@@ -46,6 +46,15 @@ pub struct Substance {
     pub phases: serde_json::Map<String, serde_json::Value>,
 }
 
+/// Tides and wind waves read for a world's card and a landing site.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct SeaSettings {
+    /// Longest stretch of open water one wind blows over, m: a storm's
+    /// size, whatever the width of the sea.
+    pub storm_fetch_m: f64,
+    pub source: String,
+}
+
 /// W7c part 1: land and sea as two columns in each band, coupled by the
 /// band's own diffusion across its coasts.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -496,6 +505,7 @@ pub struct ClimateSettings {
     pub ice: Ice,
     pub heat_capacity: HeatCapacity,
     pub land_sea: LandSeaSettings,
+    pub sea: SeaSettings,
     pub moisture: Moisture,
     pub cloud: Cloud,
     /// Thermal wind depth in scale heights, and the share of it felt near the ground.

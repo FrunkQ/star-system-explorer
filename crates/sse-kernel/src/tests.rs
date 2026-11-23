@@ -850,6 +850,40 @@ fn adopt_age_and_read_back_a_system() {
     );
     let assumed = sv["survey"]["climate"]["assumed"].to_string();
     assert!(assumed.contains("authored (V3)"), "{assumed}");
+    // W-sea: the card's tides and waves, from the formula blocks.
+    let sea = &sv["survey"]["climate"]["sea"];
+    let by = sea["tides"]["by"].as_array().expect("tides by raiser");
+    assert!(by.iter().any(|t| t["raiser"] == "host"), "{sea}");
+    // The imported Moon, listed beside Earth, raises the larger tide: about
+    // half a metre every 12.42 hours, and the Sun's is about 0.46 of it.
+    let moon = &by[0];
+    assert_eq!(moon["raiser"], "moon 1", "{sea}");
+    assert!(
+        (moon["range_m"].as_f64().unwrap() - 0.535).abs() < 0.01,
+        "{moon}"
+    );
+    assert!(
+        (moon["period_h"].as_f64().unwrap() - 12.42).abs() < 0.01,
+        "{moon}"
+    );
+    for t in by {
+        let h = t["range_m"].as_f64().unwrap();
+        assert!(h > 0.0 && h < 10.0, "{t}");
+    }
+    let typical = sea["waves"]["typical_m"].as_f64().unwrap();
+    assert!((0.3..8.0).contains(&typical), "{sea}");
+    // And the landing site's sea state under the wind blowing there.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "report", "system": sys, "body": earth["address"], "lat": -50.0, "lon": 160.0}),
+    );
+    let site = &r["data"]["sea"];
+    let wave = site["wave_m"].as_f64().unwrap_or(-1.0);
+    assert!((0.0..20.0).contains(&wave), "{r:.600}");
+    assert!(
+        site["tides"]["spring_range_m"].as_f64().unwrap() > 0.0,
+        "{site}"
+    );
     // A formation world spins at its settled spin.
     let f = send(
         &mut k,

@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 85,
+        n, 88,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1184,4 +1184,40 @@ fn moved_blocks_keep_their_faces_and_bits() {
         }
     }
     assert!(n >= was.len() * 50, "{n}");
+}
+
+#[test]
+fn tides_of_the_moon_and_the_sun_on_earth() {
+    let (me, re) = (5.972e24, 6.371e6);
+    let moon = run("sse.tides.ocean_range", &[7.342e22, me, re, 3.844e8])[0];
+    let sun = run("sse.tides.ocean_range", &[1.989e30, me, re, 1.496e11])[0];
+    // The textbook equilibrium figures: about 0.53 m from the Moon, and the
+    // Sun's about 0.46 of it.
+    close(moon, 0.535, 0.01, "lunar range");
+    close(sun / moon, 0.46, 0.02, "solar to lunar");
+    let t = run("sse.tides.period", &[86_164.1, 27.321_66 * 86_400.0])[0];
+    close(t / 3600.0, 12.42, 0.001, "lunar semidiurnal period");
+    // A backward spin turns under the moon faster: a shorter tide.
+    let back = run("sse.tides.period", &[-86_164.1, 27.321_66 * 86_400.0])[0];
+    assert!(back < t);
+}
+
+#[test]
+fn waves_grow_with_wind_and_fetch_until_the_sea_is_full_grown() {
+    let h = |u: f64, x: f64, g: f64| run("sse.ocean.wind_waves", &[u, x, g]);
+    let a = h(10.0, 1.0e4, 9.81);
+    let b = h(10.0, 1.0e5, 9.81);
+    let c = h(10.0, 1.0e7, 9.81);
+    let d = h(10.0, 1.0e8, 9.81);
+    assert!(a[0] < b[0] && b[0] < c[0] && a[1] < b[1]);
+    // Fully grown: more fetch adds nothing.
+    assert_eq!(c[0], d[0]);
+    assert!(h(20.0, 1.0e5, 9.81)[0] > b[0]);
+    // A 10 m/s wind over 300 km of sea: near 2.75 m and 7 s (the manual's
+    // relations); full grown about 3.1 m, as observed for that wind.
+    let e = h(10.0, 3.0e5, 9.81);
+    close(e[0], 2.75, 0.01, "wave height");
+    close(c[0], 3.12, 0.02, "full grown height");
+    // Weaker gravity, taller waves for the same wind.
+    assert!(h(2.0, 1.0e5, 1.352)[0] > h(2.0, 1.0e5, 9.81)[0]);
 }
