@@ -7,7 +7,7 @@
   they show. Selection is shared by the views of one screen.
 -->
 <script lang="ts">
-  import { boundScene, type CheckedScreen, type Mark, type PlayerContext, type PlayerScene, type PlayerSubject, type Vocab, type ViewHandle } from "../../../ui-contract/src/index.ts";
+  import { boundScene, withLive, type CheckedScreen, type Mark, type PlayerContext, type PlayerScene, type PlayerSubject, type Vocab, type ViewHandle } from "../../../ui-contract/src/index.ts";
 
   let {
     screen,
@@ -16,7 +16,8 @@
     mark,
     selection = $bindable(null),
     compact = false,
-  }: { screen: CheckedScreen; scene: PlayerScene; vocab: Vocab; mark?: (s: PlayerSubject) => Mark; selection?: string | null; compact?: boolean } = $props();
+    live,
+  }: { screen: CheckedScreen; scene: PlayerScene; vocab: Vocab; mark?: (s: PlayerSubject) => Mark; selection?: string | null; compact?: boolean; live?: Record<string, boolean> } = $props();
 
   const handles: { h: ViewHandle<PlayerScene>; m: CheckedScreen["mounts"][number] }[] = [];
   $effect(() => {
@@ -24,7 +25,7 @@
     for (const x of handles) x.h.update(boundScene(s, x.m.bind));
   });
   function view(node: HTMLElement, m: CheckedScreen["mounts"][number]) {
-    const ctx: PlayerContext = { params: m.params, vocab, selection: () => selection, select: (a) => (selection = a), ...(mark ? { mark } : {}) };
+    const ctx: PlayerContext = { params: withLive(m.params, m.module.params ?? [], live), vocab, selection: () => selection, select: (a) => (selection = a), ...(mark ? { mark } : {}) };
     const h = m.module.mount(node, ctx, boundScene(scene, m.bind)) as ViewHandle<PlayerScene>;
     const entry = { h, m };
     handles.push(entry);
@@ -34,11 +35,13 @@
 </script>
 
 <div class="screen layout-{layout}" class:compact data-screen-id={screen.doc.id} data-layout={layout}>
+  {#key JSON.stringify(live ?? {})}
   {#each screen.mounts as m (m.area)}
     <section class="area area-{m.area}" class:boxed={m.module.box === "fill"} data-view={m.module.id} data-area={m.area} aria-label="{m.module.id.replace('sse.view.', '')} ({m.area})">
       <div class="fill" use:view={m}></div>
     </section>
   {/each}
+  {/key}
 </div>
 
 <style>

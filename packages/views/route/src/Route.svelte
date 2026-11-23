@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { STOCK_SHIPS, constant, daysWords, delayWords, difficultyPips, doseWords, dvWords, fromNowWords, fuelLeft, navFromScene, orbitEllipse, routeFrame, safestFirst, shortlist, trackIndexAt, trackPath, trackPoint, type Course, type Json, type Prefer, type RoutePlan, type SystemScene, type ViewContext, YEAR_S } from "../../../ui-contract/src/index.ts";
+  import { STOCK_SHIPS, aerobrakeOption, chanceWords, constant, verdictWords, worstDangers, type WorldCheck, daysWords, delayWords, difficultyPips, doseWords, dvWords, fromNowWords, fuelLeft, navFromScene, orbitEllipse, routeFrame, safestFirst, shortlist, trackIndexAt, trackPath, trackPoint, type Course, type Json, type Prefer, type RoutePlan, type SystemScene, type ViewContext, YEAR_S } from "../../../ui-contract/src/index.ts";
 
   const YEAR_S_NUM = Number(YEAR_S);
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -91,6 +91,26 @@
     return typeof c === "number" && Number.isFinite(c) ? c * YEAR_S_NUM : (from_scene.nav?.t0_s ?? 0);
   });
   const shipName = $derived(STOCK_SHIPS.find((s) => s.id === ship));
+
+  // The risky option beside the safe one (Alex, 23 Nov: danger is drama, never forbidden): where the destination has
+  // air, braking in it instead of the arrival burn, judged by the kernel's ship_at_world at this course's own speed.
+  let aero = $state<{ course: string; check: WorldCheck; saves_m_s: number } | null>(null);
+  let agen = 0;
+  $effect(() => {
+    const c = chosen;
+    const nav = from_scene.nav;
+    const arr = c?.burns.find((b) => b.what === "arrival burn");
+    aero = null;
+    if (!c || !nav || !arr || !(c.arrive_v_inf_m_s! > 0)) return;
+    const g = ++agen;
+    // An adopted system on the GM's seat answers from its own record (its air); a chart's inline system carries none.
+    const where = !scene.fixture && ctx.session.seat.authority === "gm" ? { system: scene.system } : { nav };
+    ctx.session.shipAtWorld({ ...where, ship, worlds: [toAddr], v_inf_m_s: c.arrive_v_inf_m_s! }).then((r) => {
+      if (g !== agen || !r.ok) return;
+      const o = aerobrakeOption(c.burns, r.report.worlds[0]);
+      if (o) aero = { course: c.id, ...o };
+    });
+  });
 
   function tag(c: Course, i: number): string {
     if (i === 0) return want === "safest" ? "safest" : want === "fastest" ? "fastest" : want === "save-fuel" ? "cheapest" : "best match";
@@ -209,6 +229,16 @@
             <div>
               <h4>Burns</h4>
               <ol class="burns">{#each chosen.burns as b, j (j)}<li><span class="v">{fromNowWords(chosen.depart_s + b.at_s, now_s)}</span> {b.what}: {dvWords(b.dv_m_s)}{b.duration_s > 3600 ? `, lasting ${daysWords(b.duration_s / constant("day"))}` : ""}</li>{/each}</ol>
+              {#if aero && aero.course === chosen.id}
+                {@const ds = worstDangers(aero.check)}
+                <div class="aero" data-aerobrake={aero.check.verdict}>
+                  <h4>Or brake in the air</h4>
+                  <p>Skip the {dvWords(aero.saves_m_s)} arrival burn by aerocapture at {nameOf(toAddr)}: <strong data-level={aero.check.verdict}>{verdictWords(aero.check.verdict)}</strong>.</p>
+                  {#each ds as d (d.id)}<p class="hint">{d.why}. If it goes wrong ({chanceWords(d.chance.p)}): {d.if_wrong}.</p>{/each}
+                  {#if aero.check.would_pass?.length}<p class="hint">Safer with {aero.check.would_pass.join("; or ")}.</p>{/if}
+                  <p class="hint">Offered, never forbidden: the GM weighs it.</p>
+                </div>
+              {/if}
               {#if chosen.difficulty.reasons.length}<h4>Why it is {chosen.difficulty.label}</h4><ul>{#each chosen.difficulty.reasons as r (r)}<li>{r}</li>{/each}</ul>{/if}
             </div>
             <div>
@@ -258,6 +288,14 @@
 </div>
 
 <style>
+  .aero {
+    border-left: 2px solid var(--sse-accent);
+    padding-left: 8px;
+    margin: 8px 0;
+  }
+  .aero strong[data-level="dangerous"] {
+    color: var(--sse-alert, var(--sse-accent));
+  }
   .route {
     color: var(--sse-ink);
     font-size: 13px;
