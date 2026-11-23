@@ -82,17 +82,19 @@ Alex: "The 10 times was a simple rule of thumb for ideas. Not a hard fact. Apply
 
 **The improvement: immaturity acts on the advance's figure, not on the part's size.** This is the same move as the rest of the design (an advance moves a number, the block still runs), so the size of an early version falls out of physics and differs by kind of part, as it does in real history. Four things follow that a flat multiplier cannot give: a weak early cable costs exponentially, not ten times; early shielding costs nothing extra, because mass is mass; an early engine also drags bigger tanks behind it; and a prototype can never come out better than physics allows.
 
-**What history says, by family of part.** All figures here are from memory and go to the citation check.
+**What history says, by family of part.** Figures checked by the data sheet thread on 23 Nov (sources in section 14.1).
 
 | Family | What the first working generation managed, against the mature one | Examples | Default for one level short |
 |---|---|---|---|
-| **Engines and power plants** (drives, reactors, generators): output for their mass | about a seventh | rocket engine thrust for weight: V-2 about 27, Merlin 1D about 180. Jet engines: Jumo 004 about 1.2, modern fighter engines 7 to 9. Space reactors: SNAP-10A about 1 W per kg, later designs 3 to 15 | figure divided by 7 |
-| **Figures held down by a nearby ceiling** (exhaust speed for a given fuel, conversion efficiency, how much a habitat recycles) | half to two-thirds, because the ceiling was close from the start | chemical exhaust speed: V-2 about 2 km/s, best hydrogen engines 4.5 km/s, ceiling near 5. Heat engines against Carnot | two-thirds of the way from the old figure to the mature one |
-| **Materials in bulk** (strength for weight of something you can buy by the kilometre) | about a fifth; the laboratory figure arrives decades before the bulk one | carbon fibre, about 1.5 GPa in the 1960s and 7 now; nanotubes today, tens of GPa for single tubes and a few for yarn | figure divided by 5 |
-| **Stores of energy** (batteries, fuel handling) | about a third | first lithium-ion cells about 80 Wh per kg, now about 270 | figure divided by 3 |
+| **Engines and power plants** (drives, reactors, generators): output for their mass | about a seventh | rocket engine thrust for weight: V-2 about 22, Merlin 1D over 150 (about 180 claimed after its 2013 upgrade), so 7 to 8 times. Jet engines: Jumo 004 about 1.2, Eurofighter's EJ200 about 9 with reheat (6 dry). Space reactors: SNAP-10A, the only one the US flew, about 1.2 W per kg; designs since run from 1 to 7 W per kg for small Kilopower-class units to about 33 for the 100 kW SP-100, none of them flown | figure divided by 7 |
+| **Figures held down by a nearby ceiling** (exhaust speed for a given fuel, conversion efficiency, how much a habitat recycles) | half to two-thirds, because the ceiling was close from the start | chemical exhaust speed: V-2 about 2.0 km/s at sea level (2.3 in vacuum), the best hydrogen engine 4.6 km/s in vacuum (RL10B-2, 465.5 s), so the V-2 had about half; ceiling near 5 for hydrogen and oxygen. Heat engines against Carnot | two-thirds of the way from the old figure to the mature one |
+| **Materials in bulk** (strength for weight of something you can buy by the kilometre) | about a fifth; the laboratory figure arrives decades before the bulk one | carbon fibre: Shindo's first PAN fibres of the early 1960s 0.5 to 1 GPa, the first big commercial grade (Toray T300, 1971) 3.5 GPa, the best now (T1100G) 7.0 GPa. Nanotubes today: single tubes above 100 GPa, centimetre bundles 80 GPa, the best spun fibre 4.2 GPa, about a twenty-fifth | figure divided by 5 |
+| **Stores of energy** (batteries, fuel handling) | about a third | the first lithium-ion cell (Sony, 1991) 80 Wh per kg, about three times that now in mainstream cells; 450 Wh per kg in specialist silicon-anode cells | figure divided by 3 |
 | **Plain mass** (radiation shielding by matter, ballast, reaction mass itself) | the same | a g/cm² of shielding stops what it stops in any century | no change |
 | **Devices with a least size set by physics** (a critical mass, a plasma big enough to hold its heat) | not smaller, at any maturity | reactors do not shrink below criticality; fusion machines grew as they improved | the advance states its floor |
 | **Fictional devices and anything unknown** (gravity plates, heat sinks, an FTL drive) | nothing to go on | | Alex's thumb: ten times the mass and volume per level short, editable per setting and per advance |
+
+**What "first generation" means here.** The first version that does the job at working scale: the first engine that flew, the first fibre sold by the tonne. It is not the first laboratory sample, which is usually far worse (the first carbon fibres were a seventh to a fourteenth of today's), and not a later refined grade, which is usually within a factor of two. The materials default of a fifth sits between those on purpose, and is the weakest-founded number in the table.
 
 **Three rules round it off.**
 
@@ -301,3 +303,17 @@ Every source read where it could be (publisher record, the paper, or the author'
 | launch track 1,000 km at 3 g | v² / 2a, v = 7.8 km/s | 1,034 km; holds |
 | fusion plume tens to hundreds of keV | burning D-T and D-He3 plasmas run at about 10 to 100 keV | holds; textbook |
 
+### 14.1 Citation check of section 5.2 (data sheet thread, 23 Nov evening)
+
+| Figure in 5.2 | Source read | Finding |
+|---|---|---|
+| V-2 thrust for weight about 27 | McCutcheon, K. D., U.S. manned rocket propulsion evolution part 2.2: V-2 propulsion, Aircraft Engine Historical Society (enginehistory.org, rev. 2024): 55,000 lb thrust, engine 2,484 lb, "22" | corrected to about 22. The 27 matches Astronautix's 931 kg engine mass, which cites nothing. Deutsches Museum gives 245 kN and 400 kg, probably without the turbopump |
+| Merlin 1D about 180 | SpaceX press release (2013), quoted by Space.com and Spaceflight Now: vacuum thrust for weight "exceeding 150"; 180 from Musk's SES-8 teleconference, 24 Nov 2013 (as summarised) | "over 150, about 180 claimed" |
+| Jumo 004 about 1.2; fighters 7 to 9 | Smithsonian NASM A19670124000: 8,807 N, 739.4 kg (1.21); MTU EJ200 brochure: 20,000 lbf with reheat, 13,500 dry, about 2,204 lb (9.1 and 6.1) | holds; EJ200 named. F119 and F135 weights not found |
+| SNAP-10A about 1 W/kg; later 3 to 15 | US DOE ETEC SNAP overview: at least 500 W (over 600 at first), under 950 lb with instruments and shielding (1.2 to 1.4 W/kg); Mason, L. S., NASA (NTRS 20180005431): Kilopower-class 1 to 7 W/kg; Manvi and Fujita 1986, SP-100 users handbook (JPL D-2185): 100 kWe for about 3,000 kg (about 33 W/kg) | corrected: later designs 1 to 7 W/kg small, about 33 large, none flown. The engine family's "a seventh" rests on the engines, not the reactors |
+| V-2 exhaust about 2 km/s against 4.5 | AEHS USSRC V-2 page: 203 s at sea level, 239 s in vacuum; National Museum of the USAF fact sheet (thrust and flow give about 195 s); RL10B-2 465.5 s (L3Harris, read for FT1) | holds; vacuum against vacuum is 1.95 times, so "about half" |
+| carbon fibre about 1.5 GPa in the 1960s, 7 now | Shindo, A. 2000, J. Ceram. Soc. Japan 108, S35 (reprint of his early-1960s work, abstract read): 5,000 to 10,000 kgf/cm² at best, 0.5 to 1 GPa; Toray T1100G data sheet (2021): 7,000 MPa; Toray carbon fibre card: T300 3,530 MPa | corrected. First fibre to best now is 7 to 14 times; first commercial grade to best now is 2 times. The materials default of a fifth sits between |
+| nanotube single tubes against yarn | Peng, B. et al. 2008, Nature Nanotechnology 3, 626 (abstract): single tubes above 100 GPa; Bai, Y. et al. 2018, Nature Nanotechnology 13, 589 (abstract): centimetre bundles over 80 GPa; Taylor, L. W. et al. 2020, Carbon (Rice University news, as summarised): fibre 4.2 GPa | figures added; tube to fibre about 24 times |
+| lithium-ion about 80 Wh/kg first, about 270 now | Crabtree, G., Kócs, E. and Trahey, L. 2015, MRS Bulletin 40, 1067: Sony's first cell 80 Wh/kg, energy density up "by a factor of three" since; Amprius 2022 press release: 450 Wh/kg silicon-anode cells | holds as "about three times"; the 270 had no source read and is replaced by Crabtree's factor |
+
+Still from memory: the hydrogen-oxygen exhaust ceiling "near 5 km/s".
