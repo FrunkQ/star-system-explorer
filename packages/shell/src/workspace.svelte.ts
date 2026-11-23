@@ -38,6 +38,13 @@ export function createWorkspace(now_yr: number): Workspace {
     setCampaignNow(yr: number) {
       ws.campaign_now_yr = yr;
     },
+    overlay_anchors: {},
+    setOverlayAnchor(id, a) {
+      const next = { ...(ws.overlay_anchors ?? {}) };
+      if (a) next[id] = a;
+      else delete next[id];
+      ws.overlay_anchors = next;
+    },
     noteApplied(e: AppliedEdit, as: "edit" | "undo" | "redo" = "edit") {
       ws.applied[`${e.address}#${e.field}`] = { value: e.after.value, display: e.after.display, event_id: e.event_id };
       if (as === "edit") {
