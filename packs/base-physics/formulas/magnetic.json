@@ -1,0 +1,219 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.magnetic",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.magnetic.dynamo_density",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "core_mass_fraction",
+     "letter": "f"
+    },
+    {
+     "port": "core_radius",
+     "letter": "r"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "density",
+     "letter": "rho"
+    }
+   ],
+   "positive": [
+    {
+     "port": "core_radius",
+     "says": "core_radius"
+    },
+    {
+     "port": "mass",
+     "says": "mass"
+    }
+   ],
+   "references": [
+    "A uniform sphere: density is mass over volume, ρ = M / (4/3 π R³).",
+    "Christensen, U. R. 2010, Space Science Reviews 152, 565: dynamo scaling laws and applications to the planets (c about 0.63, f_ohm about 0.9). doi:10.1007/s11214-009-9553-2"
+   ],
+   "shown": "ρ = M f_core / (4/3 π R_core³)",
+   "equation": {
+    "name": "How dense the core is",
+    "formula": "rho = M * f / (4/3 * pi * r * r * r)",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world"
+     },
+     "f": {
+      "kind": "interior.core_mass_fraction",
+      "unit": "1",
+      "name": "share of the mass in the core",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "r": {
+      "kind": "interior.core_radius",
+      "unit": "m",
+      "name": "radius of the core"
+     }
+    },
+    "outputs": {
+     "rho": {
+      "kind": "interior.dynamo_density",
+      "unit": "kg m-3",
+      "name": "mean density of the core"
+     }
+    },
+    "source": {
+     "text": "Christensen, U. R. 2010, Space Science Reviews 152, 565",
+     "doi": "10.1007/s11214-009-9553-2",
+     "where": "the dynamo region"
+    },
+    "explain": {
+     "curious": "Earth's iron core is about twice as dense as the rock above it, and that dense, churning metal is where the compass field is made.",
+     "science": "For a rocky world the dynamo runs in the liquid iron core, so its density is the core's mass over its volume. For a giant the dynamo region is the metallic hydrogen inside about 85% of the radius, and its density can be given directly."
+    },
+    "examples": [
+     {
+      "M": 5.97e+24,
+      "f": 0.32,
+      "r": 3480000.0,
+      "rho": 10821.761748905648
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.magnetic.surface_dipole",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "field",
+     "letter": "B"
+    },
+    {
+     "port": "dynamo_radius",
+     "letter": "rd"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "surface_field",
+     "letter": "Bs"
+    },
+    {
+     "port": "moment",
+     "letter": "m"
+    }
+   ],
+   "constants": {
+    "mu0": "sheet/mu0"
+   },
+   "params": [
+    {
+     "param": "dipole_ratio",
+     "letter": "k",
+     "default": 0.085,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "dipole field at the dynamo surface over the rms field inside (Earth and Jupiter, docs/fudges.md)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "dynamo_radius",
+     "says": "dynamo_radius"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    }
+   ],
+   "references": [
+    "Christensen, U. R. and Aubert, J. 2006, Geophysical Journal International 166, 97: scaling properties of convection-driven dynamos in rotating spherical shells and application to planetary magnetic fields (dipolar dynamos, the ratio of mean field to dipole field at the dynamo surface). doi:10.1111/j.1365-246X.2006.03009.x",
+    "A dipole field falls as r⁻³; the equatorial field B at radius r of a moment μ is B = μ₀ μ / (4π r³). Jackson, J. D. 1999, Classical Electrodynamics, 3rd edn, Wiley, section 5.6.",
+    "Alken, P. et al. 2021, Earth, Planets and Space 73, 49: the International Geomagnetic Reference Field, 13th generation (Earth's dipole moment about 7.7e22 A m²). doi:10.1186/s40623-020-01288-x",
+    "Connerney, J. E. P. et al. 2018, Geophysical Research Letters 45, 2590: a new model of Jupiter's magnetic field from Juno's first nine orbits (dipole about 4.1 G at the equator). doi:10.1002/2018GL077312"
+   ],
+   "shown": "B_eq = k · B_rms · (R_dyn / R)³,  μ = 4π B_eq R³ / μ₀",
+   "equation": {
+    "name": "Field a world's dynamo shows at the surface",
+    "formula": "x = min(rd / R, 1)\nBs = k * B * x * x * x\nm = 4 * pi / mu0 * Bs * R * R * R",
+    "inputs": {
+     "B": {
+      "kind": "magnetic.dynamo_field",
+      "unit": "T",
+      "name": "field inside the dynamo"
+     },
+     "rd": {
+      "kind": "interior.dynamo_radius",
+      "unit": "m",
+      "name": "radius of the dynamo"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "mu0": {
+      "kind": "constant.mu0",
+      "unit": "N A-2",
+      "name": "magnetic constant"
+     },
+     "k": {
+      "kind": "model.dipole_ratio",
+      "unit": "1",
+      "name": "dipole at the dynamo's top over the field inside"
+     }
+    },
+    "outputs": {
+     "Bs": {
+      "kind": "body.surface_magnetic_field",
+      "unit": "T",
+      "name": "field at the equator on the ground"
+     },
+     "m": {
+      "kind": "body.magnetic_moment",
+      "unit": "A m2",
+      "name": "strength of the world's magnet (dipole moment)"
+     }
+    },
+    "source": {
+     "text": "Christensen, U. R. and Aubert, J. 2006, Geophys. J. Int. 166, 97",
+     "doi": "10.1111/j.1365-246X.2006.03009.x",
+     "where": "the dipole at the surface"
+    },
+    "explain": {
+     "curious": "Only a small part of the field made in the core reaches the surface as the familiar north-south dipole, and it fades fast with distance: Earth's field at the surface is about seven times weaker than at the top of the core.",
+     "science": "In dipolar dynamos the dipole at the dynamo's outer surface is a roughly fixed share of the field inside (Christensen and Aubert 2006); outside it falls as (R_dynamo/r)³. The moment follows from the equatorial surface field. The share is set here so that Earth and Jupiter come out within about 15% of their measured moments."
+    },
+    "examples": [
+     {
+      "B": 0.003,
+      "rd": 3480000.0,
+      "R": 6371000.0,
+      "k": 0.085,
+      "Bs": 4.155804385355546e-05,
+      "m": 1.074676895414972e+23
+     }
+    ]
+   }
+  }
+ ]
+}

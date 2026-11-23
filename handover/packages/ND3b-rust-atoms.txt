@@ -10,27 +10,17 @@ sse.belts.kp_limit	not yet looked at
 sse.belts.radiation_yield	not yet looked at
 sse.chem.reaction_gibbs	not yet looked at
 sse.chem.standard_gibbs_at_temperature	not yet looked at
-sse.dynamo.compositional_power	not yet looked at
-sse.dynamo.convected_flux	not yet looked at
 sse.field.ionopause_altitude	not yet looked at
 sse.field.shue_flaring	not yet looked at
 sse.field.standoff_in_field	not yet looked at
-sse.heat.active_geology_lifetime	not yet looked at
-sse.heat.al26_planetesimal_heating	not yet looked at
+sse.heat.active_geology_lifetime	iterates: 80 halvings to find when the heat flow falls below the limit
+sse.heat.al26_planetesimal_heating	refuses when its two energy settings cross: waits for checks on settings
 sse.induction.response	not yet looked at
 sse.interior.core_mass_fraction	its fitted numbers (1.07, 0.21, 3.7) become Model number letters first
 sse.interior.core_radius	not yet looked at
 sse.interior.rocky_radius	its fitted numbers (1.07, 0.21, 3.7) become Model number letters first
-sse.light.auroral_radio_power	not yet looked at
-sse.light.cyclotron_frequency	not yet looked at
 sse.light.dust_extinction	CCM89's four polynomial pieces need more than the 64 operations an Equation holds; waits for fit tables as data
-sse.light.effective_temperature	not yet looked at
-sse.light.magnetopause_radius	not yet looked at
-sse.light.reflected_area	not yet looked at
-sse.light.stellar_wind	not yet looked at
-sse.magnetic.dynamo_density	not yet looked at
-sse.magnetic.dynamo_field	not yet looked at
-sse.magnetic.surface_dipole	not yet looked at
+sse.magnetic.dynamo_field	its steps ρ^⅓ and q^⅔ are not whole units on their own (only their product is): waits for unit-free working lines
 sse.nebula.ionising_photon_rate	iterates: a 400-term series for the photons above 13.6 eV
 sse.orbit.kepler_position	iterates: Kepler's equation solved by a fixed number of Newton steps
 sse.planet.radius_from_mass	a broken power law over a table of mass ranges
