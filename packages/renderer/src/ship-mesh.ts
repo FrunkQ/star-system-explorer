@@ -6,7 +6,7 @@
 import type { Piece, ShipLayout, SystemKind } from "./ship-design.ts";
 
 /** Surface kinds: each gets one buffer and one material from the style's `skin`. */
-export type Surface = "hull" | "tanks" | "radiators" | "spine" | "drive";
+export type Surface = "hull" | "tanks" | "radiators" | "spine" | "drive" | "shield";
 
 export const SURFACE_OF: Record<SystemKind, Surface | null> = {
   sensors: "hull",
@@ -17,6 +17,11 @@ export const SURFACE_OF: Record<SystemKind, Surface | null> = {
   drive: "drive",
   spine: "spine",
   plume: null,
+  shield: "shield",
+  wings: "hull",
+  legs: "spine",
+  chute: "hull",
+  scoop: "drive",
 };
 
 export interface SurfaceBuffers {
@@ -91,7 +96,7 @@ function panelPiece(b: Builder, p: Piece, t: number, panel: number): void {
   const sw = p.sweep ?? 0;
   const corners: [number, number][] = [[p.x0, p.y], [p.x1, p.y], [p.x1 - sw, p.y + s], [p.x0 - sw, p.y + s]];
   for (const face of [1, -1]) {
-    const q = corners.map(([x, y]) => b.vert(x, y, face * t, 0, 0, face, x / panel, y / panel));
+    const q = corners.map(([x, y]) => b.vert(x, y, p.z + face * t, 0, 0, face, x / panel, y / panel));
     // Keep both faces wound outward whichever way the panel reaches.
     const flip = face * Math.sign(s || 1) < 0;
     flip ? b.i.push(q[0]!, q[2]!, q[1]!, q[0]!, q[3]!, q[2]!) : b.i.push(q[0]!, q[1]!, q[2]!, q[0]!, q[2]!, q[3]!);
@@ -130,6 +135,12 @@ export function shipMesh(l: ShipLayout, o: { segments: number; panel_m: number }
   return { surfaces, triangles, bounds: [lo, hi], hull_bounds: [hlo, hhi] };
 }
 
+export interface SurfaceLook {
+  albedo: [number, number, number];
+  roughness: number;
+  metalness: number;
+}
+
 /** base-ships style `skin`: per surface, a linear albedo, roughness and metalness, and the panel look. */
 export interface SkinSpec {
   panel_m: number;
@@ -137,7 +148,8 @@ export interface SkinSpec {
   patchiness: number;
   /** Fine scuffing (0 to 1). */
   wear: number;
-  surfaces: Record<Surface, { albedo: [number, number, number]; roughness: number; metalness: number }>;
+  /** A style may leave out `shield`: it then takes the hull's look. */
+  surfaces: Record<Exclude<Surface, "shield">, SurfaceLook> & { shield?: SurfaceLook };
 }
 
 /** A tileable panel texture, `px` square, covering 4 × 4 panels: each panel its own shade, dark seams between

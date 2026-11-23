@@ -49,7 +49,10 @@ export { designShip, narrateDesign, needsOf, remixes, shipViews } from "./ship-d
 export type { Callout, DesignOverrides, DesignRecipe, DesignRules, DesignShip, Needs, Piece, ShipLayout, ShipStyle, ShipView, SystemKind, ViewPath } from "./ship-design.ts";
 // V3 gap item 14, stage 3: the 3D model from the same layout, with panel textures from the style's skin.
 export { panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
-export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers } from "./ship-mesh.ts";
+export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers, SurfaceLook } from "./ship-mesh.ts";
+// V3 gap item 14, stage 4: abilities (aerobraking, landing, skimming) size a shield, lift, legs, chute and scoop.
+export { fitAbilities, fittedChecks, outlineOf } from "./ship-abilities.ts";
+export type { Abilities, AbilityRules, AskShipAtWorld, FitResult, Fitted, ShieldKind } from "./ship-abilities.ts";
 export type { ShipView3D } from "./gpu-ship.ts";
 
 /** Draw a designed ship in 3D (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */

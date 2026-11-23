@@ -50,7 +50,7 @@ export async function mountShip(canvas: HTMLCanvasElement, l: ShipLayout, skin: 
     g.setAttribute("normal", new BufferAttribute(b.normals, 3));
     g.setAttribute("uv", new BufferAttribute(b.uvs, 2));
     g.setIndex(new BufferAttribute(b.indices, 1));
-    const s = skin.surfaces[name];
+    const s = (name === "shield" ? skin.surfaces.shield : skin.surfaces[name]) ?? skin.surfaces.hull;
     const m = new MeshStandardMaterial({ color: new Color(...s.albedo), roughness: s.roughness, metalness: s.metalness, map: tex });
     if (name === "radiators" && heat > 0) {
       m.emissive = new Color(...starRgb(heat));
