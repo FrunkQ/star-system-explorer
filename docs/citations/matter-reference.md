@@ -42,6 +42,9 @@ sheet is filled, and each sheet row records that check.
 | thauer1977 | Thauer, Jungermann and Decker 1977, Bacteriol. Rev. 41, 100. https://pmc.ncbi.nlm.nih.gov/articles/PMC413997 | free energies and enthalpies of formation | verified (metadata) | PMC record in search results; values carried from base-life |
 | ussa1976 | U.S. Standard Atmosphere 1976. https://ntrs.nasa.gov/citations/19770009539 | dry-air composition | verified (metadata); recipe unverified | NTRS record in search results |
 | lineweaver2010 | Lineweaver, C. H. and Norman, M. 2010: the potato radius, a lower minimum size for dwarf planets. https://arxiv.org/abs/1004.1091 | rock and ice yield strengths | verified (metadata) | arXiv PDF 1004.1091 in search results under that title |
+| dupont-kevlar2017 | DuPont 2017, Kevlar aramid fiber technical guide, Table II-1. https://www.r-g.de/wiki/images/e/ec/Td_en_Kevlar_guide.pdf | aramid density and tensile strength | verified | Kevlar 49 yarn 3,000 MPa (strand 3,600 MPa), 1.44 g/cm3, read 23 Nov 2026 |
+| fiberline-zylon | Fiber-Line, Zylon PBO datasheet (Toyobo fibre). https://automotive.polyone.com/sites/default/files/2021-06/fl.us-.datasheet-zylonr-pbo.pdf | PBO density and tensile strength | verified | HM 42.0 g/d, specific gravity 1.56, read 23 Nov 2026; 5.8 GPa worked out and matches Toyobo |
+| yu2000 | Yu, M.-F. et al. 2000, Science 287, 637. doi:10.1126/science.287.5453.637 | carbon nanotube tensile strength | unverified | 11 to 63 GPa as summarised; abstract not read |
 | nssdca-earth, -moon, -jupiter | NASA NSSDCA planetary fact sheets | mean radii, Moon mass and distance | textbook | standard fact sheets; values match the MP0 canonical column |
 | cgpm1901, cgpm1954 | CGPM resolutions on standard gravity and the standard atmosphere | g0, atm | textbook | exact by definition |
 | fudge-register | docs/fudges.md | authored stand-ins | authored | each authored value says why in the fudge register |

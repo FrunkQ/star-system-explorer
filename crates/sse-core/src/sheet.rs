@@ -573,6 +573,14 @@ pub mod mixture_density {
     pub const SEDIMENT: f64 = 2300.0;
     /// quartz-sand (crc-handbook).
     pub const QUARTZ_SAND: f64 = 2650.0;
+    /// steel-wire (fudge-register).
+    pub const STEEL_WIRE: f64 = 7850.0;
+    /// aramid (dupont-kevlar2017).
+    pub const ARAMID: f64 = 1440.0;
+    /// pbo-fibre (fiberline-zylon).
+    pub const PBO_FIBRE: f64 = 1560.0;
+    /// carbon-nanotube (fudge-register).
+    pub const CARBON_NANOTUBE: f64 = 1340.0;
     /// magma-dre (mastin2009).
     pub const MAGMA_DRE: f64 = 2500.0;
     /// formation-metal (fudge-register).
