@@ -16,7 +16,8 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | V10b: Band in the one ViewControls (Visible, Infrared, Ultraviolet, X-ray, Radio, Mag); a view declares the bands it can show in its spec, the rest read "not seen in … here yet"; kept in the saved view choice | done; views wire their bands next (chart room moves Band out of LightControl) | this row |
 | V10c: a living star in True: the kernel's star (limb darkening, spots from the cycle, flares from the flare list) turning on its spin on its own clock, six hours a second; StarDisc and True read one `readLiveStar` | done; X-ray band through True next | packages/V10c.md |
 | OV1: pack overlays under the HUD switch: overlays as pack data (a hex grid or fixed layers), placed by campaign anchors, drawn by detail of zoom; first on Voyages between stars | done; Traveller pack entry, turning and dragging, galaxy chart next | packages/OV1.md |
-| V10d: bands through True: X-ray (the star's corona and flares; worlds dark) and Infrared (10 µm, each body by its own heat, mapped grey); the Window's sky follows the one Band | done; Mag (magnetospheres) next | packages/V10d.md |
+| V10d: bands through True: X-ray (the star's corona and flares; worlds dark) and Infrared (10 µm, each body by its own heat, mapped grey); the Window's sky follows the one Band | done | packages/V10d.md |
+| V10e: Mag through 3D and True: every world's field lines and the wind's bubble round it at system scale, from read_field; Real at true size, Readable cut short of neighbours | done; next OV2 (territory areas contract, with the kernel's OV3), then V9 True galaxy | packages/V10e.md |
 | GH9: galaxies' collision marks drawn from GH3's dated marks (warp, ripples, tilt, rings with emptied middles, lopsided and driven arms, knots, thick disc), face-on layer and edge-on strip in the galaxy chart | done; True drawing of the same formulas next | packages/GH9.md |
 
 ## Done so far and what is next

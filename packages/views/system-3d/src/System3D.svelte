@@ -16,8 +16,8 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, drawLiveStar, flaresAt, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
-  import { SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
+  import { basis, drawLiveStar, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
+  import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
@@ -39,6 +39,7 @@
     hud = true,
     star = null,
     band = "visible",
+    fields = new Map(),
   }: {
     bands?: Band3D[];
     bodies: Body3D[];
@@ -67,9 +68,23 @@
     /** True look: the band it is seen in (rule 12). Visible, X-ray (the star's corona; worlds dark) and Infrared (each
      * body's own heat, mapped grey) are drawn; the others draw Visible and say so. */
     band?: string;
+    /** Mag (V10e): each world's field facts (read_field) by body id; worlds without are drawn dark and fieldless. */
+    fields?: ReadonlyMap<string, FieldReadJson>;
   } = $props();
   const trueBand = $derived(band === "xray" || band === "infrared" ? band : "visible");
   const overlay = $derived(hud);
+  // Mag (V10e): the picture gives way to the fields, in 3D and True alike: each world's lines and the wind's bubble.
+  const mag = $derived(band === "mag");
+  // Traced once per change of facts (a few ms a world), never per frame.
+  const magShapes = $derived.by(() => {
+    const out = new Map<string, MagShape>();
+    if (!mag) return out;
+    for (const [id, r] of fields) {
+      const s = magShape(r);
+      if (s) out.set(id, s);
+    }
+    return out;
+  });
   const isTrue = $derived(trueLook);
 
   const root = $derived(bodies.find((b) => b.parent === null)?.id ?? bodies[0]?.id ?? "");
@@ -235,7 +250,7 @@
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   });
-  const starK = $derived(bodies.find((b) => b.parent === null)?.t_k ?? star?.teff ?? 5772);
+  const starK = $derived(bodies.find((b) => b.parent === null)?.t_k ?? star?.teff ?? constant("T_sun"));
   const bandNote = $derived(
     !isTrue
       ? ""
@@ -243,9 +258,18 @@
         ? "X-rays, in mapped colour: the star's corona on a log scale, brighter over its spots and flares. Worlds give off almost none, so they are dark."
         : trueBand === "infrared"
           ? `Thermal infrared (10 µm), in mapped grey on a log scale ${THERMAL_DECADES} decades deep from the star: each body glows by its own temperature, the same over its whole disc (the Light panel's near-infrared recipes paint the flat chart).`
-          : band !== "visible"
+          : band !== "visible" && band !== "mag"
             ? "True draws Visible, Infrared and X-ray for now; this band is drawn as Visible."
             : "",
+  );
+  const magNote = $derived(
+    !mag
+      ? ""
+      : using === "canvas"
+        ? "Mag lines are drawn on the GPU tier; open a world for its field's cut."
+        : !magShapes.size
+          ? "Mag: no world here has field facts yet. Fields come from the Solar System's own bodies for now; other worlds get theirs once the kernel publishes a field for every world."
+          : `Mag: ${magShapes.size === 1 ? "one world's" : `${magShapes.size} worlds'`} magnetic fields from the kernel's facts (read_field), traced as on each world's own Mag layer. Orange where the field points away from the world, blue where it points in; the faint outlines are the wind's bubble (magnetopause), its nose toward the star.${realScale ? " Real scale: each field at its true size." : " Readable scale: each field is drawn to its world's enlarged size and stopped short of the nearest body drawn; Real shows them at their true size."}`,
   );
   const flaringNow = $derived(star && isTrue ? flaresAt(star, spotsOf(star), starT, STAR_SECONDS_PER_SECOND / 10).length : 0);
   // The face is drawn at about the size the disc shows on the screen, in steps so its texture is not remade each zoom.
@@ -270,6 +294,30 @@
     return { key: `star:${b.id}:${xray ? "x" : "v"}`, version: ++faceVersion, width, data: faceBuf.data, disc };
   }
 
+  // Mag lines in camera-relative points: each world's field drawn to its drawn size, x toward the star. Readable
+  // enlarges the worlds, so a field there is stopped short of the nearest other body drawn (fudge register); Real
+  // draws every field at its true size.
+  function magRings(outInk: string, inInk: string, edge: string): { points: Vec3[]; colour: string }[] {
+    if (!mag || !lay || !magShapes.size) return [];
+    const starNode = lay.nodes.find((n) => n.id === root);
+    const from = lightFor();
+    const out: { points: Vec3[]; colour: string }[] = [];
+    for (const b of shown) {
+      const s = magShapes.get(b.id);
+      const n = lay.nodes.find((x) => x.id === b.id);
+      if (!s || !n) continue;
+      const radius = realScale ? lay.dist(b.radius_m ?? 0) : sizeOf(b, b === lay.centre);
+      if (!(radius > 0)) continue;
+      const sun: [number, number] = starNode && starNode.id !== b.id ? [starNode.local[0] - n.local[0], starNode.local[1] - n.local[1]] : "from" in from && from.from ? [from.from[0], from.from[1]] : [-n.local[0], -n.local[1]];
+      let reach = Infinity;
+      if (!realScale) for (const o of lay.nodes) if (o.id !== b.id) reach = Math.min(reach, 0.45 * Math.hypot(o.local[0] - n.local[0], o.local[1] - n.local[1], o.local[2] - n.local[2]));
+      const placed = placeMag(s, n.local as [number, number, number], radius, sun, reach);
+      for (const r of placed.runs) out.push({ points: r.points.map(rel), colour: r.out ? outInk : inInk });
+      for (const e of placed.bubble) out.push({ points: e.map(rel), colour: edge });
+    }
+    return out;
+  }
+
   let canvas2d: HTMLCanvasElement | undefined = $state();
   $effect(() => {
     if (!lay || w === 0 || h === 0) return;
@@ -279,6 +327,8 @@
     // A shell's haze is faint ink: it surrounds everything and must not crowd the orbits.
     const haze = token("--sse-ink-faint", "--sse-ink-muted");
     const ground = token("--sse-ground", "--sse-ground-raised");
+    const fieldOut = token("--sse-field-out", "--sse-accent");
+    const fieldIn = token("--sse-field-in", "--sse-ink");
     const colour = (b: Body3D) => b.mark?.colour ?? ink;
     if (using === "gpu" && gpu) {
       const { f, u } = basis(cam.eye, cam.look);
@@ -292,11 +342,12 @@
             const radius = sizeOf(b, b === lay!.centre);
             // Infrared draws every body by its own heat, the star included; X-ray draws the star's corona and leaves
             // the worlds dark (they give off almost none).
-            const face = isStar && trueBand !== "infrared" ? faceFor(b, radius) : undefined;
-            const emit = trueBand === "infrared" ? thermalGrey(b.t_k ?? 0, starK) : trueBand === "xray" && !isStar ? 0 : undefined;
+            const face = isStar && !mag && trueBand !== "infrared" ? faceFor(b, radius) : undefined;
+            // Mag: the worlds dark under their fields, the star a dim grey (its own field is not drawn yet).
+            const emit = mag ? (isStar ? 0.35 : magShapes.has(b.id) ? 0.18 : 0.08) : trueBand === "infrared" ? thermalGrey(b.t_k ?? 0, starK) : trueBand === "xray" && !isStar ? 0 : undefined;
             return { id: b.id, rel: relOf(b.id), radius, colour: isStar ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: isStar, ...(t ? { surface: { key: b.id, texture: t } } : {}), ...(face ? { face } : {}), ...(emit !== undefined ? { emit } : {}) };
           }),
-          rings: hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : [],
+          rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...magRings(fieldOut, fieldIn, faint)],
           forward: f,
           up: u,
           fovY: cam.fovY,
@@ -309,10 +360,10 @@
       }
       gpu.draw({
         items: shown.map((b) => ({ id: b.id, rel: relOf(b.id), radius: sizeOf(b, b === lay!.centre), colour: colour(b), ring: b.mark?.ring ?? false, selected: b.id === selection })),
-        rings: !hud ? [] : [
+        rings: [...magRings(fieldOut, fieldIn, faint), ...(!hud ? [] : [
           ...bandLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : faint })),
           ...lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })),
-        ],
+        ])],
         dots: hud ? shellLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : haze })) : [],
         forward: f,
         up: u,
@@ -491,6 +542,7 @@
     <span>{realScale ? "Real scale: distances and sizes in proportion (a world smaller than a pixel shows as a point)" : "Distances on a log scale, sizes not to scale"}{distanceNote}. Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}.</span>
     {#if isTrue && (using === "canvas" || trueNote)}<span data-true-note>{using === "canvas" ? "True needs a GPU: this device draws the chart's look." : trueNote}</span>{/if}
     {#if isTrue && bandNote && using === "gpu"}<span data-true-band={trueBand}>{bandNote}</span>{/if}
+    {#if mag}<span data-true-band="mag" data-mag-worlds={magShapes.size}>{magNote}</span>{/if}
     {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)}>The star runs on its own clock, six hours a second: it turns on its spin, its spots go round with it{flaringNow ? ", and it is flaring now" : ""}.</span>{/if}
   </p>
 </div>
