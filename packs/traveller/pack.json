@@ -8973,6 +8973,62 @@
        }
       ],
       "explain": "a ship's high-resolution bio-scanner within 10,000 km for an hour reveals biosphere, vegetation, settlements"
+     },
+     {
+      "id": "traveller.status.derelict",
+      "when": {
+       "on_condition": {
+        "condition": {
+         "if": "tag",
+         "tag": "status.derelict"
+        }
+       }
+      },
+      "scope": {
+       "tag": "construct"
+      },
+      "effects": [
+       {
+        "effect": "set_kept",
+        "kind": "ship.readiness",
+        "value": 0.0,
+        "reason": "tagged derelict"
+       }
+      ],
+      "explain": "a construct tagged derelict drops to readiness 0 (the GM may set it otherwise afterwards)"
+     },
+     {
+      "id": "traveller.status.damaged",
+      "when": {
+       "on_condition": {
+        "condition": {
+         "if": "all",
+         "of": [
+          {
+           "if": "tag",
+           "tag": "status.damaged"
+          },
+          {
+           "if": "range",
+           "field": "ship.readiness",
+           "min": 0.5000001
+          }
+         ]
+        }
+       }
+      },
+      "scope": {
+       "tag": "construct"
+      },
+      "effects": [
+       {
+        "effect": "set_kept",
+        "kind": "ship.readiness",
+        "value": 0.5,
+        "reason": "tagged damaged: readiness at most 0.5"
+       }
+      ],
+      "explain": "a construct tagged damaged runs at readiness 0.5 at most until the tag is taken off"
      }
     ]
    },
@@ -8995,7 +9051,9 @@
        "construct.source": "written for this pack"
       },
       "kept": {
-       "construct.crew": 4.0
+       "construct.crew": 4.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.8
       },
       "tags": [
        "construct",
@@ -9021,7 +9079,9 @@
        "construct.source": "written for this pack"
       },
       "kept": {
-       "construct.crew": 6.0
+       "construct.crew": 6.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.6
       },
       "tags": [
        "construct",
@@ -9047,7 +9107,9 @@
        "construct.source": "written for this pack"
       },
       "kept": {
-       "construct.crew": 6.0
+       "construct.crew": 6.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.5
       },
       "tags": [
        "construct",
@@ -9075,7 +9137,9 @@
        "construct.source": "written for this pack"
       },
       "kept": {
-       "construct.crew": 12.0
+       "construct.crew": 12.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.9
       },
       "tags": [
        "construct",
@@ -9103,7 +9167,9 @@
        "construct.source": "V3 starter-sf construct_templates.json"
       },
       "kept": {
-       "construct.crew": 2.0
+       "construct.crew": 2.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.6
       },
       "tags": [
        "construct",
@@ -9131,7 +9197,9 @@
        "construct.source": "V3 starter-sf construct_templates.json"
       },
       "kept": {
-       "construct.crew": 6.0
+       "construct.crew": 6.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.7
       },
       "tags": [
        "construct",
@@ -9161,7 +9229,9 @@
        "construct.source": "V3 starter-sf construct_templates.json"
       },
       "kept": {
-       "construct.crew": 5000.0
+       "construct.crew": 5000.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.7
       },
       "tags": [
        "construct",
@@ -9189,7 +9259,9 @@
        "construct.source": "V3 starter-sf construct_templates.json"
       },
       "kept": {
-       "construct.crew": 1000.0
+       "construct.crew": 1000.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.6
       },
       "tags": [
        "construct",
@@ -9217,7 +9289,9 @@
        "construct.source": "V3 starter-sf construct_templates.json"
       },
       "kept": {
-       "construct.crew": 20000.0
+       "construct.crew": 20000.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.9
       },
       "tags": [
        "construct",
@@ -9244,7 +9318,9 @@
        "construct.source": "V3 starter-sf construct_templates.json"
       },
       "kept": {
-       "construct.crew": 100000.0
+       "construct.crew": 100000.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.95
       },
       "tags": [
        "construct",
@@ -9275,7 +9351,9 @@
        "construct.source": "V3 starter-sf construct_templates.json"
       },
       "kept": {
-       "construct.crew": 200.0
+       "construct.crew": 200.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.8
       },
       "tags": [
        "construct",
@@ -9300,7 +9378,9 @@
        "construct.source": "V3 starter-sf construct_templates.json"
       },
       "kept": {
-       "construct.crew": 500.0
+       "construct.crew": 500.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.6
       },
       "tags": [
        "construct",
@@ -9326,7 +9406,9 @@
        "construct.source": "V3 starter-sf construct_templates.json"
       },
       "kept": {
-       "construct.crew": 50.0
+       "construct.crew": 50.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.6
       },
       "tags": [
        "construct",
@@ -9350,7 +9432,9 @@
        "construct.source": "V3 starter-sf construct_templates.json"
       },
       "kept": {
-       "construct.crew": 100.0
+       "construct.crew": 100.0,
+       "ship.readiness": 1.0,
+       "ship.discipline": 0.4
       },
       "tags": [
        "construct",
@@ -9528,6 +9612,180 @@
      }
     ]
    },
+   "dressing": {
+    "about": "Ports and bases a world's codes call for, as candidates the GM adopts or holds off.",
+    "rules": [
+     {
+      "id": "traveller.port.highport-a.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "society.starport",
+       "value": "A"
+      },
+      "place": "highport_a",
+      "where": "high-orbit",
+      "explain": "a class A starport has a highport in orbit with a shipyard for jump ships"
+     },
+     {
+      "id": "traveller.port.highport-b.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "society.starport",
+       "value": "B"
+      },
+      "place": "highport_b",
+      "where": "high-orbit",
+      "explain": "a class B starport has a highport in orbit that builds small craft"
+     },
+     {
+      "id": "traveller.port.downport.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "any",
+       "of": [
+        {
+         "if": "is",
+         "field": "society.starport",
+         "value": "A"
+        },
+        {
+         "if": "is",
+         "field": "society.starport",
+         "value": "B"
+        },
+        {
+         "if": "is",
+         "field": "society.starport",
+         "value": "C"
+        }
+       ]
+      },
+      "place": "downport",
+      "where": "surface",
+      "explain": "a class A, B or C starport has a downport on the surface"
+     },
+     {
+      "id": "traveller.port.spaceport-d.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "society.starport",
+       "value": "D"
+      },
+      "place": "spaceport_d",
+      "where": "surface",
+      "explain": "a class D starport is a landing pad with unrefined fuel"
+     },
+     {
+      "id": "traveller.port.beacon-e.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "society.starport",
+       "value": "E"
+      },
+      "place": "beacon_e",
+      "where": "surface",
+      "explain": "a class E starport is a marked patch of ground and a beacon"
+     },
+     {
+      "id": "traveller.base.N.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.N",
+       "value": true
+      },
+      "place": "naval_base",
+      "where": "high-orbit",
+      "explain": "the bases column lists N: a naval base here"
+     },
+     {
+      "id": "traveller.base.S.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.S",
+       "value": true
+      },
+      "place": "scout_base",
+      "where": "high-orbit",
+      "explain": "the bases column lists S: a scout base here"
+     },
+     {
+      "id": "traveller.base.W.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.W",
+       "value": true
+      },
+      "place": "way_station",
+      "where": "high-orbit",
+      "explain": "the bases column lists W: a way station here"
+     },
+     {
+      "id": "traveller.base.D.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.D",
+       "value": true
+      },
+      "place": "naval_depot",
+      "where": "high-orbit",
+      "explain": "the bases column lists D: a naval depot here"
+     },
+     {
+      "id": "traveller.base.M.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.M",
+       "value": true
+      },
+      "place": "military_base",
+      "where": "surface",
+      "explain": "the bases column lists M: a planetary military base here"
+     },
+     {
+      "id": "traveller.base.C.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.C",
+       "value": true
+      },
+      "place": "corsair_base",
+      "where": "high-orbit",
+      "explain": "the bases column lists C: a corsair base here"
+     }
+    ]
+   },
    "record": {
     "kept": [
      {
@@ -9564,6 +9822,78 @@
        "template.solar_array"
       ],
       "describes": "people aboard or living there now"
+     },
+     {
+      "id": "ship.readiness",
+      "shape": "number",
+      "range": [
+       0.0,
+       1.0
+      ],
+      "default": 1,
+      "tier": "scanned",
+      "writers": [
+       "gm",
+       "template.courier",
+       "template.trader",
+       "template.far_trader",
+       "template.patrol",
+       "template.shuttle",
+       "template.heavy_lifter",
+       "template.highport_a",
+       "template.highport_b",
+       "template.naval_base",
+       "template.naval_depot",
+       "template.scout_base",
+       "template.way_station",
+       "template.research_station",
+       "template.corsair_base",
+       "template.downport",
+       "template.spaceport_d",
+       "template.beacon_e",
+       "template.military_base",
+       "template.dome_city",
+       "template.arcology",
+       "template.solar_array",
+       "effect.traveller.status.derelict",
+       "effect.traveller.status.damaged"
+      ],
+      "describes": "how ready it is to go or to fight now, from 0 (dead in space) to 1 (fully ready)"
+     },
+     {
+      "id": "ship.discipline",
+      "shape": "number",
+      "range": [
+       0.0,
+       1.0
+      ],
+      "default": 0.5,
+      "tier": "scanned",
+      "writers": [
+       "gm",
+       "template.courier",
+       "template.trader",
+       "template.far_trader",
+       "template.patrol",
+       "template.shuttle",
+       "template.heavy_lifter",
+       "template.highport_a",
+       "template.highport_b",
+       "template.naval_base",
+       "template.naval_depot",
+       "template.scout_base",
+       "template.way_station",
+       "template.research_station",
+       "template.corsair_base",
+       "template.downport",
+       "template.spaceport_d",
+       "template.beacon_e",
+       "template.military_base",
+       "template.dome_city",
+       "template.arcology",
+       "template.solar_array"
+      ],
+      "describes": "how well its crew keeps to orders and drill, from 0 to 1; programs read it (a patrol reacts faster when it is high)"
      }
     ]
    },
@@ -9653,6 +9983,15 @@
       "id": "traveller",
       "label": "Traveller codes",
       "about": "Tags the Traveller code sheet derives from UWP and world facts (trade codes, bases, zones, gear)."
+     },
+     {
+      "id": "status",
+      "label": "Status",
+      "about": "A construct's condition, set by the GM. A status tag carries no number: pack triggers set readiness from it, visibly.",
+      "applies_to": [
+       "construct"
+      ],
+      "exclusive": false
      }
     ],
     "tags": [
@@ -10000,6 +10339,22 @@
      {
       "id": "traveller.need.low_ground",
       "label": "What to wear outside: low ground"
+     },
+     {
+      "id": "status.derelict",
+      "label": "Derelict",
+      "about": "abandoned or dead in space; its readiness drops to 0 when tagged",
+      "group": "status",
+      "source": "authored",
+      "tier": "scanned"
+     },
+     {
+      "id": "status.damaged",
+      "label": "Damaged",
+      "about": "damaged; its readiness is held at 0.5 or below while tagged",
+      "group": "status",
+      "source": "authored",
+      "tier": "scanned"
      }
     ]
    }
