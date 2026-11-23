@@ -229,9 +229,6 @@ LADDER = {
     "id": "neutral", "name": "Neutral ladder",
     "about": "Real history on the lower rungs, so 'Sol today' is level 4. A setting defines its own ladder; this one is the default.",
     "improve_per_level_beyond": 1.5,
-    # Kept while FT2's first reader still reads them; the kernel removes them
-    # when its reader moves to the families (the fictional family holds the same numbers).
-    "size_per_level_short": 10.0, "shrink_per_level_beyond": 0.5, "shrink_levels": 2,
     "improve_note": "past an advance's home level its figure gets half as much better again per level (times 1.5 where higher is better, divided by 1.5 where lower is), until it meets the next cited allowed or ceiling mark, then stops",
     "levels": [
         {"n": 0, "id": "muscle", "name": "Muscle and wind", "about": "before engines"},
@@ -310,7 +307,7 @@ FICTIONAL_WHERE = [
 
 ADVANCES = [
     {"id": "steel-wire", "name": "Steel cable", "level": 1, "sets": {"strength_for_weight": strength_for_weight("steel-wire")}, "family": "material", "part": "structure"},
-    {"id": "chemical-rocket", "name": "Hydrogen-oxygen rocket", "level": 3, "sets": {"exhaust_km_s": isp_km_s(465.5), "waste_per_jet": 0.0}, "family": "near-ceiling", "fixed": ["waste_per_jet"], "part": "drive"},
+    {"id": "chemical-rocket", "name": "Hydrogen-oxygen rocket", "level": 3, "sets": {"exhaust_km_s": isp_km_s(465.5), "waste_per_jet": 0.0}, "fuel": "hydrogen-oxygen", "family": "near-ceiling", "fixed": ["waste_per_jet"], "part": "drive"},
     {"id": "fission-reactor", "name": "Fission reactor", "level": 3, "sets": {"plant_w_per_kg": SNAP10A_W_KG}, "family": "engine", "part": "reactor"},
     {"id": "aramid", "name": "Aramid fibre", "level": 3, "sets": {"strength_for_weight": strength_for_weight("aramid")}, "family": "material", "part": "structure"},
     {"id": "pumped-radiator", "name": "Pumped ammonia radiators", "level": 3, "sets": {"radiator_k": 276.0}, "family": "engine", "part": "radiator"},

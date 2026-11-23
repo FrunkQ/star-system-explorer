@@ -6,11 +6,19 @@
 //!
 //! - **Needs from parts**: a design lists its parts, each with the figures
 //!   it leans on and the value it needs; nothing keeps a "requires" list.
-//! - **The size rule**: a part whose advance is n levels above its builder
-//!   is `size_per_level_short`ⁿ times the size (a prototype); one m levels
-//!   below shrinks by `shrink_per_level_beyond`^min(m, `shrink_levels`).
+//! - **Maturity acts on the figure** (design 5.2): an advance n levels above
+//!   its builder gives a first-generation figure by its family's rule
+//!   (`worse_by` a factor per level, `toward` a share of the way from their
+//!   older figure, `same`, `floor`), never worse than the best older advance
+//!   they hold for the same figure. Past its home level a figure improves by
+//!   `improve_per_level_beyond` per level until its next cited allowed or
+//!   ceiling mark. Figures an advance lists as `fixed` never move. The part's
+//!   size follows from the figure (first order: inversely); only the
+//!   `fictional` family keeps the flat rule of thumb, `size_per_level_short`ⁿ
+//!   short and `shrink_per_level_beyond`^min(m, `shrink_levels`) beyond.
 //! - **Fictional by ceiling**: a need past a figure's ceiling mark is
-//!   fictional by arithmetic, and the reading names the law it breaks.
+//!   fictional by arithmetic, and the reading names the law it breaks. A mark
+//!   `for` one fuel counts only for an advance or a design of that fuel.
 
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -19,6 +27,9 @@ use std::collections::BTreeMap;
 pub struct Mark {
     pub mark: String,
     pub v: f64,
+    /// A mark for one fuel only (an advance's or design's `fuel`).
+    #[serde(rename = "for", skip_serializing_if = "Option::is_none")]
+    pub for_fuel: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub law: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -44,12 +55,89 @@ impl Figure {
             have <= need
         }
     }
-    /// The ceiling a need passes, if any.
-    pub fn past_ceiling(&self, need: f64) -> Option<&Mark> {
+    /// The ceiling a need passes, if any, for a part of fuel `fuel`.
+    pub fn past_ceiling(&self, need: f64, fuel: Option<&str>) -> Option<&Mark> {
         self.marks
             .iter()
-            .filter(|m| m.mark == "ceiling")
+            .filter(|m| m.mark == "ceiling" && applies(m, fuel))
             .find(|m| !self.meets(m.v, need))
+    }
+    /// The next cited allowed or ceiling mark strictly better than `v`.
+    pub fn next_mark(&self, v: f64, fuel: Option<&str>) -> Option<f64> {
+        self.marks
+            .iter()
+            .filter(|m| (m.mark == "allowed" || m.mark == "ceiling") && applies(m, fuel))
+            .map(|m| m.v)
+            .filter(|&x| x != v && self.meets(x, v))
+            .fold(None, |b: Option<f64>, x| match b {
+                Some(y) if self.meets(x, y) => Some(y),
+                _ => Some(x),
+            })
+    }
+    /// The better of two values.
+    pub fn best(&self, a: f64, b: f64) -> f64 {
+        if self.meets(a, b) {
+            a
+        } else {
+            b
+        }
+    }
+    /// How many times better `a` is than `b` (1 or more when a is better).
+    pub fn ratio(&self, a: f64, b: f64) -> f64 {
+        if self.higher {
+            a / b
+        } else {
+            b / a
+        }
+    }
+}
+
+fn applies(m: &Mark, fuel: Option<&str>) -> bool {
+    match &m.for_fuel {
+        None => true,
+        Some(f) => fuel == Some(f.as_str()),
+    }
+}
+
+/// A family's maturity rule (design 5.2; the defaults are rules of thumb in
+/// the fudge register).
+#[derive(Clone, PartialEq, Debug, Serialize)]
+#[serde(tag = "rule", rename_all = "snake_case")]
+pub enum Maturity {
+    /// The figure divided by `factor` per level short (multiplied where lower is better).
+    WorseBy { factor: f64 },
+    /// One level short, `share` of the way from their older figure to the mature one.
+    Toward { share: f64 },
+    /// No change: mass is mass.
+    Same,
+    /// No change, and never smaller: the advance states its floor.
+    Floor,
+    /// Nothing known: the figure stays, the part's size scales (fictional devices).
+    Size {
+        size_per_level_short: f64,
+        shrink_per_level_beyond: f64,
+        shrink_levels: i64,
+    },
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize)]
+pub struct Family {
+    pub id: String,
+    pub name: String,
+    pub maturity: Maturity,
+}
+
+impl Family {
+    fn fictional() -> Family {
+        Family {
+            id: "fictional".into(),
+            name: "Fictional devices and anything unknown".into(),
+            maturity: Maturity::Size {
+                size_per_level_short: 10.0,
+                shrink_per_level_beyond: 0.5,
+                shrink_levels: 2,
+            },
+        }
     }
 }
 
@@ -62,6 +150,14 @@ pub struct Advance {
     pub part: String,
     pub mark: String,
     pub pack: String,
+    /// The family whose maturity rule it follows (absent: fictional).
+    pub family: String,
+    /// Figures physics fixes, which maturity never moves.
+    pub fixed: Vec<String>,
+    /// The fuel it burns, for marks `for` one fuel.
+    pub fuel: Option<String>,
+    /// For a fictional advance: where its light, heat, momentum and energy go.
+    pub r#where: Option<serde_json::Value>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize)]
@@ -75,9 +171,8 @@ pub struct Level {
 pub struct Ladder {
     pub id: String,
     pub name: String,
-    pub size_per_level_short: f64,
-    pub shrink_per_level_beyond: f64,
-    pub shrink_levels: i64,
+    /// Past an advance's home level its figure improves by this per level.
+    pub improve_per_level_beyond: f64,
     pub levels: Vec<Level>,
     pub pack: String,
 }
@@ -87,19 +182,6 @@ fn times(x: f64, n: i64) -> f64 {
     (0..n).fold(1.0, |a, _| a * x)
 }
 
-impl Ladder {
-    /// The size factor of a part whose advance sits `short` levels above its
-    /// builder (negative: below).
-    pub fn size_factor(&self, short: i64) -> f64 {
-        if short > 0 {
-            times(self.size_per_level_short, short)
-        } else {
-            let beyond = (-short).min(self.shrink_levels).max(0);
-            times(self.shrink_per_level_beyond, beyond)
-        }
-    }
-}
-
 /// The stack's technology: one ladder (the top pack's), every figure and
 /// every advance by id, later packs replacing earlier ones.
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -107,6 +189,7 @@ pub struct Tech {
     pub ladder: Option<Ladder>,
     pub figures: BTreeMap<String, Figure>,
     pub advances: BTreeMap<String, Advance>,
+    pub families: BTreeMap<String, Family>,
 }
 
 fn num(v: &serde_json::Value) -> Option<f64> {
@@ -128,6 +211,7 @@ impl Tech {
                         Some(Mark {
                             mark: m["mark"].as_str()?.to_string(),
                             v: num(&m["v"])?,
+                            for_fuel: m["for"].as_str().map(str::to_string),
                             law: m["law"].as_str().map(str::to_string),
                             what: m["what"].as_str().map(str::to_string),
                         })
@@ -169,22 +253,57 @@ impl Tech {
                         })
                     })
                     .collect::<Vec<_>>();
-                let size = num(&l["size_per_level_short"]).unwrap_or(10.0);
-                let shrink = num(&l["shrink_per_level_beyond"]).unwrap_or(1.0);
-                if size < 1.0 || !(0.0..=1.0).contains(&shrink) || levels.is_empty() {
+                let improve = num(&l["improve_per_level_beyond"]).unwrap_or(1.0);
+                if improve < 1.0 || levels.is_empty() {
                     problems.push(format!(
-                        "{pack}: ladder: levels, size_per_level_short of 1 or more, shrink_per_level_beyond of 0 to 1"
+                        "{pack}: ladder: levels, and improve_per_level_beyond of 1 or more"
                     ));
                 }
                 t.ladder = Some(Ladder {
                     id: l["id"].as_str().unwrap_or("ladder").to_string(),
                     name: l["name"].as_str().unwrap_or("").to_string(),
-                    size_per_level_short: size,
-                    shrink_per_level_beyond: shrink,
-                    shrink_levels: l["shrink_levels"].as_i64().unwrap_or(0),
+                    improve_per_level_beyond: improve,
                     levels,
                     pack: pack.clone(),
                 });
+            }
+            for f in v["families"].as_array().into_iter().flatten() {
+                let id = f["id"].as_str().unwrap_or("").to_string();
+                let m = &f["maturity"];
+                let n = |k: &str| num(&m[k]);
+                let maturity = match m["rule"].as_str() {
+                    Some("worse_by") if n("factor").is_some_and(|x| x >= 1.0) => {
+                        Maturity::WorseBy {
+                            factor: n("factor").unwrap_or(1.0),
+                        }
+                    }
+                    Some("toward") if n("share").is_some_and(|x| (0.0..=1.0).contains(&x)) => {
+                        Maturity::Toward {
+                            share: n("share").unwrap_or(1.0),
+                        }
+                    }
+                    Some("same") => Maturity::Same,
+                    Some("floor") => Maturity::Floor,
+                    Some("size") => Maturity::Size {
+                        size_per_level_short: n("size_per_level_short").unwrap_or(10.0),
+                        shrink_per_level_beyond: n("shrink_per_level_beyond").unwrap_or(0.5),
+                        shrink_levels: m["shrink_levels"].as_i64().unwrap_or(2),
+                    },
+                    _ => {
+                        problems.push(format!(
+                            "{pack}: family {id:?}: maturity is worse_by (factor 1 or more), toward (share 0 to 1), same, floor or size"
+                        ));
+                        continue;
+                    }
+                };
+                t.families.insert(
+                    id.clone(),
+                    Family {
+                        name: f["name"].as_str().unwrap_or(&id).to_string(),
+                        id,
+                        maturity,
+                    },
+                );
             }
             for a in v["advances"].as_array().into_iter().flatten() {
                 let id = a["id"].as_str().unwrap_or("").to_string();
@@ -208,11 +327,29 @@ impl Tech {
                         part: a["part"].as_str().unwrap_or("").to_string(),
                         mark: a["mark"].as_str().unwrap_or("").to_string(),
                         pack: pack.clone(),
+                        family: a["family"].as_str().unwrap_or("fictional").to_string(),
+                        fixed: a["fixed"]
+                            .as_array()
+                            .into_iter()
+                            .flatten()
+                            .filter_map(|x| x.as_str().map(str::to_string))
+                            .collect(),
+                        fuel: a["fuel"].as_str().map(str::to_string),
+                        r#where: a.get("where").cloned(),
                     },
                 );
             }
         }
+        t.families
+            .entry("fictional".into())
+            .or_insert_with(Family::fictional);
         for a in t.advances.values() {
+            if !t.families.contains_key(&a.family) {
+                problems.push(format!(
+                    "{}: advance {:?}: no family {:?}",
+                    a.pack, a.id, a.family
+                ));
+            }
             for f in a.sets.keys() {
                 if !t.figures.contains_key(f) {
                     problems.push(format!(
@@ -247,6 +384,9 @@ impl Tech {
 pub struct PartNeed {
     pub part: String,
     pub needs: BTreeMap<String, f64>,
+    /// The fuel the part burns, for ceilings `for` one fuel.
+    #[serde(default)]
+    pub fuel: Option<String>,
 }
 
 fn fmt_x(x: f64) -> String {
@@ -256,6 +396,118 @@ fn fmt_x(x: f64) -> String {
         format!("{:.1}", x)
     } else {
         format!("{:.2}", x)
+    }
+}
+
+/// What maturity makes of one advance's figure `d` levels above its builder.
+struct Matured {
+    /// The figure as built now.
+    now: f64,
+    /// The rule that set it: fixed, worse_by, toward, same, floor, size, improved, home.
+    how: &'static str,
+    /// The older advance it is floored at, by name.
+    floored_at: Option<String>,
+    size_factor: f64,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn matured(
+    tech: &Tech,
+    ladder: &Ladder,
+    of: &sse_record::tech::TechOf,
+    a: &Advance,
+    f: &Figure,
+    fid: &str,
+    d: i64,
+    fuel: Option<&str>,
+) -> Matured {
+    let v = a.sets[fid];
+    let fam = tech
+        .families
+        .get(&a.family)
+        .map_or_else(Family::fictional, Clone::clone);
+    let plain = |now: f64, how| Matured {
+        now,
+        how,
+        floored_at: None,
+        size_factor: if now == 0.0 || v == 0.0 {
+            1.0
+        } else {
+            f.ratio(v, now)
+        },
+    };
+    if let Maturity::Size {
+        size_per_level_short,
+        shrink_per_level_beyond,
+        shrink_levels,
+    } = fam.maturity
+    {
+        let size_factor = if d > 0 {
+            times(size_per_level_short, d)
+        } else {
+            times(shrink_per_level_beyond, (-d).min(shrink_levels).max(0))
+        };
+        return Matured {
+            now: v,
+            how: "size",
+            floored_at: None,
+            size_factor,
+        };
+    }
+    if a.fixed.iter().any(|x| x == fid) || d == 0 {
+        return plain(v, if d == 0 { "home" } else { "fixed" });
+    }
+    if d < 0 {
+        // Past home: better by the ladder's step per level, up to the next mark.
+        return match fam.maturity {
+            Maturity::WorseBy { .. } | Maturity::Toward { .. } => match f.next_mark(v, fuel) {
+                Some(cap) => {
+                    let k = times(ladder.improve_per_level_beyond, -d);
+                    let up = if f.higher { v * k } else { v / k };
+                    plain(if f.meets(up, cap) { cap } else { up }, "improved")
+                }
+                None => plain(v, "improved"),
+            },
+            _ => plain(v, "same"),
+        };
+    }
+    // Short: their best older advance for the same figure and part.
+    let older = tech
+        .advances
+        .values()
+        .filter(|o| o.id != a.id && o.level < a.level && tech.holds(of, o))
+        .filter(|o| a.part.is_empty() || o.part.is_empty() || o.part == a.part)
+        .filter_map(|o| o.sets.get(fid).map(|&x| (x, o)))
+        .fold(None, |b: Option<(f64, &Advance)>, (x, o)| match b {
+            Some((y, _)) if !f.meets(x, y) || x == y => b,
+            _ => Some((x, o)),
+        });
+    let first = match fam.maturity {
+        Maturity::WorseBy { factor } => {
+            let k = times(factor, d);
+            if f.higher {
+                v / k
+            } else {
+                v * k
+            }
+        }
+        Maturity::Toward { share } => match older {
+            Some((x, _)) => x + (v - x) * times(share, d),
+            None => v,
+        },
+        Maturity::Floor => return plain(v, "floor"),
+        _ => return plain(v, "same"),
+    };
+    let how = match fam.maturity {
+        Maturity::WorseBy { .. } => "worse_by",
+        _ => "toward",
+    };
+    match older {
+        Some((x, o)) if !f.meets(first, x) || first == x => Matured {
+            floored_at: Some(o.name.clone()),
+            ..plain(x, how)
+        },
+        _ => plain(first, how),
     }
 }
 
@@ -284,7 +536,18 @@ pub fn reading(
             if !need.is_finite() {
                 return Err(format!("part {:?}: {fid} must be a finite number", p.part));
             }
-            let fiction = f.past_ceiling(need).map(|m| {
+            // Advances on the ladder whose mature figure meets the need,
+            // lowest level first.
+            let mut meets: Vec<&Advance> = tech
+                .advances
+                .values()
+                .filter(|a| a.sets.get(fid).is_some_and(|&v| f.meets(v, need)))
+                .collect();
+            meets.sort_by(|a, b| a.level.cmp(&b.level).then(a.id.cmp(&b.id)));
+            let held = meets.iter().find(|a| tech.holds(of, a));
+            let by = held.or(meets.first()).copied();
+            let fuel = p.fuel.as_deref().or(by.and_then(|a| a.fuel.as_deref()));
+            let fiction = f.past_ceiling(need, fuel).map(|m| {
                 format!(
                     "past the ceiling of {} {} {}: breaks {}",
                     fmt_x(m.v),
@@ -293,30 +556,19 @@ pub fn reading(
                     m.law.as_deref().unwrap_or("a law")
                 )
             });
-            // Advances on the ladder that meet the need, lowest level first.
-            let mut meets: Vec<&Advance> = tech
-                .advances
-                .values()
-                .filter(|a| a.sets.get(fid).is_some_and(|&v| f.meets(v, need)))
-                .collect();
-            meets.sort_by(|a, b| a.level.cmp(&b.level).then(a.id.cmp(&b.id)));
-            let held = meets.iter().find(|a| tech.holds(of, a));
             let mut row = serde_json::json!({
                 "part": p.part, "figure": fid, "plain": f.plain, "unit": f.unit, "need": need,
             });
             if let Some(w) = &fiction {
                 row["fictional"] = serde_json::json!(w);
             }
-            let (reading, by, factor) = match (held, meets.first()) {
-                (Some(a), _) => {
-                    let beyond = level.map_or(0, |l| a.level - l);
-                    ("can build", Some(*a), ladder.size_factor(beyond.min(0)))
-                }
+            let reading = match (held, by) {
+                (Some(_), _) => "can build",
                 (None, Some(a)) => {
                     let short = level.map_or(a.level + 1, |l| (a.level - l).max(1));
                     row["levels_short"] = serde_json::json!(short);
                     worst = worst.max(1);
-                    ("short", Some(*a), ladder.size_factor(short))
+                    "short"
                 }
                 (None, None) => {
                     // Their best on this figure, for "needs N times".
@@ -327,10 +579,10 @@ pub fn reading(
                         .filter_map(|a| a.sets.get(fid).copied())
                         .fold(None, |b: Option<f64>, v| match b {
                             None => Some(v),
-                            Some(x) => Some(if f.meets(v, x) { v } else { x }),
+                            Some(x) => Some(f.best(v, x)),
                         });
                     if let Some(b) = best.filter(|b| *b != 0.0) {
-                        let times = if f.higher { need / b } else { b / need };
+                        let times = f.ratio(need, b);
                         row["times_their_best"] = serde_json::json!(times);
                         row["words"] = serde_json::json!(format!(
                             "needs {} times their best {} ({} {})",
@@ -346,25 +598,55 @@ pub fn reading(
                         ));
                     }
                     worst = 2;
-                    ("past known", None, 1.0)
+                    "past known"
                 }
             };
             row["reading"] = serde_json::json!(reading);
-            row["size_factor"] = serde_json::json!(factor);
+            let mut factor = 1.0;
             if let Some(a) = by {
+                // Levels above the builder (negative: below).
+                let d = match (held, level) {
+                    (Some(_), Some(l)) => a.level - l,
+                    (Some(_), None) => 0,
+                    _ => row["levels_short"].as_i64().unwrap_or(1),
+                };
+                let m = matured(tech, ladder, of, a, f, fid, d, fuel);
+                factor = m.size_factor;
+                row["figure_now"] = serde_json::json!(m.now);
+                row["maturity"] = serde_json::json!(m.how);
+                row["family"] = serde_json::json!(a.family);
+                if let Some(o) = &m.floored_at {
+                    row["floored_at"] = serde_json::json!(o);
+                }
                 row["advance"] = serde_json::json!(a.id);
                 row["home_level"] = serde_json::json!(a.level);
                 if reading == "short" {
-                    row["words"] = serde_json::json!(format!(
-                        "{} short: {} (a prototype {} times the size)",
-                        if row["levels_short"] == 1 {
-                            "one level".to_string()
-                        } else {
-                            format!("{} levels", row["levels_short"])
-                        },
-                        a.name,
-                        fmt_x(factor)
-                    ));
+                    let lv = if d == 1 {
+                        "one level".to_string()
+                    } else {
+                        format!("{d} levels")
+                    };
+                    row["words"] = serde_json::json!(match &m.floored_at {
+                        _ if m.how == "size" => format!(
+                            "{lv} short: {} (a prototype {} times the size)",
+                            a.name,
+                            fmt_x(factor)
+                        ),
+                        Some(o) => format!(
+                            "{lv} short: {}, no better yet than their {} ({} {})",
+                            a.name,
+                            o,
+                            fmt_x(m.now),
+                            f.unit
+                        ),
+                        None => format!(
+                            "{lv} short: {}, first generation at {} {} ({} times the size)",
+                            a.name,
+                            fmt_x(m.now),
+                            f.unit,
+                            fmt_x(factor)
+                        ),
+                    });
                 }
                 let ink = if fiction.is_some() {
                     "fictional"
@@ -372,9 +654,14 @@ pub fn reading(
                     a.mark.as_str()
                 };
                 leans.entry(a.id.clone()).or_insert_with(|| {
-                    serde_json::json!({"advance": a.id, "name": a.name, "ink": ink, "level": a.level, "pack": a.pack})
+                    let mut c = serde_json::json!({"advance": a.id, "name": a.name, "ink": ink, "level": a.level, "pack": a.pack, "family": a.family});
+                    if let Some(w) = &a.r#where {
+                        c["where"] = w.clone();
+                    }
+                    c
                 });
             }
+            row["size_factor"] = serde_json::json!(factor);
             rows.push(row);
         }
     }
