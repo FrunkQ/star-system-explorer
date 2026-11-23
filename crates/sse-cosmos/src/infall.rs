@@ -504,6 +504,36 @@ pub struct Fate {
     pub labels: Vec<String>,
     /// Where it was at each host slice from infall on: (Gyr, kpc).
     pub track: Vec<(f64, [f64; 3])>,
+    /// Its stars kept (over those at infall) at each point of `track`.
+    pub kept: Vec<f64>,
+    /// Each closest approach and each pass through the disc while bound
+    /// (GH3 reads the host's responses off these).
+    pub passes: Vec<Pass>,
+}
+
+/// One close moment of an orbit: a closest approach or a pass through the
+/// host's disc plane inside the disc's reach.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Pass {
+    pub t_gyr: f64,
+    /// `true` for a crossing of the disc plane, `false` for a closest approach.
+    pub disc: bool,
+    pub r_kpc: f64,
+    /// Distance from the axis in the disc plane.
+    pub big_r_kpc: f64,
+    pub speed_kms: f64,
+    /// Speed across the disc plane.
+    pub vz_kms: f64,
+    /// Angular momentum along the disc's spin (+z) over its size: +1 with
+    /// the disc's turning, −1 against it.
+    pub prograde: f64,
+    /// Bound mass then.
+    pub bound_msun: f64,
+    /// The host's circular speed and mass inside r then.
+    pub v_c_kms: f64,
+    pub host_inside_msun: f64,
+    pub disc_msun: f64,
+    pub disc_kpc: f64,
 }
 
 /// The step a body takes, from its own orbit near closest approach in the
@@ -559,10 +589,44 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
     let mut quench = None;
     let mut merged = None;
     let mut disrupted = None;
-    let (mut peri_n, mut passes) = (0u32, 0u32);
+    let (mut peri_n, mut passes_n) = (0u32, 0u32);
     let r_start = m::sqrt(dot(x, x));
     let (mut peri, mut apo) = (r_start, r_start);
     let mut track = vec![(t, x)];
+    let mut passes: Vec<Pass> = vec![];
+    let kms_k = kms();
+    let pass_at = |t: f64, disc: bool, x: [f64; 3], v: [f64; 3], mass: f64, h: &Here| {
+        let r = m::sqrt(dot(x, x));
+        let s = m::sqrt(dot(v, v));
+        let lz = x[0] * v[1] - x[1] * v[0];
+        let l = m::sqrt({
+            let lx = x[1] * v[2] - x[2] * v[1];
+            let ly = x[2] * v[0] - x[0] * v[2];
+            lx * lx + ly * ly + lz * lz
+        });
+        Pass {
+            t_gyr: t,
+            disc,
+            r_kpc: r,
+            big_r_kpc: m::sqrt(x[0] * x[0] + x[1] * x[1]),
+            speed_kms: s / kms_k,
+            vz_kms: v[2].abs() / kms_k,
+            prograde: if l > 0.0 { lz / l } else { 0.0 },
+            bound_msun: mass,
+            v_c_kms: m::sqrt(g * h.mass.max(0.0) / r.max(1.0e-6)) / kms_k,
+            host_inside_msun: h.mass,
+            disc_msun: h.disc_msun,
+            disc_kpc: h.disc_kpc,
+        }
+    };
+    let kept_of = |mass: f64, gone: bool| {
+        if gone {
+            0.0
+        } else {
+            (mass / m0 / op.stars_leave_below).min(1.0)
+        }
+    };
+    let mut kept = vec![1.0];
     let mut next_slice = t + op.slice_gyr;
     let mut steps = 0u64;
     // The grip on its gas at its disc scale (Gunn and Gott): 2πG Σ_tot Σ_gas.
@@ -620,6 +684,9 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
         if dr_prev < 0.0 && dr >= 0.0 {
             peri_n += 1;
             peri = peri.min(r_prev);
+            if processes && bound {
+                passes.push(pass_at(t, false, x, v, mass, &here));
+            }
         }
         if dr_prev > 0.0 && dr <= 0.0 {
             apo = apo.max(r_prev);
@@ -649,7 +716,8 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
             // A pass through the disc (impulsive heating, design 7.3).
             let big_r = m::sqrt(x[0] * x[0] + x[1] * x[1]);
             if z_before * x[2] < 0.0 && big_r < op.disc_reach * here.disc_kpc {
-                passes += 1;
+                passes_n += 1;
+                passes.push(pass_at(t, true, x, v, mass, &here));
                 let sigma_d = here.disc_msun / (2.0 * m::PI * here.disc_kpc * here.disc_kpc)
                     * m::exp(-big_r / here.disc_kpc);
                 let g_m = 2.0 * m::PI * g * sigma_d;
@@ -673,11 +741,13 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
         }
         if t >= next_slice {
             track.push((t, x));
+            kept.push(kept_of(mass, disrupted.is_some()));
             next_slice += op.slice_gyr;
         }
     }
     if track.last().is_some_and(|l| l.0 < t) {
         track.push((t, x));
+        kept.push(kept_of(mass, disrupted.is_some()));
     }
     let dark_kept = mass / m0;
     let stars_kept = if disrupted.is_some() {
@@ -726,11 +796,13 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
         pericentres: peri_n,
         peri_kpc: peri,
         apo_kpc: apo,
-        disc_passes: passes,
+        disc_passes: passes_n,
         step_gyr: dt,
         steps,
         labels,
         track,
+        kept,
+        passes,
     }
 }
 

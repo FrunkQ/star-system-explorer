@@ -200,6 +200,9 @@ pub struct Galaxy {
     /// from 0.05 kpc to r200 (`structure::Structure::speeds`).
     #[serde(default)]
     pub rotation: Vec<(f64, f64)>,
+    /// GH3: what its assembly tree brought, when it was fed by one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub assembled: Option<crate::feed::Assembled>,
 }
 
 /// a(t) on the galaxy's grid, by stepping the cosmology's time integral in log a.
@@ -339,6 +342,18 @@ pub fn mergers_with(halo: &Halo, edits: &[Edit]) -> Vec<(f64, f64)> {
 
 /// Evolve one galaxy in its halo with authored edits (call `check_edits` first).
 pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit]) -> Galaxy {
+    evolve_feeding(c, p, halo, edits, None)
+}
+
+/// As `evolve_with`; with a feed (GH3), the tree's arrivals replace G3's
+/// merger and smooth ex-situ stand-ins, and inked mergers keep G3's rule.
+pub fn evolve_feeding(
+    c: &Cosmology,
+    p: &GalaxyParams,
+    halo: &Halo,
+    edits: &[Edit],
+    feed: Option<(&crate::feed::ResponseParams, &[crate::feed::Arrival])>,
+) -> Galaxy {
     let table = time_table(c, p.z_start);
     let t0 = table[0].0;
     let now = c.p.now_gyr;
@@ -352,7 +367,30 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
     let mut inflow_steps = vec![];
     let mut returned_steps = vec![];
     let mut agn = vec![];
-    let mergers = mergers_with(halo, edits);
+    let mergers = if feed.is_some() {
+        let mut inked: Vec<(f64, f64)> = edits
+            .iter()
+            .filter_map(|e| match e {
+                Edit::Merger { t_gyr, ratio } => Some((*t_gyr, *ratio)),
+                _ => None,
+            })
+            .collect();
+        inked.sort_by(|a, b| a.0.total_cmp(&b.0));
+        inked
+    } else {
+        mergers_with(halo, edits)
+    };
+    let mut feeding = feed.map(|(rp, arrivals)| crate::feed::Feeding {
+        rp,
+        arrivals,
+        next: 0,
+        out: Default::default(),
+        halo_metals: 0.0,
+        exsitu_metals: 0.0,
+        by_member: Default::default(),
+        owed: 0.0,
+        next_infall: 0,
+    });
     let mut next_merger = 0;
     let mut bursts: Vec<(f64, f64)> = edits
         .iter()
@@ -400,7 +438,10 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
         ejected -= back;
         ejected_metals -= back_metals;
         metals += back_metals;
-        let inflow = fb * dmh * eps + back;
+        let mut inflow = fb * dmh * eps + back;
+        if let Some(f) = feeding.as_mut() {
+            inflow = f.pay(t + dt, inflow);
+        }
         let t_dep = p.depletion_gyr
             * m::pow(1.0 + z, -p.depletion_z_slope)
             * m::pow((v_c / p.depletion_v).min(1.0), -p.depletion_v_slope);
@@ -424,10 +465,27 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
         if !quiet(t) {
             bh += p.black_hole_steady * formed;
         }
-        let smooth = p.exsitu_fraction * p.exsitu_ratio * (1.0 - hot) * dmh;
-        stars += smooth;
-        bulge += smooth;
-        bh += p.exsitu_black_hole * smooth;
+        if feeding.is_none() {
+            let smooth = p.exsitu_fraction * p.exsitu_ratio * (1.0 - hot) * dmh;
+            stars += smooth;
+            bulge += smooth;
+            bh += p.exsitu_black_hole * smooth;
+        }
+        let mut fed_inflow = 0.0;
+        if let Some(f) = feeding.as_mut() {
+            let mut pools = crate::feed::Pools {
+                gas: &mut gas,
+                stars: &mut stars,
+                bulge: &mut bulge,
+                metals: &mut metals,
+                bh: &mut bh,
+                ejected: &mut ejected,
+                ejected_metals: &mut ejected_metals,
+                inflow: &mut fed_inflow,
+                agn: &mut agn,
+            };
+            f.step(t + dt, mh, p, &quiet, &mut pools);
+        }
         // Major mergers in this step: bulge, burst, black hole.
         while next_merger < mergers.len() && mergers[next_merger].0 < t + dt {
             let (tm, ratio) = mergers[next_merger];
@@ -445,6 +503,10 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
             bulge += accreted;
             bh += p.exsitu_black_hole * accreted;
             let burst = (p.burst_fraction * ratio * gas).min(gas);
+            // The burst's gas takes its metals with it into stars.
+            if gas > 0.0 {
+                metals -= metals * burst / gas;
+            }
             gas -= burst;
             let born = (1.0 - p.return_fraction) * burst;
             stars += born;
@@ -463,6 +525,10 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
                 continue;
             }
             let burst = f * gas;
+            // The burst's gas takes its metals with it into stars.
+            if gas > 0.0 {
+                metals -= metals * burst / gas;
+            }
             gas -= burst;
             stars += (1.0 - p.return_fraction) * burst;
             let feed = p.black_hole_feed * burst;
@@ -473,7 +539,7 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
         }
         bulge = bulge.min(stars);
         let quenched = stars > 0.0 && sfr_gyr / 1.0e9 < p.quenched_ssfr * stars;
-        inflow_steps.push(inflow);
+        inflow_steps.push(inflow + fed_inflow);
         returned_steps.push(back);
         let disc = p.disc_factor * halo.spin / m::sqrt(2.0) * r_vir;
         let st = GalaxyState {
@@ -523,6 +589,7 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
         step_gyr: dt,
         t_start_gyr: t0,
         rotation,
+        assembled: feeding.map(crate::feed::Feeding::finish),
     }
 }
 

@@ -10,6 +10,7 @@ pub mod cosmology;
 pub mod envelope;
 pub mod epochs;
 pub mod events;
+pub mod feed;
 pub mod galaxy;
 pub mod glow_mix;
 pub mod haloes;
@@ -149,6 +150,8 @@ mod g4_tests;
 mod g5_tests;
 #[cfg(test)]
 mod g6_tests;
+#[cfg(test)]
+mod gh3_tests;
 #[cfg(test)]
 mod y1_tests;
 
