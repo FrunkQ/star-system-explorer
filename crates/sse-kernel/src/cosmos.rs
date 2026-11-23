@@ -22,6 +22,11 @@ pub const HALOES: [(&str, f64); 3] = [
     ("group", 1.0e13),
 ];
 
+/// The cosmology's present, Gyr after the origin (DM6's dated calls).
+pub(crate) fn now_gyr() -> Result<f64, Response> {
+    Ok(settings()?.params.now_gyr)
+}
+
 fn settings() -> Result<CosmologyPack, Response> {
     CosmologyPack::from_packs(&[base_cosmology_pack()]).map_err(|e| err("bad_pack", e))
 }
