@@ -1,0 +1,301 @@
+{
+  "construct": "apollo-11",
+  "name": "Apollo 11 (Columbia)",
+  "about": "RS3 test log for split and join. The construct is the CSM Columbia, which keeps the name; the stages, Eagle and the service module become their own constructs at each split (their logs follow in RS3). Big burns only (Alex, 23 Nov 2026). Times as in voyager-2.json; 1969 UTC with TT-UTC about 39.4 s. Figures from the Apollo 11 Mission Report (MSC-00171, NASA, Nov 1969), written from memory and marked; to verify against the report in RS3. Propellant per burn waits on RS2's parts. Needs a Moon body (u:sol/sys:sun/body:earth/body:moon), which tests/fixtures/nav/sol.json does not have yet.",
+  "pieces": [
+    {
+      "from_s": 62148735159,
+      "to_s": 62153919159,
+      "state": {
+        "kind": "landed",
+        "body": "u:sol/sys:sun/body:earth",
+        "lat_deg": 28.6082,
+        "lon_deg": -80.6041
+      },
+      "mark": "authored",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "why": "60 days on pad 39A before launch, authored"
+    },
+    {
+      "from_s": 62153919159,
+      "to_s": 62153919864,
+      "state": {
+        "kind": "course",
+        "course": {
+          "kind": "planned",
+          "course": "ascent"
+        }
+      },
+      "mark": "estimated",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "why": "ascent to orbit insertion at 11 min 49 s; waits on RS5 ascent physics"
+    },
+    {
+      "from_s": 62153919864,
+      "to_s": 62153929015,
+      "state": {
+        "kind": "orbit",
+        "around": "u:sol/sys:sun/body:earth",
+        "elements": {
+          "a_m": 6562737.0,
+          "e": 0.00021332562923061,
+          "i_deg": 32.52,
+          "node_deg": 0.0,
+          "peri_deg": 0.0,
+          "m0_deg": 0.0,
+          "epoch_s": 62153919864
+        }
+      },
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "why": "parking orbit 183 by 186 km, 32.5 degrees; node and phase left at zero until RS3"
+    },
+    {
+      "from_s": 62153929015,
+      "to_s": 62154192149,
+      "state": {
+        "kind": "course",
+        "course": {
+          "kind": "lambert",
+          "to": "u:sol/sys:sun/body:earth/body:moon",
+          "arrive_s": 62154192149
+        }
+      },
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack"
+    },
+    {
+      "from_s": 62154192149,
+      "to_s": 62154207855,
+      "state": {
+        "kind": "orbit",
+        "around": "u:sol/sys:sun/body:earth/body:moon",
+        "elements": {
+          "a_m": 1951100.0,
+          "e": 0.0508943672799959,
+          "i_deg": 1.25,
+          "node_deg": 0.0,
+          "peri_deg": 0.0,
+          "m0_deg": 0.0,
+          "epoch_s": 62154192149
+        }
+      },
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "why": "after LOI-1, 61 by 169 nautical miles"
+    },
+    {
+      "from_s": 62154207855,
+      "to_s": 62154406581,
+      "state": {
+        "kind": "orbit",
+        "around": "u:sol/sys:sun/body:earth/body:moon",
+        "elements": {
+          "a_m": 1848400.0,
+          "e": 0.005951092837048258,
+          "i_deg": 1.25,
+          "node_deg": 0.0,
+          "peri_deg": 0.0,
+          "m0_deg": 0.0,
+          "epoch_s": 62154207855
+        }
+      },
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "why": "after LOI-2, 54 by 66 nautical miles; held stable to TEI (Alex's ruling)"
+    },
+    {
+      "from_s": 62154406581,
+      "to_s": 62154621344,
+      "state": {
+        "kind": "course",
+        "course": {
+          "kind": "lambert",
+          "to": "u:sol/sys:sun/body:earth",
+          "arrive_s": 62154621344
+        }
+      },
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack"
+    },
+    {
+      "from_s": 62154621344,
+      "to_s": 62154622274,
+      "state": {
+        "kind": "course",
+        "course": {
+          "kind": "planned",
+          "course": "entry"
+        }
+      },
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "why": "entry flown by sse-nav entry.rs"
+    },
+    {
+      "from_s": 62154622274,
+      "state": {
+        "kind": "landed",
+        "body": "u:sol/sys:sun/body:earth",
+        "lat_deg": 13.32,
+        "lon_deg": -169.15
+      },
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "why": "splashdown 13 deg 19 min N, 169 deg 9 min W; recovered by USS Hornet"
+    }
+  ],
+  "events": [
+    {
+      "at_s": 62153919159,
+      "kind": "launch",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack"
+    },
+    {
+      "at_s": 62153919321,
+      "kind": "split",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "into": [
+        "apollo-11-s-ic"
+      ],
+      "keeps_identity": true
+    },
+    {
+      "at_s": 62153919708,
+      "kind": "split",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "into": [
+        "apollo-11-s-ii"
+      ],
+      "keeps_identity": true
+    },
+    {
+      "at_s": 62153929015,
+      "kind": "burn",
+      "mark": "estimated",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "dv_m_s": 3180.0,
+      "engine": "j-2",
+      "why": "trans-lunar injection, about 3.18 km/s from the 185 km parking orbit; propellant from RS2 parts"
+    },
+    {
+      "at_s": 62153934579,
+      "kind": "split",
+      "mark": "estimated",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "into": [
+        "apollo-11-s-ivb"
+      ],
+      "keeps_identity": true,
+      "why": "CSM and LM extracted from the S-IVB (LM docked to the CSM, carried on as one stack)"
+    },
+    {
+      "at_s": 62154192149,
+      "kind": "burn",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "dv_m_s": 889.0,
+      "engine": "aj10-137",
+      "why": "lunar orbit insertion 1, 2,917 ft/s"
+    },
+    {
+      "at_s": 62154207855,
+      "kind": "burn",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "dv_m_s": 48.0,
+      "engine": "aj10-137",
+      "why": "lunar orbit insertion 2, 159 ft/s"
+    },
+    {
+      "at_s": 62154279879,
+      "kind": "split",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "into": [
+        "apollo-11-eagle"
+      ],
+      "keeps_identity": true,
+      "why": "Eagle undocks; its own log carries DOI, powered descent, landing at Tranquility Base and ascent"
+    },
+    {
+      "at_s": 62154380139,
+      "kind": "join",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "with": "apollo-11-eagle",
+      "why": "Eagle's ascent stage docks with Columbia"
+    },
+    {
+      "at_s": 62154387699,
+      "kind": "split",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "into": [
+        "apollo-11-eagle"
+      ],
+      "keeps_identity": true,
+      "why": "ascent stage jettisoned, left in lunar orbit"
+    },
+    {
+      "at_s": 62154406581,
+      "kind": "burn",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "dv_m_s": 1001.0,
+      "engine": "aj10-137",
+      "why": "trans-Earth injection, 3,283 ft/s"
+    },
+    {
+      "at_s": 62154620499,
+      "kind": "split",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "into": [
+        "apollo-11-service-module"
+      ],
+      "keeps_identity": true,
+      "why": "the command module separates from the service module"
+    },
+    {
+      "at_s": 62154621344,
+      "kind": "entry",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "why": "entry interface, 122 km"
+    },
+    {
+      "at_s": 62154622274,
+      "kind": "landing",
+      "mark": "recorded",
+      "src": "nasa-apollo-11-mission-report",
+      "writer": "pack",
+      "why": "splashdown, Pacific Ocean"
+    }
+  ]
+}
