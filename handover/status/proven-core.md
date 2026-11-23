@@ -1,0 +1,41 @@
+# Status: Physics and surfaces
+
+Owner thread: "Build SSE4 proven core". Covers: P, F, S, SF, B, T3, S5, the source side of MF (MF1 to MF3, MF10), MP19, MP20, ND1.
+
+Only the owner thread edits this file. One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`. Stage order: `handover/design/SSE4-coming-together.md`.
+
+| Package | State | Log |
+|---|---|---|
+| P1 atom library, first wave | done; heat-producing elements and reference links added | packages/P1.md, packages/P1-heat.md |
+| P3 V3 importer | built; run on 3 real saves on Alex's PC, one difference open (P3.md) | packages/P3.md |
+| P4 regions and features on worlds | done | packages/P4.md |
+| F0 inheritance, stars, life lines, formation history | done | packages/F0.md |
+| F1 disc and material bands | done | packages/F1.md |
+| F2 Classic Accrete block | done; **Alex to confirm**: System Lab (GPL-3.0, his code) ported under Apache-2.0 on his 17 Nov ruling, with credit (F2.md, Source) | packages/F2.md |
+| F3 modern growth block | done | packages/F3.md |
+| F4 violent phase and upheavals | done | packages/F4.md |
+| F5 leftovers: belts, Oort cloud, Trojans, moons, rings | done | packages/F5.md |
+| F6 early worlds and hand-off | done (ahead of F2 to F5; reads a plain `Protoplanet`) | packages/F6.md |
+| Formation pipeline (stages chained, heat flow per world) | done | packages/F-pipeline.md |
+| F7 long life of generated systems; close binaries by rule table | done (giant tables still T1's sketch) | packages/F7.md |
+| F9 pins and reconstruction (solve around pinned worlds; imported systems gain a reconstructed history) | done | packages/F9.md |
+| S0 surface envelope: kind, regime over time with dated causes, regime sketch globe | done | packages/S0.md |
+| S1 surface atlas: cube-sphere tiles, band-limited detail, disclosure and fact floor, cache | done (sketch atlas; S2 adds the surveyed plate atlas) | packages/S1.md |
+| S2 plate sketch: moving plates, ridges, trenches, arcs, mountain belts, plumes, drift snapshots, surveyed atlas | done | packages/S2.md |
+| S3 wearing down: rivers, lakes, sediment, sea level, hillslopes, worn atlas with flow layer | done | packages/S3.md |
+| S4 impacts and volcanism: chronology and spikes, survival by renewal, crater shapes, lava plains, shields, tiles to the fact floor, "why is this here" | done | packages/S4.md |
+| S6 other regimes: ice-shell ridges, bands and chaos; heat-pipe paterae and mountains; coronae, chasmata and overturns; contraction scarps and rifts; Titan's dunes and lakes; tar seas; giant cloud decks | done | packages/S6.md |
+| S7 cover, named features, built layer, aerostats, GM reshape: climate by latitude and height, wind cells and rain shadow, ice, deposits, colour; feature register with dated, per-audience renames and sifters; built-layer rules; aerostat band from the air profile; dated GM edits tagged when impossible, height pins honoured | done; served by `survey_surface` | packages/S7.md, packages/K-physics-ops.md |
+| Kernel ops `import_v3`, `run_formation` and `read_world_stack` (V3 import with report; one system through the pipeline with pins and surfaces; a body's world stack with ladder and physics notes) | done (physics track, for the UI) | packages/K-physics-ops.md |
+| S5 descent scene: entry heating, lift, parachutes, powered descent and touchdown; site slope, roughness and liquid from the height map; hazards in one shape; kernel op `plan_descent` | done | packages/S5.md |
+| B1 one body: self light on one mass axis, companion light, multiples as nested pairs with stability tags, one dynamo law (magnetic blocks) | in progress (B1a to B1d part 1 on main) | packages/B1.md |
+| S16a detail levels, parts 1 and 2: the surveyed plate run refines the coarse Orbit run (one world at both levels); the whole chain (wear, large craters, landforms, cover) runs at Orbit level; the Body globe reads the Orbit atlas, cached per universe; `quick` is the Orbit level. Next: reuse from GM, peers and packs; the resolution control (shell); then S14a lava tubes, S15, S2b with S16b, S9 and S10, S14b, map export (Rock 3 comparison, accepted 21 Nov) | in progress (part 1) | packages/S16a.md |
+| S0b part 1, icy bodies by process strength (PR 82): roundness from gravity against ice or rock strength, ice-shell activity from crack depth against shell thickness, a cold ice lid, past tidal heating as a world input, fossil landforms cratered away by saturation. Next: the rest of S0b (lid mobility, heat-pipe, melt, ocean worlds), ice-shell cracking and eruptions by area | done (part 1) | packages/S0b-icy.md |
+| S3b sediment budget: sediment counted only where it still lies, river loads build shelves to the shelf break, plate-world land kept at the plate height (steady state), isostasy filtered by flexure elsewhere. Next: marine platform cover from a sea-level history (S9), arc and flood volcanics on land, continental hypsometry (S2b) | done | packages/S3b-sediment.md |
+| S14a lava tubes, part 1: envelopes for every lava source (shields, plains, plate-world hot spots): forming strength from slope, roof span scaled by 1/g, roof kept after craters and rain, stage (intact, skylights, pit chains, rille); kernel `survey_surface` returns `tubes`. Part 2: passages placed on approach (`survey_caves`: downhill paths, roof-fall runs as skylights, pit chains and rilles, entrances, the same tube from any site). Next: the cave survey map (shell), Cutaway void band | in progress (parts 1 and 2) | packages/S14a.md |
+| SF1 surface time-lapse frames, part 1: `surface_frames` gives per-cell keyframes on the plate grid at every plate snapshot (elevation, plates, vents, ice sheets, temperature, rain, runoff from the dated climate) and dated events (plate events, eruptions, flood lava, impacts), for the renderer's generation video. Next: worn elevation per frame, ice-age onsets, land strips for the climate | in progress (part 1) | packages/SF1-frames.md |
+| T3 NAV: candidate courses (Hohmann, Lambert grid, torch) with burns, fuel and reserve, dose, heat, grazes, belts, debris, delays and difficulty with reasons; a drifting ship's fate and ways out; kernel op `plan_route` | done | packages/T3.md |
+
+## Done so far and what is next
+
+P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4, S6 and S7 done, served by the `survey_surface` op; T3 NAV done (`sse-nav`, `plan_route`); S5 done (`plan_descent`); F8 next (G6 is in), S8 on G7; next B1 one body (handover/design/SSE4-star-census.md), then weather W1 to W3 and W5, then S8 or S9

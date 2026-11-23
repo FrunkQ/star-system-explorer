@@ -2,7 +2,7 @@
 
 Date 17 Nov 2026. Audience: a coordinating session planning the work, and the building sessions it starts.
 
-**As of 22 Nov 2026:** most tracks below are built in the kernel and partly on screen; `main` is the default branch, live at v4.starsystemx.com, and pull requests merge when their checks pass (this replaces "never push without Alex's word" in section 1; edits to CI or merge checks still need his own yes). Package state is in `handover/START-HERE.md`. **The order in which the pieces are joined up, in six stages, and the rules for changes that touch many blocks, are in `SSE4-coming-together.md` (proposed 22 Nov, waiting on Alex).** This file stays the list of every package.
+**As of 22 Nov 2026:** most tracks below are built in the kernel and partly on screen; `main` is the default branch, live at v4.starsystemx.com, and pull requests merge when their checks pass (this replaces "never push without Alex's word" in section 1; edits to CI or merge checks still need his own yes). Package state is in `handover/status/`, one file per track, indexed by `handover/START-HERE.md`. **The order in which the pieces are joined up, in six stages, the rules for changes that touch many blocks, and the "common things a click away" test are in `SSE4-coming-together.md` (accepted by Alex 23 Nov).** This file stays the list of every package.
 
 ## 0. Read in this order
 
