@@ -28,6 +28,8 @@ mod nav;
 mod orbits;
 pub mod protocol;
 mod sky;
+#[cfg(test)]
+mod sol_tests;
 mod survey;
 mod systems;
 mod tags;

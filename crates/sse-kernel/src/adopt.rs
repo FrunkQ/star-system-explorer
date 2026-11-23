@@ -615,8 +615,27 @@ fn bodies_from_facts(
             None if r.get("body.oceans") == Some(&Value::Bool(true)) => 1.0,
             None => 0.0,
         };
+        // A catalogued world brings what was measured: its own Bond albedo,
+        // its mean surface temperature and its air. Only what is missing is
+        // estimated (equilibrium with the star, the pack's greenhouse).
+        let albedo = r
+            .get("body.albedo")
+            .and_then(as_f64)
+            .filter(|x| (0.0..1.0).contains(x))
+            .unwrap_or(s.albedo_default);
         let greenhouse = if oceans > 0.0 { s.greenhouse_k } else { 0.0 };
-        let t_eq = teff * m::sqrt(r_star / (2.0 * a_star)) * m::pow(1.0 - s.albedo_default, 0.25);
+        let t_eq = teff * m::sqrt(r_star / (2.0 * a_star)) * m::pow(1.0 - albedo, 0.25);
+        let t_surface_k = r
+            .get("planet.surface_temperature")
+            .and_then(as_f64)
+            .filter(|t| *t > 0.0)
+            .unwrap_or(t_eq + greenhouse);
+        let pressure_pa = r
+            .get("atmosphere.surface_pressure")
+            .or_else(|| r.get("body.surface_pressure"))
+            .and_then(as_f64)
+            .unwrap_or(0.0)
+            .max(0.0);
         out.push(sse_surface::Body {
             address: a.clone(),
             label: r
@@ -630,19 +649,13 @@ fn bodies_from_facts(
             water_fraction: 0.0,
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
-            pressure_bar: r
-                .get("body.surface_pressure")
-                .and_then(as_f64)
-                .map(|p| p / 1e5)
-                .unwrap_or(0.0),
+            pressure_bar: pressure_pa / 1e5,
             c_o: 0.55,
             k40_rel: 1.0,
             r_process_rel: 1.0,
             age_gyr: spec.age_myr / 1000.0,
             magma_end_myr: 0.0,
-            climate: sse_surface::Climate::Fixed {
-                t_surface_k: t_eq + greenhouse,
-            },
+            climate: sse_surface::Climate::Fixed { t_surface_k },
             tidal_w_m2: None,
             orbit: Some(sse_surface::Orbit {
                 a_au: a_own / AU,
