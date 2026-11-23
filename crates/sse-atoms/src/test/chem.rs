@@ -7,7 +7,7 @@ use sse_core::Dimension as D;
 use sse_flow::{Atom, CostClass};
 
 /// Molar gas constant, J mol^-1 K^-1 (CODATA 2018, exact from k and N_A).
-pub const R_GAS: f64 = 8.314_462_618;
+pub const R_GAS: f64 = sse_core::sheet::R_GAS;
 /// The temperature standard values are tabulated at, K.
 pub const T_REF_K: f64 = 298.15;
 
@@ -63,6 +63,27 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             f: |i, _| {
                 let t = positive(i[2], "temperature")?;
                 Ok(vec![standard_gibbs_at(i[0], i[1], t)])
+            },
+        }
+        .build(),
+        Def {
+            id: "sse.chem.reaction_gibbs",
+            version: "1.0.0",
+            inputs: vec![
+                port("standard_gibbs", "chem.standard_gibbs", MOLAR_ENERGY, None),
+                port("temperature", "chem.temperature", D::TEMPERATURE, Some((200.0, 450.0))),
+                port("ln_quotient", "chem.ln_reaction_quotient", D::NONE, None),
+            ],
+            outputs: vec![port("gibbs", "chem.reaction_gibbs", MOLAR_ENERGY, None)],
+            params: vec![],
+            cost: CostClass::Trivial,
+            references: &[THAUER, LAROWE],
+            curious: "Whether a reaction can feed life depends on how much of each ingredient is actually there. Plenty of fuel and little waste makes it pay; a build-up of waste can shut it off.",
+            science: "Free energy of reaction at the local activities. Negative means energy is released. Q is the product of activities raised to their stoichiometric coefficients (products positive, reactants negative); at pH 7 the hydrogen ion activity is 10^-7.",
+            formula: "ΔG = ΔG° + R T ln Q",
+            f: |i, _| {
+                let t = positive(i[1], "temperature")?;
+                Ok(vec![reaction_gibbs(i[0], t, i[2])])
             },
         }
         .build(),

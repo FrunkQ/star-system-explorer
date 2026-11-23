@@ -43,7 +43,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | C3 reverse placement in a system | done (kernel track) | packages/C3.md |
 | T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
-| ND3b physics blocks into formula files (crate sse-formula, 20 files in `packs/base-physics/formulas/`, shrinking list `packages/ND3b-rust-atoms.txt`) | parts 1 and 2 done: 70 blocks moved, bit for bit; 15 stay in Rust with reasons | packages/ND3b.md |
+| ND3b physics blocks into formula files (crate sse-formula, 20 files in `packs/base-physics/formulas/`, shrinking list `packages/ND3b-rust-atoms.txt`) | parts 1 and 2 done: 71 blocks moved, bit for bit; 14 stay in Rust with reasons | packages/ND3b.md |
 | ND6 kernel half: packs carry sources, fudges (declared plus fitted and assumed Model numbers) and reproduction checks run on load; op `pack_reports` | done (kernel half); the Packs screen half is the chart room's | packages/ND6.md |
 | GH2 satellites on orbits: one host table per slice, leapfrog from infall, sinking, tidal stripping, gas stripping, disc shocks, labels, tracks | done | packages/GH2.md |
 | DM6 kernel half: `derive` and `explain` take `at_s`; a stack with a constant's law reads it at that date | done; look-ahead spans keep one date (noted) | packages/DM6-kernel.md |

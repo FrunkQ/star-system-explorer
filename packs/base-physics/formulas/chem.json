@@ -99,6 +99,99 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.chem.reaction_gibbs",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "standard_gibbs",
+     "letter": "G0"
+    },
+    {
+     "port": "temperature",
+     "letter": "T"
+    },
+    {
+     "port": "ln_quotient",
+     "letter": "lnQ"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "gibbs",
+     "letter": "G"
+    }
+   ],
+   "constants": {
+    "R": "sheet/R_gas"
+   },
+   "positive": [
+    {
+     "port": "temperature",
+     "says": "temperature"
+    }
+   ],
+   "references": [
+    "Thauer, R. K., Jungermann, K. and Decker, K. 1977, Bacteriological Reviews 41, 100: energy conservation in chemotrophic anaerobic bacteria (free energies of formation, appendix). doi:10.1128/br.41.1.100-180.1977",
+    "LaRowe, D. E. and Amend, J. P. 2015, Frontiers in Microbiology 6, 718: power limits for microbial life. doi:10.3389/fmicb.2015.00718"
+   ],
+   "shown": "ΔG = ΔG° + R T ln Q",
+   "equation": {
+    "name": "Free energy a reaction releases here",
+    "formula": "G = G0 + R * T * lnQ",
+    "inputs": {
+     "G0": {
+      "kind": "chem.standard_gibbs",
+      "unit": "m2 kg s-2 mol-1",
+      "name": "standard free energy of reaction"
+     },
+     "T": {
+      "kind": "chem.temperature",
+      "unit": "K",
+      "name": "temperature",
+      "valid": [
+       200.0,
+       450.0
+      ]
+     },
+     "lnQ": {
+      "kind": "chem.ln_reaction_quotient",
+      "unit": "1",
+      "name": "natural log of the reaction quotient"
+     },
+     "R": {
+      "kind": "constant.R_gas",
+      "unit": "J mol-1 K-1",
+      "name": "molar gas constant"
+     }
+    },
+    "outputs": {
+     "G": {
+      "kind": "chem.reaction_gibbs",
+      "unit": "m2 kg s-2 mol-1",
+      "name": "free energy of reaction here"
+     }
+    },
+    "source": {
+     "text": "Atkins, P. and de Paula, J. 2014, Atkins' Physical Chemistry, 10th edn, Oxford University Press",
+     "url": "https://global.oup.com/academic/product/atkins-physical-chemistry-9780199697403",
+     "where": "topic 6A, the reaction Gibbs energy at given composition"
+    },
+    "explain": {
+     "curious": "Whether a reaction can feed life depends on how much of each ingredient is actually there. Plenty of fuel and little waste makes it pay; a build-up of waste can shut it off.",
+     "science": "Free energy of reaction at the local activities. Negative means energy is released. Q is the product of activities raised to their stoichiometric coefficients (products positive, reactants negative); at pH 7 the hydrogen ion activity is 10^-7."
+    },
+    "examples": [
+     {
+      "G0": -100000.0,
+      "T": 300.0,
+      "lnQ": 2.0,
+      "G": -95011.32242910806
+     }
+    ]
+   }
   }
  ]
 }

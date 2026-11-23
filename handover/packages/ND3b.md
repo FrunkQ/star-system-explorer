@@ -44,7 +44,7 @@ Owner: Build kernel resolve and rules.
 
 ## Part 2 (23 Nov): the families
 
-70 blocks now live in 20 formula files under `packs/base-physics/formulas/`; 15 stay in Rust, each with
+71 blocks now live in 20 formula files under `packs/base-physics/formulas/`; 14 stay in Rust, each with
 its reason in `ND3b-rust-atoms.txt` (series, bisection, piecewise fits over mass tables, an answer of
 infinity, a rounded gas constant that MP22 swaps first).
 
@@ -66,6 +66,10 @@ infinity, a rounded gas constant that MP22 swaps first).
 - **Tools** (not in the repo, rebuildable from this log): a script read each Rust `Def`, wrote the formula
   entry and worked examples, and moved the `Def` under `src/test/`. Worked examples use round numbers.
 
+- **The gas constant.** `sse_atoms::chem::R_GAS` was a rounded copy (8.314462618); it now is the sheet
+  row `R_gas` (N_A k_B, exact), and `sse.chem.reaction_gibbs` moved with it. Its ledger line is gone (423
+  left). Values move by about 1e-11 relative; no golden moved.
+
 ### Golden
 
 The contract golden changes by one line, on purpose: the reach report lists the new `math.cbrt` block.
@@ -74,8 +78,7 @@ No world changed: every other golden passes untouched.
 ## Next
 
 The 15 blocks in the list, as the language grows: series and bisection (a fixed-step "repeat" form),
-fit tables as data (mass-range pieces, CCM89), an unbounded answer, and `reaction_gibbs` once MP22 reads
-the gas constant from the sheet.
+fit tables as data (mass-range pieces, CCM89) and an unbounded answer.
 
 ## Timing (8B, within 5 %)
 

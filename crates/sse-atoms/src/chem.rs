@@ -2,18 +2,14 @@
 //! releases under local conditions. The life suite's gradient catalogue (E1)
 //! is built on these two blocks.
 
-use crate::common::*;
 use sse_core::math as m;
 use sse_core::Dimension as D;
-use sse_flow::{Atom, CostClass};
+use sse_flow::Atom;
 
-/// Molar gas constant, J mol^-1 K^-1 (CODATA 2018, exact from k and N_A).
-pub const R_GAS: f64 = 8.314_462_618;
+/// Molar gas constant, J mol^-1 K^-1: the data sheet row (N_A k_B, exact).
+pub const R_GAS: f64 = sse_core::sheet::R_GAS;
 /// The temperature standard values are tabulated at, K.
 pub const T_REF_K: f64 = 298.15;
-
-const THAUER: &str = "Thauer, R. K., Jungermann, K. and Decker, K. 1977, Bacteriological Reviews 41, 100: energy conservation in chemotrophic anaerobic bacteria (free energies of formation, appendix). doi:10.1128/br.41.1.100-180.1977";
-const LAROWE: &str = "LaRowe, D. E. and Amend, J. P. 2015, Frontiers in Microbiology 6, 718: power limits for microbial life. doi:10.3389/fmicb.2015.00718";
 
 /// J mol^-1.
 pub const MOLAR_ENERGY: D = D([2, 1, -2, 0, 0, -1, 0]);
@@ -44,27 +40,5 @@ pub fn ln_quotient(terms: &[(f64, f64)]) -> Result<f64, String> {
 }
 
 pub fn atoms() -> Vec<Box<dyn Atom>> {
-    vec![
-        Def {
-            id: "sse.chem.reaction_gibbs",
-            version: "1.0.0",
-            inputs: vec![
-                port("standard_gibbs", "chem.standard_gibbs", MOLAR_ENERGY, None),
-                port("temperature", "chem.temperature", D::TEMPERATURE, Some((200.0, 450.0))),
-                port("ln_quotient", "chem.ln_reaction_quotient", D::NONE, None),
-            ],
-            outputs: vec![port("gibbs", "chem.reaction_gibbs", MOLAR_ENERGY, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &[THAUER, LAROWE],
-            curious: "Whether a reaction can feed life depends on how much of each ingredient is actually there. Plenty of fuel and little waste makes it pay; a build-up of waste can shut it off.",
-            science: "Free energy of reaction at the local activities. Negative means energy is released. Q is the product of activities raised to their stoichiometric coefficients (products positive, reactants negative); at pH 7 the hydrogen ion activity is 10^-7.",
-            formula: "ΔG = ΔG° + R T ln Q",
-            f: |i, _| {
-                let t = positive(i[1], "temperature")?;
-                Ok(vec![reaction_gibbs(i[0], t, i[2])])
-            },
-        }
-        .build(),
-    ]
+    vec![]
 }

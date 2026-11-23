@@ -725,7 +725,7 @@ fn gibbs_blocks_reproduce_tabulated_values() {
     let r = run("sse.chem.reaction_gibbs", &[-100.0e3, 298.15, m::ln(10.0)])[0];
     close(
         r,
-        -100.0e3 + 8.314_462_618 * 298.15 * m::ln(10.0),
+        -100.0e3 + crate::chem::R_GAS * 298.15 * m::ln(10.0),
         1e-12,
         "RT ln Q",
     );

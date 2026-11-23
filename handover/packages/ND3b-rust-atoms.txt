@@ -7,7 +7,6 @@ sse.aurora.footprint	gives 0 for a line that never rises above the planet instea
 sse.aurora.hill_distance	answers infinity when no plasma is loaded instead of refusing: waits for an "unbounded" answer a formula can give
 sse.belts.electron_range	iterates: 60 halvings invert the measured range for the energy
 sse.belts.kp_limit	iterates: the lowest cap over a grid of resonance curves
-sse.chem.reaction_gibbs	reads a rounded gas constant (8.314462618), not the sheet row; moves once MP22 swaps the copy (that changes bits, so it rides the golden lane)
 sse.heat.active_geology_lifetime	iterates: 80 halvings to find when the heat flow falls below the limit
 sse.heat.al26_planetesimal_heating	refuses when its two energy settings cross: waits for checks on settings
 sse.light.dust_extinction	CCM89's four polynomial pieces need more than the 64 operations an Equation holds; waits for fit tables as data
