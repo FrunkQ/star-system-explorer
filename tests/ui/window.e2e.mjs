@@ -107,7 +107,7 @@ try {
       await sb.locator("[data-sky-canvas]").click({ position: { x: spot[0] * box.width, y: spot[1] * box.height } });
       await gm.waitForSelector("[data-sky-picked]", { timeout: 5000 });
       assert.match(await sb.locator("[data-sky-picked]").innerText(), /^Picked: a star of magnitude/);
-      await sb.getByRole("button", { name: "Near infrared" }).click();
+      await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: "Infrared" }).click();
       await gm.waitForSelector("[data-sky-beyond=on][data-sky-band=Ks]", { timeout: 5000 });
       await gm.waitForFunction(() => /shown in Ks; brightest in Ks:/.test(document.querySelector("[data-sky-words]")?.textContent ?? ""), null, { timeout: 5000 });
       await shot(gm, "y5-sky-infrared");

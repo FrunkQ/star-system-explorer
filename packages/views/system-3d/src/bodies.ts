@@ -17,13 +17,24 @@ export interface Body3D {
   mark: Mark | null;
   /** The body's radius, metres, for Real scale; null or absent when the audience does not have it. */
   radius_m?: number | null;
+  /** Its surface temperature, kelvin (a star's own), for True's infrared; null or absent when not known. */
+  t_k?: number | null;
 }
 
 export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => Mark): Body3D[] {
   const star = primaryOf(scene);
   return scene.subjects
     .filter((s) => s === star || s.orbit)
-    .map((s) => ({ id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, mark: mark(s), radius_m: radiusOf(s) }));
+    .map((s) => ({ id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s) }));
+}
+
+/** A subject's surface temperature in kelvin: a star's effective, a world's surface, else its equilibrium. */
+function tempOf(s: SceneSubject): number | null {
+  for (const field of ["teff_k", "surface_k", "teq_k"]) {
+    const f = s.facts.find((x) => x.field === field);
+    if (typeof f?.value === "number" && f.value > 0) return f.value;
+  }
+  return null;
 }
 
 /** A subject's radius in metres from its facts (Earth radii for worlds, Sun radii for stars), else null. */
