@@ -94,6 +94,12 @@ export interface Workspace {
   players_online?: number;
   /** True once the campaign has been shared with players: secrecy has become relevant (SV2). */
   shared?: boolean;
+  /**
+   * The Land screen's live landing (renderer's `LandingShow`), a few times a second at most. The shell keeps the
+   * latest; "Send this view" from the Land screen sends it to the table, and while the table watches it each update
+   * goes on to them. Nothing reaches the table until the GM sends.
+   */
+  sendLanding?: (show: Json) => void;
   /** Values applied by intents in this session, keyed "address#field", shown until scenes come from the kernel. */
   applied: Record<string, { value: Json; display: string; event_id: string }>;
   /** Bumped whenever an intent is applied, so views can refresh history. */
