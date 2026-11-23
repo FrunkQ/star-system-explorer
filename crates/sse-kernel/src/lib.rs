@@ -2748,7 +2748,14 @@ impl Kernel {
                 targets,
                 sensors,
                 radar,
-            } => systems::detect(targets, sensors, radar)?,
+                range_bands,
+            } => systems::detect(
+                targets,
+                sensors,
+                radar,
+                range_bands.unwrap_or_default(),
+                &self.observe.reference,
+            )?,
             Request::ReadActivity {
                 stars,
                 seed,

@@ -499,6 +499,11 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         radar: Option<serde_json::Value>,
+        /// The setting's range bands (a measure, RK11): each detection's
+        /// distance and range are labelled with them.
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        range_bands: Option<Vec<serde_json::Value>>,
     },
     /// Air optics (light track, for the renderer's sky): for each air (gas
     /// fractions by number, surface pressure, temperature, gravity), Rayleigh
