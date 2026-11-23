@@ -22,6 +22,19 @@ No goldens change: nothing reads the new rows yet. `sse_core::sheet::mixture_den
 
 Atomic Rockets (projectrho.com, pointed out by Alex 23 Nov) is used only as a map to primary sources; nothing is cited from it or copied.
 
-## Part 2: the base-tech pack (next)
+## Part 2: the base-tech pack
 
-`packs/base-tech`: the ten limits, the figures each holds back with the field a block reads, cited marks (built, allowed, ceiling), the neutral ladder and its two size factors, the real advances. Built by a script that reads the sheet (SHEET_FED in the MP22 audit), `--check` in check.sh.
+`packs/base-tech`, built by `scripts/build-base-tech.py` (SHEET_FED in the MP22 audit; `--check` in check.sh; manifest test in sse-pack). Under `provides.other.tech`:
+
+- **limits**: the ten of design section 4, each with its Science line, what it shapes, what lies past its ceiling, and its figures. Limit 6 (light speed) has no figure: FTL stays a per-setting rule (voyages design).
+- **figures** (17): id, limit, unit, `better` (the way an advance pushes it), `reads` (the field a sizing block reads today, or "FT2" where the kernel adds the reader) and cited **marks**: built, allowed, ceiling. A ceiling always names its law. Fiction has a figure with a ceiling at zero where no partial version exists: heat sent nowhere, inertia screened, weight without spin, light hidden.
+- **ladder**: the neutral ladder, levels 0 (muscle and wind) to 6 (deep); Sol today is level 4. Ten times the size per level short; half per level beyond, for at most two levels (Alex, question 4).
+- **advances** (12, all real or not yet built, none fictional): what each sets, its home level, its part, and the mark it earns, worked out by the builder from the figure's marks (past a ceiling fictional, within the best built value built, otherwise not yet built).
+
+Worked out from the sheet, never typed: the exhaust ceiling and photon thrust from c; exhaust speeds from Isp times g0; hydrogen-oxygen energy from water's heat of formation and atomic weights; D-He3 energy from e and m_u; strength for weight from the four materials of part 1; annihilation from c squared.
+
+Sources read for the marks (23 Nov): L3Harris RL10 sheet (465.5 s); NASEM 2021 Table 2.1 (Pewee about 875 s); Williams et al. 2005 (D-He3, 35,435 s, 8.62 kW/kg; partly read); Adams et al. 2003 (77,000 s); Ball 2019 (3.7 MeV per nucleon); OpenStax University Physics 3 (8.21e13 J/kg); Pattarini et al. 2020 (seated head-to-foot 4.91 m/s2 past 2 minutes); Globus and Hall 2017; ISS ATCS overview (ammonia 2.8 C); NASA-STD-3001 V1 rev C (600 mSv); OCHMO-TB-020 (20 g/cm2); Koontz 2016 (40 to 50 g/cm2); Lynch et al. 2023 (0.89, 2.79 and 2.39 kg a day); NASA 2023 (98% water); Lubin 2016 (3.3 nN/W).
+
+Not read, marked so: NASA-STD-3001 V2 acceleration tables (chest-to-back limits), the BVAD tables, Santarius and Logan 1998's full text (behind the 1,500 K radiator and 0.1 waste share carried from base-ships), the ideal nanotube shell (Peng 2008, the 77 MJ/kg bond ceiling), steel wire.
+
+Next (FT2, kernel): advances on a civilisation, inherited and dated; needs computed from parts; the size rule; the availability reading; fictional by ceiling.
