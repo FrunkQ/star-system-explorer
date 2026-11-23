@@ -52,7 +52,7 @@ pub const RING_CAP_KM: f64 = 0.01;
 
 const R_EARTH_KM: f64 = 6_371.0;
 const AU_KM: f64 = 1.495_978_707e8;
-const MSUN_KG: f64 = 1.988_47e30;
+const MSUN_KG: f64 = sse_core::sheet::M_SUN;
 /// Densities by element group, kg/m^3 (metal, rock, carbon, water, CO2, CO).
 const DENSITY: [f64; 6] = [7_800.0, 3_000.0, 2_000.0, 1_000.0, 1_500.0, 900.0];
 

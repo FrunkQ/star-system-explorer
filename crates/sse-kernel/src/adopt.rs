@@ -25,7 +25,7 @@ pub const ADOPT_FORMATION: &str = "adopt.formation";
 pub const TIME_AGED: &str = "time.aged";
 
 /// Masses as the importer uses them.
-pub const M_SUN_KG: f64 = 1.988_47e30;
+pub const M_SUN_KG: f64 = sse_core::sheet::M_SUN;
 
 /// The serde name of a plain enum value (kebab-case labels).
 fn json_name<T: serde::Serialize>(v: &T) -> String {
@@ -34,7 +34,7 @@ fn json_name<T: serde::Serialize>(v: &T) -> String {
         .and_then(|x| x.as_str().map(str::to_string))
         .unwrap_or_default()
 }
-pub const M_EARTH_KG: f64 = 5.972_2e24;
+pub const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 /// Metal mass fraction assumed when a system has no `star.metallicity_z` fact.
 pub const DEFAULT_Z: f64 = 0.0142;
 /// Most tiles one `resolved_system` builds.

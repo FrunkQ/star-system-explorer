@@ -35,7 +35,7 @@ use std::collections::BTreeMap;
 pub const IMPACTS_VERSION: &str = "surface-impacts-v1";
 
 const R_EARTH_KM: f64 = 6371.0;
-const M_EARTH_KG: f64 = 5.972e24;
+const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 
 pub const CHRONOLOGIES: [&str; 1] = ["neukum-2001"];
 pub const CRATER_SHAPES: [&str; 1] = ["pike-1977"];

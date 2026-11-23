@@ -32,7 +32,7 @@ const K_B: f64 = sse_core::sheet::K_B;
 const M_H: f64 = 1.673_5e-27;
 const MU: f64 = 2.34;
 const AU_M: f64 = sse_core::sheet::AU;
-const MSUN_KG: f64 = 1.988_47e30;
+const MSUN_KG: f64 = sse_core::sheet::M_SUN;
 const YR_S: f64 = sse_core::sheet::YR_JULIAN;
 pub const MSUN_IN_EARTH: f64 = 332_946.0;
 

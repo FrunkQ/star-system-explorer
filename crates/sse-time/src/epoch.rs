@@ -348,7 +348,7 @@ impl<'a> Ageing<'a> {
                         continue;
                     }
                     // Convective turnover time (yr) = (Menv (R - Renv)^2 / (3 L))^(1/3), Renv ~ 0.
-                    let msun = 1.988_47e30;
+                    let msun = sse_core::sheet::M_SUN;
                     let r_m = st.star.radius * sse_core::sheet::R_SUN;
                     let tau_s = m::cbrt(
                         menv * msun * r_m * r_m
