@@ -17,6 +17,7 @@
 //! fall into each system are NAV's in-system courses and are not counted
 //! here, and the ship's mass during a flight leaves out its jump fuel.
 
+use crate::links::Links;
 use crate::{Ship, G0};
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
@@ -391,6 +392,9 @@ pub struct Leg {
     /// In-system legs: speed over escape at the destination before the arrival burn, m/s.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub arrive_v_inf_m_s: Option<f64>,
+    /// The standing link this leg runs along (a gate pair, a charted lane), by id.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub link: Option<String>,
     /// The sentence the screens show.
     pub words: String,
 }
@@ -496,13 +500,29 @@ pub fn plan(
     goal: &Goal,
     o: &Options,
 ) -> Result<Voyage, Vec<String>> {
+    plan_with_links(ship, jump, systems, from, goal, o, &Links::default())
+}
+
+/// [`plan`], with standing links between the systems (`links.rs`): a link
+/// with a rule makes its own leg, a charted lane marks the ship's legs along
+/// it, and `links.only` keeps every leg to a link.
+pub fn plan_with_links(
+    ship: &Ship,
+    jump: Option<&JumpDrive>,
+    systems: &[VoyageSystem],
+    from: &str,
+    goal: &Goal,
+    o: &Options,
+    links: &Links,
+) -> Result<Voyage, Vec<String>> {
     let name = if ship.name.is_empty() {
         "the ship".to_string()
     } else {
         format!("the {}", ship.name)
     };
     let flies = ship.sustained && ship.accel_g > 0.0 && ship.exhaust_km_s > 0.0;
-    if jump.is_none() && !flies {
+    let ruled = links.links.iter().any(|l| l.rule.is_some());
+    if jump.is_none() && !flies && !ruled {
         return Err(vec![format!(
             "{name} has no jump drive and no sustained drive, so it cannot cross between stars"
         )]);
@@ -519,8 +539,22 @@ pub fn plan(
         flies,
         name: name.clone(),
         set,
+        links,
     };
-    search(ship, jump, systems, from, goal, o, &maker)
+    search(ship, jump, systems, from, goal, o, &maker).map_err(|mut why| {
+        if links.only {
+            why.insert(
+                0,
+                format!(
+                    "every leg must run along a link, and {} known link{} reach{} from here",
+                    links.links.len(),
+                    if links.links.len() == 1 { "" } else { "s" },
+                    if links.links.len() == 1 { "es" } else { "" }
+                ),
+            );
+        }
+        why
+    })
 }
 
 /// What prices the legs out of a place: between stars (jumps and flights)
@@ -547,6 +581,7 @@ struct Interstellar<'a> {
     flies: bool,
     name: String,
     set: &'a VoyageSettings,
+    links: &'a Links,
 }
 
 impl LegMaker for Interstellar<'_> {
@@ -603,7 +638,9 @@ impl LegMaker for Interstellar<'_> {
                 }
             }
         }
-        out
+        let rating = jump.map(|j| j.rating_pc).unwrap_or(1.0);
+        out.extend(self.links.ruled_legs(systems, from, rating, jf, pr));
+        self.links.mark(systems, from, out)
     }
     fn refusals(&self, start: usize, target: Option<usize>, visited: &[usize]) -> Vec<String> {
         refusals(
@@ -646,6 +683,7 @@ impl Leg {
             course: None,
             wait_days: None,
             arrive_v_inf_m_s: None,
+            link: None,
             words: String::new(),
         }
     }
@@ -939,6 +977,11 @@ fn leg_words(l: &Leg, from: &str, to: &str) -> String {
                 l.propellant_t
             )
         }
+        "link" => format!(
+            "Along {} from {from} to {to}, {}",
+            l.words,
+            span_words(l.home_days)
+        ),
         "jump" => format!(
             "Jump {} pc from {from} to {to} ({} counted), {}",
             fmt1(l.distance_pc),
@@ -961,6 +1004,9 @@ fn leg_words(l: &Leg, from: &str, to: &str) -> String {
             )
         }
     };
+    if l.means != "link" && l.link.is_some() {
+        s.push_str(", along a charted lane");
+    }
     if let Some(r) = &l.refuel {
         if l.gamble {
             let from = if l.odds_from.is_empty() {

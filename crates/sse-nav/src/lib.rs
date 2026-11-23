@@ -21,6 +21,7 @@ pub mod ftl;
 pub mod hazards;
 pub mod insystem;
 pub mod kepler;
+pub mod links;
 pub mod refuel;
 pub mod scenario;
 pub mod sky;
@@ -729,5 +730,7 @@ mod descent_tests;
 mod entry_tests;
 #[cfg(test)]
 mod ftl_tests;
+#[cfg(test)]
+mod links_tests;
 #[cfg(test)]
 mod tests;
