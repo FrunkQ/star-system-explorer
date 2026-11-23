@@ -2,7 +2,7 @@
 
 Status: **accepted 23 Nov 2026**. Alex answered "yes to all" at 16:15 to the fourteen questions in section 12 (read by the coordinator as covering this list among three open at once; he can correct that). Written by the design thread. Track letters **FT**. Design only; the packages are in section 13. Every figure still passes the citation check before it ships. A mockup goes with it: "SSE4 ship styles and tech levels" (one generated ship in five styles and at three tech levels), source in `/mnt/project-files/sse4/ships/styles-and-tech-mockup.html`.
 
-**Revision, 23 Nov 18:48 (Alex):** the ten times per level rule was "a simple rule of thumb for ideas. Not a hard fact. Apply intelligently and improve if possible." Section 5.2 now gives the size rule by family of part; its four questions (15 to 18) are open.
+**Revision, 23 Nov 18:48 (Alex):** the ten times per level rule was "a simple rule of thumb for ideas. Not a hard fact. Apply intelligently and improve if possible." Section 5.2 now gives the size rule by family of part; its four questions (15 to 18) were accepted 23 Nov 19:20 (Alex: "size rules make sense", read by the coordinator as yes to all four).
 
 **Ruling, 23 Nov 17:49 (Alex):** "4.1 alien life will have to have culture and tech as part of life. So all these systems can be extended then and we can have a lighter touch." So 4.0 keeps civilisation capability light: levels and advances are set by hand or by a pack. Automated research, tech trees and a civilisation growing its own technology are 4.1, grown from life.
 
@@ -76,7 +76,7 @@ Most of these figures already exist. `base-ships` `drive_heat` carries waste per
 
 Because the generator already draws every part from its size, a prototype looks like one: the same ship with one grotesquely swollen system.
 
-### 5.2 How much worse an early version is (revised 23 Nov 18:48)
+### 5.2 How much worse an early version is (revised 23 Nov 18:48, accepted 19:20)
 
 Alex: "The 10 times was a simple rule of thumb for ideas. Not a hard fact. Apply intelligently and improve if possible."
 
@@ -104,7 +104,7 @@ Alex: "The 10 times was a simple rule of thumb for ideas. Not a hard fact. Apply
 
 The mockup now swells its fusion torch by seven and its fictional heat sink and field drive by ten.
 
-**Questions for Alex on this revision**
+**Questions for Alex on this revision (all accepted 23 Nov 19:20)**
 
 15. **Immaturity acts on the advance's figure and the size falls out**, with the flat ten times kept only where nothing is known. Recommended: yes.
 16. **The family defaults in the table** (engines a seventh, materials a fifth, stores a third, near-ceiling figures two-thirds of the way, plain mass unchanged, fictional ten times), each editable. Recommended: yes, subject to the citation check.
@@ -260,8 +260,8 @@ So two navies at the same level differ by style, and two ships in the same style
 
 | Package | What | Suggested owner |
 |---|---|---|
-| FT1 | `base-tech` pack: limits, figures with cited marks, the neutral ladder, real advances; strength for weight on the master data sheet | matter data sheet thread, with citation checks |
-| FT2 | Kernel: advances on a civilisation, set by hand or by a pack, inherited and dated, with no growth hooks (growth is 4.1); needs computed from parts; the size rule; the availability reading; fictional by ceiling | kernel thread |
+| FT1 | `base-tech` pack: limits, figures with cited marks, the neutral ladder, real advances, each with a part family; the family maturity defaults of section 5.2 and the size multiplier for fictional devices; strength for weight on the master data sheet | matter data sheet thread, with citation checks |
+| FT2 | Kernel: advances on a civilisation, set by hand or by a pack, inherited and dated, with no growth hooks (growth is 4.1); needs computed from parts; the size rule of section 5.2 (figure maturity by part family, floored at the best older advance held, with the size multiplier as the second path for fictional devices); the availability reading; fictional by ceiling | kernel thread |
 | FT3 | Ships read figures from advances instead of per-fuel rules; the fictional flag on legs and passes that lean on a fictional advance | travel thread |
 | FT4 | Generator: spin ring, prototype swelling, "show it without"; styles stage 5 against the part vocabulary | renderer thread |
 | FT5 | Light by part and the band switch on the ship picture; stated light for fictional advances | light thread with the renderer |
