@@ -1,6 +1,6 @@
 # SSE4 and Atomic Rockets: what is on the site, where it lands in SSE4, the rights, and the approach
 
-Status: **accepted 23 Nov 2026, 20:25** (Alex: "Agree to all questions", with question 11 changed: weapons come in, as data and "in range" sums only, "we dont fire anything"). Sections 11 to 14 were added the same evening on his word (power as a general input, sensors, weapons, and what SSE3 had); their six questions in section 15 were **answered yes at 21:30** ("yes to all"). Sections 16 and 17 (the power flow diagram, and fog of war from sensors) answer his two follow-ups and carry five new questions in section 18, **not yet answered**. Mockup: `/mnt/project-files/sse4/RK-screens/power-flow-mockup.html` (artifact "SSE4 power flow", https://claude.ai/artifact/2k5uSbdv6yKuFNgRedGTDs), screenshots beside it. Research and design only, no code. Track letters **RK** (a neutral working name; nothing here is named after the site until its author agrees).
+Status: **accepted 23 Nov 2026, 20:25** (Alex: "Agree to all questions", with question 11 changed: weapons come in, as data and "in range" sums only, "we dont fire anything"). Sections 11 to 14 were added the same evening on his word (power as a general input, sensors, weapons, and what SSE3 had); their six questions in section 15 were **answered yes at 21:30** ("yes to all"). Sections 16 and 17 (the power flow diagram, and fog of war from sensors) answer his two follow-ups and carry the questions in section 18, **all answered yes at 22:08** ("Yes to your questions"). Mockup: `/mnt/project-files/sse4/RK-screens/power-flow-mockup.html` (artifact "SSE4 power flow", https://claude.ai/artifact/2k5uSbdv6yKuFNgRedGTDs), screenshots beside it. Research and design only, no code. Track letters **RK** (a neutral working name; nothing here is named after the site until its author agrees).
 
 Alex, 23 Nov 16:25 to 16:28: "this is VERY interesting", "EVERYTHING on that site needs to be in SSE - as a pack? I approach them and ask if they wanna get involved - as they can now fly their rockets properly simulated", "They have rocket equations - we have equation blocks!"
 
@@ -208,6 +208,8 @@ Guidance, not legal advice.
 
 > Hello! I'm Alex. I've spent years on Star System Explorer, a free, open source star system and universe builder for SF gamers and writers, and I've just fallen head first into Atomic Rockets. The new version sizes ships from real physics (radiators from actual waste heat!) and flies them on real fuel. I'd love to tell you more and ask a favour. What's the best way to drop you a proper note?
 
+**Sent.** Alex sent the fuller message by email on 23 Nov 2026, about 21:40, to an address he found himself. No reply yet. Until the author agrees in writing, the rules of section 7 stand unchanged.
+
 **The fuller message, for Alex to edit and send himself:**
 
 > Subject: Flying your rockets (an open source project that owes you a pint)
@@ -345,6 +347,8 @@ One import caution: SSE3's stock list carries a few names that belong to other p
 
 Coming on top: the real spaceflight pack's instruments (band, aperture, field of view, resolution), the remote survey methods (wobble, transit), and FT's light by part (plumes in X-ray).
 
+**The model to follow (Alex, 23 Nov 21:44): "a ship gets a sensor pack (array) now. That is the model to follow."** A ship carries an array of sensors picked from its pack's sensor list, as the Traveller pack's ships already do. That stays exactly as it is. Nothing below adds a second structure: it changes only what one entry in the array *is* (an instrument with a band and an aperture, where today it is a name with a typed range), and the "default sensor fit" of section 17 is simply a named array for a tech level that a ship gets when nobody has chosen one.
+
 **Proposed: one table, one shape, one rule.**
 
 1. **One Bands table on the master data sheet.** Each row: id, plain name, from and to in metres, which view band shows it, its default recipe. The light table, the view switch, every screen's list, every sensor and every recipe refer to a band by id and nothing spells a band any other way. The hand-written map goes. A pack adds a band by adding a row.
@@ -470,7 +474,7 @@ Nothing else is drawn, and nothing leaks by absence (SV's rule). One soft ring r
 2. **Every craft gets a sensor fit for free.** A default set of instruments from its tech level and size, as an advance like any other part. A GM who never opens a sensor still gets sensible fog. Fitting a better telescope is for those who care.
 3. **What a thing gives off is never set up.** It comes from the power flow: a burning torch is seen across the system, a coasting hull only close by, a station by its radiators. The GM changes what a ship *does*, and visibility follows.
 4. **"Why?" on any contact, both ways.** "Seen by its drive plume, in X-ray and infrared, by your main telescope." And on the GM's side for anything a seat cannot see: "Too cold: gives off 200 W, and they would need to be within 4,000 km." One line, in words.
-5. **Ping is an order, not a control panel.** "Ping with radar" finds what is close and cold, and tells everyone in range where you are. One button, with the cost stated on it. This fits "players never hand-pilot": it is an instruction to the ship.
+5. **Passive is a pack that is always on; each active sensor is its own switch** (Alex, 23 Nov 21:46). The passive pack needs no attention and shows everything in range that gives itself away: a freighter burning hard, a hot radiator, **someone else's radar**. Each active sensor (radar, lidar) is a separate switch with its cost stated on it: it finds what is close and cold, and it tells everyone in range where you are. A radar is heard much further than it sees, because its signal falls with distance squared on the way to a listener and with the fourth power on the way out and back; that comes from the sums, not from a rule. Switches are orders to the ship, which fits "players never hand-pilot".
 6. **Charts count.** Things on a crew's charts (stations, worlds, lanes) are known without being sensed. Buying a chart is SV's "Hand over".
 7. **The GM always wins.** A press of the eye overrides the physics either way, and stays as authored ink. Physics never un-reveals what the GM revealed.
 8. **Light delay, quietly.** A contact is drawn where its light says it was. In Simple that is just true and unremarked; in Full the card says "as seen 4 minutes ago".
@@ -485,7 +489,42 @@ The chart stays in pencil and ink per SV. "See as: the Kestrel's crew" shows tha
 
 ### 17.5 What it does not do
 
-No sensor operator mini-game, no electronic warfare, no jamming, no decoys in 4.0. A pack may add them later as parts on the ledger. Surface fog (what a landed party can see) is the same idea with terrain in the way, and waits for the surface work.
+No sensor operator mini-game: counters are switches with stated costs (section 17.7), never a console to play. Surface fog (what a landed party can see) is the same idea with terrain in the way, and waits for the surface work.
+
+### 17.7 Countering sensors: ECM and cloaking (Alex, 23 Nov 21:46: "obvs we need an ECM or cloaking capability to counter these")
+
+A sensor compares what a target gives off with the noise it has to see through. So there are only two things a counter can do: **give off less**, or **raise the watcher's noise**. Everything below is one of those, each is a part or an order with a cost on the power ledger, and all but the last are real physics that needs no new mechanism.
+
+| Counter | What it does | Its cost, stated on the switch | Honest reading |
+|---|---|---|---|
+| **Run quiet** | drive off, active sensors off, non-essential loads off | you coast; you see less | built |
+| **Cold face** | radiators and hull turned so the hot side faces away from one watcher | works in one direction only; anyone off to the side sees you as before | allowed |
+| **Heat sink** | waste heat stored instead of radiated | a clock: "holds 6 hours", then it must be dumped, brightly. FT 15.3 already makes a sink say where the heat goes | allowed |
+| **Absorbent skin** (Alex, 21:48: "radar absorbant hulls") | the hull returns less of what hits it, in the bands its coating is made for | the coating has mass, and what it absorbs becomes heat on the ledger, so a ship painted black to radar is a little warmer in infrared. Useless against a watcher who sees you by your own heat | built |
+| **Shaped hull** | facets and edges send a radar's echo away from where it came from | works from some directions and not others; costs room inside. This is an ability the generator fits, like a heat shield, not a style | built |
+| **Hide in the glare** | sit close to something bright in the watcher's view: the star, a world's limb, a ring, another ship's plume | you must be there, and stay there | built. The sensing sum already drowns a faint thing next to a bright one |
+| **Jam** (ECM) | a transmitter that raises the noise in a band for every receiver in reach | power on the ledger, and you are now the loudest thing in the sky: they know *something* is there and on what bearing, but not what or exactly where | built |
+| **Cancelling** (Alex, 21:48: "active jamming, like noise filtering on audio") | listens to an incoming signal and sends its mirror image, so the echo and the answer cancel at the watcher | power, and a receiver and computer good enough to copy the signal in time. It cancels toward one watcher only; a second watcher elsewhere sees you more brightly, because the energy has to go somewhere. Works on radar and lidar, never on your own heat | built (Alex, 21:49: "all exists now and could be put on ships"). In service on aircraft, but no published figures, so its strength is an authored figure, marked as such, until a primary source turns up |
+| **Dazzle** | a beam into one telescope to blind it | power; needs to know where the watcher is; "beams spread" sets the reach | allowed |
+| **Decoy** | a small part with a heater and a reflector that gives off a ship's signature | a part with mass, used up; a close enough look tells it from a ship | built |
+| **False colours** | a transponder that lies about who you are | holds until someone resolves you well enough. This is the secrets design's "Told instead", unchanged | built |
+| **Cloak** | sets what you give off in named bands to a stated share, as a fictional advance | whatever the setting says. It must fill FT's four fields: where the light goes, where the heat goes. "Nowhere" is allowed and is marked fictional | fictional |
+
+**One mechanism under the first two rows: a construct's skin is a substance.** The master data sheet gives a substance its reflectance by band, which SSE4 already uses for the colour and albedo of worlds. A hull reads the same row. So how much radar comes back, how bright the ship glints in sunlight and how much sunlight it soaks up as heat are one lookup, and a coating is a new row on the sheet, not a stealth flag. "Absorbent to radar" and "mirror-bright to stay cool near a star" are the same figure pulled in opposite directions, which is a real trade.
+
+**What paint can and cannot do** (Alex, 22:08: "painting a ship black would work for some sensors... that drive plume is a problem"). A skin only changes light that arrives from outside and bounces off: sunlight in the visible, a radar's pulse, a lidar's beam. It does nothing for light the ship makes itself, and the largest source of that is the exhaust. The plume is outside the hull, so no coating covers it, and its brightness comes straight off the power ledger: whatever the "ends up as" column of the Power card shows leaving as hot exhaust is what a watcher's infrared sensor has to work with. So a black ship coasting can be very hard to find, and the same ship burning is found by its plume at the range the sums give, whatever it is painted with. The counters to a plume are the ones that are already on the list and all of them cost travel: do not burn (run quiet), burn gently (a smaller, cooler plume and a longer trip), or burn with a world or a star between you and the watcher (hide in the glare, or simply out of sight). The switch row says so in a few words: with the drive lit, the skin's reading greys out for the bands the plume shows in.
+
+**All three are parts a ship can carry today** (Alex, 21:49). Absorbent skin, shaped hull and cancelling sit in the base packs at the "built" mark, so they are on offer at the lowest rung of any tech ladder and the ship generator may fit them like any other part. They are not advances a setting has to unlock.
+
+How it looks, kept simple:
+- **On your own ship: a short row of switches**, each with its cost in a few words. Passive pack (always on), one per active sensor, Run quiet, then whichever counters the ship actually carries. A ship with none shows none.
+- **On the chart, jamming is a hatched patch** over the area it spoils. Contacts inside it drop one mark (known to noticed, noticed to gone). The jammer shows as a bearing, not a point.
+- **A decoy is just another dotted contact** until it is resolved, when it inks in as what it is.
+- **A cloaked or quiet ship is simply not drawn**, and nothing leaks by absence. The GM's chart keeps it in pencil with a "Why?": "running quiet: gives off 300 W, they would need to be within 5,000 km".
+- **The clock is the drama.** A heat sink filling, a jammer's power draw starving the engine, a decoy's battery: each is a number counting down that the GM and the dice can use. Danger is drama, never forbidden.
+- **Programs use them too.** A pirate that runs quiet on a lane, a patrol that pings on its beat, a smuggler under false colours are pack programs choosing switches, with no new rule.
+
+One knock-on: FT question 11 said every fictional advance must state its light. A cloak is that rule's main customer, and limit 10 already says a cloak "must say where the light goes".
 
 ### 17.6 Packages
 
@@ -493,12 +532,16 @@ No sensor operator mini-game, no electronic warfare, no jamming, no decoys in 4.
 |---|---|---|---|
 | RK13 | The Flow view (rows of from, to, amount, kind) and the Power card on it, with the Nowhere band and the five readings | chart room thread, with the renderer for the ship card | RK9 |
 | RK14 | Default sensor fit per tech level; signatures from the ledger; the three rungs written as grants on events; the last-seen ring | light thread (`sse-sense`) and kernel thread (grants), on SV1 | RK9, RK11, SV1 |
-| RK15 | The three marks on the chart, the Off, Simple, Full switch, "Why?" both ways, Ping, the Run desk's contact list | chart room thread and the travel screens thread | RK14, SV2 |
+| RK15 | The three marks on the chart, the Off, Simple, Full switch, "Why?" both ways, the passive pack and a switch per active sensor, the Run desk's contact list | chart room thread and the travel screens thread | RK14, SV2 |
+| RK16 | Counters (section 17.7): run quiet, cold face, heat sink clock, jamming as added noise with its hatched patch, decoys, false colours through "Told instead", cloak as a fictional advance; the switch row on the ship | light thread (`sse-sense` noise and signatures), chart room thread (switches, patch), Traveller thread for its pack's ECM | RK14, RK15 |
 
-## 18. Questions for Alex (23 Nov, late)
+## 18. Questions 18 to 25 (all answered yes, 23 Nov 22:08; question 21 so defaults to Simple)
 
 18. **A general Flow view**, with the Power card as its first use, that a world's energy budget, an element's journey and a habitat's air can use later. Recommended: yes. Build the Power card first and let the others follow when their owners want them.
 19. **Broken books drawn as a dashed band from "Nowhere"**, with one sentence saying how much. Recommended: yes; it is the clearest honesty mark we have.
 20. **Fog of war is the secrets ladder climbed by physics**: three marks on the ordinary chart (ink, dotted, faded with a ring), no sensor screen. Recommended: yes.
 21. **One campaign switch, Off, Simple, Full, defaulting to Simple** in any campaign that has ships, with a free default sensor fit per tech level. Recommended: yes. Say if you would rather it default to Off so nothing changes for a GM who never asked for it.
-22. **Ping as a single order with its cost stated**, and no jamming, decoys or operator game in 4.0. Recommended: yes.
+22. *Answered by Alex, 23 Nov 21:46:* passive sensors are a pack that is always on and shows everything in range; each active sensor is its own switch; ECM and cloaking are needed as counters. Written into 17.2 and 17.7.
+23. **Counters are a short list of real moves** (run quiet, cold face, heat sink, hide in the glare, jam, dazzle, decoy, false colours) **plus cloak as a fictional advance**, each a switch or an order with its cost stated, and no operator game. Recommended: yes.
+24. **Jamming drops contacts one mark inside a hatched patch and shows the jammer as a bearing**, so it hides what you are and not that you are there. Recommended: yes; it is what real jamming does and it is easy to read.
+25. **A cloak must say where its light and heat go**, like every fictional advance, and "nowhere" is allowed but marked. Recommended: yes.

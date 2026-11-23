@@ -82,13 +82,46 @@ export function air(f: AirFacts): Air | null {
   return f.optics ?? null;
 }
 
+/**
+ * A world's surface pressure in pascals: a V3 import's `body.surface_pressure`, else the kernel's and the catalogue's
+ * `atmosphere.surface_pressure` (base-sol). Zero when neither is known.
+ */
+export function surfacePressureOf(facts: Record<string, Json> | undefined): number {
+  for (const k of ["body.surface_pressure", "atmosphere.surface_pressure"]) {
+    const p = facts?.[k];
+    if (typeof p === "number" && p > 0) return p;
+  }
+  return 0;
+}
+
+/** The kernel's gas ids back to the names compositions use (n2 → N2). */
+const GAS_NAMES: Readonly<Record<string, string>> = Object.fromEntries(Object.entries(KERNEL_GASES).map(([name, id]) => [id, name]));
+
+/**
+ * A world's gas mix by mole fraction: a V3 import's `v3.atmosphere.composition`, else an `atmosphere.composition`
+ * fact, else the main gas alone (`atmosphere.main`, as base-sol and the kernel give it) standing for the whole mix
+ * until the data sheet carries a fuller one (fudge register). Null when nothing is known or the main gas is "none".
+ */
+export function gasMixOf(facts: Record<string, Json> | undefined): Record<string, number> | null {
+  const v3 = (facts?.["v3.atmosphere"] as { composition?: Record<string, number> } | undefined)?.composition;
+  if (v3 && Object.keys(v3).length) return v3;
+  const own = facts?.["atmosphere.composition"];
+  if (own && typeof own === "object" && !Array.isArray(own) && Object.keys(own).length) {
+    const out: Record<string, number> = {};
+    for (const [g, x] of Object.entries(own)) if (typeof x === "number") out[GAS_NAMES[g.toLowerCase()] ?? g] = x;
+    if (Object.keys(out).length) return out;
+  }
+  const main = facts?.["atmosphere.main"];
+  if (typeof main !== "string" || !main || main === "none") return null;
+  return { [GAS_NAMES[main.toLowerCase()] ?? main]: 1 };
+}
+
 /** The air facts of one body from `resolved_system` facts and its surface record, or null when it has no air. */
 export function airFactsOf(facts: Record<string, Json> | undefined, surface: { gravity_m_s2?: number; t_surface_now_k?: number; reference_radius_m?: number } | undefined): AirFacts | null {
   if (!facts) return null;
-  const p = facts["body.surface_pressure"];
-  if (typeof p !== "number" || !(p > 0)) return null;
-  const atm = facts["v3.atmosphere"] as { composition?: Record<string, number> } | undefined;
-  const comp = atm?.composition && Object.keys(atm.composition).length ? atm.composition : null;
+  const p = surfacePressureOf(facts);
+  if (!(p > 0)) return null;
+  const comp = gasMixOf(facts);
   const g = surface?.gravity_m_s2;
   const t = surface?.t_surface_now_k;
   const r = surface?.reference_radius_m ?? (typeof facts["body.radius"] === "number" ? (facts["body.radius"] as number) : undefined);
