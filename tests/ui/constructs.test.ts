@@ -5,7 +5,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { byKind, constructsIn, kindOf, kindWords, templateOf, type ConstructTemplate } from "../../packages/ui-contract/src/constructs.ts";
+import { byKind, constructsIn, kindOf, kindWords, shipLog, templateOf, writerWords, type ConstructTemplate, type RecordRead } from "../../packages/ui-contract/src/constructs.ts";
+import type { HistoryEvent } from "../../packages/ui-contract/src/session.ts";
 import { railOf, RAIL_MAX } from "../../packages/ui-contract/src/screen.ts";
 import { stackProvides } from "../../packages/ui-contract/src/sector.ts";
 import { fieldWords, valueWords } from "../../packages/views/constructs/src/words.ts";
@@ -63,4 +64,42 @@ test("Ships and stations is on the rail only while a pack gives templates, and t
   assert.ok(at("system", [traveller]).includes("constructs"));
   assert.ok(at("world", [traveller]).includes("constructs"));
   for (const s of ["system", "world"] as const) assert.ok(at(s, [traveller]).length <= RAIL_MAX, `${s}: ${at(s, [traveller]).join(", ")}`);
+});
+
+// V3 gap 16: the log is the history and the record, read back. The record and
+// history below are the kernel's replies for a trader made, renamed, a crew
+// member lost, a note, then scrapped (sse-kernel, 23 Nov).
+test("the ship's log reads the history and the record, oldest first, with who and why", () => {
+  const history: HistoryEvent[] = [
+    { id: "a", kind: "template.create", at_yr: 0, evidence: "authored", subject: ["u:trav/sys:0/ship:1"] },
+    { id: "b", kind: "authored.set", at_yr: 100, evidence: "authored", subject: ["u:trav/sys:0/ship:1"] },
+    { id: "c", kind: "template.retire", at_yr: 400, evidence: "authored", subject: ["u:trav/sys:0/ship:1"] },
+  ];
+  const record: RecordRead = {
+    address: "u:trav/sys:0/ship:1",
+    actors: [],
+    notes: [{ at_s: 300, by: "gm", id: "n", text: "refuelled at Halt" }],
+    kept: [
+      { kind: "construct.crew", value: 3, history: [
+        { at_s: 0, event: "e1", reason: "made from template trader", value: 6, writer: "template.trader" },
+        { at_s: 200, delta: -3, event: "e2", reason: "one lost on Halt", value: 3, writer: "gm" },
+      ] },
+      { kind: "ship.readiness", value: 0, history: [
+        { at_s: 0, event: "e3", reason: "made from template trader", value: 1, writer: "template.trader" },
+        { at_s: 350, event: "e4", reason: "derelict", value: 0, writer: "effect.traveller.status.derelict" },
+      ] },
+    ],
+  };
+  const log = shipLog(history, record, (s) => s, (k) => fieldWords(k).label);
+  assert.deepEqual(log.map((e) => e.what), ["made", "edited", "kept", "note", "kept", "retired"]);
+  const crew = log[2]!;
+  assert.equal(crew.text, `${fieldWords("construct.crew").label}: 3 (-3)`);
+  assert.equal(crew.who, "the GM");
+  assert.equal(crew.why, "one lost on Halt");
+  // A pack trigger is named as the rule it is; the template's opening values are part of "Made".
+  assert.equal(log[4]!.who, "rule traveller.status.derelict");
+  assert.ok(!log.some((e) => e.who.startsWith("template")));
+  assert.equal(writerWords("template.far_trader"), "template far trader");
+  // No record (a seat): the history alone.
+  assert.equal(shipLog(history, null, (s) => s).length, 3);
 });
