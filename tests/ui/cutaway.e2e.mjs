@@ -57,6 +57,14 @@ try {
     // The kernel's physics notes for the picked line.
     assert.match(await cut.getByLabel("Physics of Sub-ice brine ocean").innerText(), /freezes at 265\.1 K.*liquid/);
     await shot(gm, `cutaway-${name}`);
+    // Scale is the view controls' (one set of controls, Alex 23 Nov): Readable spreads depth on a log scale, Real draws it to scale.
+    assert.equal(await cut.getAttribute("data-scale"), "log");
+    const scaleBar = gm.getByRole("group", { name: "Scale" });
+    await scaleBar.getByRole("button", { name: "Real", exact: true }).click();
+    await gm.waitForSelector('[data-cutaway][data-scale="true"]');
+    assert.match(await cut.locator("figcaption").innerText(), /to scale/);
+    await scaleBar.getByRole("button", { name: "Readable", exact: true }).click();
+    await gm.waitForSelector('[data-cutaway][data-scale="log"]');
 
     // A body with no stack says so.
     await go(gm, "system");

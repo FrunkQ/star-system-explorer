@@ -10,8 +10,9 @@
   no stack, no picture.
 -->
 <script lang="ts">
-  import { cutRadius, formatKm, kindPhrase, regionCounts, type Json, type LadderLine, type WorldStackRead, type SystemScene, type ViewContext, type WorldShell, type WorldStack } from "../../../ui-contract/src/index.ts";
+  import { cutRadius, formatKm, viewOptions, DEFAULT_VIEW, kindPhrase, regionCounts, type Json, type LadderLine, type WorldStackRead, type SystemScene, type ViewContext, type WorldShell, type WorldStack } from "../../../ui-contract/src/index.ts";
   import { Card } from "../../../chart-grammar/src/index.ts";
+  import { CUTAWAY_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -46,7 +47,8 @@
     })();
   });
   const w = $derived<WorldStack | undefined>(read?.stack);
-  const scale = $derived(params.scale === "true" ? "true" : "log");
+  // Scale is the view controls' (one set of controls, Alex 23 Nov): Real draws depth to scale, Readable on a log scale.
+  const scale = $derived(viewOptions(CUTAWAY_CONTROLS, ws.view ?? DEFAULT_VIEW).shown.scale === "real" ? "true" : "log");
   const wedge = $derived(Math.min(360, Math.max(60, Number(params.wedge_deg ?? 140))));
   const lines = $derived<LadderLine[]>(read?.ladder ?? []);
   // physics_notes() lines start "<key>: ".
