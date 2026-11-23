@@ -430,7 +430,7 @@ pub fn belt_reach_radii(b: &NavBody, rs: &crate::RadiationSettings) -> Option<f6
 }
 
 /// Earth's gravitational parameter, m³ s⁻² (IERS 2010).
-const GM_EARTH: f64 = 3.986_004_418e14;
+const GM_EARTH: f64 = sse_core::sheet::GM_EARTH;
 
 /// The belt dose rate relative to Jupiter's, read as the body's equatorial
 /// surface field over Jupiter's (rough: the trapped flux a field can hold

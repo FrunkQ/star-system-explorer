@@ -22,7 +22,7 @@ use sse_core::Seed;
 use std::collections::BTreeMap;
 
 const YR_PER_MYR: f64 = 1.0e6;
-const G_PER_MOL_C: f64 = 12.011;
+const G_PER_MOL_C: f64 = sse_core::sheet::atomic_weight::C;
 
 /// Settings (`provides.other.life_feedback`), per world.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

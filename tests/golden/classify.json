@@ -1,5 +1,5 @@
 {
-  "atlas": "834746585375598c6feb09e178a91326fcf0f889a2a2430975c45ff30f54830b",
+  "atlas": "c7839043a118365e955f2237f10c540628c471b36419567f0f15a3e105de64f7",
   "base_atlas": "def961caa126631b4f60931f6a164a467f4e841890fbf908c63394d3c838b221",
   "base_solar_system": [
     [
@@ -545,19 +545,19 @@
       "03e53eba9e8509042de85fb95803f73768eab69c8a0a466955032536e3c70d44"
     ]
   ],
-  "chronicle_head": "67bacc2e51f79aee7c26171300a7540a22a822cb13376fc6033c3a1d029432e2",
+  "chronicle_head": "86878d5ff7eee6e0d71e0ceb3c3abf76bceee88bad4f0209dcf596ff1e6d104d",
   "relabels": [
     [
       31557600000000000,
       "planet/earth-analogue",
       "planet/silicate",
-      "e58a42b850fe51b3b9cd4cca9e83da70672f42e6f33431196b065d882527ba4a"
+      "d5525306b23a281ed68fe432258ab81e6acdd8d4a128dbbb1bc0294a7eb7dedd"
     ],
     [
       94672800000000000,
       "planet/silicate",
       "planet/lava",
-      "bf23c1307010f7463ce87a4f8efe35dc357fe1e905e1420e7c2d6996af3dbb2a"
+      "58e59ff467b661de7989a1dbcd52481f5a60bc3c566b2770e9ae23a08d3b32c3"
     ]
   ],
   "solar_system": [

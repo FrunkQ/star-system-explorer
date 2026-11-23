@@ -12,6 +12,8 @@ python3 scripts/build-base-sol.py --check
 python3 scripts/build-base-names.py --check
 # The class atlas reads the sheet and base-sol (its builder is what the MP22 audit reads).
 python3 scripts/build-base-atlas.py --check
+# The Traveller pack reads the sheet too (its builder is what the MP22 audit reads).
+python3 scripts/build-traveller-pack.py --check
 # MP22: no new typed constant or material number, and the ledger only shrinks.
 python3 scripts/test-audit-matter.py >/dev/null
 if git rev-parse -q --verify origin/main >/dev/null; then

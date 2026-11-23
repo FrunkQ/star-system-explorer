@@ -6,6 +6,7 @@ import type { Workspace } from "./view.ts";
 import type { DeriveRef, Derived, IntentResult, Probe, ViewSession } from "./session.ts";
 import type { SystemScene } from "./scene.ts";
 import { checkRequest, packFor, type ChangeRequest, type PackDoc } from "./physics.ts";
+import { constant } from "./sheet.ts";
 
 /** The id of the GM's open draft for a flow. */
 export const draftId = (flow: string) => `gm-draft.${flow}`;
@@ -52,7 +53,7 @@ export interface MovedTest {
   after: number;
 }
 
-const UNIT_SI: Record<string, number> = { one: 1, k: 1, w: 1, w_m2: 1, m_s2: 1, km: 1e3, km_s: 1e3, g_cm3: 1e3, day: 86400, gyr: 3.15576e16, l_sun: 3.828e26, r_sun: 6.957e8 };
+const UNIT_SI: Record<string, number> = { one: 1, k: 1, w: 1, w_m2: 1, m_s2: 1, km: 1e3, km_s: 1e3, g_cm3: 1e3, day: constant("day"), gyr: 1e9 * constant("yr_julian"), l_sun: constant("L_sun"), r_sun: constant("R_sun") };
 
 type FlowTest = { name: string; inputs: Record<string, { value: number; unit?: string }>; expect: Record<string, { value: number; unit?: string; tol: number }> };
 

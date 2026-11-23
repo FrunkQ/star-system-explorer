@@ -14,7 +14,7 @@ use sse_core::draw::{Draws, Seed, Stream};
 use sse_core::math as m;
 use sse_surface::Body;
 
-const M_EARTH_MSUN: f64 = 3.003_489_6e-6;
+const M_EARTH_MSUN: f64 = sse_core::sheet::GM_EARTH / sse_core::sheet::GM_SUN;
 const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 const AU_M: f64 = sse_core::sheet::AU;
 

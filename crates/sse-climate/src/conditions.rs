@@ -11,7 +11,7 @@ use sse_core::math as m;
 use sse_core::Address;
 use std::collections::BTreeMap;
 
-pub const R_GAS: f64 = 8.314462618;
+pub const R_GAS: f64 = sse_core::sheet::R_GAS;
 /// Earth's air column, kg/m² (1.01325 bar over 9.80665 m/s²).
 pub const EARTH_COLUMN_KG_M2: f64 = sse_core::sheet::ATM / sse_core::sheet::G0;
 

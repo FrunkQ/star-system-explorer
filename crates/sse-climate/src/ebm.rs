@@ -30,7 +30,7 @@ use crate::settings::{ClimateSettings, Substance};
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
-const EARTH_OMEGA: f64 = 2.0 * m::PI / (23.934 * 3600.0);
+const EARTH_OMEGA: f64 = sse_core::sheet::OMEGA_EARTH;
 
 /// One season's (or the year's) zonal state, band by band, south to north.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -255,7 +255,7 @@ pub(crate) fn steady(cs: &ClimateSettings, c: &Conditions, q: &[f64]) -> (Vec<f6
 /// (thermal inertia × sqrt(year / π)) and the air column above.
 pub fn heat_capacity(cs: &ClimateSettings, c: &Conditions) -> f64 {
     let h = &cs.heat_capacity;
-    let year_s = (c.year_days * 86_400.0).max(1.0);
+    let year_s = (c.year_days * sse_core::sheet::DAY).max(1.0);
     let cp_air = 3.5 * R_GAS / c.mean_molar_kg.max(1e-6);
     let air = cp_air * c.column_kg_m2().max(0.0);
     if !c.solid_surface {
@@ -325,7 +325,7 @@ pub fn two_columns(cs: &ClimateSettings, c: &Conditions) -> bool {
 /// with the air column above it.
 pub fn column_capacities(cs: &ClimateSettings, c: &Conditions) -> (f64, f64) {
     let h = &cs.heat_capacity;
-    let year_s = (c.year_days * 86_400.0).max(1.0);
+    let year_s = (c.year_days * sse_core::sheet::DAY).max(1.0);
     let cp_air = 3.5 * R_GAS / c.mean_molar_kg.max(1e-6);
     let air = cp_air * c.column_kg_m2().max(0.0);
     let skin = h.ground_inertia_si * m::sqrt(year_s / m::PI);
@@ -409,7 +409,7 @@ fn cycle_two(cs: &ClimateSettings, c: &Conditions) -> Vec<Season> {
     let (mut tl, mut ts) = (t0.clone(), t0.clone());
     let t_bar = c.t_surface_k;
     let (cap_l, cap_s) = column_capacities(cs, c);
-    let dt = (c.year_days * 86_400.0).max(1.0) / steps as f64;
+    let dt = (c.year_days * sse_core::sheet::DAY).max(1.0) / steps as f64;
     let (kl, ks) = (cap_l / dt, cap_s / dt);
     let b = g.b;
     // The block rows, fixed over the year: [land; sea] × [T_land, T_sea].
@@ -639,7 +639,7 @@ pub fn cycle(cs: &ClimateSettings, c: &Conditions) -> Vec<Season> {
     let (mut t, _) = steady(cs, c, &q_year);
     let t_bar = c.t_surface_k;
     let cap = heat_capacity(cs, c);
-    let dt = (c.year_days * 86_400.0).max(1.0) / steps as f64;
+    let dt = (c.year_days * sse_core::sheet::DAY).max(1.0) / steps as f64;
     let k = cap / dt;
     let di: Vec<f64> = (0..n).map(|j| k + g.b + g.lo[j] + g.up[j]).collect();
     // A from the steady start, then from each year's own mean absorbed light.

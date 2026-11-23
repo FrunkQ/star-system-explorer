@@ -66,6 +66,78 @@ def build():
     for rid, name in names:
         out.append(f"    ({json.dumps(rid)}, {name}),")
     out.append("];")
+    ref = pack["provides"]["reference"]
+    # Standard atomic weights, g/mol, by symbol (the elements with no stable
+    # isotope have none).
+    weights = {}
+    out += ["", "/// Standard atomic weights, g/mol, by element (IUPAC, as on the sheet).", "pub mod atomic_weight {"]
+    for e in ref["elements"]:
+        w = e.get("atomic_weight")
+        if w is None:
+            continue
+        weights[e["id"]] = w["v"]
+        out.append(f"    /// {e['name']} ({w['src']}).")
+        out.append(f"    pub const {ident(e['symbol'])}: f64 = {lit(w['v'])};")
+    out.append("}")
+    # Molar masses, kg/mol, worked out from each substance's formula exactly
+    # as the reader does (elements in id order, sum, then / 1000).
+    masses = {}
+    for i in ref.get("isotopes", []):
+        if isinstance(i.get("mass"), dict):
+            masses[i["id"]] = i["mass"]["v"]
+    out += ["", "/// Molar masses, kg/mol, worked out from each substance's formula (as the reader does).", "pub mod molar_mass {"]
+    for sub in ref["substances"]:
+        f = sub.get("formula") or {}
+        total, ok = 0.0, bool(f)
+        for el in sorted(f):
+            w = weights.get(el, masses.get(el))
+            if w is None:
+                ok = False
+                break
+            total += f[el] * w
+        if ok:
+            out.append(f"    /// {sub['id']}.")
+            out.append(f"    pub const {ident(sub['id'])}: f64 = {lit(total / 1000.0)};")
+    out.append("}")
+    # A few phase properties every crate reaches for, per substance that has
+    # them (the reader holds the rest).
+    for prop, doc in [("triple_point_k", "Triple point temperature, K"), ("triple_point_pa", "Triple point pressure, Pa"),
+                      ("density_solid", "Density of the solid at its reference state, kg/m3"),
+                      ("density_liquid", "Density of the liquid at its reference state, kg/m3"),
+                      ("latent_vaporisation", "Latent heat of vaporisation, J/kg")]:
+        rows = [(sub["id"], sub["phases"][prop]) for sub in ref["substances"]
+                if isinstance(sub.get("phases", {}).get(prop), dict) and isinstance(sub["phases"][prop].get("v"), (int, float))]
+        out += ["", f"/// {doc}, by substance (the sheet's `phases.{prop}`).", f"pub mod {prop} {{"]
+        for sid, v in rows:
+            out.append(f"    /// {sid} ({v.get('src', '')}).")
+            out.append(f"    pub const {ident(sid)}: f64 = {lit(v['v'])};")
+        out.append("}")
+    # The conductivity fit of the solid (k = a / T and the like): its coefficients.
+    out += ["", "/// Thermal conductivity fits of the solid, by substance (the sheet's `thermal.conductivity_solid`):", "/// the coefficients, in the order the fit names them.", "pub mod conductivity_solid {"]
+    for sub in ref["substances"]:
+        fit = (sub.get("thermal") or {}).get("conductivity_solid")
+        if isinstance(fit, dict) and fit.get("coeffs"):
+            co = ", ".join(lit(c) for c in fit["coeffs"])
+            out.append(f"    /// {sub['id']}: {fit['fit']} ({fit.get('unit', '')}; {fit.get('src', '')}).")
+            out.append(f"    pub const {ident(sub['id'])}: [f64; {len(fit['coeffs'])}] = [{co}];")
+    out.append("}")
+    # Mixture properties, by mixture id.
+    for prop, doc in [("density", "Density, kg/m3"), ("yield_strength", "Yield strength, Pa")]:
+        out += ["", f"/// {doc}, by mixture (the sheet's mixtures).", f"pub mod mixture_{prop} {{"]
+        for mx in ref["mixtures"]:
+            v = mx.get(prop)
+            if isinstance(v, dict) and isinstance(v.get("v"), (int, float)):
+                out.append(f"    /// {mx['id']} ({v.get('src', '')}).")
+                out.append(f"    pub const {ident(mx['id'])}: f64 = {lit(v['v'])};")
+        out.append("}")
+    # Unit factors to SI, by unit id.
+    out += ["", "/// Each unit's factor to SI, by unit id (the sheet's units table).", "pub mod unit {"]
+    for u in ref["units"]:
+        fv = (u.get("factor") or {}).get("v")
+        if isinstance(fv, (int, float)):
+            out.append(f"    /// {u['name']}.")
+            out.append(f"    pub const {ident(u['id'])}: f64 = {lit(fv)};")
+    out.append("}")
     return "\n".join(out) + "\n"
 
 

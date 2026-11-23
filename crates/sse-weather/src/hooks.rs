@@ -95,7 +95,7 @@ pub fn column(
     let report =
         crate::formations::report(&b.formations, &cell, c, &systems, date.day, b.provenance());
     let bounds = level_bounds(c, &b.settings);
-    let cp = 3.5 * 8.314462618 / c.mean_molar_kg;
+    let cp = 3.5 * sse_core::sheet::R_GAS / c.mean_molar_kg;
     let lapse = c.gravity_m_s2 / cp;
     let mut levels = vec![];
     if p.circ.regime != "airless" {

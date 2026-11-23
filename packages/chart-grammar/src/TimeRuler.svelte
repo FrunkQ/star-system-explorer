@@ -13,6 +13,7 @@
 <script lang="ts">
   import { fraction, keyStep, labelRows, type RulerEvent } from "./ruler.ts";
   import { motionMs } from "./motion.ts";
+  import { constant } from "../../ui-contract/src/sheet.ts";
   import { around, between, calendarTicks, defaultCalendar, spanWords, steps, timeWords, zoom, type Calendar, type RulerWindow } from "./calendar.ts";
 
   let {
@@ -145,13 +146,13 @@
   });
 
   // "Show": windows around the time being viewed.
-  const DAY = $derived(cal.day_s / 31_557_600);
+  const DAY = $derived(cal.day_s / constant("yr_julian"));
   const SHOWS = $derived([
     { id: "all", label: "Whole history", span: Infinity },
     { id: "myr", label: "10 million years", span: 1e7 },
     { id: "kyr", label: "1,000 years", span: 1e3 },
-    { id: "decade", label: "10 years", span: (10 * cal.year_days * cal.day_s) / 31_557_600 },
-    { id: "year", label: "A year", span: (cal.year_days * cal.day_s) / 31_557_600 },
+    { id: "decade", label: "10 years", span: (10 * cal.year_days * cal.day_s) / constant("yr_julian") },
+    { id: "year", label: "A year", span: (cal.year_days * cal.day_s) / constant("yr_julian") },
     { id: "month", label: "A month", span: 30 * DAY },
     { id: "week", label: "A week", span: 7 * DAY },
     { id: "day", label: "A day", span: DAY },

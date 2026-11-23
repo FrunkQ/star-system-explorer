@@ -524,8 +524,8 @@ impl Importer {
     /// Earth's mean, 3688 m), `body.oceans` whether there is any, and
     /// `body.surface_pressure` the atmosphere's surface pressure in Pa.
     fn hydrosphere(&mut self, a: &Address, n: &Map<String, Json>) {
-        const EARTH_OCEANS_M3: f64 = 1.335e18;
-        const EARTH_MEAN_DEPTH_M: f64 = 3688.0;
+        const EARTH_OCEANS_M3: f64 = sse_core::sheet::V_OCEAN_EARTH;
+        const EARTH_MEAN_DEPTH_M: f64 = sse_core::sheet::DEPTH_OCEAN_EARTH;
         if let Some(p) = n
             .get("atmosphere")
             .and_then(|x| x.get("pressure_bar"))

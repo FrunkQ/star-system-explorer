@@ -26,7 +26,7 @@ use sse_light::{LightDescription, Part};
 mod tests;
 
 pub const M_SUN: f64 = GM_SUN / G;
-const KEV_M: f64 = 1.239_84e-9;
+const KEV_M: f64 = sse_core::sheet::H * sse_core::sheet::C / (1e3 * sse_core::sheet::E);
 
 const PALL81: &str = "Pallavicini, R. et al. 1981, Relations among stellar X-ray emission observed from Einstein, stellar rotation and bolometric luminosity, ApJ 248, 279: hot (O and B) stars give L_X ≈ 10⁻⁷ L_bol from their winds, independent of rotation. doi:10.1086/159152";
 const SKUM72: &str = "Skumanich, A. 1972, Time scales for Ca II emission decay, rotational braking, and lithium depletion, ApJ 171, 565: spin falls as the square root of age. doi:10.1086/151310";

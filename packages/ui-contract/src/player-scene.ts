@@ -5,6 +5,7 @@
 // Views only turn these facts into words and marks through a vocabulary
 // layer (pack data); they never compute physics.
 import type { Json } from "./json.ts";
+import { numberOf, type SheetRef } from "./sheet.ts";
 
 export interface PlayerFact {
   field: string;
@@ -36,8 +37,8 @@ export interface PlayerScene {
 /** How one field reads in one vocabulary layer (H8.3 vocab): label, unit, scale, digits, sentence. */
 export interface FieldWords {
   label: string;
-  /** SI value is divided by this before display. */
-  scale?: number;
+  /** SI value is divided by this before display (a number, or a sheet reference such as `{"sheet": "constants/au"}`). */
+  scale?: number | SheetRef;
   unit?: string;
   digits?: number;
   /** Shown as a percentage of 1. */
@@ -89,7 +90,7 @@ export function describeFact(vocab: Vocab, f: PlayerFact): FactText {
   const w = wordsFor(vocab, f.field);
   const label = w.label;
   const num = (v: number) => {
-    const x = (w.percent ? v * 100 : v) / (w.scale ?? 1);
+    const x = (w.percent ? v * 100 : v) / numberOf(w.scale ?? 1);
     return { x, t: sigText(x, w.digits ?? 3) };
   };
   const unit = w.percent ? " %" : w.unit ? ` ${w.unit}` : "";

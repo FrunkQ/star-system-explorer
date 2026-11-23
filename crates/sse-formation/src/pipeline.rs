@@ -27,7 +27,7 @@ pub const PIPELINE_VERSION: &str = "formation-pipeline-v1";
 pub const HEAT_FLOW: &str = "sse.base.planet-heat";
 
 const BASE_PHYSICS: &str = include_str!("../../../packs/base-physics/pack.json");
-const GYR_S: f64 = 1e9 * 365.25 * 86_400.0;
+const GYR_S: f64 = 1e9 * sse_core::sheet::YR_JULIAN;
 
 /// Which block grows the planets (design section 4).
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]

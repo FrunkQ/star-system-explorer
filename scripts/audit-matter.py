@@ -41,6 +41,7 @@ unrelated place is still listed, and the table says which quantity it
 matched so a reader can judge. Deterministic: files and hits are sorted.
 """
 import json
+import math
 import os
 import re
 import sys
@@ -60,6 +61,15 @@ HOME = os.path.join("crates", "sse-reference")
 # worked-out numbers are not copies. Each builder has a --check in check.sh.
 SHEET_FED = {
     os.path.join("packs", "base-atlas", "pack.json"): os.path.join("scripts", "build-base-atlas.py"),
+    os.path.join("packs", "traveller", "pack.json"): os.path.join("scripts", "build-traveller-pack.py"),
+}
+# Sample documents whose numbers are a made-up or foreign record, not values
+# the app computes with: like a fixtures folder, they are not read.
+FIXTURE_FILES = {
+    # A made-up sample scene (every fact's source is "fixture").
+    os.path.join("packages", "shell", "src", "documents", "kestrel.scene.json"),
+    # A sample SSE 3 save, in SSE 3's own format and with its own figures.
+    os.path.join("packages", "shell", "src", "documents", "sample-sol.v3.json"),
 }
 SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"), os.path.join("packs", "base-sol"), os.path.join("crates", "sse-core", "src", "sheet.rs"))
 
@@ -213,6 +223,8 @@ def _tracked():
 def walk():
     tracked = _tracked()
     for path in _walk_all():
+        if path in FIXTURE_FILES:
+            continue
         if path in SHEET_FED:
             yield SHEET_FED[path]
         elif tracked is None or path.replace(os.sep, "/") in tracked:
@@ -286,6 +298,12 @@ def json_props(path):
     return out
 
 
+# "// not-sheet: <why>" (or "# not-sheet: <why>") on a line: its numbers are
+# not copies of a sheet value, and the reason is required.
+WAIVER = re.compile(r"(?://|#)\s*not-sheet:\s*(\S.*)$")
+waived = []
+
+
 def scan():
     consts, props, rust_consts = [], [], []
     for path in walk():
@@ -306,6 +324,11 @@ def scan():
                 elif json_tests is not None and re.match(re.escape(json_tests) + r"\],?\s*$", line):
                     json_tests = None
             if is_comment(line, ext):
+                continue
+            if WAIVER.search(line):
+                # The line says why its number is not a sheet value (a fitted
+                # coefficient that happens to look like one, a model setting).
+                waived.append({"file": path, "line": n, "why": WAIVER.search(line).group(1).strip()})
                 continue
             code = line.split("//")[0] if ext in (".rs", ".ts", ".mjs", ".svelte") else line.split("#")[0] if ext == ".py" else line
             # Numbers inside strings are prose (paper volumes, page numbers,
@@ -487,7 +510,7 @@ NOT_MATTER = [
     ("packs/base-climate/", r"/(delta_h|latent_scale_w_m2|frost_emissivity|lowest_frost_k|t_ice_k|"
      r"super_rotation_critical|latent_share|ddf_ice_mm)$", "a climate model setting"),
     ("packs/base-surface/", r"/(ice_dry_k|land_ice_k|shadow_ice_max_bar|ice_min_km2|impactor_density|"
-     r"ice_giant_mass_earth|wind_ice_m_s)$", "a surface model setting"),
+     r"ice_giant_mass_earth|wind_ice_m_s|cover/ice_albedo|cover/sea_ice_k)$", "a surface model setting"),
     ("packs/base-weather/", r"/(equator_ice|equatorial_bands_ice|ice_giant_mass_earth|wind_ice_m_s|"
      r"strength_u|strength_m_s)$", "a weather model setting"),
     ("packs/base-weather/", r"/impact/density_kg_m3$", "an assumed impactor, a model setting"),
@@ -555,11 +578,23 @@ def _is_test(path):
     return "/tests/" in path or path.endswith("tests.rs") or "/test/" in path
 
 
+def _power_of_ten(v):
+    """An SI prefix (1e3, 1e9, 1e-6...): a change of scale, not a typed value."""
+    if v <= 0:
+        return False
+    e = round(math.log10(v))
+    return abs(v - 10.0 ** e) <= 1e-12 * v
+
+
 def _has_typed_number(expr):
     code = STR_RE.sub('""', expr)
+    # A power of ten beside a sheet value is a change of scale (1e9 years), and
+    # a small whole number beside one is a formula's own (3 H^2 / 8 pi G).
+    scaled = "sheet::" in code
     for m in NUM_RE.finditer(code):
         v = to_float(m.group(0))
-        if v is not None and abs(v) not in (0.0, 1.0, 2.0):
+        formula = scaled and (_power_of_ten(abs(v)) or (abs(v) <= 12.0 and v == int(v))) if v is not None else False
+        if v is not None and abs(v) not in (0.0, 1.0, 2.0) and not formula:
             return True
     return False
 

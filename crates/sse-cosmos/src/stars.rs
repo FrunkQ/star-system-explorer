@@ -255,8 +255,11 @@ pub struct Stars<'a> {
     pub galaxy: Address,
 }
 
-const KMS_PC_MYR: f64 = 1.022_712;
-const G_PC3: f64 = 4.498_502e-3;
+const KMS_PC_MYR: f64 = 1e3 * 1e6 * sse_core::sheet::YR_JULIAN / sse_core::sheet::PC;
+const G_PC3: f64 = sse_core::sheet::GM_SUN
+    * (1e6 * sse_core::sheet::YR_JULIAN)
+    * (1e6 * sse_core::sheet::YR_JULIAN)
+    / (sse_core::sheet::PC * sse_core::sheet::PC * sse_core::sheet::PC);
 
 /// A birth time from the cumulative star formation and a unit draw.
 pub(crate) fn birth_from(cdf: &[(f64, f64)], acc: f64, u: f64, t_now_gyr: f64) -> f64 {

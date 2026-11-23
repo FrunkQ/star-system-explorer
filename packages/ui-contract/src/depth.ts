@@ -5,6 +5,7 @@
  * one says. Presentation only: it never changes data.
  */
 import type { SceneFact, SceneSubject } from "./scene.ts";
+import { constant } from "./sheet.ts";
 
 export type Depth = "curious" | "science" | "engine";
 
@@ -63,7 +64,7 @@ export function curiousDisplay(f: Pick<SceneFact, "display" | "unit">): string {
   if (!Number.isFinite(n)) return f.display;
   const unit = (f.unit ?? m[2] ?? "").trim();
   if (unit === "K") {
-    const c = n - 273.15;
+    const c = n - constant("T0C");
     if (c >= -150 && c <= 250) return `about ${Math.round(c)} °C`;
     return `about ${roughly(n)} K`;
   }

@@ -28,17 +28,24 @@ pub enum Pattern {
     },
 }
 
+fn is_zero(v: &f64) -> bool {
+    *v == 0.0
+}
+
 /// How long the situation lasts, in seconds.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 #[serde(tag = "from", rename_all = "kebab-case")]
 pub enum Persistence {
+    /// A set duration: `s` seconds plus `yr` Julian years (the sheet's
+    /// `yr_julian`), so a sifter never types a year in seconds.
     Fixed {
+        #[serde(default)]
         s: f64,
+        #[serde(default, skip_serializing_if = "is_zero")]
+        yr: f64,
     },
     /// A fact holding a duration in seconds.
-    Field {
-        field: String,
-    },
+    Field { field: String },
     /// Until the subject's life line ends (`life.ends_s` - now).
     LifeRemaining,
 }
@@ -184,7 +191,7 @@ fn subject_of(w: &World, a: &Address) -> Subject {
 
 fn significance(spec: &SignificanceSpec, w: &World, subj: &Subject, a: &Address) -> Significance {
     let persistence = match &spec.persistence {
-        Persistence::Fixed { s } => *s,
+        Persistence::Fixed { s, yr } => *s + *yr * sse_core::sheet::YR_JULIAN,
         Persistence::Field { field } => subj.num(field).unwrap_or(0.0),
         Persistence::LifeRemaining => subj
             .num("life.ends_s")

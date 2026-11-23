@@ -14,7 +14,14 @@ from pathlib import Path
 SRC = Path(sys.argv[1])
 OUT = Path(__file__).resolve().parent.parent / "packs/sse3-classic/pack.json"
 TOL = 0.15
-ME, RE, AU, GYR = 5.972e24, 6.371e6, 1.495978707e11, 3.15576e16  # SSE 3's own constants (src/lib/constants.ts)
+# SSE 3's own constants (src/lib/constants.ts) were Earth 5.972e24 kg and
+# 6.371e6 m, the au and the Julian Gyr; the pack divides by the master data
+# sheet's instead (MP22), written as sheet references the loader resolves.
+ME = {"sheet": "units/m_earth"}
+RE = {"sheet": "constants/R_earth_mean"}
+AU = {"sheet": "units/au"}
+GYR = {"sheet": "units/gyr"}
+DAY = {"sheet": "units/day"}
 
 # V3 feature -> SSE4 fact (and unit change) where a V4 flow publishes it.
 MAPPED = {
@@ -26,7 +33,7 @@ MAPPED = {
     "eccentricity": ("orbit.eccentricity", None, ""),
     "Teq_K": ("planet.equilibrium_temperature", None, "K"),
     "SurfaceTemp_K": ("planet.surface_temperature", None, "K"),
-    "orbital_period_days": ("orbit.period", 86400.0, "days"),
+    "orbital_period_days": ("orbit.period", DAY, "days"),
     "atm.pressure_bar": ("atmosphere.surface_pressure", 1e5, "bar"),
     "age_Gyr": ("system.age", GYR, "Gyr"),
     "parentId": ("parent", None, ""),

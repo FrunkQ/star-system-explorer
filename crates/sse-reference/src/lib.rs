@@ -29,6 +29,7 @@ pub mod expr;
 pub mod laws;
 pub mod lookup;
 pub mod phases;
+pub mod refs;
 
 /// Relative tolerance between a sheet unit and the built-in one of the
 /// same id.

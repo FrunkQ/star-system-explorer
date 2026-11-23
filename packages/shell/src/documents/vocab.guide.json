@@ -23,7 +23,7 @@
   },
   "luminosity_w": {
    "label": "Brightness",
-   "scale": 3.828e+26,
+   "scale": {"sheet": "constants/L_sun"},
    "unit": "× Sun",
    "digits": 2,
    "sentence": "It shines {text}.",
@@ -31,7 +31,7 @@
   },
   "mass_kg": {
    "label": "Heft",
-   "scale": 5.9722e+24,
+   "scale": {"sheet": "constants/M_earth"},
    "unit": "× Earth",
    "digits": 2,
    "sentence": "It weighs in at {text}.",
@@ -39,7 +39,7 @@
   },
   "orbit.semi_major_axis_m": {
    "label": "Distance from home star",
-   "scale": 149597870700.0,
+   "scale": {"sheet": "constants/au"},
    "unit": "AU",
    "digits": 2,
    "sentence": "It swings round {text} out from its star.",
@@ -47,7 +47,7 @@
   },
   "orbit.period_s": {
    "label": "Length of a year",
-   "scale": 86400,
+   "scale": {"sheet": "constants/day"},
    "unit": "days",
    "digits": 3,
    "sentence": "Birthdays come round every {text}."
@@ -62,7 +62,7 @@
   },
   "atmosphere.pressure_pa": {
    "label": "Air pressure",
-   "scale": 101325,
+   "scale": {"sheet": "constants/atm"},
    "unit": "atm",
    "digits": 2,
    "sentence": "Pressure at the surface is {text}. Ears may pop."

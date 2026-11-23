@@ -225,9 +225,9 @@ fn route(g: &Grid, nb: &[[usize; 4]], h: &[f64], sea: Option<f64>, eps: f64) -> 
     }
 }
 
-const RHO_ROCK: f64 = 2700.0;
-const RHO_SEDIMENT: f64 = 2300.0;
-const RHO_MANTLE: f64 = 3300.0;
+const RHO_ROCK: f64 = sse_core::sheet::mixture_density::CRUST_ROCK;
+const RHO_SEDIMENT: f64 = sse_core::sheet::mixture_density::SEDIMENT;
+const RHO_MANTLE: f64 = sse_core::sheet::mixture_density::MANTLE_ROCK;
 const YOUNG_PA: f64 = 7.0e10;
 const POISSON: f64 = 0.25;
 /// The base of the elastic lithosphere sits near the 450 °C isotherm
