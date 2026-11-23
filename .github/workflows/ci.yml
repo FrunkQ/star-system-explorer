@@ -121,6 +121,8 @@ jobs:
       - run: scripts/build-shell.sh
       - run: npm install --no-save playwright@1.63.0 && (for i in 1 2 3; do npx playwright install --with-deps chromium firefox && exit 0; echo "browser install failed (try $i), retrying"; sudo apt-get update || true; sleep 45; done; exit 1)
       - run: node tests/ui/shell.e2e.mjs chromium firefox --screens ui-screens
+      # The stage 1 test drive (handover/test-drive.md): the whole walk, desktop and phone, presses counted per step.
+      - run: node tests/ui/walk.e2e.mjs --screens ui-screens
       - run: node tests/ui/players.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/setup.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/themes.e2e.mjs chromium firefox --screens ui-screens

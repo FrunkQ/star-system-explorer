@@ -20,6 +20,20 @@
   ],
   "rail": [
     {
+      "scale": "system",
+      "group": "understand",
+      "label": "Look up",
+      "order": 3,
+      "hint": "Constants, elements and units, each with where it comes from"
+    },
+    {
+      "scale": "world",
+      "group": "understand",
+      "label": "Look up",
+      "order": 3,
+      "hint": "Constants, elements and units, each with where it comes from"
+    },
+    {
       "scale": "workshop",
       "group": "workshop",
       "label": "Reference",
