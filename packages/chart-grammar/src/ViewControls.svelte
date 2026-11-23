@@ -1,15 +1,15 @@
-<!-- The standard view controls (interface style rule 12): View style (Chart, 3D, True, Wireframe) and Seen from (Above,
-     Tilted, Edge-on, Free), the same words in the same order on every diagram, for every seat. Options a view or this
+<!-- The standard view controls (interface style rule 12): View style (Chart, 3D, True, Wireframe), Seen from (Above,
+     Tilted, Edge-on, Free), Scale (Readable, Real) and HUD (Off, On: orbit lines, names and outlines over a True view), the same words in the same order on every diagram, for every seat. Options a view or this
      device cannot do stay in place, quiet, with the reason as their title. Free shows how it is worked. -->
 <script lang="ts">
   import Segmented from "./Segmented.svelte";
-  import { FREE_HINT, pickSeen, pickStyle, viewOptions, type SeenFrom, type ViewChoice, type ViewControlsSpec, type ViewStyle } from "../../ui-contract/src/index.ts";
+  import { FREE_HINT, pickScale, pickSeen, pickStyle, viewOptions, type ViewScale, type SeenFrom, type ViewChoice, type ViewControlsSpec, type ViewStyle } from "../../ui-contract/src/index.ts";
 
   let { spec, choice, onchange, compact = false }: { spec: ViewControlsSpec; choice: ViewChoice; onchange: (c: ViewChoice) => void; compact?: boolean } = $props();
   const o = $derived(viewOptions(spec, choice));
 </script>
 
-<div class="vc" class:compact data-view-controls data-style={o.shown.style} data-seen={o.shown.seen}>
+<div class="vc" class:compact data-view-controls data-style={o.shown.style} data-seen={o.shown.seen} data-scale={o.shown.scale} data-hud={o.shown.hud ? "on" : "off"}>
   <div class="field">
     <span class="k" aria-hidden="true">View style</span>
     <Segmented label="View style" value={o.shown.style} options={o.styles} onchange={(s: ViewStyle) => onchange(pickStyle(choice, s))} />
@@ -17,6 +17,14 @@
   <div class="field">
     <span class="k" aria-hidden="true">Seen from</span>
     <Segmented label="Seen from" value={o.shown.seen} options={o.seen} onchange={(s: SeenFrom) => onchange(pickSeen(spec, choice, s))} />
+  </div>
+  <div class="field">
+    <span class="k" aria-hidden="true">Scale</span>
+    <Segmented label="Scale" value={o.shown.scale} options={o.scales} onchange={(s: ViewScale) => onchange(pickScale(spec, choice, s))} />
+  </div>
+  <div class="field">
+    <span class="k" aria-hidden="true">HUD</span>
+    <Segmented label="HUD" value={o.shown.hud ? "on" : "off"} options={o.huds} onchange={(v: "off" | "on") => onchange({ ...choice, hud: v === "on" })} />
   </div>
   {#if o.shown.seen === "free" && o.turnable}<p class="hint" data-free-hint>{FREE_HINT}</p>{/if}
 </div>
