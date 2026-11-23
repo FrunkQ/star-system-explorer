@@ -23,8 +23,9 @@ export { resolveStyle, checkStyle, settingCost, settingsCost, promotedOf, settin
 export type { StyleDoc, StyleCheck } from "./style.ts";
 export type { ScreenDoc, ScreenItem, CheckedScreen, RailEntry, RailLine, RailScale, RailGroup } from "./screen.ts";
 export { subjectOf, playerSubjectOf } from "./mark.ts";
-export { resolveSymbology, markerFor, legendFor, sameLook, checkSymbology, CHANNELS, PATTERNS, BODY_SHAPES } from "./symbology.ts";
-export type { Mark, Binding, Channel, Shape, Pattern, Scale, SymbologyDoc, Marker, LegendEntry, MarkSubject, ThemeCapability, SymbologyHost, TagColour } from "./symbology.ts";
+export { luminosityLsun, readStarFacts, starFactsFrom, withStarFacts, type StarFacts } from "./star-marks.ts";
+export { resolveSymbology, markerFor, legendFor, sameLook, checkSymbology, CHANNELS, PATTERNS, BODY_SHAPES, AURAS } from "./symbology.ts";
+export type { Mark, Binding, Channel, Shape, Pattern, Scale, SymbologyDoc, Marker, LegendEntry, MarkSubject, ThemeCapability, SymbologyHost, TagColour, Aura } from "./symbology.ts";
 export { parseV3Palette, symbologyFromV3Palette, coloursFromV3Save, withV3TagColours, objectColourSummary, campaignCopy, v3SaveText } from "./v3-colours.ts";
 export type { V3TokenMap, V3ImportLine, V3PaletteImport, V3ObjectColour, V3SaveColours } from "./v3-colours.ts";
 export type { SystemScene, SceneSubject, SceneFact, SceneEvent, FactSource } from "./scene.ts";
