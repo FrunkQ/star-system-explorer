@@ -97,3 +97,6 @@ export type { StartLine, StartLinesDoc, StartOpens } from "./start.ts";
 export { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "./sol.ts";
 // The performance readout and its reports (PF1).
 export * from "./perf.ts";
+// The master data sheet's constants (MP22): one door to a constant's value for every package.
+export { constant, constantOf, constantIds, SHEET_PACK } from "./sheet.ts";
+export type { SheetConstant } from "./sheet.ts";
