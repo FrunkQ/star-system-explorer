@@ -3,7 +3,8 @@
   through the magnetic axis and the wind's direction, with the field's lines inked by the theme (field-out where the
   field leaves the body, field-in where it enters), the wind's bubble, both axes and the tilt between them, and the
   words. Lines are a picture of the kernel's facts (read_field), traced by the renderer's shared tracer; nothing here
-  computes physics. Every part has a why. A world with no field facts says so.
+  computes physics. Every part has a why. A world with no field facts says so. It shows when the view controls'
+  Band is Mag, in place of the globe.
 -->
 <script lang="ts">
   import { chartCut, cutPaths, FIELD_LINES, FIELD_REFS, fieldFromRead, narrateField, type FieldReadJson } from "../../../renderer/src/index.ts";
@@ -16,12 +17,12 @@
     tier = "gpu-basic",
     depth = "science",
     size = 300,
-  }: { session: ViewSession; system: string; name: string; tier?: string; depth?: Depth; size?: number } = $props();
+    on = false,
+  }: { session: ViewSession; system: string; name: string; tier?: string; depth?: Depth; size?: number; on?: boolean } = $props();
 
   // The kernel's field facts. Until MF2 publishes fields as facts of every world, read_field's Solar System fixture
   // is the source: it covers the Solar System's own bodies, matched by name inside the campaign's Solar System.
   const SOL = /\/sys:sol$/;
-  let on = $state(false);
   let busy = $state(false);
   let failed = $state<string | null>(null);
   let read = $state.raw<FieldReadJson[] | null>(null);
@@ -34,10 +35,9 @@
     if (!r.ok) return void (failed = r.message);
     read = r.bodies as unknown as FieldReadJson[];
   }
-  function toggle() {
-    on = !on;
+  $effect(() => {
     if (on && SOL.test(system)) void load();
-  }
+  });
 
   const body = $derived(SOL.test(system) && read ? (read.find((b) => b.name === name) ?? null) : null);
   const field = $derived(body ? fieldFromRead(body) : null);
@@ -80,7 +80,6 @@
 </script>
 
 <section class="mag" aria-label="Mag layer" data-mag={on ? (field ? "lines" : busy ? "loading" : "none") : "off"}>
-  <button type="button" class="toggle" aria-pressed={on} data-mag-toggle onclick={toggle}>Mag</button>
   {#if on}
     {#if busy}
       <p class="note" aria-busy="true">Reading the field…</p>
@@ -139,19 +138,6 @@
     margin: 8px 0;
     font-size: 13px;
     max-width: 100%;
-  }
-  .toggle {
-    font: inherit;
-    font-family: var(--sse-font-mono);
-    padding: 3px 10px;
-    border: var(--sse-line) solid var(--sse-ink);
-    background: var(--sse-ground-raised);
-    color: var(--sse-ink);
-    cursor: pointer;
-  }
-  .toggle[aria-pressed="true"] {
-    background: var(--sse-ink);
-    color: var(--sse-on-ink);
   }
   .note {
     margin: 8px 0 0;

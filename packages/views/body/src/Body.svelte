@@ -461,7 +461,7 @@
     <StarDisc {ctx} {scene} address={subject.address} label={subject.label} {size} />
   {:else}
     <div class="top">
-      <div class="globe" style:width="{size}px" style:height="{size}px">
+      <div class="globe" class:hidden={shownView.band === "mag"} style:width="{size}px" style:height="{size}px">
         {#if loading}
           <p class="note">Building the surface of {subject.label}… (about a second)</p>
         {:else if has}
@@ -501,7 +501,7 @@
           </p>
         {/if}
       </div>
-      {#if has}
+      {#if has && shownView.band !== "mag"}
         <!-- The time lapse's controls (U22): layer toggles, scrubber with event marks, Play, and the why card. -->
         <BodyTimeline {lapse} depth={ws.depth ?? "science"} label={subject.label} />
         <!-- Interim weather control; the chart room's controls replace it. A time lapse shows its own past, so this hides then. -->
@@ -510,8 +510,8 @@
           {#if weather.error}<small data-weather-error>{weather.error}</small>{/if}
         </div>{/if}
       {/if}
-      <!-- The Mag layer (MF14b): the field's Chart cut, its words and a why for every part. -->
-      <BodyMag session={ctx.session} system={scene.system} name={subject.label} tier={gs?.tier ?? "gpu-basic"} depth={ws.depth ?? "science"} size={Math.min(size, 320)} />
+      <!-- The Mag layer (MF14b): the field's Chart cut, its words and a why for every part, when Band is Mag. -->
+      <BodyMag session={ctx.session} system={scene.system} name={subject.label} tier={gs?.tier ?? "gpu-basic"} depth={ws.depth ?? "science"} size={size} on={shownView.band === "mag"} />
       {#if stats}
         <dl class="facts" data-globe-stats>
           <dt>Drawn</dt>
@@ -638,6 +638,10 @@
 </div>
 
 <style>
+  /* Mag replaces the picture (the globe stays built underneath, so Visible comes straight back). */
+  .globe.hidden {
+    display: none;
+  }
   .body {
     display: flex;
     flex-direction: column;

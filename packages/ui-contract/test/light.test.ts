@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import type { SystemScene } from "../src/scene.ts";
 import type { PlayerScene } from "../src/player-scene.ts";
-import { checkLightRecipe, describeLight, litFromPlayers, litFromSystem, paint, planck, readLight, teffFromSpectral, thermalColour, type BandRecipe } from "../src/light.ts";
+import { bandChoices, checkLightRecipe, describeLight, lightForBand, paintedBands, recipeBand, litFromPlayers, litFromSystem, paint, planck, readLight, teffFromSpectral, thermalColour, type BandRecipe } from "../src/light.ts";
 
 const root = new URL("../../../", import.meta.url);
 const json = (p: string) => JSON.parse(readFileSync(new URL(p, root), "utf8"));
@@ -125,4 +125,17 @@ test("the setting falls back to chart colours", () => {
   assert.equal(readLight("{bad", ["eye"]), "symbols");
   assert.equal(readLight(JSON.stringify({ recipe: "hologram" }), ["eye"]), "symbols");
   assert.equal(readLight(JSON.stringify({ recipe: "eye" }), ["eye"]), "eye");
+});
+
+test("each recipe sits in the band its light comes from; the view controls' Band picks within it", () => {
+  const rs = recipes;
+  const of = Object.fromEntries(rs.map((r) => [r.id, recipeBand(r)]));
+  assert.deepEqual(of, { eye: "visible", camera: "visible", sho: "visible", hoo: "visible", "near-ir": "infrared", "mid-ir": "infrared", uv: "ultraviolet", xray: "xray", radio: "radio" });
+  assert.equal(recipeBand(null), "visible", "the chart's own colours are Visible");
+  assert.deepEqual(bandChoices(rs, "visible"), ["symbols", "eye", "camera", "sho", "hoo"]);
+  assert.deepEqual(bandChoices(rs, "mag"), [], "no light recipe paints the field");
+  assert.deepEqual(paintedBands(rs), ["visible", "infrared", "ultraviolet", "xray", "radio"]);
+  assert.equal(lightForBand(rs, "infrared", "eye"), "near-ir", "a new band starts on its first recipe");
+  assert.equal(lightForBand(rs, "infrared", "eye", { infrared: "mid-ir" }), "mid-ir", "or the one last used there");
+  assert.equal(lightForBand(rs, "visible", "hoo"), "hoo", "a light already in the band stays");
 });

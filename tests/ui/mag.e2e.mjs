@@ -18,6 +18,9 @@ const port = 9600 + Math.floor(Math.random() * 90);
 const base = `http://localhost:${port}/`;
 const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
 await new Promise((r) => setTimeout(r, 400));
+const magBand = async (page) => {
+  if ((await page.locator("[data-view-controls]").getAttribute("data-band")) !== "mag") await page.getByRole("group", { name: "Band" }).getByRole("button", { name: "Mag", exact: true }).click();
+};
 const shot = async (page, n) => {
   await page.waitForTimeout(500);
   if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png` }));
@@ -40,10 +43,12 @@ try {
     await pick("Earth");
     await go(gm, "body");
     const mag = gm.locator("[data-mag]");
-    await mag.waitFor({ timeout: 20000 });
+    await mag.waitFor({ state: "attached", timeout: 20000 });
     const hash0 = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
-    await gm.locator("[data-mag-toggle]").click();
+    // Mag is a Band in the one view controls (Alex, 23 Nov): it replaces the globe with the field.
+    await magBand(gm);
     await gm.waitForSelector('[data-mag="lines"]', { timeout: 20000 });
+    assert.equal(await gm.locator(".globe").isVisible(), false, "Mag replaces the picture");
     const cut = gm.locator("[data-mag-cut]");
     const closed = await cut.locator('path.line[data-kind="closed"]').count();
     const open = await cut.locator("path.line.open").count();
@@ -75,7 +80,7 @@ try {
     await pick("Mars");
     await go(gm, "body");
     await gm.waitForSelector("[data-mag]");
-    if ((await gm.locator("[data-mag-toggle]").getAttribute("aria-pressed")) !== "true") await gm.locator("[data-mag-toggle]").click();
+    await magBand(gm);
     await gm.waitForSelector('[data-mag="none"]', { timeout: 20000 });
     assert.match(await gm.locator("[data-mag-none]").innerText(), /No field facts for this world yet/);
 
@@ -85,7 +90,7 @@ try {
       await pick("Jupiter");
       await go(gm, "body");
       await gm.waitForSelector('[data-mag="lines"]', { timeout: 20000 }).catch(async () => {
-        await gm.locator("[data-mag-toggle]").click();
+        await magBand(gm);
         await gm.waitForSelector('[data-mag="lines"]', { timeout: 20000 });
       });
       await more(gm, /Night chart/);
