@@ -45,3 +45,10 @@ Owner: Build kernel resolve and rules.
 ## Next (part 2 onward)
 
 `cbrt` in the formula language, parameters as letters, then the next families by the ledger.
+
+## Timing (8B, within 5 %)
+
+PF2 bench, Node runner, cloud container, main a7ad88b against this branch, one machine. Full run, 5 runs
+each: every chunk within 5 % except `resolve` at 4.0 to 4.2 ms (+5.0 %, one step of the 0.1 ms
+display). Resolve alone, 9 runs, the two builds alternated three times: main 4.7, 4.6, 4.9 ms; this
+branch 4.8, 4.6, 4.8 ms. Same within noise.
