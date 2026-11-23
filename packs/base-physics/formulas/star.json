@@ -1,0 +1,89 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.star",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.star.effective_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "luminosity",
+     "letter": "L"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "teff",
+     "letter": "T"
+    }
+   ],
+   "constants": {
+    "sigma": "constants/sigma_SB"
+   },
+   "positive": [
+    {
+     "port": "luminosity",
+     "says": "luminosity"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    }
+   ],
+   "references": [
+    "Stefan-Boltzmann law; definition of effective temperature, e.g. Carroll, B. W. and Ostlie, D. A. 2017, An Introduction to Modern Astrophysics, 2nd edn, Cambridge University Press, eq. 3.17. doi:10.1017/9781108380980"
+   ],
+   "shown": "T_eff = (L / (4π R² σ))^¼",
+   "equation": {
+    "name": "How hot a star's surface shines",
+    "formula": "T = (L / (4 * pi * R * R * sigma)) ^ (1/4)",
+    "inputs": {
+     "L": {
+      "kind": "star.luminosity",
+      "unit": "W",
+      "name": "light the star gives off"
+     },
+     "R": {
+      "kind": "star.radius",
+      "unit": "m",
+      "name": "radius of the star"
+     },
+     "sigma": {
+      "kind": "constant.sigma_SB",
+      "unit": "W m-2 K-4",
+      "name": "Stefan-Boltzmann constant"
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "star.effective_temperature",
+      "unit": "K",
+      "name": "surface temperature"
+     }
+    },
+    "source": {
+     "text": "Carroll, B. W. and Ostlie, D. A. 2017, An Introduction to Modern Astrophysics, 2nd edn, Cambridge University Press",
+     "doi": "10.1017/9781108380980",
+     "where": "eq. 3.17"
+    },
+    "explain": {
+     "curious": "How hot a star's surface is follows from how much light leaves how much surface.",
+     "science": "Effective temperature is the temperature of a black body with the star's radius and luminosity. It defines the surface temperature rather than measuring it."
+    },
+    "examples": [
+     {
+      "L": 3.8e+26,
+      "R": 700000000.0,
+      "T": 5743.696440459901
+     }
+    ]
+   }
+  }
+ ]
+}

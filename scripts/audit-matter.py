@@ -459,6 +459,7 @@ NAME_ROW = [
 # copies. (file fragment, JSON path regex, reason)
 NOT_MATTER = [
     ("packs/", r"/examples/[^/]+/values/(body\.bulk_density|surface\.ice_fraction)$", "a named body's measured fact"),
+    ("packs/base-physics/formulas/", r"/equation/examples/", "a formula's worked example (its constants read the sheet)"),
     ("packs/sse3-classic/", r"body\.bulk_density$", "a named body's fact (V3 import)"),
     ("packs/base-light/", r"/lines/[^/]+/strength$", "an absorption line's shape"),
     ("packs/base-cosmos/", r"density_pc3$", "a star density in a galaxy model"),
