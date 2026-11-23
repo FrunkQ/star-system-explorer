@@ -45,6 +45,10 @@ try {
   assert.ok(!(await style.getByRole("button", { name: "True" }).isDisabled()));
   assert.ok(await style.getByRole("button", { name: "Wireframe" }).isDisabled());
   assert.match(await style.getByRole("button", { name: "Wireframe" }).getAttribute("title"), /coming/);
+  // Band: listed on every view; Visible until a view declares the others.
+  const band = vc.getByRole("group", { name: "Band" });
+  assert.deepEqual(await band.locator("button").allInnerTexts(), ["Visible", "Infrared", "Ultraviolet", "X-ray", "Radio", "Mag"]);
+  assert.equal(await vc.getAttribute("data-band"), "visible");
   await shot(gm, "rule12-system-chart");
 
   // Tilted turns the flat chart into 3D; dragging switches to Free and the hint appears.

@@ -12,7 +12,7 @@ test("every option is listed in the same order; what a view cannot do says why",
   assert.deepEqual(o.seen.map((x) => x.label), ["Above", "Tilted", "Edge-on", "Free"]);
   assert.equal(o.styles[2]!.unavailable, WHY_TRUE_HELD);
   assert.match(o.styles[3]!.unavailable!, /not drawn here yet/);
-  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true }, "a flat chart is seen from above");
+  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true, band: "visible" }, "a flat chart is seen from above");
   assert.ok(o.seen.every((x) => !x.unavailable), "turning a flat chart is offered when it has 3D");
 });
 
@@ -27,10 +27,10 @@ test("turning a flat chart makes it 3D; a fixed view on 3D stays 3D", () => {
 test("a style a view cannot draw falls back to Chart, and the choice is kept for the next view", () => {
   const galaxy = flatChart();
   const o = viewOptions(galaxy, { style: "3d", seen: "free" });
-  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true });
+  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true, band: "visible" });
   assert.ok(o.seen.slice(1).every((x) => x.unavailable), "a flat-only view cannot be turned");
   assert.equal(o.turnable, false);
-  assert.deepEqual(viewOptions(system, { style: "3d", seen: "free" }).shown, { style: "3d", seen: "free", scale: "readable", hud: true });
+  assert.deepEqual(viewOptions(system, { style: "3d", seen: "free" }).shown, { style: "3d", seen: "free", scale: "readable", hud: true, band: "visible" });
 });
 
 test("a kept choice is read back safely", () => {
@@ -63,4 +63,15 @@ test("HUD: off in True (a photograph), on in the diagrams, one choice through ev
   assert.match(flat.huds[0]!.unavailable!, /always shows its labels/);
   assert.equal(readViewChoice('{"style":"true","seen":"free","hud":false}').hud, false);
   assert.equal(readViewChoice('{"style":"true","seen":"free"}').hud, undefined);
+});
+
+test("Band: Visible by default; the others listed quiet until a view declares them; a kept band reads back", () => {
+  const o = viewOptions(system, { style: "chart", seen: "above", band: "xray" });
+  assert.deepEqual(o.bands.map((b) => b.label), ["Visible", "Infrared", "Ultraviolet", "X-ray", "Radio", "Mag"]);
+  assert.equal(o.shown.band, "visible");
+  assert.match(o.bands[3]!.unavailable!, /not seen in x-ray here yet/i);
+  const lit: ViewControlsSpec = { ...system, bands: { visible: true, xray: true, mag: true } };
+  assert.equal(viewOptions(lit, { style: "chart", seen: "above", band: "xray" }).shown.band, "xray");
+  assert.equal(readViewChoice('{"style":"chart","seen":"above","band":"mag"}').band, "mag");
+  assert.equal(readViewChoice('{"style":"chart","seen":"above","band":"gamma"}').band, undefined);
 });
