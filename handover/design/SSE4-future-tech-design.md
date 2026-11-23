@@ -2,6 +2,8 @@
 
 Status: **accepted 23 Nov 2026**. Alex answered "yes to all" at 16:15 to the fourteen questions in section 12 (read by the coordinator as covering this list among three open at once; he can correct that). Written by the design thread. Track letters **FT**. Design only; the packages are in section 13. Every figure still passes the citation check before it ships. A mockup goes with it: "SSE4 ship styles and tech levels" (one generated ship in five styles and at three tech levels), source in `/mnt/project-files/sse4/ships/styles-and-tech-mockup.html`.
 
+**Revision, 23 Nov 18:48 (Alex):** the ten times per level rule was "a simple rule of thumb for ideas. Not a hard fact. Apply intelligently and improve if possible." Section 5.2 now gives the size rule by family of part; its four questions (15 to 18) are open.
+
 **Ruling, 23 Nov 17:49 (Alex):** "4.1 alien life will have to have culture and tech as part of life. So all these systems can be extended then and we can have a lighter touch." So 4.0 keeps civilisation capability light: levels and advances are set by hand or by a pack. Automated research, tech trees and a civilisation growing its own technology are 4.1, grown from life.
 
 Read with: the voyages design (drive facts, FTL as a pack rule), the nebulae and light design (every object publishes its light by band, section 5A sensing), the matter pack design (the master data sheet and its one "Look up" door), the programs design (track J), the naming design (settings inherit down the tree), and the ship generator in `packages/renderer/src/ship-design.ts` (parts sized by physics, a style only arranges and dresses them).
@@ -68,11 +70,46 @@ Most of these figures already exist. `base-ships` `drive_heat` carries waste per
 1. **A setting defines its own ladder**: how many levels and what they are called. Traveller has its TL numbers; "A working Sol" might have three ("orbital", "torch", "deep"). The base pack ships a neutral ladder with the real past on its lower rungs, so "Sol today" is simply a level.
 2. **Every advance sits at a home level**, real ones included. A chemical rocket, a fission reactor and a fusion torch are advances like any other; only their marks differ.
 3. **Every advance is carried by a part with a size**: a drive, a reactor, a cable, a plate under the deck, a heat sink. The pack gives the part's size at the home level, usually per watt, per newton or per tonne of ship.
-4. **Short of the home level, the part is ten times the mass and volume for each level short.** The ten is one editable number per setting (and may be overridden per advance). One level short is a prototype. Three levels short is a thousand times: a jump drive the size of a small moon. It is never forbidden; the app shows the size and lets the GM build it. This is the ruling "danger is drama, never forbidden" applied to ambition.
-5. **For an advance with no separate device** (a better material), the part is the structure itself: ten times the mass for the same load, which is the same as a tenth of the strength for weight. One rule still covers it.
-6. **Past the home level**, parts may shrink by a second editable factor (question 4).
+4. **Short of the home level, the advance is immature, and its part comes out bigger.** How much bigger is section 5.2: where history or physics says, the advance's own figure is worse and the sizing block gives the size; where nothing is known, the part is ten times the mass and volume per level short, which was Alex's rule of thumb and stays the editable default. One level short is a prototype. It is never forbidden; the app shows the size and lets the GM build it. This is the ruling "danger is drama, never forbidden" applied to ambition.
+5. **For an advance with no separate device** (a better material), the immature figure is the material's own strength for weight, and the structure block does the rest. This matters: a cable a fifth as strong does not make a beanstalk five times heavier, it makes it many thousands of times heavier, because taper is exponential. A flat multiplier on size would get that wrong.
+6. **Past the home level**, the figure keeps improving until it meets its cited ceiling (section 5.2).
 
 Because the generator already draws every part from its size, a prototype looks like one: the same ship with one grotesquely swollen system.
+
+### 5.2 How much worse an early version is (revised 23 Nov 18:48)
+
+Alex: "The 10 times was a simple rule of thumb for ideas. Not a hard fact. Apply intelligently and improve if possible."
+
+**The improvement: immaturity acts on the advance's figure, not on the part's size.** This is the same move as the rest of the design (an advance moves a number, the block still runs), so the size of an early version falls out of physics and differs by kind of part, as it does in real history. Four things follow that a flat multiplier cannot give: a weak early cable costs exponentially, not ten times; early shielding costs nothing extra, because mass is mass; an early engine also drags bigger tanks behind it; and a prototype can never come out better than physics allows.
+
+**What history says, by family of part.** Figures checked by the data sheet thread on 23 Nov (sources in section 14.1).
+
+| Family | What the first working generation managed, against the mature one | Examples | Default for one level short |
+|---|---|---|---|
+| **Engines and power plants** (drives, reactors, generators): output for their mass | about a seventh | rocket engine thrust for weight: V-2 about 22, Merlin 1D over 150 (about 180 claimed after its 2013 upgrade), so 7 to 8 times. Jet engines: Jumo 004 about 1.2, Eurofighter's EJ200 about 9 with reheat (6 dry). Space reactors: SNAP-10A, the only one the US flew, about 1.2 W per kg; designs since run from 1 to 7 W per kg for small Kilopower-class units to about 33 for the 100 kW SP-100, none of them flown | figure divided by 7 |
+| **Figures held down by a nearby ceiling** (exhaust speed for a given fuel, conversion efficiency, how much a habitat recycles) | half to two-thirds, because the ceiling was close from the start | chemical exhaust speed: V-2 about 2.0 km/s at sea level (2.3 in vacuum), the best hydrogen engine 4.6 km/s in vacuum (RL10B-2, 465.5 s), so the V-2 had about half; ceiling near 5 for hydrogen and oxygen. Heat engines against Carnot | two-thirds of the way from the old figure to the mature one |
+| **Materials in bulk** (strength for weight of something you can buy by the kilometre) | about a fifth; the laboratory figure arrives decades before the bulk one | carbon fibre: Shindo's first PAN fibres of the early 1960s 0.5 to 1 GPa, the first big commercial grade (Toray T300, 1971) 3.5 GPa, the best now (T1100G) 7.0 GPa. Nanotubes today: single tubes above 100 GPa, centimetre bundles 80 GPa, the best spun fibre 4.2 GPa, about a twenty-fifth | figure divided by 5 |
+| **Stores of energy** (batteries, fuel handling) | about a third | the first lithium-ion cell (Sony, 1991) 80 Wh per kg, about three times that now in mainstream cells; 450 Wh per kg in specialist silicon-anode cells | figure divided by 3 |
+| **Plain mass** (radiation shielding by matter, ballast, reaction mass itself) | the same | a g/cm² of shielding stops what it stops in any century | no change |
+| **Devices with a least size set by physics** (a critical mass, a plasma big enough to hold its heat) | not smaller, at any maturity | reactors do not shrink below criticality; fusion machines grew as they improved | the advance states its floor |
+| **Fictional devices and anything unknown** (gravity plates, heat sinks, an FTL drive) | nothing to go on | | Alex's thumb: ten times the mass and volume per level short, editable per setting and per advance |
+
+**What "first generation" means here.** The first version that does the job at working scale: the first engine that flew, the first fibre sold by the tonne. It is not the first laboratory sample, which is usually far worse (the first carbon fibres were a seventh to a fourteenth of today's), and not a later refined grade, which is usually within a factor of two. The materials default of a fifth sits between those on purpose, and is the weakest-founded number in the table.
+
+**Three rules round it off.**
+
+- **A prototype is never worse than what they already have for the same job.** The immature figure is floored at the best older advance the civilisation holds. Where an early version would only match the old way, the reading says so ("no better yet than their fission plant"), and still lets the GM build it.
+- **Past the home level the figure improves by half as much again per level until it meets its cited "allowed" or "ceiling" mark**, then stops. This replaces "half the size per level for two levels": the stop is where physics puts it, not at a count. Fictional devices, having no ceiling, keep the old rule (half the size per level, two levels).
+- **A level is the setting's own step**, so every default above is per level and editable on the Technology page. Where a ladder gives its levels rough spans of years, the defaults read as "per generation of about forty years", which is what the history above spans.
+
+The mockup now swells its fusion torch by seven and its fictional heat sink and field drive by ten.
+
+**Questions for Alex on this revision**
+
+15. **Immaturity acts on the advance's figure and the size falls out**, with the flat ten times kept only where nothing is known. Recommended: yes.
+16. **The family defaults in the table** (engines a seventh, materials a fifth, stores a third, near-ceiling figures two-thirds of the way, plain mass unchanged, fictional ten times), each editable. Recommended: yes, subject to the citation check.
+17. **A prototype is never worse than what they already have**, and the reading says when an early version is not yet worth building. Recommended: yes.
+18. **Past the home level, improve until the cited ceiling** instead of stopping after two levels. Recommended: yes.
 
 ### 5.1 Advances are partial, and civilisations differ (Alex, 23 Nov 16:39)
 
@@ -95,7 +132,7 @@ So a setting picks a point on a scale, the card shows the factor ("sheds heat 1,
 **The light-speed advance is an FTL rule, held by a civilisation like any other advance.** Its form is the one accepted in the example packs design (section 4A): a family (jump by rating, hop with a tether, speed by formula, rate per distance, gates, fixed points), a rating on the ship, and six fields: where a leg may start and end, what the crew does, how long it takes, what it costs, what can go wrong, and how messages travel. Consequences:
 
 - **Several FTL rules can coexist in one setting.** One power jumps by rating, its neighbour uses gates it found and cannot build ("found, not built"), a third has none and flies for real. The voyage finder already prices each leg by one means, so a ship is simply offered the legs its own rule allows.
-- **It sits on the ladder.** An FTL rule has a home level, so a power one level short can have a jump drive ten times the size.
+- **It sits on the ladder.** An FTL rule has a home level, so a power one level short can have a jump drive ten times the size (the default for fictional devices, section 5.2).
 - **Messages are part of the rule**, so two neighbours can differ in how fast news travels as well as ships.
 - **A setting-wide rule is the common case and stays easy**: put the rule on the setting and every civilisation inherits it.
 
@@ -130,7 +167,7 @@ So megastructures are not a special catalogue. Each states its figures, and what
 | Reading | Meaning | What the GM can do, one press each |
 |---|---|---|
 | **They can build this** | every advance held at their level | build it |
-| **One level short: Woven carbon cable** (or two, three) | an advance not held yet | **Build the prototype**, at ten times the size per level short, shown before committing; or **Develop it** |
+| **One level short: Woven carbon cable** (or two, three) | an advance not held yet | **Build the prototype**, at the size section 5.2 gives for each level short, shown before committing; or **Develop it** |
 | **Past anything known: needs 30,000 times their strongest material** | no advance on this setting's ladder reaches the figure | **Add an advance to the setting** (marked fictional if past the ceiling); or **Place it as found** |
 
 **Develop it.** In the core app this is a story decision with one honest lever. "Develop it" adds a dated event, "the Vesh gain woven carbon cable in 2310", at the campaign's now or a chosen date. From that date the reading changes, existing prototypes stay as built, and new builds come out at the proper size. No research points in the core. "Develop it" stays the one hand-pressed dated event in 4.0 (a pack may also write the same event as plain data). Automated research and tech trees are 4.1, grown from life with its culture, per the ruling above; nothing in 4.0 builds hooks for them. Orac can propose the event and its consequences ("this opens a beanstalk on four of their worlds").
@@ -207,10 +244,10 @@ So two navies at the same level differ by style, and two ships in the same style
 1. **No switches: an advance moves a figure, and the same block still runs** (zero waste heat gives zero radiator), so nothing is ever "skipped", only pushed, and "fictional" is read off whether a figure passed its cited ceiling. Recommended: yes. It is the processes-not-classes rule for machines.
 2. **The ten starting limits in section 4**, as editable pack data, with weapons, computing, medicine and build cost left out for now. Recommended: yes.
 3. **One ladder for real and imagined tech alike**, with real history on the lower rungs, so a steam-age nation can have a reactor at a hundred times the size and "Sol today" is just a level. Recommended: yes.
-4. **Past the home level, parts shrink.** Recommended: yes, by a gentler editable factor, half the size per level beyond, stopping after two levels, so old tech gets handier without vanishing.
+4. **Past the home level, parts shrink.** Recommended: yes, by a gentler editable factor, half the size per level beyond, stopping after two levels, so old tech gets handier without vanishing. (Revised 23 Nov 18:48, see section 5.2.)
 5. **A third, softer honesty note, "not yet built"**, for the range between what flies today and what physics forbids (fusion torches, nanotube cable, sleeping crews), beside the existing "fictional". Recommended: yes. Without it a fusion torch and a warp drive would wear the same mark, which undersells the physics.
 6. **Capability lives on a civilisation and inherits down the tree** (setting, species or nation, shipyard), dated on its timeline, with what a construct needs computed from its parts and never typed. Recommended: yes.
-7. **Availability never says no.** It reads "can build", "N levels short, prototype at ten times the size per level", or "past anything known", each with its one-press ways forward. Recommended: yes.
+7. **Availability never says no.** It reads "can build", "N levels short, prototype at ten times the size per level", or "past anything known", each with its one-press ways forward. Recommended: yes. (Size rule revised 23 Nov 18:48, see section 5.2.)
 8. **"Develop it" is a dated story event in the core**, set by the GM or proposed by Orac, with no research points; game packs and later the economy pack may drive the same event by program. Recommended: yes. (Narrowed 23 Nov 17:49: driving it by program is 4.1, see the ruling at the top.)
 9. **"Found, not built"**: a construct may carry parts above its owner's level that work but cannot be copied or repaired. Recommended: yes; it is nearly free and it is half of science fiction.
 10. **"Show it without"** on the card: redraw the ship with an advance removed. Recommended: yes, and capture it for the trailer.
@@ -266,3 +303,17 @@ Every source read where it could be (publisher record, the paper, or the author'
 | launch track 1,000 km at 3 g | v² / 2a, v = 7.8 km/s | 1,034 km; holds |
 | fusion plume tens to hundreds of keV | burning D-T and D-He3 plasmas run at about 10 to 100 keV | holds; textbook |
 
+### 14.1 Citation check of section 5.2 (data sheet thread, 23 Nov evening)
+
+| Figure in 5.2 | Source read | Finding |
+|---|---|---|
+| V-2 thrust for weight about 27 | McCutcheon, K. D., U.S. manned rocket propulsion evolution part 2.2: V-2 propulsion, Aircraft Engine Historical Society (enginehistory.org, rev. 2024): 55,000 lb thrust, engine 2,484 lb, "22" | corrected to about 22. The 27 matches Astronautix's 931 kg engine mass, which cites nothing. Deutsches Museum gives 245 kN and 400 kg, probably without the turbopump |
+| Merlin 1D about 180 | SpaceX press release (2013), quoted by Space.com and Spaceflight Now: vacuum thrust for weight "exceeding 150"; 180 from Musk's SES-8 teleconference, 24 Nov 2013 (as summarised) | "over 150, about 180 claimed" |
+| Jumo 004 about 1.2; fighters 7 to 9 | Smithsonian NASM A19670124000: 8,807 N, 739.4 kg (1.21); MTU EJ200 brochure: 20,000 lbf with reheat, 13,500 dry, about 2,204 lb (9.1 and 6.1) | holds; EJ200 named. F119 and F135 weights not found |
+| SNAP-10A about 1 W/kg; later 3 to 15 | US DOE ETEC SNAP overview: at least 500 W (over 600 at first), under 950 lb with instruments and shielding (1.2 to 1.4 W/kg); Mason, L. S., NASA (NTRS 20180005431): Kilopower-class 1 to 7 W/kg; Manvi and Fujita 1986, SP-100 users handbook (JPL D-2185): 100 kWe for about 3,000 kg (about 33 W/kg) | corrected: later designs 1 to 7 W/kg small, about 33 large, none flown. The engine family's "a seventh" rests on the engines, not the reactors |
+| V-2 exhaust about 2 km/s against 4.5 | AEHS USSRC V-2 page: 203 s at sea level, 239 s in vacuum; National Museum of the USAF fact sheet (thrust and flow give about 195 s); RL10B-2 465.5 s (L3Harris, read for FT1) | holds; vacuum against vacuum is 1.95 times, so "about half" |
+| carbon fibre about 1.5 GPa in the 1960s, 7 now | Shindo, A. 2000, J. Ceram. Soc. Japan 108, S35 (reprint of his early-1960s work, abstract read): 5,000 to 10,000 kgf/cm² at best, 0.5 to 1 GPa; Toray T1100G data sheet (2021): 7,000 MPa; Toray carbon fibre card: T300 3,530 MPa | corrected. First fibre to best now is 7 to 14 times; first commercial grade to best now is 2 times. The materials default of a fifth sits between |
+| nanotube single tubes against yarn | Peng, B. et al. 2008, Nature Nanotechnology 3, 626 (abstract): single tubes above 100 GPa; Bai, Y. et al. 2018, Nature Nanotechnology 13, 589 (abstract): centimetre bundles over 80 GPa; Taylor, L. W. et al. 2020, Carbon (Rice University news, as summarised): fibre 4.2 GPa | figures added; tube to fibre about 24 times |
+| lithium-ion about 80 Wh/kg first, about 270 now | Crabtree, G., Kócs, E. and Trahey, L. 2015, MRS Bulletin 40, 1067: Sony's first cell 80 Wh/kg, energy density up "by a factor of three" since; Amprius 2022 press release: 450 Wh/kg silicon-anode cells | holds as "about three times"; the 270 had no source read and is replaced by Crabtree's factor |
+
+Still from memory: the hydrogen-oxygen exhaust ceiling "near 5 km/s".
