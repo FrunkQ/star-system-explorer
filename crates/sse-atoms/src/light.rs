@@ -15,12 +15,12 @@ pub const MU0: f64 = sse_core::sheet::MU0;
 pub const E_OVER_ME: f64 = sse_core::sheet::E / sse_core::sheet::M_E;
 /// Proton mass, kg (CODATA 2018).
 pub const M_PROTON: f64 = sse_core::sheet::M_P;
-/// The Sun's sidereal rotation rate (Carrington, 25.38 d), rad/s.
 /// Dimensions: magnetic moment (A m²), magnetic field (tesla = kg s⁻² A⁻¹), area.
 pub const MOMENT: D = D([2, 0, 0, 1, 0, 0, 0]);
 pub const TESLA: D = D([0, 1, -2, -1, 0, 0, 0]);
 pub const AREA: D = D([2, 0, 0, 0, 0, 0, 0]);
-pub const OMEGA_SUN: f64 = 2.0 * m::PI / (25.38 * DAY);
+/// The Sun's sidereal rotation rate (Carrington, 25.38 d), rad/s.
+pub const OMEGA_SUN: f64 = 2.0 * m::PI / sse_core::sheet::P_ROT_SUN;
 
 /// T⁴ = (1 − A) S / (4σ) + q / σ: absorbed light shared round the sphere plus
 /// the body's own heat flowing out through its surface.

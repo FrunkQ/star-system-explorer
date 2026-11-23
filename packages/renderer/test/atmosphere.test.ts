@@ -67,3 +67,18 @@ test("V3 mixes with NH3, SO2, CO and Ne resolve whole", () => {
   assert.deepEqual(r.unknown_gases, []);
   assert.equal(r.unknown_share, 0);
 });
+
+test("the catalogue's air: atmosphere.surface_pressure and the main gas standing for the mix", () => {
+  const surf = { gravity_m_s2: 9.8, t_surface_now_k: 288, reference_radius_m: 6.371e6 };
+  const earth = airFactsOf({ "atmosphere.surface_pressure": 101400, "atmosphere.main": "n2" }, surf);
+  assert.ok(earth);
+  assert.equal(earth.pressure_pa, 101400);
+  assert.deepEqual(earth.composition, { N2: 1 });
+  assert.equal(airRequest("x", earth)?.air && (airRequest("x", earth)!.air as { gases: { gas: string }[] }).gases[0]!.gas, "n2");
+  assert.equal(airFactsOf({ "atmosphere.surface_pressure": 0, "atmosphere.main": "none" }, surf), null, "airless");
+  assert.equal(airFactsOf({ "atmosphere.surface_pressure": 500, "atmosphere.main": "none" }, surf), null, "no gas named");
+  // A fuller mix wins over the main gas, by the kernel's ids or by name.
+  assert.deepEqual(airFactsOf({ "atmosphere.surface_pressure": 101400, "atmosphere.main": "n2", "atmosphere.composition": { n2: 0.78, o2: 0.21, ar: 0.01 } }, surf)?.composition, { N2: 0.78, O2: 0.21, Ar: 0.01 });
+  // A V3 import's own names still win.
+  assert.deepEqual(airFactsOf({ "body.surface_pressure": 101300, "atmosphere.main": "co2", "v3.atmosphere": { composition: { N2: 0.78, O2: 0.21 } } }, surf)?.composition, { N2: 0.78, O2: 0.21 });
+});
