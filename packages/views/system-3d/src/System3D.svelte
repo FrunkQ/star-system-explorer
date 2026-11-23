@@ -8,14 +8,15 @@
   2D drawing the same projection. The overlay buttons are the keyboard path.
   True (V10a): the same frame against black space, each world wrapped in its
   own surface (given in `surfaces`, read from its tiles) and lit by its star,
-  the star in its own colour; names and the selected orbit only, names on
-  hover (view styles ruling, 22 Nov).
+  the star in its own colour. HUD (every style, Alex 23 Nov): orbit lines,
+  belts, names and locator rings; off, names show on hover only and True
+  looks like a photograph. Scale Real: distances and sizes in proportion.
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { basis, project, startGpu, tree, type Camera, type Gpu, type GpuLight, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
-  import { bandLines, hasChildren, layout, shellDots, type Band3D, type Body3D } from "./bodies.ts";
+  import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
     bodies,
@@ -32,6 +33,8 @@
     surfaces = new Map(),
     starColour = "",
     trueNote = "",
+    realScale = false,
+    hud = true,
   }: {
     bands?: Band3D[];
     bodies: Body3D[];
@@ -51,13 +54,18 @@
     starColour?: string;
     /** True look: what is still being read, said under the chart. */
     trueNote?: string;
+    /** Scale: Real (Alex, 23 Nov 2026): distances in proportion and every body at its true size on that scale. */
+    realScale?: boolean;
+    /** HUD (True only): orbit lines, names and locator rings over the picture; off, it looks like a photograph. */
+    hud?: boolean;
   } = $props();
+  const overlay = $derived(hud);
   const isTrue = $derived(trueLook);
 
   const root = $derived(bodies.find((b) => b.parent === null)?.id ?? bodies[0]?.id ?? "");
   let frame = $state<string | null>(null);
   const centreId = $derived(frame && bodies.some((b) => b.id === frame) ? frame : root);
-  const lay = $derived(layout(bodies, centreId));
+  const lay = $derived(realScale ? layoutReal(bodies, centreId) : layout(bodies, centreId));
   const t = $derived(lay ? tree(lay.nodes) : tree([]));
   const byId = (id: string | null) => bodies.find((b) => b.id === id);
 
@@ -83,7 +91,15 @@
     pitch = SEEN_ELEVATION[s];
     pan = [0, 0];
   });
-  const MIN = 4;
+  // Changing the scale changes what a distance means: start the camera again from its usual place.
+  let lastScale: boolean | null = null;
+  $effect(() => {
+    const r = realScale;
+    if (lastScale !== null && r !== lastScale) ((dist = 26), (pan = [0, 0]));
+    lastScale = r;
+  });
+  // Real scale lets the camera come much closer: the worlds are small.
+  const MIN = $derived(realScale ? 0.3 : 4);
   const MAX = 60;
   let w = $state(0);
   let h = $state(0);
@@ -124,7 +140,15 @@
     const cs = getComputedStyle(host);
     return cs.getPropertyValue(name).trim() || (fallback ? cs.getPropertyValue(fallback).trim() : "") || cs.color;
   };
-  const sizeOf = (b: Body3D, centre: boolean) => (centre ? 0.55 : 0.13 * Math.max(0.6, (b.mark?.size ?? 5) / 5));
+  // Readable: sizes for reading. Real: the body's own radius on the frame's scale, but never under a pixel or two at
+  // the camera's distance, so a world too small to show as a disc still shows as a point of light (fudge register).
+  const sizeOf = (b: Body3D, centre: boolean) => {
+    if (!realScale) return centre ? 0.55 : 0.13 * Math.max(0.6, (b.mark?.size ?? 5) / 5);
+    const n = lay?.nodes.find((x) => x.id === b.id);
+    const far = n ? Math.hypot(n.local[0] - cam.eye[0], n.local[1] - cam.eye[1], n.local[2] - cam.eye[2]) : Math.hypot(...cam.eye);
+    const px = (2 * Math.tan(cam.fovY / 2) * far) / Math.max(1, h);
+    return Math.max((b.parent === null ? 1.5 : 0.75) * px, lay ? lay.dist(b.radius_m ?? 0) : 0);
+  };
 
   // Camera-relative positions, f64 until the last step (frames.ts).
   const SEG = 96;
@@ -202,7 +226,7 @@
             const star = b.parent === null;
             return { id: b.id, rel: relOf(b.id), radius: sizeOf(b, b === lay!.centre), colour: star ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: star, ...(t ? { surface: { key: b.id, texture: t } } : {}) };
           }),
-          rings: lay.placed.filter((b) => b.id === selection).map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: accent })),
+          rings: hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : [],
           forward: f,
           up: u,
           fovY: cam.fovY,
@@ -215,11 +239,11 @@
       }
       gpu.draw({
         items: shown.map((b) => ({ id: b.id, rel: relOf(b.id), radius: sizeOf(b, b === lay!.centre), colour: colour(b), ring: b.mark?.ring ?? false, selected: b.id === selection })),
-        rings: [
+        rings: !hud ? [] : [
           ...bandLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : faint })),
           ...lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })),
         ],
-        dots: shellLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : haze })),
+        dots: hud ? shellLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : haze })) : [],
         forward: f,
         up: u,
         fovY: cam.fovY,
@@ -234,9 +258,9 @@
       const g = canvas2d.getContext("2d")!;
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.clearRect(0, 0, w, h);
-      // Belts and the Oort cloud first, dotted and faint, under the orbits.
+      // Belts and the Oort cloud first, dotted and faint, under the orbits (all HUD).
       g.setLineDash([2, 4]);
-      for (const { b, pts } of bandLocal) {
+      for (const { b, pts } of hud ? bandLocal : []) {
         g.beginPath();
         let started = false;
         for (const q of pts) {
@@ -250,7 +274,7 @@
         g.stroke();
       }
       g.setLineDash([]);
-      for (const { b, pts } of shellLocal) {
+      for (const { b, pts } of hud ? shellLocal : []) {
         g.fillStyle = b.id === selection ? accent : haze;
         for (const q of pts) {
           const p = project(t, cam, lay.centre.id, q);
@@ -258,7 +282,7 @@
         }
       }
       // Orbits as projected polylines, in the same camera-relative arithmetic.
-      for (const b of lay.placed) {
+      for (const b of hud ? lay.placed : []) {
         const r = lay.ring.get(b.id)!;
         g.beginPath();
         let started = false;
@@ -361,6 +385,8 @@
   data-tier={using}
   data-frame={centreId}
   data-look={isTrue && using === "gpu" ? "true" : "plain"}
+  data-scale={realScale ? "real" : "readable"}
+  data-hud={overlay ? "on" : "off"}
   class:true-look={isTrue && using === "gpu"}
 >
   <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true"></canvas>
@@ -371,6 +397,7 @@
         type="button"
         class="pin"
         class:sel={b.id === selection}
+        class:locate={realScale && overlay}
         style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, (sizeOf(b, b === lay?.centre) * (b.mark?.ring ? 1.9 : 1) * (h / 2 / Math.tan(cam.fovY / 2))) / p.depth)}px"
         aria-pressed={b.id === selection}
         data-body={b.id}
@@ -378,7 +405,7 @@
         data-y={p.y.toFixed(2)}
         onclick={() => onselect(b.id)}
         ondblclick={() => hasChildren(bodies, b.id) && b.id !== centreId && enter(b.id)}
-      ><span class="dot"></span>{#if labels}<span class="name" class:hover={isTrue && b.id !== selection}>{b.name}</span>{/if}</button>
+      ><span class="dot"></span>{#if labels}<span class="name" class:hover={!hud}>{b.name}</span>{/if}</button>
     {/if}
   {/each}
   <div class="bar">
@@ -391,7 +418,7 @@
   </div>
   <p class="note">
     {#if lay?.unplaced.length}<span>Position not known: {lay.unplaced.map((b) => b.name).join(", ")}.</span>{/if}
-    <span>Distances on a log scale, sizes not to scale{distanceNote}. Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}.</span>
+    <span>{realScale ? "Real scale: distances and sizes in proportion (a world smaller than a pixel shows as a point)" : "Distances on a log scale, sizes not to scale"}{distanceNote}. Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}.</span>
     {#if isTrue && (using === "canvas" || trueNote)}<span data-true-note>{using === "canvas" ? "True needs a GPU: this device draws the chart's look." : trueNote}</span>{/if}
   </p>
 </div>
@@ -440,6 +467,10 @@
     height: 14px;
     border-radius: 50%;
   }
+  /* Real scale: a faint ring finds a world too small to see (its name on hover in True). */
+  .pin.locate .dot {
+    box-shadow: 0 0 0 1px var(--sse-ink-faint, var(--sse-ink-muted));
+  }
   .pin.sel .dot {
     outline: 1.5px dashed var(--sse-accent);
     outline-offset: 3px;
@@ -454,12 +485,12 @@
     white-space: nowrap;
     text-shadow: 0 0 3px var(--sse-ground), 0 0 3px var(--sse-ground);
   }
-  /* True: names only on hover or focus (the selected world keeps its name); text sits on a chip over black space. */
-  .true-look .pin .name.hover {
+  /* HUD off: names only on hover or focus. True: text sits on a chip over black space. */
+  .pin .name.hover {
     visibility: hidden;
   }
-  .true-look .pin:hover .name.hover,
-  .true-look .pin:focus-visible .name.hover {
+  .pin:hover .name.hover,
+  .pin:focus-visible .name.hover {
     visibility: visible;
   }
   .true-look .pin .name,
@@ -468,11 +499,12 @@
     padding: 0 4px;
     text-shadow: none;
   }
+  /* Low in the stage: the view controls run along the top. */
   .bar {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    top: 12px;
+    bottom: 64px;
     display: flex;
     gap: 10px;
     align-items: center;
