@@ -614,6 +614,14 @@ Sheet rows whose `src` is `fudge-register`: a stand-in value kept until a source
 |---|---|---|---|---|
 | `substances[he3].phases.density_liquid` (MP23) | 59 kg m-3 at the 3.19 K boiling point, recalled, not read | Liquid helium-3 has no equation of state in CoolProp, and the sources read so far stop below 2.5 K (Kollar and Vollhardt, arXiv cond-mat/9906222) or give no density (Wikipedia's liquid helium table) | The saturated-liquid density of helium-3 from a read source (Wheatley 1975, Rev. Mod. Phys. 47, 415, or a helium-3 equation of state such as Huang et al.) | stand-in; ship tanks only |
 
+## Real spaceflight (track RS, `tests/fixtures/flightlog/`)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| Every real craft's flight log (big burns only) | Only big burns and flybys are logged; trim manoeuvres, station-keeping and drag are left out, and orbits between events are held fixed. Each course is solved to meet its next recorded event, so a craft is right at every logged event and off only in between | Alex's ruling, 23 Nov 2026: "we simplify and approximate... just the big burns and assume stable orbits" | A reconstructed ephemeris (JPL Horizons or SPICE) for each craft. Estimated error: mid-leg thousands to tens of thousands of km on legs of hundreds of millions in deep space (well under 0.1%); in low orbit the phase along the orbit drifts, good only to a fraction of an orbit after a few days. RS3 measures both against Horizons and writes the measured numbers here | accepted fudge, size to be measured in RS3 |
+| `voyager-2.json` departure burn | One impulsive 7.19 km/s burn an hour after launch from a 185 km parking orbit, in place of the Centaur's two burns and the solid kick stage | Gives the right speed leaving Earth (Horizons, 10.15 km/s a day after launch) with one event | The Centaur and TE-M-364-4 burns with their own times and engines (RS2 parts, RS5 ascent) | stand-in |
+| `apollo-11.json` orbit orientation | Parking and lunar orbits carry their size and inclination but node, periapsis and phase are zero | Written from the mission report's sizes before RS3 reads the state vectors | Node and phase from Horizons (the S-IVB, -399110, is there) or the report's state vectors | stand-in until RS3 |
+
 ## Interface and player views
 
 | Where | Instead of the physics | Why | Real physics to replace it | Status |
