@@ -54,6 +54,8 @@ export function decide(seat: Seat, intent: Intent): Decision {
   if (intent.kind === "adopt_physics" || intent.kind === "stack_packs" || intent.kind === "scan_toggle" || intent.kind === "grant") return { action: "ask_gm" };
   // Placing and withdrawing bodies is the GM's (paste and cut on the Build desk): never auto-approved.
   if (intent.kind === "set_values" || intent.kind === "withdraw" || intent.kind === "restore") return { action: "ask_gm" };
+  // What things are called is the GM's (NM2): a player's rename goes to the GM.
+  if (intent.kind === "rename" || intent.kind === "set_naming") return { action: "ask_gm" };
   const ok = (seat.auto_approve ?? []).some(
     (a) => a.intent === intent.kind && a.scope.some((s) => within(intent.address, s)) && (!a.fields || (intent.kind === "set_value" && a.fields.includes(intent.field))),
   );

@@ -64,3 +64,21 @@ test("a sample is the same in a trial and on the stack, and never changes the ca
     await k.close();
   }
 });
+
+test("rename and set_naming are GM intents that become the kernel's own requests", async () => {
+  const { checkIntent, intentToRequest } = await import("../src/intent.ts");
+  const { decide, tableSeat } = await import("../src/seat.ts");
+  const r = { kind: "rename" as const, address: "u:k/sys:1/body:3", layer: "local_vesh", text: " Zakqu ", at_yr: 4.6e9 };
+  assert.equal(checkIntent(r), null);
+  const req = intentToRequest(r) as { op: string; text?: string; layer: string };
+  assert.equal(req.op, "rename");
+  assert.equal(req.text, "Zakqu");
+  assert.equal((intentToRequest({ ...r, text: null }) as { text?: string }).text, undefined, "null takes the typed name away");
+  assert.match(checkIntent({ ...r, layer: "Local Vesh" })!, /layer/);
+  assert.match(checkIntent({ ...r, text: "  " })!, /some text/);
+  const n = { kind: "set_naming" as const, address: "u:k/sys:1", layer: "common", scheme: "vesh", of_kind: "moon", at_yr: 4.6e9 };
+  assert.deepEqual(Object.keys(intentToRequest(n)).sort(), ["address", "at_s", "kind", "layer", "op", "scheme"]);
+  assert.equal((intentToRequest({ ...n, scheme: null }) as { scheme?: string }).scheme, undefined);
+  assert.equal(decide(gmSeat(), r).action, "apply");
+  assert.equal(decide({ ...tableSeat(), may_send: ["rename"] }, r).action, "ask_gm", "a player's rename goes to the GM");
+});
