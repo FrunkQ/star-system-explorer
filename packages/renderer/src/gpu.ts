@@ -2,7 +2,7 @@
 // device has no WebGPU). It is handed camera-relative positions only, already
 // narrowed from f64 (frames.ts), and draws with the camera at the origin, so
 // no large number ever reaches the GPU (rendering rule 3).
-import { AdditiveBlending, AmbientLight, BufferGeometry, DoubleSide, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
+import { AdditiveBlending, AmbientLight, BufferGeometry, DoubleSide, Quaternion, RingGeometry, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
 import { WebGPURenderer } from "three/webgpu";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
@@ -27,6 +27,11 @@ export interface GpuItem {
   face?: { key: string; version: number; width: number; data: Uint8ClampedArray; disc: number };
   /** True look in a band other than visible: the body's own light as a mapped grey, 0..1 (0 is dark), not lit. */
   emit?: number;
+  /**
+   * True look: the world's rings (rings.ts `ringProfile`), lit by the star: edges in units of the world's drawn
+   * radius, the ring plane's normal, and the profile's row of RGBA pixels from the inner edge out. Keyed: uploaded once.
+   */
+  rings?: { key: string; inner: number; outer: number; normal: Vec3; width: number; data: Uint8ClampedArray };
 }
 
 /** True look: the star's light. `at` a camera-relative point (the star is in the frame), else `from` a direction. */
@@ -202,6 +207,27 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     return e.geom;
   };
   const torus = new TorusGeometry(1.8, 0.08, 6, 48);
+  // A world's rings: an annulus in units of its radius, its texture's u running from the inner edge out.
+  const ringSets = new Map<string, { geom: RingGeometry; tex: DataTexture; mat: MeshStandardMaterial }>();
+  const zAxis = new Vector3(0, 0, 1);
+  const ringSet = (r: NonNullable<GpuItem["rings"]>) => {
+    const hit = ringSets.get(r.key);
+    if (hit) return hit;
+    const geom = new RingGeometry(r.inner, r.outer, 256, 1);
+    const pos = geom.getAttribute("position");
+    const uv = geom.getAttribute("uv");
+    for (let v = 0; v < pos.count; v++) uv.setXY(v, (Math.hypot(pos.getX(v), pos.getY(v)) - r.inner) / (r.outer - r.inner), 0.5);
+    uv.needsUpdate = true;
+    const tex = new DataTexture(new Uint8Array(r.data), r.width, 1, RGBAFormat);
+    tex.colorSpace = SRGBColorSpace;
+    tex.magFilter = LinearFilter;
+    tex.minFilter = LinearFilter;
+    tex.needsUpdate = true;
+    const mat = new MeshStandardMaterial({ map: tex, transparent: true, side: DoubleSide, depthWrite: false, roughness: 1, metalness: 0 });
+    const e = { geom, tex, mat };
+    ringSets.set(r.key, e);
+    return e;
+  };
   const mats = new Map<string, MeshBasicMaterial>();
   const lineMats = new Map<string, LineBasicMaterial>();
   const mat = (c: string) => mats.get(c) ?? (mats.set(c, new MeshBasicMaterial({ color: new Color(c) })), mats.get(c)!);
@@ -241,7 +267,15 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         m.position.set(it.rel[0], it.rel[1], it.rel[2]);
         m.scale.setScalar(it.radius);
         scene.add(m);
-        if (it.ring) {
+        if (o.light && it.rings) {
+          const rs = ringSet(it.rings);
+          const rm = new Mesh(rs.geom, rs.mat);
+          rm.position.copy(m.position);
+          rm.scale.setScalar(it.radius);
+          rm.quaternion.copy(new Quaternion().setFromUnitVectors(zAxis, new Vector3(it.rings.normal[0], it.rings.normal[1], it.rings.normal[2]).normalize()));
+          scene.add(rm);
+        }
+        if (it.ring && !(o.light && it.rings)) {
           const r = new Mesh(torus, mat(it.colour));
           r.position.copy(m.position);
           r.scale.setScalar(it.radius);
@@ -296,6 +330,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       lightMats.forEach((m) => m.dispose());
       glowMats.forEach((m) => m.dispose());
       sheetGeoms.forEach((e) => e.geom.dispose());
+      ringSets.forEach((e) => (e.geom.dispose(), e.tex.dispose(), e.mat.dispose()));
       lineMats.forEach((m) => m.dispose());
       dotMats.forEach((m) => m.dispose());
       renderer.dispose();

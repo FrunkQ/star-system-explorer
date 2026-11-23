@@ -19,13 +19,28 @@ export interface Body3D {
   radius_m?: number | null;
   /** Its surface temperature, kelvin (a star's own), for True's infrared; null or absent when not known. */
   t_k?: number | null;
+  /** Its rings (a belt whose host is this world), edges from its centre in metres; tau and albedo when known. */
+  rings?: Ring3D[];
+  /** Its axial tilt, radians, when known: the rings lie in its equator. */
+  tilt_rad?: number;
+}
+
+export interface Ring3D {
+  name: string;
+  inner_m: number;
+  outer_m: number;
+  tau: number | null;
+  albedo: number | null;
 }
 
 export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => Mark): Body3D[] {
   const star = primaryOf(scene);
   return scene.subjects
     .filter((s) => s === star || s.orbit)
-    .map((s) => ({ id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s) }));
+    .map((s) => {
+      const rings = scene.subjects.filter((r) => r.ring && r.parent === s.address).map((r) => ({ name: r.label, ...r.ring! }));
+      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}) };
+    });
 }
 
 /** A subject's surface temperature in kelvin: a star's effective, a world's surface, else its equilibrium. */
