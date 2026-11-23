@@ -1570,6 +1570,17 @@ pub enum Request {
         address: String,
         at_s: i64,
     },
+    /// ND6 (new-physics demo 2.5): each pack's sources, fudge list
+    /// (declared, plus every fitted or assumed Model number its flows and
+    /// boxes hold) and reproduction report (published numbers beside the
+    /// pack's, worked out when the stack loaded), for the stack in force or
+    /// one pack of it. Read in a trial, it shows them before the pack is
+    /// added. Read-only.
+    PackReports {
+        #[serde(default)]
+        #[ts(optional)]
+        pack: Option<String>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1731,6 +1742,7 @@ impl Request {
             Request::SetNaming { .. } => "set_naming",
             Request::Rename { .. } => "rename",
             Request::FixNames { .. } => "fix_names",
+            Request::PackReports { .. } => "pack_reports",
         }
     }
 }
@@ -2095,6 +2107,11 @@ pub fn ops() -> Vec<OpInfo> {
             "fix_names",
             Cost::Light,
             "GM machine only; draws the names under one address, one event",
+        ),
+        o(
+            "pack_reports",
+            Cost::Trivial,
+            "reads reports worked out when the stack loaded; read only",
         ),
     ]
 }
@@ -2898,6 +2915,14 @@ pub enum Response {
     /// avoid_hits}`, each name with its form, faces and parts.
     /// `read_names`: `{address, kind, names: [{layer, text, source, scheme,
     /// named, original}]}`.
+    /// `pack_reports`: `[{pack, version, licence, sources, fudges: [{id, what,
+    /// stands_in_for, replace_with?, flows, source?, from, number?}],
+    /// reproduction: [{name, source, where?, flow, pass, rows: [{kind, unit?,
+    /// published, got, tolerance, off, pass, error?}]}], reproduced}]`.
+    PackReports {
+        #[ts(type = "unknown")]
+        reports: serde_json::Value,
+    },
     Names {
         #[ts(type = "unknown")]
         value: serde_json::Value,

@@ -44,6 +44,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
 | ND3b physics blocks into formula files (part 1: six blocks, crate sse-formula, shrinking list `packages/ND3b-rust-atoms.txt`) | part 1 done; next cbrt and parameters as letters, then the next families | packages/ND3b.md |
+| ND6 kernel half: packs carry sources, fudges (declared plus fitted and assumed Model numbers) and reproduction checks run on load; op `pack_reports` | done (kernel half); the Packs screen half is the chart room's | packages/ND6.md |
 
 ## Done so far and what is next
 

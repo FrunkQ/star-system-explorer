@@ -3240,5 +3240,16 @@
   "scope": "u:toy",
   "sheet": "nope",
   "at_s": 30
+ },
+ {
+  "op": "pack_reports"
+ },
+ {
+  "op": "pack_reports",
+  "pack": "sse.base-toy"
+ },
+ {
+  "op": "pack_reports",
+  "pack": "nope.none"
  }
 ]
