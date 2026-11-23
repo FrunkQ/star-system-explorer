@@ -968,6 +968,7 @@ pub fn run_manifest(
             params: cp.envelope.clone(),
             seed,
             address: addr.clone(),
+            remains: Default::default(),
         };
         let ev = Events {
             env: &env,
