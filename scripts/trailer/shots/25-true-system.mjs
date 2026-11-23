@@ -12,15 +12,18 @@ export default {
     await d.hold(4500);
     await d.click(vc(page, "Seen from", "Tilted"));
     await d.hold(3500);
+    await d.caption("HUD", "Names, orbits and outlines over the true picture, like a heads-up display.");
+    await d.click(vc(page, "HUD", "On"));
+    await d.hold(3500);
     await d.caption("Infrared", "Each body glows by its own heat.");
     await d.click(vc(page, "Band", "Infrared"));
     await d.hold(3500);
     await d.caption("X-ray", "The star's corona and flares; the worlds go dark.");
     await d.click(vc(page, "Band", "X-ray"));
     await d.hold(3500);
-    await d.caption("Mag", "Every world's magnetic field, and the wind's bubble round it.");
+    await d.caption("Mag", "Every world's magnetic field lines, and the wind's bubble round it.");
     await d.click(vc(page, "Band", "Mag"));
-    await d.hold(4000);
+    await d.hold(5000);
     await d.click(vc(page, "Band", "Visible"));
     await d.hold(1500);
   },
