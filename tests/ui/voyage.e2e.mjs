@@ -43,8 +43,21 @@ try {
     // What the ship can do where it arrives (ship_at_world): the ship drawn, then the acts, none refused.
     await gm.waitForSelector(".insys [data-at-world]", { timeout: 60000 });
     assert.ok((await ins.locator("[data-at-world] [data-act]").count()) >= 1, "acts at the destination");
-    assert.ok((await ins.locator("[data-at-world] figure.ship svg").count()) === 1, "the ship drawn from its numbers");
+    await gm.waitForSelector(".insys [data-at-world] [data-ship-plans]", { timeout: 30000 });
+    assert.equal(await ins.locator("[data-at-world] [data-ship-plans]").count(), 1, "the ship designed from its numbers");
     await shot(gm, "v8-voyage-at-world", true);
+    // Abilities shape the ship (SHIP14 stage 4b): fit it for this world, and if the fit carries a heat shield for an
+    // aerobraking pass, watch the pass with the shield glowing at its radiative balance.
+    await ins.locator("[data-fit-for-world]").click();
+    await gm.waitForFunction(() => !document.querySelector(".insys [data-fit-for-world]")?.hasAttribute("disabled"), null, { timeout: 60000 });
+    const pass = ins.locator("[data-watch-pass]");
+    if (await pass.count()) {
+      await pass.click();
+      await gm.waitForSelector(".insys [data-pass-view] canvas", { timeout: 30000 });
+      assert.match(await ins.locator("[data-pass-view]").innerText(), /K/);
+      await gm.waitForTimeout(1500);
+      await shot(gm, "ship14-watch-the-pass", true);
+    }
     // To a belt, if the system has one; else the outermost world.
     const belt = ins.locator("[data-place^='belt:']").first();
     const target = (await belt.count()) ? await belt.getAttribute("data-place") : await ins.locator("[data-place]").last().getAttribute("data-place");

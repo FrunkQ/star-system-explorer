@@ -2,3 +2,4 @@
 // and the route card's ship line. The renderer's ship.ts does the sums; this only inks them in the theme's colours.
 export { default as ShipPicture } from "./ShipPicture.svelte";
 export { default as ShipPlans } from "./ShipPlans.svelte";
+export { default as ShipAtWorldView } from "./ShipAtWorldView.svelte";

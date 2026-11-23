@@ -103,6 +103,23 @@ The kernel's NAV engine produces a **descent scene** for any landing, probe drop
 
 Alex's reference video (`C:\Development\Misc\m2-res_1080p.mp4`, 1 min 55 s) is a good test that this is enough: everything in it can be drawn from that scene. Its stacked horizontal terrain lines are cross-sections of the height map along the track; its red outlines are hazard contours; its receding rectangles are the descent corridor; its right-hand column is the telemetry events; its countdown is trajectory time. No extra data is needed.
 
+### 4.1 Ruling of 23 Nov: getting down and walking about (Alex)
+
+- **Pick a site, the ship autoroutes.** The player picks any point on the planet; the kernel plans the descent (no hand piloting) and the view plays it as a flown camera, skippable.
+- **Pick a landmark from a map (easiest).** The usual way to choose is a landmark from a map: a natural one (peak, crater, coast, named by the naming packs) or a construct. A press anywhere else on the map still works.
+- **Anywhere, not only ports.** Any point is a valid destination. Landing facilities are places that exist, never the list of allowed spots. Under "danger is drama", a rough or risky site is offered with its dangers and chances shown (slope, roughness, weather, the ship's own `ship_at_world` limits), never filtered out.
+- **Planet-bound free view.** Once down, a free view to wander and explore, kept to the planet. The only way to see an off-planet sequence is to get back in the ship and chart a new course.
+- **Landing facilities are constructs.** Simple geometric facilities in the render catalogue, procgen so each is deterministically different, wearing construct styles per nation or species exactly as ships do. One style mechanism covers ships and ground constructs.
+
+Accepted with it ("yes to all", 23 Nov 11:53):
+
+1. **Choosing the site.** Landmarks and the map come from the surface atlas and the naming packs; each site shows a quick verdict for the ship from the same `ship_at_world` check as the Voyages card; Land plays the kernel's descent as a flown camera that can be skipped.
+2. **How far you can wander.** Walk, or fly a low drone, over the detailed patch a few km across around the landing site. Going further means taking off and choosing a new site.
+3. **Where facilities appear.** Only where a universe pack, a story or the GM places one; bare ground elsewhere. Pads and hangars are sized from the ships they serve.
+4. **One style system.** Base-ships `ship_styles` become construct styles covering ships and ground facilities alike, assignable to a nation or species and remixable.
+5. **Phones.** The walk view runs at `gpu-basic`, with "Take photograph" (`still` tier, 6.4) for a detailed picture.
+
+
 ---
 
 ## 5. Landing styles as render recipes (evolvable by Orac)
