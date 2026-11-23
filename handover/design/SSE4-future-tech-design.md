@@ -2,6 +2,8 @@
 
 Status: **accepted 23 Nov 2026**. Alex answered "yes to all" at 16:15 to the fourteen questions in section 12 (read by the coordinator as covering this list among three open at once; he can correct that). Written by the design thread. Track letters **FT**. Design only; the packages are in section 13. Every figure still passes the citation check before it ships. A mockup goes with it: "SSE4 ship styles and tech levels" (one generated ship in five styles and at three tech levels), source in `/mnt/project-files/sse4/ships/styles-and-tech-mockup.html`.
 
+**Ruling, 23 Nov 17:49 (Alex):** "4.1 alien life will have to have culture and tech as part of life. So all these systems can be extended then and we can have a lighter touch." So 4.0 keeps civilisation capability light: levels and advances are set by hand or by a pack. Automated research, tech trees and a civilisation growing its own technology are 4.1, grown from life.
+
 Read with: the voyages design (drive facts, FTL as a pack rule), the nebulae and light design (every object publishes its light by band, section 5A sensing), the matter pack design (the master data sheet and its one "Look up" door), the programs design (track J), the naming design (settings inherit down the tree), and the ship generator in `packages/renderer/src/ship-design.ts` (parts sized by physics, a style only arranges and dresses them).
 
 Sources below were **[from memory, verify]**; the citation check (FT1, 23 Nov, section 14) has now read or re-worked each one, and corrected those that were off. A figure marked *computed* is this note's own arithmetic, re-run in the check; *textbook* means a standard value not read from a paper.
@@ -131,7 +133,7 @@ So megastructures are not a special catalogue. Each states its figures, and what
 | **One level short: Woven carbon cable** (or two, three) | an advance not held yet | **Build the prototype**, at ten times the size per level short, shown before committing; or **Develop it** |
 | **Past anything known: needs 30,000 times their strongest material** | no advance on this setting's ladder reaches the figure | **Add an advance to the setting** (marked fictional if past the ceiling); or **Place it as found** |
 
-**Develop it.** Recommended: in the core app this is a story decision with one honest lever. "Develop it" adds a dated event, "the Vesh gain woven carbon cable in 2310", at the campaign's now or a chosen date. From that date the reading changes, existing prototypes stay as built, and new builds come out at the proper size. No research points in the core. A game pack may drive the same event from a program (track J) or, later, from the economy pack, so a 4X-style pack can have research as a mechanic without the core growing one. Orac can propose the event and its consequences ("this opens a beanstalk on four of their worlds").
+**Develop it.** In the core app this is a story decision with one honest lever. "Develop it" adds a dated event, "the Vesh gain woven carbon cable in 2310", at the campaign's now or a chosen date. From that date the reading changes, existing prototypes stay as built, and new builds come out at the proper size. No research points in the core. "Develop it" stays the one hand-pressed dated event in 4.0 (a pack may also write the same event as plain data). Automated research and tech trees are 4.1, grown from life with its culture, per the ruling above; nothing in 4.0 builds hooks for them. Orac can propose the event and its consequences ("this opens a beanstalk on four of their worlds").
 
 **Found, not built.** Any construct may carry parts above its owner's level. They work, they cannot be copied or repaired, and the card says "found". This gives the ancient artefact, the captured drive and the gift from elder aliens with no new machinery, and it is authored ink like any GM placement.
 
@@ -222,7 +224,7 @@ So two navies at the same level differ by style, and two ships in the same style
 | Package | What | Suggested owner |
 |---|---|---|
 | FT1 | `base-tech` pack: limits, figures with cited marks, the neutral ladder, real advances; strength for weight on the master data sheet | matter data sheet thread, with citation checks |
-| FT2 | Kernel: advances on a civilisation, inherited and dated; needs computed from parts; the size rule; the availability reading; fictional by ceiling | kernel thread |
+| FT2 | Kernel: advances on a civilisation, set by hand or by a pack, inherited and dated, with no growth hooks (growth is 4.1); needs computed from parts; the size rule; the availability reading; fictional by ceiling | kernel thread |
 | FT3 | Ships read figures from advances instead of per-fuel rules; the fictional flag on legs and passes that lean on a fictional advance | travel thread |
 | FT4 | Generator: spin ring, prototype swelling, "show it without"; styles stage 5 against the part vocabulary | renderer thread |
 | FT5 | Light by part and the band switch on the ship picture; stated light for fictional advances | light thread with the renderer |
