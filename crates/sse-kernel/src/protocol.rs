@@ -1304,6 +1304,16 @@ pub enum Request {
         #[ts(optional)]
         limit: Option<u32>,
     },
+    /// DM3: one halo cell's matter ledger today: dark matter in catalogued
+    /// haloes, in haloes below the catalogue floor and never collapsed;
+    /// ordinary matter as stars, cold gas, hot halo gas, thrown-out gas,
+    /// black holes and gas between galaxies; and the cell's volume and matter
+    /// by web environment. Read only.
+    MatterBudget {
+        #[serde(default)]
+        #[ts(optional)]
+        cell: Option<[i64; 3]>,
+    },
     /// G5 through the kernel (night sky design, Y7a): one 10 pc star cell of
     /// the campaign's galaxy at `t_myr` (default the campaign's now), its
     /// fill as today's rules draw it and the campaign's promoted stars read
@@ -1768,6 +1778,7 @@ impl Request {
             Request::ExportSector { .. } => "export_sector",
             Request::SectorMap { .. } => "sector_map",
             Request::HaloCell { .. } => "halo_cell",
+            Request::MatterBudget { .. } => "matter_budget",
             Request::StarCell { .. } => "star_cell",
             Request::SkyFromHere { .. } => "sky_from_here",
             Request::SkyGlow { .. } => "sky_glow",
@@ -2078,6 +2089,11 @@ pub fn ops() -> Vec<OpInfo> {
             "halo_cell",
             Cost::Medium,
             "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
+        ),
+        o(
+            "matter_budget",
+            Cost::Medium,
+            "one cell's haloes, G3 once per half dex of halo mass, the mass function below the catalogue floor and the cell's environments (about 0.1 to 1 s native)",
         ),
         o(
             "sky_from_here",
@@ -2907,6 +2923,15 @@ pub enum Response {
     HaloCelled {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
+    },
+    /// `matter_budget`: `{cell, cell_mpc, matter_msun, dark {catalogued_haloes,
+    /// haloes_below_floor, never_collapsed}, ordinary {stars, cold_gas, hot_gas,
+    /// thrown_out, black_holes, between_galaxies}, baryon_share, f_b,
+    /// floor_low_msun, catalogue_floor_msun, haloes, environments: [{environment,
+    /// volume, matter}], samples_a_side, model}`, solar masses.
+    MatterBudgeted {
+        #[ts(type = "unknown")]
+        budget: serde_json::Value,
     },
     /// `star_cell`: `{galaxy, cell, frame, frame_start_myr, t_myr, cell_pc, expected, pins,
     /// systems: [{address, pinned, drawn_in {cell, frame, slot}, mass_msun,

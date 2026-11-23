@@ -439,6 +439,40 @@ pub(crate) fn web_slice(a: SliceAsk) -> Result<serde_json::Value, Response> {
     }))
 }
 
+/// DM3: one cell's matter ledger today.
+pub(crate) fn matter_budget(
+    seed: &Seed,
+    root: &Address,
+    cell: [i64; 3],
+) -> Result<serde_json::Value, Response> {
+    let cp = settings()?;
+    let c = cosmology(&cp.params);
+    let w = web(&c, &cp, seed, root)?;
+    let hs = Haloes {
+        cosmo: &c,
+        web: &w,
+        params: cp.haloes.clone(),
+        seed: *seed,
+        universe: root.clone(),
+    };
+    let lp = &cp.ledger;
+    let res = sse_cosmos::ledger::Reservoirs::new(
+        &hs,
+        &cp.galaxy,
+        lp.galaxy_low_msun,
+        cp.haloes.max_mass,
+    );
+    let l = sse_cosmos::ledger::cell(&hs, &res, lp, cell);
+    let mut v = serde_json::to_value(&l).map_err(|e| err("internal", e.to_string()))?;
+    v["model"] = serde_json::json!([
+        "matter: the cell's mass from the web's density; dark and ordinary in the universe's shares",
+        "haloes: the catalogued ones (G2) and, below the floor, the same mass function down to floor_low_msun; the rest of the dark matter never collapsed into those",
+        "reservoirs: G3 on a median halo once per half dex of mass, read off by each halo's mass; hot halo gas is a halo's share of ordinary matter less what its galaxy holds and threw out; gas between galaxies is the rest of the cell's",
+        "environments: the T-web at the web's finest octave (voids, sheets, filaments, knots), on a grid of samples",
+    ]);
+    Ok(v)
+}
+
 pub(crate) struct CellAsk<'a> {
     pub seed: &'a Seed,
     pub root: &'a Address,
@@ -838,6 +872,35 @@ mod tests {
             r#"{"op":"galaxy_chart","halo":"dwarf","edits":[{"kind":"remove_merger","index":999}]}"#,
         );
         assert_eq!(bad["code"], "bad_edit", "{bad}");
+    }
+
+    /// DM3 through the kernel: the ledger closes and is repeatable.
+    #[test]
+    fn matter_budget_closes_and_is_repeatable() {
+        let mut k = open();
+        let r = ask(&mut k, r#"{"op":"matter_budget","cell":[0,0,0]}"#);
+        assert_eq!(r["type"], "matter_budgeted", "{r}");
+        let b = &r["budget"];
+        let f = |p: &str, q: &str| b[p][q].as_f64().unwrap();
+        let dark = f("dark", "catalogued_haloes")
+            + f("dark", "haloes_below_floor")
+            + f("dark", "never_collapsed");
+        let ord: f64 = [
+            "stars",
+            "cold_gas",
+            "hot_gas",
+            "thrown_out",
+            "black_holes",
+            "between_galaxies",
+        ]
+        .iter()
+        .map(|q| f("ordinary", q))
+        .sum();
+        let m = b["matter_msun"].as_f64().unwrap();
+        assert!(((dark + ord) / m - 1.0).abs() < 1e-9, "{b}");
+        assert_eq!(b["environments"].as_array().unwrap().len(), 4);
+        let again = ask(&mut k, r#"{"op":"matter_budget","cell":[0,0,0]}"#);
+        assert_eq!(r, again);
     }
 
     #[test]

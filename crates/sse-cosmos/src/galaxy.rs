@@ -203,6 +203,10 @@ pub struct Galaxy {
     /// GH3: what its assembly tree brought, when it was fed by one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub assembled: Option<crate::feed::Assembled>,
+    /// DM3: gas thrown out by winds and not yet back, now (solar masses);
+    /// the matter ledger reads it, the wire does not carry it.
+    #[serde(default, skip_serializing)]
+    pub ejected_now: f64,
 }
 
 /// a(t) on the galaxy's grid, by stepping the cosmology's time integral in log a.
@@ -590,6 +594,7 @@ pub fn evolve_feeding(
         t_start_gyr: t0,
         rotation,
         assembled: feeding.map(crate::feed::Feeding::finish),
+        ejected_now: ejected,
     }
 }
 

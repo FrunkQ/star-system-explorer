@@ -15,6 +15,7 @@ pub mod galaxy;
 pub mod glow_mix;
 pub mod haloes;
 pub mod infall;
+pub mod ledger;
 pub mod model;
 pub mod nucleus;
 pub mod origin;
@@ -140,6 +141,8 @@ pub(crate) mod golden {
 }
 #[cfg(test)]
 mod dm2_tests;
+#[cfg(test)]
+mod dm3_tests;
 #[cfg(test)]
 mod g1_tests;
 #[cfg(test)]

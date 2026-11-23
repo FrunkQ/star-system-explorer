@@ -4890,6 +4890,11 @@ impl Kernel {
                 })?;
                 Response::HaloCelled { cell }
             }
+            Request::MatterBudget { cell } => {
+                let u = self.universe()?;
+                let budget = cosmos::matter_budget(&u.seed, &u.root, cell.unwrap_or([0, 0, 0]))?;
+                Response::MatterBudgeted { budget }
+            }
             Request::StarCell { cell, t_myr } => {
                 let u = self.universe()?;
                 let pins =
