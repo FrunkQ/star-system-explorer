@@ -191,10 +191,15 @@ export function beltBand(sma_m: number | undefined, inner_m: number | undefined,
   if (sma_m !== undefined && sma_m > 0) return [(sma_m * 0.9) / AU_M, (sma_m * 1.1) / AU_M];
   return undefined;
 }
-function f(field: string, label: string, value: number | string, unit?: string, source: SceneFact["source"] = "authored"): SceneFact {
+function f(field: string, label: string, value: number | string, unit?: string, source: SceneFact["source"] = "authored", kernel?: SceneFact["kernel"]): SceneFact {
   const v = typeof value === "number" ? round(value) : value;
-  return { field, label, value: v, ...(unit ? { unit } : {}), display: unit ? `${v} ${unit}` : String(v), editable: false, source };
+  // A value the universe holds at a kernel field can be typed over (it becomes the GM's, authored); one the physics
+  // works out from others cannot.
+  const editable = !!kernel && source !== "derived";
+  return { field, label, value: v, ...(unit ? { unit } : {}), display: unit ? `${v} ${unit}` : String(v), editable, source, ...(kernel ? { kernel } : {}) };
 }
+/** The kernel field a shown value is held at, and how many SI units one shown unit is. */
+const at = (field: string, per_unit = 1): SceneFact["kernel"] => ({ field, per_unit });
 /** Spread phases so bodies do not stack: a deterministic step of the golden angle. */
 const phase = (i: number) => (i * 137.507764) % 360;
 const sizeTag = (m_earth: number) => (m_earth < 0.5 ? "size:small" : m_earth < 10 ? "size:medium" : "size:large");
@@ -494,22 +499,22 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
       const s = surf.get(a);
       const out: SceneFact[] = [f("name", "Name", name)];
       if (kind === "star") {
-        if (mass !== undefined) out.push(f("mass_sun", "Mass", mass / M_SUN, "M☉", srcOf(a, "body.mass")));
-        if (radius !== undefined) out.push(f("radius_sun", "Radius", radius / R_SUN_M, "R☉", srcOf(a, "body.radius")));
+        if (mass !== undefined) out.push(f("mass_sun", "Mass", mass / M_SUN, "M☉", srcOf(a, "body.mass"), at("body.mass", M_SUN)));
+        if (radius !== undefined) out.push(f("radius_sun", "Radius", radius / R_SUN_M, "R☉", srcOf(a, "body.radius"), at("body.radius", R_SUN_M)));
         const t = num(a, "star.effective_temperature");
-        if (t !== undefined) out.push(f("teff_k", "Surface", t, "K", srcOf(a, "star.effective_temperature")));
+        if (t !== undefined) out.push(f("teff_k", "Surface", t, "K", srcOf(a, "star.effective_temperature"), at("star.effective_temperature")));
         const l = num(a, "star.luminosity");
-        if (l !== undefined) out.push(f("luminosity_sun", "Luminosity", l / L_SUN_W, "L☉", srcOf(a, "star.luminosity")));
+        if (l !== undefined) out.push(f("luminosity_sun", "Luminosity", l / L_SUN_W, "L☉", srcOf(a, "star.luminosity"), at("star.luminosity", L_SUN_W)));
         const ph = str(a, "star.phase");
         if (ph) out.push(f("phase", "Phase", ph.replace(/[-_]/g, " "), undefined, srcOf(a, "star.phase")));
       } else {
-        if (sma !== undefined) out.push(f("a_au", "Orbit", sma / AU_M, "AU", srcOf(a, "orbit.semi_major_axis")));
+        if (sma !== undefined) out.push(f("a_au", "Orbit", sma / AU_M, "AU", srcOf(a, "orbit.semi_major_axis"), at("orbit.semi_major_axis", AU_M)));
         const e = num(a, "orbit.eccentricity");
-        if (e !== undefined) out.push(f("eccentricity", "Eccentricity", e, undefined, srcOf(a, "orbit.eccentricity")));
-        if (mass !== undefined) out.push(f("mass_earth", "Mass", mass / M_EARTH, "M⊕", srcOf(a, "body.mass")));
-        if (radius !== undefined) out.push(f("radius_earth", "Radius", radius / R_EARTH_M, "R⊕", srcOf(a, "body.radius")));
+        if (e !== undefined) out.push(f("eccentricity", "Eccentricity", e, undefined, srcOf(a, "orbit.eccentricity"), at("orbit.eccentricity")));
+        if (mass !== undefined) out.push(f("mass_earth", "Mass", mass / M_EARTH, "M⊕", srcOf(a, "body.mass"), at("body.mass", M_EARTH)));
+        if (radius !== undefined) out.push(f("radius_earth", "Radius", radius / R_EARTH_M, "R⊕", srcOf(a, "body.radius"), at("body.radius", R_EARTH_M)));
         const day = num(a, "body.rotation_period");
-        if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h", srcOf(a, "body.rotation_period")));
+        if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h", srcOf(a, "body.rotation_period"), at("body.rotation_period", 3600)));
         if (s) out.push(f("surface_k", "Surface", s.t_surface_now_k, "K", "derived"));
       }
       const band = kind === "belt" && (!parent || parent === primary) ? beltBand(sma, num(a, "body.radius_inner"), num(a, "body.radius_outer")) : undefined;

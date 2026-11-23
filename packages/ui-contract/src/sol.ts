@@ -65,6 +65,19 @@ export interface SolBatch {
  * at body:N in the sheet's order, a body's moons under it, the belts at belt:N. `unverified` lists the facts whose
  * value the sheet marks unverified (address#field), for the GM's honesty marks.
  */
+/** SI units the kernel's facts are held in: a value printed in one of these goes in as it is. */
+const SI_UNITS: ReadonlySet<string> = new Set(["1", "m", "kg", "s", "K", "W", "Pa", "m/s", "kg/m3", "rad"]);
+/**
+ * A value as the kernel holds it, in SI. The sheet keeps each value in the unit it was printed in; the door converts
+ * by that unit. Angles printed in degrees become radians (a matter of geometry, not a measured constant). A unit the
+ * door does not know stops the door rather than entering a value in the wrong unit.
+ */
+export function toSI(x: SolValue, what = "a value"): number {
+  if (SI_UNITS.has(x.unit)) return x.v;
+  if (x.unit === "deg") return (x.v * Math.PI) / 180;
+  throw new Error(`sol: ${what} is in "${x.unit}", which the door cannot convert to SI`);
+}
+
 export function solBatches(sheet: SolSheet, system: string): { batches: SolBatch[]; addresses: Record<string, string>; unverified: string[]; names: Record<string, string> } {
   const addr: Record<string, string> = {};
   const count = new Map<string, number>();
@@ -106,7 +119,7 @@ export function solBatches(sheet: SolSheet, system: string): { batches: SolBatch
         put(x.src, system, "system.age", x.v * 1e9 * Number(YEAR_S));
         continue;
       }
-      put(x.src, a, field, x.v);
+      put(x.src, a, field, toSI(x, `${b.id} ${field}`));
       if (x.check === "unverified") unverified.push(`${a}#${field}`);
     }
   }
