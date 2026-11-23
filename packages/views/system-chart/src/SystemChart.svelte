@@ -104,7 +104,10 @@
   const label = (s: SceneSubject) => s.label;
   // The GM's lens (U9) decides which layers are drawn; it never changes the data.
   const L = $derived(ctx.workspace.lens);
-  const on = (id: Parameters<typeof hasLayer>[1]) => hasLayer(L, id);
+  // HUD off (the shared view controls, Alex 23 Nov): the chart shows the bodies and their belts as they are, without
+  // the overlay of scale rings, distances, orbit lines, names, the survey hatch or the temperate zone.
+  const OVERLAY = new Set(["grid", "unsurveyed", "distances", "orbits", "labels"]);
+  const on = (id: Parameters<typeof hasLayer>[1]) => hasLayer(L, id) && (shownView.hud || !OVERLAY.has(id));
   // What the lens's audience knows: each body's data view, from the kernel's scene for them.
   const known = $derived(ctx.workspace.lensScene ? new Map(ctx.workspace.lensScene.subjects.map((x) => [x.address, x.view])) : null);
   const through = $derived(asPlayers(L) && known !== null);
@@ -312,7 +315,7 @@
           {@const r0 = r(b.band_au![0])}
           {@const r1 = r(b.band_au![1])}
           {#if b.kind === "zone"}
-            <Ink circle={{ cx, cy, r: (r0 + r1) / 2 }} tone="zone" width={r1 - r0} />
+            {#if shownView.hud}<Ink circle={{ cx, cy, r: (r0 + r1) / 2 }} tone="zone" width={r1 - r0} />{/if}
           {:else if isShell(b)}
             <!-- A sphere seen from above: a haze from its inner edge out past the chart, not a ring in the plane. -->
             {@const edge = Math.min(r1, Math.hypot(w, h))}
