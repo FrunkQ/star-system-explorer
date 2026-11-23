@@ -35,6 +35,18 @@
   let open = $state(false);
   let why = $state<string | null>(null);
   const id = $props.id();
+  // The panel opens above its button, never over it, and closes on ×, Escape or a press anywhere else.
+  let root = $state<HTMLElement | null>(null);
+  let toggle = $state<HTMLButtonElement | null>(null);
+  let bottom = $state(44);
+  function place() {
+    const r = toggle?.getBoundingClientRect();
+    if (r) bottom = Math.max(8, innerHeight - r.top + 8);
+  }
+  function close() {
+    open = false;
+    toggle?.focus();
+  }
   const groups: [string, (r: BandRecipe) => boolean][] = [
     ["Seen as light", (r) => r.mode === "eye" || r.mode === "camera"],
     ["Astro palettes", (r) => r.mode === "composite"],
@@ -42,10 +54,13 @@
   ];
 </script>
 
-<svelte:window onkeydown={(e) => open && e.key === "Escape" && (open = false)} />
+<svelte:window
+  onkeydown={(e) => open && e.key === "Escape" && (e.stopPropagation(), close())}
+  onpointerdown={(e) => open && !root?.contains(e.target as Node) && (open = false)}
+  onresize={() => open && place()} />
 
-<span class="light" data-light={value} data-honesty={recipe?.honesty ?? "symbols"} data-stubbed={recipe ? stubbed.length : 0}>
-  <button type="button" class="toggle" aria-expanded={open} aria-controls="{id}-panel" onclick={() => (open = !open)} title="Which light the marks show">
+<span class="light" bind:this={root} data-light={value} data-honesty={recipe?.honesty ?? "symbols"} data-stubbed={recipe ? stubbed.length : 0}>
+  <button type="button" class="toggle" bind:this={toggle} aria-expanded={open} aria-controls="{id}-panel" onclick={() => (place(), (open = !open))} title="Which light the marks show">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" /></svg>
     Light: {recipe?.name ?? "chart colours"}
   </button>
@@ -55,7 +70,8 @@
     </span>
   {/if}
   {#if open}
-    <div class="panel" id="{id}-panel" role="group" aria-label="Light">
+    <div class="panel" id="{id}-panel" role="group" aria-label="Light" style:bottom="{bottom}px">
+      <div class="phead"><span class="k">Light</span><button type="button" class="pclose" aria-label="Close light" data-panel-close onclick={close}>×</button></div>
       <fieldset>
         <legend>Marks show</legend>
         <label class="check"><input type="radio" name="{id}-r" value={SYMBOLS} bind:group={value} /> Chart colours (the symbology)</label>
@@ -134,6 +150,21 @@
   }
   .stub {
     color: var(--sse-accent, currentColor);
+  }
+  .phead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pclose {
+    height: auto;
+    padding: 0 4px;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
   }
   .panel {
     position: fixed;
