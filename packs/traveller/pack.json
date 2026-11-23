@@ -7894,6 +7894,14 @@
      }
     }
    },
+   "overlays": [
+    {
+     "id": "traveller.sector-grid",
+     "label": "Sector grid",
+     "frame": "galaxy-plane-pc",
+     "grid": "sse.view.hex-map"
+    }
+   ],
    "calendar": {
     "name": "Imperial",
     "epoch_s": 0.0,

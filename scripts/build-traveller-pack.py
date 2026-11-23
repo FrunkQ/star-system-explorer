@@ -836,6 +836,8 @@ pack = {
         "classes": CLASSES,
         "code_sheets": [SHEET],
         "views": {"sse.view.hex-map": HEX_MAP},
+        # V3 gap 18 (overlay.ts): the sector grid laid over the stars, where the GM puts it, under the HUD.
+        "overlays": [{"id": "traveller.sector-grid", "label": "Sector grid", "frame": "galaxy-plane-pc", "grid": "sse.view.hex-map"}],
         "calendar": IMPERIAL,
         "gas_mixes": GAS_MIXES,
         "sensors": {"range_bands": RANGE_BANDS, "kinds": SENSORS, "ladder": LADDER},

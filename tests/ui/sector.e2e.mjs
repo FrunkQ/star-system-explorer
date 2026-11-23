@@ -3,6 +3,7 @@
 // from the galaxy scale's rail, import the first four worlds (preview, then write), pick
 // one; then the shared view controls' HUD (V10a): on by default, off leaves
 // the grid and each world's mark and strips numbers, names, glyphs and reach.
+// Then the pack's sector grid as an overlay on Voyages (V3 gap 18), placed on a star and taken off again.
 // Usage: node tests/ui/sector.e2e.mjs
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -56,8 +57,25 @@ try {
   await page.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On" }).click();
   await page.waitForFunction(() => document.querySelector("svg.hex-map")?.getAttribute("data-hud") === "on");
 
+  // V3 gap 18 (overlay.ts): the pack's sector grid on Voyages, between stars, placed on a picked star.
+  await go(page, "voyages");
+  await page.locator("[data-scale-pick=stars]").click();
+  const voy = page.locator(".voy");
+  await voy.locator("[data-star]").nth(3).waitFor({ timeout: 60000 });
+  await voy.locator("[data-overlay-row='traveller.sector-grid']").waitFor();
+  assert.equal(await voy.locator("[data-overlay-row='traveller.sector-grid']").getAttribute("data-placed"), "no");
+  await voy.locator("[data-star]").nth(3).dispatchEvent("click");
+  await voy.locator("[data-place-overlay='traveller.sector-grid']").click();
+  await page.waitForFunction(() => document.querySelectorAll("[data-overlay] polygon, [data-overlay] path, [data-overlay] polyline").length > 0, null, { timeout: 15000 });
+  const drawn = await voy.locator("[data-overlay] polygon, [data-overlay] path, [data-overlay] polyline").count();
+  if (shots) await page.screenshot({ path: `${shots}/sector-grid-on-stars.png` });
+  // The Chart style always shows its names, so the grid stays with it; the GM takes it off the map instead.
+  await voy.locator("[data-remove-overlay='traveller.sector-grid']").click();
+  await page.waitForFunction(() => document.querySelectorAll("[data-overlay] polygon, [data-overlay] path, [data-overlay] polyline").length === 0, null, { timeout: 15000 });
+  assert.equal(await voy.locator("[data-overlay-row='traveller.sector-grid']").getAttribute("data-placed"), "no");
+
   assert.deepEqual(errors, []);
-  console.log(`PASS chromium: Traveller pack added, four worlds imported, HUD on ${JSON.stringify(on)}, off ${JSON.stringify(off)}`);
+  console.log(`PASS chromium: Traveller pack added, four worlds imported, HUD on ${JSON.stringify(on)}, off ${JSON.stringify(off)}; sector grid on the stars (${drawn} shapes), taken off again`);
   await browser.close();
 } finally {
   server.kill();
