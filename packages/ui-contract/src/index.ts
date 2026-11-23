@@ -83,8 +83,8 @@ export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateO
 export { shipLog, writerWords } from "./constructs.ts";
 export type { ConstructTemplate, Created, KeptChange, ShipLogEntry, RecordRead } from "./constructs.ts";
 export type { CodeReading, CodesRead, MappedWorldRow, SectorMap, SectorFormat, SectorImportAsk, ImportedWorldRow, SectorImported, SectorExported } from "./sector.ts";
-export { STOCK_SHIPS, packShips, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
-export type { NavShip, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
+export { STOCK_SHIPS, packShips, shipChoices, shipToSend, packDriveWords, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
+export type { NavShip, ShipChoice, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
 export { verdictWords, chanceWords, worstDangers } from "./ship-at-world.ts";
 export { aerobrakeOption } from "./ship-at-world.ts";
 export type { ShipAtWorldAsk, ShipAtWorldReport, ShipAtWorld, WorldCheck, Danger as ShipDanger, Chance as ShipChance, ShipEffect, Verdict as ShipVerdict, WorldAir } from "./ship-at-world.ts";
