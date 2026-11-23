@@ -41,7 +41,7 @@ export function withStarFacts(s: MarkSubject, f: StarFacts | undefined): MarkSub
   return f ? { ...s, tags: [...s.tags, ...f.tags], numbers: { ...s.numbers, ...f.numbers } } : s;
 }
 
-const YEAR_S = 365.25 * 86400;
+const YEAR_S = 365.25 * constant("day");
 
 /**
  * The facts for a system's stars, by address: one resolved_system and one
