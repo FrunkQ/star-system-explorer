@@ -13,7 +13,7 @@
 <script lang="ts">
   import { fraction, keyStep, labelRows, type RulerEvent } from "./ruler.ts";
   import { motionMs } from "./motion.ts";
-  import { constant } from "../../ui-contract/src/sheet.ts";
+  import { constant } from "../../ui-contract/src/index.ts";
   import { around, between, calendarTicks, defaultCalendar, spanWords, steps, timeWords, zoom, type Calendar, type RulerWindow } from "./calendar.ts";
 
   let {

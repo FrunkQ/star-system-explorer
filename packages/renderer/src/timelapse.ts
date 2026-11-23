@@ -7,7 +7,7 @@
 // rain, ice, runoff) blend; plates, coasts and heights show the nearer frame,
 // because a blend of two plate maps is not a world that existed.
 
-import { constant } from "../../ui-contract/src/sheet.ts";
+import { constant } from "../../ui-contract/src/index.ts";
 
 export type V3 = readonly [number, number, number];
 

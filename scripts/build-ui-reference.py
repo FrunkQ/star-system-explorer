@@ -13,12 +13,30 @@ packages/ui-contract/test/sheet.test.ts fails when it is stale.
   scripts/build-ui-reference.py --check  exit 1 if the file is stale
 """
 import json
+import math
 import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHEET = os.path.join(ROOT, "packs", "base-reference", "pack.json")
 OUT = os.path.join(ROOT, "packages", "ui-contract", "generated", "reference-constants.json")
+
+
+def unit_factor(u, consts):
+    """A unit's factor to SI: its `factor_from` worked out over the constants
+    (numbers and ids multiplied, `/` dividing by the next), else its typed factor."""
+    f = u.get("factor_from")
+    if not f:
+        return u["factor"]["v"]
+    v, div = 1.0, False
+    for tok in f.split():
+        if tok == "/":
+            div = True
+            continue
+        x = math.pi if tok == "pi" else consts[tok]["v"] if tok in consts else float(tok)
+        v = v / x if div else v * x
+        div = False
+    return v
 
 
 def build():
@@ -30,7 +48,7 @@ def build():
         "pack": {"id": pack["id"], "version": pack["version"]},
         "constants": consts,
         # Each unit's factor to SI, for documents that give a value in a unit.
-        "units": {u["id"]: u["factor"]["v"] for u in pack["provides"]["reference"]["units"] if isinstance((u.get("factor") or {}).get("v"), (int, float))},
+        "units": {u["id"]: unit_factor(u, consts) for u in pack["provides"]["reference"]["units"]},
     }
     return json.dumps(doc, indent=1, sort_keys=False, ensure_ascii=False) + "\n"
 

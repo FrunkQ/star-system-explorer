@@ -6,7 +6,7 @@
 // starts, not the Big Bang. Presentation only: the kernel's time is seconds,
 // and positions at a time come from the kernel.
 import { formatYears, niceStep, type Tick } from "./ruler.ts";
-import { constant } from "../../ui-contract/src/sheet.ts";
+import { constant } from "../../ui-contract/src/index.ts";
 
 /** Seconds in the workspace's year (the Julian year, as the kernel's YEAR_S). */
 export const YEAR_S = constant("yr_julian");
