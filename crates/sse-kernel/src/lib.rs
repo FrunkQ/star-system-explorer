@@ -14,6 +14,7 @@ mod descent;
 mod dressing;
 #[cfg(test)]
 mod dressing_tests;
+mod fields;
 mod frame;
 mod frames;
 mod galaxies;
@@ -2754,8 +2755,43 @@ impl Kernel {
                 at_s,
                 window,
             } => systems::read_activity(stars, seed.as_deref(), at_s, window)?,
-            Request::ReadField { bodies, fixture } => {
-                systems::read_field(bodies, fixture.as_deref(), &self.observe.reference)?
+            Request::ReadField {
+                bodies,
+                fixture,
+                system: None,
+                ..
+            } => systems::read_field(bodies, fixture.as_deref(), &self.observe.reference)?,
+            Request::ReadField {
+                system: Some(system),
+                at_s,
+                ..
+            } => {
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                if !u.root.contains(&a) {
+                    return Err(err(
+                        "bad_address",
+                        format!("{a} is not in universe {}", u.root),
+                    ));
+                }
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                fields::read_system(
+                    &u.chronicle,
+                    &a,
+                    at_s,
+                    u.runs.get(&system),
+                    &self.observe.reference,
+                )?
             }
             Request::ReadPhotometry { stars, bands } => {
                 systems::read_photometry(stars, bands.unwrap_or_default())?
