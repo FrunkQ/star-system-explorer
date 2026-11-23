@@ -591,6 +591,10 @@ pub struct Course {
     pub why: Vec<String>,
     /// Course positions around the star at the samples, m (for drawing).
     pub track: Vec<V3>,
+    /// Speed over escape at the destination before the arrival burn, m/s: what an
+    /// aerocapture would shed instead (0 for a torch flight braked by its drive).
+    #[serde(default)]
+    pub arrive_v_inf_m_s: f64,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

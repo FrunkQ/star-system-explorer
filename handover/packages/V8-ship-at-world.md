@@ -88,3 +88,15 @@ and the unknown-op error message names `ship_at_world`. No other line changed.
 - e2e: `tests/ui/voyage.e2e.mjs` waits for the card, an act and the ship picture.
 
 Limits: the leg's own arrival speed is not passed yet (the voyage plan does not carry it); belts get no card.
+
+## Part 3: the leg's own arrival speed (23 Nov)
+
+- `Course.arrive_v_inf_m_s` (sse-nav): speed over escape at the destination before the arrival burn. For a Hohmann
+  transfer it is the textbook second-burn excess, for a Lambert arc |v₂ − v_world| at arrival, and 0 for a torch
+  flight braked by its drive. In-system voyage legs carry it as `Leg.arrive_v_inf_m_s`; belt hops leave it unset.
+- The Voyages "At <world>" card asks `ship_at_world` with that speed and says how the ship arrives ("arriving on
+  this voyage's transfer arc"). A leg without one falls back to the kernel's Hohmann default as before.
+- Tests: the Earth to Mars Hohmann arrives at d₂ (2.65 km/s), the cheapest Lambert arc within 10% of it, and a torch
+  flight at 0.
+- Goldens (on purpose, a new serialised field): `tests/golden/nav.json` (the chemical and torch plan digests only)
+  and `tests/golden/contract.jsonl` (three plan_route/plan_voyage responses gain the field). No number moved.

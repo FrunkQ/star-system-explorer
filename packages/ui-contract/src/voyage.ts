@@ -49,6 +49,8 @@ export interface VoyageLeg {
   /** In-system legs: the NAV course (hohmann, lambert, torch) and the days waited for its window. */
   course?: string;
   wait_days?: number;
+  /** In-system legs: speed over escape at the destination before the arrival burn, m/s. */
+  arrive_v_inf_m_s?: number;
   counted_pc?: number;
   home_days: number;
   ship_days: number;
