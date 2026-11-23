@@ -89,6 +89,7 @@ fn ideal() -> NavSystem {
         stock: vec![],
         magnetic_moment_a_m2: None,
         belts: None,
+        air: None,
     };
     NavSystem {
         name: "ideal".into(),

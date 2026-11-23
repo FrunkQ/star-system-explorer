@@ -10,6 +10,7 @@ import { constant } from "./sheet.ts";
 import type { MarkSubject } from "./symbology.ts";
 import type { Json } from "./json.ts";
 import type { ViewSession } from "./session.ts";
+import { YEAR_S } from "./intent.ts";
 
 /** What a star's mark reads beyond its kind and classes. */
 export interface StarFacts {
@@ -41,7 +42,6 @@ export function withStarFacts(s: MarkSubject, f: StarFacts | undefined): MarkSub
   return f ? { ...s, tags: [...s.tags, ...f.tags], numbers: { ...s.numbers, ...f.numbers } } : s;
 }
 
-const YEAR_S = 365.25 * 86400;
 
 /**
  * The facts for a system's stars, by address: one resolved_system and one
@@ -63,7 +63,7 @@ export async function readStarFacts(session: Pick<ViewSession, "resolvedSystem" 
     const l = starFactsFrom(f, undefined).numbers.luminosity_lsun;
     if (l === undefined || !(mass > 0 && radius > 0 && teff > 0)) continue;
     out.set(a, starFactsFrom(f, undefined));
-    asks.push({ address: a, mass_kg: mass, radius_m: radius, luminosity_w: l * constant("L_sun"), teff_k: teff, age_s: age > 0 ? age : 4.6e9 * YEAR_S });
+    asks.push({ address: a, mass_kg: mass, radius_m: radius, luminosity_w: l * constant("L_sun"), teff_k: teff, age_s: age > 0 ? age : 4.6e9 * Number(YEAR_S) });
   }
   if (!asks.length) return out;
   const r = await session.readActivity({ stars: asks as unknown as Json[] });
