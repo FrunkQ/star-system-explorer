@@ -238,7 +238,7 @@ Notes on the draft: it claims only what is live today (stock ships, radiators, r
 |---|---|---|---|
 | RK1 | Sheet rows: propellants, reactions, working temperatures, shield and radiator materials, the impulse unit; cited | data sheet thread, with FT1 | nothing |
 | RK2 | `base-tech` additions: the heat figure, "beams spread", the size floor; marks; flown advances for every family | data sheet thread (FT1) and the FT design thread for the note | question 3 |
-| RK3 | Ship and flight formulas as named Equations (section 5), done together with FT3 and FT4 | travel and renderer threads, kernel thread for the block side | question 4 |
+| RK3 | Ship and flight formulas as named Equations (section 5), done together with FT3 and FT4. Agreed split: the travel thread takes the flight formulas in `sse-nav` (rocket equation and its relativistic form, vis-viva, orbital and escape speed, Hohmann, synodic period and phase angle, brachistochrone, entry heating, ballistic coefficient; Lambert, Kepler and entry integration stay in Rust with reasons); the renderer thread takes ship sizing (thrust power, radiators) | travel and renderer threads, kernel thread for the block side | question 4 |
 | RK4 | Power plant as a part; shadow shield; drives that read watts or sunlight; pulse drive parts | renderer thread (generator), travel thread (records) | RK2 |
 | RK5 | Slow-spiral courses; a beamed leg that depends on its sender | travel thread | RK4 |
 | RK6 | "Paper spacecraft" pack: advances and ship recipes from primary sources, with tours | Traveller thread or a new pack thread; citations by the data sheet thread | RK1 to RK4 |
@@ -314,17 +314,17 @@ What falls out with no further rules:
 - **Sources follow a law.** Constant (reactor), sunlight (array: watts at a reference flux), decay (radioisotope: a half-life and a start date, so Voyager's power today is computed from the clock), fuel (fuel cell: burns propellant).
 - **Size comes from the advance.** A source's mass is its watts times the kilograms per watt of its advance (a limit 3 figure that already exists), so a level-short reactor swells like any other part.
 
-### 11.3 Field names (proposed; the travel thread owns the ship record and confirms)
+### 11.3 Field names (confirmed by the travel thread, owner of the ship record, 23 Nov 20:33, with six corrections folded in)
 
 SSE4 writes SI with the unit in the name. SSE3's fields stay readable and map across:
 
 | New field | On | SSE3 field it reads | Notes |
 |---|---|---|---|
-| `power[]`: `id`, `kind`, `electric_w`, `thermal_w`, `reject_k`, `mass_kg`, `law` | construct | `systems.power_plants[]`: `output_MW` to `electric_w`; `type` text matched to a `kind` where it can be, kept as the name where it cannot | `kind` is an advance id (`solar-array`, `fission-reactor`, `radioisotope`, `fuel-cell`). `thermal_w` and `reject_k` optional: given both outputs, the efficiency is checked, not typed |
-| `law`: `{ kind: "constant" }`, `{ kind: "sunlight", ref_flux_w_m2 }`, `{ kind: "decay", half_life_y, since }`, `{ kind: "fuel", fuel }` | power source | none (SSE3 was constant) | default constant |
-| `engines[]`: `engine`, `count` | construct | `engines[]`: `engine_id`, `quantity` | the flat `exhaust_km_s` and `accel_g` on today's ship record become readings computed from the engines, so NAV is untouched |
-| engine definition: `fuels[]`, `thrust_n`, `exhaust_km_s`, `energy_from`, `electric_w`, `efficiency`, `waste_k`, `mass_kg`, optional `exhaust_range_km_s` | pack | `fuel_type_id`, `thrust_kN`, `efficiency_isp` (times standard gravity), `powerDraw_MW` to `electric_w` | `efficiency` is jet power over energy in. `energy_from` is guessed on import from SSE3's `type` text and marked as a guess |
-| `loads[]`: `name`, `electric_w`, `heat_k` | construct | none | quarters, sensors, radios; each ends as heat |
+| `power[]`: `id`, `kind`, `electric_w`, `thermal_w`, `reject_k`, `mass_t`, `law` | construct | `systems.power_plants[]`: `output_MW` to `electric_w`; `type` text matched to a `kind` where it can be, kept as the name where it cannot | `kind` is an advance id (`solar-array`, `fission-reactor`, `radioisotope`, `fuel-cell`). `thermal_w` and `reject_k` optional: given both outputs, the efficiency is checked, not typed |
+| `law`: `{ kind: "constant" }`, `{ kind: "sunlight", ref_flux_w_m2 }`, `{ kind: "decay", half_life_y, since_s }`, `{ kind: "fuel", fuel }` | power source | none (SSE3 was constant) | default constant. `since_s` is universe seconds, the one clock |
+| `engines[]`: `engine`, `count` | construct | `engines[]`: `engine_id`, `quantity` | `accel_g`, `sustained` and `exhaust_km_s` stay on the ship as readings computed from `engines[]`. A ship with no `engines[]` keeps typing them, so every stock and pack ship flies unchanged |
+| engine definition: `fuels[]`, `thrust_n`, `exhaust_km_s`, `energy_from`, `electric_w`, `efficiency`, `reject_k`, `mass_t`, optional `exhaust_range_km_s: [low, high]` | pack | `fuel_type_id`, `thrust_kN`, `efficiency_isp` (times standard gravity), `powerDraw_MW` to `electric_w` | `fuels[]` is the same list refuelling already reads. `efficiency` is jet power over energy in. `energy_from` is guessed on import from SSE3's `type` text and marked as a guess |
+| `loads[]`: `name`, `electric_w`, `reject_k`, `mass_t` | construct | none | quarters, sensors, radios; each ends as heat. One name, `reject_k`, for the heat's temperature on sources, engines and loads, so radiator sizing reads one field. Masses in tonnes, as the rest of the ship record |
 
 `can_aerobrake` and `has_landing_gear` are read on import as the builder's intent only; SSE4 computes both per world.
 
