@@ -49,6 +49,11 @@ def val(v, unit, src, check="verified", **extra):
 SOURCES = {
     "fray2009": ("Fray, N. and Schmitt, B. 2009, Planet. Space Sci. 57, 2053: sublimation of ices of astrophysical interest, a bibliographic review (recommended fits ln P[bar] = A0 + sum A_i / T^i; water by Feistel and Wagner 2007). Coefficients read from Lisse et al. 2021's reproduction of the table (SOM Table 2); which fit covers which range checked against each ice's triple point", "10.1016/j.pss.2009.09.011", None, "verified"),
     "lisse2021": ("Lisse, C. M. et al. 2021, Icarus 356, 114072: on the origin and thermal stability of Arrokoth's and Pluto's ices; Supplementary Online Material Table 2 reproduces Fray and Schmitt 2009's sublimation fits", None, "https://ntrs.nasa.gov/api/citations/20210019502/downloads/Supplementary%20Online%20Material%2020210019502.pdf", "verified"),
+    "ame2020": ("Wang, M., Huang, W. J., Kondev, F. G., Audi, G. and Naimi, S. 2021, Chinese Phys. C 45, 030003: the AME 2020 atomic mass evaluation (II), tables", "10.1088/1674-1137/abddaf", None, "unverified"),
+    "leachman2009": ("Leachman, J. W., Jacobsen, R. T., Penoncello, S. G. and Lemmon, E. W. 2009, J. Phys. Chem. Ref. Data 38, 721: fundamental equations of state for parahydrogen, normal hydrogen and orthohydrogen", "10.1063/1.3160306", None, "unverified"),
+    "schmidt-wagner1985": ("Schmidt, R. and Wagner, W. 1985, Fluid Phase Equilibria 19, 175: a new form of the equation of state for pure substances and its application to oxygen", "10.1016/0378-3812(85)87016-3", None, "unverified"),
+    "richardson2014": ("Richardson, I. A., Leachman, J. W. and Lemmon, E. W. 2014, J. Phys. Chem. Ref. Data 43, 013103: fundamental equation of state for deuterium", "10.1063/1.4864752", None, "unverified"),
+    "coolprop2014": ("Bell, I. H., Wronski, J., Quoilin, S. and Lemort, V. 2014, Ind. Eng. Chem. Res. 53, 2498: CoolProp, pure and pseudo-pure fluid property evaluation (MIT licence; its saturated-liquid density fits to the equations of state, dev/fluids/*.json)", "10.1021/ie4033999", "https://github.com/CoolProp/CoolProp", "unverified"),
     "codata2018": ("Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, Rev. Mod. Phys. 93, 025010: CODATA recommended values of the fundamental physical constants, 2018", "10.1103/RevModPhys.93.025010", None, "verified"),
     "si2019": ("The International System of Units (SI), 9th edition 2019, BIPM: the seven defining constants are exact (CODATA 2018 Table I)", None, "https://www.bipm.org/en/publications/si-brochure", "verified"),
     "iau2015b3": ("Prša, A. et al. 2016, AJ 152, 41: nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3", "10.3847/0004-6256/152/2/41", None, "verified"),
@@ -379,8 +384,12 @@ ISOTOPES = [
         share_at_sun_birth=val(5.25e-5, "1", "kita2013", note="26Al/27Al by number in the first solids"),
         decay_heat_w_per_kg=val(0.3583, "W kg-1", "ruedas2017")),
     # Fuels.
-    iso("h1", "h", 1), iso("h2", "h", 2), iso("h3", "h", 3, 12.32, daughter="he3"),
-    iso("he3", "he", 3), iso("he4", "he", 4), iso("li6", "li", 6), iso("li7", "li", 7),
+    # Masses of the light isotopes the fuels use: AME2020 atomic masses, in u.
+    iso("h1", "h", 1, mass=val(1.00782503224, "u", "ame2020")),
+    iso("h2", "h", 2, mass=val(2.01410177812, "u", "ame2020")),
+    iso("h3", "h", 3, 12.32, daughter="he3", mass=val(3.01604928132, "u", "ame2020")),
+    iso("he3", "he", 3, mass=val(3.01602932197, "u", "ame2020")),
+    iso("he4", "he", 4, mass=val(4.00260325413, "u", "ame2020")), iso("li6", "li", 6), iso("li7", "li", 7),
     # Stable references and clocks.
     iso("c12", "c", 12), iso("c13", "c", 13), iso("c14", "c", 14, 5700.0, daughter="n14"),
     iso("n14", "n", 14), iso("n15", "n", 15), iso("o16", "o", 16), iso("o18", "o", 18),
@@ -500,6 +509,10 @@ SUBSTANCES = [
               optical={**gas_optics(2.98e-4, [1.034, 3.17e-4, 0.0], "kaye-laby", "unverified"), "condensed_colour_rgb": val([0.97, 0.97, 0.97], "1", "fudge-register", "authored")},
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention")}}),
     substance("o2", {"o": 2}, "oxygen",
+              phases={
+                  "density_liquid": val(1141.2, "kg m-3", "schmidt-wagner1985", "unverified", at_k=90.188, also=["coolprop2014"],
+                                        note="saturated liquid at its normal boiling point; CoolProp's fit gives 1141.20"),
+              },
               optical=gas_optics(2.71e-4, [1.096, 1.385e-3, 1.448e-4], "kaye-laby", "unverified"),
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention"), "dissolved": gibbs(16.32, -11.7, T)}}),
     substance("ar", {"ar": 1}, "argon",
@@ -511,9 +524,21 @@ SUBSTANCES = [
               },
               optical={**gas_optics(2.81e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", king_src="atom-isotropic"), "condensed_colour_rgb": val([0.97, 0.97, 0.97], "1", "fudge-register", "authored")}),
     substance("h2", {"h": 2}, "hydrogen",
+              phases={
+                  # Normal hydrogen, saturated liquid at 1 atm; CoolProp's fit to the same equation gives 70.87.
+                  "density_liquid": val(70.85, "kg m-3", "leachman2009", "unverified", at_k=20.369, also=["coolprop2014"],
+                                        note="normal hydrogen at its normal boiling point"),
+              },
               optical=gas_optics(1.32e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE),
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention"), "dissolved": gibbs(17.72, -4.2, T)}}),
     substance("he", {"he": 1}, "helium", optical=gas_optics(3.5e-5, [1.0, 0.0, 0.0], "kaye-laby", "unverified", king_src="atom-isotropic")),
+    # Fusion fuels (hull tanks, ship ranges). Formulas name the isotope, so the molar mass is the isotope's own.
+    substance("d2", {"h2": 2}, "deuterium", "heavy hydrogen",
+              phases={"density_liquid": val(163.5, "kg m-3", "coolprop2014", "computed", at_k=23.31, also=["richardson2014"],
+                                            note="normal deuterium at its normal boiling point, from CoolProp's saturated-liquid fit to Richardson et al. 2014 (fit good to 0.17%)")}),
+    substance("he3", {"he3": 1}, "helium-3",
+              phases={"density_liquid": val(59.0, "kg m-3", "fudge-register", "unverified", at_k=3.19,
+                                            note="about 59 kg/m3 at its 3.19 K boiling point; from memory, not read: check against a helium-3 equation of state")}),
     substance("ne", {"ne": 1}, "neon", optical=gas_optics(6.71e-5, [1.0, 0.0, 0.0], "pdg-gas", "verified", king_src="atom-isotropic")),
     substance("kr", {"kr": 1}, "krypton"),
     substance("xe", {"xe": 1}, "xenon"),
@@ -557,6 +582,16 @@ MIXTURES = [
     {"id": "giant-air", "names": {"physics": "hydrogen-helium envelope", "plain": "giant-planet air", "story": "giant air"},
      "recipe": {"h2": 0.86, "he": 0.14}, "by": "volume", "src": "fudge-register", "check": "authored",
      "note": "the weather pack's giant air at 0.0023 kg/mol; the reader's worked-out molar mass replaces it"},
+    # Ship fuels by mass, one per base-nav fuel id ("fuel-" + id). Antimatter has no row: no stored density.
+    {"id": "fuel-hydrogen", "names": {"physics": "liquid hydrogen", "plain": "hydrogen fuel", "story": "hydrogen"},
+     "recipe": {"h2": 1.0}, "by": "mass", "src": "fudge-register", "check": "authored"},
+    {"id": "fuel-hydrogen-oxygen", "names": {"physics": "liquid hydrogen and liquid oxygen", "plain": "hydrogen and oxygen", "story": "hydrolox"},
+     "recipe": {"h2": 1.0 / 7.0, "o2": 6.0 / 7.0}, "by": "mass", "src": "fudge-register", "check": "authored",
+     "note": "oxidiser to fuel 6:1 by mass, near what hydrogen-oxygen engines burn (the stoichiometric ratio is about 7.9)"},
+    {"id": "fuel-deuterium", "names": {"physics": "liquid deuterium", "plain": "deuterium fuel", "story": "deuterium"},
+     "recipe": {"d2": 1.0}, "by": "mass", "src": "fudge-register", "check": "authored"},
+    {"id": "fuel-helium-3", "names": {"physics": "liquid helium-3", "plain": "helium-3 fuel", "story": "helium-3"},
+     "recipe": {"he3": 1.0}, "by": "mass", "src": "fudge-register", "check": "authored"},
     {"id": "surface-rock", "names": {"physics": "generic silicate rock", "plain": "rock", "story": "rock"},
      "recipe": {}, "by": "mass", "density": val(3500.0, "kg m-3", "fudge-register", "authored"),
      "yield_strength": val(1.54e8, "Pa", "lineweaver2010", "unverified", note="calibrated so rock rounds at about 300 km")},
@@ -682,9 +717,10 @@ def validate(pack):
 
     walk(ref, "reference")
     for s in ref["substances"]:
+        iso_mass = {i["id"] for i in ref["isotopes"] if "mass" in i}
         for el in s["formula"]:
-            if el not in el_ids:
-                errors.append(f"substance {s['id']}: unknown element {el}")
+            if el not in el_ids and el not in iso_mass:
+                errors.append(f"substance {s['id']}: unknown element or isotope {el}")
     for m in ref["mixtures"]:
         for sid in m["recipe"]:
             if sid not in sub_ids:

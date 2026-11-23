@@ -592,3 +592,42 @@ fn constants_with_a_history_read_by_date() {
         Reference::from_json(&[("base".into(), base), ("what-if".into(), on_derived)]).unwrap_err();
     assert!(e.iter().any(|m| m.contains("measured row")), "{e:?}");
 }
+
+/// Hull tanks (renderer thread, V3 gap 14): each fuel's liquid density at its
+/// boiling point is on the sheet, an isotope named in a formula counts at its
+/// own mass, and every base-nav fuel but antimatter has a "fuel-" mixture.
+#[test]
+fn ship_fuels_have_densities_and_isotope_masses() {
+    let p = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../packs/base-reference/pack.json"
+    );
+    let m: sse_pack::PackManifest =
+        serde_json::from_str(&std::fs::read_to_string(p).unwrap()).unwrap();
+    let r = Reference::from_packs(&[m]).unwrap();
+    let rho = |id: &str| {
+        r.row("substances", id).unwrap()["phases"]["density_liquid"]["v"]
+            .as_f64()
+            .unwrap()
+    };
+    assert_eq!(rho("h2"), 70.85);
+    assert_eq!(rho("o2"), 1141.2);
+    assert_eq!(rho("d2"), 163.5);
+    assert_eq!(rho("he3"), 59.0);
+    let d2 = r.molar_mass_kg_mol("d2").unwrap();
+    assert!((d2 - 2.0 * 2.01410177812e-3).abs() < 1e-15, "{d2}");
+    let he3 = r.molar_mass_kg_mol("he3").unwrap();
+    assert!((he3 - 3.01602932197e-3).abs() < 1e-15, "{he3}");
+    for fuel in ["hydrogen", "hydrogen-oxygen", "deuterium", "helium-3"] {
+        let row = r.row("mixtures", &format!("fuel-{fuel}")).unwrap();
+        assert_eq!(row["by"], "mass");
+        let shares: f64 = row["recipe"]
+            .as_object()
+            .unwrap()
+            .values()
+            .filter_map(J::as_f64)
+            .sum();
+        assert!((shares - 1.0).abs() < 1e-12, "{fuel}: {shares}");
+    }
+    assert!(r.row("mixtures", "fuel-antimatter").is_none());
+}
