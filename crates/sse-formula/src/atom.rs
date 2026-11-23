@@ -79,6 +79,9 @@ struct Check {
     /// Refuse an infinity too.
     #[serde(default)]
     finite: bool,
+    /// The value must be above this other port's value.
+    #[serde(default)]
+    above: Option<String>,
     says: String,
 }
 
@@ -164,7 +167,7 @@ pub struct FormulaAtom {
     out: Vec<usize>,
     /// Ports that must be above zero, with their names.
     positive: Vec<(usize, String)>,
-    checks: Vec<(usize, Check)>,
+    checks: Vec<(usize, Option<usize>, Check)>,
 }
 
 fn port(p: &PortEntry, spec: &PortSpec, dim: sse_core::Dimension, scale: f64) -> Port {
@@ -298,7 +301,16 @@ impl FormulaAtom {
                 .iter()
                 .position(|p| p.port == c.port)
                 .ok_or_else(|| at(format!("a check names no port {}", c.port)))?;
-            checks.push((k, c.clone()));
+            let other = match &c.above {
+                None => None,
+                Some(o) => Some(
+                    e.inputs
+                        .iter()
+                        .position(|p| p.port == *o)
+                        .ok_or_else(|| at(format!("a check names no port {o}")))?,
+                ),
+            };
+            checks.push((k, other, c.clone()));
         }
         let from: Vec<From> = from
             .into_iter()
@@ -371,8 +383,14 @@ impl Atom for FormulaAtom {
             }
             return Err(AtomError(format!("{what} must be positive, got {x}")));
         }
-        for (k, c) in &self.checks {
+        for (k, other, c) in &self.checks {
             let x = inputs[*k];
+            if let Some(o) = other {
+                if x > inputs[*o] {
+                    continue;
+                }
+                return Err(AtomError(c.says.replacen("{}", &format!("{x}"), 1)));
+            }
             let ok = c.min.is_none_or(|m| x >= m)
                 && c.below.is_none_or(|b| x < b)
                 && c.max.is_none_or(|m| x <= m)
