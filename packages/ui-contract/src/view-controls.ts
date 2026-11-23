@@ -47,6 +47,9 @@ export interface ViewControlsSpec {
   /** Whether it can turn its HUD (orbit lines, names, outlines) off and on, per style. Left out: not in any style
    * (the option is listed quiet with the reason, and the view shows its labels). */
   hud?: Partial<Record<ViewStyle, Can>>;
+  /** What the view opens on each time it is opened, whatever the viewer last chose elsewhere (the size comparison
+   * opens at Real, the point of the tool). The viewer can change it there; their own choice comes back when they leave. */
+  opens?: { scale?: ViewScale };
 }
 
 /** The viewer's choice, kept on the device. */

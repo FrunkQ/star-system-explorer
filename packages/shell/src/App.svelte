@@ -114,6 +114,21 @@
   const mountFor = (area: string) => screen?.mounts.find((m) => m.area === area);
   /** What the chart's view draws in each view style, when it is a diagram (rule 12). */
   const viewSpec = $derived(mountFor("chart")?.module.controls);
+  // A view that opens on its own scale (the size comparison at Real) gets it each time it is opened; the viewer's own
+  // scale comes back when they leave.
+  let keptScale: ViewChoice["scale"] | null = null;
+  $effect(() => {
+    const opens = viewSpec?.opens?.scale;
+    untrack(() => {
+      if (opens && ws.view && keptScale === null) {
+        keptScale = ws.view.scale ?? "readable";
+        ws.view = { ...ws.view, scale: opens };
+      } else if (!opens && keptScale !== null && ws.view) {
+        setView({ ...ws.view, scale: keptScale });
+        keptScale = null;
+      }
+    });
+  });
   // The view controls' height: what sits below them starts there, however many rows they wrap to.
   let viewbarH = $state(0);
 
@@ -2263,6 +2278,7 @@
   }
   .stage[data-viewbar][data-screen="body"] .area-chart,
   .stage[data-viewbar][data-screen="cutaway"] .area-chart,
+  .stage[data-viewbar][data-screen="compare"] .area-chart,
   .stage[data-viewbar][data-page] .area-chart {
     top: calc(var(--viewbar-h, 68px) + 16px);
   }

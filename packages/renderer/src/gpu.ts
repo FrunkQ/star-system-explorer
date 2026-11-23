@@ -25,6 +25,8 @@ export interface GpuItem {
    * A new `version` uploads new pixels.
    */
   face?: { key: string; version: number; width: number; data: Uint8ClampedArray; disc: number };
+  /** True look in a band other than visible: the body's own light as a mapped grey, 0..1 (0 is dark), not lit. */
+  emit?: number;
 }
 
 /** True look: the star's light. `at` a camera-relative point (the star is in the frame), else `from` a direction. */
@@ -113,6 +115,12 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     }
     return e.mat;
   };
+  // A body's own light in a mapped band, as grey (linear, so the steps of the log scale read evenly once encoded).
+  const greys = new Map<number, MeshBasicMaterial>();
+  const greyMat = (v: number) => {
+    const k = Math.round(Math.max(0, Math.min(1, v)) * 64);
+    return greys.get(k) ?? (greys.set(k, new MeshBasicMaterial({ color: new Color().setScalar(k / 64) })), greys.get(k)!);
+  };
   const torus = new TorusGeometry(1.8, 0.08, 6, 48);
   const mats = new Map<string, MeshBasicMaterial>();
   const lineMats = new Map<string, LineBasicMaterial>();
@@ -148,8 +156,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
           scene.add(sp);
           continue;
         }
-        const lit = !!o.light && !it.shines;
-        const m = new Mesh(o.light ? globe : sphere, lit ? litMat(it) : mat(it.colour));
+        const lit = !!o.light && !it.shines && it.emit === undefined;
+        const m = new Mesh(o.light ? globe : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? litMat(it) : mat(it.colour));
         m.position.set(it.rel[0], it.rel[1], it.rel[2]);
         m.scale.setScalar(it.radius);
         scene.add(m);
@@ -188,6 +196,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       faces.forEach((e) => (e.tex.dispose(), e.mat.dispose()));
       litMats.forEach((m) => m.dispose());
       mats.forEach((m) => m.dispose());
+      greys.forEach((m) => m.dispose());
       lineMats.forEach((m) => m.dispose());
       dotMats.forEach((m) => m.dispose());
       renderer.dispose();
