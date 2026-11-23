@@ -158,10 +158,21 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     const n = normalize(normalWorld);
     const shade = float(0.55).add(float(0.45).mul(max(dot(n, normalize(vec3(-0.5, 0.5, 0.8))), float(0))));
     const z = attribute("kernel_z", "float").sub(uLow);
-    const f = fract(z.div(uC));
-    const w = fwidth(z.div(uC)).mul(1.2);
-    const line = float(1).sub(smoothstep(float(0), w, min(f, float(1).sub(f))));
-    const c = mix(col.mul(shade), vec3(uInk), line.mul(0.65));
+    // Contours at three intervals (the chosen one, five and twenty-five times it), each faded out where its lines
+    // would crowd closer than a few pixels on screen: a slope seen edge-on far off keeps only the index lines, so
+    // the ground reads as a diagram at every distance instead of a field of aliased lines.
+    const contour = (every: Node<"float">, ink: number) => {
+      const u = z.div(every);
+      const f = fract(u);
+      const w = fwidth(u);
+      const line = float(1).sub(smoothstep(float(0), max(w, float(1e-6)).mul(1.2), min(f, float(1).sub(f))));
+      // Level ground (a sea at its datum, a flat plain on a contour's level) has no lines at all: without this the
+      // contour sits exactly on the surface and every pixel flickers on and off it.
+      const fade = smoothstep(float(1e-5), float(1e-4), w).mul(float(1).sub(smoothstep(float(0.12), float(0.3), w)));
+      return line.mul(fade).mul(ink);
+    };
+    const lines = max(contour(uC, 0.45), max(contour(uC.mul(5), 0.7), contour(uC.mul(25), 0.85)));
+    const c = mix(col.mul(shade), vec3(uInk), lines);
     return vec4(c, 1);
   })();
   const wireNode = vec4(vec3(uInk), 1);
