@@ -7,7 +7,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go, more } from "./nav.mjs";
+import { go, more, view } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -42,12 +42,12 @@ try {
     await shot(gm, "v8-window");
     // HUD off (one set of controls, Alex 23 Nov): the lights alone, without the ecliptic or names; on brings them back.
     const withHud = await ink();
-    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off", exact: true }).click();
+    await view(gm, "HUD", "Off");
     await gm.waitForSelector("[data-sky][data-hud=off]");
     await gm.waitForTimeout(150);
     const bare = await ink();
     assert.ok(bare > 50 && bare < withHud, `HUD off draws less (${bare} of ${withHud})`);
-    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On", exact: true }).click();
+    await view(gm, "HUD", "On");
     await gm.waitForSelector("[data-sky][data-hud=on]");
 
     // The telescope at the biggest world it lists: a lit disc.
@@ -107,7 +107,7 @@ try {
       await sb.locator("[data-sky-canvas]").click({ position: { x: spot[0] * box.width, y: spot[1] * box.height } });
       await gm.waitForSelector("[data-sky-picked]", { timeout: 5000 });
       assert.match(await sb.locator("[data-sky-picked]").innerText(), /^Picked: a star of magnitude/);
-      await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: "Infrared" }).click();
+      await view(gm, "Band", "Infrared");
       await gm.waitForSelector("[data-sky-beyond=on][data-sky-band=Ks]", { timeout: 5000 });
       await gm.waitForFunction(() => /shown in Ks; brightest in Ks:/.test(document.querySelector("[data-sky-words]")?.textContent ?? ""), null, { timeout: 5000 });
       await shot(gm, "y5-sky-infrared");

@@ -780,6 +780,14 @@ fn aerocapture(
     }
 }
 
+/// The ship itself as a lander, for landing the party's own ship (run-through
+/// blocker 4): its hull, shield, aero, gear and engine, held to what the crew
+/// stands for a minute, as the entry check flies it.
+pub fn ship_as_lander(s: &EntrySettings, ship: &Ship) -> Lander {
+    let h = hull(s, ship);
+    lander(s, ship, &h, brief_g(s, 60.0, ship.g_limit))
+}
+
 /// A lander with the ship's numbers.
 fn lander(s: &EntrySettings, ship: &Ship, h: &Hull, tol: f64) -> Lander {
     let thrust = ship.accel_g * G0 * h.mass_kg;
