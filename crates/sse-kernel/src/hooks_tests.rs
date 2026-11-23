@@ -167,4 +167,3 @@ fn hooks_stack_with_the_traveller_and_universe_packs() {
     );
     assert_eq!(r["type"], "stack_loaded", "{r}");
 }
-
