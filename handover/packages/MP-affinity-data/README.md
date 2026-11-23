@@ -67,3 +67,5 @@ Neither was written as ci_lodders.csv, so that they are not passed off as Lodder
 - **Citation:** McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223, CI chondrite column. DOI 10.1016/0009-2541(94)00140-4.
 - **Read at:** the pyrolite 0.3.9 package (`CH_McDonoughSun1995.csv`) and georefdatar (`CI_Pyrolite__McDonough_Sun__1995__full.csv`), two separate transcriptions. 74 values agree. N and P differ by a factor of 1000. The per-cent-level values (3180 and 1080 ppm) are kept, since CI chondrites hold about 0.3% N and 0.1% P.
 - Used in place of Lodders 2021, whose CI mass fractions were not found in a readable copy.
+
+- H (1.97%) and O (45.9%) come from Palme, H. and O'Neill, H. St. C. 2014, Treatise on Geochemistry 2nd ed. vol. 3, 1 (DOI 10.1016/B978-0-08-095975-7.00201-1), read from one copy (pyrolite 0.3.9 `CH_PalmeONeill2014.csv`): neither copy of McDonough and Sun 1995 carries them. Their rows' source is palme-oneill2014.

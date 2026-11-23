@@ -1461,6 +1461,13 @@
       "check": "unverified",
       "note": "no 50% condensation temperature: stays in the gas"
      },
+     "ci_mass_fraction": {
+      "v": 0.0197,
+      "unit": "1",
+      "src": "palme-oneill2014",
+      "check": "unverified",
+      "note": "CI chondrite by mass; from Palme and O'Neill 2014 (pyrolite 0.3.9 CH_PalmeONeill2014.csv, one copy); neither copy of McDonough and Sun 1995 carries it"
+     },
      "earth_mass_fraction": {
       "core": {
        "v": 0.0006,
@@ -1921,6 +1928,13 @@
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
       }
+     },
+     "ci_mass_fraction": {
+      "v": 0.459,
+      "unit": "1",
+      "src": "palme-oneill2014",
+      "check": "unverified",
+      "note": "CI chondrite by mass; from Palme and O'Neill 2014 (pyrolite 0.3.9 CH_PalmeONeill2014.csv, one copy); neither copy of McDonough and Sun 1995 carries it"
      }
     },
     {
@@ -2090,7 +2104,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "na2o"
      },
      "ci_mass_fraction": {
       "v": 0.0051,
@@ -2162,7 +2177,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "mgo"
      },
      "ci_mass_fraction": {
       "v": 0.0965,
@@ -2232,7 +2248,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "al2o3"
      },
      "ci_mass_fraction": {
       "v": 0.0086,
@@ -2304,7 +2321,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "sio2"
      },
      "ci_mass_fraction": {
       "v": 0.1065,
@@ -2380,7 +2398,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "p2o5"
      },
      "ci_mass_fraction": {
       "v": 0.00108,
@@ -2662,7 +2681,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "k2o"
      },
      "ci_mass_fraction": {
       "v": 0.00055,
@@ -2733,7 +2753,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "cao"
      },
      "ci_mass_fraction": {
       "v": 0.00925,
@@ -2875,7 +2896,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "tio2"
      },
      "ci_mass_fraction": {
       "v": 0.00044,
@@ -3023,7 +3045,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "cr2o3"
      },
      "ci_mass_fraction": {
       "v": 0.00265,
@@ -3100,7 +3123,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "mno"
      },
      "ci_mass_fraction": {
       "v": 0.00192,
@@ -3177,7 +3201,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "feo"
      },
      "ci_mass_fraction": {
       "v": 0.181,
@@ -3332,7 +3357,8 @@
        "check": "unverified",
        "at_pa": 10.0,
        "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
-      }
+      },
+      "oxide": "nio"
      },
      "ci_mass_fraction": {
       "v": 0.0105,
@@ -12848,6 +12874,150 @@
      }
     },
     {
+     "id": "sio2",
+     "formula": {
+      "si": 1,
+      "o": 2
+     },
+     "names": {
+      "physics": "silicon dioxide",
+      "plain": "silica",
+      "story": "silica"
+     }
+    },
+    {
+     "id": "tio2",
+     "formula": {
+      "ti": 1,
+      "o": 2
+     },
+     "names": {
+      "physics": "titanium dioxide",
+      "plain": "titanium dioxide",
+      "story": "titanium dioxide"
+     }
+    },
+    {
+     "id": "al2o3",
+     "formula": {
+      "al": 2,
+      "o": 3
+     },
+     "names": {
+      "physics": "aluminium oxide",
+      "plain": "alumina",
+      "story": "alumina"
+     }
+    },
+    {
+     "id": "cr2o3",
+     "formula": {
+      "cr": 2,
+      "o": 3
+     },
+     "names": {
+      "physics": "chromium(III) oxide",
+      "plain": "chromium(III) oxide",
+      "story": "chromium(III) oxide"
+     }
+    },
+    {
+     "id": "feo",
+     "formula": {
+      "fe": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "iron(II) oxide",
+      "plain": "iron(II) oxide",
+      "story": "iron(II) oxide"
+     }
+    },
+    {
+     "id": "mno",
+     "formula": {
+      "mn": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "manganese(II) oxide",
+      "plain": "manganese(II) oxide",
+      "story": "manganese(II) oxide"
+     }
+    },
+    {
+     "id": "mgo",
+     "formula": {
+      "mg": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "magnesium oxide",
+      "plain": "magnesia",
+      "story": "magnesia"
+     }
+    },
+    {
+     "id": "cao",
+     "formula": {
+      "ca": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "calcium oxide",
+      "plain": "lime",
+      "story": "lime"
+     }
+    },
+    {
+     "id": "na2o",
+     "formula": {
+      "na": 2,
+      "o": 1
+     },
+     "names": {
+      "physics": "sodium oxide",
+      "plain": "sodium oxide",
+      "story": "sodium oxide"
+     }
+    },
+    {
+     "id": "k2o",
+     "formula": {
+      "k": 2,
+      "o": 1
+     },
+     "names": {
+      "physics": "potassium oxide",
+      "plain": "potassium oxide",
+      "story": "potassium oxide"
+     }
+    },
+    {
+     "id": "p2o5",
+     "formula": {
+      "p": 2,
+      "o": 5
+     },
+     "names": {
+      "physics": "phosphorus pentoxide",
+      "plain": "phosphorus pentoxide",
+      "story": "phosphorus pentoxide"
+     }
+    },
+    {
+     "id": "nio",
+     "formula": {
+      "ni": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "nickel(II) oxide",
+      "plain": "nickel(II) oxide",
+      "story": "nickel(II) oxide"
+     }
+    },
+    {
      "id": "ch2o",
      "formula": {
       "c": 1,
@@ -13942,6 +14112,12 @@
      "text": "Öberg, K. I., Murray-Clay, R. and Bergin, E. A. 2011, ApJL 743, L16: the effects of snowlines on C/O in planetary atmospheres (H2O 135 K, CO2 47 K, CO 20 K)",
      "status": "unverified",
      "doi": "10.1088/2041-8205/743/1/L16"
+    },
+    {
+     "id": "palme-oneill2014",
+     "text": "Palme, H. and O'Neill, H. St. C. 2014, Cosmochemical estimates of mantle composition, Treatise on Geochemistry 2nd edition vol. 3, 1: CI chondrite hydrogen and oxygen (read from the pyrolite package's copy)",
+     "status": "unverified",
+     "doi": "10.1016/B978-0-08-095975-7.00201-1"
     },
     {
      "id": "pdg-gas",

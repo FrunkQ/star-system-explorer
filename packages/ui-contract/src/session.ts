@@ -233,6 +233,8 @@ export interface ViewSession {
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   /** What stops the wind at each body, and its field (read only): `fixture: "solar-system"` or handed `bodies`. */
   readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
+  /** SV2: who knows a thing, or one fact on it (kernel `known_to`): per audience its landmark, rung and exceptions. GM only. */
+  knownTo(address: string, field?: string): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }>;
   /** NM6: every name a thing has, by layer (kernel `read_names`); a player seat sees only the layers its view discloses. */
   readNames(address: string): Promise<{ ok: true; value: import("./names.ts").NamesRead } | { ok: false; code: string; message: string }>;
   /** NM6: a sample of names from one scheme on the stack (kernel `name_sample`), the same on every device. Read only. */
@@ -531,6 +533,8 @@ export class Session implements ViewSession {
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
     if (r.type === "authored")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
+    if ((intent.kind === "set_known" || intent.kind === "undo_known") && (r.type === "known_set" || r.type === "known_undone"))
+      return { status: "applied", event_id: String(r.undo ?? r.event_id ?? ""), state_hash: String(r.state_hash ?? (await this.stateHash())), affected: intent.kind === "set_known" ? [intent.address] : [] };
     if (r.type === "error") return { status: "error", code: String(r.code), message: String(r.message) };
     return { status: "error", code: "unexpected", message: JSON.stringify(r) };
   }
@@ -750,6 +754,12 @@ export class Session implements ViewSession {
   async readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_field", ...ask } as Json);
     return r.type === "field_read" ? { ok: true, bodies: (r as unknown as { bodies: Json[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async knownTo(address: string, field?: string): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master sees who knows what" };
+    const r = await this.#call({ op: "known_to", address, ...(field ? { field } : {}) } as Json);
+    return r.type === "known_to" ? { ok: true, value: (r as unknown as { value: import("./known.ts").KnownTo }).value } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async readNames(address: string): Promise<{ ok: true; value: import("./names.ts").NamesRead } | { ok: false; code: string; message: string }> {
