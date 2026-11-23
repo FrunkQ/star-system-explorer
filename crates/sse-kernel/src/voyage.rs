@@ -389,4 +389,55 @@ mod tests {
             .expect("Earth's belts");
         assert!(msv(j) > 10.0 * msv(e), "{jup:?}");
     }
+
+    /// Example packs 4.1: the Traveller pack's standard ships fly as ship
+    /// objects. Every starship plans a voyage between stars within its jump
+    /// rating, and every craft plans a course in Sol.
+    #[test]
+    fn the_traveller_standard_ships_plan_voyages() {
+        let pack: serde_json::Value =
+            serde_json::from_str(include_str!("../../../packs/traveller/pack.json")).unwrap();
+        let ships = pack["provides"]["other"]["nav_ships"]["ships"]
+            .as_object()
+            .unwrap();
+        assert_eq!(ships.len(), 18);
+        let mut k = Kernel::new();
+        let r = k.handle_json(r#"{"op":"open_universe","id":"v8","seed":"v8"}"#);
+        assert!(r.contains("universe_opened"), "{r}");
+        let cell = ask(&mut k, r#"{"op":"star_cell"}"#);
+        let from = cell["cell"]["systems"][0]["address"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let mut jumped = 0;
+        for (id, ship) in ships {
+            if let Some(rating) = ship["jump"]["rating_pc"].as_f64() {
+                let req = serde_json::json!({
+                    "op": "plan_voyage", "from": from, "ship": ship,
+                    "visited": [from], "minimise": "legs"
+                });
+                let v = ask(&mut k, &req.to_string());
+                assert_eq!(v["type"], "voyage_planned", "{id}: {v}");
+                // No star within a parsec here: a jump-1 ship has nowhere to go, and says so.
+                match v["voyage"]["voyage"]["legs"].as_array() {
+                    None => assert!(rating < 2.0, "{id}: {v}"),
+                    Some(legs) => {
+                        assert!(!legs.is_empty(), "{id}: {v}");
+                        jumped += 1;
+                        for l in legs {
+                            if let Some(d) = l["distance_pc"].as_f64() {
+                                assert!(d <= rating, "{id}: a {d} pc leg on jump-{rating}");
+                            }
+                        }
+                    }
+                }
+            }
+            let req = serde_json::json!({
+                "op": "plan_voyage", "fixture": "sol", "from": "Earth", "to": "Mars", "ship": ship
+            });
+            let v = ask(&mut k, &req.to_string());
+            assert_eq!(v["type"], "voyage_planned", "{id}: {v}");
+        }
+        assert!(jumped >= 8, "{jumped} of 12 starships jumped");
+    }
 }
