@@ -120,3 +120,5 @@ export { findInSheet } from "./reference-find.ts";
 export type { RefHit } from "./reference-find.ts";
 export { namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMore, sourceWords, layerOrder, SAMPLE_KINDS } from "./names.ts";
 export type { SampleAsk, SampledName, NameSample, NamePart, SchemeInfo, NamesOnStack, ShownName, NamesRead } from "./names.ts";
+export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedAsk, EmbedBridge } from "./embed.ts";
+export type { EmbedMode, EmbedOut } from "./embed.ts";

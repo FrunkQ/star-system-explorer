@@ -4,6 +4,7 @@
 // empires at one table can know different things about the same system.
 // A seat is a place at the table: whose knowledge it shows, which screens it
 // opens, what it may ask for and what applies without asking.
+import { embedOrigin } from "./embed.ts";
 import type { Intent, IntentKind } from "./intent.ts";
 import { INTENT_KINDS } from "./intent.ts";
 import { sharedTableSeat, type Seat } from "./seat.ts";
@@ -64,7 +65,7 @@ export function grantField(audience: string): string {
  * from its own room; `autoNames` applies those names without asking, inside
  * `scope`.
  */
-export function addSeat(p: SeatPlan, o: { label: string; fog?: { starts_with: string; discovered_view: string }; names?: boolean; autoNames?: string[]; screens?: string[]; sealed?: boolean }): SeatPlan {
+export function addSeat(p: SeatPlan, o: { label: string; fog?: { starts_with: string; discovered_view: string }; names?: boolean; autoNames?: string[]; screens?: string[]; sealed?: boolean; embedOrigins?: string[] }): SeatPlan {
   let id = slug(o.label);
   const taken = new Set([...p.seats.map((s) => s.id), ...p.audiences.map((a) => a.id), ...RESERVED]);
   for (let n = 2; taken.has(id); n++) id = `${slug(o.label)}-${n}`;
@@ -78,6 +79,7 @@ export function addSeat(p: SeatPlan, o: { label: string; fog?: { starts_with: st
     ...(o.names && o.autoNames?.length ? { auto_approve: [{ intent: "set_value" as const, scope: [...o.autoNames], fields: ["name"] }] } : {}),
     sealed: o.sealed === true,
     ...(o.screens?.length ? { screens: [...o.screens] } : {}),
+    ...(o.embedOrigins?.length ? { embed_origins: [...o.embedOrigins] } : {}),
   };
   return { ...p, audiences: [...p.audiences, audience], seats: [...p.seats, seat] };
 }
@@ -115,6 +117,11 @@ export function checkSeats(p: SeatPlan, ctx: { views?: string[]; screens?: strin
     for (const a of s.auto_approve ?? []) if (!s.may_send.includes(a.intent)) out.push(`seat ${s.label}: applies ${a.intent} without asking but may not send it`);
     for (const sc of s.screens ?? []) if (ctx.screens && !ctx.screens.includes(sc)) out.push(`seat ${s.label}: no screen ${sc}`);
     if (s.sealed && s.id === "table") out.push("the table cannot be sealed: it is the open link");
+    for (const o of s.embed_origins ?? []) {
+      const r = embedOrigin(o);
+      if (!r.ok) out.push(`seat ${s.label}: tabletop ${r.reason}`);
+      else if (r.origin !== o) out.push(`seat ${s.label}: tabletop ${o} should be written ${r.origin}`);
+    }
   }
   if (!ids.has("table")) out.push("the table seat always exists");
   return out;
