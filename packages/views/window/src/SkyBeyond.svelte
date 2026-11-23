@@ -9,19 +9,20 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { drawSky, narrateSky, pickStar, readSky, skyCamera, SKY_POINTS_MAX, type Sky, type SkyStar } from "../../../renderer/src/sky.ts";
-  import type { Json, SystemScene, ViewContext } from "../../../ui-contract/src/index.ts";
+  import { DEFAULT_VIEW, viewOptions, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { WINDOW_CONTROLS } from "./controls.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene } = $props();
 
   // The kernel's sky_from_here walk is slow toward the naked-eye limit for now; magnitude 5 keeps a first look quick.
   const LIMIT = 5;
   const NSIDE = 16;
+  // The sky's bands, read once: the view controls' Band (one set of controls) picks which is drawn.
   const BANDS = [
-    { id: "B", label: "Blue" },
     { id: "V", label: "Visible" },
     { id: "Ks", label: "Near infrared" },
   ] as const;
-  let band = $state<string>("V");
+  const band = $derived(viewOptions(WINDOW_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown.band === "infrared" ? "Ks" : "V");
   let open = $state(false);
   let loading = $state(false);
   let error = $state<string | null>(null);
@@ -117,9 +118,7 @@
     <button type="button" class="link" onclick={() => (open = true)}>Show the night sky from here</button>
   {:else}
     <div class="bar">
-      <span class="seg" role="group" aria-label="Band">
-        {#each BANDS as b (b.id)}<button type="button" class:on={band === b.id} aria-pressed={band === b.id} onclick={() => (band = b.id)}>{b.label}</button>{/each}
-      </span>
+      <span class="muted" data-sky-band-words>{BANDS.find((b) => b.id === band)?.label} (Band, at the top)</span>
       <label>Field <input type="range" min="20" max="200" step="5" bind:value={field} /></label>
       <button type="button" class="link" onclick={() => ((l0 = 0), (b0 = 0))}>Toward the galaxy's centre</button>
     </div>
@@ -156,9 +155,8 @@
     align-items: center;
     margin-bottom: 0.5rem;
   }
-  .seg button.on {
-    font-weight: 600;
-    text-decoration: underline;
+  .muted {
+    color: var(--sse-ink-muted);
   }
   canvas {
     display: block;
