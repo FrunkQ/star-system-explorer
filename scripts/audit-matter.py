@@ -54,6 +54,13 @@ HOME = os.path.join("crates", "sse-reference")
 # Where the sheet itself lives: values here are the source, not copies.
 # packs/base-sol is the catalogued Solar System: measured body facts, each
 # cited, checked against the sheet by scripts/build-base-sol.py.
+# Packs built by a script that reads the sheet (and base-sol) for every
+# constant and catalogued body: the audit reads the builder in the pack's
+# place, so a constant typed in the builder still fails, and the built pack's
+# worked-out numbers are not copies. Each builder has a --check in check.sh.
+SHEET_FED = {
+    os.path.join("packs", "base-atlas", "pack.json"): os.path.join("scripts", "build-base-atlas.py"),
+}
 SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"), os.path.join("packs", "base-sol"), os.path.join("crates", "sse-core", "src", "sheet.rs"))
 
 # Quantity catalogue: id, name, canonical value, unit, source, relative
@@ -206,7 +213,9 @@ def _tracked():
 def walk():
     tracked = _tracked()
     for path in _walk_all():
-        if tracked is None or path.replace(os.sep, "/") in tracked:
+        if path in SHEET_FED:
+            yield SHEET_FED[path]
+        elif tracked is None or path.replace(os.sep, "/") in tracked:
             yield path
 
 
@@ -244,6 +253,8 @@ def match_quantity(v, lit):
 
 def is_comment(line, ext):
     t = line.strip()
+    if ext == ".py":
+        return t.startswith("#")
     return ext in (".rs", ".ts", ".mjs", ".svelte") and (t.startswith("//") or t.startswith("*") or t.startswith("/*"))
 
 
@@ -289,7 +300,7 @@ def scan():
                 in_test = True
             if is_comment(line, ext):
                 continue
-            code = line.split("//")[0] if ext in (".rs", ".ts", ".mjs", ".svelte") else line
+            code = line.split("//")[0] if ext in (".rs", ".ts", ".mjs", ".svelte") else line.split("#")[0] if ext == ".py" else line
             # Numbers inside strings are prose (paper volumes, page numbers,
             # explanations), not values the code computes with.
             code = STR_RE.sub('""', code)
