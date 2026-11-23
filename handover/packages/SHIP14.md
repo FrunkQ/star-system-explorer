@@ -78,12 +78,35 @@ Pictures: `SHIP14-screens/design-cool-drives.png` (chemical, nuclear thermal, ju
 `design-hot-drives.png` (torch, cutter, probe framed whole: the radiators dwarf the ship) and `design-hot-close.png`
 (closed in on the hull). Checks: `packages/renderer/test/ship-design.test.ts`, 5 tests.
 
+## Stage 3: the 3D model
+
+- `ship-mesh.ts` (pure): `shipMesh(layout, { segments, panel_m })` turns the same layout the plans draw into one
+  triangle buffer per surface (hull, tanks, radiators, spine, drive) with normals and texture coordinates in real
+  metres over the style's panel size, plus bounds for the whole ship and for its modules alone. `panelTexture`
+  makes a tileable 4 × 4 panel texture (seams, shade per panel, wear) from a seed.
+- `gpu-ship.ts`: `mountShip` (exported lazily as `startShip`, so three.js loads only when a model is shown) wraps
+  the buffers in materials from the style's `skin` (pack data: albedo, roughness, metalness per surface), one star
+  and a fill light, a logarithmic depth buffer (kilometre radiators beside metre modules), mipmapped panels, and
+  hot radiators that glow with the colour of a body at their temperature. Built once; later draws only turn the
+  camera. "hull" framing closes in on the modules.
+- `ShipPlans` now carries the shared ViewControls: Chart is the plans (flat), any other "Seen from" turns it into
+  the 3D model; Free drags to turn and wheels to zoom. True and Wireframe are listed and say why they wait.
+- Fuels from the master data sheet (PR 223): `readPropellants(session, fuels)` reads mixture `fuel-<id>` (shares by
+  mass) and each substance's `phases.density_liquid`; antimatter has no row, so its tank stays a marked stand-in.
+  Views no longer need typed densities; the tests' NIST fixtures remain only in the pure tests.
+- Free view in `ShipPlans`: drag turns and tilts, Shift-drag or two fingers slide, wheel or pinch zooms (the shared
+  hint's promise).
+- Checks (`ship-mesh.test.ts`, 4 tests): every closed body's mesh volume (divergence theorem) equals its part's
+  volume to 1e-6 of the polygon's share; radiator faces add up to exactly the area the waste heat needs; normals are
+  unit and agree with winding; bounds match the layout; under 5,000 triangles; textures repeat per seed.
+- Picture: `SHIP14-screens/model-3d.png` (chemical, nuclear thermal, jump courier, rescue cutter closed in, and the
+  fusion torch closed in and whole: a 15 m crew module on a 785 m spine over 3.8 km² of glowing radiator).
+
 ## Next
 
 - **Sheet**: `density_liquid` for hydrogen, oxygen, deuterium and helium-3, and a substance for each base-nav fuel
   (asked of the matter data sheet thread). Mixture ratios in the ship record (galaxy and travel thread).
-- **Stage 3**: the 3D model from the same layout (one merged mesh, lit like a body) with procedural textures per
-  style (panel lines, wear, livery), and a True plume from the exhaust's own emission.
+- A True plume from the exhaust's own emission, and the model in the True exposure chain.
 - **Stage 4**: abilities shape the ship from the kernel's `ship_at_world` (travel thread): heat shield, wings or
   lifting body, legs, scoops; styles assigned per nation or culture, inherited down the tree like name schemes.
 - **Uploads**: GLB, OBJ and STL hulls with credit fields once packs can carry files.

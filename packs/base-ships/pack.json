@@ -107,7 +107,60 @@
           "radiator_aspect": [
             1.5,
             4.0
-          ]
+          ],
+          "skin": {
+            "panel_m": 2.0,
+            "patchiness": 0.5,
+            "wear": 0.4,
+            "why": "white thermal blankets on the modules, foil-wrapped tanks, a bare metal truss, black high-emissivity radiators",
+            "surfaces": {
+              "hull": {
+                "albedo": [
+                  0.78,
+                  0.78,
+                  0.75
+                ],
+                "roughness": 0.75,
+                "metalness": 0.0
+              },
+              "tanks": {
+                "albedo": [
+                  0.7,
+                  0.68,
+                  0.6
+                ],
+                "roughness": 0.45,
+                "metalness": 0.4
+              },
+              "radiators": {
+                "albedo": [
+                  0.05,
+                  0.05,
+                  0.06
+                ],
+                "roughness": 0.5,
+                "metalness": 0.1
+              },
+              "spine": {
+                "albedo": [
+                  0.4,
+                  0.41,
+                  0.43
+                ],
+                "roughness": 0.4,
+                "metalness": 0.8
+              },
+              "drive": {
+                "albedo": [
+                  0.18,
+                  0.18,
+                  0.2
+                ],
+                "roughness": 0.35,
+                "metalness": 0.9
+              }
+            }
+          }
         },
         "sleek": {
           "name": "Sleek hull",
@@ -140,7 +193,60 @@
           "radiator_aspect": [
             0.8,
             2.0
-          ]
+          ],
+          "skin": {
+            "panel_m": 4.0,
+            "patchiness": 0.15,
+            "wear": 0.1,
+            "why": "one gunmetal skin, black radiator fins",
+            "surfaces": {
+              "hull": {
+                "albedo": [
+                  0.26,
+                  0.28,
+                  0.31
+                ],
+                "roughness": 0.3,
+                "metalness": 0.6
+              },
+              "tanks": {
+                "albedo": [
+                  0.26,
+                  0.28,
+                  0.31
+                ],
+                "roughness": 0.3,
+                "metalness": 0.6
+              },
+              "radiators": {
+                "albedo": [
+                  0.04,
+                  0.04,
+                  0.05
+                ],
+                "roughness": 0.45,
+                "metalness": 0.1
+              },
+              "spine": {
+                "albedo": [
+                  0.26,
+                  0.28,
+                  0.31
+                ],
+                "roughness": 0.3,
+                "metalness": 0.6
+              },
+              "drive": {
+                "albedo": [
+                  0.12,
+                  0.12,
+                  0.13
+                ],
+                "roughness": 0.3,
+                "metalness": 0.9
+              }
+            }
+          }
         }
       }
     }

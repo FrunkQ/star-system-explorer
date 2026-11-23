@@ -42,8 +42,18 @@ export type { Sky, SkyCamera, SkyGlowBand, SkyStar, SkyView, SystemFrame } from 
 export { bubbleOutline, chartCut, compressed, cutPaths, degreeOf, dipole, dipoleAxis, dipoleB0, drawField3D, FIELD_LINES, FIELD_REFS, fieldAt, fieldFromRead, inBubble, insideBubble, lineBuffers, narrateField, project3D, schmidt, seeds, traceField, traceLine } from "./field.ts";
 export type { Bubble, ChartCut, FieldCamera, FieldLine, FieldModel, FieldReadJson, FieldTrace, Pen, Run, TraceOptions } from "./field.ts";
 // V3 gap item 14, part 1: ship hulls and drive plumes built from the ship record's own physics.
-export { bandOf, driveFacts, HULL_SHAPE, hullFromShip, hullProfile, narrateShip, plumeShape, SHIP_REFS, shipPaths, tanksOf } from "./ship.ts";
+export { bandOf, driveFacts, HULL_SHAPE, hullFromShip, hullProfile, narrateShip, plumeShape, SHIP_REFS, shipPaths, readPropellants, tanksOf } from "./ship.ts";
 export type { DriveFacts, Hull, HullPart, HullPartKind, PlumeShape, PropellantPart, Propellants, ShipRecord, TankNeed } from "./ship.ts";
 // V3 gap item 14, stage 2: ships designed from their parts, in styles from the base-ships pack.
 export { designShip, narrateDesign, needsOf, remixes, shipViews } from "./ship-design.ts";
 export type { Callout, DesignOverrides, DesignRecipe, DesignRules, DesignShip, Needs, Piece, ShipLayout, ShipStyle, ShipView, SystemKind, ViewPath } from "./ship-design.ts";
+// V3 gap item 14, stage 3: the 3D model from the same layout, with panel textures from the style's skin.
+export { panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
+export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers } from "./ship-mesh.ts";
+export type { ShipView3D } from "./gpu-ship.ts";
+
+/** Draw a designed ship in 3D (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */
+export async function startShip(...a: Parameters<typeof import("./gpu-ship.ts").mountShip>) {
+  const { mountShip } = await import("./gpu-ship.ts");
+  return mountShip(...a);
+}

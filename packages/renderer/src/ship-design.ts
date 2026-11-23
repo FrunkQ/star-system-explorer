@@ -4,6 +4,7 @@
 // changes a size. A design is kept as a recipe (ship, style, seed, hand overrides), never as a mesh, and is drawn
 // from that recipe on any machine: a side view and a top view with call-outs here, a 3D model in the next stage.
 import { constant } from "../../ui-contract/src/index.ts";
+import type { SkinSpec } from "./ship-mesh.ts";
 import { driveFacts, plumeShape, tanksOf, type DriveFacts, type Propellants, type ShipRecord, type TankNeed } from "./ship.ts";
 
 export type SystemKind = "sensors" | "crew" | "cargo" | "tanks" | "radiators" | "drive" | "spine" | "plume";
@@ -37,6 +38,8 @@ export interface ShipStyle {
   spine_width_r: number;
   sensor_r: number;
   hull: "open" | "skin";
+  /** The look of each surface in 3D (ship-mesh.ts SkinSpec). */
+  skin?: SkinSpec;
 }
 
 /** Sizes set by hand win over the rules, and the words say so. */
