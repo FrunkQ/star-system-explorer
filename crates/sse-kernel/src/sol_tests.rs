@@ -139,3 +139,39 @@ fn typed_air_and_temperature_win_over_estimates() {
     let e = world(&mut k, "Moon");
     assert_eq!(e["t_surface_now_k"], 250.0, "{e}");
 }
+
+/// A measurement belongs to the world it was made on: Mars moved to 1 AU by
+/// the GM keeps its thin air's warming but answers to the brighter Sun.
+#[test]
+fn a_moved_world_keeps_its_air_but_not_its_old_temperature() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let mars = r["facts"]
+        .as_object()
+        .unwrap()
+        .iter()
+        .find(|(_, f)| f["name"] == "Mars")
+        .map(|(a, _)| a.clone())
+        .unwrap();
+    let au = sse_core::sheet::AU;
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,
+            "edits":[{"address":mars,"field":"orbit.semi_major_axis","value":au}]}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let m = world(&mut k, "Mars");
+    let t = m["t_surface_now_k"].as_f64().unwrap();
+    let expect = 214.0 * m::sqrt(227.956e9 / au);
+    assert!((t - expect).abs() < 0.01, "{t} against {expect}");
+    // Typed by the GM, a temperature stands as typed, wherever the world is.
+    send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,
+            "edits":[{"address":mars,"field":"planet.surface_temperature","value":230.0}]}),
+    );
+    assert_eq!(world(&mut k, "Mars")["t_surface_now_k"], 230.0);
+}
