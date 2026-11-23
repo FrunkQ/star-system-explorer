@@ -12,7 +12,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | K4 flows, validation, scheduler, solve, explain | done | packages/K4.md |
 | K5 packs, stacks, one-publisher, fictional labels | done | packages/K5.md |
 | K6 kernel API, worker, TS client, cancellation, cost classes, tiers | done | packages/K6.md |
-| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1 to J5 and J7 done (kernel track, logs `packages/J1.md` to `J7.md`; the chart room still has to switch to the kernel intent registry, see J5.md); J6 (programs) next, after T3 NAV. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
+| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1 to J5, J7 and J6 part 1 (programs, `packages/J6.md`) done (kernel track, logs `packages/J1.md` to `J7.md`; the chart room still has to switch to the kernel intent registry, see J5.md); J6 part 2 (NAV travel, pirate and patrol) next. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
 | K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
@@ -47,7 +47,8 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | ND6 kernel half: packs carry sources, fudges (declared plus fitted and assumed Model numbers) and reproduction checks run on load; op `pack_reports` | done (kernel half); the Packs screen half is the chart room's | packages/ND6.md |
 | GH2 satellites on orbits: one host table per slice, leapfrog from infall, sinking, tidal stripping, gas stripping, disc shocks, labels, tracks | done | packages/GH2.md |
 | DM6 kernel half: `derive` and `explain` take `at_s`; a stack with a constant's law reads it at that date | done; look-ahead spans keep one date (noted) | packages/DM6-kernel.md |
-| GH3 progenitors feed the host: each tree member's galaxy and orbit decide what arrives (stellar halo, hot gas, merger); responses by ratios; dated marks; G3's ex-situ stand-ins retired in looked-at galaxies | done; next GH4 | packages/GH3.md |
+| GH3 progenitors feed the host: each tree member's galaxy and orbit decide what arrives (stellar halo, hot gas, merger); responses by ratios; dated marks; G3's ex-situ stand-ins retired in looked-at galaxies | done | packages/GH3.md |
+| GH4 remains as places: stars leave a satellite by its tidal radius; each torn member a stream, shells or mixed remains in the envelope; halo stars in star cells and the sky with where they were born; origins across galaxies | done; next GH5 | packages/GH4.md |
 | DM2 dark energy w0 and wa in the expansion and in the growth (stepped when w is not −1); void shape checked | done; real-size switch is the galaxy charts' | packages/DM2.md |
 | DM3 matter ledger per cell (op `matter_budget`): dark in catalogued haloes, below the floor, never collapsed; ordinary by reservoir; environments | done; one question for Alex (environment classifier) in the log | packages/DM3.md |
 

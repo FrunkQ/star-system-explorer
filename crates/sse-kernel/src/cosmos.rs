@@ -94,6 +94,16 @@ pub(crate) fn fed_galaxy(
         edits,
     )
     .map_err(|e| err("bad_address", e))?;
+    let mut fed = fed;
+    // GH4: what it tore apart stays as places in its envelope.
+    sse_cosmos::feed::with_remains(
+        &mut fed,
+        &cp.galaxy,
+        &cp.sky.satellites.orbits,
+        &cp.rings,
+        &cp.sky.satellites.remains,
+        hs.seed,
+    );
     let g = std::rc::Rc::new(fed.galaxy);
     FED.with(|f| {
         let mut f = f.borrow_mut();
@@ -228,6 +238,7 @@ fn galaxy_chart_of(
         params: cp.envelope.clone(),
         seed: *a.seed,
         address: addr.clone(),
+        remains: Default::default(),
     };
     let now = g.now.t_gyr;
     // Galaxy-wide events over the whole history (mergers, inked starbursts, nucleus episodes).
@@ -608,6 +619,7 @@ pub(crate) fn reconstruct_origin(
         params: cp.envelope.clone(),
         seed: *seed,
         address: addr,
+        remains: Default::default(),
     };
     let ask = sse_cosmos::origin::OriginAsk {
         now_gyr: g.now.t_gyr + a.elapsed_gyr,
@@ -694,6 +706,7 @@ pub(crate) fn with_world<R>(
         params: cp.envelope.clone(),
         seed: *seed,
         address: addr.clone(),
+        remains: Default::default(),
     };
     let st = sse_cosmos::stars::Stars {
         env: &env,

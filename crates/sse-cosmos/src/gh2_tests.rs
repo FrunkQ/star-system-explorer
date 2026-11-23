@@ -199,9 +199,19 @@ fn the_four_processes_shape_a_satellite_system() {
             n += 1;
             assert!(f.dark_kept <= 1.0 && f.dark_kept >= 0.0, "{f:?}");
             assert!(!f.labels.is_empty());
-            // Stars stay until nine tenths of the dark matter has gone.
-            if f.dark_kept >= op.stars_leave_below && f.disrupted_gyr.is_none() {
-                assert_eq!(f.stars_kept, 1.0);
+            // Stars sit deep in the dark halo, so they go more slowly than
+            // the dark matter: with half of it still bound, four in five stars
+            // are (GH4's tidal rule; Peñarrubia et al. 2008).
+            if f.disrupted_gyr.is_none() {
+                assert!(
+                    f.stars_kept >= f.dark_kept,
+                    "{} {}",
+                    f.dark_kept,
+                    f.stars_kept
+                );
+                if f.dark_kept >= 0.5 {
+                    assert!(f.stars_kept > 0.8, "{} {}", f.dark_kept, f.stars_kept);
+                }
             }
             if f.pericentres > 0 && f.dark_kept < 0.9 {
                 stripped += 1;
