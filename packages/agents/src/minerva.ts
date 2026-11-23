@@ -78,6 +78,17 @@ export function factsBundle(scene: PlayerScene, vocab: Vocab, o: { title?: strin
   return { audience: scene.audience, text: lines.join("\n") };
 }
 
+/**
+ * One subject's part of an audience's scene (V3 gap 23, Describe on a card): the subject, what it orbits, what orbits
+ * it and the scene's own star, so Minerva writes about this world with its setting. Null when the audience does not know the subject.
+ */
+export function aboutOne(scene: PlayerScene, address: string): PlayerScene | null {
+  if (!scene.subjects.some((x) => x.address === address)) return null;
+  const up = (a: string) => a.slice(0, Math.max(0, a.lastIndexOf("/")));
+  const keep = (x: PlayerScene["subjects"][number]) => x.address === address || x.address === up(address) || up(x.address) === address || x.address === scene.scope;
+  return { ...scene, subjects: scene.subjects.filter(keep) };
+}
+
 const WORDS: Record<string, number> = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90, hundred: 100, thousand: 1000, million: 1e6, billion: 1e9, trillion: 1e12, half: 0.5, twice: 2, double: 2, triple: 3, dozen: 12 };
 const DIGITS = /(?<![\w.])-?\d[\d,]*(?:\.\d+)?(?:[eE][-+]?\d+)?/g;
 
