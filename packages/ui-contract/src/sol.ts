@@ -30,6 +30,12 @@ export interface SolRegion {
   grade: string;
   note?: string;
   check?: string;
+  /** "ring" for a planet's ring; a belt otherwise. */
+  kind?: string;
+  /** A ring's printed optical depth (the middle of a printed range). */
+  optical_depth?: number;
+  /** A ring's particle albedo as printed (the middle of a printed range). */
+  albedo?: number;
 }
 export interface SolSource {
   id: string;
@@ -137,11 +143,13 @@ export function solBatches(sheet: SolSheet, system: string): { batches: SolBatch
     const a = addr[r.id]!;
     names[a] = r.name;
     put(r.src, a, "name", r.name);
-    put(r.src, a, "body.kind", "belt");
+    put(r.src, a, "body.kind", r.kind ?? "belt");
     put(r.src, a, "orbit.host", addr[r.host]!);
     put(r.src, a, "body.radius_inner", r.inner_m);
     put(r.src, a, "body.radius_outer", r.outer_m);
     put(r.src, a, "belt.shape", /oort/.test(r.id) ? "sphere" : "disc");
+    if (typeof r.optical_depth === "number") put(r.src, a, "ring.optical_depth", r.optical_depth);
+    if (typeof r.albedo === "number") put(r.src, a, "body.albedo", r.albedo);
     if (r.check === "unverified") unverified.push(`${a}#body.radius_inner`);
   }
   return { batches: [...by.values()], addresses: addr, unverified, names };

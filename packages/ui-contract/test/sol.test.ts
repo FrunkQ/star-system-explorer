@@ -27,6 +27,14 @@ test("the sheet becomes batches by source, parents first, nothing typed", () => 
   assert.ok(all.some((e) => e.address === "u:k/sys:sol" && e.field === "system.age"));
   assert.ok(unverified.length >= 1, "the sheet's unverified values are named");
   assert.match(solSourceText(sheet, batches[0]!.source), /\S/);
+  // Earth's air gas by gas, and Saturn's rings as regions hosted by Saturn.
+  const at = (a: string, f: string) => all.find((e) => e.address === a && e.field === f)?.value;
+  assert.equal(at(addresses.earth!, "atmosphere.composition.n2"), 0.7808);
+  assert.equal(at(addresses.earth!, "atmosphere.composition.o2"), 0.2095);
+  assert.equal(at(addresses["saturn-b"]!, "body.kind"), "ring");
+  assert.equal(at(addresses["saturn-b"]!, "orbit.host"), addresses.saturn);
+  assert.ok((at(addresses["saturn-b"]!, "ring.optical_depth") as number) > 1);
+  assert.equal(at(addresses["main-belt"]!, "body.kind"), "belt");
 });
 
 test("entered as catalogued facts, Sol reads back whole, with its spec", async () => {

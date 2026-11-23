@@ -25,6 +25,14 @@ SOURCES = [
      "status": "verified", "doi": "10.3847/2041-8205/817/2/L22"},
     {"id": "trujillo2001", "text": "Trujillo, C. A., Jewitt, D. C. and Luu, J. X. 2001, AJ 122, 457: properties of the trans-Neptunian belt, statistics from the Canada-France-Hawaii Telescope survey (an outer edge to the classical belt at 50 AU)",
      "status": "verified", "doi": "10.1086/321117"},
+    {"id": "nssdca-saturn-rings", "text": "Williams, D. R., NASA NSSDCA Saturnian rings fact sheet (last updated 19 April 2022; read 23 Nov 2026)",
+     "status": "verified", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/satringfact.html"},
+    {"id": "nssdca-jupiter-rings", "text": "Williams, D. R., NASA NSSDCA Jovian rings fact sheet (last updated 14 October 2015; read 23 Nov 2026)",
+     "status": "verified", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupringfact.html"},
+    {"id": "nssdca-uranus-rings", "text": "Williams, D. R., NASA NSSDCA Uranian rings fact sheet (last updated 14 October 2015; read 23 Nov 2026)",
+     "status": "verified", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/uranringfact.html"},
+    {"id": "nssdca-neptune-rings", "text": "Williams, D. R., NASA NSSDCA Neptunian rings fact sheet (last updated 14 October 2015; read 23 Nov 2026)",
+     "status": "verified", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/nepringfact.html"},
     {"id": "kaib-volk2022", "text": "Kaib, N. A. and Volk, K. 2022, Dynamical population of comet reservoirs, arXiv:2206.00010 (the Galactic tide sets the Oort cloud's outer limit near 1 to 2 × 10^5 au)",
      "status": "verified", "url": "https://arxiv.org/abs/2206.00010"},
 ]
@@ -53,6 +61,47 @@ BODIES = [
 ]
 
 
+KM = 1e3
+# The giants' main rings as regions hosted by their planet, as the NSSDCA ring
+# sheets print them (read 23 Nov 2026). Radii from the planet's centre in km.
+# optical_depth is the printed optical depth (the sheets do not say "normal");
+# where a range is printed, optical_depth is its middle and optical_depth_range
+# the range. albedo is the particles' albedo as printed; the sheets do not say
+# which kind. No colour is printed: the renderer uses the planet's.
+# Rings printed at one radius with a width are given radius +- half the width.
+# Saturn's F ring prints a radius (139,826 km) but no width, so it is left out.
+def _ring(rid, name, host, inner_km, outer_km, tau, albedo, src, note, grade="measured"):
+    r = {"id": rid, "name": name, "host": host, "kind": "ring", "inner_m": inner_km * KM, "outer_m": outer_km * KM,
+         "src": src, "grade": grade, "note": note}
+    if isinstance(tau, tuple):
+        r["optical_depth"], r["optical_depth_range"] = (tau[0] + tau[1]) / 2, list(tau)
+    else:
+        r["optical_depth"] = tau
+    if albedo is not None:
+        if isinstance(albedo, tuple):
+            r["albedo"], r["albedo_range"] = (albedo[0] + albedo[1]) / 2, list(albedo)
+        else:
+            r["albedo"] = albedo
+    return r
+
+
+RINGS = [
+    _ring("saturn-d", "Saturn's D ring", "saturn", 66900, 74510, 1e-5, None, "nssdca-saturn-rings", "optical depth printed as 10-5; no albedo printed"),
+    _ring("saturn-c", "Saturn's C ring", "saturn", 74658, 91975, (0.05, 0.35), (0.12, 0.30), "nssdca-saturn-rings", "albedo 0.12 to 0.30 at the inner edge, 0.2 at the outer; thickness 5 m"),
+    _ring("saturn-b", "Saturn's B ring", "saturn", 91975, 117507, (0.4, 2.5), (0.4, 0.6), "nssdca-saturn-rings", "thickness 5 to 10 m"),
+    _ring("saturn-cassini", "Cassini Division", "saturn", 117507, 122340, (0.0, 0.1), (0.2, 0.4), "nssdca-saturn-rings",
+          "edges taken as the B ring's outer and the A ring's inner edge (the sheet prints no radius on this row); thickness 20 m"),
+    _ring("saturn-a", "Saturn's A ring", "saturn", 122340, 136780, (0.4, 1.0), (0.4, 0.6), "nssdca-saturn-rings", "thickness 10 to 30 m"),
+    _ring("jupiter-main", "Jupiter's main ring", "jupiter", 123000, 128940, 5e-6, 0.015, "nssdca-jupiter-rings", "albedo printed as ~0.015; thickness under about 100 km"),
+    _ring("uranus-epsilon", "Uranus's epsilon ring", "uranus", 51149 - 29, 51149 + 29, (0.5, 2.3), 0.018, "nssdca-uranus-rings",
+          "radius 51,149 km, width 20 to 96 km (eccentric, e = 0.0079): drawn at the middle width, 58 km; albedo printed as ~18 x 10-3"),
+    _ring("neptune-le-verrier", "Neptune's Le Verrier ring", "neptune", 53200 - 50, 53200 + 50, 0.01, 0.015, "nssdca-neptune-rings",
+          "radius ~53,200 km, width printed as under 100 km: drawn at 100 km, an upper bound; albedo ~15 x 10-3"),
+    _ring("neptune-adams", "Neptune's Adams ring", "neptune", 62933 - 7.5, 62933 + 7.5, (0.01, 0.1), 0.015, "nssdca-neptune-rings",
+          "radius 62,933 km, width ~15 km; its arcs (Courage, Liberte, Egalite, Fraternite) reach optical depth 0.12; albedo ~15 x 10-3"),
+]
+
+
 def regions(bodies):
     aj = bodies["jupiter"]["values"]["orbit.semi_major_axis"]["v"]
     an = bodies["neptune"]["values"]["orbit.semi_major_axis"]["v"]
@@ -67,4 +116,4 @@ def regions(bodies):
         {"id": "oort-cloud", "name": "Oort cloud", "host": "sun",
          "inner_m": 5000 * AU, "outer_m": 1e5 * AU, "src": "kaib-volk2022", "grade": "estimate", "check": "unverified",
          "note": "outer limit set by the Galactic tide at 1 to 2 × 10^5 au (quoted); the inner edge near 5,000 au for bodies scattered by Uranus and Neptune was read in paraphrase, not quoted. A sphere (ruling)."},
-    ]
+    ] + RINGS

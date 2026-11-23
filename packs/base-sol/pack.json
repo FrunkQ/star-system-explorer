@@ -197,6 +197,54 @@
         "unit": "substance",
         "src": "nssdca-venus",
         "note": "96.5% CO2, 3.5% N2 near the surface, by volume"
+       },
+       "atmosphere.composition.co2": {
+        "v": 0.965,
+        "unit": "1",
+        "src": "nssdca-venus",
+        "note": "by volume, near the surface"
+       },
+       "atmosphere.composition.n2": {
+        "v": 0.035,
+        "unit": "1",
+        "src": "nssdca-venus",
+        "note": "by volume, near the surface"
+       },
+       "atmosphere.composition.so2": {
+        "v": 0.00015,
+        "unit": "1",
+        "src": "nssdca-venus",
+        "note": "by volume, near the surface"
+       },
+       "atmosphere.composition.ar": {
+        "v": 7e-05,
+        "unit": "1",
+        "src": "nssdca-venus",
+        "note": "by volume, near the surface"
+       },
+       "atmosphere.composition.h2o": {
+        "v": 2e-05,
+        "unit": "1",
+        "src": "nssdca-venus",
+        "note": "by volume, near the surface"
+       },
+       "atmosphere.composition.co": {
+        "v": 1.7e-05,
+        "unit": "1",
+        "src": "nssdca-venus",
+        "note": "by volume, near the surface"
+       },
+       "atmosphere.composition.he": {
+        "v": 1.2e-05,
+        "unit": "1",
+        "src": "nssdca-venus",
+        "note": "by volume, near the surface"
+       },
+       "atmosphere.composition.ne": {
+        "v": 7e-06,
+        "unit": "1",
+        "src": "nssdca-venus",
+        "note": "by volume, near the surface"
        }
       }
      },
@@ -272,6 +320,60 @@
         "unit": "substance",
         "src": "nssdca-earth",
         "note": "78.08% N2, 20.95% O2, dry air by volume"
+       },
+       "atmosphere.composition.n2": {
+        "v": 0.7808,
+        "unit": "1",
+        "src": "nssdca-earth",
+        "note": "by volume, dry air; water is highly variable, typically about 1%"
+       },
+       "atmosphere.composition.o2": {
+        "v": 0.2095,
+        "unit": "1",
+        "src": "nssdca-earth",
+        "note": "by volume, dry air; water is highly variable, typically about 1%"
+       },
+       "atmosphere.composition.ar": {
+        "v": 0.00934,
+        "unit": "1",
+        "src": "nssdca-earth",
+        "note": "by volume, dry air; water is highly variable, typically about 1%"
+       },
+       "atmosphere.composition.co2": {
+        "v": 0.00042,
+        "unit": "1",
+        "src": "nssdca-earth",
+        "note": "by volume, dry air; water is highly variable, typically about 1%"
+       },
+       "atmosphere.composition.ne": {
+        "v": 1.818e-05,
+        "unit": "1",
+        "src": "nssdca-earth",
+        "note": "by volume, dry air; water is highly variable, typically about 1%"
+       },
+       "atmosphere.composition.he": {
+        "v": 5.24e-06,
+        "unit": "1",
+        "src": "nssdca-earth",
+        "note": "by volume, dry air; water is highly variable, typically about 1%"
+       },
+       "atmosphere.composition.ch4": {
+        "v": 1.94e-06,
+        "unit": "1",
+        "src": "nssdca-earth",
+        "note": "by volume, dry air; water is highly variable, typically about 1%"
+       },
+       "atmosphere.composition.kr": {
+        "v": 1.14e-06,
+        "unit": "1",
+        "src": "nssdca-earth",
+        "note": "by volume, dry air; water is highly variable, typically about 1%"
+       },
+       "atmosphere.composition.h2": {
+        "v": 5.5e-07,
+        "unit": "1",
+        "src": "nssdca-earth",
+        "note": "by volume, dry air; water is highly variable, typically about 1%"
        }
       }
      },
@@ -395,6 +497,60 @@
         "unit": "substance",
         "src": "nssdca-mars",
         "note": "95.1% CO2, 2.59% N2, 1.94% Ar by volume"
+       },
+       "atmosphere.composition.co2": {
+        "v": 0.951,
+        "unit": "1",
+        "src": "nssdca-mars",
+        "note": "by volume, nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"
+       },
+       "atmosphere.composition.n2": {
+        "v": 0.0259,
+        "unit": "1",
+        "src": "nssdca-mars",
+        "note": "by volume, nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"
+       },
+       "atmosphere.composition.ar": {
+        "v": 0.0194,
+        "unit": "1",
+        "src": "nssdca-mars",
+        "note": "by volume, nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"
+       },
+       "atmosphere.composition.o2": {
+        "v": 0.0016,
+        "unit": "1",
+        "src": "nssdca-mars",
+        "note": "by volume, nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"
+       },
+       "atmosphere.composition.co": {
+        "v": 0.0006,
+        "unit": "1",
+        "src": "nssdca-mars",
+        "note": "by volume, nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"
+       },
+       "atmosphere.composition.h2o": {
+        "v": 0.00021,
+        "unit": "1",
+        "src": "nssdca-mars",
+        "note": "by volume, nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"
+       },
+       "atmosphere.composition.ne": {
+        "v": 2.5e-06,
+        "unit": "1",
+        "src": "nssdca-mars",
+        "note": "by volume, nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"
+       },
+       "atmosphere.composition.kr": {
+        "v": 3e-07,
+        "unit": "1",
+        "src": "nssdca-mars",
+        "note": "by volume, nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"
+       },
+       "atmosphere.composition.xe": {
+        "v": 8e-08,
+        "unit": "1",
+        "src": "nssdca-mars",
+        "note": "by volume, nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"
        }
       }
      },
@@ -447,6 +603,36 @@
         "v": 0.538,
         "unit": "1",
         "src": "nssdca-jupiter"
+       },
+       "atmosphere.composition.h2": {
+        "v": 0.898,
+        "unit": "1",
+        "src": "nssdca-jupiter",
+        "note": "by volume, at the 1 bar level; HD (28 ppm) and ethane (5.8 ppm) left out; water varies with pressure"
+       },
+       "atmosphere.composition.he": {
+        "v": 0.102,
+        "unit": "1",
+        "src": "nssdca-jupiter",
+        "note": "by volume, at the 1 bar level; HD (28 ppm) and ethane (5.8 ppm) left out; water varies with pressure"
+       },
+       "atmosphere.composition.ch4": {
+        "v": 0.003,
+        "unit": "1",
+        "src": "nssdca-jupiter",
+        "note": "by volume, at the 1 bar level; HD (28 ppm) and ethane (5.8 ppm) left out; water varies with pressure"
+       },
+       "atmosphere.composition.nh3": {
+        "v": 0.00026,
+        "unit": "1",
+        "src": "nssdca-jupiter",
+        "note": "by volume, at the 1 bar level; HD (28 ppm) and ethane (5.8 ppm) left out; water varies with pressure"
+       },
+       "atmosphere.composition.h2o": {
+        "v": 4e-06,
+        "unit": "1",
+        "src": "nssdca-jupiter",
+        "note": "by volume, at the 1 bar level; HD (28 ppm) and ethane (5.8 ppm) left out; water varies with pressure"
        }
       },
       "note": "rotation in System III (1965.0)"
@@ -500,6 +686,30 @@
         "v": 0.499,
         "unit": "1",
         "src": "nssdca-saturn"
+       },
+       "atmosphere.composition.h2": {
+        "v": 0.963,
+        "unit": "1",
+        "src": "nssdca-saturn",
+        "note": "by volume, at the 1 bar level; HD (110 ppm) and ethane (7 ppm) left out"
+       },
+       "atmosphere.composition.he": {
+        "v": 0.0325,
+        "unit": "1",
+        "src": "nssdca-saturn",
+        "note": "by volume, at the 1 bar level; HD (110 ppm) and ethane (7 ppm) left out"
+       },
+       "atmosphere.composition.ch4": {
+        "v": 0.0045,
+        "unit": "1",
+        "src": "nssdca-saturn",
+        "note": "by volume, at the 1 bar level; HD (110 ppm) and ethane (7 ppm) left out"
+       },
+       "atmosphere.composition.nh3": {
+        "v": 0.000125,
+        "unit": "1",
+        "src": "nssdca-saturn",
+        "note": "by volume, at the 1 bar level; HD (110 ppm) and ethane (7 ppm) left out"
        }
       },
       "note": "rotation in Saturnian System III"
@@ -553,6 +763,24 @@
         "v": 0.488,
         "unit": "1",
         "src": "nssdca-uranus"
+       },
+       "atmosphere.composition.h2": {
+        "v": 0.825,
+        "unit": "1",
+        "src": "nssdca-uranus",
+        "note": "by volume, at the 1 bar level; HD (148 ppm) left out"
+       },
+       "atmosphere.composition.he": {
+        "v": 0.152,
+        "unit": "1",
+        "src": "nssdca-uranus",
+        "note": "by volume, at the 1 bar level; HD (148 ppm) left out"
+       },
+       "atmosphere.composition.ch4": {
+        "v": 0.023,
+        "unit": "1",
+        "src": "nssdca-uranus",
+        "note": "by volume, at the 1 bar level; HD (148 ppm) left out"
        }
       },
       "note": "rotation from Voyager 2 radio science (magnetic coordinates)"
@@ -606,6 +834,24 @@
         "v": 0.442,
         "unit": "1",
         "src": "nssdca-neptune"
+       },
+       "atmosphere.composition.h2": {
+        "v": 0.8,
+        "unit": "1",
+        "src": "nssdca-neptune",
+        "note": "by volume, at the 1 bar level; HD (192 ppm) and ethane (1.5 ppm) left out"
+       },
+       "atmosphere.composition.he": {
+        "v": 0.19,
+        "unit": "1",
+        "src": "nssdca-neptune",
+        "note": "by volume, at the 1 bar level; HD (192 ppm) and ethane (1.5 ppm) left out"
+       },
+       "atmosphere.composition.ch4": {
+        "v": 0.015,
+        "unit": "1",
+        "src": "nssdca-neptune",
+        "note": "by volume, at the 1 bar level; HD (192 ppm) and ethane (1.5 ppm) left out"
        }
       },
       "note": "rotation from Voyager 2 radio science (magnetic coordinates)"
@@ -671,6 +917,24 @@
         "unit": "substance",
         "src": "nssdca-pluto",
         "note": "99% N2, 0.5% CH4 by volume"
+       },
+       "atmosphere.composition.n2": {
+        "v": 0.99,
+        "unit": "1",
+        "src": "nssdca-pluto",
+        "note": "by volume, trace HCN and C2Hx hydrocarbons left out"
+       },
+       "atmosphere.composition.ch4": {
+        "v": 0.005,
+        "unit": "1",
+        "src": "nssdca-pluto",
+        "note": "by volume, trace HCN and C2Hx hydrocarbons left out"
+       },
+       "atmosphere.composition.co": {
+        "v": 0.0005,
+        "unit": "1",
+        "src": "nssdca-pluto",
+        "note": "by volume, trace HCN and C2Hx hydrocarbons left out"
        }
       }
      },
@@ -760,6 +1024,162 @@
       "grade": "estimate",
       "check": "unverified",
       "note": "outer limit set by the Galactic tide at 1 to 2 × 10^5 au (quoted); the inner edge near 5,000 au for bodies scattered by Uranus and Neptune was read in paraphrase, not quoted. A sphere (ruling)."
+     },
+     {
+      "id": "saturn-d",
+      "name": "Saturn's D ring",
+      "host": "saturn",
+      "kind": "ring",
+      "inner_m": 66900000.0,
+      "outer_m": 74510000.0,
+      "src": "nssdca-saturn-rings",
+      "grade": "measured",
+      "note": "optical depth printed as 10-5; no albedo printed",
+      "optical_depth": 1e-05
+     },
+     {
+      "id": "saturn-c",
+      "name": "Saturn's C ring",
+      "host": "saturn",
+      "kind": "ring",
+      "inner_m": 74658000.0,
+      "outer_m": 91975000.0,
+      "src": "nssdca-saturn-rings",
+      "grade": "measured",
+      "note": "albedo 0.12 to 0.30 at the inner edge, 0.2 at the outer; thickness 5 m",
+      "optical_depth": 0.19999999999999998,
+      "optical_depth_range": [
+       0.05,
+       0.35
+      ],
+      "albedo": 0.21,
+      "albedo_range": [
+       0.12,
+       0.3
+      ]
+     },
+     {
+      "id": "saturn-b",
+      "name": "Saturn's B ring",
+      "host": "saturn",
+      "kind": "ring",
+      "inner_m": 91975000.0,
+      "outer_m": 117507000.0,
+      "src": "nssdca-saturn-rings",
+      "grade": "measured",
+      "note": "thickness 5 to 10 m",
+      "optical_depth": 1.45,
+      "optical_depth_range": [
+       0.4,
+       2.5
+      ],
+      "albedo": 0.5,
+      "albedo_range": [
+       0.4,
+       0.6
+      ]
+     },
+     {
+      "id": "saturn-cassini",
+      "name": "Cassini Division",
+      "host": "saturn",
+      "kind": "ring",
+      "inner_m": 117507000.0,
+      "outer_m": 122340000.0,
+      "src": "nssdca-saturn-rings",
+      "grade": "measured",
+      "note": "edges taken as the B ring's outer and the A ring's inner edge (the sheet prints no radius on this row); thickness 20 m",
+      "optical_depth": 0.05,
+      "optical_depth_range": [
+       0.0,
+       0.1
+      ],
+      "albedo": 0.30000000000000004,
+      "albedo_range": [
+       0.2,
+       0.4
+      ]
+     },
+     {
+      "id": "saturn-a",
+      "name": "Saturn's A ring",
+      "host": "saturn",
+      "kind": "ring",
+      "inner_m": 122340000.0,
+      "outer_m": 136780000.0,
+      "src": "nssdca-saturn-rings",
+      "grade": "measured",
+      "note": "thickness 10 to 30 m",
+      "optical_depth": 0.7,
+      "optical_depth_range": [
+       0.4,
+       1.0
+      ],
+      "albedo": 0.5,
+      "albedo_range": [
+       0.4,
+       0.6
+      ]
+     },
+     {
+      "id": "jupiter-main",
+      "name": "Jupiter's main ring",
+      "host": "jupiter",
+      "kind": "ring",
+      "inner_m": 123000000.0,
+      "outer_m": 128940000.0,
+      "src": "nssdca-jupiter-rings",
+      "grade": "measured",
+      "note": "albedo printed as ~0.015; thickness under about 100 km",
+      "optical_depth": 5e-06,
+      "albedo": 0.015
+     },
+     {
+      "id": "uranus-epsilon",
+      "name": "Uranus's epsilon ring",
+      "host": "uranus",
+      "kind": "ring",
+      "inner_m": 51120000.0,
+      "outer_m": 51178000.0,
+      "src": "nssdca-uranus-rings",
+      "grade": "measured",
+      "note": "radius 51,149 km, width 20 to 96 km (eccentric, e = 0.0079): drawn at the middle width, 58 km; albedo printed as ~18 x 10-3",
+      "optical_depth": 1.4,
+      "optical_depth_range": [
+       0.5,
+       2.3
+      ],
+      "albedo": 0.018
+     },
+     {
+      "id": "neptune-le-verrier",
+      "name": "Neptune's Le Verrier ring",
+      "host": "neptune",
+      "kind": "ring",
+      "inner_m": 53150000.0,
+      "outer_m": 53250000.0,
+      "src": "nssdca-neptune-rings",
+      "grade": "measured",
+      "note": "radius ~53,200 km, width printed as under 100 km: drawn at 100 km, an upper bound; albedo ~15 x 10-3",
+      "optical_depth": 0.01,
+      "albedo": 0.015
+     },
+     {
+      "id": "neptune-adams",
+      "name": "Neptune's Adams ring",
+      "host": "neptune",
+      "kind": "ring",
+      "inner_m": 62925500.0,
+      "outer_m": 62940500.0,
+      "src": "nssdca-neptune-rings",
+      "grade": "measured",
+      "note": "radius 62,933 km, width ~15 km; its arcs (Courage, Liberte, Egalite, Fraternite) reach optical depth 0.12; albedo ~15 x 10-3",
+      "optical_depth": 0.055,
+      "optical_depth_range": [
+       0.01,
+       0.1
+      ],
+      "albedo": 0.015
      }
     ],
     "sources": [
@@ -830,6 +1250,12 @@
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html"
      },
      {
+      "id": "nssdca-jupiter-rings",
+      "text": "Williams, D. R., NASA NSSDCA Jovian rings fact sheet (last updated 14 October 2015; read 23 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupringfact.html"
+     },
+     {
       "id": "nssdca-mars",
       "text": "Williams, D. R., NASA NSSDCA Mars Fact Sheet (read 22 Nov 2026)",
       "status": "verified",
@@ -854,6 +1280,12 @@
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/neptunefact.html"
      },
      {
+      "id": "nssdca-neptune-rings",
+      "text": "Williams, D. R., NASA NSSDCA Neptunian rings fact sheet (last updated 14 October 2015; read 23 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/nepringfact.html"
+     },
+     {
       "id": "nssdca-pluto",
       "text": "Williams, D. R., NASA NSSDCA Pluto Fact Sheet (read 22 Nov 2026)",
       "status": "verified",
@@ -866,6 +1298,12 @@
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/saturnfact.html"
      },
      {
+      "id": "nssdca-saturn-rings",
+      "text": "Williams, D. R., NASA NSSDCA Saturnian rings fact sheet (last updated 19 April 2022; read 23 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/satringfact.html"
+     },
+     {
       "id": "nssdca-sun",
       "text": "Williams, D. R., NASA NSSDCA Sun Fact Sheet (read 22 Nov 2026)",
       "status": "verified",
@@ -876,6 +1314,12 @@
       "text": "Williams, D. R., NASA NSSDCA Uranus Fact Sheet (read 22 Nov 2026)",
       "status": "verified",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/uranusfact.html"
+     },
+     {
+      "id": "nssdca-uranus-rings",
+      "text": "Williams, D. R., NASA NSSDCA Uranian rings fact sheet (last updated 14 October 2015; read 23 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/uranringfact.html"
      },
      {
       "id": "nssdca-venus",

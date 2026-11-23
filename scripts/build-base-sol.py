@@ -116,6 +116,7 @@ def planet_row(name, pid, kind, host, m24, r_km, a6, e, rot_h, bond, geo, obl):
     }
     row = {"id": pid, "name": name, "kind": kind, "host": host, "values": values}
     values.update(surface_facts(pid, src))
+    values.update(composition_facts(pid, src))
     if pid in NOTES:
         row["note"] = NOTES[pid]
     return row
@@ -165,7 +166,36 @@ def surface_facts(pid, src):
         out["atmosphere.main"] = val(gas, "substance", src, note=SURFACE_NOTES[pid + "_gas"])
     return out
 
+# The air's make-up by volume (mole fraction), gas by gas, as the NSSDCA sheets
+# print it (read 23 Nov 2026), keyed by substance id on the master data sheet:
+# one row per gas, atmosphere.composition.<id>, unit 1. Shares printed in ppm are
+# converted here. Gases the sheet has no substance for are left out and named in
+# the level note. The giants' make-up is at the 1 bar level (no surface).
+PPM = 1e-6
+COMPOSITION = {
+    "earth": ({"n2": 0.7808, "o2": 0.2095, "ar": 9340 * PPM, "co2": 420 * PPM, "ne": 18.18 * PPM, "he": 5.24 * PPM,
+               "ch4": 1.94 * PPM, "kr": 1.14 * PPM, "h2": 0.55 * PPM},
+              "dry air; water is highly variable, typically about 1%"),
+    "venus": ({"co2": 0.965, "n2": 0.035, "so2": 150 * PPM, "ar": 70 * PPM, "h2o": 20 * PPM, "co": 17 * PPM,
+               "he": 12 * PPM, "ne": 7 * PPM}, "near the surface"),
+    "mars": ({"co2": 0.951, "n2": 0.0259, "ar": 0.0194, "o2": 0.0016, "co": 0.0006, "h2o": 210 * PPM,
+              "ne": 2.5 * PPM, "kr": 0.3 * PPM, "xe": 0.08 * PPM}, "nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"),
+    "pluto": ({"n2": 0.99, "ch4": 0.005, "co": 0.0005}, "trace HCN and C2Hx hydrocarbons left out"),
+    "jupiter": ({"h2": 0.898, "he": 0.102, "ch4": 3000 * PPM, "nh3": 260 * PPM, "h2o": 4 * PPM},
+                "at the 1 bar level; HD (28 ppm) and ethane (5.8 ppm) left out; water varies with pressure"),
+    "saturn": ({"h2": 0.963, "he": 0.0325, "ch4": 4500 * PPM, "nh3": 125 * PPM},
+               "at the 1 bar level; HD (110 ppm) and ethane (7 ppm) left out"),
+    "uranus": ({"h2": 0.825, "he": 0.152, "ch4": 0.023}, "at the 1 bar level; HD (148 ppm) left out"),
+    "neptune": ({"h2": 0.80, "he": 0.19, "ch4": 0.015}, "at the 1 bar level; HD (192 ppm) and ethane (1.5 ppm) left out"),
+}
 
+
+def composition_facts(pid, src):
+    if pid not in COMPOSITION:
+        return {}
+    mix, where = COMPOSITION[pid]
+    return {"atmosphere.composition." + g: val(float(f"{x:.6g}"), "1", src, note="by volume, " + where)
+            for g, x in mix.items()}
 
 
 def build():
@@ -205,10 +235,16 @@ def validate(pack):
         assert b["host"] is None or b["host"] in bids, "%s: unknown host %s" % (b["id"], b["host"])
         for k, v in b["values"].items():
             assert v["src"] in ids, "%s %s: unknown source %s" % (b["id"], k, v["src"])
+            if k.startswith("atmosphere.composition."):
+                assert k.rsplit(".", 1)[1] in subs, "%s %s: not a substance on the sheet" % (b["id"], k)
+                assert 0.0 < v["v"] <= 1.0, (b["id"], k)
             if v["unit"] == "substance":
                 assert v["v"] in subs, "%s %s: %s is not a substance on the sheet" % (b["id"], k, v["v"])
                 continue
             assert isinstance(v["v"], (int, float)) and v["v"] == v["v"], "%s %s: not a number" % (b["id"], k)
+    for b in sol["bodies"]:
+        mix = [v["v"] for k, v in b["values"].items() if k.startswith("atmosphere.composition.")]
+        assert not mix or 0.99 <= sum(mix) <= 1.01, "%s: air shares sum to %.4f" % (b["id"], sum(mix))
     for r in sol["regions"]:
         assert r["host"] in bids and r["src"] in ids and 0 < r["inner_m"] < r["outer_m"], r["id"]
     # The sheet's yardsticks and this Sun must agree.
