@@ -9,12 +9,23 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
   import AtWorld from "./AtWorld.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ ship: String(params.ship ?? "fusion-torch"), minimise: String(params.minimise ?? "home_time") }));
-  let ship = $state(IN_SYSTEM_SHIPS.some((s) => s.id === first.ship) ? first.ship : "fusion-torch");
+  let ship = $state(first.ship);
+  // Ships the stacked packs list (the Traveller pack's standard ships) beside the stock ones; a pack ship goes whole.
+  const choices = $derived.by(() => {
+    void ctx.workspace.revision;
+    const st = ctx.session.stack();
+    return shipChoices(IN_SYSTEM_SHIPS, [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof shipChoices>[1]);
+  });
+  $effect(() => {
+    if (!choices.some((c) => c.id === ship)) ship = "fusion-torch";
+  });
+  const shipInfo = $derived(choices.find((c) => c.id === ship) ?? choices.find((c) => c.id === "fusion-torch") ?? choices[0]);
+  const sending = $derived(shipInfo ? shipToSend(shipInfo) : ship);
   let minimise = $state<Minimise>((MINIMISE_WORDS.some((m) => m.id === first.minimise) ? first.minimise : "home_time") as Minimise);
   let mode = $state<"explore" | "to">("to");
   const fromScene = $derived(navFromScene(scene));
@@ -49,7 +60,7 @@
     const nav = fromScene.nav;
     const c = (ctx.workspace as { campaign_now_yr?: number }).campaign_now_yr;
     const depart = typeof c === "number" && Number.isFinite(c) ? { depart_s: c * Number(YEAR_S) } : {};
-    const ask = { nav, from, ship, minimise, visited: [...visited], ...depart, ...(mode === "to" && to ? { to } : {}) };
+    const ask = { nav, from, ship: sending, minimise, visited: [...visited], ...depart, ...(mode === "to" && to ? { to } : {}) };
     if (!nav || !from || (mode === "to" && (!to || to === from))) return void (plan = null);
     const g = ++gen;
     busy = true;
@@ -82,7 +93,6 @@
     }),
   );
   const nameOf = (a: string) => at(a)?.name ?? a;
-  const shipInfo = $derived(IN_SYSTEM_SHIPS.find((s) => s.id === ship));
   // What the ship can do where the voyage ends: an adopted system's own record on the GM's seat (its air), else the chart's system.
   const atAsk = $derived.by((): ShipAtWorldAsk | null => {
     const dest = v?.to;
@@ -91,8 +101,8 @@
     // (a belt hop) leaves the kernel's default, a Hohmann transfer from the next body in.
     const last = v?.legs.at(-1);
     const speed = last?.arrive_v_inf_m_s !== undefined ? { v_inf_m_s: last.arrive_v_inf_m_s } : last?.course === "torch" ? { v_inf_m_s: 0 } : {};
-    if (!scene.fixture && ctx.session.seat.authority === "gm") return { system: scene.system, ship, worlds: [dest], ...speed };
-    return fromScene.nav ? { nav: fromScene.nav, ship, worlds: [dest], ...speed } : null;
+    if (!scene.fixture && ctx.session.seat.authority === "gm") return { system: scene.system, ship: sending, worlds: [dest], ...speed };
+    return fromScene.nav ? { nav: fromScene.nav, ship: sending, worlds: [dest], ...speed } : null;
   });
   const arriving = $derived.by(() => {
     const l = v?.legs.at(-1);
@@ -120,7 +130,7 @@
   <div class="bar">
     <label class="lbl">Ship
       <select data-ship bind:value={ship}>
-        {#each IN_SYSTEM_SHIPS as s (s.id)}<option value={s.id}>{s.name}</option>{/each}
+        {#each choices as s (s.id)}<option value={s.id} data-pack={s.pack ?? null}>{s.name}{s.pack ? " (pack)" : ""}</option>{/each}
       </select>
     </label>
     <span class="seg" role="group" aria-label="Goal">

@@ -74,8 +74,14 @@ try {
   await page.waitForFunction(() => document.querySelectorAll("[data-overlay] polygon, [data-overlay] path, [data-overlay] polyline").length === 0, null, { timeout: 15000 });
   assert.equal(await voy.locator("[data-overlay-row='traveller.sector-grid']").getAttribute("data-placed"), "no");
 
+  // The pack's standard ships join the stock ones in the picker, and one flies whole (V8 with X3g).
+  assert.equal(await voy.locator("[data-ship] option[data-pack='sse.traveller']").count(), 18);
+  await page.waitForFunction(() => Number(document.querySelector(".voy")?.getAttribute("data-legs") ?? 0) > 0, null, { timeout: 60000 });
+  await voy.locator("[data-ship]").selectOption("traveller.courier");
+  await page.waitForFunction(() => document.querySelector(".voy [data-leg=jump]") && /Jump-2, a pack rule/.test(document.querySelector(".voy .head")?.textContent ?? ""), null, { timeout: 60000 });
+
   assert.deepEqual(errors, []);
-  console.log(`PASS chromium: Traveller pack added, four worlds imported, HUD on ${JSON.stringify(on)}, off ${JSON.stringify(off)}; sector grid on the stars (${drawn} shapes), taken off again`);
+  console.log(`PASS chromium: Traveller pack added, four worlds imported, HUD on ${JSON.stringify(on)}, off ${JSON.stringify(off)}; sector grid on the stars (${drawn} shapes), taken off again; the pack's courier flies a voyage`);
   await browser.close();
 } finally {
   server.kill();

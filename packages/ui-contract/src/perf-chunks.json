@@ -75,7 +75,7 @@
       "name": "Orbits, routes and voyages",
       "meaning": "Where everything is at a time, the calendar, routes between stars and voyages in a system.",
       "budget_ms": 300,
-      "sources": ["orbits_at", "calendar", "campaign_now", "set_campaign_now", "plan_route", "plan_voyage", "ship_at_world"],
+      "sources": ["orbits_at", "calendar", "campaign_now", "set_campaign_now", "plan_route", "plan_voyage", "ship_at_world", "jump_map"],
       "bench": ["time", "time-generated", "nav"]
     },
     {

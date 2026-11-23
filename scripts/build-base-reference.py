@@ -32,6 +32,7 @@ ORIGINS_CSV = ROOT / "handover/packages/MP2-data/origins.csv"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import element_origins  # noqa: E402
 import water_phases  # noqa: E402
+import element_affinity  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -73,6 +74,10 @@ SOURCES = {
     "bodhaine1999": ("Bodhaine, B. A., Wood, N. B., Dutton, E. G. and Slusser, J. R. 1999, J. Atmos. Oceanic Technol. 16, 1854: on Rayleigh optical depth calculations (King factors)", "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2", None, "verified"),
     "thauer1977": ("Thauer, R. K., Jungermann, K. and Decker, K. 1977, Bacteriological Reviews 41, 100: energy conservation in chemotrophic anaerobic bacteria (appendix: free energies and enthalpies of formation at 298.15 K)", None, "https://pmc.ncbi.nlm.nih.gov/articles/PMC413997", "verified"),
     "convention": ("Elements in their standard state and the hydrogen ion at unit activity have zero free energy and enthalpy of formation by convention", None, "https://goldbook.iupac.org/", "textbook"),
+    "nssdca-sun": ("NASA NSSDCA Sun fact sheet: sidereal rotation period 25.38 days (the Carrington rotation)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html", "unverified"),
+    "mcdonough-sun1995": ("McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223: the composition of the Earth (CI chondrite and pyrolite columns; read from two machine-readable reproductions, handover/packages/MP-affinity-data)", "10.1016/0009-2541(94)00140-4", None, "unverified"),
+    "mcdonough2003": ("McDonough, W. F. 2003, Compositional model for the Earth's core, Treatise on Geochemistry vol. 2, 547, Table 4 (read from the GERM reservoir database's copy)", "10.1016/B0-08-043751-6/02015-6", "https://earthref.org/GERMRD/34/", "unverified"),
+    "rudnick-gao2003": ("Rudnick, R. L. and Gao, S. 2003, Composition of the continental crust, Treatise on Geochemistry vol. 3, 1, Table 11, bulk crust (read from the pyrolite package's copy, checked against the 2014 edition)", "10.1016/B0-08-043751-6/03016-4", None, "unverified"),
     "nssdca-earth": ("NASA NSSDCA Earth fact sheet (volumetric mean radius 6371.000 km)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html", "verified"),
     "nssdca-moon": ("NASA NSSDCA Moon fact sheet (mass 0.07346e24 kg, mean radius 1737.4 km, semi-major axis 0.3844e6 km)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html", "verified"),
     "nssdca-jupiter": ("NASA NSSDCA Jupiter fact sheet (volumetric mean radius 69911 km)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html", "verified"),
@@ -175,6 +180,7 @@ CONSTANTS = [
     ("R_sun", "nominal solar radius", val(6.957e8, "m", "iau2015b3", exact=True)),
     ("L_sun", "nominal solar luminosity", val(3.828e26, "W", "iau2015b3", exact=True)),
     ("T_sun", "nominal solar effective temperature", val(5772.0, "K", "iau2015b3", exact=True)),
+    ("P_rot_sun", "solar sidereal rotation period (Carrington)", val(25.38 * 86400.0, "s", "nssdca-sun", "unverified", note="25.38 days; the surface turns faster at the equator and slower near the poles")),
     ("S_sun", "nominal total solar irradiance", val(1361.0, "W m-2", "iau2015b3", exact=True)),
     ("GM_earth", "nominal Earth mass parameter", val(GM_EARTH, "m3 s-2", "iau2015b3", exact=True)),
     ("M_earth", "Earth mass", val(GM_EARTH / G, "kg", "iau2015b3"), "GM_earth / G"),
@@ -473,6 +479,7 @@ SUBSTANCES = [
                   "triple_point_k": val(273.16, "K", NIST),
                   "triple_point_pa": val(611.657, "Pa", NIST),
                   "latent_vaporisation": val(2.468e6, "J kg-1", NIST, "verified", at_k=288.0, note="from the slope of the NIST Antoine fit, 273-303 K row"),
+                  "latent_fusion": val(3.3355e5, "J kg-1", "crc-handbook", "unverified", at_k=273.15, at_pa=101325.0, note="ice Ih to liquid, 6.009 kJ/mol"),
                   "density_liquid": val(1000.0, "kg m-3", NIST, "verified", at_k=277.0),
                   "density_solid": val(917.0, "kg m-3", "petrenko1999", "verified", at_k=273.15, note="ice Ih"),
                   "vapour_pressure": {"fit": "feistel-wagner-2007", "coeffs": [273.16, 611.657, 20.9969665107897, 3.72437478271362, -13.9205483215524, 29.6988765013566, -40.1972392635944, 29.7880481050215, -9.13050963547721], "valid_k": [50.0, 273.16], "src": FS, "also": ["lisse2021"], "note": "ln(P/Pt) = 1.5 ln(T/Tt) + (1 - Tt/T) sum e_i (T/Tt)^i; coeffs [Tt, Pt Pa, e0..e6]"},
@@ -675,6 +682,7 @@ for gid, name, t_k, t_src, rho, share in [
 
 # ---------------------------------------------------------------- elements
 ORIGINS = element_origins.load(ORIGINS_CSV)
+AFFINITY = element_affinity.load()
 
 
 def elements():
@@ -700,6 +708,7 @@ def elements():
             o = ORIGINS[row["id"]]
             row["origin"] = element_origins.origin_value(row["id"], o)
             row["origin_story"] = element_origins.story(row["id"], row["name"], o)
+            element_affinity.apply(row, AFFINITY, val)
             rows.append(row)
     return rows
 

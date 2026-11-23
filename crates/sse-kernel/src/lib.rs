@@ -3157,6 +3157,60 @@ impl Kernel {
                 };
                 Response::ShipAtWorldRead { report }
             }
+            Request::JumpMap {
+                fixture,
+                nav,
+                system,
+                at_s,
+                rule,
+                end,
+            } => {
+                let end = end.unwrap_or(false);
+                let go = |source, t: Option<f64>| nav::jump_map(source, &rule, end, t);
+                let report = match (fixture.as_deref(), nav.as_ref(), system) {
+                    (Some(f), None, None) => go(nav::Source::Fixture(f), at_s.map(|t| t as f64))?,
+                    (None, Some(n), None) => go(nav::Source::Inline(n), at_s.map(|t| t as f64))?,
+                    (None, None, Some(system)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        go(
+                            nav::Source::System {
+                                ch: &u.chronicle,
+                                system: &a,
+                                at_s,
+                                run: u.runs.get(&system),
+                                ports: &[],
+                                air: false,
+                            },
+                            None,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give one of a fixture, a nav system or a universe system",
+                        ))
+                    }
+                };
+                Response::JumpMapped { report }
+            }
             Request::GalaxyChart {
                 cell,
                 halo,

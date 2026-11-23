@@ -755,6 +755,31 @@ pub enum Request {
         #[ts(optional)]
         v_inf_m_s: Option<f64>,
     },
+    /// Where an FTL leg may begin (or end, `end: true`) in a system at `at_s`
+    /// under a pack's FTL `rule` (example packs 4A: clear of bodies by a
+    /// multiple of their size, gravity below or above a level, Lagrange
+    /// points, the star's poles, gates, anywhere): spheres to be clear of,
+    /// points, gates asked for, gravity levels and the rule in words, for the
+    /// chart's HUD layer and the voyage finder. Same sources as `ship_at_world`.
+    JumpMap {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[ts(type = "unknown")]
+        rule: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional)]
+        end: Option<bool>,
+    },
     /// The story finder (U8) and the agents' sift: run sifters over every
     /// address at or under `scope` (default the universe) at `at_s` (default
     /// now). `sifters` holds names of the stack's sifters
@@ -1864,6 +1889,7 @@ impl Request {
             Request::SurveySurface { .. } => "survey_surface",
             Request::PlanRoute { .. } => "plan_route",
             Request::ShipAtWorld { .. } => "ship_at_world",
+            Request::JumpMap { .. } => "jump_map",
             Request::GalaxyChart { .. } => "galaxy_chart",
             Request::WebSlice { .. } => "web_slice",
             Request::WindowView { .. } => "window_view",
@@ -2095,6 +2121,11 @@ pub fn ops() -> Vec<OpInfo> {
             "ship_at_world",
             Cost::Light,
             "per world closed-form passes and burns, plus one descent at 0.1 s steps where there is ground and air (tens of ms native)",
+        ),
+        o(
+            "jump_map",
+            Cost::Light,
+            "closed form per body: a shell, five points or a gravity level each",
         ),
         o(
             "plan_route",
@@ -2719,6 +2750,14 @@ pub enum Response {
     /// role, figure, limit, unit, ratio, level, chance {p, basis}, if_wrong,
     /// effects, why), would_pass, why)), model}`.
     ShipAtWorldRead {
+        #[ts(type = "unknown")]
+        report: serde_json::Value,
+    },
+    /// `jump_map`: `report {system, rule (the FTL rule as read), map {t_s, keepouts
+    /// (body, name, centre_m, radius_m), points (body, name, what, at_m,
+    /// within_m), gates, gravity ([m_s2, above]), anywhere, words}}`; positions
+    /// are metres from the star in NAV's frame.
+    JumpMapped {
         #[ts(type = "unknown")]
         report: serde_json::Value,
     },
