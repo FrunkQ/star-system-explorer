@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, voyageSpan, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
   import AtWorld from "./AtWorld.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -67,7 +67,9 @@
   const W = 640;
   const H = 220;
   const AXIS_Y = 160;
-  const x = $derived(orbitAxis(W, places));
+  const real = $derived(viewOptions(VOYAGE_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown.scale === "real");
+  const x = $derived(orbitAxis(W, places, 28, real));
+  const farAu = $derived(Math.max(1, ...places.map((p) => p.a_au)));
   const at = (a: string) => places.find((p) => p.address === a);
   const arcs = $derived(
     (v?.legs ?? []).flatMap((l, i) => {
@@ -142,6 +144,7 @@
 
   <svg class="axis" viewBox="0 0 {W} {H}" role="img" aria-label="The system's orbits by size, with the voyage's legs arcing between them">
     <line class="base" x1="16" y1={AXIS_Y} x2={W - 16} y2={AXIS_Y} />
+    <text class="scale-note" x={W - 16} y="14" text-anchor="end" data-axis-scale={real ? "real" : "readable"}>{real ? `to scale: ${farAu < 10 ? farAu.toFixed(1) : Math.round(farAu)} AU across` : "by the log of each orbit's size"}</text>
     {#each places.filter((p) => p.belt) as p (p.address)}
       <rect class="belt" x={x(p.a_au) - 10} y={AXIS_Y - 6} width="20" height="12" rx="6" />
     {/each}
@@ -186,6 +189,10 @@
 </div>
 
 <style>
+  .scale-note {
+    font-size: 11px;
+    fill: var(--sse-ink-muted);
+  }
   .insys {
     color: var(--sse-ink);
     font-size: 13px;
