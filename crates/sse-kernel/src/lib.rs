@@ -2944,6 +2944,7 @@ impl Kernel {
                             at_s,
                             run: u.runs.get(&system),
                             ports: &ports,
+                            air: false,
                         }))?
                     }
                     _ => {
@@ -2954,6 +2955,57 @@ impl Kernel {
                     }
                 };
                 Response::RoutePlanned { plan }
+            }
+            Request::ShipAtWorld {
+                fixture,
+                nav,
+                system,
+                at_s,
+                ship,
+                worlds,
+                v_inf_m_s,
+            } => {
+                let go = |source| nav::ship_at_world(source, &ship, &worlds, v_inf_m_s);
+                let report = match (fixture.as_deref(), nav.as_ref(), system) {
+                    (Some(f), None, None) => go(nav::Source::Fixture(f))?,
+                    (None, Some(n), None) => go(nav::Source::Inline(n))?,
+                    (None, None, Some(system)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        go(nav::Source::System {
+                            ch: &u.chronicle,
+                            system: &a,
+                            at_s,
+                            run: u.runs.get(&system),
+                            ports: &[],
+                            air: true,
+                        })?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give one of a fixture, a nav system or a universe system",
+                        ))
+                    }
+                };
+                Response::ShipAtWorldRead { report }
             }
             Request::GalaxyChart {
                 cell,
@@ -4936,6 +4988,7 @@ impl Kernel {
                                 at_s,
                                 run: u.runs.get(&system),
                                 ports: &ports,
+                                air: false,
                             },
                             ask,
                         )?
