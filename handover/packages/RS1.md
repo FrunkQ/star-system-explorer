@@ -16,4 +16,10 @@ Owner: "Build real spaceflight history pack". Design: `handover/design/SSE4-real
 - Network: the cloud environment now allows planet4589.org, ssd.jpl.nasa.gov, nssdc.gsfc.nasa.gov and query.wikidata.org (Alex approved, 23 Nov).
 - `store-packs/` is outside `packs/`, so nothing loads it. The pack is published on Explorers, not built in.
 
-Next: cross-check masses and dates against Wikidata (CC0) and NSSDCA; then RS2 parts from GCAT's engines.tsv, stages.tsv and lvs.tsv.
+## Part 2 (23 Nov 2026): Wikidata cross-check
+
+- `scripts/spaceflight/crosscheck_wikidata.py` matches craft by COSPAR id (Wikidata P247), adds each craft's Wikidata id (`wikidata`, CC0) to the catalogue, and writes `handover/packages/RS1-wikidata.md`.
+- 336 of 472 craft found. One launch date differs: Pioneer 10, where Wikidata is wrong. 67 masses differ by more than 10 percent, mostly because the two sources quote different masses (wet against dry, with or without a lander, or GCAT's mass for one orbit phase). GCAT stays the source; RS2's parts settle the masses for the showcase craft from primary sources.
+- NSSDCA is left for RS2, read per craft for its instruments rather than in bulk.
+
+Next: RS2 parts from GCAT's engines.tsv, stages.tsv and lvs.tsv.
