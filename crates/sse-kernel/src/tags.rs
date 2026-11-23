@@ -377,8 +377,9 @@ pub fn reserved_kept(ms: &[sse_pack::PackManifest]) -> Vec<String> {
     out
 }
 
-/// Blocks that read the game layer: tags and the record's kept values.
-pub const GAME_READERS: [&str; 2] = ["world.has_tag", "world.read_kept"];
+/// Blocks that read the game layer: tags, the record's kept values and
+/// map layers' holdings (OV3; the reader block comes with OV12).
+pub const GAME_READERS: [&str; 3] = ["world.has_tag", "world.read_kept", "world.who_holds"];
 
 /// TG2, the physics wall: a physics flow (or a box it uses) that reads a
 /// tag or a kept value is refused when the stack loads. Tags and the record
@@ -408,7 +409,7 @@ fn wall_nodes(
     for n in nodes {
         if let Some(a) = n.atom.as_deref().filter(|a| GAME_READERS.contains(a)) {
             report(format!(
-                "{at}: node {} reads {a}; physics never reads tags or kept values (tags design, the physics wall)",
+                "{at}: node {} reads {a}; physics never reads tags, kept values or holdings (tags design, the physics wall)",
                 n.id
             ));
         }
