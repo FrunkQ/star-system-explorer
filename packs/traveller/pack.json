@@ -9974,6 +9974,11 @@
      "sealed_suit": "a sealed suit, renewed often: insidious air defeats seals",
      "altitude": "high ground: the air is breathable only at altitude",
      "low_ground": "low ground: the air is breathable only in the lowlands"
+    },
+    "join": {
+     "joining": "Calling the ship's computer for {brand}\u2026",
+     "waiting": "Link open. Receiving the charts\u2026",
+     "away": "Signal lost. These are the last charts received, read only; they update when the link is back."
     }
    },
    "tags": {

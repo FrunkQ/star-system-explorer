@@ -846,7 +846,11 @@ pack = {
         "record": RECORD,
         "vocabulary": {"terms": TERMS, "traveller.trade": TRADE_WORDS, "traveller.bases": BASES,
                        "traveller.zone": {"A": "amber", "R": "red"},
-                       "traveller.need": {k: v[0] for k, v in NEEDS.items()}},
+                       "traveller.need": {k: v[0] for k, v in NEEDS.items()},
+                       # V3 gap 25: what a player screen says while it joins ({seat}, {brand} filled in).
+                       "join": {"joining": "Calling the ship's computer for {brand}…",
+                                "waiting": "Link open. Receiving the charts…",
+                                "away": "Signal lost. These are the last charts received, read only; they update when the link is back."}},
         # TG1: every tag the pack names is declared (labels only, never physics).
         "tags": json.loads((ROOT / "scripts/traveller-tags.json").read_text()),
     }},
