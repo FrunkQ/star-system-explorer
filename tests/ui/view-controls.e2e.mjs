@@ -46,10 +46,22 @@ try {
   assert.ok(!(await style.getByRole("button", { name: "True" }).isDisabled()));
   assert.ok(await style.getByRole("button", { name: "Wireframe" }).isDisabled());
   assert.match(await style.getByRole("button", { name: "Wireframe" }).getAttribute("title"), /coming/);
-  // Band: listed on every view; Visible until a view declares the others.
+  // HUD and Band, changed far less, fold into one chip that says what they are; it opens both switches beside it.
+  const chip = vc.locator("[data-view-more]");
+  assert.equal(await vc.getByRole("group", { name: "Band" }).count(), 0, "Band is folded away until asked for");
+  assert.match(await chip.innerText(), /^HUD on · Visible/);
+  await chip.click();
   const band = vc.getByRole("group", { name: "Band" });
   assert.deepEqual(await band.locator("button").allInnerTexts(), ["Visible", "Infrared", "Ultraviolet", "X-ray", "Radio", "Mag"]);
   assert.equal(await vc.getAttribute("data-band"), "visible");
+  assert.equal(await vc.getByRole("group", { name: "HUD" }).count(), 1);
+  await shot(gm, "rule12-show-open");
+  await gm.keyboard.press("Escape");
+  await band.waitFor({ state: "detached" });
+  assert.equal(await chip.evaluate((e) => e === document.activeElement), true, "Escape gives the keyboard back to the chip");
+  // The bar is one row on a wide screen.
+  const rows = new Set(await vc.locator(":scope > .field").evaluateAll((fs) => fs.map((f) => Math.round(f.getBoundingClientRect().bottom / 8))));
+  assert.equal(rows.size, 1, "one row on a desktop");
   await shot(gm, "rule12-system-chart");
 
   // Tilted turns the flat chart into 3D; dragging switches to Free and the hint appears.
@@ -117,6 +129,8 @@ try {
   assert.ok(vbox.y + vbox.height <= cbox.y + 1, "the controls sit above the chart");
   const overflow = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   assert.ok(overflow <= 1, `nothing runs off the side (${overflow}px)`);
+  const prows = new Set(await pvc.locator(":scope > .field").evaluateAll((fs) => fs.map((f) => Math.round(f.getBoundingClientRect().bottom / 8))));
+  assert.ok(prows.size <= 2, `two rows on a phone (${prows.size})`);
   await shot(phone, "rule12-phone");
 
   assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash0, "choosing writes nothing");

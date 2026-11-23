@@ -432,9 +432,12 @@
             {/if}
             {#if showLabel(s) && (s.orbit || atCentre) && !(atCentre && !frame)}
               {@const left = x > w - 110}
-              <text class="name" class:selname={sel} x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size - 4} text-anchor={left ? "end" : "start"}>{label(s)}</text>
-              {#if on("known") && known && !atCentre}
-                <text class="knownv" x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size + 9} text-anchor={left ? "end" : "start"} aria-hidden="true">{view ? view.replace(/-/g, " ") : "not known to the table"}</text>
+              <!-- Who knows (track SV, pencil and ink): a name the table does not know is drawn in pencil, quiet and dotted,
+                   with no words; one they know is in ink, with how they know it ("long range") under it. -->
+              {@const pencil = on("known") && known && !atCentre && !view && !knows(s)}
+              <text class="name" class:selname={sel} class:pencil x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size - 4} text-anchor={left ? "end" : "start"}>{label(s)}{#if pencil}<title>Not known to the table</title>{/if}</text>
+              {#if on("known") && known && !atCentre && view}
+                <text class="knownv" x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size + 9} text-anchor={left ? "end" : "start"} aria-hidden="true">{view.replace(/-/g, " ")}</text>
               {/if}
             {/if}
           </g>
@@ -666,6 +669,11 @@
   }
   .body.unknown {
     opacity: 0.25;
+  }
+  .name.pencil {
+    fill: var(--sse-ink-muted);
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
   }
   .knownv {
     font-family: var(--sse-font-body);
