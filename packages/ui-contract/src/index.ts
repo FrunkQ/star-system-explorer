@@ -47,7 +47,9 @@ export * from "./map-controls.ts";
 export * from "./place-event.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
 export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
-export type { Hub, Wire, Manifest, Shown, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest, SealedManifest } from "./p2p.ts";
+export type { Hub, Wire, Manifest, Shown, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest, SealedManifest, ScreenHello } from "./p2p.ts";
+export { BoardHistory, emptyBoard, upgradeBoard, sourceOf, landing, send, lift, back, rejoin, hold, release, holdAll, releaseAll, screenHello, moveScreen, swapScreens, redirect, setSignal, resolve, signalOf, cardWords, boardWire } from "./board.ts";
+export type { Board, BoardScreen, Dest, HoldCard, Line, Showing } from "./board.ts";
 // The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
 export type { Session } from "./session.ts";
 export { LENS_SCHEMA, LAYERS, TOOLS, SHIPPED_LENSES, HONESTY_MARKS, playerLenses, hasLayer, hasTool, asPlayers, lensAudience, cardFor, cardFacts, gmStamps, defaultLens, lensFits, checkLens, saved, copyLens, lensPack, lensesFromPack, allLenses } from "./lens.ts";
