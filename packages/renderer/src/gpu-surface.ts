@@ -8,6 +8,8 @@
 // chart's colours with contour lines), "wireframe" (the mesh's edges on the chart's ground).
 import { ACESFilmicToneMapping, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Scene, SphereGeometry, SRGBColorSpace, Vector3 } from "three";
 import { MeshBasicNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
+import { fresnelNode } from "./sea-node.ts";
+import type { SeaOptics } from "./sea.ts";
 import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
 
 export interface SurfaceMesh {
@@ -22,6 +24,10 @@ export interface SurfaceMesh {
   kernel_z: Float32Array;
   /** 1 where a liquid covers the ground (its sea surface), else 0. Absent: all dry. */
   wet?: Float32Array;
+  /** Depth of the liquid over the ground, m (0 where dry). Absent: taken as deep. */
+  depth?: Float32Array;
+  /** The ground's own reflectance under the liquid (the kernel's tile albedo). Absent: as `albedo`. */
+  floor?: Float32Array;
   indices: Uint32Array;
   /** Drawn over lower layers where they overlap (a finer ring inside a coarser one). */
   layer: number;
@@ -56,7 +62,7 @@ export interface SurfaceFrame {
    * height and peak period, the way the wind blows them (radians from east), the world's gravity, the tide's height
    * now above mean sea level, and the clock the waves run on (seconds).
    */
-  sea?: { wave_m: number; period_s: number; dir_rad: number; gravity_m_s2: number; tide_m: number; time_s: number };
+  sea?: { wave_m: number; period_s: number; dir_rad: number; gravity_m_s2: number; tide_m: number; time_s: number; optics?: SeaOptics };
 }
 
 /**
@@ -119,6 +125,12 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   const uG = uniform(9.8);
   const uTime = uniform(0);
   const uTide = uniform(0);
+  // The liquid's own optics when the kernel sends them (W-sea2): deep-water reflectance, absorption per metre, and
+  // refractive index. uHasBody is 0 until the colour numbers come; then the water's body is the kernel's.
+  const uDeep = uniform(new Vector3(0, 0, 0));
+  const uAbsorb = uniform(new Vector3(0, 0, 0));
+  const uHasBody = uniform(0);
+  const uN = uniform(0);
 
   const airMass = (mu: Node<"float">) => sqrt(uK.mul(mu).mul(uK.mul(mu)).add(uK.mul(2)).add(1)).sub(uK.mul(mu));
   /** Single-scattered sky light along a unit direction d (the closed form of surface-sky.ts). */
@@ -184,12 +196,23 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     const nw = normalize(vec3(sx.negate(), sy.negate(), 1));
     const view = normalize(positionWorld);
     const cosV = max(dot(view.negate(), nw), float(0));
-    const fres = float(0.02).add(float(0.98).mul(pow(float(1).sub(cosV), 5)));
+    // Fresnel: the exact unpolarised split at the liquid's own index when the kernel sends it; Schlick's water-like
+    // curve until then (fudge register).
+    const schlick = float(0.02).add(float(0.98).mul(pow(float(1).sub(cosV), 5)));
+    const fres = select(uN.greaterThan(1), fresnelNode(uN, cosV), schlick);
     const refl = view.sub(nw.mul(dot(view, nw).mul(2)));
     const mirrored = skyAlong(vec3(refl.x, refl.y, max(refl.z, float(0.02))));
     // The sun's disc mirrored, spread by the slopes finer than the trains drawn (a narrow lobe; fudge register).
     const glint = uSunRgb.mul(sunT()).mul(pow(max(dot(refl, uSun), float(0)), 1500)).mul(2000);
-    const body = alb.mul(uSunRgb.mul(sunT()).mul(max(dot(nw, uSun), float(0))).add(skyLight)).div(Math.PI);
+    // The water's body: light that went in, came back up from the liquid itself (the kernel's deep reflectance) or from
+    // the floor seen through it, faded by the round trip, exp(−2 a z) (Beer–Lambert). Until the kernel sends the
+    // liquid's numbers, the ground colour under the sea as before.
+    const depth = attribute("depth", "float");
+    const floorAlb = vec3(attribute("floor", "float"));
+    const through = exp(uAbsorb.mul(depth.mul(-2)));
+    const own = uDeep.mul(vec3(1, 1, 1).sub(through)).add(floorAlb.mul(through));
+    const seaAlb = select(uHasBody.greaterThan(0.5), own, alb);
+    const body = seaAlb.mul(uSunRgb.mul(sunT()).mul(max(dot(nw, uSun), float(0))).add(skyLight)).div(Math.PI);
     const water = body.mul(float(1).sub(fres)).add(mirrored.add(glint).mul(fres));
     const lit = mix(land, water, select(wet.greaterThan(0.5), float(1), float(0)));
     // Aerial perspective: the eye is at the origin, the point at positionWorld (camera-relative).
@@ -282,6 +305,8 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         g.setAttribute("chart", new BufferAttribute(s.chart, 3));
         g.setAttribute("kernel_z", new BufferAttribute(s.kernel_z, 1));
         g.setAttribute("wet", new BufferAttribute(s.wet ?? new Float32Array(s.kernel_z.length), 1));
+        g.setAttribute("depth", new BufferAttribute(s.depth ?? new Float32Array(s.kernel_z.length).fill(1e4), 1));
+        g.setAttribute("floor", new BufferAttribute(s.floor ?? Float32Array.from({ length: s.kernel_z.length }, (_, i) => s.albedo[i * 3 + 1]!), 1));
         g.setIndex(new BufferAttribute(s.indices, 1));
         g.computeVertexNormals();
         g.computeBoundingSphere();
@@ -324,6 +349,11 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       uG.value = sea?.gravity_m_s2 ?? 9.8;
       uTime.value = sea?.time_s ?? 0;
       uTide.value = sea?.tide_m ?? 0;
+      const op = sea?.optics;
+      const hasBody = !!(op?.deep_rgb && op.absorb_per_m);
+      uHasBody.value = hasBody ? 1 : 0;
+      if (hasBody) (uDeep.value.set(...op!.deep_rgb!), uAbsorb.value.set(...op!.absorb_per_m!));
+      uN.value = op?.refractive_index ?? 0;
       // Diagram looks pass the theme's display colours straight through; True is light, tone-mapped and encoded.
       bg.setStyle(f.ground, LinearSRGBColorSpace);
       ink.setStyle(f.ink, LinearSRGBColorSpace);

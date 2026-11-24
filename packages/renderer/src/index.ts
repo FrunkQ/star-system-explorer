@@ -98,6 +98,8 @@ export async function startStation(...a: Parameters<typeof import("./gpu-station
 
 export { curveDrop, decoration, descentTrack, floorFromRefusal, groundColours, groundMesh, heightAt as groundHeightAt, horizonDistance, levelFor, localToDir, patchKeys, patchPoint, playbackKeys, readPatch, siteFrame, tileSpot } from "./surface-patch.ts";
 export type { GroundPoint, Patch, TileKey as SurfaceTileKey } from "./surface-patch.ts";
+export { fresnel, MAX_TRAINS, readSeaOptics, SEA_STEPS, seaBody, seaWords } from "./sea.ts";
+export type { SeaOptics, WaveTrain } from "./sea.ts";
 export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunAt, sunDirection, sunTransmittance } from "./surface-sky.ts";
 export type { SurfaceFrame, SurfaceGpu, SurfaceMesh } from "./gpu-surface.ts";
 
