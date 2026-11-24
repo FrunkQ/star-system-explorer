@@ -23,6 +23,7 @@ mod glow;
 #[cfg(test)]
 mod hooks_tests;
 mod ice_ages;
+mod inventory;
 #[cfg(test)]
 mod matter_tests;
 mod names;
@@ -257,6 +258,22 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             tech::Tech::default()
         }
     };
+    // TG11: resource kinds, bottom to top.
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("resources") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: resources: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let resources = match inventory::Kinds::from_packs(&found) {
+        Ok(k) => k,
+        Err(e) => {
+            problems.extend(e);
+            inventory::Kinds::default()
+        }
+    };
     if !problems.is_empty() {
         return Err(problems);
     }
@@ -304,6 +321,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         names: std::sync::Arc::new(names),
         layers,
         tech,
+        resources,
     })
 }
 
@@ -482,6 +500,8 @@ struct Observe {
     /// The setting's tech ladder, figures and advances
     /// (`provides.other.tech`, FT2).
     tech: tech::Tech,
+    /// Resource kinds (`provides.other.resources`, TG11).
+    resources: inventory::Kinds,
 }
 
 pub struct Kernel {
@@ -3023,6 +3043,42 @@ impl Kernel {
                     at_s,
                     u.runs.get(&system),
                     &self.observe.reference,
+                )?
+            }
+            Request::ReadInventory {
+                system,
+                body,
+                kinds,
+                at_s,
+            } => {
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                if !u.root.contains(&a) {
+                    return Err(err(
+                        "bad_address",
+                        format!("{a} is not in universe {}", u.root),
+                    ));
+                }
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                inventory::read(
+                    &u.chronicle,
+                    &a,
+                    body.as_deref(),
+                    kinds.as_deref(),
+                    at_s,
+                    u.runs.get(&system),
+                    &self.observe.reference,
+                    &self.observe.resources,
                 )?
             }
             Request::ReadPhotometry { stars, bands } => {
