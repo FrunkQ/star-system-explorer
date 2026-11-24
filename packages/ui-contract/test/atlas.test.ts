@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import type { PlayerScene, Vocab } from "../src/player-scene.ts";
 import { checkBrand } from "../src/brand.ts";
 import {
+  atlasDocsOf,
   buildPage,
   chapterOf,
   checkEditionShape,
@@ -385,13 +386,15 @@ test("margin notes: fit by what the audience knows, slots said by the figures do
 
 test("the note sets load: Alex's list (no Douglas Adams names in the base set), the fan pack apart, the loader's refusals", () => {
   assert.deepEqual(checkNoteSet(GUIDE_NOTES), []);
-  const fan = json("store-packs/guide-fan-notes/notes.json");
+  const fanPack = atlasDocsOf([json("store-packs/guide-fan-notes/pack.json")]);
+  assert.deepEqual(fanPack.refused, []);
+  const fan = fanPack.note_sets[0]!;
   assert.deepEqual(checkNoteSet(fan), []);
   const borrowed = /Zaphod|Vogon|Beeblebrox|Sirius Cybernetics|Improbability|Gargle Blaster|Ford Prefect|Megadodo|Eccentrica|petunias|\b42\b|forgot your towel|Bugblatter|Nutri-Matic|Genuine People|bypass/i;
   for (const n of GUIDE_NOTES.notes) assert.ok(!borrowed.test(n.text), `${n.id} is in the base set`);
   const alex = GUIDE_NOTES.notes.filter((n) => n.id.startsWith("guide.alex.")).length + fan.notes.length;
   assert.equal(alex, 131 - 5, "every line of Alex's list is in one set or held for him (five type a figure)");
-  const ed = json("store-packs/guide-fan-notes/edition.json");
+  const ed = fanPack.editions[0]!;
   assert.deepEqual(checkEdition(ed, { ...STACK, noteSets: ["sse.notes.guide", "fan.notes.guide-classic"] }), []);
   assert.equal(resolveEdition(ed.id, [ed]).cover?.publisher, "Megadodo Publications");
   assert.equal(resolveEdition("sse.edition.guide").cover?.publisher, undefined, "the base Guide's cover names no publisher");

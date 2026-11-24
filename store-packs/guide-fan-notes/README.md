@@ -5,5 +5,6 @@ Beeblebrox, Vogons, the Sirius Cybernetics Corporation, 42 and the rest), and an
 Alex's own lines from SSE3. Free and unofficial, on the same footing as the named-setting packs; published on
 Explorers and never built into SSE4 (atlas design section 6.6, accepted 24 Nov 2026).
 
-`notes.json` is an `sse.margin-notes/1` set (`fan.notes.guide-classic`); `edition.json` (`fan.edition.guide-classic`)
-names it beside the base set. The pack's loader step adds both to the stack.
+`pack.json` carries both documents under `provides.other.atlas`, the key every pack uses for the Atlas
+(`atlasDocsOf` in `ui-contract/src/atlas/docs.ts`): an `sse.margin-notes/1` set (`fan.notes.guide-classic`) in
+`note_sets`, and in `editions` the edition `fan.edition.guide-classic`, which names it beside the base set.

@@ -1,7 +1,7 @@
 // AT14: interface kits as data. The loader's checks are the same for a starter, a pack's kit and Orac's draft.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkKit, checkPalette, contrastOf, controlsOn, resolveKit, SHIPPED_PALETTES, STARTER_KITS, type KitDoc, type PartInfo } from "../src/atlas/index.ts";
+import { atlasDocsOf, checkKit, checkPalette, contrastOf, controlsOn, resolveKit, SHIPPED_PALETTES, STARTER_KITS, type KitDoc, type PartInfo } from "../src/atlas/index.ts";
 import { SHIPPED_EDITIONS } from "../src/atlas/index.ts";
 
 // The parts' controls as the design lists them (11A.4), until the parts declare their own (AT13).
@@ -68,4 +68,17 @@ test("controls: none is a picture, all is every declared one, unstated take the 
   assert.deepEqual(controlsOn({ view: atlas.id, area: "a", controls: "all" }, atlas), atlas.controls);
   assert.deepEqual(controlsOn({ view: atlas.id, area: "a", controls: { edition: false, contents: false } }, atlas), ["step", "print", "links"]);
   assert.ok((contrastOf("#000000", "#FFFFFF") ?? 0) > 20.9);
+});
+
+test("atlasDocsOf gathers editions, note sets and kits from provides.other.atlas; a later pack replaces by id", () => {
+  const pack = (id: string, atlas: unknown) => ({ format: "sse.pack/1", id, version: "0.1.0", kind: ["other"], kernel_range: "^0.1", licence: "CC0", provides: { other: { atlas } } });
+  const hauler = STARTER_KITS[0]!;
+  const docs = atlasDocsOf([
+    pack("a", { kits: [hauler, { ...hauler, id: "mine.kit.salvage" }] }),
+    { format: "sse.pack/1", id: "b", version: "0.1.0", kind: ["other"], kernel_range: "^0.1", licence: "CC0" },
+    pack("campaign.atlas", { kits: [{ ...hauler, name: "Hauler (ours)" }], note_sets: "oops", charts: [] }),
+  ]);
+  assert.deepEqual(docs.kits.map((k) => [k.id, k.name]), [["sse.kit.hauler", "Hauler (ours)"], ["mine.kit.salvage", "Hauler"]]);
+  assert.match(docs.refused.join("\n"), /atlas\.charts; the lists are editions, note_sets and kits/);
+  assert.match(docs.refused.join("\n"), /atlas\.note_sets that is not a list/);
 });
