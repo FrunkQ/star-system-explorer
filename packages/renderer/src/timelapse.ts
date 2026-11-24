@@ -505,8 +505,8 @@ export function narrateFrame(tl: TimeLapse, layer: string, t_myr: number, label:
 /** How long ago, in words that suit the span: thousands of years inside the ice-age window, millions or billions else. */
 export function agoWords(ago_myr: number): string {
   if (ago_myr <= 0.0005) return "today";
-  if (ago_myr < 1) return `${Math.round(ago_myr * 1000).toLocaleString("en-GB")} thousand years ago`;
-  if (ago_myr < 10) return `${ago_myr.toFixed(1)} million years ago`;
+  if (ago_myr < 1) return `${Math.round(ago_myr * 1000)} thousand years ago`;
+  if (ago_myr < 10) return `${Math.round(ago_myr * 10) / 10} million years ago`;
   return ago_myr >= 1000 ? `${(ago_myr / 1000).toFixed(2)} billion years ago` : `${Math.round(ago_myr)} million years ago`;
 }
 

@@ -60,8 +60,8 @@
   const ago = (t: number) => {
     const a = t1 - t;
     if (a <= 0.0005) return "today";
-    if (a < 1) return `${Math.round(a * 1000).toLocaleString("en-GB")} thousand years ago`;
-    if (a < 10) return `${a.toFixed(1)} million years ago`;
+    if (a < 1) return `${Math.round(a * 1000)} thousand years ago`;
+    if (a < 10) return `${Math.round(a * 10) / 10} million years ago`;
     return a >= 1000 ? `${(a / 1000).toFixed(2)} billion years ago` : `${Math.round(a)} million years ago`;
   };
   const age = (t: number) => (t >= 1000 ? `${(t / 1000).toFixed(2)} billion years` : `${Math.round(t)} million years`);
