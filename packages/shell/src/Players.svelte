@@ -15,6 +15,7 @@
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus, type Shown } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
+  import { V3_URL } from "./alpha.ts";
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import LightControl from "./LightControl.svelte";
   import lightDoc from "./documents/light.recipes.json";
@@ -408,7 +409,7 @@
   {:else if (checked && !checked.ok) || sceneErrors.length}
     <main class="problem" role="alert"><h2>This screen cannot be shown</h2><ul>{#each [...(checked && !checked.ok ? checked.errors : []), ...sceneErrors] as e (e)}<li>{e}</li>{/each}</ul></main>
   {:else if !scene || !checked?.ok}
-    <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p></main>
+    <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p><p class="alpha" data-alpha>An alpha preview of what is coming. To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener">version 3 ›</a></p></main>
   {:else}
     {#key vocabId}
       <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
@@ -489,6 +490,14 @@
   .ship strong {
     color: var(--sse-ink);
     font-weight: 600;
+  }
+  .alpha {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--sse-ink-muted);
+  }
+  .alpha a {
+    color: var(--sse-accent);
   }
   .kicker {
     font-size: 12px;
