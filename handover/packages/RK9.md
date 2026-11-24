@@ -17,7 +17,7 @@ A Ship now may carry:
   written in place: `{name, fuels, thrust_n, exhaust_km_s, energy_from
   (fuel|electric|beam|sunlight), electric_w?, efficiency?, reject_k?, mass_t?,
   exhaust_range_km_s?}`.
-- `loads[]`: `{name, electric_w, reject_k?, mass_t?, off?}`.
+- `loads[]`: `{name, electric_w, reject_k?, mass_t?, role?, off?}` (`role` is a label, "weapon" or "sensor", for grouping bands in the Flow view).
 
 `power::ledger(sources, mounts, loads, defs, Conditions{flux_w_m2, t_s})`
 returns Flow rows `(from, to, amount_w, kind)` for the Flow view (RK13, chart

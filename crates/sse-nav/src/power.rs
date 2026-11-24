@@ -134,6 +134,10 @@ pub struct Load {
     pub reject_k: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mass_t: Option<f64>,
+    /// What it is for ("weapon", "sensor", "life support"), so the Flow view
+    /// can group its bands; a label only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
     /// Off: listed, drawing nothing.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub off: bool,
