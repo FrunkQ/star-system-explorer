@@ -9,6 +9,8 @@
   import type { FieldReadJson, LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
+  /** The level-0 tiles behind each kept surface, so finer tiles (VP3 part 2) can be laid over them. */
+  const level0 = new Map<string, import("../../../ui-contract/src/index.ts").SurfaceTile[]>();
   /** Stars read for True's living star, by system and star (a string: why there is none). */
   const liveStars = new Map<string, LiveStar | string>();
   /** read_field's Solar System fixture, read once for the page (Mag, V10e). */
@@ -21,6 +23,7 @@
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
   import { readLiveStar, starCss, trueSurface, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
+  import { finerTiles, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -252,6 +255,10 @@
           const r = await ctx.session.surfaceTiles(sys, s.address);
           const why = r.ok ? String((r.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : r.message;
           trueSurfaces.set(key, (r.ok && trueSurface(r.tiles)) || why);
+          if (r.ok && r.tiles.length) level0.set(key, r.tiles);
+          // Finer tiles already read on this page (VP3 part 2) are laid over the level-0 read at once.
+          const fine = finerTiles(key);
+          if (r.ok && r.tiles.length && fine.length) trueSurfaces.set(key, trueSurface([...r.tiles, ...fine]) || why);
         }
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
@@ -260,6 +267,19 @@
         done++;
       }
       reading = { done, of: order.length, none, why: noneWhy };
+      // VP3 part 2: finer tiles for the chosen world only, four at a time, once it has been left chosen for a while
+      // (finer-tiles.ts); stops between requests when another world is chosen or True is left.
+      const chosen = order[0];
+      const ck = chosen && chosen.address === sel ? `${sys}|${chosen.address}` : "";
+      const base = ck ? level0.get(ck) : undefined;
+      if (ck && base && g === trueGen) {
+        void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
+          const t = trueSurface([...base, ...fine]);
+          if (!t) return;
+          trueSurfaces.set(ck, t);
+          surfaces = new Map(surfaces).set(chosen!.address, t);
+        });
+      }
     })());
   });
   // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.

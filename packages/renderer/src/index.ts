@@ -117,5 +117,5 @@ export { cell, curl, NOISE_REFERENCES, NUM, PERIOD, ridged, simplex, SIMPLEX_SCA
 export type { Ops, V3 } from "./ladder-noise.ts";
 // VP3: the texture ladder (face sizes by screen, tiles to read, face pictures from any tile levels, relief normals).
 // The GPU bake is texture-ladder-gpu.ts, used by gpu.ts.
-export { BAKE_BUDGET, composeFaces, COMPOSE_MAX, cubeBytes, directionFace, FACE_CAP, FACE_MIN, faceDirection, faceSize, faceWords, levelFor, reliefNormal, sampleFaces, texelAngle, TILE_SAMPLES, tilesFacing } from "./texture-ladder.ts";
+export { BAKE_BUDGET, composeFaces, COMPOSE_MAX, cubeBytes, directionFace, FACE_CAP, FACE_MIN, faceDirection, faceSize, faceWords, levelFor as tileLevelFor, reliefNormal, sampleFaces, texelAngle, TILE_SAMPLES, tilesFacing } from "./texture-ladder.ts";
 export type { Composite, FacePicture, TileKey } from "./texture-ladder.ts";
