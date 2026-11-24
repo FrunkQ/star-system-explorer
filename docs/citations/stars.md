@@ -76,3 +76,15 @@ Status key: verified = the number or relation was read in the source; corrected-
 | inherit.rs:87, :162 | "Z = 0.02 × 10^[Fe/H], the fits' own solar scale" (F0.md) | Z for the HPT fits | verified (consistent with HPT, whose models are calibrated with Z☉ = 0.02) | HPT00 uses ζ = log(Z/0.02). Elsewhere the repo uses protosolar Z = 0.0142 (Lodders 2003, disc.rs:91). Documented in fudge F-S13. |
 | F0.md | "HPT00: t_MS 11.0 Gyr at 1 M☉ …", "Tout 1996: L 0.698, R 0.888" | test claims | not re-run | These are the code's own outputs. |
 | T1.md, F7.md | Schroeder and Smith 2008: Sun's tip 256 R☉, 0.67 M☉ | comparison only | unverified (not fetched) | Probably MNRAS 386, 155 (memory). |
+
+## Stars on screen: glow, churn, flares and ejections (track SG, `packages/renderer/src/star-*.ts`)
+
+| Where | Reference as written (short) | Relied on (as used in code) | Status | What was checked |
+|---|---|---|---|---|
+| `star-glow.ts` `glarePsf` | Vos and van den Berg 1999, CIE Collection 135/1; CIE 146:2002 | L/E = 10/θ³ + (5/θ² + 0.1 p/θ)(1 + (A/62.5)⁴) + 0.0025 p sr⁻¹, θ in degrees, 0.1° to 100° | unverified | Written from memory of the CIE general disability glare equation; the CIE documents are sold, not read here. The test checks the code against the formula as written |
+| `star-glow.ts` | Spencer, Shirley, Zimmerman and Greenberg 1995, SIGGRAPH 95, doi:10.1145/218380.218466 | drawing the eye's scatter round bright sources as an image | unverified | Method only; no number relied on |
+| `star-churn.ts` | Nordlund, Stein and Asplund 2009, LRSP 6, 2, doi:10.12942/lrsp-2009-2 | granules about ten scale heights wide, born and fading over a few turnover times, moving about their size | unverified | Qualitative; the sizes and lives are the kernel's |
+| `star-churn.ts` `limbLumps` | Freytag, Steffen and Dorch 2002, AN 323, 213; Chiavassa et al. 2010, A&A 515, A12 | a red supergiant's few giant cells lift and drop its visible edge by about a scale height | unverified | Qualitative; the lift factor (one scale height) is in the fudge register |
+| `star-events.ts` | Benz 2017, LRSP 14, 2, doi:10.1007/s41116-016-0004-3 | white-light flare kernels near 10,000 K; impulsive rise, gradual fall | unverified | The temperature and area are the kernel's (`sse-activity` settings) |
+| `star-events.ts` `ejectionShare` | Howard 2011, Coronal Mass Ejections, Springer, doi:10.1007/978-1-4419-8789-1; Billings 1966 | Thomson-scattered brightness from the electron column; σ_T from the master data sheet | textbook | σ_T N (R/r)²/4 derived here for an optically thin shell scattering evenly; checked by test (fourth-power fall) |
+| `star-events.ts` `FLASHES_PER_SECOND_MAX` | W3C WCAG 2.2, criterion 2.3.1, https://www.w3.org/TR/WCAG22/#three-flashes-or-below-threshold | no more than three flashes in any one second | unverified | The rule as widely quoted; the page was not fetched here. Same rule as the exotic objects design, section 2.4 |
