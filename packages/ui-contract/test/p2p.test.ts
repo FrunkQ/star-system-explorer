@@ -109,6 +109,16 @@ test("players replay the GM's events and agree by state hash; GM drop goes read-
     await settle();
     assert.equal(phone.p.party(), undefined, "no party ship any more");
 
+    // A system the GM adds (a V3 import) reaches players' screens as an event: their kernels hold it too.
+    const added = await gm.adopt({ import_v3: readFileSync(new URL("tests/fixtures/v3/synthetic-sol.json", root), "utf8") });
+    assert.ok(added.ok, added.ok ? "" : added.message);
+    const sys = added.ok ? added.result.systems[0]! : "";
+    await until(() => phone.p.status.state === "live" && (phone.p.status as { seq: number }).seq === host.state().seq, "phone has the adopt");
+    assert.equal(await phone.p.session!.stateHash(), await gm.stateHash(), "the adopt replays to the same state");
+    const theirs = await phone.p.session!.scene(sys, { audience: "everyone" });
+    assert.ok(theirs.ok, theirs.ok ? "" : `the player's kernel has the imported system: ${theirs.message}`);
+    assert.equal((await phone.p.session!.adopt({ import_v3: "{}" })).ok, false, "a player seat never adds a system");
+
     // A player tries to change the universe: its seat cannot (V5 carries requests).
     const own = await phone.p.session!.send({ kind: "set_value", address: TARN, field: "a_au", value: 9, at_yr: facts.at_yr });
     assert.notEqual(own.status, "applied");
