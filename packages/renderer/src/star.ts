@@ -96,6 +96,8 @@ export function coronaScaleHeight(mass_kg: number, radius_m: number, t_k = CORON
 
 /** The kernel's surface convection for a star (read_activity, O10), the parts the picture uses. */
 export interface Convection {
+  /** Pressure scale height at the photosphere, metres (kT / μ m_H g). */
+  pressure_scale_height_m?: number;
   granule_size_m: number;
   granule_lifetime_s: number;
   supergranule_size_m: number;
@@ -117,6 +119,8 @@ export interface Granules {
   /** Mean and spread of the raw pattern, so the picture's mean light equals the plain disc's. */
   mean: number;
   rms: number;
+  /** Each cell's strength now, 0 to 1 (star-churn.ts: a cell rises, domes and fades over its life); left out, all 1. */
+  amp?: Float64Array;
 }
 
 /** How many granules cover a star with `across` granules over its diameter: the sphere's area over a hexagon's. */
@@ -153,6 +157,12 @@ export function granulesFor(address: string, across: number, epoch: number): Gra
     pts[i * 3 + 1] = z;
     pts[i * 3 + 2] = q * Math.sin(phi);
   }
+  return finishGranules(n, spacing, pts);
+}
+
+/** A set of cell centres made ready to draw: the lookup grid, and the pattern's mean and spread from a fixed sample. */
+export function finishGranules(n: number, spacing: number, pts: Float64Array, amp?: Float64Array): Granules {
+  const golden = Math.PI * (3 - Math.sqrt(5));
   const cell = spacing * 1.5;
   const grid = new Map<number, number[]>();
   for (let i = 0; i < n; i++) {
@@ -161,7 +171,7 @@ export function granulesFor(address: string, across: number, epoch: number): Gra
     if (b) b.push(i);
     else grid.set(k, [i]);
   }
-  const g: Granules = { n, spacing, pts, grid, cell, mean: 0, rms: 1 };
+  const g: Granules = { n, spacing, pts, grid, cell, mean: 0, rms: 1, ...(amp ? { amp } : {}) };
   // The raw pattern's mean and spread, from a fixed sample of the sphere.
   let s1 = 0;
   let s2 = 0;
@@ -185,6 +195,7 @@ export function granulesFor(address: string, across: number, epoch: number): Gra
 function granulePattern(g: Granules, x: number, y: number, z: number): number {
   let f1 = Infinity;
   let f2 = Infinity;
+  let near = -1;
   const i0 = Math.floor(x / g.cell);
   const j0 = Math.floor(y / g.cell);
   const k0 = Math.floor(z / g.cell);
@@ -201,6 +212,7 @@ function granulePattern(g: Granules, x: number, y: number, z: number): number {
           if (d2 < f1) {
             f2 = f1;
             f1 = d2;
+            near = p;
           } else if (d2 < f2) f2 = d2;
         }
       }
@@ -209,12 +221,24 @@ function granulePattern(g: Granules, x: number, y: number, z: number): number {
   const a = Math.min(1, Math.sqrt(f1) / (0.75 * g.spacing));
   const u = Math.min(1, (Math.sqrt(f2) - Math.sqrt(f1)) / (0.45 * g.spacing));
   const lane = u * u * (3 - 2 * u);
-  return lane * (1 - 0.7 * a * a);
+  // A cell being born or fading is a weaker dome: its upflow is not yet, or no longer, at full strength.
+  const k = g.amp && near >= 0 ? g.amp[near]! : 1;
+  return lane * (1 - 0.7 * a * a) * (0.35 + 0.65 * k);
 }
 
 /** The granulation as a temperature change at a point on the star, kelvin (mean zero over the star). */
 export function granuleDeltaT(g: Granules, teff_k: number, x: number, y: number, z: number): number {
   return ((granulePattern(g, x, y, z) - g.mean) / g.rms) * GRANULE_DT * teff_k;
+}
+
+/**
+ * A flare's white-light patch (star-events.ts, from the kernel's light description): its angular radius on the star,
+ * how much brighter than the photosphere it is in each channel at its peak, and its light now over its peak.
+ */
+export interface FlarePatch {
+  radius_deg: number;
+  contrast: number[];
+  k: number;
 }
 
 export interface StarDraw {
@@ -228,10 +252,23 @@ export interface StarDraw {
   /** Coronal scale height in stellar radii (X-ray view). */
   corona_h: number;
   /** Flares going on now: where and how bright (peak power over the star's X-ray power). */
-  flares?: { lat_deg: number; lon_deg: number; strength: number }[];
+  flares?: { lat_deg: number; lon_deg: number; strength: number; patch?: FlarePatch }[];
   /** Granule cells (from granulesFor), drawn in visible light when the disc resolves them. */
   granules?: Granules | null;
+  /**
+   * The cells' share of their full contrast in this picture (star-churn.ts `granuleBlur`): a picture that stands for
+   * more than a cell's life averages several generations, as a long exposure does. Left out, 1.
+   */
+  granuleContrast?: number;
+  /**
+   * How far the cells lift and drop the limb, in stellar radii per standard deviation of the pattern (star-churn.ts
+   * `limbLumps`, from the pressure scale height). Seen only where it reaches a pixel: on giants. Left out, a round limb.
+   */
+  lumps?: number;
 }
+
+/** Most the limb is lifted, in stellar radii per standard deviation; twice this must fit in the square round the disc. */
+export const LUMP_MAX = 0.04;
 
 const decode = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const encode = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
@@ -274,11 +311,19 @@ export function drawStar(out: { width: number; data: Uint8ClampedArray }, s: Sta
   const spotT = Math.max(1000, s.teff_k - SPOT_DELTA_K);
   const spotRatio = RGB_M.map((l) => planck(l, spotT) / planck(l, s.teff_k));
   const spots = s.spots.map((p) => ({ v: toView(p.lat_deg, p.lon_deg, s.lat_deg, s.lon_deg), cosr: Math.cos((p.radius_deg * Math.PI) / 180), pen: Math.cos((p.radius_deg * 1.8 * Math.PI) / 180) }));
-  const flares = (s.flares ?? []).map((f) => ({ v: toView(f.lat_deg, f.lon_deg, s.lat_deg, s.lon_deg), k: f.strength }));
+  const pixelDeg = (180 / Math.PI) * (1 / Math.max(1, R));
+  const flares = (s.flares ?? []).map((f) => {
+    const drawn = f.patch ? Math.max(f.patch.radius_deg, pixelDeg) : 0;
+    const cap = (deg: number) => 1 - Math.cos((deg * Math.PI) / 180);
+    return { v: toView(f.lat_deg, f.lon_deg, s.lat_deg, s.lon_deg), k: f.strength, patch: f.patch, patchCos: Math.cos((drawn * Math.PI) / 180), patchShare: f.patch ? cap(f.patch.radius_deg) / Math.max(1e-12, cap(drawn)) : 0 };
+  });
   const H = Math.max(0.01, s.corona_h);
   // Granules change each channel by d(ln B)/d(ln T) = x / (1 - e^-x), x = hc / (lambda k T): linear in dT, so the
   // disc's mean light is the plain disc's.
   const gran = s.light === "visible" ? (s.granules ?? null) : null;
+  const contrast = Math.max(0, Math.min(1, s.granuleContrast ?? 1));
+  const lump = gran ? Math.min(LUMP_MAX, Math.max(0, s.lumps ?? 0)) : 0;
+  const lumpy = lump * R >= 0.25;
   const slope = RGB_M.map((l) => {
     const x = HC_K / (l * s.teff_k);
     return x / (1 - Math.exp(-x)) / s.teff_k;
@@ -286,25 +331,39 @@ export function drawStar(out: { width: number; data: Uint8ClampedArray }, s: Sta
   for (let py = 0; py < n; py++) {
     for (let px = 0; px < n; px++) {
       const o = (py * n + px) * 4;
-      const x = (px + 0.5 - c) / R;
-      const y = -(py + 0.5 - c) / R;
-      const b2 = x * x + y * y;
-      const b = Math.sqrt(b2);
+      let x = (px + 0.5 - c) / R;
+      let y = -(py + 0.5 - c) / R;
+      let b2 = x * x + y * y;
+      let b = Math.sqrt(b2);
       let r = 0;
       let g = 0;
       let bl = 0;
       let a = 0;
       if (s.light === "visible") {
-        if (b2 >= 1) {
+        // A lumpy limb (giants): the edge at this bearing lifted or dropped by the cell under it, the disc scaled to it.
+        let rl = 1;
+        if (lumpy && b > 1 - 2.5 * lump) {
+          const [lx, ly, lz] = toStar(x / b, y / b, 0, s.lat_deg, s.lon_deg);
+          const zs = Math.max(-2, Math.min(2, granuleDeltaT(gran!, s.teff_k, lx, ly, lz) / (GRANULE_DT * s.teff_k)));
+          rl = 1 + lump * zs;
+        }
+        if (b >= rl) {
           d[o + 3] = 0;
           continue;
+        }
+        const edgeB = b;
+        if (rl !== 1) {
+          x /= rl;
+          y /= rl;
+          b2 = x * x + y * y;
+          b = Math.sqrt(b2);
         }
         const mu = Math.sqrt(1 - b2);
         const ld = limbDarkening(mu);
         let f = [1, 1, 1];
         if (gran) {
           const [sx, sy, sz] = toStar(x, y, mu, s.lat_deg, s.lon_deg);
-          const dT = granuleDeltaT(gran, s.teff_k, sx, sy, sz);
+          const dT = contrast * granuleDeltaT(gran, s.teff_k, sx, sy, sz);
           f = slope.map((k) => Math.max(0, 1 + k * dT));
         }
         const fg = f;
@@ -315,14 +374,17 @@ export function drawStar(out: { width: number; data: Uint8ClampedArray }, s: Sta
         }
         for (const fl of flares) {
           const cosang = x * fl.v[0] + y * fl.v[1] + mu * fl.v[2];
-          if (cosang > 0.995) f = f.map((q) => q + Math.min(3, fl.k));
+          if (fl.patch) {
+            // The kernel's patch, drawn at least a pixel wide with its light spread to keep the same power.
+            if (cosang > fl.patchCos) f = f.map((q, ch) => q + fl.patch!.k * (fl.patch!.contrast[ch]! - 1) * fl.patchShare);
+          } else if (cosang > 0.995) f = f.map((q) => q + Math.min(3, fl.k));
         }
         r = base[0]! * ld * f[0]!;
         g = base[1]! * ld * f[1]!;
         bl = base[2]! * ld * f[2]!;
         a = 1;
         // Soft rim (pixel coverage).
-        a = Math.min(1, (1 - b) * R + 0.5);
+        a = Math.min(1, (rl - edgeB) * R + 0.5);
       } else {
         // Optically thin corona: column of n^2 through a shell n = n0 exp(-(r - 1)/H), Chapman's approximation
         // for the emission scale H/2; behind the disc the star hides the far half.

@@ -78,6 +78,10 @@ try {
         await live.waitFor({ timeout: 30000 });
         const turn0 = await live.getAttribute("data-star-turn");
         await gm.waitForFunction((t) => document.querySelector("[data-star-live]")?.getAttribute("data-star-turn") !== t, turn0, { timeout: 10000 });
+        // SG1 to SG3: the star's glow is the eye's glare, said beside the view, and its flares and ejections are named.
+        assert.match(await live.innerText(), /glare/, "the glow says what it is");
+        assert.match(await live.innerText(), /flare/, "the flares are named");
+        await shot(gm, `sg-true-star-${mode}`);
         // Bands through True (rule 12, one set of controls): X-ray draws the corona, Infrared each body's own heat.
         for (const [b, id] of [["X-ray", "xray"], ["Infrared", "infrared"]]) {
           await pick(gm, "Band", b);
