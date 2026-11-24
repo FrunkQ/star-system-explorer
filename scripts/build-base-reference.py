@@ -38,6 +38,8 @@ import nuclear_rows  # noqa: E402
 import isotope_shares  # noqa: E402
 import material_rows  # noqa: E402
 import solid_rows  # noqa: E402
+import thermal_rows  # noqa: E402
+import band_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -784,11 +786,28 @@ for _m in _solids:
     MIXTURES.append(_m)
 next(x for x in MIXTURES if x["id"] == "rp-1").update(_rp1)
 
+# RK10: the Bands table (scripts/band_rows.py).
+for _k, _v in band_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+
 # RK1 part 3: hot-structure, fuel and shield materials (scripts/material_rows.py).
 for _k, _v in material_rows.SOURCES.items():
     assert _k not in SOURCES, _k
     SOURCES[_k] = _v
 for _m in material_rows.rows(val, {c[0]: c[2]["v"] for c in CONSTANTS}):
+    assert all(x["id"] != _m["id"] for x in MIXTURES), _m["id"]
+    MIXTURES.append(_m)
+
+# MP27: heat, melt and boil values for hull skins (scripts/thermal_rows.py, for
+# RK12's burn-through), molar NIST-JANAF values turned per kilogram with the
+# elements table's atomic weights.
+for _k, _v in thermal_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+with open(ELEMENTS_CSV, newline="") as _f:
+    _weights = {r["id"]: float(r["atomic_weight"]) for r in csv.DictReader(_f) if r["atomic_weight"]}
+for _m in thermal_rows.apply(MIXTURES, _weights, val):
     assert all(x["id"] != _m["id"] for x in MIXTURES), _m["id"]
     MIXTURES.append(_m)
 
@@ -859,6 +878,7 @@ def build():
                 "substances": SUBSTANCES,
                 "mixtures": MIXTURES,
                 "reactions": nuclear_rows.reactions(ISOTOPES, {c[0]: c[2]["v"] for c in CONSTANTS}, val),
+                "bands": band_rows.rows(val),
                 "sources": sources,
             }
         },
@@ -902,7 +922,8 @@ def validate(pack):
     for i in ref["isotopes"]:
         if i["element"] not in el_ids:
             errors.append(f"isotope {i['id']}: unknown element {i['element']}")
-    for table in ("constants", "units", "elements", "isotopes", "substances", "mixtures", "sources"):
+    band_rows.check_against_light(ref["bands"], json.loads((ROOT / "packs/base-light/pack.json").read_text()))
+    for table in ("constants", "units", "elements", "isotopes", "substances", "mixtures", "bands", "sources"):
         ids = [r["id"] for r in ref[table]]
         if len(ids) != len(set(ids)):
             errors.append(f"{table}: duplicate ids")

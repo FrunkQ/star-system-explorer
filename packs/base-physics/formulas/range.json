@@ -1,0 +1,894 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.range",
+ "about": "Effect at range (RK12, Atomic Rockets plan section 13): what arrives at a target from a beam, a burst or a projectile, what the target's skin can take, the chance of a hit, and the reading. Nothing is fired; these are facts for a card and a ring on the chart.",
+ "atoms": [
+  {
+   "id": "sse.range.beam_spot",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "beam_power",
+     "letter": "P"
+    },
+    {
+     "port": "wavelength",
+     "letter": "lam"
+    },
+    {
+     "port": "aperture",
+     "letter": "D"
+    },
+    {
+     "port": "spread",
+     "letter": "Q"
+    },
+    {
+     "port": "jitter",
+     "letter": "j"
+    },
+    {
+     "port": "distance",
+     "letter": "d"
+    },
+    {
+     "port": "dwell",
+     "letter": "t"
+    },
+    {
+     "port": "absorbed_share",
+     "letter": "al"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "spot_radius",
+     "letter": "w"
+    },
+    {
+     "port": "irradiance",
+     "letter": "I"
+    },
+    {
+     "port": "fluence",
+     "letter": "F"
+    }
+   ],
+   "models": {
+    "airy": {
+     "value": 1.22,
+     "grade": "derived",
+     "source": "Born and Wolf 1999, section 8.5.2 (first zero of J1 over pi, 1.2197)"
+    },
+    "core": {
+     "value": 0.838,
+     "grade": "derived",
+     "source": "Born and Wolf 1999, section 8.5.2 (share of the light inside the first dark ring)"
+    }
+   },
+   "checks": [
+    {
+     "port": "beam_power",
+     "min": 0,
+     "finite": true,
+     "says": "beam power must be zero or more, got {}"
+    },
+    {
+     "port": "jitter",
+     "min": 0,
+     "finite": true,
+     "says": "pointing jitter must be zero or more, got {}"
+    },
+    {
+     "port": "dwell",
+     "min": 0,
+     "finite": true,
+     "says": "time on target must be zero or more, got {}"
+    },
+    {
+     "port": "absorbed_share",
+     "min": 0,
+     "max": 1,
+     "says": "share absorbed must lie between 0 and 1, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "wavelength",
+     "says": "wavelength"
+    },
+    {
+     "port": "aperture",
+     "says": "aperture"
+    },
+    {
+     "port": "spread",
+     "says": "beam spread"
+    },
+    {
+     "port": "distance",
+     "says": "distance"
+    }
+   ],
+   "references": [
+    "Born, M. and Wolf, E. 1999, Principles of Optics, 7th edn, Cambridge University Press, section 8.5.2: a circular aperture's light falls to its first dark ring at 1.22 wavelengths over the aperture, and 83.8% of the light lies inside it. doi:10.1017/CBO9781139644181",
+    "Siegman, A. E. 1990, New developments in laser resonators, Proc. SPIE 1224, 2: the beam quality M², the factor by which a real beam spreads faster than a perfect one. doi:10.1117/12.18425"
+   ],
+   "shown": "w = d √((M² · 1.22 λ / D)² + j²),  I = 0.838 P / (π w²),  F = α I t",
+   "equation": {
+    "name": "How wide a beam has spread when it arrives, and how much it delivers",
+    "formula": "tq = Q * airy * lam / D\nw = d * sqrt(tq * tq + j * j)\nI = core * P / (pi * w * w)\nF = al * I * t",
+    "inputs": {
+     "P": {
+      "kind": "range.beam_power",
+      "unit": "W",
+      "name": "power in the beam as it leaves"
+     },
+     "lam": {
+      "kind": "range.wavelength",
+      "unit": "m",
+      "name": "wavelength of the beam"
+     },
+     "D": {
+      "kind": "range.aperture",
+      "unit": "m",
+      "name": "width of the mirror or lens that sends it"
+     },
+     "Q": {
+      "kind": "range.spread",
+      "unit": "1",
+      "name": "how much faster than a perfect beam it spreads (M², 1 is perfect)"
+     },
+     "j": {
+      "kind": "range.jitter",
+      "unit": "1",
+      "name": "pointing wobble, as an angle in radians"
+     },
+     "d": {
+      "kind": "range.distance",
+      "unit": "m",
+      "name": "distance to the target"
+     },
+     "t": {
+      "kind": "range.dwell",
+      "unit": "s",
+      "name": "time the beam is held on one spot"
+     },
+     "al": {
+      "kind": "range.absorbed_share",
+      "unit": "1",
+      "name": "share of the light the target's skin takes in",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "airy": {
+      "kind": "model.airy_first_ring",
+      "unit": "1",
+      "name": "first dark ring, in wavelengths over the aperture"
+     },
+     "core": {
+      "kind": "model.airy_core_share",
+      "unit": "1",
+      "name": "share of the light inside the first dark ring"
+     }
+    },
+    "outputs": {
+     "w": {
+      "kind": "range.spot_radius",
+      "unit": "m",
+      "name": "radius of the spot on the target"
+     },
+     "I": {
+      "kind": "range.irradiance",
+      "unit": "W m-2",
+      "name": "power arriving on each square metre of the spot"
+     },
+     "F": {
+      "kind": "range.fluence",
+      "unit": "J m-2",
+      "name": "energy taken in by each square metre while the beam is held there"
+     }
+    },
+    "source": {
+     "text": "Born, M. and Wolf, E. 1999, Principles of Optics, 7th edn",
+     "doi": "10.1017/CBO9781139644181",
+     "where": "section 8.5.2"
+    },
+    "explain": {
+     "curious": "No beam stays narrow. A laser's spot grows with distance as its wavelength over the width of its mirror, so a beam that burns at a thousand kilometres only warms at a hundred thousand. A wobble in the aim smears it further.",
+     "science": "The diffraction-limited spot of a focused beam (Airy radius 1.22 λd/D, times the beam quality M²) added in quadrature to the pointing jitter; irradiance is the Airy core's share of the power over the spot area."
+    },
+    "examples": [
+     {
+      "P": 1000000.0,
+      "lam": 1e-06,
+      "D": 1.0,
+      "Q": 1.0,
+      "j": 1e-07,
+      "d": 100000.0,
+      "t": 1.0,
+      "al": 0.5,
+      "w": 0.12240914998479484,
+      "I": 17801901.00253715,
+      "F": 8900950.501268575
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.range.burst_fluence",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "burst_energy",
+     "letter": "Y"
+    },
+    {
+     "port": "xray_share",
+     "letter": "fx"
+    },
+    {
+     "port": "distance",
+     "letter": "d"
+    },
+    {
+     "port": "absorbed_share",
+     "letter": "al"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "fluence",
+     "letter": "F"
+    }
+   ],
+   "checks": [
+    {
+     "port": "burst_energy",
+     "min": 0,
+     "finite": true,
+     "says": "burst energy must be zero or more, got {}"
+    },
+    {
+     "port": "xray_share",
+     "min": 0,
+     "max": 1,
+     "says": "share leaving as X-rays must lie between 0 and 1, got {}"
+    },
+    {
+     "port": "absorbed_share",
+     "min": 0,
+     "max": 1,
+     "says": "share absorbed must lie between 0 and 1, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "distance",
+     "says": "distance"
+    }
+   ],
+   "references": [
+    "Glasstone, S. and Dolan, P. J. 1977, The Effects of Nuclear Weapons, 3rd edn, US Department of Defense and Energy Research and Development Administration: section 1.77: within about a microsecond 70 to 80 percent of the energy leaves as primary thermal radiation, mostly soft X-rays; section 1.79: at high altitude, with little air, the X-rays travel long distances before they are absorbed. doi:10.2172/6852629"
+   ],
+   "shown": "F = α f_x Y / (4π d²)",
+   "equation": {
+    "name": "How much of a burst in space reaches each square metre",
+    "formula": "F = al * fx * Y / (4 * pi * d * d)",
+    "inputs": {
+     "Y": {
+      "kind": "range.burst_energy",
+      "unit": "J",
+      "name": "energy the burst sets free (its yield)"
+     },
+     "fx": {
+      "kind": "range.xray_share",
+      "unit": "1",
+      "name": "share of it that leaves as X-rays",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "d": {
+      "kind": "range.distance",
+      "unit": "m",
+      "name": "distance to the target"
+     },
+     "al": {
+      "kind": "range.absorbed_share",
+      "unit": "1",
+      "name": "share of the light the target's skin takes in",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "F": {
+      "kind": "range.fluence",
+      "unit": "J m-2",
+      "name": "energy taken in by each square metre while the beam is held there"
+     }
+    },
+    "source": {
+     "text": "Glasstone, S. and Dolan, P. J. 1977, The Effects of Nuclear Weapons, 3rd edn",
+     "doi": "10.2172/6852629",
+     "where": "sections 1.77 and 1.79"
+    },
+    "explain": {
+     "curious": "In space there is no air to make a blast or a fireball. A burst is a flash of X-rays spreading over a growing sphere, so what reaches a ship falls as the square of the distance.",
+     "science": "Inverse-square fluence of the prompt X-ray output of an exoatmospheric burst; no blast wave without a medium."
+    },
+    "examples": [
+     {
+      "Y": 4184000000000.0,
+      "fx": 0.7,
+      "d": 10000.0,
+      "al": 1.0,
+      "F": 2330.664986637715
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.range.impact_fluence",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "projectile_mass",
+     "letter": "m"
+    },
+    {
+     "port": "closing_speed",
+     "letter": "v"
+    },
+    {
+     "port": "projectile_face",
+     "letter": "A"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "impact_energy",
+     "letter": "E"
+    },
+    {
+     "port": "fluence",
+     "letter": "F"
+    }
+   ],
+   "checks": [
+    {
+     "port": "projectile_mass",
+     "min": 0,
+     "finite": true,
+     "says": "projectile mass must be zero or more, got {}"
+    },
+    {
+     "port": "closing_speed",
+     "min": 0,
+     "finite": true,
+     "says": "closing speed must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "projectile_face",
+     "says": "projectile face"
+    }
+   ],
+   "references": [
+    "Computed (SSE4): energy is half the mass times the closing speed squared, spread over the projectile's face; the textbook kinetic energy. Halliday, D., Resnick, R. and Walker, J. 2013, Fundamentals of Physics, 10th edn, Wiley, chapter 7. https://www.wiley.com/en-us/Fundamentals+of+Physics%2C+10th+Edition-p-9781118230718"
+   ],
+   "shown": "E = ½ m v²,  F = E / A",
+   "equation": {
+    "name": "How much energy a projectile brings to the patch it strikes",
+    "formula": "E = m * v * v / 2\nF = E / A",
+    "inputs": {
+     "m": {
+      "kind": "range.projectile_mass",
+      "unit": "kg",
+      "name": "mass of the projectile"
+     },
+     "v": {
+      "kind": "range.closing_speed",
+      "unit": "m s-1",
+      "name": "speed at which it meets the target"
+     },
+     "A": {
+      "kind": "range.projectile_face",
+      "unit": "m2",
+      "name": "area of its face, the patch it strikes"
+     }
+    },
+    "outputs": {
+     "E": {
+      "kind": "range.impact_energy",
+      "unit": "J",
+      "name": "energy it brings"
+     },
+     "F": {
+      "kind": "range.fluence",
+      "unit": "J m-2",
+      "name": "energy taken in by each square metre while the beam is held there"
+     }
+    },
+    "source": {
+     "text": "Computed: kinetic energy (Halliday, Resnick and Walker 2013, chapter 7)",
+     "url": "https://www.wiley.com/en-us/Fundamentals+of+Physics%2C+10th+Edition-p-9781118230718",
+     "where": "chapter 7"
+    },
+    "explain": {
+     "curious": "Speed is the weapon. At 3 km/s a slug carries about the energy of its own mass in explosive, and faster than that it vaporises what it hits.",
+     "science": "Kinetic energy at the closing speed, spread over the projectile's frontal area, to set beside the energy per area the skin can take."
+    },
+    "examples": [
+     {
+      "m": 1.0,
+      "v": 3000.0,
+      "A": 0.01,
+      "E": 4500000.0,
+      "F": 450000000.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.range.burn_through",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "density",
+     "letter": "rho"
+    },
+    {
+     "port": "thickness",
+     "letter": "th"
+    },
+    {
+     "port": "heat_capacity",
+     "letter": "c"
+    },
+    {
+     "port": "start_temperature",
+     "letter": "T0"
+    },
+    {
+     "port": "heat_to_melt",
+     "letter": "Hm"
+    },
+    {
+     "port": "latent_fusion",
+     "letter": "Lf"
+    },
+    {
+     "port": "heat_to_boil",
+     "letter": "Hb"
+    },
+    {
+     "port": "latent_vaporisation",
+     "letter": "Lv"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "to_melt",
+     "letter": "Em"
+    },
+    {
+     "port": "to_boil",
+     "letter": "Eb"
+    }
+   ],
+   "models": {
+    "Tr": {
+     "value": 298.15,
+     "grade": "derived",
+     "source": "NIST-JANAF reference temperature: the tables' heats are counted from 298.15 K"
+    }
+   },
+   "checks": [
+    {
+     "port": "density",
+     "min": 0,
+     "finite": true,
+     "says": "density must be zero or more, got {}"
+    },
+    {
+     "port": "thickness",
+     "min": 0,
+     "finite": true,
+     "says": "skin thickness must be zero or more, got {}"
+    },
+    {
+     "port": "heat_capacity",
+     "min": 0,
+     "finite": true,
+     "says": "heat capacity must be zero or more, got {}"
+    },
+    {
+     "port": "heat_to_melt",
+     "min": 0,
+     "finite": true,
+     "says": "heat to reach the melting point must be zero or more, got {}"
+    },
+    {
+     "port": "latent_fusion",
+     "min": 0,
+     "finite": true,
+     "says": "heat of melting must be zero or more, got {}"
+    },
+    {
+     "port": "heat_to_boil",
+     "min": 0,
+     "finite": true,
+     "says": "heat to reach the boiling point must be zero or more, got {}"
+    },
+    {
+     "port": "latent_vaporisation",
+     "min": 0,
+     "finite": true,
+     "says": "heat of boiling must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "start_temperature",
+     "says": "start temperature"
+    }
+   ],
+   "references": [
+    "Chase, M. W. 1998, NIST-JANAF Thermochemical Tables, 4th edn, J. Phys. Chem. Ref. Data Monograph 9: heating a solid to a temperature, melting it and boiling it cost its heat capacity times the rise plus each latent heat. https://janaf.nist.gov/"
+   ],
+   "shown": "E_melt = ρ t (c (298 K − T₀) + H_m + L_f),  E_boil = E_melt + ρ t (H_b + L_v)",
+   "equation": {
+    "name": "How much energy it takes to melt or boil through a skin",
+    "formula": "mass = rho * th\nwarm = c * (Tr - T0)\nEm = mass * max(warm + Hm + Lf, 0)\nEb = mass * max(warm + Hm + Lf + Hb + Lv, 0)",
+    "inputs": {
+     "rho": {
+      "kind": "range.skin_density",
+      "unit": "kg m-3",
+      "name": "density of the skin"
+     },
+     "th": {
+      "kind": "range.skin_thickness",
+      "unit": "m",
+      "name": "thickness of the skin"
+     },
+     "c": {
+      "kind": "range.heat_capacity",
+      "unit": "J kg-1 K-1",
+      "name": "heat to warm a kilogram by one kelvin near room temperature"
+     },
+     "T0": {
+      "kind": "range.start_temperature",
+      "unit": "K",
+      "name": "temperature of the skin before the hit"
+     },
+     "Hm": {
+      "kind": "range.heat_to_melt",
+      "unit": "J kg-1",
+      "name": "heat to bring a kilogram from 298 K up to its melting point"
+     },
+     "Lf": {
+      "kind": "range.latent_fusion",
+      "unit": "J kg-1",
+      "name": "heat to melt a kilogram once it is at its melting point"
+     },
+     "Hb": {
+      "kind": "range.heat_to_boil",
+      "unit": "J kg-1",
+      "name": "heat to bring a kilogram of the melt up to its boiling point"
+     },
+     "Lv": {
+      "kind": "range.latent_vaporisation",
+      "unit": "J kg-1",
+      "name": "heat to boil a kilogram once it is at its boiling point"
+     },
+     "Tr": {
+      "kind": "model.janaf_reference_temperature",
+      "unit": "K",
+      "name": "temperature the tables count their heats from"
+     }
+    },
+    "outputs": {
+     "Em": {
+      "kind": "range.to_melt",
+      "unit": "J m-2",
+      "name": "energy per square metre to melt right through"
+     },
+     "Eb": {
+      "kind": "range.to_boil",
+      "unit": "J m-2",
+      "name": "energy per square metre to boil right through"
+     }
+    },
+    "source": {
+     "text": "Chase, M. W. 1998, NIST-JANAF Thermochemical Tables, 4th edn",
+     "url": "https://janaf.nist.gov/",
+     "where": "introduction: enthalpy increments H(T) − H(298.15 K) and transitions"
+    },
+    "explain": {
+     "curious": "Armour in space is a heat sum. To cut through a skin a weapon must warm it, melt it and then boil it away, and boiling costs far more than melting, so a thin skin of a hard-to-boil metal goes a long way.",
+     "science": "The tabulated enthalpy increments to melting and from melting to boiling, plus both latent heats, per unit area of a slab, from a start temperature near 298 K; losses to conduction and radiation are left out, so it is the least energy that could do it."
+    },
+    "examples": [
+     {
+      "rho": 2700.0,
+      "th": 0.01,
+      "c": 897.0,
+      "T0": 250.0,
+      "Hm": 660000.0,
+      "Lf": 397000.0,
+      "Hb": 2190000.0,
+      "Lv": 10900000.0,
+      "Em": 29705144.849999994,
+      "Eb": 383135144.85
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.range.hit_odds",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "distance",
+     "letter": "d"
+    },
+    {
+     "port": "shot_speed",
+     "letter": "v"
+    },
+    {
+     "port": "target_acceleration",
+     "letter": "a"
+    },
+    {
+     "port": "target_radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "delay",
+     "letter": "t"
+    },
+    {
+     "port": "wander",
+     "letter": "s"
+    },
+    {
+     "port": "odds",
+     "letter": "p"
+    }
+   ],
+   "constants": {
+    "c": "constants/c"
+   },
+   "checks": [
+    {
+     "port": "distance",
+     "min": 0,
+     "finite": true,
+     "says": "distance must be zero or more, got {}"
+    },
+    {
+     "port": "target_acceleration",
+     "min": 0,
+     "finite": true,
+     "says": "target acceleration must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "shot_speed",
+     "says": "shot speed"
+    },
+    {
+     "port": "target_radius",
+     "says": "target radius"
+    }
+   ],
+   "references": [
+    "Computed (SSE4, plan section 13, our own derivation, not the Atomic Rockets formula): the target was seen as it was a light-travel time ago and the shot takes its own flight time to arrive; in that time a target that can accelerate at a may be anywhere within ½ a t² of where it was aimed, taken as evenly spread over that disc, so the chance of a hit is (R / ½ a t²)² capped at one. https://github.com/FrunkQ/star-system-explorer/blob/main/handover/design/SSE4-atomic-rockets-plan.md"
+   ],
+   "shown": "t = d/c + d/v,  s = ½ a t²,  p = min(1, (R/s)²)",
+   "equation": {
+    "name": "Chance of a hit when the target can move while the shot is on its way",
+    "formula": "t = d / c + d / v\ns = a * t * t / 2\np = if s <= R then 1 else (R / s) * (R / s)",
+    "inputs": {
+     "d": {
+      "kind": "range.distance",
+      "unit": "m",
+      "name": "distance to the target"
+     },
+     "v": {
+      "kind": "range.shot_speed",
+      "unit": "m s-1",
+      "name": "speed of the shot (light speed for a beam)"
+     },
+     "a": {
+      "kind": "range.target_acceleration",
+      "unit": "m s-2",
+      "name": "how hard the target can accelerate to dodge"
+     },
+     "R": {
+      "kind": "range.target_radius",
+      "unit": "m",
+      "name": "half the target's width as seen by the shooter"
+     },
+     "c": {
+      "kind": "constant.c",
+      "unit": "m s-1",
+      "name": "speed of light"
+     }
+    },
+    "outputs": {
+     "t": {
+      "kind": "range.delay",
+      "unit": "s",
+      "name": "time from the light that showed the target leaving it to the shot arriving"
+     },
+     "s": {
+      "kind": "range.wander",
+      "unit": "m",
+      "name": "how far the target could have moved in that time"
+     },
+     "p": {
+      "kind": "range.odds",
+      "unit": "1",
+      "name": "chance of a hit, from 0 to 1",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "source": {
+     "text": "Computed (SSE4): light lag and the target's reach, our own derivation",
+     "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/handover/design/SSE4-atomic-rockets-plan.md",
+     "where": "section 13"
+    },
+    "explain": {
+     "curious": "Range in space is limited by light, not power. You see the target where it was, and your shot takes time to arrive. If it can dodge further than its own width in that time, you are guessing, and the odds fall as the square of the distance it could have gone.",
+     "science": "Delay is the light-travel time plus the shot's flight time; the target's possible displacement is ½ a t², taken as uniform over that disc across the line of sight, so the hit probability is the target's area over the disc's."
+    },
+    "examples": [
+     {
+      "d": 1000000.0,
+      "v": 10000.0,
+      "a": 0.1,
+      "R": 10.0,
+      "t": 100.00333564095199,
+      "s": 500.033356965845,
+      "p": 0.0003999466341950715
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.range.reading",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "arrives",
+     "letter": "A"
+    },
+    {
+     "port": "takes",
+     "letter": "N"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "ratio",
+     "letter": "r"
+    },
+    {
+     "port": "reading",
+     "letter": "k"
+    },
+    {
+     "port": "margin",
+     "letter": "mg"
+    }
+   ],
+   "models": {
+    "margin": {
+     "value": 2.0,
+     "grade": "assumed",
+     "source": "SSE4 Atomic Rockets plan section 13: a stated factor either way; two, so the GM and the dice decide inside a factor of two"
+    }
+   },
+   "checks": [
+    {
+     "port": "arrives",
+     "min": 0,
+     "finite": true,
+     "says": "what arrives must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "takes",
+     "says": "what the target can take"
+    }
+   ],
+   "references": [
+    "SSE4 Atomic Rockets plan section 13 (accepted 23 Nov 2026): three readings, in range, marginal and out of range, with marginal within a stated factor either way of what the target can take. https://github.com/FrunkQ/star-system-explorer/blob/main/handover/design/SSE4-atomic-rockets-plan.md"
+   ],
+   "shown": "r = arrives / takes;  in range r ≥ m, marginal 1/m ≤ r < m, out of range r < 1/m",
+   "equation": {
+    "name": "Is what arrives enough: in range, marginal or out of range",
+    "formula": "r = A / N\nk = if r >= margin then 2 else if r * margin >= 1 then 1 else 0\nmg = margin",
+    "inputs": {
+     "A": {
+      "kind": "range.arrives",
+      "unit": "J m-2",
+      "name": "energy per square metre that arrives and is taken in"
+     },
+     "N": {
+      "kind": "range.takes",
+      "unit": "J m-2",
+      "name": "energy per square metre the target can take before the effect"
+     },
+     "margin": {
+      "kind": "model.range_margin",
+      "unit": "1",
+      "name": "factor either way inside which the reading is marginal"
+     }
+    },
+    "outputs": {
+     "r": {
+      "kind": "range.ratio",
+      "unit": "1",
+      "name": "what arrives as a share of what is needed"
+     },
+     "k": {
+      "kind": "range.reading",
+      "unit": "1",
+      "name": "2 in range, 1 marginal, 0 out of range",
+      "valid": [
+       0.0,
+       2.0
+      ]
+     },
+     "mg": {
+      "kind": "range.margin",
+      "unit": "1",
+      "name": "the factor used, so rings can be drawn where the reading changes"
+     }
+    },
+    "source": {
+     "text": "SSE4 Atomic Rockets plan, accepted 23 Nov 2026",
+     "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/handover/design/SSE4-atomic-rockets-plan.md",
+     "where": "section 13"
+    },
+    "explain": {
+     "curious": "The physics never refuses a shot. It says whether what arrives is plenty, close (the dice decide) or a small share of what is needed.",
+     "science": "Ratio of delivered to required fluence, banded by a stated margin factor."
+    },
+    "examples": [
+     {
+      "A": 30000000.0,
+      "N": 10000000.0,
+      "r": 3.0,
+      "k": 2.0,
+      "mg": 2.0
+     }
+    ]
+   }
+  }
+ ]
+}

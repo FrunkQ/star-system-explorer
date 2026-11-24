@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The interface's copy of the master data sheet's constants (MP22, UI side).
 
-The chart room needs a handful of constants synchronously (the astronomical
+The chart room needs a handful of constants (and the small Bands table) synchronously (the astronomical
 unit, the Sun's and Earth's masses and radii, the speed of light). Bundling all
 of packs/base-reference (about 350 kB of elements, isotopes and substances)
 into the page for them would be wasteful, so this writes just the constants,
@@ -49,6 +49,13 @@ def build():
         "constants": consts,
         # Each unit's factor to SI, for documents that give a value in a unit.
         "units": {u["id"]: unit_factor(u, consts) for u in pack["provides"]["reference"]["units"]},
+        # The Bands table (RK10), small and read by every screen's band list:
+        # id, kind, plain name, wavelength range in metres, view and recipe.
+        "bands": [{k: v for k, v in {
+            "id": b["id"], "kind": b["kind"], "name": b["names"]["physics"], "plain": b["names"]["plain"],
+            "view_id": b.get("view_id"), "view": b.get("view"), "recipe": b.get("recipe"),
+            "from_m": b["from_m"]["v"] if "from_m" in b else None, "to_m": b["to_m"]["v"] if "to_m" in b else None,
+        }.items() if v is not None} for b in pack["provides"]["reference"].get("bands", [])],
     }
     return json.dumps(doc, indent=1, sort_keys=False, ensure_ascii=False) + "\n"
 
