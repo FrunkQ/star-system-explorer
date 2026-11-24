@@ -187,6 +187,10 @@ export interface ViewSession {
   /** Candidate courses (V8, kernel `plan_route`, T3): from an inline system any seat may ask about; an adopted `system` is GM only. Writes nothing. */
   planRoute(ask: import("./route.ts").RouteAsk): Promise<{ ok: true; plan: import("./route.ts").RoutePlan } | { ok: false; code: string; message: string }>;
   /** What a ship can do at each of some worlds (kernel `ship_at_world`): aerocapture, entry, landing, take-off, with dangers, margins and rough chances; nothing rolled. An adopted `system` is GM only. Writes nothing. */
+  /** V8 flight log: write one entry of a construct's log on the record (GM only). */
+  logFlight(ask: { construct: string; at_s: number } & ({ piece: Json } | { event: Json } | { name?: string; about?: string } | { withdraw: string })): Promise<{ ok: true; event_id: string; seeded: string[]; notes: string[] } | { ok: false; code: string; message: string }>;
+  /** V8 flight log: a construct's log as written, and with `where_at` and a system, where the craft was then (GM only). */
+  flightLog(ask: { construct: string; at_s?: number; where_at?: number; fixture?: string; nav?: unknown; system?: string }): Promise<{ ok: true; log: Json; entries: Json[]; at?: Json } | { ok: false; code: string; message: string }>;
   shipAtWorld(ask: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: import("./ship-at-world.ts").ShipAtWorldReport } | { ok: false; code: string; message: string }>;
   /** One galaxy grown from the universe's seed (U6, kernel `galaxy_chart`, G1 to G4). Read only; GM only. */
   galaxyChart(ask: import("./galaxy.ts").GalaxyAsk): Promise<{ ok: true; chart: import("./galaxy.ts").GalaxyChart } | { ok: false; code: string; message: string }>;
@@ -732,6 +736,18 @@ export class Session implements ViewSession {
     if (ask.system !== undefined && this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master plans against a system's full record; players plan from what they know" };
     const r = await this.#call({ op: "plan_route", ...ask });
     return r.type === "route_planned" ? { ok: true, plan: (r as unknown as { plan: import("./route.ts").RoutePlan }).plan } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async logFlight(ask: { construct: string; at_s: number } & ({ piece: Json } | { event: Json } | { name?: string; about?: string } | { withdraw: string })): Promise<{ ok: true; event_id: string; seeded: string[]; notes: string[] } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "flight logs are written on the game master's machine" };
+    const r = await this.#call({ op: "log_flight", ...ask, at_s: Math.round(ask.at_s) } as Json);
+    return r.type === "flight_logged" ? { ok: true, event_id: String(r.event_id), seeded: (r.seeded as string[]) ?? [], notes: (r.notes as string[]) ?? [] } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async flightLog(ask: { construct: string; at_s?: number; where_at?: number; fixture?: string; nav?: unknown; system?: string }): Promise<{ ok: true; log: Json; entries: Json[]; at?: Json } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "flight logs are read on the game master's machine" };
+    const r = await this.#call({ op: "flight_log", ...ask } as Json);
+    return r.type === "flight_log_is" ? { ok: true, log: r.log as Json, entries: (r.entries as Json[]) ?? [], ...(r.at !== undefined ? { at: r.at as Json } : {}) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async shipAtWorld(ask: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: import("./ship-at-world.ts").ShipAtWorldReport } | { ok: false; code: string; message: string }> {

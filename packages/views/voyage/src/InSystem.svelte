@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, voyageLogEntries, voyageFuelWrites, FUEL_FIELDS, fuelNow, fuelGauges, shipRecordOf, type FuelShip, type NavShip, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
   import AtWorld from "./AtWorld.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -36,7 +36,28 @@
     if (!choices.some((c) => c.id === ship)) ship = "fusion-torch";
   });
   const shipInfo = $derived(choices.find((c) => c.id === ship) ?? choices.find((c) => c.id === "fusion-torch") ?? choices[0]);
-  const sending = $derived(shipInfo?.id === PARTY && party ? party.nav : shipInfo ? shipToSend(shipInfo) : ship);
+  // The party's ship flies with what is in its tanks now (fuel gauges, MC4): its own numbers from the kernel, the tanks
+  // at the levels kept on its record (full when never set). The GM's seat reads them; a player's seat plans on full tanks.
+  const gm = $derived(ctx.session.seat.authority === "gm");
+  let tanksShip = $state.raw<FuelShip | null>(null);
+  let tanksGen = 0;
+  async function readTanks() {
+    const p = party;
+    const g = ++tanksGen;
+    if (!p || !gm || !ctx.session.record) return void (tanksShip = null);
+    const [r, own] = await Promise.all([shipRecordOf(ctx.session, p.nav), ctx.session.record(p.ship)]);
+    if (g !== tanksGen) return;
+    if (!r.ok) return void (tanksShip = null);
+    const kept: Record<string, unknown> = own.ok ? Object.fromEntries(own.record.kept.map((k) => [k.kind, k.value])) : {};
+    tanksShip = fuelNow(r.ship as unknown as FuelShip, (k) => kept[k]);
+  }
+  $effect(() => {
+    void party?.ship;
+    void party?.nav;
+    void gm;
+    untrack(() => void readTanks());
+  });
+  const sending = $derived(shipInfo?.id === PARTY && party ? ((tanksShip as unknown as NavShip | null) ?? party.nav) : shipInfo ? shipToSend(shipInfo) : ship);
   const flyingParty = $derived(shipInfo?.id === PARTY && !!party);
   let minimise = $state<Minimise>((MINIMISE_WORDS.some((m) => m.id === first.minimise) ? first.minimise : "home_time") as Minimise);
   let mode = $state<"explore" | "to">("to");
@@ -113,7 +134,6 @@
 
   const v = $derived(plan?.voyage ?? null);
   // The ship's power books (RK9): on the GM's seat only, beside the honesty marks.
-  const gm = $derived(ctx.session.seat.authority === "gm");
   const places = $derived(plan?.places ?? []);
   const W = 640;
   const H = 232;
@@ -157,6 +177,32 @@
   function pick(a: string) {
     if (mode === "to" && a !== from) to = a;
   }
+  // The flight, written into the ship's flight log on the record (V8 flight log): the table flew it, so it is planned.
+  let logged = $state<string | null>(null);
+  async function writeLog(construct: string, p: SystemVoyagePlan | null, at_s: number) {
+    if (!p) return;
+    const entries = voyageLogEntries(p, fromScene.nav?.bodies ?? []);
+    let n = 0;
+    for (const e of entries) {
+      const r = await ctx.session.logFlight({ construct, at_s, ...e });
+      if (!r.ok) return void (logged = `Not written to the flight log: ${r.message}`);
+      n++;
+    }
+    logged = `${n} entr${n === 1 ? "y" : "ies"} written to ${party?.name ?? "the ship"}'s flight log.`;
+  }
+  // What the voyage left in the tanks goes on the ship's record, dated, with where it went (the ship's log reads it).
+  let drawn = $state<string | null>(null);
+  async function drawDown(construct: string, voyage: NonNullable<typeof v>, toName: string, at_s: number) {
+    if (!tanksShip || !ctx.session.setKept) return;
+    const tanks = fuelGauges(tanksShip, () => undefined).map((g) => g.tank);
+    const writes = voyageFuelWrites(voyage, tanks, toName);
+    for (const w of writes) {
+      const r = await ctx.session.setKept({ address: construct, ...w, at_s });
+      if (!r.ok) return void (drawn = `Tanks not updated: ${r.message}`);
+    }
+    drawn = writes.length ? `Tanks now: ${writes.map((w) => `${w.kind === FUEL_FIELDS.jump ? "jump fuel" : "reaction mass"} ${w.value.toFixed(1)} t`).join(", ")}.` : null;
+    await readTanks();
+  }
   function nextStop() {
     if (!v) return;
     // The party's ship arrives: it is there now (the players' screens move only when the GM sends the view).
@@ -165,6 +211,9 @@
       ctx.workspace.setParty({ ...$state.snapshot(party), at: v.to, voyage: { from: v.from, to: v.to, days: v.home_days, ...(typeof c === "number" ? { depart_yr: c } : {}) } } as typeof party);
       arrived = v.to;
       arrivedName = nameOf(v.to);
+      const at_s = typeof c === "number" ? c * Number(YEAR_S) : 0;
+      void writeLog(party.ship, $state.snapshot(plan) as SystemVoyagePlan, at_s);
+      void drawDown(party.ship, $state.snapshot(v) as NonNullable<typeof v>, nameOf(v.to), at_s);
     }
     visited = [...visited, ...v.legs.map((l) => l.to).filter((s) => !visited.includes(s))];
     from = v.to;
@@ -229,6 +278,8 @@
     {#if failed}<p class="warn" data-failed>{failed}</p>{/if}
     {#if busy && !plan}<p class="muted">Charting…</p>{/if}
     {#if landHref && arrived === from}<p data-arrived>{party?.name} is at {arrivedName}. <a href={landHref} data-land-here>Land here</a></p>{/if}
+    {#if logged && arrived === from}<p class="muted" data-logged>{logged}</p>{/if}
+    {#if drawn && arrived === from}<p class="muted" data-drawn>{drawn}</p>{/if}
     {#if plan && !v}
       <h3>No voyage</h3>
       {#each plan.refusals as r, i (i)}<p class="warn" data-refusal>{r}</p>{/each}

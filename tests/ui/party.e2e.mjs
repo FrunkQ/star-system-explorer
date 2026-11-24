@@ -112,6 +112,12 @@ try {
   await ins.locator("[data-next]").click();
   await ins.locator("[data-land-here]").waitFor({ timeout: 15000 });
   assert.match(await ins.locator("[data-arrived]").innerText(), /Beowulf is at Mars/);
+  // The flight goes into Beowulf's flight log on the record (V8 flight log).
+  await ins.locator("[data-logged]").waitFor({ timeout: 15000 });
+  assert.match(await ins.locator("[data-logged]").innerText(), /\d+ entries written to Beowulf's flight log/);
+  // What the voyage burned comes off Beowulf's tanks, on its record (fuel draw-down).
+  await ins.locator("[data-drawn]").waitFor({ timeout: 15000 });
+  assert.match(await ins.locator("[data-drawn]").innerText(), /^Tanks now: (reaction mass|jump fuel) [\d.]+ t/);
   await noOverlap(gm);
   await shot(gm, "party-arrived-at-mars");
   await pl.waitForFunction((m) => document.querySelector("header [data-party-ship]")?.getAttribute("data-party-at") === m, mars, { timeout: 15000 });
