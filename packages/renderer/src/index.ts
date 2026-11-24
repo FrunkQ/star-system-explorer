@@ -109,3 +109,5 @@ export async function startSurface(canvas: HTMLCanvasElement) {
 // The size comparison's turning globes (3D, True, Wireframe).
 export { circleSteps, globeFrame, graticule, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
 export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";
+export { byDensitySquared, density as shellDensity, drawShells, dustGlow10um, narrateShells, nebulaColour, SHELL_DECADES, SHELL_REFERENCES, wavelengthRgb } from "./star-shells.ts";
+export type { NebulaShape, ShellView } from "./star-shells.ts";
