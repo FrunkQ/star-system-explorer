@@ -1383,6 +1383,275 @@
       "v": 1.0,
       "src": "si2019"
      }
+    },
+    {
+     "id": "min",
+     "symbol": "min",
+     "name": "minute",
+     "measures": "time",
+     "group": "working",
+     "factor": {
+      "v": 60.0,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "kyr",
+     "symbol": "kyr",
+     "name": "thousand years",
+     "measures": "time",
+     "group": "working",
+     "factor_from": "1e3 yr_julian"
+    },
+    {
+     "id": "r_moon",
+     "symbol": "R☾",
+     "name": "Moon radius",
+     "measures": "length",
+     "group": "working",
+     "factor_from": "R_moon"
+    },
+    {
+     "id": "m_moon",
+     "symbol": "M☾",
+     "name": "Moon mass",
+     "measures": "mass",
+     "group": "working",
+     "factor_from": "M_moon"
+    },
+    {
+     "id": "ocean_earth",
+     "symbol": "Earth oceans",
+     "name": "mass of Earth's oceans",
+     "measures": "mass",
+     "group": "working",
+     "factor_from": "M_ocean_earth"
+    },
+    {
+     "id": "tonne",
+     "symbol": "t",
+     "name": "tonne",
+     "measures": "mass",
+     "group": "working",
+     "factor": {
+      "v": 1000.0,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "litre",
+     "symbol": "L",
+     "name": "litre",
+     "measures": "volume",
+     "group": "working",
+     "factor": {
+      "v": 0.001,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "m3",
+     "symbol": "m³",
+     "name": "cubic metre",
+     "measures": "volume",
+     "group": "working",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "km3",
+     "symbol": "km³",
+     "name": "cubic kilometre",
+     "measures": "volume",
+     "group": "working",
+     "factor": {
+      "v": 1000000000.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "m2",
+     "symbol": "m²",
+     "name": "square metre",
+     "measures": "area",
+     "group": "working",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "km2",
+     "symbol": "km²",
+     "name": "square kilometre",
+     "measures": "area",
+     "group": "working",
+     "factor": {
+      "v": 1000000.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "s_earth",
+     "symbol": "S⊕",
+     "name": "Earth's sunlight",
+     "measures": "flux",
+     "group": "working",
+     "factor_from": "S_sun"
+    },
+    {
+     "id": "arcmin",
+     "symbol": "′",
+     "name": "arcminute",
+     "measures": "angle",
+     "group": "working",
+     "factor_from": "pi / 10800"
+    },
+    {
+     "id": "percent",
+     "symbol": "%",
+     "name": "percent",
+     "measures": "dimensionless",
+     "group": "working",
+     "factor": {
+      "v": 0.01,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "ppm",
+     "symbol": "ppm",
+     "name": "part per million",
+     "measures": "dimensionless",
+     "group": "working",
+     "factor": {
+      "v": 1e-06,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "tnt_tonne",
+     "symbol": "t TNT",
+     "name": "tonne of TNT",
+     "measures": "energy",
+     "group": "working",
+     "factor": {
+      "v": 4184000000.0,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "mi",
+     "symbol": "mi",
+     "name": "mile",
+     "measures": "length",
+     "group": "imperial",
+     "factor": {
+      "v": 1609.344,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "ft",
+     "symbol": "ft",
+     "name": "foot",
+     "measures": "length",
+     "group": "imperial",
+     "factor": {
+      "v": 0.3048,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "lb",
+     "symbol": "lb",
+     "name": "pound",
+     "measures": "mass",
+     "group": "imperial",
+     "factor": {
+      "v": 0.45359237,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "degf",
+     "symbol": "°F",
+     "name": "degree Fahrenheit",
+     "measures": "temperature",
+     "group": "imperial",
+     "factor": {
+      "v": 0.5555555555555556,
+      "src": "nist-sp811"
+     },
+     "offset": 255.3722222222222
+    },
+    {
+     "id": "psi",
+     "symbol": "psi",
+     "name": "pound-force per square inch",
+     "measures": "pressure",
+     "group": "imperial",
+     "factor": {
+      "v": 6894.757293168361,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "mph",
+     "symbol": "mph",
+     "name": "mile per hour",
+     "measures": "velocity",
+     "group": "imperial",
+     "factor": {
+      "v": 0.44704,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "lb_ft3",
+     "symbol": "lb/ft³",
+     "name": "pound per cubic foot",
+     "measures": "density",
+     "group": "imperial",
+     "factor": {
+      "v": 16.018463373960138,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "ft3",
+     "symbol": "ft³",
+     "name": "cubic foot",
+     "measures": "volume",
+     "group": "imperial",
+     "factor": {
+      "v": 0.028316846592,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "gal",
+     "symbol": "gal",
+     "name": "US gallon",
+     "measures": "volume",
+     "group": "imperial",
+     "factor": {
+      "v": 0.003785411784,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "sq_mi",
+     "symbol": "mi²",
+     "name": "square mile",
+     "measures": "area",
+     "group": "imperial",
+     "factor": {
+      "v": 2589988.110336,
+      "src": "nist-sp811"
+     }
     }
    ],
    "origin_legend": [
@@ -16919,6 +17188,13 @@
      "text": "Chase, M. W. 1998, NIST-JANAF Thermochemical Tables, 4th edition, J. Phys. Chem. Ref. Data Monograph 9: reference-state tables (ref) for Al, Ti, Fe, Nb, Mo, Ta, W, Pb, C (graphite) and the gas tables W(g) W-005, C(g) C-003, C2(g) C-113, C3(g) C-138, C4(g) C-143, C5(g) C-148; Cp and H - H(298.15 K) at 298.15 K and at each transition row",
      "status": "unverified",
      "url": "https://janaf.nist.gov/"
+    },
+    {
+     "id": "nist-sp811",
+     "text": "Thompson, A. and Taylor, B. N. 2008, Guide for the Use of the International System of Units (SI), NIST Special Publication 811, 2008 edition, Appendix B.8 and B.9: foot 0.3048 m, inch 0.0254 m, mile 1609.344 m, mile per hour 0.44704 m/s, minute 60 s, litre 1e-3 m3, tonne 1e3 kg, ton of TNT 4.184e9 J and the thermochemical calorie 4.184 J (all exact); t/degC = (t/degF - 32)/1.8; the pound, 0.45359237 kg exactly by the 1959 international yard and pound agreement, is printed to 7 digits there, and the US gallon is 231 cubic inches",
+     "status": "verified",
+     "doi": "10.6028/NIST.SP.811e2008",
+     "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b9"
     },
     {
      "id": "nist-srd126",

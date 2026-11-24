@@ -791,3 +791,39 @@ fn conductivities_for_the_field_ledger_are_on_the_sheet() {
     let s: Vec<f64> = prof.iter().map(|row| row[4].as_f64().unwrap()).collect();
     assert!(s.windows(2).all(|w| w[0] > w[1]), "{s:?}");
 }
+
+#[test]
+fn units_engine_rungs_are_on_the_sheet() {
+    // MP31 (for ED1a): the units engine reads every factor from the sheet.
+    let r = Reference::base();
+    for id in [
+        "min",
+        "kyr",
+        "r_moon",
+        "m_moon",
+        "ocean_earth",
+        "tonne",
+        "litre",
+        "m3",
+        "km3",
+        "m2",
+        "km2",
+        "s_earth",
+        "arcmin",
+        "percent",
+        "ppm",
+        "tnt_tonne",
+        "mi",
+        "ft",
+        "lb",
+        "degf",
+        "psi",
+        "mph",
+        "lb_ft3",
+        "ft3",
+        "gal",
+        "sq_mi",
+    ] {
+        assert!(r.row("units", id).is_some(), "{id}");
+    }
+}
