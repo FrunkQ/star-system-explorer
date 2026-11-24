@@ -9,8 +9,8 @@
     "kind": "orbit",
     "around": "u:sol/sys:sun/body:earth/body:moon",
     "elements": {
-     "a_m": 1848520.0,
-     "e": 0.00601129552290481,
+     "a_m": 1848057.0,
+     "e": 0.00596269487358886,
      "i_deg": 1.25,
      "node_deg": 0.0,
      "peri_deg": 0.0,
@@ -30,8 +30,8 @@
     "kind": "orbit",
     "around": "u:sol/sys:sun/body:earth/body:moon",
     "elements": {
-     "a_m": 1798238.2,
-     "e": 0.025077990223987014,
+     "a_m": 1798793.8,
+     "e": 0.024761370647374926,
      "i_deg": 1.25,
      "node_deg": 0.0,
      "peri_deg": 0.0,
@@ -39,10 +39,10 @@
      "epoch_s": 62154284933
     }
    },
-   "mark": "estimated",
+   "mark": "recorded",
    "src": "nasa-apollo-11-mission-report",
    "writer": "pack",
-   "why": "descent orbit about 8.5 by 57 nautical miles (mission report, from memory)",
+   "why": "descent orbit 57.2 by 9.1 nautical miles by the onboard computer (mission report section 4)",
    "to_s": 62154288344
   },
   {
@@ -95,8 +95,8 @@
     "kind": "orbit",
     "around": "u:sol/sys:sun/body:earth/body:moon",
     "elements": {
-     "a_m": 1789904.2,
-     "e": 0.019607418095337167,
+     "a_m": 1789996.8,
+     "e": 0.01955467182958092,
      "i_deg": 1.25,
      "node_deg": 0.0,
      "peri_deg": 0.0,
@@ -104,10 +104,10 @@
      "epoch_s": 62154367315
     }
    },
-   "mark": "estimated",
+   "mark": "recorded",
    "src": "nasa-apollo-11-mission-report",
    "writer": "pack",
-   "why": "ascent orbit about 9.4 by 47 nautical miles (mission report, from memory)",
+   "why": "ascent orbit 47.3 by 9.5 nautical miles (mission report section 4)",
    "to_s": 62154380139
   },
   {
@@ -127,8 +127,8 @@
     "kind": "orbit",
     "around": "u:sol/sys:sun/body:earth/body:moon",
     "elements": {
-     "a_m": 1848520.0,
-     "e": 0.00601129552290481,
+     "a_m": 1848057.0,
+     "e": 0.00596269487358886,
      "i_deg": 1.25,
      "node_deg": 0.0,
      "peri_deg": 0.0,
