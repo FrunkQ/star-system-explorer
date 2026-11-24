@@ -7,6 +7,7 @@
 use crate::err;
 use crate::protocol::Response;
 use sse_cosmos::stars::Stars;
+use sse_nav::links::{Link, LinkEnd, Links};
 use sse_nav::voyage::{self, Goal, Minimise, Options, VoyageSystem};
 use std::collections::BTreeMap;
 
@@ -21,6 +22,83 @@ pub(crate) struct Ask<'a> {
     pub sensed_fuel: &'a BTreeMap<String, f64>,
     pub surveyed: &'a [String],
     pub gambles: bool,
+    /// Links the voyage may use (the record's, as the crew knows them, and any given inline).
+    pub links: &'a Links,
+}
+
+/// The travel part a link carries in the record (`set_link`'s `nav`).
+#[derive(Clone, PartialEq, Debug, Default, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct NavPart {
+    #[serde(default)]
+    a: EndPart,
+    #[serde(default)]
+    b: EndPart,
+    #[serde(default)]
+    rule: Option<sse_nav::ftl::FtlRule>,
+    #[serde(default)]
+    counted: BTreeMap<String, f64>,
+}
+
+#[derive(Clone, PartialEq, Debug, Default, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EndPart {
+    #[serde(default)]
+    place: Vec<sse_nav::ftl::Place>,
+}
+
+/// Check a link's travel part, in words when it is wrong.
+pub(crate) fn nav_part(v: &serde_json::Value) -> Result<NavPart, String> {
+    serde_json::from_value(v.clone())
+        .map_err(|e| format!("nav: {{a: {{place}}, b: {{place}}, rule?, counted?}} ({e})"))
+}
+
+/// A stored link as the screens read it: the record's fields, `nav` as an object.
+pub(crate) fn link_json(l: &sse_record::links::LinkRecord) -> serde_json::Value {
+    let mut v = serde_json::to_value(l).expect("plain");
+    if let Some(n) = &l.nav {
+        v["nav"] = serde_json::from_str(n).unwrap_or(serde_json::Value::Null);
+    }
+    v
+}
+
+/// The links a voyage reads: the record's (already filtered to what the crew
+/// knows), then any given inline as sse-nav `Link`s.
+pub(crate) fn links_for(
+    records: &[sse_record::links::LinkRecord],
+    inline: &[serde_json::Value],
+    only: bool,
+) -> Result<Links, Response> {
+    let mut links = vec![];
+    for l in records {
+        let part = match &l.nav {
+            Some(n) => serde_json::from_str::<serde_json::Value>(n)
+                .ok()
+                .and_then(|v| nav_part(&v).ok())
+                .unwrap_or_default(),
+            None => NavPart::default(),
+        };
+        links.push(Link {
+            id: l.id.clone(),
+            name: l.name.clone(),
+            kind: l.kind.clone(),
+            a: LinkEnd {
+                at: l.a.to_string(),
+                place: part.a.place,
+            },
+            b: LinkEnd {
+                at: l.b.to_string(),
+                place: part.b.place,
+            },
+            one_way: l.one_way,
+            rule: part.rule,
+            counted: part.counted,
+        });
+    }
+    for v in inline {
+        links.push(serde_json::from_value(v.clone()).map_err(|e| bad(format!("links: {e}")))?);
+    }
+    Ok(Links { links, only })
 }
 
 pub(crate) fn minimise(m: Option<&str>) -> Result<Minimise, Response> {
@@ -90,6 +168,15 @@ pub(crate) fn plan_voyage(
     };
     let lo = [0, 1, 2].map(|i| c0[i].min(c1[i]) - 1);
     let hi = [0, 1, 2].map(|i| c0[i].max(c1[i]) + 1);
+    // A link's far end may lie outside the box: its cell is drawn too.
+    let far: Vec<[i64; 3]> = a
+        .links
+        .links
+        .iter()
+        .flat_map(|l| [cell_of(&l.a.at), cell_of(&l.b.at)])
+        .flatten()
+        .filter(|c| (0..3).any(|i| c[i] < lo[i] || c[i] > hi[i]))
+        .collect();
     let count: i64 = (0..3).map(|i| hi[i] - lo[i] + 1).product();
     if count as usize > MAX_CELLS {
         return Err(err(
@@ -110,6 +197,11 @@ pub(crate) fn plan_voyage(
             for z in lo[2]..=hi[2] {
                 box_cells.push([x, y, z]);
             }
+        }
+    }
+    for c in far {
+        if !box_cells.contains(&c) && box_cells.len() < MAX_CELLS * 2 {
+            box_cells.push(c);
         }
     }
     let drawn = st.cells(&box_cells, frame, pins).map_err(bad)?;
@@ -169,7 +261,15 @@ pub(crate) fn plan_voyage(
         gambles: a.gambles,
         settings: s.voyage.clone(),
     };
-    let result = voyage::plan(&ship, ship.jump.as_ref(), &systems, a.from, &goal, &o);
+    let result = voyage::plan_with_links(
+        &ship,
+        ship.jump.as_ref(),
+        &systems,
+        a.from,
+        &goal,
+        &o,
+        a.links,
+    );
     let means = |ship: &sse_nav::Ship| {
         let mut m = vec![];
         if let Some(j) = &ship.jump {
@@ -314,6 +414,54 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("cannot cross between stars"));
+    }
+
+    #[test]
+    fn a_gate_in_the_record_carries_a_ship_that_cannot_cross_and_a_secret_one_stays_secret() {
+        let mut k = Kernel::new();
+        let r = k.handle_json(r#"{"op":"open_universe","id":"hw","seed":"v8"}"#);
+        assert!(r.contains("universe_opened"), "{r}");
+        let cell = ask(&mut k, r#"{"op":"star_cell"}"#);
+        let systems = cell["cell"]["systems"].as_array().unwrap();
+        let from = systems[0]["address"].as_str().unwrap().to_string();
+        let to = systems[3]["address"].as_str().unwrap().to_string();
+        let rule = serde_json::json!({"id": "gate", "name": "gate transit", "family": "gate",
+            "duration": {"form": "fixed", "days": 1.0}, "messages": {"by": "ships"}, "fictional": true});
+        let set = |k: &mut Kernel, id: &str, audience: &str| {
+            let req = serde_json::json!({"op": "set_link", "id": id, "a": from, "b": to, "name": "the Long Gate",
+                "kind": "gate", "nav": {"rule": rule, "counted": {"setting.gates": 1.0}}, "audience": audience, "at_s": 0});
+            ask(k, &req.to_string())
+        };
+        let r = set(&mut k, "long-gate", "gm");
+        assert_eq!(r["type"], "link_set", "{r}");
+        assert_eq!(r["link"], "u:hw/link:long-gate");
+        assert_eq!(r["record"]["nav"]["rule"]["id"], "gate", "{r}");
+        let voyage = |k: &mut Kernel, audience: &str| {
+            let req = serde_json::json!({"op": "plan_voyage", "from": from, "to": to, "ship": "chemical-transfer", "audience": audience});
+            ask(k, &req.to_string())
+        };
+        // The GM's plan goes through the gate; the crew does not know of it, so for them a chemical ship still cannot go.
+        let gm = voyage(&mut k, "gm");
+        let leg = &gm["voyage"]["voyage"]["legs"][0];
+        assert_eq!(
+            (leg["means"].as_str(), leg["link"].as_str()),
+            (Some("link"), Some("long-gate")),
+            "{gm}"
+        );
+        assert_eq!(leg["home_days"], 1.0);
+        assert!(voyage(&mut k, "crew")["voyage"]["voyage"].is_null());
+        // Told to the crew, it is theirs too, and links_in lists it for them.
+        set(&mut k, "long-gate", "everyone");
+        assert_eq!(
+            voyage(&mut k, "crew")["voyage"]["voyage"]["legs"][0]["link"],
+            "long-gate"
+        );
+        let l = ask(&mut k, r#"{"op":"links_in","audience":"crew"}"#);
+        assert_eq!(l["links"].as_array().unwrap().len(), 1, "{l}");
+        // A bad travel part is refused in words.
+        let req = serde_json::json!({"op": "set_link", "id": "x", "a": from, "b": to, "nav": {"rules": 1}, "at_s": 0});
+        let bad = ask(&mut k, &req.to_string());
+        assert_eq!(bad["code"], "bad_link", "{bad}");
     }
 
     #[test]

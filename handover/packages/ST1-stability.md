@@ -34,7 +34,7 @@ What gets compared:
 - Alpha Centauri A: a planet at 1 au lasts, the limit is about 2.8 au, and 5 au is lost. Kepler-16 b lasts round both stars. A companion 300 au out, tilted 60°, gives e_max 0.764 (a note).
 - Adding a body returns only the checks it touches, and a body with no mass is listed as unchecked.
 
-`sse-atoms`: the first-wave atom count goes from 94 to 102, and 13 new port kinds are described. `packs/base-physics/pack.json` is re-blessed for the new kinds.
+`sse-atoms`: the first-wave atom count goes from 105 to 113, and 13 new port kinds are described. `packs/base-physics/pack.json` is re-blessed for the new kinds.
 
 ## Golden (on purpose)
 `tests/golden/contract.jsonl` changes in five places:
@@ -42,7 +42,7 @@ What gets compared:
 - line 41: the unknown-op message names it;
 - line 318: the reach list for G gains the stability blocks that read G (`amd_term`, `amd_critical`);
 - lines 45 to 50: the stack reports after load, because `tests/fixtures/packs/base-physics.json` (a copy of the real pack) gains the 13 new port kinds;
-- line 355: the new `orbit_stability` case (the Earth, the Moon and Mars, with an Earth added at 1.03 au).
+- line 357: the new `orbit_stability` case (the Earth, the Moon and Mars, with an Earth added at 1.03 au).
 
 No G goldens change.
 

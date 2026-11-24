@@ -3351,6 +3351,36 @@
   "level": "site"
  },
  {
+  "op": "light_through_gas",
+  "passages": [
+   {
+    "address": "u:t/sys:0/star:0",
+    "t_k": 5800.0,
+    "layers": []
+   }
+  ]
+ },
+ {
+  "op": "light_through_gas",
+  "passages": [
+   {
+    "t_k": 5000.0,
+    "layers": [
+     {
+      "t_k": 80.0,
+      "path_m": 1.0,
+      "gases": [
+       {
+        "gas": "unobtainium",
+        "number_density_m3": 1.0
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
   "op": "orbit_stability",
   "system": "u:st/sys:0",
   "bodies": [

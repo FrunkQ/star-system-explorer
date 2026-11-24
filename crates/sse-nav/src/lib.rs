@@ -17,11 +17,13 @@ pub mod courses;
 pub mod descent;
 pub mod drift;
 pub mod entry;
+pub mod flightlog;
 pub mod ftl;
 pub mod hazards;
 pub mod insystem;
 pub mod kepler;
 pub mod links;
+pub mod power;
 pub mod refuel;
 pub mod scenario;
 pub mod sky;
@@ -267,6 +269,15 @@ pub struct Ship {
     /// Most deceleration the hull bears, g (none given: not checked).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub structure_g: Option<f64>,
+    /// Power sources, fitted engines and electric loads (RK9, `power`): the
+    /// four-bus ledger. A ship with no `engines` keeps its typed
+    /// `accel_g` and `exhaust_km_s`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub power: Vec<power::PowerSource>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub engines: Vec<power::EngineMount>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub loads: Vec<power::Load>,
 }
 
 impl Ship {
@@ -729,10 +740,14 @@ mod descent_tests;
 #[cfg(test)]
 mod entry_tests;
 #[cfg(test)]
+mod flightlog_tests;
+#[cfg(test)]
 mod ftl_tests;
 #[cfg(test)]
 mod links_tests;
 #[cfg(test)]
 mod mission_tests;
+#[cfg(test)]
+mod power_tests;
 #[cfg(test)]
 mod tests;

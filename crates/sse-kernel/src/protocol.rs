@@ -580,6 +580,19 @@ pub enum Request {
         #[ts(optional)]
         wavelengths_m: Option<Vec<f64>>,
     },
+    /// Light through gas (ND2): each passage is a light (`light`, a light
+    /// description, or `t_k`, a black body) and the gas it crosses
+    /// (`layers` of temperature, depth and number density per sheet gas,
+    /// and a `path_factor`: 1 for a glow seen straight on, 2 for light down
+    /// to a cloud deck and back). Each gas's absorption (measured bands,
+    /// pressure-widened lines, colliding pairs) comes from its row on the
+    /// data sheet. Returns the light that comes out at `wavelengths_m`
+    /// (default: the eye's), what each feature did, and the colour to the
+    /// eye before and after.
+    LightThroughGas {
+        #[ts(type = "unknown[]")]
+        passages: Vec<serde_json::Value>,
+    },
     /// Spectrum as it reaches an observer (O12): each target is one or more
     /// components (`conditions` as for `read_light`, or a ready `light`
     /// description), each with a line-of-sight speed; the observer gives the
@@ -1274,6 +1287,64 @@ pub enum Request {
         #[ts(optional)]
         history: Option<bool>,
     },
+    /// Space highways: a link between two places in the universe, one dated
+    /// record event. `nav` is the travel part in sse-nav's `Link` shape
+    /// (each end's `place` conditions as `{a: {place}, b: {place}}`, an
+    /// optional `rule` of its own, `counted` measures); without a rule the
+    /// link is a charted lane. `withdraw` ends it.
+    SetLink {
+        id: String,
+        a: String,
+        b: String,
+        #[serde(default)]
+        #[ts(optional)]
+        name: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        kind: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        one_way: Option<bool>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        tier: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        audience: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        source: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        withdraw: Option<bool>,
+        at_s: i64,
+    },
+    /// Space highways: the links in force at `at_s` (absent: latest) that
+    /// `audience` knows (absent: the GM), with an end inside `bounds`
+    /// (absent: the whole universe); with `history`, every one by date.
+    LinksIn {
+        #[serde(default)]
+        #[ts(optional)]
+        bounds: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        history: Option<bool>,
+    },
     /// FT2: a civilisation's technology, one dated record event on an actor
     /// (or on the universe root, for the whole setting): a `level` on the
     /// setting's ladder, advances gained early (`gain`, "Develop it") or
@@ -1716,6 +1787,18 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         depart_s: Option<f64>,
+        /// Links the crew may use beyond the record's (sse-nav `Link`s), and
+        /// whether every leg must run along one. The record's links come in
+        /// as `audience` knows them (absent: the GM).
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        links: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        only_links: Option<bool>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
     },
     /// Make a fill star permanent: its whole drawn description (address,
     /// cell, frame and slot, birth, mass, companions, abundances, orbit) is
@@ -1989,6 +2072,7 @@ impl Request {
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
+            Request::LightThroughGas { .. } => "light_through_gas",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2015,6 +2099,8 @@ impl Request {
             Request::Hold { .. } => "hold",
             Request::WhoHolds { .. } => "who_holds",
             Request::HoldingsIn { .. } => "holdings_in",
+            Request::SetLink { .. } => "set_link",
+            Request::LinksIn { .. } => "links_in",
             Request::SetTech { .. } => "set_tech",
             Request::TechOf { .. } => "tech_of",
             Request::TechReading { .. } => "tech_reading",
@@ -2194,6 +2280,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_air_optics",
             Cost::Trivial,
             "per air and wavelength: a few closed-form blocks",
+        ),
+        o(
+            "light_through_gas",
+            Cost::Light,
+            "per passage: a few formula blocks per wavelength per absorption feature, at the eye's 81 wavelengths and any asked for",
         ),
         o(
             "read_spectrum",
@@ -2781,6 +2872,13 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         airs: Vec<serde_json::Value>,
     },
+    /// `light_through_gas`: each of `passages` is `{ passed, colour_in,
+    /// colour_out }` with `sse_light::gas::Passed` and
+    /// `sse_light::colour::Colour`.
+    GasPassed {
+        #[ts(type = "unknown[]")]
+        passages: Vec<serde_json::Value>,
+    },
     /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
     SpectrumRead {
         #[ts(type = "unknown[]")]
@@ -3018,6 +3116,19 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         #[ts(optional, type = "unknown[]")]
         changes: Vec<serde_json::Value>,
+    },
+    /// `set_link`: the link as stored.
+    LinkSet {
+        link: String,
+        event_id: String,
+        #[ts(type = "unknown")]
+        record: serde_json::Value,
+        record_hash: String,
+    },
+    /// `links_in`: each link with its travel part (`nav`) as an object.
+    LinksListed {
+        #[ts(type = "unknown[]")]
+        links: Vec<serde_json::Value>,
     },
     /// `set_tech`: the event's id.
     TechSet {

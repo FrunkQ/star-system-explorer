@@ -45,9 +45,11 @@
   // A press shows at once (the eye opens, the thing inks in) and is sent when the hold ends.
   let shown = $state<KnownLandmark | null>(null);
   const eye = $derived<KnownLandmark>(shown ?? own);
+  // A read that arrives while a press is held or on its way is older than the press: it must not put the eye back.
+  let pending = 0;
   $effect(() => {
     void read;
-    shown = null;
+    if (!pending) shown = null;
   });
 
   let slip = $state<{ words: string; undo: (() => void) | null } | null>(null);
@@ -62,7 +64,8 @@
   const what = $derived(field ? (fieldLabel ?? field).toLowerCase() : label);
 
   async function send(c: KnownChange): Promise<string | undefined> {
-    const r = await onset(c);
+    pending++;
+    const r = await onset(c).finally(() => pending--);
     if (!r.ok) {
       shown = null;
       say(`Not changed: ${r.why}`, null);
@@ -78,11 +81,13 @@
     const c: KnownChange = { audience: table.audience, landmark: field ? lineChange(table, field, to) : to, ...(field ? { field } : {}), scope: "this" };
     shown = to;
     held?.flush();
+    pending++;
     let sentAs: Promise<string | undefined> | null = null;
-    const h = holdReveal(() => void (sentAs = send(c)), { hold: hold && to !== "gm_only" });
+    const h = holdReveal(() => void ((sentAs = send(c)), pending--), { hold: hold && to !== "gm_only" });
     held = h;
     const back = () => {
       if (h.undo()) {
+        pending--;
         shown = from;
         say(`Undone. ${who[0]!.toUpperCase()}${who.slice(1)} never saw it.`, null);
       } else {
