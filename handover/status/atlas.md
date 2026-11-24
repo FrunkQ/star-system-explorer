@@ -8,7 +8,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`.
 
 **Design (accepted by Alex 24 Nov 2026 20:14 UTC, "yes to all"):** `handover/design/SSE4-atlas-and-reports-design.md`
-(arrives with PR 478; also `/mnt/project-files/sse4/SSE4-atlas-and-reports-design.md`). Read its sections 1, 13, 14A
+(also `/mnt/project-files/sse4/SSE4-atlas-and-reports-design.md`). Read its sections 1, 13, 14A
 (Alex's notes, which win over the rest) and 16. Mockups: project files `sse4/handover-screens/AT-screens/`.
 
 **Firm rules:** an edition changes words, order, look, jokes and letterhead, never a fact. A gap is drawn from the
@@ -35,3 +35,5 @@ Seams agreed by message: the look transitions thread ("Build look transitions fo
 `ui-contract/src/delivery.ts` and `chart-grammar/src/deliver.ts`; the Atlas page is
 `<article class="atlas-page" data-atlas-page>` with each block a direct child marked `data-deliver-item` and prose
 and figures marked `data-deliver-text`; this thread makes the call on each step once that lands.
+
+Open with Alex: whether the Weyland-Yutani logo is in the built-in set (design section 14A, note 2; left out until he says).

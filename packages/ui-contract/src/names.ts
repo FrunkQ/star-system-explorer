@@ -159,3 +159,37 @@ export function layerOrder(a: { layer: string }, b: { layer: string }): number {
   const at = (l: string) => (l === "designation" ? 0 : l === "common" ? 1 : 2);
   return at(a.layer) - at(b.layer) || a.layer.localeCompare(b.layer);
 }
+
+/** The name layers a lens can label the chart with: the usual three, then any other the stack's defaults name. */
+export function chartNameLayers(defaults: readonly { layer: string }[] = []): { id: string; label: string }[] {
+  const out = [
+    { id: "", label: "Common name, else designation" },
+    { id: "designation", label: "Designation only" },
+    { id: "local", label: "Local names" },
+  ];
+  for (const d of defaults) if (d.layer !== "common" && !out.some((o) => o.id === d.layer)) out.push({ id: d.layer, label: `${layerWords(d.layer)} names` });
+  return out;
+}
+
+/**
+ * Each subject's name in one layer, for a chart a lens labels by that layer (NM6 layer choice). Read through the
+ * session's read_names, so a player seat gets only the layers its view discloses. A subject with no name in the
+ * layer is left out (the chart keeps its usual label). Layer "" or "common" needs no reading: the scene already has
+ * the common name, else the designation.
+ */
+export async function namesInLayer(session: { readNames(address: string): Promise<{ ok: true; value: NamesRead } | { ok: false; code: string; message: string }> }, addresses: readonly string[], layer: string): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (!layer || layer === "common") return out;
+  const read = await Promise.all(addresses.map((a) => session.readNames(a)));
+  read.forEach((r, i) => {
+    const n = r.ok ? r.value.names.find((x) => x.layer === layer) : undefined;
+    if (n?.text) out.set(addresses[i]!, n.text);
+  });
+  return out;
+}
+
+/** A scene with its labels taken from `labels` where it has one (names never change anything else). */
+export function relabel<S extends { subjects: readonly T[] }, T extends { address: string; label: string }>(scene: S, labels: ReadonlyMap<string, string>): S {
+  if (!labels.size) return scene;
+  return { ...scene, subjects: scene.subjects.map((s) => (labels.has(s.address) ? { ...s, label: labels.get(s.address)! } : s)) };
+}
