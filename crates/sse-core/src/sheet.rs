@@ -899,6 +899,10 @@ pub mod mixture_density {
     pub const FORMATION_CO: f64 = 900.0;
     /// rp-1 (nistir6646).
     pub const RP_1: f64 = 799.0;
+    /// pban-ap-al (jpl-79-29).
+    pub const PBAN_AP_AL: f64 = 1771.4;
+    /// htpb-ap-al (kibbey-star48).
+    pub const HTPB_AP_AL: f64 = 1813.0;
     /// tungsten (nist-srd126).
     pub const TUNGSTEN: f64 = 19300.0;
     /// niobium-c103 (materion-c103).
