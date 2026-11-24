@@ -68,7 +68,7 @@
   const valid = $derived(doc.label.trim().length > 0 && checked.ok);
 </script>
 
-<div class="editor" role="group" aria-label="Layout editor" data-layout-editor={doc.id}>
+<div class="wrap"><div class="editor" role="group" aria-label="Layout editor" data-layout-editor={doc.id}>
   <div class="form">
     <label>Name <input type="text" bind:value={doc.label} maxlength="60" data-layout-name /></label>
     <label
@@ -134,12 +134,16 @@
     {:else if !boxes.length}<p class="sub">Blank: a screen with nothing on it until something is sent.</p>
     {:else if !scene}<p class="sub">Reading what this role knows…</p>{/if}
   </div>
-</div>
+</div></div>
 
 <style>
+  /* Side by side where the column is wide enough, else the preview under the form. */
+  .wrap {
+    container-type: inline-size;
+  }
   .editor {
     display: grid;
-    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
     padding: 12px;
     border: var(--sse-line) solid var(--sse-ink);
@@ -219,9 +223,9 @@
   button.go {
     font-weight: 600;
   }
-  @media (max-width: 760px) {
+  @container (min-width: 760px) {
     .editor {
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
     }
   }
 </style>
