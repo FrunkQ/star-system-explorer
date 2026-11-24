@@ -80,11 +80,17 @@ fn the_op_lists_are_every_op() {
     assert!(mask_ops(bad).contains(UNKNOWN_MASK), "{bad}");
     let s = bad.find(UNKNOWN_FROM).unwrap() + UNKNOWN_FROM.len();
     let e = s + bad[s..].find(UNKNOWN_TO).unwrap();
-    let mut named: Vec<&str> = bad[s..e].split(", ").map(|x| x.trim_matches('`')).collect();
-    named.sort_unstable();
-    let mut all: Vec<String> = ops().iter().map(|o| o.op.clone()).collect();
-    all.sort_unstable();
-    assert_eq!(named, all);
+    let named: Vec<&str> = bad[s..e].split(", ").map(|x| x.trim_matches('`')).collect();
+    // Every op in the op table is a request, and every op the message names
+    // is one the kernel knows (asking for it is never "unknown variant").
+    for o in ops() {
+        assert!(named.contains(&o.op.as_str()), "{} is not a request", o.op);
+    }
+    let mut k = crate::Kernel::new();
+    for n in &named {
+        let r = k.handle_json(&serde_json::json!({ "op": n }).to_string());
+        assert!(!r.contains("unknown variant"), "{n}: {r}");
+    }
 }
 
 #[test]
