@@ -8,6 +8,7 @@
   decides what each screen shows; this file only draws it and turns presses into board changes.
 -->
 <script lang="ts">
+  import RoleCard from "./RoleCard.svelte";
   import { cardLabel, outputLink, addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
   import Playbook from "./Playbook.svelte";
   import PresetMonitor from "./PresetMonitor.svelte";
@@ -139,6 +140,9 @@
     if (typeof c === "string") lastCard = c;
     act((b) => hold(b, dest, c));
   }
+  // The role card (PB7): undefined closed, null adding a role, else the role open.
+  let card = $state<string | null | undefined>(undefined);
+  const asks = (role: string) => table.seats?.requests().filter((q) => q.seat === role).length ?? 0;
   // The clean output link (PB8, design 9): copied, never opened here.
   let copiedOut = $state<string | null>(null);
   function copyOut(key: string, href: string) {
@@ -383,8 +387,9 @@
           <button type="button" data-copy-link onclick={() => (navigator.clipboard?.writeText(st.link!).catch(() => {}), (copied = true), setTimeout(() => (copied = false), 1500))}>{copied ? "Link copied" : "Copy the players' link"}</button>
           <a href={st.link} target="_blank" rel="noopener" data-players-link={st.link}>Open a screen here</a>
         {/if}
-        {#if onopenseats}<button type="button" data-open-seats onclick={onopenseats}>Roles…</button>{/if}
+        {#if table.seats}<button type="button" data-add-role aria-expanded={card === null} onclick={() => (card = card === null ? undefined : null)}>+ Add a role</button>{:else if onopenseats}<button type="button" data-open-seats onclick={onopenseats}>Roles…</button>{/if}
       </header>
+      {#if card === null && table.seats}<RoleCard {table} seats={table.seats} role={null} onclose={() => (card = undefined)} />{/if}
 
       <div class="everyone" class:layer={board.over.length > 0} data-dest="everyone" data-role="" role="button" tabindex="0" onclick={pressDest} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && pressDest(e)}>
         <span><b>Everyone</b> · <span data-dest-shows>{board.over.length ? `${words(board.over[board.over.length - 1]!)}, over the set-up` : evText}</span></span>
@@ -401,7 +406,9 @@
         {@const sh = showing(board, r.id)}
         <section class="role" data-role-id={r.id}>
           <div class="rhead" class:held={sh.held} data-dest={`role:${r.id}`} data-role={r.id} role="button" tabindex="0" onclick={pressDest} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && pressDest(e)}>
-            <span><b>{r.label}</b>{#if r.sealed}<span class="sub"> · sealed</span>{/if}</span>
+            <span
+              >{#if table.seats}<button type="button" class="rname" data-role-open={r.id} aria-expanded={card === r.id} title="The role card: name, what it knows, layout, links and more" onclick={(e) => armed || (e.stopPropagation(), (card = card === r.id ? undefined : r.id))}><b>{r.label}</b></button>{:else}<b>{r.label}</b>{/if}{#if r.sealed}<span class="sub"> · sealed</span>{/if}{#if board.redirects[r.id]}<span class="sub" data-redirected> · to {roles.find((x) => x.id === board.redirects[r.id])?.label ?? board.redirects[r.id]}'s screens</span>{/if}{#if asks(r.id)}<span class="asks" data-role-asks={r.id} title="Requests waiting: open the role card">{asks(r.id)} asking</span>{/if}</span
+            >
             <span class="sub" data-dest-shows>{own ? sh.text : sh.held ? sh.text : `with Everyone`}</span>
             <span class="acts">
               {#if own && !own.held && own.before !== undefined}<button type="button" class="quiet" data-back={`role:${r.id}`} onclick={(e) => (e.stopPropagation(), act((b) => back(b, `role:${r.id}`)))} title="What it had before this send">Back</button>{/if}
@@ -411,6 +418,7 @@
               {#if own?.held}{@render cardCtl(`role:${r.id}`, r.label, own.held)}{/if}
             </span>
           </div>
+          {#if card === r.id && table.seats}<RoleCard {table} seats={table.seats} role={r.id} onclose={() => (card = undefined)} />{/if}
           {#each r.screens as [id, s] (id)}
             {@const mineLine = board.lines[`screen:${id}`]}
             {@const ss = showing(board, r.id, id)}
@@ -646,6 +654,27 @@
     font-size: 13px;
   }
   .everyone,
+  .rname {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-decoration: underline dotted var(--sse-rule);
+    text-underline-offset: 3px;
+  }
+  .rname:hover:not(:disabled) {
+    background: transparent;
+    color: var(--sse-accent);
+  }
+  .asks {
+    margin-left: 8px;
+    font-size: 12px;
+    padding: 0 6px;
+    border: var(--sse-line) solid var(--sse-accent);
+    border-radius: var(--sse-radius);
+    color: var(--sse-accent);
+  }
   .rhead,
   .screen {
     display: flex;

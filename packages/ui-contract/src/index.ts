@@ -5,8 +5,8 @@ export { YEAR_S, INTENT_KINDS, checkIntent, yearsToSeconds, secondsToYears } fro
 export type { Intent, IntentKind, IntentSchema } from "./intent.ts";
 export { audienceOf, decide, gmSeat, tableSeat, sharedTableSeat, within } from "./seat.ts";
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
-export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, removeSeat, checkSeats, startIntents, discoverIntent, joinLink, outputLink, sealedLink, fogViews } from "./seats.ts";
-export type { Audience, SeatPlan } from "./seats.ts";
+export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, updateSeat, oneLayoutPerRole, removeSeat, checkSeats, startIntents, discoverIntent, joinLink, outputLink, sealedLink, fogViews } from "./seats.ts";
+export type { Audience, SeatChange, SeatPlan } from "./seats.ts";
 export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, PackCalendar } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
@@ -53,7 +53,7 @@ export { BOOKMARK_SCHEMA, addBookmark, bookmarkName, bookmarkReachable, bookmark
 export type { Bookmark, Whereabouts } from "./bookmark.ts";
 export { PLAYBOOK_SCHEMA, addChapter, addPage, addPreset, addSection, destOf, emptyPlaybook, findPage, findPreset, fire, isUp, movePreset, movePresetToPage, nextId, pages, playbookFrom, presetWords, presetsInView, reveals, revealsOf, removePart, removePreset, rename, sayOf, showOf, updatePreset, wordsOnly } from "./playbook.ts";
 export type { Chapter, Page, Playbook, Preset, Section, Step } from "./playbook.ts";
-export type { Board, BoardScreen, Dest, HoldCard, Line, Showing, TablePort } from "./board.ts";
+export type { Board, BoardScreen, Dest, HoldCard, Line, SeatPort, Showing, TablePort } from "./board.ts";
 export { CardDeck, cardLabel, holdingCardsOn } from "./holding.ts";
 export type { CardKind, HoldingCard } from "./holding.ts";
 // The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
@@ -142,7 +142,7 @@ export { chartNameLayers, namesInLayer, relabel, namesOnStack, sampleKinds, laye
 export type { SampleAsk, SampledName, NameSample, NamePart, SchemeInfo, NamesOnStack, ShownName, NamesRead } from "./names.ts";
 export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedAsk, EmbedBridge } from "./embed.ts";
 export type { EmbedMode, EmbedOut } from "./embed.ts";
-export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
+export { BRAND_LOGO_MAX, BRAND_MOTTO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
 export type { JoinWords, SeatBrand } from "./brand.ts";
 export { FUEL_FIELDS, MANIFEST_WORDS, fuelGauges, fuelNow, tonnesWords, shipRecordOf, aboardLog, type FuelTank, type FuelGauge, type FuelShip, ABOARD, PERSON, CARGO, STATES, STATE_WORDS, STORES, entryFrom, aboard, crewAboard, living, ageNow, lifeSupportFrom, storeOf, massKg, lifeSupport, entryId, startingValues } from "./manifest.ts";
 export type { AboardEntry, AboardState, LifeSupport, LifeSupportPack, LifeSupportRate, Store, StoreDays } from "./manifest.ts";

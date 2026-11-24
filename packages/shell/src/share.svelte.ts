@@ -4,7 +4,7 @@
 // The GM serves both at once: BroadcastChannel for other windows and screens
 // of this computer, and the site's relay (worker/index.js) for other devices.
 import { BoardHistory, CardDeck, boardWire, holdingCardsOn, driveTo, emptyBoard, hold, rejoin, release, screenHello, send as boardSend, type Board } from "../../ui-contract/src/index.ts";
-import { GmHost, SealedHost, sealedLink, observeOf, addSeat, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type Json, type PlayerRequest, type SeatPlan, type Session, type Shown, type PackDoc, type HoldingCard } from "../../ui-contract/src/index.ts";
+import { GmHost, SealedHost, sealedLink, observeOf, addSeat, updateSeat, oneLayoutPerRole, type SeatChange, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type Json, type PlayerRequest, type SeatPlan, type Session, type Shown, type PackDoc, type HoldingCard } from "../../ui-contract/src/index.ts";
 
 declare const __SSE_APP__: string;
 export const APP_VERSION: string = typeof __SSE_APP__ === "string" ? __SSE_APP__ : "dev";
@@ -31,6 +31,8 @@ export interface Share {
   /** V10: add a seat with its own audience; a fog-of-war audience's starting view is chronicled at once. */
   addSeat(o: Parameters<typeof addSeat>[1]): Promise<string | null>;
   removeSeat(id: string): void;
+  /** The role card (PB7): change a seat's name, layout, names, brand or tabletops; its screens get it at once. */
+  updateSeat(id: string, change: SeatChange): void;
   /** Quick overrides (V3 gap 25): set a seat's live switches now; they go to its screens at once and are never saved. */
   setLive(id: string, live: Record<string, boolean>): void;
   /** Mark a body (and what orbits it) discovered by an audience, or take it back. */
@@ -158,7 +160,7 @@ export async function createShare(session: Session, opening: { universe: { id: s
       sealed.forEach((x) => x.host.setClock(yr));
     },
     async addSeat(o) {
-      const next = addSeat($state.snapshot(st.plan) as SeatPlan, o);
+      const next = oneLayoutPerRole(addSeat($state.snapshot(st.plan) as SeatPlan, o));
       const added = next.audiences.filter((a) => !st.plan.audiences.some((b) => b.id === a.id));
       for (const i of startIntents({ ...next, audiences: added }, root, opening.clock_yr)) {
         const bad = failed(await session.send(i));
@@ -178,6 +180,11 @@ export async function createShare(session: Session, opening: { universe: { id: s
       });
       st.plan = { ...plan, seats };
       host.setState({ seats });
+    },
+    updateSeat(id: string, change: SeatChange) {
+      const next = updateSeat($state.snapshot(st.plan) as SeatPlan, id, change);
+      st.plan = next;
+      host.setState({ seats: next.seats });
     },
     removeSeat(id: string) {
       const next = removeSeat($state.snapshot(st.plan) as SeatPlan, id);

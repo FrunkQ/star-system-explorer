@@ -410,4 +410,27 @@ export interface TablePort {
   links(role: string): { screen: string | null; href: string }[];
   /** The live source: where the GM is now, as the table would be sent it. */
   live(): Shown;
+  /** The roles themselves, for the role card (PB7). Absent: the board can route but not change roles. */
+  seats?: SeatPort;
+}
+
+/** What the role card needs of the table (PB7): the seat plan and the ways to change it. */
+export interface SeatPort {
+  plan(): import("./seats.ts").SeatPlan;
+  /** Fog of war is on offer only when the campaign's data views have one that shows nothing. */
+  fog(): { starts_with: string; discovered_view: string } | null;
+  add(o: Parameters<typeof import("./seats.ts").addSeat>[1]): Promise<string | null>;
+  update(id: string, change: import("./seats.ts").SeatChange): void;
+  remove(id: string): void;
+  /** Quick overrides, live and never saved ("Hide labels"). */
+  setLive(id: string, live: Record<string, boolean>): void;
+  /** Mark a body discovered by a fog-of-war audience, or take it back. */
+  discover(audience: string, address: string, known: boolean): Promise<string | null>;
+  /** The addresses a fog-of-war audience has discovered, read from the kernel's scene for it. */
+  discovered(audience: string): Promise<string[]>;
+  /** The bodies a discovery can be marked on (the system in view). */
+  bodies(): readonly { address: string; label: string }[];
+  /** Players' requests waiting, by seat. */
+  requests(): readonly { id: string; from: string; seat: string; words: string }[];
+  answer(id: string, from: string, approve: boolean): Promise<void>;
 }

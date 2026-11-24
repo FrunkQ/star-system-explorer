@@ -66,15 +66,18 @@ export function grantField(audience: string): string {
  * from its own room; `autoNames` applies those names without asking, inside
  * `scope`.
  */
-export function addSeat(p: SeatPlan, o: { label: string; fog?: { starts_with: string; discovered_view: string }; names?: boolean; autoNames?: string[]; screens?: string[]; sealed?: boolean; embedOrigins?: string[]; brand?: SeatBrand }): SeatPlan {
+export function addSeat(p: SeatPlan, o: { label: string; fog?: { starts_with: string; discovered_view: string }; names?: boolean; autoNames?: string[]; screens?: string[]; sealed?: boolean; embedOrigins?: string[]; brand?: SeatBrand; audience?: string }): SeatPlan {
   let id = slug(o.label);
   const taken = new Set([...p.seats.map((s) => s.id), ...p.audiences.map((a) => a.id), ...RESERVED]);
   for (let n = 2; taken.has(id); n++) id = `${slug(o.label)}-${n}`;
-  const audience: Audience = o.fog ? { id, label: o.label, tag: `discovered:${id}`, starts_with: o.fog.starts_with, discovered_view: o.fog.discovered_view } : { id, label: o.label };
+  // Sharing knowledge (PB7): a role may know what another role's audience knows, so a seat with two screens becomes
+  // two roles with one audience between them.
+  const shared = o.audience && p.audiences.some((a) => a.id === o.audience) ? o.audience : null;
+  const audience: Audience | null = shared ? null : o.fog ? { id, label: o.label, tag: `discovered:${id}`, starts_with: o.fog.starts_with, discovered_view: o.fog.discovered_view } : { id, label: o.label };
   const seat: Seat = {
     id,
     label: o.label,
-    audience: id,
+    audience: shared ?? id,
     authority: "player",
     may_send: o.names ? ["set_value"] : [],
     ...(o.names && o.autoNames?.length ? { auto_approve: [{ intent: "set_value" as const, scope: [...o.autoNames], fields: ["name"] }] } : {}),
@@ -83,7 +86,73 @@ export function addSeat(p: SeatPlan, o: { label: string; fog?: { starts_with: st
     ...(o.embedOrigins?.length ? { embed_origins: [...o.embedOrigins] } : {}),
     ...(o.brand ? { brand: { ...o.brand } } : {}),
   };
-  return { ...p, audiences: [...p.audiences, audience], seats: [...p.seats, seat] };
+  return { ...p, audiences: audience ? [...p.audiences, audience] : p.audiences, seats: [...p.seats, seat] };
+}
+
+/** What the role card changes on a seat (PB7). `null` takes a field away. Sealed is chosen when the role is made. */
+export interface SeatChange {
+  label?: string;
+  names?: boolean;
+  /** Names apply without asking, inside these scopes; empty: they are asked for. */
+  autoNames?: string[];
+  embedOrigins?: string[];
+  brand?: SeatBrand | null;
+  /** The one layout (screen document) its screens open; null: the default player screen. */
+  screen?: string | null;
+}
+
+/** Change a seat from its role card. Its own audience takes the new name too; the table keeps its id. */
+export function updateSeat(p: SeatPlan, id: string, c: SeatChange): SeatPlan {
+  const seat = p.seats.find((s) => s.id === id);
+  if (!seat) return p;
+  const n: Seat = { ...seat };
+  if (c.label !== undefined && c.label.trim()) n.label = c.label.trim();
+  if (c.names !== undefined) n.may_send = c.names ? [...new Set([...n.may_send, "set_value" as const])] : n.may_send.filter((k) => k !== "set_value");
+  if (c.autoNames !== undefined || c.names === false) {
+    const auto = n.may_send.includes("set_value") ? (c.autoNames ?? n.auto_approve?.[0]?.scope ?? []) : [];
+    if (auto.length) n.auto_approve = [{ intent: "set_value", scope: [...auto], fields: ["name"] }];
+    else delete n.auto_approve;
+  }
+  if (c.embedOrigins !== undefined) {
+    if (c.embedOrigins.length) n.embed_origins = [...c.embedOrigins];
+    else delete n.embed_origins;
+  }
+  if (c.brand !== undefined) {
+    if (c.brand) n.brand = { ...c.brand };
+    else delete n.brand;
+  }
+  if (c.screen !== undefined) {
+    if (c.screen) n.screens = [c.screen];
+    else delete n.screens;
+  }
+  const audiences = c.label?.trim() && seat.audience === seat.id ? p.audiences.map((a) => (a.id === seat.audience ? { ...a, label: c.label!.trim() } : a)) : p.audiences;
+  return { ...p, audiences, seats: p.seats.map((s) => (s.id === id ? n : s)) };
+}
+
+/**
+ * One layout per role (PB7, design 7.3 and question 4): a seat that opens several screen documents becomes one role
+ * per document, sharing its audience ("Bridge", "Bridge: Tarn survey report"). The first keeps the seat's id.
+ */
+export function oneLayoutPerRole(p: SeatPlan, label: (screen: string) => string = (s) => s.replace(/^players\.|\.screen\.json$/g, "")): SeatPlan {
+  if (!p.seats.some((s) => (s.screens?.length ?? 0) > 1)) return p;
+  const seats: Seat[] = [];
+  const taken = new Set([...p.seats.map((s) => s.id), ...p.audiences.map((a) => a.id), ...RESERVED]);
+  for (const s of p.seats) {
+    const [first, ...rest] = s.screens ?? [];
+    if (!rest.length) {
+      seats.push(s);
+      continue;
+    }
+    seats.push({ ...s, screens: [first!] });
+    for (const sc of rest) {
+      let id = `${s.id}-${slug(label(sc))}`;
+      for (let k = 2; taken.has(id); k++) id = `${s.id}-${slug(label(sc))}-${k}`;
+      taken.add(id);
+      const { shown: _shown, live: _live, ...keep } = s;
+      seats.push({ ...keep, id, label: `${s.label}: ${label(sc)}`, screens: [sc] });
+    }
+  }
+  return { ...p, seats };
 }
 
 /** Remove a seat, and its audience when no other seat uses it. */

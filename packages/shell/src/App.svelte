@@ -276,7 +276,15 @@
   });
   // The table for the Switchboard (PB2): the share, with the live view as its first source.
   $effect(() => {
-    ws.table = share ? tablePort(share, () => here()) : undefined;
+    ws.table = share && session
+      ? tablePort(share, () => here(), {
+          session,
+          bodies: () => bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address),
+          scope: () => (factsDoc as unknown as AuthoredFacts).scope,
+          at_yr: () => (factsDoc as unknown as AuthoredFacts).at_yr,
+          onchange: () => (ws.revision++, ws.notePhysics()),
+        })
+      : undefined;
   });
   let opened: unknown[] = [];
   loadPacks()
@@ -1676,9 +1684,6 @@
           system={scene.system}
           title={scene.title}
           subjects={scene.subjects}
-          seatBodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)}
-          scope={(factsDoc as unknown as AuthoredFacts).scope}
-          at_yr={(factsDoc as unknown as AuthoredFacts).at_yr}
           landingUnsent={ws.screen === "surface" && !!lastLanding}
           {here}
           onswitchboard={() => go("switchboard")}
