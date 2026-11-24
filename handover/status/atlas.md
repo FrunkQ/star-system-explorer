@@ -28,7 +28,8 @@ ask him for it; never recreate his jokes from memory. The Weyland-Yutani logo st
 | AT7 margin notes and The Guide edition (gadget look, cover every time; 14A note 4) | done; five of Alex's lines held for him (they type a figure); campaign-kept "Not this one" and the GM's Guide's notes next; Alex reads the note set before it ships | packages/AT7.md |
 | AT8 Why on the Atlas, "How we know" | not started | |
 | AT10 the GM's copy: pencil and ink on the page and in print | not started | |
-| AT14, AT15 interface kits and the four starters | not started | |
+| AT14 `sse.kit/1`, its loader and checks, palettes with a contrast check, the four starters as documents | done for the document and checks; "Interface" on the role card and swatches are the Run desk thread's (AT13) | packages/AT14.md |
+| AT15 wearing a kit: the four starters on screen | not started; needs AT13 (parts declare controls) and AT15a | |
 | AT9, AT13 (Run desk), AT11, AT16 (Orac), AT15a (look transitions thread) | other threads | |
 
 Seams agreed by message: the look transitions thread ("Build look transitions for screens", AT15a) builds
