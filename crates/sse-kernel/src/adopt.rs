@@ -1059,9 +1059,18 @@ pub(crate) fn resolved_system(
         at_s: (at_s != i64::MAX).then_some(at_s),
         facts: serde_json::Value::Object(facts_json),
         spec: spec.map(|x| serde_json::to_value(x).expect("plain data")),
-        surfaces: envelopes
+        // Each world's surface record, with its vapour plumes when it has
+        // any (third audit R10: drawn above the limb in True).
+        surfaces: bodies
             .iter()
-            .map(|e| serde_json::to_value(e).expect("plain data"))
+            .zip(&envelopes)
+            .map(|(b, e)| {
+                let mut v = serde_json::to_value(e).expect("plain data");
+                if let Some(p) = sse_surface::plumes::plumes(b, e, seed) {
+                    v["plumes"] = serde_json::to_value(p).expect("plain data");
+                }
+                v
+            })
             .collect(),
         tiles: out_tiles,
         refused,

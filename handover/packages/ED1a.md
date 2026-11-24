@@ -31,9 +31,14 @@ Status: part 1 done 24 Nov 2026 (thread "Build planet and star editing"). Design
 - `subjectClass(subject)` (handles.ts) gives a scene subject's scale class.
 - Tests that read figures as text moved with it: shell.e2e (Tarn's surface in °C, Hasp's orbit "412 thousand km"), walk.e2e (Mars warms past about 230 K, in K or °C); editing.e2e presses the card's orbit unit round its readings and checks the handle follows.
 
-## Next (part 2b)
+## Part 2b: the check and the table (done 24 Nov)
 
-The other screens' own number formatting onto `say` (about 250 places use toFixed, toPrecision or toLocaleString), with a ledger check that counts them per file and fails if one grows, going down to zero as the typed-copy ledger did; "How figures are said" on Reference beside Units; player seats inheriting the GM's choices. Planet radii as a rung for a moon's orbit needs the parent's radius passed in; local days and years need the world's calendar.
+- `tests/ui/figures-ledger.test.ts`: the editing grammar's check on figures. Each file's own number formatting (toFixed, toPrecision, toLocaleString, outside comments) in views, shell, chart grammar, ui-contract and renderer is counted against `tests/ui/figures-ledger.json`; figures.ts itself is exempt. A file may go down, never up, and a new file starts at none; when one goes down, lower its row (`WRITE_LEDGER=1 node --test tests/ui/figures-ledger.test.ts` rewrites the ledger from the code). 309 on 24 Nov.
+- Reference, Units page: "How figures are said", from `figureTable()`: each kind and what it is about, its readings in click order with their units, the chosen one marked; "Use the scheme's everywhere" clears the campaign's choices.
+
+## Next (part 2c)
+
+Bring the ledger down, biggest first: ui-contract/src/replay.ts (15), GalaxyChart (14), Surface (14), Body (10), BodyTimeline, StarDisc (9). Not every count is a figure (a CSS percentage, an id), but each is either moved onto `say` or given a small named helper outside the views. Player seats inheriting the GM's choices; planet radii as a rung for a moon's orbit (needs the parent's radius); local days and years (needs the world's calendar).
 
 ## Integration points
 
