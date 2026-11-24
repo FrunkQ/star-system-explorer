@@ -116,3 +116,96 @@ fn a_sweep_can_be_cancelled_and_refuses_bad_ranges() {
     let c = send(&mut k, serde_json::json!({"op":"cancel_job","job":id}));
     assert_eq!(c["type"], "job_cancelled", "{c}");
 }
+
+/// K3: a world typed with a mass and makeup but no radius gets the radius
+/// its makeup gives, so it has ground (Zeng 2016: an Earth-like makeup at
+/// one Earth mass is within a percent of Earth).
+#[test]
+fn a_world_with_no_radius_takes_one_from_its_mass_and_makeup() {
+    let mut k = kernel();
+    let au = sse_core::sheet::AU;
+    let b = "u:sw/sys:0/body:2";
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,"edits":[
+            {"address":b,"field":"body.mass","value":sse_core::sheet::M_EARTH},
+            {"address":b,"field":"makeup.metal","value":0.32},
+            {"address":b,"field":"makeup.rock","value":0.68},
+            {"address":b,"field":"orbit.host","value":"u:sw/sys:0/star:0"},
+            {"address":b,"field":"orbit.semi_major_axis","value":au}
+        ]}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let rs = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SYS,
+        "tiles":[{"body":b,"face":0,"level":0,"x":0,"y":0}]}),
+    );
+    let s = rs["surfaces"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["address"] == b)
+        .cloned();
+    let s = s.unwrap_or_else(|| panic!("no surface: {}", rs["refused"]));
+    let text = s.to_string();
+    eprintln!("{}", &text[..text.len().min(300)]);
+    assert_eq!(
+        rs["tiles"].as_array().unwrap().len(),
+        1,
+        "{}",
+        rs["refused"]
+    );
+    // A gas giant with no radius still has none.
+    assert_eq!(
+        crate::adopt::radius_from_makeup(
+            1.9e27,
+            &[("makeup.gas".to_string(), sse_core::cbor::Value::Float(0.9))]
+                .into_iter()
+                .collect()
+        ),
+        None
+    );
+    let r = crate::adopt::radius_from_makeup(
+        sse_core::sheet::M_EARTH,
+        &[
+            (
+                "makeup.metal".to_string(),
+                sse_core::cbor::Value::Float(0.32),
+            ),
+            (
+                "makeup.rock".to_string(),
+                sse_core::cbor::Value::Float(0.68),
+            ),
+        ]
+        .into_iter()
+        .collect(),
+    )
+    .unwrap();
+    assert!((r / 6.371e6 - 1.0).abs() < 0.01, "{r}");
+}
+
+/// K2: Mars typed at 3390 km; left out, its mass and Earth's default
+/// makeup give the radius the science expects, and nothing moves.
+#[test]
+fn what_the_science_expects_for_a_set_field() {
+    let mut k = kernel();
+    let before = send(&mut k, serde_json::json!({"op":"state_hash","at_s":0}));
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"expects","system":SYS,"address":"u:sw/sys:0/body:1",
+            "fields":["body.radius","planet.surface_temperature","body.albedo"]}),
+    );
+    assert_eq!(r["type"], "expected", "{r}");
+    let f = r["fields"].as_array().unwrap();
+    assert_eq!(f[0]["set"], 3.39e6);
+    let want = crate::adopt::radius_from_makeup(6.42e23, &Default::default()).unwrap();
+    // The surface's reference radius is the solid one, within a fraction
+    // of a percent of the bulk radius the block gives.
+    let got = f[0]["expects"].as_f64().unwrap();
+    assert!((got / want - 1.0).abs() < 0.005, "{got} {want}");
+    assert!(f[1]["expects"].as_f64().unwrap() > 150.0, "{r}");
+    assert!(f[2]["expects"].is_null() && f[2]["why"].is_string(), "{r}");
+    let after = send(&mut k, serde_json::json!({"op":"state_hash","at_s":0}));
+    assert_eq!(before, after);
+}

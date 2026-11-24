@@ -388,3 +388,4 @@
 {"type":"tech_set","change_id":"315701312b1b989007758682a132d6e38fabb8ef4d1c189737190dfd5f5457aa","record_hash":"c97eb7253f84025a1658bc851675cbbc69eab1b56ff3c8dea1179aa953ca1fff"}
 {"type":"tech_read","holder":"u:k13","tech":{"holds":[],"level":[4,{"by":"u:k13","since_s":0}]}}
 {"type":"error","code":"bad_tech","message":"no tech ladder in the pack stack (load packs/base-tech or a setting's own)"}
+{"type":"expected","address":"u:k13/sys:0/body:3","fields":[{"expects":null,"field":"body.radius","set":6371000,"why":"left out, the world has no ground to work it out from"},{"expects":null,"field":"body.albedo","set":null,"why":"the kernel does not work this field out yet"}]}

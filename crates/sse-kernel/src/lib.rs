@@ -5938,6 +5938,12 @@ impl Kernel {
                 at_s,
             } => self.classify_preview(packs, scheme, scope, at_s)?,
             Request::ClassSample { packs, classes } => self.class_sample(packs, classes)?,
+            Request::Expects {
+                system,
+                address,
+                fields,
+                at_s,
+            } => sweep::expects(self, system, address, fields, at_s)?,
             Request::Programs { at_s } => {
                 let ps = self.observe.programs.clone();
                 let u = self.universe()?;

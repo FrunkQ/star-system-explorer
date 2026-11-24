@@ -8,9 +8,9 @@
 
 use crate::protocol::{AuthoredEdit, JobSpec, Request, Response};
 use crate::{err, json_to_value, Kernel};
+use sse_chronicle::UniverseTime;
 use sse_core::cbor::Value;
 use sse_core::math as m;
-use sse_chronicle::UniverseTime;
 use sse_core::Address;
 use std::collections::BTreeMap;
 
@@ -317,4 +317,91 @@ impl Sweep {
             })).collect::<Vec<_>>(),
         })
     }
+}
+
+/// Where the kernel works a set field out when it is left out: the field
+/// and the path in the body's `resolved_system` surface.
+const WORKED_OUT: [(&str, &str); 3] = [
+    ("body.radius", "reference_radius_m"),
+    ("planet.surface_temperature", "t_surface_now_k"),
+    ("body.surface_gravity", "gravity_m_s2"),
+];
+
+/// K2 `expects`: each field left out on its own throwaway branch.
+pub(crate) fn expects(
+    k: &mut Kernel,
+    system: String,
+    address: String,
+    fields: Vec<String>,
+    at_s: Option<i64>,
+) -> Result<Response, Response> {
+    if fields.is_empty() || fields.len() > 32 {
+        return Err(err("bad_request", "fields: 1 to 32 field names"));
+    }
+    let u = k.universe()?;
+    let a = crate::in_universe(&u.root, &address)?;
+    let sys = crate::in_universe(&u.root, &system)?;
+    if !sys.contains(&a) {
+        return Err(err("bad_address", format!("{a} is not in {sys}")));
+    }
+    let st = u
+        .chronicle
+        .state_at(UniverseTime::seconds(at_s.unwrap_or(i64::MAX)));
+    let row = st.facts.get(&a).cloned().unwrap_or_default();
+    let mut out = vec![];
+    for field in fields {
+        let set = row
+            .get(&field)
+            .map(|v| serde_json::to_value(v).unwrap_or_default());
+        let Some(&(_, path)) = WORKED_OUT.iter().find(|(f, _)| *f == field) else {
+            out.push(
+                serde_json::json!({"field": field, "set": set, "expects": null,
+                "why": "the kernel does not work this field out yet"}),
+            );
+            continue;
+        };
+        let branch = match k.dispatch(Request::Branch {
+            label: format!("expects {a} {field}"),
+        })? {
+            Response::BranchOpened { branch } => branch,
+            other => return Err(other),
+        };
+        let result = (|| {
+            k.dispatch(Request::BranchSet {
+                branch: branch.clone(),
+                edit: AuthoredEdit {
+                    address: a.to_string(),
+                    field: field.clone(),
+                    value: serde_json::Value::Null,
+                    occurred_at_s: at_s.unwrap_or(0),
+                    impossible: false,
+                },
+            })?;
+            match k.dispatch(Request::ResolvedSystem {
+                system: system.clone(),
+                at_s,
+                tiles: None,
+                branch: Some(branch.clone()),
+            })? {
+                Response::SystemResolved { surfaces, .. } => Ok(surfaces
+                    .iter()
+                    .find(|s| s["address"] == a.to_string().as_str())
+                    .map(|s| s[path].clone())),
+                other => Err(other),
+            }
+        })();
+        let _ = k.dispatch(Request::Discard { branch });
+        match result? {
+            Some(v) => out.push(serde_json::json!({"field": field, "set": set, "expects": v,
+                "from": format!("resolved_system surface {path}")})),
+            None => out.push(
+                serde_json::json!({"field": field, "set": set, "expects": null,
+                "why": "left out, the world has no ground to work it out from"}),
+            ),
+        }
+    }
+    Ok(Response::Expected {
+        address: a.to_string(),
+        fields: out,
+    })
 }

@@ -861,6 +861,20 @@ pub enum Request {
         #[ts(optional, type = "number")]
         at_s: Option<i64>,
     },
+    /// K2 (editing design 15): "what the science expects" for fields that
+    /// are set: each field left out on a what-if branch that is thrown away,
+    /// the system resolved, and the result read where the kernel works it
+    /// out (`body.radius` from the mass and makeup, `planet.surface_temperature`
+    /// from the starlight and the air, `body.surface_gravity` from both).
+    /// A field the kernel does not work out yet answers null, with why.
+    Expects {
+        system: String,
+        address: String,
+        fields: Vec<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+    },
     /// A sample world for each class (the class gallery's pictures, V3 gaps
     /// item 35): from the atlas of `packs` (as `classify_preview`), the
     /// class's own `in` example that sits most centrally in its bands is
@@ -2328,6 +2342,7 @@ impl Request {
             Request::Sift { .. } => "sift",
             Request::ClassifyPreview { .. } => "classify_preview",
             Request::ClassSample { .. } => "class_sample",
+            Request::Expects { .. } => "expects",
             Request::PlanDescent { .. } => "plan_descent",
             Request::SurveyCaves { .. } => "survey_caves",
             Request::SurfaceFrames { .. } => "surface_frames",
@@ -2630,6 +2645,11 @@ pub fn ops() -> Vec<OpInfo> {
             "classify_preview",
             Cost::Light,
             "GM machine only; one atlas load plus one label per body in scope (a campaign of a few systems: milliseconds)",
+        ),
+        o(
+            "expects",
+            Cost::Light,
+            "GM machine only; per field one branch edit and one system resolve",
         ),
         o(
             "class_sample",
@@ -3729,6 +3749,13 @@ pub enum Response {
         bodies: Vec<serde_json::Value>,
         unclassified: u32,
         failing_examples: Vec<String>,
+    },
+    /// `expects`: per field asked, `{field, set, expects, from}` (`expects`
+    /// null with `why` when the kernel does not work it out yet).
+    Expected {
+        address: String,
+        #[ts(type = "unknown[]")]
+        fields: Vec<serde_json::Value>,
     },
     /// `class_sample`: the branch holding the samples, one sample per class
     /// found, in the order asked: `{class, scheme, example, system, body,

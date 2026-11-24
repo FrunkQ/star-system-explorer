@@ -3477,5 +3477,6 @@
  {"op": "holdings_in", "bounds": "u:k13/sys:0", "layer": "misc.claims"},
  {"op": "set_tech", "holder": "u:k13", "level": 4, "at_s": 0},
  {"op": "tech_of", "holder": "u:k13"},
- {"op": "tech_reading", "holder": "u:k13", "parts": [{"part": "structure", "needs": {}}]}
+ {"op": "tech_reading", "holder": "u:k13", "parts": [{"part": "structure", "needs": {}}]},
+ {"op": "expects", "system": "u:k13/sys:0", "address": "u:k13/sys:0/body:3", "fields": ["body.radius", "body.albedo"]}
 ]
