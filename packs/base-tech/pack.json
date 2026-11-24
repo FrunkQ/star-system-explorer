@@ -676,9 +676,6 @@
      "name": "Neutral ladder",
      "about": "Real history on the lower rungs, so 'Sol today' is level 4. A setting defines its own ladder; this one is the default.",
      "improve_per_level_beyond": 1.5,
-     "size_per_level_short": 10.0,
-     "shrink_per_level_beyond": 0.5,
-     "shrink_levels": 2,
      "improve_note": "past an advance's home level its figure gets half as much better again per level (times 1.5 where higher is better, divided by 1.5 where lower is), until it meets the next cited allowed or ceiling mark, then stops",
      "levels": [
       {
@@ -909,6 +906,7 @@
        "exhaust_km_s": 4.565,
        "waste_per_jet": 0.0
       },
+      "fuel": "hydrogen-oxygen",
       "family": "near-ceiling",
       "fixed": [
        "waste_per_jet"

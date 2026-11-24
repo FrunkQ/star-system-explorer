@@ -1,5 +1,5 @@
 {
-  "about": "Sol today craft, RS2 part 2 (first batch, 24 Nov 2026): figures read from NASA's NSSDCA Master Catalog pages, one source per craft, quoted in `as_written`. Field names follow SSE4-atomic-rockets-plan.md section 11.3 (power[], engines[], masses in tonnes). Launch vehicles, stages and their engines are in parts.json. A figure marked `derived` is worked out here from two cited ones and says how. Craft with no NSSDCA page that could be read (Cassini, SNAP-10A, ISS) and craft NSSDCA does not describe in parts (STS-1, Falcon 9, V-2) come from their own primary sources in the next batch.",
+  "about": "Sol today craft, RS2 part 2 (first batch 24 Nov 2026 from NASA's NSSDCA; second batch 24 Nov from each craft's own source, named in src and src_note). Figures are quoted in `as_written`. Field names follow SSE4-atomic-rockets-plan.md section 11.3 (power[], engines[], masses in tonnes, temperatures in kelvin). Launch vehicles, stages and their engines are in parts.json. A figure marked `derived` is worked out here from cited ones and says how; `secondary` means not yet from a primary source; `to_read` is a figure still wanted.",
   "craft": [
     {
       "id": "voyager-2", "name": "Voyager 2", "cospar": "1977-076A",
@@ -91,6 +91,428 @@
       "sunshield_m": [10, 22], "sunshield_mark": "cited, rounded ('roughly')",
       "instruments": ["NIRCam", "NIRSpec", "near-IR tunable filter imager", "MIRI"],
       "as_written": "Total mass of JWST is 6500 kg, including the station-keeping propellant ... 6.6 meter diameter aperture ... sunshield roughly 10 x 22 meters"
+    },
+    {
+      "id": "cassini-huygens",
+      "name": "Cassini-Huygens",
+      "cospar": "1997-061A",
+      "src": "https://www.jpl.nasa.gov/news/press_kits/cassini.pdf",
+      "src_note": "Cassini Launch Press Kit, October 1997 (pre-launch planned values); NSSDCA's spacecraft page gave errors, its planetary page (https://nssdc.gsfc.nasa.gov/planetary/cassini.html) gives the 630 W RTG figure",
+      "mass_t": {
+        "launch": 5.712,
+        "orbiter": 2.125,
+        "propellant": 3.132,
+        "huygens": 0.32,
+        "without_adapter": 5.577
+      },
+      "dimensions": {
+        "height_m": 6.8,
+        "height_note": "the press kit says 6.8 m on p.46 and 6.7 m in Quick Facts",
+        "width_m": 4.0,
+        "high_gain_dish_m": 4.0
+      },
+      "power": [
+        {
+          "id": "gphs-rtg",
+          "kind": "radioisotope",
+          "count": 3,
+          "electric_w": 885,
+          "electric_w_is": "all three together, as Quick Facts states it",
+          "measured": [
+            {
+              "date": "1997-10-15",
+              "electric_w": 885
+            },
+            {
+              "date": "2004-07-01",
+              "electric_w": 675,
+              "mark": "planned"
+            },
+            {
+              "date": "2008-07-01",
+              "electric_w": 633,
+              "mark": "planned, end of the prime mission"
+            }
+          ],
+          "law": {
+            "kind": "decay",
+            "since": "1997-10-15",
+            "half_life_y": "to derive in RS3 once flown values are read",
+            "mark": "to_read"
+          },
+          "as_written": "Power: 885 watts (633 watts at end of mission) from radioisotope thermoelectric generators"
+        }
+      ],
+      "engines": [
+        {
+          "id": "cassini-main-445n",
+          "count": 2,
+          "redundant": true,
+          "fuels": [
+            "mmh",
+            "n2o4"
+          ],
+          "thrust_n": 445,
+          "isp_s": "to_read",
+          "as_written": "445-newton Engine (1 of 2) ... use monomethylhydrazine as the fuel and nitrogen tetroxide as the oxidizer"
+        },
+        {
+          "id": "cassini-rcs",
+          "count": 16,
+          "fuels": [
+            "n2h4"
+          ],
+          "thrust_n": "to_read",
+          "as_written": "Sixteen smaller engines called thrusters use hydrazine"
+        }
+      ],
+      "big_burns": [
+        {
+          "name": "deep space manoeuvre",
+          "date": "1999-01-20",
+          "dv_m_s": "to_read"
+        },
+        {
+          "name": "Saturn orbit insertion",
+          "date": "2004-07-01",
+          "duration_min": 94,
+          "dv_m_s": "to_read"
+        }
+      ],
+      "flybys": [
+        {
+          "body": "venus",
+          "date": "1998-04-25",
+          "altitude_km": 300
+        },
+        {
+          "body": "venus",
+          "date": "1999-06-23",
+          "altitude_km": 1530
+        },
+        {
+          "body": "earth",
+          "date": "1999-08-17",
+          "altitude_km": 800
+        },
+        {
+          "body": "jupiter",
+          "date": "2000-12-30",
+          "distance_km": 9655000,
+          "note": "Quick Facts rounds it to 10 million km"
+        }
+      ]
+    },
+    {
+      "id": "snap-10a",
+      "name": "SNAP-10A (Snapshot)",
+      "cospar": "1965-027A",
+      "src": "https://www.osti.gov/servlets/purl/4174823",
+      "src_note": "Atomics International NAA-SR-MEMO-8679 Rev. 1, SNAP 10A Reactor Design Summary, 26 Oct 1964 (design values). Flight values from a secondary account (https://drewexmachina.com/2015/04/03/first-nuclear-reactor-in-orbit, A. LePage, 2015), marked secondary",
+      "launched": "1965-04-03",
+      "orbit_km": [
+        1287,
+        1306
+      ],
+      "inclination_deg": 90.3,
+      "orbit_mark": "secondary",
+      "mass_t": {
+        "nuclear_system": 0.2263,
+        "nuclear_system_mark": "derived: 499 lb",
+        "snap_payload": 0.435,
+        "snap_payload_mark": "secondary",
+        "with_agena": 2.4,
+        "with_agena_mark": "secondary"
+      },
+      "power": [
+        {
+          "id": "snap-10a-reactor",
+          "kind": "fission",
+          "count": 1,
+          "thermal_w": 39500,
+          "electric_w": 525,
+          "electric_w_is": "design minimum net; flight peaked at 600 W and settled at 530 W (secondary)",
+          "conversion": "silicon-germanium thermoelectric, about 1.8% (secondary); 525/39500 = 1.3% net (derived)",
+          "coolant": {
+            "kind": "NaK",
+            "outlet_k": 803.7,
+            "inlet_k": 732.6,
+            "mark": "derived from 987 F and 859 F"
+          },
+          "radiator": {
+            "area_m2": 5.8,
+            "area_mark": "secondary",
+            "reject_k": "to_read"
+          },
+          "fuel": {
+            "substance": "u235-zrh",
+            "u235_kg": 4.75,
+            "elements": 37
+          },
+          "law": {
+            "kind": "constant",
+            "design_life_y": 1
+          },
+          "flown": {
+            "days": 43,
+            "why": "a failed bus voltage regulator on the Agena made it eject its reflectors, as designed, on 16 May 1965 (secondary)"
+          },
+          "as_written": "produces 39.5 thermal kilowatts ... converted to 525 electrical watts through a thermoelectric convertor"
+        }
+      ],
+      "engines": [
+        {
+          "id": "eos-cesium-ion-5cm",
+          "count": 1,
+          "fuels": [
+            "cs"
+          ],
+          "energy_from": "electric",
+          "electric_w": 400,
+          "thrust_n": 0.0085,
+          "mark": "secondary",
+          "flown": "about one hour; stopped because it caused electromagnetic interference"
+        }
+      ]
+    },
+    {
+      "id": "iss",
+      "name": "International Space Station",
+      "cospar": "1998-067A",
+      "src": "https://www.nasa.gov/wp-content/uploads/2021/02/473486main_iss_atcs_overview.pdf",
+      "src_note": "NASA, Active Thermal Control System (ATCS) Overview. The station's power, mass, volume, life support and shielding figures are still to read",
+      "radiators": [
+        {
+          "id": "iss-hrs",
+          "name": "main radiators (heat rejection system)",
+          "count": 6,
+          "panel_m": [
+            23.3,
+            3.4
+          ],
+          "area_m2_each": 79.2,
+          "area_mark": "derived, one face: 23.3 m x 3.4 m",
+          "reject_w": 70000,
+          "reject_w_is": "two loops of 35 kW",
+          "coolant": "ammonia",
+          "coolant_supply_k": 275.9,
+          "outlet_goal_k": 233.2,
+          "as_written": "designed to provide 35 kW of heat rejection per loop for a total capability of 70 kW"
+        },
+        {
+          "id": "iss-pvr",
+          "name": "photovoltaic radiators",
+          "count": 4,
+          "panel_m": [
+            13.6,
+            3.12
+          ],
+          "mass_t": 0.7407,
+          "reject_w_each": 14000,
+          "as_written": "can reject up to 14 kW of heat into deep space"
+        }
+      ],
+      "to_read": [
+        "solar arrays and usable power",
+        "battery",
+        "mass and pressurised volume",
+        "oxygen and water per person per day; water recovery fraction",
+        "shielding"
+      ]
+    },
+    {
+      "id": "sts-1-columbia",
+      "name": "STS-1 Columbia",
+      "cospar": "1981-034A",
+      "src": "https://www.nasa.gov/wp-content/uploads/2023/05/sts-001-press-kit.pdf",
+      "src_note": "STS-1 press kit, April 1981. It gives the mission, not the hardware: orbiter, SSME, SRB, OMS and tile figures are still to read from the Shuttle press reference",
+      "launched": "1981-04-12",
+      "inclination_deg": 40.3,
+      "big_burns": [
+        {
+          "name": "OMS-1",
+          "met": "0:10:32",
+          "dv_m_s": 50.3,
+          "orbit_nmi_after": [
+            130,
+            57
+          ]
+        },
+        {
+          "name": "OMS-2",
+          "met": "0:44:00",
+          "dv_m_s": 41.8,
+          "orbit_nmi_after": [
+            130,
+            130
+          ]
+        },
+        {
+          "name": "OMS-3",
+          "met": "6:20:41",
+          "dv_m_s": 11.1,
+          "orbit_nmi_after": [
+            150,
+            134
+          ]
+        },
+        {
+          "name": "OMS-4",
+          "met": "7:05:31",
+          "dv_m_s": 11.4,
+          "orbit_nmi_after": [
+            150,
+            150
+          ]
+        },
+        {
+          "name": "deorbit",
+          "met": "53:28:00",
+          "dv_m_s": 91.1,
+          "orbit_nmi_after": [
+            149,
+            2
+          ]
+        }
+      ],
+      "big_burns_note": "delta-v printed in ft/s, converted here (1 ft = 0.3048 m)",
+      "ascent": {
+        "srb_sep": {
+          "met": "0:02:12",
+          "altitude_km": 49.7
+        },
+        "meco": {
+          "met": "0:08:32",
+          "altitude_km": 118.5,
+          "speed_km_h": 26715
+        }
+      },
+      "entry": {
+        "interface_met": "53:56:02"
+      },
+      "landing": {
+        "site": "Rogers Dry Lake, Edwards AFB",
+        "met": "54:27:43",
+        "touchdown_kn": 185,
+        "touchdown_note": "185 knots on p.14, 180 KEAS in the p.27 table",
+        "sink_m_s": 0.23
+      },
+      "payload_bay_m": [
+        4.6,
+        18
+      ],
+      "to_read": [
+        "orbiter masses and size",
+        "SSME, SRB, ET and OMS figures",
+        "fuel cells and radiators",
+        "tile types and their temperature limits",
+        "entry speed and peak heating"
+      ]
+    },
+    {
+      "id": "falcon-9-ft",
+      "name": "Falcon 9 (v1.1 upgraded, landing first stage)",
+      "src": "https://wayback.archive.org/web/20160103224230/http://www.spacex.com/sites/spacex/files/falcon_9_users_guide_rev_2.0.pdf",
+      "src_note": "Falcon 9 User's Guide Rev 2, 21 Oct 2015. Isp and masses are not given there",
+      "dimensions": {
+        "height_m": 70,
+        "diameter_m": 3.66,
+        "fairing_diameter_m": 5.2
+      },
+      "stages": [
+        {
+          "stage": 1,
+          "engines": [
+            {
+              "engine": "merlin-1d",
+              "count": 9
+            }
+          ],
+          "thrust_sl_n": 6804000,
+          "thrust_sl_n_each": 756000,
+          "fuels": [
+            "lox",
+            "rp-1"
+          ],
+          "recovery": {
+            "legs": 4,
+            "grid_fins": 4,
+            "cold_gas": "nitrogen",
+            "as_written": "four deployable landing legs, which are locked against the first-stage tank during ascent"
+          }
+        },
+        {
+          "stage": 2,
+          "engines": [
+            {
+              "engine": "merlin-1d-vacuum",
+              "count": 1
+            }
+          ],
+          "thrust_vac_n": 934000,
+          "expansion_ratio": 165
+        }
+      ],
+      "to_read": [
+        "Isp at sea level and in vacuum",
+        "stage dry and propellant masses",
+        "burn times",
+        "a landing flight's boost-back, entry and landing burns"
+      ]
+    },
+    {
+      "id": "v-2",
+      "name": "V-2 (A-4)",
+      "src": "https://www.nationalmuseum.af.mil/Visit/Museum-Exhibits/Fact-Sheets/Display/Article/195894/v-2-rocket/",
+      "src_note": "US Air Force museum fact sheet; dimensions from https://www.designation-systems.net/dusrm/app4/v-2.html, which warns its figures may be slightly off. Both are secondary; a German or US Army primary report is still to read",
+      "mark": "secondary",
+      "dimensions": {
+        "length_m": 14.03,
+        "diameter_m": 1.65,
+        "fin_span_m": 3.56
+      },
+      "mass_t": {
+        "weight": 13.0,
+        "weight_note": "given as Weight; launch mass not confirmed"
+      },
+      "engines": [
+        {
+          "engine": "a-4-engine",
+          "count": 1,
+          "fuels": [
+            "lox",
+            "ethanol-water"
+          ],
+          "thrust_sl_n": 249100,
+          "thrust_note": "56,000 lbf (USAF); designation-systems gives 267 kN for 70 s",
+          "flow_kg_s": {
+            "ethanol-water": 58.1,
+            "lox": 72.1,
+            "mark": "derived from 128 and 159 lb/s"
+          },
+          "turbopump": {
+            "steam_from": [
+              "h2o2",
+              "sodium permanganate"
+            ],
+            "power_w": 432500,
+            "power_mark": "derived from 580 hp",
+            "rpm": 3800
+          },
+          "isp_s": "to_read; derived check 249.1 kN / 130.2 kg/s = 1.91 km/s (about 195 s)"
+        }
+      ],
+      "flight": {
+        "max_speed_km_h": 5580,
+        "range_km": 320,
+        "highest_km": 213,
+        "highest_note": "TF-1, 22 Aug 1951, US firing"
+      },
+      "to_read": [
+        "first flight past 100 km (MW 18014, June 1944) from a primary source",
+        "empty and propellant masses",
+        "the alcohol fraction"
+      ]
     }
   ]
 }

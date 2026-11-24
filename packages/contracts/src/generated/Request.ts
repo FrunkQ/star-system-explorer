@@ -90,7 +90,7 @@ edits?: unknown[],
  * A halo cell's index (from `halo_cell`): `halo` is then one of its
  * catalogued haloes (`halo:3` or its full address), with its own history.
  */
-cell?: [bigint, bigint, bigint], } | { "op": "web_slice", z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "surface_frames", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, detail?: string, 
+cell?: [bigint, bigint, bigint], } | { "op": "web_slice", cube?: boolean, z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "surface_frames", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, detail?: string, 
 /**
  * At most this many frames, evenly spaced, always ending on the epoch.
  */

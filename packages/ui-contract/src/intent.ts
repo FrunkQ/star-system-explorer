@@ -71,9 +71,10 @@ export type Intent =
    * that undo as one. A null landmark on a field drops its exception, so the fact follows its thing again. `from_yr`
    * holds the news back until that campaign time. Only the GM applies it.
    */
-  /** Put back exactly what one set_known changed (SV1 undo_known), by the id its reply gave, as one dated event. */
-  | { kind: "undo_known"; undo: string; at_yr: number }
-  | { kind: "set_known"; address: string; audience: string; landmark: import("./known.ts").Landmark | null; field?: string; scope: import("./known.ts").KnownScope; from_yr?: number; at_yr: number };
+  /** Put back exactly what one set_known changed (SV1 undo_known), by the id its reply gave, as one dated event.
+   * `at_s` (whole seconds, as text), when given, is the exact time and wins over `at_yr`. */
+  | { kind: "undo_known"; undo: string; at_yr: number; at_s?: string }
+  | { kind: "set_known"; address: string; audience: string; landmark: import("./known.ts").Landmark | null; field?: string; scope: import("./known.ts").KnownScope; from_yr?: number; at_yr: number; at_s?: string };
 
 export type IntentKind = Intent["kind"];
 
@@ -177,6 +178,7 @@ export function checkIntent(i: Intent): string | null {
     if (!Number.isFinite(i.at_yr)) return "time must be finite";
     return null;
   }
+  if ((i.kind === "undo_known" || i.kind === "set_known") && i.at_s !== undefined && !/^-?\d{1,19}$/.test(i.at_s)) return "at_s is whole seconds, written out";
   if (i.kind === "undo_known") return typeof i.undo === "string" && i.undo ? (Number.isFinite(i.at_yr) ? null : "time must be finite") : "undo needs the id a set_known gave";
   if (i.kind === "set_known") {
     if (!i.address.startsWith("u:")) return "address must start with u:";
@@ -220,7 +222,7 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
   if (i.kind === "set_naming")
     return { op: "set_naming" as const, address: i.address, layer: i.layer, ...(i.scheme !== null ? { scheme: i.scheme } : {}), ...(i.of_kind ? { kind: i.of_kind } : {}), ...(i.rename_fixed ? { rename_fixed: true } : {}), at_s: yearsToSeconds(i.at_yr) };
   if (i.kind === "adopt") return { op: "adopt" as const, ...(i.source as Record<string, Json>), ...(i.occurred_at_s !== undefined ? { occurred_at_s: i.occurred_at_s } : {}) };
-  if (i.kind === "undo_known") return { op: "undo_known" as const, undo: i.undo, at_s: yearsToSeconds(i.at_yr) };
+  if (i.kind === "undo_known") return { op: "undo_known" as const, undo: i.undo, at_s: i.at_s !== undefined ? BigInt(i.at_s) : yearsToSeconds(i.at_yr) };
   if (i.kind === "set_known")
     return {
       op: "set_known" as const,
@@ -230,7 +232,8 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
       ...(i.field ? { field: i.field } : {}),
       scope: i.scope,
       ...(i.from_yr !== undefined ? { from_s: yearsToSeconds(i.from_yr) } : {}),
-      at_s: yearsToSeconds(i.at_yr),
+      // Exact seconds when given (the campaign's now): a year in floating point is only good to about half a minute.
+      at_s: i.at_s !== undefined ? BigInt(i.at_s) : yearsToSeconds(i.at_yr),
     };
   return {
     op: "set_authored" as const,

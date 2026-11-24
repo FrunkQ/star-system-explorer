@@ -37,6 +37,7 @@ import propellant_rows  # noqa: E402
 import nuclear_rows  # noqa: E402
 import isotope_shares  # noqa: E402
 import material_rows  # noqa: E402
+import solid_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -732,6 +733,16 @@ next(i for i in ISOTOPES if i["id"] == "u235")["fission_thermal"] = nuclear_rows
 # Table 4. Isotopes with a share but no row yet (Be, B, O-17, F, Ne) wait for
 # their AME2020 masses.
 ISOTOPE_SHARES_WAITING = isotope_shares.apply(ISOTOPES, val)
+
+# Solid propellants and RP-1's heating value (scripts/solid_rows.py, for RS's real engines).
+for _k, _v in solid_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+_solids, _rp1 = solid_rows.rows(val)
+for _m in _solids:
+    assert all(x["id"] != _m["id"] for x in MIXTURES), _m["id"]
+    MIXTURES.append(_m)
+next(x for x in MIXTURES if x["id"] == "rp-1").update(_rp1)
 
 # RK1 part 3: hot-structure, fuel and shield materials (scripts/material_rows.py).
 for _k, _v in material_rows.SOURCES.items():
