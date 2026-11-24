@@ -117,3 +117,6 @@ export { drawnGlow, GLOW_FLOOR, hotGlow } from "./hot-glow.ts";
 export type { HotGlow } from "./hot-glow.ts";
 export { plumeBrightness, plumeFacts, plumeGrains, plumeNote } from "./plumes.ts";
 export type { PlumeFacts } from "./plumes.ts";
+// Lava tube openings cut into the ground at a landing site (third audit, TRUE6).
+export { caveCut, caveOpenings, nearestOpening, openingLine } from "./cave-mouths.ts";
+export type { CaveOpening } from "./cave-mouths.ts";

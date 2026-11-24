@@ -163,6 +163,8 @@ export interface ViewSession {
   grantLanding?(g: { system: string; body: string } | null): void;
   /** A descent planned to any site (SL1, kernel `plan_descent` on the quick survey): the site judged, a lander flown down; GM only. */
   planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }>;
+  /** The lava tube passages within `radius_km` of a site (S14a, kernel `survey_caves` on the quick survey): their fallen-roof openings are cut into the ground (renderer cave-mouths.ts). */
+  surveyCaves(ask: { system: string; body: string; lat_deg: number; lon_deg: number; radius_km?: number }): Promise<{ ok: true; caves: Json } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
   surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }>;
   /** The open universe as a document to keep (U10, kernel `export_chronicle`); GM only. */
@@ -689,6 +691,12 @@ export class Session implements ViewSession {
     if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const reg = (r as unknown as { survey?: { register?: { features?: import("./landing.ts").Landmark[]; features_total?: number } } }).survey?.register;
     return { ok: true, landmarks: reg?.features ?? [], total: reg?.features_total ?? 0 };
+  }
+
+  async surveyCaves(ask: { system: string; body: string; lat_deg: number; lon_deg: number; radius_km?: number }): Promise<{ ok: true; caves: Json } | { ok: false; code: string; message: string }> {
+    if (!this.#mayLand(ask.system, ask.body)) return { ok: false, code: "not_gm", message: "only the game master surveys a world's caves" };
+    const r = await this.#call({ op: "survey_caves", system: ask.system, body: ask.body, quick: true, lat_deg: ask.lat_deg, lon_deg: ask.lon_deg, ...(ask.radius_km ? { radius_km: ask.radius_km } : {}) });
+    return r.type === "caves_surveyed" ? { ok: true, caves: ((r as unknown as { caves: { caves?: Json } }).caves.caves ?? null) as Json } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }> {

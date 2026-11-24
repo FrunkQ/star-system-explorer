@@ -14,3 +14,6 @@ Track TRUE-surface (thread "Build plumes, frosts and hot glow"), third V3 audit 
 ## Not yet
 - Live check (audit R3): Enceladus, Io and Triton are not in the default Solar System until the kernel's barycentre PR lands.
 - Io's lava glow needs per-tile temperatures (VP-P1, through the detail ladder). The Lineup3D gallery does not pass `heat` or `plumes` yet: it needs the same surface record.
+
+## Earth at −18 °C (test drive rough edge 1)
+Checked 24 Nov on the catalogued Sol (packs/base-sol, as sol.test.ts enters it): Earth reads 288 K, "Mobile lid (plate tectonics)", and its level-0 tiles are about 67% ocean, 18% ice and 15% land. Rough edge 1 is gone. Mars 214 K, Venus 737 K, Moon 270 K.
