@@ -116,6 +116,7 @@
   const known = $derived(ctx.workspace.lensScene ? new Map(ctx.workspace.lensScene.subjects.map((x) => [x.address, x.view])) : null);
   const through = $derived(asPlayers(L) && known !== null);
   const knows = (s: SceneSubject) => !known || s === star || known.has(s.address);
+  const pencilled = (id: string) => { const s = all.find((x) => x.address === id); return !!s && !knows(s); };
   // How the table knows most bodies here: said once in the legend, and under a name only where it differs.
   const usualView = $derived.by(() => {
     if (!known) return null;
@@ -220,6 +221,9 @@
   // The standard view controls (rule 12) choose it: Chart is this flat log chart, 3D turns. A view without a shell's
   // choice (a screen document elsewhere) stays on Chart.
   const shownView = $derived(viewOptions(SYSTEM_CHART_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  // Pencil (track SV): a body the table does not know is drawn in pencil on the GM's chart, on the Build and Run desks
+  // whatever the lens, and wherever a lens carries the "What the table knows" layer; never through a player lens.
+  const pencilOn = $derived(!!known && !through && hudShows(shownView.hud, "known") && (hasLayer(L, "known") || ctx.workspace.desk === "build" || ctx.workspace.desk === "run"));
   const dims = $derived(shownView.style === "3d" || shownView.style === "true" ? "3d" : "2d");
   // True (V10a): each world's surface is read from its level-0 tiles (the Body globe's own, about 3 s a world in the
   // kernel), one at a time, the selected world first, and kept for this page. Only on the GM's seat, which reads tiles.
@@ -345,7 +349,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
@@ -430,7 +434,13 @@
             data-moons={moons || undefined}
           >
             <circle class="hit" cx={x} cy={y} r={Math.max(22, m.size + 12)} />
-            <Mark mark={m} cx={x} cy={y} {prefix} />
+            {#if pencilOn && !atCentre && !knows(s)}
+              <!-- Pencil (design 5): the mark of a body the table does not know is quiet, inside a thin dotted ring. -->
+              <g class="pencilled" data-pencil><Mark mark={m} cx={x} cy={y} {prefix} /></g>
+              <circle class="pencil-ring" cx={x} cy={y} r={markExtent(m) + 3} aria-hidden="true" />
+            {:else}
+              <Mark mark={m} cx={x} cy={y} {prefix} />
+            {/if}
             {#each { length: on("moons") ? Math.min(moons, 4) : 0 } as _, k (k)}
               {@const [mx, my] = polar(x, y, markExtent(m) + 5, 200 + k * 28)}
               <circle class="moontick" cx={mx} cy={my} r="1.6" aria-hidden="true" />
@@ -443,7 +453,7 @@
               {@const left = x > w - 110}
               <!-- Who knows (track SV, pencil and ink): a name the table does not know is drawn in pencil, quiet and dotted,
                    with no words; one they know is in ink, with how they know it ("long range") under it. -->
-              {@const pencil = on("known") && known && !atCentre && !view && !knows(s)}
+              {@const pencil = pencilOn && !atCentre && !view && !knows(s)}
               <text class="name" class:selname={sel} class:pencil x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size - 4} text-anchor={left ? "end" : "start"}>{label(s)}{#if pencil}<title>Not known to the table</title>{/if}</text>
               {#if on("known") && known && !atCentre && view && view !== usualView}
                 <text class="knownv" x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size + 9} text-anchor={left ? "end" : "start"} aria-hidden="true">{view.replace(/-/g, " ")}</text>
@@ -679,6 +689,16 @@
   }
   .body.unknown {
     opacity: 0.25;
+  }
+  .pencilled {
+    opacity: 0.4;
+  }
+  .pencil-ring {
+    fill: none;
+    stroke: var(--sse-ink-muted);
+    stroke-width: 0.8;
+    stroke-dasharray: 1.5 2.5;
+    pointer-events: none;
   }
   .name.pencil {
     fill: var(--sse-ink-muted);

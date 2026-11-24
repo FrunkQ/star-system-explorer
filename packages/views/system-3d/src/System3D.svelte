@@ -40,6 +40,8 @@
     star = null,
     band = "visible",
     fields = new Map(),
+    pencil,
+    reframe = 0,
   }: {
     bands?: Band3D[];
     bodies: Body3D[];
@@ -70,6 +72,11 @@
     band?: string;
     /** Mag (V10e): each world's field facts (read_field) by body id; worlds without are drawn dark and fieldless. */
     fields?: ReadonlyMap<string, FieldReadJson>;
+    /** Who knows (track SV, pencil and ink): true for a body the table does not know, drawn in pencil like the
+     * chart's names (quiet, dotted); read afresh whenever the table's knowledge changes. */
+    pencil?: (id: string) => boolean;
+    /** Bumped each time a fixed "Seen from" is picked: the camera goes back to that framing (turn, zoom and slide). */
+    reframe?: number;
   } = $props();
   const trueBand = $derived(band === "xray" || band === "infrared" ? band : "visible");
   const overlay = $derived(hud);
@@ -109,11 +116,15 @@
   let dist = $state(26);
   // Slide (rule 11): where the camera looks, in this frame's display units.
   let pan = $state<[number, number]>([0, 0]);
-  // "Seen from" (rule 12): a fixed view sets the camera's height and puts the slide back; Free keeps what the hands did.
+  // "Seen from" (rule 12): picking a fixed view frames it afresh (height, turn, zoom and slide), even when it is the
+  // one already shown; Free keeps what the hands did.
   $effect(() => {
     const s = seen;
+    void reframe;
     if (s === "free") return;
     pitch = SEEN_ELEVATION[s];
+    yaw = -0.6;
+    dist = 26;
     pan = [0, 0];
   });
   // Changing the scale changes what a distance means: start the camera again from its usual place.
@@ -587,7 +598,8 @@
         data-y={p.y.toFixed(2)}
         onclick={() => onselect(b.id)}
         ondblclick={() => hasChildren(bodies, b.id) && b.id !== centreId && enter(b.id)}
-      ><span class="dot"></span>{#if labels}<span class="name" class:hover={!hud}>{b.name}</span>{/if}</button>
+        data-known={pencil ? (pencil(b.id) ? "no" : "yes") : undefined}
+      ><span class="dot"></span>{#if labels}<span class="name" class:hover={!hud} class:pencil={pencil?.(b.id)}>{b.name}{#if pencil?.(b.id)}<span class="sr"> (not known to the table)</span>{/if}</span>{/if}</button>
     {/if}
   {/each}
   <div class="bar">
@@ -647,6 +659,19 @@
     font-style: italic;
     font-size: 14px;
     cursor: pointer;
+  }
+  /* Pencil (track SV): a name the table does not know, quiet and dotted, the same as on the flat chart. */
+  .pin .name.pencil {
+    color: var(--sse-ink-muted);
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+  }
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
   }
   .pin .dot {
     width: 14px;
