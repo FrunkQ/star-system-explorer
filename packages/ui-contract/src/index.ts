@@ -111,7 +111,7 @@ export { fetchMetadata, fetchSector, metadataPath, sectorPath } from "./sector-f
 export type { SectorText } from "./sector-fetch.ts";
 export { SECTOR_FORMATS, mapFields, stackProvides } from "./sector.ts";
 export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateOf } from "./constructs.ts";
-export { shipLog, writerWords } from "./constructs.ts";
+export { flightLines, LOG_RANK, shipLog, writerWords } from "./constructs.ts";
 export type { ConstructTemplate, Created, KeptChange, ShipLogEntry, RecordRead } from "./constructs.ts";
 export { navShipOf, partyLander, voyageStart, voyageLogEntries, voyageFuelWrites, tanksWords, systemOfPlace, withPartyChoice, partyShipNow, PARTY_CHOICE } from "./party.ts";
 export type { PartyShip, FlightEntryAsk } from "./party.ts";

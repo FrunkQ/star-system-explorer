@@ -159,6 +159,17 @@ try {
   await pl.waitForFunction((m) => document.querySelector("header [data-party-ship]")?.getAttribute("data-party-at") === m, star, { timeout: 15000 });
   assert.doesNotMatch(await aboard.innerText(), /sys:/, "the players read a star's name, not its address");
   await shot(pl, "party-player-between-stars");
+  // Beowulf's log on Ships and stations reads the voyage from its flight log, and what it burned (track MC, MC7).
+  await go(gm, "constructs");
+  const beowulf = desk.locator("[data-construct]", { hasText: "Beowulf" });
+  await beowulf.waitFor({ timeout: 15000 });
+  if ((await beowulf.getAttribute("aria-pressed")) !== "true") await beowulf.click();
+  await desk.locator("[data-log-toggle]").click();
+  const flew = desk.locator("[data-log] [data-log-what=flight]", { hasText: "Flew Earth to Mars" });
+  await flew.waitFor({ timeout: 15000 });
+  assert.match(await flew.innerText(), /planned/);
+  assert.ok((await desk.locator("[data-log] li").allInnerTexts()).some((l) => /voyage to Mars/.test(l)), "the tanks' draw-down is in the log");
+  await shot(gm, "party-ship-log");
   assert.deepEqual(errors, []);
   await browser.close();
   console.log("party e2e: ok");

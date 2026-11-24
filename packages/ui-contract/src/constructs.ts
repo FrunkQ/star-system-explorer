@@ -6,6 +6,7 @@
 import type { PlayerScene, PlayerSubject } from "./player-scene.ts";
 import type { HistoryEvent } from "./session.ts";
 import type { Json } from "./json.ts";
+import { constant } from "./sheet.ts";
 
 export interface ConstructTemplate {
   id: string;
@@ -93,7 +94,7 @@ export interface RecordRead {
 /** One line of the log. `who` is the writer ("gm", a template, a pack rule); `why` the reason given, if any. */
 export interface ShipLogEntry {
   at_yr: number;
-  what: "made" | "edited" | "retired" | "kept" | "note" | "event" | "aboard";
+  what: "made" | "edited" | "retired" | "kept" | "note" | "event" | "aboard" | "flight";
   text: string;
   who: string;
   why?: string;
@@ -116,7 +117,7 @@ function factWords(v: unknown): string | null {
 }
 
 /** One edit's line: "Changed: Jump drive 2 → 3; Name Kestrel → Kestrel II; Design changed". */
-export function editWords(changes: NonNullable<HistoryEvent["changes"]>, was: ReadonlyMap<string, unknown>, label: (field: string) => string = (f) => f): string {
+export function factEditWords(changes: NonNullable<HistoryEvent["changes"]>, was: ReadonlyMap<string, unknown>, label: (field: string) => string = (f) => f): string {
   const parts = changes.map((c) => {
     const name = label(c.field);
     if (c.unset) return `${name} cleared`;
@@ -126,6 +127,61 @@ export function editWords(changes: NonNullable<HistoryEvent["changes"]>, was: Re
     return from === null || from === to ? `${name} ${to}` : `${name} ${from} → ${to}`;
   });
   return `Changed: ${parts.join("; ")}`;
+}
+
+/** The order of entries at the same moment: made first, taken out of play last. */
+export const LOG_RANK: Record<ShipLogEntry["what"], number> = { made: 0, edited: 1, event: 1, flight: 1, kept: 2, aboard: 2, note: 3, retired: 4 };
+
+const DAY_S = constant("day");
+
+/** One event of a construct's flight log (kernel `flight_log`, sse-nav `LogEvent`): its kind's own fields flattened in. */
+type FlightEvent = { at_s: number; kind: string; mark?: string; why?: string; writer?: string } & Record<string, unknown>;
+
+/**
+ * The ship's flights for its log (MC7, Alex 24 Nov: "the log record all flights"), from its flight log on the record
+ * (the travel track's V8): one line per voyage, "Flew Tarn to Regina (12 days)" on arrival, or "Left Tarn" while it
+ * is under way; and launches, burns, flybys, landings, entries, splits, joins, refuels, loads and unloads, each on
+ * its own date. What was planned or estimated, not recorded, says so beside the reason.
+ */
+export function flightLines(log: Json | null | undefined, yr: (at_s: number) => number, place: (address: string) => string): ShipLogEntry[] {
+  const events = ((log as { events?: FlightEvent[] } | null)?.events ?? []).filter((e) => e && typeof e.at_s === "number").sort((a, b) => a.at_s - b.at_s);
+  const out: ShipLogEntry[] = [];
+  let left: FlightEvent | null = null;
+  const said = (e: FlightEvent, text: string, at_s = e.at_s) => {
+    const marks = [e.mark && e.mark !== "recorded" ? e.mark : null, typeof e.why === "string" ? e.why : null].filter(Boolean);
+    out.push({ at_yr: yr(at_s), what: "flight", text, who: writerWords(e.writer ?? "gm"), ...(marks.length ? { why: marks.join(": ") } : {}), key: `flight.${e.kind === "stop" ? String(e.type) : e.kind}` });
+  };
+  const num = (v: unknown, d = 1) => (typeof v === "number" ? String(Math.round(v * 10 ** d) / 10 ** d) : "?");
+  for (const e of events) {
+    const at = typeof e.place_id === "string" ? place(e.place_id) : null;
+    if (e.kind === "stop" && e.type === "depart") {
+      if (left) said(left, `Left ${typeof left.place_id === "string" ? place(left.place_id) : "port"}`);
+      left = e;
+      continue;
+    }
+    if (e.kind === "stop" && e.type === "arrive") {
+      const from = left && typeof left.place_id === "string" ? place(left.place_id) : null;
+      const days = left ? (e.at_s - left.at_s) / DAY_S : null;
+      said(e, `Flew ${from ? `${from} to ` : "to "}${at ?? "somewhere"}${days !== null ? ` (${days < 2 ? `${num(days * 24, 0)} hours` : `${num(days, 0)} days`})` : ""}`);
+      left = null;
+      continue;
+    }
+    const text =
+      e.kind === "launch" ? "Launched"
+      : e.kind === "burn" ? `Burn of ${num((e.dv_m_s as number) / 1000, 2)} km/s${typeof e.propellant_t === "number" && e.propellant_t > 0 ? `, ${num(e.propellant_t)} t of propellant` : ""}`
+      : e.kind === "flyby" ? `Flew by ${typeof e.body === "string" ? place(e.body) : "a world"}`
+      : e.kind === "entry" ? "Entered the air"
+      : e.kind === "landing" ? "Landed"
+      : e.kind === "split" ? `Split: ${Array.isArray(e.into) ? e.into.map((x) => place(String(x))).join(", ") : "parts"} went their own way`
+      : e.kind === "join" ? `Joined ${typeof e.with === "string" ? place(e.with) : "another craft"}`
+      : e.kind === "stop" && e.type === "refuel" ? `Refuelled${at ? ` at ${at}` : ""}`
+      : e.kind === "stop" && (e.type === "load" || e.type === "unload") ? `${e.type === "load" ? "Loaded" : "Unloaded"}${typeof e.tonnes === "number" ? ` ${num(e.tonnes)} t` : ""}${typeof e.resource_key === "string" ? ` of ${e.resource_key.replace(/[._-]/g, " ")}` : ""}${at ? ` at ${at}` : ""}`
+      : e.kind === "stop" ? `${String(e.type ?? "stop").replace(/^./, (c) => c.toUpperCase())}${at ? ` at ${at}` : ""}`
+      : e.kind;
+    said(e, text);
+  }
+  if (left) said(left, `Left ${typeof left.place_id === "string" ? place(left.place_id) : "port"}, under way`);
+  return out;
 }
 
 /** Words for who wrote an entry: the GM, a template, or a pack's rule. */
@@ -152,7 +208,7 @@ export function shipLog(
   const was = new Map<string, unknown>();
   for (const e of [...history].sort((a, b) => a.at_yr - b.at_yr)) {
     const what = e.kind === "template.create" ? "made" : e.kind === "template.retire" ? "retired" : e.kind === "authored.set" || e.kind === "authored.batch" ? "edited" : "event";
-    const said = what === "edited" && e.changes?.length ? editWords(e.changes, was, label) : null;
+    const said = what === "edited" && e.changes?.length ? factEditWords(e.changes, was, label) : null;
     for (const c of e.changes ?? []) was.set(c.field, c.unset || c.large ? undefined : c.value);
     const text = what === "made" ? "Made" : what === "retired" ? "Taken out of play" : what === "edited" ? (said ?? "Facts edited") : e.kind;
     out.push({ at_yr: e.at_yr, what, text, who: e.evidence === "authored" ? "the GM" : e.evidence, key: e.kind });
@@ -167,6 +223,6 @@ export function shipLog(
     });
   }
   for (const n of record?.notes ?? []) out.push({ at_yr: yr(n.at_s), what: "note", text: n.text, who: writerWords(n.by), key: "note" });
-  const rank: Record<ShipLogEntry["what"], number> = { made: 0, edited: 1, event: 1, kept: 2, aboard: 2, note: 3, retired: 4 };
+  const rank: Record<ShipLogEntry["what"], number> = LOG_RANK;
   return out.sort((a, b) => a.at_yr - b.at_yr || rank[a.what] - rank[b.what]);
 }
