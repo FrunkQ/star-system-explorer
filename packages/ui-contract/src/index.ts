@@ -79,6 +79,8 @@ export type { Separation } from "./measure.ts";
 export { CAMPAIGN_SCHEMA, checkCampaignSave, makeCampaignSave, publicExport, savedEvents, saveFileName } from "./campaign.ts";
 export type { CampaignSave } from "./campaign.ts";
 export { LIFE_EXAMPLES, MARKED_KINDS, carbonWords, confidenceWords, epochBands, foodWeb, productionPath, scanTiers, timeAxis, words as lifeWords } from "./life.ts";
+export { STAGES as LIFE_STAGES, lifeFlow, placeStages, stageOfEvent } from "./life-flow.ts";
+export type { FlowStage, PlacedStage, StageId } from "./life-flow.ts";
 export type { LifeEpoch, LifeEvent, LifeGuild, LifeHook, LifePoint, LifeSignatures, LifeView, WebLink, WebNode } from "./life.ts";
 export { GREGORIAN, calendarOf, checkCalendar, dateOf, epochOf, formatDate, isLong, parseDate, startOf, yearLength } from "./calendar.ts";
 export type { Anchor, Calendar, CalendarDate } from "./calendar.ts";
@@ -136,7 +138,7 @@ export { findInSheet } from "./reference-find.ts";
 export type { RefHit } from "./reference-find.ts";
 export { classesOnStack, classTree, className, classBandWords, classNumber, needsWords, findClass, findClasses } from "./classes.ts";
 export type { AtlasAxis, AtlasBand, AtlasClass, AtlasScheme, ClassAtlas, ClassNode } from "./classes.ts";
-export { namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMore, sourceWords, layerOrder, SAMPLE_KINDS } from "./names.ts";
+export { chartNameLayers, namesInLayer, relabel, namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMore, sourceWords, layerOrder, SAMPLE_KINDS } from "./names.ts";
 export type { SampleAsk, SampledName, NameSample, NamePart, SchemeInfo, NamesOnStack, ShownName, NamesRead } from "./names.ts";
 export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedAsk, EmbedBridge } from "./embed.ts";
 export type { EmbedMode, EmbedOut } from "./embed.ts";
@@ -154,6 +156,9 @@ export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX
 export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
 export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";
 // One units engine (ED1a): every figure said and read back the same way.
-export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
-export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices } from "./figures.ts";
+export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, factAbout, factUnit, sayFact, readFact, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
+export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices, FactLike, FactUnit } from "./figures.ts";
+// Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
+export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
+export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed } from "./handles.ts";
 export * from "./place-notes.ts";

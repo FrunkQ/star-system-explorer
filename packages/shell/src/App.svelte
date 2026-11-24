@@ -25,8 +25,8 @@
   import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
-  import { readSol, solBatches, solSourceText, SOL_TITLE } from "../../ui-contract/src/index.ts";
-  import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
+  import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
+  import { listedTitle, namesInLayer, relabel, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
@@ -112,6 +112,8 @@
   ws.turned = () => {
     if (ws.view?.seen !== "free") setView({ ...ws.view!, seen: "free" });
   };
+  // A view's own press may set the choice for the viewer (the size comparison's Gallery opens in True).
+  ws.pickView = (c) => setView(c);
   // Orac is not connected yet (A2): its sample requests come from a fixture document.
   for (const r of (oracDoc as unknown as { requests: ChangeRequest[] }).requests) ws.fileRequest(r);
   let scene = $state<SystemScene>(base);
@@ -343,6 +345,7 @@
     ws.campaign_now_yr = save.workspace.campaign_now_yr ?? save.workspace.now_yr;
     ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
     ws.overlay_anchors = save.workspace.overlay_anchors ?? {};
+    ws.unit_choices = save.workspace.unit_choices ?? {};
     ws.party = save.workspace.party ?? null;
     ws.bookmarks = bookmarksFrom(save.workspace.bookmarks);
     ws.playbook = playbookFrom(save.workspace.playbook);
@@ -364,7 +367,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -695,7 +698,19 @@
     s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
   });
   const timed = $derived(withPhases(scene, phases));
-  const shown = $derived(ahead && ahead.snapshots[aheadAt] ? sceneAt(timed, ahead, ahead.snapshots[aheadAt]!) : timed);
+  // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
+  let layerLabels = $state.raw<Map<string, string>>(new Map());
+  $effect(() => {
+    void ws.revision;
+    const layer = lens.names ?? "";
+    const s = session;
+    const addrs = scene.subjects.map((x) => x.address);
+    if (!s || !layer || layer === "common") return void (layerLabels = new Map());
+    void namesInLayer(s, addrs, layer).then((m) => {
+      if ((lens.names ?? "") === layer) layerLabels = m;
+    });
+  });
+  const shown = $derived(relabel(ahead && ahead.snapshots[aheadAt] ? sceneAt(timed, ahead, ahead.snapshots[aheadAt]!) : timed, layerLabels));
   const lit = $derived(describeLight(litFromSystem(shown)));
   const lightNames = $derived(new Map(shown.subjects.map((x) => [x.address, x.label])));
   const lightColours = $derived.by(() => {
@@ -990,6 +1005,13 @@
   // Each Sol body's sheet id ("earth", "europa"), by address: the name the kernel's world stacks go by, so a catalogued
   // world opens in the cutaway when the kernel has its stack (and says it has none otherwise).
   let solIds = $state<ReadonlyMap<string, string>>(new Map());
+  // The same sheet for views (reference worlds on the editing strips), read once and kept.
+  let solForViews: Promise<SolSheet | null> | null = null;
+  const solSheetForViews = () =>
+    (solForViews ??= fetch(new URL(stackDoc.catalogues.sol, document.baseURI))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => (p ? readSol(p) : null))
+      .catch(() => null));
   async function solSheet() {
     const sheet = readSol(await (await fetch(new URL(stackDoc.catalogues.sol, document.baseURI))).json());
     if (!sheet) throw new Error("the Solar System sheet could not be read");
@@ -1390,7 +1412,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, ...(minervaHost ? { describe } : {}) }, shown);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, solSheet: solSheetForViews, ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
     return {
       destroy: () => {

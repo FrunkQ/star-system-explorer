@@ -1,0 +1,10 @@
+{
+  "name": "@sse/view-editing",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "description": "Track ED: the handles row, the strip and the figure every editing surface is built from (editing design section 3B).",
+  "exports": { ".": "./src/index.ts" },
+  "peerDependencies": { "svelte": "^5.0.0" }
+}
