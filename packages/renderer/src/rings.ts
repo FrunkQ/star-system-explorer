@@ -7,6 +7,8 @@
 // drawn at the fallbacks below, also in the register.
 // Belts round the star are a haze of points, one per draw slot, never the real count (also in the register).
 
+import { constant } from "../../ui-contract/src/index.ts";
+
 /** One ring of a world, as Body3D carries it. */
 export interface RingBand {
   name: string;
@@ -166,4 +168,4 @@ export function beltAt(ps: readonly BeltParticle[], t_s: number, gm: number, dis
 }
 
 /** The belts' own clock in True: thirty days of their time a second, so the main belt goes round in about a minute. */
-export const BELT_SECONDS_PER_SECOND = 30 * 86400;
+export const BELT_SECONDS_PER_SECOND = 30 * constant("day");
