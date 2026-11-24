@@ -160,6 +160,10 @@ pub struct Grid {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LightTable {
+    /// The fixed band set. Read from the master data sheet's Bands table
+    /// (its `light` rows, RK10) when the pack gives none; a pack that
+    /// gives its own list overrides the sheet.
+    #[serde(default)]
     pub bands: Vec<Band>,
     pub visible_slices: Vec<Band>,
     pub lines: Vec<LineDef>,
@@ -211,6 +215,40 @@ fn fill_from_sheet(g: &mut GasDef, sheet: &sse_reference::Reference) -> Result<(
     Ok(())
 }
 
+/// The light rows of the sheet's Bands table (RK10), in order of wavelength.
+pub fn bands_from_sheet(sheet: &sse_reference::Reference) -> Result<Vec<Band>, String> {
+    let num = |row: &serde_json::Map<String, serde_json::Value>, k: &str| {
+        row.get(k)
+            .and_then(|v| v.get("v").and_then(|x| x.as_f64()).or_else(|| v.as_f64()))
+    };
+    let mut out = vec![];
+    for (id, row) in sheet.tables.get("bands").into_iter().flatten() {
+        if row.get("kind").and_then(|k| k.as_str()) != Some("light") {
+            continue;
+        }
+        let (Some(from_m), Some(to_m)) = (num(row, "from_m"), num(row, "to_m")) else {
+            return Err(format!("sheet band {id} has no from_m or to_m"));
+        };
+        let name = row
+            .get("names")
+            .and_then(|n| n.get("physics"))
+            .and_then(|n| n.as_str())
+            .unwrap_or(id)
+            .to_string();
+        out.push(Band {
+            id: id.clone(),
+            name,
+            from_m,
+            to_m,
+        });
+    }
+    if out.is_empty() {
+        return Err("the sheet has no light bands (Bands table, RK10)".into());
+    }
+    out.sort_by(|a, b| a.from_m.total_cmp(&b.from_m));
+    Ok(out)
+}
+
 impl LightTable {
     /// The base pack's table.
     pub fn base() -> Self {
@@ -233,11 +271,17 @@ impl LightTable {
         let mut t: LightTable = serde_json::to_value(v)
             .and_then(serde_json::from_value)
             .map_err(|e| format!("light table: {e}"))?;
-        if let Some(g) = t.gases.as_mut() {
-            let sheet = sse_reference::Reference::from_packs(stack)
+        let sheet = || {
+            sse_reference::Reference::from_packs(stack)
                 .ok()
                 .filter(|r| r.row("constants", "c").is_some())
-                .unwrap_or_else(sse_reference::Reference::base);
+                .unwrap_or_else(sse_reference::Reference::base)
+        };
+        if t.bands.is_empty() {
+            t.bands = bands_from_sheet(&sheet())?;
+        }
+        if let Some(g) = t.gases.as_mut() {
+            let sheet = sheet();
             for gas in &mut g.list {
                 fill_from_sheet(gas, &sheet)?;
             }

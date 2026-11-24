@@ -922,7 +922,6 @@ def validate(pack):
     for i in ref["isotopes"]:
         if i["element"] not in el_ids:
             errors.append(f"isotope {i['id']}: unknown element {i['element']}")
-    band_rows.check_against_light(ref["bands"], json.loads((ROOT / "packs/base-light/pack.json").read_text()))
     for table in ("constants", "units", "elements", "isotopes", "substances", "mixtures", "bands", "sources"):
         ids = [r["id"] for r in ref[table]]
         if len(ids) != len(set(ids)):
