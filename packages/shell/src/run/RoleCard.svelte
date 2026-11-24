@@ -6,15 +6,11 @@
   redirect. Look and sensors come with looks (PB10) and bands on players' screens; the card says so.
 -->
 <script lang="ts">
-  import { EVERYONE, LIVE_OVERRIDES, checkBrand, embedOrigins, redirect, type Board, type SeatBrand, type SeatPort, type TablePort } from "../../../ui-contract/src/index.ts";
+  import { SHIPPED_LAYOUTS, EVERYONE, LIVE_OVERRIDES, checkBrand, embedOrigins, redirect, type Board, type SeatBrand, type SeatPort, type TablePort } from "../../../ui-contract/src/index.ts";
 
   let { table, seats, role, onclose }: { table: TablePort; seats: SeatPort; role: string | null; onclose: (made?: string) => void } = $props();
 
-  const LAYOUTS = [
-    { file: "", label: "Bridge (the players' chart)" },
-    { file: "players.survey.screen.json", label: "Tarn survey report" },
-    { file: "players.bridge-3d.screen.json", label: "Bridge in 3D" },
-  ];
+  const LAYOUTS = SHIPPED_LAYOUTS;
 
   const plan = $derived(seats.plan());
   const seat = $derived(role ? plan.seats.find((s) => s.id === role) : undefined);

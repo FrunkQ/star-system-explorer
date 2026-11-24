@@ -9,7 +9,8 @@
 -->
 <script lang="ts">
   import RoleCard from "./RoleCard.svelte";
-  import { cardLabel, outputLink, addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
+  import LayoutPicker from "./LayoutPicker.svelte";
+  import { SHIPPED_LAYOUTS, cardLabel, outputLink, addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
   import Playbook from "./Playbook.svelte";
   import PresetMonitor from "./PresetMonitor.svelte";
   import { justSent, noteFired, noteSent, type JustSent } from "./fired.svelte.ts";
@@ -142,6 +143,12 @@
   }
   // The role card (PB7): undefined closed, null adding a role, else the role open.
   let card = $state<string | null | undefined>(undefined);
+  // A role's layout (PB13): its name on the heading opens the list and the editor.
+  let layoutOf = $state<string | null>(null);
+  const layoutWords = (role: string) => {
+    const sc = table.seats?.plan().seats.find((x) => x.id === role)?.screens?.[0] ?? "";
+    return SHIPPED_LAYOUTS.find((l) => l.file === sc)?.label.replace(/ \(.*\)$/, "") ?? ws?.layouts?.find((d) => d.id === sc)?.label ?? sc;
+  };
   const asks = (role: string) => table.seats?.requests().filter((q) => q.seat === role).length ?? 0;
   // The clean output link (PB8, design 9): copied, never opened here.
   let copiedOut = $state<string | null>(null);
@@ -337,6 +344,7 @@
           {board}
           {bookmarks}
           roles={st.roles}
+          layouts={[...SHIPPED_LAYOUTS.filter((l) => l.file).map((l) => ({ id: l.file, label: l.label })), ...(ws?.layouts ?? []).map((d) => ({ id: d.id, label: d.label }))]}
           bind:editing
           markHere={ws?.markHere}
           onchange={(next) => setPlaybook(next)}
@@ -407,7 +415,7 @@
         <section class="role" data-role-id={r.id}>
           <div class="rhead" class:held={sh.held} data-dest={`role:${r.id}`} data-role={r.id} role="button" tabindex="0" onclick={pressDest} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && pressDest(e)}>
             <span
-              >{#if table.seats}<button type="button" class="rname" data-role-open={r.id} aria-expanded={card === r.id} title="The role card: name, what it knows, layout, links and more" onclick={(e) => armed || (e.stopPropagation(), (card = card === r.id ? undefined : r.id))}><b>{r.label}</b></button>{:else}<b>{r.label}</b>{/if}{#if r.sealed}<span class="sub"> · sealed</span>{/if}{#if board.redirects[r.id]}<span class="sub" data-redirected> · to {roles.find((x) => x.id === board.redirects[r.id])?.label ?? board.redirects[r.id]}'s screens</span>{/if}{#if asks(r.id)}<span class="asks" data-role-asks={r.id} title="Requests waiting: open the role card">{asks(r.id)} asking</span>{/if}</span
+              >{#if table.seats}<button type="button" class="rname" data-role-open={r.id} aria-expanded={card === r.id} title="The role card: name, what it knows, layout, links and more" onclick={(e) => armed || (e.stopPropagation(), (card = card === r.id ? undefined : r.id))}><b>{r.label}</b></button>{:else}<b>{r.label}</b>{/if}{#if r.sealed}<span class="sub"> · sealed</span>{/if}{#if board.redirects[r.id]}<span class="sub" data-redirected> · to {roles.find((x) => x.id === board.redirects[r.id])?.label ?? board.redirects[r.id]}'s screens</span>{/if}{#if asks(r.id)}<span class="asks" data-role-asks={r.id} title="Requests waiting: open the role card">{asks(r.id)} asking</span>{/if}{#if table.seats && !r.sealed}<button type="button" class="lchip" data-role-layout-chip={r.id} aria-expanded={layoutOf === r.id} title="The layout this role's screens open" onclick={(e) => armed || (e.stopPropagation(), (layoutOf = layoutOf === r.id ? null : r.id))}>{layoutWords(r.id)} ▾</button>{/if}</span
             >
             <span class="sub" data-dest-shows>{own ? sh.text : sh.held ? sh.text : `with Everyone`}</span>
             <span class="acts">
@@ -419,6 +427,7 @@
             </span>
           </div>
           {#if card === r.id && table.seats}<RoleCard {table} seats={table.seats} role={r.id} onclose={() => (card = undefined)} />{/if}
+          {#if layoutOf === r.id && table.seats}<LayoutPicker seats={table.seats} role={r.id} {ws} {session} {live} onclose={() => (layoutOf = null)} />{/if}
           {#each r.screens as [id, s] (id)}
             {@const mineLine = board.lines[`screen:${id}`]}
             {@const ss = showing(board, r.id, id)}
@@ -654,6 +663,16 @@
     font-size: 13px;
   }
   .everyone,
+  .lchip {
+    margin-left: 8px;
+    font: inherit;
+    font-size: 12px;
+    padding: 0 6px;
+    border: var(--sse-line) solid var(--sse-rule);
+    border-radius: var(--sse-radius);
+    background: transparent;
+    color: var(--sse-ink-muted);
+  }
   .rname {
     border: 0;
     background: transparent;

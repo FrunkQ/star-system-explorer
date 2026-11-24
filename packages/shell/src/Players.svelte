@@ -54,6 +54,9 @@
       if (!raw) throw new Error("No screen has been handed over from the composer on this device.");
       return JSON.parse(raw) as ScreenDoc;
     }
+    // A layout the GM made (PB13) travels with the session; the shipped ones are files beside the shell.
+    const made = asked?.startsWith("mine.") ? (replicaRef?.layouts ?? []).find((d) => (d as unknown as ScreenDoc).id === asked) : undefined;
+    if (made) return structuredClone(made) as unknown as ScreenDoc;
     const file = asked && /^[a-z0-9._-]+\.json$/i.test(asked) ? asked : "players.screen.json";
     const r = await fetch(new URL(`documents/${file}`, document.baseURI));
     if (!r.ok) throw new Error(`No screen document ${file}.`);
@@ -93,8 +96,12 @@
   async function useScreen(s: ViewSession) {
     await useScreenWith(observeOf(s.stack().base)?.setup.views.map((v) => v.id), s.device()?.tier ?? "standard");
   }
+  // Two loads in flight (the role's layout named, then its document arriving): only the last one asked is used.
+  let screenAsk = 0;
   async function useScreenWith(views: string[] | undefined, tier: string) {
+    const ask = ++screenAsk;
     const doc = await loadScreen();
+    if (ask !== screenAsk) return;
     checked = checkScreen(doc, PLAYER_STACK, views, { registry: allStyles(), tier: tier as "standard" });
     screenDoc = doc;
   }
@@ -155,7 +162,7 @@
     return broadcastHub(room!, id);
   }
   // V5: asking the GM. A request becomes an event only if the GM approves it.
-  let replicaRef: Pick<PlayerReplica, "request"> | null = null;
+  let replicaRef: (Pick<PlayerReplica, "request"> & { layouts?: PlayerReplica["layouts"] }) | null = null;
   let mine = $state<OwnRequest[]>([]);
   let ask = $state("");
   let askError = $state("");
@@ -250,16 +257,24 @@
         link = st;
         if (st.state === "live" || st.state === "offline") stateHash = st.state_hash;
       };
+      let layoutKey = "";
       replica.onSession = (s) => {
         session = s;
         sessionReady = true;
         shown = shownFor(replica);
         party = partyOf(replica.party());
         perfEdge = s.device();
+        layoutKey = layoutNow();
         void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
+      };
+      // The role's layout (PB7 role card, PB13): a change of it, or of the made layout it names, reloads the screen.
+      const layoutNow = () => {
+        const asked = (shown && "scope" in shown ? shown.screen : undefined) ?? seatScreen;
+        return `${asked ?? ""}|${asked?.startsWith("mine.") ? JSON.stringify(replica.layouts.find((d) => (d as unknown as ScreenDoc).id === asked) ?? null) : ""}`;
       };
       replica.onUpdate = () => {
         const mine = replica.seats().find((x) => x.id === seatId);
+        if (!new URLSearchParams(location.search).get("screen")) seatScreen = mine ? (mine.screens?.[0] ?? null) : seatScreen;
         if (JSON.stringify(mine?.live ?? null) !== JSON.stringify(live ?? null)) live = mine?.live;
         const ship = partyOf(replica.party());
         if (JSON.stringify(ship) !== JSON.stringify(party)) party = ship;
@@ -270,6 +285,11 @@
           const now = sent && "scope" in sent ? sent.screen : undefined;
           // Another screen named: load it before the scene is built for it.
           if (was !== now && session) return void useScreen(session).then(refresh).catch((e) => (sceneErrors = [String(e)]));
+        }
+        const key = layoutNow();
+        if (key !== layoutKey && session && screenDoc) {
+          layoutKey = key;
+          return void useScreen(session).then(refresh).catch((e) => (sceneErrors = [String(e)]));
         }
         if (session && screenDoc) void refresh();
       };

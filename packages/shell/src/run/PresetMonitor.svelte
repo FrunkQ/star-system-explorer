@@ -14,6 +14,7 @@
     board,
     bookmarks,
     roles,
+    layouts = [],
     editing = $bindable(),
     markHere,
     onchange,
@@ -26,6 +27,8 @@
     board: Board;
     bookmarks: readonly Bookmark[];
     roles: readonly { id: string; label: string }[];
+    /** Layouts a Show step may bring (PB13): shipped files and the campaign's made ones; "" keeps the role's own. */
+    layouts?: readonly { id: string; label: string }[];
     editing: boolean;
     markHere?: () => Bookmark;
     onchange: (next: Playbook) => void;
@@ -48,7 +51,8 @@
     if (!k || !markHere) return;
     const b = markHere();
     onbookmarks(addBookmark(bookmarks, { ...b, name: `${k.title} (from live)` }));
-    setStep(i, { show: { bookmark: b.id } });
+    const was = k.steps[i];
+    setStep(i, { show: { bookmark: b.id, ...(was && "show" in was && was.show.layout ? { layout: was.show.layout } : {}) } });
     note = "Now shows where you are. Fire again to send it.";
   }
   const cardValue = (c: HoldCard) => (typeof c === "string" ? c : "text");
@@ -96,11 +100,20 @@
           {#if "show" in s}
             <label
               >Shows
-              <select value={s.show.bookmark} data-edit-bookmark onchange={(e) => setStep(i, { show: { bookmark: e.currentTarget.value } })}>
+              <select value={s.show.bookmark} data-edit-bookmark onchange={(e) => setStep(i, { show: { ...s.show, bookmark: e.currentTarget.value } })}>
                 {#each bookmarks as b (b.id)}<option value={b.id}>{b.name}</option>{/each}
                 {#if !bookmarks.some((b) => b.id === s.show.bookmark)}<option value={s.show.bookmark}>a bookmark that has gone</option>{/if}
               </select>
             </label>
+            {#if layouts.length}
+              <label
+                >On the layout
+                <select value={s.show.layout ?? ""} data-edit-layout onchange={(e) => setStep(i, { show: { bookmark: s.show.bookmark, ...(e.currentTarget.value ? { layout: e.currentTarget.value } : {}) } })}>
+                  <option value="">The role's own</option>
+                  {#each layouts as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
+                </select>
+              </label>
+            {/if}
             {#if markHere}<button type="button" class="ghost" data-update-from-live onclick={() => updateFromLive(i)}>Update from live</button>{/if}
           {:else if "reveal" in s}
             <label

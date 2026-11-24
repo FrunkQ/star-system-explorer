@@ -41,6 +41,7 @@ export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
 export * from "./part-controls.ts";
+export * from "./layouts.ts";
 export * from "./picker.ts";
 export * from "./overlay.ts";
 export * from "./landing.ts";

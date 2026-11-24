@@ -10,7 +10,8 @@ export const PLAYBOOK_SCHEMA = "sse.playbook/1";
 
 /** One thing a preset does. Steps in one preset go together, at once (no conditions, no timers in 4.0). */
 export type Step =
-  | { show: { bookmark: string } }
+  /** `layout` (PB13): the layout the role's screens use for this send (a shipped file or a made `mine.` id); going back returns them to their own. */
+  | { show: { bookmark: string; layout?: string } }
   | { hold: { card: HoldCard } }
   /** Words for the GM to read; nothing goes to any screen (a card on screens comes with the Looks work). */
   /** Words for the GM to read; `on_screens` also puts them on the role's screens as a card over what they show (4.3, PB6). */
@@ -188,9 +189,9 @@ export function destOf(p: Preset): Dest {
   return p.to === "everyone" ? "everyone" : `role:${p.to}`;
 }
 /** What a Show step sends: the bookmark's place under the preset's name. A missing bookmark sends nothing. */
-export function showOf(p: Preset, step: { show: { bookmark: string } }, bookmarks: readonly Bookmark[]): Shown | null {
+export function showOf(p: Preset, step: { show: { bookmark: string; layout?: string } }, bookmarks: readonly Bookmark[]): Shown | null {
   const b = bookmarks.find((x) => x.id === step.show.bookmark);
-  return b ? { scope: b.scope, title: p.title, ...(b.selected ? { focus: b.selected } : {}) } : null;
+  return b ? { scope: b.scope, title: p.title, ...(b.selected ? { focus: b.selected } : {}), ...(step.show.layout ? { screen: step.show.layout } : {}) } : null;
 }
 
 /** Only words for the GM: nothing goes to any screen, so its button marks it read (4.3). */
@@ -261,7 +262,7 @@ export function playbookFrom(raw: unknown): Playbook {
   const arr = (x: unknown): Record<string, unknown>[] => (Array.isArray(x) ? x.filter((y) => y && typeof y === "object") : []);
   const step = (s: Record<string, unknown>): Step | null => {
     const v = (k: string) => s[k] as Record<string, unknown> | undefined;
-    if (v("show") && typeof v("show")!.bookmark === "string") return { show: { bookmark: v("show")!.bookmark as string } };
+    if (v("show") && typeof v("show")!.bookmark === "string") return { show: { bookmark: v("show")!.bookmark as string, ...(typeof v("show")!.layout === "string" && v("show")!.layout ? { layout: v("show")!.layout as string } : {}) } };
     if (v("hold")) {
       const c = v("hold")!.card;
       if (c === "blank" || c === "plain" || c === "joke") return { hold: { card: c } };

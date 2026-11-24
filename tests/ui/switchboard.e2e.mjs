@@ -117,6 +117,35 @@ try {
   await gm.locator("[data-lift]").click();
   assert.equal(await gm.locator("[data-lift]").count(), 0);
 
+  // Layouts (PB13): the table's layout on its heading; a new one made in the editor goes to its screens at once, and a
+  // box with its control off is a picture there (AT13). Choosing the Bridge again puts it back.
+  await gm.locator('[data-role-layout-chip="table"]').click();
+  await gm.locator('[data-layout-picker="table"] [data-layout-new]').click();
+  const ed = gm.locator("[data-layout-editor]");
+  await ed.waitFor();
+  await ed.locator("[data-layout-name]").fill("Wall chart");
+  await ed.locator("[data-layout-arrangement]").selectOption("report");
+  await ed.locator("[data-box-new-part]").selectOption("sse.view.chart");
+  await ed.locator("[data-box-add]").click();
+  await ed.locator("[data-box-new-part]").selectOption("sse.view.table");
+  await ed.locator("[data-box-add]").click();
+  await ed.locator('[data-layout-box="0"] [data-box-control="select"]').uncheck();
+  // The arrows reorder: the table first, then back.
+  await ed.locator('[data-layout-box="1"] [data-box-up]').click();
+  assert.equal(await ed.locator('[data-layout-box="0"]').getAttribute("data-box-part"), "sse.view.table");
+  await ed.locator('[data-layout-box="0"] [data-box-down]').click();
+  await ed.locator("[data-layout-preview] .screen").waitFor({ timeout: 15000 });
+  await shot(gm, "layout-editor");
+  await ed.locator("[data-layout-save]").click();
+  assert.match(await gm.locator('[data-role-layout-chip="table"]').innerText(), /Wall chart/);
+  for (const p of [wall, mira]) await p.locator('[data-screen-id="mine.wall-chart"]').waitFor({ timeout: 15000 });
+  assert.equal(await wall.locator('[data-screen-id="mine.wall-chart"] [data-view="sse.view.chart"][data-picture][inert]').count(), 1, "the chart's one control is off: a picture");
+  assert.equal(await wall.locator('[data-view="sse.view.table"][data-picture]').count(), 0, "the table keeps its controls");
+  await shot(wall, "layout-on-wall");
+  await gm.locator('[data-role-layout-chip="table"]').click();
+  await gm.locator('[data-layout-picker="table"] [data-layout-choose="bridge"]').click();
+  for (const p of [wall, mira]) await p.locator('[data-screen-id="sse.screen.players.bridge"]').waitFor({ timeout: 15000 });
+
   // The clean output (PB8): the role offers it; opened, it is a screen marked Output, with no controls, at 16:9.
   assert.equal(await gm.locator('[data-output-link="table"]').count(), 1);
   const out = await context.newPage();
