@@ -1,8 +1,8 @@
 # SSE4: the Playbook and the Switchboard (track PB)
 
-Status: **PROPOSED 24 Nov 2026**, for Alex. The direction was accepted by Alex on 24 Nov 15:39 ("agree... on all counts", six questions, in memory `sse4-run-desk-beats`); this note designs it in detail. Design and mockup only; nothing here is built by this note. The 14 questions are in section 14, each with a recommendation.
+Status: **PROPOSED 24 Nov 2026**, for Alex. The direction was accepted by Alex on 24 Nov 15:39 ("agree... on all counts", six questions, in memory `sse4-run-desk-beats`); this note designs it in detail. Design and mockup only; nothing here is built by this note. The 18 questions are in section 14, each with a recommendation.
 
-Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, folding sections, adding a preset, the Everyone layer and Lift, Undo and Redo, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
+Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, folding sections, adding a preset, the Everyone layer and Lift, Undo and Redo, the layout list and the new-layout builder, picture and sound presets, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
 
 Alex's brief, in his words (24 Nov): "a gm must always be able to adapt and remix... presets... are great to have 'in hand' but live is the key"; "no need for next - just let the GM build up a 'playbook'... chapters and pages and sections - each can be a preset that is fired at various windows"; "a routing diagram showing what everyone sees - gm can pause any one by clicking on the line"; "a mini video routing package"; "the routing screen should be generally available and does remove the need for a bunch of other smaller interfaces - we corral the user to the 'nerve centre'".
 
@@ -131,6 +131,7 @@ A preset is a short list of **steps**, each one a thing the GM could do live, pl
 | **Land** | a landing at a site | yes: `Shown.landing` (`LandingShow`) |
 | **Reveal** | a Known to change for the role's audience | yes: the `set_known` intent |
 | **Read aloud** | words for the GM to read; optionally also a card on the screens | new `Shown` kind |
+| **Play** | a picture, a sound or a film (section 4.8) | new `Shown` kind |
 | **Look** | a look for the role, a signal level, or both | Looks not built yet |
 | **Hold** | a holding card (blank is "screens off") | new `Shown` kind, replacing `{off: true}` |
 
@@ -173,6 +174,22 @@ Alex, same message: sections "like 'Approach' as collapsible". Yes.
 - **Reorder by dragging the row** by its body, within a section, onto another section's heading, or onto a page name in the picker.
 - **"Update from live"** on a selected Show preset replaces its place and view with what the GM is looking at now.
 - **Again** on the "just now" strip repeats a send.
+
+### 4.8 Pictures, sound and film
+
+Alex, 24 Nov 16:03: "we could 'do nothing' to let the GM read - but here would also be useful to load an audiofile, image or video to play... those assets can come with some games... eg: show a map". Yes. A **Play** step shows or plays one asset, and it is a source like any other: it takes a line, it can be held, it lifts.
+
+- **Read aloud keeps its plain form**: words on the GM's monitor and nothing sent. It may also carry one asset, so a read-aloud card can come with its handout or its recorded voice.
+- **A picture** (a map, a handout, a portrait) fills the role's screens through the role's look, so a map on a green terminal looks like it belongs there. The look can be switched off for one picture.
+- **A sound** plays **here**, on the GM's computer, by default, because at a table that is where the speakers are. Sent to a role it plays on that role's screens, and only on screens whose owner has turned sound on (sound is off by default, as ruled, and browsers insist on it).
+- **A film** plays on the screens it is sent to, with the same sound rule.
+- **Where assets come from.** (a) A pack: a game or adventure pack carries its maps, handouts and sounds, and presets name them. Every screen already has the pack, so only the asset's name is sent. (b) The GM's own file, dropped on the Playbook: kept with the campaign. (c) A web address, which each screen loads for itself.
+- **"The GM streams only data" still holds**, with one line drawn. A pack asset or a web address is a name. A GM's own picture or short sound is a file sent once, not a stream, and is allowed up to a small size (question 16). A GM's own film is too big to send that way: it plays on this computer's screens, or goes by web address or in a pack.
+- **Whose work it is.** Assets in a pack follow the pack rules already set (our own or licensed; named-setting fan packs free). A GM's own files stay in their campaign and are not uploaded to Explorers with it unless they say so.
+
+### 4.9 Another program as a source (later)
+
+Alex, 16:03: "eventually - show the VTT - as we integrate Mappadux". This needs no new mechanism, only one more kind of source: a **web page**. A source that is a web address is shown in a panel on each screen, and each screen loads it for itself, so nothing is streamed from the GM. A virtual tabletop that offers a players' page by link becomes a source the moment its address is pasted in, and it then takes lines, holds and layers like everything else. It is the mirror of what SSE4 already does the other way (a seat shown inside a tabletop). Marked later, with Mappadux: what the two programs tell each other (which map, where the party is) is its own design.
 
 ### 4.7 Where the Playbook is kept
 
@@ -301,13 +318,30 @@ Opens from a role's heading, and grows from it. It holds, in order of use:
 
 1. **Name**, and **Look**.
 2. **Knows what**: the audience (whose knowledge), with a link to the table ledger from the secrets design. The Switchboard never edits knowledge itself; "Known to" stays the one control for that.
-3. **Layout**: which screen document this role opens (Bridge, Survey report, Bridge in 3D, Landing).
+3. **Layout**: which layout this role's screens open (section 7.4).
 4. **Sensors**: the bands this role can be sent.
 5. **More**, closed by default: what the role may ask for and what applies without asking; brand and logo; tabletops it may sit inside; sealed (for competitive play); the quick switches ("hide labels").
 
 This is today's Seats dialog, field for field, rearranged by how often each is touched. One role today can list several layouts, each meant as its own window. That becomes one layout per role: a seat with two screens becomes two roles that share an audience (question 4).
 
-### 7.4 The pinned preview
+### 7.4 Layouts: choosing one, building one, keeping yours
+
+Alex, 24 Nov 16:02: "how do you actually define a setup - elsewhere - they are listed here for selection - or created here - a wizard to help build a player screen makes a lot of sense. But also... make one in situ... you as a GM get a cool screen... 'save this into the playbook' works well too". All three, and they make the same thing.
+
+A **layout** is what a player screen is made of: which instruments are on it and where, and the look it starts with. It is today's screen document (`sse.screen/1`: Bridge, Tarn survey report, Bridge in 3D, Landing). "Layout" is the word used here so that "screen" can mean the piece of glass.
+
+1. **Listed here.** Each role's heading names its layout ("Bridge ▾"). Pressing it lists every layout the campaign has: the ones shipped, the ones from packs, the ones made. Choosing one changes that role's screens at once. A Show step in a preset may also name a layout, so "Landing at Hollin Flats" can bring the Landing layout with it and Back returns the role to its own.
+2. **Built here.** "+ New layout…" at the foot of that list opens a builder in place, with a live preview of the screen beside it. Four steps, each optional, in the "guide, don't leave them alone" manner:
+   - **Start from:** Bridge, Viewport (one picture and nothing else), Report, Sensor station, Briefing, Blank. Choosing one and pressing Save is a complete answer.
+   - **On it:** instruments switched on and off. They are the same list as the GM's rail (one registry), so a new view is at once available to player screens. Sizes are dragged in the preview.
+   - **Look:** one of the campaign's looks.
+   - **Name it**, and Save gives it to the role it was opened from.
+   - A line under the first step offers **Orac**: say what you want ("a sensor station with the infrared globe and two gauges") and it fills the steps in, for the GM to adjust. Orac already has a screen request of this kind on main.
+3. **Kept from what the GM has.** "+ From my view now" in the same list, and **Keep** on Live, both take the GM's own stage as it stands (the instrument, the view style, band and HUD, whether the card is open) and make a layout of it. Keep on Live puts it in the Playbook as a preset: that place, in that arrangement. "From my view now" keeps only the arrangement, for any place. A layout kept this way holds the arrangement and never the GM's knowledge: on a player's screen it is drawn from what that role knows, without the GM's pencil marks.
+
+All three end as one `sse.screen/1` document in the campaign, listed in the same place and editable in the same builder. The full composer stays in Workshop › Player screens for fine work; the builder here is its short form, opened where the need arises.
+
+### 7.5 The pinned preview
 
 Alex called the pinned preview "genius", so it stays, and it is now the same picture as the Switchboard's: **Pin** on any screen's preview pins it to the corner of the chart, so the GM can work on the chart and watch one screen. Pressing another screen's Pin moves it. For a full-size look, a preview's own "See full size" replaces the list in the desk's "See as" menu.
 
@@ -367,6 +401,8 @@ Names are proposals. Everything is plain data; nothing here feeds physics or RES
 { "land":  { /* LandingShow, unchanged */ } }
 { "say":   { "text": "The beacon repeats every ninety seconds…", "on_screens": false } }
 { "hold":  { "card": "blank" | "plain" | "joke" | { "text": "…" } } }   // replaces { off: true }
+{ "play":  { "kind": "picture" | "sound" | "film", "asset": "pack:kestrel/maps/hollin-2" | "file:…" | "https://…", "look": true } }
+{ "page":  { "address": "https://…" } }                                   // later: another program's players' page
 { "camera": { "name": "Camera 1" } }                                     // GM machine only
 
 // A preset: steps plus a role name. Knows nothing of screens.
@@ -426,6 +462,10 @@ A screen's join gains one step: it says hello with a screen id it keeps on the d
 12. **Delete the Seats dialog and the table half of the status line once PB7 lands**, with no old path kept beside the new one? Recommended: yes. Keeping both is how small interfaces come back.
 13. **OBS out in 4.0 as an ordinary screen on an ordinary role, with the transparent background option; camera in marked later; NDI parked?** Recommended: yes. This is the agreed position with the order made explicit.
 14. **Build order: PB1 to PB3 first** (lines, the Switchboard with send and hold, the Playbook with fire and keep), because those three are what the run-through needs? Recommended: yes.
+15. **Layouts three ways, all making one thing** (section 7.4): listed on the role, built in place with the four-step builder and its preview, or kept from your own view; the full composer stays in Workshop? Recommended: yes.
+16. **A GM's own picture or short sound may be sent to remote screens as a file, once, up to about 5 MB**; films only on this computer, by web address or in a pack? Recommended: yes. It is a file and not a stream, so I read it as inside "the GM streams only data", but it is your rule to read.
+17. **Sound plays on the GM's computer by default**, and on a role's screens only where that screen's owner has turned sound on? Recommended: yes.
+18. **Pictures and sound in 4.0 as one late package (PB12); film, web-page sources and the tabletop wait for 4.2 with Mappadux?** Recommended: yes. A map on the table is useful to the run-through; the rest is RPG release work.
 
 ## 15. Packages (for "Build Run desk playbook and players' side")
 
@@ -444,6 +484,9 @@ Files in `packages/shell/src/run/` and `packages/ui-contract/src/`. One at a tim
 | **PB9** | Phone layout; "Open in its own window"; "Open a screen on this computer" keeping a link to its opener. | PB2 | no |
 | **PB10** | Looks on the board: look per role, the dials on role headings and screen boxes, deliveries on arrival and hold, Following latch. | renderer's looks (filters, faults, deliveries) | no |
 | **PB11** | Later: camera in, on local screens only. | PB9 | no |
+| **PB12** | Play: pictures and sound as a source, from a pack, a file or a web address; "Here" as a sound destination; one asset on a Read aloud. | PB6 | no, but wanted |
+| **PB13** | Layouts on the board: the layout list on a role, the four-step builder with preview, "From my view now", a layout named by a Show step. Orac's line when the agents track is ready. | PB7; the existing screen composer | no |
+| **PB14** | Later (4.2): film; a web page as a source; the tabletop with Mappadux. | PB12 | no |
 
 Asks of other threads: the renderer for the cheap Chart preview at thumbnail size, the transparent ground and the looks pieces already assigned to it; the secrets work (SV) for the eye on Reveal steps; navigation (NV1) for the two object-menu entries.
 
@@ -457,4 +500,5 @@ Kept out so the run-through stays small; most belong to 4.2, the RPG release.
 - Dice, checks or any game rule on a preset.
 - Players asking for a picture ("put the scope on that moon") as a request line into the Switchboard.
 - Picture-in-picture and split screens on one destination.
+- Film, web-page sources and showing a virtual tabletop (section 4.9).
 - NDI.
