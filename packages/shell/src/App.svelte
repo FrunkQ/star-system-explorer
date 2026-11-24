@@ -151,8 +151,15 @@
   let landingAwaited = false;
   const here = (): Shown => {
     landingAwaited = ws.screen === "surface" && !lastLanding;
-    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+    const focus = ws.selection ? { focus: ws.selection } : {};
+    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding, ...focus } : { scope: scene.system, title: scene.title, ...focus };
   };
+  // Driving a read-only screen (PB3b): as the GM moves, the screen follows. Never while on the Switchboard itself.
+  $effect(() => {
+    if (!share?.state.board.driving || ws.screen === "switchboard") return;
+    const live = here();
+    untrack(() => share?.follow(live));
+  });
   // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
   let kickerW = $state(999);
 
@@ -205,9 +212,15 @@
     if (v) toWorld(v);
   }
   // Bookmarks (PB2b): where the GM is and how they look, and back again exactly as it was left.
-  const whereabouts = (): Whereabouts => ({ scope: scene.system, now_yr: ws.now_yr, instrument: ws.screen, scale: railScale, ...(ws.view ? { view: ws.view } : {}), selected: ws.selection });
+  // The instrument a bookmark keeps: the Switchboard is where bookmarks are used, never where they point.
+  let lastInstrument = "system";
+  $effect(() => {
+    if (ws.screen !== "switchboard") lastInstrument = ws.screen;
+  });
+  const instrumentNow = () => (ws.screen === "switchboard" ? lastInstrument : ws.screen);
+  const whereabouts = (): Whereabouts => ({ scope: scene.system, now_yr: ws.now_yr, instrument: instrumentNow(), scale: railScale, ...(ws.view ? { view: ws.view } : {}), selected: ws.selection });
   function markHere(): Bookmark {
-    const words = SCREENS[ws.screen]?.label ?? ws.screen;
+    const words = SCREENS[instrumentNow()]?.label ?? instrumentNow();
     return makeBookmark(ws.bookmarks ?? [], whereabouts(), railScale === "world" || railScale === "system" ? (selName ?? scene.title) : scene.title, String(words));
   }
   ws.markHere = markHere;
