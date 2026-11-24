@@ -160,6 +160,8 @@
     if (r.ok) ask = "";
   }
   const seatId = new URLSearchParams(location.search).get("seat") ?? "table";
+  // What this seat is shown: its own send if the GM gave it one, else the table's.
+  const shownFor = (r: PlayerReplica) => r.seats().find((x) => x.id === seatId)?.shown ?? r.shown();
   if (isSealed) {
     const id = `player-${Math.random().toString(36).slice(2, 10)}`;
     void roomHub(id).then((hub) => {
@@ -226,7 +228,7 @@
       replica.onSession = (s) => {
         session = s;
         sessionReady = true;
-        shown = replica.shown();
+        shown = shownFor(replica);
         party = partyOf(replica.party());
         perfEdge = s.device();
         void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
@@ -236,7 +238,7 @@
         if (JSON.stringify(mine?.live ?? null) !== JSON.stringify(live ?? null)) live = mine?.live;
         const ship = partyOf(replica.party());
         if (JSON.stringify(ship) !== JSON.stringify(party)) party = ship;
-        const sent = replica.shown();
+        const sent = shownFor(replica);
         if (JSON.stringify(sent ?? null) !== JSON.stringify(shown ?? null)) {
           const was = shown && "scope" in shown ? shown.screen : undefined;
           shown = sent;

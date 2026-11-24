@@ -7,10 +7,12 @@
   that audience (nothing is remembered here).
 -->
 <script lang="ts">
-  import { EVERYONE, LIVE_OVERRIDES, checkBrand, embedOrigins, fogViews, isDefaultPlan, observeOf, type Audience, type SceneSubject, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { EVERYONE, LIVE_OVERRIDES, checkBrand, embedOrigins, fogViews, isDefaultPlan, observeOf, type Audience, type SceneSubject, type Shown, type ViewSession } from "../../ui-contract/src/index.ts";
   import type { Share } from "./share.svelte.ts";
 
-  let { share, session, bodies, scope, at_yr, onchange }: { share: Share; session: ViewSession; bodies: SceneSubject[]; scope: string; at_yr: number; onchange: () => void } = $props();
+  let { share, session, bodies, scope, at_yr, onchange, here }: { share: Share; session: ViewSession; bodies: SceneSubject[]; scope: string; at_yr: number; onchange: () => void; here?: () => Shown } = $props();
+  // What a seat is shown, in words: its own send, else the table's.
+  const seesWords = (x: Shown) => ("off" in x ? "nothing (screens off)" : (x.title ?? "the opening place"));
 
   const SCREENS = [
     { file: "players.screen.json", label: "Bridge" },
@@ -109,6 +111,15 @@
               <label class="check"><input type="checkbox" data-live={`${s.id}:${o.param}`} checked={s.live?.[o.param] === o.on} onchange={(e) => { const { [o.param]: _x, ...rest } = s.live ?? {}; share.setLive(s.id, e.currentTarget.checked ? { ...rest, [o.param]: o.on } : rest); }} /> {o.label}</label>
             {/each}
           </span>
+          {#if share.state.link}
+            <!-- Looks 4D seat rows, first cut: send one seat the view, or blank it; "Send this view" in the footer sends everyone. -->
+            <span class="sees" data-seat-sees={s.id}>
+              Sees: {seesWords(s.shown ?? share.state.shown)}{s.shown ? "" : " (with the table)"}
+              {#if here && JSON.stringify(s.shown ?? share.state.shown) !== JSON.stringify(here())}<button type="button" class="linkbtn" data-seat-send={s.id} onclick={() => share.showSeat(s.id, here!())}>Send this view</button>{/if}
+              {#if !(s.shown && "off" in s.shown)}<button type="button" class="linkbtn quiet" data-seat-off={s.id} onclick={() => share.showSeat(s.id, { off: true })}>Screens off</button>{/if}
+              {#if s.shown}<button type="button" class="linkbtn quiet" data-seat-rejoin={s.id} onclick={() => share.showSeat(s.id, null)}>Back with the table</button>{/if}
+            </span>
+          {/if}
           {#if s.id !== "table"}<button type="button" class="linkbtn" onclick={() => share.removeSeat(s.id)}>Remove</button>{/if}
         </li>
       {/each}
@@ -193,6 +204,14 @@
     font-family: var(--sse-font-display);
     font-style: italic;
     font-size: 16px;
+  }
+  .sees {
+    grid-column: 1 / -1;
+    font-size: 13px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    align-items: baseline;
   }
   .meta,
   .hint {
