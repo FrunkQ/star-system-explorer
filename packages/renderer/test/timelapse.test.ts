@@ -8,7 +8,7 @@ import { cubeDirection } from "../../ui-contract/src/index.ts";
 import { Session } from "../../ui-contract/src/session.ts";
 import { gmSeat } from "../../ui-contract/src/seat.ts";
 import { nodeKernel } from "../../ui-contract/test/node-kernel.ts";
-import { bracket, cellOf, eventsBetween, layerColour, layersFor, narrateFrame, onPlateEdge, pickAt, readFrames, recolour, seaLevelAt, valueAt, type RawFrames } from "../src/timelapse.ts";
+import { bracket, cellOf, eventsBetween, iceAgeAt, iceAges, iceAgeWords, layerColour, layersFor, narrateFrame, onPlateEdge, pickAt, readFrames, recolour, seaLevelAt, underSea, valueAt, type RawFrames } from "../src/timelapse.ts";
 
 const N = 8;
 function fixture(b64 = false): RawFrames {
@@ -130,6 +130,46 @@ test("recolour: every sample takes the layer's colour; past frames are flat-lit;
   assert.match(words, /Ice age begins/);
 });
 
+test("a dry world has no sea, and ice ages get a window of their own with the kernel's cells", () => {
+  // Dry: the kernel sends sea_level_m null; low ground stays land, never ocean.
+  const dry = fixture();
+  for (const f of dry.frames) f.sea_level_m = null;
+  const td = readFrames(dry);
+  assert.ok(td.frames.every((f) => f.dry));
+  const low = cellOf(td, -1, 0, 0);
+  assert.ok((valueAt(td, "elevation_m", low, 4500) ?? 0) < 0, "the fixture's west is low ground");
+  assert.equal(underSea(td, low, 4500), false);
+  const c = layerColour(td, "land", low, 4500);
+  assert.ok(c[2] < c[1] + 20, `low ground on a dry world is not sea blue: ${c}`);
+  assert.equal(pickAt(td, [-1, 0, 0], 4500).sea, false);
+  assert.match(narrateFrame(td, "land", 4500, "Dry"), /no sea/);
+  // Ice ages: three onsets in the last 100 thousand years, the latest with the cells where ice starts.
+  const wet = fixture();
+  const cold = [cellOf(td, 0.6, 0, 0.8), cellOf(td, 0.6, 0.1, 0.79)];
+  wet.events = [
+    ...wet.events!,
+    { t_myr: 4500 - 0.09, kind: "ice-age", text: "An ice age begins: ice starts to grow on 2.0% of the land.", why: ["The orbit's swing."] },
+    { t_myr: 4500 - 0.05, kind: "ice-age", text: "An ice age begins: ice starts to grow on 1.0% of the land." },
+    { t_myr: 4500 - 0.02, kind: "ice-age", text: "An ice age begins: ice starts to grow on 3.0% of the land.", cells: cold },
+  ];
+  const tl = readFrames(wet);
+  const ia = iceAges(tl)!;
+  assert.equal(ia.events.length, 4, "the fixture's older onset counts too");
+  // The fixture's 4000 Myr onset stretches the window; without it the window is a tidy 100 thousand years.
+  const recent = readFrames({ ...wet, events: wet.events.filter((e) => e.t_myr > 4400) });
+  const r = iceAges(recent)!;
+  assert.equal(r.to_myr, 4500);
+  assert.ok(Math.abs(r.to_myr - r.from_myr - 0.1) < 1e-9, `window ${r.to_myr - r.from_myr} Myr`);
+  assert.equal(iceAgeAt(recent, 4500 - 0.03)?.text, recent.events[1]!.text);
+  assert.equal(iceAgeAt(recent, 4500 - 0.5), null, "before the window");
+  assert.match(iceAgeWords(recent, recent.events[2]!), /^Ice age 3 of 3 in the last 100 thousand years, begun 20 thousand years ago: ice starts to grow on 3\.0% of the land\.$/);
+  assert.match(narrateFrame(recent, "ice", 4500 - 0.01, "Fixture"), /10 thousand years ago, .*Ice age 3 of 3/);
+  // Where the kernel names the cells, the ice layer shows ice starting there during that ice age, not before.
+  const during = layerColour(recent, "ice", cold[0]!, 4500 - 0.01);
+  const before = layerColour(recent, "ice", cold[0]!, 4500 - 0.03);
+  assert.ok(during[2] > before[2] + 20, `growing ice is paler: ${during} vs ${before}`);
+});
+
 test("the kernel's Earth: surface_frames read whole, every layer drawable, events placed, the same each time", async () => {
   const k = nodeKernel();
   try {
@@ -164,6 +204,46 @@ test("the kernel's Earth: surface_frames read whole, every layer drawable, event
     const again = await s.surfaceFrames({ fixture: "Earth", frames_max: 12 });
     assert.ok(again.ok);
     assert.deepEqual(readFrames(again.frames as unknown as RawFrames).frames[3]!.fields.plate, tl.frames[3]!.fields.plate, "the same world each time");
+  } finally {
+    await k.close();
+  }
+});
+
+test("the Solar System's Earth: the kernel's ice ages read into their own window, and each frame's climate reads its own land", async () => {
+  const { readSol, solBatches, solSourceText } = await import("../../ui-contract/src/sol.ts");
+  const text = (p: string) => readFileSync(new URL(`../../../${p}`, import.meta.url), "utf8");
+  const k = nodeKernel();
+  try {
+    const packs = [JSON.parse(text("packs/base-physics/pack.json")), JSON.parse(text("packs/base-time/pack.json"))];
+    const s = await Session.open(k.client, gmSeat(), { id: "lapse", seed: "lapse" }, packs);
+    const sys = "u:lapse/sys:sol";
+    const sheet = readSol(JSON.parse(text("packs/base-sol/pack.json")))!;
+    const { batches, addresses } = solBatches(sheet, sys);
+    for (const b of batches) {
+      const r = await s.send({ kind: "set_values", edits: b.edits, at_yr: 0, evidence: "catalogued", source: solSourceText(sheet, b.source) });
+      assert.equal(r.status, "applied", `${b.source}: ${JSON.stringify(r)}`);
+    }
+    const r = await s.surfaceFrames({ system: sys, body: addresses.earth!, detail: "orbit" });
+    assert.ok(r.ok, JSON.stringify(r));
+    const tl = readFrames(r.frames as unknown as RawFrames);
+    const ia = iceAges(tl);
+    assert.ok(ia, `ice ages dated (pending: ${tl.pending.join("; ")})`);
+    assert.ok(ia.to_myr - ia.from_myr < 10, `the ice-age window is recent: ${ia.to_myr - ia.from_myr} Myr`);
+    assert.ok(ia.events.every((e) => e.t_myr >= ia.from_myr && e.t_myr <= ia.to_myr));
+    const last = ia.events[ia.events.length - 1]!;
+    assert.match(narrateFrame(tl, "ice", last.t_myr, "Earth"), /thousand years ago.*Ice age \d+ of \d+/);
+    assert.ok(tl.frames.every((f) => !f.dry && f.why.length), "Earth has a sea in every frame, and a line for each");
+    // Each frame's climate reads that frame's own land (PR 394): the first frame is an ocean world, and its climate
+    // differs from today's. The catalogued Earth's temperature is a fixed value, so the young Sun's dimming is not in
+    // these frames; the kernel says so, and the temperature layer carries the line.
+    const landShare = (f: (typeof tl.frames)[number]) => f.fields.elevation_m!.filter((z) => z >= f.sea_level_m).length / tl.cells;
+    const mean = (f: (typeof tl.frames)[number]) => f.fields.temp_k!.reduce((a, b) => a + b, 0) / tl.cells;
+    const first = tl.frames[0]!;
+    const now = tl.frames[tl.frames.length - 1]!;
+    assert.ok(landShare(first) < 0.05 && landShare(now) > 0.15, `land ${landShare(first)} then, ${landShare(now)} now`);
+    assert.ok(Math.abs(mean(first) - mean(now)) > 1, `an ocean world's climate is its own: ${mean(first)} K then, ${mean(now)} K now`);
+    const temp = layersFor(tl).find((l) => l.spec.id === "temperature")!;
+    assert.ok(temp.pending.some((n) => /fixed value/.test(n)), temp.pending.join("; "));
   } finally {
     await k.close();
   }

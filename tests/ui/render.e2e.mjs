@@ -254,6 +254,16 @@ try {
       await why.waitFor();
       assert.ok((await why.locator(".said").innerText()).length > 5, "the event in words");
       await shot(gm, `render-lapse-why-${name}`);
+      // R6c: the kernel's ice ages (all in the last few million years) on a strip of their own, read in thousands of years.
+      const iceStrip = lc.locator("[data-lapse-ice]");
+      if (await iceStrip.count()) {
+        await iceStrip.locator(".mark.cold").last().click();
+        await why.waitFor();
+        assert.match(await why.locator(".said").innerText(), /^Ice age \d+ of \d+ in the last .+, begun .+ ago: /);
+        assert.match(await lc.locator("[data-lapse-when]").innerText(), /thousand years ago|million years ago/);
+        await shot(gm, `render-lapse-ice-age-${name}`);
+        console.log(`  time lapse: ${await iceStrip.getAttribute("data-lapse-ice")} ice ages on their own strip`);
+      } else console.log("  time lapse: this world has no dated ice ages (no orbit track)");
       // Play steps forward through the keyframes.
       const before = Number(await lc.getAttribute("data-lapse-t"));
       await lc.getByRole("button", { name: "Play" }).click();

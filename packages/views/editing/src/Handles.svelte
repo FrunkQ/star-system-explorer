@@ -6,7 +6,7 @@
   Values are the kernel's facts for the body (resolved_system), never the card's display strings.
 -->
 <script lang="ts">
-  import { aboutFor, commitEdit, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resultsOf, say, scaleClass, whatFollowed, type Followed, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { aboutFor, chosenReading, commitEdit, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resultsOf, say, scaleClass, whatFollowed, type Followed, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import Strip from "./Strip.svelte";
 
   let { ctx, scene, subject }: { ctx: ViewContext; scene: SystemScene; subject: SceneSubject } = $props();
@@ -33,6 +33,8 @@
     return () => (live = false);
   });
   const mine = $derived(facts[subject?.address ?? ""] ?? {});
+  // The reading chosen by pressing a unit anywhere (a card's figure, a strip's), per kind and scale class.
+  const pick = (h: Handle) => chosenReading(ws.unit_choices, h.part.kind, aboutFor(h, cls));
   const cls = $derived(scaleClass(subject?.kind ?? "", typeof mine["body.mass"] === "number" ? (mine["body.mass"] as number) : undefined));
 
   // The catalogued Solar System, for the reference dots (packs/base-sol, handed over by the shell).
@@ -75,13 +77,13 @@
     const system = scene.system;
     const before = resultsOf(surfaces, address);
     const old = handleValue(h, mine);
-    const display = say(Math.abs(si), h.part.kind, aboutFor(h, cls), { depth, ...(how.source === "typed" ? { source: "typed" as const, sig: how.sig ?? 3 } : {}) }).text;
+    const display = say(Math.abs(si), h.part.kind, aboutFor(h, cls), { depth, reading: pick(h), ...(how.source === "typed" ? { source: "typed" as const, sig: how.sig ?? 3 } : {}) }).text;
     const r = await commitEdit(ctx.session, ws, {
       address,
       field: h.part.field,
       value: fieldValue(h, si),
       display,
-      before: { value: old === null ? null : fieldValue(h, old), display: old === null ? "not set" : say(Math.abs(old), h.part.kind, aboutFor(h, cls), { depth }).text },
+      before: { value: old === null ? null : fieldValue(h, old), display: old === null ? "not set" : say(Math.abs(old), h.part.kind, aboutFor(h, cls), { depth, reading: pick(h) }).text },
     });
     if (r.status !== "applied") return r.status === "pending" ? "Sent to the GM to approve." : r.status === "refused" ? r.reason : r.message;
     const again = await ctx.session.resolvedSystem(system);
@@ -89,7 +91,7 @@
       facts = again.result.facts as Record<string, Record<string, Json>>;
       surfaces = (again.result as { surfaces?: unknown }).surfaces ?? null;
     }
-    const change = { label: depth === "curious" ? h.names.curious : h.names.science, before: old === null ? "not set" : say(Math.abs(old), h.part.kind, aboutFor(h, cls), { depth }).text, after: display };
+    const change = { label: depth === "curious" ? h.names.curious : h.names.science, before: old === null ? "not set" : say(Math.abs(old), h.part.kind, aboutFor(h, cls), { depth, reading: pick(h) }).text, after: display };
     followed = { handle: id, change, rest: whatFollowed(before, resultsOf(surfaces, address), cls, { depth }) };
     return null;
   }
@@ -98,7 +100,7 @@
 {#if on && !scene.fixture}
   <div class="handles" data-handles={on} role="toolbar" aria-label={editable ? "What you can set" : "What sets this world"}>
     {#each handles as h (h.id)}
-      {@const fig = handleFigure(h, mine, cls, { depth })}
+      {@const fig = handleFigure(h, mine, cls, { depth, reading: pick(h) })}
       {@const waits = h.part.scale === "bar"}
       <button
         type="button"
@@ -121,7 +123,7 @@
   </div>
   {#if open}
     {@const h = handles.find((x) => x.id === open)!}
-    <Strip handle={h} value={handleValue(h, mine)} dots={dotsFor(h.id)} {cls} {depth} {editable} oncommit={(si, how) => commit(h.id, si, how)} onclose={() => (open = null)} />
+    <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} {cls} {depth} {editable} oncommit={(si, how) => commit(h.id, si, how)} onclose={() => (open = null)} />
   {/if}
   {#if followed}
     <div class="followed" data-followed aria-live="polite">

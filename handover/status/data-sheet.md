@@ -23,6 +23,46 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | MP27 heat, melt and boil values for hull skins (`heat_capacity`, `heat_to_melt`, `latent_fusion`, `heat_to_boil`, `boiling_point_k`, `latent_vaporisation`; graphite `latent_sublimation`) on Al, Ti, Fe, Nb, Mo, Ta, W, Pb and graphite, for RK12 burn-through | done (PR 381); tungsten's boiling point, graphite's sublimation temperature, rhenium and steel heats still to find | packages/MP27-hull-skin-heats.md |
 | RK10 one Bands table on the sheet (Atomic Rockets plan question 14): `bands` table (view, light, channel rows), reader checks, `SHEET_BANDS` in ui-contract | done (PR 383); light, renderer and chart room threads repoint their own strings | packages/RK10.md |
 | MP28 MP27's gaps: tungsten boiling point (JANAF W(g), extrapolated 157 K), graphite sublimation point and heat (C1 to C5 vapour), `stainless-304l` (Kim 1975), `ti-6al-4v` melting point, `al-6061` heat capacity, rhenium heat of sublimation | done (PR 407); solids' heats of combustion, alloy latent heats and rhenium melting heats still to find | packages/MP28-skin-gaps.md |
-| MP29 the rest of the stable isotopes H to Ne (Be-9, B-10, B-11, O-17, F-19, Ne-20 to 22) with masses, so every Lodders 2021 share has a row | done (this PR); masses from NIST's pages (AME2016), AME2020 itself unreachable | packages/MP29-light-isotopes.md |
-| MP30 electrical conductivity for MF2's field ledger: `earth-core-liquid` and liquid iron (Pozzo 2012), `giant-envelope` sigma profile along Jupiter's adiabat (French 2012), `seawater` with PSS-78 fits | done (this PR); ionic water's 1e4 S/m still recalled | packages/MP30-conductivity.md |
-| MP31 units for the units engine (ED1a): 16 working units, 10 imperial units (group `imperial`), source NIST SP 811; reader knows `area` and `volume` | done (this PR) | packages/MP31-units.md |
+| MP29 the rest of the stable isotopes H to Ne (Be-9, B-10, B-11, O-17, F-19, Ne-20 to 22) with masses, so every Lodders 2021 share has a row | done (PR 419); masses from NIST's pages (AME2016), AME2020 itself unreachable | packages/MP29-light-isotopes.md |
+| MP30 electrical conductivity for MF2's field ledger: `earth-core-liquid` and liquid iron (Pozzo 2012), `giant-envelope` sigma profile along Jupiter's adiabat (French 2012), `seawater` with PSS-78 fits | done (PR 419); ionic water's 1e4 S/m still recalled | packages/MP30-conductivity.md |
+| MP31 units for the units engine (ED1a): 16 working units, 10 imperial units (group `imperial`), source NIST SP 811; reader knows `area` and `volume` | done (PR 419) | packages/MP31-units.md |
+| MP32 sea liquids: liquid water's absorption spectrum 380 to 2000 nm (Pope and Fry 1997, Hale and Querry 1973) and refractive index (Segelstein 1981); `saturated_liquid` tables (density, viscosity, surface tension, vapour pressure) for water, methane, ethane, ammonia, nitrogen, helium, CO2, argon, propane, each column citing its reference correlation, read through CoolProp; new rows `c2h6`, `c3h8` | done (this PR); liquid methane and ethane absorption still unsourced; ethane as a volatile (vapour fit, colour) next | packages/MP32-sea-liquids.md |
+| MP33 condensate optics, part 1: `titan-tholin` n,k 264 to 2422 nm (Khare 1984), shape `optical.refractive_index {lambda_nm, n, k}` for the giant-bands and plumes threads | part 1 done (this PR); h2so4, nh4sh, chromophore and the MP34 ices wait (list in the log) | packages/MP33-condensate-optics.md |
+
+
+## Next, in order (as of 24 Nov 2026, for whoever picks this track up)
+
+1. **MP32 follow-ups for the climate thread.**
+   - **Liquid methane and ethane absorption.** Leads: Ramaprasad et al. 1978 (Icarus 35, 400), and Grundy et al. 2002 (Icarus 155, 486; it includes liquid methane at 93 K).
+   - **Ethane as a volatile.** Needs Fray and Schmitt 2009's fit, a condensed colour and a latent heat. This goes through the golden lane, since it may move hashes.
+   
+   Details are in packages/MP32-sea-liquids.md.
+2. **MP33 and MP34 condensate optics.** The renderer's giant-bands and plumes threads read these through Look up; the order is in packages/MP33-condensate-optics.md:
+   - `h2so4` (from the Palmer and Williams 1975 page image);
+   - `nh4sh`;
+   - `jupiter-chromophore`;
+   - SO2 frost;
+   - sulphur allotropes;
+   - N2 and CH4 ice;
+   - CO2 frost.
+3. **Still unsourced, and searched without luck so far:**
+   - heats of combustion for the solid propellants (JPL TM 33-649, JPL 79-29 and Thiokol TWR-13009 searched);
+   - ionic water's conductivity: `h2o.ionic_fluid` still holds a recalled 1e4 S/m, because Knudson 2012 gives only reflectivity;
+   - latent heats for Ti-6Al-4V and Al 6061;
+   - rhenium's heat of melting;
+   - the solar-metallicity end of the element `scatter_dex` (Bensby 2014 Table C.3 at CDS was not read).
+   
+   The Cayrel 2004 metal-poor scatter values are written down in packages/scatter-dex-notes.md and are still to be put on the rows.
+4. **Waiting on the readers of new rows.**
+   - Proven core reads MP30's conductivities for MF2, through these fields:
+     - `earth-core-liquid.sigma_elec` and `sigma_elec_icb`;
+     - `iron.sigma_elec_liquid`;
+     - `giant-envelope.sigma_elec_profile` and `metallic_from`;
+     - `seawater.sigma_elec`, `sigma_elec_25c` and the PSS-78 fits.
+   - The editing thread strikes the MP31 units off its WAITING list in figures.test.ts. Imperial units are in group `imperial`.
+5. **Later:** p-B11 fusion (the B-11 mass is now on the sheet); OV12 naming at stage 5.
+
+Working notes for this track:
+- After any change to the sheet, or to scripts/build-ui-reference.py, merge main and re-run `python3 scripts/build-base-reference.py`, `python3 scripts/build-ui-reference.py` and `python3 scripts/build-rust-reference.py` just before merging. CI's ui job checks the generated copy, and on 24 Nov PR 419 merged a stale one because PR 410 changed the script while 419's CI ran, which turned main red until PR 422 and PR 445.
+- From the cloud, janaf.nist.gov, the AME2020 hosts, webbook.nist.gov, omlc.org and srd.nist.gov all refuse curl. A web-reading agent reaches janaf, physics.nist.gov and omlc.
+- Values read from fetched text are marked `unverified` until the citation check reads the paper.

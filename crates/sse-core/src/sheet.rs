@@ -507,6 +507,10 @@ pub mod molar_mass {
     pub const N2O4: f64 = 0.09201000000000001;
     /// h2o2.
     pub const H2O2: f64 = 0.034014;
+    /// c2h6.
+    pub const C2H6: f64 = 0.03007;
+    /// c3h8.
+    pub const C3H8: f64 = 0.044097000000000004;
 }
 
 /// Triple point temperature, K, by substance (the sheet's `phases.triple_point_k`).
@@ -527,6 +531,10 @@ pub mod triple_point_k {
     pub const CO: f64 = 68.13;
     /// n2o4 (nasa-rp1013).
     pub const N2O4: f64 = 261.9;
+    /// c2h6 (buecker-wagner2006).
+    pub const C2H6: f64 = 90.368;
+    /// c3h8 (lemmon2009-propane).
+    pub const C3H8: f64 = 85.525;
 }
 
 /// Triple point pressure, Pa, by substance (the sheet's `phases.triple_point_pa`).
@@ -593,6 +601,10 @@ pub mod density_liquid {
     pub const N2O4: f64 = 1450.0;
     /// h2o2 (evonik-h2o2).
     pub const H2O2: f64 = 1450.0;
+    /// c2h6 (buecker-wagner2006).
+    pub const C2H6: f64 = 651.527;
+    /// c3h8 (lemmon2009-propane).
+    pub const C3H8: f64 = 733.12;
 }
 
 /// Latent heat of vaporisation, J/kg, by substance (the sheet's `phases.latent_vaporisation`).

@@ -144,17 +144,16 @@ try {
     await styleBar.getByRole("button", { name: "Chart", exact: true }).click();
     assert.equal(await cmp2.locator("canvas[data-lineup-3d]").count(), 0, "Chart is the flat lineup again");
 
-    // The Gallery: every body of this system and the Solar System's reference bodies, in True at Readable, one press.
-    await cmp2.getByRole("button", { name: "Gallery", exact: true }).click();
-    await gm.waitForSelector('[data-view-controls][data-style="true"][data-scale="readable"]');
-    assert.ok(Number(await cmp2.getAttribute("data-compare")) >= start + 8, "the system's bodies and the Solar System's");
-    assert.match(await cmp2.locator('[role="status"]').innerText(), /^Gallery: \d+ bod(y|ies) of .* and \d+ of the Solar System, in True\.$/);
-    await cmp2.locator('canvas[data-lineup-3d="true"], [data-no-globes]').first().waitFor({ timeout: 10000 });
-    // The system's own star in the gallery is the living star of the system's True (SG4b): churning, spotted, flaring.
-    if (!(await cmp2.locator("[data-no-globes]").count())) await gm.waitForFunction(() => Number(document.querySelector("canvas[data-lineup-3d]")?.getAttribute("data-live-stars")) > 0, null, { timeout: 20000 });
-    await gm.waitForTimeout(1500);
-    await shot(gm, `gallery-${name}`);
-    await styleBar.getByRole("button", { name: "Chart", exact: true }).click();
+    // True at Readable: the system's own star stands as a globe, and it is the living star of the system's True (SG4b).
+    if (!(await cmp2.locator("[data-no-globes]").count())) {
+      await styleBar.getByRole("button", { name: "True", exact: true }).click();
+      await scaleBar.getByRole("button", { name: "Readable", exact: true }).click();
+      await gm.waitForFunction(() => Number(document.querySelector("canvas[data-lineup-3d]")?.getAttribute("data-live-stars")) > 0, null, { timeout: 20000 });
+      await gm.waitForTimeout(1500);
+      await shot(gm, `globes-live-star-${name}`);
+      await scaleBar.getByRole("button", { name: "Real", exact: true }).click();
+      await styleBar.getByRole("button", { name: "Chart", exact: true }).click();
+    }
 
     // Phone.
     const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true })).newPage();
