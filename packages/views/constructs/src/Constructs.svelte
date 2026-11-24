@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { BOOKKEEPING, PICTURE_FIELDS, FUEL_FIELDS, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { BOOKKEEPING, PICTURE_FIELDS, FUEL_FIELDS, MANIFEST_WORDS, PERSON, CARGO, aboardLog, entryFrom, type AboardEntry, type RecordRead, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
   import { Aboard, Picture } from "../../manifest/src/index.ts";
@@ -96,9 +96,22 @@
   let log = $state<ShipLogEntry[]>([]);
   const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
   async function loadLog(address: string) {
-    const [h, r] = await Promise.all([session.history(address), session.record?.(address)]);
+    const [h, r, aboardAll] = await Promise.all([session.history(address), session.record?.(address), aboardEntries(address)]);
     if (picked !== address) return;
-    log = shipLog(h, r?.ok ? r.record : null, (s) => secondsToYears(s), (k) => fieldWords(k).label).reverse();
+    const own = shipLog(h, r?.ok ? r.record : null, (s) => secondsToYears(s), (k) => fieldWords(k, MANIFEST_WORDS).label);
+    // Who and what came aboard, left and changed state here (track MC), from the entries' own histories.
+    const moves = aboardLog(address, aboardAll, (s) => secondsToYears(s), (a) => (a === scene.system ? scene.title : listed.find((x) => x.address === a) ? nameOf(listed.find((x) => x.address === a)!) : (scene.subjects.find((x) => x.address === a)?.label ?? "elsewhere")));
+    const rank = (w: ShipLogEntry["what"]) => ({ made: 0, edited: 1, event: 1, kept: 2, aboard: 2, note: 3, retired: 4 })[w];
+    log = [...own, ...moves].sort((a, b) => a.at_yr - b.at_yr || rank(a.what) - rank(b.what)).reverse();
+  }
+  // Everyone and everything that is or was aboard anything: record entries at the universe root (base manifest pack).
+  async function aboardEntries(address: string): Promise<AboardEntry[]> {
+    if (!session.record) return [];
+    const top = await session.record(address.split("/")[0]!);
+    if (!top.ok) return [];
+    const mine = top.record.actors.filter((a) => a.kind === PERSON || a.kind === CARGO);
+    const reads = await Promise.all(mine.map((a) => session.record!(a.address)));
+    return mine.map((a, i) => entryFrom(a, reads[i]!.ok ? (reads[i] as { ok: true; record: RecordRead }).record : null)).filter((e) => e.moves.some((m) => m.value === address));
   }
   $effect(() => {
     void ws.revision;

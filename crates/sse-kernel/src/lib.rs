@@ -16,6 +16,9 @@ mod dressing;
 #[cfg(test)]
 mod dressing_tests;
 mod fields;
+mod flights;
+#[cfg(test)]
+mod flights_tests;
 mod frame;
 mod frames;
 mod galaxies;
@@ -5333,6 +5336,104 @@ impl Kernel {
                 let mut power = nav::books(&l, &fitted, flux);
                 power["ship"] = ship.name.clone().into();
                 Response::ShipPowerIs { power }
+            }
+            Request::LogFlight {
+                construct,
+                piece,
+                event,
+                name,
+                about,
+                withdraw,
+                writer,
+                reason,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let root = u.root.clone();
+                let (event_id, seeded, notes) = flights::write(
+                    &mut u.record,
+                    flights::Write {
+                        root: &root,
+                        construct: &construct,
+                        piece,
+                        event,
+                        name,
+                        about,
+                        withdraw,
+                        writer: writer.unwrap_or_else(|| "gm".into()),
+                        reason,
+                        at_s,
+                    },
+                )?;
+                Response::FlightLogged {
+                    event_id,
+                    seeded,
+                    notes,
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::FlightLog {
+                construct,
+                at_s,
+                where_at,
+                fixture,
+                nav,
+                system,
+            } => {
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let c = in_universe(&u.root, &construct)?;
+                let (log, es) = flights::assemble(
+                    &u.record,
+                    &c,
+                    UniverseTime::seconds(at_s.unwrap_or(i64::MAX)),
+                );
+                let at = match where_at {
+                    None => None,
+                    Some(t) => {
+                        let source = match (fixture.as_deref(), nav.as_ref(), system.as_deref()) {
+                            (Some(f), None, None) => nav::Source::Fixture(f),
+                            (None, Some(n), None) => nav::Source::Inline(n),
+                            (None, None, Some(sys)) => {
+                                let a = in_universe(&u.root, sys)?;
+                                if !u.runs.contains_key(sys) {
+                                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                        let (_, run, _) = systems::form(req.into())?;
+                                        u.runs.insert(sys.to_string(), run);
+                                    }
+                                }
+                                let (s, _) = nav::nav_system(nav::Source::System {
+                                    ch: &u.chronicle,
+                                    system: &a,
+                                    at_s: None,
+                                    run: u.runs.get(sys),
+                                    ports: &[],
+                                    air: false,
+                                })?;
+                                return Ok(Response::FlightLogIs {
+                                    log: serde_json::to_value(&log).expect("plain"),
+                                    entries: es.iter().map(flights::entry_json).collect(),
+                                    at: Some(flights::where_at(&log, t, &s)),
+                                });
+                            }
+                            _ => {
+                                return Err(err(
+                                    "bad_request",
+                                    "where_at needs one of a fixture, a nav system or a universe system",
+                                ))
+                            }
+                        };
+                        let (s, _) = nav::nav_system(source)?;
+                        Some(flights::where_at(&log, t, &s))
+                    }
+                };
+                Response::FlightLogIs {
+                    log: serde_json::to_value(&log).expect("plain"),
+                    entries: es.iter().map(flights::entry_json).collect(),
+                    at,
+                }
             }
             Request::OrbitStability {
                 system,

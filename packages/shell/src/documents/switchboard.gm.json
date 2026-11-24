@@ -1,0 +1,18 @@
+{
+  "schema": "sse.screen/1",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "id": "sse.workspace.gm.switchboard",
+  "label": "Switchboard",
+  "items": [{ "view": "sse.view.switchboard", "area": "chart" }],
+  "rail": [
+    { "scale": "web", "group": "table", "label": "Switchboard", "order": 1, "hint": "What every screen at the table shows, and how to send, hold and swap it" },
+    { "scale": "cluster", "group": "table", "label": "Switchboard", "order": 1, "hint": "What every screen at the table shows, and how to send, hold and swap it" },
+    { "scale": "galaxy", "group": "table", "label": "Switchboard", "order": 1, "hint": "What every screen at the table shows, and how to send, hold and swap it" },
+    { "scale": "system", "group": "table", "label": "Switchboard", "order": 1, "hint": "What every screen at the table shows, and how to send, hold and swap it" },
+    { "scale": "world", "group": "table", "label": "Switchboard", "order": 1, "hint": "What every screen at the table shows, and how to send, hold and swap it" }
+  ]
+}

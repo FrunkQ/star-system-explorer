@@ -54,7 +54,7 @@ leave the browser.
 | Fudge register / citations | `docs/fudges.md` / `docs/citations.md` |
 | Interface style, top-level UI | `handover/interface-style.md`, `handover/design/SSE4-top-level-ui-and-onboarding.md` |
 | Old project memory | `handover/memory/` |
-| Screenshots, mockups, trailer clips | Not in the repo. Old account's project files `sse4/` (see the handover note for the list); Alex's PC |
+| Screenshots, mockups, trailer clips | Not in the repo. Alex's PC: `C:\Development\sse4-project-files\` (13 zips of the old project files `sse4/`, 24 Nov snapshot) |
 | Alex's PC (AC-ProArt) | `C:\Development`: `sse4` checkout, `star-system-explorer-v2` (V3 source, code in `star-system-generator`), `sse4-real-saves` (real V3 saves), `sse4-trailer-gpu` (trailer clips) |
 | Sister sites | Explorers `FrunkQ/starsystemx-creator-hub`; converter `FrunkQ/starsystem-convert` |
 
@@ -95,12 +95,12 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/naming.md` | the thread that owns track NM | NM |
 | `status/performance.md` | Measure performance for minimum specs | PF |
 | `status/across-tracks.md` | each row names its owners | the umbrella rows for MF, Y, GH, ND, TG, and the converter module |
+| `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, run/ (table line, seats, arrival), Bookmarks, Playbook and Switchboard (RD, PB) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/cosmic-web.md` | Build cosmic web view | V9w and what follows: the web cube in 3D and True, light from haloes |
 | `status/navigation.md` | Build object selector and menus | NV (finding your way: selector part 2, object menu, find by tag, notes) |
-| `status/exotic-objects.md` | no builder thread yet (design by "Design exotic stars and black holes") | XO (black holes with real light bending, pulsars, stripped stars, Composite band, the approach diagram) |
+| `status/exotic-objects.md` | no builder thread yet (design by "Design exotic stars and black holes") | XO (black holes with real light bending, pulsars, stripped stars, Composite band, the Hazard map for any hazardous body) |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs as edited, the Solar System built through the UI) |
-| `status/run-desk.md` (arrives with PR 421) | Build Run desk playbook and players' side | RD, PB (Playbook and Switchboard) |
 | none yet | Build Paper spacecraft pack | RK6 (other RK packages are rows in the files above) |
 | none yet | designed only (XO note, PR 420) | XO exotic objects |
 

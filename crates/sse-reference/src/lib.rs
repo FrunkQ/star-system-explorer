@@ -63,6 +63,8 @@ fn unit_dim(row: &Map<String, J>) -> Option<sse_core::Dimension> {
         "flux" => D::FLUX,
         "velocity" => D::VELOCITY,
         "acceleration" => D::ACCELERATION,
+        "area" => D([2, 0, 0, 0, 0, 0, 0]),
+        "volume" => D([3, 0, 0, 0, 0, 0, 0]),
         "density" => D::DENSITY,
         "magnetic_field" => D::MAGNETIC_FIELD,
         "magnetic_moment" => D::MAGNETIC_MOMENT,
