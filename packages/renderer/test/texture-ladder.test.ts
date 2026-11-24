@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { composeFaces, directionFace, faceDirection, faceSize, faceWords, levelFor, reliefNormal, sampleFaces, texelAngle, tilesFacing, TILE_SAMPLES } from "../src/texture-ladder.ts";
+import { composeFaces, directionFace, faceDirection, faceSize, faceWords, levelFor, reliefNormal, sampleFaces, texelAngle, tilesFacing, TILE_SAMPLES, withFiner } from "../src/texture-ladder.ts";
 import { faceOf, type SurfaceTile } from "../../ui-contract/src/index.ts";
 
 /** A tile filled from a height function of direction (metres), sea below `sea`. */
@@ -103,4 +103,16 @@ test("the HUD's words name the finest ground read", () => {
   const c = composeFaces(globe(() => 0, 32));
   assert.equal(faceWords(c, 6.371e6), "Ground read to 313 km.");
   assert.equal(faceWords(composeFaces([]), 1), "");
+});
+
+test("finer tiles laid over a kept surface: recomposed once, never doubled; a painted face is left alone", () => {
+  const base = { width: 1, faces: composeFaces(globe(() => 0)) };
+  const fine = [tile(0, 1, 1, 1, () => 5000)];
+  const t = withFiner(base, fine);
+  assert.equal(t.width, 1);
+  assert.equal(t.faces!.faces[0]!.level, 1);
+  assert.equal(sampleFaces(t.faces!, faceDirection(0, 0.5, 0.5))!.height_m, 5000);
+  assert.equal(withFiner(t, fine), t);
+  const painted = { width: 1 };
+  assert.equal(withFiner(painted, fine), painted);
 });

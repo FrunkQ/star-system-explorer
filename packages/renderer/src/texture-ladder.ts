@@ -118,6 +118,8 @@ export interface Composite {
   signature: string;
   /** The body's radius from the tiles' own spacing (spacing × samples × 2^level = a quarter of the way round), 0 with no tiles. */
   radius_m: number;
+  /** The tiles it was composed from, so finer ones can be laid over it later (withFiner). */
+  tiles: readonly SurfaceTile[];
 }
 
 /**
@@ -174,7 +176,21 @@ export function composeFaces(tiles: readonly SurfaceTile[]): Composite {
     }
     return { n, rgb, height_m, liquid, level };
   });
-  return { faces, signature: sig.join("|"), radius_m };
+  return { faces, signature: sig.join("|"), radius_m, tiles };
+}
+
+/**
+ * Finer tiles laid over a composed surface (VP3 part 2): the same faces recomposed with them, deepest first; tiles
+ * already in it are not doubled. A surface with no composed faces (a giant's cloud decks, or ground with clouds
+ * painted over it) is returned as it is, since its picture is not the ground's alone.
+ */
+export function withFiner<T extends { faces?: Composite }>(tex: T, fine: readonly SurfaceTile[]): T {
+  if (!tex.faces || !fine.length) return tex;
+  const k = (t: SurfaceTile) => `${t.key.face}/${t.key.level}/${t.key.x}/${t.key.y}`;
+  const have = new Set(tex.faces.tiles.map(k));
+  const more = fine.filter((t) => !have.has(k(t)));
+  if (!more.length) return tex;
+  return { ...tex, faces: composeFaces([...tex.faces.tiles, ...more]) };
 }
 
 /** Bilinear inside a face picture at cube coordinates (u, v), clamped to the face (no bleeding across an edge). */

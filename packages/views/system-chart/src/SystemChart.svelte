@@ -9,8 +9,8 @@
   import type { FieldReadJson, LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
-  /** The level-0 tiles behind each kept surface, so finer tiles (VP3 part 2) can be laid over them. */
-  const level0 = new Map<string, import("../../../ui-contract/src/index.ts").SurfaceTile[]>();
+  /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
+  const trueSaid = new Map<string, string[]>();
   /** Stars read for True's living star, by system and star (a string: why there is none). */
   const liveStars = new Map<string, LiveStar | string>();
   /** read_field's Solar System fixture, read once for the page (Mag, V10e). */
@@ -22,7 +22,7 @@
   import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, starCss, trueSurface, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
+  import { readLiveStar, readTrueFace, starCss, type FaceReader, type StarReader, type TrueTexture, withFiner } from "../../../renderer/src/index.ts";
   import { finerTiles, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -252,13 +252,13 @@
         const key = `${sys}|${s.address}`;
         if (!trueSurfaces.has(key)) {
           reading = { done, of: order.length, none, why: noneWhy };
-          const r = await ctx.session.surfaceTiles(sys, s.address);
-          const why = r.ok ? String((r.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : r.message;
-          trueSurfaces.set(key, (r.ok && trueSurface(r.tiles)) || why);
-          if (r.ok && r.tiles.length) level0.set(key, r.tiles);
-          // Finer tiles already read on this page (VP3 part 2) are laid over the level-0 read at once.
-          const fine = finerTiles(key);
-          if (r.ok && r.tiles.length && fine.length) trueSurfaces.set(key, trueSurface([...r.tiles, ...fine]) || why);
+          // Ground, then today's clouds and haze; a giant is its cloud decks (renderer true-air.ts).
+          const f = await readTrueFace(ctx.session as unknown as FaceReader, sys, s.address);
+          trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
+          if (typeof f !== "string") trueSaid.set(key, f.said);
+          // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
+          const kept = trueSurfaces.get(key);
+          if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));
         }
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
@@ -271,11 +271,13 @@
       // (finer-tiles.ts); stops between requests when another world is chosen or True is left.
       const chosen = order[0];
       const ck = chosen && chosen.address === sel ? `${sys}|${chosen.address}` : "";
-      const base = ck ? level0.get(ck) : undefined;
-      if (ck && base && g === trueGen) {
+      const base = ck ? trueSurfaces.get(ck) : undefined;
+      // Only a world whose True face is its ground alone (no clouds painted over it) wears the finer faces.
+      if (ck && base && typeof base !== "string" && base.faces && g === trueGen) {
         void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
-          const t = trueSurface([...base, ...fine]);
-          if (!t) return;
+          const now = trueSurfaces.get(ck);
+          if (!now || typeof now === "string") return;
+          const t = withFiner(now, fine);
           trueSurfaces.set(ck, t);
           surfaces = new Map(surfaces).set(chosen!.address, t);
         });
@@ -340,7 +342,9 @@
             ? `${reading.none} of ${reading.of} worlds are drawn plain, with no surface to show (the kernel: ${reading.why}).`
             : "",
   );
-  const trueNote = $derived([surfaceNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
+  // Each thing a face could not show, said once for the system (a colour the sheet lacks, a giant's dark deep air).
+  const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
+  const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.

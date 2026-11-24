@@ -20,3 +20,4 @@ Recorded by the handover thread from the coordinator's relays, 24 Nov 2026. Also
 - XO is a package code only, never shown in the product (Alex queried the name).
 
 Related: [[sse4-exotic-objects]], [[sse4-coming-together]], [[sse4-bands-table]]
+- **Consensus for research (Alex 18:47)**: the Consensus research connector is available for deep research. On the new account Claude will have it directly (an account transfer), so use it yourself rather than writing briefs for Alex to pass on.

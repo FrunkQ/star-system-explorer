@@ -827,3 +827,98 @@ fn units_engine_rungs_are_on_the_sheet() {
         assert!(r.row("units", id).is_some(), "{id}");
     }
 }
+
+#[test]
+fn liquid_water_absorbs_least_in_the_blue() {
+    // MP32: pure water's absorption (Pope and Fry 1997; Hale and Querry 1973)
+    // is least near 420 nm and climbs steeply into the red and infrared,
+    // which is why deep water looks blue.
+    let r = Reference::base();
+    let t = r
+        .row("substances", "h2o")
+        .and_then(|x| x.get("optical"))
+        .and_then(|o| o.get("absorption_liquid"))
+        .unwrap();
+    let col = |k: &str| -> Vec<f64> {
+        let v = t.get(k).unwrap();
+        let a = v.get("v").unwrap_or(v);
+        a.as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect()
+    };
+    let lam = col("lambda_nm");
+    let alpha = col("alpha");
+    assert_eq!(lam.len(), alpha.len());
+    let i_min = (0..alpha.len())
+        .min_by(|&a, &b| alpha[a].total_cmp(&alpha[b]))
+        .unwrap();
+    assert_eq!(lam[i_min], 420.0);
+    let at = |nm: f64| alpha[lam.iter().position(|&l| l == nm).unwrap()];
+    assert!(at(700.0) > 100.0 * at(420.0));
+    assert!(at(2000.0) > at(1000.0));
+}
+
+#[test]
+fn sea_liquids_carry_density_viscosity_and_surface_tension() {
+    // MP32 part 2: every sea liquid has its boiling-curve table; water at 0 C
+    // is near 1000 kg/m3, 1.8 mPa s and 76 mN/m, and Titan's methane at its
+    // triple point is lighter and far runnier than water.
+    let r = Reference::base();
+    let first = |id: &str| -> Vec<f64> {
+        let t = r
+            .row("substances", id)
+            .and_then(|x| x.get("phases"))
+            .and_then(|p| p.get("saturated_liquid"))
+            .unwrap_or_else(|| panic!("{id} has no saturated_liquid"));
+        t.get("rows").unwrap().as_array().unwrap()[0]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect()
+    };
+    for id in ["h2o", "ch4", "c2h6", "nh3", "n2", "he", "co2", "ar", "c3h8"] {
+        assert_eq!(first(id).len(), 5, "{id}");
+    }
+    let w = first("h2o");
+    assert!(
+        (w[2] - 1000.0).abs() < 1.0
+            && (w[3] - 1.79e-3).abs() < 2e-5
+            && (w[4] - 0.0757).abs() < 2e-4
+    );
+    let m = first("ch4");
+    assert!(m[2] < 0.5 * w[2] && m[3] < 0.2 * w[3] && m[4] < 0.3 * w[4]);
+}
+
+#[test]
+fn tholin_absorbs_blue_more_than_red() {
+    // MP33: Khare et al. 1984 tholin; k falls from the ultraviolet to the
+    // near infrared, which is why Titan's haze is orange.
+    let r = Reference::base();
+    let t = r
+        .row("mixtures", "titan-tholin")
+        .and_then(|x| x.get("optical"))
+        .and_then(|o| o.get("refractive_index"))
+        .unwrap();
+    let col = |k: &str| -> Vec<f64> {
+        t.get(k)
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect()
+    };
+    let (lam, n, k) = (col("lambda_nm"), col("n"), col("k"));
+    assert!(lam.len() == n.len() && n.len() == k.len());
+    let at = |nm: f64| {
+        let i = (0..lam.len())
+            .min_by(|&a, &b| (lam[a] - nm).abs().total_cmp(&(lam[b] - nm).abs()))
+            .unwrap();
+        k[i]
+    };
+    assert!(at(440.0) > at(690.0) && at(690.0) > at(1000.0));
+    assert!(n.iter().all(|&x| (1.5..1.8).contains(&x)));
+}

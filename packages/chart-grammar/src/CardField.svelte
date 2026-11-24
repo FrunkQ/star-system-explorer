@@ -19,6 +19,8 @@
     pencil = false,
     known,
     keepKnown = false,
+    unit,
+    onunit,
   }: {
     label: string;
     display: string;
@@ -41,7 +43,13 @@
     known?: Snippet;
     /** The line has an exception of its own, so its eye stays showing. */
     keepKnown?: boolean;
+    /** The unit at the end of `display` ("AU", "thousand km"): pressing it steps to the next reading (ED1a). */
+    unit?: string;
+    /** Step the figure to the next reading of its kind; the choice holds for every body of the same class. */
+    onunit?: () => void;
   } = $props();
+  // The figure split at its unit, so the unit can be pressed.
+  const headOf = (d: string, u: string | undefined): string | null => (u && onunit && d.endsWith(u) ? d.slice(0, d.length - u.length) : null);
 
   let draft = $state("");
   let error = $state<string | null>(null);
@@ -92,7 +100,7 @@
       />
     {:else}
       <!-- A new value settles into place (U12): the element is new, so its arrival animates; the text is always the true value. -->
-      {#key display}<output {id} class="v arrive">{display}</output>{/key}
+      {#key display}{@const head = headOf(display, unit)}<output {id} class="v arrive">{#if head !== null}{head}<button type="button" class="unit" data-unit onclick={onunit} title="Say it in other units (holds for every one of its kind)">{unit}</button>{:else}{display}{/if}</output>{/key}
     {/if}
   </div>
   {#if error}<p class="err" id="{id}-err" role="alert">{error}</p>{/if}
@@ -100,6 +108,18 @@
 </div>
 
 <style>
+  .unit {
+    border: 0;
+    padding: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border-bottom: var(--sse-line) dotted var(--sse-ink-faint);
+  }
+  .unit:hover {
+    border-bottom-color: currentColor;
+  }
   .field {
     position: relative;
     display: flex;
