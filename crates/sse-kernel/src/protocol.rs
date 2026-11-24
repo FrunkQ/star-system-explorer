@@ -861,6 +861,42 @@ pub enum Request {
         #[ts(optional, type = "number")]
         at_s: Option<i64>,
     },
+    /// K17 (editing design 10B, F4): orbital elements typed in another
+    /// convention, converted to the kernel's (the system's own plane, about
+    /// the host, with the orbit's own epoch). `measured_from` is `system`
+    /// (the default) or a plane `{pole_lon_rad, pole_lat_rad, zero_lon_rad?}`
+    /// in the system's frame (Earth's equator in an ecliptic frame: pole at
+    /// longitude 90°, latitude 90° less the obliquity, zero 0). `centred_on`
+    /// is `parent` (the default) or `shared`, the pair's shared centre,
+    /// which needs the masses (read from the record, or `mass_kg`). `true_on_s`
+    /// is the elements' date, kept as the orbit's epoch. Nothing is written:
+    /// the reply holds the edits to send (`set_authored_batch`).
+    ElementsIn {
+        address: String,
+        semi_major_axis_m: f64,
+        eccentricity: f64,
+        inclination_rad: f64,
+        ascending_node_rad: f64,
+        argument_of_periapsis_rad: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        mean_anomaly_at_epoch_rad: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        measured_from: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        centred_on: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        host: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_kg: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        true_on_s: Option<i64>,
+    },
     /// K2 (editing design 15): "what the science expects" for fields that
     /// are set: each field left out on a what-if branch that is thrown away,
     /// the system resolved, and the result read where the kernel works it
@@ -2343,6 +2379,7 @@ impl Request {
             Request::ClassifyPreview { .. } => "classify_preview",
             Request::ClassSample { .. } => "class_sample",
             Request::Expects { .. } => "expects",
+            Request::ElementsIn { .. } => "elements_in",
             Request::PlanDescent { .. } => "plan_descent",
             Request::SurveyCaves { .. } => "survey_caves",
             Request::SurfaceFrames { .. } => "surface_frames",
@@ -2646,6 +2683,7 @@ pub fn ops() -> Vec<OpInfo> {
             Cost::Light,
             "GM machine only; one atlas load plus one label per body in scope (a campaign of a few systems: milliseconds)",
         ),
+        o("elements_in", Cost::Trivial, "a few rotations; no resolve"),
         o(
             "expects",
             Cost::Light,
@@ -3749,6 +3787,14 @@ pub enum Response {
         bodies: Vec<serde_json::Value>,
         unclassified: u32,
         failing_examples: Vec<String>,
+    },
+    /// `elements_in`: the elements in the kernel's convention and the
+    /// `edits` that set them (`{address, field, value}`, for
+    /// `set_authored_batch`).
+    ElementsConverted {
+        address: String,
+        #[ts(type = "unknown")]
+        elements: serde_json::Value,
     },
     /// `expects`: per field asked, `{field, set, expects, from}` (`expects`
     /// null with `why` when the kernel does not work it out yet).

@@ -14,6 +14,9 @@ mod class_sample_tests;
 mod clock;
 mod composition;
 pub mod contract;
+mod conventions;
+#[cfg(test)]
+mod conventions_tests;
 mod cosmos;
 mod descent;
 mod dressing;
@@ -5938,6 +5941,105 @@ impl Kernel {
                 at_s,
             } => self.classify_preview(packs, scheme, scope, at_s)?,
             Request::ClassSample { packs, classes } => self.class_sample(packs, classes)?,
+            Request::ElementsIn {
+                address,
+                semi_major_axis_m,
+                eccentricity,
+                inclination_rad,
+                ascending_node_rad,
+                argument_of_periapsis_rad,
+                mean_anomaly_at_epoch_rad,
+                measured_from,
+                centred_on,
+                host,
+                mass_kg,
+                true_on_s,
+            } => {
+                let num = |v: &serde_json::Value, k: &str| v.get(k).and_then(|x| x.as_f64());
+                let frame = match &measured_from {
+                    None => None,
+                    Some(serde_json::Value::String(s)) if s == "system" => None,
+                    Some(v @ serde_json::Value::Object(_)) => {
+                        let (Some(lon), Some(lat)) =
+                            (num(v, "pole_lon_rad"), num(v, "pole_lat_rad"))
+                        else {
+                            return Err(err(
+                                "bad_request",
+                                "measured_from needs pole_lon_rad and pole_lat_rad",
+                            ));
+                        };
+                        Some(conventions::plane(
+                            lon,
+                            lat,
+                            num(v, "zero_lon_rad").unwrap_or(0.0),
+                        )?)
+                    }
+                    Some(other) => {
+                        return Err(err(
+                            "bad_request",
+                            format!("measured_from: \"system\" or a plane's pole, not {other}"),
+                        ))
+                    }
+                };
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let shared = match centred_on.as_deref().unwrap_or("parent") {
+                    "parent" => None,
+                    "shared" => {
+                        let st = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                        let row = st.facts.get(&a);
+                        let host = host
+                            .or_else(|| {
+                                row.and_then(|r| r.get("orbit.host"))
+                                    .and_then(|v| match v {
+                                        Value::Text(t) => Some(t.clone()),
+                                        _ => None,
+                                    })
+                            })
+                            .ok_or_else(|| err("bad_request", "centred on the shared centre needs the host (host, or orbit.host in the record)"))?;
+                        let h = in_universe(&u.root, &host)?;
+                        let mass_of =
+                            |x: &Address| match st.facts.get(x).and_then(|r| r.get("body.mass")) {
+                                Some(Value::Float(f)) => Some(*f),
+                                Some(Value::Int(i)) => Some(*i as f64),
+                                _ => None,
+                            };
+                        let hm = mass_of(&h).ok_or_else(|| {
+                            err("bad_request", format!("{h} has no mass in the record"))
+                        })?;
+                        let own = mass_kg.or_else(|| mass_of(&a)).ok_or_else(|| {
+                            err("bad_request", format!("{a} has no mass: give mass_kg"))
+                        })?;
+                        Some((hm, own))
+                    }
+                    other => {
+                        return Err(err(
+                            "bad_request",
+                            format!("centred_on: parent or shared, not {other:?}"),
+                        ))
+                    }
+                };
+                if !(semi_major_axis_m > 0.0) || !(0.0..1.0).contains(&eccentricity) {
+                    return Err(err("bad_request", "an orbit needs a > 0 and 0 <= e < 1"));
+                }
+                Response::ElementsConverted {
+                    address: a.to_string(),
+                    elements: conventions::convert(
+                        &a.to_string(),
+                        conventions::Typed {
+                            a_m: semi_major_axis_m,
+                            e: eccentricity,
+                            i: inclination_rad,
+                            node: ascending_node_rad,
+                            peri: argument_of_periapsis_rad,
+                            mean_anomaly: mean_anomaly_at_epoch_rad,
+                        },
+                        frame,
+                        shared,
+                        true_on_s,
+                    ),
+                }
+            }
             Request::Expects {
                 system,
                 address,
