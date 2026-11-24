@@ -1,0 +1,22 @@
+{
+ "construct": "cassini-centaur",
+ "name": "Cassini's Centaur upper stage",
+ "about": "Left in orbit about the Sun after the Earth departure burn.",
+ "pieces": [
+  {
+   "from_s": 63045378843,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "heliocentric orbit"
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "follows Cassini's departure; its own elements are not read yet"
+  }
+ ],
+ "events": []
+}

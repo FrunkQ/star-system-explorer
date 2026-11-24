@@ -1,0 +1,290 @@
+{
+ "construct": "sts-1-columbia",
+ "name": "STS-1 Columbia (OV-102)",
+ "about": "The first Space Shuttle flight, 12 to 14 April 1981, from pad 39A to Rogers Dry Lake. The two solid boosters and the external tank become their own constructs when they separate. Burn times and delta-v are the press kit's pre-flight plan; the launch time is from memory and the landing is NSSDCA's flown duration.",
+ "pieces": [
+  {
+   "from_s": 62521804855,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 28.6082,
+    "lon_deg": -80.6041
+   },
+   "mark": "authored",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "on pad 39A before launch",
+   "to_s": 62524396855
+  },
+  {
+   "from_s": 62524396855,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ascent"
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "SRB separation T+2:12 at 49.7 km, MECO T+8:32 at 118.5 km and 26,715 km/h",
+   "to_s": 62524397367
+  },
+  {
+   "from_s": 62524397367,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6464255.0,
+     "e": 0.009597703060909572,
+     "i_deg": 40.3,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62524397367
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "after MECO, 13 by 80 nautical miles: the tank's orbit, which dips into the air",
+   "to_s": 62524397487
+  },
+  {
+   "from_s": 62524397487,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6551299.0,
+     "e": 0.010318259020081362,
+     "i_deg": 40.3,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62524397487
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "after OMS-1, 57 by 130 nmi; press kit plan; flown within seconds",
+   "to_s": 62524399495
+  },
+  {
+   "from_s": 62524399495,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6618897.0,
+     "e": 0.0,
+     "i_deg": 40.3,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62524399495
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "after OMS-2, 130 nmi (241 km) circular; press kit plan; flown within seconds",
+   "to_s": 62524419696
+  },
+  {
+   "from_s": 62524419696,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6641121.0,
+     "e": 0.002230948660625217,
+     "i_deg": 40.3,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62524419696
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "after OMS-3, 134 by 150 nmi; press kit plan; flown within seconds",
+   "to_s": 62524422386
+  },
+  {
+   "from_s": 62524422386,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6655937.0,
+     "e": 0.0,
+     "i_deg": 40.3,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62524422386
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "after OMS-4, 150 nmi (278 km) circular; press kit plan; flown within seconds",
+   "to_s": 62524589335
+  },
+  {
+   "from_s": 62524589335,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6517963.0,
+     "e": 0.02088413205168547,
+     "i_deg": 40.3,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62524589335
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "after the deorbit burn, 2 by 149 nmi; press kit plan; flown within seconds",
+   "to_s": 62524591017
+  },
+  {
+   "from_s": 62524591017,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "entry"
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "entry interface at 53:56:02 (plan); glides to Edwards",
+   "to_s": 62524592508
+  },
+  {
+   "from_s": 62524592508,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 34.9,
+    "lon_deg": -117.9
+   },
+   "mark": "estimated",
+   "src": "nssdca-craft",
+   "writer": "pack",
+   "why": "Rogers Dry Lake, Edwards AFB; flown duration 54:20:53 (NSSDCA); position from memory"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 62524396855,
+   "kind": "launch",
+   "mark": "recorded",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack"
+  },
+  {
+   "at_s": 62524396987,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "into": [
+    "sts-1-srb-left",
+    "sts-1-srb-right"
+   ],
+   "keeps_identity": true,
+   "why": "solid boosters separate at 49.7 km (plan)"
+  },
+  {
+   "at_s": 62524397386,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "into": [
+    "sts-1-external-tank"
+   ],
+   "keeps_identity": true,
+   "why": "external tank separates (plan)"
+  },
+  {
+   "at_s": 62524397487,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "dv_m_s": 50.3,
+   "engine": "oms-aj10-190",
+   "why": "OMS-1, 165 ft/s in the press kit's plan"
+  },
+  {
+   "at_s": 62524399495,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "dv_m_s": 41.8,
+   "engine": "oms-aj10-190",
+   "why": "OMS-2, 137 ft/s in the press kit's plan"
+  },
+  {
+   "at_s": 62524419696,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "dv_m_s": 11.1,
+   "engine": "oms-aj10-190",
+   "why": "OMS-3, 36.5 ft/s in the press kit's plan"
+  },
+  {
+   "at_s": 62524422386,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "dv_m_s": 11.4,
+   "engine": "oms-aj10-190",
+   "why": "OMS-4, 37.5 ft/s in the press kit's plan"
+  },
+  {
+   "at_s": 62524589335,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "dv_m_s": 91.1,
+   "engine": "oms-aj10-190",
+   "why": "deorbit, 299.0 ft/s in the press kit's plan"
+  },
+  {
+   "at_s": 62524591017,
+   "kind": "entry",
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "entry interface (plan)"
+  },
+  {
+   "at_s": 62524592508,
+   "kind": "landing",
+   "mark": "recorded",
+   "src": "nssdca-craft",
+   "writer": "pack",
+   "why": "touchdown on Rogers Dry Lake"
+  }
+ ]
+}
