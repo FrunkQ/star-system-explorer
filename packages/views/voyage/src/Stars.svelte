@@ -11,7 +11,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { Overlays } from "../../../chart-grammar/src/index.ts";
-  import { MINIMISE_WORDS, VOYAGE_CONTROLS, DEFAULT_VIEW, overlaysFor, overlaySpecsOf, viewOptions, VOYAGE_SHIPS, shipChoices, shipToSend, agesWords, systemShort, voyageFrame, voyageSpan, type Json, type Minimise, type StarCell, type SystemScene, type ViewContext, type VoyagePlan } from "../../../ui-contract/src/index.ts";
+  import { MINIMISE_WORDS, VOYAGE_CONTROLS, DEFAULT_VIEW, overlaysFor, overlaySpecsOf, viewOptions, VOYAGE_SHIPS, shipChoices, shipToSend, agesWords, systemShort, voyageFrame, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type StarCell, type SystemScene, type ViewContext, type VoyagePlan } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ ship: String(params.ship ?? "jump-courier"), minimise: String(params.minimise ?? "home_time"), gambles: params.gambles === true }));
@@ -79,6 +79,8 @@
   });
 
   const v = $derived(plan?.voyage ?? null);
+  // The ship's power books (RK9): on the GM's seat only, beside the honesty marks.
+  const gm = $derived(ctx.session.seat.authority === "gm");
   const stars = $derived.by(() => {
     const out = new Map<string, { address: string; xyz_pc: readonly number[]; fuel: string[]; odds?: number }>();
     if (!plan) for (const s of cell?.systems ?? []) out.set(s.address, { address: s.address, xyz_pc: s.xyz_pc, fuel: knownFuel[s.address] ?? [] });
@@ -213,6 +215,11 @@
           {#if v.propellant_t > 0}<dt>Propellant</dt><dd>{v.propellant_t.toFixed(0)} t</dd>{/if}
           <dt>Refuel stops</dt><dd>{v.refuels}</dd>
         </dl>
+        {#if gm && plan?.power}
+          {@const nw = nowhereWords(plan.power)}
+          <p class="power" data-power>Power: {powerWords(plan.power)}.</p>
+          {#if nw}<p class="power nowhere" data-nowhere title={plan.power.balance.says ?? ""}>{nw}</p>{/if}
+        {/if}
         {#if ages}<p class="ages" data-ages>{ages}</p>{/if}
         <h4>Legs</h4>
         <ol class="legs">
@@ -248,6 +255,13 @@
 </div>
 
 <style>
+  .power {
+    font-size: 12px;
+    margin: 4px 0;
+  }
+  .power.nowhere {
+    color: var(--sse-alert, var(--sse-accent));
+  }
   .voy {
     color: var(--sse-ink);
     font-size: 13px;

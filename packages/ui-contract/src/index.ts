@@ -135,3 +135,5 @@ export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableOf, fieldLandm
 export type { Landmark as KnownLandmark, KnownTo, KnownAudience, KnownException, KnownScope, KnownChange, Held } from "./known.ts";
 export { difficultyLadderOf, chanceToMeet, stepTarget, gameDifficulty } from "./difficulty.ts";
 export type { DifficultyLadder, DifficultyStep, GameDifficulty } from "./difficulty.ts";
+export { wattsText, powerWords, nowhereWords } from "./power.ts";
+export type { PowerBooks, PowerLedger, PowerFlow, PowerEngine } from "./power.ts";

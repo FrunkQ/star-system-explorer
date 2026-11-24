@@ -99,6 +99,8 @@ export interface VoyageSystem {
 }
 
 export interface VoyagePlan {
+  /** The ship's power books, when it has fitted engines (RK9; between the stars sunlight counts as none). */
+  power?: import("./power.ts").PowerBooks;
   ship: string;
   means: { means: "jump" | "flight"; words: string; rule?: string; fictional: boolean }[];
   searched: number;
@@ -201,6 +203,8 @@ export interface SystemPlace {
 
 /** plan_voyage's answer inside one system. */
 export interface SystemVoyagePlan {
+  /** The ship's power books, when it has fitted engines (RK9; sunlight read at each leg's dimmer end). */
+  power?: import("./power.ts").PowerBooks;
   scale: "system";
   system: string;
   ship: string;

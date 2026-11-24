@@ -51,3 +51,21 @@ generous check.
   Nowhere band; NAV's `accel_g` and `exhaust_km_s` read from `engines[]` when
   present, at the voyage's flux.
 - RK12 and RK14 (light thread) can build on `power::ledger` now.
+
+## Part 3 (24 Nov): the books in Voyages
+
+The kernel's part 2 (`RK9b-power-books.md`, PR 389) puts `power` on the plan
+from `plan_voyage` when the ship has fitted engines. ui-contract `power.ts`
+types it (`PowerBooks`) and words it: `powerWords` (made, spare or short,
+heat to shed, the drive's acceleration) and `nowhereWords` (what came from
+nowhere; none when the books close). In a system and Between stars, the GM
+seat shows a "Power:" line under the voyage's figures and, when the books do
+not close, the "from nowhere" line (the balance's `says` as its tooltip).
+Players see neither. Ships with typed figures show nothing new.
+
+Tests: `packages/ui-contract/test/power.test.ts`, including a real-kernel
+voyage in Sol with SSE3's Hall tug (5.2 MW from nowhere) and a typed torch
+(no books). No stock or pack ship has fitted engines yet, so no browser test
+shows the line; it will once a pack ships one (the Paper spacecraft pack, or
+the converter's SSE3 reader).
+

@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
   import AtWorld from "./AtWorld.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -112,6 +112,8 @@
   });
 
   const v = $derived(plan?.voyage ?? null);
+  // The ship's power books (RK9): on the GM's seat only, beside the honesty marks.
+  const gm = $derived(ctx.session.seat.authority === "gm");
   const places = $derived(plan?.places ?? []);
   const W = 640;
   const H = 232;
@@ -239,6 +241,11 @@
         <dt>Propellant</dt><dd>{v.propellant_t.toFixed(1)} t</dd>
         <dt>Legs</dt><dd>{v.legs.length}, refuelling {v.refuels} time{v.refuels === 1 ? "" : "s"}</dd>
       </dl>
+      {#if gm && plan?.power}
+        {@const nw = nowhereWords(plan.power)}
+        <p class="power" data-power>Power: {powerWords(plan.power)}.</p>
+        {#if nw}<p class="power nowhere" data-nowhere title={plan.power.balance.says ?? ""}>{nw}</p>{/if}
+      {/if}
       <h4>Legs</h4>
       <ol class="legs">
         {#each v.legs as l, i (i)}
@@ -253,6 +260,13 @@
 </div>
 
 <style>
+  .power {
+    font-size: 12px;
+    margin: 4px 0;
+  }
+  .power.nowhere {
+    color: var(--sse-alert, var(--sse-accent));
+  }
   .scale-note {
     font-size: 11px;
     fill: var(--sse-ink-muted);
