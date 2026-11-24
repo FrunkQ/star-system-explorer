@@ -51,7 +51,7 @@ fn every_ship_closes_its_power_books() {
     let o = &p["provides"]["other"];
     let mut k = stacked();
     let ss = ships(&p);
-    assert_eq!(ss.len(), 7);
+    assert_eq!(ss.len(), 8);
     for (id, ship) in &ss {
         let rc = &o["recipes"][id];
         assert_eq!(rc["mark"], "not yet built", "{id}");
@@ -107,8 +107,9 @@ fn the_open_cycle_baseline_does_not_close_as_printed() {
     assert_eq!(r["power"]["fictional"], true);
 }
 
-/// Each drive leans on one of the pack's advances, and the GM's ink for it is
-/// "not yet built", for a setting at the top of the ladder.
+/// Each drive leans on an advance, and for the pack's own drives the GM's ink
+/// is "not yet built", for a setting at the top of the ladder. (The DRA 5.0
+/// ship leans on base-tech's nuclear thermal rocket, which was ground-tested.)
 #[test]
 fn every_drive_reads_not_yet_built() {
     let p = pack();
@@ -140,7 +141,19 @@ fn every_drive_reads_not_yet_built() {
         );
         assert_eq!(r["type"], "tech_availability", "{id}: {r}");
         let leans = &r["reading"]["leans_on"][0];
-        assert_eq!(leans["ink"], "not yet built", "{id}: {r}");
+        let wants: Vec<&str> = o["recipes"][&id]["advances"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|a| a.as_str().unwrap())
+            .collect();
+        println!("{id}: leans on {} ({})", leans["advance"], leans["ink"]);
+        if wants
+            .iter()
+            .all(|a| a.starts_with("paper.") || *a == "fusion-torch")
+        {
+            assert_eq!(leans["ink"], "not yet built", "{id}: {r}");
+        }
     }
 }
 
@@ -166,7 +179,9 @@ fn the_studies_voyages_fly_in_sol() {
         assert_eq!(v["type"], "voyage_planned", "{id}: {v}");
         let legs = v["voyage"]["voyage"]["legs"].as_array().unwrap();
         assert!(!legs.is_empty(), "{id}");
-        let days = v["voyage"]["voyage"]["ship_days"].as_f64().unwrap();
+        // Days on the way: the ship's days less any wait for a launch window.
+        let wait: f64 = legs.iter().filter_map(|l| l["wait_days"].as_f64()).sum();
+        let days = v["voyage"]["voyage"]["ship_days"].as_f64().unwrap() - wait;
         let course = legs[0]["course"].as_str().unwrap();
         let study = says["trip_days"].as_f64().unwrap();
         println!("{id}: SSE4 {days:.0} days ({course}), the study {study:.0}");
@@ -181,12 +196,49 @@ fn the_studies_voyages_fly_in_sol() {
             // as 818 t of propellant burns off, and its path is shaped.
             "paper.discovery-ii" => Some((1.0, 1.5)),
             "paper.discovery-ii-saturn" => Some((1.0, 1.3)),
+            // DRA 5.0: SSE4 193 days on a Lambert arc, the study 180.
+            "paper.dra5-ntr" => Some((0.9, 1.2)),
             _ => None,
         };
         if let Some((lo, hi)) = band {
-            assert_eq!(course, "torch", "{id}");
+            let want = if id == "paper.dra5-ntr" {
+                "lambert"
+            } else {
+                "torch"
+            };
+            assert!(
+                course == want || (want == "lambert" && course == "hohmann"),
+                "{id}: {course}"
+            );
             let ratio = days / study;
             assert!(ratio >= lo && ratio <= hi, "{id}: {days} against {study}");
         }
     }
+}
+
+/// Longshot between the stars: NAV's interstellar flight (constant proper
+/// acceleration with a turnover, or a coast when the propellant runs short)
+/// over the report's 4.3 light years, against its "approximately 100 years".
+#[test]
+fn longshot_reaches_alpha_centauri_in_about_a_century() {
+    let p = pack();
+    let o = &p["provides"]["other"];
+    let ship: sse_nav::Ship =
+        serde_json::from_value(o["nav_ships"]["ships"]["paper.longshot"].clone()).unwrap();
+    let says = &o["recipes"]["paper.longshot"]["study_says"];
+    let d_pc = says["distance_ly"].as_f64().unwrap() * sse_core::sheet::LY / sse_core::sheet::PC;
+    let f = sse_nav::voyage::flight(&ship, ship.wet_t - ship.dry_t, d_pc, 0.0).unwrap();
+    let years = f.home_s / sse_core::sheet::YR_JULIAN;
+    let study = says["trip_days"].as_f64().unwrap() * 86_400.0 / sse_core::sheet::YR_JULIAN;
+    println!(
+        "Longshot: SSE4 {years:.1} years (coast {}, peak {:.3} c), the study {study:.0}",
+        f.coast, f.peak_beta
+    );
+    // SSE4 flies Longshot as one stage at its starting acceleration: 264 t
+    // of pellets on 132 t give about 11,000 km/s in all, so it speeds up and
+    // brakes at under 2% of c and takes about three times the study's
+    // century. The report drops two empty tanks and then the drive itself
+    // (sec. 2.2), which a single-stage record cannot. Staging is next.
+    assert!(f.coast);
+    assert!(years > study && years < 4.0 * study, "{years}");
 }
