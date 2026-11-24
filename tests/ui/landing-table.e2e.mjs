@@ -57,7 +57,8 @@ try {
 
   // Sent: the players' screen is the Landing screen, judging the same site the same way.
   await gm.locator("[data-send-view]").click();
-  assert.match(await gm.locator("[data-table-sees]").innerText(), /landing/);
+  // A send made before the Land screen's first landing is ready goes again with it a moment later.
+  await gm.waitForFunction(() => /landing/.test(document.querySelector("[data-table-sees]")?.textContent ?? ""), null, { timeout: 15000 });
   await pl.waitForSelector("[data-surface][data-watching]:not([data-verdict=''])", { timeout: 60000 });
   assert.equal(await pl.locator("[data-surface]").getAttribute("data-verdict"), await gm.locator("[data-surface]").getAttribute("data-verdict"), "the same verdict on both kernels");
   await shot(pl, "landing-player-site");

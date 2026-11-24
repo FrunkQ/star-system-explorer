@@ -161,8 +161,24 @@
     if (r.ok) ask = "";
   }
   const seatId = new URLSearchParams(location.search).get("seat") ?? "table";
-  // What this seat is shown: its own send if the GM gave it one, else the table's.
-  const shownFor = (r: PlayerReplica) => r.seats().find((x) => x.id === seatId)?.shown ?? r.shown();
+  // This screen (Switchboard, PB1): an id kept in this tab, so a reload comes back as the same screen, and a name the
+  // GM sees on the board (`?name=`, else a short one from the id).
+  const screenId = (() => {
+    const key = `sse4.screen.${room ?? "alone"}`;
+    try {
+      const had = sessionStorage.getItem(key);
+      if (had && /^[a-z0-9-]{4,40}$/.test(had)) return had;
+      const made = `scr-${Math.random().toString(36).slice(2, 8)}`;
+      sessionStorage.setItem(key, made);
+      return made;
+    } catch {
+      return `scr-${Math.random().toString(36).slice(2, 8)}`;
+    }
+  })();
+  const screenName = (new URLSearchParams(location.search).get("name") ?? "").slice(0, 40) || `Screen ${screenId.slice(4).toUpperCase()}`;
+  const hello = { id: screenId, name: screenName, role: seatId };
+  // What this screen is shown: its own line if the GM gave it one, else its seat's, else the table's.
+  const shownFor = (r: PlayerReplica) => r.shownFor(seatId, screenId);
   if (isSealed) {
     const id = `player-${Math.random().toString(36).slice(2, 10)}`;
     void roomHub(id).then((hub) => {
@@ -185,6 +201,9 @@
         scene = sc;
         sceneHash = hash;
         stateHash = "";
+        // Held by the GM: the card, and an empty scene behind it.
+        const held = replica.held;
+        shown = held === null ? undefined : held ? { off: true, card: held } : { off: true };
         if (first) {
           first = false;
           seatScreen = seat.screens?.[0] ?? null;
@@ -249,9 +268,9 @@
         }
         if (session && screenDoc) void refresh();
       };
-      replica.join();
+      replica.join(hello);
       // Ask again until the GM answers (the GM's page may open after this one).
-      const ask = setInterval(() => (link.state === "joining" ? replica.join() : clearInterval(ask)), 1500);
+      const ask = setInterval(() => (link.state === "joining" ? replica.join(hello) : clearInterval(ask)), 1500);
       setInterval(() => replica.tick(), 1000);
     });
   } else {
@@ -405,7 +424,11 @@
   {#if embed.mode === "refused"}
     <main class="problem" role="alert"><h2>This view cannot be shown here</h2><p>{embed.reason}</p></main>
   {:else if shown && "off" in shown}
-    <main class="problem off" data-screens-off><p>The game master has the screens off for now.</p></main>
+    {#if shown.card}
+      <main class="problem off held" data-screens-off data-held={shown.card}><p class="card">{shown.card}</p></main>
+    {:else}
+      <main class="problem off" data-screens-off><p>The game master has the screens off for now.</p></main>
+    {/if}
   {:else if (checked && !checked.ok) || sceneErrors.length}
     <main class="problem" role="alert"><h2>This screen cannot be shown</h2><ul>{#each [...(checked && !checked.ok ? checked.errors : []), ...sceneErrors] as e (e)}<li>{e}</li>{/each}</ul></main>
   {:else if !scene || !checked?.ok}
@@ -582,6 +605,31 @@
   }
   .problem {
     padding: 24px;
+  }
+  /* A holding card (Switchboard): one line of words in the middle of the glass, arriving by a fade until looks exist. */
+  .held {
+    min-height: 60vh;
+    display: grid;
+    place-items: center;
+    text-align: center;
+  }
+  .held .card {
+    font-family: var(--sse-font-mono);
+    font-size: clamp(16px, 2.4vw, 28px);
+    letter-spacing: 0.04em;
+    max-width: 36ch;
+    margin: 0;
+    animation: card-in var(--sse-motion) var(--sse-ease);
+  }
+  @keyframes card-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .held .card {
+      animation: none;
+    }
   }
   @media (max-width: 760px) {
     .bar {
