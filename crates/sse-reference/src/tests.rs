@@ -859,3 +859,35 @@ fn liquid_water_absorbs_least_in_the_blue() {
     assert!(at(700.0) > 100.0 * at(420.0));
     assert!(at(2000.0) > at(1000.0));
 }
+
+#[test]
+fn sea_liquids_carry_density_viscosity_and_surface_tension() {
+    // MP32 part 2: every sea liquid has its boiling-curve table; water at 0 C
+    // is near 1000 kg/m3, 1.8 mPa s and 76 mN/m, and Titan's methane at its
+    // triple point is lighter and far runnier than water.
+    let r = Reference::base();
+    let first = |id: &str| -> Vec<f64> {
+        let t = r
+            .row("substances", id)
+            .and_then(|x| x.get("phases"))
+            .and_then(|p| p.get("saturated_liquid"))
+            .unwrap_or_else(|| panic!("{id} has no saturated_liquid"));
+        t.get("rows").unwrap().as_array().unwrap()[0]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect()
+    };
+    for id in ["h2o", "ch4", "c2h6", "nh3", "n2", "he", "co2", "ar", "c3h8"] {
+        assert_eq!(first(id).len(), 5, "{id}");
+    }
+    let w = first("h2o");
+    assert!(
+        (w[2] - 1000.0).abs() < 1.0
+            && (w[3] - 1.79e-3).abs() < 2e-5
+            && (w[4] - 0.0757).abs() < 2e-4
+    );
+    let m = first("ch4");
+    assert!(m[2] < 0.5 * w[2] && m[3] < 0.2 * w[3] && m[4] < 0.3 * w[4]);
+}

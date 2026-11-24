@@ -862,11 +862,12 @@ for _m in conductivity_rows.apply(MIXTURES, val, {c[0]: c[2]["v"] for c in CONST
     assert all(x["id"] != _m["id"] for x in MIXTURES), _m["id"]
     MIXTURES.append(_m)
 
-# MP32: sea liquids for the climate thread (scripts/liquid_rows.py): liquid optics.
+# MP32: sea liquids for the climate thread (scripts/liquid_rows.py): liquid optics and
+# saturated-liquid density, viscosity and surface tension.
 for _k, _v in liquid_rows.SOURCES.items():
     assert _k not in SOURCES, _k
     SOURCES[_k] = _v
-liquid_rows.apply(SUBSTANCES, math.pi)
+liquid_rows.apply(SUBSTANCES, math.pi, val)
 
 
 def elements():

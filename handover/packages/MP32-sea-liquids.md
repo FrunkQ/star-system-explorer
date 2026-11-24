@@ -1,4 +1,4 @@
-# MP32: sea liquids (part 1, liquid water's optics)
+# MP32: sea liquids (liquid water's optics; every sea liquid's density, viscosity and surface tension)
 
 The climate thread needs data on each sea liquid for sea colour and for waves:
 
@@ -28,15 +28,56 @@ The builder checks that Segelstein's k agrees with Hale and Querry's alpha throu
 
 The values were read from the Oregon Medical Laser Center's copies of the authors' tables and are unverified.
 
-## Waiting (part 2)
+## Part 2 rows (on each substance's `phases` block)
 
-- **Density, viscosity and surface tension of every sea liquid along saturation.** Water, methane, ethane, ammonia, nitrogen, helium-4 and propane are all waiting.
-  - The NIST WebBook fluid pages hold all of them, but the cloud cannot read them. curl is blocked, and the web reader gets only the input form or "[binary data]".
-  - Mulero et al. 2012 (JPCRD 41, 043105) gives the surface tension fits, but no readable copy was found.
-  - An open-source reference implementation of the same correlations (CoolProp) would give every value at once, with each correlation's paper cited, but installing it here was refused.
+`saturated_liquid` is a table of the liquid along its boiling curve. It runs from just above the triple point to 0.95 of the critical temperature, in nine rows.
+
+| Column | Unit |
+|---|---|
+| `t_k` | K |
+| `p_pa` | Pa (the vapour pressure) |
+| `density` | kg m⁻³ |
+| `viscosity` | Pa s |
+| `surface_tension` | N m⁻¹ |
+
+`src_by_column` names the paper behind each column:
+
+| Substance | Equation of state (p, density) | Viscosity | Surface tension |
+|---|---|---|---|
+| `h2o` | Wagner and Pruss 2002 (IAPWS-95) | Huber et al. 2009 | Mulero et al. 2012 |
+| `ch4` | Setzmann and Wagner 1991 | Sotiriadou et al. 2025 | Mulero et al. 2012 |
+| `c2h6` (new row) | Buecker and Wagner 2006 | Friend et al. 1991 | Mulero et al. 2012 |
+| `nh3` | Gao et al. 2023 | Monogenidou et al. 2018 | Mulero et al. 2012 |
+| `n2` | Span et al. 2000 | Huber et al. 2024 | Mulero et al. 2012 |
+| `he` | Ortiz-Vega et al. 2023 | Arp et al. 1998 | Mulero et al. 2012 |
+| `co2` | Span and Wagner 1996 | Laesecke and Muzny 2017 | Mulero et al. 2012 |
+| `ar` | Tegeler et al. 1999 | Lemmon and Jacobsen 2004 | Mulero et al. 2012 |
+| `c3h8` (new row) | Lemmon et al. 2009 | Vogel et al. 1998 | Mulero et al. 2012 |
+
+### How the values were read
+
+The values were evaluated with CoolProp 8.1.0, the open-source implementation of the same reference correlations NIST's WebBook uses. NIST's own pages could not be read from the cloud.
+
+- The CoolProp install was approved by Alex on 24 Nov and lived in scratch only. Nothing of the library is committed or shipped.
+- `MP32-data/make_sat_liquids.py` wrote `MP32-data/sat-liquids.csv`. The builder reads only that CSV.
+- Every source row says it was read through CoolProp, so the citation check can compare the numbers against each paper's own tables.
+
+### New substance rows
+
+Ethane and propane are new substance rows, with:
+
+- formula;
+- triple and critical points;
+- liquid density just above the triple point;
+- the saturated-liquid table.
+
+They have no vapour-pressure fit yet, so the climate does not treat them as volatiles. Adding Fray and Schmitt 2009's ethane fit, a condensed colour and the latent heat makes ethane a Titan volatile, and that may change golden hashes.
+
+## Still waiting
+
 - **Liquid methane and ethane absorption.** No readable table was found:
   - Ramaprasad et al. 1978 (Icarus 35, 400) gives band strengths for ten liquid methane bands from 0.62 to 1.94 µm, but has no free text.
   - Grundy et al. 2002 (Icarus 155, 486) includes a liquid methane spectrum at 93 K; its data files were not reachable.
   - Adams et al. 2012 (GRL 39, L04309) gives reflectances only.
-- **Ethane substance row.** The sheet has no `c2h6` substance yet. It comes with part 2.
+- **Ethane as a volatile.** Ethane needs its vapour-pressure fit, colour and latent heat, which go through the golden lane.
 - **Liquid methane refractive index.** Khare et al. (about 1989, NTRS 19910007878) gives n of about 1.28 at 110 K in an OCR-degraded table. It is not used until a clean copy is read.

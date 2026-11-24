@@ -26,17 +26,16 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | MP29 the rest of the stable isotopes H to Ne (Be-9, B-10, B-11, O-17, F-19, Ne-20 to 22) with masses, so every Lodders 2021 share has a row | done (this PR); masses from NIST's pages (AME2016), AME2020 itself unreachable | packages/MP29-light-isotopes.md |
 | MP30 electrical conductivity for MF2's field ledger: `earth-core-liquid` and liquid iron (Pozzo 2012), `giant-envelope` sigma profile along Jupiter's adiabat (French 2012), `seawater` with PSS-78 fits | done (this PR); ionic water's 1e4 S/m still recalled | packages/MP30-conductivity.md |
 | MP31 units for the units engine (ED1a): 16 working units, 10 imperial units (group `imperial`), source NIST SP 811; reader knows `area` and `volume` | done (this PR) | packages/MP31-units.md |
-| MP32 sea liquids, part 1: liquid water's absorption spectrum 380 to 2000 nm (Pope and Fry 1997, Hale and Querry 1973) and refractive index (Segelstein 1981) | part 1 done (this PR); density, viscosity, surface tension and the cold liquids wait for readable tables | packages/MP32-sea-liquids.md |
+| MP32 sea liquids: liquid water's absorption spectrum 380 to 2000 nm (Pope and Fry 1997, Hale and Querry 1973) and refractive index (Segelstein 1981); `saturated_liquid` tables (density, viscosity, surface tension, vapour pressure) for water, methane, ethane, ammonia, nitrogen, helium, CO2, argon, propane, each column citing its reference correlation, read through CoolProp; new rows `c2h6`, `c3h8` | done (this PR); liquid methane and ethane absorption still unsourced; ethane as a volatile (vapour fit, colour) next | packages/MP32-sea-liquids.md |
 
 
 ## Next, in order (as of 24 Nov 2026, for whoever picks this track up)
 
-1. **MP32 part 2: sea liquids for the climate thread.** The climate thread wants these for sea colour and waves by liquid:
-   - saturated-liquid density, viscosity and surface tension for water, methane, ethane, ammonia, nitrogen, helium-4 and propane;
-   - liquid methane and ethane absorption;
-   - a new `c2h6` substance row with a Fray and Schmitt 2009 vapour-pressure fit.
+1. **MP32 follow-ups for the climate thread.**
+   - **Liquid methane and ethane absorption.** Leads: Ramaprasad et al. 1978 (Icarus 35, 400), and Grundy et al. 2002 (Icarus 155, 486; it includes liquid methane at 93 K).
+   - **Ethane as a volatile.** Needs Fray and Schmitt 2009's fit, a condensed colour and a latent heat. This goes through the golden lane, since it may move hashes.
    
-   The values are in the NIST WebBook fluid pages (Lemmon, McLinden and Friend), which the cloud could not read. From a local machine, read them there or with CoolProp. Cite the original correlation paper for each value, and note when a value was read through CoolProp. Absorption leads: Ramaprasad et al. 1978 (Icarus 35, 400) and Grundy et al. 2002 (Icarus 155, 486; it includes liquid methane at 93 K). Details are in packages/MP32-sea-liquids.md.
+   Details are in packages/MP32-sea-liquids.md.
 2. **Still unsourced, and searched without luck so far:**
    - heats of combustion for the solid propellants (JPL TM 33-649, JPL 79-29 and Thiokol TWR-13009 searched);
    - ionic water's conductivity: `h2o.ionic_fluid` still holds a recalled 1e4 S/m, because Knudson 2012 gives only reflectivity;
