@@ -5011,6 +5011,230 @@
         "range": null
       },
       {
+        "description": "people aboard",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.crew",
+        "range": null
+      },
+      {
+        "description": "pressurised room a crew needs",
+        "dim": [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.crew_volume",
+        "range": null
+      },
+      {
+        "description": "how well a radiator panel glows, from 0 to 1",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.emissivity",
+        "range": null
+      },
+      {
+        "description": "speed of a drive's exhaust",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.exhaust_speed",
+        "range": null
+      },
+      {
+        "description": "net habitable room each person needs",
+        "dim": [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.habitable_per_person",
+        "range": null
+      },
+      {
+        "description": "power carried by a drive's exhaust",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.jet_power",
+        "range": null
+      },
+      {
+        "description": "share of a pressurised module left free once equipment is in",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.net_to_gross",
+        "range": null
+      },
+      {
+        "description": "how densely a load packs: a liquid's density or cargo's stowage",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.packed_density",
+        "range": null
+      },
+      {
+        "description": "faces of a panel that see space",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.radiating_faces",
+        "range": null
+      },
+      {
+        "description": "area of radiator panel, one face",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.radiator_area",
+        "range": null
+      },
+      {
+        "description": "temperature radiators shed heat at",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "ship.radiator_temperature",
+        "range": null
+      },
+      {
+        "description": "mass of propellant or cargo carried",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.stowed_mass",
+        "range": null
+      },
+      {
+        "description": "room a load takes in tanks or holds",
+        "dim": [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.stowed_volume",
+        "range": null
+      },
+      {
+        "description": "push a drive gives",
+        "dim": [
+          1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.thrust",
+        "range": null
+      },
+      {
+        "description": "heat a ship must shed",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.waste_heat",
+        "range": null
+      },
+      {
+        "description": "heat left aboard for each watt in the jet",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ship.waste_per_jet",
+        "range": null
+      },
+      {
         "description": "length of a star's spot and activity cycle",
         "dim": [
           0,

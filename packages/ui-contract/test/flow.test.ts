@@ -125,3 +125,10 @@ test("the Power card: three columns, broken books from Nowhere on the GM's seat 
     await k.close();
   }
 });
+
+test("the card's radiator sum is the named Equation sse.ship.radiator_area (RK3), checked on its worked example", () => {
+  const f = JSON.parse(readFileSync(new URL("packs/base-physics/formulas/ship.json", root), "utf8")) as { atoms: { id: string; equation: { examples: Record<string, number>[] } }[] };
+  const ex = f.atoms.find((a) => a.id === "sse.ship.radiator_area")!.equation.examples[0]!;
+  const a = radiatorArea(ex.Q!, ex.T!, { emissivity: ex.e!, two_sided: ex.n === 2 });
+  assert.ok(Math.abs(a / ex.A! - 1) < 1e-9, `${a} against ${ex.A}`);
+});
