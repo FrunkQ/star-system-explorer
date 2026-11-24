@@ -4,7 +4,7 @@ export const V3_URL = "https://starsystemx.com/";
 
 // How SSE4 is made, by the copyright line (Alex, 24 Nov 2026: "the joke is kinda the point... YES this IS VIBE CODED...
 // but that does not mean it is slop"; a placeholder he will fine tune). The support links show only once each has its real address here; none is guessed.
-export const MADE_LINE = "Yes, this is vibe-coded, by FrunkQ & Fable/Opus. That doesn't make it slop: it is designed, architected and researched, and every number shows its working through its Why.";
+export const MADE_LINE = "Yes, this is vibe-coded, by FrunkQ & Fable/Opus. If it is carefully researched, architected and designed, is it slop?";
 export const SUPPORT_LINKS: readonly { label: string; href: string }[] = [
   { label: "Patreon", href: "" },
   { label: "Ko-fi", href: "" },
