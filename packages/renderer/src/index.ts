@@ -109,3 +109,9 @@ export async function startSurface(canvas: HTMLCanvasElement) {
 // The size comparison's turning globes (3D, True, Wireframe).
 export { circleSteps, globeFrame, graticule, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
 export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";
+// VP6: the detail ladder (rung table, bindings, seed and clock, HUD detail line). The GPU node is ladder-node.ts,
+// imported by GPU code directly so pages without 3D never load three.js.
+export { checkLayer, detailLine, profileShare, discScale, EDDY_EXPONENT, FLOW_REACH, LADDER_LAYERS, ladderAt, ladderLayer, ladderSeed, MAX_RUNGS, MAX_STRETCH, resolveLayer, RUNG_FADE, RUNG_MIN_PX, rungOrigin, rungs, sizeWords, TIER_RUNGS } from "./ladder.ts";
+export type { Bound, LadderFacts, LadderLayer, NoiseKind, NotDrawn, ResolvedLayer, Rung, ViewScale } from "./ladder.ts";
+export { cell, curl, NOISE_REFERENCES, NUM, PERIOD, ridged, simplex, SIMPLEX_SCALE, WRAP } from "./ladder-noise.ts";
+export type { Ops, V3 } from "./ladder-noise.ts";
