@@ -83,7 +83,7 @@
       "name": "Seats, rules and programs",
       "meaning": "The game layer: seats and grants, disclosure, rules, ship programs, intents and the chronicle's notes.",
       "budget_ms": 100,
-      "sources": ["grant", "scan_toggle", "known_to", "set_known", "undo_known", "known_in", "disclosures", "rules", "rules_step", "rules_pending", "rules_decide", "rules_policy", "programs", "programs_step", "attach_program", "detach_program", "templates", "create", "retire", "split_construct", "join_constructs", "intents", "set_seats", "send_intent", "intent_decide", "add_actor", "record", "add_note", "set_kept", "hold", "who_holds", "holdings_in", "set_tech", "tech_of", "tech_reading", "export_chronicle", "import_chronicle", "codes", "set_link", "links_in"]
+      "sources": ["grant", "scan_toggle", "known_to", "set_known", "undo_known", "known_in", "disclosures", "rules", "rules_step", "rules_pending", "rules_decide", "rules_policy", "programs", "programs_step", "attach_program", "detach_program", "templates", "create", "retire", "split_construct", "join_constructs", "intents", "set_seats", "send_intent", "intent_decide", "add_actor", "record", "add_note", "set_kept", "hold", "who_holds", "holdings_in", "set_tech", "tech_of", "tech_reading", "export_chronicle", "import_chronicle", "codes", "set_link", "links_in", "log_flight", "flight_log"]
     },
     {
       "id": "drawing",
