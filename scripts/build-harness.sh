@@ -9,6 +9,8 @@ mkdir -p packages/kernel-client/wasm
 cp tests/harness/pkg/sse_wasm* packages/kernel-client/wasm/
 [ -d node_modules/typescript ] || npm install --no-audit --no-fund
 npx tsc -p packages/kernel-client
+# VP4: the drawing bench (speed probe and placement, three.js bundled) for the bench on this page.
+npx vite build --config packages/renderer/bench.vite.config.ts
 rm -rf tests/harness/pkg/client tests/harness/pkg/fixtures
 mkdir -p tests/harness/pkg/client tests/harness/pkg/fixtures/packs
 cp packages/kernel-client/dist/kernel-client/src/*.js tests/harness/pkg/client/
