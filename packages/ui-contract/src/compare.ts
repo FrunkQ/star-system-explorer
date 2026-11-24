@@ -7,7 +7,7 @@
 // hidden. Nothing here computes physics: a subject with no radius fact is
 // left out and says so.
 import type { SceneSubject } from "./scene.ts";
-import { constant, numberOf, type SheetRef } from "./sheet.ts";
+import { constant, numberOf, sheetUnitFactor, type SheetRef } from "./sheet.ts";
 
 export const R_EARTH_KM = constant("R_earth_mean") / 1000;
 export const R_JUPITER_KM = constant("R_jup_mean") / 1000;
@@ -23,6 +23,10 @@ export interface ReferenceObject {
   /** km, or a sheet reference (`{"sheet": "constants/R_sun", "in": "km"}`) for an object the sheet holds. */
   radius_km: number | SheetRef;
   teff_k?: number | SheetRef;
+  /** Its day, hours (a sheet reference for the Sun's); a Solar System body's comes from base-sol instead. */
+  day_h?: number | SheetRef;
+  /** A Solar System body: its row in the base-sol pack, which holds its measured day, tilt and rings. */
+  sol?: string;
   colour?: string;
   /** A type's typical size, not one measured object. */
   typical?: boolean;
@@ -53,7 +57,16 @@ export interface CompareItem {
   teff_k?: number;
   colour?: string;
   ref?: { cite: string; url: string };
+  /** Its axial tilt to its orbit, radians, when the universe holds it (above a right angle it turns backwards). */
+  tilt_rad?: number;
+  /** Its day (one turn on its axis), hours, when known; negative turns backwards. */
+  day_h?: number;
+  /** Its rings, edges from its centre in km, with their depth and brightness when known (the 3D lineups draw them). */
+  rings?: { inner_km: number; outer_km: number; tau: number | null; albedo: number | null }[];
 }
+
+/** How far out a body reaches, its rings included, km: the room it needs in a lineup that draws its rings. */
+export const reachKm = (i: CompareItem): number => Math.max(i.radius_km, ...(i.rings ?? []).map((r) => r.outer_km));
 
 /** Problems with a reference document, as sentences; empty when it is usable. */
 export function checkReferences(doc: unknown): string[] {
@@ -78,8 +91,25 @@ export function checkReferences(doc: unknown): string[] {
   return out;
 }
 
-export function itemFromReference(o: ReferenceObject): CompareItem {
-  return { key: `ref:${o.id}`, label: o.label, kind: o.kind, tags: o.tags, radius_km: numberOf(o.radius_km), where: "Reference", basis: o.typical ? "typical" : "reference", type: o.type, teff_k: o.teff_k === undefined ? undefined : numberOf(o.teff_k), colour: o.colour, ref: o.ref };
+/** The base-sol pack's Solar System, as far as the size comparison reads it: each body's values and its rings. */
+export interface SolDoc {
+  bodies: { id: string; values: Record<string, { v: number; unit: string }> }[];
+  regions: { id: string; host: string | null; kind?: string; inner_m?: number; outer_m?: number; optical_depth?: number; albedo?: number }[];
+}
+
+export function itemFromReference(o: ReferenceObject, sol?: SolDoc | null): CompareItem {
+  const i: CompareItem = { key: `ref:${o.id}`, label: o.label, kind: o.kind, tags: o.tags, radius_km: numberOf(o.radius_km), where: "Reference", basis: o.typical ? "typical" : "reference", type: o.type, teff_k: o.teff_k === undefined ? undefined : numberOf(o.teff_k), colour: o.colour, ref: o.ref };
+  if (o.day_h !== undefined) i.day_h = numberOf(o.day_h);
+  const b = o.sol ? sol?.bodies.find((x) => x.id === o.sol) : undefined;
+  if (b) {
+    const day = b.values["body.rotation_period"];
+    const tilt = b.values["body.obliquity"];
+    if (day && day.unit === "s" && day.v) i.day_h = day.v / sheetUnitFactor("h");
+    if (tilt && tilt.unit === "deg") i.tilt_rad = (tilt.v * Math.PI) / 180;
+    const rings = sol!.regions.filter((r) => r.host === b.id && r.kind === "ring" && r.inner_m && r.outer_m && r.outer_m > r.inner_m);
+    if (rings.length) i.rings = rings.map((r) => ({ inner_km: r.inner_m! / 1000, outer_km: r.outer_m! / 1000, tau: r.optical_depth ?? null, albedo: r.albedo ?? null }));
+  }
+  return i;
 }
 
 /** A subject's radius in km from its facts (radius_earth or radius_sun), or null: the view never guesses one. */
@@ -95,11 +125,30 @@ export function radiusKm(s: SceneSubject): { km: number; basis: string } | null 
   return null;
 }
 
-export function itemFromSubject(s: SceneSubject, where: string): CompareItem | null {
+/**
+ * A subject as a lineup item, or null when it has no radius. `all`, the subjects of its scene, gives it its rings (a
+ * belt whose host is this body).
+ */
+export function itemFromSubject(s: SceneSubject, where: string, all: readonly SceneSubject[] = []): CompareItem | null {
   const r = radiusKm(s);
   if (!r) return null;
   const t = s.facts.find((f) => f.field === "teff_k")?.value;
-  return { key: s.address, label: s.label, kind: s.kind, tags: s.tags, radius_km: r.km, where, basis: r.basis, type: s.subtitle, teff_k: typeof t === "number" ? t : undefined };
+  const day = s.facts.find((f) => f.field === "day_h")?.value;
+  const rings = all.filter((x) => x.ring && x.parent === s.address && x.ring.outer_m > x.ring.inner_m).map((x) => ({ inner_km: x.ring!.inner_m / 1000, outer_km: x.ring!.outer_m / 1000, tau: x.ring!.tau, albedo: x.ring!.albedo }));
+  return {
+    key: s.address,
+    label: s.label,
+    kind: s.kind,
+    tags: s.tags,
+    radius_km: r.km,
+    where,
+    basis: r.basis,
+    type: s.subtitle,
+    teff_k: typeof t === "number" ? t : undefined,
+    ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}),
+    ...(typeof day === "number" && day !== 0 ? { day_h: day } : {}),
+    ...(rings.length ? { rings } : {}),
+  };
 }
 
 /** A star's disc colour from its surface temperature: presentation only, a rough blackbody ramp. */
@@ -153,7 +202,9 @@ export interface Lineup {
  * not to scale. `slot` is the least width each item takes (room for its
  * label), so small bodies' labels never overprint.
  */
-export function layoutLineup(items: readonly CompareItem[], height: number, maxWidth: number, mode: "true" | "log" = "true", limbRatio = 5, slot = 0): Lineup {
+export function layoutLineup(items: readonly CompareItem[], height: number, maxWidth: number, mode: "true" | "log" = "true", limbRatio = 5, slot = 0, withRings = false): Lineup {
+  // Where rings are drawn, a ringed body takes the room of its rings, at the same scale as its globe.
+  const reach = (i: CompareItem) => (withRings ? reachKm(i) / i.radius_km : 1);
   const gap = 18;
   const minR = 1.5;
   if (!items.length) return { placed: [], limb: null, km_per_px: 1, width: 0, mode };
@@ -163,12 +214,12 @@ export function layoutLineup(items: readonly CompareItem[], height: number, maxW
     const span = Math.max(1e-9, Math.log10(hi) - Math.log10(lo));
     // Radius from 4 px (smallest) to half the height (largest), less if the row would need more than twice the width.
     const raw = (km: number) => 4 + ((Math.log10(km) - Math.log10(lo)) / span) * (height / 2 - 4);
-    const need = items.reduce((s, i) => s + Math.max(2 * raw(i.radius_km), slot) + gap, gap);
+    const need = items.reduce((s, i) => s + Math.max(2 * raw(i.radius_km) * reach(i), slot) + gap, gap);
     const k = need > 1.25 * maxWidth ? Math.max(0.4, (1.25 * maxWidth) / need) : 1;
     let x = gap;
     const placed = items.map((item) => {
       const r = Math.max(3, raw(item.radius_km) * k);
-      const wd = Math.max(2 * r, slot);
+      const wd = Math.max(2 * r * reach(item), slot);
       const p = { item, x: x + wd / 2, r, tiny: false };
       x += wd + gap;
       return p;
@@ -182,15 +233,15 @@ export function layoutLineup(items: readonly CompareItem[], height: number, maxW
   const row = limbItem ? items.filter((i) => i !== limbItem) : [...items];
   const rowMax = Math.max(...row.map((i) => i.radius_km));
   const limbBand = limbItem ? Math.min(140, maxWidth * 0.18) : 0;
-  const sumD = row.reduce((s, i) => s + 2 * i.radius_km, 0);
+  const sumD = row.reduce((s, i) => s + 2 * i.radius_km * reach(i), 0);
   const avail = Math.max(60, maxWidth - limbBand - gap * (row.length + 1));
   // Fit the row's width: small bodies take their slot whatever the scale, so solve for the rest.
   let kmPerPx = Math.max((2 * rowMax) / height, sumD / avail);
   for (let k = 0; k < 4; k++) {
-    const fixed = row.filter((i) => (2 * i.radius_km) / kmPerPx < slot);
-    const flex = row.filter((i) => (2 * i.radius_km) / kmPerPx >= slot);
+    const fixed = row.filter((i) => (2 * i.radius_km * reach(i)) / kmPerPx < slot);
+    const flex = row.filter((i) => (2 * i.radius_km * reach(i)) / kmPerPx >= slot);
     const room = avail - fixed.length * slot;
-    const need = flex.reduce((s, i) => s + 2 * i.radius_km, 0);
+    const need = flex.reduce((s, i) => s + 2 * i.radius_km * reach(i), 0);
     if (room <= 0 || need <= 0) break;
     kmPerPx = Math.max((2 * rowMax) / height, need / room);
   }
@@ -198,7 +249,7 @@ export function layoutLineup(items: readonly CompareItem[], height: number, maxW
   const placed = row.map((item) => {
     const true_r = item.radius_km / kmPerPx;
     const r = Math.max(minR, true_r);
-    const wd = Math.max(2 * r, slot);
+    const wd = Math.max(2 * r * reach(item), slot);
     const p = { item, x: x + wd / 2, r, tiny: true_r < minR };
     x += wd + gap;
     return p;

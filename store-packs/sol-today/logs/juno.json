@@ -1,0 +1,431 @@
+{
+ "construct": "juno",
+ "name": "Juno",
+ "about": "Juno from Cape Canaveral to Jupiter: the two deep space manoeuvres of 2012, the Earth flyby of 2013 and Jupiter orbit insertion on 5 Jul 2016, then its 53-day polar orbits, kept as one osculating orbit a year (the big-burns fudge). Still flying. From JPL Horizons (scripts/spaceflight/horizons_more.json); the launch time is from memory.",
+ "pieces": [
+  {
+   "from_s": 63475849566,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 28.5833,
+    "lon_deg": -80.5833
+   },
+   "mark": "authored",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "on the pad before launch",
+   "to_s": 63481033566
+  },
+  {
+   "from_s": 63481033566,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ascent"
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "ascent; RS5 flies it",
+   "to_s": 63481034166
+  },
+  {
+   "from_s": 63481034166,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6563137.0,
+     "e": 0.0,
+     "i_deg": 28.5,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 63481034166
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "a 185 km parking orbit stands in for the upper stage's coast before departure",
+   "to_s": 63481035366
+  },
+  {
+   "from_s": 63481035366,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 245070837642.2254,
+     "e": 0.3839529794878137,
+     "i_deg": 0.06634511702216615,
+     "node_deg": 133.0187119891687,
+     "peri_deg": 190.7591759886736,
+     "m0_deg": 0.0,
+     "epoch_s": 63481867463
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun after departure (Horizons, 2012-01-01)",
+   "to_s": 63514839000
+  },
+  {
+   "from_s": 63514839000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 240433944516.368,
+     "e": 0.4106533366681127,
+     "i_deg": 0.03480577253659801,
+     "node_deg": 123.2801910818382,
+     "peri_deg": 200.7906828974105,
+     "m0_deg": 0.0,
+     "epoch_s": 63547221779
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "between the two manoeuvres (Horizons, 2012-09-07)",
+   "to_s": 63516135000
+  },
+  {
+   "from_s": 63516135000,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "lambert",
+     "to": "u:sol/sys:sun/body:earth",
+     "arrive_s": 63549818557
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "back to Earth for the flyby",
+   "to_s": 63549818557
+  },
+  {
+   "from_s": 63549818557,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "lambert",
+     "to": "u:sol/sys:sun/body:jupiter",
+     "arrive_s": 63636158920
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "to Jupiter",
+   "to_s": 63636158920
+  },
+  {
+   "from_s": 63636158920,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 4095618128.6925354,
+     "e": 0.9815748546852795,
+     "i_deg": 90.61553600693097,
+     "node_deg": 269.2668611318246,
+     "peri_deg": 174.6980628928331,
+     "m0_deg": 0.0,
+     "epoch_s": 63636158915
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "the capture orbit, about 53 days (Horizons, 2016-07-06)",
+   "to_s": 63651700800
+  },
+  {
+   "from_s": 63651700800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 4059859823.957413,
+     "e": 0.9814789529213754,
+     "i_deg": 91.16856167166479,
+     "node_deg": 269.1705679895996,
+     "peri_deg": 171.9499241777945,
+     "m0_deg": 0.0,
+     "epoch_s": 63649947436
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2017-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line",
+   "to_s": 63683236800
+  },
+  {
+   "from_s": 63683236800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 4059383313.8010807,
+     "e": 0.9814459370110162,
+     "i_deg": 95.43199113148852,
+     "node_deg": 268.8312502935884,
+     "peri_deg": 165.4986223444457,
+     "m0_deg": 0.0,
+     "epoch_s": 63681919032
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2018-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line",
+   "to_s": 63714772800
+  },
+  {
+   "from_s": 63714772800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 4068042846.8481226,
+     "e": 0.9813447459877259,
+     "i_deg": 100.435264735011,
+     "node_deg": 269.0639530157899,
+     "peri_deg": 159.4636201154195,
+     "m0_deg": 0.0,
+     "epoch_s": 63713883726
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2019-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line",
+   "to_s": 63746308800
+  },
+  {
+   "from_s": 63746308800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 4066345980.570651,
+     "e": 0.9814300503868334,
+     "i_deg": 106.417919858325,
+     "node_deg": 268.7566724334586,
+     "peri_deg": 154.1314452587967,
+     "m0_deg": 0.0,
+     "epoch_s": 63745853839
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2020-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line",
+   "to_s": 63777931200
+  },
+  {
+   "from_s": 63777931200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 4060992626.144702,
+     "e": 0.981887132812226,
+     "i_deg": 103.1928474555383,
+     "node_deg": 273.8075494831676,
+     "peri_deg": 150.1231594573946,
+     "m0_deg": 0.0,
+     "epoch_s": 63777836826
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2021-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line",
+   "to_s": 63809467200
+  },
+  {
+   "from_s": 63809467200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 3585210963.85522,
+     "e": 0.9795823787027528,
+     "i_deg": 99.9827907870945,
+     "node_deg": 280.0650620077535,
+     "peri_deg": 146.3387464432991,
+     "m0_deg": 0.0,
+     "epoch_s": 63810455768
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2022-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line",
+   "to_s": 63841003200
+  },
+  {
+   "from_s": 63841003200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 3264759780.0149636,
+     "e": 0.9776900632772796,
+     "i_deg": 98.05613830169271,
+     "node_deg": 284.4998110276448,
+     "peri_deg": 138.8601885025894,
+     "m0_deg": 0.0,
+     "epoch_s": 63839546430
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2023-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line",
+   "to_s": 63872539200
+  },
+  {
+   "from_s": 63872539200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 3110310562.523861,
+     "e": 0.9768129899536983,
+     "i_deg": 98.58288116978267,
+     "node_deg": 286.6041291836683,
+     "peri_deg": 130.5175431038402,
+     "m0_deg": 0.0,
+     "epoch_s": 63872411864
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2024-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line",
+   "to_s": 63904161600
+  },
+  {
+   "from_s": 63904161600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 2951182805.336591,
+     "e": 0.9757754713353937,
+     "i_deg": 99.89657820042483,
+     "node_deg": 288.3299091240465,
+     "peri_deg": 119.8899125647705,
+     "m0_deg": 0.0,
+     "epoch_s": 63903749013
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2025-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line",
+   "to_s": 63935697600
+  },
+  {
+   "from_s": 63935697600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:jupiter",
+    "elements": {
+     "a_m": 2946164621.4598494,
+     "e": 0.9744870752743203,
+     "i_deg": 100.2198296182914,
+     "node_deg": 290.8890223366648,
+     "peri_deg": 110.1577348103137,
+     "m0_deg": 0.0,
+     "epoch_s": 63934838048
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2026-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 63481033566,
+   "kind": "launch",
+   "mark": "recorded",
+   "src": "nssdca-craft",
+   "writer": "pack"
+  },
+  {
+   "at_s": 63481035366,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "dv_m_s": 4558.0,
+   "engine": "rl10a-4-2",
+   "why": "impulsive equivalent from a 185 km parking orbit to Horizons' Earth-relative hyperbola (v-infinity 5.575 km/s on 2011-Aug-06); the upper stage's real burns wait on RS5"
+  },
+  {
+   "at_s": 63481035366,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "into": [
+    "juno-centaur"
+   ],
+   "keeps_identity": true,
+   "why": "the upper stage separates after the departure burn"
+  },
+  {
+   "at_s": 63514839000,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "dv_m_s": 344.3,
+   "engine": "leros-1b",
+   "why": "deep space manoeuvre: Horizons' elements before (2012-Aug-30 22:30) and after (2012-Aug-30 23:10), compared at the midpoint"
+  },
+  {
+   "at_s": 63516135000,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "dv_m_s": 387.9,
+   "engine": "leros-1b",
+   "why": "deep space manoeuvre: Horizons' elements before (2012-Sep-14 22:30) and after (2012-Sep-14 23:10), compared at the midpoint"
+  },
+  {
+   "at_s": 63549818557,
+   "kind": "flyby",
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "body": "u:sol/sys:sun/body:earth",
+   "periapsis_m": 6916097
+  },
+  {
+   "at_s": 63636158920,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "dv_m_s": 516.1,
+   "engine": "leros-1b",
+   "why": "Jupiter orbit insertion (35 min, 03:18 to 03:53 UTC): speed at perijove from the far elements before (30 Jun) and after (15 Jul): Jupiter's oblateness moves osculating elements too much near perijove to compare there"
+  }
+ ]
+}

@@ -423,8 +423,549 @@
   "g_cm3": 1000.0,
   "ut": 1e-06,
   "gauss": 0.0001,
-  "a_m2": 1.0
+  "a_m2": 1.0,
+  "min": 60.0,
+  "kyr": 31557600000.0,
+  "r_moon": 1737400.0,
+  "m_moon": 7.346e+22,
+  "ocean_earth": 1.4e+21,
+  "tonne": 1000.0,
+  "litre": 0.001,
+  "m3": 1.0,
+  "km3": 1000000000.0,
+  "m2": 1.0,
+  "km2": 1000000.0,
+  "s_earth": 1361.0,
+  "arcmin": 0.0002908882086657216,
+  "percent": 0.01,
+  "ppm": 1e-06,
+  "tnt_tonne": 4184000000.0,
+  "mi": 1609.344,
+  "ft": 0.3048,
+  "lb": 0.45359237,
+  "degf": 0.5555555555555556,
+  "psi": 6894.757293168361,
+  "mph": 0.44704,
+  "lb_ft3": 16.018463373960138,
+  "ft3": 0.028316846592,
+  "gal": 0.003785411784,
+  "sq_mi": 2589988.110336
  },
+ "unit_rows": [
+  {
+   "id": "one",
+   "symbol": "",
+   "name": "one",
+   "measures": "dimensionless",
+   "factor": 1.0
+  },
+  {
+   "id": "m",
+   "symbol": "m",
+   "name": "metre",
+   "measures": "length",
+   "factor": 1.0
+  },
+  {
+   "id": "kg",
+   "symbol": "kg",
+   "name": "kilogram",
+   "measures": "mass",
+   "factor": 1.0
+  },
+  {
+   "id": "s",
+   "symbol": "s",
+   "name": "second",
+   "measures": "time",
+   "factor": 1.0
+  },
+  {
+   "id": "a",
+   "symbol": "A",
+   "name": "ampere",
+   "measures": "current",
+   "factor": 1.0
+  },
+  {
+   "id": "k",
+   "symbol": "K",
+   "name": "kelvin",
+   "measures": "temperature",
+   "factor": 1.0
+  },
+  {
+   "id": "mol",
+   "symbol": "mol",
+   "name": "mole",
+   "measures": "amount",
+   "factor": 1.0
+  },
+  {
+   "id": "cd",
+   "symbol": "cd",
+   "name": "candela",
+   "measures": "luminous_intensity",
+   "factor": 1.0
+  },
+  {
+   "id": "n",
+   "symbol": "N",
+   "name": "newton",
+   "measures": "force",
+   "factor": 1.0
+  },
+  {
+   "id": "pa",
+   "symbol": "Pa",
+   "name": "pascal",
+   "measures": "pressure",
+   "factor": 1.0
+  },
+  {
+   "id": "j",
+   "symbol": "J",
+   "name": "joule",
+   "measures": "energy",
+   "factor": 1.0
+  },
+  {
+   "id": "w",
+   "symbol": "W",
+   "name": "watt",
+   "measures": "power",
+   "factor": 1.0
+  },
+  {
+   "id": "hz",
+   "symbol": "Hz",
+   "name": "hertz",
+   "measures": "frequency",
+   "factor": 1.0
+  },
+  {
+   "id": "t",
+   "symbol": "T",
+   "name": "tesla",
+   "measures": "magnetic_field",
+   "factor": 1.0
+  },
+  {
+   "id": "km",
+   "symbol": "km",
+   "name": "kilometre",
+   "measures": "length",
+   "factor": 1000.0
+  },
+  {
+   "id": "au",
+   "symbol": "au",
+   "name": "astronomical unit",
+   "measures": "length",
+   "factor": 149597870700.0
+  },
+  {
+   "id": "pc",
+   "symbol": "pc",
+   "name": "parsec",
+   "measures": "length",
+   "factor": 3.085677581491367e+16
+  },
+  {
+   "id": "ly",
+   "symbol": "ly",
+   "name": "light year",
+   "measures": "length",
+   "factor": 9460730472580800.0
+  },
+  {
+   "id": "r_sun",
+   "symbol": "R☉",
+   "name": "solar radius",
+   "measures": "length",
+   "factor": 695700000.0
+  },
+  {
+   "id": "r_earth",
+   "symbol": "R⊕",
+   "name": "Earth radius (equatorial)",
+   "measures": "length",
+   "factor": 6378100.0
+  },
+  {
+   "id": "r_jupiter",
+   "symbol": "RJ",
+   "name": "Jupiter radius (equatorial)",
+   "measures": "length",
+   "factor": 71492000.0
+  },
+  {
+   "id": "m_sun",
+   "symbol": "M☉",
+   "name": "solar mass",
+   "measures": "mass",
+   "factor": 1.988409870698051e+30
+  },
+  {
+   "id": "m_earth",
+   "symbol": "M⊕",
+   "name": "Earth mass",
+   "measures": "mass",
+   "factor": 5.972167867791379e+24
+  },
+  {
+   "id": "m_jupiter",
+   "symbol": "MJ",
+   "name": "Jupiter mass",
+   "measures": "mass",
+   "factor": 1.8981245973360505e+27
+  },
+  {
+   "id": "h",
+   "symbol": "h",
+   "name": "hour",
+   "measures": "time",
+   "factor": 3600.0
+  },
+  {
+   "id": "day",
+   "symbol": "d",
+   "name": "day",
+   "measures": "time",
+   "factor": 86400.0
+  },
+  {
+   "id": "yr",
+   "symbol": "yr",
+   "name": "Julian year",
+   "measures": "time",
+   "factor": 31557600.0
+  },
+  {
+   "id": "myr",
+   "symbol": "Myr",
+   "name": "million years",
+   "measures": "time",
+   "factor": 31557600000000.0
+  },
+  {
+   "id": "gyr",
+   "symbol": "Gyr",
+   "name": "billion years",
+   "measures": "time",
+   "factor": 3.15576e+16
+  },
+  {
+   "id": "degc",
+   "symbol": "°C",
+   "name": "degree Celsius",
+   "measures": "temperature",
+   "factor": 1.0,
+   "offset": 273.15
+  },
+  {
+   "id": "l_sun",
+   "symbol": "L☉",
+   "name": "solar luminosity",
+   "measures": "power",
+   "factor": 3.828e+26
+  },
+  {
+   "id": "w_m2",
+   "symbol": "W/m²",
+   "name": "watt per square metre",
+   "measures": "flux",
+   "factor": 1.0
+  },
+  {
+   "id": "bar",
+   "symbol": "bar",
+   "name": "bar",
+   "measures": "pressure",
+   "factor": 100000.0
+  },
+  {
+   "id": "atm",
+   "symbol": "atm",
+   "name": "standard atmosphere",
+   "measures": "pressure",
+   "factor": 101325.0
+  },
+  {
+   "id": "ev",
+   "symbol": "eV",
+   "name": "electronvolt",
+   "measures": "energy",
+   "factor": 1.602176634e-19
+  },
+  {
+   "id": "gee",
+   "symbol": "g",
+   "name": "standard gravity",
+   "measures": "acceleration",
+   "factor": 9.80665
+  },
+  {
+   "id": "degree",
+   "symbol": "°",
+   "name": "degree of arc",
+   "measures": "angle",
+   "factor": 0.017453292519943295
+  },
+  {
+   "id": "arcsec",
+   "symbol": "″",
+   "name": "arcsecond",
+   "measures": "angle",
+   "factor": 4.84813681109536e-06
+  },
+  {
+   "id": "m_s",
+   "symbol": "m/s",
+   "name": "metre per second",
+   "measures": "velocity",
+   "factor": 1.0
+  },
+  {
+   "id": "km_s",
+   "symbol": "km/s",
+   "name": "kilometre per second",
+   "measures": "velocity",
+   "factor": 1000.0
+  },
+  {
+   "id": "isp_s",
+   "symbol": "s (Isp)",
+   "name": "second of specific impulse",
+   "measures": "velocity",
+   "factor": 9.80665
+  },
+  {
+   "id": "m_s2",
+   "symbol": "m/s²",
+   "name": "metre per second squared",
+   "measures": "acceleration",
+   "factor": 1.0
+  },
+  {
+   "id": "kg_m3",
+   "symbol": "kg/m³",
+   "name": "kilogram per cubic metre",
+   "measures": "density",
+   "factor": 1.0
+  },
+  {
+   "id": "g_cm3",
+   "symbol": "g/cm³",
+   "name": "gram per cubic centimetre",
+   "measures": "density",
+   "factor": 1000.0
+  },
+  {
+   "id": "ut",
+   "symbol": "µT",
+   "name": "microtesla",
+   "measures": "magnetic_field",
+   "factor": 1e-06
+  },
+  {
+   "id": "gauss",
+   "symbol": "G",
+   "name": "gauss",
+   "measures": "magnetic_field",
+   "factor": 0.0001
+  },
+  {
+   "id": "a_m2",
+   "symbol": "A m²",
+   "name": "ampere square metre",
+   "measures": "magnetic_moment",
+   "factor": 1.0
+  },
+  {
+   "id": "min",
+   "symbol": "min",
+   "name": "minute",
+   "measures": "time",
+   "factor": 60.0
+  },
+  {
+   "id": "kyr",
+   "symbol": "kyr",
+   "name": "thousand years",
+   "measures": "time",
+   "factor": 31557600000.0
+  },
+  {
+   "id": "r_moon",
+   "symbol": "R☾",
+   "name": "Moon radius",
+   "measures": "length",
+   "factor": 1737400.0
+  },
+  {
+   "id": "m_moon",
+   "symbol": "M☾",
+   "name": "Moon mass",
+   "measures": "mass",
+   "factor": 7.346e+22
+  },
+  {
+   "id": "ocean_earth",
+   "symbol": "Earth oceans",
+   "name": "mass of Earth's oceans",
+   "measures": "mass",
+   "factor": 1.4e+21
+  },
+  {
+   "id": "tonne",
+   "symbol": "t",
+   "name": "tonne",
+   "measures": "mass",
+   "factor": 1000.0
+  },
+  {
+   "id": "litre",
+   "symbol": "L",
+   "name": "litre",
+   "measures": "volume",
+   "factor": 0.001
+  },
+  {
+   "id": "m3",
+   "symbol": "m³",
+   "name": "cubic metre",
+   "measures": "volume",
+   "factor": 1.0
+  },
+  {
+   "id": "km3",
+   "symbol": "km³",
+   "name": "cubic kilometre",
+   "measures": "volume",
+   "factor": 1000000000.0
+  },
+  {
+   "id": "m2",
+   "symbol": "m²",
+   "name": "square metre",
+   "measures": "area",
+   "factor": 1.0
+  },
+  {
+   "id": "km2",
+   "symbol": "km²",
+   "name": "square kilometre",
+   "measures": "area",
+   "factor": 1000000.0
+  },
+  {
+   "id": "s_earth",
+   "symbol": "S⊕",
+   "name": "Earth's sunlight",
+   "measures": "flux",
+   "factor": 1361.0
+  },
+  {
+   "id": "arcmin",
+   "symbol": "′",
+   "name": "arcminute",
+   "measures": "angle",
+   "factor": 0.0002908882086657216
+  },
+  {
+   "id": "percent",
+   "symbol": "%",
+   "name": "percent",
+   "measures": "dimensionless",
+   "factor": 0.01
+  },
+  {
+   "id": "ppm",
+   "symbol": "ppm",
+   "name": "part per million",
+   "measures": "dimensionless",
+   "factor": 1e-06
+  },
+  {
+   "id": "tnt_tonne",
+   "symbol": "t TNT",
+   "name": "tonne of TNT",
+   "measures": "energy",
+   "factor": 4184000000.0
+  },
+  {
+   "id": "mi",
+   "symbol": "mi",
+   "name": "mile",
+   "measures": "length",
+   "factor": 1609.344
+  },
+  {
+   "id": "ft",
+   "symbol": "ft",
+   "name": "foot",
+   "measures": "length",
+   "factor": 0.3048
+  },
+  {
+   "id": "lb",
+   "symbol": "lb",
+   "name": "pound",
+   "measures": "mass",
+   "factor": 0.45359237
+  },
+  {
+   "id": "degf",
+   "symbol": "°F",
+   "name": "degree Fahrenheit",
+   "measures": "temperature",
+   "factor": 0.5555555555555556,
+   "offset": 255.3722222222222
+  },
+  {
+   "id": "psi",
+   "symbol": "psi",
+   "name": "pound-force per square inch",
+   "measures": "pressure",
+   "factor": 6894.757293168361
+  },
+  {
+   "id": "mph",
+   "symbol": "mph",
+   "name": "mile per hour",
+   "measures": "velocity",
+   "factor": 0.44704
+  },
+  {
+   "id": "lb_ft3",
+   "symbol": "lb/ft³",
+   "name": "pound per cubic foot",
+   "measures": "density",
+   "factor": 16.018463373960138
+  },
+  {
+   "id": "ft3",
+   "symbol": "ft³",
+   "name": "cubic foot",
+   "measures": "volume",
+   "factor": 0.028316846592
+  },
+  {
+   "id": "gal",
+   "symbol": "gal",
+   "name": "US gallon",
+   "measures": "volume",
+   "factor": 0.003785411784
+  },
+  {
+   "id": "sq_mi",
+   "symbol": "mi²",
+   "name": "square mile",
+   "measures": "area",
+   "factor": 2589988.110336
+  }
+ ],
  "bands": [
   {
    "id": "view-visible",

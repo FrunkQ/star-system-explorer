@@ -7,8 +7,8 @@
   that audience (nothing is remembered here).
 -->
 <script lang="ts">
-  import { EVERYONE, LIVE_OVERRIDES, checkBrand, embedOrigins, fogViews, isDefaultPlan, observeOf, type Audience, type SceneSubject, type Shown, type ViewSession } from "../../ui-contract/src/index.ts";
-  import type { Share } from "./share.svelte.ts";
+  import { EVERYONE, LIVE_OVERRIDES, checkBrand, embedOrigins, fogViews, isDefaultPlan, observeOf, type Audience, type SceneSubject, type Shown, type ViewSession } from "../../../ui-contract/src/index.ts";
+  import type { Share } from "../share.svelte.ts";
 
   let { share, session, bodies, scope, at_yr, onchange, here }: { share: Share; session: ViewSession; bodies: SceneSubject[]; scope: string; at_yr: number; onchange: () => void; here?: () => Shown } = $props();
   // What a seat is shown, in words: its own send, else the table's.

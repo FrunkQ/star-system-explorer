@@ -1,0 +1,55 @@
+{
+  "about": "Orac's handbook (A2 part 5): how SSE4 is built and extended, for Orac to read before it drafts. Written from the design handoff, the build plan's standing rules, the matter pack design and the package logs; check against them when they change.",
+  "passages": [
+    {
+      "id": "method",
+      "line": "how SSE4 is built: real physics in small cited blocks, documented fudges, packs not code",
+      "text": "SSE4 leans into the physics and never fakes it. New physics goes into editable flows of small blocks (atoms and boxes), each citing its papers. Big Blocks (the classifier, weather, geology, stellar evolution) exist only where a flow cannot express it, and each says why. A deliberate simplification is a fudge: it goes in the fudge register (docs/fudges.md) with where it lives, why, and what real physics would replace it. Every published relation or constant goes in docs/citations.md with its check status. Everything Orac makes is pack data, never code: a draft is checked by SSE's own validators, refused drafts come back with the reasons, and nothing changes until the GM accepts. One general mechanism is preferred over a special case."
+    },
+    {
+      "id": "blocks",
+      "line": "atoms, flows and boxes: what a physics block is and how they wire",
+      "text": "An atom is one small physics block: typed input and output ports (quantity kinds with dimensions), parameters with allowed ranges, a cost class, references and a three-level explain (curious, science, formula). A flow wires atoms into a hook: inputs `in.<name>` of a quantity kind, nodes `{id, atom}`, wires `{from, to}` and `publishes` of quantity kinds; each quantity kind has exactly one publisher in the stack. Flows carry golden tests from published values. A box (sse.box/1) is a flow used as one block: inputs, outputs, nodes, wires, promoted params and its own worked examples; a node uses it with `box: \"id@^1\"`. Today Orac can change a flow's parameters (physics) and draft boxes; it cannot write a new atom, which needs Rust, so it drafts an atom issue instead. Read atoms with atom:<id> and flows with flow:<id>."
+    },
+    {
+      "id": "packs",
+      "line": "packs and the stack: how SSE4 is extended without code",
+      "text": "A pack (sse.pack/1) is declarative data: id, semver version, kind, kernel_range, licence and `provides` (flows, boxes, units, quantity kinds, reference rows for the data sheet, and `other` content such as classes, sifters, programs, data views, screens and skins). Packs stack bottom to top: base packs, then game-system, universe and campaign packs. A later pack overrides an earlier one only on purpose (`replaces`), never by accident. A pack marked `fictional` labels everything downstream of it as fictional. Orac writes only into the campaign's own packs (campaign.programs, campaign.sifters, campaign.boxes, campaign.tables, campaign.reference and the like); accepting stacks that pack as a chronicled stack change the GM can undo, and the campaign can export it for others to load."
+    },
+    {
+      "id": "data-sheet",
+      "line": "the master data sheet: constants, elements, substances, mixtures, sources",
+      "text": "The master data sheet is pack data under `provides.reference`: tables constants, units, elements, isotopes, substances, mixtures, reactions, bands, plus sources and groups. Every value is `{\"v\": number, \"unit\": \"...\", \"src\": \"<source id>\"}`, optionally with `check` (unverified: the source is named but the number was not read from it; authored: a documented stand-in citing fudge-register), `note`, `at_k`, `at_pa`; a fit is `{\"fit\": name, \"coeffs\": [...], \"valid_k\": [lo, hi], \"src\": ...}`. A substance has `formula` (element counts), `names` (physics, plain, story) and property groups: phases (triple, boiling and critical points, latent heats, densities, vapour curve), optical (refractivity, King factor, colour when condensed), chemical, cosmochemical. A mixture is a recipe of substances by volume or mass that sums to one. Load checks: every src names a source row, formulas name known elements, a typed molar mass agrees with the formula, a vapour curve passes through its own triple point, an override says what it replaces. Blocks read rows through the Look up block, so a new substance works everywhere at once: whether it is gas, liquid or ice on a world is worked out from its phase rows, not chosen."
+    },
+    {
+      "id": "honesty",
+      "line": "honesty marks: authored, impossible, fictional, speculative",
+      "text": "Every value keeps its evidence: catalogued, resolved, derived, authored, authored-impossible or narrative. A GM edit is an authored event dated when it happens; it changes the world from then on and never rewrites the past. An edit that contradicts physics is allowed and marked impossible, and everything derived from it carries the impossible badge with the reason; nothing is silently fixed. Invented physics or matter lives in a pack marked fictional so real and invented are never confused in explain mode. Honesty marks show on the GM's view only. Orac never hides a mark and says plainly when a draft is fictional or rests on unverified values."
+    },
+    {
+      "id": "secrecy",
+      "line": "who knows what: audiences, data views, the record on the GM machine",
+      "text": "The universe is shared; knowledge is need-to-know. Each seat has an audience, and data views are GM-defined labelled filters over what an audience may read (exact, rounded, band). The record is computed only on the GM machine and each seat is sent only what its audience may see; a player's screen never shows a gap or a count where a secret is. Dice use a GM-only table secret. Orac's drafts never reveal anything by themselves: a reveal is a change the GM accepts. Minerva writes for one audience from that audience's scene only."
+    },
+    {
+      "id": "classes",
+      "line": "the class atlas: classes as regions over named axes, game codes from physics",
+      "text": "Classification is the class atlas: axes read stored facts (field, scale linear, log, fraction, category or flag, span, unit, divide_by); schemes ask one question; classes are regions over axes (core and fringe for numbers, any_of for categories, is for flags), base or modifier, with names at three depths and examples. Labels are always derived from facts, never the only record of a fact. A game table (a size code from diameter, a temperature band) is a scheme with one base class per row, so its codes answer why and update when the world changes. Read axes with `axes` and schemes with scheme:<id>."
+    },
+    {
+      "id": "game",
+      "line": "the game layer: record, sifters, programs, intents, templates",
+      "text": "The game and story layer is one general mechanism. The record holds facts and events on any object. Sifters (story finder) are patterns over facts or events in the K8 condition language with a significance; Minerva and the story finder read their hits. Programs are small state machines driving a program seat (an autopilot, a patrol): they pick among what their audience has sensed and send intents a pack declares; one runs only on an object whose template lists it. Triggers and rules (with grant effects) move bodies up a knowledge ladder, for example when a ship's sensor is in range long enough. Every tag a trigger names must be declared by a pack (provides.other.tags); read the declared ones with `tags`."
+    },
+    {
+      "id": "tools",
+      "line": "what Orac can draft, where it lands, and what it cannot do",
+      "text": "Orac drafts: physics parameter changes (filed on the Physics screen to adopt), lenses, styles, player screens, symbologies, data views, programs, triggers, story sifters, boxes, game tables as class schemes, data sheet substances, and atom issues (a GitHub issue text for a block that needs code). Each kind has its own checker; a draft that fails comes back with the reasons, up to three times, and only a passing draft reaches Accept. Orac cannot write code, change the kernel, edit a base pack in place, reveal secrets, or change anything without the GM's accept. When SSE4 lacks what a request needs, Orac says so plainly and drafts an atom issue rather than faking it."
+    },
+    {
+      "id": "screens",
+      "line": "the chart room: desks, the instrument rail, Workshop, depth",
+      "text": "The GM's chart room has a place line (where you are), desks for the task (Build, Run, Explore), an instrument rail of screens (a new screen adds a rail entry in its screen document, never a tab), the Workshop for packs, physics and definitions, and three depths of wording (curious, science, physics). The look is dynamic minimalism: quiet, light chart-room paper or the dark Night chart, with motion and popups for tactility. Player views are separate pages built from screens Orac or the GM compose, themed per setting. Editing screens offer only what is defined (gases, substances, kinds); when something is missing they offer the data sheet editor, or Orac when a model is linked."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
  "construct": "apollo-11",
  "name": "Apollo 11 (Columbia)",
- "about": "The CSM Columbia, which keeps the mission's name from the pad to the Pacific. The Saturn V's stages, Eagle and the service module become their own constructs at each split, with their own logs. Event times from NASA SP-4029; orbit sizes and burn delta-v from the Apollo 11 Mission Report, written from memory and marked estimated until read from the report. Needs a Moon body (u:sol/sys:sun/body:earth/body:moon), which the NAV Sol fixture does not hold yet.",
+ "about": "The CSM Columbia, which keeps the mission's name from the pad to the Pacific. The Saturn V's stages, Eagle and the service module become their own constructs at each split, with their own logs. Event times from NASA SP-4029; orbit sizes from the Apollo 11 Mission Report (sections 1 to 4, read 24 Nov 2026); burn delta-v from memory and marked estimated, as the report's trajectory tables are not read yet. Needs a Moon body (u:sol/sys:sun/body:earth/body:moon), which the NAV Sol fixture does not hold yet.",
  "pieces": [
   {
    "from_s": 62148735159,
@@ -38,8 +38,8 @@
     "kind": "orbit",
     "around": "u:sol/sys:sun/body:earth",
     "elements": {
-     "a_m": 6562737.0,
-     "e": 0.00021332562923060913,
+     "a_m": 6563244.4,
+     "e": 0.00021163313680654645,
      "i_deg": 32.52,
      "node_deg": 0.0,
      "peri_deg": 0.0,
@@ -47,10 +47,10 @@
      "epoch_s": 62153919868
     }
    },
-   "mark": "estimated",
+   "mark": "recorded",
    "src": "nasa-apollo-11-mission-report",
    "writer": "pack",
-   "why": "parking orbit 183 by 186 km at 32.5 degrees (mission report, from memory); node and phase not set",
+   "why": "parking orbit 100.7 by 99.2 nautical miles (mission report section 3); inclination 32.5 degrees from memory; node and phase not set",
    "to_s": 62153929015
   },
   {
@@ -75,8 +75,8 @@
     "kind": "orbit",
     "around": "u:sol/sys:sun/body:earth/body:moon",
     "elements": {
-     "a_m": 1950380.0,
-     "e": 0.051276161568514854,
+     "a_m": 1951120.8,
+     "e": 0.05173129208606664,
      "i_deg": 1.25,
      "node_deg": 0.0,
      "peri_deg": 0.0,
@@ -84,10 +84,10 @@
      "epoch_s": 62154192149
     }
    },
-   "mark": "estimated",
+   "mark": "recorded",
    "src": "nasa-apollo-11-mission-report",
    "writer": "pack",
-   "why": "after LOI-1, 61 by 169 nautical miles (mission report, from memory)",
+   "why": "after LOI-1, 169.9 by 60.9 nautical miles by the onboard computer (mission report section 4)",
    "to_s": 62154207855
   },
   {
@@ -96,8 +96,8 @@
     "kind": "orbit",
     "around": "u:sol/sys:sun/body:earth/body:moon",
     "elements": {
-     "a_m": 1848520.0,
-     "e": 0.00601129552290481,
+     "a_m": 1848057.0,
+     "e": 0.00596269487358886,
      "i_deg": 1.25,
      "node_deg": 0.0,
      "peri_deg": 0.0,
@@ -105,10 +105,10 @@
      "epoch_s": 62154207855
     }
    },
-   "mark": "estimated",
+   "mark": "recorded",
    "src": "nasa-apollo-11-mission-report",
    "writer": "pack",
-   "why": "after LOI-2, 54 by 66 nautical miles, held stable to TEI (mission report, from memory)",
+   "why": "after LOI-2, 65.7 by 53.8 nautical miles (mission report section 3), held stable to TEI",
    "to_s": 62154406581
   },
   {
@@ -146,13 +146,13 @@
    "state": {
     "kind": "landed",
     "body": "u:sol/sys:sun/body:earth",
-    "lat_deg": 13.32,
+    "lat_deg": 13.3167,
     "lon_deg": -169.15
    },
-   "mark": "estimated",
+   "mark": "recorded",
    "src": "nasa-apollo-11-mission-report",
    "writer": "pack",
-   "why": "splashdown 13 deg 19 min N, 169 deg 9 min W (mission report, from memory); recovered by USS Hornet"
+   "why": "splashdown 13 deg 19 min N, 169 deg 09 min W by the onboard computer (mission report section 1); recovered by USS Hornet"
   }
  ],
  "events": [
