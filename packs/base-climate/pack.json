@@ -40,6 +40,10 @@
      "spin_up_years": 6,
      "source": "Seasonal energy balance with heat capacity, C dT/dt (North and Coakley 1979; North, Cahalan and Coakley 1981). C is the sea's mixed layer (about 50 m of water) over the sea fraction, the ground's seasonal skin, thermal inertia I times sqrt(year / pi) (Pierrehumbert 2010, ch. 7), over the land, plus the air column c_p p / g. One ground inertia (1500 SI, between dry regolith near 200 and wet rock near 2500) on every world until cover publishes it per cell (docs/fudges.md)."
     },
+    "sea": {
+     "storm_fetch_m": 1000000.0,
+     "source": "Tides (sse.tides.ocean_range, sse.tides.period) and wind waves (sse.ocean.wind_waves, Coastal Engineering Manual eqs. II-2-36 and II-2-37). A wind's fetch is the band's open water between coasts, (1 - land) x the band's circumference / (coasts / 2), held to a storm's size of about 1000 km (synoptic storms span 1000 to 2000 km; one wind direction holds over a part of that): docs/fudges.md."
+    },
     "land_sea": {
      "coasts_per_band": 2.0,
      "max_coupling_w_m2_k": 50.0,

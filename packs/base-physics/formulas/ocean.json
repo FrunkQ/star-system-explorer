@@ -143,6 +143,180 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.ocean.wind_waves",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "wind_speed",
+     "letter": "U"
+    },
+    {
+     "port": "fetch",
+     "letter": "X"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "wave_height",
+     "letter": "Hs"
+    },
+    {
+     "port": "wave_period",
+     "letter": "Tp"
+    }
+   ],
+   "models": {
+    "cd0": {
+     "value": 0.001,
+     "grade": "fitted",
+     "source": "Coastal Engineering Manual EM 1110-2-1100 Part II ch. 2 (eqs. II-2-36, II-2-37 and the drag relation); fitted to JONSWAP and later wave records on Earth's seas"
+    },
+    "c1": {
+     "value": 1.1,
+     "grade": "fitted",
+     "source": "Coastal Engineering Manual EM 1110-2-1100 Part II ch. 2 (eqs. II-2-36, II-2-37 and the drag relation); fitted to JONSWAP and later wave records on Earth's seas"
+    },
+    "c2": {
+     "value": 0.035,
+     "grade": "fitted",
+     "source": "Coastal Engineering Manual EM 1110-2-1100 Part II ch. 2 (eqs. II-2-36, II-2-37 and the drag relation); fitted to JONSWAP and later wave records on Earth's seas"
+    },
+    "aH": {
+     "value": 0.0413,
+     "grade": "fitted",
+     "source": "Coastal Engineering Manual EM 1110-2-1100 Part II ch. 2 (eqs. II-2-36, II-2-37 and the drag relation); fitted to JONSWAP and later wave records on Earth's seas"
+    },
+    "bH": {
+     "value": 211.5,
+     "grade": "fitted",
+     "source": "Coastal Engineering Manual EM 1110-2-1100 Part II ch. 2 (eqs. II-2-36, II-2-37 and the drag relation); fitted to JONSWAP and later wave records on Earth's seas"
+    },
+    "aT": {
+     "value": 0.651,
+     "grade": "fitted",
+     "source": "Coastal Engineering Manual EM 1110-2-1100 Part II ch. 2 (eqs. II-2-36, II-2-37 and the drag relation); fitted to JONSWAP and later wave records on Earth's seas"
+    },
+    "bT": {
+     "value": 239.8,
+     "grade": "fitted",
+     "source": "Coastal Engineering Manual EM 1110-2-1100 Part II ch. 2 (eqs. II-2-36, II-2-37 and the drag relation); fitted to JONSWAP and later wave records on Earth's seas"
+    }
+   },
+   "positive": [
+    {
+     "port": "wind_speed",
+     "says": "wind speed"
+    },
+    {
+     "port": "fetch",
+     "says": "fetch"
+    },
+    {
+     "port": "gravity",
+     "says": "gravity"
+    }
+   ],
+   "references": [
+    "US Army Corps of Engineers 2002 (change 1, 2003), Coastal Engineering Manual, EM 1110-2-1100, Part II, chapter 2, Meteorology and Wave Climate: fetch-limited deep-water wave growth eq. II-2-36, fully developed limits eq. II-2-37, drag coefficient C_D = 0.001 (1.1 + 0.035 U10). https://www.publications.usace.army.mil/USACE-Publications/Engineer-Manuals/"
+   ],
+   "shown": "Hs = min(4.13×10⁻² √(gX/u*²), 211.5) u*²/g, Tp = min(0.651 (gX/u*²)^⅓, 239.8) u*/g, u* = U √C_D",
+   "equation": {
+    "name": "Height of the waves a wind raises",
+    "formula": "CD = cd0 * (c1 + c2 * U)\nus = U * sqrt(CD)\nq = us * us\nx = g * X / q\nHs = min(aH * sqrt(x), bH) * q / g\nTp = min(aT * x ^ (1/3), bT) * us / g",
+    "inputs": {
+     "U": {
+      "kind": "weather.wind_speed_10m",
+      "unit": "m/s",
+      "name": "wind speed ten metres above the water",
+      "valid": [
+       0.5,
+       30
+      ]
+     },
+     "X": {
+      "kind": "ocean.fetch",
+      "unit": "m",
+      "name": "stretch of open water the wind blows over"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "pull of gravity at the surface"
+     },
+     "cd0": {
+      "kind": "model.drag_scale",
+      "unit": "1",
+      "name": "scale of the sea's drag on the wind"
+     },
+     "c1": {
+      "kind": "model.drag_base",
+      "unit": "1",
+      "name": "drag at no wind"
+     },
+     "c2": {
+      "kind": "model.drag_growth",
+      "unit": "s m-1",
+      "name": "growth of drag with wind"
+     },
+     "aH": {
+      "kind": "model.wave_height_growth",
+      "unit": "1",
+      "name": "how fast wave height grows with fetch"
+     },
+     "bH": {
+      "kind": "model.wave_height_limit",
+      "unit": "1",
+      "name": "height of a fully grown sea"
+     },
+     "aT": {
+      "kind": "model.wave_period_growth",
+      "unit": "1",
+      "name": "how fast wave period grows with fetch"
+     },
+     "bT": {
+      "kind": "model.wave_period_limit",
+      "unit": "1",
+      "name": "period of a fully grown sea"
+     }
+    },
+    "outputs": {
+     "Hs": {
+      "kind": "ocean.significant_wave_height",
+      "unit": "m",
+      "name": "significant wave height (the mean of the highest third)"
+     },
+     "Tp": {
+      "kind": "ocean.wave_peak_period",
+      "unit": "s",
+      "name": "period of the strongest waves"
+     }
+    },
+    "source": {
+     "text": "US Army Corps of Engineers, Coastal Engineering Manual, EM 1110-2-1100, Part II, chapter 2",
+     "url": "https://www.publications.usace.army.mil/USACE-Publications/Engineer-Manuals/",
+     "where": "eqs. II-2-36 (fetch-limited growth), II-2-37 (fully developed limits) and the drag coefficient relation"
+    },
+    "explain": {
+     "curious": "Wind drags on the sea and builds waves; the longer the stretch of open water and the stronger the wind, the bigger they grow, until the sea is fully grown. Weaker gravity lets the same wind pile water higher, so Titan's seas would rise further for each breath of wind.",
+     "science": "Deep-water fetch-limited growth in friction-velocity scaling, g Hm0/u*² = 4.13×10⁻² (g X/u*²)^½ and g Tp/u* = 0.651 (g X/u*²)^⅓, capped at the fully developed 211.5 and 239.8, with u*² = C_D U10². Fitted on Earth: the ratio of air to liquid density and the liquid's viscosity and surface tension are Earth's (docs/fudges.md)."
+    },
+    "examples": [
+     {
+      "U": 10.0,
+      "X": 300000.0,
+      "g": 9.78,
+      "Hs": 2.7543888569808237,
+      "Tp": 6.907011365760793
+     }
+    ]
+   }
   }
  ]
 }

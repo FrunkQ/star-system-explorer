@@ -781,6 +781,18 @@ energy balance). Details in `handover/packages/W7a.md`.
 | advances counted as upward zero crossings | Each crossing of the ice balance from loss to gain is one advance | No hysteresis or minimum ice volume | Ice volume integrated through the window | ours |
 | moons and lone worlds | A moon, or a planet with no siblings, gets no orbit track and so no cycles | A lone planet has no secular forcing; a moon's own forcing (its planet's wobble) is not modelled | Satellite secular theory | documented |
 
+### Tides and wind waves (W-sea, `sse.tides.ocean_range`, `sse.tides.period`, `sse.ocean.wind_waves`, `crates/sse-kernel/src/sea.rs`, `climate.sea`)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `sse.tides.ocean_range` | The open-sea equilibrium tide, H = 3/2 γ (m/M)(R/d)³ R, with γ 1 (a fluid world on a rigid floor). No ocean dynamics: no basin resonance, no amphidromes, no shelf amplification | The card's figure is the tide the bodies raise; real coasts reach several to tens of times it (Fundy about 16 m) | Basin and shelf response from the height map (Laplace tidal equations per basin) | documented; the note on the card says so |
+| tide raisers | The body the world orbits and its moons. A moon world's tide from its planet is shown, but not the star's; the world's own siblings are left out (each below a millionth of the Sun's on Earth) | The raisers that matter on every case met so far | All bodies within a set share of the largest | documented |
+| spring and neap | Spring is the sum of the moving tides, neap the largest less the rest; a fixed bulge (a raiser the world keeps one face to) is shown but raises no tide | The extremes of tides adding in and out of phase; the timing of springs is not computed | Tides as harmonic constituents in the universe clock | documented |
+| `sse.ocean.wind_waves` on other liquids | The CEM's growth laws and drag coefficient are fitted to wind over Earth's sea; only gravity is the world's own. The air-to-liquid density ratio, viscosity and surface tension of Titan's methane or a thick-air world do not enter | No published fitted law for other liquids; Lorenz and Hayes's Titan work scales these by hand | A growth law with the density ratio and a capillary cut-off (Lorenz, Kraal and others 2005 style) | known gap |
+| wind sea only | The waves are those the local wind grows; no swell runs in from distant storms | Swell needs a propagation model | Swell from the W2 storm tracks, decaying with distance | known gap: the calm tropics show about 0.1 to 0.7 m where altimetry shows about 1.5 to 2 m of swell |
+| `sea.storm_fetch_m` 1000 km | The fetch in a band is its open sea between coasts, held to a storm's size | A wind system is only so large; the CEM's growth also stops at full development | Fetch along the wind from the cell grid and the storm's own extent | documented |
+| card's wind | Each band's waves come from its year-round near-surface wind (`Climate::wind_m_s`) | The Orbit-level climate has one wind per band | Waves per cell under the weather of the day | documented; Earth's card mean is 4.8 m against about 2.5 to 3 m measured, because the climate's mid-latitude surface wind runs high (about 17 m/s, observed about 8 to 12): a climate gap, not a wave one |
+
 ## Future tech (`packs/base-tech`, track FT)
 
 Rules of thumb behind the tech ladder (design section 15.7). Each rests on one or two cited examples, so each is an editable guess with history behind it, not a measurement. The examples themselves are cited in the design note's section 14.1.

@@ -27,7 +27,17 @@ pub(crate) fn orbit_inputs(
 ) -> (Option<OrbitTrack>, Vec<MoonPull>) {
     let moons: Vec<MoonPull> = bodies
         .iter()
-        .filter(|b| b.address.parent().as_ref() == Some(&body.address))
+        .filter(|b| {
+            // Nested under the world, or a sibling whose orbit's host is the
+            // world's own mass (an import that lists moons flat).
+            let own = body.mass_earth * M_EARTH_MSUN;
+            b.address.parent().as_ref() == Some(&body.address)
+                || (b.address != body.address
+                    && b.mass_earth < body.mass_earth
+                    && b.orbit
+                        .as_ref()
+                        .is_some_and(|o| (o.host_msun - own).abs() <= 1e-3 * own))
+        })
         .filter_map(|b| {
             let o = b.orbit.as_ref()?;
             Some(MoonPull {
