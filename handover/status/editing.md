@@ -17,7 +17,11 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED2 the sweep behind the strip: tipping points, pencil figures, "what followed" | queued (K1) | |
 | ED3 part 1 the chart drag: a ghost and its orbit line follow the pointer while the world stays put; the readout is the units engine's (`dist` in SystemChart says the orbit in the campaign's chosen reading); Esc cancels and writes nothing; the strip's Esc no longer clears the selection | done | packages/ED3.md |
 | ED3 part 2: the readout adds the year, the surface's quick look and the ST1 stability verdict; the "Where things can orbit" layer during a drag; geared drag and Shift finer; magnetism (tipping points, round figures, resonances; Alt off); the far-point and lean grips | queued (year and quick look want kernel K1's sweep) | |
-| ED4 to ED13, ED10a, ED13a | queued, in the design's order | |
+| ED12 part 1 the Orbit and Spin boxes in full (`box` in the handle sheet; `Box.svelte`, `Ring.svelte`, `box.ts`): shape, where it is now, lean, the two small rings, tilt; Retrograde, Locked, In step with; the year, closest and farthest, sunlight swing, the ST1 verdict, the sun's day, tides; a typed year on the size | done | packages/ED12.md |
+| ED7 part 1 "Try changing it" on Explore: an example what-if where the strip moves; handles move on any what-if | done | packages/ED12.md |
+| ED12 part 2 season phase and oblateness (K12); gravity at equator and poles; the ring's catches against neighbours and the held value's year and verdict (BC1) | waits on kernel K12 and BC1 | |
+| ED7 part 2 moons in full; the phone dock | queued | |
+| ED4 to ED6, ED8 to ED11, ED13, ED10a, ED13a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 
 ## Decisions and agreements that live only in threads (written down 24 Nov for the handover)
