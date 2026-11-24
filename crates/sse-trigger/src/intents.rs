@@ -217,6 +217,28 @@ pub fn builtins() -> Vec<Kind> {
             Kernel,
         ),
         builtin(
+            "set_known",
+            "set what an audience knows of a thing (gm_only, heard_of, known), or of one field on it; scope this, children or a list; one undo",
+            vec![
+                field("address", Address, true),
+                field("audience", Text, true),
+                field("landmark", Any, true),
+                field("field", Text, false),
+                field("scope", Any, false),
+                field("from_yr", Number, false),
+                field("at_yr", Number, true),
+            ],
+            true,
+            Kernel,
+        ),
+        builtin(
+            "undo_known",
+            "put back what one set_known changed",
+            vec![field("undo", Text, true), field("at_yr", Number, true)],
+            true,
+            Kernel,
+        ),
+        builtin(
             "add_note",
             "write a note on the record (a seat's own audience: its journal, applied without asking)",
             vec![
@@ -398,6 +420,24 @@ impl IntentRegistry {
                     if o.get("default") == Some(&J::Bool(true)) && view.is_null() {
                         return Err("a starting view cannot be taken back, only replaced".into());
                     }
+                }
+            }
+            "set_known" => {
+                if !audience_ok(o["audience"].as_str().unwrap_or("")) {
+                    return Err("audience must be a lower-case name".into());
+                }
+                let l = &o["landmark"];
+                if !(l.is_null() || matches!(l.as_str(), Some("gm_only" | "heard_of" | "known"))) {
+                    return Err("landmark must be gm_only, heard_of, known or null".into());
+                }
+                let sc = o.get("scope").unwrap_or(&J::Null);
+                let ok = sc.is_null()
+                    || matches!(sc.as_str(), Some("this" | "children"))
+                    || sc["list"]
+                        .as_array()
+                        .is_some_and(|a| a.iter().all(J::is_string));
+                if !ok {
+                    return Err("scope must be this, children or {list: [addresses]}".into());
                 }
             }
             "set_campaign_now" => {
@@ -693,6 +733,24 @@ pub fn to_request(intent: &J, by: &str, at_s: i64) -> Option<J> {
             }
             r
         }
+        "set_known" => {
+            let mut r = serde_json::json!({
+                "op": "set_known", "address": o["address"], "audience": o["audience"],
+                "landmark": o["landmark"], "at_s": secs(&o["at_yr"])
+            });
+            for k in ["field", "scope"] {
+                if let Some(v) = o.get(k).filter(|v| !v.is_null()) {
+                    r[k] = v.clone();
+                }
+            }
+            if let Some(v) = o.get("from_yr").filter(|v| !v.is_null()) {
+                r["from_s"] = secs(v).into();
+            }
+            r
+        }
+        "undo_known" => serde_json::json!({
+            "op": "undo_known", "undo": o["undo"], "at_s": secs(&o["at_yr"])
+        }),
         "set_campaign_now" => serde_json::json!({
             "op": "set_campaign_now", "at_s": o["now_s"].as_f64().unwrap_or(0.0) as i64
         }),

@@ -1,6 +1,7 @@
 //! Scene building: plain, serialisable data made from state after the data
 //! view's filter (H8.1). Views see only this; they never read kernel state.
 
+use crate::known::{except_field, gm_only_view, Landmark, GM_ONLY_VIEW};
 use crate::view::{
     effective_view_tagged, Campaign, DataView, Disclosure, Precision, TagMode, Target, UnknownStyle,
 };
@@ -163,6 +164,10 @@ fn gm_view(d: &Disclosure) -> DataView {
 
 fn subject(inp: &SceneInput, a: &Address, v: &DataView, audience: &str) -> Option<SceneSubject> {
     let d = inp.disclosure;
+    // SV1: GM only means nothing at all, not even a note or a tag.
+    if audience != GM && is_gm_only(v, inp.campaign) {
+        return None;
+    }
     let shown_rank = v.show_tiers.iter().filter_map(|t| d.ladder.rank(t)).max();
     let next_rank = shown_rank.map_or(0, |r| r + 1);
     let secret_rank = d.ladder.rungs.len() - 1;
@@ -179,14 +184,34 @@ fn subject(inp: &SceneInput, a: &Address, v: &DataView, audience: &str) -> Optio
         }
         let tier = d.field_tier(f);
         let ov = field_override(f);
+        // SV1: the GM's one-field exception on this thing beats the view.
+        let except = match inp.state.get(a, &except_field(audience, f)) {
+            Some(Value::Text(t)) if audience != GM => Landmark::parse(t),
+            _ => None,
+        };
         let precision = ov
             .and_then(|o| o.precision.clone())
             .unwrap_or(Precision::Exact);
-        let shown = match ov {
-            Some(o) if !o.show => false,
-            Some(o) if o.show => true,
+        let shown = match (except, ov) {
+            (Some(l), _) => l == Landmark::Known,
+            (None, Some(o)) if !o.show => false,
+            (None, Some(o)) if o.show => true,
             _ => v.show_tiers.iter().any(|t| t == tier),
         } && precision != Precision::Hidden;
+        if except == Some(Landmark::HeardOf) {
+            let p = d.ladder.placeholder(tier);
+            facts.push(SceneFact {
+                field: f.clone(),
+                value: None,
+                band: None,
+                placeholder: Some(if p.is_empty() { "kept back" } else { p }.into()),
+                marks: Vec::new(),
+            });
+            continue;
+        }
+        if except == Some(Landmark::GmOnly) {
+            continue;
+        }
         let marks = if v.show_honesty {
             marks_for(inp, a, f)
         } else {
@@ -306,6 +331,13 @@ fn subject(inp: &SceneInput, a: &Address, v: &DataView, audience: &str) -> Optio
     })
 }
 
+fn is_gm_only(v: &DataView, c: &Campaign) -> bool {
+    let named = c.landmarks.as_ref().and_then(|l| l.gm_only.as_deref());
+    v.id == GM_ONLY_VIEW
+        || named == Some(v.id.as_str())
+        || (v.show_tiers.is_empty() && !v.overrides.iter().any(|o| o.show))
+}
+
 /// Build the scene for `audience` over everything at or under `scope`.
 /// `audience == "gm"` gives the GM's all-knowledge scene with honesty marks.
 /// Subjects come in address order; facts in field order.
@@ -323,6 +355,7 @@ pub fn build_scene_through(
     lens: Option<&str>,
 ) -> Result<Scene, String> {
     let gm = gm_view(inp.disclosure);
+    let hidden = gm_only_view();
     let forced = match lens {
         Some(id) => Some(
             inp.views
@@ -343,9 +376,11 @@ pub fn build_scene_through(
             &gm
         } else {
             let id = effective_view_tagged(inp.state, inp.tags, a, audience, inp.campaign);
-            inp.views
-                .get(&id)
-                .ok_or_else(|| format!("{a}: data view {id:?} is not defined"))?
+            match inp.views.get(&id) {
+                Some(v) => v,
+                None if id == GM_ONLY_VIEW => &hidden,
+                None => return Err(format!("{a}: data view {id:?} is not defined")),
+            }
         };
         subjects.extend(subject(inp, a, v, audience));
     }
