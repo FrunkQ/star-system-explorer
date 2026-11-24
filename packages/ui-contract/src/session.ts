@@ -355,6 +355,8 @@ export class Session implements ViewSession {
   readonly #pending: Intent[] = [];
   readonly #listeners: AppliedListener[] = [];
   #grantedViews: readonly string[] = [];
+  /** The kernel's answer to the last adopt, for `adopt()` to hand back. */
+  #adopted: Adopted | null = null;
   #flows: string[] = [];
   #opening: PackDoc[] = [];
   #added: PackDoc[] = [];
@@ -540,6 +542,11 @@ export class Session implements ViewSession {
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
     if (intent.kind === "grant" && r.type === "granted")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
+    if (intent.kind === "adopt" && r.type === "adopted") {
+      const a = r as unknown as Adopted;
+      this.#adopted = a;
+      return { status: "applied", event_id: a.events[0] ?? `adopt:${a.state_hash}`, state_hash: a.state_hash, affected: a.systems };
+    }
     if (r.type === "authored")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
     if ((intent.kind === "set_known" || intent.kind === "undo_known") && (r.type === "known_set" || r.type === "known_undone"))
@@ -631,8 +638,14 @@ export class Session implements ViewSession {
 
   async adopt(source: { import_v3: string } | { formation: FormationRequest }, occurred_at_s?: number): Promise<{ ok: true; result: Adopted } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master adds systems to the universe" };
-    const r = await this.#call({ op: "adopt", ...source, ...(occurred_at_s !== undefined ? { occurred_at_s } : {}) } as never);
-    return r.type === "adopted" ? { ok: true, result: r as unknown as Adopted } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    // Through the intent path, so players' screens replay it (and a kept log holds it).
+    // Plain data: a caller's reactive object would not survive the copy every applied intent makes for the log.
+    const plain = JSON.parse(JSON.stringify(source)) as { import_v3: string } | { formation: Json };
+    const res = await this.#apply({ kind: "adopt", source: plain, ...(occurred_at_s !== undefined ? { occurred_at_s } : {}) });
+    const got = this.#adopted;
+    this.#adopted = null;
+    if (res.status === "applied" && got) return { ok: true, result: got };
+    return { ok: false, code: res.status === "error" ? res.code : res.status, message: res.status === "error" ? res.message : res.status === "refused" ? res.reason : "not applied" };
   }
 
   async readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }> {
