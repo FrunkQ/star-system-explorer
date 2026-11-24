@@ -593,6 +593,18 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
+    /// Effect at range (RK12, Atomic Rockets plan section 13): each of
+    /// `asks` is `sse_sense::reach::Ask`, a weapon (beam, burst or
+    /// projectile), a target (its skin as a sheet material or a typed
+    /// figure, its size and how hard it can dodge) and a distance. Returns
+    /// what arrives, what the skin can take, the reading (in range,
+    /// marginal, out of range), the chance of a hit from light lag, the
+    /// distances where the reading changes for a ring, and a beam's load on
+    /// the power ledger. Nothing is fired.
+    EffectAtRange {
+        #[ts(type = "unknown[]")]
+        asks: Vec<serde_json::Value>,
+    },
     /// Spectrum as it reaches an observer (O12): each target is one or more
     /// components (`conditions` as for `read_light`, or a ready `light`
     /// description), each with a line-of-sight speed; the observer gives the
@@ -2054,6 +2066,7 @@ impl Request {
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
             Request::LightThroughGas { .. } => "light_through_gas",
+            Request::EffectAtRange { .. } => "effect_at_range",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2265,6 +2278,11 @@ pub fn ops() -> Vec<OpInfo> {
             "light_through_gas",
             Cost::Light,
             "per passage: a few formula blocks per wavelength per absorption feature, at the eye's 81 wavelengths and any asked for",
+        ),
+        o(
+            "effect_at_range",
+            Cost::Light,
+            "per ask: a few formula blocks, and four bisections of about eighty steps for the rings",
         ),
         o(
             "read_spectrum",
@@ -2853,6 +2871,11 @@ pub enum Response {
     GasPassed {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
+    },
+    /// `effect_at_range`: each of `effects` is `sse_sense::reach::Effect`.
+    EffectsAtRange {
+        #[ts(type = "unknown[]")]
+        effects: Vec<serde_json::Value>,
     },
     /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
     SpectrumRead {

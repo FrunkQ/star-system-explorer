@@ -3961,6 +3961,538 @@
         "range": null
       },
       {
+        "description": "share of arriving energy the target's skin takes in",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.absorbed_share",
+        "range": null
+      },
+      {
+        "description": "width of the mirror or lens that sends a beam",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.aperture",
+        "range": null
+      },
+      {
+        "description": "energy per square metre that arrives and is taken in",
+        "dim": [
+          0,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.arrives",
+        "range": null
+      },
+      {
+        "description": "power in a beam as it leaves its mirror or lens",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.beam_power",
+        "range": null
+      },
+      {
+        "description": "energy a burst sets free (its yield)",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.burst_energy",
+        "range": null
+      },
+      {
+        "description": "speed at which a projectile meets its target",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.closing_speed",
+        "range": null
+      },
+      {
+        "description": "time from the light that showed the target to the shot arriving",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.delay",
+        "range": null
+      },
+      {
+        "description": "distance from the weapon to its target",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.distance",
+        "range": null
+      },
+      {
+        "description": "time a beam is held on one spot",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.dwell",
+        "range": null
+      },
+      {
+        "description": "energy taken in by each square metre of the target",
+        "dim": [
+          0,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.fluence",
+        "range": null
+      },
+      {
+        "description": "heat to warm a kilogram of the skin by one kelvin",
+        "dim": [
+          2,
+          0,
+          -2,
+          0,
+          -1,
+          0,
+          0
+        ],
+        "id": "range.heat_capacity",
+        "range": null
+      },
+      {
+        "description": "heat to bring a kilogram of the melted skin to its boiling point",
+        "dim": [
+          2,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.heat_to_boil",
+        "range": null
+      },
+      {
+        "description": "heat to bring a kilogram of the skin from 298 K to its melting point",
+        "dim": [
+          2,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.heat_to_melt",
+        "range": null
+      },
+      {
+        "description": "energy a projectile brings to its target",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.impact_energy",
+        "range": null
+      },
+      {
+        "description": "beam power arriving on each square metre of the spot",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.irradiance",
+        "range": null
+      },
+      {
+        "description": "pointing wobble of a beam, as an angle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.jitter",
+        "range": null
+      },
+      {
+        "description": "heat to melt a kilogram of the skin at its melting point",
+        "dim": [
+          2,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.latent_fusion",
+        "range": null
+      },
+      {
+        "description": "heat to boil a kilogram of the skin at its boiling point",
+        "dim": [
+          2,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.latent_vaporisation",
+        "range": null
+      },
+      {
+        "description": "factor either way inside which an effect at range is marginal",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.margin",
+        "range": null
+      },
+      {
+        "description": "chance of a hit",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.odds",
+        "range": null
+      },
+      {
+        "description": "area of a projectile's face",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.projectile_face",
+        "range": null
+      },
+      {
+        "description": "mass of a projectile",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.projectile_mass",
+        "range": null
+      },
+      {
+        "description": "what arrives as a share of what is needed",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.ratio",
+        "range": null
+      },
+      {
+        "description": "effect at range: 2 in range, 1 marginal, 0 out of range",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.reading",
+        "range": null
+      },
+      {
+        "description": "speed of a shot (light speed for a beam)",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.shot_speed",
+        "range": null
+      },
+      {
+        "description": "density of a target's skin",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.skin_density",
+        "range": null
+      },
+      {
+        "description": "thickness of a target's skin",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.skin_thickness",
+        "range": null
+      },
+      {
+        "description": "radius of a beam's spot on the target",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.spot_radius",
+        "range": null
+      },
+      {
+        "description": "beam quality M²: how much faster than a perfect beam it spreads",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.spread",
+        "range": null
+      },
+      {
+        "description": "temperature of the skin before the hit",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "range.start_temperature",
+        "range": null
+      },
+      {
+        "description": "energy per square metre the target can take before the effect",
+        "dim": [
+          0,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.takes",
+        "range": null
+      },
+      {
+        "description": "how hard the target can accelerate to dodge",
+        "dim": [
+          1,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.target_acceleration",
+        "range": null
+      },
+      {
+        "description": "half the target's width as the shooter sees it",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.target_radius",
+        "range": null
+      },
+      {
+        "description": "energy per square metre to boil through the skin",
+        "dim": [
+          0,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.to_boil",
+        "range": null
+      },
+      {
+        "description": "energy per square metre to melt through the skin",
+        "dim": [
+          0,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.to_melt",
+        "range": null
+      },
+      {
+        "description": "how far the target could move while the shot was on its way",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.wander",
+        "range": null
+      },
+      {
+        "description": "wavelength of a beam",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.wavelength",
+        "range": null
+      },
+      {
+        "description": "share of a burst's energy that leaves as X-rays",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "range.xray_share",
+        "range": null
+      },
+      {
         "description": "mean density of a satellite",
         "dim": [
           -3,
