@@ -9,6 +9,7 @@
   import { untrack } from "svelte";
   import { NamesHere } from "../../reference/src/index.ts";
   import { YOUR_SYSTEMS_CONTROLS } from "./controls.ts";
+  import HomeCell from "./HomeCell.svelte";
   import { DEFAULT_VIEW, gridLines, hudShows, systemRoutes, viewOptions, type RecordLink, layoutSystems, placeHash, readCampaignSystems, mapScaleBar, summaryWords, systemSummary, type CampaignSystem, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -67,6 +68,8 @@
   const unplaced = $derived(all.filter((x) => !at.has(x.system)));
   const unit = $derived(placed.find((x) => x.unit)?.unit ?? null);
   const unitWords = $derived(unit === "ly" ? "light years" : unit === "pc" ? "parsecs" : unit ? unit : "map units");
+  // One of them: "1 light year", "1 map unit".
+  const unitOne = $derived(unitWords.endsWith("s") ? unitWords.slice(0, -1) : unitWords);
   const bar = $derived(mapScaleBar(laid.unitsPerPx / zoom, 110));
   // The grid under HUD: one line every scale-bar length, through the map's middle.
   const grid = $derived(gridLines(S, mapScaleBar(laid.unitsPerPx, 110).px));
@@ -175,7 +178,7 @@
         </svg>
         <figcaption class="hint">
           {#if placed.length > 1}<span class="bar" style="width: {(bar.px / S) * 100}%" data-scale-bar></span>
-          {bar.units.toLocaleString("en-GB")} {unitWords} · {/if}seen from above, x across, y up; a stalk drops to the map from a system above or below it. A ringed dot holds more than one star; a green one holds life. Wheel to zoom, drag to slide, double-click to put it back.
+          {bar.units} {bar.units === 1 ? unitOne : unitWords} · {/if}seen from above, x across, y up; a stalk drops to the map from a system above or below it. A ringed dot holds more than one star; a coloured one holds life. Wheel to zoom, drag to slide, double-click to put it back.
         </figcaption>
       </figure>
     {/if}
@@ -202,6 +205,7 @@
         <ul data-unplaced={unplaced.length}>{#each unplaced as x (x.system)}{@render row(x)}{/each}</ul>
         <p class="hint">{placed.length ? "Their data gives no place among the others." : "None of them has a place of its own yet."} Placing systems in the galaxy's own stars comes with the campaign's galaxy (G7); until then a system sits where its V3 map put it, or here.</p>
       {/if}
+      <HomeCell session={ctx.session} campaign={all.map((x) => x.system)} />
     </aside>
   </div>
 
@@ -211,7 +215,7 @@
         <b>{peeked.title}</b>
         <span data-peek-summary>{summaryWords(peeked.summary)}</span>
         {#each peeked.summary.remarkable as r (r)}<span class="mark">{r}</span>{/each}
-        {#if peeked.position}<span class="where">at {[peeked.position.x, peeked.position.y, peeked.position.z].map((v) => +v.toFixed(2)).join(", ")} {unitWords}</span>{/if}
+        {#if peeked.position}<span class="where">at {[peeked.position.x, peeked.position.y, peeked.position.z].map((v) => Math.round(v * 100) / 100).join(", ")} {unitWords}</span>{/if}
       </div>
     {/key}
   {/if}

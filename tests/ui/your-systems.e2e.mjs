@@ -86,6 +86,13 @@ try {
     assert.ok((await ys.locator("[data-placed] [data-names-here]").innerText()).trim().length > 0, "the names block says something");
     await ys.locator("[data-placed] [data-names-door]").first().click();
 
+    // Stars around home: the home 10 pc cell's drawn stars, read when opened; resting on one gives its mass and metals.
+    await ys.locator("[data-home-cell] summary").click();
+    await gm.waitForFunction(() => Number(document.querySelector(".ys [data-home-cell]")?.getAttribute("data-home-cell")) > 3, null, { timeout: 30000 });
+    await ys.locator("[data-home-cell] circle.st").last().hover({ force: true });
+    assert.match(await ys.locator("[data-home-star]").innerText(), /M☉ .* \[Fe\/H\]/, "a home star says its mass and metals");
+    await shot(gm, "your-systems-home-cell");
+
     // Press a listed system: it opens.
     const grown = ys.locator("[data-unplaced] a", { hasText: "first light" });
     const target = await grown.getAttribute("data-system");

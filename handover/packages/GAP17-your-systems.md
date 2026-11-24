@@ -36,6 +36,13 @@ see what is in it); Alex accepted both for stage 2 (23 and 24 Nov).
   names. `layoutSystems` fits both a system and the foot of its stalk; the stalk runs from the map up (or down) to the
   system, and the e2e checks it joins.
 
+- **Part 2b, Stars around home** (24 Nov): `HomeCell.svelte` beside the list, a closed "Stars around home" that reads
+  `star_cell` when first opened and draws the home 10 pc cell's drawn stars from above (dot by the cube root of mass;
+  ringed if promoted; coloured if a campaign system). Resting on one gives its short name, mass, companions and
+  [Fe/H]. "Grow a system here" waits on the kernel: `from_star` on run_formation and adopt (formation from
+  `Stars::birth` of that star; agreed with "Build kernel resolve and rules" 24 Nov, golden lane). No TypeScript copy
+  of the birth physics.
+
 ## Honest limits
 - Systems are not yet placed in the galaxy's own star cells (G5 pins and G7, the campaign's galaxy): a grown system
   has no place. A V3 map's unit is read from `v3.distanceUnit` when the read-back carries it; the universe-level fact
@@ -45,4 +52,4 @@ see what is in it); Alex accepted both for stage 2 (23 and 24 Nov).
   scale, which the design allows to become the patch scale later.
 
 ## Next
-Picker rows read `summaryWords` (navigation thread, NV2 part 2). Part 2b: "Add system here" and "Add near here", the home star cell behind the map from `star_cell`.
+Picker rows read `summaryWords` (navigation thread, NV2 part 2). Part 2b: "Grow a system here" once `from_star` lands, then "Add system here" and "Add near here", the home star cell behind the map from `star_cell`.
