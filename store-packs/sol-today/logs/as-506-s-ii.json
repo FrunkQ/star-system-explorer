@@ -1,0 +1,34 @@
+{
+ "construct": "as-506-s-ii",
+ "name": "Saturn V S-II (AS-506)",
+ "about": "Apollo 11's second stage, from separation to the Atlantic.",
+ "pieces": [
+  {
+   "from_s": 62153919708,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ballistic fall"
+    }
+   },
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "separated at 101.2 nmi altitude, 21,377 ft/s Earth-fixed, 31.72 N 64.15 W; short of orbit, falls back",
+   "to_s": 62153920373
+  },
+  {
+   "from_s": 62153920373,
+   "state": {
+    "kind": "gone",
+    "how": "impacted"
+   },
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "theoretical impact time in the Atlantic (SP-4029); place not given there"
+  }
+ ],
+ "events": []
+}
