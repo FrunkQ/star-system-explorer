@@ -437,6 +437,46 @@ SHEET = {
     "rules": RULES,
 }
 
+# The extended world profile (Alex 23 Nov: the World Builder's Handbook way,
+# as one "big block"), part 1: the physical profile, every figure read off the
+# world's own physics and never rolled. One code sheet a GM can grab, swap or
+# edit: each line is a fact, its scale and its figures (sse-codes `value`
+# segments; `per` names a constant on the master data sheet). The idea of a
+# fuller physical profile beside the UWP follows Roy Martin's
+# TravellerSystemGenerator (GPL-3.0, credited in sources; no code or tables
+# used). WBH tables stay out (Mongoose copyright). The social layer is part 2.
+def val(id_, label, field, times=1.0, per=None, digits=3):
+    src = {"from": "value", "field": field, "times": times, "digits": digits}
+    if per:
+        src["per"] = per
+    return {"id": id_, "label": label, "source": src}
+EXTENDED = {
+    "id": "traveller.extended",
+    "label": "Extended world profile",
+    "about": "The physical profile behind the UWP, read off the world's own physics (never rolled): size, density, gravity, air, surface and orbit. One block: swap it or edit a line.",
+    "segments": [
+        val("diameter_km", "Diameter (km)", "body.radius", times=2.0e-3, digits=4),
+        val("mass", "Mass (Earth masses)", "body.mass", per="M_earth"),
+        val("density", "Density (g/cm³)", "body.bulk_density", times=1.0e-3),
+        val("gravity", "Surface gravity (g)", "body.surface_gravity", per="g0", digits=2),
+        val("escape", "Escape velocity (km/s)", "body.escape_velocity", times=1.0e-3),
+        val("pressure", "Surface pressure (atm)", "atmosphere.surface_pressure", per="atm"),
+        val("oxygen", "Oxygen partial pressure (bar)", "atmosphere.pp.o2", digits=2),
+        val("liquid", "Surface liquid (%)", "surface.liquid_fraction", times=100.0, digits=2),
+        val("temperature", "Mean surface temperature (K)", "planet.surface_temperature"),
+        val("distance", "Distance from its star (au)", "orbit.semi_major_axis", per="au"),
+        val("eccentricity", "Eccentricity", "orbit.eccentricity", digits=2),
+        val("year", "Year (Earth years)", "orbit.period", per="yr_julian"),
+    ],
+    "layouts": {
+        "size": "{diameter_km} km across, {mass} Earth masses, {density} g/cm³, {gravity} g, escape {escape} km/s",
+        "air": "{pressure} atm at the surface, oxygen {oxygen} bar",
+        "surface": "{liquid}% liquid, {temperature} K",
+        "orbit": "{distance} au, eccentricity {eccentricity}, a year of {year} Earth years",
+    },
+    "fact_prefix": U,
+}
+
 # The hex map (a core view) as this pack configures it: one hex a parsec,
 # subsectors 8 by 10, sectors 4 by 4 subsectors, four-digit labels.
 HEX_MAP = {
@@ -1066,11 +1106,15 @@ pack = {
     "provides": {"units": UNITS, "other": {
         "about": ABOUT,
         "notice": {"text": NOTICE, "source": NOTICE_SOURCE},
+        "credits": [
+            {"text": "Cepheus Engine System Reference Document (Samardan Press), Open Game Licence: task difficulty, skills, ship weapon lines.", "url": "https://www.orffenspace.com/cepheus-srd/"},
+            {"text": "Roy Martin, TravellerSystemGenerator (GPL-3.0): the idea of an extended world profile beside the UWP; ideas only, no code or tables.", "url": "https://github.com/rtrm/TravellerSystemGenerator"},
+        ],
         "difficulty": DIFFICULTY,
         "schemes": SCHEMES,
         "axes": [[k, v] for k, v in sorted(AXES.items())],
         "classes": CLASSES,
-        "code_sheets": [SHEET],
+        "code_sheets": [SHEET, EXTENDED],
         "views": {"sse.view.hex-map": HEX_MAP},
         # V3 gap 18 (overlay.ts): the sector grid laid over the stars, where the GM puts it, under the HUD.
         "overlays": [{"id": "traveller.sector-grid", "label": "Sector grid", "frame": "galaxy-plane-pc", "grid": "sse.view.hex-map"}],

@@ -44,6 +44,16 @@
     "text": "The Traveller, 2300AD, Twilight: 2000 and Dark Conspiracy games in all forms are owned by Mongoose Publishing. Copyright 1977 - 2025 Mongoose Publishing. Traveller is a registered trademark of Mongoose Publishing. Mongoose Publishing permits web sites and fanzines for this game, provided it contains this notice, that Mongoose Publishing is notified, and subject to a withdrawal of permission on 90 days notice. The contents of this site are for personal, non-commercial use only. Any use of Mongoose Publishing's copyrighted material or trademarks anywhere on this web site and its files should not be viewed as a challenge to those copyrights or trademarks. In addition, any program/articles/file on this site cannot be republished or distributed without the consent of the author who contributed it.",
     "source": "https://www.mongoosepublishing.com/pages/traveller-licensing (Fair Use Policy, 2025)"
    },
+   "credits": [
+    {
+     "text": "Cepheus Engine System Reference Document (Samardan Press), Open Game Licence: task difficulty, skills, ship weapon lines.",
+     "url": "https://www.orffenspace.com/cepheus-srd/"
+    },
+    {
+     "text": "Roy Martin, TravellerSystemGenerator (GPL-3.0): the idea of an extended world profile beside the UWP; ideas only, no code or tables.",
+     "url": "https://github.com/rtrm/TravellerSystemGenerator"
+    }
+   ],
    "difficulty": {
     "system": "Traveller task",
     "dice": {
@@ -7766,6 +7776,145 @@
        }
       }
      ]
+    },
+    {
+     "id": "traveller.extended",
+     "label": "Extended world profile",
+     "about": "The physical profile behind the UWP, read off the world's own physics (never rolled): size, density, gravity, air, surface and orbit. One block: swap it or edit a line.",
+     "segments": [
+      {
+       "id": "diameter_km",
+       "label": "Diameter (km)",
+       "source": {
+        "from": "value",
+        "field": "body.radius",
+        "times": 0.002,
+        "digits": 4
+       }
+      },
+      {
+       "id": "mass",
+       "label": "Mass (Earth masses)",
+       "source": {
+        "from": "value",
+        "field": "body.mass",
+        "times": 1.0,
+        "digits": 3,
+        "per": "M_earth"
+       }
+      },
+      {
+       "id": "density",
+       "label": "Density (g/cm\u00b3)",
+       "source": {
+        "from": "value",
+        "field": "body.bulk_density",
+        "times": 0.001,
+        "digits": 3
+       }
+      },
+      {
+       "id": "gravity",
+       "label": "Surface gravity (g)",
+       "source": {
+        "from": "value",
+        "field": "body.surface_gravity",
+        "times": 1.0,
+        "digits": 2,
+        "per": "g0"
+       }
+      },
+      {
+       "id": "escape",
+       "label": "Escape velocity (km/s)",
+       "source": {
+        "from": "value",
+        "field": "body.escape_velocity",
+        "times": 0.001,
+        "digits": 3
+       }
+      },
+      {
+       "id": "pressure",
+       "label": "Surface pressure (atm)",
+       "source": {
+        "from": "value",
+        "field": "atmosphere.surface_pressure",
+        "times": 1.0,
+        "digits": 3,
+        "per": "atm"
+       }
+      },
+      {
+       "id": "oxygen",
+       "label": "Oxygen partial pressure (bar)",
+       "source": {
+        "from": "value",
+        "field": "atmosphere.pp.o2",
+        "times": 1.0,
+        "digits": 2
+       }
+      },
+      {
+       "id": "liquid",
+       "label": "Surface liquid (%)",
+       "source": {
+        "from": "value",
+        "field": "surface.liquid_fraction",
+        "times": 100.0,
+        "digits": 2
+       }
+      },
+      {
+       "id": "temperature",
+       "label": "Mean surface temperature (K)",
+       "source": {
+        "from": "value",
+        "field": "planet.surface_temperature",
+        "times": 1.0,
+        "digits": 3
+       }
+      },
+      {
+       "id": "distance",
+       "label": "Distance from its star (au)",
+       "source": {
+        "from": "value",
+        "field": "orbit.semi_major_axis",
+        "times": 1.0,
+        "digits": 3,
+        "per": "au"
+       }
+      },
+      {
+       "id": "eccentricity",
+       "label": "Eccentricity",
+       "source": {
+        "from": "value",
+        "field": "orbit.eccentricity",
+        "times": 1.0,
+        "digits": 2
+       }
+      },
+      {
+       "id": "year",
+       "label": "Year (Earth years)",
+       "source": {
+        "from": "value",
+        "field": "orbit.period",
+        "times": 1.0,
+        "digits": 3,
+        "per": "yr_julian"
+       }
+      }
+     ],
+     "layouts": {
+      "size": "{diameter_km} km across, {mass} Earth masses, {density} g/cm\u00b3, {gravity} g, escape {escape} km/s",
+      "air": "{pressure} atm at the surface, oxygen {oxygen} bar",
+      "surface": "{liquid}% liquid, {temperature} K",
+      "orbit": "{distance} au, eccentricity {eccentricity}, a year of {year} Earth years"
+     },
+     "fact_prefix": "traveller.uwp."
     }
    ],
    "views": {

@@ -87,6 +87,51 @@ pub enum Source {
     /// Bodies in the same system (the world itself included) that carry
     /// `tag` from the stack's rules, capped at `max`.
     Count { tag: String, max: i64 },
+    /// A fact read as a number (an extended profile's line: diameter in km,
+    /// gravity in g): `field` times `times`, over the sheet constant `per`
+    /// (an id of `sse_core::sheet::ALL`, such as `g0`, `atm` or `day`), shown
+    /// to `digits` significant figures. Read only: never a pin for planning.
+    Value {
+        field: String,
+        #[serde(default = "one")]
+        times: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        per: Option<String>,
+        #[serde(default = "three")]
+        digits: u32,
+    },
+}
+
+fn one() -> f64 {
+    1.0
+}
+fn three() -> u32 {
+    3
+}
+
+/// `x` to `digits` significant figures, plainly: no exponent between a
+/// millionth and a billion, whole numbers without a point.
+pub fn sig_figures(x: f64, digits: u32) -> String {
+    if x == 0.0 || !x.is_finite() {
+        return if x == 0.0 { "0".into() } else { UNKNOWN.into() };
+    }
+    let digits = digits.clamp(1, 12) as i32;
+    let mut mag = sse_core::math::floor(sse_core::math::log10(x.abs())) as i32;
+    let round_at = |mag: i32| {
+        let step = sse_core::math::pow(10.0, f64::from(mag - digits + 1));
+        sse_core::math::round(x / step) * step
+    };
+    let mut rounded = round_at(mag);
+    // 0.99997 to three figures is 1.00, a power of ten up.
+    if rounded.abs() >= sse_core::math::pow(10.0, f64::from(mag + 1)) {
+        mag += 1;
+        rounded = round_at(mag);
+    }
+    if !(-6..9).contains(&mag) {
+        return format!("{:.*e}", (digits - 1) as usize, x);
+    }
+    let decimals = (digits - 1 - mag).max(0) as usize;
+    format!("{rounded:.decimals$}")
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -176,6 +221,15 @@ pub enum Why {
     /// A count segment read without the rest of the system.
     NoSystem {
         tag: String,
+    },
+    /// A fact read as a number; `value` is the fact before scaling, absent
+    /// when the world does not have it (the symbol is then the unknown mark).
+    Value {
+        field: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        value: Option<f64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        per: Option<String>,
     },
 }
 
@@ -364,6 +418,22 @@ impl Codes {
                         return Err(format!("code sheet {}: no rule sets the tag {tag}", s.id));
                     }
                 }
+                Source::Value { per, times, .. } => {
+                    if let Some(p) = per {
+                        if sheet_constant(p).is_none() {
+                            return Err(format!(
+                                "code sheet {}: {} divides by {p}, which is not a constant on the sheet",
+                                s.id, g.id
+                            ));
+                        }
+                    }
+                    if !times.is_finite() || *times == 0.0 {
+                        return Err(format!(
+                            "code sheet {}: {} times must be a number other than 0",
+                            s.id, g.id
+                        ));
+                    }
+                }
             }
         }
         for (l, t) in &s.layouts {
@@ -531,6 +601,37 @@ impl Codes {
                     ),
                 }
             }
+            Source::Value {
+                field,
+                times,
+                per,
+                digits,
+            } => {
+                let div = per.as_deref().and_then(sheet_constant).unwrap_or(1.0);
+                match subj.num(field) {
+                    Some(x) => {
+                        let v = x * times / div;
+                        (
+                            sig_figures(v, *digits),
+                            Some(v),
+                            Why::Value {
+                                field: field.clone(),
+                                value: Some(x),
+                                per: per.clone(),
+                            },
+                        )
+                    }
+                    None => (
+                        UNKNOWN.into(),
+                        None,
+                        Why::Value {
+                            field: field.clone(),
+                            value: None,
+                            per: per.clone(),
+                        },
+                    ),
+                }
+            }
             Source::Count { tag, max } => match system {
                 None => (UNKNOWN.into(), None, Why::NoSystem { tag: tag.clone() }),
                 Some(sys) => {
@@ -598,6 +699,14 @@ pub fn leading(x: f64, exp: i64) -> i64 {
         n /= 10;
     }
     (n as i64).clamp(1, 9)
+}
+
+/// A constant on the master data sheet by its id (`g0`, `atm`, `day`...).
+fn sheet_constant(id: &str) -> Option<f64> {
+    sse_core::sheet::ALL
+        .iter()
+        .find(|(k, _)| *k == id)
+        .map(|(_, v)| *v)
 }
 
 fn symbol_value(g: &Segment, symbol: &str) -> Option<f64> {
