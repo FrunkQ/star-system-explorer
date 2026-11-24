@@ -1,0 +1,237 @@
+{
+ "about": "The handle sheet (ED1, editing design sections 2, 3 and 3B): the few true inputs of a world, a star and a system, each a handle with the part its strip opens on. Fields are kernel fields; values are SI except where `per` names the sheet constant a field is held in multiples of (surface water in Earth oceans). Figures are said by the units engine (figures.ts) with `kind` and `about`. `scale` is how the strip lays the value out. `refs` are the catalogued Solar System bodies (packs/base-sol ids) drawn as reference dots at Curious depth; this system's other worlds are drawn at every depth. `desks` are where the handle may be moved; Explore shows it read-only. This sheet moves into the base pack beside the units scheme (MP15) so a pack can add a handle for a field of its own. `results` are the kernel's results for a world (resolved_system's surface entry, flattened) that 'what followed' lists when they move.",
+ "handles": [
+  {
+   "id": "orbit",
+   "on": "world",
+   "names": {
+    "curious": "How far out",
+    "science": "Orbit"
+   },
+   "part": {
+    "field": "orbit.semi_major_axis",
+    "kind": "length",
+    "what": "orbit",
+    "scale": "log"
+   },
+   "refs": [
+    "mercury",
+    "venus",
+    "earth",
+    "mars",
+    "jupiter",
+    "saturn",
+    "uranus",
+    "neptune"
+   ],
+   "moon_refs": [
+    "moon"
+   ],
+   "desks": [
+    "build"
+   ]
+  },
+  {
+   "id": "mass",
+   "on": "world",
+   "names": {
+    "curious": "How heavy",
+    "science": "Mass"
+   },
+   "part": {
+    "field": "body.mass",
+    "kind": "mass",
+    "what": "mass",
+    "scale": "log"
+   },
+   "refs": [
+    "mercury",
+    "mars",
+    "venus",
+    "earth",
+    "uranus",
+    "neptune",
+    "saturn",
+    "jupiter"
+   ],
+   "moon_refs": [
+    "moon"
+   ],
+   "desks": [
+    "build"
+   ]
+  },
+  {
+   "id": "makeup",
+   "on": "world",
+   "names": {
+    "curious": "What it is made of",
+    "science": "Makeup"
+   },
+   "part": {
+    "field": "makeup",
+    "kind": "share",
+    "scale": "bar"
+   },
+   "refs": [],
+   "desks": [
+    "build"
+   ],
+   "waits": "the bulk bar and cutaway are ED9; hand-made worlds need kernel K3 for makeup to reach their physics"
+  },
+  {
+   "id": "liquids",
+   "on": "world",
+   "names": {
+    "curious": "Seas",
+    "science": "Liquids"
+   },
+   "part": {
+    "field": "body.surface_water_oceans",
+    "kind": "mass",
+    "what": "water",
+    "scale": "log",
+    "per": "M_ocean_earth",
+    "zero": true
+   },
+   "refs": [
+    "earth"
+   ],
+   "desks": [
+    "build"
+   ]
+  },
+  {
+   "id": "air",
+   "on": "world",
+   "names": {
+    "curious": "Air",
+    "science": "Air"
+   },
+   "part": {
+    "field": "atmosphere.surface_pressure",
+    "kind": "pressure",
+    "scale": "log",
+    "zero": true
+   },
+   "refs": [
+    "mars",
+    "earth",
+    "venus"
+   ],
+   "desks": [
+    "build"
+   ]
+  },
+  {
+   "id": "spin",
+   "on": "world",
+   "names": {
+    "curious": "Day and tilt",
+    "science": "Spin"
+   },
+   "part": {
+    "field": "body.rotation_period",
+    "kind": "time",
+    "what": "day",
+    "scale": "log",
+    "signed": true
+   },
+   "also": {
+    "field": "body.obliquity",
+    "kind": "angle",
+    "label": "tilt"
+   },
+   "refs": [
+    "jupiter",
+    "earth",
+    "mars",
+    "venus",
+    "mercury"
+   ],
+   "desks": [
+    "build"
+   ]
+  },
+  {
+   "id": "mass",
+   "on": "star",
+   "names": {
+    "curious": "How heavy",
+    "science": "Mass"
+   },
+   "part": {
+    "field": "body.mass",
+    "kind": "mass",
+    "what": "mass",
+    "scale": "log"
+   },
+   "refs": [
+    "sun"
+   ],
+   "desks": [
+    "build"
+   ]
+  },
+  {
+   "id": "spin",
+   "on": "star",
+   "names": {
+    "curious": "Day and tilt",
+    "science": "Spin"
+   },
+   "part": {
+    "field": "body.rotation_period",
+    "kind": "time",
+    "what": "day",
+    "scale": "log",
+    "signed": true
+   },
+   "also": {
+    "field": "body.obliquity",
+    "kind": "angle",
+    "label": "tilt"
+   },
+   "refs": [
+    "sun"
+   ],
+   "desks": [
+    "build"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "key": "t_surface_now_k",
+   "label": "Surface",
+   "kind": "temperature"
+  },
+  {
+   "key": "gravity_m_s2",
+   "label": "Gravity",
+   "kind": "gravity"
+  },
+  {
+   "key": "tidal_w_m2",
+   "label": "Heat from tides",
+   "kind": "light",
+   "reading": "si"
+  },
+  {
+   "key": "regime_label",
+   "label": "Climate"
+  },
+  {
+   "key": "core.dynamo_now",
+   "label": "Magnetic field",
+   "yes": "a field of its own",
+   "no": "no field of its own"
+  },
+  {
+   "key": "locked",
+   "label": "Day",
+   "yes": "locked to its star",
+   "no": "turns freely"
+  }
+ ]
+}
