@@ -18,6 +18,7 @@ pub mod heat;
 pub mod layers;
 pub mod light;
 pub mod magnetic;
+pub mod matter;
 pub mod nebula;
 pub mod orbit;
 pub mod planet;
@@ -178,6 +179,20 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
         "power stirring the dynamo region, as a heat flux: convected heat plus compositional buoyancy",
     ),
     ("interior.core_heat_flux", "heat flux leaving the top of the core"),
+    ("element.ci_mass_fraction", "an element's mass share in CI chondrites"),
+    ("star.element_ratio", "an element's abundance in a star over the Sun's, by mass per hydrogen"),
+    ("element.oxide_oxygen_ratio", "mass of oxygen an element binds in its rock oxide, per mass of the element"),
+    ("material.ci_weight", "a formation material's summed CI weight over its riders, bound oxygen included"),
+    ("element.material_share", "an element's mass share of the formation material it rides in"),
+    ("element.bound_oxygen_share", "mass share of a material that is oxygen bound to one element's oxide"),
+    ("interior.separation_strength", "how far a world separated into metal and silicate, 0 to 1"),
+    ("element.metal_silicate_partition", "an element's concentration in metal over its concentration in silicate"),
+    ("interior.metal_fraction", "metal's mass share of a separated body's metal and silicate"),
+    ("element.core_share", "share of a body's element held in its core"),
+    ("element.crust_enrichment", "an element's concentration in crust over its concentration in mantle"),
+    ("interior.crust_fraction", "the crust's mass share of a body's silicate"),
+    ("element.crust_share", "share of the silicate's element held in the crust"),
+    ("interior.silicate_mass", "mass of a body's silicate (mantle and crust)"),
     ("interior.core_top_temperature", "temperature at the top of the core"),
     ("interior.core_top_gravity", "gravity at the top of the core"),
     (

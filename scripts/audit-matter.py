@@ -29,6 +29,9 @@ Usage:
                                           write the ledger from today's scan
                                           (once, for MP22; never to label a
                                           new copy)
+  scripts/audit-matter.py --closed        MP22 closed (23 Nov 2026): any typed
+                                          copy outside the sheet fails; there is
+                                          no ledger to label one with
   --root DIR                              scan DIR instead of the repo (tests)
 
 Exit codes for --ledger: 0 pass (prints "typed copies left: N"), 1 fail
@@ -767,6 +770,14 @@ def main(argv):
         print("typed copies left: %d" % n)
         if base is None:
             print("(no base ledger, so the may-only-shrink check did not run)")
+        return 1 if probs else 0
+    if "--closed" in argv:
+        # MP22 done (23 Nov 2026): the ledger reached 0, so no typed copy of
+        # a constant or material number is allowed anywhere outside the sheet.
+        probs, n = check_ledger(ledger_entries(consts, props, rust_consts), [], [])
+        for p in probs:
+            print(p)
+        print("typed copies left: %d (closed: read the sheet instead)" % n)
         return 1 if probs else 0
     if "--retired" in argv:
         retired = set(json.load(open(argv[argv.index("--retired") + 1])))

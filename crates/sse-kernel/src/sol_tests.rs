@@ -21,9 +21,13 @@ const SOL: &str = "u:home/sys:sol";
 fn open_sol(extra: &[(&str, &str, serde_json::Value)]) -> crate::Kernel {
     let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
     let mut k = crate::Kernel::new();
+    let sheet: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-reference/pack.json")).unwrap(),
+    )
+    .unwrap();
     let r = send(
         &mut k,
-        serde_json::json!({"op":"load_stack","packs":[packs["base-physics"]]}),
+        serde_json::json!({"op":"load_stack","packs":[sheet, packs["base-physics"]]}),
     );
     assert_eq!(r["type"], "stack_loaded", "{r}");
     send(
@@ -174,4 +178,134 @@ fn a_moved_world_keeps_its_air_but_not_its_old_temperature() {
             "edits":[{"address":mars,"field":"planet.surface_temperature","value":230.0}]}),
     );
     assert_eq!(world(&mut k, "Mars")["t_surface_now_k"], 230.0);
+}
+
+fn composition(k: &mut crate::Kernel, name: &str, level: &str) -> serde_json::Value {
+    let r = send(k, serde_json::json!({"op":"resolved_system","system":SOL}));
+    let a = r["facts"]
+        .as_object()
+        .unwrap()
+        .iter()
+        .find(|(_, f)| f["name"] == name)
+        .map(|(a, _)| a.clone())
+        .unwrap();
+    let c = send(
+        k,
+        serde_json::json!({"op":"read_composition","system":SOL,"body":a,"level":level}),
+    );
+    assert_eq!(c["type"], "composition_read", "{c}");
+    c["bodies"][0].clone()
+}
+
+fn share(c: &serde_json::Value, id: &str) -> f64 {
+    c["elements"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["id"] == id)
+        .map(|e| e["mass_fraction"].as_f64().unwrap())
+        .unwrap_or(0.0)
+}
+
+/// MP6: Earth's bulk from its catalogue alone, against McDonough and Sun
+/// 1995 (table 4, bulk Earth: Fe 32.0, O 29.7, Si 16.1, Mg 15.4 wt%).
+/// Rock's elements within 15%. Iron within 30%: its metal still carries
+/// CI's sulfur, which Earth lost to volatility (MP14 brings that).
+#[test]
+fn earths_elements_from_its_catalogue() {
+    let mut k = open_sol(&[]);
+    let c = composition(&mut k, "Earth", "orbit");
+    for (id, want, tol) in [
+        ("o", 0.297, 0.15),
+        ("si", 0.161, 0.15),
+        ("mg", 0.154, 0.15),
+        ("fe", 0.320, 0.30),
+    ] {
+        let got = share(&c, id);
+        assert!(
+            ((got - want) / want).abs() <= tol,
+            "{id}: {got} against {want}"
+        );
+    }
+    let total: f64 = c["elements"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["kg"].as_f64().unwrap())
+        .sum();
+    let mass = c["bulk"]["mass_kg"].as_f64().unwrap();
+    assert!(
+        (total - mass).abs() / mass < 0.01,
+        "the elements make the body: {total} of {mass}"
+    );
+    assert_eq!(c["separation_strength"], 1.0, "{c}");
+}
+
+/// MP6: the same world at both levels. Every element's total at Orbit is
+/// the sum over its reservoirs at Survey. Earth's core holds most of its
+/// gold; its crust holds far more of its potassium than its share of the
+/// rock; its sea holds hydrogen and its air nitrogen.
+#[test]
+fn orbit_totals_are_survey_reservoirs_summed() {
+    let mut k = open_sol(&[]);
+    let orbit = composition(&mut k, "Earth", "orbit");
+    let survey = composition(&mut k, "Earth", "survey");
+    let at = |c: &serde_json::Value, id: &str| -> serde_json::Value {
+        c["elements"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|e| e["id"] == id)
+            .cloned()
+            .unwrap_or_else(|| panic!("no {id}"))
+    };
+    for e in orbit["elements"].as_array().unwrap() {
+        let id = e["id"].as_str().unwrap();
+        let kg = e["kg"].as_f64().unwrap();
+        let r = &at(&survey, id)["reservoirs"];
+        let sum: f64 = ["core_kg", "mantle_kg", "crust_kg", "sea_kg", "air_kg"]
+            .iter()
+            .map(|k| r[k].as_f64().unwrap())
+            .sum();
+        assert!(
+            (sum - kg).abs() <= 1e-9 * kg.max(1e-30),
+            "{id}: {sum} against {kg}"
+        );
+        assert!(e.get("reservoirs").is_none(), "Orbit gives totals only");
+    }
+    let au = at(&survey, "au");
+    let share = au["reservoirs"]["core_kg"].as_f64().unwrap() / au["kg"].as_f64().unwrap();
+    assert!(share > 0.9, "Earth's core holds most of its gold: {share}");
+    let k40 = at(&survey, "k");
+    let crust = k40["reservoirs"]["crust_kg"].as_f64().unwrap() / k40["kg"].as_f64().unwrap();
+    let fc = survey["crust_fraction"].as_f64().unwrap();
+    assert!(
+        crust > 10.0 * fc,
+        "potassium rises into the crust: {crust} with a crust of {fc}"
+    );
+    let w = at(&survey, "h");
+    assert!(
+        w["reservoirs"]["sea_kg"].as_f64().unwrap() > 0.0,
+        "the sea holds hydrogen"
+    );
+    let n = at(&survey, "n");
+    assert!(
+        n["reservoirs"]["air_kg"].as_f64().unwrap() > 0.0,
+        "the air holds nitrogen"
+    );
+}
+
+/// A small world barely melted, so it barely separated: Ceres keeps its
+/// metal through its rock (Park et al. 2016 find it only partly separated).
+#[test]
+fn small_worlds_barely_separate() {
+    let mut k = open_sol(&[]);
+    let c = composition(&mut k, "Ceres", "survey");
+    let s = c["separation_strength"].as_f64().unwrap();
+    assert!(s < 0.1, "{s}");
+    let bad = send(
+        &mut k,
+        serde_json::json!({"op":"read_composition","system":SOL,"level":"site"}),
+    );
+    assert_eq!(bad["code"], "bad_level", "{bad}");
 }

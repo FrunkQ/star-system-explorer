@@ -8,6 +8,7 @@
 mod adopt;
 mod caves;
 mod clock;
+mod composition;
 pub mod contract;
 mod cosmos;
 mod descent;
@@ -2984,6 +2985,41 @@ impl Kernel {
                 fields::read_system(
                     &u.chronicle,
                     &a,
+                    at_s,
+                    u.runs.get(&system),
+                    &self.observe.reference,
+                )?
+            }
+            Request::ReadComposition {
+                system,
+                body,
+                level,
+                at_s,
+            } => {
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                if !u.root.contains(&a) {
+                    return Err(err(
+                        "bad_address",
+                        format!("{a} is not in universe {}", u.root),
+                    ));
+                }
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                composition::read(
+                    &u.chronicle,
+                    &a,
+                    body.as_deref(),
+                    level.as_deref(),
                     at_s,
                     u.runs.get(&system),
                     &self.observe.reference,

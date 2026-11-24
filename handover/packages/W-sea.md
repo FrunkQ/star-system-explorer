@@ -7,7 +7,7 @@ Asked by Alex on 23 Nov 2026 ("tides and waves, YES!"). Owner: "Build shared cli
   - `sse.tides.ocean_range` (tides.json): the open-sea equilibrium tide range H = 3/2 γ (m/M)(R/d)³ R. Murray and Dermott 1999, ch. 4. Param `diminishing` γ is 0 to 1, default 1.
   - `sse.tides.period` (tides.json): T = 1 / (2 |1/P_spin − 1/P_raiser|), the semidiurnal tide.
   - `sse.ocean.wind_waves` (ocean.json): the significant height and peak period of a wind sea. These use the Coastal Engineering Manual's fetch-limited growth (eq. II-2-36), capped at full development (eq. II-2-37), with the drag coefficient C_D = 0.001 (1.1 + 0.035 U10). Its coefficients are fitted models; gravity is the world's own.
-  - New port kinds: `tides.raiser_mass`, `tides.raiser_distance`, `tides.raiser_period`, `tides.equilibrium_range`, `tides.period`, `weather.wind_speed_10m`, `ocean.fetch`, `ocean.significant_wave_height` and `ocean.wave_peak_period`. Atom count 85 → 88.
+  - New port kinds: `tides.raiser_mass`, `tides.raiser_distance`, `tides.raiser_period`, `tides.equilibrium_range`, `tides.period`, `weather.wind_speed_10m`, `ocean.fetch`, `ocean.significant_wave_height` and `ocean.wave_peak_period`. Atom count 90 → 93 (after MP6).
 - **Kernel `sea.rs`** runs those blocks (found in `sse_atoms::formulas::loaded()`, so a pack edit to them changes the figures).
   - Raisers: the body the world orbits (once a year round the sky, or a fixed bulge when locked) and its moons (periods from `sse.orbit.period`).
   - Fetch per band: the band's open sea between its coasts (from W7c part 2a's land strips), held to `climate.sea.storm_fetch_m` 1000 km.

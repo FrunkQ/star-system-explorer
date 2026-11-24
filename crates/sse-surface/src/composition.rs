@@ -1,0 +1,515 @@
+//! MP6: a body's elements, worked out on a click (matter pack design
+//! section 5, steps 3 and 4).
+//!
+//! - **Materials.** Formation hands each body its mass of each material
+//!   (metal, rock, carbon, water; the CO2 and CO ices count with the water
+//!   until they get rows of their own). A world built from facts gets them
+//!   from its core share and its water.
+//! - **Elements in each material.** Every element rides in the material its
+//!   host phase condenses with (`condensation.rides_in` on the sheet). Its
+//!   share of that material is its CI chondrite share times its star's ratio
+//!   to the Sun, normalised over the material, the oxygen its oxide binds
+//!   included (`sse.composition.share_in_material`). Water is the substance
+//!   h2o by its formula, with what rides in it beside.
+//! - **Reservoirs (Survey only).** How far the world separated
+//!   (`sse.composition.separation_strength`) weights the iron-loving
+//!   elements' sinking to the core (`sse.composition.core_share`) and the
+//!   incompatible ones' rising into the crust (`sse.composition.crust_share`);
+//!   the water's elements go to sea and air as far as the world outgassed;
+//!   the mantle holds the rest. Totals are the same at both levels.
+//!
+//! Nothing here runs a surface stage: a click on a body never surveyed reads
+//! only its bulk and the sheet.
+
+use serde::{Deserialize, Serialize};
+use sse_atoms::matter as mt;
+use sse_core::sheet::{M_EARTH, R_EARTH_MEAN};
+use sse_core::Address;
+use sse_reference::Reference;
+use std::collections::BTreeMap;
+
+pub const VERSION: &str = "composition-v1";
+
+/// The formation materials an element can ride in.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Material {
+    Metal,
+    Rock,
+    Carbon,
+    Water,
+    /// Stays in the gas: no share of the solids.
+    Gas,
+}
+
+impl Material {
+    fn from_sheet(id: &str) -> Option<Self> {
+        Some(match id {
+            "formation-metal" => Material::Metal,
+            "formation-rock" => Material::Rock,
+            "formation-carbon" => Material::Carbon,
+            "formation-water" => Material::Water,
+            "gas" => Material::Gas,
+            _ => return None,
+        })
+    }
+}
+
+/// One element as the composition chain reads it from the sheet.
+#[derive(Clone, PartialEq, Debug)]
+pub struct ElementRow {
+    pub id: String,
+    pub rides_in: Material,
+    /// CI chondrite mass share (0 when the sheet has none).
+    pub ci: f64,
+    /// Oxygen bound per kg of the element in its rock oxide (0: none).
+    pub oxide_oxygen: f64,
+    /// Concentration in Earth's core over its silicate (None: no datum).
+    pub partition: Option<f64>,
+    /// Concentration in Earth's crust over its silicate (None: no datum).
+    pub enrichment: Option<f64>,
+}
+
+/// The water material's make-up: h2o's elements by mass.
+#[derive(Clone, PartialEq, Debug, Default)]
+pub struct Water {
+    /// Element mass shares of h2o (H, O).
+    pub formula: BTreeMap<String, f64>,
+}
+
+/// What the chain reads from the sheet, once per stack.
+#[derive(Clone, PartialEq, Debug, Default)]
+pub struct Sheet {
+    pub elements: Vec<ElementRow>,
+    pub water: Water,
+}
+
+fn num(v: Option<&serde_json::Value>) -> Option<f64> {
+    let v = v?;
+    v.get("v").and_then(|x| x.as_f64()).or_else(|| v.as_f64())
+}
+
+/// Mass shares of a substance's elements from its formula and the atomic
+/// weights.
+fn mass_shares(r: &Reference, substance: &str) -> BTreeMap<String, f64> {
+    let Some(f) = r.formula(substance) else {
+        return BTreeMap::new();
+    };
+    let mut w: BTreeMap<String, f64> = BTreeMap::new();
+    for (e, n) in &f {
+        if let Some(aw) = r
+            .row("elements", e)
+            .and_then(|row| num(row.get("atomic_weight")))
+        {
+            w.insert(e.clone(), n * aw);
+        }
+    }
+    let total: f64 = w.values().sum();
+    if total > 0.0 {
+        for v in w.values_mut() {
+            *v /= total;
+        }
+    }
+    w
+}
+
+impl Sheet {
+    /// Read the element rows and h2o from a loaded reference.
+    pub fn read(r: &Reference) -> Self {
+        let water = Water {
+            formula: mass_shares(r, "h2o"),
+        };
+        let mut elements = vec![];
+        let Some(rows) = r.tables.get("elements") else {
+            return Sheet { elements, water };
+        };
+        for (id, row) in rows {
+            let cond = row.get("condensation");
+            let Some(rides_in) = cond
+                .and_then(|c| c.get("rides_in"))
+                .and_then(|x| x.as_str())
+                .and_then(Material::from_sheet)
+            else {
+                continue;
+            };
+            let ci = num(row.get("ci_mass_fraction")).unwrap_or(0.0);
+            // The oxygen its rock oxide binds, by stoichiometry.
+            let oxide_oxygen = cond
+                .and_then(|c| c.get("oxide"))
+                .and_then(|x| x.as_str())
+                .map(|ox| {
+                    let s = mass_shares(r, ox);
+                    match (s.get(id), s.get("o")) {
+                        (Some(e), Some(o)) if *e > 0.0 && id != "o" => o / e,
+                        _ => 0.0,
+                    }
+                })
+                .unwrap_or(0.0);
+            let earth = row.get("earth_mass_fraction");
+            let at = |k: &str| num(earth.and_then(|e| e.get(k)));
+            let ratio = |top: Option<f64>| match (top, at("silicate")) {
+                (Some(t), Some(s)) if s > 0.0 => Some(t / s),
+                _ => None,
+            };
+            elements.push(ElementRow {
+                id: id.clone(),
+                rides_in,
+                ci,
+                oxide_oxygen,
+                partition: ratio(at("core")),
+                enrichment: ratio(at("crust")),
+            });
+        }
+        Sheet { elements, water }
+    }
+}
+
+/// A body's bulk, kg, as the chain needs it.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Bulk {
+    pub address: Address,
+    pub mass_kg: f64,
+    pub radius_m: f64,
+    pub metal_kg: f64,
+    pub rock_kg: f64,
+    pub carbon_kg: f64,
+    pub water_kg: f64,
+    /// Water at the surface now (oceans, ice caps), kg.
+    pub surface_water_kg: f64,
+    /// Air, kg (surface pressure times area over gravity).
+    pub air_kg: f64,
+    /// Al-26 heat per kg left after it formed (0 when unknown).
+    pub al26_j_kg: f64,
+    /// Where the materials came from, in words.
+    pub source: String,
+}
+
+/// The mass of one Earth ocean, the unit `oceans` counts in (the sheet's
+/// `M_ocean_earth`).
+pub const OCEAN_KG: f64 = sse_core::sheet::M_OCEAN_EARTH;
+
+impl Bulk {
+    /// From a surface body: metal is the core share, water its water share
+    /// or, failing that, its oceans as the outgassed part of what formation
+    /// left (Elkins-Tanton 2008's retained share), rock the rest.
+    pub fn of_body(b: &crate::Body) -> Self {
+        let mass = b.mass_earth * M_EARTH;
+        let radius = b.radius_earth * R_EARTH_MEAN;
+        let surface_water = b.oceans.max(0.0) * OCEAN_KG;
+        let water = if b.water_fraction > 0.0 {
+            b.water_fraction * mass
+        } else {
+            surface_water / (1.0 - sse_formation::early::MANTLE_RETAINED)
+        };
+        let solid = mass.min(mass - water).max(0.0);
+        let metal = b.core_mass_fraction.clamp(0.0, 1.0) * solid;
+        let g = sse_core::constants::g() * mass / (radius * radius).max(1.0);
+        let air = if g > 0.0 {
+            b.pressure_bar.max(0.0) * 1e5 * 4.0 * sse_core::math::PI * radius * radius / g
+        } else {
+            0.0
+        };
+        Bulk {
+            address: b.address.clone(),
+            mass_kg: mass,
+            radius_m: radius,
+            metal_kg: metal,
+            rock_kg: (solid - metal).max(0.0),
+            carbon_kg: 0.0,
+            water_kg: water,
+            surface_water_kg: surface_water.min(water),
+            air_kg: air,
+            al26_j_kg: 0.0,
+            source: "the body's core share and water".into(),
+        }
+    }
+
+    /// From formation's ledger: each material's mass as the body collected
+    /// it (Earth masses, `GROUPS` order: metal, rock, carbon, water, CO2,
+    /// CO), scaled to the body's solid mass.
+    pub fn with_ledger(mut self, by_group: &[f64; 6]) -> Self {
+        let sum: f64 = by_group.iter().sum();
+        if sum <= 0.0 {
+            return self;
+        }
+        let solid = self.metal_kg + self.rock_kg + self.carbon_kg + self.water_kg;
+        let k = solid / sum;
+        self.metal_kg = by_group[0] * k;
+        self.rock_kg = by_group[1] * k;
+        self.carbon_kg = by_group[2] * k;
+        self.water_kg = (by_group[3] + by_group[4] + by_group[5]) * k;
+        self.surface_water_kg = self.surface_water_kg.min(self.water_kg);
+        self.source = "formation's ledger of what the body collected".into();
+        self
+    }
+}
+
+/// Where one element is (Survey).
+#[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
+pub struct Reservoirs {
+    pub core_kg: f64,
+    pub mantle_kg: f64,
+    pub crust_kg: f64,
+    pub sea_kg: f64,
+    pub air_kg: f64,
+}
+
+impl Reservoirs {
+    pub fn total(&self) -> f64 {
+        self.core_kg + self.mantle_kg + self.crust_kg + self.sea_kg + self.air_kg
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct ElementAmount {
+    pub id: String,
+    pub kg: f64,
+    /// Mass share of the whole body.
+    pub mass_fraction: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reservoirs: Option<Reservoirs>,
+}
+
+/// The detail a read is asked at.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Level {
+    /// Element totals only.
+    Orbit,
+    /// Totals and where each element is.
+    Survey,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Composition {
+    pub version: String,
+    pub address: Address,
+    pub level: Level,
+    pub bulk: Bulk,
+    /// How far the world separated into metal and silicate, 0 to 1.
+    pub separation_strength: f64,
+    /// Metal's share of metal and rock.
+    pub metal_fraction: f64,
+    /// The crust's share of the silicate (Survey).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub crust_fraction: Option<f64>,
+    /// Elements, heaviest first.
+    pub elements: Vec<ElementAmount>,
+    /// What this read leaves out or stands in for, in words.
+    pub stand_ins: Vec<String>,
+}
+
+/// Settings the chain's blocks take (their defaults are the blocks').
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Settings {
+    pub e_melt_j_kg: f64,
+    pub crust_thickness_m: f64,
+    pub crust_density: f64,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Settings {
+            e_melt_j_kg: 1.8e6,
+            crust_thickness_m: 2.0e4,
+            crust_density: sse_core::sheet::mixture_density::CRUST_ROCK,
+        }
+    }
+}
+
+/// An element with no partition datum that rides in the metal stays with
+/// it: an effectively endless preference for metal.
+const METAL_RIDER_PARTITION: f64 = 1.0e6;
+
+/// A body's elements at `level`. `ratio` is the star's abundance of each
+/// element over the Sun's (missing reads as 1).
+pub fn compose(
+    sheet: &Sheet,
+    bulk: &Bulk,
+    ratio: &BTreeMap<String, f64>,
+    level: Level,
+    s: &Settings,
+) -> Composition {
+    let r = |id: &str| ratio.get(id).copied().unwrap_or(1.0).max(0.0);
+    // Riders: hydrogen and oxygen come with their carriers (water's formula,
+    // rock's oxides), not as CI riders of their own.
+    let riders: Vec<&ElementRow> = sheet
+        .elements
+        .iter()
+        .filter(|e| e.id != "o" && e.id != "h" && e.ci > 0.0)
+        .collect();
+    let weight = |mat: Material| -> f64 {
+        riders
+            .iter()
+            .filter(|e| e.rides_in == mat)
+            .map(|e| {
+                let o = if mat == Material::Rock {
+                    e.oxide_oxygen
+                } else {
+                    0.0
+                };
+                e.ci * r(&e.id) * (1.0 + o)
+            })
+            .sum()
+    };
+    let (w_metal, w_rock, w_carbon) = (
+        weight(Material::Metal),
+        weight(Material::Rock),
+        weight(Material::Carbon),
+    );
+    // Water: h2o by formula, CI-weighted by its hydrogen (CI water is the
+    // hydrogen over hydrogen's share of h2o), with the riders beside it.
+    let h_share = sheet.water.formula.get("h").copied().unwrap_or(0.0);
+    let ci_h = sheet
+        .elements
+        .iter()
+        .find(|e| e.id == "h")
+        .map(|e| e.ci * r("h"))
+        .unwrap_or(0.0);
+    let w_h2o = if h_share > 0.0 { ci_h / h_share } else { 0.0 };
+    let w_water = w_h2o + weight(Material::Water);
+
+    // Mass of each element by the material it came in.
+    let mut by_mat: BTreeMap<String, [f64; 4]> = BTreeMap::new();
+    let mut add = |id: &str, slot: usize, kg: f64| {
+        if kg > 0.0 {
+            by_mat.entry(id.to_string()).or_insert([0.0; 4])[slot] += kg;
+        }
+    };
+    for e in &riders {
+        let (mat_kg, total, slot) = match e.rides_in {
+            Material::Metal => (bulk.metal_kg, w_metal, 0),
+            Material::Rock => (bulk.rock_kg, w_rock, 1),
+            Material::Carbon => (bulk.carbon_kg, w_carbon, 2),
+            Material::Water => (bulk.water_kg, w_water, 3),
+            Material::Gas => continue,
+        };
+        let oxygen = if e.rides_in == Material::Rock {
+            e.oxide_oxygen
+        } else {
+            0.0
+        };
+        let (share, bound) = mt::share_in_material(e.ci, r(&e.id), oxygen, total);
+        add(&e.id, slot, mat_kg * share);
+        add("o", slot, mat_kg * bound);
+    }
+    if w_water > 0.0 {
+        let h2o_kg = bulk.water_kg * w_h2o / w_water;
+        for (el, f) in &sheet.water.formula {
+            add(el, 3, h2o_kg * f);
+        }
+    }
+
+    let g = sse_core::constants::g();
+    let strength = mt::separation_strength(
+        g,
+        bulk.mass_kg,
+        bulk.radius_m,
+        bulk.al26_j_kg,
+        s.e_melt_j_kg,
+    );
+    let metal_fraction = {
+        let mr = bulk.metal_kg + bulk.rock_kg;
+        if mr > 0.0 {
+            bulk.metal_kg / mr
+        } else {
+            0.0
+        }
+    };
+    let silicate_kg = bulk.rock_kg;
+    let crust_fraction = (level == Level::Survey).then(|| {
+        mt::crust_fraction(
+            bulk.radius_m,
+            silicate_kg,
+            s.crust_thickness_m,
+            s.crust_density,
+        )
+    });
+    let outgassed = if bulk.water_kg > 0.0 {
+        (bulk.surface_water_kg / bulk.water_kg).clamp(0.0, 1.0)
+    } else {
+        0.0
+    };
+    let rows: BTreeMap<&str, &ElementRow> =
+        sheet.elements.iter().map(|e| (e.id.as_str(), e)).collect();
+    let in_formula = |id: &str| sheet.water.formula.contains_key(id);
+
+    let mut elements: Vec<ElementAmount> = by_mat
+        .iter()
+        .map(|(id, kg)| {
+            let total: f64 = kg.iter().sum();
+            let reservoirs = crust_fraction.map(|fc| {
+                let row = rows.get(id.as_str());
+                let d = row
+                    .and_then(|e| e.partition)
+                    .or_else(|| {
+                        (row.map(|e| e.rides_in) == Some(Material::Metal))
+                            .then_some(METAL_RIDER_PARTITION)
+                    })
+                    .unwrap_or(0.0);
+                let e = row.and_then(|e| e.enrichment).unwrap_or(1.0);
+                // What came in solids separates by partition; what came in
+                // the water goes to sea and air as far as the world
+                // outgassed, the rest staying in the mantle.
+                let solid = kg[0] + kg[1] + kg[2];
+                let core = solid * mt::core_share(d, metal_fraction, strength);
+                let crust = (solid - core) * mt::crust_share(e, fc, strength);
+                let up = kg[3] * outgassed;
+                let (sea, air) = if in_formula(id) {
+                    (up, 0.0)
+                } else if bulk.air_kg > 0.0 {
+                    (0.0, up)
+                } else {
+                    (0.0, 0.0)
+                };
+                let kept = sea + air;
+                Reservoirs {
+                    core_kg: core,
+                    crust_kg: crust,
+                    sea_kg: sea,
+                    air_kg: air,
+                    mantle_kg: (total - core - crust - kept).max(0.0),
+                }
+            });
+            ElementAmount {
+                id: id.clone(),
+                kg: total,
+                mass_fraction: if bulk.mass_kg > 0.0 {
+                    total / bulk.mass_kg
+                } else {
+                    0.0
+                },
+                reservoirs,
+            }
+        })
+        .collect();
+    elements.sort_by(|a, b| b.kg.total_cmp(&a.kg).then_with(|| a.id.cmp(&b.id)));
+
+    let mut stand_ins = vec![
+        "elements are shares of six coarse formation materials, by CI chondrite make-up; no element is lost to its own volatility yet (MP14)".to_string(),
+    ];
+    if ratio.is_empty() {
+        stand_ins.push("the star's element ratios read as the Sun's until MP7 lands".into());
+    }
+    if bulk.carbon_kg <= 0.0 {
+        stand_ins.push("no carbon material known for this body, so no carbon".into());
+    }
+    if level == Level::Survey {
+        stand_ins.push("core and crust shares are Earth's measured partitions as single values, not functions of pressure and oxygen".into());
+        stand_ins.push(format!(
+            "the crust is a {:.0} km shell until the surface stage hands each world its own",
+            s.crust_thickness_m / 1000.0
+        ));
+    }
+    Composition {
+        version: VERSION.into(),
+        address: bulk.address.clone(),
+        level,
+        bulk: bulk.clone(),
+        separation_strength: strength,
+        metal_fraction,
+        crust_fraction,
+        elements,
+        stand_ins,
+    }
+}
