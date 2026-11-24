@@ -100,6 +100,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/exotic-objects.md` | no builder thread yet (design by "Design exotic stars and black holes") | XO (black holes with real light bending, pulsars, stripped stars, Composite band, the approach diagram) |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs as edited, the Solar System built through the UI) |
 | `status/run-desk.md` (arrives with PR 421) | Build Run desk playbook and players' side | RD, PB (Playbook and Switchboard) |
+| `status/landing.md` | Build landing run-through | LR (the landing run-through end to end: voyage, arrival, site, descent, ground, the table's view of each) |
 | none yet | Build Paper spacecraft pack | RK6 (other RK packages are rows in the files above) |
 | none yet | designed only (XO note, PR 420) | XO exotic objects |
 
