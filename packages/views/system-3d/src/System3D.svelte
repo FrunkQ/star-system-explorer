@@ -503,9 +503,34 @@
     yaw = dragFrom.yaw - dx * 0.008;
     pitch = Math.min(1.45, Math.max(-1.45, dragFrom.pitch + dy * 0.008));
   }
+  // A click picks the body nearest the pointer, not whichever pin happens to lie on top (at Real scale the inner worlds'
+  // pins overlap) and not only a 26 px pin: anywhere on a body's drawn disc, or a little round a point of light.
+  const radiusPx = (b: Body3D, depth: number) => (sizeOf(b, b === lay?.centre) * (b.mark?.ring ? 1.9 : 1) * (h / 2 / Math.tan(cam.fovY / 2))) / depth;
+  function nearestAt(clientX: number, clientY: number): string | null {
+    if (!host) return null;
+    const r = host.getBoundingClientRect();
+    const x = clientX - r.left;
+    const y = clientY - r.top;
+    let best: { id: string; d: number } | null = null;
+    for (const { b, p } of pins) {
+      if (!p) continue;
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d > Math.max(22, radiusPx(b, p.depth) + 6)) continue;
+      if (!best || d < best.d) best = { id: b.id, d };
+    }
+    return best?.id ?? null;
+  }
   function up(e: PointerEvent) {
     touches.delete(e.pointerId);
+    const still = dragFrom && Math.abs(e.clientX - dragFrom.x) + Math.abs(e.clientY - dragFrom.y) < 5;
     dragFrom = null;
+    if (!still || e.type !== "pointerup") return;
+    const id = nearestAt(e.clientX, e.clientY);
+    if (id) onselect(id);
+  }
+  function dbl(e: MouseEvent) {
+    const id = nearestAt(e.clientX, e.clientY);
+    if (id && id !== centreId && hasChildren(bodies, id)) enter(id);
   }
   function wheel(e: WheelEvent) {
     e.preventDefault();
@@ -543,6 +568,7 @@
   onpointermove={move}
   onpointerup={up}
   onpointercancel={up}
+  ondblclick={dbl}
   onwheel={wheel}
   data-seen={seen}
   style:touch-action={seen === "free" ? "none" : "pan-y"}
@@ -563,13 +589,13 @@
         class="pin"
         class:sel={b.id === selection}
         class:locate={realScale && overlay}
-        style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, (sizeOf(b, b === lay?.centre) * (b.mark?.ring ? 1.9 : 1) * (h / 2 / Math.tan(cam.fovY / 2))) / p.depth)}px"
+        style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, radiusPx(b, p.depth))}px"
         aria-pressed={b.id === selection}
         data-body={b.id}
         data-x={p.x.toFixed(2)}
         data-y={p.y.toFixed(2)}
-        onclick={() => onselect(b.id)}
-        ondblclick={() => hasChildren(bodies, b.id) && b.id !== centreId && enter(b.id)}
+        onclick={(e) => onselect(e.detail ? (nearestAt(e.clientX, e.clientY) ?? b.id) : b.id)}
+        ondblclick={(e) => (e.stopPropagation(), dbl(e))}
       ><span class="dot"></span>{#if labels}<span class="name" class:hover={!hud}>{b.name}</span>{/if}</button>
     {/if}
   {/each}

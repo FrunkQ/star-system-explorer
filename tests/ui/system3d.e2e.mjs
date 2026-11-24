@@ -97,6 +97,17 @@ try {
       await pick(gm, "HUD", "On");
       await gm.waitForFunction(() => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-hud") === "on");
       await shot(gm, `v10b-gm-real-hud-${mode}`);
+      // Every body takes a click (Alex, 24 Nov: only two did): the pointer picks the nearest body, so pins that overlap
+      // at Real scale no longer hide the worlds beneath them. Checked on each pin clear of its neighbours by 6 px.
+      const pinsAt = await view.locator(".pin").evaluateAll((ps) => ps.map((e) => { const r = e.getBoundingClientRect(); return { id: e.dataset.body, x: r.x + r.width / 2, y: r.y + r.height / 2 }; }));
+      let clicked = 0;
+      for (const q of pinsAt) {
+        if (pinsAt.some((o) => o.id !== q.id && Math.hypot(o.x - q.x, o.y - q.y) < 6)) continue;
+        await gm.mouse.click(q.x, q.y);
+        await gm.waitForFunction((id) => document.querySelector("[aria-roledescription='3D chart'] .pin.sel")?.getAttribute("data-body") === id, q.id, { timeout: 5000 });
+        clicked++;
+      }
+      assert.ok(clicked >= 3, `bodies clicked: ${clicked}`);
       await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();
       await gm.getByRole("button", { name: "3D", exact: true }).click();
       await gm.getByRole("group", { name: "View style" }).getByRole("button", { name: "Chart", exact: true }).click();
