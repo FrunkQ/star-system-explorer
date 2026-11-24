@@ -81,6 +81,8 @@ test("the Power card: three columns, broken books from Nowhere on the GM's seat 
     const r = await s.shipPower({ ship: hall });
     assert.ok(r.ok, JSON.stringify(r));
     const p: PowerBooks = r.power;
+    // The kernel names each heat row's temperature.
+    assert.ok(p.ledger.flows.filter((f) => f.kind === "heat").every((f) => typeof f.reject_k === "number"));
     const gmRows = powerFlowRows(p, { gm: true, ship: hall });
     const col = powerColumn(gmRows);
     assert.equal(col("plant"), 0);

@@ -21,9 +21,12 @@ the ship designer sizes parts with).
   that sizes a ship through these blocks, as entry and landing already do through `ship_at_world`. A test checks the
   Power card's radiator sum against the block's worked example meanwhile.
 
+- **`reject_k` on the kernel's heat rows** (`sse-nav` power `Flow`, RK13's follow-on): each heat row says the
+  temperature it is rejected at, so the Power card no longer guesses which radiator it goes to.
+
 ## Golden
 Changes on purpose: `tests/golden/contract.jsonl`, the base-physics pack hash and atom count in every case that loads
-base-physics. No world's values change. In the golden lane (one at a time, coordinator's order).
+base-physics, and the `ship_power` answer (its heat rows gain `reject_k`). No world's values change. In the golden lane (one at a time, coordinator's order).
 
 ## Next
 - A kernel op (or a field on `ship_at_world`) giving the ship's sizes through these blocks; the renderer reads it.
