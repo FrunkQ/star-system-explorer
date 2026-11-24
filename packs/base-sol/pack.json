@@ -1291,6 +1291,102 @@
       "note": "a is the mean distance from Pluto; radius is equatorial; the pair goes round a point outside Pluto"
      },
      {
+      "id": "styx",
+      "name": "Styx",
+      "kind": "moon",
+      "host": "pluto",
+      "values": {
+       "body.radius": {
+        "v": 5250.0,
+        "unit": "m",
+        "src": "nssdca-pluto"
+       },
+       "orbit.semi_major_axis": {
+        "v": 42413000.0,
+        "unit": "m",
+        "src": "nssdca-pluto"
+       },
+       "body.albedo_geometric": {
+        "v": 0.65,
+        "unit": "1",
+        "src": "nssdca-pluto"
+       }
+      },
+      "note": "a is barycentric (round Pluto and Charon); no mass printed"
+     },
+     {
+      "id": "nix",
+      "name": "Nix",
+      "kind": "moon",
+      "host": "pluto",
+      "values": {
+       "body.radius": {
+        "v": 18933.3,
+        "unit": "m",
+        "src": "nssdca-pluto"
+       },
+       "orbit.semi_major_axis": {
+        "v": 48690000.0,
+        "unit": "m",
+        "src": "nssdca-pluto"
+       },
+       "body.albedo_geometric": {
+        "v": 0.56,
+        "unit": "1",
+        "src": "nssdca-pluto"
+       }
+      },
+      "note": "a is barycentric (round Pluto and Charon); no mass printed"
+     },
+     {
+      "id": "kerberos",
+      "name": "Kerberos",
+      "kind": "moon",
+      "host": "pluto",
+      "values": {
+       "body.radius": {
+        "v": 6333.3,
+        "unit": "m",
+        "src": "nssdca-pluto"
+       },
+       "orbit.semi_major_axis": {
+        "v": 57750000.0,
+        "unit": "m",
+        "src": "nssdca-pluto"
+       },
+       "body.albedo_geometric": {
+        "v": 0.56,
+        "unit": "1",
+        "src": "nssdca-pluto"
+       }
+      },
+      "note": "a is barycentric (round Pluto and Charon); no mass printed"
+     },
+     {
+      "id": "hydra",
+      "name": "Hydra",
+      "kind": "moon",
+      "host": "pluto",
+      "values": {
+       "body.radius": {
+        "v": 21300.0,
+        "unit": "m",
+        "src": "nssdca-pluto"
+       },
+       "orbit.semi_major_axis": {
+        "v": 64721000.0,
+        "unit": "m",
+        "src": "nssdca-pluto"
+       },
+       "body.albedo_geometric": {
+        "v": 0.83,
+        "unit": "1",
+        "src": "nssdca-pluto"
+       }
+      },
+      "note": "a is barycentric (round Pluto and Charon); no mass printed"
+     },
+     {
       "id": "ceres",
       "name": "Ceres",
       "kind": "dwarf_planet",

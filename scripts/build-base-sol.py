@@ -110,12 +110,24 @@ MOONS = [
     ("Titan", "titan", "saturn", 1345.5e20, 2575, 1221.87e3, 0.0292, 0.33, 0.22, None, "nssdca-saturnian-sats"),
     ("Triton", "triton", "neptune", 214e20, 1353.4, 354.76e3, 0.000016, 157.345, 0.72, None, "nssdca-neptunian-sats"),
     ("Charon", "charon", "pluto", 1.586e21, 606, 19596, 0.0, 0.00005, 0.42, 0.25, "nssdca-pluto"),
+    # Round Pluto and Charon (the sheet's distances are barycentric, which
+    # the Jacobi hierarchy reads as round the pair: they lie outside Charon).
+    # No mass, eccentricity or lean is printed; the radius is half the mean
+    # diameter (the mean of three axes where three are printed).
+    ("Styx", "styx", "pluto", None, 10.5 / 2, 42413, None, None, 0.65, None, "nssdca-pluto"),
+    ("Nix", "nix", "pluto", None, (48.4 + 33.8 + 31.4) / 6, 48690, None, None, 0.56, None, "nssdca-pluto"),
+    ("Kerberos", "kerberos", "pluto", None, (19 + 10 + 9) / 6, 57750, None, None, 0.56, None, "nssdca-pluto"),
+    ("Hydra", "hydra", "pluto", None, (62.0 + 36.5 + 29.3) / 6, 64721, None, None, 0.83, None, "nssdca-pluto"),
 ]
 MOON_NOTES = {
     "phobos": "radius: the mean of the three axis radii printed; a is the mean distance from the centre of Mars",
     "deimos": "radius: the mean of the three axis radii printed; a is the mean distance from the centre of Mars",
     "triton": "retrograde orbit (inclination over 90 degrees)",
     "charon": "a is the mean distance from Pluto; radius is equatorial; the pair goes round a point outside Pluto",
+    "styx": "a is barycentric (round Pluto and Charon); no mass printed",
+    "nix": "a is barycentric (round Pluto and Charon); no mass printed",
+    "kerberos": "a is barycentric (round Pluto and Charon); no mass printed",
+    "hydra": "a is barycentric (round Pluto and Charon); no mass printed",
 }
 
 
@@ -128,6 +140,7 @@ def moon_row(name, pid, host, mass, r_km, a_km, e, inc, geo, bond, src):
         "orbit.inclination": val(inc, "deg", src),
         "body.albedo_geometric": val(geo, "1", src),
     }
+    values = {k: v for k, v in values.items() if v["v"] is not None}
     if bond is not None:
         values["body.albedo"] = val(bond, "1", src, note="Bond albedo")
     row = {"id": pid, "name": name, "kind": "moon", "host": host, "values": values}
