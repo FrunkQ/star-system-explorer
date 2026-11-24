@@ -17,9 +17,14 @@ fn contract_lines() -> Vec<String> {
 }
 
 /// Native half of the contract test. Set SSE_BLESS=1 to rewrite the golden.
+/// The two op-list lines are kept masked (`contract::mask_ops`); their lists
+/// are checked by `the_op_lists_are_every_op`.
 #[test]
 fn contract_matches_golden() {
-    let lines = contract_lines();
+    let lines: Vec<String> = contract_lines()
+        .iter()
+        .map(|l| crate::contract::mask_ops(l))
+        .collect();
     let path = root().join("tests/golden/contract.jsonl");
     let text = lines.join("\n") + "\n";
     if std::env::var("SSE_BLESS").is_ok() {
@@ -30,6 +35,56 @@ fn contract_matches_golden() {
         assert_eq!(a, b, "response {i} differs");
     }
     assert_eq!(lines.len(), golden.lines().count());
+}
+
+/// What the golden masks: `hello` lists every op of `ops()` with its cost
+/// and edge, in order, and the unknown-op message names every request op.
+#[test]
+fn the_op_lists_are_every_op() {
+    use crate::contract::*;
+    let lines = contract_lines();
+    let hello = lines.iter().find(|l| l.starts_with(HELLO)).unwrap();
+    let masked = mask_ops(hello);
+    assert!(masked.contains(OPS_MASK), "{masked}");
+    let v: serde_json::Value = serde_json::from_str(hello).unwrap();
+    let listed: Vec<String> = v["ops"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|o| {
+            format!(
+                "{} {} {}",
+                o["op"].as_str().unwrap(),
+                o["cost"].as_str().unwrap(),
+                o["edge"].as_str().unwrap()
+            )
+        })
+        .collect();
+    let want: Vec<String> = ops()
+        .iter()
+        .map(|o| {
+            let j = serde_json::to_value(o).unwrap();
+            format!(
+                "{} {} {}",
+                j["op"].as_str().unwrap(),
+                j["cost"].as_str().unwrap(),
+                j["edge"].as_str().unwrap()
+            )
+        })
+        .collect();
+    assert_eq!(listed, want);
+    let bad = lines
+        .iter()
+        .find(|l| l.contains(UNKNOWN_FROM))
+        .expect("the contract asks for an unknown op");
+    assert!(mask_ops(bad).contains(UNKNOWN_MASK), "{bad}");
+    let s = bad.find(UNKNOWN_FROM).unwrap() + UNKNOWN_FROM.len();
+    let e = s + bad[s..].find(UNKNOWN_TO).unwrap();
+    let mut named: Vec<&str> = bad[s..e].split(", ").map(|x| x.trim_matches('`')).collect();
+    named.sort_unstable();
+    let mut all: Vec<String> = ops().iter().map(|o| o.op.clone()).collect();
+    all.sort_unstable();
+    assert_eq!(named, all);
 }
 
 #[test]
