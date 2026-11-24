@@ -126,7 +126,12 @@
   let lon = $state(0);
   let lat = $state(20);
   // The standard view controls (rule 12): the style picks the recipe, "seen from" the latitude looked down from.
-  const shownView = $derived(viewOptions(BODY_CONTROLS, ws.view ?? DEFAULT_VIEW).shown);
+  const viewed = $derived(viewOptions(BODY_CONTROLS, ws.view ?? DEFAULT_VIEW));
+  const shownView = $derived(viewed.shown);
+  // Composite (XO17): the globe draws Visible only, so a mix of Visible and Mag shows the globe with the field's cut
+  // beside it; Mag alone replaces the globe as before.
+  const magOn = $derived(viewed.layers.some((l) => l.band === "mag"));
+  const globeOn = $derived(viewed.layers.some((l) => l.band !== "mag"));
   const styleRecipe = $derived(shownView.style === "true" ? "true-colour" : String(params.recipe ?? "survey-relief"));
   // Picking a fixed "Seen from" frames the globe afresh, even the one already shown.
   $effect(() => {
@@ -463,7 +468,7 @@
     <StarDisc {ctx} {scene} address={subject.address} label={subject.label} {size} />
   {:else}
     <div class="top">
-      <div class="globe" class:hidden={shownView.band === "mag"} style:width="{size}px" style:height="{size}px">
+      <div class="globe" class:hidden={!globeOn} style:width="{size}px" style:height="{size}px">
         {#if loading}
           <p class="note">Building the surface of {subject.label}… (about a second)</p>
         {:else if has}
@@ -503,7 +508,7 @@
           </p>
         {/if}
       </div>
-      {#if has && shownView.band !== "mag"}
+      {#if has && globeOn}
         <!-- The time lapse's controls (U22): layer toggles, scrubber with event marks, Play, and the why card. -->
         <BodyTimeline {lapse} depth={ws.depth ?? "science"} label={subject.label} />
         <!-- Interim weather control; the chart room's controls replace it. A time lapse shows its own past, so this hides then. -->
@@ -513,7 +518,7 @@
         </div>{/if}
       {/if}
       <!-- The Mag layer (MF14b): the field's Chart cut, its words and a why for every part, when Band is Mag. -->
-      <BodyMag session={ctx.session} system={scene.system} name={subject.label} tier={gs?.tier ?? "gpu-basic"} depth={ws.depth ?? "science"} size={size} on={shownView.band === "mag"} />
+      <BodyMag session={ctx.session} system={scene.system} name={subject.label} tier={gs?.tier ?? "gpu-basic"} depth={ws.depth ?? "science"} size={size} on={magOn} />
       {#if stats}
         <dl class="facts" data-globe-stats>
           <dt>Drawn</dt>

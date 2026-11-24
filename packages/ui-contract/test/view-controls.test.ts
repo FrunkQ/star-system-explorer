@@ -76,7 +76,8 @@ test("HUD: off in True (a photograph), on in the diagrams, one choice through ev
 
 test("Band: Visible by default; the others listed quiet until a view declares them; a kept band reads back", () => {
   const o = viewOptions(system, { style: "chart", seen: "above", band: "xray" });
-  assert.deepEqual(o.bands.map((b) => b.label), ["Visible", "Infrared", "Ultraviolet", "X-ray", "Radio", "Mag"]);
+  assert.deepEqual(o.bands.map((b) => b.label), ["Visible", "Infrared", "Ultraviolet", "X-ray", "Radio", "Mag", "Composite"]);
+  assert.match(o.bands[6]!.unavailable!, /needs two bands/, "Composite is listed on every view, quiet where only one band is drawn");
   assert.equal(o.shown.band, "visible");
   assert.match(o.bands[3]!.unavailable!, /X-ray is not drawn here yet/);
   const lit: ViewControlsSpec = { ...system, bands: { visible: true, xray: true, mag: true } };

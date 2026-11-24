@@ -11,4 +11,6 @@ export const GALAXY_CONTROLS: ViewControlsSpec = {
   flat: true,
   hud: { "3d": true, true: true },
   bands: { visible: true, infrared: true, ultraviolet: true, xray: true, radio: true, mag: "The galaxy's magnetic field is not drawn yet" },
+  // Composite (XO17): several bands laid into one picture of the turned disc.
+  composite: { "3d": true, true: true, chart: "The face-on chart is a diagram: turn it to 3D or True for Composite" },
 };

@@ -23,7 +23,7 @@
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
   import { readLiveStar, readTrueFace, starCss, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
-  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
+  import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -222,7 +222,8 @@
   // V6: the same frame in 3D (view only; edits stay on the 2D chart).
   // The standard view controls (rule 12) choose it: Chart is this flat log chart, 3D turns. A view without a shell's
   // choice (a screen document elsewhere) stays on Chart.
-  const shownView = $derived(viewOptions(SYSTEM_CHART_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  const viewed = $derived(viewOptions(SYSTEM_CHART_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW));
+  const shownView = $derived(viewed.shown);
   // Pencil (track SV): a body the table does not know is drawn in pencil on the GM's chart, on the Build and Run desks
   // whatever the lens, and wherever a lens carries the "What the table knows" layer; never through a player lens.
   const pencilOn = $derived(!!known && !through && hudShows(shownView.hud, "known") && (hasLayer(L, "known") || ctx.workspace.desk === "build" || ctx.workspace.desk === "run"));
@@ -292,7 +293,7 @@
   $effect(() => {
     const sys = scene.system;
     const subjects = scene.subjects;
-    if (dims !== "3d" || shownView.band !== "mag" || !/\/sys:sol$/.test(sys)) return void (fields = new Map());
+    if (dims !== "3d" || !viewed.layers.some((l) => l.band === "mag") || !/\/sys:sol$/.test(sys)) return void (fields = new Map());
     let live = true;
     solFields ??= ctx.session.readField({ fixture: "solar-system" }).then((r) => (r.ok ? (r.bodies as unknown as FieldReadJson[]) : []));
     void solFields.then((read) => {
@@ -354,7 +355,15 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} />
+    {#snippet in3d(band: string, base: boolean)}
+      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} />
+    {/snippet}
+    {#if viewed.composite}
+      <!-- Composite (XO17): the system drawn once per band and laid into one picture. -->
+      <CompositeStack layers={viewed.layers} dark={looksTrue ? true : undefined}>{#snippet children(band, base)}{@render in3d(band, base)}{/snippet}</CompositeStack>
+    {:else}
+      {@render in3d(shownView.band, true)}
+    {/if}
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}

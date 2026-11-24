@@ -10,13 +10,15 @@
   import GalaxyScars from "./GalaxyScars.svelte";
   import GalaxyEdgeOn from "./GalaxyEdgeOn.svelte";
   import { Galaxy3D } from "../../galaxy-3d/src/index.ts";
+  import { CompositeStack } from "../../../chart-grammar/src/index.ts";
   import { GALAXY_CONTROLS } from "./controls.ts";
   import { markStrengthAt } from "../../../renderer/src/index.ts";
   import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, DEFAULT_VIEW, dex, viewOptions, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   // The one set of view controls (V9t): Chart is the face-on diagram below; 3D and True turn the disc (Galaxy3D).
-  const shownView = $derived(viewOptions(GALAXY_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  const viewed = $derived(viewOptions(GALAXY_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW));
+  const shownView = $derived(viewed.shown);
   const turned = $derived(shownView.style === "3d" || shownView.style === "true");
   const first = untrack(() => ({ halo: String(params.halo ?? "milky-way-like"), layer: String(params.layer ?? "metals") }));
   // A named halo, or a catalogued halo's address picked on the cluster map (V9).
@@ -240,7 +242,15 @@
     <div class="cols">
       <div class="disc">
         {#if turned}
-          <div class="frame3d"><Galaxy3D {chart} look={shownView.style === "true" ? "true" : "3d"} band={shownView.band} seen={shownView.seen} hud={shownView.hud} reframe={shownView.framed} onturned={() => ctx.workspace.turned?.()} /></div>
+          <div class="frame3d">
+            {#snippet turnedDisc(band: string, base: boolean)}<Galaxy3D chart={chart!} look={shownView.style === "true" ? "true" : "3d"} {band} seen={shownView.seen} hud={base && shownView.hud} reframe={shownView.framed} onturned={() => ctx.workspace.turned?.()} />{/snippet}
+            {#if viewed.composite}
+              <!-- Composite (XO17): the galaxy drawn once per band and laid into one picture. -->
+              <CompositeStack layers={viewed.layers} dark={shownView.style === "true" ? true : undefined}>{#snippet children(band, base)}{@render turnedDisc(band, base)}{/snippet}</CompositeStack>
+            {:else}
+              {@render turnedDisc(shownView.band, true)}
+            {/if}
+          </div>
         {:else}
         <svg viewBox="0 0 {W} {W}" role="img" aria-label="The galaxy face-on at {gyr(chart.at_gyr)}: {chart.rings.length} rings shaded by {LAYER_WORDS[layer].label.toLowerCase()}, {chart.arms.length} arms, the green band{green?.habitable ? ` from ${green.habitable[0].toFixed(1)} to ${green.habitable[1].toFixed(1)} kpc` : ' absent'}">
           {#each chart.rings as g, i (i)}

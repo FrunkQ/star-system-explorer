@@ -887,6 +887,7 @@ listed here. Imported codes always win over these (they are kept as authored and
 | `sse-gravity/src/bend.rs` viewer far away | Rays are traced in from infinity; a camera within about fifty r_g reads the same curves from part-way along (XO4) | The far viewer covers every view outside the close-up | Start each ray at the camera's radius (same equation, one more number) | XO1; revisit in XO4 |
 | `sse-gravity/src/bend.rs` table edges | Three half turns of sweep (direct image, arch, thin ring) and b up to 64 r_g; beyond, the weak bender's first term (within 6% at the edge, 0.1% with its next term) | Higher image orders are thinner than a pixel; far rays barely bend | None needed; add the second-order term to `sse.gravity.weak_bend` if a view ever shows the join | XO1 |
 | `sse.gravity.shadow_angle` | Shadow size for no spin, static viewer | As the table | The spin pass's shadow (XO7) | XO1 |
+| `chart-grammar/src/CompositeStack.svelte` (XO17) | Composite lays whole view layers in the browser: each band's picture tinted by its brightness (Rec. 709 weights), added with `plus-lighter` on a dark ground or `multiply` on the chart room's paper (the paper lifted to white by 1/0.88 first); each band arrives scaled to its own brightest by its own view | One mechanism for every view with no layering code of its own | Per-band render targets in one GPU context and `renderer/src/composite.ts` in a shader, with each band's true brightest | presentation, XO17 |
 
 ### Why the bend table is Rust, not a flow
 

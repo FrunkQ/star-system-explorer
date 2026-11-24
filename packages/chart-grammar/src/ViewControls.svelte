@@ -4,19 +4,44 @@
      device cannot do stay in place, quiet, with the reason as their title. Free shows how it is worked.
      How often each is used decides where it sits (Alex, 23 Nov: "how often it is used, easy flow and newbie friendly"):
      View style, Seen from and Scale are a press away; HUD and Band, changed far less, fold into one chip that always
-     says what they are ("HUD on · Visible ▾") and opens the same two switches beside it. -->
+     says what they are ("HUD on · Visible ▾") and opens the same two switches beside it.
+     Composite (XO17, Alex 24 Nov: "everywhere"), the band switch's last entry, shows the last mix at once and opens a
+     tick list under it: presets, the bands this view and seat can draw with their colours, at most two on a phone. -->
 <script lang="ts">
   import Segmented from "./Segmented.svelte";
   import { opensFrom } from "./motion.ts";
-  import { FREE_HINT, VIEW_BAND_WORDS, pickScale, pickSeen, pickStyle, viewOptions, type ViewBand, type ViewScale, type SeenFrom, type ViewChoice, type ViewControlsSpec, type ViewStyle } from "../../ui-contract/src/index.ts";
+  import { COMPOSITE, COMPOSITE_WORD, DEFAULT_MIX, FREE_HINT, LAYER_COLOURS, VIEW_BANDS, VIEW_BAND_WORDS, compositeLegend, compositePresets, pickScale, pickSeen, pickStyle, presetMix, recolour, toggleLayer, viewOptions, type BandLimits, type BandPick, type CompositeMix, type ViewBand, type ViewScale, type SeenFrom, type ViewChoice, type ViewControlsSpec, type ViewStyle } from "../../ui-contract/src/index.ts";
 
-  let { spec, choice, onchange, compact = false }: { spec: ViewControlsSpec; choice: ViewChoice; onchange: (c: ViewChoice) => void; compact?: boolean } = $props();
-  const o = $derived(viewOptions(spec, choice));
+  let { spec, choice, onchange, compact = false, limits = {} }: { spec: ViewControlsSpec; choice: ViewChoice; onchange: (c: ViewChoice) => void; compact?: boolean; limits?: BandLimits } = $props();
+  const o = $derived(viewOptions(spec, choice, limits));
+  // The mix the tick list edits: the viewer's kept one, cut to what can be drawn here.
+  const mix = $derived<CompositeMix>({ ...(choice.composite?.preset ? { preset: choice.composite.preset } : {}), layers: o.composite ? o.layers : (choice.composite ?? DEFAULT_MIX).layers });
+  const legend = $derived(o.composite ? compositeLegend({ layers: o.layers }, VIEW_BAND_WORDS) : null);
+  let refused = $state<string | null>(null);
+  function pickBand(b: BandPick) {
+    refused = null;
+    // A single band closes the fold, as a menu does; Composite keeps it open on its tick list.
+    if (b !== COMPOSITE) open = false;
+    onchange({ ...choice, band: b, ...(b === COMPOSITE && !choice.composite ? { composite: DEFAULT_MIX } : {}) });
+  }
+  function tick(b: ViewBand) {
+    const limit = { can: o.drawable, ...(o.maxLayers !== undefined ? { max: o.maxLayers } : {}) };
+    const next = toggleLayer(mix, b, limit);
+    if ("refused" in next) return void (refused = next.refused);
+    refused = null;
+    onchange({ ...choice, band: COMPOSITE, composite: next });
+  }
+  function preset(id: string) {
+    const m = presetMix(id);
+    if (!m) return;
+    refused = null;
+    onchange({ ...choice, band: COMPOSITE, composite: m });
+  }
   const uid = $props.id();
   let open = $state(false);
   let chip = $state<HTMLButtonElement | null>(null);
   let fold = $state<HTMLDivElement | null>(null);
-  const summary = $derived(`HUD ${o.shown.hud ? "on" : "off"} · ${VIEW_BAND_WORDS[o.shown.band]}`);
+  const summary = $derived(`HUD ${o.shown.hud ? "on" : "off"} · ${o.composite ? `${COMPOSITE_WORD} (${o.layers.length})` : VIEW_BAND_WORDS[o.shown.band]}`);
   // A choice closes it, as a menu does; so does a press off it, or Escape, which gives the keyboard back to the chip.
   $effect(() => {
     if (!open) return;
@@ -38,7 +63,7 @@
   });
 </script>
 
-<div class="vc" class:compact data-view-controls data-style={o.shown.style} data-seen={o.shown.seen} data-scale={o.shown.scale} data-hud={o.shown.hud ? "on" : "off"} data-band={o.shown.band}>
+<div class="vc" class:compact data-view-controls data-style={o.shown.style} data-seen={o.shown.seen} data-scale={o.shown.scale} data-hud={o.shown.hud ? "on" : "off"} data-band={o.composite ? COMPOSITE : o.shown.band} data-layers={o.layers.map((l) => l.band).join(" ")}>
   <div class="field">
     <span class="k" aria-hidden="true">View style</span>
     <Segmented label="View style" value={o.shown.style} options={o.styles} onchange={(s: ViewStyle) => onchange(pickStyle(choice, s))} />
@@ -62,11 +87,39 @@
         </div>
         <div class="field">
           <span class="k" aria-hidden="true">Band</span>
-          <Segmented label="Band" value={o.shown.band} options={o.bands} onchange={(b: ViewBand) => ((open = false), onchange({ ...choice, band: b }))} />
+          <Segmented label="Band" value={o.composite ? COMPOSITE : o.shown.band} options={o.bands} onchange={pickBand} />
         </div>
+        {#if o.composite}
+          <div class="mix" role="group" aria-label="Composite: bands laid into one picture" data-composite>
+            <div class="presets">
+              {#each compositePresets() as p (p.id)}
+                <button type="button" class="preset" class:on={choice.composite?.preset === p.id} title={p.why} data-preset={p.id} onclick={() => preset(p.id)}>{p.name}</button>
+              {/each}
+            </div>
+            <ul class="ticks">
+              {#each VIEW_BANDS as b (b)}
+                {@const layer = mix.layers.find((l) => l.band === b)}
+                {@const drawn = o.drawable.includes(b)}
+                <li class:quiet={!drawn}>
+                  <label title={drawn ? undefined : o.bands.find((x) => x.value === b)?.unavailable}>
+                    <input type="checkbox" checked={!!layer} disabled={!drawn} data-tick={b} onchange={() => tick(b)} />
+                    <span>{VIEW_BAND_WORDS[b]}</span>
+                  </label>
+                  {#if b === "visible"}
+                    <span class="natural" title="Visible keeps its own colours">actual</span>
+                  {:else}
+                    <input type="color" class="swatch" aria-label="{VIEW_BAND_WORDS[b]} colour" value={layer?.colour ?? LAYER_COLOURS[b]} disabled={!layer} onchange={(e) => onchange({ ...choice, band: COMPOSITE, composite: recolour(mix, b, (e.currentTarget as HTMLInputElement).value) })} />
+                  {/if}
+                </li>
+              {/each}
+            </ul>
+            {#if refused}<p class="why" role="status" data-composite-refused>{refused}</p>{/if}
+          </div>
+        {/if}
       </div>
     {/if}
   </div>
+  {#if legend}<p class="legend" data-composite-legend data-mapped={legend.mapped ? "yes" : "no"}>{legend.text}</p>{/if}
   {#if o.shown.seen === "free" && o.turnable}<p class="hint" data-free-hint>{FREE_HINT}</p>{/if}
 </div>
 
@@ -138,6 +191,76 @@
   .pop .field {
     align-items: flex-start;
   }
+  .mix {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: var(--sse-line) solid var(--sse-ink-faint, var(--sse-ink-muted));
+    padding-top: 8px;
+  }
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .preset {
+    font: inherit;
+    font-size: 12px;
+    padding: 2px 8px;
+    border: var(--sse-line) solid var(--sse-ink);
+    background: var(--sse-ground-raised);
+    color: var(--sse-ink);
+    cursor: pointer;
+  }
+  .preset.on {
+    background: var(--sse-ink);
+    color: var(--sse-on-ink);
+  }
+  .ticks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, max-content));
+    gap: 4px 16px;
+    font-size: 12.5px;
+  }
+  .ticks li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: space-between;
+  }
+  .ticks li.quiet {
+    color: var(--sse-ink-muted);
+  }
+  .ticks label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+  .swatch {
+    width: 22px;
+    height: 18px;
+    padding: 0;
+    border: var(--sse-line) solid var(--sse-ink);
+    background: none;
+  }
+  .natural {
+    font-size: 11px;
+    color: var(--sse-ink-muted);
+  }
+  .why,
+  .legend {
+    margin: 0;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    max-width: 44ch;
+  }
+  .legend {
+    flex-basis: 100%;
+  }
   .hint {
     flex-basis: 100%;
     margin: 0;
@@ -161,6 +284,19 @@
     }
     .pop .k {
       display: block;
+    }
+    /* The fold opens under the whole bar, edge to edge, so nothing in it runs off the side of a phone. */
+    .vc {
+      position: relative;
+    }
+    .fold {
+      position: static;
+    }
+    .pop {
+      left: 0;
+      right: 0;
+      width: auto;
+      max-width: none;
     }
     .field :global(.seg) {
       overflow-x: auto;
