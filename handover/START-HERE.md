@@ -95,13 +95,12 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/naming.md` | the thread that owns track NM | NM |
 | `status/performance.md` | Measure performance for minimum specs | PF |
 | `status/across-tracks.md` | each row names its owners | the umbrella rows for MF, Y, GH, ND, TG, and the converter module |
-| `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, run/ (table line, seats, arrival), Playbook and Switchboard (RD) |
+| `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, run/ (table line, seats, arrival), Bookmarks, Playbook and Switchboard (RD, PB) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/navigation.md` | Build object selector and menus | NV (finding your way: selector part 2, object menu, find by tag, notes) |
 | `status/exotic-objects.md` | no builder thread yet (design by "Design exotic stars and black holes") | XO (black holes with real light bending, pulsars, stripped stars, Composite band, the Hazard map for any hazardous body) |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs as edited, the Solar System built through the UI) |
 | `status/surface-timelapse.md` | Build surface time-lapse | R6 part 2 (the globe's time-lapse from surface_frames), the drawing side of W-sea2 to W-sea4 |
-| `status/run-desk.md` (arrives with PR 421) | Build Run desk playbook and players' side | RD, PB (Playbook and Switchboard) |
 | none yet | Build Paper spacecraft pack | RK6 (other RK packages are rows in the files above) |
 | none yet | designed only (XO note, PR 420) | XO exotic objects |
 
