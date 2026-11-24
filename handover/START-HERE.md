@@ -95,12 +95,12 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/naming.md` | the thread that owns track NM | NM |
 | `status/performance.md` | Measure performance for minimum specs | PF |
 | `status/across-tracks.md` | each row names its owners | the umbrella rows for MF, Y, GH, ND, TG, and the converter module |
-| `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, run/ (table line, seats, arrival), Playbook and Switchboard (RD) |
+| `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, run/ (table line, seats, arrival), Bookmarks, Playbook and Switchboard (RD, PB) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/navigation.md` | Build object selector and menus | NV (finding your way: selector part 2, object menu, find by tag, notes) |
 | `status/exotic-objects.md` | Build exotic stars and black holes (design by "Design exotic stars and black holes") | XO (black holes with real light bending, pulsars, stripped stars, Composite band, the Hazard map for any hazardous body) |
+| `status/star-look.md` | Build star glow and flares | SG (ordinary stars on screen: glow past the edge, churning cells, lumpy giants, flares and ejections; then star jets and shells) |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs as edited, the Solar System built through the UI) |
-| `status/run-desk.md` (arrives with PR 421) | Build Run desk playbook and players' side | RD, PB (Playbook and Switchboard) |
 | none yet | Build Paper spacecraft pack | RK6 (other RK packages are rows in the files above) |
 | `status/exotic-objects.md` | Build exotic stars and black holes | XO exotic objects (XO1 part 1 built 24 Nov) |
 
