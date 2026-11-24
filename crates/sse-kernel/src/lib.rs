@@ -24,6 +24,9 @@ mod glow;
 mod hooks_tests;
 mod ice_ages;
 mod inventory;
+mod known;
+#[cfg(test)]
+mod known_tests;
 #[cfg(test)]
 mod matter_tests;
 mod names;
@@ -36,6 +39,9 @@ mod sea;
 mod sky;
 #[cfg(test)]
 mod sol_tests;
+mod star_elements;
+#[cfg(test)]
+mod star_elements_tests;
 mod survey;
 mod systems;
 mod tags;
@@ -2954,6 +2960,9 @@ impl Kernel {
                 airs,
                 wavelengths_m,
             } => systems::read_air_optics(airs, wavelengths_m)?,
+            Request::LightThroughGas { passages } => {
+                systems::light_through_gas(passages, &self.observe.reference)?
+            }
             Request::Detect {
                 targets,
                 sensors,
@@ -3389,6 +3398,7 @@ impl Kernel {
                 Response::WindowViewed { view }
             }
             Request::WebSlice {
+                cube,
                 z,
                 t_gyr,
                 centre,
@@ -3404,6 +3414,7 @@ impl Kernel {
                     centre: centre.unwrap_or([0.0; 3]),
                     extent_mpc,
                     n,
+                    cube: cube.unwrap_or(false),
                 })?;
                 Response::WebSliced { web }
             }
@@ -4175,6 +4186,101 @@ impl Kernel {
                     changes,
                 }
             }
+            Request::SetLink {
+                id,
+                a,
+                b,
+                name,
+                kind,
+                one_way,
+                nav,
+                tier,
+                audience,
+                writer,
+                reason,
+                source,
+                withdraw,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let (a, b) = (in_universe(&u.root, &a)?, in_universe(&u.root, &b)?);
+                let bad = |m: String| err("bad_link", m);
+                if let Some(n) = &nav {
+                    voyage::nav_part(n).map_err(bad)?;
+                }
+                let audience: sse_record::Audience = match audience {
+                    None => sse_record::Audience::gm(),
+                    Some(v) => serde_json::from_value(v).map_err(|e| {
+                        bad(format!("audience: \"everyone\", \"gm\" or a list ({e})"))
+                    })?,
+                };
+                let writer = writer.unwrap_or_else(|| "gm".into());
+                let d = sse_record::links::LinkDraft {
+                    root: u.root.clone(),
+                    id,
+                    a,
+                    b,
+                    name: name.unwrap_or_default(),
+                    kind: kind.unwrap_or_default(),
+                    one_way: one_way.unwrap_or(false),
+                    nav: nav.map(|n| n.to_string()),
+                    tier,
+                    audience,
+                    writer: writer.clone(),
+                    reason,
+                    source,
+                    withdraw: withdraw.unwrap_or(false),
+                };
+                let (link, ev) = sse_record::links::set_link(
+                    &mut u.record,
+                    &d,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new(&writer, "set_link", "1"),
+                )
+                .map_err(record_err)?;
+                let rec =
+                    sse_record::links::history(u.record.events(), UniverseTime::seconds(i64::MAX))
+                        .into_iter()
+                        .find(|l| l.event == ev.hex());
+                Response::LinkSet {
+                    link: link.to_string(),
+                    event_id: ev.hex(),
+                    record: rec
+                        .as_ref()
+                        .map(voyage::link_json)
+                        .unwrap_or(serde_json::Value::Null),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::LinksIn {
+                bounds,
+                at_s,
+                audience,
+                history,
+            } => {
+                let u = self.universe()?;
+                let bounds = match bounds {
+                    Some(b) => in_universe(&u.root, &b)?,
+                    None => u.root.clone(),
+                };
+                let at = UniverseTime::seconds(at_s.unwrap_or(i64::MAX));
+                let audience = audience.unwrap_or_else(|| "gm".into());
+                let all = if history.unwrap_or(false) {
+                    sse_record::links::history(u.record.events(), at)
+                        .into_iter()
+                        .filter(|l| l.visible_to(&audience))
+                        .collect()
+                } else {
+                    sse_record::links::links_at(u.record.events(), at, &audience)
+                };
+                Response::LinksListed {
+                    links: all
+                        .iter()
+                        .filter(|l| bounds.contains(&l.a) || bounds.contains(&l.b))
+                        .map(voyage::link_json)
+                        .collect(),
+                }
+            }
             Request::SetTech {
                 holder,
                 level,
@@ -4653,7 +4759,7 @@ impl Kernel {
                     )
                 })?;
                 if let Some(v) = &view {
-                    if !setup.views.iter().any(|d| &d.id == v) {
+                    if v != sse_observe::GM_ONLY_VIEW && !setup.views.iter().any(|d| &d.id == v) {
                         return Err(err("unknown_view", format!("no data view {v:?}")));
                     }
                 }
@@ -4693,6 +4799,30 @@ impl Kernel {
                     state_hash: state.hash().hex(),
                 }
             }
+            Request::KnownTo {
+                address,
+                field,
+                at_s,
+            } => self.known_to(&address, field.as_deref(), at_s)?,
+            Request::SetKnown {
+                address,
+                audience,
+                landmark,
+                field,
+                scope,
+                from_s,
+                at_s,
+            } => self.set_known(
+                &address,
+                &audience,
+                landmark.as_deref(),
+                field.as_deref(),
+                scope.as_ref(),
+                from_s,
+                at_s,
+            )?,
+            Request::UndoKnown { undo, at_s } => self.undo_known(&undo, at_s)?,
+            Request::KnownIn { bounds, at_s } => self.known_in(&bounds, at_s)?,
             Request::RulesStep { at_s } => {
                 let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
                 let tpl = self.observe.templates.clone();
@@ -5523,6 +5653,7 @@ impl Kernel {
                 at_s,
                 ports,
                 depart_s,
+                ..
             } if fixture.is_some() || nav.is_some() || system.is_some() => {
                 let visited = visited.unwrap_or_default();
                 let ports = ports.unwrap_or_default();
@@ -5591,9 +5722,23 @@ impl Kernel {
                 sensed_fuel,
                 surveyed,
                 gambles,
+                links,
+                only_links,
+                audience,
                 ..
             } => {
                 let u = self.universe()?;
+                let audience = audience.unwrap_or_else(|| "gm".into());
+                let records = sse_record::links::links_at(
+                    u.record.events(),
+                    UniverseTime::seconds(i64::MAX),
+                    &audience,
+                );
+                let links = voyage::links_for(
+                    &records,
+                    links.as_deref().unwrap_or(&[]),
+                    only_links.unwrap_or(false),
+                )?;
                 let pins =
                     cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
                 let elapsed = clock::elapsed_myr(&u.chronicle);
@@ -5617,6 +5762,7 @@ impl Kernel {
                             sensed_fuel: &sensed_fuel,
                             surveyed: &surveyed,
                             gambles: gambles.unwrap_or(false),
+                            links: &links,
                         },
                     )
                 })?;

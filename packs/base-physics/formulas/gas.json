@@ -1,0 +1,991 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.gas",
+ "about": "Light through gas (ND2): one mechanism for every gas and every body, with no kind of body named. A gas's features (measured bands, pressure-widened lines, colliding pairs) are rows on the master data sheet; these blocks are the physics that turns them into the light that comes out.",
+ "atoms": [
+  {
+   "id": "sse.gas.line_strength",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "oscillator_strength",
+     "letter": "f"
+    },
+    {
+     "port": "lower_level_energy",
+     "letter": "El"
+    },
+    {
+     "port": "line_wavelength",
+     "letter": "lambda0"
+    },
+    {
+     "port": "temperature",
+     "letter": "T"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "strength",
+     "letter": "S"
+    }
+   ],
+   "constants": {
+    "e": "sheet/e",
+    "me": "sheet/m_e",
+    "eps0": "sheet/eps0",
+    "c": "constants/c",
+    "k": "constants/k_B",
+    "h": "sheet/h"
+   },
+   "positive": [
+    {
+     "port": "temperature",
+     "says": "gas temperature"
+    },
+    {
+     "port": "line_wavelength",
+     "says": "line wavelength"
+    }
+   ],
+   "references": [
+    "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, section 10.6 (the classical oscillator: a line's integrated cross-section is πe²f/(m_e c) in Gaussian units, e²f/(4ε₀m_e c) in SI) and section 1.6 (stimulated emission). doi:10.1002/9783527618170"
+   ],
+   "shown": "S = e² f / (4 ε₀ m_e c) · e^(−E_l / kT) · (1 − e^(−hc / λ₀kT))",
+   "equation": {
+    "name": "How strongly one atom absorbs at a line, in all",
+    "formula": "pop = exp(-El / (k * T))\nstim = -expm1(-h * c / (lambda0 * k * T))\nS = e * e / (4 * eps0 * me * c) * f * pop * stim",
+    "inputs": {
+     "f": {
+      "kind": "gas.oscillator_strength",
+      "unit": "1",
+      "name": "oscillator strength of the line (how many electrons' worth it absorbs)",
+      "valid": [
+       0.0,
+       10.0
+      ]
+     },
+     "El": {
+      "kind": "gas.lower_level_energy",
+      "unit": "J",
+      "name": "energy of the level the line absorbs from, above the ground state"
+     },
+     "lambda0": {
+      "kind": "gas.line_wavelength",
+      "unit": "m",
+      "name": "wavelength at the line's centre",
+      "valid": [
+       1e-08,
+       0.001
+      ]
+     },
+     "T": {
+      "kind": "gas.temperature",
+      "unit": "K",
+      "name": "temperature of the gas"
+     },
+     "e": {
+      "kind": "constant.e",
+      "unit": "C",
+      "name": "elementary charge"
+     },
+     "me": {
+      "kind": "constant.m_e",
+      "unit": "kg",
+      "name": "electron mass"
+     },
+     "eps0": {
+      "kind": "constant.eps0",
+      "unit": "F m-1",
+      "name": "vacuum permittivity"
+     },
+     "c": {
+      "kind": "constant.c",
+      "unit": "m s-1",
+      "name": "speed of light"
+     },
+     "k": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann constant"
+     },
+     "h": {
+      "kind": "constant.h",
+      "unit": "J s",
+      "name": "Planck constant"
+     }
+    },
+    "outputs": {
+     "S": {
+      "kind": "gas.line_strength",
+      "unit": "m2 s-1",
+      "name": "cross-section of one atom summed over the whole line (per hertz of width)"
+     }
+    },
+    "source": {
+     "text": "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics",
+     "doi": "10.1002/9783527618170",
+     "where": "eq. 10.70 and section 1.6"
+    },
+    "explain": {
+     "curious": "Each kind of atom swallows light at its own sharp colours. How much it swallows in all is fixed by the atom; the gas's heat decides how many atoms are ready to.",
+     "science": "Integrated line cross-section of a classical oscillator of strength f, times the Boltzmann share of absorbers in the lower level (relative to the ground level; the partition function is a stand-in) and the correction for stimulated emission."
+    },
+    "examples": [
+     {
+      "f": 0.641,
+      "El": 0.0,
+      "lambda0": 5.89e-07,
+      "T": 4000.0,
+      "S": 1.6974301621655329e-06
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gas.line_widths",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "line_wavelength",
+     "letter": "lambda0"
+    },
+    {
+     "port": "temperature",
+     "letter": "T"
+    },
+    {
+     "port": "particle_mass",
+     "letter": "m"
+    },
+    {
+     "port": "natural_damping",
+     "letter": "G0"
+    },
+    {
+     "port": "widening_per_density",
+     "letter": "Cw"
+    },
+    {
+     "port": "perturber_density",
+     "letter": "n"
+    },
+    {
+     "port": "widening_temperature_exponent",
+     "letter": "x"
+    },
+    {
+     "port": "widening_reference_temperature",
+     "letter": "T0"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "doppler_width",
+     "letter": "sd"
+    },
+    {
+     "port": "damping_width",
+     "letter": "gl"
+    }
+   ],
+   "constants": {
+    "k": "constants/k_B"
+   },
+   "positive": [
+    {
+     "port": "temperature",
+     "says": "gas temperature"
+    },
+    {
+     "port": "particle_mass",
+     "says": "particle mass"
+    },
+    {
+     "port": "line_wavelength",
+     "says": "line wavelength"
+    },
+    {
+     "port": "widening_reference_temperature",
+     "says": "widening reference temperature"
+    }
+   ],
+   "references": [
+    "Gray, D. F. 2005, The Observation and Analysis of Stellar Photospheres, 3rd ed., Cambridge University Press, chapter 11 (thermal Doppler width, radiation damping, van der Waals widening growing with perturber density and as T^0.3). doi:10.1017/CBO9780511614576"
+   ],
+   "shown": "σ_D = √(kT/m) / λ₀ ;  γ = (Γ_rad + C n (T/T₀)^x) / 4π",
+   "equation": {
+    "name": "How wide a line is spread by heat and by crowding",
+    "formula": "sd = sqrt(k * T / m) / lambda0\ngl = (G0 + Cw * n * (T / T0) ^ x) / (4 * pi)",
+    "inputs": {
+     "lambda0": {
+      "kind": "gas.line_wavelength",
+      "unit": "m",
+      "name": "wavelength at the line's centre",
+      "valid": [
+       1e-08,
+       0.001
+      ]
+     },
+     "T": {
+      "kind": "gas.temperature",
+      "unit": "K",
+      "name": "temperature of the gas"
+     },
+     "m": {
+      "kind": "gas.particle_mass",
+      "unit": "kg",
+      "name": "mass of one absorbing atom or molecule"
+     },
+     "G0": {
+      "kind": "gas.natural_damping",
+      "unit": "s-1",
+      "name": "natural damping rate of the line (from the levels' lifetimes)"
+     },
+     "Cw": {
+      "kind": "gas.widening_per_density",
+      "unit": "m3 s-1",
+      "name": "damping added per perturbing particle per cubic metre, at the reference temperature"
+     },
+     "n": {
+      "kind": "gas.perturber_density",
+      "unit": "m-3",
+      "name": "number of perturbing particles per cubic metre"
+     },
+     "x": {
+      "kind": "gas.widening_temperature_exponent",
+      "unit": "1",
+      "name": "how the widening per particle grows with temperature (0.3 for van der Waals)",
+      "valid": [
+       -2.0,
+       2.0
+      ]
+     },
+     "T0": {
+      "kind": "gas.widening_reference_temperature",
+      "unit": "K",
+      "name": "temperature the widening per particle was measured at"
+     },
+     "k": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann constant"
+     }
+    },
+    "outputs": {
+     "sd": {
+      "kind": "gas.doppler_width",
+      "unit": "s-1",
+      "name": "spread of the line in frequency from the atoms' thermal motion (one standard deviation)"
+     },
+     "gl": {
+      "kind": "gas.damping_width",
+      "unit": "s-1",
+      "name": "half width of the line's damping wings in frequency"
+     }
+    },
+    "source": {
+     "text": "Gray, D. F. 2005, The Observation and Analysis of Stellar Photospheres, 3rd ed.",
+     "doi": "10.1017/CBO9780511614576",
+     "where": "chapter 11"
+    },
+    "explain": {
+     "curious": "A line is never perfectly sharp. Hot atoms rush to and fro and smear it; in a dense gas, neighbours jostle each atom mid-swallow and spread its wings wide. That crowding is what makes a cool, dense white dwarf's sodium line hundreds of nanometres broad.",
+     "science": "Thermal Doppler standard deviation in frequency, and the Lorentzian half width (HWHM) of radiation damping plus collisional widening linear in perturber density, scaled as a power of temperature."
+    },
+    "examples": [
+     {
+      "lambda0": 5.89e-07,
+      "T": 4000.0,
+      "m": 3.81923985318e-26,
+      "G0": 62000000.0,
+      "Cw": 1e-14,
+      "n": 1e+26,
+      "x": 0.3,
+      "T0": 5000.0,
+      "sd": 2041586924.0164306,
+      "gl": 74429640548.23222
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gas.voigt_width",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "doppler_width",
+     "letter": "sd"
+    },
+    {
+     "port": "damping_width",
+     "letter": "gl"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "profile_width",
+     "letter": "F"
+    },
+    {
+     "port": "damping_share",
+     "letter": "eta"
+    }
+   ],
+   "models": {
+    "a1": {
+     "value": 2.69269,
+     "grade": "fitted",
+     "source": "Thompson, Cox and Hastings 1987 eqs. 3 and 4"
+    },
+    "a2": {
+     "value": 2.42843,
+     "grade": "fitted",
+     "source": "Thompson, Cox and Hastings 1987 eqs. 3 and 4"
+    },
+    "a3": {
+     "value": 4.47163,
+     "grade": "fitted",
+     "source": "Thompson, Cox and Hastings 1987 eqs. 3 and 4"
+    },
+    "a4": {
+     "value": 0.07842,
+     "grade": "fitted",
+     "source": "Thompson, Cox and Hastings 1987 eqs. 3 and 4"
+    },
+    "e1": {
+     "value": 1.36603,
+     "grade": "fitted",
+     "source": "Thompson, Cox and Hastings 1987 eqs. 3 and 4"
+    },
+    "e2": {
+     "value": 0.47719,
+     "grade": "fitted",
+     "source": "Thompson, Cox and Hastings 1987 eqs. 3 and 4"
+    },
+    "e3": {
+     "value": 0.11116,
+     "grade": "fitted",
+     "source": "Thompson, Cox and Hastings 1987 eqs. 3 and 4"
+    }
+   },
+   "checks": [
+    {
+     "port": "damping_width",
+     "min": 0,
+     "finite": true,
+     "says": "damping width must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Thompson, P., Cox, D. E. and Hastings, J. B. 1987, Rietveld refinement of Debye-Scherrer synchrotron X-ray data from Al2O3, J. Appl. Cryst. 20, 79: the pseudo-Voigt width and mixing fits (eqs. 3 and 4), good to about 1 % of the true Voigt. doi:10.1107/S0021889887087090"
+   ],
+   "shown": "f = (f_G⁵ + 2.69269 f_G⁴f_L + 2.42843 f_G³f_L² + 4.47163 f_G²f_L³ + 0.07842 f_G f_L⁴ + f_L⁵)^⅕ ;  η = 1.36603 r − 0.47719 r² + 0.11116 r³, r = f_L/f",
+   "equation": {
+    "name": "Width of a line spread by heat and crowding together",
+    "formula": "fg = 2 * sqrt(2 * ln(2)) * sd\nfl = 2 * gl\nF = (fg ^ 5 + a1 * fg ^ 4 * fl + a2 * fg ^ 3 * fl ^ 2 + a3 * fg ^ 2 * fl ^ 3 + a4 * fg * fl ^ 4 + fl ^ 5) ^ (1/5)\nr = fl / F\neta = e1 * r - e2 * r * r + e3 * r * r * r",
+    "inputs": {
+     "sd": {
+      "kind": "gas.doppler_width",
+      "unit": "s-1",
+      "name": "spread from thermal motion (one standard deviation)"
+     },
+     "gl": {
+      "kind": "gas.damping_width",
+      "unit": "s-1",
+      "name": "half width of the damping wings"
+     },
+     "a1": {
+      "kind": "model.tch87_a1",
+      "unit": "1",
+      "name": "first width coefficient"
+     },
+     "a2": {
+      "kind": "model.tch87_a2",
+      "unit": "1",
+      "name": "second width coefficient"
+     },
+     "a3": {
+      "kind": "model.tch87_a3",
+      "unit": "1",
+      "name": "third width coefficient"
+     },
+     "a4": {
+      "kind": "model.tch87_a4",
+      "unit": "1",
+      "name": "fourth width coefficient"
+     },
+     "e1": {
+      "kind": "model.tch87_e1",
+      "unit": "1",
+      "name": "first mixing coefficient"
+     },
+     "e2": {
+      "kind": "model.tch87_e2",
+      "unit": "1",
+      "name": "second mixing coefficient"
+     },
+     "e3": {
+      "kind": "model.tch87_e3",
+      "unit": "1",
+      "name": "third mixing coefficient"
+     }
+    },
+    "outputs": {
+     "F": {
+      "kind": "gas.profile_width",
+      "unit": "s-1",
+      "name": "full width at half depth of the combined line shape"
+     },
+     "eta": {
+      "kind": "gas.damping_share",
+      "unit": "1",
+      "name": "share of the line shape that is damping wings rather than the thermal core",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "source": {
+     "text": "Thompson, P., Cox, D. E. and Hastings, J. B. 1987, J. Appl. Cryst. 20, 79",
+     "doi": "10.1107/S0021889887087090",
+     "where": "eqs. 3 and 4"
+    },
+    "explain": {
+     "curious": "Heat gives a line a rounded core and crowding gives it long wings. This finds the width of the two together and how much of the shape is wing.",
+     "science": "The pseudo-Voigt approximation: a weighted sum of a Gaussian and a Lorentzian of one common FWHM, with the TCH fits for that FWHM and the Lorentzian share; within about 1 % of the Voigt profile."
+    },
+    "examples": [
+     {
+      "sd": 1000000000.0,
+      "gl": 3000000000.0,
+      "F": 6850020802.234399,
+      "eta": 0.9051113249826964
+     }
+    ]
+   },
+   "positive": [
+    {
+     "port": "doppler_width",
+     "says": "Doppler width"
+    }
+   ]
+  },
+  {
+   "id": "sse.gas.line_shape",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "detuning",
+     "letter": "dnu"
+    },
+    {
+     "port": "profile_width",
+     "letter": "F"
+    },
+    {
+     "port": "damping_share",
+     "letter": "eta"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "shape",
+     "letter": "phi"
+    }
+   ],
+   "positive": [
+    {
+     "port": "profile_width",
+     "says": "line width"
+    }
+   ],
+   "checks": [
+    {
+     "port": "damping_share",
+     "min": 0,
+     "max": 1,
+     "says": "damping share must lie between 0 and 1, got {}"
+    }
+   ],
+   "references": [
+    "Thompson, P., Cox, D. E. and Hastings, J. B. 1987, Rietveld refinement of Debye-Scherrer synchrotron X-ray data from Al2O3, J. Appl. Cryst. 20, 79: the pseudo-Voigt width and mixing fits (eqs. 3 and 4), good to about 1 % of the true Voigt. doi:10.1107/S0021889887087090"
+   ],
+   "shown": "φ(Δν) = η L(Δν) + (1 − η) G(Δν), both of full width f",
+   "equation": {
+    "name": "How much of a line falls at each colour near it",
+    "formula": "hw = F / 2\nL = hw / (pi * (dnu * dnu + hw * hw))\nG = sqrt(4 * ln(2) / pi) / F * exp(-4 * ln(2) * dnu * dnu / (F * F))\nphi = eta * L + (1 - eta) * G",
+    "inputs": {
+     "dnu": {
+      "kind": "gas.detuning",
+      "unit": "s-1",
+      "name": "distance in frequency from the line's centre"
+     },
+     "F": {
+      "kind": "gas.profile_width",
+      "unit": "s-1",
+      "name": "full width at half depth of the line shape"
+     },
+     "eta": {
+      "kind": "gas.damping_share",
+      "unit": "1",
+      "name": "share of the shape that is damping wings",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "phi": {
+      "kind": "gas.line_shape",
+      "unit": "s",
+      "name": "share of the line's strength per hertz at this distance from its centre"
+     }
+    },
+    "source": {
+     "text": "Thompson, P., Cox, D. E. and Hastings, J. B. 1987, J. Appl. Cryst. 20, 79",
+     "doi": "10.1107/S0021889887087090",
+     "where": "eq. 2"
+    },
+    "explain": {
+     "curious": "A line is strongest at its centre and fades away on both sides; in a dense gas its wings reach far into neighbouring colours.",
+     "science": "Pseudo-Voigt profile normalised to one over frequency: η times a Lorentzian plus (1 − η) times a Gaussian, both of FWHM f."
+    },
+    "examples": [
+     {
+      "dnu": 2000000000.0,
+      "F": 6850020802.234399,
+      "eta": 0.9051113249826964,
+      "phi": 7.300275908093956e-11
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gas.line_cross_section",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "strength",
+     "letter": "S"
+    },
+    {
+     "port": "shape",
+     "letter": "phi"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "cross_section",
+     "letter": "sigma"
+    }
+   ],
+   "references": [
+    "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, section 10.6 (the classical oscillator: a line's integrated cross-section is πe²f/(m_e c) in Gaussian units, e²f/(4ε₀m_e c) in SI) and section 1.6 (stimulated emission). doi:10.1002/9783527618170"
+   ],
+   "shown": "σ(ν) = S φ(ν)",
+   "equation": {
+    "name": "How strongly one atom absorbs at one colour near a line",
+    "formula": "sigma = S * phi",
+    "inputs": {
+     "S": {
+      "kind": "gas.line_strength",
+      "unit": "m2 s-1",
+      "name": "cross-section summed over the whole line"
+     },
+     "phi": {
+      "kind": "gas.line_shape",
+      "unit": "s",
+      "name": "share of the line per hertz here"
+     }
+    },
+    "outputs": {
+     "sigma": {
+      "kind": "gas.absorption_cross_section",
+      "unit": "m2",
+      "name": "absorbing cross-section of one particle at this wavelength"
+     }
+    },
+    "source": {
+     "text": "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics",
+     "doi": "10.1002/9783527618170",
+     "where": "eq. 10.70"
+    },
+    "explain": {
+     "curious": "The line's whole strength, shared out over the colours its shape reaches.",
+     "science": "Monochromatic cross-section from the integrated cross-section and the normalised profile."
+    },
+    "examples": [
+     {
+      "S": 0.0205,
+      "phi": 1e-12,
+      "sigma": 2.05e-14
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gas.band_cross_section",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "measured_cross_section",
+     "letter": "s0"
+    },
+    {
+     "port": "temperature",
+     "letter": "T"
+    },
+    {
+     "port": "measured_temperature",
+     "letter": "T0"
+    },
+    {
+     "port": "band_temperature_exponent",
+     "letter": "x"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "cross_section",
+     "letter": "sigma"
+    }
+   ],
+   "positive": [
+    {
+     "port": "temperature",
+     "says": "gas temperature"
+    },
+    {
+     "port": "measured_temperature",
+     "says": "temperature the band was measured at"
+    }
+   ],
+   "references": [
+    "Karkoschka, E. and Tomasko, M. G. 2010, Methane absorption coefficients for the jovian planets from laboratory, Huygens, and HST data, Icarus 205, 674: band absorption measured at one temperature and scaled to others. doi:10.1016/j.icarus.2009.07.044"
+   ],
+   "shown": "σ(λ, T) = σ(λ, T₀) (T / T₀)^x",
+   "equation": {
+    "name": "How strongly one molecule absorbs in a measured band, at this heat",
+    "formula": "sigma = s0 * (T / T0) ^ x",
+    "inputs": {
+     "s0": {
+      "kind": "gas.measured_cross_section",
+      "unit": "m2",
+      "name": "cross-section per molecule as measured at this wavelength"
+     },
+     "T": {
+      "kind": "gas.temperature",
+      "unit": "K",
+      "name": "temperature of the gas"
+     },
+     "T0": {
+      "kind": "gas.measured_temperature",
+      "unit": "K",
+      "name": "temperature the band was measured at"
+     },
+     "x": {
+      "kind": "gas.band_temperature_exponent",
+      "unit": "1",
+      "name": "how the band strength follows temperature (0: not at all)",
+      "valid": [
+       -4.0,
+       4.0
+      ]
+     }
+    },
+    "outputs": {
+     "sigma": {
+      "kind": "gas.absorption_cross_section",
+      "unit": "m2",
+      "name": "absorbing cross-section of one particle at this wavelength"
+     }
+    },
+    "source": {
+     "text": "Karkoschka, E. and Tomasko, M. G. 2010, Icarus 205, 674",
+     "doi": "10.1016/j.icarus.2009.07.044",
+     "where": "section 2"
+    },
+    "explain": {
+     "curious": "Molecules such as methane absorb in broad bands made of countless lines. Those are measured in the laboratory and looked up, then adjusted for how warm the gas is.",
+     "science": "A tabulated band cross-section at its measured temperature, scaled by a power of temperature (zero when the source gives no dependence)."
+    },
+    "examples": [
+     {
+      "s0": 1e-26,
+      "T": 150.0,
+      "T0": 296.0,
+      "x": -0.5,
+      "sigma": 1.4047538337136986e-26
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gas.optical_depth",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "cross_section",
+     "letter": "sigma"
+    },
+    {
+     "port": "column",
+     "letter": "N"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "optical_depth",
+     "letter": "tau"
+    }
+   ],
+   "checks": [
+    {
+     "port": "column",
+     "min": 0,
+     "finite": true,
+     "says": "gas column must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Beer-Lambert-Bouguer law of extinction: Liou, K. N. 2002, An Introduction to Atmospheric Radiation, 2nd ed., Academic Press, section 1.4.2. doi:10.1016/S0074-6142(02)80015-4"
+   ],
+   "shown": "τ = σ N",
+   "equation": {
+    "name": "How much a gas dims light at one colour",
+    "formula": "tau = sigma * N",
+    "inputs": {
+     "sigma": {
+      "kind": "gas.absorption_cross_section",
+      "unit": "m2",
+      "name": "absorbing cross-section of one particle"
+     },
+     "N": {
+      "kind": "gas.column",
+      "unit": "m-2",
+      "name": "particles in the way, per square metre of the beam"
+     }
+    },
+    "outputs": {
+     "tau": {
+      "kind": "gas.optical_depth",
+      "unit": "1",
+      "name": "optical depth: each unit dims the light to about a third"
+     }
+    },
+    "source": {
+     "text": "Liou, K. N. 2002, An Introduction to Atmospheric Radiation, 2nd ed.",
+     "doi": "10.1016/S0074-6142(02)80015-4",
+     "where": "section 1.4.2"
+    },
+    "explain": {
+     "curious": "The more absorbing particles in the way, and the bigger each one's shadow, the more light is lost.",
+     "science": "Optical depth of a homogeneous column: cross-section times column density."
+    },
+    "examples": [
+     {
+      "sigma": 1e-26,
+      "N": 1e+27,
+      "tau": 10.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gas.pair_optical_depth",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "pair_coefficient",
+     "letter": "kp"
+    },
+    {
+     "port": "partner_density",
+     "letter": "n2"
+    },
+    {
+     "port": "column",
+     "letter": "N"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "optical_depth",
+     "letter": "tau"
+    }
+   ],
+   "checks": [
+    {
+     "port": "pair_coefficient",
+     "min": 0,
+     "finite": true,
+     "says": "pair coefficient must be zero or more, got {}"
+    },
+    {
+     "port": "partner_density",
+     "min": 0,
+     "finite": true,
+     "says": "partner density must be zero or more, got {}"
+    },
+    {
+     "port": "column",
+     "min": 0,
+     "finite": true,
+     "says": "gas column must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Richard, C. et al. 2012, New section of the HITRAN database: collision-induced absorption (CIA), J. Quant. Spectrosc. Radiat. Transf. 113, 1276: absorption by a pair grows as the product of both densities, k(ν,T) in cm⁵ molecule⁻². doi:10.1016/j.jqsrt.2011.11.004"
+   ],
+   "shown": "τ = k(λ, T) n₂ N₁",
+   "equation": {
+    "name": "How much colliding pairs of molecules dim light",
+    "formula": "tau = kp * n2 * N",
+    "inputs": {
+     "kp": {
+      "kind": "gas.pair_coefficient",
+      "unit": "m5",
+      "name": "absorption by a colliding pair, per density of each partner"
+     },
+     "n2": {
+      "kind": "gas.partner_density",
+      "unit": "m-3",
+      "name": "number of partner particles per cubic metre"
+     },
+     "N": {
+      "kind": "gas.column",
+      "unit": "m-2",
+      "name": "particles in the way, per square metre of the beam"
+     }
+    },
+    "outputs": {
+     "tau": {
+      "kind": "gas.optical_depth",
+      "unit": "1",
+      "name": "optical depth: each unit dims the light to about a third"
+     }
+    },
+    "source": {
+     "text": "Richard, C. et al. 2012, J. Quant. Spectrosc. Radiat. Transf. 113, 1276",
+     "doi": "10.1016/j.jqsrt.2011.11.004",
+     "where": "section 2"
+    },
+    "explain": {
+     "curious": "Some molecules, such as hydrogen, cannot absorb on their own but can while two of them collide. Squeeze the gas and collisions grow with the square of its density, so dense hydrogen turns dark in the infrared.",
+     "science": "Collision-induced absorption: optical depth is the binary coefficient times the partner's number density times the absorber's column."
+    },
+    "examples": [
+     {
+      "kp": 3e-56,
+      "n2": 2.5e+25,
+      "N": 2.5e+29,
+      "tau": 0.1875
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.gas.transmission",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "light_in",
+     "letter": "I"
+    },
+    {
+     "port": "optical_depth",
+     "letter": "tau"
+    },
+    {
+     "port": "path_factor",
+     "letter": "X"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "light_out",
+     "letter": "Io"
+    }
+   ],
+   "checks": [
+    {
+     "port": "optical_depth",
+     "min": 0,
+     "finite": true,
+     "says": "optical depth must be zero or more, got {}"
+    },
+    {
+     "port": "path_factor",
+     "min": 0,
+     "finite": true,
+     "says": "path factor must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Beer-Lambert-Bouguer law of extinction: Liou, K. N. 2002, An Introduction to Atmospheric Radiation, 2nd ed., Academic Press, section 1.4.2. doi:10.1016/S0074-6142(02)80015-4"
+   ],
+   "shown": "I = I₀ e^(−X τ)",
+   "equation": {
+    "name": "Light left after passing through gas",
+    "formula": "Io = I * exp(-X * tau)",
+    "inputs": {
+     "I": {
+      "kind": "light.spectral_flux",
+      "unit": "W m-3",
+      "name": "light arriving at this wavelength"
+     },
+     "tau": {
+      "kind": "gas.optical_depth",
+      "unit": "1",
+      "name": "optical depth of the gas on a straight path through it"
+     },
+     "X": {
+      "kind": "gas.path_factor",
+      "unit": "1",
+      "name": "how many straight paths the light takes through the gas (2 for down and back up at the vertical, more when slanted)",
+      "valid": [
+       0.0,
+       1000.0
+      ]
+     }
+    },
+    "outputs": {
+     "Io": {
+      "kind": "light.spectral_flux",
+      "unit": "W m-3",
+      "name": "light left at this wavelength"
+     }
+    },
+    "source": {
+     "text": "Liou, K. N. 2002, An Introduction to Atmospheric Radiation, 2nd ed.",
+     "doi": "10.1016/S0074-6142(02)80015-4",
+     "where": "eq. 1.4.8"
+    },
+    "explain": {
+     "curious": "Each layer of gas takes the same share of what reaches it, so light fades exponentially with the gas in the way.",
+     "science": "Beer-Lambert-Bouguer extinction along a path of X times the straight optical depth."
+    },
+    "examples": [
+     {
+      "I": 20000000000000.0,
+      "tau": 0.7,
+      "X": 1.5,
+      "Io": 6998754982223.108
+     }
+    ]
+   }
+  }
+ ]
+}

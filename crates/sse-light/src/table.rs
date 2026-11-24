@@ -117,6 +117,40 @@ pub struct Passbands {
     pub list: Vec<Passband>,
 }
 
+/// How the eye turns light into colour: the CIE 1931 2° observer as sums of
+/// lopsided Gaussian lobes `[weight, centre nm, blue width nm, red width nm]`
+/// (Wyman, Sloan and Shirley 2013), summed over `from_nm..=to_nm` in
+/// `step_nm`, and the matrix from XYZ to linear sRGB (IEC 61966-2-1).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Eye {
+    #[serde(default)]
+    pub note: String,
+    pub lobes: EyeLobes,
+    pub from_nm: f64,
+    pub to_nm: f64,
+    pub step_nm: f64,
+    pub xyz_to_linear_srgb: [[f64; 3]; 3],
+    #[serde(default)]
+    pub sources: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct EyeLobes {
+    pub x: Vec<[f64; 4]>,
+    pub y: Vec<[f64; 4]>,
+    pub z: Vec<[f64; 4]>,
+}
+
+impl Eye {
+    /// The wavelengths the eye is summed over, m.
+    pub fn wavelengths_m(&self) -> Vec<f64> {
+        let n = ((self.to_nm - self.from_nm) / self.step_nm + 0.5) as usize;
+        (0..=n)
+            .map(|i| (self.from_nm + self.step_nm * i as f64) * 1e-9)
+            .collect()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Grid {
     pub from_m: f64,
@@ -138,6 +172,8 @@ pub struct LightTable {
     pub gases: Option<Gases>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub passbands: Option<Passbands>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub eye: Option<Eye>,
     #[serde(default)]
     pub references: Vec<Reference>,
 }
@@ -252,6 +288,16 @@ impl LightTable {
                 .find(|b| b.effective_m.is_nan() || b.effective_m <= 0.0)
             {
                 return Err(format!("passband {} needs a positive wavelength", b.id));
+            }
+        }
+        if let Some(e) = &self.eye {
+            if !(e.step_nm > 0.0 && e.to_nm > e.from_nm && e.from_nm > 0.0) {
+                return Err("the eye's wavelengths need a positive step and a rising range".into());
+            }
+            for l in e.lobes.x.iter().chain(&e.lobes.y).chain(&e.lobes.z) {
+                if !(l[2] > 0.0 && l[3] > 0.0) {
+                    return Err("each eye lobe needs positive widths".into());
+                }
             }
         }
         if self.steps_per_decade < 8 || self.grid.points < 2 {

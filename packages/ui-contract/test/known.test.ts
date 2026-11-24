@@ -89,3 +89,13 @@ test("a line: withheld past its rung is pencil; a press makes an exception, and 
   assert.equal(lineChange(kept, "mass", "gm_only"), "gm_only", "keep one fact back");
   assert.equal(lineChange(t, "atmosphere.pressure", "known"), "known", "show one fact early");
 });
+
+test("set_known and undo_known carry exact seconds when given (a year in floating point is only good to half a minute)", () => {
+  const at_s = "145480536000000017";
+  const set: Intent = { kind: "set_known", address: "u:k/sys:1/body:3", audience: "everyone", landmark: "known", scope: "this", at_yr: 4.61e9, at_s };
+  assert.equal(checkIntent(set), null);
+  assert.equal((intentToRequest(set) as { at_s: bigint }).at_s, 145480536000000017n);
+  const undo: Intent = { kind: "undo_known", undo: "abc", at_yr: 4.61e9, at_s };
+  assert.equal((intentToRequest(undo) as { at_s: bigint }).at_s, 145480536000000017n);
+  assert.match(checkIntent({ ...set, at_s: "4.6e9" }) ?? "", /whole seconds/);
+});

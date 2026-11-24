@@ -2052,6 +2052,8 @@ fn intents_through_the_api() {
             "stack_packs",
             "scan_toggle",
             "grant",
+            "set_known",
+            "undo_known",
             "add_note",
             "set_campaign_now",
             "hail"
@@ -3393,6 +3395,124 @@ fn detect_on_the_magnetic_channel_with_range_bands() {
     assert_eq!(d["channel"], "magnetic", "{d}");
     assert_eq!(d["detectable"], true, "{d}");
     assert_eq!(d["distance_band"], "distant", "{d}");
+}
+
+/// X3i (RK11, our share): every Traveller sensor kind carries an instrument
+/// the kernel's `detect` reads. Each computes its range from what the target
+/// gives off (only the datalink, a handshake, keeps V3's authored range), and
+/// each detection is labelled with the pack's own range bands.
+#[test]
+fn the_traveller_sensors_compute_their_ranges() {
+    let mut k = crate::Kernel::new();
+    let pack = |p: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
+    };
+    let traveller = pack("packs/traveller/pack.json");
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-reference/pack.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let sensors = &traveller["provides"]["other"]["sensors"];
+    let kinds = sensors["kinds"].as_array().unwrap();
+    assert_eq!(kinds.len(), 12);
+    // A 200-tonne ship 1 au from a Sun-like star: sunlit hull, warm radiators,
+    // a transponder, a radar cross-section and its mass.
+    let au = 1.495978707e11;
+    let ship = |d: f64| {
+        serde_json::json!({"address": "u:t/sys:0/ship:0", "distance_m": d,
+            "conditions": {"address": "u:t/sys:0/ship:0", "radius_m": 15.0, "bond_albedo": 0.3,
+                "lit_by": [{"address": "u:t/sys:0/star:0", "luminosity_w": 3.828e26, "t_k": 5772.0, "distance_m": au}],
+                "radiators": [{"t_k": 400.0, "area_m2": 200.0}],
+                "transmitters": [{"frequency_hz": 3e9, "bandwidth_hz": 1e6, "power_w": 100.0}]},
+            "radar_cross_section_m2": 100.0, "mass_kg": 2.0e6})
+    };
+    let instruments: Vec<serde_json::Value> =
+        kinds.iter().map(|s| s["instrument"].clone()).collect();
+    let r = send(
+        serde_json::json!({"op": "detect", "targets": [ship(1.0e7)], "sensors": instruments,
+        "range_bands": sensors["range_bands"]}),
+    );
+    assert_eq!(r["type"], "detected", "{r}");
+    let ds = r["detections"].as_array().unwrap();
+    assert_eq!(ds.len(), 12);
+    for (s, d) in kinds.iter().zip(ds) {
+        let id = s["id"].as_str().unwrap();
+        let range = d["range_m"].as_f64().unwrap();
+        assert!(range.is_finite() && range > 0.0, "{id}: {d}");
+        let want = if id == "datalink" {
+            "authored"
+        } else {
+            "computed"
+        };
+        assert_eq!(d["range_source"], want, "{id}: {d}");
+        assert_eq!(d["authored_range_m"], s["range_m"], "{id}: {d}");
+        assert!(d["distance_band"].is_string(), "{id}: {d}");
+        eprintln!(
+            "{id}: {} reaches {range:.3e} m ({}), V3 typed {:.3e} m",
+            d["method"],
+            d["range_band"],
+            s["range_m"].as_f64().unwrap()
+        );
+    }
+    let by = |id: &str| &ds[kinds.iter().position(|s| s["id"] == id).unwrap()];
+    // The radar is heard further than it sees; the radar's power is reported
+    // for the power ledger.
+    let radar = by("search_radar");
+    assert!(radar["heard_to_m"].as_f64().unwrap() > radar["range_m"].as_f64().unwrap());
+    assert_eq!(radar["transmit_power_w"], 1e5);
+    // A spectrum reaches less far than an image through the same telescope.
+    assert!(
+        by("spectral_5au")["range_m"].as_f64().unwrap()
+            < by("telescope_15au")["range_m"].as_f64().unwrap()
+    );
+    // The gravimetric grid finds a ship's mass only close by.
+    assert!(by("gravimetric")["range_m"].as_f64().unwrap() < 1.0e5);
+}
+
+/// ND2: light through gas reads each gas's absorption from the data sheet
+/// and gives the colour to the eye before and after.
+#[test]
+fn light_through_gas_gives_the_colour_to_the_eye() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let pack = |p: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-reference/pack.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "light_through_gas", "passages": [
+            {"address": "sun", "t_k": 5800.0, "layers": []},
+            {"address": "giant", "t_k": 5772.0, "path_factor": 2.0,
+             "layers": [{"t_k": 80.0, "path_m": 5e4, "gases": [
+                 {"gas": "h2", "number_density_m3": 1e25}, {"gas": "ch4", "number_density_m3": 2e22}]}],
+             "wavelengths_m": [5.5e-7, 8.9e-7]}]}),
+    );
+    assert_eq!(r["type"], "gas_passed", "{r}");
+    assert_eq!(r["passages"][0]["colour_in"]["hex"], "#FFF1EB", "{r}");
+    let g = &r["passages"][1]["passed"];
+    assert_eq!(g["wavelengths_m"].as_array().unwrap().len(), 2, "{g}");
+    // Methane's bands are read from the sheet; hydrogen has no rows yet,
+    // which is said, and it passes the light.
+    assert_eq!(g["features"][0]["feature"], "ch4.visible-bands", "{g}");
+    assert!(g["not_looked_up"].to_string().contains("h2"), "{g}");
+    let out = &r["passages"][1]["colour_out"]["srgb"];
+    assert!(out[2].as_u64() > out[0].as_u64(), "{out}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "light_through_gas", "passages": [
+            {"layers": [{"t_k": 80.0, "path_m": 1.0, "gases": [{"gas": "unobtainium", "number_density_m3": 1.0}]}], "t_k": 5000.0}]}),
+    );
+    assert_eq!(r["code"], "bad_gas", "{r}");
 }
 
 /// X3e: the chart room's Packs screen adds the Traveller pack on top of the

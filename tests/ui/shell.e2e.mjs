@@ -80,8 +80,9 @@ try {
     const tabsToTarn = await tabTo(page, () => document.activeElement?.getAttribute("aria-label")?.startsWith("Tarn"));
     await page.keyboard.press("Enter");
     await page.waitForSelector("section[aria-label='Tarn']");
-    // From Tarn the way to Mass passes the Build tool bar (Undo, Redo, Copy, Keyboard) and the card's fields before it.
-    const tabsToMass = await tabTo(page, () => document.activeElement?.id && document.querySelector(`label[for='${document.activeElement.id}']`)?.textContent?.startsWith("Mass"), 24);
+    // From Tarn the way to Mass passes the Build tool bar (Undo, Redo, Copy, Keyboard) and the card's fields before it,
+    // each field with its "Known to" eye and popup button once the kernel answers known_to (SV1).
+    const tabsToMass = await tabTo(page, () => document.activeElement?.id && document.querySelector(`label[for='${document.activeElement.id}']`)?.textContent?.startsWith("Mass"), 36);
     await page.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
     await page.keyboard.type("0.9");
     await page.keyboard.press("Enter");

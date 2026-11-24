@@ -1,6 +1,7 @@
 //! FT2 checks (future tech design 5 to 8): a level set on the setting and
-//! inherited, exceptions, "Develop it" as one dated event, the size rule on
-//! both sides of a part's home level, and fictional by ceiling.
+//! inherited, exceptions, "Develop it" as one dated event, maturity acting on
+//! the figure on both sides of a part's home level (5.2), and fictional by
+//! ceiling, with fuel-specific ceilings.
 
 use crate::Kernel;
 use std::path::PathBuf;
@@ -123,7 +124,9 @@ fn the_availability_reading_never_says_no() {
     assert_eq!(r["reading"], "can build", "{r}");
     assert_eq!(r["needs"][0]["advance"], "pbo-fibre");
     assert_eq!(r["leans_on"][0]["ink"], "built");
-    // A beanstalk on Earth needs nanotube cable: two levels short, 100 times the size.
+    // A beanstalk on Earth needs nanotube cable, two levels short. A
+    // material loses 5 times per level (47 to 1.9 MN m/kg), which is worse
+    // than the PBO fibre they hold, so the first cable is floored at PBO.
     let r = reading(
         &mut k,
         vesh,
@@ -131,15 +134,21 @@ fn the_availability_reading_never_says_no() {
         None,
     );
     assert_eq!(r["reading"], "short", "{r}");
-    assert_eq!(r["needs"][0]["levels_short"], 2);
-    assert_eq!(r["needs"][0]["size_factor"], 100.0);
-    assert_eq!(r["part_sizes"]["structure"], 100.0);
+    let n = &r["needs"][0];
+    assert_eq!(n["levels_short"], 2);
+    assert_eq!(n["maturity"], "worse_by");
+    assert_eq!(n["figure_now"], 3_718_000.0);
+    assert_eq!(n["floored_at"], "PBO fibre");
+    let size = n["size_factor"].as_f64().unwrap();
+    assert!((size - 47_015_000.0 / 3_718_000.0).abs() < 1e-9, "{size}");
+    assert_eq!(r["part_sizes"]["structure"], size);
     assert_eq!(r["leans_on"][0]["ink"], "not yet built");
+    assert_eq!(r["leans_on"][0]["family"], "material");
     assert!(
-        r["needs"][0]["words"]
+        n["words"]
             .as_str()
             .unwrap()
-            .starts_with("2 levels short: Woven carbon cable"),
+            .starts_with("2 levels short: Woven carbon cable, no better yet than their PBO fibre"),
         "{r}"
     );
     // Develop it: one dated event; before it the reading is as it was.
@@ -185,6 +194,66 @@ fn the_availability_reading_never_says_no() {
 }
 
 #[test]
+fn maturity_acts_on_the_figure() {
+    let mut k = open();
+    let vesh = "u:ft/actor:vesh";
+    let drive = |k: &mut Kernel, needs: serde_json::Value, fuel: Option<&str>| {
+        let mut p = serde_json::json!({"part": "drive", "needs": needs});
+        if let Some(f) = fuel {
+            p["fuel"] = f.into();
+        }
+        let r = ask(
+            k,
+            serde_json::json!({"op": "tech_reading", "holder": vesh, "parts": [p]}),
+        );
+        assert_eq!(r["type"], "tech_availability", "{r}");
+        r["reading"].clone()
+    };
+    // A fusion torch one level short: an engine is 7 times worse per level,
+    // still far past their nuclear thermal rocket, so no floor; its fuel's
+    // energy is physics and never moves.
+    let r = drive(
+        &mut k,
+        serde_json::json!({"exhaust_km_s": 300.0, "fuel_j_per_kg": 3.0e14}),
+        None,
+    );
+    let ex = r["needs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|n| n["figure"] == "exhaust_km_s")
+        .unwrap()
+        .clone();
+    assert_eq!(ex["reading"], "short", "{r}");
+    assert_eq!(ex["maturity"], "worse_by");
+    assert!((ex["figure_now"].as_f64().unwrap() - 347.499 / 7.0).abs() < 1e-9);
+    assert!((ex["size_factor"].as_f64().unwrap() - 7.0).abs() < 1e-9);
+    assert!(ex.get("floored_at").is_none(), "{ex}");
+    let fuel = r["needs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|n| n["figure"] == "fuel_j_per_kg")
+        .unwrap()
+        .clone();
+    assert_eq!(fuel["maturity"], "fixed", "{fuel}");
+    assert_eq!(fuel["size_factor"], 1.0);
+    // 6 km/s is past the hydrogen-oxygen ceiling, but that ceiling is for
+    // that fuel only: a nuclear thermal rocket gives it, nothing fictional.
+    let r = drive(&mut k, serde_json::json!({"exhaust_km_s": 6.0}), None);
+    assert_eq!(r["reading"], "can build", "{r}");
+    assert_eq!(r["needs"][0]["advance"], "nuclear-thermal");
+    assert_eq!(r["fictional"], false, "{r}");
+    // The same need from a hydrogen-oxygen engine breaks its chemistry.
+    let r = drive(
+        &mut k,
+        serde_json::json!({"exhaust_km_s": 6.0}),
+        Some("hydrogen-oxygen"),
+    );
+    assert_eq!(r["fictional"], true, "{r}");
+}
+
+#[test]
 fn parts_shrink_beyond_their_home_level() {
     let mut k = open();
     let vesh = "u:ft/actor:vesh";
@@ -192,8 +261,9 @@ fn parts_shrink_beyond_their_home_level() {
         &mut k,
         serde_json::json!({"op": "set_tech", "holder": vesh, "level": 6, "at_s": 0}),
     );
-    // The hydrogen-oxygen rocket's home is level 3: three beyond, shrinking by
-    // a half for at most two levels.
+    // The hydrogen-oxygen rocket's home is level 3. Three beyond, its exhaust
+    // would be 1.5 cubed better, but it stops at the ceiling for its own fuel
+    // (5.18 km/s), not at the nuclear rocket's mark; the part shrinks to match.
     let r = ask(
         &mut k,
         serde_json::json!({"op": "tech_reading", "holder": vesh,
@@ -201,7 +271,9 @@ fn parts_shrink_beyond_their_home_level() {
     );
     let n = &r["reading"]["needs"][0];
     assert_eq!(n["advance"], "chemical-rocket", "{r}");
-    assert_eq!(n["size_factor"], 0.25);
+    assert_eq!(n["maturity"], "improved");
+    assert_eq!(n["figure_now"], 5.18);
+    assert!((n["size_factor"].as_f64().unwrap() - 4.565 / 5.18).abs() < 1e-9);
     // Parts read through an unknown figure are refused, not guessed.
     let r = ask(
         &mut k,
@@ -209,4 +281,237 @@ fn parts_shrink_beyond_their_home_level() {
         "parts": [{"part": "drive", "needs": {"warp_factor": 9.0}}]}),
     );
     assert_eq!(r["code"], "bad_tech", "{r}");
+}
+
+#[test]
+fn a_fictional_device_keeps_the_size_rule_and_says_where() {
+    let mut k = Kernel::new();
+    let setting = serde_json::json!({"format": "sse.pack/1", "id": "t.torch", "version": "0.1.0",
+        "kind": ["universe"], "kernel_range": "^0.1", "licence": "Apache-2.0",
+        "provides": {"other": {"tech": {"advances": [{"id": "reactionless", "name": "Reactionless drive",
+            "level": 7, "sets": {"exhaust_km_s": 100000.0}, "part": "drive", "mark": "fictional",
+            "where": {"momentum": "the nearest large mass"}}]}}}});
+    let r = ask(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [base_tech(), setting]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    ask(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "ft", "seed": "ft"}),
+    );
+    ask(
+        &mut k,
+        serde_json::json!({"op": "set_tech", "holder": "u:ft", "level": 4, "at_s": 0}),
+    );
+    let r = reading(
+        &mut k,
+        "u:ft",
+        serde_json::json!({"exhaust_km_s": 50000.0}),
+        None,
+    );
+    let n = &r["needs"][0];
+    assert_eq!(n["advance"], "reactionless", "{r}");
+    assert_eq!(n["family"], "fictional");
+    assert_eq!(n["maturity"], "size");
+    assert_eq!(n["size_factor"], 1000.0);
+    assert_eq!(
+        r["leans_on"][0]["where"]["momentum"],
+        "the nearest large mass"
+    );
+}
+
+#[test]
+fn ceilings_for_one_fuel_and_electric_drives() {
+    // RK2: hydrogen-oxygen's exhaust ceiling holds for that fuel only, so a
+    // drive needing an ion thruster's exhaust is not fictional; a "drive"
+    // need still reads the chemical rocket, not the electric drives that
+    // meet the same exhaust speed but also need a power plant.
+    let mut k = open();
+    let vesh = "u:ft/actor:vesh";
+    ask(
+        &mut k,
+        serde_json::json!({"op": "set_tech", "holder": vesh, "level": 3, "at_s": 0}),
+    );
+    let r = ask(
+        &mut k,
+        serde_json::json!({"op": "tech_reading", "holder": vesh,
+        "parts": [{"part": "electric drive", "needs": {"exhaust_km_s": 30.0}}]}),
+    );
+    let n = &r["reading"]["needs"][0];
+    assert!(n.get("fictional").is_none(), "{r}");
+    assert_eq!(n["advance"], "ion-thruster", "{r}");
+    let r = ask(
+        &mut k,
+        serde_json::json!({"op": "tech_reading", "holder": vesh,
+        "parts": [{"part": "drive", "needs": {"exhaust_km_s": 4.0}}]}),
+    );
+    assert_eq!(
+        r["reading"]["needs"][0]["advance"], "chemical-rocket",
+        "{r}"
+    );
+    // Past light speed is still fictional.
+    let r = ask(
+        &mut k,
+        serde_json::json!({"op": "tech_reading", "holder": vesh,
+        "parts": [{"part": "drive", "needs": {"exhaust_km_s": 4.0e5}}]}),
+    );
+    assert!(r["reading"]["needs"][0]["fictional"].is_string(), "{r}");
+}
+
+fn part(k: &mut Kernel, p: serde_json::Value) -> serde_json::Value {
+    let r = ask(
+        k,
+        serde_json::json!({"op": "tech_reading", "holder": "u:ft/actor:vesh", "parts": [p]}),
+    );
+    assert_eq!(r["type"], "tech_availability", "{r}");
+    r["reading"].clone()
+}
+
+fn balance<'a>(r: &'a serde_json::Value, id: &str) -> &'a serde_json::Value {
+    r["balances"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|b| b["balance"] == id)
+        .unwrap_or_else(|| panic!("no {id} in {r}"))
+}
+
+#[test]
+fn the_books_must_close() {
+    // FT6 (design 15.1): each balance is an Equation block in base-tech.
+    let mut k = open();
+    // A "chemical" drive with a torch's exhaust: under every ceiling it
+    // names, but its own fuel cannot pay for it.
+    let r = part(
+        &mut k,
+        serde_json::json!({"part": "drive", "needs": {"exhaust_km_s": 4.0},
+            "quantities": {"exhaust_km_s": 40.0}}),
+    );
+    let b = balance(&r, "energy-pays-exhaust");
+    assert_eq!(b["closes"], false, "{b}");
+    assert!((b["supply"].as_f64().unwrap() - 5176.0).abs() < 5.0, "{b}");
+    assert!(
+        b["words"]
+            .as_str()
+            .unwrap()
+            .contains("7.73 times as fast as its fuel's energy"),
+        "{b}"
+    );
+    assert_eq!(r["fictional"], true);
+    assert_eq!(r["leans_on"][0]["ink"], "fictional", "{r}");
+    // The real one closes: the J-2's 4.168 km/s is 81% of what the fuel pays for.
+    let r = part(
+        &mut k,
+        serde_json::json!({"part": "drive", "needs": {"exhaust_km_s": 4.168}}),
+    );
+    let b = balance(&r, "energy-pays-exhaust");
+    assert_eq!(b["closes"], true, "{b}");
+    assert_eq!(r["fictional"], false);
+    // Thrust with nothing thrown: momentum does not close, and says so.
+    let r = part(
+        &mut k,
+        serde_json::json!({"part": "drive", "quantities": {"thrust_n": 1.0e5, "mdot_kg_s": 0.0,
+            "exhaust_km_s": 0.0, "plant_w": 1.0e6}}),
+    );
+    let b = balance(&r, "momentum");
+    assert_eq!(b["closes"], false, "{b}");
+    assert!(b["words"]
+        .as_str()
+        .unwrap()
+        .contains("conservation of momentum"));
+    // Not enough to go on is listed, never guessed.
+    let r = part(
+        &mut k,
+        serde_json::json!({"part": "drive", "quantities": {"thrust_n": 1.0e5}}),
+    );
+    let u = r["unchecked"].to_string();
+    assert!(u.contains("jet-power") && u.contains("plant_w"), "{u}");
+}
+
+#[test]
+fn heat_flows_downhill_unless_a_pump_is_paid_for() {
+    let mut k = open();
+    // 100 kW from quarters at 300 K, shed by a 600 K radiator: Carnot asks
+    // at least 100 kW of pump work.
+    let q = |pump: f64| {
+        serde_json::json!({"part": "radiator", "quantities": {"q_w": 1.0e5,
+            "radiator_k": 600.0, "waste_heat_k": 300.0, "pump_w": pump}})
+    };
+    let r = part(&mut k, q(0.0));
+    let b = balance(&r, "heat-downhill");
+    assert_eq!(b["closes"], false, "{b}");
+    assert!((b["demand"].as_f64().unwrap() - 1.0e5).abs() < 1e-6);
+    assert!(b["words"].as_str().unwrap().contains("nothing pays for it"));
+    let r = part(&mut k, q(1.0e5));
+    assert_eq!(balance(&r, "heat-downhill")["closes"], true);
+    // A radiator cooler than its source needs no pump.
+    let r = part(
+        &mut k,
+        serde_json::json!({"part": "radiator", "quantities": {"q_w": 1.0e5,
+            "radiator_k": 276.0, "waste_heat_k": 300.0}}),
+    );
+    let b = balance(&r, "heat-downhill");
+    assert_eq!(b["closes"], true, "{b}");
+    assert_eq!(b["demand"], 0.0);
+}
+
+#[test]
+fn real_craft_close_their_books() {
+    // Design 15.6: the craft in base-tech that name a balance, read through
+    // the same blocks, close it. Quantities are converted from each row's
+    // unit to the unit its name says; a row without enough is unchecked.
+    // ISS: the ammonia loops cool cabin air at a crew's 300 K (the
+    // waste_heat_k figure's built mark), the row's one missing quantity.
+    let pack = base_tech();
+    let craft = pack["provides"]["other"]["tech"]["real_craft"]
+        .as_array()
+        .unwrap()
+        .clone();
+    let mut k = open();
+    let mut closed = vec![];
+    for c in &craft {
+        let tests: Vec<&str> = c["tests"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|t| t.as_str())
+            .collect();
+        let mut quantities = serde_json::Map::new();
+        for (name, q) in c["quantities"].as_object().unwrap() {
+            quantities.insert(name.clone(), q["v"].clone());
+        }
+        if c["id"] == "iss-radiators" {
+            quantities.insert("waste_heat_k".into(), 300.0.into());
+        }
+        let mut p = serde_json::json!({"part": c["id"], "quantities": quantities});
+        if let Some(v) = c["quantities"]["exhaust_km_s"]["v"].as_f64() {
+            // A hydrogen-oxygen stage: the drive need finds the rocket and its fuel.
+            if v > 4.0 {
+                p["needs"] = serde_json::json!({"exhaust_km_s": v});
+                p["part"] = "drive".into();
+            }
+        }
+        let r = part(&mut k, p);
+        for b in r["balances"].as_array().unwrap() {
+            assert_eq!(b["closes"], true, "{}: {b}", c["id"]);
+            if tests.contains(&b["balance"].as_str().unwrap()) {
+                closed.push(format!(
+                    "{}:{}",
+                    c["id"].as_str().unwrap(),
+                    b["balance"].as_str().unwrap()
+                ));
+            }
+        }
+    }
+    for want in [
+        "iss-radiators:heat-downhill",
+        "saturn-v-s-ii:energy-pays-exhaust",
+        "saturn-v-s-ivb:energy-pays-exhaust",
+    ] {
+        assert!(
+            closed.iter().any(|c| c == want),
+            "{want} not checked: {closed:?}"
+        );
+    }
 }

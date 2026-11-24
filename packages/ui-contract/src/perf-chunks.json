@@ -45,7 +45,7 @@
       "name": "Light, spectra and the sky",
       "meaning": "Starlight, spectra, activity, air optics, nebulae, planet finding and the sky from a world.",
       "budget_ms": 300,
-      "sources": ["read_light", "detect", "read_air_optics", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"]
+      "sources": ["read_light", "detect", "read_air_optics", "light_through_gas", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"]
     },
     {
       "id": "matter",
@@ -83,7 +83,7 @@
       "name": "Seats, rules and programs",
       "meaning": "The game layer: seats and grants, disclosure, rules, ship programs, intents and the chronicle's notes.",
       "budget_ms": 100,
-      "sources": ["grant", "scan_toggle", "disclosures", "rules", "rules_step", "rules_pending", "rules_decide", "rules_policy", "programs", "programs_step", "attach_program", "detach_program", "templates", "create", "retire", "intents", "set_seats", "send_intent", "intent_decide", "add_actor", "record", "add_note", "set_kept", "hold", "who_holds", "holdings_in", "set_tech", "tech_of", "tech_reading", "export_chronicle", "import_chronicle", "codes"]
+      "sources": ["grant", "scan_toggle", "known_to", "set_known", "undo_known", "known_in", "disclosures", "rules", "rules_step", "rules_pending", "rules_decide", "rules_policy", "programs", "programs_step", "attach_program", "detach_program", "templates", "create", "retire", "intents", "set_seats", "send_intent", "intent_decide", "add_actor", "record", "add_note", "set_kept", "hold", "who_holds", "holdings_in", "set_tech", "tech_of", "tech_reading", "export_chronicle", "import_chronicle", "codes", "set_link", "links_in"]
     },
     {
       "id": "drawing",

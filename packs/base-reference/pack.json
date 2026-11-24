@@ -8438,6 +8438,13 @@
       "v": 1.00782503224,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 0.99998,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.998 atom % (Table 4)"
      }
     },
     {
@@ -8449,6 +8456,13 @@
       "v": 2.01410177812,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 1.97e-05,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.00197 atom % (Table 4)"
      }
     },
     {
@@ -8478,6 +8492,13 @@
       "v": 3.01602932197,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 0.000166,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.0166 atom % (Table 4)"
      }
     },
     {
@@ -8489,31 +8510,66 @@
       "v": 4.00260325413,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 0.999834,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.9834 atom % (Table 4)"
      }
     },
     {
      "id": "li6",
      "element": "li",
      "a": 6,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.07589,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "7.589 atom % (Table 4)"
+     }
     },
     {
      "id": "li7",
      "element": "li",
      "a": 7,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.92411,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "92.411 atom % (Table 4)"
+     }
     },
     {
      "id": "c12",
      "element": "c",
      "a": 12,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.98965,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "98.965 atom % (Table 4)"
+     }
     },
     {
      "id": "c13",
      "element": "c",
      "a": 13,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.01035,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "1.035 atom % (Table 4)"
+     }
     },
     {
      "id": "c14",
@@ -8532,25 +8588,53 @@
      "id": "n14",
      "element": "n",
      "a": 14,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.99774,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.774 atom % (Table 4)"
+     }
     },
     {
      "id": "n15",
      "element": "n",
      "a": 15,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.00226,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.226 atom % (Table 4)"
+     }
     },
     {
      "id": "o16",
      "element": "o",
      "a": 16,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.99777,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.777 atom % (Table 4)"
+     }
     },
     {
      "id": "o18",
      "element": "o",
      "a": 18,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.00188,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.188 atom % (Table 4)"
+     }
     },
     {
      "id": "be10",
@@ -11745,7 +11829,266 @@
        "unit": "1",
        "src": "fudge-register",
        "check": "authored"
-      }
+      },
+      "absorption": [
+       {
+        "id": "ch4.visible-bands",
+        "kind": "table",
+        "lambda_nm": [
+         410.0,
+         415.0,
+         420.0,
+         425.0,
+         430.0,
+         435.0,
+         440.0,
+         445.0,
+         450.0,
+         455.0,
+         460.0,
+         465.0,
+         470.0,
+         475.0,
+         480.0,
+         485.0,
+         490.0,
+         495.0,
+         500.0,
+         505.0,
+         510.0,
+         515.0,
+         520.0,
+         525.0,
+         530.0,
+         535.0,
+         540.0,
+         545.0,
+         550.0,
+         555.0,
+         560.0,
+         565.0,
+         570.0,
+         575.0,
+         580.0,
+         585.0,
+         590.0,
+         595.0,
+         600.0,
+         605.0,
+         610.0,
+         615.0,
+         620.0,
+         625.0,
+         630.0,
+         635.0,
+         640.0,
+         645.0,
+         650.0,
+         655.0,
+         660.0,
+         665.0,
+         670.0,
+         675.0,
+         680.0,
+         685.0,
+         690.0,
+         695.0,
+         700.0,
+         705.0,
+         710.0,
+         715.0,
+         720.0,
+         725.0,
+         730.0,
+         735.0,
+         740.0,
+         745.0,
+         750.0,
+         755.0,
+         760.0,
+         765.0,
+         770.0,
+         775.0,
+         780.0,
+         785.0,
+         790.0,
+         795.0,
+         800.0,
+         805.0,
+         810.0,
+         815.0,
+         820.0,
+         825.0,
+         830.0,
+         835.0,
+         840.0,
+         845.0,
+         850.0,
+         855.0,
+         860.0,
+         865.0,
+         870.0,
+         875.0,
+         880.0,
+         885.0,
+         890.0,
+         895.0,
+         900.0,
+         905.0,
+         910.0,
+         915.0,
+         920.0,
+         925.0,
+         930.0,
+         935.0,
+         940.0,
+         945.0,
+         950.0,
+         955.0,
+         960.0,
+         965.0,
+         970.0,
+         975.0,
+         980.0,
+         985.0,
+         990.0,
+         995.0,
+         1000.0
+        ],
+        "sigma": {
+         "v": [
+          3.72e-29,
+          0.0,
+          3.35e-28,
+          0.0,
+          3.72e-29,
+          7.44e-29,
+          1.34e-27,
+          0.0,
+          3.72e-29,
+          3.35e-28,
+          1.6e-27,
+          1.86e-28,
+          1.12e-28,
+          2.98e-28,
+          1.97e-27,
+          1.23e-26,
+          2.6e-28,
+          1.12e-28,
+          5.21e-28,
+          1.97e-27,
+          5.84e-27,
+          4.09e-28,
+          1.67e-27,
+          1.56e-27,
+          1.26e-27,
+          5.8e-27,
+          2.67e-26,
+          2.89e-26,
+          4.09e-28,
+          1.12e-27,
+          1.08e-27,
+          1.86e-27,
+          6.32e-27,
+          1.71e-26,
+          7.44e-27,
+          7.44e-28,
+          1.12e-27,
+          1e-26,
+          8.18e-27,
+          3.35e-27,
+          1.53e-26,
+          1.15e-25,
+          2.54e-25,
+          4.32e-26,
+          3.35e-27,
+          1.49e-27,
+          5.58e-27,
+          8.18e-27,
+          1.41e-26,
+          2.27e-26,
+          3.46e-26,
+          5.06e-26,
+          4.58e-26,
+          6.7e-27,
+          7.44e-27,
+          1.64e-26,
+          5.95e-27,
+          1.38e-26,
+          9.08e-26,
+          1.11e-25,
+          4.54e-26,
+          4.32e-26,
+          4.69e-25,
+          1.22e-24,
+          1.03e-24,
+          2.93e-25,
+          5.32e-26,
+          5.21e-27,
+          5.21e-27,
+          4.09e-27,
+          2.9e-26,
+          5.77e-26,
+          5.36e-26,
+          9.19e-26,
+          2.06e-25,
+          2.49e-25,
+          2.05e-25,
+          3.61e-25,
+          3.35e-25,
+          2.16e-25,
+          1.3e-25,
+          5.58e-26,
+          1.86e-26,
+          1.12e-26,
+          3.72e-27,
+          5.58e-26,
+          2.23e-25,
+          1.82e-25,
+          9.67e-26,
+          3.27e-25,
+          9.34e-25,
+          1.63e-24,
+          6.62e-25,
+          3.76e-25,
+          1.21e-24,
+          6.62e-24,
+          8.97e-24,
+          1e-23,
+          4.72e-24,
+          9.9e-25,
+          2.83e-25,
+          3.12e-25,
+          1.71e-25,
+          6.7e-26,
+          2.98e-26,
+          7.44e-27,
+          7.44e-27,
+          3.72e-26,
+          7.07e-26,
+          1e-25,
+          2.27e-25,
+          8.89e-25,
+          1.39e-24,
+          1.33e-24,
+          1.26e-24,
+          3.05e-24,
+          4.58e-24,
+          3.72e-24,
+          2.53e-24
+         ],
+         "unit": "m2"
+        },
+        "at_k": 126.5,
+        "t_exponent": 0.0,
+        "valid_k": [
+         100.0,
+         300.0
+        ],
+        "src": "karkoschka1994",
+        "note": "The methane bands that colour Uranus and Neptune and darken the giants in the red, measured from the giants' own spectra at their temperatures (125 to 128 K). Sampled every 5 nm from a 1 nm table, so narrow band edges are smoothed; near-zero values are the table's floor."
+       }
+      ]
      },
      "chemical": {
       "states": {
@@ -12356,6 +12699,76 @@
        ],
        "src": "atom-isotropic"
       }
+     }
+    },
+    {
+     "id": "na",
+     "formula": {
+      "na": 1
+     },
+     "names": {
+      "physics": "sodium vapour",
+      "plain": "sodium as a gas",
+      "story": "sodium vapour"
+     },
+     "optical": {
+      "absorption": [
+       {
+        "id": "na.d2",
+        "kind": "line",
+        "lambda_nm": 588.995,
+        "f": 0.6408,
+        "lower_ev": 0.0,
+        "gamma_rad_s": 61600000.0,
+        "src": "nist-handbook-na",
+        "note": "Sodium's D2 line (3s to 3p 3/2), air wavelength. f worked out from Aki = 6.160e+07 s-1 and g_u/g_l = 4/2; radiative damping is that Aki (the upper level's only decay). No collisional widening row yet: the pressure-widened wings of dense airs (white dwarfs, brown dwarfs) wait for a cited widening law (Allard et al.)."
+       },
+       {
+        "id": "na.d1",
+        "kind": "line",
+        "lambda_nm": 589.5924,
+        "f": 0.32,
+        "lower_ev": 0.0,
+        "gamma_rad_s": 61400000.0,
+        "src": "nist-handbook-na",
+        "note": "Sodium's D1 line (3s to 3p 1/2), air wavelength. f worked out from Aki = 6.140e+07 s-1 and g_u/g_l = 2/2; radiative damping is that Aki (the upper level's only decay). No collisional widening row yet: the pressure-widened wings of dense airs (white dwarfs, brown dwarfs) wait for a cited widening law (Allard et al.)."
+       }
+      ]
+     }
+    },
+    {
+     "id": "k",
+     "formula": {
+      "k": 1
+     },
+     "names": {
+      "physics": "potassium vapour",
+      "plain": "potassium as a gas",
+      "story": "potassium vapour"
+     },
+     "optical": {
+      "absorption": [
+       {
+        "id": "k.d2",
+        "kind": "line",
+        "lambda_nm": 766.48991,
+        "f": 0.6676,
+        "lower_ev": 0.0,
+        "gamma_rad_s": 37900000.0,
+        "src": "nist-handbook-k",
+        "note": "Potassium's D2 line (4s to 4p 3/2), air wavelength. f worked out from Aki = 3.790e+07 s-1 and g_u/g_l = 4/2; radiative damping is that Aki (the upper level's only decay). No collisional widening row yet: the pressure-widened wings of dense airs (white dwarfs, brown dwarfs) wait for a cited widening law (Allard et al.)."
+       },
+       {
+        "id": "k.d1",
+        "kind": "line",
+        "lambda_nm": 769.89645,
+        "f": 0.3323,
+        "lower_ev": 0.0,
+        "gamma_rad_s": 37400000.0,
+        "src": "nist-handbook-k",
+        "note": "Potassium's D1 line (4s to 4p 1/2), air wavelength. f worked out from Aki = 3.740e+07 s-1 and g_u/g_l = 2/2; radiative damping is that Aki (the upper level's only decay). No collisional widening row yet: the pressure-widened wings of dense airs (white dwarfs, brown dwarfs) wait for a cited widening law (Allard et al.)."
+       }
+      ]
      }
     },
     {
@@ -14067,7 +14480,111 @@
       "at_k": 296.45,
       "note": "measured near 23.3 C; the report's own digits to be checked against the PDF"
      },
-     "note": "a refinery cut, not one molecule: the report's 14-component surrogate has the approximate formula C11.8H23.0 (hydrogen to carbon 1.95)"
+     "note": "a refinery cut, not one molecule: the report's 14-component surrogate has the approximate formula C11.8H23.0 (hydrogen to carbon 1.95)",
+     "heating_value_net": {
+      "v": 43302000.0,
+      "unit": "J kg-1",
+      "src": "nbs-tn937",
+      "check": "unverified",
+      "note": "the kerosine mean of NBS TN 937 (43.3020 MJ/kg net), not a measurement of RP-1 itself"
+     }
+    },
+    {
+     "id": "pban-ap-al",
+     "names": {
+      "physics": "PBAN composite propellant (TP-H1148, Shuttle SRB)",
+      "plain": "Shuttle booster propellant",
+      "story": "booster propellant"
+     },
+     "recipe": {},
+     "by": "mass",
+     "make_up": {
+      "ammonium perchlorate": {
+       "v": 0.696,
+       "unit": "1",
+       "src": "jpl-79-29",
+       "check": "unverified",
+       "note": "69.60%"
+      },
+      "aluminium": {
+       "v": 0.16,
+       "unit": "1",
+       "src": "jpl-79-29",
+       "check": "unverified",
+       "note": "16.00%"
+      },
+      "PBAN binder with epoxy cure": {
+       "v": 0.14,
+       "unit": "1",
+       "src": "jpl-79-29",
+       "check": "unverified",
+       "note": "14.00%"
+      },
+      "iron oxide catalyst": {
+       "v": 0.004,
+       "unit": "1",
+       "src": "jpl-79-29",
+       "check": "unverified",
+       "note": "0.40%"
+      }
+     },
+     "density": {
+      "v": 1771.4,
+      "unit": "kg m-3",
+      "src": "jpl-79-29",
+      "check": "unverified",
+      "note": "1.7714 g/cm3, the Shuttle PBAN baseline (86% solids, 16% aluminium)"
+     },
+     "flame_temperature_k": {
+      "v": 3471.0,
+      "unit": "K",
+      "src": "jpl-79-29",
+      "check": "unverified",
+      "at_pa": 6900000.0,
+      "note": "theoretical, adiabatic, at 1000 psia; Table 3-1 gives 3515 K"
+     },
+     "isp_theoretical": {
+      "v": 276.7,
+      "unit": "s (Isp)",
+      "src": "jpl-79-29",
+      "check": "unverified",
+      "note": "vacuum, expansion ratio 7.16; 262.3 s at sea level, optimum expansion from 1000 psia"
+     },
+     "note": "the solid booster propellant of the Space Shuttle (and its RSRM successor)"
+    },
+    {
+     "id": "htpb-ap-al",
+     "names": {
+      "physics": "HTPB composite propellant (ammonium perchlorate, aluminium)",
+      "plain": "solid rocket propellant",
+      "story": "solid propellant"
+     },
+     "recipe": {},
+     "by": "mass",
+     "make_up": {
+      "aluminium": {
+       "v": 0.18,
+       "unit": "1",
+       "src": "kibbey-star48",
+       "check": "unverified",
+       "note": "18%; the ammonium perchlorate share is not printed"
+      }
+     },
+     "density": {
+      "v": 1813.0,
+      "unit": "kg m-3",
+      "src": "kibbey-star48",
+      "check": "unverified",
+      "note": "theoretical bulk density, 1.813 g/cm3 (STAR-48BV)"
+     },
+     "isp_theoretical": {
+      "v": 294.2,
+      "unit": "s (Isp)",
+      "src": "kibbey-star48",
+      "check": "unverified",
+      "note": "the STAR-48BV propellant at expansion ratio 54.8"
+     },
+     "note": "the common upper-stage and kick-motor solid (the STAR motor family); polymer is 22% by volume"
     },
     {
      "id": "tungsten",
@@ -14863,10 +15380,23 @@
      "url": "https://arxiv.org/abs/1907.09598"
     },
     {
+     "id": "jpl-79-29",
+     "text": "Anderson, F. A. and West, W. R. 1979, Alternate propellant program phase I final report, JPL Publication 79-29 (NASA-CR-158815): TP-H1148 (Shuttle SRB) 69.60% ammonium perchlorate, 16.00% aluminium, 14.00% PBAN binder, 0.40% iron oxide, cured with an epoxy (Table 2-1); Shuttle PBAN baseline density 1.7714 g/cm3 (Table 3-1); theoretical Isp 262.3 s at sea level (1000 psia, optimum) and 276.7 s in vacuum (expansion ratio 7.16), flame temperature 3471 K (Table 2-2)",
+     "status": "unverified",
+     "url": "https://ntrs.nasa.gov/api/citations/19790020174/downloads/19790020174.pdf"
+    },
+    {
      "id": "kaplinghat2016",
      "text": "Kaplinghat, M., Tulin, S. and Yu, H.-B. 2016, Phys. Rev. Lett. 116, 041302: dark matter halos as particle colliders",
      "status": "verified",
      "doi": "10.1103/PhysRevLett.116.041302"
+    },
+    {
+     "id": "karkoschka1994",
+     "text": "Karkoschka, E. 1994, Icarus 111, 174: spectrophotometry of the Jovian planets and Titan at 300 to 1000 nm, the methane spectrum (absorption coefficients at the giants' temperatures, Table VIII); read as served by the MPI-Mainz UV/VIS Spectral Atlas (Keller-Rudek, H. et al. 2013, Earth Syst. Sci. Data 5, 365, doi:10.5194/essd-5-365-2013), every 5 nm of its 1 nm table: handover/packages/ND2-data/ch4-karkoschka1994.csv",
+     "status": "verified",
+     "doi": "10.1006/icar.1994.1139",
+     "url": "https://uv-vis-spectral-atlas-mainz.org/uvvis/cross_sections/Alkanes+alkyl%20radicals/Alkanes/CH4_Karkoschka(1994)_125-128K_406-1000nm.txt"
     },
     {
      "id": "kasen2017",
@@ -14879,6 +15409,12 @@
      "text": "Kaye and Laby, Tables of Physical and Chemical Constants, section 2.5.7 refractive index of gases (online edition, NPL; now offline)",
      "status": "unverified",
      "url": "https://pdg.lbl.gov/2023/AtomicNuclearProperties/explain_gas.html"
+    },
+    {
+     "id": "kibbey-star48",
+     "text": "Kibbey, T. P., New solid propellant additives: evaluation for NASA mission use cases, NASA Marshall Space Flight Center (JANNAF), Table 1 (STAR-48BV): aluminium 18% by mass, polymer 22% by volume, theoretical bulk density 1.813 g/cm3, propellant Isp 294.2 s at expansion ratio 54.8",
+     "status": "unverified",
+     "url": "https://ntrs.nasa.gov/api/citations/20240015535/downloads/JANNAF%209871%20Propellants%20for%20Space%20Kibbey.pdf"
     },
     {
      "id": "kita2013",
@@ -15026,10 +15562,30 @@
      "url": "https://apps.dtic.mil/sti/pdfs/ADA399829.pdf"
     },
     {
+     "id": "nbs-tn937",
+     "text": "Nuttall, R. L. and Armstrong, G. T. 1977, Estimation of net enthalpies of combustion of some aviation fuels expressed in SI units, NBS Technical Note 937, Table 2: kerosine mean net enthalpy of combustion 43.3020 MJ/kg (18616.3 Btu/lb)",
+     "status": "unverified",
+     "url": "https://nvlpubs.nist.gov/nistpubs/Legacy/TN/nbstechnicalnote937.pdf"
+    },
+    {
      "id": "niemann2005",
      "text": "Niemann, H. B. et al. 2005, Nature 438, 779: Titan's atmosphere from the Huygens probe (5.65% methane by volume near the surface)",
      "status": "unverified",
      "doi": "10.1038/nature04122"
+    },
+    {
+     "id": "nist-handbook-k",
+     "text": "NIST Handbook of Basic Atomic Spectroscopic Data (Sansonetti, J. E. and Martin, W. C. 2005, J. Phys. Chem. Ref. Data 34, 1559), potassium, strong lines of K I: wavelengths (air, A) and transition probabilities Aki; oscillator strengths here are worked out from Aki and the levels' statistical weights",
+     "status": "verified",
+     "doi": "10.1063/1.1800011",
+     "url": "https://physics.nist.gov/PhysRefData/Handbook/Tables/potassiumtable3.htm"
+    },
+    {
+     "id": "nist-handbook-na",
+     "text": "NIST Handbook of Basic Atomic Spectroscopic Data (Sansonetti, J. E. and Martin, W. C. 2005, J. Phys. Chem. Ref. Data 34, 1559), sodium, strong lines of Na I: wavelengths (air, A) and transition probabilities Aki; oscillator strengths here are worked out from Aki and the levels' statistical weights",
+     "status": "verified",
+     "doi": "10.1063/1.1800011",
+     "url": "https://physics.nist.gov/PhysRefData/Handbook/Tables/sodiumtable3.htm"
     },
     {
      "id": "nist-srd126",

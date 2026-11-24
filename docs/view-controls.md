@@ -18,37 +18,36 @@ The rule (Alex, 23 Nov 2026): one set of controls, and similar levels of drawing
 
 | Scale | Screen | Chart | 3D | True | Wireframe | Seen from | Scale | HUD in | Visible | Infrared | Ultraviolet | X-ray | Radio | Mag |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Cosmic web | Cosmic web (foam) | ✓ | —1 | —2 | —3 | Above | Readable, Real | always labelled | ✓ | —4 | —5 | —6 | —7 | —8 |
-| Galaxies nearby | Galaxies nearby | ✓ | —9 | —2 | —3 | Above | Readable | always labelled | ✓ | —4 | —5 | —6 | —7 | —8 |
-| Galaxy | Galaxy chart | ✓ | ✓ | ✓ | —3 | Above, Tilted, Edge-on, Free | Readable | 3D, True | ✓ | ✓ | ✓ | ✓ | ✓ | —10 |
-| Local stars | Sector map | ✓ | —11 | —2 | —3 | Above | Readable | Chart | ✓ | —4 | —5 | —6 | —7 | —8 |
-| Between stars | Voyages | ✓ | —12 | —2 | —3 | Above | Readable, Real | always labelled | ✓ | —4 | —5 | —6 | —7 | —8 |
-| System | System chart | ✓ | ✓ | ✓ | —3 | Above, Tilted, Edge-on, Free | Readable, Real | Chart, 3D, True | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Sky from a world | Window | ✓ | —13 | —2 | —3 | Above | Readable | Chart | ✓ | ✓ | —5 | —6 | —7 | —8 |
-| World | Body (globe) | ✓ | —14 | ✓ | —3 | Above, Tilted, Edge-on, Free | Readable, Real | Chart, True | ✓ | —15 | —15 | —15 | —15 | ✓ |
-| On the ground | Land (surface) | ✓ | ✓ | ✓ | ✓ | Free | Real | 3D, True, Wireframe | ✓ | —16 | —16 | —16 | —16 | —17 |
-| Inside a world | Cutaway | ✓ | —18 | —2 | —3 | Above | Readable, Real | Chart | ✓ | —4 | —5 | —6 | —7 | —8 |
-| Side by side | Size comparison | ✓ | —19 | —2 | —3 | Above | Readable, Real | always labelled | ✓ | —4 | —5 | —6 | —7 | —8 |
+| Cosmic web | Cosmic web (foam) | ✓ | ✓ | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable, Real | 3D, True | ✓ | —2 | —3 | —4 | —5 | —6 |
+| Galaxies nearby | Galaxies nearby | ✓ | —7 | —8 | —1 | Above | Readable | always labelled | ✓ | —2 | —3 | —4 | —5 | —6 |
+| Galaxy | Galaxy chart | ✓ | ✓ | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable | 3D, True | ✓ | ✓ | ✓ | ✓ | ✓ | —9 |
+| Local stars | Sector map | ✓ | —10 | —8 | —1 | Above | Readable | Chart | ✓ | —2 | —3 | —4 | —5 | —6 |
+| Between stars | Voyages | ✓ | —11 | —8 | —1 | Above | Readable, Real | always labelled | ✓ | —2 | —3 | —4 | —5 | —6 |
+| System | System chart | ✓ | ✓ | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable, Real | Chart, 3D, True | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Sky from a world | Window | ✓ | —12 | —8 | —1 | Above | Readable | Chart | ✓ | ✓ | —3 | —4 | —5 | —6 |
+| World | Body (globe) | ✓ | —13 | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable, Real | Chart, True | ✓ | —14 | —14 | —14 | —14 | ✓ |
+| On the ground | Land (surface) | ✓ | ✓ | ✓ | ✓ | Free | Real | 3D, True, Wireframe | ✓ | —15 | —15 | —15 | —15 | —16 |
+| Inside a world | Cutaway | ✓ | —17 | —8 | —1 | Above | Readable, Real | Chart | ✓ | —2 | —3 | —4 | —5 | —6 |
+| Side by side | Size comparison | ✓ | —18 | —8 | —1 | Above | Readable, Real | always labelled | ✓ | —2 | —3 | —4 | —5 | —6 |
 | Down a lava tube | Caves | not built yet: the kernel's lava tubes (survey_caves) drawn underground come after the walk |
 
 ### Why a switch is not offered
 
-1. The cosmic web is a slice for now: 3D comes later.
-2. True is coming: the photoreal views are held for now.
-3. Wireframe is coming with the view styles.
-4. Not seen in infrared here yet.
-5. Not seen in ultraviolet here yet.
-6. Not seen in x-ray here yet.
-7. Not seen in radio here yet.
-8. Not seen in Mag here yet.
-9. 3D cells come with the galaxy charts' Free view.
-10. The galaxy's magnetic field is not drawn yet.
-11. The sector map is a flat hex grid.
-12. Voyages are charted flat for now.
-13. The sky is drawn as a flat map for now.
-14. The globe is already 3D: Chart draws it.
-15. The globe is drawn in visible light for now.
-16. The ground is drawn in visible light for now.
-17. The field at the ground is not drawn yet: the Globe's Mag shows the world's field.
-18. The cutaway is a slice: it is drawn flat.
-19. The lineup is drawn flat, side by side.
+1. Wireframe is coming with the view styles.
+2. Not seen in infrared here yet.
+3. Not seen in ultraviolet here yet.
+4. Not seen in x-ray here yet.
+5. Not seen in radio here yet.
+6. Not seen in Mag here yet.
+7. 3D cells come with the galaxy charts' Free view.
+8. True is coming: the photoreal views are held for now.
+9. The galaxy's magnetic field is not drawn yet.
+10. The sector map is a flat hex grid.
+11. Voyages are charted flat for now.
+12. The sky is drawn as a flat map for now.
+13. The globe is already 3D: Chart draws it.
+14. The globe is drawn in visible light for now.
+15. The ground is drawn in visible light for now.
+16. The field at the ground is not drawn yet: the Globe's Mag shows the world's field.
+17. The cutaway is a slice: it is drawn flat.
+18. The lineup is drawn flat, side by side.

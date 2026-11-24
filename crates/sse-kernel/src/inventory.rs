@@ -218,7 +218,7 @@ pub(crate) fn read(
     let ss = sse_surface::scenario::settings();
     let w = worlds_at(ch, system, at_s, run, &ss)?;
     let settings = Settings::default();
-    let ratio: BTreeMap<String, f64> = BTreeMap::new();
+    let ratio = crate::composition::star_ratio(run, sheet)?;
     let mut out = vec![];
     for b in &w.bodies {
         if want.as_ref().is_some_and(|a| *a != b.address) {
