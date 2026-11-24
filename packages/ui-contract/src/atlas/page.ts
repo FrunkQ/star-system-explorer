@@ -42,7 +42,25 @@ export type Block =
   | { type: "plate"; key: string; title: string; style: PlateStyle; subject: string; addresses: string[]; names: string[] }
   | { type: "story"; key: string; title: string; lines: { label: string; text: string }[] }
   | { type: "note"; text: string }
-  | { type: "rule" };
+  | { type: "rule" }
+  | {
+      type: "letterhead";
+      /** The brand's name, or the edition's fallback. */
+      name: string;
+      motto?: string;
+      /** A raster logo as a data URI (the GM's own or a built-in one). */
+      logo?: string;
+      /** The logo is a light mark, drawn as a luminance mask in the page's ink or the accent. */
+      logoMono?: boolean;
+      /** The placeholder logo drawn in text, when there is no logo. */
+      art?: string[];
+      artLabel?: string;
+      /** The edition's letterhead lines, slots filled. */
+      lines: string[];
+      stamp?: string;
+      /** The brand's accent (#rrggbb) for rules and stamp. */
+      accent?: string;
+    };
 
 export interface AtlasOptions {
   vocab: Vocab;

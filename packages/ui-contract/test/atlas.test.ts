@@ -4,6 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import type { PlayerScene, Vocab } from "../src/player-scene.ts";
+import { checkBrand } from "../src/brand.ts";
 import {
   buildPage,
   chapterOf,
@@ -23,6 +24,11 @@ import {
   pageText,
   atlasHtml,
   TEXT_BAR,
+  asciiLogo,
+  logoLetters,
+  docNumber,
+  withLetterhead,
+  BUILTIN_LOGOS,
   type AtlasPage,
   type EditionDoc,
 } from "../src/atlas/index.ts";
@@ -277,4 +283,55 @@ test("Save page is one self-contained HTML file: escaped, no script, nothing fro
   assert.equal(html.match(/<article>/g)!.length, 2, "one article per page");
   assert.ok(html.includes("0.63 AU"));
   assert.ok(html.includes("--sse-ink: #222;"));
+});
+
+test("the placeholder logo: the same name always draws the same art, letters made of themselves, three seeded flaws", () => {
+  const a = asciiLogo("Halden-Voss Deep Survey", "1098");
+  assert.deepEqual(asciiLogo("Halden-Voss Deep Survey", "1098"), a, "the same every time");
+  assert.equal(logoLetters("Halden-Voss Deep Survey"), "HVDS");
+  assert.equal(logoLetters("Bob"), "BOB");
+  assert.equal(logoLetters("Interstellar"), "INTERSTE", "one word, spelt out to eight letters");
+  assert.equal(logoLetters("A B C D E F"), "ABCD", "at most four initials");
+  const body = a.lines.slice(1, 6).join("\n");
+  for (const ch of body.replace(/[\s|=>()*~o-]/g, "")) assert.ok("HVDS".includes(ch), `only the letters themselves (${ch})`);
+  assert.notEqual(a.lines[0]!.length, a.lines[6]!.length, "the bottom edge is one dash out");
+  assert.match(a.lines[7]!, /HALDEN-VOSS DEEP SURVEY \*est 1098\*/);
+  assert.match(a.lines[8]!, /^\s+\(.+\)$/, "an apology");
+  assert.match(a.label, /placeholder logo drawn in text/);
+  // Different names may pick different flaws; no clock is involved, so a second call never differs.
+  assert.notDeepEqual(asciiLogo("Kelido Mining").lines, asciiLogo("Nexum Freight").lines);
+});
+
+test("letterhead: the brand's paper on the Company edition, a logo replaces the drawn one, Survey has none", () => {
+  const company = resolveEdition("sse.edition.company");
+  const p = page(after, TARN, company);
+  const ctx = { clearance: "GM EYES ONLY", date: "Year 1, day 1", place: "Kestrel", est: "1" };
+  const drawn = withLetterhead(p, company, { ...ctx, brand: { name: "Halden-Voss Deep Survey", accent: "#aa3322", motto: "We go further" } });
+  const lh = drawn.blocks[0]!;
+  assert.equal(lh.type, "letterhead");
+  if (lh.type !== "letterhead") return;
+  assert.ok(lh.art && !lh.logo);
+  assert.deepEqual(lh.lines, ["Halden-Voss Deep Survey", "SURVEY REPORT HVD-KES-02/TARN", "ISSUED Year 1, day 1", "CLEARANCE: GM EYES ONLY"]);
+  assert.equal(lh.stamp, "COMPANY CONFIDENTIAL");
+  assert.equal(lh.accent, "#aa3322");
+  assert.equal(lh.motto, "We go further");
+  assert.deepEqual(drawn.blocks.slice(1), p.blocks, "the letterhead adds paper, never a fact");
+  const logo = BUILTIN_LOGOS.find((l) => l.id === "interspan")!;
+  const withLogo = withLetterhead(p, company, { ...ctx, brand: { name: logo.name, logo: logo.logo } }).blocks[0]!;
+  assert.ok(withLogo.type === "letterhead" && withLogo.logo === logo.logo && !withLogo.art);
+  const noBrand = withLetterhead(p, company, ctx).blocks[0]!;
+  assert.ok(noBrand.type === "letterhead" && noBrand.name === "Independent Survey Office", "no brand: the edition's fallback name");
+  assert.equal(withLetterhead(page(after, TARN), survey, ctx).blocks[0]!.type, "title", "the Survey atlas has no letterhead");
+  assert.ok(!withLetterhead(p, company, { ...ctx, brand: { name: "X", accent: "red; background: url(x)" } }).blocks.some((b) => b.type === "letterhead" && b.accent), "an accent is a colour or nothing");
+  assert.equal(docNumber("Kelido", "Kestrel", 3, "Tarn a"), "KEL-KES-03/TARNA");
+  assert.match(pageText(drawn), /COMPANY CONFIDENTIAL/);
+});
+
+test("the built-in logos: SSE3's starters, credited, each a brand logo the brand check accepts, no Weyland-Yutani", () => {
+  assert.deepEqual(BUILTIN_LOGOS.map((l) => l.id), ["sse", "interspan", "kelido", "nexum", "terra", "tsec"]);
+  for (const l of BUILTIN_LOGOS) {
+    assert.deepEqual(checkBrand({ name: l.name, logo: l.logo }), [], l.id);
+    assert.ok(l.credit.length > 10, `${l.id} is credited`);
+  }
+  assert.ok(!BUILTIN_LOGOS.some((l) => /weyland|yutani/i.test(l.id + l.name)));
 });

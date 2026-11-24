@@ -71,10 +71,26 @@ try {
   assert.match(await atlas.locator("[data-atlas-page]").innerText(), /Heft/i, "the Guide's own words");
   assert.deepEqual(await figures(), surveyFigs, "switching edition changes no figure");
   await shot(gm, "atlas-guide-desk");
+  assert.equal(await gm.locator("[data-letterhead]").count(), 0, "the Guide has no letterhead");
   await edition.getByRole("button", { name: "Company" }).click();
   await gm.waitForFunction(() => document.querySelector("[data-atlas-edition]")?.getAttribute("data-atlas-edition") === "sse.edition.company");
   assert.deepEqual(await figures(), surveyFigs);
+  // AT6: the Company's paper. With no brand, the placeholder logo drawn in text; a built-in logo replaces it.
+  const lh = gm.locator("[data-letterhead]");
+  await lh.waitFor();
+  const art = await lh.locator("pre").innerText();
+  assert.match(art, /IIIII\s+SSSS\s+OOO/, "the fallback name's initials, drawn with themselves");
+  assert.match(await lh.innerText(), /COMPANY CONFIDENTIAL/);
+  assert.match(await lh.innerText(), /CLEARANCE: GM EYES ONLY/);
   await shot(gm, "atlas-company-desk");
+  const paperPick = atlas.getByRole("combobox", { name: "Letterhead" });
+  await paperPick.selectOption("kelido");
+  await lh.getByRole("img", { name: "Kelido" }).waitFor();
+  assert.equal(await lh.locator("pre").count(), 0, "a logo replaces the drawn one");
+  assert.match(await lh.innerText(), /KEL-KES-02\/TARN/);
+  await shot(gm, "atlas-company-logo-desk");
+  await paperPick.selectOption("");
+  assert.equal(await lh.locator("pre").innerText(), art, "the same name draws the same art again");
 
   // Print under the view (AT4). The browser's print is stood in for: it keeps what would print (the print-only pages
   // and the sheet size) and says printing began. Each edition prints in its own words; Save ink prints a dark look light.
@@ -137,7 +153,8 @@ try {
   await panel.getByRole("button", { name: "Copy as Markdown" }).click();
   await atlas.getByRole("status").filter({ hasText: "Copied as Markdown" }).waitFor();
   const md = await gm.evaluate(() => navigator.clipboard.readText());
-  assert.match(md, /^# Tarn/);
+  assert.match(md, /^# Tarn$/m);
+  assert.match(md, /COMPANY CONFIDENTIAL/, "the copy carries the letterhead");
   for (const f of surveyFigs) assert.ok(md.includes(f), `the copy says ${f}`);
   await atlas.getByRole("button", { name: "Print…" }).click();
   const [download] = await Promise.all([gm.waitForEvent("download"), panel.getByRole("button", { name: "Save page" }).click()]);

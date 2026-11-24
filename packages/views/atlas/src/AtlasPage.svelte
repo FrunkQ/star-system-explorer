@@ -14,7 +14,8 @@
 
   const title = $derived(page.blocks.find((b): b is Extract<Block, { type: "title" }> => b.type === "title"));
   const plates = $derived(page.blocks.filter((b): b is Extract<Block, { type: "plate" }> => b.type === "plate"));
-  const body = $derived(page.blocks.filter((b) => b.type !== "title" && b.type !== "plate"));
+  const head = $derived(page.blocks.find((b): b is Extract<Block, { type: "letterhead" }> => b.type === "letterhead"));
+  const body = $derived(page.blocks.filter((b) => b.type !== "title" && b.type !== "plate" && b.type !== "letterhead"));
 
   // The plate's schematic: the subject's children on one line, in book order, each a link to its page.
   const PLATE_W = 300;
@@ -27,6 +28,23 @@
 </script>
 
 <article class="atlas-page" data-atlas-page aria-labelledby="atlas-title-{page.number}">
+  {#if head}
+    <div class="lh" data-deliver-item data-letterhead style={head.accent ? `--lh-accent: ${head.accent}` : undefined}>
+      {#if head.logo && head.logoMono}
+        <span class="logo mono" role="img" aria-label={head.name} style="--logo: url('{head.logo}')"></span>
+      {:else if head.logo}
+        <img class="logo" src={head.logo} alt={head.name} />
+      {:else if head.art}
+        <pre class="art" role="img" aria-label={head.artLabel}>{head.art.join("\n")}</pre>
+      {/if}
+      <div class="lhwords">
+        <p class="lhname">{head.name}</p>
+        {#if head.motto}<p class="lhmotto">{head.motto}</p>{/if}
+        {#each head.lines.slice(head.lines[0] === head.name ? 1 : 0) as l, i (i)}<p class="lhline">{l}</p>{/each}
+      </div>
+      {#if head.stamp}<p class="stamp">{head.stamp}</p>{/if}
+    </div>
+  {/if}
   {#if title}
     <header class="head" data-deliver-item>
       <p class="sub">{title.subtitle}</p>
@@ -296,7 +314,74 @@
     font-size: 12px;
     color: var(--sse-ink-muted);
   }
+  .lh {
+    position: relative;
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 2px solid var(--lh-accent, var(--sse-ink));
+  }
+  .logo {
+    max-height: 72px;
+    max-width: 160px;
+    object-fit: contain;
+  }
+  .mono {
+    display: block;
+    width: 160px;
+    height: 72px;
+    background: var(--lh-accent, var(--sse-ink));
+    mask: var(--logo) left center / contain no-repeat luminance;
+  }
+  .art {
+    margin: 0;
+    font-family: var(--sse-font-mono);
+    font-size: 9px;
+    line-height: 1.1;
+    color: var(--sse-ink);
+    overflow-x: auto;
+  }
+  .lhwords p {
+    margin: 0;
+  }
+  .lhname {
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .lhmotto {
+    font-style: italic;
+    color: var(--sse-ink-muted);
+  }
+  .lhline {
+    font-family: var(--sse-font-mono);
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+  }
+  .stamp {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    padding: 3px 10px;
+    border: 2px solid var(--lh-accent, var(--sse-accent));
+    color: var(--lh-accent, var(--sse-accent));
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    font-size: 12px;
+    transform: rotate(-4deg);
+  }
   @container atlas (max-width: 760px) {
+    .lh {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stamp {
+      position: static;
+      align-self: flex-start;
+    }
     .atlas-page {
       padding: 22px 18px 18px;
     }

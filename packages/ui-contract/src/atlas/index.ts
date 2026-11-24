@@ -4,3 +4,5 @@ export * from "./catalogue.ts";
 export * from "./page.ts";
 export * from "./loader.ts";
 export * from "./text.ts";
+export * from "./ascii.ts";
+export * from "./letterhead.ts";

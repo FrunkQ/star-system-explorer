@@ -7,12 +7,12 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { EVERYONE, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { EVERYONE, BUILTIN_LOGOS, withLetterhead, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
   import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
   import AtlasPrint from "./AtlasPrint.svelte";
-  import { dateWords, defaultCalendar, fromPackCalendar } from "../../../chart-grammar/src/calendar.ts";
+  import { dateParts, dateWords, defaultCalendar, fromPackCalendar } from "../../../chart-grammar/src/calendar.ts";
 
   let { ctx, scene, host }: { ctx: ViewContext; scene: SystemScene; host: AtlasHost } = $props();
   const ws = $derived(ctx.workspace);
@@ -62,13 +62,33 @@
     if (has(ws.selection)) return ws.selection!;
     return lines[0]?.address ?? null;
   });
-  const page = $derived(book && address ? buildPage(book, address, edition, { vocab, depth: ws.depth }) : null);
   const titleOf = (a: string | null) => lines.find((l) => l.address === a)?.title ?? "";
 
   // The date the page speaks for: the ruler's time, in the campaign's calendar. A printed page says it in its footer.
   const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
   const date = $derived(dateWords(ws.now_yr, calendar));
   const footer = $derived(`${edition.name} · ${titleOf(lines[0]?.address ?? null)} · as known to ${audienceWords}, ${date}`);
+
+  // Letterhead (AT6): whose paper the page is on. On a player's screen it is the role's brand (AT9); the GM browsing
+  // may try a built-in logo, else the placeholder logo drawn in text from the edition's fallback name.
+  let paperOf = $state("");
+  const brand = $derived.by(() => {
+    const b = BUILTIN_LOGOS.find((l) => l.id === paperOf);
+    return b ? { name: b.name, logo: b.logo, ...(b.mono ? { mono: true } : {}) } : host.brand?.(shownAudience);
+  });
+  const letterhead = $derived({
+    ...(brand ? { brand } : {}),
+    clearance: shownAudience === "gm" ? "GM EYES ONLY" : audienceWords.toUpperCase(),
+    date,
+    place: titleOf(lines[0]?.address ?? null),
+    est: String(dateParts(ws.campaign_epoch_yr ?? ws.now_yr, calendar).year),
+    pages: lines.length,
+  });
+  const dressed = (a: string) => {
+    const p = book ? buildPage(book, a, edition, { vocab, depth: ws.depth }) : null;
+    return p ? withLetterhead(p, edition, letterhead) : null;
+  };
+  const page = $derived(book && address ? dressed(address) : null);
 
   // ---- Print under the view (AT4): this page, this chapter or the whole Atlas, in the edition showing, in place.
   let printOpen = $state(false);
@@ -82,7 +102,7 @@
   function pagesFor(which: "page" | "chapter" | "atlas") {
     if (!book || !address) return [];
     const want = which === "page" ? [address] : which === "chapter" ? chapterOf(lines, address).map((l) => l.address) : lines.map((l) => l.address);
-    return want.map((a) => buildPage(book!, a, edition, { vocab, depth: ws.depth })).filter((p) => p !== null);
+    return want.map(dressed).filter((p) => p !== null);
   }
 
   async function print(which: "page" | "chapter" | "atlas") {
@@ -192,6 +212,14 @@
     <Segmented label="Edition" options={editions} value={editionId} onchange={(v) => (editionId = v)} slide />
     <span class="gapfill"></span>
     <Segmented label="Seen by" options={audiences} value={audience} onchange={(v) => (audience = v)} slide />
+    {#if edition.letterhead.use !== "none"}
+      <label class="paper">Letterhead
+        <select bind:value={paperOf}>
+          <option value="">{brand && !paperOf ? brand.name : "Drawn in text"}</option>
+          {#each BUILTIN_LOGOS as l (l.id)}<option value={l.id}>{l.name}</option>{/each}
+        </select>
+      </label>
+    {/if}
     <button type="button" class="printnow" onclick={() => print("page")} disabled={!page}>Print this page</button>
     <span class="printwrap">
       <button type="button" class="printmore" aria-expanded={printOpen} aria-controls="atlas-print-panel" onclick={() => (printOpen = !printOpen)} disabled={!page}>Print…</button>
@@ -274,6 +302,21 @@
   }
   .fold {
     display: none;
+  }
+  .paper {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--sse-ink-muted);
+  }
+  .paper select {
+    font: inherit;
+    color: var(--sse-ink);
+    background: var(--sse-ground);
+    border: 1px solid var(--sse-line);
+    border-radius: var(--sse-radius);
+    padding: 4px 6px;
   }
   .printwrap {
     position: relative;

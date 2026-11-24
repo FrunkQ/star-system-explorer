@@ -44,6 +44,10 @@ function blockText(b: Block, md: boolean): string[] {
       return [md ? `*${b.text}*` : b.text, ""];
     case "rule":
       return [md ? "---" : "----", ""];
+    case "letterhead": {
+      const art = b.art ? (md ? ["```", ...b.art, "```"] : b.art) : [md ? `**${b.name}**` : b.name.toUpperCase()];
+      return [...art, ...(b.motto ? [md ? `*${b.motto}*` : b.motto] : []), ...b.lines, ...(b.stamp ? [md ? `**${b.stamp}**` : `[ ${b.stamp} ]`] : []), ""];
+    }
   }
 }
 
@@ -80,6 +84,8 @@ function blockHtml(b: Block): string {
       return `<p class="note">${esc(b.text)}</p>`;
     case "rule":
       return "<hr>";
+    case "letterhead":
+      return `<div class="lh"${b.accent ? ` style="--lh-accent:${esc(b.accent)}"` : ""}>${b.logo ? (b.logoMono ? `<span class="mono" role="img" aria-label="${esc(b.name)}" style="--logo:url('${esc(b.logo)}')"></span>` : `<img src="${esc(b.logo)}" alt="${esc(b.name)}">`) : b.art ? `<pre aria-label="${esc(b.artLabel ?? b.name)}">${esc(b.art.join("\n"))}</pre>` : ""}<div><p class="lhname">${esc(b.name)}</p>${b.motto ? `<p class="lhmotto">${esc(b.motto)}</p>` : ""}${b.lines.map((l) => `<p class="lhline">${esc(l)}</p>`).join("")}</div>${b.stamp ? `<p class="stamp">${esc(b.stamp)}</p>` : ""}</div>`;
   }
 }
 
@@ -104,6 +110,9 @@ dt{color:var(--sse-ink-muted,#555)}dd{margin:0;font-family:var(--sse-font-mono,m
 .bar{display:inline-block;width:9em;height:.9em;background:var(--sse-ink,#111);vertical-align:middle}.bar.short{width:4em}
 table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:.3em .5em .3em 0;border-bottom:1px solid var(--sse-rule,#ddd)}tr{break-inside:avoid}
 blockquote{margin:.4em 0;padding-left:.8em;border-left:2px solid var(--sse-accent,#a33);font-style:italic}.note,.plate,footer{font-size:.85em;color:var(--sse-ink-muted,#555)}
+.lh{display:flex;gap:1.2em;align-items:flex-start;border-bottom:2px solid var(--lh-accent,var(--sse-ink,#111));padding-bottom:.8em;margin-bottom:1.2em;position:relative}.lh img{max-height:5em;max-width:10em}.lh .mono{display:block;width:10em;height:5em;background:var(--lh-accent,var(--sse-ink,#111));-webkit-mask:var(--logo) left center/contain no-repeat;mask:var(--logo) left center/contain no-repeat luminance}.lh pre{margin:0;font-size:.6em;line-height:1.1}
+.lhname{font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0}.lhmotto{font-style:italic;margin:0}.lhline{margin:0;font-family:var(--sse-font-mono,monospace);font-size:.8em}
+.stamp{position:absolute;right:0;top:0;margin:0;padding:.2em .6em;border:2px solid var(--lh-accent,var(--sse-accent,#a33));color:var(--lh-accent,var(--sse-accent,#a33));font-weight:700;letter-spacing:.1em;transform:rotate(-4deg)}
 footer{margin-top:2em;padding-top:.6em;border-top:1px solid var(--sse-line,#ccc);display:flex;justify-content:space-between;font-family:var(--sse-font-mono,monospace)}`;
   const body = pages
     .map((p) => `<article>${p.blocks.map(blockHtml).join("\n")}${opts.footer ? `<footer><span>${esc(opts.footer)}</span><span>${p.number}</span></footer>` : ""}</article>`)
