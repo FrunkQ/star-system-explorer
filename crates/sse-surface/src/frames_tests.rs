@@ -17,6 +17,7 @@ fn frames_of(name: &str) -> crate::frames::Frames {
         &SurveyOptions::default(),
         false,
         None,
+        None,
     )
     .expect("frames")
 }
@@ -116,6 +117,7 @@ fn frame_limit_keeps_the_last() {
             &SurveyOptions::default(),
             false,
             mx,
+            None,
         )
         .expect("frames")
     };
@@ -130,4 +132,77 @@ fn frame_limit_keeps_the_last() {
         (b.t_myr, &b.elevation_m, &b.temp_k)
     );
     assert_eq!(at(Some(1)).frames.len(), 1);
+}
+
+/// SF1 part 2: with an orbit track over the window before the epoch, the
+/// ice ages' onsets are dated events inside it, and each frame's climate
+/// reads that frame's own land.
+#[test]
+fn ice_ages_and_the_land_of_then() {
+    let b = fixtures()
+        .into_iter()
+        .find(|f| f.body.label == "Earth")
+        .expect("fixture")
+        .body;
+    use sse_climate::forcing::{MoonPull, OrbitTrack, TrackSample};
+    // Earth's tilt swinging under one inclination mode, with the Moon's pull
+    // (as the wear test's track).
+    let span = 400_000.0;
+    let s3 = -18.85 / 3600.0 * sse_core::math::PI / 180.0;
+    let track = OrbitTrack {
+        samples: (0..=200)
+            .map(|k| {
+                let t = f64::from(k) * 2000.0;
+                TrackSample {
+                    t_yr: t,
+                    e: 0.0167,
+                    varpi: 0.0,
+                    incl: 0.035,
+                    node: s3 * t,
+                }
+            })
+            .collect(),
+        source: "one inclination mode".into(),
+    };
+    let opts = SurveyOptions {
+        moons: vec![MoonPull {
+            mass_kg: 7.342e22,
+            a_m: 3.844e8,
+        }],
+        ..SurveyOptions::default()
+    };
+    let f = surface_frames(
+        &settings(),
+        &b,
+        &Seed::from_text("sse4-frames-tests"),
+        b.age_gyr,
+        &opts,
+        false,
+        None,
+        Some(&track),
+    )
+    .expect("frames");
+    let ice: Vec<_> = f.events.iter().filter(|e| e.kind == "ice-age").collect();
+    assert!(!ice.is_empty(), "no ice-age onsets");
+    for e in &ice {
+        assert!(
+            e.t_myr >= f.epoch_myr - span / 1.0e6 - 1e-9 && e.t_myr <= f.epoch_myr + 1e-9,
+            "onset at {} outside the window",
+            e.t_myr
+        );
+    }
+    assert!(!f.pending.iter().any(|p| p.starts_with("ice-age")));
+    // Without a track the onsets are pending.
+    assert!(frames_of("Earth").pending.iter().any(|p| p.starts_with("ice-age")));
+    // For the package log: the onsets, and the land then and now (the first
+    // frames are nearly all sea).
+    let first = &f.frames[0];
+    let now = f.frames.last().expect("frames");
+    let land = |fr: &crate::frames::Frame| fr.elevation_m.iter().filter(|z| **z > 0.0).count();
+    eprintln!(
+        "ice-age onsets {}, land first {} now {}",
+        ice.len(),
+        land(first),
+        land(now)
+    );
 }

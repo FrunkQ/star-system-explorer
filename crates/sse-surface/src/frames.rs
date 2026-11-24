@@ -42,6 +42,9 @@ const RHO_ICE: f64 = sse_core::sheet::density_solid::H2O;
 const STILL_FRAMES: u32 = 12;
 /// Impacts listed as events: the largest this many.
 const IMPACT_EVENTS: usize = 200;
+/// An ice-age onset is listed when it starts ice on at least this share of
+/// the land (smaller onsets are a mountain glacier's flicker).
+const ICE_AGE_LEAST_LAND: f64 = 0.005;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct FrameGrid {
@@ -180,6 +183,7 @@ pub fn surface_frames(
     opts: &SurveyOptions,
     survey: bool,
     frames_max: Option<usize>,
+    track_before: Option<&sse_climate::forcing::OrbitTrack>,
 ) -> Result<Frames, String> {
     let s = if survey {
         s.clone()
@@ -199,13 +203,15 @@ pub fn surface_frames(
     let epoch_myr = h.epoch_myr;
     let mut why = vec![];
     let mut pending = vec![
-        "ice-age onsets (W9 part 2 dates them only inside the orbit-history window)".to_string(),
         "worn elevation (S3 wears only the last window; frames show tectonic heights)".to_string(),
         "oceans over time (held at today's volume)".to_string(),
         "sea ice".to_string(),
     ];
     if matches!(body.climate, Climate::Fixed { .. }) {
         pending.push("temperature history (this world's climate is a fixed value)".into());
+    }
+    if track_before.is_none() {
+        pending.push("ice-age onsets (no orbit track: no sibling planets to swing its orbit)".into());
     }
     // Frame dates and the cells at each: the plate snapshots, or evenly
     // spaced dates for a world whose plates never moved.
@@ -252,6 +258,8 @@ pub fn surface_frames(
     let (feat, _) = impacts(&s, &e, seed, &ii, epoch_gyr)?;
     let x = opts.extra(opts.rotation_hours);
     let mut frames = vec![];
+    // The last frame's climate, heights and date, for the ice ages.
+    let mut last: Option<(crate::climate::WorldClimate, Vec<f64>, Body)> = None;
     let mut prev_t = dates.first().map(|d| d.0).unwrap_or(0.0);
     for (k, (t, snap)) in dates.iter().enumerate() {
         let t = *t;
@@ -315,7 +323,14 @@ pub fn surface_frames(
         let e_t = envelope(&s, &b_t);
         let mut e_c = e.clone();
         e_c.t_surface_now_k = e_t.t_surface_now_k;
-        let wc = world_climate(&s, &b_t, &e_c, &x, t);
+        // Land and coasts by latitude from this frame's own heights (W7c),
+        // so the climate's land is the land of then.
+        let x_t = if sl.is_some() {
+            crate::climate::with_land(&x, &grid, &elev, s.climate.bands as usize)
+        } else {
+            x.clone()
+        };
+        let wc = world_climate(&s, &b_t, &e_c, &x_t, t);
         let mut temp = Vec::with_capacity(nc);
         let mut rain = Vec::with_capacity(nc);
         let mut runoff = Vec::with_capacity(nc);
@@ -330,6 +345,9 @@ pub fn surface_frames(
             glaciated.push(land && w.ice_balance_m_yr > 0.0);
         }
         let ice = ice_sheet(&grid, &glaciated, cell_m, g);
+        if k + 1 == dates.len() {
+            last = Some((wc.clone(), elev.clone(), b_t.clone()));
+        }
         let land_pc =
             100.0 * elev.iter().filter(|z| sl.is_none() || **z > 0.0).count() as f64 / nc as f64;
         let ice_pc = 100.0 * glaciated.iter().filter(|x| **x).count() as f64 / nc as f64;
@@ -395,6 +413,49 @@ pub fn surface_frames(
             diameter_km: None,
             why: vec![],
         });
+    }
+    // Ice ages (W9 part 2): over the orbit-history window that ends at the
+    // epoch, each onset at which more land starts to gain ice than lose it.
+    if let (Some(track), Some((wc, elev, b_t))) = (track_before, &last) {
+        let model =
+            crate::climate::ice_ages(&s, b_t, wc, track, &opts.moons, epoch_myr);
+        let start_myr = epoch_myr - track.span_yr() / 1.0e6;
+        let mut by_date: std::collections::BTreeMap<u64, usize> = Default::default();
+        let mut land = 0usize;
+        for (i, d) in grid.dirs.iter().enumerate() {
+            if elev[i] <= 0.0 && frames.last().is_some_and(|f| f.sea_level_m.is_some()) {
+                continue;
+            }
+            land += 1;
+            let lat = m::asin(d[2].clamp(-1.0, 1.0)).to_degrees();
+            for t_yr in model.onsets_yr(&s.climate, &wc.climate, wc.lapse_k_km, lat, elev[i].max(0.0)) {
+                *by_date.entry(t_yr.to_bits()).or_default() += 1;
+            }
+        }
+        let least = (land as f64 * ICE_AGE_LEAST_LAND).ceil().max(1.0) as usize;
+        for (bits, cells) in by_date {
+            if cells < least {
+                continue;
+            }
+            let t_yr = f64::from_bits(bits);
+            events.push(FrameEvent {
+                t_myr: start_myr + t_yr / 1.0e6,
+                kind: "ice-age".into(),
+                text: format!(
+                    "An ice age begins: ice starts to grow on {:.1}% of the land.",
+                    100.0 * cells as f64 / land.max(1) as f64
+                ),
+                dir: None,
+                plates: vec![],
+                radius_km: None,
+                diameter_km: None,
+                why: vec![format!(
+                    "The orbit's swing over the last {:.0} kyr ({}) lowers the summer sunlight until snow outlasts the summer there (Milankovitch; W9 part 2).",
+                    track.span_yr() / 1000.0,
+                    track.source
+                )],
+            });
+        }
     }
     let mut craters: Vec<&crate::impacts::Crater> = feat.craters.iter().collect();
     craters.sort_by(|a, b| b.d_km.total_cmp(&a.d_km).then(a.id.cmp(&b.id)));
