@@ -21,10 +21,25 @@ fn contract_lines() -> Vec<String> {
 /// are checked by `the_op_lists_are_every_op`.
 #[test]
 fn contract_matches_golden() {
-    let lines: Vec<String> = contract_lines()
+    let raw = contract_lines();
+    let lines: Vec<String> = raw.iter().map(|l| crate::contract::mask_ops(l)).collect();
+    let reach: Vec<String> = raw
         .iter()
-        .map(|l| crate::contract::mask_ops(l))
+        .filter(|l| l.starts_with(crate::contract::REACH))
+        .flat_map(|l| crate::contract::reach_entries(l))
         .collect();
+    let reach_path = root().join("tests/golden/contract-reach.txt");
+    let reach_text = reach.join("\n") + "\n";
+    if std::env::var("SSE_BLESS").is_ok() {
+        std::fs::write(&reach_path, &reach_text).unwrap();
+    }
+    let want = std::fs::read_to_string(&reach_path).expect("run with SSE_BLESS=1 once");
+    assert!(!reach.is_empty(), "the contract reads a reach report");
+    assert_eq!(
+        reach_text,
+        want.replace("\r\n", "\n"),
+        "tests/golden/contract-reach.txt"
+    );
     let path = root().join("tests/golden/contract.jsonl");
     let text = lines.join("\n") + "\n";
     if std::env::var("SSE_BLESS").is_ok() {
@@ -284,18 +299,28 @@ fn stack_changes_are_chronicled_and_replay() {
     assert_eq!(a[8], a[6], "a rejected stack changes nothing");
 }
 
-/// The contract loads the real base-physics pack from a fixture copy (both
-/// runners read `tests/fixtures/packs/`). The copy must be the pack itself.
-/// After re-blessing the pack: `cp packs/base-physics/pack.json tests/fixtures/packs/base-physics.json`.
+/// The contract runs on a frozen copy of base-physics
+/// (`tests/fixtures/packs/base-physics.json`), so a physics change no longer
+/// moves the golden. The live pack is checked here instead: it loads as a
+/// stack, and every other kernel test runs on it.
 #[test]
-fn base_physics_fixture_is_the_real_pack() {
-    let real = std::fs::read_to_string(root().join("packs/base-physics/pack.json")).unwrap();
-    let copy =
-        std::fs::read_to_string(root().join("tests/fixtures/packs/base-physics.json")).unwrap();
-    assert!(
-        real == copy,
-        "tests/fixtures/packs/base-physics.json is stale: cp packs/base-physics/pack.json tests/fixtures/packs/base-physics.json"
+fn the_live_base_physics_pack_loads() {
+    let live: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-physics/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[live]}),
     );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"live","seed":"live"}),
+    );
+    let m = send(&mut k, serde_json::json!({"op":"manifest"}));
+    assert_eq!(m["manifest"]["packs"][0]["id"], "sse.base-physics", "{m}");
 }
 
 /// Tags in scenes also come from the stack's rule pack (K8), not only from
