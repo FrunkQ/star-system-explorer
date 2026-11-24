@@ -83,7 +83,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 |---|---|---|
 | `status/kernel.md` | Build kernel resolve and rules | K, J, C, T1, T2, G, L, E, the kernel side of Y, TG, GH, DM2 to DM5, ND3, ND3b, ND6 |
 | `status/proven-core.md` | Build SSE4 proven core | P, F, S, SF, B, T3, S5, the source side of MF (MF1 to MF3, MF10), MP19, MP20, ND1 |
-| `status/chart-room.md` | Rebuild the chart room's top level | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
+| `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | U6, U8, V8, V9, voyages, GH8 |
 | `status/light.md` | Build light and nebulae | O, the light side of Y, MF6, MF7, MF9, ND2 |
 | `status/weather.md` | Build shared climate and weather | W |
@@ -98,6 +98,9 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/navigation.md` | Build object selector and menus | NV (finding your way: selector part 2, object menu, find by tag, notes) |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs as edited, the Solar System built through the UI) |
+| `status/run-desk.md` (arrives with PR 421) | Build Run desk playbook and players' side | RD, PB (Playbook and Switchboard) |
+| none yet | Build Paper spacecraft pack | RK6 (other RK packages are rows in the files above) |
+| none yet | designed only (XO note, PR 420) | XO exotic objects |
 
 A package that does not fit a file goes in its owner thread's file. A new track gets a new file and one line in the table above. Milestone M1 "Proven core" (K0 to K6) is complete.
 

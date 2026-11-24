@@ -1,0 +1,84 @@
+# Name sheet (SSE4-naming-design.md section 4.11). Package NM3d, 22 Nov 2026.
+# An original invented language for base-names. Not from any published setting.
+# Token syntax follows the design's example; NM7 settles the final grammar and
+# this file is adjusted to it then. "colour?" means: the word for the object's
+# own colour when it has one, else nothing.
+
+name:    Vesh
+about:   A hive-building people's tongue. Guttural, with one click and doubled stops. Short hard words; the describing word comes first, the thing last.
+script:  latin
+kind:    invented
+
+sounds:
+  C = k kh g gh q r z tk x
+  V = a i u aa
+  E = k z kh rr q
+weights:
+  C = k 5, kh 4, r 4, z 4, g 3, q 3, gh 2, tk 2, x 1
+  V = a 6, i 3, u 3, aa 2
+  E = k 4, z 3, kh 3, q 2, rr 2
+shape:   CV 4, CVE 5, VE 1
+length:  2-3
+never:   aa+aa, aa+a, a+aa, a+a, i+i, u+u, x+x, k+k, k+kh, kh+kh, q+q, z+z, rr+r, rr+rr
+stress:  first
+
+say:     kh "ch as in loch", gh "a voiced kh, like a gargle", q "a k made far back in the throat", r "a single tap", rr "a rolled r", tk "t and k at once", x "a sharp tongue click", aa "a long ah", a "ah", i "ee", u "oo"
+ipa:     k k, kh x, g ɡ, gh ɣ, q q, r ɾ, rr r, z z, tk t͡k, x ǂ, a a, i i, u u, aa aː
+
+join:    modifier first, no joiner
+
+means:
+  red = khaz
+  dark = ghuk
+  light = xi
+  cold = kiz
+  great = gaarr
+  small = zi
+  new = tki
+  old = ghaarr
+  deep = guq
+  first = ka
+  second = zu
+  third = ri
+  mountain = rak
+  stone = rakh
+  water = tkiz
+  sea = zuq
+  river = ziq
+  ice = xikh
+  sand = zak
+  plain = gaz
+  fire = ghaz
+  wind = ruz
+  storm = ghurr
+  sky = xaak
+  star = qirr
+  sun = qaaz
+  moon = qi
+  home = uq
+  hive = tkuq
+  mother = aaq
+  north = ukh
+  south = az
+
+forms:
+  star       = {word}
+  planet     = {word}
+  moon       = {word}
+  belt       = {word} {means:stone}
+  peak       = {means:colour?}{means:mountain}
+  peak       = {word}{means:mountain}
+  range      = {means:great}{means:mountain} {word}
+  sea        = {word}{means:sea}
+  ocean      = {means:great}{means:sea}
+  lake       = {means:small}{means:water} {word}
+  river      = {word}{means:river}
+  crater     = {word}
+  plains     = {word}{means:plain}
+  settlement = {word}{means:home}
+  port       = {means:sky}{means:home} {word}
+  base       = {word}{means:hive}
+  default    = {word}
+
+# Samples the sounds above give: Khazrak (red mountain), Zirukh, Gaqirr,
+# Tkuzak, Kharraq, Rikuz, Xaakuq Gikh (sky-home Gikh, a port).
