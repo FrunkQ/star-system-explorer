@@ -20,22 +20,23 @@ The chart reads level-0 tiles (32 samples a face). Finer tiles cost the kernel a
 - `packages/views/body/src/finer-tiles.ts` `readFiner` asks for **4 tiles a request** (about 0.8 s) and checks `wanted()` before each one. Choosing another world or leaving True stops it (the chart's effect generation changes).
 - It starts only after the world has stayed chosen for **1.2 s**, which is longer than the 1 s camera fly, and **pauses 1.5 s** before level 2.
 - Tiles are kept in one map for the page (`finerTiles(key)`, keyed `system|body`), so the Body screen and the body card's globe can reuse them once the shared surface cache (PR 428) lands. Refused tiles are not asked for again.
-- In `SystemChart.svelte`, only inside the True surface reader: the level-0 tiles are kept, finer tiles already read are laid over at once, and the chosen world's surface is recomposed after each request. Only the chosen world reads finer.
+- In `SystemChart.svelte`, only inside the True surface reader: finer tiles already read are laid over the kept face at once (`withFiner`), and the chosen world's face is recomposed after each request. Only the chosen world reads finer.
+- After the merge with main (TA1, PR 444), System True reads faces through `readTrueFace` (true-air.ts), which paints clouds and haze over the ground. A face with clouds painted over it no longer carries `faces`, so it keeps the flat picture and shows no relief; airless and clear worlds (the Moon, Mercury) wear the bake. **Next:** draw the clouds as their own shell over the baked ground, so cloudy worlds get relief too (with the air thread).
 
 In the shell (sample Sol, WebGL2, cloud container), with the Moon chosen and zoomed in, the face 3 s after choosing already has part of level 1. At 28 s level 2 is in: finer craters and smoother edges between materials (screens below). `walk.e2e` and `perf.e2e` pass inside their budgets, and both open True.
 
 ## Code
 
-- `packages/renderer/src/texture-ladder.ts`: `faceSize`, `levelFor`, `tilesFacing`, `faceDirection`, `directionFace`, `composeFaces` (with `radius_m` from the tiles' spacing), `sampleFaces`, `reliefNormal`, `texelAngle`, `cubeBytes`, `BAKE_BUDGET`, `faceWords`.
+- `packages/renderer/src/texture-ladder.ts`: `faceSize`, `levelFor`, `tilesFacing`, `faceDirection`, `directionFace`, `composeFaces` (with `radius_m` from the tiles' spacing, and the tiles it was made from), `withFiner`, `sampleFaces`, `reliefNormal`, `texelAngle`, `cubeBytes`, `BAKE_BUDGET`, `faceWords`.
 - `packages/renderer/src/texture-ladder-gpu.ts`: `createTextureBaker` (bake, LRU, the wearing material).
 - `packages/renderer/src/true-look.ts`: `TrueTexture.faces` (additive). `trueSurface` also composes the faces.
 - `packages/renderer/src/gpu.ts` (additive): a lit world whose surface has faces wears the bake sized to its disc on screen; otherwise the old material.
 - `packages/views/body/src/finer-tiles.ts`: `readFiner`, `finerTiles`, `FINER_BATCH`, `FINER_SETTLE_MS`, `FINER_PAUSE_MS`, `FINER_LEVELS`.
-- `packages/views/system-chart/src/SystemChart.svelte` (True surface reader only): `level0` map, finer tiles laid over, `readFiner` for the chosen world.
+- `packages/views/system-chart/src/SystemChart.svelte` (True surface reader only): finer tiles laid over with `withFiner`, `readFiner` for the chosen world.
 
 ## Checks
 
-- `packages/renderer/test/texture-ladder.test.ts` (7 tests): face sizes and levels; the cube map is the kernel's (round trip and agreement with ui-contract's `faceOf`); tiles facing the viewer; deeper tiles laid over coarser ones; sampling continuous across cube edges; the normal tilts by the true angle (tan 0.05 ramp), flat ground and seas point straight up; HUD words.
+- `packages/renderer/test/texture-ladder.test.ts` (8 tests): finer tiles laid over a kept face once, never doubled, a painted face left alone; face sizes and levels; the cube map is the kernel's (round trip and agreement with ui-contract's `faceOf`); tiles facing the viewer; deeper tiles laid over coarser ones; sampling continuous across cube edges; the normal tilts by the true angle (tan 0.05 ramp), flat ground and seas point straight up; HUD words.
 - `tests/ui/ladder-gpu.e2e.mjs`: a made-up world baked at 128 and read back along a 64 × 32 grid of directions, compared with the processor. WebGL2 and WebGPU: colour within 0.017 (linear), normal within 0.0025 (true tilts up to 0.63°).
 - `tests/ui/finer-tiles.test.ts` (2 tests): both levels read four at a time, kept, nothing asked twice (refused tiles too); stops between requests once not wanted.
 - `tests/ui/walk.e2e.mjs` and `tests/ui/perf.e2e.mjs` pass.

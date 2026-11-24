@@ -11,6 +11,7 @@ Files: `packages/views/body/src/finer-tiles.ts` (VP3 part 2), `packages/renderer
 | VP6 the detail ladder: rung table by screen size and tier, bindings to kernel values (missing value, nothing drawn), seed and clock, anchors folded on the processor, noises written once for processor and GPU (simplex with turning gradients, curl, cells, ridged, flow), TSL node, HUD detail line, six starter declarations | done | packages/VP6.md |
 | VP3 part 1: texture ladder and relief normals: cube faces 64 to 2048 px by screen size, baked on the GPU from the kernel's tiles at any levels, relief normals at true scale, LRU by budget; System True wears it | done | packages/VP3.md |
 | VP3 part 2: finer tiles (levels 1 and 2) for the chosen world, 4 tiles a request after a 1.2 s settle, stopping when not wanted, kept for the page in `views/body/src/finer-tiles.ts`; the chart room agreed the edit in `SystemChart.svelte`'s True surface reader | done | packages/VP3.md |
+| VP3 part 2b: clouds as their own shell over the baked ground, so worlds with air keep their relief in True (with the air thread, true-air.ts) | next | |
 | VP3 part 3: the Body screen and the body card's globe read `finerTiles` through the shared surface cache (after PR 428); the detail ladder's ground roughness below the tiles on the globe | next | |
 
 No kernel change and no golden change.
