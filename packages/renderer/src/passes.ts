@@ -3,8 +3,13 @@
 // for Orac first (name, type, range, default, unit, meaning, group) in the
 // same ParamSpec shape the views use (V11). Costs are per frame on the
 // reference device and are estimates until the probe measures this device
-// (probe.ts); the governor works from measured frame times either way.
-import type { PassSpec } from "./recipe.ts";
+// (probe.ts); the governor works from measured frame times either way. A GPU
+// cost's `load` says which of the probe's three scenes bounds it.
+import type { PassCost, PassSpec } from "./recipe.ts";
+
+const MESH: PassCost["load"] = { geometry: 0.5, fill: 0.5 };
+const LINES: PassCost["load"] = { geometry: 1 };
+const MARCH: PassCost["load"] = { march: 1 };
 
 const HILLSHADE_REF = {
   text: "Horn, B. K. P. (1981). Hill shading and the reflectance map. Proceedings of the IEEE 69(1), 14-47.",
@@ -31,9 +36,9 @@ export const RELIEF: PassSpec = {
   ],
   cost: {
     canvas: { fixed_ms: 0.5, per_mpix_ms: 60 },
-    "gpu-basic": { fixed_ms: 1.5, per_mpix_ms: 1.5, scale: [{ param: "grid", ref: 128, power: 1.2 }] },
-    "gpu-high": { fixed_ms: 1.5, per_mpix_ms: 2, scale: [{ param: "grid", ref: 128, power: 1.2 }] },
-    still: { fixed_ms: 1.5, per_mpix_ms: 2, scale: [{ param: "grid", ref: 128, power: 1.2 }] },
+    "gpu-basic": { fixed_ms: 1.5, per_mpix_ms: 1.5, scale: [{ param: "grid", ref: 128, power: 1.2 }], load: MESH },
+    "gpu-high": { fixed_ms: 1.5, per_mpix_ms: 2, scale: [{ param: "grid", ref: 128, power: 1.2 }], load: MESH },
+    still: { fixed_ms: 1.5, per_mpix_ms: 2, scale: [{ param: "grid", ref: 128, power: 1.2 }], load: MESH },
   },
   references: [HILLSHADE_REF],
 };
@@ -50,7 +55,7 @@ export const GRATICULE: PassSpec = {
     { name: "spacing_deg", type: "number", default: 30, range: [5, 90], unit: "°", meaning: "Degrees between lines.", group: "look", promoted: true },
     { name: "opacity", type: "number", default: 0.3, range: [0, 1], meaning: "How strongly the lines show.", group: "look" },
   ],
-  cost: { canvas: { fixed_ms: 0, per_mpix_ms: 8 }, "gpu-basic": { fixed_ms: 0.3, per_mpix_ms: 0.2 }, still: { fixed_ms: 0.3, per_mpix_ms: 0.2 } },
+  cost: { canvas: { fixed_ms: 0, per_mpix_ms: 8 }, "gpu-basic": { fixed_ms: 0.3, per_mpix_ms: 0.2, load: LINES }, still: { fixed_ms: 0.3, per_mpix_ms: 0.2, load: LINES } },
 };
 
 export const CONTOURS: PassSpec = {
@@ -85,9 +90,9 @@ export const ATMOSPHERE: PassSpec = {
     { name: "thickness", type: "number", default: 1, range: [1, 20], unit: "×", meaning: "Draw the air this many times thicker than it is (1 is true scale). Above 1 is a look, not the world, and the badge says so.", group: "look" },
   ],
   cost: {
-    "gpu-high": { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }] },
-    still: { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }] },
-    "gpu-basic": { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }] },
+    "gpu-high": { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }], load: MARCH },
+    still: { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }], load: MARCH },
+    "gpu-basic": { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }], load: MARCH },
     canvas: { fixed_ms: 0, per_mpix_ms: 6 },
   },
   references: [
