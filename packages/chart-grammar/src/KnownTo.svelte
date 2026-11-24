@@ -122,7 +122,7 @@
   const id = $props.id();
 </script>
 
-<svelte:window onkeydown={(e) => open && e.key === "Escape" && (e.stopPropagation(), close())} onpointerdown={(e) => open && !root?.contains(e.target as Node) && (open = false)} />
+<svelte:window onkeydowncapture={(e) => open && e.key === "Escape" && (e.stopPropagation(), close())} onpointerdown={(e) => open && !root?.contains(e.target as Node) && (open = false)} />
 
 <span class="known" bind:this={root} data-known={eye} data-known-field={field}>
   <button
