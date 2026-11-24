@@ -2,7 +2,7 @@
 
 Status: **PROPOSED 24 Nov 2026**, for Alex. The direction was accepted by Alex on 24 Nov 15:39 ("agree... on all counts", six questions, in memory `sse4-run-desk-beats`); this note designs it in detail. Design and mockup only; nothing here is built by this note. The 14 questions are in section 14, each with a recommendation.
 
-Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, folding sections, adding a preset, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
+Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, folding sections, adding a preset, the Everyone layer and Lift, Undo and Redo, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
 
 Alex's brief, in his words (24 Nov): "a gm must always be able to adapt and remix... presets... are great to have 'in hand' but live is the key"; "no need for next - just let the GM build up a 'playbook'... chapters and pages and sections - each can be a preset that is fired at various windows"; "a routing diagram showing what everyone sees - gm can pause any one by clicking on the line"; "a mini video routing package"; "the routing screen should be generally available and does remove the need for a bunch of other smaller interfaces - we corral the user to the 'nerve centre'".
 
@@ -10,11 +10,12 @@ Alex's brief, in his words (24 Nov): "a gm must always be able to adapt and remi
 
 1. **Everything the GM can show is a source. Everything that can show it is a destination. A line joins them.** That one sentence is the whole Switchboard. The GM's live view is a source. Each preset on the open Playbook page is a source. A camera is a source. A destination is a screen, a role (all its screens) or Everyone (all roles).
 2. **Sending is making a line.** Press a preset and its line appears to the role it names. Drag from any source to any destination to send it somewhere else. "Send this view" is a line from Live. Nothing is sent any other way.
-3. **Holding is breaking a line.** Click a line and it breaks: that screen gets a holding card ("Awaiting transmission", "Signal lost", or a joke). Click again and the picture comes back. "Screens off" is a hold with a blank card, so it is the same thing and not a second control.
-4. **A preset is a saved send.** It holds exactly what a live press would send, plus the name of a role. So firing a preset and doing it live go down one path, and "keep what I just did" is free.
-5. **The Playbook is pages of presets**, in chapters, with section headings. The open page is the GM's hand. There is no order, no Next and no script.
-6. **Roles are named in the Playbook; screens are decided at the table.** A preset says "Bridge". Which glass is Bridge tonight is set by dragging on the Switchboard, and is never saved in the Playbook.
-7. **It replaces the Seats dialog, the seat rows, the "Table sees" bar, the share link line and the planned Looks seat rows.** What stays on the chart is one Send button and one small "on air" chip that opens the Switchboard.
+3. **Nothing sent destroys what it replaced.** A send to Everyone is a layer over the set-up that lifts off again; a fired preset's button un-presses to go back; Undo and Redo sit at the top.
+4. **Holding is breaking a line.** Click a line and it breaks: that screen gets a holding card ("Awaiting transmission", "Signal lost", or a joke). Click again and the picture comes back. "Screens off" is a hold with a blank card, so it is the same thing and not a second control.
+5. **A preset is a saved send.** It holds exactly what a live press would send, plus the name of a role. So firing a preset and doing it live go down one path, and "keep what I just did" is free.
+6. **The Playbook is pages of presets**, in chapters, with section headings. The open page is the GM's hand. There is no order, no Next and no script.
+7. **Roles are named in the Playbook; screens are decided at the table.** A preset says "Bridge". Which glass is Bridge tonight is set by dragging on the Switchboard, and is never saved in the Playbook.
+8. **It replaces the Seats dialog, the seat rows, the "Table sees" bar, the share link line and the planned Looks seat rows.** What stays on the chart is one Send button and one small "on air" chip that opens the Switchboard.
 
 ## 2. Words
 
@@ -92,7 +93,7 @@ Placed by how often it is done (Alex's rule, 23 Nov).
 | often | send something somewhere else | drag from the source's dot to a screen, a role or Everyone |
 | often | hold or release one line | click the line |
 | often | hold everything | **Hold all**, always in the same corner, key H |
-| often | take the last send back | **Back** on the line: the destination returns to what it showed before |
+| often | take the last send back | press the preset's button again; **Lift** on Everyone; **Undo** at the top (section 5.4) |
 | often | turn the signal dial | the dial on the role's heading (all its screens) or on one screen's box |
 | sometimes | choose the holding card, latch Following | click the line's dot: the **line card** opens on the line itself |
 | sometimes | move a screen to another role | drag the screen onto the role's heading |
@@ -181,7 +182,7 @@ In the campaign, as one document (`sse.playbook/1`), exported and imported with 
 
 ### 5.1 What a destination shows
 
-Each destination has exactly one current source. A screen with a line of its own uses that; otherwise it shows its role's. A role with no line of its own shows Everyone's. This is today's rule (`Seat.shown` over the table's `shown`) with one more level.
+Each destination has exactly one current source. If an Everyone layer is on (section 5.4), every screen shows that. Otherwise a screen with a line of its own uses that, or else its role's, and a role with no line of its own shows the table's floor: the last thing Everyone was sent before any role had its own. This is today's rule (`Seat.shown` over the table's `shown`) with one more level and with the wipe removed.
 
 ### 5.2 Arrival
 
@@ -193,9 +194,19 @@ A line from Live is a snapshot by default: the destination gets the place the GM
 
 A line from Live may be switched to **following** (a small latch on the line). The destination then goes where the GM goes, drawn through its own knowledge. The line turns accent colour and the on-air chip says "Bridge is following you", because a GM who forgets this will show the table where the secret base is by going to look at it (question 6).
 
-### 5.4 Back
+### 5.4 Going back: press again, Lift, Undo
 
-Each destination remembers the one source it had before. **Back** on its line returns to it. A Reveal is not undone by Back: the eye's own "take it back" does that, on purpose, in the place where knowledge is managed.
+Alex, 24 Nov 15:58: "when you have an 'everyone', second click on that should go back to the last state... unclicking resumes old setup. Maybe an undo/redo at the top?" Yes to both. The rule is that **nothing sent ever destroys the set-up it replaced**, so there is always a way back, in three sizes.
+
+**Everyone is a layer, not a wipe.** Today a table-wide send clears every seat's own send. That goes. A send to Everyone sits over the set-up: every screen shows it, and the lines to each role and screen stay where they were, drawn faint underneath. **Lift** on the Everyone bar takes the layer off and every screen returns to exactly what it had. A second Everyone send stacks on the first, and Lift goes back one. Anything sent to a role or a screen while a layer is on goes underneath it, ready for when it lifts.
+
+**A preset's button is a switch while its picture is up.** Once fired, the button stays pressed for as long as that preset is what its destination shows. Pressing it again takes it back: an Everyone preset lifts, a role preset returns that role to what it had before, "Signal breaks up" puts the dial back, "Screens dark" releases. So "hold transmission" then un-click resumes the old set-up, as asked. A preset that is no longer showing fires afresh.
+
+**Hold all remembers.** It notes which lines were already held. Release all puts each line back as it was: lines held before stay held.
+
+**Undo and Redo, at the top beside Hold all** (Ctrl Z, Ctrl Shift Z). They step through tonight's changes to what screens show: sends, lifts, holds, dial moves, a screen changing role. This is the Switchboard's own history, separate from the Build desk's undo of edits to the world, and it is not saved. Undo never takes back a Reveal, because the table has already seen it: the eye's own "take it back" does that, on purpose. Undo says so when it steps over one.
+
+**Back** on a line card stays as the one-step return for a single destination.
 
 ### 5.5 Roles with no screen tonight
 
@@ -370,7 +381,8 @@ Names are proposals. Everything is plain data; nothing here feeds physics or RES
       "sections": [ { "title": "Approach", "presets": [ … ] } ] } ] } ] }
 
 // Tonight, on the GM's machine only (host state; replaces `shown` and `Seat.shown`).
-{ "lines": { "everyone": { "source": …, "state": "live" },
+{ "over": [ { "source": …, "state": "live" } ],                     // Everyone layers, top last; empty when none
+  "lines": { "everyone": { "source": …, "state": "live" },             // the floor
              "role:bridge": { "source": …, "state": "held", "card": …, "before": … },
              "screen:k3f9": { "source": …, "state": "following" } },
   "screens": { "k3f9": { "name": "Mira's tablet", "role": "bridge", "local": false, "showing": … } },
@@ -406,7 +418,7 @@ A screen's join gains one step: it says hello with a screen id it keeps on the d
 4. **One layout per role**, so today's seat with two screens becomes two roles sharing one audience ("Bridge" and "Telescope", both the Kestrel's crew)? Recommended: yes. It is what makes "fire at Telescope" mean one thing.
 5. **A preset row is two parts: the body previews it in the GM's monitor, the fire button sends it**, with no confirmation? Recommended: yes. One press to send, and browsing the hand is safe.
 6. **Following: a line from Live may be latched to follow the GM**, off by default, shown in accent on the line and named on the chip? Recommended: yes, off by default. Without it a GM narrating a fly-through must press Send at every stop.
-7. **Back, one step per destination**, which never undoes a Reveal? Recommended: yes.
+7. **Going back in three sizes** (your message of 15:58, taken as yes): a fired preset's button un-presses, Everyone is a layer with Lift, and Undo and Redo sit at the top; none of them takes back a Reveal? Recommended: yes.
 8. **A role with no screen tonight can be dropped onto another role** as tonight's redirect, never saved in the Playbook? Recommended: yes.
 9. **Read aloud stays on the GM's monitor unless its "also show on screens" switch is on?** Recommended: yes.
 10. **Presets never move the universe clock in 4.0.** A Show step may say "as it was at this date" for the picture only. Recommended: yes. Moving the clock changes the world for everyone and should stay a deliberate act on the ruler; a preset that does it waits for 4.2 with triggers and timers.
@@ -421,9 +433,9 @@ Files in `packages/shell/src/run/` and `packages/ui-contract/src/`. One at a tim
 
 | Pkg | What | Needs | For the run-through? |
 |---|---|---|---|
-| **PB1** | Contract: `Source` (show with view, land, hold; `{off}` read as a blank hold), lines for Everyone, role and screen with `before`, the screen hello (id, name, wanted role) and its "showing" report. Sealed roles honour a hold. Old `shown` and `Seat.shown` read and upgraded. | nothing | yes |
-| **PB2** | The Switchboard screen: Live source, roles and screens as a list with lines, Send, click to hold, Hold all, Back, drag and press-then-press, move and swap screens. The on-air chip and the chart's Send button. Rail entry. The status line's table half goes. | PB1 | yes |
-| **PB3** | The Playbook: `sse.playbook/1` in the campaign; chapter and page picker; folding sections; fire; keys 1 to 9; Keep on Live and "+ Add" with its six kinds; the "just now" strip with Keep and Again; edit row; reorder; Update from live; Reveal steps with the eye. | PB2 | yes |
+| **PB1** | Contract: `Source` (show with view, land, hold; `{off}` read as a blank hold), lines for Everyone (as layers over the set-up), role and screen with `before`, the board's undo history, the screen hello (id, name, wanted role) and its "showing" report. Sealed roles honour a hold. Old `shown` and `Seat.shown` read and upgraded. | nothing | yes |
+| **PB2** | The Switchboard screen: Live source, roles and screens as a list with lines, Send, click to hold, Hold all that remembers, Lift, Undo and Redo, drag and press-then-press, move and swap screens. The on-air chip and the chart's Send button. Rail entry. The status line's table half goes. | PB1 | yes |
+| **PB3** | The Playbook: `sse.playbook/1` in the campaign; chapter and page picker; folding sections; fire, and press again to go back; keys 1 to 9; Keep on Live and "+ Add" with its six kinds; the "just now" strip with Keep and Again; edit row; reorder; Update from live; Reveal steps with the eye. | PB2 | yes |
 | **PB4** | Previews: a Chart preview per role and source, shared; the confirmed tick; Pin to the chart; See full size. | PB2 | helps |
 | **PB5** | Holding cards: `sse.holding-cards/1` in the base pack, the 24 lines, kinds, chosen on the line card, no repeat twice running. | PB2 | small, yes |
 | **PB6** | Read aloud: the `say` source, the GM monitor reading card, "also show on screens" as a player document. | PB3 | yes if the run-through has narration |
