@@ -25,7 +25,7 @@
   import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
-  import { readSol, solBatches, solSourceText, SOL_TITLE } from "../../ui-contract/src/index.ts";
+  import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
   import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
@@ -49,7 +49,7 @@
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
   import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
-  import { menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
+  import { actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
   import ObjectMenu from "./ObjectMenu.svelte";
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
@@ -990,6 +990,13 @@
   // Each Sol body's sheet id ("earth", "europa"), by address: the name the kernel's world stacks go by, so a catalogued
   // world opens in the cutaway when the kernel has its stack (and says it has none otherwise).
   let solIds = $state<ReadonlyMap<string, string>>(new Map());
+  // The same sheet for views (reference worlds on the editing strips), read once and kept.
+  let solForViews: Promise<SolSheet | null> | null = null;
+  const solSheetForViews = () =>
+    (solForViews ??= fetch(new URL(stackDoc.catalogues.sol, document.baseURI))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => (p ? readSol(p) : null))
+      .catch(() => null));
   async function solSheet() {
     const sheet = readSol(await (await fetch(new URL(stackDoc.catalogues.sol, document.baseURI))).json());
     if (!sheet) throw new Error("the Solar System sheet could not be read");
@@ -1358,6 +1365,9 @@
   const objMenuItems = $derived(
     objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }) : null,
   );
+  // More's edit group says what the object menu says: the same words and keys, from the one list.
+  const moreWords = (id: string) => actionById(id)!.label({ address: ws.selection ?? "", kind: "", label: selName ?? "" });
+  const moreKey = (id: string) => keyWords(actionById(id)!.key!);
   async function runAction(id: string, address: string) {
     ws.select(address);
     if (id === "open") return toWorld(address);
@@ -1387,7 +1397,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, ...(minervaHost ? { describe } : {}) }, shown);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, solSheet: solSheetForViews, ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
     return {
       destroy: () => {
@@ -1481,6 +1491,8 @@
       {steps}
       title={scene.title}
       baseTitle={base.title}
+      session={session ?? null}
+      systemAddress={scene.system}
       subjects={scene.subjects}
       selection={ws.selection}
       {selName}
@@ -1523,10 +1535,11 @@
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
           <div class="depth-more"><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
           {#if clipArmed}
-            <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>Copy {selName ?? "a body"} <kbd>Ctrl+C</kbd></button>
-            {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>Cut {selName} <kbd>Ctrl+X</kbd></button>{/if}
-            <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
-            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>Add here… <kbd>A</kbd></button>
+            <!-- The edit group reads its words and keys from the one action list (ui-contract actions.ts), as the object menu does. -->
+            <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>{moreWords("copy")} {selName ?? "a body"} <kbd>{moreKey("copy")}</kbd></button>
+            {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>{moreWords("cut")} {selName} <kbd>{moreKey("cut")}</kbd></button>{/if}
+            <button type="button" data-more-paste onclick={pasteFromMenu}>{moreWords("paste")} <kbd>{moreKey("paste")}</kbd></button>
+            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>{moreWords("add")} <kbd>{moreKey("add")}</kbd></button>
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
           <button type="button" data-more-open onclick={() => ((moreOpen = false), (offered = null), (given = null), (confirmFresh = false), openCampaign(true))}>Open a file… <kbd>Ctrl+O</kbd></button>

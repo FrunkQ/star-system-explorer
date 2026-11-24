@@ -5,7 +5,7 @@ metadata:
   type: project
   modified: 2026-11-24T15:49:45.488Z
 ---
-Design note: `/mnt/project-files/sse4/SSE4-playbook-and-switchboard-design.md`, repo copy `handover/design/` on main (PR 411, merged 24 Nov 2026; later note changes need a new PR). Written 24 Nov 2026 by the Fable thread "Design playbook and switchboard". Status: ACCEPTED by Alex 24 Nov 2026 16:34 ("Agree with all your recs above", all 22 questions yes). Direction itself was accepted earlier, see [[sse4-run-desk-beats]].
+Design note: `/mnt/project-files/sse4/SSE4-playbook-and-switchboard-design.md`, repo copy `handover/design/` on main (PR 411 and PR 425, both merged 24 Nov 2026; later note changes need a new PR). Section 18 of the note is the concept map and section 19 is the handover for a reader without the chat; mockup sources are in handover-screens/PB-screens/source/. Written 24 Nov 2026 by the Fable thread "Design playbook and switchboard". Status: ACCEPTED by Alex 24 Nov 2026 16:34 ("Agree with all your recs above", all 22 questions yes). Direction itself was accepted earlier, see [[sse4-run-desk-beats]].
 
 Mockup: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html` plus five screenshots; live artifact https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 (source in that thread's scratchpad, not kept; the project-files copy is the source to edit).
 
