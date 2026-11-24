@@ -133,17 +133,36 @@ fn refuse_existing(ch: &Chronicle, systems: &[Address]) -> Result<(), Response> 
     Ok(())
 }
 
+/// A system grown from a drawn star (`from_star`) may hold the star's own
+/// promotion record at its address, and nothing else.
+fn refuse_existing_but_the_star(ch: &Chronicle, system: &Address) -> Result<(), Response> {
+    let st = ch.state_at(UniverseTime::seconds(i64::MAX));
+    let ok = st
+        .facts
+        .iter()
+        .filter(|(a, _)| system.contains(a))
+        .all(|(a, f)| a == system && f.contains_key(crate::cosmos::STAR_DESCRIPTION));
+    if !ok {
+        return Err(err(
+            "already_adopted",
+            format!("{system} already has a system grown in this universe"),
+        ));
+    }
+    Ok(())
+}
+
 pub(crate) fn adopt(
     ch: &Chronicle,
     root: &Address,
     import_v3: Option<String>,
     formation: Option<FormationRequest>,
     occurred_at_s: Option<i64>,
+    from_star: Option<&str>,
 ) -> Result<Adoption, Response> {
     let at = UniverseTime::seconds(occurred_at_s.unwrap_or(0));
     match (import_v3, formation) {
         (Some(save), None) => adopt_v3(ch, root, &save, at),
-        (None, Some(req)) => adopt_formation(ch, root, req, at),
+        (None, Some(req)) => adopt_formation(ch, root, req, at, from_star.is_some()),
         _ => Err(err(
             "bad_request",
             "give one of import_v3 (a save's text) or formation (run_formation fields)",
@@ -332,6 +351,7 @@ fn adopt_formation(
     root: &Address,
     req: FormationRequest,
     at: UniverseTime,
+    from_star: bool,
 ) -> Result<Adoption, Response> {
     let mut req = req;
     let system: Address = match &req.system {
@@ -347,7 +367,11 @@ fn adopt_formation(
         ));
     }
     req.system = Some(system.to_string());
-    refuse_existing(ch, std::slice::from_ref(&system))?;
+    if from_star {
+        refuse_existing_but_the_star(ch, &system)?;
+    } else {
+        refuse_existing(ch, std::slice::from_ref(&system))?;
+    }
     let (_, run, pinned) = systems::form(req.clone().into())?;
     let set = run_facts(&run);
     let count = set.values().map(|r| r.len() as u32).sum();

@@ -477,6 +477,15 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         pins: Option<serde_json::Value>,
+        /// A drawn star of the campaign's galaxy (its system address, as
+        /// `star_cell` lists it) to grow this system from: the kernel promotes
+        /// it if it is not yet, the system's address becomes the star's, and
+        /// the formation inherits the star's birth (`Stars::birth`: population,
+        /// mass, age, metals) with `now_gyr` the galaxy's now plus campaign time
+        /// elapsed, unless given. Not with `birth` or `envelope`.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        from_star: Option<String>,
     },
     /// A body's world stack (`sse.world-stack/1`: shells, regions, features)
     /// with its depth ladder and physics notes. Served from the P4 fixtures
@@ -2165,6 +2174,15 @@ pub enum Request {
 #[ts(export)]
 pub struct FormationRequest {
     pub seed: String,
+    /// A drawn star of the campaign's galaxy (its system address, as
+    /// `star_cell` lists it) to grow this system from: the kernel promotes
+    /// it if it is not yet, the system's address becomes the star's, and
+    /// the formation inherits the star's birth (`Stars::birth`: population,
+    /// mass, age, metals) with `now_gyr` the galaxy's now plus campaign time
+    /// elapsed, unless given. Not with `birth` or `envelope`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub from_star: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub system: Option<String>,

@@ -11,6 +11,8 @@ mod bary_tests;
 mod caves;
 #[cfg(test)]
 mod class_sample_tests;
+#[cfg(test)]
+mod from_star_tests;
 mod clock;
 mod composition;
 pub mod contract;
@@ -1777,6 +1779,25 @@ impl Kernel {
         })
     }
 
+    /// `from_star` (run_formation, adopt): promote the drawn star if need
+    /// be and give its birth, as JSON, and the galaxy's now plus campaign
+    /// time elapsed, Gyr.
+    fn star_birth(&mut self, address: &str) -> Result<(serde_json::Value, f64), Response> {
+        let description = match self.promote_star(address)? {
+            Response::StarPromoted { description, .. } => description,
+            other => return Err(other),
+        };
+        let s: sse_cosmos::stars::StarSystem = serde_json::from_value(description)
+            .map_err(|e| err("bad_record", format!("{address}: {e}")))?;
+        let u = self.universe()?;
+        let elapsed_gyr = clock::elapsed_myr(&u.chronicle) / 1000.0;
+        let (seed, root) = (u.seed.clone(), u.root.clone());
+        cosmos::with_stars(&seed, &root, None, |st, now| {
+            let b = serde_json::to_value(st.birth(&s)).expect("plain data");
+            Ok((b, now + elapsed_gyr))
+        })
+    }
+
     /// `promote_star` (Y7a): draw a fill star once and store it whole.
     fn promote_star(&mut self, address: &str) -> Result<Response, Response> {
         let lib = self.observe.names.clone();
@@ -3355,17 +3376,33 @@ impl Kernel {
                 inherit_pins,
                 star_pins,
                 pins,
-            } => systems::run_formation(systems::FormArgs {
-                seed,
-                system,
-                block,
-                birth,
-                now_gyr,
-                envelope,
-                inherit_pins,
-                star_pins,
-                pins,
-            })?,
+                from_star,
+            } => {
+                let (system, birth, now_gyr) = match from_star {
+                    Some(a) => {
+                        if birth.is_some() || envelope.is_some() {
+                            return Err(err(
+                                "bad_request",
+                                "from_star gives the birth: not with birth or envelope",
+                            ));
+                        }
+                        let (b, now) = self.star_birth(&a)?;
+                        (Some(a), Some(b), now_gyr.or(Some(now)))
+                    }
+                    None => (system, birth, now_gyr),
+                };
+                systems::run_formation(systems::FormArgs {
+                    seed,
+                    system,
+                    block,
+                    birth,
+                    now_gyr,
+                    envelope,
+                    inherit_pins,
+                    star_pins,
+                    pins,
+                })?
+            }
             Request::ReadWorldStack {
                 body,
                 fixture,
@@ -3581,11 +3618,34 @@ impl Kernel {
             }
             Request::Adopt {
                 import_v3,
-                formation,
+                mut formation,
                 occurred_at_s,
             } => {
+                let mut grown_from = None;
+                if let Some(f) = formation.as_mut() {
+                    if let Some(a) = f.from_star.clone() {
+                        if f.birth.is_some() || f.envelope.is_some() {
+                            return Err(err(
+                                "bad_request",
+                                "from_star gives the birth: not with birth or envelope",
+                            ));
+                        }
+                        let (b, now) = self.star_birth(&a)?;
+                        f.system = Some(a.clone());
+                        f.birth = Some(b);
+                        f.now_gyr = f.now_gyr.or(Some(now));
+                        grown_from = Some(a);
+                    }
+                }
                 let u = self.universe()?;
-                let a = adopt::adopt(&u.chronicle, &u.root, import_v3, formation, occurred_at_s)?;
+                let a = adopt::adopt(
+                    &u.chronicle,
+                    &u.root,
+                    import_v3,
+                    formation,
+                    occurred_at_s,
+                    grown_from.as_deref(),
+                )?;
                 let mut events = vec![];
                 for e in a.events {
                     events.push(
@@ -6280,8 +6340,14 @@ impl Kernel {
                                 "pins": g.rerun.pins,
                             }))
                             .expect("a formation request");
-                            let a =
-                                adopt::adopt(&u.chronicle, &u.root, None, Some(req), Some(at_s))?;
+                            let a = adopt::adopt(
+                                &u.chronicle,
+                                &u.root,
+                                None,
+                                Some(req),
+                                Some(at_s),
+                                None,
+                            )?;
                             for e in a.events {
                                 events.push(
                                     u.chronicle
