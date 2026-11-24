@@ -161,3 +161,39 @@ test("on the wire: a held role gets off with one card for all its screens; other
   assert.deepEqual(w.screens.w1, mars);
   assert.deepEqual(boardWire(holdAll(b, "blank"), ["table"]).roles.table, { off: true });
 });
+
+test("who steers (PB3b): Theirs by default; a role sets its screens, one screen may differ; read only goes on the wire", async () => {
+  const { setSteer, steerOf, drive, driveTo, boardWire } = await import("../src/board.ts");
+  let b = screenHello(screenHello(emptyBoard(sol), "w", { name: "Wall", role: "bridge" }), "m", { name: "Mira", role: "bridge" });
+  assert.equal(steerOf(b, "bridge", "w"), "theirs");
+  b = setSteer(b, "screen:m", "read");
+  b = setSteer(b, "role:bridge", "read");
+  assert.equal(steerOf(b, "bridge", "m"), "read");
+  assert.equal(b.steer?.["screen:m"], undefined, "the role's setting clears its screens' own");
+  b = setSteer(b, "screen:w", "theirs");
+  assert.deepEqual([steerOf(b, "bridge", "w"), steerOf(b, "bridge", "m")], ["theirs", "read"]);
+  const wire = boardWire(b, ["bridge"]);
+  assert.equal((wire.screens.m as { steer?: string }).steer, "read");
+  assert.equal((wire.screens.w as { steer?: string }).steer, undefined);
+  assert.equal((wire.shown as { steer?: string }).steer, undefined);
+});
+
+test("driving a read-only destination: it follows the GM without new undo steps; Theirs lets go", async () => {
+  const { setSteer, drive, driveTo, steerOf } = await import("../src/board.ts");
+  let b = screenHello(emptyBoard(sol), "w", { name: "Wall", role: "bridge" });
+  b = drive(b, "screen:w");
+  assert.equal(b.driving, "screen:w");
+  assert.equal(steerOf(b, "bridge", "w"), "read");
+  b = driveTo(b, tarn);
+  assert.equal(title(b, "bridge", "w"), "Tarn");
+  assert.equal(title(b, "bridge"), "The Solar System");
+  b = driveTo(b, mars);
+  assert.equal(title(b, "bridge", "w"), "Mars, landing");
+  b = setSteer(b, "screen:w", "theirs");
+  assert.equal(b.driving, undefined);
+  assert.equal(title(b, "bridge", "w"), "Mars, landing", "let go: it stays where it was left");
+  let e = drive(send(send(emptyBoard(sol), "role:bridge", tarn), "everyone", mars), "everyone");
+  e = driveTo(e, sol);
+  assert.equal(title(e, "bridge"), "The Solar System", "driving Everyone moves its top layer");
+  assert.equal(drive(e, null).driving, undefined);
+});

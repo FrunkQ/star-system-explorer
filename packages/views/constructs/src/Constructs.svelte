@@ -96,7 +96,7 @@
   let log = $state<ShipLogEntry[]>([]);
   const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
   async function loadLog(address: string) {
-    const [h, r, aboardAll] = await Promise.all([session.history(address), session.record?.(address), aboardEntries(address)]);
+    const [h, r, aboardAll] = await Promise.all([session.history(address, { changes: true }), session.record?.(address), aboardEntries(address)]);
     if (picked !== address) return;
     const own = shipLog(h, r?.ok ? r.record : null, (s) => secondsToYears(s), (k) => fieldWords(k, MANIFEST_WORDS).label);
     // Who and what came aboard, left and changed state here (track MC), from the entries' own histories.

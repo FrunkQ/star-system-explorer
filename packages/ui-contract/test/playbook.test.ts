@@ -93,3 +93,16 @@ test("read back from a save: bad steps and presets are dropped; nothing usable g
   assert.deepEqual(playbookFrom(null), emptyPlaybook());
   assert.deepEqual(playbookFrom({ schema: "sse.playbook/1", chapters: [] }), emptyPlaybook());
 });
+
+test("a Reveal step: words, read back, never on the board", async () => {
+  const { reveals, revealsOf } = await import("../src/playbook.ts");
+  const p: Preset = { id: "k5", title: "The wreck", to: "bridge", steps: [{ reveal: { address: "u:k/sys:1/body:4", landmark: "known", name: "the wreck" } }] };
+  assert.equal(presetWords(p, bm), "Reveal the wreck");
+  assert.ok(reveals(p));
+  assert.deepEqual(revealsOf(p), [{ address: "u:k/sys:1/body:4", landmark: "known" }]);
+  const b = emptyBoard({ scope: "k", title: "Kestrel" });
+  assert.deepEqual(fire(b, p, bm), b);
+  assert.ok(!isUp(b, p));
+  const pb = addPreset(emptyPlaybook(), "s1", { title: p.title, to: p.to, steps: p.steps }).pb;
+  assert.deepEqual(playbookFrom(JSON.parse(JSON.stringify(pb))), pb);
+});
