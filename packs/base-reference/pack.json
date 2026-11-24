@@ -15524,6 +15524,14 @@
       "unit": "kg m-3",
       "src": "nist-srd126-t1",
       "check": "unverified"
+     },
+     "sigma_elec_liquid": {
+      "v": 1360000.0,
+      "unit": "S m-1",
+      "src": "pozzo2012",
+      "check": "unverified",
+      "at_place": "Earth's core-mantle boundary",
+      "note": "pure liquid iron, Table 1 in parentheses; 1.56e6 at the inner-core boundary"
      }
     },
     {
@@ -15698,6 +15706,225 @@
       "check": "unverified",
       "at_k": 300.0,
       "note": "the 4-300 K fit at its top end, 5 % fit error"
+     }
+    },
+    {
+     "id": "earth-core-liquid",
+     "names": {
+      "physics": "liquid iron alloy with silicon and oxygen (Earth's outer core)",
+      "plain": "liquid core iron",
+      "story": "molten core"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "Pozzo et al.'s light-element case, 10 % Si and 8 % O; its conductivity changes only about 13 % from top to bottom of the core",
+     "sigma_elec": {
+      "v": 1110000.0,
+      "unit": "S m-1",
+      "src": "pozzo2012",
+      "check": "unverified",
+      "at_k": 4186.0,
+      "at_place": "Earth's core-mantle boundary",
+      "note": "Table 1, density jump 0.6 g/cm3; first-principles, 2 to 3 times the estimates used before"
+     },
+     "sigma_elec_icb": {
+      "v": 1250000.0,
+      "unit": "S m-1",
+      "src": "pozzo2012",
+      "check": "unverified",
+      "at_k": 5700.0,
+      "at_place": "Earth's inner-core boundary",
+      "note": "Table 1, density jump 0.6 g/cm3"
+     }
+    },
+    {
+     "id": "giant-envelope",
+     "names": {
+      "physics": "hydrogen-helium fluid of a gas giant's interior",
+      "plain": "gas giant's deep fluid",
+      "story": "the giant's deep sea of hydrogen"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "along Jupiter's adiabat, model J11-8a; hydrogen turns metal-like with depth, with no sharp edge",
+     "sigma_elec_profile": {
+      "src": "french2012",
+      "check": "unverified",
+      "model": "Jupiter J11-8a",
+      "columns": [
+       "r_rj",
+       "density",
+       "t_k",
+       "p_pa",
+       "sigma_elec"
+      ],
+      "units": [
+       "Jupiter radii",
+       "kg m-3",
+       "K",
+       "Pa",
+       "S m-1"
+      ],
+      "rows": [
+       [
+        0.0923,
+        4420.0,
+        19500.0,
+        4180000000000.0,
+        3390000.0
+       ],
+       [
+        0.196,
+        3990.0,
+        18000.0,
+        3410000000000.0,
+        3050000.0
+       ],
+       [
+        0.35,
+        3390.0,
+        16000.0,
+        2460000000000.0,
+        2480000.0
+       ],
+       [
+        0.478,
+        2800.0,
+        14000.0,
+        1640000000000.0,
+        1970000.0
+       ],
+       [
+        0.584,
+        2260.0,
+        12000.0,
+        1030000000000.0,
+        1480000.0
+       ],
+       [
+        0.68,
+        1600.0,
+        10000.0,
+        600000000000.0,
+        1090000.0
+       ],
+       [
+        0.77,
+        1200.0,
+        8000.0,
+        300000000000.0,
+        720000.0
+       ],
+       [
+        0.852,
+        824.0,
+        6000.0,
+        120000000000.0,
+        360000.0
+       ],
+       [
+        0.89,
+        638.0,
+        5000.0,
+        64000000000.0,
+        146000.0
+       ],
+       [
+        0.93,
+        null,
+        null,
+        23000000000.0,
+        1500.0
+       ]
+      ],
+      "note": "from the centre outwards; the deepest row is at 0.0923 Jupiter radii; the 0.930 row prints no density or temperature in Table 2"
+     },
+     "metallic_from": {
+      "sigma_elec": {
+       "v": 20000.0,
+       "unit": "S m-1",
+       "src": "french2012",
+       "check": "unverified"
+      },
+      "p_pa": {
+       "v": 50000000000.0,
+       "unit": "Pa",
+       "src": "french2012",
+       "check": "unverified",
+       "note": "0.5 Mbar, about 0.9 Jupiter radii (section 6.2)"
+      }
+     }
+    },
+    {
+     "id": "seawater",
+     "names": {
+      "physics": "standard seawater, practical salinity 35",
+      "plain": "seawater",
+      "story": "sea water"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "conductivity rises with salt and with warmth",
+     "salinity_practical": {
+      "v": 35.0,
+      "unit": "1",
+      "src": "unesco37",
+      "check": "unverified",
+      "note": "PSS-78 salinity is a pure number from a conductivity ratio"
+     },
+     "sigma_elec": {
+      "v": 4.2914,
+      "unit": "S m-1",
+      "src": "seabird-an14",
+      "check": "unverified",
+      "at_k": 288.15,
+      "at_place": "sea surface",
+      "note": "C(35,15,0) = 42.914 mmho/cm (Culkin and Smith); Poisson's 42.933 differs by 0.04 %",
+      "also": [
+       "unesco37"
+      ]
+     },
+     "sigma_elec_25c": {
+      "v": 5.3065,
+      "unit": "S m-1",
+      "src": "lewis1980",
+      "check": "unverified",
+      "at_k": 298.15,
+      "at_place": "sea surface",
+      "note": "C(35,15,0) times r_T(25 C) = 1.23654 from eq. 8"
+     },
+     "sigma_elec_t_fit": {
+      "fit": "C(35,T,0)/C(35,15,0) = c0 + c1 T + c2 T^2 + c3 T^3 + c4 T^4, T in deg C",
+      "coeffs": [
+       0.6766097,
+       0.0200564,
+       0.0001104259,
+       -6.9698e-07,
+       1.0031e-09
+      ],
+      "range_c": [
+       -2.0,
+       35.0
+      ],
+      "src": "lewis1980",
+      "check": "unverified"
+     },
+     "salinity_fit": {
+      "fit": "S = a0 + a1 K^0.5 + a2 K + a3 K^1.5 + a4 K^2 + a5 K^2.5, K = C(S,15,0)/C(KCl,15,0)",
+      "coeffs": [
+       0.008,
+       -0.1692,
+       25.3851,
+       14.0941,
+       -7.0261,
+       2.7081
+      ],
+      "range": [
+       2.0,
+       42.0
+      ],
+      "src": "unesco37",
+      "check": "unverified"
      }
     }
    ],
@@ -16369,6 +16596,12 @@
      "doi": "10.1016/j.pss.2009.09.011"
     },
     {
+     "id": "french2012",
+     "text": "French, M. et al. 2012, ApJS 202, 5: ab initio simulations for material properties along the Jupiter adiabat (model J11-8a), Table 2 (linear transport properties) with Table 1 (thermodynamic properties); section 6.2: metal-like conduction (sigma >= 2e4 S/m) from about 0.9 Jupiter radii, 0.5 Mbar",
+     "status": "unverified",
+     "doi": "10.1088/0067-0049/202/1/5"
+    },
+    {
      "id": "fudge-register",
      "text": "SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)",
      "status": "authored",
@@ -16515,6 +16748,12 @@
      "text": "Leachman, J. W., Jacobsen, R. T., Penoncello, S. G. and Lemmon, E. W. 2009, J. Phys. Chem. Ref. Data 38, 721: fundamental equations of state for parahydrogen, normal hydrogen and orthohydrogen",
      "status": "unverified",
      "doi": "10.1063/1.3160306"
+    },
+    {
+     "id": "lewis1980",
+     "text": "Lewis, E. L. 1980, IEEE J. Oceanic Eng. OE-5, 3: the Practical Salinity Scale 1978 and its antecedents, eq. 8: r_T = C(35,T,0)/C(35,15,0) = c0 + c1 T + c2 T^2 + c3 T^3 + c4 T^4, T in deg C (c0..c4 = 6.766097e-1, 2.00564e-2, 1.104259e-4, -6.9698e-7, 1.0031e-9)",
+     "status": "unverified",
+     "url": "https://www.vliz.be/imisdocs/publications/ocrd/29440.pdf"
     },
     {
      "id": "lin2005",
@@ -16845,6 +17084,13 @@
      "url": "https://rsicc.ornl.gov/fmdp/tm2000-351.pdf"
     },
     {
+     "id": "pozzo2012",
+     "text": "Pozzo, M., Davies, C., Gubbins, D. and Alfe, D. 2012, Nature 485, 355: thermal and electrical conductivity of iron at Earth's core conditions (arXiv:1203.4970), Table 1: sigma at the inner-core and core-mantle boundaries, Fe with 10 % Si and 8 % O (pure Fe in parentheses), for a density jump of 0.6 g/cm3",
+     "status": "unverified",
+     "doi": "10.1038/nature11031",
+     "url": "https://arxiv.org/abs/1203.4970"
+    },
+    {
      "id": "randall2008",
      "text": "Randall, S. W. et al. 2008, ApJ 679, 1173: constraints on the self-interaction cross section of dark matter from the Bullet Cluster",
      "status": "verified",
@@ -16910,6 +17156,12 @@
      "doi": "10.1111/j.1365-2966.2012.21252.x"
     },
     {
+     "id": "seabird-an14",
+     "text": "Sea-Bird Electronics, Application note 14: 1978 Practical Salinity Scale (rev. January 1989): C(35,15,0) = 42.914 mmho/cm (Culkin and Smith, UNESCO 37 p. 23; Poisson used 42.933); mmho/cm equal mS/cm",
+     "status": "unverified",
+     "url": "https://pscfiles.apl.uw.edu/woodgate/BeringStraitArchive/BeringStraitMooringData/BeringStraitMoorings2007to2009IPY_versionMar10/SeasoftForWavesProcessingSoftware/website/application_notes/AN14.htm"
+    },
+    {
      "id": "setzmann-wagner1991",
      "text": "Setzmann, U. and Wagner, W. 1991, J. Phys. Chem. Ref. Data 20, 1061: a new equation of state and tables of thermodynamic properties for methane (values read from the NIST WebBook fluid tables, which use it: saturated liquid 422.36 kg/m3 at the normal boiling point, 111.67 K)",
      "status": "unverified",
@@ -16967,6 +17219,12 @@
      "text": "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition, Cambridge University Press (typical crust 2700, mantle 3300 and sediment 2300 kg/m3 of its worked problems)",
      "status": "unverified",
      "doi": "10.1017/CBO9780511843877"
+    },
+    {
+     "id": "unesco37",
+     "text": "UNESCO 1981, Background papers and supporting data on the Practical Salinity Scale 1978, Unesco Technical Papers in Marine Science 37 (Joint Panel on Oceanographic Tables and Standards): practical salinity S = 0.0080 - 0.1692 K^0.5 + 25.3851 K + 14.0941 K^1.5 - 7.0261 K^2 + 2.7081 K^2.5, K = C(S,15,0)/C(KCl,15,0), valid for S 2 to 42; Culkin and Smith's C(35,15,0) = 42.914 mmho/cm",
+     "status": "unverified",
+     "url": "https://www.vliz.be/imisdocs/publications/ocrd/270529.pdf"
     },
     {
      "id": "uscg-chris-dmh",

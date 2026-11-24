@@ -767,3 +767,27 @@ fn bands_meet_end_to_end_and_name_a_view() {
     assert!(e.iter().any(|m| m.contains("view-red")), "{e:#?}");
     assert!(e.iter().any(|m| m.contains("band odd")), "{e:#?}");
 }
+
+#[test]
+fn conductivities_for_the_field_ledger_are_on_the_sheet() {
+    // MP30: eta = 1/(mu0 sigma) reads these. Core iron near 1e6 S/m (Pozzo
+    // 2012); Jupiter's deep fluid rises past 1e6 with depth (French 2012);
+    // seawater 4.29 S/m at 15 C and salinity 35 (PSS-78).
+    let r = Reference::base();
+    let get = |id: &str, k: &str| num(r.row("mixtures", id).and_then(|x| x.get(k)));
+    let core = get("earth-core-liquid", "sigma_elec").unwrap();
+    assert!((1e6..2e6).contains(&core), "{core}");
+    assert!(get("iron", "sigma_elec_liquid").is_some());
+    let sea15 = get("seawater", "sigma_elec").unwrap();
+    let sea25 = get("seawater", "sigma_elec_25c").unwrap();
+    assert!((sea15 - 4.2914).abs() < 1e-9 && sea25 > sea15 && sea25 < 6.0);
+    let prof = r
+        .row("mixtures", "giant-envelope")
+        .and_then(|x| x.get("sigma_elec_profile"))
+        .and_then(|p| p.get("rows"))
+        .and_then(|v| v.as_array())
+        .unwrap();
+    // Sigma falls outwards, row by row.
+    let s: Vec<f64> = prof.iter().map(|row| row[4].as_f64().unwrap()).collect();
+    assert!(s.windows(2).all(|w| w[0] > w[1]), "{s:?}");
+}
