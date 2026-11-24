@@ -50,6 +50,22 @@ try {
     for (const n of ["Earth", "Jupiter"]) assert.equal(await strip.locator(`[data-dot="${n}"]`).count(), 1, `${n} is a reference dot`);
     await shot(gm, `explore-orbit-${vp}`);
 
+    // Press a unit (ED1a): the card's Orbit steps to the next reading and the handle follows, for every planet; round
+    // the readings it comes back to AU.
+    const cardOrbit = gm.locator("section[aria-label='Mars'] .field").filter({ hasText: /^(orbit|how far)/i }).first();
+    const unitButton = cardOrbit.locator("[data-unit]");
+    {
+      assert.equal(await unitButton.count(), 1, "the card's orbit has a unit to press");
+      assert.equal(await unitButton.innerText(), "AU");
+      await unitButton.click();
+      await gm.waitForFunction(() => !/AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 5000 });
+      const other = await cardOrbit.locator("[data-unit]").innerText();
+      assert.notEqual(other, "AU");
+      assert.ok((await row.locator('[data-handle="orbit"] .value').innerText()).endsWith(other), "the handle says it in the chosen unit too");
+      for (let i = 0; i < 5 && (await cardOrbit.locator("[data-unit]").innerText()) !== "AU"; i++) await cardOrbit.locator("[data-unit]").click();
+      assert.equal(await cardOrbit.locator("[data-unit]").innerText(), "AU", "round the readings and back");
+    }
+
     // Build: type "1 AU", one change, what followed, Undo.
     await desk(gm, "Build");
     const hash0 = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");

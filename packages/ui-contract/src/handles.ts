@@ -53,6 +53,14 @@ export function scaleClass(kind: string, mass_kg: number | undefined): string {
   return "planet";
 }
 
+/** A scene subject's scale class, from its kind and (for a planet) its mass fact in Earth masses. */
+export function subjectClass(s: { kind: string; facts?: readonly { field: string; value: unknown }[] }): string {
+  if (s.kind === "belt" || s.kind === "ring") return "ring";
+  if (s.kind === "station" || s.kind === "construct" || s.kind === "craft") return "construct";
+  const m = s.facts?.find((f) => f.field === "mass_earth")?.value;
+  return scaleClass(s.kind, typeof m === "number" ? m * constant("M_earth") : undefined);
+}
+
 export const aboutFor = (h: Handle, cls: string): About => ({ class: cls, ...(h.part.what ? { what: h.part.what } : {}) });
 
 const perOf = (p: { per?: string }): number => (p.per ? constant(p.per) : 1);
