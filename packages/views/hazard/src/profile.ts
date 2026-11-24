@@ -2,6 +2,7 @@
 // reading. Distance runs along the bottom on a stretched (logarithmic) scale from the surface out; one thin row per
 // hazard in three tones; the fixed marks under it and the ship's Park and Dive marks over it. Nothing here is physics:
 // every number is the kernel's.
+import { constant } from "../../../ui-contract/src/sheet.ts";
 
 export type Tone = "clear" | "harsh" | "deadly";
 export interface HazardBand { from_m: number; to_m: number; tone: Tone }
@@ -11,9 +12,12 @@ export interface ShipMark { distance_m: number; set_by: string; says: string; cl
 export interface MoonReading { moon: string; distance_m: number; sv_per_day: number; tone: Tone }
 export interface HazardPass { closest_m: number; dose_sv: number; peak_hull_k: number; hours_in_belts: number; clock_lost_s: number }
 
-/** The push to hold still, in m/s² and in Earth gravities (g0 = 9.80665 m/s², the defined standard). */
-export const hoverWords = (a: number): string =>
-  !Number.isFinite(a) ? "no push can hold still there" : `holding still there instead takes ${a < 10 ? a.toFixed(2) : a.toFixed(0)} m/s² (${(a / 9.80665).toFixed(a / 9.80665 < 10 ? 2 : 0)} g) of thrust`;
+/** The push to hold still, in m/s² and in standard gravities (the sheet's g0). */
+export function hoverWords(a: number): string {
+  if (!Number.isFinite(a)) return "no push can hold still there";
+  const g = a / constant("g0");
+  return `holding still there instead takes ${a < 10 ? a.toFixed(2) : a.toFixed(0)} m/s² (${g.toFixed(g < 10 ? 2 : 0)} g) of thrust`;
+}
 export interface HazardMapRead {
   address: string;
   line: "equator" | "poles";
@@ -44,7 +48,7 @@ export function xOf(map: Pick<HazardMapRead, "from_m" | "to_m">, d: number, x0: 
 
 /** A distance in the body's radii, or in au round a star far out (as the kernel words it). */
 export function distanceWords(d: number, radius: number): string {
-  const AU_M = 1.495978707e11;
+  const AU_M = constant("au");
   if (radius > 1e8 && d > 0.05 * AU_M) return `${(d / AU_M).toFixed(2)} au`;
   const r = d / radius;
   return `${r < 10 ? r.toFixed(2) : r.toFixed(1)} radii`;
