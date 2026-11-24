@@ -64,11 +64,17 @@ def main():
         write(root, "ledger.txt", "# empty\n")
         code, out = run(root, "--ledger", ledger, "--base-ledger", ledger)
         expect("clean tree and empty ledger pass", code == 0 and "typed copies left: 0" in out, out)
+        code, out = run(root, "--closed")
+        expect("closed: a clean tree passes", code == 0 and "typed copies left: 0" in out, out)
 
         # A new typed density in a pack fails while unlabelled.
         tree(root, "pub fn f() -> f64 { 1.0 }\n", {"other": {"water": {"density_kg_m3": 997.0}}})
         code, out = run(root, "--ledger", ledger, "--base-ledger", ledger)
         expect("new typed density fails", code == 1 and "unlabelled typed copy" in out and "density_kg_m3" in out, out)
+
+        # Closed (MP22 done): the same copy fails with no ledger at all.
+        code, out = run(root, "--closed")
+        expect("closed: a typed density fails", code == 1 and "unlabelled typed copy" in out, out)
 
         # A new typed constant in Rust fails while unlabelled.
         tree(root, "pub const AU_M: f64 = 149_597_870_700.0;\n", {"other": {"x": 1}})

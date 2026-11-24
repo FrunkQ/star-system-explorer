@@ -71,7 +71,12 @@ try {
     await choose("running");
     assert.equal(await gm.getByRole("button", { name: "Undo" }).count(), 0, "Running has no undo tool");
     await gm.waitForSelector(".area-chart text.knownv");
-    assert.ok((await gm.locator(".area-chart text.knownv").evaluateAll((t) => t.map((x) => x.textContent))).some((t) => /long range|scanned/.test(t)), "what the table knows is marked");
+    const kv = await gm.locator(".area-chart text.knownv").evaluateAll((t) => t.map((x) => x.textContent));
+    assert.ok(kv.some((t) => /long range|scanned|rumour/.test(t)), `what the table knows is marked: ${JSON.stringify(kv)}`);
+    // The usual way the table knows bodies here is said once, in the legend; a name carries words only where it differs.
+    assert.match(await gm.locator("[data-usual-known]").innerText(), /The table knows these at (long range|scanned)/);
+    const usual = (await gm.locator("[data-usual-known]").getAttribute("data-usual-known")).replace(/-/g, " ");
+    assert.ok(!kv.includes(usual), `no "${usual}" under every name`);
     assert.equal(await hash(), h0);
     await shot(gm, "u9-running");
 

@@ -28,6 +28,21 @@ export interface LogEntry {
   state_hash: string;
 }
 
+/**
+ * What the table is shown (the landing run-through, 23 Nov): the place the GM last sent, or screens off. Players'
+ * screens build their scene for this scope; nothing the GM looks at privately reaches them until it is sent.
+ */
+export type Shown =
+  | {
+      scope: string;
+      title?: string;
+      /** The players' screen document to show it on (`documents/<screen>`); absent: the seat's own screen. */
+      screen?: string;
+      /** A landing the table is watching (renderer's `LandingShow`, ui-contract landing.ts): players replay it on their own kernel. */
+      landing?: Json;
+    }
+  | { off: true };
+
 export interface Manifest {
   protocol: typeof P2P_PROTOCOL;
   /** One GM session; a new id means a new run (players start again). */
@@ -51,6 +66,10 @@ export interface Manifest {
   data_views: string[];
   /** The seats of this session (V5: what each may ask for; the table is "table"). */
   seats: Seat[];
+  /** What the table is shown; absent on a session from before it (the screen's own scope then). */
+  shown?: Shown;
+  /** The party's ship and where it is (travel's `PartyShip`): the table always knows it. */
+  party?: Json;
 }
 
 export type Wire =
@@ -58,7 +77,7 @@ export type Wire =
   | { t: "manifest"; to: string; manifest: Manifest }
   | { t: "event"; run: string; entry: LogEntry }
   /** Session state for screens: the clock, the data views granted, and (V10) the seats when the GM changes them. */
-  | { t: "state"; run: string; clock_yr: number; data_views: string[]; seats?: Seat[] }
+  | { t: "state"; run: string; clock_yr: number; data_views: string[]; seats?: Seat[]; shown?: Shown; party?: Json | null }
   | { t: "beat"; run: string; seq: number; state_hash: string }
   | { t: "snapshot"; from: string }
   | { t: "bye"; run: string }
@@ -241,7 +260,9 @@ export interface HostState {
 export class GmHost {
   readonly #session: Session;
   #hub: Hub | null = null;
-  readonly #base: Omit<Manifest, "log" | "state_hash" | "clock_yr" | "data_views" | "seats">;
+  readonly #base: Omit<Manifest, "log" | "state_hash" | "clock_yr" | "data_views" | "seats" | "shown" | "party">;
+  #shown: Shown | undefined;
+  #party: Json | undefined;
   readonly #log: LogEntry[] = [];
   #opening_hash: string;
   #clock: number;
@@ -254,8 +275,9 @@ export class GmHost {
   readonly #replies = new Map<string, (w: Wire) => void>();
   onChange: (s: HostState) => void = () => {};
 
-  constructor(session: Session, hub: Hub | null, base: { run: string; kernel: string; app: string; universe: { id: string; seed: string }; packs: unknown[]; opening_export?: Json; opening_hash: string; clock_yr: number; data_views?: string[]; seats?: Seat[] }) {
+  constructor(session: Session, hub: Hub | null, base: { run: string; kernel: string; app: string; universe: { id: string; seed: string }; packs: unknown[]; opening_export?: Json; opening_hash: string; clock_yr: number; data_views?: string[]; seats?: Seat[]; shown?: Shown }) {
     this.#session = session;
+    this.#shown = base.shown ? structuredClone(base.shown) : undefined;
     this.#seats = structuredClone(base.seats ?? []);
     this.#hub = hub;
     this.#base = { protocol: P2P_PROTOCOL, run: base.run, kernel: base.kernel, app: base.app, universe: base.universe, packs: base.packs, ...(base.opening_export !== undefined ? { opening_export: publicExport(base.opening_export) } : {}) };
@@ -361,15 +383,22 @@ export class GmHost {
   }
 
   manifest(): Manifest {
-    return { ...structuredClone(this.#base), log: structuredClone(this.#log), state_hash: this.#hash(), clock_yr: this.#clock, data_views: [...this.#views], seats: structuredClone(this.#seats) };
+    return { ...structuredClone(this.#base), log: structuredClone(this.#log), state_hash: this.#hash(), clock_yr: this.#clock, data_views: [...this.#views], seats: structuredClone(this.#seats), ...(this.#shown ? { shown: structuredClone(this.#shown) } : {}), ...(this.#party !== undefined ? { party: structuredClone(this.#party) } : {}) };
   }
 
-  /** The session clock, the data views players' screens may use and (V10) the seats. */
-  setState(s: { clock_yr?: number; data_views?: string[]; seats?: Seat[] }) {
+  /** The session clock, the data views players' screens may use, (V10) the seats and what the table is shown. */
+  setState(s: { clock_yr?: number; data_views?: string[]; seats?: Seat[]; shown?: Shown; party?: Json | null }) {
     if (s.clock_yr !== undefined) this.#clock = s.clock_yr;
     if (s.data_views) this.#views = [...s.data_views];
     if (s.seats) this.#seats.splice(0, this.#seats.length, ...structuredClone(s.seats));
-    this.#hub?.send({ t: "state", run: this.#base.run, clock_yr: this.#clock, data_views: [...this.#views], ...(s.seats ? { seats: structuredClone(this.#seats) } : {}) });
+    if (s.shown) this.#shown = structuredClone(s.shown);
+    if (s.party !== undefined) this.#party = s.party === null ? undefined : structuredClone(s.party);
+    this.#hub?.send({ t: "state", run: this.#base.run, clock_yr: this.#clock, data_views: [...this.#views], ...(s.seats ? { seats: structuredClone(this.#seats) } : {}), ...(this.#shown ? { shown: structuredClone(this.#shown) } : {}), ...(s.party !== undefined ? { party: s.party === null ? null : structuredClone(s.party) } : {}) });
+  }
+
+  /** What the table is shown now. */
+  shown(): Shown | undefined {
+    return this.#shown ? structuredClone(this.#shown) : undefined;
   }
 
   seats(): readonly Seat[] {
@@ -420,6 +449,8 @@ export class PlayerReplica {
   readonly #off: () => void;
   readonly #own: OwnRequest[] = [];
   #seats: Seat[] = [];
+  #shown: Shown | undefined;
+  #party: Json | undefined;
   #nextId = 1;
   onStatus: (s: ReplicaStatus) => void = () => {};
   /** The player's own requests changed (sent, approved, declined). */
@@ -477,6 +508,16 @@ export class PlayerReplica {
   /** The session's seats as the GM last sent them (V10). */
   seats(): readonly Seat[] {
     return structuredClone(this.#seats);
+  }
+
+  /** The party's ship and where it is, as the GM last sent it. */
+  party(): Json | undefined {
+    return this.#party === undefined ? undefined : structuredClone(this.#party);
+  }
+
+  /** What the GM last sent the table: a place, or screens off. */
+  shown(): Shown | undefined {
+    return this.#shown ? structuredClone(this.#shown) : undefined;
   }
 
   /** Called by the host on a timer: notices a GM that has gone quiet. */
@@ -548,6 +589,8 @@ export class PlayerReplica {
       this.#clock = m.clock_yr;
       this.#session[GRANT_VIEWS](m.data_views);
       if (m.seats) this.#seats = structuredClone(m.seats);
+      if (m.shown) this.#shown = structuredClone(m.shown);
+      if (m.party !== undefined) this.#party = m.party === null ? undefined : structuredClone(m.party);
       this.#live();
       this.onUpdate();
     } else if (m.t === "beat") {
@@ -586,6 +629,8 @@ export class PlayerReplica {
     this.#hash = hash;
     this.#clock = man.clock_yr;
     this.#seats = structuredClone(man.seats);
+    this.#shown = man.shown ? structuredClone(man.shown) : undefined;
+    this.#party = man.party === undefined ? undefined : structuredClone(man.party);
     this.#lastHeard = this.#now();
     this.onSession(s);
     this.#live();
@@ -606,7 +651,7 @@ export class SealedHost {
   readonly #host: GmHost;
   readonly #hub: Hub;
   readonly #seat: Seat;
-  readonly #scope: string;
+  #scope: string;
   readonly #app: string;
   #views: string[];
   #clock: number;
@@ -664,6 +709,13 @@ export class SealedHost {
 
   setClock(yr: number) {
     this.#clock = yr;
+  }
+
+  /** The GM sent the table another place: this seat's scene is built there from now on. */
+  setScope(scope: string): Promise<void> {
+    if (scope === this.#scope) return this.#queue;
+    this.#scope = scope;
+    return this.refresh();
   }
 
   beat() {
