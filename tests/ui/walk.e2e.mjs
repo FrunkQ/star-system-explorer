@@ -181,6 +181,7 @@ async function walk(browser, vp) {
     const find = page.locator("[data-ref-find]");
     // The screen slides in; a person's tap on the box lands once it has settled (mid-slide it hit the page tabs).
     if (phone) {
+      await find.scrollIntoViewIfNeeded();
       await page.waitForFunction(
         () =>
           new Promise((done) => {
@@ -190,7 +191,7 @@ async function walk(browser, vp) {
               const b = box();
               const top = b && document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
               done(!!a && !!b && a.x === b.x && a.y === b.y && !!top?.closest("[data-ref-find]") && document.getAnimations().length === 0);
-            }, 150);
+            }, 300);
           }),
         null,
         { timeout: 8000, polling: 200 },
