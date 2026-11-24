@@ -49,7 +49,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 3. **Still unsourced, and searched without luck so far:**
    - heats of combustion for the solid propellants (JPL TM 33-649, JPL 79-29 and Thiokol TWR-13009 searched);
    - latent heats for Ti-6Al-4V and Al 6061;
-   - rhenium's heat of melting;
+   - rhenium's heat of melting (leads not yet read in full: Int. J. Thermophys. 7:1, TU Graz pulse heating, OSTI 6910033; Int. J. Thermophys. 13:3, Los Alamos, OSTI 5909672; their abstracts give no numbers);
    - the solar-metallicity end of the element `scatter_dex` (Bensby 2014 Table C.3 at CDS was not read).
    
    The Cayrel 2004 metal-poor scatter values are written down in packages/scatter-dex-notes.md and are still to be put on the rows.
