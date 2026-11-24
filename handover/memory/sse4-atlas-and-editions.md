@@ -1,6 +1,6 @@
 ---
 name: sse4-atlas-and-editions
-description: SSE4 track AT, the Atlas view with data-defined editions (Survey atlas, The Guide with jokes, Company report) and print under the view; proposed 24 Nov 2026, awaiting Alex's answers
+description: SSE4 track AT, the Atlas view with data-defined editions (Survey atlas, The Guide with jokes, Company report) and print under the view; accepted by Alex 24 Nov 2026 with notes; four starter interface kits
 metadata:
   type: project
   modified: 2026-11-24T20:00:10.351Z
@@ -18,3 +18,5 @@ SSE3 facts found: source is only on Alex's PC (`C:\Development\star-system-explo
 
 Alex 24 Nov 20:04 to 20:07 (added to the note as section 11A and 12.7): besides the text Atlas (all editions kept, "magical"), players get "app type" interfaces from FOUR solid starters: space trucker green screen and wireframe ("Hauler", my name), slick corporate interactive 3D, slick 2D diagram "LCARS type" ("Deck", own design, never the LCARS name), and The Guide as its own special thing. Built from reusable parts whose controls switch on and off; buttons and interface elements must follow the style. "Scrub" SSE3's infinite sliders: no slider editor; Orac assembles new ones from a structured system; a hand guide exists; the only direct edits are company name, logo and palette (e.g. green to amber). Proposed document `sse.kit/1` (interface kit); questions 13 to 16 added (16 total).
 Alex 20:08: the main aim is "the toolkit that can be used to actually build a trillion cool interfaces"; reuse SSE3's transitions: green screens building up rather than flicking, the slow warm up, the disappear to a dot. In the note as section 11A.4a (five moments: power on, arrive, turn, leave, power off; uses the Playbook's "screen delivery" in a look, PB10).
+
+Alex 20:14 to 20:17: YES TO ALL 16 questions. His notes (note section 14A, which wins): Atlas pages are auto-bookmarked; an Atlas in an edition is a Switchboard source fired at any endpoint, players have no Edition switch (the top-bar switch is the GM's for perusing); SSE3 starter logos are built in (artist gave permission; Weyland-Yutani left out pending Alex's word); Survey and Company stay as serious variations; The Guide is NOT paper, it is 'cheesy electronics built to a low cost' with a DON'T PANIC cover pressed past each time; paper-looking editions flick their pages. Status ACCEPTED; repo copy and handover/status/atlas.md by PR from branch claude/project-thread-9d7os7.

@@ -375,6 +375,26 @@ fn stations_and_crewed_flights_have_logs() {
         all["mir"].pieces.last().unwrap().state,
         State::Gone { .. }
     ));
+    // RS8 part 3: Soyuz 21 docked to Salyut 5 and landed on the steppe on Wikidata's day.
+    match &all["soyuz-21"].pieces.last().unwrap().state {
+        State::Landed { lat_deg, .. } => assert!((lat_deg - 47.4).abs() < 1.0, "the steppe"),
+        s => panic!("Soyuz 21 ends {s:?}"),
+    }
+    let landed = std::fs::read_dir(dir.join("logs/earth-orbit"))
+        .unwrap()
+        .filter(|p| {
+            let id = p
+                .as_ref()
+                .unwrap()
+                .path()
+                .file_stem()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
+            matches!(all[&id].pieces.last().unwrap().state, State::Landed { .. })
+        })
+        .count();
+    assert!(landed >= 400, "{landed} landed");
     let sts = &all["discovery-sts-103"];
     match &sts.pieces.last().unwrap().state {
         State::Landed {
