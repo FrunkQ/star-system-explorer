@@ -16,7 +16,7 @@
   let open = $state(false);
   let chip = $state<HTMLButtonElement | null>(null);
   let fold = $state<HTMLDivElement | null>(null);
-  const summary = $derived(`HUD ${o.shown.hud ? "on" : "off"} · ${VIEW_BAND_WORDS[o.shown.band]}${o.shown.exposure === "long" ? ` · ${EXPOSURE_WORDS.long}` : ""}`);
+  const summary = $derived(`HUD ${o.shown.hud ? "on" : "off"} · ${VIEW_BAND_WORDS[o.shown.band]}${o.shown.style === "true" ? ` · ${EXPOSURE_WORDS[o.shown.exposure]}` : ""}`);
   // A choice closes it, as a menu does; so does a press off it, or Escape, which gives the keyboard back to the chip.
   $effect(() => {
     if (!open) return;

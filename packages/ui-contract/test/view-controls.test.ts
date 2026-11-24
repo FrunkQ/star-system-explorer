@@ -102,8 +102,11 @@ test("the band switch reads its words from the master sheet's Bands table, one v
   assert.equal(VIEW_BAND_PLAIN.infrared, "heat light");
 });
 
-test("a long exposure is True's choice where the view draws the sky's stars, and the eye's otherwise (VP2)", () => {
+test("True opens at a long exposure where the view draws one (Alex, 24 Nov), Eye is the choice; elsewhere the eye's (VP2)", () => {
   const spec = { styles: { chart: true as const, true: true as const }, long: true as const };
+  assert.equal(viewOptions(spec, { style: "true", seen: "free" }).shown.exposure, "long");
+  assert.equal(viewOptions(spec, { style: "true", seen: "free", exposure: "eye" }).shown.exposure, "eye");
+  assert.equal(readViewChoice(JSON.stringify({ style: "true", seen: "free", exposure: "eye" })).exposure, "eye");
   assert.equal(viewOptions(spec, { style: "true", seen: "free", exposure: "long" }).shown.exposure, "long");
   assert.equal(viewOptions(spec, { style: "chart", seen: "above", exposure: "long" }).shown.exposure, "eye");
   assert.ok(viewOptions({ styles: { true: true } }, { style: "true", seen: "free", exposure: "long" }).exposures.find((e) => e.value === "long")!.unavailable);

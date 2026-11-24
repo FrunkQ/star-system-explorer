@@ -345,8 +345,9 @@
             ? `${reading.none} of ${reading.of} worlds are drawn plain, with no surface to show (the kernel: ${reading.why}).`
             : "",
   );
-  // Said only for the long exposure, a composite; at the eye's exposure the faint stars speak for themselves.
-  const skyNote = $derived(skyBehind && shownView.exposure === "long" ? "Long exposure: the stars are lifted, a composite." : "");
+  // The long exposure (the default, Alex 24 Nov) says its lift, so the picture never claims to be what an eye sees;
+  // at the eye's exposure the faint stars speak for themselves.
+  const skyNote = $derived(skyBehind && shownView.exposure === "long" ? "Long exposure: faint light is lifted, a composite." : "");
   // Each thing a face could not show, said once for the system (a colour the sheet lacks, a giant's dark deep air).
   const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
   const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : "", skyNote].filter(Boolean).join(" "));
