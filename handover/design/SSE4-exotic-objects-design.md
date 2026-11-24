@@ -1,6 +1,6 @@
 # SSE4 exotic objects on screen: black holes, pulsars and stripped stars (track XO)
 
-Written 24 Nov 2026 by the design thread "Design exotic stars and black holes", after Alex's "yes to all" (24 Nov 16:41) to starting it. **Status: ACCEPTED by Alex, 24 Nov 2026 17:03 ("Yes to all" to the eleven questions), with two additions he asked for the same day: Composite in the band switch (section 6A) and a diagram in place of a list of readings, which at 17:19 he widened into the Hazard map for any hazardous body (section 3.8). Section 13 records the rulings.** "XO" stands for exotic objects. It is only the short code on this track's packages and never appears in the product.
+Written 24 Nov 2026 by the design thread "Design exotic stars and black holes", after Alex's "yes to all" (24 Nov 16:41) to starting it. **Status: ACCEPTED by Alex, 24 Nov 2026 17:03 ("Yes to all" to the eleven questions), with two additions he asked for the same day: Composite in the band switch (section 6A) and a diagram in place of a list of readings, which at 17:19 he widened into the Hazard map for any hazardous body (section 3.8). Section 13 records the rulings.** **Addendum of 24 Nov 18:25 (section 15): pulsating variable stars and clock readouts, packages XO19 and XO20, questions 16 to 21 accepted by Alex 24 Nov 18:36.** "XO" stands for exotic objects. It is only the short code on this track's packages and never appears in the product.
 
 Read with `SSE4-star-census.md` (which objects exist and who makes them), `SSE4-nebulae-and-light-design.md` (light descriptions, band recipes, shifts, jets, activity), `SSE4-magnetic-fields-design.md` (the field ledger, remnants in MF11, the Mag band) and `interface-style.md` rule 12 (View style, Seen from, Scale, HUD, Band).
 
@@ -553,6 +553,8 @@ One package, one builder, one pull request, evidence in it. Owners are proposals
 | **XO18** | The Hazard map (3.8), for any hazardous body: op `hazard_map`, the Map (a cut drawn with the Mag layer's tracer) and the Profile along a chosen line, belts from `read_field` with edges, gaps, shield and latitude, storms, debris, Park and Dive marks from the party's ship, totals for a pass, rail entry and card line, the system-scale Hazards overlay, shown to players through the eye | MF7 belts and shielding, `read_light`, `read_activity`, MF14a tracer (all built), the ship record; XO1 only for compact bodies. **Jupiter, Saturn, Earth and the Sun need nothing from XO: start there** | light for the op, renderer for the Map, chart room for the rail entry and card | section 11's Hazard map rows |
 | **XO16** | Later: relativistic disc profile; thick and warped discs as volumes; cluster arcs at the web scale; the plunge shot; pack-supplied benders | XO7 | as they come | |
 
+XO19 (pulsating stars) and XO20 (clocks) are in section 15.12.
+
 Suggested order: XO1, XO2, XO3, XO4 (the showpiece on screen), then XO5 and XO6, with XO17 and XO18 beside them (both are general and useful at once on ordinary stars and planets; XO18 starts on Jupiter and the Sun), then XO10 (pulsars on MF0's fixtures) while XO7 runs, then the rest as B2 to B4 and MF11 land.
 
 None of XO1 to XO6 changes a golden hash on an existing system: they add an op, blocks and a table. XO8 onward add facts to bodies and will change goldens, one pull request at a time in the golden lane.
@@ -639,3 +641,207 @@ Shapes and winds
 - Tuthill, Monnier and Danchi 1999, Nature 398, 487 (WR 104's spiral); Lau et al. 2022, Nature Astronomy 6, 1308 (WR 140's shells).
 - Mauron and Huggins 2006, A&A 452, 257; Maercker et al. 2012, Nature 490, 232 (spiral shells round red giants).
 - Kruckow et al. 2014 and Kawahara et al. 2018 (a white dwarf brightening its companion by bending its light; KOI-3278, Kruse and Agol 2014, Science 344, 275).
+
+---
+
+## 15. Addendum (Alex, 24 Nov 2026 18:19 and 18:24): stars that breathe, and clocks that disagree
+
+Alex read a list of what another space simulator does not do (no intrinsic variable stars, no time dilation, stars that do not drift, galaxies that do not turn) and asked whether we do these. He said yes to two additions here: **pulsating variable stars** as a small block set, and **time dilation readouts**. Both are cheap, exact enough to check with a calculator, and of the "cool physics win" kind. Neither needs a new screen. Packages XO19 and XO20. **Questions 16 to 21 (15.13) were accepted by Alex on 24 Nov 2026 at 18:36.**
+
+Why most simulators skip pulsating stars, as far as this thread can tell: they keep each star as one catalogue row with one brightness. Ours already keep a star's state through time, so a star that changes is only one more formula of time.
+
+### 15.1 What already exists, so nothing here redoes it
+
+| Thing | State |
+|---|---|
+| Stars drifting, constellations changing | designed: every star has a described galactic orbit (galaxy design, G5) and the night sky reads each star where it was when its light left; "constellations distort over a million years" (night sky design 4.4) |
+| Galaxies turning | designed and visible: rotation curve and an arm pattern speed (galaxy design) |
+| A star's brightness changing with time | partly built: the activity cycle multiplies X-rays and spots (`sse-activity`, `cycle_factor`, `moment`); flares are dated events. Nothing yet changes the star's own steady light |
+| What reads a star's brightness | `star.luminosity_at_age` (mass and age only) feeds climate (`sse-place`), light (`sse-light`), nav hazards, sensing and the sky |
+| Ship time on a fast voyage | built in the finder: time aboard and time at home on every relativistic leg (voyages design; `sse-nav` `voyage.rs`). Ruling: the campaign clock moves by home time, each crew member ages by time aboard |
+| Clocks near a mass | designed: the Clocks row of the Hazard map (3.8) and the block `sse.gravity.clock_rate` in XO1 |
+| The census | lists classical and Type II Cepheids, RR Lyrae, delta Scuti, beta Cephei and SPB stars as Missing, with the recipe "instability strip, period-luminosity and period-density relations" |
+
+So the gaps are: no star pulsates; no screen shows a ship's clock against home; and a stellar engine's push does not yet reach the star's path (15.9).
+
+### 15.2 Pulsating stars: one process, read off the star's state
+
+Processes, not classes. A star pulsates when a layer inside it works as a heat valve: squeezed, the layer turns more opaque, holds heat back and pushes the star out; expanded, it clears, lets the heat go and the star falls back. Whether that valve drives the whole star depends only on where the layer sits, which is set by the star's temperature, brightness and metal content. So no star is drawn as "a Cepheid". The kernel asks one question of every star at every age, "is a valve working here?", and the class names are labels read off the answer.
+
+| Valve | Layer | Where it works | Labels read off (never inputs) |
+|---|---|---|---|
+| **Helium valve** | where helium loses its second electron, near 40,000 K | a sloping band in the temperature and brightness plane, roughly 6,000 to 8,500 K: "the instability strip". Too hot and the layer is too shallow to push; too cool and churning gas carries the heat round it | delta Scuti (on and near the main sequence, 1.5 to 2.5 Suns), RR Lyrae (old stars burning helium), classical Cepheids (4 to 20 Suns crossing as supergiants), Type II Cepheids (old low-mass stars in the same band) |
+| **Iron valve** | where iron-group atoms crowd the opacity, near 200,000 K | hot massive main-sequence stars, and only where there is enough metal | beta Cephei (8 to 18 Suns, hours), slowly pulsating B stars (3 to 8 Suns, days) |
+| later: **hydrogen valve with churning** | the outer envelope of the coolest giants | Miras and semiregulars (census row "AGB pulsation") | same blocks, a later package |
+
+A small correct touch a clever user can test: because the iron valve needs iron, a metal-poor galaxy has almost no beta Cephei stars. Nothing special makes that happen; the strip block reads the star's metal content.
+
+Not every star inside a strip pulsates enough to see. The share that does is a stated pack number per valve (about half for delta Scuti stars, nearly all for Cepheids and RR Lyrae), drawn by key from the star's seed, so the same star always answers the same way.
+
+### 15.3 The period comes from the star, and Leavitt's law falls out
+
+The period is not looked up from brightness. A star rings like a bell at a period set by its mean density:
+
+> period × √(mean density, in Suns) = Q, with Q about 0.04 days for the basic in-and-out mode
+
+The kernel already has every star's mass and radius, so it has the period. Checks a builder can run: the Sun's own basic ring comes out at about an hour (it is measured at about 63 minutes); Delta Cephei, at 4.5 Suns and 44 Sun radii, comes out at 5.4 days (it is 5.37).
+
+Then the famous period and brightness law (Leavitt 1912), the one that measured the universe, is **a result and a test, not an input**: plot period against brightness for every Cepheid the kernel makes in a galaxy and the points must lie along the observed line within its real scatter. Type II Cepheids land about one and a half magnitudes fainter at the same period, because they are lighter stars, and nothing special is needed for that either. The observed laws stay in the pack as the check, with their papers.
+
+This gives the players something real to do: a science seat that watches a pulsating star in another galaxy for a few periods gets its true brightness from the period, and so its distance. That is how it was really done, and it works because the numbers underneath are consistent.
+
+Overtones (the star ringing in its second or third mode) are a table of period ratios (about 0.71 of the basic period for Cepheids, 0.745 for RR Lyrae). Delta Scuti stars ring in several modes at once; the block allows up to three, summed. The slow B stars ring in a different kind of mode that the density rule does not give, so their periods come from an observed table, said as such.
+
+### 15.4 The light curve is a formula of time, like an orbit
+
+One block, `sse.star.pulse_curve`, gives the star at any instant without stepping:
+
+- **Phase** = the fraction part of (time ÷ period + the star's own offset from its seed). Same answer on every device, at any date asked, in any order.
+- **Shape** = a short sum of sine waves whose sizes are a table against period (the method of Simon and Lee 1981). That one table gives the sawtooth of an RR Lyrae, the smooth wave of an overtone star, and the bump that walks along a Cepheid's curve near ten days.
+- **Size of the swing** = a table by valve and place in the strip. This is the honest shortcut: the period is physics, but how far the star swings is set by non-linear gas motion that only a full simulation gives, so the table is from observation and goes in the fudge register (15.10).
+- **Outputs, all from the one phase**: the star's radius, surface temperature and total light as multipliers on its steady values, and the speed of its surface. From those `sse-light` makes the light in every band, so the colour change comes free: a Cepheid swings by a factor of two or three in Visible, less in total light, and more in Ultraviolet, because it is hotter when bright.
+- **A detail worth getting right**: the star is brightest when it is expanding fastest through its middle size, not when it is smallest. The block carries that quarter-cycle lag as data, and the card's little chart shows size and brightness out of step. Someone who knows will look for it.
+
+Over deep time the period drifts as the star evolves across the strip, which is real and measured. Phase is kept continuous only inside one evolution step; across steps it restarts from the key. Nobody can test phase across a million years, and it is logged as a shortcut.
+
+### 15.5 One general mechanism: the star's light now
+
+Thinking wide: pulsation is one of several things that change a star's light with time. So the addition is not a pulsation feature bolted on; it is one place every reader asks.
+
+**`star.light_now`** = the steady light for the star's mass and age (what `star.luminosity_at_age` gives today) × a list of **modulators**, each a formula of time with a name, a size and a period:
+
+| Modulator | State |
+|---|---|
+| activity cycle | built (`cycle_factor`); joins the list |
+| spots turning with the star | designed (light design 4A) |
+| pulsation | new, XO19 |
+| a companion or planet crossing the face, seen from a stated place | designed (light design, transits and eclipses); depends on the viewer, so it is applied on the "seen from" side only |
+| flares and outbursts | built as dated events; they stay events and are added on top |
+
+A new op, proposed name **`read_light_curve {star, from, to, band?, seen_from?}`**, returns the samples and the list of modulators with each one's share, so every chart of a star's brightness in the product is the same curve with the same Why.
+
+Who feels the star breathe, each by reading `star.light_now` instead of the steady value:
+
+- **The views.** In True the star swells, brightens and whitens together, under the time stretch chip ("one day a second" for a Cepheid, "one hour a second" for a delta Scuti). The three-flashes-a-second cap and reduced motion apply as written in 2.4. From a planet's surface the daylight itself rises and falls. In a globular cluster the sky's RR Lyrae stars slowly wink, each on its own half-day beat.
+- **Climate.** The yearly balance uses the mean, which is unchanged, so no existing world's climate moves. The swing goes to climate and weather as a size and a period, and each surface answers by its own heat store: bare rock and thin air follow the star almost fully (temperature moves by about a quarter of the swing in light, so a star swinging by half moves an airless 300 K world by tens of degrees every few days); an ocean world barely notices a five-day beat. The habitable band on the system chart gains a faint second edge for brightest and dimmest.
+- **Hazard map.** Heat and Radiation: light rows are drawn for the mean with the worst case faint beside it, the same device the belts use for quiet and stormy.
+- **Sensing and surveys.** A watched star yields its period, and from it brightness and distance (15.3). A planet hunt round a pulsating star is harder, as it really is, because the star's own beat hides the dip.
+- **Sound.** The period and shape go to the sound design as a slow swell.
+- **The card.** One line, "Pulsating: helium valve, 5.4 days", with a small light curve; the Why opens the strip, the density rule and the tables. The honesty marks are unchanged: this is computed, not authored.
+- **Phones.** Everything. It is a formula, with no cost to speak of.
+
+### 15.6 What it needs from stellar evolution
+
+The strip is crossed by stars in particular stages, so what turns up depends on the proven core's stages:
+
+- **Works with today's stars**: delta Scuti and beta Cephei stars and the slow B stars are main-sequence stars the kernel already makes.
+- **Needs B2 (evolved stars)**: RR Lyrae need the helium-burning stage split out of "giant"; classical Cepheids need supergiants that loop back across the strip. Until then they are checked on fixture stars with stated mass, radius and temperature, the way XO1 to XO4 run on fixtures.
+
+No class gates a block. When B2 lands, Cepheids appear in galaxies without a change to XO19.
+
+### 15.7 Clocks: one reading, shown where it matters
+
+The rule that there is one universe clock stands. The campaign clock is home time. A **ship clock** is a reading derived from it, never a second clock to scrub.
+
+One block does all of it: **`sse.gravity.clock_rate`** (already in XO1 for hovering and circular orbits) is widened to "clock rate from pull and speed": how many seconds pass aboard for each second far away, given where the ship is and how fast it moves. Far from any mass it is the fast-ship rule the voyage finder already uses; in a slow orbit near a deep well it is the Hazard map's rule; in between it is both at once. For a spinning hole the rate on a circular orbit has a closed formula too, so it needs none of XO7's ray work.
+
+The **offset** (how far the ship's clock is behind home) is the sum over the ship's flight log. The log is already cut into dated pieces (voyages ruling), and every kind of piece has an exact formula: parked in an orbit (rate constant), coasting (rate constant), a steady burn (the finder's own formula). So the offset is exact at any date without stepping, and identical on every device.
+
+Where it shows:
+
+| Place | What |
+|---|---|
+| **Hazard map** (3.8) | the Clocks row as designed, plus the rate written at the Park and Dive marks ("parked here, an hour is 1 hour 25 minutes at home") and, in the totals for a pass, "time lost against home on this pass". Hovering closer than any orbit is possible and slows the clock without limit, so the row also gives the thrust needed to hover there, which is the price |
+| **The ship's card and the players' ship page** | a **clock chip**: "Ship clock 14 Mar 2301 · home 2 Jun 2309 · running at 0.42". Pressing it opens the Why: which legs cost how much. Each crew member's age reads from time aboard, as already ruled |
+| **Voyage plan** | already gives both times for a leg; gains the rate along the leg as a small strip, and the offset the crew will arrive with |
+| **Universe clock in the place line** | when Seen from is a ship or a place whose clock differs, the ship's reading appears beside the campaign clock; otherwise nothing changes |
+| **Time stretch chip** (2.4) | from a slowed seat the outside really does run fast and blue. The chip says so ("the outside runs 1.4 times fast from here"), and the shifts already in the light-path stage colour it |
+| **Messages** | already delayed by light time. Added: a stream from home plays slow on the way out and fast on the way back, by the same shift factor the renderer uses for colour. A small touch that makes the twin story come out right from both ends |
+
+**How big it gets, honestly.** Round a hole that does not spin, the deepest stable orbit slows a clock only to 0.71 (the "1 hour 25 minutes" above). The film-sized numbers, an hour for years, need a hole spinning at nearly the limit and an orbit skimming it, or hovering on a great deal of thrust. The readout will show that, and a GM who wants the film can have it by building that hole. A neutron star's surface runs at about 0.8. For any planet, star or ordinary orbit the effect is millionths or less.
+
+**The cheap win that can be checked.** The same block, with no special case, must reproduce the satellite navigation correction: a clock in a navigation satellite's orbit gains about 38 millionths of a second a day on one at Earth's surface (about 45 gained from weaker pull, about 7 lost to speed). A space station's clock loses about 25. Both are fixtures. The clever person who sets up a navigation satellite and reads the clock chip at Engine depth finds the real number.
+
+**Players and secrets.** The ship clock is the crew's own and they always see it. The home reading is a fact they hold only as well as they could know it (the "Known to" eye, as for everything else); the GM sees both.
+
+**Kernel side.** No new op for the Hazard map (the row is already in `hazard_map`). Ship state gains `clock {rate, offset_s, set_by}` where `set_by` names the speed share and each mass's share, and `plan_voyage` legs gain the rate. Cost: nothing to speak of.
+
+### 15.8 Blocks added
+
+| Block | What it gives | Source | Standing |
+|---|---|---|---|
+| `sse.star.pulse_strip` | is a valve working, and which, from temperature, brightness and metal content; strip edges as lines in pack data | Cox 1980; for the iron valve Moskalik and Dziembowski 1992, Pamyatnykh 1999 | settled; edges are observed lines |
+| `sse.star.pulse_period` | period from mean density; overtone ratios | Ritter 1879; Eddington 1926; Cox 1980 | settled |
+| `sse.star.pulse_curve` | radius, temperature and light against phase; the size and shape tables | Simon and Lee 1981; Bailey's diagram for RR Lyrae | shape and size are observed tables |
+| `sse.star.pulse_share` | share of stars in a strip that visibly pulsate, per valve | Kepler-mission counts for delta Scuti (Murphy et al. 2019) | observed number |
+| `sse.star.period_brightness_check` (data, used by tests) | the observed laws the results must fall on | Leavitt and Pickering 1912; Benedict et al. 2007; Riess et al. 2022 for the modern line | observed |
+| `sse.star.light_now` | steady light × the modulator list | this note | a rule of the engine |
+| `sse.surface.swing_response` | how far a surface's temperature follows a star's beat, from its heat store and the period | textbook heat flow into a slab | settled |
+| `sse.gravity.clock_rate` (widened) | rate from pull and speed together; closed form on a circular orbit round a spinning hole | Misner, Thorne and Wheeler 1973; Bardeen, Press and Teukolsky 1972; Ashby 2003 for the satellite check | settled |
+| `sse.ship.clock_offset` | the sum over the flight log's pieces | Rindler 1960 (motion under a steady push) | settled |
+| `sse.signal.stream_rate` | how fast a received stream plays | textbook Doppler factor | settled |
+
+All sources from memory, to be checked like section 14's.
+
+### 15.9 The stellar engine and the sky (Alex's point)
+
+Alex: we know the nearby stars' speeds and directions, so constellations change over time, and a stellar engine changes a star's speed, so it should change the sky too.
+
+The first half already follows from the designs (15.1). The second half **does not yet follow and needs one line**. A star's path through the galaxy is described by a formula (a guiding circle with wobbles), not stepped, and the stellar engine is a thrust block on the star (future tech design) whose output nobody reads. The line that joins them:
+
+> A star's described orbit accepts **dated pushes**. A thrust block on a star writes one: from this date, this acceleration in this direction. The star's place at a later date is its described orbit plus the drift the pushes have built up; when a push ends, the orbit is re-described from the star's place and speed at that date.
+
+Then everything downstream is free, because the night sky, voyages and encounters already ask the kernel where each star is at a date: the engine's own sky shifts, and so does every sky that star is in. It is one general mechanism (a passing star's tug or a fictional drive can write a push as well), and it belongs to the galaxy track (kernel thread) with the megastructure work, not to XO. It is noted here so it is not lost, and passed to the coordinator.
+
+The honest size, which the GM should see on the engine's card: a mirror engine on the Sun gives about 10 metres a second after a million years and moves the Sun about a thousand times Earth's distance in that time. Constellations shift far more in a million years from the stars' ordinary motions. Over a billion years it is about 10 kilometres a second and thousands of light-years. So it matters only in deep time, or with a stronger engine from a pack marked fictional.
+
+### 15.10 Shortcuts for the fudge register
+
+| Shortcut | Why | What replaces it |
+|---|---|---|
+| The size and shape of a pulsating star's swing come from observed tables | only a non-linear gas simulation gives them | a pulsation model as a swappable block |
+| One mode per star (up to three for delta Scuti) | enough to look and measure right | a mode list per star |
+| No slow beat on top of RR Lyrae curves (the Blazhko effect) | its cause is not settled | a modulator, when wanted |
+| Non-radial ringing changes brightness only; no pattern is drawn moving over the star's face | small in light, costly to draw | a surface pattern in the star shader |
+| Phase restarts across evolution steps | untestable over such spans | carry phase through |
+| Pulsation does not drive extra mass loss | matters for Miras, which are a later package | with the Mira package |
+| The home clock is "far-away time" of the home system: the home world's own slowing (about a billionth) and the galaxy's are left out of the campaign clock | invisible in play; the satellite check still works because it compares two clocks in the same well | a per-place clock if a setting ever needs it |
+| No extra delay for a message passing close to a mass | tiny | with the weak bender (O15) |
+
+### 15.11 Checks a builder can run
+
+1. The Sun's basic ringing period from `pulse_period`: about an hour.
+2. Delta Cephei fixture (4.5 Suns, 44 Sun radii, 5,900 K): inside the helium strip; period 5.4 days within a few percent; brightest a quarter cycle after smallest.
+3. An RR Lyrae fixture (0.65 Suns, 5.5 Sun radii): period about 0.6 days; sawtooth shape.
+4. A 1.8 Sun main-sequence star from today's kernel: in the strip; period one to three hours. The Sun: not in the strip.
+5. A 12 Sun main-sequence star at the Sun's metal content: iron valve working, period of hours. The same star at a fiftieth of the metal: not working.
+6. Period against brightness over the Cepheid fixtures lies on the observed line within its scatter; the Type II fixtures lie about 1.5 magnitudes below.
+7. `read_light_curve` at one date equals `star.light_now` at that date; asking dates in any order gives the same answers.
+8. Climate: the yearly mean for a planet of a pulsating star equals the steady-star answer; an airless fixture's swing is a quarter of the light's swing to within the block's stated error.
+9. Clock rate: 0.707 on the deepest stable orbit of a non-spinning hole; about 0.8 on a 1.4 Sun, 12 km neutron star's surface; a navigation satellite against Earth's surface gains 38 millionths of a second a day within one; a station at 400 km loses about 25.
+10. Clock offset: a there-and-back fixture voyage gives the same crew age summed by pieces as the finder's leg totals; splitting a piece in two changes nothing.
+11. No flashing: a 30 minute delta Scuti at the chip's fastest setting stays under three beats a second.
+
+### 15.12 Packages
+
+| Id | Package | Needs | Proposed owner | Evidence |
+|---|---|---|---|---|
+| **XO19** | Pulsating stars: `pulse_strip`, `pulse_period`, `pulse_curve`, `pulse_share` with their tables; `star.light_now` with the modulator list (the built activity cycle joins it); op `read_light_curve`; the card line and light curve; True views and the sky read it; climate and weather get the swing through `swing_response`; Hazard map worst case. In two parts if wanted: (a) kernel blocks and op on fixtures and today's main-sequence stars, (b) the readers | none for (a); B2 for Cepheids and RR Lyrae in real galaxies | light for (a); renderer, climate and chart room for (b) | 15.11 rows 1 to 8 and 11 |
+| **XO20** | Clocks: `clock_rate` widened (with XO1), `clock_offset` over the flight log, ship state `clock`, the rate on voyage legs; the clock chip on the ship card and players' page; the place line reading; Hazard map marks and pass total; the time stretch chip's "outside runs fast" line; stream rate on messages | XO1 for the block; voyages V8 (built) | travel thread for the kernel side, chart room for the chip, with XO18's builder for the map | 15.11 rows 9 and 10; e2e: a fixture ship parks deep, the chip shows the offset growing, the Why names the leg |
+
+XO19 part (a) adds published facts to stars inside a strip, so it changes goldens for those stars only and goes through the golden lane; the mean light is unchanged, so no climate golden moves. XO20 adds fields to ship state and changes no body.
+
+Order: XO19 (a) can start now beside XO1; it needs nothing from the rest of the track. XO20's kernel side follows XO1; its Hazard map lines ride with XO18.
+
+### 15.13 Rulings (Alex, 24 Nov 2026 18:36)
+
+Alex asked of 16 whether the density rule copes with all star types or only the main sequence, was told what the paragraph below says, and answered "sweet - all good then!". All six are **decided as recommended**.
+
+**What the density rule covers.** Every star that pulses in and out as a whole, at any stage of its life: main-sequence stars, giants, supergiants and old helium-burning stars alike, because it needs only mass and radius. It does not cover stars that ring in the other kind of mode, where layers slosh rather than the whole star breathing: the slowly pulsating B stars (their own table, 15.3) and pulsing white dwarfs (not in this addendum; a later row with its own table, when white dwarfs get their package). Miras breathe in and out and so follow the rule, but their valve and their mass loss are the later Mira package.
+
+16. **Period from the star's own density, with the famous period and brightness law as a test it must pass, not a table it reads?** Recommended: yes. It is the "never fake it" way and it makes the distance trick work for players.
+17. **The size and shape of the swing from observed tables, logged as a shortcut?** Recommended: yes. The only alternative is a gas simulation per star.
+18. **One "star's light now" with a list of modulators that every reader uses (views, climate, hazards, sensing), not a pulsation special case?** Recommended: yes. Spots, eclipses and anything a pack invents then come the same way.
+19. **Pulsating stars in 4.0?** Recommended: XO19 in 4.0, since delta Scuti and beta Cephei stars work with today's stars; Cepheids and RR Lyrae appear in galaxies when B2 lands, with no further work here. Miras later.
+20. **When does the clock chip show?** Recommended: always on a ship's card at Engine depth (so the satellite check can be found); at Curious and Science depth only once the ship is more than a minute off home or running more than a thousandth slow, so ordinary ships carry no clutter.
+21. **Stellar engine pushes changing a star's path and so the sky (15.9): add the "dated push" line to the galaxy track?** Recommended: yes, as a small kernel package with the megastructure work, late; it is general and cheap, and it matters only over deep time.

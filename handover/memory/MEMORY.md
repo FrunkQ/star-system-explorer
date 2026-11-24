@@ -66,7 +66,10 @@
 - About 250k lines of code and tests. Approved tidy-ups: split sse-kernel/src/lib.rs; remove old Rust copies in sse-atoms/src/test/ once golden checks are trusted.
 - Caveats: Pluto's air too thick; Mercury's field dies early and Earth's inner core too big (fudge register); stellar halo about 100x low until GH4.
 
+- Exotic objects build (track XO): memory sse4-exotic-build (PR order 443, XO17, XO18 part 1; XO1 part 2 and XO18 part 2 need the golden lane).
+
 ## Waiting on Alex
 - Asked 24 Nov: roughly what time on the 25th the window closes.
 - Older items (class thresholds, hycean class, colour per class, Night chart accent) return as proper questions when work reaches them.
 - Star glow and flares (track SG, thread "Build star glow and flares", 24 Nov): glare halo, churning cells, lumpy giants, flares and ejections in True, PR 439. Memory sse4-star-look.
+- Visual polish (track VP, 24 Nov): design note SSE4-visual-polish-design.md accepted in full by Alex 24 Nov 18:57 (PR 462); packages by owner thread in its section 12. Memory sse4-visual-polish.

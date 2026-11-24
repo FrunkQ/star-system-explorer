@@ -1,5 +1,5 @@
 {
- "about": "How figures are said (ED1a, editing design section 3C). For each kind of quantity and what it is about, the readings a click steps through (first is the default), each a ladder of rungs. Every unit is a row of the master data sheet's Units table (packs/base-reference): no factor is typed here. A rung whose unit the sheet does not hold yet is skipped. 'from' is where a rung takes over, in that rung's own unit. Words (thousand, million) are written above plain_below; exponents when nothing fits. This table moves into a pack with unit schemes (MP15).",
+ "about": "How figures are said (ED1a, editing design section 3C). For each kind of quantity and what it is about, the readings a click steps through (first is the default), each a ladder of rungs. Every unit is a row of the master data sheet's Units table (packs/base-reference): no factor is typed here. `fact_about` says what a card's fact is about from its field (a_au is an orbit, radius_earth a size), so it reads like the same value anywhere else; a world's surface temperature reads in °C first, like a site's. A rung whose unit the sheet does not hold yet is skipped. 'from' is where a rung takes over, in that rung's own unit. Words (thousand, million) are written above plain_below; exponents when nothing fits. This table moves into a pack with unit schemes (MP15).",
  "comfort": [0.1, 1000],
  "plain_below": 100000,
  "stickiness": 0.1,
@@ -55,6 +55,16 @@
   { "id": "system", "name": "system" },
   { "id": "neighbourhood", "name": "stellar neighbourhood" },
   { "id": "galaxy", "name": "galaxy" }
+ ],
+ "fact_about": [
+  { "field": "^(a|peri|apo)_au$|semi_major", "what": "orbit" },
+  { "field": "^radius", "what": "size" },
+  { "field": "^mass", "what": "mass" },
+  { "field": "water", "what": "water" },
+  { "field": "^surface_k$|^t_surface", "what": "surface" },
+  { "field": "^day", "what": "day" },
+  { "field": "^year", "what": "year" },
+  { "field": "^lumin", "what": "light" }
  ],
  "units": {
   "au": { "symbol": "AU", "word": "AU" },
@@ -244,6 +254,11 @@
      { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "degf" }] }
     ],
     "site": [
+     { "id": "celsius", "family": "scientific", "rungs": [{ "unit": "degc" }] },
+     { "id": "kelvin", "family": "scientific", "rungs": [{ "unit": "k" }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "degf" }] }
+    ],
+    "*.surface": [
      { "id": "celsius", "family": "scientific", "rungs": [{ "unit": "degc" }] },
      { "id": "kelvin", "family": "scientific", "rungs": [{ "unit": "k" }] },
      { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "degf" }] }
