@@ -1,0 +1,45 @@
+{
+ "construct": "sts-1-srb-right",
+ "name": "STS-1 solid rocket booster (right)",
+ "about": "Separated at T+2:12, came down under parachutes in the Atlantic and was recovered for reuse.",
+ "pieces": [
+  {
+   "from_s": 62524396987,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "coast and parachute descent"
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "separated at 49.7 km (plan)",
+   "to_s": 62524397275
+  },
+  {
+   "from_s": 62524397275,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 30.2,
+    "lon_deg": -78.6
+   },
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "splashdown about 140 nmi downrange; time and place estimated, recovered by ship"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 62524397275,
+   "kind": "landing",
+   "mark": "estimated",
+   "src": "nasa-sts-1-press-kit",
+   "writer": "pack",
+   "why": "splashdown under three parachutes"
+  }
+ ]
+}

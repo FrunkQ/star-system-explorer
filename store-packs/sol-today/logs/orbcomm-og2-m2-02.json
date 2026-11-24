@@ -1,0 +1,28 @@
+{
+ "construct": "orbcomm-og2-m2-02",
+ "name": "ORBCOMM OG2 (flight 20, satellite 2)",
+ "about": "Released from Falcon 9 flight 20 into its working orbit.",
+ "pieces": [
+  {
+   "from_s": 63619220674,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 7013137.0,
+     "e": 0.0029943804035198513,
+     "i_deg": 47.0,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 63619220674
+    }
+   },
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "why": "the second stage's orbit at release"
+  }
+ ],
+ "events": []
+}
