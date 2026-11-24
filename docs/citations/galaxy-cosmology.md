@@ -101,6 +101,8 @@ Status key: verified / corrected-metadata / corrected-physics / unverified / tex
 | design §7 | Lineweaver, Fenner and Gibson 2004 | | see above | |
 | design §8 | Kroupa 2001; Raghavan 2010; Moe and Di Stefano 2017; MIST; Fischer and Valenti 2005; σ ∝ age^0.35 | | stars agent's area, except σ ∝ age^0.35 (see Holmberg row) | |
 | design §3 | Hahn et al. 2007 T-web | | see above | |
+| sse-cosmos `feed.rs` `LeadingArmParams` (GH3 leading arm) | Byrd, G. G., Freeman, T. and Howard, S. 1993, AJ 105, 477, "The galaxy NGC 4622: long-lasting leading arms and rings via low mass perturbers" | best match a companion 0.01 of the galaxy's mass, closest approach within a tenth of the disc's radius, halo eight times the disc (arm "practically absent" at 2); still leading after about a Gyr, "about three rotations of the disk edge" at 200 km/s; too massive a companion makes the outer arms irregular | verified | full text read 24 Nov 2026 (ADS 1993AJ....105..477B, pp. 477, 480 to 484); 2D disc with little self-gravity, in-plane encounters only, "preliminary": the numbers are stand-ins (F47) |
+| sse-cosmos `gh3_tests.rs` `leading_arms_are_rare`, `LeadingArmParams::seen_share_max` | Iye, M., Tadaki, K. and Fukumoto, H. 2019, arXiv:1910.10926 (accepted to ApJ) | all 146 spirals with confirmed spin and tilt trail; NGC 4622 and NGC 722 "somewhat questionable": at most about 1 in 100 lead | verified (abstract) | read at source for the design, 24 Nov 2026 (section 9.4) |
 
 ## Counts
 Rows: 83. Read at source this session: 9 rows (Planck table 2 ×3, CPT section, EH98, ST99 ×2, FMBK, HS96 equation number and journal), plus paper and DOI identity from search results for Correa I/II and Muratov.

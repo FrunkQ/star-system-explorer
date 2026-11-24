@@ -6,6 +6,9 @@
 #![allow(clippy::result_large_err)]
 
 mod adopt;
+mod atmos;
+#[cfg(test)]
+mod atmos_tests;
 mod caves;
 mod clock;
 mod composition;
@@ -311,6 +314,15 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         return Err(issues);
     }
     let calendar = orbits::load_calendar(ms)?;
+    // ATMOS: the stack's chemistry, when a pack provides one.
+    let chemistry = if ms
+        .iter()
+        .any(|p| p.provides.other.contains_key("life_chemistry"))
+    {
+        Some(sse_life::chemistry::ThermoTable::from_packs(ms).map_err(|e| vec![e])?)
+    } else {
+        None
+    };
     // TG1: every tag named anywhere in the stack is declared.
     let tags = tags::declarations(ms)?;
     let mut problems = tags::check(&tags::references(ms), &tags);
@@ -348,6 +360,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         tech,
         resources,
         engines,
+        chemistry,
     })
 }
 
@@ -530,6 +543,9 @@ struct Observe {
     resources: inventory::Kinds,
     /// Engine designs by id (`provides.other.engines`, RK9).
     engines: BTreeMap<String, sse_nav::power::EngineDef>,
+    /// The stack's gas and water chemistry (`provides.other.life_chemistry`,
+    /// E0), for `atmosphere_advice`; absent, the base life pack's.
+    chemistry: Option<sse_life::chemistry::ThermoTable>,
 }
 
 pub struct Kernel {
@@ -5984,6 +6000,9 @@ impl Kernel {
                 parent.as_deref(),
                 &facts.unwrap_or_default(),
             )?,
+            Request::AtmosphereAdvice { body, at_s, facts } => {
+                self.atmosphere_advice(&body, at_s, facts.as_ref())?
+            }
             Request::PackReports { pack } => {
                 let reports: Vec<&trust::PackReport> = self
                     .reports

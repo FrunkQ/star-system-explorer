@@ -2048,6 +2048,22 @@ pub enum Request {
         #[ts(optional)]
         pack: Option<String>,
     },
+    /// ATMOS: advice on a world's air (editing design 11A). What the rock
+    /// gives off from the mantle's redox ("the science expects"), how the
+    /// hand-set air differs from it, the pairs in it that do not go
+    /// together (E8) and how long they last, and one `set_authored_batch`
+    /// for "Suggest an atmosphere". Reads the body's facts at `at_s`
+    /// (absent: all of them); `facts` is laid over them (a draft mix).
+    /// Advice only: nothing is written or refused. Read-only.
+    AtmosphereAdvice {
+        body: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "Record<string, unknown>")]
+        facts: Option<serde_json::Value>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -2233,6 +2249,7 @@ impl Request {
             Request::Rename { .. } => "rename",
             Request::FixNames { .. } => "fix_names",
             Request::PackReports { .. } => "pack_reports",
+            Request::AtmosphereAdvice { .. } => "atmosphere_advice",
         }
     }
 }
@@ -2661,6 +2678,11 @@ pub fn ops() -> Vec<OpInfo> {
             "pack_reports",
             Cost::Trivial,
             "reads reports worked out when the stack loaded; read only",
+        ),
+        o(
+            "atmosphere_advice",
+            Cost::Light,
+            "two formula blocks and one equilibrium search (about 60 sweeps of 5 reactions); read only",
         ),
     ]
 }
@@ -3667,6 +3689,15 @@ pub enum Response {
         #[ts(type = "unknown")]
         description: serde_json::Value,
         state_hash: String,
+    },
+    /// `atmosphere_advice`: `{body, says, redox_iw, redox_from (formation,
+    /// core or unknown), expected (gas to share), pressure_pa, set,
+    /// set_pressure_pa, differs ([{gas, set, expected, why}]), clashes
+    /// ([{pair, sink, j_mol, time_s, why}]), available_j_mol, suggest
+    /// ({op, edits} or null), notes, blocks ([{block, inputs, results}])}`.
+    AtmosphereAdvised {
+        #[ts(type = "unknown")]
+        advice: serde_json::Value,
     },
 }
 

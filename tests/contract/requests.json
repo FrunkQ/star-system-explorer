@@ -3441,5 +3441,6 @@
  {"op": "set_authored_batch", "occurred_at_s": 100, "edits": [{"address": "u:rs4/sys:0/ship:1", "field": "construct.mass_kg", "value": 45000.0}, {"address": "u:rs4/sys:0/ship:1", "field": "part.eagle.mass_kg", "value": 15000.0}]},
  {"op": "split_construct", "address": "u:rs4/sys:0/ship:1", "key": "eagle", "name": "Eagle", "parts": ["eagle"], "at_s": 500},
  {"op": "join_constructs", "address": "u:rs4/sys:0/ship:1", "with": "u:rs4/sys:0/ship:eagle", "at_s": 600},
- {"op": "join_constructs", "address": "u:rs4/sys:0/ship:1", "with": "u:rs4/sys:0/ship:eagle", "how": "merge", "at_s": 700}
+ {"op": "join_constructs", "address": "u:rs4/sys:0/ship:1", "with": "u:rs4/sys:0/ship:eagle", "how": "merge", "at_s": 700},
+ {"op": "atmosphere_advice", "body": "u:rs4/sys:0/planet:9", "facts": {"interior.core_mass_fraction": 0.325, "body.mass": 5.972e24, "body.radius": 6371000.0, "atmosphere.surface_pressure": 101400.0, "atmosphere.composition.n2": 0.7808, "atmosphere.composition.o2": 0.2095, "atmosphere.composition.ch4": 1.9e-6}}
 ]

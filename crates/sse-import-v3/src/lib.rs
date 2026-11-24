@@ -522,7 +522,8 @@ impl Importer {
     /// `body.surface_water_oceans` is the surface liquid water in Earth oceans
     /// (coverage × area × mean depth / 1.335e18 m³; a missing depth is taken as
     /// Earth's mean, 3688 m), `body.oceans` whether there is any, and
-    /// `body.surface_pressure` the atmosphere's surface pressure in Pa.
+    /// `body.surface_pressure` the atmosphere's surface pressure in Pa, and
+    /// `atmosphere.composition.<gas>` its make-up by share.
     fn hydrosphere(&mut self, a: &Address, n: &Map<String, Json>) {
         const EARTH_OCEANS_M3: f64 = sse_core::sheet::V_OCEAN_EARTH;
         const EARTH_MEAN_DEPTH_M: f64 = sse_core::sheet::DEPTH_OCEAN_EARTH;
@@ -537,6 +538,30 @@ impl Importer {
                 Json::from(p * 1e5),
                 Evidence::Authored,
             );
+        }
+        // ATMOS: the air's make-up as hand-set shares (`atmosphere.composition.<gas>`,
+        // lower case), so the kernel's advice reads an imported air as authored.
+        // V3 writes fractions; a list that sums past 1.5 is read as percent.
+        if let Some(c) = n
+            .get("atmosphere")
+            .and_then(|x| x.get("composition"))
+            .and_then(Json::as_object)
+        {
+            let shares: Vec<(String, f64)> = c
+                .iter()
+                .filter_map(|(g, v)| v.as_f64().map(|x| (g.to_ascii_lowercase(), x)))
+                .filter(|(g, x)| *x > 0.0 && !g.is_empty())
+                .collect();
+            let sum: f64 = shares.iter().map(|(_, x)| x).sum();
+            let scale = if sum > 1.5 { 0.01 } else { 1.0 };
+            for (g, x) in shares {
+                self.set(
+                    a,
+                    &format!("atmosphere.composition.{g}"),
+                    Json::from(x * scale),
+                    Evidence::Authored,
+                );
+            }
         }
         let Some(h) = n.get("hydrosphere").and_then(Json::as_object) else {
             return;
