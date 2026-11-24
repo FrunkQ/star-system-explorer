@@ -123,6 +123,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/paper-spacecraft.md` (arrives with PR 438) | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
+| `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
 
 Added after 18:15 UTC (status files to follow): "Verify every cited paper" (master citation list, daily Consensus batches), "Build quality tiers and speed probe", "Build detail ladder and world textures", "Build aurorae and night lights". Design: "Design visual polish and flourishes" (accepted, note in `handover/design/`); the exotic objects note's section 15 adds pulsating stars (XO19) and clocks (XO20).
