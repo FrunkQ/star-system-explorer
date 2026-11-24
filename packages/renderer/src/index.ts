@@ -109,3 +109,6 @@ export async function startSurface(canvas: HTMLCanvasElement) {
 // The size comparison's turning globes (3D, True, Wireframe).
 export { circleSteps, globeFrame, graticule, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
 export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";
+// Aurorae (VP-AU5): the plan from read_field and the air, and its exposure.
+export { AURORA_REFERENCES, cieXyz, COLOUR_VISION_CD_M2, exposeAurora, kiloRayleighRadiance, lineRgb, oxygenShare, OXYGEN_STAND_IN, planAurora, RAYLEIGH_PH_M2_S_SR } from "./aurora.ts";
+export type { AuroraDraw, AuroraDrawLayer, AuroraEmissionJson, AuroraExposure, AuroraJson, AuroraLayer, AuroraOvalJson, AuroraPlan, AuroraWorld } from "./aurora.ts";

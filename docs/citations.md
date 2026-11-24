@@ -28,6 +28,7 @@ reference as written, what is relied on, status, what was checked.
 | Climate and life | [citations/climate-life.md](citations/climate-life.md) | 79 | 9 | methane lifetime in oxic air, hydrogen escape coefficient |
 | Galaxy and cosmology | [citations/galaxy-cosmology.md](citations/galaxy-cosmology.md) | 90 | 11 | merger mass ratios, disc heating exponent, Hawking lifetime |
 | Master data sheet (track MP) | [citations/matter-reference.md](citations/matter-reference.md) | 34 | 0 | none yet (sources for the sheet) |
+| Aurora drawing (track VP-AU) | [citations/aurora-drawing.md](citations/aurora-drawing.md) | 12 | 0 | none (6 from the Consensus pass checked, 6 of the code's own unverified) |
 | Galaxy histories design (track GH, GH0) | [citations/galaxy-histories.md](citations/galaxy-histories.md) | 113 (metadata) | 1 (Bekki and Chiba DOI) | none (design stage) |
 | Naming (track NM, NM0) | [citations/naming.md](citations/naming.md) | 11 | 2 metadata (WGSN list has no origin column; Hessman 2010 is a preprint), 1 replaced (English place-name elements are copyrighted) | none (design stage) |
 | Magnetic fields (track MF) | [citations/magnetic-fields.md](citations/magnetic-fields.md) | 108 | 2 | none yet (design references; DOIs checked in MF0) |

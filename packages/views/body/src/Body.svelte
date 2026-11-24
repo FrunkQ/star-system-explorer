@@ -24,7 +24,7 @@
   import { BODY_CONTROLS, GLOBE_LAT } from "./controls.ts";
   import { untrack } from "svelte";
   import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
-  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, airRequest, planAurora, type AuroraJson, type AuroraPlan, type FieldReadJson, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
@@ -81,6 +81,41 @@
       got = v;
       loading = false;
     })();
+  });
+
+  // Aurorae (VP-AU5): where they glow from the kernel's field read (read_field's aurora), what colours and how high
+  // from the air. The Solar System's own worlds read the measured fixture by name; any other adopted system is read
+  // world by world from its facts. Asked once per world, only when True is shown.
+  const auroraCache = new Map<string, { plan: AuroraPlan; radius_m: number } | null>();
+  let aurora = $state.raw<{ plan: AuroraPlan; radius_m: number } | null>(null);
+  $effect(() => {
+    const sub = subject;
+    const sys = scene.system;
+    const air = got?.air;
+    const isTrue = shownView.style === "true";
+    aurora = null;
+    if (!sub || sub.kind === "star" || !got || !isTrue) return;
+    const key = `${sys}|${sub.address}`;
+    if (auroraCache.has(key)) return void (aurora = auroraCache.get(key) ?? null);
+    let live = true;
+    void (async () => {
+      const sol = /\/sys:sol$/.test(sys);
+      const r = await ctx.session.readField(sol ? { fixture: "solar-system" } : { system: sys });
+      if (!live) return;
+      const bodies = r.ok ? (r.bodies as unknown as (FieldReadJson & { aurora?: AuroraJson | null })[]) : [];
+      const read = sol ? bodies.find((b) => b.name === sub.label) : bodies.find((b) => b.address === sub.address);
+      // A generated world's tilt is its MF3 fact (the Solar System fixture carries its own in the field block).
+      const rs = sol ? null : await ctx.session.resolvedSystem(sys);
+      if (!live) return;
+      const tilt = rs?.ok ? rs.result.facts[sub.address]?.["field.tilt"] : undefined;
+      const radius = air?.radius_m ?? (read?.field?.reference_radius_m ?? 0);
+      const v = read && radius > 0 ? { plan: planAurora(read, { radius_m: radius, scale_height_m: air?.optics?.scale_height_m, composition: air?.composition, ...(typeof tilt === "number" ? { tilt_deg: tilt } : {}) }), radius_m: radius } : null;
+      auroraCache.set(key, v);
+      aurora = v;
+    })();
+    return () => {
+      live = false;
+    };
   });
 
   // "Why?" for the climate (W7a): asked for, never fetched on a click of the world alone.
@@ -197,6 +232,7 @@
     size_px: size,
     label: subject?.label ?? "",
     air: got?.air ?? null,
+    aurora,
   });
   // Time lapse (R6): the kernel's surface_frames for this world, played on the same globe. `lapse` is the API the
   // chart room's timeline (BodyTimeline) drives; it is reactive, so a scrubber follows changes made anywhere.
@@ -393,7 +429,7 @@
     shotNote = null;
     try {
       const o = runOpts;
-      const shot = await photograph({ registry: o.registry, library: o.library, recipe: o.recipe, knobs: o.knobs, globe, air: o.air, label: s.label, lon, lat, size: 1024, frames: 16, onProgress: (d, n) => (shooting = `Refining ${d} of ${n}…`) });
+      const shot = await photograph({ registry: o.registry, library: o.library, recipe: o.recipe, knobs: o.knobs, globe, air: o.air, aurora: o.aurora, label: s.label, lon, lat, size: 1024, frames: 16, onProgress: (d, n) => (shooting = `Refining ${d} of ${n}…`) });
       const png = await new Promise<Blob>((res, rej) => shot.canvas.toBlob((b) => (b ? res(b) : rej(new Error("the browser would not encode the picture"))), "image/png"));
       const now = new Date();
       const caption = `${s.label}, centred on ${lat.toFixed(0)}° ${lon.toFixed(0)}°. ${shot.note} Made in ${(shot.ms / 1000).toFixed(1)} s.`;
@@ -503,6 +539,9 @@
           </p>
         {/if}
       </div>
+      {#if has && shownView.band !== "mag" && aurora?.plan.stand_in && gs?.plan.passes.some((x) => x.pass === "aurora")}
+        <p class="note" data-aurora-stand-in>Aurora colours are a stand-in: oxygen's green and red lines at heights scaled from Earth's, until the kernel gives this air's own lines.</p>
+      {/if}
       {#if has && shownView.band !== "mag"}
         <!-- The time lapse's controls (U22): layer toggles, scrubber with event marks, Play, and the why card. -->
         <BodyTimeline {lapse} depth={ws.depth ?? "science"} label={subject.label} />
@@ -525,6 +564,7 @@
               <div class="badge-detail" data-badge-detail>
                 <p>{gs.tier_note}</p>
                 {#if gs.plan.passes.some((x) => x.pass === "atmosphere")}<p data-air-note>{gs.air_note}</p>{/if}
+                {#if gs.plan.passes.some((x) => x.pass === "aurora")}<p data-aurora-note>{gs.aurora_note}</p>{/if}
                 {#each gs.badge.detail as line (line)}<p>{line}</p>{/each}
                 {#if gs.badge.reduced}<p>{gs.badge.lift}</p>{/if}
                 <p>Recipe {gs.recipe}, level {gs.level} of {gs.max}. {Number.isFinite(gs.ewma_ms) ? `Frames about ${Math.round(gs.ewma_ms)} ms; budget ${Math.round(gs.budget_ms)} ms.` : ""}</p>
