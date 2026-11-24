@@ -28,7 +28,7 @@ Khare's Table I was read from the text layer of the HITRAN aerosol archive's PDF
 
 | Wanted | By | Lead | Blocker |
 |---|---|---|---|
-| `h2so4` (Venus cloud droplets, 75 % and 84.5 % by weight) | giant bands | Palmer and Williams 1975, Appl. Opt. 14, 208, Table I (measured at 300 K) | The text layer of the HITRAN PDF loses the row alignment. Read the page image, or the HITRAN aerosol data files. |
+| `h2so4` (Venus cloud droplets, 75 % and 84.5 % by weight) | giant bands | Palmer and Williams 1975, Appl. Opt. 14, 208, Table I (measured at 300 K) | The text layer of the HITRAN PDF loses the row alignment. HITRAN's ASCII copy is `PalmerandWilliams.dat`, beside `Aerosol_readme_2008.pdf` in HITRAN2012/Aerosols/ascii/. The site disallows automated fetching, so read it from a local machine. |
 | `nh4sh` (Jupiter's and Saturn's NH4SH cloud) | giant bands | Sromovsky et al. 2017 treat the main cloud as non-absorbing, with n near 1.4 for NH3 and near 1.8 for NH4SH (Sato et al. 2013: 1.85). | No measured n,k found yet. Howett et al. 2007 and Ferraro et al. 1980 are not yet read. |
 | `jupiter-chromophore` (red-brown chromophore) | giant bands | Carlson et al. 2016, Icarus 274, 106; Sromovsky et al. 2017, Icarus 291, 232, Fig. 6B (n = 1.4 assumed) | k is printed only in a figure. |
 | H2S ice, silicate, sulphide, alkali haze, iron | giant bands | (not yet searched) | |
