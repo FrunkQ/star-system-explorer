@@ -17818,6 +17818,210 @@
        "note": "bulk crystal values as compiled by Sokolik and Toon 1999; orientation not stated; the files read stop at 1001 nm; alpha = 4 pi k / lambda"
       }
      }
+    },
+    {
+     "id": "basalt",
+     "names": {
+      "physics": "basalt",
+      "plain": "basalt",
+      "story": "dark volcanic rock"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the commonest volcanic rock on the rocky planets; grey-black and only faintly coloured",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        260.0,
+        300.0,
+        355.0,
+        400.0,
+        466.0,
+        500.0,
+        566.0,
+        600.0,
+        666.0,
+        700.0,
+        817.0,
+        907.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        1.644,
+        1.644,
+        1.634,
+        1.621,
+        1.611,
+        1.613,
+        1.599,
+        1.609,
+        1.597,
+        1.597,
+        1.595,
+        1.595,
+        1.593,
+        1.59,
+        1.589
+       ],
+       "k": [
+        0.002692,
+        0.002692,
+        0.002399,
+        0.002239,
+        0.001995,
+        0.00195,
+        0.001698,
+        0.001738,
+        0.001698,
+        0.001738,
+        0.00195,
+        0.002455,
+        0.00302,
+        0.002455,
+        0.003311
+       ],
+       "src": "egan-hilgeman1979",
+       "check": "unverified",
+       "note": "rock sample as measured by Egan and Hilgeman; no sample or locality named where read; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "limonite",
+     "names": {
+      "physics": "limonite (hydrous ferric oxides, mostly goethite)",
+      "plain": "yellow-brown rust",
+      "story": "ochre"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the yellow-brown rust of weathered iron-bearing rock; absorbs violet and blue",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        260.0,
+        300.0,
+        355.0,
+        400.0,
+        466.0,
+        500.0,
+        566.0,
+        600.0,
+        666.0,
+        700.0,
+        817.0,
+        907.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        2.15,
+        2.282,
+        2.33,
+        2.528,
+        2.544,
+        2.513,
+        2.4,
+        2.35,
+        2.228,
+        2.2,
+        2.146,
+        2.122,
+        2.108,
+        2.045,
+        2.03
+       ],
+       "k": [
+        0.007079,
+        0.00955,
+        0.0123,
+        0.02239,
+        0.02399,
+        0.01698,
+        0.004786,
+        0.004169,
+        0.003388,
+        0.00309,
+        0.003162,
+        0.003802,
+        0.003802,
+        0.00263,
+        0.002455
+       ],
+       "src": "egan-hilgeman1979",
+       "check": "unverified",
+       "note": "limonite is the general term for hydrous ferric oxides, mostly goethite (the NPSG page, after Roberts et al. 1990); alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "magnetite",
+     "names": {
+      "physics": "magnetite (Fe3O4)",
+      "plain": "black iron oxide",
+      "story": "lodestone"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the black, magnetic iron oxide of black sands and lodestones; absorbs strongly at every colour",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        310.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1230.0
+       ],
+       "n": [
+        2.103,
+        2.179,
+        2.233,
+        2.186,
+        2.169,
+        2.164,
+        2.152,
+        2.164,
+        2.125,
+        2.05,
+        1.938,
+        1.939,
+        2.082
+       ],
+       "k": [
+        0.6236,
+        0.7265,
+        0.874,
+        1.015,
+        1.051,
+        1.1,
+        1.153,
+        1.191,
+        1.243,
+        1.27,
+        1.212,
+        1.109,
+        0.9478
+       ],
+       "src": "schlegel1979",
+       "check": "unverified",
+       "note": "single-crystal values; the files read run from 310 to 1230 nm; alpha = 4 pi k / lambda"
+      }
+     }
     }
    ],
    "reactions": [
@@ -18469,6 +18673,12 @@
      "text": "Eakins, B. W. and Sharman, G. F. 2010, Volumes of the World's Oceans from ETOPO1, NOAA National Geophysical Data Center (1.335e9 km3, mean depth 3688 m)",
      "status": "unverified",
      "url": "https://www.ngdc.noaa.gov/mgg/global/etopo1_ocean_volumes.html"
+    },
+    {
+     "id": "egan-hilgeman1979",
+     "text": "Egan, W. G. and Hilgeman, T. W. 1979, Optical Properties of Inhomogeneous Materials: Applications to Geology, Astronomy, Chemistry, and Engineering, Academic Press; basalt and limonite n and k as read from the University of Waterloo Natural Phenomena Simulation Group's files riBas/ecBas and riLim/ecLim (185 to 2500 and 185 to 2600 nm) on 24 Nov 2026; no sample description on the page",
+     "status": "unverified",
+     "url": "https://www.npsg.uwaterloo.ca/data/sand.php"
     },
     {
      "id": "evonik-h2o2",
@@ -19175,6 +19385,12 @@
      "text": "Salzmann, C. G. 2019, J. Chem. Phys. 150, 060901: advances in the experimental exploration of water's phase diagram (ices XVI and XVII, amorphous ices, hydrogen order)",
      "status": "verified",
      "doi": "10.1063/1.5085163"
+    },
+    {
+     "id": "schlegel1979",
+     "text": "Schlegel, A., Alvarado, S. F. and Wachter, P. 1979, Journal of Physics C: Solid State Physics 12, 1157-1164: optical properties of magnetite (Fe3O4); n and k as read from the University of Waterloo Natural Phenomena Simulation Group's files riMag.txt and ecMag.txt (interpolated to 1 nm, 310 to 1230 nm) on 24 Nov 2026",
+     "status": "unverified",
+     "url": "https://www.npsg.uwaterloo.ca/data/sand.php"
     },
     {
      "id": "schmidt-wagner1985",

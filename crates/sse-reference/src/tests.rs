@@ -1008,3 +1008,36 @@ fn water_ice_is_clearest_in_the_blue() {
     let at = |nm: f64| k[lam.iter().position(|x| (*x - nm).abs() < 1e-9).unwrap()];
     assert!(at(700.0) > 100.0 * at(450.0));
 }
+
+#[test]
+fn rock_minerals_order_by_darkness() {
+    // MP34: at 550 nm magnetite (k about 1) is black, limonite and basalt far clearer.
+    let r = Reference::base();
+    let k_near = |id: &str, nm: f64| {
+        let t = r
+            .row("mixtures", id)
+            .and_then(|x| x.get("optical"))
+            .and_then(|o| o.get("refractive_index"))
+            .unwrap();
+        let col = |c: &str| -> Vec<f64> {
+            t.get(c)
+                .unwrap()
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|x| x.as_f64().unwrap())
+                .collect()
+        };
+        let (lam, k) = (col("lambda_nm"), col("k"));
+        let mut best = 0;
+        for i in 0..lam.len() {
+            if (lam[i] - nm).abs() < (lam[best] - nm).abs() {
+                best = i;
+            }
+        }
+        k[best]
+    };
+    assert!(k_near("magnetite", 550.0) > 100.0 * k_near("limonite", 550.0));
+    assert!(k_near("limonite", 450.0) > 5.0 * k_near("limonite", 700.0));
+    assert!(k_near("basalt", 550.0) < 0.01);
+}
