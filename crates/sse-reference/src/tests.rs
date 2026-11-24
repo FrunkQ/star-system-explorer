@@ -680,3 +680,20 @@ fn nuclear_reactions_conserve_nucleons_and_charge() {
     );
     assert!(e.iter().any(|m| m.contains("li99")), "{e:#?}");
 }
+
+#[test]
+fn protosolar_isotope_shares_are_on_the_isotope_rows() {
+    // MP8c reads He-3's share of helium for giant envelopes: Lodders 2021
+    // Table 4, 0.0166 atom percent, so He-3/He-4 is about 1.66e-4.
+    let r = Reference::base();
+    let share = |id: &str| {
+        num(r
+            .row("isotopes", id)
+            .and_then(|x| x.get("abundance_protosolar")))
+        .unwrap()
+    };
+    let ratio = share("he3") / share("he4");
+    assert!((ratio - 1.66e-4).abs() < 1e-6, "{ratio}");
+    // The printed digits sum to 99.99997 percent.
+    assert!((share("h1") + share("h2") - 1.0).abs() < 1e-6);
+}

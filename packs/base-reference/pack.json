@@ -8438,6 +8438,13 @@
       "v": 1.00782503224,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 0.99998,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.998 atom % (Table 4)"
      }
     },
     {
@@ -8449,6 +8456,13 @@
       "v": 2.01410177812,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 1.97e-05,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.00197 atom % (Table 4)"
      }
     },
     {
@@ -8478,6 +8492,13 @@
       "v": 3.01602932197,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 0.000166,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.0166 atom % (Table 4)"
      }
     },
     {
@@ -8489,31 +8510,66 @@
       "v": 4.00260325413,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 0.999834,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.9834 atom % (Table 4)"
      }
     },
     {
      "id": "li6",
      "element": "li",
      "a": 6,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.07589,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "7.589 atom % (Table 4)"
+     }
     },
     {
      "id": "li7",
      "element": "li",
      "a": 7,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.92411,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "92.411 atom % (Table 4)"
+     }
     },
     {
      "id": "c12",
      "element": "c",
      "a": 12,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.98965,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "98.965 atom % (Table 4)"
+     }
     },
     {
      "id": "c13",
      "element": "c",
      "a": 13,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.01035,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "1.035 atom % (Table 4)"
+     }
     },
     {
      "id": "c14",
@@ -8532,25 +8588,53 @@
      "id": "n14",
      "element": "n",
      "a": 14,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.99774,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.774 atom % (Table 4)"
+     }
     },
     {
      "id": "n15",
      "element": "n",
      "a": 15,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.00226,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.226 atom % (Table 4)"
+     }
     },
     {
      "id": "o16",
      "element": "o",
      "a": 16,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.99777,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.777 atom % (Table 4)"
+     }
     },
     {
      "id": "o18",
      "element": "o",
      "a": 18,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.00188,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.188 atom % (Table 4)"
+     }
     },
     {
      "id": "be10",
