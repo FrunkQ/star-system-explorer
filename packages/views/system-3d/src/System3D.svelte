@@ -550,7 +550,8 @@
   let dragFrom: { x: number; y: number; yaw: number; pitch: number; pan: [number, number]; slide: boolean } | null = null;
   const touches = new Map<number, { x: number; y: number }>();
   function down(e: PointerEvent) {
-    if ((e.target as HTMLElement).closest("button")) return;
+    // A right-click asks for the object menu (below), never turns or picks.
+    if (e.button === 2 || (e.target as HTMLElement).closest("button")) return;
     if (e.pointerType === "touch") {
       if (seen !== "free") return;
       touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -599,6 +600,15 @@
     const id = nearestAt(e.clientX, e.clientY);
     if (id) void flyTo(id);
   }
+  // The menu on any object (V3 gap 38): a right-click near a body on the canvas asks for that body's menu, as a
+  // right-click on its pin does (the pin carries data-address, which the shell watches).
+  function context(e: MouseEvent) {
+    if (e.shiftKey || (e.target as HTMLElement).closest("[data-address]")) return;
+    const id = nearestAt(e.clientX, e.clientY);
+    if (!id) return;
+    e.preventDefault();
+    host?.dispatchEvent(new CustomEvent("sse:object-menu", { bubbles: true, detail: { address: id, x: e.clientX, y: e.clientY } }));
+  }
   function dbl(e: MouseEvent) {
     const id = nearestAt(e.clientX, e.clientY);
     if (id && id !== centreId && hasChildren(bodies, id)) enter(id);
@@ -640,6 +650,7 @@
   onpointerup={up}
   onpointercancel={up}
   ondblclick={dbl}
+  oncontextmenu={context}
   onwheel={wheel}
   data-seen={seen}
   style:touch-action={seen === "free" ? "none" : "pan-y"}
@@ -663,6 +674,7 @@
         style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, radiusPx(b, p.depth))}px"
         aria-pressed={b.id === selection}
         data-body={b.id}
+        data-address={b.id}
         data-x={p.x.toFixed(2)}
         data-y={p.y.toFixed(2)}
         onclick={(e) => void flyTo(e.detail ? (nearestAt(e.clientX, e.clientY) ?? b.id) : b.id)}
