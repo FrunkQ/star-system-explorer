@@ -93,6 +93,11 @@ The aim: heat capacity per place, so that coasts are mild and interiors harsh. A
 - `ebm::diagnose_two` passes the sea column's temperature to the moisture block. On a two-column world, each band's evaporation is now ρ C|U| q_sat(T_sea)(1 − rh), times the band's sea share. Single-column worlds keep the old path bit for bit.
 - Earth fixture: global evaporation and precipitation go from 0.86 to 0.84 m a year (about 1.0 measured). The summer sea is cooler than the band.
 
+### Goldens changed (parts 2b and 2c, on purpose; they ship in PR 418 alongside W-wind10)
+- **Changed:** `weather.json`, `weather-swap.json`, `weather-storms.json`, `surface-wear.json`, `surface-cover.json`, and the survey and weather lines of `contract.jsonl`.
+- **Reason:** on two-column worlds the sea now evaporates at its own temperature, which moves rain and therefore wear and cover. Marine decks now sit only over upwelling coasts where there is a map.
+- **Unchanged:** single-column worlds keep the old evaporation path bit for bit.
+
 ### Not yet (rest of part 2)
 - A cell's temperature from its distance to the coast, so land cells read the land column and coasts lean to the sea.
 - The ITCZ lag from heat capacity.

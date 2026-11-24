@@ -24,4 +24,22 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | W-sea2 sea colour from the liquid (Alex 24 Nov): the liquid's absorption spectrum and what is dissolved in it, from the data sheet, through the same light code as the air; a few numbers per region for the shader | queued after W7c part 2 | (to come) |
 | W-sea3 waves by the liquid (Alex 24 Nov): liquid-to-air density ratio, viscosity, surface tension and a capillary cut-off in the wave block, so methane seas behave differently from water; liquid helium is one more liquid (near-zero viscosity, low density and surface tension) with a card line saying it is superfluid below 2.17 K, no creeping film; acceptance test: a rogue planet in a void cold enough for a helium sea works end to end (helium condenses as the sea liquid, its waves, the superfluid line), with any link owned elsewhere named | queued after W-sea2 | (to come) |
 | W-sea4 whitecaps and storm froth (Alex 24 Nov): whitecap cover from the wind and the liquid's properties, handed to the renderer as numbers per region (browser-cheap shaders). Superfluid helium seas: not wanted | queued after W-sea3 | (to come) |
-| W8 part 3 (with S17a), W7c part 2, W10 to W12 weather redo (accepted 21 Nov, `design/SSE4-weather-review.md`): ground ice inventories, polar hood and CO2 snow, land from the height map, coasts and currents, storms, aerosols and giants as strengths, detail levels, Workshop blocks | next: W7c part 2; owner "Build shared climate and weather" | design/SSE4-weather-review.md |
+| W7c part 2b (currents as rules: upwelling decks, warm western boundaries, flip with the spin) and 2c (sea evaporates at the sea column's temperature) | done, in PR 418 with W-wind10 (open, golden lane after PR 400) | packages/W7c.md |
+| W10a giant chromophore and haze depths (asked 24 Nov by "Build giant bands, clouds and hazes"): the giant rule block adds a `chromophore` aerosol in each cell, with optical depth from a pack rate and more of it showing in belts (Sromovsky et al. 2017, Icarus 291, 232: about 0.1 to 0.2 at 500 nm above Jupiter's NH3 deck; Baines et al. 2019 for Saturn). Colour comes from the sheet's `jupiter-chromophore` row (MP33). Titan's organic haze optical depth goes from about 3 to the measured 5 to 10 at 500 nm (Tomasko et al. 2008). Both papers must be read before their numbers are used | queued first after PR 418 merges (it changes weather goldens) | (to come) |
+| NEXT, in order: W10a (row above), W7c part 2d (a cell's temperature from its distance to the coast: land cells read the land column, coasts lean to the sea; cover and wear), then W-sea2, W-sea3 (with helium), W-sea4 (rows above), then W8 part 3 (with S17a), W10 to W12 (`design/SSE4-weather-review.md`), MF8 (air loss by channel; shielding is an effect, never a switch) | next; owner "Build shared climate and weather" | design/SSE4-weather-review.md |
+
+## Sea drawing contract (agreed 24 Nov with "Build surface time-lapse", the drawing side)
+Site: the weather op's `report` gives `data.sea`. Globe: `survey.climate.sea.bands[]` gives one entry per climate band, null over land. Both use the same keys. Every key is additive, and a missing key means not sent yet.
+- W-sea2 colour:
+  - `bands_nm` [650, 550, 450]
+  - `absorb_per_m` [R,G,B] and `backscatter_per_m` [R,G,B]
+  - `refractive_index`
+  - `deep_rgb`, computed by the kernel: R∞ ≈ 0.33 b_b/(a + b_b)
+  - The shader does the shallow fade exp(−2az) and Fresnel.
+- W-sea3 waves:
+  - `trains`, at most 6, each {wavelength_m, amplitude_m, period_s, dir_deg}, from the kernel's spectrum with ω² = gk + (σ/ρ)k³
+  - `ripple_cutoff_m`
+  - `superfluid` (bool) and `liquid_note`
+  - `wave_m` and `period_s` stay.
+- W-sea4 froth: `whitecap_fraction`, `foam_albedo`, `streak_dir_deg`.
+

@@ -7,9 +7,9 @@
   "version": "weather-v1",
   "worlds": [
     {
-      "climate": "162e261b269d16b59a620fc8fd14e1770642f13b9514560e644fadbd3600db99",
+      "climate": "9bd78b6415d1a2aa6fad1346410f60a8f0ce82923e946e8047a3b07f52cbc075",
       "condensate": "water",
-      "field": "e2994d7e60925ab299655176c67aaee9ee276268f7b3341ec68c29a21870d716",
+      "field": "65684bb649275b4c931c62069680d188772b04dc53e14e6d0853a34b839087a3",
       "regime": "earth-like",
       "world": "Earth"
     },
@@ -30,21 +30,21 @@
     {
       "climate": "8fb41fff63bc41b19cab75a3549086a2f1fb02af46a080448dc0e75454900073",
       "condensate": "methane",
-      "field": "fdd19f7fcf8f87ac042a939a37d775326ed637133c7d4159aa56c388ef85824f",
+      "field": "bae055a9b12527f4d4e25403b35e79d6c7e7ebefc2dd32895100750004c85827",
       "regime": "slow-rotator",
       "world": "Titan"
     },
     {
-      "climate": "b55b99b6507c0e2035fe9473bc8d1f1f13dd286dcaf4f26d72b63d5276d7e412",
+      "climate": "24a1f7797a2e726b926b89439e8ea7fe3f5641d720eaef15df02f6a4cb9540da",
       "condensate": "water",
-      "field": "cddf0a7ec4c9fc3054be2a3ab6241526e7dde811343602d96f51cdbdadecee4b",
+      "field": "0b03fa02d47fc991035c240dc6e6f2a46126cf28d3e0fa9b07bc31f5d7d051c7",
       "regime": "tidally-locked",
       "world": "Locked temperate world"
     },
     {
-      "climate": "8524f1d9944f5ed2df7d45826daa830c753aef647faa4fd31e61e52453027c8e",
+      "climate": "d969211882224049ba6ec3aad54d5a06a319313b84e080d1961731c83aa28fac",
       "condensate": "water",
-      "field": "6828cb21323fa3cc6a205b6a9282ac66826f37b7a3bb1258d001655cc4b7fa7f",
+      "field": "228f5323e65aa9c5e2ba1997375ee146e1de16370082a21f45a73242e8d004e5",
       "regime": "fast-rotator",
       "world": "Fast-spinning Earth"
     },
