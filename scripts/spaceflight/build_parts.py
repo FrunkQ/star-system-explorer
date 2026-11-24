@@ -6,7 +6,7 @@ Usage: python3 -I scripts/spaceflight/build_parts.py <dir with GCAT engines.tsv,
 Writes <out dir>/parts.json in the field names of SSE4-atomic-rockets-plan.md section 11.3
 (engine definition: fuels[], thrust_n, exhaust_km_s, energy_from, mass_t ...). Exhaust speed is
 Isp times g0, with g0 read from the master data sheet (packs/base-reference), never typed here.
-Propellants are named by their master data sheet substance ids; a propellant the sheet does not
+Propellants are named by their master data sheet substance or mixture ids; a propellant the sheet does not
 carry yet is listed under "sheet_missing" and kept by GCAT's own name. Every figure GCAT does not
 give (engine mass, sea-level thrust and Isp, electric input) is listed in "to_read" for the craft
 that need it, to be read from a primary source in RS2 part 2: nothing is guessed.
@@ -16,7 +16,7 @@ import json, os, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SHEET = json.load(open(os.path.join(ROOT, "packs/base-reference/pack.json"), encoding="utf-8"))["provides"]["reference"]
 G0 = {c["id"]: c["value"]["v"] for c in SHEET["constants"]}["g0"]
-SUBSTANCES = {s["id"] for s in SHEET["substances"]}
+SUBSTANCES = {s["id"] for s in SHEET["substances"]} | {m["id"] for m in SHEET.get("mixtures", [])}
 
 # GCAT propellant names to sheet substance ids. Mixtures list their parts.
 PROP = {
@@ -25,7 +25,7 @@ PROP = {
     "AZ-50": ["n2h4", "udmh"], "Methane": ["ch4"], "Xe": ["xe"],
     "Alcohol": ["ethanol", "h2o"],  # the A-4 burned 75 percent ethanol in water
     "Kero": ["rp-1"], "Kerosene RP-1": ["rp-1"],
-    "PBAN": ["pban-ap-al"], "Solid": ["solid-composite"],
+    "PBAN": ["pban-ap-al"], "Solid": ["htpb-ap-al"],
 }
 
 # The launch vehicles of the first slice (design section 8), as GCAT names them (LV, variant).

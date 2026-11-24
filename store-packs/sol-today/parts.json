@@ -5,9 +5,8 @@
  ],
  "credit": "Stage and engine data from GCAT, Jonathan C. McDowell, https://planet4589.org/space/gcat/ , CC BY 4.0. Exhaust speed is GCAT's Isp times the master data sheet's g0.",
  "sheet_missing": [
-  "pban-ap-al",
-  "rp-1",
-  "solid-composite"
+  "htpb-ap-al",
+  "pban-ap-al"
  ],
  "engines": [
   {
@@ -311,7 +310,7 @@
    "id": "Star 37E",
    "maker": "THKE",
    "fuels": [
-    "solid-composite"
+    "htpb-ap-al"
    ],
    "isp_s": 283.6,
    "exhaust_km_s": 2.7812,
@@ -328,7 +327,7 @@
    "id": "UA1205",
    "maker": "UTC",
    "fuels": [
-    "solid-composite"
+    "htpb-ap-al"
    ],
    "thrust_n": 5293300.0,
    "isp_s": 263,
