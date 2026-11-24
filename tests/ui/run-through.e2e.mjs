@@ -5,7 +5,8 @@
 // One journey, GM and a joined player side by side, each step checked on both screens:
 //  1. the Solar System with the Traveller pack; a far trader at Earth is made the party's ship; the GM takes Run;
 //  2. the table joins and sees "Aboard Beowulf, at Earth";
-//  3. Voyages flies Beowulf to Mars; the player's header follows; "Land here" opens Land on Mars;
+//  3. Voyages flies Beowulf to Mars; the player's header follows; the GM sends Mars's own screen and the table sees
+//     "Beowulf in orbit of Mars", the world turning below on its own kernel (LR4); "Land here" opens Land on Mars;
 //  4. the party's ship is the lander; the GM picks a landmark and sets midday; the ship flies down on its drive (LR1);
 //     nothing reaches the table until it is sent;
 //  5. Send this view: the player's screen is the Landing screen, judging the same site the same way;
@@ -96,7 +97,18 @@ try {
   await pl.waitForFunction((m) => document.querySelector("header [data-party-ship]")?.getAttribute("data-party-at") === m, mars, { timeout: 15000 });
   assert.match(await aboard.innerText(), /Aboard Beowulf, at Mars/);
   await shot(gm, "rt-2-gm-arrived");
-  await ins.locator("[data-land-here]").click();
+  const landHref = await ins.locator("[data-land-here]").getAttribute("href");
+  assert.match(landHref, /~surface$/, `Land here opens Land: ${landHref}`);
+
+  // 3b. In orbit (LR4): the GM opens Mars's own screen and sends it; the table sees Mars turning below on its own kernel.
+  await gm.evaluate((h) => (location.hash = h), landHref.replace(/~surface$/, ""));
+  await gm.waitForFunction(() => document.querySelector(".place h1.title")?.getAttribute("data-place") === "world", null, { timeout: 20000 });
+  await gm.locator("[data-send-view]").click();
+  await gm.waitForFunction(() => /Beowulf in orbit of Mars/.test(document.querySelector("[data-table-sees]")?.textContent ?? ""), null, { timeout: 15000 });
+  await pl.waitForSelector(`[data-orbit="${mars}"][data-orbit-drawn]`, { timeout: 60000 });
+  assert.match(await pl.locator("[data-orbit-caption]").innerText(), /Mars, turning below/);
+  await shot(pl, "rt-2b-player-orbit");
+  await gm.evaluate((h) => (location.hash = h), landHref);
 
   // 4. Land on Mars with the party's ship; the GM picks a landmark, still private.
   await gm.waitForSelector("[data-surface] [data-landmark-row]", { timeout: 40000 });
@@ -107,7 +119,7 @@ try {
   // LR1: a far trader can hold itself up at Mars, so it flies down on its drive from orbit and lands.
   assert.equal(verdict, "landed", "Beowulf flies down from orbit on its drive");
   assert.match(await gm.locator("[data-verdict-card] .says").innerText(), /engines from orbit/);
-  assert.equal(await pl.locator("[data-surface]").count(), 0, "nothing of the landing reaches the table before it is sent");
+  assert.equal(await pl.locator("[data-view='sse.view.surface']").count(), 0, "nothing of the landing reaches the table before it is sent");
   // LR2: the GM sets the landing at midday on Mars's own clock with one press.
   await gm.locator('[data-times] [data-time="midday"]').click();
   assert.match(await gm.locator("[data-times] [data-local-time]").innerText(), /^1[12]:/);

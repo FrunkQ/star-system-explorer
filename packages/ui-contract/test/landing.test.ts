@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
 import { sceneFromResolved } from "../src/make.ts";
-import { landingLinkSite, landingSeaOf, landingShowOf, landingTimeOf, landingTitle, landmarkOrder, roundPose, suggestLander } from "../src/landing.ts";
+import { landingLinkSite, landingSeaOf, landingShowOf, landingTimeOf, landingTitle, landmarkOrder, orbitTitle, groundGrant, ORBIT_SCREEN, roundPose, suggestLander } from "../src/landing.ts";
 import { nodeKernel } from "./node-kernel.ts";
 import { floorFromRefusal, levelFor, patchKeys, readPatch, groundHeightAt } from "../../renderer/src/index.ts";
 
@@ -142,4 +142,15 @@ test("the Land screen's own link and title carry the landing (LR5b)", () => {
   assert.deepEqual(landingLinkSite(capsule), { lat_deg: -3, lon_deg: 12, lander: "capsule" });
   assert.equal(landingTitle(capsule, "Mars"), "Mars, landing at 3° S, 12° E");
   assert.equal(landingLinkSite({ nope: 1 }), null);
+});
+
+test("LR4: an orbit is named for the party's ship, and a seat reads only a known world's map", () => {
+  assert.equal(orbitTitle("Mars", { name: "Beowulf", at: "u:k/sys:sol/body:4" }, "u:k/sys:sol/body:4"), "Beowulf in orbit of Mars");
+  assert.equal(orbitTitle("Mars", { name: "Beowulf", at: "u:k/sys:sol/body:3" }, "u:k/sys:sol/body:4"), "In orbit of Mars");
+  const mars = "u:k/sys:sol/body:4";
+  const shown = { scope: "u:k/sys:sol", screen: ORBIT_SCREEN, focus: mars };
+  assert.deepEqual(groundGrant(shown, (a) => a === mars), { system: "u:k/sys:sol", body: mars });
+  assert.equal(groundGrant(shown, () => false), null, "a world the table does not know is not read");
+  assert.equal(groundGrant({ scope: "u:k/sys:sol", focus: mars }, () => true), null, "a plain send of a world grants nothing");
+  assert.equal(groundGrant(null, () => true), null);
 });

@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, landingLinkSite, landingTitle } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
@@ -152,7 +152,11 @@
   const here = (): Shown => {
     landingAwaited = ws.screen === "surface" && !lastLanding;
     const focus = ws.selection ? { focus: ws.selection } : {};
-    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: landingTitle(lastLanding, selName), screen: LAND_SCREEN, landing: lastLanding, ...focus } : { scope: scene.system, title: scene.title, ...focus };
+    if (ws.screen === "surface" && lastLanding) return { scope: scene.system, title: landingTitle(lastLanding, selName), screen: LAND_SCREEN, landing: lastLanding, ...focus };
+    // A world's own screen (not Land): the table is shown it in orbit, turning below (LR4).
+    const world = orbitWorld;
+    if (world) return { scope: scene.system, title: orbitTitle(world.label, ws.party, world.address), screen: ORBIT_SCREEN, focus: world.address };
+    return { scope: scene.system, title: scene.title, ...focus };
   };
   // Driving a read-only screen (PB3b): as the GM moves, the screen follows. Never while on the Switchboard itself.
   $effect(() => {
@@ -861,6 +865,12 @@
   // On the Land screen the place carries the landing being chosen (LR5b): its site, quick hour and lander, so the
   // address bar, a bookmark or a kept beat brings the whole landing back. Kept as text so a new pose (a few times a
   // second) never stirs the place; only a new site, hour or lander does.
+  // A world's own screen (LR4): the planet or moon the table would be shown in orbit, and whether it has been sent.
+  const orbitWorld = $derived(railScale === "world" && ws.screen !== "surface" ? scene.subjects.find((x) => x.address === ws.selection && (x.kind === "planet" || x.kind === "moon")) : undefined);
+  const orbitUnsent = $derived.by(() => {
+    const sh = share?.state.shown;
+    return !!orbitWorld && !!sh && "scope" in sh && sh.scope === scene.system && !(sh.screen === ORBIT_SCREEN && sh.focus === orbitWorld.address);
+  });
   const landSite = $derived.by(() => {
     if (railScale !== "world" || ws.screen !== "surface" || !lastLanding) return "";
     const l = lastLanding as { body?: string };
@@ -1690,6 +1700,7 @@
           scope={(factsDoc as unknown as AuthoredFacts).scope}
           at_yr={(factsDoc as unknown as AuthoredFacts).at_yr}
           landingUnsent={ws.screen === "surface" && !!lastLanding}
+          {orbitUnsent}
           {here}
           onswitchboard={() => go("switchboard")}
           chip={desk !== "run"}

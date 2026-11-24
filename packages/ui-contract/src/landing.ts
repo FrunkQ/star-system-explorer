@@ -292,3 +292,23 @@ export function landingTitle(show: unknown, world?: string | null): string {
   const where = s.site.label || `${deg(s.site.lat_deg)}° ${s.site.lat_deg >= 0 ? "N" : "S"}, ${deg(s.site.lon_deg)}° ${s.site.lon_deg >= 0 ? "E" : "W"}`;
   return `${world || s.label}, landing at ${where}${time ? `, ${time}` : ""}`;
 }
+
+/** The players' "In orbit" screen (LR4): the world the GM's send names, turning below, on the seat's own kernel. */
+export const ORBIT_SCREEN = "players.orbit.screen.json";
+
+/** An orbit as the table and the Playbook name it: "Beowulf in orbit of Mars" when the party's ship is there, else "In orbit of Mars". */
+export function orbitTitle(world: string, party?: { name: string; at: string } | null, address?: string | null): string {
+  return party && address && party.at === address ? `${party.name} in orbit of ${world}` : `In orbit of ${world}`;
+}
+
+/**
+ * The world a seat may read the map of for what it is shown (LR4): a landing's world, or the world an "In orbit"
+ * send names, when that world is one the table already knows (in the seat's scene). Null: none.
+ */
+export function groundGrant(shown: { scope: string; screen?: string; focus?: string; landing?: unknown } | null | undefined, known: (address: string) => boolean): { system: string; body: string } | null {
+  if (!shown) return null;
+  const l = landingShowOf(shown.landing);
+  if (l) return { system: l.system, body: l.body };
+  if (shown.screen === ORBIT_SCREEN && shown.focus && known(shown.focus)) return { system: shown.scope, body: shown.focus };
+  return null;
+}
