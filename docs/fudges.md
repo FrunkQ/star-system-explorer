@@ -868,3 +868,16 @@ listed here. Imported codes always win over these (they are kept as authored and
 |---|---|---|---|---|
 | `sse-kernel/src/nav.rs` `powered` | Sunlight power for a leg is held at the leg's dimmer end (the lower of the start and end worlds' starlight), not integrated along the path; between the stars no world's starlight is read, so sunlight power counts as none | A course's thrust must be one that the ship can keep the whole way; the cautious end is never generous | Thrust following the flux along the integrated course, with the array's pointing and temperature | stand-in (RK9 part 2) |
 | frames.rs ice-age onsets (SF1 part 2, `ice_ages::orbit_inputs_from`) | The window before the epoch integrates the spin axis from today's tilt and perihelion at its start, not back from today | Spin history runs forward only; the tilt drifts about a degree in 400 kyr on Earth | Integrate the spin axis backwards from the epoch | Stand-in (SF1) |
+
+## Exotic objects (track XO, `crates/sse-gravity`, `packs/base-physics/formulas/gravity.json`)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `sse-gravity/src/bend.rs` bend table | Light paths for a mass that does not spin only; a spinning hole will be drawn with them (shadow size off by up to about 4%, the one-sided flattening missing) | Exact paths round a spinning hole need per-pixel integration; this table is exact for no spin and cheap on phones | The spin pass (XO7) on capable tiers; phones keep the table with the badge "bending drawn for no spin" | planned shortcut (design 9), XO1 |
+| `sse-gravity/src/bend.rs` viewer far away | Rays are traced in from infinity; a camera within about fifty r_g reads the same curves from part-way along (XO4) | The far viewer covers every view outside the close-up | Start each ray at the camera's radius (same equation, one more number) | XO1; revisit in XO4 |
+| `sse-gravity/src/bend.rs` table edges | Three half turns of sweep (direct image, arch, thin ring) and b up to 64 r_g; beyond, the weak bender's first term (within 6% at the edge, 0.1% with its next term) | Higher image orders are thinner than a pixel; far rays barely bend | None needed; add the second-order term to `sse.gravity.weak_bend` if a view ever shows the join | XO1 |
+| `sse.gravity.shadow_angle` | Shadow size for no spin, static viewer | As the table | The spin pass's shadow (XO7) | XO1 |
+
+### Why the bend table is Rust, not a flow
+
+It is a table of about 65,000 numbers worked out by stepping one differential equation two million times: an Equation block has no loops by design. It is the "heavy physics ships as tables behind swappable blocks" pattern: the table is the design's block `sse.gravity.light_path` (published to the screen with the op `read_light_paths` in XO2), worked out once, hashed (`tests/golden/gravity.json`) and checked the same bits in the browser harness. Every size it is read with (horizon, photon orbit, last stable orbit, shadow) is a formula block in the base pack.

@@ -1,17 +1,17 @@
 # Status: Exotic objects on screen
 
-Owner thread: "Design exotic stars and black holes" wrote the design; no builder thread owns the track yet. Until one does, the builder of each package updates its row. Covers: XO (short for exotic objects; a package code only, never shown in the product).
+Owner thread: "Build exotic stars and black holes" builds the track (from 24 Nov 2026); "Design exotic stars and black holes" wrote the design and takes design questions. Covers: XO (short for exotic objects; a package code only, never shown in the product).
 
 One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`. Stage order: `handover/design/SSE4-coming-together.md`.
 
 Design: `handover/design/SSE4-exotic-objects-design.md`, **accepted by Alex 24 Nov 2026** (rulings in its section 13; three small open points, 12 to 14, each with a recommendation builders follow). Mockup and screenshots are in project files at `sse4/handover-screens/XO-screens/` (`black-hole-mockup.html` is a working picture: light traced from the real bending equation, the band switch with Composite, and the approach diagram).
 
-Nothing is built. The design's section 1 says what the kernel and renderer already hold (checked at main 67a5957): the thin disc and the spectrum shifts in `sse-light`, remnants with mass only, no light bending anywhere.
+Built: XO1 part 1, the bend table (24 Nov). The design's section 1 says what the kernel and renderer already hold (checked at main 67a5957): the thin disc and the spectrum shifts in `sse-light`, remnants with mass only, no light bending anywhere.
 
 | Package | State | Proposed builder | Needs |
 |---|---|---|---|
-| XO1 gravity blocks and the bend table (design 3.2, section 8) | **next**: start here | Build light and nebulae | none |
-| XO2 the feed descriptor on three fixtures, op `read_light_paths` (2.2, 3.5) | waiting on XO1 | Build light and nebulae | XO1 |
+| XO1 gravity blocks and the bend table (design 3.2, section 8) | part 1 **done** 24 Nov: `crates/sse-gravity` bend table, golden `gravity.json`. Part 2, the nine `sse.gravity.*` formula blocks, is **next** and changes `contract.jsonl`: golden lane, ready in `packages/XO1-part2/` (log `packages/XO1.md` says how to land it) | Build exotic stars and black holes | none |
+| XO2 the feed descriptor on three fixtures, op `read_light_paths` (2.2, 3.5) | after XO1 part 2 (adds an op: golden lane, tell the coordinator first) | Build light and nebulae | XO1 |
 | XO3 the disc's light point by point; tilt and shifts into `read_light` (3.3) | waiting on XO2 | Build light and nebulae | XO2, O7 (built) |
 | XO4 the `light-path` stage and the black hole in True, every band (2.1, 3.1 to 3.4, 7); was the renderer's R5b | waiting on XO1 to XO3 | Build photoreal renderer | XO1 to XO3 |
 | XO5 phone path, table lookups in WebGL2 (7) | waiting on XO4 | Build photoreal renderer | XO4 |

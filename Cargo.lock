@@ -635,6 +635,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-gravity"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+]
+
+[[package]]
 name = "sse-import-v3"
 version = "0.1.0"
 dependencies = [
@@ -951,6 +960,7 @@ dependencies = [
  "sse-core",
  "sse-cosmos",
  "sse-formation",
+ "sse-gravity",
  "sse-kernel",
  "sse-life",
  "sse-nav",
