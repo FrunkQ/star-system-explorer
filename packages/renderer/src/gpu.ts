@@ -16,8 +16,11 @@ export interface GpuItem {
   colour: string;
   ring?: boolean;
   selected?: boolean;
-  /** True look: the world's own surface (true-look.ts), keyed so it is uploaded once. */
-  surface?: { key: string; texture: TrueTexture };
+  /**
+   * True look: the world's own surface (true-look.ts), keyed so it is uploaded once. A new `version` uploads new
+   * pixels of the same size (a giant's face carried by its winds, true-air.ts `flowFace`).
+   */
+  surface?: { key: string; texture: TrueTexture; version?: number };
   /** True look: a star, drawn by its own light (not lit). */
   shines?: boolean;
   /**
@@ -134,20 +137,31 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     }
     return g;
   };
+  const versions = new Map<string, number>();
   const litMats = new Map<string, MeshStandardMaterial>();
   const litMat = (it: GpuItem) => {
     const key = it.surface?.key ?? `plain:${it.colour}`;
     const hit = litMats.get(key);
-    if (hit) return hit;
+    if (hit) {
+      const map = textures.get(key);
+      const v = it.surface?.version ?? 0;
+      if (map && it.surface && versions.get(key) !== v && map.image.width === it.surface.texture.width && map.image.height === it.surface.texture.height) {
+        (map.image.data as Uint8Array).set(it.surface.texture.data);
+        map.needsUpdate = true;
+        versions.set(key, v);
+      }
+      return hit;
+    }
     let map: DataTexture | null = null;
     if (it.surface) {
       const t = it.surface.texture;
-      map = new DataTexture(t.data, t.width, t.height, RGBAFormat);
+      map = new DataTexture(t.data.slice(), t.width, t.height, RGBAFormat);
       map.colorSpace = SRGBColorSpace;
       map.magFilter = LinearFilter;
       map.minFilter = LinearFilter;
       map.needsUpdate = true;
       textures.set(key, map);
+      versions.set(key, it.surface.version ?? 0);
     }
     const m = new MeshStandardMaterial({ color: map ? 0xffffff : new Color(it.colour), map, roughness: 1, metalness: 0 });
     litMats.set(key, m);

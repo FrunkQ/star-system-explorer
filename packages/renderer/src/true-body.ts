@@ -8,6 +8,7 @@ import type { Vec3 } from "./frames.ts";
 import { ringProfile, type RingBand } from "./rings.ts";
 import { cutRings, ringMarks, type RingMoon } from "./ring-structure.ts";
 import type { TrueTexture } from "./true-look.ts";
+import { flowFace, type AirFlow } from "./true-air.ts";
 
 export interface TrueBody {
   /** Unique among what is drawn: keys the textures and ring profiles uploaded once. */
@@ -24,6 +25,11 @@ export interface TrueBody {
   rings?: readonly RingBand[];
   /** Its north pole in the drawing's frame: its rings lie in its equator. */
   pole: Vec3;
+  /**
+   * The winds its face is carried by (a giant's, from `readTrueFace`), and how long after the face was read the
+   * drawing is, in the body's own seconds: the bands slide at their jets' speeds and the storms turn (VP-A1).
+   */
+  flow?: { flow: AirFlow; dt_s: number };
   /**
    * A small body's own figure from the kernel (`small_body`, sse-small `Figure` with its albedo and weathering): drawn
    * as that shape, seeded by `key` (use the body's address), instead of a sphere.
@@ -83,7 +89,13 @@ export function ringsAssumed(b: TrueBody): boolean {
 export function trueLook(b: TrueBody): TrueLook {
   const out: TrueLook = { colour: b.colour };
   if (b.star) out.shines = true;
-  if (b.surface) out.surface = { key: b.key, texture: b.surface };
+  if (b.surface) {
+    const f = b.flow;
+    // Carried by its winds: a new picture each time asked, uploaded into the same texture by its version.
+    if (f && f.dt_s && b.radius_m && b.radius_m > 0)
+      out.surface = { key: b.key, texture: flowFace(b.surface, f.flow, { radius_m: b.radius_m, dt_s: f.dt_s }), version: f.dt_s };
+    else out.surface = { key: b.key, texture: b.surface };
+  }
   const r = b.star ? null : ringsOf(b);
   if (r) out.rings = { key: r.key, inner: r.inner, outer: r.outer, normal: b.pole, width: r.width, data: r.data };
   if (b.figure && !b.star) {

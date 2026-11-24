@@ -9,7 +9,7 @@
 import { resolveParams, type Json, type ParamSpec, type Tier } from "../../ui-contract/src/index.ts";
 
 /** Tiers from richest to plainest. A degrade step may only move down this list. */
-export const TIER_ORDER: readonly Tier[] = ["still", "gpu-high", "gpu-basic", "canvas", "text"];
+export const TIER_ORDER: readonly Tier[] = ["still", "gpu-ultra", "gpu-high", "gpu-basic", "canvas", "text"];
 
 /** What one pass costs per frame on the reference device, in milliseconds. */
 export interface PassCost {
@@ -18,6 +18,32 @@ export interface PassCost {
   per_mpix_ms: number;
   /** Numeric parameters the cost grows with: cost × (value / ref) ^ power. */
   scale?: { param: string; ref: number; power: number }[];
+  /**
+   * What bounds the pass on the GPU, as shares of the speed probe's three scenes (probe.ts): texture reads and
+   * pixels (`fill`), loops per pixel (`march`), triangles (`geometry`). Shares are normalised; absent: all fill.
+   * The probe's device factors scale the cost by this mix, so a device slow at marching but quick at filling
+   * is costed fairly for each pass.
+   */
+  load?: Partial<Record<ProbeScene, number>>;
+}
+
+/** The speed probe's three scenes (probe.ts); a device factor is measured for each. */
+export type ProbeScene = "fill" | "march" | "geometry";
+
+/** How many times the reference device's time this device takes for each probe scene (1: as fast; 2: half as fast). */
+export type DeviceFactors = Record<ProbeScene, number>;
+
+/** One pass's device factor: its load mix weighted over the probe's factors. */
+export function passFactor(c: PassCost, f: DeviceFactors): number {
+  const l = c.load ?? { fill: 1 };
+  let w = 0;
+  let x = 0;
+  for (const k of ["fill", "march", "geometry"] as const) {
+    const s = Math.max(0, l[k] ?? 0);
+    w += s;
+    x += s * f[k];
+  }
+  return w > 0 ? x / w : f.fill;
 }
 
 export interface PassSpec {
@@ -81,8 +107,8 @@ export interface RecipeDoc {
   history?: string[];
 }
 
-/** Default frame budgets: 60 a second on the high GPU tier, 30 elsewhere. */
-export const DEFAULT_BUDGET_MS: Readonly<Record<Tier, number>> = { still: 1000, "gpu-high": 16.7, "gpu-basic": 33.3, canvas: 33.3, text: 1000 };
+/** Default frame budgets: 60 a second on the high and ultra GPU tiers, 30 elsewhere. */
+export const DEFAULT_BUDGET_MS: Readonly<Record<Tier, number>> = { still: 1000, "gpu-ultra": 16.7, "gpu-high": 16.7, "gpu-basic": 33.3, canvas: 33.3, text: 1000 };
 
 export interface RecipeCheck {
   ok: boolean;
@@ -259,10 +285,12 @@ export function plan(doc: RecipeDoc, library: readonly PassSpec[], tier: Tier, l
 
 /**
  * Estimated milliseconds a frame of the plan takes at `pixels` output pixels
- * (render scale applied here), with a per-tier device factor from the probe
- * (absent: the reference device).
+ * (render scale applied here), with a per-tier device factor (absent: the
+ * reference device). `factors` from the speed probe (probe.ts) scale each GPU
+ * pass by its own load mix instead; the canvas and text tiers run on the
+ * processor and are not scaled by them.
  */
-export function estimateMs(p: Plan, library: readonly PassSpec[], pixels: number, device: Partial<Record<Tier, number>> = {}): number {
+export function estimateMs(p: Plan, library: readonly PassSpec[], pixels: number, device: Partial<Record<Tier, number>> = {}, factors?: DeviceFactors | null): number {
   const mpix = (pixels * p.render_scale * p.render_scale) / 1e6;
   let ms = 0;
   for (const run of p.passes) {
@@ -273,7 +301,8 @@ export function estimateMs(p: Plan, library: readonly PassSpec[], pixels: number
       const v = run.params[s.param];
       if (typeof v === "number" && s.ref > 0) f *= Math.pow(Math.max(v, 1e-9) / s.ref, s.power);
     }
-    ms += (c.fixed_ms + c.per_mpix_ms * mpix) * f;
+    const gpu = factors && p.tier !== "canvas" && p.tier !== "text" ? passFactor(c, factors) : 1;
+    ms += (c.fixed_ms + c.per_mpix_ms * mpix) * f * gpu;
   }
   return ms * (device[p.tier] ?? 1);
 }

@@ -105,6 +105,35 @@ try {
     await gm.keyboard.press("Escape");
     await gm.waitForTimeout(400);
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash2, "Esc writes nothing");
+    assert.equal(await row.count(), 1, "the strip's Esc leaves the world selected");
+
+    // ED3 part 1, the chart: dragging a world shows a ghost and the distance as the engine says it; the world stays
+    // put; Esc puts it back and writes nothing.
+    if (vp === "desk") {
+      await gm.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
+      await gm.keyboard.press("Control+z");
+      await gm.waitForFunction(() => /1\.52 AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
+      await gm.waitForTimeout(1000); // the chart redraws Mars back at 1.52 AU after the card
+      const hit = gm.locator('.area-chart .body[aria-label^="Mars,"] .hit').first();
+      const sun = gm.locator('.area-chart .body[aria-label^="Sun"] .hit').first();
+      const mb = await hit.boundingBox();
+      const sb = await sun.boundingBox();
+      const [mx, my, sx, sy] = [mb.x + mb.width / 2, mb.y + mb.height / 2, sb.x + sb.width / 2, sb.y + sb.height / 2];
+      const hash3 = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
+      await gm.mouse.move(mx, my);
+      await gm.mouse.down();
+      for (let k = 1; k <= 6; k++) await gm.mouse.move(mx + ((mx - sx) * 0.3 * k) / 6, my + ((my - sy) * 0.3 * k) / 6);
+      await gm.locator("[data-ghost]").waitFor({ timeout: 5000 });
+      assert.match(await gm.locator("[data-drag-readout]").textContent(), /AU$/);
+      const still = await hit.boundingBox();
+      assert.ok(Math.abs(still.x - mb.x) < 1 && Math.abs(still.y - mb.y) < 1, `the world stays put while the ghost moves: ${JSON.stringify([mb, still])}`);
+      await shot(gm, `chart-drag-${vp}`);
+      await gm.keyboard.press("Escape");
+      await gm.mouse.up();
+      await gm.waitForTimeout(400);
+      assert.equal(await gm.locator("[data-ghost]").count(), 0, "Esc takes the ghost away");
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash3, "Esc on the chart writes nothing");
+    }
 
     if (vp === "phone") {
       const over = await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
