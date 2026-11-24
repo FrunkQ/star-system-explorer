@@ -184,3 +184,37 @@ fn every_reading_cites_its_blocks() {
         .iter()
         .all(|r| r.doi.is_some() || r.url.is_some()));
 }
+
+#[test]
+fn an_aluminium_skin_reads_its_heats_from_the_sheet() {
+    // 1 cm of aluminium from 298.15 K: ρ t (H_m + L_f + H_b + L_v), every
+    // figure read here from the sheet's row (NIST-JANAF, MP27).
+    let sheet = Sheet::base();
+    let row = sheet.row("mixtures", "aluminium").unwrap();
+    let v = |k: &str| row[k]["v"].as_f64().unwrap();
+    let want = v("density")
+        * 0.01
+        * (v("heat_to_melt") + v("latent_fusion") + v("heat_to_boil") + v("latent_vaporisation"));
+    let mut t = target(None);
+    t.skin.material = Some("aluminium".into());
+    t.skin.start_k = Some(298.15);
+    let e = ask(beam(1e6, None), t.clone(), 1e5);
+    assert_eq!(e.takes_from.as_deref(), Some("sheet"), "{:?}", e.missing);
+    assert!((e.takes_j_m2.unwrap() / want - 1.0).abs() < 1e-12);
+    // About 382 MJ/m² to boil through: boiling is most of it.
+    assert!((want / 1e6 - 382.0).abs() < 2.0, "{want}");
+    // To melt is far less.
+    t.skin.effect = "melt".into();
+    let melt = ask(beam(1e6, None), t, 1e5).takes_j_m2.unwrap();
+    assert!(melt < want / 10.0, "{melt}");
+    // Tungsten has no boiling figures yet, and says so.
+    let mut w = target(None);
+    w.skin.material = Some("tungsten".into());
+    let e = ask(beam(1e6, None), w, 1e5);
+    assert_eq!(e.reading, "unknown");
+    assert!(
+        e.missing.iter().any(|k| k == "tungsten.heat_to_boil"),
+        "{:?}",
+        e.missing
+    );
+}
