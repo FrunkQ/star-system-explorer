@@ -11,7 +11,7 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { basis, cubeEdges, mixCss, SPACE_CSS, starCss, startGpu, webGlow, webLights, webMarks, webParcelLevels, WEB_DARK_GLOW, WEB_LEVEL_INK, WEB_LIGHT_K, type Gpu, type GpuDots, type Vec3, type WebKind } from "../../../renderer/src/index.ts";
-  import { SEEN_ELEVATION, type SeenFrom, type WebCube, type WebGalaxies } from "../../../ui-contract/src/index.ts";
+  import { SEEN_ELEVATION, sayNumber, type SeenFrom, type WebCube, type WebGalaxies } from "../../../ui-contract/src/index.ts";
 
   let {
     cube,
@@ -112,11 +112,7 @@
   });
 
   const LIGHT = starCss(WEB_LIGHT_K);
-  const sciMass = (m: number) => {
-    const e = Math.floor(Math.log10(m));
-    const f = m / 10 ** e;
-    return `${Math.abs(f - 1) < 0.05 ? "" : `${f.toFixed(1)} × `}10${String(e).replace(/./g, (d) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[Number(d)]!)}`;
-  };
+  const sciMass = (m: number) => sayNumber(m, 2);
   const total = $derived(levels.reduce((a, g) => a + g.points.length, 0));
 
   // What is drawn, as layers of alike dots in display units: the GPU and the canvas draw the same list.
@@ -274,8 +270,8 @@
     </div>
   </div>
   <p class="note">
-    <span>Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}: {total.toLocaleString()} parcels of matter, each the same mass, moved from a grid {cube.volume.n} a side by the field smoothed over {cube.volume.smoothing_mpc.toFixed(0)} Mpc.</span>
-    {#if isTrue && lights}<span>Light: {lit.toLocaleString()} galaxies, the haloes above {sciMass(galaxies?.galaxy_floor_msun ?? 0)} solar masses, each where its matter has been carried and shining by its own stars: old stars warm, young ones blue. The gas and dark matter between them are dark{hud ? " (HUD shows the dark matter faintly)" : ""}.</span>{:else if isTrue}<span>Lighting the galaxies… for now every parcel shines alike, one colour, old starlight at about {WEB_LIGHT_K.toLocaleString()} K.</span>{:else}<span>Faint: voids. Grey: sheets. Ink: filaments. Accent: knots, where clusters grow. Each dot is inked by how crowded its matter is today, so the dense web stands out of the thin voids.{marked ? ` Bigger dots: ${marked.toLocaleString()} big galaxies, groups and clusters (haloes over 10¹² solar masses).` : ""}</span>{/if}
+    <span>Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}: {sayNumber(total, 6)} parcels of matter, each the same mass, moved from a grid {cube.volume.n} a side by the field smoothed over {sayNumber(cube.volume.smoothing_mpc, 2)} Mpc.</span>
+    {#if isTrue && lights}<span>Light: {sayNumber(lit, 6)} galaxies, the haloes above {sciMass(galaxies?.galaxy_floor_msun ?? 0)} solar masses, each where its matter has been carried and shining by its own stars: old stars warm, young ones blue. The gas and dark matter between them are dark{hud ? " (HUD shows the dark matter faintly)" : ""}.</span>{:else if isTrue}<span>Lighting the galaxies… for now every parcel shines alike, one colour, old starlight at about {sayNumber(WEB_LIGHT_K, 2)} K.</span>{:else}<span>Faint: voids. Grey: sheets. Ink: filaments. Accent: knots, where clusters grow. Each dot is inked by how crowded its matter is today, so the dense web stands out of the thin voids.{marked ? ` Bigger dots: ${sayNumber(marked, 6)} big galaxies, groups and clusters (haloes over 10¹² solar masses).` : ""}</span>{/if}
   </p>
 </div>
 
