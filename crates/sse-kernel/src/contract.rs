@@ -44,6 +44,38 @@ pub fn run(requests: &Value, packs: &BTreeMap<String, Value>) -> Vec<String> {
     out
 }
 
+/// What the golden keeps of a response line. Two lines list every op, so
+/// every new op used to change them and golden-changing PRs queued behind
+/// each other: the `hello` op list and the unknown-op message. The golden
+/// keeps the rest of those lines byte for byte; the lists themselves are
+/// checked against `protocol::ops()` (test `the_op_lists_are_every_op`).
+/// The JavaScript runner (`packages/kernel-client/src/contract.ts`,
+/// `maskOps`) masks the same way.
+pub fn mask_ops(line: &str) -> String {
+    if line.starts_with(HELLO) {
+        if let (Some(s), Some(e)) = (line.find(OPS_FROM), line.find(OPS_TO)) {
+            if s < e {
+                return format!("{}{OPS_MASK}{}", &line[..s], &line[e + 1..]);
+            }
+        }
+    }
+    if let Some(s) = line.find(UNKNOWN_FROM) {
+        let s = s + UNKNOWN_FROM.len();
+        if let Some(e) = line[s..].find(UNKNOWN_TO) {
+            return format!("{}{UNKNOWN_MASK}{}", &line[..s], &line[s + e..]);
+        }
+    }
+    line.to_string()
+}
+
+pub const HELLO: &str = "{\"type\":\"hello\"";
+pub const OPS_FROM: &str = "\"ops\":[";
+pub const OPS_TO: &str = "],\"tiers\":";
+pub const OPS_MASK: &str = "\"ops\":\"every op, checked against ops()\"";
+pub const UNKNOWN_FROM: &str = "unknown variant `nonsense`, expected one of ";
+pub const UNKNOWN_TO: &str = " at line ";
+pub const UNKNOWN_MASK: &str = "every op, checked against ops()";
+
 /// Load the fixture packs from a directory of `<name>.json` files.
 pub fn load_packs(dir: &std::path::Path) -> BTreeMap<String, Value> {
     let mut m = BTreeMap::new();
