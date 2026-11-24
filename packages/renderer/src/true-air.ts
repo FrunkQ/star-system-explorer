@@ -4,6 +4,7 @@
 // storms and the polar cyclones are all the weather block's, cell by cell; each layer's colour is its condensate's on
 // the master data sheet, read by the caller; a haze's colour is the one the weather op sends. This file only stacks
 // the layers by the adding method (Bohren 1987), as weather.ts does on the Body globe.
+import { stainFacts, stainHue, type StainHue } from "./stain-look.ts";
 import { constant, sheetUnitFactor } from "../../ui-contract/src/index.ts";
 import type { SurfaceTile } from "../../ui-contract/src/index.ts";
 import { trueSurface, type TrueTexture } from "./true-look.ts";
@@ -437,7 +438,7 @@ export async function readAirTiles(k: AirReader, system: string, body: string, o
 
 /** The kernel doors a True face needs (a ViewSession has them all). */
 export interface FaceReader extends AirReader {
-  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: unknown[] } | { ok: false; message: string }>;
+  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: unknown[]; record?: unknown } | { ok: false; message: string }>;
   campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; message: string }>;
 }
 
@@ -448,7 +449,14 @@ export interface FaceReader extends AirReader {
  */
 export async function readTrueFace(k: FaceReader, system: string, body: string): Promise<AirLook | string> {
   const s = await k.surfaceTiles(system, body);
-  const ground = s.ok ? trueSurface(s.tiles) : null;
+  // What stains its ground (TRUE4): the kernel's stains, each hued by its sheet row's optics.
+  const stains: StainHue[] = [];
+  for (const f of s.ok ? stainFacts(s.record) : []) {
+    const r = await k.readMatter({ id: f.material_id });
+    const h = r.ok ? stainHue(f, (r.value as { row?: unknown }).row) : null;
+    if (h) stains.push(h);
+  }
+  const ground = s.ok ? trueSurface(s.tiles, 128, 64, stains) : null;
   const groundWhy = s.ok ? String((s.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : s.message;
   const now = await k.campaignNow();
   const at_s = now.ok && now.at_s !== undefined ? Number(now.at_s) : undefined;

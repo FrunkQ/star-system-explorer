@@ -127,6 +127,11 @@ export type { PlumeFacts } from "./plumes.ts";
 // Lava tube openings cut into the ground at a landing site (third audit, TRUE6).
 export { caveCut, caveOpenings, nearestOpening, openingLine } from "./cave-mouths.ts";
 export type { CaveOpening } from "./cave-mouths.ts";
+// Surface stains hued from the data sheet's optics (TRUE4).
+export { grainAlbedo, indexTableOf, layerReflectance, mixAlbedo, seenColour, GRAIN_UM } from "./sheet-optics.ts";
+export type { GrainShare, IndexTable } from "./sheet-optics.ts";
+export { stainFacts, stainHue, stainNote, stainPrepared, STAIN_GRAIN_UM } from "./stain-look.ts";
+export type { StainFact, StainHue } from "./stain-look.ts";
 // The stars over a landing site and the eye's adaptation (night-sky.ts).
 export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";
 export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";

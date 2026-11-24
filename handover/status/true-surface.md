@@ -9,7 +9,8 @@ Only the owner thread edits this file. Visual polish rule (`design/SSE4-visual-p
 | TRUE1 plumes part 1: the kernel's plume facts (ocean, polar cracks, speeds, height, rate) on `resolved_system` surface records | done (PR 449) | packages/TRUE1.md |
 | TRUE2 plumes part 2: drawn above the limb in System True | done (PR with TRUE3 and TRUE6) | packages/TRUE2.md |
 | TRUE3 part 1 hot things glow in Visible (Planck against the world's own daylight, one temperature a world) | done (same PR); part 2 is VP-P1 (hot ground per tile) | packages/TRUE2.md |
-| TRUE4 tholins and coloured frosts | waits on data sheet MP33, MP34 | |
+| TRUE4 part 1 surface stains (rust, tholin, sulphur, frost) from the kernel, hued from the sheet's optics | done (PR 492); shows on Sol once proven core's SOL5 brings the catalogued air into the climate | packages/TRUE4.md |
+| TRUE4 part 2 SO2 frost and sulphur rows on the sheet (MP34, agreed with the data sheet thread); per-tile stains | next, after the data sheet's PR 475 | |
 | TRUE5 small bodies and comets | handed over to "Build asteroids and rings up close" (24 Nov) | |
 | TRUE6 lava tube openings on the ground (from `survey_caves`): cut into the walk patch, named on the HUD; going inside parked to 4.2 | done (same PR) | packages/TRUE6.md |
 | VP-P1 hot ground and lava as emitted light into the shared glare, crust from cell noise (visual polish design, accepted 24 Nov; extends TRUE3) | waits on VP1, VP6 | |

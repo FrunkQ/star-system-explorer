@@ -95,8 +95,8 @@ export function seenColour(t: IndexTable | readonly GrainShare[], d_um = GRAIN_U
     const s = planck(nm * 1e-9, star_k);
     const c = cmf(nm);
     for (let j = 0; j < 3; j++) {
-      lit[j] += r * s * c[j]!;
-      white[j] += s * c[j]!;
+      lit[j] = lit[j]! + r * s * c[j]!;
+      white[j] = white[j]! + s * c[j]!;
     }
   }
   const a = linearSrgb(lit as [number, number, number]);
