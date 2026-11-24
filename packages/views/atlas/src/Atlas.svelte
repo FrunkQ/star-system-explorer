@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { EVERYONE, BUILTIN_LOGOS, SHIPPED_NOTE_SETS, withLetterhead, withMargin, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { EVERYONE, BUILTIN_LOGOS, SHIPPED_NOTE_SETS, withLetterhead, withMargin, withVoice, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
   import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
@@ -93,7 +93,8 @@
   const dressed = (a: string) => {
     const p = book ? buildPage(book, a, edition, { vocab, depth: ws.depth }) : null;
     if (!p || !book) return null;
-    return withMargin(withLetterhead(p, edition, letterhead), book, edition, noteSets, { vocab, depth: ws.depth, exclude: turnedAway });
+    const voiced = withVoice(p, book, edition, { vocab, depth: ws.depth });
+    return withMargin(withLetterhead(voiced, edition, letterhead), book, edition, noteSets, { vocab, depth: ws.depth, exclude: turnedAway });
   };
   const notThisOne = (id: string) => (turnedAway = [...turnedAway, id]);
 

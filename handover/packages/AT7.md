@@ -28,6 +28,10 @@ Track AT (atlas design section 6, 12.5, 14A note 4). Built 24 Nov 2026.
   - line 117: "Warning: The local civilization recently discovered the concept of marketing. The third planet is currently offering 20% off all gravity until Friday."
   - 15 new notes with slots (`guide.new.*`, weight 2) react to the real world: sea cover, year length, temperature,
     air pressure, star brightness, mass, settlements, core and orbit. Alex reads the set before it ships (design 13).
+- **Verdict and subtitle phrase** (design 6.5, `ui-contract/src/atlas/voice.ts`): tables of rules in the edition
+  (`verdict`, `subtitles`), in the notes' condition language, first rule met wins, nothing said when none is. Each
+  carries its Why (the facts read, said by the figures door); on screen the stamp opens to show it. The Guide's:
+  Do not, Bring a suit, Mostly survivable, Bring a mask; the damp, big, chilly, toasty, airless, dim and bright one.
 - Editions gain `cover` (big words, a title with `{place}`, a strap, a publisher) and `device` (case words,
   hardware keys, how a page changes). The loader checks their words like the rest.
 - The Guide is a **device**: `look: guide-gadget` (night-blue screen, gold and teal, a cream case, big coloured
@@ -43,9 +47,12 @@ Track AT (atlas design section 6, 12.5, 14A note 4). Built 24 Nov 2026.
 ## Not yet
 - "Not this one" is kept for the sitting; keeping it with the campaign, and the GM's own "Guide's notes" with a
   "Known to" eye, need a campaign field (with SV's notes work).
-- Verdict and subtitle tables (design 6.5): next in this track.
 - Minerva's drafted notes are AT11 (Orac thread).
 - The fan pack's loading into the stack (note sets and editions from packs) arrives with the pack loader step.
+
+## Seen, for another thread
+- The Guide vocabulary's year sentence reads "Birthdays come round every about 214 days" (the figures door's "about"
+  after "every"); `vocab.guide.json` in `shell/src/documents` is not this thread's.
 
 ## Checks
 - `node --test packages/ui-contract/test/atlas.test.ts`: notes fit by what the audience knows; a slot is the

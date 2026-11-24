@@ -5,6 +5,7 @@ import { FIGURE_KINDS, readFigure } from "../figures.ts";
 import type { PlayerScene, Vocab } from "../player-scene.ts";
 import { isCatalogued } from "./catalogue.ts";
 import { checkEditionShape, resolveEdition, PAGE_KINDS, SURVEY_EDITION, type EditionDoc } from "./edition.ts";
+import { checkVoiceTable } from "./voice.ts";
 import { atlasContents, buildPage, type AtlasPage, type FactRow } from "./page.ts";
 
 /** Slots an edition's letterhead and print lines may use (design 12.4). */
@@ -44,6 +45,8 @@ function textsOf(d: EditionDoc): { where: string; text: string; slots: boolean }
   if (d.print?.running_head) out.push({ where: "the running head", text: d.print.running_head, slots: true });
   if (d.print?.footer) out.push({ where: "the footer", text: d.print.footer, slots: true });
   for (const k of ["big", "title", "strap", "publisher"] as const) if (d.cover?.[k]) out.push({ where: `the cover's ${k} line`, text: d.cover[k]!, slots: k === "title" });
+  for (const [name, t] of [["verdict", d.verdict], ["subtitle", d.subtitles]] as const) for (const [i, r] of (t?.rules ?? []).entries()) out.push({ where: `rule ${i + 1} of the ${name} table`, text: r.text ?? "", slots: false });
+  if (d.verdict?.label) out.push({ where: "the verdict's label", text: d.verdict.label, slots: false });
   for (const k of ["label", "status"] as const) if (d.device?.[k]) out.push({ where: `the device's ${k} line`, text: d.device[k]!, slots: false });
   return out;
 }
@@ -75,6 +78,7 @@ export function checkEdition(doc: unknown, stack: EditionStack = {}): string[] {
   for (const k of Object.keys(d.voice?.labels ?? {})) {
     if (k.startsWith("line.") && !isCatalogued(k.slice(5))) out.push(`The label ${k} is for "${k.slice(5)}", which is not a fact the Atlas knows.`);
   }
+  for (const [name, t] of [["verdict", d.verdict], ["subtitle", d.subtitles]] as const) if (t) out.push(...checkVoiceTable(name, t));
   // 3. no typed figures; slots only where slots go, and only known ones.
   for (const t of textsOf(d)) {
     for (const f of typedFigures(t.text)) out.push(`${t.where[0]!.toUpperCase()}${t.where.slice(1)} states a figure ("${f}"). An edition may not state a fact: leave figures to the page.`);

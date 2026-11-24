@@ -35,7 +35,16 @@ export interface TableRow {
 }
 
 export type Block =
-  | { type: "title"; text: string; subtitle: string; kind: PageKind }
+  | {
+      type: "title";
+      text: string;
+      subtitle: string;
+      kind: PageKind;
+      /** The edition's subtitle phrase, already in `subtitle`, with its Why. */
+      phrase?: import("./voice.ts").VoiceSaid;
+      /** The edition's verdict stamp, with its Why (design 6.5). */
+      verdict?: import("./voice.ts").VoiceSaid;
+    }
   | { type: "prose"; key: string; title: string; text: string }
   | { type: "facts"; key: string; title: string; rows: FactRow[] }
   | { type: "table"; key: string; title: string; columns: string[]; rows: TableRow[] }

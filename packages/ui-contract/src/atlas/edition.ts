@@ -69,6 +69,10 @@ export interface EditionDoc {
   cover?: EditionCover;
   /** The edition is a device, not paper: its case's words and its hardware keys (14A note 4). Drawn by the look. */
   device?: EditionDevice;
+  /** A verdict stamp read off real facts (design 6.5): the first rule met wins. */
+  verdict?: import("./voice.ts").VoiceTable;
+  /** A subtitle phrase read off real facts ("the damp one"). */
+  subtitles?: import("./voice.ts").VoiceTable;
 }
 
 export interface EditionCover {
@@ -109,6 +113,8 @@ export interface Edition {
   print: { running_head?: string; footer?: string; save_ink_look?: string };
   cover: EditionCover | null;
   device: EditionDevice | null;
+  verdict: import("./voice.ts").VoiceTable | null;
+  subtitles: import("./voice.ts").VoiceTable | null;
 }
 
 /** The editions shipped with the base Atlas. */
@@ -177,6 +183,8 @@ export function resolveEdition(id: string, docs: readonly EditionDoc[] = []): Ed
     print: { ...(root.print ?? {}) },
     cover: root.cover ? { ...root.cover } : null,
     device: root.device ? { ...root.device } : null,
+    verdict: root.verdict ?? null,
+    subtitles: root.subtitles ?? null,
   };
   // From the root's child up to the edition itself, each layer overrides what it states.
   for (const d of chain.slice(0, -1).reverse()) {
@@ -193,6 +201,8 @@ export function resolveEdition(id: string, docs: readonly EditionDoc[] = []): Ed
     if (d.print) out.print = { ...out.print, ...d.print };
     if (d.cover) out.cover = { ...(out.cover ?? {}), ...d.cover };
     if (d.device) out.device = { ...(out.device ?? {}), ...d.device };
+    if (d.verdict) out.verdict = d.verdict;
+    if (d.subtitles) out.subtitles = d.subtitles;
   }
   for (const d of [...chain].reverse()) {
     if (d.margin) out.margin = { sets: [...d.margin.sets], max: d.margin.max ?? 2, signature: d.margin.signature ?? out.margin?.signature ?? "" };

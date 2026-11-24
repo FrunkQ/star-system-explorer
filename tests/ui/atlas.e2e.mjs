@@ -84,6 +84,11 @@ try {
   assert.ok(noteIds.length >= 1 && noteIds.length <= 2, `one or two margin notes (${noteIds})`);
   assert.match(await notes.first().innerText(), /The Guide says/i);
   assert.match(await atlas.locator("[data-atlas-page]").innerText(), /opinions and are not facts/);
+  // The verdict stamp is read off facts and opens to say which.
+  const verdict = gm.locator("[data-verdict]");
+  assert.match(await verdict.locator("summary").innerText(), /VERDICT: MOSTLY SURVIVABLE/i);
+  await verdict.locator("summary").click();
+  assert.match(await verdict.innerText(), /1\.3 bar/);
   // The keys: Next steps the book with a stepped wipe; the cover key brings the cover back; Back returns.
   const keys = atlas.getByRole("group", { name: "Keys" });
   await keys.getByRole("button", { name: "Next ›" }).click();

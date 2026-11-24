@@ -35,6 +35,7 @@ import {
   fillNote,
   meets,
   checkNoteSet,
+  withVoice,
   type AtlasPage,
   type EditionDoc,
 } from "../src/atlas/index.ts";
@@ -406,4 +407,23 @@ test("the note sets load: Alex's list (no Douglas Adams names in the base set), 
   assert.match(said, /about "planet"/);
   assert.match(said, /\{gravity\.surface\}, which is not a fact/);
   assert.match(said, /slot \{ocean\.fraction\} that its "when" does not test/);
+});
+
+test("the Guide's verdict and subtitle phrase are read off what the audience knows, with their Why", () => {
+  const guide = resolveEdition("sse.edition.guide");
+  const p = withVoice(page(after, TARN, guide), after, guide, opts);
+  const t = p.blocks[0]!;
+  assert.ok(t.type === "title");
+  if (t.type !== "title") return;
+  assert.match(t.subtitle, / · the damp one$/, "71% sea");
+  assert.ok(t.verdict, "a verdict");
+  assert.equal(t.verdict!.label, "Verdict");
+  assert.ok(t.verdict!.why.length >= 1 && t.verdict!.why.every((w) => /: \S/.test(w)), `each Why names a fact and its figure (${t.verdict!.why})`);
+  // Without the facts, nothing is said.
+  const blind: PlayerScene = { ...after, subjects: after.subjects.map((s) => (s.address === TARN ? { ...s, facts: s.facts.filter((f) => !/pressure|temp|ocean|composition/.test(f.field)) } : s)) };
+  const q = withVoice(page(blind, TARN, guide), blind, guide, opts).blocks[0]!;
+  assert.ok(q.type === "title" && !q.verdict && !q.subtitle.includes("damp"));
+  // The Survey atlas has no voice tables; switching edition still changes no figure (the test render passes).
+  assert.deepEqual(withVoice(page(after, TARN), after, survey, opts), page(after, TARN));
+  assert.match(pageText(p), /\[ Verdict: /);
 });

@@ -50,6 +50,13 @@
     <header class="head" data-deliver-item>
       <p class="sub">{title.subtitle}</p>
       <h1 id="atlas-title-{page.number}" tabindex="-1">{title.text}</h1>
+      {#if title.verdict}
+        <details class="verdict" data-verdict>
+          <summary>{title.verdict.label ? `${title.verdict.label}: ` : ""}{title.verdict.text}</summary>
+          <p class="whyhead">Read off</p>
+          <ul>{#each title.verdict.why as w (w)}<li>{w}</li>{/each}</ul>
+        </details>
+      {/if}
     </header>
   {/if}
   <div class="cols" class:with-plate={plates.length > 0 || margins.length > 0}>
@@ -173,6 +180,47 @@
     font-weight: 500;
     font-size: 44px;
     line-height: 1.1;
+  }
+  .verdict {
+    display: inline-block;
+    margin: -6px 0 18px;
+  }
+  .verdict summary {
+    list-style: none;
+    display: inline-block;
+    cursor: pointer;
+    padding: 6px 16px;
+    border: 3px solid var(--sse-title-ink, var(--sse-accent));
+    border-radius: 6px;
+    color: var(--sse-title-ink, var(--sse-accent-ink));
+    font: 800 15px/1.2 var(--sse-font-body);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transform: rotate(-2deg);
+  }
+  .verdict summary::-webkit-details-marker {
+    display: none;
+  }
+  .verdict summary:focus-visible {
+    outline: 2px solid var(--sse-focus);
+    outline-offset: 3px;
+  }
+  .verdict[open] summary {
+    transform: none;
+  }
+  .verdict .whyhead {
+    margin: 10px 0 2px;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--sse-label-ink, var(--sse-ink-muted));
+  }
+  .verdict ul {
+    margin: 0;
+    padding-left: 18px;
+    font-family: var(--sse-font-mono);
+    font-size: 13px;
+    color: var(--sse-ink-muted);
   }
   .cols {
     display: grid;

@@ -54,5 +54,190 @@
     "status": "Batt ▮▮▯ · made cheaply, with love",
     "keys": true,
     "change": "wipe"
+  },
+  "verdict": {
+    "label": "Verdict",
+    "rules": [
+      {
+        "about": [
+          "world",
+          "moon"
+        ],
+        "when": {
+          "any": [
+            {
+              "fact": "surface.temp_mean_k",
+              "at_least": 400
+            },
+            {
+              "fact": "surface.temp_mean_k",
+              "at_most": 150
+            },
+            {
+              "fact": "atmosphere.pressure_pa",
+              "at_least": 10000000.0
+            }
+          ]
+        },
+        "text": "Do not"
+      },
+      {
+        "about": [
+          "world",
+          "moon"
+        ],
+        "when": {
+          "fact": "atmosphere.pressure_pa",
+          "at_most": 1000
+        },
+        "text": "Bring a suit"
+      },
+      {
+        "about": [
+          "world",
+          "moon"
+        ],
+        "when": {
+          "all": [
+            {
+              "fact": "atmosphere.composition",
+              "equals": "N2-O2"
+            },
+            {
+              "fact": "atmosphere.pressure_pa",
+              "between": [
+                50000,
+                200000
+              ]
+            },
+            {
+              "fact": "surface.temp_mean_k",
+              "between": [
+                260,
+                310
+              ]
+            }
+          ]
+        },
+        "text": "Mostly survivable"
+      },
+      {
+        "about": [
+          "world",
+          "moon"
+        ],
+        "when": {
+          "all": [
+            {
+              "fact": "atmosphere.pressure_pa",
+              "between": [
+                20000,
+                500000
+              ]
+            },
+            {
+              "fact": "surface.temp_mean_k",
+              "between": [
+                230,
+                330
+              ]
+            }
+          ]
+        },
+        "text": "Bring a mask"
+      },
+      {
+        "about": [
+          "world",
+          "moon"
+        ],
+        "when": {
+          "fact": "surface.temp_mean_k",
+          "between": [
+            150,
+            400
+          ]
+        },
+        "text": "Bring a suit and a good book"
+      }
+    ]
+  },
+  "subtitles": {
+    "rules": [
+      {
+        "about": [
+          "world"
+        ],
+        "when": {
+          "fact": "mass_kg",
+          "at_least": 1.9e+26
+        },
+        "text": "the big one"
+      },
+      {
+        "about": [
+          "world",
+          "moon"
+        ],
+        "when": {
+          "fact": "ocean.fraction",
+          "at_least": 0.5
+        },
+        "text": "the damp one"
+      },
+      {
+        "about": [
+          "world",
+          "moon"
+        ],
+        "when": {
+          "fact": "surface.temp_mean_k",
+          "at_most": 200
+        },
+        "text": "the chilly one"
+      },
+      {
+        "about": [
+          "world",
+          "moon"
+        ],
+        "when": {
+          "fact": "surface.temp_mean_k",
+          "at_least": 400
+        },
+        "text": "the toasty one"
+      },
+      {
+        "about": [
+          "world",
+          "moon"
+        ],
+        "when": {
+          "fact": "atmosphere.pressure_pa",
+          "at_most": 1000
+        },
+        "text": "the airless one"
+      },
+      {
+        "about": [
+          "star"
+        ],
+        "when": {
+          "fact": "luminosity_w",
+          "at_most": 3.8e+25
+        },
+        "text": "the dim one"
+      },
+      {
+        "about": [
+          "star"
+        ],
+        "when": {
+          "fact": "luminosity_w",
+          "at_least": 3.8e+27
+        },
+        "text": "the bright one"
+      }
+    ]
   }
 }

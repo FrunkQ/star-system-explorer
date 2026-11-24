@@ -18,7 +18,11 @@ const gapText = (text: string, bar: boolean | undefined, md: boolean) => (bar ? 
 function blockText(b: Block, md: boolean): string[] {
   switch (b.type) {
     case "title":
-      return md ? [`# ${b.text}`, `*${b.subtitle}*`, ""] : [b.text, "=".repeat(Math.max(4, b.text.length)), b.subtitle, ""];
+      return [
+        ...(md ? [`# ${b.text}`, `*${b.subtitle}*`] : [b.text, "=".repeat(Math.max(4, b.text.length)), b.subtitle]),
+        ...(b.verdict ? [md ? `**${b.verdict.label ? `${b.verdict.label}: ` : ""}${b.verdict.text}**` : `[ ${b.verdict.label ? `${b.verdict.label}: ` : ""}${b.verdict.text} ]`] : []),
+        "",
+      ];
     case "prose":
       return [b.text, ""];
     case "facts": {
@@ -67,7 +71,7 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 function blockHtml(b: Block): string {
   switch (b.type) {
     case "title":
-      return `<header><p class="sub">${esc(b.subtitle)}</p><h1>${esc(b.text)}</h1></header>`;
+      return `<header><p class="sub">${esc(b.subtitle)}</p><h1>${esc(b.text)}</h1>${b.verdict ? `<p class="stamp verdict" title="${esc(b.verdict.why.join("; "))}">${esc(`${b.verdict.label ? `${b.verdict.label}: ` : ""}${b.verdict.text}`)}</p>` : ""}</header>`;
     case "prose":
       return `<p class="prose">${esc(b.text)}</p>`;
     case "facts":
@@ -116,7 +120,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:.3em .5e
 blockquote{margin:.4em 0;padding-left:.8em;border-left:2px solid var(--sse-accent,#a33);font-style:italic}.note,.plate,footer{font-size:.85em;color:var(--sse-ink-muted,#555)}
 .lh{display:flex;gap:1.2em;align-items:flex-start;border-bottom:2px solid var(--lh-accent,var(--sse-ink,#111));padding-bottom:.8em;margin-bottom:1.2em;position:relative}.lh img{max-height:5em;max-width:10em}.lh .mono{display:block;width:10em;height:5em;background:var(--lh-accent,var(--sse-ink,#111));-webkit-mask:var(--logo) left center/contain no-repeat;mask:var(--logo) left center/contain no-repeat luminance}.lh pre{margin:0;font-size:.6em;line-height:1.1}
 .lhname{font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0}.lhmotto{font-style:italic;margin:0}.lhline{margin:0;font-family:var(--sse-font-mono,monospace);font-size:.8em}
-.stamp{position:absolute;right:0;top:0;margin:0;padding:.2em .6em;border:2px solid var(--lh-accent,var(--sse-accent,#a33));color:var(--lh-accent,var(--sse-accent,#a33));font-weight:700;letter-spacing:.1em;transform:rotate(-4deg)}
+.verdict{position:static;display:inline-block;margin:.2em 0 1em}.stamp{position:absolute;right:0;top:0;margin:0;padding:.2em .6em;border:2px solid var(--lh-accent,var(--sse-accent,#a33));color:var(--lh-accent,var(--sse-accent,#a33));font-weight:700;letter-spacing:.1em;transform:rotate(-4deg)}
 .margin p{border-left:3px solid var(--sse-accent,#a33);padding-left:.8em;font-style:italic}.sig{display:block;font-style:normal;text-transform:uppercase;letter-spacing:.12em;font-size:.75em;color:var(--sse-ink-muted,#555)}
 footer{margin-top:2em;padding-top:.6em;border-top:1px solid var(--sse-line,#ccc);display:flex;justify-content:space-between;font-family:var(--sse-font-mono,monospace)}`;
   const body = pages
