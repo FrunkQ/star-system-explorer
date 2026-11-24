@@ -27,8 +27,8 @@ const moonOrbit: About = { class: "moon", what: "orbit" };
 
 // Units the table names that the sheet's Units table does not hold yet. The data sheet thread is adding them; when a
 // row lands, take it off this list. A new unit the table names must be on the sheet or listed here, so a typo fails.
-const WAITING = ["arcmin", "degf", "ft", "lb", "lb_ft3", "m_moon", "mi", "min", "mph", "ocean_earth", "percent", "ppm", "psi", "r_moon", "s_earth", "tnt_tonne", "tonne"];
-const onSheet = (u: string): boolean => !waitingUnits().includes(u);
+// Units the table names that the sheet does not hold yet. Empty since the data sheet's MP31 (PR 419) added them.
+const WAITING: string[] = [];
 
 test("every unit the table names is on the sheet, or is a known wait", () => {
   for (const u of waitingUnits()) assert.ok(WAITING.includes(u), `"${u}" is neither a sheet unit nor a listed wait`);
@@ -170,7 +170,7 @@ test("a figure of another kind is told apart, so a period can become a distance"
   if (!r.ok) assert.deepEqual(r.as, { kind: "time", si: 300 * 86_400 });
 });
 
-test("the Moon's tilt as published, '23d 26m', once the sheet has arcminutes", { skip: !onSheet("arcmin") && "waits on the sheet's arcmin row" }, () => {
+test("the Moon's tilt as published, '23d 26m'", () => {
   const r = readFigure("23d 26m", "angle");
   assert.ok(r.ok);
   if (r.ok) assert.ok(Math.abs(r.si - ((23 + 26 / 60) * Math.PI) / 180) < 1e-12);
@@ -200,7 +200,6 @@ test("everything said reads back to the value, within what was shown", () => {
       for (const depth of ["curious", "science", "engine"] as const) {
         for (const v of values) {
           const s = say(v, kind, about, { reading: reading.id, depth });
-          if (reading.rungs.some((g) => g.dms)) continue; // read back once the sheet has arcminutes
           const back = readFigure(s.text, kind);
           assert.ok(back.ok, `${kind} ${reading.id} ${depth}: "${s.text}" did not read back: ${JSON.stringify(back)}`);
           if (back.ok) assert.ok(Math.abs(back.si - v) <= Math.abs(v) * 0.006, `${kind} ${reading.id} ${depth}: "${s.text}" read back as ${back.si}, not ${v}`);
