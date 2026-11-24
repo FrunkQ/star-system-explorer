@@ -1,6 +1,6 @@
 # SSE4 visual polish: closing the gap to SpaceEngine, pass by pass
 
-Design note, 24 Nov 2026. Track code **VP** (never shown in the product). Status: **accepted by Alex, 24 Nov 2026 18:57 UTC ("yes to all" ten questions in section 14)**. Builders may take the packages in section 12. Design only: no code was written for this note. **Addendum of 24 Nov 19:06 in section 16** (systems, not Solar System fixes; aurorae) has four new questions waiting on Alex. Still open: the citations marked "from memory" (Alex is bringing a research pass back) and every cost marked as an estimate.
+Design note, 24 Nov 2026. Track code **VP** (never shown in the product). Status: **accepted by Alex, 24 Nov 2026 18:57 UTC ("yes to all" ten questions in section 14)**. Builders may take the packages in section 12. Design only: no code was written for this note. **Addendum of 24 Nov 19:06 in section 16** (systems, not Solar System fixes; aurorae): its questions 11 to 15 were accepted by Alex at 19:12 UTC ("yes to all"), with one change: **"Long exposure" is the default and the eye-true view is the choice** (ruling in 16.7, which overrides the default written in 5.2 and questions 9 and 13). Still open: the citations marked "from memory" (Alex is bringing a research pass back) and every cost marked as an estimate.
 
 Asked for by Alex, 24 Nov, in four lines:
 
@@ -196,7 +196,7 @@ System True is black. SpaceEngine never shows black: there is always a star fiel
 
 - **Have:** the kernel's `sky_from_here` and `sky_glow` (Y2, Y3), and the Window's "stars behind" (Y5).
 - **Do:** bake a sky cube map per vantage (once per system, cheap) and draw it behind every True view, dimmed by the exposure. Stars as point sprites sized by brightness, coloured by temperature, capped at 20,000 on B and 200,000 on H (already agreed for Y5).
-- **Honest by default:** at the exposure that shows a sunlit planet, most stars vanish. That is real, and the HUD says so. A "long exposure" choice brings them back (question 9).
+- **Exposure (changed by Alex's ruling, 16.7):** at the exposure that shows a sunlit planet, most stars vanish to a real eye. The default is "Long exposure", which shows both and says it is a composite; "Eye" is the choice that shows what an eye would see.
 - Grade: fact (it is the kernel's sky). Tier B. Phone: one cube read, 0.3 ms.
 
 ### 5.3 A world's face from space
@@ -702,7 +702,7 @@ From memory, to verify before building (title, formula and licence each): Hillai
 
 Alex, 19:06: "As we improve this renderer we are not just fixing it for the solar system. We are instead building SYSTEMS to ensure the right visuals get overlaid the right way, so they are concepts applied to all exoplanets and can be scaled accordingly and applied when the physics says so. Auroras are key too. Now we can have several different types and places they can occur (calculated) and we know their colours (in SSE3, multiband for O2)."
 
-The first part is a ruling as given. The second adds a package group. Four new questions are in 16.6.
+The first part is a ruling as given. The second adds a package group. Its questions are in 16.6 and Alex's answers in 16.7.
 
 ### 16.1 The rule: every look is a system that the physics switches on
 
@@ -851,3 +851,21 @@ Proving worlds for aurora packages: an Earth-like fixture; proving worlds 2 (no 
 13. **Aurora to the eye and to the camera.** Really faint aurorae look grey-white to the eye, and green and red only in a long exposure. In True, the exposure adapts on the night side so bright aurorae show their colour, faint ones are pale, and "Long exposure" shows full colour and says so. *Recommend yes: it is true, testable, and the long exposure still gives the spectacular picture.* The alternative is always full colour, which is prettier and not what an eye sees.
 14. **Airglow** as one more driver in the same machinery, after the aurora kinds. *Recommend yes.*
 15. **"Light it gives off" on every element and substance card**, with the lines editable on the Build desk so an invented gas gets its own aurora. *Recommend yes.*
+
+### 16.7 Alex's answers, 24 Nov 2026 19:12 UTC
+
+"We can have 'long exposure' on by default :) Yes to all."
+
+- **Questions 11, 12, 14 and 15 stand as recommended.** Ten proving worlds; a new builder thread "Build aurorae and night lights" (started by the coordinator at 19:12); airglow as one more driver; "Light it gives off" on element and substance cards, editable on the Build desk.
+- **Questions 9 and 13 are reversed in their default.** Ruling: **"Long exposure" is the default, and the eye-true view is the choice.**
+
+How to read that ruling (my reading, chosen to be one mechanism with no special cases; correct it if wrong):
+
+1. **One Exposure control with two states, "Long exposure" (default) and "Eye", in the shared view controls of every True view**, at every scale, remembered with the saved view choice like Band and Scale. It is not switched on only when something faint is in frame: a default that changes by itself would make the same world look different for no visible reason, and the two states look the same anyway when nothing faint is there.
+2. **Long exposure** is what a camera gives when bright and faint things are exposed separately and combined: sunlit worlds at their daylight exposure, and the faint layers (stars and the galaxy's band, aurorae, airglow, nebulae, planet-shine, night-side lights, faint rings and plumes) lifted to where a long exposure would show them, in full colour. The HUD's exposure line says "Long exposure: faint light is lifted" whenever it is on, so the picture never claims to be what an eye sees.
+3. **The lift is a number, not a look.** Each faint layer is drawn at its real brightness times one stated exposure ratio for the view, so ratios between faint things stay true (a brighter aurora is still brighter, a faint one still faint), and the ratio is shown in the HUD.
+4. **Eye** is the honest single exposure with the eye's own limits: beside a sunlit world the stars fade, and aurorae too faint for colour vision go grey-white. Wins 21 and 32 in the expert list are seen by switching to Eye, and each says so in its Explain line.
+5. **Glare stays physical in both states** (section 5.1): only things that are truly far brighter than their surroundings bloom. Long exposure does not make aurorae or stars bloom.
+6. Ground view: the same control. Long exposure by day shows a daylight sky; it lifts faint light only where the sky is dark enough for a camera to record it, so it does not paint stars onto a bright blue sky.
+
+Builders: VP1 (finish) carries the Exposure control and the lift ratio; VP2 (sky) and VP-AU5 (aurora shells) draw their layers in real brightness and let the finish apply the lift.
