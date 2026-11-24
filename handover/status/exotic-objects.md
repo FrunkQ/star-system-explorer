@@ -4,7 +4,7 @@ Owner thread: "Design exotic stars and black holes" wrote the design; no builder
 
 One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`. Stage order: `handover/design/SSE4-coming-together.md`.
 
-Design: `handover/design/SSE4-exotic-objects-design.md`, **accepted by Alex 24 Nov 2026** (rulings in its section 13; small open points 12 to 15 and, for the addendum in section 15, questions 16 to 21, each with a recommendation builders follow). Mockup and screenshots are in project files at `sse4/handover-screens/XO-screens/` (`black-hole-mockup.html` is a working picture: light traced from the real bending equation, the band switch with Composite, and the Hazard map for the hole, the Sun and Jupiter).
+Design: `handover/design/SSE4-exotic-objects-design.md`, **accepted by Alex 24 Nov 2026** (rulings in its section 13; small open points 12 to 15 and, each with a recommendation builders follow; the addendum in section 15 (questions 16 to 21) was accepted by Alex 24 Nov 18:36). Mockup and screenshots are in project files at `sse4/handover-screens/XO-screens/` (`black-hole-mockup.html` is a working picture: light traced from the real bending equation, the band switch with Composite, and the Hazard map for the hole, the Sun and Jupiter).
 
 Nothing is built. The design's section 1 says what the kernel and renderer already hold (checked at main 67a5957): the thin disc and the spectrum shifts in `sse-light`, remnants with mass only, no light bending anywhere.
 

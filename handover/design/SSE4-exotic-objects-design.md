@@ -1,6 +1,6 @@
 # SSE4 exotic objects on screen: black holes, pulsars and stripped stars (track XO)
 
-Written 24 Nov 2026 by the design thread "Design exotic stars and black holes", after Alex's "yes to all" (24 Nov 16:41) to starting it. **Status: ACCEPTED by Alex, 24 Nov 2026 17:03 ("Yes to all" to the eleven questions), with two additions he asked for the same day: Composite in the band switch (section 6A) and a diagram in place of a list of readings, which at 17:19 he widened into the Hazard map for any hazardous body (section 3.8). Section 13 records the rulings.** **Addendum of 24 Nov 18:25 (section 15): pulsating variable stars and clock readouts, packages XO19 and XO20, questions 16 to 21 awaiting Alex.** "XO" stands for exotic objects. It is only the short code on this track's packages and never appears in the product.
+Written 24 Nov 2026 by the design thread "Design exotic stars and black holes", after Alex's "yes to all" (24 Nov 16:41) to starting it. **Status: ACCEPTED by Alex, 24 Nov 2026 17:03 ("Yes to all" to the eleven questions), with two additions he asked for the same day: Composite in the band switch (section 6A) and a diagram in place of a list of readings, which at 17:19 he widened into the Hazard map for any hazardous body (section 3.8). Section 13 records the rulings.** **Addendum of 24 Nov 18:25 (section 15): pulsating variable stars and clock readouts, packages XO19 and XO20, questions 16 to 21 accepted by Alex 24 Nov 18:36.** "XO" stands for exotic objects. It is only the short code on this track's packages and never appears in the product.
 
 Read with `SSE4-star-census.md` (which objects exist and who makes them), `SSE4-nebulae-and-light-design.md` (light descriptions, band recipes, shifts, jets, activity), `SSE4-magnetic-fields-design.md` (the field ledger, remnants in MF11, the Mag band) and `interface-style.md` rule 12 (View style, Seen from, Scale, HUD, Band).
 
@@ -646,7 +646,7 @@ Shapes and winds
 
 ## 15. Addendum (Alex, 24 Nov 2026 18:19 and 18:24): stars that breathe, and clocks that disagree
 
-Alex read a list of what another space simulator does not do (no intrinsic variable stars, no time dilation, stars that do not drift, galaxies that do not turn) and asked whether we do these. He said yes to two additions here: **pulsating variable stars** as a small block set, and **time dilation readouts**. Both are cheap, exact enough to check with a calculator, and of the "cool physics win" kind. Neither needs a new screen. Packages XO19 and XO20; questions 16 to 21 at the end, each with a recommendation builders follow until Alex says otherwise.
+Alex read a list of what another space simulator does not do (no intrinsic variable stars, no time dilation, stars that do not drift, galaxies that do not turn) and asked whether we do these. He said yes to two additions here: **pulsating variable stars** as a small block set, and **time dilation readouts**. Both are cheap, exact enough to check with a calculator, and of the "cool physics win" kind. Neither needs a new screen. Packages XO19 and XO20. **Questions 16 to 21 (15.13) were accepted by Alex on 24 Nov 2026 at 18:36.**
 
 Why most simulators skip pulsating stars, as far as this thread can tell: they keep each star as one catalogue row with one brightness. Ours already keep a star's state through time, so a star that changes is only one more formula of time.
 
@@ -833,7 +833,11 @@ XO19 part (a) adds published facts to stars inside a strip, so it changes golden
 
 Order: XO19 (a) can start now beside XO1; it needs nothing from the rest of the track. XO20's kernel side follows XO1; its Hazard map lines ride with XO18.
 
-### 15.13 Questions for Alex (builders follow the recommendation meanwhile)
+### 15.13 Rulings (Alex, 24 Nov 2026 18:36)
+
+Alex asked of 16 whether the density rule copes with all star types or only the main sequence, was told what the paragraph below says, and answered "sweet - all good then!". All six are **decided as recommended**.
+
+**What the density rule covers.** Every star that pulses in and out as a whole, at any stage of its life: main-sequence stars, giants, supergiants and old helium-burning stars alike, because it needs only mass and radius. It does not cover stars that ring in the other kind of mode, where layers slosh rather than the whole star breathing: the slowly pulsating B stars (their own table, 15.3) and pulsing white dwarfs (not in this addendum; a later row with its own table, when white dwarfs get their package). Miras breathe in and out and so follow the rule, but their valve and their mass loss are the later Mira package.
 
 16. **Period from the star's own density, with the famous period and brightness law as a test it must pass, not a table it reads?** Recommended: yes. It is the "never fake it" way and it makes the distance trick work for players.
 17. **The size and shape of the swing from observed tables, logged as a shortcut?** Recommended: yes. The only alternative is a gas simulation per star.
