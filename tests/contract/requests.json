@@ -2190,6 +2190,12 @@
   "n": 1
  },
  {
+  "op": "web_slice",
+  "cube": true,
+  "extent_mpc": 64,
+  "n": 4
+ },
+ {
   "op": "galaxy_chart",
   "halo": "dwarf",
   "edits": [

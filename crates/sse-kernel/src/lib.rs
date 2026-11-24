@@ -3333,6 +3333,7 @@ impl Kernel {
                 Response::WindowViewed { view }
             }
             Request::WebSlice {
+                cube,
                 z,
                 t_gyr,
                 centre,
@@ -3348,6 +3349,7 @@ impl Kernel {
                     centre: centre.unwrap_or([0.0; 3]),
                     extent_mpc,
                     n,
+                    cube: cube.unwrap_or(false),
                 })?;
                 Response::WebSliced { web }
             }

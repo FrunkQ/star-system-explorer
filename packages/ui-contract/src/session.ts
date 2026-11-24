@@ -226,6 +226,8 @@ export interface ViewSession {
   exportSector?(ask: { scope: string; format: import("./sector.ts").SectorFormat; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorExported } | { ok: false; code: string; message: string }>;
   /** A slice of the cosmic web at one epoch (V9, kernel `web_slice`, G1). Read only; GM only. */
   webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }>;
+  /** A cube of the cosmic web for the 3D view (kernel `web_slice` with `cube`): n^3 parcels moved by the truncated Zel'dovich approximation. Read only; GM only. */
+  webCube(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebCube } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
   resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
@@ -907,6 +909,12 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the cosmic web is read on the game master's machine" };
     const r = await this.#call({ op: "web_slice", ...ask });
     return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebSlice }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async webCube(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebCube } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the cosmic web is read on the game master's machine" };
+    const r = await this.#call({ op: "web_slice", cube: true, ...ask });
+    return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebCube }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }> {

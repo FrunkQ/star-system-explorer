@@ -305,3 +305,132 @@ fn cosmology_reads_the_cosmos_group() {
     assert_eq!(edited.params.omega_m, 0.6222);
     assert!(Cosmology::new(edited.params).age_gyr() < planck().age_gyr());
 }
+
+fn web_voids(octaves: u32, f: f64) -> (Cosmology, Web) {
+    let c = planck();
+    let w = Web::new(
+        &c,
+        WebParams {
+            octaves,
+            void_fraction: Some(f),
+            ..Default::default()
+        },
+        &Seed::from_text("g1"),
+        &Address::universe("g1").unwrap(),
+    )
+    .unwrap();
+    (c, w)
+}
+
+#[test]
+fn a_void_share_sets_the_threshold_and_holds_at_any_smoothing() {
+    // Cautun et al. 2014: about 77 percent of space is void, holding about
+    // 15 percent of the matter. The threshold is found from Doroshkevich's
+    // distribution weighted by each parcel's Zel'dovich volume, so the
+    // realised field should fill about the share of space asked for at each
+    // smoothing, and its voids should hold less matter than space.
+    let draws =
+        crate::web::tweb_draws(&Seed::from_text("g1"), &Address::universe("g1").unwrap()).unwrap();
+    let t = crate::web::void_threshold(0.77, 1.0, &draws).unwrap();
+    assert!(
+        t > 0.0,
+        "a positive threshold for a share above Doroshkevich's 8%: {t}"
+    );
+    let (_, w) = web_voids(4, 0.77);
+    let pts = points(2000);
+    for up in [1, 2, 3] {
+        let mut cache = Cache::default();
+        let th = w.threshold(up, 1.0);
+        let (mut vv, mut vt, mut mv) = (0.0, 0.0, 0.0);
+        for p in &pts {
+            let ev = w.tidal_eigenvalues(&mut cache, *p, up);
+            let v = crate::web::zeldovich_volume(ev);
+            vt += v;
+            if w.environment_with(&mut cache, *p, up, 1.0, th) == Environment::Void {
+                vv += v;
+                mv += 1.0;
+            }
+        }
+        let (space, matter) = (vv / vt, mv / pts.len() as f64);
+        println!("smoothing octave {up}: voids {space:.3} of space, {matter:.3} of matter");
+        assert!((space - 0.77).abs() < 0.08, "octave {up}: {space}");
+        // Coarse smoothing barely moves matter; at the spread the motion is
+        // read at (D sigma near 1) voids are clearly emptier than average.
+        let s = m::sqrt(w.variance[up as usize]);
+        let gap = if s > 0.7 { 0.2 } else { 0.0 };
+        assert!(
+            matter < space - gap,
+            "octave {up} (sigma {s:.2}): voids hold {matter} of the matter in {space} of space"
+        );
+    }
+    assert!(crate::web::void_threshold(1.2, 1.0, &draws).is_err());
+}
+
+#[test]
+fn a_volume_moves_matter_into_filaments_by_truncated_zeldovich() {
+    let (c, w) = web_voids(4, 0.77);
+    let now = w.volume(&c, 1.0, [0.0; 3], 128.0, 16, 3);
+    assert_eq!(now.position.len(), 16 * 16 * 16 * 3);
+    assert_eq!(now.environment.len(), 16 * 16 * 16);
+    // Today the field is non-linear at the finest octaves, so the motion is
+    // read from a coarser one; early on, from the finest.
+    let young = w.volume(&c, 0.2, [0.0; 3], 128.0, 16, 3);
+    assert!(
+        now.smoothing_octave < young.smoothing_octave,
+        "{} {}",
+        now.smoothing_octave,
+        young.smoothing_octave
+    );
+    // Voids: about 77 percent of the space, less of the matter.
+    let total: f64 = now.room.iter().sum();
+    let space = now
+        .environment
+        .iter()
+        .zip(&now.room)
+        .filter(|(e, _)| **e == Environment::Void)
+        .map(|(_, r)| r)
+        .sum::<f64>()
+        / total;
+    let matter = now
+        .environment
+        .iter()
+        .filter(|e| **e == Environment::Void)
+        .count() as f64
+        / now.environment.len() as f64;
+    println!(
+        "volume voids {space:.3} of space, {matter:.3} of matter, smoothing {} Mpc",
+        now.smoothing_mpc
+    );
+    assert!((space - 0.77).abs() < 0.12, "{space}");
+    assert!(matter < space - 0.1, "{matter} {space}");
+    // Parcels move further today than at a = 0.2.
+    let shift = |v: &crate::web::Volume| {
+        let h = v.extent / f64::from(v.n);
+        let mut s = 0.0;
+        let n = v.n as usize;
+        for k in 0..n {
+            for j in 0..n {
+                for i in 0..n {
+                    let q = [
+                        h * (i as f64 + 0.5) - 64.0,
+                        h * (j as f64 + 0.5) - 64.0,
+                        h * (k as f64 + 0.5) - 64.0,
+                    ];
+                    let o = ((k * n + j) * n + i) * 3;
+                    s += (0..3)
+                        .map(|d| (v.position[o + d] - q[d]) * (v.position[o + d] - q[d]))
+                        .sum::<f64>();
+                }
+            }
+        }
+        m::sqrt(s / (n * n * n) as f64)
+    };
+    let (a, b) = (shift(&young), shift(&now));
+    println!("rms shift a=0.2 {a:.2} Mpc, today {b:.2} Mpc");
+    assert!(b > a && b > 1.0 && b < 30.0);
+    assert_eq!(
+        w.volume(&c, 1.0, [0.0; 3], 128.0, 16, 3),
+        now,
+        "deterministic"
+    );
+}

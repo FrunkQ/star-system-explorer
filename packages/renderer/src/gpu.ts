@@ -50,6 +50,10 @@ export interface GpuRing {
 export interface GpuDots {
   points: Vec3[];
   colour: string;
+  /** Added as light at this strength, 0..1 (the cosmic web in True: crowded matter glows brighter); left out, opaque. */
+  glow?: number;
+  /** Pixels across (1 when left out). */
+  size?: number;
 }
 
 /**
@@ -232,7 +236,20 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   const lineMats = new Map<string, LineBasicMaterial>();
   const mat = (c: string) => mats.get(c) ?? (mats.set(c, new MeshBasicMaterial({ color: new Color(c) })), mats.get(c)!);
   const dotMats = new Map<string, PointsMaterial>();
-  const dotMat = (c: string) => dotMats.get(c) ?? (dotMats.set(c, new PointsMaterial({ color: new Color(c), size: 1, sizeAttenuation: false })), dotMats.get(c)!);
+  const dotMat = (d: GpuDots) => {
+    const key = `${d.colour}|${d.glow ?? ""}|${d.size ?? 1}`;
+    const hit = dotMats.get(key);
+    if (hit) return hit;
+    const m = new PointsMaterial({ color: new Color(d.colour), size: d.size ?? 1, sizeAttenuation: false });
+    if (d.glow !== undefined) {
+      m.transparent = true;
+      m.opacity = d.glow;
+      m.blending = AdditiveBlending;
+      m.depthWrite = false;
+    }
+    dotMats.set(key, m);
+    return m;
+  };
   const lineMat = (c: string) => lineMats.get(c) ?? (lineMats.set(c, new LineBasicMaterial({ color: new Color(c) })), lineMats.get(c)!);
   return {
     backend,
@@ -305,7 +322,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       for (const d of o.dots ?? []) {
         const g = new BufferGeometry();
         g.setAttribute("position", new Float32BufferAttribute(d.points.flat(), 3));
-        scene.add(new Points(g, dotMat(d.colour)));
+        scene.add(new Points(g, dotMat(d)));
       }
       camera.fov = (o.fovY * 180) / Math.PI;
       camera.aspect = o.width / Math.max(1, o.height);

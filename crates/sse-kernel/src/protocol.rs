@@ -892,8 +892,14 @@ pub enum Request {
     /// G1 for the foam and cluster maps (V9): a square slice of the cosmic
     /// web from the open universe's seed, `n` samples a side over
     /// `extent_mpc` around `centre` (Mpc, default the origin), at redshift
-    /// `z` or cosmic time `t_gyr` (default now). Read only.
+    /// `z` or cosmic time `t_gyr` (default now). With `cube: true` it is a
+    /// cube for the 3D view instead: n^3 parcels (n 4 to 48) moved by the
+    /// truncated Zel'dovich approximation, each with its environment, its
+    /// starting density and the room it takes today. Read only.
     WebSlice {
+        #[serde(default)]
+        #[ts(optional)]
+        cube: Option<bool>,
         #[serde(default)]
         #[ts(optional)]
         z: Option<f64>,
@@ -2170,7 +2176,7 @@ pub fn ops() -> Vec<OpInfo> {
         o(
             "web_slice",
             Cost::Medium,
-            "n by n web samples at four octaves (n = 128: about 0.2 s native)",
+            "n by n web samples at four octaves (n = 128: about 0.2 s native); a cube is (n + 2)^3 potentials (n = 32: about 0.3 s native)",
         ),
         o(
             "sift",
@@ -2744,7 +2750,9 @@ pub enum Response {
         #[ts(type = "unknown")]
         chart: serde_json::Value,
     },
-    /// `web_slice`: `{t_gyr, z, now_gyr, slice, model}` (`slice` is sse-cosmos's `Slice`).
+    /// `web_slice`: `{t_gyr, z, now_gyr, slice, model}` (`slice` is sse-cosmos's
+    /// `Slice`), or with `cube` `{t_gyr, z, now_gyr, volume, model}` (`volume`
+    /// is sse-cosmos's `Volume`).
     WebSliced {
         #[ts(type = "unknown")]
         web: serde_json::Value,
