@@ -111,3 +111,5 @@ export { circleSteps, globeFrame, graticule, hoursPerSecond, nearSide, ringEdge,
 export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";
 export { byDensitySquared, density as shellDensity, drawShells, dustGlow10um, narrateShells, nebulaColour, SHELL_DECADES, SHELL_REFERENCES, wavelengthRgb } from "./star-shells.ts";
 export type { NebulaShape, ShellView } from "./star-shells.ts";
+export { baumbach, CORONA_DECADES, CORONA_REFERENCES, coronaShape, cycleActivity, drawCorona, narrateCorona } from "./star-corona.ts";
+export { DIFFERENTIAL_ROTATION, rateShare, spotsAt } from "./live-star.ts";

@@ -170,3 +170,35 @@ test("the star now: face, glow and words together, the same picture for the same
   assert.ok(a.got.words.some((w) => w.includes("glare")));
   assert.ok(a.halo.some((v) => v > 0));
 });
+
+test("spots drift by latitude: the equator keeps pace with the turn, high latitudes fall behind (VP-S4)", async () => {
+  const { rateShare, spotsAt, spotsOf } = await import("../src/live-star.ts");
+  assert.equal(rateShare(0), 1);
+  // Snodgrass and Ulrich at 60°: 14.713 − 2.396 × 0.75 − 1.787 × 0.5625 = 11.91°/day, against 14.71 at the equator.
+  assert.ok(Math.abs(rateShare(60) * 14.713 - 11.91) < 0.01);
+  const s = sun({ moment: { cycle_phase: 0.2, spot_coverage: 0.02, xray_w: 2e20 } });
+  const now = spotsOf(s);
+  assert.deepEqual(spotsAt(s, s.age_s), now, "at the star's present, as the kernel places them");
+  const later = spotsAt(s, s.age_s + 25.4 * DAY);
+  now.forEach((sp, i) => {
+    const lag = (((sp.lon_deg - later[i]!.lon_deg) % 360) + 360) % 360;
+    assert.ok(lag >= 0 && lag < 90, "a spot falls behind, never ahead");
+    if (Math.abs(sp.lat_deg) > 20) assert.ok(lag > 1, `a spot at ${sp.lat_deg.toFixed(0)}° lags ${lag.toFixed(1)}°`);
+  });
+});
+
+test("the hidden-disc corona: a millionth of the disc, streamers along the equator when quiet, round at the peak (VP-S3)", async () => {
+  const { baumbach, coronaShape, cycleActivity, drawCorona } = await import("../src/star-corona.ts");
+  assert.ok(baumbach(1) > 3e-6 && baumbach(1) < 5e-6, "about four millionths at the limb");
+  assert.ok(baumbach(2) < baumbach(1) / 50);
+  assert.ok(coronaShape(Math.PI / 2, 0) < 0.3 && coronaShape(0, 0) === 1, "quiet: dark poles");
+  assert.equal(coronaShape(Math.PI / 2, 1), 1, "peak: round");
+  // Phase 0.25 from the cycle's minimum is cycle_phase 0 in the kernel's convention (minimum at 0.75).
+  const quiet = sun({ activity: { rotation_period_s: 25.4 * DAY, cycle: { period_s: 11 * 365.25 * DAY } }, moment: { cycle_phase: 0.75, xray_w: 2e20 } });
+  assert.ok(cycleActivity(quiet) < 0.01);
+  const o = { width: 64, data: new Uint8ClampedArray(64 * 64 * 4) };
+  drawCorona(o, quiet, 0.3);
+  const at = (x: number, y: number) => o.data[(y * 64 + x) * 4]!;
+  assert.equal(at(32, 32), 0, "the disc is hidden");
+  assert.ok(at(32 + 14, 32) > at(32, 32 - 14), "brighter along the equator than over the pole");
+});

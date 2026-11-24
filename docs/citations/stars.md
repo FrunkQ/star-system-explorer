@@ -91,3 +91,6 @@ Status key: verified = the number or relation was read in the source; corrected-
 | `star-shells.ts` | Osterbrock and Ferland 2006, Astrophysics of Gaseous Nebulae and AGN | line light scales with density squared along the line of sight | textbook | Standard result |
 | `star-shells.ts` | Reipurth and Bally 2001, ARA&A 39, 403, doi:10.1146/annurev.astro.39.1.403 | young stars' bipolar jets with knots from episodic accretion | unverified | Qualitative; sizes are the kernel's |
 | `star-shells.ts` `wavelengthRgb` | Bruton 1996, https://www.physics.sfasu.edu/astro/color/spectra.html | piecewise colour of one wavelength | unverified | Written from memory of the widely copied routine; listed as a fudge |
+| `live-star.ts` `DIFFERENTIAL_ROTATION` | Snodgrass and Ulrich 1990, ApJ 351, 309 | ω = 14.713 − 2.396 sin²φ − 1.787 sin⁴φ degrees a day | unverified | From memory of the widely used Doppler fit; not read here |
+| `star-corona.ts` `baumbach` | Baumbach 1937, AN 263, 121 | I/I☉ = 10⁻⁶ (0.0532 r^−2.5 + 1.425 r^−7 + 2.565 r^−17) | unverified | From memory of the standard Baumbach formula; checked by test that it gives about 4 millionths at the limb |
+| `star-corona.ts` | Golub and Pasachoff 2010, The Solar Corona, CUP | equatorial streamers at minimum, a round corona at maximum | unverified | Qualitative |

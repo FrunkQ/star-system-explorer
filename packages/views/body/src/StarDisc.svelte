@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import { constant, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { churningGranules, coronaScaleHeight, CORONA_K, cycleOf, drawStar, flaresAt, flareWhiteLight, limbLumps, narrateLumps, patchContrast, patchRadiusDeg, readLiveStar, GRANULE_DT, granulesShow, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES, type Convection, type LiveStar, type StarDraw, type StarReader } from "../../../renderer/src/index.ts";
+  import { cycleActivity, drawCorona, narrateCorona, churningGranules, coronaScaleHeight, CORONA_K, cycleOf, drawStar, flaresAt, flareWhiteLight, limbLumps, narrateLumps, patchContrast, patchRadiusDeg, readLiveStar, GRANULE_DT, granulesShow, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES, type Convection, type LiveStar, type StarDraw, type StarReader } from "../../../renderer/src/index.ts";
 
   let { ctx, scene, address, label, size }: { ctx: ViewContext; scene: SystemScene; address: string; label: string; size: number } = $props();
 
@@ -14,6 +14,8 @@
   let failed = $state<string | null>(null);
   let band = $state<StarDraw["light"]>("visible");
   let turn = $state(0);
+  /** The disc hidden, as a world in front or a coronagraph hides it, so the visible corona shows (VP-S3). */
+  let hidden = $state(false);
   let canvas = $state<HTMLCanvasElement | undefined>();
 
   // The star as the kernel has it (live-star.ts, shared with the system view's True star).
@@ -58,6 +60,11 @@
     c.width = c.height = n;
     const x = c.getContext("2d")!;
     const img = x.createImageData(n, n);
+    if (hidden && band === "visible") {
+      drawCorona(img, g, 0.3);
+      x.putImageData(img, 0, 0);
+      return;
+    }
     drawStar(img, { teff_k: g.teff, spots, lon_deg: turn, lat_deg: 7, light: band, corona_h: H, flares: active.map(({ lat_deg, lon_deg, strength, flare }) => {
         // The kernel's white-light patch (star-events.ts): its own area and temperature, at its strength now over its peak.
         const wl = flareWhiteLight(flare);
@@ -97,7 +104,8 @@
           <button aria-pressed={band === "visible"} onclick={() => (band = "visible")}>Visible</button>
           <button aria-pressed={band === "xray"} onclick={() => (band = "xray")}>X-ray</button>
         </span>
-        <small>{band === "visible" ? "Actual colour" : "Mapped colour: X-rays have no colour; brightness is the corona's emission measure on a log scale"}</small>
+        {#if band === "visible"}<button class="hide" aria-pressed={hidden} onclick={() => (hidden = !hidden)} data-hide-disc>Hide the disc</button>{/if}
+        <small data-corona-words={hidden && band === "visible" ? "yes" : "no"}>{band === "visible" ? (hidden ? narrateCorona(cycleActivity(got), !!cyc) : "Actual colour") : "Mapped colour: X-rays have no colour; brightness is the corona's emission measure on a log scale"}</small>
       </dd>
       <dt>Surface</dt>
       <dd>{Math.round(got.teff).toLocaleString("en-GB")} K, darker towards the limb (grey atmosphere)</dd>
@@ -157,7 +165,8 @@
   dd {
     margin: 0;
   }
-  .seg button {
+  .seg button,
+  .hide {
     font: inherit;
     font-size: 12px;
     background: none;
@@ -166,7 +175,11 @@
     padding: 1px 8px;
     cursor: pointer;
   }
-  .seg button[aria-pressed="true"] {
+  .hide {
+    margin-left: 6px;
+  }
+  .seg button[aria-pressed="true"],
+  .hide[aria-pressed="true"] {
     background: var(--sse-ink);
     color: var(--sse-ground);
   }

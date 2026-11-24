@@ -3,7 +3,7 @@
 // show a star turning on its own clock call this; star.ts and live-star.ts stay the parts it is made of.
 import { thermalColour } from "../../ui-contract/src/index.ts";
 import { coronaScaleHeight, drawStar, granulesShow, type Convection, type StarDraw } from "./star.ts";
-import { spotsOf, turnAt, flarePlace, type LiveStar } from "./live-star.ts";
+import { spotsAt, turnAt, flarePlace, type LiveStar } from "./live-star.ts";
 import { churningGranules, granuleBlur, limbLumps, narrateLumps } from "./star-churn.ts";
 import { addEjections, ejectionsAt, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares, type EjectionNow, type ShownFlare } from "./star-events.ts";
 import { drawGlow, glareProfile, GLOW_REACH_DEG, narrateGlow } from "./star-glow.ts";
@@ -64,7 +64,8 @@ export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, ha
   const conv = (s.activity.convection ?? null) as unknown as Convection | null;
   const discPx = face.width * disc;
   const shown = shownFlares(s, ask.t, ask.clock, ask.calm);
-  const spots = spotsOf(s);
+  // Spots drift by latitude (differential rotation); under reduced motion they hold at the star's present.
+  const spots = spotsAt(s, ask.calm ? s.age_s : ask.t);
   const xr = Math.max(1, Number(s.moment.xray_w));
   const flares = shown.map(({ flare, index, k }) => {
     const at = flarePlace(s, flare);

@@ -157,3 +157,29 @@ export function drawLiveStar(out: { width: number; data: Uint8ClampedArray }, s:
  * shows for a moment; the universe clock is not moved.
  */
 export const STAR_SECONDS_PER_SECOND = constant("day") / 4;
+
+/**
+ * Differential rotation (VP-S4): a star's surface turns faster at its equator than near its poles. The Sun's rate is
+ * ω(φ) = A + B sin²φ + C sin⁴φ with A = 14.713, B = −2.396, C = −1.787 degrees a day (Snodgrass and Ulrich 1990, from
+ * Doppler shifts). Other stars take the same shape, scaled to their own spin (a stand-in: Barnes et al. 2005 find the
+ * shear depends weakly on temperature): the share of the equator's rate at latitude φ.
+ */
+export const DIFFERENTIAL_ROTATION = { a: 14.713, b: -2.396, c: -1.787 };
+export function rateShare(lat_deg: number): number {
+  const s2 = Math.sin((lat_deg * Math.PI) / 180) ** 2;
+  const { a, b, c } = DIFFERENTIAL_ROTATION;
+  return (a + b * s2 + c * s2 * s2) / a;
+}
+
+/**
+ * The star's spots at time t, each carried round at its own latitude's rate: placed at the star's present (the
+ * kernel's moment), they drift against the equator's turn (which `turnAt` follows) by the difference in rate, so a
+ * high-latitude spot falls behind over the days. Without a known spin they stay put.
+ */
+export function spotsAt(s: LiveStar, t: number): Spot[] {
+  const p = Number(s.activity.rotation_period_s ?? 0);
+  const spots = spotsOf(s);
+  if (!(p > 0)) return spots;
+  const turns = (t - s.age_s) / p;
+  return spots.map((sp) => ({ ...sp, lon_deg: ((((sp.lon_deg + (rateShare(sp.lat_deg) - 1) * 360 * turns) % 360) + 360) % 360) }));
+}
