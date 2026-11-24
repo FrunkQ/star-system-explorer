@@ -25,6 +25,18 @@ pub(crate) fn orbit_inputs(
     bodies: &[Body],
     body: &Body,
 ) -> (Option<OrbitTrack>, Vec<MoonPull>) {
+    orbit_inputs_from(cs, seed, bodies, body, 0.0)
+}
+
+/// The same, with the window starting `start_yr` from the epoch (negative:
+/// the window before it). The secular theory runs either way in time.
+pub(crate) fn orbit_inputs_from(
+    cs: &sse_climate::ClimateSettings,
+    seed: &Seed,
+    bodies: &[Body],
+    body: &Body,
+    start_yr: f64,
+) -> (Option<OrbitTrack>, Vec<MoonPull>) {
     let moons: Vec<MoonPull> = bodies
         .iter()
         .filter(|b| {
@@ -100,7 +112,7 @@ pub(crate) fn orbit_inputs(
     let samples = (0..=n)
         .map(|k| {
             let t = k as f64 * f.sample_yr;
-            let p = sec.advance(&planets, t)[me];
+            let p = sec.advance(&planets, start_yr + t)[me];
             TrackSample {
                 t_yr: t,
                 e: p.e,
