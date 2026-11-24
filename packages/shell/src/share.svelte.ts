@@ -3,7 +3,7 @@
 // shares. A room is a random id; the players' link opens players.html with it.
 // The GM serves both at once: BroadcastChannel for other windows and screens
 // of this computer, and the site's relay (worker/index.js) for other devices.
-import { BoardHistory, boardWire, emptyBoard, hold, rejoin, release, screenHello, send as boardSend, type Board } from "../../ui-contract/src/index.ts";
+import { BoardHistory, boardWire, driveTo, emptyBoard, hold, rejoin, release, screenHello, send as boardSend, type Board } from "../../ui-contract/src/index.ts";
 import { GmHost, SealedHost, sealedLink, observeOf, addSeat, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type Json, type PlayerRequest, type SeatPlan, type Session, type Shown } from "../../ui-contract/src/index.ts";
 
 declare const __SSE_APP__: string;
@@ -17,6 +17,8 @@ export interface Share {
   /** The board's own Undo and Redo (tonight's changes to what screens show; never a reveal). */
   undo(): void;
   redo(): void;
+  /** Where the GM is now goes to the destination being driven (PB3b), if any; not a step on the board's history. */
+  follow(live: Shown): void;
   /** Share, showing the table `first` (the place in view when the GM shares). */
   start(first?: Shown): string;
   /** Send the table a place, or turn their screens off. Nothing reaches them until it is sent. Every seat follows: a seat's own send is cleared. */
@@ -67,7 +69,7 @@ export async function createShare(session: Session, opening: { universe: { id: s
     const b = hist.board;
     const plan = $state.snapshot(st.plan) as SeatPlan;
     const wire = boardWire(b, plan.seats.map((x) => x.id));
-    const seats = plan.seats.map(({ shown: _old, ...rest }) => (b.lines[`role:${rest.id}`] ? { ...rest, shown: wire.roles[rest.id]! } : rest));
+    const seats = plan.seats.map(({ shown: _old, ...rest }) => (b.lines[`role:${rest.id}`] || b.steer?.[`role:${rest.id}`] ? { ...rest, shown: wire.roles[rest.id]! } : rest));
     st.plan = { ...plan, seats };
     st.shown = wire.shown;
     st.board = b;
@@ -95,6 +97,13 @@ export async function createShare(session: Session, opening: { universe: { id: s
     },
     redo() {
       hist.redo();
+      push();
+    },
+    follow(live: Shown) {
+      if (!hist.board.driving) return;
+      const next = driveTo(hist.board, JSON.parse(JSON.stringify(live)) as Shown);
+      if (JSON.stringify(next) === JSON.stringify(hist.board)) return;
+      hist.board = next;
       push();
     },
     start(first?: Shown) {

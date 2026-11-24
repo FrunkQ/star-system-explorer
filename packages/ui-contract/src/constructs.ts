@@ -101,6 +101,33 @@ export interface ShipLogEntry {
   key: string;
 }
 
+/** A number, word or yes/no as the log writes it; anything bigger (a design, a picture) is just "changed". */
+function factWords(v: unknown): string | null {
+  if (v === undefined || v === null) return null;
+  if (typeof v === "number") return String(Math.round(v * 1000) / 1000);
+  if (typeof v === "boolean") return v ? "yes" : "no";
+  if (typeof v === "string") {
+    // The picture a construct opens on (views/pictures): "picture:0" is the GM's first own picture.
+    const own = /^picture:(\d+)$/.exec(v);
+    if (own) return `picture ${Number(own[1]) + 1}`;
+    return v.length <= 60 && !v.startsWith("data:") ? v : null;
+  }
+  return null;
+}
+
+/** One edit's line: "Changed: Jump drive 2 → 3; Name Kestrel → Kestrel II; Design changed". */
+export function editWords(changes: NonNullable<HistoryEvent["changes"]>, was: ReadonlyMap<string, unknown>, label: (field: string) => string = (f) => f): string {
+  const parts = changes.map((c) => {
+    const name = label(c.field);
+    if (c.unset) return `${name} cleared`;
+    const to = c.large ? null : factWords(c.value);
+    const from = factWords(was.get(c.field));
+    if (to === null) return `${name} changed`;
+    return from === null || from === to ? `${name} ${to}` : `${name} ${from} → ${to}`;
+  });
+  return `Changed: ${parts.join("; ")}`;
+}
+
 /** Words for who wrote an entry: the GM, a template, or a pack's rule. */
 export function writerWords(w: string): string {
   if (w === "gm") return "the GM";
@@ -121,9 +148,13 @@ export function shipLog(
   label: (kind: string) => string = (k) => k,
 ): ShipLogEntry[] {
   const out: ShipLogEntry[] = [];
-  for (const e of history) {
+  // Each fact's value so far, so an edit (a refit, a rename) says what it changed from and to.
+  const was = new Map<string, unknown>();
+  for (const e of [...history].sort((a, b) => a.at_yr - b.at_yr)) {
     const what = e.kind === "template.create" ? "made" : e.kind === "template.retire" ? "retired" : e.kind === "authored.set" || e.kind === "authored.batch" ? "edited" : "event";
-    const text = what === "made" ? "Made" : what === "retired" ? "Taken out of play" : what === "edited" ? "Facts edited" : e.kind;
+    const said = what === "edited" && e.changes?.length ? editWords(e.changes, was, label) : null;
+    for (const c of e.changes ?? []) was.set(c.field, c.unset || c.large ? undefined : c.value);
+    const text = what === "made" ? "Made" : what === "retired" ? "Taken out of play" : what === "edited" ? (said ?? "Facts edited") : e.kind;
     out.push({ at_yr: e.at_yr, what, text, who: e.evidence === "authored" ? "the GM" : e.evidence, key: e.kind });
   }
   for (const k of record?.kept ?? []) {

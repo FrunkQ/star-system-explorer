@@ -4,7 +4,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { ToolButton, ViewControls } from "../../../chart-grammar/src/index.ts";
-  import { hasTool, type Json, type ViewChoice, type ViewControlsSpec, type ViewModule, type Workspace } from "../../../ui-contract/src/index.ts";
+  import { actionById, hasTool, type Json, type ViewChoice, type ViewControlsSpec, type ViewModule, type Workspace } from "../../../ui-contract/src/index.ts";
 
   type Mount = { module: ViewModule; params: Record<string, Json> };
   let {
@@ -57,6 +57,12 @@
 
   // The view controls' height: what sits below them starts there, however many rows they wrap to.
   let viewbarH = $state(0);
+  // Build's Copy and Add here say what the object menu and More say: the words and keys come from the one action list
+  // (ui-contract actions.ts). A tool's name has no "…": the button is the action itself.
+  const tool = (id: string) => {
+    const a = actionById(id)!;
+    return { label: a.label({ address: "", kind: "", label: "" }).replace(/…$/, ""), key: a.key };
+  };
 </script>
 
 <main class="stage" style:--viewbar-h={viewbarH ? `${viewbarH}px` : undefined} data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={cardMount ? undefined : ""} data-lens={lensId} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
@@ -68,8 +74,8 @@
     {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
     <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
     {@render extraTools?.()}
-    {#if clipArmed}<ToolButton label="Copy" icon="M8 8h11v11H8zM5 16V5h11" keyhint="Control+C" disabled={!ws.selection} onclick={copyBody} />{/if}
-    {#if clipArmed}<ToolButton label="Add here" icon="M12 5v14M5 12h14" keyhint="A" onclick={openAdd} />{/if}
+    {#if clipArmed}<ToolButton label={tool("copy").label} icon="M8 8h11v11H8zM5 16V5h11" keyhint={tool("copy").key} disabled={!ws.selection} onclick={copyBody} />{/if}
+    {#if clipArmed}<ToolButton label={tool("add").label} icon="M12 5v14M5 12h14" keyhint={tool("add").key} onclick={openAdd} />{/if}
     {#if clipArmed && cuttable}<ToolButton label="Cut" icon="M6 4l12 16M18 4L6 20M4 18a2 2 0 1 0 4 0M16 18a2 2 0 1 0 4 0" keyhint="Control+X" onclick={cutBody} />{/if}
     <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={openKeys} />
   </nav>
