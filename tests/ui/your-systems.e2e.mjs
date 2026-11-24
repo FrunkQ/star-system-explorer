@@ -56,7 +56,8 @@ try {
     const sol = ys.locator("svg a.sys").first();
     assert.equal(await ys.locator("svg a.sys").count(), 1, "the sample sits on the map where its save puts it");
     assert.ok((await ys.locator("[data-unplaced] li").count()) >= 1, "the grown system is listed, not put somewhere made up");
-    assert.match(await ys.locator("[data-unplaced] li").first().innerText(), /\d+ (star|planet)/, "a listed system says what it holds");
+    // Every listed system says what it holds; the campaign's own one fills in once the chart's scene for it arrives.
+    await gm.waitForFunction(() => [...document.querySelectorAll(".ys [data-unplaced] li")].every((li) => /\d+ (star|planet)/.test(li.textContent ?? "")), null, { timeout: 15000 });
 
     // Rest on the sample: what it holds, without opening it.
     await sol.locator("circle.star").hover();
