@@ -54,7 +54,7 @@ leave the browser.
 | Fudge register / citations | `docs/fudges.md` / `docs/citations.md` |
 | Interface style, top-level UI | `handover/interface-style.md`, `handover/design/SSE4-top-level-ui-and-onboarding.md` |
 | Old project memory | `handover/memory/` |
-| Screenshots, mockups, trailer clips | Not in the repo. Old account's project files `sse4/` (see the handover note for the list); Alex's PC |
+| Screenshots, mockups, trailer clips | Not in the repo. Alex's PC: `C:\Development\sse4-project-files\` (13 zips of the old project files `sse4/`, 24 Nov snapshot) |
 | Alex's PC (AC-ProArt) | `C:\Development`: `sse4` checkout, `star-system-explorer-v2` (V3 source, code in `star-system-generator`), `sse4-real-saves` (real V3 saves), `sse4-trailer-gpu` (trailer clips) |
 | Sister sites | Explorers `FrunkQ/starsystemx-creator-hub`; converter `FrunkQ/starsystem-convert` |
 
