@@ -20,7 +20,7 @@
   import LightControl from "./LightControl.svelte";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, litFromPlayers, paint, type BandRecipe } from "../../ui-contract/src/index.ts";
-  import { orbitScene, voicesFromPlayers } from "../../ui-contract/src/index.ts";
+  import { orbitScene, voicesFromPlayers, systemShort } from "../../ui-contract/src/index.ts";
   import { focusOf } from "../../views/player-stack/src/pick.ts";
   import stackDoc from "./documents/stack.json";
   import { PLAYER_STACK, ScreenRuntime } from "../../views/player-stack/src/index.ts";
@@ -363,6 +363,8 @@
   function placeName(a: string): string {
     const hit = scene?.subjects.find((x) => x.address === a);
     if (hit) return subjectName(hit);
+    // A star between the stars (the party flew there): its short name.
+    if (/\/cell:[^/]+\/sys:[^/]+$/.test(a)) return systemShort(a);
     const last = a.split("/").pop() ?? a;
     return last.charAt(0).toUpperCase() + last.slice(1).replace(/[-_]/g, " ");
   }

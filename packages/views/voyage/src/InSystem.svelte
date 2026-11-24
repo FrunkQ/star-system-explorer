@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, voyageLogEntries, voyageFuelWrites, FUEL_FIELDS, fuelNow, fuelGauges, shipRecordOf, type FuelShip, type NavShip, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, voyageLogEntries, voyageFuelWrites, withPartyChoice, partyShipNow, FUEL_FIELDS, fuelGauges, type FuelShip, type NavShip, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
   import AtWorld from "./AtWorld.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -23,10 +23,7 @@
     void ctx.workspace.revision;
     const st = ctx.session.stack();
     const rows = shipChoices(IN_SYSTEM_SHIPS, [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof shipChoices>[1]);
-    if (!party) return rows;
-    const like = typeof party.nav === "string" ? rows.find((r) => r.id === party.nav) : undefined;
-    const drive = like?.drive ?? (typeof party.nav === "string" ? "" : rows.find((r) => r.ship === party.nav)?.drive ?? `${party.nav.accel_g} g`);
-    return [{ id: PARTY, name: `${party.name} (the party's ship)`, drive, ...(typeof party.nav === "string" ? {} : { ship: party.nav }) }, ...rows];
+    return withPartyChoice(rows, party);
   });
   // A new party ship is picked at once.
   $effect(() => {
@@ -45,11 +42,8 @@
     const p = party;
     const g = ++tanksGen;
     if (!p || !gm || !ctx.session.record) return void (tanksShip = null);
-    const [r, own] = await Promise.all([shipRecordOf(ctx.session, p.nav), ctx.session.record(p.ship)]);
-    if (g !== tanksGen) return;
-    if (!r.ok) return void (tanksShip = null);
-    const kept: Record<string, unknown> = own.ok ? Object.fromEntries(own.record.kept.map((k) => [k.kind, k.value])) : {};
-    tanksShip = fuelNow(r.ship as unknown as FuelShip, (k) => kept[k]);
+    const now = await partyShipNow(ctx.session, p);
+    if (g === tanksGen) tanksShip = now;
   }
   $effect(() => {
     void party?.ship;
