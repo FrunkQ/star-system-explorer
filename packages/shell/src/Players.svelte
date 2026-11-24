@@ -290,6 +290,9 @@
 
   let selection = $state<string | null>(null);
   // Read only (PB3b): the GM steers this screen; it watches and takes no input but sound.
+  // Words sent with what is shown (PB6): a card over the picture until the GM takes them back or the player puts it away.
+  const sayWords = $derived(shown && "scope" in shown && shown.say ? shown.say : "");
+  let sayHidden = $state("");
   const readOnly = $derived(!!shown && "scope" in shown && shown.steer === "read");
   // A send that names a thing (a bookmark's selection, PB3) selects it here, once per send, if this screen's scene has it.
   let focusSent = "";
@@ -450,6 +453,13 @@
       <main class="grid" class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
       {#if readOnly}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
     {/key}
+    {#if sayWords && sayHidden !== sayWords}
+      <!-- A Read aloud sent to screens (PB6, design 4.3): plain words on a card over the picture. The player may put it away; new words bring it back. -->
+      <aside class="say-card" data-say role="status" aria-live="polite">
+        <p>{sayWords}</p>
+        <button type="button" class="say-hide" data-say-hide onclick={() => (sayHidden = sayWords)}>Put away</button>
+      </aside>
+    {/if}
   {/if}
   {#if joined && scene && mayAsk && !bare && !watching && !readOnly && !(shown && "off" in shown)}
     <section class="ask" aria-label="Ask the game master">
@@ -650,6 +660,43 @@
     }
     .grid {
       padding: 12px;
+    }
+  }
+  .say-card {
+    position: fixed;
+    left: 50%;
+    bottom: 64px;
+    transform: translateX(-50%);
+    width: min(640px, calc(100vw - 32px));
+    margin: 0;
+    padding: 16px 20px 12px;
+    background: var(--sse-ground-raised);
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    box-shadow: var(--sse-card-shadow);
+    z-index: 5;
+    animation: card-in var(--sse-motion) var(--sse-ease);
+  }
+  .say-card p {
+    margin: 0 0 8px;
+    font-family: var(--sse-font-display);
+    font-size: 20px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+  .say-hide {
+    font: inherit;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    background: transparent;
+    border: var(--sse-line) solid var(--sse-rule);
+    border-radius: var(--sse-radius);
+    padding: 2px 8px;
+    cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .say-card {
+      animation: none;
     }
   }
   .steered {

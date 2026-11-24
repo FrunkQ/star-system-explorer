@@ -5,7 +5,7 @@
   never sends: what is on screens stays as it was sent until it is fired again. Done or Escape goes back to Live.
 -->
 <script lang="ts">
-  import { addBookmark, findPreset, isUp, presetWords, removePreset, updatePreset, type Board, type Bookmark, type HoldCard, type Playbook, type Preset, type Step } from "../../../ui-contract/src/index.ts";
+  import { addBookmark, findPreset, wordsOnly, isUp, presetWords, removePreset, updatePreset, type Board, type Bookmark, type HoldCard, type Playbook, type Preset, type Step } from "../../../ui-contract/src/index.ts";
   import { firedAt } from "./fired.svelte.ts";
 
   let {
@@ -62,13 +62,13 @@
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <article class="monitor" data-monitor={k.id} data-editing={editing ? "" : undefined} onkeydown={key} aria-label="Preset {k.title}">
     <header>
-      <span class="mt"><b data-monitor-title>{k.title}</b>{#if !k.steps.every((x) => "say" in x)} <span class="sub to">▸ {roleWords(k.to)}</span>{/if}</span>
+      <span class="mt"><b data-monitor-title>{k.title}</b>{#if !wordsOnly(k)} <span class="sub to">▸ {roleWords(k.to)}</span>{/if}</span>
       <span class="acts">
         {#if editing}
           <button type="button" class="pri" data-monitor-done onclick={() => (editing = false)}>Done</button>
         {:else}
           <button type="button" data-monitor-edit onclick={() => (editing = true)}>Edit</button>
-          <button type="button" class="pri" class:on={up} aria-pressed={up} data-monitor-fire onclick={() => onfire(k)}>{up ? "Take back" : k.steps.every((x) => "say" in x) ? "Mark read" : "Fire"}</button>
+          <button type="button" class="pri" class:on={up} aria-pressed={up} data-monitor-fire onclick={() => onfire(k)}>{up ? "Take back" : wordsOnly(k) ? "Mark read" : "Fire"}</button>
         {/if}
         <button type="button" class="quiet" aria-label="Back to Live" title="Back to Live (Escape)" data-monitor-close onclick={onclose}>×</button>
       </span>
@@ -111,7 +111,8 @@
               </select>
             </label>
           {:else if "say" in s}
-            <label class="wide">Words to read <textarea rows="4" value={s.say.text} data-edit-say oninput={(e) => setStep(i, { say: { text: e.currentTarget.value } })}></textarea></label>
+            <label class="wide">Words to read <textarea rows="4" value={s.say.text} data-edit-say oninput={(e) => setStep(i, { say: { text: e.currentTarget.value, ...(s.say.on_screens ? { on_screens: true as const } : {}) } })}></textarea></label>
+            <label class="check"><input type="checkbox" checked={!!s.say.on_screens} data-edit-on-screens onchange={(e) => setStep(i, { say: { text: s.say.text, ...(e.currentTarget.checked ? { on_screens: true as const } : {}) } })} /> Also show on screens</label>
           {:else if "hold" in s}
             <label
               >Card
@@ -226,6 +227,13 @@
   }
   label.wide {
     width: 100%;
+  }
+  label.check {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--sse-ink);
   }
   textarea {
     font-family: var(--sse-font-display);
