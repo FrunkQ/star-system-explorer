@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { childWordsFor, kindChips, pickerRows, subjectItems, type PickItem } from "../src/picker.ts";
+import { childWordsFor, elsewhereRows, kindChips, matchesQuery, pickerRows, subjectItems, type ElsewhereItem, type PickItem } from "../src/picker.ts";
 
 const sol: PickItem[] = [
   { id: "sun", label: "Sun", kinds: ["Stars"] },
@@ -71,4 +71,39 @@ test("the fold's words follow the children: one ring, two moons, a mix is inside
   assert.equal(childWordsFor([it("Main ring", ["Belts and rings"])]), "ring");
   assert.equal(childWordsFor([it("Phobos", ["Moons"]), it("Deimos", ["Moons"])]), "moons");
   assert.equal(childWordsFor([it("Phobos", ["Moons"]), it("Main ring", ["Belts and rings"])]), "inside");
+});
+
+test("a search starting with # finds a tag, from its start, ignoring case", () => {
+  const tagged: PickItem[] = [...sol.map((i) => (i.id === "moon" ? { ...i, tags: ["Ruins", "#precursor"] } : i))];
+  assert.deepEqual(pickerRows(tagged, { query: "#ruin" }).rows.map((r) => r.label), ["Moon"]);
+  assert.deepEqual(pickerRows(tagged, { query: "#PRECURSOR" }).rows.map((r) => r.label), ["Moon"]);
+  assert.deepEqual(pickerRows(tagged, { query: "#uins" }).rows, []);
+  // A tag with parts ("class:planet/ocean") is found by any part's start, or the whole.
+  assert.equal(matchesQuery({ label: "Tarn", tags: ["class:planet/ocean"] }, "#ocean"), true);
+  assert.equal(matchesQuery({ label: "Tarn", tags: ["class:planet/ocean"] }, "#class:planet"), true);
+  assert.equal(matchesQuery({ label: "Tarn", tags: ["class:planet/ocean"] }, "#cean"), false);
+  assert.equal(matchesQuery({ label: "Ruins Hill" }, "#ruins"), false, "a # search does not match names");
+  assert.equal(matchesQuery({ label: "Ruins Hill" }, "#"), false);
+});
+
+test("searching also finds places elsewhere in the campaign, after this level's, saying where they are", () => {
+  const away: ElsewhereItem[] = [
+    { id: "kestrel", label: "Kestrel", kinds: ["Systems"], where: "a system in this campaign" },
+    { id: "k/tarn", label: "Tarn", kinds: ["Planets"], where: "in Kestrel", tags: ["ruins"] },
+    { id: "earth", label: "Earth", kinds: ["Planets"], where: "in Sol" },
+  ];
+  assert.deepEqual(elsewhereRows(away, "", sol).rows, [], "nothing while browsing");
+  assert.deepEqual(elsewhereRows(away, "ar", sol).rows.map((r) => [r.label, r.caption]), [["Tarn", "in Kestrel"]], "this level's Earth is not listed twice");
+  assert.deepEqual(elsewhereRows(away, "#ruins", sol).rows.map((r) => r.id), ["k/tarn"]);
+  const many: ElsewhereItem[] = Array.from({ length: 60 }, (_, i) => ({ id: `x${i}`, label: `Rock ${i}`, kinds: [], where: "in Sol" }));
+  assert.deepEqual([elsewhereRows(many, "rock").rows.length, elsewhereRows(many, "rock").more], [50, 10]);
+});
+
+test("a system's subjects carry their tags into the picker", () => {
+  const items = subjectItems([
+    { address: "s", kind: "star", label: "Sol", facts: [], stamps: [], tags: [] },
+    { address: "s/e", kind: "planet", label: "Earth", parent: "s", orbit: { a_au: 1, phase_deg: 0 }, facts: [], stamps: [], tags: ["homeworld"] },
+  ]);
+  assert.deepEqual(items.find((i) => i.id === "s/e")?.tags, ["homeworld"]);
+  assert.equal(items.find((i) => i.id === "s")?.tags, undefined);
 });
