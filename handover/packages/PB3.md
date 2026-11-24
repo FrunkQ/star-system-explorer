@@ -17,7 +17,10 @@ Thread "Build Run desk playbook and players' side", 24 Nov 2026. Design sections
 ## The "just now" strip (second commit)
 - `run/fired.svelte.ts` `noteSent` and `justSent`: the last six live sends tonight (the Switchboard's Send and dots, the status line's Send this view, Again). Each row has Keep (a bookmark of that place and thing, then a preset for the role it went to, on the open page, open in the monitor) and Again. playbook.e2e covers Keep and Again.
 
+## Reveal steps (third commit)
+- `Step` `reveal {address, landmark: known | heard_of, name?}`; `revealsOf`, `reveals`. "+ Add" A reveal lists bookmarks that have a selected thing. The Switchboard sends `set_known` for the audience of the role fired at (tablePort roles now carry `audience`), at the campaign's now, then `notePhysics`. Not on the board's undo (the eye's own Undo takes a reveal back). The row wears the `KnownEye`. playbook.e2e: the player's Tarn card fills in after the reveal.
+
 ## Not yet (the rest of PB3)
-- Reveal steps with the eye; A landing as an add kind.
+- A landing as an add kind (the landing thread offered a helper that builds a LandingShow for a site).
 - On players' screens a Show selects the bookmark's thing but does not yet change their instrument or view (needs layouts, PB13).
 - A pack's playbook as extra chapters (`playbookFrom` reads it; packs need a slot).

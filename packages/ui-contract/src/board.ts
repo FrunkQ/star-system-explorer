@@ -391,7 +391,7 @@ export function boardWire(b: Board, roles: readonly string[], words: (card: Hold
 export interface TablePort {
   readonly state: {
     board: Board;
-    roles: readonly { id: string; label: string; sealed: boolean }[];
+    roles: readonly { id: string; label: string; sealed: boolean; audience?: string }[];
     /** Screens connected now (players' pages that said hello and have not gone). */
     players: number;
     /** The players' link once on air, else null. */

@@ -8,12 +8,12 @@
   decides what each screen shows; this file only draws it and turns presses into board changes.
 -->
 <script lang="ts">
-  import { addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type Workspace } from "../../../ui-contract/src/index.ts";
+  import { addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
   import Playbook from "./Playbook.svelte";
   import PresetMonitor from "./PresetMonitor.svelte";
   import { justSent, noteFired, noteSent, type JustSent } from "./fired.svelte.ts";
 
-  let { table, ws, onopenseats }: { table: TablePort; ws?: Workspace; onopenseats?: () => void } = $props();
+  let { table, ws, session, onopenseats }: { table: TablePort; ws?: Workspace; session?: ViewSession; onopenseats?: () => void } = $props();
 
   const st = $derived(table.state);
   const board = $derived(st.board);
@@ -59,9 +59,26 @@
     if (select) ((selected = select), (editing = true));
     if (selected && !findPreset(next, selected)) ((selected = null), (editing = false));
   }
+  let revealNote = $state<string | null>(null);
   function firePreset(p: Preset, at?: Dest) {
     noteFired(p.id);
     act((b) => fire(b, p, bookmarks, st.roles.map((r) => r.id), at));
+    void reveal(p, at);
+  }
+  // A Reveal step is not a send (4.2, 5.3): it tells the role's audience, at the campaign's now, and every screen of
+  // that role redraws where it stands. The kernel's set_known; never on the board's undo.
+  async function reveal(p: Preset, at?: Dest) {
+    const rs = revealsOf(p);
+    if (!rs.length || !session || !ws) return;
+    const dest = at ?? (p.to === "everyone" ? "everyone" : `role:${p.to}`);
+    const role = dest.startsWith("role:") ? dest.slice(5) : dest.startsWith("screen:") ? (board.screens[dest.slice(7)]?.role ?? "") : "";
+    const audience = role ? (st.roles.find((r) => r.id === role)?.audience ?? "everyone") : "everyone";
+    const now = ws.campaign_now_yr ?? ws.now_yr;
+    for (const r of rs) {
+      const res = await session.send({ kind: "set_known", address: r.address, audience, landmark: r.landmark, scope: "this", at_yr: now, at_s: String(yearsToSeconds(now)) });
+      revealNote = res.status === "applied" ? `${p.title}: told ${audience === "everyone" ? "the table" : destName(dest)}.` : `${p.title}: not told (${res.status === "refused" ? res.reason : res.status === "error" ? res.message : res.status}).`;
+    }
+    ws.notePhysics();
   }
   // Keep on Live (4.4): bookmark where the GM is and put it on the open page as a preset for Everyone, named ready to change.
   function keepLive() {
@@ -299,6 +316,7 @@
       </article>
       {/if}
       <Playbook {pb} {board} {bookmarks} roles={st.roles} bind:pageId bind:folded {selected} armed={armed?.kind === "source" && armed.id !== "live" ? armed.id : null} onchange={setPlaybook} onselect={(id) => ((selected = id), (editing = false))} onfire={firePreset} ondrag={dragPreset} />
+      {#if revealNote}<p class="sub" role="status" data-reveal-note>{revealNote}</p>{/if}
       {#if justSent().length}
         <section class="just" aria-label="Just now" data-just-now>
           <h4>Just now</h4>
