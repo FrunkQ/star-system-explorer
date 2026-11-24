@@ -6,7 +6,7 @@
   report is made only when the person copies or saves it; nothing is sent.
 -->
 <script lang="ts">
-  import { describeDevice, jsHeapMb, perf, perfReport, watchPage, type ChunkSummary, type DeviceDescription } from "../../ui-contract/src/index.ts";
+  import { describeDevice, jsHeapMb, sayNumber, perf, perfReport, watchPage, type ChunkSummary, type DeviceDescription } from "../../ui-contract/src/index.ts";
   import { opensFrom } from "../../chart-grammar/src/index.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { deviceReadout, measureAgain, quality, setQuality } from "../../renderer/src/runtime.ts";
@@ -31,7 +31,7 @@
   let measuring = $state(false);
   const QUALITIES = Object.entries(QUALITY_WORDS) as [QualityChoice, string][];
   const speedWords = (r: ProbeResult | null) =>
-    r ? `Graphics measured on ${r.backend === "webgpu" ? "WebGPU" : "WebGL2"}: fill ${r.factors.fill.toFixed(1)}×, march ${r.factors.march.toFixed(1)}×, geometry ${r.factors.geometry.toFixed(1)}× the reference's time${r.steady ? "" : " (unsteady: the device paused)"}.` : "Graphics speed not measured yet: it is measured with the first view drawn on the GPU.";
+    r ? `Graphics measured on ${r.backend === "webgpu" ? "WebGPU" : "WebGL2"}: fill ${sayNumber(r.factors.fill, 2, { decimals: 1 })}×, march ${sayNumber(r.factors.march, 2, { decimals: 1 })}×, geometry ${sayNumber(r.factors.geometry, 2, { decimals: 1 })}× the reference's time${r.steady ? "" : " (unsteady: the device paused)"}.` : "Graphics speed not measured yet: it is measured with the first view drawn on the GPU.";
   $effect(() => void deviceReadout().then((d) => (speed = d.probe)).catch(() => undefined));
   function pickQuality(v: QualityChoice) {
     q = v;
