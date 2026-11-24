@@ -76,6 +76,42 @@ pub struct Lightning {
     pub source: String,
 }
 
+/// W7c: eastern-boundary upwelling, the cold water under the marine decks.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Currents {
+    /// How far offshore the cold water reaches, km (e-folding).
+    pub upwelling_km: f64,
+    /// Cooling of the sea surface at the coast under full sinking air, K.
+    pub upwelling_cooling_k: f64,
+    /// Western boundary current: its warm water's reach offshore, km, its
+    /// warming at the coast, K, and the gyre's half-width about the Hadley
+    /// edge, degrees of latitude.
+    pub boundary_km: f64,
+    pub boundary_warming_k: f64,
+    pub gyre_half_width_deg: f64,
+    pub source: String,
+}
+
+/// Nearness to a coast at a sea place, 0 to 1: exp(−d / L), L the
+/// `upwelling_km`, d the distance to the nearest land lying spin-east
+/// (`spin` +1) or spin-west (−1) of it along the parallel, within 4 L.
+fn upwelling(cu: &Currents, c: &Conditions, t: &dyn Terrain, lat: f64, lon: f64, spin: f64) -> f64 {
+    let l = cu.upwelling_km * KM;
+    if l <= 0.0 {
+        return 0.0;
+    }
+    let per_deg = c.radius_m * m::cos(rad(lat)).max(0.05) * m::PI / 180.0;
+    let steps = 16;
+    for k in 1..=steps {
+        let d = 4.0 * l * k as f64 / steps as f64;
+        let (_, wet) = t.ground(dir(lat, lon + spin.signum() * d / per_deg));
+        if !wet {
+            return m::exp(-d / l);
+        }
+    }
+    0.0
+}
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct FormationSettings {
     pub cyclones: Cyclones,
@@ -84,6 +120,8 @@ pub struct FormationSettings {
     pub orography: Orography,
     pub lightning: Lightning,
     pub marine_layer: f64,
+    /// W7c: cold upwelling off eastern-boundary coasts.
+    pub currents: Currents,
     pub clear_visibility_km: f64,
     pub references: Vec<Reference>,
 }
@@ -521,11 +559,41 @@ pub fn imprint(
         cell.precip_mm_day = mean_rain * 3.0 * shield * shield;
         cell.temp_offset_k = 45.0 * (day_side - 0.32);
     }
-    // Marine layer: low deck over the sea under sinking subtropical air.
+    // Marine layer: low deck over the sea under sinking subtropical air,
+    // where the water is cold. With a map, that is upwelling water off an
+    // eastern-boundary coast (Klein and Hartmann 1993): the trades' flank
+    // of the subtropical high blows along the coast toward the equator,
+    // Ekman transport carries the surface water offshore and cold water
+    // rises behind it. "East" is the spin's: on a backward-spinning world
+    // the gyres and the upwelling coasts swap sides.
     let edge = p.circ.hadley_edge_deg;
     if regime != "tidally-locked" && p.climate.precip_mean_m_yr > 0.0 {
         let sink = bump(lat.abs() - (edge - 8.0), 7.0);
-        let extra = fs.marine_layer * sink * ocean_w;
+        let cold = match terrain {
+            Some(t) if wet_ground && sink > 0.01 => {
+                upwelling(&fs.currents, c, t, lat, lon, p.circ.spin_sign)
+            }
+            Some(_) => 0.0,
+            None => 1.0,
+        };
+        if cold > 0.0 {
+            cell.temp_offset_k -= fs.currents.upwelling_cooling_k * cold * sink;
+        }
+        // The same gyre's western boundary current (the Gulf Stream, the
+        // Kuroshio) carries warm water poleward along the coast lying to
+        // the spin's west, across the gyre's span.
+        if let Some(t) = terrain {
+            let gyre = bump(lat.abs() - edge, fs.currents.gyre_half_width_deg);
+            if wet_ground && gyre > 0.01 {
+                let cu = Currents {
+                    upwelling_km: fs.currents.boundary_km,
+                    ..fs.currents.clone()
+                };
+                let warm = upwelling(&cu, c, t, lat, lon, -p.circ.spin_sign);
+                cell.temp_offset_k += fs.currents.boundary_warming_k * warm * gyre;
+            }
+        }
+        let extra = fs.marine_layer * sink * ocean_w * cold;
         if extra > 0.01 {
             let l = &mut cell.layers[0];
             l.cloud_cover = (l.cloud_cover + extra).min(1.0);

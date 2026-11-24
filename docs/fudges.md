@@ -787,6 +787,14 @@ energy balance). Details in `handover/packages/W7a.md`.
 | exchange on one column | W8's moving-ices cycle keeps the single mixed column | Frost of the main gas comes within reach only on worlds without a sea so far | Two columns in the exchange cycle if a world needs both | known gap |
 | ice-age onsets | Dated only inside the W9 orbit-history window | Outside it there is no spin history to date them by | Longer secular tracks (T1) | documented |
 
+### Currents (W7c part 2b, `crates/sse-weather/src/formations.rs`, `weather_formations.currents`)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `currents.upwelling_km` 500, `upwelling_cooling_k` 5 | Under the subtropical high, a sea place within reach of a coast lying to the spin's east is cooled by 5 K × exp(−d / 500 km) and carries the marine deck; the open ocean and the far shore carry none | The deck needs cold water (Klein and Hartmann 1993) and the cold water is eastern-boundary upwelling; read along the parallel, 16 samples out to 2000 km | Ekman transport from the coast-parallel wind, and an ocean model with gyres | read off observation (Californian, Peruvian, Canarian, Benguela coasts) |
+| `currents.boundary_km` 300, `boundary_warming_k` 4, `gyre_half_width_deg` 15 | Within 15° of the Hadley edge, a sea place near a coast lying to the spin's west is warmed by 4 K × exp(−d / 300 km) | Western intensification of the gyres (Stommel 1948) puts warm currents on those coasts | As above | read off observation (Gulf Stream, Kuroshio) |
+| fixtures without a map | A world with no height map keeps the marine deck over every subtropical sea, at its ocean share | No coasts to read | None needed once every world has a map | documented |
+
 ### Orbital forcing and ice ages (W9 part 2, `crates/sse-climate/src/forcing.rs`, `climate.forcing`, `crates/sse-kernel/src/ice_ages.rs`)
 
 | Where | Instead of the physics | Why | Real physics to replace it | Status |

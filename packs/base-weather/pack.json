@@ -170,6 +170,14 @@
      "source": "Flash rate from cloud-top height, continental and marine (Price and Rind 1992); storm density is a stand-in (docs/fudges.md)"
     },
     "marine_layer": 0.35,
+    "currents": {
+     "upwelling_km": 500.0,
+     "upwelling_cooling_k": 5.0,
+     "boundary_km": 300.0,
+     "boundary_warming_k": 4.0,
+     "gyre_half_width_deg": 15.0,
+     "source": "Eastern-boundary upwelling (W7c): cold water within about 500 km of a coast lying to the spin's east under the subtropical high, the seat of the Californian, Peruvian, Canarian and Benguela stratocumulus decks (Klein and Hartmann 1993); the coast's sea surface runs about 5 K below the zonal mean there. Western boundary currents (Gulf Stream, Kuroshio) run about 4 K above it within about 300 km of the coast lying to the spin's west, across the subtropical gyre (about 15 degrees either side of the Hadley edge). All figures read off observation: docs/fudges.md."
+    },
     "clear_visibility_km": 50.0,
     "references": [
      {

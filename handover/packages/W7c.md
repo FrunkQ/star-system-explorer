@@ -74,9 +74,23 @@ The aim: heat capacity per place, so that coasts are mild and interiors harsh. A
 - **Reason:** a surveyed world with seas now takes its land and sea from its own height map instead of one global share.
 - **Unchanged:** the surface goldens. They build their climates directly, without the survey chain.
 
+## Part 2b (24 Nov 2026): currents as rules
+
+### What was built
+- **Eastern-boundary upwelling** (`formations::upwelling`, `weather_formations.currents`). Under the subtropical high, a sea place's nearness to a coast lying to the spin's east is exp(−d / `upwelling_km`), with d read along the parallel. That nearness cools the place by `upwelling_cooling_k` and is the only place the marine deck forms (Klein and Hartmann 1993). The open ocean and the far shore get no deck.
+- **Western boundary currents**: within `gyre_half_width_deg` of the Hadley edge, a sea place near a coast lying to the spin's west is warmed by `boundary_warming_k` × exp(−d / `boundary_km`).
+- On a backward-spinning world, east and west swap, so the upwelling and the warm currents move to the other coasts.
+- Worlds with no height map keep the old deck over every subtropical sea.
+
+### Tests
+- `sse-weather::marine_decks_sit_over_upwelling_coasts_and_flip_with_the_spin`: one continent from 0° to 40° E.
+  - Off its west coast: a deck and cold water.
+  - Off its east coast and mid-ocean: no deck.
+  - The warm current is off the east coast.
+  - A backward spin swaps the two coasts.
+
 ### Not yet (rest of part 2)
 - A cell's temperature from its distance to the coast, so land cells read the land column and coasts lean to the sea.
 - Evaporation from the sea column.
-- Current rules: western boundaries warm, eastern upwelling cold, marine decks only over upwelling. A retrograde fixture's currents flip.
 - The ITCZ lag from heat capacity.
 - Eyeball sea ice on locked worlds.
