@@ -144,3 +144,8 @@ export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem,
 // One units engine (ED1a): every figure said and read back the same way.
 export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
 export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices } from "./figures.ts";
+// The Flow view (RK13): any ledger's rows laid out in columns; the Power card is its first user.
+export { layoutFlow, flowRowColumns, HAIRLINE_SHARE } from "./flow.ts";
+export type { FlowRow, FlowNode, FlowBand, FlowLayout, FlowOptions } from "./flow.ts";
+export { POWER_COLUMNS, NOWHERE, JET, FUEL_NODE, RADIATORS, heatTemperatures, radiatorNode, powerFlowRows, powerColumn, powerRank, powerReadings, radiatorArea, newtonsText, areaText, VISIBLE_AT_M } from "./power.ts";
+export type { RadiatorRule, PowerReading } from "./power.ts";

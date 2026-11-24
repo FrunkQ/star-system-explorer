@@ -101,6 +101,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs as edited, the Solar System built through the UI) |
 | `status/run-desk.md` (arrives with PR 421) | Build Run desk playbook and players' side | RD, PB (Playbook and Switchboard) |
 | none yet | Build Paper spacecraft pack | RK6 (other RK packages are rows in the files above) |
+| `status/atomic-rockets.md` | Build ship flow and power views | RK13 (Flow view, Power card), RK12, RK10, RK3 |
 | none yet | designed only (XO note, PR 420) | XO exotic objects |
 
 A package that does not fit a file goes in its owner thread's file. A new track gets a new file and one line in the table above. Milestone M1 "Proven core" (K0 to K6) is complete.

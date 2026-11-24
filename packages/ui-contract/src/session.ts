@@ -201,6 +201,8 @@ export interface ViewSession {
   /** One 10 pc star cell of the campaign's galaxy (kernel `star_cell`, Y7a). Read only; GM only. */
   starCell(ask: { cell?: [number, number, number]; t_myr?: number }): Promise<{ ok: true; cell: import("./voyage.ts").StarCell } | { ok: false; code: string; message: string }>;
   /** A voyage between stars for one ship (kernel `plan_voyage`, V8 part 3). Read only; GM only for now (players ask through their console later). */
+  /** A ship's power books (RK9 kernel `ship_power`), for the Power card (RK13). */
+  shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }>;
   planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan | import("./voyage.ts").SystemVoyagePlan } | { ok: false; code: string; message: string }>;
   /** The stacked packs' templates for ships, stations, sites and the like (kernel `templates`, J7). Read only. */
   templates?(): Promise<{ ok: true; templates: import("./constructs.ts").ConstructTemplate[] } | { ok: false; code: string; message: string }>;
@@ -832,6 +834,12 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the galaxy's stars are drawn on the game master's machine" };
     const r = await this.#call({ op: "star_cell", ...ask });
     return r.type === "star_celled" ? { ok: true, cell: (r as unknown as { cell: import("./voyage.ts").StarCell }).cell } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  /** A ship's power books (RK9 kernel `ship_power`): what it makes, what takes it, where it ends up. A ship is an id or a record; `flux_w_m2` is the starlight where it is. */
+  async shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "ship_power", ...ask } as unknown as Json);
+    return r.type === "ship_power_is" ? { ok: true, power: (r as unknown as { power: import("./power.ts").PowerBooks }).power } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan | import("./voyage.ts").SystemVoyagePlan } | { ok: false; code: string; message: string }> {
