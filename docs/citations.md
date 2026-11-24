@@ -15,6 +15,8 @@ shown in "Why?"), and a published relation is checked against its source before 
   the page or equation number may be unverified.
 
 ## How to add one
+A paper cited in a pack or the code must also be on the run-through's master list (`handover/citations/`):
+run `python3 scripts/citations.py --add` and commit it; `scripts/check.sh` and CI fail otherwise.
 Add a row to the area file below in the same PR that adds the reference. Columns: where (file or atom id),
 reference as written, what is relied on, status, what was checked.
 
