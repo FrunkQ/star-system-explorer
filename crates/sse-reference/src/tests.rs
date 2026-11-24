@@ -827,3 +827,35 @@ fn units_engine_rungs_are_on_the_sheet() {
         assert!(r.row("units", id).is_some(), "{id}");
     }
 }
+
+#[test]
+fn liquid_water_absorbs_least_in_the_blue() {
+    // MP32: pure water's absorption (Pope and Fry 1997; Hale and Querry 1973)
+    // is least near 420 nm and climbs steeply into the red and infrared,
+    // which is why deep water looks blue.
+    let r = Reference::base();
+    let t = r
+        .row("substances", "h2o")
+        .and_then(|x| x.get("optical"))
+        .and_then(|o| o.get("absorption_liquid"))
+        .unwrap();
+    let col = |k: &str| -> Vec<f64> {
+        let v = t.get(k).unwrap();
+        let a = v.get("v").unwrap_or(v);
+        a.as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect()
+    };
+    let lam = col("lambda_nm");
+    let alpha = col("alpha");
+    assert_eq!(lam.len(), alpha.len());
+    let i_min = (0..alpha.len())
+        .min_by(|&a, &b| alpha[a].total_cmp(&alpha[b]))
+        .unwrap();
+    assert_eq!(lam[i_min], 420.0);
+    let at = |nm: f64| alpha[lam.iter().position(|&l| l == nm).unwrap()];
+    assert!(at(700.0) > 100.0 * at(420.0));
+    assert!(at(2000.0) > at(1000.0));
+}

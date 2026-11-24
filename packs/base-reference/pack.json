@@ -11987,6 +11987,131 @@
        "unit": "1",
        "src": "fudge-register",
        "check": "authored"
+      },
+      "absorption_liquid": {
+       "kind": "table",
+       "lambda_nm": [
+        380.0,
+        400.0,
+        420.0,
+        440.0,
+        460.0,
+        480.0,
+        500.0,
+        520.0,
+        540.0,
+        560.0,
+        580.0,
+        600.0,
+        620.0,
+        640.0,
+        660.0,
+        680.0,
+        700.0,
+        750.0,
+        800.0,
+        900.0,
+        1000.0,
+        1200.0,
+        1440.0,
+        1460.0,
+        1600.0,
+        2000.0
+       ],
+       "alpha": {
+        "v": [
+         0.01137,
+         0.00663,
+         0.00454,
+         0.00635,
+         0.00979,
+         0.0127,
+         0.0204,
+         0.0409,
+         0.0474,
+         0.0619,
+         0.0896,
+         0.2224,
+         0.2755,
+         0.3108,
+         0.41,
+         0.465,
+         0.624,
+         2.6,
+         2.0,
+         6.8,
+         36.0,
+         104.0,
+         2880.0,
+         2840.0,
+         672.0,
+         6912.0
+        ],
+        "unit": "m-1",
+        "src": "pope-fry1997",
+        "also": [
+         "hale-querry1973"
+        ],
+        "check": "unverified"
+       },
+       "src": "pope-fry1997",
+       "also": [
+        "hale-querry1973"
+       ],
+       "check": "unverified",
+       "src_from_nm": {
+        "pope-fry1997": [
+         380.0,
+         700.0
+        ],
+        "hale-querry1973": [
+         750.0,
+         2000.0
+        ]
+       },
+       "note": "pure liquid water near room temperature; light falls to 1/e over 1/alpha metres (about 22 m at 420 nm, 0.4 m at 750 nm), which is why deep water is blue"
+      },
+      "refractive_index_liquid": {
+       "kind": "table",
+       "lambda_nm": [
+        500.0,
+        599.8,
+        749.9,
+        799.8,
+        899.5,
+        1000.0,
+        1199.0,
+        1449.0,
+        1600.0,
+        2000.0
+       ],
+       "n": [
+        1.33943,
+        1.3331,
+        1.327201,
+        1.325874,
+        1.323648,
+        1.321695,
+        1.318008,
+        1.313055,
+        1.309642,
+        1.296913
+       ],
+       "k": [
+        9.243e-10,
+        9.634e-09,
+        1.559e-07,
+        1.25e-07,
+        4.862e-07,
+        3e-06,
+        1.199e-05,
+        0.0003637,
+        9.347e-05,
+        0.001101
+       ],
+       "src": "segelstein1981",
+       "check": "unverified",
+       "note": "liquid water near room temperature; k is the imaginary index (alpha = 4 pi k / lambda)"
       }
      },
      "chemical": {
@@ -16883,6 +17008,13 @@
      "url": "https://arxiv.org/abs/2009.10098"
     },
     {
+     "id": "hale-querry1973",
+     "text": "Hale, G. M. and Querry, M. R. 1973, Applied Optics 12, 555: optical constants of water in the 200 nm to 200 micron wavelength region; absorption in 1/cm (OMLC copy hale73.txt)",
+     "status": "unverified",
+     "doi": "10.1364/AO.12.000555",
+     "url": "https://omlc.org/spectra/water/data/hale73.txt"
+    },
+    {
      "id": "harvey2015",
      "text": "Harvey, D. et al. 2015, Science 347, 1462: the nongravitational interactions of dark matter in colliding galaxy clusters",
      "status": "verified",
@@ -17354,6 +17486,13 @@
      "url": "https://nvlpubs.nist.gov/nistpubs/jres/070/2/V70.N02.A07.pdf"
     },
     {
+     "id": "pope-fry1997",
+     "text": "Pope, R. M. and Fry, E. S. 1997, Applied Optics 36, 8710: absorption spectrum (380-700 nm) of pure water. II. Integrating cavity measurements; table on a 2.5 nm grid in 1/cm (OMLC copy pope97.txt)",
+     "status": "unverified",
+     "doi": "10.1364/AO.36.008710",
+     "url": "https://omlc.org/spectra/water/data/pope97.txt"
+    },
+    {
      "id": "popov2000",
      "text": "Popov, S. G., Ivanov, V. K., Carbajo, J. J. and Yoder, G. L. 2000, Thermophysical properties of MOX and UO2 fuels including the effects of irradiation, ORNL/TM-2000/351, Oak Ridge National Laboratory, sections 2.3 and 3.1: UO2 melting point 3120 +- 30 K unirradiated, theoretical density 10 970 +- 70 kg/m3 at 273 K",
      "status": "unverified",
@@ -17436,6 +17575,12 @@
      "text": "Sea-Bird Electronics, Application note 14: 1978 Practical Salinity Scale (rev. January 1989): C(35,15,0) = 42.914 mmho/cm (Culkin and Smith, UNESCO 37 p. 23; Poisson used 42.933); mmho/cm equal mS/cm",
      "status": "unverified",
      "url": "https://pscfiles.apl.uw.edu/woodgate/BeringStraitArchive/BeringStraitMooringData/BeringStraitMoorings2007to2009IPY_versionMar10/SeasoftForWavesProcessingSoftware/website/application_notes/AN14.htm"
+    },
+    {
+     "id": "segelstein1981",
+     "text": "Segelstein, D. J. 1981, The complex refractive index of water, M.S. thesis, University of Missouri-Kansas City; real and imaginary index against wavelength (OMLC copy segelstein81_index.txt)",
+     "status": "unverified",
+     "url": "https://omlc.org/spectra/water/data/segelstein81_index.txt"
     },
     {
      "id": "setzmann-wagner1991",

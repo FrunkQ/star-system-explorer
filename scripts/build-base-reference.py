@@ -40,6 +40,7 @@ import material_rows  # noqa: E402
 import solid_rows  # noqa: E402
 import thermal_rows  # noqa: E402
 import conductivity_rows  # noqa: E402
+import liquid_rows  # noqa: E402
 import band_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
@@ -860,6 +861,12 @@ for _k, _v in conductivity_rows.SOURCES.items():
 for _m in conductivity_rows.apply(MIXTURES, val, {c[0]: c[2]["v"] for c in CONSTANTS}["T0C"]):
     assert all(x["id"] != _m["id"] for x in MIXTURES), _m["id"]
     MIXTURES.append(_m)
+
+# MP32: sea liquids for the climate thread (scripts/liquid_rows.py): liquid optics.
+for _k, _v in liquid_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+liquid_rows.apply(SUBSTANCES, math.pi)
 
 
 def elements():
