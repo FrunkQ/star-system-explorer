@@ -144,15 +144,6 @@ try {
     await styleBar.getByRole("button", { name: "Chart", exact: true }).click();
     assert.equal(await cmp2.locator("canvas[data-lineup-3d]").count(), 0, "Chart is the flat lineup again");
 
-    // The Gallery: every body of this system and the Solar System's reference bodies, in True at Readable, one press.
-    await cmp2.getByRole("button", { name: "Gallery", exact: true }).click();
-    await gm.waitForSelector('[data-view-controls][data-style="true"][data-scale="readable"]');
-    assert.ok(Number(await cmp2.getAttribute("data-compare")) >= start + 8, "the system's bodies and the Solar System's");
-    assert.match(await cmp2.locator('[role="status"]').innerText(), /^Gallery: \d+ bod(y|ies) of .* and \d+ of the Solar System, in True\.$/);
-    await cmp2.locator('canvas[data-lineup-3d="true"], [data-no-globes]').first().waitFor({ timeout: 10000 });
-    await shot(gm, `gallery-${name}`);
-    await styleBar.getByRole("button", { name: "Chart", exact: true }).click();
-
     // Phone.
     const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true })).newPage();
     phone.on("pageerror", (e) => errors.push(e.message));

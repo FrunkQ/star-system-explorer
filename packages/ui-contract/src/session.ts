@@ -204,6 +204,10 @@ export interface ViewSession {
   /** One 10 pc star cell of the campaign's galaxy (kernel `star_cell`, Y7a). Read only; GM only. */
   starCell(ask: { cell?: [number, number, number]; t_myr?: number }): Promise<{ ok: true; cell: import("./voyage.ts").StarCell } | { ok: false; code: string; message: string }>;
   /** A voyage between stars for one ship (kernel `plan_voyage`, V8 part 3). Read only; GM only for now (players ask through their console later). */
+  /** Effect at range (RK12, kernel `effect_at_range`): each ask's reading and the distances where it changes. */
+  effectAtRange(asks: import("./range-rings.ts").RangeAsk[]): Promise<{ ok: true; effects: import("./range-rings.ts").RangeEffect[] } | { ok: false; code: string; message: string }>;
+  /** A ship's power books (RK9 kernel `ship_power`), for the Power card (RK13). */
+  shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }>;
   planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan | import("./voyage.ts").SystemVoyagePlan } | { ok: false; code: string; message: string }>;
   /** The stacked packs' templates for ships, stations, sites and the like (kernel `templates`, J7). Read only. */
   templates?(): Promise<{ ok: true; templates: import("./constructs.ts").ConstructTemplate[] } | { ok: false; code: string; message: string }>;
@@ -231,6 +235,8 @@ export interface ViewSession {
   webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }>;
   /** A cube of the cosmic web for the 3D view (kernel `web_slice` with `cube`): n^3 parcels moved by the truncated Zel'dovich approximation. Read only; GM only. */
   webCube(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebCube } | { ok: false; code: string; message: string }>;
+  /** The galaxies in the same cube (kernel `web_slice` with `cube` and `haloes`, V9w): what True lights. Read only; GM only. */
+  webGalaxies?(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebGalaxies } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
   resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
@@ -838,6 +844,18 @@ export class Session implements ViewSession {
     return r.type === "star_celled" ? { ok: true, cell: (r as unknown as { cell: import("./voyage.ts").StarCell }).cell } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  /** Effect at range (RK12, kernel `effect_at_range`): what arrives, the reading, the odds, and the rings. */
+  async effectAtRange(asks: import("./range-rings.ts").RangeAsk[]): Promise<{ ok: true; effects: import("./range-rings.ts").RangeEffect[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "effect_at_range", asks } as unknown as Json);
+    return r.type === "effects_at_range" ? { ok: true, effects: (r as unknown as { effects: import("./range-rings.ts").RangeEffect[] }).effects } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  /** A ship's power books (RK9 kernel `ship_power`): what it makes, what takes it, where it ends up. A ship is an id or a record; `flux_w_m2` is the starlight where it is. */
+  async shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "ship_power", ...ask } as unknown as Json);
+    return r.type === "ship_power_is" ? { ok: true, power: (r as unknown as { power: import("./power.ts").PowerBooks }).power } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan | import("./voyage.ts").SystemVoyagePlan } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "voyages between stars are planned on the game master's machine for now" };
     const r = await this.#call({ op: "plan_voyage", ...ask });
@@ -919,6 +937,12 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the cosmic web is read on the game master's machine" };
     const r = await this.#call({ op: "web_slice", cube: true, ...ask });
     return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebCube }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async webGalaxies(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebGalaxies } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the cosmic web is read on the game master's machine" };
+    const r = await this.#call({ op: "web_slice", cube: true, haloes: true, ...ask });
+    return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebGalaxies }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }> {
