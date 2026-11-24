@@ -678,6 +678,7 @@ dependencies = [
  "sse-sense",
  "sse-sift",
  "sse-sky",
+ "sse-small",
  "sse-surface",
  "sse-survey",
  "sse-time",

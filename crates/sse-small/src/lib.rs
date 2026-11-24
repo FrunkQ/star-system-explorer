@@ -25,7 +25,10 @@ mod member;
 pub mod settings;
 
 pub use figure::{jacobi_axes, maclaurin_c_over_a, Q_BIFURCATION, Q_JACOBI_END, Q_MACLAURIN_MAX};
-pub use member::{notables, rank_of, resolve, Notable};
+pub use member::{
+    made_field, mass_for_diameter, nearest_cloud, notables, rank_of, resolve, resolve_pinned,
+    Notable, Pins,
+};
 pub use settings::Settings;
 
 use serde::{Deserialize, Serialize};

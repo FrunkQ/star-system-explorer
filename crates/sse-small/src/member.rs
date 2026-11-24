@@ -198,7 +198,45 @@ pub fn resolve(
     upheaval: Option<&Upheaval>,
     s: &Settings,
 ) -> Member {
-    let body = cloud.resolve(seed, rank);
+    resolve_pinned(
+        seed,
+        cloud,
+        rank,
+        host,
+        star_au,
+        upheaval,
+        s,
+        &Pins::default(),
+    )
+}
+
+/// What a GM fixed by hand on a body they added (the Add list): the pair
+/// kind ("contact" or "separated") and the eccentricity. Everything else
+/// still comes from the field.
+#[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
+pub struct Pins {
+    #[serde(default)]
+    pub pair: Option<String>,
+    #[serde(default)]
+    pub e: Option<f64>,
+}
+
+/// [`resolve`] with pins.
+#[allow(clippy::too_many_arguments)]
+pub fn resolve_pinned(
+    seed: &Seed,
+    cloud: &Cloud,
+    rank: u64,
+    host: &Host,
+    star_au: Option<f64>,
+    upheaval: Option<&Upheaval>,
+    s: &Settings,
+    pins: &Pins,
+) -> Member {
+    let mut body = cloud.resolve(seed, rank);
+    if let Some(e) = pins.e {
+        body.e = e.clamp(0.0, 0.99);
+    }
     let d = Draws::new(
         *seed,
         body.address.clone(),
@@ -398,11 +436,46 @@ pub fn resolve(
     let u = d.unit(at::PAIR);
     let mut acc = 0.0;
     let mut chosen: Option<(&str, &str)> = None;
-    for o in odds {
-        acc += o.2;
-        if u < acc {
-            chosen = Some((o.0, o.1));
-            break;
+    if let Some(want) = pins
+        .pair
+        .as_deref()
+        .filter(|w| *w == "contact" || *w == "separated")
+    {
+        // Pinned: the mechanism is still the field's, weighted by its odds.
+        let sum: f64 = odds.iter().filter(|o| o.0 == want).map(|o| o.2).sum();
+        if sum > 0.0 {
+            for o in odds.iter().filter(|o| o.0 == want) {
+                acc += o.2;
+                if u * sum < acc {
+                    chosen = Some((o.0, o.1));
+                    break;
+                }
+            }
+        }
+        if chosen.is_none() {
+            let how = if cold > 0.5 {
+                "gentle-merger"
+            } else if want == "separated" && big > 0.5 {
+                "impact-moon"
+            } else {
+                "yorp-fission"
+            };
+            chosen = Some((
+                if want == "contact" {
+                    "contact"
+                } else {
+                    "separated"
+                },
+                how,
+            ));
+        }
+    } else {
+        for o in odds {
+            acc += o.2;
+            if u < acc {
+                chosen = Some((o.0, o.1));
+                break;
+            }
         }
     }
     let ur = d.unit(at::RATIO);
@@ -766,4 +839,57 @@ pub fn rank_of(address: &Address) -> Option<u64> {
         .to_string()
         .rsplit_once("obj:")
         .and_then(|(_, k)| k.parse().ok())
+}
+
+/// A one-member field for a body a GM adds by hand: the makeup and orbit
+/// spread of `template` (the system's own cloud nearest `a_au`, so the body
+/// is made of what is really there), at `a_au`, with exactly `mass_kg`.
+/// Rank 1 of the returned cloud is the body.
+pub fn made_field(
+    template: &Cloud,
+    address: Address,
+    kind: &str,
+    a_au: f64,
+    mass_kg: f64,
+) -> Cloud {
+    let mut c = template.clone();
+    c.address = address;
+    c.kind = kind.to_string();
+    c.a_min_au = a_au;
+    c.a_max_au = a_au;
+    c.a_log = false;
+    c.n_top = 1.0;
+    c.norm = cloud_mass_kg(&c) / mass_kg.max(1.0);
+    c.largest_km = 0.0;
+    c
+}
+
+/// Mass of a body of diameter `d_km` made of `cloud`'s mean makeup at a
+/// monolith's porosity (the resolve then works out its own structure).
+pub fn mass_for_diameter(cloud: &Cloud, d_km: f64, s: &Settings) -> f64 {
+    let mk = mean_makeup(cloud).as_array();
+    let rho = s.makeup.grain_density_kg_m3;
+    let inv: f64 = mk.iter().zip(rho.iter()).map(|(x, r)| x / r).sum();
+    let bulk = (1.0 - s.collisions.porosity_monolith) / inv;
+    m::PI / 6.0 * bulk * m::pow(d_km * 1000.0, 3.0)
+}
+
+/// The cloud nearest a distance from the star (by log distance to its range),
+/// among those of the given kinds (all kinds when empty).
+pub fn nearest_cloud<'a>(clouds: &'a [Cloud], a_au: f64, kinds: &[&str]) -> Option<&'a Cloud> {
+    let dist = |c: &Cloud| {
+        let la = m::ln(a_au.max(1e-6));
+        let (lo, hi) = (m::ln(c.a_min_au.max(1e-6)), m::ln(c.a_max_au.max(1e-6)));
+        if la < lo {
+            lo - la
+        } else if la > hi {
+            la - hi
+        } else {
+            0.0
+        }
+    };
+    clouds
+        .iter()
+        .filter(|c| c.around.is_none() && (kinds.is_empty() || kinds.contains(&c.kind.as_str())))
+        .min_by(|a, b| dist(a).total_cmp(&dist(b)))
 }

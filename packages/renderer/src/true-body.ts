@@ -2,6 +2,7 @@
 // lineup and gallery), so a look added here (a giant's bands, a haze, plumes, frosts, a star's glow) shows in all of
 // them at once with no second code path. It takes what is known of the body and gives the GpuItem fields that draw it;
 // the view keeps only where the body is and how big. Pure, apart from a cache of ring profiles by key.
+import { smallBodyColour, smallBodyMesh, type SmallFigure } from "./small-body.ts";
 import type { GpuItem } from "./gpu.ts";
 import type { Vec3 } from "./frames.ts";
 import { ringProfile, type RingBand } from "./rings.ts";
@@ -22,10 +23,15 @@ export interface TrueBody {
   rings?: readonly RingBand[];
   /** Its north pole in the drawing's frame: its rings lie in its equator. */
   pole: Vec3;
+  /**
+   * A small body's own figure from the kernel (`small_body`, sse-small `Figure` with its albedo and weathering): drawn
+   * as that shape, seeded by `key` (use the body's address), instead of a sphere.
+   */
+  figure?: SmallFigure;
 }
 
 /** The GPU fields of a body's True face. */
-export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings">;
+export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "mesh">;
 
 /** A surface texture's mean colour, 0..1 (sRGB bytes over 255; a tint, not a measurement). */
 export function meanColour(t: TrueTexture): [number, number, number] {
@@ -68,5 +74,9 @@ export function trueLook(b: TrueBody): TrueLook {
   if (b.surface) out.surface = { key: b.key, texture: b.surface };
   const r = b.star ? null : ringsOf(b);
   if (r) out.rings = { key: r.key, inner: r.inner, outer: r.outer, normal: b.pole, width: r.width, data: r.data };
+  if (b.figure && !b.star) {
+    out.mesh = smallBodyMesh(b.figure, b.key);
+    if (!b.surface) out.colour = smallBodyColour(b.figure);
+  }
   return out;
 }

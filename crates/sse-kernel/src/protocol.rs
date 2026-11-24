@@ -691,6 +691,43 @@ pub enum Request {
         #[ts(optional)]
         at_s: Option<i64>,
     },
+    /// SB2: one member of a system's belt, ring or cloud resolved into a
+    /// definite body (makeup, type, rubble pile or monolith, single, contact
+    /// or separated pair, spin, figure, weathering, history, and facts for
+    /// the resource books). Give `member` (`<cloud>/obj:<k>`), or `cloud` and
+    /// `rank`; give neither for the bodies formation made before anyone
+    /// looked (a shattered world's bared core). Nothing is stored.
+    SmallBody {
+        system: String,
+        #[serde(default)]
+        #[ts(optional)]
+        member: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        cloud: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        rank: Option<u64>,
+    },
+    /// SB2: a small body a GM adds by hand (the Add list), made of the
+    /// system's own nearest cloud: `kind` asteroid, comet-nucleus,
+    /// contact-binary or binary-pair, a `diameter_km` or `mass_kg`, at
+    /// `a_au` (optional eccentricity `e`), living at `address`.
+    MakeSmallBody {
+        system: String,
+        address: String,
+        kind: String,
+        #[serde(default)]
+        #[ts(optional)]
+        diameter_km: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_kg: Option<f64>,
+        a_au: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        e: Option<f64>,
+    },
     /// Natural resource inventory (TG11, MP8b): for each world of `system`
     /// (or `body`), the kilograms of each resource kind in `kinds` (pack
     /// kinds from `provides.other.resources`, or any element id or `h2o`
@@ -2207,6 +2244,8 @@ impl Request {
             Request::ReadField { .. } => "read_field",
             Request::ReadComposition { .. } => "read_composition",
             Request::ReadInventory { .. } => "read_inventory",
+            Request::SmallBody { .. } => "small_body",
+            Request::MakeSmallBody { .. } => "make_small_body",
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
@@ -2459,6 +2498,16 @@ pub fn ops() -> Vec<OpInfo> {
             "read_inventory",
             Cost::Trivial,
             "per body: read_composition at Survey, then one sum per kind",
+        ),
+        o(
+            "small_body",
+            Cost::Trivial,
+            "one member: a few dozen draws and closed-form relations (the system's formation run is made once if missing)",
+        ),
+        o(
+            "make_small_body",
+            Cost::Trivial,
+            "one body: the same as small_body on a one-member field",
         ),
         o(
             "read_photometry",
@@ -3092,6 +3141,20 @@ pub enum Response {
     CompositionRead {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `small_body` and `make_small_body`: `body` (sse-small `Member`:
+    /// address, cloud, kind, rank, orbit, mass_kg, diameter_km,
+    /// bulk_density_kg_m3, makeup, temperature_k, type_label, type_why,
+    /// structure, pair, spin_hours, barrier_hours, yorp_strength, figure
+    /// {kind, axes_m, lobes, relief, q}, albedo, weathering, history, facts),
+    /// or `notables` (each a `Member` with `why`).
+    SmallBodyIs {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        body: Option<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown[]")]
+        notables: Option<Vec<serde_json::Value>>,
     },
     /// `read_inventory`: each of `bodies` is a world's address, mass and
     /// kinds (id, matter, reach, kg, per_kg, by_reservoir, note), with
