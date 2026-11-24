@@ -65,6 +65,7 @@ SOURCES = {
     "schmidt-wagner1985": ("Schmidt, R. and Wagner, W. 1985, Fluid Phase Equilibria 19, 175: a new form of the equation of state for pure substances and its application to oxygen", "10.1016/0378-3812(85)87016-3", None, "unverified"),
     "richardson2014": ("Richardson, I. A., Leachman, J. W. and Lemmon, E. W. 2014, J. Phys. Chem. Ref. Data 43, 013103: fundamental equation of state for deuterium", "10.1063/1.4864752", None, "unverified"),
     "coolprop2014": ("Bell, I. H., Wronski, J., Quoilin, S. and Lemort, V. 2014, Ind. Eng. Chem. Res. 53, 2498: CoolProp, pure and pseudo-pure fluid property evaluation (MIT licence; its saturated-liquid density fits to the equations of state, dev/fluids/*.json)", "10.1021/ie4033999", "https://github.com/CoolProp/CoolProp", "unverified"),
+    "nist-compositions": ("NIST Physical Measurement Laboratory, Atomic Weights and Isotopic Compositions pages: relative atomic masses of Be-9, B-10, B-11, O-17, F-19, Ne-20, Ne-21 and Ne-22; NIST's H-1 (1.007 825 032 23) is one digit off AME2020's in the last place, so these read as AME2016 values", None, "https://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl?ele=B&ascii=html&isotype=some", "unverified"),
     "codata2018": ("Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, Rev. Mod. Phys. 93, 025010: CODATA recommended values of the fundamental physical constants, 2018", "10.1103/RevModPhys.93.025010", None, "verified"),
     "si2019": ("The International System of Units (SI), 9th edition 2019, BIPM: the seven defining constants are exact (CODATA 2018 Table I)", None, "https://www.bipm.org/en/publications/si-brochure", "verified"),
     "iau2015b3": ("Prša, A. et al. 2016, AJ 152, 41: nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3", "10.3847/0004-6256/152/2/41", None, "verified"),
@@ -433,6 +434,16 @@ ISOTOPES = [
     # Stable references and clocks.
     iso("c12", "c", 12), iso("c13", "c", 13), iso("c14", "c", 14, 5700.0, daughter="n14"),
     iso("n14", "n", 14), iso("n15", "n", 15), iso("o16", "o", 16), iso("o18", "o", 18),
+    # The rest of the stable isotopes from H to Ne (MP29), so every protosolar
+    # share in Lodders 2021 Table 4 has a row; masses as NIST lists them.
+    iso("be9", "be", 9, mass=val(9.012183065, "u", "nist-compositions", "unverified")),
+    iso("b10", "b", 10, mass=val(10.01293695, "u", "nist-compositions", "unverified")),
+    iso("b11", "b", 11, mass=val(11.00930536, "u", "nist-compositions", "unverified")),
+    iso("o17", "o", 17, mass=val(16.9991317565, "u", "nist-compositions", "unverified")),
+    iso("f19", "f", 19, mass=val(18.99840316273, "u", "nist-compositions", "unverified")),
+    iso("ne20", "ne", 20, mass=val(19.9924401762, "u", "nist-compositions", "unverified")),
+    iso("ne21", "ne", 21, mass=val(20.993846685, "u", "nist-compositions", "unverified")),
+    iso("ne22", "ne", 22, mass=val(21.991385114, "u", "nist-compositions", "unverified")),
     iso("be10", "be", 10, 1.387e6, daughter="b10"),
     iso("cl36", "cl", 36, 3.01e5, daughter="ar36"),
     iso("fe60", "fe", 60, 2.62e6, daughter="ni60"),
@@ -772,9 +783,9 @@ for _k, _v in nuclear_rows.SOURCES.items():
 next(i for i in ISOTOPES if i["id"] == "u235")["fission_thermal"] = nuclear_rows.fission_u235(val)
 
 # Protosolar isotope shares (scripts/isotope_shares.py, for MP8c): Lodders 2021
-# Table 4. Isotopes with a share but no row yet (Be, B, O-17, F, Ne) wait for
-# their AME2020 masses.
+# Table 4; every stable isotope from H to Ne has a row (MP29).
 ISOTOPE_SHARES_WAITING = isotope_shares.apply(ISOTOPES, val)
+assert not ISOTOPE_SHARES_WAITING, ISOTOPE_SHARES_WAITING
 
 # Solid propellants and RP-1's heating value (scripts/solid_rows.py, for RS's real engines).
 for _k, _v in solid_rows.SOURCES.items():

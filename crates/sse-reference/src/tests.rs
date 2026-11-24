@@ -696,6 +696,10 @@ fn protosolar_isotope_shares_are_on_the_isotope_rows() {
     assert!((ratio - 1.66e-4).abs() < 1e-6, "{ratio}");
     // The printed digits sum to 99.99997 percent.
     assert!((share("h1") + share("h2") - 1.0).abs() < 1e-6);
+    // MP29: every stable isotope from H to Ne has its row and share.
+    let ne = share("ne20") + share("ne21") + share("ne22");
+    assert!((ne - 1.0).abs() < 1e-6, "{ne}");
+    assert!((share("b11") / share("b10") - 80.173 / 19.827).abs() < 1e-9);
 }
 
 #[test]

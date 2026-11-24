@@ -8637,6 +8637,158 @@
      }
     },
     {
+     "id": "be9",
+     "element": "be",
+     "a": 9,
+     "stable": true,
+     "mass": {
+      "v": 9.012183065,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 1.0,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "100.0 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "b10",
+     "element": "b",
+     "a": 10,
+     "stable": true,
+     "mass": {
+      "v": 10.01293695,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.19827,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "19.827 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "b11",
+     "element": "b",
+     "a": 11,
+     "stable": true,
+     "mass": {
+      "v": 11.00930536,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.80173,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "80.173 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "o17",
+     "element": "o",
+     "a": 17,
+     "stable": true,
+     "mass": {
+      "v": 16.9991317565,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.00035,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.035 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "f19",
+     "element": "f",
+     "a": 19,
+     "stable": true,
+     "mass": {
+      "v": 18.99840316273,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 1.0,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "100.0 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "ne20",
+     "element": "ne",
+     "a": 20,
+     "stable": true,
+     "mass": {
+      "v": 19.9924401762,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.931251,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "93.1251 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "ne21",
+     "element": "ne",
+     "a": 21,
+     "stable": true,
+     "mass": {
+      "v": 20.993846685,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.002236,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.2236 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "ne22",
+     "element": "ne",
+     "a": 22,
+     "stable": true,
+     "mass": {
+      "v": 21.991385114,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.066513,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "6.6513 atom % (Table 4)"
+     }
+    },
+    {
      "id": "be10",
      "element": "be",
      "a": 10,
@@ -16502,6 +16654,12 @@
      "text": "Niemann, H. B. et al. 2005, Nature 438, 779: Titan's atmosphere from the Huygens probe (5.65% methane by volume near the surface)",
      "status": "unverified",
      "doi": "10.1038/nature04122"
+    },
+    {
+     "id": "nist-compositions",
+     "text": "NIST Physical Measurement Laboratory, Atomic Weights and Isotopic Compositions pages: relative atomic masses of Be-9, B-10, B-11, O-17, F-19, Ne-20, Ne-21 and Ne-22; NIST's H-1 (1.007 825 032 23) is one digit off AME2020's in the last place, so these read as AME2016 values",
+     "status": "unverified",
+     "url": "https://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl?ele=B&ascii=html&isotype=some"
     },
     {
      "id": "nist-handbook-k",
