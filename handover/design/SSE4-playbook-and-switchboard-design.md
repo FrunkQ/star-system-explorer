@@ -2,7 +2,7 @@
 
 Status: **PROPOSED 24 Nov 2026**, for Alex. The direction was accepted by Alex on 24 Nov 15:39 ("agree... on all counts", six questions, in memory `sse4-run-desk-beats`); this note designs it in detail. Design and mockup only; nothing here is built by this note. The 14 questions are in section 14, each with a recommendation.
 
-Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
+Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, folding sections, adding a preset, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
 
 Alex's brief, in his words (24 Nov): "a gm must always be able to adapt and remix... presets... are great to have 'in hand' but live is the key"; "no need for next - just let the GM build up a 'playbook'... chapters and pages and sections - each can be a preset that is fired at various windows"; "a routing diagram showing what everyone sees - gm can pause any one by clicking on the line"; "a mini video routing package"; "the routing screen should be generally available and does remove the need for a bunch of other smaller interfaces - we corral the user to the 'nerve centre'".
 
@@ -97,7 +97,8 @@ Placed by how often it is done (Alex's rule, 23 Nov).
 | sometimes | choose the holding card, latch Following | click the line's dot: the **line card** opens on the line itself |
 | sometimes | move a screen to another role | drag the screen onto the role's heading |
 | sometimes | swap two screens | drag one screen onto another: they trade roles |
-| sometimes | keep what was just done | **Keep** on the "just now" strip (section 4.4) |
+| sometimes | add a preset | **Keep** on Live, "+ Add" in a section, or Keep on the "just now" strip (section 4.4) |
+| sometimes | fold a section out of the way | press its heading |
 | rarely | change a role's knowledge, layout, look or brand | the role card |
 
 Every drag has a press-only twin, for touch and for keyboards: press a source's dot, then press a destination.
@@ -144,14 +145,35 @@ Rules that keep it one mechanism:
 
 A Read aloud step shows its words in the GM's monitor, large enough to read at arm's length. By default nothing goes to any screen: firing it marks it read, so it can sit in the hand among the sends. A switch on the step, "also show on screens", sends the words to the role as a plain card that arrives by the look's delivery (Typewriter suits it). This is the first use of documents on a player screen that are not a place.
 
-### 4.4 Keep, edit, reorder
+### 4.4 Adding a preset
 
-- **Just now.** A strip along the foot of the Switchboard lists the last few sends in words: "Tarn IV close up to Telescope, 21:42". Each has **Keep**, which adds it to the open page as a preset, and **Again**. This is how "anything just done live can be kept" works, and because a live send and a preset are the same data, Keep copies and invents nothing.
-- **Edit in place.** Selecting a preset opens its small card beside it: title, role, steps, a note to self. On Run the card opens only when asked for (a pencil on the selected row), so a session is not an editing screen.
-- **Reorder by dragging the row** by its body, within a page or onto a page name in the picker.
-- **"Update from live"** on a selected Show preset replaces its place and view with what the GM is looking at now. This is the fastest way to prepare: fly somewhere, frame it, Keep.
+Alex, 24 Nov 15:53: "how do we define new items to add to the playbook?" The rule is **show it, then keep it**. A new preset is never built from a blank form: it takes what the GM is looking at or has selected, and the GM only names it and says where it goes. Four doors, most used first:
 
-### 4.5 Where the Playbook is kept
+1. **Keep on Live.** Beside Send. Whatever is on the GM's view (place, layout, view style, band, a landing in progress) becomes a Show or Land preset on the open page. This is the fastest way to prepare: fly somewhere, frame it, Keep.
+2. **"+ Add to …" at the foot of each section.** It opens one row of six kinds: This view, A landing, A reveal, Read aloud, Look or signal, A hold. The first three take the GM's current view, picked site or selected object. Read aloud opens a box to type in. Look or signal takes the role's current look and dial. A hold asks only for the card.
+3. **Keep on the "just now" strip.** Anything sent live in the last few minutes, kept after the fact.
+4. **"Keep as a preset" in any object's menu**, on any desk, so a preset can be made from the chart without opening the Switchboard.
+
+A new preset arrives in the section it was added to, already selected, with its name ready to type over and a "goes to" choice beside it (Everyone, or a role). Enter or Done finishes it. Nothing else is required.
+
+### 4.5 Sections fold
+
+Alex, same message: sections "like 'Approach' as collapsible". Yes.
+
+- Pressing a section's heading folds it to one line that keeps its name and count ("The beacon · 3 presets").
+- Folding is the GM's own, kept on the device. It never changes the Playbook and nothing folds by itself, since a section that closed when its presets had been fired would be a script by the back door.
+- Keys 1 to 9 count only the presets in view.
+- A page's heading in the picker works the same way one level up.
+- "+ Section" sits at the foot of the page, and "+ Page" and "+ Chapter" in the picker.
+
+### 4.6 Edit, reorder
+
+- **Edit in place.** A selected preset's pencil opens the same name and "goes to" row it was made with, plus its steps and a note to self. On Run the row opens only when asked for, so a session is not an editing screen.
+- **Reorder by dragging the row** by its body, within a section, onto another section's heading, or onto a page name in the picker.
+- **"Update from live"** on a selected Show preset replaces its place and view with what the GM is looking at now.
+- **Again** on the "just now" strip repeats a send.
+
+### 4.7 Where the Playbook is kept
 
 In the campaign, as one document (`sse.playbook/1`), exported and imported with it. A pack may carry a playbook (an adventure pack's scenes), which appears as extra chapters marked with the pack's name and can be copied into the campaign to change. Sketch in section 11.
 
@@ -401,7 +423,7 @@ Files in `packages/shell/src/run/` and `packages/ui-contract/src/`. One at a tim
 |---|---|---|---|
 | **PB1** | Contract: `Source` (show with view, land, hold; `{off}` read as a blank hold), lines for Everyone, role and screen with `before`, the screen hello (id, name, wanted role) and its "showing" report. Sealed roles honour a hold. Old `shown` and `Seat.shown` read and upgraded. | nothing | yes |
 | **PB2** | The Switchboard screen: Live source, roles and screens as a list with lines, Send, click to hold, Hold all, Back, drag and press-then-press, move and swap screens. The on-air chip and the chart's Send button. Rail entry. The status line's table half goes. | PB1 | yes |
-| **PB3** | The Playbook: `sse.playbook/1` in the campaign; chapter and page picker; sections; fire; keys 1 to 9; the "just now" strip with Keep and Again; edit card; reorder; Update from live; Reveal steps with the eye. | PB2 | yes |
+| **PB3** | The Playbook: `sse.playbook/1` in the campaign; chapter and page picker; folding sections; fire; keys 1 to 9; Keep on Live and "+ Add" with its six kinds; the "just now" strip with Keep and Again; edit row; reorder; Update from live; Reveal steps with the eye. | PB2 | yes |
 | **PB4** | Previews: a Chart preview per role and source, shared; the confirmed tick; Pin to the chart; See full size. | PB2 | helps |
 | **PB5** | Holding cards: `sse.holding-cards/1` in the base pack, the 24 lines, kinds, chosen on the line card, no repeat twice running. | PB2 | small, yes |
 | **PB6** | Read aloud: the `say` source, the GM monitor reading card, "also show on screens" as a player document. | PB3 | yes if the run-through has narration |
