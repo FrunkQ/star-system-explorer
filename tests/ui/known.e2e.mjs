@@ -81,11 +81,15 @@ try {
   await gm.keyboard.press("Escape");
   await pop.waitFor({ state: "detached", timeout: 5000 });
 
+  // The ruler stepped on a few days: the eye reads and changes at the campaign's now, so it stays where it was pressed.
+  for (let i = 0; i < 3; i++) await gm.getByRole("button", { name: /^Forward one/ }).click();
   // Keyboard only: focus the eye and press Space.
   await eye.focus();
   await gm.keyboard.press(" ");
   assert.equal(await mark.getAttribute("data-known"), "known");
   await pl.waitForFunction(() => !/not yet scanned/.test(document.querySelector("[data-field='mass_kg'] dd")?.textContent ?? "not yet scanned"), null, { timeout: 15000 });
+  await gm.waitForTimeout(1000);
+  assert.equal(await mark.getAttribute("data-known"), "known", "the eye stays open after the kernel is read again");
   assert.deepEqual(errors, []);
   await browser.close();
   console.log("known e2e: ok");
