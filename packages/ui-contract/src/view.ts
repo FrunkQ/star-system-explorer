@@ -78,6 +78,8 @@ export interface Workspace {
   view?: import("./view-controls.ts").ViewChoice;
   /** A view says the viewer turned it by hand: the choice becomes Free. */
   turned?(): void;
+  /** A view sets the viewer's choice for them, as a press of its own asks (the size comparison's Gallery opens in True). */
+  pickView?(c: import("./view-controls.ts").ViewChoice): void;
   /** The time being viewed (the ruler's stroke); views derive and draw at it. */
   now_yr: number;
   /**
@@ -162,6 +164,8 @@ export interface ViewContext {
   styles?: StylesHost;
   /** V3 gap 23: hand a subject to Minerva, the storyteller, to describe from what one audience knows (absent where she cannot run). */
   describe?(address: string): void;
+  /** The catalogued Solar System (packs/base-sol, read once by the shell), for reference worlds; null where it cannot be read. */
+  solSheet?(): Promise<import("./sol.ts").SolSheet | null>;
 }
 
 /** What a shell offers views about style documents. Presentation only: kept on the device, never in the universe. */

@@ -113,3 +113,6 @@ export { byDensitySquared, density as shellDensity, drawShells, dustGlow10um, na
 export type { NebulaShape, ShellView } from "./star-shells.ts";
 export { baumbach, CORONA_DECADES, CORONA_REFERENCES, coronaShape, cycleActivity, drawCorona, narrateCorona } from "./star-corona.ts";
 export { DIFFERENTIAL_ROTATION, rateShare, spotsAt } from "./live-star.ts";
+// A body's face in True, one door for every view (true-body.ts).
+export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
+export type { TrueBody, TrueLook } from "./true-body.ts";

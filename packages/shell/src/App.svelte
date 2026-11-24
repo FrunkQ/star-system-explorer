@@ -25,7 +25,7 @@
   import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
-  import { readSol, solBatches, solSourceText, SOL_TITLE } from "../../ui-contract/src/index.ts";
+  import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
   import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
@@ -112,6 +112,8 @@
   ws.turned = () => {
     if (ws.view?.seen !== "free") setView({ ...ws.view!, seen: "free" });
   };
+  // A view's own press may set the choice for the viewer (the size comparison's Gallery opens in True).
+  ws.pickView = (c) => setView(c);
   // Orac is not connected yet (A2): its sample requests come from a fixture document.
   for (const r of (oracDoc as unknown as { requests: ChangeRequest[] }).requests) ws.fileRequest(r);
   let scene = $state<SystemScene>(base);
@@ -990,6 +992,13 @@
   // Each Sol body's sheet id ("earth", "europa"), by address: the name the kernel's world stacks go by, so a catalogued
   // world opens in the cutaway when the kernel has its stack (and says it has none otherwise).
   let solIds = $state<ReadonlyMap<string, string>>(new Map());
+  // The same sheet for views (reference worlds on the editing strips), read once and kept.
+  let solForViews: Promise<SolSheet | null> | null = null;
+  const solSheetForViews = () =>
+    (solForViews ??= fetch(new URL(stackDoc.catalogues.sol, document.baseURI))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => (p ? readSol(p) : null))
+      .catch(() => null));
   async function solSheet() {
     const sheet = readSol(await (await fetch(new URL(stackDoc.catalogues.sol, document.baseURI))).json());
     if (!sheet) throw new Error("the Solar System sheet could not be read");
@@ -1390,7 +1399,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, ...(minervaHost ? { describe } : {}) }, shown);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, solSheet: solSheetForViews, ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
     return {
       destroy: () => {
