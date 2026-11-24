@@ -1,0 +1,20 @@
+{
+ "construct": "apollo-11-eagle-descent-stage",
+ "name": "Eagle's descent stage",
+ "about": "Left at Tranquility Base on 21 July 1969, where it stands.",
+ "pieces": [
+  {
+   "from_s": 62154366880,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth/body:moon",
+    "lat_deg": 0.67416,
+    "lon_deg": 23.47314
+   },
+   "mark": "recorded",
+   "src": "nssdca-craft",
+   "writer": "pack"
+  }
+ ],
+ "events": []
+}

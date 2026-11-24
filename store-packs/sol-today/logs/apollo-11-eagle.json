@@ -1,0 +1,194 @@
+{
+ "construct": "apollo-11-eagle",
+ "name": "Apollo 11 Eagle (LM-5)",
+ "about": "The lunar module from undocking: descent, Tranquility Base, ascent, docking and its last orbit. The descent stage stays on the Moon as its own construct.",
+ "pieces": [
+  {
+   "from_s": 62154279879,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth/body:moon",
+    "elements": {
+     "a_m": 1848520.0,
+     "e": 0.00601129552290481,
+     "i_deg": 1.25,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62154279879
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "Columbia's orbit after LOI-2",
+   "to_s": 62154284933
+  },
+  {
+   "from_s": 62154284933,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth/body:moon",
+    "elements": {
+     "a_m": 1798238.2,
+     "e": 0.025077990223987014,
+     "i_deg": 1.25,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62154284933
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-apollo-11-mission-report",
+   "writer": "pack",
+   "why": "descent orbit about 8.5 by 57 nautical miles (mission report, from memory)",
+   "to_s": 62154288344
+  },
+  {
+   "from_s": 62154288344,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "powered descent"
+    }
+   },
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "powered descent, 12 min 35 s",
+   "to_s": 62154289099
+  },
+  {
+   "from_s": 62154289099,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth/body:moon",
+    "lat_deg": 0.67416,
+    "lon_deg": 23.47314
+   },
+   "mark": "recorded",
+   "src": "nssdca-craft",
+   "writer": "pack",
+   "why": "Tranquility Base (NSSDCA 1969-059C)",
+   "to_s": 62154366880
+  },
+  {
+   "from_s": 62154366880,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ascent"
+    }
+   },
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "ascent stage lifts off; the descent stage stays",
+   "to_s": 62154367315
+  },
+  {
+   "from_s": 62154367315,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth/body:moon",
+    "elements": {
+     "a_m": 1789904.2,
+     "e": 0.019607418095337167,
+     "i_deg": 1.25,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62154367315
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-apollo-11-mission-report",
+   "writer": "pack",
+   "why": "ascent orbit about 9.4 by 47 nautical miles (mission report, from memory)",
+   "to_s": 62154380139
+  },
+  {
+   "from_s": 62154380139,
+   "state": {
+    "kind": "docked",
+    "to": "apollo-11"
+   },
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "to_s": 62154387730
+  },
+  {
+   "from_s": 62154387730,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth/body:moon",
+    "elements": {
+     "a_m": 1848520.0,
+     "e": 0.00601129552290481,
+     "i_deg": 1.25,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62154387730
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "left in lunar orbit; it later fell to the Moon, when and where unknown"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 62154284933,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "nasa-apollo-11-mission-report",
+   "writer": "pack",
+   "dv_m_s": 23.2,
+   "engine": "lm-descent-engine",
+   "why": "descent orbit insertion, 30 s, about 76 ft/s (from memory)"
+  },
+  {
+   "at_s": 62154289099,
+   "kind": "landing",
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "20:17:39.9, engine cutoff 20:17:41"
+  },
+  {
+   "at_s": 62154366880,
+   "kind": "split",
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "into": [
+    "apollo-11-eagle-descent-stage"
+   ],
+   "keeps_identity": true,
+   "why": "the ascent stage leaves the descent stage on the surface"
+  },
+  {
+   "at_s": 62154366880,
+   "kind": "launch",
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "lunar liftoff, 17:54:00.79"
+  },
+  {
+   "at_s": 62154380139,
+   "kind": "join",
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "with": "apollo-11",
+   "why": "docks with Columbia"
+  }
+ ]
+}

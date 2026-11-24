@@ -1,0 +1,154 @@
+{
+ "construct": "falcon-9-flight-20",
+ "name": "Falcon 9 flight 20 (ORBCOMM OG2 M2)",
+ "about": "The second stage and its eleven ORBCOMM OG2 satellites, 22 Dec 2015 UTC, from SLC-40. The first stage, B1019, splits off at T+2:25 and becomes the first orbital booster to land, at Landing Zone 1. Times from Spaceflight101's reconstruction (approximate) and the 45th Space Wing release.",
+ "pieces": [
+  {
+   "from_s": 63619133408,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 28.5618,
+    "lon_deg": -80.5772
+   },
+   "mark": "estimated",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "why": "on SLC-40 the day before; pad position from memory",
+   "to_s": 63619219808
+  },
+  {
+   "from_s": 63619219808,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ascent"
+    }
+   },
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "why": "first stage burn 143 s, second stage 412 s, shutdown at T+9:26",
+   "to_s": 63619220374
+  },
+  {
+   "from_s": 63619220374,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 7013137.0,
+     "e": 0.0029943804035198513,
+     "i_deg": 47.0,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 63619220374
+    }
+   },
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "why": "614 by 656 km at 47.00 degrees, as achieved"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 63619219808,
+   "kind": "launch",
+   "mark": "recorded",
+   "src": "usaf-45sw-og2",
+   "writer": "pack"
+  },
+  {
+   "at_s": 63619219953,
+   "kind": "split",
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "into": [
+    "falcon-9-b1019"
+   ],
+   "keeps_identity": true,
+   "why": "stage separation"
+  },
+  {
+   "at_s": 63619220674,
+   "kind": "split",
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "into": [
+    "orbcomm-og2-m2-01",
+    "orbcomm-og2-m2-02"
+   ],
+   "keeps_identity": true,
+   "why": "satellites released"
+  },
+  {
+   "at_s": 63619220746,
+   "kind": "split",
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "into": [
+    "orbcomm-og2-m2-03",
+    "orbcomm-og2-m2-04"
+   ],
+   "keeps_identity": true,
+   "why": "satellites released"
+  },
+  {
+   "at_s": 63619220784,
+   "kind": "split",
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "into": [
+    "orbcomm-og2-m2-05",
+    "orbcomm-og2-m2-06"
+   ],
+   "keeps_identity": true,
+   "why": "satellites released"
+  },
+  {
+   "at_s": 63619220851,
+   "kind": "split",
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "into": [
+    "orbcomm-og2-m2-07",
+    "orbcomm-og2-m2-08"
+   ],
+   "keeps_identity": true,
+   "why": "satellites released"
+  },
+  {
+   "at_s": 63619220895,
+   "kind": "split",
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "into": [
+    "orbcomm-og2-m2-09",
+    "orbcomm-og2-m2-10"
+   ],
+   "keeps_identity": true,
+   "why": "satellites released"
+  },
+  {
+   "at_s": 63619220953,
+   "kind": "split",
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "into": [
+    "orbcomm-og2-m2-11"
+   ],
+   "keeps_identity": true,
+   "why": "satellites released"
+  }
+ ]
+}

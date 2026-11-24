@@ -12,6 +12,7 @@
   import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
   import { Aboard } from "../../manifest/src/index.ts";
+  import StationPicture from "../../ship/src/StationPicture.svelte";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const session = untrack(() => ctx.session);
@@ -115,6 +116,15 @@
 
   // ---- Edit and retire ----
   let edits = $state<Record<string, string>>({});
+  // A station's picture (renderer station-design.ts): built from its description, kept as `construct.design`.
+  let pictureOpen = $state(false);
+  const isStation = (c: PlayerSubject) => (templateOf(c, templates)?.kind ?? kindOf(c.address)) === "station";
+  async function setDesign(r: unknown) {
+    if (!current || !gm || ws.desk !== "build") return;
+    const res = await session.send({ kind: "set_value", address: current.address, field: "construct.design", value: JSON.stringify(r), at_yr: ws.campaign_now_yr ?? ws.now_yr });
+    note = res.status === "applied" ? null : res.status === "refused" ? res.reason : "Sent to the game master.";
+    ws.revision++;
+  }
   async function setFact(field: string, raw: string, was: unknown) {
     if (!current) return;
     const value: Json = typeof was === "number" ? Number(raw) : typeof was === "boolean" ? raw === "yes" || raw === "true" : raw;
@@ -275,10 +285,16 @@
           <nav class="links">
             {#if bodyAt(current.address)}<a href={placeHash({ scale: "world", system: scene.system, world: bodyAt(current.address)! })}>Open the world it is at</a>{/if}
             {#if gm && ws.setParty && navOf(current)}<button type="button" class="quiet-btn" aria-pressed={isParty(current)} onclick={() => makeParty(current!)} data-party-ship>{isParty(current) ? "The party's ship" : "Make this the party's ship"}</button>{/if}
+            {#if isStation(current)}<button type="button" class="quiet-btn" aria-expanded={pictureOpen} onclick={() => (pictureOpen = !pictureOpen)} data-station-picture-toggle>Picture</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" aria-expanded={aboardOpen} onclick={() => (aboardOpen = !aboardOpen)} data-aboard-toggle>Aboard</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" bind:this={logBtn} aria-expanded={logOpen} onclick={() => (logOpen = !logOpen)} data-log-toggle>Log</button>{/if}
             {#if gm && current.facts.some((f) => f.field === "template.id")}<button type="button" class="quiet-btn" onclick={() => (retiring = !retiring)} data-retire>Take out of play…</button>{/if}
           </nav>
+          {#if pictureOpen && isStation(current)}
+            <div use:opensFrom={() => document.querySelector("[data-station-picture-toggle]")}>
+              <StationPicture construct={current} name={nameOf(current)} words={currentTemplate?.explain ?? ""} tags={currentTemplate?.tags ?? []} locked={!(gm && ws.desk === "build")} onchange={(r) => setDesign(r)} />
+            </div>
+          {/if}
           {#if aboardOpen}
             <div use:opensFrom={() => document.querySelector("[data-aboard-toggle]")}>
               <Aboard {ctx} construct={current} {places} />
