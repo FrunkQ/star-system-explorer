@@ -153,7 +153,15 @@ export interface LandingSea {
   tide_m: number;
   /** The kernel's line about it. */
   line?: string;
+  /**
+   * The liquid's own numbers for drawing it (W-sea2 to W-sea4: colour, wave trains, froth), as the kernel sent them;
+   * the renderer's `readSeaOptics` reads them. Absent until the kernel sends any.
+   */
+  optics?: Record<string, unknown>;
 }
+
+/** The keys of the weather report's `data.sea` that describe the liquid for drawing (handover/status/surface-timelapse.md). */
+export const SEA_OPTICS_KEYS = ["bands_nm", "absorb_per_m", "backscatter_per_m", "refractive_index", "deep_rgb", "trains", "ripple_cutoff_m", "superfluid", "liquid_note", "whitecap_fraction", "foam_albedo", "streak_dir_deg"] as const;
 
 /** Where the GM is looking on the ground: metres east and north of the site, facing, and whether flying the drone. */
 export interface LandingPose {
@@ -229,6 +237,12 @@ export function tideNow(by: readonly { range_m?: number; period_h?: number }[], 
 }
 
 /** The sea from a weather report's `data`, with the tide at `t_s`; null when the site has no sea. */
+function opticsOf(sea: Record<string, unknown>): { optics?: Record<string, unknown> } {
+  const o: Record<string, unknown> = {};
+  for (const k of SEA_OPTICS_KEYS) if (sea[k] !== undefined && sea[k] !== null) o[k] = sea[k];
+  return Object.keys(o).length ? { optics: o } : {};
+}
+
 export function landingSeaOf(data: unknown, t_s: number): LandingSea | null {
   const sea = (data as { sea?: Record<string, unknown> } | null)?.sea;
   if (!sea || typeof sea !== "object") return null;
@@ -244,6 +258,7 @@ export function landingSeaOf(data: unknown, t_s: number): LandingSea | null {
     ...(Number.isFinite(Number(sea.fetch_km)) ? { fetch_km: Number(sea.fetch_km) } : {}),
     tide_m: Math.round(tideNow(by, t_s) * 100) / 100,
     ...(typeof sea.line === "string" ? { line: sea.line } : {}),
+    ...opticsOf(sea),
   };
 }
 
