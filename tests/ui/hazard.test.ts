@@ -1,7 +1,7 @@
 // The Hazard map's Profile layout (XO18): the stretched scale, ticks, labels that would overprint, distance words.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { distanceWords, labelled, radiusTicks, shortMark, xOf } from "../../packages/views/hazard/src/profile.ts";
+import { distanceWords, hoverWords, labelled, radiusTicks, shortMark, xOf } from "../../packages/views/hazard/src/profile.ts";
 
 const map = { from_m: 7e7, to_m: 7e9 };
 
@@ -35,4 +35,10 @@ test("distances are said in radii, or in au round a star far out", () => {
   assert.equal(distanceWords(4.2e8, 7e7), "6.00 radii");
   assert.equal(distanceWords(1.84e9, 7e7), "26.3 radii");
   assert.equal(distanceWords(2.27e11, 6.957e8), "1.52 au");
+});
+
+test("the push to hover reads in m/s² and g, and says when nothing can", () => {
+  assert.equal(hoverWords(9.80665), "holding still there instead takes 9.81 m/s² (1.00 g) of thrust");
+  assert.match(hoverWords(2.7e11), /\(\d+ g\)/);
+  assert.equal(hoverWords(Infinity), "no push can hold still there");
 });

@@ -39,6 +39,9 @@ const BLOCKS: &[&str] = &[
     "sse.climate.equilibrium_temperature",
     "sse.planet.escape_velocity",
     "sse.belts.latitude_falloff",
+    "sse.gravity.gravitational_radius",
+    "sse.gravity.clock_rate",
+    "sse.planet.surface_gravity",
 ];
 
 /// Points along the line, spaced evenly on a stretched (logarithmic) scale.
@@ -215,6 +218,12 @@ pub struct ShipMark {
     /// short of the ground.
     pub set_by: String,
     pub says: String,
+    /// A clock here against one far away: at Park on a circular orbit, at
+    /// Dive falling through from far away (XO20).
+    pub clock_rate: f64,
+    /// The push to hold still here instead, in m/s² (gravity over the
+    /// hovering clock rate).
+    pub hover_m_s2: f64,
 }
 
 /// The totals for one fall-through, at the Dive mark.
@@ -225,6 +234,8 @@ pub struct Pass {
     pub peak_hull_k: f64,
     /// Hours spent inside the belts' outer edge.
     pub hours_in_belts: f64,
+    /// Seconds the ship's clock falls behind a far clock over the pass.
+    pub clock_lost_s: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -471,6 +482,35 @@ fn say_distance(d: f64, radius: f64, au: f64) -> String {
     }
 }
 
+/// A span of seconds in the unit that reads best.
+fn say_seconds(s: f64) -> String {
+    let a = s.abs();
+    if a >= 86_400.0 {
+        format!("{:.1} days", s / 86_400.0)
+    } else if a >= 3600.0 {
+        format!("{:.1} hours", s / 3600.0)
+    } else if a >= 1.0 {
+        format!("{s:.1} s")
+    } else if a >= 1e-3 {
+        format!("{:.1} ms", s * 1e3)
+    } else if a >= 1e-6 {
+        format!("{:.1} µs", s * 1e6)
+    } else {
+        format!("{:.1} ns", s * 1e9)
+    }
+}
+
+/// How a clock at this rate keeps time against one far away.
+fn clock_words(rate: f64, where_: &str) -> String {
+    if rate <= 0.0 {
+        return format!("A clock {where_} stops against one far away.");
+    }
+    format!(
+        "A clock {where_} loses {} a day against one far away.",
+        say_seconds((1.0 - rate) * 86_400.0)
+    )
+}
+
 /// The hazard map's reading for one body, ship and line.
 pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
     let set = settings();
@@ -517,6 +557,26 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
         let v = run("sse.planet.escape_velocity", &[mass, r], &[])?;
         Ok(v * (1.0 - 1.0 / m::sqrt(2.0)))
     };
+    // Clocks (XO20): the gravitational radius, then the hovering and
+    // orbiting rates; a fall from far away (a parabola) runs at the hovering
+    // rate squared, 1 − 2rg/r. Holding still takes gravity over the hovering rate.
+    let rg = run("sse.gravity.gravitational_radius", &[mass], &[])?;
+    let clock = |r: f64| -> Result<(f64, f64, f64), String> {
+        let out = block("sse.gravity.clock_rate")
+            .eval(&[rg, r], &[])
+            .map_err(|e| format!("sse.gravity.clock_rate: {e}"))?;
+        let (hover, orbit) = (out[0], out[1]);
+        let g = run("sse.planet.surface_gravity", &[mass, r], &[])?;
+        let push = if hover > 0.0 {
+            g / hover
+        } else {
+            f64::INFINITY
+        };
+        Ok((orbit, hover * hover, push))
+    };
+    used.push("sse.gravity.gravitational_radius");
+    used.push("sse.gravity.clock_rate");
+    used.push("sse.planet.surface_gravity");
 
     // The span: out past every hazard's harsh edge.
     let mut far = 30.0 * r0;
@@ -679,12 +739,16 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
                 word_of(h)
             ),
         };
-        ShipMark {
+        let (orbit, _, push) = clock(sb[0])?;
+        Ok::<_, String>(ShipMark {
             distance_m: sb[0],
             set_by,
-            says,
-        }
+            says: format!("{says} {}", clock_words(orbit, "on an orbit there")),
+            clock_rate: orbit,
+            hover_m_s2: push,
+        })
     });
+    let park = park.transpose()?;
     if safe_bands.len() > 1 {
         why.push(format!(
             "There are {} places {} where it can stay: {}.",
@@ -711,12 +775,12 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
     let gm = run("sse.planet.escape_velocity", &[mass, 1.0], &[])?;
     let gm = gm * gm / 2.0;
     let belts_out = ask.belts.as_ref().map_or(0.0, |x| x.outer_m);
-    let pass_of = |q: f64| -> Result<(f64, f64, f64), String> {
+    let pass_of = |q: f64| -> Result<(f64, f64, f64, f64), String> {
         // r = 2q / (1 + cos ν); dt = r² dν / h, h = √(2 GM q).
         let h = m::sqrt(2.0 * gm * q);
         let nu_out = m::acos((2.0 * q / far - 1.0).clamp(-1.0, 1.0));
         let dnu = 2.0 * nu_out / PASS_STEPS as f64;
-        let (mut sv, mut hours) = (0.0, 0.0);
+        let (mut sv, mut hours, mut lost) = (0.0, 0.0, 0.0);
         for k in 0..PASS_STEPS {
             let nu = -nu_out + (k as f64 + 0.5) * dnu;
             let r = 2.0 * q / (1.0 + m::cos(nu));
@@ -735,15 +799,16 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
             if r <= belts_out {
                 hours += dt / 3600.0;
             }
+            lost += (1.0 - clock(r)?.1) * dt;
         }
-        Ok((sv, hull_t(q)?, hours))
+        Ok((sv, hull_t(q)?, hours, lost))
     };
     let dive_fails = |i: usize| -> Result<Option<&'static str>, String> {
         let q = grid[i];
         if air_top.is_some_and(|a| q < a) {
             return Ok(Some("air"));
         }
-        let (sv, t, _) = pass_of(q)?;
+        let (sv, t, _, _) = pass_of(q)?;
         if t >= hull_k {
             return Ok(Some("heat"));
         }
@@ -767,7 +832,8 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
             } else {
                 dive_fails(i - 1)?.unwrap_or("surface")
             };
-            let (sv, t, hours) = pass_of(grid[i])?;
+            let (sv, t, hours, lost) = pass_of(grid[i])?;
+            let (_, fall, push) = clock(q)?;
             let says = match set_by {
                 "surface" => format!(
                     "A fall-through {} can skim the surface and come back out.",
@@ -794,13 +860,20 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
                 Some(ShipMark {
                     distance_m: q,
                     set_by: set_by.into(),
-                    says,
+                    says: format!(
+                        "{says} {} Over the pass its clock falls {} behind a far one.",
+                        clock_words(fall, "falling through there"),
+                        say_seconds(lost)
+                    ),
+                    clock_rate: fall,
+                    hover_m_s2: push,
                 }),
                 Some(Pass {
                     closest_m: grid[i],
                     dose_sv: sv,
                     peak_hull_k: t,
                     hours_in_belts: hours,
+                    clock_lost_s: lost,
                 }),
             )
         }

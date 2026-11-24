@@ -12,7 +12,7 @@
   import { DEFAULT_VIEW, viewOptions, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { Card } from "../../../chart-grammar/src/index.ts";
   import { HAZARD_CONTROLS } from "./controls.ts";
-  import { distanceWords, labelled, radiusTicks, shortMark, xOf, type HazardMapRead, type Tone } from "./profile.ts";
+  import { distanceWords, hoverWords, labelled, radiusTicks, shortMark, xOf, type HazardMapRead, type Tone } from "./profile.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -142,7 +142,7 @@
         <li><span class="sw park"></span>Park and Dive for {map.stock_ship ? "the stock ship" : map.ship.name} ({(map.ship.delta_v_m_s / 1e3).toFixed(1)} km/s, {(map.ship.shield_kg_m2 / 10).toFixed(0)} g/cm² shield)</li>
       </ul>
       <div class="words">
-        {#if map.park}<p data-says="park"><b>Park</b> {distanceWords(map.park.distance_m, radius)}, set by the {word(map.park.set_by)}. {map.park.says}</p>{/if}
+        {#if map.park}<p data-says="park"><b>Park</b> {distanceWords(map.park.distance_m, radius)}, set by the {word(map.park.set_by)}. {map.park.says} At Park, {hoverWords(map.park.hover_m_s2)}.</p>{/if}
         {#if map.dive}<p data-says="dive"><b>Dive</b> {distanceWords(map.dive.distance_m, radius)}, set by the {word(map.dive.set_by)}. {map.dive.says} Inside it is too late.</p>{/if}
         {#if map.pass}<p data-says="pass">That pass: {map.pass.dose_sv.toFixed(2)} Sv soaked up{map.pass.peak_hull_k > 0 ? `, hull peaks at ${map.pass.peak_hull_k.toFixed(0)} K` : ""}{map.pass.hours_in_belts > 0 ? `, ${map.pass.hours_in_belts.toFixed(1)} hours inside the belts` : ""}.</p>{/if}
         {#each map.rows as r (r.hazard)}<p class="say" data-says={r.hazard}>{r.name}: {r.says}.</p>{/each}

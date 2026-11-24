@@ -47,6 +47,9 @@ try {
     assert.equal(await hm.locator('[data-ship-mark="dive"]').count(), 1);
     assert.match(await hm.locator('[data-says="park"]').innerText(), /^Park .* radii, set by the radiation from the belts/);
     assert.match(await hm.locator('[data-says="dive"]').innerText(), /Inside it is too late/);
+    // Clocks at the marks (XO20): what a clock loses a day there, the push to hover, the time lost on a pass.
+    assert.match(await hm.locator('[data-says="park"]').innerText(), /loses .* a day against one far away.*of thrust/);
+    assert.match(await hm.locator('[data-says="dive"]').innerText(), /falls .* behind a far one/);
     assert.ok((await hm.locator('[data-mark^="lane swept by Io"]').count()) === 1, "Io's lane is marked");
     assert.equal(await hm.locator('[data-moon="sol/io"]').getAttribute("data-tone"), "deadly");
     assert.equal(await hm.locator('[data-moon="sol/callisto"]').getAttribute("data-tone"), "clear");

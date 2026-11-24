@@ -7,9 +7,13 @@ export type Tone = "clear" | "harsh" | "deadly";
 export interface HazardBand { from_m: number; to_m: number; tone: Tone }
 export interface HazardRow { hazard: string; name: string; bands: HazardBand[]; says: string }
 export interface HazardMark { what: string; distance_m: number }
-export interface ShipMark { distance_m: number; set_by: string; says: string }
+export interface ShipMark { distance_m: number; set_by: string; says: string; clock_rate: number; hover_m_s2: number }
 export interface MoonReading { moon: string; distance_m: number; sv_per_day: number; tone: Tone }
-export interface HazardPass { closest_m: number; dose_sv: number; peak_hull_k: number; hours_in_belts: number }
+export interface HazardPass { closest_m: number; dose_sv: number; peak_hull_k: number; hours_in_belts: number; clock_lost_s: number }
+
+/** The push to hold still, in m/s² and in Earth gravities (g0 = 9.80665 m/s², the defined standard). */
+export const hoverWords = (a: number): string =>
+  !Number.isFinite(a) ? "no push can hold still there" : `holding still there instead takes ${a < 10 ? a.toFixed(2) : a.toFixed(0)} m/s² (${(a / 9.80665).toFixed(a / 9.80665 < 10 ? 2 : 0)} g) of thrust`;
 export interface HazardMapRead {
   address: string;
   line: "equator" | "poles";

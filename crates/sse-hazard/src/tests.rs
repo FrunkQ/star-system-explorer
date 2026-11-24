@@ -256,3 +256,38 @@ fn the_same_every_time() {
     let b = serde_json::to_string(&read("jupiter", None, Line::Poles)).unwrap();
     assert_eq!(a, b);
 }
+
+#[test]
+fn clocks_at_park_and_dive() {
+    // XO20: the clock rate at the marks, the time lost on a pass and the push
+    // to hover, from the gravity blocks. Earth: rg = GM/c² ≈ 4.4 mm.
+    let map = read("earth", None, Line::Equator);
+    let c = sheet().constant("c").unwrap();
+    let gm = sheet().constant("G").unwrap() * sol("earth").0.mass_kg;
+    let rg = gm / (c * c);
+    let park = map.park.as_ref().unwrap();
+    let want = (1.0 - 3.0 * rg / park.distance_m).sqrt();
+    assert!(
+        (park.clock_rate - want).abs() < 1e-14,
+        "{} {want}",
+        park.clock_rate
+    );
+    // A hover needs a touch more than gravity.
+    let g = gm / (park.distance_m * park.distance_m);
+    assert!(park.hover_m_s2 > g && park.hover_m_s2 < g * (1.0 + 1e-8));
+    assert!(
+        park.says.contains("a day against one far away"),
+        "{}",
+        park.says
+    );
+    let dive = map.dive.as_ref().unwrap();
+    assert!((dive.clock_rate - (1.0 - 2.0 * rg / dive.distance_m)).abs() < 1e-14);
+    // Lost over a pass: positive, and less than 2rg/q times the pass's span.
+    let pass = map.pass.as_ref().unwrap();
+    assert!(
+        pass.clock_lost_s > 0.0 && pass.clock_lost_s < 1e-3,
+        "{}",
+        pass.clock_lost_s
+    );
+    assert!(dive.says.contains("behind a far one"), "{}", dive.says);
+}
