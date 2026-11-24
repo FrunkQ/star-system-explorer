@@ -623,6 +623,63 @@ SENSORS = [
     sensor("visual_cam", "visual inspection camera", 50, ["construct"], "visual id, hull markings, damage", None),
     sensor("datalink", "datalink", 0.5, ["construct"], "everything it shares", None),
 ]
+# RK12 (Atomic Rockets plan section 13, question 16): the ship weapons as
+# "effect at range". Each kind keeps the game's own line beside the physics:
+# tech level, optimum range band and damage dice, from the Cepheus Engine
+# System Reference Document (Samardan Press, Open Game Licence; chapter 8
+# turret and bay tables, read 24 Nov). The `weapon` is sse-sense's Weapon,
+# read by the kernel's `effect_at_range` against a target: what arrives, what
+# the skin can take, in range, marginal or out of range, the odds from light
+# lag, and rings. Nothing is fired and nothing is rolled. The figures are game
+# defaults (fudge register F54), set so that against the standard target
+# below each beam is in range or marginal at the far edge of its game band.
+# A weapon the physics cannot reach (the meson gun) says so and carries none.
+CEPHEUS_SRD = "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+def band_of(id_):
+    i = [b["id"] for b in RANGE_BANDS].index(id_)
+    return {"band": id_, "from_m": RANGE_BANDS[i - 1]["range_m"] if i else 0.0, "to_m": RANGE_BANDS[i]["range_m"]}
+def weapon(id_, label, mount, tl, optimum, damage, w, about):
+    game = {"tl": tl, "optimum": band_of(optimum) if optimum else None, "damage": damage, "source": CEPHEUS_SRD}
+    return {"id": id_, "label": label, "mount": mount, "game": game, "weapon": w, "about": about}
+def laser(power_w, dwell_s, aperture_m, wavelength_m=1.06 * UM, efficiency=0.3):
+    return {"kind": "beam", "beam_power_w": power_w, "wavelength_m": wavelength_m, "aperture_m": aperture_m,
+            "dwell_s": dwell_s, "efficiency": efficiency, "reject_k": 600.0}
+WEAPONS = {
+    "about": "Ship weapons as effect at range: the game's tech level, optimum band and damage beside what the physics says arrives. Nothing is fired.",
+    # A small armed hull as the shooter sees it: 2 mm of aluminium over the
+    # side it shows, 15 m across, able to pull 2 g to spoil an aim.
+    "standard_target": {"label": "a small armed hull (2 mm aluminium, 15 m, 2 g)",
+                        "skin": {"material": "aluminium", "thickness_m": 0.002}, "radius_m": 15.0, "accel_m_s2": 19.6},
+    "kinds": [
+        weapon("pulse_laser", "pulse laser", "turret", 7, "short", "2D6",
+               laser(5.0e8, 0.1, 2.0, wavelength_m=0.35 * UM), "short, hard ultraviolet pulses: a lot of energy on a spot, but the spot grows with distance"),
+        weapon("beam_laser", "beam laser", "turret", None, "medium", None,
+               laser(5.0e7, 10.0, 3.0, wavelength_m=0.35 * UM),
+               "a steady beam held on the spot; the SRD gives no stat line, so the band is the one its prose puts above the pulse laser"),
+        weapon("particle_beam", "particle beam", "turret", 8, "long", "3D6 + radiation",
+               {"kind": "beam", "beam_power_w": 2.0e8, "wavelength_m": 1.0e-12, "aperture_m": 0.5, "jitter_rad": 1.0e-7,
+                "dwell_s": 10.0, "efficiency": 0.2, "reject_k": 800.0},
+               "a neutral particle beam: its spread is its divergence, not diffraction"),
+        weapon("particle_bay", "particle beam bay", "bay", 8, "long", "6D6 + radiation",
+               {"kind": "beam", "beam_power_w": 1.0e9, "wavelength_m": 1.0e-12, "aperture_m": 1.0, "jitter_rad": 1.0e-7,
+                "dwell_s": 10.0, "efficiency": 0.2, "reject_k": 800.0},
+               "the bay's larger accelerator: five times the energy, so it is still in range at the far edge of long"),
+        weapon("fusion_bay", "fusion gun bay", "bay", 12, "medium", "5D6",
+               {"kind": "beam", "beam_power_w": 5.0e9, "wavelength_m": 1.0e-12, "aperture_m": 1.0, "jitter_rad": 1.0e-6,
+                "dwell_s": 6.0, "efficiency": 0.5, "reject_k": 1200.0},
+               "a plasma bolt: it spreads ten times faster than a particle beam, so its reach is shorter"),
+        weapon("meson_bay", "meson gun bay", "bay", 11, "long", "5D6 + radiation", None,
+               "fictional physics (mesons that decay inside the target): no figures to compute, so the game's band stands alone"),
+        weapon("nuclear_missile", "nuclear missile", "turret", 6, None, "2D6 + radiation",
+               {"kind": "burst", "yield_j": 4.184e12, "xray_share": 0.7},
+               "a kiloton warhead read where it bursts: in vacuum it must burst within about 50 m of a small hull to boil through; how it gets there is the missile's flight (NAV)"),
+        weapon("standard_missile", "standard missile", "turret", 6, None, "1D6",
+               {"kind": "projectile", "mass_kg": 50.0, "muzzle_m_s": 3000.0, "face_m2": 0.05},
+               "a kinetic and fragment hit at its closing speed; how it gets there is the missile's flight (NAV)"),
+        weapon("sandcaster", "sandcaster", "turret", 7, "close", "special", None,
+               "a defence, not a weapon at range: no figures"),
+    ],
+}
 def ladder_to(top):
     return LADDER[: LADDER.index(top) + 1]
 TRIGGERS = {"rules": [
@@ -1020,6 +1077,7 @@ pack = {
         "calendar": IMPERIAL,
         "gas_mixes": GAS_MIXES,
         "sensors": {"range_bands": RANGE_BANDS, "kinds": SENSORS, "ladder": LADDER},
+        "weapons": WEAPONS,
         "observe": OBSERVE,
         "triggers": TRIGGERS,
         "templates": {"templates": TEMPLATES},
