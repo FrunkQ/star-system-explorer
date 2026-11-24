@@ -818,6 +818,20 @@ pub enum Request {
         #[ts(optional, type = "number")]
         at_s: Option<i64>,
     },
+    /// A sample world for each class (the class gallery's pictures, V3 gaps
+    /// item 35): from the atlas of `packs` (as `classify_preview`), the
+    /// class's own `in` example that sits most centrally in its bands is
+    /// hand-set on a new what-if branch, one system per class round a
+    /// Sun-like star, and resolved. Only the example's inputs are set (mass,
+    /// radius, makeup, orbit, spin, air); everything else is worked out, and
+    /// `fit` is the class's fit on the resolved world, so a sample that the
+    /// physics carries out of its class says so. Nothing on the main line
+    /// changes: read a sample with `resolved_system {system, branch}`.
+    ClassSample {
+        #[ts(type = "unknown[]")]
+        packs: Vec<serde_json::Value>,
+        classes: Vec<String>,
+    },
     /// NAV (T3): candidate courses between two places, or the ways out
     /// for a drifting ship (no `to`). The system is a NAV `fixture` (`sol`),
     /// an inline `nav` system, or an adopted `system` read at `at_s` (its
@@ -2261,6 +2275,7 @@ impl Request {
             Request::WindowView { .. } => "window_view",
             Request::Sift { .. } => "sift",
             Request::ClassifyPreview { .. } => "classify_preview",
+            Request::ClassSample { .. } => "class_sample",
             Request::PlanDescent { .. } => "plan_descent",
             Request::SurveyCaves { .. } => "survey_caves",
             Request::SurfaceFrames { .. } => "surface_frames",
@@ -2563,6 +2578,11 @@ pub fn ops() -> Vec<OpInfo> {
             "classify_preview",
             Cost::Light,
             "GM machine only; one atlas load plus one label per body in scope (a campaign of a few systems: milliseconds)",
+        ),
+        o(
+            "class_sample",
+            Cost::Light,
+            "GM machine only; one atlas load, then per class a few dozen branch edits and one system resolve (a handful of classes: well under a second)",
         ),
         o(
             "window_view",
@@ -3635,6 +3655,18 @@ pub enum Response {
         bodies: Vec<serde_json::Value>,
         unclassified: u32,
         failing_examples: Vec<String>,
+    },
+    /// `class_sample`: the branch holding the samples, one sample per class
+    /// found, in the order asked: `{class, scheme, example, system, body,
+    /// radius_m, tilt_rad?, day_s?, rings, fit}`; `refused` names each class
+    /// with no sample and why.
+    ClassSampled {
+        branch: String,
+        atlas_hash: String,
+        #[ts(type = "unknown[]")]
+        samples: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        refused: Vec<serde_json::Value>,
     },
     /// `codes`: one entry per body, in address order:
     /// `{address, reading}` with the sse-codes `Reading` unchanged in shape.

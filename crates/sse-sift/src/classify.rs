@@ -541,6 +541,45 @@ impl Atlas {
         })
     }
 
+    /// How central a subject sits in a class's cores (with ancestors): 1 at
+    /// the middle of every numeric core, falling to 0 at a core's edge or
+    /// outside it; a category or flag bound counts 1 when met, else 0. The
+    /// lowest bound sets it, as for `fit`. Used to pick a mid-band sample.
+    pub fn centrality(&self, class: &str, s: &Subject) -> f64 {
+        let mut least: f64 = 1.0;
+        for b in self
+            .ancestry(class)
+            .iter()
+            .flat_map(|k| k.region.iter().chain(&k.gate))
+        {
+            let c = match b {
+                Bound::Numeric { core, .. } => {
+                    let axis = &self.axes[bound_axis(b)];
+                    match axis.value(s).as_ref().and_then(as_num) {
+                        Some(x) => {
+                            let (xp, c0, c1) = (
+                                self.axis_pos(axis, x),
+                                self.axis_pos(axis, core.0),
+                                self.axis_pos(axis, core.1),
+                            );
+                            if xp < c0 || xp > c1 {
+                                0.0
+                            } else if c1 > c0 {
+                                1.0 - (2.0 * (xp - c0) / (c1 - c0) - 1.0).abs()
+                            } else {
+                                1.0
+                            }
+                        }
+                        None => 0.0,
+                    }
+                }
+                _ => self.axis_fit(b, s).fit,
+            };
+            least = least.min(c);
+        }
+        least
+    }
+
     /// Normalised core volume (smaller is more specific); unconstrained axes count 1.
     fn volume(&self, class: &str) -> f64 {
         let mut per: BTreeMap<&str, f64> = BTreeMap::new();

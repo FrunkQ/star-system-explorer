@@ -47,6 +47,8 @@ mod sky;
 #[cfg(test)]
 mod sol_tests;
 #[cfg(test)]
+mod class_sample_tests;
+#[cfg(test)]
 mod split_tests;
 mod stability;
 #[cfg(test)]
@@ -1848,6 +1850,181 @@ impl Kernel {
     /// audience's scene.
     /// `classify_preview`: label the campaign's bodies with a candidate
     /// stack's atlas, loading and writing nothing.
+    /// `class_sample` (see the request). The sample's inputs are the class
+    /// example's facts whose field starts with one of `SAMPLE_INPUTS`.
+    fn class_sample(
+        &mut self,
+        packs: Vec<serde_json::Value>,
+        classes: Vec<String>,
+    ) -> Result<Response, Response> {
+        const SAMPLE_INPUTS: [&str; 10] = [
+            "body.kind",
+            "body.mass",
+            "body.radius",
+            "body.rotation_period",
+            "body.obliquity",
+            "makeup.",
+            "orbit.semi_major_axis",
+            "orbit.eccentricity",
+            "atmosphere.surface_pressure",
+            "atmosphere.main",
+        ];
+        use sse_core::{math as m, sheet as sh};
+        if classes.is_empty() || classes.len() > 64 {
+            return Err(err("bad_request", "classes: 1 to 64 class ids"));
+        }
+        let mut ms = Vec::new();
+        for (i, p) in packs.iter().enumerate() {
+            ms.push(
+                serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                    .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
+            );
+        }
+        let atlas = sse_sift::load(&ms)
+            .map_err(|es| err("bad_stack", es.join("; ")))?
+            .atlas;
+        let root = self.universe()?.root.clone();
+        let branch = match self.dispatch(Request::Branch {
+            label: "class samples".into(),
+        })? {
+            Response::BranchOpened { branch } => branch,
+            other => return Err(other),
+        };
+        let mut samples = vec![];
+        let mut refused = vec![];
+        for (n, id) in classes.iter().enumerate() {
+            let Some(class) = atlas.classes.iter().find(|c| &c.id == id) else {
+                refused.push(serde_json::json!({"class": id, "why": "no class with this id in the atlas"}));
+                continue;
+            };
+            let best = class
+                .examples
+                .iter()
+                .filter(|e| e.expect == sse_sift::classify::Expect::In)
+                .map(|e| {
+                    let s = sse_sift::Subject::new(e.values.clone());
+                    let fit = atlas.fit(id, &s).map_or(0.0, |f| f.fit);
+                    (fit, atlas.centrality(id, &s), e)
+                })
+                .fold(None::<(f64, f64, &sse_sift::classify::Example)>, |b, x| match b {
+                    Some(b) if (b.0, b.1) >= (x.0, x.1) => Some(b),
+                    _ => Some(x),
+                });
+            let Some((_, _, ex)) = best else {
+                refused.push(serde_json::json!({"class": id, "why": "the class has no in example to sample"}));
+                continue;
+            };
+            let system = format!("{root}/sys:class-sample-{n}");
+            let star = format!("{system}/star:0");
+            let body = format!("{system}/body:0");
+            let mut edits: Vec<(String, String, serde_json::Value)> = vec![
+                (star.clone(), "name".into(), serde_json::json!("Sample sun")),
+                (star.clone(), "body.kind".into(), serde_json::json!("star")),
+                (star.clone(), "body.mass".into(), serde_json::json!(sh::M_SUN)),
+                (star.clone(), "body.radius".into(), serde_json::json!(sh::R_SUN)),
+                (star.clone(), "star.luminosity".into(), serde_json::json!(sh::L_SUN)),
+                (star.clone(), "star.effective_temperature".into(), serde_json::json!(sh::T_SUN)),
+                (body.clone(), "name".into(), serde_json::json!(format!("{} sample", ex.name))),
+            ];
+            let num_of = |k: &str| match ex.values.get(k) {
+                Some(Value::Float(x)) => Some(*x),
+                Some(Value::Int(x)) => Some(*x as f64),
+                _ => None,
+            };
+            // The system's age: the example's, else the Sun's.
+            let age_s = num_of("system.age")
+                .filter(|a| *a > 0.0)
+                .unwrap_or(4.6e9 * sh::YR_JULIAN);
+            edits.push((system.clone(), "system.age".into(), serde_json::json!(age_s)));
+            edits.push((body.clone(), "orbit.host".into(), serde_json::json!(star)));
+            // An example with no orbit sits where the star warms a fast
+            // rotating black body to the example's equilibrium temperature,
+            // L = 16 pi sigma a^2 T^4, else at 1 AU.
+            if num_of("orbit.semi_major_axis").is_none() {
+                let a_m = num_of("planet.equilibrium_temperature")
+                    .filter(|t| *t > 0.0)
+                    .map_or(sh::AU, |t| {
+                        m::sqrt(sh::L_SUN / (16.0 * m::PI * sh::SIGMA_SB * t * t * t * t))
+                    });
+                edits.push((
+                    body.clone(),
+                    "orbit.semi_major_axis".into(),
+                    serde_json::json!(a_m),
+                ));
+            }
+            for (f, v) in &ex.values {
+                if SAMPLE_INPUTS.iter().any(|p| f.starts_with(p)) {
+                    let j = serde_json::to_value(v).map_err(|e| err("bad_value", format!("{e}")))?;
+                    edits.push((body.clone(), f.clone(), j));
+                }
+            }
+            for (address, field, value) in edits {
+                self.dispatch(Request::BranchSet {
+                    branch: branch.clone(),
+                    edit: crate::protocol::AuthoredEdit {
+                        address,
+                        field,
+                        value,
+                        occurred_at_s: 0,
+                        impossible: false,
+                    },
+                })?;
+            }
+            let (facts, surfaces) = match self.dispatch(Request::ResolvedSystem {
+                system: system.clone(),
+                at_s: None,
+                tiles: None,
+                branch: Some(branch.clone()),
+            })? {
+                Response::SystemResolved {
+                    facts, surfaces, ..
+                } => (facts, surfaces),
+                other => return Err(other),
+            };
+            let surface = surfaces.iter().any(|s| s["address"] == body.as_str());
+            let f = &facts[&body];
+            let mut resolved = BTreeMap::new();
+            for (k, v) in f.as_object().into_iter().flatten() {
+                if let Ok(v) = json_to_value(v) {
+                    resolved.insert(k.clone(), v);
+                }
+            }
+            let fit = atlas
+                .fit(id, &sse_sift::Subject::new(resolved))
+                .map_or(0.0, |f| f.fit);
+            let num = |k: &str| f[k].as_f64();
+            let rings = ex.values.get("rings").is_some_and(|v| *v == Value::Bool(true))
+                || ex
+                    .values
+                    .get("has_ring_child")
+                    .and_then(|v| match v {
+                        Value::Float(x) => Some(*x),
+                        Value::Int(x) => Some(*x as f64),
+                        _ => None,
+                    })
+                    .is_some_and(|x| x > 0.0);
+            samples.push(serde_json::json!({
+                "class": id,
+                "scheme": class.scheme,
+                "example": ex.name,
+                "system": system,
+                "body": body,
+                "radius_m": num("body.radius"),
+                "tilt_rad": num("body.obliquity"),
+                "day_s": num("body.rotation_period"),
+                "rings": rings,
+                "fit": fit,
+                "surface": surface,
+            }));
+        }
+        Ok(Response::ClassSampled {
+            branch,
+            atlas_hash: atlas.content_hash().hex(),
+            samples,
+            refused,
+        })
+    }
+
     fn classify_preview(
         &mut self,
         packs: Vec<serde_json::Value>,
@@ -5585,6 +5762,7 @@ impl Kernel {
                 scope,
                 at_s,
             } => self.classify_preview(packs, scheme, scope, at_s)?,
+            Request::ClassSample { packs, classes } => self.class_sample(packs, classes)?,
             Request::Programs { at_s } => {
                 let ps = self.observe.programs.clone();
                 let u = self.universe()?;
