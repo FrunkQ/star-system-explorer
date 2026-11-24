@@ -15,7 +15,8 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED1 part 2 the handles row and the strip on the body card (`packages/views/editing/`: Handles, Strip), mounted in BodyCard for the GM off the Run desk; Build moves it (drag, arrows, typing in any unit), Explore shows it read-only; letting go is one set_value through `commitEdit`, one Undo; what followed from `resolved_system` surfaces before and after; e2e `tests/ui/editing.e2e.mjs` on desk and phone | done | packages/ED1.md |
 | ED1 part 3 exact figures on a pause through `resolved_system {branch}`; Titan on the Air strip; walk step "Change a world" | waits on kernel BC1 | |
 | ED2 the sweep behind the strip: tipping points, pencil figures, "what followed" | queued (K1) | |
-| ED3 dragging on the chart: orbit size, shape, readout, magnetism, cancel | queued | |
+| ED3 part 1 the chart drag: a ghost and its orbit line follow the pointer while the world stays put; the readout is the units engine's (`dist` in SystemChart says the orbit in the campaign's chosen reading); Esc cancels and writes nothing; the strip's Esc no longer clears the selection | done | packages/ED3.md |
+| ED3 part 2: the readout adds the year, the surface's quick look and the ST1 stability verdict; the "Where things can orbit" layer during a drag; geared drag and Shift finer; magnetism (tipping points, round figures, resonances; Alt off); the far-point and lean grips | queued (year and quick look want kernel K1's sweep) | |
 | ED4 to ED13, ED10a, ED13a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 
