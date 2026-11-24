@@ -1,6 +1,6 @@
 # ED1: Handles and the strip
 
-Status: part 1 done 24 Nov 2026 (thread "Build planet and star editing"); part 2 next. Design: `handover/design/SSE4-editing-design.md` sections 2, 3, 3B and 6 (accepted by Alex 24 Nov 2026).
+Status: parts 1 and 2 done 24 Nov 2026 (thread "Build planet and star editing"); part 3 waits on the kernel's BC1. Design: `handover/design/SSE4-editing-design.md` sections 2, 3, 3B and 6 (accepted by Alex 24 Nov 2026).
 
 ## Part 1: the handle sheet and the strip model (this PR)
 
@@ -10,6 +10,15 @@ Status: part 1 done 24 Nov 2026 (thread "Build planet and star editing"); part 2
 
 Checks: `packages/ui-contract/test/handles.test.ts`.
 
-## Part 2 (next)
+## Part 2: the row and the strip on the body card
 
-The row and the strip on the body card, in `packages/views/editing/`; see the ED1 row of `handover/status/editing.md`.
+- `packages/views/editing/src/Handles.svelte`: the row of handles under the card's sentence (three columns, two on a phone). Figures are the kernel's facts for the body (`resolved_system`, reread on each revision), said by the units engine at the workspace depth. One strip open at a time; another body closes it, a reread of the same body does not. On Build (GM, no branch open) a strip moves the value; elsewhere it opens read-only, "where this world sits among the reference worlds". A change is one `commitEdit` (set_value) with the before value, so Undo takes it back; the card then lists what followed (the change and each watched result that moved).
+- `packages/views/editing/src/Strip.svelte`: the line, the accent mark (a slider for keyboard and screen readers), reference dots from packs/base-sol and this system's other worlds (round the same body for an orbit), names thinned so they never run together. Dragging writes nothing: the figure goes to pencil and its rung is held. Letting go, or Enter after arrows, is one change; Esc puts it back. Pressing the figure takes typing in any unit of the kind (`readFigure`); a typed value is kept exactly and stretches the strip.
+- Mounted from `packages/views/body-card/src/BodyCard.svelte` for the GM off the Run desk.
+- Found: Enter in the entry bubbled to the strip and set the value twice (the entry now stops its keys); the card's subject is a new object after each change, so the strip is keyed to the address and the commit holds the address before it awaits.
+
+Checks: `tests/ui/editing.e2e.mjs` (desk and phone: the six handles with Mars's figures, read-only on Explore with the Earth and Jupiter dots, typed "1 AU" is one change that warms Mars and Undo puts it back, a drag is one change, Esc writes nothing, no overflow on a phone). Screens in project files `sse4/handover-screens/ED1-screens/`.
+
+## Part 3 (waits on kernel BC1)
+
+The strip's exact answer on a pause through `resolved_system {branch}`; Titan on the Air strip's moon dots; the walk step "Change a world".

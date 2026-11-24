@@ -154,6 +154,8 @@ export interface ViewContext {
   styles?: StylesHost;
   /** V3 gap 23: hand a subject to Minerva, the storyteller, to describe from what one audience knows (absent where she cannot run). */
   describe?(address: string): void;
+  /** The catalogued Solar System (packs/base-sol, read once by the shell), for reference worlds; null where it cannot be read. */
+  solSheet?(): Promise<import("./sol.ts").SolSheet | null>;
 }
 
 /** What a shell offers views about style documents. Presentation only: kept on the device, never in the universe. */
