@@ -11,6 +11,6 @@ in `handover/packages/`. Plan: `handover/design/SSE4-atomic-rockets-plan.md` (ac
 | Package | State | Log |
 |---|---|---|
 | RK13: the general Flow view (`ui-contract/flow.ts`, `views/flow` Flow) and the Power card on a ship's card (three columns, "Nowhere" dashed band on the GM seat only, five readings, live starlight and load switches) | done 24 Nov; next: `reject_k` on the kernel's heat rows (golden lane); later users of Flow: a world's energy budget (weather), an element's journey (matter) | packages/RK13-flow-and-power.md |
-| RK12: range rings (kernel `effect_at_range` done) as a HUD overlay: `ui-contract/range-rings.ts`, one component each in system-chart and system-3d; the chart room thread mounts them | next | |
-| RK10: band strings in ui-contract `light.ts`, `view-controls.ts` (and the renderer's) read `SHEET_BANDS` | queued | |
+| RK12 part 2: range rings as a HUD overlay: `ui-contract/range-rings.ts` (`rangeRings`, `ringPoints`, layer `range`), session `effectAtRange`, `system-chart/RangeRings.svelte`, `system-3d/range-rings.ts` | done 24 Nov; next: the chart room mounts them and adds `range` to `HUD_OVERLAY_LAYERS`; a pack's weapons feed them | packages/RK12-rings.md |
+| RK10: band strings in ui-contract `light.ts`, `view-controls.ts` (and the renderer's) read `SHEET_BANDS` | next | |
 | RK3: ship sizing formulas as named Equations in `packs/base-ships` (may change goldens: golden lane) | queued | |
