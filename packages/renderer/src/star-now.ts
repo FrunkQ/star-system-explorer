@@ -101,3 +101,31 @@ export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, ha
   words.push(narrateEvents(s, shown, light === "visible" ? ejections : [], !!ask.calm));
   return { shown, ejections, boost, reach, words };
 }
+
+/** Face sizes in pixels: drawn at about the size the disc shows, in steps so the texture is not remade at each zoom. */
+export const FACE_STEPS = [16, 32, 64, 128, 256] as const;
+
+const faces = new Map<string, { width: number; data: Uint8ClampedArray; version: number; drawn: string; now: StarNow }>();
+
+/**
+ * A star's face for a view's GPU item (gpu.ts `GpuItem.face`), for views that draw many bodies through true-body.ts:
+ * one buffer per key, redrawn only when the moment or size changes, `px` the disc's diameter on screen in device
+ * pixels. No halo: the caller draws the glare where it has a camera to measure it by.
+ */
+export function liveFace(key: string, s: LiveStar, ask: StarNowAsk & { px: number }): { face: { key: string; version: number; width: number; data: Uint8ClampedArray; disc: number }; now: StarNow } {
+  const disc = ask.disc ?? 0.92;
+  const width = FACE_STEPS.find((n) => n >= ask.px / disc) ?? FACE_STEPS[FACE_STEPS.length - 1]!;
+  const drawn = `${width}|${ask.t}|${ask.light ?? "visible"}|${ask.calm ? 1 : 0}|${disc}|${ask.lat_deg ?? 7}`;
+  let f = faces.get(key);
+  if (!f || f.width !== width) {
+    if (faces.size > 64) faces.clear();
+    f = { width, data: new Uint8ClampedArray(width * width * 4), version: 0, drawn: "", now: { shown: [], ejections: [], boost: 1, reach: 0, words: [] } };
+    faces.set(key, f);
+  }
+  if (f.drawn !== drawn) {
+    f.now = drawStarNow(f, null, s, ask);
+    f.drawn = drawn;
+    f.version++;
+  }
+  return { face: { key: `star:${key}:${ask.light === "xray" ? "x" : "v"}`, version: f.version, width, data: f.data, disc }, now: f.now };
+}

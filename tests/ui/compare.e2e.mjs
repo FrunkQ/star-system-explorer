@@ -150,6 +150,9 @@ try {
     assert.ok(Number(await cmp2.getAttribute("data-compare")) >= start + 8, "the system's bodies and the Solar System's");
     assert.match(await cmp2.locator('[role="status"]').innerText(), /^Gallery: \d+ bod(y|ies) of .* and \d+ of the Solar System, in True\.$/);
     await cmp2.locator('canvas[data-lineup-3d="true"], [data-no-globes]').first().waitFor({ timeout: 10000 });
+    // The system's own star in the gallery is the living star of the system's True (SG4b): churning, spotted, flaring.
+    if (!(await cmp2.locator("[data-no-globes]").count())) await gm.waitForFunction(() => Number(document.querySelector("canvas[data-lineup-3d]")?.getAttribute("data-live-stars")) > 0, null, { timeout: 20000 });
+    await gm.waitForTimeout(1500);
     await shot(gm, `gallery-${name}`);
     await styleBar.getByRole("button", { name: "Chart", exact: true }).click();
 

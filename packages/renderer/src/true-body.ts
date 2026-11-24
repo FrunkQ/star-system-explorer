@@ -22,10 +22,12 @@ export interface TrueBody {
   rings?: readonly RingBand[];
   /** Its north pole in the drawing's frame: its rings lie in its equator. */
   pole: Vec3;
+  /** A star's living face for this moment (star-now.ts `liveFace` or `drawStarNow`): churning cells, spots, flares. */
+  face?: GpuItem["face"];
 }
 
 /** The GPU fields of a body's True face. */
-export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings">;
+export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "face">;
 
 /** A surface texture's mean colour, 0..1 (sRGB bytes over 255; a tint, not a measurement). */
 export function meanColour(t: TrueTexture): [number, number, number] {
@@ -65,6 +67,7 @@ export function ringsAssumed(b: TrueBody): boolean {
 export function trueLook(b: TrueBody): TrueLook {
   const out: TrueLook = { colour: b.colour };
   if (b.star) out.shines = true;
+  if (b.star && b.face) out.face = b.face;
   if (b.surface) out.surface = { key: b.key, texture: b.surface };
   const r = b.star ? null : ringsOf(b);
   if (r) out.rings = { key: r.key, inner: r.inner, outer: r.outer, normal: b.pole, width: r.width, data: r.data };

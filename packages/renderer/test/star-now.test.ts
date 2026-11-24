@@ -231,3 +231,18 @@ test("ejection targets come from the system's own orbit facts, wound back to age
   assert.equal(t[1]!.period_s, 1.88 * year);
   assert.equal(t[1]!.phase_rad, 0.5);
 });
+
+test("a gallery star's face is drawn once per moment and size, and goes through the one True door", async () => {
+  const { liveFace } = await import("../src/star-now.ts");
+  const { trueLook } = await import("../src/true-body.ts");
+  const s = sun();
+  const a = liveFace("t|sun", s, { t: s.age_s, clock: 21600, span: 2160, px: 50 });
+  assert.equal(a.face.width, 64);
+  const again = liveFace("t|sun", s, { t: s.age_s, clock: 21600, span: 2160, px: 50 });
+  assert.equal(again.face.version, a.face.version, "same moment: not redrawn");
+  const later = liveFace("t|sun", s, { t: s.age_s + 2160, clock: 21600, span: 2160, px: 50 });
+  assert.equal(later.face.version, a.face.version + 1);
+  const look = trueLook({ key: "t|sun", star: true, colour: "#fff", pole: [0, 0, 1], face: later.face });
+  assert.equal(look.face, later.face);
+  assert.equal(trueLook({ key: "w", star: false, colour: "#888", pole: [0, 0, 1], face: later.face }).face, undefined, "only stars wear a face");
+});
