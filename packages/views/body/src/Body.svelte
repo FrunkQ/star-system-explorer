@@ -128,9 +128,11 @@
   // The standard view controls (rule 12): the style picks the recipe, "seen from" the latitude looked down from.
   const shownView = $derived(viewOptions(BODY_CONTROLS, ws.view ?? DEFAULT_VIEW).shown);
   const styleRecipe = $derived(shownView.style === "true" ? "true-colour" : String(params.recipe ?? "survey-relief"));
+  // Picking a fixed "Seen from" frames the globe afresh, even the one already shown.
   $effect(() => {
     const s = shownView.seen;
-    if (s !== "free") lat = GLOBE_LAT[s];
+    void shownView.framed;
+    if (s !== "free") ((lat = GLOBE_LAT[s]), (lon = 0));
   });
   let host = $state<HTMLElement | undefined>();
   let run: GlobeRun | null = null;

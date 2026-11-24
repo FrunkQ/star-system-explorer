@@ -138,3 +138,5 @@ export type { DifficultyLadder, DifficultyStep, GameDifficulty } from "./difficu
 export { wattsText, powerWords, nowhereWords } from "./power.ts";
 export type { PowerBooks, PowerLedger, PowerFlow, PowerEngine } from "./power.ts";
 export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX, PICTURE_MAX, PICTURE_SIDE, checkPicture, picturesOf, shownOf, designOf, fitSide, type PictureShown } from "./picture.ts";
+export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
+export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";

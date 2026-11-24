@@ -117,6 +117,15 @@
 
   // ---- Edit and retire ----
   let edits = $state<Record<string, string>>({});
+  // A station's picture (renderer station-design.ts): built from its description, kept as `construct.design`; shown
+  // in the same Picture panel as a ship's.
+  const isStation = (c: PlayerSubject) => (templateOf(c, templates)?.kind ?? kindOf(c.address)) === "station";
+  async function setDesign(r: unknown) {
+    if (!current || !gm || ws.desk !== "build") return;
+    const res = await session.send({ kind: "set_value", address: current.address, field: "construct.design", value: JSON.stringify(r), at_yr: ws.campaign_now_yr ?? ws.now_yr });
+    note = res.status === "applied" ? null : res.status === "refused" ? res.reason : "Sent to the game master.";
+    ws.revision++;
+  }
   async function setFact(field: string, raw: string, was: unknown) {
     if (!current) return;
     const value: Json = typeof was === "number" ? Number(raw) : typeof was === "boolean" ? raw === "yes" || raw === "true" : raw;
@@ -277,14 +286,14 @@
           <nav class="links">
             {#if bodyAt(current.address)}<a href={placeHash({ scale: "world", system: scene.system, world: bodyAt(current.address)! })}>Open the world it is at</a>{/if}
             {#if gm && ws.setParty && navOf(current)}<button type="button" class="quiet-btn" aria-pressed={isParty(current)} onclick={() => makeParty(current!)} data-party-ship>{isParty(current) ? "The party's ship" : "Make this the party's ship"}</button>{/if}
-            {#if gm}<button type="button" class="quiet-btn" aria-expanded={pictureOpen} onclick={() => (pictureOpen = !pictureOpen)} data-picture-toggle>Picture</button>{/if}
+            {#if gm || isStation(current)}<button type="button" class="quiet-btn" aria-expanded={pictureOpen} onclick={() => (pictureOpen = !pictureOpen)} data-picture-toggle>Picture</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" aria-expanded={aboardOpen} onclick={() => (aboardOpen = !aboardOpen)} data-aboard-toggle>Aboard</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" bind:this={logBtn} aria-expanded={logOpen} onclick={() => (logOpen = !logOpen)} data-log-toggle>Log</button>{/if}
             {#if gm && current.facts.some((f) => f.field === "template.id")}<button type="button" class="quiet-btn" onclick={() => (retiring = !retiring)} data-retire>Take out of play…</button>{/if}
           </nav>
           {#if pictureOpen}
             <div use:opensFrom={() => document.querySelector("[data-picture-toggle]")}>
-              <Picture {ctx} construct={current} nav={navOf(current)} {editing} name={nameOf(current)} />
+              <Picture {ctx} construct={current} nav={navOf(current)} {editing} name={nameOf(current)} station={isStation(current) ? { words: currentTemplate?.explain ?? "", tags: currentTemplate?.tags ?? [], ondesign: setDesign } : null} />
             </div>
           {/if}
           {#if aboardOpen}

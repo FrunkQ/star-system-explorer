@@ -10,6 +10,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { fade } from "svelte/transition";
+  import { V3_URL } from "./alpha.ts";
   import { opensKey, pickLine, shownLines, type StartLine, type StartLinesDoc, type StartOpens } from "../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../chart-grammar/src/index.ts";
   import { loadPref, savePref } from "./prefs.ts";
@@ -88,7 +89,7 @@
 <section class="start" aria-labelledby="start-title" data-start>
   <div class="sheet">
     <header class="head">
-      <p class="mark" id="start-title">Star System Explorer</p>
+      <p class="mark" id="start-title">Star System Explorer <span class="stage">Alpha</span></p>
       <div class="line" aria-live="polite" role="group" aria-label="About" onpointerenter={() => (held = true)} onpointerleave={() => (held = false)} onfocusin={() => (held = true)} onfocusout={() => (held = false)}>
         {#if line}
           {#key line.id}
@@ -104,6 +105,12 @@
         {/if}
       </div>
     </header>
+
+    <!-- Alex, 24 Nov: say plainly that this is an alpha preview, and point anyone who wants to use it for real to V3. -->
+    <aside class="alpha" aria-label="Alpha" data-alpha>
+      <p><b>This is an alpha preview.</b> Most of the core is built, but it is not yet pulled together into one interface, so expect rough edges and gaps. It shows what is coming.</p>
+      <p>To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener" data-v3-link>version 3 ›</a></p>
+    </aside>
 
     <div class="cols">
       <section class="begin" aria-labelledby="begin-h">
@@ -198,6 +205,33 @@
     cursor: pointer;
     text-decoration: underline;
     text-underline-offset: 3px;
+  }
+  .stage {
+    margin-left: 8px;
+    padding: 1px 6px;
+    border: var(--sse-line, 1px) solid var(--sse-accent);
+    color: var(--sse-accent);
+    border-radius: 2px;
+  }
+  .alpha {
+    margin-top: -12px;
+    padding: 12px 16px;
+    border-left: 3px solid var(--sse-accent);
+    background: var(--sse-ground-raised);
+    max-width: 72ch;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .alpha p {
+    margin: 0;
+  }
+  .alpha p + p {
+    margin-top: 6px;
+  }
+  .alpha a {
+    color: var(--sse-accent);
+    text-underline-offset: 3px;
+    white-space: nowrap;
   }
   .cols {
     display: grid;

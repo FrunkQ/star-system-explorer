@@ -1,0 +1,559 @@
+{
+ "construct": "cassini",
+ "name": "Cassini",
+ "about": "Cassini from Cape Canaveral to Saturn: four flybys, the deep space manoeuvre and the Saturn orbit insertion, then thirteen years of a tour reshaped by Titan flybys, kept here as one osculating orbit per year (the big-burns fudge), and the plunge into Saturn on 15 Sep 2017. Huygens splits off on 25 Dec 2004. Flyby times and distances, the burns and the orbits are read from JPL Horizons (scripts/spaceflight/horizons_cassini.json).",
+ "pieces": [
+  {
+   "from_s": 63040193043,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 28.562,
+    "lon_deg": -80.577
+   },
+   "mark": "authored",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "on SLC-40 before launch",
+   "to_s": 63045377043
+  },
+  {
+   "from_s": 63045377043,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ascent"
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "Titan IVB-Centaur ascent; RS5 flies it",
+   "to_s": 63045377643
+  },
+  {
+   "from_s": 63045377643,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6563137.0,
+     "e": 0.0,
+     "i_deg": 28.5,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 63045377643
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "a 185 km parking orbit stands in for the Centaur's coast before departure",
+   "to_s": 63045378843
+  },
+  {
+   "from_s": 63045378843,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "lambert",
+     "to": "u:sol/sys:sun/body:venus",
+     "arrive_s": 63062070341
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "to the first Venus flyby",
+   "to_s": 63062070341
+  },
+  {
+   "from_s": 63062070341,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 172441707986.9649,
+     "e": 0.3689076333972748,
+     "i_deg": 3.406467645509526,
+     "node_deg": 76.79619349805479,
+     "peri_deg": 199.9725118229023,
+     "m0_deg": 0.0,
+     "epoch_s": 63062047862
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun after Venus 1 (Horizons, 1998-06-15)",
+   "to_s": 63081139500
+  },
+  {
+   "from_s": 63081139500,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "lambert",
+     "to": "u:sol/sys:sun/body:venus",
+     "arrive_s": 63098728249
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "after the deep space manoeuvre, to the second Venus flyby",
+   "to_s": 63098728249
+  },
+  {
+   "from_s": 63098728249,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "lambert",
+     "to": "u:sol/sys:sun/body:earth",
+     "arrive_s": 63103418970
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "to_s": 63103418970
+  },
+  {
+   "from_s": 63103418970,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "lambert",
+     "to": "u:sol/sys:sun/body:jupiter",
+     "arrive_s": 63146642715
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "to_s": 63146642715
+  },
+  {
+   "from_s": 63146642715,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "lambert",
+     "to": "u:sol/sys:sun/body:saturn",
+     "arrive_s": 63257121575
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "to_s": 63257121575
+  },
+  {
+   "from_s": 63257121575,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 4612706790.658511,
+     "e": 0.982529500414017,
+     "i_deg": 25.05857707318171,
+     "node_deg": 208.2146684825326,
+     "peri_deg": 172.4220294056212,
+     "m0_deg": 0.0,
+     "epoch_s": 63257121571
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "the capture orbit (Horizons, 2004-07-02)",
+   "to_s": 63273009600
+  },
+  {
+   "from_s": 63273009600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1941297496.617137,
+     "e": 0.8537893029832612,
+     "i_deg": 26.96925477376481,
+     "node_deg": 180.6992231109921,
+     "peri_deg": 224.8887316821518,
+     "m0_deg": 0.0,
+     "epoch_s": 63274328393
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2005-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63304545600
+  },
+  {
+   "from_s": 63304545600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1576914000.3324192,
+     "e": 0.8468885136859517,
+     "i_deg": 27.71956799927904,
+     "node_deg": 169.1452560271273,
+     "peri_deg": 227.4953168544181,
+     "m0_deg": 0.0,
+     "epoch_s": 63303931864
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2006-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63336081600
+  },
+  {
+   "from_s": 63336081600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1222056116.316815,
+     "e": 0.5156178665762733,
+     "i_deg": 28.62695955945894,
+     "node_deg": 356.508401155655,
+     "peri_deg": 299.1488561747722,
+     "m0_deg": 0.0,
+     "epoch_s": 63336014352
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2007-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63367617600
+  },
+  {
+   "from_s": 63367617600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1221285643.659773,
+     "e": 0.8038400558646409,
+     "i_deg": 15.71756059932144,
+     "node_deg": 287.0211147216473,
+     "peri_deg": 259.8173158560347,
+     "m0_deg": 0.0,
+     "epoch_s": 63367879699
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2008-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63399240000
+  },
+  {
+   "from_s": 63399240000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 869675996.5808609,
+     "e": 0.3687718445126662,
+     "i_deg": 45.1838452612845,
+     "node_deg": 311.8825215001412,
+     "peri_deg": 195.5072399982542,
+     "m0_deg": 0.0,
+     "epoch_s": 63399567947
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2009-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63430776000
+  },
+  {
+   "from_s": 63430776000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1223114544.068912,
+     "e": 0.8503648771332247,
+     "i_deg": 36.54047596668147,
+     "node_deg": 207.566215025147,
+     "peri_deg": 82.24771868564444,
+     "m0_deg": 0.0,
+     "epoch_s": 63430272736
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2010-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63462312000
+  },
+  {
+   "from_s": 63462312000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1455676516.421764,
+     "e": 0.8511321720251316,
+     "i_deg": 28.08106894680267,
+     "node_deg": 169.6596050198147,
+     "peri_deg": 113.4925327898327,
+     "m0_deg": 0.0,
+     "epoch_s": 63463148465
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2011-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63493848000
+  },
+  {
+   "from_s": 63493848000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1582460633.4393969,
+     "e": 0.8357014680107132,
+     "i_deg": 28.63628925812672,
+     "node_deg": 171.0587161258338,
+     "peri_deg": 86.0639778889806,
+     "m0_deg": 0.0,
+     "epoch_s": 63494154360
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2012-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63525470400
+  },
+  {
+   "from_s": 63525470400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1081657965.5491061,
+     "e": 0.5854404806932714,
+     "i_deg": 69.5552555806307,
+     "node_deg": 217.653281324104,
+     "peri_deg": 70.62566085572514,
+     "m0_deg": 0.0,
+     "epoch_s": 63525870753
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2013-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63557006400
+  },
+  {
+   "from_s": 63557006400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1943419905.358381,
+     "e": 0.3934303554926111,
+     "i_deg": 68.79317190783873,
+     "node_deg": 215.2850047081934,
+     "peri_deg": 230.6950638799275,
+     "m0_deg": 0.0,
+     "epoch_s": 63557165135
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2014-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63588542400
+  },
+  {
+   "from_s": 63588542400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1941062352.151129,
+     "e": 0.7459586939565924,
+     "i_deg": 49.30314698813728,
+     "node_deg": 201.6116506547035,
+     "peri_deg": 277.180312228235,
+     "m0_deg": 0.0,
+     "epoch_s": 63589298430
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2015-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63620078400
+  },
+  {
+   "from_s": 63620078400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1058681389.558543,
+     "e": 0.8533780493632496,
+     "i_deg": 27.08595078411739,
+     "node_deg": 171.5522509867687,
+     "peri_deg": 318.4845774105963,
+     "m0_deg": 0.0,
+     "epoch_s": 63620116815
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2016-Jan-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63672696000
+  },
+  {
+   "from_s": 63672696000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 668615572.4586009,
+     "e": 0.9078856694943765,
+     "i_deg": 66.38108408695624,
+     "node_deg": 243.3402099116833,
+     "peri_deg": 218.738187967907,
+     "m0_deg": 0.0,
+     "epoch_s": 63672830045
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2017-Sep-01 (Horizons); Titan flybys between are below the big-burns line",
+   "to_s": 63673948680
+  },
+  {
+   "from_s": 63673948680,
+   "state": {
+    "kind": "gone",
+    "how": "impacted"
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "the Grand Finale: into Saturn's atmosphere; Horizons' trajectory ends here"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 63045377043,
+   "kind": "launch",
+   "mark": "recorded",
+   "src": "jpl-cassini-press-kit",
+   "writer": "pack"
+  },
+  {
+   "at_s": 63045378843,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "dv_m_s": 3958.0,
+   "engine": "rl10a-4",
+   "why": "impulsive equivalent from an assumed 185 km parking orbit to Horizons' Earth-relative hyperbola at 1997-10-15 12:00 TDB"
+  },
+  {
+   "at_s": 63045378843,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "into": [
+    "cassini-centaur"
+   ],
+   "keeps_identity": true,
+   "why": "the Centaur upper stage separates after the departure burn"
+  },
+  {
+   "at_s": 63062070341,
+   "kind": "flyby",
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "body": "u:sol/sys:sun/body:venus",
+   "periapsis_m": 6359261
+  },
+  {
+   "at_s": 63081139500,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "dv_m_s": 450.2,
+   "engine": "cassini-main-445n",
+   "why": "deep space manoeuvre: heliocentric velocity from the elements before and after, compared at the midpoint, between 1998-12-03 06:00 TDB and 1998-12-03 07:30 TDB"
+  },
+  {
+   "at_s": 63098728249,
+   "kind": "flyby",
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "body": "u:sol/sys:sun/body:venus",
+   "periapsis_m": 6819206
+  },
+  {
+   "at_s": 63103418970,
+   "kind": "flyby",
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "body": "u:sol/sys:sun/body:earth",
+   "periapsis_m": 7549815
+  },
+  {
+   "at_s": 63146642715,
+   "kind": "flyby",
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "body": "u:sol/sys:sun/body:jupiter",
+   "periapsis_m": 9794455065
+  },
+  {
+   "at_s": 63257121575,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "dv_m_s": 576.3,
+   "engine": "cassini-main-445n",
+   "why": "Saturn orbit insertion (96 min): Saturn-centred velocity from the elements before and after, at the midpoint; 576 to 645 m/s by window, as Saturn's oblateness moves osculating elements near periapsis"
+  },
+  {
+   "at_s": 63272412600,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "into": [
+    "huygens"
+   ],
+   "keeps_identity": true,
+   "why": "Huygens released; Cassini's Saturn-centred a steps there between 02:00 and 02:20"
+  }
+ ]
+}

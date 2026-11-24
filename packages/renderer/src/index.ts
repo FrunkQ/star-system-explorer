@@ -12,7 +12,8 @@ export type { WebCubeData, WebKind } from "./web-cube.ts";
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
 export type { TrueTexture } from "./true-look.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
-export { BELT_DUST, beltHaze, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
+export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
+export type { BeltParticle } from "./rings.ts";
 export type { RingBand, RingProfile } from "./rings.ts";
 // R1: render recipes, the pass library, the governor and the globe runtime.
 export { checkRecipe, plan, estimateMs, pickRecipe, bestTier, maxLevel, stepsFrom, TIER_ORDER, DEFAULT_BUDGET_MS } from "./recipe.ts";
@@ -76,6 +77,17 @@ export type { ShipView3D } from "./gpu-ship.ts";
 export async function startShip(...a: Parameters<typeof import("./gpu-ship.ts").mountShip>) {
   const { mountShip } = await import("./gpu-ship.ts");
   return mountShip(...a);
+}
+// Stations and land constructs built from their description (Alex, 24 Nov): a self-contained builder, swappable.
+export { designStation, hoopNeed, narrateStation, pickShape, stationPackData, stationViews } from "./station-design.ts";
+export type { Axis, DockClass, Megastructure, Part, StationForm, StationLayout, StationLimits, StationOverrides, StationPlace, StationRecipe, StationRecord, StationRules, StationShape, StationSurface, StationView, StrengthMark } from "./station-design.ts";
+export { stationMesh } from "./station-mesh.ts";
+export type { StationMesh } from "./station-mesh.ts";
+export type { StationSkin, StationView3D } from "./gpu-station.ts";
+/** The station's 3D model, loaded only when asked (three.js is heavy). */
+export async function startStation(...a: Parameters<typeof import("./gpu-station.ts").mountStation>) {
+  const { mountStation } = await import("./gpu-station.ts");
+  return mountStation(...a);
 }
 
 export { curveDrop, decoration, descentTrack, floorFromRefusal, groundColours, groundMesh, heightAt as groundHeightAt, horizonDistance, levelFor, localToDir, patchKeys, patchPoint, playbackKeys, readPatch, siteFrame, tileSpot } from "./surface-patch.ts";

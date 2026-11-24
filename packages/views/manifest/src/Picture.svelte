@@ -1,15 +1,31 @@
 <script lang="ts">
   // A construct's pictures on the Ships and stations card: the shared Pictures panel (views/pictures) with a ship's
   // own drawn views, its plans and 3D model designed from its parts (the renderer's ShipPlans, from the base-ships
-  // pack). On the Build desk the design's style, remix and overrides are kept with the construct as a recipe; on
-  // Explore and Run the look is fixed (Alex, 24 Nov: play changes what is aboard, never the ship). Stations and sites
-  // without a drive have no drawn view yet (the renderer's station builder comes next), so they take own pictures.
+  // pack), or a station's design built from its description (the renderer's StationPicture). On the Build desk the design's style, remix and overrides are kept with the construct as a recipe; on
+  // Explore and Run the look is fixed (Alex, 24 Nov: play changes what is aboard, never the ship). Sites with
+  // neither take own pictures.
   import { DESIGN_FIELD, designOf, factOf, shipRecordOf, type Json, type NavShip, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { readPropellants, type DesignRecipe, type DesignRules, type DesignShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
   import { ShipPlans } from "../../ship/src/index.ts";
+  import StationPicture from "../../ship/src/StationPicture.svelte";
   import { Pictures } from "../../pictures/src/index.ts";
 
-  let { ctx, construct, nav, editing = false, name }: { ctx: ViewContext; construct: PlayerSubject; nav: string | NavShip | null; editing?: boolean; name: string } = $props();
+  let {
+    ctx,
+    construct,
+    nav,
+    editing = false,
+    name,
+    station = null,
+  }: {
+    ctx: ViewContext;
+    construct: PlayerSubject;
+    nav: string | NavShip | null;
+    editing?: boolean;
+    name: string;
+    /** A station: its template's words and tags pick the shape (renderer StationPicture); its recipe is kept by the card. */
+    station?: { words: string; tags: string[]; ondesign: (r: unknown) => void } | null;
+  } = $props();
   const session = $derived(ctx.session);
   const ws = $derived(ctx.workspace);
   const design = $derived(designOf(factOf(construct, DESIGN_FIELD)));
@@ -42,7 +58,7 @@
       if (g === gen) ((fuels = f), (ship = s));
     });
   });
-  const views = $derived(ship && pack ? [{ id: "plans", label: "Plans" }, { id: "model", label: "3D model" }] : []);
+  const views = $derived(station ? [{ id: "station", label: "Design" }] : ship && pack ? [{ id: "plans", label: "Plans" }, { id: "model", label: "3D model" }] : []);
 
   // The plans report each change of style, remix or override (offered only on Build); the last one is kept, a moment after.
   let pending: ReturnType<typeof setTimeout> | null = null;
@@ -60,9 +76,11 @@
   $effect(() => () => pending && clearTimeout(pending));
 </script>
 
-<Pictures {ctx} subject={construct} {name} {editing} {views} hint={views.length ? "Style and remix are kept with the ship." : undefined}>
+<Pictures {ctx} subject={construct} {name} {editing} {views} hint={station ? "The shape and remix are kept with it." : views.length ? "Style and remix are kept with the ship." : undefined}>
   {#snippet view(id, choose)}
-    {#if ship && pack}
+    {#if id === "station" && station}
+      <StationPicture {construct} {name} words={station.words} tags={station.tags} locked={!editing} onchange={(r) => editing && station.ondesign(r)} />
+    {:else if ship && pack}
       <ShipPlans {ship} {fuels} rules={pack.rules} styles={pack.styles} segments={24} fit="hull" locked={!editing} start={id === "model" ? "model" : "plans"} onview={choose} {...design && pack.styles[design.style] ? { recipe: design as DesignRecipe } : {}} onchange={designChanged} />
     {/if}
   {/snippet}

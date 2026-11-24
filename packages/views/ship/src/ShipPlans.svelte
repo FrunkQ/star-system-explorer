@@ -72,6 +72,11 @@
   let pan = $state<[number, number]>([0, 0]);
   let failed = $state(false);
   const pitch = $derived(view.seen === "free" ? freePitch : (SEEN_ELEVATION[view.seen] * 180) / Math.PI);
+  // Picking a fixed "Seen from" frames the model afresh (turn, zoom and slide), even the one already shown.
+  $effect(() => {
+    void view.framed;
+    if (untrack(() => view.seen) !== "free") ((yaw = 35), (zoom = 1), (pan = [0, 0]));
+  });
   $effect(() => {
     if (view.style !== "3d" || !canvas || !style.skin) return;
     const c = canvas;

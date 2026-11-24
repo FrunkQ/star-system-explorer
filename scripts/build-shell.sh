@@ -19,6 +19,8 @@ cp packs/base-reference/pack.json packages/shell/public/packs/base-reference.jso
 # The base names pack, offered on the Names page while no pack on the stack carries names (NM6).
 cp packs/base-names/pack.json packages/shell/public/packs/base-names.json
 cp packs/base-ships/pack.json packages/shell/public/packs/base-ships.json
+# The future tech ladder: the station builder reads the comfortable spin and the strength for weight from it.
+cp packs/base-tech/pack.json packages/shell/public/packs/base-tech.json
 # The manifest and crew kinds (track MC): everything aboard a ship, on the base stack so any setting has it.
 cp packs/base-manifest/pack.json packages/shell/public/packs/base-manifest.json
 cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/public/packs/kestrel-player-data.json
