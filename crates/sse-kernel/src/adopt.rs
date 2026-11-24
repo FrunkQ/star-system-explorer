@@ -678,7 +678,12 @@ fn bodies_from_facts(
                 .unwrap_or_else(|| a.to_string()),
             mass_earth,
             radius_earth: radius / R_EARTH,
-            core_mass_fraction: 0.32,
+            // A measured core share (catalogued or typed), else Earth's.
+            core_mass_fraction: r
+                .get("interior.core_mass_fraction")
+                .and_then(as_f64)
+                .filter(|x| (0.0..=1.0).contains(x))
+                .unwrap_or(0.32),
             water_fraction: 0.0,
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,

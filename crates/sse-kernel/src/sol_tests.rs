@@ -361,8 +361,10 @@ fn earths_deposits_hold_its_porphyry_copper() {
     };
     let arc = kind("copper-arc");
     let cu = held(&arc, "cu");
-    // Kesler and Wilkinson 2008: about 1.7e11 t (1.7e14 kg).
-    assert!((cu / 1.7e14 - 1.0).abs() < 0.3, "arc copper {cu:.3e} kg");
+    // Kesler and Wilkinson 2008: about 1.7e11 t (1.7e14 kg). Within 35%:
+    // with Earth's measured core share (32.5%, SOL4) the mantle, and so the
+    // arc's copper, is a touch smaller than with the old 32% stand-in.
+    assert!((cu / 1.7e14 - 1.0).abs() < 0.35, "arc copper {cu:.3e} kg");
     assert!(held(&kind("gold-orogenic"), "au") > 0.0, "{h}");
     let c = composition(&mut k, "Earth", "survey");
     for x in h["crust"].as_array().unwrap() {
@@ -729,4 +731,43 @@ fn giants_make_their_fields_in_their_deep_hydrogen() {
         serde_json::json!({"op":"resolved_system","system":SOL}),
     );
     assert_eq!(again["facts"], r["facts"]);
+}
+
+/// SOL4: catalogued rocky worlds bring their measured interiors. Mercury is
+/// metal-rich (its core is about 70% of its mass), the Moon nearly
+/// coreless, and the measured moment of inertia factors win over the
+/// two-layer estimate.
+#[test]
+fn catalogued_worlds_bring_their_measured_interiors() {
+    let mut k = open_sol(&[]);
+    let fe = |k: &mut crate::Kernel, n: &str| share(&composition(k, n, "orbit"), "fe");
+    let (mercury, earth, moon, mars) = (
+        fe(&mut k, "Mercury"),
+        fe(&mut k, "Earth"),
+        fe(&mut k, "Moon"),
+        fe(&mut k, "Mars"),
+    );
+    // Mercury's bulk is about 60 to 70% iron; the core alloy's light
+    // elements (CI's sulfur, MP14) hold it near half here, against Earth's 0.3.
+    assert!(mercury > 0.45, "Mercury's iron {mercury}");
+    assert!(moon < 0.15, "the Moon's iron {moon}");
+    assert!(
+        mercury > earth && earth > mars && mars > moon,
+        "{mercury} {earth} {mars} {moon}"
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let c = |name: &str| {
+        r["facts"]
+            .as_object()
+            .unwrap()
+            .values()
+            .find(|f| f["name"] == name)
+            .and_then(|f| f["body.moment_of_inertia_factor"].as_f64())
+            .unwrap()
+    };
+    assert_eq!(c("Earth"), 0.3307);
+    assert_eq!(c("Moon"), 0.3932);
 }
