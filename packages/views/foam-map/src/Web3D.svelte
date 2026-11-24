@@ -281,8 +281,8 @@
     </div>
   </div>
   <p class="note">
-    <span>Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}: {sayNumber(total, 12, { decimals: 0 })} parcels of matter, each the same mass, moved from a grid {cube.volume.n} a side by the field smoothed over {cube.volume.smoothing_mpc.toFixed(0)} Mpc.</span>
-    {#if isTrue && lights}<span>Light: {sayNumber(lit, 12, { decimals: 0 })} galaxies, the haloes above {sciMass(galaxies?.galaxy_floor_msun ?? 0)} solar masses, each where its matter has been carried and shining by its own stars: old stars warm, young ones blue. The gas and dark matter between them are dark{hud ? " (HUD shows the dark matter faintly)" : ""}.</span>{:else if isTrue}<span>Lighting the galaxies… for now every parcel shines alike, one colour, old starlight at about {sayNumber(WEB_LIGHT_K, 12, { decimals: 0 })} K.</span>{:else}<span>Faint: voids. Grey: sheets. Ink: filaments. Accent: knots, where clusters grow.</span>{/if}
+    <span>Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}: {sayNumber(total, 3, { decimals: 0 })} parcels of matter, each the same mass, moved from a grid {cube.volume.n} a side by the field smoothed over {sayNumber(cube.volume.smoothing_mpc, 3, { decimals: 0 })} Mpc.</span>
+    {#if isTrue && lights}<span>Light: {sayNumber(lit, 3, { decimals: 0 })} galaxies, the haloes above {sciMass(galaxies?.galaxy_floor_msun ?? 0)} solar masses, each where its matter has been carried and shining by its own stars: old stars warm, young ones blue. The gas and dark matter between them are dark{hud ? " (HUD shows the dark matter faintly)" : ""}.</span>{:else if isTrue}<span>Lighting the galaxies… for now every parcel shines alike, one colour, old starlight at about {sayNumber(WEB_LIGHT_K, 3, { decimals: 0 })} K.</span>{:else}<span>Faint: voids. Grey: sheets. Ink: filaments. Accent: knots, where clusters grow.</span>{/if}
   </p>
 </div>
 
