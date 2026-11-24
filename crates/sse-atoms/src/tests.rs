@@ -1470,9 +1470,9 @@ fn inertia_blocks_match_their_sums() {
             "{q} {rc} {r}: {got}"
         );
     }
-    let earth = ia::two_layer(0.325, 3.48e6, 6.371e6);
+    let earth = ia::two_layer(0.325, 3.48e6, 6.4e6);
     assert!(earth > 0.3307 && earth < 0.36, "{earth}");
-    assert!((ia::two_layer(0.0, 0.0, 1.7374e6) - 0.4).abs() < 1e-12);
+    assert!((ia::two_layer(0.0, 0.0, 1.7e6) - 0.4).abs() < 1e-12);
     for z in [0.0, 0.1, 0.25] {
         let got = run("sse.interior.inertia_giant", &[z])[0];
         assert!(
