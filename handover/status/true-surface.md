@@ -2,7 +2,7 @@
 
 Owner thread: "Build plumes, frosts and small bodies". Covers the third V3 audit's items 4, 5, 6 and 10 (R9 to R12, R15, R16, R18, R32, R33): plumes above the limb, tholins and coloured frosts, hot things glowing in Visible and lava tube openings on the ground (small bodies and comets handed over, see below).
 
-Only the owner thread edits this file. Files agreed on 24 Nov: `crates/sse-surface/src/plumes.rs`, a later `shapes.rs`, the tholin and frost cover in `cover.rs` (with "Build SSE4 proven core"); new files `packages/renderer/src/plumes.ts`, `ices.ts`, `hot-glow.ts`, `small-bodies.ts` and their GpuItem fields, filled in the renderer's `trueLook` (with "Build photoreal renderer"). The frost and tholin pass runs after the ground and before "Build giant bands, clouds and hazes"'s air layer. Material colours only through the data sheet's Look up (MP33 titan-tholin, MP34 SO2, sulphur, N2 and CH4 ice, CO2 frost).
+Only the owner thread edits this file. Visual polish rule (`design/SSE4-visual-polish-design.md` section 3): every drawn detail is a Fact, Drawn from the numbers, or a Camera effect; a flourish with no kernel number behind it is not drawn. Files agreed on 24 Nov: `crates/sse-surface/src/plumes.rs`, a later `shapes.rs`, the tholin and frost cover in `cover.rs` (with "Build SSE4 proven core"); new files `packages/renderer/src/plumes.ts`, `ices.ts`, `hot-glow.ts`, `small-bodies.ts` and their GpuItem fields, filled in the renderer's `trueLook` (with "Build photoreal renderer"). The frost and tholin pass runs after the ground and before "Build giant bands, clouds and hazes"'s air layer. Material colours only through the data sheet's Look up (MP33 titan-tholin, MP34 SO2, sulphur, N2 and CH4 ice, CO2 frost).
 
 | Package | State | Log |
 |---|---|---|
@@ -12,6 +12,10 @@ Only the owner thread edits this file. Files agreed on 24 Nov: `crates/sse-surfa
 | TRUE4 tholins and coloured frosts | waits on data sheet MP33, MP34 | |
 | TRUE5 small bodies and comets | handed over to "Build asteroids and rings up close" (24 Nov) | |
 | TRUE6 lava tube openings on the ground (from `survey_caves`) | not started | |
+| VP-P1 hot ground and lava as emitted light into the shared glare, crust from cell noise (visual polish design, accepted 24 Nov; extends TRUE3) | waits on VP1, VP6 | |
+| VP-P2 plumes with size-driven forward scatter and the umbrella shape (extends TRUE2) | waits on kernel ask K-c | |
+| VP-P3 comets (coma switch-on, two tails, green head) | goes with TRUE5 to "Build asteroids and rings up close" | |
+| VP-P4 ice cracks and frost sparkle below the fact floor through the detail ladder | waits on VP6 | |
 
 ## Live checks (audit R3, per body)
 Not yet run. Note: the default Solar System (`packs/base-sol`) has no Enceladus, Io, Europa, Titan, Triton or Charon yet, so those lines cannot be judged on the live site until the big moons are added.
