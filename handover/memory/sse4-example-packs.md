@@ -1,0 +1,47 @@
+---
+name: sse4-example-packs
+description: Example pack for every Explorers shelf, accepted 23 Nov 2026 (questions 1 to 9); licence findings, tech and FTL per pack, owners; all 13 questions accepted
+metadata:
+  type: project
+  modified: 2026-11-23T15:47:49.639Z
+---
+Design note: /mnt/project-files/sse4/SSE4-example-packs.md (proposed 23 Nov 2026, thread "Choose example packs for every shelf"). Alex accepted questions 1 to 9 on 23 Nov 16:15 ("yes to all"), after saying at 16:14: agree on Star Trek, "do others similarly" (free, none of the owner's words such as LCARS, only on our library; he is willing to follow an original's look closely), and the main thing each pack must get right is the tech level (problems solved) per universe and faction and how its rules handle FTL (jump routes, drive classifications). Questions 10 to 13 accepted 16:36 with Alex's addition that FTL start and end rules (out of a gravity well, L points, built gates) come from one simple flexible rule set shown on the chart, now a conditions list in section 4A. The four were: questions 10 to 13 (look closeness, Claude recommends "close homage, nothing traced"; a naming line on listings; five plain fields on every FTL rule plus gates and messages; section 4A as the build brief). Section 7A lists the owner thread per pack. Mothership licence: an email in Alex's name, drafted for him 23 Nov, he sends it.
+
+Alex's ask (23 Nov): an example on every shelf so people see what each kind of pack can be; Traveller should carry all the standard ships; his ideas were Star Trek (LCARS, calendar, FTL), a shared Alien/Mothership retro look, and a fully populated Expanse solar system with ships patrolling and mining.
+
+Accepted recommendations:
+- Traveller: finish the standard ships (about 12 starships, 6 small craft), own generated hulls, no deck plans. Pack notice still says Far Future Enterprises; the Traveller wiki now says Mongoose Publishing owns Traveller, so the notice needs updating.
+- Star Trek: do not write or feature a pack by that name or copy LCARS; build an original "Bridge console" pack (theme, decimal date, formula FTL, quadrant overlay).
+- Alien/Mothership: one original "Retro future" looks pack; apply for Mothership's third-party licence; never name Alien.
+- Expanse: ship the living system as an original campaign "A working Sol" on the near-future pack.
+- Named-setting fan examples: Eclipse Phase (CC BY-NC-SA 4.0, pack must carry that licence) and 2300AD (Mongoose fair use policy).
+- Originals: Sol today (real spacecraft), Megastructures, Pulp solar system (fictional physics), World hooks tag set, tours, sky overlays, Darian calendar, astronomer's units.
+- No new shelves for calendars, units, ship styles, programs, overlays, sensors: a "contains" filter read from the manifest.
+
+Licence findings read 23 Nov 2026 (guidance, not legal advice): Mongoose Fair Use Policy allows non-commercial websites, downloadable modules and small game aids in the official universe, and names 2300AD too. Star Trek has only fan film guidelines ("not a license") and free fan projects were shut down in 2018 and 2023. Free League's open licences cover Year Zero Engine and five games, not Alien. No fan policy found for The Expanse. Paizo allows names in free tools but not with mechanics. Orion's Arm needs written consent. Not confirmed: Mothership licence terms, Stars Without Number, Cepheus ship chapter, Darian calendar terms.
+
+The cloud container cannot curl most sites (proxy 403); the web-fetch agent can read them.
+
+Related: [[traveller-pack-track]], [[explorers-paid-packs]], [[sse4-view-styles]]
+
+Mothership widened (Alex, 23 Nov 19:28, "I LOVE Mothership!"): a ship manifest screen and crew, character generation inside SSE4, rolling the jump encounter on a failed jump, play sites such as wreckage and a lava tube. Note section 4.3A splits it: general pieces for every game pack (manifest, crew roster, character sheet from pack data, roll on a table, failed-FTL table, sites with an inside, the last needing its own design note) from Mothership's own names and tables, which wait for the licence. Open with Alex: whether in-app table rolls start now (he said dice and skill checks "not just yet"); Claude recommends table rolls yes, skill checks still later.
+
+Scope change (Alex, 23 Nov 19:47): authored wrecks and built sites you can go inside are parked until about 4.2, with a co-GM generating encounters, pirate skirmishes and wrecks from the living simulation. Natural caves and lava tubes stay in 4.0. Manifest, crew roster, pack-defined character sheet and table roll are unaffected.
+
+Scope ruling (Alex, 23 Nov 19:50): "in 4.2 we will go hard into RPG support. So all the game packs can wait a bit. Traveller is our showcase." Waiting for 4.2 and handed to nobody: Mothership game pack and its play features (manifest, crew, character sheet, table rolls), Cepheus, the 4X, the Mothership licence email and the in-app dice question. Coordinator's and Claude's reading (not Alex's words): setting, look and data packs with no game rules carry on. Asked of Alex in note section 0: whether Retro future (look only), Bridge console, Eclipse Phase and 2300AD (settings only) carry on; Claude recommends yes.
+
+Alex, 23 Nov 19:52 to 19:53: "Author all the looks" (Retro future and Bridge console carry on now as looks with no game names or rules); "apart from that all the game specific stuff (except Traveller) is parked for 4.2" (so Eclipse Phase and 2300AD wait too, coordinator's reading). The green screen is "any colour mono" (GM picks the colour). A select few SSE3 player view shaders carry over: note section 4C proposes Mono (any colour), Tube, Bad signal (GM dial), False colour as a palette on real bands (not a fake thermal filter), Night vision as a saved setting plus grain, and transitions Power off, Static dissolve, Typewriter, Fade; awaiting Alex's pick. SSE3 source for these: star-system-generator/src/lib/holo/filters, transitions, player/presets.ts (files more than 7 folders below C:\Development cannot be staged). Do not carry SSE3's builtin-wy-logo or "DON'T PANIC / Megadodo" cover.
+
+Bad signal (Alex, 23 Nov 19:55): one dial that clears the picture up from the level the saved look started at; two kinds, analogue noise and classic digital break-up (blocks, freezes, dropouts). In note section 4C. He has not yet picked from the rest of the looks list.
+
+Static (Alex, 23 Nov 19:56): the GM should have the same live dial to let players "tune in". Design answer in 4C: every such look and transition has one amount from none to all; a transition plays it over time, a dial holds it by hand; static is the far end of the Bad signal dial. Pushing past the saved level is the coordinator's working choice, reversible by Alex.
+
+Scene wipes (Alex, 23 Nov 19:56): wants classic space-opera scene wipes on screen changes, so wipe and iris come back as one "Scene wipes" transition with shape as data (straight, diagonal, clock, iris), generic film wipes with no franchise name.
+
+Correction (Alex, 23 Nov 19:57): the looks list "mixed up transitions, with effects and more". Section 4C is now sorted into five separate kinds: filters (Mono any colour, Tube, Grain; lasting, saved settings), palettes (False colour on a real band), signal faults (analogue, digital; the only kind with a live GM dial; static and "tune in" live here), transitions (Fade, Scene wipes, Power off and on, Static burst; play once, not a dial), text delivery (Typewriter). A look is a saved combination. The earlier "one shared amount for everything" claim is withdrawn. Keep these kinds separate in any later work.
+
+Alex, 23 Nov 19:59: "screen delivery rather than text delivery - a transition from nothing is always an option." So 4C has four kinds: filters, palettes, signal faults, screen delivery (Fade, Scene wipes, Power on/off, Static burst, Typewriter, Scan in; each from the screen before or from nothing). "Screen off" is a seat state.
+GM controls for looks (Alex asked 19:58, including a preview window): note section 4D and live mockup https://claude.ai/artifact/MUWHuo5mwY5fTXED7fvaSP (source in this thread's scratchpad, not kept). Proposal: Workshop > Looks as one card with four rows and the stage as preview; saved looks in the View style switch; Seats rows on the Run desk gain Look, a signal dial and Send/Preview; a small pinned preview of one seat; flashing limit and reduced motion. Seven questions with Alex, including whether a GM-given look holds for a seat (touches his ruling that style is each user's choice).
+Alex, 23 Nov 20:05, on the looks controls mockup: "genius"; no Preview button, pressing a seat's row (or touching its dial) makes it active and shows its screen in the pinned preview. The seven 4D questions are otherwise not answered one by one.
+
+ACCEPTED (Alex, 23 Nov 20:08, "All good here - your recs resonate - so solid - great mockup BTW"): the looks short list (4C, four kinds) and all seven 4D questions as recommended. Rulings that follow: a look the GM gives a seat holds by default with a per-seat "player may change" switch (plain view styles stay each user's choice); player accessibility settings always win; faults never flash the whole screen more than three times a second; the signal dial may go past the saved level. Owners: renderer thread (filters, faults, deliveries, preview drawing), chart room thread (Workshop > Looks, Seats rows, pinned preview). Nothing from this note waits on Alex; the Mothership licence email is parked for 4.2.

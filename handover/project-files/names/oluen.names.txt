@@ -1,0 +1,86 @@
+# Name sheet (SSE4-naming-design.md section 4.11). Package NM3d, 22 Nov 2026.
+# An original invented language for base-names. Not from any published setting.
+# Token syntax follows the design's example; NM7 settles the final grammar and
+# this file is adjusted to it then. "colour?" means: the word for the object's
+# own colour when it has one, else nothing.
+
+name:    Oluen
+about:   A soft, flowing tongue of open syllables and long vowels, with no hard stops. The thing comes first and the describing word after it.
+script:  latin
+kind:    invented
+
+sounds:
+  C = l m n s th v y r h sh
+  V = a e i o u ae ia ue
+  E = n l s th r
+weights:
+  C = l 5, n 5, m 4, s 4, r 4, th 3, v 3, sh 2, y 2, h 2
+  V = a 6, e 5, i 4, o 3, u 2, ae 2, ia 2, ue 1
+  E = n 4, l 4, s 2, th 2, r 3
+shape:   V 1, CV 5, CVE 3, VE 1
+length:  2-4
+never:   a+a, e+e, i+i, o+o, u+u, ae+a, ae+e, ia+a, ia+i, ue+e, ue+u, h+h
+replace: a+a = a, e+e = e, i+i = i, o+o = o, u+u = u
+stress:  second from last
+
+say:     th "th as in thin", sh "sh as in ship", y "y as in yes", r "a light tap", ae "like the word eye", ia "ee-ah, run together", ue "weh", a "ah", e "eh", i "ee", o "oh", u "oo"
+ipa:     l l, m m, n n, s s, th θ, v v, y j, r ɾ, h h, sh ʃ, a a, e e, i i, o o, u u, ae aɪ, ia ja, ue we
+
+join:    thing first, no joiner
+
+means:
+  red = sora
+  dark = nol
+  light = lia
+  cold = yeth
+  great = vael
+  small = ni
+  new = nae
+  old = oth
+  deep = lomu
+  first = an
+  second = es
+  third = ir
+  mountain = thael
+  stone = ren
+  water = mial
+  sea = vuen
+  river = rial
+  ice = yel
+  sand = sia
+  plain = lan
+  fire = shira
+  wind = hae
+  storm = vorus
+  sky = lue
+  star = sil
+  sun = aeli
+  moon = miel
+  home = ena
+  grove = losha
+  mother = ama
+  north = ith
+  south = osa
+
+forms:
+  star       = {word}
+  planet     = {word}
+  moon       = {means:moon} {parent}
+  belt       = {means:stone}{means:sky} {word}
+  peak       = {means:mountain}{means:colour?}
+  peak       = {means:mountain} {word}
+  range      = {word} {means:mountain}{means:great}
+  sea        = {means:sea} {word}
+  ocean      = {means:sea}{means:great}
+  lake       = {means:water}{means:small} {word}
+  river      = {means:river} {word}
+  crater     = {word}
+  plains     = {means:plain} {word}
+  settlement = {means:home} {word}
+  port       = {means:home}{means:sky} {word}
+  base       = {word} {means:grove}
+  default    = {word}
+
+# Samples the sounds above give: Thaelsora (red mountain), Selian, Movaen,
+# Aluenor, Niathe, Miel Selian (moon of Selian: follows its parent's name),
+# Vuen Lorae (the Lorae sea).

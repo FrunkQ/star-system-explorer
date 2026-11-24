@@ -1,6 +1,63 @@
 # START HERE
 
-Last updated: 23 Nov 2026: split into an index (this page) and one status file per track in `status/`. Live site v4.starsystemx.com; `main` is the default branch.
+Last updated: 24 Nov 2026 (handover to a new Claude account). Live site v4.starsystemx.com; `main` is the default branch.
+
+## New to this project? Read this section first
+
+On 25 Nov 2026 Alex (GitHub `FrunkQ`, the owner) moves SSE4 to a new Claude account. The old account's project chat,
+threads and project memory do not come with it. **Everything a new Claude needs is in this repo**, mainly in `handover/`.
+Read in this order:
+
+1. `/CLAUDE.md` (repo rules), then the rest of this page.
+2. `handover/memory/MEMORY.md`: the old project memory index, copied in full on 24 Nov 2026. The other files in
+   `handover/memory/` are the detail memories it points to (one subject each). Treat them as dated notes: check
+   anything that names a file, PR or function against main before relying on it.
+3. `handover/handover-2026-11-24.md`: work streams, per-track status checked against main and open PRs, the golden
+   lane queue, open questions for Alex, known caveats.
+4. Your track's file in `handover/status/`, then the log of its last package in `handover/packages/`.
+
+### What SSE4 is (one paragraph)
+Star System Explorer 4: a total rewrite of Alex's Star System Explorer (V3 is live at starsystemx.com and is the one
+for real use; SSE4 is ALPHA at v4.starsystemx.com). A procedural, deterministic universe from Big Bang to heat death
+whose physics is real, visible and editable as cited node flows ("lean into the physics, never fake it"). An RPG and
+storytelling toolkit first, astrophysics education second. Kernel in Rust (compiled to wasm), UI in TypeScript and
+Svelte 5. Apache-2.0. Agents (Orac designer, Minerva storytelling, Tars support) are bring-your-own-key; keys never
+leave the browser.
+
+### How Alex wants work done (standing rules)
+- **Design and mockups on Fable** (limited weekly allowance; never used for code). **Coding on Opus.**
+- **One builder thread per screen section** (chart room, object selector and menus, Run desk and players' side,
+  planet and star editing, ...) so contexts stay small and threads do not collide. `shell/src/` is split into section
+  folders for this.
+- **PRs into `main` merge when their checks pass** ("main is entirely yours"). Every merge deploys the live site.
+- **CI workflow or merge-check edits need Alex's own yes.** So do database, storage or user-data changes on the
+  Explorers site (repo `FrunkQ/starsystemx-creator-hub`). The converter (`FrunkQ/starsystem-convert`) merges when green.
+- **One golden-changing PR open at a time** (`tests/golden/` hashes change only on purpose, reason in the package log).
+- **No temporary files in the repo**: screenshots and working artefacts go to project files
+  (`sse4/handover-screens/<PKG>-screens/`), never committed. **No history rewrites** (old screenshots stay in history).
+- **Questions as one numbered list**, each with Claude's own recommendation; Alex answers like "yes to 1, 2 and 4".
+  At most one list a day unless something cannot be undone or blocks a stage. No release-date pressure.
+- One work package at a time; its checks (`scripts/check.sh`) pass before the next starts. Commits as
+  `FrunkQ <frunk@frunk.net>`.
+- One general mechanism over specials; don't copy V3, do it better; "think wide". Physics over simplification where
+  practical, every fudge in the register. Interface is "dynamic minimalism": common things a click away, rare things
+  in menus with context, newcomer friendly; guide the user, never leave them alone.
+
+### Where everything lives
+| What | Where |
+|---|---|
+| Repo rules | `/CLAUDE.md`, `clippy.toml`, `scripts/check.sh` |
+| Design notes (accepted unless marked) | `handover/design/SSE4-*.md`; start with `SSE4-build-plan.md` sections 1 and 2; authority `SSE4-design-handoff.md`; join-up order `SSE4-coming-together.md` |
+| Rulings during the build | `handover/decisions.md`, plus the "Standing rulings" in `handover/memory/MEMORY.md` |
+| Track status | `handover/status/<track>.md` (table below) |
+| Package logs and evidence | `handover/packages/<PKG>.md` |
+| Fudge register / citations | `docs/fudges.md` / `docs/citations.md` |
+| Interface style, top-level UI | `handover/interface-style.md`, `handover/design/SSE4-top-level-ui-and-onboarding.md` |
+| Old project memory | `handover/memory/` |
+| Screenshots, mockups, trailer clips | Not in the repo. Alex's PC: `C:\Development\sse4-project-files\` (13 zips of the old project files `sse4/`, 24 Nov snapshot) |
+| Alex's PC (AC-ProArt) | `C:\Development`: `sse4` checkout, `star-system-explorer-v2` (V3 source, code in `star-system-generator`), `sse4-real-saves` (real V3 saves), `sse4-trailer-gpu` (trailer clips) |
+| Sister sites | Explorers `FrunkQ/starsystemx-creator-hub`; converter `FrunkQ/starsystem-convert` |
+
 
 ## Standing rule: real physics, documented fudges (Alex, 19 Nov 2026)
 In his words: "the physics is WAY more interesting than faking it. But understand a browser has limited capability. Fall on physics rather than simplification where practical. If we decide to "fudge" it is a known and documented fudge with a damn fine reason to exist."
@@ -26,7 +83,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 |---|---|---|
 | `status/kernel.md` | Build kernel resolve and rules | K, J, C, T1, T2, G, L, E, the kernel side of Y, TG, GH, DM2 to DM5, ND3, ND3b, ND6 |
 | `status/proven-core.md` | Build SSE4 proven core | P, F, S, SF, B, T3, S5, the source side of MF (MF1 to MF3, MF10), MP19, MP20, ND1 |
-| `status/chart-room.md` | Rebuild the chart room's top level | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
+| `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | U6, U8, V8, V9, voyages, GH8 |
 | `status/light.md` | Build light and nebulae | O, the light side of Y, MF6, MF7, MF9, ND2 |
 | `status/weather.md` | Build shared climate and weather | W |
@@ -38,10 +95,14 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/naming.md` | the thread that owns track NM | NM |
 | `status/performance.md` | Measure performance for minimum specs | PF |
 | `status/across-tracks.md` | each row names its owners | the umbrella rows for MF, Y, GH, ND, TG, and the converter module |
+| `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, run/ (table line, seats, arrival), Playbook and Switchboard (RD) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/navigation.md` | Build object selector and menus | NV (finding your way: selector part 2, object menu, find by tag, notes) |
-| `status/exotic-objects.md` | Build exotic stars and black holes (design by "Design exotic stars and black holes") | XO (black holes with real light bending, pulsars, stripped stars, Composite band, the approach diagram) |
+| `status/exotic-objects.md` | Build exotic stars and black holes (design by "Design exotic stars and black holes") | XO (black holes with real light bending, pulsars, stripped stars, Composite band, the Hazard map for any hazardous body) |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs as edited, the Solar System built through the UI) |
+| `status/run-desk.md` (arrives with PR 421) | Build Run desk playbook and players' side | RD, PB (Playbook and Switchboard) |
+| none yet | Build Paper spacecraft pack | RK6 (other RK packages are rows in the files above) |
+| `status/exotic-objects.md` | Build exotic stars and black holes | XO exotic objects (XO1 part 1 built 24 Nov) |
 
 A package that does not fit a file goes in its owner thread's file. A new track gets a new file and one line in the table above. Milestone M1 "Proven core" (K0 to K6) is complete.
 

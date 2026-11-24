@@ -113,6 +113,23 @@ test("players replay the GM's events and agree by state hash; GM drop goes read-
     await settle();
     assert.equal(phone.p.party(), undefined, "no party ship any more");
 
+    // The Switchboard (PB1): a screen says hello with its own id and name; one screen can be sent its own place or held
+    // with a card, while the rest of the table carries on.
+    const hellos: { id: string; name: string; role: string }[] = [];
+    host.onScreen = (h) => hellos.push(h);
+    const wall = new PlayerReplica(room.hub("wall"), open, { kernel: version, app: "test-app", now: () => clock, offlineAfterMs: 6000 });
+    wall.join({ id: "scr-wall", name: "Wall TV", role: "table" });
+    await until(() => wall.status.state === "live", "wall live");
+    assert.deepEqual(hellos, [{ id: "scr-wall", name: "Wall TV", role: "table" }]);
+    host.setState({ shown: { scope: facts.scope, title: "Kestrel" }, screens: { "scr-wall": { off: true, card: "Signal lost" } } });
+    await settle();
+    assert.deepEqual(wall.shownFor("table", "scr-wall"), { off: true, card: "Signal lost" });
+    assert.deepEqual(phone.p.shownFor("table"), { scope: facts.scope, title: "Kestrel" }, "the other screens carry on");
+    assert.deepEqual(host.manifest().screens, { "scr-wall": { off: true, card: "Signal lost" } }, "a late joiner gets it on the manifest");
+    host.setState({ screens: {} });
+    await settle();
+    assert.deepEqual(wall.shownFor("table", "scr-wall"), { scope: facts.scope, title: "Kestrel" }, "back with the table");
+
     // A system the GM adds (a V3 import) reaches players' screens as an event: their kernels hold it too.
     const added = await gm.adopt({ import_v3: readFileSync(new URL("tests/fixtures/v3/synthetic-sol.json", root), "utf8") });
     assert.ok(added.ok, added.ok ? "" : added.message);
