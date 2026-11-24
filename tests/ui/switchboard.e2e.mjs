@@ -132,6 +132,18 @@ try {
   await ed.locator("[data-box-new-part]").selectOption("sse.view.table");
   await ed.locator("[data-box-add]").click();
   await ed.locator('[data-layout-box="0"] [data-box-control="select"]').uncheck();
+  // A picture box with the GM's own file (PB13 part 2b), kept in the layout as data; a web page box, not usable.
+  await ed.locator("[data-box-new-part]").selectOption("sse.view.picture");
+  await ed.locator("[data-box-add]").click();
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  await ed.locator('[data-layout-box="2"] [data-box-file]').setInputFiles({ name: "map.png", mimeType: "image/png", buffer: png });
+  await ed.locator('[data-layout-box="2"] [data-box-own]').waitFor();
+  await ed.locator('[data-layout-box="2"] [data-box-caption]').fill("The old survey map");
+  await ed.locator('[data-layout-box="2"] [data-box-caption]').blur();
+  await ed.locator("[data-box-new-part]").selectOption("sse.view.link");
+  await ed.locator("[data-box-add]").click();
+  await ed.locator('[data-layout-box="3"] [data-box-address]').fill("http://localhost:1/none");
+  await ed.locator('[data-layout-box="3"] [data-box-address]').blur();
   // The table box always shows the kept place (PB13 part 2), whatever is sent.
   await ed.locator('[data-layout-box="1"] [data-box-holds]').selectOption({ index: 1 });
   // The arrows reorder: the table first, then back.
@@ -147,6 +159,9 @@ try {
   assert.equal(await wall.locator('[data-view="sse.view.table"][data-picture]').count(), 0, "the table keeps its controls");
   await wall.locator('[data-view="sse.view.table"][data-placed] [data-place-title]').waitFor({ timeout: 15000 });
   await wall.locator('[data-view="sse.view.table"][data-placed] table').waitFor({ timeout: 15000 });
+  await wall.locator('[data-view="sse.view.picture"] [data-picture-src="own"] img').waitFor({ timeout: 15000 });
+  assert.match(await wall.locator('[data-view="sse.view.picture"] figcaption').innerText(), /old survey map/);
+  assert.equal(await wall.locator('[data-view="sse.view.link"][data-picture][inert]').count(), 1, "a web page box is only looked at unless Use is on");
   await shot(wall, "layout-on-wall");
   await gm.locator('[data-role-layout-chip="table"]').click();
   await gm.locator('[data-layout-picker="table"] [data-layout-choose="bridge"]').click();

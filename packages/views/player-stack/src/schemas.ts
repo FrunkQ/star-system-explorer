@@ -58,3 +58,28 @@ export const TABLE_CONTROLS: PartControl[] = [
   { id: "sort", words: "Sort by a column, pressing its heading", kind: "button", default: true },
   { id: "select", words: "Pick a world by its name in the table", kind: "link", default: true },
 ];
+
+// A picture or a web page on a layout (PB13 part 2b): what a box holds when it is not a place. Neither reads the scene.
+/** A web address a box may show: https anywhere, or http on this computer (an OBS or camera page). */
+export function addressOk(a: string): boolean {
+  return /^https:\/\/[^\s]+$/i.test(a) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/[^\s]*)?$/i.test(a);
+}
+/** A picture a box may show: a web address as above, a file beside the shell (a pack's), or the GM's own as data. */
+export function pictureOk(a: string): boolean {
+  return addressOk(a) || /^(packs|documents)\/[a-z0-9._/-]+\.(png|jpe?g|webp|gif|svg)$/i.test(a) || /^data:image\/(png|jpeg|webp|gif);base64,[a-z0-9+/=]+$/i.test(a);
+}
+/** The GM's own picture travels with the layout to every screen, so it is kept small. */
+export const PICTURE_DATA_MAX = 400_000;
+
+export const PICTURE_PARAMS: ParamSpec[] = [
+  { name: "src", type: "string", default: "", group: "content", meaning: "The picture: a web address, a pack's file, or the GM's own (kept small, as data).", promoted: true },
+  { name: "caption", type: "string", default: "", group: "content", meaning: "Words under the picture.", promoted: true },
+  { name: "fit", type: "enum", options: ["contain", "cover"], default: "contain", group: "look", meaning: "Show all of it (contain) or fill the box (cover)." },
+];
+
+export const LINK_PARAMS: ParamSpec[] = [
+  { name: "address", type: "string", default: "", group: "content", meaning: "The web page: https, or http on this computer (an OBS or camera page).", promoted: true },
+  { name: "title", type: "string", default: "", group: "content", meaning: "What the page is, for people who cannot see it." },
+];
+
+export const LINK_CONTROLS: PartControl[] = [{ id: "use", words: "Use the page (press, scroll, type in it)", kind: "switch", default: false }];

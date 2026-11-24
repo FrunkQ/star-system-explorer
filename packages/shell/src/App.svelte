@@ -1692,6 +1692,7 @@
           title={scene.title}
           subjects={scene.subjects}
           landingUnsent={ws.screen === "surface" && !!lastLanding}
+          focus={ws.selection ?? undefined}
           {here}
           onswitchboard={() => go("switchboard")}
           chip={desk !== "run"}

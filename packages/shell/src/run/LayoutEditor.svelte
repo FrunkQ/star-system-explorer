@@ -3,11 +3,11 @@
      arrangement, the boxes on it (each a part showing whatever is sent to the role, with that part's own controls on or
      off, AT13), and the name; Save keeps it with the campaign and gives it to the role. Boxes are reordered by dragging
      (one onto another swaps them) or with the arrows. The preview beside it is the role's screen as it would be, drawn
-     from what the role knows. Boxes holding a bookmark, a file or a link, and the look line, come in later parts. -->
+     from what the role knows. A box may also hold a bookmarked place, a picture or a web page; the look line comes in a later part. -->
 <script lang="ts">
   import { untrack } from "svelte";
   import { ARRANGEMENTS, addBox, arrangementOf, checkScreen, moveBox, rearrange, removeBox, sorted, swapBoxes, type Arrangement, type Bookmark, type PlayerScene, type ScreenDoc, type Vocab } from "../../../ui-contract/src/index.ts";
-  import { PLAYER_STACK, ScreenRuntime } from "../../../views/player-stack/src/index.ts";
+  import { PICTURE_DATA_MAX, PLAYER_STACK, ScreenRuntime } from "../../../views/player-stack/src/index.ts";
   import vocabDoc from "../documents/vocab.plain.json";
 
   let {
@@ -38,6 +38,8 @@
     "sse.view.text": "Text",
     "sse.view.readout": "Readout",
     "sse.view.surface": "Landing view",
+    "sse.view.picture": "Picture",
+    "sse.view.link": "Web page",
   };
   const parts = PLAYER_STACK.map((v) => ({ id: v.id, words: PART_WORDS[v.id] ?? v.id.replace("sse.view.", ""), switchable: v.switchable ?? [] }));
   const partOf = (id: string) => parts.find((p) => p.id === id);
@@ -96,6 +98,31 @@
       return n;
     });
   }
+  // A picture's or a web page's words (PB13 part 2b): kept as the box's params.
+  const paramOf = (i: number, name: string) => String(boxes[i]?.params?.[name] ?? "");
+  function setParam(i: number, name: string, value: string) {
+    setBox(i, (b) => {
+      const params = { ...(b.params ?? {}) };
+      if (value) params[name] = value;
+      else delete params[name];
+      const n: ScreenDoc["items"][number] = { ...b, params };
+      if (!Object.keys(params).length) delete n.params;
+      return n;
+    });
+  }
+  let tooBig = $state<number | null>(null);
+  // The GM's own picture goes into the layout as data, so it reaches every screen with it; a big one is refused.
+  function ownPicture(i: number, file: File | undefined) {
+    tooBig = null;
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = () => {
+      const url = String(r.result ?? "");
+      if (url.length > PICTURE_DATA_MAX) tooBig = i;
+      else setParam(i, "src", url);
+    };
+    r.readAsDataURL(file);
+  }
   let places = $state.raw<Record<string, PlayerScene>>({});
   $effect(() => {
     const scopes = [...new Set(doc.items.flatMap((i) => (i.place ? [i.place.scope] : [])))];
@@ -142,6 +169,19 @@
             {#each bookmarks as bm (bm.id)}<option value={bm.id}>{bm.name}</option>{/each}
             {#if holds(i) === "kept"}<option value="kept">{b.place?.title ?? "a place"}</option>{/if}
           </select>
+          {#if b.view === "sse.view.picture"}
+            <span class="words">
+              <input type="text" aria-label="Picture address in box {i + 1}" placeholder="https://… or packs/…" value={paramOf(i, "src").startsWith("data:") ? "" : paramOf(i, "src")} data-box-src onchange={(e) => setParam(i, "src", e.currentTarget.value.trim())} />
+              <label class="file">or your own <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-box-file onchange={(e) => ownPicture(i, e.currentTarget.files?.[0])} /></label>
+              {#if paramOf(i, "src").startsWith("data:")}<span class="sub" data-box-own>your own picture</span>{/if}
+              {#if tooBig === i}<span class="sub" data-box-too-big>That picture is too big to send to every screen; try one under {Math.round(PICTURE_DATA_MAX / 1370)} KB.</span>{/if}
+              <input type="text" aria-label="Caption in box {i + 1}" placeholder="Caption" value={paramOf(i, "caption")} data-box-caption onchange={(e) => setParam(i, "caption", e.currentTarget.value)} />
+            </span>
+          {:else if b.view === "sse.view.link"}
+            <span class="words">
+              <input type="text" aria-label="Web page address in box {i + 1}" placeholder="https://…" value={paramOf(i, "address")} data-box-address onchange={(e) => setParam(i, "address", e.currentTarget.value.trim())} />
+            </span>
+          {/if}
           {#if p?.switchable.length}
             <span class="ctls">
               {#each p.switchable as c (c.id)}
@@ -236,6 +276,17 @@
     margin-left: auto;
     display: inline-flex;
     gap: 2px;
+  }
+  .words {
+    display: grid;
+    gap: 3px;
+    flex-basis: 100%;
+  }
+  .words .file {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    font-size: 12px;
   }
   .ctls {
     display: inline-flex;
