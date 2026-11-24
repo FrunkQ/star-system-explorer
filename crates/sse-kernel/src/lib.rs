@@ -11,8 +11,6 @@ mod bary_tests;
 mod caves;
 #[cfg(test)]
 mod class_sample_tests;
-#[cfg(test)]
-mod from_star_tests;
 mod clock;
 mod composition;
 pub mod contract;
@@ -27,6 +25,8 @@ mod flights;
 mod flights_tests;
 mod frame;
 mod frames;
+#[cfg(test)]
+mod from_star_tests;
 mod galaxies;
 mod glow;
 #[cfg(test)]
@@ -61,6 +61,9 @@ mod star_elements_tests;
 #[cfg(test)]
 mod starters_tests;
 mod survey;
+mod sweep;
+#[cfg(test)]
+mod sweep_tests;
 mod systems;
 mod tags;
 #[cfg(test)]
@@ -579,6 +582,8 @@ struct Job {
     total: u32,
     done: u32,
     hasher: Hasher,
+    /// A sweep's state (K1); `None` for the benchmark.
+    sweep: Option<sweep::Sweep>,
 }
 
 /// What the stack says about observation: data views and disclosure
@@ -3192,7 +3197,29 @@ impl Kernel {
                 Response::Discarded { branch }
             }
             Request::StartJob { job } => {
-                let JobSpec::Benchmark { units } = job;
+                let units = match job {
+                    JobSpec::Benchmark { units } => units,
+                    JobSpec::Sweep { .. } => {
+                        let s = sweep::Sweep::start(self, job)?;
+                        let id = self.next_job;
+                        self.next_job += 1;
+                        let total = s.total();
+                        self.jobs.insert(
+                            id,
+                            Job {
+                                total,
+                                done: 0,
+                                hasher: Hasher::new("sse.kernel.sweep.v1"),
+                                sweep: Some(s),
+                            },
+                        );
+                        return Ok(Response::JobStarted {
+                            job: id,
+                            total_units: total,
+                            cost: Cost::Heavy,
+                        });
+                    }
+                };
                 if units == 0 {
                     return Err(err("bad_job", "a job needs at least one unit"));
                 }
@@ -3204,6 +3231,7 @@ impl Kernel {
                         total: units,
                         done: 0,
                         hasher: Hasher::new("sse.kernel.benchmark.v1"),
+                        sweep: None,
                     },
                 );
                 let cost = if units <= 1_000 {
@@ -3219,6 +3247,40 @@ impl Kernel {
                     job: id,
                     total_units: units,
                     cost,
+                }
+            }
+            Request::StepJob { job, budget }
+                if self.jobs.get(&job).is_some_and(|j| j.sweep.is_some()) =>
+            {
+                let mut j = self.jobs.remove(&job).unwrap();
+                let mut s = j.sweep.take().unwrap();
+                let stepped = s.step(self, budget.max(1));
+                match stepped {
+                    Err(e) => {
+                        s.finish(self);
+                        return Err(e);
+                    }
+                    Ok(()) if s.done() => {
+                        let done = s.units_done();
+                        let result = s.finish(self);
+                        Response::JobDone {
+                            job,
+                            done_units: done,
+                            result,
+                        }
+                    }
+                    Ok(()) => {
+                        let (done, total) = (s.units_done(), s.total());
+                        j.done = done;
+                        j.total = total;
+                        j.sweep = Some(s);
+                        self.jobs.insert(job, j);
+                        Response::JobProgress {
+                            job,
+                            done_units: done,
+                            total_units: total,
+                        }
+                    }
                 }
             }
             Request::StepJob { job, budget } => {
@@ -3249,9 +3311,13 @@ impl Kernel {
                 }
             }
             Request::CancelJob { job } => {
-                self.jobs
+                let j = self
+                    .jobs
                     .remove(&job)
                     .ok_or_else(|| err("unknown_job", format!("no job {job}")))?;
+                if let Some(s) = j.sweep {
+                    s.finish(self);
+                }
                 Response::JobCancelled { job }
             }
             Request::Scene {

@@ -125,12 +125,46 @@ pub struct BatchEdit {
     pub impossible: Option<bool>,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize, TS)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
 pub enum JobSpec {
     /// Deterministic benchmark: `units` Kepler solves. Used for capability tiers.
     Benchmark { units: u32 },
+    /// K1 (editing design 15): one field of one body swept from `from` to
+    /// `to` in `count` steps (`log` spacing when `log`), each step resolved
+    /// on a what-if branch that is thrown away at the end: per step the
+    /// value, the asked `results`, the class label (`packs` and `scheme`, as
+    /// `classify_preview`) and the stability verdict about the body. Where
+    /// the label or the verdict changes between steps, the tipping point is
+    /// narrowed by halving `refine` times (default 4). One unit is one
+    /// resolve. A result name is a fact on the body or a dotted path into
+    /// its `resolved_system` surface (`climate.t_mean_k`).
+    Sweep {
+        system: String,
+        address: String,
+        field: String,
+        from: f64,
+        to: f64,
+        count: u32,
+        #[serde(default)]
+        #[ts(optional)]
+        log: Option<bool>,
+        #[serde(default)]
+        results: Vec<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        packs: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        scheme: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        refine: Option<u32>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+    },
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
