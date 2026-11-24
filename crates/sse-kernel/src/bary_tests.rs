@@ -166,3 +166,53 @@ fn a_withdrawn_world_takes_its_moons() {
     let left: Vec<String> = f.keys().map(|k| k.to_string()).collect();
     assert_eq!(left, ["u:t/sys:0/body:3", SUN]);
 }
+
+/// K13: a hand-written host must be there, not the body itself, and never
+/// close a ring; refused by name, so nothing is silently unplaced.
+#[test]
+fn hosts_are_checked_on_write() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"t","seed":"t"}),
+    );
+    let batch = |edits: serde_json::Value| {
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,"edits":edits})
+    };
+    // A star and a world in one edit: fine.
+    let r = send(
+        &mut k,
+        batch(serde_json::json!([
+            {"address":SUN,"field":"body.mass","value":M_SUN},
+            {"address":"u:t/sys:0/body:1","field":"orbit.host","value":SUN}
+        ])),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    for (edits, says) in [
+        (
+            serde_json::json!([{"address":"u:t/sys:0/body:2","field":"orbit.host","value":"u:t/sys:0/body:9"}]),
+            "is not in the universe",
+        ),
+        (
+            serde_json::json!([{"address":"u:t/sys:0/body:1","field":"orbit.host","value":"u:t/sys:0/body:1"}]),
+            "cannot orbit itself",
+        ),
+        (
+            serde_json::json!([{"address":SUN,"field":"orbit.host","value":"u:t/sys:0/body:1"}]),
+            "ring",
+        ),
+    ] {
+        let r = send(&mut k, batch(edits));
+        assert_eq!(r["code"], "bad_host", "{r}");
+        assert!(r["message"].as_str().unwrap().contains(says), "{r}");
+    }
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_authored","edit":{"address":"u:t/sys:0/body:3",
+            "field":"orbit.host","value":"u:t/sys:0/body:8","occurred_at_s":0}}),
+    );
+    assert_eq!(r["code"], "bad_host", "{r}");
+}

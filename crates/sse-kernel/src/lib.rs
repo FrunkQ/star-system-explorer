@@ -356,6 +356,59 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
 /// The stack's tag declarations plus the campaign's own (kept in the
 /// record at the universe root, TG1). A pack loaded later that declares a
 /// tag the campaign already had wins; the campaign's copy is ignored.
+/// K13: an `orbit.host` written by hand names a body that is there (now, or
+/// in the same edit), not the body itself, and no ring of hosts: so nothing
+/// is ever silently unplaced.
+fn hosts_ok(
+    facts: &BTreeMap<Address, BTreeMap<String, Value>>,
+    set: &BTreeMap<Address, BTreeMap<String, Value>>,
+) -> Result<(), String> {
+    let host_of = |a: &Address| -> Option<Address> {
+        let v = set
+            .get(a)
+            .and_then(|r| r.get("orbit.host"))
+            .or_else(|| facts.get(a).and_then(|r| r.get("orbit.host")))?;
+        match v {
+            Value::Text(t) => t.parse().ok(),
+            _ => None,
+        }
+    };
+    for (a, row) in set {
+        let Some(v) = row.get("orbit.host") else {
+            continue;
+        };
+        let Value::Text(t) = v else {
+            return Err(format!("{a} orbit.host: an address, not {v:?}"));
+        };
+        let h: Address = t
+            .parse()
+            .map_err(|e| format!("{a} orbit.host {t:?}: {e}"))?;
+        if &h == a {
+            return Err(format!("{a} cannot orbit itself"));
+        }
+        if !facts.contains_key(&h) && !set.contains_key(&h) {
+            return Err(format!(
+                "{a} orbit.host: {h} is not in the universe; add it first, or in the same edit"
+            ));
+        }
+        let mut at = Some(h);
+        let mut steps = 0;
+        while let Some(x) = at {
+            if &x == a {
+                return Err(format!(
+                    "{a} orbit.host: its hosts would go round in a ring back to it"
+                ));
+            }
+            steps += 1;
+            if steps > 64 {
+                break;
+            }
+            at = host_of(&x);
+        }
+    }
+    Ok(())
+}
+
 fn campaign_tags(u: &Universe, stack: &tags::TagSet) -> Result<tags::TagSet, Response> {
     let mut set = stack.clone();
     let rec = u.record.state_at(UniverseTime::seconds(i64::MAX));
@@ -2127,6 +2180,8 @@ impl Kernel {
             }
             set.entry(a).or_default().insert(e.field.clone(), v);
         }
+        let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        hosts_ok(&latest.facts, &set).map_err(|m| err("bad_host", m))?;
         let t = UniverseTime::seconds(occurred_at_s);
         let subject: Vec<Address> = set.keys().cloned().collect();
         let ev = Event::new(EventBody {
@@ -2459,6 +2514,8 @@ impl Kernel {
                         declare = Some(tag.to_string());
                     }
                 }
+                let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                hosts_ok(&latest.facts, &e.body.payload.set).map_err(|m| err("bad_host", m))?;
                 let affected = e.body.subject.iter().map(|a| a.to_string()).collect();
                 let id = u
                     .chronicle
