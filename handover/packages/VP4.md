@@ -29,3 +29,9 @@ System True (System3D's GPU path in `gpu.ts`), Land (`gpu-surface.ts`), ships an
 ## Integration points
 - `renderer/src/probe.ts` `place()` is the one placement for any view: pass the view's standard recipe and its pixel count.
 - `runtime.ts` exports `deviceReadout`, `measureAgain`, `setQuality`, `quality` for any settings place (the chart room's one settings place, when it exists, can move the Quality control there).
+
+## Part 2a (built 24 Nov evening, in the PR after 470)
+- `device.ts`: the device's capabilities, measured speed, the visit's heat watch and the Quality choice, shared by every view (moved out of `runtime.ts`); `onPlacementChange` tells views to place themselves again.
+- `true-run.ts` `TrueRun`: one controller per True view. `place()` by the device (or a forced tier), `frame(ms, now)` feeds the governor and heat watch and returns true when the settings change, `settings(atRest)` gives the tier, render scale and every pass's parameters (the still passes at full size when at rest), `status()` gives the badge, note, budget and rest state. Tests: `test/true-run.test.ts`.
+- `recipes/system-true.json` (scene `system`, a new recipe scene): passes `true-bodies` (worlds, star, rings, belts; `sphere_detail`) and `true-finish` (the shared finish; `glare_rungs`, `glare_scale`), degrade order scale 0.85, fewer rungs, fall to Light, 0.75, fewer rungs, coarser globes, 0.6, 0.5. Exported as `SYSTEM_TRUE` (kept out of the Body's recipe list). The bench now predicts with it.
+- Costs of the two new passes are estimates (fudge register row "reference device") until the bench times the recipe for real in part 2b.

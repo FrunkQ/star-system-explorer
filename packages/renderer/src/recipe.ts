@@ -83,6 +83,10 @@ export interface Knob {
 /** One reduction the governor may apply, in order. `says` is what the quality badge tells the user. */
 export type DegradeStep = { says: string; tiers?: Tier[] } & ({ render_scale: number } | { set: { pass: string; param: string; value: Json } } | { drop: string } | { tier: Tier });
 
+/** The scenes recipes draw this release. */
+export const RECIPE_SCENES = ["body", "system"] as const;
+export type RecipeScene = (typeof RECIPE_SCENES)[number];
+
 export interface RecipeDoc {
   schema: "sse.render-recipe/1";
   id: string;
@@ -90,8 +94,8 @@ export interface RecipeDoc {
   /** Recipes of one family stand in for each other when a device cannot run the one asked for. */
   family: string;
   description: string;
-  /** The scene it draws ("body": one world's surface atlas). */
-  scene: "body";
+  /** The scene it draws ("body": one world's surface atlas; "system": a system in True, its worlds and star). */
+  scene: RecipeScene;
   tiers: Tier[];
   passes: RecipePass[];
   knobs?: Knob[];
@@ -123,7 +127,7 @@ export function checkRecipe(doc: RecipeDoc, library: readonly PassSpec[], opts: 
   const e = (s: string) => errors.push(s);
   if (doc?.schema !== "sse.render-recipe/1") e(`schema must be sse.render-recipe/1, not ${String(doc?.schema)}`);
   for (const k of ["id", "name", "family", "description"] as const) if (typeof doc?.[k] !== "string" || !doc[k]) e(`${k} must be non-empty text`);
-  if (doc?.scene !== "body") e(`scene ${String(doc?.scene)} is not one this release draws (body)`);
+  if (!(RECIPE_SCENES as readonly string[]).includes(doc?.scene)) e(`scene ${String(doc?.scene)} is not one this release draws (${RECIPE_SCENES.join(", ")})`);
   if (doc?.contains_code && !opts.allowCode) e("contains code: shared recipes are data only, and code-bearing recipes are not run in this release");
   const tiers = Array.isArray(doc?.tiers) ? doc.tiers : [];
   if (!tiers.length) e("declares no tiers");

@@ -4,6 +4,10 @@
 import surveyRelief from "./recipes/survey-relief.json";
 import surveyContours from "./recipes/survey-contours.json";
 import trueColour from "./recipes/true-colour.json";
+import systemTrue from "./recipes/system-true.json";
 import type { RecipeDoc } from "./recipe.ts";
 
 export const SHIPPED_RECIPES: readonly RecipeDoc[] = [surveyRelief as RecipeDoc, surveyContours as RecipeDoc, trueColour as RecipeDoc];
+
+/** The standard recipe for True views of a system (VP4): placement and the bench predict with it. Not a globe recipe, so not in the Body's list. */
+export const SYSTEM_TRUE = systemTrue as RecipeDoc;
