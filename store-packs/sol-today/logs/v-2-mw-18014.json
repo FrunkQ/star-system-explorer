@@ -1,0 +1,57 @@
+{
+ "construct": "v-2-mw-18014",
+ "name": "V-2 MW 18014",
+ "about": "An A-4 (V-2) fired straight up from Peenemunde, the first craft known to pass 100 km. GCAT lists it on 14 Sep 1944 with an apogee of 175 km (citing von Braun, 1958); 20 Jun 1944 is the date most often given. The hour is unknown.",
+ "pieces": [
+  {
+   "from_s": 61370092839,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 54.173,
+    "lon_deg": 13.801
+   },
+   "mark": "authored",
+   "src": "gcat",
+   "writer": "pack",
+   "why": "on its stand at Peenemunde (GCAT site HVP); the day before is authored",
+   "to_s": 61370179239
+  },
+  {
+   "from_s": 61370179239,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "vertical flight to 175 km"
+    }
+   },
+   "mark": "estimated",
+   "src": "gcat",
+   "writer": "pack",
+   "why": "about 65 s of thrust, then a coast to 175 km and the fall back; the hour is unknown, noon is a stand-in",
+   "to_s": 61370179659
+  },
+  {
+   "from_s": 61370179659,
+   "state": {
+    "kind": "gone",
+    "how": "impacted"
+   },
+   "mark": "estimated",
+   "src": "gcat",
+   "writer": "pack",
+   "why": "came down in the Baltic; about seven minutes for a 175 km vertical flight"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 61370179239,
+   "kind": "launch",
+   "mark": "estimated",
+   "src": "gcat",
+   "writer": "pack",
+   "why": "date from GCAT; the hour is unknown"
+  }
+ ]
+}
