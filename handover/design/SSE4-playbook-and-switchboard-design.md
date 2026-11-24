@@ -494,6 +494,8 @@ Asks of other threads: the renderer for the cheap Chart preview at thumbnail siz
 
 Alex, 24 Nov 16:04 to 16:05: "This routing system is going back into Mappadux as that is rethought. The ultimate space VTT... jot down notes for this - I will get to Mappadux again one day and we need to carry these over." Also confirmed in the same message: assets are loaded here, can be included in packs, and "the GM can throw them up where they want".
 
+Mappadux lives at `C:\Development\dynamic-map-renderer-v2` on Alex's machine and at https://github.com/FrunkQ/dynamic-map-renderer-v2 (Alex, 16:05). Its code was not read for this note.
+
 What to carry over, written so it stands without the rest of this note:
 
 1. **Sources, destinations, lines.** Everything the GM can show is a source; everything that can show it is a destination (a screen, a role, Everyone); sending draws a line. One mechanism covers send, per-player send, screens off and previews.
