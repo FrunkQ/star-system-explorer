@@ -425,7 +425,27 @@ The rules for a recipe:
 
 **Who it could be home to: requirement profiles.** "Home to humans" is a test against a **profile**: the ranges a kind of life needs. Temperature, pressure, the gases it breathes and the ones that poison it, gravity, radiation at the ground, the liquid it is built on, light. The life design already describes this profile for habitats (its requirement profile, handoff 11A); this uses the same shape for a visitor or settler.
 
-- 4.0 ships one profile in the base pack, **Humans**, in three grades: unaided, with a mask, with a suit. It is editable like any pack data (a setting's hardier colonists are a copy with wider ranges).
+- **A profile is a set of survivability bands, one per thing that can hurt** (Alex, 24 Nov 15:20, replacing the first draft's "three grades": "surely we can say yes, but needs protection from lack of oxygen (breather), cold (warm or heated clothing for ranges), heat, radiation (foil suit, underground habitat and infrequent surface visits)... 'can live here' and 'can live here uncomfortably because'... run the physics for a human body... a survivability band"). Each band is a strip like any other, over one physical quantity the kernel already works out, with four stretches: **comfortable**, **tolerable** (uncomfortable, with the reason and for how long), **needs protection** (and which), **nothing saves you**.
+
+| What can hurt | Read from | Protection, by how far out of band |
+|---|---|---|
+| Too little oxygen | oxygen partial pressure | breather, then pressure suit |
+| Too much oxygen, or poison gases (CO₂, CO, SO₂, H₂S, ammonia, chlorine and the rest) | each gas's partial pressure against its own limit | filter mask, then sealed suit |
+| Total pressure low or high | surface pressure | pressure suit; hard suit; pressurised habitat |
+| Cold | air temperature with wind, by day, night and season | warm clothing, heated clothing, heated suit, by range |
+| Heat | wet-bulb temperature (heat and humidity together) | shade and rest, cooling garment, cooled suit |
+| Radiation | dose at the ground (MF7, built) from the star, flares and cosmic rays | hours outside per day, shielded suit, living underground with short surface visits |
+| Ultraviolet | UV at the ground through the air and ozone | covered skin and eyes, then suit |
+| Gravity | surface gravity at the site's latitude | none: tolerable with fatigue, then harm over years, then braces and short stays |
+| Day and night length, light level | the sun's day, light received | lighting and kept hours; purely comfort |
+| Water to drink, air to breathe on site | liquids and their salts | none needed, treat it, bring it |
+
+- **The verdict is put together from the bands, with reasons:** "Humans can live here." "Humans can live here, uncomfortably: thin air like 4,000 m, nights of −30 °C (heated clothing)." "Humans can live here with a breather and a radiation shelter; two hours a day outside." "Humans need a sealed suit: CO₂ at 30 times the limit." The worst band sets the headline; every band out of comfort is listed. A band's line opens its strip with the world's value marked on it, so the GM sees how far off it is and which handle would move it, which is exactly what "Could be…" then offers.
+- **It varies over the world and the year,** because the quantities do: the same card can say "at the equator by day: a breather only; at the poles: heated suit", and a surface site gets its own verdict for its place and season. Altitude counts (thin air on a mountain, thick air in a deep basin).
+- **Protections are data too:** a short list of gear and shelter, each stating which band it widens and by how much (a breather supplies oxygen down to a stated total pressure; heated clothing holds to a stated temperature; two metres of rock cuts dose by a stated factor). A setting's better suits are a copy with wider reach, and the tech ladder (track FT) can date them.
+- **The human bands are cited physiology,** on the data sheet like any other numbers: oxygen and CO₂ limits, the pressure limits (the Armstrong limit, nitrogen narcosis), wet-bulb heat limit, cold exposure tables, dose limits, long-term gravity as "research is divided". This is "running the physics for a human body": a body is a requirement record the kernel tests against a place.
+- 4.0 ships one profile in the base pack, **Humans**. It is editable like any pack data (a setting's hardier colonists are a copy with wider bands).
+- **The same shape is what exobiology supplies:** a microbe's or an alien's bands are different numbers over the same quantities (or its own solvent and gases), which is why the life design's habitat profile and this one are one record type.
 - The card's line names the profile: "Could be home to **humans**". A campaign chooses which profiles it cares about; the line lists those.
 - **The hook for 4.1:** a species is a record that carries a profile. When the aliens update adds species that come out of evolution, each brings its profile and every world answers "could be home to the Vesh" with no new mechanism. A GM can already write a profile by hand in 4.0 for a setting's aliens; what 4.1 adds is profiles that follow from a species' own history.
 - Players never see suggestions. What a crew learns about habitability comes through their sensors and lens, as now.
@@ -580,12 +600,14 @@ Kernel (thread "Build kernel resolve and rules"):
 - **K10 `could_be`**: given a world and a test from a pack, return the steps (handle, target value, what it leans on, what skipping costs). It is Reach it over several handles. Also offered to Orac.
 - **K11 requirement profiles** as pack records, with the Humans profile in the base pack, shaped so a 4.1 species record can carry one.
 - **K12 season phase as an authored field, and oblateness, gravity by latitude and axis wobble as results** readable per sweep sample.
+- **K14 test a place against a profile:** one op that takes a body (or a site and a time) and a profile and returns each band's stretch, the value, and the protection that would cover it; wet-bulb temperature and UV at the ground as results if not already there.
 - **K13 pairs in the record** (section 10A): a parent may be a pair; every orbit two-sided about its centre with both masses; "binary" as a derived label; a re-parent op with the two keeps of R4; `withdraw` with the three choices for what orbited it; a preview op that returns the tree an edit would make, with verdicts; Pluto and Charon, Alpha Centauri and Kepler-16 as catalogued fixtures. The kernel thread answered on 24 Nov (see 10A): it proposes Jacobi hierarchy with `orbit.host` kept as one body, so "a parent may be a pair" reduces to "host plus what lies inside"; hosts must be checked on write, and no body may be silently unplaced.
 - **K8 a surface inventory by substance** (`surface.inventory.<substance>`, with `body.surface_water_oceans` as its water row): phase from the Look up block, coverage from the ground's own height spread, vapour handed to the air.
 
 Chart room (thread "Make the SSE4 test drive work end to end"), suggested packages, after navigation in stage 2:
 
 - **ED1a** the units engine: `say` and its parser in `ui-contract`, reading the sheet's Units and the new "How figures are said" table; every existing figure moved onto it; click a unit; the choice remembered per kind and what it is about.
+- **ED10a** survivability bands: the Humans profile and the protections list as base pack data, the composed verdict on a world's card and on a surface site (kernel K14).
 - **ED1** the handle sheet, the handles row and the strip on the card, with exact answers on pause (no sweep yet). Walk step "Change a world" becomes: pick Mars, Build, drag Orbit.
 - **ED2** the sweep behind the strip: tipping points, pencil figures, "what followed".
 - **ED3** dragging on the chart: orbit size, shape, readout, magnetism, cancel.
@@ -624,7 +646,7 @@ Chart room (thread "Make the SSE4 test drive work end to end"), suggested packag
 20. **Makeup is one handle whose box holds a bulk bar, a live cutaway, and heat and redox strips at Science depth;** layers are results. *Recommend yes.* **Alex 24 Nov 15:13: yes.**
 21. **A buried sea (and plates, a field, volcanoes) is asked for through "Could be…",** never painted in as a layer; Pin it remains for those who just want it so. *Recommend yes.* **Alex 24 Nov 15:13: yes.**
 22. **"Could be…" on every world's card:** separate optional steps, dependencies shown, what skipping costs stated, one line, can be silenced per world. *Recommend yes.* **Alex 24 Nov 15:13: yes.**
-23. **Requirement profiles as pack data, Humans in three grades for 4.0,** shaped so 4.1 species bring their own. *Recommend yes.* **Alex queried "three grades". Explained in the thread; waiting.**
+23. **Requirement profiles as survivability bands** (section 11C): one band per hazard with comfortable, tolerable, needs protection and nothing saves you; the verdict composed with reasons and the protection named; protections as data; Humans shipped in 4.0 with cited physiology; 4.1 species bring their own bands. *Recommend yes.* **Alex 24 Nov 15:20 asked for this in place of "three grades"; the hazard list is his to add to.**
 24. **One GM-only list per world, "What does not add up",** with a mend button on each line. *Recommend yes.* **Alex 24 Nov 15:13: yes.**
 25. **Definitions (gases, liquids, drives, sensors, calendars, tags) are edited as records with the same handles,** in context and under one Workshop entry, "Your setting's data". *Recommend yes.* **Alex: changed. A world's boxes only pick what is defined; "Can't find it?" leads to Reference or to Orac (section 11E).**
 26. **A handle is a subject with a box of parts:** the row stays six, and Orbit and Spin get the parts in section 11F (shape, where it is now, lean, retrograde, in step with a neighbour; day, tilt, locked). *Recommend yes.* **Alex 24 Nov 15:13: yes.**
