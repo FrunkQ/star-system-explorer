@@ -103,6 +103,8 @@ export interface Workspace {
    * goes on to them. Nothing reaches the table until the GM sends.
    */
   sendLanding?: (show: Json) => void;
+  /** A site a link asked to land at (`~surface?site=lat,lon`): the Land screen takes it once its world is read, then clears it. */
+  landing_site?: { body: string; lat_deg: number; lon_deg: number } | null;
   /** Values applied by intents in this session, keyed "address#field", shown until scenes come from the kernel. */
   applied: Record<string, { value: Json; display: string; event_id: string }>;
   /** Bumped whenever an intent is applied, so views can refresh history. */

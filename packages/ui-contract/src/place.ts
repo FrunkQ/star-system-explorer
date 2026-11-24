@@ -30,6 +30,8 @@ export interface Place {
   screen?: string;
   /** Above a system: which one at that scale, in the scale view's own id ("cell:0.0.0", a halo address, "web:200"). */
   id?: string;
+  /** A site on the world to land at (the Land screen; Voyages' "Land here"): `~surface?site=lat,lon` in the link. */
+  site?: { lat_deg: number; lon_deg: number };
   /** Its name, or a world's name, when the place was visited, for the Recent list (not part of the link). */
   label?: string;
 }
@@ -85,7 +87,7 @@ export function rememberPlace(recent: readonly Place[], p: Place, max = 6): Plac
 }
 
 /**
- * A place as the address bar's hash: `#chart/<scale>[/<system>[/<world or id>]][~<screen>]`.
+ * A place as the address bar's hash: `#chart/<scale>[/<system>[/<world or id>]][~<screen>[?site=<lat>,<lon>]]`.
  * `#chart` alone is the base system (it also skips the start sheet).
  */
 export function placeHash(p: Place): string {
@@ -96,7 +98,8 @@ export function placeHash(p: Place): string {
     if (p.system || third) parts.push(encodeURIComponent(p.system));
     if (third) parts.push(encodeURIComponent(third));
   }
-  return `#${parts.join("/")}${p.screen ? `~${encodeURIComponent(p.screen)}` : ""}`;
+  const site = p.screen && p.site ? `?site=${+p.site.lat_deg.toFixed(4)},${+p.site.lon_deg.toFixed(4)}` : "";
+  return `#${parts.join("/")}${p.screen ? `~${encodeURIComponent(p.screen)}${site}` : ""}`;
 }
 
 /** The place a hash names, or null when it names none (a bad scale, or not `#chart`). */
@@ -121,8 +124,16 @@ export function parsePlaceHash(hash: string): Place | null {
     const id = dec(m[3]);
     if (id) p.id = id;
   }
-  const screen = dec(m[4]);
+  // The screen, then its own settings after "?" (only `site=lat,lon` for now; others are ignored).
+  const [scr, query] = (m[4] ?? "").split("?", 2) as [string, string | undefined];
+  const screen = dec(scr);
   if (screen) p.screen = screen;
+  const at = /(?:^|&)site=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:&|$)/.exec(query ?? "");
+  if (at && screen) {
+    const lat = Number(at[1]);
+    const lon = Number(at[2]);
+    if (Math.abs(lat) <= 90 && Math.abs(lon) <= 360) p.site = { lat_deg: lat, lon_deg: lon > 180 ? lon - 360 : lon };
+  }
   return p;
 }
 

@@ -60,3 +60,27 @@ export function sunDirection(lat_deg: number, hour_angle_deg: number, declinatio
   const l = Math.hypot(x, y, z) || 1;
   return [x / l, y / l, z / l];
 }
+
+/**
+ * Where a world's star stands in its sky at a time (Land part 2), from the world's own numbers:
+ * - declination from its tilt and its place on its orbit: sin δ = −sin ε · cos φ, with φ the angle of the world
+ *   (or, for a moon, of the planet it circles) round the star from the frame's reference direction, and the pole
+ *   leaning toward that direction (the lean's direction is not on record: the same choice as the rings' pole, in
+ *   the fudge register);
+ * - hour angle from its spin: one solar day is 1 / |1/P_spin − 1/P_orbit| (a negative spin is retrograde); a world
+ *   whose spin matches its orbit keeps one face to its star and the hour stands still; the spin's phase at the
+ *   universe's time 0 is not on record, so longitude 0 has noon then (fudge register).
+ * Null when the spin is not known: the time of day is then the GM's to choose.
+ */
+export function sunAt(o: { tilt_deg: number; orbit_phase_deg: number; spin_s?: number; orbit_s?: number; t_s: number; lon_deg: number }): { hour_deg: number; declination_deg: number; solar_day_s: number } | null {
+  if (!o.spin_s || !Number.isFinite(o.spin_s)) return null;
+  const eps = (o.tilt_deg * Math.PI) / 180;
+  const phi = (o.orbit_phase_deg * Math.PI) / 180;
+  const declination_deg = (Math.asin(Math.max(-1, Math.min(1, -Math.sin(eps) * Math.cos(phi)))) * 180) / Math.PI;
+  const perDay = 1 / o.spin_s - (o.orbit_s && Number.isFinite(o.orbit_s) ? 1 / o.orbit_s : 0);
+  const locked = Math.abs(perDay) * Math.abs(o.spin_s) < 1e-6;
+  // The sun crosses the local sky the same way whichever way the world turns: the hour only runs forward.
+  const turns = locked ? 0 : (o.t_s * Math.abs(perDay)) % 1;
+  const h = (((turns * 360 + o.lon_deg) % 360) + 540) % 360 - 180;
+  return { hour_deg: h, declination_deg, solar_day_s: locked ? Infinity : 1 / Math.abs(perDay) };
+}

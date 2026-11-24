@@ -162,6 +162,8 @@ export interface LandingShow {
   pose?: LandingPose;
   /** The sun's hour angle in degrees (the Land screen's time of day). */
   hour_deg: number;
+  /** The star's declination in the world's sky, in degrees (from its tilt and season). */
+  decl_deg?: number;
   /** How the GM's screen draws the ground (true, 3d or wireframe); a seat draws the same. */
   look?: "true" | "3d" | "wireframe";
   world: LandingWorld;
