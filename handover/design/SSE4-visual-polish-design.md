@@ -1,6 +1,6 @@
 # SSE4 visual polish: closing the gap to SpaceEngine, pass by pass
 
-Design note, 24 Nov 2026. Track code **VP** (never shown in the product). Status: **accepted by Alex, 24 Nov 2026 18:57 UTC ("yes to all" ten questions in section 14)**. Builders may take the packages in section 12. Design only: no code was written for this note. Still open: the citations marked "from memory" (Alex is bringing a research pass back) and every cost marked as an estimate.
+Design note, 24 Nov 2026. Track code **VP** (never shown in the product). Status: **accepted by Alex, 24 Nov 2026 18:57 UTC ("yes to all" ten questions in section 14)**. Builders may take the packages in section 12. Design only: no code was written for this note. **Addendum of 24 Nov 19:06 in section 16** (systems, not Solar System fixes; aurorae) has three new questions waiting on Alex. Still open: the citations marked "from memory" (Alex is bringing a research pass back) and every cost marked as an estimate.
 
 Asked for by Alex, 24 Nov, in four lines:
 
@@ -695,3 +695,139 @@ Checked on 24 Nov 2026 for this note:
 - SSE4 repo at f95a334: `packages/renderer/src` (`gpu.ts`, `true-look.ts`, `gpu-globe.ts`, `gpu-surface.ts`, `recipe.ts`, `passes.ts`, `governor.ts`, `runtime.ts`, `rings.ts`), `docs/minimum-spec.md`, `packages/ui-contract/src/perf-chunks.json`, `crates/sse-weather`, the status files, and screenshots in project files.
 
 From memory, to verify before building (title, formula and licence each): Hillaire 2020 (EGSR); Bruneton and Neyret 2008 (EGSR) and its BSD code; Schneider's Nubis talks (SIGGRAPH Advances in Real-Time Rendering 2015, 2017, 2022); Bridson, Hourihan and Nordenstam 2007; Perlin and Neyret 2001; Vlachos 2010; Gustavson and McEwan's `psrdnoise`; Heitz and Neyret 2018; Mikkelsen 2022 (JCGT); Cox and Munk 1954 (J. Opt. Soc. Am. 44); Hapke's "Theory of reflectance and emittance spectroscopy"; Chandrasekhar 1960 "Radiative transfer"; Tessendorf 2001; AMD FSR 1 (MIT); von Zeipel 1924 and Lucy 1967 for gravity darkening; the WGSL specification's floating-point accuracy section; Celestia and Stellarium licences; OpenSpace's shader set; the methane rainbow angle; Shadertoy's default licence; the simplex noise patent's expiry.
+
+---
+
+## 16. Addendum, 24 Nov 2026 19:06 UTC: systems for every world, and aurorae
+
+Alex, 19:06: "As we improve this renderer we are not just fixing it for the solar system. We are instead building SYSTEMS to ensure the right visuals get overlaid the right way, so they are concepts applied to all exoplanets and can be scaled accordingly and applied when the physics says so. Auroras are key too. Now we can have several different types and places they can occur (calculated) and we know their colours (in SSE3, multiband for O2)."
+
+The first part is a ruling as given. The second adds a package group. Three new questions are in 16.4.
+
+### 16.1 The rule: every look is a system that the physics switches on
+
+This joins the four rules of section 3 as **rule 5**, and it binds every VP package and every builder:
+
+1. **A look is switched on by a condition on kernel values, never by a name, a class or a list.** Not "Saturn has a hexagon" but "a polygon jet where the weather op's rule gives one". Not "Titan is orange" but "a haze whose particles have that absorption row". Renderer code contains no body names and no class tests. This is the standing ruling "processes, not classes" applied to drawing.
+2. **A look scales with the numbers.** Each layer's declaration says which kernel values set its size, strength, colour, height and speed (the detail ladder's table in section 6 is the model). A world with ten times the wind has visibly different curls without anyone touching the shader.
+3. **A look that the physics does not call for is absent, and the HUD or Explain can say why** ("no aurora: this world has no air to glow").
+4. **Solar System bodies are the calibration, not the target.** They are where we can compare with a photograph. Every Solar System name in this note (sections 5, 9 and 10) is an example of a condition, and a builder should read it as "worlds like this".
+5. **Each package is proven three ways** before it merges, with a screenshot of each in its package log:
+   - **on a Solar System body**, against a reference picture;
+   - **on at least one world that is not in the Solar System**, where the numbers differ enough to see the look scale;
+   - **on a world where the look must stay off**, to show the condition works.
+
+I reread sections 5, 9, 10 and 12 against this. No package is written as a per-body special case; where a row names a body it is an example. Two wordings to read with care: VP-P2's "umbrella shape" means any plume on a world too thin-aired to stop it, and win 7's Mimas figure is one check of a formula that runs for every moon and ring.
+
+**The proving worlds (question 11).** So that "a world not in the Solar System" is the same handful for every thread, I propose ten generated systems kept as shared fixtures, each chosen because it pushes some look far from its Solar System value:
+
+| # | Proving world | Pushes |
+|---|---|---|
+| 1 | Hot giant, locked to its star, 1,800 K day side | hot glow, day-to-night flow, no moons' shadows, sodium light |
+| 2 | Rogue planet in a void with a helium sea (Alex's test world) | no star: its own heat and spin-driven aurora only; exposure at starlight |
+| 3 | Locked "eyeball" world round an active red dwarf | red-star colours, flares, storm aurorae, one cloud shield at the sub-star point |
+| 4 | Fast-spinning young giant near the brown dwarf line | flattening, narrow bands, bright spin-driven ovals |
+| 5 | Heavy rocky world, thick carbon dioxide air, strong field | low scale height, squat aurorae, crushed clouds |
+| 6 | Small cold world, thin nitrogen air, low gravity | tall air, detached haze, tall faint aurorae |
+| 7 | Hazy moon of a giant, inside the giant's radiation belts | aurora and glow driven by the host's plasma, planet-shine, eclipses |
+| 8 | Airless lava world close to its star | regolith law, night-side glow, no air effects at all (the "stays off" world for most air looks) |
+| 9 | Ringed giant tipped on its side, with moons generated, not typed | ring shadows at odd angles, ovals far from the spin poles |
+| 10 | Ocean world with no land and strong winds | glint width, wave fields, cloud streets |
+
+The per-body checklist in the third audit gains a second half, "beyond Sol", with one line per proving world, rerun with the first.
+
+### 16.2 Aurorae: what already exists
+
+| Piece | State | Where |
+|---|---|---|
+| Design | Accepted 22 Nov: ovals follow the magnetic axis; power is a share of the wind's; "colours are not chosen", they come from the air's own emission lines; moon footprints; patches over crustal fields; diffuse glow on worlds with air and no field; storms move the oval on a dated event; in True, only what could be seen, by band | `SSE4-magnetic-fields-design.md` 3.4, 6.5, section 9 (MF9, MF14a) |
+| Kernel, where they glow | **Built** (MF9 part 1): a wind-driven oval with its quiet-to-gusty range; a spin-driven oval when moons load plasma; a spot per moon inside the bubble; ovals placed in spin latitude for a tilted field; a diffuse flag for airy worlds with no field. Computed on every world; "nothing asks: is this a giant?" | `read_field`'s `aurora`; `handover/packages/MF9.md` |
+| Kernel, how bright and what colour | **Not built** (MF9 part 2): power, colours from the line table, storm response, crustal patches | light thread, queued |
+| Emission lines | Oxygen's green (557.7 nm) and red (630.0 nm) are in the light pack's line table already | `packs/base-light` |
+| Drawing | Mag band only (`field.ts`). Nothing in Visible on the night side (audit R23) | renderer |
+| This note before the addendum | One row (5.11), one line in VP12, VP-L2 for colours, win 22 | too thin for something Alex calls key |
+| SSE3 | Read on Alex's PC (`physics/aurora.ts`): strength as air x field x incoming particles; a table of colours per gas with **two bands for oxygen** (green main, crimson high, the crimson only in oxygen-rich air), nitrogen purple low, carbon dioxide violet, hydrogen red-pink, methane blue; shells stacked by a height rank of 0, 1 or 2 | reference only |
+
+SSE3's layering by height was its best idea and looked right. Its weakness is that the colours, the efficiencies and the height ranks were typed. SSE4 can compute all three.
+
+### 16.3 Aurorae as a system
+
+One mechanism: **a driver puts energetic particles into some air at some place; the air answers in its own lines, each at the height where that line can survive.** Every kind of aurora is a row in a table of drivers, not a special case.
+
+**Drivers and places (each computed, each present only when its condition holds):**
+
+| Kind | Switched on when | Where | State |
+|---|---|---|---|
+| Wind-driven oval | a field holds the wind off, and there is air | a ring round each magnetic pole at the footprint of the bubble's edge | built |
+| Spin-driven oval | a fast-spinning field is loaded with plasma (from moons, or from the world's own air) | a ring at the footprint of where the plasma stops keeping up | built. This one needs no star, so it lights a rogue planet or a brown dwarf |
+| Moon footprints | a moon orbits inside the bubble | a spot and a trailing tail where the moon's field line lands | spots built; tails to add |
+| Diffuse glow | air but no field | the whole night side, faint, brighter toward the terminator | flag built |
+| Crustal patches | old magnetised crust under thin air | arcs over the magnetised ground | waits on MF10 |
+| Proton aurora | wind protons reach the air (weak or no field, or the dayside funnel of a strong one) | a broad soft band toward the equator from the oval, or the whole day side | to add |
+| Dayside funnel spots | a strong field | one spot per hemisphere near local noon, poleward of the oval | to add |
+| Storm aurora | one of the star's ejections arrives (O10's dated events) | the oval widens toward the equator and brightens for a day or two; red arcs well equatorward | to add (design 6.5) |
+| Glow in a host's belts | a moon with any air sits in its planet's trapped plasma | the whole moon, or ovals if it has its own field | to add; SSE3 had it through total incoming flux |
+| Spot on the star | a planet orbits inside the star's own magnetic reach | a bright spot on the **star** that follows the planet round | design 6.5; with the star thread |
+| Weak-field wandering | the dynamo is dipping or reversing | ovals reach the tropics, several at once | falls out once MF3 gives the field over time |
+
+**The air's answer (the part that makes colour and shape):**
+
+- **Which colours:** every gas in the air above the height where the particles stop, weighted by amount x how readily that line is excited. Rows on the data sheet (emission lines per species with wavelength, upper-state lifetime and yield), read only through "Look up". Oxygen gives green and red; nitrogen blue-violet and a pink lower fringe; hydrogen red and blue Balmer light in Visible and far more in Ultraviolet and Infrared; carbon dioxide mostly Ultraviolet (with oxygen's green from its broken molecules); sodium yellow; and so on for whatever a pack adds. **[line data to check per row]**
+- **How high each colour sits:** computed, not ranked. Two limits set it. The particles stop where they have crossed enough air, so more energetic ones glow lower. And a slow line is put out by collisions before it can shine: oxygen's red line takes about two minutes to emit, so it survives only where the air is very thin, high up; the green line takes under a second and survives much lower; nitrogen's light is immediate and reaches lowest. **So "green below, red above, purple fringe at the bottom" comes out of the air's density profile and each line's lifetime**, for any gas mix, with no typed heights. **[from memory; the light thread checks the lifetimes]**
+- **How tall the curtains are:** the air's scale height. A small cold world with light air has curtains several times taller than Earth's; a heavy world's are squat.
+- **How bright:** power from the driver (MF9 part 2), spread over the oval's area, per line, in the unit observers use. Compared with the exposure, that decides whether it is visible at all.
+- **By band:** the same lines through the Band control. Giants' ovals are brilliant in Ultraviolet and Infrared and modest in Visible; X-ray spots at the strongest. Already the light design's rule.
+
+**Drawing, by tier (grades in brackets):**
+
+| Form | What | Tier |
+|---|---|---|
+| Glowing shells | Each colour as a thin shell at its own height over the kernel's ovals, spots and patches, emissive into the shared glare (5.1). From orbit: rings of light on the night side, and at the limb the colours visibly stacked (fact) | B, near free |
+| Curtain texture | Rays and folds inside the oval, aligned with the field's direction there, drifting, through the detail ladder (drawn from the numbers: oval width, field direction, activity) | B one rung, H three |
+| From the ground | The same shells seen from the site: an arc at the right height above the right horizon, overhead curtains inside the oval, nothing outside the kernel's range. The magnetic fields design's Site level already promises "tonight's aurora chance and where in the sky" (fact) | B |
+| Ribbons | Curtains as ribbons standing along the field lines with a real height profile per colour | H |
+| Volumes | Ray-marched curtains with depth, seen from inside | U |
+| Pulsing and flicker | Under the "three flashes a second" cap; none under reduced motion (drawn from the numbers) | B |
+
+**Cheap wins an expert can test** (they join section 10):
+
+25. Ovals circle the **magnetic** pole, so on a world with a tilted, offset field they sit far from the spin poles and are different sizes north and south.
+26. Green below red, with a purple lower fringe, from line lifetimes against air density. Change the air's density profile and the layers move.
+27. No oxygen, no green. A hydrogen giant's visible aurora is pink-red; most of its light is outside Visible.
+28. Curtain height follows the scale height.
+29. A rogue planet with a field, spin and a moon has aurorae with no star at all.
+30. A moon's spot leads or trails the moon's position by the right angle, and has a tail.
+31. A storm from the star moves the oval toward the equator on the date the ejection arrives.
+32. Faint aurorae are grey to the eye and coloured in a long exposure (question 13).
+
+**Not aurora, but the same machinery: airglow (question 14).** A faint glow of the whole upper air, from sunlight's chemistry, not from particles: a thin green line along the limb of an oxygen world all round the night side. It uses the same lines and the same height rule, with a different driver (absorbed ultraviolet). Proposed as one more driver row, built after the aurora kinds.
+
+### 16.4 Packages added, and owners
+
+**Facts: Build light and nebulae** (extends MF9 part 2; replaces VP-L2):
+
+| Package | What |
+|---|---|
+| **VP-AU1** | Emission line rows on the data sheet for the air gases (wavelength, lifetime, yield), read through Look up; with the data sheet thread |
+| **VP-AU2** | Power per driver and brightness per line; height per line from stopping depth and collision quenching; `read_field`'s `aurora` gains a list of kinds, each with place, lines, heights and brightness |
+| **VP-AU3** | The missing kinds: proton aurora, dayside spots, moon tails, glow in a host's belts, storm events from O10 |
+| **VP-AU4** | Airglow as a driver (if question 14 is yes) |
+
+**Drawing: a new builder thread, "Build aurorae and night lights"** (question 12), so the photoreal thread is not the queue. It owns new files (`aurora.ts`, `gpu-aurora.ts`) and takes VP12 (city lights, lightning) with it, since all three are night-side light on a shell feeding the shared glare:
+
+| Package | What | Needs | Tier |
+|---|---|---|---|
+| **VP-AU5** | Glowing shells from orbit and at the limb, colours stacked by the kernel's heights; first on the fixture fields, then generated worlds | VP1; VP-AU2 (until then, heights and colours from the two oxygen lines only, marked as a stand-in) | B |
+| **VP-AU6** | Curtain texture through the detail ladder; pulsing under the flash cap | VP6 | B, H |
+| **VP-AU7** | Aurora from the ground on the Land screen | VP-AU5 | B |
+| **VP-AU8** | Ribbons along field lines; volumes | VP4 | H, U |
+| **VP-AU9** | Other bands (Ultraviolet, Infrared, X-ray) through the Band control | VP-AU2 | B |
+
+Proving worlds for aurora packages: an Earth-like fixture; proving worlds 2 (no star), 6 (tall curtains), 7 (host's plasma) and 9 (ovals far from the spin poles); and world 8 as the one where it stays off.
+
+### 16.5 Questions for Alex (numbering continues from section 14)
+
+11. **Ten proving worlds** (16.1) kept as shared fixtures, and every VP package shown on a Solar System body, on a world that is not, and on a world where the look must stay off. *Recommend yes.*
+12. **A new builder thread, "Build aurorae and night lights"**, for the drawing (aurorae, city lights, lightning), with the facts staying in the light thread. *Recommend yes.*
+13. **Aurora to the eye and to the camera.** Really faint aurorae look grey-white to the eye, and green and red only in a long exposure. In True, the exposure adapts on the night side so bright aurorae show their colour, faint ones are pale, and "Long exposure" shows full colour and says so. *Recommend yes: it is true, testable, and the long exposure still gives the spectacular picture.* The alternative is always full colour, which is prettier and not what an eye sees.
+14. **Airglow** as one more driver in the same machinery, after the aurora kinds. *Recommend yes.*
