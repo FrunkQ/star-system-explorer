@@ -74,7 +74,7 @@
   }
 </script>
 
-<div class="star" data-star>
+<div class="star" data-star={bare ? undefined : ""} data-star-picture={bare ? "" : undefined}>
   {#if failed}
     <p class="note">{failed}</p>
   {:else if !got}

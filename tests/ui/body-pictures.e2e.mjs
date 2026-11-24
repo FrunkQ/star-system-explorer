@@ -95,7 +95,7 @@ try {
   // A star: its disc.
   await body("Sun").locator(".hit").click();
   await gm.locator(".area-card section.picture[data-picture='disc'] [data-body-picture='disc']").waitFor({ timeout: 20000 });
-  assert.equal(await gm.locator(".area-card [data-star] dl").count(), 0, "the card shows the disc alone; its facts stay on the Body screen");
+  assert.equal(await gm.locator(".area-card [data-star-picture] dl").count(), 0, "the card shows the disc alone; its facts stay on the Body screen");
   await gm.locator(".area-card section.picture [data-show='x-ray']").click();
   await gm.locator(".area-card [data-body-picture='x-ray'] .disc[data-band='xray']").waitFor({ timeout: 20000 });
   await gm.waitForTimeout(600);
