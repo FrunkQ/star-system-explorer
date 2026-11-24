@@ -2579,8 +2579,6 @@ pub fn ops() -> Vec<OpInfo> {
         o("ship_power", Cost::Trivial, "linear in the ship's parts"),
         o("log_flight", Cost::Trivial, "one record event, and one for each construct a split or join touches"),
         o("flight_log", Cost::Light, "linear in the record events; with where_at, one Kepler or Lambert solve"),
-        o("set_link", Cost::Trivial, "one record event"),
-        o("links_in", Cost::Light, "linear in the record's link events"),
         o(
             "orbit_stability",
             Cost::Light,

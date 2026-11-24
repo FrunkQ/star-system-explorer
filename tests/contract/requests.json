@@ -3459,7 +3459,5 @@
  {"op": "set_authored_batch", "occurred_at_s": 100, "edits": [{"address": "u:rs4/sys:0/ship:1", "field": "construct.mass_kg", "value": 45000.0}, {"address": "u:rs4/sys:0/ship:1", "field": "part.eagle.mass_kg", "value": 15000.0}]},
  {"op": "split_construct", "address": "u:rs4/sys:0/ship:1", "key": "eagle", "name": "Eagle", "parts": ["eagle"], "at_s": 500},
  {"op": "join_constructs", "address": "u:rs4/sys:0/ship:1", "with": "u:rs4/sys:0/ship:eagle", "at_s": 600},
- {"op": "join_constructs", "address": "u:rs4/sys:0/ship:1", "with": "u:rs4/sys:0/ship:eagle", "how": "merge", "at_s": 700},
- {"op": "set_link", "id": "long-gate", "a": "u:rs4/sys:0", "b": "u:rs4/sys:3", "name": "the Long Gate", "kind": "gate", "nav": {"rule": {"id": "gate", "name": "gate transit", "family": "gate", "duration": {"form": "fixed", "days": 1.0}, "messages": {"by": "ships"}, "fictional": true}}, "audience": "gm", "at_s": 0},
- {"op": "links_in", "at_s": 0}
+ {"op": "join_constructs", "address": "u:rs4/sys:0/ship:1", "with": "u:rs4/sys:0/ship:eagle", "how": "merge", "at_s": 700}
 ]
