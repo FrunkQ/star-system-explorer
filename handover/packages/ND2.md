@@ -68,11 +68,27 @@ Owner: Build light and nebulae. Data rows with the matter data sheet thread.
   ten times in 1e27 m⁻³ of helium at 6000 K. Fudge F54 (Unsöld is often about two times narrow).
 - No golden change beyond the base-physics and base-reference pack hashes.
 
+## Part 2b (24 Nov): the limb law per colour
+
+- Two Equations in `packs/base-physics/formulas/light.json`: `sse.light.limb_temperature`
+  (Eddington-Barbier in a grey atmosphere, T = Teff (¾(μ + ⅔))^¼; Rybicki and Lightman 1979 §1.8,
+  doi 10.1002/9783527618170) and `sse.light.reflected_limb` (Minnaert 1941, b = μ0^k μ^(k−1),
+  doi 10.1086/144279). New kinds `light.limb_cosine`, `light.seen_temperature`, `light.minnaert_k`,
+  `light.incidence_cosine`, `light.brightness_share`.
+- `sse_light::limb`: `glowing(teff, mus, wavelengths, eye)` gives each point's layer temperature,
+  brightness per wavelength against the centre (Planck at that layer over Planck at μ = 1) and the
+  colour to the eye; `lit(k, mu0, mus)` gives Minnaert's share per k.
+- Op `read_limb` (Cost::Trivial, light chunk): a disc gives `teff_k` (glowing) or `minnaert_k` and
+  `mu0` (lit); wavelengths default to the eye's grid. Errors are `bad_disc` with the disc's number.
+- Tests: Eddington's (2 + 3μ)/5 law; blue darkens more than red and the edge is redder; Lambert at
+  k = 1 and a brighter edge for k < 1; kernel `read_limb_gives_the_edge_of_a_disc`. Fudge F55.
+- Golden change: the base-physics pack hash and the contract cases for the new op only.
+
 ## Next (part 2)
 
 - More rows: H₂-H₂ and H₂-He pairs (HITRAN CIA; hitran.org was not reachable from the build machine), a cited
   measured widening rows where they exist (Allard et al., ABO), which win over Unsöld's estimate, methane below 410 nm and in the near
   infrared, TiO and C₂ substance rows, ammonia and the giants' chromophores.
 - A spectrum on a wire (a `list<number>` on the eye's or a named grid) and the gas block in flows.
-- Limb law per channel; the light of a description's lines in the colour; screens read colour from the op.
+- The light of a description's lines in the colour; screens read colour from the op.
 - Gap items 9 and 36 build on it (own daylight, gas giant colours from cloud chemistry).

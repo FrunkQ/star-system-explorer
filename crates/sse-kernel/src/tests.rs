@@ -3515,6 +3515,29 @@ fn light_through_gas_gives_the_colour_to_the_eye() {
     assert_eq!(r["code"], "bad_gas", "{r}");
 }
 
+/// ND2 part 2b: the limb law reads a glowing disc darker and redder at its
+/// edge, and a lit one by Minnaert's law.
+#[test]
+fn read_limb_gives_the_edge_of_a_disc() {
+    let mut k = crate::Kernel::new();
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "read_limb", "discs": [
+        {"teff_k": 5772.0, "mus": [1.0, 0.2], "wavelengths_m": [4.0e-7, 8.0e-7]},
+        {"minnaert_k": [1.0], "mu0": 0.6, "mus": [0.3]}]}));
+    assert_eq!(r["type"], "limb_read", "{r}");
+    let edge = &r["discs"][0]["points"][1]["share"];
+    assert!(edge[0].as_f64().unwrap() < edge[1].as_f64().unwrap(), "{r}");
+    assert!(
+        r["discs"][0]["points"][1]["colour"]["hex"].is_string(),
+        "{r}"
+    );
+    assert!((r["discs"][1]["points"][0]["share"][0].as_f64().unwrap() - 0.6).abs() < 1e-12);
+    let r = send(serde_json::json!({"op": "read_limb", "discs": [{"mus": [1.0]}]}));
+    assert_eq!(r["code"], "bad_disc", "{r}");
+}
+
 /// RK12: effect at range gives the reading, the odds from light lag, the
 /// rings and a beam's load on the power ledger.
 #[test]

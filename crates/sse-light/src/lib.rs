@@ -21,6 +21,7 @@ pub mod air;
 pub mod colour;
 pub mod emit;
 pub mod gas;
+pub mod limb;
 pub mod observe;
 pub mod photometry;
 pub mod shift;
@@ -28,6 +29,8 @@ pub mod table;
 
 #[cfg(test)]
 mod gas_tests;
+#[cfg(test)]
+mod limb_tests;
 #[cfg(test)]
 mod tests;
 

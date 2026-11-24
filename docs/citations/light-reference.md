@@ -159,3 +159,10 @@ Status key: **verified** (source read, number matches) / **corrected-metadata** 
 | **Total** | **92** | **44** | **13** | **4** | **16** | **15** |
 
 How rows are counted: Proxima is counted unverified (its radius is verified, but its teff is not in the cited paper). Sirius A is counted corrected-physics for teff only. Sirius B is verified (its teff 25000 is a rounding of 25369; an optional fix is listed). "Verified (existence/bibcode)" rows confirm that the work exists as named; they do not confirm any number, and the design files quote none from them.
+
+## ND2 part 2b: the limb law (added 24 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.light.limb_temperature` | Rybicki, G. B. and Lightman, A. P. 1979, *Radiative Processes in Astrophysics*, Wiley, §1.8. doi:10.1002/9783527618170 | grey atmosphere T⁴ = ¾Teff⁴(τ + ⅔) and Eddington-Barbier (light at μ leaves τ ≈ μ) | textbook | Standard result; the test recovers Eddington's (2 + 3μ)/5 law. |
+| `sse.light.reflected_limb` | Minnaert, M. 1941, ApJ 93, 403. doi:10.1086/144279 | b = μ0^k μ^(k−1); k = 1 is Lambert | textbook | Law as stated in the paper's title and abstract; k = 1 reduces to Lambert in the test. |

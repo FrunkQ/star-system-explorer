@@ -593,6 +593,16 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
+    /// The limb law (ND2 part 2b): how each disc's brightness and colour
+    /// change from centre (`mu` 1) to edge (`mu` 0). A glowing disc gives
+    /// `teff_k` (Eddington-Barbier in a grey atmosphere: the layer seen,
+    /// its temperature, brightness per wavelength against the centre and
+    /// the colour to the eye); a lit disc gives `minnaert_k` (one, or one
+    /// per wavelength) and `mu0`, the sunlight's cosine.
+    ReadLimb {
+        #[ts(type = "unknown[]")]
+        discs: Vec<serde_json::Value>,
+    },
     /// Effect at range (RK12, Atomic Rockets plan section 13): each of
     /// `asks` is `sse_sense::reach::Ask`, a weapon (beam, burst or
     /// projectile), a target (its skin as a sheet material or a typed
@@ -2153,6 +2163,7 @@ impl Request {
             Request::ReadAirOptics { .. } => "read_air_optics",
             Request::LightThroughGas { .. } => "light_through_gas",
             Request::EffectAtRange { .. } => "effect_at_range",
+            Request::ReadLimb { .. } => "read_limb",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2368,6 +2379,11 @@ pub fn ops() -> Vec<OpInfo> {
             "light_through_gas",
             Cost::Light,
             "per passage: a few formula blocks per wavelength per absorption feature, at the eye's 81 wavelengths and any asked for",
+        ),
+        o(
+            "read_limb",
+            Cost::Trivial,
+            "per disc and point: one formula block and a Planck sum at the eye's 81 wavelengths",
         ),
         o(
             "effect_at_range",
@@ -2974,6 +2990,12 @@ pub enum Response {
     GasPassed {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
+    },
+    /// `read_limb`: each of `discs` is `{ points, references }` with
+    /// `sse_light::limb::LimbPoint`.
+    LimbRead {
+        #[ts(type = "unknown[]")]
+        discs: Vec<serde_json::Value>,
     },
     /// `effect_at_range`: each of `effects` is `sse_sense::reach::Effect`.
     EffectsAtRange {

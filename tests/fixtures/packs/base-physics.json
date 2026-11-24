@@ -3616,6 +3616,34 @@
         "range": null
       },
       {
+        "description": "brightness of a lit surface against a matt one seen square on in full sun",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.brightness_share",
+        "range": null
+      },
+      {
+        "description": "cosine of the angle sunlight arrives at on a surface",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.incidence_cosine",
+        "range": null
+      },
+      {
         "description": "photons per second able to ionise hydrogen (above 13.6 eV)",
         "dim": [
           0,
@@ -3630,6 +3658,34 @@
         "range": null
       },
       {
+        "description": "cosine between the line of sight and straight out of a surface: 1 at a disc's centre, 0 at its edge",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.limb_cosine",
+        "range": null
+      },
+      {
+        "description": "Minnaert's k: how a lit surface's brightness falls toward its edge (1 is matt)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.minnaert_k",
+        "range": null
+      },
+      {
         "description": "effective area for reflected starlight: Bond albedo times cross-section times the source's dilution (R*/d)²",
         "dim": [
           2,
@@ -3641,6 +3697,20 @@
           0
         ],
         "id": "light.reflected_area",
+        "range": null
+      },
+      {
+        "description": "temperature of the layer a disc's light comes from at one point",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "light.seen_temperature",
         "range": null
       },
       {

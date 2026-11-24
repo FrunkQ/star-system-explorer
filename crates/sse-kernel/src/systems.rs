@@ -432,6 +432,50 @@ pub(crate) fn read_air_optics(
 }
 
 /// Light through gas (ND2), with the colour to the eye before and after.
+pub(crate) fn read_limb(discs: Vec<serde_json::Value>) -> Out {
+    #[derive(serde::Deserialize)]
+    struct In {
+        #[serde(default)]
+        teff_k: Option<f64>,
+        #[serde(default)]
+        minnaert_k: Option<Vec<f64>>,
+        #[serde(default)]
+        mu0: Option<f64>,
+        mus: Vec<f64>,
+        #[serde(default)]
+        wavelengths_m: Option<Vec<f64>>,
+    }
+    let table = &sse_light::emit::Model::base().table;
+    let eye = table
+        .eye
+        .as_ref()
+        .ok_or_else(|| err("bad_light", "the light table has no eye"))?;
+    let mut out = vec![];
+    for (n, v) in discs.into_iter().enumerate() {
+        let bad = |e: String| err("bad_disc", format!("disc {n}: {e}"));
+        let i: In = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let points = match (i.teff_k, i.minnaert_k) {
+            (Some(t), None) => {
+                let wl = i.wavelengths_m.unwrap_or_else(|| eye.wavelengths_m());
+                sse_light::limb::glowing(t, &i.mus, &wl, eye).map_err(bad)?
+            }
+            (None, Some(k)) => {
+                sse_light::limb::lit(&k, i.mu0.unwrap_or(1.0), &i.mus).map_err(bad)?
+            }
+            _ => {
+                return Err(bad(
+                    "give teff_k for a glowing disc or minnaert_k for a lit one".into(),
+                ))
+            }
+        };
+        out.push(serde_json::json!({
+            "points": points,
+            "references": sse_light::limb::references(),
+        }));
+    }
+    Ok(Response::LimbRead { discs: out })
+}
+
 pub(crate) fn effect_at_range(
     asks: Vec<serde_json::Value>,
     sheet: &sse_reference::Reference,

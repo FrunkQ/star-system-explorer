@@ -914,6 +914,194 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.light.limb_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "effective_temperature",
+     "letter": "Teff"
+    },
+    {
+     "port": "limb_cosine",
+     "letter": "mu"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "seen_temperature",
+     "letter": "T"
+    }
+   ],
+   "checks": [
+    {
+     "port": "limb_cosine",
+     "min": 0,
+     "max": 1,
+     "says": "the cosine toward the viewer must lie between 0 (the limb) and 1 (the centre), got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "effective_temperature",
+     "says": "effective temperature"
+    }
+   ],
+   "references": [
+    "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, section 1.8: a grey atmosphere in the Eddington approximation has T⁴ = (3/4) T_eff⁴ (τ + 2/3), and the light leaving at angle cos θ = μ comes from about optical depth μ (Eddington-Barbier). doi:10.1002/9783527618170"
+   ],
+   "shown": "T(μ) = T_eff (3/4 (μ + 2/3))^(1/4)",
+   "equation": {
+    "name": "How hot the layer you see is, from the centre of a disc to its edge",
+    "formula": "T = Teff * (3 / 4 * (mu + 2 / 3)) ^ (1/4)",
+    "inputs": {
+     "Teff": {
+      "kind": "body.effective_temperature",
+      "unit": "K",
+      "name": "temperature of the glowing surface as a whole (effective temperature)"
+     },
+     "mu": {
+      "kind": "light.limb_cosine",
+      "unit": "1",
+      "name": "cosine of the angle between the line of sight and straight out of the surface: 1 at the centre, 0 at the edge",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "light.seen_temperature",
+      "unit": "K",
+      "name": "temperature of the layer the light at that point comes from"
+     }
+    },
+    "source": {
+     "text": "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics",
+     "doi": "10.1002/9783527618170",
+     "where": "section 1.8"
+    },
+    "explain": {
+     "curious": "Look at a star's edge and you look in at a slant, so you see only its cooler upper layers. The edge is darker, and redder, than the middle.",
+     "science": "Eddington-Barbier: the emergent intensity at μ is about the source function at τ = μ; for a grey Eddington atmosphere that is the Planck function at T⁴ = (3/4) T_eff⁴ (μ + 2/3)."
+    },
+    "examples": [
+     {
+      "Teff": 6000.0,
+      "mu": 0.5,
+      "T": 5803.009260803007
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.reflected_limb",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "minnaert_k",
+     "letter": "k"
+    },
+    {
+     "port": "incidence_cosine",
+     "letter": "mu0"
+    },
+    {
+     "port": "limb_cosine",
+     "letter": "mu"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "brightness_share",
+     "letter": "b"
+    }
+   ],
+   "checks": [
+    {
+     "port": "minnaert_k",
+     "min": 0,
+     "max": 2,
+     "says": "Minnaert's k must lie between 0 and 2, got {}"
+    },
+    {
+     "port": "incidence_cosine",
+     "min": 0,
+     "max": 1,
+     "says": "the sunlight's cosine must lie between 0 and 1, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "limb_cosine",
+     "says": "cosine toward the viewer"
+    }
+   ],
+   "references": [
+    "Minnaert, M. 1941, The reciprocity principle in lunar photometry, Astrophys. J. 93, 403: reflected brightness goes as μ₀^k μ^(k−1), with k = 1 a Lambert surface. doi:10.1086/144279"
+   ],
+   "shown": "b = μ₀^k μ^(k−1)",
+   "equation": {
+    "name": "How bright a lit surface looks across its disc (Minnaert)",
+    "formula": "b = mu0 ^ k * mu ^ (k - 1)",
+    "inputs": {
+     "k": {
+      "kind": "light.minnaert_k",
+      "unit": "1",
+      "name": "Minnaert's k: 1 for a matt surface, less for a hazy or dusty one that stays bright to the edge",
+      "valid": [
+       0.0,
+       2.0
+      ]
+     },
+     "mu0": {
+      "kind": "light.incidence_cosine",
+      "unit": "1",
+      "name": "cosine of the angle the sunlight arrives at",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "mu": {
+      "kind": "light.limb_cosine",
+      "unit": "1",
+      "name": "cosine of the angle between the line of sight and straight out of the surface: 1 at the centre, 0 at the edge",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "b": {
+      "kind": "light.brightness_share",
+      "unit": "1",
+      "name": "brightness against a matt surface seen square on in full sun"
+     }
+    },
+    "source": {
+     "text": "Minnaert, M. 1941, Astrophys. J. 93, 403",
+     "doi": "10.1086/144279",
+     "where": "the reciprocity law"
+    },
+    "explain": {
+     "curious": "A matt ball fades toward its edge; a hazy one, like a giant planet, stays bright almost to the rim. One number, k, says which.",
+     "science": "Minnaert's empirical law I/F = (I/F)₀ μ₀^k μ^(k−1), which keeps reciprocity; k = 1 is Lambert."
+    },
+    "examples": [
+     {
+      "k": 0.7,
+      "mu0": 0.8,
+      "mu": 0.6,
+      "b": 0.9970515564324448
+     }
+    ]
+   }
   }
  ]
 }

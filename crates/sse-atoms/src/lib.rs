@@ -540,6 +540,11 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("range.ratio", "what arrives as a share of what is needed"),
     ("range.reading", "effect at range: 2 in range, 1 marginal, 0 out of range"),
     ("range.margin", "factor either way inside which an effect at range is marginal"),
+    ("light.limb_cosine", "cosine between the line of sight and straight out of a surface: 1 at a disc's centre, 0 at its edge"),
+    ("light.seen_temperature", "temperature of the layer a disc's light comes from at one point"),
+    ("light.minnaert_k", "Minnaert's k: how a lit surface's brightness falls toward its edge (1 is matt)"),
+    ("light.incidence_cosine", "cosine of the angle sunlight arrives at on a surface"),
+    ("light.brightness_share", "brightness of a lit surface against a matt one seen square on in full sun"),
     ("eye.linear_level", "light level of one screen colour, 0 to 1, in proportion to light"),
     ("eye.screen_level", "level sent to the screen, 0 to 1"),
 ];
