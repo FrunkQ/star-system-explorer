@@ -5,6 +5,7 @@
 // only and is never saved with the campaign (5.6). What reaches the wire is still `Shown`, worked out per role and per
 // screen by `resolve`, so players' screens read one value whatever made it.
 import type { Shown } from "./seat.ts";
+import type { HoldingCard } from "./holding.ts";
 
 /** A holding card (6.2): blank is "Screens off"; plain and joke draw from the pack's list; or words typed now. */
 export type HoldCard = "blank" | "plain" | "joke" | { text: string };
@@ -348,17 +349,12 @@ export class BoardHistory {
   }
 }
 
-/** The words a holding card shows, chosen on the GM's machine (PB5 brings the pack's list; until then, these). */
-export function cardWords(card: HoldCard, pick: (kind: "plain" | "joke") => string = defaultPick): string {
+/**
+ * The words a holding card shows, with no pack to hand: the shell passes a `CardDeck` (holding.ts) built from the
+ * stack's `sse.holding-cards/1` instead (PB5), so these fixed words are only the last resort.
+ */
+export function cardWords(card: HoldCard, pick: (kind: "plain" | "joke") => string = () => "Stand by"): string {
   return card === "blank" ? "" : typeof card === "object" ? card.text : pick(card);
-}
-const PLAIN = ["Awaiting transmission", "Signal lost", "Stand by", "No carrier"];
-const JOKES = ["Hold on: tracking down the missing gold atoms. I think the black hole swallowed them.", "Awaiting transmission. Light is doing its best.", "Signal lost. It was last seen heading for the Oort cloud.", "Recalculating. Someone moved the barycentre."];
-let lastPick = "";
-function defaultPick(kind: "plain" | "joke"): string {
-  const list = kind === "plain" ? PLAIN : JOKES;
-  const choices = list.filter((x) => x !== lastPick);
-  return (lastPick = choices[Math.floor(Math.random() * choices.length)] ?? list[0]!);
 }
 
 /**
@@ -400,6 +396,8 @@ export interface TablePort {
     can_redo: boolean;
     /** Players' requests waiting for the GM. */
     waiting: number;
+    /** The holding cards on the stack (PB5, holding.ts), for the line card's choices. */
+    cards?: readonly HoldingCard[];
   };
   act(f: (b: Board) => Board): void;
   undo(): void;

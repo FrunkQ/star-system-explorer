@@ -8,7 +8,7 @@
   decides what each screen shows; this file only draws it and turns presses into board changes.
 -->
 <script lang="ts">
-  import { addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
+  import { cardLabel, addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
   import Playbook from "./Playbook.svelte";
   import PresetMonitor from "./PresetMonitor.svelte";
   import { justSent, noteFired, noteSent, type JustSent } from "./fired.svelte.ts";
@@ -19,7 +19,7 @@
   const board = $derived(st.board);
   const live = $derived(table.live());
   const words = (s: Shown) => ("off" in s ? (s.card ? s.card : "screens dark") : (s.title ?? "the opening place"));
-  const cardWords = (c: HoldCard) => (c === "blank" ? "dark" : c === "plain" ? "awaiting transmission" : c === "joke" ? "a joke" : c.text);
+  const cardWords = cardLabel;
   // What a destination shows now, in words, and whether it is held.
   function showing(b: Board, role: string, screen?: string): { text: string; held: boolean } {
     const r = resolve(b, role, screen);
@@ -135,8 +135,25 @@
     void screen;
   }
   function chooseCard(dest: Dest, c: HoldCard) {
-    lastCard = c;
+    // A click holds with the kind used last (6.2); a particular card or typed words are for this moment only.
+    if (typeof c === "string") lastCard = c;
     act((b) => hold(b, dest, c));
+  }
+  // The line card's choices (PB5): a kind, a particular card from the stack's list, or words typed now.
+  const cards = $derived(st.cards ?? []);
+  let ownWords = $state<Dest | null>(null);
+  function cardValue(c: HoldCard): string {
+    if (typeof c === "string") return c;
+    const i = cards.findIndex((x) => x.words === c.text);
+    return i >= 0 ? `card:${i}` : "own";
+  }
+  function pickCard(dest: Dest, v: string) {
+    if (v === "own") return void (ownWords = dest);
+    ownWords = null;
+    if (v.startsWith("card:")) {
+      const c = cards[Number(v.slice(5))];
+      if (c) chooseCard(dest, { text: c.words });
+    } else chooseCard(dest, v as HoldCard);
   }
 
   // Dragging: a source's dot onto a destination; a screen onto a role (move) or another screen (swap). Every drag has
@@ -256,6 +273,25 @@
   let copied = $state(false);
 </script>
 
+{#snippet cardCtl(dest: Dest, label: string, held: HoldCard)}
+  {@const v = ownWords === dest ? "own" : cardValue(held)}
+  <select aria-label="Holding card for {label}" data-card={dest} onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} onchange={(e) => pickCard(dest, (e.currentTarget as HTMLSelectElement).value)} value={v}>
+    <option value="plain">Plain ({cards.filter((c) => c.kind === "plain").length})</option>
+    <option value="joke">A joke ({cards.filter((c) => c.kind === "joke").length})</option>
+    <option value="blank">Dark</option>
+    <option value="own">My own words…</option>
+    {#each [["plain", "Plain cards"], ["joke", "Jokes"]] as [kind, head] (kind)}
+      <optgroup label={head}>
+        {#each cards as c, i (i)}{#if c.kind === kind}<option value={`card:${i}`}>{c.words}</option>{/if}{/each}
+      </optgroup>
+    {/each}
+  </select>
+  {#if v === "own"}
+    <!-- svelte-ignore a11y_autofocus -->
+    <input class="own" aria-label="Words for {label}'s screens" data-card-words={dest} placeholder="Stand by" value={typeof held === "object" ? held.text : ""} autofocus onclick={(e) => e.stopPropagation()} onkeydown={(e) => (e.stopPropagation(), e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur())} onchange={(e) => { const t = (e.currentTarget as HTMLInputElement).value.trim(); if (t) chooseCard(dest, { text: t }); }} />
+  {/if}
+{/snippet}
+
 {#snippet steerCtl(dest: Dest, mode: "theirs" | "read")}
   <button type="button" class="quiet steer" class:read={mode === "read"} data-steer={dest} data-steer-mode={mode} onclick={(e) => (e.stopPropagation(), act((b) => setSteer(b, dest, mode === "read" ? "theirs" : "read")))} title={mode === "read" ? "Read only: it follows you and takes no input. Press for Theirs." : "Theirs: the player has the screen's own controls, within what you sent. Press for Read only."}>{mode === "read" ? "Read only" : "Theirs"}</button>
   {#if mode === "read"}
@@ -349,6 +385,7 @@
           {#if board.over.length}<button type="button" data-lift onclick={(e) => (e.stopPropagation(), act(lift))} title="Take this off; every screen goes back to what it had">Lift</button>{/if}
           {@render steerCtl("everyone", steerOf(board, ""))}
           <button type="button" class="quiet" data-hold="everyone" aria-pressed={!!board.lines.everyone?.held} onclick={(e) => (e.stopPropagation(), toggleHold("everyone", ""))}>{board.lines.everyone?.held ? "Release" : "Hold"}</button>
+          {#if board.lines.everyone?.held}{@render cardCtl("everyone", "Everyone", board.lines.everyone.held)}{/if}
         </span>
       </div>
 
@@ -364,13 +401,7 @@
               {#if own && !own.for_hold}<button type="button" class="quiet" data-rejoin={`role:${r.id}`} onclick={(e) => (e.stopPropagation(), act((b) => rejoin(b, `role:${r.id}`)))}>With Everyone</button>{/if}
               {@render steerCtl(`role:${r.id}`, steerOf(board, r.id))}
               <button type="button" class="quiet" data-hold={`role:${r.id}`} aria-pressed={!!own?.held} onclick={(e) => (e.stopPropagation(), toggleHold(`role:${r.id}`, r.id))}>{own?.held ? "Release" : "Hold"}</button>
-              {#if own?.held}
-                <select aria-label="Holding card for {r.label}" data-card={`role:${r.id}`} onclick={(e) => e.stopPropagation()} onchange={(e) => chooseCard(`role:${r.id}`, (e.currentTarget as HTMLSelectElement).value as HoldCard)} value={typeof own.held === "string" ? own.held : "plain"}>
-                  <option value="plain">Awaiting transmission</option>
-                  <option value="joke">A joke</option>
-                  <option value="blank">Dark</option>
-                </select>
-              {/if}
+              {#if own?.held}{@render cardCtl(`role:${r.id}`, r.label, own.held)}{/if}
             </span>
           </div>
           {#each r.screens as [id, s] (id)}
@@ -384,6 +415,7 @@
                 {#if mineLine && !mineLine.for_hold}<button type="button" class="quiet" data-rejoin={`screen:${id}`} onclick={(e) => (e.stopPropagation(), act((b) => rejoin(b, `screen:${id}`)))}>Back with {r.label}</button>{/if}
                 {@render steerCtl(`screen:${id}`, steerOf(board, r.id, id))}
                 <button type="button" class="quiet" data-hold={`screen:${id}`} aria-pressed={!!mineLine?.held} onclick={(e) => (e.stopPropagation(), toggleHold(`screen:${id}`, r.id, id))}>{mineLine?.held ? "Release" : "Hold"}</button>
+                {#if mineLine?.held}{@render cardCtl(`screen:${id}`, s.name, mineLine.held)}{/if}
               </span>
             </div>
           {:else}
@@ -456,6 +488,20 @@
     padding: 3px 10px;
     cursor: pointer;
     transition: background var(--sse-motion-quick) var(--sse-ease);
+  }
+  select[data-card] {
+    max-width: 13em;
+    padding: 3px 6px;
+  }
+  input.own {
+    font: inherit;
+    font-size: 13px;
+    color: var(--sse-ink);
+    background: var(--sse-ground-raised);
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    padding: 3px 8px;
+    width: 12em;
   }
   button:hover:not(:disabled) {
     background: var(--sse-ink);

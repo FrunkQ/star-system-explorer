@@ -77,6 +77,18 @@ try {
   assert.equal(await gm.locator(`[data-line="screen:${wallId}"].held`).count(), 1, "the line is drawn broken");
   await shot(gm, "switchboard-held");
   await shot(wall, "switchboard-wall-held");
+  // The line card (PB5): a plain card from the base presentation pack; then a particular joke; then words typed now.
+  assert.ok(["Awaiting transmission", "Signal lost", "Stand by", "No carrier"].includes(await wall.locator("[data-held]").getAttribute("data-held")));
+  const cardSel = gm.locator(`[data-card="screen:${wallId}"]`);
+  assert.equal(await cardSel.locator("optgroup[label='Jokes'] option").count(), 24);
+  await cardSel.selectOption({ label: "Tuning. This frequency is mostly hydrogen." });
+  await wall.locator("[data-held='Tuning. This frequency is mostly hydrogen.']").waitFor({ timeout: 10000 });
+  await shot(wall, "holding-joke");
+  await cardSel.selectOption("own");
+  await gm.locator(`[data-card-words="screen:${wallId}"]`).fill("Back after the break");
+  await gm.locator(`[data-card-words="screen:${wallId}"]`).press("Enter");
+  await wall.locator("[data-held='Back after the break']").waitFor({ timeout: 10000 });
+  await shot(gm, "holding-own-words");
   await gm.locator(`[data-hold="screen:${wallId}"]`).click();
   await wall.locator("[data-screens-off]").waitFor({ state: "detached", timeout: 10000 });
 

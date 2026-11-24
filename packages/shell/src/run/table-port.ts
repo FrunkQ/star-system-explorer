@@ -14,6 +14,7 @@ export function tablePort(share: Share, live: () => Shown): TablePort {
         can_undo: st.can_undo,
         can_redo: st.can_redo,
         waiting: st.waiting.length,
+        cards: share.cards,
       };
     },
     act: (f) => share.act(f),

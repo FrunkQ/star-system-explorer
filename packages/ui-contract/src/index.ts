@@ -54,6 +54,8 @@ export type { Bookmark, Whereabouts } from "./bookmark.ts";
 export { PLAYBOOK_SCHEMA, addChapter, addPage, addPreset, addSection, destOf, emptyPlaybook, findPage, findPreset, fire, isUp, movePreset, movePresetToPage, nextId, pages, playbookFrom, presetWords, presetsInView, reveals, revealsOf, removePart, removePreset, rename, showOf, updatePreset } from "./playbook.ts";
 export type { Chapter, Page, Playbook, Preset, Section, Step } from "./playbook.ts";
 export type { Board, BoardScreen, Dest, HoldCard, Line, Showing, TablePort } from "./board.ts";
+export { CardDeck, cardLabel, holdingCardsOn } from "./holding.ts";
+export type { CardKind, HoldingCard } from "./holding.ts";
 // The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
 export type { Session } from "./session.ts";
 export { LENS_SCHEMA, LAYERS, TOOLS, SHIPPED_LENSES, HONESTY_MARKS, playerLenses, hasLayer, hasTool, asPlayers, lensAudience, cardFor, cardFacts, gmStamps, defaultLens, lensFits, checkLens, saved, copyLens, lensPack, lensesFromPack, allLenses } from "./lens.ts";
