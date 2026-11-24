@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 111,
+        n, 112,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1302,5 +1302,18 @@ fn composition_blocks_match_the_chain() {
         );
         near(got[0], want.0, "deposit mass");
         near(got[1], want.1, "deposit grade");
+    }
+    for (z, mass) in [(0.014, 1.9e27), (0.02, 1.0e26), (0.014, 1.0e25)] {
+        near(
+            run("sse.composition.heavy_element_share", &[z, mass])[0],
+            mt::heavy_element_share(
+                z,
+                mass,
+                sse_core::sheet::M_JUP,
+                mt::GIANT_METAL_COEFFICIENT,
+                mt::GIANT_METAL_SLOPE,
+            ),
+            "heavy share",
+        );
     }
 }

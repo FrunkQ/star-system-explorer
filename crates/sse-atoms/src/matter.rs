@@ -14,6 +14,8 @@
 //! - `sse.composition.crust_share`: the share of the silicate's element that
 //!   the crust holds, by its enrichment over the mantle;
 //! - `sse.composition.crust_fraction`: the crust's share of the silicate;
+//! - `sse.composition.heavy_element_share` (MP8c): a giant's share of
+//!   heavy elements, from the mass-metallicity relation of measured giants;
 //! - `sse.composition.deposit_amount` (MP8): what an ore deposit holds, from
 //!   its footprint and the enrichment its process reached over the crust.
 //!
@@ -29,6 +31,8 @@ pub const RG03: &str = "Rudnick, R. L. and Gao, S. 2003, Treatise on Geochemistr
 pub const L03: &str = "Lodders, K. 2003, ApJ 591, 1220: solar system abundances and condensation temperatures of the elements (host phases, table 8). doi:10.1086/375492";
 pub const ET12: &str = "Elkins-Tanton, L. T. 2012, Annual Review of Earth and Planetary Sciences 40, 113: magma oceans in the inner solar system (accretion and Al-26 energy against the energy to melt). doi:10.1146/annurev-earth-042711-105503";
 pub const PO14: &str = "Palme, H. and O'Neill, H. St. C. 2014, Treatise on Geochemistry (2nd ed.) 3, 1: cosmochemical estimates of mantle composition (CI H and O). doi:10.1016/B978-0-08-095975-7.00201-1";
+pub const TF16: &str = "Thorngren, D. P., Fortney, J. J., Murray-Clay, R. A. and Lopez, E. D. 2016, ApJ 831, 64: the mass-metallicity relation for giant planets (Z_planet / Z_star = 9.7 (M / M_Jup)^-0.45). doi:10.3847/0004-637X/831/1/64";
+pub const L21: &str = "Lodders, K. 2021, Space Science Reviews 217, 44: relative atomic solar system abundances, mass fractions, and atomic masses of the elements and their isotopes (protosolar). doi:10.1007/s11214-021-00825-8";
 pub const KW08: &str = "Kesler, S. E. and Wilkinson, B. H. 2008, Geology 36, 255: Earth's copper resources estimated from tectonic diffusion of porphyry copper deposits (about 1.7e11 t of copper in porphyry deposits above 3.3 km). doi:10.1130/G24317A.1";
 
 /// An element's mass share of its material, and the oxygen its oxide binds
@@ -110,4 +114,17 @@ pub fn deposit_amount(
     let grade = (crust_fraction * factor).clamp(0.0, 1.0);
     let ore = area_m2.max(0.0) * depth_m.max(0.0) * density.max(0.0) * ore_share.clamp(0.0, 1.0);
     (ore * grade, grade)
+}
+
+/// The relation's defaults (the block's parameters).
+pub const GIANT_METAL_COEFFICIENT: f64 = 9.7;
+pub const GIANT_METAL_SLOPE: f64 = 0.45;
+
+/// A giant's heavy-element share of its mass, 0 to 1: its star's metal
+/// share times `a (M_Jup / M)^b` (the mass-metallicity relation).
+pub fn heavy_element_share(z_star: f64, mass_kg: f64, m_jup: f64, a: f64, b: f64) -> f64 {
+    if mass_kg <= 0.0 || m_jup <= 0.0 {
+        return 1.0;
+    }
+    (z_star.max(0.0) * a * sse_core::math::pow(m_jup / mass_kg, b)).clamp(0.0, 1.0)
 }
