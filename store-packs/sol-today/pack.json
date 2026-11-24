@@ -2,7 +2,9 @@
   "format": "sse.pack/1",
   "id": "sse.sol-today",
   "version": "0.1.0",
-  "kind": ["universe"],
+  "kind": [
+    "universe"
+  ],
   "kernel_range": "^0.1",
   "licence": "CC-BY-4.0 AND Apache-2.0",
   "provides": {
@@ -19,7 +21,8 @@
       ],
       "files": {
         "catalogue": "catalogue.json",
-        "stations": "stations.json"
+        "stations": "stations.json",
+        "parts": "parts.json"
       }
     }
   }
