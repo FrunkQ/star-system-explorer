@@ -108,6 +108,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/weather.md` | Build shared climate and weather | W, seas (colour, waves, whitecaps) |
 | `status/data-sheet.md` | Build the master matter data sheet | MP data waves, MP22, SOL, DM1, DM6, RK1, RK2, RK10, citation checks |
 | `status/renderer.md` | Build photoreal renderer | R, the drawing side of Y5 and MF14a, V14 |
+| `status/quality-tiers.md` | Build quality tiers and speed probe (split from the renderer) | VP4, VP5: the `gpu-ultra` tier, the speed probe and placement by measured speed, heat watch, Quality choice, drawing bench rows; recipes and the governor on every True view; sharpen at rest |
 | `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
 | `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map, pulsating stars, ship clocks); XO is a code only, never shown in the product |
 | `status/true-air.md` (arrives with PR 444) | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
@@ -120,7 +121,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/traveller.md` | Build Traveller pack | X3, TG8, TG9, TG11, TG13, MP16 |
 | `status/manifest.md` | Build ship manifest and crew roster | MC |
 | `status/atomic-rockets.md` (arrives with PR 447) | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
-| `status/paper-spacecraft.md` (arrives with PR 438) | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
+| `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |

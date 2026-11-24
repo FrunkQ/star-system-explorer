@@ -132,17 +132,6 @@
     return out;
   }
 
-  // The gallery (Alex, 24 Nov): every body of this system, moons too, and the Solar System's reference bodies, side by
-  // side in True and turning, Readable so the smallest shows: the place to judge whether each looks like the real thing.
-  // Their faces come from the same door as every True view's (trueLook), so the gallery improves as each look lands.
-  function gallery() {
-    const sol = refs?.objects.filter((o) => o.sol || o.id === "sun").map((o) => itemFromReference(o, solDoc)) ?? [];
-    const all = [...own, ...sol];
-    lineups[key] = all.filter((i, n) => all.findIndex((x) => x.key === i.key) === n).map((i) => ({ ...i }));
-    ws.pickView?.({ ...(ws.view ?? DEFAULT_VIEW), style: "true", scale: "readable" });
-    note = `Gallery: ${own.length} ${own.length === 1 ? "body" : "bodies"} of ${scene.title}${sol.length ? ` and ${sol.length} of the Solar System` : ""}, in True.`;
-  }
-
   let adding = $state<"system" | "campaign" | "reference" | null>(null);
   function openAdd(t: "system" | "campaign" | "reference") {
     adding = adding === t ? null : t;
@@ -207,7 +196,6 @@
       <button type="button" aria-expanded={adding === "campaign"} onclick={() => openAdd("campaign")}>From the campaign</button>
       <button type="button" aria-expanded={adding === "reference"} onclick={() => openAdd("reference")}>Reference objects</button>
       <button type="button" onclick={surprise}>Surprise me</button>
-      <button type="button" onclick={gallery} data-gallery>Gallery</button>
       <span class="sep"></span>
       <button type="button" aria-pressed={sorted} onclick={() => (sorted = !sorted)}>By size</button>
       <button type="button" onclick={() => ((lineups[key] = starting.map((i) => ({ ...i }))), (note = `Back to ${scene.title}'s own worlds.`))}>Start again</button>

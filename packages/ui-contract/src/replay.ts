@@ -9,6 +9,8 @@
  */
 import type { FormationRan, LeftoverCloud } from "./make.ts";
 import { cloudShape } from "./make.ts";
+import { sayNumber, sayText, roundTo } from "./figures.ts";
+import { sheetUnitFactor } from "./sheet.ts";
 
 type Solid = number[];
 interface LedgerEntry { kind: string; t_myr?: number; solid?: Solid; gas?: number; ledger?: { entries: LedgerEntry[] } }
@@ -95,7 +97,7 @@ export interface ReplayFrame {
 
 const sum = (s: Solid | undefined) => (s ?? []).reduce((a, b) => a + b, 0);
 const lg = (t: number) => Math.log10(Math.max(t, 1e-4));
-const dedupe = (xs: number[]) => [...new Set(xs.map((x) => Number(x.toPrecision(9))))].sort((a, b) => a - b);
+const dedupe = (xs: number[]) => [...new Set(xs.map((x) => roundTo(x, 9)))].sort((a, b) => a - b);
 
 function claims(entries: LedgerEntry[] | undefined, out: { t: number; u: number }[] = []): { t: number; u: number }[] {
   for (const e of entries ?? []) {
@@ -110,8 +112,11 @@ export function bandWords(key: string): string {
   return BAND_WORDS[key] ?? key.replace(/-/g, " ");
 }
 
-const ago = (t: number) => (t < 1 ? `${Math.round(t * 1000).toLocaleString("en-GB")} thousand years` : t < 1000 ? `${Number(t.toPrecision(2))} million years` : `${Number((t / 1000).toPrecision(2))} billion years`);
-const au = (a: number) => `${Number(a.toPrecision(2))} AU`;
+// Figures in the story are said by the units engine, in words, at the figures the story can stand behind.
+const MYR_S = sheetUnitFactor("myr");
+const story = { depth: "curious" as const, about: false };
+const ago = (t: number) => sayText(t * MYR_S, "time", undefined, story);
+const au = (a: number) => sayText(a * sheetUnitFactor("au"), "length", { class: "planet", what: "orbit" }, story);
 
 /** The replay of one formation run. Pure: the same run gives the same replay. */
 export function replayModel(run: FormationRan): ReplayModel {
@@ -207,7 +212,7 @@ export function replayModel(run: FormationRan): ReplayModel {
   for (const e of events) {
     const t = e.t_myr;
     if (e.type === "chain-breaks") ev.push({ t_myr: t, kind: e.type, text: `With the gas gone, the resonant chain of ${(e.ids ?? []).map(lbl).join(", ")} breaks.`, ids: e.ids ?? [] });
-    else if (e.type === "scatter") ev.push({ t_myr: t, kind: e.type, text: `${lbl(e.kept)} flings ${lbl(e.thrown)} out to ${au(e.to_au ?? 0)} on a stretched orbit (e ${(e.e ?? 0).toFixed(2)}).`, ids: [e.thrown!, e.kept!].filter(Boolean) });
+    else if (e.type === "scatter") ev.push({ t_myr: t, kind: e.type, text: `${lbl(e.kept)} flings ${lbl(e.thrown)} out to ${au(e.to_au ?? 0)} on a stretched orbit (e ${sayNumber(e.e ?? 0, 2, { decimals: 2 })}).`, ids: [e.thrown!, e.kept!].filter(Boolean) });
     else if (e.type === "ejected") ev.push({ t_myr: t, kind: e.type, text: `${lbl(e.by)} throws ${lbl(e.id)} out of the system for good: it becomes a rogue planet.`, ids: [e.id!, e.by!].filter(Boolean) });
     else if (e.type === "impact") {
       const words: Record<string, string> = {
@@ -240,7 +245,7 @@ export function replayModel(run: FormationRan): ReplayModel {
   const clouds: ReplayCloud[] = [];
   for (const c of r.leftovers?.clouds ?? []) {
     if (c.around || !(c.a_max_au > c.a_min_au)) continue;
-    const key = `${c.kind}|${c.a_min_au.toPrecision(4)}|${c.a_max_au.toPrecision(4)}`;
+    const key = `${c.kind}|${roundTo(c.a_min_au, 4)}|${roundTo(c.a_max_au, 4)}`;
     if (seen.has(key)) continue;
     seen.add(key);
     const src = (c as LeftoverCloud & { source?: string }).source;
@@ -264,15 +269,15 @@ export function replayModel(run: FormationRan): ReplayModel {
   const t0 = 0.01;
   const t1 = Math.max(300, settled * 4, lastMagma * 1.5);
   const stages: ReplayStage[] = [
-    { n: 1, name: "Inheritance", from_myr: t0 * 0.5, text: `A cloud core collapses in a birth cluster of ${(h.inheritance as { cluster_members?: number }).cluster_members ?? "many"} stars. Its metals ([Fe/H] ${inh.feh.toFixed(2)}) and the cluster's ultraviolet glare (${Math.round(inh.fuv_g0)} G₀) were set by stars that lived and died there before.` },
-    { n: 2, name: "Star", from_myr: t0, text: `A ${star0 ? star0.mass.toFixed(2) : "?"} solar-mass star forms${companions ? ` with ${companions === 1 ? "a companion star" : `${companions} companion stars`}` : ""}, still contracting and not yet burning hydrogen.` },
-    { n: 3, name: "Disc and material bands", from_myr: 0.03, text: `A disc of ${mass0.toFixed(3)} solar masses of gas and dust. It cools, so its condensation lines sweep inward: water ice freezes out beyond ${au(water ?? 0)} at first, ${au(waterEnd ?? 0)} by the end. Between the lines lie bands of different stuff.` },
+    { n: 1, name: "Inheritance", from_myr: t0 * 0.5, text: `A cloud core collapses in a birth cluster of ${(h.inheritance as { cluster_members?: number }).cluster_members ?? "many"} stars. Its metals ([Fe/H] ${sayNumber(inh.feh, 2, { decimals: 2 })}) and the cluster's ultraviolet glare (${Math.round(inh.fuv_g0)} G₀) were set by stars that lived and died there before.` },
+    { n: 2, name: "Star", from_myr: t0, text: `A ${star0 ? sayNumber(star0.mass, 2, { decimals: 2 }) : "?"} solar-mass star forms${companions ? ` with ${companions === 1 ? "a companion star" : `${companions} companion stars`}` : ""}, still contracting and not yet burning hydrogen.` },
+    { n: 3, name: "Disc and material bands", from_myr: 0.03, text: `A disc of ${sayNumber(mass0, 3, { decimals: 3 })} solar masses of gas and dust. It cools, so its condensation lines sweep inward: water ice freezes out beyond ${au(water ?? 0)} at first, ${au(waterEnd ?? 0)} by the end. Between the lines lie bands of different stuff.` },
     { n: 4, name: "Growth", from_myr: firstEmbryo, text: `Dust piles into pebbles and planetesimals at the band edges; ${growth.length} embryos gather and feed on pebbles drifting in, each recording what it ate.` },
     { n: 5, name: giants.length ? "Giants and migration" : "Migration (no giants)", from_myr: Math.max(firstEmbryo * 1.3, Math.min(tDisperse * 0.6, growthEnd * 0.6)), text: giants.length ? `${giants.map((g) => g.label).join(" and ")} pull${giants.length === 1 ? "s" : ""} in gas before the disc clears, and the worlds drift through the gas into resonant chains.` : `No core grows heavy enough to pull in gas before the disc clears after ${ago(tDisperse)}, so no giants; the embryos drift through the gas into resonant chains.` },
     { n: 6, name: "The violent phase", from_myr: violentFrom ?? tDisperse * 1.5, text: violentFrom ? `With the gas gone the system rearranges: ${countWords(events)}. It settles after ${ago(settled)}.` : "With the gas gone, the system is spaced widely enough to stay calm: no break." },
     { n: 7, name: "Leftovers", from_myr: settled * 1.05, text: `What did not become a world stays as ${clouds.length ? [...new Set(clouds.map((c) => (c.shape === "sphere" ? "a sphere of comets round the whole system" : `a ${c.kind.replace(/-/g, " ")}`)))].join(", ") : "dust"}${moons.length ? `, and ${moons.length === 1 ? "a moon" : `${moons.length} moons`} from giant impacts` : ""}.` },
     { n: 8, name: "Each world's early life", from_myr: settled * 2, text: `Magma oceans freeze${lastMagma ? ` (the last by ${ago(lastMagma)})` : ""}, cores separate, first air is kept or lost, and oceans may condense. Each world's surface and climate start from here.` },
-    { n: 9, name: "Long life", from_myr: t1 * 0.6, text: `Then billions of years of slow change: the star brightens${tms ? ` until it runs out of hydrogen near ${ago(tms)}` : ""}, tides lock and moons drift, and geology runs down. The system is ${inh.age_gyr.toFixed(2)} billion years old now.` },
+    { n: 9, name: "Long life", from_myr: t1 * 0.6, text: `Then billions of years of slow change: the star brightens${tms ? ` until it runs out of hydrogen near ${ago(tms)}` : ""}, tides lock and moons drift, and geology runs down. The system is ${sayNumber(inh.age_gyr, 3, { decimals: 2 })} billion years old now.` },
   ].sort((a, b) => a.from_myr - b.from_myr);
 
   // Beats: every event and stage start, plus even steps in log time so quiet stretches still move.
@@ -387,5 +392,5 @@ export function replayAt(m: ReplayModel, t: number): ReplayFrame {
 
 /** Time in words for the replay's clock. */
 export function replayClock(t: number): string {
-  return t < 1 ? `${Math.round(t * 1000).toLocaleString("en-GB")} thousand years` : t < 1000 ? `${Number(t.toPrecision(3))} million years` : `${Number((t / 1000).toPrecision(3))} billion years`;
+  return ago(t);
 }

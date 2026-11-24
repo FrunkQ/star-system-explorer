@@ -292,6 +292,8 @@
   }
 
   let selection = $state<string | null>(null);
+  // Read only (PB3b): the GM steers this screen; it watches and takes no input but sound.
+  const readOnly = $derived(!!shown && "scope" in shown && shown.steer === "read");
   // A send that names a thing (a bookmark's selection, PB3) selects it here, once per send, if this screen's scene has it.
   let focusSent = "";
   $effect(() => {
@@ -471,10 +473,11 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p><p class="alpha" data-alpha>An alpha preview of what is coming. To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener">version 3 ›</a></p></main>
   {:else}
     {#key vocabId}
-      <main class="grid" use:deliver={arrival} out:deliverOut|global={powerOff()}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
+      <main class="grid" use:deliver={arrival} out:deliverOut|global={powerOff()} class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
+      {#if readOnly}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
     {/key}
   {/if}
-  {#if joined && scene && mayAsk && !bare && !watching && !(shown && "off" in shown)}
+  {#if joined && scene && mayAsk && !bare && !watching && !readOnly && !(shown && "off" in shown)}
     <section class="ask" aria-label="Ask the game master">
       <form onsubmit={(e) => (e.preventDefault(), askName())}>
         <label>Suggest a name for {target ? subjectName(target) : "the body in focus"} <input type="text" bind:value={ask} maxlength="40" disabled={link.state !== "live" || !target} /></label>
@@ -674,5 +677,19 @@
     .grid {
       padding: 12px;
     }
+  }
+  .steered {
+    position: fixed;
+    right: 16px;
+    bottom: 12px;
+    margin: 0;
+    padding: 3px 10px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--sse-ink-muted);
+    background: var(--sse-ground-raised);
+    border: var(--sse-line) solid var(--sse-rule);
+    border-radius: var(--sse-radius);
+    pointer-events: none;
   }
 </style>

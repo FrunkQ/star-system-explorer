@@ -48,10 +48,10 @@ export * from "./place-event.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
 export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
 export type { Hub, Wire, Manifest, Shown, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest, SealedManifest, ScreenHello } from "./p2p.ts";
-export { BoardHistory, emptyBoard, upgradeBoard, sourceOf, landing, send, lift, back, rejoin, hold, release, holdAll, releaseAll, screenHello, moveScreen, swapScreens, redirect, setSignal, resolve, signalOf, cardWords, boardWire } from "./board.ts";
+export { BoardHistory, emptyBoard, upgradeBoard, sourceOf, landing, send, lift, back, rejoin, hold, release, holdAll, releaseAll, screenHello, moveScreen, swapScreens, redirect, setSignal, resolve, signalOf, cardWords, boardWire, steerOf, setSteer, drive, driveTo } from "./board.ts";
 export { BOOKMARK_SCHEMA, addBookmark, bookmarkName, bookmarkReachable, bookmarksFrom, makeBookmark, moveBookmark, nextBookmarkId, removeBookmark, renameBookmark, updateBookmark } from "./bookmark.ts";
 export type { Bookmark, Whereabouts } from "./bookmark.ts";
-export { PLAYBOOK_SCHEMA, addChapter, addPage, addPreset, addSection, destOf, emptyPlaybook, findPage, findPreset, fire, isUp, movePreset, movePresetToPage, nextId, pages, playbookFrom, presetWords, presetsInView, removePart, removePreset, rename, showOf, updatePreset } from "./playbook.ts";
+export { PLAYBOOK_SCHEMA, addChapter, addPage, addPreset, addSection, destOf, emptyPlaybook, findPage, findPreset, fire, isUp, movePreset, movePresetToPage, nextId, pages, playbookFrom, presetWords, presetsInView, reveals, revealsOf, removePart, removePreset, rename, showOf, updatePreset } from "./playbook.ts";
 export type { Chapter, Page, Playbook, Preset, Section, Step } from "./playbook.ts";
 export type { Board, BoardScreen, Dest, HoldCard, Line, Showing, TablePort } from "./board.ts";
 // The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
@@ -154,7 +154,7 @@ export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX
 export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
 export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";
 // One units engine (ED1a): every figure said and read back the same way.
-export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, factAbout, factUnit, sayFact, readFact, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
+export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, factAbout, factUnit, sayFact, readFact, figureTable, sayNumber, roundTo, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
 export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices, FactLike, FactUnit } from "./figures.ts";
 // Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
