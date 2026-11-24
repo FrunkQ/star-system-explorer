@@ -484,3 +484,73 @@ fn inventories_follow_the_makeup() {
     );
     assert_eq!(r["code"], "unknown_resource", "{r}");
 }
+
+/// MP8c: a giant is mostly an envelope of hydrogen and helium, at the birth
+/// cloud's shares, around the mass-metallicity relation's heavy elements
+/// (Thorngren et al. 2016): Jupiter about 14% heavy, Neptune far more.
+/// Hydrogen and helium-3 skim from Jupiter's envelope; Earth has none.
+#[test]
+fn giants_are_mostly_envelope() {
+    let pack = serde_json::json!({
+        "format": "sse.pack/1", "id": "test.gas", "version": "0.1.0",
+        "kind": ["universe"], "kernel_range": "^0.1", "licence": "Apache-2.0",
+        "provides": {"other": {"resources": {"kinds": [
+            {"id": "hydrogen", "matter": "h", "reach": "envelope"},
+            {"id": "helium-3", "matter": "he3", "reach": "envelope"}
+        ]}}}
+    });
+    let mut k = open_sol_with(&[pack], &[]);
+    let jup = composition(&mut k, "Jupiter", "survey");
+    let nep = composition(&mut k, "Neptune", "survey");
+    let heavy = |c: &serde_json::Value| 1.0 - share(c, "h") - share(c, "he");
+    let (hj, hn) = (heavy(&jup), heavy(&nep));
+    assert!(hj > 0.08 && hj < 0.25, "Jupiter heavy share {hj}");
+    assert!(hn > 2.0 * hj, "Neptune {hn} against Jupiter {hj}");
+    // Hydrogen about 0.71 to helium's 0.27 by mass in the envelope.
+    let ratio = share(&jup, "h") / share(&jup, "he");
+    assert!(ratio > 2.2 && ratio < 3.2, "H/He {ratio}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let addr = |name: &str| {
+        r["facts"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .find(|(_, f)| f["name"] == name)
+            .map(|(a, _)| a.clone())
+            .unwrap()
+    };
+    let inv = |k: &mut crate::Kernel, name: &str| {
+        let r = send(
+            k,
+            serde_json::json!({"op":"read_inventory","system":SOL,"body":addr(name)}),
+        );
+        assert_eq!(r["type"], "inventory_read", "{r}");
+        let kinds = r["bodies"][0]["kinds"].clone();
+        let get = |id: &str| {
+            kinds
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|x| x["id"] == id)
+                .cloned()
+                .unwrap()
+        };
+        (get("hydrogen"), get("helium-3"))
+    };
+    let (jh, j3) = inv(&mut k, "Jupiter");
+    let (eh, _) = inv(&mut k, "Earth");
+    assert!(jh["kg"].as_f64().unwrap() > 1.0e26, "{jh}");
+    assert_eq!(eh["kg"].as_f64().unwrap(), 0.0, "{eh}");
+    // Helium-3: the envelope's helium at the birth cloud's isotope share
+    // (Lodders 2021: 1.66e-4 of helium atoms), by mass.
+    let he = share(&jup, "he") * jup["bulk"]["mass_kg"].as_f64().unwrap();
+    let he3 = j3["kg"].as_f64().unwrap();
+    let want = he * 1.66e-4 * 3.016 / 4.0026;
+    assert!(
+        (he3 / want - 1.0).abs() < 0.02,
+        "helium-3 {he3:.3e} against {want:.3e}"
+    );
+}

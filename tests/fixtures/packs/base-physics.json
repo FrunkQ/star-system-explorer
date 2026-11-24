@@ -3154,6 +3154,20 @@
         "range": null
       },
       {
+        "description": "a giant's share of heavy elements by mass",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.heavy_element_share",
+        "range": null
+      },
+      {
         "description": "mass flux of buoyant light elements let out into the liquid core, per area of its top",
         "dim": [
           -2,
@@ -4210,6 +4224,20 @@
           0
         ],
         "id": "star.mass",
+        "range": null
+      },
+      {
+        "description": "a star's share of heavy elements by mass",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.metallicity_z",
         "range": null
       },
       {

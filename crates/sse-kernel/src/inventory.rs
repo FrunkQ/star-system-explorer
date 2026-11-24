@@ -1,7 +1,8 @@
 //! `read_inventory` (TG11, MP8b): how much of each resource a world holds,
 //! in kilograms, read off its composition (MP6) at Survey. A resource kind
 //! is pack data (`provides.other.resources`): an id, a name, the matter it
-//! is (an element id or `h2o` on the sheet; none for a made good) and its
+//! is (an element id, an isotope id such as `he3`, or `h2o` on the sheet;
+//! none for a made good) and its
 //! reach (crust, sea, air, surface or whole). Any element id or `h2o` is a
 //! kind by itself, so a resource nobody declared still has an inventory.
 //! No dice: the same world always holds the same amounts. What is mined
@@ -25,6 +26,8 @@ pub enum Reach {
     Crust,
     Sea,
     Air,
+    /// A giant's hydrogen and helium envelope (gas skimming).
+    Envelope,
     /// Crust, sea and air.
     #[default]
     Surface,
@@ -38,6 +41,7 @@ impl Reach {
             Reach::Crust => r.crust_kg,
             Reach::Sea => r.sea_kg,
             Reach::Air => r.air_kg,
+            Reach::Envelope => r.envelope_kg,
             Reach::Surface => r.crust_kg + r.sea_kg + r.air_kg,
             Reach::Whole => r.total(),
         }
@@ -109,7 +113,11 @@ impl Kinds {
 }
 
 /// One kind's amount on one world.
-fn amount(c: &Composition, k: &Kind) -> serde_json::Value {
+/// An isotope resource: its element and its mass share of that element
+/// (the sheet's protosolar atom fraction), or why it cannot be counted.
+type Isotope = Option<Result<(String, f64), String>>;
+
+fn amount(c: &Composition, k: &Kind, iso: &Isotope) -> serde_json::Value {
     let mass = c.bulk.mass_kg.max(f64::MIN_POSITIVE);
     let base = serde_json::json!({
         "id": k.id,
@@ -130,7 +138,7 @@ fn amount(c: &Composition, k: &Kind) -> serde_json::Value {
             let kg = match k.reach {
                 Reach::Sea | Reach::Surface => sea,
                 Reach::Whole => b.water_kg,
-                Reach::Crust | Reach::Air => 0.0,
+                Reach::Crust | Reach::Air | Reach::Envelope => 0.0,
             };
             (
                 kg,
@@ -138,6 +146,33 @@ fn amount(c: &Composition, k: &Kind) -> serde_json::Value {
                 None,
             )
         }
+        Some(_) if iso.is_some() => match iso {
+            Some(Ok((el, share))) => {
+                let r = c
+                    .elements
+                    .iter()
+                    .find(|e| e.id == *el)
+                    .and_then(|e| e.reservoirs.clone())
+                    .unwrap_or_default();
+                let scaled = Reservoirs {
+                    core_kg: r.core_kg * share,
+                    mantle_kg: r.mantle_kg * share,
+                    crust_kg: r.crust_kg * share,
+                    sea_kg: r.sea_kg * share,
+                    air_kg: r.air_kg * share,
+                    envelope_kg: r.envelope_kg * share,
+                };
+                (
+                    k.reach.of(&scaled),
+                    serde_json::to_value(&scaled).unwrap_or_default(),
+                    Some(format!(
+                        "{share:.3e} of the world's {el} by mass, at the birth cloud's isotope share"
+                    )),
+                )
+            }
+            Some(Err(why)) => (0.0, serde_json::Value::Null, Some(why.clone())),
+            None => unreachable!(),
+        },
         Some(id) => match c.elements.iter().find(|e| e.id == id) {
             Some(e) => {
                 let r = e.reservoirs.clone().unwrap_or_default();
@@ -177,7 +212,18 @@ pub(crate) fn read(
     declared: &Kinds,
 ) -> Result<Response, Response> {
     let rows = Sheet::read(sheet);
-    let is_matter = |id: &str| id == "h2o" || rows.elements.iter().any(|e| e.id == id);
+    let is_isotope = |id: &str| sheet.row("isotopes", id).is_some();
+    let is_matter =
+        |id: &str| id == "h2o" || rows.elements.iter().any(|e| e.id == id) || is_isotope(id);
+    let isotope_of = |k: &Kind| -> Isotope {
+        let id = k.matter.as_deref()?;
+        if !is_isotope(id) {
+            return None;
+        }
+        Some(rows.isotope_mass_share(sheet, id).ok_or_else(|| {
+            format!("the sheet does not carry {id}'s protosolar share yet: not counted")
+        }))
+    };
     let wanted: Vec<Kind> = match kinds {
         Some(ids) => {
             let mut out = vec![];
@@ -224,26 +270,28 @@ pub(crate) fn read(
         if want.as_ref().is_some_and(|a| *a != b.address) {
             continue;
         }
+        let z = w
+            .spec
+            .as_ref()
+            .map(|s| s.z)
+            .unwrap_or(crate::adopt::DEFAULT_Z);
         let c = compose(
             &rows,
-            &crate::composition::bulk_of(b, run),
+            &crate::composition::bulk_of(b, run, z),
             &ratio,
             Level::Survey,
             &settings,
         );
-        let mut stand_ins = vec![
+        let stand_ins = vec![
             "natural amounts only: what has been mined out and what has been brought in are kept values on top".to_string(),
             "deposits are part of the crust: survey_surface's holdings say how much of it is ore".to_string(),
         ];
-        if b.makeup.as_ref().is_some_and(|m| m.gas > 0.0) || b.deep_envelope {
-            stand_ins.push("a gas envelope's hydrogen and helium are not counted yet".into());
-        }
         out.push(serde_json::json!({
             "body": b.address.to_string(),
             "label": b.label,
             "mass_kg": c.bulk.mass_kg,
             "source": c.bulk.source,
-            "kinds": wanted.iter().map(|k| amount(&c, k)).collect::<Vec<_>>(),
+            "kinds": wanted.iter().map(|k| amount(&c, k, &isotope_of(k))).collect::<Vec<_>>(),
             "stand_ins": stand_ins,
         }));
     }

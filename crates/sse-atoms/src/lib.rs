@@ -193,6 +193,8 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("interior.crust_fraction", "the crust's mass share of a body's silicate"),
     ("element.crust_share", "share of the silicate's element held in the crust"),
     ("interior.silicate_mass", "mass of a body's silicate (mantle and crust)"),
+    ("star.metallicity_z", "a star's share of heavy elements by mass"),
+    ("interior.heavy_element_share", "a giant's share of heavy elements by mass"),
     ("deposit.footprint_area", "area of an ore deposit or ore province"),
     ("element.crust_mass_fraction", "an element's share of a world's crust by mass"),
     ("element.ore_enrichment", "how many times an ore process raised an element over the crust"),

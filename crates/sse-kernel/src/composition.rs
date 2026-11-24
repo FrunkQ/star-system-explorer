@@ -28,13 +28,17 @@ fn al26_left(formed_myr: f64) -> f64 {
     a.eval(&[1.0, t], &p).map(|o| o[0]).unwrap_or(0.0)
 }
 
-/// A world's bulk: its facts, with formation's ledger and Al-26 where it
-/// was formed by a run.
-pub(crate) fn bulk_of(b: &sse_surface::Body, run: Option<&SystemRun>) -> Bulk {
+/// A world's bulk: its facts, with formation's ledger, captured gas and
+/// Al-26 where it was formed by a run; a giant known only by its mass and
+/// radius gets the mass-metallicity relation's envelope (MP8c), for a star
+/// of metal share `z_star`.
+pub(crate) fn bulk_of(b: &sse_surface::Body, run: Option<&SystemRun>, z_star: f64) -> Bulk {
     let mut bulk = Bulk::of_body(b);
     if let Some(p) = run.and_then(|r| r.protoplanets.iter().find(|p| p.address == b.address)) {
-        bulk = bulk.with_ledger(&p.by_group);
+        bulk = bulk.with_ledger_and_gas(&p.by_group, p.gas);
         bulk.al26_j_kg = al26_left(p.formed_myr);
+    } else if b.deep_envelope && b.makeup.is_none() {
+        bulk = bulk.with_envelope(z_star);
     }
     bulk
 }
@@ -63,7 +67,7 @@ pub(crate) fn holdings(
     let settings = Settings::default();
     let c = compose(
         &Sheet::read(sheet),
-        &bulk_of(b, run),
+        &bulk_of(b, run, crate::adopt::DEFAULT_Z),
         &star_ratio(run, sheet).unwrap_or_default(),
         Level::Survey,
         &settings,
@@ -105,12 +109,12 @@ pub(crate) fn read(
         if want.as_ref().is_some_and(|a| *a != b.address) {
             continue;
         }
-        let mut c = compose(&rows, &bulk_of(b, run), &ratio, level, &settings);
-        if b.deep_envelope {
-            c.stand_ins.push(
-                "a deep hydrogen and helium envelope: only the solid core is counted here".into(),
-            );
-        }
+        let z = w
+            .spec
+            .as_ref()
+            .map(|s| s.z)
+            .unwrap_or(crate::adopt::DEFAULT_Z);
+        let c = compose(&rows, &bulk_of(b, run, z), &ratio, level, &settings);
         out.push(serde_json::to_value(&c).expect("serialisable"));
     }
     if let (Some(a), true) = (&want, out.is_empty()) {
