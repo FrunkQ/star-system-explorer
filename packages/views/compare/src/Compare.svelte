@@ -98,12 +98,12 @@
   });
   // The Solar System's measured days, tilts and rings (base-sol pack) for the reference bodies that name a row in it.
   const SOL = "packs/base-sol.json";
-  let sol = $state<SolDoc | null>(null);
+  let solDoc = $state<SolDoc | null>(null);
   $effect(() => {
-    if (sol) return;
+    if (solDoc) return;
     fetch(new URL(SOL, document.baseURI))
       .then((r) => r.json())
-      .then((d) => (sol = (d?.provides?.other?.sol as SolDoc | undefined) ?? null))
+      .then((d) => (solDoc = (d?.provides?.other?.sol as SolDoc | undefined) ?? null))
       .catch(() => {});
   });
 
@@ -132,6 +132,17 @@
     return out;
   }
 
+  // The gallery (Alex, 24 Nov): every body of this system, moons too, and the Solar System's reference bodies, side by
+  // side in True and turning, Readable so the smallest shows: the place to judge whether each looks like the real thing.
+  // Their faces come from the same door as every True view's (trueLook), so the gallery improves as each look lands.
+  function gallery() {
+    const sol = refs?.objects.filter((o) => o.sol || o.id === "sun").map((o) => itemFromReference(o, solDoc)) ?? [];
+    const all = [...own, ...sol];
+    lineups[key] = all.filter((i, n) => all.findIndex((x) => x.key === i.key) === n).map((i) => ({ ...i }));
+    ws.pickView?.({ ...(ws.view ?? DEFAULT_VIEW), style: "true", scale: "readable" });
+    note = `Gallery: ${own.length} ${own.length === 1 ? "body" : "bodies"} of ${scene.title}${sol.length ? ` and ${sol.length} of the Solar System` : ""}, in True.`;
+  }
+
   let adding = $state<"system" | "campaign" | "reference" | null>(null);
   function openAdd(t: "system" | "campaign" | "reference") {
     adding = adding === t ? null : t;
@@ -139,7 +150,7 @@
   }
   async function surprise() {
     const p = await loadPool();
-    const choices = [...own, ...p.flatMap((x) => x.items), ...(refs?.objects.map((o) => itemFromReference(o, sol)) ?? [])].filter((i) => !inLineup(i.key));
+    const choices = [...own, ...p.flatMap((x) => x.items), ...(refs?.objects.map((o) => itemFromReference(o, solDoc)) ?? [])].filter((i) => !inLineup(i.key));
     if (!choices.length) {
       note = "Everything there is to compare is already in the lineup.";
       return;
@@ -196,6 +207,7 @@
       <button type="button" aria-expanded={adding === "campaign"} onclick={() => openAdd("campaign")}>From the campaign</button>
       <button type="button" aria-expanded={adding === "reference"} onclick={() => openAdd("reference")}>Reference objects</button>
       <button type="button" onclick={surprise}>Surprise me</button>
+      <button type="button" onclick={gallery} data-gallery>Gallery</button>
       <span class="sep"></span>
       <button type="button" aria-pressed={sorted} onclick={() => (sorted = !sorted)}>By size</button>
       <button type="button" onclick={() => ((lineups[key] = starting.map((i) => ({ ...i }))), (note = `Back to ${scene.title}'s own worlds.`))}>Start again</button>
@@ -231,7 +243,7 @@
           <h3>{g.label}</h3>
           <ul class="picks">
             {#each refs.objects.filter((o) => o.group === g.id) as o (o.id)}
-              {@const i = itemFromReference(o, sol)}
+              {@const i = itemFromReference(o, solDoc)}
               <li><button type="button" disabled={inLineup(i.key)} onclick={() => add(i)} title={o.type}>{o.label}</button></li>
             {/each}
           </ul>

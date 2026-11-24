@@ -112,6 +112,8 @@
   ws.turned = () => {
     if (ws.view?.seen !== "free") setView({ ...ws.view!, seen: "free" });
   };
+  // A view's own press may set the choice for the viewer (the size comparison's Gallery opens in True).
+  ws.pickView = (c) => setView(c);
   // Orac is not connected yet (A2): its sample requests come from a fixture document.
   for (const r of (oracDoc as unknown as { requests: ChangeRequest[] }).requests) ws.fileRequest(r);
   let scene = $state<SystemScene>(base);

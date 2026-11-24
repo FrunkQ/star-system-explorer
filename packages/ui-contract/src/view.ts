@@ -78,6 +78,8 @@ export interface Workspace {
   view?: import("./view-controls.ts").ViewChoice;
   /** A view says the viewer turned it by hand: the choice becomes Free. */
   turned?(): void;
+  /** A view sets the viewer's choice for them, as a press of its own asks (the size comparison's Gallery opens in True). */
+  pickView?(c: import("./view-controls.ts").ViewChoice): void;
   /** The time being viewed (the ruler's stroke); views derive and draw at it. */
   now_yr: number;
   /**
