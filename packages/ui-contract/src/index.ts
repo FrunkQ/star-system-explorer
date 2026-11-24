@@ -49,6 +49,10 @@ export type { ReferenceIn, ShownReference } from "./reference.ts";
 export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
 export type { Hub, Wire, Manifest, Shown, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest, SealedManifest, ScreenHello } from "./p2p.ts";
 export { BoardHistory, emptyBoard, upgradeBoard, sourceOf, landing, send, lift, back, rejoin, hold, release, holdAll, releaseAll, screenHello, moveScreen, swapScreens, redirect, setSignal, resolve, signalOf, cardWords, boardWire } from "./board.ts";
+export { BOOKMARK_SCHEMA, addBookmark, bookmarkName, bookmarkReachable, bookmarksFrom, makeBookmark, moveBookmark, nextBookmarkId, removeBookmark, renameBookmark, updateBookmark } from "./bookmark.ts";
+export type { Bookmark, Whereabouts } from "./bookmark.ts";
+export { PLAYBOOK_SCHEMA, addChapter, addPage, addPreset, addSection, destOf, emptyPlaybook, findPage, findPreset, fire, isUp, movePreset, movePresetToPage, nextId, pages, playbookFrom, presetWords, presetsInView, removePart, removePreset, rename, showOf, updatePreset } from "./playbook.ts";
+export type { Chapter, Page, Playbook, Preset, Section, Step } from "./playbook.ts";
 export type { Board, BoardScreen, Dest, HoldCard, Line, Showing, TablePort } from "./board.ts";
 // The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
 export type { Session } from "./session.ts";
@@ -66,8 +70,8 @@ export { checkWorldStack, formatKm, kindPhrase, ladder, regionCounts, cutRadius 
 export type { WorldStack, WorldShell, WorldRegion, WorldFeature, LadderLine, WorldStackRead } from "./world.ts";
 export { direction as cubeDirection, faceOf, sampleAt, sampleColour, globeStats, viewToWorld, MATERIALS as SURFACE_MATERIALS, COVERS as SURFACE_COVERS } from "./globe.ts";
 export type { SurfaceTile, Globe } from "./globe.ts";
-export { R_EARTH_KM, R_JUPITER_KM, R_SUN_KM, checkReferences, itemFromReference, itemFromSubject, radiusKm, starColour, layoutLineup, sizeWords, scaleBar, formatKmLength } from "./compare.ts";
-export type { ReferenceObject, ReferenceDoc, CompareItem, Placed, Lineup } from "./compare.ts";
+export { R_EARTH_KM, R_JUPITER_KM, R_SUN_KM, checkReferences, itemFromReference, itemFromSubject, radiusKm, reachKm, starColour, layoutLineup, sizeWords, scaleBar, formatKmLength } from "./compare.ts";
+export type { ReferenceObject, ReferenceDoc, CompareItem, Placed, Lineup, SolDoc } from "./compare.ts";
 export { separation, distanceWords, lightWords, C_KM_S } from "./measure.ts";
 export type { Separation } from "./measure.ts";
 export { CAMPAIGN_SCHEMA, checkCampaignSave, makeCampaignSave, publicExport, savedEvents, saveFileName } from "./campaign.ts";
@@ -134,7 +138,7 @@ export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedA
 export type { EmbedMode, EmbedOut } from "./embed.ts";
 export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
 export type { JoinWords, SeatBrand } from "./brand.ts";
-export { FUEL_FIELDS, fuelGauges, fuelNow, tonnesWords, shipRecordOf, type FuelTank, type FuelGauge, type FuelShip, ABOARD, PERSON, CARGO, STATES, STATE_WORDS, STORES, entryFrom, aboard, crewAboard, living, ageNow, lifeSupportFrom, storeOf, massKg, lifeSupport, entryId, startingValues } from "./manifest.ts";
+export { FUEL_FIELDS, MANIFEST_WORDS, fuelGauges, fuelNow, tonnesWords, shipRecordOf, aboardLog, type FuelTank, type FuelGauge, type FuelShip, ABOARD, PERSON, CARGO, STATES, STATE_WORDS, STORES, entryFrom, aboard, crewAboard, living, ageNow, lifeSupportFrom, storeOf, massKg, lifeSupport, entryId, startingValues } from "./manifest.ts";
 export type { AboardEntry, AboardState, LifeSupport, LifeSupportPack, LifeSupportRate, Store, StoreDays } from "./manifest.ts";
 export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableOf, fieldLandmark, hasException, lineChange, pressedLandmark, knownOverall, knownChangedWords, eyesShow, secrecyRelevant, holdReveal } from "./known.ts";
 export type { Landmark as KnownLandmark, KnownTo, KnownAudience, KnownException, KnownScope, KnownChange, Held } from "./known.ts";
