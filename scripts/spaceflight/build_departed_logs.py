@@ -594,7 +594,7 @@ print(n, "logs,", lam, "solved courses; no phases for", len(skipped), skipped[:2
 
 
 # ---------------------------------------------------------------- RS8 part 2: stations and crewed flights in Earth orbit
-# GCAT's satcat gives each object's first phase only (later phases are in its auxiliary catalogues, not read yet):
+# GCAT's satcat gives each object's first phase only (GCAT's public tables keep no later phases for these: auxcat.tsv lists the objects attached to them, not their own undocking and landing):
 # launch, shape and inclination of the orbit, and how that phase ended (reentered, deorbited, landed, docked or
 # grappled). One log per station core (stations.json) and per human spaceflight vehicle record (catalogue.json).
 OUT2 = os.path.join(PACK, "logs/earth-orbit")
@@ -603,6 +603,17 @@ SAT = {r["JCAT"]: r for r in table("satcat.tsv")}
 # written from memory and marked estimated).
 SITES = {"KSC": (28.615, -80.695), "EAFB": (34.905, -117.884), "EDW": (34.905, -117.884),
          "WSSH": (32.943, -106.419), "Kazakhstan": (47.36, 69.59)}
+
+
+# Landing days for crewed flights GCAT leaves docked (Wikidata P620, CC0; scripts/spaceflight/wikidata_landings.json).
+WD_LANDED = json.load(open(os.path.join(ROOT, "scripts/spaceflight/wikidata_landings.json"),
+                           encoding="utf-8"))["by_cospar"]
+# Each programme's usual landing zone, from memory and marked so: Soyuz on the Kazakh steppe near Dzhezkazgan, the
+# Shuttle at the Kennedy Space Center, Shenzhou at Dongfeng in Inner Mongolia.
+PROGRAM_SITES = {"Soyuz": (47.36, 69.59), "7K-": (47.36, 69.59), "STS": (28.615, -80.695), "OV-": (28.615, -80.695),
+                 "Shenzhou": (41.62, 100.08)}
+# Cargo craft that burn up on leaving: a Wikidata landing for one would be a slip, so none is taken.
+BURN_UP = ("Progress", "Cygnus", "HTV", "Tianzhou", "ATV")
 
 
 def earth_log(jcat, name, kind):
@@ -663,8 +674,24 @@ def earth_log(jcat, name, kind):
             events.append({"at_s": t1, "kind": "landing", "mark": "recorded" if d1[1] else "estimated", "src": "gcat",
                            "writer": "pack", **({} if d1[1] else {"why": "GCAT marks this date uncertain"})})
         elif st in ("DK", "GRP", "ATT") and r["Dest"]:
+            back = WD_LANDED.get(r["Piece"], {}).get("landed", [])
+            land = None
+            if len(back) == 1 and not any(b in kind for b in BURN_UP):
+                y, mo, dd = (int(x) for x in back[0][:10].split("-"))
+                land = gdate("%d %s %2d" % (y, list(MONTHS)[mo - 1], dd))
             piece(t1, {"kind": "docked", "to": "gcat:" + r["Dest"]}, d1[1],
-                  "docked to %s; GCAT's later phases (auxiliary catalogues) are not read yet" % r["Dest"])
+                  "docked to %s; %s" % (r["Dest"], "it stays docked here until it lands, as the undocking is not in "
+                                        "GCAT's tables or Wikidata" if land and land[0] > t1 else
+                                        "GCAT's tables give no later phase (undocking, landing)"))
+            if land and land[0] > t1:
+                site = next((v for k_, v in PROGRAM_SITES.items() if k_ in kind), None)
+                piece(land[0], {"kind": "landed", "body": P("earth"), "lat_deg": (site or (0.0, 0.0))[0],
+                                "lon_deg": (site or (0.0, 0.0))[1]}, False,
+                      "landing day from Wikidata (P620, %s), noon UTC standing in for the hour; %s" % (
+                          WD_LANDED[r["Piece"]]["wikidata"], "the site is the programme's usual landing zone, from "
+                          "memory" if site else "no site given; the point is a stand-in"))
+                events.append({"at_s": land[0], "kind": "landing", "mark": "estimated", "src": "wikidata",
+                               "writer": "pack", "why": "landing day from Wikidata; the hour is not given"})
         elif st in ("E", "C"):
             piece(t1, {"kind": "gone", "how": "impacted"}, d1[1], "broke up in orbit (GCAT status %s)" % st)
     return {"construct": cid, "name": r["Name"] or name, "gcat": jcat, "about": (

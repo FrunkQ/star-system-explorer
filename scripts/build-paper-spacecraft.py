@@ -48,6 +48,8 @@ SOURCES = {
     "ragsdale-willis1971": "Ragsdale, R. G. and Willis, E. A. 1971, Gas-core rocket reactors: a new look, NASA TM X-67823 (OCR scan). https://ntrs.nasa.gov/api/citations/19710014431/downloads/19710014431.pdf",
     "johnson2003": "Johnson, S. 2003, Project Prometheus, workshop slides, NASA/TM-2003-212598, slide 13: up to 100 kWe, specific mass 50 kg/kWe. https://ntrs.nasa.gov/api/citations/20040034798/downloads/20040034798.pdf",
     "mason2003": "Mason, L. S. 2003, A power conversion concept for the Jupiter Icy Moons Orbiter, NASA/TM-2003-212596: two 100 kWe Brayton units, 496 kWt. https://ntrs.nasa.gov/api/citations/20030105581/downloads/20030105581.pdf",
+    "borowski2009": "Borowski, S. K., McCurdy, D. R. and Packard, T. W. 2009, Nuclear thermal rocket/vehicle characteristics and sensitivity trades for NASA's Mars Design Reference Architecture (DRA) 5.0 study, Nuclear and Emerging Technologies for Space 2009, paper 203599 (NASA E-18236), Tables I and II and section V. https://ntrs.nasa.gov/api/citations/20120012928/downloads/20120012928.pdf",
+    "borowski2012": "Borowski, S. K., McCurdy, D. R. and Packard, T. W. 2012, Modular growth NTR space transportation system for future NASA human lunar, NEA and Mars exploration missions, AIAA-2012-5144: Isp ~906 s; four 12.5 kWe arrays give ~50 kWe at Mars. https://ntrs.nasa.gov/api/citations/20150006732/downloads/20150006732.pdf",
     "parkin2018": "Parkin, K. L. G. 2018, The Breakthrough Starshot system model, Acta Astronautica 152, 370, arXiv:1805.01306 v3, Tables 1 and 2. https://arxiv.org/pdf/1805.01306",
     "gwin-mee1959": "Gwin, R. and Mee, W. T. 1959, Critical assemblies of uranium metal, Y-1248, Table I: a bare sphere of 93 to 94% U-235 metal is critical at 53.9 kg. https://www.osti.gov/servlets/purl/4246875",
 }
@@ -127,6 +129,11 @@ ENGINES = {
         "mass_t": r(200000 * LB_KG / 1000),
         "exhaust_range_km_s": [orion_v, isp_km_s(2500)],
     },
+    "paper.pewee-25klbf": {
+        "name": "Pewee-class nuclear thermal engine (25 klbf)",
+        "fuels": ["hydrogen"],
+        "thrust_n": r(25000 * LBF_N), "exhaust_km_s": isp_km_s(900), "energy_from": "fuel",
+    },
     "paper.ffre": {
         "name": "Fission fragment rocket engine",
         "fuels": ["uranium dioxide"],
@@ -154,6 +161,7 @@ ENGINE_NOTES = {
     "paper.hope-mpd": {"src": ["adams2003-callisto"], "derived": "thrust = 2 x 24 MW / exhaust (8,000 s); efficiency = 24 MW of jet over 37 MW in"},
     "paper.longshot-icf": {"src": ["beals1988"], "derived": "exhaust from 1.02e6 s; thrust 1,838 N read from the OCR of the tank-sizing appendix"},
     "paper.orion-10m": {"src": ["ga4891", "ga5009-3", "nance1964"], "derived": "the reports give no average thrust; this is the 0.3 g start-up of GA-5009 on the 599,000 kg departure mass of GA-4891; exhaust from 1,800 s, the low end of 1,800 to 2,500 s; module 200,000 lb"},
+    "paper.pewee-25klbf": {"src": ["borowski2009", "borowski2012"], "derived": "thrust 25 klbf in newtons; exhaust from 900 s, the value the DRA 5.0 analysis used (900 s at 2650 K to 910 s at 2700 K; ~906 s in the 2012 paper); engine mass not given (thrust-to-weight about 3.4)"},
     "paper.ffre": {"src": ["werka2012"], "derived": "thrust 10 lbf in newtons; exhaust from 527,000 s; efficiency = jet over 1000 MW thermal (the report says about 11%); 1350 K is its heat-shield radiator, which sheds 699 MW"},
     "paper.nuclear-light-bulb": {"src": ["mclafferty1968"], "derived": "thrust 92,000 lb in newtons; exhaust from 1870 s; efficiency = jet over the 4600 MW engine power; mass 70,000 lb"},
     "paper.open-cycle-gas-core": {"src": ["ragsdale1991", "ragsdale-willis1971"], "derived": "thrust 50,000 lb; exhaust from 5200 s; engine 250,000 lb with its radiator (1100 K from Ragsdale and Willis). As printed its jet (5.7 GW) is more than its 5,000 MW reactor: the books do not close, and the reading says so"},
@@ -219,6 +227,18 @@ SHIPS = {
         "crew": 8,
         "engines": [{"engine": "paper.orion-10m"}],
     },
+    "paper.dra5-ntr": {
+        "name": "DRA 5.0 nuclear thermal Mars ship (crewed)", "sustained": False,
+        "accel_g": r(3 * 25000 * LBF_N / (333e3 * G0)), "exhaust_km_s": isp_km_s(900),
+        "wet_t": 333.0, "dry_t": r(333.0 - 180.2),
+        "fuels": ["hydrogen"], "refuel": ["docking"],
+        "crew": 6, "cargo_t": 51.3,
+        "power": [{"id": "arrays", "kind": "solar-array", "electric_w": 50e3}],
+        "loads": [{"name": "crew life support", "electric_w": 30e3, "role": "life support"},
+                  {"name": "zero boil-off cryocoolers", "electric_w": 15e3},
+                  {"name": "communications", "electric_w": 5e3, "role": "sensor"}],
+        "engines": [{"engine": "paper.pewee-25klbf", "count": 3}],
+    },
     "paper.ffre-callisto": {
         "name": "Fission fragment ship to Callisto", "sustained": True,
         "accel_g": r(ffre_f / (303.1e3 * G0)), "exhaust_km_s": ffre_v,
@@ -267,7 +287,7 @@ RECIPES = {
         "study": "Project Longshot", "year": 1988, "by": "US Naval Academy for NASA",
         "src": ["beals1988"], "mark": "not yet built",
         "advances": ["paper.icf-pulse", "fission-reactor"],
-        "study_says": {"to": "Alpha Centauri", "trip_days": 36525, "note": "about 100 years, cruising near 5% of light speed; no crew"},
+        "study_says": {"to": "Alpha Centauri", "distance_ly": 4.3, "trip_days": 36525, "note": "about 100 years, turning over at 71.27 years and braking into orbit about Beta Centauri (the report says 4.3 light years, sec. 3.4); cruising near 5% of light speed; no crew"},
         "derived": "dry_t is the overall total (396.414 t) less the fuel (264.276 t); the OCR of the weight table is garbled",
         "about": "A 1988 student design for NASA: an uncrewed fusion probe that reaches Alpha Centauri in about a century.",
     },
@@ -278,6 +298,14 @@ RECIPES = {
         "study_says": {"from": "Earth", "to": "Mars", "trip_days": 450, "note": "round trip; mission velocity 72,850 ft/s"},
         "derived": "dry_t from the rocket equation: 599,000 kg at departure over exp(22.2 km/s / 17.65 km/s); thrust is the 0.3 g start-up",
         "about": "Pushed by a bomb a second against a 10 m plate: the 1964 design for a Saturn V-launched Mars ship with eight crew.",
+    },
+    "paper.dra5-ntr": {
+        "study": "NASA Mars Design Reference Architecture 5.0, nuclear thermal crew vehicle (4-launch, twin drop tanks)", "year": 2009, "by": "NASA Glenn Research Center",
+        "src": ["borowski2009", "borowski2012"], "mark": "not yet built",
+        "advances": ["nuclear-thermal"],
+        "study_says": {"from": "Earth", "to": "Mars", "trip_days": 180, "dv_km_s": {"trans_mars": 3.992, "mars_capture": 1.771, "trans_earth": 1.562}, "note": "180 days each way, about 540 at Mars, about 900 in all; ideal delta-v without gravity losses"},
+        "derived": "dry_t is the ~333 t IMLEO less the ~180.2 t of usable hydrogen; the real ship drops its two drop tanks after the Earth departure burn, which a single-stage record cannot (it carries their mass to Mars). The arrays are held at their 50 kWe at Mars rather than following the starlight",
+        "about": "Three Rover-descended 25,000 lbf nuclear engines on one stage, six crew, Mars and back in about 900 days: NASA's own reference design.",
     },
     "paper.ffre-callisto": {
         "study": "Fission fragment rocket engine, crewed Callisto mission", "year": 2012, "by": "NASA Marshall (NIAC phase I)",
@@ -411,7 +439,7 @@ def build():
         "provides": {"other": {
             "about": {
                 "label": "Paper spacecraft",
-                "text": "Engines and ships that were designed in detail and never built, each from its own study: Discovery II, NASA's HOPE ships to Callisto, Project Longshot, the Orion nuclear pulse ship, the fission fragment rocket, gaseous core engines and the Starshot sail. They fly on SSE4's own physics, marked not yet built.",
+                "text": "Engines and ships that were designed in detail and never built, each from its own study: Discovery II, NASA's DRA 5.0 nuclear thermal Mars ship, NASA's HOPE ships to Callisto, Project Longshot, the Orion nuclear pulse ship, the fission fragment rocket, gaseous core engines and the Starshot sail. They fly on SSE4's own physics, marked not yet built.",
                 "fictional": False,
                 "note": "Track RK, package RK6 (handover/design/SSE4-atomic-rockets-plan.md section 6). Published on Explorers, not built into SSE4. Built by scripts/build-paper-spacecraft.py; do not edit by hand.",
             },
