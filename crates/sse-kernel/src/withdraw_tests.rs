@@ -186,3 +186,31 @@ fn a_catalogued_batch_carries_its_source() {
         assert_eq!(r["type"], "error", "{extra} {r}");
     }
 }
+
+#[test]
+fn a_history_can_name_what_each_edit_changed_at_one_address() {
+    let mut k = kernel();
+    send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,"edits":[
+            {"address": B4, "field": "pressure_bar", "value": 2.0},
+            {"address": B4, "field": "picture", "value": "x".repeat(5000)},
+            {"address": M1, "field": "name", "value": "Kell a"}
+        ]}),
+    );
+    // Plain history is unchanged: no changes asked, none given.
+    let plain = send(&mut k, serde_json::json!({"op":"history","address":B4}));
+    assert!(plain["events"][0].get("changes").is_none(), "{plain}");
+    let h = send(
+        &mut k,
+        serde_json::json!({"op":"history","address":B4,"changes":true}),
+    );
+    let c = h["events"][0]["changes"].as_array().unwrap().clone();
+    // Only B4's own facts (not its moon's); a picture-sized value is named but not sent.
+    assert_eq!(c.len(), 2, "{h}");
+    let p = c.iter().find(|x| x["field"] == "pressure_bar").unwrap();
+    assert_eq!(p["value"], 2.0);
+    let pic = c.iter().find(|x| x["field"] == "picture").unwrap();
+    assert_eq!(pic["large"], true, "{pic}");
+    assert!(pic["value"].is_null());
+}

@@ -25,8 +25,8 @@
   import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
-  import { readSol, solBatches, solSourceText, SOL_TITLE } from "../../ui-contract/src/index.ts";
-  import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
+  import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
+  import { listedTitle, namesInLayer, relabel, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
@@ -41,7 +41,7 @@
   import { programTarget, ruleEntries, sifterEntries, sifterTarget } from "../../agents/src/orac-rules.ts";
   import { blockEntries, boxTarget, tableTarget } from "../../agents/src/orac-blocks.ts";
   import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
-  import { triggerEntries, triggerTarget } from "../../agents/src/orac-triggers.ts";
+  import { templateTarget, triggerEntries, triggerTarget } from "../../agents/src/orac-triggers.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -49,7 +49,7 @@
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
   import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
-  import { menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
+  import { actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
   import ObjectMenu from "./ObjectMenu.svelte";
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
@@ -112,6 +112,8 @@
   ws.turned = () => {
     if (ws.view?.seen !== "free") setView({ ...ws.view!, seen: "free" });
   };
+  // A view's own press may set the choice for the viewer (the size comparison's Gallery opens in True).
+  ws.pickView = (c) => setView(c);
   // Orac is not connected yet (A2): its sample requests come from a fixture document.
   for (const r of (oracDoc as unknown as { requests: ChangeRequest[] }).requests) ws.fileRequest(r);
   let scene = $state<SystemScene>(base);
@@ -343,6 +345,7 @@
     ws.campaign_now_yr = save.workspace.campaign_now_yr ?? save.workspace.now_yr;
     ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
     ws.overlay_anchors = save.workspace.overlay_anchors ?? {};
+    ws.unit_choices = save.workspace.unit_choices ?? {};
     ws.party = save.workspace.party ?? null;
     ws.bookmarks = bookmarksFrom(save.workspace.bookmarks);
     ws.playbook = playbookFrom(save.workspace.playbook);
@@ -364,7 +367,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -695,7 +698,19 @@
     s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
   });
   const timed = $derived(withPhases(scene, phases));
-  const shown = $derived(ahead && ahead.snapshots[aheadAt] ? sceneAt(timed, ahead, ahead.snapshots[aheadAt]!) : timed);
+  // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
+  let layerLabels = $state.raw<Map<string, string>>(new Map());
+  $effect(() => {
+    void ws.revision;
+    const layer = lens.names ?? "";
+    const s = session;
+    const addrs = scene.subjects.map((x) => x.address);
+    if (!s || !layer || layer === "common") return void (layerLabels = new Map());
+    void namesInLayer(s, addrs, layer).then((m) => {
+      if ((lens.names ?? "") === layer) layerLabels = m;
+    });
+  });
+  const shown = $derived(relabel(ahead && ahead.snapshots[aheadAt] ? sceneAt(timed, ahead, ahead.snapshots[aheadAt]!) : timed, layerLabels));
   const lit = $derived(describeLight(litFromSystem(shown)));
   const lightNames = $derived(new Map(shown.subjects.map((x) => [x.address, x.label])));
   const lightColours = $derived.by(() => {
@@ -990,6 +1005,13 @@
   // Each Sol body's sheet id ("earth", "europa"), by address: the name the kernel's world stacks go by, so a catalogued
   // world opens in the cutaway when the kernel has its stack (and says it has none otherwise).
   let solIds = $state<ReadonlyMap<string, string>>(new Map());
+  // The same sheet for views (reference worlds on the editing strips), read once and kept.
+  let solForViews: Promise<SolSheet | null> | null = null;
+  const solSheetForViews = () =>
+    (solForViews ??= fetch(new URL(stackDoc.catalogues.sol, document.baseURI))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => (p ? readSol(p) : null))
+      .catch(() => null));
   async function solSheet() {
     const sheet = readSol(await (await fetch(new URL(stackDoc.catalogues.sol, document.baseURI))).json());
     if (!sheet) throw new Error("the Solar System sheet could not be read");
@@ -1096,6 +1118,7 @@
         tableTarget(s, ws),
         substanceTarget(s, ws),
         triggerTarget(s, ws),
+        templateTarget(s, ws),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
       catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...handbookEntries()],
@@ -1357,6 +1380,9 @@
   const objMenuItems = $derived(
     objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }) : null,
   );
+  // More's edit group says what the object menu says: the same words and keys, from the one list.
+  const moreWords = (id: string) => actionById(id)!.label({ address: ws.selection ?? "", kind: "", label: selName ?? "" });
+  const moreKey = (id: string) => keyWords(actionById(id)!.key!);
   async function runAction(id: string, address: string) {
     ws.select(address);
     if (id === "open") return toWorld(address);
@@ -1386,7 +1412,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, ...(minervaHost ? { describe } : {}) }, shown);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, solSheet: solSheetForViews, ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
     return {
       destroy: () => {
@@ -1480,6 +1506,8 @@
       {steps}
       title={scene.title}
       baseTitle={base.title}
+      session={session ?? null}
+      systemAddress={scene.system}
       subjects={scene.subjects}
       selection={ws.selection}
       {selName}
@@ -1522,10 +1550,11 @@
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
           <div class="depth-more"><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
           {#if clipArmed}
-            <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>Copy {selName ?? "a body"} <kbd>Ctrl+C</kbd></button>
-            {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>Cut {selName} <kbd>Ctrl+X</kbd></button>{/if}
-            <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
-            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>Add here… <kbd>A</kbd></button>
+            <!-- The edit group reads its words and keys from the one action list (ui-contract actions.ts), as the object menu does. -->
+            <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>{moreWords("copy")} {selName ?? "a body"} <kbd>{moreKey("copy")}</kbd></button>
+            {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>{moreWords("cut")} {selName} <kbd>{moreKey("cut")}</kbd></button>{/if}
+            <button type="button" data-more-paste onclick={pasteFromMenu}>{moreWords("paste")} <kbd>{moreKey("paste")}</kbd></button>
+            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>{moreWords("add")} <kbd>{moreKey("add")}</kbd></button>
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
           <button type="button" data-more-open onclick={() => ((moreOpen = false), (offered = null), (given = null), (confirmFresh = false), openCampaign(true))}>Open a file… <kbd>Ctrl+O</kbd></button>

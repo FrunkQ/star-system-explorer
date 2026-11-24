@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawLiveStar, poleOf, ringProfile, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
+  import { basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
@@ -325,7 +325,10 @@
           ? "Mag: no world here has field facts yet. Fields come from the Solar System's own bodies for now; other worlds get theirs once the kernel publishes a field for every world."
           : `Mag: ${magShapes.size === 1 ? "one world's" : `${magShapes.size} worlds'`} magnetic fields from the kernel's facts (read_field), traced as on each world's own Mag layer. Orange where the field points away from the world, blue where it points in; the faint outlines are the wind's bubble (magnetopause), its nose toward the star.${realScale ? " Real scale: each field at its true size." : " Readable scale: each field is drawn to its world's enlarged size and stopped short of the nearest body drawn; Real shows them at their true size."}`,
   );
-  const flaringNow = $derived(star && isTrue ? flaresAt(star, spotsOf(star), starT, STAR_SECONDS_PER_SECOND / 10).length : 0);
+  // What the star showed in its last picture (star-now.ts): flares on screen, ejections leaving, words for the note.
+  let starNow = $state<StarNow | null>(null);
+  const flaringNow = $derived(starNow ? starNow.shown.length : 0);
+  const calm = reducedMotion();
   // The face is drawn at about the size the disc shows on the screen, in steps so its texture is not remade each zoom.
   const FACE_STEPS = [16, 32, 64, 128, 256];
   const FACE_DISC = 0.92;
@@ -344,9 +347,18 @@
     const xray = trueBand === "xray";
     // In X-rays the corona reaches past the disc: the disc takes less of the square.
     const disc = xray ? XRAY_DISC : FACE_DISC;
-    drawLiveStar(faceBuf, s, starT, xray ? "xray" : "visible", disc, 7, STAR_SECONDS_PER_SECOND / 10);
-    return { key: `star:${b.id}:${xray ? "x" : "v"}`, version: ++faceVersion, width, data: faceBuf.data, disc };
+    // The glow round the star (star-glow.ts) is an angle on the screen: the disc's angular radius sets its shape.
+    const discDeg = (Math.atan(radius / Math.max(1e-9, d)) * 180) / Math.PI;
+    if (!haloBuf) haloBuf = { width: HALO_PX, data: new Uint8ClampedArray(HALO_PX * HALO_PX * 4) };
+    starNow = drawStarNow(faceBuf, xray ? null : haloBuf, s, { t: starT, clock: STAR_SECONDS_PER_SECOND, span: STAR_SECONDS_PER_SECOND / 10, calm, light: xray ? "xray" : "visible", disc, lat_deg: 7, disc_deg: discDeg });
+    const version = ++faceVersion;
+    halo = xray ? null : { key: `star-glow:${b.id}`, version, texture: haloBuf, rel: r, radius: d * Math.tan((GLOW_REACH_DEG * Math.PI) / 180) };
+    return { key: `star:${b.id}:${xray ? "x" : "v"}`, version, width, data: faceBuf.data, disc };
   }
+  // The halo: the eye's glare round the star and any mass ejection leaving it, added to the scene as light.
+  const HALO_PX = 160;
+  let haloBuf: { width: number; data: Uint8ClampedArray } | null = null;
+  let halo: GpuGlow | null = null;
 
   // Mag lines in camera-relative points: each world's field drawn to its drawn size, x toward the star. Readable
   // enlarges the worlds, so a field there is stopped short of the nearest other body drawn (fudge register); Real
@@ -372,32 +384,6 @@
     return out;
   }
 
-  // Rings in True (V10f): each ringed world's profile, worked out once per world and its rings. The ring material's
-  // colour is the world's own mean surface colour when its surface has been read, else a neutral grey: the ring data
-  // carries no colour yet (fudge register).
-  const ringCache = new Map<string, { sig: string; item: NonNullable<import("../../../renderer/src/index.ts").GpuItem["rings"]> | null; assumed: boolean }>();
-  function ringsFor(b: Body3D): NonNullable<import("../../../renderer/src/index.ts").GpuItem["rings"]> | undefined {
-    if (!b.rings?.length || !(b.radius_m && b.radius_m > 0)) return undefined;
-    const t = surfaces.get(b.id);
-    const sig = `${JSON.stringify(b.rings)}|${b.tilt_rad ?? ""}|${t ? "s" : "-"}`;
-    let e = ringCache.get(b.id);
-    if (!e || e.sig !== sig) {
-      const tint = t ? meanColour(t) : ([0.5, 0.5, 0.5] as [number, number, number]);
-      const p = ringProfile(b.rings, tint);
-      e = { sig, item: p ? { key: `${b.id}|${sig}`, inner: p.inner_m / b.radius_m, outer: p.outer_m / b.radius_m, normal: poleOf(b.tilt_rad), width: p.width, data: p.data } : null, assumed: p?.assumed ?? false };
-      ringCache.set(b.id, e);
-    }
-    return e.item ?? undefined;
-  }
-  /** A surface texture's mean colour, 0..1 linear-ish (sRGB bytes over 255; a tint, not a measurement). */
-  function meanColour(t: TrueTexture): [number, number, number] {
-    let r = 0;
-    let g = 0;
-    let bl = 0;
-    let n = 0;
-    for (let i = 0; i < t.data.length; i += 4 * 17) ((r += t.data[i]!), (g += t.data[i + 1]!), (bl += t.data[i + 2]!), n++);
-    return n ? [r / n / 255, g / n / 255, bl / n / 255] : [0.5, 0.5, 0.5];
-  }
   // Belts in True: a haze of points between each disc belt's drawn edges, in the star's frame, as faint as starlight
   // on dust allows a screen to show (fudge register: the count is a drawing's, not the belt's).
   const BELT_POINTS = 2400;
@@ -447,8 +433,8 @@
       if (isTrue) {
         // True: worlds in their own surfaces, a world not read yet plain and faint; only the selected orbit drawn.
         const tex = (b: Body3D) => surfaces.get(b.id);
-        gpu.draw({
-          items: shown.map((b) => {
+        halo = null;
+        const items = shown.map((b) => {
             const t = tex(b);
             const isStar = b.parent === null;
             const radius = sizeOf(b, b === lay!.centre);
@@ -457,12 +443,17 @@
             const face = isStar && !mag && trueBand !== "infrared" ? faceFor(b, radius) : undefined;
             // Mag: the worlds dark under their fields, the star a dim grey (its own field is not drawn yet).
             const emit = mag ? (isStar ? 0.35 : magShapes.has(b.id) ? 0.18 : 0.08) : trueBand === "infrared" ? thermalGrey(b.t_k ?? 0, starK) : trueBand === "xray" && !isStar ? 0 : undefined;
-            const rings = !isStar && emit === undefined ? ringsFor(b) : undefined;
-            return { id: b.id, rel: relOf(b.id), radius, colour: isStar ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: isStar, ...(t ? { surface: { key: b.id, texture: t } } : {}), ...(face ? { face } : {}), ...(emit !== undefined ? { emit } : {}), ...(rings ? { rings } : {}) };
-          }),
+            // The body's face from the one door every True view uses (renderer true-body.ts): surface, rings, and
+            // whatever looks other builders hook in there.
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(t ? { surface: t } : {}), ...(b.rings && emit === undefined ? { rings: b.rings } : {}), pole: poleOf(b.tilt_rad) });
+            return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(face ? { face } : {}), ...(emit !== undefined ? { emit } : {}) };
+          });
+        gpu.draw({
+          items,
           rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...magRings(fieldOut, fieldIn, faint)],
           // Belts as haze in visible light only: in the other bands they give off next to nothing a screen could show.
           dots: trueBand === "visible" && !mag ? beltHazes.map(({ pts }) => ({ points: pts.map(rel), colour: BELT_DUST, size: 1.5 })) : [],
+          glows: halo ? [halo] : [],
           forward: f,
           up: u,
           fovY: cam.fovY,
@@ -550,7 +541,8 @@
   let dragFrom: { x: number; y: number; yaw: number; pitch: number; pan: [number, number]; slide: boolean } | null = null;
   const touches = new Map<number, { x: number; y: number }>();
   function down(e: PointerEvent) {
-    if ((e.target as HTMLElement).closest("button")) return;
+    // A right-click asks for the object menu (below), never turns or picks.
+    if (e.button === 2 || (e.target as HTMLElement).closest("button")) return;
     if (e.pointerType === "touch") {
       if (seen !== "free") return;
       touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -599,6 +591,15 @@
     const id = nearestAt(e.clientX, e.clientY);
     if (id) void flyTo(id);
   }
+  // The menu on any object (V3 gap 38): a right-click near a body on the canvas asks for that body's menu, as a
+  // right-click on its pin does (the pin carries data-address, which the shell watches).
+  function context(e: MouseEvent) {
+    if (e.shiftKey || (e.target as HTMLElement).closest("[data-address]")) return;
+    const id = nearestAt(e.clientX, e.clientY);
+    if (!id) return;
+    e.preventDefault();
+    host?.dispatchEvent(new CustomEvent("sse:object-menu", { bubbles: true, detail: { address: id, x: e.clientX, y: e.clientY } }));
+  }
   function dbl(e: MouseEvent) {
     const id = nearestAt(e.clientX, e.clientY);
     if (id && id !== centreId && hasChildren(bodies, id)) enter(id);
@@ -640,6 +641,7 @@
   onpointerup={up}
   onpointercancel={up}
   ondblclick={dbl}
+  oncontextmenu={context}
   onwheel={wheel}
   data-seen={seen}
   style:touch-action={seen === "free" ? "none" : "pan-y"}
@@ -663,6 +665,7 @@
         style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, radiusPx(b, p.depth))}px"
         aria-pressed={b.id === selection}
         data-body={b.id}
+        data-address={b.id}
         data-x={p.x.toFixed(2)}
         data-y={p.y.toFixed(2)}
         onclick={(e) => void flyTo(e.detail ? (nearestAt(e.clientX, e.clientY) ?? b.id) : b.id)}
@@ -686,7 +689,7 @@
     {#if isTrue && using === "gpu" && ringNote && trueBand === "visible" && !mag}<span data-true-rings={ringed.length} data-true-belts={beltHazes.length}>{ringNote}</span>{/if}
     {#if isTrue && bandNote && using === "gpu"}<span data-true-band={trueBand}>{bandNote}</span>{/if}
     {#if mag}<span data-true-band="mag" data-mag-worlds={magShapes.size}>{magNote}</span>{/if}
-    {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)}>The star runs on its own clock, six hours a second: it turns on its spin, its spots go round with it{flaringNow ? ", and it is flaring now" : ""}.</span>{/if}
+    {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)} data-star-ejections={starNow?.ejections.length ?? 0} data-star-calm={calm ? "yes" : "no"}>The star runs on its own clock, six hours a second: it turns on its spin, its spots go round with it{flaringNow ? ", and it is flaring now" : ""}. {(starNow?.words ?? []).join(" ")}</span>{/if}
   </p>
 </div>
 

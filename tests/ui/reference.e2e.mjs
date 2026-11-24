@@ -5,7 +5,8 @@
 // numbers at the top; every theoretical row carries its stamp and its note at Curious, Science and Engine; a row
 // opens its card with the source linked; Engine adds ids. Units list each against its SI unit (a parsec in metres,
 // worked out from the sheet). Night chart keeps the marks; on a phone nothing runs off the side, rows wrap to two
-// lines and the card rises from the foot. Reading writes nothing.
+// lines and the card rises from the foot. Names and Classes (the class gallery) read the shipped packs. Reading writes
+// nothing.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -167,6 +168,43 @@ try {
       assert.ok(over <= 0, `names overflow by ${over} px`);
     }
     await shot(gm, `names-${vp}`);
+    // Classes (the class gallery), under "Names and classes": no pack carries classes, so the shipped atlases are shown.
+    await gm.locator('[data-page="classes"]').click();
+    const classes = gm.locator('[data-classes="offered"]');
+    await classes.waitFor({ timeout: 20000 });
+    assert.equal(await classes.getAttribute("data-atlas"), "sse.base-atlas", "SSE4's own atlas first");
+    assert.deepEqual(await classes.locator("[data-scheme]").evaluateAll((els) => els.map((e) => e.dataset.scheme)), ["physical", "surface", "air", "habitability"]);
+    const tiles = classes.locator('[data-gallery="physical"] .tile');
+    await tiles.nth(14).waitFor({ timeout: 20000 });
+    assert.ok((await tiles.count()) >= 15, "the physical scheme's base classes are tiles");
+    assert.equal(await tiles.locator("svg.icon").count(), await tiles.count(), "every tile has its mark");
+    await classes.locator('[data-class="gas-giant/ammonia-clouds"]').click();
+    const ccard = gm.locator('[data-class-card="gas-giant/ammonia-clouds"]');
+    await ccard.waitFor();
+    assert.match(await ccard.locator("[data-bands]").innerText(), /equilibrium temperature up to 150 K/);
+    assert.match(await ccard.locator("[data-examples]").innerText(), /Jupiter/);
+    assert.match(await ccard.innerText(), /A kind of gas giant/);
+    await shot(gm, `classes-${vp}`);
+    await gm.keyboard.press("Escape");
+    await ccard.waitFor({ state: "detached" });
+    await classes.locator("[data-classes-find]").fill("rings");
+    await classes.locator('[data-hit="physical/ringed"]').click();
+    await gm.locator('[data-class-card="physical/ringed"]').waitFor();
+    await gm.keyboard.press("Escape");
+    await classes.locator('[data-scheme="habitability"]').click();
+    await classes.locator('[data-class="habitable/shirt-sleeve"]').click();
+    await gm.locator('[data-class-card="habitable/shirt-sleeve"] [data-misses]').waitFor();
+    await gm.keyboard.press("Escape");
+    // SSE 3's classic list, the classes the charts mark today.
+    await classes.locator('[data-atlas-pick="sse.sse3-classic"]').click();
+    await gm.locator('[data-atlas="sse.sse3-classic"] [data-gallery="sse3-classic"] .tile').nth(60).waitFor();
+    if (vp === "phone") {
+      const over = await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      assert.ok(over <= 0, `classes overflow by ${over} px`);
+    }
+    assert.equal(await gm.locator("[data-classes-add]").count(), 0, "adding an atlas waits for the Build desk");
+    await gm.locator('[data-page="names"]').click();
+    await names.waitFor();
     assert.equal(await gm.locator("[data-names-add]").count(), 0, "adding a pack waits for the Build desk");
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash0, "reading the sheet writes nothing");
     if (vp === "desk") {
@@ -175,6 +213,15 @@ try {
       await gm.locator('[data-names="stack"]').waitFor({ timeout: 20000 });
       await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hash0);
       await gm.locator('[data-names="stack"] [data-sample] li').nth(11).waitFor({ timeout: 20000 });
+      // Names here for the whole system, from the Names page: name every planet in Kestrel in Oluen.
+      const here = gm.locator("[data-names-here='u:kestrel/sys:1']");
+      await here.waitFor({ timeout: 20000 });
+      await here.locator("[data-names-here-kind]").selectOption("planet");
+      await here.locator('[data-names-here-layer="common"]').selectOption("oluen");
+      await here.locator("[data-names-here-note]").getByText(/Common names for planets in Kestrel now come from Oluen/).waitFor({ timeout: 20000 });
+      await shot(gm, "names-here-desk");
+      await here.locator('[data-names-here-layer="common"]').selectOption("-");
+      await here.locator("[data-names-here-note]").getByText(/follow the setting above again/).waitFor({ timeout: 20000 });
       // The name card: every name a body has, by layer, with where it came from.
       await go(gm, "system");
       await gm.locator("[role=button][aria-label^='Tarn']").click();
@@ -197,6 +244,18 @@ try {
       await card.locator('[data-name-here="designation"]').selectOption("vesh");
       await card.locator("[data-name-note]").getByText(/take designation names from Vesh/).waitFor({ timeout: 20000 });
       await gm.waitForFunction(() => /drawn from Vesh/.test(document.querySelector('[data-name-card] [data-layer="designation"]')?.textContent ?? ""), null, { timeout: 20000 });
+      // Layer choice in lenses: a lens of the GM's own that labels the chart by designation shows Tarn's Vesh designation.
+      const vesh = await desig();
+      await gm.getByRole("combobox", { name: "Lens", exact: true }).selectOption("__make");
+      const dlg = gm.getByRole("dialog", { name: "Lens editor" });
+      await dlg.getByLabel("Lens name").fill("Survey names");
+      await dlg.getByLabel("Names on the chart").selectOption("designation");
+      await dlg.getByRole("button", { name: "Save lens" }).click();
+      await gm.waitForFunction(() => document.querySelector("main.stage")?.getAttribute("data-lens") === "mine.survey-names");
+      await dlg.getByRole("button", { name: "Close" }).click();
+      await gm.waitForFunction((n) => !!document.querySelector(`[role=button][aria-label^="${n}"]`), vesh, { timeout: 20000 });
+      assert.equal(await gm.locator("[role=button][aria-label^='Tarn']").count(), 0, "the chart is labelled by designation");
+      await shot(gm, "names-lens-desk");
     }
     assert.deepEqual(errors, []);
     await browser.close();

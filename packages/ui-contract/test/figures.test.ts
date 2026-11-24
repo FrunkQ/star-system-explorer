@@ -27,8 +27,8 @@ const moonOrbit: About = { class: "moon", what: "orbit" };
 
 // Units the table names that the sheet's Units table does not hold yet. The data sheet thread is adding them; when a
 // row lands, take it off this list. A new unit the table names must be on the sheet or listed here, so a typo fails.
-const WAITING = ["arcmin", "degf", "ft", "lb", "lb_ft3", "m_moon", "mi", "min", "mph", "ocean_earth", "percent", "ppm", "psi", "r_moon", "s_earth", "tnt_tonne", "tonne"];
-const onSheet = (u: string): boolean => !waitingUnits().includes(u);
+// Units the table names that the sheet does not hold yet. Empty since the data sheet's MP31 (PR 419) added them.
+const WAITING: string[] = [];
 
 test("every unit the table names is on the sheet, or is a known wait", () => {
   for (const u of waitingUnits()) assert.ok(WAITING.includes(u), `"${u}" is neither a sheet unit nor a listed wait`);
@@ -170,7 +170,7 @@ test("a figure of another kind is told apart, so a period can become a distance"
   if (!r.ok) assert.deepEqual(r.as, { kind: "time", si: 300 * 86_400 });
 });
 
-test("the Moon's tilt as published, '23d 26m', once the sheet has arcminutes", { skip: !onSheet("arcmin") && "waits on the sheet's arcmin row" }, () => {
+test("the Moon's tilt as published, '23d 26m'", () => {
   const r = readFigure("23d 26m", "angle");
   assert.ok(r.ok);
   if (r.ok) assert.ok(Math.abs(r.si - ((23 + 26 / 60) * Math.PI) / 180) < 1e-12);
@@ -200,7 +200,6 @@ test("everything said reads back to the value, within what was shown", () => {
       for (const depth of ["curious", "science", "engine"] as const) {
         for (const v of values) {
           const s = say(v, kind, about, { reading: reading.id, depth });
-          if (reading.rungs.some((g) => g.dms)) continue; // read back once the sheet has arcminutes
           const back = readFigure(s.text, kind);
           assert.ok(back.ok, `${kind} ${reading.id} ${depth}: "${s.text}" did not read back: ${JSON.stringify(back)}`);
           if (back.ok) assert.ok(Math.abs(back.si - v) <= Math.abs(v) * 0.006, `${kind} ${reading.id} ${depth}: "${s.text}" read back as ${back.si}, not ${v}`);
@@ -212,4 +211,48 @@ test("everything said reads back to the value, within what was shown", () => {
 
 test("every kind has a reading on the sheet today", () => {
   for (const kind of FIGURE_KINDS) assert.ok(readingsFor(kind).length > 0, kind);
+});
+
+// ED1a part 2: a card's facts through the engine.
+import { factUnit, readFact, sayFact } from "../src/figures.ts";
+import { subjectClass } from "../src/handles.ts";
+
+test("a scene's unit symbols are the sheet's units, a unit's own symbol first", () => {
+  assert.equal(factUnit("AU")?.unit, "au");
+  assert.equal(factUnit("M⊕")?.kind, "mass");
+  assert.equal(factUnit("g")?.unit, "gee", "g on a card is the gee, not a gram");
+  assert.equal(factUnit("d")?.unit, "day", "d is a day, not a degree");
+  assert.equal(factUnit("μT")?.unit, "ut", "Greek mu and the micro sign are one");
+  assert.equal(factUnit("dex"), null);
+  assert.equal(factUnit(undefined), null);
+});
+
+test("a card's facts are said like the same value anywhere else", () => {
+  const f = (field: string, value: number, unit: string, source = "derived") => ({ field, value, unit, source });
+  assert.equal(sayFact(f("a_au", 1.524, "AU", "catalogued"), "planet", { depth: "science" })?.text, "1.524 AU");
+  assert.equal(sayFact(f("a_au", 1.524, "AU", "catalogued"), "planet", { depth: "curious" })?.text, "about 1.52 AU");
+  assert.equal(sayFact(f("a_au", 0.00257, "AU"), "moon", { depth: "science" })?.text, "384 thousand km", "a moon's orbit in thousand km");
+  assert.equal(sayFact(f("mass_earth", 0.10700000000000001, "M⊕", "catalogued"), "planet", { depth: "science" })?.text, "0.107 M⊕", "float noise gains no figures");
+  assert.equal(sayFact(f("surface_k", 288.15, "K"), "planet", { depth: "science" })?.text, "15 °C", "a world's surface reads in °C");
+  assert.equal(sayFact(f("teff_k", 5772, "K"), "star", { depth: "science" })?.text, "5,770 K");
+  assert.equal(sayFact(f("luminosity_sun", 1, "L☉"), "star", { depth: "curious" })?.text, "about 1 Sun");
+  assert.equal(sayFact({ field: "metallicity", value: -0.08, unit: "dex" }, "star"), null, "a unit the sheet lacks keeps the scene's text");
+  assert.equal(sayFact({ field: "name", value: "Tarn" }, "planet"), null);
+});
+
+test("typing over a card's fact takes any unit of its kind, and a bare number in the unit on screen", () => {
+  const orbit = { field: "a_au", value: 1, unit: "AU" };
+  const r = readFact(orbit, "412 thousand km");
+  assert.ok(r?.ok && Math.abs(r.value * constant("au") - 4.12e8) < 1);
+  const c = readFact({ field: "surface_k", value: 288, unit: "K" }, "15", "degc");
+  assert.ok(c?.ok && Math.abs(c.value - 288.15) < 1e-9);
+  const bad = readFact(orbit, "3 kg");
+  assert.ok(bad && !bad.ok);
+});
+
+test("a subject's scale class", () => {
+  assert.equal(subjectClass({ kind: "planet", facts: [{ field: "mass_earth", value: 317.8 }] }), "giant");
+  assert.equal(subjectClass({ kind: "planet", facts: [{ field: "mass_earth", value: 0.8 }] }), "planet");
+  assert.equal(subjectClass({ kind: "moon" }), "moon");
+  assert.equal(subjectClass({ kind: "belt" }), "ring");
 });

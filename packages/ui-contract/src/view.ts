@@ -70,6 +70,10 @@ export interface Workspace {
   /** The party's ship (party.ts): Voyages starts where it is, Land lands it. Kept with the campaign. */
   party?: import("./party.ts").PartyShip | null;
   setParty?(p: import("./party.ts").PartyShip | null): void;
+  /** The readings chosen by pressing a unit (figures.ts `withChoice`), per kind and scale class; kept with the campaign. */
+  unit_choices?: import("./figures.ts").UnitChoices;
+  /** Keep a reading for a kind and what it is about (null puts the scheme's back). */
+  setUnitChoice?(kind: string, about: import("./figures.ts").About | undefined, reading: string | null): void;
   /** Where the GM put each pack overlay (overlay.ts), by overlay id; kept with the campaign. */
   overlay_anchors?: Record<string, import("./overlay.ts").OverlayAnchor>;
   /** Place an overlay (null takes it off the map). */
@@ -78,6 +82,8 @@ export interface Workspace {
   view?: import("./view-controls.ts").ViewChoice;
   /** A view says the viewer turned it by hand: the choice becomes Free. */
   turned?(): void;
+  /** A view sets the viewer's choice for them, as a press of its own asks (the size comparison's Gallery opens in True). */
+  pickView?(c: import("./view-controls.ts").ViewChoice): void;
   /** The time being viewed (the ruler's stroke); views derive and draw at it. */
   now_yr: number;
   /**
@@ -162,6 +168,8 @@ export interface ViewContext {
   styles?: StylesHost;
   /** V3 gap 23: hand a subject to Minerva, the storyteller, to describe from what one audience knows (absent where she cannot run). */
   describe?(address: string): void;
+  /** The catalogued Solar System (packs/base-sol, read once by the shell), for reference worlds; null where it cannot be read. */
+  solSheet?(): Promise<import("./sol.ts").SolSheet | null>;
 }
 
 /** What a shell offers views about style documents. Presentation only: kept on the device, never in the universe. */
