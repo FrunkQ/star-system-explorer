@@ -225,6 +225,12 @@
 
   // Sharing with players (V4): recording starts as the campaign opens, before any fact is entered.
   let share = $state<Share | null>(null);
+  // The party's ship (run-through): the table always knows where it is, so every change goes to the players' screens.
+  // It never moves their view: that is the GM's "Send this view".
+  $effect(() => {
+    const p = ws.party ? ($state.snapshot(ws.party) as unknown as Json) : null;
+    if (share) share.host.setState({ party: p });
+  });
   let opened: unknown[] = [];
   loadPacks()
     .then((packs) => ((opened = packs), openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: base.universe, packs })))
