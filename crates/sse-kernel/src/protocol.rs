@@ -1593,6 +1593,16 @@ pub enum Request {
         keep: Option<crate::orbits::Keep>,
         at_s: i64,
     },
+    /// K13 (editing design 10A, R1): the system's family tree before and
+    /// after `edits` (requests such as `set_authored_batch`, `rehost`,
+    /// `withdraw`), with each body's host, pair label and verdict, and the
+    /// bodies whose place or verdict changed. Nothing is written.
+    PreviewTree {
+        system: String,
+        at_s: i64,
+        #[ts(type = "unknown[]")]
+        edits: Vec<serde_json::Value>,
+    },
     /// RS4: split a construct at `at_s`. The named parts (`part.<id>.*`
     /// facts) and `mass_kg` more move to a new construct of the same kind
     /// beside it (`key`, else the next free number; `name`, else the old
@@ -2230,6 +2240,7 @@ impl Request {
             Request::Create { .. } => "create",
             Request::Retire { .. } => "retire",
             Request::Rehost { .. } => "rehost",
+            Request::PreviewTree { .. } => "preview_tree",
             Request::SplitConstruct { .. } => "split_construct",
             Request::JoinConstructs { .. } => "join_constructs",
             Request::Programs { .. } => "programs",
@@ -2567,6 +2578,7 @@ pub fn ops() -> Vec<OpInfo> {
         o("templates", Cost::Trivial, "read at load"),
         o("create", Cost::Light, "GM machine only; one universe event and one record event per kept value"),
         o("retire", Cost::Trivial, "GM machine only; one universe event"),
+        o("preview_tree", Cost::Light, "a copy of the universe, the edits, the orbits and stability checks twice"),
         o("rehost", Cost::Light, "GM machine only; the system's orbits at one time, one universe event"),
         o("split_construct", Cost::Trivial, "GM machine only; one universe event"),
         o("join_constructs", Cost::Trivial, "GM machine only; one universe event"),
@@ -3385,6 +3397,14 @@ pub enum Response {
     Retired {
         event_id: String,
         state_hash: String,
+    },
+    /// `preview_tree`: `before` and `after` trees and the addresses that changed.
+    TreePreviewed {
+        #[ts(type = "unknown")]
+        before: serde_json::Value,
+        #[ts(type = "unknown")]
+        after: serde_json::Value,
+        changed: Vec<String>,
     },
     /// `split_construct`: the new construct's address.
     ConstructSplit {

@@ -14,7 +14,7 @@
       "name": "Working out a system",
       "meaning": "Resolving a system and its worlds from the packs and the chronicle: what every card, chart, edit and search reads. A click must not wait on it.",
       "budget_ms": 100,
-      "sources": ["derive", "explain", "draw", "scene", "atoms", "manifest", "pack_reports", "resolved_system", "systems", "read_world_stack", "classify_preview", "history", "state_hash", "branch_state_hash", "set_authored", "set_authored_batch", "withdraw", "restore", "branch", "branch_set", "commit", "discard", "adopt", "read_reach", "dressing", "adopt_dressing", "hold_dressing", "campaign_tags", "sift"],
+      "sources": ["derive", "explain", "draw", "scene", "atoms", "manifest", "pack_reports", "resolved_system", "systems", "read_world_stack", "classify_preview", "history", "state_hash", "branch_state_hash", "set_authored", "set_authored_batch", "withdraw", "rehost", "preview_tree", "restore", "branch", "branch_set", "commit", "discard", "adopt", "read_reach", "dressing", "adopt_dressing", "hold_dressing", "campaign_tags", "sift"],
       "bench": ["resolve", "sift", "observe", "suite", "classify", "place"]
     },
     {

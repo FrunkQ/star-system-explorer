@@ -45,6 +45,7 @@ mod sky;
 mod sol_tests;
 #[cfg(test)]
 mod split_tests;
+mod tree;
 mod stability;
 #[cfg(test)]
 mod stability_tests;
@@ -86,6 +87,7 @@ use std::collections::BTreeMap;
 
 pub const KERNEL_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(Clone)]
 struct Universe {
     root: Address,
     seed: Seed,
@@ -5313,6 +5315,60 @@ impl Kernel {
                     state_hash: latest_hash(&u.chronicle),
                 }
             }
+            Request::PreviewTree {
+                system,
+                at_s,
+                edits,
+            } => {
+                const EDIT_OPS: [&str; 5] =
+                    ["set_authored", "set_authored_batch", "rehost", "withdraw", "restore"];
+                let reqs: Vec<Request> = edits
+                    .iter()
+                    .enumerate()
+                    .map(|(i, e)| {
+                        let op = e["op"].as_str().unwrap_or("");
+                        if !EDIT_OPS.contains(&op) {
+                            return Err(err(
+                                "bad_request",
+                                format!("edit {i}: {op:?} is not an edit a tree can preview ({})", EDIT_OPS.join(", ")),
+                            ));
+                        }
+                        serde_json::from_value(e.clone())
+                            .map_err(|x| err("bad_request", format!("edit {i}: {x}")))
+                    })
+                    .collect::<Result<_, _>>()?;
+                let (root, seed) = {
+                    let u = self.universe()?;
+                    (u.root.clone(), u.seed)
+                };
+                let a = in_universe(&root, &system)?;
+                let read = |k: &mut Kernel| -> Result<serde_json::Value, Response> {
+                    let u = k.universe()?;
+                    let mut st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                    withdraw::drop_withdrawn(&mut st.facts);
+                    Ok(tree::tree(&st, &a, at_s, Some(&seed)))
+                };
+                let before = read(self)?;
+                let saved = self.universe.clone();
+                let mut failed = None;
+                for (i, r) in reqs.into_iter().enumerate() {
+                    if let Response::Error { code, message } = self.handle(r) {
+                        failed = Some(err(&code, format!("edit {i}: {message}")));
+                        break;
+                    }
+                }
+                let after = if failed.is_none() { read(self) } else { Ok(serde_json::Value::Null) };
+                self.universe = saved;
+                if let Some(e) = failed {
+                    return Err(e);
+                }
+                let after = after?;
+                Response::TreePreviewed {
+                    changed: tree::changed(&before, &after),
+                    before,
+                    after,
+                }
+            }
             Request::Rehost {
                 address,
                 to,
@@ -5608,9 +5664,10 @@ impl Kernel {
                                 format!("{a} is not in universe {}", u.root),
                             ));
                         }
-                        let st = u
+                        let mut st = u
                             .chronicle
                             .state_at(UniverseTime::seconds(at_s.unwrap_or(i64::MAX)));
+                        withdraw::drop_withdrawn(&mut st.facts);
                         st.facts
                             .iter()
                             .filter(|(x, _)| a.contains(x))

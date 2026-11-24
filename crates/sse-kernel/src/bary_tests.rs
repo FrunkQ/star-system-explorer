@@ -387,3 +387,78 @@ fn withdraw_takes_leaves_or_hands_on() {
     );
     assert_eq!(r["code"], "bad_request", "{r}");
 }
+
+/// K13 `preview_tree`: the tree before and after edits, nothing written;
+/// Pluto and Charon read as a pair, the Earth and the Moon do not.
+#[test]
+fn preview_tree_shows_before_and_after_and_writes_nothing() {
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let (earth, moon) = ("u:t/sys:0/body:3", "u:t/sys:0/body:3/body:0");
+    let mut k = crate::Kernel::new();
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"t","seed":"t"}),
+    );
+    let e = |a: &str, f: &str, v: serde_json::Value| serde_json::json!({"address":a,"field":f,"value":v});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,"edits":[
+            e(SUN, "body.mass", M_SUN.into()),
+            e(earth, "body.mass", 5.9722e24.into()), e(earth, "orbit.host", SUN.into()),
+            e(earth, "body.radius", 6.371e6.into()),
+            e(earth, "orbit.semi_major_axis", 1.496e11.into()),
+            e(moon, "body.mass", 7.346e22.into()), e(moon, "orbit.host", earth.into()),
+            e(moon, "orbit.semi_major_axis", 3.844e8.into()),
+            e(PLUTO, "body.mass", 1.303e22.into()), e(PLUTO, "orbit.host", SUN.into()),
+            e(PLUTO, "body.radius", 1.188e6.into()),
+            e(PLUTO, "orbit.semi_major_axis", (39.48 * AU).into()),
+            e(CHARON, "body.mass", 1.586e21.into()), e(CHARON, "orbit.host", PLUTO.into()),
+            e(CHARON, "orbit.semi_major_axis", 1.9591e7.into()),
+        ]}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let row = |t: &serde_json::Value, a: &str| -> serde_json::Value {
+        t["bodies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|b| b["address"] == a)
+            .unwrap_or_else(|| panic!("{a} in {t}"))
+            .clone()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"preview_tree","system":"u:t/sys:0","at_s":100,"edits":[
+            {"op":"rehost","address":moon,"to":SUN,"keep":"motion","at_s":100}
+        ]}),
+    );
+    assert_eq!(r["type"], "tree_previewed", "{r}");
+    assert_eq!(row(&r["before"], moon)["host"], earth);
+    assert_eq!(row(&r["after"], moon)["host"], SUN);
+    assert_eq!(row(&r["before"], CHARON)["pair"], true, "{r}");
+    assert_eq!(row(&r["before"], moon)["pair"], false, "{r}");
+    assert!(r["changed"].as_array().unwrap().iter().any(|c| c == moon), "{r}");
+    // Nothing was written.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"preview_tree","system":"u:t/sys:0","at_s":100,"edits":[]}),
+    );
+    assert_eq!(row(&r["after"], moon)["host"], earth, "{r}");
+    // A refused edit names itself, and leaves the universe as it was.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"preview_tree","system":"u:t/sys:0","at_s":100,"edits":[
+            {"op":"rehost","address":earth,"to":moon,"at_s":100}
+        ]}),
+    );
+    assert!(r["message"].as_str().unwrap().starts_with("edit 0:"), "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"preview_tree","system":"u:t/sys:0","at_s":100,"edits":[
+            {"op":"open_universe","id":"x","seed":"x"}
+        ]}),
+    );
+    assert_eq!(r["code"], "bad_request", "{r}");
+}
