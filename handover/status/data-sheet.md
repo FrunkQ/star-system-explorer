@@ -48,7 +48,6 @@ Only the owner thread edits this file. One row per package: update it in the sam
    - CO2 frost.
 3. **Still unsourced, and searched without luck so far:**
    - heats of combustion for the solid propellants (JPL TM 33-649, JPL 79-29 and Thiokol TWR-13009 searched);
-   - ionic water's conductivity: `h2o.ionic_fluid` still holds a recalled 1e4 S/m, because Knudson 2012 gives only reflectivity;
    - latent heats for Ti-6Al-4V and Al 6061;
    - rhenium's heat of melting;
    - the solar-metallicity end of the element `scatter_dex` (Bensby 2014 Table C.3 at CDS was not read).

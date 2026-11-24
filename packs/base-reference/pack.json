@@ -9428,11 +9428,12 @@
         },
         "props": {
          "sigma_elec": {
-          "v": 10000.0,
+          "v": 15000.0,
           "unit": "S m-1",
-          "src": "redmer2011",
+          "src": "millot2018",
           "check": "unverified",
-          "note": "order of magnitude, recalled"
+          "at_place": "70 to 180 GPa, below about 5000 K (reverberating shocks)",
+          "note": "Millot et al. 2018 quote about 150 S/cm on reverberating shocks at 70 to 180 GPa, against about 30 S/cm (3000 S/m) on the single-shock Hugoniot above 30 GPa and 2000 K, which rises from 0.1 S/cm at 10 GPa; Yakushev 1998 gives 2000 S/m at 75 GPa. Mostly ionic: the electronic part is under 100 S/cm below 200 GPa and 5000 K"
          }
         }
        },
@@ -11034,7 +11035,7 @@
          "millot2018"
         ],
         "check": "unverified",
-        "note": "3250 K at 100 GPa is Cheng et al.'s; 5000 K at 190 GPa is recalled from Millot et al. 2018 and must be checked; beyond 190 GPa extrapolated"
+        "note": "3250 K at 100 GPa is Cheng et al.'s; 5000 K at 190 GPa is Millot et al. 2018's (abstract); beyond 190 GPa extrapolated"
        },
        {
         "between": [
@@ -18709,9 +18710,10 @@
     },
     {
      "id": "millot2018",
-     "text": "Millot, M. et al. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression. Not read; its melting point near 5000 K at 190 GPa is recalled",
+     "text": "Millot, M., Hamel, S., Rygg, J. R., Celliers, P. M., Collins, G. W., Coppari, F., Fratanduono, D. E., Jeanloz, R., Swift, D. C. and Eggert, J. H. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression (ice melts near 5000 K at 190 GPa; conductivity about 30 S/cm on the Hugoniot and about 150 S/cm on reverberating shocks). Read from the OSTI copy (osti.gov 1542614) on 24 Nov 2026; volume and page not on that copy",
      "status": "unverified",
-     "doi": "10.1038/s41567-017-0017-4"
+     "doi": "10.1038/s41567-017-0017-4",
+     "url": "https://www.osti.gov/biblio/1542614"
     },
     {
      "id": "millot2019",
