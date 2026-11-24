@@ -117,6 +117,22 @@ try {
   await gm.locator("[data-lift]").click();
   assert.equal(await gm.locator("[data-lift]").count(), 0);
 
+  // The clean output (PB8): the role offers it; opened, it is a screen marked Output, with no controls, at 16:9.
+  assert.equal(await gm.locator('[data-output-link="table"]').count(), 1);
+  const out = await context.newPage();
+  await out.setViewportSize({ width: 1600, height: 1000 });
+  out.on("pageerror", (e) => errors.push(`output: ${e.message}`));
+  await out.goto(`${link}&clean=1&ground=none&name=Stream`);
+  await out.waitForSelector("[data-clean] footer[data-link='live'][data-state-hash]:not([data-state-hash=''])", { state: "attached", timeout: 30000 });
+  assert.equal(await out.locator("header.bar, section.ask, .soundbar").count(), 0, "no controls on the output");
+  const size = await out.locator("[data-clean]").evaluate((e) => [e.clientWidth, e.clientHeight]);
+  assert.ok(Math.abs(size[0] / size[1] - 16 / 9) < 0.01, `16:9, got ${size}`);
+  assert.equal(await out.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgba(0, 0, 0, 0)", "clear ground");
+  await box("Stream").locator("[data-output-screen]").waitFor({ timeout: 15000 });
+  await shot(out, "clean-output");
+  await shot(gm, "switchboard-output");
+  await out.close();
+
   // On a phone the board is one column, without the drawn lines.
   await gm.setViewportSize({ width: 390, height: 844 });
   await gm.waitForTimeout(400);

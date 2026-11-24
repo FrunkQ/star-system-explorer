@@ -32,6 +32,8 @@ export interface BoardScreen {
   role: string;
   /** On the GM's own machine (a tab opened from here), so a camera may reach it later (section 10). */
   local?: boolean;
+  /** A clean output link (PB8, design 9): a screen like any other, marked "Output". */
+  output?: boolean;
 }
 
 export interface Board {
@@ -189,10 +191,10 @@ export function releaseAll(b: Board): Board {
 }
 
 /** A screen says hello (section 11): known screens keep the role the GM gave them; new ones get the role they asked for. */
-export function screenHello(b: Board, id: string, hello: { name: string; role: string; local?: boolean }): Board {
+export function screenHello(b: Board, id: string, hello: { name: string; role: string; local?: boolean; output?: boolean }): Board {
   const n = clone(b);
   const had = n.screens[id];
-  n.screens[id] = { name: hello.name || had?.name || "Screen", role: had?.role ?? hello.role, ...(hello.local ? { local: true } : {}) };
+  n.screens[id] = { name: hello.name || had?.name || "Screen", role: had?.role ?? hello.role, ...(hello.local ? { local: true } : {}), ...(hello.output ? { output: true } : {}) };
   return n;
 }
 

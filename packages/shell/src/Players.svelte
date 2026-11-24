@@ -134,7 +134,12 @@
   let live = $state<Record<string, boolean> | undefined>(undefined);
   const say = (t: string) => joinLine(t, { seat: seatLabel, ...(brand ? { brand: brand.name } : {}) });
   const embed = $derived(seatKnown ? embedMode(asksEmbed, framing, embedList) : asksEmbed && framing !== "unframed" ? ({ mode: "waiting" } as const) : ({ mode: "page" } as const));
-  const bare = $derived(embed.mode !== "page");
+  // A clean output (PB8, design 9): `?clean=1`, no controls, a fixed 16:9 picture for a stream; `&ground=none` drops the
+  // page's ground so the picture floats over the streamer's own scene. A screen like any other: it joins its role.
+  const clean = new URLSearchParams(location.search).get("clean") === "1";
+  const clearGround = clean && new URLSearchParams(location.search).get("ground") === "none";
+  const bare = $derived(embed.mode !== "page" || clean);
+  if (clearGround) document.body.classList.add("sse-clear-ground");
   let link = $state<ReplicaStatus>({ state: "joining" });
   let stateHash = $state("");
   // How this screen reached the room: the site's relay (other devices) or this browser.
@@ -176,7 +181,7 @@
     }
   })();
   const screenName = (new URLSearchParams(location.search).get("name") ?? "").slice(0, 40) || `Screen ${screenId.slice(4).toUpperCase()}`;
-  const hello = { id: screenId, name: screenName, role: seatId };
+  const hello = { id: screenId, name: screenName, role: seatId, ...(new URLSearchParams(location.search).get("clean") === "1" ? { output: true } : {}) };
   // What this screen is shown: its own line if the GM gave it one, else its seat's, else the table's.
   const shownFor = (r: PlayerReplica) => r.shownFor(seatId, screenId);
   if (isSealed) {
@@ -399,7 +404,7 @@
   });
 </script>
 
-<div class="page" class:bare style={rootFx} data-embed={embed.mode}>
+<div class="page" class:bare class:clean class:clear={clearGround} style={rootFx} data-embed={embed.mode} data-clean={clean ? "" : undefined}>
   {#if !bare}
   <header class="bar">
     {#if brand}<span class="brand" data-brand>{#if brand.logo}<img src={brand.logo} alt="" />{/if}{brand.name}</span>{/if}
@@ -451,13 +456,13 @@
   {:else}
     {#key vocabId}
       <main class="grid" class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
-      {#if readOnly}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
+      {#if readOnly && !clean}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
     {/key}
     {#if sayWords && sayHidden !== sayWords}
       <!-- A Read aloud sent to screens (PB6, design 4.3): plain words on a card over the picture. The player may put it away; new words bring it back. -->
       <aside class="say-card" data-say role="status" aria-live="polite">
         <p>{sayWords}</p>
-        <button type="button" class="say-hide" data-say-hide onclick={() => (sayHidden = sayWords)}>Put away</button>
+        {#if !clean}<button type="button" class="say-hide" data-say-hide onclick={() => (sayHidden = sayWords)}>Put away</button>{/if}
       </aside>
     {/if}
   {/if}
@@ -513,6 +518,22 @@
   }
   .page.bare {
     grid-template-rows: 1fr;
+  }
+  /* The clean output: a 16:9 picture, letterboxed in whatever window the stream gives it, no pointer. */
+  .page.clean {
+    width: min(100vw, calc(100vh * 16 / 9));
+    height: min(100vh, calc(100vw * 9 / 16));
+    min-height: 0;
+    margin: auto;
+    overflow: hidden;
+    cursor: none;
+  }
+  .page.clear {
+    background: transparent;
+  }
+  :global(body.sse-clear-ground),
+  :global(html:has(body.sse-clear-ground)) {
+    background: transparent;
   }
   .bar {
     display: flex;

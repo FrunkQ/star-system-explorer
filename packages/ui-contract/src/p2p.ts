@@ -85,6 +85,8 @@ export interface ScreenHello {
   name: string;
   /** The seat (role) its link named, or the one it had last time. */
   role: string;
+  /** A clean output (PB8, `?clean=1`): no controls, fixed 16:9, for a stream. Marked "Output" on the board. */
+  output?: boolean;
 }
 
 /** What a sealed seat's screen receives on joining: never the seed, the packs or the event log. */
@@ -307,7 +309,7 @@ export class GmHost {
           // A sealed seat never gets the manifest (seed, packs, log), even if it finds the shared room.
           if (m.t === "hello" && m.seat && this.#seats.find((x) => x.id === m.seat)?.sealed) return;
           this.#players.add(m.from);
-          if (m.t === "hello" && m.screen && typeof m.screen.id === "string") this.onScreen({ id: m.screen.id, name: String(m.screen.name ?? ""), role: String(m.screen.role ?? m.seat ?? "table") });
+          if (m.t === "hello" && m.screen && typeof m.screen.id === "string") this.onScreen({ id: m.screen.id, name: String(m.screen.name ?? ""), role: String(m.screen.role ?? m.seat ?? "table"), ...(m.screen.output === true ? { output: true } : {}) });
           hub.send({ t: "manifest", to: m.from, manifest: this.manifest() });
           this.#changed();
         } else if (m.t === "request" && m.run === this.#base.run) this.#request(m);

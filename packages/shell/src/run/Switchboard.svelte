@@ -8,7 +8,7 @@
   decides what each screen shows; this file only draws it and turns presses into board changes.
 -->
 <script lang="ts">
-  import { cardLabel, addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
+  import { cardLabel, outputLink, addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
   import Playbook from "./Playbook.svelte";
   import PresetMonitor from "./PresetMonitor.svelte";
   import { justSent, noteFired, noteSent, type JustSent } from "./fired.svelte.ts";
@@ -138,6 +138,13 @@
     // A click holds with the kind used last (6.2); a particular card or typed words are for this moment only.
     if (typeof c === "string") lastCard = c;
     act((b) => hold(b, dest, c));
+  }
+  // The clean output link (PB8, design 9): copied, never opened here.
+  let copiedOut = $state<string | null>(null);
+  function copyOut(key: string, href: string) {
+    navigator.clipboard?.writeText(href).catch(() => {});
+    copiedOut = key;
+    setTimeout(() => (copiedOut = copiedOut === key ? null : copiedOut), 1500);
   }
   // The line card's choices (PB5): a kind, a particular card from the stack's list, or words typed now.
   const cards = $derived(st.cards ?? []);
@@ -409,7 +416,7 @@
             {@const ss = showing(board, r.id, id)}
             <div class="screen" class:held={ss.held} class:armed={armed?.kind === "screen" && armed.id === id} data-dest={`screen:${id}`} data-role={r.id} data-screen={id} role="button" tabindex="0" onclick={pressDest} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && pressDest(e)}>
               <button type="button" class="grip" aria-label="Move {s.name}: press, then press a role, or another screen to swap" aria-pressed={armed?.kind === "screen" && armed.id === id} onpointerdown={(e) => (e.stopPropagation(), startDrag(e, { kind: "screen", id }))} onclick={(e) => e.stopPropagation()} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), e.stopPropagation(), (armed = armed ? null : { kind: "screen", id }))}>⠿</button>
-              <span class="sname"><b>{s.name}</b>{#if s.local}<span class="sub"> · this computer</span>{/if}</span>
+              <span class="sname"><b>{s.name}</b>{#if s.local}<span class="sub"> · this computer</span>{/if}{#if s.output}<span class="tag" data-output-screen> Output</span>{/if}</span>
               <span class="sub" data-dest-shows>Showing {ss.text}</span>
               <span class="acts">
                 {#if mineLine && !mineLine.for_hold}<button type="button" class="quiet" data-rejoin={`screen:${id}`} onclick={(e) => (e.stopPropagation(), act((b) => rejoin(b, `screen:${id}`)))}>Back with {r.label}</button>{/if}
@@ -421,6 +428,17 @@
           {:else}
             <p class="sub none">No screen tonight.{#if st.link} {#each table.links(r.id).slice(0, 1) as l (l.href)}<a href={l.href} target="_blank" rel="noopener" data-role-link={r.id}>Open one</a>{/each}{/if}</p>
           {/each}
+          {#if st.link}
+            {@const join = table.links(r.id)[0]?.href}
+            {#if join}
+              <p class="sub out">
+                Stream {r.label}:
+                <button type="button" class="linkish" data-output-link={r.id} title="A screen with no controls at 16:9, for an OBS browser source; viewers see only what {r.label} knows" onclick={() => copyOut(r.id, outputLink(join))}>{copiedOut === r.id ? "copied" : "output link"}</button>
+                ·
+                <button type="button" class="linkish" data-output-clear={r.id} title="The same with no background, so the picture floats over your own scene" onclick={() => copyOut(`${r.id}:clear`, outputLink(join, true))}>{copiedOut === `${r.id}:clear` ? "copied" : "clear ground"}</button>
+              </p>
+            {/if}
+          {/if}
         </section>
       {/each}
     </div>
@@ -488,6 +506,27 @@
     padding: 3px 10px;
     cursor: pointer;
     transition: background var(--sse-motion-quick) var(--sse-ease);
+  }
+  .out {
+    margin: 2px 0 6px 16px;
+  }
+  .linkish {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    text-decoration: underline;
+  }
+  .linkish:hover:not(:disabled) {
+    background: transparent;
+    color: var(--sse-accent);
+  }
+  .tag {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sse-accent);
   }
   select[data-card] {
     max-width: 13em;

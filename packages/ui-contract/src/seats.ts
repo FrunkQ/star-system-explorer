@@ -160,6 +160,18 @@ export function joinLink(base: string, room: string, seat = "table", screen?: st
 }
 
 /**
+ * A role's clean output link (PB8, design 9): its join link with no controls, at a fixed 16:9, for an OBS browser
+ * source; `clear` drops the page's ground so the picture floats over the streamer's own scene.
+ */
+export function outputLink(join: string, clear = false): string {
+  const u = new URL(join);
+  u.searchParams.set("clean", "1");
+  if (!u.searchParams.has("name")) u.searchParams.set("name", "Output");
+  if (clear) u.searchParams.set("ground", "none");
+  return u.href;
+}
+
+/**
  * The views fog of war needs from the campaign's data views: one that shows
  * nothing at all (the audience does not learn a body exists) to start with,
  * and the campaign's "before" view for a discovery. Null when the campaign
