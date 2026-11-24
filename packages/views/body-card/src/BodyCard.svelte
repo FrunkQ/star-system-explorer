@@ -10,6 +10,7 @@
   import { parseFact } from "./parse.ts";
   import Explain from "./Explain.svelte";
   import NameCard from "./NameCard.svelte";
+  import Handles from "../../editing/src/Handles.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -153,6 +154,8 @@
       {/if}
       {#if ctx.describe}<button type="button" class="names-open" data-describe onclick={() => ctx.describe?.(subject.address)} title="Minerva writes a description from what one audience knows of it">Describe ›</button>{/if}
       {#if sentence}<p class="sentence" data-depth="curious">{sentence}</p>{/if}
+      <!-- The handles (track ED): what you can set, one row; Build moves them, Explore shows them; Run has none. -->
+      {#if ws.desk !== "run" && ctx.session.seat.authority === "gm"}<Handles {ctx} {scene} {subject} />{/if}
       {#if depth === "engine"}<p class="address" data-depth="engine" title="This body's address in the universe">{subject.address}</p>{/if}
       <div class="grid" class:line={rule.density === "line"} style="--cols: {cols}">
         {#each listed as f (f.field)}
