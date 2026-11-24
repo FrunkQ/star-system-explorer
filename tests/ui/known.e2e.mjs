@@ -40,8 +40,16 @@ try {
   await pl.goto(await gm.getAttribute("[data-players-link]", "data-players-link"));
   await pl.waitForSelector("footer[data-link='live'][data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
 
+  // The chart follows the table's knowledge on the Run desk's own lens (pencil and ink, SV3): Ember, unknown to the
+  // table, is in pencil (mark and name); Tarn, heard of, is not.
+  const body = (n) => gm.locator(`.area-chart .body[aria-label^="${n},"]`).first();
+  await body("Ember").locator("[data-pencil]").waitFor({ timeout: 20000 });
+  assert.equal(await body("Ember").getAttribute("data-known"), "no");
+  assert.equal(await body("Tarn").locator("[data-pencil]").count(), 0, "a body the table has heard of is not pencilled");
+  const tarnBefore = await body("Tarn").getAttribute("data-known");
+
   // Tarn's card shows its eye, at the title.
-  await gm.locator('.area-chart .body[aria-label^="Tarn,"] .hit').first().click();
+  await body("Tarn").locator(".hit").click();
   const mark = gm.locator("span.known[data-known]:not([data-known-field])").first();
   const eye = mark.locator("[data-known-eye]");
   await eye.waitFor({ timeout: 20000 });
@@ -57,6 +65,8 @@ try {
   assert.equal(await mark.getAttribute("data-known"), "known");
   await gm.locator("[data-known-slip]").waitFor();
   assert.match(await gm.locator("[data-known-slip]").innerText(), /Undo/);
+  // The chart follows the press: Tarn's mark reads again from the table's knowledge.
+  await gm.waitForFunction((was) => document.querySelector('.area-chart .body[aria-label^="Tarn,"]')?.getAttribute("data-known") !== was, tarnBefore, { timeout: 10000 });
   await gm.waitForTimeout(400);
   await shot(gm, "known-revealed-slip");
   await pl.waitForFunction(() => !/not yet scanned/.test(document.querySelector("[data-field='mass_kg'] dd")?.textContent ?? "not yet scanned"), null, { timeout: 15000 });

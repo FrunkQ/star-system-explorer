@@ -19,6 +19,7 @@
     shrink = 1,
     tier = "gpu-basic",
     onturned,
+    reframe = 0,
   }: {
     cube: WebCube;
     look?: "3d" | "true";
@@ -28,6 +29,8 @@
     shrink?: number;
     tier?: string;
     onturned?: () => void;
+    /** Bumped each time a fixed "Seen from" is picked: the camera goes back to that framing. */
+    reframe?: number;
   } = $props();
 
   const isTrue = $derived(look === "true");
@@ -43,9 +46,11 @@
   $effect(() => {
     if (framed !== half) ((framed = half), (dist = half * 4.2));
   });
+  // Picking a fixed "Seen from" frames it afresh (height, turn and zoom), even the one already shown.
   $effect(() => {
     const s = seen;
-    if (s !== "free") pitch = SEEN_ELEVATION[s];
+    void reframe;
+    if (s !== "free") ((pitch = SEEN_ELEVATION[s]), (yaw = -0.6), (dist = half * 4.2));
   });
   const MIN = $derived(half * 0.3);
   const MAX = $derived(half * 10);

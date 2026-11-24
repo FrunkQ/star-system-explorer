@@ -12,25 +12,34 @@ test("every option is listed in the same order; what a view cannot do says why",
   assert.deepEqual(o.seen.map((x) => x.label), ["Above", "Tilted", "Edge-on", "Free"]);
   assert.equal(o.styles[2]!.unavailable, WHY_TRUE_HELD);
   assert.match(o.styles[3]!.unavailable!, /not drawn here yet/);
-  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true, band: "visible" }, "a flat chart is seen from above");
+  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true, band: "visible", framed: 0 }, "a flat chart is seen from above");
   assert.ok(o.seen.every((x) => !x.unavailable), "turning a flat chart is offered when it has 3D");
 });
 
 test("turning a flat chart makes it 3D; a fixed view on 3D stays 3D", () => {
   const c = pickSeen(system, { style: "chart", seen: "tilted" }, "edge");
-  assert.deepEqual(c, { style: "3d", seen: "edge" });
-  assert.deepEqual(pickSeen(system, c, "free"), { style: "3d", seen: "free" });
-  assert.deepEqual(pickSeen(system, { style: "chart", seen: "tilted" }, "above"), { style: "chart", seen: "tilted" });
-  assert.deepEqual(pickStyle(c, "chart"), { style: "chart", seen: "edge" });
+  assert.deepEqual(c, { style: "3d", seen: "edge", framed: 1 });
+  assert.deepEqual(pickSeen(system, c, "free"), { style: "3d", seen: "free", framed: 1 });
+  assert.deepEqual(pickSeen(system, { style: "chart", seen: "tilted" }, "above"), { style: "chart", seen: "tilted", framed: 1 });
+  assert.deepEqual(pickStyle(c, "chart"), { style: "chart", seen: "edge", framed: 1 });
+});
+
+test("picking a fixed Seen from reframes, even the one shown; Free keeps the hands' view (Alex, 24 Nov)", () => {
+  const a = pickSeen(system, { style: "3d", seen: "free" }, "tilted");
+  const b = pickSeen(system, a, "tilted");
+  assert.equal(b.seen, "tilted");
+  assert.ok((b.framed ?? 0) > (a.framed ?? 0), "re-picking the view shown frames it again");
+  assert.equal(pickSeen(system, b, "free").framed, b.framed, "Free does not move the camera");
+  assert.equal(viewOptions(system, b).shown.framed, b.framed);
 });
 
 test("a style a view cannot draw falls back to Chart, and the choice is kept for the next view", () => {
   const galaxy = flatChart();
   const o = viewOptions(galaxy, { style: "3d", seen: "free" });
-  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true, band: "visible" });
+  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true, band: "visible", framed: 0 });
   assert.ok(o.seen.slice(1).every((x) => x.unavailable), "a flat-only view cannot be turned");
   assert.equal(o.turnable, false);
-  assert.deepEqual(viewOptions(system, { style: "3d", seen: "free" }).shown, { style: "3d", seen: "free", scale: "readable", hud: true, band: "visible" });
+  assert.deepEqual(viewOptions(system, { style: "3d", seen: "free" }).shown, { style: "3d", seen: "free", scale: "readable", hud: true, band: "visible", framed: 0 });
 });
 
 test("a kept choice is read back safely", () => {
