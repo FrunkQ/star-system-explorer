@@ -38,6 +38,9 @@ mod sea;
 mod sky;
 #[cfg(test)]
 mod sol_tests;
+mod star_elements;
+#[cfg(test)]
+mod star_elements_tests;
 mod survey;
 mod systems;
 mod tags;

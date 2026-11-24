@@ -489,7 +489,9 @@ pub fn compose(
         "elements are shares of six coarse formation materials, by CI chondrite make-up; no element is lost to its own volatility yet (MP14)".to_string(),
     ];
     if ratio.is_empty() {
-        stand_ins.push("the star's element ratios read as the Sun's until MP7 lands".into());
+        stand_ins.push(
+            "no formation run for this system, so its star's elements read as the Sun's".into(),
+        );
     }
     if bulk.carbon_kg <= 0.0 {
         stand_ins.push("no carbon material known for this body, so no carbon".into());
