@@ -1,8 +1,8 @@
 # SSE4: the Playbook and the Switchboard (track PB)
 
-Status: **ACCEPTED by Alex, 24 Nov 2026 16:34** ("Agree with all your recs above", all 22 questions of section 14; and on who steers a screen: "This is a bit 'suck it and see' to be honest - to see how it works out", so section 5.3 is built to be tried and changed). The direction was accepted earlier the same day (15:39, memory `sse4-run-desk-beats`). Design and mockup only; nothing here is built by this note. Packages for the builder are in section 15. A picture of how the pieces fit, for newcomers and for us: `/mnt/project-files/sse4/handover-screens/PB-screens/concept-map.html`.
+Status: **ACCEPTED by Alex, 24 Nov 2026 16:34** ("Agree with all your recs above", all 22 questions of section 14; and on who steers a screen: "This is a bit 'suck it and see' to be honest - to see how it works out", so section 5.3 is built to be tried and changed). The direction was accepted earlier the same day (15:39, memory `sse4-run-desk-beats`). Design and mockup only; nothing here is built by this note. Packages for the builder are in section 15. A picture of how the pieces fit, for newcomers and for us, is section 18. **Picking this up without the chat it came from: read section 19 first.**
 
-Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, folding sections, adding a preset, the Everyone layer and Lift, Undo and Redo, the Bookmarks list, the layout list and the new-layout builder made of bookmarks, picture and sound presets, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
+Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html` (open it in a browser), with desktop and phone screenshots beside it and its editable source in `PB-screens/source/`. Section 19 says exactly what the mockup shows, what it does not, and how to rebuild it.
 
 Alex's brief, in his words (24 Nov): "a gm must always be able to adapt and remix... presets... are great to have 'in hand' but live is the key"; "no need for next - just let the GM build up a 'playbook'... chapters and pages and sections - each can be a preset that is fired at various windows"; "a routing diagram showing what everyone sees - gm can pause any one by clicking on the line"; "a mini video routing package"; "the routing screen should be generally available and does remove the need for a bunch of other smaller interfaces - we corral the user to the 'nerve centre'".
 
@@ -619,3 +619,64 @@ Kept out so the run-through stays small; most belong to 4.2, the RPG release.
 - Picture-in-picture and split screens on one destination.
 - Film, web-page sources and showing a virtual tabletop (section 4.8).
 - NDI.
+
+## 18. The concept map
+
+Alex, 24 Nov 16:34: "We probably need to create a flowchart to show how all these systems interact and to help onboard users with the terminology and concepts diagrammatically and have that link to the various bits in SSE. Kinda onboarding, kinda guide, kinda help getting OUR head straight."
+
+A first version exists as a one-page clickable picture: `/mnt/project-files/sse4/handover-screens/PB-screens/concept-map.html` (source in `PB-screens/source/`, screenshots beside it). It is meant to become a page in the app's help and the opening of the Run desk tour, with each box linking to the real control. It is repeated here in full so it survives without that file.
+
+```mermaid
+flowchart LR
+  A["1 WHAT<br/>Bookmark<br/>(or a file, or a link)"] --> B["2 HOW IT LOOKS<br/>Layout + Look"]
+  B --> C["3 WHERE IT IS KEPT<br/>Playbook<br/>(presets)"]
+  C --> D["4 SENT<br/>Switchboard<br/>(a line)"]
+  D --> E["5 WHERE IT IS SHOWN<br/>Role, then its screens<br/>(fog: what the role knows)"]
+  L["Live: where the GM is now"] -. Send .-> D
+  L -. Keep .-> C
+  K["Reveal: changes what a role knows"] -. every screen redraws .-> E
+```
+
+| | Answers | It holds | Find it |
+|---|---|---|---|
+| **1 Bookmark** | what | a place and the date; the instrument; how you are looking (view style, band, scale, selection); nothing about players. A file (picture, sound, film) and a link (camera or OBS, another program, a tabletop) are the other two kinds of input | Bookmarks, beside Undo, on every desk |
+| **2 Layout** | how it looks | an arrangement; a box per input, dragged into order; "Whatever is sent"; a look (filters, palette, kind of signal fault, how a picture arrives) | Switchboard, the layout name on a role |
+| **3 Playbook** | where it is kept | presets (an input or layout plus the role it is for) in chapters, pages and folding sections; no order, no Next | Switchboard, left side, under Live |
+| **4 Switchboard** | sent | sources on the left, destinations on the right, lines between (live, held, driven); the interference dial; Hold all; Undo | the rail, group "Table"; or the on-air chip |
+| **5 Role and screens** | where it is shown, and how much | a role (name, what it knows, sensors, layout, look); tonight's screens (a display or a part of one, a tablet, a phone, a stream output); each screen Theirs or Read only | Switchboard, right side |
+
+Three things run alongside the path:
+
+- **Live skips the middle.** Where the GM is now is an unsaved bookmark. Send puts it straight on screens; Keep saves it to the open page. Prepared and improvised are one path.
+- **Holding breaks the line.** That screen gets a card until the line is pressed again.
+- **Knowledge never travels.** It belongs to the role. A reveal changes what a role knows, so its screens redraw where they stand and nothing is re-sent.
+
+Three rules that keep it simple:
+
+1. **One place for the gloss.** Out in the app only bookmarks are made. Who sees it, its look, its layout and its routing are added in the Switchboard.
+2. **One editor per thing.** The monitor edits a preset, the layout editor edits a layout, the look card edits a look. A new one is the same editor on a blank copy. Anything in a list drags into a new order.
+3. **Live controls in reach, chosen-once things in the look.** The dial and Hold are always on the board. The kind of fault, filters and palette are set once in a look.
+
+The words, as the interface should use them: Bookmark, Input, Layout, Look, Preset, Playbook, Live, Role, Screen, Split, Everyone, Line, Hold, Dial, Fog, Reveal, Theirs / Read only. Section 2 defines the older ones; the rest are defined where they first appear (4A, 5.3, 3.2, 7.1).
+
+Still to do on the map: link each box to its place in the running app once PB2 exists; decide where it lives (a help page, and the first stop of a Run desk tour, are both suggested); have Alex read it as a newcomer would.
+
+## 19. Picking this up without the chat
+
+Written 24 Nov 2026, because the project moves to another account on 25 Nov and the conversation that produced this note does not move with it. Everything Alex decided is in this note; nothing needed is only in a chat.
+
+**What is decided.** All of it. Alex steered this design message by message on 24 Nov between 15:28 and 16:42, and each steer is quoted with its time in the section it changed. In order: live first, a Playbook, no Next (the brief); the dial on the boxes (7.1); adding presets and folding sections (4.4, 4.5); going back, Everyone as a layer, Undo (5.4); layouts (7.4); pictures, sound and film, and Mappadux (4.7, 4.8, 16); bookmarks at source and gloss only here (4A); "bookmarks define what, layouts define how it looks and playbooks store them... fired at screens with dynamic fog" (4A, 18); the kind of fault lives in the look (7.1); acceptance of all 22 questions (14); the transmission card (4.7); who steers a screen, to be tried (5.3); reveals on every view (5.3); edit on the monitor (4.6); one layout editor, and "simplify as we go" (7.4); screens on this computer and splitting a display (3.2); interference as a switch on every look (7.1).
+
+**One reading Alex has not confirmed.** In 7.1, "have interference as a switch available on every look" was read as a switch on the look card, on by default, with the dial on the board whenever it is on. He was asked whether he meant a switch on the board beside each dial instead. If he says so, move it; nothing else depends on it.
+
+**What is built.** Nothing by this note. The builder is the Run desk track, working in `packages/shell/src/run/`; its status is in `handover/status/` and section 15 here is its package list. It was told to start with PB1, PB2, PB2b, PB3 and PB3b. Its account of what existed on main before it started is `/mnt/project-files/sse4/plans/switchboard-what-exists.md`.
+
+**The mockup, and what it does not show.** `PB-screens/switchboard-mockup.html` is one file with no dependencies beyond web fonts. It shows: sending and dragging, holding and the line card, Hold all, the dials on role and screen boxes with the kind of fault named, folding sections, adding a preset, the Everyone layer and Lift, Undo and Redo, the Bookmarks list, the layout list and the one layout editor, picture and sound presets, Keep and Again; desktop and phone, light and dark. It does **not** show, and this note is the only authority for: the transmission card (4.7), Edit on the monitor (4.6), Theirs and Read only and driving a screen (5.3), screens on this computer and Split (3.2), the interference switch on the look card (7.1), the role card (7.3), Add a screen, and the page picker. Where the mockup and this note differ, the note is right; the mockup's chip still says "Stream is following you", which 5.3 has replaced with driving.
+
+**Rebuilding the mockup and its screenshots.** `PB-screens/source/switchboard.html` and `concept-map.html` are the sources (page content without a document wrapper). `shot.js` and `shotmap.js` in the same folder wrap them, write the standalone files and take the screenshots with Playwright (`node shot.js`, output in `out/` beside the script). Screenshots and mockups stay in project files and are never committed.
+
+**If project files did not come across.** The screenshots and the mockup are then lost, and this note still stands by itself: sections 3 to 7 describe every control, section 11 the data, section 18 the concept map. The mockup can be redrawn from them.
+
+**Mappadux.** Section 16 is written to stand alone. The program is at `C:\Development\dynamic-map-renderer-v2` on Alex's machine and https://github.com/FrunkQ/dynamic-map-renderer-v2 . Nobody has read its code for this work.
+
+**How Alex likes design done**, as it applied here: mockups before code; every open question numbered with a recommendation, answered "yes to 1, 2 and 4"; one general mechanism over special cases; controls placed by how often they are used; plain words; and "we need to try and simplify as we go".
