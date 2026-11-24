@@ -44,3 +44,30 @@ test("the landing's sea carries the liquid's numbers to the drawing and to watch
   assert.deepEqual(s.optics, { deep_rgb: [0.01, 0.02, 0.03], refractive_index: 1.27, liquid_note: "Liquid methane" });
   assert.equal(landingSeaOf({ sea: { wave_m: 1, period_s: 5 } }, 0)!.optics, undefined);
 });
+
+test("waves: the kernel's own trains when sent (so methane and water differ), the stand-in otherwise, always six", async () => {
+  const { trainsToDraw, MAX_TRAINS } = await import("../src/sea.ts");
+  const standIn = [{ k: 0.1, a: 0.5, w: 1, dir: 0, phase: 0 }];
+  const none = trainsToDraw({}, standIn);
+  assert.equal(none.source, "stand-in");
+  assert.equal(none.trains.length, MAX_TRAINS);
+  assert.deepEqual(none.trains[0], standIn[0]);
+  assert.equal(none.trains[5]!.a, 0, "unused trains are still");
+  const water = readSeaOptics({ trains: [{ wavelength_m: 40, amplitude_m: 0.6, period_s: 5.06, dir_deg: 90 }] }).optics;
+  const methane = readSeaOptics({ trains: [{ wavelength_m: 40, amplitude_m: 0.9, period_s: 12.6, dir_deg: 90 }] }).optics;
+  const w = trainsToDraw(water, standIn);
+  assert.equal(w.source, "kernel");
+  assert.ok(Math.abs(w.trains[0]!.k - (2 * Math.PI) / 40) < 1e-12);
+  assert.ok(Math.abs(w.trains[0]!.w - (2 * Math.PI) / 5.06) < 1e-12);
+  assert.ok(Math.abs(w.trains[0]!.dir - Math.PI / 2) < 1e-12);
+  assert.ok(trainsToDraw(methane, standIn).trains[0]!.w < w.trains[0]!.w, "the same wavelength runs slower under Titan's gravity");
+});
+
+test("froth: the kernel's share and reflectance, streaks along the wind unless the kernel says otherwise", async () => {
+  const { frothToDraw } = await import("../src/sea.ts");
+  assert.equal(frothToDraw({}, 0), null, "no froth drawn until the kernel sends it");
+  const f = frothToDraw(readSeaOptics({ whitecap_fraction: 0.03, foam_albedo: 0.55 }).optics, 1.2)!;
+  assert.deepEqual(f, { cover: 0.03, albedo: 0.55, dir: 1.2 });
+  assert.equal(frothToDraw(readSeaOptics({ whitecap_fraction: 2, foam_albedo: 0.5, streak_dir_deg: 180 }).optics, 0)!.cover, 1);
+  assert.ok(Math.abs(frothToDraw(readSeaOptics({ whitecap_fraction: 0.1, foam_albedo: 0.5, streak_dir_deg: 180 }).optics, 0)!.dir - Math.PI) < 1e-12);
+});

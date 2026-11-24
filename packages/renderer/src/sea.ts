@@ -145,3 +145,46 @@ const fmt = (x: number) => {
   const e = Math.floor(Math.log10(x)) - 1;
   return String(e < 0 ? Math.round(x * 10 ** -e) / 10 ** -e : Math.round(x / 10 ** e) * 10 ** e);
 };
+
+/** One train as the shader draws it: wavenumber (rad/m), amplitude (m), angular frequency (rad/s), heading (rad from east), phase. */
+export interface TrainDraw {
+  k: number;
+  a: number;
+  w: number;
+  dir: number;
+  phase: number;
+}
+
+/**
+ * Each train's starting phase. The kernel gives a spectrum, not where each crest stands at the universe's time 0,
+ * so the phases are spread by the golden angle so that trains never line up (fudge register: a picture choice).
+ */
+const PHASE_STEP = Math.PI * (3 - Math.sqrt(5));
+
+/**
+ * The trains the shader sums, always MAX_TRAINS of them (unused ones have amplitude 0). The kernel's own trains when
+ * it sends them (W-sea3: wavelength, amplitude, period, heading, from the liquid's own dispersion); otherwise the
+ * older stand-in, `fallback` (V10k: trains round the wind scaled to the significant height, deep-water ω² = g k).
+ */
+export function trainsToDraw(o: SeaOptics, fallback: TrainDraw[]): { trains: TrainDraw[]; source: "kernel" | "stand-in" } {
+  const pad = (ts: TrainDraw[]) => [...ts, ...Array.from({ length: Math.max(0, MAX_TRAINS - ts.length) }, () => ({ k: 0, a: 0, w: 0, dir: 0, phase: 0 }))].slice(0, MAX_TRAINS);
+  if (!o.trains?.length) return { trains: pad(fallback), source: "stand-in" };
+  return {
+    trains: pad(
+      o.trains.map((t, i) => ({
+        k: (2 * Math.PI) / t.wavelength_m,
+        a: Math.max(0, t.amplitude_m),
+        w: (2 * Math.PI) / t.period_s,
+        dir: (t.dir_deg * Math.PI) / 180,
+        phase: (i * PHASE_STEP) % (2 * Math.PI),
+      })),
+    ),
+    source: "kernel",
+  };
+}
+
+/** Froth as the shader draws it: the share of the surface white, its reflectance and the streaks' heading (rad). */
+export function frothToDraw(o: SeaOptics, wind_dir_rad: number): { cover: number; albedo: number; dir: number } | null {
+  if (o.whitecap_fraction === undefined || o.foam_albedo === undefined) return null;
+  return { cover: Math.min(1, Math.max(0, o.whitecap_fraction)), albedo: Math.min(1, Math.max(0, o.foam_albedo)), dir: o.streak_dir_deg !== undefined ? (o.streak_dir_deg * Math.PI) / 180 : wind_dir_rad };
+}

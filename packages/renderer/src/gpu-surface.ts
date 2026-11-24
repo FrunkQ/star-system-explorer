@@ -6,11 +6,11 @@
 //
 // Three looks: "true" (the light as it is, tone-mapped), "3d" (the same ground as a diagram: shaded relief in the
 // chart's colours with contour lines), "wireframe" (the mesh's edges on the chart's ground).
-import { ACESFilmicToneMapping, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Scene, SphereGeometry, SRGBColorSpace, Vector3 } from "three";
+import { ACESFilmicToneMapping, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Scene, SphereGeometry, SRGBColorSpace, Vector3, Vector4 } from "three";
 import { MeshBasicNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
 import { fresnelNode } from "./sea-node.ts";
-import type { SeaOptics } from "./sea.ts";
-import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
+import { frothToDraw, MAX_TRAINS, trainsToDraw, type SeaOptics, type TrainDraw } from "./sea.ts";
+import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, sin, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
 
 export interface SurfaceMesh {
   key: string;
@@ -83,6 +83,24 @@ export function waveAmplitude(wave_m: number): number {
   return (Math.max(0, wave_m) / 4) * Math.sqrt(2 / sum);
 }
 
+/** The stand-in trains for a significant height and peak period (V10k), in the form the shader draws. */
+export function standInTrains(wave_m: number, period_s: number, dir_rad: number, gravity_m_s2: number): TrainDraw[] {
+  if (!(wave_m > 0 && period_s > 0)) return [];
+  const kPeak = (4 * Math.PI * Math.PI) / (gravity_m_s2 * period_s * period_s);
+  const a = waveAmplitude(wave_m);
+  return WAVE_TRAINS.map(([len, ang, share, ph]) => {
+    const k = kPeak / len;
+    return { k, a: a * share, w: Math.sqrt(gravity_m_s2 * k), dir: dir_rad + ang, phase: ph };
+  });
+}
+
+/**
+ * The mean share of a foam cell its soft streak covers: an ellipse fading from 0.35 to 0.95 of the cell's half-size,
+ * jittered by up to a fifth (∫ over the cell of 1 − smoothstep(0.35, 0.95, r), taken numerically: 0.35). Shares
+ * above it saturate at it (whitecaps rarely cover more than a tenth of a sea).
+ */
+export const FOAM_FILL = 0.35;
+
 export interface SurfaceGpu {
   readonly backend: "webgpu" | "webgl2";
   setMeshes(meshes: SurfaceMesh[]): void;
@@ -119,10 +137,13 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   // The sea (V10k): the eye in the site's frame (the waves are fixed to the ground), the peak wavenumber, amplitude
   // and direction, gravity, time and the tide.
   const uEyeXY = uniform(new Vector3(0, 0, 0));
-  const uWaveK = uniform(0);
-  const uWaveA = uniform(0);
-  const uWaveDir = uniform(0);
-  const uG = uniform(9.8);
+  // Six wave trains (sea.ts trainsToDraw): per train (k, a, ω, heading) and its phase; the kernel's own when sent.
+  const uTrain = Array.from({ length: MAX_TRAINS }, () => uniform(new Vector4(0, 0, 0, 0)));
+  const uTrainPh = Array.from({ length: MAX_TRAINS }, () => uniform(0));
+  // Froth (W-sea4): the share of the surface white, its reflectance, the streaks' heading; cover 0 draws none.
+  const uFoamCover = uniform(0);
+  const uFoamAlb = uniform(0);
+  const uFoamDir = uniform(0);
   const uTime = uniform(0);
   const uTide = uniform(0);
   // The liquid's own optics when the kernel sends them (W-sea2): deep-water reflectance, absorption per metre, and
@@ -182,14 +203,15 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     const site = vec2(positionWorld.x.add(uEyeXY.x), positionWorld.y.add(uEyeXY.y));
     let sx: Node<"float"> = float(0);
     let sy: Node<"float"> = float(0);
-    for (const [len, ang, share, ph] of WAVE_TRAINS) {
-      const k = uWaveK.div(len);
-      const dx = cos(uWaveDir.add(ang));
-      const dy = cos(uWaveDir.add(ang - Math.PI / 2));
+    for (let i = 0; i < MAX_TRAINS; i++) {
+      const t = uTrain[i]!;
+      const k = t.x;
+      const dx = cos(t.w);
+      const dy = cos(t.w.sub(Math.PI / 2));
       const phase = k.mul(site.x.mul(dx).add(site.y.mul(dy)));
       // A train finer than a pixel averages out: faded where its phase turns faster than once a few pixels.
       const fade = float(1).sub(smoothstep(float(0.4), float(1.5), fwidth(phase)));
-      const slope = uWaveA.mul(share).mul(k).mul(cos(phase.sub(sqrt(uG.mul(k)).mul(uTime)).add(ph))).mul(fade);
+      const slope = t.y.mul(k).mul(cos(phase.sub(t.z.mul(uTime)).add(uTrainPh[i]!))).mul(fade);
       sx = sx.add(slope.mul(dx));
       sy = sy.add(slope.mul(dy));
     }
@@ -213,7 +235,29 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     const own = uDeep.mul(vec3(1, 1, 1).sub(through)).add(floorAlb.mul(through));
     const seaAlb = select(uHasBody.greaterThan(0.5), own, alb);
     const body = seaAlb.mul(uSunRgb.mul(sunT()).mul(max(dot(nw, uSun), float(0))).add(skyLight)).div(Math.PI);
-    const water = body.mul(float(1).sub(fres)).add(mirrored.add(glint).mul(fres));
+    const clear = body.mul(float(1).sub(fres)).add(mirrored.add(glint).mul(fres));
+    // Froth (W-sea4): streaks along the wind, cells 1 m across and 6 m along it; a cell is white when its hash falls
+    // under the kernel's whitecap share, so the white area is that share on average (fudge register: where the froth
+    // lies is a picture choice; how much is the kernel's). Lit like the ground, at the froth's own reflectance.
+    const fdx = cos(uFoamDir);
+    const fdy = cos(uFoamDir.sub(Math.PI / 2));
+    const along = site.x.mul(fdx).add(site.y.mul(fdy)).div(6);
+    const across = site.y.mul(fdx).sub(site.x.mul(fdy));
+    // Each cell holds at most one soft streak, an ellipse filling FOAM_FILL of the cell on average; a cell carries one
+    // when its hash falls under cover / FOAM_FILL, so the white area is the kernel's share. The streak sits at a random
+    // spot in its cell so the pattern does not read as a grid.
+    const cell = vec2(along.floor(), across.floor());
+    const hash = fract(sin(dot(cell, vec2(12.9898, 78.233))).mul(43758.5453));
+    const jx = fract(hash.mul(17.0)).sub(0.5).mul(0.4);
+    const jy = fract(hash.mul(131.0)).sub(0.5).mul(0.4);
+    const fu = fract(along).sub(0.5).sub(jx).mul(2);
+    const fv = fract(across).sub(0.5).sub(jy).mul(2);
+    const fr = sqrt(fu.mul(fu).add(fv.mul(fv)));
+    const blob = float(1).sub(smoothstep(float(0.35), float(0.95), fr));
+    const carries = select(hash.lessThan(uFoamCover.div(FOAM_FILL)), float(1), float(0));
+    const foamy = carries.mul(blob).mul(float(1).sub(smoothstep(float(0.5), float(2), fwidth(across))));
+    const foamLit = vec3(uFoamAlb).mul(uSunRgb.mul(sunT()).mul(max(uSun.z, float(0))).add(skyLight)).div(Math.PI);
+    const water = mix(clear, foamLit, foamy);
     const lit = mix(land, water, select(wet.greaterThan(0.5), float(1), float(0)));
     // Aerial perspective: the eye is at the origin, the point at positionWorld (camera-relative).
     const v = positionWorld;
@@ -340,13 +384,12 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       uLow.value = 0;
       const sea = f.sea;
       uEyeXY.value.set(f.eye[0], f.eye[1], 0);
-      if (sea && sea.wave_m > 0 && sea.period_s > 0) {
-        const lambda = (sea.gravity_m_s2 * sea.period_s * sea.period_s) / (2 * Math.PI);
-        uWaveK.value = (2 * Math.PI) / lambda;
-        uWaveA.value = waveAmplitude(sea.wave_m);
-      } else ((uWaveK.value = 0), (uWaveA.value = 0));
-      uWaveDir.value = sea?.dir_rad ?? 0;
-      uG.value = sea?.gravity_m_s2 ?? 9.8;
+      const { trains } = trainsToDraw(sea?.optics ?? {}, sea ? standInTrains(sea.wave_m, sea.period_s, sea.dir_rad, sea.gravity_m_s2) : []);
+      trains.forEach((t, i) => (uTrain[i]!.value.set(t.k, t.a, t.w, t.dir), (uTrainPh[i]!.value = t.phase)));
+      const froth = sea?.optics ? frothToDraw(sea.optics, sea.dir_rad) : null;
+      uFoamCover.value = froth?.cover ?? 0;
+      uFoamAlb.value = froth?.albedo ?? 0;
+      uFoamDir.value = froth?.dir ?? 0;
       uTime.value = sea?.time_s ?? 0;
       uTide.value = sea?.tide_m ?? 0;
       const op = sea?.optics;

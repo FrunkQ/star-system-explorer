@@ -15,8 +15,8 @@ Only the owner thread edits this file. Logs are in `handover/packages/`.
 | R6c part 2: each ice age's spread on the globe, from the cells the kernel names at its onset (reader done; waits on proven core sending `cells` on "ice-age" events) | waiting on the kernel | packages/R6c-timelapse.md |
 | W-sea2 drawing: sea colour from the liquid's own absorption: `sea.ts` reads the agreed keys (missing ones named per step, said in the Land note), the Land screen's water body is the kernel's deep colour with the floor (tile albedo) seen through exp(−2az) of liquid, and the sky splits by exact Fresnel at the liquid's index; the landing's sea carries the numbers to watching seats. Until the kernel sends them the look is as before | done (drawing); kernel numbers pending from the climate thread | packages/W-sea2-drawing.md |
 | Parked by Alex (24 Nov 20:41, "we will come back to this"): the time-lapse world's air and oceans evolving through the frames (outgassing, oxygen built up by life); today the frames hold today's oceans and air throughout, so early Earth does not look right. Kernel side first (proven core, climate) | parked | |
-| W-sea3 drawing: waves as the kernel's wave trains (Gerstner sum), ripple detail to the kernel's cut-off | after W-sea2 | |
-| W-sea4 drawing: whitecaps and streaks of froth from the kernel's whitecap fraction | after W-sea3 | |
+| W-sea3 drawing: the Land screen sums up to six wave trains, the kernel's own when sent (so a methane sea moves as methane does), the V10k stand-in otherwise; the note says which. Ripple detail to the kernel's cut-off still to come | done (drawing); kernel trains pending | packages/W-sea2-drawing.md |
+| W-sea4 drawing: froth over the kernel's whitecap share as soft streaks along the wind (or the kernel's streak heading), at the froth's own reflectance; nothing drawn until sent | done (drawing); kernel numbers pending | packages/W-sea2-drawing.md |
 
 ## The sea contract (agreed with the climate thread, 24 Nov 2026)
 Same keys at the site (weather `report`, `data.sea`) and on the globe (`survey.climate.sea.bands[]`, one entry per
