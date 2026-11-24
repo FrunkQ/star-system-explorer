@@ -13,7 +13,8 @@ Everything drawn comes from the kernel's `read_activity` (O10): spin, spots, the
 | SG1 the glow past the edge: the eye's glare (CIE general disability glare equation) summed over the drawn disc, at the worlds' daylight exposure, brightened by flares; an angle on the screen, so the same few degrees near or far | done | packages/SG1-3.md |
 | SG2 a churning surface: each cell born, domed and fading over its own life on its own clock, drifting; a picture spanning many lives averages them (1/√N); the limb lifted by the cell under it by the kernel's scale height, so red supergiants are lumpy and the Sun is round | done | packages/SG1-3.md |
 | SG3 flares and ejections you can see: the kernel's white-light patch (area, 10,000 K) where the ejection leaves; the ejection's front travelling at its speed, its Thomson-scattered light drawn as a coronagraph shows it; never more than three flashes a second, none under reduced motion | done | packages/SG1-3.md |
-| SG4 the Body screen's StarDisc through `drawStarNow` (churn, lumps, patches, a glow ring) | next | |
+| SG4 the Body screen's star disc: the same churning cells (held at the star's present), lumpy limb and the kernel's flare patches as True; the `light` band typed as the sheet's `ViewBand` | done | packages/SG1-3.md (SG4 section) |
+| SG4b the gallery's stars through the renderer's shared True look (`true-body.ts` `trueLook`, PR 442): face and glow from `drawStarNow` | next, when PR 442 is on main | |
 | SG5 star jets and shells in True (third V3 audit, gap 8): young stars' jets and dying stars' shed shells from the light track's nebula kinds | queued | |
 | SG6 prominences at the limb and filaments on the disc in hydrogen light (nebulae design 4A), once the kernel lists them | queued (needs the light track) | |
 
