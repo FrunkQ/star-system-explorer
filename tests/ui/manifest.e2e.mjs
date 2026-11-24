@@ -84,6 +84,21 @@ try {
   await desk.locator("[data-picture-toggle]").click();
   // In play (Explore) what is aboard can change, but the ship's look cannot: amounts are open, the design is fixed.
   assert.equal(await man.locator("[data-cargo-amount]").count(), 4, "amounts can change in play");
+  // Fuel (MC4): a gauge per tank, full to start; set a level in play, then top it up.
+  await man.locator("[data-fuel=jump] [data-now]").waitFor();
+  assert.equal(await man.locator("[data-fuel]").count(), 2, "reaction mass and jump fuel");
+  const jumpNow = () => man.locator("[data-fuel=jump] [data-now]").evaluate((m) => [Number(m.dataset.now), Number(m.dataset.full)]);
+  assert.deepEqual(await jumpNow(), [19.838, 19.838]);
+  assert.equal(await man.locator("[data-fuel=jump] [data-fuel-top]").count(), 0, "full: nothing to top up");
+  await man.locator("[data-fuel=jump] [data-fuel-now]").fill("5");
+  await man.locator("[data-fuel=jump] [data-fuel-now]").press("Tab");
+  await page.waitForFunction(() => document.querySelector("[data-fuel=jump] [data-now]")?.dataset.now === "5");
+  assert.equal(await desk.locator("[data-field='construct.jump_fuel_t']").count(), 0, "the level is drawn, not listed");
+  await shot(page, "fuel-low-desk");
+  await man.locator("[data-fuel=jump] [data-fuel-top]").click();
+  await man.locator("[data-aboard-note]", { hasText: "topped up" }).waitFor();
+  await page.waitForFunction(() => document.querySelector("[data-fuel=jump] [data-now]")?.dataset.now === "19.838");
+  assert.equal(await man.locator("[data-fuel=jump] [data-fuel-top]").count(), 0);
   await desk.locator("[data-picture=plans] svg").first().waitFor();
   assert.equal(await desk.locator("[data-picture=plans] [data-remix]").count(), 0, "no remix outside Build");
   assert.equal(await desk.locator("[data-picture-file]").count(), 0, "no own picture outside Build");

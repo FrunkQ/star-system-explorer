@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { BOOKKEEPING, PICTURE_FIELDS, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { BOOKKEEPING, PICTURE_FIELDS, FUEL_FIELDS, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
   import { Aboard, Picture } from "../../manifest/src/index.ts";
@@ -56,7 +56,7 @@
   const currentTemplate = $derived(current ? templateOf(current, templates) : undefined);
   const shownFacts = $derived.by(() => {
     if (!current) return [];
-    const all = current.facts.filter((f) => f.field !== "name" && !PICTURE_FIELDS.includes(f.field) && (depth === "engine" || !BOOKKEEPING.includes(f.field)));
+    const all = current.facts.filter((f) => f.field !== "name" && !PICTURE_FIELDS.includes(f.field) && !(Object.values(FUEL_FIELDS) as string[]).includes(f.field) && (depth === "engine" || !BOOKKEEPING.includes(f.field)));
     return depth === "curious" ? all.filter((f) => f.field.startsWith("construct.")).slice(0, 4) : all;
   });
 
@@ -289,7 +289,7 @@
           {/if}
           {#if aboardOpen}
             <div use:opensFrom={() => document.querySelector("[data-aboard-toggle]")}>
-              <Aboard {ctx} construct={current} {places} />
+              <Aboard {ctx} construct={current} {places} nav={navOf(current)} />
             </div>
           {/if}
           {#if logOpen}
