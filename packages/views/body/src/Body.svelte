@@ -20,7 +20,8 @@
 </script>
 
 <script lang="ts">
-  import { globeStats, regimeWords, viewOptions, DEFAULT_VIEW, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { globeStats, regimeWords, tableLandmarks, viewOptions, DEFAULT_VIEW, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { PEN_WORDS, penOf, type Pen } from "../../../chart-grammar/src/pencil.ts";
   import { BODY_CONTROLS, GLOBE_LAT } from "./controls.ts";
   import { untrack } from "svelte";
   import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
@@ -37,6 +38,20 @@
   const ws = $derived(ctx.workspace);
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
   const size = $derived(Math.round(Math.min(640, Math.max(160, Number(params.size_px ?? 320)))));
+
+  // Pencil and ink (SV3): on the GM's Build and Run desks a world the table does not know is drawn in pencil, its globe
+  // inside a dotted ring (heard of: a thin solid one), as on the charts. Players never see pencil.
+  let pen = $state<Pen>("ink");
+  $effect(() => {
+    const a = subject?.address;
+    void ws.revision;
+    const gmDesk = ctx.session.seat.authority === "gm" && (ws.desk === "build" || ws.desk === "run");
+    pen = "ink";
+    if (!a || !gmDesk) return;
+    void tableLandmarks(ctx.session, [a]).then((m) => {
+      if (subject?.address === a) pen = penOf(m.get(a));
+    });
+  });
 
   let got = $state<{ tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null } | null>(null);
   let loading = $state(false);
@@ -463,7 +478,7 @@
     <StarDisc {ctx} {scene} address={subject.address} label={subject.label} {size} />
   {:else}
     <div class="top">
-      <div class="globe" class:hidden={shownView.band === "mag"} style:width="{size}px" style:height="{size}px">
+      <div class="globe" class:hidden={shownView.band === "mag"} class:pencil={pen === "pencil"} class:heard={pen === "heard"} style:width="{size}px" style:height="{size}px" data-pen={pen}>
         {#if loading}
           <p class="note">Building the surface of {subject.label}… (about a second)</p>
         {:else if has}
@@ -503,6 +518,7 @@
           </p>
         {/if}
       </div>
+      {#if pen !== "ink"}<p class="pennote" data-pen-note>In pencil: {PEN_WORDS[pen]}. The players' screens {pen === "pencil" ? "do not show" : "show only the name and place of"} {subject.label}.</p>{/if}
       {#if has && shownView.band !== "mag"}
         <!-- The time lapse's controls (U22): layer toggles, scrubber with event marks, Play, and the why card. -->
         <BodyTimeline {lapse} depth={ws.depth ?? "science"} label={subject.label} />
@@ -661,6 +677,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 50%;
+  }
+  /* Pencil (SV3): the shared look, a dotted ring for not known, a thin solid one for heard of. */
+  .globe.pencil {
+    outline: 1px dotted var(--sse-ink-muted);
+    outline-offset: 4px;
+  }
+  .globe.heard {
+    outline: 1px solid var(--sse-ink-muted);
+    outline-offset: 4px;
+  }
+  .pennote {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    font-style: italic;
+    color: var(--sse-ink-muted);
   }
   .surface {
     max-width: 100%;

@@ -42,6 +42,7 @@ export * from "./place.ts";
 export * from "./view-controls.ts";
 export * from "./picker.ts";
 export * from "./overlay.ts";
+export { areaShares, areasFromHoldings, insideRings, itemArea, letterArea, nearestWithin, parsecs, ringArea, traceRings, type AreasAsk } from "./areas.ts";
 export * from "./landing.ts";
 export * from "./map-controls.ts";
 export * from "./place-event.ts";
@@ -144,7 +145,7 @@ export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBran
 export type { JoinWords, SeatBrand } from "./brand.ts";
 export { FUEL_FIELDS, MANIFEST_WORDS, fuelGauges, fuelNow, tonnesWords, shipRecordOf, aboardLog, type FuelTank, type FuelGauge, type FuelShip, ABOARD, PERSON, CARGO, STATES, STATE_WORDS, STORES, entryFrom, aboard, crewAboard, living, ageNow, lifeSupportFrom, storeOf, massKg, lifeSupport, entryId, startingValues } from "./manifest.ts";
 export type { AboardEntry, AboardState, LifeSupport, LifeSupportPack, LifeSupportRate, Store, StoreDays } from "./manifest.ts";
-export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableOf, fieldLandmark, hasException, lineChange, pressedLandmark, knownOverall, knownChangedWords, eyesShow, secrecyRelevant, holdReveal } from "./known.ts";
+export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableLandmarks, tableOf, fieldLandmark, hasException, lineChange, pressedLandmark, knownOverall, knownChangedWords, eyesShow, secrecyRelevant, holdReveal } from "./known.ts";
 export type { Landmark as KnownLandmark, KnownTo, KnownAudience, KnownException, KnownScope, KnownChange, Held } from "./known.ts";
 export { difficultyLadderOf, chanceToMeet, stepTarget, gameDifficulty } from "./difficulty.ts";
 export type { DifficultyLadder, DifficultyStep, GameDifficulty } from "./difficulty.ts";

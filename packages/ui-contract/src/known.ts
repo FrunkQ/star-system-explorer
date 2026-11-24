@@ -150,3 +150,22 @@ export function holdReveal(send: () => void, opts: { hold: boolean; ms?: number;
     },
   };
 }
+
+/**
+ * What the table knows of many things at once (SV3: a chart draws each in pencil or ink), as each one's landmark for
+ * the table. Things the kernel cannot answer for (an address outside the universe) are left out, so they draw in ink.
+ * GM only, like `known_to`.
+ */
+export async function tableLandmarks(
+  session: { knownTo(address: string, field?: string, at_s?: bigint): Promise<{ ok: true; value: KnownTo } | { ok: false; code: string; message: string }> },
+  addresses: readonly string[],
+  at_s?: bigint,
+): Promise<Map<string, Landmark>> {
+  const out = new Map<string, Landmark>();
+  for (const a of [...new Set(addresses)]) {
+    const r = await session.knownTo(a, undefined, at_s);
+    const t = r.ok ? tableOf(r.value) : null;
+    if (t) out.set(a, t.landmark);
+  }
+  return out;
+}
