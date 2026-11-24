@@ -623,3 +623,92 @@ fn an_empty_record_changes_nothing() {
     assert!(actors(&ch, &addr("u:a"), t(1)).is_empty());
     assert_eq!(ch.state_at(t(1)).hash(), h);
 }
+
+/// Track MC: the base manifest pack's kinds load, and a person aboard moves
+/// from one ship to another as one dated change whose history is kept.
+#[test]
+fn the_manifest_pack_moves_people_between_ships() {
+    let pack: serde_json::Value =
+        serde_json::from_str(include_str!("../../../packs/base-manifest/pack.json")).unwrap();
+    let r = Registry::from_packs(&[(
+        "sse.base-manifest".into(),
+        pack["provides"]["other"]["record"].clone(),
+    )])
+    .unwrap();
+    let mut ch = Chronicle::new();
+    let root = addr("u:a");
+    let ada = add_actor(&mut ch, &root, None, "ada", "Ada", "person", t(0), &pubr()).unwrap();
+    let a = ada.to_string();
+    let on = |ship: &str| Some(Value::Text(ship.into()));
+    set_kept(
+        &mut ch,
+        &r,
+        &set(&a, "aboard.on", on("u:a/sys:1/ship:1"), "gm", "signed on"),
+        t(1),
+        &pubr(),
+    )
+    .unwrap();
+    set_kept(
+        &mut ch,
+        &r,
+        &set(
+            &a,
+            "aboard.state",
+            Some(Value::Text("cold_sleep".into())),
+            "gm",
+            "for the crossing",
+        ),
+        t(1),
+        &pubr(),
+    )
+    .unwrap();
+    set_kept(
+        &mut ch,
+        &r,
+        &set(&a, "aboard.on", on("u:a/sys:2/ship:7"), "gm", "transferred"),
+        t(3),
+        &pubr(),
+    )
+    .unwrap();
+    // A state the pack does not list is refused; so is a writer it does not name.
+    assert!(set_kept(
+        &mut ch,
+        &r,
+        &set(
+            &a,
+            "aboard.state",
+            Some(Value::Text("asleep".into())),
+            "gm",
+            ""
+        ),
+        t(3),
+        &pubr()
+    )
+    .is_err());
+    assert!(set_kept(
+        &mut ch,
+        &r,
+        &set(
+            &a,
+            "aboard.role",
+            Some(Value::Text("pilot".into())),
+            "effect.x",
+            ""
+        ),
+        t(3),
+        &pubr()
+    )
+    .is_err());
+    let kept = kept_at(&ch, &r, &ada, t(4));
+    let on = kept.iter().find(|k| k.kind == "aboard.on").unwrap();
+    assert_eq!(on.value, Value::Text("u:a/sys:2/ship:7".into()));
+    assert_eq!(on.history.len(), 2);
+    assert_eq!(on.history[0].reason.as_deref(), Some("signed on"));
+    // Before the transfer she was on the first ship.
+    let then = kept_at(&ch, &r, &ada, t(2));
+    assert_eq!(
+        then.iter().find(|k| k.kind == "aboard.on").unwrap().value,
+        Value::Text("u:a/sys:1/ship:1".into())
+    );
+    assert_eq!(actors(&ch, &root, t(4)).len(), 1);
+}

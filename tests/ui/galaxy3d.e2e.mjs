@@ -6,7 +6,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go } from "./nav.mjs";
+import { go, view } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -47,16 +47,16 @@ try {
   await gm.locator("[data-galaxy-band='visible']").waitFor({ timeout: 20000 });
   await shot(gm, "v9t-galaxy-true-visible");
   for (const [b, id] of [["Infrared", "infrared"], ["Ultraviolet", "ultraviolet"], ["X-ray", "xray"], ["Radio", "radio"]]) {
-    await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: b }).click();
+    await view(gm, "Band", b);
     await gm.locator(`[data-galaxy-band='${id}']`).waitFor({ timeout: 20000 });
     await shot(gm, `v9t-galaxy-true-${id}`);
   }
-  await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: "Visible" }).click();
+  await view(gm, "Band", "Visible");
   await gm.getByRole("group", { name: "Seen from" }).getByRole("button", { name: "Edge-on" }).click();
   await gm.waitForFunction(() => document.querySelector("[data-galaxy-3d]")?.getAttribute("data-seen") === "edge");
   await shot(gm, "v9t-galaxy-true-edge");
   await gm.getByRole("group", { name: "Seen from" }).getByRole("button", { name: "Above" }).click();
-  await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off" }).click();
+  await view(gm, "HUD", "Off");
   await gm.waitForFunction(() => document.querySelector("[data-galaxy-3d]")?.getAttribute("data-hud") === "off");
   await shot(gm, "v9t-galaxy-true-above-hud-off");
   // Back to Chart: the diagram, its scars and edge-on strip as before.

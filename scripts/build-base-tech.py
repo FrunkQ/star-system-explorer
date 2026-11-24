@@ -46,6 +46,8 @@ G0 = REF["g0"]
 # The international pound, exact by definition (1959); SNAP-10A's mass is given in pounds.
 LB_KG = 0.45359237
 SNAP10A_W_KG = round(500.0 / (950.0 * LB_KG), 2)
+# GPHS-RTG at start of mission (Schmidt 2009); read by a mark, an advance and REAL_CRAFT.
+GPHS_W, GPHS_KG = 292.0, 55.9
 ELEMENTS = {e["id"]: e for e in SHEET["elements"]}
 H2O = next(x for x in SHEET["substances"] if x["id"] == "h2o")
 # Hydrogen burned with oxygen, per kilogram of liquid water made (the higher
@@ -70,6 +72,10 @@ def strength_for_weight(mid):
     """A sheet material's tensile strength over its density, J/kg."""
     m = MIX[mid]
     return round(m["tensile_strength"]["v"] / m["density"]["v"], -3)
+
+
+def sheet_k(mid, key):
+    return MIX[mid][key]["v"]
 
 
 def mark(kind, v, what, src, check=None, law=None, note=None, sheet=None, **extra):
@@ -116,6 +122,14 @@ SOURCES = {
     "nasa-orbiter-tps": "NASA Facts FS-2008-02-042-KSC, Orbiter thermal protection system: reinforced carbon-carbon above 3000 F, tiles for 1,200 to 2,500 F, entry in excess of 17,000 mph",
     "pavlosky1974": "Pavlosky, J. E. and St. Leger, L. G. 1974, Apollo experience report: thermal protection subsystem, NASA TN D-7564: Avco 5026-39G at 31 lb/ft3; design lunar return 36,333 ft/s; Apollo 4 peak 425 Btu/ft2 s and total 37,522 Btu/ft2; surfaces approaching 5000 F",
     "nasa-iss-facts": "NASA, Space station facts and figures (read Nov 2026): 1,005 m3 pressurised, 388 m3 habitable, 419,725 kg, 75 to 90 kW from 8 arrays. https://www.nasa.gov/international-space-station/space-station-facts-and-figures/",
+    "sovey2001": "Sovey, J. S., Rawlin, V. K. and Patterson, M. J. 2001, Ion propulsion development projects in U.S.: Space Electric Rocket Test I to Deep Space 1, J. Propulsion and Power 17(3), 517-526: NSTAR 1900 s at 0.5 kW to 3100 s at 2.3 kW, 19 to 92 mN; flight-set masses thruster 8.2 kg, PPU 14.77 kg; 9,241 h of thrusting by 17 Feb 2001. https://ntrs.nasa.gov/api/citations/20010093217/downloads/20010093217.pdf",
+    "rayman1999": "Rayman, M. D., Varghese, P., Lehman, D. H. and Livesay, L. L. 1999, Results from the Deep Space 1 technology validation mission, IAC-99-IAA.11.2.01, Acta Astronautica 47, 475 (2000): 3180 s at 2140 W in flight; 11.4 kg of xenon gave 699.6 m/s in 1799.4 h. https://www.jpl.nasa.gov/nmp/ds1/DS1_Primary_Mission.pdf",
+    "brophy1992": "Brophy, J. R. 1992, Stationary plasma thruster evaluation in Russia, JPL Publication 92-4 (NASA-CR-192823): SPT first operated in space 1 March 1972; SPT-100 1600 s, 0.080 N, 1.35 kW, efficiency 0.50, thruster 4 kg (Table 1). https://ntrs.nasa.gov/api/citations/19930016017/downloads/19930016017.pdf",
+    "sankovic1993": "Sankovic, J. M., Hamley, J. A. and Haag, T. W. 1993, Performance evaluation of the Russian SPT-100 thruster at NASA LeRC, IEPC-93-094 (NASA TM-106401): 1610 s and 0.50 at 300 V, 4.5 A. https://ntrs.nasa.gov/api/citations/19940019157/downloads/19940019157.pdf",
+    "curran-byers1994": "Curran, F. M. and Byers, D. C. 1994, New developments and research findings: NASA hydrazine arcjets, NASA TM-106695 (AIAA-94-2463): kW-class arcjets operational on Telstar 401 (launched December 1993), a nominal mission average of 500 s at a 1.4 kW system power level. https://ntrs.nasa.gov/api/citations/19950004443/downloads/19950004443.pdf",
+    "jaxa-ikaros": "JAXA IKAROS Demonstration Team (JSPEC), Introduction of Small Solar Power Sail Demonstrator IKAROS (press kit, 2010): square sail 14 m a side, 7.5 micrometre aluminised polyimide, membrane 15 kg with 2 kg of tip masses, 310 kg at launch; Tsuda et al. 2013 (J. Space Tech. Sci. 27, 1_79) give 200 m2; eoPortal: 100 m/s from sunlight within half a year. https://global.jaxa.jp/countdown/f17/pdf/presskit_ikaros_e.pdf",
+    "gwin-mee1959": "Gwin, R. and Mee, W. T. 1959, Critical assemblies of uranium metal, Y-1248, Union Carbide Nuclear Company, Oak Ridge Y-12 Plant, Table I: bare sphere of 93 to 94% U-235 metal (about 18.5 g/cm3), critical at 53.9 kg. https://www.osti.gov/servlets/purl/4246875",
+    "airy1835": "Airy, G. B. 1835, On the diffraction of an object-glass with circular aperture, Trans. Cambridge Phil. Soc. 5, 283: the first dark ring at 1.22 wavelengths over the aperture",
     "sheet": "the master data sheet (pack base-reference): the value is worked out from its rows",
     "law": "a law of physics, named on the mark",
 }
@@ -145,6 +159,7 @@ FIGURES = [
      "reads": "ship exhaust_km_s (sse-nav Ship)",
      "marks": [mark("built", isp_km_s(465.5), "RL10B-2 hydrogen-oxygen engine, 465.5 s", "l3harris-rl10"),
                mark("built", isp_km_s(875.0), "Pewee 1 nuclear thermal reactor, about 875 s (ground test, never flown)", "nasem2021"),
+               mark("built", isp_km_s(3100.0), "NSTAR ion thruster on Deep Space 1, 3100 s at 2.3 kW", "sovey2001"),
                mark("allowed", isp_km_s(35435.0), "D-He3 spherical torus fusion ship, 35,435 s", "williams2005"),
                mark("allowed", isp_km_s(77000.0), "D-He3 magnetised target fusion ship, 77,000 s", "adams2003"),
                mark("ceiling", HYDROLOX_EXHAUST_CEILING_KM_S, "hydrogen and oxygen: every joule of the fuel in the jet", "sheet", law="conservation of energy",
@@ -165,6 +180,7 @@ FIGURES = [
     {"id": "plant_w_per_kg", "limit": "energy", "plain": "power per kilogram of power plant and drive", "unit": "W kg-1", "better": "higher",
      "reads": "FT2",
      "marks": [mark("built", SNAP10A_W_KG, "SNAP-10A, the only reactor the US flew: 500 W for under 950 lb", "doe-snap"),
+               mark("built", round(GPHS_W / GPHS_KG, 2), "GPHS-RTG radioisotope generator, 292 W for 55.9 kg", "schmidt2009"),
                mark("allowed", round(100e3 / 3000.0), "SP-100 space reactor design, 100 kWe for about 3,000 kg", "sp100"),
                mark("allowed", 8620.0, "D-He3 spherical torus fusion ship, drive and plant together", "williams2005")]},
     # 4 Crews break under hard acceleration
@@ -190,6 +206,15 @@ FIGURES = [
                mark("built", strength_for_weight("pbo-fibre"), "PBO fibre", "sheet", sheet="mixtures/pbo-fibre"),
                mark("allowed", strength_for_weight("carbon-nanotube"), "carbon nanotube, the best measured shell; not made at length", "sheet", sheet="mixtures/carbon-nanotube"),
                mark("ceiling", 7.7e7, "an ideal nanotube shell, about 100 GPa over 1,300 kg/m3: the carbon bond itself", "peng2008", check="unverified", law="chemical bond energy")]},
+    # 7, second figure (RK2): materials only take so much heat. A hot-gas
+    # rocket's exhaust speed goes as the root of temperature over gas weight,
+    # so this caps every nuclear thermal engine, nozzle and radiator.
+    {"id": "working_k", "limit": "materials", "plain": "hottest a working part can run", "unit": "K", "better": "higher",
+     "reads": "FT2 (hot-gas exhaust from temperature; nozzle, fuel, radiator and heat shield limits)",
+     "marks": [mark("built", sheet_k("inconel-718", "service_limit_k"), "nickel superalloy (Inconel 718): turbopumps and engine structure", "sheet", sheet="mixtures/inconel-718"),
+               mark("built", sheet_k("tungsten", "service_limit_k"), "tungsten heat shields in vacuum furnaces", "sheet", sheet="mixtures/tungsten"),
+               mark("ceiling", sheet_k("uo2-fuel", "melting_point_k"), "uranium dioxide fuel melts", "sheet", sheet="mixtures/uo2-fuel", law="melting: past it the solid is not one", **{"for": "uo2-fuel"}),
+               mark("ceiling", sheet_k("tungsten", "melting_point_k"), "tungsten melts, the highest melting metal", "sheet", sheet="mixtures/tungsten", law="melting: past it the solid is not one", **{"for": "tungsten"})]},
     # 8 Radiation gets through
     {"id": "shield_g_cm2", "limit": "radiation", "plain": "shielding round the crew", "unit": "g cm-2", "better": "lower",
      "reads": "ship shield_g_cm2 (sse-nav Ship)",
@@ -207,6 +232,11 @@ FIGURES = [
      "marks": [mark("built", 0.98, "International Space Station with its brine processor", "nasa-water2023"),
                mark("ceiling", 1.0, "all of it", "law", law="conservation of mass")]},
     # 10 Anything warm can be seen
+    # 11 Beams spread (RK2): one figure for beamed power, laser sails, links,
+    # sensors and telescopes; the Equation is the same in each.
+    {"id": "spread_over_diffraction", "limit": "beams", "plain": "how much wider a beam spreads than diffraction allows", "unit": "1", "better": "lower",
+     "reads": "FT2 (beamed power, laser sails, link rates, sensor and telescope sharpness)",
+     "marks": [mark("ceiling", 1.0, "a perfect beam: it still spreads at 1.22 wavelengths over the aperture", "airy1835", law="diffraction")]},
     {"id": "light_hidden", "limit": "seen", "plain": "share of a construct's light that goes nowhere", "unit": "1", "better": "higher",
      "reads": "FT2",
      "marks": [mark("ceiling", 0.0, "a cloak that does not say where the light goes", "law", law="conservation of energy; second law of thermodynamics")]},
@@ -223,6 +253,7 @@ LIMITS = [
     ("radiation", 8, "Radiation gets through", "Stopping of charged particles and gammas by mass in the way", "mass round the quarters, storm shelters, close passes", "force screens"),
     ("supplies", 9, "Crews need air, food and time", "Mass balance of a closed habitat; ageing", "habitat and stores size, greenhouses, who is awake", "stasis with no upkeep"),
     ("seen", 10, "Anything warm can be seen", "Every body radiates at its temperature", "detection range by band, hiding", "cloaks, which must say where the light goes"),
+    ("beams", 11, "Beams spread", "Diffraction: a beam's spot grows as wavelength times distance over aperture", "beamed power, laser sails, link rates, how sharp a telescope or sensor sees", "a beam that stays narrow at any distance"),
 ]
 
 LADDER = {
@@ -308,14 +339,16 @@ FICTIONAL_WHERE = [
 ADVANCES = [
     {"id": "steel-wire", "name": "Steel cable", "level": 1, "sets": {"strength_for_weight": strength_for_weight("steel-wire")}, "family": "material", "part": "structure"},
     {"id": "chemical-rocket", "name": "Hydrogen-oxygen rocket", "level": 3, "sets": {"exhaust_km_s": isp_km_s(465.5), "waste_per_jet": 0.0}, "fuel": "hydrogen-oxygen", "family": "near-ceiling", "fixed": ["waste_per_jet"], "part": "drive"},
-    {"id": "fission-reactor", "name": "Fission reactor", "level": 3, "sets": {"plant_w_per_kg": SNAP10A_W_KG}, "family": "engine", "part": "reactor"},
+    {"id": "fission-reactor", "name": "Fission reactor", "level": 3, "sets": {"plant_w_per_kg": SNAP10A_W_KG}, "family": "engine", "part": "reactor",
+     "least_size": {"v": 53.9, "unit": "kg", "what": "fissile metal: a bare sphere of 93 to 94% U-235 goes critical at 53.9 kg; a reflector lowers it", "src": "gwin-mee1959", "check": "unverified"}},
     {"id": "aramid", "name": "Aramid fibre", "level": 3, "sets": {"strength_for_weight": strength_for_weight("aramid")}, "family": "material", "part": "structure"},
     {"id": "pumped-radiator", "name": "Pumped ammonia radiators", "level": 3, "sets": {"radiator_k": 276.0}, "family": "engine", "part": "radiator"},
     {"id": "nuclear-thermal", "name": "Nuclear thermal rocket", "level": 4, "sets": {"exhaust_km_s": isp_km_s(875.0), "waste_per_jet": 0.0}, "family": "near-ceiling", "fixed": ["waste_per_jet"], "part": "drive",
      "note": "ground-tested 1959 to 1972, never flown: built at level 3 on the bench, home here as a flying part"},
     {"id": "pbo-fibre", "name": "PBO fibre", "level": 4, "sets": {"strength_for_weight": strength_for_weight("pbo-fibre")}, "family": "material", "part": "structure"},
     {"id": "water-recovery", "name": "Water recovery with brine processing", "level": 4, "sets": {"water_recycled": 0.98}, "family": "near-ceiling", "part": "stores"},
-    {"id": "light-sail", "name": "Light sail or photon rocket", "level": 4, "sets": {"unthrown_n_per_w": 1.0 / C}, "family": "plain-mass", "fixed": ["unthrown_n_per_w"], "part": "drive"},
+    {"id": "light-sail", "name": "Light sail or photon rocket", "level": 4, "sets": {"unthrown_n_per_w": 1.0 / C}, "family": "plain-mass", "fixed": ["unthrown_n_per_w"], "part": "drive",
+     "flown": {"what": "IKAROS (2010): a 200 m2 sail of 7.5 micrometre film, 15 kg, gained 100 m/s from sunlight in half a year", "src": "jaxa-ikaros"}},
     {"id": "fusion-torch", "name": "Fusion torch (D-He3)", "level": 5, "sets": {"exhaust_km_s": isp_km_s(35435.0), "plant_w_per_kg": 8620.0, "fuel_j_per_kg": DHE3_J_KG, "waste_per_jet": 0.1, "waste_heat_k": 1500.0, "radiator_k": 1500.0}, "family": "engine", "fixed": ["fuel_j_per_kg"], "part": "drive"},
     {"id": "spin-habitat", "name": "Comfortable spin habitat", "level": 5, "sets": {"spin_rpm": 4.0}, "family": "plain-mass", "fixed": ["spin_rpm"], "part": "spin ring",
      "note": "comfort is the crew's physiology, not the ring's maturity"},
@@ -383,7 +416,7 @@ REAL_CRAFT = [
      "quantities": {"plant_w": q(158.0, "W", "electric, start of mission"), "mass_kg": q(37.7, "kg")},
      "tests": ["plant sizing"], "src": ["schmidt2009"]},
     {"id": "gphs-rtg", "name": "GPHS radioisotope generator (Galileo, Cassini, New Horizons)", "flew": "1989 to now",
-     "quantities": {"plant_w": q(292.0, "W", "electric, start of mission; New Horizons' own unit made about 213 to 250 W"), "mass_kg": q(55.9, "kg")},
+     "quantities": {"plant_w": q(GPHS_W, "W", "electric, start of mission; New Horizons' own unit made about 213 to 250 W"), "mass_kg": q(GPHS_KG, "kg")},
      "tests": ["plant sizing"], "src": ["schmidt2009"]},
     {"id": "juno-arrays", "name": "Juno's solar arrays", "flew": "2011 to now",
      "quantities": {"area_m2": q(60.0, "m2", "more than"), "power_1au_w": q(14000.0, "W"), "power_jupiter_w": q(400.0, "W")},
@@ -421,6 +454,22 @@ def mark_of(fig, v):
     return "allowed"
 
 
+# RK2: real, flown advances for the families that have flown (Atomic Rockets
+# plan section 7). Each says what flew.
+ADVANCES += [
+    {"id": "hall-thruster", "name": "Hall thruster", "level": 3, "sets": {"exhaust_km_s": isp_km_s(1600.0)}, "family": "engine", "part": "electric drive",
+     "flown": {"what": "stationary plasma thrusters, first run in space on 1 March 1972; the SPT-100 gives 1600 s and 80 mN from 1.35 kW for a 4 kg thruster", "src": "brophy1992", "also": ["sankovic1993"]},
+     "note": "electric: thrust is set by the power plant; exhaust speed is the figure the advance pushes"},
+    {"id": "arcjet", "name": "Hydrazine arcjet", "level": 3, "sets": {"exhaust_km_s": isp_km_s(500.0)}, "family": "engine", "part": "electric drive",
+     "flown": {"what": "kW-class arcjets on Telstar 401 (launched December 1993): a nominal mission average of 500 s at 1.4 kW", "src": "curran-byers1994"}},
+    {"id": "ion-thruster", "name": "Gridded ion thruster", "level": 3, "sets": {"exhaust_km_s": isp_km_s(3100.0)}, "family": "engine", "part": "electric drive",
+     "flown": {"what": "NSTAR on Deep Space 1 (1998): 3100 s and 92 mN at 2.3 kW, 9,241 hours of thrusting by February 2001", "src": "sovey2001", "also": ["rayman1999"]}},
+    {"id": "rtg", "name": "Radioisotope generator", "level": 3,
+     "sets": {"plant_w_per_kg": round(GPHS_W / GPHS_KG, 2)}, "family": "engine", "part": "power plant",
+     "flown": {"what": "GPHS-RTG (Galileo 1989, Ulysses, Cassini, New Horizons): 292 W for 55.9 kg", "src": "schmidt2009"}},
+]
+
+
 def build():
     figs = {f["id"]: f for f in FIGURES}
     limits = []
@@ -447,7 +496,7 @@ def build():
 def validate(pack):
     t = pack["provides"]["other"]["tech"]
     lids = {lim["id"] for lim in t["limits"]}
-    assert len(t["limits"]) == 10, "ten starting limits"
+    assert len(t["limits"]) == 11, "ten starting limits and beams spread (RK2)"
     fids = set()
     for f in t["figures"]:
         assert f["limit"] in lids, f["id"]
@@ -499,6 +548,14 @@ def validate(pack):
         for k in a.get("fixed", []):
             assert k in a["sets"], (a["id"], k)
         assert a["mark"] != "fictional", (a["id"], "the base pack holds no fiction")
+        if a["family"] == "least-size":
+            assert "least_size" in a, (a["id"], "a least-size device states its floor")
+        if "least_size" in a:
+            ls = a["least_size"]
+            assert ls["v"] > 0 and ls["unit"] and ls["src"] in t["sources"], a["id"]
+        if "flown" in a:
+            assert a["flown"]["src"] in t["sources"] and all(x in t["sources"] for x in a["flown"].get("also", [])), a["id"]
+            assert a["mark"] == "built", (a["id"], "what flew is built")
 
 
 def main():

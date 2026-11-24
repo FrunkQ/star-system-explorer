@@ -40,6 +40,9 @@ pub const DECLARED: &[(&str, Reach)] = &[
     ("sse.planet.escape_velocity", Reach::Follows(&["G"])),
     ("sse.tides.eccentricity_heating", Reach::Follows(&["G"])),
     ("sse.tides.locking_time", Reach::Follows(&["G"])),
+    ("sse.tides.ocean_range", Reach::Follows(&[])),
+    ("sse.tides.period", Reach::Follows(&[])),
+    ("sse.ocean.wind_waves", Reach::Follows(&[])),
     ("sse.climate.insolation", Reach::Follows(&[])),
     (
         "sse.climate.equilibrium_temperature",

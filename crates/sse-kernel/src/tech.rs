@@ -27,7 +27,8 @@ use std::collections::BTreeMap;
 pub struct Mark {
     pub mark: String,
     pub v: f64,
-    /// A mark for one fuel only (an advance's or design's `fuel`).
+    /// A mark for one fuel or material only (`"for"` in the pack): it applies
+    /// only to a part or advance burning or made of it (its `fuel`).
     #[serde(rename = "for", skip_serializing_if = "Option::is_none")]
     pub for_fuel: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -543,7 +544,15 @@ pub fn reading(
                 .values()
                 .filter(|a| a.sets.get(fid).is_some_and(|&v| f.meets(v, need)))
                 .collect();
-            meets.sort_by(|a, b| a.level.cmp(&b.level).then(a.id.cmp(&b.id)));
+            // An advance made for this kind of part first (a "drive" need is
+            // not met by an "electric drive", which also needs a power plant),
+            // then the lowest level, then by id.
+            meets.sort_by(|a, b| {
+                (a.part != p.part)
+                    .cmp(&(b.part != p.part))
+                    .then(a.level.cmp(&b.level))
+                    .then(a.id.cmp(&b.id))
+            });
             let held = meets.iter().find(|a| tech.holds(of, a));
             let by = held.or(meets.first()).copied();
             let fuel = p.fuel.as_deref().or(by.and_then(|a| a.fuel.as_deref()));

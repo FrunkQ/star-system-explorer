@@ -67,6 +67,9 @@ export interface WhatIf {
 
 export interface Workspace {
   selection: string | null;
+  /** The party's ship (party.ts): Voyages starts where it is, Land lands it. Kept with the campaign. */
+  party?: import("./party.ts").PartyShip | null;
+  setParty?(p: import("./party.ts").PartyShip | null): void;
   /** Where the GM put each pack overlay (overlay.ts), by overlay id; kept with the campaign. */
   overlay_anchors?: Record<string, import("./overlay.ts").OverlayAnchor>;
   /** Place an overlay (null takes it off the map). */
@@ -94,6 +97,14 @@ export interface Workspace {
   players_online?: number;
   /** True once the campaign has been shared with players: secrecy has become relevant (SV2). */
   shared?: boolean;
+  /**
+   * The Land screen's live landing (renderer's `LandingShow`), a few times a second at most. The shell keeps the
+   * latest; "Send this view" from the Land screen sends it to the table, and while the table watches it each update
+   * goes on to them. Nothing reaches the table until the GM sends.
+   */
+  sendLanding?: (show: Json) => void;
+  /** A site a link asked to land at (`~surface?site=lat,lon`): the Land screen takes it once its world is read, then clears it. */
+  landing_site?: { body: string; lat_deg: number; lon_deg: number } | null;
   /** Values applied by intents in this session, keyed "address#field", shown until scenes come from the kernel. */
   applied: Record<string, { value: Json; display: string; event_id: string }>;
   /** Bumped whenever an intent is applied, so views can refresh history. */
@@ -171,6 +182,10 @@ export interface PlayerContext {
   send?(intent: import("./intent.ts").Intent): Promise<unknown>;
   /** Marks for player subjects, from the screen's symbology under its theme (absent: views draw plain discs). */
   mark?(subject: import("./player-scene.ts").PlayerSubject): Mark;
+  /** The landing the table is watching now (landing.ts `LandingShow`, as the GM sent it), or null. Read it in an effect: it changes. */
+  landing?(): import("./landing.ts").LandingShow | null;
+  /** This seat's own reads of that landing's world (granted for it alone). Absent on a sealed seat, which has no kernel. */
+  ground?: import("./landing.ts").LandingGround;
 }
 
 export interface ViewHandle<S = SystemScene> {

@@ -7,7 +7,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { depth, go, more } from "./nav.mjs";
+import { depth, go, more, view } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -19,7 +19,7 @@ const base = `http://localhost:${port}/`;
 const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
 await new Promise((r) => setTimeout(r, 400));
 const magBand = async (page) => {
-  if ((await page.locator("[data-view-controls]").getAttribute("data-band")) !== "mag") await page.getByRole("group", { name: "Band" }).getByRole("button", { name: "Mag", exact: true }).click();
+  if ((await page.locator("[data-view-controls]").getAttribute("data-band")) !== "mag") await view(page, "Band", "Mag");
 };
 const shot = async (page, n) => {
   await page.waitForTimeout(500);

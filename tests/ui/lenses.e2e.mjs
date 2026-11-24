@@ -49,7 +49,7 @@ try {
     // Lenses choose the fields; Science shows every one of them (Curious leads with four, in words).
     await depth(gm, "Science");
     const h0 = await hash();
-    const kicker = await gm.locator(".kicker").innerText();
+    const kicker = await gm.locator(".kicker").textContent();
 
     await gm.locator(".area-chart [role=button]", { hasText: TARN }).first().click();
     const tarn = gm.locator(".area-chart [role=button][aria-pressed=true]");
@@ -62,7 +62,7 @@ try {
     await choose("basic");
     assert.deepEqual(await fields(), ["Orbit", "Mass", "Surface"], "Basic: three headline facts");
     assert.match(await gm.locator(".area-chart [role=button][aria-pressed=true]").getAttribute("aria-label"), /^Tarn/, "selection kept");
-    assert.equal(await gm.locator(".kicker").innerText(), kicker, "time kept");
+    assert.equal(await gm.locator(".kicker").textContent(), kicker, "time kept");
     assert.equal(await hash(), h0, "switching lens leaves the state hash unchanged");
     assert.equal(await gm.locator(".area-chart text.dist").count(), 0, "Basic draws no distance rings");
     await shot(gm, "u9-basic");
@@ -71,7 +71,12 @@ try {
     await choose("running");
     assert.equal(await gm.getByRole("button", { name: "Undo" }).count(), 0, "Running has no undo tool");
     await gm.waitForSelector(".area-chart text.knownv");
-    assert.ok((await gm.locator(".area-chart text.knownv").evaluateAll((t) => t.map((x) => x.textContent))).some((t) => /long range|scanned/.test(t)), "what the table knows is marked");
+    const kv = await gm.locator(".area-chart text.knownv").evaluateAll((t) => t.map((x) => x.textContent));
+    assert.ok(kv.some((t) => /long range|scanned|rumour/.test(t)), `what the table knows is marked: ${JSON.stringify(kv)}`);
+    // The usual way the table knows bodies here is said once, in the legend; a name carries words only where it differs.
+    assert.match(await gm.locator("[data-usual-known]").innerText(), /The table knows these at (long range|scanned)/);
+    const usual = (await gm.locator("[data-usual-known]").getAttribute("data-usual-known")).replace(/-/g, " ");
+    assert.ok(!kv.includes(usual), `no "${usual}" under every name`);
     assert.equal(await hash(), h0);
     await shot(gm, "u9-running");
 

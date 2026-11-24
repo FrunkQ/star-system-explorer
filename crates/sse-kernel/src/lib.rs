@@ -8,6 +8,7 @@
 mod adopt;
 mod caves;
 mod clock;
+mod composition;
 pub mod contract;
 mod cosmos;
 mod descent;
@@ -30,6 +31,7 @@ mod names_tests;
 mod nav;
 mod orbits;
 pub mod protocol;
+mod sea;
 mod sky;
 #[cfg(test)]
 mod sol_tests;
@@ -722,7 +724,15 @@ impl Kernel {
         system: &str,
         body: &str,
         at_s: Option<i64>,
-    ) -> Result<(serde_json::Value, f64), Response> {
+    ) -> Result<
+        (
+            serde_json::Value,
+            f64,
+            sse_surface::Body,
+            Vec<sse_climate::forcing::MoonPull>,
+        ),
+        Response,
+    > {
         let a: Address = system
             .parse()
             .map_err(|e| err("bad_address", format!("{e}")))?;
@@ -746,14 +756,17 @@ impl Kernel {
         let w = adopt::worlds_at(&u.chronicle, &a, at_s, u.runs.get(system), &s)?;
         let b = w
             .bodies
-            .into_iter()
+            .iter()
             .find(|b| b.address.to_string() == body)
+            .cloned()
             .ok_or_else(|| {
                 err(
                     "no_surface_body",
                     format!("{body} is not a surface body of {system}"),
                 )
             })?;
+        // Its moons, for the tides a landing site reads.
+        let (_, moons) = ice_ages::orbit_inputs(&s.climate, &u.seed, &w.bodies, &b);
         let env = sse_surface::envelope(&s, &b);
         // The epoch the survey reads the body at, so both keep one key.
         let epoch_gyr = (b.age_gyr + w.shift_gyr).max(0.0);
@@ -781,7 +794,12 @@ impl Kernel {
             }
         };
         let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &x);
-        Ok((serde_json::to_value(&c).expect("plain data"), epoch_myr))
+        Ok((
+            serde_json::to_value(&c).expect("plain data"),
+            epoch_myr,
+            b,
+            moons,
+        ))
     }
 
     /// Handle one JSON request; always returns one JSON response.
@@ -2861,11 +2879,13 @@ impl Kernel {
                 block,
             } => {
                 let mut epoch_myr = 0.0;
+                let mut raisers = None;
                 let conditions = match (conditions, system, body) {
                     (Some(c), _, _) => Some(c),
                     (None, Some(system), Some(body)) => {
-                        let (c, e) = self.body_conditions(&system, &body, at_s)?;
+                        let (c, e, b, moons) = self.body_conditions(&system, &body, at_s)?;
                         epoch_myr = e;
+                        raisers = Some((b, moons));
                         Some(c)
                     }
                     (None, Some(_), None) | (None, None, Some(_)) => {
@@ -2890,6 +2910,7 @@ impl Kernel {
                         sources,
                         block,
                         epoch_myr,
+                        raisers,
                     },
                     &mut self.climates,
                 )?
@@ -2964,6 +2985,41 @@ impl Kernel {
                 fields::read_system(
                     &u.chronicle,
                     &a,
+                    at_s,
+                    u.runs.get(&system),
+                    &self.observe.reference,
+                )?
+            }
+            Request::ReadComposition {
+                system,
+                body,
+                level,
+                at_s,
+            } => {
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                if !u.root.contains(&a) {
+                    return Err(err(
+                        "bad_address",
+                        format!("{a} is not in universe {}", u.root),
+                    ));
+                }
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                composition::read(
+                    &u.chronicle,
+                    &a,
+                    body.as_deref(),
+                    level.as_deref(),
                     at_s,
                     u.runs.get(&system),
                     &self.observe.reference,
@@ -3504,6 +3560,7 @@ impl Kernel {
                             tiles: &tiles,
                             quick,
                             limit,
+                            reference: &self.observe.reference,
                         },
                         &mut self.surveys,
                     )?,
@@ -3541,6 +3598,7 @@ impl Kernel {
                                 tiles: &tiles,
                                 quick,
                                 limit,
+                                reference: &self.observe.reference,
                             },
                             &mut self.surveys,
                         )?
