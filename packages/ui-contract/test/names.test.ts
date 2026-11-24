@@ -82,3 +82,37 @@ test("rename and set_naming are GM intents that become the kernel's own requests
   assert.equal(decide(gmSeat(), r).action, "apply");
   assert.equal(decide({ ...tableSeat(), may_send: ["rename"] }, r).action, "ask_gm", "a player's rename goes to the GM");
 });
+
+test("layer choice in lenses: a lens names a layer, the chart's labels follow it, nothing else changes", async () => {
+  const { chartNameLayers, namesInLayer, relabel } = await import("../src/names.ts");
+  const { checkLens, saved, SHIPPED_LENSES } = await import("../src/lens.ts");
+  assert.deepEqual(
+    chartNameLayers().map((l) => l.id),
+    ["", "designation", "local"],
+  );
+  assert.ok(chartNameLayers([{ layer: "common" }, { layer: "traveller" }]).some((l) => l.id === "traveller"));
+  const lens = { ...SHIPPED_LENSES[0]!, id: "mine.survey", names: "designation" };
+  assert.deepEqual(checkLens(lens), []);
+  assert.equal(saved(lens).names, "designation", "the layer is kept when saved");
+  assert.equal(saved({ ...lens, names: undefined }).names, undefined);
+  assert.ok(checkLens({ ...lens, names: "Not A Layer" }).length);
+  const asked: string[] = [];
+  const session = {
+    readNames: async (a: string) => {
+      asked.push(a);
+      return a.endsWith("1") ? { ok: true as const, value: { address: a, kind: "planet", names: [{ layer: "designation", text: "KS 1 b", source: "drawn" as const }] } } : { ok: false as const, code: "x", message: "no" };
+    },
+  };
+  assert.equal((await namesInLayer(session, ["a/1", "a/2"], "common")).size, 0, "common needs no reading");
+  assert.deepEqual(asked, []);
+  const m = await namesInLayer(session, ["a/1", "a/2"], "designation");
+  assert.deepEqual([...m], [["a/1", "KS 1 b"]]);
+  const sc = { subjects: [{ address: "a/1", label: "Tarn", facts: [1] }, { address: "a/2", label: "Ember", facts: [2] }] };
+  const out = relabel(sc, m);
+  assert.deepEqual(
+    out.subjects.map((x) => x.label),
+    ["KS 1 b", "Ember"],
+  );
+  assert.equal(out.subjects[0]!.facts, sc.subjects[0]!.facts, "only the label changes");
+  assert.equal(relabel(sc, new Map()), sc);
+});

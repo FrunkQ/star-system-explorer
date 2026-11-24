@@ -26,7 +26,7 @@
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
   import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
-  import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
+  import { listedTitle, namesInLayer, relabel, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, baseBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
@@ -151,8 +151,15 @@
   let landingAwaited = false;
   const here = (): Shown => {
     landingAwaited = ws.screen === "surface" && !lastLanding;
-    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+    const focus = ws.selection ? { focus: ws.selection } : {};
+    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding, ...focus } : { scope: scene.system, title: scene.title, ...focus };
   };
+  // Driving a read-only screen (PB3b): as the GM moves, the screen follows. Never while on the Switchboard itself.
+  $effect(() => {
+    if (!share?.state.board.driving || ws.screen === "switchboard") return;
+    const live = here();
+    untrack(() => share?.follow(live));
+  });
   // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
   let kickerW = $state(999);
 
@@ -205,9 +212,15 @@
     if (v) toWorld(v);
   }
   // Bookmarks (PB2b): where the GM is and how they look, and back again exactly as it was left.
-  const whereabouts = (): Whereabouts => ({ scope: scene.system, now_yr: ws.now_yr, instrument: ws.screen, scale: railScale, ...(ws.view ? { view: ws.view } : {}), selected: ws.selection });
+  // The instrument a bookmark keeps: the Switchboard is where bookmarks are used, never where they point.
+  let lastInstrument = "system";
+  $effect(() => {
+    if (ws.screen !== "switchboard") lastInstrument = ws.screen;
+  });
+  const instrumentNow = () => (ws.screen === "switchboard" ? lastInstrument : ws.screen);
+  const whereabouts = (): Whereabouts => ({ scope: scene.system, now_yr: ws.now_yr, instrument: instrumentNow(), scale: railScale, ...(ws.view ? { view: ws.view } : {}), selected: ws.selection });
   function markHere(): Bookmark {
-    const words = SCREENS[ws.screen]?.label ?? ws.screen;
+    const words = SCREENS[instrumentNow()]?.label ?? instrumentNow();
     return makeBookmark(ws.bookmarks ?? [], whereabouts(), railScale === "world" || railScale === "system" ? (selName ?? scene.title) : scene.title, String(words));
   }
   ws.markHere = markHere;
@@ -698,7 +711,19 @@
     s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
   });
   const timed = $derived(withPhases(scene, phases));
-  const shown = $derived(ahead && ahead.snapshots[aheadAt] ? sceneAt(timed, ahead, ahead.snapshots[aheadAt]!) : timed);
+  // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
+  let layerLabels = $state.raw<Map<string, string>>(new Map());
+  $effect(() => {
+    void ws.revision;
+    const layer = lens.names ?? "";
+    const s = session;
+    const addrs = scene.subjects.map((x) => x.address);
+    if (!s || !layer || layer === "common") return void (layerLabels = new Map());
+    void namesInLayer(s, addrs, layer).then((m) => {
+      if ((lens.names ?? "") === layer) layerLabels = m;
+    });
+  });
+  const shown = $derived(relabel(ahead && ahead.snapshots[aheadAt] ? sceneAt(timed, ahead, ahead.snapshots[aheadAt]!) : timed, layerLabels));
   const lit = $derived(describeLight(litFromSystem(shown)));
   const lightNames = $derived(new Map(shown.subjects.map((x) => [x.address, x.label])));
   const lightColours = $derived.by(() => {
