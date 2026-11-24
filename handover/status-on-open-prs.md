@@ -1,29 +1,191 @@
-# Status rows that exist only on open PR branches (copied 24 Nov 2026 17:15 UTC)
+# Status files that exist only on open PR branches (copied 24 Nov 2026 18:15 UTC)
 
-These are the owner threads' own status files as they stand on open PR branches, copied here so they survive if
-the PRs are still open at the account move. Once a PR below merges, its file in `handover/status/` is the truth and
-the copy here is stale; delete this file when all three have merged.
+Each is the owner thread's own status file as it stands on an open PR branch, copied here so it survives if the PR
+is still open at the account move. Once that PR merges, the file in `handover/status/` is the truth and the copy
+here is stale. Rows changed on open PRs for files that already exist on main are not copied; read the PR.
 
 ---
 
-## `handover/status/run-desk.md` from PR 421 (branch `claude/project-thread-n8ko07`)
+## `handover/status/true-surface.md` from PR 449 (branch `claude/project-thread-3jxtpq`)
 
-### Status: Run desk and players' side
+### Status: True looks like the real thing (surfaces and small bodies)
 
-Owner thread: "Build Run desk playbook and players' side" (from 24 Nov 2026, taken over from the chart room). Covers: the players' page (packages/shell/src/Players.svelte, players.ts, documents/players.*.screen.json), the table's part of the Run desk (packages/shell/src/run/: TableStatus, SeatsPanel, ArrivalSlip), and from design the Playbook and Switchboard. Shared seams changed only with a note to the chart room: ui-contract seat.ts `Shown`, p2p host state (`shown`, `party`), `ws.sendLanding`. Tests owned: table.e2e, landing-table.e2e, party.e2e, players.e2e.
+Owner thread: "Build plumes, frosts and small bodies". Covers the third V3 audit's items 4, 5, 6 and 10 (R9 to R12, R15, R16, R18, R32, R33): plumes above the limb, tholins and coloured frosts, hot things glowing in Visible, small bodies and comets, lava tube openings on the ground.
 
-Only the owner thread edits this file. Earlier rows for this area (What the table is shown, adopted systems reach players, the table watches a landing, players see the party's ship, seat rows first cut) stay in `status/chart-room.md`.
+Only the owner thread edits this file. Files agreed on 24 Nov: `crates/sse-surface/src/plumes.rs`, a later `shapes.rs`, the tholin and frost cover in `cover.rs` (with "Build SSE4 proven core"); new files `packages/renderer/src/plumes.ts`, `ices.ts`, `hot-glow.ts`, `small-bodies.ts` and their GpuItem fields, filled in the renderer's `trueLook` (with "Build photoreal renderer"). The frost and tholin pass runs after the ground and before "Build giant bands, clouds and hazes"'s air layer. Material colours only through the data sheet's Look up (MP33 titan-tholin, MP34 SO2, sulphur, N2 and CH4 ice, CO2 frost).
 
 | Package | State | Log |
 |---|---|---|
-| RD1 reveal on arrival and a landing sent too soon (landing run-through gap 6; landing-table race): when the party's ship comes to a world the table does not fully know, the table's line offers "Beowulf is at Mars. Tell the table about it?"; one press sends the ordinary `set_known` (audience everyone, landmark known, at the campaign's now) with Undo (`undo_known`) and "Not now". Logic in ui-contract arrival.ts (`arrivalOffer`, `arrivalReveal`). A "Send this view" pressed on Land before the Land screen's first landing arrived now goes again with the landing (it went as the plain system and the players never saw the landing). | done | packages/RD1.md |
-| PB1 the board underneath (design SSE4-playbook-and-switchboard-design.md, accepted 24 Nov): ui-contract board.ts holds who sees what as plain data (Everyone as a layer over the floor, a line per role and per screen, holds with a card, Hold all that remembers, redirects, signal levels) with undo and redo (`BoardHistory`); `boardWire` turns it into the old `Shown` per role and per screen, so older players still work. Players' screens say hello with a name and a role (`?name=`, id kept per tab); a held screen shows its card ("Stand by", plain words or a joke). Sealed seats get an empty scene while held. | done | packages/PB1.md |
-| PB2 the Switchboard screen (rail entry under Table, every scale): the Live card and Send, roles and screens as a list with lines, press a line to hold and again to release, Hold all (H), Lift, Back, Undo and Redo (Ctrl+Z), drag or press-then-press a source onto a role or screen, move and swap screens by their grip. The status line's table half is now one on-air chip that opens it; Send this view stays. Seats dialog stays behind "More seats" until PB7. | done | packages/PB2.md |
-| PB2b Bookmarks beside Undo (needs the chart room's top bar) | next | |
-| PB3 the Playbook; PB3b who steers (Theirs, Read only); PB4 to PB14 per design section 15 | queued | |
+| TRUE1 plumes part 1: the kernel's plume facts (ocean, polar cracks, speeds, height, rate) on `resolved_system` surface records | in review | packages/TRUE1.md |
+| TRUE2 plumes part 2: drawn above the limb in System True | next | |
+| TRUE3 hot things glow in Visible (Planck against the world's own daylight) | module written, drawing next | |
+| TRUE4 tholins and coloured frosts | waits on data sheet MP33, MP34 | |
+| TRUE5 small bodies and comets | not started | |
+| TRUE6 lava tube openings on the ground (from `survey_caves`) | not started | |
+
+#### Live checks (audit R3, per body)
+Not yet run. Note: the default Solar System (`packs/base-sol`) has no Enceladus, Io, Europa, Titan, Triton or Charon yet, so those lines cannot be judged on the live site until the big moons are added.
+
+---
+
+## `handover/status/atomic-rockets.md` from PR 447 (branch `claude/project-thread-7xs7xp`)
+
+### Status: Atomic Rockets (track RK)
+
+Owner thread: "Build ship flow and power views" (from 24 Nov 2026). Covers: the RK packages handed on by the chart room
+and renderer threads: RK13 (Flow view and Power card), RK12 (range rings as a HUD overlay), RK10 (remaining band
+strings), RK3 (ship sizing formulas as named Equations). Other RK packages stay rows in their owners' files: RK9 in
+`galaxy-and-travel.md`, RK6 in the Paper spacecraft pack's thread.
+
+Only the owner thread edits this file. One row per package: update it in the same pull request as the package. Logs are
+in `handover/packages/`. Plan: `handover/design/SSE4-atomic-rockets-plan.md` (accepted in full, questions 1 to 25).
+
+| Package | State | Log |
+|---|---|---|
+| RK13: the general Flow view (`ui-contract/flow.ts`, `views/flow` Flow) and the Power card on a ship's card (three columns, "Nowhere" dashed band on the GM seat only, five readings, live starlight and load switches) | done 24 Nov; next: `reject_k` on the kernel's heat rows (golden lane); later users of Flow: a world's energy budget (weather), an element's journey (matter) | packages/RK13-flow-and-power.md |
+| RK12: range rings (kernel `effect_at_range` done) as a HUD overlay: `ui-contract/range-rings.ts`, one component each in system-chart and system-3d; the chart room thread mounts them | next | |
+| RK10: band strings in ui-contract `light.ts`, `view-controls.ts` (and the renderer's) read `SHEET_BANDS` | queued | |
+| RK3: ship sizing formulas as named Equations in `packs/base-ships` (may change goldens: golden lane) | queued | |
+
+---
+
+## `handover/status/true-air.md` from PR 444 (branch `claude/project-thread-nrzllv`)
+
+### Status: Air in True (giant bands, clouds and hazes)
+
+Owner thread: "Build giant bands, clouds and hazes". Covers: TA, the third V3 audit's atmosphere items (`handover/design/SSE4-v3-gaps.md`, third audit: R1 giant bands, R2 storms, R3 polar vortices, R4 oblateness, R6 cloud decks, R7 limb, R8 coloured hazes) and R2b part 2 (the cloud shell at height on the Body globe, handed over by the renderer thread on 24 Nov).
+
+Only the owner thread edits this file. Logs are in `handover/packages/`. Files: `packages/renderer/src/true-air.ts` (and its test); hooks in `SystemChart.svelte` and the renderer's index are a few marked lines. Agreed 24 Nov: the renderer thread owns `packages/renderer`; this track owns `true-air.ts` and the coming `gpu-cloud-shell.ts`, may touch `gpu-globe.ts` and `gpu-air.ts` for R2b part 2 and add optional fields to `gpu.ts`; the plumes thread's `trueIces` tints the ground before the air is laid on.
+
+| Package | State | Log |
+|---|---|---|
+| TA1: air in system True. Every world's True face is read through one `readTrueFace` (ground tiles, then today's clouds and haze from the weather op's field); a giant is its cloud decks, so its bands, storms and polar cyclones show; each deck coloured by its condensate's sheet colour, white where the sheet has none (said in the HUD) | done | packages/TA1.md |
+| TA2: colour from what particles are made of: blocks `sse.light.particle_albedo` (anomalous diffraction) and `sse.light.slab_reflectance` (two-stream), `sse_light::haze`; and `sse.shape.spin_flattening` (Darwin-Radau) for oblateness. Golden-changing: waits for its slot | next (code written, in the thread's working tree until the slot) | |
+| TA3: Titan orange and Jupiter's brown from the sheet's n,k rows (data sheet MP33: titan-tholin, jupiter-chromophore, nh4sh, h2so4) and the giants' chromophore haze (weather W10a) | waits on MP33 and W10a | |
+| TA4: methane above the decks through `light_through_gas` (Uranus and Neptune blue) | waits on the light thread's fix: its methane rows read about 10⁴ too strong (reported 24 Nov) | |
+| TA5: the cloud shell at height (R2b part 2) and the limb of air in system True | next after TA2 | |
+| TA6: giants visibly flattened in True from TA2's block (GpuItem flatten along the body's frame) | after TA2 | |
+
+#### Looks like the real thing (audit R3 checklist), as of TA1
+
+Not yet run on the live site: the TA1 check is in its log (local build, WebGL2). Rerun on v4.starsystemx.com after each merge and record the date and the main commit here.
+
+---
+
+## `handover/status/paper-spacecraft.md` from PR 438 (branch `claude/project-thread-evvtvp`)
+
+### Status: Paper spacecraft pack (track RK, RK6)
+
+Owner thread: "Build Paper spacecraft pack". Plan: `design/SSE4-atomic-rockets-plan.md` section 6. Other RK rows live in the files of the threads that own them (data sheet: RK1, RK2, RK10; light: RK10, RK11, RK12; galaxy and travel: RK9; kernel: RK9 part 2).
+
+| Package | State | Log |
+|---|---|---|
+| RK6 part 1: store pack `store-packs/paper-spacecraft` (7 ships from 6 studies, 9 engines, 8 not-yet-built advances, 3 tours as data), builder `scripts/build-paper-spacecraft.py`, test `crates/sse-kernel/tests/paper_spacecraft.rs` | done (PR 438) | packages/RK6.md |
+| RK6 next | 1 source check by the data sheet thread; 2 Longshot interstellar test; 3 Daedalus, DRA 5.0 NTR, EMPIRE, JIMO from primary text; 4 launch loops and skyhooks; 5 tours play after PB2b | packages/RK6.md, Next |
+| RK8 name, credit, links | waits on the Atomic Rockets author's written reply to Alex; do not start | design section 9 |
+
+---
+
+## `handover/status/landing.md` from PR 437 (branch `claude/project-thread-zcty3l`)
+
+### Status: landing run-through (track LR)
+
+Owner thread: "Build landing run-through" (from 24 Nov 2026, taken over from the chart room). Covers Alex's milestone of
+23 Nov 2026: "landing sequence and end to end run through ... the GM plotting the Players experience of the events".
+The journey: the party's ship flies a voyage to a world, arrives, the world is revealed, the GM picks a site, the
+ship descends and lands, the party looks about; players on their own seats see each step the GM sends.
+
+Owned here: this file, `tests/ui/run-through.e2e.mjs` (the whole journey, GM and a player side by side), the hand-off
+from Voyages to Land, and the Land screen's glue (`packages/views/surface/src/Surface.svelte` controls; the renderer
+thread owns its drawing). Not owned: `shell/src/run/`, `Players.svelte`, `landing-table.e2e`, `party.e2e` (Run desk
+thread, status/run-desk.md); `shell/src/chart/` (chart room); `nav/` (selector); the drawing in `renderer/` (renderer).
+Only the owner thread edits this file. Earlier landing rows stay where they were written: chart-room.md ("What the table
+is shown", "The table watches a landing", "Players see the party's ship"), galaxy-and-travel.md (party ship, blocker 4),
+renderer.md (SL1, V10g, V10i, V10j, V10k), run-desk.md (RD1 reveal on arrival).
+
+#### The journey on main 9a5912c (24 Nov 2026, walked by `run-through.e2e`)
+
+| Step | GM | Players | State |
+|---|---|---|---|
+| Party's ship picked (Ships and stations) | yes | header "Aboard Beowulf, at Earth" | works |
+| Voyage Earth to Mars, "Fly Beowulf there" | yes, At-world card with dangers | header follows to Mars | works |
+| Arrival reveal | RD1 slip (PR 421) | through set_known | in PR 421 |
+| Approach and orbit | At-world card (aerocapture, entry, powered landing) | nothing until sent | gap LR4 |
+| Pick a site (Land here, landmark or anywhere) | yes, party's ship as lander | nothing until sent | works |
+| Send this view | yes | Landing screen, same site and verdict on own kernel | works (send race fixed in RD1) |
+| Descend | flown from the kernel's log | flies too, a few seconds behind | works; verdict wrong, gap LR1 |
+| Land, look about, walk | yes | follows the GM's pose | works; night and 3D ground, gaps LR2, LR3 |
+| Take off | yes | back to the site | works |
+
+#### Gaps and packages
+
+| Package | Owner | State | Notes |
+|---|---|---|---|
+| LR0 this file and `run-through.e2e` (the whole journey as one check) | here | done | not in CI (workflow edits need Alex's yes); in `npm run ui:e2e` |
+| LR1 a ship that can fly down flies down: plan_descent with a capable engine (thrust over weight, delta-v enough, as ship_at_world's powered-landing check) plans a powered descent from orbit instead of a ballistic entry, picking the better of the two and saying which and why. Today a Traveller far trader at Mars "burns up" (aerobrake only, 7 W/cm² against a 1 W/cm² hull, 2392 m/s touchdown) while the At-world card says "Powered landing from orbit: within limits" | here (kernel thread agreed, sse-nav descent) | next | may move golden plan_descent cases: ask the coordinator for a lane slot first |
+| LR2 choosing the hour: the Land screen's "Hours from now" slider binds degrees (±180) under an hours label; label it in hours and add Dawn, Midday, Dusk and Night presses on the world's own clock, so the GM can land in daylight | here (renderer agreed) | next | Surface.svelte only |
+| LR3 the ground at night and in 3D: True at night is black with no stars, 3D is a flat grey slab (headless WebGL2) | renderer | asked 24 Nov | |
+| LR4 approach and orbit for the table: between arrival and the site the players see only the header; a "Beowulf in orbit of Mars" view (the world turning below, the At-world card's chosen act) for Send this view | here, with the Run desk thread for the preset | queued | |
+| LR5 a landing preset for the Playbook (PB3 "A landing"): an exported pure helper `landingFor(world, site) -> LandingShow`, so a preset stores {world, site} and builds the landing when fired | here, for the Run desk thread | queued | |
+| Gap 10, Mass on the Run desk card at Curious | Run desk thread (asking Alex) | open | |
 
 #### Next
-- PB2b, then PB3 and on in design order. The on-air chip moves to the chart room's top bar when it has room. Small: the Run desk card at Curious leads with four facts and drops Mass for planets with a day and a year (gap 10): depth.ts puts mass fifth by design; ask Alex with the Switchboard questions rather than change it alone.
+LR1, then LR2, then LR5 (the Run desk needs it for PB3), then LR4.
+
+---
+
+## `handover/status/surface-timelapse.md` from PR 436 (branch `claude/project-thread-7g5v90`)
+
+### Status: Surface time-lapse and sea drawing
+
+Owner thread: "Build surface time-lapse" (handed R6 part 2 by "Build photoreal renderer", 24 Nov 2026). Covers the
+drawing of the kernel's `surface_frames` on the Body globe (`packages/renderer/src/timelapse.ts` and its test, the
+time-lapse parts of `packages/views/body`: Body.svelte's `lapse` API and BodyTimeline.svelte, and the `frames()`
+plumbing in `packages/renderer/src/runtime.ts`), and the drawing side of the sea items W-sea2, W-sea3 and W-sea4
+(a sea shading file of its own). The renderer thread keeps the rest of `packages/renderer`; the kernel side of the
+sea is "Build shared climate and weather" (`status/weather.md`), the frames op is proven core's (SF).
+
+Only the owner thread edits this file. Logs are in `handover/packages/`.
+
+| Package | State | Log |
+|---|---|---|
+| R6c: the time-lapse reads PR 394's frames: a dry world (sea_level_m null) has no sea and its basins are bare rock; the kernel's ice-age onsets, which all fall in the last few million years, get a strip of their own under the main scrubber with a fine range over the orbit-history window, a line each ("Ice age 3 of 9 in the last 200 thousand years, begun 20 thousand years ago: ...") and their why on the card; times inside the window read in thousands of years; the frame's own kernel line on pick; a Solar System Earth test (31 ice ages dated in 500 thousand years, each frame's climate on its own land) | done (this PR) | packages/R6c-timelapse.md |
+| R6c part 2: each ice age's spread on the globe, from the cells the kernel names at its onset (reader done; waits on proven core sending `cells` on "ice-age" events) | waiting on the kernel | packages/R6c-timelapse.md |
+| W-sea2 drawing: sea colour from the liquid's own absorption (deep colour, shallow fade over the floor, Fresnel with the liquid's index) | next | |
+| W-sea3 drawing: waves as the kernel's wave trains (Gerstner sum), ripple detail to the kernel's cut-off | after W-sea2 | |
+| W-sea4 drawing: whitecaps and streaks of froth from the kernel's whitecap fraction | after W-sea3 | |
+
+#### The sea contract (agreed with the climate thread, 24 Nov 2026)
+Same keys at the site (weather `report`, `data.sea`) and on the globe (`survey.climate.sea.bands[]`, one entry per
+climate band, null over land). Every key is additive; a missing key means "not sent yet" and the drawing says so.
+- W-sea2: `bands_nm` [650, 550, 450]; `absorb_per_m` [R,G,B]; `backscatter_per_m` [R,G,B]; `refractive_index`;
+  `deep_rgb` (R∞ ≈ 0.33 b_b/(a+b_b), Gordon and Morel, computed by the kernel). The drawing does the shallow fade
+  exp(−2az) over the floor and the Fresnel with that index.
+- W-sea3: `trains`, up to 6 of {wavelength_m, amplitude_m, period_s, dir_deg} from the kernel's spectrum and its
+  capillary-gravity dispersion; `ripple_cutoff_m`; `superfluid` and `liquid_note` for the card; `wave_m` and
+  `period_s` kept as before.
+- W-sea4: `whitecap_fraction`, `foam_albedo`, `streak_dir_deg`.
+
+---
+
+## `handover/status/galaxy.md` from PR 431 (branch `claude/project-thread-z535je`)
+
+### Status: Galaxy charts and histories
+
+Owner thread: "Build galaxy charts and histories" (split from "Build galaxy charts and travel screens" on 24 Nov 2026; travel keeps V8, voyages, the flight log and the travel panels). Covers: U6, U8, V9, GH8, V3 gap 39.
+
+Files: `packages/views/galaxy-chart`, `packages/views/galaxy-3d`, `packages/views/foam-map`, `packages/views/cluster-map`, `packages/views/story-finder`, `packages/ui-contract/src/galaxy.ts`, `tests/ui/galaxy*.e2e.mjs`, `tests/ui/foam*`, `tests/ui/cluster*`, `tests/ui/stories*`. The True picture (GH9, `GalaxyScars`, renderer galaxy files) is the renderer thread's; the 3D and True web cube (`foam-map/src/Web3D.svelte`, renderer `web-cube.ts`) is "Build cosmic web view"'s.
+
+Only the owner thread edits this file. One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`.
+
+| Package | State | Log |
+|---|---|---|
+| U6 galaxy and patch charts (part 1: Galaxy under the Explore tab, from the `galaxy_chart` op) | parts 1, 2a (inked history preview) and 2c (what other galaxies brought, GH3) done; 24 Nov: the stellar halo row is `data-stellar-halo` (it clashed with the halo picker's `data-halo`); next: part 2b, patch survey, find a home, save inked history | packages/U6.md |
+| V3 gap 39: system hover summary (GM only: counts of stars, planets, moons, minor bodies, ships, any life, anything remarkable; the selector of gap 37 reads the same summary) | part 1 done 24 Nov: pure reader `ui-contract/src/system-summary.ts` (`systemSummary`, `summaryWords`; reads scene subjects or picker chips; life only from life/biosphere tags or a Life chip, never guessed), test `system-summary.test.ts`; the navigation thread puts it on the picker's system rows; the hover on Your systems done with gap 17 part 1 | packages/GAP17-your-systems.md |
+| GH8 leading-arm mark in the chart's history (design SSE4-galaxy-histories-design.md 9.4; rare, about 1 in 100, a cited editable number) | chart side done 24 Nov (`leadingArmWords`, the line and mark name in "Built from other galaxies"), hidden until the kernel's GH3 `leading_arm` mark merges (golden lane, "Build galaxy arm fix and atmosphere advice"); then an e2e | packages/GH8.md |
+| V3 gap 17: Your systems, the campaign's systems on one map (U6 part 2b) | part 1 done 24 Nov: screen `systems` at the galaxy scale, view `sse.view.your-systems`; systems where their own V3 map puts them, the rest listed; hover says what each holds; press opens; loader `readCampaignSystems`; next: routes, Add system here, the home star cell behind | packages/GAP17-your-systems.md |
+| V9 map views (Cosmic web foam under Explore from `web_slice` with time scrub and Play; cluster map "Galaxies nearby" on `halo_cell`) | parts 1 and 2 done | packages/V9.md |
+| U8 story finder (Stories under Explore, on the `sift` op; starter sifters as data, hits with evidence, the GM's own sifter, a storyteller brief) | part 1 done; 24 Nov: "Tell it with Minerva" on each hit (ctx.describe, GM machine), the brief still copies for any storyteller; next: rarity from resolve clouds, event starters, a story pack | packages/U8.md |
 
 ---
 
@@ -94,41 +256,3 @@ Only the owner thread edits this file. One row per package: update it in the sam
 - SSE4 never rolls dice or decides. A game pack may show its own difficulty ladder beside SSE4's words: odds through the system's dice first, then the word table; GM screens only; the skill shown when the pack knows the game's skills (X3h).
 - Sensors must "just work", and stay tweakable by those who care (X3i).
 - The World Builder's Handbook way of making worlds is wanted. It ships as one "big block" a GM can grab and change (see next package 5).
-
----
-
-## `handover/status/manifest.md` from PR 423 (branch `claude/project-thread-mm0wul`)
-
-### Status: ship manifest and crew
-
-Owner thread: "Build ship manifest and crew roster". Covers: MC (track: what is aboard a ship, station or site).
-
-Only the owner thread edits this file. One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`. Stage order: `handover/design/SSE4-coming-together.md`.
-
-Scope (Alex, 23 Nov): the manifest and crew are general, game-neutral tools now; aliens remake them in 4.1 and RPG support in 4.2. Character sheets from pack data, dice and table rolls, and sites you go inside stay parked for 4.2 (example packs design section 0).
-
-| Package | State | Log |
-|---|---|---|
-| MC1: base manifest pack (`sse.base-manifest`: `aboard.*` kept kinds, life support rates per kind of being, cited); everyone and everything aboard as record actors (kinds `person` and `cargo`) with an `aboard.on` link; an Aboard panel (Crew and Manifest) on the Ships and stations card (people against crew limit and berths, the ship's own capacities, readiness, recycled share, life support days per store, cargo with load and move; crew with role, kind of being, awake or cold sleep or missing or dead, own age); session `addActor`, `setKept` | done | packages/MC1-manifest-and-crew.md |
-| MC2: Known to on entries aboard: the shared three-state eye on each person and lot (Build and Run desks, as on the card), and "Show the crew / the manifest to the table" as one change with one Undo; changes are made at the campaign clock, where Known to reads them | done | packages/MC2-known-to-aboard.md |
-| MC3: a construct's pictures ("Picture" on the Ships and stations card) with a selector: Plans and 3D model of the ship designed from its own parts (renderer ShipPlans, closed in on the hull; style, remix and overrides kept as `construct.design`), and up to four of the GM's own pictures (`picture.own`, raster data URIs scaled to 960 px, about 150 KB each); the one last chosen on Build is kept (`picture.shown`) and is what it opens on. On Explore and Run any view can be chosen but nothing is kept, and the look cannot change (ShipPlans `locked`); crew roles and cargo amounts are editable in play, the ship's fittings only on Build | done | packages/MC3-construct-picture.md |
-| MC4: fuel gauges in the Manifest: reaction mass and jump fuel, now against full (`construct.propellant_t`, `construct.jump_fuel_t`, full when unset, the kernel's own default), set or topped up in play; `fuelNow(ship, kept)` gives the ship with its tanks at the kept levels for planning; `shipRecordOf` resolves a nav ship through the kernel | done (fields moved to kept values in MC5); voyages drawing the tanks down is the travel track's (asked) | packages/MC4-fuel-gauges.md |
-| MC5: the ship's Log reads what is aboard: who and what came aboard (from where), left (for where), and a person's state while aboard (`aboardLog`, from the entries' own histories); fuel levels become kept values in the base manifest pack (`fuel.propellant_t`, `fuel.jump_t`, unit t), so each set, top-up or voyage is a dated log line with its change and reason | done | packages/MC5-log-aboard.md |
-
-#### Alex's rulings for this track (so they live in the repo, not only in the thread)
-
-- 23 Nov 19:53: "do the manifest and crew work... that IS good"; SSE3 had crew and life support as text boxes, SSE4's is a general tracking tool; "it will get a makeover with aliens [4.1] and again in RPG [4.2]". Keep it light and never assume crew are human.
-- 24 Nov 14:00, **context by desk**: "explore/run will allow manifest/crew/fuel updates but not allow changes to the ship (and the pic & the 3d model we create or they supply)... the edit tab is the tool to hide things". So: in play (Explore, Run) what is aboard changes (people, cargo, roles, states, amounts, fuel); the ship itself (facts, fittings such as recycling, design, pictures, default view) changes only on Build. `ShipPlans` takes `locked` on play screens.
-- 24 Nov 14:15, **picture selector**: "an image selector, pic, 2d 3d whatever the player loads... they can hold the default image as the last selected - which may be the 3d model". Built as the general `Pictures` panel (views/pictures); 14:28 he wants the same on the body card ("same as a ship"), which the chart room thread is doing.
-- 24 Nov 14:18 to 14:19, **stations**: generated from their description, land constructs the same; about two dozen shapes sized to population with bolt-ons; docking points by size; a cut-off where it becomes a megastructure because it then touches physics. Built by the renderer thread (StationPlans, PR 408), hosted in the same Pictures panel.
-- 24 Nov 14:20, **fuel**: "fuel gauge (and an edit fuel) to top up, etc - yup go for it!" Built (MC4, MC5); voyages planning from and drawing down the tanks is the travel thread's, agreed with it.
-
-#### Open questions for Alex (each with the track's recommendation; built on the recommendation meanwhile)
-
-1. The six crew questions of 23 Nov (aboard is one kind of thing for people and cargo; kinds of being never assumed human; own age that stops in cold sleep; life support from the stores aboard; damage only through readiness; players learn of entries through Known to): no answer yet; all built as recommended.
-2. Should players see a ship's pictures once the ship is shown to them? Recommended yes, through the same Known to eye. Blocked on a player-side ship card, which does not exist yet (player screens show no construct card).
-
-#### Next
-
-- After PR 423 (MC5) merges: nothing queued that needs no one else. Waiting on others: the travel thread plans voyages from `fuelNow` and draws the tanks down with `setKept` (agreed 24 Nov); the chart room puts `Pictures` on the body card.
-- Candidates, in order: a player-side ship card (with the chart room) so question 2 can be built; crew limits by kind of being with FT2 (future tech); `tests/ui/manifest.e2e.mjs` into CI's e2e list (CI edits need Alex's own yes).
