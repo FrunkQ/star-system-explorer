@@ -22,7 +22,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { constant, DEFAULT_VIEW, DESCENT_VERDICT_WORDS, LANDER_WORDS, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params, follow }: { ctx?: ViewContext; scene?: SystemScene; params: Record<string, Json>; follow?: PlayerContext } = $props();
@@ -48,7 +48,8 @@
   const eyeM = $derived(Math.min(3, Math.max(0.3, Number(params.eye_m ?? 1.7))));
 
   // ── The world: map tiles, landmarks, air, star ─────────────────────────────────────────────
-  type World = LandingWorld & { air: Air | null };
+  /** The world as drawn, with (on the GM's screen) what its clock needs: its spin, its year and what goes round the star. */
+  type World = LandingWorld & { air: Air | null; spin_s?: number; orbit_s?: number; orbiter?: string };
   let tiles = $state<SurfaceTile[] | null>(null);
   let landmarks = $state<Landmark[]>([]);
   let world = $state<World | null>(null);
@@ -84,20 +85,32 @@
       const surf = rs.result.surfaces.find((x) => x.address === sub.address) as { gravity_m_s2?: number; t_surface_now_k?: number; reference_radius_m?: number } | undefined;
       const radius = Number(f["body.radius"] ?? surf?.reference_radius_m ?? 0) || (t.tiles[0]!.spacing_m * t.tiles[0]!.samples * 2) / Math.PI;
       // The star: up the chain of hosts to the one with a temperature; its disc's size from its radius and distance.
-      let host = f["parent"] as string | undefined;
+      const hostOf = (x: Record<string, Json>) => (x["parent"] ?? x["orbit.host"]) as string | undefined;
+      let host = hostOf(f);
       let dist = Number(f["orbit.semi_major_axis"] ?? 0);
       let star_k = 0;
       let star_r = 0;
+      let star_m = 0;
+      // The body going round the star: the world itself, or the planet a moon circles (its year sets the seasons).
+      let orbiter = sub.address;
       for (let i = 0; host && i < 6; i++) {
         const h = facts[host] ?? {};
         if (typeof h["star.effective_temperature"] === "number") {
           star_k = h["star.effective_temperature"] as number;
           star_r = Number(h["body.radius"] ?? 0);
+          star_m = Number(h["body.mass"] ?? 0);
           break;
         }
         dist = Number(h["orbit.semi_major_axis"] ?? dist);
-        host = h["parent"] as string | undefined;
+        orbiter = host;
+        host = hostOf(h);
       }
+      const spin = Number(f["body.rotation_period"] ?? 0);
+      // The tilt: the kernel's and V3's axial tilt (radians), else the catalogue's obliquity (degrees; above 90 the
+      // spin runs backwards, as Venus's does).
+      const tiltDeg = typeof f["body.axial_tilt"] === "number" ? ((f["body.axial_tilt"] as number) * 180) / Math.PI : Number(f["body.obliquity"] ?? 0);
+      const orbitA = Number((facts[orbiter] ?? {})["orbit.semi_major_axis"] ?? 0);
+      const gm = star_m > 0 ? (constant("GM_sun") * star_m) / constant("M_sun") : 0;
       const af = airFactsOf(f, surf);
       let air: Air | null = null;
       const req = af ? airRequest(sub.address, af) : null;
@@ -113,7 +126,10 @@
         air,
         star_k: star_k || constant("T_sun"),
         sun_radius: star_r > 0 && dist > 0 ? star_r / dist : 0.0047,
-        tilt_deg: (Number(f["body.axial_tilt"] ?? 0) * 180) / Math.PI,
+        tilt_deg: tiltDeg,
+        ...(spin ? { spin_s: tiltDeg > 90 ? -Math.abs(spin) : spin } : {}),
+        ...(gm > 0 && orbitA > 0 ? { orbit_s: 2 * Math.PI * Math.sqrt((orbitA * orbitA * orbitA) / gm) } : {}),
+        orbiter,
       };
       landerPick = untrack(() => partyHere) ? "party" : suggestLander(world.pressure_bar, world.t_k);
       const lm: Landmark[] = marks.get(key) ?? (await ctx!.session.surfaceLandmarks(sys, sub.address).then((r) => (r.ok ? r.landmarks : [])));
@@ -121,6 +137,20 @@
       marks.set(key, lm);
       landmarks = landmarkOrder(lm);
     })();
+  });
+
+  // A site a link asked for (Voyages' "Land here"): chosen as if pressed on the map once the world is read, whether
+  // the screen was open already or not, then the ask is spent.
+  $effect(() => {
+    const asked = watching ? null : ctx!.workspace.landing_site;
+    const sub = subject;
+    if (!asked || !sub || !world || asked.body !== sub.address) return;
+    untrack(() => {
+      if (phase !== "choose") takeOff();
+      const near = landmarks.find((l) => Math.abs(l.lat_deg - asked.lat_deg) < 0.05 && Math.abs(l.lon_deg - asked.lon_deg) < 0.05);
+      site = { lat: asked.lat_deg, lon: asked.lon_deg, label: near ? (near.name ?? near.original_name) : "" };
+      ctx!.workspace.landing_site = null;
+    });
   });
 
   // ── The map (Chart) ───────────────────────────────────────────────────────────────────────
@@ -323,6 +353,19 @@
   let walk = $state({ x: 0, y: 0, yaw: Math.PI / 2, pitch: -0.05 });
   let drone = $state(false);
   let hour = $state(-30);
+  // The world's own clock (Land part 2): its star's hour and declination at the time being viewed, from its spin and
+  // its place on its orbit; the GM can shift the hour from there. Without a known spin, the hour is the GM's choice.
+  let shift = $state(0);
+  const clock = $derived.by(() => {
+    if (watching || !world || !site) return null;
+    const orb = world.orbiter ? scene!.subjects.find((x) => x.address === world!.orbiter) : undefined;
+    return sunAt({ tilt_deg: world.tilt_deg, orbit_phase_deg: orb?.orbit?.phase_deg ?? 0, ...(world.spin_s ? { spin_s: world.spin_s } : {}), ...(world.orbit_s ? { orbit_s: world.orbit_s } : {}), t_s: ctx!.workspace.now_yr * constant("yr_julian"), lon_deg: site.lon });
+  });
+  const wrapDeg = (d: number) => ((((d + 180) % 360) + 360) % 360) - 180;
+  const sunHour = $derived(watching ? (show?.hour_deg ?? hour) : clock ? wrapDeg(clock.hour_deg + shift) : hour);
+  const sunDecl = $derived(watching ? (show?.decl_deg ?? 0) : (clock?.declination_deg ?? 0));
+  /** Local solar time as a clock face (12:00 is noon), for the note. */
+  const localTime = $derived(`${String(Math.floor((((sunHour / 15 + 12) % 24) + 24) % 24)).padStart(2, "0")}:${String(Math.floor((((((sunHour / 15 + 12) % 24) + 24) % 24) % 1) * 60)).padStart(2, "0")}`);
   let flyU = 0;
 
   // ── The table's view of this landing (the landing run-through) ──────────────────────────────
@@ -343,7 +386,8 @@
       flight_s: flightS,
       ...(p === "flying" ? { fly_u: Math.round(flyU * 1000) / 1000 } : {}),
       ...(p === "down" ? { pose: roundPose({ x_m: walk.x, y_m: walk.y, yaw: walk.yaw, pitch: walk.pitch, drone }) } : {}),
-      hour_deg: hour,
+      hour_deg: Math.round(sunHour * 100) / 100,
+      decl_deg: Math.round(sunDecl * 100) / 100,
       look,
       world: { ...world, air: world.air ? { ...world.air, unknown_gases: [...world.air.unknown_gases] } : null },
     };
@@ -365,7 +409,7 @@
   // The choosing moments (a site, a lander, landing, taking off) go at once; the pose goes from the frame loop.
   $effect(() => {
     if (watching) return;
-    void [site, landerKey, phase, world, hour, drone, look];
+    void [site, landerKey, phase, world, sunHour, sunDecl, drone, look];
     untrack(() => publish(performance.now(), true));
   });
 
@@ -378,7 +422,6 @@
         site = { lat: l.site.lat_deg, lon: l.site.lon_deg, label: l.site.label };
         if (phase !== "choose") takeOff();
       }
-      hour = l.hour_deg;
       if (l.pose) {
         walk = { x: l.pose.x_m, y: l.pose.y_m, yaw: l.pose.yaw, pitch: l.pose.pitch };
         drone = l.pose.drone;
@@ -465,7 +508,7 @@
     eyeNow = eye;
     if (!watching && now - sentAt > 250) publish(now);
     headingNow = ((90 - (Math.atan2(fwd[1], fwd[0]) * 180) / Math.PI) % 360 + 360) % 360;
-    const sun = sunDirection(site!.lat, hour, 0);
+    const sun = sunDirection(site!.lat, sunHour, sunDecl);
     const air = world.air;
     if (using === "gpu" && gpu) {
       buildMeshes();
@@ -692,7 +735,7 @@
           <button onpointerdown={() => press("ArrowDown", true)} onpointerup={() => press("ArrowDown", false)} onpointerleave={() => press("ArrowDown", false)} aria-label="Walk back">▼</button>
           <button onpointerdown={() => press("ArrowRight", true)} onpointerup={() => press("ArrowRight", false)} onpointerleave={() => press("ArrowRight", false)} aria-label="Turn right">▶</button>
           <label><input type="checkbox" bind:checked={drone} data-drone /> Drone</label>
-          <label>Time of day <input type="range" min="-100" max="100" step="1" bind:value={hour} data-hour /></label>
+          {#if clock}<label>Hours from now <input type="range" min="-180" max="180" step="1" bind:value={shift} data-hour /></label>{:else}<label>Time of day <input type="range" min="-100" max="100" step="1" bind:value={hour} data-hour /></label>{/if}
           <button onclick={takeOff} data-take-off>Take off</button>
         </div>
       {/if}
@@ -701,7 +744,7 @@
     <p class="note quiet" data-ground-note>
       The ground is the kernel's to {near ? Math.round(near.spacing_m) : "?"} m (its fact floor here); finer than that within {fmtM(DETAIL_HALF)} of the site it is decoration sized to the site's roughness. You can walk {fmtM(WALK_HALF)} from where you landed; further means taking off.
       {#if world && !world.air}No air: the sky is black and nothing dims the far ground.{:else}Sky from single scattering in the kernel's air optics.{/if}
-      The sun is placed for the equinox at the hour chosen. Drawn on {reason}.
+      {#if watching}The sun stands where the game master's clock puts it, local time {localTime}.{:else if clock}The sun stands where {subject?.label}'s spin and its place on its orbit put it at the time in view: local time {localTime}{clock.solar_day_s === Infinity ? " (it keeps one face to its star)" : ""}, declination {sunDecl.toFixed(1)}°{shift ? `, moved ${Math.round(shift / 15)} h by hand` : ""}.{:else}The world's spin is not on record, so the hour is chosen by hand and the sun stands as at an equinox.{/if} Drawn on {reason}.
     </p>
     {/if}
   {/if}
