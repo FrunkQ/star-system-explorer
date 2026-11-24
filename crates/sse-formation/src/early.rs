@@ -11,7 +11,9 @@ use crate::disc::{Group, GROUPS};
 use crate::hurley::Fits;
 use crate::lifeline::LifeLine;
 use serde::{Deserialize, Serialize};
+use sse_atoms::redox as rx;
 use sse_core::math as m;
+use sse_core::sheet::{atomic_weight as aw, molar_mass as mm};
 use sse_core::Address;
 
 pub const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
@@ -83,6 +85,12 @@ pub struct WorldStart {
     pub co2_bar: f64,
     /// Insolation when it formed, Earth units.
     pub early_insolation: f64,
+    /// The mantle's oxygen fugacity against iron-wüstite at its magma
+    /// ocean's surface, log10 units (`sse.interior.redox_iw`).
+    pub redox_iw: f64,
+    /// What the magma ocean gave off, mole fractions of H2, H2O, CO, CO2
+    /// and CH4 (`sse.atmosphere.outgassed_mix`); all zero when nothing.
+    pub outgas: [f64; 5],
     pub facts: Vec<HandOff>,
 }
 
@@ -97,7 +105,7 @@ pub struct HandOff {
 
 /// The kinds this stage publishes, each with its unit and reader. Nothing else
 /// publishes them; the base-physics flows take some as inputs and derive the rest.
-pub const HAND_OFF_KINDS: [(&str, &str, &str); 12] = [
+pub const HAND_OFF_KINDS: [(&str, &str, &str); 18] = [
     (
         "body.mass",
         "kg",
@@ -138,6 +146,16 @@ pub const HAND_OFF_KINDS: [(&str, &str, &str); 12] = [
     ),
     ("early.desiccated", "one", "climate, life (L)"),
     ("early.insolation", "w_m2", "climate"),
+    (
+        "interior.redox_iw",
+        "one",
+        "surface (S) volcanic gases, climate early air",
+    ),
+    ("early.outgas_h2", "one", "climate early air, life (L)"),
+    ("early.outgas_h2o", "one", "climate early air, life (L)"),
+    ("early.outgas_co", "one", "climate early air, life (L)"),
+    ("early.outgas_co2", "one", "climate early air, life (L)"),
+    ("early.outgas_ch4", "one", "climate early air, life (L)"),
 ];
 
 /// Bolometric luminosity of the host in solar units at age `t` Myr.
@@ -281,6 +299,31 @@ pub fn early_life(p: &Protoplanet, fits: &Fits, host: &LifeLine) -> WorldStart {
     let r_m = solid_radius * R_EARTH_M;
     let grav = G * solids * M_EARTH_KG / (r_m * r_m);
     let co2_pa = co2_kg * grav / (4.0 * m::PI * r_m * r_m);
+    // F-redox: how oxidised the mantle is (the iron the core did not take,
+    // less what free carbon smelts back to metal), and the outgassed H and
+    // C split by gas equilibrium at that oxygen fugacity. Pressure is the
+    // outgassed mass's weight as water and CO2.
+    let free_carbon = if rockmetal > 0.0 {
+        g(Group::Carbon) * (1.0 - CARBON_TO_CORE) / rockmetal
+    } else {
+        0.0
+    };
+    let (redox_iw, _) = rx::redox_iw(
+        cmf,
+        free_carbon,
+        aw::FE / 1000.0,
+        mm::FEO,
+        aw::C / 1000.0,
+        &rx::REDOX,
+    );
+    let gas_pa = (surface_water_kg + co2_kg) * grav / (4.0 * m::PI * r_m * r_m);
+    let outgas = rx::outgassed_mix(
+        redox_iw,
+        surface_water_kg / mm::H2O,
+        co2_kg / mm::CO2,
+        gas_pa,
+        &rx::OUTGAS,
+    );
 
     let h = |kind: &str, value: f64| {
         let (_, unit, read_by) = HAND_OFF_KINDS
@@ -307,6 +350,12 @@ pub fn early_life(p: &Protoplanet, fits: &Fits, host: &LifeLine) -> WorldStart {
         h("early.co2_partial_pressure", co2_pa),
         h("early.desiccated", if desiccated { 1.0 } else { 0.0 }),
         h("early.insolation", flux * sse_core::sheet::S_SUN),
+        h("interior.redox_iw", redox_iw),
+        h("early.outgas_h2", outgas[0]),
+        h("early.outgas_h2o", outgas[1]),
+        h("early.outgas_co", outgas[2]),
+        h("early.outgas_co2", outgas[3]),
+        h("early.outgas_ch4", outgas[4]),
     ];
     WorldStart {
         address: p.address.clone(),
@@ -322,6 +371,8 @@ pub fn early_life(p: &Protoplanet, fits: &Fits, host: &LifeLine) -> WorldStart {
         surface_water_oceans: surface_water_kg / EARTH_OCEAN_KG,
         co2_bar: co2_pa / 1.0e5,
         early_insolation: flux,
+        redox_iw,
+        outgas,
         facts,
     }
 }

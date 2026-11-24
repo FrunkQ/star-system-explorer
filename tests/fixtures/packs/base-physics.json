@@ -2171,6 +2171,118 @@
         "range": null
       },
       {
+        "description": "methane's share by moles of the gas a magma ocean gave off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "early.outgas_ch4",
+        "range": null
+      },
+      {
+        "description": "carbon monoxide's share by moles of the gas a magma ocean gave off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "early.outgas_co",
+        "range": null
+      },
+      {
+        "description": "carbon dioxide's share by moles of the gas a magma ocean gave off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "early.outgas_co2",
+        "range": null
+      },
+      {
+        "description": "H2's share by moles of the gas a magma ocean gave off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "early.outgas_h2",
+        "range": null
+      },
+      {
+        "description": "water vapour's share by moles of the gas a magma ocean gave off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "early.outgas_h2o",
+        "range": null
+      },
+      {
+        "description": "carbon a magma ocean gave off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0
+        ],
+        "id": "early.outgassed_carbon",
+        "range": null
+      },
+      {
+        "description": "hydrogen a magma ocean gave off, counted as H2",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0
+        ],
+        "id": "early.outgassed_hydrogen",
+        "range": null
+      },
+      {
+        "description": "pressure of the air a magma ocean gave off",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "early.outgassed_pressure",
+        "range": null
+      },
+      {
         "description": "mass share of a material that is oxygen bound to one element's oxide",
         "dim": [
           0,
@@ -3252,6 +3364,48 @@
         "range": null
       },
       {
+        "description": "the mantle's oxygen fugacity against the iron-wüstite buffer at its magma ocean's surface, log10 units",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.redox_iw",
+        "range": null
+      },
+      {
+        "description": "the mantle's oxygen fugacity against iron-wüstite at core formation, log10 units",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.redox_iw_core",
+        "range": null
+      },
+      {
+        "description": "carbon free to smelt iron oxide back to metal, share of the rock and metal by mass",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.reducing_carbon_share",
+        "range": null
+      },
+      {
         "description": "how far a world separated into metal and silicate, 0 to 1",
         "dim": [
           0,
@@ -3529,6 +3683,48 @@
           0
         ],
         "id": "material.ci_weight",
+        "range": null
+      },
+      {
+        "description": "molar mass of carbon",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          -1,
+          0
+        ],
+        "id": "matter.molar_mass_c",
+        "range": null
+      },
+      {
+        "description": "molar mass of iron",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          -1,
+          0
+        ],
+        "id": "matter.molar_mass_fe",
+        "range": null
+      },
+      {
+        "description": "molar mass of iron oxide, FeO",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          -1,
+          0
+        ],
+        "id": "matter.molar_mass_feo",
         "range": null
       },
       {

@@ -323,6 +323,371 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.atmosphere.outgassed_mix",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "redox",
+     "letter": "d"
+    },
+    {
+     "port": "hydrogen",
+     "letter": "h"
+    },
+    {
+     "port": "carbon",
+     "letter": "c"
+    },
+    {
+     "port": "pressure",
+     "letter": "P"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "h2",
+     "letter": "xh2"
+    },
+    {
+     "port": "h2o",
+     "letter": "xh2o"
+    },
+    {
+     "port": "co",
+     "letter": "xco"
+    },
+    {
+     "port": "co2",
+     "letter": "xco2"
+    },
+    {
+     "port": "ch4",
+     "letter": "xch4"
+    }
+   ],
+   "params": [
+    {
+     "param": "temperature",
+     "letter": "T",
+     "default": 2000.0,
+     "range": [
+      1000.0,
+      3000.0
+     ],
+     "description": "temperature at which the magma ocean's surface last set its air, K (about 1700 to 2200 K; Sossi et al. 2020 used 2173 K)"
+    },
+    {
+     "param": "iw_a",
+     "letter": "ai",
+     "default": 27489.0,
+     "range": [
+      0.0,
+      1000000.0
+     ],
+     "description": "iron-wüstite buffer, log fO2 = -A/T + B: A in K (Frost 1991)"
+    },
+    {
+     "param": "iw_b",
+     "letter": "bi",
+     "default": 6.702,
+     "range": [
+      -100.0,
+      100.0
+     ],
+     "description": "iron-wüstite buffer: B (Frost 1991)"
+    },
+    {
+     "param": "water_a",
+     "letter": "a1",
+     "default": 13040.0,
+     "range": [
+      0.0,
+      1000000.0
+     ],
+     "description": "H2 + ½ O2 = H2O, log K = A/T - B: A in K (fitted to NIST-JANAF, 1000 to 2000 K)"
+    },
+    {
+     "param": "water_b",
+     "letter": "b1",
+     "default": 2.981,
+     "range": [
+      -100.0,
+      100.0
+     ],
+     "description": "H2 + ½ O2 = H2O: B"
+    },
+    {
+     "param": "co2_a",
+     "letter": "a2",
+     "default": 14674.0,
+     "range": [
+      0.0,
+      1000000.0
+     ],
+     "description": "CO + ½ O2 = CO2, log K = A/T - B: A in K (fitted to NIST-JANAF, 1000 to 2000 K)"
+    },
+    {
+     "param": "co2_b",
+     "letter": "b2",
+     "default": 4.456,
+     "range": [
+      -100.0,
+      100.0
+     ],
+     "description": "CO + ½ O2 = CO2: B"
+    },
+    {
+     "param": "methane_a",
+     "letter": "a3",
+     "default": 11860.0,
+     "range": [
+      0.0,
+      1000000.0
+     ],
+     "description": "CO + 3 H2 = CH4 + H2O, log K = A/T - B: A in K (fitted to NIST-JANAF, 1000 to 1500 K)"
+    },
+    {
+     "param": "methane_b",
+     "letter": "b3",
+     "default": 13.279,
+     "range": [
+      -100.0,
+      100.0
+     ],
+     "description": "CO + 3 H2 = CH4 + H2O: B"
+    },
+    {
+     "param": "standard_pressure",
+     "letter": "p0",
+     "default": 100000.0,
+     "range": [
+      100000.0,
+      100000.0
+     ],
+     "description": "the tables' standard pressure, Pa (1 bar)"
+    }
+   ],
+   "references": [
+    "Gaillard, F., Bernadou, F., Roskosz, M. et al. 2022, EPSL 577, 117255: redox controls during magma ocean degassing. doi:10.1016/j.epsl.2021.117255",
+    "Hirschmann, M. M. 2012, EPSL 341, 48: magma ocean influence on early atmosphere mass and composition. doi:10.1016/j.epsl.2012.06.015",
+    "Frost, B. R. 1991, Reviews in Mineralogy 25, 1: introduction to oxygen fugacity and its petrologic importance; iron-wüstite log fO2 = -27489/T + 6.702 (table 1). doi:10.1515/9781501508684-004",
+    "Chase, M. W. 1998, NIST-JANAF Thermochemical Tables, 4th edn, J. Phys. Chem. Ref. Data Monograph 9: Gibbs energies of formation of H2O, CO, CO2 and CH4, fitted as A/T - B from 1000 to 2000 K",
+    "Sossi, P. A., Burnham, A. D., Badro, J., Lanzirotti, A., Newville, M. and O'Neill, H. St. C. 2020, Science Advances 6, eabd1387: Earth's magma ocean surface near IW+0.5. doi:10.1126/sciadv.abd1387"
+   ],
+   "shown": "H2O/H2 = K1 √fO2, CO2/CO = K2 √fO2, fO2 = IW(T) · 10^ΔIW; CH4 from CO + 3 H2",
+   "equation": {
+    "name": "What a magma ocean breathes out",
+    "formula": "lo = d + bi - ai / T\nr1 = 10 ^ (a1 / T - b1 + lo / 2)\nr2 = 10 ^ (a2 / T - b2 + lo / 2)\nh2 = h / (1 + r1)\nw = h - h2\nco = c / (1 + r2)\nco2 = c - co\nk3 = 10 ^ (a3 / T - b3)\nnt = h2 + w + co + co2\npb = max(P, 0) / p0\nq = if nt <= 0 or w <= 0 then 0 else k3 * co * (h2 * h2 * h2) * (pb * pb) / (w * (nt * nt))\nm4 = min(q, min(co, h2 / 3))\nn = nt - 2 * m4\ninv = if n <= 0 then 0 else 1 / n\nxh2 = (h2 - 3 * m4) * inv\nxh2o = (w + m4) * inv\nxco = (co - m4) * inv\nxco2 = co2 * inv\nxch4 = m4 * inv",
+    "inputs": {
+     "d": {
+      "kind": "interior.redox_iw",
+      "unit": "1",
+      "name": "the mantle's oxygen fugacity against iron-wüstite",
+      "valid": [
+       -8.0,
+       6.0
+      ]
+     },
+     "h": {
+      "kind": "early.outgassed_hydrogen",
+      "unit": "mol",
+      "name": "hydrogen given off, counted as H2",
+      "valid": [
+       0.0,
+       1e+40
+      ]
+     },
+     "c": {
+      "kind": "early.outgassed_carbon",
+      "unit": "mol",
+      "name": "carbon given off",
+      "valid": [
+       0.0,
+       1e+40
+      ]
+     },
+     "P": {
+      "kind": "early.outgassed_pressure",
+      "unit": "Pa",
+      "name": "pressure of the young air"
+     },
+     "T": {
+      "kind": "model.outgassing_temperature",
+      "unit": "K",
+      "name": "temperature the air was set at"
+     },
+     "ai": {
+      "kind": "model.iw_buffer_a",
+      "unit": "K",
+      "name": "iron-wüstite A"
+     },
+     "bi": {
+      "kind": "model.iw_buffer_b",
+      "unit": "1",
+      "name": "iron-wüstite B"
+     },
+     "a1": {
+      "kind": "model.water_equilibrium_a",
+      "unit": "K",
+      "name": "water equilibrium A"
+     },
+     "b1": {
+      "kind": "model.water_equilibrium_b",
+      "unit": "1",
+      "name": "water equilibrium B"
+     },
+     "a2": {
+      "kind": "model.co2_equilibrium_a",
+      "unit": "K",
+      "name": "CO2 equilibrium A"
+     },
+     "b2": {
+      "kind": "model.co2_equilibrium_b",
+      "unit": "1",
+      "name": "CO2 equilibrium B"
+     },
+     "a3": {
+      "kind": "model.methane_equilibrium_a",
+      "unit": "K",
+      "name": "methane equilibrium A"
+     },
+     "b3": {
+      "kind": "model.methane_equilibrium_b",
+      "unit": "1",
+      "name": "methane equilibrium B"
+     },
+     "p0": {
+      "kind": "model.standard_pressure",
+      "unit": "Pa",
+      "name": "standard pressure of the tables"
+     }
+    },
+    "outputs": {
+     "xh2": {
+      "kind": "early.outgas_h2",
+      "unit": "1",
+      "name": "H2's share of the gas, by moles"
+     },
+     "xh2o": {
+      "kind": "early.outgas_h2o",
+      "unit": "1",
+      "name": "water vapour's share"
+     },
+     "xco": {
+      "kind": "early.outgas_co",
+      "unit": "1",
+      "name": "carbon monoxide's share"
+     },
+     "xco2": {
+      "kind": "early.outgas_co2",
+      "unit": "1",
+      "name": "carbon dioxide's share"
+     },
+     "xch4": {
+      "kind": "early.outgas_ch4",
+      "unit": "1",
+      "name": "methane's share"
+     }
+    },
+    "source": {
+     "text": "Gaillard, F. et al. 2022, EPSL 577, 117255",
+     "doi": "10.1016/j.epsl.2021.117255",
+     "where": "gas speciation at the magma ocean's oxygen fugacity"
+    },
+    "explain": {
+     "curious": "The same hydrogen and carbon come out as water and carbon dioxide from an oxidised world, and as hydrogen and carbon monoxide from a reduced one. The rock decides, because the gas trades oxygen with the molten surface it rises from.",
+     "science": "At the magma ocean's surface the gas is in equilibrium with the melt's oxygen fugacity, fO2 = IW(T) · 10^ΔIW (Frost 1991's buffer): H2O/H2 = K1 fO2^½ and CO2/CO = K2 fO2^½, with K from NIST-JANAF. Methane, CO + 3 H2 = CH4 + H2O, is one step from the methane-free mix and rises with pressure squared; at magma ocean temperatures it is a trace. One temperature for every world; the air's later cooling, escape and photochemistry are not here (Gaillard et al. 2022, Hirschmann 2012)."
+    },
+    "examples": [
+     {
+      "d": 0.5,
+      "h": 1.0,
+      "c": 0.3,
+      "P": 10000000.0,
+      "T": 2000.0,
+      "ai": 27489.0,
+      "bi": 6.702,
+      "a1": 13040.0,
+      "b1": 2.981,
+      "a2": 14674.0,
+      "b2": 4.456,
+      "a3": 11860.0,
+      "b3": 13.279,
+      "p0": 100000.0,
+      "xh2": 0.2696652019849163,
+      "xh2o": 0.4995642368776537,
+      "xco": 0.16399615363277717,
+      "xco2": 0.06677152504022131,
+      "xch4": 2.8824644313388638e-06
+     },
+     {
+      "d": -2.0,
+      "h": 1.0,
+      "c": 0.3,
+      "P": 10000000.0,
+      "T": 2000.0,
+      "ai": 27489.0,
+      "bi": 6.702,
+      "a1": 13040.0,
+      "b1": 2.981,
+      "a2": 14674.0,
+      "b2": 4.456,
+      "a3": 11860.0,
+      "b3": 13.279,
+      "p0": 100000.0,
+      "xh2": 0.6959018248185517,
+      "xh2o": 0.07311154743753746,
+      "xco": 0.22534542203593375,
+      "xco2": 0.005170178929503396,
+      "xch4": 0.00047102677847390333
+     },
+     {
+      "d": 3.0,
+      "h": 1.0,
+      "c": 0.0,
+      "P": 100000.0,
+      "T": 2000.0,
+      "ai": 27489.0,
+      "bi": 6.702,
+      "a1": 13040.0,
+      "b1": 2.981,
+      "a2": 14674.0,
+      "b2": 4.456,
+      "a3": 11860.0,
+      "b3": 13.279,
+      "p0": 100000.0,
+      "xh2": 0.029462021006089762,
+      "xh2o": 0.9705379789939103,
+      "xco": 0.0,
+      "xco2": 0.0,
+      "xch4": 0.0
+     },
+     {
+      "d": 0.0,
+      "h": 0.0,
+      "c": 0.0,
+      "P": 0.0,
+      "T": 2000.0,
+      "ai": 27489.0,
+      "bi": 6.702,
+      "a1": 13040.0,
+      "b1": 2.981,
+      "a2": 14674.0,
+      "b2": 4.456,
+      "a3": 11860.0,
+      "b3": 13.279,
+      "p0": 100000.0,
+      "xh2": 0.0,
+      "xh2o": 0.0,
+      "xco": 0.0,
+      "xco2": 0.0,
+      "xch4": 0
+     }
+    ]
+   }
   }
  ]
 }
