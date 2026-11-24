@@ -6,13 +6,13 @@ export type { Vec3, FrameNode, Tree, Camera, Pixel } from "./frames.ts";
 export type { Gpu, GpuDots, GpuGlow, GpuItem, GpuLight, GpuRing, GpuSheet } from "./gpu.ts";
 export { armField, cloudNoise, GALAXY_BANDS, GALAXY_LIGHT, GALAXY_LIGHT_REFS, galaxyFace, glowPicture, sheetWeights, surfaceAt } from "./galaxy-true.ts";
 export type { GalaxyBand, GalaxyPicture } from "./galaxy-true.ts";
-export { cubeEdges, SPACE_CSS, webGlow, webParcels, WEB_KINDS, WEB_LIGHT_K } from "./web-cube.ts";
-export type { WebCubeData, WebKind } from "./web-cube.ts";
+export { cubeEdges, galaxyLight, SPACE_CSS, webGlow, webLights, webParcels, WEB_DARK_GLOW, WEB_KINDS, WEB_LIGHT_K, WEB_LIGHT_SHOW } from "./web-cube.ts";
+export type { WebCubeData, WebGalaxyData, WebKind, WebLightGroup } from "./web-cube.ts";
 // V10a: True in the system view, each world wrapped in its own surface.
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
 export type { TrueTexture } from "./true-look.ts";
 // R1 to R3, R6: air in True (clouds, hazes, giants from their cloud decks), true-air.ts.
-export { gasAbove, gasTint, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirLook, type FaceReader } from "./true-air.ts";
+export { flowFace, gasAbove, gasTint, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
 export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
@@ -112,7 +112,7 @@ export async function startSurface(canvas: HTMLCanvasElement) {
   return createSurfaceGpu(canvas);
 }
 // The size comparison's turning globes (3D, True, Wireframe).
-export { circleSteps, globeFrame, graticule, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
+export { circleSteps, globeFrame, graticule, bodySeconds, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
 export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";
 // A body's face in True, one door for every view (true-body.ts).
 export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
