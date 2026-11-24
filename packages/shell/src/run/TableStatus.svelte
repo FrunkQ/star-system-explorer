@@ -5,6 +5,7 @@
   import SeatsPanel from "./SeatsPanel.svelte";
   import ArrivalSlip from "./ArrivalSlip.svelte";
   import OnAir from "./OnAir.svelte";
+  import { noteSent } from "./fired.svelte.ts";
   import type { Share } from "../share.svelte.ts";
   import type { PartyShip, SceneSubject, Shown, ViewSession } from "../../../ui-contract/src/index.ts";
 
@@ -60,7 +61,7 @@
     <!-- On air (PB2): in the top bar on the Run desk, here on the others. The one Send of the live view stays here. -->
     {@const shown = share.state.shown}
     {#if chip}<OnAir {share} {onswitchboard} />{/if}
-    {#if "off" in shown || shown.scope !== system || (landingUnsent && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => share.show(here())} title="Show every screen {title}, as far as each knows it">Send this view</button>{/if}
+    {#if "off" in shown || shown.scope !== system || (landingUnsent && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => { const h = here(); noteSent(h, "everyone"); share.show(h); }} title="Show every screen {title}, as far as each knows it">Send this view</button>{/if}
     <a class="quietlink" href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' link</a>
     <button type="button" class="linkbtn quiet" onclick={() => ((seatsOpen = true), seatsDialog?.showModal())}>{share.state.plan.seats.length > 1 ? `${share.state.plan.seats.length} seats` : "More seats"}</button>
     <ArrivalSlip {session} {party} {subjects} {now_yr} {onchange} />

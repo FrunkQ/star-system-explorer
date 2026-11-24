@@ -107,7 +107,8 @@ async function walk(browser, vp) {
   });
   await step("see what followed", async () => {
     const surface = field("Mars", "surface");
-    await page.waitForFunction(() => /2[3-9]\d K|3\d\d K/.test(document.querySelector("section[aria-label='Mars']")?.textContent ?? ""), null, { timeout: 20000 });
+    // Warmer than about 230 K: in kelvin, or in °C as a world's surface is said (ED1a).
+    await page.waitForFunction(() => /2[3-9]\d K|3\d\d K|(^|[^\d])−?([0-3]?\d|4\d)(\.\d)? °C/.test(document.querySelector("section[aria-label='Mars']")?.textContent ?? ""), null, { timeout: 20000 });
     await tap(surface.getByRole("button", { name: /why/i }));
     await page.locator(".area-card").getByText(/./).first().waitFor();
   });
