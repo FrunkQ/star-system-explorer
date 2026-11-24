@@ -116,6 +116,15 @@
   const known = $derived(ctx.workspace.lensScene ? new Map(ctx.workspace.lensScene.subjects.map((x) => [x.address, x.view])) : null);
   const through = $derived(asPlayers(L) && known !== null);
   const knows = (s: SceneSubject) => !known || s === star || known.has(s.address);
+  // How the table knows most bodies here: said once in the legend, and under a name only where it differs.
+  const usualView = $derived.by(() => {
+    if (!known) return null;
+    const n = new Map<string, number>();
+    for (const v of known.values()) if (v) n.set(v, (n.get(v) ?? 0) + 1);
+    let best: string | null = null;
+    for (const [v, c] of n) if (best === null || c > n.get(best)!) best = v;
+    return best;
+  });
   const knownCount = $derived(known ? scene.subjects.filter((x) => (x.orbit || x.band_au) && known.has(x.address)).length : 0);
   const bodyCount = $derived(scene.subjects.filter((x) => x.orbit || x.band_au).length);
   // The key is generated from the symbology for the bodies on this chart.
@@ -436,7 +445,7 @@
                    with no words; one they know is in ink, with how they know it ("long range") under it. -->
               {@const pencil = on("known") && known && !atCentre && !view && !knows(s)}
               <text class="name" class:selname={sel} class:pencil x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size - 4} text-anchor={left ? "end" : "start"}>{label(s)}{#if pencil}<title>Not known to the table</title>{/if}</text>
-              {#if on("known") && known && !atCentre && view}
+              {#if on("known") && known && !atCentre && view && view !== usualView}
                 <text class="knownv" x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size + 9} text-anchor={left ? "end" : "start"} aria-hidden="true">{view.replace(/-/g, " ")}</text>
               {/if}
             {/if}
@@ -488,6 +497,7 @@
         {#if catalogued}<span class="authored-import" data-catalogued><Stamp kind="catalogued" title="Every value here is a measurement from a catalogue, with its source on the card's why?." /><span class="words">As measured, each value with its source</span></span>{/if}
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
         <span data-scale-note>{on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${g.units.toLocaleString("en-GB")} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
+        {#if on("known") && known && usualView && !through}<span class="usual-known" data-usual-known={usualView}>The table knows these at {usualView.replace(/-/g, " ")}; dotted names, not at all</span>{/if}
         {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}
         {#if key?.entries.length && on("key")}
           <details class="key">
