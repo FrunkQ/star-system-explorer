@@ -71,13 +71,17 @@ export interface Band3D {
   a_in_m: number;
   a_out_m: number;
   shape: "disc" | "sphere";
+  /** The star's GM, m³/s², when its mass is known: the belt's members go round at the Kepler rate. */
+  gm?: number;
 }
 
 export function bandsFromScene(scene: SystemScene): Band3D[] {
   const star = primaryOf(scene);
+  const ms = star?.facts.find((x) => x.field === "mass_sun")?.value;
+  const gm = typeof ms === "number" && ms > 0 ? constant("G") * ms * constant("M_sun") : undefined;
   return scene.subjects
     .filter((s) => s.kind === "belt" && s.band_au && (!s.parent || s.parent === star?.address))
-    .map((s) => ({ id: s.address, name: s.label, a_in_m: s.band_au![0] * KM_PER_AU * 1000, a_out_m: s.band_au![1] * KM_PER_AU * 1000, shape: s.shape ?? "disc" }));
+    .map((s) => ({ id: s.address, name: s.label, a_in_m: s.band_au![0] * KM_PER_AU * 1000, a_out_m: s.band_au![1] * KM_PER_AU * 1000, shape: s.shape ?? "disc", ...(gm ? { gm } : {}) }));
 }
 
 /**

@@ -1,0 +1,34 @@
+{
+ "construct": "as-506-s-ic",
+ "name": "Saturn V S-IC (AS-506)",
+ "about": "Apollo 11's first stage, from separation to the Atlantic.",
+ "pieces": [
+  {
+   "from_s": 62153919321,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ballistic fall"
+    }
+   },
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "separated at 36.0 nmi altitude, 7,883 ft/s Earth-fixed, 28.70 N 79.68 W; falls on a ballistic arc",
+   "to_s": 62153919703
+  },
+  {
+   "from_s": 62153919703,
+   "state": {
+    "kind": "gone",
+    "how": "impacted"
+   },
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "theoretical impact time in the Atlantic (SP-4029); place not given there"
+  }
+ ],
+ "events": []
+}

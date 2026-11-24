@@ -19,6 +19,7 @@
     hud = true,
     tier = "gpu-basic",
     onturned,
+    reframe = 0,
   }: {
     chart: GalaxyChart;
     /** "3d": the chart's diagram turned in 3D; "true": the galaxy in light. */
@@ -28,6 +29,8 @@
     hud?: boolean;
     tier?: string;
     onturned?: () => void;
+    /** Bumped each time a fixed "Seen from" is picked: the camera goes back to that framing. */
+    reframe?: number;
   } = $props();
 
   const isTrue = $derived(look === "true");
@@ -70,9 +73,11 @@
   $effect(() => {
     if (dist === 0) dist = outer * 2;
   });
+  // Picking a fixed "Seen from" frames it afresh (height, turn and zoom), even the one already shown.
   $effect(() => {
     const s = seen;
-    if (s !== "free") pitch = SEEN_ELEVATION[s];
+    void reframe;
+    if (s !== "free") ((pitch = SEEN_ELEVATION[s]), (yaw = -0.5), (dist = outer * 2));
   });
   const MIN = $derived(outer * 0.12);
   const MAX = $derived(outer * 8);
