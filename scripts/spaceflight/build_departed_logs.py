@@ -294,12 +294,15 @@ HOW = "GCAT gives the orbit's shape and inclination, not its orientation or wher
 
 
 def coords(dest):
-    m = re.match(r"([\d.]+)([EW]) ([\d.]+)([NS])", dest or "")
-    if not m:
-        return None
-    lon = float(m.group(1)) * (1 if m.group(2) == "E" else -1)
-    lat = float(m.group(3)) * (1 if m.group(4) == "N" else -1)
-    return lat, lon
+    """'63.834W 7.850N' or '26.22S 175.88W' to (lat, lon)."""
+    lat = lon = None
+    for v, h in re.findall(r"([\d.]+)([NSEW])", dest or ""):
+        x = float(v) * (1 if h in "NE" else -1)
+        if h in "NS":
+            lat = x
+        else:
+            lon = x
+    return (lat, lon) if lat is not None and lon is not None else None
 
 
 def borrow(parent, world, t):
@@ -588,3 +591,132 @@ for d in CAT["departed"]:
         fh.write(json.dumps(log, ensure_ascii=False) + "\n")
     n += 1
 print(n, "logs,", lam, "solved courses; no phases for", len(skipped), skipped[:20])
+
+
+# ---------------------------------------------------------------- RS8 part 2: stations and crewed flights in Earth orbit
+# GCAT's satcat gives each object's first phase only (GCAT's public tables keep no later phases for these: auxcat.tsv lists the objects attached to them, not their own undocking and landing):
+# launch, shape and inclination of the orbit, and how that phase ended (reentered, deorbited, landed, docked or
+# grappled). One log per station core (stations.json) and per human spaceflight vehicle record (catalogue.json).
+OUT2 = os.path.join(PACK, "logs/earth-orbit")
+SAT = {r["JCAT"]: r for r in table("satcat.tsv")}
+# Landing sites GCAT names without coordinates (positions from the sites' published runway and zone centres,
+# written from memory and marked estimated).
+SITES = {"KSC": (28.615, -80.695), "EAFB": (34.905, -117.884), "EDW": (34.905, -117.884),
+         "WSSH": (32.943, -106.419), "Kazakhstan": (47.36, 69.59)}
+
+
+# Landing days for crewed flights GCAT leaves docked (Wikidata P620, CC0; scripts/spaceflight/wikidata_landings.json).
+WD_LANDED = json.load(open(os.path.join(ROOT, "scripts/spaceflight/wikidata_landings.json"),
+                           encoding="utf-8"))["by_cospar"]
+# Each programme's usual landing zone, from memory and marked so: Soyuz on the Kazakh steppe near Dzhezkazgan, the
+# Shuttle at the Kennedy Space Center, Shenzhou at Dongfeng in Inner Mongolia.
+PROGRAM_SITES = {"Soyuz": (47.36, 69.59), "7K-": (47.36, 69.59), "STS": (28.615, -80.695), "OV-": (28.615, -80.695),
+                 "Shenzhou": (41.62, 100.08)}
+# Cargo craft that burn up on leaving: a Wikidata landing for one would be a slip, so none is taken.
+BURN_UP = ("Progress", "Cygnus", "HTV", "Tianzhou", "ATV")
+
+
+def earth_log(jcat, name, kind):
+    r = SAT.get(jcat)
+    if not r:
+        return None
+    s0 = gdate(r["SDate"]) or gdate(r["LDate"])
+    if not s0:
+        return None
+    hp, ha, inc = num(r["Perigee"]), num(r["Apogee"]), num(r["Inc"]) or 0.0
+    cid = slug(r["Name"] or name) or slug(r["Piece"])
+    if cid in taken:
+        cid = cid + "-" + slug(r["Piece"])
+    if cid in taken:
+        return None
+    taken.add(cid)
+    pieces, events = [], []
+
+    def piece(t, state, sure, why):
+        p = {"from_s": t, "state": state, "mark": "recorded" if sure and not why else "estimated", "src": "gcat",
+             "writer": "pack"}
+        if p["mark"] == "estimated":
+            p["why"] = why or "GCAT marks this date uncertain or gives it without an hour"
+        if pieces:
+            pieces[-1]["to_s"] = t
+        pieces.append(p)
+
+    if hp is None or ha is None or ha < 0:
+        piece(s0[0], {"kind": "course", "course": {"kind": "planned", "course": {"what": "in Earth orbit"}}}, s0[1],
+              "GCAT gives no orbit for this phase")
+    else:
+        R = WORLDS["Earth"][1]
+        rp, ra = (R + hp) * 1e3, (R + max(ha, hp)) * 1e3
+        i, node = equatorial_to_ecliptic(inc)
+        piece(s0[0], {"kind": "orbit", "around": P("earth"), "elements": {
+            "a_m": (rp + ra) / 2, "e": (ra - rp) / (ra + rp), "i_deg": i, "node_deg": node, "peri_deg": 0.0,
+            "m0_deg": 0.0, "epoch_s": s0[0]}}, s0[1], HOW + "; the orbit is GCAT's at its epoch (%s), held fixed" %
+              (r["ODate"] or "-"))
+    events.append({"at_s": s0[0], "kind": "launch", "mark": "recorded" if s0[1] else "estimated", "src": "gcat",
+                   "writer": "pack", **({} if s0[1] else {"why": "GCAT gives the launch without an hour"})})
+    d1 = gdate(r["DDate"])
+    st = r["Status"].rstrip("?")
+    if d1:
+        t1 = max(d1[0], s0[0] + 1)
+        if st in ("R", "D", "AR", "S", "F"):
+            piece(t1, {"kind": "gone", "how": "reentered"}, d1[1], None)
+            events.append({"at_s": t1, "kind": "entry", "mark": "recorded" if d1[1] else "estimated", "src": "gcat",
+                           "writer": "pack", **({} if d1[1] else {"why": "GCAT marks this date uncertain"})})
+        elif st in ("L", "LF", "AL"):
+            c = coords(r["Dest"])
+            why = None
+            if not c:
+                site = next((k for k in SITES if k.lower() in r["Dest"].lower()), None)
+                c = SITES.get(site, (0.0, 0.0))
+                why = ("GCAT names the site (%s); its coordinates are written from memory" % r["Dest"]) if site else \
+                    ("GCAT names the site (%s) without coordinates; the point is a stand-in" % (r["Dest"] or "-"))
+            piece(t1, {"kind": "landed", "body": P("earth"), "lat_deg": c[0], "lon_deg": c[1]}, d1[1], why)
+            events.append({"at_s": t1, "kind": "landing", "mark": "recorded" if d1[1] else "estimated", "src": "gcat",
+                           "writer": "pack", **({} if d1[1] else {"why": "GCAT marks this date uncertain"})})
+        elif st in ("DK", "GRP", "ATT") and r["Dest"]:
+            back = WD_LANDED.get(r["Piece"], {}).get("landed", [])
+            land = None
+            if len(back) == 1 and not any(b in kind for b in BURN_UP):
+                y, mo, dd = (int(x) for x in back[0][:10].split("-"))
+                land = gdate("%d %s %2d" % (y, list(MONTHS)[mo - 1], dd))
+            piece(t1, {"kind": "docked", "to": "gcat:" + r["Dest"]}, d1[1],
+                  "docked to %s; %s" % (r["Dest"], "it stays docked here until it lands, as the undocking is not in "
+                                        "GCAT's tables or Wikidata" if land and land[0] > t1 else
+                                        "GCAT's tables give no later phase (undocking, landing)"))
+            if land and land[0] > t1:
+                site = next((v for k_, v in PROGRAM_SITES.items() if k_ in kind), None)
+                piece(land[0], {"kind": "landed", "body": P("earth"), "lat_deg": (site or (0.0, 0.0))[0],
+                                "lon_deg": (site or (0.0, 0.0))[1]}, False,
+                      "landing day from Wikidata (P620, %s), noon UTC standing in for the hour; %s" % (
+                          WD_LANDED[r["Piece"]]["wikidata"], "the site is the programme's usual landing zone, from "
+                          "memory" if site else "no site given; the point is a stand-in"))
+                events.append({"at_s": land[0], "kind": "landing", "mark": "estimated", "src": "wikidata",
+                               "writer": "pack", "why": "landing day from Wikidata; the hour is not given"})
+        elif st in ("E", "C"):
+            piece(t1, {"kind": "gone", "how": "impacted"}, d1[1], "broke up in orbit (GCAT status %s)" % st)
+    return {"construct": cid, "name": r["Name"] or name, "gcat": jcat, "about": (
+        "%s (%s), a %s, launched %s. One orbit from GCAT's satcat (shape and inclination; orientation estimated), "
+        "then how that phase ended (%s)." % (r["Name"] or name, r["Piece"], kind, r["LDate"], st or "still in orbit")),
+            "pieces": pieces, "events": sorted(events, key=lambda e: e["at_s"])}
+
+
+os.makedirs(OUT2, exist_ok=True)
+for old in os.listdir(OUT2):
+    if old.endswith(".json"):
+        os.remove(os.path.join(OUT2, old))
+STATIONS = json.load(open(os.path.join(PACK, "stations.json"), encoding="utf-8"))["stations"]
+seen, n2, ends = set(), 0, {}
+for row in [(s_[0], s_[2], "station core") for s_ in STATIONS] + [(c[0], c[2], "crewed vehicle (" + c[4] + ")")
+                                                                  for c in CAT["crewed"]]:
+    if row[0] in seen or row[0] in IDS:
+        continue
+    seen.add(row[0])
+    log = earth_log(*row)
+    if not log:
+        continue
+    k = log["pieces"][-1]["state"]["kind"]
+    ends[k] = ends.get(k, 0) + 1
+    with open(os.path.join(OUT2, log["construct"] + ".json"), "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(log, ensure_ascii=False) + "\n")
+    n2 += 1
+print(n2, "Earth-orbit logs, ending", ends)

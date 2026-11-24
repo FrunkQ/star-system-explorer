@@ -11,8 +11,8 @@ use std::path::PathBuf;
 fn logs() -> BTreeMap<String, FlightLog> {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today/logs");
     // The showcase logs (build_logs.py) and, under departed/, one per craft that left Earth orbit
-    // (build_departed_logs.py, RS8).
-    let mut names: Vec<PathBuf> = [dir.clone(), dir.join("departed")]
+    // (build_departed_logs.py, RS8), and under earth-orbit/ the stations and crewed flights (RS8 part 2).
+    let mut names: Vec<PathBuf> = [dir.clone(), dir.join("departed"), dir.join("earth-orbit")]
         .iter()
         .flat_map(|d| std::fs::read_dir(d).unwrap())
         .map(|e| e.unwrap().path())
@@ -358,4 +358,53 @@ fn departed_cruise_against_horizons() {
         }
     }
     assert!(worst < 0.3, "worst {:.1}%", 100.0 * worst);
+}
+
+/// RS8 part 2: a log for each station core and each human spaceflight vehicle,
+/// from GCAT's satcat: Mir deorbited into the Pacific, Shuttle flights landed,
+/// Soyuz and Shuttles docked where GCAT's first phase ends at a station.
+#[test]
+fn stations_and_crewed_flights_have_logs() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today");
+    let all = logs();
+    let n = std::fs::read_dir(dir.join("logs/earth-orbit"))
+        .unwrap()
+        .count();
+    assert!(n >= 700, "{n} Earth-orbit logs");
+    assert!(matches!(
+        all["mir"].pieces.last().unwrap().state,
+        State::Gone { .. }
+    ));
+    // RS8 part 3: Soyuz 21 docked to Salyut 5 and landed on the steppe on Wikidata's day.
+    match &all["soyuz-21"].pieces.last().unwrap().state {
+        State::Landed { lat_deg, .. } => assert!((lat_deg - 47.4).abs() < 1.0, "the steppe"),
+        s => panic!("Soyuz 21 ends {s:?}"),
+    }
+    let landed = std::fs::read_dir(dir.join("logs/earth-orbit"))
+        .unwrap()
+        .filter(|p| {
+            let id = p
+                .as_ref()
+                .unwrap()
+                .path()
+                .file_stem()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
+            matches!(all[&id].pieces.last().unwrap().state, State::Landed { .. })
+        })
+        .count();
+    assert!(landed >= 400, "{landed} landed");
+    let sts = &all["discovery-sts-103"];
+    match &sts.pieces.last().unwrap().state {
+        State::Landed {
+            lat_deg, lon_deg, ..
+        } => {
+            assert!(
+                (lat_deg - 28.6).abs() < 0.5 && (lon_deg + 80.7).abs() < 0.5,
+                "KSC"
+            )
+        }
+        s => panic!("STS-103 ends {s:?}"),
+    }
 }

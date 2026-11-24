@@ -9,6 +9,8 @@
   import type { FieldReadJson, LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
+  /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
+  const trueSaid = new Map<string, string[]>();
   /** Stars read for True's living star, by system and star (a string: why there is none). */
   const liveStars = new Map<string, LiveStar | string>();
   /** read_field's Solar System fixture, read once for the page (Mag, V10e). */
@@ -17,10 +19,10 @@
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, starCss, trueSurface, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
+  import { readLiveStar, readTrueFace, starCss, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -96,7 +98,11 @@
   // How far out a drag may move an orbit: the survey edge in the star's frame, a little past the outermost moon in a planet's.
   const limitAu = $derived(frame ? scale.outer_au * 2 : scene.surveyed_to_au);
   const km = (au: number) => `${sig(au * KM_PER_AU, 3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} km`;
-  const dist = (au: number) => (frame ? km(au) : `${au} AU`);
+  // An orbit's size as the units engine says it (ED1a): AU round a star, thousand km round a planet, in the campaign's
+  // chosen reading, at the workspace depth.
+  const orbitAbout = $derived({ class: frame ? "moon" : "planet", what: "orbit" });
+  const dist = (au: number) =>
+    sayText(au * sheetUnitFactor("au"), "length", orbitAbout, { depth: ctx.workspace.depth ?? "science", reading: chosenReading(ctx.workspace.unit_choices, "length", orbitAbout) });
   const unsurveyed = $derived(
     `M0 0H${w}V${h}H0Z M${cx - surveyR} ${cy}a${surveyR} ${surveyR} 0 1 0 ${surveyR * 2} 0a${surveyR} ${surveyR} 0 1 0 ${-surveyR * 2} 0Z`,
   );
@@ -142,7 +148,8 @@
   let drag = $state<{ address: string; a_au: number; moved: boolean; scale: typeof scale } | null>(null);
   let problem = $state<string | null>(null);
   const editable = (s: SceneSubject) => ctx.workspace.mode === "edit" && hasTool(L, "drag") && !!s.orbit && !!s.facts.find((f) => f.field === "a_au" && f.editable);
-  const aOf = (s: SceneSubject) => (drag && drag.address === s.address ? drag.a_au : s.orbit!.a_au);
+  // The world stays put while dragging; a ghost and its orbit line follow the pointer (editing design section 4).
+  const aOf = (s: SceneSubject) => s.orbit!.a_au;
   const rr = (au: number) => radius(au, drag ? drag.scale : scale);
   const pos = (s: SceneSubject): [number, number] => polar(cx, cy, rr(aOf(s)), s.orbit!.phase_deg);
   let svgEl: SVGSVGElement | undefined = $state();
@@ -165,6 +172,19 @@
     const a = round(Math.min(limitAu, Math.max(drag.scale.inner_au, distanceAt(d, drag.scale))));
     if (a !== drag.a_au) drag = { ...drag, a_au: a, moved: true };
   }
+
+  // Esc while dragging puts the orbit back and writes nothing (editing design section 4).
+  $effect(() => {
+    if (!drag) return;
+    const cancel = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      drag = null;
+    };
+    window.addEventListener("keydown", cancel, true);
+    return () => window.removeEventListener("keydown", cancel, true);
+  });
 
   async function endDrag() {
     const d = drag;
@@ -249,9 +269,10 @@
         const key = `${sys}|${s.address}`;
         if (!trueSurfaces.has(key)) {
           reading = { done, of: order.length, none, why: noneWhy };
-          const r = await ctx.session.surfaceTiles(sys, s.address);
-          const why = r.ok ? String((r.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : r.message;
-          trueSurfaces.set(key, (r.ok && trueSurface(r.tiles)) || why);
+          // Ground, then today's clouds and haze; a giant is its cloud decks (renderer true-air.ts).
+          const f = await readTrueFace(ctx.session as unknown as FaceReader, sys, s.address);
+          trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
+          if (typeof f !== "string") trueSaid.set(key, f.said);
         }
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
@@ -320,7 +341,9 @@
             ? `${reading.none} of ${reading.of} worlds are drawn plain, with no surface to show (the kernel: ${reading.why}).`
             : "",
   );
-  const trueNote = $derived([surfaceNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
+  // Each thing a face could not show, said once for the system (a colour the sheet lacks, a giant's dark deep air).
+  const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
+  const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
@@ -447,7 +470,9 @@
             {/each}
             {#if sel}<circle class="sel" cx={x} cy={y} r={Math.max(markExtent(m) + 4, m.size * 2 + 6)} />{/if}
             {#if drag?.address === s.address}
-              <text class="dragv" x={x + m.size + 9} y={y + m.size + 16}>{dist(drag.a_au)}</text>
+              {@const [gx, gy] = polar(cx, cy, rr(drag.a_au), s.orbit!.phase_deg)}
+              <g class="ghost" data-ghost aria-hidden="true"><Mark mark={m} cx={gx} cy={gy} {prefix} /></g>
+              <text class="dragv" data-drag-readout x={gx + m.size + 9} y={gy + m.size + 16}>{dist(drag.a_au)}</text>
             {/if}
             {#if showLabel(s) && (s.orbit || atCentre) && !(atCentre && !frame)}
               {@const left = x > w - 110}
@@ -548,6 +573,13 @@
   .dragging,
   .dragging .body {
     cursor: grabbing;
+  }
+  .dragging {
+    user-select: none;
+  }
+  .ghost {
+    opacity: 0.55;
+    pointer-events: none;
   }
   .dragv {
     fill: var(--sse-accent-ink);

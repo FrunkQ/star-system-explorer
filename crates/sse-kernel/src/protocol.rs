@@ -183,6 +183,11 @@ pub enum Request {
     },
     History {
         address: String,
+        /// Also give each event's fact changes at exactly this address (the ship's Log names what a refit
+        /// changed). Off by default, so the plain answer is unchanged.
+        #[serde(default)]
+        #[ts(optional)]
+        changes: Option<bool>,
     },
     StateHash {
         #[serde(default)]
@@ -990,11 +995,24 @@ pub enum Request {
     /// `z` or cosmic time `t_gyr` (default now). With `cube: true` it is a
     /// cube for the 3D view instead: n^3 parcels (n 4 to 48) moved by the
     /// truncated Zel'dovich approximation, each with its environment, its
-    /// starting density and the room it takes today. Read only.
+    /// starting density and the room it takes today. With `haloes: true` as
+    /// well it gives the same cube's `galaxies` instead (V9w): G2's haloes
+    /// from the pack's web light floor up that started inside it, moved by
+    /// the same step, each with its G3 galaxy's stars and star formation
+    /// then; ask for the parcels and the galaxies apart so the parcels show
+    /// first. Read only.
     WebSlice {
         #[serde(default)]
         #[ts(optional)]
         cube: Option<bool>,
+        #[serde(default)]
+        #[ts(optional)]
+        haloes: Option<bool>,
+        /// With `haloes`: the smallest halo drawn, solar masses (never below
+        /// the pack's floor), so a bigger cube can keep to the brighter ones.
+        #[serde(default)]
+        #[ts(optional)]
+        galaxy_floor_msun: Option<f64>,
         #[serde(default)]
         #[ts(optional)]
         z: Option<f64>,
@@ -2771,6 +2789,31 @@ pub struct EventSummary {
     pub occurred_at_s: i64,
     pub evidence: String,
     pub subject: Vec<String>,
+    /// The facts this event set or unset at the asked address, by field (only when `history` asked for changes).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub changes: Option<Vec<FactChange>>,
+}
+
+/// One fact an event set (`value`) or unset (`unset: true`). A value over `FactChange::LARGE` bytes of JSON (a
+/// picture) is left out and marked `large`, so a history stays small.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FactChange {
+    pub field: String,
+    #[ts(type = "unknown")]
+    #[serde(default)]
+    pub value: serde_json::Value,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(type = "boolean | undefined")]
+    pub unset: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(type = "boolean | undefined")]
+    pub large: bool,
+}
+
+impl FactChange {
+    pub const LARGE: usize = 4096;
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
@@ -3157,7 +3200,9 @@ pub enum Response {
     },
     /// `web_slice`: `{t_gyr, z, now_gyr, slice, model}` (`slice` is sse-cosmos's
     /// `Slice`), or with `cube` `{t_gyr, z, now_gyr, volume, model}` (`volume`
-    /// is sse-cosmos's `Volume`).
+    /// is sse-cosmos's `Volume`), or with `haloes` too `{t_gyr, z, now_gyr,
+    /// centre, extent, galaxies, galaxy_floor_msun, model}` (`galaxies` is a
+    /// list of sse-cosmos's `WebGalaxy`).
     WebSliced {
         #[ts(type = "unknown")]
         web: serde_json::Value,

@@ -63,9 +63,11 @@ leave the browser.
 
 - **CI test lines, add only** (Alex 18:07 UTC: "yes - if it makes your job easier - do it!"): a builder may add lines to `.github/workflows/ci.yml` so its new tests run automatically. Never remove, skip or loosen a check. Every other CI workflow or merge-check edit still needs Alex's own yes.
 - **Frozen physics for the golden** (Alex 18:07 UTC): the shared contract golden may run on a frozen copy of the base-physics pack, with the live pack's loading tested separately. The kernel thread builds this after the barycentre PR.
-- **Golden lane:** until the golden is split by area (agreed by Alex; kernel thread first takes the op list, line 1, and the unknown-op line, 41, out of `tests/golden/contract.jsonl`, then per-area files), one golden-changing PR merges at a time, in order of readiness, each merged with main, regenerated and green. Tell the kernel thread when one opens and when it merges.
+- **Golden lane:** since PR 454 (kernel), adding an op no longer changes golden lines 1 and 41 of `tests/golden/contract.jsonl`: they are masked and checked against `ops()`. After merging main, a golden PR re-runs `SSE_BLESS=1 cargo test -p sse-kernel contract`, and only its own appended cases and real changes should show in the diff; an open golden PR that edited lines 1 or 41 takes main's side and reblesses. Golden-changing PRs still merge one at a time in order of readiness, each merged with main, regenerated and green; tell the kernel thread when one opens and merges. Next from the kernel: the frozen base-physics copy (Alex 18:07), then `class_sample`. Open item: eight request ops have no `ops()` cost row (`hold`, `holdings_in`, `links_in`, `set_link`, `set_tech`, `tech_of`, `tech_reading`, `who_holds`); owner being found.
 - **Data sheet UI copy:** after any change to the data sheet or `scripts/build-ui-reference.py`, merge main, run `python3 scripts/build-ui-reference.py`, then `--check`, before merging.
 - **"Call me if there is a stop"** (Alex): if a stage is blocked on him, ask him; don't wait silently.
+- **Figures go through one door (ED1a, accepted; check lands with the editing thread's PR):** a screen never formats its own numbers. Use `packages/ui-contract/src/figures.ts` (`say`, `sayText`, `sayFact`, `sayNumber`, `roundTo`). `tests/ui/figures-ledger.test.ts` counts `toFixed`, `toPrecision` and `toLocaleString` per file under views, shell, chart-grammar, ui-contract and renderer against `tests/ui/figures-ledger.json`: a file's count may go down, never up, and a new file starts at zero. After removing calls, rewrite the ledger with `WRITE_LEDGER=1 node --test tests/ui/figures-ledger.test.ts`.
+- **Consensus for research** (Alex 18:47 UTC): the Consensus research connector is there for deep research; on the new account Claude has it directly, so use it yourself rather than writing briefs for Alex.
 - Other rulings of the day (Composite band, Hazard map, seas, pulsar glitches, CoolProp only in scratch with his yes) are in `handover/memory/sse4-rulings-24nov-evening.md`.
 
 ## Standing rule: real physics, documented fudges (Alex, 19 Nov 2026)
@@ -73,6 +75,7 @@ In his words: "the physics is WAY more interesting than faking it. But understan
 
 - Every deliberate simplification, stand-in or tuned constant goes in `docs/fudges.md` (where it lives, why it exists, what real physics would replace it) in the same PR that adds it.
 - Every reference, published relation or quoted constant goes in `docs/citations.md` with its check status (verified, corrected, unverified). Check a relation against its source before relying on it.
+- **Master citation list (from PR 471, thread "Verify every cited paper"):** a new citation in a pack or in the code fails the checks until it is added to the master list with `python3 scripts/citations.py --add`. The list (about 1,475 papers, tiered, with statuses) and how papers are verified (with Consensus, which the new account has directly) are in `handover/citations/README.md`. Still also add the citation to `docs/citations.md` with its status.
 
 ## Standing rule: physics in the chain blocks, each with a view (Alex, 19 Nov 2026)
 In his words: "try and do everything in the physics chain blocks... other than Big Blocks. And have a UI element that makes sense to visualise".
@@ -81,6 +84,12 @@ In his words: "try and do everything in the physics chain blocks... other than B
 - "Big Blocks" (heavy engine or simulator blocks: the classifier, weather, geology, stellar evolution and the like) only for what truly cannot be expressed as a flow, and each says why in `docs/fudges.md`.
 - Each block or Big Block has a UI element that makes sense to visualise what it does.
 - Logic hidden in Rust that could be a flow is listed in `docs/fudges.md` (section "Candidates to move into flows") until it moves.
+
+## Banked ideas (not accepted, nothing queued)
+
+Design notes kept for the future. They are **not** rulings and no builder starts on them without Alex's own yes.
+
+- `design/SSE4-outside-models-design.md` (track OM, banked 24 Nov 2026): a scientist's own model feeding a physics flow through recorded answers, and the kernel as a published module. Alex: "find a proper use case first". Revisit when a real use case appears.
 
 ## Where we are
 
@@ -91,8 +100,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | Status file | Owner thread (24 Nov 2026, 18:15 UTC) | Covers |
 |---|---|---|
 | `status/kernel.md` | Build kernel resolve and rules | K, J, C, T1, T2, G, L, E, the kernel side of Y, TG, GH, DM2 to DM5, ND3, ND3b, ND6, ED kernel asks K1 to K17, the golden split |
-| `status/kernel-handoffs.md` (arrives with PR 463) | Build galaxy arm fix and atmosphere advice | kernel packages handed off by the kernel thread: arm sign fix, GH3 leading arm, ATMOS, V3 bary nodes on import |
-| none yet | Build galaxy arm fix and atmosphere advice (split from the kernel thread) | the galaxy arm sign fix (golden), atmosphere advice ("the science expects", "Suggest an atmosphere") |
+| `status/kernel-handoffs.md` | Build galaxy arm fix and atmosphere advice | kernel packages handed off by the kernel thread: arm sign fix, GH3 leading arm, ATMOS, V3 bary nodes on import |
 | `status/proven-core.md` | Build SSE4 proven core | P, F, S, SF, B, T3, S5, the source side of MF (MF1 to MF3, MF10), MP19, MP20, ND1 |
 | `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
 | `status/navigation.md` | Build object selector and menus | NV (selector part 2, object menu, find by tag, notes) |
@@ -101,27 +109,31 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | V8, voyages, the flight log, travel panels, HW |
 | `status/galaxy.md` (arrives with PR 431) | Build galaxy charts and histories (split from travel) | U6, U8, V9, GH8, V3 gap 39 |
-| none yet | Build cosmic web view | the cosmic web view (V9w follow-ups) |
+| `status/cosmic-web.md` | Build cosmic web view | the web cube in 3D and True, light from haloes (V9w follow-ups) |
 | `status/light.md` | Build light and nebulae | O, the light side of Y, MF6, MF7, MF9, ND2 |
 | `status/weather.md` | Build shared climate and weather | W, seas (colour, waves, whitecaps) |
 | `status/data-sheet.md` | Build the master matter data sheet | MP data waves, MP22, SOL, DM1, DM6, RK1, RK2, RK10, citation checks |
 | `status/renderer.md` | Build photoreal renderer | R, the drawing side of Y5 and MF14a, V14 |
+| `status/quality-tiers.md` | Build quality tiers and speed probe (split from the renderer) | VP4, VP5: the `gpu-ultra` tier, the speed probe and placement by measured speed, heat watch, Quality choice, drawing bench rows; recipes and the governor on every True view; sharpen at rest |
 | `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
-| `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map); XO is a code only, never shown in the product |
-| `status/true-air.md` (arrives with PR 444) | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
-| `status/true-surface.md` (arrives with PR 449) | Build plumes, frosts and small bodies (listed as "Build plumes, frosts and hot glow") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
-| none yet | Build asteroids and rings up close | asteroids and rings seen close |
-| `status/surface-timelapse.md` (arrives with PR 436) | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse |
+| `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map, pulsating stars, ship clocks); XO is a code only, never shown in the product |
+| `status/true-air.md` | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
+| `status/true-surface.md` | Build plumes, frosts and hot glow (was "... and small bodies") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
+| `status/small-bodies.md` (arrives with PR 459) | Build asteroids and rings up close (took small bodies from the plumes thread) | SB: belt members resolved into definite bodies, asteroids and rings up close |
+| `status/surface-timelapse.md` | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse, the drawing side of W-sea2 to W-sea4 |
 | `status/names-and-life.md` | Build names gallery and life board | rest of NM6 (Classes, names gallery), U7 Life board |
 | `status/naming.md` | no live owner (NM design done) | NM |
-| `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9, SV7 |
+| `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9, SV7, AT11, AT16 |
 | `status/traveller.md` | Build Traveller pack | X3, TG8, TG9, TG11, TG13, MP16 |
 | `status/manifest.md` | Build ship manifest and crew roster | MC |
-| `status/atomic-rockets.md` (arrives with PR 447) | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
-| `status/paper-spacecraft.md` (arrives with PR 438) | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
+| `status/atomic-rockets.md` | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
+| `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
+| `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
+
+Added after 18:15 UTC: "Verify every cited paper" (`status/citations.md`, arrives with PR 471; master citation list, daily Consensus batches), "Build quality tiers and speed probe" (`status/quality-tiers.md`, PR 470), "Build detail ladder and world textures" (`status/detail-ladder.md`, PR 467), "Build aurorae and night lights" (`status/aurora.md`, PR 469). Designs: "Design visual polish and flourishes" (accepted, note in `handover/design/`); the exotic objects note's section 15 adds pulsating stars (XO19) and clocks (XO20); outside models and the kernel as a module (track OM, PR 484) is banked, not accepted.
 
 Design (Fable) threads take design questions for their notes: "Bring Atomic Rockets into SSE4" (RK), "Design exotic stars and black holes" (XO). A status file marked "arrives with PR n" is on that PR's branch; until it merges, its text is kept in `handover/status-on-open-prs.md`. Threads marked "none yet" were asked to start a file.
 

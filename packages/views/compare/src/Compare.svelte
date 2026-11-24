@@ -98,12 +98,12 @@
   });
   // The Solar System's measured days, tilts and rings (base-sol pack) for the reference bodies that name a row in it.
   const SOL = "packs/base-sol.json";
-  let sol = $state<SolDoc | null>(null);
+  let solDoc = $state<SolDoc | null>(null);
   $effect(() => {
-    if (sol) return;
+    if (solDoc) return;
     fetch(new URL(SOL, document.baseURI))
       .then((r) => r.json())
-      .then((d) => (sol = (d?.provides?.other?.sol as SolDoc | undefined) ?? null))
+      .then((d) => (solDoc = (d?.provides?.other?.sol as SolDoc | undefined) ?? null))
       .catch(() => {});
   });
 
@@ -139,7 +139,7 @@
   }
   async function surprise() {
     const p = await loadPool();
-    const choices = [...own, ...p.flatMap((x) => x.items), ...(refs?.objects.map((o) => itemFromReference(o, sol)) ?? [])].filter((i) => !inLineup(i.key));
+    const choices = [...own, ...p.flatMap((x) => x.items), ...(refs?.objects.map((o) => itemFromReference(o, solDoc)) ?? [])].filter((i) => !inLineup(i.key));
     if (!choices.length) {
       note = "Everything there is to compare is already in the lineup.";
       return;
@@ -231,7 +231,7 @@
           <h3>{g.label}</h3>
           <ul class="picks">
             {#each refs.objects.filter((o) => o.group === g.id) as o (o.id)}
-              {@const i = itemFromReference(o, sol)}
+              {@const i = itemFromReference(o, solDoc)}
               <li><button type="button" disabled={inLineup(i.key)} onclick={() => add(i)} title={o.type}>{o.label}</button></li>
             {/each}
           </ul>

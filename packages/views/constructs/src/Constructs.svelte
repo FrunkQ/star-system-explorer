@@ -12,6 +12,7 @@
   import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
   import { Aboard, Picture } from "../../manifest/src/index.ts";
+  import { Power } from "../../flow/src/index.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const session = untrack(() => ctx.session);
@@ -96,7 +97,7 @@
   let log = $state<ShipLogEntry[]>([]);
   const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
   async function loadLog(address: string) {
-    const [h, r, aboardAll] = await Promise.all([session.history(address), session.record?.(address), aboardEntries(address)]);
+    const [h, r, aboardAll] = await Promise.all([session.history(address, { changes: true }), session.record?.(address), aboardEntries(address)]);
     if (picked !== address) return;
     const own = shipLog(h, r?.ok ? r.record : null, (s) => secondsToYears(s), (k) => fieldWords(k, MANIFEST_WORDS).label);
     // Who and what came aboard, left and changed state here (track MC), from the entries' own histories.
@@ -123,6 +124,8 @@
   let aboardOpen = $state(false);
   // The picture (designed from its parts, or the GM's own) opens like Aboard and Log: the card stays short.
   let pictureOpen = $state(false);
+  // Its power books as a flow (RK13): every seat, the GM's with the honesty marks.
+  let powerOpen = $state(false);
   const places = $derived([
     ...listed.map((s) => ({ address: s.address, label: nameOf(s) })),
     ...scene.subjects.map((s) => ({ address: s.address, label: s.address === scene.system ? `${s.label} (the system)` : s.label })),
@@ -300,6 +303,7 @@
             {#if bodyAt(current.address)}<a href={placeHash({ scale: "world", system: scene.system, world: bodyAt(current.address)! })}>Open the world it is at</a>{/if}
             {#if gm && ws.setParty && navOf(current)}<button type="button" class="quiet-btn" aria-pressed={isParty(current)} onclick={() => makeParty(current!)} data-party-ship>{isParty(current) ? "The party's ship" : "Make this the party's ship"}</button>{/if}
             {#if gm || isStation(current)}<button type="button" class="quiet-btn" aria-expanded={pictureOpen} onclick={() => (pictureOpen = !pictureOpen)} data-picture-toggle>Picture</button>{/if}
+            {#if navOf(current)}<button type="button" class="quiet-btn" aria-expanded={powerOpen} onclick={() => (powerOpen = !powerOpen)} data-power-toggle>Power</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" aria-expanded={aboardOpen} onclick={() => (aboardOpen = !aboardOpen)} data-aboard-toggle>Aboard</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" bind:this={logBtn} aria-expanded={logOpen} onclick={() => (logOpen = !logOpen)} data-log-toggle>Log</button>{/if}
             {#if gm && current.facts.some((f) => f.field === "template.id")}<button type="button" class="quiet-btn" onclick={() => (retiring = !retiring)} data-retire>Take out of play…</button>{/if}
@@ -312,6 +316,11 @@
           {#if aboardOpen}
             <div use:opensFrom={() => document.querySelector("[data-aboard-toggle]")}>
               <Aboard {ctx} construct={current} {places} nav={navOf(current)} />
+            </div>
+          {/if}
+          {#if powerOpen && navOf(current)}
+            <div use:opensFrom={() => document.querySelector("[data-power-toggle]")}>
+              <Power {ctx} nav={navOf(current)} />
             </div>
           {/if}
           {#if logOpen}
