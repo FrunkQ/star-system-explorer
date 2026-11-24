@@ -281,6 +281,42 @@ pub struct Ship {
 }
 
 impl Ship {
+    /// RK9 part 2: the ship as its fitted parts make it here and now. With
+    /// `engines`, the four-bus ledger at `flux_w_m2` and `t_s` sets
+    /// `accel_g` (thrust over the mass aboard) and `exhaust_km_s` (thrust
+    /// weighted); with none, `None`, and the typed figures stand. Engine
+    /// ids resolve against `defs` (the stacked packs' engines); an unknown
+    /// one is named in the ledger's `why`.
+    pub fn effective(
+        &self,
+        defs: &BTreeMap<String, power::EngineDef>,
+        flux_w_m2: f64,
+        t_s: i64,
+    ) -> Option<(power::Ledger, Ship)> {
+        if self.engines.is_empty() {
+            return None;
+        }
+        let l = power::ledger(
+            &self.power,
+            &self.engines,
+            &self.loads,
+            defs,
+            power::Conditions { flux_w_m2, t_s },
+        );
+        let (a, ve) = power::readings(&l, self.dry_t + self.propellant());
+        let mut s = self.clone();
+        s.accel_g = a;
+        if ve > 0.0 {
+            s.exhaust_km_s = ve;
+        }
+        Some((l, s))
+    }
+    /// Whether any power source follows the starlight where the ship is.
+    pub fn sunlit_power(&self) -> bool {
+        self.power
+            .iter()
+            .any(|p| matches!(p.law, power::Law::Sunlight { .. }))
+    }
     /// Whether the ship has a refuelling capability.
     pub fn can(&self, capability: &str) -> bool {
         self.refuel

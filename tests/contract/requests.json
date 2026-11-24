@@ -3392,5 +3392,12 @@
   "add": [
    {"address": "u:st/sys:0/star:0/planet:2", "facts": {"body.kind": "planet", "orbit.host": "u:st/sys:0/star:0", "body.mass": 5.9722e24, "orbit.semi_major_axis": 154085806821.0}}
   ]
+ },
+ {
+  "op": "ship_power",
+  "ship": {"name": "Hall tug", "accel_g": 0.05, "sustained": true, "exhaust_km_s": 20.0, "wet_t": 400.0, "dry_t": 200.0,
+   "power": [{"id": "plant", "kind": "fission-reactor", "electric_w": 100000.0}],
+   "loads": [{"name": "quarters", "electric_w": 20000.0, "reject_k": 290.0}],
+   "engines": [{"engine": {"name": "Hall thruster", "thrust_n": 530.0, "exhaust_km_s": 20.0, "energy_from": "electric", "electric_w": 100000.0, "efficiency": 0.6, "reject_k": 500.0}}]}
  }
 ]

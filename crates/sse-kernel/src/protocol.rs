@@ -1443,6 +1443,22 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// RK9: a ship's power books (the four-bus ledger, `sse-nav` power):
+    /// what its sources make at `flux_w_m2` (default 1361, the Earth's) and
+    /// `at_s` (default 0), what its loads and engines take, heat by the
+    /// temperature it leaves at, what came from nowhere with why, and one
+    /// balance shaped like `tech_reading`'s. Fitted engines set `accel_g`
+    /// and `exhaust_km_s`. `ship` is a template id or a ship in full.
+    ShipPower {
+        #[ts(type = "unknown")]
+        ship: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional)]
+        flux_w_m2: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
     /// ST1: whether the orbits at or under `system` last (Hill spacing,
     /// angular momentum deficit, moon limits, Kozai-Lidov swings, binary
     /// limits), each check a formula block shown with its numbers. Reads the
@@ -2112,6 +2128,7 @@ impl Request {
             Request::Rules => "rules",
             Request::OrbitsAt { .. } => "orbits_at",
             Request::OrbitStability { .. } => "orbit_stability",
+            Request::ShipPower { .. } => "ship_power",
             Request::SetCampaignNow { .. } => "set_campaign_now",
             Request::CampaignNow => "campaign_now",
             Request::Calendar => "calendar",
@@ -2427,6 +2444,7 @@ pub fn ops() -> Vec<OpInfo> {
             Cost::Light,
             "linear in bodies x times (at most 64 times); 16 Newton steps each",
         ),
+        o("ship_power", Cost::Trivial, "linear in the ship's parts"),
         o(
             "orbit_stability",
             Cost::Light,
@@ -3283,6 +3301,12 @@ pub enum Response {
         system: String,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `ship_power`: `{ship, flux_w_m2, accel_g, exhaust_km_s, ledger,
+    /// balance, fictional, why}`.
+    ShipPowerIs {
+        #[ts(type = "unknown")]
+        power: serde_json::Value,
     },
     /// `orbit_stability`: `verdict` (`lasts`, `watch` or `unstable`, the
     /// worst check), `checks` (`{check, block, around, bodies, level, says,

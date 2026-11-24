@@ -850,3 +850,9 @@ listed here. Imported codes always win over these (they are kept as authored and
 | `ui-contract/manifest.ts` `ageNow` | A person's own age moves on with campaign (home) time while awake or missing, and not at all in cold sleep | Voyages do not yet record ship time, and no hibernation metabolism is modelled | Ship time from each voyage leg (time dilation on fast flights), and an ageing rate in cold sleep from the setting's future tech | stand-in until voyages record ship time |
 | `ui-contract/manifest.ts` `lifeSupport` | People in cold sleep draw nothing from the stores; anyone whose kind of being is not stated is counted at the human rates | Most campaigns start with human crews; the screen says so on the Life support line | Cold-sleep upkeep (power, a small share of oxygen) as a rate in the pack; no default kind once 4.1 aliens bring rates of their own | authored, to review with 4.1 life |
 | `packs/base-manifest` `life_support.recycled` | One recovered share for oxygen and water together, set by the GM per ship | No life support plant is modelled; the share stands in for it | Each recovery system (water processor, oxygen generator, plant beds) as a part with its own efficiency and power draw, from the ship designer | authored |
+
+## Power books (track RK, RK9)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `sse-kernel/src/nav.rs` `powered` | Sunlight power for a leg is held at the leg's dimmer end (the lower of the start and end worlds' starlight), not integrated along the path; between the stars no world's starlight is read, so sunlight power counts as none | A course's thrust must be one that the ship can keep the whole way; the cautious end is never generous | Thrust following the flux along the integrated course, with the array's pointing and temperature | stand-in (RK9 part 2) |

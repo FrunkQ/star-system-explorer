@@ -24,6 +24,8 @@ pub(crate) struct Ask<'a> {
     pub gambles: bool,
     /// Links the voyage may use (the record's, as the crew knows them, and any given inline).
     pub links: &'a Links,
+    /// The stack's engine designs (RK9), for ships with fitted engines.
+    pub engines: &'a BTreeMap<String, sse_nav::power::EngineDef>,
 }
 
 /// The travel part a link carries in the record (`set_link`'s `nav`).
@@ -160,6 +162,10 @@ pub(crate) fn plan_voyage(
         })?,
         other => serde_json::from_value(other.clone()).map_err(|e| bad(format!("ship: {e}")))?,
     };
+    // RK9: fitted engines set the drive. Between the stars no world's
+    // starlight is read, so sunlight power counts as none (cautious).
+    let t_s = t_myr * 1.0e6 * sse_core::sheet::YR_JULIAN;
+    let (ship, power) = crate::nav::powered(ship, a.engines, &[], t_s);
     let minimise = minimise(a.minimise)?;
     let c0 = cell_of(a.from).ok_or_else(|| bad(format!("{}: not a star system", a.from)))?;
     let c1 = match a.to {
@@ -362,6 +368,9 @@ pub(crate) fn plan_voyage(
             out["voyage"] = serde_json::Value::Null;
             out["refusals"] = serde_json::to_value(r).expect("plain data");
         }
+    }
+    if let Some(p) = power {
+        out["power"] = p;
     }
     Ok(out)
 }
