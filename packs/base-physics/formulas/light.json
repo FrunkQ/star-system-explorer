@@ -704,6 +704,216 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.light.eye_lobe",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "wavelength_nm",
+     "letter": "x"
+    },
+    {
+     "port": "lobe_centre_nm",
+     "letter": "mu"
+    },
+    {
+     "port": "lobe_width_blue_nm",
+     "letter": "s1"
+    },
+    {
+     "port": "lobe_width_red_nm",
+     "letter": "s2"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "lobe",
+     "letter": "g"
+    }
+   ],
+   "positive": [
+    {
+     "port": "lobe_width_blue_nm",
+     "says": "lobe width on the blue side"
+    },
+    {
+     "port": "lobe_width_red_nm",
+     "says": "lobe width on the red side"
+    }
+   ],
+   "references": [
+    "Wyman, C., Sloan, P.-P. and Shirley, P. 2013, Simple analytic approximations to the CIE XYZ color matching functions, Journal of Computer Graphics Techniques 2(2), 1: the multi-lobe piecewise Gaussian fit, eq. 2 and table 1. https://jcgt.org/published/0002/02/01/"
+   ],
+   "shown": "g(λ) = exp(−½ ((λ − μ)/σ)²), σ = σ₁ below μ and σ₂ above",
+   "equation": {
+    "name": "One lobe of the eye's response to colour",
+    "formula": "t = if x < mu then (x - mu) / s1 else (x - mu) / s2\ng = exp(-t * t / 2)",
+    "inputs": {
+     "x": {
+      "kind": "eye.wavelength_nm",
+      "unit": "1",
+      "name": "wavelength in nanometres",
+      "valid": [
+       300.0,
+       900.0
+      ]
+     },
+     "mu": {
+      "kind": "eye.lobe_centre_nm",
+      "unit": "1",
+      "name": "wavelength the lobe peaks at, in nanometres"
+     },
+     "s1": {
+      "kind": "eye.lobe_width_blue_nm",
+      "unit": "1",
+      "name": "width of the lobe on its blue side, in nanometres"
+     },
+     "s2": {
+      "kind": "eye.lobe_width_red_nm",
+      "unit": "1",
+      "name": "width of the lobe on its red side, in nanometres"
+     }
+    },
+    "outputs": {
+     "g": {
+      "kind": "eye.lobe",
+      "unit": "1",
+      "name": "height of the lobe at this wavelength, 1 at its peak"
+     }
+    },
+    "source": {
+     "text": "Wyman, C., Sloan, P.-P. and Shirley, P. 2013, Journal of Computer Graphics Techniques 2(2), 1",
+     "url": "https://jcgt.org/published/0002/02/01/",
+     "where": "eq. 2"
+    },
+    "explain": {
+     "curious": "The eye has three kinds of colour sensors. Their combined response to each wavelength is written as a few lopsided bell curves; the colour of any light follows from them.",
+     "science": "A piecewise Gaussian lobe with different widths either side of its peak; sums of these fit the CIE 1931 2° colour matching functions (lobe weights and shapes are data in the light pack)."
+    },
+    "examples": [
+     {
+      "x": 590.0,
+      "mu": 599.8,
+      "s1": 37.9,
+      "s2": 31.0,
+      "g": 0.9671220595874113
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.srgb_encode",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "linear_level",
+     "letter": "v"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "screen_level",
+     "letter": "s"
+    }
+   ],
+   "models": {
+    "knee": {
+     "value": 0.0031308,
+     "grade": "derived",
+     "source": "IEC 61966-2-1:1999 section 5.2"
+    },
+    "slope": {
+     "value": 12.92,
+     "grade": "derived",
+     "source": "IEC 61966-2-1:1999 section 5.2"
+    },
+    "scale": {
+     "value": 1.055,
+     "grade": "derived",
+     "source": "IEC 61966-2-1:1999 section 5.2"
+    },
+    "offset": {
+     "value": 0.055,
+     "grade": "derived",
+     "source": "IEC 61966-2-1:1999 section 5.2"
+    }
+   },
+   "checks": [
+    {
+     "port": "linear_level",
+     "min": 0,
+     "max": 1,
+     "says": "linear level must lie between 0 and 1, got {}"
+    }
+   ],
+   "references": [
+    "IEC 61966-2-1:1999, Multimedia systems and equipment, Colour measurement and management, Part 2-1: Default RGB colour space, sRGB (the transfer curve, section 5.2). https://webstore.iec.ch/publication/6169"
+   ],
+   "shown": "V = 12.92 v (v ≤ 0.0031308), else 1.055 v^(1/2.4) − 0.055",
+   "equation": {
+    "name": "Screen level for a light level, as screens expect it",
+    "formula": "s = if v <= knee then slope * v else scale * v ^ (5/12) - offset",
+    "inputs": {
+     "v": {
+      "kind": "eye.linear_level",
+      "unit": "1",
+      "name": "light level of one screen colour, 0 to 1, in proportion to light",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "knee": {
+      "kind": "model.srgb_knee",
+      "unit": "1",
+      "name": "level below which the curve is a straight line"
+     },
+     "slope": {
+      "kind": "model.srgb_slope",
+      "unit": "1",
+      "name": "slope of the straight part"
+     },
+     "scale": {
+      "kind": "model.srgb_scale",
+      "unit": "1",
+      "name": "scale of the curved part"
+     },
+     "offset": {
+      "kind": "model.srgb_offset",
+      "unit": "1",
+      "name": "offset of the curved part"
+     }
+    },
+    "outputs": {
+     "s": {
+      "kind": "eye.screen_level",
+      "unit": "1",
+      "name": "level sent to the screen, 0 to 1",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "source": {
+     "text": "IEC 61966-2-1:1999, Default RGB colour space, sRGB",
+     "url": "https://webstore.iec.ch/publication/6169",
+     "where": "section 5.2"
+    },
+    "explain": {
+     "curious": "Screens do not show levels in proportion to light: they expect a curve that spends more steps on dark shades, as eyes do.",
+     "science": "The sRGB transfer function (gamma encoding) from linear light to the encoded value."
+    },
+    "examples": [
+     {
+      "v": 0.5,
+      "s": 0.7353569830524495
+     }
+    ]
+   }
   }
  ]
 }
