@@ -1,7 +1,7 @@
 // The Hazard map's Profile layout (XO18): the stretched scale, ticks, labels that would overprint, distance words.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { distanceWords, labelled, radiusTicks, xOf } from "../../packages/views/hazard/src/profile.ts";
+import { distanceWords, labelled, radiusTicks, shortMark, xOf } from "../../packages/views/hazard/src/profile.ts";
 
 const map = { from_m: 7e7, to_m: 7e9 };
 
@@ -19,9 +19,16 @@ test("ticks are 1, 2 and 5 of each power of ten radii, inside the span", () => {
   assert.deepEqual(t, [1, 2, 5, 10, 20, 50, 100]);
 });
 
-test("marks closer than the gap keep their tick but lose the label", () => {
-  const l = labelled([{ x: 0 }, { x: 10 }, { x: 60 }]);
-  assert.deepEqual(l.map((m) => m.show), [true, false, true]);
+test("labels take two rows in turn and one that would touch its row's last label is left off", () => {
+  const l = labelled([{ x: 0, label: "surface" }, { x: 10, label: "Io lane" }, { x: 20, label: "Io" }, { x: 200, label: "bubble's edge" }]);
+  assert.deepEqual(l.map((m) => [m.show, m.row]), [[true, 0], [true, 1], [false, 0], [true, 0]]);
+});
+
+test("marks have short names on the strip", () => {
+  assert.equal(shortMark("lane swept by Io, 3642 km wide"), "Io lane");
+  assert.equal(shortMark("Europa's orbit"), "Europa");
+  assert.equal(shortMark("belts' inner edge (set by the rings)"), "belts' inner edge");
+  assert.equal(shortMark("surface"), "surface");
 });
 
 test("distances are said in radii, or in au round a star far out", () => {

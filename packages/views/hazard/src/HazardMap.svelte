@@ -12,7 +12,7 @@
   import { DEFAULT_VIEW, viewOptions, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { Card } from "../../../chart-grammar/src/index.ts";
   import { HAZARD_CONTROLS } from "./controls.ts";
-  import { distanceWords, labelled, radiusTicks, xOf, type HazardMapRead, type Tone } from "./profile.ts";
+  import { distanceWords, labelled, radiusTicks, shortMark, xOf, type HazardMapRead, type Tone } from "./profile.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -46,14 +46,18 @@
     };
   });
 
-  const W = 760;
-  const X0 = 150;
-  const X1 = W - 24;
+  // The strip is drawn at the width it has, so its words stay readable on a phone; there each row's name sits above it.
+  let cw = $state(760);
+  const W = $derived(Math.max(320, Math.min(760, Math.round(cw))));
+  const narrow = $derived(W < 520);
+  const X0 = $derived(narrow ? 10 : 150);
+  const X1 = $derived(W - (narrow ? 14 : 24));
   const ROW = 18;
-  const TOP = 40;
+  const TOP = $derived(narrow ? 54 : 40);
+  const STEP = $derived(narrow ? ROW + 18 : ROW + 6);
   const rows = $derived(map?.rows ?? []);
-  const base = $derived(TOP + rows.length * (ROW + 6) + 6);
-  const H = $derived(TOP + rows.length * (ROW + 6) + 70);
+  const base = $derived(TOP + rows.length * STEP + 6);
+  const H = $derived(TOP + rows.length * STEP + 84);
   const x = (d: number) => (map ? xOf(map, d, X0, X1) : X0);
   const radius = $derived(map?.marks.find((m) => m.what === "surface")?.distance_m ?? map?.from_m ?? 1);
   const TONE: Record<Tone, string> = {
@@ -62,7 +66,7 @@
     deadly: "var(--sse-danger, #c0392b)",
   };
   const ticks = $derived(map ? radiusTicks(map) : []);
-  const fixed = $derived(map ? labelled(map.marks.map((m) => ({ ...m, x: x(m.distance_m) }))) : []);
+  const fixed = $derived(map ? labelled(map.marks.map((m) => ({ ...m, label: shortMark(m.what), x: x(m.distance_m) }))) : []);
   const shipMarks = $derived(
     map
       ? [
@@ -71,6 +75,8 @@
         ].map((m) => ({ ...m, x: x(m.distance_m) }))
       : [],
   );
+  // Park and Dive close together: Dive's label goes up a line.
+  const shipsClose = $derived(shipMarks.length === 2 && Math.abs(shipMarks[0]!.x - shipMarks[1]!.x) < 150);
   const word = (h: string) => ({ heat: "heat", radiation_belts: "radiation from the belts", air: "air", climbing_out: "fuel to climb out", surface: "surface" })[h] ?? h;
   const moonName = (a: string) => {
     const n = a.split("/").pop() ?? a;
@@ -87,16 +93,17 @@
     <p class="note" data-hazard-problem>{problem}</p>
   {:else if map}
     <Card title="{subject.label}: hazard map" subtitle="How close can a ship go, and which hazard stops it">
+      <div class="inner">
       <div class="lines" role="group" aria-label="Read along">
         <button class:on={line === "equator"} aria-pressed={line === "equator"} data-line-pick="equator" onclick={() => (line = "equator")}>In the equator's plane</button>
         <button class:on={line === "poles"} aria-pressed={line === "poles"} data-line-pick="poles" onclick={() => (line = "poles")}>Over the poles</button>
       </div>
-      <figure>
+      <figure bind:clientWidth={cw}>
         <svg viewBox="0 0 {W} {H}" role="img" aria-label="Hazards round {subject.label} by distance, {line === 'poles' ? 'over the poles' : 'in the equator\'s plane'}. The lines below say the same in words.">
           {#each rows as r, i (r.hazard)}
-            {@const y = TOP + i * (ROW + 6)}
+            {@const y = TOP + i * STEP + (narrow ? 12 : 0)}
             <g data-row={r.hazard}>
-              <text x={X0 - 8} y={y + ROW / 2 + 4} class="row" text-anchor="end">{r.name}</text>
+              {#if narrow}<text x={X0} y={y - 4} class="row">{r.name}</text>{:else}<text x={X0 - 8} y={y + ROW / 2 + 4} class="row" text-anchor="end">{r.name}</text>{/if}
               <rect x={X0} y={y} width={X1 - X0} height={ROW} fill="none" stroke="var(--sse-rule, var(--sse-ink-muted))" stroke-width="0.6" />
               {#each r.bands as b, j (j)}
                 {#if b.tone !== "clear"}
@@ -110,8 +117,8 @@
           {/each}
           {#each shipMarks as m (m.key)}
             <g data-ship-mark={m.key}>
-              <line x1={m.x} x2={m.x} y1={TOP - 14} y2={TOP + rows.length * (ROW + 6)} stroke="var(--sse-accent)" stroke-width="2" stroke-dasharray={m.key === "dive" ? "4 3" : undefined} />
-              {#if hud}<text x={m.x + (m.key === "dive" ? -4 : 4)} y={TOP - 18} class="ship" text-anchor={m.key === "dive" ? "end" : "start"}>{m.name}: {distanceWords(m.distance_m, radius)}</text>{/if}
+              <line x1={m.x} x2={m.x} y1={TOP - 14} y2={TOP + rows.length * STEP} stroke="var(--sse-accent)" stroke-width="2" stroke-dasharray={m.key === "dive" ? "4 3" : undefined} />
+              {#if hud}<text x={m.x + (m.key === "dive" ? -4 : 4)} y={TOP - 18 - (m.key === "dive" && shipsClose ? 13 : 0)} class="ship" text-anchor={m.key === "dive" ? "end" : "start"}>{m.name}: {distanceWords(m.distance_m, radius)}</text>{/if}
             </g>
           {/each}
           <line x1={X0} x2={X1} y1={base} y2={base} stroke="var(--sse-ink)" stroke-width="0.8" />
@@ -122,7 +129,7 @@
           {#each fixed as f (f.what)}
             <g data-mark={f.what}>
               <circle cx={f.x} cy={base + 26} r="2.6" fill="var(--sse-ink)" />
-              {#if hud && f.show}<text x={f.x} y={base + 40} class="mark" text-anchor="middle">{f.what}</text>{/if}
+              {#if hud && f.show}<text x={f.x} y={base + 40 + f.row * 12} class="mark" text-anchor="middle">{f.label}</text>{/if}
               <title>{f.what}: {distanceWords(f.distance_m, radius)}</title>
             </g>
           {/each}
@@ -145,7 +152,7 @@
             <thead><tr><th>Beside</th><th>Dose a day</th><th></th></tr></thead>
             <tbody>
               {#each map.moons as mo (mo.moon)}
-                <tr data-moon={mo.moon} data-tone={mo.tone}><td>{moonName(mo.moon)}</td><td>{mo.sv_per_day < 0.01 ? mo.sv_per_day.toExponential(1) : mo.sv_per_day.toFixed(2)} Sv</td><td class="t-{mo.tone}">{mo.tone}</td></tr>
+                <tr data-moon={mo.moon} data-tone={mo.tone}><td>{moonName(mo.moon)}</td><td>{mo.sv_per_day <= 0 ? "none" : mo.sv_per_day < 0.01 ? `${mo.sv_per_day.toExponential(1)} Sv` : `${mo.sv_per_day.toFixed(2)} Sv`}</td><td class="t-{mo.tone}">{mo.tone}</td></tr>
               {/each}
             </tbody>
           </table>
@@ -156,6 +163,7 @@
             <ul>{#each map.stand_ins as s (s)}<li>{s}</li>{/each}</ul>
           </details>
         {/if}
+      </div>
       </div>
     </Card>
   {:else if loading}
@@ -172,6 +180,9 @@
   }
   .note {
     color: var(--sse-ink-muted);
+  }
+  .inner {
+    padding: 2px 18px 12px;
   }
   .lines {
     display: flex;
@@ -190,7 +201,7 @@
   }
   .lines button.on {
     background: var(--sse-accent);
-    color: var(--sse-accent-ink, var(--sse-ground));
+    color: var(--sse-ground);
     border-color: var(--sse-accent);
   }
   figure {

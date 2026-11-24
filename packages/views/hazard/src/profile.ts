@@ -59,14 +59,30 @@ export function radiusTicks(map: Pick<HazardMapRead, "from_m" | "to_m">): number
   return out;
 }
 
-/** Marks that would overprint (closer than `gap` px) keep their tick but lose their label. */
-export function labelled<T extends { x: number }>(marks: T[], gap = 46): (T & { show: boolean })[] {
-  let last = -Infinity;
+/** Marks that would overprint keep their tick but lose their label: labels take two rows in turn, each label as wide
+ * as its words (`charPx` a letter), and one that would touch its row's last label is left off. */
+export function labelled<T extends { x: number; label: string }>(marks: T[], charPx = 5.6, pad = 8): (T & { show: boolean; row: number })[] {
+  const end = [-Infinity, -Infinity];
   return [...marks]
     .sort((a, b) => a.x - b.x)
     .map((m) => {
-      const show = m.x - last >= gap;
-      if (show) last = m.x;
-      return { ...m, show };
+      const half = (m.label.length * charPx) / 2;
+      const row = end[0]! <= end[1]! ? 0 : 1;
+      const show = m.x - half >= end[row]! + pad;
+      if (show) end[row] = m.x + half;
+      return { ...m, show, row };
     });
+}
+
+/** A mark's short name on the strip ("lane swept by sol/io, 3642 km wide" reads "Io lane"); the full words stay in
+ * its tooltip. */
+export function shortMark(what: string): string {
+  const lane = /^lane swept by ([^,]+)/.exec(what);
+  if (lane) return `${lane[1]} lane`;
+  const orbit = /^(.+)'s orbit$/.exec(what);
+  if (orbit) return orbit[1]!;
+  const edge = /^belts' (inner|outer) edge/.exec(what);
+  if (edge) return `belts' ${edge[1]} edge`;
+  if (what === "edge of the magnetic bubble") return "bubble's edge";
+  return what;
 }
