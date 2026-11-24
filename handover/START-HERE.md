@@ -75,6 +75,7 @@ In his words: "the physics is WAY more interesting than faking it. But understan
 
 - Every deliberate simplification, stand-in or tuned constant goes in `docs/fudges.md` (where it lives, why it exists, what real physics would replace it) in the same PR that adds it.
 - Every reference, published relation or quoted constant goes in `docs/citations.md` with its check status (verified, corrected, unverified). Check a relation against its source before relying on it.
+- **Master citation list (from PR 471, thread "Verify every cited paper"):** a new citation in a pack or in the code fails the checks until it is added to the master list with `python3 scripts/citations.py --add`. The list (about 1,475 papers, tiered, with statuses) and how papers are verified (with Consensus, which the new account has directly) are in `handover/citations/README.md`. Still also add the citation to `docs/citations.md` with its status.
 
 ## Standing rule: physics in the chain blocks, each with a view (Alex, 19 Nov 2026)
 In his words: "try and do everything in the physics chain blocks... other than Big Blocks. And have a UI element that makes sense to visualise".
@@ -112,7 +113,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/true-air.md` (arrives with PR 444) | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
 | `status/true-surface.md` (arrives with PR 449) | Build plumes, frosts and small bodies (listed as "Build plumes, frosts and hot glow") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
 | none yet | Build asteroids and rings up close | asteroids and rings seen close |
-| `status/surface-timelapse.md` (arrives with PR 436) | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse |
+| `status/surface-timelapse.md` | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse, the drawing side of W-sea2 to W-sea4 |
 | `status/names-and-life.md` | Build names gallery and life board | rest of NM6 (Classes, names gallery), U7 Life board |
 | `status/naming.md` | no live owner (NM design done) | NM |
 | `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9, SV7 |

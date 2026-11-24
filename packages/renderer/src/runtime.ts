@@ -3,7 +3,7 @@
 // order, and reports what it did so the view can show the quality badge.
 // Presentation only: nothing here reaches the kernel or the state hash.
 import { cubeDirection, perf, type Globe, type Tier } from "../../ui-contract/src/index.ts";
-import { layersFor, narrateFrame, pickAt, recolour, type LayerSpec, type TimeLapse } from "./timelapse.ts";
+import { iceAges, iceAgeWords, layersFor, narrateFrame, pickAt, recolour, type LayerSpec, type TimeLapse } from "./timelapse.ts";
 import { narrateWeather, weatherAt, withWeather, type WeatherMap } from "./weather.ts";
 import { badge, Governor, type Badge } from "./governor.ts";
 import { DEFAULT_BUDGET_MS, estimateMs, maxLevel, pickRecipe, plan, TIER_ORDER, type PassSpec, type Plan, type RecipeDoc } from "./recipe.ts";
@@ -72,8 +72,8 @@ export interface GlobeRun {
   setTime(t_myr: number): void;
   /** The layers this time lapse can show: id, label, legend, limits, and whether its fields are present or pending. */
   layers(): { id: string; label: string; legend: LayerSpec["legend"]; limits: string; available: boolean; pending: string[] }[];
-  /** Keyframe times and dated events, for the scrubber's marks. */
-  frames(): { times: number[]; events: { t_myr: number; kind: string; label: string; lon?: number; lat?: number }[] };
+  /** Keyframe times and dated events, for the scrubber's marks; the ice ages' window (they fall within a few million years of today) for a strip of their own. */
+  frames(): { times: number[]; events: { t_myr: number; kind: string; label: string; lon?: number; lat?: number; why?: string[] }[]; iceAges: { from_myr: number; to_myr: number; words: string[] } | null };
   /** What lies under a point on the globe at the time shown: field values, the nearest event and the kernel's why lines. */
   pick(lon_deg: number, lat_deg: number): ReturnType<typeof pickAt> | null;
   /** Today's weather over the globe (the kernel's weather op, read): null takes it off. A time lapse shows its own past instead. */
@@ -343,9 +343,15 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       return lapse ? layersFor(lapse).map((l) => ({ id: l.spec.id, label: l.spec.label, legend: l.spec.legend, limits: l.spec.limits, available: l.available, pending: l.pending })) : [];
     },
     frames() {
-      if (!lapse) return { times: [], events: [] };
+      if (!lapse) return { times: [], events: [], iceAges: null };
       const ll = (d: readonly number[]) => ({ lon: (Math.atan2(d[1]!, d[0]!) * 180) / Math.PI, lat: (Math.asin(Math.max(-1, Math.min(1, d[2]!))) * 180) / Math.PI });
-      return { times: lapse.frames.map((f) => f.t_myr), events: lapse.events.map((e) => ({ t_myr: e.t_myr, kind: e.kind, label: e.text, ...(e.dir ? ll(e.dir) : {}) })) };
+      const ia = iceAges(lapse);
+      const tl = lapse;
+      return {
+        times: lapse.frames.map((f) => f.t_myr),
+        events: lapse.events.map((e) => ({ t_myr: e.t_myr, kind: e.kind, label: e.text, ...(e.dir ? ll(e.dir) : {}), ...(e.why?.length ? { why: e.why } : {}) })),
+        iceAges: ia ? { from_myr: ia.from_myr, to_myr: ia.to_myr, words: ia.events.map((e) => iceAgeWords(tl, e)) } : null,
+      };
     },
     pick(lo, la) {
       if (!lapse) return null;
