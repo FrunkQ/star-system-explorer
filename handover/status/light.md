@@ -35,7 +35,8 @@ Only the owner thread edits this file. One row per package: update it in the sam
 ## Next, in order (24 Nov, for whoever picks this track up)
 
 1. **RK14 part 2**: the kernel thread writes `fog_of_war` marks as dated `observe.grant` events when something changes; the light side may add tech rungs beyond `today` and plume spectra. Design questions go to the thread "Bring Atomic Rockets into SSE4".
-2. **ND2 part 2c**: H₂-H₂ and H₂-He collision pairs (HITRAN CIA; hitran.org was not reachable from the cloud build machine, so fetch on Alex's PC), measured widening rows (Allard et al.) that win over Unsöld, methane below 410 nm and in the near infrared.
-3. **ND2 part 2d**: a spectrum on a wire (`list<number>` on the eye's grid) and the gas block in flows; then V3 gap items 9 (own daylight) and 36/36a (gas giant colours from cloud chemistry) on top of it.
-4. **RK16 counters** (my share), after RK14 and the kernel's RK15.
-5. Then the rows still marked "next" above: FT5, MF7 2b-ii, MF9 part 2, Y3 far infrared and radio, Y4, Y6, MF4, MF5.
+2. **O3b jets and dust shells** (gap R26, asked by "Build star glow and flares", 24 Nov): two new nebula kinds through `read_nebulae`, `jet` (a young star's bipolar outflow: lobes.axis is the spin axis; field `jet {length_m, speed_m_s, opening_rad, mass_rate_kg_s, knots [{distance_m, age_s}]}`; outflow about 0.1 of accretion, Hartigan et al. 1995; Hα and shock lines) and `dust-shell` (a cool giant's mass loss: shells[0] at the dust condensation radius, outer edge wind speed × time; Reimers 1975 or Schröder and Cuntz 2005 rate, 10 to 30 km/s wind; dust as a Thermal part). Blocks in sse-nebula with Equations in base-physics; the star glow thread draws them.
+3. **ND2 part 2c**: H₂-H₂ and H₂-He collision pairs (HITRAN CIA; hitran.org was not reachable from the cloud build machine, so fetch on Alex's PC), measured widening rows (Allard et al.) that win over Unsöld, methane below 410 nm and in the near infrared.
+4. **ND2 part 2d**: a spectrum on a wire (`list<number>` on the eye's grid) and the gas block in flows; then V3 gap items 9 (own daylight) and 36/36a (gas giant colours from cloud chemistry) on top of it.
+5. **RK16 counters** (my share), after RK14 and the kernel's RK15.
+6. Then the rows still marked "next" above: FT5, MF7 2b-ii, MF9 part 2, Y3 far infrared and radio, Y4, Y6, MF4, MF5.
