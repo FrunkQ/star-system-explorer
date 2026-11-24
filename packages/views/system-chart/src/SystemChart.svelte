@@ -672,6 +672,9 @@
     color: var(--sse-panel-muted);
   }
   .name {
+    /* A name never takes a tap meant for a neighbour's mark (a crowded inner system on a phone): the mark's own
+       hit circle picks its body. */
+    pointer-events: none;
     fill: var(--sse-ink);
     font-family: var(--sse-font-display);
     font-style: italic;
