@@ -21,3 +21,10 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | SB3 True draws figures: ellipsoids, two lobes with a neck, relief from the kernel's tiles, weathering colour; new renderer file plus the optional fields above | queued (after SB2 and PR 442) | |
 | SB4 comets: sublimation from the energy balance, a coma, dust and ion tails (render audit R32) | queued | |
 | SB5 type gradient across a belt (fudge SB-belt-gradient), per-member makeup from where it formed; asks proven core | queued | |
+| VP-R1 ring shadow on the planet and the planet's shadow on the rings (visual polish design 5.8) | queued (needs the renderer's VP1 finish) | |
+| VP-R2 rings' dark side, opposition surge, forward scatter by particle size (5.9) | queued (needs ask K-c, ring particle size) | |
+| VP-R3 gaps and wave trains at moons' computed resonances, wavy edges beside embedded moons (5.9) | queued (moons' orbits exist) | |
+| VP-R4 ring particles near the camera, instanced (5.9) | queued (needs VP4) | |
+| VP-R5 small-body shapes from spin and strength (this track's figure in `sse-small`, drawn by SB3), boulders through the detail ladder (5.10) | queued (needs VP6; folds into SB3) | |
+
+Visual polish packages (VP-R1 to VP-R5) come from `handover/design/SSE4-visual-polish-design.md` section 12, accepted by Alex 24 Nov 2026 18:57 ("yes to all"). Its section 3 rule applies: every drawn detail is a fact, drawn from the numbers, or a camera effect; a flourish with no kernel number behind it is not drawn.
