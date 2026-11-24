@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
@@ -15,7 +15,7 @@
   import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
   import { CONVERTER_URL, checkPackDoc, creditWords, fetchExplorers, previewStack, reportWords, sniffFile, stackPacks as addPacks, v3SaveText, type ExplorersListing, type PackDoc, type Sniffed, type StackPreview } from "../../ui-contract/src/index.ts";
-  import SeatsPanel from "./SeatsPanel.svelte";
+  import TableStatus from "./run/TableStatus.svelte";
   import LensPanel from "./LensPanel.svelte";
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import LightControl from "./LightControl.svelte";
@@ -53,8 +53,10 @@
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
-  import { Picker, Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
-  import { SUBJECT_KIND_ORDER, subjectItems, type PickItem } from "../../ui-contract/src/index.ts";
+  import { Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
+  import PlaceLine from "./nav/PlaceLine.svelte";
+  import Rail from "./nav/Rail.svelte";
+  import Stage from "./chart/Stage.svelte";
   import workspaceDoc from "./documents/workspace.gm.json";
   import physicsDoc from "./documents/physics.gm.json";
   import packsDoc from "./documents/packs.gm.json";
@@ -83,6 +85,8 @@
   import { MORE_SCREENS } from "./screens.more.ts";
   import { GAME_SCREENS } from "./screens.game.ts";
   import { RENDER_SCREENS } from "./screens.renderer.ts";
+  import { RUN_SCREENS } from "./run/screens.run.ts";
+  import { tablePort } from "./run/table-port.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { createSymbols } from "./symbols.svelte.ts";
@@ -110,7 +114,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -135,13 +139,15 @@
       }
     });
   });
-  // The view controls' height: what sits below them starts there, however many rows they wrap to.
-  let viewbarH = $state(0);
   /** The place in view, as the table would be shown it: on the Land screen, with the landing the GM is flying. */
   let lastLanding = $state.raw<Json | null>(null);
   const LAND_SCREEN = "players.land.screen.json";
-  const here = (): Shown =>
-    ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+  // A send made on the Land screen before its first landing arrived waits for it, then goes again with it.
+  let landingAwaited = false;
+  const here = (): Shown => {
+    landingAwaited = ws.screen === "surface" && !lastLanding;
+    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+  };
   // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
   let kickerW = $state(999);
 
@@ -235,6 +241,10 @@
   $effect(() => {
     const p = ws.party ? ($state.snapshot(ws.party) as unknown as Json) : null;
     if (share) share.host.setState({ party: p });
+  });
+  // The table for the Switchboard (PB2): the share, with the live view as its first source.
+  $effect(() => {
+    ws.table = share ? tablePort(share, () => here()) : undefined;
   });
   let opened: unknown[] = [];
   loadPacks()
@@ -530,6 +540,8 @@
     ws.sendLanding = (show) => {
       lastLanding = show;
       const sh = share?.state.shown;
+      if (landingAwaited && share && ws.screen === "surface" && sh && "scope" in sh && sh.scope === scene.system && !sh.landing) return void share.show(here());
+      landingAwaited = false;
       if (share && sh && "landing" in sh && sh.landing) share.show({ ...(JSON.parse(JSON.stringify(sh)) as typeof sh), landing: show });
     };
     ws.shared = !!share?.state.link;
@@ -834,18 +846,11 @@
   let linked = false;
   let recent = $state<Place[]>(readRecent(loadPref("places")));
   const placeName = (a: string | undefined | null) => (a ? (scene.subjects.find((x) => x.address === a)?.label ?? null) : null);
-  const systemTitle = (sys: string) => (sys ? (adoptedSystems.find((x) => x.system === sys)?.title ?? sys.split("/").pop()!) : base.title);
   const steps = $derived(
     place
       ? placeSteps(place, trail, { system: scene.title, world: placeName(railScale === "world" ? ws.selection : trail?.world), above: Object.fromEntries(UPPER.flatMap((k) => (notes[k] ? [[k, { id: notes[k]!.id, name: notes[k]!.name }]] : []))) })
       : [],
   );
-  /** A place in words, for the Recent list. */
-  function placeWords(p: Place): string {
-    if (p.scale === "world") return `${p.label ?? "A world"} · ${systemTitle(p.system)}`;
-    if (p.scale === "system") return systemTitle(p.system);
-    return p.label ?? PLACE_WORDS[p.scale];
-  }
   $effect(() => {
     const p = place;
     if (!p) return;
@@ -892,55 +897,7 @@
     const i = placeRank(railScale as PlaceScale);
     if (i > 0 && railScale !== "system") toScale(PLACE_SCALES[i - 1]!);
   }
-  /** The steps above a system in a word each, for a narrower bar. */
-  const SHORT_WORDS: Partial<Record<PlaceScale, string>> = { web: "Web", cluster: "Nearby" };
-  /** The step below this one when it is a scale of its own (the cosmic web → the galaxies nearby → the galaxy). */
-  const downScale = $derived<PlaceScale | null>(railScale === "web" ? "cluster" : railScale === "cluster" ? "galaxy" : null);
-  /** What the view in front says is nested below it, when the next scale down can open on it. */
-  const belowNote = $derived(downScale ? notes[railScale as PlaceScale] : undefined);
   const recentElsewhere = $derived(place ? recent.filter((r) => !samePlace(r, place)) : recent);
-  function goBelow(v: string) {
-    if (v.startsWith("scale:") && isPlaceScale(v.slice(6))) return toScale(v.slice(6) as PlaceScale);
-    if (v.startsWith("sys:")) return goPlace({ scale: "system", system: v.slice(4) });
-    if (v.startsWith("up:")) {
-      const u = steps.find((x) => x.scale === v.slice(3) && !x.current && !x.below);
-      return void (u && goPlace(u.place));
-    }
-    if (v.startsWith("child:")) {
-      const c = belowNote?.children?.[Number(v.slice(6))];
-      return void (c && downScale && goPlace({ scale: downScale, system: viewing?.system ?? "", id: c.id }));
-    }
-    if (v.startsWith("recent:")) {
-      const r = recentElsewhere[Number(v.slice(7))];
-      return void (r && goPlace(r));
-    }
-    goTo(v);
-  }
-  // The picker beside the place's name (24 Nov): the level above first, then this level and what is in it, then the
-  // other ways about (systems in the campaign, recent places). One component; the content changes with the scale.
-  const atBodies = $derived(railScale === "system" || railScale === "world");
-  const pickSystems = $derived([{ id: "sys:", label: base.title }, ...adoptedSystems.map((a) => ({ id: `sys:${a.system}`, label: a.title }))]);
-  const pickItems = $derived.by<PickItem[]>(() => {
-    if (atBodies) return subjectItems(scene.subjects);
-    // The galaxy holds the campaign's systems; the web and the galaxies nearby hold what their view names below them.
-    if (railScale === "galaxy") return pickSystems.map((x) => ({ ...x, kinds: [] }));
-    return [
-      ...(downScale ? [{ id: `scale:${downScale}`, label: PLACE_WORDS[downScale], kinds: [] }] : []),
-      ...(downScale ? (belowNote?.children ?? []).map((c, j) => ({ id: `child:${j}`, label: c.name, kinds: [] })) : []),
-    ];
-  });
-  const pickSummary = $derived.by(() => {
-    if (atBodies) return `${scene.subjects.length} ${scene.subjects.length === 1 ? "body" : "bodies"}`;
-    if (railScale === "galaxy") return `${pickSystems.length} ${pickSystems.length === 1 ? "system" : "systems"}`;
-    const n = belowNote?.children?.length ?? 0;
-    return n ? `${n} below` : "Below";
-  });
-  const pickAbove = $derived(steps.filter((x) => !x.current && !x.below).reverse().map((u) => ({ id: `up:${u.scale}`, label: u.label, caption: PLACE_WORDS[u.scale] === u.label ? undefined : PLACE_WORDS[u.scale] })));
-  const pickSections = $derived([
-    ...(atBodies && adoptedSystems.length ? [{ label: "Other systems in this campaign", entries: pickSystems.filter((x) => x.id !== `sys:${viewing?.system ?? ""}`) }] : []),
-    ...(!atBodies && railScale !== "galaxy" ? [{ label: "Systems in this campaign", entries: pickSystems }] : []),
-    { label: "Recent", entries: recentElsewhere.map((r, j) => ({ id: `recent:${j}`, label: placeWords(r) })) },
-  ]);
   // The address bar's Back and Forward, and a pasted link, move through places.
   function fromHash() {
     const p = parsePlaceHash(location.hash);
@@ -1427,8 +1384,6 @@
     if (page === "new") (markNewsSeen(), (newsDot = false));
   }
   // V10: the seats panel opens from a quiet link once the session is shared.
-  let seatsDialog: HTMLDialogElement | undefined = $state();
-  let seatsOpen = $state(false);
   // Tree order: the star, then each planet followed by its moons.
   const bodies = systemOrder(base);
   function cycle(by: number) {
@@ -1496,46 +1451,24 @@
 <div class="app" inert={startOpen} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   <header class="bar">
     <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
-    <nav class="place" aria-label="Place" data-scale={railScale}>
-      {#each place ? steps : [] as s, i (s.scale)}
-        {@const parent = steps[i + 1]?.current ?? false}
-        {#if s.current && s.scale === "system" && adoptedSystems.length}
-          <!-- The system's name is its own switcher when the campaign holds more than one: press the name, pick another. -->
-          <label class="title-switch" title="Switch to another system in this campaign">
-            <h1 class="title" data-place={s.scale}>{s.label}</h1>
-            <select aria-label="System on the chart" value={viewing?.system ?? ""} onchange={(e) => (showSystem(e.currentTarget.value), toSystem())} data-viewing={viewing?.system ?? ""}>
-              <option value="">{base.title}</option>
-              {#each adoptedSystems as a (a.system)}<option value={a.system}>{a.title}</option>{/each}
-            </select>
-          </label>
-        {:else if s.current}
-          <h1 class="title" data-place={s.scale}>{s.scale === "world" ? (selName ?? "A world") : s.label}</h1>
-        {/if}
-        {#if s.current}
-          <!-- The picker: the level above, this level and what is in it, the systems in the campaign, and recent places. -->
-          <span class="goto" data-below={railScale}>
-            <Picker
-              summary={pickSummary}
-              label={atBodies ? "Go to a body" : "Go down"}
-              items={pickItems}
-              selected={atBodies ? ws.selection : null}
-              kindOrder={SUBJECT_KIND_ORDER}
-              above={pickAbove}
-              top={atBodies ? { id: "@system", label: "The whole system", caption: scene.title } : undefined}
-              sections={pickSections}
-              placeholder={atBodies ? "Find a body…" : "Find…"}
-              heading={!atBodies && belowNote?.children?.length ? `In ${belowNote.name}` : undefined}
-              onpick={goBelow}
-            />
-          </span>
-        {:else}
-          <button type="button" class="step" class:up={parent} class:below={s.below} class:far={!s.below && !parent} data-place-step={s.scale} data-go={s.scale === "system" ? "system" : undefined} onclick={() => goPlace(s.place)} title={s.below ? `Back down to ${s.label}` : `Up to ${s.label}${parent ? " (Esc)" : ""}`}>{#if parent}<span class="up-arrow" aria-hidden="true">‹ </span>{/if}<span class="up-name"><span class="long">{s.label}</span>{#if SHORT_WORDS[s.scale] && s.label === PLACE_WORDS[s.scale]}<span class="short" aria-hidden="true">{SHORT_WORDS[s.scale]}</span>{/if}</span></button>
-        {/if}
-        {#if i < steps.length - 1}<span class="sep" class:up-sep={parent} class:far={!s.below && !parent && !s.current} class:below={s.below} aria-hidden="true">›</span>{/if}
-      {:else}
-        <h1 class="title" data-place="system">{scene.title}</h1>
-      {/each}
-    </nav>
+    <PlaceLine
+      {railScale}
+      {place}
+      {steps}
+      title={scene.title}
+      baseTitle={base.title}
+      subjects={scene.subjects}
+      selection={ws.selection}
+      {selName}
+      {adoptedSystems}
+      {viewing}
+      {notes}
+      {recentElsewhere}
+      {goPlace}
+      {goTo}
+      {toScale}
+      switchSystem={(sys) => (showSystem(sys), toSystem())}
+    />
     <!-- The system's subtitle belongs to the system; above it the line itself says where. -->
     {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker" class:gone={kickerW < 140} bind:clientWidth={kickerW} title="{scene.subtitle} · {formatYears(ws.now_yr)}">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
     <div class="spacer"></div>
@@ -1599,43 +1532,42 @@
   {:else}
     <div class="middle">
       <!-- How (2.2): every way of looking at the place in view, in words, built from the screens' own rail entries. -->
-      <nav class="rail" aria-label="Instruments" data-scale={railScale}>
-        {#if railScale === "workshop"}
-          <button type="button" class="door back" data-go="back" onclick={toSystem}>‹ Back to {scene.title}</button>
-        {:else if railScale !== "system" && railScale !== "world"}
-          <button type="button" class="door back" data-go="back" onclick={() => goPlace(trail && trail.system === (viewing?.system ?? "") && placeRank(trail.scale) > placeRank("galaxy") ? trail : { scale: "system", system: viewing?.system ?? "" })}>‹ Back to {trail?.scale === "world" && placeName(trail.world) ? placeName(trail.world) : scene.title}</button>
-        {:else if railScale === "system"}
-          <button type="button" class="door open" data-go="world" onclick={() => toWorld()} title={selName ? `Look at ${selName} itself: globe, cutaway, life` : "Pick a world to look at closely"}>{selName ? `Open ${selName}` : "Open a world"} ›</button>
-        {/if}
-        {#each rail as g (g.group)}
-          <div class="group" role="group" aria-label={g.words}>
-            <h2>{g.words}</h2>
-            {#each g.lines as l (l.screen)}
-              <button type="button" class="inst" aria-pressed={ws.screen === l.screen} data-go={l.screen} title={l.hint} onclick={() => go(l.screen)}>{l.label}</button>
-            {/each}
-          </div>
-        {/each}
-        {#if railScale === "system"}<button type="button" class="door" data-go="out" onclick={() => toScale("galaxy")} title="The galaxy around this system, the galaxies nearby and the cosmic web: they are on the place line above the system">Out to the galaxy ›</button>{/if}
-        {#if railScale !== "workshop"}<button type="button" class="door" data-go="workshop" onclick={toWorkshop} title="Physics flows, packs, player screens and data, symbols, styles: everything that changes the tool">Workshop ›</button>{/if}
-      </nav>
+      <Rail
+        {railScale}
+        {rail}
+        screen={ws.screen}
+        title={scene.title}
+        {selName}
+        backWords={trail?.scale === "world" && placeName(trail.world) ? placeName(trail.world)! : scene.title}
+        back={() => goPlace(trail && trail.system === (viewing?.system ?? "") && placeRank(trail.scale) > placeRank("galaxy") ? trail : { scale: "system", system: viewing?.system ?? "" })}
+        {go}
+        toWorld={() => toWorld()}
+        {toSystem}
+        toGalaxy={() => toScale("galaxy")}
+        {toWorkshop}
+      />
       {#key ws.screen}
-      <main class="stage" style:--viewbar-h={viewbarH ? `${viewbarH}px` : undefined} data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
-        {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
-        {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH}><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
-        <div class="area-chart">{#if chartMount}{#key openings}<div class="fill" use:view={chartMount}></div>{/key}{/if}</div>
-        <nav class="tools" aria-label="Tools">
-          <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
-          {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
-          <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
-          {#if clipArmed}<ToolButton label="Copy" icon="M8 8h11v11H8zM5 16V5h11" keyhint="Control+C" disabled={!ws.selection} onclick={copyBody} />{/if}
-          {#if clipArmed}<ToolButton label="Add here" icon="M12 5v14M5 12h14" keyhint="A" onclick={openAdd} />{/if}
-          {#if clipArmed && cuttable}<ToolButton label="Cut" icon="M6 4l12 16M18 4L6 20M4 18a2 2 0 1 0 4 0M16 18a2 2 0 1 0 4 0" keyhint="Control+X" onclick={cutBody} />{/if}
-          <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => openHelp("keys")} />
-        </nav>
-        {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
-        {#if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
-        <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if mountFor("card")}<div use:view={mountFor("card")!}></div>{/if}</aside>
-      </main>
+      <Stage
+        {ws}
+        {desk}
+        lensId={lens.id}
+        ahead={!!ahead}
+        {viewSpec}
+        {setView}
+        {chartMount}
+        cardMount={mountFor("card")}
+        {openings}
+        {view}
+        {clipArmed}
+        {cuttable}
+        {undoNote}
+        {clipNote}
+        {undo}
+        {copyBody}
+        {openAdd}
+        {cutBody}
+        openKeys={() => openHelp("keys")}
+      />
       {/key}
     </div>
     <footer class="area-ruler" aria-label="Time">
@@ -1670,31 +1602,22 @@
         <span data-kept={savedAt ?? ""} title={saveProblem ?? "The campaign is kept in this browser after every change"}>{saveProblem ? "Not kept" : savedWords}</span>
       </span>
       {#if share}
-        <span class="share" aria-label="Players">
-          {#if share.state.link}
-            <a href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' screen</a>
-            <span data-players={share.state.players}>{share.state.players} {share.state.players === 1 ? "screen" : "screens"} · {share.state.seq} events</span>
-            <!-- What the table is shown (the landing run-through): the place the GM last sent, or screens off. -->
-            {@const shown = share.state.shown}
-            <span class="table-sees" data-table-sees={"off" in shown ? "off" : shown.scope}>Table sees: {"off" in shown ? "nothing (screens off)" : (shown.title ?? "the opening place")}</span>
-            {#if "off" in shown || shown.scope !== scene.system || (ws.screen === "surface" && lastLanding && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => share!.show(here())} title="Show the players' screens {scene.title}, as far as they know it">Send this view</button>{/if}
-            {#if !("off" in shown)}<button type="button" class="linkbtn quiet" data-screens-off onclick={() => share!.show({ off: true })} title="Blank the players' screens until you send a view">Screens off</button>{/if}
-            <button type="button" class="linkbtn quiet" onclick={() => ((seatsOpen = true), seatsDialog?.showModal())}>{share.state.plan.seats.length > 1 ? `${share.state.plan.seats.length} seats` : "More seats"}</button>
-            {#if share.state.waiting.length}
-              <span class="requests" role="group" aria-label="Players' requests">
-                {#each share.state.waiting as r (r.from + r.id)}
-                  <span class="req" data-request={r.id}>
-                    {r.intent.kind === "set_value" ? `${r.intent.field} of ${scene?.subjects.find((x) => x.address === (r.intent as { address: string }).address)?.label ?? (r.intent as { address: string }).address} → ${JSON.stringify(r.intent.value)}` : r.intent.kind}
-                    <button type="button" class="linkbtn" onclick={async () => (await share!.host.approve(r.id, r.from), ws.notePhysics())}>Approve</button>
-                    <button type="button" class="linkbtn" onclick={() => share!.host.decline(r.id, r.from)}>Decline</button>
-                  </span>
-                {/each}
-              </span>
-            {/if}
-          {:else}
-            <button type="button" class="linkbtn" onclick={() => window.open(share!.start(here()), "_blank", "noopener")}>Share with players</button>
-          {/if}
-        </span>
+        <TableStatus
+          {share}
+          {session}
+          system={scene.system}
+          title={scene.title}
+          subjects={scene.subjects}
+          seatBodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)}
+          scope={(factsDoc as unknown as AuthoredFacts).scope}
+          at_yr={(factsDoc as unknown as AuthoredFacts).at_yr}
+          landingUnsent={ws.screen === "surface" && !!lastLanding}
+          {here}
+          onswitchboard={() => go("switchboard")}
+          party={ws.party ?? null}
+          now_yr={ws.campaign_now_yr ?? ws.now_yr}
+          onchange={() => (ws.revision++, ws.notePhysics())}
+        />
       {/if}
       <!-- The engine's own numbers by depth (2.4): Science adds the device tier, Engine the kernel and the hashes. -->
       {#if depth !== "curious"}
@@ -1714,13 +1637,6 @@
 {#if perfOn}
   <PerfReadout kernel={status.kernel} edge={session?.device()} from={() => moreBtn} onclose={() => (perfOn = false)} />
 {/if}
-
-<dialog bind:this={seatsDialog} class="help seats-dialog" aria-label="Seats" onclose={() => (seatsOpen = !!seatsDialog?.open)}>
-  {#if seatsOpen && share && session}
-    <SeatsPanel {share} session={session} bodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)} scope={(factsDoc as unknown as AuthoredFacts).scope} at_yr={(factsDoc as unknown as AuthoredFacts).at_yr} onchange={() => ws.notePhysics()} {here} />
-  {/if}
-  <form method="dialog"><button type="submit">Close</button></form>
-</dialog>
 
 <dialog bind:this={lensDialog} class="help seats-dialog" aria-label="Lens editor" onclose={() => (lensOpen = !!lensDialog?.open)}>
   {#if lensOpen && session}
@@ -1849,10 +1765,10 @@
   /* Tactility (handover/interface-style.md): every control answers a touch at once, quietly. */
   :global(button, select, [role="button"]) {
     transition:
-      background-color var(--sse-motion-quick) var(--sse-ease),
-      color var(--sse-motion-quick) var(--sse-ease),
-      box-shadow var(--sse-motion-quick) var(--sse-ease),
-      transform var(--sse-motion-quick) var(--sse-ease);
+    background-color var(--sse-motion-quick) var(--sse-ease),
+    color var(--sse-motion-quick) var(--sse-ease),
+    box-shadow var(--sse-motion-quick) var(--sse-ease),
+    transform var(--sse-motion-quick) var(--sse-ease);
   }
   :global(button:not(:disabled):active) {
     transform: translateY(1px);
@@ -1884,116 +1800,10 @@
     background: var(--sse-ground);
     min-width: 0;
   }
-  .place {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    min-width: 0;
-    /* A long line gives way inside its own space; it never runs under the desk switch. */
-    overflow: hidden;
-  }
-  .title {
-    margin: 0;
-    min-width: 0;
-    font-family: var(--sse-font-display);
-    font-size: 26px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .place > :not(.title) {
-    flex: none;
-  }
-  .place .up {
-    font: inherit;
-    font-family: var(--sse-font-display);
-    font-size: 17px;
-    color: var(--sse-accent);
-    background: none;
-    border: 0;
-    padding: 0;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .place .up:hover {
-    text-decoration: underline;
-  }
   /* The steps above the place in view are quiet; the ones below it are the way back to where the GM was. */
   /* The name keeps its room: the steps above it give way first, then the list beside it. */
-  .place .title {
-    flex: 0 0.1 auto;
-  }
-  .place .step {
-    flex: 0 8 auto;
-    min-width: 2.5em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .place .sep {
-    flex: none;
-  }
-  .place .goto {
-    flex: 0 4 auto;
-    min-width: 3em;
-  }
-  .place .step:not(.up) {
-    font: inherit;
-    font-size: 13px;
-    color: var(--sse-ink-muted);
-    background: none;
-    border: 0;
-    padding: 0;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .place .step:not(.up):hover {
-    color: var(--sse-accent);
-    text-decoration: underline;
-  }
-  .place .step.below {
-    font-style: italic;
-    flex: 0 20 auto;
-    min-width: 1.5em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
   /* Above a system the name is the chart's own ("The cosmic web, 200 Mpc across"): it gives way only after the trail. */
-  .place:not([data-scale="system"], [data-scale="world"]) .title {
-    flex: 0 1 auto;
-    min-width: 8em;
-  }
-  .sep.below {
-    opacity: 0.6;
-  }
-  .goto {
-    display: inline-flex;
-    min-width: 0;
-  }
-  .place .short {
-    display: none;
-  }
   /* Narrower: the far steps say it in a word; narrower still, only the step above shows. */
-  @media (max-width: 1600px) {
-    .place .step.far:has(.short) .long {
-      display: none;
-    }
-    .place .step.far .short {
-      display: inline;
-    }
-  }
-  @media (max-width: 1180px) {
-    .place .step.far,
-    .sep.far {
-      display: none;
-    }
-  }
-  .sep {
-    color: var(--sse-ink-muted);
-  }
-  .up-arrow {
-    display: none;
-  }
   .barbtn {
     height: 32px;
     padding: 0 14px;
@@ -2070,85 +1880,6 @@
     grid-template-columns: 172px minmax(0, 1fr);
     min-height: 0;
   }
-  .rail {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding: 18px 12px 18px 18px;
-    border-right: var(--sse-line) solid var(--sse-rule);
-    overflow: auto;
-  }
-  .rail .group {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-  .rail h2 {
-    margin: 0 0 4px;
-    font-family: var(--sse-font-mono);
-    font-size: 10px;
-    font-weight: normal;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--sse-ink-muted);
-  }
-  .rail .inst {
-    position: relative;
-    text-align: left;
-    font: inherit;
-    font-size: 14px;
-    padding: 5px 8px;
-    margin-left: -8px;
-    border: 0;
-    background: none;
-    color: var(--sse-ink);
-    cursor: pointer;
-  }
-  .rail .inst:hover {
-    background: var(--sse-ground-raised);
-  }
-  .rail .inst[aria-pressed="true"] {
-    font-weight: 600;
-  }
-  .rail .inst[aria-pressed="true"]::before {
-    content: "";
-    position: absolute;
-    left: -6px;
-    top: 6px;
-    bottom: 6px;
-    width: 3px;
-    background: var(--sse-accent);
-    animation: rail-in var(--sse-motion) var(--sse-ease);
-  }
-  @keyframes rail-in {
-    from {
-      transform: scaleY(0);
-    }
-  }
-  .rail .door {
-    text-align: left;
-    font: inherit;
-    font-size: 13px;
-    padding: 6px 10px;
-    border: var(--sse-line) solid var(--sse-ink);
-    background: transparent;
-    color: var(--sse-ink);
-    cursor: pointer;
-  }
-  .rail .door.open {
-    background: var(--sse-ink);
-    color: var(--sse-on-ink);
-  }
-  .rail .door[data-go="workshop"] {
-    margin-top: auto;
-    border-color: var(--sse-rule);
-    color: var(--sse-ink-muted);
-  }
-  .rail .door.back {
-    border: 0;
-    padding: 0;
-    color: var(--sse-accent);
-  }
   /* When the bar is full the kicker gives way first, then the place's name ends in "…"; nothing overlaps. */
   .kicker {
     min-width: 0;
@@ -2167,26 +1898,6 @@
   }
   .spacer {
     flex: 1;
-  }
-  .branch-stamp {
-    position: absolute;
-    top: 14px;
-    left: 50%;
-    transform: translateX(-50%) rotate(-1deg);
-    z-index: 3;
-    padding: 2px 10px;
-    border: var(--sse-line) solid var(--sse-accent);
-    color: var(--sse-accent-ink);
-    font-family: var(--sse-font-mono);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    background: var(--sse-ground);
-    pointer-events: none;
-  }
-  .stage[data-branch] {
-    outline: 2px dashed var(--sse-accent);
-    outline-offset: -4px;
   }
   .whatif {
     display: inline-flex;
@@ -2212,24 +1923,6 @@
     color: var(--sse-ink);
   }
   /* The name, pressed, opens the list of the campaign's systems (the list is the name's own, laid over it unseen). */
-  .title-switch {
-    position: relative;
-    display: inline-flex;
-    min-width: 0;
-    flex: 0 0.1 auto;
-    cursor: pointer;
-  }
-  .title-switch .title {
-    text-decoration: underline dotted var(--sse-rule);
-    text-underline-offset: 6px;
-  }
-  .title-switch select {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    opacity: 0;
-    cursor: pointer;
-  }
   .whatif b {
     color: var(--sse-accent-ink);
     font-weight: normal;
@@ -2309,95 +2002,18 @@
     font-family: var(--sse-font-body);
     font-size: 13px;
   }
-  .stage {
-    position: relative;
-    min-height: 0;
-  }
-  .area-chart,
   .fill {
     position: absolute;
     inset: 0;
   }
-  .area-chart .fill,
   .area-ruler .fill {
     position: relative;
     height: 100%;
   }
   /* The cutaway sits between the tools and the card instead of under them. */
-  .stage[data-screen="body"] .area-chart,
-  .stage[data-screen="cutaway"] .area-chart,
-  .stage[data-screen="compare"] .area-chart,
-  .stage[data-screen="life"] .area-chart {
-    inset: 24px 428px 24px 96px;
-    overflow: auto;
-  }
   /* A screen with no card is a page: its one view scrolls in the stage. */
-  .stage[data-page] .area-chart {
-    inset: 24px 24px 24px 96px;
-    overflow: auto;
-  }
-  .stage[data-page] .area-chart .fill {
-    height: auto;
-    min-height: 100%;
-    padding: 0 0 24px;
-  }
-  .stage[data-page] .area-card {
-    display: none;
-  }
   /* The view controls (rule 12): always at the top of the stage, beside the tools, on every diagram. */
-  .viewbar {
-    position: absolute;
-    left: 96px;
-    top: 16px;
-    right: 440px;
-    z-index: 2;
-    pointer-events: none;
-  }
-  .viewbar > :global(*) {
-    pointer-events: auto;
-    width: fit-content;
-  }
   /* Below the view controls however many rows they wrap to (their measured height). */
-  .stage[data-viewbar] .undo-note {
-    top: calc(var(--viewbar-h, 68px) + 16px);
-  }
-  .stage[data-viewbar][data-screen="body"] .area-chart,
-  .stage[data-viewbar][data-screen="cutaway"] .area-chart,
-  .stage[data-viewbar][data-screen="compare"] .area-chart,
-  .stage[data-viewbar][data-page] .area-chart {
-    top: calc(var(--viewbar-h, 68px) + 16px);
-  }
-  .tools {
-    position: absolute;
-    left: 24px;
-    top: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .undo-note {
-    position: absolute;
-    left: 88px;
-    top: 24px;
-    margin: 0;
-    font-size: 13px;
-    color: var(--sse-ink-muted);
-  }
-  .clip-note {
-    top: 48px;
-    padding: 4px 8px;
-    background: var(--sse-ground);
-    max-width: min(560px, calc(100% - 520px));
-  }
-  .area-card {
-    position: absolute;
-    right: 24px;
-    top: 24px;
-    width: 380px;
-    max-height: calc(100% - 110px);
-    overflow: auto;
-    padding: 0 6px 6px 0;
-  }
   .area-ruler {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -2441,24 +2057,6 @@
     gap: 14px;
     opacity: 0.75;
   }
-  .share {
-    display: inline-flex;
-    gap: 10px;
-    align-items: center;
-  }
-  .requests {
-    display: inline-flex;
-    gap: 12px;
-    color: var(--sse-ink);
-  }
-  .req {
-    display: inline-flex;
-    gap: 6px;
-    padding: 2px 6px;
-    border: var(--sse-line) solid var(--sse-accent);
-    border-radius: var(--sse-radius);
-  }
-  .share a,
   .linkbtn {
     color: var(--sse-accent);
     font: inherit;
@@ -2553,7 +2151,6 @@
     color: var(--sse-on-ink);
     font-family: var(--sse-font-body);
   }
-
   /* Phone: the same card and ruler without the wide chart (H8.5). */
   @media (max-width: 760px) {
     .app {
@@ -2566,47 +2163,8 @@
       gap: 10px;
       padding: 0 12px;
     }
-    .title {
-      font-size: 22px;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
     /* The header holds the place line, the lens, the mode switch, Ask and More; the place line gives way first. */
-    .place {
-      flex: 1 1 auto;
-      overflow: hidden;
-    }
     /* The name gives way first on a phone (the desktop rule keeps it whole and shrinks the far steps). */
-    .place .title {
-      flex: 0 1 auto;
-    }
-    .place .step {
-      flex: none;
-      min-width: 0;
-    }
-    .place .up {
-      font-size: 22px;
-      line-height: 1;
-    }
-    .up-arrow {
-      display: inline;
-    }
-    .up-name,
-    .up-sep {
-      display: none;
-    }
-    .place .step.below,
-    .sep.below {
-      display: none;
-    }
-    /* Down is a small ▾ beside the name (the picker draws it); the list opens across the screen. */
-    .place .goto {
-      flex: none;
-      min-width: 0;
-      align-self: center;
-    }
     .lens {
       flex: 0 1 auto;
       min-width: 56px;
@@ -2639,117 +2197,17 @@
     .menu .ask-more {
       display: flex;
     }
-    .place {
-      min-width: 64px;
-    }
     .lens-k,
-    .kicker,
-    .tools {
+    .kicker {
       display: none;
     }
     /* The rail becomes one row of chips that scrolls sideways (design 4). */
     .middle {
       display: contents;
     }
-    .rail {
-      flex-direction: row;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
-      border-right: 0;
-      border-bottom: var(--sse-line) solid var(--sse-rule);
-      overflow-x: auto;
-      overflow-y: hidden;
-      white-space: nowrap;
-      scrollbar-width: none;
-    }
-    .rail .group {
-      flex-direction: row;
-      gap: 6px;
-    }
     /* The row scrolls; nothing in it is squeezed (a squeezed group once ran "Life" into "Route to here"). */
-    .rail > *,
-    .rail .group > * {
-      flex: none;
-    }
-    .rail h2 {
-      display: none;
-    }
-    .rail .inst {
-      margin: 0;
-      min-height: 36px;
-      padding: 0 12px;
-      border: 1px solid var(--sse-rule);
-    }
-    .rail .inst[aria-pressed="true"] {
-      border-color: var(--sse-ink);
-    }
-    .rail .inst[aria-pressed="true"]::before {
-      display: none;
-    }
-    .rail .door {
-      min-height: 36px;
-      white-space: nowrap;
-    }
-    .rail .door[data-go="workshop"] {
-      margin-top: 0;
-    }
-    .stage {
-      display: contents;
-    }
     /* The view controls sit over the chart they set, one row, labels dropped. */
-    .viewbar {
-      position: static;
-      padding: 8px 12px 6px;
-      pointer-events: auto;
-    }
-    .area-chart {
-      position: relative;
-      height: 44vh;
-      border-bottom: var(--sse-line) solid var(--sse-ink);
-    }
-    .area-chart .fill {
-      position: absolute;
-    }
     /* Tool screens (symbols, styles, packs...) scroll in a taller window; the flow editor and the Body view flow with the page. */
-    .stage:not([data-screen="system"]) .area-chart {
-      height: 72dvh;
-    }
-    .stage:not([data-screen="system"]) .area-chart .fill {
-      overflow: auto;
-    }
-    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="cutaway"], [data-screen="compare"], [data-screen="life"], [data-page]) .area-chart {
-      height: auto;
-    }
-    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="cutaway"], [data-screen="compare"], [data-screen="life"], [data-page]) .area-chart .fill {
-      position: relative;
-    }
-    .stage[data-screen="body"] .area-chart,
-    .stage[data-screen="cutaway"] .area-chart,
-    .stage[data-screen="compare"] .area-chart,
-    .stage[data-screen="life"] .area-chart,
-    .stage[data-page] .area-chart {
-      inset: auto;
-      padding: 12px 16px;
-    }
-    .undo-note {
-    position: absolute;
-    left: 88px;
-    top: 24px;
-    margin: 0;
-    font-size: 13px;
-    color: var(--sse-ink-muted);
-  }
-  .area-card {
-      position: static;
-      width: auto;
-      max-height: none;
-      overflow: visible;
-      /* A card opening from its body (U12) slides a little sideways; it must never make the page scroll. */
-      overflow-x: clip;
-      margin: 16px 16px 24px;
-      padding: 0 6px 6px 0;
-    }
     .area-ruler {
       position: sticky;
       bottom: 0;
@@ -2775,13 +2233,6 @@
       flex-wrap: wrap;
       gap: 4px 12px;
       padding: 6px 12px;
-    }
-  }
-  @media (max-width: 760px) {
-    .clip-note {
-      position: static;
-      max-width: none;
-      margin: 8px 16px;
     }
   }
 </style>

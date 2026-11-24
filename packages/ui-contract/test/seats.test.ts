@@ -225,6 +225,13 @@ test("a sealed seat's device receives no seed and no unfiltered fact", async () 
     assert.ok(!all.includes("Vault") && !all.includes(VAULT), "nothing about what Vesh has not found");
     assert.ok(heard.every((m) => ["sealed", "scene", "answer", "beat", "bye", "hello", "request"].includes(m.t)), [...new Set(heard.map((m) => m.t))].join());
 
+    // Held (Switchboard): an empty scene and the card's words, nothing of the place; released, the place comes back.
+    await sealedHost.setShown({ off: true, card: "Signal lost" });
+    await until(() => p.held === "Signal lost", "held");
+    assert.deepEqual(p.scene!.subjects, [], "nothing of the place behind the card");
+    await sealedHost.setShown({ scope: SYS });
+    await until(() => p.held === null && JSON.stringify(p.scene).includes("Haven"), "released");
+
     // The GM goes: read only on the last scene.
     sealedHost.close();
     await until(() => p.status.state === "offline", "offline");
