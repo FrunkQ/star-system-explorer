@@ -112,3 +112,8 @@ export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts"
 // A body's face in True, one door for every view (true-body.ts).
 export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
 export type { TrueBody, TrueLook } from "./true-body.ts";
+// Hot things glow in Visible and plumes above the limb (third audit R10 to R12, track TRUE).
+export { drawnGlow, GLOW_FLOOR, hotGlow } from "./hot-glow.ts";
+export type { HotGlow } from "./hot-glow.ts";
+export { plumeBrightness, plumeFacts, plumeGrains, plumeNote } from "./plumes.ts";
+export type { PlumeFacts } from "./plumes.ts";

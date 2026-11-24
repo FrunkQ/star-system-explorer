@@ -6,6 +6,8 @@ import type { GpuItem } from "./gpu.ts";
 import type { Vec3 } from "./frames.ts";
 import { ringProfile, type RingBand } from "./rings.ts";
 import type { TrueTexture } from "./true-look.ts";
+import { drawnGlow, hotGlow } from "./hot-glow.ts";
+import { plumeBrightness, plumeGrains, type PlumeFacts } from "./plumes.ts";
 
 export interface TrueBody {
   /** Unique among what is drawn: keys the textures and ring profiles uploaded once. */
@@ -22,10 +24,17 @@ export interface TrueBody {
   rings?: readonly RingBand[];
   /** Its north pole in the drawing's frame: its rings lie in its equator. */
   pole: Vec3;
+  /**
+   * Its own heat (hot-glow.ts): its temperature and its star's (temperature, radius, distance). A world at or over
+   * the Draper point glows by Planck against its own daylight.
+   */
+  heat?: { t_k: number; star?: { t_k: number; r_m: number; d_m: number } | null };
+  /** Its plumes from the kernel's surface record (plumes.ts), with the light's and the eye's directions from it. */
+  plumes?: { facts: PlumeFacts; toLight: Vec3; toEye: Vec3 };
 }
 
 /** The GPU fields of a body's True face. */
-export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings">;
+export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "glow" | "plumes">;
 
 /** A surface texture's mean colour, 0..1 (sRGB bytes over 255; a tint, not a measurement). */
 export function meanColour(t: TrueTexture): [number, number, number] {
@@ -68,5 +77,48 @@ export function trueLook(b: TrueBody): TrueLook {
   if (b.surface) out.surface = { key: b.key, texture: b.surface };
   const r = b.star ? null : ringsOf(b);
   if (r) out.rings = { key: r.key, inner: r.inner, outer: r.outer, normal: b.pole, width: r.width, data: r.data };
+  if (!b.star && b.heat) {
+    const g = drawnGlow(hotGlow(b.heat.t_k, b.heat.star));
+    if (g) out.glow = g.rgb;
+  }
+  if (!b.star && b.plumes && b.radius_m) {
+    const p = b.plumes;
+    const unit = (v: Vec3) => {
+      const l = Math.hypot(v[0], v[1], v[2]) || 1;
+      return [v[0] / l, v[1] / l, v[2] / l] as Vec3;
+    };
+    // The light travels from the star to the plume, then to the eye: back-lit when the star is behind the plume.
+    const l = unit(p.toLight);
+    const e = unit(p.toEye);
+    const cosPhase = -(l[0] * e[0] + l[1] * e[1] + l[2] * e[2]);
+    const brightness = plumeBrightness(p.facts, cosPhase);
+    if (brightness > 0) out.plumes = { points: turnToPole(plumeKept(b.key, p.facts, b.radius_m), b.pole), brightness };
+  }
+  return out;
+}
+
+// A plume's grains are made once per body and its facts (they are a drawing's, deterministic).
+const grains = new Map<string, Float32Array>();
+function plumeKept(key: string, f: PlumeFacts, radius_m: number): Float32Array {
+  const k = `${key}|${JSON.stringify(f)}|${radius_m}`;
+  let g = grains.get(k);
+  if (!g) grains.set(k, (g = plumeGrains(f, radius_m)));
+  return g;
+}
+
+/** Points in the body's own frame (+z its pole) turned so +z lies along `pole` in the drawing's frame. */
+function turnToPole(pts: Float32Array, pole: Vec3): Float32Array {
+  const l = Math.hypot(pole[0], pole[1], pole[2]) || 1;
+  const z: Vec3 = [pole[0] / l, pole[1] / l, pole[2] / l];
+  const a: Vec3 = Math.abs(z[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
+  const xr: Vec3 = [a[1] * z[2] - a[2] * z[1], a[2] * z[0] - a[0] * z[2], a[0] * z[1] - a[1] * z[0]];
+  const xl = Math.hypot(xr[0], xr[1], xr[2]) || 1;
+  const x: Vec3 = [xr[0] / xl, xr[1] / xl, xr[2] / xl];
+  const y: Vec3 = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+  const out = new Float32Array(pts.length);
+  for (let i = 0; i < pts.length; i += 3) {
+    const [u, v, w] = [pts[i]!, pts[i + 1]!, pts[i + 2]!];
+    for (let k = 0; k < 3; k++) out[i + k] = u * x[k]! + v * y[k]! + w * z[k]!;
+  }
   return out;
 }

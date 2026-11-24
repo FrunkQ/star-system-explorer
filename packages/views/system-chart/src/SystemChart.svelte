@@ -9,6 +9,8 @@
   import type { FieldReadJson, LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
+  /** Plume facts from the same reads (the world's surface record), by system and world. */
+  const truePlumes = new Map<string, import("../../../renderer/src/index.ts").PlumeFacts>();
   /** Stars read for True's living star, by system and star (a string: why there is none). */
   const liveStars = new Map<string, LiveStar | string>();
   /** read_field's Solar System fixture, read once for the page (Mag, V10e). */
@@ -20,7 +22,7 @@
   import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, starCss, trueSurface, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
+  import { plumeFacts, readLiveStar, starCss, trueSurface, type PlumeFacts, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -229,6 +231,8 @@
   // kernel), one at a time, the selected world first, and kept for this page. Only on the GM's seat, which reads tiles.
   const looksTrue = $derived(shownView.style === "true");
   let surfaces = $state<Map<string, TrueTexture>>(new Map());
+  // Each world's plume facts from the same read (its surface record), for plumes above the limb.
+  let plumes = $state<Map<string, PlumeFacts>>(new Map());
   let reading = $state<{ done: number; of: number; none: number; why: string } | null>(null);
   let trueGen = 0;
   $effect(() => {
@@ -252,7 +256,11 @@
           const r = await ctx.session.surfaceTiles(sys, s.address);
           const why = r.ok ? String((r.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : r.message;
           trueSurfaces.set(key, (r.ok && trueSurface(r.tiles)) || why);
+          const pf = r.ok ? plumeFacts(r.record) : null;
+          if (pf) truePlumes.set(key, pf);
         }
+        const kp = truePlumes.get(key);
+        if (kp && g === trueGen) plumes = new Map(plumes).set(s.address, kp);
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
         if (t && typeof t !== "string") surfaces = new Map(surfaces).set(s.address, t);
@@ -349,7 +357,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {plumes} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
