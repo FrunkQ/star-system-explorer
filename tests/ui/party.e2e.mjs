@@ -124,6 +124,16 @@ try {
   assert.match(await aboard.innerText(), /Aboard Beowulf, at Mars/);
   assert.match(await aboard.getAttribute("title"), /Last voyage: Earth to Mars, \d/);
   await shot(pl, "party-player-header");
+  // The players' card for the party's ship (track MC, MC8): opened from the header, read from the table's own scene.
+  await aboard.click();
+  const card = pl.locator("[data-party-card]");
+  await card.waitFor({ timeout: 15000 });
+  // Beowulf has not been shown to the table, so the card says so and shows nothing of it.
+  await card.locator("[data-party-card-unknown]").waitFor({ timeout: 15000 });
+  assert.equal(await card.locator("[data-picture], [data-party-crew], [data-fuel]").count(), 0, "nothing the table does not know");
+  await shot(pl, "party-player-ship-card");
+  await aboard.click();
+  await card.waitFor({ state: "detached" });
 
   // Arriving at a world the table does not fully know, the GM is offered one press to tell them, with Undo.
   const slip = gm.locator(`[data-arrival="${mars}"]`);

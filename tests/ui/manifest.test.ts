@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { ABOARD, aboard, ageNow, crewAboard, entryFrom, entryId, lifeSupport, lifeSupportFrom, massKg, startingValues, storeOf, type AboardEntry } from "../../packages/ui-contract/src/manifest.ts";
+import { seenAboard, ABOARD, aboard, ageNow, crewAboard, entryFrom, entryId, lifeSupport, lifeSupportFrom, massKg, startingValues, storeOf, type AboardEntry } from "../../packages/ui-contract/src/manifest.ts";
 import type { Json } from "../../packages/ui-contract/src/json.ts";
 import { flightLines, shipLog, type RecordRead } from "../../packages/ui-contract/src/constructs.ts";
 
@@ -183,4 +183,20 @@ test("the ship's flights read from its flight log (MC7): one line a voyage, and 
   assert.equal(lines[0]!.who, "pack");
   assert.ok(lines.every((l) => l.what === "flight"));
   assert.deepEqual(flightLines(null, (s) => s, (a) => a), [], "no flight log, no lines");
+});
+
+test("a players' screen sees aboard only what its scene discloses (MC8)", () => {
+  const ship = "u:k/sys:0/construct:kittiwake";
+  const subjects = [
+    { address: "u:k/actor:ada", facts: [{ field: "name", value: "Ada Moss" }, { field: "aboard.on", value: ship }, { field: "aboard.role", value: "pilot" }] },
+    { address: "u:k/actor:rhee", facts: [{ field: "name", value: "Rhee" }, { field: "aboard.on", value: ship }, { field: "aboard.state", value: "cold_sleep" }, { field: "aboard.role", placeholder: "not yet scanned" }] },
+    { address: "u:k/actor:water", facts: [{ field: "name", value: "water" }, { field: "aboard.on", value: ship }, { field: "aboard.amount", value: 500 }, { field: "aboard.unit", value: "kg" }] },
+    { address: "u:k/actor:crate", facts: [{ field: "name", value: "a sealed crate" }, { field: "aboard.on", value: ship }] },
+    { address: "u:k/actor:secret", facts: [{ field: "name", value: "stowaway" }, { field: "aboard.on", placeholder: "not yet scanned" }, { field: "aboard.role", value: "none" }] },
+    { address: "u:k/actor:elsewhere", facts: [{ field: "name", value: "Vesh" }, { field: "aboard.on", value: "u:k/sys:0/construct:lark" }, { field: "aboard.role", value: "cook" }] },
+  ];
+  const seen = seenAboard(subjects, ship);
+  assert.deepEqual(seen.people.map((e) => [e.name, e.role ?? null, e.state ?? null]), [["Ada Moss", "pilot", null], ["Rhee", null, "cold_sleep"]]);
+  assert.deepEqual(seen.cargo.map((e) => [e.name, e.amount, e.unit]), [["water", 500, "kg"]]);
+  assert.deepEqual(seen.other.map((e) => e.name), ["a sealed crate"], "neither a person's nor a lot's facts: just aboard");
 });
