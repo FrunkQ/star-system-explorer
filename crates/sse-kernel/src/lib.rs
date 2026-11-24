@@ -2976,7 +2976,18 @@ impl Kernel {
                 planetary,
                 remnants,
                 glows,
-            } => systems::read_nebulae(at_s, seed.as_deref(), deaths, planetary, remnants, glows)?,
+                giants,
+                young,
+            } => systems::read_nebulae(
+                at_s,
+                seed.as_deref(),
+                deaths,
+                planetary,
+                remnants,
+                glows,
+                giants,
+                young,
+            )?,
             Request::SurveyPlanets { survey } => systems::survey_planets(survey)?,
             Request::ReadSpectrum { targets, observer } => {
                 systems::read_spectrum(targets, observer)?

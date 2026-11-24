@@ -770,6 +770,16 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         glows: Option<Vec<serde_json::Value>>,
+        /// Cool giants losing mass (`sse_nebula::outflow::GiantInput`): their
+        /// dusty shells (O3b).
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        giants: Option<Vec<serde_json::Value>>,
+        /// Young stars still accreting (`sse_nebula::outflow::YoungStarInput`):
+        /// their jets (O3b).
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        young: Option<Vec<serde_json::Value>>,
     },
     /// Bring a system into the open universe as facts: an SSE 3 save
     /// (`import_v3`, its text) or a formation run (`formation`, the same

@@ -166,3 +166,12 @@ How rows are counted: Proxima is counted unverified (its radius is verified, but
 |---|---|---|---|---|
 | `sse.light.limb_temperature` | Rybicki, G. B. and Lightman, A. P. 1979, *Radiative Processes in Astrophysics*, Wiley, §1.8. doi:10.1002/9783527618170 | grey atmosphere T⁴ = ¾Teff⁴(τ + ⅔) and Eddington-Barbier (light at μ leaves τ ≈ μ) | textbook | Standard result; the test recovers Eddington's (2 + 3μ)/5 law. |
 | `sse.light.reflected_limb` | Minnaert, M. 1941, ApJ 93, 403. doi:10.1086/144279 | b = μ0^k μ^(k−1); k = 1 is Lambert | textbook | Law as stated in the paper's title and abstract; k = 1 reduces to Lambert in the test. |
+
+## O3b: outflows from stars (added 24 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.outflow.giant_mass_loss` | Schröder, K.-P. and Cuntz, M. 2005, ApJ 630, L73. doi:10.1086/491579 | Ṁ = 8e-14 L R / M (T/4000 K)^3.5 (1 + g☉/(4300 g)) M☉/yr | textbook | Equation 4 as widely quoted; not re-fetched 24 Nov. |
+| `sse.outflow.dust_shell` | Höfner, S. and Olofsson, H. 2018, A&ARv 26, 1. doi:10.1007/s00159-017-0106-5 | R_c = (R/2)(T/T_c)^((4+p)/2), condensation near 1000 to 1500 K, winds 5 to 30 km/s | textbook | Review; values as quoted. |
+| `sse.outflow.young_jet` | Hartigan, P., Edwards, S. and Ghandour, L. 1995, ApJ 452, 736. doi:10.1086/176343; Bally, J. 2016, ARA&A 54, 491. doi:10.1146/annurev-astro-081915-023341 | jets carry about 0.1 of the accretion; speeds near the escape speed at launch, a few hundred km/s; knots from episodic accretion | textbook | As quoted in the reviews. |
+

@@ -890,6 +890,7 @@ pub(crate) fn survey_planets(survey: serde_json::Value) -> Out {
 }
 
 /// Nebulae at a date (O3).
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn read_nebulae(
     at_s: f64,
     seed: Option<&str>,
@@ -897,6 +898,8 @@ pub(crate) fn read_nebulae(
     planetary: Option<Vec<serde_json::Value>>,
     remnants: Option<Vec<serde_json::Value>>,
     glows: Option<Vec<serde_json::Value>>,
+    giants: Option<Vec<serde_json::Value>>,
+    young: Option<Vec<serde_json::Value>>,
 ) -> Out {
     use sse_nebula::*;
     let seed = sse_core::Seed::from_text(seed.unwrap_or("sse4"));
@@ -927,6 +930,14 @@ pub(crate) fn read_nebulae(
     }
     for p in &gl {
         put(&p.address, star_forming_glow(&seed, p, at_s))?;
+    }
+    let gi: Vec<outflow::GiantInput> = parse_list("giant", giants)?;
+    for p in &gi {
+        put(&p.address, outflow::dust_shell(&seed, p, at_s))?;
+    }
+    let yo: Vec<outflow::YoungStarInput> = parse_list("young star", young)?;
+    for p in &yo {
+        put(&p.address, outflow::young_jet(&seed, p, at_s))?;
     }
     Ok(Response::NebulaeRead {
         at_s,

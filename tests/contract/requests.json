@@ -3487,5 +3487,17 @@
  {
   "op": "fog_of_war",
   "seats": [{"seat": "nobody", "contacts": []}]
+ },
+ {
+  "op": "read_nebulae",
+  "at_s": 3.15576e11,
+  "giants": [
+   {"address": "u:o3b/sys:0/neb:shell", "star": "u:o3b/sys:0/star:0", "luminosity_w": 1.9e30, "radius_m": 1.4e11,
+    "mass_kg": 2.4e30, "teff_k": 3000.0, "started_s": 0.0, "ends_s": 2.0e11}
+  ],
+  "young": [
+   {"address": "u:o3b/sys:1/neb:jet", "star": "u:o3b/sys:1/star:0", "mass_kg": 1.0e30, "radius_m": 1.4e9,
+    "accretion_kg_s": 6.3e15, "started_s": 0.0, "ends_s": 3.0e13, "axis": [0.0, 0.0, 1.0]}
+  ]
  }
 ]

@@ -3515,6 +3515,27 @@ fn light_through_gas_gives_the_colour_to_the_eye() {
     assert_eq!(r["code"], "bad_gas", "{r}");
 }
 
+/// O3b: read_nebulae gives a giant's dusty shell and a young star's jets.
+#[test]
+fn read_nebulae_gives_dust_shells_and_jets() {
+    let mut k = crate::Kernel::new();
+    let r: serde_json::Value = serde_json::from_str(&k.handle_json(
+        &serde_json::json!({"op": "read_nebulae", "at_s": 3.15576e11,
+            "giants": [{"address": "u:o/sys:0/neb:s", "star": "u:o/sys:0/star:0", "luminosity_w": 1.9e30,
+                        "radius_m": 1.4e11, "mass_kg": 2.4e30, "teff_k": 3000.0, "started_s": 0.0}],
+            "young": [{"address": "u:o/sys:1/neb:j", "star": "u:o/sys:1/star:0", "mass_kg": 1.0e30,
+                       "radius_m": 1.4e9, "accretion_kg_s": 6.3e15, "started_s": 0.0, "ends_s": 3.0e13,
+                       "axis": [0.0, 0.0, 1.0]}]})
+        .to_string(),
+    ))
+    .unwrap();
+    assert_eq!(r["type"], "nebulae_read", "{r}");
+    let n = r["nebulae"].as_array().unwrap();
+    assert_eq!(n[0]["kind"], "dust-shell", "{r}");
+    assert_eq!(n[1]["kind"], "jet", "{r}");
+    assert!(n[1]["jet"]["knots"].as_array().unwrap().len() > 1, "{r}");
+}
+
 /// RK14: fog of war marks a lit torch far off and leaves a ring where a
 /// lost coaster could be.
 #[test]
