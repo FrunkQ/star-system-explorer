@@ -3000,6 +3000,7 @@ impl Kernel {
                         block,
                         epoch_myr,
                         raisers,
+                        sheet: self.observe.reference.clone(),
                     },
                     &mut self.climates,
                 )?

@@ -333,7 +333,7 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
                     })
                 }),
                 // Tides and wind waves, from the formula blocks.
-                "sea": crate::sea::summary(cs, &body, k, &moons),
+                "sea": crate::sea::summary(r.reference, cs, &body, k, &moons),
                 // W8: the main gas's ice moving between ground and air.
                 "volatile": k.exchange.as_ref().map(|e| {
                     serde_json::json!({

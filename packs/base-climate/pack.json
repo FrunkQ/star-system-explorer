@@ -46,7 +46,15 @@
     },
     "sea": {
      "storm_fetch_m": 1000000.0,
-     "source": "Tides (sse.tides.ocean_range, sse.tides.period) and wind waves (sse.ocean.wind_waves, Coastal Engineering Manual eqs. II-2-36 and II-2-37). A wind's fetch is the band's open water between coasts, (1 - land) x the band's circumference / (coasts / 2), held to a storm's size of about 1000 km (synoptic storms span 1000 to 2000 km; one wind direction holds over a part of that): docs/fudges.md."
+     "reference_density_ratio": 0.0012,
+     "whitecaps": {
+      "coefficient": 5e-05,
+      "onset_m_s": 4.47,
+      "exponent": 3.0,
+      "foam_albedo": 0.22,
+      "source": "Whitecap share W = 5.0e-5 (U10 - 4.47)^3 for developed seas (Stramska and Petelski 2003, as used for ocean colour: Ocean Optics Web Book, whitecaps, eq. 2), read with the wind scaled by the liquid's drive; effective whitecap reflectance 0.22, about +-50% (Koepke 1984, Appl. Opt. 23, 1816), flat across the visible to 555 nm and lower in the red (Frouin et al. 1996)."
+     },
+     "source": "Tides (sse.tides.ocean_range, sse.tides.period) and wind waves (sse.ocean.wind_waves, Coastal Engineering Manual eqs. II-2-36 and II-2-37). A wind's fetch is the band's open water between coasts, (1 - land) x the band's circumference / (coasts / 2), held to a storm's size of about 1000 km (synoptic storms span 1000 to 2000 km; one wind direction holds over a part of that): docs/fudges.md. Another liquid's waves read the wind scaled by sqrt((rho_air / rho_liquid) / 0.0012), Earth's air over water (1.2 / 1000), since the waves' momentum comes from the air and their weight from the liquid (a stand-in, docs/fudges.md); trains drawn from the Pierson-Moskowitz spectrum with capillary-gravity dispersion, the liquid's density, viscosity and surface tension from the data sheet."
     },
     "land_sea": {
      "coasts_per_band": 2.0,
@@ -171,6 +179,18 @@
      }
     },
     "references": [
+     {
+      "text": "Stramska, M. and Petelski, T. 2003, Observations of oceanic whitecaps in the north polar waters of the Atlantic, J. Geophys. Res. 108, 3086 (as quoted in the Ocean Optics Web Book, whitecaps)",
+      "url": "https://oceanopticsbook.info/view/atmospheric-correction/level-2/whitecaps"
+     },
+     {
+      "text": "Koepke, P. 1984, Effective reflectance of oceanic whitecaps, Appl. Opt. 23, 1816",
+      "url": "https://scilit.com/publications/d02e8fb48e351aa7a4b6391ef50b0338"
+     },
+     {
+      "text": "Morel, A. and Prieur, L. 1977, Analysis of variations in ocean color, Limnol. Oceanogr. 22, 709",
+      "url": "https://frouingroup.ucsd.edu/Aw_Chl/REFRENCES/Morel_and_Prieur_LO_77.pdf"
+     },
      {
       "text": "North, G. R. 1975, Theory of energy-balance climate models, J. Atmos. Sci. 32, 2033-2043",
       "doi": "10.1175/1520-0469(1975)032<2033:TOEBCM>2.0.CO;2"

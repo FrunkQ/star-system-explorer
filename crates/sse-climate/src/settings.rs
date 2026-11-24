@@ -62,6 +62,24 @@ pub struct SeaSettings {
     /// Longest stretch of open water one wind blows over, m: a storm's
     /// size, whatever the width of the sea.
     pub storm_fetch_m: f64,
+    /// Earth's air over water, ρ_air / ρ_water, against which another
+    /// liquid's waves are driven (W-sea3); 0 turns the scaling off.
+    #[serde(default)]
+    pub reference_density_ratio: f64,
+    /// Whitecaps and foam (W-sea4).
+    #[serde(default)]
+    pub whitecaps: Option<Whitecaps>,
+    pub source: String,
+}
+
+/// The share of the sea under whitecaps, W = c (U − U₀)³ above the onset
+/// wind U₀, and the foam's effective reflectance (W-sea4).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Whitecaps {
+    pub coefficient: f64,
+    pub onset_m_s: f64,
+    pub exponent: f64,
+    pub foam_albedo: f64,
     pub source: String,
 }
 
