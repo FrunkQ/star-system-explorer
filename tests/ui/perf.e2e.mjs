@@ -52,6 +52,18 @@ try {
     assert.ok(["within", "near", "over"].includes(await card(gm).locator('[data-chunk="resolve"]').getAttribute("data-verdict")));
     await shot(gm, `perf-${vp}`);
 
+    // VP4: drawing quality. Auto by default, a choice is kept, and "Measure again" times the graphics afresh.
+    const drawing = card(gm).locator("[data-perf-drawing]");
+    assert.match(await drawing.innerText(), /Quality/);
+    assert.equal(await drawing.locator("select").inputValue(), "auto");
+    await drawing.locator("select").selectOption("light");
+    assert.equal(await gm.evaluate(() => localStorage.getItem("sse4.render.quality")), "light");
+    await drawing.locator("select").selectOption("auto");
+    await drawing.locator("[data-perf-measure]").click();
+    await gm.waitForFunction(() => /Graphics measured on (WebGPU|WebGL2)|not measured yet/.test(document.querySelector("[data-perf-drawing]")?.textContent ?? ""), null, { timeout: 90000 });
+    const kept = await gm.evaluate(() => JSON.parse(localStorage.getItem("sse4.render.probe") ?? "null"));
+    if (kept) assert.equal(kept.schema, "sse.render-probe/1");
+
     // The report: copied, never sent.
     await card(gm).getByLabel("This device").fill(`test ${vp}`);
     await card(gm).locator("[data-perf-copy]").click();

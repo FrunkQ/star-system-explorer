@@ -203,7 +203,7 @@
     layer: "land",
     t_myr: 0,
     layers: [],
-    frames: { times: [], events: [] },
+    frames: { times: [], events: [], iceAges: null },
     async load() {
       const sub = subject;
       if (!sub || lapse.loading) return;
