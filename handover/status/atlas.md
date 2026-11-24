@@ -37,4 +37,10 @@ Seams agreed by message: the look transitions thread ("Build look transitions fo
 `<article class="atlas-page" data-atlas-page>` with each block a direct child marked `data-deliver-item` and prose
 and figures marked `data-deliver-text`; this thread makes the call on each step once that lands.
 
+Agreed with the Run desk thread (AT13, PR 485): once 485 is on main, the Atlas view module declares
+`switchable: PartControl[]` (contents, step, print, links; no edition on a player's screen, 14A note 6) and reads them
+with `controlOn` from `ui-contract/src/part-controls.ts`; `kit.ts` then takes part controls from those declarations
+and its own `controlsOn` is dropped. Agreed with the Orac thread (AT11, AT16): accepted drafts live in the campaign
+pack `campaign.atlas` (kind `presentation`) under `provides.other.atlas`, ids starting `mine.`, read by `atlasDocsOf`.
+
 Open with Alex: whether the Weyland-Yutani logo is in the built-in set (design section 14A, note 2; left out until he says).
