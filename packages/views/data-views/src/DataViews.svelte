@@ -1,8 +1,8 @@
 <!--
   Player data (U5, PlayerData board): what players can learn, and when. The
   campaign's data views (which tiers each shows, which tags, how unknowns
-  read), the disclosure map (which tier each fact sits at) and the Scanned
-  button's pair. Edits are a draft until Apply, which stacks them as the
+  read), the disclosure map (which tier each fact sits at) and the campaign's
+  before and after a scan. Showing the table one thing is the eye on a card (SV2). Edits are a draft until Apply, which stacks them as the
   campaign's own player-data pack (one chronicled intent). The preview is the
   kernel's live scene for an audience, seen through any view: what that
   table would see right now.
@@ -56,7 +56,7 @@
   function role(id: string): string[] {
     if (!draft) return [];
     const c = draft.campaign;
-    return [c.default_view === id ? "default" : "", c.before === id ? "before Scanned" : "", c.after === id ? "after Scanned" : ""].filter(Boolean);
+    return [c.default_view === id ? "default" : "", c.before === id ? "before a scan" : "", c.after === id ? "after a scan" : ""].filter(Boolean);
   }
   function toggleTier(v: DataView, t: string, on: boolean) {
     v.show_tiers = on ? playerTiers.map((r) => r[0]).filter((x) => x === t || v.show_tiers.includes(x)) : v.show_tiers.filter((x) => x !== t);
@@ -154,16 +154,6 @@
   const TABLE = { id: "sse.view.table", params: { columns: ["kind", "mass_kg", "surface.temp_mean_k"] } };
   const subjects = $derived(preview ? preview.subjects.filter((s) => s.address !== preview!.scope) : []);
 
-  // The GM's Scanned button for the body in focus, for this audience.
-  let scanNote = $state<string | null>(null);
-  async function scan() {
-    const target = focus ?? subjects[0]?.address;
-    if (!target) return;
-    const r = await session.send({ kind: "scan_toggle", address: target, audience, at_yr: ws.now_yr });
-    const name = subjects.find((s) => s.address === target);
-    scanNote = r.status === "applied" ? `${name ? subjectName(name) : target}: ${r.view ? `now through ${r.view}` : "back to the default view"}.` : r.status === "refused" ? r.reason : r.status;
-    if (r.status === "applied") ws.revision++;
-  }
   const TAGS = { none: "no tags", listed: "only listed tags", all: "every tag it may see" };
 </script>
 
@@ -173,7 +163,7 @@
   {:else}
     <section class="views" aria-label="Data views">
       <h2>What players can learn</h2>
-      <p>Every fact sits at a tier. A data view says which tiers a table sees. The Scanned button moves one world from its before view to its after view for one audience.</p>
+      <p>Every fact sits at a tier. A data view says which tiers a table sees. To show the table something, press the eye by its name on a card (Build and Run desks): one press reveals it; hold the eye for who knows what.</p>
       <div class="k">Data views · from {applied.pack}</div>
       <ul class="vlist">
         {#each draft.views as v (v.id)}
@@ -186,11 +176,11 @@
         {/each}
       </ul>
       {#if editable}<button type="button" class="link" onclick={newView}>New view from this one…</button>{/if}
-      <div class="campaign" aria-label="Scanned button">
-        <div class="k">The Scanned button</div>
+      <div class="campaign" aria-label="Campaign views">
+        <div class="k">Campaign views</div>
         <label>Starts with <select bind:value={draft.campaign.default_view} disabled={!editable}>{#each draft.views as v (v.id)}<option value={v.id}>{v.label}</option>{/each}</select></label>
-        <label>Before <select bind:value={draft.campaign.before} disabled={!editable}>{#each draft.views as v (v.id)}<option value={v.id}>{v.label}</option>{/each}</select></label>
-        <label>After <select bind:value={draft.campaign.after} disabled={!editable}>{#each draft.views as v (v.id)}<option value={v.id}>{v.label}</option>{/each}</select></label>
+        <label title="What a new fog-of-war seat sees of a thing once you mark it discovered">Before a scan <select bind:value={draft.campaign.before} disabled={!editable}>{#each draft.views as v (v.id)}<option value={v.id}>{v.label}</option>{/each}</select></label>
+        <label title="What a scan shows">After a scan <select bind:value={draft.campaign.after} disabled={!editable}>{#each draft.views as v (v.id)}<option value={v.id}>{v.label}</option>{/each}</select></label>
       </div>
     </section>
 
@@ -270,10 +260,6 @@
       {:else if preview && vocab}
         <div class="pcard" data-view="sse.view.card">{#key through}<div use:mountView={CARD}></div>{/key}</div>
         <div class="ptable" data-view="sse.view.table">{#key through}<div use:mountView={TABLE}></div>{/key}</div>
-        {#if editable}
-          <div class="scan"><button type="button" class="btn" onclick={scan}>Scanned button: {(subjects.find((s) => s.address === focus) ?? subjects[0]) ? subjectName((subjects.find((s) => s.address === focus) ?? subjects[0])!) : "…"}</button></div>
-          {#if scanNote}<p class="note" role="status">{scanNote}</p>{/if}
-        {/if}
         <p class="muted">Live from the kernel. {draftSetup ? "Showing your unapplied draft: players do not see it until you apply it." : "Showing the campaign as applied."}</p>
       {:else}<p class="muted" aria-busy="true">Asking the kernel…</p>{/if}
     </section>
@@ -447,11 +433,6 @@
     border-top: var(--sse-line) solid var(--sse-ink);
   }
   .actions,
-  .scan {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
   .btn {
     display: inline-flex;
     align-items: center;

@@ -4,7 +4,7 @@
   derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import { CURIOUS_FACTS, HONESTY_MARKS, namesOnStack, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, eyesShow, fieldLandmark, hasException, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownTo as KnownRead, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
+  import { CURIOUS_FACTS, HONESTY_MARKS, yearsToSeconds, namesOnStack, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, eyesShow, fieldLandmark, hasException, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownTo as KnownRead, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
   import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
   import { Card, CardField, KnownTo, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
@@ -34,14 +34,17 @@
   let namesOpen = $state(false);
   // Known to (SV2): who knows this body, read from the kernel on the GM's Build and Run desks. The eye shows once
   // secrecy matters here (something held back, or the campaign shared); a press reveals or hides through set_known.
+  // A reread after a change keeps the eye in place (its slip carries the Undo); only another body clears it.
   let known = $state.raw<KnownRead | null>(null);
+  let knownOf: string | null = null;
   $effect(() => {
     const a = subject?.address;
     void ws.revision;
-    known = null;
-    if (!a || ctx.session.seat.authority !== "gm" || (ws.desk !== "build" && ws.desk !== "run")) return;
+    if (a !== knownOf) known = null;
+    knownOf = a ?? null;
+    if (!a || ctx.session.seat.authority !== "gm" || (ws.desk !== "build" && ws.desk !== "run")) return void (known = null);
     let live = true;
-    void ctx.session.knownTo(a).then((r) => {
+    void ctx.session.knownTo(a, undefined, BigInt(knownAt().at_s)).then((r) => {
       if (live && r.ok) known = r.value;
     });
     return () => (live = false);
@@ -49,14 +52,21 @@
   const eye = $derived(!!known && eyesShow(ws.desk, secrecyRelevant(known, !!ws.shared)));
   const inside = $derived(!!subject && scene.subjects.some((x) => x.parent === subject.address));
   const failed = (r: IntentResult) => (r.status === "refused" ? r.reason : r.status === "pending" ? "sent to the GM" : r.status === "error" ? r.message : "");
+  // Who knows what is read and changed at the campaign's now (the story's date, which players' screens follow), never
+  // the sky's time: a change made at a time the read does not reach would leave the eye where it was. One exact
+  // second for both, since a year in floating point is only good to about half a minute.
+  function knownAt(): { at_yr: number; at_s: string } {
+    const at_yr = ws.campaign_now_yr ?? ws.now_yr;
+    return { at_yr, at_s: String(yearsToSeconds(at_yr)) };
+  }
   async function setKnown(c: KnownChange): Promise<{ ok: true; undo?: string } | { ok: false; why: string }> {
     if (!subject) return { ok: false, why: "nothing selected" };
-    const r = await ctx.session.send({ kind: "set_known", address: subject.address, ...c, at_yr: ws.now_yr });
+    const r = await ctx.session.send({ kind: "set_known", address: subject.address, ...c, ...knownAt() });
     if (r.status === "applied") return (ws.revision++, { ok: true, ...(r.event_id ? { undo: r.event_id } : {}) });
     return { ok: false, why: failed(r) };
   }
   async function undoKnown(undo: string): Promise<string | null> {
-    const r = await ctx.session.send({ kind: "undo_known", undo, at_yr: ws.now_yr });
+    const r = await ctx.session.send({ kind: "undo_known", undo, ...knownAt() });
     return r.status === "applied" ? (ws.revision++, null) : failed(r);
   }
   // Pencil on the card (secrets design 4): the lines the table is not sent are drawn quieter, each with its own eye.

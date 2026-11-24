@@ -4,8 +4,8 @@
 // Packs (PackSetup board): the live stack, Check stack, a sample fictional
 // pack previewed value by value, accepted, and its labels on the card.
 // Player data (PlayerData board): the live scene for everyone, an edited
-// disclosure applied and put back, a look through another view, and the
-// GM's Scanned button.
+// disclosure applied and put back, a look through another view (the
+// Scanned button has gone; the eye on a card replaces it, known.e2e).
 // Screens (Compose board): the view stack, a player screen drawn live from
 // its document, an invalid parameter caught, Orac's sample screen request
 // validated and accepted. V3: screens opened from the campaign's documents
@@ -95,9 +95,8 @@ try {
     await dv.getByLabel("Through").selectOption({ label: "Survey on file" });
     await page.waitForFunction(() => /rare earths/.test(document.querySelector("[aria-label='Player data'] [data-field='resources'] dd")?.textContent ?? ""));
     await dv.getByLabel("Through").selectOption({ label: "their own grants" });
-    await dv.getByRole("button", { name: "Scanned button: Tarn" }).click();
-    await dv.getByText("Tarn: now through scanned.").waitFor();
-    await page.waitForFunction(() => /270 to 290 K/.test(document.querySelector("[aria-label='Player data'] [data-field='surface.temp_mean_k'] dd")?.textContent ?? ""));
+    // The Scanned button has gone: the eye on a card shows the table one thing (known.e2e).
+    assert.equal(await dv.getByRole("button", { name: /Scanned button/ }).count(), 0);
 
     // Screens.
     await go(page, "screens");

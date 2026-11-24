@@ -7,7 +7,8 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { ABOARD, CARGO, PERSON, STATES, STATE_WORDS, aboard, ageNow, crewAboard, daysWords, entryFrom, entryId, lifeSupport, lifeSupportFrom, startingValues, secondsToYears, type AboardEntry, type AboardState, type Json, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { ABOARD, CARGO, PERSON, STATES, STATE_WORDS, aboard, ageNow, crewAboard, daysWords, entryFrom, entryId, lifeSupport, lifeSupportFrom, startingValues, secondsToYears, eyesShow, secrecyRelevant, tableOf, type AboardEntry, type AboardState, type IntentResult, type Json, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KnownTo } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "../../constructs/src/words.ts";
 
   let { ctx, construct, places, start = "crew" }: { ctx: ViewContext; construct: PlayerSubject; places: { address: string; label: string }[]; start?: "manifest" | "crew" } = $props();
@@ -66,6 +67,51 @@
     if (!r.ok) return (note = r.message), false;
     return true;
   }
+  // ---- Known to (SV1, SV2): who at the table knows each person and lot aboard ----
+  // Entries are record actors; the eye on each row reveals one, and "Show all to the table"
+  // reveals everyone and everything on this side of the panel as one change that one Undo takes back. New entries are
+  // as known as their place (Known to question 6).
+  let known = $state.raw<Record<string, KnownRead>>({});
+  $effect(() => {
+    const list = [...here.people, ...here.cargo].map((e) => e.address);
+    void ws.revision;
+    if (!gm || (ws.desk !== "build" && ws.desk !== "run")) return void (known = {});
+    let live = true;
+    void Promise.all(list.map(async (a) => [a, await session.knownTo(a)] as const)).then((rs) => {
+      if (live) known = Object.fromEntries(rs.flatMap(([a, r]) => (r.ok ? [[a, r.value]] : [])));
+    });
+    return () => (live = false);
+  });
+  // Who knows what is read at the campaign clock, so changes are made there too (the sky's time can run ahead).
+  const knownAt = async () => secondsToYears(await campaignAt());
+  const eyes = $derived(eyesShow(ws.desk, Object.values(known).some((k) => secrecyRelevant(k, !!ws.shared))));
+  const landmarkOf = (a: string): KnownLandmark => tableOf(known[a])?.landmark ?? "known";
+  const whyNot = (r: IntentResult) => (r.status === "refused" ? r.reason : r.status === "pending" ? "sent to the GM" : r.status === "error" ? r.message : "");
+  const setKnownOf = (address: string) => async (c: KnownChange): Promise<{ ok: true; undo?: string } | { ok: false; why: string }> => {
+    const r = await session.send({ kind: "set_known", address, ...c, at_yr: await knownAt() });
+    if (r.status === "applied") return (ws.revision++, { ok: true, ...(r.event_id ? { undo: r.event_id } : {}) });
+    return { ok: false, why: whyNot(r) };
+  };
+  async function undoKnown(undo: string): Promise<string | null> {
+    const r = await session.send({ kind: "undo_known", undo, at_yr: await knownAt() });
+    return r.status === "applied" ? (ws.revision++, null) : whyNot(r);
+  }
+  let lastShown = $state<string | null>(null);
+  const hidden = $derived((part === "crew" ? here.people : here.cargo).filter((e) => landmarkOf(e.address) !== "known").map((e) => e.address));
+  async function showAll() {
+    if (!hidden.length) return;
+    const r = await session.send({ kind: "set_known", address: hidden[0]!, audience: "everyone", landmark: "known", scope: { list: hidden }, at_yr: await knownAt() });
+    if (r.status !== "applied") return void (note = whyNot(r));
+    lastShown = r.event_id || null;
+    void done(`${hidden.length === 1 ? "One entry is" : `${hidden.length} entries are`} now known to the table.`);
+  }
+  async function undoShowAll() {
+    if (!lastShown) return;
+    const why = await undoKnown(lastShown);
+    lastShown = null;
+    note = why ?? "Hidden again.";
+  }
+
   async function done(msg: string | null) {
     note = msg;
     ws.revision++;
@@ -147,6 +193,12 @@
       <button type="button" aria-pressed={part === k} onclick={() => ((part = k as "crew" | "manifest"), (adding = false), (moving = null))} data-part={k}>{label}</button>
     {/each}
   </div>
+  {#if eyes && (hidden.length || lastShown)}
+    <div class="bar small" data-show-all-bar>
+      {#if hidden.length}<button type="button" class="quiet-btn" onclick={showAll} data-show-all>Show {part === "crew" ? "the crew" : "the manifest"} to the table</button><span class="muted">{hidden.length} not known to them</span>{/if}
+      {#if lastShown}<button type="button" class="quiet-btn" onclick={undoShowAll} data-show-all-undo>Undo</button>{/if}
+    </div>
+  {/if}
   {#if !hasKinds}
     <p class="small muted">The manifest pack is not on the stack, so nothing can be listed aboard.</p>
   {:else if part === "manifest"}
@@ -204,7 +256,8 @@
     {/if}
     <ul class="list" data-cargo>
       {#each here.cargo as c (c.address)}
-        <li>
+        <li class:pencil={eyes && landmarkOf(c.address) !== "known"} data-lot={c.address}>
+          {#if eyes && known[c.address]}<KnownTo read={known[c.address]!} label={c.name} hold={(ws.players_online ?? 0) > 0} onset={setKnownOf(c.address)} onundo={undoKnown} />{/if}
           <span><b>{c.name}</b>{#if c.what && c.what !== c.name}<span class="muted">{` · ${c.what}`}</span>{/if}</span>
           {#if gm && ws.mode === "edit"}
             <span><input type="number" min="0" value={c.amount ?? ""} onchange={(e) => setNumber(c.address, ABOARD.amount, (e.currentTarget as HTMLInputElement).value)} aria-label={`Amount of ${c.name}`} data-cargo-amount /> {c.unit ?? ""}</span>
@@ -230,7 +283,8 @@
     {/if}
     <ul class="list" data-crew>
       {#each here.people as p (p.address)}
-        <li data-person={p.address} class:gone={p.state === "dead" || p.state === "missing"}>
+        <li data-person={p.address} class:gone={p.state === "dead" || p.state === "missing"} class:pencil={eyes && landmarkOf(p.address) !== "known"}>
+          {#if eyes && known[p.address]}<KnownTo read={known[p.address]!} label={p.name} hold={(ws.players_online ?? 0) > 0} onset={setKnownOf(p.address)} onundo={undoKnown} />{/if}
           <span><b>{p.name}</b>{#if p.role}<span class="muted">{` · ${p.role}`}</span>{/if}</span>
           {#if gm && ws.mode === "edit"}
             <input type="text" value={p.role ?? ""} placeholder="role" onchange={(e) => setText(p, ABOARD.role, (e.currentTarget as HTMLInputElement).value)} aria-label={`Role of ${p.name}`} />
@@ -276,6 +330,8 @@
   input[type="number"] { width: 6em; }
   .list, .stores { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
   .list li { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; border-bottom: 1px solid var(--sse-rule); padding: 3px 0; }
+  .list li.pencil b, .list li.pencil > span { color: var(--sse-ink-muted); font-style: italic; }
+  .list li.pencil { border-bottom-style: dotted; }
   .list li.gone b { text-decoration: line-through; color: var(--sse-ink-muted); }
   .stores li { display: grid; grid-template-columns: 5em 7em 1fr; gap: 0 10px; }
   .move { width: 100%; }

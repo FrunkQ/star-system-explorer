@@ -2937,6 +2937,9 @@ impl Kernel {
                 airs,
                 wavelengths_m,
             } => systems::read_air_optics(airs, wavelengths_m)?,
+            Request::LightThroughGas { passages } => {
+                systems::light_through_gas(passages, &self.observe.reference)?
+            }
             Request::Detect {
                 targets,
                 sensors,
@@ -3336,6 +3339,7 @@ impl Kernel {
                 Response::WindowViewed { view }
             }
             Request::WebSlice {
+                cube,
                 z,
                 t_gyr,
                 centre,
@@ -3351,6 +3355,7 @@ impl Kernel {
                     centre: centre.unwrap_or([0.0; 3]),
                     extent_mpc,
                     n,
+                    cube: cube.unwrap_or(false),
                 })?;
                 Response::WebSliced { web }
             }

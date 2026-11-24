@@ -580,6 +580,19 @@ pub enum Request {
         #[ts(optional)]
         wavelengths_m: Option<Vec<f64>>,
     },
+    /// Light through gas (ND2): each passage is a light (`light`, a light
+    /// description, or `t_k`, a black body) and the gas it crosses
+    /// (`layers` of temperature, depth and number density per sheet gas,
+    /// and a `path_factor`: 1 for a glow seen straight on, 2 for light down
+    /// to a cloud deck and back). Each gas's absorption (measured bands,
+    /// pressure-widened lines, colliding pairs) comes from its row on the
+    /// data sheet. Returns the light that comes out at `wavelengths_m`
+    /// (default: the eye's), what each feature did, and the colour to the
+    /// eye before and after.
+    LightThroughGas {
+        #[ts(type = "unknown[]")]
+        passages: Vec<serde_json::Value>,
+    },
     /// Spectrum as it reaches an observer (O12): each target is one or more
     /// components (`conditions` as for `read_light`, or a ready `light`
     /// description), each with a line-of-sight speed; the observer gives the
@@ -944,8 +957,14 @@ pub enum Request {
     /// G1 for the foam and cluster maps (V9): a square slice of the cosmic
     /// web from the open universe's seed, `n` samples a side over
     /// `extent_mpc` around `centre` (Mpc, default the origin), at redshift
-    /// `z` or cosmic time `t_gyr` (default now). Read only.
+    /// `z` or cosmic time `t_gyr` (default now). With `cube: true` it is a
+    /// cube for the 3D view instead: n^3 parcels (n 4 to 48) moved by the
+    /// truncated Zel'dovich approximation, each with its environment, its
+    /// starting density and the room it takes today. Read only.
     WebSlice {
+        #[serde(default)]
+        #[ts(optional)]
+        cube: Option<bool>,
         #[serde(default)]
         #[ts(optional)]
         z: Option<f64>,
@@ -2034,6 +2053,7 @@ impl Request {
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
+            Request::LightThroughGas { .. } => "light_through_gas",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2242,6 +2262,11 @@ pub fn ops() -> Vec<OpInfo> {
             "per air and wavelength: a few closed-form blocks",
         ),
         o(
+            "light_through_gas",
+            Cost::Light,
+            "per passage: a few formula blocks per wavelength per absorption feature, at the eye's 81 wavelengths and any asked for",
+        ),
+        o(
             "read_spectrum",
             Cost::Light,
             "per target: the grid, band integrals and a 400-point peak scan per covered range",
@@ -2314,7 +2339,7 @@ pub fn ops() -> Vec<OpInfo> {
         o(
             "web_slice",
             Cost::Medium,
-            "n by n web samples at four octaves (n = 128: about 0.2 s native)",
+            "n by n web samples at four octaves (n = 128: about 0.2 s native); a cube is (n + 2)^3 potentials (n = 32: about 0.3 s native)",
         ),
         o(
             "sift",
@@ -2822,6 +2847,13 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         airs: Vec<serde_json::Value>,
     },
+    /// `light_through_gas`: each of `passages` is `{ passed, colour_in,
+    /// colour_out }` with `sse_light::gas::Passed` and
+    /// `sse_light::colour::Colour`.
+    GasPassed {
+        #[ts(type = "unknown[]")]
+        passages: Vec<serde_json::Value>,
+    },
     /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
     SpectrumRead {
         #[ts(type = "unknown[]")]
@@ -2910,7 +2942,9 @@ pub enum Response {
         #[ts(type = "unknown")]
         chart: serde_json::Value,
     },
-    /// `web_slice`: `{t_gyr, z, now_gyr, slice, model}` (`slice` is sse-cosmos's `Slice`).
+    /// `web_slice`: `{t_gyr, z, now_gyr, slice, model}` (`slice` is sse-cosmos's
+    /// `Slice`), or with `cube` `{t_gyr, z, now_gyr, volume, model}` (`volume`
+    /// is sse-cosmos's `Volume`).
     WebSliced {
         #[ts(type = "unknown")]
         web: serde_json::Value,

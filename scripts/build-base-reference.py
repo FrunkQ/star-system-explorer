@@ -37,6 +37,7 @@ import propellant_rows  # noqa: E402
 import nuclear_rows  # noqa: E402
 import isotope_shares  # noqa: E402
 import material_rows  # noqa: E402
+import solid_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -52,6 +53,9 @@ def val(v, unit, src, check="verified", **extra):
 # ---------------------------------------------------------------- sources
 # id -> (text, doi, url, register status). The register is docs/citations/matter-reference.md.
 SOURCES = {
+    "karkoschka1994": ("Karkoschka, E. 1994, Icarus 111, 174: spectrophotometry of the Jovian planets and Titan at 300 to 1000 nm, the methane spectrum (absorption coefficients at the giants' temperatures, Table VIII); read as served by the MPI-Mainz UV/VIS Spectral Atlas (Keller-Rudek, H. et al. 2013, Earth Syst. Sci. Data 5, 365, doi:10.5194/essd-5-365-2013), every 5 nm of its 1 nm table: handover/packages/ND2-data/ch4-karkoschka1994.csv", "10.1006/icar.1994.1139", "https://uv-vis-spectral-atlas-mainz.org/uvvis/cross_sections/Alkanes+alkyl%20radicals/Alkanes/CH4_Karkoschka(1994)_125-128K_406-1000nm.txt", "verified"),
+    "nist-handbook-na": ("NIST Handbook of Basic Atomic Spectroscopic Data (Sansonetti, J. E. and Martin, W. C. 2005, J. Phys. Chem. Ref. Data 34, 1559), sodium, strong lines of Na I: wavelengths (air, A) and transition probabilities Aki; oscillator strengths here are worked out from Aki and the levels' statistical weights", "10.1063/1.1800011", "https://physics.nist.gov/PhysRefData/Handbook/Tables/sodiumtable3.htm", "verified"),
+    "nist-handbook-k": ("NIST Handbook of Basic Atomic Spectroscopic Data (Sansonetti, J. E. and Martin, W. C. 2005, J. Phys. Chem. Ref. Data 34, 1559), potassium, strong lines of K I: wavelengths (air, A) and transition probabilities Aki; oscillator strengths here are worked out from Aki and the levels' statistical weights", "10.1063/1.1800011", "https://physics.nist.gov/PhysRefData/Handbook/Tables/potassiumtable3.htm", "verified"),
     "fray2009": ("Fray, N. and Schmitt, B. 2009, Planet. Space Sci. 57, 2053: sublimation of ices of astrophysical interest, a bibliographic review (recommended fits ln P[bar] = A0 + sum A_i / T^i; water by Feistel and Wagner 2007). Coefficients read from Lisse et al. 2021's reproduction of the table (SOM Table 2); which fit covers which range checked against each ice's triple point", "10.1016/j.pss.2009.09.011", None, "verified"),
     "lisse2021": ("Lisse, C. M. et al. 2021, Icarus 356, 114072: on the origin and thermal stability of Arrokoth's and Pluto's ices; Supplementary Online Material Table 2 reproduces Fray and Schmitt 2009's sublimation fits", None, "https://ntrs.nasa.gov/api/citations/20210019502/downloads/Supplementary%20Online%20Material%2020210019502.pdf", "verified"),
     "ame2020": ("Wang, M., Huang, W. J., Kondev, F. G., Audi, G. and Naimi, S. 2021, Chinese Phys. C 45, 030003: the AME 2020 atomic mass evaluation (II), tables", "10.1088/1674-1137/abddaf", None, "unverified"),
@@ -145,6 +149,9 @@ N_A = 6.02214076e23
 H = 6.62607015e-34
 C = 299792458.0
 PI = math.pi
+E_CHARGE = 1.602176634e-19
+M_E = 9.1093837015e-31
+EPS0 = 8.8541878128e-12
 SIGMA = 2 * PI**5 * K_B**4 / (15 * H**3 * C**2)
 
 CONSTANTS = [
@@ -152,19 +159,19 @@ CONSTANTS = [
     ("c", "speed of light in vacuum", val(C, "m s-1", "si2019", exact=True)),
     ("h", "Planck constant", val(H, "J s", "si2019", exact=True)),
     ("hbar", "reduced Planck constant", val(1.054571817e-34, "J s", "codata2018", note="CODATA 2018 published figure"), "h / (2 pi)"),
-    ("e", "elementary charge", val(1.602176634e-19, "C", "si2019", exact=True)),
+    ("e", "elementary charge", val(E_CHARGE, "C", "si2019", exact=True)),
     ("k_B", "Boltzmann constant", val(K_B, "J K-1", "si2019", exact=True)),
     ("N_A", "Avogadro constant", val(N_A, "mol-1", "si2019", exact=True)),
     ("R_gas", "molar gas constant", val(N_A * K_B, "J mol-1 K-1", "si2019"), "N_A k_B"),
     ("sigma_SB", "Stefan-Boltzmann constant", val(5.670374419e-8, "W m-2 K-4", "codata2018", note="CODATA 2018 published figure; the worked-out value agrees to 3e-11"), "2 pi^5 k_B^4 / (15 h^3 c^2)"),
     ("a_rad", "radiation density constant", val(4 * SIGMA / C, "J m-3 K-4", "si2019"), "4 sigma_SB / c"),
     ("G", "Newtonian constant of gravitation", val(G, "m3 kg-1 s-2", "codata2018", "unverified", uncertainty=1.5e-15)),
-    ("m_e", "electron mass", val(9.1093837015e-31, "kg", "codata2018", "unverified")),
+    ("m_e", "electron mass", val(M_E, "kg", "codata2018", "unverified")),
     ("m_p", "proton mass", val(1.67262192369e-27, "kg", "codata2018", "unverified")),
     ("m_n", "neutron mass", val(1.67492749804e-27, "kg", "codata2018", "unverified")),
     ("m_u", "atomic mass constant", val(1.66053906660e-27, "kg", "codata2018", "unverified")),
     ("alpha", "fine-structure constant", val(7.2973525693e-3, "1", "codata2018", "unverified")),
-    ("eps0", "vacuum electric permittivity", val(8.8541878128e-12, "F m-1", "codata2018", "unverified")),
+    ("eps0", "vacuum electric permittivity", val(EPS0, "F m-1", "codata2018", "unverified")),
     ("mu0", "vacuum magnetic permeability", val(1.25663706212e-6, "N A-2", "codata2018", "unverified")),
     ("R_inf", "Rydberg constant", val(10973731.568160, "m-1", "codata2018", "unverified")),
     ("a0", "Bohr radius", val(5.29177210903e-11, "m", "codata2018", "unverified")),
@@ -465,6 +472,28 @@ def gas_optics(n589, king, src_n, check_n="verified", king_src="bodhaine1999", k
     }
 
 
+def band_table(id_, csv_name, at_k, valid_k, src, note):
+    """A measured absorption band (ND2 row shape, agreed 23 Nov): cross-section per molecule by wavelength."""
+    lam, sig = [], []
+    for line in (ROOT / "handover/packages/ND2-data" / csv_name).read_text().splitlines():
+        if not line or line.startswith("#") or line.startswith("wavelength"):
+            continue
+        a, b = line.split(",")
+        lam.append(float(a))
+        sig.append(float(b))
+    return {"id": id_, "kind": "table", "lambda_nm": lam, "sigma": {"v": sig, "unit": "m2"},
+            "at_k": at_k, "t_exponent": 0.0, "valid_k": valid_k, "src": src, "note": note}
+
+
+def resonance_line(id_, air_angstrom, a_ki, g_upper, g_lower, src, note):
+    """A resonance line from its transition probability: f = A eps0 m_e c lambda^2 g_u / (2 pi e^2 g_l)."""
+    lam = air_angstrom * 1e-10
+    f = a_ki * EPS0 * M_E * C * lam * lam * g_upper / (2 * PI * E_CHARGE * E_CHARGE * g_lower)
+    return {"id": id_, "kind": "line", "lambda_nm": air_angstrom / 10.0, "f": round(f, 4), "lower_ev": 0.0,
+            "gamma_rad_s": a_ki, "src": src,
+            "note": note + f" f worked out from Aki = {a_ki:.3e} s-1 and g_u/g_l = {g_upper}/{g_lower}; radiative damping is that Aki (the upper level's only decay). No collisional widening row yet: the pressure-widened wings of dense airs (white dwarfs, brown dwarfs) wait for a cited widening law (Allard et al.)."}
+
+
 FS = "fray2009"
 
 
@@ -517,7 +546,9 @@ SUBSTANCES = [
                   "density_solid": val(494.0, "kg m-3", "fudge-register", "unverified", note="methane ice as the climate's sand grain (Telfer et al. 2018 use it); not read from a measurement"),
                   "vapour_pressure": fs_fit([10.51, -1110.0, -4341.0, 1.035e5, -7.910e5], 20.0, 90.67, "CH4-1"),
               },
-              optical={**gas_optics(4.44e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE), "condensed_colour_rgb": val([0.9, 0.9, 0.95], "1", "fudge-register", "authored")},
+              optical={**gas_optics(4.44e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE), "condensed_colour_rgb": val([0.9, 0.9, 0.95], "1", "fudge-register", "authored"),
+                       "absorption": [band_table("ch4.visible-bands", "ch4-karkoschka1994.csv", 126.5, [100.0, 300.0], "karkoschka1994",
+                                                 "The methane bands that colour Uranus and Neptune and darken the giants in the red, measured from the giants' own spectra at their temperatures (125 to 128 K). Sampled every 5 nm from a 1 nm table, so narrow band edges are smoothed; near-zero values are the table's floor.")]},
               chemical={"states": {"gas": gibbs(-50.75, -74.81, T), "dissolved": gibbs(-34.39, -89.04, T)}}),
     substance("nh3", {"n": 1, "h": 3}, "ammonia",
               phases={
@@ -572,6 +603,16 @@ SUBSTANCES = [
               phases={"density_liquid": val(59.0, "kg m-3", "fudge-register", "unverified", at_k=3.19,
                                             note="about 59 kg/m3 at its 3.19 K boiling point; from memory, not read: check against a helium-3 equation of state")}),
     substance("ne", {"ne": 1}, "neon", optical=gas_optics(6.71e-5, [1.0, 0.0, 0.0], "pdg-gas", "verified", king_src="atom-isotropic")),
+    substance("na", {"na": 1}, "sodium vapour", "sodium as a gas", "sodium vapour",
+              optical={"absorption": [
+                  resonance_line("na.d2", 5889.950, 6.16e7, 4, 2, "nist-handbook-na", "Sodium's D2 line (3s to 3p 3/2), air wavelength."),
+                  resonance_line("na.d1", 5895.924, 6.14e7, 2, 2, "nist-handbook-na", "Sodium's D1 line (3s to 3p 1/2), air wavelength."),
+              ]}),
+    substance("k", {"k": 1}, "potassium vapour", "potassium as a gas", "potassium vapour",
+              optical={"absorption": [
+                  resonance_line("k.d2", 7664.8991, 3.79e7, 4, 2, "nist-handbook-k", "Potassium's D2 line (4s to 4p 3/2), air wavelength."),
+                  resonance_line("k.d1", 7698.9645, 3.74e7, 2, 2, "nist-handbook-k", "Potassium's D1 line (4s to 4p 1/2), air wavelength."),
+              ]}),
     substance("kr", {"kr": 1}, "krypton"),
     substance("xe", {"xe": 1}, "xenon"),
     substance("so2", {"s": 1, "o": 2}, "sulphur dioxide", optical=gas_optics(6.86e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE)),
@@ -732,6 +773,16 @@ next(i for i in ISOTOPES if i["id"] == "u235")["fission_thermal"] = nuclear_rows
 # Table 4. Isotopes with a share but no row yet (Be, B, O-17, F, Ne) wait for
 # their AME2020 masses.
 ISOTOPE_SHARES_WAITING = isotope_shares.apply(ISOTOPES, val)
+
+# Solid propellants and RP-1's heating value (scripts/solid_rows.py, for RS's real engines).
+for _k, _v in solid_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+_solids, _rp1 = solid_rows.rows(val)
+for _m in _solids:
+    assert all(x["id"] != _m["id"] for x in MIXTURES), _m["id"]
+    MIXTURES.append(_m)
+next(x for x in MIXTURES if x["id"] == "rp-1").update(_rp1)
 
 # RK1 part 3: hot-structure, fuel and shield materials (scripts/material_rows.py).
 for _k, _v in material_rows.SOURCES.items():

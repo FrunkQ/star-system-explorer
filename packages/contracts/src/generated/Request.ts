@@ -67,7 +67,7 @@ block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[],
  * The setting's range bands (a measure, RK11): each detection's
  * distance and range are labelled with them.
  */
-range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, } | { "op": "read_field", bodies: unknown[], fixture?: string, 
+range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "light_through_gas", passages: unknown[], } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, } | { "op": "read_field", bodies: unknown[], fixture?: string, 
 /**
  * An adopted system: every planet read from its facts, each with a
  * `glance` (what holds off the wind, bubble size, shielded or not,
@@ -90,7 +90,7 @@ edits?: unknown[],
  * A halo cell's index (from `halo_cell`): `halo` is then one of its
  * catalogued haloes (`halo:3` or its full address), with its own history.
  */
-cell?: [bigint, bigint, bigint], } | { "op": "web_slice", z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "surface_frames", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, detail?: string, 
+cell?: [bigint, bigint, bigint], } | { "op": "web_slice", cube?: boolean, z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "surface_frames", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, detail?: string, 
 /**
  * At most this many frames, evenly spaced, always ending on the epoch.
  */
