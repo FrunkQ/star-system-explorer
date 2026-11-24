@@ -813,7 +813,64 @@
       ],
       "law": "conservation of energy",
       "catches": "a chemical fuel with a torch's exhaust speed",
-      "src": "ft-design-15"
+      "src": "ft-design-15",
+      "closes": "at_most",
+      "tolerance": 1e-09,
+      "look_up": {
+       "c": "c"
+      },
+      "says": "the exhaust is {times} times as fast as its fuel's energy can make it",
+      "check": {
+       "name": "Fastest exhaust the fuel's energy can pay for",
+       "formula": "g = 1 + fuel_j_per_kg / c^2\nsupply = c * sqrt(1 - 1 / g^2)\ndemand = exhaust_km_s",
+       "inputs": {
+        "exhaust_km_s": {
+         "kind": "design.exhaust_speed",
+         "unit": "km/s",
+         "name": "exhaust speed"
+        },
+        "fuel_j_per_kg": {
+         "kind": "design.fuel_energy",
+         "unit": "J/kg",
+         "name": "energy per kilogram thrown"
+        },
+        "c": {
+         "kind": "constant.speed_of_light",
+         "unit": "m/s",
+         "name": "speed of light"
+        }
+       },
+       "outputs": {
+        "demand": {
+         "kind": "design.exhaust_speed",
+         "unit": "m/s",
+         "name": "exhaust speed asked for"
+        },
+        "supply": {
+         "kind": "design.exhaust_speed",
+         "unit": "m/s",
+         "name": "fastest the energy pays for"
+        }
+       },
+       "source": {
+        "text": "Einstein 1905, kinetic energy (gamma - 1) m c^2 of a moving mass; below a few per cent of c it is the familiar half m v^2",
+        "doi": "10.1002/andp.19053221004",
+        "where": "section 10"
+       },
+       "explain": {
+        "curious": "Throwing exhaust takes energy. If every joule in the fuel went into the jet, this is the fastest it could leave.",
+        "science": "(gamma - 1) c^2 <= E per kg thrown, so v <= c sqrt(1 - 1/(1 + E/c^2)^2); for E much less than c^2, v <= sqrt(2E)."
+       },
+       "examples": [
+        {
+         "exhaust_km_s": 4.168,
+         "fuel_j_per_kg": 13400000.0,
+         "c": 299792458.0,
+         "demand": 4168.0,
+         "supply": 5176.872911908914
+        }
+       ]
+      }
      },
      {
       "id": "jet-power",
@@ -825,7 +882,57 @@
       ],
       "law": "kinetic energy of the exhaust",
       "catches": "thrust and exhaust speed set apart that need more power than the ship makes",
-      "src": "ft-design-15"
+      "src": "ft-design-15",
+      "closes": "at_most",
+      "tolerance": 1e-09,
+      "says": "the jet needs {times} times the power the plant gives",
+      "check": {
+       "name": "Power the jet carries away",
+       "formula": "demand = thrust_n * exhaust_km_s / 2\nsupply = plant_w",
+       "inputs": {
+        "thrust_n": {
+         "kind": "design.thrust",
+         "unit": "N",
+         "name": "thrust"
+        },
+        "exhaust_km_s": {
+         "kind": "design.exhaust_speed",
+         "unit": "km/s",
+         "name": "exhaust speed"
+        },
+        "plant_w": {
+         "kind": "design.plant_power",
+         "unit": "W",
+         "name": "power the plant gives the drive"
+        }
+       },
+       "outputs": {
+        "demand": {
+         "kind": "design.jet_power",
+         "unit": "W",
+         "name": "jet power"
+        },
+        "supply": {
+         "kind": "design.plant_power",
+         "unit": "W",
+         "name": "plant power"
+        }
+       },
+       "logic": true,
+       "explain": {
+        "curious": "A jet carries energy away as fast as it leaves. Something on board has to make that much power.",
+        "science": "Jet power is half the thrust times the exhaust speed (thrust = mass flow x speed, power = half mass flow x speed squared)."
+       },
+       "examples": [
+        {
+         "thrust_n": 1000.0,
+         "exhaust_km_s": 30.0,
+         "plant_w": 20000000.0,
+         "demand": 15000000.0,
+         "supply": 20000000.0
+        }
+       ]
+      }
      },
      {
       "id": "energy-in-out",
@@ -837,7 +944,73 @@
       ],
       "law": "conservation of energy",
       "catches": "waste heat set to nothing while the plant's efficiency says otherwise",
-      "src": "ft-design-15"
+      "src": "ft-design-15",
+      "closes": "equal",
+      "tolerance": 0.02,
+      "defaults": {
+       "stored_w": 0.0,
+       "loads_w": 0.0
+      },
+      "says": "{times} times as much power goes out as comes in",
+      "check": {
+       "name": "Power out against power in",
+       "formula": "demand = jet_w + waste_w + stored_w + loads_w\nsupply = plant_w",
+       "inputs": {
+        "jet_w": {
+         "kind": "design.jet_power",
+         "unit": "W",
+         "name": "jet power"
+        },
+        "waste_w": {
+         "kind": "design.waste_power",
+         "unit": "W",
+         "name": "waste heat"
+        },
+        "stored_w": {
+         "kind": "design.stored_power",
+         "unit": "W",
+         "name": "going into store"
+        },
+        "loads_w": {
+         "kind": "design.load_power",
+         "unit": "W",
+         "name": "other loads"
+        },
+        "plant_w": {
+         "kind": "design.plant_power",
+         "unit": "W",
+         "name": "plant power"
+        }
+       },
+       "outputs": {
+        "demand": {
+         "kind": "design.plant_power",
+         "unit": "W",
+         "name": "power going out"
+        },
+        "supply": {
+         "kind": "design.plant_power",
+         "unit": "W",
+         "name": "power coming in"
+        }
+       },
+       "logic": true,
+       "explain": {
+        "curious": "Every watt the plant makes goes somewhere: the jet, waste heat, a store or the ship's other loads.",
+        "science": "Plant output = jet power + waste heat + power stored + other loads, within 2 per cent."
+       },
+       "examples": [
+        {
+         "jet_w": 6000000000.0,
+         "waste_w": 4000000000.0,
+         "stored_w": 0.0,
+         "loads_w": 0.0,
+         "plant_w": 10000000000.0,
+         "demand": 10000000000.0,
+         "supply": 10000000000.0
+        }
+       ]
+      }
      },
      {
       "id": "momentum",
@@ -849,7 +1022,75 @@
       ],
       "law": "conservation of momentum",
       "catches": "thrust with nothing thrown and no stated partner",
-      "src": "ft-design-15"
+      "src": "ft-design-15",
+      "closes": "at_most",
+      "tolerance": 0.01,
+      "look_up": {
+       "c": "c"
+      },
+      "defaults": {
+       "plant_w": 0.0
+      },
+      "says": "the thrust is {times} times what is thrown can give",
+      "check": {
+       "name": "Thrust what is thrown can give",
+       "formula": "demand = thrust_n\nsupply = mdot_kg_s * exhaust_km_s + plant_w / c",
+       "inputs": {
+        "thrust_n": {
+         "kind": "design.thrust",
+         "unit": "N",
+         "name": "thrust"
+        },
+        "mdot_kg_s": {
+         "kind": "design.mass_flow",
+         "unit": "kg/s",
+         "name": "mass thrown per second"
+        },
+        "exhaust_km_s": {
+         "kind": "design.exhaust_speed",
+         "unit": "km/s",
+         "name": "exhaust speed"
+        },
+        "plant_w": {
+         "kind": "design.plant_power",
+         "unit": "W",
+         "name": "power thrown as light, if any"
+        },
+        "c": {
+         "kind": "constant.speed_of_light",
+         "unit": "m/s",
+         "name": "speed of light"
+        }
+       },
+       "outputs": {
+        "demand": {
+         "kind": "design.thrust",
+         "unit": "N",
+         "name": "thrust asked for"
+        },
+        "supply": {
+         "kind": "design.thrust",
+         "unit": "N",
+         "name": "thrust the mass and light thrown give"
+        }
+       },
+       "logic": true,
+       "explain": {
+        "curious": "To push forward, a ship has to throw something back. With nothing thrown and no partner named, there is no thrust.",
+        "science": "Thrust is at most mass flow x exhaust speed, plus P/c for power thrown as light."
+       },
+       "examples": [
+        {
+         "thrust_n": 33851000.0,
+         "mdot_kg_s": 13010.0,
+         "exhaust_km_s": 2.602,
+         "plant_w": 0.0,
+         "c": 299792458.0,
+         "demand": 33851000.0,
+         "supply": 33852020.0
+        }
+       ]
+      }
      },
      {
       "id": "heat-downhill",
@@ -861,7 +1102,78 @@
       ],
       "law": "second law of thermodynamics (Carnot)",
       "catches": "a hot radiator cooling a cool room for free",
-      "src": "ft-design-15"
+      "src": "ft-design-15",
+      "closes": "at_most",
+      "tolerance": 1e-09,
+      "defaults": {
+       "pump_w": 0.0
+      },
+      "says": "heat is pushed uphill with {times} times the pump work paid for",
+      "check": {
+       "name": "Work to pump heat uphill to the radiators",
+       "formula": "demand = if radiator_k > waste_heat_k then q_w * (radiator_k - waste_heat_k) / waste_heat_k else 0\nsupply = pump_w",
+       "inputs": {
+        "q_w": {
+         "kind": "design.waste_power",
+         "unit": "W",
+         "name": "heat to shed"
+        },
+        "radiator_k": {
+         "kind": "design.radiator_temperature",
+         "unit": "K",
+         "name": "radiator temperature"
+        },
+        "waste_heat_k": {
+         "kind": "design.source_temperature",
+         "unit": "K",
+         "name": "temperature of what is cooled"
+        },
+        "pump_w": {
+         "kind": "design.pump_power",
+         "unit": "W",
+         "name": "heat pump power paid for"
+        }
+       },
+       "outputs": {
+        "demand": {
+         "kind": "design.pump_power",
+         "unit": "W",
+         "name": "least pump work (Carnot)"
+        },
+        "supply": {
+         "kind": "design.pump_power",
+         "unit": "W",
+         "name": "pump work paid for"
+        }
+       },
+       "source": {
+        "text": "Clausius 1854: heat passes of itself only from hotter to colder; the least work to lift heat Q from T_cold to T_hot is Q (T_hot - T_cold) / T_cold",
+        "doi": "10.1002/andp.18541691202",
+        "where": "section 1"
+       },
+       "explain": {
+        "curious": "Heat runs downhill. A radiator hotter than what it cools needs a heat pump, and the pump's work is more heat to shed.",
+        "science": "W >= Q (T_r - T_s) / T_s when T_r > T_s, else nothing (Carnot coefficient of performance)."
+       },
+       "examples": [
+        {
+         "q_w": 100000.0,
+         "radiator_k": 600.0,
+         "waste_heat_k": 300.0,
+         "pump_w": 0.0,
+         "demand": 100000.0,
+         "supply": 0.0
+        },
+        {
+         "q_w": 70000.0,
+         "radiator_k": 275.95,
+         "waste_heat_k": 300.0,
+         "pump_w": 0.0,
+         "demand": 0.0,
+         "supply": 0.0
+        }
+       ]
+      }
      }
     ],
     "fictional_where": [
@@ -904,12 +1216,14 @@
       "level": 3,
       "sets": {
        "exhaust_km_s": 4.565,
-       "waste_per_jet": 0.0
+       "waste_per_jet": 0.0,
+       "fuel_j_per_kg": 13400000.0
       },
       "fuel": "hydrogen-oxygen",
       "family": "near-ceiling",
       "fixed": [
-       "waste_per_jet"
+       "waste_per_jet",
+       "fuel_j_per_kg"
       ],
       "part": "drive",
       "mark": "built"
