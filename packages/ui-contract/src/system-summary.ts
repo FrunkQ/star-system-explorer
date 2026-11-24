@@ -7,6 +7,8 @@
 import { subjectKinds } from "./picker.ts";
 
 /** The least a body needs for the count: its kind, or failing that the picker's kind chips. */
+import { sayNumber } from "./figures.ts";
+
 export interface SummaryBody {
   label?: string;
   /** Scene kind (star, planet, dwarf_planet, moon, belt, ring, station, ...). */
@@ -40,7 +42,7 @@ export interface SystemSummary {
 
 const LIFE_TAG = /^(life|biosphere|inhabited)(\b|[:/])/i;
 const lives = (b: SummaryBody) => (b.tags ?? []).some((t) => LIFE_TAG.test(t)) || (b.kinds ?? []).some((k) => /^life$/i.test(k));
-const n = (count: number, one: string, many = `${one}s`) => `${count.toLocaleString("en-GB")} ${count === 1 ? one : many}`;
+const n = (count: number, one: string, many = `${one}s`) => `${sayNumber(count, 15, { decimals: 0 })} ${count === 1 ? one : many}`;
 
 /** Count a system's bodies and note what stands out. Unknown kinds are left out of the counts, never guessed. */
 export function systemSummary(bodies: readonly SummaryBody[]): SystemSummary {

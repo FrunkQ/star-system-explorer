@@ -4,6 +4,8 @@
 // physics here: radii, abundances, rates, arm crests and green bands are the
 // kernel's own.
 
+import { sayNumber } from "./figures.ts";
+
 export interface GalaxyAsk {
   /** A named halo, or (with `cell`) one of that cell's catalogued haloes, `halo:N`. */
   halo?: string;
@@ -485,8 +487,8 @@ export function leadingArmWords(marks: readonly GalaxyMark[], t_gyr: number, str
   if (!made.length) return null;
   const last = made.reduce((a, b) => (b.began_gyr > a.began_gyr ? b : a));
   const ago = t_gyr - last.began_gyr;
-  const when = ago < 0.001 ? "just now" : ago < 1 ? `${Math.round(ago * 1000)} Myr ago` : `${ago.toFixed(1)} Gyr ago`;
-  const pass = typeof last.shape.r_kpc === "number" ? `a backwards pass ${last.shape.r_kpc.toFixed(0)} kpc out` : "a backwards merger";
+  const when = ago < 0.001 ? "just now" : ago < 1 ? `${Math.round(ago * 1000)} Myr ago` : `${sayNumber(ago, 2, { decimals: 1 })} Gyr ago`;
+  const pass = typeof last.shape.r_kpc === "number" ? `a backwards pass ${sayNumber(last.shape.r_kpc, 2, { decimals: 0 })} kpc out` : "a backwards merger";
   const strength = strengthAt(last, t_gyr);
   const live = strength >= showing;
   const line = `A leading arm, from ${pass} ${when}: ${live ? "it still winds against the spin" : "the rotation has wound it back into the trailing sense"}.`;
