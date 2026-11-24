@@ -334,7 +334,7 @@ The Land view is the furthest from SpaceEngine today: a smooth plain. In order o
 | **The sun as a disc with glare**, flattened near the horizon by the air's bending | Angular size from the orbit; bending from air density | fact | B | free |
 | **Shadows** | Cascaded shadow map near the camera; baked horizon angles far away | fact | H | |
 | **Stars by day on thin-air worlds; twinkling by air density; planets steady** | Sky brightness against star brightness at the current exposure | fact | B | free |
-| **Rainbows and halos** | Bow radius from the refractive index of what is raining (data sheet); only when the weather op has rain and a low sun | fact | H | |
+| **Rainbows, halos, fog bows and glories** | Never placed: each appears when the weather op has the right particles in the right place (rain ahead with the sun low behind for a bow; ice crystals for a halo; fine droplets for a fog bow; cloud below the viewer for a glory round the ship's shadow). Bow radius from the refractive index of what is raining (data sheet), colours from the star's own light, brightness from the particle's phase table (K-e). Ground view and low flight only | fact | H | |
 | **Blowing dust, snow, rain streaks** | Particles by the weather op's rates | drawn from the numbers | H | |
 | **Living cover** (parked with the life track) | | | later | |
 | True displacement of the near ground | Parallax occlusion in the pixel shader (no tessellation in WebGPU) | drawn | U | |
@@ -644,7 +644,7 @@ Order: VP1, VP2, VP3 first (the three biggest gains), VP4 and VP6 beside them (t
 | **VP-L1** | Nebula shapes and line strengths in a form the renderer can march (density recipe and line colours per kind) from `read_nebulae` |
 | **VP-L2** | Aurora colours from the air's gases (MF9 part 2) |
 | **VP-L3** | The colour of light inside a world's shadow, from `light_through_gas` along a grazing path (win 4) |
-| **VP-L4** | Rainbow and halo angles from refractive index (data sheet look-up) |
+| **VP-L4** | Rainbow, halo, fog bow and glory angles from refractive index and particle size (data sheet look-up and the phase tables of K-e), with the conditions under which each appears |
 
 ### Asks of other threads
 
