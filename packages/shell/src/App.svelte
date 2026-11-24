@@ -41,14 +41,15 @@
   import { programTarget, ruleEntries, sifterEntries, sifterTarget } from "../../agents/src/orac-rules.ts";
   import { blockEntries, boxTarget, tableTarget } from "../../agents/src/orac-blocks.ts";
   import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
+  import { templateTarget, triggerEntries, triggerTarget } from "../../agents/src/orac-triggers.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
-  import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
+  import { orbitScene, voicesFromSystem, bookmarksFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
   import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
-  import { menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
+  import { actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
   import ObjectMenu from "./ObjectMenu.svelte";
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
@@ -85,6 +86,10 @@
   import { MORE_SCREENS } from "./screens.more.ts";
   import { GAME_SCREENS } from "./screens.game.ts";
   import { RENDER_SCREENS } from "./screens.renderer.ts";
+  import { RUN_SCREENS } from "./run/screens.run.ts";
+  import Bookmarks from "./run/Bookmarks.svelte";
+  import OnAir from "./run/OnAir.svelte";
+  import { tablePort } from "./run/table-port.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { createSymbols } from "./symbols.svelte.ts";
@@ -112,7 +117,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -140,8 +145,12 @@
   /** The place in view, as the table would be shown it: on the Land screen, with the landing the GM is flying. */
   let lastLanding = $state.raw<Json | null>(null);
   const LAND_SCREEN = "players.land.screen.json";
-  const here = (): Shown =>
-    ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+  // A send made on the Land screen before its first landing arrived waits for it, then goes again with it.
+  let landingAwaited = false;
+  const here = (): Shown => {
+    landingAwaited = ws.screen === "surface" && !lastLanding;
+    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+  };
   // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
   let kickerW = $state(999);
 
@@ -193,6 +202,20 @@
     if (v === "@system") return toSystem();
     if (v) toWorld(v);
   }
+  // Bookmarks (PB2b): where the GM is and how they look, and back again exactly as it was left.
+  const whereabouts = (): Whereabouts => ({ scope: scene.system, now_yr: ws.now_yr, instrument: ws.screen, scale: railScale, ...(ws.view ? { view: ws.view } : {}), selected: ws.selection });
+  function markHere(): Bookmark {
+    const words = SCREENS[ws.screen]?.label ?? ws.screen;
+    return makeBookmark(ws.bookmarks ?? [], whereabouts(), railScale === "world" || railScale === "system" ? (selName ?? scene.title) : scene.title, String(words));
+  }
+  ws.markHere = markHere;
+  function goBookmark(b: Bookmark) {
+    ws.select(b.selected);
+    if (b.scale) railScale = b.scale as RailScale;
+    ws.screen = b.instrument;
+    if (b.at_yr !== null) ws.now_yr = b.at_yr;
+    if (b.view) setView({ ...b.view, framed: (ws.view?.framed ?? 0) + 1 });
+  }
   let moreOpen = $state(false);
   // The performance readout (PF1): off by default, remembered per device.
   let perfOn = $state(loadPref("perf.readout") === "on");
@@ -235,6 +258,10 @@
   $effect(() => {
     const p = ws.party ? ($state.snapshot(ws.party) as unknown as Json) : null;
     if (share) share.host.setState({ party: p });
+  });
+  // The table for the Switchboard (PB2): the share, with the live view as its first source.
+  $effect(() => {
+    ws.table = share ? tablePort(share, () => here()) : undefined;
   });
   let opened: unknown[] = [];
   loadPacks()
@@ -317,6 +344,8 @@
     ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
     ws.overlay_anchors = save.workspace.overlay_anchors ?? {};
     ws.party = save.workspace.party ?? null;
+    ws.bookmarks = bookmarksFrom(save.workspace.bookmarks);
+    ws.playbook = playbookFrom(save.workspace.playbook);
     savedAt = save.saved_at;
     const events = savedEvents(save);
     keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
@@ -335,7 +364,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, party: ws.party ?? null })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -349,6 +378,8 @@
     void ws.campaign_now_yr;
     void ws.undo.length;
     void ws.redo.length;
+    void ws.bookmarks;
+    void ws.playbook;
     if (!session || !status.hash) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
@@ -530,6 +561,8 @@
     ws.sendLanding = (show) => {
       lastLanding = show;
       const sh = share?.state.shown;
+      if (landingAwaited && share && ws.screen === "surface" && sh && "scope" in sh && sh.scope === scene.system && !sh.landing) return void share.show(here());
+      landingAwaited = false;
       if (share && sh && "landing" in sh && sh.landing) share.show({ ...(JSON.parse(JSON.stringify(sh)) as typeof sh), landing: show });
     };
     ws.shared = !!share?.state.link;
@@ -1062,9 +1095,11 @@
         boxTarget(s, ws),
         tableTarget(s, ws),
         substanceTarget(s, ws),
+        triggerTarget(s, ws),
+        templateTarget(s, ws),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
-      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...handbookEntries()],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...handbookEntries()],
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
@@ -1323,6 +1358,9 @@
   const objMenuItems = $derived(
     objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }) : null,
   );
+  // More's edit group says what the object menu says: the same words and keys, from the one list.
+  const moreWords = (id: string) => actionById(id)!.label({ address: ws.selection ?? "", kind: "", label: selName ?? "" });
+  const moreKey = (id: string) => keyWords(actionById(id)!.key!);
   async function runAction(id: string, address: string) {
     ws.select(address);
     if (id === "open") return toWorld(address);
@@ -1421,6 +1459,7 @@
         const i = lenses.findIndex((x) => x.id === lens.id);
         chooseLens(lenses[(i + 1) % lenses.length]!.id);
       },
+      b: () => document.querySelector<HTMLElement>("[data-bookmarks] > button")?.click(),
       "?": () => openHelp("keys"),
       // Esc clears the selection, then goes up a step.
       Escape: () => (ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
@@ -1445,6 +1484,8 @@
       {steps}
       title={scene.title}
       baseTitle={base.title}
+      session={session ?? null}
+      systemAddress={scene.system}
       subjects={scene.subjects}
       selection={ws.selection}
       {selName}
@@ -1462,6 +1503,7 @@
     <div class="spacer"></div>
     <!-- What (2.3): the desk. Explore looks, Build changes, Run is the table. -->
     <Segmented label="Desk" value={desk} options={DESKS} onchange={chooseDesk} slide />
+    {#if share && desk === "run"}<OnAir {share} onswitchboard={() => go("switchboard")} bar />{/if}
     {#if session}
       <!-- The desk's own small menu: see the same place through another lens, for this desk only. -->
       <label class="lens" title="See as: what the chart and cards show at this desk (L)">
@@ -1486,10 +1528,11 @@
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
           <div class="depth-more"><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
           {#if clipArmed}
-            <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>Copy {selName ?? "a body"} <kbd>Ctrl+C</kbd></button>
-            {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>Cut {selName} <kbd>Ctrl+X</kbd></button>{/if}
-            <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
-            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>Add here… <kbd>A</kbd></button>
+            <!-- The edit group reads its words and keys from the one action list (ui-contract actions.ts), as the object menu does. -->
+            <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>{moreWords("copy")} {selName ?? "a body"} <kbd>{moreKey("copy")}</kbd></button>
+            {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>{moreWords("cut")} {selName} <kbd>{moreKey("cut")}</kbd></button>{/if}
+            <button type="button" data-more-paste onclick={pasteFromMenu}>{moreWords("paste")} <kbd>{moreKey("paste")}</kbd></button>
+            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>{moreWords("add")} <kbd>{moreKey("add")}</kbd></button>
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
           <button type="button" data-more-open onclick={() => ((moreOpen = false), (offered = null), (given = null), (confirmFresh = false), openCampaign(true))}>Open a file… <kbd>Ctrl+O</kbd></button>
@@ -1555,7 +1598,9 @@
         {openAdd}
         {cutBody}
         openKeys={() => openHelp("keys")}
-      />
+      >
+        {#snippet extraTools()}<Bookmarks list={ws.bookmarks ?? []} scope={scene.system} mark={markHere} where={whereabouts} go={goBookmark} onchange={(next) => (ws.bookmarks = next)} />{/snippet}
+      </Stage>
       {/key}
     </div>
     <footer class="area-ruler" aria-label="Time">
@@ -1601,7 +1646,11 @@
           at_yr={(factsDoc as unknown as AuthoredFacts).at_yr}
           landingUnsent={ws.screen === "surface" && !!lastLanding}
           {here}
-          onchange={() => ws.notePhysics()}
+          onswitchboard={() => go("switchboard")}
+          chip={desk !== "run"}
+          party={ws.party ?? null}
+          now_yr={ws.campaign_now_yr ?? ws.now_yr}
+          onchange={() => (ws.revision++, ws.notePhysics())}
         />
       {/if}
       <!-- The engine's own numbers by depth (2.4): Science adds the device tier, Engine the kernel and the hashes. -->

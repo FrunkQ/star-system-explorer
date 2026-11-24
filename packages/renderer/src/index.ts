@@ -42,9 +42,15 @@ export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edi
 // R5a: stars drawn from their physics (photosphere, spots, corona in X-rays).
 // O10 convection: granules drawn where the disc resolves them.
 export { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, limbDarkening, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
-export type { Convection, Granules, Spot, StarDraw } from "./star.ts";
-export { cycleOf, drawLiveStar, flareProfile, flaresAt, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, turnAt } from "./live-star.ts";
+export type { Convection, FlarePatch, Granules, Spot, StarDraw } from "./star.ts";
+export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, turnAt } from "./live-star.ts";
 export type { Flare, GivenStar, LiveStar, StarReader } from "./live-star.ts";
+export { drawGlow, glarePsf, glareProfile, glowReach, GLARE_EYE, GLOW_REACH_DEG, GLOW_REFERENCES, narrateGlow } from "./star-glow.ts";
+export { CELL_DRIFT, CHURN_REFERENCES, churningGranules, granuleBlur, limbLumps, LUMP_SCALE_HEIGHTS, narrateLumps } from "./star-churn.ts";
+export { addEjections, EJECTION_SCALE, ejectionShare, ejectionShown, ejectionsAt, EVENT_REFERENCES, FLASHES_PER_SECOND_MAX, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares } from "./star-events.ts";
+export type { EjectionNow, ShownFlare } from "./star-events.ts";
+export { drawStarNow } from "./star-now.ts";
+export type { StarNow, StarNowAsk } from "./star-now.ts";
 // Time-lapse layers on the Body globe (surface_frames): read, bracket, colour, pick, narrate.
 export { bracket, cellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor, narrateFrame, pickAt, readFrames, recolour, seaLevelAt, valueAt } from "./timelapse.ts";
 export type { FieldName, Frame, FrameEvent, LayerSpec, RawFrames, TimeLapse } from "./timelapse.ts";
@@ -100,3 +106,6 @@ export async function startSurface(canvas: HTMLCanvasElement) {
   const { createSurfaceGpu } = await import("./gpu-surface.ts");
   return createSurfaceGpu(canvas);
 }
+// The size comparison's turning globes (3D, True, Wireframe).
+export { circleSteps, globeFrame, graticule, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
+export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";

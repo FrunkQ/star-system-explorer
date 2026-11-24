@@ -1,0 +1,74 @@
+symbol,bulk_crust_ppm,source,note
+Li,16,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Be,1.9,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+B,11,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+N,56,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,"UNSURE label: pyrolite file lists this 56 ppm under ""Na""; Na is a major element (Na2O) so this is taken as N; RG2014 copy gives N 56 ug/g"
+F,553,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Na,22998,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,converted: Na2O 3.1 wt% x 1e4 x 2*22.99/(2*22.99+1*15.999)=0.74186 -> 22998 ppm; UNSURE precision: RG2014 Table 11 copy (georefdatar) gives Na2O 3.07 wt% -> 22775 ppm; pyrolite 2003 copy appears rounded to 1 decimal
+Mg,28343,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,converted: MgO 4.7 wt% x 1e4 x 1*24.305/(1*24.305+1*15.999)=0.60304 -> 28343 ppm; UNSURE precision: RG2014 Table 11 copy (georefdatar) gives MgO 4.66 wt% -> 28102 ppm; pyrolite 2003 copy appears rounded to 1 decimal
+Al,84153,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,converted: Al2O3 15.9 wt% x 1e4 x 2*26.982/(2*26.982+3*15.999)=0.52926 -> 84153 ppm
+Si,283267,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,converted: SiO2 60.6 wt% x 1e4 x 1*28.085/(1*28.085+2*15.999)=0.46744 -> 283267 ppm
+P,436,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,converted: P2O5 0.1 wt% x 1e4 x 2*30.974/(2*30.974+5*15.999)=0.43643 -> 436 ppm; UNSURE precision: RG2014 Table 11 copy (georefdatar) gives P2O5 0.13 wt% -> 567 ppm; pyrolite 2003 copy appears rounded to 1 decimal
+S,404,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Cl,244,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+K,14943,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,converted: K2O 1.8 wt% x 1e4 x 2*39.098/(2*39.098+1*15.999)=0.83015 -> 14943 ppm; UNSURE precision: RG2014 Table 11 copy (georefdatar) gives K2O 1.81 wt% -> 15026 ppm; pyrolite 2003 copy appears rounded to 1 decimal
+Ca,45741,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,converted: CaO 6.4 wt% x 1e4 x 1*40.078/(1*40.078+1*15.999)=0.71470 -> 45741 ppm; UNSURE precision: RG2014 Table 11 copy (georefdatar) gives CaO 6.41 wt% -> 45812 ppm; pyrolite 2003 copy appears rounded to 1 decimal
+Sc,21.9,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Ti,4195,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,converted: TiO2 0.7 wt% x 1e4 x 1*47.867/(1*47.867+2*15.999)=0.59935 -> 4195 ppm; UNSURE precision: RG2014 Table 11 copy (georefdatar) gives TiO2 0.72 wt% -> 4315 ppm; pyrolite 2003 copy appears rounded to 1 decimal
+V,138,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Cr,135,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Mn,774,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,converted: MnO 0.1 wt% x 1e4 x 1*54.938/(1*54.938+1*15.999)=0.77446 -> 774 ppm
+Fe,52080,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,converted: FeO 6.7 wt% x 1e4 x 1*55.845/(1*55.845+1*15.999)=0.77731 -> 52080 ppm (FeO = total Fe as FeO); UNSURE precision: RG2014 Table 11 copy (georefdatar) gives FeO 6.71 wt% -> 52157 ppm; pyrolite 2003 copy appears rounded to 1 decimal
+Co,26.6,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Ni,59,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Cu,27,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Zn,72,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Ga,16,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Ge,1.3,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+As,2.5,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Se,0.13,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Br,0.88,Rudnick & Gao 2014 (2nd ed.) Table 11 bulk crust via georefdatar CC__Rudnick_Gao__2014.csv,NOT in the 2003 copy read; value from 2014 edition
+Rb,49,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Sr,320,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Y,19,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Zr,132,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Nb,8,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Mo,0.8,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Ru,0.0006,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,as printed 0.6 ppb; RG2014 copy gives 0.57 ng/g
+Pd,0.0015,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,as printed 1.5 ppb
+Ag,0.056,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,as printed 56 ppb
+Cd,0.08,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+In,0.052,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Sn,1.7,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Sb,0.2,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+I,0.71,Rudnick & Gao 2014 (2nd ed.) Table 11 bulk crust via georefdatar CC__Rudnick_Gao__2014.csv,NOT in the 2003 copy read; value from 2014 edition
+Cs,2,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Ba,456,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+La,20,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Ce,43,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Pr,4.9,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Nd,20,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Sm,3.9,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Eu,1.1,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Gd,3.7,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Tb,0.6,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Dy,3.6,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Ho,0.77,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Er,2.1,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Tm,0.28,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Yb,1.9,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Lu,0.3,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Hf,3.7,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Ta,0.7,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+W,1,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Re,0.000188,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,as printed 0.188 ppb
+Os,4.1e-05,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,as printed 0.041 ppb
+Ir,3.7e-05,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,as printed 0.037 ppb
+Pt,0.0015,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,as printed 1.5 ppb
+Au,0.0013,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,as printed 1.3 ppb
+Hg,0.03,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Tl,0.5,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Pb,11,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Bi,0.18,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+Th,5.6,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,
+U,1.3,Rudnick & Gao 2003 bulk crust via pyrolite BCC_RudnickGao2003.csv,

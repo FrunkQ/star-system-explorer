@@ -93,7 +93,7 @@ export interface RecordRead {
 /** One line of the log. `who` is the writer ("gm", a template, a pack rule); `why` the reason given, if any. */
 export interface ShipLogEntry {
   at_yr: number;
-  what: "made" | "edited" | "retired" | "kept" | "note" | "event";
+  what: "made" | "edited" | "retired" | "kept" | "note" | "event" | "aboard";
   text: string;
   who: string;
   why?: string;
@@ -136,6 +136,6 @@ export function shipLog(
     });
   }
   for (const n of record?.notes ?? []) out.push({ at_yr: yr(n.at_s), what: "note", text: n.text, who: writerWords(n.by), key: "note" });
-  const rank: Record<ShipLogEntry["what"], number> = { made: 0, edited: 1, event: 1, kept: 2, note: 3, retired: 4 };
+  const rank: Record<ShipLogEntry["what"], number> = { made: 0, edited: 1, event: 1, kept: 2, aboard: 2, note: 3, retired: 4 };
   return out.sort((a, b) => a.at_yr - b.at_yr || rank[a.what] - rank[b.what]);
 }
