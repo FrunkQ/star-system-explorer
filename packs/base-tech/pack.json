@@ -91,7 +91,8 @@
       "shapes": "tank and structure mass, domes, towers, spin radius, tethers, megastructures",
       "past_ceiling": "ringworld floors, rigid shells round a star",
       "figures": [
-       "strength_for_weight"
+       "strength_for_weight",
+       "working_k"
       ]
      },
      {
@@ -127,6 +128,17 @@
       "past_ceiling": "cloaks, which must say where the light goes",
       "figures": [
        "light_hidden"
+      ]
+     },
+     {
+      "id": "beams",
+      "n": 11,
+      "plain": "Beams spread",
+      "science": "Diffraction: a beam's spot grows as wavelength times distance over aperture",
+      "shapes": "beamed power, laser sails, link rates, how sharp a telescope or sensor sees",
+      "past_ceiling": "a beam that stays narrow at any distance",
+      "figures": [
+       "spread_over_diffraction"
       ]
      }
     ],
@@ -247,6 +259,12 @@
         "src": "nasem2021"
        },
        {
+        "mark": "built",
+        "v": 30.401,
+        "what": "NSTAR ion thruster on Deep Space 1, 3100 s at 2.3 kW",
+        "src": "sovey2001"
+       },
+       {
         "mark": "allowed",
         "v": 347.499,
         "what": "D-He3 spherical torus fusion ship, 35,435 s",
@@ -359,6 +377,12 @@
         "v": 1.16,
         "what": "SNAP-10A, the only reactor the US flew: 500 W for under 950 lb",
         "src": "doe-snap"
+       },
+       {
+        "mark": "built",
+        "v": 5.22,
+        "what": "GPHS-RTG radioisotope generator, 292 W for 55.9 kg",
+        "src": "schmidt2009"
        },
        {
         "mark": "allowed",
@@ -494,6 +518,48 @@
       ]
      },
      {
+      "id": "working_k",
+      "limit": "materials",
+      "plain": "hottest a working part can run",
+      "unit": "K",
+      "better": "higher",
+      "reads": "FT2 (hot-gas exhaust from temperature; nozzle, fuel, radiator and heat shield limits)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 977.59,
+        "what": "nickel superalloy (Inconel 718): turbopumps and engine structure",
+        "src": "sheet",
+        "sheet": "mixtures/inconel-718"
+       },
+       {
+        "mark": "built",
+        "v": 2800.0,
+        "what": "tungsten heat shields in vacuum furnaces",
+        "src": "sheet",
+        "sheet": "mixtures/tungsten"
+       },
+       {
+        "mark": "ceiling",
+        "v": 3120.0,
+        "what": "uranium dioxide fuel melts",
+        "src": "sheet",
+        "for": "uo2-fuel",
+        "law": "melting: past it the solid is not one",
+        "sheet": "mixtures/uo2-fuel"
+       },
+       {
+        "mark": "ceiling",
+        "v": 3683.0,
+        "what": "tungsten melts, the highest melting metal",
+        "src": "sheet",
+        "for": "tungsten",
+        "law": "melting: past it the solid is not one",
+        "sheet": "mixtures/tungsten"
+       }
+      ]
+     },
+     {
       "id": "shield_g_cm2",
       "limit": "radiation",
       "plain": "shielding round the crew",
@@ -567,6 +633,23 @@
         "what": "all of it",
         "src": "law",
         "law": "conservation of mass"
+       }
+      ]
+     },
+     {
+      "id": "spread_over_diffraction",
+      "limit": "beams",
+      "plain": "how much wider a beam spreads than diffraction allows",
+      "unit": "1",
+      "better": "lower",
+      "reads": "FT2 (beamed power, laser sails, link rates, sensor and telescope sharpness)",
+      "marks": [
+       {
+        "mark": "ceiling",
+        "v": 1.0,
+        "what": "a perfect beam: it still spreads at 1.22 wavelengths over the aperture",
+        "src": "airy1835",
+        "law": "diffraction"
        }
       ]
      },
@@ -842,6 +925,13 @@
       },
       "family": "engine",
       "part": "reactor",
+      "least_size": {
+       "v": 53.9,
+       "unit": "kg",
+       "what": "fissile metal: a bare sphere of 93 to 94% U-235 goes critical at 53.9 kg; a reflector lowers it",
+       "src": "gwin-mee1959",
+       "check": "unverified"
+      },
       "mark": "built"
      },
      {
@@ -916,6 +1006,10 @@
        "unthrown_n_per_w"
       ],
       "part": "drive",
+      "flown": {
+       "what": "IKAROS (2010): a 200 m2 sail of 7.5 micrometre film, 15 kg, gained 100 m/s from sunlight in half a year",
+       "src": "jaxa-ikaros"
+      },
       "mark": "built"
      },
      {
@@ -962,6 +1056,73 @@
       "family": "material",
       "part": "structure",
       "mark": "not yet built"
+     },
+     {
+      "id": "hall-thruster",
+      "name": "Hall thruster",
+      "level": 3,
+      "sets": {
+       "exhaust_km_s": 15.691
+      },
+      "family": "engine",
+      "part": "electric drive",
+      "flown": {
+       "what": "stationary plasma thrusters, first run in space on 1 March 1972; the SPT-100 gives 1600 s and 80 mN from 1.35 kW for a 4 kg thruster",
+       "src": "brophy1992",
+       "also": [
+        "sankovic1993"
+       ]
+      },
+      "note": "electric: thrust is set by the power plant; exhaust speed is the figure the advance pushes",
+      "mark": "built"
+     },
+     {
+      "id": "arcjet",
+      "name": "Hydrazine arcjet",
+      "level": 3,
+      "sets": {
+       "exhaust_km_s": 4.903
+      },
+      "family": "engine",
+      "part": "electric drive",
+      "flown": {
+       "what": "kW-class arcjets on Telstar 401 (launched December 1993): a nominal mission average of 500 s at 1.4 kW",
+       "src": "curran-byers1994"
+      },
+      "mark": "built"
+     },
+     {
+      "id": "ion-thruster",
+      "name": "Gridded ion thruster",
+      "level": 3,
+      "sets": {
+       "exhaust_km_s": 30.401
+      },
+      "family": "engine",
+      "part": "electric drive",
+      "flown": {
+       "what": "NSTAR on Deep Space 1 (1998): 3100 s and 92 mN at 2.3 kW, 9,241 hours of thrusting by February 2001",
+       "src": "sovey2001",
+       "also": [
+        "rayman1999"
+       ]
+      },
+      "mark": "built"
+     },
+     {
+      "id": "rtg",
+      "name": "Radioisotope generator",
+      "level": 3,
+      "sets": {
+       "plant_w_per_kg": 5.22
+      },
+      "family": "engine",
+      "part": "power plant",
+      "flown": {
+       "what": "GPHS-RTG (Galileo 1989, Ulysses, Cassini, New Horizons): 292 W for 55.9 kg",
+       "src": "schmidt2009"
+      },
+      "mark": "built"
      }
     ],
     "real_craft": [
@@ -1378,6 +1539,14 @@
      "nasa-orbiter-tps": "NASA Facts FS-2008-02-042-KSC, Orbiter thermal protection system: reinforced carbon-carbon above 3000 F, tiles for 1,200 to 2,500 F, entry in excess of 17,000 mph",
      "pavlosky1974": "Pavlosky, J. E. and St. Leger, L. G. 1974, Apollo experience report: thermal protection subsystem, NASA TN D-7564: Avco 5026-39G at 31 lb/ft3; design lunar return 36,333 ft/s; Apollo 4 peak 425 Btu/ft2 s and total 37,522 Btu/ft2; surfaces approaching 5000 F",
      "nasa-iss-facts": "NASA, Space station facts and figures (read Nov 2026): 1,005 m3 pressurised, 388 m3 habitable, 419,725 kg, 75 to 90 kW from 8 arrays. https://www.nasa.gov/international-space-station/space-station-facts-and-figures/",
+     "sovey2001": "Sovey, J. S., Rawlin, V. K. and Patterson, M. J. 2001, Ion propulsion development projects in U.S.: Space Electric Rocket Test I to Deep Space 1, J. Propulsion and Power 17(3), 517-526: NSTAR 1900 s at 0.5 kW to 3100 s at 2.3 kW, 19 to 92 mN; flight-set masses thruster 8.2 kg, PPU 14.77 kg; 9,241 h of thrusting by 17 Feb 2001. https://ntrs.nasa.gov/api/citations/20010093217/downloads/20010093217.pdf",
+     "rayman1999": "Rayman, M. D., Varghese, P., Lehman, D. H. and Livesay, L. L. 1999, Results from the Deep Space 1 technology validation mission, IAC-99-IAA.11.2.01, Acta Astronautica 47, 475 (2000): 3180 s at 2140 W in flight; 11.4 kg of xenon gave 699.6 m/s in 1799.4 h. https://www.jpl.nasa.gov/nmp/ds1/DS1_Primary_Mission.pdf",
+     "brophy1992": "Brophy, J. R. 1992, Stationary plasma thruster evaluation in Russia, JPL Publication 92-4 (NASA-CR-192823): SPT first operated in space 1 March 1972; SPT-100 1600 s, 0.080 N, 1.35 kW, efficiency 0.50, thruster 4 kg (Table 1). https://ntrs.nasa.gov/api/citations/19930016017/downloads/19930016017.pdf",
+     "sankovic1993": "Sankovic, J. M., Hamley, J. A. and Haag, T. W. 1993, Performance evaluation of the Russian SPT-100 thruster at NASA LeRC, IEPC-93-094 (NASA TM-106401): 1610 s and 0.50 at 300 V, 4.5 A. https://ntrs.nasa.gov/api/citations/19940019157/downloads/19940019157.pdf",
+     "curran-byers1994": "Curran, F. M. and Byers, D. C. 1994, New developments and research findings: NASA hydrazine arcjets, NASA TM-106695 (AIAA-94-2463): kW-class arcjets operational on Telstar 401 (launched December 1993), a nominal mission average of 500 s at a 1.4 kW system power level. https://ntrs.nasa.gov/api/citations/19950004443/downloads/19950004443.pdf",
+     "jaxa-ikaros": "JAXA IKAROS Demonstration Team (JSPEC), Introduction of Small Solar Power Sail Demonstrator IKAROS (press kit, 2010): square sail 14 m a side, 7.5 micrometre aluminised polyimide, membrane 15 kg with 2 kg of tip masses, 310 kg at launch; Tsuda et al. 2013 (J. Space Tech. Sci. 27, 1_79) give 200 m2; eoPortal: 100 m/s from sunlight within half a year. https://global.jaxa.jp/countdown/f17/pdf/presskit_ikaros_e.pdf",
+     "gwin-mee1959": "Gwin, R. and Mee, W. T. 1959, Critical assemblies of uranium metal, Y-1248, Union Carbide Nuclear Company, Oak Ridge Y-12 Plant, Table I: bare sphere of 93 to 94% U-235 metal (about 18.5 g/cm3), critical at 53.9 kg. https://www.osti.gov/servlets/purl/4246875",
+     "airy1835": "Airy, G. B. 1835, On the diffraction of an object-glass with circular aperture, Trans. Cambridge Phil. Soc. 5, 283: the first dark ring at 1.22 wavelengths over the aperture",
      "sheet": "the master data sheet (pack base-reference): the value is worked out from its rows",
      "law": "a law of physics, named on the mark"
     }
