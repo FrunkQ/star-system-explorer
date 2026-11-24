@@ -144,7 +144,7 @@
       <button type="button" class="linkbtn" data-door="chart" onclick={() => open({ door: "chart" })}>Go to the chart ›</button>
     </footer>
     <p class="made" data-made>
-      © 2026 FrunkQ (Alex) · Apache-2.0 · {MADE_LINE}{#each SUPPORT_LINKS as l (l.label)}{" · "}<a href={l.href} target="_blank" rel="noopener" data-support={l.label}>{l.label}</a>{/each}
+      © 2026 FrunkQ · Apache-2.0 · {MADE_LINE}{#each SUPPORT_LINKS as l (l.label)}{" · "}<a href={l.href} target="_blank" rel="noopener" data-support={l.label}>{l.label}</a>{/each}
     </p>
   </div>
 </section>
