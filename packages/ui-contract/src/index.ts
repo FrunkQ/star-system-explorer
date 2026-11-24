@@ -144,3 +144,6 @@ export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem,
 // One units engine (ED1a): every figure said and read back the same way.
 export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
 export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices } from "./figures.ts";
+// Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
+export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
+export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed } from "./handles.ts";
