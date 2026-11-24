@@ -6,13 +6,13 @@ export type { Vec3, FrameNode, Tree, Camera, Pixel } from "./frames.ts";
 export type { Gpu, GpuDots, GpuGlow, GpuItem, GpuLight, GpuRing, GpuSheet } from "./gpu.ts";
 export { armField, cloudNoise, GALAXY_BANDS, GALAXY_LIGHT, GALAXY_LIGHT_REFS, galaxyFace, glowPicture, sheetWeights, surfaceAt } from "./galaxy-true.ts";
 export type { GalaxyBand, GalaxyPicture } from "./galaxy-true.ts";
-export { cubeEdges, SPACE_CSS, webGlow, webParcels, WEB_KINDS, WEB_LIGHT_K } from "./web-cube.ts";
-export type { WebCubeData, WebKind } from "./web-cube.ts";
+export { cubeEdges, galaxyLight, SPACE_CSS, webGlow, webLights, webParcels, WEB_DARK_GLOW, WEB_KINDS, WEB_LIGHT_K, WEB_LIGHT_SHOW } from "./web-cube.ts";
+export type { WebCubeData, WebGalaxyData, WebKind, WebLightGroup } from "./web-cube.ts";
 // V10a: True in the system view, each world wrapped in its own surface.
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
 export type { TrueTexture } from "./true-look.ts";
 // R1 to R3, R6: air in True (clouds, hazes, giants from their cloud decks), true-air.ts.
-export { gasAbove, gasTint, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirLook, type FaceReader } from "./true-air.ts";
+export { flowFace, gasAbove, gasTint, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
 export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
@@ -23,7 +23,10 @@ export type { RecipeDoc, RecipePass, PassSpec, PassCost, Knob, DegradeStep, Plan
 export { Governor, badge } from "./governor.ts";
 export type { Badge, GovernorOptions, GovernorMove } from "./governor.ts";
 export { LIBRARY } from "./passes.ts";
-export { mountGlobe, airRender } from "./runtime.ts";
+export { mountGlobe, airRender, deviceReadout, measureAgain, passShares, quality, setQuality } from "./runtime.ts";
+// VP4: the speed probe and placement by measured speed.
+export { BENCH_PIXELS, drawingBench, factorsFrom, gpuTiersAllowed, HeatWatch, loadProbe, loadQuality, place, PLACE_MARGIN, PROBE_SCENES, probeKey, QUALITY_WORDS, tierWords, ULTRA_HEADROOM } from "./probe.ts";
+export type { Capabilities, DeviceFactors, DrawingBench, Placement, ProbeResult, ProbeScene, QualityChoice, TierPrediction } from "./probe.ts";
 export { air, airFactsOf, gasMixOf, surfacePressureOf, airFromOptics, airRequest, KERNEL_GASES } from "./atmosphere.ts";
 export type { Air, AirFacts } from "./atmosphere.ts";
 export type { GlobeRun, GlobeRunOptions, GlobeStatus } from "./runtime.ts";
@@ -100,6 +103,8 @@ export async function startStation(...a: Parameters<typeof import("./gpu-station
 
 export { curveDrop, decoration, descentTrack, floorFromRefusal, groundColours, groundMesh, heightAt as groundHeightAt, horizonDistance, levelFor, localToDir, patchKeys, patchPoint, playbackKeys, readPatch, siteFrame, tileSpot } from "./surface-patch.ts";
 export type { GroundPoint, Patch, TileKey as SurfaceTileKey } from "./surface-patch.ts";
+export { fresnel, MAX_TRAINS, readSeaOptics, SEA_STEPS, seaBody, seaWords } from "./sea.ts";
+export type { SeaOptics, WaveTrain } from "./sea.ts";
 export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunAt, sunDirection, sunTransmittance } from "./surface-sky.ts";
 export type { SurfaceFrame, SurfaceGpu, SurfaceMesh } from "./gpu-surface.ts";
 
@@ -109,8 +114,11 @@ export async function startSurface(canvas: HTMLCanvasElement) {
   return createSurfaceGpu(canvas);
 }
 // The size comparison's turning globes (3D, True, Wireframe).
-export { circleSteps, globeFrame, graticule, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
+export { circleSteps, globeFrame, graticule, bodySeconds, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
 export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";
 // A body's face in True, one door for every view (true-body.ts).
 export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
 export type { TrueBody, TrueLook } from "./true-body.ts";
+// The stars over a landing site and the eye's adaptation (night-sky.ts).
+export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";
+export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";

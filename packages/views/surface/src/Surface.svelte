@@ -22,7 +22,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { constant, DEFAULT_VIEW, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params, follow }: { ctx?: ViewContext; scene?: SystemScene; params: Record<string, Json>; follow?: PlayerContext } = $props();
@@ -49,7 +49,7 @@
 
   // ── The world: map tiles, landmarks, air, star ─────────────────────────────────────────────
   /** The world as drawn, with (on the GM's screen) what its clock needs: its spin, its year and what goes round the star. */
-  type World = LandingWorld & { air: Air | null; spin_s?: number; orbit_s?: number; orbiter?: string };
+  type World = LandingWorld & { air: Air | null; spin_s?: number; orbit_s?: number; orbiter?: string; host_lsun?: number; orbit_m?: number };
   let tiles = $state<SurfaceTile[] | null>(null);
   let landmarks = $state<Landmark[]>([]);
   let world = $state<World | null>(null);
@@ -91,6 +91,7 @@
       let star_k = 0;
       let star_r = 0;
       let star_m = 0;
+      let star_l = 0;
       // The body going round the star: the world itself, or the planet a moon circles (its year sets the seasons).
       let orbiter = sub.address;
       for (let i = 0; host && i < 6; i++) {
@@ -99,6 +100,8 @@
           star_k = h["star.effective_temperature"] as number;
           star_r = Number(h["body.radius"] ?? 0);
           star_m = Number(h["body.mass"] ?? 0);
+          // Its light: the kernel's luminosity, else Stefan and Boltzmann's from its size and temperature.
+          star_l = typeof h["star.luminosity"] === "number" ? (h["star.luminosity"] as number) : 4 * Math.PI * star_r * star_r * constant("sigma_SB") * star_k ** 4;
           break;
         }
         dist = Number(h["orbit.semi_major_axis"] ?? dist);
@@ -132,6 +135,8 @@
         ...(spin ? { spin_s: tiltDeg > 90 ? -Math.abs(spin) : spin } : {}),
         ...(gm > 0 && orbitA > 0 ? { orbit_s: 2 * Math.PI * Math.sqrt((orbitA * orbitA * orbitA) / gm) } : {}),
         orbiter,
+        ...(star_l > 0 ? { host_lsun: star_l / constant("L_sun") } : {}),
+        ...(orbitA > 0 ? { orbit_m: orbitA } : {}),
       };
       landerPick = untrack(() => partyHere) ? "party" : suggestLander(world.pressure_bar, world.t_k);
       const lm: Landmark[] = marks.get(key) ?? (await ctx!.session.surfaceLandmarks(sys, sub.address).then((r) => (r.ok ? r.landmarks : [])));
@@ -245,6 +250,8 @@
     });
   });
   const seaNow = $derived<LandingSea | null>(watching ? (show?.sea ?? null) : seaRead);
+  // The liquid's own numbers (W-sea2 to W-sea4), read once per sea; the words say what the kernel has not sent yet.
+  const seaOptics = $derived(seaNow?.optics ? readSeaOptics(seaNow.optics) : null);
 
   // ── The ground round the site ─────────────────────────────────────────────────────────────
   let phase = $state<"choose" | "loading" | "flying" | "down">("choose");
@@ -382,6 +389,44 @@
     const orb = world.orbiter ? scene!.subjects.find((x) => x.address === world!.orbiter) : undefined;
     return sunAt({ tilt_deg: world.tilt_deg, orbit_phase_deg: orb?.orbit?.phase_deg ?? 0, ...(world.spin_s ? { spin_s: world.spin_s } : {}), ...(world.orbit_s ? { orbit_s: world.orbit_s } : {}), t_s: ctx!.workspace.now_yr * constant("yr_julian"), lon_deg: site.lon });
   });
+  // The stars over the site at night (True): the kernel's sky from this system, turned onto the site's sky round the
+  // same pole as the sun (night-sky.ts), read once per system. The eye adapts to the light about it, so they show
+  // when the sky is dark.
+  const STAR_LIMIT = 6.5;
+  const SQUARE: SiteSkyFrame = { to_galactic: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] };
+  let skyRead = $state<{ system: string; stars: SiteSkyStar[]; frame: SiteSkyFrame } | null>(null);
+  $effect(() => {
+    const sys = scene?.system;
+    if (!sys || !ctx || look !== "true" || skyRead?.system === sys) return;
+    untrack(() =>
+      void (async () => {
+        // From this system's own place when the kernel knows it; otherwise the Sun's sky, laid square on the system's
+        // frame (its turn against the galaxy is not on record: fudge register, "Stars over the site at night").
+        const ask = { limit_mag: STAR_LIMIT, band: "V", bands: ["B", "V"] };
+        let r = await ctx!.session.skyFromHere({ ...ask, observer: sys });
+        if (!r.ok) r = await ctx!.session.skyFromHere(ask);
+        const sky = r.ok ? (r.sky as { frame?: unknown; stars?: { dir: number[]; luminosity_lsun: number; distance_pc: number; teff_k?: number; components?: { teff_k: number }[] }[] }) : null;
+        if (!sky?.stars) return;
+        const frame = sky.frame && typeof sky.frame === "object" && Array.isArray((sky.frame as SiteSkyFrame).to_galactic) ? (sky.frame as SiteSkyFrame) : SQUARE;
+        skyRead = { system: sys, frame, stars: sky.stars.map((x) => ({ dir: [x.dir[0]!, x.dir[1]!, x.dir[2]!], luminosity_lsun: x.luminosity_lsun, distance_pc: x.distance_pc, teff_k: x.teff_k ?? x.components?.[0]?.teff_k ?? 5800 })) };
+      })(),
+    );
+  });
+  const siteStars = $derived.by(() => {
+    if (!skyRead || !world || !site || !world.host_lsun || !world.orbit_m) return null;
+    const orb = world.orbiter ? scene!.subjects.find((x) => x.address === world!.orbiter) : undefined;
+    const list = starsOverSite({ stars: skyRead.stars, frame: skyRead.frame, tilt_deg: world.tilt_deg, orbit_phase_deg: orb?.orbit?.phase_deg ?? 0, sun_hour_deg: sunHour, lat_deg: site.lat, retrograde: (world.spin_s ?? 0) < 0, host_lsun: world.host_lsun, orbit_m: world.orbit_m });
+    const dirs = new Float32Array(list.length * 3);
+    const light = new Float32Array(list.length * 3);
+    list.forEach((x, i) => {
+      const c = linear(thermalColour(x.teff_k));
+      dirs.set(x.dir, i * 3);
+      light.set([c[0] * x.share, c[1] * x.share, c[2] * x.share], i * 3);
+    });
+    return { key: `${skyRead.system}|${site.lat}|${site.lon}|${sunHour}|${sunDecl}`, dirs, light };
+  });
+  // The exposure last drawn at, for the page's marks (tests read the eye opening up at night).
+  let seenExposure = $state(6);
   const wrapDeg = (d: number) => ((((d + 180) % 360) + 360) % 360) - 180;
   const sunHour = $derived(watching ? (show?.hour_deg ?? hour) : clock ? wrapDeg(clock.hour_deg + shift) : hour);
   const sunDecl = $derived(watching ? (show?.decl_deg ?? 0) : (clock?.declination_deg ?? 0));
@@ -548,11 +593,13 @@
         scale_height_m: air?.scale_height_m ?? 8000,
         radius_m: world.radius_m,
         sun_radius: world.sun_radius,
-        exposure: 6,
+        // The eye adapts: a dark sky opens it up until the stars show (night-sky.ts).
+        exposure: (seenExposure = look === "true" ? adaptedExposure(6, { sun_z: sun[2], tau_green: air ? air.zenith_depth[1] : 0, radius_m: world.radius_m, scale_height_m: air?.scale_height_m ?? 8000 }) : 6),
+        ...(look === "true" && siteStars ? { stars: siteStars } : {}),
         ground: tok("--sse-ground"),
         ink: tok("--sse-ink"),
         contour_m: contourFor(eye[2] - siteZ),
-        ...(seaNow ? { sea: { wave_m: seaNow.wave_m, period_s: seaNow.period_s, dir_rad: seaNow.wind_m_s < 0 ? Math.PI : 0, gravity_m_s2: world.gravity_m_s2 ?? plan?.gravity_m_s2 ?? 9.8, tide_m: seaNow.tide_m, time_s: now / 1000 } } : {}),
+        ...(seaNow ? { sea: { wave_m: seaNow.wave_m, period_s: seaNow.period_s, dir_rad: seaNow.wind_m_s < 0 ? Math.PI : 0, gravity_m_s2: world.gravity_m_s2 ?? plan?.gravity_m_s2 ?? 9.8, tide_m: seaNow.tide_m, time_s: now / 1000, ...(seaOptics ? { optics: seaOptics.optics } : {}) } } : {}),
       });
     } else if (using === "canvas" && line) drawLines(line, eye, fwd);
   }
@@ -667,7 +714,7 @@
   );
 </script>
 
-<section class="surface" bind:this={host} data-surface data-watching={watching || undefined} data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""}>
+<section class="surface" bind:this={host} data-surface data-watching={watching || undefined} data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""} data-stars={siteStars ? siteStars.dirs.length / 3 : 0} data-exposure={Math.round(seenExposure)}>
   {#if watching && !show}
     <p class="quiet" data-surface-waiting>Waiting for the game master to send a landing.</p>
   {:else if !subject || subject.kind === "star"}
@@ -768,7 +815,7 @@
     <p class="note quiet" data-ground-note>
       The ground is the kernel's to {near ? Math.round(near.spacing_m) : "?"} m (its fact floor here); finer than that within {fmtM(DETAIL_HALF)} of the site it is decoration sized to the site's roughness. You can walk {fmtM(WALK_HALF)} from where you landed; further means taking off.
       {#if world && !world.air}No air: the sky is black and nothing dims the far ground.{:else}Sky from single scattering in the kernel's air optics.{/if}
-      {#if seaNow}{seaNow.line ?? ""}{seaNow.line ? "." : ""} The sea is drawn as a few wave trains of that height and period round the wind; the tide stands {Math.abs(seaNow.tide_m).toFixed(2)} m {seaNow.tide_m >= 0 ? "above" : "below"} mean sea level.{/if}
+      {#if seaNow}{seaNow.line ?? ""}{seaNow.line ? "." : ""} {seaOptics ? `${seaWords(seaOptics.optics, seaOptics.missing)} ` : ""}{seaOptics?.optics.trains ? `The sea is drawn as the kernel's own ${seaOptics.optics.trains.length} wave trains for this liquid` : "The sea is drawn as a few wave trains of that height and period round the wind"}{seaOptics?.optics.whitecap_fraction ? `, white with froth over ${Math.round(seaOptics.optics.whitecap_fraction * 100)}% of it` : ""}; the tide stands {Math.abs(seaNow.tide_m).toFixed(2)} m {seaNow.tide_m >= 0 ? "above" : "below"} mean sea level.{/if}
       {#if watching}The sun stands where the game master's clock puts it, local time {localTime}.{:else if clock}The sun stands where {subject?.label}'s spin and its place on its orbit put it at the time in view: local time {localTime}{clock.solar_day_s === Infinity ? " (it keeps one face to its star)" : ""}, declination {sunDecl.toFixed(1)}°{shift ? `, moved ${Math.round(shift / 15)} h by hand` : ""}.{:else}The world's spin is not on record, so the hour is chosen by hand and the sun stands as at an equinox.{/if} Drawn on {reason}.
     </p>
     {/if}

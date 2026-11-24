@@ -8,7 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go, more } from "./nav.mjs";
+import { go, more, view } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -68,8 +68,15 @@ try {
     await shot(gm, "v9w-web-3d");
     await style("True").click();
     await gm.waitForSelector("[data-web-3d][data-look='true']");
+    // Light from haloes: True shines by the cube's galaxies once they are read.
+    await gm.waitForFunction(() => Number(document.querySelector("[data-web-3d]")?.getAttribute("data-galaxies") ?? 0) > 1000, null, { timeout: 90000 });
+    assert.match(await gm.locator("[data-web-3d] .note").innerText(), /galaxies, the haloes above/);
     await gm.waitForTimeout(500);
     await shot(gm, "v9w-web-true");
+    await view(gm, "HUD", "On");
+    await gm.waitForTimeout(300);
+    await shot(gm, "v9w-web-true-hud");
+    await view(gm, "HUD", "Off");
     await style("Chart").click();
     await gm.waitForSelector("[data-web-3d]", { state: "detached" });
     await foam.locator("[data-extent='200']").click();
@@ -116,7 +123,7 @@ try {
 
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`${name}: foam map from web_slice: drawn, four environments, 3D and True cube with voids most of the space and less of the matter, sharpens with time, plays, environments, sizes, night chart, phone`);
+    console.log(`${name}: foam map from web_slice: drawn, four environments, 3D and True cube with voids most of the space and less of the matter, True lit by its galaxies, sharpens with time, plays, environments, sizes, night chart, phone`);
   }
 } finally {
   server.kill();

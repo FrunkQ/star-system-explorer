@@ -167,6 +167,8 @@ export interface SliceAsk {
   centre?: [number, number, number];
   extent_mpc: number;
   n: number;
+  /** With the cube's galaxies: the smallest halo drawn, solar masses (never below the pack's floor). */
+  galaxy_floor_msun?: number;
 }
 
 export interface WebSlice {
@@ -209,6 +211,23 @@ export interface WebCube {
     /** The room each parcel takes today as a share of the room it started in: over 1 in voids. */
     room: number[];
   };
+  model: string[];
+}
+
+/**
+ * The galaxies in a cube of the web (kernel `web_slice` with `cube` and `haloes`, V9w light from haloes): G2's haloes
+ * from the pack's floor up whose matter started inside the cube, moved by the cube's own step, each with its G3
+ * galaxy's stars and star formation then.
+ */
+export interface WebGalaxies {
+  t_gyr: number;
+  z: number;
+  now_gyr: number;
+  centre: [number, number, number];
+  extent: number;
+  galaxies: { position: [number, number, number]; halo_msun: number; stars_msun: number; sfr_msun_yr: number; quenched: boolean }[];
+  /** Smallest halo drawn, solar masses (pack `web_light.floor_msun`). */
+  galaxy_floor_msun: number;
   model: string[];
 }
 

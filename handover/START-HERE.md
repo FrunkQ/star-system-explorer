@@ -85,6 +85,12 @@ In his words: "try and do everything in the physics chain blocks... other than B
 - Each block or Big Block has a UI element that makes sense to visualise what it does.
 - Logic hidden in Rust that could be a flow is listed in `docs/fudges.md` (section "Candidates to move into flows") until it moves.
 
+## Banked ideas (not accepted, nothing queued)
+
+Design notes kept for the future. They are **not** rulings and no builder starts on them without Alex's own yes.
+
+- `design/SSE4-outside-models-design.md` (track OM, banked 24 Nov 2026): a scientist's own model feeding a physics flow through recorded answers, and the kernel as a published module. Alex: "find a proper use case first". Revisit when a real use case appears.
+
 ## Where we are
 
 Since 23 Nov 2026 the state of each track is its own small file in `handover/status/`, edited only by the thread that owns it (Alex's yes to question 5 of `design/SSE4-coming-together.md`). This page is the index and the standing rules. **Do not add package rows here.**
@@ -103,11 +109,12 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | V8, voyages, the flight log, travel panels, HW |
 | `status/galaxy.md` (arrives with PR 431) | Build galaxy charts and histories (split from travel) | U6, U8, V9, GH8, V3 gap 39 |
-| none yet | Build cosmic web view | the cosmic web view (V9w follow-ups) |
+| `status/cosmic-web.md` | Build cosmic web view | the web cube in 3D and True, light from haloes (V9w follow-ups) |
 | `status/light.md` | Build light and nebulae | O, the light side of Y, MF6, MF7, MF9, ND2 |
 | `status/weather.md` | Build shared climate and weather | W, seas (colour, waves, whitecaps) |
 | `status/data-sheet.md` | Build the master matter data sheet | MP data waves, MP22, SOL, DM1, DM6, RK1, RK2, RK10, citation checks |
 | `status/renderer.md` | Build photoreal renderer | R, the drawing side of Y5 and MF14a, V14 |
+| `status/quality-tiers.md` | Build quality tiers and speed probe (split from the renderer) | VP4, VP5: the `gpu-ultra` tier, the speed probe and placement by measured speed, heat watch, Quality choice, drawing bench rows; recipes and the governor on every True view; sharpen at rest |
 | `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
 | `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map, pulsating stars, ship clocks); XO is a code only, never shown in the product |
 | `status/true-air.md` (arrives with PR 444) | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
@@ -120,7 +127,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/traveller.md` | Build Traveller pack | X3, TG8, TG9, TG11, TG13, MP16 |
 | `status/manifest.md` | Build ship manifest and crew roster | MC |
 | `status/atomic-rockets.md` (arrives with PR 447) | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
-| `status/paper-spacecraft.md` (arrives with PR 438) | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
+| `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
