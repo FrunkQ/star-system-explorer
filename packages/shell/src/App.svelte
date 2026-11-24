@@ -41,6 +41,7 @@
   import { programTarget, ruleEntries, sifterEntries, sifterTarget } from "../../agents/src/orac-rules.ts";
   import { blockEntries, boxTarget, tableTarget } from "../../agents/src/orac-blocks.ts";
   import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
+  import { triggerEntries, triggerTarget } from "../../agents/src/orac-triggers.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -1074,9 +1075,10 @@
         boxTarget(s, ws),
         tableTarget(s, ws),
         substanceTarget(s, ws),
+        triggerTarget(s, ws),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
-      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...handbookEntries()],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...handbookEntries()],
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
