@@ -1,0 +1,96 @@
+{
+  "about": "Sol today craft, RS2 part 2 (first batch, 24 Nov 2026): figures read from NASA's NSSDCA Master Catalog pages, one source per craft, quoted in `as_written`. Field names follow SSE4-atomic-rockets-plan.md section 11.3 (power[], engines[], masses in tonnes). Launch vehicles, stages and their engines are in parts.json. A figure marked `derived` is worked out here from two cited ones and says how. Craft with no NSSDCA page that could be read (Cassini, SNAP-10A, ISS) and craft NSSDCA does not describe in parts (STS-1, Falcon 9, V-2) come from their own primary sources in the next batch.",
+  "craft": [
+    {
+      "id": "voyager-2", "name": "Voyager 2", "cospar": "1977-076A",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1977-076A",
+      "dimensions": {"bus_across_flats_m": 1.78, "bus_height_m": 0.47, "high_gain_dish_m": 3.66, "science_boom_m": 2.5, "magnetometer_boom_m": 13.0},
+      "power": [
+        {"id": "mhw-rtg", "kind": "radioisotope", "count": 3, "mass_t": 0.039, "size_m": {"diameter": 0.406, "length": 0.508},
+         "electric_w": 470, "electric_w_is": "all three together, at launch",
+         "measured": [{"date": "1977-08-20", "electric_w": 470}, {"date": "1997-01-01", "electric_w": 335}],
+         "law": {"kind": "decay", "half_life_y": 39.7, "since": "1977-08-20", "mark": "derived", "why": "the electric output halves in 19.37 y (20 Aug 1977 to 1 Jan 1997) x ln 2 / ln(470/335) = 39.7 y: faster than plutonium-238 alone, because the thermocouples age too"},
+         "as_written": "initial output of the RTGs on Voyager was approximately 470 W ... fallen off to approximately 335 W by the beginning of 1997; each RTG ... 40.6 cm in diameter, 50.8 cm in length, and weighed 39 kg"}
+      ]
+    },
+    {
+      "id": "apollo-11-csm", "name": "Apollo 11 Columbia (CSM 107)", "cospar": "1969-059A",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059A",
+      "mass_t": {"launch": 28.801, "command_module": 5.557, "service_module": 23.244},
+      "dimensions": {"length_m": 11.0, "diameter_m": 3.9, "cm_height_m": 3.65, "cm_crew_volume_m3": 6.17},
+      "heat_shield": {"kind": "ablative", "material": "phenolic epoxy resin in brazed stainless steel honeycomb", "thickness_m": [0.018, 0.069]},
+      "landing": {"chutes": [{"count": 3, "diameter_m": 25.4, "role": "main"}, {"count": 2, "diameter_m": 5.0, "role": "drogue"}]},
+      "burns": [{"event": "lunar orbit insertion 1", "start_utc": "1969-07-19 17:21:50", "duration_s": 357.5},
+                {"event": "trans-Earth injection", "start_utc": "1969-07-22 04:54:42", "duration_s": 150, "note": "NSSDCA writes 04:54:42 and 'a 2 1/2 minute firing'; the mission report's time is checked in RS3"}],
+      "as_written": "CSM mass of 28,801 kg was the launch mass including propellants and expendables, of this the Command Module (CM 107) had a mass of 5557 kg and the Service Module (SM 107) 23,244 kg"
+    },
+    {
+      "id": "apollo-11-eagle", "name": "Apollo 11 Eagle (LM-5)", "cospar": "1969-059C",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C",
+      "mass_t": {"launch": 15.103, "ascent_dry": 2.445, "ascent_propellant": 2.376, "descent_dry": 2.034, "descent_propellant": 8.248},
+      "dimensions": {"descent_stage_across_m": 4.2, "descent_stage_thick_m": 1.7, "ascent_stage_height_m": 2.8, "ascent_crew_volume_m3": 6.65},
+      "engines": [
+        {"id": "lm-descent-engine", "thrust_n": 45000, "thrust_is": "maximum, deep throttling", "mark": "cited, rounded ('about')"},
+        {"id": "lm-ascent-engine", "thrust_n": 15000, "thrust_is": "fixed", "mark": "cited, rounded ('about')"},
+        {"id": "lm-rcs", "thrust_n": 450, "count": 16}
+      ],
+      "landed": {"lat_deg": 0.67416, "lon_deg": 23.47314, "frame": "DE 421 mean Earth/polar axis, from LRO images"},
+      "burns": [{"event": "descent orbit insertion", "start_utc": "1969-07-20 19:08", "duration_s": 30},
+                {"event": "powered descent", "start_utc": "1969-07-20 20:05", "duration_s": 756.3}],
+      "fate": "ascent stage: not known, assumed to have hit the Moon within 1 to 4 months",
+      "as_written": "total mass of the LM ascent and descent stages including propellants 15103 kg; ascent stage dry 2445 kg, 2376 kg of propellant; descent stage dry 2034 kg, 8248 kg of propellant; descent engine maximum thrust of about 45,000 N; ascent engine about 15,000 N"
+    },
+    {
+      "id": "dawn", "name": "Dawn", "cospar": "2007-043A",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
+      "mass_t": {"dry": 0.7471, "launch": 1.2177, "xenon": 0.425, "hydrazine": 0.0456},
+      "dimensions": {"bus_m": [1.64, 1.27, 1.77], "array_span_m": 19.7, "high_gain_dish_m": 1.52},
+      "power": [
+        {"id": "dawn-arrays", "kind": "solar-array", "count": 2, "panel_m": [2.3, 8.3], "area_m2": 38.18, "area_mark": "derived: 2 x 2.3 m x 8.3 m",
+         "electric_w": 10300, "law": {"kind": "sunlight", "ref_flux_w_m2": "1 au"}, "end_of_life_w_at_3_au": 1300,
+         "cells": "InGaP/InGaAs/Ge triple junction",
+         "as_written": "two 2.3 x 8.3 meter solar arrays ... provide 10.3 kW at 1 AU (1.3 kW at end-of-life at 3 AU)"}
+      ],
+      "engines": [
+        {"id": "NSTAR-30", "count": 3, "fuels": ["xe"], "energy_from": "electric", "electric_w": 2600, "thrust_n": 0.092,
+         "isp_range_s": [1900, 3200],
+         "jet_power_check": {"efficiency": 0.555, "mark": "derived", "why": "0.5 x 0.092 N x (3200 s x g0) / 2600 W at full power; g0 from the master data sheet"},
+         "as_written": "maximum thrust at 2.6 kW input power of 92 mN and a specific impulse of 3200 to 1900 s"},
+        {"id": "dawn-hydrazine-thruster", "count": 12, "fuels": ["n2h4"], "thrust_n": 0.9}
+      ],
+      "loads": [{"name": "thermal control at 3 au", "electric_w": 200}, {"name": "X-band travelling wave tube amplifier", "electric_w": 100}]
+    },
+    {
+      "id": "juno", "name": "Juno", "cospar": "2011-040A",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-040A",
+      "mass_t": {"nssdca_listed": 1.5, "radiation_vault": 0.15},
+      "mass_note": "NSSDCA's 1500 kg is not the launch mass (about 3.6 t with propellant); the launch and dry masses come from the press kit in the next batch",
+      "dimensions": {"bus_diameter_m": 3.5, "bus_height_m": 3.5, "span_m": 20.0},
+      "power": [
+        {"id": "juno-arrays", "kind": "solar-array", "count": 11, "electric_w": 18000, "law": {"kind": "sunlight", "ref_flux_w_m2": "1 au"},
+         "at_jupiter_w": 400, "cells": "ultra triple junction GaAs under thick glass",
+         "as_written": "The solar panels will produce a total of 18 kW at Earth and 400 W initially at Jupiter"}
+      ],
+      "engines": [{"id": "Leros 1b", "count": 1}],
+      "burns": [{"event": "Jupiter orbit insertion", "end_utc": "2016-07-05 03:53", "duration_s": 2100, "as_written": "35 minute engine burn"}]
+    },
+    {
+      "id": "curiosity", "name": "Curiosity (Mars Science Laboratory)", "cospar": "2011-070A",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-070A",
+      "mass_t": {"rover_at_least": 0.75},
+      "dimensions": {"rover_length_m": 2.8},
+      "power": [{"id": "mmrtg", "kind": "radioisotope", "count": 1, "electric_w": 125, "electric_w_is": "at the start of the mission",
+                 "as_written": "radioisotope thermoelectric generator (RTG) which produces 125 W at the start of the mission"}],
+      "entry": {"interface_altitude_m": 125000, "protection": "aeroshell and heat shield"}
+    },
+    {
+      "id": "jwst", "name": "James Webb Space Telescope", "cospar": "2021-130A",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2021-130A",
+      "mass_t": {"launch": 6.5},
+      "optics": {"aperture_m": 6.6, "segments": 18, "segment_flat_to_flat_m": 1.32, "coating": "gold on beryllium"},
+      "sunshield_m": [10, 22], "sunshield_mark": "cited, rounded ('roughly')",
+      "instruments": ["NIRCam", "NIRSpec", "near-IR tunable filter imager", "MIRI"],
+      "as_written": "Total mass of JWST is 6500 kg, including the station-keeping propellant ... 6.6 meter diameter aperture ... sunshield roughly 10 x 22 meters"
+    }
+  ]
+}

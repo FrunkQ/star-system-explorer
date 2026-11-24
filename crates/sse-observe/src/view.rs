@@ -188,6 +188,10 @@ pub struct Campaign {
     /// planet beats a grant on its star.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tag_grants: Vec<TagGrant>,
+    /// The views that stand for GM only, Heard of and Known (SV1); any left
+    /// out are found from the views (`known::Landmarks::resolve`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub landmarks: Option<crate::known::LandmarkViews>,
 }
 
 /// "Bodies tagged `tag` are shown to `audience` through view `view`."
@@ -215,7 +219,7 @@ pub fn no_tags() -> &'static BTreeMap<Address, BTreeSet<String>> {
     &EMPTY
 }
 
-fn grant_field(audience: &str) -> String {
+pub(crate) fn grant_field(audience: &str) -> String {
     if audience == EVERYONE {
         "observe.view".into()
     } else {
