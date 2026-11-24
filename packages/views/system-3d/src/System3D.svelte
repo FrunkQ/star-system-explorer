@@ -17,8 +17,9 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
-  import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
+  import { constant, SEEN_ELEVATION, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
+  import { rangeRingLines } from "./range-rings.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
@@ -43,6 +44,7 @@
     fields = new Map(),
     pencil,
     reframe = 0,
+    range = [],
   }: {
     bands?: Band3D[];
     bodies: Body3D[];
@@ -78,6 +80,8 @@
     pencil?: (id: string) => boolean;
     /** Bumped each time a fixed "Seen from" is picked: the camera goes back to that framing (turn, zoom and slide). */
     reframe?: number;
+    /** Range rings (RK12), drawn with the HUD round each holder (a body id) in this frame. */
+    range?: readonly { holder: string; rings: readonly RangeRing[] }[];
   } = $props();
   const trueBand = $derived(band === "xray" || band === "infrared" ? band : "visible");
   const overlay = $derived(hud);
@@ -247,6 +251,23 @@
   // Belts and the Oort cloud belong to the star's frame; a sphere far out is drawn just past the outermost orbit.
   const bandLocal = $derived(lay && centreId === root ? bands.flatMap((b) => bandLines(b, lay!.dist, 11.5, SEG).map((pts) => ({ b, pts }))) : []);
   const shellLocal = $derived(lay && centreId === root ? bands.map((b) => ({ b, pts: shellDots(b, lay!.dist, 14) })).filter((x) => x.pts.length) : []);
+  // Range rings (RK12): metres from the frame's centre into display units by the frame's own scale (log or Real), so
+  // a ring round a world bends as the orbits do; loops kept in frame-local units, projected by each tier.
+  const rangeLocal = $derived.by(() => {
+    if (!lay || !range.length) return [];
+    const toLocal = (p: readonly [number, number, number]): Vec3 => {
+      const r = Math.hypot(p[0], p[1]);
+      const d = r > 0 ? lay!.dist(r) : 0;
+      return [r > 0 ? (d * p[0]) / r : 0, r > 0 ? (d * p[1]) / r : 0, 0];
+    };
+    return range.flatMap((g) => {
+      const b = g.holder === lay!.centre.id ? null : lay!.placed.find((x) => x.id === g.holder);
+      if (b === undefined) return [];
+      const t = ((b?.phase_deg ?? 0) * Math.PI) / 180;
+      const centre: [number, number, number] = b ? [b.a_m! * Math.cos(t), b.a_m! * Math.sin(t), 0] : [0, 0, 0];
+      return rangeRingLines(g.rings, centre, toLocal, { ring: "accent", odds: "faint" });
+    });
+  });
   const rel = (p: [number, number, number]): Vec3 => [Math.fround(p[0] - cam.eye[0]), Math.fround(p[1] - cam.eye[1]), Math.fround(p[2] - cam.eye[2])];
   const pins = $derived(shown.map((b) => ({ b, p: project(t, cam, b.id) })));
 
@@ -450,7 +471,7 @@
           });
         gpu.draw({
           items,
-          rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...magRings(fieldOut, fieldIn, faint)],
+          rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...(hud ? rangeLocal.map((l) => ({ points: l.points.map((q) => rel(q as [number, number, number])), colour: l.colour === "accent" ? accent : faint })) : []), ...magRings(fieldOut, fieldIn, faint)],
           // Belts as haze in visible light only: in the other bands they give off next to nothing a screen could show.
           dots: trueBand === "visible" && !mag ? beltHazes.map(({ pts }) => ({ points: pts.map(rel), colour: BELT_DUST, size: 1.5 })) : [],
           glows: halo ? [halo] : [],
@@ -467,6 +488,7 @@
       gpu.draw({
         items: shown.map((b) => ({ id: b.id, rel: relOf(b.id), radius: sizeOf(b, b === lay!.centre), colour: colour(b), ring: b.mark?.ring ?? false, selected: b.id === selection })),
         rings: [...magRings(fieldOut, fieldIn, faint), ...(!hud ? [] : [
+          ...rangeLocal.map((l) => ({ points: l.points.map((q) => rel(q as [number, number, number])), colour: l.colour === "accent" ? accent : faint })),
           ...bandLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : faint })),
           ...lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })),
         ])],
@@ -507,6 +529,20 @@
           const p = project(t, cam, lay.centre.id, q);
           if (p) g.fillRect(p.x - 0.75, p.y - 0.75, 1.5, 1.5);
         }
+      }
+      // Range rings (RK12) with the HUD, as projected loops.
+      for (const l of hud ? rangeLocal : []) {
+        g.beginPath();
+        let started = false;
+        for (const q of l.points) {
+          const p = project(t, cam, lay.centre.id, q as [number, number, number]);
+          if (!p) continue;
+          if (started) g.lineTo(p.x, p.y);
+          else (g.moveTo(p.x, p.y), (started = true));
+        }
+        g.strokeStyle = l.colour === "accent" ? accent : faint;
+        g.lineWidth = 1;
+        g.stroke();
       }
       // Orbits as projected polylines, in the same camera-relative arithmetic.
       for (const b of hud ? lay.placed : []) {
