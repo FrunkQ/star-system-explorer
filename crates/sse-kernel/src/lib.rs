@@ -711,6 +711,43 @@ fn json_to_value(v: &serde_json::Value) -> Result<Value, String> {
     serde_json::from_value::<Value>(v.clone()).map_err(|e| e.to_string())
 }
 
+/// The facts an event set or unset at exactly `at`, for a history that asked for its changes.
+fn fact_changes(p: &sse_chronicle::Payload, at: &Address) -> Vec<FactChange> {
+    let mut out: Vec<FactChange> = p
+        .set
+        .get(at)
+        .into_iter()
+        .flatten()
+        .map(|(field, v)| {
+            let value = serde_json::to_value(v).unwrap_or(serde_json::Value::Null);
+            let large = value.to_string().len() > FactChange::LARGE;
+            FactChange {
+                field: field.clone(),
+                value: if large {
+                    serde_json::Value::Null
+                } else {
+                    value
+                },
+                unset: false,
+                large,
+            }
+        })
+        .collect();
+    out.extend(
+        p.unset
+            .get(at)
+            .into_iter()
+            .flatten()
+            .map(|field| FactChange {
+                field: field.clone(),
+                value: serde_json::Value::Null,
+                unset: true,
+                large: false,
+            }),
+    );
+    out
+}
+
 fn source_label(s: &Option<String>) -> Result<SourceLabel, String> {
     Ok(match s.as_deref().unwrap_or("authored") {
         "catalogued" => SourceLabel::Catalogued,
@@ -2498,7 +2535,7 @@ impl Kernel {
                     }),
                 }
             }
-            Request::History { address } => {
+            Request::History { address, changes } => {
                 let a: Address = address
                     .parse()
                     .map_err(|e| err("bad_address", format!("{e}")))?;
@@ -2518,6 +2555,7 @@ impl Kernel {
                             .unwrap()
                             .to_string(),
                         subject: e.body.subject.iter().map(|s| s.to_string()).collect(),
+                        changes: (changes == Some(true)).then(|| fact_changes(&e.body.payload, &a)),
                     })
                     .collect();
                 Response::History { events }
