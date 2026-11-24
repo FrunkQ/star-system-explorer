@@ -392,13 +392,15 @@ Alex, 24 Nov 16:02: "how do you actually define a setup... a wizard to help buil
 A **layout** is what a player screen is made of. It is today's screen document (`sse.screen/1`: Bridge, Tarn survey report, Bridge in 3D, Landing). "Layout" is the word used here so that "screen" can mean the piece of glass.
 
 1. **Listed here.** Each role's heading names its layout ("Bridge ▾"). Pressing it lists every layout the campaign has: shipped, from packs, and made. Choosing one changes that role's screens at once. A preset may also name a layout, so "Landing at Hollin Flats" can bring the Landing layout with it and going back returns the role to its own.
-2. **Built here, from bookmarks.** "+ New layout…" at the foot of that list opens the builder in place, with a live preview of the screen beside it. Four steps, each optional:
+2. **Edited here, in one editor.** Alex, 24 Nov 16:36: "New layout is actually edit layout - the inputs being a bookmark or a file/obs link", and "we need to try and simplify as we go. And order dragging for the boxes." So there is no separate wizard for a new layout. "Edit this layout…" and "+ New layout…" in that list open the same editor in place, with a live preview of the screen beside it; new is the editor on a blank copy. It has four lines, each optional:
    - **Arrangement:** One picture, Picture and side panels, Two by two, Report page, Blank.
-   - **On it: your bookmarks.** Each panel is one bookmark. One special entry, **"Whatever is sent"**, is the panel that shows what a send or a preset brings; a layout with that panel works with every preset, and the bookmarks beside it stay put (the infrared globe always in the corner, the survey card always down the side). Sizes are dragged in the preview.
+   - **On it.** Each box takes one input, and there are only three kinds: **a bookmark** (anything in SSE: a place, an instrument, a card), **a file** (a picture, a sound, a film, from a pack or the GM's own), or **a link** (a web address: an OBS or camera feed on this computer, another program, a tabletop). "+ Where I am now" bookmarks the GM's view and puts it on. One special input, **"Whatever is sent"**, is the box that shows what a send or a preset brings; a layout with that box works with every preset, and the boxes beside it stay put.
    - **Look:** one of the campaign's looks, or "New look…".
-   - **Name it**, and Save gives it to the role it was opened from.
-   - **Orac** can do the arranging from a sentence ("the wreck big, the survey card beside it, amber"), choosing among the bookmarks that exist. Orac already has a screen request of this kind on main.
-3. **From where the GM is.** "+ From where I am now" in the same list bookmarks the GM's view and opens the builder with it already on the layout. This is "you as a GM get a cool screen": one press, then name it.
+   - **Name**, and Save gives it to the role it was opened from.
+   - **Boxes are reordered and resized by dragging them in the preview.** Dragging one box onto another swaps them.
+   - **Orac** can do the arranging from a sentence ("the wreck big, the survey card beside it, amber"), choosing among the inputs that exist.
+
+**Simplify as we go** is a rule for this track from here on: one editor per thing (the monitor edits a preset, this editor edits a layout, the look card edits a look), a new one is the same editor on a blank copy, and anything shown in a list or a box can be dragged into another order (presets, sections, roles, screens within a role, boxes on a layout). An earlier draft's separate "+ From where I am now" entry and the Following latch are both gone under this rule.
 
 A layout holds bookmarks and never the GM's knowledge: on a player's screen each panel is drawn from what that role knows, without the GM's pencil marks.
 
@@ -563,7 +565,7 @@ Files in `packages/shell/src/run/` and `packages/ui-contract/src/`. One at a tim
 | **PB10** | Looks on the board: the look card opening here with a bookmark as its preview; look per role, the dials on role headings and screen boxes always present, the kind of fault read from the look, deliveries on arrival and hold; the transmission card as part of a look. | renderer's looks (filters, faults, deliveries) | no |
 | **PB11** | Later: camera in, on local screens only. | PB9 | no |
 | **PB12** | Play: pictures and sound as a source, from a pack, a file or a web address; "Here" as a sound destination; one asset on a Read aloud; the "Incoming transmission…" card while a sound plays on screens. | PB6 | no, but wanted |
-| **PB13** | Layouts on the board: the layout list on a role; the four-step builder with preview, its panels chosen from bookmarks, with "Whatever is sent"; "From where I am now"; a layout named by a preset. Orac's line when the agents track is ready. | PB2b, PB7; the existing screen composer | no |
+| **PB13** | Layouts on the board: the layout list on a role; one layout editor for new and existing, with preview; each box a bookmark, a file or a link, or "Whatever is sent"; boxes reordered by dragging; a layout named by a preset. Orac's line when the agents track is ready. | PB2b, PB7; the existing screen composer | no |
 | **PB14** | Later (4.2): film; a web page as a source; the tabletop with Mappadux. | PB12 | no |
 
 Asks of other threads: the renderer for the cheap Chart preview at thumbnail size, the transparent ground and the looks pieces already assigned to it; the secrets work (SV) for the eye on Reveal steps; the chart room for the Bookmarks button in the top bar.
