@@ -141,3 +141,6 @@ export type { PowerBooks, PowerLedger, PowerFlow, PowerEngine } from "./power.ts
 export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX, PICTURE_MAX, PICTURE_SIDE, checkPicture, picturesOf, shownOf, designOf, fitSide, type PictureShown } from "./picture.ts";
 export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
 export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";
+// One units engine (ED1a): every figure said and read back the same way.
+export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
+export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices } from "./figures.ts";
