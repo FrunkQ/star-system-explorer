@@ -9,9 +9,10 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
+  import NamesHere from "./NamesHere.svelte";
   import { layerWords, meaningWords, namesOnStack, sampleKinds, saysMore, sortWords, stackPacks, type Depth, type NameSample, type PackDoc, type ViewSession, type Workspace } from "../../../ui-contract/src/index.ts";
 
-  let { session, workspace, depth, offer = "" }: { session: ViewSession; workspace: Workspace; depth: Depth; offer?: string } = $props();
+  let { session, workspace, depth, offer = "", here = null }: { session: ViewSession; workspace: Workspace; depth: Depth; offer?: string; here?: { address: string; label: string } | null } = $props();
   const full = $derived(depth !== "curious");
 
   const info = $derived.by(() => {
@@ -103,6 +104,7 @@
       </dl>
     {/if}
     {#if full}<p class="muted small">A setting on a system or world names everything beneath it, and a name you type always wins.</p>{/if}
+    {#if here && onStack.schemes.length}<NamesHere {session} {workspace} address={here.address} label={here.label} {depth} />{/if}
   </section>
 
   {#if shown.schemes.length}

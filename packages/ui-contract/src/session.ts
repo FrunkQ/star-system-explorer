@@ -64,6 +64,8 @@ export interface HistoryEvent {
   at_yr: number;
   evidence: string;
   subject: string[];
+  /** The facts it set or unset at the asked address (only when asked): a value too large to send is marked `large`. */
+  changes?: { field: string; value: unknown; unset?: boolean; large?: boolean }[];
 }
 
 /** One input to a derivation, as the kernel takes it (H5.2 quantities with units). */
@@ -126,7 +128,8 @@ export interface ViewSession {
   readonly seat: Readonly<Seat>;
   readonly universe: Readonly<{ id: string; seed: string; root: string }>;
   send(intent: Intent): Promise<IntentResult>;
-  history(address: string): Promise<HistoryEvent[]>;
+  /** The events at an address, oldest first; with `changes`, each event's fact changes at exactly that address. */
+  history(address: string, opts?: { changes?: boolean }): Promise<HistoryEvent[]>;
   stateHash(at_yr?: number): Promise<string>;
   /**
    * What-if branches (U4, H6.3): a branch of the chronicle the GM edits
@@ -561,15 +564,16 @@ export class Session implements ViewSession {
     return { status: "error", code: "unexpected", message: JSON.stringify(r) };
   }
 
-  async history(address: string): Promise<HistoryEvent[]> {
-    const r = await this.#call({ op: "history", address });
+  async history(address: string, opts: { changes?: boolean } = {}): Promise<HistoryEvent[]> {
+    const r = await this.#call({ op: "history", address, ...(opts.changes ? { changes: true } : {}) });
     if (r.type !== "history") return [];
-    return (r.events as { id: string; kind: string; occurred_at_s: number; evidence: string; subject: string[] }[]).map((e) => ({
+    return (r.events as { id: string; kind: string; occurred_at_s: number; evidence: string; subject: string[]; changes?: HistoryEvent["changes"] }[]).map((e) => ({
       id: e.id,
       kind: e.kind,
       at_yr: secondsToYears(e.occurred_at_s),
       evidence: e.evidence,
       subject: e.subject,
+      ...(e.changes ? { changes: e.changes } : {}),
     }));
   }
 

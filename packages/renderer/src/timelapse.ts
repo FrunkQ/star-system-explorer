@@ -12,7 +12,7 @@ import { constant } from "../../ui-contract/src/index.ts";
 export type V3 = readonly [number, number, number];
 
 /** One raw keyframe as the kernel sends it (arrays as JSON numbers, or base64 f32 under `<name>_b64`). */
-export type RawFrame = Record<string, unknown> & { t_myr: number; sea_level_m?: number };
+export type RawFrame = Record<string, unknown> & { t_myr: number; sea_level_m?: number | null; why?: string[] };
 
 export interface FrameEvent {
   t_myr: number;
@@ -23,6 +23,8 @@ export interface FrameEvent {
   diameter_km?: number;
   plates?: number[];
   why?: string[];
+  /** Ice-age onsets only: the cells where ice starts to grow at that date (indexes into the grid), when the kernel sends them. */
+  cells?: number[];
 }
 
 export interface RawFrames {
@@ -43,8 +45,15 @@ const SMOOTH: ReadonlySet<FieldName> = new Set(["ice_m", "temp_k", "rain_m_yr", 
 
 export interface Frame {
   t_myr: number;
+  /** Sea level above the raw datum, m; 0 on a dry world (no sea at all), where `dry` is true. */
   sea_level_m: number;
+  /** No sea in this frame: every cell is land, whatever its height (the kernel sends sea_level_m null). */
+  dry: boolean;
   fields: Partial<Record<FieldName, Float32Array>>;
+  /** The kernel's line for this frame (land, ice and mean surface then). */
+  why: string[];
+  /** The lowest cell's height, m (where a dry world's colour ramp starts). */
+  low_m: number;
 }
 
 export interface TimeLapse {
@@ -123,7 +132,13 @@ export function readFrames(r: RawFrames): TimeLapse {
         const a = arrayOf(f, name, cells);
         if (a) fields[name] = a;
       }
-      return { t_myr: Number(f.t_myr), sea_level_m: Number(f.sea_level_m ?? 0), fields };
+      const dry = f.sea_level_m === null || f.sea_level_m === undefined;
+      let low_m = 0;
+      if (fields.elevation_m) {
+        low_m = Infinity;
+        for (const z of fields.elevation_m) if (z < low_m) low_m = z;
+      }
+      return { t_myr: Number(f.t_myr), sea_level_m: dry ? 0 : Number(f.sea_level_m), dry, fields, why: Array.isArray(f.why) ? f.why.map(String) : [], low_m };
     })
     .sort((a, b) => a.t_myr - b.t_myr);
   if (!frames.length) throw new Error("surface_frames: no frames");
@@ -167,6 +182,51 @@ export function seaLevelAt(tl: TimeLapse, t_myr: number): number {
   return a.sea_level_m + (b.sea_level_m - a.sea_level_m) * w;
 }
 
+/** Whether a frame near `t` has a sea at all (the nearer frame's word, as for coasts). */
+export function hasSeaAt(tl: TimeLapse, t_myr: number): boolean {
+  const { a, b, w } = bracket(tl, t_myr);
+  return !(w < 0.5 ? a : b).dry;
+}
+
+/** Whether a cell lies under the sea at a time: never on a dry world. */
+export function underSea(tl: TimeLapse, cell: number, t_myr: number): boolean {
+  if (!hasSeaAt(tl, t_myr)) return false;
+  const e = valueAt(tl, "elevation_m", cell, t_myr);
+  return e !== null && e < seaLevelAt(tl, t_myr);
+}
+
+/** The frame nearest a time (what plates, coasts and the frame's own why lines come from). */
+export function nearestFrame(tl: TimeLapse, t_myr: number): Frame {
+  const { a, b, w } = bracket(tl, t_myr);
+  return w < 0.5 ? a : b;
+}
+
+/**
+ * The ice ages the kernel dated (W9 part 2's onsets over the orbit-history
+ * window that ends at the epoch), in order, with that window: they all fall
+ * within a few million years of today, far inside the last gap between
+ * keyframes, so the timeline shows them on a strip of their own.
+ */
+export function iceAges(tl: TimeLapse): { events: FrameEvent[]; from_myr: number; to_myr: number } | null {
+  const events = tl.events.filter((e) => e.kind === "ice-age");
+  if (!events.length) return null;
+  const to_myr = tl.frames[tl.frames.length - 1]!.t_myr;
+  // The window starts at the first onset, rounded out to a tidy span so the strip reads in round thousands of years.
+  const first = events[0]!.t_myr;
+  const span = Math.max(to_myr - first, 1e-3);
+  const tidy = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100].find((x) => x >= span * 1.05) ?? span * 1.05;
+  return { events, from_myr: to_myr - tidy, to_myr };
+}
+
+/** The ice age under way at a time (the latest onset at or before it, inside the ice-age window), or null. */
+export function iceAgeAt(tl: TimeLapse, t_myr: number): FrameEvent | null {
+  const ia = iceAges(tl);
+  if (!ia || t_myr < ia.events[0]!.t_myr || t_myr > ia.to_myr) return null;
+  let at: FrameEvent | null = null;
+  for (const e of ia.events) if (e.t_myr <= t_myr) at = e;
+  return at;
+}
+
 /** Events between two times (inclusive), in order: what the scrubber marks and the player announces. */
 export function eventsBetween(tl: TimeLapse, from_myr: number, to_myr: number): FrameEvent[] {
   const lo = Math.min(from_myr, to_myr);
@@ -202,6 +262,13 @@ const LAND: Stops = [
   [1000, [158, 152, 104]],
   [3000, [150, 118, 88]],
   [6000, [236, 234, 228]],
+];
+/** Bare ground on a world with no sea, metres above the frame's lowest cell. */
+const DRY: Stops = [
+  [0, [112, 92, 76]],
+  [3000, [146, 120, 94]],
+  [8000, [172, 156, 136]],
+  [16000, [214, 206, 196]],
 ];
 const TEMPERATURE: Stops = [
   [200, [44, 54, 140]],
@@ -262,7 +329,22 @@ const hue = (k: number): RGB => {
 function landColour(tl: TimeLapse, cell: number, t: number, sea: number): RGB {
   const e = valueAt(tl, "elevation_m", cell, t);
   if (e === null) return [128, 128, 128];
+  // A dry world has no sea: heights are from the raw datum, so its basins are low ground (bare rock from the frame's
+  // lowest cell up), never ocean, and never the green of a watered lowland.
+  if (!hasSeaAt(tl, t)) return rampOf(DRY, e - nearestFrame(tl, t).low_m);
   return e < sea ? rampOf(OCEAN, e - sea) : rampOf(LAND, e - sea);
+}
+
+/** Whether an ice age under way at `t` starts ice in this cell (from the kernel's cells for that onset, if it sent them). */
+function growingIce(tl: TimeLapse, cell: number, t_myr: number): boolean {
+  const e = iceAgeAt(tl, t_myr);
+  return !!e?.cells && cellSet(e).has(cell);
+}
+const cellSets = new WeakMap<FrameEvent, Set<number>>();
+function cellSet(e: FrameEvent): Set<number> {
+  let s = cellSets.get(e);
+  if (!s) cellSets.set(e, (s = new Set(e.cells ?? [])));
+  return s;
 }
 
 const mix = (a: RGB, b: RGB, f: number): RGB => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
@@ -301,19 +383,22 @@ export function layerColour(tl: TimeLapse, layer: string, cell: number, t_myr: n
       return rampOf(TEMPERATURE, valueAt(tl, "temp_k", cell, t_myr) ?? constant("T0C"));
     case "rain": {
       const e = valueAt(tl, "elevation_m", cell, t_myr);
-      if (e !== null && e < sea) return mix(rampOf(OCEAN, e - sea), [150, 150, 160], 0.5);
+      if (e !== null && underSea(tl, cell, t_myr)) return mix(rampOf(OCEAN, e - sea), [150, 150, 160], 0.5);
       return rampOf(RAIN, valueAt(tl, "rain_m_yr", cell, t_myr) ?? 0);
     }
     case "ice": {
       const base = landColour(tl, cell, t_myr, sea);
       const ice = valueAt(tl, "ice_m", cell, t_myr) ?? 0;
+      // An ice age under way: where the kernel says ice starts to grow at its onset, a pale wash (new snow that outlasts
+      // the summer), drawn only from the kernel's own cells; the thickness of that ice is not yet sent.
+      if (ice <= 0.5 && growingIce(tl, cell, t_myr)) return mix(base, [214, 226, 240], 0.55);
       if (ice <= 0.5) return base;
       const f = Math.min(1, 0.45 + Math.log10(1 + ice) / 3.5 * 0.55);
       return mix(base, [244, 248, 252], f);
     }
     case "runoff": {
       const e = valueAt(tl, "elevation_m", cell, t_myr);
-      if (e !== null && e < sea) return mix(rampOf(OCEAN, e - sea), [40, 40, 50], 0.4);
+      if (e !== null && underSea(tl, cell, t_myr)) return mix(rampOf(OCEAN, e - sea), [40, 40, 50], 0.4);
       return rampOf(RUNOFF, valueAt(tl, "runoff_m_yr", cell, t_myr) ?? 0);
     }
     default:
@@ -321,7 +406,6 @@ export function layerColour(tl: TimeLapse, layer: string, cell: number, t_myr: n
   }
 }
 
-/** Layers whose fields are all present, and those whose fields the kernel lists as pending (shown, but said). */
 /** Words in the kernel's pending notes that tie a note to a field (the kernel names fields or says them in words). */
 const FIELD_WORDS: Record<FieldName, readonly string[]> = {
   plate: ["plate"],
@@ -346,7 +430,7 @@ export function layersFor(tl: TimeLapse): { spec: LayerSpec; available: boolean;
 }
 
 /** What is under a direction at a time: every field's value, the cell, and the nearest dated event within `near_deg`. */
-export function pickAt(tl: TimeLapse, d: V3, t_myr: number, near_deg = 10): { cell: number; values: Partial<Record<FieldName, number>>; sea_level_m: number; event: FrameEvent | null; why: string[] } {
+export function pickAt(tl: TimeLapse, d: V3, t_myr: number, near_deg = 10): { cell: number; values: Partial<Record<FieldName, number>>; sea_level_m: number; sea: boolean; event: FrameEvent | null; why: string[]; frame_why: string[] } {
   const cell = cellOf(tl, d[0], d[1], d[2]);
   const values: Partial<Record<FieldName, number>> = {};
   for (const f of FIELDS) {
@@ -362,7 +446,7 @@ export function pickAt(tl: TimeLapse, d: V3, t_myr: number, near_deg = 10): { ce
     const c = e.dir[0] * d[0] + e.dir[1] * d[1] + e.dir[2] * d[2];
     if (c > cosNear && c > best) ((best = c), (event = e));
   }
-  return { cell, values, sea_level_m: seaLevelAt(tl, t_myr), event, why: event?.why ?? [] };
+  return { cell, values, sea_level_m: seaLevelAt(tl, t_myr), sea: hasSeaAt(tl, t_myr), event, why: event?.why ?? [], frame_why: nearestFrame(tl, t_myr).why };
 }
 
 /**
@@ -393,30 +477,44 @@ const norm3 = (a: V3): V3 => {
 /** The time lapse in words, for the text tier and screen readers. */
 export function narrateFrame(tl: TimeLapse, layer: string, t_myr: number, label: string): string {
   const spec = LAYERS.find((l) => l.id === layer);
-  const ago = tl.frames[tl.frames.length - 1]!.t_myr - t_myr;
-  const when = ago <= 0.5 ? "today" : ago >= 1000 ? `${(ago / 1000).toFixed(2)} billion years ago` : `${Math.round(ago)} million years ago`;
+  const when = agoWords(tl.frames[tl.frames.length - 1]!.t_myr - t_myr);
   // Shares over the globe from the cells (equal-area enough at this level of telling).
   let land = 0;
   let iced = 0;
   let erupting = 0;
   let tsum = 0;
   let tn = 0;
-  const sea = seaLevelAt(tl, t_myr);
   for (let c = 0; c < tl.cells; c++) {
-    const e = valueAt(tl, "elevation_m", c, t_myr);
-    if (e !== null && e >= sea) land++;
+    if (!underSea(tl, c, t_myr)) land++;
     if ((valueAt(tl, "ice_m", c, t_myr) ?? 0) > 1) iced++;
     if ((valueAt(tl, "vent", c, t_myr) ?? 0) > VENT_ERUPTING) erupting++;
     const t = valueAt(tl, "temp_k", c, t_myr);
     if (t !== null) ((tsum += t), tn++);
   }
   const pct = (x: number) => `${Math.round((100 * x) / tl.cells)}%`;
-  const facts = [`land ${pct(land)} of the surface`, `ice on ${pct(iced)}`, `eruptions on ${pct(erupting)}`];
+  const facts = [hasSeaAt(tl, t_myr) ? `land ${pct(land)} of the surface` : "no sea", `ice on ${pct(iced)}`, `eruptions on ${pct(erupting)}`];
   if (tn) facts.push(`mean surface ${Math.round(tsum / tn)} K`);
   const ev = eventsBetween(tl, t_myr - 50, t_myr + 50)
     .slice(0, 3)
     .map((e) => e.text.replace(/\.$/, ""));
-  return `${label}, ${when}, ${spec?.label.toLowerCase() ?? layer}: ${facts.join(", ")}.${ev.length ? ` Around then: ${ev.join("; ")}.` : ""}`;
+  const ia = iceAgeAt(tl, t_myr);
+  const iceAge = ia ? ` ${iceAgeWords(tl, ia)}` : "";
+  return `${label}, ${when}, ${spec?.label.toLowerCase() ?? layer}: ${facts.join(", ")}.${ev.length ? ` Around then: ${ev.join("; ")}.` : ""}${iceAge}`;
+}
+
+/** How long ago, in words that suit the span: thousands of years inside the ice-age window, millions or billions else. */
+export function agoWords(ago_myr: number): string {
+  if (ago_myr <= 0.0005) return "today";
+  if (ago_myr < 1) return `${Math.round(ago_myr * 1000)} thousand years ago`;
+  if (ago_myr < 10) return `${Math.round(ago_myr * 10) / 10} million years ago`;
+  return ago_myr >= 1000 ? `${(ago_myr / 1000).toFixed(2)} billion years ago` : `${Math.round(ago_myr)} million years ago`;
+}
+
+/** One ice age in words: which one of how many, when it began, and what it does. */
+export function iceAgeWords(tl: TimeLapse, e: FrameEvent): string {
+  const ia = iceAges(tl)!;
+  const k = ia.events.indexOf(e) + 1;
+  return `Ice age ${k} of ${ia.events.length} in the last ${agoWords(ia.to_myr - ia.from_myr).replace(/ ago$/, "")}, begun ${agoWords(ia.to_myr - e.t_myr)}: ${e.text.replace(/^An ice age begins: /, "").replace(/\.$/, "")}.`;
 }
 
 /**
