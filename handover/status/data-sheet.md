@@ -63,5 +63,6 @@ Only the owner thread edits this file. One row per package: update it in the sam
 5. **Later:** p-B11 fusion (the B-11 mass is now on the sheet); OV12 naming at stage 5.
 
 Working notes for this track:
+- After any change to the sheet, or to scripts/build-ui-reference.py, merge main and re-run `python3 scripts/build-base-reference.py`, `python3 scripts/build-ui-reference.py` and `python3 scripts/build-rust-reference.py` just before merging. CI's ui job checks the generated copy, and on 24 Nov PR 419 merged a stale one because PR 410 changed the script while 419's CI ran, which turned main red until PR 422 and PR 445.
 - From the cloud, janaf.nist.gov, the AME2020 hosts, webbook.nist.gov, omlc.org and srd.nist.gov all refuse curl. A web-reading agent reaches janaf, physics.nist.gov and omlc.
 - Values read from fetched text are marked `unverified` until the citation check reads the paper.
