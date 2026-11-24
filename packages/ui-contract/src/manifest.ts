@@ -4,7 +4,7 @@
 // Nothing here names a game: roles, kinds of being and goods are words, and the life support rates are pack data
 // per kind of being, so a kind with no rates says so rather than borrowing a human's.
 import type { Json } from "./json.ts";
-import type { KeptChange, RecordRead } from "./constructs.ts";
+import { writerWords, type KeptChange, type RecordRead, type ShipLogEntry } from "./constructs.ts";
 import { YEAR_S } from "./intent.ts";
 
 /** The kept kinds the manifest reads and writes. */
@@ -265,4 +265,110 @@ export function crewAboard(subject: { address: string; facts: readonly { field: 
   if (here.length) return here.filter((p) => p.state !== "dead" && p.state !== "missing").length;
   const v = subject.facts.find((f) => f.field === "construct.crew")?.value;
   return typeof v === "number" ? v : undefined;
+}
+
+// ---- Fuel aboard (MC4, Alex 24 Nov: "fuel gauge (and an edit fuel) to top up"): how full each tank is now ----
+// Kept values on the construct (base manifest pack, fuel.*), changed in play like what is aboard, each change dated with
+// its reason (so the ship's log reads "Jump fuel: 0 (-19.8) · jump to Regina"). The kernel's ship already reads both
+// ("propellant now, default full"; a jump drive's "fuel aboard now"), so a voyage planned from `fuelNow` starts from
+// what is in the tanks.
+
+export const FUEL_FIELDS = { propellant: "fuel.propellant_t", jump: "fuel.jump_t" } as const;
+export type FuelTank = keyof typeof FUEL_FIELDS;
+/** Words for the manifest's kept kinds on a ship's own record, for its log. */
+export const MANIFEST_WORDS: Record<string, string> = { [FUEL_FIELDS.propellant]: "Reaction mass", [FUEL_FIELDS.jump]: "Jump fuel", "life_support.recycled": "Recycled share" };
+
+export interface FuelGauge {
+  tank: FuelTank;
+  /** What is in it, for the label ("deuterium", "hydrogen"). */
+  fuel: string;
+  full_t: number;
+  now_t: number;
+  /** now / full, 0 to 1. */
+  share: number;
+}
+
+/** The ship's numbers this needs: the kernel's ship (nav) record. */
+export interface FuelShip {
+  wet_t: number;
+  dry_t: number;
+  propellant_t?: number;
+  fuels?: string[];
+  jump?: { tank_t: number; fuel_t?: number; fuel?: string } | null;
+}
+
+const level = (v: unknown, full: number) => (typeof v === "number" && Number.isFinite(v) ? Math.max(0, Math.min(full, v)) : full);
+
+/** A gauge per tank the ship has (reaction mass, and jump fuel when it has a jump drive); kept levels, else full. */
+export function fuelGauges(ship: FuelShip, kept: (field: string) => unknown): FuelGauge[] {
+  const out: FuelGauge[] = [];
+  const full = Math.max(0, ship.wet_t - ship.dry_t);
+  if (full > 0) {
+    const now = level(kept(FUEL_FIELDS.propellant), full);
+    out.push({ tank: "propellant", fuel: ship.fuels?.join(" and ") || "propellant", full_t: full, now_t: now, share: now / full });
+  }
+  const j = ship.jump;
+  if (j && j.tank_t > 0) {
+    const now = level(kept(FUEL_FIELDS.jump), j.tank_t);
+    out.push({ tank: "jump", fuel: j.fuel || "jump fuel", full_t: j.tank_t, now_t: now, share: now / j.tank_t });
+  }
+  return out;
+}
+
+/** The ship as it is now, for planning: its own record with the tanks at the kept levels. */
+export function fuelNow<S extends FuelShip>(ship: S, kept: (field: string) => unknown): S {
+  const g = fuelGauges(ship, kept);
+  const prop = g.find((x) => x.tank === "propellant");
+  const jump = g.find((x) => x.tank === "jump");
+  return { ...ship, ...(prop ? { propellant_t: prop.now_t } : {}), ...(jump && ship.jump ? { jump: { ...ship.jump, fuel_t: jump.now_t } } : {}) };
+}
+
+/** Tonnes in words, to a sensible precision. */
+export function tonnesWords(t: number): string {
+  return t >= 100 ? `${Math.round(t)} t` : t >= 10 ? `${t.toFixed(1)} t` : `${t.toFixed(2)} t`;
+}
+
+/** A ship's full numbers from the kernel: a stock id or a pack ship resolved (ship_at_world with no worlds). */
+export async function shipRecordOf(session: { shipAtWorld(a: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: { ship: unknown } } | { ok: false; message: string }> }, nav: string | import("./route.ts").NavShip): Promise<{ ok: true; ship: Record<string, unknown> } | { ok: false; message: string }> {
+  const r = await session.shipAtWorld({ fixture: "sol", ship: nav, worlds: [] });
+  return r.ok ? { ok: true, ship: r.report.ship as Record<string, unknown> } : r;
+}
+
+// ---- The ship's log, aboard (MC5): who and what came aboard, left, and changed state while aboard ----
+
+/**
+ * Log lines for `place` from everyone and everything that was ever aboard it, oldest first: came aboard (from where),
+ * left (for where), and a person's state changing while aboard (cold sleep, missing, dead, awake again). Read from the
+ * entries' own dated histories, so the log cannot drift from what happened. `placeName` names a ship or place.
+ */
+export function aboardLog(place: string, entries: readonly AboardEntry[], yr: (at_s: number) => number, placeName: (address: string) => string): ShipLogEntry[] {
+  const out: ShipLogEntry[] = [];
+  const who = (e: AboardEntry) => (e.kind === CARGO ? `${e.name}${e.amount !== undefined ? ` (${e.amount}${e.unit ? ` ${e.unit}` : ""})` : ""}` : e.name);
+  for (const e of entries) {
+    let prev: string | undefined;
+    const spans: [number, number][] = [];
+    let since: number | undefined;
+    for (const m of [...e.moves].sort((a, b) => a.at_s - b.at_s)) {
+      const on = text(m.value);
+      if (on === place && prev !== place) {
+        out.push({ at_yr: yr(m.at_s), what: "aboard", text: `${who(e)} came aboard${prev ? ` from ${placeName(prev)}` : ""}`, who: writerWords(m.writer), ...(m.reason ? { why: m.reason } : {}), key: ABOARD.on });
+        since = m.at_s;
+      } else if (prev === place && on !== place) {
+        out.push({ at_yr: yr(m.at_s), what: "aboard", text: `${who(e)} left${on ? ` for ${placeName(on)}` : ""}`, who: writerWords(m.writer), ...(m.reason ? { why: m.reason } : {}), key: ABOARD.on });
+        if (since !== undefined) spans.push([since, m.at_s]);
+        since = undefined;
+      }
+      prev = on;
+    }
+    if (since !== undefined) spans.push([since, Infinity]);
+    // A state change counts for this place when it happened while aboard (or the entry was made with it, aboard).
+    const states = [...e.states].sort((a, b) => a.at_s - b.at_s);
+    states.forEach((c, i) => {
+      if (i === 0 && text(c.value) === "awake") return;
+      if (!spans.some(([a, b]) => c.at_s >= a && c.at_s < b)) return;
+      const s = text(c.value) as AboardState | undefined;
+      out.push({ at_yr: yr(c.at_s), what: "aboard", text: `${e.name} ${s && STATE_WORDS[s] ? `is ${STATE_WORDS[s]}` : "changed state"}`, who: writerWords(c.writer), ...(c.reason ? { why: c.reason } : {}), key: ABOARD.state });
+    });
+  }
+  return out.sort((a, b) => a.at_yr - b.at_yr);
 }

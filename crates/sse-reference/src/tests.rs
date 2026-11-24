@@ -696,6 +696,10 @@ fn protosolar_isotope_shares_are_on_the_isotope_rows() {
     assert!((ratio - 1.66e-4).abs() < 1e-6, "{ratio}");
     // The printed digits sum to 99.99997 percent.
     assert!((share("h1") + share("h2") - 1.0).abs() < 1e-6);
+    // MP29: every stable isotope from H to Ne has its row and share.
+    let ne = share("ne20") + share("ne21") + share("ne22");
+    assert!((ne - 1.0).abs() < 1e-6, "{ne}");
+    assert!((share("b11") / share("b10") - 80.173 / 19.827).abs() < 1e-9);
 }
 
 #[test]
@@ -712,7 +716,9 @@ fn hull_skins_carry_the_burn_through_heats() {
         "niobium",
         "molybdenum",
         "tantalum",
+        "tungsten",
         "lead",
+        "stainless-304l",
     ] {
         for k in [
             "heat_capacity",
@@ -727,7 +733,13 @@ fn hull_skins_carry_the_burn_through_heats() {
     }
     let lf = get("aluminium", "latent_fusion").unwrap();
     assert!((lf - 397_000.0).abs() < 2_000.0, "{lf}");
+    // MP28: graphite sublimes near 4080 K, mostly to C3, at 1 bar.
+    let ts = get("graphite", "sublimation_point_k").unwrap();
+    assert!((3900.0..4200.0).contains(&ts), "{ts}");
+    assert!(get("graphite", "heat_to_sublime").is_some());
     assert!(get("graphite", "latent_sublimation").is_some());
+    let tb = get("tungsten", "boiling_point_k").unwrap();
+    assert!((5800.0..6300.0).contains(&tb), "{tb}");
     assert!(get("inconel-718", "heat_capacity").is_some());
 }
 
@@ -754,4 +766,64 @@ fn bands_meet_end_to_end_and_name_a_view() {
     assert!(e.iter().any(|m| m.contains("do not meet")), "{e:#?}");
     assert!(e.iter().any(|m| m.contains("view-red")), "{e:#?}");
     assert!(e.iter().any(|m| m.contains("band odd")), "{e:#?}");
+}
+
+#[test]
+fn conductivities_for_the_field_ledger_are_on_the_sheet() {
+    // MP30: eta = 1/(mu0 sigma) reads these. Core iron near 1e6 S/m (Pozzo
+    // 2012); Jupiter's deep fluid rises past 1e6 with depth (French 2012);
+    // seawater 4.29 S/m at 15 C and salinity 35 (PSS-78).
+    let r = Reference::base();
+    let get = |id: &str, k: &str| num(r.row("mixtures", id).and_then(|x| x.get(k)));
+    let core = get("earth-core-liquid", "sigma_elec").unwrap();
+    assert!((1e6..2e6).contains(&core), "{core}");
+    assert!(get("iron", "sigma_elec_liquid").is_some());
+    let sea15 = get("seawater", "sigma_elec").unwrap();
+    let sea25 = get("seawater", "sigma_elec_25c").unwrap();
+    assert!((sea15 - 4.2914).abs() < 1e-9 && sea25 > sea15 && sea25 < 6.0);
+    let prof = r
+        .row("mixtures", "giant-envelope")
+        .and_then(|x| x.get("sigma_elec_profile"))
+        .and_then(|p| p.get("rows"))
+        .and_then(|v| v.as_array())
+        .unwrap();
+    // Sigma falls outwards, row by row.
+    let s: Vec<f64> = prof.iter().map(|row| row[4].as_f64().unwrap()).collect();
+    assert!(s.windows(2).all(|w| w[0] > w[1]), "{s:?}");
+}
+
+#[test]
+fn units_engine_rungs_are_on_the_sheet() {
+    // MP31 (for ED1a): the units engine reads every factor from the sheet.
+    let r = Reference::base();
+    for id in [
+        "min",
+        "kyr",
+        "r_moon",
+        "m_moon",
+        "ocean_earth",
+        "tonne",
+        "litre",
+        "m3",
+        "km3",
+        "m2",
+        "km2",
+        "s_earth",
+        "arcmin",
+        "percent",
+        "ppm",
+        "tnt_tonne",
+        "mi",
+        "ft",
+        "lb",
+        "degf",
+        "psi",
+        "mph",
+        "lb_ft3",
+        "ft3",
+        "gal",
+        "sq_mi",
+    ] {
+        assert!(r.row("units", id).is_some(), "{id}");
+    }
 }

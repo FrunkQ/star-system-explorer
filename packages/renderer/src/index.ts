@@ -78,6 +78,17 @@ export async function startShip(...a: Parameters<typeof import("./gpu-ship.ts").
   const { mountShip } = await import("./gpu-ship.ts");
   return mountShip(...a);
 }
+// Stations and land constructs built from their description (Alex, 24 Nov): a self-contained builder, swappable.
+export { designStation, hoopNeed, narrateStation, pickShape, stationPackData, stationViews } from "./station-design.ts";
+export type { Axis, DockClass, Megastructure, Part, StationForm, StationLayout, StationLimits, StationOverrides, StationPlace, StationRecipe, StationRecord, StationRules, StationShape, StationSurface, StationView, StrengthMark } from "./station-design.ts";
+export { stationMesh } from "./station-mesh.ts";
+export type { StationMesh } from "./station-mesh.ts";
+export type { StationSkin, StationView3D } from "./gpu-station.ts";
+/** The station's 3D model, loaded only when asked (three.js is heavy). */
+export async function startStation(...a: Parameters<typeof import("./gpu-station.ts").mountStation>) {
+  const { mountStation } = await import("./gpu-station.ts");
+  return mountStation(...a);
+}
 
 export { curveDrop, decoration, descentTrack, floorFromRefusal, groundColours, groundMesh, heightAt as groundHeightAt, horizonDistance, levelFor, localToDir, patchKeys, patchPoint, playbackKeys, readPatch, siteFrame, tileSpot } from "./surface-patch.ts";
 export type { GroundPoint, Patch, TileKey as SurfaceTileKey } from "./surface-patch.ts";
@@ -89,3 +100,6 @@ export async function startSurface(canvas: HTMLCanvasElement) {
   const { createSurfaceGpu } = await import("./gpu-surface.ts");
   return createSurfaceGpu(canvas);
 }
+// The size comparison's turning globes (3D, True, Wireframe).
+export { circleSteps, globeFrame, graticule, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
+export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";

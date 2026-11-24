@@ -7,11 +7,11 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { ABOARD, CARGO, PERSON, STATES, STATE_WORDS, aboard, ageNow, crewAboard, daysWords, entryFrom, entryId, lifeSupport, lifeSupportFrom, startingValues, secondsToYears, eyesShow, secrecyRelevant, tableOf, type AboardEntry, type AboardState, type IntentResult, type Json, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { FUEL_FIELDS, fuelGauges, shipRecordOf, tonnesWords, factOf, type FuelShip, type FuelTank, type NavShip, ABOARD, CARGO, PERSON, STATES, STATE_WORDS, aboard, ageNow, crewAboard, daysWords, entryFrom, entryId, lifeSupport, lifeSupportFrom, startingValues, secondsToYears, eyesShow, secrecyRelevant, tableOf, type AboardEntry, type AboardState, type IntentResult, type Json, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { KnownTo } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "../../constructs/src/words.ts";
 
-  let { ctx, construct, places, start = "crew" }: { ctx: ViewContext; construct: PlayerSubject; places: { address: string; label: string }[]; start?: "manifest" | "crew" } = $props();
+  let { ctx, construct, places, start = "crew", nav = null }: { ctx: ViewContext; construct: PlayerSubject; places: { address: string; label: string }[]; start?: "manifest" | "crew"; nav?: string | NavShip | null } = $props();
   // One panel, two sides: who is aboard (Crew, first) and what (Manifest). The same for a ship, a station or a site.
   let part = $state<"manifest" | "crew">(untrack(() => start));
   const session = untrack(() => ctx.session);
@@ -51,6 +51,7 @@
       recycled = typeof r === "number" ? r : 0;
       const rd = own.record.kept.find((k) => k.kind === "ship.readiness")?.value;
       readiness = typeof rd === "number" ? rd : null;
+      ownKept = Object.fromEntries(own.record.kept.map((k) => [k.kind, k.value]));
     }
   }
   $effect(() => {
@@ -172,6 +173,23 @@
 
   // ---- Words ----
   const fact = (suffix: RegExp) => construct.facts.find((x) => suffix.test(x.field));
+  // ---- Fuel (MC4): how full each tank is, set or topped up in play like the stores; the ship's tanks from the kernel ----
+  let fuelShip = $state<FuelShip | null>(null);
+  let fuelGen = 0;
+  $effect(() => {
+    const n = nav;
+    if (!n || !gm) return void (fuelShip = null);
+    const g = ++fuelGen;
+    void shipRecordOf(session, n).then((r) => g === fuelGen && (fuelShip = r.ok ? (r.ship as unknown as FuelShip) : null));
+  });
+  let ownKept = $state.raw<Record<string, unknown>>({});
+  const gauges = $derived(fuelShip ? fuelGauges(fuelShip, (k) => ownKept[k]) : []);
+  const TANK_WORDS: Record<FuelTank, string> = { propellant: "Reaction mass", jump: "Jump fuel" };
+  // Kept values (base manifest pack, fuel.*): each change is dated with its reason and shows in the ship's log.
+  async function setFuel(tank: FuelTank, t: number, reason: string, said: string) {
+    if (!Number.isFinite(t) || t < 0) return void (note = "Fuel is a number of tonnes, 0 or more.");
+    if (await keep(construct.address, FUEL_FIELDS[tank], t, reason)) void done(said);
+  }
   const crewMax = $derived(fact(/(^|\.)crew_max$/));
   const berths = $derived(fact(/(^|\.)berths$/));
   const capacity = $derived(construct.facts.filter((x) => /(^|\.)(cargo|hold|tank|fuel)[a-z_]*$/.test(x.field) && typeof x.value === "number"));
@@ -216,12 +234,29 @@
       {/if}
       <dt>Recycled</dt>
       <dd>
+        <!-- In play (Explore, Run) what is aboard changes; the ship's own fittings, like its recycling, only on Build. -->
         {#if gm && ws.mode === "edit"}
           <input type="number" min="0" max="100" step="1" value={Math.round(recycled * 100)} onchange={(e) => setNumber(construct.address, ABOARD.recycled, String(Number((e.currentTarget as HTMLInputElement).value) / 100), "life support changed")} aria-label="Share of oxygen and water recycled, in percent" data-recycled />%
         {:else}{Math.round(recycled * 100)}%{/if}
         <span class="muted small"> of oxygen and water</span>
       </dd>
     </dl>
+
+    {#if gauges.length}
+      <h5>Fuel</h5>
+      <div class="gauges">
+        {#each gauges as g (g.tank)}
+          <div class="gauge" data-fuel={g.tank}>
+            <span>{TANK_WORDS[g.tank]}<span class="muted small">{` · ${g.fuel}`}</span></span>
+<span class="bar-track" class:low={g.share < 0.25} role="meter" aria-valuemin="0" aria-valuemax={g.full_t} aria-valuenow={g.now_t} aria-label={`${TANK_WORDS[g.tank]}: ${Math.round(g.share * 100)}% full`} data-now={g.now_t} data-full={g.full_t}><span class="bar-fill" style:width="{g.share * 100}%"></span></span>
+            {#if gm}
+              <span><input type="number" min="0" max={g.full_t} step="any" value={Number(g.now_t.toFixed(3))} onchange={(e) => setFuel(g.tank, Number((e.currentTarget as HTMLInputElement).value), "set by the GM", `${TANK_WORDS[g.tank]} set.`)} aria-label={`${TANK_WORDS[g.tank]} aboard, tonnes`} data-fuel-now /> <span class="muted">of {tonnesWords(g.full_t)}</span></span>
+              {#if g.share < 1}<button type="button" class="quiet-btn" onclick={() => setFuel(g.tank, g.full_t, "topped up", `${TANK_WORDS[g.tank]} topped up to ${tonnesWords(g.full_t)}.`)} data-fuel-top>Top up</button>{:else}<span class="muted small">full</span>{/if}
+            {:else}<span class="mono">{tonnesWords(g.now_t)} of {tonnesWords(g.full_t)}</span><span></span>{/if}
+          </div>
+        {/each}
+      </div>
+    {/if}
 
     <h5>Life support</h5>
     {#if support.drawing === 0 && !support.unrated.length}
@@ -259,7 +294,7 @@
         <li class:pencil={eyes && landmarkOf(c.address) !== "known"} data-lot={c.address}>
           {#if eyes && known[c.address]}<KnownTo read={known[c.address]!} label={c.name} hold={(ws.players_online ?? 0) > 0} onset={setKnownOf(c.address)} onundo={undoKnown} />{/if}
           <span><b>{c.name}</b>{#if c.what && c.what !== c.name}<span class="muted">{` · ${c.what}`}</span>{/if}</span>
-          {#if gm && ws.mode === "edit"}
+          {#if gm}
             <span><input type="number" min="0" value={c.amount ?? ""} onchange={(e) => setNumber(c.address, ABOARD.amount, (e.currentTarget as HTMLInputElement).value)} aria-label={`Amount of ${c.name}`} data-cargo-amount /> {c.unit ?? ""}</span>
           {:else}<span class="mono">{amountWords(c)}</span>{/if}
           {#if gm}<button type="button" class="quiet-btn" onclick={() => ((moving = moving === c.address ? null : c.address), (moveTo = parentOf(construct.address)))}>Move…</button>{/if}
@@ -285,8 +320,8 @@
       {#each here.people as p (p.address)}
         <li data-person={p.address} class:gone={p.state === "dead" || p.state === "missing"} class:pencil={eyes && landmarkOf(p.address) !== "known"}>
           {#if eyes && known[p.address]}<KnownTo read={known[p.address]!} label={p.name} hold={(ws.players_online ?? 0) > 0} onset={setKnownOf(p.address)} onundo={undoKnown} />{/if}
-          <span><b>{p.name}</b>{#if p.role}<span class="muted">{` · ${p.role}`}</span>{/if}</span>
-          {#if gm && ws.mode === "edit"}
+          <span><b>{p.name}</b>{#if p.role && !gm}<span class="muted">{` · ${p.role}`}</span>{/if}</span>
+          {#if gm}
             <input type="text" value={p.role ?? ""} placeholder="role" onchange={(e) => setText(p, ABOARD.role, (e.currentTarget as HTMLInputElement).value)} aria-label={`Role of ${p.name}`} />
           {/if}
           {#if gm}
@@ -319,6 +354,15 @@
   .switch { display: inline-flex; align-self: flex-start; border: 1px solid var(--sse-rule); }
   .switch button { font: inherit; min-height: 28px; padding: 0 12px; border: none; background: transparent; color: var(--sse-ink); cursor: pointer; }
   .switch button[aria-pressed="true"] { background: var(--sse-ink); color: var(--sse-ground); }
+  /* One grid for all the tanks so the bars line up; each tank's cells sit in it. */
+  .gauges { display: grid; grid-template-columns: max-content minmax(80px, 1fr) max-content max-content; gap: 6px 10px; align-items: center; margin: 6px 0; }
+  .gauge { display: contents; }
+  .bar-track { display: block; height: 10px; border: 1px solid var(--sse-rule); background: var(--sse-ground); }
+  .bar-fill { display: block; height: 100%; background: var(--sse-ink); transition: width var(--sse-motion-quick, 120ms) var(--sse-ease, ease-out); }
+  .bar-track.low .bar-fill { background: var(--sse-alert, var(--sse-accent)); }
+  .gauge input { width: 6em; }
+  @media (max-width: 720px) { .gauges { grid-template-columns: 1fr 1fr; } }
+  @media (prefers-reduced-motion: reduce) { .bar-fill { transition: none; } }
   h5 { margin: 6px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sse-ink-muted); }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 4px 0; }
   dt { color: var(--sse-ink-muted); }

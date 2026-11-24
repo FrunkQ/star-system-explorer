@@ -34,6 +34,8 @@ pub(crate) const TYPED: &str = "name.";
 pub(crate) const LEGACY: &str = "name";
 pub(crate) const COMMON: &str = "common";
 pub(crate) const DESIGNATION: &str = "designation";
+/// The name a V3 save gave a body (kept as authored on adopt).
+pub(crate) const V3_NAME: &str = "v3.name";
 
 /// A name as shown, with where it came from.
 #[derive(Clone, Debug, serde::Serialize)]
@@ -103,7 +105,7 @@ impl<'a> Names<'a> {
         let mut children: BTreeMap<(Address, String), Vec<Address>> = BTreeMap::new();
         for (a, f) in &state.facts {
             for k in f.keys() {
-                if k == LEGACY {
+                if k == LEGACY || k == V3_NAME {
                     layers.insert(COMMON.into());
                 } else if let Some(l) = k
                     .strip_prefix(SETTING)
@@ -164,7 +166,11 @@ impl<'a> Names<'a> {
             .and_then(text_of)
             .or_else(|| {
                 (layer == COMMON)
-                    .then(|| self.fact(a, LEGACY).and_then(text_of))
+                    .then(|| {
+                        self.fact(a, LEGACY)
+                            .and_then(text_of)
+                            .or_else(|| self.fact(a, V3_NAME).and_then(text_of))
+                    })
                     .flatten()
             })
             .map(str::to_string)
@@ -378,7 +384,53 @@ pub(crate) fn kind_of(state: &State, a: &Address) -> String {
         .or_else(|| f.and_then(|f| f.get("kind")))
         .and_then(text_of)
         .map(str::to_string)
+        .or_else(|| f.and_then(|f| kind_read_off(state, f)))
         .unwrap_or_else(|| a.last().kind().to_string())
+}
+
+/// A body with no kind fact (a V3 adoption): V3's role hint when it names a
+/// catalogue kind, else read off the facts: a star has a temperature; a body
+/// round a star is a planet and one round a planet a moon.
+fn kind_read_off(state: &State, f: &BTreeMap<String, Value>) -> Option<String> {
+    let role = f.get("v3.roleHint").and_then(text_of).unwrap_or("");
+    let word = match role {
+        "star" => Some("star"),
+        "planet" | "dwarf-planet" => Some("planet"),
+        "moon" => Some("moon"),
+        _ => None,
+    };
+    if let Some(w) = word {
+        return Some(w.into());
+    }
+    if f.contains_key("star.effective_temperature") {
+        return Some("star".into());
+    }
+    let host: Address = f
+        .get("orbit.host")
+        .or_else(|| f.get("parent"))
+        .and_then(text_of)?
+        .parse()
+        .ok()?;
+    let h = state.facts.get(&host)?;
+    if h.contains_key("star.effective_temperature")
+        || h.get("body.kind").and_then(text_of) == Some("star")
+    {
+        Some("planet".into())
+    } else if h.contains_key("body.mass") && h.contains_key("orbit.host") {
+        Some("moon".into())
+    } else {
+        None
+    }
+}
+
+/// The common name typed or authored on a facts row (no scheme drawn):
+/// `name.common`, the old `name` field, or a V3 save's name.
+pub(crate) fn typed_common(row: &BTreeMap<String, Value>) -> Option<String> {
+    [format!("{TYPED}{COMMON}"), LEGACY.into(), V3_NAME.into()]
+        .iter()
+        .find_map(|k| row.get(k).and_then(text_of))
+        .filter(|t| !t.is_empty())
+        .map(str::to_string)
 }
 
 /// The catalogue serial for `a`: the number of the system it is in.

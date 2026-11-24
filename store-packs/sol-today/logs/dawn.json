@@ -1,0 +1,549 @@
+{
+ "construct": "dawn",
+ "name": "Dawn",
+ "about": "Dawn from Cape Canaveral to Vesta and Ceres. Its ion engines thrust for most of the cruise, so in place of big burns the log keeps Horizons' osculating orbit about the Sun every few months, the Mars flyby of 2009, and its orbits at Vesta (2011 to 2012) and Ceres (2015 to 2018), where it fell silent on 31 Oct 2018 and still orbits. Arrival and departure dates follow the Horizons header; their hours are from memory.",
+ "pieces": [
+  {
+   "from_s": 63354180905,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 28.4667,
+    "lon_deg": -80.5667
+   },
+   "mark": "authored",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "on the pad before launch",
+   "to_s": 63359364905
+  },
+  {
+   "from_s": 63359364905,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ascent"
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "ascent; RS5 flies it",
+   "to_s": 63359365505
+  },
+  {
+   "from_s": 63359365505,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6563137.0,
+     "e": 0.0,
+     "i_deg": 28.5,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 63359365505
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "a 185 km parking orbit stands in for the upper stage's coast before departure",
+   "to_s": 63359366705
+  },
+  {
+   "from_s": 63359366705,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 196189955769.0847,
+     "e": 0.2358312071153917,
+     "i_deg": 0.5740502071102977,
+     "node_deg": 7.342252074393451,
+     "peri_deg": 3.353183336229522,
+     "m0_deg": 0.0,
+     "epoch_s": 63359899518
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2007-12-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63380750400
+  },
+  {
+   "from_s": 63380750400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 207475606028.216,
+     "e": 0.2107193769102067,
+     "i_deg": 0.6937699096830084,
+     "node_deg": 72.47281285904138,
+     "peri_deg": 310.6753463784016,
+     "m0_deg": 0.0,
+     "epoch_s": 63360417558
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2008-06-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63396561600
+  },
+  {
+   "from_s": 63396561600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 218294838417.6079,
+     "e": 0.154757181416446,
+     "i_deg": 1.840255488425112,
+     "node_deg": 49.04610318694289,
+     "peri_deg": 333.780800634099,
+     "m0_deg": 0.0,
+     "epoch_s": 63413956049
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2008-12-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63403388945
+  },
+  {
+   "from_s": 63403388945,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 240463776469.9417,
+     "e": 0.1471422620693071,
+     "i_deg": 6.150344571061987,
+     "node_deg": 100.7977985603242,
+     "peri_deg": 233.6776049488248,
+     "m0_deg": 0.0,
+     "epoch_s": 63408396121
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2009-06-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63428097600
+  },
+  {
+   "from_s": 63428097600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 253877106962.5028,
+     "e": 0.1316445811163559,
+     "i_deg": 6.389418193754747,
+     "node_deg": 101.1848917797865,
+     "peri_deg": 262.7057515506322,
+     "m0_deg": 0.0,
+     "epoch_s": 63412113100
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2009-12-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63443822400
+  },
+  {
+   "from_s": 63443822400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 281129494884.52545,
+     "e": 0.09112299592886297,
+     "i_deg": 6.820030986520424,
+     "node_deg": 103.7560260147773,
+     "peri_deg": 309.9944228288547,
+     "m0_deg": 0.0,
+     "epoch_s": 63419158203
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2010-06-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63459633600
+  },
+  {
+   "from_s": 63459633600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 312183372599.70435,
+     "e": 0.0453183611984461,
+     "i_deg": 6.856034218091438,
+     "node_deg": 104.4052747979011,
+     "peri_deg": 40.01148440721616,
+     "m0_deg": 0.0,
+     "epoch_s": 63437263383
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2010-12-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63470088000
+  },
+  {
+   "from_s": 63470088000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 334993716780.08167,
+     "e": 0.06373737624922785,
+     "i_deg": 7.000192532587015,
+     "node_deg": 103.764612617452,
+     "peri_deg": 115.5849246054207,
+     "m0_deg": 0.0,
+     "epoch_s": 63455895309
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2011-04-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63479263620
+  },
+  {
+   "from_s": 63479263620,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:vesta",
+    "elements": {
+     "a_m": 2997971.746354026,
+     "e": 0.0011484235105257996,
+     "i_deg": 75.11143445465801,
+     "node_deg": 304.1500015046843,
+     "peri_deg": 91.822918840588,
+     "m0_deg": 0.0,
+     "epoch_s": 63481801275
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Vesta, osculating on 2011-08-15 (Horizons); the spiral between science orbits is below the big-burns line",
+   "to_s": 63485899200
+  },
+  {
+   "from_s": 63485899200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:vesta",
+    "elements": {
+     "a_m": 937154.7771188988,
+     "e": 0.02997543168280706,
+     "i_deg": 77.43965018434078,
+     "node_deg": 303.4113327750932,
+     "peri_deg": 58.80030055406262,
+     "m0_deg": 0.0,
+     "epoch_s": 63487087505
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Vesta, osculating on 2011-10-15 (Horizons); the spiral between science orbits is below the big-burns line",
+   "to_s": 63492120000
+  },
+  {
+   "from_s": 63492120000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:vesta",
+    "elements": {
+     "a_m": 481149.17893005535,
+     "e": 0.04739396377589863,
+     "i_deg": 79.31424177836091,
+     "node_deg": 312.6679648741925,
+     "peri_deg": 325.20991207229787,
+     "m0_deg": 0.0,
+     "epoch_s": 63495057761
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Vesta, osculating on 2012-01-15 (Horizons); the spiral between science orbits is below the big-burns line",
+   "to_s": 63504302400
+  },
+  {
+   "from_s": 63504302400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:vesta",
+    "elements": {
+     "a_m": 937433.6552754665,
+     "e": 0.010756919601120027,
+     "i_deg": 109.29043799552286,
+     "node_deg": 355.4642230441873,
+     "peri_deg": 201.2311942881866,
+     "m0_deg": 0.0,
+     "epoch_s": 63508205979
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Vesta, osculating on 2012-06-15 (Horizons); the spiral between science orbits is below the big-burns line",
+   "to_s": 63515298360
+  },
+  {
+   "from_s": 63515298360,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 360629922204.5124,
+     "e": 0.0664043803999094,
+     "i_deg": 7.908713349187694,
+     "node_deg": 99.86454590657759,
+     "peri_deg": 141.3433255391,
+     "m0_deg": 0.0,
+     "epoch_s": 63576534690
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2013-01-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63541108800
+  },
+  {
+   "from_s": 63541108800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 416164037841.4826,
+     "e": 0.1220257971440168,
+     "i_deg": 8.469353249888732,
+     "node_deg": 95.91641802151481,
+     "peri_deg": 57.3400891672804,
+     "m0_deg": 0.0,
+     "epoch_s": 63549695539
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2014-01-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63572644800
+  },
+  {
+   "from_s": 63572644800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 409435341683.95105,
+     "e": 0.1011288130507514,
+     "i_deg": 9.800004482739629,
+     "node_deg": 80.49354909776083,
+     "peri_deg": 67.52083997124987,
+     "m0_deg": 0.0,
+     "epoch_s": 63547600319
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about the Sun, osculating on 2014-10-01 (Horizons); ion thrust bends it between samples",
+   "to_s": 63594117540
+  },
+  {
+   "from_s": 63594117540,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:ceres",
+    "elements": {
+     "a_m": 14040294.799675183,
+     "e": 0.005254977587200468,
+     "i_deg": 82.16493802923199,
+     "node_deg": 279.7532512537113,
+     "peri_deg": 321.2193350003857,
+     "m0_deg": 0.0,
+     "epoch_s": 63598545768
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Ceres, osculating on 2015-04-30 (Horizons); the spiral between science orbits is below the big-burns line",
+   "to_s": 63606859200
+  },
+  {
+   "from_s": 63606859200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:ceres",
+    "elements": {
+     "a_m": 1939457.49788928,
+     "e": 0.002119971821940766,
+     "i_deg": 82.14730004531386,
+     "node_deg": 282.3407235488284,
+     "peri_deg": 185.0451440542345,
+     "m0_deg": 0.0,
+     "epoch_s": 63608093007
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Ceres, osculating on 2015-08-15 (Horizons); the spiral between science orbits is below the big-burns line",
+   "to_s": 63617400000
+  },
+  {
+   "from_s": 63617400000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:ceres",
+    "elements": {
+     "a_m": 833232.280130554,
+     "e": 0.007261557902327862,
+     "i_deg": 82.15920757935352,
+     "node_deg": 287.10499874695125,
+     "peri_deg": 83.91258574470768,
+     "m0_deg": 0.0,
+     "epoch_s": 63620087761
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Ceres, osculating on 2016-01-01 (Horizons); the spiral between science orbits is below the big-burns line",
+   "to_s": 63646430400
+  },
+  {
+   "from_s": 63646430400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:ceres",
+    "elements": {
+     "a_m": 8909701.643076079,
+     "e": 0.10140665619765733,
+     "i_deg": 85.29633936648904,
+     "node_deg": 333.7406944052336,
+     "peri_deg": 142.4723880544784,
+     "m0_deg": 0.0,
+     "epoch_s": 63651956969
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Ceres, osculating on 2017-01-01 (Horizons); the spiral between science orbits is below the big-burns line",
+   "to_s": 63677966400
+  },
+  {
+   "from_s": 63677966400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:ceres",
+    "elements": {
+     "a_m": 22218463.137481537,
+     "e": 0.7611543384902235,
+     "i_deg": 66.9975896423832,
+     "node_deg": 325.42870958130516,
+     "peri_deg": 23.588100585581625,
+     "m0_deg": 0.0,
+     "epoch_s": 63682382402
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Ceres, osculating on 2018-01-01 (Horizons); the spiral between science orbits is below the big-burns line",
+   "to_s": 63696283200
+  },
+  {
+   "from_s": 63696283200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:ceres",
+    "elements": {
+     "a_m": 2476241.0358878314,
+     "e": 0.7958063575944743,
+     "i_deg": 77.6859295572653,
+     "node_deg": 319.28910354115453,
+     "peri_deg": 1.7823606479757275,
+     "m0_deg": 0.0,
+     "epoch_s": 63698883642
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Ceres, osculating on 2018-07-01 (Horizons); the spiral between science orbits is below the big-burns line",
+   "to_s": 63709502469
+  },
+  {
+   "from_s": 63709502469,
+   "state": {
+    "kind": "gone",
+    "how": "lost_contact"
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "missed DSN contacts on 31 Oct and 1 Nov 2018, out of hydrazine; it still orbits Ceres (Horizons header)"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 63359364905,
+   "kind": "launch",
+   "mark": "recorded",
+   "src": "nssdca-craft",
+   "writer": "pack"
+  },
+  {
+   "at_s": 63359366705,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "dv_m_s": 3729.0,
+   "engine": "star-48b",
+   "why": "impulsive equivalent from a 185 km parking orbit to Horizons' Earth-relative hyperbola (v-infinity 3.359 km/s on 2007-Sep-28); the upper stage's real burns wait on RS5"
+  },
+  {
+   "at_s": 63359366705,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "into": [
+    "dawn-star-48"
+   ],
+   "keeps_identity": true,
+   "why": "the upper stage separates after the departure burn"
+  },
+  {
+   "at_s": 63403388945,
+   "kind": "flyby",
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "body": "u:sol/sys:sun/body:mars",
+   "periapsis_m": 3936962
+  }
+ ]
+}
