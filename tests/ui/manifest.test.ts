@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { ABOARD, aboard, ageNow, crewAboard, entryFrom, entryId, lifeSupport, lifeSupportFrom, massKg, startingValues, storeOf, type AboardEntry } from "../../packages/ui-contract/src/manifest.ts";
 import type { Json } from "../../packages/ui-contract/src/json.ts";
-import type { RecordRead } from "../../packages/ui-contract/src/constructs.ts";
+import { shipLog, type RecordRead } from "../../packages/ui-contract/src/constructs.ts";
 
 const YR = 31_557_600;
 const pack = JSON.parse(readFileSync(fileURLToPath(new URL("../../packs/base-manifest/pack.json", import.meta.url)), "utf8")) as Json;
@@ -148,4 +148,13 @@ test("the ship's log reads who came aboard, left and changed state while aboard"
     [30, "parts (3 t) left for Brass Lark", "sold"],
     [40, "Ada is awake", undefined],
   ]);
+});
+
+test("a refit's log line says what changed, from what to what (MC6)", () => {
+  const made = { id: "a", kind: "template.create", at_yr: 1, evidence: "authored", subject: ["s"], changes: [{ field: "jump_rating", value: 2 }, { field: "name", value: "Kestrel" }] };
+  const refit = { id: "b", kind: "authored.set", at_yr: 2, evidence: "authored", subject: ["s"], changes: [{ field: "jump_rating", value: 3 }, { field: "construct.design", value: { style: "x" } }, { field: "picture.own", value: null, large: true }, { field: "picture.shown", value: "picture:0" }] };
+  const plain = { id: "c", kind: "authored.set", at_yr: 3, evidence: "authored", subject: ["s"] };
+  const log = shipLog([refit, made, plain], null, (s) => s, (k) => ({ jump_rating: "Jump drive", "construct.design": "Design", "picture.own": "Pictures" })[k] ?? k);
+  assert.equal(log[1]!.text, "Changed: Jump drive 2 → 3; Design changed; Pictures changed; picture.shown picture 1");
+  assert.equal(log[2]!.text, "Facts edited", "an event without its changes keeps the old words");
 });

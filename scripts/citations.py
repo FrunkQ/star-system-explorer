@@ -83,7 +83,7 @@ STOP = set(
     New Old Late Early Mid Today Now Then Here There This That These Those
     North South East West Northern Southern Eastern Western Pacific Atlantic
     Claude Alex Orac Minerva Tars Fable Opus Sonnet Haiku
-    Copyright Licence License Apache MIT GPL Rust Node Svelte Python Vite WebGPU WebGL Chrome Firefox Safari Windows
+    Copyright Licence License Apache MIT GPL Formulation One Two Three Four Five Six Seven Eight Nine Ten Rust Node Svelte Python Vite WebGPU WebGL Chrome Firefox Safari Windows
     Astronomy Astrophysics Astrophysical Journal Review Reviews Letters Proceedings Annual Society Monthly
     Notices Geophysical Research Physics Physical Nature Science Sciences Icarus Academy Academies Press
     University Institute Survey Conference Symposium Meeting Workshop Report Bulletin Transactions
@@ -537,7 +537,7 @@ def check():
     if missing:
         for k in missing:
             print(f"citations: {k} cited at {code[k]['places'][0]} is not on handover/citations/master.jsonl", file=sys.stderr)
-        print("Run python3 scripts/citations.py --update and commit handover/citations/.", file=sys.stderr)
+        print("Run python3 scripts/citations.py --add and commit handover/citations/master.jsonl.", file=sys.stderr)
     if bad or missing:
         sys.exit(1)
     print(f"citations: all {len(code)} pack and code citations are on the master list")

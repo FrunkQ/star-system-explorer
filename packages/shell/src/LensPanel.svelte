@@ -6,7 +6,7 @@
   identical. Nothing here changes data.
 -->
 <script lang="ts">
-  import { LAYERS, TOOLS, checkLens, copyLens, lensPack, lensesFromPack, saved, type Density, type LayerId, type Lens, type LensCard, type ToolId } from "../../ui-contract/src/index.ts";
+  import { LAYERS, TOOLS, chartNameLayers, checkLens, copyLens, lensPack, lensesFromPack, saved, type Density, type LayerId, type Lens, type LensCard, type ToolId } from "../../ui-contract/src/index.ts";
 
   let { from, lenses, fieldsByKind, kinds, onsave, ondelete }: { from: Lens; lenses: Lens[]; fieldsByKind: Record<string, { id: string; label: string }[]>; kinds: string[]; onsave: (l: Lens) => void; ondelete: (id: string) => void } = $props();
 
@@ -58,7 +58,10 @@
     if (!label.trim()) return void (problem = "Give the lens a name, for example Political.");
     const snap = $state.snapshot(draft) as Lens;
     const taken = lenses.filter((l) => l.id !== (own ? from.id : "")).map((l) => l.id);
-    const next: Lens = own ? { ...snap, label: label.trim(), origin: "mine" } : { ...copyLens(snap, label.trim(), taken), cards: snap.cards, layers: snap.layers, tools: snap.tools };
+    const copied: Lens = own ? { ...snap, label: label.trim(), origin: "mine" } : { ...copyLens(snap, label.trim(), taken), cards: snap.cards, layers: snap.layers, tools: snap.tools };
+    // Names on the chart (NM6): absent means the common name, else the designation.
+    const { names: _n, ...rest } = copied;
+    const next: Lens = snap.names ? { ...rest, names: snap.names } : rest;
     const bad = checkLens(next);
     problem = bad.join("; ");
     if (bad.length) return;
@@ -101,6 +104,7 @@
       {#each LAYERS as l (l.id)}
         <label class="check"><input type="checkbox" checked={draft.layers.includes(l.id)} onchange={(e) => (draft.layers = toggle<LayerId>(draft.layers, l.id, e.currentTarget.checked))} /> {l.label}</label>
       {/each}
+      <label class="check" data-lens-names>Names <select aria-label="Names on the chart" value={draft.names ?? ""} onchange={(e) => (draft.names = e.currentTarget.value || undefined)}>{#each chartNameLayers() as n (n.id)}<option value={n.id}>{n.label}</option>{/each}</select></label>
     </fieldset>
     <fieldset>
       <legend>Tools on the bar</legend>
