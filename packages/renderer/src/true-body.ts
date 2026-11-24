@@ -6,6 +6,7 @@ import { smallBodyColour, smallBodyMesh, type SmallFigure } from "./small-body.t
 import type { GpuItem } from "./gpu.ts";
 import type { Vec3 } from "./frames.ts";
 import { ringProfile, type RingBand } from "./rings.ts";
+import { cutRings, ringMarks, type RingMoon } from "./ring-structure.ts";
 import type { TrueTexture } from "./true-look.ts";
 
 export interface TrueBody {
@@ -28,6 +29,9 @@ export interface TrueBody {
    * as that shape, seeded by `key` (use the body's address), instead of a sphere.
    */
   figure?: SmallFigure;
+  /** The world's mass, kg, and its moons: with both, its rings are cut where the moons' resonances and gaps fall (ring-structure.ts). */
+  mass_kg?: number;
+  moons?: readonly RingMoon[];
 }
 
 /** The GPU fields of a body's True face. */
@@ -53,9 +57,17 @@ const profiles = new Map<string, Profile | null>();
  */
 function ringsOf(b: TrueBody): (Profile & { key: string }) | null {
   if (!b.rings?.length || !(b.radius_m && b.radius_m > 0)) return null;
-  const key = `${b.key}|${JSON.stringify(b.rings)}|${b.radius_m}|${b.surface ? "s" : "-"}`;
+  const shaped = !!(b.moons?.length && b.mass_kg && b.mass_kg > 0);
+  const key = `${b.key}|${JSON.stringify(b.rings)}|${b.radius_m}|${b.surface ? "s" : "-"}${shaped ? `|${b.mass_kg}|${JSON.stringify(b.moons)}` : ""}`;
   if (!profiles.has(key)) {
-    const p = ringProfile(b.rings, b.surface ? meanColour(b.surface) : [0.5, 0.5, 0.5]);
+    let rings = b.rings;
+    if (shaped) {
+      const lo = Math.min(...rings.map((r) => r.inner_m));
+      const hi = Math.max(...rings.map((r) => r.outer_m));
+      rings = cutRings(rings, ringMarks(b.moons!, b.mass_kg!, lo, hi));
+    }
+    // Finer when the moons cut it, so a gap a few tens of km wide still shows.
+    const p = ringProfile(rings, b.surface ? meanColour(b.surface) : [0.5, 0.5, 0.5], shaped ? 2048 : 512);
     profiles.set(key, p ? { inner: p.inner_m / b.radius_m, outer: p.outer_m / b.radius_m, width: p.width, data: p.data, assumed: p.assumed } : null);
   }
   const p = profiles.get(key);

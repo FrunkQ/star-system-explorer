@@ -120,3 +120,5 @@ export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";
 // The stars over a landing site and the eye's adaptation (night-sky.ts).
 export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";
 export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";
+export { cutRings, ringMarks, RESONANCE_F, RING_VISCOSITY_M2_S, GAP_PER_ROOT_MU, EDGE_SLACK } from "./ring-structure.ts";
+export type { RingMark, RingMoon } from "./ring-structure.ts";
