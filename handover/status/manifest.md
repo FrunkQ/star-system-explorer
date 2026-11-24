@@ -15,6 +15,7 @@ Scope (Alex, 23 Nov): the manifest and crew are general, game-neutral tools now;
 | MC5: the ship's Log reads what is aboard: who and what came aboard (from where), left (for where), and a person's state while aboard (`aboardLog`, from the entries' own histories); fuel levels become kept values in the base manifest pack (`fuel.propellant_t`, `fuel.jump_t`, unit t), so each set, top-up or voyage is a dated log line with its change and reason | done (PR 423, merged 24 Nov) | packages/MC5-log-aboard.md |
 | MC6 (PR 455, merged 24 Nov): the Log says what each Build change changed ("Changed: Jump drive 2 → 3; Design changed"): kernel `history` takes `changes: true` and gives each event's fact changes at that address (pictures named, not sent); `shipLog` words them from → to | done | packages/MC6-log-refits.md |
 | MC7: the Log reads the ship's flights from its flight log (travel V8): one line per voyage ("Flew Earth to Mars (108 days) · planned"), and launches, burns, flybys, landings, splits, joins, refuels, loads; `flightLines`, `LOG_RANK`; `tests/ui/manifest.e2e.mjs` added to CI's ui job | done | packages/MC7-log-flights.md |
+| MC8: a players' card for the party's ship (`PartyShipCard`, opened from the players' header line): picture, crew and manifest the table knows, tanks; read from the seat's own scene (`seenAboard`); read only | done; checking a known ship and shown crew end to end waits on the players' replay bug (reported 24 Nov, see the package log) | packages/MC8-party-ship-card.md |
 
 ## Alex's rulings for this track (so they live in the repo, not only in the thread)
 
@@ -28,9 +29,10 @@ Scope (Alex, 23 Nov): the manifest and crew are general, game-neutral tools now;
 ## Open questions for Alex (each with the track's recommendation; built on the recommendation meanwhile)
 
 1. The six crew questions of 23 Nov (aboard is one kind of thing for people and cargo; kinds of being never assumed human; own age that stops in cold sleep; life support from the stores aboard; damage only through readiness; players learn of entries through Known to): no answer yet; all built as recommended.
-2. Should players see a ship's pictures once the ship is shown to them? Recommended yes, through the same Known to eye. Blocked on a player-side ship card, which does not exist yet (player screens show no construct card).
+2. Should players see a ship's pictures once the ship is shown to them? Recommended yes, through the same Known to eye. Built that way for the party's ship (MC8).
 
 ## Next
 
-- MC1 to MC6 are merged; MC7 is in its PR. Alex's 24 Nov log ask (flights, cargo transfers, refits) is then complete.
-- Candidates, in order: a player-side ship card (with the chart room) so open question 2 can be built; crew limits by kind of being with FT2 (future tech); the card's "at" reading where the ship is now from the flight log (with the travel track).
+- MC1 to MC6 are merged; MC7 and MC8 are in one PR. Alex's 24 Nov log ask (flights, cargo transfers, refits) is then complete.
+- Waiting on others: the players' replay bug (a Known to reveal makes a players' screen ask to reload), reported 24 Nov; once fixed, extend party.e2e to show Beowulf and its crew to the table and read them on the card.
+- Candidates, in order: crew limits by kind of being with FT2 (future tech); the card's "at" reading where the ship is now from the flight log (with the travel track).

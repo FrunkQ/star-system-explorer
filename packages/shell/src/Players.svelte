@@ -26,7 +26,8 @@
   import { PLAYER_STACK, ScreenRuntime } from "../../views/player-stack/src/index.ts";
   import { themeCss } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES, PLAYER_THEMES, filterLayers } from "../../skins/player/src/index.ts";
-  import { FilterChain, Segmented } from "../../chart-grammar/src/index.ts";
+  import { FilterChain, Segmented, opensFrom } from "../../chart-grammar/src/index.ts";
+  import { PartyShipCard } from "../../views/manifest/src/index.ts";
   import vocabDoc from "./documents/vocab.plain.json";
   import { SHIPPED } from "./symbols.svelte.ts";
   import { allStyles } from "./styles.svelte.ts";
@@ -76,6 +77,9 @@
   let shown = $state<Shown | undefined>(undefined);
   // The party's ship (the landing run-through): the table always knows where it is, whatever screen is up.
   let party = $state.raw<PartyShip | null>(null);
+  let partyOpen = $state(false);
+  // The session the party's ship card reads through, once this screen's kernel is up (none on a sealed screen).
+  let cardSession = $state.raw<ViewSession | null>(null);
   const partyOf = (j: unknown): PartyShip | null => (j && typeof j === "object" && typeof (j as PartyShip).name === "string" && typeof (j as PartyShip).at === "string" ? (j as PartyShip) : null);
   const scopeNow = () => (shown && "scope" in shown && shown.scope ? shown.scope : facts.scope);
   let sceneHash = $state("");
@@ -248,6 +252,7 @@
       replica.onSession = (s) => {
         session = s;
         sessionReady = true;
+        cardSession = session;
         shown = shownFor(replica);
         party = partyOf(replica.party());
         perfEdge = s.device();
@@ -402,7 +407,9 @@
     {#if brand}<span class="brand" data-brand>{#if brand.logo}<img src={brand.logo} alt="" />{/if}{brand.name}</span>{/if}
     <h1>{shown && "off" in shown ? "Stand by" : star ? subjectName(star) : "System"}</h1>
     <span class="kicker">{screenDoc?.label ?? "…"}{screenDoc?.data_view ? ` · seen through ${screenDoc.data_view}` : ""} · audience {scene?.audience ?? "…"}</span>
-    {#if party}<span class="ship" data-party-ship={party.ship} data-party-at={party.at} title={party.voyage ? `Last voyage: ${placeName(party.voyage.from)} to ${placeName(party.voyage.to)}, ${dayWords(party.voyage.days)}` : undefined}>Aboard <strong>{party.name}</strong>, {party.at === scopeNow() ? "in this system" : `at ${placeName(party.at)}`}</span>{/if}
+    {#if party}<button type="button" class="ship" aria-expanded={partyOpen} onclick={() => (partyOpen = !partyOpen)} data-party-ship={party.ship} data-party-at={party.at} title={party.voyage ? `Last voyage: ${placeName(party.voyage.from)} to ${placeName(party.voyage.to)}, ${dayWords(party.voyage.days)}` : undefined}>Aboard <strong>{party.name}</strong>, {party.at === scopeNow() ? "in this system" : `at ${placeName(party.at)}`}</button>{/if}
+    <!-- The party's ship card (track MC, MC8): what the table knows of it, opened from the line above. -->
+    {#if party && partyOpen}<div class="party-pop" use:opensFrom={() => document.querySelector("header [data-party-ship]")}><PartyShipCard session={cardSession} {party} tick={stateHash} /></div>{/if}
     <span class="spacer"></span>
     {#if !screenDoc?.data_view && !joined}
     <Segmented
@@ -505,6 +512,7 @@
     grid-template-rows: 1fr;
   }
   .bar {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -519,9 +527,30 @@
     font-weight: 600;
   }
   .ship {
+    font: inherit;
     font-size: 13px;
     color: var(--sse-ink-muted);
     white-space: nowrap;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
+  .ship:hover,
+  .ship[aria-expanded="true"] {
+    border-color: var(--sse-rule);
+  }
+  .party-pop {
+    position: absolute;
+    top: 100%;
+    right: 16px;
+    z-index: 20;
+    padding: 12px 14px;
+    background: var(--sse-ground);
+    border: 1px solid var(--sse-rule);
+    box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+    max-height: 70vh;
+    overflow: auto;
   }
   .ship strong {
     color: var(--sse-ink);

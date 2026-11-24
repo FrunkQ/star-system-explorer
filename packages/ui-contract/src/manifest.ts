@@ -372,3 +372,57 @@ export function aboardLog(place: string, entries: readonly AboardEntry[], yr: (a
   }
   return out.sort((a, b) => a.at_yr - b.at_yr);
 }
+
+// ---- The players' card for the party's ship (MC8): what the table knows is aboard, from the seat's own scene ----
+
+/** One entry as a seat sees it: what its scene discloses, nothing more. A fact still to be learned is `undefined`. */
+export interface SeenEntry {
+  address: string;
+  name: string;
+  /** person, cargo, or "aboard" when the scene shows neither a person's nor a lot's facts. */
+  kind: "person" | "cargo" | "aboard";
+  role?: string;
+  being?: string;
+  state?: AboardState;
+  what?: string;
+  amount?: number;
+  unit?: string;
+}
+
+type SeenSubject = { address: string; facts: readonly { field: string; value?: unknown; placeholder?: string }[] };
+
+/**
+ * Who and what a seat sees aboard `ship`, from its own audience's scene (the kernel has already left out what the
+ * table does not know, and named what is still to be learned with a placeholder). A seat's scene carries no actor
+ * kinds, so a person is told by a person's facts (role, kind of being, state, age) and a lot by a lot's (what,
+ * amount, unit); an entry showing neither is listed as "aboard".
+ */
+export function seenAboard(subjects: readonly SeenSubject[], ship: string): { people: SeenEntry[]; cargo: SeenEntry[]; other: SeenEntry[] } {
+  const out = { people: [] as SeenEntry[], cargo: [] as SeenEntry[], other: [] as SeenEntry[] };
+  for (const s of subjects) {
+    const f = (k: string) => s.facts.find((x) => x.field === k);
+    const v = (k: string) => f(k)?.value;
+    if (v(ABOARD.on) !== ship) continue;
+    const has = (ks: string[]) => ks.some((k) => f(k) !== undefined);
+    const kind: SeenEntry["kind"] = has([ABOARD.what, ABOARD.amount, ABOARD.unit]) ? "cargo" : has([ABOARD.role, ABOARD.being, ABOARD.state, ABOARD.age]) ? "person" : "aboard";
+    const str = (k: string) => (typeof v(k) === "string" && (v(k) as string).trim() ? (v(k) as string) : undefined);
+    const state = str(ABOARD.state);
+    const e: SeenEntry = {
+      address: s.address,
+      name: str("name") ?? "someone unnamed",
+      kind,
+      ...(str(ABOARD.role) ? { role: str(ABOARD.role)! } : {}),
+      ...(str(ABOARD.being) ? { being: str(ABOARD.being)! } : {}),
+      ...(state && (STATES as readonly string[]).includes(state) ? { state: state as AboardState } : {}),
+      ...(str(ABOARD.what) ? { what: str(ABOARD.what)! } : {}),
+      ...(typeof v(ABOARD.amount) === "number" ? { amount: v(ABOARD.amount) as number } : {}),
+      ...(str(ABOARD.unit) ? { unit: str(ABOARD.unit)! } : {}),
+    };
+    (kind === "person" ? out.people : kind === "cargo" ? out.cargo : out.other).push(e);
+  }
+  const by = (a: SeenEntry, b: SeenEntry) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  out.people.sort(by);
+  out.cargo.sort(by);
+  out.other.sort(by);
+  return out;
+}
