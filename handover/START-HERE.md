@@ -85,6 +85,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/proven-core.md` | Build SSE4 proven core | P, F, S, SF, B, T3, S5, the source side of MF (MF1 to MF3, MF10), MP19, MP20, ND1 |
 | `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | U6, U8, V8, V9, voyages, GH8 |
+| `status/galaxy.md` | Build galaxy charts and histories | U6, U8, V9 (not the 3D web cube), GH8, V3 gap 39 (split from galaxy-and-travel on 24 Nov) |
 | `status/light.md` | Build light and nebulae | O, the light side of Y, MF6, MF7, MF9, ND2 |
 | `status/weather.md` | Build shared climate and weather | W |
 | `status/data-sheet.md` | Build the master matter data sheet | MP data waves, MP22, SOL, DM1, DM6, citation checks |
