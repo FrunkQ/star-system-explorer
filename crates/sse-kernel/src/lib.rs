@@ -3540,6 +3540,7 @@ impl Kernel {
                             tiles: &tiles,
                             quick,
                             limit,
+                            reference: &self.observe.reference,
                         },
                         &mut self.surveys,
                     )?,
@@ -3577,6 +3578,7 @@ impl Kernel {
                                 tiles: &tiles,
                                 quick,
                                 limit,
+                                reference: &self.observe.reference,
                             },
                             &mut self.surveys,
                         )?

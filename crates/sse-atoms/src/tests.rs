@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 90,
+        n, 91,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1249,5 +1249,22 @@ fn composition_blocks_match_the_chain() {
             ),
             "crust fraction",
         );
+    }
+    for (a, c, k) in [
+        (1.0e13, 6.0e-5, 160.0),
+        (3.0e9, 1.5e-9, 3800.0),
+        (1.0e6, 0.5, 10.0),
+    ] {
+        let got = run("sse.composition.deposit_amount", &[a, c, k]);
+        let want = mt::deposit_amount(
+            a,
+            3300.0,
+            sse_core::sheet::mixture_density::CRUST_ROCK,
+            4.5e-5,
+            c,
+            k,
+        );
+        near(got[0], want.0, "deposit mass");
+        near(got[1], want.1, "deposit grade");
     }
 }

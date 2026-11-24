@@ -143,6 +143,10 @@ pub struct CoverSettings {
     pub orogenic_gold_min_myr: f64,
     pub colours: BTreeMap<String, [u8; 3]>,
     pub deposits: BTreeMap<String, String>,
+    /// MP8: what each deposit kind holds (an ore process's enrichment over
+    /// the crust); absent kinds hold nothing counted yet.
+    #[serde(default)]
+    pub ores: Ores,
     pub gases: Vec<Gas>,
     pub aerostat: AerostatSettings,
     pub built: Vec<BuiltKind>,
@@ -154,6 +158,11 @@ impl CoverSettings {
         for k in self.deposits.keys() {
             if !DEPOSITS.contains(&k.as_str()) {
                 return Err(format!("cover: unknown deposit kind {k}"));
+            }
+        }
+        for k in self.ores.kinds.keys() {
+            if !DEPOSITS.contains(&k.as_str()) {
+                return Err(format!("cover: ores name unknown deposit kind {k}"));
             }
         }
         for b in &self.built {
@@ -358,6 +367,25 @@ pub struct CoverInputs<'a> {
     pub reshape: Vec<Reshape>,
     /// Built kinds to place by rule (the pack's names); empty for an unsettled world.
     pub settle: Vec<String>,
+}
+
+/// MP8: how deposits hold elements (`sse.composition.deposit_amount`): the
+/// ore in a footprint is `ore_share` of the crust to `depth_m`, at the crust's
+/// concentration of each element times the kind's enrichment.
+#[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
+pub struct Ores {
+    /// Depth the ore is counted to, m.
+    #[serde(default)]
+    pub depth_m: f64,
+    /// Share of a footprint's crust to that depth that is ore.
+    #[serde(default)]
+    pub ore_share: f64,
+    /// Per deposit kind, each element's grade over the crust's (enrichment).
+    #[serde(default)]
+    pub kinds: BTreeMap<String, BTreeMap<String, f64>>,
+    /// Where the grades and the share come from.
+    #[serde(default)]
+    pub references: Vec<String>,
 }
 
 /// A deposit at a place (cell deposits live on the plate grid).
