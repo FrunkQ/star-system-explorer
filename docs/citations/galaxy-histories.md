@@ -143,3 +143,4 @@ on them is built. That package's row then goes into the area file it belongs to,
 | van Dokkum et al. 2019 | doi:10.3847/2041-8213/ab0d92 | verified (metadata) | Crossref: van Dokkum ApJL 874 L5 |
 | Lee et al. 2021 | doi:10.3847/2041-8213/ac16e0 | verified (metadata) | Crossref: Lee ApJL 917 L15 |
 | Belokurov, The Conversation, 10 Jun 2026 | doi:10.64628/AB.vujjdh5vc | verified (metadata) | Crossref: Belokurov The Conversation 2026-06-10 |
+| Iye, Tadaki and Fukumoto 2019 | arXiv:1910.10926 | verified (abstract) | Read at source 24 Nov 2026 (design 9.4): all 146 spirals with confirmed spin and tilt trail; NGC 4622 and NGC 722 "somewhat questionable". Quoted by the galaxy chart beside a leading arm (GH8). |

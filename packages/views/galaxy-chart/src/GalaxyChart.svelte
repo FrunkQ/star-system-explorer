@@ -12,7 +12,7 @@
   import { Galaxy3D } from "../../galaxy-3d/src/index.ts";
   import { GALAXY_CONTROLS } from "./controls.ts";
   import { markStrengthAt } from "../../../renderer/src/index.ts";
-  import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, DEFAULT_VIEW, dex, viewOptions, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { announcePlace, cellHalo, leadingArmWords, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, DEFAULT_VIEW, dex, viewOptions, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   // The one set of view controls (V9t): Chart is the face-on diagram below; 3D and True turn the disc (Galaxy3D).
@@ -171,12 +171,15 @@
     }
     return [...by.values()].map((k) => ({ ...k, culprits: k.by.size })).sort((a, b) => b.live - a.live || b.n - a.n || a.kind.localeCompare(b.kind));
   }
+  // GH8: the latest leading arm made by the chart's time, in words.
+  const lead = $derived(chart?.assembly ? leadingArmWords(chart.assembly.marks, chart.at_gyr, markStrengthAt) : null);
   const MARK_WORDS: Record<string, string> = {
     warp: "Warped edge",
     ripples: "Ripples",
     tilt: "Tilted outer disc",
     thick_disc: "Thickened disc",
     driven_arms: "Driven arms",
+    leading_arm: "Leading arm (wound against the spin)",
     ring: "Collision ring",
     burst_knots: "Knots of new stars",
     lopsided: "Lopsided disc",
@@ -336,6 +339,13 @@
         {#if chart.now.z_gas > 0 && a.stellar_halo_z > 0}<div class="row"><span>Halo stars' metals, against the gas now</span><span class="v">{fewer(a.stellar_halo_z / chart.now.z_gas)}</span></div>{/if}
         <div class="row"><span>Thick disc (stars heated by the collisions)</span><span class="v">{sci(a.thick_disc_msun)} M☉</span></div>
         {#if a.biggest}<div class="row" data-biggest><span>Gave the most</span><span class="v" title={a.biggest}>{shortAddress(a.biggest)} · {(a.biggest_share * 100).toFixed(0)}% of the stars not born here</span></div>{/if}
+        {#if lead}
+          <!-- GH8: arms trail by the disc's own rotation; a leading arm is the mark of a backwards pass, and it fades. -->
+          <p class="lead-arm" class:faded={!lead.live} data-leading-arm={lead.live ? "showing" : "wound back"}>
+            {lead.line}{lead.made > 1 ? ` (${lead.made} in this galaxy's history so far.)` : ""}
+            <span class="hint">Rare: spirals trail, and no more than about 1 in 100 shows a leading arm (Iye, Tadaki and Fukumoto 2019).</span>
+          </p>
+        {/if}
         {#if a.marks.length}
           {@const kinds = markKinds(a.marks, chart.at_gyr)}
           <details data-mark-list>
@@ -743,5 +753,14 @@
   }
   .sw.sfr {
     border-top-color: var(--sse-accent);
+  }
+  .lead-arm {
+    margin: 6px 0;
+  }
+  .lead-arm.faded {
+    color: var(--sse-ink-muted);
+  }
+  .lead-arm .hint {
+    display: block;
   }
 </style>
