@@ -60,11 +60,11 @@
   ],
   "omega_r": 0.0000913905232432095,
   "sigma_table": "d8657e5c00a29251d116640559b94fe36f46ddeefa53a5fb61e00a0b2e885a4d",
-  "slice": "a50d00ef661eee98dad20f608be0998dfbc92befbad78636925f7f9775a25aa8",
+  "slice": "3d9242d4ee5ea1e5ab3bb2dc0e6bd64e7bea867c439e9cd6e582727325766631",
   "t_web_counts": [
-    15,
-    84,
-    86,
-    15
+    66,
+    98,
+    33,
+    3
   ]
 }

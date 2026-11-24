@@ -412,12 +412,16 @@ pub(crate) struct SliceAsk<'a> {
     pub centre: [f64; 3],
     pub extent_mpc: f64,
     pub n: u32,
+    pub cube: bool,
 }
 
 /// A square foam slice of the cosmic web (G1) at one epoch, for V9's maps.
 pub(crate) fn web_slice(a: SliceAsk) -> Result<serde_json::Value, Response> {
     if a.n < 4 || a.n > 256 {
         return Err(err("bad_request", "n must be 4 to 256 samples a side"));
+    }
+    if a.cube && a.n > 48 {
+        return Err(err("bad_request", "a cube is 4 to 48 parcels a side"));
     }
     if !(a.extent_mpc > 0.0 && a.extent_mpc <= 2000.0) {
         return Err(err(
@@ -440,6 +444,16 @@ pub(crate) fn web_slice(a: SliceAsk) -> Result<serde_json::Value, Response> {
         }
     };
     let octaves = w.params.octaves;
+    if a.cube {
+        let v = w.volume(&c, scale, a.centre, a.extent_mpc, a.n, octaves - 1);
+        return Ok(serde_json::json!({
+            "t_gyr": c.time_of_scale(scale),
+            "z": 1.0 / scale - 1.0,
+            "now_gyr": c.age_gyr(),
+            "volume": v,
+            "model": ["the cosmic web from seeded Gaussian fields grown linearly; each parcel of matter moved by the truncated Zel'dovich approximation (Coles, Melott and Shandarin 1993) and given the room that step leaves it; voids, sheets, filaments and knots by the T-web, its threshold set so voids fill the pack's share of space (G1); a picture of the large-scale pattern, not an N-body simulation"],
+        }));
+    }
     let s = w.slice(&c, scale, a.centre, a.extent_mpc, a.n, octaves);
     Ok(serde_json::json!({
         "t_gyr": c.time_of_scale(scale),
@@ -479,7 +493,7 @@ pub(crate) fn matter_budget(
         "matter: the cell's mass from the web's density; dark and ordinary in the universe's shares",
         "haloes: the catalogued ones (G2) and, below the floor, the same mass function down to floor_low_msun; the rest of the dark matter never collapsed into those",
         "reservoirs: G3 on a median halo once per half dex of mass, read off by each halo's mass; hot halo gas is a halo's share of ordinary matter less what its galaxy holds and threw out; gas between galaxies is the rest of the cell's",
-        "environments: the T-web at the web's finest octave (voids, sheets, filaments, knots), on a grid of samples",
+        "environments: the T-web at the truncated Zel'dovich smoothing (voids, sheets, filaments, knots) on a grid of equal-mass parcels, each given the room the Zel'dovich step leaves it today",
     ]);
     Ok(v)
 }
@@ -942,6 +956,41 @@ mod tests {
         let mut fresh = Kernel::new();
         let none = ask(&mut fresh, r#"{"op":"web_slice","extent_mpc":100,"n":16}"#);
         assert_eq!(none["code"], "no_universe");
+    }
+    #[test]
+    fn a_web_cube_gives_parcels_for_the_3d_view() {
+        let mut k = open();
+        let r = ask(
+            &mut k,
+            r#"{"op":"web_slice","cube":true,"extent_mpc":128,"n":12}"#,
+        );
+        assert_eq!(r["type"], "web_sliced", "{r}");
+        let v = &r["web"]["volume"];
+        assert_eq!(v["position"].as_array().unwrap().len(), 12 * 12 * 12 * 3);
+        let env = v["environment"].as_array().unwrap();
+        let room: Vec<f64> = v["room"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect();
+        let total: f64 = room.iter().sum();
+        let void_room: f64 = env
+            .iter()
+            .zip(&room)
+            .filter(|(e, _)| *e == "void")
+            .map(|(_, r)| r)
+            .sum();
+        let void_mass = env.iter().filter(|e| *e == "void").count() as f64 / env.len() as f64;
+        assert!(
+            void_mass < void_room / total,
+            "voids hold less matter than space"
+        );
+        let big = ask(
+            &mut k,
+            r#"{"op":"web_slice","cube":true,"extent_mpc":128,"n":64}"#,
+        );
+        assert_eq!(big["code"], "bad_request");
     }
     #[test]
     fn a_cell_lists_its_haloes_and_one_can_be_charted() {

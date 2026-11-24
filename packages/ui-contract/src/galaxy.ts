@@ -187,6 +187,51 @@ export interface WebSlice {
   model: string[];
 }
 
+/** A cube of the cosmic web for the 3D view (kernel `web_slice` with `cube`, sse-cosmos `Volume`). */
+export interface WebCube {
+  t_gyr: number;
+  z: number;
+  now_gyr: number;
+  volume: {
+    scale_factor: number;
+    growth: number;
+    centre: [number, number, number];
+    extent: number;
+    n: number;
+    /** The octave the motion and environments are read at (truncated Zel'dovich) and its spacing, Mpc. */
+    smoothing_octave: number;
+    smoothing_mpc: number;
+    /** Where each parcel is now, comoving Mpc, x y z per parcel, x fastest over the grid it started on. */
+    position: number[];
+    /** Density where it started, in units of the mean. */
+    density: number[];
+    environment: ("void" | "sheet" | "filament" | "knot" | string)[];
+    /** The room each parcel takes today as a share of the room it started in: over 1 in voids. */
+    room: number[];
+  };
+  model: string[];
+}
+
+/** Shares of space (by each parcel's room) and of matter (by count) in each environment of a cube. */
+export function cubeShares(v: WebCube["volume"]): Record<"void" | "sheet" | "filament" | "knot", { space: number; matter: number }> {
+  const out = { void: { space: 0, matter: 0 }, sheet: { space: 0, matter: 0 }, filament: { space: 0, matter: 0 }, knot: { space: 0, matter: 0 } };
+  let room = 0;
+  const n = v.environment.length;
+  v.environment.forEach((e, i) => {
+    const r = v.room[i] ?? 1;
+    room += r;
+    const k = out[e as keyof typeof out];
+    if (!k) return;
+    k.space += r;
+    k.matter += 1;
+  });
+  for (const k of Object.values(out)) {
+    k.space /= Math.max(1e-300, room);
+    k.matter /= Math.max(1, n);
+  }
+  return out;
+}
+
 export const NAMED_HALOES: readonly { key: "dwarf" | "milky-way-like" | "group"; label: string }[] = [
   { key: "dwarf", label: "A dwarf galaxy" },
   { key: "milky-way-like", label: "A Milky-Way-like galaxy" },

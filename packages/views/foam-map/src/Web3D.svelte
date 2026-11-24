@@ -1,0 +1,303 @@
+<!--
+  The cosmic web in 3D (V9w), for the foam map's 3D and True view styles. A cube of the kernel's web: every parcel
+  of matter where the truncated Zel'dovich step has moved it. 3D draws the parcels as dots on the chart's ground,
+  coloured by the place they started in (voids faint, sheets, filaments, knots in the accent); True draws them as
+  light against black space, so crowded matter glows brighter by adding up. It turns slowly on its own (the depth
+  reads from the motion) until it is dragged. HUD on adds the cube's edges. A device without a GPU draws the dots
+  turned on a canvas.
+-->
+<script lang="ts">
+  import { onDestroy } from "svelte";
+  import { basis, cubeEdges, SPACE_CSS, starCss, startGpu, webGlow, webParcels, WEB_KINDS, WEB_LIGHT_K, type Gpu, type GpuDots, type Vec3, type WebKind } from "../../../renderer/src/index.ts";
+  import { SEEN_ELEVATION, type SeenFrom, type WebCube } from "../../../ui-contract/src/index.ts";
+
+  let {
+    cube,
+    look = "3d",
+    seen = "tilted",
+    hud = true,
+    shrink = 1,
+    tier = "gpu-basic",
+    onturned,
+  }: {
+    cube: WebCube;
+    look?: "3d" | "true";
+    seen?: SeenFrom;
+    hud?: boolean;
+    /** Real: the cube at its size then (the scale factor); Readable: comoving, 1. */
+    shrink?: number;
+    tier?: string;
+    onturned?: () => void;
+  } = $props();
+
+  const isTrue = $derived(look === "true");
+  const parcels = $derived(webParcels(cube.volume, shrink));
+  const half = $derived(cube.volume.extent / 2);
+
+  // Camera orbiting the cube's centre, distances in Mpc (comoving, so the camera stays put as Real shrinks it).
+  let yaw = $state(-0.6);
+  let pitch = $state(0.45);
+  let dist = $state(0);
+  // A new cube size puts the camera back at the same view of it.
+  let framed = 0;
+  $effect(() => {
+    if (framed !== half) ((framed = half), (dist = half * 4.2));
+  });
+  $effect(() => {
+    const s = seen;
+    if (s !== "free") pitch = SEEN_ELEVATION[s];
+  });
+  const MIN = $derived(half * 0.3);
+  const MAX = $derived(half * 10);
+  const zoomBy = (f: number) => (dist = Math.min(MAX, Math.max(MIN, dist * f)));
+  const eye = $derived<Vec3>([dist * Math.cos(pitch) * Math.cos(yaw), dist * Math.cos(pitch) * Math.sin(yaw), dist * Math.sin(pitch)]);
+  const FOV = (40 * Math.PI) / 180;
+  const rel = (p: readonly [number, number, number]): Vec3 => [Math.fround(p[0] - eye[0]), Math.fround(p[1] - eye[1]), Math.fround(p[2] - eye[2])];
+
+  // A slow turn so the depth reads, until the viewer takes hold (or asks for less motion).
+  let spinning = $state(true);
+  let raf = 0;
+  $effect(() => {
+    const still = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!spinning || still) return;
+    let last = 0;
+    const step = (t: number) => {
+      if (last) yaw += ((t - last) / 1000) * 0.12;
+      last = t;
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  });
+
+  let host: HTMLDivElement | undefined = $state();
+  let w = $state(0);
+  let h = $state(0);
+  const token = (name: string, fallback?: string) => {
+    if (!host) return "";
+    const cs = getComputedStyle(host);
+    return cs.getPropertyValue(name).trim() || (fallback ? cs.getPropertyValue(fallback).trim() : "") || cs.color;
+  };
+
+  let canvas: HTMLCanvasElement | undefined = $state();
+  let canvas2d: HTMLCanvasElement | undefined = $state();
+  let gpu = $state<Gpu | null>(null);
+  let using = $state<"gpu" | "canvas" | "">("");
+  let reason = $state("");
+  $effect(() => {
+    if (!canvas || using) return;
+    if (tier === "canvas") return void ((using = "canvas"), (reason = "canvas tier chosen"));
+    void startGpu(canvas).then((g) => {
+      if (g) ((gpu = g), (using = "gpu"), (reason = g.backend === "webgpu" ? "WebGPU" : "WebGL2 (no WebGPU here)"));
+      else ((using = "canvas"), (reason = "no GPU path on this device"));
+    });
+  });
+  onDestroy(() => {
+    cancelAnimationFrame(raf);
+    gpu?.dispose();
+  });
+
+  const LIGHT = starCss(WEB_LIGHT_K);
+  const total = $derived(WEB_KINDS.reduce((a, k) => a + parcels[k].length, 0));
+
+  $effect(() => {
+    if (w === 0 || h === 0) return;
+    const colours: Record<WebKind, string> = {
+      void: token("--sse-ink-faint", "--sse-ink-muted"),
+      sheet: token("--sse-ink-muted"),
+      filament: token("--sse-ink"),
+      knot: token("--sse-accent"),
+    };
+    const ground = token("--sse-ground", "--sse-ground-raised");
+    const edgeColour = isTrue ? token("--sse-ink-faint", "--sse-ink-muted") : token("--sse-rule", "--sse-ink-faint");
+    const hs = half * shrink;
+    if (using === "gpu" && gpu) {
+      const { f, u } = basis(eye, [0, 0, 0]);
+      const dots: GpuDots[] = isTrue
+        ? [{ points: WEB_KINDS.flatMap((k) => parcels[k].map(rel)), colour: LIGHT, glow: webGlow(total), size: 1.5 }]
+        : WEB_KINDS.map((k) => ({ points: parcels[k].map(rel), colour: colours[k], size: k === "knot" ? 2.5 : k === "filament" ? 1.5 : 1 }));
+      gpu.draw({
+        items: [],
+        rings: hud ? cubeEdges(hs).map((e) => ({ points: e.map(rel), colour: edgeColour })) : [],
+        dots,
+        space: isTrue,
+        forward: f,
+        up: u,
+        fovY: FOV,
+        width: w,
+        height: h,
+        ground,
+      });
+    } else if (using === "canvas" && canvas2d) {
+      // No GPU: the same parcels projected by hand.
+      const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
+      canvas2d.width = Math.round(w * dpr);
+      canvas2d.height = Math.round(h * dpr);
+      const g = canvas2d.getContext("2d")!;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.fillStyle = isTrue ? SPACE_CSS : ground;
+      g.fillRect(0, 0, w, h);
+      const { f, u } = basis(eye, [0, 0, 0]);
+      const r: Vec3 = [f[1] * u[2] - f[2] * u[1], f[2] * u[0] - f[0] * u[2], f[0] * u[1] - f[1] * u[0]];
+      const k = Math.min(w, h) / 2 / Math.tan(FOV / 2);
+      const put = (p: Vec3) => {
+        const q = rel(p);
+        const d = q[0] * f[0] + q[1] * f[1] + q[2] * f[2];
+        if (d <= 0) return null;
+        return [w / 2 + (k * (q[0] * r[0] + q[1] * r[1] + q[2] * r[2])) / d, h / 2 - (k * (q[0] * u[0] + q[1] * u[1] + q[2] * u[2])) / d] as const;
+      };
+      if (isTrue) g.globalCompositeOperation = "lighter";
+      for (const kind of WEB_KINDS) {
+        g.fillStyle = isTrue ? LIGHT : colours[kind];
+        g.globalAlpha = isTrue ? webGlow(total) : 1;
+        const s = isTrue ? 1.5 : kind === "knot" ? 2.5 : kind === "filament" ? 1.5 : 1;
+        for (const p of parcels[kind]) {
+          const xy = put(p);
+          if (xy) g.fillRect(xy[0] - s / 2, xy[1] - s / 2, s, s);
+        }
+      }
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = "source-over";
+      if (hud) {
+        g.strokeStyle = edgeColour;
+        for (const e of cubeEdges(hs)) {
+          g.beginPath();
+          e.forEach((p, i) => {
+            const xy = put(p);
+            if (xy) (i ? g.lineTo(xy[0], xy[1]) : g.moveTo(xy[0], xy[1]));
+          });
+          g.stroke();
+        }
+      }
+    }
+  });
+
+  // Turning: drag with a mouse (the choice becomes Free), arrows, wheel or the buttons to zoom.
+  let dragFrom: { x: number; y: number; yaw: number; pitch: number } | null = null;
+  function down(e: PointerEvent) {
+    if ((e.target as HTMLElement).closest("button")) return;
+    if (e.pointerType === "touch" && seen !== "free") return;
+    spinning = false;
+    dragFrom = { x: e.clientX, y: e.clientY, yaw, pitch };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+  function move(e: PointerEvent) {
+    if (!dragFrom) return;
+    const dx = e.clientX - dragFrom.x;
+    const dy = e.clientY - dragFrom.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3 && seen !== "free") onturned?.();
+    yaw = dragFrom.yaw - dx * 0.008;
+    pitch = Math.min(1.5, Math.max(-1.5, dragFrom.pitch + dy * 0.008));
+  }
+  const up = () => (dragFrom = null);
+  function wheel(e: WheelEvent) {
+    e.preventDefault();
+    zoomBy(e.deltaY > 0 ? 1.12 : 1 / 1.12);
+  }
+  function key(e: KeyboardEvent) {
+    const k = e.key;
+    if (k.startsWith("Arrow") && seen !== "free") onturned?.();
+    if (k === "ArrowLeft") yaw -= 0.12;
+    else if (k === "ArrowRight") yaw += 0.12;
+    else if (k === "ArrowUp") pitch = Math.min(1.5, pitch + 0.1);
+    else if (k === "ArrowDown") pitch = Math.max(-1.5, pitch - 0.1);
+    else if (k === "+" || k === "=") zoomBy(1 / 1.25);
+    else if (k === "-") zoomBy(1.25);
+    else return;
+    spinning = false;
+    e.preventDefault();
+  }
+</script>
+
+<!-- The canvas takes drag, wheel and arrow keys to turn the cube; the zoom and turn buttons are the controls. -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+<div
+  class="w3d"
+  class:true-look={isTrue}
+  bind:this={host}
+  role="application"
+  aria-roledescription="3D cosmic web"
+  aria-label={`The cosmic web in ${isTrue ? "True" : "3D"}, a cube ${cube.volume.extent} megaparsecs across`}
+  tabindex="0"
+  onpointerdown={down}
+  onpointermove={move}
+  onpointerup={up}
+  onpointercancel={up}
+  onwheel={wheel}
+  onkeydown={key}
+  style:touch-action={seen === "free" ? "none" : "pan-y"}
+  data-web-3d
+  data-tier={using}
+  data-look={isTrue ? "true" : "3d"}
+  data-parcels={total}
+  data-spinning={spinning ? "yes" : "no"}
+>
+  <div class="stage" bind:clientWidth={w} bind:clientHeight={h}>
+    <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true"></canvas>
+    <canvas bind:this={canvas2d} class="c2d" class:off={using !== "canvas"} aria-hidden="true"></canvas>
+    <div class="zoom" role="group" aria-label="Zoom and turn">
+      <button type="button" aria-label={spinning ? "Stop turning" : "Turn slowly"} data-spin onclick={() => (spinning = !spinning)}>{spinning ? "❚❚" : "↻"}</button>
+      <button type="button" aria-label="Zoom in" onclick={() => zoomBy(1 / 1.25)}>+</button>
+      <button type="button" aria-label="Zoom out" onclick={() => zoomBy(1.25)}>−</button>
+    </div>
+  </div>
+  <p class="note">
+    <span>Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}: {total.toLocaleString()} parcels of matter, each the same mass, moved from a grid {cube.volume.n} a side by the field smoothed over {cube.volume.smoothing_mpc.toFixed(0)} Mpc.</span>
+    {#if isTrue}<span>Light: every parcel shines alike, so brightness is where the matter crowds; one colour, old starlight at about {WEB_LIGHT_K.toLocaleString()} K (fudge register).</span>{:else}<span>Faint: voids. Grey: sheets. Ink: filaments. Accent: knots, where clusters grow.</span>{/if}
+  </p>
+</div>
+
+<style>
+  .w3d {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--sse-ground);
+    outline: none;
+  }
+  .stage {
+    position: relative;
+    flex: 1;
+    min-height: 320px;
+    aspect-ratio: 1;
+    overflow: hidden;
+    cursor: grab;
+    border: 1px solid var(--sse-rule);
+  }
+  .w3d:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--sse-accent);
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  canvas.off {
+    display: none;
+  }
+  .zoom {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    display: flex;
+  }
+  .zoom button {
+    font: inherit;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--sse-rule);
+    background: var(--sse-ground-raised);
+    color: var(--sse-ink);
+    cursor: pointer;
+  }
+  .note {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+</style>

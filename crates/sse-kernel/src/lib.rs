@@ -23,6 +23,9 @@ mod glow;
 #[cfg(test)]
 mod hooks_tests;
 mod ice_ages;
+mod known;
+#[cfg(test)]
+mod known_tests;
 #[cfg(test)]
 mod matter_tests;
 mod names;
@@ -3333,6 +3336,7 @@ impl Kernel {
                 Response::WindowViewed { view }
             }
             Request::WebSlice {
+                cube,
                 z,
                 t_gyr,
                 centre,
@@ -3348,6 +3352,7 @@ impl Kernel {
                     centre: centre.unwrap_or([0.0; 3]),
                     extent_mpc,
                     n,
+                    cube: cube.unwrap_or(false),
                 })?;
                 Response::WebSliced { web }
             }
@@ -4597,7 +4602,7 @@ impl Kernel {
                     )
                 })?;
                 if let Some(v) = &view {
-                    if !setup.views.iter().any(|d| &d.id == v) {
+                    if v != sse_observe::GM_ONLY_VIEW && !setup.views.iter().any(|d| &d.id == v) {
                         return Err(err("unknown_view", format!("no data view {v:?}")));
                     }
                 }
@@ -4637,6 +4642,30 @@ impl Kernel {
                     state_hash: state.hash().hex(),
                 }
             }
+            Request::KnownTo {
+                address,
+                field,
+                at_s,
+            } => self.known_to(&address, field.as_deref(), at_s)?,
+            Request::SetKnown {
+                address,
+                audience,
+                landmark,
+                field,
+                scope,
+                from_s,
+                at_s,
+            } => self.set_known(
+                &address,
+                &audience,
+                landmark.as_deref(),
+                field.as_deref(),
+                scope.as_ref(),
+                from_s,
+                at_s,
+            )?,
+            Request::UndoKnown { undo, at_s } => self.undo_known(&undo, at_s)?,
+            Request::KnownIn { bounds, at_s } => self.known_in(&bounds, at_s)?,
             Request::RulesStep { at_s } => {
                 let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
                 let tpl = self.observe.templates.clone();

@@ -16,8 +16,17 @@ function sliceWithScale(why3d: string, whyHud: string): ViewControlsSpec {
   };
 }
 
-/** The cosmic web foam: Real shrinks the slice by the scale factor at the slider's time. */
-export const FOAM_CONTROLS = sliceWithScale("The cosmic web is a slice for now: 3D comes later", "The foam has no lines or names to hide");
+/**
+ * The cosmic web: Chart is the flat slice; 3D turns a cube of it (parcels of matter where the truncated Zel'dovich
+ * step has moved them, voids, sheets, filaments and knots by colour); True draws the same parcels as light, crowded
+ * matter brightest. Real shrinks the slice or cube by the scale factor at the slider's time. HUD: the cube's edges.
+ */
+export const FOAM_CONTROLS: ViewControlsSpec = {
+  styles: { chart: true, "3d": true, true: true, wireframe: WHY_WIREFRAME_LATER },
+  flat: true,
+  scale: { readable: true, real: true },
+  hud: { chart: "The slice has no lines or names to hide", "3d": true, true: true },
+};
 
 /** Voyages: in a system Real lays the orbits out in AU, not by the log of their size; between stars it is in parsecs either way. */
 export const VOYAGE_CONTROLS = sliceWithScale("Voyages are charted flat for now", "The voyage chart always shows its names");
