@@ -42,6 +42,7 @@ fn a_solar_electric_ship_loses_thrust_as_the_sun_fades() {
         electric_w: 500.0,
         reject_k: None,
         mass_t: None,
+        role: None,
         off: false,
     }];
     let defs = BTreeMap::new();
@@ -180,6 +181,11 @@ fn a_ship_carries_its_ledger_and_old_ships_still_load() {
     assert_eq!(s.engines[0].count, 1);
     let back = serde_json::to_value(&s).unwrap();
     assert!(back.get("loads").is_none());
+    let laser: Load = serde_json::from_value(serde_json::json!({
+        "name": "laser", "electric_w": 5.0e7, "reject_k": 1500.0, "role": "weapon"
+    }))
+    .unwrap();
+    assert_eq!(laser.role.as_deref(), Some("weapon"));
     let old: crate::Ship = serde_json::from_value(serde_json::json!({
         "accel_g": 1.0, "exhaust_km_s": 2000.0, "wet_t": 2.0, "dry_t": 1.0
     }))
