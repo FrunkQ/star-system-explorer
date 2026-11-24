@@ -43,6 +43,19 @@ try {
   const pop = gm.locator("[data-picker-pop]");
   await pop.locator("[data-picker-find]").fill("#ocean");
   assert.deepEqual((await pop.locator(".tree .name").allInnerTexts()).map((t) => t.trim()), ["Tarn"]);
+  // Light up (V3 gap 41): the tag's holders are marked on the chart until turned off from the chip on the line.
+  const tarnAddr = await pop.locator(".tree [data-pick-row]").first().getAttribute("data-pick-row");
+  const glow = () => gm.evaluate((a) => getComputedStyle(document.querySelector(`.body[data-address="${a}"]`)).filter, tarnAddr);
+  assert.equal(await glow(), "none");
+  await pop.locator("[data-picker-light]").click();
+  assert.match(await glow(), /drop-shadow/);
+  assert.equal((await gm.locator(".place [data-lit-chip]").innerText()).replace("×", "").trim(), "#ocean");
+  await shot(gm, "light-up-ocean");
+  await gm.keyboard.press("Escape");
+  await gm.keyboard.press("Escape");
+  await gm.locator(".place [data-lit-chip]").click();
+  assert.equal(await glow(), "none");
+  await gm.locator(".place [data-picker-chip]").click();
   await pop.locator("[data-picker-find]").fill("");
   const row = pop.locator(".tree [data-pick-row][data-address]").nth(1);
   const rowAddress = await row.getAttribute("data-address");

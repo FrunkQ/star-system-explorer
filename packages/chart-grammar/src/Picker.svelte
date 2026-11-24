@@ -24,6 +24,8 @@
     placeholder = "Find…",
     heading,
     elsewhere = [],
+    lit = null,
+    onlight,
     onpick,
   }: {
     /** What the chip says while closed ("12 bodies"). */
@@ -44,6 +46,10 @@
     heading?: string;
     /** Places elsewhere in the campaign, found while typing after this level's own (the picker doubles as Find). */
     elsewhere?: readonly ElsewhereItem[];
+    /** The tag lit up now ("#ocean"), if any. */
+    lit?: string | null;
+    /** Light up everything a "#tag" search finds (V3 gap 41), or turn it off (null). Absent: no Light up. */
+    onlight?: (tag: string | null, ids: string[]) => void;
     onpick: (id: string) => void;
   } = $props();
 
@@ -154,7 +160,13 @@
             {#each above as a (a.id)}<li><button type="button" class="row up" data-pick={a.id} onclick={() => pick(a.id)}><span class="arrow" aria-hidden="true">‹</span> {a.label}{#if a.caption}<span class="cap">{a.caption}</span>{/if}</button></li>{/each}
           </ul>
         {/if}
-        {#if searching}<p class="head">Results for “{query.trim()}”{list.more ? `, first ${list.rows.length}` : ""}</p>{/if}
+        {#if searching && (list.rows.length || !away.rows.length)}<p class="head">Results for “{query.trim()}”{list.more ? `, first ${list.rows.length}` : ""}</p>{/if}
+        {#if searching && onlight && query.trim().startsWith("#") && query.trim().length > 1 && list.rows.length}
+          {@const tag = query.trim().toLowerCase()}
+          <button type="button" class="light" aria-pressed={lit === tag} data-picker-light onclick={() => onlight?.(lit === tag ? null : tag, lit === tag ? [] : list.rows.filter((r) => !r.context).map((r) => r.id))} title="Mark everything carrying {tag} on the chart, until you turn it off">
+            {lit === tag ? `Lit up: ${tag} · turn off` : `Light up all ${list.rows.length} on the chart`}
+          </button>
+        {/if}
         {#if !searching && top}
           <button type="button" class="row whole" class:sel={!selected} data-pick={top.id} onclick={() => pick(top.id)}>{top.label}{#if top.caption}<span class="cap">{top.caption}</span>{/if}</button>
         {/if}
@@ -361,6 +373,24 @@
     font-size: 12px;
     cursor: pointer;
     white-space: nowrap;
+  }
+  .light {
+    display: block;
+    margin: 2px 10px 6px;
+    padding: 3px 8px;
+    border: var(--sse-line) solid var(--sse-accent);
+    background: transparent;
+    color: var(--sse-accent-ink, var(--sse-accent));
+    font: 12px var(--sse-font-body);
+    cursor: pointer;
+  }
+  .light[aria-pressed="true"] {
+    background: var(--sse-accent);
+    color: var(--sse-on-ink, var(--sse-ground));
+  }
+  .light:focus-visible {
+    outline: 2px solid var(--sse-accent);
+    outline-offset: 1px;
   }
   .head {
     margin: 8px 10px 2px;
