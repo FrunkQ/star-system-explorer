@@ -13,6 +13,9 @@ absorption coefficient follows as alpha = 4 pi k / lambda.
                  200 to 2000 nm retrieved from reflectance with n fixed at 1.5
                  (Martikainen et al. 2023, Table 3, shape GRS1); package MP34
 
+  troilite       FeS at 300 K on two crystal axes (Kranhold et al. 2026)
+  hematite       Fe2O3, 250 to 1000 nm (Sokolik and Toon 1999)
+
 The Table I values were read on 24 Nov 2026 from the text layer of the
 HITRAN aerosol archive's copy of the paper, which drops the minus sign of
 each exponent: k is printed as a mantissa and an exponent b with k = a x 10^-b
@@ -36,6 +39,15 @@ TROILITE = [
     (0.40, 2.09, 1.45, 2.02, 1.62), (0.45, 2.10, 1.56, 2.07, 1.79), (0.50, 2.13, 1.70, 2.17, 1.97),
     (0.55, 2.19, 1.85, 2.31, 2.13), (0.60, 2.27, 2.00, 2.47, 2.28), (0.65, 2.37, 2.13, 2.64, 2.39),
     (0.70, 2.47, 2.26, 2.82, 2.47), (0.774, 2.64, 2.43, 3.08, 2.54),
+]
+
+SOURCES["sokolik-toon1999"] = ("Sokolik, I. N. and Toon, O. B. 1999, Journal of Geophysical Research 104(D8), 9423-9444: incorporation of mineralogical composition into models of the radiative properties of mineral aerosol from UV to IR wavelengths; hematite n and k as compiled there, read from the University of Waterloo Natural Phenomena Simulation Group's files riHm.txt and ecHm.txt (interpolated to 1 nm, 212 to 1001 nm) on 24 Nov 2026; crystal orientation not stated", None, "https://www.npsg.uwaterloo.ca/data/sand.php", "unverified")
+
+# Hematite Fe2O3 (Sokolik and Toon 1999 via NPSG files): nm, n, k, as printed.
+HEMATITE = [
+    (250, 1.853, 1.311), (300, 2.234, 1.213), (350, 2.354, 1.078), (400, 2.686, 1.245), (450, 3.063, 0.9663),
+    (500, 3.147, 0.6541), (550, 3.203, 0.4903), (600, 3.12, 0.1565), (650, 2.962, 0.07494), (700, 2.868, 0.04628),
+    (800, 2.756, 0.03242), (900, 2.716, 0.03529), (1000, 2.69, 0.02602),
 ]
 
 # Martikainen et al. 2023 Table 3 (GRS1, n = 1.5): nm, k for JSC Mars-1, MMS-2, MGS-1, as printed.
@@ -129,4 +141,17 @@ def apply(mixtures):
     }
     assert all(m["id"] != "troilite" for m in mixtures)
     out.append(troilite)
+    hem = [r[0] for r in HEMATITE]
+    assert hem == sorted(hem)
+    assert all(m["id"] != "hematite" for m in mixtures)
+    out.append({
+        "id": "hematite", "names": {"physics": "hematite (Fe2O3)", "plain": "rust-red iron oxide", "story": "red iron oxide"},
+        "recipe": {}, "by": "mass",
+        "note": "the ferric oxide that reddens Mars and desert dust; strong blue and green absorption, nearly clear past 600 nm",
+        "optical": {"refractive_index": {
+            "kind": "table", "lambda_nm": [float(x) for x in hem], "n": [r[1] for r in HEMATITE], "k": [r[2] for r in HEMATITE],
+            "src": "sokolik-toon1999", "check": U,
+            "note": "bulk crystal values as compiled by Sokolik and Toon 1999; orientation not stated; the files read stop at 1001 nm; alpha = 4 pi k / lambda",
+        }},
+    })
     return out

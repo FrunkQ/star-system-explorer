@@ -17693,6 +17693,70 @@
        "note": "light polarised along the crystal's z axis"
       }
      }
+    },
+    {
+     "id": "hematite",
+     "names": {
+      "physics": "hematite (Fe2O3)",
+      "plain": "rust-red iron oxide",
+      "story": "red iron oxide"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ferric oxide that reddens Mars and desert dust; strong blue and green absorption, nearly clear past 600 nm",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0
+       ],
+       "n": [
+        1.853,
+        2.234,
+        2.354,
+        2.686,
+        3.063,
+        3.147,
+        3.203,
+        3.12,
+        2.962,
+        2.868,
+        2.756,
+        2.716,
+        2.69
+       ],
+       "k": [
+        1.311,
+        1.213,
+        1.078,
+        1.245,
+        0.9663,
+        0.6541,
+        0.4903,
+        0.1565,
+        0.07494,
+        0.04628,
+        0.03242,
+        0.03529,
+        0.02602
+       ],
+       "src": "sokolik-toon1999",
+       "check": "unverified",
+       "note": "bulk crystal values as compiled by Sokolik and Toon 1999; orientation not stated; the files read stop at 1001 nm; alpha = 4 pi k / lambda"
+      }
+     }
     }
    ],
    "reactions": [
@@ -19110,6 +19174,12 @@
      "text": "Special Metals Corporation 2007, INCONEL alloy 718, publication SMC-045: melting range 2300-2437 F, density 0.296 lb/in3 (annealed), used from -423 F to 1300 F; AMS 5596 sheet minimum 180 ksi ultimate and 150 ksi yield; hot-rolled bar aged, at 1200 F, 164.5 ksi ultimate and 145.0 ksi yield",
      "status": "unverified",
      "url": "https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-718.pdf"
+    },
+    {
+     "id": "sokolik-toon1999",
+     "text": "Sokolik, I. N. and Toon, O. B. 1999, Journal of Geophysical Research 104(D8), 9423-9444: incorporation of mineralogical composition into models of the radiative properties of mineral aerosol from UV to IR wavelengths; hematite n and k as compiled there, read from the University of Waterloo Natural Phenomena Simulation Group's files riHm.txt and ecHm.txt (interpolated to 1 nm, 212 to 1001 nm) on 24 Nov 2026; crystal orientation not stated",
+     "status": "unverified",
+     "url": "https://www.npsg.uwaterloo.ca/data/sand.php"
     },
     {
      "id": "sotiriadou2025-methane",

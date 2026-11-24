@@ -961,3 +961,26 @@ fn troilite_and_the_outer_ices_are_on_the_sheet() {
     };
     assert!((n("ch4") - 1.32).abs() < 1e-9 && (n("n2") - 1.23).abs() < 1e-9);
 }
+
+#[test]
+fn hematite_absorbs_blue_and_passes_red() {
+    // MP34: the red of rust is k falling tenfold from 450 to 700 nm (Sokolik and Toon 1999).
+    let r = Reference::base();
+    let t = r
+        .row("mixtures", "hematite")
+        .and_then(|x| x.get("optical"))
+        .and_then(|o| o.get("refractive_index"))
+        .unwrap();
+    let col = |c: &str| -> Vec<f64> {
+        t.get(c)
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect()
+    };
+    let (lam, k) = (col("lambda_nm"), col("k"));
+    let at = |nm: f64| k[lam.iter().position(|x| (*x - nm).abs() < 1e-9).unwrap()];
+    assert!(at(450.0) > 10.0 * at(700.0));
+}
