@@ -118,6 +118,16 @@ try {
   assert.match(await aboard.innerText(), /Aboard Beowulf, at Mars/);
   assert.match(await aboard.getAttribute("title"), /Last voyage: Earth to Mars, \d/);
   await shot(pl, "party-player-header");
+
+  // Arriving at a world the table does not fully know, the GM is offered one press to tell them, with Undo.
+  const slip = gm.locator(`[data-arrival="${mars}"]`);
+  await slip.waitFor({ timeout: 15000 });
+  assert.match(await slip.innerText(), /Beowulf is at Mars\. Tell the table about it\?/);
+  await shot(gm, "party-arrival-offer");
+  await gm.locator("[data-arrival-tell]").click();
+  await gm.locator("[data-arrival-told]").waitFor({ timeout: 15000 });
+  assert.match(await gm.locator("[data-arrival-told]").innerText(), /The table knows Mars now/);
+  assert.equal(await gm.locator("[data-arrival-undo]").count(), 1, "the reveal can be taken back");
   await ins.locator("[data-land-here]").click();
   await gm.waitForSelector("[data-surface]", { timeout: 30000 });
   await shot(gm, "party-land-on-mars");

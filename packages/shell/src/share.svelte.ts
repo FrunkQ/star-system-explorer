@@ -3,6 +3,7 @@
 // shares. A room is a random id; the players' link opens players.html with it.
 // The GM serves both at once: BroadcastChannel for other windows and screens
 // of this computer, and the site's relay (worker/index.js) for other devices.
+import { BoardHistory, boardWire, emptyBoard, hold, rejoin, release, screenHello, send as boardSend, type Board } from "../../ui-contract/src/index.ts";
 import { GmHost, SealedHost, sealedLink, observeOf, addSeat, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type Json, type PlayerRequest, type SeatPlan, type Session, type Shown } from "../../ui-contract/src/index.ts";
 
 declare const __SSE_APP__: string;
@@ -10,7 +11,12 @@ export const APP_VERSION: string = typeof __SSE_APP__ === "string" ? __SSE_APP__
 
 export interface Share {
   readonly host: GmHost;
-  readonly state: HostState & { room: string | null; link: string | null; waiting: PlayerRequest[]; plan: SeatPlan; shown: Shown };
+  readonly state: HostState & { room: string | null; link: string | null; waiting: PlayerRequest[]; plan: SeatPlan; shown: Shown; board: Board; can_undo: boolean; can_redo: boolean };
+  /** Change the Switchboard's board (PB1): `f` gets the board and returns the next; it goes on the board's undo history and out to every screen. */
+  act(f: (b: Board) => Board): void;
+  /** The board's own Undo and Redo (tonight's changes to what screens show; never a reveal). */
+  undo(): void;
+  redo(): void;
   /** Share, showing the table `first` (the place in view when the GM shares). */
   start(first?: Shown): string;
   /** Send the table a place, or turn their screens off. Nothing reaches them until it is sent. Every seat follows: a seat's own send is cleared. */
@@ -38,7 +44,8 @@ function roomId(): string {
 export async function createShare(session: Session, opening: { universe: { id: string; seed: string }; packs: unknown[]; opening_export?: Json; clock_yr: number; views: () => string[]; scope: string }, hubFor: (room: string, id: string) => Hub = (room, id) => multiHub(id, [broadcastHub(room, id), relayHub(document.baseURI, room, id)])): Promise<Share> {
   const run = roomId();
   const host = new GmHost(session, null, { run, kernel: await session.kernelVersion(), app: APP_VERSION, universe: opening.universe, packs: opening.packs, ...(opening.opening_export !== undefined ? { opening_export: opening.opening_export } : {}), opening_hash: await session.stateHash(), clock_yr: opening.clock_yr, seats: defaultPlan().seats });
-  const st = $state({ ...host.state(), room: null as string | null, link: null as string | null, waiting: [] as PlayerRequest[], plan: defaultPlan(), shown: { scope: opening.scope } as Shown });
+  const hist = new BoardHistory(emptyBoard({ scope: opening.scope }));
+  const st = $state({ ...host.state(), room: null as string | null, link: null as string | null, waiting: [] as PlayerRequest[], plan: defaultPlan(), shown: { scope: opening.scope } as Shown, board: hist.board, can_undo: false, can_redo: false });
   const root = `u:${opening.universe.id}`;
   const failed = (r: Awaited<ReturnType<Session["send"]>>) => (r.status === "applied" ? null : r.status === "refused" ? r.reason : r.status === "error" ? r.message : "not applied");
   host.onChange = (s) => Object.assign(st, s, { waiting: [...host.requests()] });
@@ -54,12 +61,46 @@ export async function createShare(session: Session, opening: { universe: { id: s
       sealed.set(seat.id, { room, host: new SealedHost(session, host, hubFor(room, "gm"), { seat: $state.snapshot(seat) as typeof seat, scope: "scope" in st.shown ? st.shown.scope : opening.scope, app: APP_VERSION, clock_yr: clock, data_views: opening.views() }) });
     }
   }
+  // The board goes out as the Shown players' screens already read: the table's, a seat's own when its role has a line
+  // of its own, and each known screen's own. Sealed seats get theirs built on this machine (a held one gets nothing).
+  function push() {
+    const b = hist.board;
+    const plan = $state.snapshot(st.plan) as SeatPlan;
+    const wire = boardWire(b, plan.seats.map((x) => x.id));
+    const seats = plan.seats.map(({ shown: _old, ...rest }) => (b.lines[`role:${rest.id}`] ? { ...rest, shown: wire.roles[rest.id]! } : rest));
+    st.plan = { ...plan, seats };
+    st.shown = wire.shown;
+    st.board = b;
+    st.can_undo = hist.canUndo;
+    st.can_redo = hist.canRedo;
+    if (!st.link) return;
+    host.setState({ shown: wire.shown, seats, screens: wire.screens });
+    sealed.forEach((x, id) => void x.host.setShown(wire.roles[id] ?? wire.shown));
+  }
+  host.onScreen = (h) => {
+    hist.board = screenHello(hist.board, h.id, h);
+    push();
+  };
+  const act = (f: (b: Board) => Board) => {
+    hist.do(f(hist.board));
+    push();
+  };
   return {
     host,
     state: st,
+    act,
+    undo() {
+      hist.undo();
+      push();
+    },
+    redo() {
+      hist.redo();
+      push();
+    },
     start(first?: Shown) {
       if (st.link) return st.link;
-      if (first) st.shown = first;
+      if (first) hist.board = emptyBoard(JSON.parse(JSON.stringify(first)) as Shown);
+      st.shown = hist.board.lines.everyone!.source;
       host.setState({ shown: JSON.parse(JSON.stringify(st.shown)) as Shown });
       const room = roomId();
       host.attach(hubFor(room, "gm"));
@@ -70,28 +111,26 @@ export async function createShare(session: Session, opening: { universe: { id: s
       st.room = room;
       st.link = joinLink(document.baseURI, room);
       serveSealed();
+      push();
       return st.link;
     },
     show(s: Shown) {
-      st.shown = s;
-      const plan = $state.snapshot(st.plan) as SeatPlan;
-      const own = plan.seats.some((x) => x.shown);
-      const seats = plan.seats.map(({ shown: _own, ...rest }) => rest);
-      if (own) st.plan = { ...plan, seats };
-      host.setState({ shown: s, ...(own ? { seats } : {}) });
-      if ("scope" in s) sealed.forEach((x) => void x.host.setScope(s.scope));
+      // The table's line, as before the Switchboard: every role and screen goes back with the table (PB2 turns
+      // Everyone into a layer that lifts, with its own controls).
+      act((b) => {
+        const place = JSON.parse(JSON.stringify(s)) as Shown;
+        const { all: _all, ...rest } = b;
+        const floor: Board = { ...rest, over: [], lines: { everyone: { source: "off" in place ? (b.lines.everyone?.source ?? place) : place } } };
+        return "off" in place ? hold(floor, "everyone", place.card ? { text: place.card } : "blank") : floor;
+      });
     },
     showSeat(id: string, s: Shown | null) {
-      const plan = $state.snapshot(st.plan) as SeatPlan;
-      const seats = plan.seats.map((x) => {
-        if (x.id !== id) return x;
-        const { shown: _old, ...rest } = x;
-        return s ? { ...rest, shown: JSON.parse(JSON.stringify(s)) as Shown } : rest;
+      act((b) => {
+        if (!s) return rejoin(b, `role:${id}`);
+        const place = JSON.parse(JSON.stringify(s)) as Shown;
+        if ("off" in place) return hold(b, `role:${id}`, place.card ? { text: place.card } : "blank");
+        return boardSend(release(b, `role:${id}`), `role:${id}`, place);
       });
-      st.plan = { ...plan, seats };
-      host.setState({ seats });
-      const scopeNow = s ?? st.shown;
-      if ("scope" in scopeNow) void sealed.get(id)?.host.setScope(scopeNow.scope);
     },
     setClock(yr: number) {
       clock = yr;
