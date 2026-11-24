@@ -90,3 +90,17 @@ Abbreviations: P = `packs/base-surface/pack.json`; I = `crates/sse-surface/src/i
 | P landform per_mkm2 (patera 10, massif 3.2, corona 1.1/1.5, ridge 8, band 1, scarp 4), cover fractions | counts from papers | densities | tuned to the quoted counts; see the count rows | test results: Io 377 paterae and 119 mountains; Venus 543 coronae |
 | sketch.rs:216 | none | giant bands = 6 sqrt(10 / spin h) | fudge (a different law from S6's Rhines count) | the S6 log notes the mismatch |
 | design S2 log, S4 log "observed Venus: about 300 to 750 Myr" | none | model-age check | unverified | none |
+
+## Plumes (third audit R10, package TRUE1, `crates/sse-surface/src/plumes.rs`)
+
+| Where | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| plumes.rs POLAR_FOCUS | Čadek et al. 2016, Geophys. Res. Lett. 43, 5653, doi:10.1002/2016GL068634 | Enceladus's shell about 20 km mean, under 5 km at the south pole | unverified | not read in this pass |
+| plumes.rs POLAR_FOCUS | Beuthe 2019, Icarus 332, 66, doi:10.1016/j.icarus.2019.05.035 | tidal heat in a thin shell concentrates at the poles | unverified | not read in this pass |
+| plumes.rs GRAIN_SPEED_SHARE | Hedman et al. 2009, ApJ 693, 1749, doi:10.1088/0004-637X/693/2/1749 | grain speeds about 80 to 160 m/s | unverified | not read in this pass |
+| plumes.rs GRAIN_SPEED_SHARE | Schmidt et al. 2008, Nature 451, 685, doi:10.1038/nature06491 | grains condense in the vent and leave slower than the gas | unverified | not read in this pass |
+| plumes.rs VENT_HEAT_SHARE | Hansen et al. 2006, Science 311, 1422, doi:10.1126/science.1121254 | plume vapour about 150 to 350 kg/s | unverified | not read in this pass |
+| plumes.rs VENT_HEAT_SHARE | Howett et al. 2011, JGR 116, E03003, doi:10.1029/2010JE003718 | Enceladus's south polar heat about 16 GW (we use the order, about 10 GW) | unverified | not read in this pass |
+| plumes.rs gas speed | adiabatic expansion into vacuum, v = sqrt(2γ/(γ−1) RT/M) | γ = 4/3 for a nonlinear triatomic ideal gas | textbook | the law; gives 1004 m/s at 273.16 K |
+| plumes.rs height | energy conservation in a point-mass field, h = R v² / (v_esc² − v²) | rise of a grain launched straight up | textbook | the law |
+| plumes.rs pole | Nimmo and Pappalardo 2006, Nature 441, 614, doi:10.1038/nature04821 | a polar hot spot by reorientation | unverified | not read in this pass |
