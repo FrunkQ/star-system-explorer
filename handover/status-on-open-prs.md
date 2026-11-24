@@ -25,25 +25,6 @@ Only the owner thread edits this file. Index and standing rules: `handover/START
 
 ---
 
-## `handover/status/quality-tiers.md` from PR 470 (branch `claude/project-thread-p1jhqu`)
-
-### Status: Quality tiers and speed probe
-
-Owner thread: "Build quality tiers and speed probe" (split from "Build photoreal renderer", 24 Nov 2026). Covers: VP4 and VP5 of `design/SSE4-visual-polish-design.md` (sections 8.1 to 8.5): the `gpu-ultra` tier, the speed probe, placement by measured speed, the heat watch, quality override, per-pass lines in the performance readout, the drawing bench rows; then system True, Land, ships and stations under recipes and the governor; then sharpen at rest and enlarging on Light.
-
-Only the owner thread edits this file. One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`.
-
-Ownership agreed with the renderer thread (24 Nov): this thread owns `packages/renderer/src/probe.ts`, `probe-gpu.ts`, `bench-drawing.ts`, `recipes.ts` and `governor.ts`; `gpu.ts` is shared and additive-only; the shared finish (`finish.ts`, VP1) is the renderer thread's, and this thread adds the tier knob (`rungs`, glare size) to its `FinishFrame`. "Build detail ladder and world textures" owns `ladder.ts` and `texture-ladder.ts`.
-
-| Package | State | Log |
-|---|---|---|
-| VP4 part 1: `gpu-ultra` in the Tier type and `TIER_ORDER`; the speed probe (capabilities, three scenes at one megapixel, timestamp or read-back timing, cached per adapter and browser); placement at the richest tier predicted within 60% of budget (WebGL2 can earn High, Ultra needs WebGPU with compute); heat watch; Quality Auto, Light, Full, Ultra and "Measure again" in the performance readout; per-pass estimated shares in the readout; the drawing rows in the bench and `docs/minimum-spec.md`. The Body globe is placed this way | done (this PR) | packages/VP4.md |
-| VP4 part 2: system True, Land, ships and stations run on recipes and the governor, with the finish's glare rungs as the tier knob (B 3 at quarter size, H 6 at half); standard recipe per view timed in the bench | next: waits for VP1 `finish.ts` on main | packages/VP4.md |
-| VP5: sharpen at rest in every True view (jittered accumulation, more steps when still, drop back on input; fade in under reduced motion); FSR1-style enlarging on Light | after VP4 part 2 | |
-
-
----
-
 ## `handover/status/aurora.md` from PR 469 (branch `claude/project-thread-b2k6we`)
 
 ### Status: Aurorae and night lights (drawing)
@@ -152,74 +133,6 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | VP-R5 small-body shapes from spin and strength (this track's figure in `sse-small`, drawn by SB3), boulders through the detail ladder (5.10) | queued (needs VP6; folds into SB3) | |
 
 Visual polish packages (VP-R1 to VP-R5) come from `handover/design/SSE4-visual-polish-design.md` section 12, accepted by Alex 24 Nov 2026 18:57 ("yes to all"). Its section 3 rule applies: every drawn detail is a fact, drawn from the numbers, or a camera effect; a flourish with no kernel number behind it is not drawn.
-
-
----
-
-## `handover/status/cosmic-web.md` from PR 453 (branch `claude/project-thread-761nqm`)
-
-### Status: Cosmic web view
-
-Owner thread: "Build cosmic web view" (from 24 Nov 2026; it took the web over from "Build photoreal renderer"). Covers: V9w and what follows it for the web cube, the 3D and True looks of the foam map.
-
-One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`.
-
-Alex's ruling (23 Nov 2026): the cosmic web stays close to real; the void fraction goes toward the measured 77% as a cited editable number; the view must read as the 3D spiderweb of filaments, nodes and voids, not a "wrinkled rug". Lean into the physics: the kernel's numbers drive it, every shortcut is in `docs/fudges.md`.
-
-Boundaries agreed 24 Nov 2026:
-- This track owns `packages/renderer/src/web-cube.ts` and its test, `packages/views/foam-map/src/Web3D.svelte`, `crates/sse-cosmos/src/web_light.rs` and its tests, and the cube parts of `web_slice` in `crates/sse-kernel/src/cosmos.rs`.
-- "Build photoreal renderer" keeps the rest of `packages/renderer` (ask it before touching `gpu.ts`).
-- "Build galaxy charts and histories" owns `FoamMap.svelte` (flat slice, time scrub, ledger) and the cluster map; this track changes FoamMap only in small hunks that feed Web3D, with a heads-up first.
-- The kernel thread owns the rest of sse-cosmos and sse-kernel; G2's `Haloes::cell` stays bit-identical (tested).
-
-| Package | What it does | State | Log |
-|---|---|---|---|
-| V9w | Voids fill 77% of space (cited, editable `void_fraction`), one web for slice, cube and ledger; the foam map turns a cube of it in 3D and True | done (PR 368, by the renderer thread); voids hold about 40% of the matter against 15% measured (fudge) | packages/V9w.md |
-| V9w2 | Light from haloes: True shines by the cube's galaxies, G2's haloes from 10¹¹ M☉ (pack `web_light.floor_msun`, the floor grows with the cube's volume) moved by the cube's own truncated Zel'dovich step, each lit by its G3 galaxy's stars and star formation then (old light warm, young blue); HUD adds the dark matter faintly; kernel `web_slice` with `cube` and `haloes` | in review | packages/V9w2.md |
-
-#### Next
-- Check the live view against Alex's ruling (spiderweb, not wrinkled rug) and fix what does not read that way.
-- Galaxies in 3D (Chart) as well as True; void galaxies bluer and fainter by environment (Hoyle et al. 2005).
-- A contract case for `haloes: true` in `tests/golden/contract.jsonl`, through the golden lane (the coordinator keeps the order).
-- The voids' matter share toward 15% (NEXUS+ or a 2LPT step), a kernel change in the golden lane.
-
-
----
-
-## `handover/status/true-surface.md` from PR 449 (branch `claude/project-thread-3jxtpq`)
-
-### Status: True looks like the real thing (surfaces and small bodies)
-
-Owner thread: "Build plumes, frosts and small bodies". Covers the third V3 audit's items 4, 5, 6 and 10 (R9 to R12, R15, R16, R18, R32, R33): plumes above the limb, tholins and coloured frosts, hot things glowing in Visible and lava tube openings on the ground (small bodies and comets handed over, see below).
-
-Only the owner thread edits this file. Visual polish rule (`design/SSE4-visual-polish-design.md` section 3): every drawn detail is a Fact, Drawn from the numbers, or a Camera effect; a flourish with no kernel number behind it is not drawn. Files agreed on 24 Nov: `crates/sse-surface/src/plumes.rs`, a later `shapes.rs`, the tholin and frost cover in `cover.rs` (with "Build SSE4 proven core"); new files `packages/renderer/src/plumes.ts`, `ices.ts`, `hot-glow.ts`, `small-bodies.ts` and their GpuItem fields, filled in the renderer's `trueLook` (with "Build photoreal renderer"). The frost and tholin pass runs after the ground and before "Build giant bands, clouds and hazes"'s air layer. Material colours only through the data sheet's Look up (MP33 titan-tholin, MP34 SO2, sulphur, N2 and CH4 ice, CO2 frost).
-
-| Package | State | Log |
-|---|---|---|
-| TRUE1 plumes part 1: the kernel's plume facts (ocean, polar cracks, speeds, height, rate) on `resolved_system` surface records | in review | packages/TRUE1.md |
-| TRUE2 plumes part 2: drawn above the limb in System True | next | |
-| TRUE3 hot things glow in Visible (Planck against the world's own daylight) | module written, drawing next | |
-| TRUE4 tholins and coloured frosts | waits on data sheet MP33, MP34 | |
-| TRUE5 small bodies and comets | handed over to "Build asteroids and rings up close" (24 Nov) | |
-| TRUE6 lava tube openings on the ground (from `survey_caves`) | not started | |
-| VP-P1 hot ground and lava as emitted light into the shared glare, crust from cell noise (visual polish design, accepted 24 Nov; extends TRUE3) | waits on VP1, VP6 | |
-| VP-P2 plumes with size-driven forward scatter and the umbrella shape (extends TRUE2) | waits on kernel ask K-c | |
-| VP-P3 comets (coma switch-on, two tails, green head) | goes with TRUE5 to "Build asteroids and rings up close" | |
-| VP-P4 ice cracks and frost sparkle below the fact floor through the detail ladder | waits on VP6 | |
-
-#### Live checks (audit R3, per body)
-Not yet run. Note: the default Solar System (`packs/base-sol`) has no Enceladus, Io, Europa, Titan, Triton or Charon yet, so those lines cannot be judged on the live site until the big moons are added.
-
-#### Small bodies: handed over
-On 24 Nov the small-body part (TRUE5: the resolving field for belts and rings, shapes, contact binaries and pairs, Psyche-like bodies from formation, comets, the Add list entry) moved to the thread "Build asteroids and rings up close", with this track's approach and notes (the shape block, the formation records, the Traveller mining hook, what the editing thread wants). Those notes live in that thread's status file once it has one, and until then in project files `sse4/small-bodies-handover.md`.
-
-#### Surface colours (TRUE4 scope, 24 Nov)
-Coordinator finding from the renderer's Gallery on Sol: Mars reads grey-brown, not red, because tile colours come from a typed table (`packs/base-surface` `cover.colours`, regolith [158, 148, 132]). TRUE4 covers Mars's ferric red as well as tholins and frosts, by one mechanism: the kernel names what stains each surface (ferric oxide where iron met oxidising air or water, tholin where methane meets ultraviolet, sulphur and SO2 frost from volcanic gas, N2 and CH4 frost where they condense), and the colour comes from that material's data-sheet row (MP33, MP34) through the light code, never typed. Run the per-body checklist in the renderer's Gallery on an opened Sol.
-
-#### Seams agreed after the visual polish design (24 Nov)
-- **Detail ladder (VP6, "Build detail ladder and world textures"; log handover/packages/VP6.md).** VP-P1 and VP-P4 are entries in `packages/renderer/src/ladder-layers.json` (`ice.cracks` exists as a starter). Their largest size, amplitude and speed are kernel facts by name, and a missing fact draws nothing. Each frame: `resolveLayer(ladderLayer(name)!, facts)`, then `rungs(layer, discScale(radius_m, disc_px, view_px), tier, t_s, ladderSeed(address), anchor_m)`. On the GPU: `ladderNode(kind, localMetres, { normal, along })` from ladder-node.ts, with `lad.set(rungs, { axis, stretch })`. The HUD line is `detailLine([{ layer, shown }])`.
-- **Grain scattering (visual polish section 17, citation check file).** It is not the Jendersie and d'Eon size fit, which holds only for water droplets of 5 to 50 µm. Plume and frost grains read a phase table per particle kind, computed by the light thread (ask K-e) from grain size and the sheet's refractive index. Until that lands, plumes.ts uses Henyey-Greenstein with g = 0.7 as a stand-in, which needs a fudge row. Copy the citations from `handover/design/SSE4-visual-polish-citation-check.md` into docs/citations with the status that file gives.
-- **Comets (VP-P3)** go wholly to "Build asteroids and rings up close" (SB4: sublimation and tails, with the drawing).
 
 
 ---

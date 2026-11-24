@@ -105,7 +105,7 @@ export type { ShipAtWorldAsk, ShipAtWorldReport, ShipAtWorld, WorldCheck, Danger
 export { VOYAGE_SHIPS, IN_SYSTEM_SHIPS, MINIMISE_WORDS, systemShort, voyageSpan, speedWords, agesWords, voyageFrame, orbitAxis, labelLanes } from "./voyage.ts";
 export type { Minimise, VoyageAsk, VoyageLeg, Voyage, VoyageSystem, VoyagePlan, StarCell, StarCellSystem, MapFrame, SystemPlace, SystemVoyagePlan } from "./voyage.ts";
 export { NAMED_HALOES, MORPHOLOGY_WORDS, GROUP_WORDS, LAYER_WORDS, discFrame, armPath, ringAt, ringShades, greenAt, cosmicAxis, logCurve, sci, timesSun, dex, epochTicks, foamCells, cubeShares, editWords, toggleRemoval, cellHalo, projectHalo, haloRadius, overdensityWords } from "./galaxy.ts";
-export type { GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, WebCube, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, GalaxyMark, GalaxyAssembly, HistoryCompare, HaloCellAsk, HaloCell, CellHalo, Projection } from "./galaxy.ts";
+export type { GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, WebCube, WebGalaxies, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, GalaxyMark, GalaxyAssembly, HistoryCompare, HaloCellAsk, HaloCell, CellHalo, Projection } from "./galaxy.ts";
 export { SENSORS, camera, project, discPx, pointPx, towards, magWords, angleWords, unprojectCamera } from "./window.ts";
 export type { WindowAsk, WindowView, Seen, Camera } from "./window.ts";
 export { SIGNIFICANCE_PARTS, valueWords, fieldWords, storyBrief } from "./story.ts";
@@ -154,7 +154,7 @@ export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX
 export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
 export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";
 // One units engine (ED1a): every figure said and read back the same way.
-export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, factAbout, factUnit, sayFact, readFact, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
+export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, factAbout, factUnit, sayFact, readFact, figureTable, sayNumber, roundTo, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
 export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices, FactLike, FactUnit } from "./figures.ts";
 // Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
