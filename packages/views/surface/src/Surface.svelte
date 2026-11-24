@@ -8,6 +8,9 @@
   - Down: the ground at eye height over the few kilometres the kernel knows to its fact floor, under the world's
     own sky. Walk, or fly a low drone; going further means taking off and choosing again.
   The ground is the kernel's tiles; finer than the fact floor it is decoration, and the view says so.
+  On a player's screen (`follow`) the same view follows the landing the GM sent the table (landing.ts LandingShow):
+  the same site and lander, the descent planned on the seat's own kernel, the GM's pose on the ground. Players watch;
+  they never pick the site or steer (seats rule).
 -->
 <script module lang="ts">
   import type { Landmark, SurfaceTile } from "../../../ui-contract/src/index.ts";
@@ -18,23 +21,34 @@
 
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { constant, DEFAULT_VIEW, DESCENT_VERDICT_WORDS, LANDER_WORDS, landmarkOrder, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type StockLander, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { constant, DEFAULT_VIEW, DESCENT_VERDICT_WORDS, LANDER_WORDS, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
-  let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
+  let { ctx, scene, params, follow }: { ctx?: ViewContext; scene?: SystemScene; params: Record<string, Json>; follow?: PlayerContext } = $props();
 
-  const ws = $derived(ctx.workspace);
-  const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
-  const shown = $derived(viewOptions(SURFACE_CONTROLS, ws.view ?? DEFAULT_VIEW).shown);
-  // On the ground Chart draws as 3D: the chart is the map you choose on.
-  const look = $derived<"true" | "3d" | "wireframe">(shown.style === "true" ? "true" : shown.style === "wireframe" ? "wireframe" : "3d");
-  const hud = $derived(shown.hud);
+  // A player's screen follows the landing the table watches; the GM's reads its own selection.
+  // Fixed for the view's life: a screen is the GM's or a seat's from mounting.
+  const watching = untrack(() => follow !== undefined);
+  const show = $derived<LandingShow | null>(follow?.landing?.() ?? null);
+  // Keyed by plain strings, so a new pose (a new show object) never reads as a new world.
+  const followKey = $derived(show ? `${show.system}\n${show.body}\n${show.label}` : "");
+  const followWorld = $derived(show ? JSON.stringify(show.world) : "");
+  const system = $derived(watching ? followKey.split("\n")[0] ?? "" : scene!.system);
+  const subject = $derived(watching ? (followKey ? { address: followKey.split("\n")[1]!, label: followKey.split("\n")[2]!, kind: "planet" } : undefined) : scene!.subjects.find((s) => s.address === ctx!.workspace.selection));
+  const reads: LandingGround | undefined = untrack(() => (watching ? follow!.ground : ctx!.session));
+  const shown = $derived(viewOptions(SURFACE_CONTROLS, (watching ? null : ctx!.workspace.view) ?? DEFAULT_VIEW).shown);
+  // On the ground Chart draws as 3D: the chart is the map you choose on. A seat draws as the GM's screen does.
+  const look = $derived<"true" | "3d" | "wireframe">(watching ? (show?.look ?? "true") : shown.style === "true" ? "true" : shown.style === "wireframe" ? "wireframe" : "3d");
+  const hud = $derived(watching ? true : shown.hud);
+  // The party's ship (party.ts) is offered first as the lander when it is at this world.
+  const party = $derived(watching ? null : (ctx!.workspace.party ?? null));
+  const partyHere = $derived(party && subject && party.at === subject.address ? party : null);
   const flightS = $derived(Math.min(120, Math.max(6, Number(params.flight_s ?? 24))));
   const eyeM = $derived(Math.min(3, Math.max(0.3, Number(params.eye_m ?? 1.7))));
 
   // ── The world: map tiles, landmarks, air, star ─────────────────────────────────────────────
-  type World = { radius_m: number; pressure_bar: number; t_k: number; air: Air | null; star_k: number; sun_radius: number; tilt_deg: number };
+  type World = LandingWorld & { air: Air | null };
   let tiles = $state<SurfaceTile[] | null>(null);
   let landmarks = $state<Landmark[]>([]);
   let world = $state<World | null>(null);
@@ -42,7 +56,8 @@
   let gen = 0;
   $effect(() => {
     const sub = subject;
-    const sys = scene.system;
+    const sys = system;
+    const fw = followWorld;
     const g = ++gen;
     untrack(() => reset());
     tiles = null;
@@ -50,16 +65,19 @@
     world = null;
     failed = null;
     if (!sub || sub.kind === "star") return;
+    if (!reads) return void (failed = "This screen cannot read the ground (it runs no kernel of its own).");
     const key = `${sys}|${sub.address}`;
     (async () => {
       const hit = globes.get(key);
-      const t = hit ? { ok: true as const, tiles: hit } : await ctx.session.surfaceTiles(sys, sub.address);
+      const t = hit ? { ok: true as const, tiles: hit } : await reads.surfaceTiles(sys, sub.address);
       if (g !== gen) return;
       if (!t.ok) return void (failed = t.message);
       if (!t.tiles.length) return void (failed = `${sub.label} has no surface the kernel has built`);
       globes.set(key, t.tiles);
       tiles = t.tiles;
-      const rs = await ctx.session.resolvedSystem(sys);
+      // A seat takes the world as the GM's reads found it; it never reads the world's record (nor its landmarks).
+      if (watching) return void (world = fw ? (JSON.parse(fw) as World) : null);
+      const rs = await ctx!.session.resolvedSystem(sys);
       if (g !== gen || !rs.ok) return;
       const facts = rs.result.facts as Record<string, Record<string, Json>>;
       const f = facts[sub.address] ?? {};
@@ -84,7 +102,7 @@
       let air: Air | null = null;
       const req = af ? airRequest(sub.address, af) : null;
       if (af && req) {
-        const ao = await ctx.session.readAirOptics([req.air]);
+        const ao = await ctx!.session.readAirOptics([req.air]);
         if (g !== gen) return;
         air = ao.ok && ao.airs[0] ? airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req) : null;
       }
@@ -97,8 +115,8 @@
         sun_radius: star_r > 0 && dist > 0 ? star_r / dist : 0.0047,
         tilt_deg: (Number(f["body.axial_tilt"] ?? 0) * 180) / Math.PI,
       };
-      lander = suggestLander(world.pressure_bar, world.t_k);
-      const lm: Landmark[] = marks.get(key) ?? (await ctx.session.surfaceLandmarks(sys, sub.address).then((r) => (r.ok ? r.landmarks : [])));
+      landerPick = untrack(() => partyHere) ? "party" : suggestLander(world.pressure_bar, world.t_k);
+      const lm: Landmark[] = marks.get(key) ?? (await ctx!.session.surfaceLandmarks(sys, sub.address).then((r) => (r.ok ? r.landmarks : [])));
       if (g !== gen) return;
       marks.set(key, lm);
       landmarks = landmarkOrder(lm);
@@ -139,22 +157,24 @@
 
   // ── The site and its descent ──────────────────────────────────────────────────────────────
   let site = $state<{ lat: number; lon: number; label: string } | null>(null);
-  let lander = $state<StockLander>("capsule");
+  // The lander picked on the card: a stock one, or "party" for the party's ship. A seat flies the GM's.
+  let landerPick = $state<string>("capsule");
+  const landerKey = $derived(watching ? JSON.stringify(show?.lander ?? "capsule") : landerPick === "party" && partyHere ? JSON.stringify(partyLander(partyHere)) : JSON.stringify(landerPick === "party" ? "capsule" : landerPick));
   let plan = $state<DescentPlan | null>(null);
   let planning = $state(false);
   let planFailed = $state<string | null>(null);
   let pgen = 0;
   $effect(() => {
     const s = site;
-    const l = lander;
+    const l = JSON.parse(landerKey) as string | Record<string, unknown>;
     const sub = subject;
-    const sys = scene.system;
+    const sys = system;
     const g = ++pgen;
     plan = null;
     planFailed = null;
-    if (!s || !sub) return;
+    if (!s || !sub || !reads) return;
     planning = true;
-    void ctx.session.planDescent({ system: sys, body: sub.address, lat_deg: s.lat, lon_deg: s.lon, lander: l }).then((r) => {
+    void reads.planDescent({ system: sys, body: sub.address, lat_deg: s.lat, lon_deg: s.lon, lander: l }).then((r) => {
       if (g !== pgen) return;
       planning = false;
       if (r.ok) plan = r.plan;
@@ -162,12 +182,13 @@
     });
   });
   function pickMap(e: MouseEvent) {
+    if (watching) return;
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const lon = -180 + (360 * (e.clientX - r.left)) / r.width;
     const lat = 90 - (180 * (e.clientY - r.top)) / r.height;
     site = { lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100, label: "" };
   }
-  const pickLandmark = (l: Landmark) => (site = { lat: l.lat_deg, lon: l.lon_deg, label: l.name ?? l.original_name });
+  const pickLandmark = (l: Landmark) => void (!watching && (site = { lat: l.lat_deg, lon: l.lon_deg, label: l.name ?? l.original_name }));
   const worst = $derived(plan ? (plan.hazards.some((h) => h.level === "danger") ? "danger" : plan.hazards.some((h) => h.level === "caution") ? "caution" : "ok") : "");
   const fmtLat = (v: number) => `${Math.abs(v).toFixed(2)}° ${v >= 0 ? "N" : "S"}`;
   const fmtLon = (v: number) => `${Math.abs(v).toFixed(2)}° ${v >= 0 ? "E" : "W"}`;
@@ -190,7 +211,7 @@
     let L = level;
     for (let tries = 0; tries < 3; tries++) {
       const keys = patchKeys(site!.lat, site!.lon, half, L, w.radius_m, tiles![0]!.samples);
-      const r = await ctx.session.surfaceTilesAt(scene.system, sub.address, keys.slice(0, 24));
+      const r = await reads!.surfaceTilesAt(system, sub.address, keys.slice(0, 24));
       if (!r.ok) return r.message;
       const floor = r.refused.map((x) => floorFromRefusal(x.why)).find((x) => x !== null);
       if (floor !== undefined && floor !== null && floor < L) {
@@ -223,9 +244,9 @@
   function skip() {
     toGround();
   }
-  /** Down: facing on along the way the lander came in (from the west). */
-  function toGround() {
-    walk = { x: 0, y: 0, yaw: 0, pitch: -0.05 };
+  /** Down: facing on along the way the lander came in (from the west), or where the GM is looking. */
+  function toGround(pose?: LandingShow["pose"]) {
+    walk = pose ? { x: pose.x_m, y: pose.y_m, yaw: pose.yaw, pitch: pose.pitch } : { x: 0, y: 0, yaw: 0, pitch: -0.05 };
     phase = "down";
   }
   function takeOff() {
@@ -302,6 +323,80 @@
   let walk = $state({ x: 0, y: 0, yaw: Math.PI / 2, pitch: -0.05 });
   let drone = $state(false);
   let hour = $state(-30);
+  let flyU = 0;
+
+  // ── The table's view of this landing (the landing run-through) ──────────────────────────────
+  // The GM's screen keeps the shell's copy up to date, a few times a second at most; nothing reaches the table until
+  // the GM sends it ("Send this view"). A seat follows what arrives.
+  let sentAt = 0;
+  let sentKey = "";
+  function landingNow(): LandingShow | null {
+    if (!site || !subject || !world) return null;
+    const p = phase === "loading" ? "choose" : phase;
+    return {
+      system,
+      body: subject.address,
+      label: subject.label,
+      site: { lat_deg: site.lat, lon_deg: site.lon, label: site.label },
+      lander: JSON.parse(landerKey) as string | Record<string, unknown>,
+      phase: p,
+      flight_s: flightS,
+      ...(p === "flying" ? { fly_u: Math.round(flyU * 1000) / 1000 } : {}),
+      ...(p === "down" ? { pose: roundPose({ x_m: walk.x, y_m: walk.y, yaw: walk.yaw, pitch: walk.pitch, drone }) } : {}),
+      hour_deg: hour,
+      look,
+      world: { ...world, air: world.air ? { ...world.air, unknown_gases: [...world.air.unknown_gases] } : null },
+    };
+  }
+  function publish(now: number, force = false) {
+    const send = ctx?.workspace.sendLanding;
+    if (!send) return;
+    const l = landingNow();
+    if (!l) return;
+    // The flight's progress alone moves every frame; it is worth sending only every second or so.
+    const { fly_u, ...rest } = l;
+    const key = JSON.stringify(rest);
+    if (!force && key === sentKey && (fly_u === undefined || now - sentAt < 1000)) return;
+    sentKey = key;
+    sentAt = now;
+    // Plain data (no reactive proxies), as the wire and structuredClone want it.
+    send(JSON.parse(JSON.stringify(l)) as Json);
+  }
+  // The choosing moments (a site, a lander, landing, taking off) go at once; the pose goes from the frame loop.
+  $effect(() => {
+    if (watching) return;
+    void [site, landerKey, phase, world, hour, drone, look];
+    untrack(() => publish(performance.now(), true));
+  });
+
+  // A seat: follow the GM's site, lander, moment and pose.
+  $effect(() => {
+    const l = show;
+    if (!watching || !l) return;
+    untrack(() => {
+      if (!site || site.lat !== l.site.lat_deg || site.lon !== l.site.lon_deg) {
+        site = { lat: l.site.lat_deg, lon: l.site.lon_deg, label: l.site.label };
+        if (phase !== "choose") takeOff();
+      }
+      hour = l.hour_deg;
+      if (l.pose) {
+        walk = { x: l.pose.x_m, y: l.pose.y_m, yaw: l.pose.yaw, pitch: l.pose.pitch };
+        drone = l.pose.drone;
+      }
+      if (l.phase === "choose" && (phase === "flying" || phase === "down")) takeOff();
+      // Keep pace with the GM's flight: a second or more apart, jump to where the GM is.
+      if (l.phase === "flying" && phase === "flying" && l.fly_u !== undefined && t0 && Math.abs(flyU - l.fly_u) * flightS > 1) t0 = performance.now() - l.fly_u * flightS * 1000;
+      if (l.phase === "down" && phase === "flying") toGround(l.pose);
+    });
+  });
+  // Land once the seat's own descent is planned (it plans from the same site and lander as the GM's).
+  $effect(() => {
+    if (!watching || !show || !plan || !world || !tiles) return;
+    const want = show.phase;
+    untrack(() => {
+      if ((want === "flying" || want === "down") && phase === "choose") void land().then(() => (want === "down" || show?.phase === "down") && phase === "flying" && toGround(show?.pose));
+    });
+  });
   const held = new Set<string>();
   let raf = 0;
   let last = 0;
@@ -347,7 +442,12 @@
       fwd = [(toSite[0]! / l) * (1 - s) + s, (toSite[1]! / l) * (1 - s), (toSite[2]! / l) * (1 - s) - 0.08 * s];
       flyT = tt;
       flyAt = i;
+      flyU = u;
       if ((now - t0) / 1000 >= flightS) toGround();
+    } else if (watching) {
+      const gz = groundAt(walk.x, walk.y).z;
+      eye = [walk.x, walk.y, gz + (drone ? 40 : eyeM)];
+      fwd = [Math.cos(walk.pitch) * Math.cos(walk.yaw), Math.cos(walk.pitch) * Math.sin(walk.yaw), Math.sin(walk.pitch)];
     } else {
       const speed = (drone ? 14 : 1.4) * (held.has("Shift") ? 4 : 1);
       const turn = 1.4 * dt;
@@ -363,6 +463,7 @@
       fwd = [Math.cos(walk.pitch) * Math.cos(walk.yaw), Math.cos(walk.pitch) * Math.sin(walk.yaw), Math.sin(walk.pitch)];
     }
     eyeNow = eye;
+    if (!watching && now - sentAt > 250) publish(now);
     headingNow = ((90 - (Math.atan2(fwd[1], fwd[0]) * 180) / Math.PI) % 360 + 360) % 360;
     const sun = sunDirection(site!.lat, hour, 0);
     const air = world.air;
@@ -456,13 +557,14 @@
     (e.currentTarget as HTMLElement).focus();
   }
   function move(e: PointerEvent) {
-    if (!drag || phase !== "down") return;
+    if (!drag || phase !== "down" || watching) return;
     walk.yaw -= (e.clientX - drag.x) * 0.004;
     walk.pitch = Math.max(-1.4, Math.min(1.4, walk.pitch - (e.clientY - drag.y) * 0.004));
     drag = { x: e.clientX, y: e.clientY };
   }
   const up = () => (drag = null);
   const keyDown = (e: KeyboardEvent) => {
+    if (watching) return;
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d", "Shift"].includes(e.key)) {
       held.add(e.key);
       e.preventDefault();
@@ -499,8 +601,10 @@
   );
 </script>
 
-<section class="surface" bind:this={host} data-surface data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""}>
-  {#if !subject || subject.kind === "star"}
+<section class="surface" bind:this={host} data-surface data-watching={watching || undefined} data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""}>
+  {#if watching && !show}
+    <p class="quiet" data-surface-waiting>Waiting for the game master to send a landing.</p>
+  {:else if !subject || subject.kind === "star"}
     <p class="quiet">Choose a world to land on.</p>
   {:else if failed}
     <p class="quiet" data-surface-failed>{failed}</p>
@@ -520,22 +624,29 @@
         {/if}
       </div>
       <aside class="card">
-        <h3>Where to land on {subject.label}</h3>
-        <p class="quiet">Pick a landmark, or press anywhere on the map. Every spot is allowed; its dangers are shown.</p>
+        <h3>{watching ? `Landing on ${subject.label}` : `Where to land on ${subject.label}`}</h3>
+        {#if watching}<p class="quiet">The game master has chosen where to land; this screen follows.</p>{:else}<p class="quiet">Pick a landmark, or press anywhere on the map. Every spot is allowed; its dangers are shown.</p>{/if}
+        {#if !watching}
         <ul class="marks">
           {#each landmarks.slice(0, 12) as l (l.id)}
             <li><button onclick={() => pickLandmark(l)} class:on={site?.label === (l.name ?? l.original_name)} data-landmark-row={l.id}>{l.name ?? l.original_name}<span class="quiet"> {l.kind}{l.remarkable.length ? `, ${l.remarkable[0]}` : ""}</span></button></li>
           {/each}
           {#if !landmarks.length}<li class="quiet">Reading the landscape's names…</li>{/if}
         </ul>
+        {/if}
         {#if site}
           <div class="verdict" data-verdict-card data-worst={worst}>
             <h4>{site.label || "This spot"} <span class="quiet">{fmtLat(site.lat)}, {fmtLon(site.lon)}</span></h4>
+            {#if watching}
+              <p class="quiet" data-lander-shown>Lander: {typeof show?.lander === "string" ? (LANDER_WORDS[show.lander as keyof typeof LANDER_WORDS] ?? show.lander) : "the party's ship"}</p>
+            {:else}
             <label class="lander">Lander
-              <select bind:value={lander} data-lander>
+              <select bind:value={landerPick} data-lander>
+                {#if partyHere}<option value="party">{partyHere.name} (the party's ship)</option>{/if}
                 {#each STOCK_LANDERS as id (id)}<option value={id}>{LANDER_WORDS[id]}</option>{/each}
               </select>
             </label>
+            {/if}
             {#if planning}<p class="quiet">Planning the descent…</p>{/if}
             {#if planFailed}<p class="quiet">{planFailed}</p>{/if}
             {#if plan}
@@ -544,7 +655,7 @@
                 {#each plan.hazards as z (z.kind)}<li class={z.level} data-hazard={z.kind} data-level={z.level}><span class="lv">{z.level}</span> {z.kind}: {z.why}</li>{/each}
               </ul>
               <details><summary>How the site was read</summary><ul>{#each plan.site.why as y, i (i)}<li>{y}</li>{/each}{#each plan.descent.outcome.why as y, i (i)}<li>{y}</li>{/each}</ul></details>
-              <button class="land" onclick={land} disabled={phase === "loading"} data-land>{phase === "loading" ? "Reading the ground…" : worst === "danger" ? "Land anyway" : "Land"}</button>
+              {#if watching}<p class="quiet" data-watch-phase>{phase === "loading" ? "Reading the ground…" : "Waiting for the game master to land."}</p>{:else}<button class="land" onclick={land} disabled={phase === "loading"} data-land>{phase === "loading" ? "Reading the ground…" : worst === "danger" ? "Land anyway" : "Land"}</button>{/if}
               {#if groundFailed}<p class="quiet">{groundFailed}</p>{/if}
             {/if}
           </div>
@@ -554,7 +665,7 @@
   {/if}
   {#if tiles}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-    <div class="stage" class:hidden={!(phase === "flying" || phase === "down")} bind:clientWidth={w} bind:clientHeight={h} role="application" aria-label="The ground at {site ? fmtLat(site.lat) : ''}: drag to look about, arrow keys or W A S D to walk" tabindex="0" onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} onkeydown={keyDown} onkeyup={keyUp} data-ground>
+    <div class="stage" class:hidden={!(phase === "flying" || phase === "down")} bind:clientWidth={w} bind:clientHeight={h} role="application" aria-label={watching ? `The ground at ${site ? fmtLat(site.lat) : ""}, as the game master sees it` : `The ground at ${site ? fmtLat(site.lat) : ""}: drag to look about, arrow keys or W A S D to walk`} tabindex="0" onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} onkeydown={keyDown} onkeyup={keyUp} data-ground>
       <canvas bind:this={canvas} class:hidden={using === "canvas"}></canvas>
       <canvas bind:this={line} class:hidden={using !== "canvas"}></canvas>
       {#if hud}
@@ -570,8 +681,10 @@
         <div class="log" data-descent-log>
           <p class="clock">T+{fmtT(flyT)} {#if tel}· {fmtM(tel.altitude_m)} · {Math.round(tel.speed_m_s)} m/s · {tel.phase}{/if}</p>
           {#each events as e (e.t_s + e.kind)}<p>T+{fmtT(e.t_s)} {e.text}</p>{/each}
-          <button onclick={skip} data-skip>Skip to the ground</button>
+          {#if !watching}<button onclick={skip} data-skip>Skip to the ground</button>{/if}
         </div>
+      {:else if watching}
+        <p class="walk quiet" data-following>Following the game master on the ground{drone ? " (drone)" : ""}.</p>
       {:else}
         <div class="walk" data-walk-pad>
           <button onpointerdown={() => press("ArrowLeft", true)} onpointerup={() => press("ArrowLeft", false)} onpointerleave={() => press("ArrowLeft", false)} aria-label="Turn left">◀</button>

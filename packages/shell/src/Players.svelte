@@ -34,6 +34,7 @@
   import PerfReadout from "./PerfReadout.svelte";
   import { perf } from "../../ui-contract/src/index.ts";
   import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
+  import { landingShowOf, type LandingGround } from "../../ui-contract/src/index.ts";
   import { DEFAULT_JOIN, joinLine, joinWordsOf, type JoinWords, type SeatBrand } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
@@ -100,6 +101,23 @@
   const isSealed = sealedRoom !== null && /^[a-z0-9]{4,40}$/.test(sealedRoom);
   const room = isSealed ? sealedRoom : new URLSearchParams(location.search).get("join");
   const joined = room !== null && /^[a-z0-9]{4,40}$/.test(room);
+  // The landing the table watches (the landing run-through): this seat's own kernel may read that one world's ground
+  // while it lasts, and no longer (the grant ends with the landing). A sealed seat has no kernel and gets neither.
+  const watching = $derived(isSealed ? null : landingShowOf(shown && "scope" in shown ? shown.landing : null));
+  let sessionReady = $state(false);
+  $effect(() => {
+    const w = watching;
+    if (!sessionReady || !session) return;
+    session.grantLanding?.(w ? { system: w.system, body: w.body } : null);
+  });
+  const landingNow = () => watching;
+  const ground: LandingGround | undefined = isSealed
+    ? undefined
+    : {
+        surfaceTiles: (system, body) => session!.surfaceTiles(system, body),
+        surfaceTilesAt: (system, body, keys) => session!.surfaceTilesAt(system, body, keys),
+        planDescent: (ask) => session!.planDescent(ask),
+      };
   // Inside a virtual tabletop (V3 gap 26): `?embed=1`, and only for a tabletop the GM listed on this seat.
   const asksEmbed = embedAsked(location.search);
   const framing = framingOrigin(window, document.referrer);
@@ -204,6 +222,7 @@
       };
       replica.onSession = (s) => {
         session = s;
+        sessionReady = true;
         shown = replica.shown();
         perfEdge = s.device();
         void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
@@ -375,7 +394,7 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p></main>
   {:else}
     {#key vocabId}
-      <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} bind:selection /></main>
+      <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
     {/key}
   {/if}
   {#if joined && scene && mayAsk && !bare}

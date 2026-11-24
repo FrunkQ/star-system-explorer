@@ -7,7 +7,7 @@
   they show. Selection is shared by the views of one screen.
 -->
 <script lang="ts">
-  import { boundScene, withLive, type CheckedScreen, type Mark, type PlayerContext, type PlayerScene, type PlayerSubject, type Vocab, type ViewHandle } from "../../../ui-contract/src/index.ts";
+  import { boundScene, withLive, type CheckedScreen, type Mark, type PlayerContext, type PlayerScene, type PlayerSubject, type Vocab, type ViewHandle, type LandingGround, type LandingShow } from "../../../ui-contract/src/index.ts";
 
   let {
     screen,
@@ -17,7 +17,9 @@
     selection = $bindable(null),
     compact = false,
     live,
-  }: { screen: CheckedScreen; scene: PlayerScene; vocab: Vocab; mark?: (s: PlayerSubject) => Mark; selection?: string | null; compact?: boolean; live?: Record<string, boolean> } = $props();
+    landing,
+    ground,
+  }: { screen: CheckedScreen; scene: PlayerScene; vocab: Vocab; mark?: (s: PlayerSubject) => Mark; selection?: string | null; compact?: boolean; live?: Record<string, boolean>; landing?: () => LandingShow | null; ground?: LandingGround } = $props();
 
   const handles: { h: ViewHandle<PlayerScene>; m: CheckedScreen["mounts"][number] }[] = [];
   $effect(() => {
@@ -25,7 +27,7 @@
     for (const x of handles) x.h.update(boundScene(s, x.m.bind));
   });
   function view(node: HTMLElement, m: CheckedScreen["mounts"][number]) {
-    const ctx: PlayerContext = { params: withLive(m.params, m.module.params ?? [], live), vocab, selection: () => selection, select: (a) => (selection = a), ...(mark ? { mark } : {}) };
+    const ctx: PlayerContext = { params: withLive(m.params, m.module.params ?? [], live), vocab, selection: () => selection, select: (a) => (selection = a), ...(mark ? { mark } : {}), ...(landing ? { landing: () => landing() } : {}), ...(ground ? { ground } : {}) };
     const h = m.module.mount(node, ctx, boundScene(scene, m.bind)) as ViewHandle<PlayerScene>;
     const entry = { h, m };
     handles.push(entry);
@@ -36,7 +38,8 @@
 
 <div class="screen layout-{layout}" class:compact data-screen-id={screen.doc.id} data-layout={layout}>
   {#key JSON.stringify(live ?? {})}
-  {#each screen.mounts as m (m.area)}
+  <!-- Keyed by the screen and the view as well as the area: another screen document (a landing sent to the table) remounts its views. -->
+  {#each screen.mounts as m (`${screen.doc.id}:${m.area}:${m.module.id}`)}
     <section class="area area-{m.area}" class:boxed={m.module.box === "fill"} data-view={m.module.id} data-area={m.area} aria-label="{m.module.id.replace('sse.view.', '')} ({m.area})">
       <div class="fill" use:view={m}></div>
     </section>
