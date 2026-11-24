@@ -17,13 +17,19 @@
     label: string;
     lon?: number;
     lat?: number;
+    /** The kernel's why lines for the event (shown when it has no place to pick). */
+    why?: string[];
   }
   interface Picked {
     cell: number;
     values: Record<string, number | undefined>;
     sea_level_m: number;
+    /** False on a dry world (no sea then). */
+    sea?: boolean;
     event: { t_myr: number; kind: string; text: string } | null;
     why: string[];
+    /** The kernel's line for the frame shown (land, ice and mean surface then). */
+    frame_why?: string[];
   }
   /** The time-lapse API Body.svelte hands over (reactive). */
   export interface LapseApi {
@@ -33,7 +39,8 @@
     layer: string;
     t_myr: number;
     layers: { id: string; label: string; legend: { unit: string; stops: readonly { at: number; label: string }[] }; limits: string; available: boolean; pending: string[] }[];
-    frames: { times: number[]; events: LapseEvent[] };
+    /** Keyframe times, dated events, and the ice ages' window (within a few million years of today) with a line for each. */
+    frames: { times: number[]; events: LapseEvent[]; iceAges?: { from_myr: number; to_myr: number; words: string[] } | null };
     load(): Promise<void>;
     close(): void;
     setLayer(id: string): void;
@@ -49,9 +56,13 @@
   const t1 = $derived(times[times.length - 1] ?? 0);
   const span = $derived(Math.max(t1 - t0, 1e-9));
   const x = (t: number) => ((t - t0) / span) * 100;
+  // How long ago, in words that suit the span: thousands of years inside the ice ages' window.
   const ago = (t: number) => {
     const a = t1 - t;
-    return a < 0.5 ? "today" : a >= 1000 ? `${(a / 1000).toFixed(2)} billion years ago` : `${Math.round(a)} million years ago`;
+    if (a <= 0.0005) return "today";
+    if (a < 1) return `${Math.round(a * 1000).toLocaleString("en-GB")} thousand years ago`;
+    if (a < 10) return `${a.toFixed(1)} million years ago`;
+    return a >= 1000 ? `${(a / 1000).toFixed(2)} billion years ago` : `${Math.round(a)} million years ago`;
   };
   const age = (t: number) => (t >= 1000 ? `${(t / 1000).toFixed(2)} billion years` : `${Math.round(t)} million years`);
   const spec = $derived(lapse.layers.find((l) => l.id === lapse.layer));
@@ -60,9 +71,19 @@
   const BINS = 90;
   // Impacts and flood volcanism stand out in accent; plate events (collisions, splits, sutures) are the quiet ink.
   const VIOLENT = /impact|flood|snowball|extinction/i;
+  // Ice ages all fall within a few million years of today, inside the last gap between keyframes: on the main track
+  // they would be one mark at the end, so they get a strip of their own over the kernel's orbit-history window.
+  const ICE = "ice-age";
+  const ice = $derived(lapse.frames.iceAges ?? null);
+  const iceEvents = $derived(lapse.frames.events.filter((e) => e.kind === ICE));
+  const iceSpan = $derived(ice ? Math.max(ice.to_myr - ice.from_myr, 1e-9) : 1);
+  const ix = (t: number) => (ice ? ((t - ice.from_myr) / iceSpan) * 100 : 0);
+  const iceWindow = $derived(ice ? ago(ice.from_myr).replace(/ ago$/, "") : "");
+  const inIce = $derived(!!ice && lapse.t_myr >= ice.from_myr);
   const bins = $derived.by(() => {
     const out: { i: number; events: LapseEvent[]; violent: boolean }[] = [];
     for (const e of lapse.frames.events) {
+      if (ice && e.kind === ICE) continue;
       const i = Math.min(BINS - 1, Math.max(0, Math.floor(((e.t_myr - t0) / span) * BINS)));
       let b = out.find((x) => x.i === i);
       if (!b) out.push((b = { i, events: [], violent: false }));
@@ -167,6 +188,22 @@
       </div>
     </div>
 
+    {#if ice && iceEvents.length}
+      <div class="scrub ice" data-lapse-ice={iceEvents.length}>
+        <span class="tag" title="The kernel dates ice ages from the orbit's swing over this window (Milankovitch)">Ice ages</span>
+        <div class="track">
+          <div class="marks" role="group" aria-label="Ice ages in the last {iceWindow}">
+            {#each iceEvents as e, k (e.t_myr)}
+              <button type="button" class="mark cold" style:left="{ix(e.t_myr)}%" aria-label={ice.words[k] ?? e.label} title={ice.words[k] ?? e.label} onclick={() => choose(e)}></button>
+            {/each}
+            {#if inIce}<span class="now" style:left="{ix(lapse.t_myr)}%" aria-hidden="true"></span>{/if}
+          </div>
+          <label class="range"><span class="sr">Through the ice ages of the last {iceWindow}</span><input type="range" aria-label="Through the ice ages of the last {iceWindow}" min={ice.from_myr} max={ice.to_myr} step={iceSpan / 500} value={inIce ? lapse.t_myr : ice.from_myr} oninput={(e) => (stop(), (chosen = null), lapse.setTime(Number(e.currentTarget.value)))} /></label>
+          <div class="ends" aria-hidden="true"><span>{iceWindow} ago</span><span>today</span></div>
+        </div>
+      </div>
+    {/if}
+
     {#if spec}
       <div class="legend" data-lapse-legend={spec.id}>
         <span class="muted">{spec.legend.unit}:</span>
@@ -177,15 +214,17 @@
     {#if chosen}
       <section class="why" aria-label="Why is this here?" data-lapse-why>
         <header><h4>Why is this here?</h4><button type="button" class="link" onclick={() => (chosen = null)} aria-label="Close">×</button></header>
-        <p class="said">{chosen.e.label}</p>
+        <p class="said">{chosen.e.kind === ICE ? (ice?.words[iceEvents.indexOf(chosen.e)] ?? chosen.e.label) : chosen.e.label}</p>
         <p class="muted">{ago(chosen.e.t_myr)}, {chosen.e.lon !== undefined ? `at ${where(chosen.e)}` : "across the world"}{depth !== "curious" ? ` · ${chosen.e.kind.replace(/[-_]/g, " ")}` : ""}</p>
         {#if chosen.at}
           <dl>
             {#each shownValues(chosen.at) as v (v.k)}<dt>{v.label}</dt><dd>{v.fmt(v.v)}</dd>{/each}
-            {#if depth !== "curious"}<dt>Sea level then</dt><dd>{Math.round(chosen.at.sea_level_m)} m</dd>{/if}
+            {#if depth !== "curious"}<dt>Sea level then</dt><dd>{chosen.at.sea === false ? "no sea" : `${Math.round(chosen.at.sea_level_m)} m`}</dd>{/if}
             {#if depth === "engine"}<dt>Cell</dt><dd>{chosen.at.cell}</dd>{/if}
           </dl>
           {#if chosen.at.why.length}<ul class="because">{#each chosen.at.why as w (w)}<li>{w}</li>{/each}</ul>{/if}
+        {:else}
+          {#if chosen.e.why?.length}<ul class="because">{#each chosen.e.why as w (w)}<li>{w}</li>{/each}</ul>{/if}
         {/if}
       </section>
     {:else if nearest && !playing && Math.abs(nearest.t_myr - lapse.t_myr) < span / BINS}
@@ -306,6 +345,29 @@
   }
   .mark.violent {
     background: var(--sse-accent);
+  }
+  /* Ice ages: their own strip under the main track, each onset a full-height hollow mark (cold, not violent). */
+  .scrub.ice {
+    align-items: center;
+  }
+  .scrub.ice .tag {
+    width: 36px;
+    font-size: 0.7rem;
+    line-height: 1.1;
+    color: var(--sse-ink-muted);
+    text-align: center;
+  }
+  .mark.cold {
+    height: 16px;
+    width: 6px;
+    margin-left: -3px;
+    background: var(--sse-ground-raised);
+    border: var(--sse-line) solid var(--sse-ink-muted);
+  }
+  .mark.cold:hover,
+  .mark.cold:focus-visible {
+    border-color: var(--sse-ink);
+    background: var(--sse-ink-faint);
   }
   .mark:hover,
   .mark:focus-visible {
