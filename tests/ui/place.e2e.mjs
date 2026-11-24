@@ -2,7 +2,7 @@
 // (scripts/build-shell.sh first). Usage: node tests/ui/place.e2e.mjs [--screens <dir>]
 // The line runs Cosmic web › Galaxies nearby › Galaxy › Kestrel › a world. Going down a body list opens a world;
 // going up to the galaxy keeps the way back (the system and the world stay on the line, quietly) and the rail offers
-// "Back to <world>". The "Below" list at the galaxy offers the campaign's systems and recent places. Esc climbs one
+// "Back to <world>". The picker beside the name at the galaxy offers the campaign's systems and recent places. Esc climbs one
 // scale. Each place is the address bar's hash: Back and Forward move through places, and a link opens straight on its
 // place with no start sheet. On a phone the line is "‹ name ▾". Moving about writes nothing.
 import { spawn } from "node:child_process";
@@ -25,6 +25,15 @@ const shot = async (page, n) => {
 };
 const at = (page) => page.locator(".place h1.title").getAttribute("data-place");
 const until = (page, scale) => page.waitForFunction((s) => document.querySelector(".place h1.title")?.getAttribute("data-place") === s, scale, { timeout: 20000 });
+// The picker beside the name: open it (once), then the row for an id.
+const pop = async (page) => {
+  const chip = page.locator(".place [data-picker-chip]");
+  if ((await chip.getAttribute("aria-expanded")) !== "true") await chip.click();
+  const p = page.locator("[data-picker-pop]");
+  await p.waitFor({ timeout: 20000 });
+  return p;
+};
+const pick = async (page, id) => (await pop(page)).locator(`[data-pick="${id}"]`).click();
 const ready = (page) => page.waitForFunction(() => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash"), null, { timeout: 20000 });
 
 try {
@@ -41,10 +50,10 @@ try {
   assert.equal(await line.locator("h1").innerText(), "Kestrel");
 
   // Down to a world from the list beside the name.
-  const below = line.getByLabel("Go to a body");
-  const tarn = await below.locator("option").nth(4).getAttribute("value");
-  const tarnName = (await below.locator("option").nth(4).innerText()).trim();
-  await below.selectOption(tarn);
+  const below = (await pop(gm)).locator(".tree [data-pick]").nth(2);
+  const tarn = await below.getAttribute("data-pick");
+  const tarnName = (await below.locator(".name").innerText()).trim();
+  await below.click();
   await until(gm, "world");
   assert.equal((await line.locator("h1").innerText()).trim(), tarnName);
   assert.equal(new URL(gm.url()).hash, `#chart/world//${encodeURIComponent(tarn)}`);
@@ -58,10 +67,14 @@ try {
   assert.equal((await line.locator("h1").innerText()).trim(), "A Milky-Way-like galaxy");
   assert.deepEqual((await line.locator("[data-place-step].below").allInnerTexts()).map((s) => s.trim()), ["Kestrel", tarnName]);
   assert.match(await gm.locator('.rail [data-go="back"]').innerText(), new RegExp(`Back to ${tarnName}`));
-  const down = line.getByLabel("Go down");
-  assert.deepEqual(await down.locator('optgroup[label="Systems in this campaign"] option').allInnerTexts(), ["Kestrel"]);
-  assert.ok((await down.locator('optgroup[label="Recent"] option').allInnerTexts()).some((t) => t.startsWith(`${tarnName} · Kestrel`)), "the world is a recent place");
+  // The galaxy's picker holds the campaign's systems, the levels above, and recent places.
+  const down = await pop(gm);
+  assert.deepEqual((await down.locator('.tree [data-pick^="sys:"] .name').allInnerTexts()).map((t) => t.trim()), ["Kestrel"]);
+  assert.deepEqual(await down.locator('.above [data-pick]').evaluateAll((b) => b.map((x) => x.dataset.pick)), ["up:cluster", "up:web"], "the level above comes first");
+  assert.ok((await down.locator('[data-pick^="recent:"]').allInnerTexts()).some((t) => t.trim().startsWith(`${tarnName} · Kestrel`)), "the world is a recent place");
   await shot(gm, "u24-galaxy-trail");
+  await gm.keyboard.press("Escape");
+  await down.waitFor({ state: "detached" });
 
   // One press back to where the GM was.
   await line.locator('[data-place-step="world"]').click();
@@ -84,15 +97,18 @@ try {
   await gm.keyboard.press("Escape");
   await until(gm, "web");
   assert.deepEqual(await line.locator("[data-place-step]:not(.below)").count(), 0);
-  await line.getByLabel("Go down").selectOption("scale:cluster");
+  await pick(gm, "scale:cluster");
   await until(gm, "cluster");
   // The galaxies nearby name their cell and list its galaxies below; picking one charts it.
-  const kids = line.getByLabel("Go down").locator("optgroup[data-children] option");
-  await kids.first().waitFor({ state: "attached", timeout: 30000 });
-  assert.match(await line.getByLabel("Go down").locator("optgroup[data-children]").getAttribute("label"), /^In Cell /);
+  await gm.waitForFunction(() => /\d below/.test(document.querySelector(".place [data-picker-chip] .sum")?.textContent?.trim() ?? ""), null, { timeout: 30000 });
+  const cell = await pop(gm);
+  const kids = cell.locator('[data-pick^="child:"]');
+  await kids.first().waitFor({ timeout: 30000 });
+  assert.match(await cell.locator("[data-picker-head]").textContent(), /^In Cell /);
   const kid = (await kids.first().innerText()).trim();
   assert.match(kid, /^Halo /);
-  await line.getByLabel("Go down").selectOption(await kids.first().getAttribute("value"));
+  await shot(gm, "picker-cluster");
+  await kids.first().click();
   await until(gm, "galaxy");
   await gm.waitForFunction(() => /^#chart\/galaxy\/\/.*cell%3A.*halo%3A/.test(location.hash), null, { timeout: 30000 });
   await gm.waitForFunction(() => /^Halo /.test(document.querySelector(".place h1.title")?.textContent?.trim() ?? ""), null, { timeout: 30000 });
@@ -100,7 +116,7 @@ try {
   await shot(gm, "u24-galaxy-named");
   await line.locator('[data-place-step="cluster"]').click();
   await until(gm, "cluster");
-  await line.getByLabel("Go down").selectOption("sys:");
+  await pick(gm, "sys:");
   await until(gm, "system");
   assert.equal(await line.locator("h1").innerText(), "Kestrel");
 
@@ -135,12 +151,12 @@ try {
   const pl = phone.locator(".place");
   assert.equal(await pl.locator("[data-place-step].far").first().isVisible(), false);
   assert.ok(await pl.locator(".step.up").isVisible(), "the up arrow shows");
-  assert.ok(await pl.locator(".goto-mark").isVisible(), "the down mark shows");
+  assert.ok(await pl.locator("[data-picker-chip] .caret").isVisible(), "the down mark shows");
   await shot(phone, "u24-phone-world");
   await go(phone, "galaxy");
   assert.equal(await at(phone), "galaxy");
-  assert.ok(await pl.locator(".goto-mark").isVisible());
-  await pl.getByLabel("Go down").selectOption("sys:");
+  assert.ok(await pl.locator("[data-picker-chip] .caret").isVisible());
+  await pick(phone, "sys:");
   await until(phone, "system");
   const overflow = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   assert.ok(overflow <= 1, `nothing runs off the side (${overflow}px)`);

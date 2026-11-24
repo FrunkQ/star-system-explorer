@@ -18,6 +18,7 @@
   import { onDestroy } from "svelte";
   import { basis, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawLiveStar, poleOf, ringProfile, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
+  import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
@@ -40,6 +41,8 @@
     star = null,
     band = "visible",
     fields = new Map(),
+    pencil,
+    reframe = 0,
   }: {
     bands?: Band3D[];
     bodies: Body3D[];
@@ -70,6 +73,11 @@
     band?: string;
     /** Mag (V10e): each world's field facts (read_field) by body id; worlds without are drawn dark and fieldless. */
     fields?: ReadonlyMap<string, FieldReadJson>;
+    /** Who knows (track SV, pencil and ink): true for a body the table does not know, drawn in pencil like the
+     * chart's names (quiet, dotted); read afresh whenever the table's knowledge changes. */
+    pencil?: (id: string) => boolean;
+    /** Bumped each time a fixed "Seen from" is picked: the camera goes back to that framing (turn, zoom and slide). */
+    reframe?: number;
   } = $props();
   const trueBand = $derived(band === "xray" || band === "infrared" ? band : "visible");
   const overlay = $derived(hud);
@@ -109,11 +117,15 @@
   let dist = $state(26);
   // Slide (rule 11): where the camera looks, in this frame's display units.
   let pan = $state<[number, number]>([0, 0]);
-  // "Seen from" (rule 12): a fixed view sets the camera's height and puts the slide back; Free keeps what the hands did.
+  // "Seen from" (rule 12): picking a fixed view frames it afresh (height, turn, zoom and slide), even when it is the
+  // one already shown; Free keeps what the hands did.
   $effect(() => {
     const s = seen;
+    void reframe;
     if (s === "free") return;
     pitch = SEEN_ELEVATION[s];
+    yaw = -0.6;
+    dist = 26;
     pan = [0, 0];
   });
   // Changing the scale changes what a distance means: start the camera again from its usual place.
@@ -141,6 +153,48 @@
     frame = id;
     dist = 26;
     onselect(id);
+  }
+  // A click on a body flies in to its close-up (Alex, 24 Nov: "do some zoom tricks to fool the user into feeling we are
+  // zooming"). Not one continuous zoom across scales: the camera rushes at the body in this frame, the frame changes
+  // to the body's own while the eye is close, and the camera eases back out to show it with its moons. Two short
+  // moves that read as one; no motion when the person asks for less.
+  let flying = 0;
+  const easeIn = (u: number) => u * u * u;
+  const easeOut = (u: number) => 1 - (1 - u) ** 3;
+  function tweenCam(to: { pan: [number, number]; dist: number }, ms: number, ease: (u: number) => number): Promise<boolean> {
+    const run = ++flying;
+    const from = { pan: [...pan] as [number, number], dist };
+    const t0 = performance.now();
+    return new Promise((done) => {
+      const step = (now: number) => {
+        if (run !== flying) return done(false);
+        const u = Math.min(1, (now - t0) / ms);
+        const e = ease(u);
+        pan = [from.pan[0] + (to.pan[0] - from.pan[0]) * e, from.pan[1] + (to.pan[1] - from.pan[1]) * e];
+        // Distance in proportion, so the rush feels even from far out to close in.
+        dist = from.dist * (to.dist / from.dist) ** e;
+        if (u < 1) requestAnimationFrame(step);
+        else done(true);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  const closeDist = (id: string) => (hasChildren(bodies, id) ? 26 : 9);
+  async function flyTo(id: string) {
+    onselect(id);
+    if (id === centreId) return;
+    const node = lay?.nodes.find((n) => n.id === id);
+    if (!node || reducedMotion() || typeof requestAnimationFrame !== "function") {
+      enter(id);
+      dist = closeDist(id);
+      return;
+    }
+    const near = Math.max(MIN, Math.min(3, dist / 6));
+    if (!(await tweenCam({ pan: [node.local[0], node.local[1]], dist: near }, 380, easeIn))) return;
+    frame = id;
+    pan = [0, 0];
+    dist = 2.5;
+    await tweenCam({ pan: [0, 0], dist: closeDist(id) }, 620, easeOut);
   }
   function leave() {
     const back = centreId;
@@ -520,9 +574,34 @@
     yaw = dragFrom.yaw - dx * 0.008;
     pitch = Math.min(1.45, Math.max(-1.45, dragFrom.pitch + dy * 0.008));
   }
+  // A click picks the body nearest the pointer, not whichever pin happens to lie on top (at Real scale the inner worlds'
+  // pins overlap) and not only a 26 px pin: anywhere on a body's drawn disc, or a little round a point of light.
+  const radiusPx = (b: Body3D, depth: number) => (sizeOf(b, b === lay?.centre) * (b.mark?.ring ? 1.9 : 1) * (h / 2 / Math.tan(cam.fovY / 2))) / depth;
+  function nearestAt(clientX: number, clientY: number): string | null {
+    if (!host) return null;
+    const r = host.getBoundingClientRect();
+    const x = clientX - r.left;
+    const y = clientY - r.top;
+    let best: { id: string; d: number } | null = null;
+    for (const { b, p } of pins) {
+      if (!p) continue;
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d > Math.max(22, radiusPx(b, p.depth) + 6)) continue;
+      if (!best || d < best.d) best = { id: b.id, d };
+    }
+    return best?.id ?? null;
+  }
   function up(e: PointerEvent) {
     touches.delete(e.pointerId);
+    const still = dragFrom && Math.abs(e.clientX - dragFrom.x) + Math.abs(e.clientY - dragFrom.y) < 5;
     dragFrom = null;
+    if (!still || e.type !== "pointerup") return;
+    const id = nearestAt(e.clientX, e.clientY);
+    if (id) void flyTo(id);
+  }
+  function dbl(e: MouseEvent) {
+    const id = nearestAt(e.clientX, e.clientY);
+    if (id && id !== centreId && hasChildren(bodies, id)) enter(id);
   }
   function wheel(e: WheelEvent) {
     e.preventDefault();
@@ -560,6 +639,7 @@
   onpointermove={move}
   onpointerup={up}
   onpointercancel={up}
+  ondblclick={dbl}
   onwheel={wheel}
   data-seen={seen}
   style:touch-action={seen === "free" ? "none" : "pan-y"}
@@ -580,18 +660,19 @@
         class="pin"
         class:sel={b.id === selection}
         class:locate={realScale && overlay}
-        style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, (sizeOf(b, b === lay?.centre) * (b.mark?.ring ? 1.9 : 1) * (h / 2 / Math.tan(cam.fovY / 2))) / p.depth)}px"
+        style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, radiusPx(b, p.depth))}px"
         aria-pressed={b.id === selection}
         data-body={b.id}
         data-x={p.x.toFixed(2)}
         data-y={p.y.toFixed(2)}
-        onclick={() => onselect(b.id)}
-        ondblclick={() => hasChildren(bodies, b.id) && b.id !== centreId && enter(b.id)}
-      ><span class="dot"></span>{#if labels}<span class="name" class:hover={!hud}>{b.name}</span>{/if}</button>
+        onclick={(e) => void flyTo(e.detail ? (nearestAt(e.clientX, e.clientY) ?? b.id) : b.id)}
+        ondblclick={(e) => (e.stopPropagation(), dbl(e))}
+        data-known={pencil ? (pencil(b.id) ? "no" : "yes") : undefined}
+      ><span class="dot"></span>{#if labels}<span class="name" class:hover={!hud} class:pencil={pencil?.(b.id)}>{b.name}{#if pencil?.(b.id)}<span class="sr"> (not known to the table)</span>{/if}</span>{/if}</button>
     {/if}
   {/each}
   <div class="bar">
-    {#if centreId !== root}<button type="button" onclick={leave}>‹ {byId(root)?.name ?? title}</button><span>Moons of <b>{byId(centreId)?.name}</b></span>{/if}
+    {#if centreId !== root}<button type="button" onclick={leave}>‹ {byId(root)?.name ?? title}</button><span>{hasChildren(bodies, centreId) ? "Moons of" : "Close up of"} <b>{byId(centreId)?.name}</b></span>{/if}
     {#if canEnter}<button type="button" onclick={() => enter(canEnter.id)}>Moons of {canEnter.name} ›</button>{/if}
   </div>
   <div class="zoom" role="group" aria-label="Zoom">
@@ -647,6 +728,19 @@
     font-style: italic;
     font-size: 14px;
     cursor: pointer;
+  }
+  /* Pencil (track SV): a name the table does not know, quiet and dotted, the same as on the flat chart. */
+  .pin .name.pencil {
+    color: var(--sse-ink-muted);
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+  }
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
   }
   .pin .dot {
     width: 14px;

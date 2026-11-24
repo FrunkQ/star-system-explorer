@@ -240,7 +240,7 @@
     <div class="cols">
       <div class="disc">
         {#if turned}
-          <div class="frame3d"><Galaxy3D {chart} look={shownView.style === "true" ? "true" : "3d"} band={shownView.band} seen={shownView.seen} hud={shownView.hud} onturned={() => ctx.workspace.turned?.()} /></div>
+          <div class="frame3d"><Galaxy3D {chart} look={shownView.style === "true" ? "true" : "3d"} band={shownView.band} seen={shownView.seen} hud={shownView.hud} reframe={shownView.framed} onturned={() => ctx.workspace.turned?.()} /></div>
         {:else}
         <svg viewBox="0 0 {W} {W}" role="img" aria-label="The galaxy face-on at {gyr(chart.at_gyr)}: {chart.rings.length} rings shaded by {LAYER_WORDS[layer].label.toLowerCase()}, {chart.arms.length} arms, the green band{green?.habitable ? ` from ${green.habitable[0].toFixed(1)} to ${green.habitable[1].toFixed(1)} kpc` : ' absent'}">
           {#each chart.rings as g, i (i)}

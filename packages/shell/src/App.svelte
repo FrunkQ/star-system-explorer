@@ -4,7 +4,7 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
-  import { untrack } from "svelte";
+  import { tick, untrack } from "svelte";
   import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
@@ -46,10 +46,14 @@
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
-  import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
+  import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
+  import { menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
+  import ObjectMenu from "./ObjectMenu.svelte";
+  import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
-  import { Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
+  import { Picker, Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
+  import { SUBJECT_KIND_ORDER, subjectItems, type PickItem } from "../../ui-contract/src/index.ts";
   import workspaceDoc from "./documents/workspace.gm.json";
   import physicsDoc from "./documents/physics.gm.json";
   import packsDoc from "./documents/packs.gm.json";
@@ -567,7 +571,9 @@
     void ws.revision;
     const l = lens;
     const s = session;
-    const aud = lensAudience(l);
+    // Pencil and ink (track SV): on the Build and Run desks the GM's chart always knows what the table knows, so an
+    // unknown body is drawn in pencil whatever the lens; a player lens looks through its own audience.
+    const aud = lensAudience(l) ?? (desk === "build" || desk === "run" ? EVERYONE : null);
     const g = ++lensGen;
     // The system in view, not the shipped sample's: a lens on the Solar System looks at the Solar System.
     const sys = scene.system || (factsDoc as unknown as AuthoredFacts).scope;
@@ -909,6 +915,31 @@
     }
     goTo(v);
   }
+  // The picker beside the place's name (24 Nov): the level above first, then this level and what is in it, then the
+  // other ways about (systems in the campaign, recent places). One component; the content changes with the scale.
+  const atBodies = $derived(railScale === "system" || railScale === "world");
+  const pickSystems = $derived([{ id: "sys:", label: base.title }, ...adoptedSystems.map((a) => ({ id: `sys:${a.system}`, label: a.title }))]);
+  const pickItems = $derived.by<PickItem[]>(() => {
+    if (atBodies) return subjectItems(scene.subjects);
+    // The galaxy holds the campaign's systems; the web and the galaxies nearby hold what their view names below them.
+    if (railScale === "galaxy") return pickSystems.map((x) => ({ ...x, kinds: [] }));
+    return [
+      ...(downScale ? [{ id: `scale:${downScale}`, label: PLACE_WORDS[downScale], kinds: [] }] : []),
+      ...(downScale ? (belowNote?.children ?? []).map((c, j) => ({ id: `child:${j}`, label: c.name, kinds: [] })) : []),
+    ];
+  });
+  const pickSummary = $derived.by(() => {
+    if (atBodies) return `${scene.subjects.length} ${scene.subjects.length === 1 ? "body" : "bodies"}`;
+    if (railScale === "galaxy") return `${pickSystems.length} ${pickSystems.length === 1 ? "system" : "systems"}`;
+    const n = belowNote?.children?.length ?? 0;
+    return n ? `${n} below` : "Below";
+  });
+  const pickAbove = $derived(steps.filter((x) => !x.current && !x.below).reverse().map((u) => ({ id: `up:${u.scale}`, label: u.label, caption: PLACE_WORDS[u.scale] === u.label ? undefined : PLACE_WORDS[u.scale] })));
+  const pickSections = $derived([
+    ...(atBodies && adoptedSystems.length ? [{ label: "Other systems in this campaign", entries: pickSystems.filter((x) => x.id !== `sys:${viewing?.system ?? ""}`) }] : []),
+    ...(!atBodies && railScale !== "galaxy" ? [{ label: "Systems in this campaign", entries: pickSystems }] : []),
+    { label: "Recent", entries: recentElsewhere.map((r, j) => ({ id: `recent:${j}`, label: placeWords(r) })) },
+  ]);
   // The address bar's Back and Forward, and a pasted link, move through places.
   function fromHash() {
     const p = parsePlaceHash(location.hash);
@@ -1321,6 +1352,50 @@
     clipNote = `Cut ${c.words}. Paste it anywhere on the Build desk; Undo puts it back.`;
   }
 
+  // The menu on any object (V3 gap 38): right-click, or press and hold, on anything carrying `data-address`. Its items
+  // are the one action list (ui-contract actions.ts) for the desk in front; each runs the same function as the tool,
+  // the key or the More entry that does it, on the object the menu was opened on.
+  let objMenu = $state<{ target: ActionTarget; at: { x: number; y: number }; from: Element | null; kicker: string } | null>(null);
+  $effect(() =>
+    watchObjectMenu(window, (ask, from) => {
+      const sub = scene.subjects.find((x) => x.address === ask.address);
+      if (!sub || railScale === "workshop") return;
+      const host = sub.parent ? scene.subjects.find((x) => x.address === sub.parent) : sub.orbit ? primaryOf(scene) : undefined;
+      ws.select(sub.address);
+      objMenu = { target: { address: sub.address, kind: sub.kind, label: sub.label }, at: { x: ask.x, y: ask.y }, from, kicker: `${sub.kind.replace(/_/g, " ")}${host ? ` · orbits ${host.label}` : ""}` };
+    }),
+  );
+  const objMenuItems = $derived(
+    objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }) : null,
+  );
+  async function runAction(id: string, address: string) {
+    ws.select(address);
+    if (id === "open") return toWorld(address);
+    if (id === "describe") return describe(address);
+    if (id === "copy") return copyBody();
+    if (id === "paste") return pasteFromMenu();
+    if (id === "add") return openAdd();
+    if (id === "cut") return cutBody();
+    if (id === "voyage") return go("voyages");
+    if (id === "land") return (toWorld(address), go("surface"));
+    if (id === "link") {
+      const url = `${location.origin}${location.pathname}${location.search}${placeHash({ scale: "world", system: viewing?.system ?? "", world: address })}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        clipNote = `Copied a link to ${placeName(address) ?? "it"}. It opens the chart room on it.`;
+      } catch {
+        clipNote = `The browser would not let the chart room use the clipboard. The link is ${url}`;
+      }
+      return;
+    }
+    if (id === "send" && share) {
+      toWorld(address);
+      await tick();
+      share.show(here());
+      clipNote = `The players now see ${placeName(address) ?? "it"}, as far as they know it.`;
+    }
+  }
+
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
     const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
@@ -1427,41 +1502,22 @@
           <h1 class="title" data-place={s.scale}>{s.scale === "world" ? (selName ?? "A world") : s.label}</h1>
         {/if}
         {#if s.current}
-          <!-- Down: what is nested below this step, the systems in the campaign, and recent places. -->
-          <label class="goto">
-            <span class="sr">{railScale === "system" || railScale === "world" ? "Go to a body" : "Go down"}</span>
-            <span class="goto-mark" aria-hidden="true">▾</span>
-            <select aria-label={railScale === "system" || railScale === "world" ? "Go to a body" : "Go down"} value="" data-below={railScale} onchange={(e) => { goBelow(e.currentTarget.value); e.currentTarget.value = ""; }}>
-              {#if railScale === "system" || railScale === "world"}
-                <option value="" disabled>{placeBodies.length} {placeBodies.length === 1 ? "body" : "bodies"}</option>
-                <option value="@system">The whole system</option>
-                {#each placeBodies as b (b.address)}<option value={b.address}>{b.depth ? "\u00a0\u00a0".repeat(b.depth) : ""}{b.label}</option>{/each}
-                {#if adoptedSystems.length}
-                  <optgroup label="Other systems in this campaign">
-                    {#if viewing}<option value="sys:">{base.title}</option>{/if}
-                    {#each adoptedSystems.filter((a) => a.system !== viewing?.system) as a (a.system)}<option value={`sys:${a.system}`}>{a.title}</option>{/each}
-                  </optgroup>
-                {/if}
-              {:else}
-                <option value="" disabled>Below ▾</option>
-                {#if downScale}<option value={`scale:${downScale}`}>{PLACE_WORDS[downScale]}</option>{/if}
-                {#if belowNote?.children?.length && downScale}
-                  <optgroup label={`In ${belowNote.name}`} data-children>{#each belowNote.children as c, j (c.id)}<option value={`child:${j}`}>{c.name}</option>{/each}</optgroup>
-                {/if}
-                <optgroup label="Systems in this campaign">
-                  <option value="sys:">{base.title}</option>
-                  {#each adoptedSystems as a (a.system)}<option value={`sys:${a.system}`}>{a.title}</option>{/each}
-                </optgroup>
-              {/if}
-              {#if steps.some((x) => !x.current && !x.below)}
-                <!-- Out: every step above, for a phone (where the line shows only the one above) and the keyboard. -->
-                <optgroup label="Further out">{#each steps.filter((x) => !x.current && !x.below) as u (u.scale)}<option value={`up:${u.scale}`}>{u.label}</option>{/each}</optgroup>
-              {/if}
-              {#if recentElsewhere.length}
-                <optgroup label="Recent">{#each recentElsewhere as r, j (j)}<option value={`recent:${j}`}>{placeWords(r)}</option>{/each}</optgroup>
-              {/if}
-            </select>
-          </label>
+          <!-- The picker: the level above, this level and what is in it, the systems in the campaign, and recent places. -->
+          <span class="goto" data-below={railScale}>
+            <Picker
+              summary={pickSummary}
+              label={atBodies ? "Go to a body" : "Go down"}
+              items={pickItems}
+              selected={atBodies ? ws.selection : null}
+              kindOrder={SUBJECT_KIND_ORDER}
+              above={pickAbove}
+              top={atBodies ? { id: "@system", label: "The whole system", caption: scene.title } : undefined}
+              sections={pickSections}
+              placeholder={atBodies ? "Find a body…" : "Find…"}
+              heading={!atBodies && belowNote?.children?.length ? `In ${belowNote.name}` : undefined}
+              onpick={goBelow}
+            />
+          </span>
         {:else}
           <button type="button" class="step" class:up={parent} class:below={s.below} class:far={!s.below && !parent} data-place-step={s.scale} data-go={s.scale === "system" ? "system" : undefined} onclick={() => goPlace(s.place)} title={s.below ? `Back down to ${s.label}` : `Up to ${s.label}${parent ? " (Esc)" : ""}`}>{#if parent}<span class="up-arrow" aria-hidden="true">‹ </span>{/if}<span class="up-name"><span class="long">{s.label}</span>{#if SHORT_WORDS[s.scale] && s.label === PLACE_WORDS[s.scale]}<span class="short" aria-hidden="true">{SHORT_WORDS[s.scale]}</span>{/if}</span></button>
         {/if}
@@ -1767,6 +1823,8 @@
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
+{#if objMenu && objMenuItems}{@const om = objMenu}<ObjectMenu target={om.target} menu={objMenuItems} at={om.at} from={om.from} kicker={om.kicker} onpick={(id) => void runAction(id, om.target.address)} ondesk={chooseDesk} onclose={() => (objMenu = null)} />{/if}
+
 <style>
   :global(html, body) {
     margin: 0;
@@ -1895,19 +1953,12 @@
     flex: 0 1 auto;
     min-width: 8em;
   }
-  .goto select[data-below="web"],
-  .goto select[data-below="cluster"],
-  .goto select[data-below="galaxy"] {
-    max-width: 5.5em;
-  }
   .sep.below {
     opacity: 0.6;
   }
   .goto {
-    position: relative;
-  }
-  .goto-mark {
-    display: none;
+    display: inline-flex;
+    min-width: 0;
   }
   .place .short {
     display: none;
@@ -1932,16 +1983,6 @@
   }
   .up-arrow {
     display: none;
-  }
-  .goto select {
-    font: inherit;
-    font-size: 12px;
-    color: var(--sse-ink-muted);
-    background: transparent;
-    border: 0;
-    border-bottom: 1px dotted var(--sse-rule);
-    cursor: pointer;
-    max-width: 7.5em;
   }
   .barbtn {
     height: 32px;
@@ -2116,13 +2157,6 @@
   }
   .spacer {
     flex: 1;
-  }
-  .sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
   }
   .branch-stamp {
     position: absolute;
@@ -2557,27 +2591,11 @@
     .sep.below {
       display: none;
     }
-    /* Down is a small ▾ beside the name; the list opens over it. */
+    /* Down is a small ▾ beside the name (the picker draws it); the list opens across the screen. */
     .place .goto {
       flex: none;
       min-width: 0;
-      width: 22px;
-      height: 32px;
-      display: inline-grid;
-      place-items: center;
       align-self: center;
-    }
-    .goto-mark {
-      display: inline;
-      color: var(--sse-accent);
-      font-size: 16px;
-    }
-    .goto select {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      max-width: none;
-      opacity: 0;
     }
     .lens {
       flex: 0 1 auto;

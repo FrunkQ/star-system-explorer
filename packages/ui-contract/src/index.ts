@@ -40,6 +40,7 @@ export { showReference } from "./reference.ts";
 export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
+export * from "./picker.ts";
 export * from "./overlay.ts";
 export * from "./landing.ts";
 export * from "./map-controls.ts";
@@ -137,3 +138,5 @@ export { difficultyLadderOf, chanceToMeet, stepTarget, gameDifficulty } from "./
 export type { DifficultyLadder, DifficultyStep, GameDifficulty } from "./difficulty.ts";
 export { wattsText, powerWords, nowhereWords } from "./power.ts";
 export type { PowerBooks, PowerLedger, PowerFlow, PowerEngine } from "./power.ts";
+export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
+export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";

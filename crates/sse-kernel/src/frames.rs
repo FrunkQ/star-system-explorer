@@ -31,6 +31,7 @@ pub(crate) fn surface_frames(
         &w.opts,
         survey,
         frames_max.map(|x| x as usize),
+        w.track_before.as_ref(),
     )
     .map_err(|e| err("no_ground", e))?;
     let mut o = serde_json::json!({
