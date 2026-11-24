@@ -193,6 +193,11 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("interior.crust_fraction", "the crust's mass share of a body's silicate"),
     ("element.crust_share", "share of the silicate's element held in the crust"),
     ("interior.silicate_mass", "mass of a body's silicate (mantle and crust)"),
+    ("deposit.footprint_area", "area of an ore deposit or ore province"),
+    ("element.crust_mass_fraction", "an element's share of a world's crust by mass"),
+    ("element.ore_enrichment", "how many times an ore process raised an element over the crust"),
+    ("deposit.element_mass", "mass of an element held in an ore deposit"),
+    ("deposit.grade", "an element's share of the ore by mass"),
     ("interior.core_top_temperature", "temperature at the top of the core"),
     ("interior.core_top_gravity", "gravity at the top of the core"),
     (

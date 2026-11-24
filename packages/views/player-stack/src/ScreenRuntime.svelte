@@ -40,7 +40,7 @@
   {#key JSON.stringify(live ?? {})}
   <!-- Keyed by the screen and the view as well as the area: another screen document (a landing sent to the table) remounts its views. -->
   {#each screen.mounts as m (`${screen.doc.id}:${m.area}:${m.module.id}`)}
-    <section class="area area-{m.area}" class:boxed={m.module.box === "fill"} data-view={m.module.id} data-area={m.area} aria-label="{m.module.id.replace('sse.view.', '')} ({m.area})">
+    <section class="area area-{m.area}" class:boxed={m.module.box === "fill"} class:solo={screen.mounts.length === 1 && !compact} data-view={m.module.id} data-area={m.area} aria-label="{m.module.id.replace('sse.view.', '')} ({m.area})">
       <div class="fill" use:view={m}></div>
     </section>
   {/each}
@@ -65,6 +65,10 @@
   }
   .compact .boxed {
     height: 300px;
+  }
+  /* A screen of one filling view (the Landing screen) takes the page's height, less the bars above and below. */
+  .boxed.solo {
+    height: max(460px, calc(100dvh - 190px));
   }
   .boxed .fill {
     height: 100%;
@@ -133,6 +137,9 @@
     }
     .boxed {
       height: 320px;
+    }
+    .boxed.solo {
+      height: max(320px, calc(100dvh - 170px));
     }
   }
 </style>

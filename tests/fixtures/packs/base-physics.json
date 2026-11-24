@@ -2115,6 +2115,48 @@
         "range": null
       },
       {
+        "description": "mass of an element held in an ore deposit",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "deposit.element_mass",
+        "range": null
+      },
+      {
+        "description": "area of an ore deposit or ore province",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "deposit.footprint_area",
+        "range": null
+      },
+      {
+        "description": "an element's share of the ore by mass",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "deposit.grade",
+        "range": null
+      },
+      {
         "description": "how much dust dims light at a wavelength, relative to the V band (A_λ / A_V)",
         "dim": [
           0,
@@ -2185,6 +2227,20 @@
         "range": null
       },
       {
+        "description": "an element's share of a world's crust by mass",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "element.crust_mass_fraction",
+        "range": null
+      },
+      {
         "description": "share of the silicate's element held in the crust",
         "dim": [
           0,
@@ -2224,6 +2280,20 @@
           0
         ],
         "id": "element.metal_silicate_partition",
+        "range": null
+      },
+      {
+        "description": "how many times an ore process raised an element over the crust",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "element.ore_enrichment",
         "range": null
       },
       {

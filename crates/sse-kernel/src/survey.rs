@@ -44,6 +44,8 @@ pub(crate) struct Request<'a> {
     pub quick: bool,
     /// Most features and deposits listed (0: all).
     pub limit: usize,
+    /// The master data sheet, for what the deposits hold (MP8).
+    pub reference: &'a sse_reference::Reference,
 }
 
 /// A world surveyed (or found in the cache): where it came from, the body,
@@ -203,6 +205,10 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
             format!("at most {MAX_TILES} tiles per request"),
         ));
     }
+    let run = match &r.from {
+        From::System { run, .. } => *run,
+        From::Fixture(_) => None,
+    };
     let (source, body, at_s, sv, moons) = surveyed(r.from, r.options, r.quick, cache)?;
     let mut tiles = vec![];
     let mut refused = vec![];
@@ -346,6 +352,11 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
         let d: Vec<_> = kept.iter().map(|&i| &l.deposits[i]).collect();
         o.insert("deposits".into(), v(&d));
         o.insert("deposits_total".into(), total.into());
+        // MP8: what the deposits hold, drawn from the crust.
+        let mut h = crate::composition::holdings(&body, run, l, r.reference);
+        let kept_ids: Vec<&str> = d.iter().map(|x| x.id.as_str()).collect();
+        h.places.retain(|p| kept_ids.contains(&p.id.as_str()));
+        o.insert("holdings".into(), v(&h));
         o.insert("built".into(), v(&l.built));
         o.insert("built_kinds".into(), v(&l.built_kinds));
         o.insert("applied".into(), v(&l.applied));

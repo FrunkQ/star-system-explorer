@@ -1651,7 +1651,7 @@
 
 <dialog bind:this={seatsDialog} class="help seats-dialog" aria-label="Seats" onclose={() => (seatsOpen = !!seatsDialog?.open)}>
   {#if seatsOpen && share && session}
-    <SeatsPanel {share} session={session} bodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)} scope={(factsDoc as unknown as AuthoredFacts).scope} at_yr={(factsDoc as unknown as AuthoredFacts).at_yr} onchange={() => ws.notePhysics()} />
+    <SeatsPanel {share} session={session} bodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)} scope={(factsDoc as unknown as AuthoredFacts).scope} at_yr={(factsDoc as unknown as AuthoredFacts).at_yr} onchange={() => ws.notePhysics()} {here} />
   {/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>

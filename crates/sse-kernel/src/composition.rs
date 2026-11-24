@@ -28,6 +28,36 @@ fn al26_left(formed_myr: f64) -> f64 {
     a.eval(&[1.0, t], &p).map(|o| o[0]).unwrap_or(0.0)
 }
 
+/// A world's bulk: its facts, with formation's ledger and Al-26 where it
+/// was formed by a run.
+pub(crate) fn bulk_of(b: &sse_surface::Body, run: Option<&SystemRun>) -> Bulk {
+    let mut bulk = Bulk::of_body(b);
+    if let Some(p) = run.and_then(|r| r.protoplanets.iter().find(|p| p.address == b.address)) {
+        bulk = bulk.with_ledger(&p.by_group);
+        bulk.al26_j_kg = al26_left(p.formed_myr);
+    }
+    bulk
+}
+
+/// MP8: what a surveyed world's deposits hold, from its Survey composition.
+pub(crate) fn holdings(
+    b: &sse_surface::Body,
+    run: Option<&SystemRun>,
+    layers: &sse_surface::cover::Layers,
+    sheet: &sse_reference::Reference,
+) -> sse_surface::composition::Holdings {
+    let settings = Settings::default();
+    let c = compose(
+        &Sheet::read(sheet),
+        &bulk_of(b, run),
+        &BTreeMap::new(),
+        Level::Survey,
+        &settings,
+    );
+    let ores = &sse_surface::scenario::settings().cover.ores;
+    sse_surface::composition::holdings(&c, layers, ores, settings.crust_density)
+}
+
 pub(crate) fn read(
     ch: &Chronicle,
     system: &Address,
@@ -61,12 +91,7 @@ pub(crate) fn read(
         if want.as_ref().is_some_and(|a| *a != b.address) {
             continue;
         }
-        let mut bulk = Bulk::of_body(b);
-        if let Some(p) = run.and_then(|r| r.protoplanets.iter().find(|p| p.address == b.address)) {
-            bulk = bulk.with_ledger(&p.by_group);
-            bulk.al26_j_kg = al26_left(p.formed_myr);
-        }
-        let mut c = compose(&rows, &bulk, &ratio, level, &settings);
+        let mut c = compose(&rows, &bulk_of(b, run), &ratio, level, &settings);
         if b.deep_envelope {
             c.stand_ins.push(
                 "a deep hydrogen and helium envelope: only the solid core is counted here".into(),
