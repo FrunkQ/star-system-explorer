@@ -6,8 +6,8 @@
 //
 // Three looks: "true" (the light as it is, tone-mapped), "3d" (the same ground as a diagram: shaded relief in the
 // chart's colours with contour lines), "wireframe" (the mesh's edges on the chart's ground).
-import { ACESFilmicToneMapping, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Scene, SphereGeometry, SRGBColorSpace, Vector3, Vector4 } from "three";
-import { MeshBasicNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
+import { ACESFilmicToneMapping, AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Points, Scene, SphereGeometry, SRGBColorSpace, Vector3, Vector4 } from "three";
+import { MeshBasicNodeMaterial, PointsNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
 import { fresnelNode } from "./sea-node.ts";
 import { frothToDraw, MAX_TRAINS, trainsToDraw, type SeaOptics, type TrainDraw } from "./sea.ts";
 import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, sin, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
@@ -63,6 +63,11 @@ export interface SurfaceFrame {
    * now above mean sea level, and the clock the waves run on (seconds).
    */
   sea?: { wave_m: number; period_s: number; dir_rad: number; gravity_m_s2: number; tide_m: number; time_s: number; optics?: SeaOptics };
+  /**
+   * True look: the stars over the site (night-sky.ts `starsOverSite`), keyed so they are uploaded once a moment:
+   * unit directions in the site's frame, and each star's light as a share of the home star's, times its colour.
+   */
+  stars?: { key: string; dirs: Float32Array; light: Float32Array };
 }
 
 /**
@@ -188,6 +193,24 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   dome.frustumCulled = false;
   scene.add(dome);
 
+  // The stars (True): points on the dome, each its light over one pixel's solid angle, dimmed by the air along its
+  // line of sight, added to the sky so a lit sky hides them and a dark one shows them.
+  const uStarScale = uniform(1);
+  const starMat = new PointsNodeMaterial({ transparent: true, blending: AdditiveBlending, depthWrite: false, sizeAttenuation: false });
+  starMat.colorNode = Fn(() => {
+    const d = normalize(positionWorld);
+    const T = exp(uTauEye.mul(airMass(max(d.z, float(0.02)))).negate());
+    const c = attribute("light", "vec3").mul(T).mul(uStarScale).mul(uExp).mul(select(d.z.lessThan(0), float(0), float(1)));
+    return vec4(c, 1);
+  })();
+  const starGeom = new BufferGeometry();
+  const stars = new Points(starGeom, starMat);
+  stars.renderOrder = 1000;
+  stars.frustumCulled = false;
+  stars.visible = false;
+  scene.add(stars);
+  let starKey = "";
+
   // The ground, true look: albedo lit by the sun through the air and by the sky, seen through the air.
   const trueNode = Fn(() => {
     const alb = attribute("albedo", "vec3");
@@ -300,7 +323,17 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       const fade = smoothstep(float(1e-5), float(1e-4), w).mul(float(1).sub(smoothstep(float(0.12), float(0.3), w)));
       return line.mul(fade).mul(ink);
     };
-    const lines = max(contour(uC, 0.45), max(contour(uC.mul(5), 0.7), contour(uC.mul(25), 0.85)));
+    // A faint ground grid every five contour intervals, east and north in the site's frame, so level ground (a plain
+    // with no contour crossing it) still reads as ground running away to the horizon.
+    const gridLine = (u: Node<"float">) => {
+      const f = fract(u);
+      const w = fwidth(u);
+      const line = float(1).sub(smoothstep(float(0), max(w, float(1e-6)).mul(1.2), min(f, float(1).sub(f))));
+      return line.mul(float(1).sub(smoothstep(float(0.12), float(0.3), w))).mul(0.25);
+    };
+    const gx = positionWorld.x.add(uEyeXY.x).div(uC.mul(5));
+    const gy = positionWorld.y.add(uEyeXY.y).div(uC.mul(5));
+    const lines = max(max(contour(uC, 0.45), max(contour(uC.mul(5), 0.7), contour(uC.mul(25), 0.85))), max(gridLine(gx), gridLine(gy)));
     const c = mix(col.mul(shade), vec3(uInk), lines);
     return vec4(c, 1);
   })();
@@ -408,6 +441,19 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         for (const m of allMats()) m.needsUpdate = true;
       }
       dome.visible = isTrue;
+      // The stars: one pixel's solid angle sets how bright a point is for its light.
+      if (f.stars && f.stars.key !== starKey) {
+        starKey = f.stars.key;
+        const pos = new Float32Array(f.stars.dirs.length);
+        for (let i = 0; i < pos.length; i++) pos[i] = f.stars.dirs[i]! * 2.9e6;
+        starGeom.setAttribute("position", new BufferAttribute(pos, 3));
+        starGeom.setAttribute("light", new BufferAttribute(f.stars.light, 3));
+        starGeom.computeBoundingSphere();
+      }
+      stars.visible = isTrue && !!f.stars;
+      const pxAngle = f.fovY / Math.max(1, f.height);
+      uStarScale.value = 1 / (pxAngle * pxAngle);
+      stars.position.set(0, 0, 0);
       renderer.setClearColor(isTrue ? 0x000000 : bg, 1);
       for (const s of order) {
         const m = meshes.get(s.key)!;
@@ -421,6 +467,8 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     dispose() {
       dropAll();
       dome.geometry.dispose();
+      starGeom.dispose();
+      starMat.dispose();
       for (const m of allMats()) m.dispose();
       renderer.dispose();
     },
