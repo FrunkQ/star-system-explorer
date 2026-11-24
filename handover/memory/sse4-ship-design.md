@@ -1,0 +1,15 @@
+---
+name: sse4-ship-design
+description: Ships drawn from physics (V3 gap item 14) and Alex's 23 Nov ask for component-built procedural ships with styles per culture
+metadata:
+  type: project
+  modified: 2026-11-23T02:55:34.921Z
+---
+- 23 Nov: Alex chose "physics hulls now, uploads later" for V3 gap item 14 (GLB/OBJ/STL uploads wait until packs can carry files; rendering design says assets are generated, not shipped).
+- Part 1 (PR 219, renderer thread): packages/renderer/src/ship.ts (driveFacts relativistic rocket, hullFromShip tanks = mass/density, shield = g/cm2 x crew skin, hullProfile for LatheGeometry, shipPaths Chart, narrateShip) and packages/views/ship ShipPicture({ship, fuels, height, words}); travel thread mounts it on the Voyages ship card and route card. Optional `fuel_shares` on ship records (travel thread adds to base-nav). Liquid densities asked of the matter sheet thread.
+- 23 Nov Alex follow-up: design ships from components (crew, cargo, fuel, reactor, radiators...), sizes worked out from physics, styles from "real" spine-and-modules to high tech, procedural textures, a style assignable to a nation or alien culture (pack data inheriting down the tree like naming), remixable options, users can override and add own models. One-off generation may be compute-heavy; result must be cheap to render. Save the recipe (parts, style, seed), not a mesh.
+- Coordinator ruled 23 Nov: add crew count and cargo as fields on stock ships, shape agreed with the travel thread (owner of base-nav). Alex 23 Nov: no interior deck plans; the 2D is a simple top-down and side view with rough call-outs naming where each major system sits (sensors, fuel tanks, crew quarters, reactor, radiators...). He loves giant radiators from real waste heat.
+- 23 Nov Alex: "aerobraking ships need to look like they can". Rule: capabilities drive form. Aerobrake/entry -> heat shield sized from ballistic coefficient and Sutton-Graves heating, ship fits in the shield's wake; scoop refuel -> scoops; landers -> legs; landers rated for air -> aero shaping (wing area from mass, landing speed and the air density they are rated for; lifting body at high wing loading). Airless landers need none.
+- Entry, aerobraking, landing and take-off physics live in the kernel (travel thread: sse-nav entry.rs, op ship_at_world) with optional NavShip fields shield {nose_radius_m, max_heat_flux_w_m2, max_heat_load_j_m2, kind, mass_t}, aero {ref_area_m2, cd, lift_area_m2, cl_max, l_over_d}, landing {legs, max_touchdown_m_s}. The renderer designer writes fields and draws; never recomputes. Landed in PR 228 (sse-nav Ship / ui-contract NavShip) plus landing.chute {area_m2, cd, max_mach, max_q_pa, fill_s?} and structure_g; a ship without aero is guessed as a sphere at 6.67 m3/t until the designer writes aero.
+- Stages 1-4 merged (PRs 219, 224, 230, 246, 23 Nov). Stage 4: renderer fitAbilities asks ship_at_world and scales parts by the figure's law to 75% of limit; abilities {aerobrake, land} world lists go in DesignRecipe until ship records carry them. A drive that can hover gets no wings. Next: stage 5 styles per nation/culture.
+Related: [[sse4-renderer-track]]

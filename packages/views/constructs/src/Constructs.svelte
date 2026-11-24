@@ -8,11 +8,10 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { BOOKKEEPING, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { BOOKKEEPING, PICTURE_FIELDS, FUEL_FIELDS, MANIFEST_WORDS, PERSON, CARGO, aboardLog, entryFrom, type AboardEntry, type RecordRead, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
-  import { Aboard } from "../../manifest/src/index.ts";
-  import StationPicture from "../../ship/src/StationPicture.svelte";
+  import { Aboard, Picture } from "../../manifest/src/index.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const session = untrack(() => ctx.session);
@@ -57,7 +56,7 @@
   const currentTemplate = $derived(current ? templateOf(current, templates) : undefined);
   const shownFacts = $derived.by(() => {
     if (!current) return [];
-    const all = current.facts.filter((f) => f.field !== "name" && (depth === "engine" || !BOOKKEEPING.includes(f.field)));
+    const all = current.facts.filter((f) => f.field !== "name" && !PICTURE_FIELDS.includes(f.field) && !(Object.values(FUEL_FIELDS) as string[]).includes(f.field) && (depth === "engine" || !BOOKKEEPING.includes(f.field)));
     return depth === "curious" ? all.filter((f) => f.field.startsWith("construct.")).slice(0, 4) : all;
   });
 
@@ -97,9 +96,22 @@
   let log = $state<ShipLogEntry[]>([]);
   const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
   async function loadLog(address: string) {
-    const [h, r] = await Promise.all([session.history(address), session.record?.(address)]);
+    const [h, r, aboardAll] = await Promise.all([session.history(address), session.record?.(address), aboardEntries(address)]);
     if (picked !== address) return;
-    log = shipLog(h, r?.ok ? r.record : null, (s) => secondsToYears(s), (k) => fieldWords(k).label).reverse();
+    const own = shipLog(h, r?.ok ? r.record : null, (s) => secondsToYears(s), (k) => fieldWords(k, MANIFEST_WORDS).label);
+    // Who and what came aboard, left and changed state here (track MC), from the entries' own histories.
+    const moves = aboardLog(address, aboardAll, (s) => secondsToYears(s), (a) => (a === scene.system ? scene.title : listed.find((x) => x.address === a) ? nameOf(listed.find((x) => x.address === a)!) : (scene.subjects.find((x) => x.address === a)?.label ?? "elsewhere")));
+    const rank = (w: ShipLogEntry["what"]) => ({ made: 0, edited: 1, event: 1, kept: 2, aboard: 2, note: 3, retired: 4 })[w];
+    log = [...own, ...moves].sort((a, b) => a.at_yr - b.at_yr || rank(a.what) - rank(b.what)).reverse();
+  }
+  // Everyone and everything that is or was aboard anything: record entries at the universe root (base manifest pack).
+  async function aboardEntries(address: string): Promise<AboardEntry[]> {
+    if (!session.record) return [];
+    const top = await session.record(address.split("/")[0]!);
+    if (!top.ok) return [];
+    const mine = top.record.actors.filter((a) => a.kind === PERSON || a.kind === CARGO);
+    const reads = await Promise.all(mine.map((a) => session.record!(a.address)));
+    return mine.map((a, i) => entryFrom(a, reads[i]!.ok ? (reads[i] as { ok: true; record: RecordRead }).record : null)).filter((e) => e.moves.some((m) => m.value === address));
   }
   $effect(() => {
     void ws.revision;
@@ -109,6 +121,8 @@
 
   // ---- Aboard (track MC): crew and manifest in one panel, opened from the card ----
   let aboardOpen = $state(false);
+  // The picture (designed from its parts, or the GM's own) opens like Aboard and Log: the card stays short.
+  let pictureOpen = $state(false);
   const places = $derived([
     ...listed.map((s) => ({ address: s.address, label: nameOf(s) })),
     ...scene.subjects.map((s) => ({ address: s.address, label: s.address === scene.system ? `${s.label} (the system)` : s.label })),
@@ -116,8 +130,8 @@
 
   // ---- Edit and retire ----
   let edits = $state<Record<string, string>>({});
-  // A station's picture (renderer station-design.ts): built from its description, kept as `construct.design`.
-  let pictureOpen = $state(false);
+  // A station's picture (renderer station-design.ts): built from its description, kept as `construct.design`; shown
+  // in the same Picture panel as a ship's.
   const isStation = (c: PlayerSubject) => (templateOf(c, templates)?.kind ?? kindOf(c.address)) === "station";
   async function setDesign(r: unknown) {
     if (!current || !gm || ws.desk !== "build") return;
@@ -285,19 +299,19 @@
           <nav class="links">
             {#if bodyAt(current.address)}<a href={placeHash({ scale: "world", system: scene.system, world: bodyAt(current.address)! })}>Open the world it is at</a>{/if}
             {#if gm && ws.setParty && navOf(current)}<button type="button" class="quiet-btn" aria-pressed={isParty(current)} onclick={() => makeParty(current!)} data-party-ship>{isParty(current) ? "The party's ship" : "Make this the party's ship"}</button>{/if}
-            {#if isStation(current)}<button type="button" class="quiet-btn" aria-expanded={pictureOpen} onclick={() => (pictureOpen = !pictureOpen)} data-station-picture-toggle>Picture</button>{/if}
+            {#if gm || isStation(current)}<button type="button" class="quiet-btn" aria-expanded={pictureOpen} onclick={() => (pictureOpen = !pictureOpen)} data-picture-toggle>Picture</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" aria-expanded={aboardOpen} onclick={() => (aboardOpen = !aboardOpen)} data-aboard-toggle>Aboard</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" bind:this={logBtn} aria-expanded={logOpen} onclick={() => (logOpen = !logOpen)} data-log-toggle>Log</button>{/if}
             {#if gm && current.facts.some((f) => f.field === "template.id")}<button type="button" class="quiet-btn" onclick={() => (retiring = !retiring)} data-retire>Take out of play…</button>{/if}
           </nav>
-          {#if pictureOpen && isStation(current)}
-            <div use:opensFrom={() => document.querySelector("[data-station-picture-toggle]")}>
-              <StationPicture construct={current} name={nameOf(current)} words={currentTemplate?.explain ?? ""} tags={currentTemplate?.tags ?? []} locked={!(gm && ws.desk === "build")} onchange={(r) => setDesign(r)} />
+          {#if pictureOpen}
+            <div use:opensFrom={() => document.querySelector("[data-picture-toggle]")}>
+              <Picture {ctx} construct={current} nav={navOf(current)} {editing} name={nameOf(current)} station={isStation(current) ? { words: currentTemplate?.explain ?? "", tags: currentTemplate?.tags ?? [], ondesign: setDesign } : null} />
             </div>
           {/if}
           {#if aboardOpen}
             <div use:opensFrom={() => document.querySelector("[data-aboard-toggle]")}>
-              <Aboard {ctx} construct={current} {places} />
+              <Aboard {ctx} construct={current} {places} nav={navOf(current)} />
             </div>
           {/if}
           {#if logOpen}

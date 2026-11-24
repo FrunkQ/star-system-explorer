@@ -929,6 +929,8 @@ pub mod mixture_density {
     pub const IRON: f64 = 7874.0;
     /// graphite (nist-srd126-t1).
     pub const GRAPHITE: f64 = 1700.0;
+    /// stainless-304l (kim1975).
+    pub const STAINLESS_304L: f64 = 7894.0;
 }
 
 /// Yield strength, Pa, by mixture (the sheet's mixtures).
@@ -999,4 +1001,44 @@ pub mod unit {
     pub const GAUSS: f64 = 0.0001;
     /// ampere square metre.
     pub const A_M2: f64 = 1.0;
+    /// minute.
+    pub const MIN: f64 = 60.0;
+    /// tonne.
+    pub const TONNE: f64 = 1000.0;
+    /// litre.
+    pub const LITRE: f64 = 0.001;
+    /// cubic metre.
+    pub const M3: f64 = 1.0;
+    /// cubic kilometre.
+    pub const KM3: f64 = 1000000000.0;
+    /// square metre.
+    pub const M2: f64 = 1.0;
+    /// square kilometre.
+    pub const KM2: f64 = 1000000.0;
+    /// percent.
+    pub const PERCENT: f64 = 0.01;
+    /// part per million.
+    pub const PPM: f64 = 1e-06;
+    /// tonne of TNT.
+    pub const TNT_TONNE: f64 = 4184000000.0;
+    /// mile.
+    pub const MI: f64 = 1609.344;
+    /// foot.
+    pub const FT: f64 = 0.3048;
+    /// pound.
+    pub const LB: f64 = 0.45359237;
+    /// degree Fahrenheit.
+    pub const DEGF: f64 = 0.5555555555555556;
+    /// pound-force per square inch.
+    pub const PSI: f64 = 6894.757293168361;
+    /// mile per hour.
+    pub const MPH: f64 = 0.44704;
+    /// pound per cubic foot.
+    pub const LB_FT3: f64 = 16.018463373960138;
+    /// cubic foot.
+    pub const FT3: f64 = 0.028316846592;
+    /// US gallon.
+    pub const GAL: f64 = 0.003785411784;
+    /// square mile.
+    pub const SQ_MI: f64 = 2589988.110336;
 }

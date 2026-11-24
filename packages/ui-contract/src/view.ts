@@ -103,6 +103,14 @@ export interface Workspace {
    * goes on to them. Nothing reaches the table until the GM sends.
    */
   sendLanding?: (show: Json) => void;
+  /** Bookmarks (PB2b): where the GM was and how they looked, kept with the campaign, in the order the GM put them. */
+  bookmarks?: import("./bookmark.ts").Bookmark[];
+  /** Bookmark where the GM is now, without adding it to the list (Keep on Live, Update from live). Set by the shell. */
+  markHere?: () => import("./bookmark.ts").Bookmark;
+  /** The Playbook (PB3): the GM's presets in chapters, pages and sections, kept with the campaign. */
+  playbook?: import("./playbook.ts").Playbook;
+  /** The table, for the Switchboard (PB2): the board, roles and screens, and the ways to change what they show. */
+  table?: import("./board.ts").TablePort;
   /** A site a link asked to land at (`~surface?site=lat,lon`): the Land screen takes it once its world is read, then clears it. */
   landing_site?: { body: string; lat_deg: number; lon_deg: number } | null;
   /** Values applied by intents in this session, keyed "address#field", shown until scenes come from the kernel. */
@@ -154,6 +162,8 @@ export interface ViewContext {
   styles?: StylesHost;
   /** V3 gap 23: hand a subject to Minerva, the storyteller, to describe from what one audience knows (absent where she cannot run). */
   describe?(address: string): void;
+  /** The catalogued Solar System (packs/base-sol, read once by the shell), for reference worlds; null where it cannot be read. */
+  solSheet?(): Promise<import("./sol.ts").SolSheet | null>;
 }
 
 /** What a shell offers views about style documents. Presentation only: kept on the device, never in the universe. */

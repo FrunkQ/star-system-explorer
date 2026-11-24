@@ -16,6 +16,9 @@ mod dressing;
 #[cfg(test)]
 mod dressing_tests;
 mod fields;
+mod flights;
+#[cfg(test)]
+mod flights_tests;
 mod frame;
 mod frames;
 mod galaxies;
@@ -41,6 +44,8 @@ mod sea;
 mod sky;
 #[cfg(test)]
 mod sol_tests;
+#[cfg(test)]
+mod split_tests;
 mod stability;
 #[cfg(test)]
 mod stability_tests;
@@ -5307,6 +5312,65 @@ impl Kernel {
                     state_hash: latest_hash(&u.chronicle),
                 }
             }
+            Request::SplitConstruct {
+                address,
+                key,
+                name,
+                parts,
+                mass_kg,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let (child, id) = sse_trigger::split::split(
+                    &mut u.chronicle,
+                    &u.root,
+                    &sse_trigger::split::SplitAsk {
+                        address: &a,
+                        key: key.as_deref(),
+                        name: name.as_deref(),
+                        parts: parts.as_deref().unwrap_or(&[]),
+                        mass_kg,
+                        at: UniverseTime::seconds(at_s),
+                    },
+                    &Publisher::new("gm", "split", "1"),
+                )
+                .map_err(|e| err("split_refused", e))?;
+                Response::ConstructSplit {
+                    address: child.to_string(),
+                    event_id: id.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
+            Request::JoinConstructs {
+                address,
+                with,
+                how,
+                at_s,
+            } => {
+                let how = how.unwrap_or(sse_trigger::split::How::Dock);
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let w = in_universe(&u.root, &with)?;
+                let id = sse_trigger::split::join(
+                    &mut u.chronicle,
+                    &u.root,
+                    &a,
+                    &w,
+                    how,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new("gm", "join", "1"),
+                )
+                .map_err(|e| err("join_refused", e))?;
+                Response::ConstructsJoined {
+                    how: serde_json::to_value(how)
+                        .ok()
+                        .and_then(|v| v.as_str().map(str::to_string))
+                        .unwrap_or_default(),
+                    event_id: id.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
             Request::Sift {
                 sifters,
                 audience,
@@ -5451,6 +5515,104 @@ impl Kernel {
                 let mut power = nav::books(&l, &fitted, flux);
                 power["ship"] = ship.name.clone().into();
                 Response::ShipPowerIs { power }
+            }
+            Request::LogFlight {
+                construct,
+                piece,
+                event,
+                name,
+                about,
+                withdraw,
+                writer,
+                reason,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let root = u.root.clone();
+                let (event_id, seeded, notes) = flights::write(
+                    &mut u.record,
+                    flights::Write {
+                        root: &root,
+                        construct: &construct,
+                        piece,
+                        event,
+                        name,
+                        about,
+                        withdraw,
+                        writer: writer.unwrap_or_else(|| "gm".into()),
+                        reason,
+                        at_s,
+                    },
+                )?;
+                Response::FlightLogged {
+                    event_id,
+                    seeded,
+                    notes,
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::FlightLog {
+                construct,
+                at_s,
+                where_at,
+                fixture,
+                nav,
+                system,
+            } => {
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let c = in_universe(&u.root, &construct)?;
+                let (log, es) = flights::assemble(
+                    &u.record,
+                    &c,
+                    UniverseTime::seconds(at_s.unwrap_or(i64::MAX)),
+                );
+                let at = match where_at {
+                    None => None,
+                    Some(t) => {
+                        let source = match (fixture.as_deref(), nav.as_ref(), system.as_deref()) {
+                            (Some(f), None, None) => nav::Source::Fixture(f),
+                            (None, Some(n), None) => nav::Source::Inline(n),
+                            (None, None, Some(sys)) => {
+                                let a = in_universe(&u.root, sys)?;
+                                if !u.runs.contains_key(sys) {
+                                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                        let (_, run, _) = systems::form(req.into())?;
+                                        u.runs.insert(sys.to_string(), run);
+                                    }
+                                }
+                                let (s, _) = nav::nav_system(nav::Source::System {
+                                    ch: &u.chronicle,
+                                    system: &a,
+                                    at_s: None,
+                                    run: u.runs.get(sys),
+                                    ports: &[],
+                                    air: false,
+                                })?;
+                                return Ok(Response::FlightLogIs {
+                                    log: serde_json::to_value(&log).expect("plain"),
+                                    entries: es.iter().map(flights::entry_json).collect(),
+                                    at: Some(flights::where_at(&log, t, &s)),
+                                });
+                            }
+                            _ => {
+                                return Err(err(
+                                    "bad_request",
+                                    "where_at needs one of a fixture, a nav system or a universe system",
+                                ))
+                            }
+                        };
+                        let (s, _) = nav::nav_system(source)?;
+                        Some(flights::where_at(&log, t, &s))
+                    }
+                };
+                Response::FlightLogIs {
+                    log: serde_json::to_value(&log).expect("plain"),
+                    entries: es.iter().map(flights::entry_json).collect(),
+                    at,
+                }
             }
             Request::OrbitStability {
                 system,

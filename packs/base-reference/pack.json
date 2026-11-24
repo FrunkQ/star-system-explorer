@@ -1383,6 +1383,275 @@
       "v": 1.0,
       "src": "si2019"
      }
+    },
+    {
+     "id": "min",
+     "symbol": "min",
+     "name": "minute",
+     "measures": "time",
+     "group": "working",
+     "factor": {
+      "v": 60.0,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "kyr",
+     "symbol": "kyr",
+     "name": "thousand years",
+     "measures": "time",
+     "group": "working",
+     "factor_from": "1e3 yr_julian"
+    },
+    {
+     "id": "r_moon",
+     "symbol": "R☾",
+     "name": "Moon radius",
+     "measures": "length",
+     "group": "working",
+     "factor_from": "R_moon"
+    },
+    {
+     "id": "m_moon",
+     "symbol": "M☾",
+     "name": "Moon mass",
+     "measures": "mass",
+     "group": "working",
+     "factor_from": "M_moon"
+    },
+    {
+     "id": "ocean_earth",
+     "symbol": "Earth oceans",
+     "name": "mass of Earth's oceans",
+     "measures": "mass",
+     "group": "working",
+     "factor_from": "M_ocean_earth"
+    },
+    {
+     "id": "tonne",
+     "symbol": "t",
+     "name": "tonne",
+     "measures": "mass",
+     "group": "working",
+     "factor": {
+      "v": 1000.0,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "litre",
+     "symbol": "L",
+     "name": "litre",
+     "measures": "volume",
+     "group": "working",
+     "factor": {
+      "v": 0.001,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "m3",
+     "symbol": "m³",
+     "name": "cubic metre",
+     "measures": "volume",
+     "group": "working",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "km3",
+     "symbol": "km³",
+     "name": "cubic kilometre",
+     "measures": "volume",
+     "group": "working",
+     "factor": {
+      "v": 1000000000.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "m2",
+     "symbol": "m²",
+     "name": "square metre",
+     "measures": "area",
+     "group": "working",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "km2",
+     "symbol": "km²",
+     "name": "square kilometre",
+     "measures": "area",
+     "group": "working",
+     "factor": {
+      "v": 1000000.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "s_earth",
+     "symbol": "S⊕",
+     "name": "Earth's sunlight",
+     "measures": "flux",
+     "group": "working",
+     "factor_from": "S_sun"
+    },
+    {
+     "id": "arcmin",
+     "symbol": "′",
+     "name": "arcminute",
+     "measures": "angle",
+     "group": "working",
+     "factor_from": "pi / 10800"
+    },
+    {
+     "id": "percent",
+     "symbol": "%",
+     "name": "percent",
+     "measures": "dimensionless",
+     "group": "working",
+     "factor": {
+      "v": 0.01,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "ppm",
+     "symbol": "ppm",
+     "name": "part per million",
+     "measures": "dimensionless",
+     "group": "working",
+     "factor": {
+      "v": 1e-06,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "tnt_tonne",
+     "symbol": "t TNT",
+     "name": "tonne of TNT",
+     "measures": "energy",
+     "group": "working",
+     "factor": {
+      "v": 4184000000.0,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "mi",
+     "symbol": "mi",
+     "name": "mile",
+     "measures": "length",
+     "group": "imperial",
+     "factor": {
+      "v": 1609.344,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "ft",
+     "symbol": "ft",
+     "name": "foot",
+     "measures": "length",
+     "group": "imperial",
+     "factor": {
+      "v": 0.3048,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "lb",
+     "symbol": "lb",
+     "name": "pound",
+     "measures": "mass",
+     "group": "imperial",
+     "factor": {
+      "v": 0.45359237,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "degf",
+     "symbol": "°F",
+     "name": "degree Fahrenheit",
+     "measures": "temperature",
+     "group": "imperial",
+     "factor": {
+      "v": 0.5555555555555556,
+      "src": "nist-sp811"
+     },
+     "offset": 255.3722222222222
+    },
+    {
+     "id": "psi",
+     "symbol": "psi",
+     "name": "pound-force per square inch",
+     "measures": "pressure",
+     "group": "imperial",
+     "factor": {
+      "v": 6894.757293168361,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "mph",
+     "symbol": "mph",
+     "name": "mile per hour",
+     "measures": "velocity",
+     "group": "imperial",
+     "factor": {
+      "v": 0.44704,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "lb_ft3",
+     "symbol": "lb/ft³",
+     "name": "pound per cubic foot",
+     "measures": "density",
+     "group": "imperial",
+     "factor": {
+      "v": 16.018463373960138,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "ft3",
+     "symbol": "ft³",
+     "name": "cubic foot",
+     "measures": "volume",
+     "group": "imperial",
+     "factor": {
+      "v": 0.028316846592,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "gal",
+     "symbol": "gal",
+     "name": "US gallon",
+     "measures": "volume",
+     "group": "imperial",
+     "factor": {
+      "v": 0.003785411784,
+      "src": "nist-sp811"
+     }
+    },
+    {
+     "id": "sq_mi",
+     "symbol": "mi²",
+     "name": "square mile",
+     "measures": "area",
+     "group": "imperial",
+     "factor": {
+      "v": 2589988.110336,
+      "src": "nist-sp811"
+     }
     }
    ],
    "origin_legend": [
@@ -8637,6 +8906,158 @@
      }
     },
     {
+     "id": "be9",
+     "element": "be",
+     "a": 9,
+     "stable": true,
+     "mass": {
+      "v": 9.012183065,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 1.0,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "100.0 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "b10",
+     "element": "b",
+     "a": 10,
+     "stable": true,
+     "mass": {
+      "v": 10.01293695,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.19827,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "19.827 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "b11",
+     "element": "b",
+     "a": 11,
+     "stable": true,
+     "mass": {
+      "v": 11.00930536,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.80173,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "80.173 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "o17",
+     "element": "o",
+     "a": 17,
+     "stable": true,
+     "mass": {
+      "v": 16.9991317565,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.00035,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.035 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "f19",
+     "element": "f",
+     "a": 19,
+     "stable": true,
+     "mass": {
+      "v": 18.99840316273,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 1.0,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "100.0 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "ne20",
+     "element": "ne",
+     "a": 20,
+     "stable": true,
+     "mass": {
+      "v": 19.9924401762,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.931251,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "93.1251 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "ne21",
+     "element": "ne",
+     "a": 21,
+     "stable": true,
+     "mass": {
+      "v": 20.993846685,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.002236,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.2236 atom % (Table 4)"
+     }
+    },
+    {
+     "id": "ne22",
+     "element": "ne",
+     "a": 22,
+     "stable": true,
+     "mass": {
+      "v": 21.991385114,
+      "unit": "u",
+      "src": "nist-compositions",
+      "check": "unverified"
+     },
+     "abundance_protosolar": {
+      "v": 0.066513,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "6.6513 atom % (Table 4)"
+     }
+    },
+    {
      "id": "be10",
      "element": "be",
      "a": 10,
@@ -14638,7 +15059,29 @@
       "at_k": 3680.0,
       "note": "W-001: 35.397 kJ/mol, liquid minus solid H at 3680 K"
      },
-     "note": "boiling point not in W-001, so no boiling values yet"
+     "note": "tungsten metal",
+     "boiling_point_k": {
+      "v": 6157.0,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "W-005: where log Kf of W(g) over liquid tungsten reaches 0, fitting log Kf = a + b/T through the 5900 and 6000 K rows; extrapolated 157 K past the table's end at 6000 K"
+     },
+     "heat_to_boil": {
+      "v": 479100.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "W-001: liquid H from 3680 K (153.780 kJ/mol) to Tb, with the table's constant liquid Cp 35.564 J/K/mol past 6000 K"
+     },
+     "latent_vaporisation": {
+      "v": 4577000.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 6157.0,
+      "note": "W-005: delta-f H of W(g) over the liquid, 841.4 kJ/mol, extrapolated 157 K past the table's end at 6000 K"
+     }
     },
     {
      "id": "molybdenum",
@@ -14841,6 +15284,14 @@
       "src": "lundberg1985",
       "check": "unverified",
       "note": "NASA SP-5035 gives 5720 F, 3433 K; the two disagree by about 20 K"
+     },
+     "latent_sublimation": {
+      "v": 4177000.0,
+      "unit": "J kg-1",
+      "src": "plante-szwarc1966",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "185.9 kcal/mol, solid to vapour at 298 K, third law; no melting or boiling heats sourced yet"
      },
      "density": {
       "v": 21020.0,
@@ -15342,6 +15793,14 @@
       "unit": "kg m-3",
       "src": "nist-srd126-t1",
       "check": "unverified"
+     },
+     "sigma_elec_liquid": {
+      "v": 1360000.0,
+      "unit": "S m-1",
+      "src": "pozzo2012",
+      "check": "unverified",
+      "at_place": "Earth's core-mantle boundary",
+      "note": "pure liquid iron, Table 1 in parentheses; 1.56e6 at the inner-core boundary"
      }
     },
     {
@@ -15363,12 +15822,26 @@
       "note": "C-002 (graphite), 8.517 J/K/mol"
      },
      "latent_sublimation": {
-      "v": 59668000.0,
+      "v": 22834000.0,
       "unit": "J kg-1",
       "src": "nist-janaf",
       "check": "unverified",
-      "at_k": 298.15,
-      "note": "C-003: delta-f H of C(g) at 298.15 K, 716.670 kJ/mol, graphite to single atoms; real carbon vapour is mostly C3, which takes less; no sublimation temperature sourced yet"
+      "at_k": 4080.0,
+      "note": "heat per mole of carbon to make the equilibrium C1 to C5 vapour at Ts, 274.3 kJ/mol; to single atoms at 298.15 K it would be 716.670 kJ/mol (C-003)"
+     },
+     "sublimation_point_k": {
+      "v": 4080.0,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "where the carbon vapour over graphite, C1 to C5 (C-003, C-113, C-138, C-143, C-148), reaches 1 bar; log of the total pressure interpolated between the 4000 and 4100 K rows; the vapour there is about 74 % C3 by pressure"
+     },
+     "heat_to_sublime": {
+      "v": 7565000.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "C-002: H - H(298.15) of graphite at Ts, 90.86 kJ/mol"
      },
      "density": {
       "v": 1700.0,
@@ -15376,6 +15849,351 @@
       "src": "nist-srd126-t1",
       "check": "unverified",
       "note": "nominal; pyrolytic and nuclear graphites run 1.7 to 2.2 g/cm3"
+     }
+    },
+    {
+     "id": "stainless-304l",
+     "names": {
+      "physics": "stainless steel type 304L",
+      "plain": "stainless steel",
+      "story": "steel"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "austenitic Cr-Ni steel; ANL-75-55 gives one set of heats for 304L and 316L",
+     "solidus_k": {
+      "v": 1670.0,
+      "unit": "K",
+      "src": "kim1975",
+      "check": "unverified",
+      "note": "melting range 1670-1730 K; the type 304 data sheet gives 1399-1421 C",
+      "also": [
+       "ati-304"
+      ]
+     },
+     "liquidus_k": {
+      "v": 1730.0,
+      "unit": "K",
+      "src": "kim1975",
+      "check": "unverified"
+     },
+     "density": {
+      "v": 7894.0,
+      "unit": "kg m-3",
+      "src": "kim1975",
+      "check": "unverified",
+      "at_k": 300.0,
+      "note": "Table 7, 304L; ATI's 304 sheet gives 7.90 g/cm3",
+      "also": [
+       "ati-304"
+      ]
+     },
+     "heat_capacity": {
+      "v": 509.9,
+      "unit": "J kg-1 K-1",
+      "src": "kim1975",
+      "check": "unverified",
+      "at_k": 300.0,
+      "note": "eq. 5, 0.1122 + 3.222e-5 T cal/g K; ATI gives 500 J/kg K over 0-100 C"
+     },
+     "heat_to_melt": {
+      "v": 846900.0,
+      "unit": "J kg-1",
+      "src": "kim1975",
+      "check": "unverified",
+      "note": "eq. 1 at 1700 K, the melting temperature the report uses: 202.41 cal/g"
+     },
+     "latent_fusion": {
+      "v": 267800.0,
+      "unit": "J kg-1",
+      "src": "kim1975",
+      "check": "unverified",
+      "at_k": 1700.0,
+      "note": "64.0 cal/g"
+     },
+     "heat_to_boil": {
+      "v": 1097000.0,
+      "unit": "J kg-1",
+      "src": "kim1975",
+      "check": "unverified",
+      "note": "eq. 9, liquid from 1700 K to 3080 K"
+     },
+     "boiling_point_k": {
+      "v": 3080.0,
+      "unit": "K",
+      "src": "kim1975",
+      "check": "unverified"
+     },
+     "latent_vaporisation": {
+      "v": 7405700.0,
+      "unit": "J kg-1",
+      "src": "kim1975",
+      "check": "unverified",
+      "at_k": 3080.0,
+      "note": "1770 cal/g"
+     }
+    },
+    {
+     "id": "ti-6al-4v",
+     "names": {
+      "physics": "titanium alloy Ti-6Al-4V",
+      "plain": "titanium alloy",
+      "story": "titanium"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the usual airframe and pressure-tank titanium alloy; room-temperature heats not sourced yet",
+     "melting_point_k": {
+      "v": 1943.0,
+      "unit": "K",
+      "src": "cezairliyan1977",
+      "check": "unverified"
+     },
+     "heat_capacity_hot": {
+      "v": 826.0,
+      "unit": "J kg-1 K-1",
+      "src": "cezairliyan1977",
+      "check": "unverified",
+      "at_k": 1850.0,
+      "note": "Table 2, 0.826 J/g K; fit valid 1450-1900 K"
+     }
+    },
+    {
+     "id": "al-6061",
+     "names": {
+      "physics": "aluminium alloy 6061-T6",
+      "plain": "aluminium alloy",
+      "story": "aluminium"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the usual structural aluminium alloy; melting and latent heats not sourced yet, so the pure-metal row stands in",
+     "heat_capacity": {
+      "v": 954.0,
+      "unit": "J kg-1 K-1",
+      "src": "nist-trc-cryo",
+      "check": "unverified",
+      "at_k": 300.0,
+      "note": "the 4-300 K fit at its top end, 5 % fit error"
+     }
+    },
+    {
+     "id": "earth-core-liquid",
+     "names": {
+      "physics": "liquid iron alloy with silicon and oxygen (Earth's outer core)",
+      "plain": "liquid core iron",
+      "story": "molten core"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "Pozzo et al.'s light-element case, 10 % Si and 8 % O; its conductivity changes only about 13 % from top to bottom of the core",
+     "sigma_elec": {
+      "v": 1110000.0,
+      "unit": "S m-1",
+      "src": "pozzo2012",
+      "check": "unverified",
+      "at_k": 4186.0,
+      "at_place": "Earth's core-mantle boundary",
+      "note": "Table 1, density jump 0.6 g/cm3; first-principles, 2 to 3 times the estimates used before"
+     },
+     "sigma_elec_icb": {
+      "v": 1250000.0,
+      "unit": "S m-1",
+      "src": "pozzo2012",
+      "check": "unverified",
+      "at_k": 5700.0,
+      "at_place": "Earth's inner-core boundary",
+      "note": "Table 1, density jump 0.6 g/cm3"
+     }
+    },
+    {
+     "id": "giant-envelope",
+     "names": {
+      "physics": "hydrogen-helium fluid of a gas giant's interior",
+      "plain": "gas giant's deep fluid",
+      "story": "the giant's deep sea of hydrogen"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "along Jupiter's adiabat, model J11-8a; hydrogen turns metal-like with depth, with no sharp edge",
+     "sigma_elec_profile": {
+      "src": "french2012",
+      "check": "unverified",
+      "model": "Jupiter J11-8a",
+      "columns": [
+       "r_rj",
+       "density",
+       "t_k",
+       "p_pa",
+       "sigma_elec"
+      ],
+      "units": [
+       "Jupiter radii",
+       "kg m-3",
+       "K",
+       "Pa",
+       "S m-1"
+      ],
+      "rows": [
+       [
+        0.0923,
+        4420.0,
+        19500.0,
+        4180000000000.0,
+        3390000.0
+       ],
+       [
+        0.196,
+        3990.0,
+        18000.0,
+        3410000000000.0,
+        3050000.0
+       ],
+       [
+        0.35,
+        3390.0,
+        16000.0,
+        2460000000000.0,
+        2480000.0
+       ],
+       [
+        0.478,
+        2800.0,
+        14000.0,
+        1640000000000.0,
+        1970000.0
+       ],
+       [
+        0.584,
+        2260.0,
+        12000.0,
+        1030000000000.0,
+        1480000.0
+       ],
+       [
+        0.68,
+        1600.0,
+        10000.0,
+        600000000000.0,
+        1090000.0
+       ],
+       [
+        0.77,
+        1200.0,
+        8000.0,
+        300000000000.0,
+        720000.0
+       ],
+       [
+        0.852,
+        824.0,
+        6000.0,
+        120000000000.0,
+        360000.0
+       ],
+       [
+        0.89,
+        638.0,
+        5000.0,
+        64000000000.0,
+        146000.0
+       ],
+       [
+        0.93,
+        null,
+        null,
+        23000000000.0,
+        1500.0
+       ]
+      ],
+      "note": "from the centre outwards; the deepest row is at 0.0923 Jupiter radii; the 0.930 row prints no density or temperature in Table 2"
+     },
+     "metallic_from": {
+      "sigma_elec": {
+       "v": 20000.0,
+       "unit": "S m-1",
+       "src": "french2012",
+       "check": "unverified"
+      },
+      "p_pa": {
+       "v": 50000000000.0,
+       "unit": "Pa",
+       "src": "french2012",
+       "check": "unverified",
+       "note": "0.5 Mbar, about 0.9 Jupiter radii (section 6.2)"
+      }
+     }
+    },
+    {
+     "id": "seawater",
+     "names": {
+      "physics": "standard seawater, practical salinity 35",
+      "plain": "seawater",
+      "story": "sea water"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "conductivity rises with salt and with warmth",
+     "salinity_practical": {
+      "v": 35.0,
+      "unit": "1",
+      "src": "unesco37",
+      "check": "unverified",
+      "note": "PSS-78 salinity is a pure number from a conductivity ratio"
+     },
+     "sigma_elec": {
+      "v": 4.2914,
+      "unit": "S m-1",
+      "src": "seabird-an14",
+      "check": "unverified",
+      "at_k": 288.15,
+      "at_place": "sea surface",
+      "note": "C(35,15,0) = 42.914 mmho/cm (Culkin and Smith); Poisson's 42.933 differs by 0.04 %",
+      "also": [
+       "unesco37"
+      ]
+     },
+     "sigma_elec_25c": {
+      "v": 5.3065,
+      "unit": "S m-1",
+      "src": "lewis1980",
+      "check": "unverified",
+      "at_k": 298.15,
+      "at_place": "sea surface",
+      "note": "C(35,15,0) times r_T(25 C) = 1.23654 from eq. 8"
+     },
+     "sigma_elec_t_fit": {
+      "fit": "C(35,T,0)/C(35,15,0) = c0 + c1 T + c2 T^2 + c3 T^3 + c4 T^4, T in deg C",
+      "coeffs": [
+       0.6766097,
+       0.0200564,
+       0.0001104259,
+       -6.9698e-07,
+       1.0031e-09
+      ],
+      "range_c": [
+       -2.0,
+       35.0
+      ],
+      "src": "lewis1980",
+      "check": "unverified"
+     },
+     "salinity_fit": {
+      "fit": "S = a0 + a1 K^0.5 + a2 K + a3 K^1.5 + a4 K^2 + a5 K^2.5, K = C(S,15,0)/C(KCl,15,0)",
+      "coeffs": [
+       0.008,
+       -0.1692,
+       25.3851,
+       14.0941,
+       -7.0261,
+       2.7081
+      ],
+      "range": [
+       2.0,
+       42.0
+      ],
+      "src": "unesco37",
+      "check": "unverified"
      }
     }
    ],
@@ -15878,6 +16696,12 @@
      "doi": "10.1088/1674-1137/abddaf"
     },
     {
+     "id": "ati-304",
+     "text": "ATI 2014, ATI 302/304/304L/305 technical data sheet (v1, 17 Feb 2014), page 4: melting range 2550-2590 F (1399-1421 C), specific heat 0.12 Btu/lb F (500 J/kg K) over 0-100 C, density 0.285 lb/in3 (7.90 g/cm3); typical values",
+     "status": "unverified",
+     "url": "https://www.atimaterials.com/Products/Documents/datasheets/stainless-specialty-steel/austenitic/ati_302_304_304l_305_tds_en1_v1.pdf"
+    },
+    {
      "id": "atom-isotropic",
      "text": "A spherically symmetric atom has no anisotropic polarisability, so its King correction factor is exactly 1 (Bodhaine et al. 1999 discussion of depolarisation)",
      "status": "textbook",
@@ -15900,6 +16724,12 @@
      "text": "Boran, S. et al. 2018, Phys. Rev. D 97, 041501: GW170817 falsifies dark matter emulators",
      "status": "verified",
      "doi": "10.1103/PhysRevD.97.041501"
+    },
+    {
+     "id": "cezairliyan1977",
+     "text": "Cezairliyan, A., McClure, J. L. and Taylor, R. 1977, J. Res. Natl. Bur. Stand. 81A, 251: thermophysical measurements on 90Ti-6Al-4V alloy above 1450 K; melting point 1943 K; cp = 1.3833 - 9.943e-4 T + 3.745e-7 T^2 J/g K over 1450-1900 K",
+     "status": "unverified",
+     "url": "https://nvlpubs.nist.gov/nistpubs/jres/81A/jresv81An2-3p251_A1b.pdf"
     },
     {
      "id": "cgpm1901",
@@ -16035,6 +16865,12 @@
      "doi": "10.1016/j.pss.2009.09.011"
     },
     {
+     "id": "french2012",
+     "text": "French, M. et al. 2012, ApJS 202, 5: ab initio simulations for material properties along the Jupiter adiabat (model J11-8a), Table 2 (linear transport properties) with Table 1 (thermodynamic properties); section 6.2: metal-like conduction (sigma >= 2e4 S/m) from about 0.9 Jupiter radii, 0.5 Mbar",
+     "status": "unverified",
+     "doi": "10.1088/0067-0049/202/1/5"
+    },
+    {
      "id": "fudge-register",
      "text": "SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)",
      "status": "authored",
@@ -16159,6 +16995,12 @@
      "url": "https://ntrs.nasa.gov/api/citations/20240015535/downloads/JANNAF%209871%20Propellants%20for%20Space%20Kibbey.pdf"
     },
     {
+     "id": "kim1975",
+     "text": "Kim, C. S. 1975, Thermophysical properties of stainless steels, ANL-75-55, Argonne National Laboratory, section II: type 304L melting range 1670-1730 K (1700 K used), heat of fusion 64.0 cal/g, solid enthalpy H - H298 = -34.885 + 0.1122 T + 1.611e-5 T^2 cal/g, liquid H - H298 = 0.1900 T - 56.588 cal/g, solid cp = 0.1122 + 3.222e-5 T cal/g K, boiling point 3080 K, heat of vaporisation 1770 cal/g, density 7.894 g/cm3 at 300 K (Table 7)",
+     "status": "unverified",
+     "url": "https://inldigitallibrary.inl.gov/Reports/ANL-75-55.pdf"
+    },
+    {
      "id": "kita2013",
      "text": "Kita, N. T. et al. 2013, Meteoritics and Planetary Science 48, 1383: 26Al-26Mg isotope systematics of the first solids in the early solar system",
      "status": "verified",
@@ -16175,6 +17017,12 @@
      "text": "Leachman, J. W., Jacobsen, R. T., Penoncello, S. G. and Lemmon, E. W. 2009, J. Phys. Chem. Ref. Data 38, 721: fundamental equations of state for parahydrogen, normal hydrogen and orthohydrogen",
      "status": "unverified",
      "doi": "10.1063/1.3160306"
+    },
+    {
+     "id": "lewis1980",
+     "text": "Lewis, E. L. 1980, IEEE J. Oceanic Eng. OE-5, 3: the Practical Salinity Scale 1978 and its antecedents, eq. 8: r_T = C(35,T,0)/C(35,15,0) = c0 + c1 T + c2 T^2 + c3 T^3 + c4 T^4, T in deg C (c0..c4 = 6.766097e-1, 2.00564e-2, 1.104259e-4, -6.9698e-7, 1.0031e-9)",
+     "status": "unverified",
+     "url": "https://www.vliz.be/imisdocs/publications/ocrd/29440.pdf"
     },
     {
      "id": "lin2005",
@@ -16316,6 +17164,12 @@
      "doi": "10.1038/nature04122"
     },
     {
+     "id": "nist-compositions",
+     "text": "NIST Physical Measurement Laboratory, Atomic Weights and Isotopic Compositions pages: relative atomic masses of Be-9, B-10, B-11, O-17, F-19, Ne-20, Ne-21 and Ne-22; NIST's H-1 (1.007 825 032 23) is one digit off AME2020's in the last place, so these read as AME2016 values",
+     "status": "unverified",
+     "url": "https://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl?ele=B&ascii=html&isotype=some"
+    },
+    {
      "id": "nist-handbook-k",
      "text": "NIST Handbook of Basic Atomic Spectroscopic Data (Sansonetti, J. E. and Martin, W. C. 2005, J. Phys. Chem. Ref. Data 34, 1559), potassium, strong lines of K I: wavelengths (air, A) and transition probabilities Aki; oscillator strengths here are worked out from Aki and the levels' statistical weights",
      "status": "verified",
@@ -16331,9 +17185,16 @@
     },
     {
      "id": "nist-janaf",
-     "text": "Chase, M. W. 1998, NIST-JANAF Thermochemical Tables, 4th edition, J. Phys. Chem. Ref. Data Monograph 9: reference-state tables (ref) for Al, Ti, Fe, Nb, Mo, Ta, W, Pb, C (graphite) and the C(g) table; Cp and H - H(298.15 K) at 298.15 K and at each transition row",
+     "text": "Chase, M. W. 1998, NIST-JANAF Thermochemical Tables, 4th edition, J. Phys. Chem. Ref. Data Monograph 9: reference-state tables (ref) for Al, Ti, Fe, Nb, Mo, Ta, W, Pb, C (graphite) and the gas tables W(g) W-005, C(g) C-003, C2(g) C-113, C3(g) C-138, C4(g) C-143, C5(g) C-148; Cp and H - H(298.15 K) at 298.15 K and at each transition row",
      "status": "unverified",
      "url": "https://janaf.nist.gov/"
+    },
+    {
+     "id": "nist-sp811",
+     "text": "Thompson, A. and Taylor, B. N. 2008, Guide for the Use of the International System of Units (SI), NIST Special Publication 811, 2008 edition, Appendix B.8 and B.9: foot 0.3048 m, inch 0.0254 m, mile 1609.344 m, mile per hour 0.44704 m/s, minute 60 s, litre 1e-3 m3, tonne 1e3 kg, ton of TNT 4.184e9 J and the thermochemical calorie 4.184 J (all exact); t/degC = (t/degF - 32)/1.8; the pound, 0.45359237 kg exactly by the 1959 international yard and pound agreement, is printed to 7 digits there, and the US gallon is 231 cubic inches",
+     "status": "verified",
+     "doi": "10.6028/NIST.SP.811e2008",
+     "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b9"
     },
     {
      "id": "nist-srd126",
@@ -16346,6 +17207,12 @@
      "text": "Hubbell, J. H. and Seltzer, S. M., X-ray mass attenuation coefficients, NIST Standard Reference Database 126, Table 1 (elemental media): densities C (graphite) 1.700, Al 2.699, Ti 4.540, Fe 7.874, Nb 8.570, Mo 10.22, Ta 16.65, Re 21.02 g/cm3",
      "status": "unverified",
      "url": "https://physics.nist.gov/PhysRefData/XrayMassCoef/tab1.html"
+    },
+    {
+     "id": "nist-trc-cryo",
+     "text": "NIST Cryogenic Technologies Group, Material properties pages: specific heat fits log10 cp = sum a_k (log10 T)^k, J/kg K, 4-300 K, 5 % fit error; 6061-T6 aluminium (a..i = 46.6467, -314.292, 866.662, -1298.3, 1162.27, -637.795, 210.351, -38.3094, 2.96344)",
+     "status": "unverified",
+     "url": "https://trc.nist.gov/cryogenics/materials/6061%20Aluminum/6061_T6Aluminum_rev.htm"
     },
     {
      "id": "nist-webbook",
@@ -16481,10 +17348,23 @@
      "url": "https://www.aanda.org/articles/aa/full_html/2020/09/aa33910-18/T2.html"
     },
     {
+     "id": "plante-szwarc1966",
+     "text": "Plante, E. R. and Szwarc, R. 1966, J. Res. Natl. Bur. Stand. 70A, 175: vapor pressure and heat of sublimation of rhenium (Langmuir, 2350-3050 K); third-law heat of sublimation at 298 K 185.9 kcal/mol",
+     "status": "unverified",
+     "url": "https://nvlpubs.nist.gov/nistpubs/jres/070/2/V70.N02.A07.pdf"
+    },
+    {
      "id": "popov2000",
      "text": "Popov, S. G., Ivanov, V. K., Carbajo, J. J. and Yoder, G. L. 2000, Thermophysical properties of MOX and UO2 fuels including the effects of irradiation, ORNL/TM-2000/351, Oak Ridge National Laboratory, sections 2.3 and 3.1: UO2 melting point 3120 +- 30 K unirradiated, theoretical density 10 970 +- 70 kg/m3 at 273 K",
      "status": "unverified",
      "url": "https://rsicc.ornl.gov/fmdp/tm2000-351.pdf"
+    },
+    {
+     "id": "pozzo2012",
+     "text": "Pozzo, M., Davies, C., Gubbins, D. and Alfe, D. 2012, Nature 485, 355: thermal and electrical conductivity of iron at Earth's core conditions (arXiv:1203.4970), Table 1: sigma at the inner-core and core-mantle boundaries, Fe with 10 % Si and 8 % O (pure Fe in parentheses), for a density jump of 0.6 g/cm3",
+     "status": "unverified",
+     "doi": "10.1038/nature11031",
+     "url": "https://arxiv.org/abs/1203.4970"
     },
     {
      "id": "randall2008",
@@ -16552,6 +17432,12 @@
      "doi": "10.1111/j.1365-2966.2012.21252.x"
     },
     {
+     "id": "seabird-an14",
+     "text": "Sea-Bird Electronics, Application note 14: 1978 Practical Salinity Scale (rev. January 1989): C(35,15,0) = 42.914 mmho/cm (Culkin and Smith, UNESCO 37 p. 23; Poisson used 42.933); mmho/cm equal mS/cm",
+     "status": "unverified",
+     "url": "https://pscfiles.apl.uw.edu/woodgate/BeringStraitArchive/BeringStraitMooringData/BeringStraitMoorings2007to2009IPY_versionMar10/SeasoftForWavesProcessingSoftware/website/application_notes/AN14.htm"
+    },
+    {
      "id": "setzmann-wagner1991",
      "text": "Setzmann, U. and Wagner, W. 1991, J. Phys. Chem. Ref. Data 20, 1061: a new equation of state and tables of thermodynamic properties for methane (values read from the NIST WebBook fluid tables, which use it: saturated liquid 422.36 kg/m3 at the normal boiling point, 111.67 K)",
      "status": "unverified",
@@ -16609,6 +17495,12 @@
      "text": "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition, Cambridge University Press (typical crust 2700, mantle 3300 and sediment 2300 kg/m3 of its worked problems)",
      "status": "unverified",
      "doi": "10.1017/CBO9780511843877"
+    },
+    {
+     "id": "unesco37",
+     "text": "UNESCO 1981, Background papers and supporting data on the Practical Salinity Scale 1978, Unesco Technical Papers in Marine Science 37 (Joint Panel on Oceanographic Tables and Standards): practical salinity S = 0.0080 - 0.1692 K^0.5 + 25.3851 K + 14.0941 K^1.5 - 7.0261 K^2 + 2.7081 K^2.5, K = C(S,15,0)/C(KCl,15,0), valid for S 2 to 42; Culkin and Smith's C(35,15,0) = 42.914 mmho/cm",
+     "status": "unverified",
+     "url": "https://www.vliz.be/imisdocs/publications/ocrd/270529.pdf"
     },
     {
      "id": "uscg-chris-dmh",

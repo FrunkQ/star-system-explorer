@@ -455,3 +455,50 @@ fn base_names_loads_with_the_stack() {
     let text = r.to_string();
     assert!(text.contains("SX 000102 I"), "{text}");
 }
+
+/// NM4 and the run-through: a V3 adoption has no kind facts and keeps its
+/// names as `v3.name`. Its bodies take their catalogue kind from V3's role
+/// (a planet gets a Roman numeral, not "{parent} {n}"), the common name is
+/// the save's own, and a ship at the world names it, not its address.
+#[test]
+fn an_adopted_v3_world_keeps_its_name_and_its_kind() {
+    let mut k = kernel(vec![base(), pack("packs/base-names/pack.json")]);
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    let save = include_str!("../../../tests/fixtures/v3/synthetic-sol.json");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "import_v3": save}),
+    );
+    assert_eq!(r["type"], "adopted", "{r}");
+    let sys = r["systems"][0].as_str().unwrap().to_string();
+    let v = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": sys}),
+    );
+    let earth = v["spec"]["planets"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["name"] == "Earth")
+        .unwrap_or_else(|| panic!("{}", v["spec"]))["address"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let n = names_of(&mut k, &earth, None);
+    assert_eq!(n["common"], "Earth", "{n:?}");
+    assert!(n["designation"].ends_with(" I"), "{n:?}");
+    let moon = format!("{sys}/body:@3");
+    let m = names_of(&mut k, &moon, None);
+    assert_eq!(m["common"], "Moon", "{m:?}");
+    assert!(m["designation"].ends_with(" I a"), "{m:?}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "ship_at_world", "system": sys,
+            "ship": "chemical-transfer", "worlds": [earth]}),
+    );
+    assert_eq!(r["type"], "ship_at_world_read", "{r}");
+    assert_eq!(r["report"]["worlds"][0]["name"], "Earth", "{r}");
+}
