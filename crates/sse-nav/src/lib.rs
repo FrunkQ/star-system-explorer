@@ -60,6 +60,11 @@ pub struct NavSettings {
     pub torch_fractions: Vec<f64>,
     /// Fixed-point steps for a moving target.
     pub target_steps: u32,
+    /// Coasting courses treat their burns as short kicks; past this share of
+    /// the flight spent burning, that is no longer true and the course is flown
+    /// as a slow spiral instead (RK5).
+    #[serde(default = "impulsive_burn_max")]
+    pub impulsive_burn_max: f64,
     pub radiation: RadiationSettings,
     pub hazards: HazardSettings,
     pub difficulty: DifficultySettings,
@@ -323,6 +328,9 @@ impl Ship {
             .as_ref()
             .is_none_or(|r| r.iter().any(|c| c == capability))
     }
+}
+fn impulsive_burn_max() -> f64 {
+    0.1
 }
 fn wind_speed() -> f64 {
     4.0e5
@@ -785,5 +793,7 @@ mod links_tests;
 mod mission_tests;
 #[cfg(test)]
 mod power_tests;
+#[cfg(test)]
+mod spiral_tests;
 #[cfg(test)]
 mod tests;
