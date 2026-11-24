@@ -576,9 +576,39 @@ RANGE_BANDS = [
     {"id": "far", "label": "far", "range_m": 150000000 * KM},
 ]
 LADDER = ["long-range", "scanned", "surveyed", "detailed"]
+# RK11 (Atomic Rockets plan section 12): each kind is also an instrument the
+# kernel's `detect` reads (method, band, aperture, noise, stare), so how far it
+# reaches a given target is computed from what that target gives off. V3's
+# typed range stays as `authored_range_m` (range_source "authored"), used by the
+# hour-in-range triggers below until they can ask `detect`, and by the kernel
+# only where an instrument has no figures to compute from (the datalink). The
+# figures are game defaults for a Traveller ship's fit (fudge register), in the
+# shape of sse-sense's Sensor.
+UM = 1e-6
+VISIBLE = {"from_m": 0.4 * UM, "to_m": 0.9 * UM}
+def inst(name, **kw):
+    return {"name": name, **kw}
+INSTRUMENTS = {
+    "astrometer": inst("wide-field astrometer", **VISIBLE, aperture_m=0.5, method="astrometry", stare_s=600.0),
+    "telescope_15au": inst("deep-field telescope", **VISIBLE, aperture_m=1.0, stare_s=600.0),
+    "telescope_2au": inst("deep-field telescope (small)", **VISIBLE, aperture_m=0.3, stare_s=60.0),
+    "spectral_5au": inst("spectral analyser", **VISIBLE, aperture_m=1.0, method="spectrum", resolving_power=1000.0, stare_s=600.0),
+    "spectral_1au": inst("spectral analyser (small)", **VISIBLE, aperture_m=0.3, method="spectrum", resolving_power=1000.0, stare_s=600.0),
+    "bio_scanner": inst("bio-scanner (near-infrared imager)", from_m=0.7 * UM, to_m=2.5 * UM, aperture_m=0.5, stare_s=60.0),
+    "passive_rf": inst("passive radio antenna", kind="radio", from_m=0.03, to_m=0.3, aperture_m=5.0, bandwidth_hz=1e6, stare_s=10.0),
+    "search_radar": inst("active search radar", kind="radio", from_m=0.03, to_m=0.031, aperture_m=3.0, method="active",
+                         transmit_power_w=1e5),
+    "thermal_ir": inst("thermal and infrared tracker", from_m=3 * UM, to_m=14 * UM, aperture_m=0.3, dark_photons_s=100.0, stare_s=10.0),
+    "gravimetric": inst("gravimetric grid", **VISIBLE, aperture_m=1.0, method="gradiometer", noise_density=1e-11, stare_s=600.0),
+    "visual_cam": inst("visual inspection camera", **VISIBLE, aperture_m=0.02, stare_s=1.0),
+    # A datalink is a handshake, not a sensing channel: no figures, so its
+    # range is the authored one.
+    "datalink": inst("datalink", **VISIBLE, aperture_m=0.0),
+}
 def sensor(id_, label, range_km, targets, reveals, up_to):
-    return {"id": id_, "label": label, "range_m": range_km * KM, "targets": targets,
-            "reveals": reveals, "up_to": up_to, "source": "V3 starter-sf sensors.json"}
+    return {"id": id_, "label": label, "range_m": range_km * KM, "range_source": "authored", "targets": targets,
+            "reveals": reveals, "up_to": up_to, "source": "V3 starter-sf sensors.json",
+            "instrument": {**INSTRUMENTS[id_], "authored_range_m": range_km * KM}}
 SENSORS = [
     sensor("astrometer", "wide-field astrometer", au_km(50), ["star", "gas giant", "ice giant"], "stellar details, planetary basics", "scanned"),
     sensor("telescope_15au", "deep-field telescope (15 au)", au_km(15), ["terrestrial planet", "belt"], "planetary basics", "scanned"),
