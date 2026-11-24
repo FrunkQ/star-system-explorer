@@ -13,8 +13,10 @@ export interface Share {
   readonly state: HostState & { room: string | null; link: string | null; waiting: PlayerRequest[]; plan: SeatPlan; shown: Shown };
   /** Share, showing the table `first` (the place in view when the GM shares). */
   start(first?: Shown): string;
-  /** Send the table a place, or turn their screens off. Nothing reaches them until it is sent. */
+  /** Send the table a place, or turn their screens off. Nothing reaches them until it is sent. Every seat follows: a seat's own send is cleared. */
   show(s: Shown): void;
+  /** Send one seat a place, or turn its screens off (Looks 4D seat rows); null puts it back with the table. */
+  showSeat(id: string, s: Shown | null): void;
   setClock(yr: number): void;
   /** V10: add a seat with its own audience; a fog-of-war audience's starting view is chronicled at once. */
   addSeat(o: Parameters<typeof addSeat>[1]): Promise<string | null>;
@@ -72,8 +74,24 @@ export async function createShare(session: Session, opening: { universe: { id: s
     },
     show(s: Shown) {
       st.shown = s;
-      host.setState({ shown: s });
+      const plan = $state.snapshot(st.plan) as SeatPlan;
+      const own = plan.seats.some((x) => x.shown);
+      const seats = plan.seats.map(({ shown: _own, ...rest }) => rest);
+      if (own) st.plan = { ...plan, seats };
+      host.setState({ shown: s, ...(own ? { seats } : {}) });
       if ("scope" in s) sealed.forEach((x) => void x.host.setScope(s.scope));
+    },
+    showSeat(id: string, s: Shown | null) {
+      const plan = $state.snapshot(st.plan) as SeatPlan;
+      const seats = plan.seats.map((x) => {
+        if (x.id !== id) return x;
+        const { shown: _old, ...rest } = x;
+        return s ? { ...rest, shown: JSON.parse(JSON.stringify(s)) as Shown } : rest;
+      });
+      st.plan = { ...plan, seats };
+      host.setState({ seats });
+      const scopeNow = s ?? st.shown;
+      if ("scope" in scopeNow) void sealed.get(id)?.host.setScope(scopeNow.scope);
     },
     setClock(yr: number) {
       clock = yr;

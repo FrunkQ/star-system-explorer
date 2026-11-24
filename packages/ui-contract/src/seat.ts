@@ -1,7 +1,23 @@
 // Seats (H8.7) and the approval rule. The GM is the seat whose audience is
 // all knowledge and whose intents apply at once (H8.8).
 import type { SeatBrand } from "./brand.ts";
+import type { Json } from "./json.ts";
 import { INTENT_KINDS, type Intent, type IntentKind } from "./intent.ts";
+
+/**
+ * What the table is shown (the landing run-through, 23 Nov): the place the GM last sent, or screens off. Players'
+ * screens build their scene for this scope; nothing the GM looks at privately reaches them until it is sent.
+ */
+export type Shown =
+  | {
+      scope: string;
+      title?: string;
+      /** The players' screen document to show it on (`documents/<screen>`); absent: the seat's own screen. */
+      screen?: string;
+      /** A landing the table is watching (renderer's `LandingShow`, ui-contract landing.ts): players replay it on their own kernel. */
+      landing?: Json;
+    }
+  | { off: true };
 
 export interface AutoApprove {
   intent: IntentKind;
@@ -34,6 +50,12 @@ export interface Seat {
    * parameters by name, laid over every screen this seat shows.
    */
   live?: Record<string, boolean>;
+  /**
+   * What this seat alone is shown (Looks 4D seat rows, first cut): the GM's per-seat "Send" or "Screens off". Absent:
+   * the seat sees what the whole table is shown. Like `live`, sent at once and never saved; "Send this view" for
+   * everyone clears it.
+   */
+  shown?: Shown;
 }
 
 export type Decision = { action: "apply" } | { action: "ask_gm" } | { action: "refuse"; reason: string };

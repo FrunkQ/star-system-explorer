@@ -13,7 +13,7 @@
 // Nothing here measures wall-clock time itself: the host passes `now()`.
 import { APPLIED, GRANT_VIEWS, REPLAY, type Session } from "./session.ts";
 import { checkIntent, type Intent } from "./intent.ts";
-import { audienceOf, decide, type Seat } from "./seat.ts";
+import { audienceOf, decide, type Seat, type Shown } from "./seat.ts";
 import type { PlayerScene } from "./player-scene.ts";
 import type { Json } from "./json.ts";
 import { publicExport } from "./campaign.ts";
@@ -28,20 +28,7 @@ export interface LogEntry {
   state_hash: string;
 }
 
-/**
- * What the table is shown (the landing run-through, 23 Nov): the place the GM last sent, or screens off. Players'
- * screens build their scene for this scope; nothing the GM looks at privately reaches them until it is sent.
- */
-export type Shown =
-  | {
-      scope: string;
-      title?: string;
-      /** The players' screen document to show it on (`documents/<screen>`); absent: the seat's own screen. */
-      screen?: string;
-      /** A landing the table is watching (renderer's `LandingShow`, ui-contract landing.ts): players replay it on their own kernel. */
-      landing?: Json;
-    }
-  | { off: true };
+export type { Shown } from "./seat.ts";
 
 export interface Manifest {
   protocol: typeof P2P_PROTOCOL;
