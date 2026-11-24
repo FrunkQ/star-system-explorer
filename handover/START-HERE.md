@@ -105,7 +105,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/weather.md` | Build shared climate and weather | W, seas (colour, waves, whitecaps) |
 | `status/data-sheet.md` | Build the master matter data sheet | MP data waves, MP22, SOL, DM1, DM6, RK1, RK2, RK10, citation checks |
 | `status/renderer.md` | Build photoreal renderer | R, the drawing side of Y5 and MF14a, V14 |
-| `status/star-look.md` (arrives with PR 439) | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
+| `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
 | `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map); XO is a code only, never shown in the product |
 | `status/true-air.md` (arrives with PR 444) | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
 | `status/true-surface.md` (arrives with PR 449) | Build plumes, frosts and small bodies (listed as "Build plumes, frosts and hot glow") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
