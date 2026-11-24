@@ -8,8 +8,6 @@
 // Belts round the star are a haze of points, one per draw slot, never the real count (also in the register).
 import { constant } from "../../ui-contract/src/index.ts";
 
-import { constant } from "../../ui-contract/src/index.ts";
-
 /** One ring of a world, as Body3D carries it. */
 export interface RingBand {
   name: string;
