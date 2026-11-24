@@ -6,8 +6,7 @@
 // a white diffuse surface in its star's light, which is the star's radiance times (R★/d)². Nothing is boosted: a
 // 1500 K night side beside a Sun-like star is a few thousandths of its day side and shows only as a dull ember,
 // while a brown dwarf far out from its star, or a young giant still hot from forming, outshines its own daylight.
-import { DRAPER_K } from "../../ui-contract/src/index.ts";
-import { linearSrgb, xyz, type LightDescription } from "../../ui-contract/src/light.ts";
+import { DRAPER_K, linearSrgb, xyz, type LightDescription } from "../../ui-contract/src/index.ts";
 
 const thermal = (t_k: number): LightDescription => ({ address: "", continuum: [{ kind: "thermal", t_k, weight: 1 }], lines: [], stubbed: false, why: "" });
 
