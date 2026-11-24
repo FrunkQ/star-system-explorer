@@ -19,6 +19,18 @@ export interface ScreenItem {
   style?: string;
   /** The part's own controls on this screen (AT13): "none" for a pure display, "all", or each by id; unstated take the part's default. */
   controls?: ItemControls;
+  /**
+   * A box that always shows one place (PB13 part 2: a bookmark put on a layout), drawn from what the role knows of it,
+   * whatever is sent; `focus` is the thing in it the box is about. Absent: the box shows whatever is sent.
+   */
+  place?: BoxPlace;
+}
+
+/** The place a layout's box holds: a bookmark's scope, the thing selected there, and its name. */
+export interface BoxPlace {
+  scope: string;
+  focus?: string;
+  title?: string;
 }
 
 export interface ScreenDoc {
@@ -128,7 +140,7 @@ export const LAYOUT_AREAS: Record<ScreenDoc["layout"], string[]> = {
 export interface CheckedScreen {
   doc: ScreenDoc;
   /** `controls`: which of the part's own controls are on; `picture`: every one is off, so nothing in it can be reached. */
-  mounts: { module: AnyView; area: string; params: Record<string, Json>; bind?: TopicQuery; controls: Record<string, boolean>; picture: boolean }[];
+  mounts: { module: AnyView; area: string; params: Record<string, Json>; bind?: TopicQuery; controls: Record<string, boolean>; picture: boolean; place?: BoxPlace }[];
 }
 
 /**
@@ -177,7 +189,9 @@ export function checkScreen(doc: ScreenDoc, registry: readonly AnyView[], dataVi
     if (bad) errors.push(`${item.view}: bind ${bad}`);
     errors.push(...checkItemControls(module.switchable, item.controls).map((e) => `${item.view}: ${e}`));
     const controls = resolveControls(module.switchable, item.controls);
-    mounts.push({ module, area: item.area, params: r.params, ...(item.bind ? { bind: item.bind } : {}), controls, picture: isPicture(module.switchable, item.controls) });
+    if (item.place !== undefined && !(item.place && typeof item.place.scope === "string" && item.place.scope.startsWith("u:") && (item.place.focus === undefined || (typeof item.place.focus === "string" && item.place.focus.startsWith("u:")))))
+      errors.push(`${item.view}: a box's place is a scope (and a focus) starting u:`);
+    mounts.push({ module, area: item.area, params: r.params, ...(item.bind ? { bind: item.bind } : {}), controls, picture: isPicture(module.switchable, item.controls), ...(item.place ? { place: item.place } : {}) });
   }
   return errors.length ? { ok: false, errors } : { ok: true, screen: { doc, mounts } };
 }

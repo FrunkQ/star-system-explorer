@@ -92,6 +92,19 @@
     sceneErrors = bad ? [bad] : [];
     scene = r.scene;
     sceneHash = r.hash;
+    await refreshPlaces(view);
+  }
+  // Boxes that hold a place (PB13 part 2): each place drawn for this screen's audience, as the main scene is.
+  let places = $state.raw<Record<string, PlayerScene>>({});
+  async function refreshPlaces(view: string | undefined) {
+    const scopes = [...new Set((checked?.ok ? checked.screen.mounts : []).flatMap((m) => (m.place ? [m.place.scope] : [])))];
+    if (!scopes.length) return void (Object.keys(places).length && (places = {}));
+    const next: Record<string, PlayerScene> = {};
+    for (const sc of scopes) {
+      const r = await session!.scene(sc, { audience, ...(view ? { data_view: view } : {}) });
+      if (r.ok) next[sc] = r.scene;
+    }
+    places = next;
   }
   async function useScreen(s: ViewSession) {
     await useScreenWith(observeOf(s.stack().base)?.setup.views.map((v) => v.id), s.device()?.tier ?? "standard");
@@ -475,7 +488,7 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p><p class="alpha" data-alpha>An alpha preview of what is coming. To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener">version 3 ›</a></p></main>
   {:else}
     {#key vocabId}
-      <main class="grid" class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} still={clean} bind:selection /></main>
+      <main class="grid" class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} still={clean} {places} bind:selection /></main>
       {#if readOnly && !clean}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
     {/key}
     {#if sayWords && sayHidden !== sayWords}

@@ -50,6 +50,11 @@
     onclose();
   }
 
+  const sceneOf = async (scope: string) => {
+    if (!session || !seat) return null;
+    const r = await session.scene(scope, { audience: audienceOf(seat) });
+    return r.ok ? r.scene : null;
+  };
   // The preview: what the role knows of the place in view, as its screens would draw it.
   let scene = $state.raw<PlayerScene | null>(null);
   $effect(() => {
@@ -63,7 +68,7 @@
 
 <div class="picker" role="group" aria-label="Layout of {seat?.label ?? role}" data-layout-picker={role}>
   {#if editing}
-    <LayoutEditor layout={editing} {scene} onsave={save} onclose={() => (editing = null)} />
+    <LayoutEditor layout={editing} {scene} bookmarks={ws?.bookmarks ?? []} sceneOf={sceneOf} onsave={save} onclose={() => (editing = null)} />
   {:else}
     <ul class="list">
       {#each SHIPPED_LAYOUTS as l (l.file)}

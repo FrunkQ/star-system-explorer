@@ -6,11 +6,27 @@
      from what the role knows. Boxes holding a bookmark, a file or a link, and the look line, come in later parts. -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { ARRANGEMENTS, addBox, arrangementOf, checkScreen, moveBox, rearrange, removeBox, sorted, swapBoxes, type Arrangement, type PlayerScene, type ScreenDoc, type Vocab } from "../../../ui-contract/src/index.ts";
+  import { ARRANGEMENTS, addBox, arrangementOf, checkScreen, moveBox, rearrange, removeBox, sorted, swapBoxes, type Arrangement, type Bookmark, type PlayerScene, type ScreenDoc, type Vocab } from "../../../ui-contract/src/index.ts";
   import { PLAYER_STACK, ScreenRuntime } from "../../../views/player-stack/src/index.ts";
   import vocabDoc from "../documents/vocab.plain.json";
 
-  let { layout, scene, onsave, onclose }: { layout: ScreenDoc; scene: PlayerScene | null; onsave: (doc: ScreenDoc) => void; onclose: () => void } = $props();
+  let {
+    layout,
+    scene,
+    bookmarks = [],
+    sceneOf,
+    onsave,
+    onclose,
+  }: {
+    layout: ScreenDoc;
+    scene: PlayerScene | null;
+    /** Bookmarks a box may hold (PB13 part 2): the box then always shows that place, as the role knows it. */
+    bookmarks?: readonly Bookmark[];
+    /** The role's scene of another place, for the preview of a box that holds one. */
+    sceneOf?: (scope: string) => Promise<PlayerScene | null>;
+    onsave: (doc: ScreenDoc) => void;
+    onclose: () => void;
+  } = $props();
 
   let doc = $state<ScreenDoc>(untrack(() => structuredClone($state.snapshot(layout)) as ScreenDoc));
   const vocab = vocabDoc as unknown as Vocab;
@@ -65,6 +81,28 @@
       return n;
     });
   }
+  // What a box shows: "" for whatever is sent, else a bookmark's id (its place is copied into the layout, so the
+  // players' screens need no bookmarks of their own).
+  const holds = (i: number) => {
+    const p = boxes[i]?.place;
+    return p ? (bookmarks.find((b) => b.scope === p.scope && (b.selected ?? undefined) === p.focus)?.id ?? "kept") : "";
+  };
+  function setHolds(i: number, id: string) {
+    const b = bookmarks.find((x) => x.id === id);
+    setBox(i, (box) => {
+      const n = { ...box };
+      if (b) n.place = { scope: b.scope, ...(b.selected ? { focus: b.selected } : {}), title: b.name };
+      else delete n.place;
+      return n;
+    });
+  }
+  let places = $state.raw<Record<string, PlayerScene>>({});
+  $effect(() => {
+    const scopes = [...new Set(doc.items.flatMap((i) => (i.place ? [i.place.scope] : [])))];
+    const get = sceneOf;
+    if (!get) return;
+    void Promise.all(scopes.map(async (sc) => [sc, await get(sc)] as const)).then((rs) => (places = Object.fromEntries(rs.filter(([, x]) => x)) as Record<string, PlayerScene>));
+  });
   const valid = $derived(doc.label.trim().length > 0 && checked.ok);
 </script>
 
@@ -77,7 +115,7 @@
         {#each Object.entries(ARRANGEMENTS) as [k, a] (k)}<option value={k}>{a.words}</option>{/each}
       </select>
     </label>
-    <p class="hint">Each box shows whatever is sent to this role, drawn by its part from what the role knows. Drag a box onto another to swap them.</p>
+    <p class="hint">Each box shows whatever is sent to this role, or always one bookmarked place, drawn by its part from what the role knows. Drag a box onto another to swap them.</p>
     <ol class="boxes" aria-label="Boxes">
       {#each boxes as b, i (b.area)}
         {@const p = partOf(b.view)}
@@ -98,6 +136,11 @@
           <span class="grip" aria-hidden="true">⠿</span>
           <select aria-label="Part in box {i + 1}" value={b.view} data-box-view onchange={(e) => setView(i, e.currentTarget.value)}>
             {#each parts as q (q.id)}<option value={q.id}>{q.words}</option>{/each}
+          </select>
+          <select aria-label="What box {i + 1} shows" value={holds(i)} data-box-holds onchange={(e) => setHolds(i, e.currentTarget.value)}>
+            <option value="">Whatever is sent</option>
+            {#each bookmarks as bm (bm.id)}<option value={bm.id}>{bm.name}</option>{/each}
+            {#if holds(i) === "kept"}<option value="kept">{b.place?.title ?? "a place"}</option>{/if}
           </select>
           {#if p?.switchable.length}
             <span class="ctls">
@@ -130,7 +173,7 @@
   </div>
   <div class="preview" aria-label="Preview" data-layout-preview>
     {#if checked.ok && scene && boxes.length}
-      {#key JSON.stringify(doc.items) + doc.layout}<ScreenRuntime screen={checked.screen} {scene} {vocab} compact still />{/key}
+      {#key JSON.stringify(doc.items) + doc.layout}<ScreenRuntime screen={checked.screen} {scene} {vocab} {places} compact still />{/key}
     {:else if !boxes.length}<p class="sub">Blank: a screen with nothing on it until something is sent.</p>
     {:else if !scene}<p class="sub">Reading what this role knows…</p>{/if}
   </div>

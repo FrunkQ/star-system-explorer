@@ -119,6 +119,8 @@ try {
 
   // Layouts (PB13): the table's layout on its heading; a new one made in the editor goes to its screens at once, and a
   // box with its control off is a picture there (AT13). Choosing the Bridge again puts it back.
+  // A bookmark to put on a box (Keep on Live makes one).
+  await gm.locator("[data-keep-live]").click();
   await gm.locator('[data-role-layout-chip="table"]').click();
   await gm.locator('[data-layout-picker="table"] [data-layout-new]').click();
   const ed = gm.locator("[data-layout-editor]");
@@ -130,6 +132,8 @@ try {
   await ed.locator("[data-box-new-part]").selectOption("sse.view.table");
   await ed.locator("[data-box-add]").click();
   await ed.locator('[data-layout-box="0"] [data-box-control="select"]').uncheck();
+  // The table box always shows the kept place (PB13 part 2), whatever is sent.
+  await ed.locator('[data-layout-box="1"] [data-box-holds]').selectOption({ index: 1 });
   // The arrows reorder: the table first, then back.
   await ed.locator('[data-layout-box="1"] [data-box-up]').click();
   assert.equal(await ed.locator('[data-layout-box="0"]').getAttribute("data-box-part"), "sse.view.table");
@@ -141,6 +145,8 @@ try {
   for (const p of [wall, mira]) await p.locator('[data-screen-id="mine.wall-chart"]').waitFor({ timeout: 15000 });
   assert.equal(await wall.locator('[data-screen-id="mine.wall-chart"] [data-view="sse.view.chart"][data-picture][inert]').count(), 1, "the chart's one control is off: a picture");
   assert.equal(await wall.locator('[data-view="sse.view.table"][data-picture]').count(), 0, "the table keeps its controls");
+  await wall.locator('[data-view="sse.view.table"][data-placed] [data-place-title]').waitFor({ timeout: 15000 });
+  await wall.locator('[data-view="sse.view.table"][data-placed] table').waitFor({ timeout: 15000 });
   await shot(wall, "layout-on-wall");
   await gm.locator('[data-role-layout-chip="table"]').click();
   await gm.locator('[data-layout-picker="table"] [data-layout-choose="bridge"]').click();

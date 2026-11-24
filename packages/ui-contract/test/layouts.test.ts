@@ -66,3 +66,13 @@ test("a Show step that names a layout sends it with the place", () => {
   assert.deepEqual(showOf(p as never, { show: { bookmark: "b1", layout: "mine.wall" } }, bm), { scope: "u:k/sys:1", title: "Wreck", screen: "mine.wall" });
   assert.equal("screen" in showOf(p as never, { show: { bookmark: "b1" } }, bm)!, false);
 });
+
+test("a box may hold a place: checked, and carried on its mount", async () => {
+  const { checkScreen } = await import("../src/screen.ts");
+  const VIEWS = [{ id: "sse.view.card", params: [] }] as never[];
+  const doc = (place: unknown): ScreenDoc => ({ ...bridge, rail: undefined, layout: "stack", items: [{ view: "sse.view.card", area: "1", place: place as never }] });
+  const ok = checkScreen(doc({ scope: "u:k/sys:1", focus: "u:k/sys:1/body:2", title: "Tarn" }), VIEWS);
+  assert.equal(ok.ok, true);
+  if (ok.ok) assert.deepEqual(ok.screen.mounts[0]!.place, { scope: "u:k/sys:1", focus: "u:k/sys:1/body:2", title: "Tarn" });
+  assert.equal(checkScreen(doc({ scope: "tarn" }), VIEWS).ok, false);
+});
