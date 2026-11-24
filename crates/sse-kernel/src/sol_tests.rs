@@ -19,16 +19,23 @@ const SOL: &str = "u:home/sys:sol";
 /// body:N in sheet order, moons under their host), values as the pack has
 /// them, plus `extra` facts by body id.
 fn open_sol(extra: &[(&str, &str, serde_json::Value)]) -> crate::Kernel {
+    open_sol_with(&[], extra)
+}
+
+/// `open_sol` with more packs on top of the sheet and base-physics.
+fn open_sol_with(
+    more: &[serde_json::Value],
+    extra: &[(&str, &str, serde_json::Value)],
+) -> crate::Kernel {
     let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
     let mut k = crate::Kernel::new();
     let sheet: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(root().join("packs/base-reference/pack.json")).unwrap(),
     )
     .unwrap();
-    let r = send(
-        &mut k,
-        serde_json::json!({"op":"load_stack","packs":[sheet, packs["base-physics"]]}),
-    );
+    let mut stack = vec![sheet, packs["base-physics"].clone()];
+    stack.extend(more.iter().cloned());
+    let r = send(&mut k, serde_json::json!({"op":"load_stack","packs":stack}));
     assert_eq!(r["type"], "stack_loaded", "{r}");
     send(
         &mut k,
@@ -379,4 +386,171 @@ fn earths_deposits_hold_its_porphyry_copper() {
             "{id}: {want} against {crust}"
         );
     }
+}
+
+/// TG11 (MP8b): resource inventories read off the makeup, with no dice. Two
+/// asteroids added beside Sol from makeup facts: a metal-rich one holds more
+/// iron per kilogram than a carbonaceous one. A pack's kind for an element
+/// nobody wrote a block for (iridium) gets an inventory; a made good gets
+/// none; an undeclared element id works on its own.
+#[test]
+fn inventories_follow_the_makeup() {
+    let pack = serde_json::json!({
+        "format": "sse.pack/1", "id": "test.resources", "version": "0.1.0",
+        "kind": ["universe"], "kernel_range": "^0.1", "licence": "Apache-2.0",
+        "provides": {"other": {"resources": {"kinds": [
+            {"id": "iron", "name": "Iron", "matter": "fe", "reach": "whole"},
+            {"id": "iridium", "name": "Iridium", "matter": "ir"},
+            {"id": "water-ice", "name": "Water ice", "matter": "h2o", "reach": "whole"},
+            {"id": "packaged-food", "name": "Packaged food"}
+        ]}}}
+    });
+    let mut k = open_sol_with(&[pack], &[]);
+    let rock = |n: u32, name: &str, makeup: [f64; 4]| {
+        let a = format!("{SOL}/body:{n}");
+        let mut e = vec![
+            serde_json::json!({"address":a,"field":"name","value":name}),
+            serde_json::json!({"address":a,"field":"body.mass","value":2.0e19}),
+            serde_json::json!({"address":a,"field":"body.radius","value":1.2e5}),
+            serde_json::json!({"address":a,"field":"orbit.semi_major_axis","value":4.2e11}),
+            serde_json::json!({"address":a,"field":"orbit.host","value":format!("{SOL}/star:0")}),
+        ];
+        for (f, v) in ["makeup.metal", "makeup.rock", "makeup.carbon", "makeup.ice"]
+            .iter()
+            .zip(makeup)
+        {
+            e.push(serde_json::json!({"address":a,"field":f,"value":v}));
+        }
+        (a, e)
+    };
+    let (metal_a, mut edits) = rock(40, "Metal rock", [0.7, 0.3, 0.0, 0.0]);
+    let (carb_a, more) = rock(41, "Carbon rock", [0.05, 0.6, 0.05, 0.3]);
+    edits.extend(more);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,
+            "evidence":"authored","source":"test","edits":edits}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let inv = |k: &mut crate::Kernel, body: &str, kinds: serde_json::Value| {
+        let r = send(
+            k,
+            serde_json::json!({"op":"read_inventory","system":SOL,"body":body,"kinds":kinds}),
+        );
+        assert_eq!(r["type"], "inventory_read", "{r}");
+        r["bodies"][0].clone()
+    };
+    let of = |b: &serde_json::Value, id: &str| {
+        b["kinds"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["id"] == id)
+            .cloned()
+            .unwrap()
+    };
+    let all = serde_json::json!(["iron", "iridium", "water-ice", "packaged-food", "ni"]);
+    let m = inv(&mut k, &metal_a, all.clone());
+    let c = inv(&mut k, &carb_a, all.clone());
+    let fe = |b: &serde_json::Value| of(b, "iron")["per_kg"].as_f64().unwrap();
+    assert!(
+        fe(&m) > 3.0 * fe(&c),
+        "iron per kg {} against {}",
+        fe(&m),
+        fe(&c)
+    );
+    assert!(of(&m, "iridium")["kg"].as_f64().unwrap() > 0.0, "{m}");
+    assert!(
+        of(&c, "water-ice")["kg"].as_f64().unwrap() > of(&m, "water-ice")["kg"].as_f64().unwrap()
+    );
+    assert_eq!(of(&m, "packaged-food")["kg"].as_f64().unwrap(), 0.0);
+    assert!(of(&m, "packaged-food")["note"].is_string());
+    assert!(
+        of(&m, "ni")["kg"].as_f64().unwrap() > 0.0,
+        "an undeclared element id is a kind"
+    );
+    assert_eq!(m["source"], "the body's makeup facts");
+    // No dice: the same read gives the same amounts.
+    assert_eq!(inv(&mut k, &metal_a, all), m);
+    // Every declared kind when none is named; an unknown kind is refused.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"read_inventory","system":SOL,"body":metal_a}),
+    );
+    assert_eq!(r["bodies"][0]["kinds"].as_array().unwrap().len(), 4, "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"read_inventory","system":SOL,"kinds":["unobtainium"]}),
+    );
+    assert_eq!(r["code"], "unknown_resource", "{r}");
+}
+
+/// MP8c: a giant is mostly an envelope of hydrogen and helium, at the birth
+/// cloud's shares, around the mass-metallicity relation's heavy elements
+/// (Thorngren et al. 2016): Jupiter about 14% heavy, Neptune far more.
+/// Hydrogen and helium-3 skim from Jupiter's envelope; Earth has none.
+#[test]
+fn giants_are_mostly_envelope() {
+    let pack = serde_json::json!({
+        "format": "sse.pack/1", "id": "test.gas", "version": "0.1.0",
+        "kind": ["universe"], "kernel_range": "^0.1", "licence": "Apache-2.0",
+        "provides": {"other": {"resources": {"kinds": [
+            {"id": "hydrogen", "matter": "h", "reach": "envelope"},
+            {"id": "helium-3", "matter": "he3", "reach": "envelope"}
+        ]}}}
+    });
+    let mut k = open_sol_with(&[pack], &[]);
+    let jup = composition(&mut k, "Jupiter", "survey");
+    let nep = composition(&mut k, "Neptune", "survey");
+    let heavy = |c: &serde_json::Value| 1.0 - share(c, "h") - share(c, "he");
+    let (hj, hn) = (heavy(&jup), heavy(&nep));
+    assert!(hj > 0.08 && hj < 0.25, "Jupiter heavy share {hj}");
+    assert!(hn > 2.0 * hj, "Neptune {hn} against Jupiter {hj}");
+    // Hydrogen about 0.71 to helium's 0.27 by mass in the envelope.
+    let ratio = share(&jup, "h") / share(&jup, "he");
+    assert!(ratio > 2.2 && ratio < 3.2, "H/He {ratio}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let addr = |name: &str| {
+        r["facts"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .find(|(_, f)| f["name"] == name)
+            .map(|(a, _)| a.clone())
+            .unwrap()
+    };
+    let inv = |k: &mut crate::Kernel, name: &str| {
+        let r = send(
+            k,
+            serde_json::json!({"op":"read_inventory","system":SOL,"body":addr(name)}),
+        );
+        assert_eq!(r["type"], "inventory_read", "{r}");
+        let kinds = r["bodies"][0]["kinds"].clone();
+        let get = |id: &str| {
+            kinds
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|x| x["id"] == id)
+                .cloned()
+                .unwrap()
+        };
+        (get("hydrogen"), get("helium-3"))
+    };
+    let (jh, j3) = inv(&mut k, "Jupiter");
+    let (eh, _) = inv(&mut k, "Earth");
+    assert!(jh["kg"].as_f64().unwrap() > 1.0e26, "{jh}");
+    assert_eq!(eh["kg"].as_f64().unwrap(), 0.0, "{eh}");
+    // Helium-3: the envelope's helium at the birth cloud's isotope share
+    // (Lodders 2021: 1.66e-4 of helium atoms), by mass.
+    let he = share(&jup, "he") * jup["bulk"]["mass_kg"].as_f64().unwrap();
+    let he3 = j3["kg"].as_f64().unwrap();
+    let want = he * 1.66e-4 * 3.016 / 4.0026;
+    assert!(
+        (he3 / want - 1.0).abs() < 0.02,
+        "helium-3 {he3:.3e} against {want:.3e}"
+    );
 }

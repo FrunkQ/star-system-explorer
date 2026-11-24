@@ -3,6 +3,7 @@
 // Tilted, Edge-on, Free. A view declares what it can draw (`ViewModule.controls`); what it cannot is still listed,
 // quiet, with the reason, so the control never rearranges itself from one screen to the next. The choice belongs to
 // the viewer (any seat), is kept on their device, and later per panel. Presentation only: never in the campaign.
+import { SHEET_BANDS } from "./sheet.ts";
 
 export const VIEW_STYLES = ["chart", "3d", "true", "wireframe"] as const;
 export type ViewStyle = (typeof VIEW_STYLES)[number];
@@ -23,7 +24,19 @@ export const HUD_WORDS: Record<"off" | "on", string> = { off: "Off", on: "On" };
  * the magnetic field (magnetic fields design, 22 Nov 2026). */
 export const VIEW_BANDS = ["visible", "infrared", "ultraviolet", "xray", "radio", "mag"] as const;
 export type ViewBand = (typeof VIEW_BANDS)[number];
-export const VIEW_BAND_WORDS: Record<ViewBand, string> = { visible: "Visible", infrared: "Infrared", ultraviolet: "Ultraviolet", xray: "X-ray", radio: "Radio", mag: "Mag" };
+// The band switch's words come from the master sheet's Bands table (RK10): its view rows, by `view_id`. The ids stay
+// typed here so a missing row is a failed check (view-controls.test), never a blank button.
+const sheetView = (b: ViewBand) => SHEET_BANDS.find((x) => x.kind === "view" && x.view_id === b);
+export const VIEW_BAND_WORDS: Record<ViewBand, string> = Object.fromEntries(VIEW_BANDS.map((b) => [b, sheetView(b)?.name ?? b])) as Record<ViewBand, string>;
+/** The band's name, with its plain words where they say more: "Infrared (heat light)", "Mag (magnetic field)", "X-ray". */
+function bandSaid(b: ViewBand): string {
+  const name = VIEW_BAND_WORDS[b];
+  const plain = VIEW_BAND_PLAIN[b];
+  const first = plain.split(" ")[0]!.toLowerCase();
+  return first === name.toLowerCase() || first === `${name.toLowerCase()}s` ? name : `${name} (${plain})`;
+}
+/** A band in plain words, for sentences ("heat light", "magnetic field"). */
+export const VIEW_BAND_PLAIN: Record<ViewBand, string> = Object.fromEntries(VIEW_BANDS.map((b) => [b, sheetView(b)?.plain ?? b])) as Record<ViewBand, string>;
 
 export const VIEW_STYLE_WORDS: Record<ViewStyle, string> = { chart: "Chart", "3d": "3D", true: "True", wireframe: "Wireframe" };
 export const SEEN_WORDS: Record<SeenFrom, string> = { above: "Above", tilted: "Tilted", edge: "Edge-on", free: "Free" };
@@ -110,7 +123,7 @@ export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice): { style
   const shownHud = hudWhy ? true : (choice.hud ?? style !== "true");
   const bands: ViewOption<ViewBand>[] = VIEW_BANDS.map((b) => {
     const c = spec.bands ? spec.bands[b] : b === "visible" ? true : undefined;
-    const why = c === true ? undefined : (c ?? `Not seen in ${VIEW_BAND_WORDS[b] === "Mag" ? "Mag" : VIEW_BAND_WORDS[b].toLowerCase()} here yet`);
+    const why = c === true ? undefined : (c ?? `${bandSaid(b)} is not drawn here yet`);
     return { value: b, label: VIEW_BAND_WORDS[b], ...(why ? { unavailable: why } : {}) };
   });
   const wantBand = choice.band ?? "visible";

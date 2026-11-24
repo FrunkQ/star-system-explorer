@@ -45,14 +45,14 @@
       "name": "Light, spectra and the sky",
       "meaning": "Starlight, spectra, activity, air optics, nebulae, planet finding and the sky from a world.",
       "budget_ms": 300,
-      "sources": ["read_light", "detect", "read_air_optics", "light_through_gas", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"]
+      "sources": ["read_light", "detect", "read_air_optics", "light_through_gas", "effect_at_range", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"]
     },
     {
       "id": "matter",
       "name": "Matter, fields and names",
       "meaning": "Look-ups on the master data sheet, phases, magnetic fields, element inventories, and names.",
       "budget_ms": 100,
-      "sources": ["read_matter", "phase_at", "read_field", "read_composition", "name_sample", "read_names", "set_naming", "rename", "fix_names"]
+      "sources": ["read_matter", "phase_at", "read_field", "read_composition", "read_inventory", "name_sample", "read_names", "set_naming", "rename", "fix_names"]
     },
     {
       "id": "life",

@@ -3379,6 +3379,41 @@
     ]
    }
   ]
+  },
+ {
+  "op": "read_inventory",
+  "system": "u:matter/sys:1",
+  "kinds": ["fe", "h2o"]
+ },
+ {
+  "op": "read_inventory",
+  "system": "u:matter/sys:1",
+  "kinds": ["unobtainium"]
+ },
+ {
+  "op": "effect_at_range",
+  "asks": [
+   {
+    "weapon": {"kind": "beam", "beam_power_w": 2.0e7, "wavelength_m": 1.0e-6, "aperture_m": 1.0, "efficiency": 0.3, "reject_k": 600.0},
+    "target": {"skin": {"takes_j_m2": 1.0e7}, "radius_m": 10.0, "accel_m_s2": 10.0},
+    "distance_m": 1.0e5
+   },
+   {
+    "weapon": {"kind": "burst", "yield_j": 4.184e12, "xray_share": 0.7},
+    "target": {"skin": {"material": "h2o", "thickness_m": 0.01, "takes_j_m2": 2.0e3}, "radius_m": 10.0},
+    "distance_m": 1.0e4
+   }
+  ]
+ },
+ {
+  "op": "effect_at_range",
+  "asks": [
+   {
+    "weapon": {"kind": "projectile", "mass_kg": 1.0, "muzzle_m_s": 3000.0, "face_m2": 0.01},
+    "target": {"skin": {"material": "unobtainium", "thickness_m": 0.01}, "radius_m": 10.0},
+    "distance_m": 1.0e5
+   }
+  ]
  },
  {
   "op": "orbit_stability",

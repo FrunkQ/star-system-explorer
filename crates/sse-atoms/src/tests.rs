@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 113,
+        n, 122,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1303,4 +1303,78 @@ fn composition_blocks_match_the_chain() {
         near(got[0], want.0, "deposit mass");
         near(got[1], want.1, "deposit grade");
     }
+    for (z, mass) in [(0.014, 1.9e27), (0.02, 1.0e26), (0.014, 1.0e25)] {
+        near(
+            run("sse.composition.heavy_element_share", &[z, mass])[0],
+            mt::heavy_element_share(
+                z,
+                mass,
+                sse_core::sheet::M_JUP,
+                mt::GIANT_METAL_COEFFICIENT,
+                mt::GIANT_METAL_SLOPE,
+            ),
+            "heavy share",
+        );
+    }
+}
+
+#[test]
+fn redox_blocks_match_the_stage_8_sums() {
+    use crate::redox as rx;
+    use sse_core::sheet::{atomic_weight as aw, molar_mass as mm};
+    let near = |a: f64, b: f64, what: &str| {
+        assert!(
+            (a - b).abs() <= 1e-12 * a.abs().max(b.abs()).max(1e-30),
+            "{what}: {a} against {b}"
+        );
+    };
+    let (fe, c) = (aw::FE / 1000.0, aw::C / 1000.0);
+    for (cmf, carbon) in [
+        (0.325, 0.0),
+        (0.24, 0.0),
+        (0.7, 0.0),
+        (0.3, 0.02),
+        (0.0, 0.0),
+    ] {
+        let got = run("sse.interior.redox_iw", &[cmf, carbon, fe, mm::FEO, c]);
+        let (d, core) = rx::redox_iw(cmf, carbon, fe, mm::FEO, c, &rx::REDOX);
+        near(got[0], d, "redox");
+        near(got[1], core, "redox at core formation");
+    }
+    // Earth: about IW-2.2 at core formation (Wade and Wood 2005), IW+0.5 at
+    // its magma ocean's surface (Sossi et al. 2020); Mars more oxidised; a
+    // Mercury-like core leaves a reduced mantle; carbon reduces.
+    let (earth, earth_core) = rx::redox_iw(0.325, 0.0, fe, mm::FEO, c, &rx::REDOX);
+    assert!((-2.6..-1.8).contains(&earth_core), "{earth_core}");
+    assert!((0.0..1.0).contains(&earth), "{earth}");
+    let mars = rx::redox_iw(0.24, 0.0, fe, mm::FEO, c, &rx::REDOX).0;
+    let mercury = rx::redox_iw(0.7, 0.0, fe, mm::FEO, c, &rx::REDOX).0;
+    let sooty = rx::redox_iw(0.325, 0.01, fe, mm::FEO, c, &rx::REDOX).0;
+    assert!(
+        mars > earth && mercury < earth - 3.0 && sooty < earth,
+        "{mars} {mercury} {sooty}"
+    );
+    for (d, h, cc, p) in [
+        (0.5, 1.0, 0.3, 1.0e7),
+        (-2.0, 1.0, 0.3, 1.0e7),
+        (3.0, 1.0, 0.0, 1.0e5),
+        (-4.0, 5.0e20, 1.0e20, 3.0e8),
+        (0.0, 0.0, 0.0, 0.0),
+    ] {
+        let got = run("sse.atmosphere.outgassed_mix", &[d, h, cc, p]);
+        let want = rx::outgassed_mix(d, h, cc, p, &rx::OUTGAS);
+        for k in 0..5 {
+            near(got[k], want[k], "outgassed mix");
+        }
+        let sum: f64 = want.iter().sum();
+        assert!(
+            sum == 0.0 || (sum - 1.0).abs() < 1e-12,
+            "fractions sum to {sum}"
+        );
+    }
+    // Oxidised air is water and CO2; reduced air is hydrogen and CO.
+    let ox = rx::outgassed_mix(3.0, 1.0, 1.0, 1.0e7, &rx::OUTGAS);
+    let red = rx::outgassed_mix(-3.0, 1.0, 1.0, 1.0e7, &rx::OUTGAS);
+    assert!(ox[1] > ox[0] && ox[3] > ox[2], "{ox:?}");
+    assert!(red[0] > red[1] && red[2] > red[3], "{red:?}");
 }

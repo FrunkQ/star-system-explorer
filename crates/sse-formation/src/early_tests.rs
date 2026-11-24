@@ -206,3 +206,29 @@ fn early_worlds_golden() {
     // Six reference worlds, byte-stable across devices (tests/golden/formation-early.json).
     crate::golden::check("formation-early.json", &crate::scenario::early_golden());
 }
+
+#[test]
+fn the_mantle_sets_what_the_magma_ocean_breathes_out() {
+    // F-redox: Earth's mantle lands near IW+0.5 at its magma ocean's
+    // surface (Sossi et al. 2020), and gives off mostly water with carbon
+    // as CO and CO2; a dry world keeps its carbon but no hydrogen.
+    let (f, l) = sun();
+    let e = early_life(&world(3, 1.0, 1.0, 0.001, 0.0), &f, &l);
+    assert!(
+        (-0.3..1.2).contains(&e.redox_iw),
+        "Earth ΔIW {}",
+        e.redox_iw
+    );
+    let sum: f64 = e.outgas.iter().sum();
+    assert!((sum - 1.0).abs() < 1e-12, "fractions sum to {sum}");
+    let [h2, h2o, co, co2, ch4] = e.outgas;
+    assert!(h2o > h2, "{:?}", e.outgas);
+    assert!(co + co2 > 0.05 && co > co2 && ch4 < 1e-3, "{:?}", e.outgas);
+    let facts: Map<&str, f64> = e.facts.iter().map(|h| (h.kind.as_str(), h.value)).collect();
+    assert_eq!(facts["interior.redox_iw"], e.redox_iw);
+    assert_eq!(facts["early.outgas_h2o"], h2o);
+    let v = early_life(&world(2, 0.815, 0.723, 0.001, 0.0), &f, &l);
+    assert!(v.desiccated);
+    assert_eq!(v.outgas[0] + v.outgas[1], 0.0, "{:?}", v.outgas);
+    assert!((v.outgas[2] + v.outgas[3] - 1.0).abs() < 1e-12);
+}

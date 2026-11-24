@@ -593,6 +593,18 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
+    /// Effect at range (RK12, Atomic Rockets plan section 13): each of
+    /// `asks` is `sse_sense::reach::Ask`, a weapon (beam, burst or
+    /// projectile), a target (its skin as a sheet material or a typed
+    /// figure, its size and how hard it can dodge) and a distance. Returns
+    /// what arrives, what the skin can take, the reading (in range,
+    /// marginal, out of range), the chance of a hit from light lag, the
+    /// distances where the reading changes for a ring, and a beam's load on
+    /// the power ledger. Nothing is fired.
+    EffectAtRange {
+        #[ts(type = "unknown[]")]
+        asks: Vec<serde_json::Value>,
+    },
     /// Spectrum as it reaches an observer (O12): each target is one or more
     /// components (`conditions` as for `read_light`, or a ready `light`
     /// description), each with a line-of-sight speed; the observer gives the
@@ -670,6 +682,24 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         level: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// Natural resource inventory (TG11, MP8b): for each world of `system`
+    /// (or `body`), the kilograms of each resource kind in `kinds` (pack
+    /// kinds from `provides.other.resources`, or any element id or `h2o`
+    /// straight from the sheet; left out, every pack kind) within the
+    /// kind's reach (crust, sea, air, surface or whole), read off
+    /// `read_composition` at Survey. No dice; no surface stage runs.
+    ReadInventory {
+        system: String,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        kinds: Option<Vec<String>>,
         #[serde(default)]
         #[ts(optional)]
         at_s: Option<i64>,
@@ -2085,10 +2115,12 @@ impl Request {
             Request::ReadActivity { .. } => "read_activity",
             Request::ReadField { .. } => "read_field",
             Request::ReadComposition { .. } => "read_composition",
+            Request::ReadInventory { .. } => "read_inventory",
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
             Request::LightThroughGas { .. } => "light_through_gas",
+            Request::EffectAtRange { .. } => "effect_at_range",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2304,6 +2336,11 @@ pub fn ops() -> Vec<OpInfo> {
             "per passage: a few formula blocks per wavelength per absorption feature, at the eye's 81 wavelengths and any asked for",
         ),
         o(
+            "effect_at_range",
+            Cost::Light,
+            "per ask: a few formula blocks, and four bisections of about eighty steps for the rings",
+        ),
+        o(
             "read_spectrum",
             Cost::Light,
             "per target: the grid, band integrals and a 400-point peak scan per covered range",
@@ -2322,6 +2359,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_composition",
             Cost::Trivial,
             "per body: a few hundred multiplications over the sheet's elements",
+        ),
+        o(
+            "read_inventory",
+            Cost::Trivial,
+            "per body: read_composition at Survey, then one sum per kind",
         ),
         o(
             "read_photometry",
@@ -2897,6 +2939,11 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
+    /// `effect_at_range`: each of `effects` is `sse_sense::reach::Effect`.
+    EffectsAtRange {
+        #[ts(type = "unknown[]")]
+        effects: Vec<serde_json::Value>,
+    },
     /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
     SpectrumRead {
         #[ts(type = "unknown[]")]
@@ -2919,6 +2966,13 @@ pub enum Response {
     /// (bulk materials, separation strength, elements heaviest first with
     /// reservoirs at Survey, stand-ins).
     CompositionRead {
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+    },
+    /// `read_inventory`: each of `bodies` is a world's address, mass and
+    /// kinds (id, matter, reach, kg, per_kg, by_reservoir, note), with
+    /// stand-ins.
+    InventoryRead {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
     },

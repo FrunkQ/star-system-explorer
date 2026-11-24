@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { constant, constantOf, constantIds, SHEET_PACK } from "../src/sheet.ts";
+import { constant, constantOf, constantIds, SHEET_BANDS, SHEET_PACK } from "../src/sheet.ts";
 import { AU_M, M_EARTH, M_SUN, R_EARTH_M, R_SUN_M, L_SUN_W } from "../src/make.ts";
 
 const root = new URL("../../../", import.meta.url);
@@ -27,4 +27,16 @@ test("the chart room's yardsticks come from the sheet", () => {
   assert.equal(R_EARTH_M, constant("R_earth_mean"));
   assert.equal(R_SUN_M, constant("R_sun"));
   assert.equal(L_SUN_W, constant("L_sun"));
+});
+
+test("the Bands table: every light band meets the next and is seen in a view row (RK10)", () => {
+  const views = new Set(SHEET_BANDS.filter((b) => b.kind === "view").map((b) => b.id));
+  assert.deepEqual(
+    SHEET_BANDS.filter((b) => b.kind === "view").map((b) => b.view_id),
+    ["visible", "infrared", "ultraviolet", "xray", "radio", "mag"],
+  );
+  const light = SHEET_BANDS.filter((b) => b.kind === "light");
+  assert.equal(light.length, 9);
+  for (let i = 1; i < light.length; i++) assert.equal(light[i - 1]!.to_m, light[i]!.from_m, light[i]!.id);
+  for (const b of SHEET_BANDS.filter((x) => x.kind !== "view")) assert.ok(views.has(b.view!), b.id);
 });

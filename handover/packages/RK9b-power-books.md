@@ -28,7 +28,7 @@ This is the kernel thread's half of RK9. Part 1, the ledger in `sse-nav` `power.
 `tests/golden/contract.jsonl` changes in three places:
 - line 1: the op list gains `ship_power`;
 - line 41: the unknown-op message names it;
-- the new `ship_power` case at the end (the Hall tug, with a quarters load and 60% efficiency).
+- line 362: the new `ship_power` case at the end (the Hall tug, with a quarters load and 60% efficiency).
 
 No other response changes, because no stack or fixture ship has fitted engines yet.
 

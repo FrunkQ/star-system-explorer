@@ -710,6 +710,27 @@ fn bodies_from_facts(
                     }
                 }),
             core_light_fraction: None,
+            makeup: {
+                let share = |k: &str| r.get(k).and_then(as_f64).filter(|x| *x >= 0.0);
+                let keys = [
+                    "makeup.metal",
+                    "makeup.rock",
+                    "makeup.carbon",
+                    "makeup.ice",
+                    "makeup.gas",
+                ];
+                if keys.iter().any(|k| share(k).is_some()) {
+                    Some(sse_surface::Makeup {
+                        metal: share(keys[0]).unwrap_or(0.0),
+                        rock: share(keys[1]).unwrap_or(0.0),
+                        carbon: share(keys[2]).unwrap_or(0.0),
+                        ice: share(keys[3]).unwrap_or(0.0),
+                        gas: share(keys[4]).unwrap_or(0.0),
+                    })
+                } else {
+                    None
+                }
+            },
         });
     }
     out

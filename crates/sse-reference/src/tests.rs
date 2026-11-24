@@ -697,3 +697,61 @@ fn protosolar_isotope_shares_are_on_the_isotope_rows() {
     // The printed digits sum to 99.99997 percent.
     assert!((share("h1") + share("h2") - 1.0).abs() < 1e-6);
 }
+
+#[test]
+fn hull_skins_carry_the_burn_through_heats() {
+    // RK12 sums heat to melt, latent fusion, heat to boil and latent
+    // vaporisation per kilogram (MP27, NIST-JANAF). Aluminium's heat of
+    // fusion is about 397 kJ/kg, from 10.711 kJ/mol at 26.98 g/mol.
+    let r = Reference::base();
+    let get = |id: &str, k: &str| num(r.row("mixtures", id).and_then(|x| x.get(k)));
+    for id in [
+        "aluminium",
+        "titanium",
+        "iron",
+        "niobium",
+        "molybdenum",
+        "tantalum",
+        "lead",
+    ] {
+        for k in [
+            "heat_capacity",
+            "heat_to_melt",
+            "latent_fusion",
+            "heat_to_boil",
+            "boiling_point_k",
+            "latent_vaporisation",
+        ] {
+            assert!(get(id, k).is_some_and(|v| v > 0.0), "{id} {k}");
+        }
+    }
+    let lf = get("aluminium", "latent_fusion").unwrap();
+    assert!((lf - 397_000.0).abs() < 2_000.0, "{lf}");
+    assert!(get("graphite", "latent_sublimation").is_some());
+    assert!(get("inconel-718", "heat_capacity").is_some());
+}
+
+#[test]
+fn bands_meet_end_to_end_and_name_a_view() {
+    // RK10: one Bands table. Light bands run without gaps; every light or
+    // channel row is seen in a view row.
+    let mut g = good();
+    g["bands"] = json!([
+        {"id": "view-visible", "kind": "view", "view_id": "visible"},
+        {"id": "view-mag", "kind": "view", "view_id": "mag"},
+        {"id": "blue", "kind": "light", "from_m": 4e-7, "to_m": 5e-7, "view": "view-visible"},
+        {"id": "red", "kind": "light", "from_m": 5e-7, "to_m": 7e-7, "view": "view-visible"},
+        {"id": "magnetic", "kind": "channel", "view": "view-mag"}
+    ]);
+    assert!(Reference::from_json(&[("base".into(), g.clone())]).is_ok());
+    g["bands"] = json!([
+        {"id": "view-visible", "kind": "view"},
+        {"id": "blue", "kind": "light", "from_m": 4e-7, "to_m": 5e-7, "view": "view-visible"},
+        {"id": "red", "kind": "light", "from_m": 6e-7, "to_m": 7e-7, "view": "view-red"},
+        {"id": "odd", "kind": "smell"}
+    ]);
+    let e = Reference::from_json(&[("base".into(), g)]).unwrap_err();
+    assert!(e.iter().any(|m| m.contains("do not meet")), "{e:#?}");
+    assert!(e.iter().any(|m| m.contains("view-red")), "{e:#?}");
+    assert!(e.iter().any(|m| m.contains("band odd")), "{e:#?}");
+}
