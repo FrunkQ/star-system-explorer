@@ -136,7 +136,7 @@ export { findInSheet } from "./reference-find.ts";
 export type { RefHit } from "./reference-find.ts";
 export { classesOnStack, classTree, className, classBandWords, classNumber, needsWords, findClass, findClasses } from "./classes.ts";
 export type { AtlasAxis, AtlasBand, AtlasClass, AtlasScheme, ClassAtlas, ClassNode } from "./classes.ts";
-export { namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMore, sourceWords, layerOrder, SAMPLE_KINDS } from "./names.ts";
+export { chartNameLayers, namesInLayer, relabel, namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMore, sourceWords, layerOrder, SAMPLE_KINDS } from "./names.ts";
 export type { SampleAsk, SampledName, NameSample, NamePart, SchemeInfo, NamesOnStack, ShownName, NamesRead } from "./names.ts";
 export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedAsk, EmbedBridge } from "./embed.ts";
 export type { EmbedMode, EmbedOut } from "./embed.ts";
