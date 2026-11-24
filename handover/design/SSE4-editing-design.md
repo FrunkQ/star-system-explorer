@@ -1,7 +1,7 @@
 # SSE4 editing: handles, strips and the chart (track ED)
 
-Status: **proposed, 24 Nov 2026; Alex on first read, 14:42: "love this! what about atmospheres on the sliders? water -> liquids? SSE3 is our starting point there" (section 11A answers that). Waiting on his answers to the questions in section 16.**
-Mockup: `/mnt/project-files/sse4/handover-screens/ED-screens/editing-mockup.html` (it works: drag the strip, drag the world on the chart). Screenshots beside it in `ED-screens/`: `desk-1-mass-strip`, `desk-2-what-followed`, `desk-3-drag-orbit`, `desk-4-star-kinds`, `desk-5-companion-night`, `desk-6-moon`, `phone-1-mass-strip`, `phone-2-drag-orbit-night`, `phone-3-star-kinds`, and for section 11A `desk-7-air`, `desk-8-liquids`, `phone-4-liquids-night`. The mockup's figures are stand-ins, not kernel output.
+Status: **proposed, 24 Nov 2026; Alex on first read, 14:42: "love this! what about atmospheres on the sliders? water -> liquids? SSE3 is our starting point there" (section 11A answers that). Then: makeup "is surely more than 1 slider now we have complex internal makeups"; how do you put in a subsurface ocean; "think through... what a worldbuilder may want to do to their world to make it right for their universe. We let them and point out things that break physics (kept to GM)"; "look at ALL the editors under settings"; "we *should suggest*: this world *could* be human habitable with an atmosphere... and that in turn may need a mag field to protect it... and a user can do one and not the other"; alien compatibility hooked in now, built in 4.1; and "we guide better now rather than leave them alone" (sections 11B to 11E); and "orbit is also more than 1 slider... eccentricity, where on the orbit, inclination, rotation, retrograde, oblateness, etc" (section 11F); "Users must ALWAYS be able to type an entry: it's how they enter real data" (section 3A); and binaries: "make sure we are coping with binaries properly... Pluto/Charon should run on a barycentre... maybe we can just always assume it... adding and removing bodies needs to be well managed chaos" (section 10A). And: SSE3's "editing was a bit all over the shop as it evolved, but now we can adopt a consistent and extensible look and feel" (section 3B). Waiting on his answers to the questions in section 16.**
+Mockup: `/mnt/project-files/sse4/handover-screens/ED-screens/editing-mockup.html` (it works: drag the strip, drag the world on the chart). Screenshots beside it in `ED-screens/`: `desk-1-mass-strip`, `desk-2-what-followed`, `desk-3-drag-orbit`, `desk-4-star-kinds`, `desk-5-companion-night`, `desk-6-moon`, `phone-1-mass-strip`, `phone-2-drag-orbit-night`, `phone-3-star-kinds`, and for section 11A `desk-7-air`, `desk-8-liquids`, `phone-4-liquids-night`, and for 11B and 11C `desk-9-makeup`, `desk-10-could-be`, `phone-5-could-be`, and for 11F `desk-11-orbit-box`, `desk-12-spin-box`, and for 10A `desk-13-family-tree`. The mockup's figures are stand-ins, not kernel output.
 
 Asked for by Alex, 24 Nov: "Editing planets is a BIG need... Earlier versions went big into sliders, although we really like them because it encourages people to play with planets and know the range that they can play in. They do take up a lot of room, are relatively cumbersome, and the act of sliding them does tend to slam the game engine. We still want to encourage play... there's probably not that many things they can change now... generally there's only going to be a few sliders that matter. What we need to do is ensure when the user sits there and kind of goes, I really want a different type of star or something like this in the system, that they can add it and have a bit more control and are just allowed to do what they want and are guided if it's unfeasible." And a minute later: "dragging planets to move them is a great way to avoid a slider and do it fine... but consider moons and cut and paste, etc. We got a good set of tools in SSE3... maybe some cumbersome or awkward, so now is the time to fine tune and improve."
 
@@ -36,7 +36,7 @@ Read from the kernel on `main`, 24 Nov (`sse-formation` manifest, inheritance an
 |---|---|---|
 | Orbit | `orbit.semi_major_axis`, `orbit.eccentricity`, `orbit.host`; inclination and the three angles at Science depth | dragged on the chart first |
 | Mass | `body.mass` | |
-| Makeup | `makeup.metal`, `.rock`, `.carbon`, `.ice`, `.gas` (shares) | one mix control (gap 11's mix editor), not five sliders |
+| Makeup | `makeup.metal`, `.rock`, `.carbon`, `.ice`, `.gas` (shares); at Science depth heat (`k40_rel`, `r_process_rel`) and how oxidised (`redox_iw`) | one box with a bulk bar and a cutaway, section 11B |
 | Liquids | `body.surface_water_oceans` today; any substance in section 11A | how much of each; which are liquid, and how much of the surface they cover, are results |
 | Air | `atmosphere.surface_pressure`, `atmosphere.mix` | how much and what of; "the science expects" beside it; section 11A |
 | Spin | `body.rotation_period`, `body.obliquity` | day length and tilt; expected values come from tides and history |
@@ -47,7 +47,7 @@ Two honest notes on the kernel as it is:
 - A world added or imported by hand carries mass **and** radius, both typed (`bodies_from_facts` reads both; "Something else" in Add here asks for both). A world that formation made gets its radius from its mass and makeup. This design wants the second behaviour for every world (question 3).
 - A hand-added world gets a fixed core share (0.32) and no water share. Makeup needs to reach `bodies_from_facts` in full before the Makeup handle is honest for hand-made worlds (kernel ask K3).
 
-So the count is 3 for a system, 1 for a star, 6 for a world. V3 had about 27 sliders across ten tabs for one body.
+So the row is 3 handles for a system, 1 for a star, 6 for a world. **A handle is a subject, not a single number** (Alex, 24 Nov: makeup and orbit are each "more than 1 slider"). Each opens a box with a few parts, set out in sections 11A, 11B and 11F: about twenty true inputs for a world in all, grouped six ways, with the commonest part of each on top. V3 had about 27 sliders across ten tabs for one body, most of them results.
 
 ## 3. The handle and its strip
 
@@ -80,12 +80,54 @@ A strip's small menu (the rare things, in context): Reset to what the science ex
 
 **Handles are data.** Each handle is a row in a small handle sheet in the base pack: the field, its name at each depth, its quantity kind, log or linear, the block that gives its range and walls, its reference marks, and which desks may move it. A pack can add a handle for a field of its own, Orac can read the sheet to know what it may set, and the same strip then works for every numeric input in SSE4 (section 12).
 
+## 3A. Typing is always there
+
+Alex, 24 Nov: "Users must ALWAYS be able to type an entry: it's how they enter real data. Eyeball is great for experimenting but some users like to bring in other work." A standing rule for every editing surface:
+
+- **Every figure that can be dragged can be typed,** in place, with one press. That includes every part of every box (shape, lean, tilt, each gas, each makeup share), not only the six on the row. A grip on the chart always has a figure that moves with it, and that figure takes typing.
+- **Typed values are taken exactly as typed.** No magnetism, no rounding to the strip's steps, full precision kept and shown ("0.01671022"). Any unit of the right kind is accepted and converted ("149.6 million km", "365.256 d" for an orbit's size, "23d 26m" for an angle).
+- **Past the end of a strip is fine.** A strip's range is where play is interesting, not a limit on entry. A typed value beyond it stretches the strip to include it.
+- **The sheet.** Each body has "Type it all in": one plain table of every input it has, by handle, with its unit, and beside each the value the physics would give. Tab moves down it. It takes a pasted row or column from a spreadsheet or a paper's table, shows what it understood before applying, and applies as one change. It is where catalogue data goes in, and it can mark the entry "catalogued" with its source (the evidence kind the kernel already has for the start sheet's Sol), which is distinct from authored.
+- **Typing gets the same guidance as dragging:** the verdict, tipping points and "what followed" appear for a typed value exactly as for a dragged one, after Enter.
+
+## 3B. One editing grammar
+
+SSE3's editors grew one at a time: ten tabs on a body, each laid out its own way; sliders of four kinds (plain, banded, log, dual); locks on some values and not others; an Overrides tab apart from the values it overrode; seven definition editors under Settings, each its own dialog; a right-click menu with its own list of actions. SSE4 has the chance to make all editing out of a few parts that always look and behave the same. These are the parts, and nothing in this note uses anything else.
+
+| Part | What it is | Always |
+|---|---|---|
+| **Handle** | a subject you can set, as a chip on the row | label above, value below, inked underline when you have set it |
+| **Box** | what a handle opens, under the row | most-used part on top; one box open at a time; a verdict line; a menu row last |
+| **Strip** | a number on a line | your mark in the accent; the diamond for what the science expects; ticks where something changes; green for usual; hatching for a neighbour's reach; the figure top right, typeable |
+| **Bar** | shares of a whole (air, makeup, any mixture) | drag a join; always sums to the whole; small shares become chips |
+| **Ring** | an angle or a place round a circle | drag the dot; catches named in words |
+| **Chips** | named choices and shortcuts (Kinds, "in step with", "locked") | a chip sets handles and says what it set; never a hidden mode |
+| **Verdict** | one sentence under any control | worst news first, plain words, at most one offered fix as a link |
+| **Menu row** | the rare things for this control | Reset first, Why? last, the unit and "From this date" between |
+| **Grip** | a control on the chart itself | one grip changes one thing; a readout beside the pointer; the box's figure moves with it |
+| **Ghost** | a thing not yet placed | follows the pointer, carries a verdict, placed with a press, Esc cancels |
+| **Tree** | who goes round what | brackets round pairs; before and after for any structural edit |
+| **Recipe** | steps toward something a world could be | each step separate, with what it leans on and what skipping costs |
+| **Pencil and ink** | pencil (muted italic) is a preview; ink is settled | nothing in pencil is saved |
+| **Sheet** | every input as a typeable table | paste accepted; the physics' own value beside each |
+
+How it stays consistent as SSE4 grows:
+
+- **A new editor is data, not a new screen.** A pack declares handles, their parts, and which part type each uses (strip, bar, ring, chips) in the handle sheet. The shell draws them. A ship's drive, a calendar, a gas on the data sheet, a tech level and a weather setting all get the same boxes with no new component.
+- **The same words everywhere:** Reset, Why?, Kinds, Could be, Reach it, Pin it, From this date, What followed, What does not add up. Each is defined once in this note.
+- **The same three colours of meaning:** accent for what you set and are holding, green for where the physics is comfortable, the warm warning tone for strain. Honesty marks stay on the GM view only.
+- **A check, like the walk check:** `tests/ui` gains an editing-grammar check that fails a pull request which adds a slider, dial or dialog for a value outside these parts.
+
 ## 4. The chart is the first editor
 
 On the Build desk, bodies drag (U14 says so already). This is what dragging does:
 
 - **Drag a world** round its star: its orbit changes size. A ghost and its new orbit line follow the pointer; the world itself stays put until you let go. A small readout rides beside the pointer: the distance, the year, the surface the quick look gives, and the stability verdict (lasts, watch, unstable) from the ST1 blocks. The radial under the pointer shows the same tipping points and walls as the Orbit strip, and the "Where things can orbit" layer (gap 1, gap 40) turns on by itself for the length of the drag, so the neighbours' no-go bands and the zone lines are visible while you choose.
-- **Drag the far point** of a selected orbit (a small handle at apoapsis) to change how stretched it is. Drag the handle round the ring to turn the ellipse.
+- **One grip, one thing** (Alex, 24 Nov: "the drag only has 1 aspect... the distance from parent"). Dragging the world in or out changes only its distance. The other parts of an orbit each have their own grip, which appear on the orbit once the world is selected, so nothing is hidden behind a modifier key:
+  - **Along the line:** drag the world round its own orbit to set where it is now. The drag locks to "in and out" or "round" from the way it first moves, as a drawing tool does; Shift frees both.
+  - **The far point:** a small grip at the far end of the orbit. Pull it out or in to stretch or round the orbit; carry it round to turn the ellipse.
+  - **The lean:** in a tilted or edge-on view, a grip at the orbit's highest point lifts or lowers it. Past upright it is backwards, and says so.
+  - Each grip shows the same readout, tipping points and verdict as its part of the Orbit box (section 11F), and the box's figure moves with it.
 - **Fine control.** The drag is geared: moving the pointer far from the orbit line makes the same hand movement count for less, the way a scrub bar on a video does. Shift is ten times finer. The ghost is lightly magnetic to tipping points, round figures and resonances with neighbours, each named as it catches; Alt turns that off (question 10).
 - **Moons** work the same at the moon level of the chart ("Moons of Tarn"). The range runs from the Roche limit to the edge of the Hill sphere, with the stable part marked (ST1's moon limit).
 - **Drop on a new parent.** Drag a body onto another body and it lights as a target; let go and it orbits that body. Drag a moon out past its planet's Hill sphere and the ghost says "would escape: now orbits Kestrel" and that is what dropping does. This replaces V3's "Re-home to" list and its co-orbital picker (drop into a Lagrange zone of the gap 1 layer).
@@ -173,6 +215,60 @@ Adding a companion is the Add ghost with a star on it.
 - The verdict offers "Move it to 62 AU, where all six worlds last" or "Keep it here and move the worlds to safe orbits" (one batch, one Undo).
 - Up to three stars as nested pairs, as formation makes them (`StarPins.count`); a fourth and beyond is allowed and gets ST1's verdict.
 
+## 10A. Pairs, always: binaries, barycentres and managed chaos
+
+Alex, 24 Nov: binaries "caught us out BIG time trying to bring them in later... Pluto/Charon should run on a barycentre. Also assume users will add stars and planets and trip binary adoption. I had an 8% mass to trigger a barycentre, but maybe we can just always assume it with its parent and have the counter wobble always. Leave those decisions to you... adding and removing bodies needs to be well managed chaos."
+
+**What the kernel has (read 24 Nov; the kernel thread has been asked to confirm and fill in).** Formation builds multiples as nested pairs about their barycentres to any depth, with the Mardling and Aarseth check on every nested pair (`sse-formation/src/hierarchy.rs`, B1c), and ST1 has Holman and Wiegert for worlds in and around pairs. But the record that editing writes to names one body as a parent (`orbit.host`), and the resolve from facts looks for one star with no parent. So today a generated triple is right inside formation and flattened where editing happens. This section is the model editing needs; its kernel side is ask K13.
+
+### The decisions
+
+1. **Always a pair. No threshold.** Every orbit is two sides going round their common centre. The lighter side's path is the big one and the heavier side's is the small counter-wobble, always computed (it is one multiplication). There is no 8% switch and no "binary mode" to trip. The Sun wobbles for Jupiter, Earth for the Moon, Pluto for Charon, by the same rule.
+2. **"Binary" is a label read off the result,** like every class: a pair is *drawn and named* as a pair when its centre lies outside the heavier body's surface. That is a real boundary, not a typed number (Pluto and Charon: outside, so a double planet. Earth and Moon: inside. Sun and Jupiter: just outside, which is true and worth a line in "why?").
+3. **The centre is never a thing the user makes or manages.** It is a point the chart draws when it matters. Nobody adds, names, moves or deletes a barycentre.
+4. **What can be orbited: a body, or a pair.** A world goes round one star of a pair (inside), or round both (outside). Nix goes round Pluto and Charon. A pair needs no record of its own: it is named by its lighter member's orbit, so "round Pluto and Charon" is "round Charon's orbit". Nesting to any depth falls out of this, matching formation's tree.
+5. **Addresses never change** when a system gains or loses a star or a pair becomes a single. Names are suggested ("Kestrel" to "Kestrel A" and "Kestrel B", per the naming design) and never forced.
+6. **The heavier one is "the primary" only as a label.** If an edit makes the lighter side the heavier, nothing is restructured; the label and the drawing follow the masses.
+
+### Adding, removing and moving: the rules that keep it managed
+
+Every edit that changes who goes round what follows the same five rules.
+
+- **R1. Show the family tree before it happens.** The ghost's panel carries a small before-and-after tree of the system, with every body that would be affected listed and its verdict (lasts, watch, unstable, lost). Nothing structural is ever a surprise.
+- **R2. Nobody else moves unless you say so.** Adding a star does not re-parent or shift any existing world. Each keeps its parent and its numbers; only its verdict is worked out again. The tree offers, per affected world and for all of them together, the move that would save it ("round both", "round A, closer in", "hand to B").
+- **R3. Where you drop decides what it goes round,** and the ghost says so in words before you let go: inside a body's hold, "round Kestrel A"; outside a pair's outer stable edge, "round both stars"; between, the nearer, with the verdict's warning.
+- **R4. A move keeps one of two things, your choice at the drop:** *a tidy orbit here* (round, at this distance: the default for Add, Paste and a drag) or *where it is and how it is moving right now* (the same position and velocity, re-expressed round the new parent: the default for an escape, a capture or a removed parent, because it is what would physically happen).
+- **R5. One change, one Undo, dated.** However many bodies a structural edit touches, it is one step, and like any edit it is "as it has always been" or "from this date" (a rogue star captured in play).
+
+Applied:
+
+| You do this | What happens | The tree asks |
+|---|---|---|
+| Add a star far out | it and the old star are a wide pair; worlds stay round the old star | worlds beyond the stable edge: move in, go round both, or leave to their fate |
+| Add a star close in | a close pair | worlds: go round both (default offered), or stay round one |
+| Add a world round both stars | parent is the pair | nothing |
+| Raise a planet's mass until it is a star | nothing structural: the pair was always a pair. Label, drawing and verdicts change | as for adding a star |
+| Add a heavy moon (Charon) | the planet and it are drawn as a double planet once the centre leaves the planet | existing moons: stay round the planet, or go round both |
+| Remove a body with things round it | asks once | take them with it (default) · leave them, moving as they are, round its parent · hand them to a named body |
+| Remove one star of a pair | the pair is gone; its worlds follow R4 | its own worlds: go with it, become rogues, or stay with the other star. Worlds that went round both now go round the one that is left |
+| Drag a world from star A to star B | re-parented, tidy orbit | nothing unless it had moons (they come along) |
+| Drag a moon past its planet's hold | "would escape": it goes round the planet's parent, moving as it was | nothing |
+| Paste a clip that holds a pair | the pair arrives whole | as Add |
+
+**Seeing it.** The object selector on the place line (gap 37) is the tree, with a bracket drawn round each pair. Rows drag in it to re-parent, which is the reliable way on a phone and for anything too close to pick on the chart. The chart draws each pair in its own frame round its centre (the rendering rules' nested frames), with the centre as a small cross when the pair is drawn as a pair; the wobble of a heavy side is visible at Real scale or when zoomed to it. "Seen from" gains "the centre" and either member.
+
+**What must be right underneath** (and is cheap): an orbit's period uses the mass of both sides; positions at a time come from the pair tree (`orbits_at`); the light on a world comes from every star by distance (B1's companion light); the stability verdict uses the pair-aware blocks.
+
+### Build out the default Solar System first
+
+Alex's suggestion, and the right test: the start sheet's Solar System becomes the fixture that proves pairs, before any editing package ships.
+
+- **Pluto and Charon** on their common centre, with Nix, Hydra, Kerberos and Styx round the pair.
+- **The Sun's wobble** from Jupiter and the rest; **Earth and Moon** round theirs.
+- Two more catalogued starter systems, so the cases are all in hand from the start sheet: **Alpha Centauri** (a close pair with Proxima as a wide third: a nested pair) and **Kepler-16** (a world round both stars).
+- **A checked list of structural edits** run against them in CI, each asserting the tree, the addresses and one Undo: add a wide star, add a close star, promote Jupiter to a star, remove Charon, remove Alpha Centauri B, drag a world from A to B, cut and paste the Pluto pair to another system.
+- A walk step for the test drive: "Open Pluto: watch both circle the point between them."
+
 ## 11. Moons
 
 - Everything in sections 3 to 8 applies to a moon unchanged; its Orbit strip runs from Roche to Hill.
@@ -209,6 +305,140 @@ SSE3's "ages or stays as authored" switch goes. A hand-set air is dated data; th
 Molten rock, seas under ice shells and deep fluid layers are not set here. They are results, and the cutaway shows them (the phase profile). To get one, change what causes it (Reach it offers the handles), or pin it.
 
 **The kernel today:** pressure and a gas mix are authored fields, but an authored air does not yet change the greenhouse (the surface chain uses a pack constant; test drive rough edge 1 is the same gap). Surface liquid is water only, in oceans, with a yes or no for "has oceans". Moving ices (W8) already handle carbon dioxide, nitrogen and methane frost. So this section needs asks K7 and K8 below, and until they land the Air and Liquids boxes can ship showing amount and mix with the honest note "does not yet change the climate".
+
+## 11B. Makeup and the inside of a world
+
+Makeup is one handle on the row, but its box is the richest of the six, because SSE4's interiors are real: a core that freezes over time, a mantle that convects or stalls, ice phases, shells and buried seas. The box has three parts, and the **cutaway is the editor**.
+
+1. **What it is built from:** one bulk bar of the five materials formation uses (iron and metal, rock, carbon, ices, gas), by mass. Drag a join; the others keep their proportions. Tipping points sit on the joins and come from the sweep: "core as big as Mercury's", "enough ice for a sea with no floor of rock", "gas past 1%: the radius swells". Radius, density and gravity follow in pencil as you drag, which is the mass and radius relation made visible.
+2. **What that makes inside:** a cutaway wedge beside the bar, redrawn from the sweep as you drag: inner and outer core, mantle, crust, any buried sea, ice shell, deep air. **Layers are results.** Press a layer for its why?, with Reach it and Pin it like any result ("make the ice shell 5 km thick").
+3. **What drives it** (Science depth), two strips:
+   - **Heat from the rock:** how radioactive the rock is, against Earth's (`k40_rel`, `r_process_rel`). Tipping points: "the mantle stalls below", "the core's dynamo dies below", "a buried sea freezes below", "volcanoes everywhere above". Heat from tides is shown on the same line as a second mark that you cannot drag, labelled "from its orbit", because it is a result of the orbit and the neighbours; pressing it takes you to the Orbit handle.
+   - **How oxidised:** the mantle's redox state (`redox_iw`). It sets how much iron went to the core and what the rock breathes out (F-redox), so its tipping points are "air comes out as hydrogen and methane below" and "as water and carbon dioxide above".
+
+**Kinds for makeup** at any depth: Earth-like rock, iron world, water world, ice moon, carbon world, small Neptune, gas giant. Each sets the bar.
+
+**Where research is divided,** the kernel already carries a choice (a regime's `dial`: for example whether a heavy rocky world has moving plates or one stiff lid). That shows as a small choice on the result's why?: "Research is divided. Using: stiff lid. Switch to: moving plates." Choosing is not a pin and carries no mark.
+
+**Riches.** What a world holds to mine is a real amount from its makeup and history (the element inventory, MP6). A worldbuilder who wants "rich in heavy metals" changes the system's birth chemistry or this world's heat-producing and heavy element shares at Science depth. Placing one particular lode by hand is site authoring, which is parked for 4.2.
+
+**So how do you put in a subsurface ocean?** It is a natural occurrence, and you ask for it. A buried sea exists when there is water, a lid of ice, and enough heat or antifreeze to keep the water under the lid liquid. The app shows how close the world is and what would close the gap. That is section 11C.
+
+## 11C. "Could be…": the app suggests, the worldbuilder chooses
+
+Alex: "we *should suggest*... a user can do one and not the other" and "we guide better now rather than leave them alone". So guidance is not only a verdict on what you just did. Each world's card carries one line that looks ahead:
+
+> **Could be** home to humans · have a buried sea · have a magnetic field · more ▾
+
+Pressing one opens a short **recipe**: the steps that would make it true for this world, worked out by the physics, each with its own button, in order of what depends on what.
+
+*Home to humans, for a cold, thin-aired world:*
+1. **Thicken the air** to 0.6 bar with 21% oxygen. `Do this`
+2. **Give it a magnetic field,** or the star strips that air: half gone in 80 million years. Needs a liquid iron core that is still stirring: raise the heat from the rock to 1.3 times Earth's. `Do this` · `Pin a field instead`
+3. **Warm it** by 14 K: the thicker air does 9 of those; move in to 0.49 AU for the rest. `Do this`
+
+The rules for a recipe:
+
+- **Every step is optional and separate.** Do one and not the others. The line then reads what you chose to live with: "Home to humans, **but** the air is being lost (half in 80 million years)". That is a story hook, not an error.
+- **Each step is a Reach it** where the physics can get there, and offers **Pin it** where the worldbuilder would rather just say so. A pinned step is marked on the GM view and nowhere else.
+- **Steps know what they lean on.** A step that only matters because of another is drawn under it ("needs a field *to keep* the air"), so the chain Alex describes (air, then a field to protect it) is visible before anything is changed.
+- **The smallest change first.** Where several handles could do it, the recipe offers the one that moves least from where the world is, and lists the others under "or".
+- **Nothing is applied until pressed,** and each press is one undo step. "Do all" exists and is one step.
+- **It is suggestion, not nagging.** One line on the card, closed by default at Science depth, and a Curious-depth sentence in words ("With thicker air this could be a second home"). A world can be told "stop suggesting this".
+
+**What can be suggested** is data: each "could be" is a small record in a pack with a name, a test over results (process strengths, amounts, labels) and nothing else. The recipe is not written by hand; it is the solver of Reach it run on that test across the handles. The base pack ships these: home to a profile (below), have open seas, have a buried sea, have a magnetic field, have moving plates, have volcanoes, be locked to its star, have seasons, keep its air, have rings, hold a large moon. A game pack adds its own (the Traveller pack: "be a Garden world", "have a breathable-with-filter air").
+
+**Who it could be home to: requirement profiles.** "Home to humans" is a test against a **profile**: the ranges a kind of life needs. Temperature, pressure, the gases it breathes and the ones that poison it, gravity, radiation at the ground, the liquid it is built on, light. The life design already describes this profile for habitats (its requirement profile, handoff 11A); this uses the same shape for a visitor or settler.
+
+- 4.0 ships one profile in the base pack, **Humans**, in three grades: unaided, with a mask, with a suit. It is editable like any pack data (a setting's hardier colonists are a copy with wider ranges).
+- The card's line names the profile: "Could be home to **humans**". A campaign chooses which profiles it cares about; the line lists those.
+- **The hook for 4.1:** a species is a record that carries a profile. When the aliens update adds species that come out of evolution, each brings its profile and every world answers "could be home to the Vesh" with no new mechanism. A GM can already write a profile by hand in 4.0 for a setting's aliens; what 4.1 adds is profiles that follow from a species' own history.
+- Players never see suggestions. What a crew learns about habitability comes through their sensors and lens, as now.
+
+**What does not add up (GM only).** The other half of "we let them and point out things that break physics". Each world's card, on the GM view only, has one list of everything on it that strains or breaks the physics: pins, values past a wall, unstable orbits, mixes that should not last, steps skipped in a recipe. Each line says what, by how much, and has two buttons: go to it, and "make it add up" (the Reach it that would mend it). The system card sums its worlds. Nothing here is ever shown to a player seat, and nothing here blocks anything.
+
+## 11D. What a worldbuilder wants to do, and how
+
+Thought through from the worldbuilder's side. "Could be" means it is offered as a suggestion; "allowed" under the last column is always yes, so the column says what the GM-only list will note.
+
+| I want this world to… | What you do | What the GM list may note |
+|---|---|---|
+| have Earth gravity | Reach it on gravity (offers Mass or Makeup) | nothing |
+| be warmer, colder, temperate | drag Orbit; or Air; or the star's Mass; "Could be: open seas" | nothing |
+| have air people can breathe | Air box, or "Could be home to humans" | oxygen with nothing making it; air being lost |
+| be a desert, an ocean world, an archipelago | Liquids amount, with coverage marks | nothing |
+| have seas of methane, ammonia, something invented | Liquids, Add a liquid; New substance for an invented one | fictional substance |
+| have a buried sea | "Could be: a buried sea" (ice, heat, antifreeze, or tides from a neighbour) | pinned sea with too little heat |
+| be volcanic, or dead and cratered | Makeup, heat from the rock; or an eccentric orbit for tides | nothing |
+| have continents that drift | "Could be: moving plates"; or choose where research is divided | nothing |
+| shield its surface from radiation | "Could be: a magnetic field"; or thicker air | pinned field without a stirring core |
+| have a long day, no day, a steep tilt | Spin handle; "Could be: locked to its star" | spin faster than break-up |
+| have big tides, a huge moon, two moons | Add a moon with the ghost; Kinds | moon past the stable limit |
+| have rings | "Could be: rings" (a moon inside the Roche limit, or a ring placed by hand) | ring that should have spread away |
+| sit round a red giant, a pulsar, two suns | star chooser, Kinds; Add a companion | worlds that should not have survived |
+| be rich in something to mine | Makeup at Science depth; system birth chemistry | amounts no birth cloud gives |
+| have been different once (dead world, terraformed, shattered) | "From this date" on any handle makes it an event in the world's history | nothing: dated changes are plain data |
+| be a rogue with no sun, a twin world, a trojan | drop on no parent; drop on a body; drop in a Lagrange zone | nothing |
+| carry life | 4.0: life follows from energy and chemistry, and "Could be home to" a profile; richer control is 4.1 | life pinned where no energy source exists |
+| be flat out impossible for the story | Pin it, with a reason ("Precursor engineering") | the pin, in full |
+| look a certain way (colour, clouds, sky) | results of air and ground; pin a look only in a Looks pack | nothing |
+| have a name, a story, secrets, a picture | the card, Known to, notes (already designed) | nothing |
+| be built, hollow, artificial | a construct with physics blocks (megastructures note) | per that note |
+
+## 11E. SSE3's Settings editors, each with its SSE4 home
+
+SSE3 keeps its definition editors under Settings: Tag categories, Time and Calendars, Fuel and Drives, Sensors, Atmospheres and Mixes, Liquids, Biospheres, the Skin editor and colour palette, plus LLM settings, the world gallery, the relay, Your data, memory, player connections, diagnostics and the danger zone.
+
+The SSE4 rule for all of them: **a definition is a record in a pack, and you edit it with the same card, handles and strips as a world.** A change goes into the campaign's own pack, the base value is shown beside it with Reset, and an invented thing carries the fictional mark. Two ways in, by how often they are used: **in context** ("Edit this gas…" from the Air box, "Edit this drive…" from a ship), and **all together** in Workshop under one entry, "Your setting's data".
+
+| SSE3 editor | What it edits | SSE4 home | Better how |
+|---|---|---|---|
+| Atmospheres and Mixes | per gas: molar mass, melting and boiling, greenhouse factor, Rayleigh scattering, absorption and aurora bands, colour, clouds; mixes with pressure limits, "occurs on" and spawn weight | Gases are substance rows on the data sheet (Reference). Mixes are Kinds for air. | Greenhouse and colour come from the absorption bands, not a typed factor. "Occurs on" and spawn weight go: the physics decides where a mix arises. Bands are edited on the spectrum chart. |
+| Liquids | melting, boiling, triple and critical points, density, colour, cloud look, biosolvent, conducting | the same substance rows (section 11A) | one row serves air, sea, ice, interior and life |
+| Biospheres | biosphere types and their needs | life chemistries as pack data (E0), and requirement profiles (11C) | profiles also answer "could be home to"; richer life is 4.1 |
+| Fuel and Drives | fuel density; drive type, thrust, exhaust speed, power, use in air, FTL, where refuelled, availability | Paper spacecraft data (track RK) and the tech ladder (track FT) | availability is a civilisation's capability with a date, not a typed list; each number is a handle with "can land here" as a tipping point |
+| Sensors | sensor definitions: range, what it finds | sensor records with real bands and reach (`sse-sense`, `detect`) | range follows from aperture and band; seats get their sensors' bands through the lens |
+| Time and Calendars | calendar name, epoch, year length, leap rules, weekdays, format | Reference, Units and calendars (MP15; the kernel's calendars exist) | a calendar can be read off a world's own day and year, then adjusted |
+| Tag categories | categories, colours, player-facing names, automated rules with chances | Tags in Workshop (tags design) | tags are labels read off results by rules, never chance, and never feed physics |
+| Skin editor, palette | GM skins and single colours | Looks packs and player themes; GM skins were dropped | as ruled |
+| Rendered world gallery | pictures of world types | the class gallery in Names and classes (gap 35) | drawn from the physics; "Add one to this system" on each (Kinds) |
+| LLM settings | model and key | Agents (bring your own key) | as built |
+| Map display, units | map options, unit system | view controls (rule 12); click a unit (gap 5) | per viewer, in context |
+| Relay, player connections | network for remote players | Seats and Share with players | as built |
+| Your data, memory, diagnostics, danger zone | storage, export, reports, wipe | Your data in More; the diagnostic file through the Open door | as built |
+
+Not yet anywhere in SSE4 and needed for this: a substance editor on Reference (MP10 part 3 covers the page; editing is MP9 and MP12), the calendar editor, and the "Your setting's data" entry in Workshop that lists a campaign pack's own records by shelf. These join the asks below.
+
+## 11F. The Orbit and Spin boxes in full
+
+**Orbit.** The chart stays the first editor (section 4). The Orbit box is the same things as figures and strips, for when you want a number, are on a phone, or want a part the flat chart cannot show. It opens with a small picture of the orbit from above and from the side, whose points drag like the chart's.
+
+| Part | Field | The control | Tipping points and marks |
+|---|---|---|---|
+| Size | `orbit.semi_major_axis` | the strip of section 3; type a distance or a period | boil and freeze lines, frost line, neighbours' reach, Roche, the star |
+| Shape | `orbit.eccentricity` | strip from round to 1 | "seasons from distance begin", "leaves the temperate zone at its far point", "crosses Sable's orbit", "tides heat the inside above" (moons), and the wall at 1: "leaves the system" |
+| Where it is now | `orbit.mean_anomaly_at_epoch` | a ring: drag the world round its orbit | catches at closest and farthest point, and at "lined up with", "opposite" and "square to" each neighbour; this sets where it is at the campaign's now |
+| Lean | `orbit.inclination` | strip from 0 to 180 degrees | "wild swings with the companion begin" (Kozai), "no longer crosses the star's face as seen from Sable"; **past 90 is backwards**, written on the strip |
+| Backwards | the same field | one chip, **Retrograde**, which flips the lean to its mirror | the verdict says what a backwards orbit means here ("a captured body: tides draw it inward", for a moon) |
+| Turn of the ellipse, and the line where it crosses | `orbit.argument_of_periapsis`, `orbit.ascending_node` | two small rings, at Science depth | which season falls at the closest point |
+| In step with a neighbour | none: it is a size | chips: "2:1 with Sable", "3:2 with Vault" | sets Size to the resonance and says whether it holds |
+| Round what | `orbit.host` | drop on a parent (section 4); or a list | none |
+
+Results shown under it: year, closest and farthest distance, speed at each, how much the sunlight swings through the year, the stability verdict and why. In a tilted or edge-on view of the chart the lean is dragged directly by lifting the orbit; in the flat chart it is the strip.
+
+**Spin** is the sixth handle and gets the same treatment.
+
+| Part | Field | The control | Tipping points and marks |
+|---|---|---|---|
+| Day | `body.rotation_period` | strip on a log scale, from break-up to years | "flies apart faster than this", "weather splits into more bands below", "locked to its star here" (it catches), "three turns per two orbits" (Mercury's state); the diamond is what tides and its birth would have left |
+| Backwards | the same field, signed | one chip, **Retrograde** | "the sun rises in the west" |
+| Tilt | `body.obliquity` | strip from 0 to 180 degrees | "no seasons below", "the poles get more sun than the equator above", "held steady by its moon" or "wanders without a large moon" |
+| When midsummer falls | season phase | a small ring, at Science depth | against the closest point of the orbit |
+| Locked | none: it is a day | chips: "Locked to its star", "Locked to its planet" | sets Day to the year or month, and says whether tides would have done this by now |
+
+Results: length of the sun's day against the star's day, days in a year, **oblateness** (how flattened the spin and makeup leave it), how the spin axis wobbles and over how long, and tide heating. Oblateness is a result, which is the honest answer to wanting to set it: Reach it offers Day and Makeup, and Pin it remains. It matters downstream (a flattened planet turns its moons' orbits), so it is on the card at Science depth with its why?.
+
+**The kernel today** has every orbit element as an authored field, a signed rotation period and obliquity (weather reads them, W7b). It has no season phase as an authored field and no oblateness as a result on the card; both join the asks (K12).
 
 ## 12. Thinking wide: what else this is
 
@@ -269,6 +499,11 @@ Kernel (thread "Build kernel resolve and rules"):
 - **K5 moon formation sampling** for "What forms here" round a planet.
 - **K6 honesty rule** of question 4: authored unless past a wall or contradicting the physics.
 - **K7 authored air drives the climate**: pressure and mix feed the greenhouse and air optics for hand-made and catalogued worlds, and "what the science expects" is readable for both amount and mix.
+- **K9 interior inputs as authored fields** for any world: heat-producing elements, redox, core light elements, and the regime `dial` choice, with layers readable per sweep sample for the live cutaway.
+- **K10 `could_be`**: given a world and a test from a pack, return the steps (handle, target value, what it leans on, what skipping costs). It is Reach it over several handles. Also offered to Orac.
+- **K11 requirement profiles** as pack records, with the Humans profile in the base pack, shaped so a 4.1 species record can carry one.
+- **K12 season phase as an authored field, and oblateness and axis wobble as results** readable per sweep sample.
+- **K13 pairs in the record** (section 10A): a parent may be a pair; every orbit two-sided about its centre with both masses; "binary" as a derived label; a re-parent op with the two keeps of R4; `withdraw` with the three choices for what orbited it; a preview op that returns the tree an edit would make, with verdicts; Pluto and Charon, Alpha Centauri and Kepler-16 as catalogued fixtures. The kernel thread was asked on 24 Nov what exists.
 - **K8 a surface inventory by substance** (`surface.inventory.<substance>`, with `body.surface_water_oceans` as its water row): phase from the Look up block, coverage from the ground's own height spread, vapour handed to the air.
 
 Chart room (thread "Make the SSE4 test drive work end to end"), suggested packages, after navigation in stage 2:
@@ -279,6 +514,12 @@ Chart room (thread "Make the SSE4 test drive work end to end"), suggested packag
 - **ED4** the ghost for Add, Paste and Duplicate; drop on a parent; paste onto a body.
 - **ED5** Reach it and Pin it (with gap 4 and gap 12).
 - **ED6** Kinds and the star chooser; changing a star with worlds; a companion star.
+- **ED0, before the rest:** the Solar System fixture with pairs and the checked list of structural edits (kernel K13 first), then the family tree in the ghost's panel and in the selector.
+- **ED13** the sheet, "Type it all in", with paste and the catalogued mark.
+- **ED12** the Orbit and Spin boxes in full: shape, position ring, lean, retrograde, resonance chips, day, tilt, lock chips.
+- **ED9** the Makeup box: bulk bar, live cutaway wedge, heat and redox strips, research-is-divided choices.
+- **ED10** "Could be…" recipes, requirement profiles (Humans), and the GM-only "What does not add up" list.
+- **ED11** "Your setting's data" in Workshop and Edit-in-context for definitions (with the data sheet and track RK owners).
 - **ED8** the Air and Liquids boxes: mix bar, trace chips, phase bars (after K7 and K8, or before them with the honest note).
 - **ED7** moons in full; Explore's read-only strip and "Try changing it"; phone dock.
 
@@ -302,4 +543,18 @@ Chart room (thread "Make the SSE4 test drive work end to end"), suggested packag
 17. **Liquids replaces Water:** you set how much of any substance; whether it is liquid, ice or vapour is a result, and the phase bars show why. *Recommend yes.*
 18. **Coverage stays draggable** as marks on the amount strip, with a typed share as a Reach it. *Recommend yes.*
 19. **Custom liquids are substances on the data sheet,** in a pack, marked fictional when they are; no separate liquids list. *Recommend yes.*
+20. **Makeup is one handle whose box holds a bulk bar, a live cutaway, and heat and redox strips at Science depth;** layers are results. *Recommend yes.*
+21. **A buried sea (and plates, a field, volcanoes) is asked for through "Could be…",** never painted in as a layer; Pin it remains for those who just want it so. *Recommend yes.*
+22. **"Could be…" on every world's card:** separate optional steps, dependencies shown, what skipping costs stated, one line, can be silenced per world. *Recommend yes.*
+23. **Requirement profiles as pack data, Humans in three grades for 4.0,** shaped so 4.1 species bring their own. *Recommend yes.*
+24. **One GM-only list per world, "What does not add up",** with a mend button on each line. *Recommend yes.*
+25. **Definitions (gases, liquids, drives, sensors, calendars, tags) are edited as records with the same handles,** in context and under one Workshop entry, "Your setting's data". *Recommend yes.*
+26. **A handle is a subject with a box of parts:** the row stays six, and Orbit and Spin get the parts in section 11F (shape, where it is now, lean, retrograde, in step with a neighbour; day, tilt, locked). *Recommend yes.*
+27. **Oblateness is a result** shown at Science depth with Reach it and Pin it, not a handle. *Recommend yes.*
+28. **Typing is a standing rule:** every draggable figure types, exactly as typed, past a strip's end if need be; plus a per-body sheet that takes pasted data and can mark it catalogued. *Recommend yes.*
+29. **Always a pair, no 8% threshold:** every orbit is two-sided about its centre, and "binary" or "double planet" is a label for when the centre lies outside the heavier body. *Recommend yes.*
+30. **A parent can be a body or a pair,** and the centre is never something the user creates or manages. *Recommend yes.*
+31. **The five rules for structural edits** (show the tree first; nobody else moves unless you say; the drop decides the parent; tidy orbit or keep its motion; one dated Undo). *Recommend yes.*
+32. **Pairs are proved on the default Solar System first** (Pluto and Charon, plus Alpha Centauri and Kepler-16 as starters, with a checked list of structural edits in CI) before editing packages ship. *Recommend yes. CI gains tests only; no workflow change.*
+33. **One editing grammar** (section 3B): every editor is built from the same fourteen parts, a new editor is data in the handle sheet, and a UI check fails anything that adds its own slider or dialog. *Recommend yes.*
 14. **Order:** ED1 to ED3 straight after the navigation items in stage 2, since "change a world" is in the stage 1 walk and is the first thing a tester tries; ED4 to ED7 after. *Recommend yes.*
