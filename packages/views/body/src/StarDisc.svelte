@@ -8,11 +8,13 @@
   import { constant, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { coronaScaleHeight, CORONA_K, cycleOf, drawStar, flaresAt, readLiveStar, GRANULE_DT, granulesFor, granulesShow, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES, type Convection, type LiveStar, type StarDraw, type StarReader } from "../../../renderer/src/index.ts";
 
-  let { ctx, scene, address, label, size }: { ctx: ViewContext; scene: SystemScene; address: string; label: string; size: number } = $props();
+  // `bare` draws the disc alone, in the `light` given (the body card's picture); the Body screen adds the facts and switch.
+  let { ctx, scene, address, label, size, bare = false, light = "visible" }: { ctx: ViewContext; scene: SystemScene; address: string; label: string; size: number; bare?: boolean; light?: StarDraw["light"] } = $props();
 
   let got = $state<LiveStar | null>(null);
   let failed = $state<string | null>(null);
-  let band = $state<StarDraw["light"]>("visible");
+  // svelte-ignore state_referenced_locally (the starting band; the switch changes it after)
+  let band = $state<StarDraw["light"]>(light);
   let turn = $state(0);
   let canvas = $state<HTMLCanvasElement | undefined>();
 
@@ -82,7 +84,7 @@
     <div class="disc" tabindex="0" role="img" aria-label={narrateStar(label, got.teff, spots.length, coverage, String(got.activity.regime), band)} onkeydown={key} data-band={band} data-spots={spots.length} data-granules={granules ? granules.n : 0}>
       <canvas bind:this={canvas} style={`width:${size}px;height:${size}px`}></canvas>
     </div>
-    <dl class="facts">
+    {#if !bare}<dl class="facts">
       <dt>View</dt>
       <dd>
         <span class="seg" role="group" aria-label="Band">
@@ -112,7 +114,7 @@
       </dd>
       <dt>Why</dt>
       <dd class="why">Spot places are drawn from the star and the cycle (the kernel gives coverage, not maps); spots are {SPOT_DELTA_K} K cooler; the corona is taken at {(CORONA_K / 1e6).toFixed(1)} MK; granule cells are placed from the star (the kernel gives their size and life) with a temperature spread of {(GRANULE_DT * 100).toFixed(1)}%, set from the Sun's measured contrast. Turn with the arrow keys. Sources: {STAR_REFERENCES.map((r) => r.text.split(".")[0]).join("; ")}.</dd>
-    </dl>
+    </dl>{/if}
   {/if}
 </div>
 
