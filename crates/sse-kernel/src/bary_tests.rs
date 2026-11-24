@@ -179,9 +179,7 @@ fn hosts_are_checked_on_write() {
         &mut k,
         serde_json::json!({"op":"open_universe","id":"t","seed":"t"}),
     );
-    let batch = |edits: serde_json::Value| {
-        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,"edits":edits})
-    };
+    let batch = |edits: serde_json::Value| serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,"edits":edits});
     // A star and a world in one edit: fine.
     let r = send(
         &mut k,
@@ -215,4 +213,177 @@ fn hosts_are_checked_on_write() {
             "field":"orbit.host","value":"u:t/sys:0/body:8","occurred_at_s":0}}),
     );
     assert_eq!(r["code"], "bad_host", "{r}");
+}
+
+/// K13 `rehost`: keep the motion (the Moon set loose round the Sun stays
+/// where it was and is bound), keep it tidy (a round orbit at its present
+/// distance), or refuse by name when the motion is not bound to the new host.
+#[test]
+fn rehost_keeps_motion_or_tidies() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"t","seed":"t"}),
+    );
+    let (earth, moon, rock) = (
+        "u:t/sys:0/body:3",
+        "u:t/sys:0/body:3/body:0",
+        "u:t/sys:0/body:7",
+    );
+    let e = |a: &str, f: &str, v: serde_json::Value| serde_json::json!({"address":a,"field":f,"value":v});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,"edits":[
+            e(SUN, "body.mass", M_SUN.into()),
+            e(earth, "body.mass", 5.9722e24.into()), e(earth, "orbit.host", SUN.into()),
+            e(earth, "orbit.semi_major_axis", 1.496e11.into()),
+            e(moon, "body.mass", 7.346e22.into()), e(moon, "orbit.host", earth.into()),
+            e(moon, "orbit.semi_major_axis", 3.844e8.into()),
+            e(rock, "body.mass", 1e15.into()), e(rock, "orbit.host", SUN.into()),
+            e(rock, "orbit.semi_major_axis", 3.0e11.into()),
+        ]}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let at = 1_000_000_i64;
+    let where_ = |k: &mut crate::Kernel, a: &str| -> [f64; 3] {
+        let r = send(
+            k,
+            serde_json::json!({"op":"orbits_at","system":"u:t/sys:0","at_s":[at]}),
+        );
+        let b = r["bodies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|b| b["address"] == a)
+            .unwrap_or_else(|| panic!("{r}"))
+            .clone();
+        let v = &b["at"][0]["sys_m"];
+        [
+            v[0].as_f64().unwrap(),
+            v[1].as_f64().unwrap(),
+            v[2].as_f64().unwrap(),
+        ]
+    };
+    let before = where_(&mut k, moon);
+    // Not bound to a pebble.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"rehost","address":moon,"to":rock,"keep":"motion","at_s":at}),
+    );
+    assert_eq!(r["code"], "rehost_refused", "{r}");
+    assert!(
+        r["message"].as_str().unwrap().contains("would escape"),
+        "{r}"
+    );
+    // Nor round its own moon.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"rehost","address":earth,"to":moon,"at_s":at}),
+    );
+    assert!(r["message"].as_str().unwrap().contains("orbits it"), "{r}");
+    // Set loose round the Sun, moving as it was: bound, and where it was.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"rehost","address":moon,"to":SUN,"keep":"motion","at_s":at}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let after = where_(&mut k, moon);
+    assert!(len(minus(after, before)) < 1.0e6, "{before:?} {after:?}");
+    // Tidy: a round orbit round the rock at its present distance.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"rehost","address":earth,"to":rock,"at_s":at}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+}
+
+/// K13 withdraw's three choices: take what went round it (the default),
+/// leave it round the body's host, or hand it to a named body; one event.
+#[test]
+fn withdraw_takes_leaves_or_hands_on() {
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let (earth, moon, mars) = (
+        "u:t/sys:0/body:3",
+        "u:t/sys:0/body:3/body:0",
+        "u:t/sys:0/body:4",
+    );
+    let setup = || {
+        let mut k = crate::Kernel::new();
+        send(
+            &mut k,
+            serde_json::json!({"op":"open_universe","id":"t","seed":"t"}),
+        );
+        let e = |a: &str, f: &str, v: serde_json::Value| serde_json::json!({"address":a,"field":f,"value":v});
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,"edits":[
+                e(SUN, "body.mass", M_SUN.into()),
+                e(earth, "body.mass", 5.9722e24.into()), e(earth, "orbit.host", SUN.into()),
+                e(earth, "orbit.semi_major_axis", 1.496e11.into()),
+                e(moon, "body.mass", 7.346e22.into()), e(moon, "orbit.host", earth.into()),
+                e(moon, "orbit.semi_major_axis", 3.844e8.into()),
+                e(mars, "body.mass", 6.4e23.into()), e(mars, "orbit.host", SUN.into()),
+                e(mars, "orbit.semi_major_axis", 2.28e11.into()),
+            ]}),
+        );
+        assert_eq!(r["type"], "authored", "{r}");
+        k
+    };
+    let host_after = |k: &mut crate::Kernel| -> Option<String> {
+        let r = send(
+            k,
+            serde_json::json!({"op":"orbits_at","system":"u:t/sys:0","at_s":[200]}),
+        );
+        r["bodies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|b| b["address"] == moon)
+            .map(|b| b["parent"].as_str().unwrap().to_string())
+    };
+    let gone = |k: &mut crate::Kernel| {
+        let u = k.universe().ok().unwrap();
+        let mut st = u
+            .chronicle
+            .state_at(sse_chronicle::UniverseTime::seconds(200));
+        crate::withdraw::drop_withdrawn(&mut st.facts);
+        !st.facts.contains_key(&a(moon))
+    };
+    let mut k = setup();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"withdraw","address":earth,"at_s":100}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    assert!(gone(&mut k));
+    let mut k = setup();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"withdraw","address":earth,"at_s":100,"others":"leave"}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    assert_eq!(
+        r["affected"].as_array().unwrap().len(),
+        2,
+        "one event for both: {r}"
+    );
+    assert!(!gone(&mut k));
+    assert_eq!(host_after(&mut k).as_deref(), Some(SUN));
+    let mut k = setup();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"withdraw","address":earth,"at_s":100,"others":"hand","to":mars,"keep":"tidy"}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    assert_eq!(host_after(&mut k).as_deref(), Some(mars));
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"withdraw","address":mars,"at_s":150,"others":"hand"}),
+    );
+    assert_eq!(r["code"], "bad_request", "{r}");
 }

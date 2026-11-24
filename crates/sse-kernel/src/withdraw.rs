@@ -14,29 +14,27 @@ use std::collections::BTreeMap;
 
 pub const WITHDRAWN: &str = "withdrawn";
 
-/// Whether an address, any address above it, or anything it orbits (its
-/// `orbit.host` chain: a V3 moon sits beside its planet, not under it) is
-/// withdrawn in these facts. A ring of hosts stops after 64 steps.
+/// Whether an address, or what it belongs to, is withdrawn in these facts.
+/// A body that orbits something belongs to its `orbit.host` (a V3 moon sits
+/// beside its planet, and a moon handed to another body keeps its address);
+/// anything else belongs to the address above it. A ring stops after 64 steps.
 pub fn is_withdrawn(facts: &BTreeMap<Address, BTreeMap<String, Value>>, a: &Address) -> bool {
-    let mut todo = vec![(a.clone(), 0u32)];
-    while let Some((x, depth)) = todo.pop() {
+    let mut at = Some(a.clone());
+    let mut steps = 0;
+    while let Some(x) = at {
         let row = facts.get(&x);
         if matches!(row.and_then(|f| f.get(WITHDRAWN)), Some(Value::Bool(true))) {
             return true;
         }
-        if depth >= 64 {
-            continue;
+        steps += 1;
+        if steps > 64 {
+            return false;
         }
-        if let Some(p) = x.parent() {
-            todo.push((p, depth + 1));
+        at = match row.and_then(|f| f.get("orbit.host")) {
+            Some(Value::Text(h)) => h.parse::<Address>().ok().filter(|h| *h != x),
+            _ => None,
         }
-        if let Some(Value::Text(h)) = row.and_then(|f| f.get("orbit.host")) {
-            if let Ok(h) = h.parse::<Address>() {
-                if h != x {
-                    todo.push((h, depth + 1));
-                }
-            }
-        }
+        .or_else(|| x.parent());
     }
     false
 }

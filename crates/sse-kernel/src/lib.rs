@@ -2254,6 +2254,113 @@ impl Kernel {
         })
     }
 
+    /// `withdraw` with `leave` or `hand`: what went round the body goes
+    /// round its host (or `to`) from `at_s`, in the same event as the
+    /// withdrawal.
+    fn withdraw_rehoming(
+        &mut self,
+        address: &str,
+        at_s: i64,
+        hand: bool,
+        to: Option<&str>,
+        keep: orbits::Keep,
+    ) -> Result<Response, Response> {
+        let u = self.universe()?;
+        let a = in_universe(&u.root, address)?;
+        let mut st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+        withdraw::drop_withdrawn(&mut st.facts);
+        let row = st.facts.get(&a).ok_or_else(|| {
+            err(
+                "unknown_address",
+                format!("{a} has no facts at that time: nothing to withdraw"),
+            )
+        })?;
+        let host_of = |r: &BTreeMap<String, Value>| match r.get("orbit.host") {
+            Some(Value::Text(t)) => t.parse::<Address>().ok(),
+            _ => None,
+        };
+        let new_host = match (hand, to) {
+            (true, Some(t)) => in_universe(&u.root, t)?,
+            (true, None) => return Err(err("bad_request", "hand needs to: the body that takes them")),
+            (false, _) => host_of(row).ok_or_else(|| {
+                err(
+                    "rehost_refused",
+                    format!("{a} goes round nothing, so what goes round it has nowhere to be left: take them, or hand them to a body"),
+                )
+            })?,
+        };
+        let system = {
+            let mut x = Some(a.clone());
+            let mut found = None;
+            while let Some(y) = x {
+                if y.last().kind() == "sys" {
+                    found = Some(y.clone());
+                    break;
+                }
+                x = y.parent();
+            }
+            found.ok_or_else(|| err("bad_address", format!("{a} is not in a system")))?
+        };
+        let facts: BTreeMap<Address, BTreeMap<String, Value>> = st
+            .facts
+            .iter()
+            .filter(|(x, _)| system.contains(x))
+            .map(|(x, r)| (x.clone(), r.clone()))
+            .collect();
+        let kids: Vec<Address> = facts
+            .iter()
+            .filter(|(x, r)| {
+                *x != &a
+                    && match host_of(r) {
+                        Some(h) => h == a,
+                        None => {
+                            x.parent().as_ref() == Some(&a)
+                                && r.contains_key("orbit.semi_major_axis")
+                        }
+                    }
+            })
+            .map(|(x, _)| x.clone())
+            .collect();
+        let mut set: BTreeMap<Address, BTreeMap<String, Value>> = BTreeMap::new();
+        for k in &kids {
+            let r = orbits::rehost(&facts, &system, k, &new_host, at_s, Some(&u.seed), keep)
+                .map_err(|m| err("rehost_refused", format!("{k}: {m}")))?;
+            set.insert(k.clone(), r);
+        }
+        set.entry(a.clone())
+            .or_default()
+            .insert(withdraw::WITHDRAWN.into(), Value::Bool(true));
+        let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        hosts_ok(&latest.facts, &set).map_err(|m| err("bad_host", m))?;
+        let t = UniverseTime::seconds(at_s);
+        let subject: Vec<Address> = set.keys().cloned().collect();
+        let ev = Event::new(EventBody {
+            kind: kinds::AUTHORED_SET.into(),
+            subject: subject.clone(),
+            occurred_at: t,
+            activated_at: t,
+            recognised_at: u.chronicle.next_stamp(),
+            causes: vec![],
+            payload: Payload {
+                set,
+                ..Default::default()
+            },
+            evidence: Evidence::Authored,
+            publisher: Publisher::new("gm", "withdraw", "1"),
+        })
+        .map_err(|e| err("bad_event", format!("{e}")))?;
+        let id = u
+            .chronicle
+            .append(ev)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        Ok(Response::Authored {
+            event_id: id.hex(),
+            affected: subject.iter().map(|x| x.to_string()).collect(),
+            state_hash: latest_hash(&u.chronicle),
+            declared_tag: None,
+        })
+    }
+
     fn flow_inputs(
         &self,
         flow: &Flow,
@@ -2541,7 +2648,28 @@ impl Kernel {
                 evidence,
                 source,
             } => self.set_authored_batch(&edits, occurred_at_s, evidence.as_deref(), source)?,
-            Request::Withdraw { address, at_s } => self.set_withdrawn(&address, at_s, true)?,
+            Request::Withdraw {
+                address,
+                at_s,
+                others,
+                to,
+                keep,
+            } => match others.as_deref().unwrap_or("take") {
+                "take" if to.is_none() => self.set_withdrawn(&address, at_s, true)?,
+                "leave" | "hand" => self.withdraw_rehoming(
+                    &address,
+                    at_s,
+                    others.as_deref() == Some("hand"),
+                    to.as_deref(),
+                    keep.unwrap_or(orbits::Keep::Motion),
+                )?,
+                other => {
+                    return Err(err(
+                        "bad_request",
+                        format!("others: take, leave or hand (with to), not {other:?}"),
+                    ))
+                }
+            },
             Request::Restore { address, at_s } => self.set_withdrawn(&address, at_s, false)?,
             Request::CampaignTags => {
                 let stack_tags = self.observe.tags.clone();
@@ -5183,6 +5311,78 @@ impl Kernel {
                 Response::Retired {
                     event_id: id.hex(),
                     state_hash: latest_hash(&u.chronicle),
+                }
+            }
+            Request::Rehost {
+                address,
+                to,
+                keep,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let h = in_universe(&u.root, &to)?;
+                let system = a
+                    .segments()
+                    .iter()
+                    .position(|s| s.kind() == "sys")
+                    .and_then(|i| {
+                        let mut x = Some(a.clone());
+                        while let Some(y) = x.clone() {
+                            if y.segments().len() == i + 1 {
+                                return Some(y);
+                            }
+                            x = y.parent();
+                        }
+                        None
+                    })
+                    .ok_or_else(|| err("bad_address", format!("{a} is not in a system")))?;
+                let mut st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                withdraw::drop_withdrawn(&mut st.facts);
+                let facts: BTreeMap<Address, BTreeMap<String, Value>> = st
+                    .facts
+                    .iter()
+                    .filter(|(x, _)| system.contains(x))
+                    .map(|(x, r)| (x.clone(), r.clone()))
+                    .collect();
+                let row = orbits::rehost(
+                    &facts,
+                    &system,
+                    &a,
+                    &h,
+                    at_s,
+                    Some(&u.seed),
+                    keep.unwrap_or(orbits::Keep::Tidy),
+                )
+                .map_err(|m| err("rehost_refused", m))?;
+                let set: BTreeMap<Address, BTreeMap<String, Value>> = [(a.clone(), row)].into();
+                let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                hosts_ok(&latest.facts, &set).map_err(|m| err("bad_host", m))?;
+                let t = UniverseTime::seconds(at_s);
+                let ev = Event::new(EventBody {
+                    kind: kinds::AUTHORED_SET.into(),
+                    subject: vec![a.clone()],
+                    occurred_at: t,
+                    activated_at: t,
+                    recognised_at: u.chronicle.next_stamp(),
+                    causes: vec![],
+                    payload: Payload {
+                        set,
+                        ..Default::default()
+                    },
+                    evidence: Evidence::Authored,
+                    publisher: Publisher::new("gm", "rehost", "1"),
+                })
+                .map_err(|e| err("bad_event", format!("{e}")))?;
+                let id = u
+                    .chronicle
+                    .append(ev)
+                    .map_err(|e| err("chronicle", format!("{e}")))?;
+                Response::Authored {
+                    event_id: id.hex(),
+                    affected: vec![a.to_string()],
+                    state_hash: latest_hash(&u.chronicle),
+                    declared_tag: None,
                 }
             }
             Request::SplitConstruct {
