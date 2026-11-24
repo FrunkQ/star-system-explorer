@@ -61,9 +61,15 @@ pub(crate) fn raisers(body: &sse_surface::Body, c: &Conditions, moons: &[MoonPul
 
 /// Wind waves at one wind and fetch: (significant height m, period s).
 pub(crate) fn waves(wind_m_s: f64, fetch_m: f64, gravity: f64) -> Option<(f64, f64)> {
+    // Below the block's range the sea is glassy; above it (hurricane
+    // force) the fitted growth is held at its top.
+    let w = wind_m_s.abs();
+    if w < 0.5 {
+        return Some((0.0, 0.0));
+    }
     let v = run(
         "sse.ocean.wind_waves",
-        &[wind_m_s.abs().max(1e-3), fetch_m.max(1.0), gravity],
+        &[w.min(30.0), fetch_m.max(1.0), gravity],
     )?;
     Some((v[0], v[1]))
 }
@@ -153,15 +159,24 @@ pub(crate) fn summary(
             continue;
         }
         let fetch = fetch_m(cs, c, cl, lat);
-        let Some((h, t)) = waves(cl.wind_m_s[j], fetch, c.gravity_m_s2) else {
+        // Over the year's 10 m winds, storms and calms alike: the mean of
+        // the waves each wind raises, not the waves of the mean wind.
+        let (u, gust) = cl.wind10_at(lat);
+        let g = c.gravity_m_s2;
+        let wave =
+            |w: f64, k: usize| waves(w, fetch, g).map_or(0.0, |v| if k == 0 { v.0 } else { v.1 });
+        let h = sse_climate::wind::expect(u, gust, |w| wave(w, 0));
+        let t = sse_climate::wind::expect(u, gust, |w| wave(w, 1));
+        let speed = sse_climate::wind::mean_speed(u, gust);
+        if h <= 0.0 {
             bands.push(serde_json::Value::Null);
             continue;
-        };
+        }
         let w = sea * m::cos(lat * m::PI / 180.0);
         wsum += w;
         hsum += w * h;
         tsum += w * t;
-        bands.push(serde_json::json!({ "wave_m": h, "period_s": t, "fetch_km": fetch / 1000.0 }));
+        bands.push(serde_json::json!({ "wave_m": h, "period_s": t, "fetch_km": fetch / 1000.0, "wind_m_s": speed }));
     }
     let (rough_j, rough) = bands
         .iter()
@@ -178,7 +193,7 @@ pub(crate) fn summary(
             "roughest_lat_deg": cl.lat_deg[rough_j],
             "bands": bands,
             "block": "sse.ocean.wind_waves",
-            "note": "from each band's year-round wind near the surface; Earth's fitted relations, with this world's gravity",
+            "note": "the year's mean over each band's 10 m winds, storms and calms alike; wind sea only, no swell; Earth's fitted relations, with this world's gravity",
         },
     }))
 }

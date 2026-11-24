@@ -46,6 +46,16 @@ pub struct Substance {
     pub phases: serde_json::Map<String, serde_json::Value>,
 }
 
+/// The 10 m wind (`crate::wind`): the circulation's prevailing wind as its
+/// mean, storms as its spread.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Wind10Settings {
+    /// Spread of each 10 m wind component as a share of the eddy wind,
+    /// where eddies carry all the heat (in air as dense as Earth's).
+    pub gust_share: f64,
+    pub source: String,
+}
+
 /// Tides and wind waves read for a world's card and a landing site.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct SeaSettings {
@@ -506,6 +516,7 @@ pub struct ClimateSettings {
     pub heat_capacity: HeatCapacity,
     pub land_sea: LandSeaSettings,
     pub sea: SeaSettings,
+    pub wind10: Wind10Settings,
     pub moisture: Moisture,
     pub cloud: Cloud,
     /// Thermal wind depth in scale heights, and the share of it felt near the ground.
