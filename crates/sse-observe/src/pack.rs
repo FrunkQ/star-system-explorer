@@ -27,15 +27,27 @@ impl ObserveSetup {
         Ok(Some(s))
     }
 
+    /// Every view by id, with the built-in GM only view unless a pack
+    /// defines its own of that id.
     pub fn views_by_id(&self) -> BTreeMap<String, DataView> {
-        self.views
+        let mut m: BTreeMap<String, DataView> = self
+            .views
             .iter()
             .map(|v| (v.id.clone(), v.clone()))
-            .collect()
+            .collect();
+        m.entry(crate::known::GM_ONLY_VIEW.into())
+            .or_insert_with(crate::known::gm_only_view);
+        m
+    }
+
+    /// The campaign's three landmark views (SV1).
+    pub fn landmarks(&self) -> crate::known::Landmarks {
+        crate::known::Landmarks::resolve(&self.views, &self.campaign)
     }
 
     pub fn validate(&self) -> Result<(), String> {
-        let ids = self.views_by_id();
+        let ids: BTreeMap<&str, &DataView> =
+            self.views.iter().map(|v| (v.id.as_str(), v)).collect();
         if ids.len() != self.views.len() {
             return Err("a data view id is defined twice".into());
         }
@@ -44,10 +56,25 @@ impl ObserveSetup {
             ("before", &self.campaign.before),
             ("after", &self.campaign.after),
         ] {
-            if !ids.contains_key(id) {
+            if !ids.contains_key(id.as_str()) {
                 return Err(format!(
                     "campaign {what} names data view {id:?}, which is not defined"
                 ));
+            }
+        }
+        if let Some(l) = &self.campaign.landmarks {
+            for (what, id) in [
+                ("gm_only", &l.gm_only),
+                ("heard_of", &l.heard_of),
+                ("known", &l.known),
+            ] {
+                if let Some(id) = id {
+                    if id != crate::known::GM_ONLY_VIEW && !ids.contains_key(id.as_str()) {
+                        return Err(format!(
+                            "campaign landmarks.{what} names data view {id:?}, which is not defined"
+                        ));
+                    }
+                }
             }
         }
         Ok(())

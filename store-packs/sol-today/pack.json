@@ -2,7 +2,9 @@
   "format": "sse.pack/1",
   "id": "sse.sol-today",
   "version": "0.1.0",
-  "kind": ["universe"],
+  "kind": [
+    "universe"
+  ],
   "kernel_range": "^0.1",
   "licence": "CC-BY-4.0 AND Apache-2.0",
   "provides": {
@@ -15,11 +17,14 @@
       },
       "credit": [
         "Catalogue data from GCAT: General Catalog of Artificial Space Objects, Jonathan C. McDowell, https://planet4589.org/space/gcat/ , CC BY 4.0. Rearranged and filtered; values unchanged.",
-        "Trajectories from JPL Horizons, NASA/JPL-Caltech, https://ssd.jpl.nasa.gov/horizons/ ."
+        "Trajectories from JPL Horizons, NASA/JPL-Caltech, https://ssd.jpl.nasa.gov/horizons/ .",
+        "Craft figures from the NASA NSSDCA Master Catalog, https://nssdc.gsfc.nasa.gov/nmc/ (US government work)."
       ],
       "files": {
         "catalogue": "catalogue.json",
-        "stations": "stations.json"
+        "stations": "stations.json",
+        "parts": "parts.json",
+        "craft": "craft.json"
       }
     }
   }
