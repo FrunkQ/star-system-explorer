@@ -124,19 +124,38 @@ Alex, 24 Nov. This finishes what is planned in pieces: the Units table on the da
 
 **One function, used everywhere.** `say(value, kind, about)` takes a value in SI (all the kernel ever holds), the kind of quantity (length, mass, time span, temperature, pressure, speed, angle, and so on) and what it is about (a planet's orbit, a moon's orbit, a world's size, a star's size, a gap between stars, a ship's range), and gives back the text. Cards, strips, the chart readout, the sheet, "what followed", the players' pages and the agents all call it. No screen formats its own numbers; the editing-grammar check (3B) fails one that does.
 
-**Families and rungs.** Each kind has **families** of units, and each family is a ladder of **rungs**:
+**Families and rungs.** Each kind has **families** of units, and each family is a ladder of **rungs**. Alex's rule (24 Nov 14:56): "use SENSIBLE units, scientific ones that are established for that type of value", across every kind (densities, volumes, masses and the rest), and "we entertain imperial but avoid it". So there are three families and no more unless a setting adds its own:
 
-| Family | A length, for example |
-|---|---|
-| Metric | m, km, then thousand, million, billion km |
-| Everyday (imperial) | feet, miles, then thousand, million miles |
-| Natural | Earth radii, Sun radii, AU, light years, parsecs |
-| The setting's own | whatever its pack adds |
+- **Scientific** (the default): the unit the field itself uses for that kind of thing.
+- **SI**: plain metric with prefixes, for anyone who wants it straight.
+- **Imperial**: miles, feet, pounds, °F. It is there for those who want it, it is last in the click order, it is never a default in any scheme we ship, and the app never shows it unasked. **A ton is a tonne** (1,000 kg): there is one "ton", spelt "tonnes", in every family; no short or long tons.
 
-- **Clicking the unit steps to the next family** (km, miles, AU, the setting's, and round again); a long press lists them. This is gap 5's click.
-- **Inside a family the engine picks the rung by itself,** so the number reads comfortably (by default between 0.1 and 1,000): 384 thousand km, then 1.2 million km, then 0.52 AU in the Natural family as a value grows. A little stickiness at each boundary stops it flickering, and during one drag the rung is held so the figure does not jump; it re-picks on release.
+The established unit depends on what the value is about, which is why "about" is an argument:
+
+| Kind | Scientific (by what it is about) | SI | Imperial |
+|---|---|---|---|
+| Length | world size: km or Earth radii; giant: Jupiter radii; star: Sun radii; orbit: AU; moon's orbit: thousand km or planet radii; between stars: light years or parsecs; landform: m, km | m, km | feet, miles |
+| Mass | rocky world: Earth masses; giant: Jupiter masses; star: Sun masses; small body: kg with exponent; ship, cargo: tonnes | kg, tonnes | pounds, tonnes |
+| Density | g/cm³ (water is 1) | kg/m³ | lb/ft³ |
+| Volume | world: Earth volumes or km³; sea: km³; tank, hold: m³, litres | m³ | cubic feet, gallons |
+| Area | km²; a world's surface as a share of Earth's | m², km² | square miles |
+| Gravity | g (Earth is 1), m/s² beside it | m/s² | g |
+| Pressure | air: bar, millibar; inside a world: GPa | Pa | psi |
+| Temperature | K; °C for places people stand | K | °F |
+| Time span | s, hours, days, years, Myr, Gyr; local days and years | s | the same |
+| Speed | km/s; m/s on a surface; share of light speed when fast | m/s | mph |
+| Energy, power | J, W with prefixes; star: Sun luminosities; blast: tonnes of TNT | J, W | the same |
+| Light received | Earth's sunlight = 1, W/m² beside it | W/m² | the same |
+| Magnetic field | gauss or microtesla for worlds, tesla for stars and machines | T | the same |
+| Angle | degrees | degrees | degrees |
+| Amounts of stuff | Earth oceans for water; bar-equivalent for air; kg with exponent; share by mass in % or ppm | kg | pounds, tonnes |
+
+This table is the first cut of the "How figures are said" data, to be checked line by line against the sheet's Units table when ED1a is built; where a field has two established units (gauss and tesla) both are rungs of the Scientific family.
+
+- **Clicking the unit steps to the next family** (Scientific, SI, Imperial, the setting's if it has one, and round again); a long press lists them. This is gap 5's click.
+- **Inside a family the engine picks the rung by itself,** so the number reads comfortably (by default between 0.1 and 1,000): 384 thousand km, then 1.2 million km, then 0.52 AU as a value grows. A little stickiness at each boundary stops it flickering, and during one drag the rung is held so the figure does not jump; it re-picks on release.
 - **Prefixes and exponents, as the depth suits.** Curious says "million km" in words. Science may use the SI prefixes where they are familiar (km, MW, GPa) and words otherwise. Engine, and any value no rung fits, gets an exponent: 3.2 × 10¹⁹ kg. Kilo to quetta and milli to quecto are all known to the engine, but it only uses the ones people recognise unless a scheme says otherwise.
-- **Natural units are the relatable ones,** so they are the default at Curious: a world is 0.82 Earth masses before it is 4.9 × 10²⁴ kg. A figure's peek adds a plain comparison where the sheet has one: "0.38 g, like Mars".
+- **The scientific units are also the relatable ones** (Earths, Suns, AU, g), so they are the default at every depth: a world is 0.82 Earth masses before it is 4.9 × 10²⁴ kg. A figure's peek adds a plain comparison where the sheet has one: "0.38 g, like Mars".
 
 **Remembered for that class of object.** The family you choose is kept per kind *and* per what it is about: choose AU for planets' orbits and thousand km for moons' orbits and both stick, for every planet and every moon. It is a preference saved with the campaign as an override on its unit scheme (Astronomer's, SI, Everyday, Traveller's, or the setting's own). Player seats inherit the GM's unless their lens chooses otherwise. "Use the scheme's" puts one back.
 
@@ -146,7 +165,7 @@ Alex, 24 Nov. This finishes what is planned in pieces: the Units table on the da
 
 **Typing uses the same table backwards.** Anything `say` can write, the entry box can read, plus any other unit of the kind, prefixes and words included ("1.2 Gm", "750 thousand miles", "0.005 AU").
 
-**Kinds that need care:** time spans climb seconds, minutes, hours, days, years, thousand, million and billion years, and have a Natural family of the world's own days and years ("117 local days"), tied to its calendar. Temperature converts with an offset (K, °C, °F). Compound units (km/s, g/cm³, W/m²) are built from their parts so a family change is consistent. Angles offer degrees or degrees, minutes and seconds. **Counted measures** (jumps, per the matter pack's 7A.8) are never converted and never get a prefix.
+**Kinds that need care:** time spans climb seconds, minutes, hours, days, years, thousand, million and billion years, and have rungs for the world's own days and years ("117 local days"), tied to its calendar. Temperature converts with an offset (K, °C, °F). Compound units (km/s, g/cm³, W/m²) are built from their parts so a family change is consistent. Angles offer degrees or degrees, minutes and seconds. **Counted measures** (jumps, per the matter pack's 7A.8) are never converted and never get a prefix.
 
 ## 4. The chart is the first editor
 
@@ -249,7 +268,11 @@ Adding a companion is the Add ghost with a star on it.
 
 Alex, 24 Nov: binaries "caught us out BIG time trying to bring them in later... Pluto/Charon should run on a barycentre. Also assume users will add stars and planets and trip binary adoption. I had an 8% mass to trigger a barycentre, but maybe we can just always assume it with its parent and have the counter wobble always. Leave those decisions to you... adding and removing bodies needs to be well managed chaos."
 
-**What the kernel has (read 24 Nov; the kernel thread has been asked to confirm and fill in).** Formation builds multiples as nested pairs about their barycentres to any depth, with the Mardling and Aarseth check on every nested pair (`sse-formation/src/hierarchy.rs`, B1c), and ST1 has Holman and Wiegert for worlds in and around pairs. But the record that editing writes to names one body as a parent (`orbit.host`), and the resolve from facts looks for one star with no parent. So today a generated triple is right inside formation and flattened where editing happens. This section is the model editing needs; its kernel side is ask K13.
+**What the kernel thread reports (24 Nov 14:55).** (a) An orbit is facts on the orbiting body (`orbit.host` plus elements); there is no barycentre object, and V3's barycentre nodes import as `bary:N` addresses nothing reads. (b) Nothing wobbles: `orbits_at` places a body about its host's centre with μ = G(M+m) and the host never moves; NAV uses G·M and has no moons. (c) Formation's chains of up to three stars are right inside formation, but the facts give every companion and planet `orbit.host` = star 0, so a third star or a world round both ignores the inner companion. (d) The default Solar System has no Charon and only one moon. (e) `set_authored` does not check hosts and `withdraw` cascades by address only, so hosts can dangle; a dangling body is silently left unplaced and dropped from the stability checks. ST1 knows a binary only from `body.kind` = star, which V3 imports lack. (f) There is no 8% rule anywhere.
+
+**Its proposal, which this design adopts:** barycentre always, worked out down the hierarchy (Jacobi), no threshold and no barycentre objects. Each body orbits the centre of mass of its host plus everything inside its own orbit about that host, and every host wobbles. This makes decision 4 below simpler than first written: "round both stars" needs no pair as a parent. A world whose host is star A and whose orbit lies outside B's simply goes round the centre of A and B. So `orbit.host` stays one body, and R3's "round A" or "round both" is only inside or outside the companion's orbit. The one case it does not cover is a world round the *lighter* member only, which is just host = B. The kernel thread also proposes that removing a body re-homes what orbited it to its host keeping current motion, with "remove them too" as the other choice (this design's R4 and the remove row; the default between the two is question 28's to settle), and that every add or remove reruns the stability verdict (R1).
+
+**What I read earlier.** Formation builds multiples as nested pairs about their barycentres to any depth, with the Mardling and Aarseth check on every nested pair (`sse-formation/src/hierarchy.rs`, B1c), and ST1 has Holman and Wiegert for worlds in and around pairs. But the record that editing writes to names one body as a parent (`orbit.host`), and the resolve from facts looks for one star with no parent. So today a generated triple is right inside formation and flattened where editing happens. This section is the model editing needs; its kernel side is ask K13.
 
 ### The decisions
 
@@ -533,7 +556,7 @@ Kernel (thread "Build kernel resolve and rules"):
 - **K10 `could_be`**: given a world and a test from a pack, return the steps (handle, target value, what it leans on, what skipping costs). It is Reach it over several handles. Also offered to Orac.
 - **K11 requirement profiles** as pack records, with the Humans profile in the base pack, shaped so a 4.1 species record can carry one.
 - **K12 season phase as an authored field, and oblateness and axis wobble as results** readable per sweep sample.
-- **K13 pairs in the record** (section 10A): a parent may be a pair; every orbit two-sided about its centre with both masses; "binary" as a derived label; a re-parent op with the two keeps of R4; `withdraw` with the three choices for what orbited it; a preview op that returns the tree an edit would make, with verdicts; Pluto and Charon, Alpha Centauri and Kepler-16 as catalogued fixtures. The kernel thread was asked on 24 Nov what exists.
+- **K13 pairs in the record** (section 10A): a parent may be a pair; every orbit two-sided about its centre with both masses; "binary" as a derived label; a re-parent op with the two keeps of R4; `withdraw` with the three choices for what orbited it; a preview op that returns the tree an edit would make, with verdicts; Pluto and Charon, Alpha Centauri and Kepler-16 as catalogued fixtures. The kernel thread answered on 24 Nov (see 10A): it proposes Jacobi hierarchy with `orbit.host` kept as one body, so "a parent may be a pair" reduces to "host plus what lies inside"; hosts must be checked on write, and no body may be silently unplaced.
 - **K8 a surface inventory by substance** (`surface.inventory.<substance>`, with `body.surface_water_oceans` as its water row): phase from the Look up block, coverage from the ground's own height spread, vapour handed to the air.
 
 Chart room (thread "Make the SSE4 test drive work end to end"), suggested packages, after navigation in stage 2:
@@ -589,7 +612,7 @@ Chart room (thread "Make the SSE4 test drive work end to end"), suggested packag
 32. **Pairs are proved on the default Solar System first** (Pluto and Charon, plus Alpha Centauri and Kepler-16 as starters, with a checked list of structural edits in CI) before editing packages ship. *Recommend yes. CI gains tests only; no workflow change.*
 33. **One editing grammar** (section 3B): every editor is built from the same fourteen parts, a new editor is data in the handle sheet, and a UI check fails anything that adds its own slider or dialog. *Recommend yes.*
 34. **One units engine:** a single `say` function for every figure on every screen, with a parser that reads the same forms back. *Recommend yes.*
-35. **Click steps the family** (metric, everyday, natural, the setting's), the engine picks the rung inside it, and the choice is remembered per kind and per class of object, saved with the campaign. *Recommend yes.*
+35. **Click steps the family** (Scientific, SI, Imperial last, the setting's), the engine picks the rung inside it, and the choice is remembered per kind and per class of object, saved with the campaign. *Recommend yes.*
 36. **The rules are an editable table on Reference,** "How figures are said", and schemes are named sets of it. *Recommend yes.*
-37. **Natural units by default at Curious depth** (Earth masses before kilograms), words before prefixes, exponents only at Engine depth or when nothing else fits. *Recommend yes.*
+37. **Scientific by default at every depth,** per the table in 3C; words before prefixes, exponents only when nothing else fits. Imperial is never a default and a ton is always a tonne. *Settled by Alex 24 Nov 14:56; the table itself is for him to correct.*
 14. **Order:** ED1 to ED3 straight after the navigation items in stage 2, since "change a world" is in the stage 1 walk and is the first thing a tester tries; ED4 to ED7 after. *Recommend yes.*
