@@ -294,6 +294,24 @@ function exponential(x: number, sig: number, keepZeros: boolean): string {
   return `${x < 0 ? "−" : ""}${digits[0]}${frac ? `.${frac}` : ""} × 10${sup(String(exp))}`;
 }
 
+/**
+ * A number with no unit (an eccentricity, a count, a metallicity) as screens write it: `sig` significant figures, or
+ * a fixed number of `decimals` where a field's convention is decimals ([Fe/H] −0.08), thousands grouped, a true minus.
+ * Every screen writes such a number through here, so the figures ledger stays honest.
+ */
+export function sayNumber(x: number, sig = 3, opts: { decimals?: number } = {}): string {
+  if (!Number.isFinite(x)) return String(x);
+  if (opts.decimals !== undefined) {
+    const t = Math.abs(x).toFixed(opts.decimals);
+    const [i, f] = t.split(".");
+    return `${x < 0 && Number(t) !== 0 ? "−" : ""}${group(i!)}${f ? `.${f}` : ""}`;
+  }
+  return plain(x, Math.max(1, sig), false);
+}
+
+/** A value rounded to `sig` significant figures, as a number (for keys and de-duplication, not for showing). */
+export const roundTo = (x: number, sig: number): number => (Number.isFinite(x) && x !== 0 ? Number(x.toPrecision(sig)) : x);
+
 /** How many significant figures a typed number carries ("0.01671022" is 7, "149.6" is 4, "1,200" is 2). */
 export function significantFigures(typed: string): number {
   const m = typed.replace(/[,\s]/g, "").replace(/^[+−-]/, "").match(/^(\d*)(?:\.(\d*))?/);
@@ -322,6 +340,8 @@ export interface SayOptions {
   source?: "computed" | "catalogued" | "typed";
   /** Significant figures for a catalogued or typed value (see `significantFigures`). */
   sig?: number;
+  /** false leaves out Curious's "about" where the sentence already says it is rough (a story's "near 4.6 billion years"). */
+  about?: boolean;
 }
 
 export interface Said {
@@ -399,7 +419,7 @@ export function say(si: number, kind: FigureKind, about?: About, opts: SayOption
   const source = opts.source ?? "computed";
   const keep = source !== "computed";
   const sig = Math.max(1, opts.sig ?? 3);
-  const approx = depth === "curious" && source === "computed";
+  const approx = depth === "curious" && source === "computed" && opts.about !== false;
   if (!Number.isFinite(si)) {
     return { text: String(si), number: String(si), unit: "", approx: false, reading: reading.id, family: reading.family, rung: `${reading.id}/0`, unitId: reading.rungs[0]!.unit };
   }
