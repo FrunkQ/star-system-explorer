@@ -8,6 +8,9 @@
 <script lang="ts">
   import { ringPoints, type RangeRing } from "../../../ui-contract/src/index.ts";
 
+  // Path coordinates to a tenth of a pixel (a drawing, not a figure anyone reads).
+  const r1 = (v: number) => Math.round(v * 10) / 10;
+
   let { rings, centre_m, project, label = "" }: {
     rings: readonly RangeRing[];
     /** Where the weapon is, in metres from the chart's centre (orbital plane x, y). */
@@ -21,7 +24,7 @@
   const drawn = $derived(
     rings.map((g) => {
       const pts = ringPoints([centre_m[0], centre_m[1], 0], g.radius_m).map(([x, y]) => project(x, y));
-      const d = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ") + " Z";
+      const d = pts.map(([x, y], i) => `${i ? "L" : "M"}${r1(x)},${r1(y)}`).join(" ") + " Z";
       // The label sits at the ring's top as drawn.
       const top = pts.reduce((a, p) => (p[1] < a[1] ? p : a), pts[0]!);
       return { g, d, top };

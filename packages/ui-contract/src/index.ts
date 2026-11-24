@@ -159,7 +159,7 @@ export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOp
 // The Flow view (RK13): any ledger's rows laid out in columns; the Power card is its first user.
 export { layoutFlow, flowRowColumns, HAIRLINE_SHARE } from "./flow.ts";
 export type { FlowRow, FlowNode, FlowBand, FlowLayout, FlowOptions } from "./flow.ts";
-export { POWER_COLUMNS, NOWHERE, JET, FUEL_NODE, RADIATORS, heatTemperatures, radiatorNode, powerFlowRows, powerColumn, powerRank, powerReadings, radiatorArea, newtonsText, areaText, VISIBLE_AT_M } from "./power.ts";
+export { POWER_COLUMNS, NOWHERE, JET, FUEL_NODE, RADIATORS, heatTemperatures, radiatorNode, powerFlowRows, powerColumn, powerRank, powerReadings, radiatorArea, newtonsText, gText, areaText, VISIBLE_AT_M } from "./power.ts";
 export type { RadiatorRule, PowerReading, PowerRadiator } from "./power.ts";
 // Range rings (RK12): effect at range as rings round the one who holds the weapon, a HUD overlay.
 export { RANGE_RING_LAYER, rangeRings, rangeText, ringPoints } from "./range-rings.ts";
