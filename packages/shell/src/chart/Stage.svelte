@@ -2,6 +2,7 @@
      controls, the tools beside it, the undo and clipboard notes, and the card. App says which views are mounted and
      mounts them (`view`); this lays them out. -->
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { ToolButton, ViewControls } from "../../../chart-grammar/src/index.ts";
   import { hasTool, type Json, type ViewChoice, type ViewControlsSpec, type ViewModule, type Workspace } from "../../../ui-contract/src/index.ts";
 
@@ -26,6 +27,7 @@
     openAdd,
     cutBody,
     openKeys,
+    extraTools,
   }: {
     ws: Workspace;
     desk: string;
@@ -49,6 +51,8 @@
     openAdd: () => void;
     cutBody: () => void;
     openKeys: () => void;
+    /** Tools another section adds after Redo (the Run desk's Bookmarks, PB2b), so the stage imports nothing of theirs. */
+    extraTools?: Snippet;
   } = $props();
 
   // The view controls' height: what sits below them starts there, however many rows they wrap to.
@@ -63,6 +67,7 @@
     <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
     {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
     <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
+    {@render extraTools?.()}
     {#if clipArmed}<ToolButton label="Copy" icon="M8 8h11v11H8zM5 16V5h11" keyhint="Control+C" disabled={!ws.selection} onclick={copyBody} />{/if}
     {#if clipArmed}<ToolButton label="Add here" icon="M12 5v14M5 12h14" keyhint="A" onclick={openAdd} />{/if}
     {#if clipArmed && cuttable}<ToolButton label="Cut" icon="M6 4l12 16M18 4L6 20M4 18a2 2 0 1 0 4 0M16 18a2 2 0 1 0 4 0" keyhint="Control+X" onclick={cutBody} />{/if}

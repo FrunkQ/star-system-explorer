@@ -4,7 +4,7 @@ Owner thread: "Design exotic stars and black holes" wrote the design; no builder
 
 One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`. Stage order: `handover/design/SSE4-coming-together.md`.
 
-Design: `handover/design/SSE4-exotic-objects-design.md`, **accepted by Alex 24 Nov 2026** (rulings in its section 13; three small open points, 12 to 14, each with a recommendation builders follow). Mockup and screenshots are in project files at `sse4/handover-screens/XO-screens/` (`black-hole-mockup.html` is a working picture: light traced from the real bending equation, the band switch with Composite, and the approach diagram).
+Design: `handover/design/SSE4-exotic-objects-design.md`, **accepted by Alex 24 Nov 2026** (rulings in its section 13; three small open points, 12 to 14, each with a recommendation builders follow). Mockup and screenshots are in project files at `sse4/handover-screens/XO-screens/` (`black-hole-mockup.html` is a working picture: light traced from the real bending equation, the band switch with Composite, and the Hazard map for the hole, the Sun and Jupiter).
 
 Nothing is built. The design's section 1 says what the kernel and renderer already hold (checked at main 67a5957): the thin disc and the spectrum shifts in `sse-light`, remnants with mass only, no light bending anywhere.
 
@@ -27,6 +27,6 @@ Nothing is built. The design's section 1 says what the kernel and renderer alrea
 | XO15 colliding winds and dust spirals (5.2) | waiting on XO14 | light, then renderer | XO14, B4 |
 | XO16 later: relativistic disc, thick and warped discs, cluster arcs, the plunge shot, pack benders | later | as they come | XO7 |
 | XO17 Composite in the band switch, every view (6A) | **next**: needs nothing from XO | chart room for the control, renderer for the layering | V10b (built) |
-| XO18 the approach diagram for any massive body, op `approach_profile` (3.8) | **next** for the Sun and Jupiter; compact bodies after XO1 | light for the op, chart room for the card | MF7 doses and `read_light` (built), the ship record |
+| XO18 the Hazard map for any hazardous body, op `hazard_map` (3.8): Map and Profile, radiation belts from `read_field` with edges, gaps and latitude, Park and Dive marks | **next**: start on Jupiter, Saturn, Earth and the Sun, which need nothing from XO; compact bodies after XO1 | light for the op, renderer for the Map, chart room for the rail entry and card | MF7 belts and shielding, `read_light`, `read_activity`, the MF14a tracer (all built), the ship record |
 
 Before any block relies on a source in the design's section 14: those references were written from memory and must be checked (the citations work in `docs/citations.md`). Planned shortcuts are listed in the design's section 9; each goes in `docs/fudges.md` in the pull request that adds it. XO1 to XO6, XO17 and XO18 change no golden hash; XO8 onward add facts to bodies and go through the golden lane one at a time.
