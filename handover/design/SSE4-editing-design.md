@@ -347,7 +347,7 @@ Alex's suggestion, and the right test: the start sheet's Solar System becomes th
 ## 11. Moons
 
 - Everything in sections 3 to 8 applies to a moon unchanged; its Orbit strip runs from Roche to Hill.
-- **Add a moon** today offers only "Something else", because moons are not sampled from formation yet (test drive rough edge 5). Ask K5 gives "What forms here" for moons. Until it lands, Kinds supplies three recipes sized from the planet by physics: a disc moon (about one ten-thousandth of the planet), an impact moon (up to about a hundredth, rocky worlds only), a captured body (small, tilted, far out, often backwards).
+- **Add a moon.** Corrected 24 Nov after Alex asked ("I thought the plan was to build moons from leftovers"): that is built. Formation's leftovers stage (F5, `sse-formation/src/leftovers.rs`) already gives every giant its regular moons from a disc of one ten-thousandth of its mass (Canup and Ward 2006), keeps the big moons made by giant impacts (F4), and scatters small captured ones far out, half of them backwards (Jewitt and Haghighipour 2007). So a *generated* system has its moons from the physics. The only thing missing is small: **Add here** can ask formation "what forms at this orbit round a star" but not "what would form round this planet", so adding a moon *by hand* offers only "Something else". Ask K5 is that one question, answered by the same F5 rules run for the selected planet (its mass, its leftover solids, its history of impacts), not a new model. Until it lands the same three rules are offered as fixed recipes: a disc moon, an impact moon (rocky worlds only), a captured body. F5's own note lists one real gap to close with it: small rocky planets get no captured moons yet (Phobos and Deimos).
 - A moon's effect on its planet (tides, day length, tilt holding steady) is in "what followed" on the planet's card.
 - Rings and belts are placed with the same ghost and have two handles, where and how much; their detail is a later note.
 
@@ -573,7 +573,7 @@ Kernel (thread "Build kernel resolve and rules"):
 - **K2 unset as a read**: "what the science expects" for a field that is set (the resolve with that one field left out). `branch_set` with an unset may already do it.
 - **K3 makeup all the way through** for hand-made worlds, and **radius from mass and makeup** when radius is not set (question 3).
 - **K4 pin a result** (gap 4) and Reach it's solve, which is a sweep plus a root find.
-- **K5 moon formation sampling** for "What forms here" round a planet.
+- **K5 "what forms round this planet"**: F5's existing moon rules (disc, impact, captured) exposed for one chosen planet, so Add here can offer them; plus captured moons for small rocky planets.
 - **K6 honesty rule** of question 4: authored unless past a wall or contradicting the physics.
 - **K7 authored air drives the climate**: pressure and mix feed the greenhouse and air optics for hand-made and catalogued worlds, and "what the science expects" is readable for both amount and mix.
 - **K9 interior inputs as authored fields** for any world: heat-producing elements, redox, core light elements, and the regime `dial` choice, with layers readable per sweep sample for the live cutaway.
@@ -615,7 +615,7 @@ Chart room (thread "Make the SSE4 test drive work end to end"), suggested packag
 10. **Light magnetism while dragging** (tipping points, round figures, resonances; Alt turns it off). *Recommend yes, weak, and named as it catches.* **Alex 24 Nov 15:13: yes.**
 11. **Reach it before Pin it:** on a result, the app offers the physical route first and the forced one second. *Recommend yes.* **Alex 24 Nov 15:13: yes.**
 12. **Editing several bodies at one time** (select four moons, move them together): *recommend waiting until after 4.0;* copy and paste covers most of it. **Alex: dropped, no use case. Not planned.**
-13. **Moons:** ask the kernel for formation sampling round a planet (K5), with the three physics-sized recipes as the stand-in until then. *Recommend yes.* **Alex: "don't understand". Asked again in plain words in the thread.**
+13. **Moons:** generated systems already get their moons from formation's leftovers (F5). The ask is only that Add a moon can put the same question for one chosen planet (K5), with the three rules as fixed recipes until then. *Recommend yes.* **Alex queried this 24 Nov 15:16; corrected and re-asked.**
 15. **Air is one handle:** an amount strip, one mix bar whose joins you drag, traces as chips in ppm, each gas with its own log strip on demand. *Recommend yes.* **Alex 24 Nov 15:13: yes.**
 16. **Drop SSE3's "ages or stays as authored" switch for air:** the verdict gives the loss rate and Look ahead applies it. *Recommend yes.* **Alex 24 Nov 15:13: yes.**
 17. **Liquids replaces Water:** you set how much of any substance; whether it is liquid, ice or vapour is a result, and the phase bars show why. *Recommend yes.* **Alex 24 Nov 15:13: yes.**
