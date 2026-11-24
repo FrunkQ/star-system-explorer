@@ -326,9 +326,9 @@ pub fn retire(
     publisher: &Publisher,
 ) -> Result<ContentHash, String> {
     let st = universe.state_at(at);
-    if st.get(a, fields::ID).is_none() {
+    if st.get(a, fields::ID).is_none() && st.get(a, crate::split::FROM).is_none() {
         return Err(format!(
-            "{a} was not made from a template (only those retire)"
+            "{a} was not made from a template or a split (only those retire)"
         ));
     }
     if st.get(a, fields::RETIRED) == Some(&Value::Bool(true)) {

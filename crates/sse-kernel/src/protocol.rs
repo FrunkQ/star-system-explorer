@@ -1567,6 +1567,38 @@ pub enum Request {
         reason: Option<String>,
         at_s: i64,
     },
+    /// RS4: split a construct at `at_s`. The named parts (`part.<id>.*`
+    /// facts) and `mass_kg` more move to a new construct of the same kind
+    /// beside it (`key`, else the next free number; `name`, else the old
+    /// name and the first part), which carries `split.from`. `construct.mass_kg`
+    /// drops by what moved.
+    SplitConstruct {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        key: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        name: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        parts: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_kg: Option<f64>,
+        at_s: i64,
+    },
+    /// RS4: join `with` to `address` at `at_s`: `dock` (the default; `with`
+    /// carries `docked.to`), `undock`, or `merge` (its parts and mass move
+    /// across and it is retired with `joined.into`).
+    JoinConstructs {
+        address: String,
+        with: String,
+        #[serde(default)]
+        #[ts(optional, type = "\"dock\" | \"undock\" | \"merge\"")]
+        how: Option<sse_trigger::split::How>,
+        at_s: i64,
+    },
     /// The GM answers a queued intent; yes applies it at `at_s` (default: when it was sent).
     IntentDecide {
         proposal: String,
@@ -2171,6 +2203,8 @@ impl Request {
             Request::Templates => "templates",
             Request::Create { .. } => "create",
             Request::Retire { .. } => "retire",
+            Request::SplitConstruct { .. } => "split_construct",
+            Request::JoinConstructs { .. } => "join_constructs",
             Request::Programs { .. } => "programs",
             Request::AttachProgram { .. } => "attach_program",
             Request::DetachProgram { .. } => "detach_program",
@@ -2506,6 +2540,8 @@ pub fn ops() -> Vec<OpInfo> {
         o("templates", Cost::Trivial, "read at load"),
         o("create", Cost::Light, "GM machine only; one universe event and one record event per kept value"),
         o("retire", Cost::Trivial, "GM machine only; one universe event"),
+        o("split_construct", Cost::Trivial, "GM machine only; one universe event"),
+        o("join_constructs", Cost::Trivial, "GM machine only; one universe event"),
         o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
         o("attach_program", Cost::Trivial, "GM machine only; one record event"),
         o("detach_program", Cost::Trivial, "GM machine only; one record event"),
@@ -3319,6 +3355,18 @@ pub enum Response {
         record_hash: String,
     },
     Retired {
+        event_id: String,
+        state_hash: String,
+    },
+    /// `split_construct`: the new construct's address.
+    ConstructSplit {
+        address: String,
+        event_id: String,
+        state_hash: String,
+    },
+    /// `join_constructs`.
+    ConstructsJoined {
+        how: String,
         event_id: String,
         state_hash: String,
     },

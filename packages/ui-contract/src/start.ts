@@ -6,8 +6,8 @@
 // user. The lines are data (shell document start.lines.json); the choice is
 // here so it can be tested without a browser.
 
-/** What Show me does: a screen at system scale, a world screen, a desk, a dialog, a door of the sheet, a control, or a link. */
-export type StartOpens = { screen: string } | { world: string } | { desk: "explore" | "build" | "run" } | { dialog: string } | { door: string } | { control: string } | { link: string };
+/** What Show me does: a screen at system scale, a world screen, a desk, a dialog (`orac` writes a request into Orac, for "ask Orac to create it"), a door of the sheet, a control, or a link. */
+export type StartOpens = { screen: string } | { world: string } | { desk: "explore" | "build" | "run" } | { dialog: string; orac?: string } | { door: string } | { control: string } | { link: string };
 
 export interface StartLine {
   id: string;
