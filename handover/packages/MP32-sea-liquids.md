@@ -81,7 +81,7 @@ They have no vapour-pressure fit yet, so the climate does not treat them as vola
 
 - **Liquid methane and ethane absorption.** No readable table was found:
   - Ramaprasad et al. 1978 (Icarus 35, 400) gives band strengths for ten liquid methane bands from 0.62 to 1.94 µm, but has no free text.
-  - Grundy et al. 2002 (Icarus 155, 486) includes a liquid methane spectrum at 93 K; its data files were not reachable.
+  - Grundy et al. 2002 (Icarus 155, 486) includes a liquid methane spectrum at 93 K. It is on SSHADE as SPECTRUM_BS_20130114_001 (experiment DOI 10.26302/SSHADE/EXPERIMENT_BS_20130114_001): absorption coefficient in cm-1 from 2380 to 14350 cm-1, which is 0.70 to 4.2 µm, so it has no visible part. Its export zip disallows robots, so download it from a local machine.
   - Adams et al. 2012 (GRL 39, L04309) gives reflectances only.
 - **Ethane as a volatile.** Ethane needs its vapour-pressure fit, colour and latent heat, which go through the golden lane.
 - **Liquid methane refractive index.** Khare et al. (about 1989, NTRS 19910007878) gives n of about 1.28 at 110 K in an OCR-degraded table. It is not used until a clean copy is read.
