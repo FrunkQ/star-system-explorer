@@ -34,7 +34,7 @@
   import PerfReadout from "./PerfReadout.svelte";
   import { perf } from "../../ui-contract/src/index.ts";
   import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
-  import { landingShowOf, type LandingGround } from "../../ui-contract/src/index.ts";
+  import { landingShowOf, type LandingGround, type PartyShip } from "../../ui-contract/src/index.ts";
   import { DEFAULT_JOIN, joinLine, joinWordsOf, type JoinWords, type SeatBrand } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
@@ -73,6 +73,9 @@
   // What the game master has sent the table (the landing run-through): a place, or screens off. A screen that is not
   // joined, or a GM from before this, uses the screen's own campaign scope.
   let shown = $state<Shown | undefined>(undefined);
+  // The party's ship (the landing run-through): the table always knows where it is, whatever screen is up.
+  let party = $state.raw<PartyShip | null>(null);
+  const partyOf = (j: unknown): PartyShip | null => (j && typeof j === "object" && typeof (j as PartyShip).name === "string" && typeof (j as PartyShip).at === "string" ? (j as PartyShip) : null);
   const scopeNow = () => (shown && "scope" in shown && shown.scope ? shown.scope : facts.scope);
   let sceneHash = $state("");
   let sceneErrors = $state<string[]>([]);
@@ -224,12 +227,15 @@
         session = s;
         sessionReady = true;
         shown = replica.shown();
+        party = partyOf(replica.party());
         perfEdge = s.device();
         void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
       };
       replica.onUpdate = () => {
         const mine = replica.seats().find((x) => x.id === seatId);
         if (JSON.stringify(mine?.live ?? null) !== JSON.stringify(live ?? null)) live = mine?.live;
+        const ship = partyOf(replica.party());
+        if (JSON.stringify(ship) !== JSON.stringify(party)) party = ship;
         const sent = replica.shown();
         if (JSON.stringify(sent ?? null) !== JSON.stringify(shown ?? null)) {
           const was = shown && "scope" in shown ? shown.screen : undefined;
@@ -321,6 +327,14 @@
     const m = marker.mark(playerSubjectOf(x));
     return lightColours ? { ...m, colour: lightColours.get(x.address) ?? null } : m;
   };
+  // A place by the name the table knows it by: from this scene when it is here, else the last part of its address.
+  function placeName(a: string): string {
+    const hit = scene?.subjects.find((x) => x.address === a);
+    if (hit) return subjectName(hit);
+    const last = a.split("/").pop() ?? a;
+    return last.charAt(0).toUpperCase() + last.slice(1).replace(/[-_]/g, " ");
+  }
+  const dayWords = (d: number) => (d < 2 ? `${Math.round(d * 24)} hours` : d < 400 ? `${Math.round(d)} days` : `${(d / 365.25).toFixed(1)} years`);
   const star = $derived(scene ? scene.subjects.find((s) => s.address === scene!.scope) : undefined);
 
   // The tabletop bridge: tell the allowed tabletop the view is ready and what is in focus; take its "focus this" asks for subjects this seat already sees.
@@ -354,6 +368,7 @@
     {#if brand}<span class="brand" data-brand>{#if brand.logo}<img src={brand.logo} alt="" />{/if}{brand.name}</span>{/if}
     <h1>{star ? subjectName(star) : "System"}</h1>
     <span class="kicker">{screenDoc?.label ?? "…"}{screenDoc?.data_view ? ` · seen through ${screenDoc.data_view}` : ""} · audience {scene?.audience ?? "…"}</span>
+    {#if party}<span class="ship" data-party-ship={party.ship} data-party-at={party.at} title={party.voyage ? `Last voyage: ${placeName(party.voyage.from)} to ${placeName(party.voyage.to)}, ${dayWords(party.voyage.days)}` : undefined}>Aboard <strong>{party.name}</strong>, {party.at === scopeNow() ? "in this system" : `at ${placeName(party.at)}`}</span>{/if}
     <span class="spacer"></span>
     {#if !screenDoc?.data_view && !joined}
     <Segmented
@@ -397,7 +412,7 @@
       <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
     {/key}
   {/if}
-  {#if joined && scene && mayAsk && !bare}
+  {#if joined && scene && mayAsk && !bare && !watching}
     <section class="ask" aria-label="Ask the game master">
       <form onsubmit={(e) => (e.preventDefault(), askName())}>
         <label>Suggest a name for {target ? subjectName(target) : "the body in focus"} <input type="text" bind:value={ask} maxlength="40" disabled={link.state !== "live" || !target} /></label>
@@ -462,6 +477,15 @@
     margin: 0;
     font-family: var(--sse-font-display);
     font-size: 26px;
+    font-weight: 600;
+  }
+  .ship {
+    font-size: 13px;
+    color: var(--sse-ink-muted);
+    white-space: nowrap;
+  }
+  .ship strong {
+    color: var(--sse-ink);
     font-weight: 600;
   }
   .kicker {
