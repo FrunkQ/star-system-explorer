@@ -8302,6 +8302,61 @@
       "v": 0.000569,
       "unit": "W kg-1",
       "src": "ruedas2017"
+     },
+     "fission_thermal": {
+      "total": {
+       "v": 202.48,
+       "unit": "MeV",
+       "src": "sher-beck1981",
+       "check": "unverified",
+       "note": "all of it, neutrinos included"
+      },
+      "split": {
+       "fragments": {
+        "v": 169.12,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified"
+       },
+       "prompt_neutrons": {
+        "v": 4.79,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified"
+       },
+       "prompt_gammas": {
+        "v": 6.97,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified"
+       },
+       "delayed_betas": {
+        "v": 6.5,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified"
+       },
+       "delayed_gammas": {
+        "v": 6.33,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified"
+       },
+       "neutrinos": {
+        "v": 8.75,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified",
+        "note": "leave the reactor unseen"
+       }
+      },
+      "recoverable": {
+       "v": 193.73,
+       "unit": "MeV",
+       "src": "sher-beck1981",
+       "check": "unverified",
+       "note": "worked out: the total less the neutrinos"
+      }
      }
     },
     {
@@ -14015,6 +14070,215 @@
      "note": "a refinery cut, not one molecule: the report's 14-component surrogate has the approximate formula C11.8H23.0 (hydrogen to carbon 1.95)"
     }
    ],
+   "reactions": [
+    {
+     "id": "d-t",
+     "kind": "nuclear",
+     "name": "deuterium-tritium fusion",
+     "terms": [
+      [
+       "h2",
+       -1
+      ],
+      [
+       "h3",
+       -1
+      ],
+      [
+       "he4",
+       1
+      ],
+      [
+       "neutron",
+       1
+      ]
+     ],
+     "q": {
+      "v": 17.5893,
+      "unit": "MeV",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "worked out from the AME2020 atomic masses on this sheet",
+      "also": [
+       "fitzpatrick-fusion"
+      ]
+     },
+     "product_energy": {
+      "he4": {
+       "v": 3.5404,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      },
+      "neutron": {
+       "v": 14.0489,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      }
+     },
+     "neutron_share": {
+      "v": 0.7987,
+      "unit": "1",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "the neutron's share of Q; it carries this energy out of a magnetic bottle and into the shield"
+     }
+    },
+    {
+     "id": "d-d-n",
+     "kind": "nuclear",
+     "name": "deuterium-deuterium fusion, helium-3 branch",
+     "terms": [
+      [
+       "h2",
+       -2
+      ],
+      [
+       "he3",
+       1
+      ],
+      [
+       "neutron",
+       1
+      ]
+     ],
+     "q": {
+      "v": 3.2689,
+      "unit": "MeV",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "worked out from the AME2020 atomic masses on this sheet"
+     },
+     "product_energy": {
+      "he3": {
+       "v": 0.8193,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      },
+      "neutron": {
+       "v": 2.4497,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      }
+     },
+     "neutron_share": {
+      "v": 0.7494,
+      "unit": "1",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "the neutron's share of Q; it carries this energy out of a magnetic bottle and into the shield"
+     }
+    },
+    {
+     "id": "d-d-p",
+     "kind": "nuclear",
+     "name": "deuterium-deuterium fusion, tritium branch",
+     "terms": [
+      [
+       "h2",
+       -2
+      ],
+      [
+       "h3",
+       1
+      ],
+      [
+       "h1",
+       1
+      ]
+     ],
+     "q": {
+      "v": 4.0327,
+      "unit": "MeV",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "worked out from the AME2020 atomic masses on this sheet"
+     },
+     "product_energy": {
+      "h3": {
+       "v": 1.01,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      },
+      "h1": {
+       "v": 3.0226,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      }
+     },
+     "neutron_share": {
+      "v": 0.0,
+      "unit": "1",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "no neutron in the main branch; side reactions add some"
+     }
+    },
+    {
+     "id": "d-he3",
+     "kind": "nuclear",
+     "name": "deuterium-helium-3 fusion",
+     "terms": [
+      [
+       "h2",
+       -1
+      ],
+      [
+       "he3",
+       -1
+      ],
+      [
+       "he4",
+       1
+      ],
+      [
+       "h1",
+       1
+      ]
+     ],
+     "q": {
+      "v": 18.3531,
+      "unit": "MeV",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "worked out from the AME2020 atomic masses on this sheet"
+     },
+     "product_energy": {
+      "he4": {
+       "v": 3.6916,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      },
+      "h1": {
+       "v": 14.6614,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      }
+     },
+     "neutron_share": {
+      "v": 0.0,
+      "unit": "1",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "no neutron in the main branch; side reactions add some"
+     }
+    }
+   ],
    "sources": [
     {
      "id": "abbott2017",
@@ -14160,6 +14424,12 @@
      "text": "Fields, B. D., Olive, K. A., Yeh, T.-H. and Young, C. 2020, JCAP 03, 010: Big-Bang nucleosynthesis after Planck (primordial helium and the lithium problem)",
      "status": "verified",
      "url": "https://arxiv.org/abs/1912.01132"
+    },
+    {
+     "id": "fitzpatrick-fusion",
+     "text": "Fitzpatrick, R., Plasma physics lecture notes, Nuclear fusion reactions, University of Texas at Austin: D-T releases 17.59 MeV, the neutron carrying 14.05 MeV and the alpha 3.541 MeV",
+     "status": "unverified",
+     "url": "https://farside.ph.utexas.edu/teaching/plasma1/Fusionhtml/node6.html"
     },
     {
      "id": "fixsen2009",
@@ -14608,6 +14878,12 @@
      "text": "Setzmann, U. and Wagner, W. 1991, J. Phys. Chem. Ref. Data 20, 1061: a new equation of state and tables of thermodynamic properties for methane (values read from the NIST WebBook fluid tables, which use it: saturated liquid 422.36 kg/m3 at the normal boiling point, 111.67 K)",
      "status": "unverified",
      "doi": "10.1063/1.555898"
+    },
+    {
+     "id": "sher-beck1981",
+     "text": "Sher, R. and Beck, C. 1981, Fission energy release for 16 fissioning nuclides, EPRI NP-1771, Stanford University, Table VI (U-235, thermal): 202.48 MeV in all, fragments 169.12, prompt neutrons 4.79, prompt gammas 6.97, delayed betas 6.50, delayed gammas 6.33, neutrinos 8.75 MeV per fission",
+     "status": "unverified",
+     "url": "https://www.osti.gov/servlets/purl/6614291"
     },
     {
      "id": "si2019",

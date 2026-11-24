@@ -23,12 +23,19 @@ Disagreements kept in the notes:
 - MMH boiling point: 360.1 K (NASA RP-1013) against 364 K (NIST).
 - UDMH boiling point: 337.1 K (NIST) against 336.5 K (CHRIS).
 
-## Part 2: nuclear reactions (next)
+## Part 2: nuclear reactions
 
-D-T, D-D (both branches) and D-He3 Q values are worked out from the sheet's AME2020 masses. The neutron's share comes from two-body kinematics. Fitzpatrick's 17.59 MeV, with 14.05 MeV for the neutron, is the cross-check for D-T.
-- p-B11 needs the B-11 mass. The AME2020 file would not fetch.
-- U-235 fission energy split: Sher and Beck 1981 (EPRI NP-1771).
-- The `reactions` table checks that elements are conserved, so nuclear rows need a `kind: "nuclear"` that checks nucleons and charge instead. That is a change to the sheet reader (sse-reference).
+Built by `scripts/nuclear_rows.py`.
+
+- **`reactions` rows with `kind: "nuclear"`:** d-t, d-d-n, d-d-p and d-he3.
+  - `terms` names nuclides: isotope ids, plus `neutron` for the free neutron, whose mass is the constant `m_n`.
+  - `q` (MeV) is worked out from the sheet's AME2020 atomic masses. Electrons balance in every reaction listed.
+  - `product_energy` gives each product's share from momentum, with the reactants at rest. `neutron_share` is the share the neutron carries off.
+  - D-T comes out at 17.589 MeV, with 14.049 MeV for the neutron. The builder checks this against Fitzpatrick's 17.59 and 14.05.
+  - The other results: D-D at 3.269 MeV (neutron branch) and 4.033 MeV (proton branch), and D-He3 at 18.353 MeV.
+- **Sheet reader (sse-reference):** a nuclear reaction must conserve nucleons and charge, not elements. Test: `nuclear_reactions_conserve_nucleons_and_charge`.
+- **U-235 fission split:** `isotopes/u235.fission_thermal` holds `total` (202.48 MeV), `split` (fragments, prompt neutrons and gammas, delayed betas and gammas, neutrinos) and `recoverable` (193.73 MeV, worked out). Source: Sher and Beck 1981, EPRI NP-1771, Table VI.
+- **Still missing:** p-B11 waits for the B-11 mass (AME2020 would not fetch). Prompt neutrons per fission (nu-bar) was not found.
 
 ## Part 3: materials and shields (after)
 
