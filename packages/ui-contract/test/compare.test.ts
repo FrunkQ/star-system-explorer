@@ -99,3 +99,32 @@ test("measure: distances between Kestrel's bodies from the scene's orbits", () =
   assert.equal(distanceWords(384400 / 149_597_870.7), "384,400 km");
   assert.equal(lightWords(499), "8.3 light minutes");
 });
+
+test("a subject brings its tilt, its day and its rings; a lineup that draws rings makes room for them", async () => {
+  const { itemFromSubject, layoutLineup, reachKm } = await import("../src/compare.ts");
+  const planet = { address: "p", label: "Ringed", kind: "planet", tags: [], facts: [{ field: "radius_earth", value: 9, source: "set" }, { field: "day_h", value: 10.7, source: "set" }], stamps: [], tilt_rad: 0.47 } as never;
+  const ring = { address: "r", label: "Main ring", kind: "belt", parent: "p", tags: [], facts: [], stamps: [], ring: { inner_m: 7e7, outer_m: 1.4e8, tau: 1, albedo: 0.5 } } as never;
+  const i = itemFromSubject(planet, "Here", [planet, ring])!;
+  assert.equal(i.tilt_rad, 0.47);
+  assert.equal(i.day_h, 10.7);
+  assert.equal(i.rings?.[0]?.outer_km, 1.4e5);
+  assert.equal(reachKm(i), 1.4e5);
+  const other = { ...i, key: "q", rings: undefined };
+  const flat = layoutLineup([i, other], 200, 2000, "true", 5, 0);
+  const ringed = layoutLineup([i, other], 200, 2000, "true", 5, 0, true);
+  const gap = (l: typeof flat) => l.placed[1]!.x - l.placed[0]!.x;
+  assert.ok(gap(ringed) / ringed.placed[0]!.r > gap(flat) / flat.placed[0]!.r, "the ringed body takes its rings' room");
+});
+
+test("a Solar System reference body takes its day, tilt and rings from base-sol; the Sun its day from the sheet", () => {
+  const sol = JSON.parse(readFileSync(new URL("../../../packs/base-sol/pack.json", import.meta.url), "utf8")).provides.other.sol;
+  const doc = JSON.parse(readFileSync(new URL("../../shell/src/documents/reference-objects.json", import.meta.url), "utf8")) as ReferenceDoc;
+  const of = (id: string) => itemFromReference(doc.objects.find((o) => o.id === id)!, sol);
+  const saturn = of("saturn");
+  assert.ok(Math.abs(saturn.day_h! - 10.656) < 0.01, `${saturn.day_h}`);
+  assert.ok(Math.abs((saturn.tilt_rad! * 180) / Math.PI - 26.73) < 1e-9);
+  assert.ok(saturn.rings!.length >= 4 && saturn.rings!.every((r) => r.outer_km > r.inner_km));
+  assert.ok(Math.abs(of("sun").day_h! - 609.12) < 0.1, `${of("sun").day_h}`);
+  assert.equal(of("rigel").day_h, undefined, "no day on record: it stands still");
+  assert.equal(itemFromReference(doc.objects.find((o) => o.id === "earth")!).day_h, undefined, "without base-sol, none");
+});

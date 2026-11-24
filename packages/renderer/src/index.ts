@@ -106,3 +106,6 @@ export async function startSurface(canvas: HTMLCanvasElement) {
   const { createSurfaceGpu } = await import("./gpu-surface.ts");
   return createSurfaceGpu(canvas);
 }
+// The size comparison's turning globes (3D, True, Wireframe).
+export { circleSteps, globeFrame, graticule, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
+export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";
