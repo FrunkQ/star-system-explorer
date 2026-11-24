@@ -17254,6 +17254,104 @@
       "src": "unesco37",
       "check": "unverified"
      }
+    },
+    {
+     "id": "titan-tholin",
+     "names": {
+      "physics": "Titan tholin (N2-CH4 discharge organics)",
+      "plain": "Titan's orange haze stuff",
+      "story": "tholin"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "a laboratory stand-in for Titan's organic haze and for the red-brown stains on icy worlds; real hazes differ with how they were made",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        263.8,
+        295.2,
+        326.3,
+        354.2,
+        387.4,
+        413.3,
+        442.8,
+        563.5,
+        688.8,
+        873.1,
+        1016.0,
+        1148.0,
+        1192.0,
+        1357.0,
+        1381.0,
+        1802.0,
+        1813.0,
+        1823.0,
+        1873.0,
+        2019.0,
+        2214.0,
+        2393.0,
+        2403.0,
+        2422.0
+       ],
+       "n": [
+        1.68,
+        1.66,
+        1.64,
+        1.63,
+        1.66,
+        1.69,
+        1.72,
+        1.7,
+        1.68,
+        1.66,
+        1.65,
+        1.65,
+        1.65,
+        1.64,
+        1.64,
+        1.64,
+        1.64,
+        1.64,
+        1.63,
+        1.63,
+        1.63,
+        1.62,
+        1.62,
+        1.62
+       ],
+       "k": [
+        0.18,
+        0.15,
+        0.13,
+        0.11,
+        0.091,
+        0.076,
+        0.06,
+        0.023,
+        0.0088,
+        0.0024,
+        0.001,
+        0.00064,
+        0.00052,
+        0.00042,
+        0.00041,
+        0.0004,
+        0.00042,
+        0.00044,
+        0.00052,
+        0.00072,
+        0.00089,
+        0.0008,
+        0.00085,
+        0.0012
+       ],
+       "src": "khare1984",
+       "check": "unverified",
+       "at_k": 300.0,
+       "note": "thin films and pellets of tholin from 0.9 N2 / 0.1 CH4 at 0.2 mbar, room temperature; alpha = 4 pi k / lambda"
+      }
+     }
     }
    ],
    "reactions": [
@@ -18095,6 +18193,13 @@
      "text": "Kaye and Laby, Tables of Physical and Chemical Constants, section 2.5.7 refractive index of gases (online edition, NPL; now offline)",
      "status": "unverified",
      "url": "https://pdg.lbl.gov/2023/AtomicNuclearProperties/explain_gas.html"
+    },
+    {
+     "id": "khare1984",
+     "text": "Khare, B. N., Sagan, C., Arakawa, E. T., Suits, F., Callcott, T. A. and Williams, M. W. 1984, Icarus 60, 127: optical constants of organic tholins produced in a simulated Titanian atmosphere, from soft X-ray to microwave frequencies; Table I, n and k = a 10^b (n to +/-0.05, k to +/-30 %)",
+     "status": "unverified",
+     "doi": "10.1016/0019-1035(84)90142-8",
+     "url": "https://hitran.org/data/Aerosols/Aerosols%20data%20from%20previous%20HITRAN/Aerosols-2016/papers/khare_tholins_1984.pdf"
     },
     {
      "id": "kibbey-star48",

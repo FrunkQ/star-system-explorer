@@ -27,6 +27,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | MP30 electrical conductivity for MF2's field ledger: `earth-core-liquid` and liquid iron (Pozzo 2012), `giant-envelope` sigma profile along Jupiter's adiabat (French 2012), `seawater` with PSS-78 fits | done (this PR); ionic water's 1e4 S/m still recalled | packages/MP30-conductivity.md |
 | MP31 units for the units engine (ED1a): 16 working units, 10 imperial units (group `imperial`), source NIST SP 811; reader knows `area` and `volume` | done (this PR) | packages/MP31-units.md |
 | MP32 sea liquids: liquid water's absorption spectrum 380 to 2000 nm (Pope and Fry 1997, Hale and Querry 1973) and refractive index (Segelstein 1981); `saturated_liquid` tables (density, viscosity, surface tension, vapour pressure) for water, methane, ethane, ammonia, nitrogen, helium, CO2, argon, propane, each column citing its reference correlation, read through CoolProp; new rows `c2h6`, `c3h8` | done (this PR); liquid methane and ethane absorption still unsourced; ethane as a volatile (vapour fit, colour) next | packages/MP32-sea-liquids.md |
+| MP33 condensate optics, part 1: `titan-tholin` n,k 264 to 2422 nm (Khare 1984), shape `optical.refractive_index {lambda_nm, n, k}` for the giant-bands and plumes threads | part 1 done (this PR); h2so4, nh4sh, chromophore and the MP34 ices wait (list in the log) | packages/MP33-condensate-optics.md |
 
 
 ## Next, in order (as of 24 Nov 2026, for whoever picks this track up)
@@ -36,7 +37,15 @@ Only the owner thread edits this file. One row per package: update it in the sam
    - **Ethane as a volatile.** Needs Fray and Schmitt 2009's fit, a condensed colour and a latent heat. This goes through the golden lane, since it may move hashes.
    
    Details are in packages/MP32-sea-liquids.md.
-2. **Still unsourced, and searched without luck so far:**
+2. **MP33 and MP34 condensate optics.** The renderer's giant-bands and plumes threads read these through Look up; the order is in packages/MP33-condensate-optics.md:
+   - `h2so4` (from the Palmer and Williams 1975 page image);
+   - `nh4sh`;
+   - `jupiter-chromophore`;
+   - SO2 frost;
+   - sulphur allotropes;
+   - N2 and CH4 ice;
+   - CO2 frost.
+3. **Still unsourced, and searched without luck so far:**
    - heats of combustion for the solid propellants (JPL TM 33-649, JPL 79-29 and Thiokol TWR-13009 searched);
    - ionic water's conductivity: `h2o.ionic_fluid` still holds a recalled 1e4 S/m, because Knudson 2012 gives only reflectivity;
    - latent heats for Ti-6Al-4V and Al 6061;
@@ -44,14 +53,14 @@ Only the owner thread edits this file. One row per package: update it in the sam
    - the solar-metallicity end of the element `scatter_dex` (Bensby 2014 Table C.3 at CDS was not read).
    
    The Cayrel 2004 metal-poor scatter values are written down in packages/scatter-dex-notes.md and are still to be put on the rows.
-3. **Waiting on the readers of new rows.**
+4. **Waiting on the readers of new rows.**
    - Proven core reads MP30's conductivities for MF2, through these fields:
      - `earth-core-liquid.sigma_elec` and `sigma_elec_icb`;
      - `iron.sigma_elec_liquid`;
      - `giant-envelope.sigma_elec_profile` and `metallic_from`;
      - `seawater.sigma_elec`, `sigma_elec_25c` and the PSS-78 fits.
    - The editing thread strikes the MP31 units off its WAITING list in figures.test.ts. Imperial units are in group `imperial`.
-4. **Later:** p-B11 fusion (the B-11 mass is now on the sheet); OV12 naming at stage 5.
+5. **Later:** p-B11 fusion (the B-11 mass is now on the sheet); OV12 naming at stage 5.
 
 Working notes for this track:
 - From the cloud, janaf.nist.gov, the AME2020 hosts, webbook.nist.gov, omlc.org and srd.nist.gov all refuse curl. A web-reading agent reaches janaf, physics.nist.gov and omlc.

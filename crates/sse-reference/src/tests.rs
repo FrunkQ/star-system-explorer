@@ -891,3 +891,34 @@ fn sea_liquids_carry_density_viscosity_and_surface_tension() {
     let m = first("ch4");
     assert!(m[2] < 0.5 * w[2] && m[3] < 0.2 * w[3] && m[4] < 0.3 * w[4]);
 }
+
+#[test]
+fn tholin_absorbs_blue_more_than_red() {
+    // MP33: Khare et al. 1984 tholin; k falls from the ultraviolet to the
+    // near infrared, which is why Titan's haze is orange.
+    let r = Reference::base();
+    let t = r
+        .row("mixtures", "titan-tholin")
+        .and_then(|x| x.get("optical"))
+        .and_then(|o| o.get("refractive_index"))
+        .unwrap();
+    let col = |k: &str| -> Vec<f64> {
+        t.get(k)
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect()
+    };
+    let (lam, n, k) = (col("lambda_nm"), col("n"), col("k"));
+    assert!(lam.len() == n.len() && n.len() == k.len());
+    let at = |nm: f64| {
+        let i = (0..lam.len())
+            .min_by(|&a, &b| (lam[a] - nm).abs().total_cmp(&(lam[b] - nm).abs()))
+            .unwrap();
+        k[i]
+    };
+    assert!(at(440.0) > at(690.0) && at(690.0) > at(1000.0));
+    assert!(n.iter().all(|&x| (1.5..1.8).contains(&x)));
+}
