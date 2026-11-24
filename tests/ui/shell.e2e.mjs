@@ -101,10 +101,12 @@ try {
         const v = f?.querySelector("input, output");
         return v ? (v.value ?? v.textContent).trim() : "";
       }, prefix);
+    // A shown figure as a number: a surface reads in °C (ED1a), so it can be below zero, written with a true minus.
+    const num = (t) => parseFloat((t.replace(/−/g, "-").replace(/,/g, "").match(/-?\d+(?:\.\d+)?/) ?? ["NaN"])[0]);
     await page.waitForFunction(() => /0\.9\b/.test(document.querySelector("section[aria-label='Tarn']")?.textContent ?? ""));
     const gravityAfterMass = await fieldStartsWith("Gravity");
     assert.notEqual(gravityAfterMass, "0.908 g", "gravity re-derived after the mass edit");
-    const surface0 = parseFloat(await fieldStartsWith("Surface"));
+    const surface0 = num(await fieldStartsWith("Surface"));
     const tarn = page.locator("[role=button][aria-label^='Tarn'] circle.hit");
     const star = page.locator("[role=button][aria-label^='Kestrel'] circle.hit");
     const tb = await tarn.boundingBox();
@@ -117,11 +119,12 @@ try {
     await page.waitForFunction(() => (n) => document.querySelectorAll("[data-event-id]").length >= n + 2, opening, { timeout: 5000 });
     await page.waitForFunction((s0) => {
       const f = [...document.querySelectorAll("section[aria-label='Tarn'] .field")].find((x) => /^surface/i.test(x.textContent.trim()));
-      return f && parseFloat(f.textContent.replace(/^\D+/, "")) < s0;
+      const t = (f?.querySelector("input, output")?.value ?? f?.querySelector("output")?.textContent ?? "").replace(/−/g, "-").replace(/,/g, "");
+      return f && parseFloat((t.match(/-?\d+(?:\.\d+)?/) ?? ["NaN"])[0]) < s0;
     }, surface0, { timeout: 5000 });
-    const orbitDragged = parseFloat(await fieldStartsWith("Orbit"));
+    const orbitDragged = num(await fieldStartsWith("Orbit"));
     assert.ok(orbitDragged > 0.52, `dragged orbit ${orbitDragged} AU`);
-    const surface1 = parseFloat(await fieldStartsWith("Surface"));
+    const surface1 = num(await fieldStartsWith("Surface"));
     await page.keyboard.press("Control+z");
     const orbitIs = (want) => page.waitForFunction((w) => [...document.querySelectorAll("section[aria-label='Tarn'] input")].some((i) => i.value === w), want, { timeout: 5000 });
     await orbitIs("0.52 AU");
@@ -194,7 +197,7 @@ try {
     const haspCard = page.locator("section[aria-label='Hasp']");
     await haspCard.waitFor();
     const haspOrbit = () => haspCard.locator(".field").filter({ hasText: /^orbit/i }).locator("input").inputValue();
-    assert.equal(await haspOrbit(), "412,000 km");
+    assert.equal(await haspOrbit(), "412 thousand km", "a moon's orbit said by the units engine (ED1a)");
     const hb = await chartSvg.locator("[role=button][aria-label^='Hasp'] circle.hit").boundingBox();
     const vb = await chartSvg.locator("[role=button][aria-label^='Vault'] circle.hit").boundingBox();
     const [hx, hy, vx, vy] = [hb.x + hb.width / 2, hb.y + hb.height / 2, vb.x + vb.width / 2, vb.y + vb.height / 2];
@@ -205,13 +208,14 @@ try {
     await haspCard.locator(".field").filter({ hasText: /^orbit/i }).locator("input").waitFor();
     await page.waitForFunction(() => {
       const i = [...document.querySelectorAll("section[aria-label='Hasp'] .field")].find((x) => /^orbit/i.test(x.textContent.trim()))?.querySelector("input");
-      return i && /km$/.test(i.value) && Number(i.value.replace(/\D/g, "")) > 412000;
+      const km = i && /km$/.test(i.value) ? parseFloat(i.value.replace(/,/g, "")) * (/thousand/.test(i.value) ? 1e3 : /million/.test(i.value) ? 1e6 : 1) : 0;
+      return km > 412000;
     }, null, { timeout: 5000 });
     const haspDragged = await haspOrbit();
     const orbitInput = haspCard.locator(".field").filter({ hasText: /^orbit/i }).locator("input");
     await orbitInput.fill("500,000 km");
     await orbitInput.press("Enter");
-    await page.waitForFunction(() => [...document.querySelectorAll("section[aria-label='Hasp'] input")].some((i) => i.value === "500,000 km"), null, { timeout: 5000 });
+    await page.waitForFunction(() => [...document.querySelectorAll("section[aria-label='Hasp'] input")].some((i) => i.value === "500 thousand km"), null, { timeout: 5000 });
     await page.getByRole("button", { name: "‹ Kestrel" }).click();
     await page.waitForFunction(() => document.querySelector(".area-chart svg")?.getAttribute("aria-label")?.startsWith("System chart"));
     await page.locator("section[aria-label='Vault']").waitFor();

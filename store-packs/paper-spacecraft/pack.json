@@ -1,0 +1,858 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.paper-spacecraft",
+ "version": "0.1.0",
+ "kind": [
+  "universe"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": {
+    "label": "Paper spacecraft",
+    "text": "Engines and ships that were designed in detail and never built, each from its own study: Discovery II, NASA's HOPE ships to Callisto, Project Longshot, the Orion nuclear pulse ship, the fission fragment rocket, gaseous core engines and the Starshot sail. They fly on SSE4's own physics, marked not yet built.",
+    "fictional": false,
+    "note": "Track RK, package RK6 (handover/design/SSE4-atomic-rockets-plan.md section 6). Published on Explorers, not built into SSE4. Built by scripts/build-paper-spacecraft.py; do not edit by hand."
+   },
+   "credit": [
+    "Figures from NASA, NASA contractor and US Naval Academy reports (US Government works) and from Parkin 2018 (arXiv:1805.01306); each figure names its study. Our selection, arrangement and words are Apache-2.0."
+   ],
+   "engines": {
+    "paper.discovery-ii-jupiter": {
+     "name": "Discovery II spherical torus (Jupiter setting)",
+     "fuels": [
+      "deuterium",
+      "helium-3",
+      "hydrogen"
+     ],
+     "thrust_n": 27801.4,
+     "exhaust_km_s": 347.499,
+     "energy_from": "fuel",
+     "efficiency": 0.8,
+     "mass_t": 310.0,
+     "exhaust_range_km_s": [
+      347.499,
+      462.923
+     ]
+    },
+    "paper.discovery-ii-saturn": {
+     "name": "Discovery II spherical torus (Saturn setting)",
+     "fuels": [
+      "deuterium",
+      "helium-3",
+      "hydrogen"
+     ],
+     "thrust_n": 20862.2,
+     "exhaust_km_s": 462.923,
+     "energy_from": "fuel",
+     "efficiency": 0.8,
+     "mass_t": 310.0,
+     "exhaust_range_km_s": [
+      347.499,
+      462.923
+     ]
+    },
+    "paper.hope-mtf": {
+     "name": "HOPE magnetised target fusion drive (D-He3)",
+     "fuels": [
+      "deuterium",
+      "helium-3",
+      "hydrogen"
+     ],
+     "thrust_n": 5485.28,
+     "exhaust_km_s": 755.112,
+     "energy_from": "fuel",
+     "efficiency": 0.908,
+     "reject_k": 1250.0
+    },
+    "paper.hope-mpd": {
+     "name": "HOPE magnetoplasmadynamic thrusters (piloted, 37 MW)",
+     "fuels": [
+      "hydrogen"
+     ],
+     "thrust_n": 611.831,
+     "exhaust_km_s": 78.453,
+     "energy_from": "electric",
+     "electric_w": 37000000.0,
+     "efficiency": 0.649
+    },
+    "paper.longshot-icf": {
+     "name": "Longshot inertial fusion pulse drive (D-He3 pellets)",
+     "fuels": [
+      "deuterium",
+      "helium-3"
+     ],
+     "thrust_n": 1838.0,
+     "exhaust_km_s": 10002.783,
+     "energy_from": "fuel"
+    },
+    "paper.orion-10m": {
+     "name": "Orion 10 m nuclear pulse module",
+     "fuels": [
+      "pulse units"
+     ],
+     "thrust_n": 1762260.0,
+     "exhaust_km_s": 17.652,
+     "energy_from": "fuel",
+     "mass_t": 90.7185,
+     "exhaust_range_km_s": [
+      17.652,
+      24.517
+     ]
+    },
+    "paper.ffre": {
+     "name": "Fission fragment rocket engine",
+     "fuels": [
+      "uranium dioxide"
+     ],
+     "thrust_n": 44.4822,
+     "exhaust_km_s": 5168.105,
+     "energy_from": "fuel",
+     "efficiency": 0.115,
+     "reject_k": 1350.0,
+     "mass_t": 113.4
+    },
+    "paper.nuclear-light-bulb": {
+     "name": "Nuclear light bulb (closed-cycle gas core)",
+     "fuels": [
+      "hydrogen"
+     ],
+     "thrust_n": 409236.0,
+     "exhaust_km_s": 18.338,
+     "energy_from": "fuel",
+     "efficiency": 0.816,
+     "mass_t": 31.7515
+    },
+    "paper.open-cycle-gas-core": {
+     "name": "Open-cycle gas core (5,000 MW baseline)",
+     "fuels": [
+      "hydrogen"
+     ],
+     "thrust_n": 222411.0,
+     "exhaust_km_s": 50.995,
+     "energy_from": "fuel",
+     "reject_k": 1100.0,
+     "mass_t": 113.398
+    }
+   },
+   "engine_notes": {
+    "paper.discovery-ii-jupiter": {
+     "src": [
+      "williams2005"
+     ],
+     "derived": "thrust 6,250 lbf in newtons; exhaust from 35,435 s; the two settings are one 4,830 MW jet geared for Jupiter and Saturn; jet efficiency 0.8 is the study's assumption; mass_t is the fusion reactor line of Table 1"
+    },
+    "paper.discovery-ii-saturn": {
+     "src": [
+      "williams2005"
+     ],
+     "derived": "thrust 4,690 lbf in newtons; exhaust from 47,205 s"
+    },
+    "paper.hope-mtf": {
+     "src": [
+      "adams2003-callisto"
+     ],
+     "derived": "thrust = 2 x jet power (2.071 GW) / exhaust (77,000 s): the paper gives no newtons; efficiency = jet over jet plus the 176.5 MW and 33.9 MW its radiators shed"
+    },
+    "paper.hope-mpd": {
+     "src": [
+      "adams2003-callisto"
+     ],
+     "derived": "thrust = 2 x 24 MW / exhaust (8,000 s); efficiency = 24 MW of jet over 37 MW in"
+    },
+    "paper.longshot-icf": {
+     "src": [
+      "beals1988"
+     ],
+     "derived": "exhaust from 1.02e6 s; thrust 1,838 N read from the OCR of the tank-sizing appendix"
+    },
+    "paper.orion-10m": {
+     "src": [
+      "ga4891",
+      "ga5009-3",
+      "nance1964"
+     ],
+     "derived": "the reports give no average thrust; this is the 0.3 g start-up of GA-5009 on the 599,000 kg departure mass of GA-4891; exhaust from 1,800 s, the low end of 1,800 to 2,500 s; module 200,000 lb"
+    },
+    "paper.ffre": {
+     "src": [
+      "werka2012"
+     ],
+     "derived": "thrust 10 lbf in newtons; exhaust from 527,000 s; efficiency = jet over 1000 MW thermal (the report says about 11%); 1350 K is its heat-shield radiator, which sheds 699 MW"
+    },
+    "paper.nuclear-light-bulb": {
+     "src": [
+      "mclafferty1968"
+     ],
+     "derived": "thrust 92,000 lb in newtons; exhaust from 1870 s; efficiency = jet over the 4600 MW engine power; mass 70,000 lb"
+    },
+    "paper.open-cycle-gas-core": {
+     "src": [
+      "ragsdale1991",
+      "ragsdale-willis1971"
+     ],
+     "derived": "thrust 50,000 lb; exhaust from 5200 s; engine 250,000 lb with its radiator (1100 K from Ragsdale and Willis). As printed its jet (5.7 GW) is more than its 5,000 MW reactor: the books do not close, and the reading says so"
+    }
+   },
+   "nav_ships": {
+    "about": "Ships from design studies, fitted with their engines so the power books set the drive. Each has a recipe saying what the study claimed.",
+    "ships": {
+     "paper.discovery-ii": {
+      "name": "Discovery II (to Jupiter)",
+      "sustained": true,
+      "accel_g": 0.00167749,
+      "exhaust_km_s": 347.499,
+      "wet_t": 1690.0,
+      "dry_t": 872.0,
+      "fuels": [
+       "deuterium",
+       "helium-3",
+       "hydrogen"
+      ],
+      "refuel": [
+       "docking"
+      ],
+      "crew": 6,
+      "cargo_t": 172.0,
+      "engines": [
+       {
+        "engine": "paper.discovery-ii-jupiter"
+       }
+      ]
+     },
+     "paper.discovery-ii-saturn": {
+      "name": "Discovery II (to Saturn)",
+      "sustained": true,
+      "accel_g": 0.00125879,
+      "exhaust_km_s": 462.923,
+      "wet_t": 1690.0,
+      "dry_t": 872.0,
+      "fuels": [
+       "deuterium",
+       "helium-3",
+       "hydrogen"
+      ],
+      "refuel": [
+       "docking"
+      ],
+      "crew": 6,
+      "cargo_t": 172.0,
+      "engines": [
+       {
+        "engine": "paper.discovery-ii-saturn"
+       }
+      ]
+     },
+     "paper.hope-mtf": {
+      "name": "HOPE fusion ship to Callisto (D-He3)",
+      "sustained": true,
+      "accel_g": 0.000808425,
+      "exhaust_km_s": 755.112,
+      "wet_t": 691.892,
+      "dry_t": 549.892,
+      "fuels": [
+       "deuterium",
+       "helium-3",
+       "hydrogen"
+      ],
+      "refuel": [
+       "docking"
+      ],
+      "crew": 6,
+      "cargo_t": 163.933,
+      "engines": [
+       {
+        "engine": "paper.hope-mtf"
+       }
+      ]
+     },
+     "paper.hope-nep": {
+      "name": "HOPE nuclear electric ship to Callisto (piloted)",
+      "sustained": true,
+      "accel_g": 5.81809e-05,
+      "exhaust_km_s": 78.453,
+      "wet_t": 1072.336,
+      "dry_t": 495.336,
+      "fuels": [
+       "hydrogen"
+      ],
+      "refuel": [
+       "docking"
+      ],
+      "crew": 6,
+      "cargo_t": 57.885,
+      "power": [
+       {
+        "id": "reactor",
+        "kind": "fission-reactor",
+        "electric_w": 37000000.0
+       }
+      ],
+      "engines": [
+       {
+        "engine": "paper.hope-mpd"
+       }
+      ]
+     },
+     "paper.longshot": {
+      "name": "Longshot probe to Alpha Centauri",
+      "sustained": true,
+      "accel_g": 0.000472798,
+      "exhaust_km_s": 10002.783,
+      "wet_t": 396.414,
+      "dry_t": 132.138,
+      "fuels": [
+       "deuterium",
+       "helium-3"
+      ],
+      "refuel": [
+       "docking"
+      ],
+      "crew": 0,
+      "power": [
+       {
+        "id": "reactor",
+        "kind": "fission-reactor",
+        "electric_w": 300000.0,
+        "mass_t": 6.4
+       }
+      ],
+      "loads": [
+       {
+        "name": "laser link (one of six)",
+        "electric_w": 250000.0,
+        "role": "sensor"
+       }
+      ],
+      "engines": [
+       {
+        "engine": "paper.longshot-icf"
+       }
+      ]
+     },
+     "paper.orion-mars": {
+      "name": "Orion 10 m Mars ship",
+      "sustained": false,
+      "accel_g": 0.3,
+      "exhaust_km_s": 17.652,
+      "wet_t": 599.0,
+      "dry_t": 170.264,
+      "fuels": [
+       "pulse units"
+      ],
+      "refuel": [
+       "docking"
+      ],
+      "crew": 8,
+      "engines": [
+       {
+        "engine": "paper.orion-10m"
+       }
+      ]
+     },
+     "paper.ffre-callisto": {
+      "name": "Fission fragment ship to Callisto",
+      "sustained": true,
+      "accel_g": 1.49651e-05,
+      "exhaust_km_s": 5168.105,
+      "wet_t": 303.1,
+      "dry_t": 299.1,
+      "fuels": [
+       "uranium dioxide"
+      ],
+      "refuel": [
+       "docking"
+      ],
+      "crew": 6,
+      "cargo_t": 58.0,
+      "engines": [
+       {
+        "engine": "paper.ffre"
+       }
+      ]
+     }
+    }
+   },
+   "recipes": {
+    "paper.discovery-ii": {
+     "study": "Discovery II",
+     "year": 2001,
+     "by": "NASA Glenn Research Center",
+     "src": [
+      "williams2005"
+     ],
+     "mark": "not yet built",
+     "advances": [
+      "fusion-torch"
+     ],
+     "study_says": {
+      "from": "Earth",
+      "to": "Jupiter",
+      "trip_days": 118,
+      "distance_au": 4.7,
+      "note": "one way, from and to C3 ~ 0 (no spiral counted)"
+     },
+     "derived": "dry_t is IMLEO less the main-impulse hydrogen (807 mt) and the D-He3 (11 mt); reaction control, reserve and residuals stay aboard",
+     "about": "A 240 m crewed fusion ship designed to make the voyages of the film 2001 real: six crew, 172 t of payload, a 4.8 GW jet."
+    },
+    "paper.discovery-ii-saturn": {
+     "study": "Discovery II",
+     "year": 2001,
+     "by": "NASA Glenn Research Center",
+     "src": [
+      "williams2005"
+     ],
+     "mark": "not yet built",
+     "advances": [
+      "fusion-torch"
+     ],
+     "study_says": {
+      "from": "Earth",
+      "to": "Saturn",
+      "trip_days": 212,
+      "distance_au": 9.57,
+      "note": "one way; the same ship geared to a faster exhaust and less thrust"
+     },
+     "derived": "as the Jupiter ship; IMLEO 1,690 mt (Table 2 prints 1,699 for Saturn, but the text says the masses were fixed for both)",
+     "about": "The same Discovery II, geared for Saturn: the same jet power spent on a faster, thinner exhaust."
+    },
+    "paper.hope-mtf": {
+     "study": "HOPE (Human Outer Planet Exploration), magnetised target fusion",
+     "year": 2003,
+     "by": "NASA Marshall Space Flight Center",
+     "src": [
+      "adams2003-callisto"
+     ],
+     "mark": "not yet built",
+     "advances": [
+      "paper.mtf-fusion"
+     ],
+     "study_says": {
+      "from": "Earth-Moon L1",
+      "to": "Callisto",
+      "trip_days": 249,
+      "note": "outbound; 183 days at Callisto, about 652 days in all, departing 27 Apr 2045"
+     },
+     "derived": "dry_t is IML1 less the 142,000 main propellant; the reaction control propellant stays aboard",
+     "about": "NASA's 2003 study of a crewed base on Callisto, flown by a fusion drive of 77,000 seconds."
+    },
+    "paper.hope-nep": {
+     "study": "HOPE, nuclear electric (MSR-LMR-MPD, piloted)",
+     "year": 2003,
+     "by": "NASA Marshall Space Flight Center",
+     "src": [
+      "adams2003-callisto"
+     ],
+     "mark": "not yet built",
+     "advances": [
+      "paper.mpd-thruster",
+      "fission-reactor"
+     ],
+     "study_says": {
+      "from": "Earth-Moon L1",
+      "to": "Callisto",
+      "trip_days": 832,
+      "note": "flight time, thrusting about 812 days; about 120 days at Callisto, about 1,661 days in all"
+     },
+     "derived": "dry_t is IML1 less the 577,000 propellant",
+     "about": "The same Callisto mission on 37 MW of reactor electricity and magnetoplasmadynamic thrusters: the slow, honest way."
+    },
+    "paper.longshot": {
+     "study": "Project Longshot",
+     "year": 1988,
+     "by": "US Naval Academy for NASA",
+     "src": [
+      "beals1988"
+     ],
+     "mark": "not yet built",
+     "advances": [
+      "paper.icf-pulse",
+      "fission-reactor"
+     ],
+     "study_says": {
+      "to": "Alpha Centauri",
+      "trip_days": 36525,
+      "note": "about 100 years, cruising near 5% of light speed; no crew"
+     },
+     "derived": "dry_t is the overall total (396.414 t) less the fuel (264.276 t); the OCR of the weight table is garbled",
+     "about": "A 1988 student design for NASA: an uncrewed fusion probe that reaches Alpha Centauri in about a century."
+    },
+    "paper.orion-mars": {
+     "study": "Orion nuclear pulse, 10 m module, Mars by orbital rendezvous",
+     "year": 1964,
+     "by": "General Atomic for NASA Marshall",
+     "src": [
+      "ga4891",
+      "ga5009-3"
+     ],
+     "mark": "not yet built",
+     "advances": [
+      "paper.orion-pulse"
+     ],
+     "study_says": {
+      "from": "Earth",
+      "to": "Mars",
+      "trip_days": 450,
+      "note": "round trip; mission velocity 72,850 ft/s"
+     },
+     "derived": "dry_t from the rocket equation: 599,000 kg at departure over exp(22.2 km/s / 17.65 km/s); thrust is the 0.3 g start-up",
+     "about": "Pushed by a bomb a second against a 10 m plate: the 1964 design for a Saturn V-launched Mars ship with eight crew."
+    },
+    "paper.ffre-callisto": {
+     "study": "Fission fragment rocket engine, crewed Callisto mission",
+     "year": 2012,
+     "by": "NASA Marshall (NIAC phase I)",
+     "src": [
+      "werka2012"
+     ],
+     "mark": "not yet built",
+     "advances": [
+      "paper.fission-fragment"
+     ],
+     "study_says": {
+      "from": "Earth-Moon L1",
+      "to": "Jupiter",
+      "trip_days": 2100,
+      "note": "'over 2100 days were needed to reach the orbit of Jupiter'"
+     },
+     "derived": "dry_t is the wet mass less the 4.0 mT of uranium dioxide dust",
+     "about": "Fission fragments thrown straight out at 1.7% of light speed: half a million seconds of impulse, and 10 lbf of thrust."
+    }
+   },
+   "waiting": {
+    "paper.starshot": {
+     "study": "Breakthrough Starshot point design",
+     "year": 2018,
+     "by": "Parkin Research for Breakthrough Initiatives",
+     "src": [
+      "parkin2018"
+     ],
+     "mark": "not yet built",
+     "advances": [
+      "light-sail"
+     ],
+     "figures": {
+      "laser_w": 200000000000.0,
+      "optics_m": 2700.0,
+      "wavelength_um": 1.06,
+      "sail_m": 4.1,
+      "sailcraft_g": 3.6,
+      "payload_g": 1.0,
+      "speed_c": 0.2,
+      "push_s": 550.0,
+      "peak_g": 14900.0,
+      "stored_wh": 63000000000.0,
+      "kinetic_wh": 1900000000.0
+     },
+     "waits_on": "RK5: a beamed leg that depends on its sender (the travel thread)",
+     "about": "A 3.6 g sail thrown to a fifth of light speed by 200 GW of laser in nine minutes."
+    }
+   },
+   "tech": {
+    "advances": [
+     {
+      "id": "paper.nuclear-light-bulb",
+      "name": "Nuclear light bulb",
+      "level": 5,
+      "sets": {
+       "exhaust_km_s": 18.338
+      },
+      "fuel": "hydrogen",
+      "family": "near-ceiling",
+      "part": "drive",
+      "mark": "not yet built",
+      "src": "mclafferty1968",
+      "note": "uranium plasma held in a quartz bulb, its light heating hydrogen outside: 1870 s, 92,000 lb, 4600 MW"
+     },
+     {
+      "id": "paper.open-cycle-gas-core",
+      "name": "Open-cycle gas core",
+      "level": 5,
+      "sets": {
+       "exhaust_km_s": 50.995
+      },
+      "fuel": "hydrogen",
+      "family": "near-ceiling",
+      "part": "drive",
+      "mark": "not yet built",
+      "src": "ragsdale1991",
+      "note": "a uranium plasma ball inside flowing hydrogen, some of it lost with the exhaust: 5200 s from 5,000 MW"
+     },
+     {
+      "id": "paper.orion-pulse",
+      "name": "Nuclear pulse (Orion)",
+      "level": 4,
+      "sets": {
+       "exhaust_km_s": 17.652
+      },
+      "family": "engine",
+      "part": "drive",
+      "mark": "not yet built",
+      "src": "ga4891",
+      "least_size": {
+       "v": 53.9,
+       "unit": "kg",
+       "what": "fissile metal per pulse unit at most: a bare sphere of 93 to 94% U-235 goes critical at 53.9 kg, so a fission charge needs a share of that and cannot be made arbitrarily small; plutonium and a reflector lower it",
+       "src": "gwin-mee1959",
+       "check": "unverified"
+      },
+      "note": "within the reach of 1960s engineering in General Atomic's view; never built (1963 test ban)"
+     },
+     {
+      "id": "paper.mtf-fusion",
+      "name": "Magnetised target fusion drive",
+      "level": 5,
+      "sets": {
+       "exhaust_km_s": 755.112,
+       "plant_w_per_kg": 51813.5
+      },
+      "family": "engine",
+      "part": "drive",
+      "mark": "not yet built",
+      "src": "adams2003-callisto",
+      "note": "plant_w_per_kg from 0.0193 kg per kW of jet (derived)"
+     },
+     {
+      "id": "paper.icf-pulse",
+      "name": "Inertial fusion pulse drive",
+      "level": 6,
+      "sets": {
+       "exhaust_km_s": 10002.783
+      },
+      "family": "engine",
+      "part": "drive",
+      "mark": "not yet built",
+      "src": "beals1988"
+     },
+     {
+      "id": "paper.fission-fragment",
+      "name": "Fission fragment rocket",
+      "level": 5,
+      "sets": {
+       "exhaust_km_s": 5168.105,
+       "waste_per_jet": 7.7,
+       "radiator_k": 1350.0
+      },
+      "family": "engine",
+      "part": "drive",
+      "mark": "not yet built",
+      "src": "werka2012",
+      "note": "waste_per_jet = heat over jet at 1000 MW thermal (derived); most of it leaves at 1350 K"
+     },
+     {
+      "id": "paper.mpd-thruster",
+      "name": "Megawatt magnetoplasmadynamic thruster",
+      "level": 5,
+      "sets": {
+       "exhaust_km_s": 78.453
+      },
+      "family": "engine",
+      "part": "electric drive",
+      "mark": "not yet built",
+      "src": "adams2003-callisto",
+      "note": "electric: thrust is set by the power plant"
+     },
+     {
+      "id": "paper.brayton-reactor",
+      "name": "Space fission reactor with Brayton conversion",
+      "level": 5,
+      "sets": {
+       "plant_w_per_kg": 20.0
+      },
+      "family": "engine",
+      "part": "power plant",
+      "mark": "not yet built",
+      "src": "johnson2003",
+      "note": "Prometheus's goal of 50 kg per kWe; two 100 kWe Brayton units designed for the Jupiter Icy Moons Orbiter (mason2003), cancelled 2005"
+     }
+    ],
+    "sources": {
+     "williams2005": "Williams, C. H., Dudzinski, L. A., Borowski, S. K. and Juhasz, A. J. 2005, Realizing '2001: A Space Odyssey': piloted spherical torus nuclear fusion propulsion, NASA/TM-2005-213559 (AIAA-2001-3805), Tables 1 and 2. https://ntrs.nasa.gov/api/citations/20050160960/downloads/20050160960.pdf",
+     "adams2003-callisto": "Adams, R. B. et al. 2003, Crewed mission to Callisto using advanced plasma propulsion systems, AIAA 2003-4527 (NASA HOPE study), Tables 1 to 8. https://ntrs.nasa.gov/api/citations/20030065984/downloads/20030065984_Update.pdf",
+     "beals1988": "Beals, K. A. et al. 1988, Project Longshot: an unmanned probe to Alpha Centauri, US Naval Academy, NASA CR-184718 (OCR scan). https://ntrs.nasa.gov/api/citations/19890007533/downloads/19890007533.pdf",
+     "ga4891": "General Atomic 1964, Nuclear pulse vehicle study, condensed summary report, GA-4891, contract NAS 8-11053 for NASA Marshall (OCR scan). https://www.classe.cornell.edu/~seb/celestia/orion/files/19770085619_1977085619.pdf",
+     "ga5009-3": "Shipps, P. R. and Nance, J. C. (General Atomic) 1964, Nuclear pulse space vehicle study, vol. III, conceptual vehicle designs and operational systems, GA-5009, section 2.1 (OCR scan). https://www.classe.cornell.edu/~seb/celestia/orion/files/19760065935_1976065935.pdf",
+     "nance1964": "Nance, J. C. 1964, Nuclear pulse propulsion, GA-5572, IEEE 11th Nuclear Science Symposium, DTIC AD0450629. https://apps.dtic.mil/sti/pdfs/AD0450629.pdf",
+     "werka2012": "Werka, R., Clark, R., Sheldon, R. and Percy, T. 2012, Concept assessment of a fission fragment rocket engine (FFRE) propelled spacecraft, NASA NIAC phase I final report, part 1. https://www.nasa.gov/wp-content/uploads/2019/04/niac_2011_phasei_werka_ffre_tagged.pdf",
+     "mclafferty1968": "McLafferty, G. H. and Bauer, H. E. 1968, Studies of specific nuclear light bulb and open-cycle vortex-stabilized gaseous nuclear rocket engines, United Aircraft F-910093-37, NASA CR-1030, Results item 1. https://ntrs.nasa.gov/api/citations/19680012569/downloads/19680012569.pdf",
+     "ragsdale1991": "Ragsdale, R. 1991, Open cycle gas core nuclear rockets, NASA conference talk (N92), figure 6 baseline. https://ntrs.nasa.gov/api/citations/19920001890/downloads/19920001890.pdf",
+     "ragsdale-willis1971": "Ragsdale, R. G. and Willis, E. A. 1971, Gas-core rocket reactors: a new look, NASA TM X-67823 (OCR scan). https://ntrs.nasa.gov/api/citations/19710014431/downloads/19710014431.pdf",
+     "johnson2003": "Johnson, S. 2003, Project Prometheus, workshop slides, NASA/TM-2003-212598, slide 13: up to 100 kWe, specific mass 50 kg/kWe. https://ntrs.nasa.gov/api/citations/20040034798/downloads/20040034798.pdf",
+     "mason2003": "Mason, L. S. 2003, A power conversion concept for the Jupiter Icy Moons Orbiter, NASA/TM-2003-212596: two 100 kWe Brayton units, 496 kWt. https://ntrs.nasa.gov/api/citations/20030105581/downloads/20030105581.pdf",
+     "parkin2018": "Parkin, K. L. G. 2018, The Breakthrough Starshot system model, Acta Astronautica 152, 370, arXiv:1805.01306 v3, Tables 1 and 2. https://arxiv.org/pdf/1805.01306",
+     "gwin-mee1959": "Gwin, R. and Mee, W. T. 1959, Critical assemblies of uranium metal, Y-1248, Table I: a bare sphere of 93 to 94% U-235 metal is critical at 53.9 kg. https://www.osti.gov/servlets/purl/4246875"
+    }
+   },
+   "tours": [
+    {
+     "schema": "sse.tour/1",
+     "id": "paper.tour.torchships-are-hard",
+     "title": "Why torchships are hard",
+     "stops": [
+      {
+       "bookmark": {
+        "schema": "sse.bookmark/1",
+        "scope": "fixture:sol",
+        "instrument": "voyages",
+        "voyage": {
+         "ship": "paper.discovery-ii",
+         "from": "Earth",
+         "to": "Jupiter"
+        }
+       },
+       "caption": "Discovery II puts 4.8 billion watts into its exhaust, a large power station's output, for 28 kN of thrust. On 1,690 tonnes that is less than two thousandths of a g.",
+       "try": "Open the power line and read the jet power."
+      },
+      {
+       "bookmark": {
+        "schema": "sse.bookmark/1",
+        "scope": "fixture:sol",
+        "instrument": "voyages",
+        "voyage": {
+         "ship": "paper.discovery-ii",
+         "from": "Earth",
+         "to": "Saturn"
+        }
+       },
+       "caption": "Thrust times exhaust speed is twice the jet power. Faster exhaust saves fuel, but at fixed power it gives less push: the same engine geared for Saturn has a quarter less thrust.",
+       "try": "Switch to the Saturn setting and compare the acceleration."
+      },
+      {
+       "bookmark": {
+        "schema": "sse.bookmark/1",
+        "scope": "fixture:sol",
+        "instrument": "voyages",
+        "voyage": {
+         "ship": "paper.hope-nep",
+         "from": "Earth",
+         "to": "Jupiter"
+        }
+       },
+       "caption": "With reactor electricity instead of fusion, 37 MW buys about a ninth of the HOPE fusion ship's push. The same trip to Callisto takes more than three times as long.",
+       "try": "Plan the trip and compare the days."
+      },
+      {
+       "bookmark": {
+        "schema": "sse.bookmark/1",
+        "scope": "fixture:sol",
+        "instrument": "voyages",
+        "voyage": {
+         "ship": "paper.ffre-callisto",
+         "from": "Earth",
+         "to": "Jupiter"
+        }
+       },
+       "caption": "Half a million seconds of impulse needs almost no fuel, but 10 lbf of thrust on 300 tonnes takes more than five years to Jupiter. Exhaust speed alone does not make a torch: power does.",
+       "try": "Read the acceleration in g."
+      }
+     ]
+    },
+    {
+     "schema": "sse.tour/1",
+     "id": "paper.tour.radiators",
+     "title": "How big the radiators really are",
+     "stops": [
+      {
+       "bookmark": {
+        "schema": "sse.bookmark/1",
+        "scope": "fixture:sol",
+        "instrument": "voyages",
+        "voyage": {
+         "ship": "paper.ffre-callisto",
+         "from": "Earth",
+         "to": "Jupiter"
+        }
+       },
+       "caption": "The fission fragment ship throws away 700 of every 1000 MW it makes. At 1350 K the panels shed that through 1954 square metres.",
+       "try": "Look at the heat line in the power books."
+      },
+      {
+       "bookmark": {
+        "schema": "sse.bookmark/1",
+        "scope": "fixture:sol",
+        "instrument": "voyages",
+        "voyage": {
+         "ship": "paper.ffre-callisto",
+         "from": "Earth",
+         "to": "Jupiter"
+        }
+       },
+       "caption": "Its magnets must stay at 120 K. Shedding only 0.05 MW at that temperature needs 2247 square metres, more than the 699 MW panels: radiated power goes as the fourth power of temperature.",
+       "try": "Halve a radiator's temperature and count how much bigger it must be."
+      },
+      {
+       "bookmark": {
+        "schema": "sse.bookmark/1",
+        "scope": "fixture:sol",
+        "instrument": "voyages",
+        "voyage": {
+         "ship": "paper.hope-mtf",
+         "from": "Earth",
+         "to": "Jupiter"
+        }
+       },
+       "caption": "The HOPE fusion ship sheds 176.5 MW at 1250 K and 33.9 MW at 800 K. The cooler load is a fifth the size and needs the bigger panel."
+      }
+     ]
+    },
+    {
+     "schema": "sse.tour/1",
+     "id": "paper.tour.nothing-hides",
+     "title": "Why nothing hides",
+     "stops": [
+      {
+       "bookmark": {
+        "schema": "sse.bookmark/1",
+        "scope": "fixture:sol",
+        "instrument": "voyages",
+        "voyage": {
+         "ship": "paper.ffre-callisto",
+         "from": "Earth",
+         "to": "Jupiter"
+        },
+        "view": {
+         "band": "infrared"
+        }
+       },
+       "caption": "Seen in infrared, 1954 square metres at 1350 K glow orange-hot. Heat has to leave, and wherever it goes it can be seen."
+      },
+      {
+       "bookmark": {
+        "schema": "sse.bookmark/1",
+        "scope": "fixture:sol",
+        "instrument": "voyages",
+        "voyage": {
+         "ship": "paper.discovery-ii",
+         "from": "Earth",
+         "to": "Jupiter"
+        },
+        "view": {
+         "band": "infrared"
+        }
+       },
+       "caption": "A fusion exhaust carrying 4.8 GW is brighter still. A cloak would have to say where that light and heat go, and in SSE4 it must.",
+       "try": "Try marking a ship as hidden and read what the GM view says."
+      }
+     ]
+    }
+   ],
+   "sources": {
+    "williams2005": "Williams, C. H., Dudzinski, L. A., Borowski, S. K. and Juhasz, A. J. 2005, Realizing '2001: A Space Odyssey': piloted spherical torus nuclear fusion propulsion, NASA/TM-2005-213559 (AIAA-2001-3805), Tables 1 and 2. https://ntrs.nasa.gov/api/citations/20050160960/downloads/20050160960.pdf",
+    "adams2003-callisto": "Adams, R. B. et al. 2003, Crewed mission to Callisto using advanced plasma propulsion systems, AIAA 2003-4527 (NASA HOPE study), Tables 1 to 8. https://ntrs.nasa.gov/api/citations/20030065984/downloads/20030065984_Update.pdf",
+    "beals1988": "Beals, K. A. et al. 1988, Project Longshot: an unmanned probe to Alpha Centauri, US Naval Academy, NASA CR-184718 (OCR scan). https://ntrs.nasa.gov/api/citations/19890007533/downloads/19890007533.pdf",
+    "ga4891": "General Atomic 1964, Nuclear pulse vehicle study, condensed summary report, GA-4891, contract NAS 8-11053 for NASA Marshall (OCR scan). https://www.classe.cornell.edu/~seb/celestia/orion/files/19770085619_1977085619.pdf",
+    "ga5009-3": "Shipps, P. R. and Nance, J. C. (General Atomic) 1964, Nuclear pulse space vehicle study, vol. III, conceptual vehicle designs and operational systems, GA-5009, section 2.1 (OCR scan). https://www.classe.cornell.edu/~seb/celestia/orion/files/19760065935_1976065935.pdf",
+    "nance1964": "Nance, J. C. 1964, Nuclear pulse propulsion, GA-5572, IEEE 11th Nuclear Science Symposium, DTIC AD0450629. https://apps.dtic.mil/sti/pdfs/AD0450629.pdf",
+    "werka2012": "Werka, R., Clark, R., Sheldon, R. and Percy, T. 2012, Concept assessment of a fission fragment rocket engine (FFRE) propelled spacecraft, NASA NIAC phase I final report, part 1. https://www.nasa.gov/wp-content/uploads/2019/04/niac_2011_phasei_werka_ffre_tagged.pdf",
+    "mclafferty1968": "McLafferty, G. H. and Bauer, H. E. 1968, Studies of specific nuclear light bulb and open-cycle vortex-stabilized gaseous nuclear rocket engines, United Aircraft F-910093-37, NASA CR-1030, Results item 1. https://ntrs.nasa.gov/api/citations/19680012569/downloads/19680012569.pdf",
+    "ragsdale1991": "Ragsdale, R. 1991, Open cycle gas core nuclear rockets, NASA conference talk (N92), figure 6 baseline. https://ntrs.nasa.gov/api/citations/19920001890/downloads/19920001890.pdf",
+    "ragsdale-willis1971": "Ragsdale, R. G. and Willis, E. A. 1971, Gas-core rocket reactors: a new look, NASA TM X-67823 (OCR scan). https://ntrs.nasa.gov/api/citations/19710014431/downloads/19710014431.pdf",
+    "johnson2003": "Johnson, S. 2003, Project Prometheus, workshop slides, NASA/TM-2003-212598, slide 13: up to 100 kWe, specific mass 50 kg/kWe. https://ntrs.nasa.gov/api/citations/20040034798/downloads/20040034798.pdf",
+    "mason2003": "Mason, L. S. 2003, A power conversion concept for the Jupiter Icy Moons Orbiter, NASA/TM-2003-212596: two 100 kWe Brayton units, 496 kWt. https://ntrs.nasa.gov/api/citations/20030105581/downloads/20030105581.pdf",
+    "parkin2018": "Parkin, K. L. G. 2018, The Breakthrough Starshot system model, Acta Astronautica 152, 370, arXiv:1805.01306 v3, Tables 1 and 2. https://arxiv.org/pdf/1805.01306",
+    "gwin-mee1959": "Gwin, R. and Mee, W. T. 1959, Critical assemblies of uranium metal, Y-1248, Table I: a bare sphere of 93 to 94% U-235 metal is critical at 53.9 kg. https://www.osti.gov/servlets/purl/4246875"
+   }
+  }
+ }
+}
