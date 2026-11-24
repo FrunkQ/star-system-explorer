@@ -76,6 +76,38 @@ try {
   await pl.waitForFunction(() => /Sun/.test(document.body.textContent ?? ""), null, { timeout: 20000 });
   void title;
 
+  // Seat rows (Looks 4D, first cut): one seat can be blanked, or sent its own view, while the table carries on.
+  await gm.getByRole("button", { name: "More seats" }).click();
+  const seats = gm.locator("dialog[aria-label=Seats]");
+  await seats.locator("input[placeholder^='Empire']").fill("Sensors");
+  const fog = seats.getByLabel(/Fog of war/);
+  if (await fog.isEnabled()) await fog.uncheck();
+  await seats.getByRole("button", { name: "Add seat" }).click();
+  const row = seats.locator("li[data-seat]", { hasText: "Sensors" });
+  await row.waitFor();
+  const seatId = await row.getAttribute("data-seat");
+  assert.match(await row.locator("[data-seat-sees]").innerText(), /Sees: The Solar System \(with the table\)/);
+  const sp = await context.newPage();
+  sp.on("pageerror", (e) => errors.push(`sensors: ${e.message}`));
+  await sp.goto(await row.locator("[data-seat-link]").first().getAttribute("href"));
+  await sp.waitForSelector("footer[data-link='live'][data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
+  await sp.waitForFunction(() => /Sun/.test(document.body.textContent ?? ""), null, { timeout: 20000 });
+  await row.locator(`[data-seat-off='${seatId}']`).click();
+  await sp.locator("[data-screens-off]").waitFor({ timeout: 10000 });
+  assert.match(await row.locator("[data-seat-sees]").innerText(), /Sees: nothing \(screens off\)/);
+  await pl.waitForTimeout(1000);
+  assert.equal(await pl.locator("main[data-screens-off]").count(), 0, "the table carries on");
+  await shot(gm, "table-seat-rows");
+  await row.locator(`[data-seat-rejoin='${seatId}']`).click();
+  await sp.locator("[data-screens-off]").waitFor({ state: "detached", timeout: 10000 });
+  // A send for everyone puts every seat back with the table.
+  await row.locator(`[data-seat-off='${seatId}']`).click();
+  await sp.locator("[data-screens-off]").waitFor({ timeout: 10000 });
+  await seats.getByRole("button", { name: "Close" }).click();
+  await gm.locator("[data-screens-off]").first().click();
+  await gm.locator("[data-send-view]").click();
+  await sp.locator("[data-screens-off]").waitFor({ state: "detached", timeout: 10000 });
+
   assert.deepEqual(errors, []);
   await browser.close();
   console.log("table e2e: ok");

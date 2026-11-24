@@ -295,6 +295,58 @@ pub enum Request {
         default: Option<bool>,
         at_s: i64,
     },
+    /// SV1: what each audience knows of `address` at `at_s` (absent: now):
+    /// per audience the rung (the data view in force), the landmark
+    /// (`gm_only`, `heard_of`, `known`), the thing's one-field exceptions,
+    /// cover stories (SV5) and a future-dated change still waiting. With
+    /// `field`, each landmark is that field's. GM only.
+    KnownTo {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        field: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// SV1: set what `audience` knows: a thing's landmark (`landmark` null
+    /// takes its own grant back) or, with `field`, one field's exception
+    /// (null drops it). `scope` is `this` (the default), `children` (the
+    /// thing and everything under it that has its own setting) or
+    /// `{list: [addresses]}`. `from_s` is when the news reaches them (later
+    /// waits on the campaign clock; earlier: known since). ONE
+    /// `observe.grant` event, so one undo. GM only.
+    SetKnown {
+        address: String,
+        audience: String,
+        #[ts(type = "string | null")]
+        landmark: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        field: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        scope: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        from_s: Option<i64>,
+        at_s: i64,
+    },
+    /// SV1: put back what one `set_known` changed (its `undo` id), as one
+    /// more dated event. GM only.
+    UndoKnown {
+        undo: String,
+        at_s: i64,
+    },
+    /// SV1: for each audience, how many things at or under `bounds` stand at
+    /// each landmark at `at_s` (absent: now), counted only over what the
+    /// GM's scene holds (the table ledger, SV4). GM only.
+    KnownIn {
+        bounds: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
     /// Look ahead (T2): age a system to `target_myr` (the star's age, Myr)
     /// on a new chronicle branch and return its fate: dated transitions with
     /// their reasons, and the star and planets at every step. `system` is an
@@ -1897,6 +1949,10 @@ impl Request {
             Request::Scene { .. } => "scene",
             Request::ScanToggle { .. } => "scan_toggle",
             Request::Grant { .. } => "grant",
+            Request::KnownTo { .. } => "known_to",
+            Request::SetKnown { .. } => "set_known",
+            Request::UndoKnown { .. } => "undo_known",
+            Request::KnownIn { .. } => "known_in",
             Request::Atoms { .. } => "atoms",
             Request::LookAhead { .. } => "look_ahead",
             Request::CommitLookAhead { .. } => "commit_look_ahead",
@@ -2057,6 +2113,22 @@ pub fn ops() -> Vec<OpInfo> {
         ),
         o("scan_toggle", Cost::Trivial, "GM machine only in a session"),
         o("grant", Cost::Trivial, "GM machine only in a session"),
+        o(
+            "known_to",
+            Cost::Trivial,
+            "GM machine only; one scene of one address per audience",
+        ),
+        o(
+            "set_known",
+            Cost::Trivial,
+            "GM machine only; one grant event over the scope's addresses",
+        ),
+        o("undo_known", Cost::Trivial, "GM machine only; one grant event"),
+        o(
+            "known_in",
+            Cost::Light,
+            "GM machine only; one scene of the bounds per audience",
+        ),
         o("atoms", Cost::Trivial, none),
         o(
             "look_ahead",
@@ -2561,6 +2633,28 @@ pub enum Response {
         /// The view now in force for the audience at that address.
         view: String,
         state_hash: String,
+    },
+    /// `known_to`: `value` is `{address, at_s, audiences: [{audience, label,
+    /// rung, rung_label, landmark, top, exceptions: [{field, landmark}],
+    /// cover: [{field, told}], withheld: [fields not sent with a value], from_s?}]}`.
+    KnownTo {
+        #[ts(type = "unknown")]
+        value: serde_json::Value,
+    },
+    /// `set_known` and `undo_known`: the one event written (`undo` is its id;
+    /// absent when nothing changed) and how many things it changed.
+    KnownSet {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        undo: Option<String>,
+        changed: u32,
+        state_hash: String,
+    },
+    /// `known_in`: per audience `{audience, label, known, heard_of, gm_only}`.
+    KnownCounted {
+        bounds: String,
+        #[ts(type = "unknown[]")]
+        audiences: Vec<serde_json::Value>,
     },
     Granted {
         event_id: String,

@@ -37,7 +37,13 @@ Built by `scripts/nuclear_rows.py`.
 - **U-235 fission split:** `isotopes/u235.fission_thermal` holds `total` (202.48 MeV), `split` (fragments, prompt neutrons and gammas, delayed betas and gammas, neutrinos) and `recoverable` (193.73 MeV, worked out). Source: Sher and Beck 1981, EPRI NP-1771, Table VI.
 - **Still missing:** p-B11 waits for the B-11 mass (AME2020 would not fetch). Prompt neutrons per fission (nu-bar) was not found.
 
-## Part 3: materials and shields (after)
+## Part 3: materials and shields
 
-- **Found:** melting points for W, Mo, Nb, Ta and Re (Lundberg 1985, LANL); C-103 and Inconel 718 hot strengths (manufacturers' sheets); UO2 (ORNL/TM-2000/351); UC and UC2 (NASA MSFC); NIST SRD 126 densities and hydrogen fractions for water, polyethylene, W and Pb.
-- **Still needed:** graphite sublimation, carbon-carbon, ZrC, NbC, HfC, Ti-6Al-4V, Al 6061-T6, 304 stainless, LiH, borated polyethylene. Next sources: NASA SNP-HDBK-0008 and PNNL-15870.
+Built by `scripts/material_rows.py`. Each material is a bulk mixture (empty recipe), like the load-carrying fibres. Values printed in Fahrenheit, ksi or lb/in3 are converted in the script from `T0C`, `g0` and the exact inch and pound, never typed in SI.
+
+- **Refractory metals:** `tungsten`, `molybdenum`, `niobium`, `tantalum`, `rhenium` carry `melting_point_k` (Lundberg 1985, LANL), with NASA SP-5035 in the note. Rhenium's two sources disagree by about 20 K. Tungsten also has `density` and `service_limit_k` (2800 K, heat shields).
+- **Alloys:** `niobium-c103` (Materion) and `inconel-718` (Special Metals) carry `density`, `yield_strength` and `tensile_strength`, plus `_hot` versions with `at_k`. Inconel 718 has `solidus_k`, `liquidus_k` and `service_limit_k`; C-103 has `melting_point_k`.
+- **Fuels:** `uo2-fuel` (melting point and theoretical density, ORNL/TM-2000/351, IAEA-TECDOC-1496 as `also`), `uc-fuel` and `uc2-fuel` (melting points, NASA MSFC).
+- **Shields:** `polyethylene` (density, hydrogen mass fraction) and `lead` (density), from NIST SRD 126. Water is already the substance `h2o`.
+- **Checks in the builder:** a hot strength must carry `at_k` and be below the cold one; solidus below liquidus; a service limit below the melting point.
+- **Still missing:** graphite sublimation, carbon-carbon, ZrC, NbC, HfC, Ti-6Al-4V, Al 6061-T6, 304 stainless, LiH and borated polyethylene. NASA SNP-HDBK-0008 and PNNL-15870 Rev. 2 hold them (the PNNL entries are numbers 196, 274, 69, 13, 365 and 331), but neither PDF's data pages could be read on 24 Nov: the fetch gave only the contents, and direct download is blocked here. The PNNL online compendium did not answer either.

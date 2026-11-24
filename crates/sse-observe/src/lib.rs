@@ -12,11 +12,13 @@
 //! - **Scenes**: plain data built from state after the filter, the only thing views see.
 #![forbid(unsafe_code)]
 
+pub mod known;
 pub mod pack;
 pub mod scenario;
 pub mod scene;
 pub mod view;
 
+pub use known::{set_known, undo_known, KnownChange, Landmark, Landmarks, GM_ONLY_VIEW};
 pub use pack::ObserveSetup;
 pub use scene::{
     build_scene, build_scene_through, diff, Scene, SceneDelta, SceneFact, SceneInput, SceneNote,

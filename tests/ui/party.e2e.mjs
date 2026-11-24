@@ -33,7 +33,8 @@ const noOverlap = async (page) => {
 try {
   const browser = await chromium.launch();
   const errors = [];
-  const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 })).newPage();
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 });
+  const gm = await context.newPage();
   gm.on("pageerror", (e) => errors.push(e.message));
   await gm.goto(base);
   await gm.waitForSelector('[data-door="sol"]:not([disabled])', { timeout: 20000 });
@@ -76,6 +77,19 @@ try {
   await desk.locator("[data-party]").first().waitFor();
   await shot(gm, "party-ship-picked");
 
+  // The table always knows where the party's ship is: a joined player sees it in the header, and it moves with the voyage.
+  const popup = context.waitForEvent("page", { timeout: 3000 }).catch(() => null);
+  await gm.getByRole("button", { name: "Share with players" }).click();
+  (await popup)?.close();
+  const pl = await context.newPage();
+  pl.on("pageerror", (e) => errors.push(`player: ${e.message}`));
+  await pl.goto(await gm.getAttribute("[data-players-link]", "data-players-link"));
+  await pl.waitForSelector("footer[data-link='live'][data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
+  const aboard = pl.locator("header [data-party-ship]");
+  await aboard.waitFor({ timeout: 15000 });
+  assert.equal(await aboard.getAttribute("data-party-at"), earth);
+  assert.match(await aboard.innerText(), /Aboard Beowulf, at Earth/);
+
   // Voyages flies it from Earth to Mars, and offers Land there.
   await go(gm, "voyages");
   await gm.waitForFunction(() => (document.querySelector(".insys [data-ship]")?.value ?? "") === "party", null, { timeout: 15000 });
@@ -98,6 +112,10 @@ try {
   assert.match(await ins.locator("[data-arrived]").innerText(), /Beowulf is at Mars/);
   await noOverlap(gm);
   await shot(gm, "party-arrived-at-mars");
+  await pl.waitForFunction((m) => document.querySelector("header [data-party-ship]")?.getAttribute("data-party-at") === m, mars, { timeout: 15000 });
+  assert.match(await aboard.innerText(), /Aboard Beowulf, at Mars/);
+  assert.match(await aboard.getAttribute("title"), /Last voyage: Earth to Mars, \d/);
+  await shot(pl, "party-player-header");
   await ins.locator("[data-land-here]").click();
   await gm.waitForSelector("[data-surface]", { timeout: 30000 });
   await shot(gm, "party-land-on-mars");

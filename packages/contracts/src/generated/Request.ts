@@ -25,7 +25,7 @@ at_s?: bigint, } | { "op": "draw", address: string, stream: string, counter: num
  * A draft `provides.other.observe` setup to build with instead of
  * the stack's (a preview before Apply). Nothing is recorded.
  */
-observe?: unknown, } | { "op": "atoms", ids?: Array<string>, } | { "op": "scan_toggle", address: string, audience: string, at_s: bigint, } | { "op": "grant", address: string, audience: string, view?: string, default?: boolean, at_s: bigint, } | { "op": "look_ahead", system: unknown, target_myr: number, settings?: unknown, } | { "op": "set_system_age", system: string, age_myr: number, composition?: string, } | { "op": "commit_look_ahead", branch: string, accept?: string, 
+observe?: unknown, } | { "op": "atoms", ids?: Array<string>, } | { "op": "scan_toggle", address: string, audience: string, at_s: bigint, } | { "op": "grant", address: string, audience: string, view?: string, default?: boolean, at_s: bigint, } | { "op": "known_to", address: string, field?: string, at_s?: bigint, } | { "op": "set_known", address: string, audience: string, landmark: string | null, field?: string, scope?: unknown, from_s?: bigint, at_s: bigint, } | { "op": "undo_known", undo: string, at_s: bigint, } | { "op": "known_in", bounds: string, at_s?: bigint, } | { "op": "look_ahead", system: unknown, target_myr: number, settings?: unknown, } | { "op": "set_system_age", system: string, age_myr: number, composition?: string, } | { "op": "commit_look_ahead", branch: string, accept?: string, 
 /**
  * For `system_age`: `follow` (default) or `keep`, as `set_system_age`.
  */
