@@ -771,3 +771,47 @@ fn catalogued_worlds_bring_their_measured_interiors() {
     assert_eq!(c("Earth"), 0.3307);
     assert_eq!(c("Moon"), 0.3932);
 }
+
+/// SOL5: a catalogued world's climate breathes its measured air, not the
+/// default mix (Mars and Venus are mostly CO2, with no free oxygen).
+#[test]
+fn catalogued_worlds_breathe_their_measured_air() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    for name in ["Mars", "Venus", "Earth"] {
+        let addr = r["facts"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .find(|(_, f)| f["name"] == name)
+            .map(|(a, _)| a.clone())
+            .unwrap();
+        let s = send(
+            &mut k,
+            serde_json::json!({"op":"survey_surface","system":SOL,"body":addr,"limit":0}),
+        );
+        assert_eq!(s["type"], "surface_surveyed", "{s}");
+        let assumed = &s["survey"]["climate"]["assumed"];
+        assert!(assumed.is_array(), "{name}: no climate in {s}");
+        let assumed = assumed.to_string();
+        assert!(
+            !assumed.contains("default mix"),
+            "{name} climate assumed {assumed}"
+        );
+    }
+    let mars = r["facts"]
+        .as_object()
+        .unwrap()
+        .values()
+        .find(|f| f["name"] == "Mars")
+        .unwrap();
+    let gases = crate::adopt::catalogued_gases(None);
+    assert!(gases.is_none());
+    assert!(
+        mars["atmosphere.composition.co2"].as_f64().unwrap() > 0.9,
+        "{mars}"
+    );
+}

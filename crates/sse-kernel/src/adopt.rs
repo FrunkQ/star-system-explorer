@@ -969,6 +969,23 @@ pub(crate) fn worlds_at(
     })
 }
 
+/// SOL5: a world's measured air, from its `atmosphere.composition.<gas>`
+/// facts (volume fractions, 0 to 1), for the climate's gas mix. None when
+/// the record holds no composition, so the climate says it assumed one.
+pub(crate) fn catalogued_gases(
+    row: Option<&BTreeMap<String, Value>>,
+) -> Option<BTreeMap<String, f64>> {
+    let gases: BTreeMap<String, f64> = row?
+        .iter()
+        .filter_map(|(k, v)| {
+            let gas = k.strip_prefix("atmosphere.composition.")?;
+            let x = as_f64(v).filter(|x| (0.0..=1.0).contains(x))?;
+            Some((gas.to_ascii_lowercase(), x))
+        })
+        .collect();
+    (!gases.is_empty()).then_some(gases)
+}
+
 /// Orbit atlases kept so that reopening a world reuses its plate run.
 pub const ORBIT_CACHE_SIZE: usize = 8;
 
@@ -983,15 +1000,20 @@ fn orbit_atlas<'c>(
     env: &sse_surface::SurfaceEnvelope,
     seed: &Seed,
     epoch_gyr: f64,
+    opts: &sse_surface::survey::SurveyOptions,
 ) -> Result<&'c sse_surface::atlas::Atlas, String> {
-    let key = sse_surface::detail::orbit_key(env, seed, epoch_gyr);
+    let key = format!(
+        "{}/{}",
+        sse_surface::detail::orbit_key(env, seed, epoch_gyr),
+        serde_json::to_string(&opts.gases).expect("plain data")
+    );
     match cache.iter().position(|(k, _)| *k == key) {
         Some(i) => {
             let hit = cache.remove(i);
             cache.push(hit);
         }
         None => {
-            let a = sse_surface::detail::orbit_atlas(s, body, seed, epoch_gyr)?;
+            let a = sse_surface::detail::orbit_atlas_with(s, body, seed, epoch_gyr, opts)?;
             if cache.len() >= ORBIT_CACHE_SIZE {
                 cache.remove(0);
             }
@@ -1082,7 +1104,19 @@ pub(crate) fn resolved_system(
             (Some(key), Some((b, env))) => {
                 // Orbit detail (S16): the coarse plate run, the same world a
                 // survey later refines; reused while it is in the cache.
-                let atlas = orbit_atlas(orbits, &s, b, env, seed, (b.age_gyr + shift_gyr).max(0.0));
+                let opts = sse_surface::survey::SurveyOptions {
+                    gases: catalogued_gases(facts.get(&b.address)),
+                    ..Default::default()
+                };
+                let atlas = orbit_atlas(
+                    orbits,
+                    &s,
+                    b,
+                    env,
+                    seed,
+                    (b.age_gyr + shift_gyr).max(0.0),
+                    &opts,
+                );
                 match atlas.map(|a| a.tile(key, sse_surface::SurveyState::Surveyed)) {
                     Ok(Ok(tile)) => {
                         out_tiles.push(serde_json::to_value(&tile).expect("plain data"));
