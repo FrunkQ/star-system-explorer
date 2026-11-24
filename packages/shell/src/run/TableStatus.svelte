@@ -3,8 +3,10 @@
      Seats dialog it opens. -->
 <script lang="ts">
   import SeatsPanel from "./SeatsPanel.svelte";
+  import ArrivalSlip from "./ArrivalSlip.svelte";
+  import OnAir from "./OnAir.svelte";
   import type { Share } from "../share.svelte.ts";
-  import type { SceneSubject, Shown, ViewSession } from "../../../ui-contract/src/index.ts";
+  import type { PartyShip, SceneSubject, Shown, ViewSession } from "../../../ui-contract/src/index.ts";
 
   let {
     share,
@@ -17,6 +19,10 @@
     at_yr,
     landingUnsent,
     here,
+    onswitchboard,
+    chip = true,
+    party,
+    now_yr,
     onchange,
   }: {
     share: Share;
@@ -33,6 +39,14 @@
     landingUnsent: boolean;
     /** What "Send this view" sends: the place in view. */
     here: () => Shown;
+    /** Open the Switchboard. */
+    onswitchboard: () => void;
+    /** Show the on-air chip here (false where the top bar has it). */
+    chip?: boolean;
+    /** The party's ship, for the offer to tell the table about a world it arrives at. */
+    party: PartyShip | null;
+    /** The campaign's now, in years. */
+    now_yr: number;
     /** A change the table made (an approved request, a seat's grant): the physics moved. */
     onchange: () => void;
   } = $props();
@@ -43,14 +57,13 @@
 
 <span class="share" aria-label="Players">
   {#if share.state.link}
-    <a href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' screen</a>
-    <span data-players={share.state.players}>{share.state.players} {share.state.players === 1 ? "screen" : "screens"} · {share.state.seq} events</span>
-    <!-- What the table is shown (the landing run-through): the place the GM last sent, or screens off. -->
+    <!-- On air (PB2): in the top bar on the Run desk, here on the others. The one Send of the live view stays here. -->
     {@const shown = share.state.shown}
-    <span class="table-sees" data-table-sees={"off" in shown ? "off" : shown.scope}>Table sees: {"off" in shown ? "nothing (screens off)" : (shown.title ?? "the opening place")}</span>
-    {#if "off" in shown || shown.scope !== system || (landingUnsent && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => share.show(here())} title="Show the players' screens {title}, as far as they know it">Send this view</button>{/if}
-    {#if !("off" in shown)}<button type="button" class="linkbtn quiet" data-screens-off onclick={() => share.show({ off: true })} title="Blank the players' screens until you send a view">Screens off</button>{/if}
+    {#if chip}<OnAir {share} {onswitchboard} />{/if}
+    {#if "off" in shown || shown.scope !== system || (landingUnsent && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => share.show(here())} title="Show every screen {title}, as far as each knows it">Send this view</button>{/if}
+    <a class="quietlink" href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' link</a>
     <button type="button" class="linkbtn quiet" onclick={() => ((seatsOpen = true), seatsDialog?.showModal())}>{share.state.plan.seats.length > 1 ? `${share.state.plan.seats.length} seats` : "More seats"}</button>
+    <ArrivalSlip {session} {party} {subjects} {now_yr} {onchange} />
     {#if share.state.waiting.length}
       <span class="requests" role="group" aria-label="Players' requests">
         {#each share.state.waiting as r (r.from + r.id)}
@@ -92,7 +105,18 @@
     border: var(--sse-line) solid var(--sse-accent);
     border-radius: var(--sse-radius);
   }
-  .share a,
+  .share a {
+    font: inherit;
+    color: var(--sse-ink);
+    background: var(--sse-ground-raised);
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    padding: 0 8px;
+    cursor: pointer;
+  }
+  .quietlink {
+    color: var(--sse-ink-muted);
+  }
   .linkbtn {
     color: var(--sse-accent);
     font: inherit;
