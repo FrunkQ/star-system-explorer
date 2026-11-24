@@ -93,6 +93,7 @@
       <dt>Ctrl+C, Ctrl+X, Ctrl+V</dt><dd>Copy the selected body with everything that orbits it; cut a pasted body; paste a copied body (Build desk)</dd>
       <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>
       <dt>why?</dt><dd>On any value: where it came from, at three depths (Curious, Science, Engine); "Open the flow" puts its physics on the bench</dd>
+      <dt>B</dt><dd>Bookmarks: keep where you are and how you are looking, or go back to one</dd>
       <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
       <dt>V, E, R</dt><dd>Desk: Explore (look), Build (change), Run (the table)</dd>
       <dt>D</dt><dd>Depth: Curious, Science, Engine (how much every card and number says)</dd>
