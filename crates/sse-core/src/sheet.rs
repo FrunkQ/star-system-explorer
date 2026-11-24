@@ -431,6 +431,10 @@ pub mod molar_mass {
     pub const HE3: f64 = 0.00301602932197;
     /// ne.
     pub const NE: f64 = 0.020179700000000002;
+    /// na.
+    pub const NA: f64 = 0.022989769280000003;
+    /// k.
+    pub const K: f64 = 0.0390983;
     /// kr.
     pub const KR: f64 = 0.083798;
     /// xe.

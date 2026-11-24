@@ -3390,8 +3390,12 @@ fn light_through_gas_gives_the_colour_to_the_eye() {
     assert_eq!(r["passages"][0]["colour_in"]["hex"], "#FFF1EB", "{r}");
     let g = &r["passages"][1]["passed"];
     assert_eq!(g["wavelengths_m"].as_array().unwrap().len(), 2, "{g}");
-    // No absorption rows on the sheet yet: said, and the light passes.
-    assert!(g["not_looked_up"].to_string().contains("ch4"), "{g}");
+    // Methane's bands are read from the sheet; hydrogen has no rows yet,
+    // which is said, and it passes the light.
+    assert_eq!(g["features"][0]["feature"], "ch4.visible-bands", "{g}");
+    assert!(g["not_looked_up"].to_string().contains("h2"), "{g}");
+    let out = &r["passages"][1]["colour_out"]["srgb"];
+    assert!(out[2].as_u64() > out[0].as_u64(), "{out}");
     let r = send(
         &mut k,
         serde_json::json!({"op": "light_through_gas", "passages": [

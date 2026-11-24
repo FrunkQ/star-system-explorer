@@ -267,3 +267,72 @@ fn red_absorbing_gas_turns_reflected_sunlight_blue_green() {
     );
     assert!(r.why[0].contains("m.red"));
 }
+
+#[test]
+fn methane_from_the_sheet_turns_a_giant_blue_green() {
+    // ND2 acceptance on the real rows (Karkoschka 1994): sunlight down to a
+    // cloud deck and back through methane. A few km-amagat leaves it pale
+    // green-blue, more leaves it the blue of Uranus and Neptune.
+    let s = sheet();
+    let ch4 = GasOptics::from_sheet(&s, "ch4").unwrap();
+    assert!(ch4
+        .features
+        .as_ref()
+        .is_some_and(|f| f[0].id() == "ch4.visible-bands"));
+    let e = eye();
+    let wl = e.wavelengths_m();
+    let sun: Vec<f64> = wl.iter().map(|l| planck(*l, 5772.0)).collect();
+    let km_amagat = 2.686_78e24;
+    let seen = |km: f64| {
+        let p = Passage {
+            address: "giant".into(),
+            layers: vec![slab(&[("ch4", km * km_amagat)], 120.0, 1.0)],
+            path_factor: 2.0,
+        };
+        let r = pass(&p, std::slice::from_ref(&ch4), &wl, &sun, &s).unwrap();
+        (colour_of(&e, &r.light_out).unwrap(), r)
+    };
+    let (pale, _) = seen(3.0);
+    assert!(
+        pale.srgb[2] >= pale.srgb[0] && pale.srgb[1] > pale.srgb[0],
+        "{:?}",
+        pale.srgb
+    );
+    let (deep, r) = seen(30.0);
+    assert!(deep.srgb[2] == 255 && deep.srgb[0] < 180, "{:?}", deep.srgb);
+    assert!(deep.srgb[1] > deep.srgb[0]);
+    // The strongest band in the eye's range is at 725 nm.
+    assert!(
+        (r.features[0].at_m - 725e-9).abs() < 3e-9,
+        "{:?}",
+        r.features[0]
+    );
+    // The eye sees from 380 nm; the table starts at 410 nm, and says so.
+    assert_eq!(r.outside_measured.len(), 1, "{:?}", r.outside_measured);
+    assert!(r.outside_measured[0].contains("410 to 1000 nm"));
+}
+
+#[test]
+fn sodium_and_potassium_lines_from_the_sheet() {
+    let s = sheet();
+    for (gas, d2, d1) in [("na", "na.d2", "na.d1"), ("k", "k.d2", "k.d1")] {
+        let g = GasOptics::from_sheet(&s, gas).unwrap();
+        let f = g.features.as_ref().unwrap();
+        let strength = |id: &str| match f.iter().find(|x| x.id() == id).unwrap() {
+            Feature::Line { f, .. } => *f,
+            _ => panic!("{id} is a line"),
+        };
+        // D2 is twice D1 (statistical weights 4 and 2).
+        assert!((strength(d2) / strength(d1) - 2.0).abs() < 0.02, "{gas}");
+    }
+    // A thin vapour dims light at 589 nm and not at 550 nm.
+    let na = GasOptics::from_sheet(&s, "na").unwrap();
+    let p = Passage {
+        address: "t".into(),
+        layers: vec![slab(&[("na", 1e16)], 1000.0, 1.0)],
+        path_factor: 1.0,
+    };
+    let r = pass(&p, &[na], &[550e-9, 588.995e-9], &[1.0, 1.0], &s).unwrap();
+    assert!(r.light_out[0] > 0.999_999, "{:?}", r.light_out);
+    assert!(r.light_out[1] < 0.5, "{:?}", r.light_out);
+}
