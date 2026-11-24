@@ -644,6 +644,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-hazard"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-field",
+ "sse-flow",
+ "sse-reference",
+]
+
+[[package]]
 name = "sse-import-v3"
 version = "0.1.0"
 dependencies = [
