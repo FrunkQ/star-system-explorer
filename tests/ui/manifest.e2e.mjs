@@ -81,6 +81,12 @@ try {
   assert.ok(await man.locator("[data-unrated]", { hasText: "vesh" }).count());
   const before = await man.locator("[data-first-days]").innerText();
   await shot(page, "manifest-desk");
+  await desk.locator("[data-picture-toggle]").click();
+  // In play (Explore) what is aboard can change, but the ship's look cannot: amounts are open, the design is fixed.
+  assert.equal(await man.locator("[data-cargo-amount]").count(), 4, "amounts can change in play");
+  await desk.locator("[data-picture=designed] svg").first().waitFor();
+  assert.equal(await desk.locator("[data-picture=designed] [data-remix]").count(), 0, "no remix outside Build");
+  assert.equal(await desk.locator("[data-picture-file]").count(), 0, "no own picture outside Build");
 
   // Known to (MC2): on the Build desk each person aboard has an eye, not yet known to the table (as known as their
   // place, which under Kestrel's ladder is heard of); one press shows the whole crew, and Undo puts them back.
@@ -96,6 +102,37 @@ try {
   await shot(page, "crew-known-desk");
   await crew.locator("[data-show-all-undo]").click();
   await page.waitForFunction((was) => JSON.stringify([...document.querySelectorAll("[data-aboard=crew] [data-person] [data-eye]")].map((e) => e.getAttribute("data-eye"))) === JSON.stringify(was), start);
+
+  // The ship's picture (edit mode, here the Build desk): designed from its parts by default, its remix kept with the
+  // ship; an own picture replaces it, scaled down, and "Use the designed ship" takes it back.
+  const pic = desk.locator("section[aria-label=Picture]");
+  await pic.locator("[data-picture=designed]").or(desk.locator("[data-picture=designed]")).first().waitFor();
+  await desk.locator("[data-picture=designed] svg").first().waitFor();
+  await desk.locator("[data-picture=designed] [data-remix]").click();
+  await desk.locator("[data-picture-note]", { hasText: "Design kept" }).waitFor();
+  assert.equal(await desk.locator("[data-field='construct.design']").count(), 0, "the recipe is drawn, not listed");
+  await shot(page, "picture-designed-desk");
+  const png = await page.evaluate(() => {
+    const c = document.createElement("canvas");
+    c.width = 1800;
+    c.height = 1000;
+    const g = c.getContext("2d");
+    g.fillStyle = "#1b2a3a";
+    g.fillRect(0, 0, 1800, 1000);
+    g.fillStyle = "#e8c070";
+    g.beginPath();
+    g.moveTo(200, 500); g.lineTo(1500, 380); g.lineTo(1650, 500); g.lineTo(1500, 620); g.closePath();
+    g.fill();
+    return c.toDataURL("image/png").split(",")[1];
+  });
+  await desk.locator("[data-picture-file]").setInputFiles({ name: "kittiwake.png", mimeType: "image/png", buffer: Buffer.from(png, "base64") });
+  const own = desk.locator("img[data-own-picture]");
+  await own.waitFor();
+  const natural = await own.evaluate((i) => [i.naturalWidth, i.naturalHeight]);
+  assert.deepEqual(natural, [960, 533], `own picture scaled to fit 960 (${natural})`);
+  await shot(page, "picture-own-desk");
+  await desk.locator("[data-picture-clear]").click();
+  await desk.locator("[data-picture=designed] svg").first().waitFor();
   await chooseDesk(page, "Explore");
 
   // Cold sleep for Rhee: one person draws, so the oxygen lasts twice as long.

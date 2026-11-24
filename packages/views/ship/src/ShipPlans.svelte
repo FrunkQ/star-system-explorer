@@ -20,6 +20,7 @@
     segments = 32,
     abilities,
     pass,
+    locked = false,
     onchange,
   }: {
     ship: DesignShip;
@@ -34,6 +35,8 @@
     abilities?: FitResult;
     /** An aerobraking pass at its hottest (renderer passGlow): opens on the 3D model, radiators folded, the shield glowing. */
     pass?: { shield_k: number; standoff_rn: number; shock_curve_rn: number; glow: number };
+    /** The design is fixed here (a card outside its edit desk): no style switch or remix; turning and framing stay. */
+    locked?: boolean;
     onchange?: (r: DesignRecipe) => void;
   } = $props();
 
@@ -149,12 +152,14 @@
 <section class="plans" data-ship-plans>
   <ViewControls spec={CONTROLS} choice={view} onchange={(c) => (view = c)} compact />
   <div class="bar">
-    <label>Style
-      <select value={styleId} onchange={(e) => change({ style: (e.currentTarget as HTMLSelectElement).value })}>
-        {#each Object.entries(styles) as [id, s] (id)}<option value={id}>{s.name}</option>{/each}
-      </select>
-    </label>
-    <button type="button" onclick={() => change({ seed: seed + 1 })} data-remix>Remix</button>
+    {#if !locked}
+      <label>Style
+        <select value={styleId} onchange={(e) => change({ style: (e.currentTarget as HTMLSelectElement).value })}>
+          {#each Object.entries(styles) as [id, s] (id)}<option value={id}>{s.name}</option>{/each}
+        </select>
+      </label>
+      <button type="button" onclick={() => change({ seed: seed + 1 })} data-remix>Remix</button>
+    {/if}
     {#if canClose || framing === "hull"}
       <button type="button" aria-pressed={framing === "hull"} onclick={() => (framing = framing === "hull" ? "all" : "hull")}>Close in on the hull</button>
     {/if}

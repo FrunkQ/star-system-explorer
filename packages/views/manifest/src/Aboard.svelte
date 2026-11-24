@@ -216,6 +216,7 @@
       {/if}
       <dt>Recycled</dt>
       <dd>
+        <!-- In play (Explore, Run) what is aboard changes; the ship's own fittings, like its recycling, only on Build. -->
         {#if gm && ws.mode === "edit"}
           <input type="number" min="0" max="100" step="1" value={Math.round(recycled * 100)} onchange={(e) => setNumber(construct.address, ABOARD.recycled, String(Number((e.currentTarget as HTMLInputElement).value) / 100), "life support changed")} aria-label="Share of oxygen and water recycled, in percent" data-recycled />%
         {:else}{Math.round(recycled * 100)}%{/if}
@@ -259,7 +260,7 @@
         <li class:pencil={eyes && landmarkOf(c.address) !== "known"} data-lot={c.address}>
           {#if eyes && known[c.address]}<KnownTo read={known[c.address]!} label={c.name} hold={(ws.players_online ?? 0) > 0} onset={setKnownOf(c.address)} onundo={undoKnown} />{/if}
           <span><b>{c.name}</b>{#if c.what && c.what !== c.name}<span class="muted">{` · ${c.what}`}</span>{/if}</span>
-          {#if gm && ws.mode === "edit"}
+          {#if gm}
             <span><input type="number" min="0" value={c.amount ?? ""} onchange={(e) => setNumber(c.address, ABOARD.amount, (e.currentTarget as HTMLInputElement).value)} aria-label={`Amount of ${c.name}`} data-cargo-amount /> {c.unit ?? ""}</span>
           {:else}<span class="mono">{amountWords(c)}</span>{/if}
           {#if gm}<button type="button" class="quiet-btn" onclick={() => ((moving = moving === c.address ? null : c.address), (moveTo = parentOf(construct.address)))}>Move…</button>{/if}
@@ -285,8 +286,8 @@
       {#each here.people as p (p.address)}
         <li data-person={p.address} class:gone={p.state === "dead" || p.state === "missing"} class:pencil={eyes && landmarkOf(p.address) !== "known"}>
           {#if eyes && known[p.address]}<KnownTo read={known[p.address]!} label={p.name} hold={(ws.players_online ?? 0) > 0} onset={setKnownOf(p.address)} onundo={undoKnown} />{/if}
-          <span><b>{p.name}</b>{#if p.role}<span class="muted">{` · ${p.role}`}</span>{/if}</span>
-          {#if gm && ws.mode === "edit"}
+          <span><b>{p.name}</b>{#if p.role && !gm}<span class="muted">{` · ${p.role}`}</span>{/if}</span>
+          {#if gm}
             <input type="text" value={p.role ?? ""} placeholder="role" onchange={(e) => setText(p, ABOARD.role, (e.currentTarget as HTMLInputElement).value)} aria-label={`Role of ${p.name}`} />
           {/if}
           {#if gm}

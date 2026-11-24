@@ -137,3 +137,4 @@ export { difficultyLadderOf, chanceToMeet, stepTarget, gameDifficulty } from "./
 export type { DifficultyLadder, DifficultyStep, GameDifficulty } from "./difficulty.ts";
 export { wattsText, powerWords, nowhereWords } from "./power.ts";
 export type { PowerBooks, PowerLedger, PowerFlow, PowerEngine } from "./power.ts";
+export { PICTURE_FIELD, DESIGN_FIELD, PICTURE_FIELDS, PICTURE_MAX, PICTURE_SIDE, checkPicture, pictureOf, designOf, fitSide } from "./picture.ts";
