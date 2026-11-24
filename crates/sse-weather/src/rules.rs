@@ -61,6 +61,7 @@ fn empty_layer() -> Layer {
         optical_depth: 0.0,
         wind_m_s: [0.0, 0.0],
         turbulence: 0.0,
+        particle_radius_um: 0.0,
     }
 }
 
@@ -358,6 +359,7 @@ pub(crate) fn layer(cover: f64, kind: &str, cond: &str, tau: f64, old: &Layer) -
         optical_depth: tau,
         wind_m_s: old.wind_m_s,
         turbulence: old.turbulence,
+        particle_radius_um: 0.0,
     }
 }
 
@@ -382,6 +384,7 @@ pub fn haze_from(list: &[crate::settings::Photochemical], c: &Conditions) -> Vec
             kind: "haze".into(),
             optical_depth: p.optical_depth,
             colour: p.colour,
+            particle_radius_um: p.particle_radius_um,
         })
         .collect()
 }

@@ -28,6 +28,7 @@ use serde::{Deserialize, Serialize};
 use sse_core::draw::{Draws, Seed, Stream};
 use sse_core::math as m;
 use sse_surface::atlas::TileKey;
+use std::collections::BTreeMap;
 
 const G: f64 = sse_core::sheet::G;
 const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
@@ -175,6 +176,30 @@ pub struct GiantClouds {
     /// Haze optical depth in a diffuse polar cap.
     pub cap_tau: f64,
     pub chemistry: Vec<Chemistry>,
+    /// Typical effective radius of each condensate's deck, µm (K-c); a
+    /// condensate not listed has no measured size held.
+    #[serde(default)]
+    pub particle_radius_um: BTreeMap<String, f64>,
+    /// The red chromophore layer above an ammonia deck (W10a).
+    #[serde(default)]
+    pub chromophore: Option<Chromophore>,
+    pub source: String,
+}
+
+/// A thin layer of red chromophore just above the ammonia cloud top, thicker
+/// over belts than zones (Sromovsky et al. 2017).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Chromophore {
+    /// The deck it sits on.
+    pub above: String,
+    /// Optical depth at 1 µm over zones and over belts.
+    pub tau_zone_1um: f64,
+    pub tau_belt_1um: f64,
+    /// Effective radius over zones and belts, µm.
+    pub radius_zone_um: f64,
+    pub radius_belt_um: f64,
+    /// Linear sRGB stand-in until the sheet's chromophore row lands.
+    pub colour: [f64; 3],
     pub source: String,
 }
 
@@ -1052,6 +1077,7 @@ pub fn giant_cell(
         optical_depth: tau,
         wind_m_s: [0.0, 0.0],
         turbulence: 0.0,
+        particle_radius_um: cl.particle_radius_um.get(cond).copied().unwrap_or(0.0),
     };
     let mut ly = vec![
         deck(cl.low_cover, &l.layers[0], cl.low_tau),
@@ -1083,6 +1109,17 @@ pub fn giant_cell(
     let mut wind = [u, 0.0];
     let mut turb = 0.1 + 0.15 * (1.0 - w);
     let mut aerosols = vec![];
+    // The chromophore: more over belts (w 0) than zones (w 1).
+    if let Some(ch) = &cl.chromophore {
+        if l.layers[2] == ch.above {
+            aerosols.push(Aerosol {
+                kind: "chromophore".into(),
+                optical_depth: ch.tau_belt_1um + (ch.tau_zone_1um - ch.tau_belt_1um) * w,
+                colour: ch.colour,
+                particle_radius_um: ch.radius_belt_um + (ch.radius_zone_um - ch.radius_belt_um) * w,
+            });
+        }
+    }
     let mut precip = "none";
     for s in &p.systems {
         let dist = distance_km(a, lat, lon, s.lat_deg, s.lon_deg);
@@ -1144,6 +1181,7 @@ pub fn giant_cell(
                         kind: "haze".into(),
                         optical_depth: cl.cap_tau * cap,
                         colour: [0.85, 0.9, 0.95],
+                        particle_radius_um: 0.0,
                     });
                 }
             }

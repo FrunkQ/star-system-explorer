@@ -380,6 +380,46 @@ fn most_random_giants_show_no_polygon_and_sides_follow_the_relation() {
 }
 
 #[test]
+fn chromophore_is_thicker_over_belts_and_decks_carry_their_size() {
+    let gs = base_settings();
+    let c = fixture("Jupiter");
+    let p = prepare(&gs, &c, Date { day: 0.0 });
+    let l = &p.layout;
+    let ch = gs.clouds.chromophore.as_ref().unwrap();
+    // Sromovsky et al. 2017: 0.05 to 0.76 at 1 µm, radius 0.12 to 0.29 µm.
+    let nj = l.jets as f64;
+    let at = |x: f64| m::asin(x / nj) * 180.0 / m::PI;
+    let read = |lat: f64| {
+        let cell = giant_cell(&gs, &c, &p, lat, 0.0);
+        let a = cell
+            .aerosols
+            .iter()
+            .find(|a| a.kind == "chromophore")
+            .cloned()
+            .expect("chromophore");
+        (a, cell.layers[2].particle_radius_um)
+    };
+    let (z, rz) = read(at(0.5)); // zone centre (band 0 from the equator)
+    let (b, _) = read(at(1.5)); // belt centre (band 1)
+    assert!(b.optical_depth > z.optical_depth);
+    for a in [&z, &b] {
+        assert!(
+            (0.05..=0.76).contains(&a.optical_depth),
+            "{}",
+            a.optical_depth
+        );
+        assert!((0.12..=0.29).contains(&a.particle_radius_um));
+    }
+    assert_eq!(l.layers[2], ch.above);
+    assert_eq!(rz, 1.0, "ammonia ice deck radius");
+    // Ice giants have no ammonia top deck, so no chromophore.
+    let n = fixture("Neptune");
+    let pn = prepare(&gs, &n, Date { day: 0.0 });
+    let cell = giant_cell(&gs, &n, &pn, 30.0, 0.0);
+    assert!(cell.aerosols.iter().all(|a| a.kind != "chromophore"));
+}
+
+#[test]
 fn cells_show_belts_zones_and_storms() {
     let gs = base_settings();
     let c = fixture("Jupiter");

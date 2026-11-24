@@ -54,6 +54,9 @@ pub struct Dust {
     pub season_phase: f64,
     pub regional_per_year: f64,
     pub optical_depth: f64,
+    /// Typical radius of lofted dust, µm (K-c).
+    #[serde(default)]
+    pub particle_radius_um: f64,
     pub source: String,
 }
 
@@ -678,6 +681,7 @@ pub fn imprint(
                     kind: "dust".into(),
                     optical_depth: sys.strength * bump(x, 0.6),
                     colour: [0.75, 0.5, 0.3],
+                    particle_radius_um: fs.dust.particle_radius_um,
                 });
                 cell.layers[0].turbulence = cell.layers[0].turbulence.max(0.5 * core);
             }

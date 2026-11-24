@@ -46,6 +46,10 @@ pub struct Aerosol {
     pub optical_depth: f64,
     /// Linear sRGB, 0 to 1.
     pub colour: [f64; 3],
+    /// Typical particle radius, µm (an aggregate's equal-volume radius);
+    /// absent where no measured size is held (visual polish K-c).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub particle_radius_um: f64,
 }
 
 /// One height layer of one cell.
@@ -65,6 +69,10 @@ pub struct Layer {
     pub wind_m_s: [f64; 2],
     /// Turbulence, 0 (smooth) to 1 (severe).
     pub turbulence: f64,
+    /// Typical cloud particle effective radius, µm; absent where no
+    /// measured size is held (visual polish K-c).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub particle_radius_um: f64,
 }
 
 /// One coarse cell on the surface atlas's cube sphere.

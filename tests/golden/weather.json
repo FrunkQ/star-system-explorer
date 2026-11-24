@@ -30,7 +30,7 @@
     {
       "climate": "8fb41fff63bc41b19cab75a3549086a2f1fb02af46a080448dc0e75454900073",
       "condensate": "methane",
-      "field": "a4f08d125a5f1a516bca5ad5e11b08baef9a9052f02c7325350bd340ad67b05c",
+      "field": "792b6167db52f5d30070513d1357d847285b32aca73876ee9938e0498b6e0307",
       "regime": "slow-rotator",
       "world": "Titan"
     },
@@ -58,7 +58,7 @@
     {
       "climate": "89e8e7b96eedf4f1ffdb0208d11c8646cc75de346e985469a48b8bc41ef03d50",
       "condensate": "ammonia",
-      "field": "4a7ed57dfa33d707ab6d074c053740167babd54f378dd9a96aaae9a114f3a80f",
+      "field": "745b6f5c5394ec5fde0a007db7968d2d087a85de379846e78e013c23dd0583fd",
       "regime": "banded-giant",
       "world": "Jupiter"
     }

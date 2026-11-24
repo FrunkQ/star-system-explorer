@@ -24,6 +24,9 @@ pub struct Photochemical {
     pub cover: f64,
     pub optical_depth: f64,
     pub colour: [f64; 3],
+    /// Typical particle radius, µm (0: no measured size held).
+    #[serde(default)]
+    pub particle_radius_um: f64,
     pub source: String,
 }
 
