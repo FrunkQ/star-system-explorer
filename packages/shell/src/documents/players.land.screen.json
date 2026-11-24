@@ -1,0 +1,12 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.screen.players.land",
+  "label": "Landing",
+  "description": "The landing the game master is flying: the same descent and the same ground, on this screen's own kernel, at the GM's pace.",
+  "audience": "players",
+  "layout": "stack",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "plain",
+  "items": [{ "view": "sse.view.surface", "area": "1", "params": { "tier": "auto" } }]
+}
