@@ -19,7 +19,7 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | SB1 the resolve: crate `sse-small`, pack `base-small-bodies`, notables (a shattered world's core), 14 checks (radar pair shares, spin barrier, Chandrasekhar figures, Arrokoth-like lobes, rings) | done (this PR) | packages/SB1.md |
 | SB2 kernel ops `small_body` {system, member address} and `make_small_body` (Add list), facts for the resource books, `sse.shape.spin_figure` block; golden lane (appends lines after PR 454) | next | |
 | SB3 True draws figures: ellipsoids, two lobes with a neck, relief from the kernel's tiles, weathering colour; new renderer file plus the optional fields above | queued (after SB2 and PR 442) | |
-| SB4 comets: sublimation from the energy balance, a coma, dust and ion tails (render audit R32) | queued | |
+| SB4 comets whole (agreed with the plumes thread 24 Nov): sublimation from the energy balance, coma switch-on distance, dust and ion tails, and their drawing (takes over VP-P3; reuse `plumeBrightness` in `renderer/src/plumes.ts` for the dust tail) (render audit R32) | queued | |
 | SB5 type gradient across a belt (fudge SB-belt-gradient), per-member makeup from where it formed; asks proven core | queued | |
 | VP-R1 ring shadow on the planet and the planet's shadow on the rings (visual polish design 5.8) | queued (needs the renderer's VP1 finish) | |
 | VP-R2 rings' dark side, opposition surge, forward scatter by particle size (5.9) | queued (needs ask K-c, ring particle size) | |
