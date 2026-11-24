@@ -22,7 +22,7 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | SB4 comets whole (agreed with the plumes thread 24 Nov): sublimation from the energy balance, coma switch-on distance, dust and ion tails, and their drawing (takes over VP-P3; reuse `plumeBrightness` in `renderer/src/plumes.ts` for the dust tail) (render audit R32) | queued | |
 | SB5 type gradient across a belt (fudge SB-belt-gradient), per-member makeup from where it formed; asks proven core | queued | |
 | VP-R1 ring shadow on the planet and the planet's shadow on the rings (visual polish design 5.8) | queued (needs the renderer's VP1 finish) | |
-| VP-R2 rings' dark side, opposition surge, forward scatter by particle size (5.9) | queued (needs ask K-c, ring particle size) | |
+| VP-R2 rings' dark side, opposition surge, forward scatter (5.9); grains read a phase table per particle kind from size and the sheet's refractive index (ask K-e of the light thread), not the Jendersie and d'Eon droplet fit (citation check, PR 464) | queued (needs K-c particle size and K-e phase tables) | |
 | VP-R3 gaps and wave trains at moons' computed resonances, wavy edges beside embedded moons (5.9) | queued (moons' orbits exist) | |
 | VP-R4 ring particles near the camera, instanced (5.9) | queued (needs VP4) | |
 | VP-R5 small-body shapes from spin and strength (this track's figure in `sse-small`, drawn by SB3), boulders through the detail ladder (5.10) | queued (needs VP6; folds into SB3) | |
