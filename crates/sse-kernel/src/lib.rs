@@ -6,6 +6,8 @@
 #![allow(clippy::result_large_err)]
 
 mod adopt;
+#[cfg(test)]
+mod bary_tests;
 mod caves;
 mod clock;
 mod composition;

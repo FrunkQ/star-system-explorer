@@ -35,6 +35,12 @@ SOURCES = [
                  ("mars", "Mars"), ("jupiter", "Jupiter"), ("saturn", "Saturn"), ("uranus", "Uranus"),
                  ("neptune", "Neptune"), ("pluto", "Pluto"), ("asteroid", "Asteroid")]
 ] + [
+    {"id": "nssdca-%s" % n, "text": "Williams, D. R., NASA NSSDCA %s (read 24 Nov 2026)" % t,
+     "status": "verified", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/%s.html" % page}
+    for n, t, page in [("jovian-sats", "Jovian Satellite Fact Sheet", "joviansatfact"),
+                       ("saturnian-sats", "Saturnian Satellite Fact Sheet", "saturniansatfact"),
+                       ("neptunian-sats", "Neptunian Satellite Fact Sheet", "neptuniansatfact")]
+] + [
     {"id": "iau2015b3", "text": "Prša, A. et al. 2016, AJ 152, 41: Nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3",
      "status": "verified", "doi": "10.3847/0004-6256/152/2/41"},
     {"id": "hipparcos1997", "text": "ESA 1997, The Hipparcos and Tycho Catalogues, ESA SP-1200, vol. 1, sec. 1.5.3: the ICRS to galactic matrix A_G",
@@ -87,6 +93,49 @@ PLANETS = [
     ("Neptune", "neptune", "planet", "sun", 102.409, 24622, 4514.953, 0.0097, 16.11, 0.290, 0.442, 28.32),
     ("Pluto", "pluto", "dwarf_planet", "sun", 0.01303, 1188, 5869.656, 0.2444, -153.2928, 0.72, 0.52, 119.51),
 ]
+# The large moons and Charon (barycentre always: Pluto and Charon go round a
+# point outside Pluto, Alex 24 Nov 2026). name, id, host, mass (kg), radius
+# (km), a (km), e, inclination to the host's equator or orbit (deg; Triton's
+# is retrograde), geometric albedo, Bond albedo or None, source. All
+# synchronous: rotation equals the orbit, so none is kept here. Phobos and
+# Deimos are printed with the Mars sheet (mass 1e15 kg, axis radii: the radius
+# is the mean of the three), Charon with the Pluto sheet (mean distance).
+MOONS = [
+    ("Phobos", "phobos", "mars", 10.6e15, (13.0 + 11.4 + 9.1) / 3, 9378, 0.0151, 1.08, 0.07, None, "nssdca-mars"),
+    ("Deimos", "deimos", "mars", 2.4e15, (7.8 + 6.0 + 5.1) / 3, 23459, 0.0005, 1.79, 0.08, None, "nssdca-mars"),
+    ("Io", "io", "jupiter", 893.2e20, 1821.5, 421.8e3, 0.004, 0.04, 0.62, None, "nssdca-jovian-sats"),
+    ("Europa", "europa", "jupiter", 480.0e20, 1560.8, 671.1e3, 0.009, 0.47, 0.68, None, "nssdca-jovian-sats"),
+    ("Ganymede", "ganymede", "jupiter", 1481.9e20, 2631.2, 1070.4e3, 0.001, 0.18, 0.44, None, "nssdca-jovian-sats"),
+    ("Callisto", "callisto", "jupiter", 1075.9e20, 2410.3, 1882.7e3, 0.007, 0.19, 0.19, None, "nssdca-jovian-sats"),
+    ("Titan", "titan", "saturn", 1345.5e20, 2575, 1221.87e3, 0.0292, 0.33, 0.22, None, "nssdca-saturnian-sats"),
+    ("Triton", "triton", "neptune", 214e20, 1353.4, 354.76e3, 0.000016, 157.345, 0.72, None, "nssdca-neptunian-sats"),
+    ("Charon", "charon", "pluto", 1.586e21, 606, 19596, 0.0, 0.00005, 0.42, 0.25, "nssdca-pluto"),
+]
+MOON_NOTES = {
+    "phobos": "radius: the mean of the three axis radii printed; a is the mean distance from the centre of Mars",
+    "deimos": "radius: the mean of the three axis radii printed; a is the mean distance from the centre of Mars",
+    "triton": "retrograde orbit (inclination over 90 degrees)",
+    "charon": "a is the mean distance from Pluto; radius is equatorial; the pair goes round a point outside Pluto",
+}
+
+
+def moon_row(name, pid, host, mass, r_km, a_km, e, inc, geo, bond, src):
+    values = {
+        "body.mass": val(mass, "kg", src),
+        "body.radius": val(round(r_km, 4) * 1e3, "m", src),
+        "orbit.semi_major_axis": val(a_km * 1e3, "m", src),
+        "orbit.eccentricity": val(e, "1", src),
+        "orbit.inclination": val(inc, "deg", src),
+        "body.albedo_geometric": val(geo, "1", src),
+    }
+    if bond is not None:
+        values["body.albedo"] = val(bond, "1", src, note="Bond albedo")
+    row = {"id": pid, "name": name, "kind": "moon", "host": host, "values": values}
+    if pid in MOON_NOTES:
+        row["note"] = MOON_NOTES[pid]
+    return row
+
+
 NOTES = {
     "jupiter": "rotation in System III (1965.0)",
     "saturn": "rotation in Saturnian System III",
@@ -209,14 +258,14 @@ def build():
     }}
     sun["values"].update(sol_extra.SUN_AGE)
     sun["values"].update(sun_frame())
-    bodies = [sun] + [planet_row(*p) for p in PLANETS] + sol_extra.BODIES
+    bodies = [sun] + [planet_row(*p) for p in PLANETS] + [moon_row(*x) for x in MOONS] + sol_extra.BODIES
     sources = sorted(SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
     regions = sol_extra.regions({b["id"]: b for b in bodies})
     return {
         "format": "sse.pack/1", "id": "sse.base-sol", "version": "0.1.0", "kind": ["base-physics"],
         "kernel_range": "^0.1", "licence": "Apache-2.0",
         "provides": {"other": {"sol": {
-            "about": "The catalogued Solar System: the Sun, the planets, the Moon, Ceres and Pluto, and the belts and the Oort cloud, as measured. Built by scripts/build-base-sol.py; every value names its source. Body facts, not the master data sheet's reference objects.",
+            "about": "The catalogued Solar System: the Sun, the planets, the Moon and the large moons, Ceres, Pluto and Charon, and the belts and the Oort cloud, as measured. Built by scripts/build-base-sol.py; every value names its source. Body facts, not the master data sheet's reference objects.",
             "bodies": bodies, "regions": regions, "sources": sources,
         }}},
     }
