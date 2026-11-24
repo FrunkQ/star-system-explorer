@@ -1,6 +1,6 @@
 # What SSE3 does that SSE4 does not (yet)
 
-Date 23 Nov 2026. Status: **obvious items going ahead** (Alex, 23 Nov: "the obvious ones you can push on and develop"); Alex answered the six open questions on 23 Nov 02:51 (recorded on each item) and added items 35 and 36. **Nothing is waiting on him.**
+Date 23 Nov 2026, second audit 24 Nov (at the end). Status: **obvious items going ahead** (Alex, 23 Nov: "the obvious ones you can push on and develop"); Alex answered the six open questions on 23 Nov 02:51 (recorded on each item) and added items 35 and 36. **Nothing is waiting on him.**
 
 - Going ahead, each through the thread that owns its area and in its stage: 1 to 9, 11 to 14, 16, 18 to 23, 25 to 29, 31.
 - Settled 23 Nov: 10 (replaced by the gallery, item 35), 15 (megastructures as constructs carrying physics blocks), 17 (yes), 24 (purpose-built report screens), 30 (yes), 32 to 34 (dropped for now). New: 35 (class gallery), 36 (gas giant colours from the physics).
@@ -143,3 +143,80 @@ What SSE4 should do better than V3: the colours themselves become physics (a con
 - Stage 3: 9, 36. Stage 4: 19, 20.
 - Stage 5 (run a game): 13, 15, 16, 18, 22 to 26, 29.
 - Stage 6: 14, 31 (tours).
+
+
+---
+
+# Second audit, 24 Nov 2026
+
+Asked by Alex on 24 Nov after he used the live Sol chart: "these are all sse3 features - may be worthwhile doing another audit to bring us up to speed on what we have not brought over". This audit was read against `main` at ddd6b6b (187 merges since the first list) and `handover/status/`. V3 was read again on his machine, read only: the picker `BodyPicker.svelte`, `FocusHeader.svelte`, the context menus and `GettingStarted.md` sections 2, 3 and 11. This time the weight is on everyday use and finding your way.
+
+Words used below. **Done**: merged and on screen. **In hand**: a thread is building it now, or has built part of it. **Planned**: settled on this list and routed on 23 Nov, but no package started yet. **New**: on no list until this audit.
+
+## S1. Where the first 36 items stand
+
+| Item | State | Where |
+|---|---|---|
+| 2 Add here | Done | T6, chart room |
+| 7 Which worlds are shielded | Done | `read_field` for a system (light); Mag at system scale in 3D and True (V10e) |
+| 8 Stand on it | Mostly done | SL1 land anywhere, fly down and walk about; Land and Landing screens (V10i). Not yet: sight distance and lamp reach in metres |
+| 13 Ships and stations | In hand | Ships and stations screen with Add here, cards, edit (X3f), manifest and crew (MC1), power books (RK9). Not yet: ships drawn on the system chart, a flight profile on the card |
+| 14 Hulls and plumes | Done | Ship designer, stages 1 to 4b (renderer) |
+| 16 Log, drift, stress | In hand | Ship's log on the card is done; flight log part 1 (HW1). Not yet: drift, g-force and dose on the voyage card |
+| 18 Grids and your picture | In hand | Traveller sector grid as a pack overlay is done. Not yet: your own picture pinned behind the stars |
+| 19 Stars that show what they do | In hand | Part 1 (size by power, flares) done; shells and jets are part 2 |
+| 21 The eye and notes | Done | "Known to" eye on cards, lines, ships, people and cargo (SV1, SV2, MC2) |
+| 23 Describe | In hand | Part 1 (Describe on the body card, kept as a note) done |
+| 25 Branding, join words, Hide labels | Done | Traveller track |
+| 26 Inside a virtual tabletop | Done | `&embed=1` with an exact origin list |
+| 27 Your data and recovery | Done | T4 |
+| 28 One Open door | Done | T5 |
+| 30 Colour vision check | Done | T2 |
+| 31 Help door | Done | T3; tours wait for stage 6 |
+| 9 and 36 Colours from the light, giant colours | In hand | ND2 (light through gas, first absorption rows) landed; giant cloud colours not yet |
+| 1 Where things can orbit | Planned | Hill spacing and other stability checks show on the card (ST1), but nothing is drawn on the chart |
+| 3 Grow with a star you choose and the four dials | Planned | Not started |
+| 4 Pin this value | Planned | Not started |
+| 5 Click a unit | Planned | Not started |
+| 6 Next eclipse | Planned | Not started |
+| 11 Mix editor | Planned | Not started (gases now come from the sheet, V10h, which it would read) |
+| 12 and 35 Pin a class, class gallery | Planned | "Names and classes" exists with its Names page (NM6); no Classes page yet |
+| 15 Megastructures | Planned | Design note first (kernel with Traveller) |
+| 17 Your systems map | Planned | The patch chart is not built; going up from a system still opens the galaxy last charted (test drive rough edge 3) |
+| 20 Real sky and Local Neighbourhood | Planned | Waits on the real-sky pack (Y8) |
+| 22, 29 Your pictures, credit the maker | Planned | Not started |
+| 24 Report screens | Planned | Not started |
+
+## S2. Gaps the first list missed: everyday use and finding your way
+
+Alex's own finds on the Sol chart are **in hand** with the chart room, renderer and crew threads: every body clickable, with a predictable zoom to a planet and its moons; a belt that looks right (today its dots fall into spiral arms, an artefact of how they are placed) and moves; Saturn's rings on the chart; fuel on a ship; a picture you can set for a ship; and V3's picker. They are listed here so the list is complete. New items get numbers from 37.
+
+**37. One picker for "which one?" (in hand; this is the recommended shape).** V3's picker was one component for every "which body?" in the app: the system navigator, the transit destination and the interstellar target. It is a slim strip (the current name, a search box, ▾) over a **tree** (Sol › Earth › Luna › Lunar Gateway), ordered by distance from the star so moons sit straight after their planet. It has type chips that toggle (stars, planets, moons, belts, ships, stations, life), and each row says what it is in words ("orbits Earth", "on Mars", "pair with Charon"; a barycentre greyed with the reason why). Its owner's rule was "one interface for the user to learn". *Do better, and meet Alex's "current level, one below, one above":* put the picker on the place line, attached to the current place's name, and let it **replace the Below list** so there is still only one thing to learn.
+- Opened, it shows the current place's tree two deep (Sol: planets, and their moons and ships folded under each).
+- Above the tree, one line goes **Up** (the system's neighbours on the map: other systems in the campaign).
+- Each row has a › to make that row the current place, so going down is always one press.
+- Typing searches **the whole campaign** and not only this level, with this level's hits first. The picker then doubles as the stage 2 **Find** for names (test drive rough edge 4), with no second search box.
+- The type chips are the same at every scale and change their contents with it: galaxies, systems and stars at galaxy scale; bodies, ships and belts in a system; regions and sites on a world.
+- Every "which one?" in the app opens this picker: Voyages' destination, Add here's host, Send this view, Measure, Copy to. A ship's own home shows as context but cannot be picked, as in V3.
+
+*Owner:* chart room. **Stage 1** (it fixes the walk's way down).
+
+**38. Press and hold, or right-click, on anything (new).** V3's main way to act on an object was its context menu: Copy, Cut, Paste here, Add planet or moon here, Add construct here, Rename, Set depth, Centre map here, Start link, Delete, plus "put something here" inside a Lagrange or binary zone. In SSE4 the same actions live in the Build tools, in More and on the card, and only the "Known to" eye answers a right-click. This is exactly Alex's rule: rarely touched things in a menu that carries the relevant context. *Do better:* one menu on any object at every scale, drawn from the same list of actions as the Build tools and More, so an action added once appears in all three. It is desk-aware: Explore offers looking and sending to the table, Build offers editing, and Run offers time and ships. Each item that cannot be done shows greyed with the reason. Long press on touch. *Owner:* chart room. **Stage 1.**
+
+**39. Hover a system to see what is in it (new as its own item; part of 17).** On V3's starmap, hovering a star tells you in plain words how many stars, planets, moons, minor bodies and ships it holds, any life, and anything remarkable, without opening it. It is a GM-only count. SSE4 has the hover peek on bodies only. *Keep:* the same peek on systems at galaxy and patch scale, and on rows of the picker (item 37). *Owner:* galaxy charts thread, with item 17. **Stage 2.**
+
+**40. The zones, with a key (new; the first list only covered Hill and Lagrange, item 1).** V3 draws the Roche limit, the rock and soot lines, the habitable zone with its caveat, **two** frost lines (where ice formed at birth and where it is stable today) and the CO₂ ice line, plus a key that explains each. SSE4's chart draws a temperate zone under HUD. *Keep:* each line comes from its own block, sits under HUD, and has a "why?"; the key is the HUD's legend. Fold into item 1's "Where things can orbit" layer. *Owner:* chart room with the kernel. **Stage 2.**
+
+**41. Find by tag, and light it up (new as its own item).** V3: Find by tag in the rail filters bodies or constructs across all systems; giving a tag a colour lights up every body carrying it, with a roll-up on the starmap of which systems hold what. Tags now exist in SSE4 (TG1 to TG13) but there is no find or highlight. *Do better:* a tag is a chip in the picker's search (item 37: type "#ruins"), and **Light up** on a tag paints its holders on the chart and the systems that hold them on the map. *Owner:* chart room with the Traveller track (tags). **Stage 5.**
+
+**42. A description and notes for the whole campaign and each system (new).** V3's floating panel on the map holds the map's own description and GM notes, editable in place. SSE4 keeps notes per object in the record. *Keep:* the place's card for a system, and for the campaign at the top of the place line, carries the same description and notes fields as a body. *Owner:* chart room. **Stage 2.**
+
+Checked and **not** gaps: undo with named steps, measure, size comparison, the time ruler (V3's spring-back shuttle is covered by step, play and the zooming ruler), labels by hover in True, Escape to climb, deep links for every place, and every unit being one quantity from the sheet.
+
+## S3. Questions for Alex (24 Nov)
+
+1. **The picker (item 37) sits on the place line, replaces the Below list, and its search covers the whole campaign so it is also Find.** Recommended: yes. It gives one thing to learn for finding, going down and choosing a target.
+2. **Add a press-and-hold or right-click menu on every object (item 38), built from the same action list as the tools.** Recommended: yes, in stage 1 with the picker. These two are the V3 habits a GM reaches for most.
+3. **Order of the planned stage 2 items:** navigation first (37, 38, then 17 with 39, then 40 with 1), then the editing ones (5 click a unit, 4 pin a value, 3 grow with the dials, 11 mix editor, 12 and 35 classes and gallery, 6 eclipses). Recommended: yes. Today the gap a GM feels most is finding and getting to things, not the depth of editing.
+
+*Alex, 24 Nov 14:34: "yes to all questions".* Settled: the picker (37) goes on the place line, replaces the Below list and is also Find; every object gets the press-and-hold or right-click menu (38), both in stage 1; navigation comes first in stage 2 (17 with 39, then 40 with 1), then the editing items.

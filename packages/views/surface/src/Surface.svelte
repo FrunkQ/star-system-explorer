@@ -106,9 +106,10 @@
         host = hostOf(h);
       }
       const spin = Number(f["body.rotation_period"] ?? 0);
-      // The tilt: the kernel's and V3's axial tilt (radians), else the catalogue's obliquity (degrees; above 90 the
-      // spin runs backwards, as Venus's does).
-      const tiltDeg = typeof f["body.axial_tilt"] === "number" ? ((f["body.axial_tilt"] as number) * 180) / Math.PI : Number(f["body.obliquity"] ?? 0);
+      // The tilt: the kernel's and V3's axial tilt, else the catalogue's obliquity (both radians, the catalogue's
+      // degrees turned to SI at the door; above 90 degrees the spin runs backwards, as Venus's does).
+      const tiltRad = typeof f["body.axial_tilt"] === "number" ? (f["body.axial_tilt"] as number) : Number(f["body.obliquity"] ?? 0);
+      const tiltDeg = (tiltRad * 180) / Math.PI;
       const orbitA = Number((facts[orbiter] ?? {})["orbit.semi_major_axis"] ?? 0);
       const gm = star_m > 0 ? (constant("GM_sun") * star_m) / constant("M_sun") : 0;
       const af = airFactsOf(f, surf);
