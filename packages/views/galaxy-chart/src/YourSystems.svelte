@@ -165,7 +165,7 @@
             <li>
               <a href={link(x)} data-system={x.system} onpointerenter={(e) => rest(e, x)} onpointerleave={() => leave(x)}>
                 <b>{x.title}</b>
-                <span class="sum">{summaryWords(x.summary)}</span>
+                <span class="sum">{x.subjects.length ? summaryWords(x.summary) : "Not counted yet: open it once and it says what it holds"}</span>
               </a>
             </li>
           {/each}
