@@ -116,10 +116,9 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9, SV7 |
 | `status/traveller.md` | Build Traveller pack | X3, TG8, TG9, TG11, TG13, MP16 |
 | `status/manifest.md` | Build ship manifest and crew roster | MC |
-| `status/atomic-rockets.md` (arrives with PR 447) | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
+| `status/atomic-rockets.md` | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
 | `status/paper-spacecraft.md` (arrives with PR 438) | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
-| `status/atomic-rockets.md` | Build ship flow and power views | RK13 (Flow view, Power card), RK12, RK10, RK3 |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
 
