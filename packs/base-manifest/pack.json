@@ -9,7 +9,7 @@
   "licence": "Apache-2.0",
   "provides": {
     "other": {
-      "about": "Ship manifest and crew roster (track MC): what is aboard a ship, station or site. Everyone and everything aboard is a record entry (an actor of kind person or cargo) with an aboard.on link, so moving someone or something is one dated change and the history keeps it. No game's rules: roles, kinds of being and goods are plain words a pack or the GM writes. Life support days come from the stores aboard and from who is awake, at the rates below per kind of being; a kind with no rates says so rather than borrowing a human's.",
+      "about": "Ship manifest and crew roster (track MC): what is aboard a ship, station or site. Everyone and everything aboard is a record entry (an actor of kind person or cargo) with an aboard.on link, so moving someone or something is one dated change and the history keeps it. No game's rules: roles, kinds of being and goods are plain words a pack or the GM writes. Life support days come from the stores aboard and from who is awake, at the rates below per kind of being; a kind with no rates says so rather than borrowing a human's. Fuel in a ship's tanks is kept here too (fuel.*): set, topped up or drawn down by a voyage, each change dated with its reason.",
       "record": {
         "kept": [
           {
@@ -81,6 +81,24 @@
             "tier": "surveyed",
             "writers": ["gm"],
             "describes": "the share of oxygen and water the life support recovers on this ship or station, from 0 (none) to 1 (closed loop)"
+          },
+          {
+            "id": "fuel.propellant_t",
+            "shape": "number",
+            "range": [0.0, 1e15],
+            "unit": "t",
+            "tier": "scanned",
+            "writers": ["gm"],
+            "describes": "reaction mass in this ship's tanks now, tonnes; full (its own wet less dry mass) when never set"
+          },
+          {
+            "id": "fuel.jump_t",
+            "shape": "number",
+            "range": [0.0, 1e15],
+            "unit": "t",
+            "tier": "scanned",
+            "writers": ["gm"],
+            "describes": "jump fuel in this ship's tanks now, tonnes (a pack's FTL drive); full when never set"
           }
         ]
       },
