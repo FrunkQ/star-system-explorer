@@ -42,6 +42,7 @@ export function createWorkspace(now_yr: number): Workspace {
     setParty(p) {
       ws.party = p;
     },
+    bookmarks: [],
     overlay_anchors: {},
     setOverlayAnchor(id, a) {
       const next = { ...(ws.overlay_anchors ?? {}) };

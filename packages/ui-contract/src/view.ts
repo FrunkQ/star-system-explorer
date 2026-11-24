@@ -103,6 +103,8 @@ export interface Workspace {
    * goes on to them. Nothing reaches the table until the GM sends.
    */
   sendLanding?: (show: Json) => void;
+  /** Bookmarks (PB2b): where the GM was and how they looked, kept with the campaign, in the order the GM put them. */
+  bookmarks?: import("./bookmark.ts").Bookmark[];
   /** The table, for the Switchboard (PB2): the board, roles and screens, and the ways to change what they show. */
   table?: import("./board.ts").TablePort;
   /** A site a link asked to land at (`~surface?site=lat,lon`): the Land screen takes it once its world is read, then clears it. */

@@ -4,6 +4,7 @@
 <script lang="ts">
   import SeatsPanel from "./SeatsPanel.svelte";
   import ArrivalSlip from "./ArrivalSlip.svelte";
+  import OnAir from "./OnAir.svelte";
   import type { Share } from "../share.svelte.ts";
   import type { PartyShip, SceneSubject, Shown, ViewSession } from "../../../ui-contract/src/index.ts";
 
@@ -19,6 +20,7 @@
     landingUnsent,
     here,
     onswitchboard,
+    chip = true,
     party,
     now_yr,
     onchange,
@@ -39,6 +41,8 @@
     here: () => Shown;
     /** Open the Switchboard. */
     onswitchboard: () => void;
+    /** Show the on-air chip here (false where the top bar has it). */
+    chip?: boolean;
     /** The party's ship, for the offer to tell the table about a world it arrives at. */
     party: PartyShip | null;
     /** The campaign's now, in years. */
@@ -53,14 +57,9 @@
 
 <span class="share" aria-label="Players">
   {#if share.state.link}
-    <!-- On air (Switchboard PB2): one chip that says how many screens and what the table sees, and opens the
-         Switchboard; the one Send of the live view stays here, a press from the chart. -->
+    <!-- On air (PB2): in the top bar on the Run desk, here on the others. The one Send of the live view stays here. -->
     {@const shown = share.state.shown}
-    {@const held = Object.values(share.state.board.lines).filter((l) => l?.held).length + (share.state.board.all ? 1 : 0)}
-    <button type="button" class="chip" data-on-air data-players={share.state.players} onclick={onswitchboard} title="Open the Switchboard: what every screen shows">
-      On air · {share.state.players} {share.state.players === 1 ? "screen" : "screens"}{held ? ` · ${held} held` : ""} ·
-      <span class="table-sees" data-table-sees={"off" in shown ? "off" : shown.scope}>{"off" in shown ? (shown.card ? `held: ${shown.card}` : "screens dark") : (shown.title ?? "the opening place")}</span>
-    </button>
+    {#if chip}<OnAir {share} {onswitchboard} />{/if}
     {#if "off" in shown || shown.scope !== system || (landingUnsent && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => share.show(here())} title="Show every screen {title}, as far as each knows it">Send this view</button>{/if}
     <a class="quietlink" href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' link</a>
     <button type="button" class="linkbtn quiet" onclick={() => ((seatsOpen = true), seatsDialog?.showModal())}>{share.state.plan.seats.length > 1 ? `${share.state.plan.seats.length} seats` : "More seats"}</button>
@@ -106,8 +105,7 @@
     border: var(--sse-line) solid var(--sse-accent);
     border-radius: var(--sse-radius);
   }
-  .share a,
-  .chip {
+  .share a {
     font: inherit;
     color: var(--sse-ink);
     background: var(--sse-ground-raised);
@@ -115,11 +113,6 @@
     border-radius: var(--sse-radius);
     padding: 0 8px;
     cursor: pointer;
-  }
-  .chip::before {
-    content: "●";
-    color: var(--sse-accent);
-    margin-right: 6px;
   }
   .quietlink {
     color: var(--sse-ink-muted);

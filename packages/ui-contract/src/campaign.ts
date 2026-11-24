@@ -33,6 +33,8 @@ export interface CampaignSave {
     overlay_anchors?: Record<string, import("./overlay.ts").OverlayAnchor>;
     /** The party's ship (older saves have none). */
     party?: import("./party.ts").PartyShip | null;
+    /** Bookmarks, `sse.bookmark/1` (older saves have none). */
+    bookmarks?: import("./bookmark.ts").Bookmark[];
   };
   /**
    * The packs over the opening stack (Packs screen) and the campaign's own
