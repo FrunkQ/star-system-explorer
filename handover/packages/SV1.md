@@ -57,3 +57,6 @@ answered and every request it sends is taken.
 four new contract cases (tests/contract/requests.json, after the Vesh
 starting view on Kestrel) add four lines: a `known_to` and a `known_in` on
 Tarn, and two refusals that write nothing (a bad landmark, an unknown undo).
+
+## Follow-up, 24 Nov: what "now" means when no time is asked
+The chart room asked for this while wiring the eye (PR 369). On Kestrel, `campaign_now` is never set, so `known_to` and `known_in` with no `at_s` read time 0. A reveal made at the present then read as not yet made. With no `at_s`, both now read the campaign's now when one is set, and otherwise the latest time any event in the record speaks of (the later of its occurred and activated times). They never read the origin by default. The check is `known_tests::with_no_time_known_to_reads_the_present`. No golden moves, because the contract's cases all pass an explicit `at_s`.

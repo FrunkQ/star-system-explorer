@@ -289,3 +289,38 @@ fn the_shared_fixture_is_what_the_kernel_answers_and_takes() {
         assert_eq!(r["type"], "known_set", "{}: {r}", c["about"]);
     }
 }
+
+/// Asked with no time, known_to reads the campaign's now, else the latest
+/// time any event speaks of, never the origin (chart room, 24 Nov): a
+/// reveal made at the present reads as made.
+#[test]
+fn with_no_time_known_to_reads_the_present() {
+    let mut k = kernel();
+    const NOW: i64 = 4_610_000_000 * 31_557_600;
+    set(
+        &mut k,
+        serde_json::json!({"address": BASE, "landmark": "gm_only"}),
+    );
+    set(
+        &mut k,
+        serde_json::json!({"address": BASE, "landmark": "known", "at_s": NOW}),
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "known_to", "address": BASE}),
+    );
+    assert_eq!(r["value"]["at_s"], NOW, "{r}");
+    assert_eq!(r["value"]["audiences"][0]["landmark"], "known", "{r}");
+    // A campaign clock, once set, is what "now" means.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "set_campaign_now", "at_s": 5}),
+    );
+    assert_ne!(r["type"], "error", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "known_to", "address": BASE}),
+    );
+    assert_eq!(r["value"]["at_s"], 5, "{r}");
+    assert_eq!(r["value"]["audiences"][0]["landmark"], "gm_only", "{r}");
+}
