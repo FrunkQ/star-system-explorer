@@ -106,7 +106,12 @@ function factWords(v: unknown): string | null {
   if (v === undefined || v === null) return null;
   if (typeof v === "number") return String(Math.round(v * 1000) / 1000);
   if (typeof v === "boolean") return v ? "yes" : "no";
-  if (typeof v === "string") return v.length <= 60 && !v.startsWith("data:") ? v : null;
+  if (typeof v === "string") {
+    // The picture a construct opens on (views/pictures): "picture:0" is the GM's first own picture.
+    const own = /^picture:(\d+)$/.exec(v);
+    if (own) return `picture ${Number(own[1]) + 1}`;
+    return v.length <= 60 && !v.startsWith("data:") ? v : null;
+  }
   return null;
 }
 
