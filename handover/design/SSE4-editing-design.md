@@ -1,7 +1,7 @@
 # SSE4 editing: handles, strips and the chart (track ED)
 
-Status: **proposed, 24 Nov 2026. Waiting on Alex's answers to the questions in section 16.**
-Mockup: `/mnt/project-files/sse4/handover-screens/ED-screens/editing-mockup.html` (it works: drag the strip, drag the world on the chart). Screenshots beside it in `ED-screens/`: `desk-1-mass-strip`, `desk-2-what-followed`, `desk-3-drag-orbit`, `desk-4-star-kinds`, `desk-5-companion-night`, `desk-6-moon`, `phone-1-mass-strip`, `phone-2-drag-orbit-night`, `phone-3-star-kinds`. The mockup's figures are stand-ins, not kernel output.
+Status: **proposed, 24 Nov 2026; Alex on first read, 14:42: "love this! what about atmospheres on the sliders? water -> liquids? SSE3 is our starting point there" (section 11A answers that). Waiting on his answers to the questions in section 16.**
+Mockup: `/mnt/project-files/sse4/handover-screens/ED-screens/editing-mockup.html` (it works: drag the strip, drag the world on the chart). Screenshots beside it in `ED-screens/`: `desk-1-mass-strip`, `desk-2-what-followed`, `desk-3-drag-orbit`, `desk-4-star-kinds`, `desk-5-companion-night`, `desk-6-moon`, `phone-1-mass-strip`, `phone-2-drag-orbit-night`, `phone-3-star-kinds`, and for section 11A `desk-7-air`, `desk-8-liquids`, `phone-4-liquids-night`. The mockup's figures are stand-ins, not kernel output.
 
 Asked for by Alex, 24 Nov: "Editing planets is a BIG need... Earlier versions went big into sliders, although we really like them because it encourages people to play with planets and know the range that they can play in. They do take up a lot of room, are relatively cumbersome, and the act of sliding them does tend to slam the game engine. We still want to encourage play... there's probably not that many things they can change now... generally there's only going to be a few sliders that matter. What we need to do is ensure when the user sits there and kind of goes, I really want a different type of star or something like this in the system, that they can add it and have a bit more control and are just allowed to do what they want and are guided if it's unfeasible." And a minute later: "dragging planets to move them is a great way to avoid a slider and do it fine... but consider moons and cut and paste, etc. We got a good set of tools in SSE3... maybe some cumbersome or awkward, so now is the time to fine tune and improve."
 
@@ -37,8 +37,8 @@ Read from the kernel on `main`, 24 Nov (`sse-formation` manifest, inheritance an
 | Orbit | `orbit.semi_major_axis`, `orbit.eccentricity`, `orbit.host`; inclination and the three angles at Science depth | dragged on the chart first |
 | Mass | `body.mass` | |
 | Makeup | `makeup.metal`, `.rock`, `.carbon`, `.ice`, `.gas` (shares) | one mix control (gap 11's mix editor), not five sliders |
-| Water | `body.surface_water_oceans` | in Earth oceans; coverage of the surface is a result of this and the ground |
-| Air | `atmosphere.surface_pressure`, `atmosphere.mix` | "the science expects" beside it; the mix editor for gases |
+| Liquids | `body.surface_water_oceans` today; any substance in section 11A | how much of each; which are liquid, and how much of the surface they cover, are results |
+| Air | `atmosphere.surface_pressure`, `atmosphere.mix` | how much and what of; "the science expects" beside it; section 11A |
 | Spin | `body.rotation_period`, `body.obliquity` | day length and tilt; expected values come from tides and history |
 
 **Results, not handles** (all are V3 sliders today): radius, density, gravity, escape speed, year, surface temperature, albedo, greenhouse warming, tidal and inner heat, magnetic field, ocean coverage, class, a star's radius, temperature, luminosity and spectral type. To change one of these you use section 8.
@@ -53,7 +53,7 @@ So the count is 3 for a system, 1 for a star, 6 for a world. V3 had about 27 sli
 
 A **handle** is an input shown as a figure with a faint underline on the Build desk. The card's first row on Build is the handles alone:
 
-`Orbit 0.52 AU · Mass 0.82 M⊕ · Makeup rock and iron · Water 1.1 oceans · Air 1.1 bar · Day 31 h, tilt 23°`
+`Orbit 0.52 AU · Mass 0.82 M⊕ · Makeup rock and iron · Liquids 1.1 oceans · Air 1.1 bar · Day 31 h, tilt 23°`
 
 Three ways to move one, all the same mechanism underneath:
 
@@ -180,6 +180,36 @@ Adding a companion is the Add ghost with a star on it.
 - A moon's effect on its planet (tides, day length, tilt holding steady) is in "what followed" on the planet's card.
 - Rings and belts are placed with the same ghost and have two handles, where and how much; their detail is a later note.
 
+## 11A. Air and Liquids (added after Alex's first read)
+
+SSE3 is the starting point for both: its Atmosphere tab (a pressure slider, a log slider for each gas with ppm below 1%, presets, a greenhouse readout) and its Hydrosphere tab (pick a primary liquid from an editable list, a coverage slider, derived fluid layers). Both keep their reach. What changes is that each becomes one handle with one box, and that the physics does more of the work.
+
+**One idea underneath.** What a GM sets is an **inventory**: how much of each volatile substance the world has at its surface. Whether a substance is gas, liquid or ice there is a result of the temperature and pressure, read from its phase row on the data sheet through the Look up block. So Air and Liquids are two faces of one inventory, and each tells you when the other is affected: put 1.1 oceans of water on a world at 516 K and the Liquids verdict says "none of this is liquid here: it is 290 bar of steam", and the Air handle shows it.
+
+**Air** opens a box with two parts:
+
+1. **How much:** a strip of surface pressure on a log scale, like any other. Tipping points found by the sweep: "water can be liquid above", "people breathe unaided above" (a pack's rule; the Traveller pack adds its atmosphere codes as marks), "the sea boils away above". The diamond is what the science expects from outgassing and loss (the redox work, F-redox). Reference dots: Mars, Earth, Venus.
+2. **What it is made of:** one **mix bar**, the whole air as a stacked bar. Drag a join to trade one gas against its neighbour; the rest keep their proportions, so it always sums to 100% with nothing to fix up by hand. Gases under 1% sit below as **trace chips** in ppm. Pressing any gas or chip opens that gas's own strip in place of the amount strip: its share on a log scale across eight decades (SSE3's log slider, kept), with its own tipping points: "fires burn above", "toxic to people above", "freezes out at the poles above" for carbon dioxide on a cold world.
+   - **Add a gas** lists the data sheet's gases in three groups: what this world's rock gives off (expected), what it can hold (allowed), and what escapes ("hydrogen leaves in about 30 million years": still allowed, and told).
+   - The verdict carries the things-that-do-not-go-together advice: "Oxygen with methane lasts only while something keeps making them."
+   - Results that follow, shown in "what followed": greenhouse warming, surface temperature, sky colour (air optics), what rains, whether people can breathe it.
+
+The box's menu holds "Reset to what the science expects" (this is the planned "Suggest an atmosphere" button), **Kinds** for air (Earth-like, Mars-like, Venus-like, Titan-like, first hydrogen air; packs add their own), "From this date" and Why?.
+
+SSE3's "ages or stays as authored" switch goes. A hand-set air is dated data; the verdict says how fast it is being lost ("thins by half in 400 million years"), and Look ahead applies that. Nothing erodes behind the GM's back and nothing is frozen against the physics.
+
+**Liquids** replaces the Water handle. Its box has two parts:
+
+1. **How much:** a strip of the amount of the main liquid (in oceans, metres of global layer, or kg; click the unit). Its tipping points come from the world's own ground: "first seas", "half covered", "last land drowns", "ice forms on the sea floor". **Coverage is a result but it is on the same line**, so dragging to "half covered" is dragging to 50%. SSE3's coverage slider is therefore still there, as marks on the amount strip, and "Cover a share instead" in the menu takes a typed percentage (a Reach it).
+2. **What can be liquid here:** a short list of substances, each drawn as a **phase bar** along temperature (solid, liquid, gas at this world's pressure) with the world's own surface range laid across them all. At a glance: water is liquid here, methane is gas, sulphur is solid. The ones in use are marked. This is the guide SSE3's liquid picker lacked: it shows why before you choose.
+   - **Add a liquid** adds another substance to the inventory (methane and ethane on a cold moon; ammonia in water as antifreeze). Choosing one that cannot be liquid here is allowed: it goes in as ice or vapour, the verdict says so, and offers the move that would melt or condense it.
+   - **Salts** and other dissolved things use the mix editor (gap 11), and shift the freezing point as the data sheet says.
+   - **New substance** opens the data sheet's substance editor (Reference): melting, boiling, triple and critical points, density, colour, whether life can use it as a solvent. This is SSE3's Edit Liquids dialog, moved to where every other part of SSE4 can read the result. A made-up liquid lives in a pack and carries the fictional mark.
+
+Molten rock, seas under ice shells and deep fluid layers are not set here. They are results, and the cutaway shows them (the phase profile). To get one, change what causes it (Reach it offers the handles), or pin it.
+
+**The kernel today:** pressure and a gas mix are authored fields, but an authored air does not yet change the greenhouse (the surface chain uses a pack constant; test drive rough edge 1 is the same gap). Surface liquid is water only, in oceans, with a yes or no for "has oceans". Moving ices (W8) already handle carbon dioxide, nitrogen and methane frost. So this section needs asks K7 and K8 below, and until they land the Air and Liquids boxes can ship showing amount and mix with the honest note "does not yet change the climate".
+
 ## 12. Thinking wide: what else this is
 
 The general capability is "any input is a handle with a strip, and any strip can be swept". Other uses, none of them a special:
@@ -195,7 +225,7 @@ The general capability is "any input is a handle with a strip, and any strip can
 ## 13. Desks, depth and the phone
 
 - **Build** moves handles. **Explore** shows them as plain figures; pressing one opens the strip read-only as an explanation of where this world sits, with one button, "Try changing it", which opens an example branch ("EXAMPLE · change anything", onboarding section 12) where it moves freely and nothing is kept unless asked (question 7). **Run** shows no handles; only pack-declared live fields (fuel, crew, cargo) move there.
-- **Curious** names handles in plain words (How far out, How heavy, What it is made of, Water, Air, Day and tilt), shows tipping points and reference worlds, hides bands. **Science** adds eccentricity, inclination, makeup shares, bands, Reach it and Pin it. **Engine** adds the angles, field names, the blocks each handle feeds and the sweep's timings.
+- **Curious** names handles in plain words (How far out, How heavy, What it is made of, Seas, Air, Day and tilt), shows tipping points and reference worlds, hides bands. **Science** adds eccentricity, inclination, makeup shares, bands, Reach it and Pin it. **Engine** adds the angles, field names, the blocks each handle feeds and the sweep's timings.
 - **Phone.** The handles row scrolls sideways under the body's name. The open strip docks across the full width above the time ruler with a thumb-sized mark; the verdict sits over it. Dragging on the chart is long press, then drag.
 - **Dated edits.** A change on Build is "as it has always been" unless the strip's menu says "From this date", which makes it an event at the ruler's time (terraforming, a moon captured in play). See question 6.
 - **Undo** names what it takes back ("Undo: Tarn's orbit 0.52 to 0.61 AU") and Reset on a body returns every handle to what the science expects, as one step.
@@ -216,8 +246,10 @@ Read from V3's source on 24 Nov (`BodySidePanel` and its ten tabs, `BandedSlider
 | Star tab: spectral type list plus separate mass, radius, temperature, luminosity sliders | Replace | One Mass handle and the system's Age and Metals; Kinds; Pin it for the rest |
 | Type and image picker, "reset to type", "let physics derive the type" switch | Replace | Kinds set inputs; class is always read off; Pin a class (gap 12) |
 | Temperature tab (albedo, greenhouse, tidal, inner heat as "+K") | Replace | Results with "why?"; Reach it or Pin it |
-| Hydrosphere coverage slider | Change | Water handle in oceans; coverage is a result |
-| Atmosphere tab | As planned | Air handle plus the mix editor (gap 11) and "the science expects" |
+| Hydrosphere tab: pick a primary liquid, coverage slider, derived fluid layers | Keep the reach, change the footing | Liquids handle (11A): any substance, by amount; phase and coverage are results; coverage can still be dragged |
+| Edit Liquids dialog (melting and boiling points, critical point, colour, biosolvent) | Move | A substance row on the data sheet, in a pack; marked fictional when it is |
+| Atmosphere tab: pressure slider, a log slider per gas with ppm, presets, greenhouse readout | Keep, tighten | Air handle (11A): one amount strip, one mix bar, traces as chips; presets are Kinds |
+| Atmosphere "ages or stays as authored" switch | Drop | The verdict gives the loss rate; Look ahead applies it; hand-set air is dated data |
 | Overrides tab with reasons | As planned | Pin it (gap 4), on every result, no tab |
 | Add body type dialog with gates as switches | Done better already | Add here; now ghost first, with Kinds |
 | Right-click menu | As planned | Gap 38, from the same list of actions as the Build tools |
@@ -236,6 +268,8 @@ Kernel (thread "Build kernel resolve and rules"):
 - **K4 pin a result** (gap 4) and Reach it's solve, which is a sweep plus a root find.
 - **K5 moon formation sampling** for "What forms here" round a planet.
 - **K6 honesty rule** of question 4: authored unless past a wall or contradicting the physics.
+- **K7 authored air drives the climate**: pressure and mix feed the greenhouse and air optics for hand-made and catalogued worlds, and "what the science expects" is readable for both amount and mix.
+- **K8 a surface inventory by substance** (`surface.inventory.<substance>`, with `body.surface_water_oceans` as its water row): phase from the Look up block, coverage from the ground's own height spread, vapour handed to the air.
 
 Chart room (thread "Make the SSE4 test drive work end to end"), suggested packages, after navigation in stage 2:
 
@@ -245,11 +279,12 @@ Chart room (thread "Make the SSE4 test drive work end to end"), suggested packag
 - **ED4** the ghost for Add, Paste and Duplicate; drop on a parent; paste onto a body.
 - **ED5** Reach it and Pin it (with gap 4 and gap 12).
 - **ED6** Kinds and the star chooser; changing a star with worlds; a companion star.
+- **ED8** the Air and Liquids boxes: mix bar, trace chips, phase bars (after K7 and K8, or before them with the honest note).
 - **ED7** moons in full; Explore's read-only strip and "Try changing it"; phone dock.
 
 ## 16. Open questions, each with a recommendation
 
-1. **The short list.** A world shows six handles (Orbit, Mass, Makeup, Water, Air, Spin), a star one (Mass), a system three (Age, Metals, birth chemistry at Science depth), and everything else is changed through Reach it or Pin it. *Recommend yes.*
+1. **The short list.** A world shows six handles (Orbit, Mass, Makeup, Liquids, Air, Spin), a star one (Mass), a system three (Age, Metals, birth chemistry at Science depth), and everything else is changed through Reach it or Pin it. *Recommend yes.*
 2. **The strip replaces standing sliders:** it opens from the figure, one at a time, and takes no room when closed. *Recommend yes.*
 3. **Radius becomes a result** of mass and makeup for every world, hand-made ones too (today a hand-made world takes a typed mass and a typed radius). A typed radius is then a pin. Needs kernel work. *Recommend yes.*
 4. **Honesty marks set themselves:** a hand-set input inside the physics is "authored"; "impossible" is only for values past a wall or pinned results that contradict the physics. Today "Something else" in Add here marks every hand-made world impossible. *Recommend yes; it stops the mark meaning "a person touched this".*
@@ -262,4 +297,9 @@ Chart room (thread "Make the SSE4 test drive work end to end"), suggested packag
 11. **Reach it before Pin it:** on a result, the app offers the physical route first and the forced one second. *Recommend yes.*
 12. **Editing several bodies at one time** (select four moons, move them together): *recommend waiting until after 4.0;* copy and paste covers most of it.
 13. **Moons:** ask the kernel for formation sampling round a planet (K5), with the three physics-sized recipes as the stand-in until then. *Recommend yes.*
+15. **Air is one handle:** an amount strip, one mix bar whose joins you drag, traces as chips in ppm, each gas with its own log strip on demand. *Recommend yes.*
+16. **Drop SSE3's "ages or stays as authored" switch for air:** the verdict gives the loss rate and Look ahead applies it. *Recommend yes.*
+17. **Liquids replaces Water:** you set how much of any substance; whether it is liquid, ice or vapour is a result, and the phase bars show why. *Recommend yes.*
+18. **Coverage stays draggable** as marks on the amount strip, with a typed share as a Reach it. *Recommend yes.*
+19. **Custom liquids are substances on the data sheet,** in a pack, marked fictional when they are; no separate liquids list. *Recommend yes.*
 14. **Order:** ED1 to ED3 straight after the navigation items in stage 2, since "change a world" is in the stage 1 walk and is the first thing a tester tries; ED4 to ED7 after. *Recommend yes.*
