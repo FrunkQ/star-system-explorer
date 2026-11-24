@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
 import { sceneFromResolved } from "../src/make.ts";
-import { landingSeaOf, landingShowOf, landmarkOrder, roundPose, suggestLander } from "../src/landing.ts";
+import { landingLinkSite, landingSeaOf, landingShowOf, landingTimeOf, landingTitle, landmarkOrder, roundPose, suggestLander } from "../src/landing.ts";
 import { nodeKernel } from "./node-kernel.ts";
 import { floorFromRefusal, levelFor, patchKeys, readPatch, groundHeightAt } from "../../renderer/src/index.ts";
 
@@ -125,4 +125,21 @@ test("the sea at a site from the weather report, with the tide now", () => {
   assert.equal(landingSeaOf(data, 6.21 * 3600)!.tide_m < 0, true, "half a lunar tide on: lower");
   assert.equal(landingSeaOf({ sea: null }, 0), null);
   assert.equal(landingSeaOf({}, 0), null);
+});
+
+test("the Land screen's own link and title carry the landing (LR5b)", () => {
+  const show = {
+    system: "s", body: "s/planet:4", label: "Mars", site: { lat_deg: 20.43012, lon_deg: -108.71, label: "Dribeque Planitia" },
+    lander: { ship: "traveller.far_trader" }, phase: "choose", flight_s: 24, hour_deg: 0,
+    world: { radius_m: 3.39e6, star_k: 5772, sun_radius: 0.004 },
+  };
+  assert.deepEqual(landingLinkSite(show), { lat_deg: 20.4301, lon_deg: -108.71, time: "midday", lander: "party" });
+  assert.equal(landingTitle(show, "Mars"), "Mars, Dribeque Planitia at midday");
+  assert.equal(landingTimeOf(-82.5), "dawn");
+  assert.equal(landingTimeOf(180), "night");
+  assert.equal(landingTimeOf(40), null, "14:40 is no quick hour");
+  const capsule = { ...show, lander: "capsule", hour_deg: 40, site: { lat_deg: -3, lon_deg: 12, label: "" } };
+  assert.deepEqual(landingLinkSite(capsule), { lat_deg: -3, lon_deg: 12, lander: "capsule" });
+  assert.equal(landingTitle(capsule, "Mars"), "Mars, 3.0° S, 12.0° E");
+  assert.equal(landingLinkSite({ nope: 1 }), null);
 });

@@ -1,3 +1,5 @@
+import type { LandingTime, Place } from "./place.ts";
+
 // Getting down to a world and walking about (SL1; surfaces design 4.1, Alex 23 Nov 2026). The kernel's three
 // pieces, as plain data: the world's landmarks (its named landscape, `survey_surface`'s register), a descent
 // planned to any site (`plan_descent`: the site judged on the one height map, then NAV flies a lander down), and
@@ -243,4 +245,33 @@ export function landingSeaOf(data: unknown, t_s: number): LandingSea | null {
     tide_m: Math.round(tideNow(by, t_s) * 100) / 100,
     ...(typeof sea.line === "string" ? { line: sea.line } : {}),
   };
+}
+
+/** The quick hour a landing is at (Dawn 06:30, Midday 12:00, Dusk 17:30, Night 00:00 local), within half an hour; else null. */
+export function landingTimeOf(hour_deg: number): LandingTime | null {
+  const local = (((hour_deg / 15 + 12) % 24) + 24) % 24;
+  const at: [LandingTime, number][] = [["dawn", 6.5], ["midday", 12], ["dusk", 17.5], ["night", 0]];
+  return at.find(([, h]) => Math.min(Math.abs(local - h), 24 - Math.abs(local - h)) < 0.5)?.[0] ?? null;
+}
+
+/**
+ * The site part of the Land screen's own link (LR5b): where the GM is landing, at which quick hour, in which lander
+ * ("party" for the party's ship, else the stock lander's id), so the address bar, a bookmark or a kept beat brings the
+ * whole landing back. Null when the landing is not one.
+ */
+export function landingLinkSite(show: unknown): Place["site"] | null {
+  const s = landingShowOf(show);
+  if (!s) return null;
+  const time = landingTimeOf(s.hour_deg);
+  const lander = typeof s.lander === "string" ? s.lander : "ship" in s.lander ? "party" : null;
+  return { lat_deg: +s.site.lat_deg.toFixed(4), lon_deg: +s.site.lon_deg.toFixed(4), ...(time ? { time } : {}), ...(lander ? { lander } : {}) };
+}
+
+/** A landing as the table and the Playbook name it: "Mars, Dribeque Planitia at midday". */
+export function landingTitle(show: unknown, world?: string | null): string {
+  const s = landingShowOf(show);
+  if (!s) return world ? `${world}, landing` : "Landing";
+  const time = landingTimeOf(s.hour_deg);
+  const where = s.site.label || `${Math.abs(s.site.lat_deg).toFixed(1)}° ${s.site.lat_deg >= 0 ? "N" : "S"}, ${Math.abs(s.site.lon_deg).toFixed(1)}° ${s.site.lon_deg >= 0 ? "E" : "W"}`;
+  return `${world || s.label}, ${where}${time ? ` at ${time}` : ""}`;
 }

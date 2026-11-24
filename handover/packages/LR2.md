@@ -23,6 +23,11 @@ Thread "Build landing run-through", 24 Nov 2026. Gaps LR2 and LR5 (`handover/sta
 `npm run ui:check`, `place.test.ts`, `tests/ui/run-through.e2e.mjs` (Midday pressed, the table lands at 11:57 local;
 a link with `time=dusk&lander=capsule` comes back whole).
 
+## LR5b: the Land screen's own link
+On Land, App's `place` carries `site` from the landing being chosen (ui-contract landing.ts `landingLinkSite`: site,
+quick hour within half an hour, lander "party" for a `{ship}` lander), kept as text so a pose never stirs it; the
+address bar follows. `here()`'s title is `landingTitle` ("Mars, Dribeque Planitia at midday"). Test in
+`landing.test.ts` and `run-through.e2e` (the hash ends `&time=midday&lander=party`; the table line names the landing).
+
 ## For the Run desk (PB3 "A landing")
-A landing preset stores the place link. The Land screen's own link (here()) should carry the site, hour and lander the
-GM chose, so "keep this as a beat" captures it.
+A landing preset stores the place link and fires it, then Send this view.

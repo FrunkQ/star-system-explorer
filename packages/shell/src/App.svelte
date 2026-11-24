@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, landingLinkSite, landingTitle } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
@@ -149,7 +149,7 @@
   let landingAwaited = false;
   const here = (): Shown => {
     landingAwaited = ws.screen === "surface" && !lastLanding;
-    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: landingTitle(lastLanding, selName), screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
   };
   // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
   let kickerW = $state(999);
@@ -830,10 +830,19 @@
   let notes = $state<Partial<Record<PlaceScale, PlaceNote>>>({});
   const UPPER: readonly PlaceScale[] = ["web", "cluster", "galaxy"];
   const noteId = (scale: RailScale) => (UPPER.includes(scale as PlaceScale) ? notes[scale as PlaceScale]?.id : undefined);
+  // On the Land screen the place carries the landing being chosen (LR5b): its site, quick hour and lander, so the
+  // address bar, a bookmark or a kept beat brings the whole landing back. Kept as text so a new pose (a few times a
+  // second) never stirs the place; only a new site, hour or lander does.
+  const landSite = $derived.by(() => {
+    if (railScale !== "world" || ws.screen !== "surface" || !lastLanding) return "";
+    const l = lastLanding as { body?: string };
+    const site = l.body === ws.selection ? landingLinkSite(lastLanding) : null;
+    return site ? JSON.stringify(site) : "";
+  });
   const place = $derived<Place | null>(
     railScale === "workshop"
       ? null
-      : { scale: railScale, system: viewing?.system ?? "", ...(railScale === "world" && ws.selection ? { world: ws.selection } : {}), ...(noteId(railScale) ? { id: noteId(railScale) } : {}), ...(ws.screen !== firstScreen(railScale) ? { screen: ws.screen } : {}) },
+      : { scale: railScale, system: viewing?.system ?? "", ...(railScale === "world" && ws.selection ? { world: ws.selection } : {}), ...(noteId(railScale) ? { id: noteId(railScale) } : {}), ...(ws.screen !== firstScreen(railScale) ? { screen: ws.screen } : {}), ...(landSite ? { site: JSON.parse(landSite) as Place["site"] } : {}) },
   );
   // A place to open a scale's view on (a link, a step, a child picked in Below), passed as its `place` param; a new one
   // mounts the view afresh. Without one, a scale's view opens on the place it last named.

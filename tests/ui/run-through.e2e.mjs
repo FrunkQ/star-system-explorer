@@ -112,6 +112,8 @@ try {
   await gm.locator('[data-times] [data-time="midday"]').click();
   assert.match(await gm.locator("[data-times] [data-local-time]").innerText(), /^1[12]:/);
   assert.equal(await gm.locator('[data-times] [data-time="midday"]').getAttribute("aria-pressed"), "true");
+  // LR5b: the address bar carries the whole landing, and the table's title names it.
+  await gm.waitForFunction(() => /~surface\?site=[-\d.]+,[-\d.]+&time=midday&lander=party$/.test(location.hash), null, { timeout: 10000 });
   await shot(gm, "rt-3-gm-site");
 
   // 5. Sent: the players watch the same landing, judged the same way on their own kernel.
@@ -124,6 +126,7 @@ try {
   assert.equal(await pl.locator("[data-surface]").getAttribute("data-verdict"), verdict, "the same verdict on both kernels");
   assert.equal(await pl.locator("[data-surface]").getAttribute("data-site"), await gm.locator("[data-surface]").getAttribute("data-site"));
   assert.match(await pl.locator("[data-lander-shown]").innerText(), /the party's ship/);
+  assert.match(await gm.locator("[data-table-sees]").innerText(), /Mars, .+ at midday/);
   await shot(pl, "rt-4-player-site");
 
   // 6. Land, skip to the ground, walk; the player follows; take off.
