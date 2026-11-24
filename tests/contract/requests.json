@@ -3435,6 +3435,24 @@
    "loads": [{"name": "quarters", "electric_w": 20000.0, "reject_k": 290.0}],
    "engines": [{"engine": {"name": "Hall thruster", "thrust_n": 530.0, "exhaust_km_s": 20.0, "energy_from": "electric", "electric_w": 100000.0, "efficiency": 0.6, "reject_k": 500.0}}]}
  },
+ {
+  "op": "log_flight",
+  "construct": "u:matter/construct:pathfinder",
+  "piece": {"from_s": 63115200000, "state": {"kind": "orbit", "around": "Earth", "elements": {"a_m": 6778000.0, "e": 0.0, "epoch_s": 63115200000}}, "mark": "authored"},
+  "at_s": 0
+ },
+ {
+  "op": "log_flight",
+  "construct": "u:matter/construct:pathfinder",
+  "event": {"at_s": 63115203600, "kind": "split", "into": ["lander"], "mark": "planned"},
+  "at_s": 0
+ },
+ {
+  "op": "flight_log",
+  "construct": "u:matter/construct:lander",
+  "where_at": 63115210800,
+  "fixture": "sol"
+ },
  {"op": "load_stack", "packs": ["$pack:rpg-templates"]},
  {"op": "open_universe", "id": "rs4", "seed": "rs4"},
  {"op": "create", "template": "freighter", "under": "u:rs4/sys:0", "name": "Columbia", "at_s": 100},

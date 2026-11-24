@@ -11,7 +11,7 @@ import { nodeKernel } from "../../ui-contract/test/node-kernel.ts";
 import { plainWorkspace } from "../../ui-contract/test/workspace.ts";
 import { asker, emptyAgents, type AgentsState } from "../src/agents.ts";
 import { runOrac } from "../src/orac.ts";
-import { TRIGGERS_PACK, triggerEntries, triggerTarget } from "../src/orac-triggers.ts";
+import { TEMPLATES_PACK, TRIGGERS_PACK, templateTarget, triggerEntries, triggerTarget } from "../src/orac-triggers.ts";
 // @ts-expect-error plain JS test helper
 import { mockProvider } from "./mock-provider.mjs";
 
@@ -73,6 +73,28 @@ test("Orac drafts a trigger: the kernel's refusal goes back, the fix is offered"
     assert.ok(!s.stack().added.some((x) => x.id === TRIGGERS_PACK));
   } finally {
     await p.close();
+    await k.close();
+  }
+});
+
+test("templates: a new program gets a body; the kernel's template load refuses bad ones; accept stacks it", async () => {
+  const k = nodeKernel();
+  try {
+    const rpg: PackDoc = json("tests/fixtures/packs/rpg-programs.json");
+    const s = await Session.open(k.client, gmSeat(), scene.universe, [base, rpg], k.scratch);
+    const t = templateTarget(s, plainWorkspace(scene.now_yr));
+    const scout = { id: "scout-drone", kind: "drone", label: "Scout drone", tags: ["drone", "scout"], programs: ["miner"], explain: "a lighter drone that runs the same mining program" };
+    assert.deepEqual((await t.check({ ...scout, id: "drone" }, made)).problems, ["there is already a template drone"]);
+    const badKind = await t.check({ ...scout, kind: "Space Drone", declare: [{ id: "scout", label: "scout" }] }, made);
+    assert.ok(badKind.problems.some((p) => /kind "Space Drone" must be a lowercase word/.test(p)), badKind.problems.join("; "));
+    const undeclared = await t.check(scout, made);
+    assert.ok(undeclared.problems.some((p) => /scout/.test(p)), undeclared.problems.join("; "));
+    const good = await t.check({ ...scout, declare: [{ id: "scout", label: "scout" }] }, made);
+    assert.deepEqual(good.problems, []);
+    assert.match(t.summary(good.value!), /^Scout drone \(drone\), tagged drone, scout, may run miner\./);
+    assert.equal(await t.accept(good.value!), null);
+    assert.ok(s.stack().added.some((p) => p.id === TEMPLATES_PACK));
+  } finally {
     await k.close();
   }
 });

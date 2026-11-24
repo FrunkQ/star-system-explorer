@@ -1511,6 +1511,60 @@ pub enum Request {
         #[ts(optional)]
         at_s: Option<i64>,
     },
+    /// V8 flight log: write one entry of a construct's log on the record,
+    /// written at `at_s` (the campaign clock). Give one of `piece` (sse-nav
+    /// `Piece`: `{from_s, to_s?, state, mark, src?, why?}`), `event`
+    /// (`LogEvent`: `{at_s, kind, mark, ...}`), `name` and `about`, or
+    /// `withdraw` (an earlier entry's id). A `split` event starts each new
+    /// construct's log in the state its parent was in then; a `join` docks
+    /// the construct it names to this one.
+    LogFlight {
+        construct: String,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        piece: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        event: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        name: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        about: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        withdraw: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        at_s: i64,
+    },
+    /// V8 flight log: a construct's log as written by `at_s` (absent: all of
+    /// it), and with `where_at` and a system (a NAV `fixture`, an inline
+    /// `nav` system or an adopted universe `system`), where the craft was
+    /// then.
+    FlightLog {
+        construct: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        where_at: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+    },
     /// ST1: whether the orbits at or under `system` last (Hill spacing,
     /// angular momentum deficit, moon limits, Kozai-Lidov swings, binary
     /// limits), each check a formula block shown with its numbers. Reads the
@@ -2217,6 +2271,8 @@ impl Request {
             Request::OrbitsAt { .. } => "orbits_at",
             Request::OrbitStability { .. } => "orbit_stability",
             Request::ShipPower { .. } => "ship_power",
+            Request::LogFlight { .. } => "log_flight",
+            Request::FlightLog { .. } => "flight_log",
             Request::SetCampaignNow { .. } => "set_campaign_now",
             Request::CampaignNow => "campaign_now",
             Request::Calendar => "calendar",
@@ -2555,6 +2611,8 @@ pub fn ops() -> Vec<OpInfo> {
             "linear in bodies x times (at most 64 times); 16 Newton steps each",
         ),
         o("ship_power", Cost::Trivial, "linear in the ship's parts"),
+        o("log_flight", Cost::Trivial, "one record event, and one for each construct a split or join touches"),
+        o("flight_log", Cost::Light, "linear in the record events; with where_at, one Kepler or Lambert solve"),
         o(
             "orbit_stability",
             Cost::Light,
@@ -3455,6 +3513,27 @@ pub enum Response {
     ShipPowerIs {
         #[ts(type = "unknown")]
         power: serde_json::Value,
+    },
+    /// `log_flight`: the entry's id, the entries a split or join seeded in
+    /// other constructs' logs, and notes (a split on a course seeds nothing).
+    FlightLogged {
+        event_id: String,
+        seeded: Vec<String>,
+        notes: Vec<String>,
+        record_hash: String,
+    },
+    /// `flight_log`: the assembled log (sse-nav `FlightLog`), its entries as
+    /// written (`{event, entry, written_s, writer, body, also?, reason?}`),
+    /// and with `where_at`, where the craft was (`{kind, r_m?, v_m_s?, with?,
+    /// mark, words}`).
+    FlightLogIs {
+        #[ts(type = "unknown")]
+        log: serde_json::Value,
+        #[ts(type = "unknown[]")]
+        entries: Vec<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        at: Option<serde_json::Value>,
     },
     /// `orbit_stability`: `verdict` (`lasts`, `watch` or `unstable`, the
     /// worst check), `checks` (`{check, block, around, bodies, level, says,
