@@ -18,6 +18,9 @@ cp packs/base-sol/pack.json packages/shell/public/packs/base-sol.json
 cp packs/base-reference/pack.json packages/shell/public/packs/base-reference.json
 # The base names pack, offered on the Names page while no pack on the stack carries names (NM6).
 cp packs/base-names/pack.json packages/shell/public/packs/base-names.json
+# The class atlases the Classes page shows while no pack on the stack carries classes (the class gallery).
+cp packs/base-atlas/pack.json packages/shell/public/packs/base-atlas.json
+cp packs/sse3-classic/pack.json packages/shell/public/packs/sse3-classic.json
 cp packs/base-ships/pack.json packages/shell/public/packs/base-ships.json
 # The future tech ladder: the station builder reads the comfortable spin and the strength for weight from it.
 cp packs/base-tech/pack.json packages/shell/public/packs/base-tech.json
