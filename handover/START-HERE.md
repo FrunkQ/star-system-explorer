@@ -41,6 +41,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/navigation.md` | Build object selector and menus | NV (finding your way: selector part 2, object menu, find by tag, notes) |
 | `status/exotic-objects.md` | no builder thread yet (design by "Design exotic stars and black holes") | XO (black holes with real light bending, pulsars, stripped stars, Composite band, the approach diagram) |
+| `status/star-look.md` | Build star glow and flares | SG (ordinary stars on screen: glow past the edge, churning cells, lumpy giants, flares and ejections; then star jets and shells) |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs as edited, the Solar System built through the UI) |
 
 A package that does not fit a file goes in its owner thread's file. A new track gets a new file and one line in the table above. Milestone M1 "Proven core" (K0 to K6) is complete.
