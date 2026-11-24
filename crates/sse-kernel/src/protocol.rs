@@ -1014,11 +1014,24 @@ pub enum Request {
     /// `z` or cosmic time `t_gyr` (default now). With `cube: true` it is a
     /// cube for the 3D view instead: n^3 parcels (n 4 to 48) moved by the
     /// truncated Zel'dovich approximation, each with its environment, its
-    /// starting density and the room it takes today. Read only.
+    /// starting density and the room it takes today. With `haloes: true` as
+    /// well it gives the same cube's `galaxies` instead (V9w): G2's haloes
+    /// from the pack's web light floor up that started inside it, moved by
+    /// the same step, each with its G3 galaxy's stars and star formation
+    /// then; ask for the parcels and the galaxies apart so the parcels show
+    /// first. Read only.
     WebSlice {
         #[serde(default)]
         #[ts(optional)]
         cube: Option<bool>,
+        #[serde(default)]
+        #[ts(optional)]
+        haloes: Option<bool>,
+        /// With `haloes`: the smallest halo drawn, solar masses (never below
+        /// the pack's floor), so a bigger cube can keep to the brighter ones.
+        #[serde(default)]
+        #[ts(optional)]
+        galaxy_floor_msun: Option<f64>,
         #[serde(default)]
         #[ts(optional)]
         z: Option<f64>,
@@ -3211,7 +3224,9 @@ pub enum Response {
     },
     /// `web_slice`: `{t_gyr, z, now_gyr, slice, model}` (`slice` is sse-cosmos's
     /// `Slice`), or with `cube` `{t_gyr, z, now_gyr, volume, model}` (`volume`
-    /// is sse-cosmos's `Volume`).
+    /// is sse-cosmos's `Volume`), or with `haloes` too `{t_gyr, z, now_gyr,
+    /// centre, extent, galaxies, galaxy_floor_msun, model}` (`galaxies` is a
+    /// list of sse-cosmos's `WebGalaxy`).
     WebSliced {
         #[ts(type = "unknown")]
         web: serde_json::Value,
