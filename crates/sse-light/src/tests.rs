@@ -1027,3 +1027,18 @@ fn every_line_names_its_matter_on_the_sheet() {
         .collect();
     assert!(o.contains(&"oi-5577") && o.contains(&"oi-6300"), "{o:?}");
 }
+
+/// VP-L4: a water rainbow at 42° and 51°, a wider one in methane rain, and
+/// ice's 22° and 46° halos.
+#[test]
+fn rainbows_and_halos_follow_the_refractive_index() {
+    let w = crate::bows::bows("water", 1.333, "drop").unwrap();
+    assert!((w.primary_deg.unwrap() - 42.08).abs() < 0.05, "{w:?}");
+    assert!((w.secondary_deg.unwrap() - 50.89).abs() < 0.05, "{w:?}");
+    let ch4 = crate::bows::bows("methane", 1.29, "drop").unwrap();
+    assert!(ch4.primary_deg.unwrap() > w.primary_deg.unwrap() + 5.0);
+    let ice = crate::bows::bows("ice", 1.31, "crystal").unwrap();
+    assert!((ice.halo_60_deg.unwrap() - 21.84).abs() < 0.05, "{ice:?}");
+    assert!((ice.halo_90_deg.unwrap() - 45.7).abs() < 0.1, "{ice:?}");
+    assert!(crate::bows::bows("x", 1.3, "fog").is_err());
+}

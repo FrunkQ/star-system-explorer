@@ -3798,6 +3798,20 @@
         "range": null
       },
       {
+        "description": "radius of a rainbow round the point opposite the sun, as an angle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.bow_radius",
+        "range": null
+      },
+      {
         "description": "brightness of a lit surface against a matt one seen square on in full sun",
         "dim": [
           0,
@@ -3809,6 +3823,20 @@
           0
         ],
         "id": "light.brightness_share",
+        "range": null
+      },
+      {
+        "description": "radius of a halo round the sun or moon, as an angle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.halo_radius",
         "range": null
       },
       {
@@ -3868,6 +3896,20 @@
         "range": null
       },
       {
+        "description": "angle between two faces of a crystal light passes through",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.prism_angle",
+        "range": null
+      },
+      {
         "description": "effective area for reflected starlight: Bond albedo times cross-section times the source's dilution (R*/d)²",
         "dim": [
           2,
@@ -3879,6 +3921,20 @@
           0
         ],
         "id": "light.reflected_area",
+        "range": null
+      },
+      {
+        "description": "how strongly a liquid or crystal bends light",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.refractive_index",
         "range": null
       },
       {

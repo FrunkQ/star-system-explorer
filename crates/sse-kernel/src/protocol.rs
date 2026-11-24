@@ -593,6 +593,13 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
+    /// Rainbows and halos (VP-L4): each of `items` is `{id, n, kind}` with
+    /// `kind` "drop" (rain of a liquid of refractive index `n`: its bows)
+    /// or "crystal" (ice-like crystals: their 22° and 46° style halos).
+    ReadBows {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
     /// Fog of war from sensors (RK14, Atomic Rockets plan section 17), the
     /// sums: each seat gives `seat`, its instruments (`sensors`, or `fit`
     /// `{tech, hull_length_m}` for the free default set), optionally `own`
@@ -2241,6 +2248,7 @@ impl Request {
             Request::EffectAtRange { .. } => "effect_at_range",
             Request::ReadLimb { .. } => "read_limb",
             Request::FogOfWar { .. } => "fog_of_war",
+            Request::ReadBows { .. } => "read_bows",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2458,6 +2466,11 @@ pub fn ops() -> Vec<OpInfo> {
             "light_through_gas",
             Cost::Light,
             "per passage: a few formula blocks per wavelength per absorption feature, at the eye's 81 wavelengths and any asked for",
+        ),
+        o(
+            "read_bows",
+            Cost::Trivial,
+            "per item: one or two formula blocks",
         ),
         o(
             "fog_of_war",
@@ -3076,6 +3089,11 @@ pub enum Response {
     GasPassed {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
+    },
+    /// `read_bows`: each of `items` is `sse_light::bows::Bows`.
+    BowsRead {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
     },
     /// `fog_of_war`: each of `seats` is `{seat, sensors, noticed_to_m?,
     /// marks}` with `sse_sense::fog::Mark`.

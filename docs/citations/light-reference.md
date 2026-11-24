@@ -175,3 +175,10 @@ How rows are counted: Proxima is counted unverified (its radius is verified, but
 | `sse.outflow.dust_shell` | Höfner, S. and Olofsson, H. 2018, A&ARv 26, 1. doi:10.1007/s00159-017-0106-5 | R_c = (R/2)(T/T_c)^((4+p)/2), condensation near 1000 to 1500 K, winds 5 to 30 km/s | textbook | Review; values as quoted. |
 | `sse.outflow.young_jet` | Hartigan, P., Edwards, S. and Ghandour, L. 1995, ApJ 452, 736. doi:10.1086/176343; Bally, J. 2016, ARA&A 54, 491. doi:10.1146/annurev-astro-081915-023341 | jets carry about 0.1 of the accretion; speeds near the escape speed at launch, a few hundred km/s; knots from episodic accretion | textbook | As quoted in the reviews. |
 
+## VP-L4: rainbows and halos (added 24 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.light.rainbow` | Nussenzveig, H. M. 1977, The theory of the rainbow, Scientific American 236 (4), 116. doi:10.1038/scientificamerican0477-116 | Descartes' ray: cos² i = (n² − 1)/(k(k + 2)), deviation kπ + 2i − 2(k + 1)r | textbook | Reproduces water's 42° and 51°. |
+| `sse.light.halo` | Tape, W. 1994, Atmospheric Halos, AGU Antarctic Research Series 64. doi:10.1029/AR064 | prism minimum deviation D = 2 asin(n sin(A/2)) − A | textbook | Reproduces the 22° and 46° halos for ice. |
+

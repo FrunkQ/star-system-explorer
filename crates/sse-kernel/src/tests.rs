@@ -3576,6 +3576,24 @@ fn light_through_gas_gives_the_colour_to_the_eye() {
     assert_eq!(r["code"], "bad_gas", "{r}");
 }
 
+/// VP-L4: read_bows gives a water rainbow and ice halos.
+#[test]
+fn read_bows_gives_rainbows_and_halos() {
+    let mut k = crate::Kernel::new();
+    let r: serde_json::Value = serde_json::from_str(&k.handle_json(
+        &serde_json::json!({"op": "read_bows", "items": [
+            {"id": "water", "n": 1.333, "kind": "drop"}, {"id": "ice", "n": 1.31, "kind": "crystal"}]})
+        .to_string(),
+    ))
+    .unwrap();
+    assert_eq!(r["type"], "bows_read", "{r}");
+    assert!(
+        (r["items"][0]["primary_deg"].as_f64().unwrap() - 42.08).abs() < 0.05,
+        "{r}"
+    );
+    assert!(r["items"][1]["halo_60_deg"].as_f64().unwrap() > 21.0, "{r}");
+}
+
 /// O3b: read_nebulae gives a giant's dusty shell and a young star's jets.
 #[test]
 fn read_nebulae_gives_dust_shells_and_jets() {

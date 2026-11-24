@@ -3001,6 +3001,7 @@ impl Kernel {
             }
             Request::ReadLimb { discs } => systems::read_limb(discs)?,
             Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
+            Request::ReadBows { items } => systems::read_bows(items)?,
             Request::EffectAtRange { asks } => {
                 systems::effect_at_range(asks, &self.observe.reference)?
             }

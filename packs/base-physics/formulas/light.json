@@ -1102,6 +1102,166 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.light.rainbow",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "refractive_index",
+     "letter": "n"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "primary_bow",
+     "letter": "b1"
+    },
+    {
+     "port": "secondary_bow",
+     "letter": "b2"
+    }
+   ],
+   "positive": [
+    {
+     "port": "refractive_index",
+     "says": "refractive index"
+    }
+   ],
+   "checks": [
+    {
+     "port": "refractive_index",
+     "min": 1.0001,
+     "max": 2.0,
+     "says": "a raindrop's refractive index must lie between 1 and 2 for a bow, got {}"
+    }
+   ],
+   "references": [
+    "Nussenzveig, H. M. 1977, The theory of the rainbow, Scientific American 236 (4), 116: Descartes' ray of minimum deviation after k internal reflections enters at cos² i = (n² − 1)/(k(k + 2)); the deviation is kπ + 2i − 2(k + 1)r, so water's primary bow is 42° and its secondary 51° from the antisolar point. doi:10.1038/scientificamerican0477-116"
+   ],
+   "shown": "cos² i = (n² − 1)/(k(k + 2)),  D = kπ + 2i − 2(k + 1) r,  bows at π − D₁ and D₂ − π",
+   "equation": {
+    "name": "How wide a rainbow is, from what is raining",
+    "formula": "c1 = sqrt((n * n - 1) / 3)\ni1 = atan2(sqrt(1 - c1 * c1), c1)\ns1 = sin(i1) / n\nr1 = atan2(s1, sqrt(1 - s1 * s1))\nb1 = pi - (pi + 2 * i1 - 4 * r1)\nc2 = sqrt((n * n - 1) / 8)\ni2 = atan2(sqrt(1 - c2 * c2), c2)\ns2 = sin(i2) / n\nr2 = atan2(s2, sqrt(1 - s2 * s2))\nb2 = 2 * pi + 2 * i2 - 6 * r2 - pi",
+    "inputs": {
+     "n": {
+      "kind": "light.refractive_index",
+      "unit": "1",
+      "name": "refractive index of the falling drops",
+      "valid": [
+       1.0001,
+       2.0
+      ]
+     }
+    },
+    "outputs": {
+     "b1": {
+      "kind": "light.bow_radius",
+      "unit": "1",
+      "name": "radius of the primary bow round the point opposite the sun, as an angle in radians"
+     },
+     "b2": {
+      "kind": "light.bow_radius",
+      "unit": "1",
+      "name": "radius of the secondary bow, as an angle in radians"
+     }
+    },
+    "source": {
+     "text": "Nussenzveig, H. M. 1977, The theory of the rainbow, Scientific American 236 (4), 116",
+     "doi": "10.1038/scientificamerican0477-116",
+     "where": "Descartes' ray"
+    },
+    "explain": {
+     "curious": "A rainbow is sunlight bent and bounced inside falling drops. How wide the bow is depends only on how strongly the liquid bends light, so rain of a different liquid makes a different-sized bow.",
+     "science": "Descartes' minimum-deviation ray after one and two internal reflections; the bows sit at the deviations' turning points."
+    },
+    "examples": [
+     {
+      "n": 1.333,
+      "b1": 0.7344015167929756,
+      "b2": 0.8882112819196539
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.halo",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "refractive_index",
+     "letter": "n"
+    },
+    {
+     "port": "prism_angle",
+     "letter": "A"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "halo_radius",
+     "letter": "D"
+    }
+   ],
+   "positive": [
+    {
+     "port": "refractive_index",
+     "says": "refractive index"
+    },
+    {
+     "port": "prism_angle",
+     "says": "prism angle"
+    }
+   ],
+   "references": [
+    "Tape, W. 1994, Atmospheric Halos, Antarctic Research Series 64, American Geophysical Union: light through two faces of an ice crystal meeting at A is deviated least by D = 2 asin(n sin(A/2)) − A; 60° faces give the 22° halo, 90° faces the 46°. doi:10.1029/AR064"
+   ],
+   "shown": "D = 2 asin(n sin(A/2)) − A",
+   "equation": {
+    "name": "How wide a halo round the sun or moon is, from the crystals in the air",
+    "formula": "x = n * sin(A / 2)\nD = 2 * atan2(x, sqrt(1 - x * x)) - A",
+    "inputs": {
+     "n": {
+      "kind": "light.refractive_index",
+      "unit": "1",
+      "name": "refractive index of the crystals",
+      "valid": [
+       1.0001,
+       2.0
+      ]
+     },
+     "A": {
+      "kind": "light.prism_angle",
+      "unit": "1",
+      "name": "angle between the two crystal faces the light passes through, in radians"
+     }
+    },
+    "outputs": {
+     "D": {
+      "kind": "light.halo_radius",
+      "unit": "1",
+      "name": "radius of the halo round the sun, as an angle in radians"
+     }
+    },
+    "source": {
+     "text": "Tape, W. 1994, Atmospheric Halos, American Geophysical Union",
+     "doi": "10.1029/AR064",
+     "where": "chapter 1"
+    },
+    "explain": {
+     "curious": "Thin high cloud made of ice crystals can put a ring round the sun. Each crystal is a tiny prism, and the ring sits where its light is bent least.",
+     "science": "Minimum deviation of a prism of apex angle A; hexagonal ice gives 60° and 90° prisms."
+    },
+    "examples": [
+     {
+      "n": 1.31,
+      "A": 1.0471975511965976,
+      "D": 0.38116768975603965
+     }
+    ]
+   }
   }
  ]
 }

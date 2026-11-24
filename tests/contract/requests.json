@@ -3499,5 +3499,13 @@
    {"address": "u:o3b/sys:1/neb:jet", "star": "u:o3b/sys:1/star:0", "mass_kg": 1.0e30, "radius_m": 1.4e9,
     "accretion_kg_s": 6.3e15, "started_s": 0.0, "ends_s": 3.0e13, "axis": [0.0, 0.0, 1.0]}
   ]
+ },
+ {
+  "op": "read_bows",
+  "items": [{"id": "water", "n": 1.333, "kind": "drop"}, {"id": "ice", "n": 1.31, "kind": "crystal"}]
+ },
+ {
+  "op": "read_bows",
+  "items": [{"id": "fog", "n": 1.333, "kind": "mist"}]
  }
 ]

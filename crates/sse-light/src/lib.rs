@@ -18,6 +18,7 @@
 #![forbid(unsafe_code)]
 
 pub mod air;
+pub mod bows;
 pub mod colour;
 pub mod emit;
 pub mod gas;

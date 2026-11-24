@@ -432,6 +432,23 @@ pub(crate) fn read_air_optics(
 }
 
 /// Light through gas (ND2), with the colour to the eye before and after.
+pub(crate) fn read_bows(items: Vec<serde_json::Value>) -> Out {
+    #[derive(serde::Deserialize)]
+    struct In {
+        id: String,
+        n: f64,
+        kind: String,
+    }
+    let mut out = vec![];
+    for (i, v) in items.into_iter().enumerate() {
+        let bad = |e: String| err("bad_bow", format!("item {i}: {e}"));
+        let x: In = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let b = sse_light::bows::bows(&x.id, x.n, &x.kind).map_err(bad)?;
+        out.push(serde_json::to_value(b).expect("plain data"));
+    }
+    Ok(Response::BowsRead { items: out })
+}
+
 pub(crate) fn fog_of_war(seats: Vec<serde_json::Value>) -> Out {
     #[derive(serde::Deserialize)]
     struct FitAsk {
