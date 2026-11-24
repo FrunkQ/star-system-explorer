@@ -121,6 +121,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/manifest.md` | Build ship manifest and crew roster | MC |
 | `status/atomic-rockets.md` (arrives with PR 447) | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
 | `status/paper-spacecraft.md` (arrives with PR 438) | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
+| `status/atlas.md` | Build star atlas and editions | AT: the Atlas view, editions (Survey atlas, The Guide, Company), print, letterhead and ASCII art, margin notes, interface kits (design `design/SSE4-atlas-and-reports-design.md`) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
