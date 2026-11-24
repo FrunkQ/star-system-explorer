@@ -85,6 +85,12 @@ In his words: "try and do everything in the physics chain blocks... other than B
 - Each block or Big Block has a UI element that makes sense to visualise what it does.
 - Logic hidden in Rust that could be a flow is listed in `docs/fudges.md` (section "Candidates to move into flows") until it moves.
 
+## Banked ideas (not accepted, nothing queued)
+
+Design notes kept for the future. They are **not** rulings and no builder starts on them without Alex's own yes.
+
+- `design/SSE4-outside-models-design.md` (track OM, banked 24 Nov 2026): a scientist's own model feeding a physics flow through recorded answers, and the kernel as a published module. Alex: "find a proper use case first". Revisit when a real use case appears.
+
 ## Where we are
 
 Since 23 Nov 2026 the state of each track is its own small file in `handover/status/`, edited only by the thread that owns it (Alex's yes to question 5 of `design/SSE4-coming-together.md`). This page is the index and the standing rules. **Do not add package rows here.**
