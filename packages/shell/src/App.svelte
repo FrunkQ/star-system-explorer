@@ -26,7 +26,7 @@
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
   import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
-  import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
+  import { listedTitle, namesInLayer, relabel, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
@@ -695,7 +695,19 @@
     s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
   });
   const timed = $derived(withPhases(scene, phases));
-  const shown = $derived(ahead && ahead.snapshots[aheadAt] ? sceneAt(timed, ahead, ahead.snapshots[aheadAt]!) : timed);
+  // Names on the chart (NM6): a lens may label the chart by another name layer (designation, local); names only.
+  let layerLabels = $state.raw<Map<string, string>>(new Map());
+  $effect(() => {
+    void ws.revision;
+    const layer = lens.names ?? "";
+    const s = session;
+    const addrs = scene.subjects.map((x) => x.address);
+    if (!s || !layer || layer === "common") return void (layerLabels = new Map());
+    void namesInLayer(s, addrs, layer).then((m) => {
+      if ((lens.names ?? "") === layer) layerLabels = m;
+    });
+  });
+  const shown = $derived(relabel(ahead && ahead.snapshots[aheadAt] ? sceneAt(timed, ahead, ahead.snapshots[aheadAt]!) : timed, layerLabels));
   const lit = $derived(describeLight(litFromSystem(shown)));
   const lightNames = $derived(new Map(shown.subjects.map((x) => [x.address, x.label])));
   const lightColours = $derived.by(() => {

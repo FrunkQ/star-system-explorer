@@ -244,6 +244,18 @@ try {
       await card.locator('[data-name-here="designation"]').selectOption("vesh");
       await card.locator("[data-name-note]").getByText(/take designation names from Vesh/).waitFor({ timeout: 20000 });
       await gm.waitForFunction(() => /drawn from Vesh/.test(document.querySelector('[data-name-card] [data-layer="designation"]')?.textContent ?? ""), null, { timeout: 20000 });
+      // Layer choice in lenses: a lens of the GM's own that labels the chart by designation shows Tarn's Vesh designation.
+      const vesh = await desig();
+      await gm.getByRole("combobox", { name: "Lens", exact: true }).selectOption("__make");
+      const dlg = gm.getByRole("dialog", { name: "Lens editor" });
+      await dlg.getByLabel("Lens name").fill("Survey names");
+      await dlg.getByLabel("Names on the chart").selectOption("designation");
+      await dlg.getByRole("button", { name: "Save lens" }).click();
+      await gm.waitForFunction(() => document.querySelector("main.stage")?.getAttribute("data-lens") === "mine.survey-names");
+      await dlg.getByRole("button", { name: "Close" }).click();
+      await gm.waitForFunction((n) => !!document.querySelector(`[role=button][aria-label^="${n}"]`), vesh, { timeout: 20000 });
+      assert.equal(await gm.locator("[role=button][aria-label^='Tarn']").count(), 0, "the chart is labelled by designation");
+      await shot(gm, "names-lens-desk");
     }
     assert.deepEqual(errors, []);
     await browser.close();
