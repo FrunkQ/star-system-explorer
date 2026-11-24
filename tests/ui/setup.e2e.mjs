@@ -43,7 +43,7 @@ try {
     const packs = page.locator("[role=region][aria-label=Packs]");
     await packs.getByRole("button", { name: "Check stack" }).click();
     await packs.locator(".verdict").getByText("Validated").waitFor();
-    assert.deepEqual(await packs.locator("[data-pack]").evaluateAll((els) => els.map((e) => e.dataset.pack)), ["kestrel.player-data", "sse.base-reference", "sse.base-time", "sse.base-physics"]);
+    assert.deepEqual(await packs.locator("[data-pack]").evaluateAll((els) => els.map((e) => e.dataset.pack)), ["kestrel.player-data", "sse.base-manifest", "sse.base-reference", "sse.base-time", "sse.base-physics"]);
     const proposal = packs.locator("[aria-label=Proposal]");
     // ND6: a paper's pack shows its sources, fudges and reproduction checks before anyone accepts it.
     await packs.locator("#pack-file").setInputFiles("packages/ui-contract/test/fixtures/paper.pack.json");

@@ -11,6 +11,7 @@
   import { BOOKKEEPING, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
+  import { Aboard } from "../../manifest/src/index.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const session = untrack(() => ctx.session);
@@ -104,6 +105,13 @@
     const a = picked;
     if (a && logOpen) untrack(() => void loadLog(a));
   });
+
+  // ---- Aboard (track MC): crew and manifest in one panel, opened from the card ----
+  let aboardOpen = $state(false);
+  const places = $derived([
+    ...listed.map((s) => ({ address: s.address, label: nameOf(s) })),
+    ...scene.subjects.map((s) => ({ address: s.address, label: s.address === scene.system ? `${s.label} (the system)` : s.label })),
+  ]);
 
   // ---- Edit and retire ----
   let edits = $state<Record<string, string>>({});
@@ -260,9 +268,15 @@
           <nav class="links">
             {#if bodyAt(current.address)}<a href={placeHash({ scale: "world", system: scene.system, world: bodyAt(current.address)! })}>Open the world it is at</a>{/if}
             {#if gm && ws.setParty && navOf(current)}<button type="button" class="quiet-btn" aria-pressed={isParty(current)} onclick={() => makeParty(current!)} data-party-ship>{isParty(current) ? "The party's ship" : "Make this the party's ship"}</button>{/if}
+            {#if gm}<button type="button" class="quiet-btn" aria-expanded={aboardOpen} onclick={() => (aboardOpen = !aboardOpen)} data-aboard-toggle>Aboard</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" bind:this={logBtn} aria-expanded={logOpen} onclick={() => (logOpen = !logOpen)} data-log-toggle>Log</button>{/if}
             {#if gm && current.facts.some((f) => f.field === "template.id")}<button type="button" class="quiet-btn" onclick={() => (retiring = !retiring)} data-retire>Take out of play…</button>{/if}
           </nav>
+          {#if aboardOpen}
+            <div use:opensFrom={() => document.querySelector("[data-aboard-toggle]")}>
+              <Aboard {ctx} construct={current} {places} />
+            </div>
+          {/if}
           {#if logOpen}
             <section class="log" aria-label="Log" use:opensFrom={() => logBtn}>
               <h4>Log, newest first</h4>

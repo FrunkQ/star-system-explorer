@@ -210,3 +210,41 @@ fn parts_shrink_beyond_their_home_level() {
     );
     assert_eq!(r["code"], "bad_tech", "{r}");
 }
+
+#[test]
+fn ceilings_for_one_fuel_and_electric_drives() {
+    // RK2: hydrogen-oxygen's exhaust ceiling holds for that fuel only, so a
+    // drive needing an ion thruster's exhaust is not fictional; a "drive"
+    // need still reads the chemical rocket, not the electric drives that
+    // meet the same exhaust speed but also need a power plant.
+    let mut k = open();
+    let vesh = "u:ft/actor:vesh";
+    ask(
+        &mut k,
+        serde_json::json!({"op": "set_tech", "holder": vesh, "level": 3, "at_s": 0}),
+    );
+    let r = ask(
+        &mut k,
+        serde_json::json!({"op": "tech_reading", "holder": vesh,
+        "parts": [{"part": "electric drive", "needs": {"exhaust_km_s": 30.0}}]}),
+    );
+    let n = &r["reading"]["needs"][0];
+    assert!(n.get("fictional").is_none(), "{r}");
+    assert_eq!(n["advance"], "ion-thruster", "{r}");
+    let r = ask(
+        &mut k,
+        serde_json::json!({"op": "tech_reading", "holder": vesh,
+        "parts": [{"part": "drive", "needs": {"exhaust_km_s": 4.0}}]}),
+    );
+    assert_eq!(
+        r["reading"]["needs"][0]["advance"], "chemical-rocket",
+        "{r}"
+    );
+    // Past light speed is still fictional.
+    let r = ask(
+        &mut k,
+        serde_json::json!({"op": "tech_reading", "holder": vesh,
+        "parts": [{"part": "drive", "needs": {"exhaust_km_s": 4.0e5}}]}),
+    );
+    assert!(r["reading"]["needs"][0]["fictional"].is_string(), "{r}");
+}

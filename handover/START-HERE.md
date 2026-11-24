@@ -34,6 +34,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/renderer.md` | Build photoreal renderer | R, the drawing side of Y5 and MF14a |
 | `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9 |
 | `status/traveller.md` | Build Traveller pack | X3a to X3d, TG8, TG9, TG11, TG13, MP16 |
+| `status/manifest.md` | Build ship manifest and crew roster | MC (ship manifest and crew roster) |
 | `status/naming.md` | the thread that owns track NM | NM |
 | `status/performance.md` | Measure performance for minimum specs | PF |
 | `status/across-tracks.md` | each row names its owners | the umbrella rows for MF, Y, GH, ND, TG, and the converter module |

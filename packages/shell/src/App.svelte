@@ -877,6 +877,8 @@
       toScale(p.scale);
     }
     if (p.screen && SCREENS[p.screen] && scalesOf(SCREENS[p.screen]!).includes(p.scale)) ws.screen = p.screen;
+    // A landing site in the link (Voyages' "Land here"): the Land screen picks it up once it has read the world.
+    if (p.site && p.world) ws.landing_site = { body: p.world, lat_deg: p.site.lat_deg, lon_deg: p.site.lon_deg };
   }
   /** Up one scale, from above the system (Esc); at a world, up to its system. */
   function upAStep() {
@@ -1649,7 +1651,7 @@
 
 <dialog bind:this={seatsDialog} class="help seats-dialog" aria-label="Seats" onclose={() => (seatsOpen = !!seatsDialog?.open)}>
   {#if seatsOpen && share && session}
-    <SeatsPanel {share} session={session} bodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)} scope={(factsDoc as unknown as AuthoredFacts).scope} at_yr={(factsDoc as unknown as AuthoredFacts).at_yr} onchange={() => ws.notePhysics()} />
+    <SeatsPanel {share} session={session} bodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)} scope={(factsDoc as unknown as AuthoredFacts).scope} at_yr={(factsDoc as unknown as AuthoredFacts).at_yr} onchange={() => ws.notePhysics()} {here} />
   {/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>

@@ -657,3 +657,43 @@ fn the_compiled_molar_masses_are_the_readers() {
         assert_eq!(w.to_bits(), v.to_bits(), "{id}");
     }
 }
+
+#[test]
+fn nuclear_reactions_conserve_nucleons_and_charge() {
+    let mut g = good();
+    g["elements"].as_array_mut().unwrap().push(json!({"id": "he", "z": 2, "atomic_weight": {"v": 4.0026, "unit": "g/mol", "src": "ciaaw-2021"}}));
+    g["isotopes"] = json!([
+        {"id": "h2", "element": "h", "a": 2},
+        {"id": "h3", "element": "h", "a": 3},
+        {"id": "he4", "element": "he", "a": 4}
+    ]);
+    g["reactions"] = json!([{"id": "d-t", "kind": "nuclear", "terms": [["h2", -1], ["h3", -1], ["he4", 1], ["neutron", 1]]}]);
+    assert!(Reference::from_json(&[("base".into(), g.clone())]).is_ok());
+    g["reactions"] = json!([
+        {"id": "lost-neutron", "kind": "nuclear", "terms": [["h2", -1], ["h3", -1], ["he4", 1]]},
+        {"id": "ghost", "kind": "nuclear", "terms": [["li99", -1]]}
+    ]);
+    let e = Reference::from_json(&[("base".into(), g)]).unwrap_err();
+    assert!(
+        e.iter().any(|m| m.contains("does not conserve nucleons")),
+        "{e:#?}"
+    );
+    assert!(e.iter().any(|m| m.contains("li99")), "{e:#?}");
+}
+
+#[test]
+fn protosolar_isotope_shares_are_on_the_isotope_rows() {
+    // MP8c reads He-3's share of helium for giant envelopes: Lodders 2021
+    // Table 4, 0.0166 atom percent, so He-3/He-4 is about 1.66e-4.
+    let r = Reference::base();
+    let share = |id: &str| {
+        num(r
+            .row("isotopes", id)
+            .and_then(|x| x.get("abundance_protosolar")))
+        .unwrap()
+    };
+    let ratio = share("he3") / share("he4");
+    assert!((ratio - 1.66e-4).abs() < 1e-6, "{ratio}");
+    // The printed digits sum to 99.99997 percent.
+    assert!((share("h1") + share("h2") - 1.0).abs() < 1e-6);
+}

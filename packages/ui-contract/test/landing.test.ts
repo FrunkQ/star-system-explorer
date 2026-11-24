@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
 import { sceneFromResolved } from "../src/make.ts";
-import { landmarkOrder, suggestLander } from "../src/landing.ts";
+import { landingSeaOf, landingShowOf, landmarkOrder, roundPose, suggestLander } from "../src/landing.ts";
 import { nodeKernel } from "./node-kernel.ts";
 import { floorFromRefusal, levelFor, patchKeys, readPatch, groundHeightAt } from "../../renderer/src/index.ts";
 
@@ -83,6 +83,16 @@ test("landmarks, descents and the ground round a site on the sample Earth and Mo
     assert.equal((await player.planDescent({ system: sys, body: earth.address, lat_deg: 0, lon_deg: 0, lander: "capsule" })).ok, false);
     assert.equal((await player.surfaceLandmarks(sys, earth.address)).ok, false);
     assert.equal((await player.surfaceTilesAt(sys, earth.address, keys)).ok, false);
+    // While the table watches a landing on Earth, the seat may ask its own kernel for that world's ground, and no
+    // other (this test's seat has its own universe with nothing adopted, so the kernel, not the gate, answers).
+    const asked = (r: { ok: boolean; code?: string }) => (r.ok ? "ok" : r.code);
+    player.grantLanding({ system: sys, body: earth.address });
+    assert.notEqual(asked(await player.surfaceTilesAt(sys, earth.address, keys)), "not_gm", "the watched world's ground");
+    assert.notEqual(asked(await player.planDescent({ system: sys, body: earth.address, lat_deg: 0, lon_deg: 0, lander: "capsule" })), "not_gm", "its descent");
+    assert.equal(asked(await player.surfaceLandmarks(sys, earth.address)), "not_gm", "never its landmarks");
+    assert.equal(asked(await player.surfaceTiles(sys, moon.address)), "not_gm", "never another world");
+    player.grantLanding(null);
+    assert.equal(asked(await player.surfaceTilesAt(sys, earth.address, keys)), "not_gm", "the grant ends with the landing");
   } finally {
     await k.close();
   }
@@ -91,3 +101,28 @@ test("landmarks, descents and the ground round a site on the sample Earth and Mo
 function near(a: number, b: number, tol: number) {
   assert.ok(Math.abs(a - b) <= tol, `${a} vs ${b}`);
 }
+
+test("a landing sent to the table is read back only when it is one", () => {
+  const world = { radius_m: 6.371e6, pressure_bar: 1, t_k: 288, air: null, star_k: 5772, sun_radius: 0.0047, tilt_deg: 23.4 };
+  const show = { system: "u/sys:sol", body: "u/sys:sol/planet:3", label: "Earth", site: { lat_deg: 10.5, lon_deg: 75.97, label: "" }, lander: "capsule", phase: "flying", flight_s: 24, fly_u: 0.4, hour_deg: -30, world };
+  assert.deepEqual(landingShowOf(JSON.parse(JSON.stringify(show))), show);
+  assert.ok(landingShowOf({ ...show, lander: { ship: { id: "x" } } }), "a ship as the lander");
+  assert.equal(landingShowOf(null), null);
+  assert.equal(landingShowOf({ ...show, phase: "walking" }), null, "an unknown moment");
+  assert.equal(landingShowOf({ ...show, site: { lat_deg: "10" } }), null, "a site without numbers");
+  assert.equal(landingShowOf({ ...show, world: { ...world, radius_m: 0 } }), null, "a world without a size");
+});
+
+test("the GM's pose is rounded for the wire", () => {
+  assert.deepEqual(roundPose({ x_m: 1.23456, y_m: -0.004, yaw: 1.5707963, pitch: -0.05, drone: true }), { x_m: 1.23, y_m: -0, yaw: 1.571, pitch: -0.05, drone: true });
+});
+
+test("the sea at a site from the weather report, with the tide now", () => {
+  const data = { sea: { liquid: "water", wave_m: 1.8, period_s: 7.5, wind_m_s: -6, fetch_km: 900, line: "Waves about 1.8 m", tides: { by: [{ raiser: "moon 1", range_m: 0.54, period_h: 12.42 }, { raiser: "star", range_m: 0.25, period_h: 12 }] } } };
+  const s = landingSeaOf(data, 0)!;
+  assert.equal(s.tide_m, 0.4, "both high together at time 0");
+  assert.equal(s.wind_m_s, -6);
+  assert.equal(landingSeaOf(data, 6.21 * 3600)!.tide_m < 0, true, "half a lunar tide on: lower");
+  assert.equal(landingSeaOf({ sea: null }, 0), null);
+  assert.equal(landingSeaOf({}, 0), null);
+});

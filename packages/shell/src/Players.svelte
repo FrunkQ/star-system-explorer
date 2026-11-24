@@ -34,6 +34,7 @@
   import PerfReadout from "./PerfReadout.svelte";
   import { perf } from "../../ui-contract/src/index.ts";
   import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
+  import { landingShowOf, type LandingGround, type PartyShip } from "../../ui-contract/src/index.ts";
   import { DEFAULT_JOIN, joinLine, joinWordsOf, type JoinWords, type SeatBrand } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
@@ -72,6 +73,9 @@
   // What the game master has sent the table (the landing run-through): a place, or screens off. A screen that is not
   // joined, or a GM from before this, uses the screen's own campaign scope.
   let shown = $state<Shown | undefined>(undefined);
+  // The party's ship (the landing run-through): the table always knows where it is, whatever screen is up.
+  let party = $state.raw<PartyShip | null>(null);
+  const partyOf = (j: unknown): PartyShip | null => (j && typeof j === "object" && typeof (j as PartyShip).name === "string" && typeof (j as PartyShip).at === "string" ? (j as PartyShip) : null);
   const scopeNow = () => (shown && "scope" in shown && shown.scope ? shown.scope : facts.scope);
   let sceneHash = $state("");
   let sceneErrors = $state<string[]>([]);
@@ -100,6 +104,23 @@
   const isSealed = sealedRoom !== null && /^[a-z0-9]{4,40}$/.test(sealedRoom);
   const room = isSealed ? sealedRoom : new URLSearchParams(location.search).get("join");
   const joined = room !== null && /^[a-z0-9]{4,40}$/.test(room);
+  // The landing the table watches (the landing run-through): this seat's own kernel may read that one world's ground
+  // while it lasts, and no longer (the grant ends with the landing). A sealed seat has no kernel and gets neither.
+  const watching = $derived(isSealed ? null : landingShowOf(shown && "scope" in shown ? shown.landing : null));
+  let sessionReady = $state(false);
+  $effect(() => {
+    const w = watching;
+    if (!sessionReady || !session) return;
+    session.grantLanding?.(w ? { system: w.system, body: w.body } : null);
+  });
+  const landingNow = () => watching;
+  const ground: LandingGround | undefined = isSealed
+    ? undefined
+    : {
+        surfaceTiles: (system, body) => session!.surfaceTiles(system, body),
+        surfaceTilesAt: (system, body, keys) => session!.surfaceTilesAt(system, body, keys),
+        planDescent: (ask) => session!.planDescent(ask),
+      };
   // Inside a virtual tabletop (V3 gap 26): `?embed=1`, and only for a tabletop the GM listed on this seat.
   const asksEmbed = embedAsked(location.search);
   const framing = framingOrigin(window, document.referrer);
@@ -139,6 +160,8 @@
     if (r.ok) ask = "";
   }
   const seatId = new URLSearchParams(location.search).get("seat") ?? "table";
+  // What this seat is shown: its own send if the GM gave it one, else the table's.
+  const shownFor = (r: PlayerReplica) => r.seats().find((x) => x.id === seatId)?.shown ?? r.shown();
   if (isSealed) {
     const id = `player-${Math.random().toString(36).slice(2, 10)}`;
     void roomHub(id).then((hub) => {
@@ -204,14 +227,18 @@
       };
       replica.onSession = (s) => {
         session = s;
-        shown = replica.shown();
+        sessionReady = true;
+        shown = shownFor(replica);
+        party = partyOf(replica.party());
         perfEdge = s.device();
         void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
       };
       replica.onUpdate = () => {
         const mine = replica.seats().find((x) => x.id === seatId);
         if (JSON.stringify(mine?.live ?? null) !== JSON.stringify(live ?? null)) live = mine?.live;
-        const sent = replica.shown();
+        const ship = partyOf(replica.party());
+        if (JSON.stringify(ship) !== JSON.stringify(party)) party = ship;
+        const sent = shownFor(replica);
         if (JSON.stringify(sent ?? null) !== JSON.stringify(shown ?? null)) {
           const was = shown && "scope" in shown ? shown.screen : undefined;
           shown = sent;
@@ -302,6 +329,14 @@
     const m = marker.mark(playerSubjectOf(x));
     return lightColours ? { ...m, colour: lightColours.get(x.address) ?? null } : m;
   };
+  // A place by the name the table knows it by: from this scene when it is here, else the last part of its address.
+  function placeName(a: string): string {
+    const hit = scene?.subjects.find((x) => x.address === a);
+    if (hit) return subjectName(hit);
+    const last = a.split("/").pop() ?? a;
+    return last.charAt(0).toUpperCase() + last.slice(1).replace(/[-_]/g, " ");
+  }
+  const dayWords = (d: number) => (d < 2 ? `${Math.round(d * 24)} hours` : d < 400 ? `${Math.round(d)} days` : `${(d / 365.25).toFixed(1)} years`);
   const star = $derived(scene ? scene.subjects.find((s) => s.address === scene!.scope) : undefined);
 
   // The tabletop bridge: tell the allowed tabletop the view is ready and what is in focus; take its "focus this" asks for subjects this seat already sees.
@@ -335,6 +370,7 @@
     {#if brand}<span class="brand" data-brand>{#if brand.logo}<img src={brand.logo} alt="" />{/if}{brand.name}</span>{/if}
     <h1>{star ? subjectName(star) : "System"}</h1>
     <span class="kicker">{screenDoc?.label ?? "…"}{screenDoc?.data_view ? ` · seen through ${screenDoc.data_view}` : ""} · audience {scene?.audience ?? "…"}</span>
+    {#if party}<span class="ship" data-party-ship={party.ship} data-party-at={party.at} title={party.voyage ? `Last voyage: ${placeName(party.voyage.from)} to ${placeName(party.voyage.to)}, ${dayWords(party.voyage.days)}` : undefined}>Aboard <strong>{party.name}</strong>, {party.at === scopeNow() ? "in this system" : `at ${placeName(party.at)}`}</span>{/if}
     <span class="spacer"></span>
     {#if !screenDoc?.data_view && !joined}
     <Segmented
@@ -375,10 +411,10 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p></main>
   {:else}
     {#key vocabId}
-      <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} bind:selection /></main>
+      <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
     {/key}
   {/if}
-  {#if joined && scene && mayAsk && !bare}
+  {#if joined && scene && mayAsk && !bare && !watching}
     <section class="ask" aria-label="Ask the game master">
       <form onsubmit={(e) => (e.preventDefault(), askName())}>
         <label>Suggest a name for {target ? subjectName(target) : "the body in focus"} <input type="text" bind:value={ask} maxlength="40" disabled={link.state !== "live" || !target} /></label>
@@ -443,6 +479,15 @@
     margin: 0;
     font-family: var(--sse-font-display);
     font-size: 26px;
+    font-weight: 600;
+  }
+  .ship {
+    font-size: 13px;
+    color: var(--sse-ink-muted);
+    white-space: nowrap;
+  }
+  .ship strong {
+    color: var(--sse-ink);
     font-weight: 600;
   }
   .kicker {
