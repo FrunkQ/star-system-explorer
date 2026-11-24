@@ -697,3 +697,36 @@ fn protosolar_isotope_shares_are_on_the_isotope_rows() {
     // The printed digits sum to 99.99997 percent.
     assert!((share("h1") + share("h2") - 1.0).abs() < 1e-6);
 }
+
+#[test]
+fn hull_skins_carry_the_burn_through_heats() {
+    // RK12 sums heat to melt, latent fusion, heat to boil and latent
+    // vaporisation per kilogram (MP27, NIST-JANAF). Aluminium's heat of
+    // fusion is about 397 kJ/kg, from 10.711 kJ/mol at 26.98 g/mol.
+    let r = Reference::base();
+    let get = |id: &str, k: &str| num(r.row("mixtures", id).and_then(|x| x.get(k)));
+    for id in [
+        "aluminium",
+        "titanium",
+        "iron",
+        "niobium",
+        "molybdenum",
+        "tantalum",
+        "lead",
+    ] {
+        for k in [
+            "heat_capacity",
+            "heat_to_melt",
+            "latent_fusion",
+            "heat_to_boil",
+            "boiling_point_k",
+            "latent_vaporisation",
+        ] {
+            assert!(get(id, k).is_some_and(|v| v > 0.0), "{id} {k}");
+        }
+    }
+    let lf = get("aluminium", "latent_fusion").unwrap();
+    assert!((lf - 397_000.0).abs() < 2_000.0, "{lf}");
+    assert!(get("graphite", "latent_sublimation").is_some());
+    assert!(get("inconel-718", "heat_capacity").is_some());
+}
