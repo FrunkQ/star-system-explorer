@@ -211,7 +211,8 @@ pub fn surface_frames(
         pending.push("temperature history (this world's climate is a fixed value)".into());
     }
     if track_before.is_none() {
-        pending.push("ice-age onsets (no orbit track: no sibling planets to swing its orbit)".into());
+        pending
+            .push("ice-age onsets (no orbit track: no sibling planets to swing its orbit)".into());
     }
     // Frame dates and the cells at each: the plate snapshots, or evenly
     // spaced dates for a world whose plates never moved.
@@ -417,8 +418,7 @@ pub fn surface_frames(
     // Ice ages (W9 part 2): over the orbit-history window that ends at the
     // epoch, each onset at which more land starts to gain ice than lose it.
     if let (Some(track), Some((wc, elev, b_t))) = (track_before, &last) {
-        let model =
-            crate::climate::ice_ages(&s, b_t, wc, track, &opts.moons, epoch_myr);
+        let model = crate::climate::ice_ages(&s, b_t, wc, track, &opts.moons, epoch_myr);
         let start_myr = epoch_myr - track.span_yr() / 1.0e6;
         let mut by_date: std::collections::BTreeMap<u64, usize> = Default::default();
         let mut land = 0usize;
@@ -428,7 +428,13 @@ pub fn surface_frames(
             }
             land += 1;
             let lat = m::asin(d[2].clamp(-1.0, 1.0)).to_degrees();
-            for t_yr in model.onsets_yr(&s.climate, &wc.climate, wc.lapse_k_km, lat, elev[i].max(0.0)) {
+            for t_yr in model.onsets_yr(
+                &s.climate,
+                &wc.climate,
+                wc.lapse_k_km,
+                lat,
+                elev[i].max(0.0),
+            ) {
                 *by_date.entry(t_yr.to_bits()).or_default() += 1;
             }
         }

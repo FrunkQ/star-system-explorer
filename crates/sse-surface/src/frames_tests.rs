@@ -193,7 +193,10 @@ fn ice_ages_and_the_land_of_then() {
     }
     assert!(!f.pending.iter().any(|p| p.starts_with("ice-age")));
     // Without a track the onsets are pending.
-    assert!(frames_of("Earth").pending.iter().any(|p| p.starts_with("ice-age")));
+    assert!(frames_of("Earth")
+        .pending
+        .iter()
+        .any(|p| p.starts_with("ice-age")));
     // For the package log: the onsets, and the land then and now (the first
     // frames are nearly all sea).
     let first = &f.frames[0];

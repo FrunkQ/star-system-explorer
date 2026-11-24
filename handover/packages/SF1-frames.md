@@ -73,7 +73,7 @@ Check: `frames_tests::ice_ages_and_the_land_of_then` gives Earth one inclination
 
 Fudge register: the spin integration starts the window with today's tilt and perihelion, though the window ends today. Over 400 kyr Earth's tilt drifts about a degree, inside the drawn sibling inclinations' own spread.
 
-Goldens: none changed (the contract frames cases are on fixtures, which keep their pending line).
+Goldens: `contract.jsonl`, re-blessed on purpose for the Mars frames case, whose pending line now gives the reason ice-age onsets wait (no orbit track).
 
 ## Still to do
 - Worn elevation per frame: wear each frame's window, or carry S3 through the whole history.
