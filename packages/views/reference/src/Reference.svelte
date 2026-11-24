@@ -11,18 +11,19 @@
   import { Stamp } from "../../../chart-grammar/src/index.ts";
   import Elements from "./Elements.svelte";
   import Names from "./Names.svelte";
+  import Classes from "./Classes.svelte";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const depth = $derived(ctx.workspace.depth ?? "science");
   const full = $derived(depth !== "curious");
 
-  type PageId = "constants" | "elements" | "units" | "names";
+  type PageId = "constants" | "elements" | "units" | "names" | "classes";
   const PAGES: { group: string; pages: { id: PageId; label: string }[] }[] = [
     { group: "Nature", pages: [{ id: "constants", label: "Constants" }, { id: "elements", label: "Elements" }] },
-    { group: "Names and classes", pages: [{ id: "names", label: "Names" }] },
+    { group: "Names and classes", pages: [{ id: "names", label: "Names" }, { id: "classes", label: "Classes" }] },
     { group: "This setting", pages: [{ id: "units", label: "Units" }] },
   ];
-  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" || params.page === "names" ? params.page : "constants")));
+  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" || params.page === "names" || params.page === "classes" ? params.page : "constants")));
 
   let sheet = $state.raw<ConstantsPage | null>(null);
   let failed = $state<string | null>(null);
@@ -128,7 +129,7 @@
   <header>
     <div class="title">
       <h1>Reference</h1>
-      <p class="lede">{page === "units" ? "How this setting counts and shows things. Nothing here changes the physics." : page === "names" ? "What this campaign calls things. Names never change the physics." : "What nature gives the simulation. Real unless marked."}</p>
+      <p class="lede">{page === "units" ? "How this setting counts and shows things. Nothing here changes the physics." : page === "names" ? "What this campaign calls things. Names never change the physics." : page === "classes" ? "Every kind of world, as the charts mark it. Classes are labels read off the physics, never rules." : "What nature gives the simulation. Real unless marked."}</p>
     </div>
     <div class="find" role="search">
       <input
@@ -168,6 +169,8 @@
     <div class="body"><Elements session={ctx.session} {depth} {pick} /></div>
   {:else if page === "names"}
     <div class="body"><Names session={ctx.session} workspace={ctx.workspace} {depth} offer={typeof params.names_offer === "string" ? params.names_offer : ""} /></div>
+  {:else if page === "classes"}
+    <div class="body"><Classes session={ctx.session} workspace={ctx.workspace} {depth} symbology={ctx.symbology} offer={typeof params.classes_offer === "string" && params.classes_offer ? params.classes_offer.split(",").map((x) => x.trim()) : []} /></div>
   {:else if failed}
     <p class="note" data-reference-error>Could not read the data sheet: {failed}</p>
   {:else if !sheet}

@@ -9,7 +9,12 @@ Status: part 1 done 24 Nov 2026 (thread "Build object selector and menus"). The 
 
 Checks: `packages/ui-contract/test/picker.test.ts` (tags, elsewhere, subject tags); `tests/ui/object-menu.e2e.mjs` (finding "#ocean" in the picker on Kestrel; the menu from a picker row); `picker.e2e` and `place.e2e` still pass.
 
-## Part 2 (next, after the split): in `shell/src/nav/`
-- Pass `elsewhere`: the campaign's systems, and the bodies of systems already read this session.
-- A row's › makes it the current place; a plain press selects it on the chart without leaving the level.
-- Every "which one?" opens the selector: Voyages' destination, Add here's host, Send this view, Measure, Copy to.
+## Part 2 (done 24 Nov): in `shell/src/nav/PlaceLine.svelte`
+- **Search covers the campaign.** PlaceLine passes `elsewhere`: the campaign's systems by name, and the bodies of every system already read this session (kept as the GM moves about; nothing heavy runs to find them). Picking one goes there (`at:<system>|<address>` → `goPlace` to that world). From the galaxy, typing "earth" offers Earth "in The Solar System". "Results for" is left out when only elsewhere has hits.
+- **Going down stays one press.** Picking a row goes to it (the world close-up), as Alex's "current level, one below, one above" asks; a separate › for "go in" was not added, since a press already does that and the chart itself is where a body is selected without leaving.
+
+Checks: `tests/ui/picker.e2e.mjs` (from the galaxy, find Earth elsewhere and go there).
+
+## Still to do (NV2 part 3)
+- Bodies of systems not yet read this session (needs a cheap kernel list of an adopted system's bodies by name).
+- Every "which one?" opens the selector: Voyages' destination, Add here's host, Send this view, Measure, Copy to. These live in other tracks' views and dialogs; each needs the Picker with `items` from `subjectItems` in place of its own list.
