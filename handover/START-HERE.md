@@ -123,10 +123,10 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/surface-timelapse.md` | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse, the drawing side of W-sea2 to W-sea4 |
 | `status/names-and-life.md` | Build names gallery and life board | rest of NM6 (Classes, names gallery), U7 Life board |
 | `status/naming.md` | no live owner (NM design done) | NM |
-| `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9, SV7 |
+| `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9, SV7, AT11, AT16 |
 | `status/traveller.md` | Build Traveller pack | X3, TG8, TG9, TG11, TG13, MP16 |
 | `status/manifest.md` | Build ship manifest and crew roster | MC |
-| `status/atomic-rockets.md` (arrives with PR 447) | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
+| `status/atomic-rockets.md` | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
 | `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
