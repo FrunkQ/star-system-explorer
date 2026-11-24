@@ -6,7 +6,7 @@ Only the owner thread edits this file. Visual polish rule (`design/SSE4-visual-p
 
 | Package | State | Log |
 |---|---|---|
-| TRUE1 plumes part 1: the kernel's plume facts (ocean, polar cracks, speeds, height, rate) on `resolved_system` surface records | in review | packages/TRUE1.md |
+| TRUE1 plumes part 1: the kernel's plume facts (ocean, polar cracks, speeds, height, rate) on `resolved_system` surface records | done (PR 449) | packages/TRUE1.md |
 | TRUE2 plumes part 2: drawn above the limb in System True | done (PR with TRUE3 and TRUE6) | packages/TRUE2.md |
 | TRUE3 part 1 hot things glow in Visible (Planck against the world's own daylight, one temperature a world) | done (same PR); part 2 is VP-P1 (hot ground per tile) | packages/TRUE2.md |
 | TRUE4 tholins and coloured frosts | waits on data sheet MP33, MP34 | |

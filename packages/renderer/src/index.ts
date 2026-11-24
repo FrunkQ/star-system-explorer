@@ -11,6 +11,8 @@ export type { WebCubeData, WebKind } from "./web-cube.ts";
 // V10a: True in the system view, each world wrapped in its own surface.
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
 export type { TrueTexture } from "./true-look.ts";
+// R1 to R3, R6: air in True (clouds, hazes, giants from their cloud decks), true-air.ts.
+export { gasAbove, gasTint, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirLook, type FaceReader } from "./true-air.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
 export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
@@ -120,3 +122,6 @@ export type { PlumeFacts } from "./plumes.ts";
 // Lava tube openings cut into the ground at a landing site (third audit, TRUE6).
 export { caveCut, caveOpenings, nearestOpening, openingLine } from "./cave-mouths.ts";
 export type { CaveOpening } from "./cave-mouths.ts";
+// The stars over a landing site and the eye's adaptation (night-sky.ts).
+export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";
+export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";

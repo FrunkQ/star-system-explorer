@@ -7,7 +7,8 @@
   reorder, onto another section, or onto a page in the picker.
 -->
 <script lang="ts">
-  import { addChapter, addPage, addPreset, addSection, findPage, isUp, movePreset, movePresetToPage, pages, presetWords, removePart, rename, type Board, type Bookmark, type Playbook, type Preset } from "../../../ui-contract/src/index.ts";
+  import { addChapter, addPage, addPreset, addSection, findPage, isUp, reveals, movePreset, movePresetToPage, pages, presetWords, removePart, rename, type Board, type Bookmark, type Playbook, type Preset } from "../../../ui-contract/src/index.ts";
+  import { KnownEye } from "../../../chart-grammar/src/index.ts";
   import { firedAt } from "./fired.svelte.ts";
 
   let {
@@ -51,7 +52,7 @@
 
   let renaming = $state<string | null>(null);
   let adding = $state<string | null>(null);
-  let choosing = $state<{ section: string; kind: "bookmark" } | null>(null);
+  let choosing = $state<{ section: string; kind: "bookmark" | "reveal" } | null>(null);
   let pickerOpen = $state(false);
   let rowDrag = $state<string | null>(null);
   let dropAt = $state<string | null>(null);
@@ -62,10 +63,12 @@
     else next.add(id);
     folded = next;
   }
-  function add(section: string, kind: "bookmark" | "say" | "hold", bookmark?: Bookmark) {
+  function add(section: string, kind: "bookmark" | "reveal" | "say" | "hold", bookmark?: Bookmark) {
     const to = "everyone";
     const r =
-      kind === "bookmark" && bookmark
+      kind === "reveal" && bookmark?.selected
+        ? addPreset(pb, section, { title: `Reveal ${bookmark.name}`, to, steps: [{ reveal: { address: bookmark.selected, landmark: "known", name: bookmark.name } }] })
+        : kind === "bookmark" && bookmark
         ? addPreset(pb, section, { title: bookmark.name, to, steps: [{ show: { bookmark: bookmark.id } }] })
         : kind === "say"
           ? addPreset(pb, section, { title: "Read aloud", to, steps: [{ say: { text: "" } }] })
@@ -175,6 +178,7 @@
               >
                 <button type="button" class="body" onclick={() => onselect(selected === k.id ? null : k.id)} data-preset-select={k.id} title={presetWords(k, bookmarks)}>
                   {#if n}<span class="num" aria-hidden="true">{n}</span>{/if}
+                  {#if reveals(k)}<span class="eye" title="Tells {roleWords(k.to)} something" data-reveals><KnownEye landmark="known" size={12} /></span>{/if}
                   <span class="ktitle">{k.title}</span>
                   {#if at}<span class="tick" data-fired={k.id} title="Fired tonight at {at}">✓ {at}</span>{/if}
                 </button>
@@ -188,14 +192,16 @@
           {#if adding === s.id}
             <div class="kinds" role="group" aria-label="Add to {s.title}">
               {#if choosing?.section === s.id}
-                {#if bookmarks.length}
-                  {#each bookmarks as b (b.id)}<button type="button" class="ghost" data-add-bookmark={b.id} onclick={() => add(s.id, "bookmark", b)}>{b.name}</button>{/each}
+                {@const usable = choosing.kind === "reveal" ? bookmarks.filter((b) => b.selected) : bookmarks}
+                {#if usable.length}
+                  {#each usable as b (b.id)}<button type="button" class="ghost" data-add-bookmark={b.id} onclick={() => add(s.id, choosing!.kind, b)}>{b.name}</button>{/each}
                 {:else}
-                  <span class="sub">No bookmarks yet. Go there on the chart and press Bookmarks (B).</span>
+                  <span class="sub">{choosing.kind === "reveal" ? "No bookmark of a thing yet. Select it on the chart and press Bookmarks (B)." : "No bookmarks yet. Go there on the chart and press Bookmarks (B)."}</span>
                 {/if}
                 <button type="button" class="ghost" onclick={() => (choosing = null)}>Back</button>
               {:else}
                 <button type="button" class="ghost" data-add-kind="bookmark" onclick={() => (choosing = { section: s.id, kind: "bookmark" })}>A bookmark</button>
+                <button type="button" class="ghost" data-add-kind="reveal" onclick={() => (choosing = { section: s.id, kind: "reveal" })}>A reveal</button>
                 <button type="button" class="ghost" data-add-kind="say" onclick={() => add(s.id, "say")}>Read aloud</button>
                 <button type="button" class="ghost" data-add-kind="hold" onclick={() => add(s.id, "hold")}>A hold</button>
                 <button type="button" class="ghost" onclick={() => (adding = null)}>Cancel</button>
@@ -338,6 +344,10 @@
   }
   .row.sel .body {
     box-shadow: inset 3px 0 0 var(--sse-accent);
+  }
+  .eye {
+    display: inline-flex;
+    color: var(--sse-ink-muted);
   }
   .num {
     font-family: var(--sse-font-mono);

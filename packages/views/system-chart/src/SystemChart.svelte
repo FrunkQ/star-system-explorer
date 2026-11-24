@@ -11,6 +11,8 @@
   const trueSurfaces = new Map<string, Kept | string>();
   /** Plume facts from the same reads (the world's surface record), by system and world. */
   const truePlumes = new Map<string, import("../../../renderer/src/index.ts").PlumeFacts>();
+  /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
+  const trueSaid = new Map<string, string[]>();
   /** Stars read for True's living star, by system and star (a string: why there is none). */
   const liveStars = new Map<string, LiveStar | string>();
   /** read_field's Solar System fixture, read once for the page (Mag, V10e). */
@@ -22,7 +24,7 @@
   import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { plumeFacts, readLiveStar, starCss, trueSurface, type PlumeFacts, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
+  import { plumeFacts, readLiveStar, readTrueFace, starCss, type FaceReader, type PlumeFacts, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -253,10 +255,27 @@
         const key = `${sys}|${s.address}`;
         if (!trueSurfaces.has(key)) {
           reading = { done, of: order.length, none, why: noneWhy };
-          const r = await ctx.session.surfaceTiles(sys, s.address);
-          const why = r.ok ? String((r.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : r.message;
-          trueSurfaces.set(key, (r.ok && trueSurface(r.tiles)) || why);
-          const pf = r.ok ? plumeFacts(r.record) : null;
+          // Ground, then today's clouds and haze; a giant is its cloud decks (renderer true-air.ts). The surface record
+          // read on the way carries the world's plume facts (renderer plumes.ts).
+          let record: unknown = null;
+          const k = ctx.session as unknown as FaceReader;
+          // The session's own methods, bound to it (they use its private state), with its tile read noting the record.
+          const reader = new Proxy(k, {
+            get: (t, p) =>
+              p === "surfaceTiles"
+                ? async (a: string, b: string) => {
+                    const r = await ctx.session.surfaceTiles(a, b);
+                    if (r.ok) record = r.record ?? null;
+                    return r;
+                  }
+                : typeof (t as unknown as Record<string | symbol, unknown>)[p] === "function"
+                  ? ((t as unknown as Record<string | symbol, (...x: unknown[]) => unknown>)[p]!).bind(t)
+                  : (t as unknown as Record<string | symbol, unknown>)[p],
+          });
+          const f = await readTrueFace(reader, sys, s.address);
+          trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
+          if (typeof f !== "string") trueSaid.set(key, f.said);
+          const pf = plumeFacts(record);
           if (pf) truePlumes.set(key, pf);
         }
         const kp = truePlumes.get(key);
@@ -328,7 +347,9 @@
             ? `${reading.none} of ${reading.of} worlds are drawn plain, with no surface to show (the kernel: ${reading.why}).`
             : "",
   );
-  const trueNote = $derived([surfaceNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
+  // Each thing a face could not show, said once for the system (a colour the sheet lacks, a giant's dark deep air).
+  const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
+  const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
