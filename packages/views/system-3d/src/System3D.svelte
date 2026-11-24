@@ -471,7 +471,7 @@
           });
         gpu.draw({
           items,
-          rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...(hud ? rangeLocal.map((l) => ({ points: l.points.map((q) => rel(q as [number, number, number])), colour: l.colour === "accent" ? accent : faint })) : []), ...magRings(fieldOut, fieldIn, faint)],
+          rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...(hud ? rangeLocal.map((l) => ({ points: l.points.map((q) => rel(q as [number, number, number])), colour: l.kind === "even odds" ? faint : accent })) : []), ...magRings(fieldOut, fieldIn, faint)],
           // Belts as haze in visible light only: in the other bands they give off next to nothing a screen could show.
           dots: trueBand === "visible" && !mag ? beltHazes.map(({ pts }) => ({ points: pts.map(rel), colour: BELT_DUST, size: 1.5 })) : [],
           glows: halo ? [halo] : [],
@@ -488,7 +488,7 @@
       gpu.draw({
         items: shown.map((b) => ({ id: b.id, rel: relOf(b.id), radius: sizeOf(b, b === lay!.centre), colour: colour(b), ring: b.mark?.ring ?? false, selected: b.id === selection })),
         rings: [...magRings(fieldOut, fieldIn, faint), ...(!hud ? [] : [
-          ...rangeLocal.map((l) => ({ points: l.points.map((q) => rel(q as [number, number, number])), colour: l.colour === "accent" ? accent : faint })),
+          ...rangeLocal.map((l) => ({ points: l.points.map((q) => rel(q as [number, number, number])), colour: l.kind === "even odds" ? faint : accent })),
           ...bandLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : faint })),
           ...lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })),
         ])],
@@ -540,7 +540,7 @@
           if (started) g.lineTo(p.x, p.y);
           else (g.moveTo(p.x, p.y), (started = true));
         }
-        g.strokeStyle = l.colour === "accent" ? accent : faint;
+        g.strokeStyle = l.kind === "even odds" ? faint : accent;
         g.lineWidth = 1;
         g.stroke();
       }
