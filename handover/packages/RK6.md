@@ -33,15 +33,23 @@ Tours (data, `sse.tour/1`; play once tours and bookmarks exist, PB2b): "Why torc
 | HOPE nuclear electric | 444 days (70 waiting), Lambert | 832 days | **NAV gap**: at 6e-5 g the ship is offered an impulsive transfer; slow spirals are RK5 (travel thread), told 24 Nov |
 | Fission fragment | 375 days, Lambert | over 2,100 days | same gap, at 1.5e-5 g |
 | Orion | 547 days incl. 452 waiting, Lambert | 450 days round trip | different measures (one way against round trip); not compared |
-| Longshot | to Neptune only, 819 days | about 100 years to Alpha Centauri | Sol leg only; an interstellar sublight test is next |
+| Longshot | 313 years to Alpha Centauri (part 2) | about 100 years | single stage against the study's staging (part 2) |
 
 Every ship closes its power books (`ship_power`), and the open-cycle gas core as printed does not: 5.7 GW of jet from a 5,000 MW reactor. The pack keeps the figures as written and the test shows the check catching it.
 
 Fudges: figures the builder works out are marked `derived` (register: "Paper spacecraft"), and the low-thrust gap is listed there too. No golden change: nothing under `store-packs/` loads by default.
 
+## Part 2 (24 Nov 2026, evening): NASA's DRA 5.0 ship and Longshot between the stars
+
+- **DRA 5.0 nuclear thermal crew ship** (Borowski et al. 2009 and 2012): three Pewee-class 25 klbf engines at 900 s, 333 t, six crew, 50 kWe of arrays feeding life support, cryocoolers and radios. SSE4 flies Earth to Mars in **193 days** on a Lambert arc against the study's **180** (test band 0.9 to 1.2). Its books close.
+- **Longshot between the stars** (`sse_nav::voyage::flight` over the report's 4.3 light years): SSE4 says **313 years**, coasting at 1.5% of c, against the study's **about 100**. The report stages (it drops two empty tanks, then the drive); SSE4's ship records are one stage, so 264 t of pellets on 132 t buy only about 11,000 km/s in all. Fudge register: "single-stage records". Stages for NAV are the next real fix, and they need track RS's split-and-join on ship records.
+- The voyage test now compares days on the way, without the wait for a launch window (Orion's 452-day wait had been counted).
+- The tech reader's "leans on" picks the lowest-level advance that meets a need, so a drive can lean on a different not-yet-built advance than its own (HOPE's 77,000 s reads the fission fragment rocket, level 5, before the fusion drive, also level 5, by id). The DRA ship's 900 s is above Pewee's tested 875 s, so it reads Orion. Both are honest readings of base-tech's rules; the recipe's `advances` list says which advance the study used.
+- Looked for and not found as open text: Moravec's 1977 skyhook paper (abstract only), Daedalus's final report, Lofstrom's launch loop. Recorded in the sources file.
+
 ## Next (in order)
 1. Ask the data sheet thread to check the RK6 sources against the page images (most are OCR).
-2. An interstellar sublight voyage test for Longshot (plan_voyage between stars).
-3. More studies, from primary text once found: Project Daedalus (JBIS 1978 supplement), NASA DRA 5.0 nuclear thermal Mars ship (NASA-SP-2009-566-ADD; the fetch was refused), EMPIRE (1962 to 1963), the Jupiter Icy Moons Orbiter (masses and thrust not yet read).
+2. Stages on ship records read by NAV (with track RS), so Longshot and the DRA ship drop their tanks.
+3. More studies, from primary text once found: Project Daedalus (JBIS 1978 supplement), EMPIRE (1962 to 1963), the Jupiter Icy Moons Orbiter (masses and thrust not yet read).
 4. Launch loops (Lofstrom 1985) and skyhooks (Moravec 1977) as constructs, once a construct can carry them.
 5. Tours play once PB2b (bookmarks) and the tour player land; the Starshot ship flies once RK5 has beamed legs.

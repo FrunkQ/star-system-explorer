@@ -49,9 +49,25 @@ function benchSection(version) {
     });
     rep = benchReport(results, doc, { device: await describe(), kernel: kernelVersion ?? undefined, site: location.host, runs });
     rep.app.harness = version;
+    // VP4: the drawing rows. The speed probe's three scenes on this device's graphics, and where that places it.
+    $("benchnote").textContent = "Timing the drawing…";
+    try {
+      const m = await import("./pkg/drawing/bench-drawing.js");
+      rep.drawing = await m.benchDrawing();
+    } catch (e) {
+      rep.drawing = { backend: "none", error: String(e?.message ?? e) };
+    }
+    const words = { "gpu-ultra": "Ultra", "gpu-high": "High", "gpu-basic": "Light", canvas: "2D canvas", text: "Words only" };
+    const d = rep.drawing;
+    const drawRows = d.scenes_ms && Object.keys(d.scenes_ms).length
+      ? `<tr><td><strong>Drawing (${d.backend}, ${d.method}${d.steady ? "" : ", unsteady"}): placed at ${words[d.earned] ?? d.earned}</strong></td><td class="n"></td></tr>` +
+        Object.entries(d.scenes_ms).map(([k, v]) => `<tr><td class="muted">&nbsp;&nbsp;probe ${k} (${d.factors[k].toFixed(2)}× reference)</td><td class="n">${v.toFixed(2)} ms</td></tr>`).join("") +
+        d.predictions.map((p) => `<tr><td class="muted">&nbsp;&nbsp;standard True at 1080p, ${words[p.tier] ?? p.tier} (budget ${Math.round(p.budget_ms)} ms)</td><td class="n">${p.ms === null ? "no form" : `${p.ms.toFixed(1)} ms ${p.fits ? "fits" : "too slow"}`}</td></tr>`).join("")
+      : `<tr><td><strong>Drawing</strong></td><td class="n">${d.error ? "could not draw" : "no GPU"}</td></tr>`;
+    $("benchnote").textContent = "Done.";
     $("benchtable").innerHTML = rep.chunks
       .map((c) => `<tr><td><strong>${c.name}</strong></td><td class="n">${ms(c.median_ms)}</td></tr>` + c.sources.map((s) => `<tr><td class="muted">&nbsp;&nbsp;${s.source.slice(6)}${s.unsteady ? " (unsteady)" : ""}</td><td class="n">${ms(s.median_ms)}</td></tr>`).join(""))
-      .join("");
+      .join("") + drawRows;
     const shaky = rep.chunks.flatMap((c) => c.sources.filter((x) => x.unsteady).map((x) => x.source.slice(6)));
     if (shaky.length) $("benchnote").textContent = `Done, but one run of ${shaky.join(", ")} took over twice its usual time: the device may have paused (screen dimmed or another app). The medians are still fair; for a clean report keep the screen on and run again.`;
     $("benchacts").hidden = false;

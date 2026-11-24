@@ -91,6 +91,10 @@ try {
     await units.waitFor();
     assert.match(await units.locator('[data-unit="pc"] .val').innerText(), /^1 pc = 3\.085 677 581 × 10¹⁶ m$/);
     assert.match(await units.locator('[data-unit="m"] .val').innerText(), /SI/);
+    // How figures are said (ED1a): the units engine's table, the default reading marked.
+    const orbitRow = units.locator('[data-figures-said] [data-said="length|*.orbit"]');
+    assert.match(await orbitRow.innerText(), /AU/);
+    assert.match(await orbitRow.locator(".chosen").innerText(), /AU/, "the first reading is the default");
     await shot(gm, `units-${vp}`);
 
     if (vp === "phone") {

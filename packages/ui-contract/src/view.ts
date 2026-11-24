@@ -12,7 +12,8 @@ import type { Json } from "./json.ts";
 import type { Lens } from "./lens.ts";
 import type { PlayerScene } from "./player-scene.ts";
 
-export type Tier = "still" | "gpu-high" | "gpu-basic" | "canvas" | "text";
+/** Drawing tiers, richest first after `still`. `gpu-ultra` (VP4): passes that hammer the GPU, reached only when the speed probe places the device there (renderer probe.ts). */
+export type Tier = "still" | "gpu-ultra" | "gpu-high" | "gpu-basic" | "canvas" | "text";
 
 export interface TopicQuery {
   addresses?: string[];
