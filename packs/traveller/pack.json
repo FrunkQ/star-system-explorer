@@ -8623,6 +8623,7 @@
       "id": "astrometer",
       "label": "wide-field astrometer",
       "range_m": 7479893535000.0,
+      "range_source": "authored",
       "targets": [
        "star",
        "gas giant",
@@ -8630,131 +8631,249 @@
       ],
       "reveals": "stellar details, planetary basics",
       "up_to": "scanned",
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "wide-field astrometer",
+       "from_m": 4e-07,
+       "to_m": 9e-07,
+       "aperture_m": 0.5,
+       "method": "astrometry",
+       "stare_s": 600.0,
+       "authored_range_m": 7479893535000.0
+      }
      },
      {
       "id": "telescope_15au",
       "label": "deep-field telescope (15 au)",
       "range_m": 2243968060500.0,
+      "range_source": "authored",
       "targets": [
        "terrestrial planet",
        "belt"
       ],
       "reveals": "planetary basics",
       "up_to": "scanned",
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "deep-field telescope",
+       "from_m": 4e-07,
+       "to_m": 9e-07,
+       "aperture_m": 1.0,
+       "stare_s": 600.0,
+       "authored_range_m": 2243968060500.0
+      }
      },
      {
       "id": "telescope_2au",
       "label": "deep-field telescope (2 au)",
       "range_m": 299195741400.0,
+      "range_source": "authored",
       "targets": [
        "dwarf planet",
        "moon"
       ],
       "reveals": "planetary basics",
       "up_to": "scanned",
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "deep-field telescope (small)",
+       "from_m": 4e-07,
+       "to_m": 9e-07,
+       "aperture_m": 0.3,
+       "stare_s": 60.0,
+       "authored_range_m": 299195741400.0
+      }
      },
      {
       "id": "spectral_5au",
       "label": "spectral analyser (5 au)",
       "range_m": 747989353500.0,
+      "range_source": "authored",
       "targets": [
        "gas giant",
        "ice giant"
       ],
       "reveals": "air composition, surface liquids",
       "up_to": "scanned",
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "spectral analyser",
+       "from_m": 4e-07,
+       "to_m": 9e-07,
+       "aperture_m": 1.0,
+       "method": "spectrum",
+       "resolving_power": 1000.0,
+       "stare_s": 600.0,
+       "authored_range_m": 747989353500.0
+      }
      },
      {
       "id": "spectral_1au",
       "label": "spectral analyser (1 au)",
       "range_m": 149597870700.0,
+      "range_source": "authored",
       "targets": [
        "terrestrial planet"
       ],
       "reveals": "air composition, surface liquids",
       "up_to": "scanned",
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "spectral analyser (small)",
+       "from_m": 4e-07,
+       "to_m": 9e-07,
+       "aperture_m": 0.3,
+       "method": "spectrum",
+       "resolving_power": 1000.0,
+       "stare_s": 600.0,
+       "authored_range_m": 149597870700.0
+      }
      },
      {
       "id": "bio_scanner",
       "label": "high-resolution bio-scanner",
       "range_m": 10000000.0,
+      "range_source": "authored",
       "targets": [
        "planetary surface"
       ],
       "reveals": "biosphere, vegetation, settlements",
       "up_to": "surveyed",
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "bio-scanner (near-infrared imager)",
+       "from_m": 7e-07,
+       "to_m": 2.4999999999999998e-06,
+       "aperture_m": 0.5,
+       "stare_s": 60.0,
+       "authored_range_m": 10000000.0
+      }
      },
      {
       "id": "passive_rf",
       "label": "passive radio antenna",
       "range_m": 14959787070000.0,
+      "range_source": "authored",
       "targets": [
        "construct (cooperative)"
       ],
       "reveals": "responder ping, transponder id",
       "up_to": null,
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "passive radio antenna",
+       "kind": "radio",
+       "from_m": 0.03,
+       "to_m": 0.3,
+       "aperture_m": 5.0,
+       "bandwidth_hz": 1000000.0,
+       "stare_s": 10.0,
+       "authored_range_m": 14959787070000.0
+      }
      },
      {
       "id": "search_radar",
       "label": "active search radar",
       "range_m": 500000000.0,
+      "range_source": "authored",
       "targets": [
        "construct over 10,000 t"
       ],
       "reveals": "construct basics, lock, trajectory, hull",
       "up_to": null,
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "active search radar",
+       "kind": "radio",
+       "from_m": 0.03,
+       "to_m": 0.031,
+       "aperture_m": 3.0,
+       "method": "active",
+       "transmit_power_w": 100000.0,
+       "authored_range_m": 500000000.0
+      }
      },
      {
       "id": "thermal_ir",
       "label": "thermal and infrared tracker",
       "range_m": 50000000.0,
+      "range_source": "authored",
       "targets": [
        "construct"
       ],
       "reveals": "drive plumes, heat sinks, power output",
       "up_to": null,
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "thermal and infrared tracker",
+       "from_m": 3e-06,
+       "to_m": 1.4e-05,
+       "aperture_m": 0.3,
+       "dark_photons_s": 100.0,
+       "stare_s": 10.0,
+       "authored_range_m": 50000000.0
+      }
      },
      {
       "id": "gravimetric",
       "label": "gravimetric grid",
       "range_m": 25000000.0,
+      "range_source": "authored",
       "targets": [
        "construct (stealthy)"
       ],
       "reveals": "construct basics",
       "up_to": null,
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "gravimetric grid",
+       "from_m": 4e-07,
+       "to_m": 9e-07,
+       "aperture_m": 1.0,
+       "method": "gradiometer",
+       "noise_density": 1e-11,
+       "stare_s": 600.0,
+       "authored_range_m": 25000000.0
+      }
      },
      {
       "id": "visual_cam",
       "label": "visual inspection camera",
       "range_m": 50000.0,
+      "range_source": "authored",
       "targets": [
        "construct"
       ],
       "reveals": "visual id, hull markings, damage",
       "up_to": null,
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "visual inspection camera",
+       "from_m": 4e-07,
+       "to_m": 9e-07,
+       "aperture_m": 0.02,
+       "stare_s": 1.0,
+       "authored_range_m": 50000.0
+      }
      },
      {
       "id": "datalink",
       "label": "datalink",
       "range_m": 500.0,
+      "range_source": "authored",
       "targets": [
        "construct"
       ],
       "reveals": "everything it shares",
       "up_to": null,
-      "source": "V3 starter-sf sensors.json"
+      "source": "V3 starter-sf sensors.json",
+      "instrument": {
+       "name": "datalink",
+       "from_m": 4e-07,
+       "to_m": 9e-07,
+       "aperture_m": 0.0,
+       "authored_range_m": 500.0
+      }
      }
     ],
     "ladder": [
