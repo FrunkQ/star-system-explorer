@@ -9,11 +9,13 @@
   import type { TrueTexture } from "../../../renderer/src/index.ts";
   // Surfaces read once per world for the page's life: about 3 s each from the kernel.
   const kept = new Map<string, TrueTexture | string>();
+  // A giant's winds, read with its face: the bands slide and the storms turn as the globe turns (VP-A1).
+  const flows = new Map<string, AirFlow>();
 </script>
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { globeFrame, graticule, nearSide, ringEdge, spinAt, startGpu, trueLook, trueSurface, type Gpu, type GpuItem, type GpuRing, type LineupView, type Vec3 } from "../../../renderer/src/index.ts";
+  import { bodySeconds, globeFrame, graticule, nearSide, readTrueFace, ringEdge, spinAt, startGpu, trueLook, type AirFlow, type FaceReader, type Gpu, type GpuItem, type GpuRing, type LineupView, type Vec3 } from "../../../renderer/src/index.ts";
   import { reachKm, type CompareItem, type Placed, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let {
@@ -102,8 +104,10 @@
         for (const i of worlds) {
           const key = `${system}|${i.key}`;
           if (!kept.has(key)) {
-            const r = await ctx.session.surfaceTiles(system, i.key);
-            kept.set(key, (r.ok && trueSurface(r.tiles)) || "none");
+            // Ground, then today's clouds and haze; a giant is its cloud decks, with the winds that carry them (true-air.ts).
+            const f = await readTrueFace(ctx.session as unknown as FaceReader, system, i.key);
+            kept.set(key, typeof f === "string" ? "none" : f.tex);
+            if (typeof f !== "string" && f.flow) flows.set(key, f.flow);
           }
           const t = kept.get(key);
           if (t && typeof t !== "string" && !surfaces.has(i.key)) surfaces = new Map(surfaces).set(i.key, t);
@@ -148,7 +152,7 @@
         // A world not read is the plain grey of the system's True; 3D keeps the chart's colour.
         const face =
           look === "true"
-            ? trueLook({ key: `${system}|${i.key}`, star: i.kind === "star", colour: i.kind === "star" ? rgb(colour(i)) : faint, radius_m: i.radius_km * 1000, ...(surfaces.get(i.key) ? { surface: surfaces.get(i.key)! } : {}), ...(i.rings ? { rings: i.rings.map((r) => ({ name: "", inner_m: r.inner_km * 1000, outer_m: r.outer_km * 1000, tau: r.tau, albedo: r.albedo })) } : {}), pole: f[2] })
+            ? trueLook({ key: `${system}|${i.key}`, star: i.kind === "star", colour: i.kind === "star" ? rgb(colour(i)) : faint, radius_m: i.radius_km * 1000, ...(surfaces.get(i.key) ? { surface: surfaces.get(i.key)! } : {}), ...(flows.has(`${system}|${i.key}`) ? { flow: { flow: flows.get(`${system}|${i.key}`)!, dt_s: bodySeconds(i.day_h, t, pace, Number.isFinite(quickest) ? quickest : 24) } } : {}), ...(i.rings ? { rings: i.rings.map((r) => ({ name: "", inner_m: r.inner_km * 1000, outer_m: r.outer_km * 1000, tau: r.tau, albedo: r.albedo })) } : {}), pole: f[2] })
             : { colour: rgb(colour(i)), ...(i.kind === "star" ? { shines: true } : {}) };
         items.push({ id: i.key, rel: c, radius: p.r, frame: f, ...face });
       }
