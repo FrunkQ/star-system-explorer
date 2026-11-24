@@ -3,8 +3,9 @@
      Seats dialog it opens. -->
 <script lang="ts">
   import SeatsPanel from "./SeatsPanel.svelte";
+  import ArrivalSlip from "./ArrivalSlip.svelte";
   import type { Share } from "../share.svelte.ts";
-  import type { SceneSubject, Shown, ViewSession } from "../../../ui-contract/src/index.ts";
+  import type { PartyShip, SceneSubject, Shown, ViewSession } from "../../../ui-contract/src/index.ts";
 
   let {
     share,
@@ -17,6 +18,8 @@
     at_yr,
     landingUnsent,
     here,
+    party,
+    now_yr,
     onchange,
   }: {
     share: Share;
@@ -33,6 +36,10 @@
     landingUnsent: boolean;
     /** What "Send this view" sends: the place in view. */
     here: () => Shown;
+    /** The party's ship, for the offer to tell the table about a world it arrives at. */
+    party: PartyShip | null;
+    /** The campaign's now, in years. */
+    now_yr: number;
     /** A change the table made (an approved request, a seat's grant): the physics moved. */
     onchange: () => void;
   } = $props();
@@ -51,6 +58,7 @@
     {#if "off" in shown || shown.scope !== system || (landingUnsent && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => share.show(here())} title="Show the players' screens {title}, as far as they know it">Send this view</button>{/if}
     {#if !("off" in shown)}<button type="button" class="linkbtn quiet" data-screens-off onclick={() => share.show({ off: true })} title="Blank the players' screens until you send a view">Screens off</button>{/if}
     <button type="button" class="linkbtn quiet" onclick={() => ((seatsOpen = true), seatsDialog?.showModal())}>{share.state.plan.seats.length > 1 ? `${share.state.plan.seats.length} seats` : "More seats"}</button>
+    <ArrivalSlip {session} {party} {subjects} {now_yr} {onchange} />
     {#if share.state.waiting.length}
       <span class="requests" role="group" aria-label="Players' requests">
         {#each share.state.waiting as r (r.from + r.id)}

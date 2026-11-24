@@ -139,8 +139,12 @@
   /** The place in view, as the table would be shown it: on the Land screen, with the landing the GM is flying. */
   let lastLanding = $state.raw<Json | null>(null);
   const LAND_SCREEN = "players.land.screen.json";
-  const here = (): Shown =>
-    ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+  // A send made on the Land screen before its first landing arrived waits for it, then goes again with it.
+  let landingAwaited = false;
+  const here = (): Shown => {
+    landingAwaited = ws.screen === "surface" && !lastLanding;
+    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+  };
   // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
   let kickerW = $state(999);
 
@@ -529,6 +533,8 @@
     ws.sendLanding = (show) => {
       lastLanding = show;
       const sh = share?.state.shown;
+      if (landingAwaited && share && ws.screen === "surface" && sh && "scope" in sh && sh.scope === scene.system && !sh.landing) return void share.show(here());
+      landingAwaited = false;
       if (share && sh && "landing" in sh && sh.landing) share.show({ ...(JSON.parse(JSON.stringify(sh)) as typeof sh), landing: show });
     };
     ws.shared = !!share?.state.link;
@@ -1591,7 +1597,9 @@
           at_yr={(factsDoc as unknown as AuthoredFacts).at_yr}
           landingUnsent={ws.screen === "surface" && !!lastLanding}
           {here}
-          onchange={() => ws.notePhysics()}
+          party={ws.party ?? null}
+          now_yr={ws.campaign_now_yr ?? ws.now_yr}
+          onchange={() => (ws.revision++, ws.notePhysics())}
         />
       {/if}
       <!-- The engine's own numbers by depth (2.4): Science adds the device tier, Engine the kernel and the hashes. -->
