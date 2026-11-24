@@ -23,7 +23,10 @@ export type { RecipeDoc, RecipePass, PassSpec, PassCost, Knob, DegradeStep, Plan
 export { Governor, badge } from "./governor.ts";
 export type { Badge, GovernorOptions, GovernorMove } from "./governor.ts";
 export { LIBRARY } from "./passes.ts";
-export { mountGlobe, airRender } from "./runtime.ts";
+export { mountGlobe, airRender, deviceReadout, measureAgain, passShares, quality, setQuality } from "./runtime.ts";
+// VP4: the speed probe and placement by measured speed.
+export { BENCH_PIXELS, drawingBench, factorsFrom, gpuTiersAllowed, HeatWatch, loadProbe, loadQuality, place, PLACE_MARGIN, PROBE_SCENES, probeKey, QUALITY_WORDS, tierWords, ULTRA_HEADROOM } from "./probe.ts";
+export type { Capabilities, DeviceFactors, DrawingBench, Placement, ProbeResult, ProbeScene, QualityChoice, TierPrediction } from "./probe.ts";
 export { air, airFactsOf, gasMixOf, surfacePressureOf, airFromOptics, airRequest, KERNEL_GASES } from "./atmosphere.ts";
 export type { Air, AirFacts } from "./atmosphere.ts";
 export type { GlobeRun, GlobeRunOptions, GlobeStatus } from "./runtime.ts";
