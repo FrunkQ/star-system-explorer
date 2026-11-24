@@ -1,6 +1,6 @@
 # SSE4: the Playbook and the Switchboard (track PB)
 
-Status: **PROPOSED 24 Nov 2026**, for Alex. The direction was accepted by Alex on 24 Nov 15:39 ("agree... on all counts", six questions, in memory `sse4-run-desk-beats`); this note designs it in detail. Design and mockup only; nothing here is built by this note. The 21 questions are in section 14, each with a recommendation.
+Status: **PROPOSED 24 Nov 2026**, for Alex. The direction was accepted by Alex on 24 Nov 15:39 ("agree... on all counts", six questions, in memory `sse4-run-desk-beats`); this note designs it in detail. Design and mockup only; nothing here is built by this note. The 22 questions are in section 14, each with a recommendation.
 
 Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, folding sections, adding a preset, the Everyone layer and Lift, Undo and Redo, the Bookmarks list, the layout list and the new-layout builder made of bookmarks, picture and sound presets, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
 
@@ -341,7 +341,9 @@ Alex, 24 Nov 15:52: "the 'interference slider' should probably make it to the re
 
 - **Every screen's box carries its own dial**, under its preview, so the hand is beside the picture it changes: clear at one end, lost at the other, a tick at the look's saved level.
 - **A role's heading carries one dial for all its screens.** Moving it moves every screen in the role together and their own dials follow. Moving one screen's dial afterwards changes only that screen.
-- A dial is there only when the role's look has a signal fault, as ruled.
+- **Each dial has its kind beside it: Analogue, Digital or Both.** Alex, 24 Nov 16:15: "the stuff from the picker - digital noise and analogue noise - those controls from the old layout need to be brought over too." These are the two faults of the Looks note (kind 3). Analogue is tearing, a rolling bar, snow and ghosting, ending in static. Digital is blocks, frozen patches, colour smears and dropped frames, ending in blocks and black. Both runs the two together off the one dial. One press on the word steps through them; a screen takes its role's kind until its own is changed. The kind starts as whatever the role's look saved.
+- The dial is always there (question 22). A look with no fault saved simply starts it at clear, kind Analogue. This replaces the earlier line that a dial appears only when the look has a fault, because the GM reaches for interference live and should not have to edit a look first.
+- The finer settings of each fault (how much tearing against snow, block size, how often frames drop) stay on the look card's Signal fault row, which opens here (section 7.4). Live, the GM has one kind and one dial per box.
 - The line into a role or a screen roughens as its dial rises, so the whole board shows at a glance who has a bad picture.
 - "Tune in" is a held line released with the dial at the far end and drawn down.
 - A Look step in a preset ("Signal breaks up") sets the role's dial, and the GM's hand can take it from there.
@@ -469,7 +471,8 @@ Names are proposals. Everything is plain data; nothing here feeds physics or RES
              "role:bridge": { "source": …, "state": "held", "card": …, "before": … },
              "screen:k3f9": { "source": …, "state": "following" } },
   "screens": { "k3f9": { "name": "Mira's tablet", "role": "bridge", "local": false, "showing": … } },
-  "signal": { "role:bridge": 0.52, "screen:k3f9": 0.12 },   // a screen's own level wins over its role's
+  "signal": { "role:bridge": 0.52, "screen:k3f9": 0.12 },
+  "signal_kind": { "role:bridge": "analogue", "screen:k3f9": "digital" },   // analogue | digital | both   // a screen's own level wins over its role's
   "redirects": { "telescope": "bridge" } }
 ```
 
@@ -516,6 +519,7 @@ A screen's join gains one step: it says hello with a screen id it keeps on the d
 19. **The look card opens in the Switchboard, not as its own Workshop screen** (Workshop keeps a link that opens it here)? Recommended: yes. It follows from "the only place we do all this filter adding"; it changes where the accepted Workshop › Looks card lives, not what is on it.
 20. **Keep the one Send button on the chart on the Run desk?** It adds no gloss, it only sends where you are to Everyone, and it is the commonest live act. Recommended: yes, as the single exception to "all in one place". If you would rather have none, the on-air chip opens the Switchboard in one press and Send is the first button there.
 21. **"Dynamic fog" means the knowledge filter at the screen** (section 4A): what a role knows and which bands its sensors have decide how much of a bookmark its screens draw, live, and a reveal lifts it without a re-send? Recommended: yes. If you also meant a visible fog (unknown parts of a map or system drawn as mist rather than left out), that is a drawing style for the same filter and I would add it as a choice on the look.
+22. **Analogue, Digital or Both beside every dial, and the dial always present** (section 7.1, your message of 16:15, taken as yes for the kinds)? Recommended: yes. The part that is new is "always present": it withdraws the Looks note's rule that the dial shows only when the look has a fault saved.
 
 ## 15. Packages (for "Build Run desk playbook and players' side")
 
@@ -533,7 +537,7 @@ Files in `packages/shell/src/run/` and `packages/ui-contract/src/`. One at a tim
 | **PB7** | The role card: the Seats dialog's fields moved in; one layout per role with the upgrade of two-screen seats; redirects; requests on the screen that asked. `SeatsPanel.svelte` deleted. | PB2 | no |
 | **PB8** | Clean output link: `?clean=1`, fixed 16:9, transparent option, marked "Output" on the board. | PB2; renderer for the transparent ground | no, but small |
 | **PB9** | Phone layout; "Open in its own window"; "Open a screen on this computer" keeping a link to its opener. | PB2 | no |
-| **PB10** | Looks on the board: the look card opening here with a bookmark as its preview; look per role, the dials on role headings and screen boxes, deliveries on arrival and hold, Following latch. | renderer's looks (filters, faults, deliveries) | no |
+| **PB10** | Looks on the board: the look card opening here with a bookmark as its preview; look per role, the dials on role headings and screen boxes with their kind (analogue, digital, both), deliveries on arrival and hold, Following latch. | renderer's looks (filters, faults, deliveries) | no |
 | **PB11** | Later: camera in, on local screens only. | PB9 | no |
 | **PB12** | Play: pictures and sound as a source, from a pack, a file or a web address; "Here" as a sound destination; one asset on a Read aloud. | PB6 | no, but wanted |
 | **PB13** | Layouts on the board: the layout list on a role; the four-step builder with preview, its panels chosen from bookmarks, with "Whatever is sent"; "From where I am now"; a layout named by a preset. Orac's line when the agents track is ready. | PB2b, PB7; the existing screen composer | no |
