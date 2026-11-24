@@ -131,7 +131,7 @@ A preset is a short list of **steps**, each one a thing the GM could do live, pl
 | **Land** | a landing at a site | yes: `Shown.landing` (`LandingShow`) |
 | **Reveal** | a Known to change for the role's audience | yes: the `set_known` intent |
 | **Read aloud** | words for the GM to read; optionally also a card on the screens | new `Shown` kind |
-| **Play** | a picture, a sound or a film (section 4.8) | new `Shown` kind |
+| **Play** | a picture, a sound or a film (section 4.7) | new `Shown` kind |
 | **Look** | a look for the role, a signal level, or both | Looks not built yet |
 | **Hold** | a holding card (blank is "screens off") | new `Shown` kind, replacing `{off: true}` |
 
@@ -175,7 +175,7 @@ Alex, same message: sections "like 'Approach' as collapsible". Yes.
 - **"Update from live"** on a selected Show preset replaces its place and view with what the GM is looking at now.
 - **Again** on the "just now" strip repeats a send.
 
-### 4.8 Pictures, sound and film
+### 4.7 Pictures, sound and film
 
 Alex, 24 Nov 16:03: "we could 'do nothing' to let the GM read - but here would also be useful to load an audiofile, image or video to play... those assets can come with some games... eg: show a map". Yes. A **Play** step shows or plays one asset, and it is a source like any other: it takes a line, it can be held, it lifts.
 
@@ -187,11 +187,11 @@ Alex, 24 Nov 16:03: "we could 'do nothing' to let the GM read - but here would a
 - **"The GM streams only data" still holds**, with one line drawn. A pack asset or a web address is a name. A GM's own picture or short sound is a file sent once, not a stream, and is allowed up to a small size (question 16). A GM's own film is too big to send that way: it plays on this computer's screens, or goes by web address or in a pack.
 - **Whose work it is.** Assets in a pack follow the pack rules already set (our own or licensed; named-setting fan packs free). A GM's own files stay in their campaign and are not uploaded to Explorers with it unless they say so.
 
-### 4.9 Another program as a source (later)
+### 4.8 Another program as a source (later)
 
 Alex, 16:03: "eventually - show the VTT - as we integrate Mappadux". This needs no new mechanism, only one more kind of source: a **web page**. A source that is a web address is shown in a panel on each screen, and each screen loads it for itself, so nothing is streamed from the GM. A virtual tabletop that offers a players' page by link becomes a source the moment its address is pasted in, and it then takes lines, holds and layers like everything else. It is the mirror of what SSE4 already does the other way (a seat shown inside a tabletop). Marked later, with Mappadux: what the two programs tell each other (which map, where the party is) is its own design.
 
-### 4.7 Where the Playbook is kept
+### 4.9 Where the Playbook is kept
 
 In the campaign, as one document (`sse.playbook/1`), exported and imported with it. A pack may carry a playbook (an adventure pack's scenes), which appears as extra chapters marked with the pack's name and can be copied into the campaign to change. Sketch in section 11.
 
@@ -490,7 +490,27 @@ Files in `packages/shell/src/run/` and `packages/ui-contract/src/`. One at a tim
 
 Asks of other threads: the renderer for the cheap Chart preview at thumbnail size, the transparent ground and the looks pieces already assigned to it; the secrets work (SV) for the eye on Reveal steps; navigation (NV1) for the two object-menu entries.
 
-## 16. Not in 4.0
+## 16. For Mappadux, when it is rethought
+
+Alex, 24 Nov 16:04 to 16:05: "This routing system is going back into Mappadux as that is rethought. The ultimate space VTT... jot down notes for this - I will get to Mappadux again one day and we need to carry these over." Also confirmed in the same message: assets are loaded here, can be included in packs, and "the GM can throw them up where they want".
+
+What to carry over, written so it stands without the rest of this note:
+
+1. **Sources, destinations, lines.** Everything the GM can show is a source; everything that can show it is a destination (a screen, a role, Everyone); sending draws a line. One mechanism covers send, per-player send, screens off and previews.
+2. **Roles in the prepared material, screens at the table.** Prepared scenes name a role. Which device is which role is set on the night by dragging, and is never saved with the scenes.
+3. **A preset is a saved send**, so doing it live and firing it prepared are one path, and "keep what I just did" costs nothing.
+4. **Nothing sent destroys what it replaced.** Everyone is a layer that lifts; a fired preset's button un-presses; Hold all remembers what was already held; Undo and Redo for the board.
+5. **Holding is a send, not a cover**, so a held screen has nothing behind its card. Holding cards are editable data with jokes.
+6. **Knowledge belongs to the role a screen is in**, never to the thing sent. Routing can then never leak a secret.
+7. **The GM sends data, and each screen draws its own picture.** Previews are drawn on the GM's machine and say they are what the screen should be showing.
+8. **Assets** (pictures, sound, film) come from a pack by name, from the GM's own files, or from a web address, and are sources like any other.
+9. **Another program is a source by its web address.** This is the seam between SSE4 and Mappadux in both directions: a Mappadux table as a source on an SSE4 screen, and an SSE4 role's clean output as a source on a Mappadux table.
+10. **A clean output link per role** gives streaming for free.
+11. **Controls placed by how often they are used**: the dial on the box it changes, Hold all always in one corner, rare things on a card that opens from what it describes.
+
+Open for that day, not designed here: what the two programs tell each other (which map, where the party is, whose turn), and whether they share one Switchboard or each have their own.
+
+## 17. Not in 4.0
 
 Kept out so the run-through stays small; most belong to 4.2, the RPG release.
 
@@ -500,5 +520,5 @@ Kept out so the run-through stays small; most belong to 4.2, the RPG release.
 - Dice, checks or any game rule on a preset.
 - Players asking for a picture ("put the scope on that moon") as a request line into the Switchboard.
 - Picture-in-picture and split screens on one destination.
-- Film, web-page sources and showing a virtual tabletop (section 4.9).
+- Film, web-page sources and showing a virtual tabletop (section 4.8).
 - NDI.
