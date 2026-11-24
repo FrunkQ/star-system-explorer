@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, voyageLogEntries, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
   import AtWorld from "./AtWorld.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -157,6 +157,19 @@
   function pick(a: string) {
     if (mode === "to" && a !== from) to = a;
   }
+  // The flight, written into the ship's flight log on the record (V8 flight log): the table flew it, so it is planned.
+  let logged = $state<string | null>(null);
+  async function writeLog(construct: string, p: SystemVoyagePlan | null, at_s: number) {
+    if (!p) return;
+    const entries = voyageLogEntries(p, fromScene.nav?.bodies ?? []);
+    let n = 0;
+    for (const e of entries) {
+      const r = await ctx.session.logFlight({ construct, at_s, ...e });
+      if (!r.ok) return void (logged = `Not written to the flight log: ${r.message}`);
+      n++;
+    }
+    logged = `${n} entr${n === 1 ? "y" : "ies"} written to ${party?.name ?? "the ship"}'s flight log.`;
+  }
   function nextStop() {
     if (!v) return;
     // The party's ship arrives: it is there now (the players' screens move only when the GM sends the view).
@@ -165,6 +178,7 @@
       ctx.workspace.setParty({ ...$state.snapshot(party), at: v.to, voyage: { from: v.from, to: v.to, days: v.home_days, ...(typeof c === "number" ? { depart_yr: c } : {}) } } as typeof party);
       arrived = v.to;
       arrivedName = nameOf(v.to);
+      void writeLog(party.ship, $state.snapshot(plan) as SystemVoyagePlan, typeof c === "number" ? c * Number(YEAR_S) : 0);
     }
     visited = [...visited, ...v.legs.map((l) => l.to).filter((s) => !visited.includes(s))];
     from = v.to;
@@ -229,6 +243,7 @@
     {#if failed}<p class="warn" data-failed>{failed}</p>{/if}
     {#if busy && !plan}<p class="muted">Charting…</p>{/if}
     {#if landHref && arrived === from}<p data-arrived>{party?.name} is at {arrivedName}. <a href={landHref} data-land-here>Land here</a></p>{/if}
+    {#if logged && arrived === from}<p class="muted" data-logged>{logged}</p>{/if}
     {#if plan && !v}
       <h3>No voyage</h3>
       {#each plan.refusals as r, i (i)}<p class="warn" data-refusal>{r}</p>{/each}
