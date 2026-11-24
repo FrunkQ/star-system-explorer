@@ -58,3 +58,26 @@ The worst error is mid-way to Jupiter. The arcs are solved to the planets' centr
 - Logs for Dawn, Juno, Curiosity, JWST, the ISS, the V-2 and SNAP-10A, mostly from Horizons.
 - Read the Apollo 11 and STS-1 mission reports for the flown figures.
 - Measure low-orbit phase drift (STS-1).
+
+# RS3 part 2 (24 Nov 2026): the rest of the showcase craft
+
+- `build_logs.py` now writes 44 logs. It also reads `scripts/spaceflight/horizons_more.json`, which holds Horizons extracts for Juno, Dawn, MSL, JWST and the ISS.
+  - **Juno**: the Earth departure, the two deep space manoeuvres (344.3 and 387.9 m/s, close to the published figures), the Earth flyby of 9 Oct 2013 at 6,916 km, and Jupiter orbit insertion (516 m/s). JOI is worked out from the speed at perijove using the far elements, because Jupiter's oblateness swings the near ones. After that come yearly Jupiter orbits to 2026. The Centaur splits off.
+  - **Dawn**: no big burns, since it was on ion thrust. The log keeps Horizons' osculating orbit about the Sun every six months, the Mars flyby (3,937 km), and its orbits at Vesta and Ceres. Those are worked out from Horizons' vectors and match the survey, HAMO and LAMO orbits. It ends `lost_contact` on 1 Nov 2018. The Star 48 splits off.
+  - **Curiosity**: the cruise is solved to arrive at Mars at entry interface. The cruise stage, heat shield, back shell and sky crane each split off and end `impacted`. The rover is `landed` at Bradbury Landing. The entry and landing times and the site are from memory, marked.
+  - **JWST**: the Ariane 5 upper stage splits off at 27 min, then MCC-1a (20.0 m/s from Horizons), then osculating orbits about the Sun near L2 every three to six months.
+  - **ISS**: Horizons' TLE-based orbit on 1 Jan each year from 1999 to 2026. The modules joining are RS8.
+  - **SNAP-10A**: its 1,300 km polar orbit, from the secondary account.
+- New tests in `sol_today_logs.rs`:
+  - every solved course in every log arrives at its target, wherever the fixture holds it;
+  - the ISS log's drift is measured against Horizons.
+- Measured in low orbit (ISS), drift after a sample:
+  - 1 hour: 41 km
+  - 6 hours: 200 km
+  - 1 day: 720 km
+  - 1 week: 5,000 km
+  - 1 month: 12,900 km
+  
+  So yearly samples give the size and plane of the orbit, not where along it the ISS is. RS8 samples low orbits every few hours for any time a game needs. The fudge register has these numbers.
+- **V-2 MW 18014**, the first craft past 100 km: from GCAT's launch list. GCAT gives 14 Sep 1944 and 175 km, citing von Braun (1958), whereas the usual date is 20 Jun 1944. The log says so, and the hour and the fall are estimated.
+- Apollo 11's orbit sizes and splashdown are now read from the mission report (sections 1 to 5) and marked recorded. Its burn delta-v stays marked from memory, because the report's trajectory section did not come through.

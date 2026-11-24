@@ -1,0 +1,196 @@
+{
+ "construct": "curiosity",
+ "name": "Curiosity (Mars Science Laboratory)",
+ "about": "MSL from Cape Canaveral to Gale crater. The cruise stage, heat shield, back shell and sky crane each split off as their own constructs and end on Mars; the rover stays at Bradbury Landing in this log (its drives are not logged yet). Cruise from JPL Horizons; the entry and landing times (spacecraft time at Mars, UTC) and the site are from memory, marked.",
+ "pieces": [
+  {
+   "from_s": 63485607786,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 28.5833,
+    "lon_deg": -80.5833
+   },
+   "mark": "authored",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "on the pad before launch",
+   "to_s": 63490791786
+  },
+  {
+   "from_s": 63490791786,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ascent"
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "ascent; RS5 flies it",
+   "to_s": 63490792386
+  },
+  {
+   "from_s": 63490792386,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6563137.0,
+     "e": 0.0,
+     "i_deg": 28.5,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 63490792386
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "a 185 km parking orbit stands in for the upper stage's coast before departure",
+   "to_s": 63490793586
+  },
+  {
+   "from_s": 63490793586,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "lambert",
+     "to": "u:sol/sys:sun/body:mars",
+     "arrive_s": 63512701913
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "cruise to Mars; the trajectory corrections (the largest about 5 m/s) are below the big-burns line",
+   "to_s": 63512701913
+  },
+  {
+   "from_s": 63512701913,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "entry, parachute and sky crane"
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "entry interface 05:10:46, about 125 km up (NSSDCA); guided entry flown by sse-nav entry.rs",
+   "to_s": 63512702344
+  },
+  {
+   "from_s": 63512702344,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:mars",
+    "lat_deg": -4.5895,
+    "lon_deg": 137.4417
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "touchdown at Bradbury Landing, 4.5895 S 137.4417 E (from memory)"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 63490791786,
+   "kind": "launch",
+   "mark": "recorded",
+   "src": "nssdca-craft",
+   "writer": "pack"
+  },
+  {
+   "at_s": 63490793586,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "dv_m_s": 3704.0,
+   "engine": "rl10a-4-2",
+   "why": "impulsive equivalent from a 185 km parking orbit to Horizons' Earth-relative hyperbola (v-infinity 3.274 km/s on 2011-Nov-27); the upper stage's real burns wait on RS5"
+  },
+  {
+   "at_s": 63490793586,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "into": [
+    "msl-centaur"
+   ],
+   "keeps_identity": true,
+   "why": "the upper stage separates after the departure burn"
+  },
+  {
+   "at_s": 63512701313,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "into": [
+    "msl-cruise-stage"
+   ],
+   "keeps_identity": true,
+   "why": "cruise stage separates ten minutes before entry (from memory)"
+  },
+  {
+   "at_s": 63512701913,
+   "kind": "entry",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "entry interface (from memory)"
+  },
+  {
+   "at_s": 63512702132,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "into": [
+    "msl-heat-shield"
+   ],
+   "keeps_identity": true,
+   "why": "heat shield released under the parachute (from memory)"
+  },
+  {
+   "at_s": 63512702267,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "into": [
+    "msl-back-shell"
+   ],
+   "keeps_identity": true,
+   "why": "back shell and parachute released; powered descent (from memory)"
+  },
+  {
+   "at_s": 63512702344,
+   "kind": "landing",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "touchdown 05:17:57 UTC at Mars (from memory)"
+  },
+  {
+   "at_s": 63512702345,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "into": [
+    "msl-sky-crane"
+   ],
+   "keeps_identity": true,
+   "why": "the sky crane cuts the bridles and flies away to crash (from memory)"
+  }
+ ]
+}
