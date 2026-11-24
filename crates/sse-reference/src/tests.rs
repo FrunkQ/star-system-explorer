@@ -984,3 +984,27 @@ fn hematite_absorbs_blue_and_passes_red() {
     let at = |nm: f64| k[lam.iter().position(|x| (*x - nm).abs() < 1e-9).unwrap()];
     assert!(at(450.0) > 10.0 * at(700.0));
 }
+
+#[test]
+fn water_ice_is_clearest_in_the_blue() {
+    // MP34: Warren and Brandt 2008, ice Ih at 266 K; k rises from blue to red,
+    // which is why thick glacier ice looks blue.
+    let r = Reference::base();
+    let t = r
+        .row("substances", "h2o")
+        .and_then(|x| x.get("optical"))
+        .and_then(|o| o.get("refractive_index_solid"))
+        .unwrap();
+    let col = |c: &str| -> Vec<f64> {
+        t.get(c)
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect()
+    };
+    let (lam, k) = (col("lambda_nm"), col("k"));
+    let at = |nm: f64| k[lam.iter().position(|x| (*x - nm).abs() < 1e-9).unwrap()];
+    assert!(at(700.0) > 100.0 * at(450.0));
+}

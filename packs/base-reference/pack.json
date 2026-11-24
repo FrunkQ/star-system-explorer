@@ -12209,6 +12209,67 @@
        "src": "segelstein1981",
        "check": "unverified",
        "note": "liquid water near room temperature; k is the imaginary index (alpha = 4 pi k / lambda)"
+      },
+      "refractive_index_solid": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1250.0,
+        1504.0,
+        2000.0
+       ],
+       "n": [
+        1.3509,
+        1.3339,
+        1.3249,
+        1.3194,
+        1.3157,
+        1.313,
+        1.311,
+        1.3094,
+        1.308,
+        1.3069,
+        1.3049,
+        1.3032,
+        1.3015,
+        1.2971,
+        1.2916,
+        1.2744
+       ],
+       "k": [
+        2e-11,
+        2e-11,
+        2e-11,
+        2.365e-11,
+        9.239e-11,
+        5.889e-10,
+        2.289e-09,
+        5.73e-09,
+        1.43e-08,
+        2.9e-08,
+        1.34e-07,
+        4.2e-07,
+        1.62e-06,
+        1.29e-05,
+        0.0005373,
+        0.00164
+       ],
+       "src": "warren-brandt2008",
+       "check": "unverified",
+       "at_k": 266.15,
+       "note": "ordinary ice Ih at -7 C; k below 400 nm is an upper limit (printed as <2.0E-11); alpha = 4 pi k / lambda; ice is bluest where k is least"
       }
      },
      "chemical": {
@@ -19281,6 +19342,13 @@
      "text": "Wallace, J. M. and Hobbs, P. V. 2006, Atmospheric Science: An Introductory Survey, 2nd edition, Academic Press (dry air c_p = 1004 J/kg/K)",
      "status": "unverified",
      "doi": "10.1016/C2009-0-00034-8"
+    },
+    {
+     "id": "warren-brandt2008",
+     "text": "Warren, S. G. and Brandt, R. E. 2008, Journal of Geophysical Research 113, D14220: optical constants of ice from the ultraviolet to the microwave, a revised compilation (ice Ih at -7 C, 43 nm to 2 m). Read from the printable table IOPtable_2008.pdf on 24 Nov 2026",
+     "status": "unverified",
+     "doi": "10.1029/2007JD009744",
+     "url": "https://atmos.uw.edu/ice_optical_constants/"
     },
     {
      "id": "wikipedia-ice-phases",

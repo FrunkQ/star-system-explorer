@@ -79,11 +79,30 @@ SOURCES["protopapa2015"] = ("Protopapa, S., Grundy, W. M., Tegler, S. C. and Ber
 SOURCES["quirico-sshade-n2"] = ("Quirico, E., Schmitt, B. and Grundy, W. 1992, near-IR optical constants spectra of alpha and beta N2 ices at different temperatures, SSHADE/GhoSST dataset (linked to Grundy et al. 1993, Icarus 105, 254); its analysis note holds the real index constant at the visible value n = 1.23", "10.26302/SSHADE/EXPERIMENT_BS_20120925_001", "https://sshade.eu/data/SPECTRUM_BS_20120925_005/details", "unverified")
 
 
+SOURCES["warren-brandt2008"] = ("Warren, S. G. and Brandt, R. E. 2008, Journal of Geophysical Research 113, D14220: optical constants of ice from the ultraviolet to the microwave, a revised compilation (ice Ih at -7 C, 43 nm to 2 m). Read from the printable table IOPtable_2008.pdf on 24 Nov 2026", "10.1029/2007JD009744", "https://atmos.uw.edu/ice_optical_constants/", "unverified")
+
+# Ice Ih at 266 K (Warren and Brandt 2008 printable table): micron, mre, mim, as printed.
+# Below 400 nm the table prints mim as "<2.0E-11", an upper limit; it is held at 2e-11 here.
+WATER_ICE = [
+    (0.25, 1.3509, 2.0e-11), (0.30, 1.3339, 2.0e-11), (0.35, 1.3249, 2.0e-11), (0.40, 1.3194, 2.365e-11),
+    (0.45, 1.3157, 9.239e-11), (0.50, 1.3130, 5.889e-10), (0.55, 1.3110, 2.289e-9), (0.60, 1.3094, 5.730e-9),
+    (0.65, 1.3080, 1.430e-8), (0.70, 1.3069, 2.900e-8), (0.80, 1.3049, 1.340e-7), (0.90, 1.3032, 4.200e-7),
+    (1.00, 1.3015, 1.620e-6), (1.25, 1.2971, 1.290e-5), (1.504, 1.2916, 5.373e-4), (2.00, 1.2744, 1.640e-3),
+]
+
+
 def apply_ices(substances, val):
     """Visible real index of the Pluto and Triton ices, on the substance rows."""
     by_id = {s["id"]: s for s in substances}
     by_id["ch4"]["optical"]["n_solid"] = val(1.32, "1", "protopapa2015", "unverified", at_place="methane ice, 15800 cm-1 (633 nm)", note="real index of methane ice in the visible; its visible k is not on the sheet yet")
     by_id["n2"]["optical"]["n_solid"] = val(1.23, "1", "quirico-sshade-n2", "unverified", at_place="nitrogen ice, visible", note="real index of nitrogen ice in the visible, held constant through the near infrared in the SSHADE optical constants")
+    lam = [round(r[0] * 1000.0, 1) for r in WATER_ICE]
+    assert lam == sorted(lam)
+    by_id["h2o"]["optical"]["refractive_index_solid"] = {
+        "kind": "table", "lambda_nm": lam, "n": [r[1] for r in WATER_ICE], "k": [r[2] for r in WATER_ICE],
+        "src": "warren-brandt2008", "check": "unverified", "at_k": 266.15,
+        "note": "ordinary ice Ih at -7 C; k below 400 nm is an upper limit (printed as <2.0E-11); alpha = 4 pi k / lambda; ice is bluest where k is least",
+    }
 
 
 def apply(mixtures):
