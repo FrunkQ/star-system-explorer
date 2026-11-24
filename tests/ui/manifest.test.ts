@@ -110,3 +110,19 @@ test("people aboard: the roster's count when there is one, else the template's s
   assert.equal(crewAboard(ship, []), 1);
   assert.equal(crewAboard(ship, [person("A", {}), person("B", { [ABOARD.state]: "cold_sleep" }), person("C", { [ABOARD.state]: "dead" })]), 2);
 });
+
+test("fuel gauges read the kept levels, full by default, and plan from them", async () => {
+  const { fuelGauges, fuelNow, FUEL_FIELDS } = await import("../../packages/ui-contract/src/index.ts");
+  const courier = { wet_t: 420, dry_t: 400, fuels: ["deuterium"], jump: { tank_t: 19.838, fuel: "hydrogen" } };
+  const none = () => undefined;
+  const g = fuelGauges(courier, none);
+  assert.deepEqual(g.map((x) => [x.tank, x.fuel, x.full_t, x.share]), [["propellant", "deuterium", 20, 1], ["jump", "hydrogen", 19.838, 1]]);
+  const kept = (f: string) => (f === FUEL_FIELDS.jump ? 9.919 : f === FUEL_FIELDS.propellant ? 99 : undefined);
+  const h = fuelGauges(courier, kept);
+  assert.equal(h[0]!.now_t, 20, "more than the tank holds reads as full");
+  assert.equal(h[1]!.share, 0.5);
+  const now = fuelNow(courier, kept);
+  assert.equal(now.propellant_t, 20);
+  assert.equal(now.jump!.fuel_t, 9.919);
+  assert.deepEqual(fuelGauges({ wet_t: 10, dry_t: 10 }, none), [], "no tanks, no gauge");
+});

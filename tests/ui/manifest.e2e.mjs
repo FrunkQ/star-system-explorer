@@ -81,6 +81,27 @@ try {
   assert.ok(await man.locator("[data-unrated]", { hasText: "vesh" }).count());
   const before = await man.locator("[data-first-days]").innerText();
   await shot(page, "manifest-desk");
+  await desk.locator("[data-picture-toggle]").click();
+  // In play (Explore) what is aboard can change, but the ship's look cannot: amounts are open, the design is fixed.
+  assert.equal(await man.locator("[data-cargo-amount]").count(), 4, "amounts can change in play");
+  // Fuel (MC4): a gauge per tank, full to start; set a level in play, then top it up.
+  await man.locator("[data-fuel=jump] [data-now]").waitFor();
+  assert.equal(await man.locator("[data-fuel]").count(), 2, "reaction mass and jump fuel");
+  const jumpNow = () => man.locator("[data-fuel=jump] [data-now]").evaluate((m) => [Number(m.dataset.now), Number(m.dataset.full)]);
+  assert.deepEqual(await jumpNow(), [19.838, 19.838]);
+  assert.equal(await man.locator("[data-fuel=jump] [data-fuel-top]").count(), 0, "full: nothing to top up");
+  await man.locator("[data-fuel=jump] [data-fuel-now]").fill("5");
+  await man.locator("[data-fuel=jump] [data-fuel-now]").press("Tab");
+  await page.waitForFunction(() => document.querySelector("[data-fuel=jump] [data-now]")?.dataset.now === "5");
+  assert.equal(await desk.locator("[data-field='construct.jump_fuel_t']").count(), 0, "the level is drawn, not listed");
+  await shot(page, "fuel-low-desk");
+  await man.locator("[data-fuel=jump] [data-fuel-top]").click();
+  await man.locator("[data-aboard-note]", { hasText: "topped up" }).waitFor();
+  await page.waitForFunction(() => document.querySelector("[data-fuel=jump] [data-now]")?.dataset.now === "19.838");
+  assert.equal(await man.locator("[data-fuel=jump] [data-fuel-top]").count(), 0);
+  await desk.locator("[data-picture=plans] svg").first().waitFor();
+  assert.equal(await desk.locator("[data-picture=plans] [data-remix]").count(), 0, "no remix outside Build");
+  assert.equal(await desk.locator("[data-picture-file]").count(), 0, "no own picture outside Build");
 
   // Known to (MC2): on the Build desk each person aboard has an eye, not yet known to the table (as known as their
   // place, which under Kestrel's ladder is heard of); one press shows the whole crew, and Undo puts them back.
@@ -96,6 +117,49 @@ try {
   await shot(page, "crew-known-desk");
   await crew.locator("[data-show-all-undo]").click();
   await page.waitForFunction((was) => JSON.stringify([...document.querySelectorAll("[data-aboard=crew] [data-person] [data-eye]")].map((e) => e.getAttribute("data-eye"))) === JSON.stringify(was), start);
+
+  // The ship's pictures (edit mode, here the Build desk): plans and 3D model of the ship designed from its parts, and
+  // the GM's own pictures, with a selector; the remix and the one last chosen are kept with the ship.
+  await desk.locator("[data-picture=plans] svg").first().waitFor();
+  await desk.locator("[data-picture=plans] [data-remix]").click();
+  await desk.locator("[data-design-note]", { hasText: "Design kept" }).waitFor();
+  assert.equal(await desk.locator("[data-field='construct.design']").count(), 0, "the recipe is drawn, not listed");
+  await shot(page, "picture-designed-desk");
+  await desk.locator("[data-show=model]").click();
+  await desk.locator("[data-picture=model] [data-ship-model]").waitFor();
+  await desk.locator("[data-picture-note]", { hasText: "opens on this one" }).waitFor();
+  await shot(page, "picture-model-desk");
+  const png = await page.evaluate(() => {
+    const c = document.createElement("canvas");
+    c.width = 1800;
+    c.height = 1000;
+    const g = c.getContext("2d");
+    g.fillStyle = "#1b2a3a";
+    g.fillRect(0, 0, 1800, 1000);
+    g.fillStyle = "#e8c070";
+    g.beginPath();
+    g.moveTo(200, 500); g.lineTo(1500, 380); g.lineTo(1650, 500); g.lineTo(1500, 620); g.closePath();
+    g.fill();
+    return c.toDataURL("image/png").split(",")[1];
+  });
+  await desk.locator("[data-picture-file]").setInputFiles({ name: "kittiwake.png", mimeType: "image/png", buffer: Buffer.from(png, "base64") });
+  const own = desk.locator("[data-picture='picture:0'] img[data-own-picture]");
+  await own.waitFor();
+  const natural = await own.evaluate((i) => [i.naturalWidth, i.naturalHeight]);
+  assert.deepEqual(natural, [960, 533], `own picture scaled to fit 960 (${natural})`);
+  assert.equal(await desk.locator("[data-show]").count(), 3, "plans, model and one picture to choose from");
+  await shot(page, "picture-own-desk");
+  // Play: any view can be chosen, nothing is kept; it opens on the picture chosen last on Build.
+  await chooseDesk(page, "Explore");
+  await desk.locator("[data-picture='picture:0'] img[data-own-picture]").waitFor();
+  await desk.locator("[data-show=plans]").click();
+  await desk.locator("[data-picture=plans] svg").first().waitFor();
+  assert.equal(await desk.locator("[data-picture-file], [data-picture-clear], [data-remix]").count(), 0, "nothing to change in play");
+  await chooseDesk(page, "Build");
+  await desk.locator("[data-show='picture:0']").click();
+  await desk.locator("[data-picture-clear]").click();
+  await desk.locator("[data-picture=plans] svg").first().waitFor();
+  assert.equal(await desk.locator("[data-show]").count(), 2);
   await chooseDesk(page, "Explore");
 
   // Cold sleep for Rhee: one person draws, so the oxygen lasts twice as long.
