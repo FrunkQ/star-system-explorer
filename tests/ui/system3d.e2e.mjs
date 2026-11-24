@@ -52,10 +52,10 @@ try {
       assert.ok(!(await pins()).some((a) => a.split("/").length > 3), "no moons in the star's frame");
       assert.equal((await pins()).length, 6, "the star and five planets");
       await shot(gm, `v6-gm-3d-${mode}`);
-      // Choose Vault, open its frame: the camera hands over.
+      // A click on Vault flies in to its close-up: the camera rushes at it and hands over to its frame, with its moons.
       await view.locator(`[data-body='${VAULT}']`).click();
-      await view.getByRole("button", { name: "Moons of Vault ›" }).click();
       await gm.waitForFunction((v) => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-frame") === v, VAULT);
+      await gm.waitForTimeout(900); // the camera eases back out to show the moons
       assert.deepEqual((await pins()).sort(), [VAULT, `${VAULT}/body:0`, `${VAULT}/body:1`, `${VAULT}/body:2`]);
       await shot(gm, `v6-gm-3d-vault-${mode}`);
       // Zooming out past the frame's reach hands back to the star's frame.
@@ -99,13 +99,24 @@ try {
       await shot(gm, `v10b-gm-real-hud-${mode}`);
       // Every body takes a click (Alex, 24 Nov: only two did): the pointer picks the nearest body, so pins that overlap
       // at Real scale no longer hide the worlds beneath them. Checked on each pin clear of its neighbours by 6 px.
-      const pinsAt = await view.locator(".pin").evaluateAll((ps) => ps.map((e) => { const r = e.getBoundingClientRect(); return { id: e.dataset.body, x: r.x + r.width / 2, y: r.y + r.height / 2 }; }));
+      // A click also flies in to the body's close-up (Alex, 24 Nov); "‹ Sun" comes back out before the next one.
+      const pinsNow = () => view.locator(".pin").evaluateAll((ps) => ps.map((e) => { const r = e.getBoundingClientRect(); return { id: e.dataset.body, x: r.x + r.width / 2, y: r.y + r.height / 2 }; }));
+      const ids = (await pinsNow()).map((q) => q.id);
       let clicked = 0;
-      for (const q of pinsAt) {
-        if (pinsAt.some((o) => o.id !== q.id && Math.hypot(o.x - q.x, o.y - q.y) < 6)) continue;
+      for (const id of ids) {
+        const pinsAt = await pinsNow();
+        const q = pinsAt.find((x) => x.id === id);
+        if (!q || pinsAt.some((o) => o.id !== q.id && Math.hypot(o.x - q.x, o.y - q.y) < 6)) continue;
         await gm.mouse.click(q.x, q.y);
+        await gm.waitForTimeout(1100); // the fly-in to its close-up
         await gm.waitForFunction((id) => document.querySelector("[aria-roledescription='3D chart'] .pin.sel")?.getAttribute("data-body") === id, q.id, { timeout: 5000 });
         clicked++;
+        const back = view.locator(".crumb button, button").filter({ hasText: /^‹ / }).first();
+        if (await back.isVisible().catch(() => false)) {
+          if (clicked === 1) await shot(gm, `close-up-${mode}`);
+          await back.click();
+          await gm.waitForTimeout(150);
+        }
       }
       assert.ok(clicked >= 3, `bodies clicked: ${clicked}`);
       await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();

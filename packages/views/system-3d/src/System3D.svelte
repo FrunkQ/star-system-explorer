@@ -18,6 +18,7 @@
   import { onDestroy } from "svelte";
   import { basis, BELT_DUST, beltHaze, drawLiveStar, poleOf, ringProfile, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
+  import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
@@ -141,6 +142,48 @@
     frame = id;
     dist = 26;
     onselect(id);
+  }
+  // A click on a body flies in to its close-up (Alex, 24 Nov: "do some zoom tricks to fool the user into feeling we are
+  // zooming"). Not one continuous zoom across scales: the camera rushes at the body in this frame, the frame changes
+  // to the body's own while the eye is close, and the camera eases back out to show it with its moons. Two short
+  // moves that read as one; no motion when the person asks for less.
+  let flying = 0;
+  const easeIn = (u: number) => u * u * u;
+  const easeOut = (u: number) => 1 - (1 - u) ** 3;
+  function tweenCam(to: { pan: [number, number]; dist: number }, ms: number, ease: (u: number) => number): Promise<boolean> {
+    const run = ++flying;
+    const from = { pan: [...pan] as [number, number], dist };
+    const t0 = performance.now();
+    return new Promise((done) => {
+      const step = (now: number) => {
+        if (run !== flying) return done(false);
+        const u = Math.min(1, (now - t0) / ms);
+        const e = ease(u);
+        pan = [from.pan[0] + (to.pan[0] - from.pan[0]) * e, from.pan[1] + (to.pan[1] - from.pan[1]) * e];
+        // Distance in proportion, so the rush feels even from far out to close in.
+        dist = from.dist * (to.dist / from.dist) ** e;
+        if (u < 1) requestAnimationFrame(step);
+        else done(true);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  const closeDist = (id: string) => (hasChildren(bodies, id) ? 26 : 9);
+  async function flyTo(id: string) {
+    onselect(id);
+    if (id === centreId) return;
+    const node = lay?.nodes.find((n) => n.id === id);
+    if (!node || reducedMotion() || typeof requestAnimationFrame !== "function") {
+      enter(id);
+      dist = closeDist(id);
+      return;
+    }
+    const near = Math.max(MIN, Math.min(3, dist / 6));
+    if (!(await tweenCam({ pan: [node.local[0], node.local[1]], dist: near }, 380, easeIn))) return;
+    frame = id;
+    pan = [0, 0];
+    dist = 2.5;
+    await tweenCam({ pan: [0, 0], dist: closeDist(id) }, 620, easeOut);
   }
   function leave() {
     const back = centreId;
@@ -526,7 +569,7 @@
     dragFrom = null;
     if (!still || e.type !== "pointerup") return;
     const id = nearestAt(e.clientX, e.clientY);
-    if (id) onselect(id);
+    if (id) void flyTo(id);
   }
   function dbl(e: MouseEvent) {
     const id = nearestAt(e.clientX, e.clientY);
@@ -594,13 +637,13 @@
         data-body={b.id}
         data-x={p.x.toFixed(2)}
         data-y={p.y.toFixed(2)}
-        onclick={(e) => onselect(e.detail ? (nearestAt(e.clientX, e.clientY) ?? b.id) : b.id)}
+        onclick={(e) => void flyTo(e.detail ? (nearestAt(e.clientX, e.clientY) ?? b.id) : b.id)}
         ondblclick={(e) => (e.stopPropagation(), dbl(e))}
       ><span class="dot"></span>{#if labels}<span class="name" class:hover={!hud}>{b.name}</span>{/if}</button>
     {/if}
   {/each}
   <div class="bar">
-    {#if centreId !== root}<button type="button" onclick={leave}>‹ {byId(root)?.name ?? title}</button><span>Moons of <b>{byId(centreId)?.name}</b></span>{/if}
+    {#if centreId !== root}<button type="button" onclick={leave}>‹ {byId(root)?.name ?? title}</button><span>{hasChildren(bodies, centreId) ? "Moons of" : "Close up of"} <b>{byId(centreId)?.name}</b></span>{/if}
     {#if canEnter}<button type="button" onclick={() => enter(canEnter.id)}>Moons of {canEnter.name} ›</button>{/if}
   </div>
   <div class="zoom" role="group" aria-label="Zoom">
