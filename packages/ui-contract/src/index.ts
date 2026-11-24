@@ -51,6 +51,8 @@ export type { Hub, Wire, Manifest, Shown, LogEntry, HostState, ReplicaStatus, Pl
 export { BoardHistory, emptyBoard, upgradeBoard, sourceOf, landing, send, lift, back, rejoin, hold, release, holdAll, releaseAll, screenHello, moveScreen, swapScreens, redirect, setSignal, resolve, signalOf, cardWords, boardWire } from "./board.ts";
 export { BOOKMARK_SCHEMA, addBookmark, bookmarkName, bookmarkReachable, bookmarksFrom, makeBookmark, moveBookmark, nextBookmarkId, removeBookmark, renameBookmark, updateBookmark } from "./bookmark.ts";
 export type { Bookmark, Whereabouts } from "./bookmark.ts";
+export { PLAYBOOK_SCHEMA, addChapter, addPage, addPreset, addSection, destOf, emptyPlaybook, findPage, findPreset, fire, isUp, movePreset, movePresetToPage, nextId, pages, playbookFrom, presetWords, presetsInView, removePart, removePreset, rename, showOf, updatePreset } from "./playbook.ts";
+export type { Chapter, Page, Playbook, Preset, Section, Step } from "./playbook.ts";
 export type { Board, BoardScreen, Dest, HoldCard, Line, Showing, TablePort } from "./board.ts";
 // The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
 export type { Session } from "./session.ts";

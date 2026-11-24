@@ -42,7 +42,7 @@
   import { blockEntries, boxTarget, tableTarget } from "../../agents/src/orac-blocks.ts";
   import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
-  import { orbitScene, voicesFromSystem, bookmarksFrom, makeBookmark, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
+  import { orbitScene, voicesFromSystem, bookmarksFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
@@ -207,6 +207,7 @@
     const words = SCREENS[ws.screen]?.label ?? ws.screen;
     return makeBookmark(ws.bookmarks ?? [], whereabouts(), railScale === "world" || railScale === "system" ? (selName ?? scene.title) : scene.title, String(words));
   }
+  ws.markHere = markHere;
   function goBookmark(b: Bookmark) {
     ws.select(b.selected);
     if (b.scale) railScale = b.scale as RailScale;
@@ -343,6 +344,7 @@
     ws.overlay_anchors = save.workspace.overlay_anchors ?? {};
     ws.party = save.workspace.party ?? null;
     ws.bookmarks = bookmarksFrom(save.workspace.bookmarks);
+    ws.playbook = playbookFrom(save.workspace.playbook);
     savedAt = save.saved_at;
     const events = savedEvents(save);
     keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
@@ -361,7 +363,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, party: ws.party ?? null, bookmarks: ws.bookmarks ?? [] })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -376,6 +378,7 @@
     void ws.undo.length;
     void ws.redo.length;
     void ws.bookmarks;
+    void ws.playbook;
     if (!session || !status.hash) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {

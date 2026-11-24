@@ -1,6 +1,7 @@
 // The workspace state shared by the views of one screen. Reactive, so a
 // selection made on the chart reaches the card and the ruler.
 import type { AppliedEdit, ChangeRequest, DeriveRef, Workspace } from "../../ui-contract/src/index.ts";
+import { emptyPlaybook } from "../../ui-contract/src/index.ts";
 
 export function createWorkspace(now_yr: number): Workspace {
   const ws: Workspace = $state({
@@ -43,6 +44,7 @@ export function createWorkspace(now_yr: number): Workspace {
       ws.party = p;
     },
     bookmarks: [],
+    playbook: emptyPlaybook(),
     overlay_anchors: {},
     setOverlayAnchor(id, a) {
       const next = { ...(ws.overlay_anchors ?? {}) };
