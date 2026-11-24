@@ -132,6 +132,8 @@ export type { FormsHere } from "./add-here.ts";
 // Find in Look up: an element, constant or unit by name, symbol or id.
 export { findInSheet } from "./reference-find.ts";
 export type { RefHit } from "./reference-find.ts";
+export { classesOnStack, classTree, className, classBandWords, classNumber, needsWords, findClass, findClasses } from "./classes.ts";
+export type { AtlasAxis, AtlasBand, AtlasClass, AtlasScheme, ClassAtlas, ClassNode } from "./classes.ts";
 export { namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMore, sourceWords, layerOrder, SAMPLE_KINDS } from "./names.ts";
 export type { SampleAsk, SampledName, NameSample, NamePart, SchemeInfo, NamesOnStack, ShownName, NamesRead } from "./names.ts";
 export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedAsk, EmbedBridge } from "./embed.ts";
@@ -155,3 +157,4 @@ export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOp
 // Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
 export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed } from "./handles.ts";
+export * from "./place-notes.ts";
