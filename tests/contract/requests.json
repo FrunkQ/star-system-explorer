@@ -3452,5 +3452,22 @@
  {
   "op": "read_limb",
   "discs": [{"mus": [1.0]}]
+ },
+ {
+  "op": "fog_of_war",
+  "seats": [
+   {"seat": "kestrel", "fit": {"tech": "today", "hull_length_m": 50.0},
+    "own": {"address": "kestrel", "radius_m": 25.0, "heat_by_k": {"400": 100000.0}},
+    "contacts": [
+     {"craft": {"address": "torch", "radius_m": 25.0, "heat_by_k": {"400": 1000000.0},
+                "plumes": [{"jet_power_w": 1.0e9, "exhaust_m_s": 3.0e6}]}, "distance_m": 2.0e10},
+     {"craft": {"address": "coaster", "radius_m": 25.0, "heat_by_k": {"400": 100000.0}},
+      "distance_m": 1.0e11, "lost_for_s": 3600.0, "speed_m_s": 1000.0, "accel_m_s2": 1.0}
+    ]}
+  ]
+ },
+ {
+  "op": "fog_of_war",
+  "seats": [{"seat": "nobody", "contacts": []}]
  }
 ]

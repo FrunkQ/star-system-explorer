@@ -2591,6 +2591,174 @@
         "range": null
       },
       {
+        "description": "most a contact's drive can accelerate it",
+        "dim": [
+          1,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.acceleration",
+        "range": null
+      },
+      {
+        "description": "speed a drive's exhaust leaves at",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.exhaust_speed",
+        "range": null
+      },
+      {
+        "description": "heat a craft must shed at one temperature",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.heat_power",
+        "range": null
+      },
+      {
+        "description": "power carried away in a drive's exhaust",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.jet_power",
+        "range": null
+      },
+      {
+        "description": "mass of one exhaust particle",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.particle_mass",
+        "range": null
+      },
+      {
+        "description": "light a drive plume gives off",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.plume_luminosity",
+        "range": null
+      },
+      {
+        "description": "temperature of a drive's hot exhaust",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "fog.plume_temperature",
+        "range": null
+      },
+      {
+        "description": "glowing radiator area that sheds a craft's heat",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.radiator_area",
+        "range": null
+      },
+      {
+        "description": "temperature a craft's waste heat leaves at",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "fog.radiator_temperature",
+        "range": null
+      },
+      {
+        "description": "radius of the ring a lost contact could be anywhere inside",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.ring_radius",
+        "range": null
+      },
+      {
+        "description": "time since a contact was last seen",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.since",
+        "range": null
+      },
+      {
+        "description": "speed a contact was last seen moving at",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.speed",
+        "range": null
+      },
+      {
         "description": "absorbing cross-section of one particle at this wavelength",
         "dim": [
           2,

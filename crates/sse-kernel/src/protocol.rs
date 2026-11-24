@@ -593,6 +593,18 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
+    /// Fog of war from sensors (RK14, Atomic Rockets plan section 17), the
+    /// sums: each seat gives `seat`, its instruments (`sensors`, or `fit`
+    /// `{tech, hull_length_m}` for the free default set), optionally `own`
+    /// (its craft, for the "noticed out to here" ring) and `contacts`
+    /// (`sse_sense::fog::Contact`: a craft read from its power flow, its
+    /// distance, and when it was last seen). Each contact comes back
+    /// `ink`, `dotted` or `unseen`; writing the marks as `observe.grant`
+    /// events is the caller's.
+    FogOfWar {
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+    },
     /// The limb law (ND2 part 2b): how each disc's brightness and colour
     /// change from centre (`mu` 1) to edge (`mu` 0). A glowing disc gives
     /// `teff_k` (Eddington-Barbier in a grey atmosphere: the layer seen,
@@ -2164,6 +2176,7 @@ impl Request {
             Request::LightThroughGas { .. } => "light_through_gas",
             Request::EffectAtRange { .. } => "effect_at_range",
             Request::ReadLimb { .. } => "read_limb",
+            Request::FogOfWar { .. } => "fog_of_war",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2379,6 +2392,11 @@ pub fn ops() -> Vec<OpInfo> {
             "light_through_gas",
             Cost::Light,
             "per passage: a few formula blocks per wavelength per absorption feature, at the eye's 81 wavelengths and any asked for",
+        ),
+        o(
+            "fog_of_war",
+            Cost::Light,
+            "per seat, contact and instrument: one light description and one detection",
         ),
         o(
             "read_limb",
@@ -2990,6 +3008,12 @@ pub enum Response {
     GasPassed {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
+    },
+    /// `fog_of_war`: each of `seats` is `{seat, sensors, noticed_to_m?,
+    /// marks}` with `sse_sense::fog::Mark`.
+    FogRead {
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
     },
     /// `read_limb`: each of `discs` is `{ points, references }` with
     /// `sse_light::limb::LimbPoint`.

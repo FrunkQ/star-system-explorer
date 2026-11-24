@@ -626,6 +626,92 @@
             "IEC 61966-2-1:1999, Default RGB colour space, sRGB, section 5.2 (XYZ to linear sRGB, D65) https://webstore.iec.ch/publication/6169"
           ]
         }
+      },
+      "sensing": {
+        "about": "Default sensor fits (RK14, Atomic Rockets plan section 17.2 point 2): every craft gets a passive set for free, by tech and size, so fog of war works with no setup. A fit is a list of instruments whose aperture grows with the hull (a share of its length, between a floor and a cap). Authored stand-ins, modelled on flown instruments; a pack or the GM fits better ones.",
+        "default_fits": [
+          {
+            "tech": "today",
+            "note": "Instruments of the kind flown now: a visible camera (Rosetta OSIRIS-class), a cooled mid-infrared telescope (WISE-class), a soft X-ray monitor and a radio receiver. The two telescopes look out through the zodiacal light at 1 au.",
+            "sources": [
+              "Wright, E. L. et al. 2010, The Wide-field Infrared Survey Explorer (WISE), AJ 140, 1868. doi:10.1088/0004-6256/140/6/1868",
+              "Keller, H. U. et al. 2007, OSIRIS, the scientific camera system onboard Rosetta, Space Sci. Rev. 128, 433. doi:10.1007/s11214-006-9128-4",
+              "Leinert, C. et al. 1998, The 1997 reference of diffuse night sky brightness, A&AS 127, 1: the zodiacal light near the ecliptic at 1 au, about 23 V mag per square arcsecond (5e-7 W m-2 sr-1 over 400 to 900 nm) and in the mid infrared the glow of 280 K dust of optical depth about 1e-7 (8e-6 W m-2 sr-1 over 3 to 25 um). doi:10.1051/aas:1998105"
+            ],
+            "instruments": [
+              {
+                "aperture_share": 0.01,
+                "aperture_min_m": 0.1,
+                "aperture_max_m": 1.0,
+                "sensor": {
+                  "name": "visible camera",
+                  "kind": "photon",
+                  "from_m": 4e-07,
+                  "to_m": 9e-07,
+                  "aperture_m": 0.1,
+                  "efficiency": 0.5,
+                  "dark_photons_s": 1.0,
+                  "threshold_snr": 5.0,
+                  "stare_s": 60.0,
+                  "method": "image",
+                  "background_w_m2_sr": 5e-07
+                }
+              },
+              {
+                "aperture_share": 0.01,
+                "aperture_min_m": 0.1,
+                "aperture_max_m": 0.4,
+                "sensor": {
+                  "name": "infrared telescope",
+                  "kind": "photon",
+                  "from_m": 3e-06,
+                  "to_m": 2.5e-05,
+                  "aperture_m": 0.1,
+                  "efficiency": 0.5,
+                  "dark_photons_s": 10.0,
+                  "threshold_snr": 5.0,
+                  "stare_s": 60.0,
+                  "method": "image",
+                  "background_w_m2_sr": 8e-06
+                }
+              },
+              {
+                "aperture_share": 0.0,
+                "aperture_min_m": 0.1,
+                "aperture_max_m": 0.1,
+                "sensor": {
+                  "name": "X-ray monitor",
+                  "kind": "photon",
+                  "from_m": 1e-10,
+                  "to_m": 1e-08,
+                  "aperture_m": 0.1,
+                  "efficiency": 0.3,
+                  "dark_photons_s": 0.1,
+                  "threshold_snr": 5.0,
+                  "stare_s": 60.0,
+                  "method": "image"
+                }
+              },
+              {
+                "aperture_share": 0.05,
+                "aperture_min_m": 0.5,
+                "aperture_max_m": 5.0,
+                "sensor": {
+                  "name": "radio receiver",
+                  "kind": "radio",
+                  "from_m": 0.01,
+                  "to_m": 0.3,
+                  "aperture_m": 0.5,
+                  "efficiency": 0.6,
+                  "system_temperature_k": 50.0,
+                  "threshold_snr": 5.0,
+                  "stare_s": 60.0,
+                  "method": "image"
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     "units": [

@@ -2986,6 +2986,7 @@ impl Kernel {
                 systems::light_through_gas(passages, &self.observe.reference)?
             }
             Request::ReadLimb { discs } => systems::read_limb(discs)?,
+            Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
             Request::EffectAtRange { asks } => {
                 systems::effect_at_range(asks, &self.observe.reference)?
             }

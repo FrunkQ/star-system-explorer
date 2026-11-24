@@ -3515,6 +3515,35 @@ fn light_through_gas_gives_the_colour_to_the_eye() {
     assert_eq!(r["code"], "bad_gas", "{r}");
 }
 
+/// RK14: fog of war marks a lit torch far off and leaves a ring where a
+/// lost coaster could be.
+#[test]
+fn fog_of_war_marks_contacts_for_a_seat() {
+    let mut k = crate::Kernel::new();
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "fog_of_war", "seats": [
+        {"seat": "kestrel", "fit": {"tech": "today", "hull_length_m": 50.0},
+         "own": {"address": "kestrel", "radius_m": 25.0, "heat_by_k": {"400": 1.0e5}},
+         "contacts": [
+            {"craft": {"address": "torch", "radius_m": 25.0, "heat_by_k": {"400": 1.0e6},
+                       "plumes": [{"jet_power_w": 1.0e9, "exhaust_m_s": 3.0e6}]}, "distance_m": 2.0e10},
+            {"craft": {"address": "coaster", "radius_m": 25.0, "heat_by_k": {"400": 1.0e5}},
+             "distance_m": 1.0e11, "lost_for_s": 3600.0, "speed_m_s": 1000.0, "accel_m_s2": 1.0}]}]}));
+    assert_eq!(r["type"], "fog_read", "{r}");
+    let s = &r["seats"][0];
+    assert_eq!(s["marks"][0]["mark"], "dotted", "{s}");
+    assert_eq!(s["marks"][1]["mark"], "unseen", "{s}");
+    assert!(s["marks"][1]["ring_m"].as_f64().unwrap() > 6e6, "{s}");
+    assert!(s["noticed_to_m"].as_f64().unwrap() > 1e9, "{s}");
+    assert_eq!(s["sensors"].as_array().unwrap().len(), 4);
+    let r = send(
+        serde_json::json!({"op": "fog_of_war", "seats": [{"seat": "nobody", "contacts": []}]}),
+    );
+    assert_eq!(r["code"], "bad_seat", "{r}");
+}
+
 /// ND2 part 2b: the limb law reads a glowing disc darker and redder at its
 /// edge, and a lit one by Minnaert's law.
 #[test]

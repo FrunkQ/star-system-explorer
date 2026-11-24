@@ -432,6 +432,61 @@ pub(crate) fn read_air_optics(
 }
 
 /// Light through gas (ND2), with the colour to the eye before and after.
+pub(crate) fn fog_of_war(seats: Vec<serde_json::Value>) -> Out {
+    #[derive(serde::Deserialize)]
+    struct FitAsk {
+        tech: String,
+        hull_length_m: f64,
+    }
+    #[derive(serde::Deserialize)]
+    struct Seat {
+        seat: String,
+        #[serde(default)]
+        sensors: Option<Vec<sse_sense::Sensor>>,
+        #[serde(default)]
+        fit: Option<FitAsk>,
+        #[serde(default)]
+        own: Option<sse_sense::fog::Craft>,
+        #[serde(default)]
+        contacts: Vec<sse_sense::fog::Contact>,
+    }
+    let model = sse_light::emit::Model::base();
+    let fits = sse_sense::fog::base_fits().map_err(|e| err("bad_light", e))?;
+    let mut out = vec![];
+    for (n, v) in seats.into_iter().enumerate() {
+        let bad = |e: String| err("bad_seat", format!("seat {n}: {e}"));
+        let s: Seat = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let sensors = match (s.sensors, s.fit) {
+            (Some(x), _) => x,
+            (None, Some(f)) => {
+                sse_sense::fog::default_fit(&fits, &f.tech, f.hull_length_m).map_err(bad)?
+            }
+            (None, None) => {
+                return Err(bad(
+                    "give sensors, or fit {tech, hull_length_m} for the default set".into(),
+                ))
+            }
+        };
+        let noticed = match &s.own {
+            Some(c) => Some(sse_sense::fog::noticed_to(c, &sensors, model).map_err(bad)?),
+            None => None,
+        };
+        let marks = s
+            .contacts
+            .iter()
+            .map(|c| sse_sense::fog::mark(c, &sensors, model))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(bad)?;
+        out.push(serde_json::json!({
+            "seat": s.seat,
+            "sensors": sensors,
+            "noticed_to_m": noticed,
+            "marks": marks,
+        }));
+    }
+    Ok(Response::FogRead { seats: out })
+}
+
 pub(crate) fn read_limb(discs: Vec<serde_json::Value>) -> Out {
     #[derive(serde::Deserialize)]
     struct In {
