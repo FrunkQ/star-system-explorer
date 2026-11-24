@@ -79,11 +79,55 @@
         "read_by": "climate",
         "unit": "w_m2",
         "value": 949.5922506065516
+      },
+      {
+        "kind": "interior.redox_iw",
+        "read_by": "surface (S) volcanic gases, climate early air",
+        "unit": "one",
+        "value": 0.18508269698165325
+      },
+      {
+        "kind": "early.outgas_h2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.39279094961240935
+      },
+      {
+        "kind": "early.outgas_h2o",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.508463450742015
+      },
+      {
+        "kind": "early.outgas_co",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.07651114066997443
+      },
+      {
+        "kind": "early.outgas_co2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.021800729236369585
+      },
+      {
+        "kind": "early.outgas_ch4",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.000433729739231647
       }
     ],
     "magma_ocean_end_myr": 54.0,
     "mass_earth": 1.0,
+    "outgas": [
+      0.39279094961240935,
+      0.508463450742015,
+      0.07651114066997443,
+      0.021800729236369585,
+      0.000433729739231647
+    ],
     "radius": 0.9992499933968251,
+    "redox_iw": 0.18508269698165325,
     "solid_radius": 0.9992499933968251,
     "surface_water_oceans": 2.986083933895689,
     "water_fraction": 0.001
@@ -168,11 +212,55 @@
         "read_by": "climate",
         "unit": "w_m2",
         "value": 1816.6052593342852
+      },
+      {
+        "kind": "interior.redox_iw",
+        "read_by": "surface (S) volcanic gases, climate early air",
+        "unit": "one",
+        "value": 0.18508269698165192
+      },
+      {
+        "kind": "early.outgas_h2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.outgas_h2o",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.outgas_co",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.7792232837248627
+      },
+      {
+        "kind": "early.outgas_co2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.22077671627513726
+      },
+      {
+        "kind": "early.outgas_ch4",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.0
       }
     ],
     "magma_ocean_end_myr": 150.0,
     "mass_earth": 0.815,
+    "outgas": [
+      0.0,
+      0.0,
+      0.7792232837248627,
+      0.22077671627513726,
+      0.0
+    ],
     "radius": 0.9455025336705917,
+    "redox_iw": 0.18508269698165192,
     "solid_radius": 0.9455025336705917,
     "surface_water_oceans": 0.0,
     "water_fraction": 0.001
@@ -257,11 +345,55 @@
         "read_by": "climate",
         "unit": "w_m2",
         "value": 408.85303671722755
+      },
+      {
+        "kind": "interior.redox_iw",
+        "read_by": "surface (S) volcanic gases, climate early air",
+        "unit": "one",
+        "value": 0.18508269698165325
+      },
+      {
+        "kind": "early.outgas_h2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.39373480380153153
+      },
+      {
+        "kind": "early.outgas_h2o",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.5076037734730962
+      },
+      {
+        "kind": "early.outgas_co",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.07687214903942849
+      },
+      {
+        "kind": "early.outgas_co2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.021782144932340926
+      },
+      {
+        "kind": "early.outgas_ch4",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 7.128753602909017e-6
       }
     ],
     "magma_ocean_end_myr": 54.0,
     "mass_earth": 0.107,
+    "outgas": [
+      0.39373480380153153,
+      0.5076037734730962,
+      0.07687214903942849,
+      0.021782144932340926,
+      7.128753602909017e-6
+    ],
     "radius": 0.5461921390090946,
+    "redox_iw": 0.18508269698165325,
     "solid_radius": 0.5461921390090946,
     "surface_water_oceans": 0.3195109809268388,
     "water_fraction": 0.001
@@ -346,11 +478,55 @@
         "read_by": "climate",
         "unit": "w_m2",
         "value": 379836.90024262056
+      },
+      {
+        "kind": "interior.redox_iw",
+        "read_by": "surface (S) volcanic gases, climate early air",
+        "unit": "one",
+        "value": 0.17732880451276767
+      },
+      {
+        "kind": "early.outgas_h2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.outgas_h2o",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.outgas_co",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.7807552055160492
+      },
+      {
+        "kind": "early.outgas_co2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.21924479448395096
+      },
+      {
+        "kind": "early.outgas_ch4",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.0
       }
     ],
     "magma_ocean_end_myr": 150.0,
     "mass_earth": 5.15,
+    "outgas": [
+      0.0,
+      0.0,
+      0.7807552055160492,
+      0.21924479448395096,
+      0.0
+    ],
     "radius": 1.5428966510276565,
+    "redox_iw": 0.17732880451276767,
     "solid_radius": 1.5428966510276565,
     "surface_water_oceans": 0.0,
     "water_fraction": 0.0
@@ -435,11 +611,55 @@
         "read_by": "climate",
         "unit": "w_m2",
         "value": 3798.3690024262064
+      },
+      {
+        "kind": "interior.redox_iw",
+        "read_by": "surface (S) volcanic gases, climate early air",
+        "unit": "one",
+        "value": 0.17732880451276767
+      },
+      {
+        "kind": "early.outgas_h2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.outgas_h2o",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.outgas_co",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.7807552055160492
+      },
+      {
+        "kind": "early.outgas_co2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.21924479448395096
+      },
+      {
+        "kind": "early.outgas_ch4",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.0
       }
     ],
     "magma_ocean_end_myr": 54.0,
     "mass_earth": 5.15,
+    "outgas": [
+      0.0,
+      0.0,
+      0.7807552055160492,
+      0.21924479448395096,
+      0.0
+    ],
     "radius": 2.648509205677324,
+    "redox_iw": 0.17732880451276767,
     "solid_radius": 1.5428966510276565,
     "surface_water_oceans": 0.0,
     "water_fraction": 0.0
@@ -524,11 +744,55 @@
         "read_by": "climate",
         "unit": "w_m2",
         "value": 659.4390629212164
+      },
+      {
+        "kind": "interior.redox_iw",
+        "read_by": "surface (S) volcanic gases, climate early air",
+        "unit": "one",
+        "value": 1.5411324386942153
+      },
+      {
+        "kind": "early.outgas_h2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.13987286495112516
+      },
+      {
+        "kind": "early.outgas_h2o",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.8600175679984442
+      },
+      {
+        "kind": "early.outgas_co",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.outgas_co2",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.00006294169134319499
+      },
+      {
+        "kind": "early.outgas_ch4",
+        "read_by": "climate early air, life (L)",
+        "unit": "one",
+        "value": 0.00004662535908742413
       }
     ],
     "magma_ocean_end_myr": 54.0,
     "mass_earth": 2.0,
+    "outgas": [
+      0.13987286495112516,
+      0.8600175679984442,
+      0.0,
+      0.00006294169134319499,
+      0.00004662535908742413
+    ],
     "radius": 1.5593106061686304,
+    "redox_iw": 1.5411324386942153,
     "solid_radius": 1.5593106061686304,
     "surface_water_oceans": 2986.08393389569,
     "water_fraction": 0.5

@@ -23,6 +23,7 @@ pub mod nebula;
 pub mod orbit;
 pub mod planet;
 pub mod reach;
+pub mod redox;
 pub mod shield;
 pub mod star;
 #[cfg(test)]
@@ -200,6 +201,20 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("element.ore_enrichment", "how many times an ore process raised an element over the crust"),
     ("deposit.element_mass", "mass of an element held in an ore deposit"),
     ("deposit.grade", "an element's share of the ore by mass"),
+    ("interior.reducing_carbon_share", "carbon free to smelt iron oxide back to metal, share of the rock and metal by mass"),
+    ("matter.molar_mass_fe", "molar mass of iron"),
+    ("matter.molar_mass_feo", "molar mass of iron oxide, FeO"),
+    ("matter.molar_mass_c", "molar mass of carbon"),
+    ("interior.redox_iw", "the mantle's oxygen fugacity against the iron-wüstite buffer at its magma ocean's surface, log10 units"),
+    ("interior.redox_iw_core", "the mantle's oxygen fugacity against iron-wüstite at core formation, log10 units"),
+    ("early.outgassed_hydrogen", "hydrogen a magma ocean gave off, counted as H2"),
+    ("early.outgassed_carbon", "carbon a magma ocean gave off"),
+    ("early.outgassed_pressure", "pressure of the air a magma ocean gave off"),
+    ("early.outgas_h2", "H2's share by moles of the gas a magma ocean gave off"),
+    ("early.outgas_h2o", "water vapour's share by moles of the gas a magma ocean gave off"),
+    ("early.outgas_co", "carbon monoxide's share by moles of the gas a magma ocean gave off"),
+    ("early.outgas_co2", "carbon dioxide's share by moles of the gas a magma ocean gave off"),
+    ("early.outgas_ch4", "methane's share by moles of the gas a magma ocean gave off"),
     ("interior.core_top_temperature", "temperature at the top of the core"),
     ("interior.core_top_gravity", "gravity at the top of the core"),
     (

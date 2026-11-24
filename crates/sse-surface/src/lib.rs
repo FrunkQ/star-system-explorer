@@ -427,6 +427,18 @@ fn start_of(b: &Body) -> WorldStart {
         surface_water_oceans: b.oceans,
         co2_bar: 0.0,
         early_insolation: 1.0,
+        // A world from facts has no formation ledger: its mantle's redox
+        // follows its core alone, and what it outgassed is not known here.
+        redox_iw: sse_atoms::redox::redox_iw(
+            b.core_mass_fraction,
+            0.0,
+            sse_core::sheet::atomic_weight::FE / 1000.0,
+            sse_core::sheet::molar_mass::FEO,
+            sse_core::sheet::atomic_weight::C / 1000.0,
+            &sse_atoms::redox::REDOX,
+        )
+        .0,
+        outgas: [0.0; 5],
         facts: vec![],
     }
 }
