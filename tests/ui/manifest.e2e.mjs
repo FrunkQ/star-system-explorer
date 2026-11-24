@@ -135,6 +135,22 @@ try {
   await desk.locator("[data-picture=designed] svg").first().waitFor();
   await chooseDesk(page, "Explore");
 
+  // Known to (MC2): on the Build desk each person aboard has an eye, not yet known to the table (as known as their
+  // place, which under Kestrel's ladder is heard of); one press shows the whole crew, and Undo puts them back.
+  await chooseDesk(page, "Build");
+  await desk.locator("[data-part=crew]").click();
+  await crew.locator("[data-person] [data-eye]").first().waitFor();
+  const eyesOf = () => crew.locator("[data-person] [data-eye]").evaluateAll((els) => els.map((e) => e.getAttribute("data-eye")));
+  const start = await eyesOf();
+  assert.equal(start.length, 3);
+  assert.ok(start.every((e) => e !== "known"), `people aboard start unknown to the table (${start})`);
+  await crew.locator("[data-show-all]").click();
+  await page.waitForFunction(() => [...document.querySelectorAll("[data-aboard=crew] [data-person] [data-eye]")].every((e) => e.getAttribute("data-eye") === "known"));
+  await shot(page, "crew-known-desk");
+  await crew.locator("[data-show-all-undo]").click();
+  await page.waitForFunction((was) => JSON.stringify([...document.querySelectorAll("[data-aboard=crew] [data-person] [data-eye]")].map((e) => e.getAttribute("data-eye"))) === JSON.stringify(was), start);
+  await chooseDesk(page, "Explore");
+
   // Cold sleep for Rhee: one person draws, so the oxygen lasts twice as long.
   await desk.locator("[data-part=crew]").click();
   await crew.locator("[data-person]", { hasText: "Rhee" }).locator("[data-state]").selectOption("cold_sleep");
