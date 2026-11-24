@@ -8,7 +8,8 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { announcePlace, foamCells, parseWebId, sci, viewOptions, webId, DEFAULT_VIEW, FOAM_CONTROLS, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
+  import { announcePlace, cubeShares, foamCells, parseWebId, sci, viewOptions, webId, DEFAULT_VIEW, FOAM_CONTROLS, type Json, type SystemScene, type ViewContext, type WebCube, type WebSlice } from "../../../ui-contract/src/index.ts";
+  import Web3D from "./Web3D.svelte";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ extent: String(params.extent_mpc ?? "200"), n: Number(params.samples ?? 96) }));
@@ -27,7 +28,35 @@
   let gen = 0;
   // Scale (Alex, 23 Nov): Readable draws the slice comoving, the same size at every time; Real draws it at its
   // physical size then, shrunk by the scale factor, so the young web sits small in the middle and grows as it plays.
-  const real = $derived(viewOptions(FOAM_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown.scale === "real");
+  const shownView = $derived(viewOptions(FOAM_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  const real = $derived(shownView.scale === "real");
+  // 3D and True turn a cube of the web (V9w); Chart is the flat slice.
+  const turned = $derived(shownView.style === "3d" || shownView.style === "true");
+  const CUBE_N = 48;
+  let cube = $state<WebCube | null>(null);
+  const keptCubes = new Map<string, WebCube>();
+  async function cubeAt(e: string, s: number): Promise<WebCube | string> {
+    const key = `${e}:${s}`;
+    const k = keptCubes.get(key);
+    if (k) return k;
+    const r = await ctx.session.webCube({ ...(s === STEPS.length - 1 ? {} : { t_gyr: STEPS[s]! }), extent_mpc: Number(e), n: CUBE_N });
+    if (!r.ok) return r.message;
+    keptCubes.set(key, r.web);
+    return r.web;
+  }
+  let cgen = 0;
+  $effect(() => {
+    if (!turned) return;
+    const e = extent;
+    const s = step;
+    const g = ++cgen;
+    void cubeAt(e, s).then((r) => {
+      if (g !== cgen) return;
+      if (typeof r === "string") return void ((failed = r), (cube = null));
+      cube = r;
+    });
+  });
+  const space = $derived(cube ? cubeShares(cube.volume) : null);
   // Slices already grown, by extent and time step (deterministic, so safe to keep).
   const kept = new Map<string, WebSlice>();
 
@@ -60,7 +89,7 @@
     if (step === STEPS.length - 1) step = 0;
     while (playing && step < STEPS.length - 1) {
       // Grow the next frame before showing it, then hold it briefly.
-      await slice(extent, step + 1);
+      await (turned ? cubeAt(extent, step + 1) : slice(extent, step + 1));
       if (!playing) break;
       step += 1;
       await new Promise((r) => setTimeout(r, 450));
@@ -192,7 +221,7 @@
     {#if web}
       <p class="lede" data-lede>
         {web.t_gyr >= web.now_gyr - 0.05 ? "Today" : `${tWords(web.t_gyr)} after the Big Bang`} (redshift {web.z < 0.005 ? "0" : web.z.toFixed(2)}): a slice {web.slice.extent} megaparsecs across, about {sci(web.slice.extent * 3.2616)} million light years.
-        {#if shares.length}By where the matter sits: {shares.map((e) => `${Math.round(e.share * 100)}% ${e.label.toLowerCase()}`).join(", ")}.{/if}
+        {#if turned && space}Of the space: {Math.round(space.void.space * 100)}% voids, holding {Math.round(space.void.matter * 100)}% of the matter.{:else if shares.length}By where the matter started: {shares.map((e) => `${Math.round(e.share * 100)}% ${e.label.toLowerCase()}`).join(", ")}.{/if}
       </p>
     {:else if failed}
       <p class="lede" data-failed>{failed}</p>
@@ -203,7 +232,14 @@
 
   <div class="split">
     <div class="map">
-      <canvas bind:this={canvas} width="640" height="640" data-foam aria-label="Slice of the cosmic web"></canvas>
+      {#if turned}
+        {#if cube}
+          <Web3D {cube} look={shownView.style === "true" ? "true" : "3d"} seen={shownView.seen} hud={shownView.hud} shrink={real ? cube.volume.scale_factor : 1} onturned={() => ctx.workspace.turned?.()} />
+        {:else}
+          <p class="lede">Growing the cube…</p>
+        {/if}
+      {/if}
+      <canvas bind:this={canvas} class:off={turned} width="640" height="640" data-foam aria-label="Slice of the cosmic web"></canvas>
       <div class="scale" style:width="{bar.frac * 100}%"><span data-scale-bar={real ? "real" : "readable"}>{bar.mpc} Mpc{real ? " across then" : " comoving"} · {sci(bar.ly)} million ly</span></div>
       <div class="time">
         <button type="button" class="play" data-play onclick={play}>{playing ? "Pause" : "Play"}</button>
@@ -214,9 +250,18 @@
     <aside class="ledger">
       <h3>What this slice holds</h3>
       <dl>
-        {#each shares as e (e.id)}
-          <div data-env={e.id}><dt>{e.label}<small>{e.words}</small></dt><dd>{Math.round(e.share * 100)}%</dd></div>
-        {/each}
+        {#if turned && space}
+          <div><dt>In the cube<small>share of space · share of matter</small></dt><dd></dd></div>
+          {#each ENVS as e (e.id)}
+            {@const v = space[e.id as keyof typeof space]}
+            <div data-env={e.id} data-space={v.space.toFixed(3)} data-matter={v.matter.toFixed(3)}><dt>{e.label}<small>{e.words}</small></dt><dd>{Math.round(v.space * 100)}% · {Math.round(v.matter * 100)}%</dd></div>
+          {/each}
+        {:else}
+          <div><dt>In the slice<small>share of the matter, by where it started</small></dt><dd></dd></div>
+          {#each shares as e (e.id)}
+            <div data-env={e.id}><dt>{e.label}<small>{e.words}</small></dt><dd>{Math.round(e.share * 100)}%</dd></div>
+          {/each}
+        {/if}
         {#if web}
           <div><dt>Spread of density<small>grows as the foam sharpens</small></dt><dd data-contrast>{contrast.toFixed(2)}</dd></div>
           <div><dt>Growth since the start<small>linear growth factor</small></dt><dd>{web.slice.growth.toFixed(3)}</dd></div>
@@ -224,7 +269,11 @@
         {/if}
       </dl>
       <h4>Reading the map</h4>
+      {#if turned}
+        <p>A cube of the web {cube?.volume.extent ?? extent} Mpc across, turned in 3D: each dot is a parcel of matter, all the same mass, where gravity has moved it since the start. Voids spread out and fill most of the space but hold much less of the matter; sheets, filaments and knots gather the rest into the web. Drag to turn it, wheel to zoom.</p>
+      {:else}
       <p>Dots are matter where gravity has moved it since the start; the shade is {show === "density" ? "the density (darker is denser, log)" : "the environment: blank voids, light sheets, darker filaments and knots in red"}. {real ? "Scale is Real: the slice is drawn at its size then (today's size times the scale factor), so the young web is small and the whole foam swells as it plays." : "Scale is Readable: distances are comoving, the slice drawn at today's size, so the foam grows in contrast, not in size."}</p>
+      {/if}
       {#if web}
         <h4>The model's limits</h4>
         <ul>
@@ -318,6 +367,9 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+  }
+  canvas.off {
+    display: none;
   }
   canvas {
     width: 100%;

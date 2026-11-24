@@ -51,6 +51,30 @@ try {
     const today = Number(await foam.locator("[data-contrast]").innerText());
     await shot(gm, "v9-foam");
 
+    // V9w: 3D and True turn a cube of the web. Voids fill most of the space and hold much less of the matter.
+    const style = (n) => gm.getByRole("group", { name: "View style" }).getByRole("button", { name: n, exact: true });
+    await foam.locator("[data-extent='100']").click();
+    await gm.waitForSelector(".foam[data-web^='100:']", { timeout: 60000 });
+    await style("3D").click();
+    await gm.waitForSelector("[data-web-3d][data-tier='gpu'], [data-web-3d][data-tier='canvas']", { timeout: 90000 });
+    const cubeShare = (k, w) => foam.locator(`[data-env=${k}]`).getAttribute(`data-${w}`).then(Number);
+    const vs = await cubeShare("void", "space");
+    const vm = await cubeShare("void", "matter");
+    assert.ok(vs > 0.6 && vs < 0.95, `voids fill most of the cube (${vs})`);
+    assert.ok(vm < vs - 0.1, `voids hold less of the matter than of the space (${vm} < ${vs})`);
+    assert.ok(Number(await gm.locator("[data-web-3d]").getAttribute("data-parcels")) > 20000, "the cube's parcels are drawn");
+    await gm.locator("[data-web-3d] [data-spin]").click();
+    await gm.waitForTimeout(500);
+    await shot(gm, "v9w-web-3d");
+    await style("True").click();
+    await gm.waitForSelector("[data-web-3d][data-look='true']");
+    await gm.waitForTimeout(500);
+    await shot(gm, "v9w-web-true");
+    await style("Chart").click();
+    await gm.waitForSelector("[data-web-3d]", { state: "detached" });
+    await foam.locator("[data-extent='200']").click();
+    await gm.waitForSelector(".foam[data-web^='200:']", { timeout: 60000 });
+
     // Early: less contrast.
     await foam.locator("[data-time]").fill("1");
     await gm.waitForFunction(() => /after the Big Bang/.test(document.querySelector(".foam [data-lede]")?.textContent ?? ""), null, { timeout: 60000 });
@@ -92,7 +116,7 @@ try {
 
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`${name}: foam map from web_slice: drawn, four environments, sharpens with time, plays, environments, sizes, night chart, phone`);
+    console.log(`${name}: foam map from web_slice: drawn, four environments, 3D and True cube with voids most of the space and less of the matter, sharpens with time, plays, environments, sizes, night chart, phone`);
   }
 } finally {
   server.kill();
