@@ -47,10 +47,11 @@ export function webParcels(v: WebCubeData, shrink = 1, margin = 0.02): Record<We
 
 /**
  * The parcels by kind and density level (`densityLevel`). A parcel stands for the matter that started in the cube
- * round its grid point; that cube of matter has been squeezed or stretched by the step to its room today, so each
- * dot is drawn somewhere inside a cube of that size (side times the cube root of its room, a fixed scatter by its
- * index): matter gathered into a filament stays in the filament, matter in a void spreads through it, and the
- * starting grid does not show as a lattice.
+ * of the grid round its point. The step has carried that little cube along and squeezed or stretched it, differently
+ * along each axis: its shape today is the step's own deformation, read from where the neighbouring parcels went
+ * (dx/dq by central differences on the starting grid, one-sided at the cube's faces). Each dot is drawn at a fixed
+ * place inside that deformed cube (a fixed scatter by its index), so matter squeezed into a filament is drawn as a
+ * thread, matter in a sheet as a wall, matter in a void spread through it, and the starting grid never shows.
  */
 export function webParcelLevels(v: WebCubeData, shrink = 1, margin = 0.02): { kind: WebKind; level: number; points: Vec3[] }[] {
   const groups = new Map<string, { kind: WebKind; level: number; points: Vec3[] }>();
@@ -59,13 +60,29 @@ export function webParcelLevels(v: WebCubeData, shrink = 1, margin = 0.02): { ki
   const lim = half * (1 + 2 * margin);
   const n = v.environment.length;
   const side = Math.max(1, Math.round(Math.cbrt(n)));
+  const grid = side * side * side === n;
   const cell = v.extent / side;
+  const P = v.position;
+  // Column d of the deformation at parcel i: how far its neighbours along axis d went, per unit of starting distance.
+  const stride = [1, side, side * side];
+  const coord = (i: number, d: number) => Math.floor(i / stride[d]!) % side;
+  const column = (i: number, d: number): Vec3 => {
+    if (!grid || side < 2) return d === 0 ? [1, 0, 0] : d === 1 ? [0, 1, 0] : [0, 0, 1];
+    const c = coord(i, d);
+    const lo = c > 0 ? i - stride[d]! : i;
+    const hi = c < side - 1 ? i + stride[d]! : i;
+    const span = (hi - lo) / stride[d]!;
+    const col = [0, 1, 2].map((k) => (P[3 * hi + k]! - P[3 * lo + k]!) / span / cell) as Vec3;
+    // A parcel next to one flung far (or past a fold) is not stretched without end: at most three times its cell.
+    const len = Math.hypot(col[0], col[1], col[2]);
+    return len > 3 ? (col.map((c) => (c * 3) / len) as Vec3) : col;
+  };
   for (let i = 0; i < n; i++) {
     const room = v.room?.[i];
-    const s = cell * (room === undefined ? 1 : Math.cbrt(Math.min(8, Math.max(0.001, Math.abs(room)))));
-    const x = v.position[3 * i]! - v.centre[0] + s * (scatter(i, 1) - 0.5);
-    const y = v.position[3 * i + 1]! - v.centre[1] + s * (scatter(i, 2) - 0.5);
-    const z = v.position[3 * i + 2]! - v.centre[2] + s * (scatter(i, 3) - 0.5);
+    const cols = [column(i, 0), column(i, 1), column(i, 2)];
+    const off = [scatter(i, 1) - 0.5, scatter(i, 2) - 0.5, scatter(i, 3) - 0.5].map((u) => u * cell);
+    const at = [0, 1, 2].map((k) => P[3 * i + k]! - v.centre[k]! + cols[0]![k]! * off[0]! + cols[1]![k]! * off[1]! + cols[2]![k]! * off[2]!);
+    const [x, y, z] = at as [number, number, number];
     if (Math.abs(x) > lim || Math.abs(y) > lim || Math.abs(z) > lim) continue;
     const g = groups.get(`${v.environment[i]}:${densityLevel(room)}`);
     if (g) g.points.push([x * shrink, y * shrink, z * shrink]);
