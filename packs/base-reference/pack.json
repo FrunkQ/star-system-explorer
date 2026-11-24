@@ -14614,7 +14614,31 @@
       "src": "lundberg1985",
       "check": "unverified",
       "note": "vacuum-furnace heat shields run near this; thermionic emitters run for very long times at 1700 K"
-     }
+     },
+     "heat_capacity": {
+      "v": 132.2,
+      "unit": "J kg-1 K-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "W-001, 24.295 J/K/mol; climbs with temperature"
+     },
+     "heat_to_melt": {
+      "v": 643900.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "W-001: H - H(298.15) of the solid at 3680 K, 118.383 kJ/mol"
+     },
+     "latent_fusion": {
+      "v": 192500.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 3680.0,
+      "note": "W-001: 35.397 kJ/mol, liquid minus solid H at 3680 K"
+     },
+     "note": "boiling point not in W-001, so no boiling values yet"
     },
     {
      "id": "molybdenum",
@@ -14631,6 +14655,51 @@
       "src": "lundberg1985",
       "check": "unverified",
       "note": "TZM and Mo-Hf-C keep high strength from 1145 to 1475 K; must be kept from air when hot"
+     },
+     "heat_capacity": {
+      "v": 249.4,
+      "unit": "J kg-1 K-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "Mo-001, 23.933 J/K/mol; climbs with temperature"
+     },
+     "heat_to_melt": {
+      "v": 936800.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Mo-001: H - H(298.15) of the solid at 2896 K, 89.885 kJ/mol"
+     },
+     "latent_fusion": {
+      "v": 375000.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 2896.0,
+      "note": "Mo-001: 35.982 kJ/mol, liquid minus solid H at 2896 K"
+     },
+     "heat_to_boil": {
+      "v": 806900.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Mo-001: liquid H from 2896 K to 4952 K, 77.420 kJ/mol"
+     },
+     "boiling_point_k": {
+      "v": 4952.0,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Mo-001: liquid to ideal gas, fugacity 1 bar"
+     },
+     "latent_vaporisation": {
+      "v": 6155600.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 4952.0,
+      "note": "Mo-001: 590.631 kJ/mol, gas minus liquid H at Tb"
      }
     },
     {
@@ -14648,6 +14717,51 @@
       "src": "lundberg1985",
       "check": "unverified",
       "note": "NASA SP-5035 gives 4474 F, 2741 K"
+     },
+     "heat_capacity": {
+      "v": 265.8,
+      "unit": "J kg-1 K-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "Nb-001, 24.694 J/K/mol; climbs with temperature"
+     },
+     "heat_to_melt": {
+      "v": 828900.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Nb-001: H - H(298.15) of the solid at 2750 K, 77.011 kJ/mol"
+     },
+     "latent_fusion": {
+      "v": 289600.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 2750.0,
+      "note": "Nb-001: 26.903 kJ/mol, liquid minus solid H at 2750 K"
+     },
+     "heat_to_boil": {
+      "v": 857800.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Nb-001: liquid H from 2750 K to 5131 K, 79.691 kJ/mol"
+     },
+     "boiling_point_k": {
+      "v": 5130.8,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Nb-001: liquid to ideal gas, fugacity 1 bar"
+     },
+     "latent_vaporisation": {
+      "v": 7431800.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 5130.8,
+      "note": "Nb-001: 690.459 kJ/mol, gas minus liquid H at Tb"
      }
     },
     {
@@ -14665,6 +14779,51 @@
       "src": "lundberg1985",
       "check": "unverified",
       "note": "NASA SP-5035 gives 5428 F, 3271 K"
+     },
+     "heat_capacity": {
+      "v": 139.8,
+      "unit": "J kg-1 K-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "Ta-001, 25.295 J/K/mol; climbs with temperature"
+     },
+     "heat_to_melt": {
+      "v": 517100.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Ta-001: H - H(298.15) of the solid at 3258 K, 93.564 kJ/mol"
+     },
+     "latent_fusion": {
+      "v": 202100.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 3258.0,
+      "note": "Ta-001: 36.568 kJ/mol, liquid minus solid H at 3258 K"
+     },
+     "heat_to_boil": {
+      "v": 582700.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Ta-001: liquid H from 3258 K to 5778 K, 105.440 kJ/mol"
+     },
+     "boiling_point_k": {
+      "v": 5778.1,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Ta-001: liquid to ideal gas, fugacity 1 bar"
+     },
+     "latent_vaporisation": {
+      "v": 4082500.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 5778.1,
+      "note": "Ta-001: 738.713 kJ/mol, gas minus liquid H at Tb"
      }
     },
     {
@@ -14682,6 +14841,12 @@
       "src": "lundberg1985",
       "check": "unverified",
       "note": "NASA SP-5035 gives 5720 F, 3433 K; the two disagree by about 20 K"
+     },
+     "density": {
+      "v": 21020.0,
+      "unit": "kg m-3",
+      "src": "nist-srd126-t1",
+      "check": "unverified"
      }
     },
     {
@@ -14806,7 +14971,15 @@
       "check": "unverified",
       "note": "used from -423 F to 1300 F"
      },
-     "note": "turbopumps, injectors and engine structure; works from liquid hydrogen to red heat"
+     "note": "turbopumps, injectors and engine structure; works from liquid hydrogen to red heat",
+     "heat_capacity": {
+      "v": 435.0,
+      "unit": "J kg-1 K-1",
+      "src": "smc-inconel718",
+      "check": "unverified",
+      "at_k": 294.15,
+      "note": "0.104 Btu/lb F at 70 F, printed as (435) J/kg C at 21 C; no latent heat in the data sheet"
+     }
     },
     {
      "id": "uo2-fuel",
@@ -14910,7 +15083,300 @@
       "src": "nist-srd126",
       "check": "unverified"
      },
-     "note": "gamma shield"
+     "note": "gamma shield",
+     "heat_capacity": {
+      "v": 129.5,
+      "unit": "J kg-1 K-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "Pb-001, 26.836 J/K/mol; climbs with temperature"
+     },
+     "heat_to_melt": {
+      "v": 41000.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Pb-001: H - H(298.15) of the solid at 601 K, 8.499 kJ/mol"
+     },
+     "latent_fusion": {
+      "v": 23000.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 600.6,
+      "note": "Pb-001: 4.774 kJ/mol, liquid minus solid H at 601 K"
+     },
+     "melting_point_k": {
+      "v": 600.6,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Pb-001"
+     },
+     "heat_to_boil": {
+      "v": 200200.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Pb-001: liquid H from 601 K to 2019 K, 41.485 kJ/mol"
+     },
+     "boiling_point_k": {
+      "v": 2019.0,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Pb-001: liquid to ideal gas, fugacity 1 bar"
+     },
+     "latent_vaporisation": {
+      "v": 857100.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 2019.0,
+      "note": "Pb-001: 177.582 kJ/mol, gas minus liquid H at Tb"
+     }
+    },
+    {
+     "id": "aluminium",
+     "names": {
+      "physics": "aluminium metal",
+      "plain": "aluminium",
+      "story": "aluminium"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "pure metal; hull alloys (2xxx, 6xxx, 7xxx series) melt a little lower",
+     "heat_capacity": {
+      "v": 897.2,
+      "unit": "J kg-1 K-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "Al-001, 24.209 J/K/mol; climbs with temperature"
+     },
+     "heat_to_melt": {
+      "v": 666500.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Al-001: H - H(298.15) of the solid at 933 K, 17.982 kJ/mol"
+     },
+     "latent_fusion": {
+      "v": 397000.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 933.45,
+      "note": "Al-001: 10.711 kJ/mol, liquid minus solid H at 933 K"
+     },
+     "melting_point_k": {
+      "v": 933.45,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Al-001"
+     },
+     "heat_to_boil": {
+      "v": 2185600.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Al-001: liquid H from 933 K to 2791 K, 58.972 kJ/mol"
+     },
+     "boiling_point_k": {
+      "v": 2790.8,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Al-001: liquid to ideal gas, fugacity 1 bar"
+     },
+     "latent_vaporisation": {
+      "v": 10896400.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 2790.8,
+      "note": "Al-001: 294.002 kJ/mol, gas minus liquid H at Tb"
+     },
+     "density": {
+      "v": 2699.0,
+      "unit": "kg m-3",
+      "src": "nist-srd126-t1",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "titanium",
+     "names": {
+      "physics": "titanium metal",
+      "plain": "titanium",
+      "story": "titanium"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "pure metal; Ti-6Al-4V is the usual airframe alloy",
+     "heat_capacity": {
+      "v": 527.3,
+      "unit": "J kg-1 K-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "Ti-001, 25.238 J/K/mol; climbs with temperature"
+     },
+     "heat_to_melt": {
+      "v": 1157200.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Ti-001: H - H(298.15) of the solid at 1939 K, 55.394 kJ/mol; includes the alpha to beta change at 1166 K (4.172 kJ/mol)"
+     },
+     "latent_fusion": {
+      "v": 295500.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 1939.0,
+      "note": "Ti-001: 14.146 kJ/mol, liquid minus solid H at 1939 K"
+     },
+     "melting_point_k": {
+      "v": 1939.0,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Ti-001"
+     },
+     "heat_to_boil": {
+      "v": 1669700.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Ti-001: liquid H from 1939 K to 3631 K, 79.923 kJ/mol"
+     },
+     "boiling_point_k": {
+      "v": 3631.0,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Ti-001: liquid to ideal gas, fugacity 1 bar"
+     },
+     "latent_vaporisation": {
+      "v": 8565100.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 3631.0,
+      "note": "Ti-001: 409.984 kJ/mol, gas minus liquid H at Tb"
+     },
+     "density": {
+      "v": 4540.0,
+      "unit": "kg m-3",
+      "src": "nist-srd126-t1",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "iron",
+     "names": {
+      "physics": "iron metal",
+      "plain": "iron",
+      "story": "iron"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "pure iron; steels melt lower and have their own heats",
+     "heat_capacity": {
+      "v": 449.4,
+      "unit": "J kg-1 K-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "Fe-003, 25.094 J/K/mol; climbs with temperature"
+     },
+     "heat_to_melt": {
+      "v": 1050100.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Fe-003: H - H(298.15) of the solid at 1809 K, 58.645 kJ/mol; includes the magnetic change near 1042 K and the alpha to gamma (1184 K, 0.900 kJ/mol) and gamma to delta (1665 K, 0.837 kJ/mol) changes"
+     },
+     "latent_fusion": {
+      "v": 247200.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 1809.0,
+      "note": "Fe-003: 13.807 kJ/mol, liquid minus solid H at 1809 K"
+     },
+     "melting_point_k": {
+      "v": 1809.0,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Fe-003"
+     },
+     "heat_to_boil": {
+      "v": 1091400.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Fe-003: liquid H from 1809 K to 3133 K, 60.952 kJ/mol"
+     },
+     "boiling_point_k": {
+      "v": 3133.3,
+      "unit": "K",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "note": "Fe-003: liquid to ideal gas, fugacity 1 bar"
+     },
+     "latent_vaporisation": {
+      "v": 6259900.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 3133.3,
+      "note": "Fe-003: 349.585 kJ/mol, gas minus liquid H at Tb"
+     },
+     "density": {
+      "v": 7874.0,
+      "unit": "kg m-3",
+      "src": "nist-srd126-t1",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "graphite",
+     "names": {
+      "physics": "graphite (carbon)",
+      "plain": "graphite",
+      "story": "carbon"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "does not melt at 1 bar; it turns straight to vapour",
+     "heat_capacity": {
+      "v": 709.1,
+      "unit": "J kg-1 K-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "C-002 (graphite), 8.517 J/K/mol"
+     },
+     "latent_sublimation": {
+      "v": 59668000.0,
+      "unit": "J kg-1",
+      "src": "nist-janaf",
+      "check": "unverified",
+      "at_k": 298.15,
+      "note": "C-003: delta-f H of C(g) at 298.15 K, 716.670 kJ/mol, graphite to single atoms; real carbon vapour is mostly C3, which takes less; no sublimation temperature sourced yet"
+     },
+     "density": {
+      "v": 1700.0,
+      "unit": "kg m-3",
+      "src": "nist-srd126-t1",
+      "check": "unverified",
+      "note": "nominal; pyrolytic and nuclear graphites run 1.7 to 2.2 g/cm3"
+     }
     }
    ],
    "reactions": [
@@ -15588,10 +16054,22 @@
      "url": "https://physics.nist.gov/PhysRefData/Handbook/Tables/sodiumtable3.htm"
     },
     {
+     "id": "nist-janaf",
+     "text": "Chase, M. W. 1998, NIST-JANAF Thermochemical Tables, 4th edition, J. Phys. Chem. Ref. Data Monograph 9: reference-state tables (ref) for Al, Ti, Fe, Nb, Mo, Ta, W, Pb, C (graphite) and the C(g) table; Cp and H - H(298.15 K) at 298.15 K and at each transition row",
+     "status": "unverified",
+     "url": "https://janaf.nist.gov/"
+    },
+    {
      "id": "nist-srd126",
      "text": "Hubbell, J. H. and Seltzer, S. M., X-ray mass attenuation coefficients, NIST Standard Reference Database 126, Tables 1 and 2: densities W 19.30, Pb 11.35, polyethylene 0.930 g/cm3; hydrogen mass fraction of polyethylene 0.143716",
      "status": "unverified",
      "url": "https://physics.nist.gov/PhysRefData/XrayMassCoef/tab2.html"
+    },
+    {
+     "id": "nist-srd126-t1",
+     "text": "Hubbell, J. H. and Seltzer, S. M., X-ray mass attenuation coefficients, NIST Standard Reference Database 126, Table 1 (elemental media): densities C (graphite) 1.700, Al 2.699, Ti 4.540, Fe 7.874, Nb 8.570, Mo 10.22, Ta 16.65, Re 21.02 g/cm3",
+     "status": "unverified",
+     "url": "https://physics.nist.gov/PhysRefData/XrayMassCoef/tab1.html"
     },
     {
      "id": "nist-webbook",
