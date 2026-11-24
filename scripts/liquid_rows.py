@@ -116,6 +116,10 @@ SEGELSTEIN = [
 ]
 
 
+HE_LAMBDA_K, HE_LAMBDA_PA = 2.1768, 5039.33  # CoolProp 8.1.0, Helium Ttriple and ptriple
+HE_CRIT_K, HE_CRIT_PA = 5.1953, 228322.8  # CoolProp 8.1.0, Helium Tcrit and pcrit
+
+
 def apply(substances, pi, val):
     """Add the liquid optics and saturated-liquid tables to the substance rows
     in place; append the new substance rows (ethane, propane)."""
@@ -146,6 +150,17 @@ def apply(substances, pi, val):
             ph["triple_point_k"] = val(float(m["t_triple"]), "K", eos, U)
             ph["critical_point_k"] = val(float(m["t_crit"]), "K", eos, U)
             ph["density_liquid"] = val(rows[0][2], "kg m-3", eos, U, at_k=rows[0][0], note="saturated liquid just above the triple point")
+    # Helium (asked by the climate thread for the helium-sea test). Read from CoolProp 8.1.0,
+    # PropsSI("Tmin"/"Ttriple", "ptriple", "Tcrit", "pcrit", "Helium"), i.e. the Ortiz-Vega 2023
+    # equation of state, whose lower limit is the lambda line at saturation.
+    he = by_id["he"]["phases"]
+    eos = BY_KEY[meta["he"]["eos"]]
+    assert abs(float(meta["he"]["t_triple"]) - HE_LAMBDA_K) < 1e-9 and abs(float(meta["he"]["t_crit"]) - HE_CRIT_K) < 1e-3
+    he["lambda_point_k"] = val(HE_LAMBDA_K, "K", eos, U, at_pa=HE_LAMBDA_PA, note="below this, liquid helium-4 is a superfluid (He II); helium has no triple point at its own vapour pressure, so this is where its sea's liquid-vapour curve starts")
+    he["lambda_point_pa"] = val(HE_LAMBDA_PA, "Pa", eos, U, note="vapour pressure at the lambda point")
+    he["critical_point_k"] = val(HE_CRIT_K, "K", eos, U, note="above this there can be no helium sea")
+    he["critical_point_pa"] = val(HE_CRIT_PA, "Pa", eos, U)
+    he["saturated_liquid"]["note"] += "; the p_pa column is helium's vapour-pressure curve (it has no triple point at saturation, so climate reads the vapour curve here)"
     lam = [float(n) for n, _ in POPE + HALE]
     assert lam == sorted(lam)
     alpha = [round(a * PER_CM, 6) for _, a in POPE + HALE]

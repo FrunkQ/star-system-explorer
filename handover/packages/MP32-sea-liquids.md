@@ -77,6 +77,10 @@ Ethane and propane are new substance rows, with:
 
 They have no vapour-pressure fit yet, so the climate does not treat them as volatiles. Adding Fray and Schmitt 2009's ethane fit, a condensed colour and the latent heat makes ethane a Titan volatile, and that may change golden hashes.
 
+### Helium (added 24 Nov for the helium-sea test)
+
+On `he.phases`: `lambda_point_k` 2.1768 K at `lambda_point_pa` 5039.33 Pa, `critical_point_k` 5.1953 K and `critical_point_pa` 228322.8 Pa, read from CoolProp 8.1.0 (the Ortiz-Vega et al. 2023 equation of state, NIST IR 8474, whose lower limit is the lambda line). Helium has no triple point at its own vapour pressure, so it has no `triple_point_k`; its `saturated_liquid` p_pa column is its vapour curve, and the row's note says so. Climate's volatile list does not pick helium up, so no golden moved.
+
 ## Still waiting
 
 - **Liquid methane and ethane absorption.** No readable table was found:

@@ -13961,7 +13961,35 @@
         "viscosity": "arp1998-helium",
         "surface_tension": "mulero2012"
        },
-       "note": "liquid along its boiling curve, from just above the triple point (2.1768 K) to 0.95 of the critical point (5.1953 K); waves on a sea of it read density, viscosity and surface tension here"
+       "note": "liquid along its boiling curve, from just above the triple point (2.1768 K) to 0.95 of the critical point (5.1953 K); waves on a sea of it read density, viscosity and surface tension here; the p_pa column is helium's vapour-pressure curve (it has no triple point at saturation, so climate reads the vapour curve here)"
+      },
+      "lambda_point_k": {
+       "v": 2.1768,
+       "unit": "K",
+       "src": "ortizvega2023-helium",
+       "check": "unverified",
+       "at_pa": 5039.33,
+       "note": "below this, liquid helium-4 is a superfluid (He II); helium has no triple point at its own vapour pressure, so this is where its sea's liquid-vapour curve starts"
+      },
+      "lambda_point_pa": {
+       "v": 5039.33,
+       "unit": "Pa",
+       "src": "ortizvega2023-helium",
+       "check": "unverified",
+       "note": "vapour pressure at the lambda point"
+      },
+      "critical_point_k": {
+       "v": 5.1953,
+       "unit": "K",
+       "src": "ortizvega2023-helium",
+       "check": "unverified",
+       "note": "above this there can be no helium sea"
+      },
+      "critical_point_pa": {
+       "v": 228322.8,
+       "unit": "Pa",
+       "src": "ortizvega2023-helium",
+       "check": "unverified"
       }
      }
     },

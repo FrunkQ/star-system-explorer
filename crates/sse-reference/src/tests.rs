@@ -1063,3 +1063,17 @@ fn water_scatters_blue_more_than_green() {
     assert!((num(t.get("backscatter_share")).unwrap() - 0.5).abs() < 1e-12);
     assert!(num(t.get("exponent")).unwrap() < -4.0);
 }
+
+#[test]
+fn helium_has_a_lambda_point_below_its_critical_point() {
+    // The helium-sea test: superfluid below the lambda point, no sea above the critical point.
+    let r = Reference::base();
+    let ph = r
+        .row("substances", "he")
+        .and_then(|x| x.get("phases"))
+        .unwrap();
+    let lam = num(ph.get("lambda_point_k")).unwrap();
+    let crit = num(ph.get("critical_point_k")).unwrap();
+    assert!(lam > 2.0 && lam < 2.3 && crit > 5.0 && crit < 5.5);
+    assert!(num(ph.get("critical_point_pa")).unwrap() > num(ph.get("lambda_point_pa")).unwrap());
+}
