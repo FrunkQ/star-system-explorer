@@ -1,0 +1,35 @@
+{
+ "construct": "apollo-11-service-module",
+ "name": "Apollo 11 service module",
+ "about": "Cast off before entry; it burnt up.",
+ "pieces": [
+  {
+   "from_s": 62154620511,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "lambert",
+     "to": "u:sol/sys:sun/body:earth",
+     "arrive_s": 62154621344
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "follows the command module's course to entry",
+   "to_s": 62154621344
+  },
+  {
+   "from_s": 62154621344,
+   "state": {
+    "kind": "gone",
+    "how": "reentered"
+   },
+   "mark": "estimated",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "burnt up on entry; the time is the command module's entry interface"
+  }
+ ],
+ "events": []
+}

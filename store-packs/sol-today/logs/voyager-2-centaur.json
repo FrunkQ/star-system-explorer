@@ -1,0 +1,22 @@
+{
+ "construct": "voyager-2-centaur",
+ "name": "Voyager 2's Centaur upper stage",
+ "about": "Left about the Sun after the departure burn.",
+ "pieces": [
+  {
+   "from_s": 62409411032,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "heliocentric orbit"
+    }
+   },
+   "mark": "estimated",
+   "src": "nssdca-voyager-2",
+   "writer": "pack",
+   "why": "follows Voyager's departure; its own elements are not read yet"
+  }
+ ],
+ "events": []
+}
