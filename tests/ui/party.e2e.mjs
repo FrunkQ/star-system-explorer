@@ -101,6 +101,8 @@ try {
   assert.match(await ins.locator("[data-next]").innerText(), /Fly Beowulf there/);
   // X3h: with the Traveller pack on, each danger on the At world card carries the game's own task (GM only).
   await gm.waitForSelector(".insys [data-at-world] [data-act]", { timeout: 60000 });
+  const heading = await ins.locator("[data-at-world] h4").first().textContent();
+  assert.ok(!heading.includes("body:"), `the At world card names the world, not its address: ${heading}`);
   const dangers = await ins.locator("[data-at-world] [data-danger]").count();
   assert.equal(await ins.locator("[data-at-world] [data-danger] [data-game-difficulty]").count(), dangers);
   if (dangers) assert.match(await ins.locator("[data-game-difficulty]").first().innerText(), /\d+\+/);

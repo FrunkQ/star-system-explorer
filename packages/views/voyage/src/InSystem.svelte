@@ -247,7 +247,7 @@
       </ol>
       <button type="button" class="go" data-next onclick={nextStop}>{flyingParty ? `Fly ${party?.name} there` : mode === "explore" ? "Next stop: go there" : "Arrive there"}</button>
       {#if visited.length > 1}<button type="button" class="quiet-btn" data-restart onclick={restart}>Back to the start</button>{/if}
-      <AtWorld {ctx} ask={atAsk} arriving={arriving} />
+      <AtWorld {ctx} ask={atAsk} arriving={arriving} name={v ? nameOf(v.to) : undefined} />
     {/if}
   </div>
 </div>
