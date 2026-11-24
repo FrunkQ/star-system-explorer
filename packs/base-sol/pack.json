@@ -1169,6 +1169,419 @@
       }
      },
      {
+      "id": "mimas",
+      "name": "Mimas",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 3.79e+19,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 198666.69999999998,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 185520000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0202,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 1.53,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.6,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      }
+     },
+     {
+      "id": "enceladus",
+      "name": "Enceladus",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 1.08e+20,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 252000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 238020000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0045,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.0,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 1.0,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      }
+     },
+     {
+      "id": "tethys",
+      "name": "Tethys",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 6.18e+20,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 530666.7,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 294660000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 1.86,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.8,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      }
+     },
+     {
+      "id": "dione",
+      "name": "Dione",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 1.1e+21,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 561333.3,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 377400000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0022,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.02,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.7,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      }
+     },
+     {
+      "id": "rhea",
+      "name": "Rhea",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 2.31e+21,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 763333.3,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 527040000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.001,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.35,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.7,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       }
+      }
+     },
+     {
+      "id": "iapetus",
+      "name": "Iapetus",
+      "kind": "moon",
+      "host": "saturn",
+      "values": {
+       "body.mass": {
+        "v": 1.81e+21,
+        "unit": "kg",
+        "src": "nssdca-saturnian-sats"
+       },
+       "body.radius": {
+        "v": 734666.7,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 3560850000.0,
+        "unit": "m",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0283,
+        "unit": "1",
+        "src": "nssdca-saturnian-sats"
+       },
+       "orbit.inclination": {
+        "v": 14.72,
+        "unit": "deg",
+        "src": "nssdca-saturnian-sats"
+       }
+      }
+     },
+     {
+      "id": "miranda",
+      "name": "Miranda",
+      "kind": "moon",
+      "host": "uranus",
+      "values": {
+       "body.mass": {
+        "v": 6.6e+19,
+        "unit": "kg",
+        "src": "nssdca-uranian-sats"
+       },
+       "body.radius": {
+        "v": 235700.0,
+        "unit": "m",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 129900000.0,
+        "unit": "m",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0013,
+        "unit": "1",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.inclination": {
+        "v": 4.34,
+        "unit": "deg",
+        "src": "nssdca-uranian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.32,
+        "unit": "1",
+        "src": "nssdca-uranian-sats"
+       }
+      }
+     },
+     {
+      "id": "ariel",
+      "name": "Ariel",
+      "kind": "moon",
+      "host": "uranus",
+      "values": {
+       "body.mass": {
+        "v": 1.29e+21,
+        "unit": "kg",
+        "src": "nssdca-uranian-sats"
+       },
+       "body.radius": {
+        "v": 578900.0,
+        "unit": "m",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 190900000.0,
+        "unit": "m",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0012,
+        "unit": "1",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.04,
+        "unit": "deg",
+        "src": "nssdca-uranian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.39,
+        "unit": "1",
+        "src": "nssdca-uranian-sats"
+       }
+      }
+     },
+     {
+      "id": "umbriel",
+      "name": "Umbriel",
+      "kind": "moon",
+      "host": "uranus",
+      "values": {
+       "body.mass": {
+        "v": 1.22e+21,
+        "unit": "kg",
+        "src": "nssdca-uranian-sats"
+       },
+       "body.radius": {
+        "v": 584700.0,
+        "unit": "m",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 266000000.0,
+        "unit": "m",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0039,
+        "unit": "1",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.13,
+        "unit": "deg",
+        "src": "nssdca-uranian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.21,
+        "unit": "1",
+        "src": "nssdca-uranian-sats"
+       }
+      }
+     },
+     {
+      "id": "titania",
+      "name": "Titania",
+      "kind": "moon",
+      "host": "uranus",
+      "values": {
+       "body.mass": {
+        "v": 3.42e+21,
+        "unit": "kg",
+        "src": "nssdca-uranian-sats"
+       },
+       "body.radius": {
+        "v": 788900.0,
+        "unit": "m",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 436300000.0,
+        "unit": "m",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0011,
+        "unit": "1",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.08,
+        "unit": "deg",
+        "src": "nssdca-uranian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.27,
+        "unit": "1",
+        "src": "nssdca-uranian-sats"
+       }
+      }
+     },
+     {
+      "id": "oberon",
+      "name": "Oberon",
+      "kind": "moon",
+      "host": "uranus",
+      "values": {
+       "body.mass": {
+        "v": 2.88e+21,
+        "unit": "kg",
+        "src": "nssdca-uranian-sats"
+       },
+       "body.radius": {
+        "v": 761400.0,
+        "unit": "m",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.semi_major_axis": {
+        "v": 583500000.0,
+        "unit": "m",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0014,
+        "unit": "1",
+        "src": "nssdca-uranian-sats"
+       },
+       "orbit.inclination": {
+        "v": 0.07,
+        "unit": "deg",
+        "src": "nssdca-uranian-sats"
+       },
+       "body.albedo_geometric": {
+        "v": 0.23,
+        "unit": "1",
+        "src": "nssdca-uranian-sats"
+       }
+      }
+     },
+     {
       "id": "titan",
       "name": "Titan",
       "kind": "moon",
@@ -1774,6 +2187,12 @@
       "text": "Williams, D. R., NASA NSSDCA Sun Fact Sheet (read 22 Nov 2026)",
       "status": "verified",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html"
+     },
+     {
+      "id": "nssdca-uranian-sats",
+      "text": "Williams, D. R., NASA NSSDCA Uranian Satellite Fact Sheet (read 24 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/uraniansatfact.html"
      },
      {
       "id": "nssdca-uranus",

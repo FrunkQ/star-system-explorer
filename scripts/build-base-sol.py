@@ -39,7 +39,8 @@ SOURCES = [
      "status": "verified", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/%s.html" % page}
     for n, t, page in [("jovian-sats", "Jovian Satellite Fact Sheet", "joviansatfact"),
                        ("saturnian-sats", "Saturnian Satellite Fact Sheet", "saturniansatfact"),
-                       ("neptunian-sats", "Neptunian Satellite Fact Sheet", "neptuniansatfact")]
+                       ("neptunian-sats", "Neptunian Satellite Fact Sheet", "neptuniansatfact"),
+                       ("uranian-sats", "Uranian Satellite Fact Sheet", "uraniansatfact")]
 ] + [
     {"id": "iau2015b3", "text": "Prša, A. et al. 2016, AJ 152, 41: Nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3",
      "status": "verified", "doi": "10.3847/0004-6256/152/2/41"},
@@ -107,6 +108,21 @@ MOONS = [
     ("Europa", "europa", "jupiter", 480.0e20, 1560.8, 671.1e3, 0.009, 0.47, 0.68, None, "nssdca-jovian-sats"),
     ("Ganymede", "ganymede", "jupiter", 1481.9e20, 2631.2, 1070.4e3, 0.001, 0.18, 0.44, None, "nssdca-jovian-sats"),
     ("Callisto", "callisto", "jupiter", 1075.9e20, 2410.3, 1882.7e3, 0.007, 0.19, 0.19, None, "nssdca-jovian-sats"),
+    # Saturn's other major moons and Uranus's five (read 24 Nov 2026; asked
+    # for so Enceladus's plumes and the icy moons show in True). Radii are
+    # the mean of the three printed axes where three are printed. Iapetus's
+    # albedo is printed two-toned (0.05 / 0.5), so none is kept here.
+    ("Mimas", "mimas", "saturn", 0.379e20, (208 + 197 + 191) / 3, 185.52e3, 0.0202, 1.53, 0.6, None, "nssdca-saturnian-sats"),
+    ("Enceladus", "enceladus", "saturn", 1.08e20, (257 + 251 + 248) / 3, 238.02e3, 0.0045, 0.00, 1.0, None, "nssdca-saturnian-sats"),
+    ("Tethys", "tethys", "saturn", 6.18e20, (538 + 528 + 526) / 3, 294.66e3, 0.0000, 1.86, 0.8, None, "nssdca-saturnian-sats"),
+    ("Dione", "dione", "saturn", 11.0e20, (563 + 561 + 560) / 3, 377.40e3, 0.0022, 0.02, 0.7, None, "nssdca-saturnian-sats"),
+    ("Rhea", "rhea", "saturn", 23.1e20, (765 + 763 + 762) / 3, 527.04e3, 0.0010, 0.35, 0.7, None, "nssdca-saturnian-sats"),
+    ("Iapetus", "iapetus", "saturn", 18.1e20, (746 + 746 + 712) / 3, 3560.85e3, 0.0283, 14.72, None, None, "nssdca-saturnian-sats"),
+    ("Miranda", "miranda", "uranus", 0.66e20, (240 + 234.2 + 232.9) / 3, 129.90e3, 0.0013, 4.34, 0.32, None, "nssdca-uranian-sats"),
+    ("Ariel", "ariel", "uranus", 12.9e20, (581.1 + 577.9 + 577.7) / 3, 190.90e3, 0.0012, 0.04, 0.39, None, "nssdca-uranian-sats"),
+    ("Umbriel", "umbriel", "uranus", 12.2e20, 584.7, 266.00e3, 0.0039, 0.13, 0.21, None, "nssdca-uranian-sats"),
+    ("Titania", "titania", "uranus", 34.2e20, 788.9, 436.30e3, 0.0011, 0.08, 0.27, None, "nssdca-uranian-sats"),
+    ("Oberon", "oberon", "uranus", 28.8e20, 761.4, 583.50e3, 0.0014, 0.07, 0.23, None, "nssdca-uranian-sats"),
     ("Titan", "titan", "saturn", 1345.5e20, 2575, 1221.87e3, 0.0292, 0.33, 0.22, None, "nssdca-saturnian-sats"),
     ("Triton", "triton", "neptune", 214e20, 1353.4, 354.76e3, 0.000016, 157.345, 0.72, None, "nssdca-neptunian-sats"),
     ("Charon", "charon", "pluto", 1.586e21, 606, 19596, 0.0, 0.00005, 0.42, 0.25, "nssdca-pluto"),
