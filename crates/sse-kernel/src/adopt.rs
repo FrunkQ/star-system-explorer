@@ -513,7 +513,7 @@ pub(crate) fn spec_from_facts(facts: &Facts, system: &Address) -> Option<SystemS
             let node = rad(r, "orbit.ascending_node");
             let varpi = node + rad(r, "orbit.argument_of_periapsis");
             Some(PlanetSpec {
-                name: a.to_string(),
+                name: crate::names::typed_common(r).unwrap_or_else(|| a.to_string()),
                 address: a.to_string(),
                 mass_me: mass / M_EARTH_KG,
                 a_au: a_m / AU,

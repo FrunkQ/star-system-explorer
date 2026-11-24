@@ -20,6 +20,9 @@
     segments = 32,
     abilities,
     pass,
+    locked = false,
+    start,
+    onview,
     onchange,
   }: {
     ship: DesignShip;
@@ -34,6 +37,12 @@
     abilities?: FitResult;
     /** An aerobraking pass at its hottest (renderer passGlow): opens on the 3D model, radiators folded, the shield glowing. */
     pass?: { shield_k: number; standoff_rn: number; shock_curve_rn: number; glow: number };
+    /** The design is fixed here (a card outside its edit desk): no style switch or remix; turning and framing stay. */
+    locked?: boolean;
+    /** Open on the plans or the 3D model rather than the default; a pass opens on the model regardless. */
+    start?: "plans" | "model";
+    /** Told when the reader switches between the plans and the model, so an owner can remember the choice. */
+    onview?: (shown: "plans" | "model") => void;
     onchange?: (r: DesignRecipe) => void;
   } = $props();
 
@@ -42,7 +51,7 @@
   let seed = $state(untrack(() => recipe.seed));
   let overrides = $state<DesignOverrides>(untrack(() => recipe.overrides ?? {}));
   let framing = $state<"all" | "hull">(untrack(() => (pass ? "hull" : fit)));
-  let view = $state<ViewChoice>(untrack(() => (pass ? { ...DEFAULT_VIEW, style: "3d", seen: "free" } : { ...DEFAULT_VIEW })));
+  let view = $state<ViewChoice>(untrack(() => (pass || start === "model" ? { ...DEFAULT_VIEW, style: "3d", seen: "free" } : { ...DEFAULT_VIEW })));
   const W = 560;
   const H = 220;
   const style = $derived(styles[styleId] ?? Object.values(styles)[0]!);
@@ -152,14 +161,20 @@
 {/snippet}
 
 <section class="plans" data-ship-plans>
-  <ViewControls spec={CONTROLS} choice={view} onchange={(c) => (view = c)} compact />
+  <ViewControls spec={CONTROLS} choice={view} onchange={(c) => {
+    const was = view.style;
+    view = c;
+    if (onview && c.style !== was) onview(c.style === "3d" ? "model" : "plans");
+  }} compact />
   <div class="bar">
-    <label>Style
-      <select value={styleId} onchange={(e) => change({ style: (e.currentTarget as HTMLSelectElement).value })}>
-        {#each Object.entries(styles) as [id, s] (id)}<option value={id}>{s.name}</option>{/each}
-      </select>
-    </label>
-    <button type="button" onclick={() => change({ seed: seed + 1 })} data-remix>Remix</button>
+    {#if !locked}
+      <label>Style
+        <select value={styleId} onchange={(e) => change({ style: (e.currentTarget as HTMLSelectElement).value })}>
+          {#each Object.entries(styles) as [id, s] (id)}<option value={id}>{s.name}</option>{/each}
+        </select>
+      </label>
+      <button type="button" onclick={() => change({ seed: seed + 1 })} data-remix>Remix</button>
+    {/if}
     {#if canClose || framing === "hull"}
       <button type="button" aria-pressed={framing === "hull"} onclick={() => (framing = framing === "hull" ? "all" : "hull")}>Close in on the hull</button>
     {/if}

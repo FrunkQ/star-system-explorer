@@ -41,6 +41,8 @@ mod sea;
 mod sky;
 #[cfg(test)]
 mod sol_tests;
+#[cfg(test)]
+mod split_tests;
 mod stability;
 #[cfg(test)]
 mod stability_tests;
@@ -5120,6 +5122,65 @@ impl Kernel {
                 )
                 .map_err(|e| err("retire_refused", e))?;
                 Response::Retired {
+                    event_id: id.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
+            Request::SplitConstruct {
+                address,
+                key,
+                name,
+                parts,
+                mass_kg,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let (child, id) = sse_trigger::split::split(
+                    &mut u.chronicle,
+                    &u.root,
+                    &sse_trigger::split::SplitAsk {
+                        address: &a,
+                        key: key.as_deref(),
+                        name: name.as_deref(),
+                        parts: parts.as_deref().unwrap_or(&[]),
+                        mass_kg,
+                        at: UniverseTime::seconds(at_s),
+                    },
+                    &Publisher::new("gm", "split", "1"),
+                )
+                .map_err(|e| err("split_refused", e))?;
+                Response::ConstructSplit {
+                    address: child.to_string(),
+                    event_id: id.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
+            Request::JoinConstructs {
+                address,
+                with,
+                how,
+                at_s,
+            } => {
+                let how = how.unwrap_or(sse_trigger::split::How::Dock);
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let w = in_universe(&u.root, &with)?;
+                let id = sse_trigger::split::join(
+                    &mut u.chronicle,
+                    &u.root,
+                    &a,
+                    &w,
+                    how,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new("gm", "join", "1"),
+                )
+                .map_err(|e| err("join_refused", e))?;
+                Response::ConstructsJoined {
+                    how: serde_json::to_value(how)
+                        .ok()
+                        .and_then(|v| v.as_str().map(str::to_string))
+                        .unwrap_or_default(),
                     event_id: id.hex(),
                     state_hash: latest_hash(&u.chronicle),
                 }

@@ -929,6 +929,8 @@ pub mod mixture_density {
     pub const IRON: f64 = 7874.0;
     /// graphite (nist-srd126-t1).
     pub const GRAPHITE: f64 = 1700.0;
+    /// stainless-304l (kim1975).
+    pub const STAINLESS_304L: f64 = 7894.0;
 }
 
 /// Yield strength, Pa, by mixture (the sheet's mixtures).

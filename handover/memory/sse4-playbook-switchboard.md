@@ -1,0 +1,24 @@
+---
+name: sse4-playbook-switchboard
+description: SSE4 track PB, the Playbook and Switchboard design note and mockup (ACCEPTED by Alex 24 Nov 2026 16:34); where the files are and what was decided in it
+metadata:
+  type: project
+  modified: 2026-11-24T15:49:45.488Z
+---
+Design note: `/mnt/project-files/sse4/SSE4-playbook-and-switchboard-design.md`, repo copy `handover/design/` on main (PR 411, merged 24 Nov 2026; later note changes need a new PR). Written 24 Nov 2026 by the Fable thread "Design playbook and switchboard". Status: ACCEPTED by Alex 24 Nov 2026 16:34 ("Agree with all your recs above", all 22 questions yes). Direction itself was accepted earlier, see [[sse4-run-desk-beats]].
+
+Mockup: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html` plus five screenshots; live artifact https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 (source in that thread's scratchpad, not kept; the project-files copy is the source to edit).
+
+The proposal in one line: sources (Live, each preset on the open page, a camera), destinations (a screen, a role, Everyone) and lines between them. Sending makes a line, holding breaks it, "Screens off" is a hold with a blank card. A preset is a saved send plus a role name and knows nothing about screens or knowledge. A seat in code is a role on screen. Holding cards are pack data (`sse.holding-cards/1`, first 24 in the note). Switchboard is a rail entry in a proposed "Table" rail group plus an on-air chip and one Send button on the chart; it deletes SeatsPanel.svelte and the table half of the status line. OBS out is an ordinary screen on an ordinary role; camera in later; NDI parked.
+
+Alex's steers on 24 Nov, all folded into the note and mockup: the signal dial sits on the role and screen boxes (not behind the line); sections fold; presets are added by "show it, then keep it" (Keep on Live, + Add per section); a second press on a fired preset goes back, Everyone is a layer with Lift, Hold all remembers, Undo and Redo at the top; layouts (player screens) are listed, built with a four-step builder, or kept from the GM's own view; pictures, sound and film are sources from a pack, a file or a web address ("we can load assets here and include them in packs and the GM can throw them up where they want"). See [[mappadux-carry-over]].
+
+Bookmarks (Alex 24 Nov 16:11 to 16:14): "bookmarks define what, layouts define how it looks and playbooks store them. These are fired at screens with dynamic fog, which define where it is shown." A Bookmarks button beside Undo/Redo on every desk is the only thing made at source (`sse.bookmark/1`, the top-level design's place mark, shared with tours); presets, layouts and look tuning are made from bookmarks only in the Switchboard ("the ONLY place we do all this filter adding"), so no send or keep entries on object menus and the look card opens in the Switchboard. "Dynamic fog" was read as the per-role knowledge filter at the screen (question 21, unconfirmed). The interference dial is always present on every role and screen box; the kind of fault (analogue, digital) is defined in the look and never changed live (Alex 16:17: "only dynamic controls (like level of interference) should be on a slider at all times"). Package PB2b is bookmarks.
+
+Packages PB1 to PB14 for the builder thread "Build Run desk playbook and players' side" (files in packages/shell/src/run/); PB1 to PB3 are what the run-through needs. The builder's account of what exists on main: `/mnt/project-files/sse4/plans/switchboard-what-exists.md`.
+
+Added at acceptance (Alex 16:34 to 16:35): each screen is "Theirs" (player uses the controls its layout allows and cannot leave what was sent) or "Read only" (follows the GM; pressing its preview lets the GM drive it); Alex called this "suck it and see", so expect it to change after trying. Reveals show on every view at once. A sound sent to screens shows an "Incoming transmission…" card that a look can restyle (distress calls). Edit on a selected preset (Playbook or "just now" strip) opens it in the top monitor. Alex also asked for a concept map / flowchart of how bookmarks, layouts, playbook, looks, roles and screens interact, as onboarding and guide: `handover-screens/PB-screens/concept-map.html`.
+
+Also 16:36 to 16:39: one layout editor for new and existing ("New layout is actually edit layout"), each box taking a bookmark, a file or a link; "we need to try and simplify as we go", and boxes reorder by dragging; a screen on the GM computer is an attached display or a part of one (split into 2, 3 or 4, each part its own screen), the split being an advanced choice kept under More. Concept map artifact: https://claude.ai/artifact/YUz5hHcNEZTq5q2H3ymVMD
+
+**How to apply:** the builder thread was sent the note and package list on 24 Nov 16:4x and builds PB1, PB2, PB2b, PB3, PB3b first. Design changes go in the note first (this Fable thread), then to the builder.

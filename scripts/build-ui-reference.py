@@ -49,6 +49,12 @@ def build():
         "constants": consts,
         # Each unit's factor to SI, for documents that give a value in a unit.
         "units": {u["id"]: unit_factor(u, consts) for u in pack["provides"]["reference"]["units"]},
+        # Each unit's row for the units engine (figures.ts, ED1a): symbol, name, what it measures and any offset
+        # (a temperature's zero), the factor as above.
+        "unit_rows": [{k: v for k, v in {
+            "id": u["id"], "symbol": u["symbol"], "name": u["name"], "measures": u["measures"],
+            "factor": unit_factor(u, consts), "offset": u.get("offset"),
+        }.items() if v is not None} for u in pack["provides"]["reference"]["units"]],
         # The Bands table (RK10), small and read by every screen's band list:
         # id, kind, plain name, wavelength range in metres, view and recipe.
         "bands": [{k: v for k, v in {
