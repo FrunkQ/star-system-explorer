@@ -4,6 +4,7 @@
 // widen what a role knows. `checkKit` is pure and DOM-free: the pack loader, the role card and Orac (AT16) call it the
 // same way, and it returns plain sentences (empty: the kit loads).
 import { typedFigures } from "./loader.ts";
+import { sayNumber } from "../figures.ts";
 import { VIEW_STYLES, type ViewStyle } from "../view-controls.ts";
 import starters from "./kits/starters.json" with { type: "json" };
 
@@ -129,7 +130,7 @@ export function checkPalette(p: Palette): string[] {
     if (!ground) continue;
     for (const k of TEXT_TOKENS) {
       const c = contrastOf(p.tokens[k], ground)!;
-      if (c < 4.5) out.push(`In the palette ${p.id}, ${k} on ${g} has a contrast of ${c.toFixed(1)} to 1; text needs 4.5. Darken or lighten one of them.`);
+      if (c < 4.5) out.push(`In the palette ${p.id}, ${k} on ${g} has a contrast of ${sayNumber(c, 2, { decimals: 1 })} to 1; text needs 4.5. Darken or lighten one of them.`);
     }
   }
   return out;
