@@ -11,6 +11,7 @@ import { drawCanvas } from "./canvas.ts";
 import { lightDir, narrate, prepare, type Prepared } from "./surface.ts";
 import type { GlobeGpu } from "./gpu-globe.ts";
 import { air as airOf, type Air, type AirFacts } from "./atmosphere.ts";
+import { HeatWatch, loadProbe, loadQuality, place, probeKey, saveProbe, saveQuality, type Capabilities, type Placement, type ProbeResult, type QualityChoice } from "./probe.ts";
 import type { AirRender } from "./gpu-air.ts";
 
 /** The air in render units (globe radius 1): coefficients × radius, scale height ÷ radius, shell to 10 scale heights. */
@@ -90,6 +91,72 @@ export interface GlobeRun {
 /** What this device can draw: probed once a page. */
 let gpuProbe: Promise<"webgpu" | "webgl2" | null> | null = null;
 
+/** The device's capabilities and measured speed (VP4 probe.ts): read once a page, the speed cached on the device. */
+let capsRead: Promise<Capabilities> | null = null;
+let speedProbe: Promise<ProbeResult | null> | null = null;
+const speedListeners = new Set<() => void>();
+/** The heat watch is the visit's, not one view's: a hot device stays lowered on every view. */
+const heat = new HeatWatch();
+let lastSpeed: ProbeResult | null = null;
+
+const storage = (): Storage | null => {
+  try {
+    return typeof localStorage !== "undefined" ? localStorage : null;
+  } catch {
+    return null;
+  }
+};
+
+async function deviceCaps(): Promise<Capabilities> {
+  capsRead ??= import("./probe-gpu.ts").then((m) => m.readCapabilities());
+  return capsRead;
+}
+
+/** The measured speed: the cached probe for this adapter and browser, else null while one is measured in the background. */
+async function deviceSpeed(caps: Capabilities): Promise<ProbeResult | null> {
+  const key = probeKey(caps, typeof navigator !== "undefined" ? navigator.userAgent : "");
+  const kept = loadProbe(storage(), key);
+  if (kept) return (lastSpeed = kept);
+  if (!speedProbe) {
+    speedProbe = import("./probe-gpu.ts")
+      .then((m) => m.measureProbe(caps))
+      .then((r) => {
+        if (r) (saveProbe(storage(), { ...r, key }), (lastSpeed = r));
+        for (const l of speedListeners) l();
+        return r;
+      })
+      .catch(() => null);
+  }
+  return null;
+}
+
+/** Forget the measured speed and measure again (More › Performance › Measure again). Resolves with the new result. */
+export async function measureAgain(): Promise<ProbeResult | null> {
+  const caps = await deviceCaps();
+  try {
+    storage()?.removeItem("sse4.render.probe");
+  } catch {
+    // Nothing kept.
+  }
+  speedProbe = null;
+  await deviceSpeed(caps);
+  return (await speedProbe) ?? null;
+}
+
+/** The quality choice (More › Performance): kept on the device, and every open view is placed again at once. */
+export function setQuality(q: QualityChoice): void {
+  saveQuality(storage(), q);
+  for (const l of speedListeners) l();
+}
+
+export const quality = (): QualityChoice => loadQuality(storage());
+
+/** The device's capabilities and its cached speed, for the performance readout. */
+export async function deviceReadout(): Promise<{ caps: Capabilities; probe: ProbeResult | null }> {
+  const caps = await deviceCaps();
+  return { caps, probe: loadProbe(storage(), probeKey(caps, typeof navigator !== "undefined" ? navigator.userAgent : "")) };
+}
+
 export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (s: GlobeStatus) => void): GlobeRun {
   let o = { ...opts };
   let globe: Globe | null = null;
@@ -153,19 +220,25 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     return gpuProbe;
   }
 
-  let available: Tier[] = ["canvas", "text"];
   let startTier: Tier = "canvas";
   async function chooseTier() {
     const want = o.tier;
-    const gpuKind = !gpuFailed && (want === "auto" || want === "gpu-basic" || want === "gpu-high") ? await probeGpu() : null;
+    const gpuKind = !gpuFailed && (want === "auto" || want === "gpu-basic" || want === "gpu-high" || want === "gpu-ultra") ? await probeGpu() : null;
     const hasGpu = !!gpuKind;
-    // gpu-high is chosen by itself only on WebGPU; it can be asked for on WebGL2.
-    available = gpuKind === "webgpu" ? ["gpu-high", "gpu-basic", "canvas", "text"] : hasGpu ? ["gpu-basic", "canvas", "text"] : ["canvas", "text"];
     if (want === "auto") {
+      // Placed by measured speed (VP4), not by which graphics layer the device has: a fast WebGL2 device can earn High.
       const doc = o.registry.find((r) => r.id === o.recipe) ?? recipe(hasGpu ? "gpu-basic" : "canvas")?.doc;
-      startTier = TIER_ORDER.find((t) => doc?.tiers.includes(t) && available.includes(t)) ?? "text";
-      tierNote = gpuKind === "webgpu" ? "Chosen for this device: it has WebGPU." : hasGpu ? "Chosen for this device: it can draw on the GPU (WebGL2; the high tier waits for WebGPU)." : "Chosen for this device: no WebGPU or WebGL2 here, so the globe is drawn on a 2D canvas.";
-    } else if ((want === "gpu-basic" || want === "gpu-high") && !hasGpu) {
+      if (!doc) {
+        startTier = "text";
+        tierNote = "No recipe to draw with.";
+        return;
+      }
+      const caps = hasGpu ? await deviceCaps().catch(() => null) : null;
+      const speed = caps && hasGpu ? await deviceSpeed({ ...caps, backend: gpuKind }) : null;
+      const placed: Placement = place({ caps: { backend: gpuKind, compute: gpuKind === "webgpu" && !!caps?.compute }, probe: speed, pixels: full() * full(), recipe: doc, library: o.library, choice: loadQuality(storage()), heat_ceiling: heat.ceiling });
+      startTier = placed.tier;
+      tierNote = placed.note;
+    } else if ((want === "gpu-basic" || want === "gpu-high" || want === "gpu-ultra") && !hasGpu) {
       startTier = "canvas";
       tierNote = "GPU tier asked for, but this device has neither WebGPU nor WebGL2: drawn on a 2D canvas instead.";
     } else {
@@ -173,6 +246,12 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       tierNote = `Drawn on ${want} as set, not by this device's own choice.`;
     }
   }
+  // When the background probe returns, place this view again by the measured speed.
+  const onSpeed = () => {
+    if (disposed || o.tier !== "auto") return;
+    ready = chooseTier().then(() => ((gov = null), (dirty = true), kick()));
+  };
+  speedListeners.add(onSpeed);
 
   function current(): { doc: RecipeDoc; stood_in?: string; plan: Plan; budget: number } | null {
     const r = recipe(startTier);
@@ -240,7 +319,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       if (!shown || shownKey !== k || shown.globe !== globe) ((shown = withWeather(prepared, wx, cubeDirection)), (shownKey = k));
     } else shown = prepared;
     const drawn = shown!;
-    const want = pl.tier === "gpu-basic" || pl.tier === "gpu-high" ? "gpu" : pl.tier === "canvas" ? "canvas" : "text";
+    const want = pl.tier === "gpu-basic" || pl.tier === "gpu-high" || pl.tier === "gpu-ultra" ? "gpu" : pl.tier === "canvas" ? "canvas" : "text";
     const atm = pl.passes.find((x) => x.pass === "atmosphere")?.params;
     const airNow = atm && airPhys ? airRender(airPhys, Number(atm.thickness ?? 1)) : null;
     ensureSurface(want);
@@ -258,8 +337,10 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     const work = performance.now() - t0;
     if (drew) {
       frames++;
-      // The performance readout (PF1), when it is on: the globe's own drawing time, by tier.
+      // The performance readout (PF1), when it is on: the globe's own drawing time, by tier, and each pass's share
+      // of it (VP4; estimated from the passes' declared costs until per-pass GPU timing lands).
       perf.record("render.globe", work, { detail: pl.tier });
+      if (perf.enabled) for (const x of passShares(pl, o.library, full() * full(), speedNow())) perf.record("render.pass", work * x.share, { detail: `${x.pass} (${pl.tier}, estimated share)` });
       // Continuous frames: the interval between them is the frame time; a lone frame: its own work.
       const ms = lastFrameAt >= 0 && now - lastFrameAt < 250 ? Math.max(work, now - lastFrameAt) : work;
       lastFrameAt = now;
@@ -271,6 +352,8 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
         const ratio = est > 0 && Number.isFinite(gov.ewma) ? gov.ewma / est : null;
         const move = gov.sample(ms, (lv) => (ratio === null ? null : estimateMs(plan(cur.doc, o.library, startTier, lv, o.knobs), o.library, pixels) * ratio));
         if (move) dirty = true;
+        // Three steps down inside a minute: a hot device. Lower the ceiling for the visit and place again.
+        if (move === "down" && o.tier === "auto" && heat.down(now, pl.tier)) ready = chooseTier().then(() => ((gov = null), (dirty = true), kick()));
       }
     }
     const c2 = current()!;
@@ -286,7 +369,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       const narration = lapse ? narrateFrame(lapse, lapseLayer, lapseT, o.label) : `${narrate(prepared, o.label, lon, lat, String(narr?.params.detail ?? "full"), L)}${wx ? ` ${narrateWeather(wx, "")}` : ""}`;
       onStatus({
       tier: c2.plan.tier,
-      backend: c2.plan.tier === "gpu-basic" || c2.plan.tier === "gpu-high" ? (gpu?.backend ?? "none") : c2.plan.tier === "canvas" ? "canvas2d" : "none",
+      backend: c2.plan.tier === "gpu-basic" || c2.plan.tier === "gpu-high" || c2.plan.tier === "gpu-ultra" ? (gpu?.backend ?? "none") : c2.plan.tier === "canvas" ? "canvas2d" : "none",
       recipe: c2.doc.id,
       level: c2.plan.level,
       max: gov?.max ?? 0,
@@ -384,9 +467,20 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     frameTimes: () => times,
     dispose() {
       disposed = true;
+      speedListeners.delete(onSpeed);
       if (raf) cancelAnimationFrame(raf);
       gpu?.dispose();
       canvas?.remove();
     },
   };
+}
+
+/** The speed now, if it has been measured (the readout's estimated shares use it). */
+const speedNow = (): ProbeResult | null => lastSpeed;
+
+/** Each pass's share of a frame, from its declared cost (scaled by the probe's factors when measured). */
+export function passShares(pl: Plan, library: readonly PassSpec[], pixels: number, speed: Pick<ProbeResult, "factors"> | null): { pass: string; share: number }[] {
+  const each = pl.passes.map((p) => ({ pass: p.pass, ms: estimateMs({ ...pl, passes: [p] }, library, pixels, {}, speed?.factors ?? null) }));
+  const total = each.reduce((a, x) => a + x.ms, 0);
+  return total > 0 ? each.filter((x) => x.ms > 0).map((x) => ({ pass: x.pass, share: x.ms / total })) : [];
 }
