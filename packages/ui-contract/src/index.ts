@@ -66,8 +66,8 @@ export { checkWorldStack, formatKm, kindPhrase, ladder, regionCounts, cutRadius 
 export type { WorldStack, WorldShell, WorldRegion, WorldFeature, LadderLine, WorldStackRead } from "./world.ts";
 export { direction as cubeDirection, faceOf, sampleAt, sampleColour, globeStats, viewToWorld, MATERIALS as SURFACE_MATERIALS, COVERS as SURFACE_COVERS } from "./globe.ts";
 export type { SurfaceTile, Globe } from "./globe.ts";
-export { R_EARTH_KM, R_JUPITER_KM, R_SUN_KM, checkReferences, itemFromReference, itemFromSubject, radiusKm, starColour, layoutLineup, sizeWords, scaleBar, formatKmLength } from "./compare.ts";
-export type { ReferenceObject, ReferenceDoc, CompareItem, Placed, Lineup } from "./compare.ts";
+export { R_EARTH_KM, R_JUPITER_KM, R_SUN_KM, checkReferences, itemFromReference, itemFromSubject, radiusKm, reachKm, starColour, layoutLineup, sizeWords, scaleBar, formatKmLength } from "./compare.ts";
+export type { ReferenceObject, ReferenceDoc, CompareItem, Placed, Lineup, SolDoc } from "./compare.ts";
 export { separation, distanceWords, lightWords, C_KM_S } from "./measure.ts";
 export type { Separation } from "./measure.ts";
 export { CAMPAIGN_SCHEMA, checkCampaignSave, makeCampaignSave, publicExport, savedEvents, saveFileName } from "./campaign.ts";

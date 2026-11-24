@@ -2,7 +2,7 @@
 // device has no WebGPU). It is handed camera-relative positions only, already
 // narrowed from f64 (frames.ts), and draws with the camera at the origin, so
 // no large number ever reaches the GPU (rendering rule 3).
-import { AdditiveBlending, AmbientLight, BufferGeometry, DoubleSide, Quaternion, RingGeometry, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
+import { AdditiveBlending, AmbientLight, BufferGeometry, DoubleSide, Quaternion, RingGeometry, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
 import { WebGPURenderer } from "three/webgpu";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
@@ -33,18 +33,29 @@ export interface GpuItem {
    * radius, the ring plane's normal, and the profile's row of RGBA pixels from the inner edge out. Keyed: uploaded once.
    */
   rings?: { key: string; inner: number; outer: number; normal: Vec3; width: number; data: Uint8ClampedArray };
+  /**
+   * The globe's own axes (x, y, and z its north pole) in camera space: it is drawn turned and tilted to them, so a
+   * surface or a graticule turns with it (the size comparison's spinning globes). Left out: pole on z, unturned.
+   */
+  frame?: [Vec3, Vec3, Vec3];
 }
 
 /** True look: the star's light. `at` a camera-relative point (the star is in the frame), else `from` a direction. */
 export interface GpuLight {
   at?: Vec3;
   from?: Vec3;
+  /** Light from everywhere, as a share of the star's (a trace when left out): a shaded chart globe gets more. */
+  ambient?: number;
+  /** Keep the chart's ground behind instead of black space (3D style: shaded, but a chart). */
+  ground?: boolean;
 }
 
 export interface GpuRing {
   /** Camera-relative points of the orbit (float32 values), closed. */
   points: Vec3[];
   colour: string;
+  /** Drawn over everything, not hidden behind (lines already trimmed to what faces the viewer: a globe's graticule). */
+  over?: boolean;
 }
 
 /** A haze of single-pixel points (a shell such as the Oort cloud), camera-relative like everything else. */
@@ -85,7 +96,7 @@ export interface GpuGlow {
 
 export interface Gpu {
   readonly backend: "webgpu" | "webgl2";
-  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean }): void;
+  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number } }): void;
   dispose(): void;
 }
 
@@ -100,6 +111,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   const backend = (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? "webgpu" : "webgl2";
   const scene = new Scene();
   const camera = new PerspectiveCamera(50, 1, 1e-3, 1e4);
+  const flat = new OrthographicCamera(-1, 1, 1, -1, 1e-3, 1e4);
+  const turned = new Matrix4();
   const sphere = new SphereGeometry(1, 32, 16);
   // True look: a finer sphere with its poles on z, as the globe's (true-look.ts `equirect`).
   const globe = new SphereGeometry(1, 64, 32).rotateX(Math.PI / 2);
@@ -252,13 +265,16 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     dotMats.set(key, m);
     return m;
   };
-  const lineMat = (c: string) => lineMats.get(c) ?? (lineMats.set(c, new LineBasicMaterial({ color: new Color(c) })), lineMats.get(c)!);
+  const lineMat = (c: string, over = false) => {
+    const key = `${c}|${over}`;
+    return lineMats.get(key) ?? (lineMats.set(key, new LineBasicMaterial({ color: new Color(c), depthTest: !over })), lineMats.get(key)!);
+  };
   return {
     backend,
     draw(o) {
       scene.clear();
       // Space is black in the true look: a physical choice, not a theme colour.
-      scene.background = new Color(o.light || o.space ? 0x000000 : o.ground);
+      scene.background = new Color((o.light && !o.light.ground) || o.space ? 0x000000 : o.ground);
       if (o.light) {
         // The star lights its worlds with no fall-off across the frame (the distances are drawn on a log scale);
         // a trace of ambient keeps a night side from vanishing against space.
@@ -271,7 +287,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
           l.position.set(o.light.from[0], o.light.from[1], o.light.from[2]);
           scene.add(l);
         }
-        scene.add(new AmbientLight(0xffffff, 0.04));
+        scene.add(new AmbientLight(0xffffff, o.light.ambient ?? 0.04));
       }
       for (const it of o.items) {
         if (o.light && it.face) {
@@ -282,9 +298,13 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
           continue;
         }
         const lit = !!o.light && !it.shines && it.emit === undefined;
-        const m = new Mesh(o.light ? globe : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? litMat(it) : mat(it.colour));
+        const m = new Mesh(o.light || it.frame ? globe : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? litMat(it) : mat(it.colour));
         m.position.set(it.rel[0], it.rel[1], it.rel[2]);
         m.scale.setScalar(it.radius);
+        if (it.frame) {
+          const [x, y, z] = it.frame;
+          m.quaternion.setFromRotationMatrix(turned.makeBasis(new Vector3(...x), new Vector3(...y), new Vector3(...z)));
+        }
         scene.add(m);
         if (o.light && it.rings) {
           const rs = ringSet(it.rings);
@@ -309,7 +329,9 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       for (const ring of o.rings) {
         const g = new BufferGeometry();
         g.setAttribute("position", new Float32BufferAttribute(ring.points.flat(), 3));
-        scene.add(new Line(g, lineMat(ring.colour)));
+        const line = new Line(g, lineMat(ring.colour, ring.over));
+        if (ring.over) line.renderOrder = 1;
+        scene.add(line);
       }
       for (const s of o.sheets ?? []) {
         const m = new Mesh(sheetGeom(s), lightMat(s.key, picture(s.key, s.version, s.texture), s.weight));
@@ -331,14 +353,24 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         g.setAttribute("position", new Float32BufferAttribute(d.points.flat(), 3));
         scene.add(new Points(g, dotMat(d)));
       }
-      camera.fov = (o.fovY * 180) / Math.PI;
-      camera.aspect = o.width / Math.max(1, o.height);
-      camera.position.set(0, 0, 0);
-      camera.up.set(o.up[0], o.up[1], o.up[2]);
-      camera.lookAt(new Vector3(o.forward[0], o.forward[1], o.forward[2]));
-      camera.updateProjectionMatrix();
+      const cam = o.ortho ? flat : camera;
+      if (o.ortho) {
+        flat.left = -o.ortho.width / 2;
+        flat.right = o.ortho.width / 2;
+        flat.top = o.ortho.height / 2;
+        flat.bottom = -o.ortho.height / 2;
+        flat.near = o.ortho.near;
+        flat.far = o.ortho.far;
+      } else {
+        camera.fov = (o.fovY * 180) / Math.PI;
+        camera.aspect = o.width / Math.max(1, o.height);
+      }
+      cam.position.set(0, 0, 0);
+      cam.up.set(o.up[0], o.up[1], o.up[2]);
+      cam.lookAt(new Vector3(o.forward[0], o.forward[1], o.forward[2]));
+      cam.updateProjectionMatrix();
       renderer.setSize(o.width, o.height, false);
-      renderer.render(scene, camera);
+      renderer.render(scene, cam);
       scene.traverse((x) => (x instanceof Line || x instanceof Points) && x.geometry.dispose());
     },
     dispose() {
