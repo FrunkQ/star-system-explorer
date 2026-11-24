@@ -77,6 +77,8 @@ export type { Separation } from "./measure.ts";
 export { CAMPAIGN_SCHEMA, checkCampaignSave, makeCampaignSave, publicExport, savedEvents, saveFileName } from "./campaign.ts";
 export type { CampaignSave } from "./campaign.ts";
 export { LIFE_EXAMPLES, MARKED_KINDS, carbonWords, confidenceWords, epochBands, foodWeb, productionPath, scanTiers, timeAxis, words as lifeWords } from "./life.ts";
+export { STAGES as LIFE_STAGES, lifeFlow, placeStages, stageOfEvent } from "./life-flow.ts";
+export type { FlowStage, PlacedStage, StageId } from "./life-flow.ts";
 export type { LifeEpoch, LifeEvent, LifeGuild, LifeHook, LifePoint, LifeSignatures, LifeView, WebLink, WebNode } from "./life.ts";
 export { GREGORIAN, calendarOf, checkCalendar, dateOf, epochOf, formatDate, isLong, parseDate, startOf, yearLength } from "./calendar.ts";
 export type { Anchor, Calendar, CalendarDate } from "./calendar.ts";
@@ -162,4 +164,7 @@ export type { RadiatorRule, PowerReading } from "./power.ts";
 // Range rings (RK12): effect at range as rings round the one who holds the weapon, a HUD overlay.
 export { RANGE_RING_LAYER, rangeRings, rangeText, ringPoints } from "./range-rings.ts";
 export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, RangeTarget, RangeWeapon } from "./range-rings.ts";
+// Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
+export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
+export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed } from "./handles.ts";
 export * from "./place-notes.ts";
