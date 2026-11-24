@@ -79,6 +79,8 @@ test("the catalogue's air: atmosphere.surface_pressure and the main gas standing
   assert.equal(airFactsOf({ "atmosphere.surface_pressure": 500, "atmosphere.main": "none" }, surf), null, "no gas named");
   // A fuller mix wins over the main gas, by the kernel's ids or by name.
   assert.deepEqual(airFactsOf({ "atmosphere.surface_pressure": 101400, "atmosphere.main": "n2", "atmosphere.composition": { n2: 0.78, o2: 0.21, ar: 0.01 } }, surf)?.composition, { N2: 0.78, O2: 0.21, Ar: 0.01 });
+  // The data sheet's facts, one per gas, win over the main gas.
+  assert.deepEqual(airFactsOf({ "atmosphere.surface_pressure": 101400, "atmosphere.main": "n2", "atmosphere.composition.n2": 0.7808, "atmosphere.composition.o2": 0.2095, "atmosphere.composition.ar": 0.0093, "atmosphere.composition.xe": 0 }, surf)?.composition, { N2: 0.7808, O2: 0.2095, Ar: 0.0093 });
   // A V3 import's own names still win.
   assert.deepEqual(airFactsOf({ "body.surface_pressure": 101300, "atmosphere.main": "co2", "v3.atmosphere": { composition: { N2: 0.78, O2: 0.21 } } }, surf)?.composition, { N2: 0.78, O2: 0.21 });
 });
