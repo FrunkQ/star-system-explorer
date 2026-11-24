@@ -1,6 +1,6 @@
 # SSE4 exotic objects on screen: black holes, pulsars and stripped stars (track XO)
 
-Written 24 Nov 2026 by the design thread "Design exotic stars and black holes", after Alex's "yes to all" (24 Nov 16:41) to starting it. **Status: ACCEPTED by Alex, 24 Nov 2026 17:03 ("Yes to all" to the eleven questions), with two additions he asked for the same day: Composite in the band switch (section 6A) and the approach diagram in place of a list of readings (section 3.8). Section 13 records the rulings.** "XO" stands for exotic objects. It is only the short code on this track's packages and never appears in the product.
+Written 24 Nov 2026 by the design thread "Design exotic stars and black holes", after Alex's "yes to all" (24 Nov 16:41) to starting it. **Status: ACCEPTED by Alex, 24 Nov 2026 17:03 ("Yes to all" to the eleven questions), with two additions he asked for the same day: Composite in the band switch (section 6A) and a diagram in place of a list of readings, which at 17:19 he widened into the Hazard map for any hazardous body (section 3.8). Section 13 records the rulings.** "XO" stands for exotic objects. It is only the short code on this track's packages and never appears in the product.
 
 Read with `SSE4-star-census.md` (which objects exist and who makes them), `SSE4-nebulae-and-light-design.md` (light descriptions, band recipes, shifts, jets, activity), `SSE4-magnetic-fields-design.md` (the field ledger, remnants in MF11, the Mag band) and `interface-style.md` rule 12 (View style, Seen from, Scale, HUD, Band).
 
@@ -195,39 +195,64 @@ A black hole of ten Suns is 60 km across. In a system view at **Real** scale it 
 - **Readable**: the body's mark is enlarged like any other body's, and the bending is drawn round the enlarged mark at the same ratio, so the picture reads. This is the same exaggeration Readable already applies to planets, and the Scale switch already says so.
 - **The close-up** (press the body, "click to fly" as on any other) is where the showpiece lives: the camera sits a few hundred gravitational radii out, where Real and Readable agree.
 
-### 3.8 The approach diagram: how close can you get **[Alex, 24 Nov 17:03]**
+### 3.8 The hazard map: how close can you get, round anything dangerous **[Alex, 24 Nov 17:03 and 17:19]**
 
-Alex asked for a diagram, not a list of orbit options: how close you can get, the radiation at each distance, what it costs to climb back out, and for a ship the closest it can go before it is "too late", as a figure the GM has and can choose to show the players. He asked for the same diagram on exotics and on most ordinary stars. So it is one general thing, for **any massive body**: a black hole, a neutron star, the Sun, Jupiter with its belts.
+Alex asked first for a diagram, not a list of orbit options: how close you can get, the radiation at each distance, what it costs to climb back out, and for a ship the closest it can go before it is "too late", as a figure the GM has and can choose to show the players. Then (17:19) he made it general: "we need them for most objects that are hazardous, a kind of hazard map that can be brought up", naming Jupiter's radiation belts as something to treat carefully. So this is **not a black hole feature**. It is one instrument, called **Hazard map** on screen, for any body with something dangerous round it: a black hole, a neutron star, the Sun, a flare star, Jupiter with its belts, Saturn with its rings, Io's ring of charged gas.
 
-**What it is.** One strip chart on the body's card, opening from the body. Distance from the body runs along the bottom on a stretched (logarithmic) scale, from its surface or point of no return on the left to far away on the right. Each hazard is one thin row above that axis, drawn in three tones: clear, harsh, deadly. Danger is drama, never forbidden: the diagram informs, and nothing stops a ship going past a line.
+**Where it is.** An entry on the instrument rail at world and star level (declared in the screen document, as every screen is; never a tab), and a "Hazard map" line on any body's card that opens it from the body. At system scale the same zones can be laid over the chart as a HUD overlay ("Hazards"), so the GM sees every body's danger zones at a glance on one chart. Danger is drama, never forbidden: the map informs, and nothing stops a ship crossing a line.
 
-| Row | What it reads, at each distance | From | Where it bites |
-|---|---|---|---|
-| **Heat** | the temperature a hull settles at in the body's light, against what this hull can take | the body's light (`read_light`), the hull's skin from the data sheet | the Sun and every ordinary star (this is what stopped Parker Solar Probe at about ten Sun radii); any fed black hole, from astonishingly far out |
-| **Radiation** | dose per hour behind this ship's shield, from X-rays and gamma rays, trapped belts and particle storms | the existing dose and shield blocks (MF7), the disc's light | fed black holes; Jupiter's belts; magnetars |
-| **Tide** | the stretch across the ship's length and across a person | 2GM / r³ per metre | small dense things: stellar black holes and neutron stars, thousands of km out. Never, outside the surface, for a supermassive hole or the Sun |
-| **Field** | magnetic field strength against what electronics and bodies stand | the Mag layer's field | neutron stars; magnetars from a thousand km and more |
-| **Clocks** | how slowly the ship's clock runs against home | √(1 − 2GM / rc²) hovering, √(1 − 3GM / rc²) orbiting | compact bodies only. Shown as "an hour here is 1 hour 25 minutes at home". Feeds ship time in voyages |
-| **Climbing out** | the speed change needed to leave from a circular orbit at this distance, against the fuel on board | orbital speed there (relativistic where it matters) and the ship's remaining delta-v from its record | everything. This is the row that makes the "too late" line |
+**Why a map and not only a strip.** Several hazards are not a simple matter of distance. A radiation belt is a doughnut round the magnetic equator with an inner edge, an outer edge and gaps, and nothing over the poles. A jet or a pulsar's beam is a cone. Rings and discs are flat. So the instrument has two readings of the same facts:
 
-Rows that never leave "clear" for this body fold away into one line ("Tide, field and clocks: nothing to worry about here"), so an ordinary star shows two or three rows and a neutron star all six. That is the space Alex noticed simple bodies have.
+- **Map**: a cut through the body and its surroundings, in the plane holding its spin and magnetic axes (the same cut the Mag layer already draws in Chart style), with each hazard's zone shaded where it really is. It is a diagram and obeys the one set of view controls: Chart is the cut, 3D turns it, Seen from and Scale work as everywhere.
+- **Profile**: the strip chart. Distance along the bottom on a stretched (logarithmic) scale, one thin row per hazard in three tones: clear, harsh, deadly. A profile is always **along a stated line**: "in the equator's plane", "over the poles", or "along this ship's planned course" (from voyages). The line is drawn on the Map. Changing the line changes the profile, and that is the point: over Jupiter's poles the radiation row is nearly clear where in the equator's plane it is deadly.
 
-**Fixed marks on the axis**, from the body alone: its surface; for a black hole the surface of no return, the last orbit light can hold and the last stable orbit; the distance inside which a loosely held ship or moon is pulled apart; belts; the disc's edges.
+**The hazards (rows on the Profile, zones on the Map).** Each is an existing block or a one-line formula block. A row or zone appears only where it leaves "clear".
 
-**Two marks for a ship**, in the accent colour, each saying which row set it:
+| Hazard | What it reads | Shape on the Map | From | Where it bites |
+|---|---|---|---|---|
+| **Heat** | the temperature a hull settles at in the body's light, against what this hull can take | round, or shadowed behind a disc or planet | `read_light`, the hull's skin from the data sheet | the Sun and every star (this is what stopped Parker Solar Probe at about ten Sun radii); any fed black hole, from astonishingly far out |
+| **Radiation: trapped belts** | dose per hour behind this ship's shield | doughnuts along the field's own lines, with edges and gaps (see below) | `read_field`'s `belts` (built, MF7) | Jupiter above all; Earth, Saturn, Uranus, Neptune; any world or star with a field and something to fill it |
+| **Radiation: light** | X-ray and gamma dose from a disc, a corona or a hot surface | round, or a cone for a beamed source | the body's light by band, the shield blocks | fed black holes, neutron stars, the wall between colliding winds |
+| **Radiation: storms** | particle dose from flares and mass ejections, quiet against stormy | a wide fan from the star; blocked inside a planet's magnetic bubble | `read_activity` events, `read_field`'s shielding (built) | flare stars, young stars, anywhere outside a bubble during a storm |
+| **Beams and jets** | dose and heat inside a jet or a pulsar's cone | a cone along the axis, turning with the spin | O11 jets, XO10 pulsar geometry | accreting compact objects, pulsars, galaxy centres |
+| **Debris** | chance of a strike per pass through rings, a belt of rocks, a disc or a comet's dust | a flat sheet with its real gaps, or a cloud | ring and belt regions with optical depth (already data), relative speed | Saturn's rings, debris discs, a young system's leftovers |
+| **Tide** | the stretch across the ship's length and across a person | round | 2GM / r³ per metre | small dense things: stellar black holes and neutron stars, thousands of km out. Never, outside the surface, for a supermassive hole or the Sun |
+| **Field** | magnetic field strength against what electronics and bodies stand | the field's own shape | the Mag layer's field | neutron stars; magnetars from a thousand km and more |
+| **Clocks** | how slowly the ship's clock runs against home | round | √(1 − 2GM / rc²) hovering, √(1 − 3GM / rc²) orbiting | compact bodies only. Shown as "an hour here is 1 hour 25 minutes at home". Feeds ship time in voyages |
+| **Air** | heating and drag where a pass would dip into the atmosphere | a thin shell | the aerobraking and landing blocks (built, per ship per world) | any world with air |
+| **Climbing out** | the speed change needed to leave from a circular orbit here, against the fuel on board | round | orbital speed there (relativistic where it matters), the ship record's remaining delta-v | everything. This row makes the Park mark |
 
-- **Park: the closest orbit this ship can settle into and still climb out of.** Set by the fuel on board against the "Climbing out" row, or by whichever hazard turns deadly first if that comes sooner. A deep well makes this surprisingly far out: a ship with 30 km/s in its tanks cannot park closer to the Sun than about a sixth of Earth's distance and still leave.
-- **Dive: the closest pass on a fall-through that still comes back out.** Alex's point about stretched orbits is right, and it is the heart of the diagram: a ship that falls in from far away and swings past leaves again **for free**, because it arrives with the speed it needs to escape. So a dive goes far deeper than a park, limited only by heat, radiation over the hours of the pass, tide, and, for a black hole, the distance inside which even a fall-through is swallowed (about four gravitational radii for no spin). It is easier and more vicious, exactly as he said: the tide and the dose are at their worst, and briefly.
+Rows that never leave "clear" for this body fold into one line ("Tide, field and clocks: nothing to worry about here"), so an ordinary star shows two or three rows and a neutron star most of them. A pack can add a hazard (a fictional field, a psychic zone) as data, marked fictional.
 
-Inside the Dive mark is "too late": the ship does not come back, or comes back dead. The card says which ("limited by heat: hull reaches 1,600 K").
+**Radiation belts, done properly.** Belts come from the body's magnetic field, so everything about them is read from the magnetic fields work, not from a rule of thumb about distance:
 
-**A quiet hole lets you get very close; a fed one does not.** This falls out of the rows. Round a starved or bare black hole the Heat and Radiation rows are clear almost to the last stable orbit, so the Dive mark sits a few radii from the shadow and only the tide (for a small hole) decides. Round a well-fed stellar hole the heat stops a ship several times Earth's distance from the Sun away, and the hard X-rays stop a thinly shielded one far further out still. That is many millions of times further out than the hole is wide.
+- **No field, no belts.** `read_field` says whether the body has a field now (measured, computed, none or unresolved). Venus and Mars have no belt zone. A world whose dynamo died has none after that date, so the map follows the time ruler like every effect in the MF design.
+- **Shape.** A belt is the set of field lines between its inner and outer shells, as far along each line as particles bounce. For a plain dipole that is the familiar crescent pair either side of the planet in the cut; for a tilted or offset field (Uranus, Neptune) the doughnut is tilted and off-centre, and it wobbles as the planet turns. The Map draws it by tracing the same field lines the Mag layer traces (`renderer/src/field.ts`), so the two pictures always agree.
+- **Edges.** The inner edge is where the lines dip into air, rings or the surface; the outer edge is the last closed drift shell inside the magnetic bubble. The kernel already gives both and what sets each (`inner_m`, `outer_m`, `inner_set_by`, `outer_set_by`).
+- **Gaps.** Moons and rings sweep particles out along the shells they cross. The kernel already lists them (`gaps`, each with the moon's name). On the Map a gap is a clear lane inside the doughnut with the moon's name on it; on the Profile it is a break in the row. A gap is somewhere a ship can loiter, and a GM should see it.
+- **Strength varies across the belt.** Each shell carries its own dose behind six shield thicknesses (`shells[].dose_sv_h`), and the dose at each moon's orbit (`orbits`). The map picks the ship's own shield from that list, so the same belt is deadly to a thin hull and merely harsh to a heavy one.
+- **Latitude.** Dose falls away from the magnetic equator along each shell. The first version uses the standard fall-off for particles bouncing on a dipole line as one formula block (`sse.belts.latitude_falloff`), marked as a simplification in the fudge register until the belt model carries pitch angles.
+- **Quiet and stormy.** Belts swell after the star's storms. Where the kernel gives a range, harsh and deadly edges are drawn for now and, faintly, for the worst expected, as the aurora design already does for quiet and gusty.
+- **What this buys the GM.** The real ways through are visible: come in over the poles and under the belt, as the Juno probe does at Jupiter; park in a moon's swept lane; stay outside the outer edge; or hide in the body's shadow from a storm. And the real traps are visible: Io and Europa sit inside Jupiter's deadly zone, Ganymede in the harsh one, Callisto outside.
+- **Honest limits today** (already in the fudge register, F40 and the belts note): electrons only, no proton belt and no slot yet, so Earth's inner belt and thick-shield doses read low. The map carries a mark saying so until MF7 part 2b-ii lands, and needs no change when it does.
+- **The Mag band shows the same thing in light.** In True, Mag draws the field and Radio shows the belts' own glow. The Hazard map is the diagram of what that means for a ship.
 
-**Who sees it.** The GM always. It shows for the party's ship by default (the ship record gives fuel, hull skin, shield and length); with no ship chosen it uses a stated stock ship. The players see it when the GM opens the eye on it, through the one "Known to" control like anything else, and a seat sees only the rows its sensors could measure. Each mark answers "Why?".
+**Fixed marks**, from the body alone: its surface and the top of its air; for a black hole the surface of no return, the last orbit light can hold and the last stable orbit; the distance inside which a loosely held ship or moon is pulled apart; moons' orbits; ring and disc edges; the edge of the magnetic bubble.
 
-**Kernel side.** One op, proposed name `approach_profile {body, ship?, at}`: for a ladder of distances it returns each row's value and tone, the fixed marks, and the two ship marks with the row that set each. Every row is an existing block or a one-line formula block; the op only gathers them. Cost class light. A pack can add a row (a fictional field, a psychic hazard) as data, marked fictional.
+**Two marks for a ship**, in the accent colour, each saying which hazard set it, **for the line chosen**:
 
-**Under the diagram, not on it**: full orbit planning stays in voyages. The diagram is the GM's quick answer to "how close dare they go".
+- **Park: the closest orbit this ship can settle into and still climb out of.** Set by the fuel on board against "Climbing out", or by whichever hazard turns deadly first if that comes sooner. A deep well makes this surprisingly far out: a ship with 30 km/s in its tanks cannot park closer to the Sun than about a sixth of Earth's distance and still leave. Where a belt has a clear lane or a clear space beneath it, the map shows each safe band, not only the outermost.
+- **Dive: the closest pass on a fall-through that still comes back out.** Alex's point about stretched orbits is right, and it is the heart of the map: a ship that falls in from far away and swings past leaves again **for free**, because it arrives with the speed it needs to escape. So a dive goes far deeper than a park, limited only by heat, the radiation soaked up over the hours of the pass, tide, air, and, for a black hole, the distance inside which even a fall-through is swallowed (about four gravitational radii for no spin). It is easier and more vicious, exactly as he said.
+
+Inside the Dive mark is "too late": the ship does not come back, or comes back dead. The card says which ("limited by heat: hull reaches 1,600 K"). For a course from voyages the map also gives **the total for the pass**: dose soaked up, peak hull temperature, peak tide, so "can we cut through the belt quickly?" has a number.
+
+**A quiet hole lets you get very close; a fed one does not.** This falls out of the rows. Round a starved or bare black hole Heat and Radiation are clear almost to the last stable orbit, so the Dive mark sits a few radii from the shadow and only the tide (for a small hole) decides. Round a well-fed stellar hole the heat stops a ship several times Earth's distance from the Sun away, and the hard X-rays stop a thinly shielded one far further out still.
+
+**Who sees it.** The GM always. It shows for the party's ship by default (the ship record gives fuel, hull skin, shield and length); with no ship chosen it uses a stated stock ship. The players see it when the GM opens the eye on it, through the one "Known to" control like anything else, and a seat sees only the hazards its sensors could measure: a ship with no particle detector does not know where the belt is.
+
+**Kernel side.** One op, proposed name `hazard_map {body, ship?, at, line?}`. It returns: the zones, each a shape in the body's own frame (round shell, field-line doughnut by shell numbers with gaps, cone, flat sheet) with its tone edges; the Profile rows along the line; the fixed marks; the ship marks with the hazard that set each; and, for a course, the totals for the pass. It gathers `read_field`, `read_light`, `read_activity`, the ring and belt regions and the ship record; it adds almost no physics of its own. Cost class light.
+
+**Under the map, not on it**: full orbit planning stays in voyages. The Hazard map is the GM's quick answer to "how close dare they go, and which way in".
 
 ### 3.9 From further away, and over time
 
@@ -404,6 +429,8 @@ Names are plain words. Each is a formula block or a table in a pack, with its so
 | `sse.gravity.weak_bend` | 4GM / (c² b); Einstein ring angle | Einstein 1915, 1936 | settled |
 | `sse.gravity.clock_rate` | how slowly a clock runs, hovering or orbiting | textbook (Misner, Thorne and Wheeler 1973) | settled |
 | `sse.gravity.tide` | stretch per metre | textbook | settled |
+| `sse.belts.latitude_falloff` | how a belt's dose falls away from the magnetic equator along a field line | textbook trapped-particle motion (Roederer 1970; Walt 1994) | settled for a dipole; a stand-in for real pitch angles |
+| `sse.hazard.debris_strike` | chance of a strike on a pass through a ring or belt, from optical depth, particle size and speed | textbook cross-section argument | rough |
 | `sse.approach.hull_heat` | the temperature a hull settles at in a body's light | Stefan and Boltzmann; textbook radiative balance | settled |
 | `sse.approach.climb_out` | speed change to leave from a circular orbit, and the deepest free fall-through | textbook; Misner, Thorne and Wheeler 1973 for the swallowed distance | settled |
 | `sse.gravity.spin_light_path` (reference, XO7) | ray paths round a spinning hole | Carter 1968; Bardeen 1973; James et al. 2015 | settled |
@@ -449,6 +476,7 @@ Each is logged in `docs/fudges.md` by the pull request that adds it.
 | Disc streaks, flicker and jet knots are seeded decoration | turbulence cannot be computed in a browser | none planned; the brightness profile stays the fact |
 | Only two or three image orders drawn | higher ones are thinner than a pixel | none needed |
 | Pulsar beam width from an empirical relation; the beam's own brightness pattern a plain cone | the mechanism is unsolved | whatever the field one day agrees on |
+| Hazard map: a belt's dose away from the magnetic equator from a dipole fall-off rule; belts are electrons only until the proton belt lands (F40) | the belt model does not carry pitch angles or protons yet | MF7 part 2b-ii and a pitch-angle belt model, behind the same op |
 | Readable scale draws the bending round an enlarged mark | so it can be seen at system scale | Real scale, already offered |
 | Motion shown slowed or sped | the eye cannot follow thirty turns a second | none; the chip states the rate |
 
@@ -490,9 +518,11 @@ Real objects as fixtures, each a number against a measurement.
 | WR 140 | spacing between dust shells = wind speed × 7.93 years |
 | WR 104 | one turn of the spiral per 241 days |
 | Achernar | flattening near the measured 1.35 to 1 or more; poles brighter |
-| Approach diagram, the Sun, a probe with Parker Solar Probe's shield | heat limit close to its real closest pass, 9.9 Sun radii from the centre |
-| Approach diagram, Jupiter | radiation row turns deadly inside Europa's orbit for a thin shield, from the built belt doses |
-| Approach diagram, a 10 Sun hole, bare | Dive mark set by tide at thousands of km; fed at a tenth of the Eddington rate, set by heat or radiation at several au or more, by the shield |
+| Hazard map, the Sun, a probe with Parker Solar Probe's shield | heat limit close to its real closest pass, 9.9 Sun radii from the centre |
+| Hazard map, Jupiter (from `read_field`'s Solar System fixture) | in the equator's plane the radiation row is deadly at Io and Europa and harsh at Ganymede for a thin shield, clear at Callisto; there is a break at each moon's swept lane; over the poles the same row is clear down to under the belt, where Juno passes at about 1.06 Jupiter radii; Venus and Mars show no belt zone |
+| Hazard map, Saturn | the Debris zone is the rings with their real gaps; the belt's inner edge is set by the rings |
+| Hazard map, a world whose field has died | the belt zone is gone after that date on the time ruler |
+| Hazard map, a 10 Sun hole, bare | Dive mark set by tide at thousands of km; fed at a tenth of the Eddington rate, set by heat or radiation at several au or more, by the shield |
 | Composite | legend lists every ticked band; a seat cannot tick a band it lacks; a phone stops at two |
 | Any view | no element flashes above 3 per second; reduced motion gives a steady glow |
 
@@ -520,10 +550,10 @@ One package, one builder, one pull request, evidence in it. Owners are proposals
 | **XO14** | The wind you can see: optical depth and soft edge; Wolf-Rayet line rows; ring nebula tie; class labels | B2, O4 | light, then renderer | a wind's edge moves out smoothly as mass loss rises; an ordinary star is unchanged |
 | **XO15** | Colliding winds and spirals: wall, dust spiral and shells, turning on the time ruler; red giant spiral shells by the same block | XO14, B4 | light, then renderer | WR 140 and WR 104 rows |
 | **XO17** | Composite in the band switch, every view (6A): the entry, drop-down, presets as pack data, per-band scaling, legend, seat and phone limits; the saved view choice carries a band list | V10b band switch (built) | chart room for the control, renderer for the layering | section 11 Composite row; works on the system chart, the galaxy chart and the globe as well as XO4's hole |
-| **XO18** | The approach diagram (3.8): op `approach_profile`, the two formula blocks, the strip chart on the card for any massive body, Park and Dive marks from the party's ship, shown to players through the eye | MF7 doses (built), `read_light` (built), the ship record; XO1 for compact bodies. **The Sun and Jupiter need nothing from XO** | light for the op, chart room for the card | section 11's three approach rows |
+| **XO18** | The Hazard map (3.8), for any hazardous body: op `hazard_map`, the Map (a cut drawn with the Mag layer's tracer) and the Profile along a chosen line, belts from `read_field` with edges, gaps, shield and latitude, storms, debris, Park and Dive marks from the party's ship, totals for a pass, rail entry and card line, the system-scale Hazards overlay, shown to players through the eye | MF7 belts and shielding, `read_light`, `read_activity`, MF14a tracer (all built), the ship record; XO1 only for compact bodies. **Jupiter, Saturn, Earth and the Sun need nothing from XO: start there** | light for the op, renderer for the Map, chart room for the rail entry and card | section 11's Hazard map rows |
 | **XO16** | Later: relativistic disc profile; thick and warped discs as volumes; cluster arcs at the web scale; the plunge shot; pack-supplied benders | XO7 | as they come | |
 
-Suggested order: XO1, XO2, XO3, XO4 (the showpiece on screen), then XO5 and XO6, with XO17 and XO18 beside them (both are small, general, and useful at once on ordinary stars and planets), then XO10 (pulsars on MF0's fixtures) while XO7 runs, then the rest as B2 to B4 and MF11 land.
+Suggested order: XO1, XO2, XO3, XO4 (the showpiece on screen), then XO5 and XO6, with XO17 and XO18 beside them (both are general and useful at once on ordinary stars and planets; XO18 starts on Jupiter and the Sun), then XO10 (pulsars on MF0's fixtures) while XO7 runs, then the rest as B2 to B4 and MF11 land.
 
 None of XO1 to XO6 changes a golden hash on an existing system: they add an op, blocks and a table. XO8 onward add facts to bodies and will change goldens, one pull request at a time in the golden lane.
 
@@ -539,7 +569,7 @@ None of XO1 to XO6 changes a golden hash on an existing system: they add an op, 
 6. **Decided.** Shape from spin and pull, and brightness following gravity, for every body (XO13, after B1).
 7. **Decided.** The time stretch chip on every moving True view; never more than three flashes a second.
 8. **Decided.** XO1 to XO4 start on fixtures, ahead of B3 and B4, behind the landing run-through's blockers.
-9. **Decided, changed by Alex:** not a list of readings but **the approach diagram** (3.8), for exotics and ordinary stars alike, with the closest a ship can go before it is too late as a figure the GM has and may show the players. Alex said he was unsure of the details; 3.8 is the proposal and the mockup shows it. Small open points are below.
+9. **Decided, changed by Alex:** not a list of readings but a diagram, widened by him at 17:19 into **the Hazard map** (3.8) for any hazardous body, Jupiter's belts named; with the closest a ship can go before it is too late as a figure the GM has and may show the players. Alex said he was unsure of the details; 3.8 is the proposal and the mockup shows it. Small open points are below.
 10. **Decided.** 4.0 scope is XO1 to XO12, plus XO17 and XO18; XO13 to XO15 follow B2 and B4; XO16 later.
 11. **Decided**, with Alex's query answered: "XO" (exotic objects) is only the package code. The op is `read_light_paths`.
 
@@ -547,9 +577,10 @@ None of XO1 to XO6 changes a golden hash on an existing system: they add an op, 
 
 ### Still open (small; builders go ahead on the recommendation)
 
-12. **Approach diagram: two ship marks, Park and Dive, as in 3.8?** Recommended: yes. They are the two honest answers to "how close": one for staying, one for a pass.
-13. **With no ship chosen, the diagram uses a stated stock ship, not a blank?** Recommended: yes, so every star's card has it from the first press.
+12. **Hazard map: two ship marks, Park and Dive, as in 3.8?** Recommended: yes. They are the two honest answers to "how close": one for staying, one for a pass.
+13. **With no ship chosen, the Hazard map uses a stated stock ship, not a blank?** Recommended: yes, so every star's card has it from the first press.
 14. **Composite on a phone stops at two bands?** Recommended: yes, with the reason on the third tick.
+15. **Hazard map as its own rail entry at world and star level, plus a Hazards overlay under HUD at system scale?** Recommended: yes. The rail entry is where a GM would look for it; the overlay gives the whole system at a glance.
 
 ## 14. Sources
 
@@ -591,6 +622,12 @@ Neutron stars
 - Heinke and Ho 2010, ApJL 719, L167; Page et al. 2011, PRL 106, 081101; Shternin et al. 2011, MNRAS 412, L108 (Cassiopeia A's fast cooling and the superfluid).
 - Kaspi and Beloborodov 2017; Duncan and Thompson 1992; Hurley et al. 2005 (magnetars; in the MF design's list).
 - Wolszczan and Frail 1992, Nature 355, 145 (planets round a pulsar).
+
+Hazards
+- Roederer 1970, *Dynamics of Geomagnetically Trapped Radiation*; Walt 1994, *Introduction to Geomagnetically Trapped Radiation* (how trapped particles bounce and drift; fall-off with latitude).
+- Mauk and Fox 2010, JGR 115, A12220 (belt limits; already the kernel's source for MF7).
+- Bolton et al. 2017, Space Sci. Rev. 213, 5 (the Juno mission and its polar orbit under Jupiter's belts).
+- Fox et al. 2016, Space Sci. Rev. 204, 7 (Parker Solar Probe; closest pass 9.86 Sun radii, December 2024).
 
 Shapes and winds
 - von Zeipel 1924, MNRAS 84, 665; Lucy 1967, Z. Astrophys. 65, 89; Espinosa Lara and Rieutord 2011, A&A 533, A43.
