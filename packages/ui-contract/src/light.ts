@@ -17,7 +17,7 @@ import type { SystemScene } from "./scene.ts";
 import type { PlayerScene } from "./player-scene.ts";
 import { parentOf, subjectName } from "./player-scene.ts";
 import { playerSubjectOf } from "./mark.ts";
-import { constant } from "./sheet.ts";
+import { constant, SHEET_BANDS } from "./sheet.ts";
 import type { ViewBand } from "./view-controls.ts";
 
 export const LIGHT_SCHEMA = "sse.band-recipe/0" as const;
@@ -27,24 +27,14 @@ const H = constant("h");
 const C = constant("c");
 const K = constant("k_B");
 
-/** The fixed band set (design 2.1), wavelengths in metres. */
+/** The fixed band set (design 2.1), wavelengths in metres: the light rows of the sheet's Bands table (RK10). */
 export interface Band {
   id: string;
   name: string;
   from_m: number;
   to_m: number;
 }
-export const BANDS: readonly Band[] = [
-  { id: "gamma", name: "Gamma rays", from_m: 1e-14, to_m: 1e-11 },
-  { id: "xray", name: "X-rays", from_m: 1e-11, to_m: 1e-8 },
-  { id: "uv", name: "Ultraviolet", from_m: 1e-8, to_m: 3.8e-7 },
-  { id: "visible", name: "Visible", from_m: 3.8e-7, to_m: 7.5e-7 },
-  { id: "near-ir", name: "Near infrared", from_m: 7.5e-7, to_m: 5e-6 },
-  { id: "mid-ir", name: "Mid infrared", from_m: 5e-6, to_m: 2.5e-5 },
-  { id: "far-ir", name: "Far infrared", from_m: 2.5e-5, to_m: 3.5e-4 },
-  { id: "mm", name: "Millimetre", from_m: 3.5e-4, to_m: 1e-2 },
-  { id: "radio", name: "Radio", from_m: 1e-2, to_m: 10 },
-];
+export const BANDS: readonly Band[] = SHEET_BANDS.filter((b) => b.kind === "light" && b.from_m !== undefined && b.to_m !== undefined).map((b) => ({ id: b.id, name: b.name, from_m: b.from_m!, to_m: b.to_m! }));
 
 /** Emission lines the palettes use (rest wavelengths in air, metres). */
 export interface Line {
@@ -394,7 +384,10 @@ export function readLight(raw: string | null, ids: readonly string[]): string {
 }
 
 /** Which instrument band (the view controls' Band, interface style rule 12) each light band is seen in. */
-const BAND_OF: Record<string, ViewBand> = { gamma: "xray", xray: "xray", uv: "ultraviolet", visible: "visible", "near-ir": "infrared", "mid-ir": "infrared", "far-ir": "infrared", mm: "radio", radio: "radio" };
+// Read off the sheet (RK10): a light row names the view row it is seen in, and that row carries the switch's own id.
+const BAND_OF: Record<string, ViewBand> = Object.fromEntries(
+  SHEET_BANDS.filter((b) => b.kind === "light" && b.view).map((b) => [b.id, SHEET_BANDS.find((v) => v.kind === "view" && v.id === b.view)?.view_id as ViewBand]),
+);
 const bandAt = (m: number): ViewBand => BAND_OF[BANDS.find((b) => m >= b.from_m && m < b.to_m)?.id ?? "visible"] ?? "visible";
 function sourceAt(s: Source): number | null {
   if ("band" in s) {

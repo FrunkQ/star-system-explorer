@@ -413,6 +413,10 @@ pub(crate) struct SliceAsk<'a> {
     pub extent_mpc: f64,
     pub n: u32,
     pub cube: bool,
+    /// With a cube: its galaxies instead (V9w light from haloes).
+    pub haloes: bool,
+    /// The smallest halo drawn, if above the pack's floor.
+    pub galaxy_floor_msun: Option<f64>,
 }
 
 /// A square foam slice of the cosmic web (G1) at one epoch, for V9's maps.
@@ -444,6 +448,51 @@ pub(crate) fn web_slice(a: SliceAsk) -> Result<serde_json::Value, Response> {
         }
     };
     let octaves = w.params.octaves;
+    if a.haloes && !a.cube {
+        return Err(err("bad_request", "haloes come with a cube"));
+    }
+    if a.cube && a.haloes {
+        // The cube's galaxies alone (its parcels are the plain cube ask), so
+        // a view can show the parcels first and light them after.
+        let hs = Haloes {
+            cosmo: &c,
+            web: &w,
+            params: cp.haloes.clone(),
+            seed: *a.seed,
+            universe: a.root.clone(),
+        };
+        if let Some(f) = a.galaxy_floor_msun {
+            if !(1.0e8..=1.0e15).contains(&f) {
+                return Err(err("bad_request", "galaxy_floor_msun must be 1e8 to 1e15"));
+            }
+        }
+        let lp = &sse_cosmos::web_light::WebLightParams {
+            floor_msun: a
+                .galaxy_floor_msun
+                .map_or(cp.web_light.floor_msun, |f| f.max(cp.web_light.floor_msun)),
+            ..cp.web_light.clone()
+        };
+        let median = web_light_table(&hs, &cp)?;
+        let galaxies = sse_cosmos::web_light::cube_galaxies(
+            &hs,
+            &median,
+            lp,
+            scale,
+            a.centre,
+            a.extent_mpc,
+            octaves - 1,
+        );
+        return Ok(serde_json::json!({
+            "t_gyr": c.time_of_scale(scale),
+            "z": 1.0 / scale - 1.0,
+            "now_gyr": c.age_gyr(),
+            "centre": a.centre,
+            "extent": a.extent_mpc,
+            "galaxies": galaxies,
+            "galaxy_floor_msun": lp.floor_msun,
+            "model": ["galaxies: G2's haloes from the web light floor up whose matter started inside the cube, each moved from the peak it collapsed from by the cube's own truncated Zel'dovich step, at its mass then (its own growth history); stars and star formation from G3 on the median halo of its mass, per half dex, as shares of its halo then"],
+        }));
+    }
     if a.cube {
         let v = w.volume(&c, scale, a.centre, a.extent_mpc, a.n, octaves - 1);
         return Ok(serde_json::json!({
@@ -462,6 +511,45 @@ pub(crate) fn web_slice(a: SliceAsk) -> Result<serde_json::Value, Response> {
         "slice": s,
         "model": ["the cosmic web from seeded Gaussian fields, grown linearly and moved by the Zel'dovich approximation (G1); a picture of the large-scale pattern, not an N-body simulation"],
     }))
+}
+
+thread_local! {
+    /// G3 on median haloes for the web's light: about twelve galaxies run
+    /// through all of time, the same for every cube of one cosmology, so the
+    /// last table is kept (keyed by what it is made from; changes no answer).
+    static WEB_LIGHT: std::cell::RefCell<Option<(String, std::rc::Rc<sse_cosmos::web_light::MedianGalaxies>)>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+fn web_light_table(
+    hs: &Haloes,
+    cp: &CosmologyPack,
+) -> Result<std::rc::Rc<sse_cosmos::web_light::MedianGalaxies>, Response> {
+    let key = serde_json::to_string(&(
+        format!("{:?}", hs.seed),
+        hs.universe.to_string(),
+        &cp.params,
+        &cp.haloes,
+        &cp.galaxy,
+        &cp.web_light,
+    ))
+    .map_err(|e| err("internal", e.to_string()))?;
+    if let Some(t) = WEB_LIGHT.with(|w| {
+        w.borrow()
+            .as_ref()
+            .filter(|(k, _)| *k == key)
+            .map(|(_, t)| t.clone())
+    }) {
+        return Ok(t);
+    }
+    let t = std::rc::Rc::new(sse_cosmos::web_light::MedianGalaxies::new(
+        hs,
+        &cp.galaxy,
+        cp.web_light.floor_msun,
+        cp.haloes.max_mass,
+    ));
+    WEB_LIGHT.with(|w| *w.borrow_mut() = Some((key, t.clone())));
+    Ok(t)
 }
 
 /// DM3: one cell's matter ledger today.
@@ -991,6 +1079,42 @@ mod tests {
             r#"{"op":"web_slice","cube":true,"extent_mpc":128,"n":64}"#,
         );
         assert_eq!(big["code"], "bad_request");
+    }
+    #[test]
+    fn a_web_cube_with_haloes_gives_its_galaxies() {
+        let mut k = open();
+        let r = ask(
+            &mut k,
+            r#"{"op":"web_slice","cube":true,"haloes":true,"extent_mpc":40,"n":8}"#,
+        );
+        assert_eq!(r["type"], "web_sliced", "{r}");
+        let w = &r["web"];
+        let floor = w["galaxy_floor_msun"].as_f64().unwrap();
+        let gals = w["galaxies"].as_array().unwrap();
+        assert!(!gals.is_empty(), "{w}");
+        for g in gals {
+            assert!(g["halo_msun"].as_f64().unwrap() >= floor);
+            assert!(g["stars_msun"].as_f64().unwrap() > 0.0);
+        }
+        // The galaxies come alone; the parcels are the plain cube.
+        assert!(w.get("volume").is_none());
+        let plain = ask(
+            &mut k,
+            r#"{"op":"web_slice","cube":true,"extent_mpc":40,"n":8}"#,
+        );
+        assert!(plain["web"].get("galaxies").is_none());
+        let flat = ask(
+            &mut k,
+            r#"{"op":"web_slice","haloes":true,"extent_mpc":40,"n":8}"#,
+        );
+        assert_eq!(flat["code"], "bad_request");
+        // A higher floor keeps to the bigger haloes.
+        let few = ask(
+            &mut k,
+            r#"{"op":"web_slice","cube":true,"haloes":true,"galaxy_floor_msun":1e12,"extent_mpc":40,"n":8}"#,
+        );
+        assert_eq!(few["web"]["galaxy_floor_msun"], 1.0e12);
+        assert!(few["web"]["galaxies"].as_array().unwrap().len() < gals.len());
     }
     #[test]
     fn a_cell_lists_its_haloes_and_one_can_be_charted() {
