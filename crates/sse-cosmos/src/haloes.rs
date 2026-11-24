@@ -258,6 +258,39 @@ impl Haloes<'_> {
     /// The cell's halo catalogue. Pure: the same call gives the same cell on
     /// every device, in any order.
     pub fn cell(&self, idx: [i64; 3]) -> Cell {
+        let bins = self.bin_table();
+        self.cell_from(idx, &bins, self.params.min_mass, true)
+    }
+
+    /// Each mass bin's unconditional abundance and bias today, top bin first
+    /// (what `conditional_dn_dlnm` multiplies out per cell; the same numbers,
+    /// worked once for a block of cells).
+    pub fn bin_table(&self) -> Vec<(f64, f64)> {
+        let p = &self.params;
+        let c = self.cosmo;
+        let nb = m::round(m::log10(p.max_mass / p.min_mass) * f64::from(p.bins_per_dex)) as u32;
+        let w = 1.0 / f64::from(p.bins_per_dex);
+        let d = c.growth(1.0);
+        (0..nb)
+            .rev()
+            .map(|b| {
+                let mm = m::pow(10.0, m::log10(p.min_mass) + (f64::from(b) + 0.5) * w);
+                let nu = DELTA_C / (c.sigma_m(mm) * d);
+                (dn_dlnm(c, mm, 0.0), st_bias(nu))
+            })
+            .collect()
+    }
+
+    /// The haloes of a cell from `floor` solar masses up, without merger
+    /// histories or neighbours: for drawing many cells at once (the web
+    /// cube's galaxies). Bins are drawn from the top down and every draw is
+    /// keyed by its bin and its halo's number, so these are exactly the
+    /// haloes `cell` gives above the floor.
+    pub fn cell_above(&self, idx: [i64; 3], bins: &[(f64, f64)], floor: f64) -> Vec<Halo> {
+        self.cell_from(idx, bins, floor, false).haloes
+    }
+
+    fn cell_from(&self, idx: [i64; 3], table: &[(f64, f64)], floor: f64, full: bool) -> Cell {
         let p = &self.params;
         let c = self.cosmo;
         let addr = self.cell_address(idx);
@@ -280,10 +313,14 @@ impl Haloes<'_> {
         let mut bins = vec![];
         let mut drawn: Vec<(f64, u64)> = vec![];
         let mut budget = mass;
-        for b in (0..nb).rev() {
+        for (b, (dn, bias)) in (0..nb).rev().zip(table) {
             let lm = m::log10(p.min_mass) + (f64::from(b) + 0.5) * w;
-            let mm = m::pow(10.0, lm);
-            let expected = conditional_dn_dlnm(c, mm, 0.0, delta_l) * w * m::ln(10.0) * volume;
+            if !full && m::pow(10.0, lm + 0.5 * w) < floor {
+                // Every halo in this bin and those below is under the floor.
+                break;
+            }
+            // conditional_dn_dlnm, from the table.
+            let expected = dn * (1.0 + bias * delta_l).max(0.0) * w * m::ln(10.0) * volume;
             let mut n = poisson(&counts, u64::from(b), expected);
             let top = m::pow(10.0, lm + 0.5 * w);
             let fit = (budget / top).max(0.0) as u64;
@@ -301,6 +338,10 @@ impl Haloes<'_> {
         for (lm, n) in drawn {
             for _ in 0..n {
                 let mh = m::pow(10.0, lm - 0.5 * w + w * within.unit(k));
+                if !full && mh < floor {
+                    k += 1;
+                    continue;
+                }
                 let ha = addr.child("halo", k).expect("valid");
                 // Position: the highest of a few keyed candidates on the finer octaves.
                 let mut best = ([0.0; 3], f64::NEG_INFINITY);
@@ -332,12 +373,16 @@ impl Haloes<'_> {
                     neighbour: None,
                 };
                 h.z_half = half_mass_z(&h);
-                h.mergers = self.mergers(&h, &ha);
+                if full {
+                    h.mergers = self.mergers(&h, &ha);
+                }
                 haloes.push(h);
                 k += 1;
             }
         }
-        self.link_neighbours(&mut haloes);
+        if full {
+            self.link_neighbours(&mut haloes);
+        }
         let halo_mass = haloes.iter().map(|h| h.mass).sum();
         Cell {
             address: addr.to_string(),
