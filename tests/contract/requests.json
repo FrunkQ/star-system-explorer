@@ -3468,5 +3468,6 @@
  {"op": "withdraw", "address": "u:k13/sys:0/body:4", "at_s": 2000000, "others": "leave"},
  {"op": "orbit_stability", "system": "u:k13/sys:0", "at_s": 3000000},
  {"op": "branch", "label": "held"},
- {"op": "resolved_system", "system": "u:k13/sys:0", "branch": "not-a-branch"}
+ {"op": "resolved_system", "system": "u:k13/sys:0", "branch": "not-a-branch"},
+ {"op": "class_sample", "classes": ["heft/world", "heft/none"], "packs": [{"format": "sse.pack/1", "id": "campaign.tables", "version": "0.1.0", "kind": ["game-system"], "kernel_range": "^0.1", "licence": "Apache-2.0", "provides": {"other": {"axes": [["mass", {"field": "body.mass", "scale": "log", "span": [1e+20, 1e+32]}]], "schemes": [{"id": "heft", "question": "how heavy?"}], "classes": [{"id": "heft/world", "scheme": "heft", "kind": "base", "region": [{"axis": "mass", "core": [1e+20, 1e+28], "fringe": [1e+19, 2e+28]}], "examples": [{"name": "Edge", "values": {"body.mass": 2e+20, "body.radius": 3e+5}, "expect": "in"}, {"name": "Middle", "values": {"body.mass": 6e+24, "body.radius": 6.4e+6}, "expect": "in"}]}]}}}]}
 ]

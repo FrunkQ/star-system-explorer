@@ -9,6 +9,8 @@ mod adopt;
 #[cfg(test)]
 mod bary_tests;
 mod caves;
+#[cfg(test)]
+mod class_sample_tests;
 mod clock;
 mod composition;
 pub mod contract;
@@ -46,8 +48,6 @@ mod sea;
 mod sky;
 #[cfg(test)]
 mod sol_tests;
-#[cfg(test)]
-mod class_sample_tests;
 #[cfg(test)]
 mod split_tests;
 mod stability;
@@ -1870,8 +1870,8 @@ impl Kernel {
             "atmosphere.main",
         ];
         use sse_core::{math as m, sheet as sh};
-        if classes.is_empty() || classes.len() > 64 {
-            return Err(err("bad_request", "classes: 1 to 64 class ids"));
+        if classes.is_empty() || classes.len() > 128 {
+            return Err(err("bad_request", "classes: 1 to 128 class ids"));
         }
         let mut ms = Vec::new();
         for (i, p) in packs.iter().enumerate() {
@@ -1894,7 +1894,9 @@ impl Kernel {
         let mut refused = vec![];
         for (n, id) in classes.iter().enumerate() {
             let Some(class) = atlas.classes.iter().find(|c| &c.id == id) else {
-                refused.push(serde_json::json!({"class": id, "why": "no class with this id in the atlas"}));
+                refused.push(
+                    serde_json::json!({"class": id, "why": "no class with this id in the atlas"}),
+                );
                 continue;
             };
             let best = class
@@ -1906,10 +1908,13 @@ impl Kernel {
                     let fit = atlas.fit(id, &s).map_or(0.0, |f| f.fit);
                     (fit, atlas.centrality(id, &s), e)
                 })
-                .fold(None::<(f64, f64, &sse_sift::classify::Example)>, |b, x| match b {
-                    Some(b) if (b.0, b.1) >= (x.0, x.1) => Some(b),
-                    _ => Some(x),
-                });
+                .fold(
+                    None::<(f64, f64, &sse_sift::classify::Example)>,
+                    |b, x| match b {
+                        Some(b) if (b.0, b.1) >= (x.0, x.1) => Some(b),
+                        _ => Some(x),
+                    },
+                );
             let Some((_, _, ex)) = best else {
                 refused.push(serde_json::json!({"class": id, "why": "the class has no in example to sample"}));
                 continue;
@@ -1920,11 +1925,31 @@ impl Kernel {
             let mut edits: Vec<(String, String, serde_json::Value)> = vec![
                 (star.clone(), "name".into(), serde_json::json!("Sample sun")),
                 (star.clone(), "body.kind".into(), serde_json::json!("star")),
-                (star.clone(), "body.mass".into(), serde_json::json!(sh::M_SUN)),
-                (star.clone(), "body.radius".into(), serde_json::json!(sh::R_SUN)),
-                (star.clone(), "star.luminosity".into(), serde_json::json!(sh::L_SUN)),
-                (star.clone(), "star.effective_temperature".into(), serde_json::json!(sh::T_SUN)),
-                (body.clone(), "name".into(), serde_json::json!(format!("{} sample", ex.name))),
+                (
+                    star.clone(),
+                    "body.mass".into(),
+                    serde_json::json!(sh::M_SUN),
+                ),
+                (
+                    star.clone(),
+                    "body.radius".into(),
+                    serde_json::json!(sh::R_SUN),
+                ),
+                (
+                    star.clone(),
+                    "star.luminosity".into(),
+                    serde_json::json!(sh::L_SUN),
+                ),
+                (
+                    star.clone(),
+                    "star.effective_temperature".into(),
+                    serde_json::json!(sh::T_SUN),
+                ),
+                (
+                    body.clone(),
+                    "name".into(),
+                    serde_json::json!(format!("{} sample", ex.name)),
+                ),
             ];
             let num_of = |k: &str| match ex.values.get(k) {
                 Some(Value::Float(x)) => Some(*x),
@@ -1935,7 +1960,11 @@ impl Kernel {
             let age_s = num_of("system.age")
                 .filter(|a| *a > 0.0)
                 .unwrap_or(4.6e9 * sh::YR_JULIAN);
-            edits.push((system.clone(), "system.age".into(), serde_json::json!(age_s)));
+            edits.push((
+                system.clone(),
+                "system.age".into(),
+                serde_json::json!(age_s),
+            ));
             edits.push((body.clone(), "orbit.host".into(), serde_json::json!(star)));
             // An example with no orbit sits where the star warms a fast
             // rotating black body to the example's equilibrium temperature,
@@ -1954,7 +1983,8 @@ impl Kernel {
             }
             for (f, v) in &ex.values {
                 if SAMPLE_INPUTS.iter().any(|p| f.starts_with(p)) {
-                    let j = serde_json::to_value(v).map_err(|e| err("bad_value", format!("{e}")))?;
+                    let j =
+                        serde_json::to_value(v).map_err(|e| err("bad_value", format!("{e}")))?;
                     edits.push((body.clone(), f.clone(), j));
                 }
             }
@@ -1989,11 +2019,28 @@ impl Kernel {
                     resolved.insert(k.clone(), v);
                 }
             }
-            let fit = atlas
-                .fit(id, &sse_sift::Subject::new(resolved))
+            let on_world = atlas.fit(id, &sse_sift::Subject::new(resolved));
+            let fit = on_world.as_ref().map_or(0.0, |f| f.fit);
+            // What holds the sample's fit down: the axis, and whether the
+            // campaign has no value for it yet (a fact not published on
+            // the world) or one outside the class's bands.
+            let limiting = on_world
+                .and_then(|f| f.limiting)
+                .filter(|l| l.fit < 1.0)
+                .map(|l| {
+                    serde_json::json!({
+                        "axis": l.axis,
+                        "why": if l.value.is_none() { "not published on the world yet" } else { "outside the class's bands" },
+                    })
+                });
+            let example_fit = atlas
+                .fit(id, &sse_sift::Subject::new(ex.values.clone()))
                 .map_or(0.0, |f| f.fit);
             let num = |k: &str| f[k].as_f64();
-            let rings = ex.values.get("rings").is_some_and(|v| *v == Value::Bool(true))
+            let rings = ex
+                .values
+                .get("rings")
+                .is_some_and(|v| *v == Value::Bool(true))
                 || ex
                     .values
                     .get("has_ring_child")
@@ -2014,6 +2061,8 @@ impl Kernel {
                 "day_s": num("body.rotation_period"),
                 "rings": rings,
                 "fit": fit,
+                "example_fit": example_fit,
+                "limiting": limiting,
                 "surface": surface,
             }));
         }

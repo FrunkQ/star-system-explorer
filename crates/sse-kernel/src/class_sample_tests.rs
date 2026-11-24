@@ -59,7 +59,10 @@ fn every_asked_class_gets_a_sample_or_a_reason() {
         // A sample with ground gives the globe its tiles.
         let drawn = rs["tiles"].as_array().is_some_and(|t| !t.is_empty());
         assert_eq!(drawn, x["surface"] == true, "{x} {}", rs["refused"]);
-        assert!(rs["facts"].get(x["body"].as_str().unwrap()).is_some(), "{rs}");
+        assert!(
+            rs["facts"].get(x["body"].as_str().unwrap()).is_some(),
+            "{rs}"
+        );
     }
     // Nothing on the main line moved.
     let after = send(&mut k, serde_json::json!({"op":"state_hash","at_s":0}));
@@ -112,6 +115,21 @@ fn the_whole_atlas_samples() {
     let s = r["samples"].as_array().unwrap();
     let kept = s.iter().filter(|x| x["fit"].as_f64() >= Some(0.6)).count();
     let ground = s.iter().filter(|x| x["surface"] == true).count();
-    eprintln!("{} samples, {kept} keep their class, {ground} with ground; refused {}", s.len(), r["refused"]);
+    let unpublished = s
+        .iter()
+        .filter(|x| x["limiting"]["why"] == "not published on the world yet")
+        .count();
+    eprintln!(
+        "{} samples, {kept} keep their class, {unpublished} held down by an unpublished fact, {ground} with ground; refused {}",
+        s.len(),
+        r["refused"]
+    );
+    for x in s {
+        assert!(
+            x["example_fit"].as_f64() >= Some(0.6),
+            "every atlas example is in its class: {x}"
+        );
+        assert_eq!(x["limiting"].is_null(), x["fit"] == 1.0, "{x}");
+    }
     assert_eq!(s.len() + r["refused"].as_array().unwrap().len(), ids.len());
 }

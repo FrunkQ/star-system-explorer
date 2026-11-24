@@ -3658,8 +3658,14 @@ pub enum Response {
     },
     /// `class_sample`: the branch holding the samples, one sample per class
     /// found, in the order asked: `{class, scheme, example, system, body,
-    /// radius_m, tilt_rad?, day_s?, rings, fit}`; `refused` names each class
-    /// with no sample and why.
+    /// radius_m, tilt_rad, day_s, rings, fit, example_fit, limiting,
+    /// surface}`. `radius_m`, `tilt_rad` and `day_s` are null when the
+    /// example gives none. `fit` is the class's fit on the sample as the
+    /// campaign reads it (as `classify_preview` would), `example_fit` on the
+    /// atlas example's own figures; `limiting` (null at a full fit) is
+    /// `{axis, why}`. `surface` is false when the world has no ground to draw
+    /// yet (for now, a body with no radius). `refused` names each class with
+    /// no sample and why.
     ClassSampled {
         branch: String,
         atlas_hash: String,
