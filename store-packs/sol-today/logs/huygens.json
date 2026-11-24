@@ -1,0 +1,51 @@
+{
+ "construct": "huygens",
+ "name": "Huygens",
+ "about": "ESA's Titan probe: 20 days' coast from Cassini to Titan, then the descent and landing.",
+ "pieces": [
+  {
+   "from_s": 63272412600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:saturn",
+    "elements": {
+     "a_m": 1940971462.867412,
+     "e": 0.8512555292495773,
+     "i_deg": 26.88603899728892,
+     "node_deg": 180.5798349820999,
+     "peri_deg": 224.8698720008853,
+     "m0_deg": 0.0,
+     "epoch_s": 63271561522
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "about Saturn on its way to Titan (Horizons, 2004-12-26)",
+   "to_s": 63274176419
+  },
+  {
+   "from_s": 63274176419,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:saturn/body:titan",
+    "lat_deg": -10.25,
+    "lon_deg": 167.68
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "Horizons' predicted descent ends here; the flown landing was earlier that day. Site about 10.2 S, 192.3 W, from memory"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 63274176419,
+   "kind": "landing",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "on Titan; Huygens kept sending for about 70 minutes after"
+  }
+ ]
+}

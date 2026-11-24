@@ -1,0 +1,38 @@
+{
+ "construct": "as-506-s-ivb",
+ "name": "Saturn V S-IVB (AS-506)",
+ "about": "Apollo 11's third stage after the spacecraft left it: the slingshot past the Moon into orbit about the Sun.",
+ "pieces": [
+  {
+   "from_s": 62153934582,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "lambert",
+     "to": "u:sol/sys:sun/body:earth/body:moon",
+     "arrive_s": 62154202479
+    }
+   },
+   "mark": "recorded",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "after the evasive burn (4:40:01) and slingshot burns (LOX dump, APS 5:37:47); closest to the Moon at 78:42",
+   "to_s": 62154202479
+  },
+  {
+   "from_s": 62154202479,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "heliocentric orbit"
+    }
+   },
+   "mark": "estimated",
+   "src": "nasa-sp-4029",
+   "writer": "pack",
+   "why": "the slingshot leaves it in orbit about the Sun; its elements are not on record here yet"
+  }
+ ],
+ "events": []
+}
