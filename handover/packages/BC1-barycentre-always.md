@@ -52,7 +52,8 @@ What follows from the one rule, with no special cases:
   - `orbit_stability` lines change by the hierarchy's central mass.
   - Line 1 (the op list) and line 41 (the unknown-op message) gain `rehost` and `preview_tree`.
   - New cases at the end, in universe `u:k13`: a host that is itself is refused, a tree preview, a rehost keeping motion, a withdraw that leaves what orbited it, and a stability read.
-- `crates/sse-nav` golden: positions move by the same G(M+m) change.
+- `tests/golden/nav.json`: positions move by the same G(M+m) change.
+- `tests/golden/classify.json`: the base-atlas pack hash, and the two event hashes that carry it, change with the atlas rebuild. Every class is the same.
 
 ## Next
 - **V3 barycentre nodes:** members that orbit a massless `bary:N` are unplaced today. On import they should become the primary's companion orbit.
