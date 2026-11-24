@@ -1,8 +1,8 @@
 # SSE4: the Playbook and the Switchboard (track PB)
 
-Status: **PROPOSED 24 Nov 2026**, for Alex. The direction was accepted by Alex on 24 Nov 15:39 ("agree... on all counts", six questions, in memory `sse4-run-desk-beats`); this note designs it in detail. Design and mockup only; nothing here is built by this note. The 18 questions are in section 14, each with a recommendation.
+Status: **PROPOSED 24 Nov 2026**, for Alex. The direction was accepted by Alex on 24 Nov 15:39 ("agree... on all counts", six questions, in memory `sse4-run-desk-beats`); this note designs it in detail. Design and mockup only; nothing here is built by this note. The 21 questions are in section 14, each with a recommendation.
 
-Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, folding sections, adding a preset, the Everyone layer and Lift, Undo and Redo, the layout list and the new-layout builder, picture and sound presets, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
+Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, folding sections, adding a preset, the Everyone layer and Lift, Undo and Redo, the Bookmarks list, the layout list and the new-layout builder made of bookmarks, picture and sound presets, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
 
 Alex's brief, in his words (24 Nov): "a gm must always be able to adapt and remix... presets... are great to have 'in hand' but live is the key"; "no need for next - just let the GM build up a 'playbook'... chapters and pages and sections - each can be a preset that is fired at various windows"; "a routing diagram showing what everyone sees - gm can pause any one by clicking on the line"; "a mini video routing package"; "the routing screen should be generally available and does remove the need for a bunch of other smaller interfaces - we corral the user to the 'nerve centre'".
 
@@ -15,7 +15,8 @@ Alex's brief, in his words (24 Nov): "a gm must always be able to adapt and remi
 5. **A preset is a saved send.** It holds exactly what a live press would send, plus the name of a role. So firing a preset and doing it live go down one path, and "keep what I just did" is free.
 6. **The Playbook is pages of presets**, in chapters, with section headings. The open page is the GM's hand. There is no order, no Next and no script.
 7. **Roles are named in the Playbook; screens are decided at the table.** A preset says "Bridge". Which glass is Bridge tonight is set by dragging on the Switchboard, and is never saved in the Playbook.
-8. **It replaces the Seats dialog, the seat rows, the "Table sees" bar, the share link line and the planned Looks seat rows.** What stays on the chart is one Send button and one small "on air" chip that opens the Switchboard.
+8. **Bookmarks are the only thing made elsewhere.** A Bookmark button beside Undo, on every desk, saves where the GM is and how they are looking at it. Everything players get on top of that (who sees it, look, signal, delivery, arrangement) is added in the Switchboard and nowhere else.
+9. **It replaces the Seats dialog, the seat rows, the "Table sees" bar, the share link line and the planned Looks seat rows.** What stays on the chart is one Send button and one small "on air" chip that opens the Switchboard.
 
 ## 2. Words
 
@@ -28,7 +29,9 @@ Seven words, used the same way everywhere.
 | **Everyone** | Every role at once | the table-wide `shown` |
 | **Source** | Something that can be shown: Live, a preset, a camera | a `Shown` value |
 | **Line** | A source reaching a destination, with its state: live, following, held | `shown` per table and per seat |
-| **Preset** | A saved send with a role name | not built |
+| **Bookmark** | Where the GM is and how they are looking at it, saved. Nothing about players | the "place mark" of the top-level design (section 3.2 there), not built |
+| **Preset** | A bookmark (or a landing, words, an asset) plus where it goes and how it arrives | not built |
+| **Layout** | Bookmarks arranged on one screen, with a look | `sse.screen/1`, the player screen document |
 | **Playbook** | The campaign's presets, as chapters, pages and sections | not built |
 
 "Seat" stays in the code where it is. On screen the GM reads "role" and "screen", because those are the two things the GM actually thinks about (question 2).
@@ -98,7 +101,7 @@ Placed by how often it is done (Alex's rule, 23 Nov).
 | sometimes | choose the holding card, latch Following | click the line's dot: the **line card** opens on the line itself |
 | sometimes | move a screen to another role | drag the screen onto the role's heading |
 | sometimes | swap two screens | drag one screen onto another: they trade roles |
-| sometimes | add a preset | **Keep** on Live, "+ Add" in a section, or Keep on the "just now" strip (section 4.4) |
+| sometimes | add a preset | **Keep** on Live, "+ Add" in a section (from a bookmark), or Keep on the "just now" strip (section 4.4) |
 | sometimes | fold a section out of the way | press its heading |
 | rarely | change a role's knowledge, layout, look or brand | the role card |
 
@@ -109,7 +112,7 @@ Every drag has a press-only twin, for touch and for keyboards: press a source's 
 - **Its own screen document** (`switchboard.gm.json`) with a `rail` entry, as CLAUDE.md requires. The entry is called **Switchboard** and sits in a rail group named **Table**, present at every scale and on every desk (question 3). No tab is added.
 - **The on-air chip.** While a session is shared, the top bar carries one small chip, for example "On air · 4 screens · 1 held". It opens the Switchboard from where it sits. It replaces the "Table sees" line, the share link and the request count on the status line.
 - **One Send button stays on the chart**, on the Run desk only, so the commonest live act is still one press from the chart. It sends to Everyone; its small arrow lists the roles. It is the Live source's Send, shown in a second place, and it goes down the same path.
-- **Every object's menu** (NV1's one action list) gains two entries: "Send to ▸" with the roles, and "Keep as a preset".
+- **Nothing else is added anywhere else.** No "send to" or "keep as preset" entries on object menus, no look or signal controls on the chart. Alex, 24 Nov 16:11: "This is the ONLY place we actually do all this filter adding, etc. Keep it all in one contained place - not distributed." The one thing the rest of the app offers is the Bookmark button (section 4A).
 - **Generally available.** The Switchboard opens on Explore and Build as well as Run. On Build with nobody connected it is where presets are prepared: the right column shows each role with one stand-in preview, "what Bridge would see".
 - **In its own window.** "Open in its own window" puts the Switchboard on a second monitor while the chart keeps the first. This is the two-screen GM set-up Alex describes; on a one-screen night it is a rail entry like any other.
 
@@ -127,7 +130,7 @@ A preset is a short list of **steps**, each one a thing the GM could do live, pl
 
 | Step | Sends | Exists today? |
 |---|---|---|
-| **Show** | a place, with its view (layout, view style, seen from, band, HUD) | yes: `Shown {scope, title, screen}`; the view fields are new |
+| **Show** | a bookmark: a place and how it is looked at (section 4A); optionally a layout | partly: `Shown {scope, title, screen}`; the bookmark is new |
 | **Land** | a landing at a site | yes: `Shown.landing` (`LandingShow`) |
 | **Reveal** | a Known to change for the role's audience | yes: the `set_known` intent |
 | **Read aloud** | words for the GM to read; optionally also a card on the screens | new `Shown` kind |
@@ -138,7 +141,7 @@ A preset is a short list of **steps**, each one a thing the GM could do live, pl
 Rules that keep it one mechanism:
 
 - **A preset knows nothing about screens.** It names a role, or Everyone. It never names a device.
-- **A preset holds no knowledge of its own.** A Show step says "this place", not "these facts". What a screen draws is always its own role's knowledge through its own sensors, exactly as a live send. So sending a preset to a different role than it was written for can never leak anything.
+- **A preset holds no knowledge of its own.** A Show step says "this bookmark", not "these facts". What a screen draws is always its own role's knowledge through its own sensors, exactly as a live send. So sending a preset to a different role than it was written for can never leak anything.
 - **Only a Reveal step changes what anyone knows**, and a preset with one wears the small eye from the secrets design, so the GM can see before pressing that this one tells the table something. A Reveal goes to the audience of the role it is fired at.
 - **A band the role cannot see** (Infrared sent to a role with no infrared sensor) shows the nearest band it has. The preset row says so in a title ("Bridge has no Infrared: will show Visible").
 - **No conditions, no timers, no "then"** in 4.0. Steps in one preset go together, at once.
@@ -149,14 +152,13 @@ A Read aloud step shows its words in the GM's monitor, large enough to read at a
 
 ### 4.4 Adding a preset
 
-Alex, 24 Nov 15:53: "how do we define new items to add to the playbook?" The rule is **show it, then keep it**. A new preset is never built from a blank form: it takes what the GM is looking at or has selected, and the GM only names it and says where it goes. Four doors, most used first:
+Alex, 24 Nov 15:53: "how do we define new items to add to the playbook?" The rule is **bookmark it, then add the gloss here** (section 4A). A preset is never built from a blank form or from pickers.
 
-1. **Keep on Live.** Beside Send. Whatever is on the GM's view (place, layout, view style, band, a landing in progress) becomes a Show or Land preset on the open page. This is the fastest way to prepare: fly somewhere, frame it, Keep.
-2. **"+ Add to …" at the foot of each section.** It opens one row of six kinds: This view, A landing, A reveal, Read aloud, Look or signal, A hold. The first three take the GM's current view, picked site or selected object. Read aloud opens a box to type in. Look or signal takes the role's current look and dial. A hold asks only for the card.
+1. **Keep on Live.** Beside Send. Bookmarks where the GM is and puts it on the open page as a preset. The fastest way to prepare: fly somewhere, frame it, Keep.
+2. **"+ Add to …" at the foot of each section.** One row of kinds: A bookmark, A landing, A reveal, Read aloud, Picture, sound or film, Look or signal, A hold. "A bookmark" lists the campaign's bookmarks to choose from. A landing and a reveal also start from a bookmark (the site, the thing). Read aloud opens a box to type in. A hold asks only for the card.
 3. **Keep on the "just now" strip.** Anything sent live in the last few minutes, kept after the fact.
-4. **"Keep as a preset" in any object's menu**, on any desk, so a preset can be made from the chart without opening the Switchboard.
 
-A new preset arrives in the section it was added to, already selected, with its name ready to type over and a "goes to" choice beside it (Everyone, or a role). Enter or Done finishes it. Nothing else is required.
+A new preset arrives in the section it was added to, already selected, with its name ready to type over and a "goes to" choice beside it (Everyone, or a role). Enter or Done finishes it. Its look and signal come from the role it goes to unless the preset says otherwise.
 
 ### 4.5 Sections fold
 
@@ -172,7 +174,7 @@ Alex, same message: sections "like 'Approach' as collapsible". Yes.
 
 - **Edit in place.** A selected preset's pencil opens the same name and "goes to" row it was made with, plus its steps and a note to self. On Run the row opens only when asked for, so a session is not an editing screen.
 - **Reorder by dragging the row** by its body, within a section, onto another section's heading, or onto a page name in the picker.
-- **"Update from live"** on a selected Show preset replaces its place and view with what the GM is looking at now.
+- **"Update from live"** on a selected Show preset replaces its bookmark with where the GM is now.
 - **Again** on the "just now" strip repeats a send.
 
 ### 4.7 Pictures, sound and film
@@ -194,6 +196,42 @@ Alex, 16:03: "eventually - show the VTT - as we integrate Mappadux". This needs 
 ### 4.9 Where the Playbook is kept
 
 In the campaign, as one document (`sse.playbook/1`), exported and imported with it. A pack may carry a playbook (an adventure pack's scenes), which appears as extra chapters marked with the pack's name and can be copied into the campaign to change. Sketch in section 11.
+
+## 4A. Bookmarks: the one thing made at source
+
+**The whole model in four words** (Alex, 24 Nov 16:13): "bookmarks define 'what', layouts define 'how it looks' and playbooks store them. These are fired at screens with dynamic fog, which define 'where it is shown'."
+
+| Word | Answers | Holds |
+|---|---|---|
+| **Bookmark** | what | a place, a date, an instrument and a way of looking |
+| **Layout** | how it looks | bookmarks arranged on one screen, with a look |
+| **Playbook** | where they are kept | presets in chapters, pages and sections, each a bookmark or layout with the role it is for |
+| **Screen** (through its role) | where it is shown, and how much of it | the fog: each screen draws only what its role knows, with that role's sensors, worked out at the moment it is shown |
+
+"Dynamic fog" is read here as the knowledge filter: the same bookmark fired at the Bridge and at the Scout shows each of them a different amount, and shows more the moment something is revealed, with nothing re-sent. It is never stored in a bookmark, a layout or a preset (question 21).
+
+Alex, 24 Nov 16:11, on the layout builder: "where do you get the context of what you are looking at/from... lots of drop down pickers? ...perhaps we define 'bookmarks' at source and those become layouts when the extra gloss is added here. So effectively the GM can have anything on screen (they create a bookmark) and that is what is selected here in a new layout... next to undo/redo we have a bookmark that lets the user 'come back to this page' any time AND also use in 'looks' in this."
+
+Accepted, and it replaces the earlier draft's pickers and its scattered "keep as preset" entries. It is also the "place mark" the top-level design already has (tours are ordered place marks), so this is one mechanism finding its third use, not a new one.
+
+**What a bookmark is.** Where you are (the place and the date on the ruler), which instrument you are using (Chart, Globe, Cutaway, Landing, a card), and how you are looking (view style, seen from, scale, band, HUD, what is selected). It holds nothing about players: no role, no look, no knowledge. So it is safe and useful to everyone, GM or not.
+
+**Where it is made.** One **Bookmarks** button beside Undo and Redo, in the same spot on every desk and every instrument. It opens a short list with "+ Bookmark where I am" at the top. Choosing a bookmark takes you back there, exactly as you left it. That is its first job and it needs no Switchboard: a learner uses it to come back to a page.
+
+**What the Switchboard does with it.** Everything else:
+
+| A bookmark, plus | is | made |
+|---|---|---|
+| who it goes to, and how it arrives | a **preset** | "+ Add" in a section, "A bookmark" |
+| other bookmarks beside it, an arrangement and a look | a **layout** | "+ New layout…" on a role |
+| a look or a signal fault being tuned | the **preview** for the look card | "New look…" on a role |
+| a caption and an order | a **tour** stop | the tours design, unchanged |
+
+So there are no pickers in the Switchboard for "which world, which instrument, which band". The GM goes there, gets it looking right, and bookmarks it. If what is wanted is not in the list, the hint says how: "Go there on the chart and press Bookmarks."
+
+**Live is the unsaved bookmark.** The Live source is simply where the GM is now. Keep on Live bookmarks it and puts it on the open page in one press.
+
+**Kept with** the campaign, and exported with it. A pack can carry bookmarks (an adventure's key places). Outside a campaign they are kept on the device.
 
 ## 5. Sending, in detail
 
@@ -262,7 +300,7 @@ A click uses the kind the GM used last. The line card (the line's dot) chooses t
 
 ### 6.3 The list is pack data
 
-`sse.holding-cards/1`, in the base presentation pack: each card has its words and a kind. The GM edits the list in Workshop › Looks (a fifth row on the look card, "Holding cards", so a look can carry its own in-fiction set). A pack adds cards; a setting pack can replace the base jokes with ones that fit its world. First set, in the voice of the opening lines (short, dry, second person where it helps, British spelling):
+`sse.holding-cards/1`, in the base presentation pack: each card has its words and a kind. The GM edits the list on the look card (a fifth row, "Holding cards", so a look can carry its own in-fiction set), which opens in the Switchboard (section 7.4). A pack adds cards; a setting pack can replace the base jokes with ones that fit its world. First set, in the voice of the opening lines (short, dry, second person where it helps, British spelling):
 
 1. Hold on: tracking down the missing gold atoms. I think the black hole swallowed them. *(Alex)*
 2. Awaiting transmission. Light is doing its best.
@@ -324,22 +362,26 @@ Opens from a role's heading, and grows from it. It holds, in order of use:
 
 This is today's Seats dialog, field for field, rearranged by how often each is touched. One role today can list several layouts, each meant as its own window. That becomes one layout per role: a seat with two screens becomes two roles that share an audience (question 4).
 
-### 7.4 Layouts: choosing one, building one, keeping yours
+### 7.4 Layouts: bookmarks, arranged, with a look
 
-Alex, 24 Nov 16:02: "how do you actually define a setup - elsewhere - they are listed here for selection - or created here - a wizard to help build a player screen makes a lot of sense. But also... make one in situ... you as a GM get a cool screen... 'save this into the playbook' works well too". All three, and they make the same thing.
+Alex, 24 Nov 16:02: "how do you actually define a setup... a wizard to help build a player screen makes a lot of sense. But also... make one in situ... you as a GM get a cool screen". And 16:11: the context comes from bookmarks made at source, with the gloss added here and only here (section 4A).
 
-A **layout** is what a player screen is made of: which instruments are on it and where, and the look it starts with. It is today's screen document (`sse.screen/1`: Bridge, Tarn survey report, Bridge in 3D, Landing). "Layout" is the word used here so that "screen" can mean the piece of glass.
+A **layout** is what a player screen is made of. It is today's screen document (`sse.screen/1`: Bridge, Tarn survey report, Bridge in 3D, Landing). "Layout" is the word used here so that "screen" can mean the piece of glass.
 
-1. **Listed here.** Each role's heading names its layout ("Bridge ▾"). Pressing it lists every layout the campaign has: the ones shipped, the ones from packs, the ones made. Choosing one changes that role's screens at once. A Show step in a preset may also name a layout, so "Landing at Hollin Flats" can bring the Landing layout with it and Back returns the role to its own.
-2. **Built here.** "+ New layout…" at the foot of that list opens a builder in place, with a live preview of the screen beside it. Four steps, each optional, in the "guide, don't leave them alone" manner:
-   - **Start from:** Bridge, Viewport (one picture and nothing else), Report, Sensor station, Briefing, Blank. Choosing one and pressing Save is a complete answer.
-   - **On it:** instruments switched on and off. They are the same list as the GM's rail (one registry), so a new view is at once available to player screens. Sizes are dragged in the preview.
-   - **Look:** one of the campaign's looks.
+1. **Listed here.** Each role's heading names its layout ("Bridge ▾"). Pressing it lists every layout the campaign has: shipped, from packs, and made. Choosing one changes that role's screens at once. A preset may also name a layout, so "Landing at Hollin Flats" can bring the Landing layout with it and going back returns the role to its own.
+2. **Built here, from bookmarks.** "+ New layout…" at the foot of that list opens the builder in place, with a live preview of the screen beside it. Four steps, each optional:
+   - **Arrangement:** One picture, Picture and side panels, Two by two, Report page, Blank.
+   - **On it: your bookmarks.** Each panel is one bookmark. One special entry, **"Whatever is sent"**, is the panel that shows what a send or a preset brings; a layout with that panel works with every preset, and the bookmarks beside it stay put (the infrared globe always in the corner, the survey card always down the side). Sizes are dragged in the preview.
+   - **Look:** one of the campaign's looks, or "New look…".
    - **Name it**, and Save gives it to the role it was opened from.
-   - A line under the first step offers **Orac**: say what you want ("a sensor station with the infrared globe and two gauges") and it fills the steps in, for the GM to adjust. Orac already has a screen request of this kind on main.
-3. **Kept from what the GM has.** "+ From my view now" in the same list, and **Keep** on Live, both take the GM's own stage as it stands (the instrument, the view style, band and HUD, whether the card is open) and make a layout of it. Keep on Live puts it in the Playbook as a preset: that place, in that arrangement. "From my view now" keeps only the arrangement, for any place. A layout kept this way holds the arrangement and never the GM's knowledge: on a player's screen it is drawn from what that role knows, without the GM's pencil marks.
+   - **Orac** can do the arranging from a sentence ("the wreck big, the survey card beside it, amber"), choosing among the bookmarks that exist. Orac already has a screen request of this kind on main.
+3. **From where the GM is.** "+ From where I am now" in the same list bookmarks the GM's view and opens the builder with it already on the layout. This is "you as a GM get a cool screen": one press, then name it.
 
-All three end as one `sse.screen/1` document in the campaign, listed in the same place and editable in the same builder. The full composer stays in Workshop › Player screens for fine work; the builder here is its short form, opened where the need arises.
+A layout holds bookmarks and never the GM's knowledge: on a player's screen each panel is drawn from what that role knows, without the GM's pencil marks.
+
+**Looks are tuned here too.** "This is the ONLY place we do all this filter adding." So the look card the Looks note designed (four rows: Filters, Palette, Signal fault, Screen delivery, with Holding cards as a fifth) opens from a role's look in the Switchboard, with the monitor as its preview on any bookmark. Workshop keeps a "Looks" entry that opens the same card here, so nothing is lost and nothing is in two places (question 19). Choosing a saved look for your own view stays in the View style switch, as ruled, because that is using a look, not making one.
+
+The full screen composer in Workshop › Player screens stays for fine work on a layout's document; the builder here is the front door.
 
 ### 7.5 The pinned preview
 
@@ -366,10 +408,11 @@ Found by reading main (`packages/shell/src`) and from the builder's account (`/m
 | "See as: the table ▾" | desk menu | "See full size" on a preview; the menu keeps one entry, "As players see it", which opens the Switchboard |
 | "Tell the table?" on arrival | `arrival.ts`, uncommitted | a suggested send on the "just now" strip, with Send and Keep |
 | Show the landing to the table | `ws.sendLanding` | a Land step; live, a line from Live while landing |
+| Workshop › Looks, the look card (designed, not built) | example packs 4D | opens in the Switchboard from a role's look; Workshop keeps a link |
 
 After this, `SeatsPanel.svelte` and the table half of the status line are deleted, not hidden.
 
-**Not absorbed**, on purpose: Known to and the eye (knowledge is one control, and it lives on the thing known); the table ledger; Workshop › Looks (building a look is preparation); the party line on the players' own header.
+**Not absorbed**, on purpose: Known to and the eye (knowledge is one control, and it lives on the thing known); the table ledger; the party line on the players' own header.
 
 ## 9. OBS out: the clean output link
 
@@ -395,9 +438,13 @@ Accepted in principle, with the limit already agreed: it never leaves the GM's m
 Names are proposals. Everything is plain data; nothing here feeds physics or RESOLVE.
 
 ```jsonc
+// A bookmark: made anywhere, by the Bookmarks button. Nothing about players. (The top-level design's place mark.)
+{ "schema": "sse.bookmark/1", "id": "b2", "name": "Tarn IV in infrared", "scope": "u:…/tarn/iv", "at_yr": null,
+  "instrument": "sse.view.globe", "view": { "style": "true", "seen_from": "free", "scale": "readable", "band": "infrared", "hud": false, "pose": … },
+  "selected": "u:…/tarn/iv/b" }
+
 // A source: what a live send, a preset step and a line all carry. Extends today's Shown.
-{ "show":  { "scope": "u:…/tarn/iv", "title": "Tarn IV close up", "layout": "players.survey.screen.json",
-             "view": { "style": "chart", "seen_from": "tilted", "band": "visible", "hud": true } } }
+{ "show":  { "bookmark": "b2", "title": "Tarn IV close up", "layout": "players.survey.screen.json" } }   // layout optional
 { "land":  { /* LandingShow, unchanged */ } }
 { "say":   { "text": "The beacon repeats every ninety seconds…", "on_screens": false } }
 { "hold":  { "card": "blank" | "plain" | "joke" | { "text": "…" } } }   // replaces { off: true }
@@ -462,10 +509,13 @@ A screen's join gains one step: it says hello with a screen id it keeps on the d
 12. **Delete the Seats dialog and the table half of the status line once PB7 lands**, with no old path kept beside the new one? Recommended: yes. Keeping both is how small interfaces come back.
 13. **OBS out in 4.0 as an ordinary screen on an ordinary role, with the transparent background option; camera in marked later; NDI parked?** Recommended: yes. This is the agreed position with the order made explicit.
 14. **Build order: PB1 to PB3 first** (lines, the Switchboard with send and hold, the Playbook with fire and keep), because those three are what the run-through needs? Recommended: yes.
-15. **Layouts three ways, all making one thing** (section 7.4): listed on the role, built in place with the four-step builder and its preview, or kept from your own view; the full composer stays in Workshop? Recommended: yes.
+15. **Bookmarks at source, gloss here** (sections 4A and 7.4, your message of 16:11, taken as yes): one Bookmarks button beside Undo on every desk; presets and layouts are made from bookmarks in the Switchboard; no "send to" or "keep" entries anywhere else? Recommended: yes. It is the top-level design's place mark, so tours, presets and layouts share one saved thing.
 16. **A GM's own picture or short sound may be sent to remote screens as a file, once, up to about 5 MB**; films only on this computer, by web address or in a pack? Recommended: yes. It is a file and not a stream, so I read it as inside "the GM streams only data", but it is your rule to read.
 17. **Sound plays on the GM's computer by default**, and on a role's screens only where that screen's owner has turned sound on? Recommended: yes.
 18. **Pictures and sound in 4.0 as one late package (PB12); film, web-page sources and the tabletop wait for 4.2 with Mappadux?** Recommended: yes. A map on the table is useful to the run-through; the rest is RPG release work.
+19. **The look card opens in the Switchboard, not as its own Workshop screen** (Workshop keeps a link that opens it here)? Recommended: yes. It follows from "the only place we do all this filter adding"; it changes where the accepted Workshop › Looks card lives, not what is on it.
+20. **Keep the one Send button on the chart on the Run desk?** It adds no gloss, it only sends where you are to Everyone, and it is the commonest live act. Recommended: yes, as the single exception to "all in one place". If you would rather have none, the on-air chip opens the Switchboard in one press and Send is the first button there.
+21. **"Dynamic fog" means the knowledge filter at the screen** (section 4A): what a role knows and which bands its sensors have decide how much of a bookmark its screens draw, live, and a reveal lifts it without a re-send? Recommended: yes. If you also meant a visible fog (unknown parts of a map or system drawn as mist rather than left out), that is a drawing style for the same filter and I would add it as a choice on the look.
 
 ## 15. Packages (for "Build Run desk playbook and players' side")
 
@@ -475,20 +525,21 @@ Files in `packages/shell/src/run/` and `packages/ui-contract/src/`. One at a tim
 |---|---|---|---|
 | **PB1** | Contract: `Source` (show with view, land, hold; `{off}` read as a blank hold), lines for Everyone (as layers over the set-up), role and screen with `before`, the board's undo history, the screen hello (id, name, wanted role) and its "showing" report. Sealed roles honour a hold. Old `shown` and `Seat.shown` read and upgraded. | nothing | yes |
 | **PB2** | The Switchboard screen: Live source, roles and screens as a list with lines, Send, click to hold, Hold all that remembers, Lift, Undo and Redo, drag and press-then-press, move and swap screens. The on-air chip and the chart's Send button. Rail entry. The status line's table half goes. | PB1 | yes |
-| **PB3** | The Playbook: `sse.playbook/1` in the campaign; chapter and page picker; folding sections; fire, and press again to go back; keys 1 to 9; Keep on Live and "+ Add" with its six kinds; the "just now" strip with Keep and Again; edit row; reorder; Update from live; Reveal steps with the eye. | PB2 | yes |
+| **PB2b** | Bookmarks: `sse.bookmark/1`; the Bookmarks button beside Undo on every desk; go back to one; kept in the campaign (on the device outside one). Shared with tours. | nothing; chart room owns the top bar | yes |
+| **PB3** | The Playbook: `sse.playbook/1` in the campaign; chapter and page picker; folding sections; fire, and press again to go back; keys 1 to 9; Keep on Live and "+ Add" with its kinds, "A bookmark" first; the "just now" strip with Keep and Again; edit row; reorder; Update from live; Reveal steps with the eye. | PB2 | yes |
 | **PB4** | Previews: a Chart preview per role and source, shared; the confirmed tick; Pin to the chart; See full size. | PB2 | helps |
 | **PB5** | Holding cards: `sse.holding-cards/1` in the base pack, the 24 lines, kinds, chosen on the line card, no repeat twice running. | PB2 | small, yes |
 | **PB6** | Read aloud: the `say` source, the GM monitor reading card, "also show on screens" as a player document. | PB3 | yes if the run-through has narration |
 | **PB7** | The role card: the Seats dialog's fields moved in; one layout per role with the upgrade of two-screen seats; redirects; requests on the screen that asked. `SeatsPanel.svelte` deleted. | PB2 | no |
 | **PB8** | Clean output link: `?clean=1`, fixed 16:9, transparent option, marked "Output" on the board. | PB2; renderer for the transparent ground | no, but small |
 | **PB9** | Phone layout; "Open in its own window"; "Open a screen on this computer" keeping a link to its opener. | PB2 | no |
-| **PB10** | Looks on the board: look per role, the dials on role headings and screen boxes, deliveries on arrival and hold, Following latch. | renderer's looks (filters, faults, deliveries) | no |
+| **PB10** | Looks on the board: the look card opening here with a bookmark as its preview; look per role, the dials on role headings and screen boxes, deliveries on arrival and hold, Following latch. | renderer's looks (filters, faults, deliveries) | no |
 | **PB11** | Later: camera in, on local screens only. | PB9 | no |
 | **PB12** | Play: pictures and sound as a source, from a pack, a file or a web address; "Here" as a sound destination; one asset on a Read aloud. | PB6 | no, but wanted |
-| **PB13** | Layouts on the board: the layout list on a role, the four-step builder with preview, "From my view now", a layout named by a Show step. Orac's line when the agents track is ready. | PB7; the existing screen composer | no |
+| **PB13** | Layouts on the board: the layout list on a role; the four-step builder with preview, its panels chosen from bookmarks, with "Whatever is sent"; "From where I am now"; a layout named by a preset. Orac's line when the agents track is ready. | PB2b, PB7; the existing screen composer | no |
 | **PB14** | Later (4.2): film; a web page as a source; the tabletop with Mappadux. | PB12 | no |
 
-Asks of other threads: the renderer for the cheap Chart preview at thumbnail size, the transparent ground and the looks pieces already assigned to it; the secrets work (SV) for the eye on Reveal steps; navigation (NV1) for the two object-menu entries.
+Asks of other threads: the renderer for the cheap Chart preview at thumbnail size, the transparent ground and the looks pieces already assigned to it; the secrets work (SV) for the eye on Reveal steps; the chart room for the Bookmarks button in the top bar.
 
 ## 16. For Mappadux, when it is rethought
 
@@ -508,7 +559,8 @@ What to carry over, written so it stands without the rest of this note:
 8. **Assets** (pictures, sound, film) come from a pack by name, from the GM's own files, or from a web address, and are sources like any other.
 9. **Another program is a source by its web address.** This is the seam between SSE4 and Mappadux in both directions: a Mappadux table as a source on an SSE4 screen, and an SSE4 role's clean output as a source on a Mappadux table.
 10. **A clean output link per role** gives streaming for free.
-11. **Controls placed by how often they are used**: the dial on the box it changes, Hold all always in one corner, rare things on a card that opens from what it describes.
+11. **Bookmarks at source, gloss in one place.** The only thing made out in the app is a bookmark (where you are, how you are looking). Who sees it, its look, its arrangement and its routing are added in the one routing screen and nowhere else.
+12. **Controls placed by how often they are used**: the dial on the box it changes, Hold all always in one corner, rare things on a card that opens from what it describes.
 
 Open for that day, not designed here: what the two programs tell each other (which map, where the party is, whose turn), and whether they share one Switchboard or each have their own.
 
