@@ -6,7 +6,7 @@
 // descriptor: the gas's density from its shells' masses and sizes, its light summed along each line of sight
 // (density squared for glowing gas, density for dust that shines by its own heat or the star's light), coloured by
 // the descriptor's own light: its emission lines at their wavelengths, or its dust temperature.
-import { constant, LINES, planck, thermalColour, type ViewBand } from "../../ui-contract/src/index.ts";
+import { constant, LINES, say, planck, thermalColour, type ViewBand } from "../../ui-contract/src/index.ts";
 
 export const SHELL_REFERENCES = [
   { text: "Osterbrock, D. E. and Ferland, G. J. (2006). Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd ed. University Science Books (recombination and forbidden lines scale with the density squared along the line of sight: the emission measure).", url: "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/" },
@@ -185,9 +185,8 @@ export function drawShells(out: { width: number; data: Uint8ClampedArray }, s: N
 
 /** The nebula in words, for the note beside the view. */
 export function narrateShells(s: NebulaShape): string {
-  const au = constant("au");
-  const ly = constant("ly");
-  const size = (m: number) => (m >= 0.1 * ly ? `${(m / ly).toPrecision(2)} light-years` : `${Math.round(m / au).toLocaleString("en-GB")} au`);
+  // Sizes through the units engine, as a star's surroundings are measured: AU close in, light-years further out.
+  const size = (m: number) => say(m, "length", { class: "star", what: "orbit" }, { sig: 2 }).text;
   if (s.kind === "jet" && s.jet) return `A jet from the young star, ${size(s.jet.length_m)} each way along its spin axis${s.jet.knots?.length ? `, with ${s.jet.knots.length} knots from bursts of feeding` : ""}: drawn from the kernel's flow, on a log scale ${SHELL_DECADES} decades deep.`;
   if (s.kind === "dust-shell") return `Dust the giant has shed, from ${size(s.shells[0]?.radius_m ?? 0)} out${s.shells.length > 1 ? `, in ${s.shells.length} shells from separate episodes` : ""}: drawn from the kernel's shells, on a log scale ${SHELL_DECADES} decades deep.`;
   return `Gas the star has shed, ${size(Math.max(...s.shells.map((x) => x.radius_m), 0))} across its outer shell${s.lobes ? ", pinched into two lobes" : ""}: drawn from the kernel's shells, on a log scale ${SHELL_DECADES} decades deep.`;
