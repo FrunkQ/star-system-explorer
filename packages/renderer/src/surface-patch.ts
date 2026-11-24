@@ -238,11 +238,13 @@ export function groundColours(g: GroundPoint): { albedo: [number, number, number
  * leaving out the cells wholly inside ±hole_m (where a finer ring lies). `at` gives the ground at a point. A higher
  * `layer` is drawn over lower ones where rings overlap.
  */
-export function groundMesh(key: string, n: number, half_m: number, hole_m: number, radius_m: number, at: (x: number, y: number) => GroundPoint, layer = 0): { key: string; positions: Float32Array; albedo: Float32Array; chart: Float32Array; kernel_z: Float32Array; wet: Float32Array; indices: Uint32Array; layer: number } {
+export function groundMesh(key: string, n: number, half_m: number, hole_m: number, radius_m: number, at: (x: number, y: number) => GroundPoint, layer = 0): { key: string; positions: Float32Array; albedo: Float32Array; chart: Float32Array; kernel_z: Float32Array; wet: Float32Array; depth: Float32Array; floor: Float32Array; indices: Uint32Array; layer: number } {
   const N = n * n;
   const positions = new Float32Array(N * 3);
   const kernel_z = new Float32Array(N);
   const wet = new Float32Array(N);
+  const depth = new Float32Array(N);
+  const floor = new Float32Array(N);
   const albedo = new Float32Array(N * 3);
   const chart = new Float32Array(N * 3);
   const step = (2 * half_m) / (n - 1);
@@ -257,6 +259,8 @@ export function groundMesh(key: string, n: number, half_m: number, hole_m: numbe
       positions[k * 3 + 2] = g.z - curveDrop(Math.hypot(x, y), radius_m);
       kernel_z[k] = g.kernel_z ?? g.z;
       wet[k] = g.cover !== 0 ? 1 : 0;
+      depth[k] = g.cover !== 0 ? g.depth : 0;
+      floor[k] = g.albedo;
       const c = groundColours(g);
       albedo.set(c.albedo, k * 3);
       chart.set(c.chart, k * 3);
@@ -270,7 +274,7 @@ export function groundMesh(key: string, n: number, half_m: number, hole_m: numbe
       const a = j * n + i;
       idx.push(a, a + 1, a + n, a + 1, a + n + 1, a + n);
     }
-  return { key, positions, albedo, chart, kernel_z, wet, indices: new Uint32Array(idx), layer };
+  return { key, positions, albedo, chart, kernel_z, wet, depth, floor, indices: new Uint32Array(idx), layer };
 }
 
 /** A patch's ground at a point (nearest cover and material, bilinear height and albedo). */
