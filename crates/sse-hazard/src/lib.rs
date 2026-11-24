@@ -448,10 +448,9 @@ fn tone_of(x: f64, harsh: f64, deadly: f64) -> Tone {
 }
 
 /// A distance in the body's radii, or in au when far out round a star.
-fn say_distance(d: f64, radius: f64) -> String {
-    const AU: f64 = 1.495_978_707e11;
-    if d > 0.05 * AU && radius > 1e8 {
-        format!("{:.2} au", d / AU)
+fn say_distance(d: f64, radius: f64, au: f64) -> String {
+    if au > 0.0 && d > 0.05 * au && radius > 1e8 {
+        format!("{:.2} au", d / au)
     } else {
         format!("{:.2} radii", d / radius)
     }
@@ -481,6 +480,8 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
             .map(|x| x.inner_m)
     });
     let margin = set.margin;
+    // The astronomical unit, only for saying distances round a star.
+    let au = sheet.constant("au").unwrap_or(0.0);
 
     // Heat: the hull's temperature in the body's own light.
     let albedo = 1.0 - ship.absorbed_over_emitted;
@@ -648,7 +649,7 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
             "climbing_out" => format!(
                 "The closest it can park {} is {}: any lower and its {:.1} km/s will not lift it out.",
                 ask.line.words(),
-                say_distance(sb[0], r0),
+                say_distance(sb[0], r0, au),
                 ship.delta_v_m_s / 1e3
             ),
             "surface" => format!(
@@ -658,7 +659,7 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
             h => format!(
                 "The closest it can park {} is {}: inside that the {} is deadly.",
                 ask.line.words(),
-                say_distance(sb[0], r0),
+                say_distance(sb[0], r0, au),
                 word_of(h)
             ),
         };
@@ -677,11 +678,11 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
                 .iter()
                 .map(|s| format!(
                     "{} to {}",
-                    say_distance(s[0], r0),
+                    say_distance(s[0], r0, au),
                     if s[1] >= far {
                         "beyond".into()
                     } else {
-                        say_distance(s[1], r0)
+                        say_distance(s[1], r0, au)
                     }
                 ))
                 .collect::<Vec<_>>()
@@ -759,18 +760,18 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
                 "air" => format!(
                     "A fall-through {} can go down to the top of the air, {}, and come back out free.",
                     ask.line.words(),
-                    say_distance(q, r0)
+                    say_distance(q, r0, au)
                 ),
                 "heat" => format!(
                     "A fall-through {} can pass {} and come back out; any deeper and the hull passes {:.0} K.",
                     ask.line.words(),
-                    say_distance(q, r0),
+                    say_distance(q, r0, au),
                     hull_k
                 ),
                 _ => format!(
                     "A fall-through {} can pass {} and come back out; any deeper and the dose over the pass is deadly behind {shield_g:.0} g/cm².",
                     ask.line.words(),
-                    say_distance(q, r0)
+                    say_distance(q, r0, au)
                 ),
             };
             (
