@@ -3480,6 +3480,8 @@ impl Kernel {
             }
             Request::WebSlice {
                 cube,
+                haloes,
+                galaxy_floor_msun,
                 z,
                 t_gyr,
                 centre,
@@ -3496,6 +3498,8 @@ impl Kernel {
                     extent_mpc,
                     n,
                     cube: cube.unwrap_or(false),
+                    haloes: haloes.unwrap_or(false),
+                    galaxy_floor_msun,
                 })?;
                 Response::WebSliced { web }
             }
