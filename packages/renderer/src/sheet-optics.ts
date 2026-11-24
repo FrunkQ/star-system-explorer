@@ -3,7 +3,7 @@
 // light. No colour is typed: a Mars dust, a tholin or a frost is as red, brown or white as its measured absorption makes
 // it. The kernel's tile albedo still sets how bright the ground is; this sets its hue.
 
-import { cmf, linearSrgb, planck } from "../../ui-contract/src/index.ts";
+import { cmf, constant, linearSrgb, planck } from "../../ui-contract/src/index.ts";
 
 /** A grain size, µm, for surfaces whose grains the kernel does not yet give (fudge register: fine regolith and frost). */
 export const GRAIN_UM = 50;
@@ -86,7 +86,7 @@ export function mixAlbedo(grains: readonly GrainShare[], nm: number, d_um = GRAI
  * layer looks white): linear sRGB per channel over a white layer's, and its visual albedo (the CIE Y share). Grains
  * of `d_um` (the fudge register's grain size until the kernel gives one per surface).
  */
-export function seenColour(t: IndexTable | readonly GrainShare[], d_um = GRAIN_UM, star_k = 5772): { rgb: [number, number, number]; albedo: number } {
+export function seenColour(t: IndexTable | readonly GrainShare[], d_um = GRAIN_UM, star_k = constant("T_sun")): { rgb: [number, number, number]; albedo: number } {
   const grains: readonly GrainShare[] = "lambda_nm" in t ? [{ table: t, share: 1 }] : t;
   const lit = [0, 0, 0];
   const white = [0, 0, 0];

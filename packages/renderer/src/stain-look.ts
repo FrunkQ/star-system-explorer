@@ -3,6 +3,7 @@
 // keeps setting how bright the ground is; a stain moves its hue toward the stain's, by its share. A stain whose sheet
 // row has no optics is not drawn (visual polish rule: no number, no flourish), and the note says so.
 
+import { constant } from "../../ui-contract/src/index.ts";
 import { indexTableOf, seenColour } from "./sheet-optics.ts";
 import type { Prepared } from "./surface.ts";
 
@@ -39,7 +40,7 @@ export function stainFacts(surface: unknown): StainFact[] {
 const lum = (c: readonly number[]) => 0.2126 * c[0]! + 0.7152 * c[1]! + 0.0722 * c[2]!;
 
 /** A stain's hue from its sheet row (any table: `readMatter({ id })`), or null when the row has no optics. */
-export function stainHue(f: StainFact, row: unknown, star_k = 5772): StainHue | null {
+export function stainHue(f: StainFact, row: unknown, star_k = constant("T_sun")): StainHue | null {
   const t = indexTableOf(row);
   if (!t) return null;
   const c = seenColour(t, STAIN_GRAIN_UM, star_k).rgb;
