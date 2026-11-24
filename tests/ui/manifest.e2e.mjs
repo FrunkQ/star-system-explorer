@@ -122,7 +122,7 @@ try {
   // the GM's own pictures, with a selector; the remix and the one last chosen are kept with the ship.
   await desk.locator("[data-picture=plans] svg").first().waitFor();
   await desk.locator("[data-picture=plans] [data-remix]").click();
-  await desk.locator("[data-picture-note]", { hasText: "Design kept" }).waitFor();
+  await desk.locator("[data-design-note]", { hasText: "Design kept" }).waitFor();
   assert.equal(await desk.locator("[data-field='construct.design']").count(), 0, "the recipe is drawn, not listed");
   await shot(page, "picture-designed-desk");
   await desk.locator("[data-show=model]").click();

@@ -6,10 +6,14 @@ Track MC. Owner thread "Build ship manifest and crew roster". Asked by Alex, 24 
 
 - A "Picture" button on the Ships and stations card (beside Aboard and Log) opens the construct's pictures (`packages/views/manifest/src/Picture.svelte`), with a selector when there is more than one: "Plans", "3D model", and a thumbnail per own picture.
 - A ship with a nav ship is designed from its own parts by the renderer's `ShipPlans` (closed in on the hull). Its numbers come from the kernel (`ship_at_world` with no worlds resolves a stock id or a pack ship); rules and styles from the base-ships pack. `ShipPlans` gained `start` ("chart" or "3d") and `onview` (told when the reader switches), both opt-in.
-- On the Build desk (edit mode): style switch and Remix, the last design kept as `construct.design` (`{style, seed, overrides?}`); "Add a picture…" (up to four, `construct.pictures`: each scaled so the longer side is 960 px, WebP or JPEG, a raster data URI of about 150 KB at most, `ui-contract/src/picture.ts`); "Remove this picture"; and the view last chosen is kept as `construct.picture_shown` ("plans", "model" or "picture:<n>"), which is what the card opens on everywhere.
+- On the Build desk (edit mode): style switch and Remix, the last design kept as `construct.design` (`{style, seed, overrides?}`); "Add a picture…" (up to four, `picture.own`: each scaled so the longer side is 960 px, WebP or JPEG, a raster data URI of about 150 KB at most, `ui-contract/src/picture.ts`); "Remove this picture"; and the view last chosen is kept as `picture.shown` ("plans", "model" or "picture:<n>"), which is what the card opens on everywhere.
 - On Explore and Run: any view can be chosen (held for the session, not kept), but nothing changes: `ShipPlans` is `locked` (no style or Remix; turning and framing stay), no adding or removing pictures.
 - Context by desk, per Alex: in play, what is aboard changes (add, move, state, crew roles, cargo amounts); the ship itself (facts, recycling share, pictures, design, default view) changes only on Build.
 - The three picture fields are drawn, not listed: `PICTURE_FIELDS` are left out of the card's fact list.
+
+## One panel for anything with an address
+
+- The selector, own pictures, the kept choice and the Build-only rules are one general component, `Pictures` (`packages/views/pictures/src/Pictures.svelte`). It takes a subject (address and facts), the owner's drawn views (`views: {id, label}[]`) and a `view` snippet that draws one, and keeps `picture.own` and `picture.shown` on the subject. Ships use it with their plans and 3D model (`views/manifest/src/Picture.svelte`); the chart room puts it on the body card with a world's chart drawing and globe (Alex, 24 Nov 14:28: "same as a ship"); the renderer's station builder (`StationPlans`, recipe `{shape, seed, overrides}` in `construct.design`) gives stations their drawn views.
 
 ## Not done
 

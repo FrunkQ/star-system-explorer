@@ -24,10 +24,12 @@ test("pictures scale down to fit, never up", () => {
 });
 
 test("it opens on the last choice while that still exists", () => {
-  assert.equal(shownOf("model", 0, true), "model");
-  assert.equal(shownOf("model", 2, false), "picture:0");
-  assert.equal(shownOf("picture:1", 2, true), "picture:1");
-  assert.equal(shownOf("picture:2", 2, true), "plans");
-  assert.equal(shownOf(undefined, 0, true), "plans");
-  assert.equal(shownOf(undefined, 0, false), null);
+  const ship = ["plans", "model"];
+  assert.equal(shownOf("model", 0, ship), "model");
+  assert.equal(shownOf("model", 2, []), "picture:0");
+  assert.equal(shownOf("picture:1", 2, ship), "picture:1");
+  assert.equal(shownOf("picture:2", 2, ship), "plans");
+  assert.equal(shownOf(undefined, 0, ship), "plans");
+  assert.equal(shownOf(undefined, 0, []), null);
+  assert.equal(shownOf("globe", 0, ["chart", "globe"]), "globe");
 });
