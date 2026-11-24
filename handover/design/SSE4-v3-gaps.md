@@ -220,3 +220,96 @@ Checked and **not** gaps: undo with named steps, measure, size comparison, the t
 3. **Order of the planned stage 2 items:** navigation first (37, 38, then 17 with 39, then 40 with 1), then the editing ones (5 click a unit, 4 pin a value, 3 grow with the dials, 11 mix editor, 12 and 35 classes and gallery, 6 eclipses). Recommended: yes. Today the gap a GM feels most is finding and getting to things, not the depth of editing.
 
 *Alex, 24 Nov 14:34: "yes to all questions".* Settled: the picker (37) goes on the place line, replaces the Below list and is also Find; every object gets the press-and-hold or right-click menu (38), both in stage 1; navigation comes first in stage 2 (17 with 39, then 40 with 1), then the editing items.
+
+
+---
+
+# Third audit, 24 Nov 2026: does True look like the real thing?
+
+Alex, 24 Nov 17:22: "check over all the key renderer features in SSE3 and ensure we have them here on the views and rendered on True, Enceladus plumes etc. In SSE3 you fed the figures into it and every object actually looked like its real counterpart... we need to do that check. Just imagining thick yellow clouds on Titan and seeing a lava tube opening."
+
+**What was read.** V3, read only on Alex's machine: `rendering/planetAppearance.ts` (the `AppearanceModel`: every feature a world can show and what derives it), `rendering/planetTexture.ts` (disc and equirectangular painting, emissive map), `rendering/landmass.ts`, `catalogue/PlanetDisc.svelte`, `holo/galleryScene.ts`, `catalogue/galleryExamples.ts`. SSE4: `packages/renderer/src` at 95b9971, `handover/status/renderer.md`, `weather.md` and `light.md`, and a keyword sweep of `crates/` for what the kernel already knows.
+
+**How it was judged.** This is an audit of the source, not of pictures: no screenshots were taken against NASA or ESA images in this pass. "Done" means the renderer draws the feature from kernel facts in True. "Partly" means the kernel knows it, or one view draws it but True at system scale does not. "Missing" means nothing draws it. The per-body checklist in R3 is the visual check, to run on the live site as each layer lands.
+
+**Owner names** are the threads the coordinator gave on 24 Nov. Photoreal = "Build photoreal renderer". Stars = "Build star glow and flares". Seas = "Build surface time-lapse". Air = "Build shared climate and weather". Ground view = "Build landing run-through". Where the kernel must supply a fact first, that thread is named too.
+
+## R1. SSE3's render features, one by one
+
+| # | Feature (V3 home) | SSE4 state | Owner |
+|---|---|---|---|
+| R1 | **Gas giant bands from the cloud decks**, band strength from a chromophore ramp (`planetTexture.giantBandRamp`, `giantBanding.ts`) | **Missing in True.** `true-look.ts` draws a giant "plain and says so" until cloud colours come. The kernel has bands and storm families (W3), and ND2 gives colour to the eye. Gap items 36 and 36a set the target palette | Photoreal, with Air (decks) and the light thread (ND2 rows) |
+| R2 | **Long-lived storms** (a Great Red Spot by chance, `stormChance`) | **Partly.** The kernel's named storms (W3) reach the Body globe through `weather.ts`; not on giants in system True | Photoreal |
+| R3 | **Polar vortex polygons** (Saturn's hexagon, Jupiter's cyclone rings; `PolarVortexSpec`) | **Partly.** The kernel has polygon jets by rule (W3); `weather.ts` knows vortices; not drawn in True at system scale | Photoreal |
+| R4 | **Oblate fast rotators** (Saturn visibly flattened, bands smeared) | **Missing.** The kernel has flattening; the renderer draws every world as a sphere | Photoreal |
+| R5 | **Rings to their real extent, tilt and brightness from their mass** | **Done, data pending.** V10f and V10l: edges, optical depth, lit as particles, tilt from the catalogue obliquity. Saturn's ring regions are waiting on the data sheet | Photoreal, data sheet |
+| R6 | **Cloud decks on rocky worlds** (Venus overcast, Earth's clouds) | **Partly.** R2b part 1 lays today's clouds and haze on the Body globe. Not yet: the cloud shell at height (R2b part 2), or clouds in system-scale True (`true-look.ts` reads ground tiles only) | Photoreal, Air |
+| R7 | **Atmosphere halo and limb glow** (`AtmGlowSpec`) | **Partly.** R2a air optics from `read_air_optics` on the globe; system True draws no limb of air | Photoreal |
+| R8 | **Titan's orange haze** (V3 drew an atmospheric tholin haze separately from surface staining) | **Missing as a colour.** Aerosol haze exists in the weather op, but nothing in SSE4 names tholin, and no haze has an absorption row, so a haze can't be orange yet | Air (haze amount), light thread (absorption rows on the sheet), Photoreal |
+| R9 | **Surface tholin staining** (Pluto's dark red, Charon's red pole; `TholinSpec`) | **Missing.** No tholin in the kernel or the renderer | Proven core (surface cover), Photoreal |
+| R10 | **Cryovolcanic plumes** (Enceladus, Triton; `CryoPlumeSpec`) | **Missing in True.** The kernel knows cryovolcanism and eruptions; the time-lapse marks them as bright ground. Nothing stands above the limb, so there are no plumes and no E-ring feed | Photoreal, with Proven core for plume height and rate |
+| R11 | **Lava and molten glow** (Io's lava lakes, magma-ocean worlds; `MagmaSpec`, emissive equirect) | **Partly.** Lava plains are in the tiles and `surface.ts` colours them; no visible glow on the night side | Photoreal |
+| R12 | **Hot things glow in visible light** (hot Jupiters, young giants, brown dwarfs; `ThermalGlowSpec`, `SelfLumSpec`) | **Missing in Visible.** `true-look.ts` uses Planck for the Infrared band only (V10d); a 1500 K world in Visible True is not red-hot | Photoreal |
+| R13 | **Eyeball worlds** (locked day and night split; `EyeballSpec`) | **Partly.** The kernel has the substellar regime; `weather.ts` knows it; True draws ground tiles only | Photoreal, Air |
+| R14 | **Craters by surface age, leading-face skew** (`CraterSpec`) | **Done on the globe** from the kernel's crater chronology (S4) in the tiles. Level-0 tiles may be too coarse to show them in system True (check, R3) | Photoreal |
+| R15 | **Rubble-pile speckle and irregular shapes for small bodies** (`RoughSpec`) | **Missing.** Small bodies are spheres or dots | Photoreal, Proven core (shape) |
+| R16 | **Space-weathered greying of airless rock** | **Missing.** Not found in the kernel or the renderer | Proven core, Photoreal |
+| R17 | **Ice cracks, lineae and rifts** (Europa; Tethys and Charon chasmata; `IceCrackSpec`, `RiftSpec`) | **Done in the kernel** (S6 ice-shell ridges, bands, chaos, chasmata) and in the tiles. Visibility in True is unchecked (R3) | Photoreal |
+| R18 | **Coloured frosts** (N₂ white-pink on Triton and Pluto, SO₂ yellow-white on Io; `FrostSpec`) | **Partly.** The kernel has frost and ground ice (S7, W ground ice); colours wait on absorption rows | Air, light thread, Photoreal |
+| R19 | **Polar caps, the two caps differing by season** | **Partly.** S7 ice and the W polar hood exist; the seasonal difference in True is unchecked | Air, Photoreal |
+| R20 | **Land and sea from one elevation field; sea glint** (`landmass.ts`) | **Done and better.** Real terrain from history (S2, S3); glint and waves on the ground (V10k) | Seas, Ground view |
+| R21 | **Vegetation spreading from the coast, in a colour set by its starlight** | **Missing in the renderer.** The life track knows where life is; nothing paints it | Photoreal, with the life thread |
+| R22 | **City lights on the night side** (and bioluminescence colours; `paintLights`) | **Missing.** Nothing draws artificial light; civilisations now exist (OV3) | Photoreal, with the kernel (OV) |
+| R23 | **Aurora ovals** | **Partly.** In the Mag band (`field.ts`); no visible-light aurora on the night side in True | Photoreal, light thread (MF9 part 2 colours) |
+| R24 | **Magnetospheres** | **Done** (V10e) | Photoreal |
+| R25 | **Stars: white-hot centre, coloured limb, spots, flares** | **Done** (V10c, R5a) | Stars |
+| R26 | **Jets and shed shells** (pulsars, magnetars, fed holes; giants' halos and supergiants' shells) | **Partly.** Star marks part 1 (size by power, flares) done; shells and jets are part 2 | Stars |
+| R27 | **Black holes:** horizon at true size, photon ring, feeding disc, lensing what is behind | **Missing.** No lensing anywhere | Stars, Photoreal |
+| R28 | **Brown dwarfs banded, not spotted, coloured by temperature** (Y, T, L) | **Missing** | Stars, Photoreal |
+| R29 | **Each world's colour from its starlight through its air** (`apparentColor.ts`, `throughTheSky`) | **Partly.** ND2 gives colour to the eye in the kernel; ground colours in True come from the tiles' own palette, so check that they read ND2 (R3) | Photoreal, light thread |
+| R30 | **Standing on it: ground, sky and light** (V3 Surface view) | **Done and better** (SL1 land, fly down, walk about; Landing screens). Sight distance and lamp reach in metres are still to come (item 8) | Ground view |
+| R31 | **Ship hulls and plumes scaled by thrust** | **Done** (item 14) | Photoreal |
+| R32 | **Comet coma and tails** (new; V3 drew comets only as pictures) | **Missing.** The kernel has no tail model | Photoreal, Proven core |
+| R33 | **Lava tube openings, caves and skylights on the ground** (Alex's example) | **Kernel only.** The surface chain reaches caves and lava tubes (S9 and on, parked) and interior sites are parked to about 4.2; nothing is drawn on the ground | Ground view, Proven core |
+
+## R2. Top ten to build, in order
+
+1. **Giants in True** (R1 to R3): bands, storms and polar vortices from the kernel's decks, in ND2 colours, checked against item 36a's palette.
+2. **Clouds and haze in system True, and the cloud shell at height** (R6, R7): Venus, Earth, Titan.
+3. **Titan's orange haze and other coloured hazes** (R8): absorption rows for tholin-like aerosols on the sheet.
+4. **Plumes above the limb** (R10): Enceladus and Triton.
+5. **Surface tholins and coloured frosts** (R9, R18): Pluto, Charon, Io, Triton.
+6. **Hot things glow in Visible** (R11, R12): Io's lava, hot and young giants, brown dwarfs.
+7. **Oblateness** (R4): Saturn and Jupiter visibly flattened.
+8. **Stars' jets and shells, black holes with lensing, brown dwarf bands** (R26 to R28).
+9. **Life and lights** (R21, R22): vegetation and city lights on the night side.
+10. **Small bodies and comets** (R15, R16, R32): irregular shapes, rubble, weathering, coma and tails.
+
+## R3. "Looks like the real thing": a checklist per body, to rerun
+
+Open Sol, set View style to True and Scale to Real, and compare each body with a reference image (NASA Photojournal or ESA). Mark each line yes, no or wrong. Lines tagged **(not yet)** cannot be judged until the layer named in R1 lands. Rerun after each renderer package; record the date and the main commit.
+
+- **Sun.** White-yellow disc, darker and redder limb, spots near the equator in cycle years, granules close up.
+- **Mercury.** Grey, heavily cratered, brighter young rays (R14 at system scale may be too coarse).
+- **Venus.** Featureless cream-yellow overcast, no ground visible **(not yet: R6 in system True)**. UV band: dark Y-shaped cloud features.
+- **Earth.** Blue oceans with glint, green-brown land, white clouds and caps, blue limb. Night side city lights **(not yet: R22)**. Also check test-drive rough edge 1 (Earth showing bare ground and −18 °C) is gone.
+- **Moon.** Grey, dark maria on the near side, bright highlands, Tycho's rays.
+- **Mars.** Butterscotch-red, dark Syrtis Major, white polar caps that differ by season, thin pink-tan limb.
+- **Jupiter.** Cream zones and tan-brown belts, Great Red Spot, white ovals, flattened by about 6.5% **(not yet: R1, R2, R4)**. Cyclone rings at the poles **(not yet: R3)**. Faint ring.
+- **Io.** Yellow, orange and white sulphur frosts, black lava spots, glowing lava at night **(not yet: R11, R18)**.
+- **Europa.** White-tan ice crossed by red-brown lineae, chaos terrain (R17 at system scale unchecked).
+- **Ganymede and Callisto.** Ganymede two-tone (dark old terrain, bright grooved); Callisto dark and saturated with craters.
+- **Saturn.** Pale gold, soft bands, hexagon at the north pole, flattened by about 10%, rings bright with the Cassini Division, ring shadow on the planet **(not yet: R1, R3, R4, R5 data)**.
+- **Titan.** Thick orange haze, no surface visible in Visible, a detached blue haze layer at the limb; in Infrared, dark dunes and the northern lakes **(not yet: R8, R6)**.
+- **Enceladus.** Brilliant white, tiger stripes at the south pole, plumes above the south limb **(not yet: R10)**.
+- **Iapetus and Mimas.** Iapetus with a dark leading face and bright trailing; Mimas with Herschel crater.
+- **Uranus.** Pale featureless cyan, lying on its side, narrow dark rings **(not yet: R1 colour)**.
+- **Neptune.** Deep blue, a dark spot with white companion clouds **(not yet: R1, R2)**.
+- **Triton.** Pink-white nitrogen frost, cantaloupe terrain, dark geyser streaks **(not yet: R10, R18)**.
+- **Pluto.** Bright Sputnik Planitia heart, dark red Cthulhu region, thin blue haze at the limb **(not yet: R9, R8)**.
+- **Charon.** Grey with a red north pole (Mordor Macula) **(not yet: R9)**.
+- **Ceres.** Dark grey with Occator's bright spots.
+- **Comets and the belt.** Belt members moving on their own orbits (V10l); a comet near the Sun with coma, dust tail and ion tail **(not yet: R32)**.
+- **Beyond Sol.** A hot Jupiter glowing on its night side, a brown dwarf in bands, a pulsar's beams, a black hole bending the stars behind it **(not yet: R12, R26 to R28)**.
+
+**Cannot be judged yet:** every line marked (not yet), plus any check needing clouds at height (R2b part 2) or ND2 colours carried to the tiles (R29). Everything else can be judged on the live site today.
