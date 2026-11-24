@@ -87,6 +87,28 @@ test("players replay the GM's events and agree by state hash; GM drop goes read-
     await settle();
     assert.equal((await phone.p.session!.scene(facts.scope, { data_view: view })).ok, true);
 
+    // What the table is shown (the landing run-through): nothing sent yet, then a place, then screens off; a late joiner
+    // gets the latest on its manifest.
+    assert.equal(phone.p.shown(), undefined);
+    host.setState({ shown: { scope: facts.scope, title: "Kestrel" } });
+    await settle();
+    assert.deepEqual(phone.p.shown(), { scope: facts.scope, title: "Kestrel" });
+    host.setState({ shown: { off: true } });
+    await settle();
+    assert.deepEqual(desk.p.shown(), { off: true });
+    assert.deepEqual(host.manifest().shown, { off: true });
+    host.setState({ clock_yr: facts.at_yr });
+    await settle();
+    assert.deepEqual(phone.p.shown(), { off: true }, "a clock tick keeps what is shown");
+    // The party's ship travels as its own key: the table always knows where it is.
+    host.setState({ party: { ship: "u:kestrel/sys:1/c:1", name: "Kittiwake", at: TARN } });
+    await settle();
+    assert.equal((phone.p.party() as { name: string }).name, "Kittiwake");
+    assert.equal((host.manifest().party as { at: string }).at, TARN);
+    host.setState({ party: null });
+    await settle();
+    assert.equal(phone.p.party(), undefined, "no party ship any more");
+
     // A player tries to change the universe: its seat cannot (V5 carries requests).
     const own = await phone.p.session!.send({ kind: "set_value", address: TARN, field: "a_au", value: 9, at_yr: facts.at_yr });
     assert.notEqual(own.status, "applied");
