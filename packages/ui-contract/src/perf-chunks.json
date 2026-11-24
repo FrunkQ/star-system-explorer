@@ -89,9 +89,9 @@
     {
       "id": "drawing",
       "name": "Drawing",
-      "meaning": "One frame: the globe's own drawing time and the page's frame interval. 33 ms is 30 frames a second.",
+      "meaning": "One frame: the globe's own drawing time, each pass's share of it, and the page's frame interval. 33 ms is 30 frames a second.",
       "budget_ms": 33,
-      "sources": ["render.globe", "page.frame"]
+      "sources": ["render.globe", "render.pass", "page.frame"]
     },
     {
       "id": "clicks",
