@@ -15,6 +15,10 @@ export interface Flare {
   decay_s: number;
   peak_w: number;
   energy_j: number;
+  /** The flare's light at its peak (sse-light LightDescription): a `thermal` part gives its white-light patch. */
+  light?: { parts?: Json[] };
+  /** A mass ejection with the flare: speed, mass, direction (unit vector, z the spin axis) and cone half-width. */
+  ejection?: { speed_m_s: number; mass_kg: number; direction: [number, number, number]; half_width_rad: number };
 }
 
 export interface LiveStar {
@@ -105,11 +109,26 @@ export function flaresAt(s: LiveStar, spots: Spot[], t: number, span = 0): { lat
     // The light curve has one peak, so its brightest within the span is the peak or one end.
     const k = span > 0 && f.at_s <= t && f.at_s >= t - span ? 1 : Math.max(flareProfile(f, t), span > 0 ? flareProfile(f, t - span) : 0);
     if (k <= 0) return;
-    // A flare goes off in an active region: over a spot, taken in turn (the kernel gives times, not places).
+    // A flare with an ejection goes off under where the ejection leaves; any other in an active region, over a spot
+    // taken in turn (the kernel gives those times, not places).
+    const at = flarePlace(s, f);
     const sp = spots[i % Math.max(1, spots.length)];
-    out.push({ lat_deg: sp?.lat_deg ?? 15, lon_deg: sp?.lon_deg ?? 0, strength: (k * f.peak_w) / xr, flare: f });
+    out.push({ lat_deg: at?.lat_deg ?? sp?.lat_deg ?? 15, lon_deg: at?.lon_deg ?? sp?.lon_deg ?? 0, strength: (k * f.peak_w) / xr, flare: f });
   });
   return out;
+}
+
+/**
+ * Where a flare with an ejection goes off, in the star's own turning frame: under the ejection's direction at the
+ * flare's peak. The ejection's direction is fixed in space (the kernel aims it for hits and misses), the viewer's frame
+ * here, so the place on the star is that direction plus the star's turn at the peak. Null without an ejection.
+ */
+export function flarePlace(s: LiveStar, f: Flare): { lat_deg: number; lon_deg: number } | null {
+  const e = f.ejection;
+  if (!e) return null;
+  const [dx, dy, dz] = e.direction;
+  const lon = (Math.atan2(dy, dx) * 180) / Math.PI + turnAt(s, f.at_s);
+  return { lat_deg: (Math.asin(Math.max(-1, Math.min(1, dz))) * 180) / Math.PI, lon_deg: ((lon % 360) + 360) % 360 };
 }
 
 /** The star's turn under a viewer at time t, degrees of central meridian (its own spin from the kernel). */
