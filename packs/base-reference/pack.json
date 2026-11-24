@@ -12922,7 +12922,15 @@
         "src": "karkoschka1994",
         "note": "The methane bands that colour Uranus and Neptune and darken the giants in the red, measured from the giants' own spectra at their temperatures (125 to 128 K). Sampled every 5 nm from a 1 nm table, so narrow band edges are smoothed; near-zero values are the table's floor."
        }
-      ]
+      ],
+      "n_solid": {
+       "v": 1.32,
+       "unit": "1",
+       "src": "protopapa2015",
+       "check": "unverified",
+       "at_place": "methane ice, 15800 cm-1 (633 nm)",
+       "note": "real index of methane ice in the visible; its visible k is not on the sheet yet"
+      }
      },
      "chemical": {
       "states": {
@@ -13345,6 +13353,14 @@
        "unit": "1",
        "src": "fudge-register",
        "check": "authored"
+      },
+      "n_solid": {
+       "v": 1.23,
+       "unit": "1",
+       "src": "quirico-sshade-n2",
+       "check": "unverified",
+       "at_place": "nitrogen ice, visible",
+       "note": "real index of nitrogen ice in the visible, held constant through the near infrared in the SSHADE optical constants"
       }
      },
      "chemical": {
@@ -17571,6 +17587,111 @@
        "note": "k retrieved from the powder's reflectance with irregular grains (GRS1) and n fixed at 1.5; n is assumed, not measured; alpha = 4 pi k / lambda"
       }
      }
+    },
+    {
+     "id": "troilite",
+     "names": {
+      "physics": "troilite (FeS)",
+      "plain": "iron sulphide",
+      "story": "iron sulphide"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the iron sulphide of meteorites and of the sulphide clouds of hot giants; dark and metallic in the visible",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        774.0
+       ],
+       "n": [
+        1.92,
+        2.04,
+        2.08,
+        2.09,
+        2.1,
+        2.13,
+        2.19,
+        2.27,
+        2.37,
+        2.47,
+        2.64
+       ],
+       "k": [
+        1.41,
+        1.36,
+        1.37,
+        1.45,
+        1.56,
+        1.7,
+        1.85,
+        2.0,
+        2.13,
+        2.26,
+        2.43
+       ],
+       "src": "kranhold2026",
+       "check": "unverified",
+       "at_k": 300.0,
+       "note": "light polarised along the crystal's x axis; the z axis is in refractive_index_ez; the files read stop at 774 nm"
+      },
+      "refractive_index_ez": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        774.0
+       ],
+       "n": [
+        1.87,
+        1.98,
+        2.0,
+        2.02,
+        2.07,
+        2.17,
+        2.31,
+        2.47,
+        2.64,
+        2.82,
+        3.08
+       ],
+       "k": [
+        1.5,
+        1.45,
+        1.49,
+        1.62,
+        1.79,
+        1.97,
+        2.13,
+        2.28,
+        2.39,
+        2.47,
+        2.54
+       ],
+       "src": "kranhold2026",
+       "check": "unverified",
+       "at_k": 300.0,
+       "note": "light polarised along the crystal's z axis"
+      }
+     }
     }
    ],
    "reactions": [
@@ -18452,6 +18573,13 @@
      "doi": "10.3847/1538-4357/abae65"
     },
     {
+     "id": "kranhold2026",
+     "text": "Kranhold et al. 2026, Astronomy and Astrophysics: optical constants of pyrrhotites and troilite, UV to far infrared (title not printed where read); troilite FeS at 300 K, E parallel to x and to z, from the Jena Database of Optical Constants for Cosmic Dust files troilite_FeS_300K_ex.txt and _ez.txt (wl_um, n, k)",
+     "status": "unverified",
+     "doi": "10.1051/0004-6361/202659441",
+     "url": "https://www2.astro.uni-jena.de/Laboratory/OCDB/sulfides_2026.html"
+    },
+    {
      "id": "laesecke-muzny2017-co2",
      "text": "Laesecke, A. and Muzny, C. D. 2017, J. Phys. Chem. Ref. Data 46: reference correlation for the viscosity of carbon dioxide; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
      "status": "unverified",
@@ -18854,6 +18982,19 @@
      "status": "unverified",
      "doi": "10.1038/nature11031",
      "url": "https://arxiv.org/abs/1203.4970"
+    },
+    {
+     "id": "protopapa2015",
+     "text": "Protopapa, S., Grundy, W. M., Tegler, S. C. and Bergonio, J. M. 2015, Icarus (arXiv:1503.00703): absorption coefficients of the methane-nitrogen binary ice system, implications for Pluto; section 3.1 takes the real index of methane ice n0 = 1.32 at 15800 cm-1 from Trotta 1996",
+     "status": "unverified",
+     "url": "https://arxiv.org/abs/1503.00703"
+    },
+    {
+     "id": "quirico-sshade-n2",
+     "text": "Quirico, E., Schmitt, B. and Grundy, W. 1992, near-IR optical constants spectra of alpha and beta N2 ices at different temperatures, SSHADE/GhoSST dataset (linked to Grundy et al. 1993, Icarus 105, 254); its analysis note holds the real index constant at the visible value n = 1.23",
+     "status": "unverified",
+     "doi": "10.26302/SSHADE/EXPERIMENT_BS_20120925_001",
+     "url": "https://sshade.eu/data/SPECTRUM_BS_20120925_005/details"
     },
     {
      "id": "randall2008",

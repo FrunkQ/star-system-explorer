@@ -28,6 +28,16 @@ SOURCES = {
 SOURCES["martikainen2023"] = ("Martikainen, J., Munoz, O., Jardiel, T., Gomez Martin, J. C., Peiteado, M., Willame, Y., Penttila, A., Muinonen, K., Wurm, G. and Becker, T. 2023, ApJS 268, 47: optical constants of Martian dust analogs at UV-visible-near-infrared wavelengths; Table 3, k for shape GRS1 with n = 1.5 (k is insensitive to n between 1.4 and 1.6, Table 4)", "10.3847/1538-4365/acf0be", "https://scattering.iaa.es/sites/default/files/media/downloads/2023_Martikainen.pdf", "unverified")
 SOURCES["dabrowska2015"] = ("Dabrowska, D. D., Munoz, O., Moreno, F., Ramos, J. L., Martinez-Frias, J. and Wurm, G. 2015, Icarus 250, 83: scattering matrices of martian dust analogs at 488 nm and 647 nm; Table 1 lists the Martian dust index of Wolff et al. 2009 (1.495 + 0.012 to 0.008i at 488 nm, 1.5 + 0.002 to 0.001i at 647 nm)", "10.1016/j.icarus.2014.11.024", "https://old-scattering.iaa.csic.es/site_media/download/DabrowskaetalIcarus2015.pdf", "unverified")
 
+SOURCES["kranhold2026"] = ("Kranhold et al. 2026, Astronomy and Astrophysics: optical constants of pyrrhotites and troilite, UV to far infrared (title not printed where read); troilite FeS at 300 K, E parallel to x and to z, from the Jena Database of Optical Constants for Cosmic Dust files troilite_FeS_300K_ex.txt and _ez.txt (wl_um, n, k)", "10.1051/0004-6361/202659441", "https://www2.astro.uni-jena.de/Laboratory/OCDB/sulfides_2026.html", "unverified")
+
+# Troilite FeS at 300 K (Kranhold et al. 2026, Jena OCDB files): micron, n_ex, k_ex, n_ez, k_ez, as printed.
+TROILITE = [
+    (0.25, 1.92, 1.41, 1.87, 1.50), (0.30, 2.04, 1.36, 1.98, 1.45), (0.35, 2.08, 1.37, 2.00, 1.49),
+    (0.40, 2.09, 1.45, 2.02, 1.62), (0.45, 2.10, 1.56, 2.07, 1.79), (0.50, 2.13, 1.70, 2.17, 1.97),
+    (0.55, 2.19, 1.85, 2.31, 2.13), (0.60, 2.27, 2.00, 2.47, 2.28), (0.65, 2.37, 2.13, 2.64, 2.39),
+    (0.70, 2.47, 2.26, 2.82, 2.47), (0.774, 2.64, 2.43, 3.08, 2.54),
+]
+
 # Martikainen et al. 2023 Table 3 (GRS1, n = 1.5): nm, k for JSC Mars-1, MMS-2, MGS-1, as printed.
 MARTIKAINEN = [
     (250, 0.001308, 0.000704, 0.000493), (300, 0.001296, 0.000751, 0.000431), (350, 0.001170, 0.000773, 0.000357),
@@ -51,6 +61,17 @@ KHARE = [
     (1.813, 4.2, 4, 1.64), (1.823, 4.4, 4, 1.64), (1.873, 5.2, 4, 1.63), (2.019, 7.2, 4, 1.63),
     (2.214, 8.9, 4, 1.63), (2.393, 8.0, 4, 1.62), (2.403, 8.5, 4, 1.62), (2.422, 1.2, 3, 1.62),
 ]
+
+
+SOURCES["protopapa2015"] = ("Protopapa, S., Grundy, W. M., Tegler, S. C. and Bergonio, J. M. 2015, Icarus (arXiv:1503.00703): absorption coefficients of the methane-nitrogen binary ice system, implications for Pluto; section 3.1 takes the real index of methane ice n0 = 1.32 at 15800 cm-1 from Trotta 1996", None, "https://arxiv.org/abs/1503.00703", "unverified")
+SOURCES["quirico-sshade-n2"] = ("Quirico, E., Schmitt, B. and Grundy, W. 1992, near-IR optical constants spectra of alpha and beta N2 ices at different temperatures, SSHADE/GhoSST dataset (linked to Grundy et al. 1993, Icarus 105, 254); its analysis note holds the real index constant at the visible value n = 1.23", "10.26302/SSHADE/EXPERIMENT_BS_20120925_001", "https://sshade.eu/data/SPECTRUM_BS_20120925_005/details", "unverified")
+
+
+def apply_ices(substances, val):
+    """Visible real index of the Pluto and Triton ices, on the substance rows."""
+    by_id = {s["id"]: s for s in substances}
+    by_id["ch4"]["optical"]["n_solid"] = val(1.32, "1", "protopapa2015", "unverified", at_place="methane ice, 15800 cm-1 (633 nm)", note="real index of methane ice in the visible; its visible k is not on the sheet yet")
+    by_id["n2"]["optical"]["n_solid"] = val(1.23, "1", "quirico-sshade-n2", "unverified", at_place="nitrogen ice, visible", note="real index of nitrogen ice in the visible, held constant through the near infrared in the SSHADE optical constants")
 
 
 def apply(mixtures):
@@ -88,4 +109,24 @@ def apply(mixtures):
                 "note": "k retrieved from the powder's reflectance with irregular grains (GRS1) and n fixed at 1.5; n is assumed, not measured; alpha = 4 pi k / lambda",
             }},
         })
+    lam_t = [round(r[0] * 1000.0, 1) for r in TROILITE]
+    troilite = {
+        "id": "troilite", "names": {"physics": "troilite (FeS)", "plain": "iron sulphide", "story": "iron sulphide"},
+        "recipe": {}, "by": "mass",
+        "note": "the iron sulphide of meteorites and of the sulphide clouds of hot giants; dark and metallic in the visible",
+        "optical": {
+            "refractive_index": {
+                "kind": "table", "lambda_nm": lam_t, "n": [r[1] for r in TROILITE], "k": [r[2] for r in TROILITE],
+                "src": "kranhold2026", "check": U, "at_k": 300.0,
+                "note": "light polarised along the crystal's x axis; the z axis is in refractive_index_ez; the files read stop at 774 nm",
+            },
+            "refractive_index_ez": {
+                "kind": "table", "lambda_nm": lam_t, "n": [r[3] for r in TROILITE], "k": [r[4] for r in TROILITE],
+                "src": "kranhold2026", "check": U, "at_k": 300.0,
+                "note": "light polarised along the crystal's z axis",
+            },
+        },
+    }
+    assert all(m["id"] != "troilite" for m in mixtures)
+    out.append(troilite)
     return out

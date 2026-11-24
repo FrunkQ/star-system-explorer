@@ -937,3 +937,27 @@ fn mars_dust_simulants_are_on_the_sheet() {
         assert!(n("lambda_nm") == 15 && n("n") == 15 && n("k") == 15, "{id}");
     }
 }
+
+#[test]
+fn troilite_and_the_outer_ices_are_on_the_sheet() {
+    // MP34: troilite FeS n,k on two axes (Kranhold 2026); the visible real
+    // index of methane ice (1.32) and nitrogen ice (1.23).
+    let r = Reference::base();
+    let o = r
+        .row("mixtures", "troilite")
+        .and_then(|x| x.get("optical"))
+        .unwrap();
+    for k in ["refractive_index", "refractive_index_ez"] {
+        let t = o.get(k).unwrap();
+        let k_col = t.get("k").unwrap().as_array().unwrap();
+        assert!(k_col.iter().all(|x| x.as_f64().unwrap() > 1.0), "{k}");
+    }
+    let n = |id: &str| {
+        num(r
+            .row("substances", id)
+            .and_then(|x| x.get("optical"))
+            .and_then(|o| o.get("n_solid")))
+        .unwrap()
+    };
+    assert!((n("ch4") - 1.32).abs() < 1e-9 && (n("n2") - 1.23).abs() < 1e-9);
+}
