@@ -86,3 +86,9 @@ Checked by two research passes on 19 Nov (raw results `handover/packages/W-citat
 | sse-climate forcing.rs (W9 part 2) | Huybers 2006, Science 313, 508, doi 10.1126/science.1125249 | summer energy J = Σ over days with insolation ≥ 275 W/m², at 65° N; early Pleistocene cycles at 40 kyr follow obliquity | verified (paper; SOM not read) | DOI from memory, to check |
 | sse-kernel ice_ages.rs (W9 part 2) | Laplace-Lagrange secular theory (Murray and Dermott 1999, sections 7.2 to 7.4), via T1's `sse-time::secular` | e, ϖ, I, Ω through time | as T1 | |
 | fixtures | NASA Planetary Fact Sheets, https://nssdc.gsfc.nasa.gov/planetary/factsheet/ | planet values | unverified (typed, not fetched) | |
+
+## Ship manifest and crew (track MC)
+
+| Where | Reference | What is relied on | Status | Checked |
+|---|---|---|---|---|
+| `packs/base-manifest` `life_support.rates.human` (MC1) | Anderson, M. S., Ewert, M. K. and Keener, J. F. 2018, Life Support Baseline Values and Assumptions Document, NASA/TP-2015-218570/REV1, https://ntrs.nasa.gov/citations/20180001338 | a nominal crew member uses 0.82 kg oxygen, about 2.5 kg drinking and food-preparation water and about 1.8 kg packaged food a day | unverified | figures from memory of the document's tables; the document was found but its tables were not read here |
