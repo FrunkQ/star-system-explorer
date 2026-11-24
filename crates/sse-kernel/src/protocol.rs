@@ -1216,6 +1216,64 @@ pub enum Request {
         #[ts(optional)]
         history: Option<bool>,
     },
+    /// Space highways: a link between two places in the universe, one dated
+    /// record event. `nav` is the travel part in sse-nav's `Link` shape
+    /// (each end's `place` conditions as `{a: {place}, b: {place}}`, an
+    /// optional `rule` of its own, `counted` measures); without a rule the
+    /// link is a charted lane. `withdraw` ends it.
+    SetLink {
+        id: String,
+        a: String,
+        b: String,
+        #[serde(default)]
+        #[ts(optional)]
+        name: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        kind: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        one_way: Option<bool>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        tier: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        audience: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        source: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        withdraw: Option<bool>,
+        at_s: i64,
+    },
+    /// Space highways: the links in force at `at_s` (absent: latest) that
+    /// `audience` knows (absent: the GM), with an end inside `bounds`
+    /// (absent: the whole universe); with `history`, every one by date.
+    LinksIn {
+        #[serde(default)]
+        #[ts(optional)]
+        bounds: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        history: Option<bool>,
+    },
     /// FT2: a civilisation's technology, one dated record event on an actor
     /// (or on the universe root, for the whole setting): a `level` on the
     /// setting's ladder, advances gained early (`gain`, "Develop it") or
@@ -1639,6 +1697,18 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         depart_s: Option<f64>,
+        /// Links the crew may use beyond the record's (sse-nav `Link`s), and
+        /// whether every leg must run along one. The record's links come in
+        /// as `audience` knows them (absent: the GM).
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        links: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        only_links: Option<bool>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
     },
     /// Make a fill star permanent: its whole drawn description (address,
     /// cell, frame and slot, birth, mass, companions, abundances, orbit) is
@@ -1934,6 +2004,8 @@ impl Request {
             Request::Hold { .. } => "hold",
             Request::WhoHolds { .. } => "who_holds",
             Request::HoldingsIn { .. } => "holdings_in",
+            Request::SetLink { .. } => "set_link",
+            Request::LinksIn { .. } => "links_in",
             Request::SetTech { .. } => "set_tech",
             Request::TechOf { .. } => "tech_of",
             Request::TechReading { .. } => "tech_reading",
@@ -2891,6 +2963,19 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         #[ts(optional, type = "unknown[]")]
         changes: Vec<serde_json::Value>,
+    },
+    /// `set_link`: the link as stored.
+    LinkSet {
+        link: String,
+        event_id: String,
+        #[ts(type = "unknown")]
+        record: serde_json::Value,
+        record_hash: String,
+    },
+    /// `links_in`: each link with its travel part (`nav`) as an object.
+    LinksListed {
+        #[ts(type = "unknown[]")]
+        links: Vec<serde_json::Value>,
     },
     /// `set_tech`: the event's id.
     TechSet {

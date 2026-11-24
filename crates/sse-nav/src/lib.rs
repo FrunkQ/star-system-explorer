@@ -17,6 +17,7 @@ pub mod courses;
 pub mod descent;
 pub mod drift;
 pub mod entry;
+pub mod flightlog;
 pub mod ftl;
 pub mod hazards;
 pub mod insystem;
@@ -728,6 +729,8 @@ fn order(mut c: Vec<Course>, p: Prefer) -> Vec<Course> {
 mod descent_tests;
 #[cfg(test)]
 mod entry_tests;
+#[cfg(test)]
+mod flightlog_tests;
 #[cfg(test)]
 mod ftl_tests;
 #[cfg(test)]
