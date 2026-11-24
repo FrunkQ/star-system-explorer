@@ -53,7 +53,7 @@ pub(crate) fn plan_descent(a: Ask, cache: &mut Cache) -> Result<serde_json::Valu
     if !(-90.0..=90.0).contains(&a.lat_deg) || !a.lon_deg.is_finite() {
         return Err(bad("site: lat_deg in -90..90 and a finite lon_deg"));
     }
-    let (source, body, at_s, sv) = surveyed(a.from, a.options, a.quick, cache)?;
+    let (source, body, at_s, sv, _) = surveyed(a.from, a.options, a.quick, cache)?;
     let layers = sv.atlas.layers().ok_or_else(|| {
         err(
             "no_ground",

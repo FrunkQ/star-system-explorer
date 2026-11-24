@@ -48,12 +48,22 @@ pub(crate) struct Request<'a> {
 
 /// A world surveyed (or found in the cache): where it came from, the body,
 /// the time read, and the survey.
+/// A survey with what it was read from: the source, the body, the time, the
+/// survey, and the moons raising tides and steering the spin axis.
+pub(crate) type Surveyed<'c> = (
+    String,
+    Body,
+    Option<i64>,
+    &'c Survey,
+    Vec<sse_climate::forcing::MoonPull>,
+);
+
 pub(crate) fn surveyed<'c>(
     from: From,
     options: Option<&serde_json::Value>,
     quick: bool,
     cache: &'c mut Cache,
-) -> Result<(String, Body, Option<i64>, &'c Survey), Response> {
+) -> Result<Surveyed<'c>, Response> {
     let w = resolve(from, options, quick)?;
     let (source, body, seed, epoch_gyr, at_s, opts, s) = (
         w.source,
@@ -65,6 +75,7 @@ pub(crate) fn surveyed<'c>(
         w.settings,
     );
     let key = serde_json::to_string(&(&seed, &body, epoch_gyr, quick, &opts)).expect("plain data");
+    let moons = opts.moons.clone();
     let sv = match cache.iter().position(|(k, _)| *k == key) {
         Some(i) => {
             let hit = cache.remove(i);
@@ -81,7 +92,7 @@ pub(crate) fn surveyed<'c>(
             &cache[cache.len() - 1].1
         }
     };
-    Ok((source, body, at_s, sv))
+    Ok((source, body, at_s, sv, moons))
 }
 
 /// A world to read: where it came from, the body, its seed and epoch, the
@@ -192,7 +203,7 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
             format!("at most {MAX_TILES} tiles per request"),
         ));
     }
-    let (source, body, at_s, sv) = surveyed(r.from, r.options, r.quick, cache)?;
+    let (source, body, at_s, sv, moons) = surveyed(r.from, r.options, r.quick, cache)?;
     let mut tiles = vec![];
     let mut refused = vec![];
     for t in r.tiles {
@@ -302,6 +313,8 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
                         "window_yr": m.spin.last().map(|x| x.t_yr).unwrap_or(0.0),
                     })
                 }),
+                // Tides and wind waves, from the formula blocks.
+                "sea": crate::sea::summary(cs, &body, k, &moons),
                 // W8: the main gas's ice moving between ground and air.
                 "volatile": k.exchange.as_ref().map(|e| {
                     serde_json::json!({
