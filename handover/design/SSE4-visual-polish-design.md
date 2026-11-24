@@ -11,6 +11,8 @@ Asked for by Alex, 24 Nov, in four lines:
 
 **Read with:** `SSE4-surfaces-and-rendering.md` (renderer base, tiers, recipes, governor, licences: this note extends its sections 5 to 7), `SSE4-surface-design.md` (the fact floor, and 4A.3 "flourishes"), `SSE4-weather-design.md`, `SSE4-nebulae-and-light-design.md`, `SSE4-exotic-objects-design.md` (light bending is designed there, not here), and the third audit in `SSE4-v3-gaps.md` (33 SSE3 render features against True, R1 to R33). In the repo: `handover/rendering-rules.md`, `handover/status/renderer.md`, `star-look.md`, and the status files for the two "True" threads (on open PRs 444 and 449, copied in `handover/status-on-open-prs.md`).
 
+**Citation check, 24 Nov 19:27.** Alex brought back a research pass on eighteen of the "from memory" items. Its results are folded in and summarised in section 17; the full check with every DOI is `SSE4-visual-polish-citation-check.md` beside this note.
+
 **How claims are marked.** "Checked" means read on the source's own page or in SSE4's code on 24 Nov. **[from memory]** means not checked for this note: verify the title, the formula and the licence before building on it, and record the check in `docs/citations.md`. **[estimate]** is a cost guess to be replaced by a measurement from the performance readout.
 
 ---
@@ -220,7 +222,7 @@ System True is black. SpaceEngine never shows black: there is always a star fiel
 |---|---|---|---|---|
 | **Differential rotation**: each band slides at its own speed | The jet speed by latitude (to add to the `weather` op if not there: kernel ask K-a) | Longitude offset per latitude in the shader. The equator then laps the temperate bands as Jupiter's does | B | free |
 | **Flow-carried detail**: the band picture is carried along a wind field | Jet profile plus each storm's place, size and spin sense | Flow map with two-phase blending: two extra reads | B | 0.4 ms |
-| **Curls at band edges**: detail octaves added as the giant grows on screen | Shear between neighbouring jets sets strength; the Rhines scale (already computed in `sse-climate`) sets the largest curl; the deformation radius sets storm size; spin direction sets which way storms turn in each hemisphere | Curl noise with rotating gradients, one to four octaves by screen size (the detail ladder) | B 1 octave, H 4 | 0.3 to 1.2 ms |
+| **Curls at band edges**: detail octaves added as the giant grows on screen | Shear between neighbouring jets sets strength; the Rhines scale (already computed in `sse-climate`) sets the largest curl, worked from the local eddy speed and not the jet speed (section 17); the deformation radius sets storm size; spin direction sets which way storms turn in each hemisphere | Curl noise with rotating gradients, one to four octaves by screen size (the detail ladder) | B 1 octave, H 4 | 0.3 to 1.2 ms |
 | **Storms that turn** | Storm list (W3): centre, radii, spin sense, drift | A rotating warp inside each storm's ellipse | B | 0.2 ms |
 | **Advected particles**: the Gaseous Giganticus look, live | Same wind field | Compute shader, 1 to 4 million particles into a cube map, updated a slice per frame | **U** | not on phones |
 | **Edge of the disc**: dimmer and yellower; brighter at the edge in methane's absorption bands | Gas column and haze from the weather op, through `light_through_gas` | A look-up by the cosine of the view angle | B | free |
@@ -240,7 +242,7 @@ The same three layers (drift, flow-carried detail, curls by shear) serve **brown
 | Rim in system True | none | A thin shell drawn from the same look-ups; at a few pixels it collapses to a coloured rim term | B |
 | Terminator | grey fade | Comes free from transmittance: the red band at sunset, twilight reaching past the edge by an amount set by the scale height | B |
 | Hazes | white | Colour from the sheet's absorption rows (TA3); a second thin layer at height for a detached haze when the weather op gives one (Titan, Pluto) | B |
-| Particle phase | one Henyey-Greenstein lobe | Jendersie and d'Eon's fit by droplet or grain diameter from the kernel | B |
+| Particle phase | one Henyey-Greenstein lobe | **A phase table per kind of particle, computed by the kernel from the particle's size and the sheet's refractive index** (Mie theory, once per kind, a small look-up). Jendersie and d'Eon's fit only for water droplets of 5 to 50 µm, which is all it was fitted for. One Henyey-Greenstein lobe is not good enough for dust (section 17) | B |
 | Light shafts | none | Shadowed march at half size | U |
 
 ### 5.6 Clouds
@@ -297,7 +299,7 @@ All facts.
 
 - **Shape from the body's own numbers:** small ones lumpy (a ray-marched or displaced shape seeded per body), larger ones rounded by their gravity at the size the kernel's strength figures give; **fast spinners take a top shape with a ridge at the equator**; some are two lobes in contact. Tier B (displaced sphere), H (true shape with self-shadow).
 - **Boulders and dust ponds** up close from the detail ladder, by gravity and age. Tier H.
-- **Comets:** a coma that switches on inside the distance where water ice sublimes; a dust tail that curves back along the orbit; a straight, bluer gas tail pointing exactly away from the star; **green in the coma only**. Soft particles at half size. Tier B (billboards), H (soft particles).
+- **Comets:** a coma that switches on inside the distance where its ice sublimes, which depends on the ice (about 3 au for water, 12 for carbon dioxide, 50 for carbon monoxide, checked), so a comet rich in the colder ices is active far out; a dust tail that curves back along the orbit; a straight, bluer gas tail pointing exactly away from the star; **green in the coma only**. Soft particles at half size. Tier B (billboards), H (soft particles).
 - **Plumes** (TRUE2): brighten strongly when backlit, by particle size. Tall umbrella shape on airless worlds from the kernel's ballistic height. Tier B.
 
 ### 5.11 The night side
@@ -504,24 +506,24 @@ Each is a few lines of shader or one small formula block, driven by numbers the 
 | # | What the expert sees | The number behind it | Where |
 |---|---|---|---|
 | 1 | The full Moon is flat-bright to its edge, not shaded like a ball | Dusty ground reflects by Lommel-Seeliger: at full phase every point returns the same | 5.3 |
-| 2 | A sharp brightening of airless worlds and rings when the sun is exactly behind you | Opposition surge | 5.3, 5.9 |
-| 3 | The glint on a sea widens with the wind; Titan's is a pinpoint | Cox and Munk: slope variance = 0.003 + 0.00512 x wind speed | 5.7 |
-| 4 | An eclipsed moon is copper round a world with air, black round one without | Light bent and reddened through the limb of that air | 5.8 |
+| 2 | A sharp brightening of airless worlds and rings when the sun is exactly behind you | Opposition surge: the Moon brightens by more than 40% between 4 degrees and 0; Saturn's rings by about a third inside half a degree (checked, section 17) | 5.3, 5.9 |
+| 3 | The glint on a sea widens with the wind; Titan's is a pinpoint | Cox and Munk: slope variance = 0.003 + 0.00512 x wind speed in m/s, measured 12.5 m above the sea, good for 1 to 14 m/s (checked, section 17) | 5.7 |
+| 4 | An eclipsed moon is copper round a world with air, black round one without | Light bent and reddened through the limb of that air, 10,000 to a few 100,000 times fainter than full; an ozone layer adds a blue-turquoise rim to the shadow (checked, section 17) | 5.8 |
 | 5 | The dark limb of a crescent moon faintly lit by its planet | Planet-shine from the planet's phase and apparent size | 5.8 |
-| 6 | Seen from their dark side, dense rings go dark and thin gaps glow | Transmitted single scattering through a layer of that opacity | 5.9 |
-| 7 | A ring's big gap sits where a moon's 2:1 resonance says | radius = moon's orbit x (1/2)^(2/3). Mimas gives 116,900 km against the real B-ring edge at 117,600 km | 5.9 |
+| 6 | Seen from their dark side, the densest rings go dark and rings of middling thickness glow. Which ring is brightest shifts with the sun's and the viewer's height above the ring plane | Transmitted single scattering through a layer of that opacity: it peaks at an optical depth set by the two angles (0.41 for sun at 20 degrees and viewer at 30) (checked, section 17) | 5.9 |
+| 7 | A ring's big gap sits where a moon's 2:1 resonance says | radius = moon's orbit x (1/2)^(2/3). Mimas gives 116,900 km against the real B-ring edge at a mean 117,570 km. The real edge also breathes in and out by 4 to 71 km over about 5.4 years, which a later package could draw (checked, section 17) | 5.9 |
 | 8 | Faint dusty rings and plumes flare when backlit and nearly vanish front-lit | Forward scattering by grains near the light's wavelength | 5.9, 5.10 |
 | 9 | A giant's equator laps its temperate bands | Jet speed by latitude (Jupiter's two rotation periods differ by about five minutes) | 5.4 |
 | 10 | Storms turn opposite ways in the two hemispheres, and backwards on a world that spins backwards | Sign of the Coriolis term from the spin | 5.4, 5.6 |
-| 11 | Curl size on a giant changes with its spin and wind | Rhines scale | 5.4 |
+| 11 | Curl size on a giant changes with its spin and wind | Rhines scale from the local eddy speed (10 to 40 m/s on Jupiter), which matches the real band widths within a factor of two (checked, section 17) | 5.4 |
 | 12 | Cloud shadows sit off to one side of their clouds by the right amount | Cloud-top height and the sun's angle | 5.6 |
 | 13 | Sunset on a dusty thin-air world is blue round the sun in a butterscotch sky | Forward scattering by dust of the kernel's grain size | 5.5 |
-| 14 | A fast-spinning star is flattened with bright poles and a dim equator | Gravity darkening: temperature follows local gravity to the 1/4 power | 5.12 |
-| 15 | A comet is green in its head and not in its tail | The green molecule is broken by sunlight before it gets far | 5.10 |
+| 14 | A fast-spinning star is flattened with bright poles and a dim equator | Gravity darkening: temperature follows local gravity to a power that is an input of the block, 0.25 only for slow spinners with radiative envelopes, about 0.19 measured on fast ones, 0.08 for convective envelopes. Test: Altair, 8,450 K at the poles and 6,860 K at the equator (checked, section 17) | 5.12 |
+| 15 | A comet is green in its head and not in its tail | The green molecule (C2) is broken by sunlight in about two days at 1 au, before it gets far (checked, section 17) | 5.10 |
 | 16 | A comet's gas tail points straight from the star; its dust tail curves | Radiation pressure against orbital motion | 5.10 |
-| 17 | A small fast-spinning asteroid is a spinning top with a ridge | Spin near the rate where rubble flows to the equator | 5.10 |
+| 17 | A small fast-spinning asteroid is a spinning top with a ridge | Spin near the rate where rubble flows to the equator: a period of about 3.3 hours divided by the square root of its density in g/cm3 (3.5 h for Ryugu's 1.19) (checked, section 17) | 5.10 |
 | 18 | The setting sun is squashed; stars twinkle and planets do not; thin-air worlds show stars by day | Refraction and turbulence from air density; angular size | 5.13 |
-| 19 | A rainbow in methane rain is wider than one in water | Bow angle from the liquid's refractive index (about 49 degrees for methane against 42 for water **[from memory]**) | 5.13 |
+| 19 | A rainbow in methane rain is wider than one in water | Bow angle from the liquid's refractive index (about 49 degrees for methane against 42 for water, moving between 47 and 52 with temperature and colour (checked, section 17)) | 5.13 |
 | 20 | A drive plume is a pencil in thick air and a wide fan in vacuum | Pressure ratio at the nozzle | 5.16 |
 | 21 | Beside a sunlit planet the stars vanish; shade the planet and they return | One honest exposure | 5.1, 5.2 |
 | 22 | Aurora colours change with the air's gases | Emission lines of what is there | 5.11 |
@@ -545,7 +547,7 @@ From the bench in `docs/minimum-spec.md` (test workloads, medians): making and a
 The kernel's founding promise is that every device computes the same bits: no wall clock, no std transcendental maths, no fused multiply-add, golden hashes that change only on purpose. A GPU breaks that promise for floating-point work in three ways:
 
 1. **No 64-bit floats** in WebGPU or WebGL2 shaders. The kernel is f64.
-2. **Float results are not guaranteed identical across graphics cards.** The shading language allows drivers latitude on division, square roots, every transcendental function, and on fusing a multiply and an add **[from memory of the WGSL specification; verify before relying on it]**. Two cards can differ in the last bit, and an erosion run of a million steps turns a last bit into a different river.
+2. **Float results are not guaranteed identical across graphics cards.** Checked against the specifications (section 17): in WebGPU's shading language add, subtract and multiply are correctly rounded but with no stated rounding mode; divide may be off by 2.5 units in the last place and square root by 2; sine and cosine by far more; drivers may reorder and fuse operations with no way to forbid it; very small numbers may be flushed to zero. A 2024 study of 600,000 test programs found NVIDIA and AMD cards disagreeing in 9% of single-precision runs. Two cards can differ in the last bit, and an erosion run of a million steps turns a last bit into a different river.
 3. **Compute shaders exist only on WebGPU.** Every WebGL2 device (Alex's phone today) would need the processor path anyway, and the two paths would have to agree exactly.
 
 One thing does stay exact: **32-bit integer arithmetic on the GPU is bit-identical everywhere.** That is the only honest road to GPU facts.
@@ -603,7 +605,7 @@ Order: VP1, VP2, VP3 first (the three biggest gains), VP4 and VP6 beside them (t
 | **VP-A2** | Flow-carried detail and curls on giants through the ladder; the same on brown dwarfs and Venus-like decks | VP6, VP-A1 | B, H |
 | **VP-A3** | Hillaire look-ups in TSL from `read_air_optics`; the rim and terminator in system True (extends TA5) | | B, H |
 | **VP-A4** | Cloud layer at height with offset shadows and wind flow (5.6 B rows) | VP6 | B |
-| **VP-A5** | Phase by droplet size (Jendersie and d'Eon) for clouds and hazes | kernel ask K-c | B |
+| **VP-A5** | Phase tables per particle kind from the kernel (size and the sheet's refractive index), used by clouds, hazes, dust, plumes and rings alike; the Jendersie and d'Eon fit only for water droplets | kernel ask K-c and K-e | B |
 | **VP-A6** | Short-march cloud shell (R2b part 2, 5.6 H) | VP-A4, VP4 | H |
 | **VP-A7** | Full volumetric clouds and light shafts; advected-particle giants | VP4 (ultra gate) | U |
 
@@ -646,10 +648,11 @@ Order: VP1, VP2, VP3 first (the three biggest gains), VP4 and VP6 beside them (t
 
 ### Asks of other threads
 
-- **K-a (climate):** jet speed by latitude and the Rhines scale in the `weather` op's giant output.
+- **K-a (climate):** jet speed and eddy speed by latitude, and the Rhines scale worked from the eddy speed, in the `weather` op's giant output.
 - **K-b (climate):** wind speed over each sea in the weather field (for the glint).
 - **K-c (climate, plumes, rings):** a typical particle size for each cloud deck, haze, plume and ring region.
-- **K-d (kernel or light):** a star's flattening and pole-to-equator temperature ratio from its spin.
+- **K-d (kernel or light):** a star's flattening and pole-to-equator temperature ratio from its spin, with the gravity darkening exponent as a block input.
+- **K-e (light):** a block that turns a particle's size and refractive index into a phase table (Mie theory), run once per particle kind. The giants thread's TA2 already has a cheaper stand-in for albedo; this replaces the single-lobe phase everywhere.
 - **Kernel thread:** section 11 option B (worker pool, then SIMD) as its own performance package when wanted.
 - **Landing run-through:** owns the Land screen's glue; VP10 and VP11 draw inside it.
 - **Exotic stars:** reads the sky cube of VP2 for bending.
@@ -694,7 +697,7 @@ Checked on 24 Nov 2026 for this note:
 - NAIF's Cosmographia credits and components pages. Gaia Sky manual, "Procedural generation".
 - SSE4 repo at f95a334: `packages/renderer/src` (`gpu.ts`, `true-look.ts`, `gpu-globe.ts`, `gpu-surface.ts`, `recipe.ts`, `passes.ts`, `governor.ts`, `runtime.ts`, `rings.ts`), `docs/minimum-spec.md`, `packages/ui-contract/src/perf-chunks.json`, `crates/sse-weather`, the status files, and screenshots in project files.
 
-From memory, to verify before building (title, formula and licence each): Hillaire 2020 (EGSR); Bruneton and Neyret 2008 (EGSR) and its BSD code; Schneider's Nubis talks (SIGGRAPH Advances in Real-Time Rendering 2015, 2017, 2022); Bridson, Hourihan and Nordenstam 2007; Perlin and Neyret 2001; Vlachos 2010; Gustavson and McEwan's `psrdnoise`; Heitz and Neyret 2018; Mikkelsen 2022 (JCGT); Cox and Munk 1954 (J. Opt. Soc. Am. 44); Hapke's "Theory of reflectance and emittance spectroscopy"; Chandrasekhar 1960 "Radiative transfer"; Tessendorf 2001; AMD FSR 1 (MIT); von Zeipel 1924 and Lucy 1967 for gravity darkening; the WGSL specification's floating-point accuracy section; Celestia and Stellarium licences; OpenSpace's shader set; the methane rainbow angle; Shadertoy's default licence; the simplex noise patent's expiry.
+The items first listed here as "from memory" were mostly checked on 24 Nov by the research pass: see section 17.3 for what is now checked and what is still from memory, and `SSE4-visual-polish-citation-check.md` for the citations.
 
 ---
 
@@ -773,7 +776,7 @@ One mechanism: **a driver puts energetic particles into some air at some place; 
 **The air's answer (the part that makes colour and shape):**
 
 - **Which colours:** every gas in the air above the height where the particles stop, weighted by amount x how readily that line is excited. Rows on the data sheet (emission lines per species with wavelength, upper-state lifetime and yield), read only through "Look up". Oxygen gives green and red; nitrogen blue-violet and a pink lower fringe; hydrogen red and blue Balmer light in Visible and far more in Ultraviolet and Infrared; carbon dioxide mostly Ultraviolet (with oxygen's green from its broken molecules); sodium yellow; and so on for whatever a pack adds. **[line data to check per row]**
-- **How high each colour sits:** computed, not ranked. Two limits set it. The particles stop where they have crossed enough air, so more energetic ones glow lower. And a slow line is put out by collisions before it can shine: oxygen's red line takes about two minutes to emit, so it survives only where the air is very thin, high up; the green line takes under a second and survives much lower; nitrogen's light is immediate and reaches lowest. **So "green below, red above, purple fringe at the bottom" comes out of the air's density profile and each line's lifetime**, for any gas mix, with no typed heights. **[from memory; the light thread checks the lifetimes]**
+- **How high each colour sits:** computed, not ranked. Two limits set it. The particles stop where they have crossed enough air, so more energetic ones glow lower. And a slow line is put out by collisions before it can shine: oxygen's red line takes about two minutes to emit, so it survives only where the air is very thin, high up; the green line takes under a second and survives much lower; nitrogen's light is immediate, so it shines wherever the particles stop and marks the bottom edge. Measured on Earth: green 0.7 s and 100 to 115 km, red about 110 s and 150 to 350 km, nitrogen about a hundred-millionth of a second and 100 to 120 km (checked, section 17). **So "green below, red above, purple fringe at the bottom" comes out of the air's density profile and each line's lifetime**, for any gas mix, with no typed heights.
 - **How tall the curtains are:** the air's scale height. A small cold world with light air has curtains several times taller than Earth's; a heavy world's are squat.
 - **How bright:** power from the driver (MF9 part 2), spread over the oval's area, per line, in the unit observers use. Compared with the exposure, that decides whether it is visible at all.
 - **By band:** the same lines through the Band control. Giants' ovals are brilliant in Ultraviolet and Infrared and modest in Visible; X-ray spots at the strongest. Already the light design's rule.
@@ -793,7 +796,7 @@ One mechanism: **a driver puts energetic particles into some air at some place; 
 
 25. Ovals circle the **magnetic** pole, so on a world with a tilted, offset field they sit far from the spin poles and are different sizes north and south.
 26. Green below red, with a purple lower fringe, from line lifetimes against air density. Change the air's density profile and the layers move.
-27. No oxygen, no green. A hydrogen giant's visible aurora is pink-red; most of its light is outside Visible.
+27. No oxygen, no green. A hydrogen giant's visible aurora is pink low down turning purple higher up, with a strong red hydrogen line (seen at Saturn by Cassini, checked); most of its light is outside Visible. A carbon dioxide world still shows oxygen's green, faintly: measured from the ground on Mars in 2024.
 28. Curtain height follows the scale height.
 29. A rogue planet with a field, spin and a moon has aurorae with no star at all.
 30. A moon's spot leads or trails the moon's position by the right angle, and has a tail.
@@ -869,3 +872,45 @@ How to read that ruling (my reading, chosen to be one mechanism with no special 
 6. Ground view: the same control. Long exposure by day shows a daylight sky; it lifts faint light only where the sky is dark enough for a camera to record it, so it does not paint stars onto a bright blue sky.
 
 Builders: VP1 (finish) carries the Exposure control and the lift ratio; VP2 (sky) and VP-AU5 (aurora shells) draw their layers in real brightness and let the finish apply the lift.
+
+---
+
+## 17. Citation check folded in, 24 Nov 2026 19:27 UTC
+
+Alex ran a research pass through Consensus on the eighteen items I listed. The full report, with every citation, DOI and evidence grade, is **`SSE4-visual-polish-citation-check.md`** (project files and `handover/design/`). It was written without sight of this note, so it tested each claim as worded in my request. This section says what changed here. Builders: take formulas and numbers from the check file, and copy its citations into `docs/citations.md` with the status it gives.
+
+### 17.1 What changed a design choice
+
+1. **How particles scatter light (5.5, VP-A5, new ask K-e).** The cheap fit I proposed (Jendersie and d'Eon) is fitted only for water droplets of 5 to 50 µm in air, and nobody has published a version for methane, sulphuric acid, haze or dust. A separate 2024 paper shows the usual single-lobe formula is not good enough for Mars's dust. So the general system is: **the kernel computes a phase table for each kind of particle from its size and the data sheet's refractive index** (Mie theory, once per kind), and every particle layer reads its table. The fit stays as the shortcut for water clouds only. This suits the "systems, not Solar System fixes" rule better than what I first wrote, and it is what makes a dusty world's blue sunset (win 13) come out right.
+2. **Curl size on giants (5.4, win 11, ask K-a).** The Rhines scale matches Jupiter's and Saturn's real bands only when it is worked from the local eddy speed (10 to 40 m/s), not the 100 m/s jet speed, and then within a factor of two. The form π√(2U/β) is the width of one jet, not the spacing of eastward jets. The climate thread should publish the eddy speed beside the jet speed.
+3. **Gravity darkening on fast stars (5.12, win 14, ask K-d).** The 1/4 power holds only for slow spinners. Measured fast spinners give about 0.19, and stars with convective envelopes about 0.08. The exponent becomes an input of the block, chosen from the star's envelope and spin. Vega's best figures are 10,070 K and 8,910 K (2012), not the older, larger contrast.
+4. **Moving physics to the GPU (11.2).** The specifications confirm the caution, and more strongly than I wrote: avoiding fused operations and built-in functions is necessary but not enough, because divide and square root are not exact either and the rounding mode cannot be pinned in WebGPU. Integer arithmetic is the only route that is exact by specification on every device. No peer-reviewed study was found showing bit-identical floating-point compute results across GPU makers. The recommendation in 11.4 stands unchanged.
+
+### 17.2 Numbers corrected or tightened
+
+| Where | Was | Now |
+|---|---|---|
+| Win 3, sea glint | formula only | The same formula, confirmed, with its conditions: wind measured 12.5 m up, good for 1 to 14 m/s. An oil-like slick halves or thirds the roughness |
+| Win 2, opposition surge | no figure | Moon: more than 40% brighter between 4 degrees and 0. Saturn's rings: about a third, inside half a degree |
+| Win 4, eclipsed moon | "copper" | 10,000 to a few 100,000 times fainter than full. New touch: an ozone layer gives the shadow's edge a blue-turquoise rim. On a thin dusty world, bending is negligible and dust scattering sets the light. A 2025 paper on drawing eclipses in real time is the reference for 5.8 |
+| Win 6, rings' dark side | "dense dark, thin gaps glow" | True for the densest ring. Which ring is brightest depends on the sun's and viewer's angles; the formula's peak is in the check file |
+| Win 7, ring edge at a resonance | 117,600 km | Mean 117,570 km, and the real edge moves by 4 to 71 km over about 5.4 years |
+| Win 23, wavy gap edges | 3π x half-width | Confirmed: 3π x the distance from the moon's orbit to the edge (about 198 km for the small moon in Saturn's 42 km gap) |
+| Win 15, comet green | "broken by sunlight" | C2 lasts about two days at 1 au. Switch-on distances by ice: water 3 au, carbon dioxide 12, carbon monoxide 50 |
+| Win 17, top-shaped asteroids | "near the rate" | Critical period about 3.3 h divided by the square root of density in g/cm3; Ryugu's shape formed at 3.5 h, Bennu's surface fails at 3.6 h |
+| Win 19, methane rainbow | 49 degrees, from memory | 49 degrees confirmed for a refractive index of 1.29, ranging 47 to 52 with temperature and colour |
+| Aurora heights (16.3) | from memory | Green 0.7 s, 100 to 115 km; red about 110 s, 150 to 350 km; nitrogen prompt, 100 to 120 km |
+| Win 27, hydrogen aurora | "pink-red" | Pink low, purple at 1,000 to 1,500 km, strong red hydrogen line: that is Saturn (Cassini). No colour has been reported for Jupiter's visible aurora |
+| Aurora under carbon dioxide | ultraviolet, plus green | Visible green confirmed on Mars from the ground, 18 March 2024, about 100 rayleighs: faint, so a "Long exposure" subject. Venus's green line was reported as night glow; calling it aurora is a later reading |
+| Lightning on giants (5.4) | no figure | A test value for the kernel's rate: Jupiter about 0.06 flashes per km2 per year, some 47 times fewer per area than Earth's 2.8, though storms peak at up to four a second |
+| Plumes and faint rings (wins 8) | no figure | Grain sizes confirmed (plume about 3 µm, faint ring about 1 µm). No measured brightness-against-angle factor was found, so none is quoted; the phase table computes it |
+| Atmosphere look-ups (5.5) | "small" | Hillaire's own sizes: 256 x 64, 32 x 32, 200 x 100, and a 32-cubed volume. His method drifts in hue at very high scattering and loses accuracy for strongly forward-scattering particles; say so in the fudge register |
+| Dust on a Mars-like world | not given | Grains 1 to 2 µm across the seasons |
+
+### 17.3 Now checked, and still open
+
+**Checked** (move to "checked" in `docs/citations.md` when used): Cox and Munk 1954; Hillaire 2020; Jendersie and d'Eon 2023; Hapke's papers and the opposition surge figures; von Zeipel 1924, Lucy 1967 and the measured stars; Rhines 1975; ring resonances and edge waves; transmitted light through rings; the eclipsed Moon; Mars's blue sunset mechanism; the methane rainbow; comet colour and switch-on; top-shaped asteroids; aurora lines and heights; lightning rates; Bridson, Hourihan and Nordenstam 2007; Schneider's Nubis talks (2015, 2017, 2022, 2023: course talks, not peer-reviewed); the shader specifications' floating-point rules.
+
+**Still from memory** (not in the research pass, or not settled by it): the licences of Celestia, Stellarium, OpenSpace's shaders, AMD's FSR 1, Bruneton's code, `psrdnoise`, the hex-tiling sample, NVIDIA's blue noise and Sebastian Lague's repositories; Shadertoy's default licence; the simplex patent's expiry; Perlin and Neyret 2001; Vlachos 2010; Heitz and Neyret 2018; Tessendorf 2001; and the sub-claims the check file lists under "Still unverified" (Hapke's formula in a primary text, the original wind-profile papers, any brightness factor for plumes, and others).
+
+The check file also names supporting notes under a `sse4-citation-check` folder in the session that made it. Those were not passed on; the check file itself is complete enough to build from.
