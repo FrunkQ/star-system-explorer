@@ -68,8 +68,10 @@ pub fn circulation(cs: &ClimateSettings, c: &Conditions) -> Circulation {
     let h = cc.tropopause_scale_heights * c.scale_height_m();
     let phi_h = m::sqrt(5.0 / 3.0 * c.gravity_m_s2 * h * cc.delta_h / (omega * omega * a * a));
     let hadley_raw = deg(phi_h).min(90.0);
-    // Rhines: k_β = (β / 2U)^½ with β = 2Ω/a; jets sit π / k_β apart, so a
-    // quarter circumference (π a / 2) holds ½ sqrt(a Ω / U) of them.
+    // Rhines: k_β = (β / 2U)^½ with β = 2Ω/a; one jet, or one cell, is
+    // π / k_β wide (eastward jets sit 2π / k_β apart), so a quarter
+    // circumference (π a / 2) holds ½ sqrt(a Ω / U) cells. U is the eddy
+    // speed, not the jet's.
     let st = strengths(cs, c);
     let wind = st.eddy_wind_m_s.max(1e-6);
     let n_raw = 0.5 * m::sqrt(a * omega / wind);
@@ -210,11 +212,21 @@ impl Circulation {
     }
 }
 
-/// A giant's prograde jets pole to pole from the Rhines scale,
-/// round(sqrt(a |Ω| / U)), 1 to 60 (the S6 cloud deck and the giant weather
-/// read this one count).
-pub fn giant_jets(radius_m: f64, spin_rate: f64, wind_m_s: f64) -> u32 {
-    m::round(m::sqrt(radius_m * spin_rate / wind_m_s)).clamp(1.0, 60.0) as u32
+/// A giant's prograde jets pole to pole from the Rhines scale, 1 to 60 (the
+/// S6 cloud deck and the giant weather read this one count). One jet is
+/// π sqrt(2U/β) wide and eastward jets sit twice that apart, so with
+/// β = 2Ω/a the half circumference π a holds round(½ sqrt(a |Ω| / U)) of
+/// them. `eddy_m_s` is the local eddy speed (10 to 40 m/s on Jupiter), not
+/// the jet speed (Rhines 1975; Gastine et al. 2014).
+pub fn giant_jets(radius_m: f64, spin_rate: f64, eddy_m_s: f64) -> u32 {
+    m::round(0.5 * m::sqrt(radius_m * spin_rate / eddy_m_s)).clamp(1.0, 60.0) as u32
+}
+
+/// The Rhines width of one jet at a latitude, m: π sqrt(2U/β) with
+/// β = 2Ω cos φ / a.
+pub fn rhines_width_m(radius_m: f64, spin_rate: f64, eddy_m_s: f64, lat_deg: f64) -> f64 {
+    let beta = 2.0 * spin_rate.abs() * m::cos(lat_deg * m::PI / 180.0).max(1e-6) / radius_m;
+    m::PI * m::sqrt(2.0 * eddy_m_s / beta)
 }
 
 /// A giant's band edges pole to pole, degrees: 2 × jets bands evenly spaced

@@ -9,42 +9,42 @@
     {
       "climate": "9bd78b6415d1a2aa6fad1346410f60a8f0ce82923e946e8047a3b07f52cbc075",
       "condensate": "water",
-      "field": "65684bb649275b4c931c62069680d188772b04dc53e14e6d0853a34b839087a3",
+      "field": "daef18b94255c434b5fe023efc9619681680361779b0cbe2341c8490ba114655",
       "regime": "earth-like",
       "world": "Earth"
     },
     {
       "climate": "0adeefe2c16d18baee6a6a6c74d0a2d9c74c21b437ed8683b25e0f29d62513a8",
       "condensate": "water",
-      "field": "b5ee8794c4d84517731896d217c180183a012800ed10805b38f0fe3a15c9c00f",
+      "field": "949ef215bdcad102a568a4dced10d658d72b9ff4e7cb6d5aca1556bab33af567",
       "regime": "thin-air",
       "world": "Mars"
     },
     {
       "climate": "e3f6a0772cd63cb905d9e6327bc92409ee5c00cef1edd16eca938f0b47a9686f",
       "condensate": "sulphuric acid",
-      "field": "5e3b4270efe44c0dc222699ead8820ad491c0ac1fabb78a49f22c0b16c8451a4",
+      "field": "484c7a9bd27cc3950d5465279deac84355926843ce2ad56032e4524821fbc8bb",
       "regime": "slow-rotator",
       "world": "Venus"
     },
     {
       "climate": "8fb41fff63bc41b19cab75a3549086a2f1fb02af46a080448dc0e75454900073",
       "condensate": "methane",
-      "field": "bae055a9b12527f4d4e25403b35e79d6c7e7ebefc2dd32895100750004c85827",
+      "field": "a4f08d125a5f1a516bca5ad5e11b08baef9a9052f02c7325350bd340ad67b05c",
       "regime": "slow-rotator",
       "world": "Titan"
     },
     {
       "climate": "24a1f7797a2e726b926b89439e8ea7fe3f5641d720eaef15df02f6a4cb9540da",
       "condensate": "water",
-      "field": "0b03fa02d47fc991035c240dc6e6f2a46126cf28d3e0fa9b07bc31f5d7d051c7",
+      "field": "4e1c6cadec7f84984486c64ea695de9ead1e3d733d7cdb868e3bab474ffdc25c",
       "regime": "tidally-locked",
       "world": "Locked temperate world"
     },
     {
       "climate": "d969211882224049ba6ec3aad54d5a06a319313b84e080d1961731c83aa28fac",
       "condensate": "water",
-      "field": "228f5323e65aa9c5e2ba1997375ee146e1de16370082a21f45a73242e8d004e5",
+      "field": "8268f67729322dd2d8454b1c5b06d54c750ad97040894f6ab650deeb13258123",
       "regime": "fast-rotator",
       "world": "Fast-spinning Earth"
     },
@@ -58,7 +58,7 @@
     {
       "climate": "89e8e7b96eedf4f1ffdb0208d11c8646cc75de346e985469a48b8bc41ef03d50",
       "condensate": "ammonia",
-      "field": "eba2188d6346ac197cd8cd6b79e66d5a1674d803e2f11b9b01ad8b5c10b42391",
+      "field": "4a7ed57dfa33d707ab6d074c053740167babd54f378dd9a96aaae9a114f3a80f",
       "regime": "banded-giant",
       "world": "Jupiter"
     }

@@ -514,8 +514,8 @@ NOT_MATTER = [
     ("packs/base-climate/", r"/(delta_h|latent_scale_w_m2|frost_emissivity|lowest_frost_k|t_ice_k|"
      r"super_rotation_critical|latent_share|ddf_ice_mm)$", "a climate model setting"),
     ("packs/base-surface/", r"/(ice_dry_k|land_ice_k|shadow_ice_max_bar|ice_min_km2|impactor_density|"
-     r"ice_giant_mass_earth|wind_ice_m_s|cover/ice_albedo|cover/sea_ice_k)$", "a surface model setting"),
-    ("packs/base-weather/", r"/(equator_ice|equatorial_bands_ice|ice_giant_mass_earth|wind_ice_m_s|"
+     r"ice_giant_mass_earth|wind_ice_m_s|eddy_ice_m_s|cover/ice_albedo|cover/sea_ice_k)$", "a surface model setting"),
+    ("packs/base-weather/", r"/(equator_ice|equatorial_bands_ice|ice_giant_mass_earth|wind_ice_m_s|eddy_ice_m_s|"
      r"strength_u|strength_m_s)$", "a weather model setting"),
     ("packs/base-weather/", r"/impact/density_kg_m3$", "an assumed impactor, a model setting"),
     ("packs/base-ships/", r"/scoop/skim_density_kg_m3$", "the air a scoop skims, a designer setting"),

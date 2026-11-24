@@ -371,6 +371,7 @@ impl ZonalBlock {
             temp_offset_k: zs.t_k[j] - za.t_k[j],
             lightning_km2_yr: 0.0,
             aerosols: haze(&self.shared, c),
+            wind10_m_s: 0.0,
         }
     }
 }

@@ -89,7 +89,9 @@ fn fixtures_land_in_their_polar_regimes() {
 fn jupiter_ring_saturn_vortex_with_hexagon_ice_giants_no_polygon() {
     let gs = base_settings();
     let j = layout(&gs, &fixture("Jupiter"));
-    assert_eq!(j.jets, 9);
+    // 6 to 7 eastward jets a hemisphere observed (visual polish citation
+    // check, section 6): the Rhines width with the eddy speed gives 13.
+    assert_eq!(j.jets, 13);
     assert!(j.a_over_ld >= 40.0, "{}", j.a_over_ld);
     for p in &j.poles {
         assert_eq!(p.regime, "cyclone-ring");
@@ -126,6 +128,42 @@ fn jupiter_ring_saturn_vortex_with_hexagon_ice_giants_no_polygon() {
 }
 
 #[test]
+fn jet_profile_reads_the_eddy_speed_and_matches_the_bands() {
+    let gs = base_settings();
+    for f in fixtures() {
+        let c = &f.conditions;
+        let l = layout(&gs, c);
+        let p = jet_profile(&gs, c, &l);
+        let n = 2 * l.jets as usize;
+        for v in [
+            &p.lat_deg,
+            &p.jet_speed_m_s,
+            &p.jet_shear_m_s,
+            &p.eddy_speed_m_s,
+            &p.rhines_scale_m,
+            &p.deformation_radius_m,
+        ] {
+            assert_eq!(v.len(), n, "{}", c.label);
+        }
+        // One jet's Rhines width, a few bands' worth of latitude near 30°:
+        // the bands are as wide as the Rhines width says (within 2, the
+        // factor the literature leaves open).
+        let k = p.lat_deg.iter().position(|x| *x > 25.0).unwrap_or(n - 1);
+        let band_m = (l.band_edges_deg[k + 1] - l.band_edges_deg[k]).to_radians() * c.radius_m;
+        let r = p.rhines_scale_m[k] / band_m;
+        assert!((0.5..2.0).contains(&r), "{}: Rhines over band {r}", c.label);
+        assert!(p.eddy_speed_m_s.iter().all(|u| *u == l.eddy_m_s));
+    }
+    // Jupiter's Rhines width near 30° with U 17 m/s: about 9,000 km
+    // (check file: 9,520 km at U 40 m/s for pi sqrt(U/beta), the same
+    // number as pi sqrt(2U/beta) at 20 m/s).
+    let jc = fixture("Jupiter");
+    let j = layout(&gs, &jc);
+    let w = sse_climate::circulation::rhines_width_m(jc.radius_m, jc.spin_rate(), j.eddy_m_s, 30.0);
+    assert!((7.0e6..1.0e7).contains(&w), "{w}");
+}
+
+#[test]
 fn band_edges_match_the_s6_cloud_deck() {
     // sse-surface regimes::cloud_deck, same inputs (its formula, restated).
     let gs = base_settings();
@@ -133,8 +171,8 @@ fn band_edges_match_the_s6_cloud_deck() {
         let c = &f.conditions;
         let l = layout(&gs, c);
         let omega = std::f64::consts::TAU / (c.rotation_hours * 3600.0);
-        let u = if l.ice { 400.0 } else { 150.0 };
-        let jets = m::round(m::sqrt(c.radius_m * omega / u)).clamp(1.0, 60.0) as u32;
+        let u = if l.ice { 100.0 } else { 17.0 };
+        let jets = m::round(0.5 * m::sqrt(c.radius_m * omega / u)).clamp(1.0, 60.0) as u32;
         let nb = 2 * jets;
         let edges: Vec<f64> = (0..=nb)
             .map(|i| m::asin(-1.0 + 2.0 * i as f64 / nb as f64).to_degrees())
@@ -150,6 +188,8 @@ fn band_edges_match_the_s6_cloud_deck() {
     let cl = &surf.regime_features.clouds;
     assert_eq!(cl.wind_gas_m_s, gs.bands.wind_gas_m_s);
     assert_eq!(cl.wind_ice_m_s, gs.bands.wind_ice_m_s);
+    assert_eq!(cl.eddy_gas_m_s, gs.bands.eddy_gas_m_s);
+    assert_eq!(cl.eddy_ice_m_s, gs.bands.eddy_ice_m_s);
     assert_eq!(cl.ice_giant_mass_earth, gs.bands.ice_giant_mass_earth);
 }
 

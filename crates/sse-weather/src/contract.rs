@@ -83,6 +83,15 @@ pub struct Cell {
     /// Lightning flashes per km² per year.
     pub lightning_km2_yr: f64,
     pub aerosols: Vec<Aerosol>,
+    /// Mean wind speed 10 m above the ground or sea, m/s, over the band's
+    /// storms and calms (the climate's 10 m wind, W-wind10); what a glint's
+    /// slope spread reads (Cox and Munk 1954). Absent with no surface.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub wind10_m_s: f64,
+}
+
+fn is_zero(x: &f64) -> bool {
+    *x == 0.0
 }
 
 /// The field over one atlas tile at one date: `n` × `n` cells in row order.

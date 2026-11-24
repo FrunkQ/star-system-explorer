@@ -106,11 +106,18 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
                 Some(b) => b.climate(&c),
                 None => sse_weather::circulation::averages(&block.settings, &c, core),
             };
-            serde_json::json!({
+            let mut out = serde_json::json!({
                 "climate": to_json(&averages),
                 "circulation": to_json(&core.circulation),
                 "core": to_json(core),
-            })
+            });
+            // A giant's jets by latitude, for the curls and drift (K-a).
+            if core.circulation.regime == "banded-giant" {
+                let gs = &block.giants;
+                let l = sse_weather::giants::layout(gs, &c);
+                out["jets"] = to_json(&sse_weather::giants::jet_profile(gs, &c, &l));
+            }
+            out
         }
         "systems" => to_json(&chosen.systems(&c, date, &pins)),
         "field" => {

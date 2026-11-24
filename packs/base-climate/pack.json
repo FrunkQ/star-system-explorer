@@ -87,7 +87,7 @@
     "circulation": {
      "delta_h": 0.3333,
      "tropopause_scale_heights": 1.8,
-     "source": "Hadley edge from Held and Hou 1980 (small-angle form, phi_H = (5/3 g H dh / (Omega a)^2)^1/2); cells from the Rhines arrest wavenumber k = (beta/2U)^1/2 (Rhines 1975); trends checked against Kaspi and Showman 2015. The wind scale comes from the thermal wind (W7b, strengths); the contrast is tuned to Earth (docs/fudges.md). The regime is a label read off the strengths and facts: the first rule whose conditions hold. The physics never reads it.",
+     "source": "Hadley edge from Held and Hou 1980 (small-angle form, phi_H = (5/3 g H dh / (Omega a)^2)^1/2); cells from the Rhines arrest wavenumber k = (beta/2U)^1/2, one cell pi/k wide, U the eddy speed (Rhines 1975); trends checked against Kaspi and Showman 2015. The wind scale comes from the thermal wind (W7b, strengths); the contrast is tuned to Earth (docs/fudges.md). The regime is a label read off the strengths and facts: the first rule whose conditions hold. The physics never reads it.",
      "rules": [
       {
        "regime": "airless",

@@ -331,6 +331,11 @@ impl RuleBlock {
         }
         let aerosols = haze(s, c);
         let _ = lon;
+        let wind10 = if c.solid_surface && p.circ.regime != "airless" {
+            p.core.speed10_at(lat)
+        } else {
+            0.0
+        };
         Cell {
             lat_deg: lat,
             lon_deg: lon,
@@ -340,6 +345,7 @@ impl RuleBlock {
             temp_offset_k: 0.0,
             lightning_km2_yr: 0.0,
             aerosols,
+            wind10_m_s: wind10,
         }
     }
 }

@@ -46,8 +46,12 @@ pub const ALWAYS: f64 = f64::MIN;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Bands {
+    /// Jet speed scale, m/s: the bands' winds and the polar jet.
     pub wind_gas_m_s: f64,
     pub wind_ice_m_s: f64,
+    /// Local eddy speed the Rhines scale reads, m/s (not the jet speed).
+    pub eddy_gas_m_s: f64,
+    pub eddy_ice_m_s: f64,
     pub ice_giant_mass_earth: f64,
     /// Retrograde jets are this fraction of the prograde (S6: 0.5).
     pub retrograde_ratio: f64,
@@ -259,6 +263,9 @@ pub struct GiantLayout {
     pub mass_earth: f64,
     pub ice: bool,
     pub wind_scale_m_s: f64,
+    /// Local eddy speed the Rhines scale reads, m/s.
+    #[serde(default)]
+    pub eddy_m_s: f64,
     pub jets: u32,
     /// Band edges pole to pole (the S6 cloud deck's).
     pub band_edges_deg: Vec<f64>,
@@ -296,9 +303,10 @@ pub fn mass_earth(c: &Conditions) -> f64 {
     c.gravity_m_s2 * c.radius_m * c.radius_m / G / M_EARTH_KG
 }
 
-/// Jets from the Rhines scale, as the S6 cloud deck (the one count, W7a).
-pub fn jets(a: f64, omega: f64, u: f64) -> u32 {
-    sse_climate::circulation::giant_jets(a, omega, u)
+/// Jets from the Rhines scale and the eddy speed, as the S6 cloud deck (the
+/// one count, W7a).
+pub fn jets(a: f64, omega: f64, eddy: f64) -> u32 {
+    sse_climate::circulation::giant_jets(a, omega, eddy)
 }
 
 /// The S6 band edges, pole to pole: asin(−1 + 2i / 2J).
@@ -324,7 +332,8 @@ pub fn layout(gs: &GiantSettings, c: &Conditions) -> GiantLayout {
     let me = mass_earth(c);
     let ice = me > 0.0 && me < b.ice_giant_mass_earth;
     let u = if ice { b.wind_ice_m_s } else { b.wind_gas_m_s };
-    let nj = jets(a, omega, u);
+    let eddy = if ice { b.eddy_ice_m_s } else { b.eddy_gas_m_s };
+    let nj = jets(a, omega, eddy);
     let edges = band_edges(nj);
     let h = c.scale_height_m();
     let ld = deformation_m(gs, c, 90.0);
@@ -401,6 +410,7 @@ pub fn layout(gs: &GiantSettings, c: &Conditions) -> GiantLayout {
         mass_earth: me,
         ice,
         wind_scale_m_s: u,
+        eddy_m_s: eddy,
         jets: nj,
         band_edges_deg: edges,
         scale_height_km: h / 1000.0,
@@ -555,6 +565,55 @@ fn blend_jet(l: &GiantLayout, base: f64, dist_km: f64) -> f64 {
 pub fn zonal_wind(gs: &GiantSettings, l: &GiantLayout, a_m: f64, lat: f64) -> f64 {
     let dist = (lat.abs() - l.polar_jet_lat_deg).abs() / DEG * a_m / 1000.0;
     blend_jet(l, band_wind(gs, l, lat), dist)
+}
+
+/// The jets by latitude, for drawing the curls and drift (visual polish
+/// K-a): one entry per band, at its centre.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct JetProfile {
+    /// Band centres, south to north, degrees.
+    pub lat_deg: Vec<f64>,
+    /// Eastward wind at the band centre, m/s (+ eastward).
+    pub jet_speed_m_s: Vec<f64>,
+    /// Change in eastward wind from the band's south edge to its north
+    /// edge, m/s per band.
+    pub jet_shear_m_s: Vec<f64>,
+    /// Local eddy speed, m/s: one value per giant kind for now.
+    pub eddy_speed_m_s: Vec<f64>,
+    /// Rhines width of one jet, π sqrt(2U/β), U the eddy speed, m.
+    pub rhines_scale_m: Vec<f64>,
+    /// Deformation radius N H / f, m.
+    pub deformation_radius_m: Vec<f64>,
+    pub source: String,
+}
+
+pub fn jet_profile(gs: &GiantSettings, c: &Conditions, l: &GiantLayout) -> JetProfile {
+    let a = c.radius_m;
+    let omega = c.spin_rate();
+    let e = &l.band_edges_deg;
+    let mut p = JetProfile {
+        lat_deg: vec![],
+        jet_speed_m_s: vec![],
+        jet_shear_m_s: vec![],
+        eddy_speed_m_s: vec![],
+        rhines_scale_m: vec![],
+        deformation_radius_m: vec![],
+        source: "Band winds of the S6 layout; Rhines width pi sqrt(2U/beta) with U the eddy speed (Rhines 1975; Gastine et al. 2014: the factor of 2 is not settled); deformation radius N H / f.".into(),
+    };
+    for w in e.windows(2) {
+        let lat = 0.5 * (w[0] + w[1]);
+        p.lat_deg.push(lat);
+        p.jet_speed_m_s.push(zonal_wind(gs, l, a, lat));
+        p.jet_shear_m_s
+            .push(zonal_wind(gs, l, a, w[1]) - zonal_wind(gs, l, a, w[0]));
+        p.eddy_speed_m_s.push(l.eddy_m_s);
+        p.rhines_scale_m
+            .push(sse_climate::circulation::rhines_width_m(
+                a, omega, l.eddy_m_s, lat,
+            ));
+        p.deformation_radius_m.push(deformation_m(gs, c, lat));
+    }
+    p
 }
 
 /// Longitude at `day` of something at `lat` that was at `lon0` on `born`,
@@ -1123,6 +1182,7 @@ pub fn giant_cell(
         temp_offset_k: 0.0,
         lightning_km2_yr: 0.0,
         aerosols,
+        wind10_m_s: 0.0,
     }
 }
 
