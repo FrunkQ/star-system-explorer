@@ -39,6 +39,20 @@ pub(crate) fn bulk_of(b: &sse_surface::Body, run: Option<&SystemRun>) -> Bulk {
     bulk
 }
 
+/// MP7: the star's own elements, from what it inherited; a system with no
+/// formation run reads as the Sun's (compose notes the stand-in). Every
+/// composition read (read_composition, read_inventory, holdings) uses it.
+pub(crate) fn star_ratio(
+    run: Option<&SystemRun>,
+    sheet: &sse_reference::Reference,
+) -> Result<BTreeMap<String, f64>, Response> {
+    match run {
+        Some(r) => crate::star_elements::star_element_ratios(&r.history.inheritance, sheet)
+            .map_err(|e| err("bad_pack", e)),
+        None => Ok(BTreeMap::new()),
+    }
+}
+
 /// MP8: what a surveyed world's deposits hold, from its Survey composition.
 pub(crate) fn holdings(
     b: &sse_surface::Body,
@@ -50,7 +64,7 @@ pub(crate) fn holdings(
     let c = compose(
         &Sheet::read(sheet),
         &bulk_of(b, run),
-        &BTreeMap::new(),
+        &star_ratio(run, sheet).unwrap_or_default(),
         Level::Survey,
         &settings,
     );
@@ -85,13 +99,7 @@ pub(crate) fn read(
     let w = worlds_at(ch, system, at_s, run, &ss)?;
     let rows = Sheet::read(sheet);
     let settings = Settings::default();
-    // MP7: the star's own elements, from what it inherited; a system with no
-    // formation run reads as the Sun's (compose notes the stand-in).
-    let ratio: BTreeMap<String, f64> = match run {
-        Some(r) => crate::star_elements::star_element_ratios(&r.history.inheritance, sheet)
-            .map_err(|e| err("bad_pack", e))?,
-        None => BTreeMap::new(),
-    };
+    let ratio = star_ratio(run, sheet)?;
     let mut out = vec![];
     for b in &w.bodies {
         if want.as_ref().is_some_and(|a| *a != b.address) {

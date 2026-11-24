@@ -292,6 +292,26 @@ pub struct Body {
     /// core settings' default when absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub core_light_fraction: Option<f64>,
+    /// What the body is made of, mass shares (`makeup.*` facts, as
+    /// placement writes them), when known (MP8b).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub makeup: Option<Makeup>,
+}
+
+/// A body's makeup as mass shares of the whole (`makeup.metal`, `rock`,
+/// `carbon`, `ice`, `gas`); missing shares read 0.
+#[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
+pub struct Makeup {
+    #[serde(default)]
+    pub metal: f64,
+    #[serde(default)]
+    pub rock: f64,
+    #[serde(default)]
+    pub carbon: f64,
+    #[serde(default)]
+    pub ice: f64,
+    #[serde(default)]
+    pub gas: f64,
 }
 
 /// Extra tidal heat flow over a span of a world's life.
@@ -799,6 +819,7 @@ pub fn bodies_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<Body> {
                 obliquity_deg: spin.map(|x| x.obliquity_deg),
                 spin_source: spin.map(|_| "formation".to_string()),
                 core_light_fraction: None,
+                makeup: None,
             }
         })
         .collect()

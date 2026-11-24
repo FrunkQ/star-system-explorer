@@ -3379,5 +3379,15 @@
     ]
    }
   ]
+  },
+ {
+  "op": "read_inventory",
+  "system": "u:matter/sys:1",
+  "kinds": ["fe", "h2o"]
+ },
+ {
+  "op": "read_inventory",
+  "system": "u:matter/sys:1",
+  "kinds": ["unobtainium"]
  }
 ]

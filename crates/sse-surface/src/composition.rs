@@ -193,6 +193,9 @@ impl Bulk {
     /// or, failing that, its oceans as the outgassed part of what formation
     /// left (Elkins-Tanton 2008's retained share), rock the rest.
     pub fn of_body(b: &crate::Body) -> Self {
+        if let Some(mk) = &b.makeup {
+            return Self::of_makeup(b, mk);
+        }
         let mass = b.mass_earth * M_EARTH;
         let radius = b.radius_earth * R_EARTH_MEAN;
         let surface_water = b.oceans.max(0.0) * OCEAN_KG;
@@ -222,6 +225,23 @@ impl Bulk {
             al26_j_kg: 0.0,
             source: "the body's core share and water".into(),
         }
+    }
+
+    /// From a body's makeup facts: each share of the mass is its material;
+    /// ice is water; a gas share is not counted here (stand-in).
+    fn of_makeup(b: &crate::Body, mk: &crate::Makeup) -> Self {
+        let mut x = Self::of_body(&crate::Body {
+            makeup: None,
+            ..b.clone()
+        });
+        let mass = x.mass_kg;
+        x.metal_kg = mk.metal.clamp(0.0, 1.0) * mass;
+        x.rock_kg = mk.rock.clamp(0.0, 1.0) * mass;
+        x.carbon_kg = mk.carbon.clamp(0.0, 1.0) * mass;
+        x.water_kg = mk.ice.clamp(0.0, 1.0) * mass;
+        x.surface_water_kg = x.surface_water_kg.min(x.water_kg);
+        x.source = "the body's makeup facts".into();
+        x
     }
 
     /// From formation's ledger: each material's mass as the body collected

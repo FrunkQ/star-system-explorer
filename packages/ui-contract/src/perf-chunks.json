@@ -52,7 +52,7 @@
       "name": "Matter, fields and names",
       "meaning": "Look-ups on the master data sheet, phases, magnetic fields, element inventories, and names.",
       "budget_ms": 100,
-      "sources": ["read_matter", "phase_at", "read_field", "read_composition", "name_sample", "read_names", "set_naming", "rename", "fix_names"]
+      "sources": ["read_matter", "phase_at", "read_field", "read_composition", "read_inventory", "name_sample", "read_names", "set_naming", "rename", "fix_names"]
     },
     {
       "id": "life",
