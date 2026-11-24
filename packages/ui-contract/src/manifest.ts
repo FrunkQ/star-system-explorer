@@ -276,7 +276,7 @@ export function crewAboard(subject: { address: string; facts: readonly { field: 
 export const FUEL_FIELDS = { propellant: "fuel.propellant_t", jump: "fuel.jump_t" } as const;
 export type FuelTank = keyof typeof FUEL_FIELDS;
 /** Words for the manifest's kept kinds on a ship's own record, for its log. */
-export const MANIFEST_WORDS: Record<string, string> = { [FUEL_FIELDS.propellant]: "Reaction mass", [FUEL_FIELDS.jump]: "Jump fuel", "life_support.recycled": "Recycled share" };
+export const MANIFEST_WORDS: Record<string, string> = { [FUEL_FIELDS.propellant]: "Reaction mass", [FUEL_FIELDS.jump]: "Jump fuel", "life_support.recycled": "Recycled share", "picture.own": "Pictures", "picture.shown": "Opens on", "construct.design": "Design" };
 
 export interface FuelGauge {
   tank: FuelTank;
