@@ -102,6 +102,14 @@
               </select>
             </label>
             {#if markHere}<button type="button" class="ghost" data-update-from-live onclick={() => updateFromLive(i)}>Update from live</button>{/if}
+          {:else if "reveal" in s}
+            <label
+              >Tells them
+              <select value={s.reveal.landmark} data-edit-landmark onchange={(e) => setStep(i, { reveal: { ...s.reveal, landmark: e.currentTarget.value as "known" | "heard_of" } })}>
+                <option value="known">it is there (known)</option>
+                <option value="heard_of">of it (heard of)</option>
+              </select>
+            </label>
           {:else if "say" in s}
             <label class="wide">Words to read <textarea rows="4" value={s.say.text} data-edit-say oninput={(e) => setStep(i, { say: { text: e.currentTarget.value } })}></textarea></label>
           {:else if "hold" in s}

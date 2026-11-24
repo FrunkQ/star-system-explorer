@@ -64,6 +64,8 @@ export interface HistoryEvent {
   at_yr: number;
   evidence: string;
   subject: string[];
+  /** The facts it set or unset at the asked address (only when asked): a value too large to send is marked `large`. */
+  changes?: { field: string; value: unknown; unset?: boolean; large?: boolean }[];
 }
 
 /** One input to a derivation, as the kernel takes it (H5.2 quantities with units). */
@@ -126,7 +128,8 @@ export interface ViewSession {
   readonly seat: Readonly<Seat>;
   readonly universe: Readonly<{ id: string; seed: string; root: string }>;
   send(intent: Intent): Promise<IntentResult>;
-  history(address: string): Promise<HistoryEvent[]>;
+  /** The events at an address, oldest first; with `changes`, each event's fact changes at exactly that address. */
+  history(address: string, opts?: { changes?: boolean }): Promise<HistoryEvent[]>;
   stateHash(at_yr?: number): Promise<string>;
   /**
    * What-if branches (U4, H6.3): a branch of the chronicle the GM edits
@@ -232,6 +235,8 @@ export interface ViewSession {
   webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }>;
   /** A cube of the cosmic web for the 3D view (kernel `web_slice` with `cube`): n^3 parcels moved by the truncated Zel'dovich approximation. Read only; GM only. */
   webCube(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebCube } | { ok: false; code: string; message: string }>;
+  /** The galaxies in the same cube (kernel `web_slice` with `cube` and `haloes`, V9w): what True lights. Read only; GM only. */
+  webGalaxies?(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebGalaxies } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
   resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
@@ -573,15 +578,16 @@ export class Session implements ViewSession {
     return { status: "error", code: "unexpected", message: JSON.stringify(r) };
   }
 
-  async history(address: string): Promise<HistoryEvent[]> {
-    const r = await this.#call({ op: "history", address });
+  async history(address: string, opts: { changes?: boolean } = {}): Promise<HistoryEvent[]> {
+    const r = await this.#call({ op: "history", address, ...(opts.changes ? { changes: true } : {}) });
     if (r.type !== "history") return [];
-    return (r.events as { id: string; kind: string; occurred_at_s: number; evidence: string; subject: string[] }[]).map((e) => ({
+    return (r.events as { id: string; kind: string; occurred_at_s: number; evidence: string; subject: string[]; changes?: HistoryEvent["changes"] }[]).map((e) => ({
       id: e.id,
       kind: e.kind,
       at_yr: secondsToYears(e.occurred_at_s),
       evidence: e.evidence,
       subject: e.subject,
+      ...(e.changes ? { changes: e.changes } : {}),
     }));
   }
 
@@ -954,6 +960,12 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the cosmic web is read on the game master's machine" };
     const r = await this.#call({ op: "web_slice", cube: true, ...ask });
     return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebCube }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async webGalaxies(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebGalaxies } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the cosmic web is read on the game master's machine" };
+    const r = await this.#call({ op: "web_slice", cube: true, haloes: true, ...ask });
+    return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebGalaxies }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }> {

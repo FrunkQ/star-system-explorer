@@ -9,6 +9,7 @@
 
   let {
     handle,
+    reading,
     value,
     dots,
     cls,
@@ -18,6 +19,8 @@
     onclose,
   }: {
     handle: Handle;
+    /** The reading to say figures in (the remembered choice). */
+    reading?: string;
     /** The value in SI, or null when the body has none yet. */
     value: number | null;
     dots: StripDot[];
@@ -47,11 +50,11 @@
   let track: HTMLDivElement | undefined = $state();
 
   const shown = $derived(pencil ?? (value === null ? null : Math.abs(value)));
-  const said = $derived(shown === null ? null : say(shown, handle.part.kind, about, { depth, ...(held ? { hold: held } : {}), ...(typed && pencil === null ? { source: "typed" as const, sig: typed.sig } : {}) }));
+  const said = $derived(shown === null ? null : say(shown, handle.part.kind, about, { depth, reading, ...(held ? { hold: held } : {}), ...(typed && pencil === null ? { source: "typed" as const, sig: typed.sig } : {}) }));
   const markPos = $derived(shown === null ? null : stripPos(domain, shown));
   // Dots in order along the line; a name is written only where it does not run into the last one written.
   const placed = $derived.by(() => {
-    const out = dots.map((d) => ({ ...d, pos: stripPos(domain, d.si), text: say(Math.abs(d.si), handle.part.kind, about, { depth }).text, named: false })).sort((a, b) => a.pos - b.pos);
+    const out = dots.map((d) => ({ ...d, pos: stripPos(domain, d.si), text: say(Math.abs(d.si), handle.part.kind, about, { depth, reading }).text, named: false })).sort((a, b) => a.pos - b.pos);
     let last = -1;
     for (const d of out) if (d.pos - last >= 0.1) ((d.named = true), (last = d.pos));
     return out;
@@ -66,7 +69,7 @@
     if (!editable || busy) return;
     dragging = true;
     track!.setPointerCapture(e.pointerId);
-    held = shown !== null ? say(shown, handle.part.kind, about, { depth }).rung : undefined;
+    held = shown !== null ? say(shown, handle.part.kind, about, { depth, reading }).rung : undefined;
     pencil = stripValue(domain, posAt(e));
     problem = null;
   }
@@ -94,13 +97,15 @@
         pencil = null;
         held = undefined;
       } else onclose();
+      // The strip's Esc is the strip's: it never also clears the selection behind it.
       e.preventDefault();
+      e.stopPropagation();
       return;
     }
     if (!editable) return;
     if (e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowDown") {
       const from = pencil ?? shown ?? domain.lo;
-      if (held === undefined && shown !== null) held = say(shown, handle.part.kind, about, { depth }).rung;
+      if (held === undefined && shown !== null) held = say(shown, handle.part.kind, about, { depth, reading }).rung;
       pencil = stripStep(domain, from, e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : -1, e.shiftKey);
       e.preventDefault();
     } else if (e.key === "Enter" && pencil !== null) {

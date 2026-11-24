@@ -91,6 +91,10 @@ try {
     await units.waitFor();
     assert.match(await units.locator('[data-unit="pc"] .val').innerText(), /^1 pc = 3\.085 677 581 × 10¹⁶ m$/);
     assert.match(await units.locator('[data-unit="m"] .val').innerText(), /SI/);
+    // How figures are said (ED1a): the units engine's table, the default reading marked.
+    const orbitRow = units.locator('[data-figures-said] [data-said="length|*.orbit"]');
+    assert.match(await orbitRow.innerText(), /AU/);
+    assert.match(await orbitRow.locator(".chosen").innerText(), /AU/, "the first reading is the default");
     await shot(gm, `units-${vp}`);
 
     if (vp === "phone") {
@@ -213,6 +217,15 @@ try {
       await gm.locator('[data-names="stack"]').waitFor({ timeout: 20000 });
       await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hash0);
       await gm.locator('[data-names="stack"] [data-sample] li').nth(11).waitFor({ timeout: 20000 });
+      // Names here for the whole system, from the Names page: name every planet in Kestrel in Oluen.
+      const here = gm.locator("[data-names-here='u:kestrel/sys:1']");
+      await here.waitFor({ timeout: 20000 });
+      await here.locator("[data-names-here-kind]").selectOption("planet");
+      await here.locator('[data-names-here-layer="common"]').selectOption("oluen");
+      await here.locator("[data-names-here-note]").getByText(/Common names for planets in Kestrel now come from Oluen/).waitFor({ timeout: 20000 });
+      await shot(gm, "names-here-desk");
+      await here.locator('[data-names-here-layer="common"]').selectOption("-");
+      await here.locator("[data-names-here-note]").getByText(/follow the setting above again/).waitFor({ timeout: 20000 });
       // The name card: every name a body has, by layer, with where it came from.
       await go(gm, "system");
       await gm.locator("[role=button][aria-label^='Tarn']").click();
@@ -235,6 +248,18 @@ try {
       await card.locator('[data-name-here="designation"]').selectOption("vesh");
       await card.locator("[data-name-note]").getByText(/take designation names from Vesh/).waitFor({ timeout: 20000 });
       await gm.waitForFunction(() => /drawn from Vesh/.test(document.querySelector('[data-name-card] [data-layer="designation"]')?.textContent ?? ""), null, { timeout: 20000 });
+      // Layer choice in lenses: a lens of the GM's own that labels the chart by designation shows Tarn's Vesh designation.
+      const vesh = await desig();
+      await gm.getByRole("combobox", { name: "Lens", exact: true }).selectOption("__make");
+      const dlg = gm.getByRole("dialog", { name: "Lens editor" });
+      await dlg.getByLabel("Lens name").fill("Survey names");
+      await dlg.getByLabel("Names on the chart").selectOption("designation");
+      await dlg.getByRole("button", { name: "Save lens" }).click();
+      await gm.waitForFunction(() => document.querySelector("main.stage")?.getAttribute("data-lens") === "mine.survey-names");
+      await dlg.getByRole("button", { name: "Close" }).click();
+      await gm.waitForFunction((n) => !!document.querySelector(`[role=button][aria-label^="${n}"]`), vesh, { timeout: 20000 });
+      assert.equal(await gm.locator("[role=button][aria-label^='Tarn']").count(), 0, "the chart is labelled by designation");
+      await shot(gm, "names-lens-desk");
     }
     assert.deepEqual(errors, []);
     await browser.close();

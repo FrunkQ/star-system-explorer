@@ -18,6 +18,8 @@ export type Shown =
       landing?: Json;
       /** The thing a bookmark was looking at (PB3): the screen selects it when its role knows it. Older players ignore it. */
       focus?: string;
+      /** Read only (PB3b): the GM steers this screen; it takes no input but sound. Absent: the player's (Theirs). */
+      steer?: "read";
     }
   /**
    * Nothing of any place: screens off, or a held line (Switchboard, PB1). `card` is the holding card's words, chosen on

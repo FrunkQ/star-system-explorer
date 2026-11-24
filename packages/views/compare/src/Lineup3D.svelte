@@ -9,11 +9,13 @@
   import type { TrueTexture } from "../../../renderer/src/index.ts";
   // Surfaces read once per world for the page's life: about 3 s each from the kernel.
   const kept = new Map<string, TrueTexture | string>();
+  // A giant's winds, read with its face: the bands slide and the storms turn as the globe turns (VP-A1).
+  const flows = new Map<string, AirFlow>();
 </script>
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { globeFrame, graticule, nearSide, ringEdge, ringProfile, spinAt, startGpu, trueSurface, type Gpu, type GpuItem, type GpuRing, type LineupView, type Vec3 } from "../../../renderer/src/index.ts";
+  import { bodySeconds, globeFrame, graticule, nearSide, readTrueFace, ringEdge, spinAt, startGpu, trueLook, type AirFlow, type FaceReader, type Gpu, type GpuItem, type GpuRing, type LineupView, type Vec3 } from "../../../renderer/src/index.ts";
   import { reachKm, type CompareItem, type Placed, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let {
@@ -102,8 +104,10 @@
         for (const i of worlds) {
           const key = `${system}|${i.key}`;
           if (!kept.has(key)) {
-            const r = await ctx.session.surfaceTiles(system, i.key);
-            kept.set(key, (r.ok && trueSurface(r.tiles)) || "none");
+            // Ground, then today's clouds and haze; a giant is its cloud decks, with the winds that carry them (true-air.ts).
+            const f = await readTrueFace(ctx.session as unknown as FaceReader, system, i.key);
+            kept.set(key, typeof f === "string" ? "none" : f.tex);
+            if (typeof f !== "string" && f.flow) flows.set(key, f.flow);
           }
           const t = kept.get(key);
           if (t && typeof t !== "string" && !surfaces.has(i.key)) surfaces = new Map(surfaces).set(i.key, t);
@@ -111,19 +115,6 @@
       })(),
     );
   });
-
-  // Rings in True, one profile per world (the ring data has no colour: a neutral grey, as in the system's 3D).
-  const ringCache = new Map<string, NonNullable<GpuItem["rings"]> | null>();
-  function ringsOf(i: CompareItem): NonNullable<GpuItem["rings"]> | null {
-    if (!i.rings?.length) return null;
-    const sig = `${i.key}|${JSON.stringify(i.rings)}`;
-    if (!ringCache.has(sig)) {
-      const p = ringProfile(i.rings.map((r) => ({ name: "", inner_m: r.inner_km * 1000, outer_m: r.outer_km * 1000, tau: r.tau, albedo: r.albedo })), [0.5, 0.5, 0.5]);
-      const R = i.radius_km * 1000;
-      ringCache.set(sig, p ? { key: sig, inner: p.inner_m / R, outer: p.outer_m / R, normal: [0, 0, 1], width: p.width, data: p.data } : null);
-    }
-    return ringCache.get(sig)!;
-  }
 
   // The watch: seconds since the globes appeared, on the page's own clock (presentation only). Still under reduced motion.
   let t = $state(0);
@@ -157,9 +148,13 @@
       const c: Vec3 = [p.x - width / 2, height / 2 - (base - p.r), 0];
       const f = globeFrame(i.tilt_rad, view, spinAt(i.day_h, t, pace, Number.isFinite(quickest) ? quickest : 24));
       if (look !== "wireframe") {
-        const s = look === "true" ? surfaces.get(i.key) : undefined;
-        const rings = look === "true" ? ringsOf(i) : null;
-        items.push({ id: i.key, rel: c, radius: p.r, colour: rgb(colour(i)), frame: f, ...(i.kind === "star" ? { shines: true } : {}), ...(s ? { surface: { key: `${system}|${i.key}`, texture: s } } : {}), ...(rings ? { rings: { ...rings, normal: f[2] } } : {}) });
+        // True: the body's face from the one door every True view uses (true-body.ts), so each new look shows here too.
+        // A world not read is the plain grey of the system's True; 3D keeps the chart's colour.
+        const face =
+          look === "true"
+            ? trueLook({ key: `${system}|${i.key}`, star: i.kind === "star", colour: i.kind === "star" ? rgb(colour(i)) : faint, radius_m: i.radius_km * 1000, ...(surfaces.get(i.key) ? { surface: surfaces.get(i.key)! } : {}), ...(flows.has(`${system}|${i.key}`) ? { flow: { flow: flows.get(`${system}|${i.key}`)!, dt_s: bodySeconds(i.day_h, t, pace, Number.isFinite(quickest) ? quickest : 24) } } : {}), ...(i.rings ? { rings: i.rings.map((r) => ({ name: "", inner_m: r.inner_km * 1000, outer_m: r.outer_km * 1000, tau: r.tau, albedo: r.albedo })) } : {}), pole: f[2] })
+            : { colour: rgb(colour(i)), ...(i.kind === "star" ? { shines: true } : {}) };
+        items.push({ id: i.key, rel: c, radius: p.r, frame: f, ...face });
       }
       // Wireframe: every line, see-through. 3D: the near side only, drawn over the shaded globe.
       if (look !== "true" && p.r >= 6)
