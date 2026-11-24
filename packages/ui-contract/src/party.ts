@@ -6,6 +6,7 @@
 // the record; until then `at` is the table's own note of it.
 import type { Json } from "./json.ts";
 import { constant } from "./sheet.ts";
+import { FUEL_FIELDS } from "./manifest.ts";
 import type { NavShip, ShipChoice } from "./route.ts";
 
 export interface PartyShip {
@@ -78,5 +79,24 @@ export function voyageLogEntries(
   if (b && !v.to.startsWith("belt:")) {
     out.push({ piece: { from_s: t, state: { kind: "orbit", around: v.to, elements: { a_m: b.radius_m + 300e3, e: 0, epoch_s: t } }, mark, why: "parked in a low orbit on arrival, 300 km up (assumed)" } });
   }
+  return out;
+}
+
+/**
+ * What a flown voyage leaves in the party ship's tanks, as kept-value writes (fuel draw-down, Alex 24 Nov): the last
+ * leg's `propellant_left_t` and `jump_fuel_left_t`, which already count every refuel on the way. Only the tanks the
+ * ship has (its gauges); each says where it went, for the ship's log ("Jump fuel: 0 (−19.8) · voyage to Regina").
+ */
+export function voyageFuelWrites(
+  voyage: { legs: readonly { propellant_left_t: number; jump_fuel_left_t: number }[] } | null,
+  tanks: readonly ("propellant" | "jump")[],
+  toName: string,
+): { kind: string; value: number; reason: string }[] {
+  const last = voyage?.legs[voyage.legs.length - 1];
+  if (!last) return [];
+  const reason = `voyage to ${toName}`;
+  const out: { kind: string; value: number; reason: string }[] = [];
+  if (tanks.includes("propellant") && Number.isFinite(last.propellant_left_t)) out.push({ kind: FUEL_FIELDS.propellant, value: Math.max(0, last.propellant_left_t), reason });
+  if (tanks.includes("jump") && Number.isFinite(last.jump_fuel_left_t)) out.push({ kind: FUEL_FIELDS.jump, value: Math.max(0, last.jump_fuel_left_t), reason });
   return out;
 }

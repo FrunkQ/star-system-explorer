@@ -6,7 +6,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { IN_SYSTEM_SHIPS, labelLanes } from "../../packages/ui-contract/src/voyage.ts";
 import { shipChoices } from "../../packages/ui-contract/src/route.ts";
-import { navShipOf, partyLander, voyageStart, voyageLogEntries, type PartyShip } from "../../packages/ui-contract/src/party.ts";
+import { navShipOf, partyLander, voyageStart, voyageLogEntries, voyageFuelWrites, type PartyShip } from "../../packages/ui-contract/src/party.ts";
+import { FUEL_FIELDS, fuelGauges, fuelNow, shipRecordOf, type FuelShip } from "../../packages/ui-contract/src/manifest.ts";
 import { Session } from "../../packages/ui-contract/src/session.ts";
 import { gmSeat, tableSeat } from "../../packages/ui-contract/src/seat.ts";
 import type { PackDoc } from "../../packages/ui-contract/src/physics.ts";
@@ -89,6 +90,55 @@ test("a flown voyage goes into the ship's flight log: leaving, the legs, arrivin
     const p = await Session.open(k.client, tableSeat(), { id: "sol", seed: "party log" }, [base], k.scratch);
     const refused = await p.logFlight({ construct: ship, at_s: 0, name: "x" });
     assert.equal(refused.ok, false, "players do not write the log");
+  } finally {
+    await k.close();
+  }
+});
+
+// Fuel draw-down (Alex 24 Nov): the party's ship plans from what is in its tanks, and the voyage leaves what it burned off them.
+
+test("the party ship flies on what is in its tanks, and the voyage draws them down on its record", async () => {
+  const base: PackDoc = JSON.parse(readFileSync(new URL("../../packs/base-physics/pack.json", import.meta.url), "utf8"));
+  const manifest: PackDoc = JSON.parse(readFileSync(new URL("../../packs/base-manifest/pack.json", import.meta.url), "utf8"));
+  const nav = JSON.parse(readFileSync(new URL("../fixtures/nav/sol.json", import.meta.url), "utf8")) as { bodies: { address: string; name: string; radius_m: number }[] };
+  const earth = nav.bodies.find((b) => b.name === "Earth")!.address;
+  const mars = nav.bodies.find((b) => b.name === "Mars")!.address;
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), { id: "sol", seed: "party fuel" }, [base, manifest], k.scratch);
+    const rec = await shipRecordOf(s, "fusion-torch");
+    assert.ok(rec.ok, JSON.stringify(rec));
+    const full = rec.ship as unknown as FuelShip;
+    const tanks = fuelGauges(full, () => undefined);
+    const prop = tanks.find((g) => g.tank === "propellant")!;
+    assert.ok(prop.full_t > 0);
+    const address = "u:sol/construct:beowulf";
+    const half = prop.full_t / 2;
+    const set = await s.setKept!({ address, kind: FUEL_FIELDS.propellant, value: half, reason: "half full", at_s: 0 });
+    assert.ok(set.ok, JSON.stringify(set));
+    const own = await s.record!(address);
+    assert.ok(own.ok);
+    const kept = Object.fromEntries(own.record.kept.map((x) => [x.kind, x.value]));
+    const now = fuelNow(full, (f) => kept[f]);
+    assert.equal(now.propellant_t, half, "planned from the tank as it is");
+    const plan = async (sh: unknown) => {
+      const r = await s.planVoyage({ nav, ship: sh as never, from: earth, to: mars, depart_s: 63_115_200_000 });
+      assert.ok(r.ok, JSON.stringify(r));
+      return (r.plan as SystemVoyagePlan).voyage!;
+    };
+    const fromFull = await plan(full);
+    const fromHalf = await plan(now);
+    const lastLeft = (v: typeof fromFull) => v.legs[v.legs.length - 1]!.propellant_left_t;
+    assert.ok(lastLeft(fromHalf) < lastLeft(fromFull), `half tanks leave less: ${lastLeft(fromHalf)} vs ${lastLeft(fromFull)}`);
+    const writes = voyageFuelWrites(fromHalf, tanks.map((g) => g.tank), "Mars");
+    assert.equal(writes.length, 1, "only the tanks it has");
+    assert.equal(writes[0]!.reason, "voyage to Mars");
+    for (const w of writes) assert.ok((await s.setKept!({ address, ...w, at_s: 63_115_200_000 })).ok);
+    const after = await s.record!(address);
+    assert.ok(after.ok);
+    const level = after.record.kept.find((x) => x.kind === FUEL_FIELDS.propellant)!;
+    assert.equal(level.value, writes[0]!.value);
+    assert.equal(level.history.length >= 2, true, "each change dated with its reason");
   } finally {
     await k.close();
   }
