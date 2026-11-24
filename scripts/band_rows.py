@@ -60,10 +60,3 @@ def rows(val):
     for cid, physics, plain, view in CHANNELS:
         out.append({"id": cid, "kind": "channel", "names": {"physics": physics, "plain": plain, "story": physics}, "view": "view-" + view})
     return out
-
-
-def check_against_light(bands, light_pack):
-    """Until the light thread reads this table, its own copy must agree."""
-    sheet = {b["id"]: (b["from_m"]["v"], b["to_m"]["v"]) for b in bands if b["kind"] == "light"}
-    theirs = {b["id"]: (b["from_m"], b["to_m"]) for b in light_pack["provides"]["other"]["light"]["bands"]}
-    assert sheet == theirs, ("packs/base-light bands differ from the sheet's Bands table", sorted(set(sheet.items()) ^ set(theirs.items())))
