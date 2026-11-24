@@ -7,6 +7,7 @@ import { WebGPURenderer } from "three/webgpu";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
 import { ringLight } from "./rings.ts";
+import { startFinish, type Finish } from "./finish.ts";
 
 export interface GpuItem {
   id: string;
@@ -94,9 +95,25 @@ export interface GpuGlow {
   radius: number;
 }
 
+/**
+ * The sky's stars behind a True view (VP2): unit directions in the drawing's frame, and each star's flux at the eye as
+ * a share of the flux that lights the exposure's white surface, per colour channel. Each is drawn as one pixel whose
+ * light is π · share / Ω_pixel (a point's flux in one pixel against a white Lambert surface's radiance), times `gain`
+ * (1 as the eye sees; a long exposure lifts it). A new `key` uploads the directions and shares.
+ */
+export interface GpuStars {
+  key: string;
+  dirs: Float32Array;
+  share: Float32Array;
+  gain?: number;
+}
+
+/** The brightest a star's pixel may be at a long exposure, as a share of white. */
+export const LONG_CLIP = 4;
+
 export interface Gpu {
   readonly backend: "webgpu" | "webgl2";
-  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number } }): void;
+  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number }; /** True: draw through the shared finish (finish.ts): high range, the eye's glare, exposure, AgX, dither. */ finish?: { exposure?: number; glare?: boolean }; /** True: the sky's stars behind everything (VP2, stars-behind.ts). */ stars?: GpuStars }): void;
   dispose(): void;
 }
 
@@ -109,7 +126,16 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     return null;
   }
   const backend = (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? "webgpu" : "webgl2";
+  // The shared finish, made on first use (a view that never asks for it never builds its passes).
+  let finish: Finish | null = null;
   const scene = new Scene();
+  // The sky's stars: one geometry per sky, its colours rewritten when the pixel's size or the gain changes.
+  const starGeom = new BufferGeometry();
+  const starMat = new PointsMaterial({ size: 1, sizeAttenuation: false, vertexColors: true, blending: AdditiveBlending, depthWrite: false, transparent: true });
+  const starPoints = new Points(starGeom, starMat);
+  starPoints.renderOrder = -1;
+  starPoints.frustumCulled = false;
+  let starSig = "";
   const camera = new PerspectiveCamera(50, 1, 1e-3, 1e4);
   const flat = new OrthographicCamera(-1, 1, 1, -1, 1e-3, 1e4);
   const turned = new Matrix4();
@@ -353,6 +379,27 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         g.setAttribute("position", new Float32BufferAttribute(d.points.flat(), 3));
         scene.add(new Points(g, dotMat(d)));
       }
+      if (o.stars && !o.ortho) {
+        const pixel = o.fovY / Math.max(1, o.height);
+        const k = (Math.PI / (pixel * pixel)) * (o.stars.gain ?? 1);
+        const sig = `${o.stars.key}|${k}`;
+        if (sig !== starSig) {
+          if (!starSig.startsWith(`${o.stars.key}|`)) {
+            // Far out along each direction, inside the camera's far plane: behind every body, never in front.
+            const pos = new Float32Array(o.stars.dirs.length);
+            for (let i = 0; i < pos.length; i++) pos[i] = o.stars.dirs[i]! * 9e3;
+            starGeom.setAttribute("position", new Float32BufferAttribute(pos, 3));
+          }
+          const col = new Float32Array(o.stars.share.length);
+          // A long exposure clips each star at a few times white, as a photograph's sensor fills: lifted, the nearest
+          // bright stars would otherwise outshine the system's own star and glare over it.
+          const cap = (o.stars.gain ?? 1) > 1 ? LONG_CLIP : Infinity;
+          for (let i = 0; i < col.length; i++) col[i] = Math.min(cap, o.stars.share[i]! * k);
+          starGeom.setAttribute("color", new Float32BufferAttribute(col, 3));
+          starSig = sig;
+        }
+        scene.add(starPoints);
+      }
       const cam = o.ortho ? flat : camera;
       if (o.ortho) {
         flat.left = -o.ortho.width / 2;
@@ -370,8 +417,9 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       cam.lookAt(new Vector3(o.forward[0], o.forward[1], o.forward[2]));
       cam.updateProjectionMatrix();
       renderer.setSize(o.width, o.height, false);
-      renderer.render(scene, cam);
-      scene.traverse((x) => (x instanceof Line || x instanceof Points) && x.geometry.dispose());
+      if (o.finish) (finish ??= startFinish(renderer)).render(scene, cam, { exposure: o.finish.exposure ?? 1, pixel_deg: o.ortho ? 0 : (o.fovY * 180) / Math.PI / Math.max(1, o.height), glare: !o.ortho && o.finish.glare !== false });
+      else renderer.render(scene, cam);
+      scene.traverse((x) => (x instanceof Line || x instanceof Points) && x !== starPoints && x.geometry.dispose());
     },
     dispose() {
       sphere.dispose();
@@ -389,6 +437,9 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       ringSets.forEach((e) => (e.geom.dispose(), e.tex.dispose(), e.mat.dispose()));
       lineMats.forEach((m) => m.dispose());
       dotMats.forEach((m) => m.dispose());
+      finish?.dispose();
+      starGeom.dispose();
+      starMat.dispose();
       renderer.dispose();
     },
   };

@@ -12,7 +12,7 @@ test("every option is listed in the same order; what a view cannot do says why",
   assert.deepEqual(o.seen.map((x) => x.label), ["Above", "Tilted", "Edge-on", "Free"]);
   assert.equal(o.styles[2]!.unavailable, WHY_TRUE_HELD);
   assert.match(o.styles[3]!.unavailable!, /not drawn here yet/);
-  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true, band: "visible", framed: 0 }, "a flat chart is seen from above");
+  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true, band: "visible", framed: 0, exposure: "eye" }, "a flat chart is seen from above");
   assert.ok(o.seen.every((x) => !x.unavailable), "turning a flat chart is offered when it has 3D");
 });
 
@@ -36,10 +36,10 @@ test("picking a fixed Seen from reframes, even the one shown; Free keeps the han
 test("a style a view cannot draw falls back to Chart, and the choice is kept for the next view", () => {
   const galaxy = flatChart();
   const o = viewOptions(galaxy, { style: "3d", seen: "free" });
-  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true, band: "visible", framed: 0 });
+  assert.deepEqual(o.shown, { style: "chart", seen: "above", scale: "readable", hud: true, band: "visible", framed: 0, exposure: "eye" });
   assert.ok(o.seen.slice(1).every((x) => x.unavailable), "a flat-only view cannot be turned");
   assert.equal(o.turnable, false);
-  assert.deepEqual(viewOptions(system, { style: "3d", seen: "free" }).shown, { style: "3d", seen: "free", scale: "readable", hud: true, band: "visible", framed: 0 });
+  assert.deepEqual(viewOptions(system, { style: "3d", seen: "free" }).shown, { style: "3d", seen: "free", scale: "readable", hud: true, band: "visible", framed: 0, exposure: "eye" });
 });
 
 test("a kept choice is read back safely", () => {
@@ -100,4 +100,12 @@ test("the band switch reads its words from the master sheet's Bands table, one v
   assert.deepEqual([...VIEW_BANDS].sort(), [...views].sort() as string[]);
   assert.equal(VIEW_BAND_WORDS.xray, "X-ray");
   assert.equal(VIEW_BAND_PLAIN.infrared, "heat light");
+});
+
+test("a long exposure is True's choice where the view draws the sky's stars, and the eye's otherwise (VP2)", () => {
+  const spec = { styles: { chart: true as const, true: true as const }, long: true as const };
+  assert.equal(viewOptions(spec, { style: "true", seen: "free", exposure: "long" }).shown.exposure, "long");
+  assert.equal(viewOptions(spec, { style: "chart", seen: "above", exposure: "long" }).shown.exposure, "eye");
+  assert.ok(viewOptions({ styles: { true: true } }, { style: "true", seen: "free", exposure: "long" }).exposures.find((e) => e.value === "long")!.unavailable);
+  assert.equal(readViewChoice(JSON.stringify({ style: "true", seen: "free", exposure: "long" })).exposure, "long");
 });

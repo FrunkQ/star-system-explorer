@@ -6,7 +6,8 @@
 //
 // Three looks: "true" (the light as it is, tone-mapped), "3d" (the same ground as a diagram: shaded relief in the
 // chart's colours with contour lines), "wireframe" (the mesh's edges on the chart's ground).
-import { ACESFilmicToneMapping, AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Points, Scene, SphereGeometry, SRGBColorSpace, Vector3 } from "three";
+import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Points, Scene, SphereGeometry, SRGBColorSpace, Vector3 } from "three";
+import { startFinish, type Finish } from "./finish.ts";
 import { MeshBasicNodeMaterial, PointsNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
 import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
 
@@ -98,6 +99,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     return null;
   }
   renderer.outputColorSpace = LinearSRGBColorSpace;
+  let finish: Finish | null = null;
   const backend = (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? "webgpu" : "webgl2";
   const scene = new Scene();
   // A logarithmic depth buffer holds a pebble at 5 cm and the far ring 300 km off in one frame.
@@ -363,7 +365,8 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       uInk.value.set(ink.r, ink.g, ink.b);
       if (f.look !== lastLook) {
         lastLook = f.look;
-        renderer.toneMapping = isTrue ? ACESFilmicToneMapping : NoToneMapping;
+        // True's tone mapping is the shared finish's (AgX, finish.ts); the diagram looks are drawn straight.
+        renderer.toneMapping = NoToneMapping;
         renderer.outputColorSpace = isTrue ? SRGBColorSpace : LinearSRGBColorSpace;
         for (const m of allMats()) m.needsUpdate = true;
       }
@@ -389,9 +392,13 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         m.material = isTrue ? ms.true : f.look === "wireframe" ? ms.wire : ms.chart;
 
       }
-      renderer.render(scene, camera);
+      // True through the shared finish (VP1): half-float light, the eye's glare (the sun's disc and glint bloom by
+      // the CIE curve), AgX and dither; the exposure is already in the materials (`uExp`).
+      if (isTrue) (finish ??= startFinish(renderer)).render(scene, camera, { exposure: 1, pixel_deg: (pxAngle * 180) / Math.PI });
+      else renderer.render(scene, camera);
     },
     dispose() {
+      finish?.dispose();
       dropAll();
       dome.geometry.dispose();
       starGeom.dispose();

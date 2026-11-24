@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
+  import { longGain, basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
@@ -43,6 +43,8 @@
     fields = new Map(),
     pencil,
     reframe = 0,
+    sky,
+    long = false,
   }: {
     bands?: Band3D[];
     bodies: Body3D[];
@@ -78,6 +80,10 @@
     pencil?: (id: string) => boolean;
     /** Bumped each time a fixed "Seen from" is picked: the camera goes back to that framing (turn, zoom and slide). */
     reframe?: number;
+    /** True: the sky's stars from this system (stars-behind.ts), drawn behind everything (VP2). */
+    sky?: { key: string; dirs: Float32Array; share: Float32Array };
+    /** True: a long exposure that lifts the stars (a composite; the note says so). */
+    long?: boolean;
   } = $props();
   const trueBand = $derived(band === "xray" || band === "infrared" ? band : "visible");
   const overlay = $derived(hud);
@@ -461,6 +467,10 @@
           height: h,
           ground,
           light: lightFor(),
+          // The shared finish (VP1). While the star draws its own glow (SG1's sprite) the eye's glare stays off, so
+          // the star is not glared twice; the glow moves onto the finish when the star is drawn at its real brightness.
+          finish: { glare: halo === null },
+          ...(sky && trueBand === "visible" && !mag ? { stars: { ...sky, gain: long ? longGain(sky.share, cam.fovY / h) : 1 } } : {}),
         });
         return;
       }

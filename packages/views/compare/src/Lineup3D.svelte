@@ -175,6 +175,8 @@
       ground: token("--sse-chart-ground", "--sse-ground"),
       ...(look === "true" ? { light: { from: [-0.75, 0.45, 0.6] } } : look === "3d" ? { light: { from: [-0.6, 0.5, 0.9], ambient: 0.35, ground: true } } : {}),
       ortho: { width, height, near: 1, far: 2 * deepest + 10 },
+      // True through the shared finish (VP1): high range, AgX and dither as every True view; no glare straight on.
+      ...(look === "true" ? { finish: { glare: false } } : {}),
     });
   });
 </script>

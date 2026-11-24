@@ -22,7 +22,7 @@
   import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, readTrueFace, starCss, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
+  import { readLiveStar, readTrueFace, starsBehind, starCss, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -230,6 +230,28 @@
   // True (V10a): each world's surface is read from its level-0 tiles (the Body globe's own, about 3 s a world in the
   // kernel), one at a time, the selected world first, and kept for this page. Only on the GM's seat, which reads tiles.
   const looksTrue = $derived(shownView.style === "true");
+  // True (VP2): the sky's stars from this system's place, read once per system and drawn behind everything; from the
+  // Sun's place, laid square on the system's frame, when the system has none yet (fudge register).
+  const SKY_LIMIT = 6.5;
+  const SQUARE = { to_galactic: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] as [[number, number, number], [number, number, number], [number, number, number]] };
+  let skyBehind = $state<{ key: string; dirs: Float32Array; share: Float32Array } | null>(null);
+  $effect(() => {
+    const sys = scene.system;
+    if (!looksTrue || skyBehind?.key === sys) return;
+    untrack(() =>
+      void (async () => {
+        const ask = { limit_mag: SKY_LIMIT, band: "V", bands: ["B", "V"] };
+        let r = await ctx.session.skyFromHere({ ...ask, observer: sys });
+        if (!r.ok) r = await ctx.session.skyFromHere(ask);
+        const sky = r.ok ? (r.sky as { frame?: unknown; stars?: { dir: number[]; luminosity_lsun: number; distance_pc: number; teff_k?: number; components?: { teff_k: number }[] }[] }) : null;
+        if (!sky?.stars || scene.system !== sys) return;
+        const f = sky.frame as { to_galactic?: unknown } | null | undefined;
+        const frame = f && typeof f === "object" && Array.isArray(f.to_galactic) ? (f as typeof SQUARE) : SQUARE;
+        const stars = sky.stars.map((x) => ({ dir: [x.dir[0]!, x.dir[1]!, x.dir[2]!] as [number, number, number], luminosity_lsun: x.luminosity_lsun, distance_pc: x.distance_pc, teff_k: x.teff_k ?? x.components?.[0]?.teff_k ?? 5800 }));
+        skyBehind = { key: sys, ...starsBehind(stars, frame) };
+      })(),
+    );
+  });
   let surfaces = $state<Map<string, TrueTexture>>(new Map());
   let reading = $state<{ done: number; of: number; none: number; why: string } | null>(null);
   let trueGen = 0;
@@ -323,9 +345,11 @@
             ? `${reading.none} of ${reading.of} worlds are drawn plain, with no surface to show (the kernel: ${reading.why}).`
             : "",
   );
+  // Said only for the long exposure, a composite; at the eye's exposure the faint stars speak for themselves.
+  const skyNote = $derived(skyBehind && shownView.exposure === "long" ? "Long exposure: the stars are lifted, a composite." : "");
   // Each thing a face could not show, said once for the system (a colour the sheet lacks, a giant's dark deep air).
   const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
-  const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
+  const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : "", skyNote].filter(Boolean).join(" "));
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
@@ -354,7 +378,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}

@@ -117,3 +117,8 @@ export type { TrueBody, TrueLook } from "./true-body.ts";
 // The stars over a landing site and the eye's adaptation (night-sky.ts).
 export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";
 export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";
+// The shared finish (VP1) and the sky's stars behind True (VP2).
+export { startFinish, type Finish, type FinishFrame } from "./finish.ts";
+export { GLARE_FLOOR_DEG, glareLadder, glareShare, glareTotal, rungScale, type GlareRung } from "./finish-glare.ts";
+export { longGain, starsBehind, starTint, type SkyStar as BehindStar } from "./stars-behind.ts";
+export type { GpuStars } from "./gpu.ts";
