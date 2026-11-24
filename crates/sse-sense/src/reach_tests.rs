@@ -207,14 +207,21 @@ fn an_aluminium_skin_reads_its_heats_from_the_sheet() {
     t.skin.effect = "melt".into();
     let melt = ask(beam(1e6, None), t, 1e5).takes_j_m2.unwrap();
     assert!(melt < want / 10.0, "{melt}");
-    // Tungsten has no boiling figures yet, and says so.
+    // Ti-6Al-4V has only its melting point so far (MP28), and says so.
     let mut w = target(None);
-    w.skin.material = Some("tungsten".into());
+    w.skin.material = Some("ti-6al-4v".into());
     let e = ask(beam(1e6, None), w, 1e5);
     assert_eq!(e.reading, "unknown");
     assert!(
-        e.missing.iter().any(|k| k == "tungsten.heat_to_boil"),
+        e.missing.iter().any(|k| k == "ti-6al-4v.heat_to_boil"),
         "{:?}",
         e.missing
+    );
+    // Tungsten has its boiling figures from MP28 and now reads from the sheet.
+    let mut w = target(None);
+    w.skin.material = Some("tungsten".into());
+    assert_eq!(
+        ask(beam(1e6, None), w, 1e5).takes_from.as_deref(),
+        Some("sheet")
     );
 }

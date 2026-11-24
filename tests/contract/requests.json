@@ -3452,5 +3452,12 @@
   "construct": "u:matter/construct:lander",
   "where_at": 63115210800,
   "fixture": "sol"
- }
+ },
+ {"op": "load_stack", "packs": ["$pack:rpg-templates"]},
+ {"op": "open_universe", "id": "rs4", "seed": "rs4"},
+ {"op": "create", "template": "freighter", "under": "u:rs4/sys:0", "name": "Columbia", "at_s": 100},
+ {"op": "set_authored_batch", "occurred_at_s": 100, "edits": [{"address": "u:rs4/sys:0/ship:1", "field": "construct.mass_kg", "value": 45000.0}, {"address": "u:rs4/sys:0/ship:1", "field": "part.eagle.mass_kg", "value": 15000.0}]},
+ {"op": "split_construct", "address": "u:rs4/sys:0/ship:1", "key": "eagle", "name": "Eagle", "parts": ["eagle"], "at_s": 500},
+ {"op": "join_constructs", "address": "u:rs4/sys:0/ship:1", "with": "u:rs4/sys:0/ship:eagle", "at_s": 600},
+ {"op": "join_constructs", "address": "u:rs4/sys:0/ship:1", "with": "u:rs4/sys:0/ship:eagle", "how": "merge", "at_s": 700}
 ]

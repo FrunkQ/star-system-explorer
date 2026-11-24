@@ -1,0 +1,28 @@
+{
+ "construct": "jwst-ariane-5-upper-stage",
+ "name": "JWST's Ariane 5 ESC-D upper stage",
+ "about": "Left on JWST's transfer away from Earth.",
+ "pieces": [
+  {
+   "from_s": 63808908489,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 512858246.2936267,
+     "e": 0.9869461297587485,
+     "i_deg": 23.72453245199746,
+     "node_deg": 169.5864382273308,
+     "peri_deg": 110.3693450229248,
+     "m0_deg": 0.0,
+     "epoch_s": 63808907978
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "on the same transfer as JWST at separation; it was not corrected and drifted away"
+  }
+ ],
+ "events": []
+}

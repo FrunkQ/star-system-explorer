@@ -1,0 +1,34 @@
+{
+ "construct": "msl-back-shell",
+ "name": "MSL back shell and parachute",
+ "about": "Cast off by MSL on the way down to Gale crater.",
+ "pieces": [
+  {
+   "from_s": 63512702267,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "fall"
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "separated on the way down (from memory)",
+   "to_s": 63512702387
+  },
+  {
+   "from_s": 63512702387,
+   "state": {
+    "kind": "gone",
+    "how": "impacted"
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "came down under its parachute about 600 m from the rover (from memory)"
+  }
+ ],
+ "events": []
+}

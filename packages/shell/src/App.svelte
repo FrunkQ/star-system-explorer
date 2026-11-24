@@ -40,6 +40,7 @@
   import { atomIssueTarget, flowEntries, lensEntries, lensTarget, loadAtoms, physicsTarget } from "../../agents/src/orac-targets.ts";
   import { programTarget, ruleEntries, sifterEntries, sifterTarget } from "../../agents/src/orac-rules.ts";
   import { blockEntries, boxTarget, tableTarget } from "../../agents/src/orac-blocks.ts";
+  import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -52,7 +53,8 @@
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
-  import { Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
+  import { Picker, Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
+  import { SUBJECT_KIND_ORDER, subjectItems, type PickItem } from "../../ui-contract/src/index.ts";
   import workspaceDoc from "./documents/workspace.gm.json";
   import physicsDoc from "./documents/physics.gm.json";
   import packsDoc from "./documents/packs.gm.json";
@@ -914,6 +916,31 @@
     }
     goTo(v);
   }
+  // The picker beside the place's name (24 Nov): the level above first, then this level and what is in it, then the
+  // other ways about (systems in the campaign, recent places). One component; the content changes with the scale.
+  const atBodies = $derived(railScale === "system" || railScale === "world");
+  const pickSystems = $derived([{ id: "sys:", label: base.title }, ...adoptedSystems.map((a) => ({ id: `sys:${a.system}`, label: a.title }))]);
+  const pickItems = $derived.by<PickItem[]>(() => {
+    if (atBodies) return subjectItems(scene.subjects);
+    // The galaxy holds the campaign's systems; the web and the galaxies nearby hold what their view names below them.
+    if (railScale === "galaxy") return pickSystems.map((x) => ({ ...x, kinds: [] }));
+    return [
+      ...(downScale ? [{ id: `scale:${downScale}`, label: PLACE_WORDS[downScale], kinds: [] }] : []),
+      ...(downScale ? (belowNote?.children ?? []).map((c, j) => ({ id: `child:${j}`, label: c.name, kinds: [] })) : []),
+    ];
+  });
+  const pickSummary = $derived.by(() => {
+    if (atBodies) return `${scene.subjects.length} ${scene.subjects.length === 1 ? "body" : "bodies"}`;
+    if (railScale === "galaxy") return `${pickSystems.length} ${pickSystems.length === 1 ? "system" : "systems"}`;
+    const n = belowNote?.children?.length ?? 0;
+    return n ? `${n} below` : "Below";
+  });
+  const pickAbove = $derived(steps.filter((x) => !x.current && !x.below).reverse().map((u) => ({ id: `up:${u.scale}`, label: u.label, caption: PLACE_WORDS[u.scale] === u.label ? undefined : PLACE_WORDS[u.scale] })));
+  const pickSections = $derived([
+    ...(atBodies && adoptedSystems.length ? [{ label: "Other systems in this campaign", entries: pickSystems.filter((x) => x.id !== `sys:${viewing?.system ?? ""}`) }] : []),
+    ...(!atBodies && railScale !== "galaxy" ? [{ label: "Systems in this campaign", entries: pickSystems }] : []),
+    { label: "Recent", entries: recentElsewhere.map((r, j) => ({ id: `recent:${j}`, label: placeWords(r) })) },
+  ]);
   // The address bar's Back and Forward, and a pasted link, move through places.
   function fromHash() {
     const p = parsePlaceHash(location.hash);
@@ -954,6 +981,13 @@
   let describing = $state<string | null>(null);
   function describe(address: string) {
     describing = address;
+    agentsOpen = true;
+    agentsDialog?.showModal();
+  }
+  // "Ask Orac to create it" (editing screens, Alex 24 Nov): opens Orac with the request written in; nothing is drafted until the GM presses Draft.
+  let asking = $state<string | null>(null);
+  function askOrac(request: string) {
+    asking = request;
     agentsOpen = true;
     agentsDialog?.showModal();
   }
@@ -1032,7 +1066,8 @@
       else if ("screen" in a) (toSystem(), go(a.screen));
       else if ("world" in a) (toWorld(someWorld()), (ws.screen = a.world));
       else if ("dialog" in a) {
-        if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
+        if (a.dialog === "ask" && a.orac) askOrac(a.orac);
+        else if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
         else if (a.dialog === "grow") openMake("generate");
         else if (a.dialog === "bring") openCampaign();
         else if (a.dialog === "share" && share) window.open(share.start(here()), "_blank", "noopener");
@@ -1081,9 +1116,10 @@
         sifterTarget(s, ws, (factsDoc as unknown as AuthoredFacts).scope),
         boxTarget(s, ws),
         tableTarget(s, ws),
+        substanceTarget(s, ws),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
-      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s)],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...handbookEntries()],
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
@@ -1476,41 +1512,22 @@
           <h1 class="title" data-place={s.scale}>{s.scale === "world" ? (selName ?? "A world") : s.label}</h1>
         {/if}
         {#if s.current}
-          <!-- Down: what is nested below this step, the systems in the campaign, and recent places. -->
-          <label class="goto">
-            <span class="sr">{railScale === "system" || railScale === "world" ? "Go to a body" : "Go down"}</span>
-            <span class="goto-mark" aria-hidden="true">▾</span>
-            <select aria-label={railScale === "system" || railScale === "world" ? "Go to a body" : "Go down"} value="" data-below={railScale} onchange={(e) => { goBelow(e.currentTarget.value); e.currentTarget.value = ""; }}>
-              {#if railScale === "system" || railScale === "world"}
-                <option value="" disabled>{placeBodies.length} {placeBodies.length === 1 ? "body" : "bodies"}</option>
-                <option value="@system">The whole system</option>
-                {#each placeBodies as b (b.address)}<option value={b.address}>{b.depth ? "\u00a0\u00a0".repeat(b.depth) : ""}{b.label}</option>{/each}
-                {#if adoptedSystems.length}
-                  <optgroup label="Other systems in this campaign">
-                    {#if viewing}<option value="sys:">{base.title}</option>{/if}
-                    {#each adoptedSystems.filter((a) => a.system !== viewing?.system) as a (a.system)}<option value={`sys:${a.system}`}>{a.title}</option>{/each}
-                  </optgroup>
-                {/if}
-              {:else}
-                <option value="" disabled>Below ▾</option>
-                {#if downScale}<option value={`scale:${downScale}`}>{PLACE_WORDS[downScale]}</option>{/if}
-                {#if belowNote?.children?.length && downScale}
-                  <optgroup label={`In ${belowNote.name}`} data-children>{#each belowNote.children as c, j (c.id)}<option value={`child:${j}`}>{c.name}</option>{/each}</optgroup>
-                {/if}
-                <optgroup label="Systems in this campaign">
-                  <option value="sys:">{base.title}</option>
-                  {#each adoptedSystems as a (a.system)}<option value={`sys:${a.system}`}>{a.title}</option>{/each}
-                </optgroup>
-              {/if}
-              {#if steps.some((x) => !x.current && !x.below)}
-                <!-- Out: every step above, for a phone (where the line shows only the one above) and the keyboard. -->
-                <optgroup label="Further out">{#each steps.filter((x) => !x.current && !x.below) as u (u.scale)}<option value={`up:${u.scale}`}>{u.label}</option>{/each}</optgroup>
-              {/if}
-              {#if recentElsewhere.length}
-                <optgroup label="Recent">{#each recentElsewhere as r, j (j)}<option value={`recent:${j}`}>{placeWords(r)}</option>{/each}</optgroup>
-              {/if}
-            </select>
-          </label>
+          <!-- The picker: the level above, this level and what is in it, the systems in the campaign, and recent places. -->
+          <span class="goto" data-below={railScale}>
+            <Picker
+              summary={pickSummary}
+              label={atBodies ? "Go to a body" : "Go down"}
+              items={pickItems}
+              selected={atBodies ? ws.selection : null}
+              kindOrder={SUBJECT_KIND_ORDER}
+              above={pickAbove}
+              top={atBodies ? { id: "@system", label: "The whole system", caption: scene.title } : undefined}
+              sections={pickSections}
+              placeholder={atBodies ? "Find a body…" : "Find…"}
+              heading={!atBodies && belowNote?.children?.length ? `In ${belowNote.name}` : undefined}
+              onpick={goBelow}
+            />
+          </span>
         {:else}
           <button type="button" class="step" class:up={parent} class:below={s.below} class:far={!s.below && !parent} data-place-step={s.scale} data-go={s.scale === "system" ? "system" : undefined} onclick={() => goPlace(s.place)} title={s.below ? `Back down to ${s.label}` : `Up to ${s.label}${parent ? " (Esc)" : ""}`}>{#if parent}<span class="up-arrow" aria-hidden="true">‹ </span>{/if}<span class="up-name"><span class="long">{s.label}</span>{#if SHORT_WORDS[s.scale] && s.label === PLACE_WORDS[s.scale]}<span class="short" aria-hidden="true">{SHORT_WORDS[s.scale]}</span>{/if}</span></button>
         {/if}
@@ -1733,8 +1750,8 @@
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
-<dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => ((agentsOpen = !!agentsDialog?.open), agentsOpen || (describing = null))}>
-  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} describe={describing} />{/if}
+<dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => ((agentsOpen = !!agentsDialog?.open), agentsOpen || ((describing = null), (asking = null)))}>
+  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} describe={describing} ask={asking} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -1946,19 +1963,12 @@
     flex: 0 1 auto;
     min-width: 8em;
   }
-  .goto select[data-below="web"],
-  .goto select[data-below="cluster"],
-  .goto select[data-below="galaxy"] {
-    max-width: 5.5em;
-  }
   .sep.below {
     opacity: 0.6;
   }
   .goto {
-    position: relative;
-  }
-  .goto-mark {
-    display: none;
+    display: inline-flex;
+    min-width: 0;
   }
   .place .short {
     display: none;
@@ -1983,16 +1993,6 @@
   }
   .up-arrow {
     display: none;
-  }
-  .goto select {
-    font: inherit;
-    font-size: 12px;
-    color: var(--sse-ink-muted);
-    background: transparent;
-    border: 0;
-    border-bottom: 1px dotted var(--sse-rule);
-    cursor: pointer;
-    max-width: 7.5em;
   }
   .barbtn {
     height: 32px;
@@ -2167,13 +2167,6 @@
   }
   .spacer {
     flex: 1;
-  }
-  .sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
   }
   .branch-stamp {
     position: absolute;
@@ -2608,27 +2601,11 @@
     .sep.below {
       display: none;
     }
-    /* Down is a small ▾ beside the name; the list opens over it. */
+    /* Down is a small ▾ beside the name (the picker draws it); the list opens across the screen. */
     .place .goto {
       flex: none;
       min-width: 0;
-      width: 22px;
-      height: 32px;
-      display: inline-grid;
-      place-items: center;
       align-self: center;
-    }
-    .goto-mark {
-      display: inline;
-      color: var(--sse-accent);
-      font-size: 16px;
-    }
-    .goto select {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      max-width: none;
-      opacity: 0;
     }
     .lens {
       flex: 0 1 auto;

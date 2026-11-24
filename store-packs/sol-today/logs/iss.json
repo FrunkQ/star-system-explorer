@@ -1,0 +1,654 @@
+{
+ "construct": "iss",
+ "name": "International Space Station",
+ "about": "The ISS from Zarya's launch on 20 Nov 1998, as one osculating orbit a year from JPL Horizons (TLE-based). Reboosts and drag are below the big-burns line. The modules and visiting craft join it as their own constructs in RS8.",
+ "pieces": [
+  {
+   "from_s": 63077424063,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 45.92,
+    "lon_deg": 63.34
+   },
+   "mark": "authored",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "at Baikonur before launch; position from memory",
+   "to_s": 63080016063
+  },
+  {
+   "from_s": 63080016063,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ascent"
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "Proton ascent; RS5 flies it",
+   "to_s": 63080016663
+  },
+  {
+   "from_s": 63080016663,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6774983.91546791,
+     "e": 0.0007101997905440832,
+     "i_deg": 36.69436346028932,
+     "node_deg": 298.7708949693794,
+     "peri_deg": 114.4786417791902,
+     "m0_deg": 0.0,
+     "epoch_s": 63083623056
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "Horizons' orbit of 1 Jan 1999 stands in for the weeks before",
+   "to_s": 63083620800
+  },
+  {
+   "from_s": 63083620800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6774983.91546791,
+     "e": 0.0007101997905440832,
+     "i_deg": 36.69436346028932,
+     "node_deg": 298.7708949693794,
+     "peri_deg": 114.4786417791902,
+     "m0_deg": 0.0,
+     "epoch_s": 63083623056
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 1999-01-01 (Horizons, from TLEs)",
+   "to_s": 63115156800
+  },
+  {
+   "from_s": 63115156800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6759645.259565497,
+     "e": 0.002048033084291849,
+     "i_deg": 52.17497644819966,
+     "node_deg": 259.2819760903027,
+     "peri_deg": 86.11226616754672,
+     "m0_deg": 0.0,
+     "epoch_s": 63115157273
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2000-01-01 (Horizons, from TLEs)",
+   "to_s": 63146779200
+  },
+  {
+   "from_s": 63146779200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6746272.767841153,
+     "e": 0.0004391514638784747,
+     "i_deg": 71.65486830353993,
+     "node_deg": 208.1926637561404,
+     "peri_deg": 83.31827557593593,
+     "m0_deg": 0.0,
+     "epoch_s": 63146779557
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2001-01-01 (Horizons, from TLEs)",
+   "to_s": 63178315200
+  },
+  {
+   "from_s": 63178315200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6756303.085325799,
+     "e": 0.001683577833012976,
+     "i_deg": 74.9322719438848,
+     "node_deg": 174.5489428442064,
+     "peri_deg": 76.16025245002967,
+     "m0_deg": 0.0,
+     "epoch_s": 63178312484
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2002-01-01 (Horizons, from TLEs)",
+   "to_s": 63209851200
+  },
+  {
+   "from_s": 63209851200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6769857.356473803,
+     "e": 0.000897614157412368,
+     "i_deg": 70.70685657824791,
+     "node_deg": 147.7315296298104,
+     "peri_deg": 63.30741885952168,
+     "m0_deg": 0.0,
+     "epoch_s": 63209851640
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2003-01-01 (Horizons, from TLEs)",
+   "to_s": 63241387200
+  },
+  {
+   "from_s": 63241387200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6752757.947120338,
+     "e": 0.0009313407715354872,
+     "i_deg": 59.5029986269376,
+     "node_deg": 116.8179920110875,
+     "peri_deg": 63.52361732487134,
+     "m0_deg": 0.0,
+     "epoch_s": 63241386158
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2004-01-01 (Horizons, from TLEs)",
+   "to_s": 63273009600
+  },
+  {
+   "from_s": 63273009600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6730773.049727493,
+     "e": 0.000836674052220072,
+     "i_deg": 34.68635721377116,
+     "node_deg": 53.70898839739443,
+     "peri_deg": 73.61828061769562,
+     "m0_deg": 0.0,
+     "epoch_s": 63273007615
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2005-01-01 (Horizons, from TLEs)",
+   "to_s": 63304545600
+  },
+  {
+   "from_s": 63304545600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6724793.596738848,
+     "e": 0.00193974321542818,
+     "i_deg": 33.78295636449815,
+     "node_deg": 309.8134765157088,
+     "peri_deg": 110.8939894638295,
+     "m0_deg": 0.0,
+     "epoch_s": 63304543297
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2006-01-01 (Horizons, from TLEs)",
+   "to_s": 63336081600
+  },
+  {
+   "from_s": 63336081600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6723010.803401482,
+     "e": 0.003699177044350762,
+     "i_deg": 63.18592247913593,
+     "node_deg": 234.3147877154314,
+     "peri_deg": 76.57862374799346,
+     "m0_deg": 0.0,
+     "epoch_s": 63336082024
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2007-01-01 (Horizons, from TLEs)",
+   "to_s": 63367617600
+  },
+  {
+   "from_s": 63367617600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6719887.116934551,
+     "e": 0.001327310026313134,
+     "i_deg": 74.3633302105116,
+     "node_deg": 166.7618655299551,
+     "peri_deg": 111.3750895197301,
+     "m0_deg": 0.0,
+     "epoch_s": 63367616800
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2008-01-01 (Horizons, from TLEs)",
+   "to_s": 63399240000
+  },
+  {
+   "from_s": 63399240000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6737755.419608806,
+     "e": 0.002099368100558021,
+     "i_deg": 52.50619016162226,
+     "node_deg": 101.1764809377207,
+     "peri_deg": 101.3507145729312,
+     "m0_deg": 0.0,
+     "epoch_s": 63399239456
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2009-01-01 (Horizons, from TLEs)",
+   "to_s": 63430776000
+  },
+  {
+   "from_s": 63430776000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6712090.8699735105,
+     "e": 0.001954016995995551,
+     "i_deg": 28.74359258234125,
+     "node_deg": 16.07873350154555,
+     "peri_deg": 89.0514776758578,
+     "m0_deg": 0.0,
+     "epoch_s": 63430773605
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2010-01-01 (Horizons, from TLEs)",
+   "to_s": 63462312000
+  },
+  {
+   "from_s": 63462312000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6729731.790261053,
+     "e": 0.001258036143694827,
+     "i_deg": 44.31453850153449,
+     "node_deg": 277.2662751709288,
+     "peri_deg": 132.8523286145771,
+     "m0_deg": 0.0,
+     "epoch_s": 63462314335
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2011-01-01 (Horizons, from TLEs)",
+   "to_s": 63493848000
+  },
+  {
+   "from_s": 63493848000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6769026.323414888,
+     "e": 0.00180115618237719,
+     "i_deg": 63.7741800666907,
+     "node_deg": 232.7458471175994,
+     "peri_deg": 243.229436800277,
+     "m0_deg": 0.0,
+     "epoch_s": 63493847858
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2012-01-01 (Horizons, from TLEs)",
+   "to_s": 63525470400
+  },
+  {
+   "from_s": 63525470400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6792600.7179445,
+     "e": 0.001994878865623466,
+     "i_deg": 70.95713474001207,
+     "node_deg": 211.1783508892996,
+     "peri_deg": 114.8362411132637,
+     "m0_deg": 0.0,
+     "epoch_s": 63525472432
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2013-01-01 (Horizons, from TLEs)",
+   "to_s": 63557006400
+  },
+  {
+   "from_s": 63557006400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6790147.059524823,
+     "e": 0.001342860631001483,
+     "i_deg": 72.85412850555221,
+     "node_deg": 202.6566150375439,
+     "peri_deg": 67.9704429629133,
+     "m0_deg": 0.0,
+     "epoch_s": 63557008915
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2014-01-01 (Horizons, from TLEs)",
+   "to_s": 63588542400
+  },
+  {
+   "from_s": 63588542400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6783712.193412407,
+     "e": 0.0006586535512273516,
+     "i_deg": 74.12336118527352,
+     "node_deg": 194.7023933597648,
+     "peri_deg": 129.474141253402,
+     "m0_deg": 0.0,
+     "epoch_s": 63588542448
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2015-01-01 (Horizons, from TLEs)",
+   "to_s": 63620078400
+  },
+  {
+   "from_s": 63620078400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6784385.441690456,
+     "e": 0.0004124808039179884,
+     "i_deg": 75.06637323248937,
+     "node_deg": 177.2366450806043,
+     "peri_deg": 37.60585565327111,
+     "m0_deg": 0.0,
+     "epoch_s": 63620075863
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2016-01-01 (Horizons, from TLEs)",
+   "to_s": 63651700800
+  },
+  {
+   "from_s": 63651700800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6781079.22497431,
+     "e": 0.001477172815136552,
+     "i_deg": 72.84802136239114,
+     "node_deg": 156.8945264730726,
+     "peri_deg": 44.69595550504052,
+     "m0_deg": 0.0,
+     "epoch_s": 63651699905
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2017-01-01 (Horizons, from TLEs)",
+   "to_s": 63683236800
+  },
+  {
+   "from_s": 63683236800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6778057.607449032,
+     "e": 0.001232417491111982,
+     "i_deg": 68.8907966121091,
+     "node_deg": 141.2520585644712,
+     "peri_deg": 46.47122749675238,
+     "m0_deg": 0.0,
+     "epoch_s": 63683239450
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2018-01-01 (Horizons, from TLEs)",
+   "to_s": 63714772800
+  },
+  {
+   "from_s": 63714772800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6781162.3899474135,
+     "e": 0.0008455635996764625,
+     "i_deg": 63.38598398890286,
+     "node_deg": 125.8766618760958,
+     "peri_deg": 55.7665043790247,
+     "m0_deg": 0.0,
+     "epoch_s": 63714770297
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2019-01-01 (Horizons, from TLEs)",
+   "to_s": 63746308800
+  },
+  {
+   "from_s": 63746308800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6790814.561385475,
+     "e": 0.0007643646216941188,
+     "i_deg": 59.22036656730745,
+     "node_deg": 116.0030712877944,
+     "peri_deg": 60.93938331368338,
+     "m0_deg": 0.0,
+     "epoch_s": 63746308751
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2020-01-01 (Horizons, from TLEs)",
+   "to_s": 63777931200
+  },
+  {
+   "from_s": 63777931200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6796554.943455444,
+     "e": 0.001106904696800332,
+     "i_deg": 55.18627299756827,
+     "node_deg": 106.9450135927856,
+     "peri_deg": 79.14705366507697,
+     "m0_deg": 0.0,
+     "epoch_s": 63777932100
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2021-01-01 (Horizons, from TLEs)",
+   "to_s": 63809467200
+  },
+  {
+   "from_s": 63809467200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6793417.053358205,
+     "e": 0.001097431371271027,
+     "i_deg": 53.1778059040323,
+     "node_deg": 102.5382000780372,
+     "peri_deg": 13.02363329473364,
+     "m0_deg": 0.0,
+     "epoch_s": 63809465961
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2022-01-01 (Horizons, from TLEs)",
+   "to_s": 63841003200
+  },
+  {
+   "from_s": 63841003200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6798015.745263018,
+     "e": 0.001097567335598977,
+     "i_deg": 50.13459479177058,
+     "node_deg": 95.76400733339129,
+     "peri_deg": 76.61309472023525,
+     "m0_deg": 0.0,
+     "epoch_s": 63841004310
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2023-01-01 (Horizons, from TLEs)",
+   "to_s": 63872539200
+  },
+  {
+   "from_s": 63872539200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6800779.258412044,
+     "e": 0.00112286264234682,
+     "i_deg": 46.95632839746898,
+     "node_deg": 88.50410047635505,
+     "peri_deg": 353.4082446925187,
+     "m0_deg": 0.0,
+     "epoch_s": 63872539783
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2024-01-01 (Horizons, from TLEs)",
+   "to_s": 63904161600
+  },
+  {
+   "from_s": 63904161600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6794699.238087732,
+     "e": 0.000944827310434154,
+     "i_deg": 41.65674399988748,
+     "node_deg": 75.44318885762479,
+     "peri_deg": 27.09413339436428,
+     "m0_deg": 0.0,
+     "epoch_s": 63904163099
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2025-01-01 (Horizons, from TLEs)",
+   "to_s": 63935697600
+  },
+  {
+   "from_s": 63935697600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 6792572.920856017,
+     "e": 0.001284975032370105,
+     "i_deg": 38.56225929551365,
+     "node_deg": 66.74982284117822,
+     "peri_deg": 24.66032263463248,
+     "m0_deg": 0.0,
+     "epoch_s": 63935699926
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "osculating orbit on 2026-01-01 (Horizons, from TLEs)"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 63080016063,
+   "kind": "launch",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "Zarya on a Proton from Baikonur (time from memory)"
+  }
+ ]
+}
