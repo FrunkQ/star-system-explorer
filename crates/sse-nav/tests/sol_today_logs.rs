@@ -1,0 +1,215 @@
+//! The Sol today pack's flight logs (track RS, package RS3), as written by
+//! `scripts/spaceflight/build_logs.py`: every log reads as a `FlightLog`, its
+//! pieces run in order without gaps, every split names constructs that have
+//! their own log from that moment, and Cassini rewinds through its flybys.
+use sse_nav::flightlog::{Ephemeris, FlightLog, Mark, State, What};
+use sse_nav::kepler::{norm, sub};
+use sse_nav::scenario::sol;
+use std::collections::BTreeMap;
+use std::path::PathBuf;
+
+fn logs() -> BTreeMap<String, FlightLog> {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today/logs");
+    let mut names: Vec<PathBuf> = std::fs::read_dir(&dir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .filter(|p| p.extension().is_some_and(|x| x == "json"))
+        .collect();
+    names.sort();
+    let mut out = BTreeMap::new();
+    for p in names {
+        let text = std::fs::read_to_string(&p).unwrap();
+        let l: FlightLog =
+            serde_json::from_str(&text).unwrap_or_else(|e| panic!("{}: {e}", p.display()));
+        let stem = p.file_stem().unwrap().to_string_lossy().to_string();
+        assert_eq!(stem, l.construct, "file name and construct");
+        assert!(out.insert(stem, l).is_none());
+    }
+    out
+}
+
+#[test]
+fn every_log_reads_and_runs_in_order() {
+    let all = logs();
+    assert!(all.len() >= 30, "{} logs", all.len());
+    for (id, l) in &all {
+        assert!(!l.pieces.is_empty(), "{id}: no pieces");
+        for w in l.pieces.windows(2) {
+            assert!(
+                w[0].from_s < w[1].from_s,
+                "{id}: pieces out of order at {}",
+                w[1].from_s
+            );
+            assert_eq!(
+                w[0].to_s,
+                Some(w[1].from_s),
+                "{id}: gap or overlap at {}",
+                w[1].from_s
+            );
+        }
+        for p in &l.pieces {
+            if p.mark == Mark::Estimated {
+                assert!(
+                    p.why.is_some(),
+                    "{id}: an estimated piece at {} says why",
+                    p.from_s
+                );
+            }
+        }
+        let first = l.pieces[0].from_s;
+        for e in &l.events {
+            assert!(e.at_s >= first, "{id}: event before the log begins");
+            if let What::Burn { dv_m_s, .. } = e.what {
+                assert!(
+                    dv_m_s > 0.0 && dv_m_s < 12_000.0,
+                    "{id}: burn of {dv_m_s} m/s"
+                );
+            }
+            if e.mark == Mark::Estimated {
+                assert!(
+                    e.why.is_some(),
+                    "{id}: an estimated event at {} says why",
+                    e.at_s
+                );
+            }
+        }
+        assert!(
+            l.events.windows(2).all(|w| w[0].at_s <= w[1].at_s),
+            "{id}: events out of order"
+        );
+    }
+}
+
+/// One split mechanism for stages, boosters, tanks, landers and probes: each
+/// construct a split names has its own log, with a piece starting right then;
+/// each join is met by a docked piece on the other side.
+#[test]
+fn splits_and_joins_meet_their_logs() {
+    let all = logs();
+    for (id, l) in &all {
+        for (t, into) in l.splits() {
+            let other = all
+                .get(into)
+                .unwrap_or_else(|| panic!("{id} splits into {into}, which has no log"));
+            assert!(
+                other.pieces.iter().any(|p| p.from_s == t),
+                "{into} has no piece starting at {id}'s split ({t})"
+            );
+        }
+        for e in &l.events {
+            if let What::Join { with } = &e.what {
+                let other = &all[with];
+                let (_, p) = other.piece_at(e.at_s).expect("a piece at the join");
+                match &p.state {
+                    State::Docked { to } => assert_eq!(to, id),
+                    _ => {
+                        // The other side docks with this one: this log must then be docked to it.
+                        let (_, q) = l.piece_at(e.at_s).unwrap();
+                        assert!(
+                            matches!(&q.state, State::Docked { to } if to == with),
+                            "{id} joins {with}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+    // The one-use parts end, and the reused booster lands.
+    for gone in [
+        "as-506-s-ic",
+        "as-506-s-ii",
+        "apollo-11-service-module",
+        "sts-1-external-tank",
+    ] {
+        let last = &all[gone].pieces.last().unwrap().state;
+        assert!(matches!(last, State::Gone { .. }), "{gone} ends gone");
+    }
+    for down in [
+        "falcon-9-b1019",
+        "sts-1-srb-left",
+        "sts-1-srb-right",
+        "apollo-11-eagle-descent-stage",
+    ] {
+        let last = &all[down].pieces.last().unwrap().state;
+        assert!(matches!(last, State::Landed { .. }), "{down} ends landed");
+    }
+}
+
+/// Cassini from Horizons: each arc solved from its ends meets Venus, Venus,
+/// Earth and Jupiter on the flyby times, then Saturn on the day of arrival,
+/// where the log puts it in orbit around Saturn.
+#[test]
+fn cassini_rewinds_through_its_flybys_to_saturn() {
+    let sys = sol();
+    let l = &logs()["cassini"];
+    let flybys: Vec<(i64, String)> = l
+        .events
+        .iter()
+        .filter_map(|e| match &e.what {
+            What::Flyby { body, .. } => Some((e.at_s, body.clone())),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(flybys.len(), 4);
+    for (t, body) in &flybys {
+        let just = l.at(t - 1, &sys);
+        assert_eq!(just.kind, "course", "{body}");
+        let b = Ephemeris::body(&sys, body, *t as f64).unwrap();
+        let miss = norm(sub(just.r_m.unwrap(), b.0));
+        assert!(miss < 1.0e6, "missed {body} by {} km", miss / 1e3);
+    }
+    // A day after arrival (1 Jul 2004): in orbit around Saturn.
+    let soi = l
+        .events
+        .iter()
+        .rfind(|e| matches!(e.what, What::Burn { .. }))
+        .unwrap()
+        .at_s;
+    let after = l.at(soi + 86_400, &sys);
+    assert_eq!(after.kind, "orbit");
+    assert_eq!(after.with.as_deref(), Some("u:sol/sys:sun/body:saturn"));
+    let saturn = Ephemeris::body(&sys, "u:sol/sys:sun/body:saturn", (soi + 86_400) as f64).unwrap();
+    let d = norm(sub(after.r_m.unwrap(), saturn.0));
+    assert!(d < 1.0e10, "{} km from Saturn", d / 1e3);
+    // 2018: gone into Saturn.
+    assert_eq!(l.at(soi + 14 * 365 * 86_400, &sys).kind, "gone");
+}
+
+/// The big-burns fudge, measured: Cassini's log against JPL Horizons'
+/// heliocentric positions in cruise (scripts/spaceflight/horizons_cassini.json).
+/// The error mixes the fudge (no trims, flybys at the planet's centre) with
+/// the NAV fixture's own planet orbits; RS3's package log keeps the figures.
+#[test]
+fn cassini_cruise_against_horizons() {
+    let sys = sol();
+    let l = &logs()["cassini"];
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../scripts/spaceflight/horizons_cassini.json");
+    let hz: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    let measure = hz["measure"].as_object().unwrap();
+    let mut worst = 0.0_f64;
+    for (date, m) in measure {
+        let jd = m["jd"].as_f64().unwrap();
+        let t = (63_115_200_000.0 + (jd - 2_451_545.0) * 86_400.0) as i64;
+        let r: Vec<f64> = m["r_km"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap() * 1e3)
+            .collect();
+        let at = l.at(t, &sys);
+        let got = at.r_m.unwrap_or_else(|| panic!("{date}: {}", at.words));
+        let err = norm(sub(got, [r[0], r[1], r[2]]));
+        let frac = err / norm([r[0], r[1], r[2]]);
+        println!(
+            "{date}: {} ({}) off by {:.0} thousand km, {:.2}% of its distance",
+            at.kind,
+            at.words,
+            err / 1e6,
+            100.0 * frac
+        );
+        worst = worst.max(frac);
+    }
+    assert!(worst < 0.02, "worst {:.2}%", 100.0 * worst);
+}

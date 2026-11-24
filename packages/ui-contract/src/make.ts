@@ -522,7 +522,9 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
       const rin = num(a, "body.radius_inner");
       const rout = num(a, "body.radius_outer");
       const ring = kind === "belt" && parent && parent !== primary && rin !== undefined && rout !== undefined && rout > rin ? { inner_m: rin, outer_m: rout, tau: num(a, "ring.optical_depth") ?? null, albedo: num(a, "ring.albedo") ?? num(a, "body.albedo") ?? null } : undefined;
-      const tilt = num(a, "body.axial_tilt");
+      // Axial tilt in radians: the kernel's, else the catalogue's obliquity (radians once through the door; over π/2
+      // is a retrograde spin, the same lean).
+      const tilt = num(a, "body.axial_tilt") ?? num(a, "body.obliquity");
       return {
         address: a,
         kind,

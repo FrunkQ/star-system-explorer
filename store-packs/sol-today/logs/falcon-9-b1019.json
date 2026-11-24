@@ -1,0 +1,53 @@
+{
+ "construct": "falcon-9-b1019",
+ "name": "Falcon 9 first stage B1019",
+ "about": "Flight 20's booster: boost-back, entry and landing burns, then down on Landing Zone 1. It never flew again.",
+ "pieces": [
+  {
+   "from_s": 63619219953,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "return to launch site"
+    }
+   },
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "why": "MECO at T+2:23, 75 km, 1.67 km/s; boost-back from T+3:47, entry burn T+8:01 for 20 s, landing burn T+9:11 for 33 s. Delta-v of the three burns is not published; RS5's ascent and return physics flies them",
+   "to_s": 63619220392
+  },
+  {
+   "from_s": 63619220392,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 28.4858,
+    "lon_deg": -80.5444
+   },
+   "mark": "estimated",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "why": "Landing Zone 1 (formerly LC-13), position from memory; touchdown T+9:44"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 63619220289,
+   "kind": "entry",
+   "mark": "recorded",
+   "src": "spaceflight101-og2",
+   "writer": "pack",
+   "why": "entry burn start"
+  },
+  {
+   "at_s": 63619220392,
+   "kind": "landing",
+   "mark": "recorded",
+   "src": "usaf-45sw-og2",
+   "writer": "pack",
+   "why": "first landing of an orbital booster, 20:38 EST on 21 Dec"
+  }
+ ]
+}

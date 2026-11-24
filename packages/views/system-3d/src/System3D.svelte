@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, BELT_DUST, beltHaze, drawLiveStar, poleOf, ringProfile, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
+  import { basis, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawLiveStar, poleOf, ringProfile, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
@@ -40,6 +40,8 @@
     star = null,
     band = "visible",
     fields = new Map(),
+    pencil,
+    reframe = 0,
   }: {
     bands?: Band3D[];
     bodies: Body3D[];
@@ -70,6 +72,11 @@
     band?: string;
     /** Mag (V10e): each world's field facts (read_field) by body id; worlds without are drawn dark and fieldless. */
     fields?: ReadonlyMap<string, FieldReadJson>;
+    /** Who knows (track SV, pencil and ink): true for a body the table does not know, drawn in pencil like the
+     * chart's names (quiet, dotted); read afresh whenever the table's knowledge changes. */
+    pencil?: (id: string) => boolean;
+    /** Bumped each time a fixed "Seen from" is picked: the camera goes back to that framing (turn, zoom and slide). */
+    reframe?: number;
   } = $props();
   const trueBand = $derived(band === "xray" || band === "infrared" ? band : "visible");
   const overlay = $derived(hud);
@@ -109,11 +116,15 @@
   let dist = $state(26);
   // Slide (rule 11): where the camera looks, in this frame's display units.
   let pan = $state<[number, number]>([0, 0]);
-  // "Seen from" (rule 12): a fixed view sets the camera's height and puts the slide back; Free keeps what the hands did.
+  // "Seen from" (rule 12): picking a fixed view frames it afresh (height, turn, zoom and slide), even when it is the
+  // one already shown; Free keeps what the hands did.
   $effect(() => {
     const s = seen;
+    void reframe;
     if (s === "free") return;
     pitch = SEEN_ELEVATION[s];
+    yaw = -0.6;
+    dist = 26;
     pan = [0, 0];
   });
   // Changing the scale changes what a distance means: start the camera again from its usual place.
@@ -346,14 +357,31 @@
   }
   // Belts in True: a haze of points between each disc belt's drawn edges, in the star's frame, as faint as starlight
   // on dust allows a screen to show (fudge register: the count is a drawing's, not the belt's).
-  const BELT_POINTS = 1600;
-  const beltHazes = $derived(lay && centreId === root ? bands.filter((b) => b.shape !== "sphere").map((b) => ({ b, pts: beltHaze(Math.min(11.5, lay!.dist(b.a_in_m)), Math.min(11.5, lay!.dist(b.a_out_m)), 0.08, BELT_POINTS) })) : []);
+  const BELT_POINTS = 2400;
+  // Each member keeps its own orbit (made once per belt) and goes round at the Kepler rate on the belts' own clock.
+  const beltMembers = $derived(bands.filter((b) => b.shape !== "sphere").map((b) => ({ b, ps: beltParticles(b.a_in_m, b.a_out_m, 0.08, BELT_POINTS) })));
+  let beltT = $state(0);
+  $effect(() => {
+    if (!isTrue || using !== "gpu" || !beltMembers.some((m) => m.b.gm)) return;
+    const still = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (still) return;
+    const t0 = performance.now();
+    let last = 0;
+    let raf = 0;
+    const step = (now: number) => {
+      if (now - last >= 100) ((last = now), (beltT = ((now - t0) / 1000) * BELT_SECONDS_PER_SECOND));
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  });
+  const beltHazes = $derived(lay && centreId === root ? beltMembers.map(({ b, ps }) => ({ b, pts: beltAt(ps, b.gm ? beltT : 0, b.gm ?? 1, (a) => lay!.dist(a), 11.5) })) : []);
   const ringed = $derived(shown.filter((b) => b.rings?.length).map((b) => b.name));
   const ringsAssumed = $derived(shown.some((b) => b.rings?.some((r) => r.tau === null || r.albedo === null)));
   const ringNote = $derived(
     [
       ringed.length ? `Rings of ${ringed.join(", ")} from their edges, optical depth and albedo${ringsAssumed ? " (a ring with none on record is drawn as a middling one)" : ""}, in the world's equator.` : "",
-      beltHazes.length ? "Belts are a haze of points between their edges: a drawing, not their real numbers." : "",
+      beltHazes.length ? "Belts are a haze of points between their edges going round at the Kepler rate on their own clock, thirty days a second: a drawing, not their real numbers." : "",
     ]
       .filter(Boolean)
       .join(" "),
@@ -391,7 +419,7 @@
           }),
           rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...magRings(fieldOut, fieldIn, faint)],
           // Belts as haze in visible light only: in the other bands they give off next to nothing a screen could show.
-          dots: trueBand === "visible" && !mag ? beltHazes.map(({ pts }) => ({ points: pts.map(rel), colour: BELT_DUST })) : [],
+          dots: trueBand === "visible" && !mag ? beltHazes.map(({ pts }) => ({ points: pts.map(rel), colour: BELT_DUST, size: 1.5 })) : [],
           forward: f,
           up: u,
           fovY: cam.fovY,
@@ -570,7 +598,8 @@
         data-y={p.y.toFixed(2)}
         onclick={() => onselect(b.id)}
         ondblclick={() => hasChildren(bodies, b.id) && b.id !== centreId && enter(b.id)}
-      ><span class="dot"></span>{#if labels}<span class="name" class:hover={!hud}>{b.name}</span>{/if}</button>
+        data-known={pencil ? (pencil(b.id) ? "no" : "yes") : undefined}
+      ><span class="dot"></span>{#if labels}<span class="name" class:hover={!hud} class:pencil={pencil?.(b.id)}>{b.name}{#if pencil?.(b.id)}<span class="sr"> (not known to the table)</span>{/if}</span>{/if}</button>
     {/if}
   {/each}
   <div class="bar">
@@ -630,6 +659,19 @@
     font-style: italic;
     font-size: 14px;
     cursor: pointer;
+  }
+  /* Pencil (track SV): a name the table does not know, quiet and dotted, the same as on the flat chart. */
+  .pin .name.pencil {
+    color: var(--sse-ink-muted);
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+  }
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
   }
   .pin .dot {
     width: 14px;

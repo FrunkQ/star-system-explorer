@@ -6,6 +6,7 @@ import { AdditiveBlending, AmbientLight, BufferGeometry, DoubleSide, Quaternion,
 import { WebGPURenderer } from "three/webgpu";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
+import { ringLight } from "./rings.ts";
 
 export interface GpuItem {
   id: string;
@@ -212,7 +213,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   };
   const torus = new TorusGeometry(1.8, 0.08, 6, 48);
   // A world's rings: an annulus in units of its radius, its texture's u running from the inner edge out.
-  const ringSets = new Map<string, { geom: RingGeometry; tex: DataTexture; mat: MeshStandardMaterial }>();
+  const ringSets = new Map<string, { geom: RingGeometry; tex: DataTexture; mat: MeshBasicMaterial }>();
   const zAxis = new Vector3(0, 0, 1);
   const ringSet = (r: NonNullable<GpuItem["rings"]>) => {
     const hit = ringSets.get(r.key);
@@ -227,7 +228,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     tex.magFilter = LinearFilter;
     tex.minFilter = LinearFilter;
     tex.needsUpdate = true;
-    const mat = new MeshStandardMaterial({ map: tex, transparent: true, side: DoubleSide, depthWrite: false, roughness: 1, metalness: 0 });
+    // Lit by hand (ringLight in rings.ts), not by the scene's lights: a ring is a layer of particles, not a surface.
+    const mat = new MeshBasicMaterial({ map: tex, transparent: true, side: DoubleSide, depthWrite: false });
     const e = { geom, tex, mat };
     ringSets.set(r.key, e);
     return e;
@@ -286,6 +288,11 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         scene.add(m);
         if (o.light && it.rings) {
           const rs = ringSet(it.rings);
+          const n = it.rings.normal;
+          const toLight: Vec3 = o.light.at ? [o.light.at[0] - it.rel[0], o.light.at[1] - it.rel[1], o.light.at[2] - it.rel[2]] : (o.light.from ?? [0, 0, 1]);
+          const toEye: Vec3 = [-it.rel[0], -it.rel[1], -it.rel[2]];
+          // The point light's strength (3) over π, as a lit world's diffuse surface gets.
+          rs.mat.color.setScalar((3 / Math.PI) * ringLight(n, toLight, toEye));
           const rm = new Mesh(rs.geom, rs.mat);
           rm.position.copy(m.position);
           rm.scale.setScalar(it.radius);

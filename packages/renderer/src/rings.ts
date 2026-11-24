@@ -6,6 +6,7 @@
 // (1/μ), nor cast the world's shadow on it; both are in the fudge register. A ring with no τ or albedo on record is
 // drawn at the fallbacks below, also in the register.
 // Belts round the star are a haze of points, one per draw slot, never the real count (also in the register).
+import { constant } from "../../ui-contract/src/index.ts";
 
 /** One ring of a world, as Body3D carries it. */
 export interface RingBand {
@@ -59,6 +60,25 @@ export function ringProfile(rings: readonly RingBand[], tint: [number, number, n
 }
 
 /**
+ * How bright a ring of particles is, relative to its albedo, for light from `toLight` seen from `toEye` (any lengths;
+ * `n` the ring's normal). A layer of many particles scattering once (Chandrasekhar 1960; Cuzzi et al. 1984 for
+ * Saturn's rings) gives I/F = ϖ₀ P/4 · μ₀/(μ₀ + μ) on the lit face, so a ring is brighter than a flat surface of the
+ * same albedo (μ₀) by 1/(μ₀ + μ), and stays bright when the light is low. Seen from the unlit face it shines only by
+ * the light passing through it, drawn as a quarter of the lit face (fudge register). The cover term 1 − e^(−τ(1/μ₀
+ * + 1/μ)) is left to the profile's face-on alpha.
+ */
+export function ringLight(n: readonly number[], toLight: readonly number[], toEye: readonly number[]): number {
+  const len = (v: readonly number[]) => Math.hypot(v[0]!, v[1]!, v[2]!) || 1;
+  const dot = (a: readonly number[], b: readonly number[]) => (a[0]! * b[0]! + a[1]! * b[1]! + a[2]! * b[2]!) / (len(a) * len(b));
+  const l = dot(n, toLight);
+  const e = dot(n, toEye);
+  const mu0 = Math.max(1e-3, Math.abs(l));
+  const mu = Math.max(1e-3, Math.abs(e));
+  const lit = mu0 / (mu0 + mu);
+  return Math.sign(l) === Math.sign(e) ? lit : 0.25 * lit;
+}
+
+/**
  * The pole of a world tilted `tilt_rad` from its orbit's normal (+z). The direction it leans is not on record, so it
  * leans toward +x of the frame (fudge register); a world with no tilt has its rings in its orbit's plane.
  */
@@ -95,7 +115,56 @@ export function beltHaze(inner: number, outer: number, sigma_rad: number, n: num
 }
 
 /**
- * The haze's colour: a dim neutral grey, the colour of rock dust lit by a Sun-like star, kept dark so the points read
- * as faint dust against black space and never as stars (a display choice, in the fudge register with the count).
+ * The haze's colour: a neutral grey, the colour of rock dust lit by a Sun-like star, kept below the worlds so the
+ * points read as dust against black space and never as stars (a display choice, in the fudge register with the count).
  */
-export const BELT_DUST = "#4d4b47";
+export const BELT_DUST = "#8a867f";
+
+/** One drawn member of a belt: its orbit (distance from the star, metres), where it was at t = 0, and its tilt. */
+export interface BeltParticle {
+  a_m: number;
+  phase: number;
+  incl: number;
+  node: number;
+}
+
+/** A fixed number in [0, 1) for member i and draw k (an integer hash, the same every time; no lattice). */
+function draw(i: number, k: number): number {
+  let h = Math.imul(i + 1, 0x9e3779b1) ^ Math.imul(k + 1, 0x85ebca77);
+  h = Math.imul(h ^ (h >>> 16), 0x7feb352d);
+  h = Math.imul(h ^ (h >>> 15), 0x846ca68b);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+/**
+ * `n` members of a belt between `a_in_m` and `a_out_m` round the star: spread evenly by area (a uniform surface
+ * density), at random angles, each tilted by a Rayleigh spread of σ radians about a random node. Each draw is a hash of
+ * the member's number, so the same belt always draws the same members and no spiral or streak shows.
+ */
+export function beltParticles(a_in_m: number, a_out_m: number, sigma_rad: number, n: number): BeltParticle[] {
+  const out: BeltParticle[] = [];
+  for (let i = 0; i < n; i++) {
+    const a_m = Math.sqrt(a_in_m * a_in_m + (a_out_m * a_out_m - a_in_m * a_in_m) * draw(i, 0));
+    out.push({ a_m, phase: 2 * Math.PI * draw(i, 1), incl: sigma_rad * Math.sqrt(-2 * Math.log(1 - 0.999 * draw(i, 2))), node: 2 * Math.PI * draw(i, 3) });
+  }
+  return out;
+}
+
+/**
+ * Where the members are at `t_s` seconds: each goes round on its own circular orbit at the Kepler rate √(GM/a³), so
+ * the inner edge of a belt runs ahead of the outer. `dist` maps metres to display units; nothing is drawn past `cap`.
+ */
+export function beltAt(ps: readonly BeltParticle[], t_s: number, gm: number, dist: (a_m: number) => number, cap: number): [number, number, number][] {
+  return ps.map((p) => {
+    const th = p.phase + Math.sqrt(gm / (p.a_m * p.a_m * p.a_m)) * t_s;
+    const r = Math.min(cap, dist(p.a_m));
+    const x = r * Math.cos(th);
+    const y = r * Math.sin(th);
+    // Tilted about its node: the height is the in-plane distance from the node line times the tilt's sine.
+    const z = r * Math.sin(p.incl) * Math.sin(th - p.node);
+    return [x, y, z];
+  });
+}
+
+/** The belts' own clock in True: thirty days of their time a second, so the main belt goes round in about a minute. */
+export const BELT_SECONDS_PER_SECOND = 30 * constant("day");
