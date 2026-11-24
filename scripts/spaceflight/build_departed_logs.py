@@ -45,19 +45,20 @@ M_SUN, M_EARTH = 1.98847e30, 5.9722e24
 MU_SUN = G * FIX["star_mass_msun"] * M_SUN
 PLANETS = {b["name"]: b for b in FIX["bodies"]}
 
-# Mean radii in km for turning GCAT's heights into distances (NSSDCA planetary fact sheets for the planets and
-# the Moon, as in packs/base-sol; the moons and small bodies from memory, to verify against JPL SSD's physical
-# parameters; they move a flyby distance by a few km at most).
+# Mean radii in km for turning GCAT's heights into distances: the NSSDCA planetary fact sheets for the planets and
+# the Moon (as in packs/base-sol); the moons from JPL SSD's planetary satellite physical parameters
+# (https://ssd.jpl.nasa.gov/sats/phys_par/, read 24 Nov 2026); the small bodies from memory, to verify (they move a
+# flyby distance by a few km at most).
 WORLDS = {
     "Mercury": (P("mercury"), 2439.7), "Venus": (P("venus"), 6051.8), "Earth": (P("earth"), 6378.137),
     "Luna": (P("earth") + "/body:moon", 1737.4), "Mars": (P("mars"), 3389.5), "Jupiter": (P("jupiter"), 69911.0),
     "Saturn": (P("saturn"), 58232.0), "Uranus": (P("uranus"), 25362.0), "Neptune": (P("neptune"), 24622.0),
     "Pluto": (P("pluto"), 1188.3), "Ceres": (P("ceres"), 469.7), "Vesta": (P("vesta"), 262.7),
     "Phobos": (P("mars") + "/body:phobos", 11.08), "Deimos": (P("mars") + "/body:deimos", 6.2),
-    "Io": (P("jupiter") + "/body:io", 1821.6), "Europa": (P("jupiter") + "/body:europa", 1560.8),
+    "Io": (P("jupiter") + "/body:io", 1821.49), "Europa": (P("jupiter") + "/body:europa", 1560.8),
     "Ganymede": (P("jupiter") + "/body:ganymede", 2631.2), "Callisto": (P("jupiter") + "/body:callisto", 2410.3),
-    "Titan": (P("saturn") + "/body:titan", 2574.7), "Enceladus": (P("saturn") + "/body:enceladus", 252.1),
-    "Dione": (P("saturn") + "/body:dione", 561.4), "Rhea": (P("saturn") + "/body:rhea", 763.8),
+    "Titan": (P("saturn") + "/body:titan", 2574.76), "Enceladus": (P("saturn") + "/body:enceladus", 252.1),
+    "Dione": (P("saturn") + "/body:dione", 561.4), "Rhea": (P("saturn") + "/body:rhea", 763.5),
     "Tethys": (P("saturn") + "/body:tethys", 531.1), "Phoebe": (P("saturn") + "/body:phoebe", 106.5),
     "Ryugu": (P("ryugu"), 0.45), "Itokawa": (P("itokawa"), 0.16), "Bennu": (P("bennu"), 0.245),
     "Eros": (P("eros"), 8.4), "(951) Gaspra": (P("gaspra"), 6.1), "(243) Ida": (P("ida"), 15.7),
@@ -578,7 +579,7 @@ os.makedirs(OUT, exist_ok=True)
 for old in os.listdir(OUT):
     if old.endswith(".json"):
         os.remove(os.path.join(OUT, old))
-n, lam, skipped = 0, 0, []
+n, lam, skipped, BUILT = 0, 0, [], {}
 for d in CAT["departed"]:
     if d["jcat"] not in IDS:
         continue
@@ -586,11 +587,43 @@ for d in CAT["departed"]:
     if not log:
         skipped.append(d["name"])
         continue
+    BUILT[d["jcat"]] = log
+
+# Splits: a craft another carried (GCAT phase REL, "released") leaves its carrier at the phase's end. The carrier's
+# log gets a split naming it, kept only when the child's own log has a piece starting at that moment, as the
+# showcase logs do (one split mechanism for stages, landers and probes).
+splits = 0
+for jcat, log in BUILT.items():
+    for r in PHASES.get(jcat, []):
+        parent = r["Parent"].split()[0] if r["Parent"] else ""
+        if r["Status"] != "REL" or parent not in BUILT or parent == jcat:
+            continue
+        end = gdate(r["DDate"])
+        if not end:
+            continue
+        t = end[0]
+        if not any(p["from_s"] == t for p in log["pieces"]):
+            continue
+        carrier = BUILT[parent]
+        if not carrier["pieces"] or t < carrier["pieces"][0]["from_s"]:
+            continue
+        ev = next((e for e in carrier["events"] if e["kind"] == "split" and e["at_s"] == t), None)
+        if ev is None:
+            ev = {"at_s": t, "kind": "split", "into": [], "keeps_identity": True, "src": "gcat", "writer": "pack",
+                  "mark": "recorded" if end[1] else "estimated"}
+            if not end[1]:
+                ev["why"] = "GCAT marks the release time uncertain or gives it without an hour"
+            carrier["events"].append(ev)
+        if log["construct"] not in ev["into"]:
+            ev["into"].append(log["construct"])
+            splits += 1
+for log in BUILT.values():
+    log["events"].sort(key=lambda e: e["at_s"])
     lam += sum(1 for p in log["pieces"] if p["state"]["kind"] == "course" and p["state"]["course"]["kind"] == "lambert")
     with open(os.path.join(OUT, log["construct"] + ".json"), "w", encoding="utf-8") as fh:
         fh.write(json.dumps(log, ensure_ascii=False) + "\n")
     n += 1
-print(n, "logs,", lam, "solved courses; no phases for", len(skipped), skipped[:20])
+print(n, "logs,", lam, "solved courses,", splits, "releases; no phases for", len(skipped), skipped[:20])
 
 
 # ---------------------------------------------------------------- RS8 part 2: stations and crewed flights in Earth orbit

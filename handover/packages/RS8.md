@@ -77,6 +77,12 @@ at GCAT's coordinates. Test `stations_and_crewed_flights_have_logs` (Mir gone, S
 Next: the undocking and landing hour and site from press kits for the 62 without a site and the 265 still docked;
 splits between carriers and what they release (Viking, Galileo).
 
+## Part 4 (24 Nov 2026): carriers split off what they release
+
+GCAT's REL phases (a craft carried by another, released at the phase's end) become `split` events on the carrier's
+log, kept only where the released craft's own log has a piece starting at that moment, as the showcase logs do: 58
+releases (Viking orbiters and their landers, among others). `splits_and_joins_meet_their_logs` checks each.
+
 ### Checks
 
 `crates/sse-nav/tests/sol_today_logs.rs` now reads `logs/` and `logs/departed/`: every log runs in order with
@@ -90,4 +96,4 @@ estimates explained, every solved course meets its planet, every departed craft 
   phases give the times; each would need the child's piece to start at the split, as the showcase logs do.
 - Moons and small bodies in the NAV fixture, so pieces around them get a position.
 - Horizons state vectors for the craft Horizons holds, in place of turned orbits.
-- Radii of the moons and small bodies are from memory, to verify against JPL SSD.
+- Radii of the small bodies (asteroids, comets) are from memory, to verify; the moons' were checked against JPL SSD on 24 Nov.

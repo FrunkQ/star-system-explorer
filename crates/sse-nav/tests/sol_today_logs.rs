@@ -313,6 +313,15 @@ fn every_departed_craft_has_a_log() {
         }
     }
     println!("{from_gcat} of {departed}: {landed} on the ground, {gone} gone, {flying} still flying or docked");
+    // RS8 part 4: carriers split off what they release, by GCAT's REL phases (the split test checks each meets its log).
+    let releases = |id: &str| -> Vec<String> {
+        all[id]
+            .splits()
+            .iter()
+            .map(|(_, c)| c.to_string())
+            .collect()
+    };
+    assert!(releases("viking-orbiter-1").contains(&"viking-lander-1".to_string()));
     // The showcase missions (Cassini, Huygens, Juno, Dawn, Curiosity, JWST, Voyager 2, Columbia, Eagle) are written
     // in full by build_logs.py; GCAT's logs cover the rest.
     assert!(from_gcat + 12 >= departed, "{from_gcat} of {departed}");
