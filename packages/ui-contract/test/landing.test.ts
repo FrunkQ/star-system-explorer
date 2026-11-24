@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
 import { sceneFromResolved } from "../src/make.ts";
-import { landingShowOf, landmarkOrder, roundPose, suggestLander } from "../src/landing.ts";
+import { landingSeaOf, landingShowOf, landmarkOrder, roundPose, suggestLander } from "../src/landing.ts";
 import { nodeKernel } from "./node-kernel.ts";
 import { floorFromRefusal, levelFor, patchKeys, readPatch, groundHeightAt } from "../../renderer/src/index.ts";
 
@@ -115,4 +115,14 @@ test("a landing sent to the table is read back only when it is one", () => {
 
 test("the GM's pose is rounded for the wire", () => {
   assert.deepEqual(roundPose({ x_m: 1.23456, y_m: -0.004, yaw: 1.5707963, pitch: -0.05, drone: true }), { x_m: 1.23, y_m: -0, yaw: 1.571, pitch: -0.05, drone: true });
+});
+
+test("the sea at a site from the weather report, with the tide now", () => {
+  const data = { sea: { liquid: "water", wave_m: 1.8, period_s: 7.5, wind_m_s: -6, fetch_km: 900, line: "Waves about 1.8 m", tides: { by: [{ raiser: "moon 1", range_m: 0.54, period_h: 12.42 }, { raiser: "star", range_m: 0.25, period_h: 12 }] } } };
+  const s = landingSeaOf(data, 0)!;
+  assert.equal(s.tide_m, 0.4, "both high together at time 0");
+  assert.equal(s.wind_m_s, -6);
+  assert.equal(landingSeaOf(data, 6.21 * 3600)!.tide_m < 0, true, "half a lunar tide on: lower");
+  assert.equal(landingSeaOf({ sea: null }, 0), null);
+  assert.equal(landingSeaOf({}, 0), null);
 });
