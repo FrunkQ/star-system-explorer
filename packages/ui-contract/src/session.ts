@@ -156,6 +156,11 @@ export interface ViewSession {
   surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }>;
   /** A world's landmarks (SL1): its named landscape from a quick survey (`survey_surface`'s register, the same world the globe shows); GM only. */
   surfaceLandmarks(system: string, body: string, limit?: number): Promise<{ ok: true; landmarks: import("./landing.ts").Landmark[]; total: number } | { ok: false; code: string; message: string }>;
+  /**
+   * Let this seat read one world's ground while the table watches its landing (the landing run-through): its tiles
+   * and a descent planned to a site, on this seat's own kernel, for that body only. Null ends it. A GM needs none.
+   */
+  grantLanding?(g: { system: string; body: string } | null): void;
   /** A descent planned to any site (SL1, kernel `plan_descent` on the quick survey): the site judged, a lander flown down; GM only. */
   planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
@@ -635,8 +640,17 @@ export class Session implements ViewSession {
     return r.type === "world_stack_read" ? { ok: true, result: r as unknown as WorldStackRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  // The one world a player seat may read the ground of, while the table watches its landing.
+  #landing: { system: string; body: string } | null = null;
+  grantLanding(g: { system: string; body: string } | null): void {
+    this.#landing = g ? { system: g.system, body: g.body } : null;
+  }
+  #mayLand(system: string, body: string): boolean {
+    return this.seat.authority === "gm" || (this.#landing !== null && this.#landing.system === system && this.#landing.body === body);
+  }
+
   async surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }> {
-    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
+    if (!this.#mayLand(system, body)) return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
     const tiles = [0, 1, 2, 3, 4, 5].map((face) => ({ body, face, level: 0, x: 0, y: 0 }));
     const r = await this.#call({ op: "resolved_system", system, tiles });
     if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
@@ -645,7 +659,7 @@ export class Session implements ViewSession {
   }
 
   async surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }> {
-    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
+    if (!this.#mayLand(system, body)) return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
     const r = await this.#call({ op: "resolved_system", system, tiles: keys.map((k) => ({ body, face: k.face, level: k.level, x: k.x, y: k.y })) });
     if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const x = r as unknown as { tiles?: SurfaceTile[]; refused?: { face: number; level: number; x: number; y: number; why: string }[] };
@@ -661,7 +675,7 @@ export class Session implements ViewSession {
   }
 
   async planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }> {
-    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master plans a descent against a world's full record" };
+    if (!this.#mayLand(ask.system, ask.body)) return { ok: false, code: "not_gm", message: "only the game master plans a descent against a world's full record" };
     const r = await this.#call({ op: "plan_descent", system: ask.system, body: ask.body, quick: true, lander: ask.lander as Json, lat_deg: ask.lat_deg, lon_deg: ask.lon_deg });
     return r.type === "descent_planned" ? { ok: true, plan: (r as unknown as { descent: import("./landing.ts").DescentPlan }).descent } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }

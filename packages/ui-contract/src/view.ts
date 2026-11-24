@@ -180,6 +180,10 @@ export interface PlayerContext {
   send?(intent: import("./intent.ts").Intent): Promise<unknown>;
   /** Marks for player subjects, from the screen's symbology under its theme (absent: views draw plain discs). */
   mark?(subject: import("./player-scene.ts").PlayerSubject): Mark;
+  /** The landing the table is watching now (landing.ts `LandingShow`, as the GM sent it), or null. Read it in an effect: it changes. */
+  landing?(): import("./landing.ts").LandingShow | null;
+  /** This seat's own reads of that landing's world (granted for it alone). Absent on a sealed seat, which has no kernel. */
+  ground?: import("./landing.ts").LandingGround;
 }
 
 export interface ViewHandle<S = SystemScene> {
