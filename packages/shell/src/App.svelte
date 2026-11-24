@@ -1445,6 +1445,8 @@
       {steps}
       title={scene.title}
       baseTitle={base.title}
+      session={session ?? null}
+      systemAddress={scene.system}
       subjects={scene.subjects}
       selection={ws.selection}
       {selName}

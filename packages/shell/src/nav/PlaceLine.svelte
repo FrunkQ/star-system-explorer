@@ -4,7 +4,8 @@
      and turns a pick into a move through the callbacks. -->
 <script lang="ts">
   import { Picker } from "../../../chart-grammar/src/index.ts";
-  import { isPlaceScale, PLACE_WORDS, SUBJECT_KIND_ORDER, subjectItems, type PickItem, type Place, type PlaceNote, type PlaceScale, type PlaceStep, type RailScale, type SceneSubject } from "../../../ui-contract/src/index.ts";
+  import PlaceNotes from "./PlaceNotes.svelte";
+  import { isPlaceScale, PLACE_WORDS, SUBJECT_KIND_ORDER, subjectItems, type PickItem, type Place, type PlaceNote, type PlaceScale, type PlaceStep, type RailScale, type SceneSubject, type ViewSession, campaignAddress } from "../../../ui-contract/src/index.ts";
 
   let {
     railScale,
@@ -23,6 +24,8 @@
     goTo,
     toScale,
     switchSystem,
+    session = null,
+    systemAddress = "",
   }: {
     railScale: RailScale;
     place: Place | null;
@@ -45,7 +48,29 @@
     toScale: (s: PlaceScale) => void;
     /** Show another system of the campaign ("" for the campaign's own). */
     switchSystem: (system: string) => void;
+    /** The record, for the place's description and notes (V3 gap 42); absent: no notes button. */
+    session?: Pick<ViewSession, "record" | "addNote"> | null;
+    /** The system in view's address ("u:kestrel/sys:1"); the campaign's notes live at its root. */
+    systemAddress?: string;
   } = $props();
+
+  let narrow = $state(typeof matchMedia === "function" && matchMedia("(max-width: 600px)").matches);
+  $effect(() => {
+    const m = matchMedia("(max-width: 600px)");
+    const on = () => (narrow = m.matches);
+    m.addEventListener("change", on);
+    return () => m.removeEventListener("change", on);
+  });
+  // Notes (V3 gap 42): at a system or a world, the system's; above the system, the whole campaign's.
+  let notesOpen = $state(false);
+  let notesBtn = $state<HTMLButtonElement | null>(null);
+  const notesFor = $derived(
+    !session?.record || !systemAddress
+      ? null
+      : railScale === "system" || railScale === "world"
+        ? { address: systemAddress, label: title, kicker: "System" }
+        : { address: campaignAddress(systemAddress), label: "This campaign", kicker: "Every system in it" },
+  );
 
   /** The steps above a system in a word each, for a narrower bar. */
   const SHORT_WORDS: Partial<Record<PlaceScale, string>> = { web: "Web", cluster: "Nearby" };
@@ -61,6 +86,7 @@
     return p.label ?? PLACE_WORDS[p.scale];
   }
   function goBelow(v: string) {
+    if (v === "notes:") return void (notesOpen = true);
     if (v.startsWith("scale:") && isPlaceScale(v.slice(6))) return toScale(v.slice(6) as PlaceScale);
     if (v.startsWith("sys:")) return goPlace({ scale: "system", system: v.slice(4) });
     if (v.startsWith("up:")) {
@@ -101,6 +127,8 @@
     ...(atBodies && adoptedSystems.length ? [{ label: "Other systems in this campaign", entries: pickSystems.filter((x) => x.id !== `sys:${viewing?.system ?? ""}`) }] : []),
     ...(!atBodies && railScale !== "galaxy" ? [{ label: "Systems in this campaign", entries: pickSystems }] : []),
     { label: "Recent", entries: recentElsewhere.map((r, j) => ({ id: `recent:${j}`, label: placeWords(r) })) },
+    // On a phone the line has no room for Notes beside the name, so it is a row here.
+    ...(narrow && notesFor ? [{ label: "Notes", entries: [{ id: "notes:", label: `Description and notes`, caption: notesFor.label }] }] : []),
   ]);
 </script>
 
@@ -136,6 +164,10 @@
           onpick={goBelow}
         />
       </span>
+      {#if notesFor}
+        <button type="button" class="notes-btn" bind:this={notesBtn} aria-expanded={notesOpen} onclick={() => (notesOpen = !notesOpen)} title="Description and notes for {notesFor.label === 'This campaign' ? 'this campaign' : notesFor.label}" data-place-notes-open aria-label="Notes">Notes</button>
+        {#if notesOpen}<PlaceNotes session={session!} address={notesFor.address} label={notesFor.label} kicker={notesFor.kicker} from={notesBtn} onclose={() => (notesOpen = false)} />{/if}
+      {/if}
     {:else}
       <button type="button" class="step" class:up={parent} class:below={s.below} class:far={!s.below && !parent} data-place-step={s.scale} data-go={s.scale === "system" ? "system" : undefined} onclick={() => goPlace(s.place)} title={s.below ? `Back down to ${s.label}` : `Up to ${s.label}${parent ? " (Esc)" : ""}`}>{#if parent}<span class="up-arrow" aria-hidden="true">‹ </span>{/if}<span class="up-name"><span class="long">{s.label}</span>{#if SHORT_WORDS[s.scale] && s.label === PLACE_WORDS[s.scale]}<span class="short" aria-hidden="true">{SHORT_WORDS[s.scale]}</span>{/if}</span></button>
     {/if}
@@ -146,6 +178,30 @@
 </nav>
 
 <style>
+  .notes-btn {
+    padding: 2px 2px;
+    border: 0;
+    border-bottom: 1px dotted var(--sse-rule);
+    background: transparent;
+    color: var(--sse-ink-muted);
+    font: 12px var(--sse-font-body);
+    cursor: pointer;
+  }
+  .notes-btn:hover,
+  .notes-btn[aria-expanded="true"] {
+    color: var(--sse-ink);
+    border-bottom-color: var(--sse-accent);
+  }
+  /* On a narrow bar the place's name needs the room: Notes is a row of the picker there instead. */
+  @media (max-width: 600px) {
+    .notes-btn {
+      display: none;
+    }
+  }
+  .notes-btn:focus-visible {
+    outline: 2px solid var(--sse-accent);
+    outline-offset: 1px;
+  }
   .place {
     display: flex;
     align-items: baseline;

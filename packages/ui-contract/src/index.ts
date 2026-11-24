@@ -144,3 +144,4 @@ export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem,
 // One units engine (ED1a): every figure said and read back the same way.
 export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
 export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices } from "./figures.ts";
+export * from "./place-notes.ts";
