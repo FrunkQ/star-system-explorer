@@ -20,8 +20,8 @@ ask him for it; never recreate his jokes from memory. The Weyland-Yutani logo st
 | Package | State | Log |
 |---|---|---|
 | AT1 the page model: blocks, the page builder (pure, over the audience's scene), contents and chapters, the fact catalogue, `sse.edition/1` with `extends`, the Survey atlas edition with templates for sector, system, star, world, moon, station | done | packages/AT1.md |
-| AT2 the Atlas view on screen: page, contents, step, links, phone, both chart modes; screen document with a `rail` entry; "Open in Atlas" in the action list (navigation thread) | next | |
-| AT3 editions as data: look, voice labels, gap styles, plates, sources; loader checks 1 to 5; the Edition switch (GM only, design 14A note 6) | not started | |
+| AT2 the Atlas view on screen: page, contents, step, links, phone, both chart modes; screen document with a `rail` entry; "Open in Atlas" in the action list (navigation thread) | done; "Open in Atlas" asked of the navigation thread; Seen by one role waits on the plan's audiences reaching views | packages/AT2.md |
+| AT3 editions as data: look, voice labels, gap styles, plates, sources; loader checks 1 to 5; the Edition switch (GM only, design 14A note 6). Exports `checkEdition(doc, docs) -> string[]` and a DOM-free `testRender` for Orac (agreed with "Build Orac, Minerva and Tars", who start AT11 when it lands) | next | |
 | AT4 print under the view: this page, chapter, whole atlas; A4 and Letter; Save ink; sheet furniture; page turn for paper editions (14A note 5); Copy as text, Save page | not started | |
 | AT5 gaps and redaction, "Show as withheld" (kernel `withheld` precision) | not started; kernel thread for `withheld` | |
 | AT6 letterhead, brand `accent` and `motto`, built-in SSE3 logos (six; not Weyland-Yutani), ASCII art; the Company edition | not started; Run desk thread for the brand fields | |

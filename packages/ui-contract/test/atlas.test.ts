@@ -8,7 +8,7 @@ import {
   buildPage,
   chapterOf,
   checkEditionShape,
-  contents,
+  atlasContents,
   isCatalogued,
   resolveEdition,
   shownFields,
@@ -34,7 +34,7 @@ const page = (scene: PlayerScene, addr: string, ed = survey): AtlasPage => build
 const facts = (p: AtlasPage) => p.blocks.flatMap((b) => (b.type === "facts" ? b.rows : []));
 
 test("contents: the top of the book, then each subject the audience knows, in address order", () => {
-  const c = contents(after);
+  const c = atlasContents(after);
   assert.deepEqual(
     c.map((l) => [l.number, l.title, l.kind, l.level]),
     [
@@ -47,7 +47,7 @@ test("contents: the top of the book, then each subject the audience knows, in ad
   assert.deepEqual(chapterOf(c, TARN).map((l) => l.title), ["Tarn", "Tarn a"]);
   // A world the audience has not found has no line and no number.
   const less: PlayerScene = { ...after, subjects: after.subjects.filter((s) => s.address !== TARN) };
-  assert.deepEqual(contents(less).map((l) => l.title), ["Kestrel", "Tarn a", "Vault"], "its moon sits under the star; nothing names the unknown world");
+  assert.deepEqual(atlasContents(less).map((l) => l.title), ["Kestrel", "Tarn a", "Vault"], "its moon sits under the star; nothing names the unknown world");
 });
 
 test("the same scene, edition and date give the same block list", () => {
@@ -86,7 +86,7 @@ test("a world page in the Survey atlas: figures through the figures door, gaps i
 
 test("a seat's block list holds nothing its scene lacks", () => {
   for (const scene of [before, after]) {
-    for (const l of contents(scene)) {
+    for (const l of atlasContents(scene)) {
       const p = page(scene, l.address);
       const s = scene.subjects.find((x) => x.address === l.address)!;
       for (const f of shownFields(p)) {
@@ -107,7 +107,7 @@ test("a gap is drawn from the template, never from the value: a placeholder and 
   // The kernel writes a placeholder only where a value exists; the Atlas must not let that show.
   const stripped: PlayerScene = { ...before, subjects: before.subjects.map((s) => ({ ...s, facts: s.facts.filter((f) => f.value !== undefined || f.band) })) };
   for (const ed of [survey, resolveEdition("x.bars", [{ schema: "sse.edition/1", id: "x.bars", name: "Bars", description: "bars", gaps: "bar" }])]) {
-    for (const l of contents(before)) assert.deepEqual(page(stripped, l.address, ed), page(before, l.address, ed), `${ed.id} ${l.address}`);
+    for (const l of atlasContents(before)) assert.deepEqual(page(stripped, l.address, ed), page(before, l.address, ed), `${ed.id} ${l.address}`);
   }
   const bars = resolveEdition("x.bars", [{ schema: "sse.edition/1", id: "x.bars", name: "Bars", description: "bars", gaps: "bar" }]);
   const gaps = facts(page(before, TARN, bars)).filter((r) => r.state === "gap");

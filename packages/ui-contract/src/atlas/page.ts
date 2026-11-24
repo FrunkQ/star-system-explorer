@@ -5,7 +5,7 @@
 import type { Depth } from "../depth.ts";
 import { fact, parentOf, subjectName, wordsFor, type PlayerScene, type PlayerSubject, type Vocab } from "../player-scene.ts";
 import { lineLabel, showFact, type FactShown } from "./catalogue.ts";
-import { label, type Edition, type GapStyle, type PageKind, type PlateStyle, type TemplateSection } from "./edition.ts";
+import { editionWord, type Edition, type GapStyle, type PageKind, type PlateStyle, type TemplateSection } from "./edition.ts";
 
 // ------------------------------------------------------------------------------------------------------ blocks
 
@@ -39,7 +39,7 @@ export type Block =
   | { type: "prose"; key: string; title: string; text: string }
   | { type: "facts"; key: string; title: string; rows: FactRow[] }
   | { type: "table"; key: string; title: string; columns: string[]; rows: TableRow[] }
-  | { type: "plate"; key: string; title: string; style: PlateStyle; subject: string; addresses: string[] }
+  | { type: "plate"; key: string; title: string; style: PlateStyle; subject: string; addresses: string[]; names: string[] }
   | { type: "story"; key: string; title: string; lines: { label: string; text: string }[] }
   | { type: "rule" };
 
@@ -114,7 +114,7 @@ export function childrenIn(scene: PlayerScene, address: string): PlayerSubject[]
  * in address order. Only subjects in the audience's scene have a line: a world they have not found has no line and
  * no number.
  */
-export function contents(scene: PlayerScene): ContentsLine[] {
+export function atlasContents(scene: PlayerScene): ContentsLine[] {
   const out: ContentsLine[] = [];
   const top = scene.subjects.find((s) => s.address === scene.scope);
   const walk = (addr: string, level: number, parent: string | null) => {
@@ -189,11 +189,11 @@ function proseFor(s: PlayerSubject, lines: readonly string[], ed: Edition, opts:
     if (!w.sentence) continue;
     said.push(w.sentence.replace("{name}", subjectName(s)).replace("{text}", shown.text));
   }
-  return said.length ? said.join(" ") : label(ed, "prose.empty", "Little is known of it yet.");
+  return said.length ? said.join(" ") : editionWord(ed, "prose.empty", "Little is known of it yet.");
 }
 
 function subtitleFor(scene: PlayerScene, s: PlayerSubject, kind: PageKind, ed: Edition, opts: AtlasOptions): string {
-  const parts: string[] = [label(ed, `page.${kind}`, kind)];
+  const parts: string[] = [editionWord(ed, `page.${kind}`, kind)];
   // What sort of thing it is, in the first words the audience has: its class, else its size, else its star type.
   for (const field of ["class", "size_class", "spectral"]) {
     const shown = showFact(s, field, opts);
@@ -209,14 +209,14 @@ function subtitleFor(scene: PlayerScene, s: PlayerSubject, kind: PageKind, ed: E
 }
 
 function sectionBlocks(scene: PlayerScene, s: PlayerSubject, sec: TemplateSection, ed: Edition, opts: AtlasOptions, isGm: boolean): Block[] {
-  const title = label(ed, sec.key, sec.key.replace(/^section\./, ""));
+  const title = editionWord(ed, sec.key, sec.key.replace(/^section\./, ""));
   switch (sec.block ?? "facts") {
     case "prose":
       return [{ type: "prose", key: sec.key, title, text: proseFor(s, sec.lines ?? [], ed, opts) }];
     case "plate": {
       if (ed.plates === "none") return [];
-      const kids = childrenIn(scene, s.address).map((k) => k.address);
-      return kids.length ? [{ type: "plate", key: sec.key, title, style: ed.plates, subject: s.address, addresses: kids }] : [];
+      const kids = childrenIn(scene, s.address);
+      return kids.length ? [{ type: "plate", key: sec.key, title, style: ed.plates, subject: s.address, addresses: kids.map((k) => k.address), names: kids.map(subjectName) }] : [];
     }
     case "table": {
       const t = sec.table!;
@@ -227,7 +227,7 @@ function sectionBlocks(scene: PlayerScene, s: PlayerSubject, sec: TemplateSectio
           type: "table",
           key: sec.key,
           title,
-          columns: t.columns.map((c) => label(ed, c, c.replace(/^column\./, ""))),
+          columns: t.columns.map((c) => editionWord(ed, c, c.replace(/^column\./, ""))),
           rows: kids.map((k) => ({ link: k.address, cells: t.lines.map((f) => cellFor(k, f, ed, opts, isGm)) })),
         },
       ];
@@ -252,7 +252,7 @@ function sectionBlocks(scene: PlayerScene, s: PlayerSubject, sec: TemplateSectio
 export function buildPage(scene: PlayerScene, address: string, ed: Edition, opts: AtlasOptions): AtlasPage | null {
   const s = scene.subjects.find((x) => x.address === address);
   if (!s) return null;
-  const lines = contents(scene);
+  const lines = atlasContents(scene);
   const i = lines.findIndex((l) => l.address === address);
   const kind = pageKindOf(scene, s);
   const isGm = scene.audience === "gm";

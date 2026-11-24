@@ -148,5 +148,6 @@ jobs:
       - run: node tests/ui/biosphere.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/time.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/tactile.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/atlas.e2e.mjs --screens ui-screens
       - uses: actions/upload-artifact@v4
         with: { name: ui-screens, path: ui-screens }

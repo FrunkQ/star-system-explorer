@@ -163,6 +163,6 @@ export function resolveEdition(id: string, docs: readonly EditionDoc[] = []): Ed
 }
 
 /** The edition's word for a key, or the fallback. */
-export function label(ed: Edition, key: string, fallback: string): string {
+export function editionWord(ed: Edition, key: string, fallback: string): string {
   return ed.voice.labels[key] ?? fallback;
 }
