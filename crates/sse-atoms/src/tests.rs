@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 122,
+        n, 126,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1377,4 +1377,77 @@ fn redox_blocks_match_the_stage_8_sums() {
     let red = rx::outgassed_mix(-3.0, 1.0, 1.0, 1.0e7, &rx::OUTGAS);
     assert!(ox[1] > ox[0] && ox[3] > ox[2], "{ox:?}");
     assert!(red[0] > red[1] && red[2] > red[3], "{red:?}");
+}
+
+#[test]
+fn ledger_blocks_match_the_field_sums() {
+    use crate::ledger as lg;
+    let near = |a: f64, b: f64, what: &str| {
+        assert!(
+            (a - b).abs() <= 1e-12 * a.abs().max(b.abs()).max(1e-30),
+            "{what}: {a} against {b}"
+        );
+    };
+    let mu0 = sse_core::sheet::MU0;
+    for (q, g, a, rho, cp, p, d) in [
+        (0.02, 7.0, 1.25e-5, 1.1e4, 840.0, 86164.0, 2.26e6),
+        (5.4, 23.0, 1.0e-5, 1500.0, 14000.0, 35730.0, 5.0e7),
+        (0.0, 7.0, 1.25e-5, 1.1e4, 840.0, 86164.0, 2.26e6),
+    ] {
+        let got = run("sse.dynamo.flow_speed", &[q, g, a, rho, cp, p, d]);
+        let (u, ro) = lg::flow_speed(q, g, a, rho, cp, p, d, lg::FLOW_C, lg::FLOW_B);
+        near(got[0], u, "flow speed");
+        near(got[1], ro, "local Rossby");
+        let got = run("sse.dynamo.reynolds", &[u.max(1e-6), d, 1.0e6]);
+        let (rm, tau) = lg::reynolds(u.max(1e-6), d, 1.0e6, mu0);
+        near(got[0], rm, "Rm");
+        near(got[1], tau, "decay time");
+        near(
+            run("sse.dynamo.onset", &[rm])[0],
+            lg::onset(rm, lg::ONSET_LO, lg::ONSET_HI),
+            "onset",
+        );
+        let got = run("sse.dynamo.rossby", &[p, d, u.max(1e-6)]);
+        let (r, f) = lg::rossby(p, d, u.max(1e-6), lg::ROSSBY_SAT, lg::ROSSBY_SLOPE);
+        near(got[0], r, "Rossby");
+        near(got[1], f, "Rossby factor");
+    }
+    // Earth's core: about a millimetre a second (secular variation, 0.1 to
+    // 1 mm/s), Rm in the hundreds to thousands, a dead core's field gone in
+    // tens of thousands of years, and spin never limiting.
+    let (u, _) = lg::flow_speed(
+        0.02,
+        7.0,
+        1.25e-5,
+        1.1e4,
+        840.0,
+        86164.0,
+        2.26e6,
+        lg::FLOW_C,
+        lg::FLOW_B,
+    );
+    assert!((1e-4..3e-3).contains(&u), "Earth core flow {u} m/s");
+    let (rm, tau) = lg::reynolds(u, 2.26e6, 1.0e6, mu0);
+    assert!((100.0..1e4).contains(&rm), "Earth Rm {rm}");
+    let tau_kyr = tau / sse_core::sheet::YR_JULIAN / 1e3;
+    assert!((10.0..1000.0).contains(&tau_kyr), "decay {tau_kyr} kyr");
+    assert_eq!(lg::onset(rm, lg::ONSET_LO, lg::ONSET_HI), 1.0);
+    assert_eq!(
+        lg::rossby(86164.0, 2.26e6, u, lg::ROSSBY_SAT, lg::ROSSBY_SLOPE).1,
+        1.0
+    );
+    // Salty water: no dynamo.
+    let (rm_sea, _) = lg::reynolds(0.01, 1.0e5, 5.0, mu0);
+    assert_eq!(lg::onset(rm_sea, lg::ONSET_LO, lg::ONSET_HI), 0.0);
+}
+
+#[test]
+fn the_dipole_ratio_constant_is_the_blocks_default() {
+    let reg = registry();
+    let d = reg
+        .get("sse.magnetic.surface_dipole")
+        .expect("block")
+        .decl();
+    let k = d.param("dipole_ratio").expect("param").1.default;
+    assert_eq!(k, crate::magnetic::DIPOLE_RATIO);
 }

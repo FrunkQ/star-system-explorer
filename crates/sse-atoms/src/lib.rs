@@ -16,6 +16,7 @@ pub mod field;
 pub mod formulas;
 pub mod heat;
 pub mod layers;
+pub mod ledger;
 pub mod light;
 pub mod magnetic;
 pub mod matter;
@@ -416,6 +417,17 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("host.field_at_orbit", "the host planet's magnetic field strength at a moon's orbit"),
     ("host.plasma_pressure_at_orbit", "pressure of the host's trapped plasma flowing past a moon"),
     ("layer.electrical_conductivity", "electrical conductivity of a layer (salty ocean, magma, iron)"),
+    ("layer.gravity", "gravity inside a layer"),
+    ("layer.thermal_expansivity", "thermal expansivity of a layer's matter"),
+    ("layer.specific_heat", "specific heat of a layer's matter"),
+    ("interior.dynamo_shell_thickness", "depth of the stirred, conducting layer a dynamo runs in"),
+    ("interior.dynamo_flow_speed", "typical speed of the flow stirring a conducting layer"),
+    ("interior.dynamo_local_rossby", "a stirring flow's speed over the spin speed across its layer"),
+    ("interior.magnetic_reynolds", "magnetic Reynolds number of a stirred layer: stretching over leaking"),
+    ("interior.magnetic_decay_time", "time an unstirred field takes to leak out of a conducting layer"),
+    ("interior.dynamo_onset", "how far a dynamo runs, 0 to 1, from its magnetic Reynolds number"),
+    ("interior.dynamo_rossby", "spin period over a dynamo's stirring time"),
+    ("interior.dynamo_rossby_factor", "factor on a dynamo's field from its spin, 1 when saturated"),
     ("layer.thickness", "thickness of a layer"),
     ("layer.outer_radius", "radius of a layer's top"),
     ("field.change_period", "period with which the outside magnetic field seen by a body changes"),

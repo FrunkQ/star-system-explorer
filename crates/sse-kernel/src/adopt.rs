@@ -1003,7 +1003,7 @@ pub(crate) fn resolved_system(
         source,
         spec,
         bodies,
-        facts,
+        mut facts,
         at_s,
         shift_gyr,
     } = worlds_at(ch, system, at_s, run, &s)?;
@@ -1011,6 +1011,16 @@ pub(crate) fn resolved_system(
         .iter()
         .map(|b| sse_surface::envelope(&s, b))
         .collect();
+    // MF2: every world with an iron core publishes its field facts from the
+    // ledger, unless the record already holds them.
+    for (b, e) in bodies.iter().zip(&envelopes) {
+        if let Some(ff) = sse_surface::core::field_facts(e, b) {
+            let row = facts.entry(b.address.clone()).or_default();
+            for (k, v) in ff {
+                row.entry(k.to_string()).or_insert(f(v));
+            }
+        }
+    }
     let mut out_tiles = vec![];
     let mut refused = vec![];
     for tr in tiles {
