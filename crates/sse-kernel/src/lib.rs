@@ -23,6 +23,7 @@ mod glow;
 #[cfg(test)]
 mod hooks_tests;
 mod ice_ages;
+mod inventory;
 mod known;
 #[cfg(test)]
 mod known_tests;
@@ -33,11 +34,19 @@ mod names;
 mod names_tests;
 mod nav;
 mod orbits;
+#[cfg(test)]
+mod power_books_tests;
 pub mod protocol;
 mod sea;
 mod sky;
 #[cfg(test)]
 mod sol_tests;
+mod stability;
+#[cfg(test)]
+mod stability_tests;
+mod star_elements;
+#[cfg(test)]
+mod star_elements_tests;
 mod survey;
 mod systems;
 mod tags;
@@ -260,6 +269,34 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             tech::Tech::default()
         }
     };
+    // TG11: resource kinds, bottom to top.
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("resources") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: resources: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let resources = match inventory::Kinds::from_packs(&found) {
+        Ok(k) => k,
+        Err(e) => {
+            problems.extend(e);
+            inventory::Kinds::default()
+        }
+    };
+    // RK9: the stack's engine designs (`provides.other.engines`, id to
+    // design), later packs over earlier.
+    let mut engines = BTreeMap::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("engines") {
+            let j = serde_json::to_value(v).map_err(|e| vec![format!("{}: engines: {e}", p.id)])?;
+            match serde_json::from_value::<BTreeMap<String, sse_nav::power::EngineDef>>(j) {
+                Ok(m) => engines.extend(m),
+                Err(e) => problems.push(format!("{}: engines: {e}", p.id)),
+            }
+        }
+    }
     if !problems.is_empty() {
         return Err(problems);
     }
@@ -307,6 +344,8 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         names: std::sync::Arc::new(names),
         layers,
         tech,
+        resources,
+        engines,
     })
 }
 
@@ -485,6 +524,10 @@ struct Observe {
     /// The setting's tech ladder, figures and advances
     /// (`provides.other.tech`, FT2).
     tech: tech::Tech,
+    /// Resource kinds (`provides.other.resources`, TG11).
+    resources: inventory::Kinds,
+    /// Engine designs by id (`provides.other.engines`, RK9).
+    engines: BTreeMap<String, sse_nav::power::EngineDef>,
 }
 
 pub struct Kernel {
@@ -2937,6 +2980,12 @@ impl Kernel {
                 airs,
                 wavelengths_m,
             } => systems::read_air_optics(airs, wavelengths_m)?,
+            Request::LightThroughGas { passages } => {
+                systems::light_through_gas(passages, &self.observe.reference)?
+            }
+            Request::EffectAtRange { asks } => {
+                systems::effect_at_range(asks, &self.observe.reference)?
+            }
             Request::Detect {
                 targets,
                 sensors,
@@ -3026,6 +3075,42 @@ impl Kernel {
                     at_s,
                     u.runs.get(&system),
                     &self.observe.reference,
+                )?
+            }
+            Request::ReadInventory {
+                system,
+                body,
+                kinds,
+                at_s,
+            } => {
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                if !u.root.contains(&a) {
+                    return Err(err(
+                        "bad_address",
+                        format!("{a} is not in universe {}", u.root),
+                    ));
+                }
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                inventory::read(
+                    &u.chronicle,
+                    &a,
+                    body.as_deref(),
+                    kinds.as_deref(),
+                    at_s,
+                    u.runs.get(&system),
+                    &self.observe.reference,
+                    &self.observe.resources,
                 )?
             }
             Request::ReadPhotometry { stars, bands } => {
@@ -3130,6 +3215,7 @@ impl Kernel {
                     prefer: prefer.as_deref(),
                     rescue: rescue.as_ref(),
                     sheet: &self.observe.reference,
+                    engines: &self.observe.engines,
                 };
                 let plan = match (fixture.as_deref(), nav.as_ref(), system) {
                     (Some(f), None, None) => nav::plan_route(ask(nav::Source::Fixture(f)))?,
@@ -4124,6 +4210,101 @@ impl Kernel {
                     changes,
                 }
             }
+            Request::SetLink {
+                id,
+                a,
+                b,
+                name,
+                kind,
+                one_way,
+                nav,
+                tier,
+                audience,
+                writer,
+                reason,
+                source,
+                withdraw,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let (a, b) = (in_universe(&u.root, &a)?, in_universe(&u.root, &b)?);
+                let bad = |m: String| err("bad_link", m);
+                if let Some(n) = &nav {
+                    voyage::nav_part(n).map_err(bad)?;
+                }
+                let audience: sse_record::Audience = match audience {
+                    None => sse_record::Audience::gm(),
+                    Some(v) => serde_json::from_value(v).map_err(|e| {
+                        bad(format!("audience: \"everyone\", \"gm\" or a list ({e})"))
+                    })?,
+                };
+                let writer = writer.unwrap_or_else(|| "gm".into());
+                let d = sse_record::links::LinkDraft {
+                    root: u.root.clone(),
+                    id,
+                    a,
+                    b,
+                    name: name.unwrap_or_default(),
+                    kind: kind.unwrap_or_default(),
+                    one_way: one_way.unwrap_or(false),
+                    nav: nav.map(|n| n.to_string()),
+                    tier,
+                    audience,
+                    writer: writer.clone(),
+                    reason,
+                    source,
+                    withdraw: withdraw.unwrap_or(false),
+                };
+                let (link, ev) = sse_record::links::set_link(
+                    &mut u.record,
+                    &d,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new(&writer, "set_link", "1"),
+                )
+                .map_err(record_err)?;
+                let rec =
+                    sse_record::links::history(u.record.events(), UniverseTime::seconds(i64::MAX))
+                        .into_iter()
+                        .find(|l| l.event == ev.hex());
+                Response::LinkSet {
+                    link: link.to_string(),
+                    event_id: ev.hex(),
+                    record: rec
+                        .as_ref()
+                        .map(voyage::link_json)
+                        .unwrap_or(serde_json::Value::Null),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::LinksIn {
+                bounds,
+                at_s,
+                audience,
+                history,
+            } => {
+                let u = self.universe()?;
+                let bounds = match bounds {
+                    Some(b) => in_universe(&u.root, &b)?,
+                    None => u.root.clone(),
+                };
+                let at = UniverseTime::seconds(at_s.unwrap_or(i64::MAX));
+                let audience = audience.unwrap_or_else(|| "gm".into());
+                let all = if history.unwrap_or(false) {
+                    sse_record::links::history(u.record.events(), at)
+                        .into_iter()
+                        .filter(|l| l.visible_to(&audience))
+                        .collect()
+                } else {
+                    sse_record::links::links_at(u.record.events(), at, &audience)
+                };
+                Response::LinksListed {
+                    links: all
+                        .iter()
+                        .filter(|l| bounds.contains(&l.a) || bounds.contains(&l.b))
+                        .map(voyage::link_json)
+                        .collect(),
+                }
+            }
             Request::SetTech {
                 holder,
                 level,
@@ -5059,6 +5240,96 @@ impl Kernel {
                 }
             }
             Request::ProgramsStep { at_s } => self.programs_step(at_s)?,
+            Request::ShipPower {
+                ship,
+                flux_w_m2,
+                at_s,
+            } => {
+                let s = sse_nav::scenario::settings();
+                let ship = nav::ship(&s, &ship)?;
+                let flux = flux_w_m2.unwrap_or(sse_core::sheet::S_SUN);
+                let t = at_s.unwrap_or(0);
+                let (l, fitted) = match ship.effective(&self.observe.engines, flux, t) {
+                    Some(x) => x,
+                    None => (
+                        sse_nav::power::ledger(
+                            &ship.power,
+                            &ship.engines,
+                            &ship.loads,
+                            &self.observe.engines,
+                            sse_nav::power::Conditions {
+                                flux_w_m2: flux,
+                                t_s: t,
+                            },
+                        ),
+                        ship.clone(),
+                    ),
+                };
+                let mut power = nav::books(&l, &fitted, flux);
+                power["ship"] = ship.name.clone().into();
+                Response::ShipPowerIs { power }
+            }
+            Request::OrbitStability {
+                system,
+                bodies,
+                add,
+                at_s,
+            } => {
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let mut facts = match &bodies {
+                    Some(b) => orbits::inline_facts(b)?,
+                    None => {
+                        let u = self.universe()?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        let st = u
+                            .chronicle
+                            .state_at(UniverseTime::seconds(at_s.unwrap_or(i64::MAX)));
+                        st.facts
+                            .iter()
+                            .filter(|(x, _)| a.contains(x))
+                            .map(|(x, r)| (x.clone(), r.clone()))
+                            .collect()
+                    }
+                };
+                let mut focus = vec![];
+                if let Some(extra) = &add {
+                    for (x, row) in orbits::inline_facts(extra)? {
+                        focus.push(x.to_string());
+                        facts.entry(x).or_default().extend(row);
+                    }
+                }
+                let (checks, unchecked) = stability::checks(&facts, &a);
+                let hosts: Vec<String> = checks
+                    .iter()
+                    .filter(|c| c.bodies.iter().any(|b| focus.contains(b)))
+                    .map(|c| c.around.clone())
+                    .collect();
+                let checks = stability::concerning(checks, &focus, &hosts);
+                let unchecked: Vec<_> = unchecked
+                    .into_iter()
+                    .filter(|u| focus.is_empty() || u.bodies.iter().any(|b| focus.contains(b)))
+                    .collect();
+                let worst = checks.iter().map(|c| c.level).max().unwrap_or(0);
+                Response::OrbitStabilityIs {
+                    system,
+                    verdict: stability::verdict_word(worst).into(),
+                    checks: checks
+                        .iter()
+                        .map(|c| serde_json::to_value(c).unwrap_or_default())
+                        .collect(),
+                    unchecked: unchecked
+                        .iter()
+                        .map(|c| serde_json::to_value(c).unwrap_or_default())
+                        .collect(),
+                }
+            }
             Request::OrbitsAt {
                 system,
                 at_s,
@@ -5496,6 +5767,7 @@ impl Kernel {
                 at_s,
                 ports,
                 depart_s,
+                ..
             } if fixture.is_some() || nav.is_some() || system.is_some() => {
                 let visited = visited.unwrap_or_default();
                 let ports = ports.unwrap_or_default();
@@ -5508,6 +5780,7 @@ impl Kernel {
                     minimise: voyage::minimise(minimise.as_deref())?,
                     visited: &visited,
                     sheet: &self.observe.reference,
+                    engines: &self.observe.engines,
                 };
                 let voyage = match (fixture.as_deref(), nav.as_ref(), system) {
                     (Some(f), None, None) => nav::plan_voyage(nav::Source::Fixture(f), ask)?,
@@ -5564,9 +5837,24 @@ impl Kernel {
                 sensed_fuel,
                 surveyed,
                 gambles,
+                links,
+                only_links,
+                audience,
                 ..
             } => {
+                let engines = self.observe.engines.clone();
                 let u = self.universe()?;
+                let audience = audience.unwrap_or_else(|| "gm".into());
+                let records = sse_record::links::links_at(
+                    u.record.events(),
+                    UniverseTime::seconds(i64::MAX),
+                    &audience,
+                );
+                let links = voyage::links_for(
+                    &records,
+                    links.as_deref().unwrap_or(&[]),
+                    only_links.unwrap_or(false),
+                )?;
                 let pins =
                     cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
                 let elapsed = clock::elapsed_myr(&u.chronicle);
@@ -5590,6 +5878,8 @@ impl Kernel {
                             sensed_fuel: &sensed_fuel,
                             surveyed: &surveyed,
                             gambles: gambles.unwrap_or(false),
+                            links: &links,
+                            engines: &engines,
                         },
                     )
                 })?;

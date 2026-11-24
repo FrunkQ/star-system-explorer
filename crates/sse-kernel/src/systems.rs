@@ -431,6 +431,116 @@ pub(crate) fn read_air_optics(
     Ok(Response::AirOpticsRead { airs: out })
 }
 
+/// Light through gas (ND2), with the colour to the eye before and after.
+pub(crate) fn effect_at_range(
+    asks: Vec<serde_json::Value>,
+    sheet: &sse_reference::Reference,
+) -> Out {
+    // The stack's sheet when it carries nature's constants, else the base.
+    let base;
+    let sheet = if sheet.row("constants", "c").is_some() {
+        sheet
+    } else {
+        base = sse_reference::Reference::base();
+        &base
+    };
+    let mut effects = vec![];
+    for (n, v) in asks.into_iter().enumerate() {
+        let bad = |e: String| err("bad_ask", format!("ask {n}: {e}"));
+        let a: sse_sense::reach::Ask = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let e = sse_sense::reach::effect_at_range(&a, sheet).map_err(bad)?;
+        effects.push(serde_json::to_value(e).map_err(|e| bad(e.to_string()))?);
+    }
+    Ok(Response::EffectsAtRange { effects })
+}
+
+pub(crate) fn light_through_gas(
+    passages: Vec<serde_json::Value>,
+    sheet: &sse_reference::Reference,
+) -> Out {
+    use sse_light::gas::{pass, GasOptics, Passage};
+    // The stack's sheet when it carries nature's constants, else the base
+    // sheet (as the light table does for its gases).
+    let base;
+    let sheet = if sheet.row("constants", "c").is_some() {
+        sheet
+    } else {
+        base = sse_reference::Reference::base();
+        &base
+    };
+    #[derive(serde::Deserialize)]
+    struct In {
+        #[serde(flatten)]
+        passage: Passage,
+        #[serde(default)]
+        light: Option<sse_light::LightDescription>,
+        #[serde(default)]
+        t_k: Option<f64>,
+        #[serde(default)]
+        wavelengths_m: Option<Vec<f64>>,
+    }
+    let table = &sse_light::emit::Model::base().table;
+    let eye = table
+        .eye
+        .as_ref()
+        .ok_or_else(|| err("bad_light", "the light table has no eye"))?;
+    let eye_wl = eye.wavelengths_m();
+    let mut out = vec![];
+    for (n, v) in passages.into_iter().enumerate() {
+        let bad = |e: String| err("bad_gas", format!("passage {n}: {e}"));
+        let i: In = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let sample = |wl: &[f64]| -> Result<Vec<f64>, Response> {
+            match (&i.light, i.t_k) {
+                (Some(d), _) => Ok(wl
+                    .iter()
+                    .map(|l| sse_light::spectral_luminosity(d, *l, table))
+                    .collect()),
+                (None, Some(t)) if t > 0.0 => {
+                    Ok(wl.iter().map(|l| sse_light::planck(*l, t)).collect())
+                }
+                _ => Err(bad(
+                    "give light (a light description) or t_k (a black body above 0 K)".into(),
+                )),
+            }
+        };
+        let mut gases: Vec<GasOptics> = vec![];
+        for layer in &i.passage.layers {
+            for a in &layer.gases {
+                if !gases.iter().any(|g| g.gas == a.gas) {
+                    gases.push(GasOptics::from_sheet(sheet, &a.gas).map_err(bad)?);
+                }
+            }
+        }
+        let wl = match &i.wavelengths_m {
+            Some(w) => {
+                if w.is_empty() || w.iter().any(|l| !(1e-8..=1e-3).contains(l)) {
+                    return Err(bad("wavelengths must lie between 10 nm and 1 mm".into()));
+                }
+                w.clone()
+            }
+            None => eye_wl.clone(),
+        };
+        let light = sample(&wl)?;
+        let passed = pass(&i.passage, &gases, &wl, &light, sheet).map_err(bad)?;
+        let (seen_in, seen_out) = if i.wavelengths_m.is_some() {
+            let l = sample(&eye_wl)?;
+            let p = pass(&i.passage, &gases, &eye_wl, &l, sheet).map_err(bad)?;
+            (l, p.light_out)
+        } else {
+            (passed.light_in.clone(), passed.light_out.clone())
+        };
+        let colour_in = sse_light::colour::colour_of(eye, &seen_in).map_err(bad)?;
+        let colour_out = sse_light::colour::colour_of(eye, &seen_out).map_err(bad)?;
+        out.push(serde_json::json!({
+            "passed": passed,
+            "colour_in": colour_in,
+            "colour_out": colour_out,
+            "colour_references": sse_light::colour::references(eye),
+        }));
+    }
+    Ok(Response::GasPassed { passages: out })
+}
+
 /// Spectrum as it reaches an observer (O12).
 pub(crate) fn read_spectrum(
     targets: Vec<serde_json::Value>,

@@ -116,6 +116,9 @@ Planck's numbers read from the journal's own Table 2 page.
 | vijaykumar2021 | Vijaykumar, A., Kapadia, S. J. and Ajith, P. 2021, Phys. Rev. Lett. 126, 141104. doi:10.1103/PhysRevLett.126.141104 | G has not changed with time | verified (metadata) | Crossref (title: binary neutron stars) |
 | sakstein2026 | Sakstein, J. and Desmond, H. 2026, arXiv:2610.04048 | red dwarfs rule out recent steps in G | verified | arXiv abstract page: steps excluded at 3.1 and 4.0 sigma |
 | mcgaugh2016 | McGaugh, S. S., Lelli, F. and Schombert, J. M. 2016, Phys. Rev. Lett. 117, 201101. doi:10.1103/PhysRevLett.117.201101 | the check on haloes (radial acceleration relation) | verified (metadata) | Crossref |
+| karkoschka1994 | Karkoschka, E. 1994, Icarus 111, 174. doi:10.1006/icar.1994.1139 | methane absorption in the visible (ND2) | verified | values read 24 Nov from the MPI-Mainz Spectral Atlas copy of the 1 nm table (its page names the paper, 125 to 128 K, and the conversion 3.72e-25 m2 per km-1 amagat-1); every 5 nm kept in handover/packages/ND2-data/ch4-karkoschka1994.csv |
+| nist-handbook-na | NIST Handbook of Basic Atomic Spectroscopic Data, sodium table 3. doi:10.1063/1.1800011 | sodium D lines (ND2) | verified | page read 24 Nov: 5889.950 A, Aki 0.616e8 s-1; 5895.924 A, Aki 0.614e8 s-1; f worked out (0.641, 0.320, the textbook values) |
+| nist-handbook-k | NIST Handbook of Basic Atomic Spectroscopic Data, potassium table 3. doi:10.1063/1.1800011 | potassium resonance lines (ND2) | verified | page read 24 Nov: 7664.8991 A, Aki 0.379e8 s-1; 7698.9645 A, Aki 0.374e8 s-1; f worked out (0.668, 0.332) |
 
 ## B. The four "from memory" gas refractivities
 

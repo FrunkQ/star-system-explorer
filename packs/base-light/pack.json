@@ -9,64 +9,8 @@
   "licence": "Apache-2.0",
   "provides": {
     "other": {
-      "about": "Light (track O1; nebulae-and-light design sections 1 and 2): the fixed band set every light description is integrated over, the visible slices, the named-line table, and the wavelength grid the spectrum chart samples. Wavelengths in metres. Radio runs to 10 km (30 kHz) so planetary auroral radio, which sits below 40 MHz, is inside the band set. Optical lines are rest wavelengths in standard air, as astronomers quote them; ultraviolet, X-ray, gamma, millimetre and radio lines are in vacuum.",
+      "about": "Light (track O1; nebulae-and-light design sections 1 and 2): the visible slices (the fixed band set every light description is integrated over is the master data sheet's Bands table, RK10; a pack may still give its own `bands` list to override it), the named-line table, and the wavelength grid the spectrum chart samples. Wavelengths in metres. Radio runs to 10 km (30 kHz) so planetary auroral radio, which sits below 40 MHz, is inside the band set. Optical lines are rest wavelengths in standard air, as astronomers quote them; ultraviolet, X-ray, gamma, millimetre and radio lines are in vacuum.",
       "light": {
-        "bands": [
-          {
-            "id": "gamma",
-            "name": "Gamma rays",
-            "from_m": 1e-14,
-            "to_m": 1e-11
-          },
-          {
-            "id": "xray",
-            "name": "X-rays",
-            "from_m": 1e-11,
-            "to_m": 1e-08
-          },
-          {
-            "id": "uv",
-            "name": "Ultraviolet",
-            "from_m": 1e-08,
-            "to_m": 3.8e-07
-          },
-          {
-            "id": "visible",
-            "name": "Visible",
-            "from_m": 3.8e-07,
-            "to_m": 7.5e-07
-          },
-          {
-            "id": "near-ir",
-            "name": "Near infrared",
-            "from_m": 7.5e-07,
-            "to_m": 5e-06
-          },
-          {
-            "id": "mid-ir",
-            "name": "Mid infrared",
-            "from_m": 5e-06,
-            "to_m": 2.5e-05
-          },
-          {
-            "id": "far-ir",
-            "name": "Far infrared",
-            "from_m": 2.5e-05,
-            "to_m": 0.00035
-          },
-          {
-            "id": "mm",
-            "name": "Millimetre",
-            "from_m": 0.00035,
-            "to_m": 0.01
-          },
-          {
-            "id": "radio",
-            "name": "Radio",
-            "from_m": 0.01,
-            "to_m": 10000.0
-          }
-        ],
         "visible_slices": [
           {
             "id": "blue",
@@ -603,6 +547,83 @@
               "effective_m": 2.1603e-06,
               "ab_minus_vega": 1.85
             }
+          ]
+        },
+        "eye": {
+          "note": "How the eye turns light into colour (ND2): the CIE 1931 2° standard observer as the sum of lopsided Gaussian lobes (weight, centre nm, blue-side width nm, red-side width nm), the wavelengths it is summed over (380 to 780 nm in 5 nm steps) and the matrix from CIE XYZ to linear sRGB (D65 white). The lobe shape and the screen curve are the blocks sse.light.eye_lobe and sse.light.srgb_encode.",
+          "lobes": {
+            "x": [
+              [
+                1.056,
+                599.8,
+                37.9,
+                31.0
+              ],
+              [
+                0.362,
+                442.0,
+                16.0,
+                26.7
+              ],
+              [
+                -0.065,
+                501.1,
+                20.4,
+                26.2
+              ]
+            ],
+            "y": [
+              [
+                0.821,
+                568.8,
+                46.9,
+                40.5
+              ],
+              [
+                0.286,
+                530.9,
+                16.3,
+                31.1
+              ]
+            ],
+            "z": [
+              [
+                1.217,
+                437.0,
+                11.8,
+                36.0
+              ],
+              [
+                0.681,
+                459.0,
+                26.0,
+                13.8
+              ]
+            ]
+          },
+          "from_nm": 380.0,
+          "to_nm": 780.0,
+          "step_nm": 5.0,
+          "xyz_to_linear_srgb": [
+            [
+              3.2406,
+              -1.5372,
+              -0.4986
+            ],
+            [
+              -0.9689,
+              1.8758,
+              0.0415
+            ],
+            [
+              0.0557,
+              -0.204,
+              1.057
+            ]
+          ],
+          "sources": [
+            "Wyman, C., Sloan, P.-P. and Shirley, P. 2013, Simple analytic approximations to the CIE XYZ color matching functions, Journal of Computer Graphics Techniques 2(2), 1, table 1 https://jcgt.org/published/0002/02/01/",
+            "IEC 61966-2-1:1999, Default RGB colour space, sRGB, section 5.2 (XYZ to linear sRGB, D65) https://webstore.iec.ch/publication/6169"
           ]
         }
       }

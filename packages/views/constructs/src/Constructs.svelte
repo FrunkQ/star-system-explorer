@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { BOOKKEEPING, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { BOOKKEEPING, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
   import { Aboard } from "../../manifest/src/index.ts";
@@ -127,12 +127,19 @@
   // Known to (SV2): each construct's eye in a narrow column on the left, sortable so "what the table does not know"
   // is one press; the eye shows on Build and Run once secrecy matters here. A GM-made base is where it most often does.
   let known = $state.raw<Record<string, KnownRead>>({});
+  // Who knows what is read and changed at one exact second of the campaign's now (the story's date), never the sky's
+  // time, as on the body card: a change made where the read does not reach would leave the eye where it was.
+  function knownAt(): { at_yr: number; at_s: string } {
+    const at_yr = ws.campaign_now_yr ?? ws.now_yr;
+    return { at_yr, at_s: String(yearsToSeconds(at_yr)) };
+  }
   $effect(() => {
     const list = listed.map((x) => x.address);
     void ws.revision;
+    const at = BigInt(knownAt().at_s);
     if (!gm || (ws.desk !== "build" && ws.desk !== "run")) return void (known = {});
     let live = true;
-    void Promise.all(list.map(async (a) => [a, await session.knownTo(a)] as const)).then((rs) => {
+    void Promise.all(list.map(async (a) => [a, await session.knownTo(a, undefined, at)] as const)).then((rs) => {
       if (live) known = Object.fromEntries(rs.flatMap(([a, r]) => (r.ok ? [[a, r.value]] : [])));
     });
     return () => (live = false);
@@ -144,12 +151,12 @@
   const rows = $derived(unknownFirst ? [...listed].sort((a, b) => RANK[landmarkOf(a.address)] - RANK[landmarkOf(b.address)]) : listed);
   const why = (r: IntentResult) => (r.status === "refused" ? r.reason : r.status === "pending" ? "sent to the GM" : r.status === "error" ? r.message : "");
   const setKnownOf = (address: string) => async (c: KnownChange): Promise<{ ok: true; undo?: string } | { ok: false; why: string }> => {
-    const r = await session.send({ kind: "set_known", address, ...c, at_yr: ws.now_yr });
+    const r = await session.send({ kind: "set_known", address, ...c, ...knownAt() });
     if (r.status === "applied") return (ws.revision++, { ok: true, ...(r.event_id ? { undo: r.event_id } : {}) });
     return { ok: false, why: why(r) };
   };
   async function undoKnown(undo: string): Promise<string | null> {
-    const r = await session.send({ kind: "undo_known", undo, at_yr: ws.now_yr });
+    const r = await session.send({ kind: "undo_known", undo, ...knownAt() });
     return r.status === "applied" ? (ws.revision++, null) : why(r);
   }
 

@@ -82,6 +82,12 @@ pub struct Water {
 pub struct Sheet {
     pub elements: Vec<ElementRow>,
     pub water: Water,
+    /// A gas envelope's elements by mass: hydrogen and helium at their
+    /// protosolar shares (MP8c).
+    pub gas: BTreeMap<String, f64>,
+    /// Isotopes with a protosolar share: id to (element, atom fraction of
+    /// the element, mass in u), for isotope resources (helium-3).
+    pub isotopes: BTreeMap<String, (String, f64, f64)>,
 }
 
 fn num(v: Option<&serde_json::Value>) -> Option<f64> {
@@ -120,8 +126,39 @@ impl Sheet {
             formula: mass_shares(r, "h2o"),
         };
         let mut elements = vec![];
+        let mut gas = BTreeMap::new();
+        for id in ["h", "he"] {
+            let row = r.row("elements", id);
+            let n = row.and_then(|x| num(x.get("abundance_protosolar")));
+            let aw = row.and_then(|x| num(x.get("atomic_weight")));
+            if let (Some(n), Some(aw)) = (n, aw) {
+                gas.insert(id.to_string(), n * aw);
+            }
+        }
+        let gsum: f64 = gas.values().sum();
+        if gsum > 0.0 {
+            for v in gas.values_mut() {
+                *v /= gsum;
+            }
+        }
+        let mut isotopes = BTreeMap::new();
+        if let Some(rows) = r.tables.get("isotopes") {
+            for (id, row) in rows {
+                let el = row.get("element").and_then(|x| x.as_str());
+                let f = num(row.get("abundance_protosolar"));
+                let mu = num(row.get("mass"));
+                if let (Some(el), Some(f), Some(mu)) = (el, f, mu) {
+                    isotopes.insert(id.clone(), (el.to_string(), f, mu));
+                }
+            }
+        }
         let Some(rows) = r.tables.get("elements") else {
-            return Sheet { elements, water };
+            return Sheet {
+                elements,
+                water,
+                gas,
+                isotopes,
+            };
         };
         for (id, row) in rows {
             let cond = row.get("condensation");
@@ -160,7 +197,22 @@ impl Sheet {
                 enrichment: ratio(at("crust")),
             });
         }
-        Sheet { elements, water }
+        Sheet {
+            elements,
+            water,
+            gas,
+            isotopes,
+        }
+    }
+
+    /// An isotope's mass share of its element (atom fraction times its
+    /// mass over the element's weight), if the sheet carries its share.
+    pub fn isotope_mass_share(&self, r: &Reference, id: &str) -> Option<(String, f64)> {
+        let (el, f, mu) = self.isotopes.get(id)?;
+        let aw = r
+            .row("elements", el)
+            .and_then(|row| num(row.get("atomic_weight")))?;
+        (aw > 0.0).then(|| (el.clone(), f * mu / aw))
     }
 }
 
@@ -178,10 +230,17 @@ pub struct Bulk {
     pub surface_water_kg: f64,
     /// Air, kg (surface pressure times area over gravity).
     pub air_kg: f64,
+    /// A gas envelope of hydrogen and helium, kg (MP8c).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub gas_kg: f64,
     /// Al-26 heat per kg left after it formed (0 when unknown).
     pub al26_j_kg: f64,
     /// Where the materials came from, in words.
     pub source: String,
+}
+
+fn is_zero(x: &f64) -> bool {
+    *x == 0.0
 }
 
 /// The mass of one Earth ocean, the unit `oceans` counts in (the sheet's
@@ -193,6 +252,9 @@ impl Bulk {
     /// or, failing that, its oceans as the outgassed part of what formation
     /// left (Elkins-Tanton 2008's retained share), rock the rest.
     pub fn of_body(b: &crate::Body) -> Self {
+        if let Some(mk) = &b.makeup {
+            return Self::of_makeup(b, mk);
+        }
         let mass = b.mass_earth * M_EARTH;
         let radius = b.radius_earth * R_EARTH_MEAN;
         let surface_water = b.oceans.max(0.0) * OCEAN_KG;
@@ -219,21 +281,79 @@ impl Bulk {
             water_kg: water,
             surface_water_kg: surface_water.min(water),
             air_kg: air,
+            gas_kg: 0.0,
             al26_j_kg: 0.0,
             source: "the body's core share and water".into(),
         }
     }
 
+    /// From a body's makeup facts: each share of the mass is its material;
+    /// ice is water; gas is the envelope's hydrogen and helium.
+    fn of_makeup(b: &crate::Body, mk: &crate::Makeup) -> Self {
+        let mut x = Self::of_body(&crate::Body {
+            makeup: None,
+            ..b.clone()
+        });
+        let mass = x.mass_kg;
+        x.metal_kg = mk.metal.clamp(0.0, 1.0) * mass;
+        x.rock_kg = mk.rock.clamp(0.0, 1.0) * mass;
+        x.carbon_kg = mk.carbon.clamp(0.0, 1.0) * mass;
+        x.water_kg = mk.ice.clamp(0.0, 1.0) * mass;
+        x.gas_kg = mk.gas.clamp(0.0, 1.0) * mass;
+        x.surface_water_kg = x.surface_water_kg.min(x.water_kg);
+        x.source = "the body's makeup facts".into();
+        x
+    }
+
+    /// A giant whose makeup is not known: its heavy elements are the
+    /// mass-metallicity relation's share of its mass
+    /// (`sse.composition.heavy_element_share`), the rest an envelope. The
+    /// solids keep their proportions.
+    pub fn with_envelope(mut self, z_star: f64) -> Self {
+        let zp = mt::heavy_element_share(
+            z_star,
+            self.mass_kg,
+            sse_core::sheet::M_JUP,
+            mt::GIANT_METAL_COEFFICIENT,
+            mt::GIANT_METAL_SLOPE,
+        );
+        let solid = self.metal_kg + self.rock_kg + self.carbon_kg + self.water_kg;
+        if solid <= 0.0 {
+            return self;
+        }
+        let k = zp * self.mass_kg / solid;
+        self.metal_kg *= k;
+        self.rock_kg *= k;
+        self.carbon_kg *= k;
+        self.water_kg *= k;
+        self.surface_water_kg = self.surface_water_kg.min(self.water_kg);
+        self.gas_kg = (1.0 - zp) * self.mass_kg;
+        self.source = format!("{} with a giant's envelope", self.source);
+        self
+    }
+
     /// From formation's ledger: each material's mass as the body collected
     /// it (Earth masses, `GROUPS` order: metal, rock, carbon, water, CO2,
     /// CO), scaled to the body's solid mass.
-    pub fn with_ledger(mut self, by_group: &[f64; 6]) -> Self {
+    pub fn with_ledger(self, by_group: &[f64; 6]) -> Self {
+        self.with_ledger_and_gas(by_group, 0.0)
+    }
+
+    /// As `with_ledger`, with the gas the body captured (Earth masses): the
+    /// ledger and the gas share the body's whole mass.
+    pub fn with_ledger_and_gas(mut self, by_group: &[f64; 6], gas: f64) -> Self {
         let sum: f64 = by_group.iter().sum();
         if sum <= 0.0 {
             return self;
         }
-        let solid = self.metal_kg + self.rock_kg + self.carbon_kg + self.water_kg;
-        let k = solid / sum;
+        let gas = gas.max(0.0);
+        let solid = if gas > 0.0 {
+            self.mass_kg
+        } else {
+            self.metal_kg + self.rock_kg + self.carbon_kg + self.water_kg
+        };
+        let k = solid / (sum + gas);
+        self.gas_kg = gas * k;
         self.metal_kg = by_group[0] * k;
         self.rock_kg = by_group[1] * k;
         self.carbon_kg = by_group[2] * k;
@@ -252,11 +372,14 @@ pub struct Reservoirs {
     pub crust_kg: f64,
     pub sea_kg: f64,
     pub air_kg: f64,
+    /// A giant's hydrogen and helium envelope (MP8c).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub envelope_kg: f64,
 }
 
 impl Reservoirs {
     pub fn total(&self) -> f64 {
-        self.core_kg + self.mantle_kg + self.crust_kg + self.sea_kg + self.air_kg
+        self.core_kg + self.mantle_kg + self.crust_kg + self.sea_kg + self.air_kg + self.envelope_kg
     }
 }
 
@@ -370,10 +493,10 @@ pub fn compose(
     let w_water = w_h2o + weight(Material::Water);
 
     // Mass of each element by the material it came in.
-    let mut by_mat: BTreeMap<String, [f64; 4]> = BTreeMap::new();
+    let mut by_mat: BTreeMap<String, [f64; 5]> = BTreeMap::new();
     let mut add = |id: &str, slot: usize, kg: f64| {
         if kg > 0.0 {
-            by_mat.entry(id.to_string()).or_insert([0.0; 4])[slot] += kg;
+            by_mat.entry(id.to_string()).or_insert([0.0; 5])[slot] += kg;
         }
     };
     for e in &riders {
@@ -398,6 +521,10 @@ pub fn compose(
         for (el, f) in &sheet.water.formula {
             add(el, 3, h2o_kg * f);
         }
+    }
+    // A giant's envelope: hydrogen and helium at their protosolar shares.
+    for (el, f) in &sheet.gas {
+        add(el, 4, bulk.gas_kg * f);
     }
 
     let g = sse_core::constants::g();
@@ -462,12 +589,14 @@ pub fn compose(
                 } else {
                     (0.0, 0.0)
                 };
-                let kept = sea + air;
+                let envelope = kg[4];
+                let kept = sea + air + envelope;
                 Reservoirs {
                     core_kg: core,
                     crust_kg: crust,
                     sea_kg: sea,
                     air_kg: air,
+                    envelope_kg: envelope,
                     mantle_kg: (total - core - crust - kept).max(0.0),
                 }
             });
@@ -489,7 +618,9 @@ pub fn compose(
         "elements are shares of six coarse formation materials, by CI chondrite make-up; no element is lost to its own volatility yet (MP14)".to_string(),
     ];
     if ratio.is_empty() {
-        stand_ins.push("the star's element ratios read as the Sun's until MP7 lands".into());
+        stand_ins.push(
+            "no formation run for this system, so its star's elements read as the Sun's".into(),
+        );
     }
     if bulk.carbon_kg <= 0.0 {
         stand_ins.push("no carbon material known for this body, so no carbon".into());

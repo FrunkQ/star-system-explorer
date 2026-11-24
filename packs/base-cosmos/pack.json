@@ -7,6 +7,117 @@
   "licence": "Apache-2.0",
   "provides": {
     "other": {
+      "element_sources": {
+        "about": "MP7 (matter pack design 8.1): a star's birth cloud holds each element in proportion to how much each kind of source had made where and when it formed. The element rows' origin shares (base-reference) say how the Sun's split; this block says how much each source made for this star, relative to the Sun's, from what the star inherited.",
+        "check": "authored",
+        "equation": {
+          "name": "How much each kind of source made for this star",
+          "formula": "s_massive = 10^(feh + alpha_fe)\ns_white_dwarfs = max(0, (10^feh - fe_massive * s_massive) / (1 - fe_massive))\ns_low_mass = max(0, (c_o / c_o_sun * s_massive - c_massive * s_massive) / (1 - c_massive))\ns_cosmic_rays = 10^feh\ns_mergers = r_process_rel",
+          "inputs": {
+            "feh": {
+              "kind": "inheritance.feh",
+              "unit": "1",
+              "name": "iron to hydrogen, dex against the Sun"
+            },
+            "alpha_fe": {
+              "kind": "inheritance.alpha_fe",
+              "unit": "1",
+              "name": "alpha elements to iron, dex"
+            },
+            "c_o": {
+              "kind": "inheritance.c_o",
+              "unit": "1",
+              "name": "carbon to oxygen"
+            },
+            "c_o_sun": {
+              "kind": "model.solar_c_o",
+              "unit": "1",
+              "name": "the Sun's carbon to oxygen (the patch model's)"
+            },
+            "r_process_rel": {
+              "kind": "inheritance.r_process_rel",
+              "unit": "1",
+              "name": "rapid neutron capture elements to hydrogen, against the Sun"
+            },
+            "fe_massive": {
+              "kind": "reference.origin_share",
+              "unit": "1",
+              "name": "share of the Sun's iron made by massive stars"
+            },
+            "c_massive": {
+              "kind": "reference.origin_share",
+              "unit": "1",
+              "name": "share of the Sun's carbon made by massive stars"
+            }
+          },
+          "outputs": {
+            "s_massive": {
+              "kind": "element.source_scale",
+              "unit": "1",
+              "name": "massive stars (core-collapse), against the Sun"
+            },
+            "s_white_dwarfs": {
+              "kind": "element.source_scale",
+              "unit": "1",
+              "name": "exploding white dwarfs, against the Sun"
+            },
+            "s_low_mass": {
+              "kind": "element.source_scale",
+              "unit": "1",
+              "name": "dying low-mass stars, against the Sun"
+            },
+            "s_cosmic_rays": {
+              "kind": "element.source_scale",
+              "unit": "1",
+              "name": "cosmic rays splitting nuclei, against the Sun"
+            },
+            "s_mergers": {
+              "kind": "element.source_scale",
+              "unit": "1",
+              "name": "merging neutron stars, against the Sun"
+            }
+          },
+          "source": {
+            "text": "Kobayashi, Karakas and Lugaro 2020, The origin of elements from carbon to uranium: oxygen and the alpha elements come from massive stars, iron about half from them and half from exploding white dwarfs, carbon about half from low-mass stars, so [alpha/Fe] measures the massive-star share and C/O the low-mass share",
+            "doi": "10.3847/1538-4357/abae65",
+            "where": "section 6 and its periodic table of origins"
+          },
+          "explain": {
+            "curious": "Different kinds of star made different elements. A star born where many massive stars had already exploded, but few white dwarfs, has more oxygen and less iron than the Sun.",
+            "science": "Each source's yield is scaled against the Sun's: massive stars by 10^([Fe/H]+[alpha/Fe]), white dwarfs by what iron then needs, low-mass stars by what C/O then needs, cosmic rays by 10^[Fe/H], neutron-star mergers by the star's own r-process ratio."
+          },
+          "examples": [
+            {
+              "feh": 0.0,
+              "alpha_fe": 0.0,
+              "c_o": 0.55,
+              "c_o_sun": 0.55,
+              "r_process_rel": 1.0,
+              "fe_massive": 0.5,
+              "c_massive": 0.5,
+              "s_massive": 1.0,
+              "s_white_dwarfs": 1.0,
+              "s_low_mass": 1.0,
+              "s_cosmic_rays": 1.0,
+              "s_mergers": 1.0
+            },
+            {
+              "feh": -1.0,
+              "alpha_fe": 0.3,
+              "c_o": 0.55,
+              "c_o_sun": 0.55,
+              "r_process_rel": 0.2,
+              "fe_massive": 0.5,
+              "c_massive": 0.5,
+              "s_massive": 0.19952623149688797,
+              "s_white_dwarfs": 0.00047376850311203755,
+              "s_low_mass": 0.19952623149688797,
+              "s_cosmic_rays": 0.1,
+              "s_mergers": 0.2
+            }
+          ]
+        }
+      },
       "patch_model": {
         "id": "milky-way-like.v1",
         "about": "Default patch envelope (galaxy design 7 and 12, stage G0): a Milky-Way-like disc so systems can be formed before any galaxy exists. Closed-form; every number is a pack default with its source. Arms, bar, local texture and events arrive with G4 and G6.",

@@ -431,6 +431,10 @@ pub mod molar_mass {
     pub const HE3: f64 = 0.00301602932197;
     /// ne.
     pub const NE: f64 = 0.020179700000000002;
+    /// na.
+    pub const NA: f64 = 0.022989769280000003;
+    /// k.
+    pub const K: f64 = 0.0390983;
     /// kr.
     pub const KR: f64 = 0.083798;
     /// xe.
@@ -905,6 +909,8 @@ pub mod mixture_density {
     pub const HTPB_AP_AL: f64 = 1813.0;
     /// tungsten (nist-srd126).
     pub const TUNGSTEN: f64 = 19300.0;
+    /// rhenium (nist-srd126-t1).
+    pub const RHENIUM: f64 = 21020.0;
     /// niobium-c103 (materion-c103).
     pub const NIOBIUM_C103: f64 = 8850.0;
     /// inconel-718 (smc-inconel718).
@@ -915,6 +921,14 @@ pub mod mixture_density {
     pub const POLYETHYLENE: f64 = 930.0;
     /// lead (nist-srd126).
     pub const LEAD: f64 = 11350.0;
+    /// aluminium (nist-srd126-t1).
+    pub const ALUMINIUM: f64 = 2699.0;
+    /// titanium (nist-srd126-t1).
+    pub const TITANIUM: f64 = 4540.0;
+    /// iron (nist-srd126-t1).
+    pub const IRON: f64 = 7874.0;
+    /// graphite (nist-srd126-t1).
+    pub const GRAPHITE: f64 = 1700.0;
 }
 
 /// Yield strength, Pa, by mixture (the sheet's mixtures).
