@@ -432,6 +432,28 @@ pub(crate) fn read_air_optics(
 }
 
 /// Light through gas (ND2), with the colour to the eye before and after.
+pub(crate) fn effect_at_range(
+    asks: Vec<serde_json::Value>,
+    sheet: &sse_reference::Reference,
+) -> Out {
+    // The stack's sheet when it carries nature's constants, else the base.
+    let base;
+    let sheet = if sheet.row("constants", "c").is_some() {
+        sheet
+    } else {
+        base = sse_reference::Reference::base();
+        &base
+    };
+    let mut effects = vec![];
+    for (n, v) in asks.into_iter().enumerate() {
+        let bad = |e: String| err("bad_ask", format!("ask {n}: {e}"));
+        let a: sse_sense::reach::Ask = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let e = sse_sense::reach::effect_at_range(&a, sheet).map_err(bad)?;
+        effects.push(serde_json::to_value(e).map_err(|e| bad(e.to_string()))?);
+    }
+    Ok(Response::EffectsAtRange { effects })
+}
+
 pub(crate) fn light_through_gas(
     passages: Vec<serde_json::Value>,
     sheet: &sse_reference::Reference,
