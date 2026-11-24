@@ -94,7 +94,7 @@ export { navShipOf, partyLander, voyageStart } from "./party.ts";
 export type { PartyShip } from "./party.ts";
 export { arrivalOffer, arrivalReveal } from "./arrival.ts";
 export type { ArrivalOffer } from "./arrival.ts";
-export type { CodeReading, CodesRead, MappedWorldRow, SectorMap, SectorFormat, SectorImportAsk, ImportedWorldRow, SectorImported, SectorExported } from "./sector.ts";
+export type { CodeReading, CodesRead, MappedWorldRow, SectorMap, SectorFormat, SectorImportAsk, ImportedWorldRow, SectorImported, SectorExported, ProfileRolled, RolledStep } from "./sector.ts";
 export { STOCK_SHIPS, packShips, shipChoices, shipToSend, packDriveWords, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
 export type { NavShip, ShipChoice, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
 export { verdictWords, chanceWords, worstDangers } from "./ship-at-world.ts";

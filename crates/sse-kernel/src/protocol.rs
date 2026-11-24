@@ -1770,6 +1770,22 @@ pub enum Request {
         route_tier: Option<String>,
         at_s: i64,
     },
+    /// A pack's rolled profile (WBH part 2, `provides.other.rolls`) for one
+    /// world: each step's dice, drawn from the universe's seed (the same on
+    /// every device), read against the world's codes on the program's sheet.
+    /// A code set by hand is kept unless `reroll`. Without `apply` it is a
+    /// preview; with it the results become one authored event at `at_s`,
+    /// each code beside a `roll.<program>.<step>` fact saying how it was
+    /// rolled. GM machine only.
+    RollProfile {
+        program: String,
+        body: String,
+        #[serde(default)]
+        reroll: bool,
+        #[serde(default)]
+        apply: bool,
+        at_s: i64,
+    },
     /// Write a campaign's mapped systems (those with `map.hex`) at or under
     /// `scope` as a sector file (`format`: `t5_tab`, `sec`, `uwp_lines`):
     /// each system's main world (the body carrying `provenance.code`, or
@@ -2317,6 +2333,7 @@ impl Request {
             Request::Codes { .. } => "codes",
             Request::ImportSector { .. } => "import_sector",
             Request::ExportSector { .. } => "export_sector",
+            Request::RollProfile { .. } => "roll_profile",
             Request::SectorMap { .. } => "sector_map",
             Request::HaloCell { .. } => "halo_cell",
             Request::MatterBudget { .. } => "matter_budget",
@@ -2668,6 +2685,11 @@ pub fn ops() -> Vec<OpInfo> {
             "import_sector",
             Cost::Light,
             "GM machine only; one code-sheet plan per world line; with grow, up to 6 pinned formation runs per world (heavy for a whole sector)",
+        ),
+        o(
+            "roll_profile",
+            Cost::Light,
+            "GM machine only; one code reading of one world, then a few dice",
         ),
         o(
             "export_sector",
@@ -3672,6 +3694,18 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional)]
         record_hash: Option<String>,
+    },
+    /// `roll_profile`: each step's result (`id`, `label`, `writes`, `symbol`,
+    /// `dice`, `total`, `how`, `why`), and with `apply` the event written.
+    ProfileRolled {
+        program: String,
+        body: String,
+        #[ts(type = "unknown[]")]
+        steps: Vec<serde_json::Value>,
+        events: Vec<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        state_hash: Option<String>,
     },
     /// `export_sector`: the file's text, the systems written, and those
     /// skipped (no main world found), by address.

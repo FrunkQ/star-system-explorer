@@ -3399,6 +3399,12 @@
   "at_s": 0
  },
  {
+  "op": "roll_profile",
+  "program": "traveller.social",
+  "body": "u:matter/sys:1/body:0",
+  "at_s": 0
+ },
+ {
   "op": "mine",
   "ship": "u:matter/sys:1/ship:0",
   "body": "u:matter/sys:1/body:0",

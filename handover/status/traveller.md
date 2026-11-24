@@ -29,22 +29,20 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | Mining and resource labels (TG11 mining step, TG8 part 2): `resource.*` labels read off held kg, so a mined-out rock loses its label; base pack `sse.base-resources` (metal, water, hydrogen, helium-3); new op `mine` at a ship's `mining.rate_kg_h` | done; a refinery's named effects, a computed drill rate next | packages/X3k-mining-labels.md |
 | X3l, sector routes as links: `sse-sector-io` reads the metadata's `<Routes>`; `import_sector` takes `metadata`, `route_audience`, `route_tier` and writes each route between two imported worlds as a link (source `import_sector`, GM only by default); the Sector map fetches or takes the XML and says which routes were left out | done; cross-sector routes, routes drawn on the hex map next | packages/X3l-sector-routes.md |
 | RK12, the Traveller mapping: nine ship weapons in `provides.other.weapons`, each with the game's tech level, optimum band and damage (Cepheus Engine SRD) beside an sse-sense weapon; a standard target; fudge F54 | done; rings on the chart (renderer, chart room), RK16 pack side next | packages/RK12-traveller-weapons.md |
-| WBH part 1, the extended world profile: `sse-codes` `value` segments (a fact, scaled, over a sheet constant, to significant figures); code sheet `traveller.extended` (twelve physical lines, none rolled) as the swappable block; a "Read as" sheet picker on World codes; credits for the Cepheus SRD and TravellerSystemGenerator | done; part 2, the seeded GM-only social layer, next | packages/WBH1-extended-profile.md |
+| WBH part 1, the extended world profile: `sse-codes` `value` segments (a fact, scaled, over a sheet constant, to significant figures); code sheet `traveller.extended` (twelve physical lines, none rolled) as the swappable block; a "Read as" sheet picker on World codes; credits for the Cepheus SRD and TravellerSystemGenerator | done | packages/WBH1-extended-profile.md |
+| WBH part 2, the social codes rolled: `sse-codes::roll` (a pack's dice procedure as data, seeded per world and step, hand-set codes kept); kernel op `roll_profile` (preview, or authored codes with how each was rolled); Traveller `traveller.social` from the Cepheus SRD (government, law, starport, tech level, bases); a roll button on World codes | done; a whole sector in one ask next | packages/WBH2-social-rolls.md |
 
 ## Open now
 
-- **PR 400** (X3j, X3k, X3l, the RK12 Traveller mapping and WBH part 1 together). It appends two lines to `tests/golden/contract.jsonl` (the `transfer` and
-  `mine` refusals) and merges in its turn in the golden lane. To land it: merge main, run
+- **PR 400** (X3j, X3k, X3l, the RK12 Traveller mapping and WBH parts 1 and 2 together). It appends three lines to `tests/golden/contract.jsonl` (the `transfer`, `mine`
+  and `roll_profile` refusals) and merges in its turn in the golden lane. To land it: merge main, run
   `SSE_BLESS=1 cargo test -q -p sse-kernel contract`, `scripts/check.sh`, push, merge on green.
 
 ## Next packages, in order
 
 1. **RK16 pack side:** stealth and countermeasure gear onto the counters list. Design questions go to the Atomic Rockets track.
 2. **MP16 counted measures.** "2 jumps" and a "Jump-2" drive rating (never "J2"). The default count is ceil(route pc / rating), and the GM's count overrules it. This needs the kernel's counted-measure declarations, and links carry `counted` in `nav` (imported routes could carry it too).
-3. **WBH part 2, the social layer** (part 1, the physical profile, is done).
-   - Read the physical profile off SSE4's physics; never roll a physical digit. Then add a seeded, GM-only social layer.
-   - Use Cepheus Engine SRD (OGL) numbers for the basic social rolls, and keep WBH tables out (Mongoose copyright).
-   - Port ideas, not code, from Roy Martin's TravellerSystemGenerator (GPL-3.0, so its code cannot enter this Apache repo). Credit it in sources and the log according to its licence, and say nothing about permission.
+3. **WBH next:** roll a whole sector's unset worlds in one ask; more social lines once there are OGL or our own numbers.
 4. **Resources, next steps:** a refinery's named making and consuming effects; a computed drill rate; catalogue Sol compositions (Mercury reads 23% iron like every catalogue body; inventory thread).
 5. **Smaller items:**
    - Triggers that ask `detect` for the pair instead of reading `range_m` (kernel lane).

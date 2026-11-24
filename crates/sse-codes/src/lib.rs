@@ -37,6 +37,7 @@ use std::collections::{BTreeMap, BTreeSet};
 pub mod import;
 pub mod mix;
 pub mod plan;
+pub mod roll;
 
 #[cfg(test)]
 mod import_tests;
@@ -293,6 +294,8 @@ pub struct Codes {
     pub sift: SiftContent,
     /// Gas mixes from every pack (`provides.other.gas_mixes`), in stack order.
     pub mixes: Vec<mix::GasMix>,
+    /// Rolled profiles from every pack (`provides.other.rolls`), in stack order.
+    pub rolls: Vec<roll::Program>,
 }
 
 impl Codes {
@@ -333,11 +336,64 @@ impl Codes {
                 Err(e) => errs.push(format!("{}: gas_mixes: {e}", p.id)),
             }
         }
+        let mut rolls: Vec<roll::Program> = Vec::new();
+        for p in stack {
+            let Some(v) = p.provides.other.get("rolls") else {
+                continue;
+            };
+            match serde_json::to_value(v).and_then(serde_json::from_value::<Vec<roll::Program>>) {
+                Ok(rs) => {
+                    for r in rs {
+                        if rolls.iter().any(|o| o.id == r.id) {
+                            errs.push(format!(
+                                "{}: rolled profile {} is already defined",
+                                p.id, r.id
+                            ));
+                        }
+                        rolls.push(r);
+                    }
+                }
+                Err(e) => errs.push(format!("{}: rolls: {e}", p.id)),
+            }
+        }
         let out = Codes {
             sheets,
             sift,
             mixes,
+            rolls,
         };
+        for r in &out.rolls {
+            match out.sheet(&r.sheet) {
+                None => errs.push(format!(
+                    "rolled profile {}: no code sheet {}",
+                    r.id, r.sheet
+                )),
+                Some(sh) => {
+                    for st in &r.steps {
+                        let segs = st
+                            .add
+                            .iter()
+                            .chain(st.dm.keys())
+                            .chain(st.zero_when.iter().chain(&st.only_when).map(|c| &c.segment))
+                            .chain(
+                                st.floors
+                                    .iter()
+                                    .flat_map(|f| f.when.iter().map(|c| &c.segment)),
+                            );
+                        for g in segs {
+                            let earlier = r
+                                .steps
+                                .iter()
+                                .take_while(|x| x.id != st.id)
+                                .any(|x| &x.id == g);
+                            if !earlier && !sh.segments.iter().any(|x| &x.id == g) {
+                                errs.push(format!("rolled profile {}: step {} reads {g}, which is not a segment of {}", r.id, st.id, r.sheet));
+                            }
+                        }
+                    }
+                }
+            }
+        }
         for s in &out.sheets {
             if let Err(e) = out.check(s) {
                 errs.push(e);

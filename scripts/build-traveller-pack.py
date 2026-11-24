@@ -477,6 +477,57 @@ EXTENDED = {
     "fact_prefix": U,
 }
 
+# WBH part 2: the social layer as a rolled profile (sse-codes `roll`), for
+# what the physics cannot decide. GM only, seeded from the universe (the same
+# dice on every device), written as authored codes marked as rolled, which the
+# GM overrules like any hand-set code. A code already set by hand (imported
+# from a sector file, typed) is kept. The physical digits (size, atmosphere,
+# hydrographics) are never rolled: they are read off the physics, and
+# population comes from the world's settlements. The numbers are the Cepheus
+# Engine SRD's world creation (Samardan Press, Open Game Licence; chapter 12,
+# read 24 Nov): starport, government and law 2D6-7 plus population or
+# government, tech level 1D6 with its modifier table and floors, bases by the
+# port. Its pirate base is written as this pack's corsair base (C).
+CEPHEUS_WORLDS = "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 12 Worlds. https://www.orffenspace.com/cepheus-srd/book3/worlds.html"
+def when(seg, *syms):
+    return {"segment": seg, "in": [str(x) for x in syms]}
+HEXD = "0123456789ABCDEFG"
+UNINHABITED = [when("population", 0)]
+TL_DM = {
+    "starport": {"A": 6, "B": 4, "C": 2, "X": -4},
+    "size": {"0": 2, "1": 2, "2": 1, "3": 1, "4": 1},
+    "atmosphere": {**{s: 1 for s in "0123"}, **{s: 1 for s in "ABCDEF"}},
+    "hydrographics": {"0": 1, "9": 1, "A": 2},
+    "population": {**{s: 1 for s in "12345"}, "9": 1, "A": 2, "B": 3, "C": 4},
+    "government": {"0": 1, "5": 1, "7": 2, "D": -2, "E": -2},
+}
+SOCIAL = {
+    "id": "traveller.social",
+    "label": "Roll the social codes",
+    "about": "Starport, government, law, tech level and bases for a world the physics cannot decide, rolled from the universe's seed (the same on every device). GM only; a code set by hand is kept; every rolled code can be overruled.",
+    "sheet": "traveller.world",
+    "source": CEPHEUS_WORLDS,
+    "steps": [
+        {"id": "government", "label": "Government", "dice": 2, "plus": -7, "add": ["population"], "zero_when": UNINHABITED, "min": 0, "max": 15},
+        {"id": "law", "label": "Law level", "dice": 2, "plus": -7, "add": ["government"], "zero_when": [when("government", 0)], "min": 0, "max": 18},
+        {"id": "starport", "label": "Starport", "dice": 2, "plus": -7, "add": ["population"],
+         "table": [[2, "X"], [3, "E"], [5, "D"], [7, "C"], [9, "B"], [11, "A"]]},
+        {"id": "tech", "label": "Tech level", "dice": 1, "dm": TL_DM, "zero_when": UNINHABITED, "min": 0,
+         "floors": [
+             {"when": [when("hydrographics", 0, "A"), when("population", 6, 7, 8, 9, "A", "B", "C")], "min": 4},
+             {"when": [when("atmosphere", 4, 7, 9)], "min": 5},
+             {"when": [when("atmosphere", 0, 1, 2, 3, "A", "B", "C")], "min": 7},
+             {"when": [when("atmosphere", "D", "E"), when("hydrographics", "A")], "min": 7},
+         ]},
+        {"id": "naval", "label": "Naval base", "writes": "traveller.bases.N", "dice": 2, "target": 8,
+         "only_when": [when("starport", "A", "B")]},
+        {"id": "scout", "label": "Scout base", "writes": "traveller.bases.S", "dice": 2, "target": 7,
+         "only_when": [when("starport", "A", "B", "C", "D")], "dm": {"starport": {"C": -1, "B": -2, "A": -3}}},
+        {"id": "corsair", "label": "Corsair base", "writes": "traveller.bases.C", "dice": 2, "target": 12,
+         "only_when": [when("starport", "B", "C", "D", "E", "X"), when("naval", "no")]},
+    ],
+}
+
 # The hex map (a core view) as this pack configures it: one hex a parsec,
 # subsectors 8 by 10, sectors 4 by 4 subsectors, four-digit labels.
 HEX_MAP = {
@@ -1115,6 +1166,7 @@ pack = {
         "axes": [[k, v] for k, v in sorted(AXES.items())],
         "classes": CLASSES,
         "code_sheets": [SHEET, EXTENDED],
+        "rolls": [SOCIAL],
         "views": {"sse.view.hex-map": HEX_MAP},
         # V3 gap 18 (overlay.ts): the sector grid laid over the stars, where the GM puts it, under the HUD.
         "overlays": [{"id": "traveller.sector-grid", "label": "Sector grid", "frame": "galaxy-plane-pc", "grid": "sse.view.hex-map"}],

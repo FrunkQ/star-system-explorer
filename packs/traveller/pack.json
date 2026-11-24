@@ -7917,6 +7917,294 @@
      "fact_prefix": "traveller.uwp."
     }
    ],
+   "rolls": [
+    {
+     "id": "traveller.social",
+     "label": "Roll the social codes",
+     "about": "Starport, government, law, tech level and bases for a world the physics cannot decide, rolled from the universe's seed (the same on every device). GM only; a code set by hand is kept; every rolled code can be overruled.",
+     "sheet": "traveller.world",
+     "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 12 Worlds. https://www.orffenspace.com/cepheus-srd/book3/worlds.html",
+     "steps": [
+      {
+       "id": "government",
+       "label": "Government",
+       "dice": 2,
+       "plus": -7,
+       "add": [
+        "population"
+       ],
+       "zero_when": [
+        {
+         "segment": "population",
+         "in": [
+          "0"
+         ]
+        }
+       ],
+       "min": 0,
+       "max": 15
+      },
+      {
+       "id": "law",
+       "label": "Law level",
+       "dice": 2,
+       "plus": -7,
+       "add": [
+        "government"
+       ],
+       "zero_when": [
+        {
+         "segment": "government",
+         "in": [
+          "0"
+         ]
+        }
+       ],
+       "min": 0,
+       "max": 18
+      },
+      {
+       "id": "starport",
+       "label": "Starport",
+       "dice": 2,
+       "plus": -7,
+       "add": [
+        "population"
+       ],
+       "table": [
+        [
+         2,
+         "X"
+        ],
+        [
+         3,
+         "E"
+        ],
+        [
+         5,
+         "D"
+        ],
+        [
+         7,
+         "C"
+        ],
+        [
+         9,
+         "B"
+        ],
+        [
+         11,
+         "A"
+        ]
+       ]
+      },
+      {
+       "id": "tech",
+       "label": "Tech level",
+       "dice": 1,
+       "dm": {
+        "starport": {
+         "A": 6,
+         "B": 4,
+         "C": 2,
+         "X": -4
+        },
+        "size": {
+         "0": 2,
+         "1": 2,
+         "2": 1,
+         "3": 1,
+         "4": 1
+        },
+        "atmosphere": {
+         "0": 1,
+         "1": 1,
+         "2": 1,
+         "3": 1,
+         "A": 1,
+         "B": 1,
+         "C": 1,
+         "D": 1,
+         "E": 1,
+         "F": 1
+        },
+        "hydrographics": {
+         "0": 1,
+         "9": 1,
+         "A": 2
+        },
+        "population": {
+         "1": 1,
+         "2": 1,
+         "3": 1,
+         "4": 1,
+         "5": 1,
+         "9": 1,
+         "A": 2,
+         "B": 3,
+         "C": 4
+        },
+        "government": {
+         "0": 1,
+         "5": 1,
+         "7": 2,
+         "D": -2,
+         "E": -2
+        }
+       },
+       "zero_when": [
+        {
+         "segment": "population",
+         "in": [
+          "0"
+         ]
+        }
+       ],
+       "min": 0,
+       "floors": [
+        {
+         "when": [
+          {
+           "segment": "hydrographics",
+           "in": [
+            "0",
+            "A"
+           ]
+          },
+          {
+           "segment": "population",
+           "in": [
+            "6",
+            "7",
+            "8",
+            "9",
+            "A",
+            "B",
+            "C"
+           ]
+          }
+         ],
+         "min": 4
+        },
+        {
+         "when": [
+          {
+           "segment": "atmosphere",
+           "in": [
+            "4",
+            "7",
+            "9"
+           ]
+          }
+         ],
+         "min": 5
+        },
+        {
+         "when": [
+          {
+           "segment": "atmosphere",
+           "in": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "A",
+            "B",
+            "C"
+           ]
+          }
+         ],
+         "min": 7
+        },
+        {
+         "when": [
+          {
+           "segment": "atmosphere",
+           "in": [
+            "D",
+            "E"
+           ]
+          },
+          {
+           "segment": "hydrographics",
+           "in": [
+            "A"
+           ]
+          }
+         ],
+         "min": 7
+        }
+       ]
+      },
+      {
+       "id": "naval",
+       "label": "Naval base",
+       "writes": "traveller.bases.N",
+       "dice": 2,
+       "target": 8,
+       "only_when": [
+        {
+         "segment": "starport",
+         "in": [
+          "A",
+          "B"
+         ]
+        }
+       ]
+      },
+      {
+       "id": "scout",
+       "label": "Scout base",
+       "writes": "traveller.bases.S",
+       "dice": 2,
+       "target": 7,
+       "only_when": [
+        {
+         "segment": "starport",
+         "in": [
+          "A",
+          "B",
+          "C",
+          "D"
+         ]
+        }
+       ],
+       "dm": {
+        "starport": {
+         "C": -1,
+         "B": -2,
+         "A": -3
+        }
+       }
+      },
+      {
+       "id": "corsair",
+       "label": "Corsair base",
+       "writes": "traveller.bases.C",
+       "dice": 2,
+       "target": 12,
+       "only_when": [
+        {
+         "segment": "starport",
+         "in": [
+          "B",
+          "C",
+          "D",
+          "E",
+          "X"
+         ]
+        },
+        {
+         "segment": "naval",
+         "in": [
+          "no"
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
    "views": {
     "sse.view.hex-map": {
      "grid": {

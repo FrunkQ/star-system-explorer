@@ -67,7 +67,7 @@
       "name": "Galaxy and cosmic web",
       "meaning": "The galaxy chart, star and halo cells, the cosmic web, the Window and sector import and export.",
       "budget_ms": 1000,
-      "sources": ["galaxy_chart", "web_slice", "halo_cell", "matter_budget", "star_cell", "window_view", "import_sector", "export_sector", "sector_map", "promote_star"],
+      "sources": ["galaxy_chart", "web_slice", "halo_cell", "matter_budget", "star_cell", "window_view", "import_sector", "roll_profile", "export_sector", "sector_map", "promote_star"],
       "bench": ["cosmos", "cosmology", "haloes", "galaxy", "galaxy-events", "envelope", "stars", "nucleus"]
     },
     {

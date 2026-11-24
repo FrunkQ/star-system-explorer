@@ -103,6 +103,28 @@ export interface SectorImported {
   record_hash?: string;
 }
 
+/** One step of a rolled profile (kernel `roll_profile`). */
+export interface RolledStep {
+  id: string;
+  label: string;
+  writes?: string;
+  symbol: string;
+  dice: number[];
+  total: number;
+  /** "rolled", "zero" (a condition gives 0), "kept" (set by hand), "skipped". */
+  how: "rolled" | "zero" | "kept" | "skipped";
+  why: string;
+}
+
+export interface ProfileRolled {
+  type: "profile_rolled";
+  program: string;
+  body: string;
+  steps: RolledStep[];
+  events: string[];
+  state_hash?: string;
+}
+
 export interface SectorExported {
   type: "sector_export";
   text: string;

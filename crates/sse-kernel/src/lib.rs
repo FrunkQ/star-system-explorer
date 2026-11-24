@@ -6137,6 +6137,117 @@ impl Kernel {
                     record_hash,
                 }
             }
+            Request::RollProfile {
+                program,
+                body,
+                reroll,
+                apply,
+                at_s,
+            } => {
+                let prog = self
+                    .codes
+                    .rolls
+                    .iter()
+                    .find(|r| r.id == program)
+                    .ok_or_else(|| {
+                        err(
+                            "unknown_program",
+                            format!(
+                                "no rolled profile {program:?} in the stack (provides.other.rolls)"
+                            ),
+                        )
+                    })?
+                    .clone();
+                let sheet = self
+                    .codes
+                    .sheet(&prog.sheet)
+                    .expect("checked at load")
+                    .clone();
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let body = in_universe(&u.root, &body)?;
+                let reading = codes_at(&self.codes, &sheet, u, &body, at_s)
+                    .into_iter()
+                    .find(|r| r["address"] == body.to_string())
+                    .ok_or_else(|| {
+                        err(
+                            "unknown_body",
+                            format!("{body} has no facts yet: adopt or import it first"),
+                        )
+                    })?;
+                let reading: sse_codes::Reading =
+                    serde_json::from_value(reading["reading"].clone())
+                        .expect("a reading round-trips");
+                let authored: BTreeMap<String, String> = sheet
+                    .segments
+                    .iter()
+                    .filter_map(|g| g.authored.clone().map(|f| (g.id.clone(), f)))
+                    .collect();
+                let steps =
+                    sse_codes::roll::roll(&prog, &reading, &authored, &u.seed, &body, reroll)
+                        .map_err(|e| err("bad_roll", e))?;
+                let mut events = Vec::new();
+                if apply {
+                    let mut set: BTreeMap<String, Value> = BTreeMap::new();
+                    for s in steps
+                        .iter()
+                        .filter(|s| s.how == "rolled" || s.how == "zero")
+                    {
+                        let Some(f) = &s.writes else { continue };
+                        let v = match s.symbol.as_str() {
+                            "yes" => Value::Bool(true),
+                            "no" => Value::Bool(false),
+                            sym => Value::Text(sym.to_string()),
+                        };
+                        set.insert(f.clone(), v);
+                        set.insert(
+                            format!("roll.{}.{}", prog.id, s.id),
+                            Value::Text(s.why.clone()),
+                        );
+                    }
+                    if !set.is_empty() {
+                        let t = UniverseTime::seconds(at_s);
+                        let e = Event::new(EventBody {
+                            kind: kinds::AUTHORED_SET.into(),
+                            subject: vec![body.clone()],
+                            occurred_at: t,
+                            activated_at: t,
+                            recognised_at: u.chronicle.next_stamp(),
+                            causes: vec![],
+                            payload: Payload {
+                                set: BTreeMap::from([(body.clone(), set)]),
+                                ..Default::default()
+                            },
+                            evidence: Evidence::Authored,
+                            publisher: Publisher::new("gm", "roll_profile", "1"),
+                        })
+                        .map_err(|e| err("bad_event", format!("{e}")))?;
+                        let id = u
+                            .chronicle
+                            .append(e)
+                            .map_err(|e| err("chronicle", format!("{e}")))?;
+                        events.push(id.hex());
+                    }
+                }
+                let state_hash = apply.then(|| {
+                    u.chronicle
+                        .state_at(UniverseTime::seconds(i64::MAX))
+                        .hash()
+                        .hex()
+                });
+                Response::ProfileRolled {
+                    program: prog.id.clone(),
+                    body: body.to_string(),
+                    steps: steps
+                        .iter()
+                        .map(|s| serde_json::to_value(s).expect("plain data"))
+                        .collect(),
+                    events,
+                    state_hash,
+                }
+            }
             Request::ExportSector {
                 scope,
                 format,

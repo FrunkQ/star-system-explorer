@@ -221,6 +221,8 @@ export interface ViewSession {
   /** The hex map's worlds (X3c, kernel `sector_map`): each mapped system's main world with its reading, by hex. Read only; GM only. */
   sectorMap?(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorMap } | { ok: false; code: string; message: string }>;
   /** Read a sector file (X3c, kernel `import_sector`): a preview without `apply`; with it, every world written as history (and with `grow`, its whole system grown first). GM only. */
+  /** Roll a pack's profile for one world (WBH part 2, kernel `roll_profile`): a preview, or with `apply` written as authored codes. GM only. */
+  rollProfile?(ask: { program: string; body: string; reroll?: boolean; apply?: boolean; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").ProfileRolled } | { ok: false; code: string; message: string }>;
   importSector?(ask: import("./sector.ts").SectorImportAsk): Promise<{ ok: true; result: import("./sector.ts").SectorImported } | { ok: false; code: string; message: string }>;
   /** Write the mapped systems as a sector file (X3c, kernel `export_sector`). Read only; GM only. */
   exportSector?(ask: { scope: string; format: import("./sector.ts").SectorFormat; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorExported } | { ok: false; code: string; message: string }>;
@@ -897,6 +899,12 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "sectors are imported on the game master's machine" };
     const r = await this.#call({ op: "import_sector", text: ask.text, ...(ask.format ? { format: ask.format } : {}), ...(ask.sheet ? { sheet: ask.sheet } : {}), apply: !!ask.apply, grow: !!ask.grow, ...(ask.metadata ? { metadata: ask.metadata } : {}), ...(ask.route_audience ? { route_audience: ask.route_audience } : {}), ...(ask.route_tier ? { route_tier: ask.route_tier } : {}), at_s: ask.at_s ?? 0 });
     return r.type === "sector_import" ? { ok: true, result: r as unknown as import("./sector.ts").SectorImported } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async rollProfile(ask: { program: string; body: string; reroll?: boolean; apply?: boolean; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").ProfileRolled } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "profiles are rolled on the game master's machine" };
+    const r = await this.#call({ op: "roll_profile", program: ask.program, body: ask.body, reroll: !!ask.reroll, apply: !!ask.apply, at_s: ask.at_s ?? 0 });
+    return r.type === "profile_rolled" ? { ok: true, result: r as unknown as import("./sector.ts").ProfileRolled } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async exportSector(ask: { scope: string; format: import("./sector.ts").SectorFormat; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorExported } | { ok: false; code: string; message: string }> {

@@ -395,3 +395,128 @@ fn sector_routes_become_links_known_to_the_gm() {
     bad["route_audience"] = serde_json::json!(7);
     assert_eq!(send(&mut k, bad)["code"], "bad_link");
 }
+
+/// WBH part 2: the Traveller social codes as a rolled profile. The dice come
+/// from the universe's seed (the same twice), the steps read each other in
+/// order, applying writes authored codes that read back on the sheet with a
+/// note of how they were rolled, a hand-set code is kept, and an uninhabited
+/// world gets government, law and tech level 0 without a roll.
+#[test]
+fn traveller_social_codes_roll_from_the_seed() {
+    let mut k = crate::Kernel::new();
+    let r = load(
+        &mut k,
+        vec![
+            pack("packs/base-physics/pack.json"),
+            pack("packs/base-atlas/pack.json"),
+            pack("packs/base-time/pack.json"),
+            pack("packs/traveller/pack.json"),
+        ],
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "wbh", "seed": "w"}),
+    );
+    let (busy, empty) = ("u:wbh/sys:0/body:3", "u:wbh/sys:0/body:4");
+    for (a, f, v) in [
+        (busy, "name", serde_json::json!("Ashgrove")),
+        (busy, "traveller.code.population", serde_json::json!("8")),
+        (empty, "name", serde_json::json!("Cinder")),
+        (empty, "traveller.code.population", serde_json::json!("0")),
+    ] {
+        let r = send(
+            &mut k,
+            serde_json::json!({"op": "set_authored", "edit": {
+                "address": a, "field": f, "value": v, "occurred_at_s": 0}}),
+        );
+        assert_eq!(r["type"], "authored", "{r}");
+    }
+    let ask = |body: &str, apply: bool| {
+        serde_json::json!({"op": "roll_profile", "program": "traveller.social", "body": body,
+            "apply": apply, "at_s": 0})
+    };
+    let step = |r: &serde_json::Value, id: &str| -> serde_json::Value {
+        r["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|s| s["id"] == id)
+            .unwrap()
+            .clone()
+    };
+    let a = send(&mut k, ask(busy, false));
+    assert_eq!(a["type"], "profile_rolled", "{a}");
+    let b = send(&mut k, ask(busy, false));
+    assert_eq!(a["steps"], b["steps"], "the same dice from the same seed");
+    let gov = step(&a, "government");
+    assert_eq!(gov["how"], "rolled", "{gov}");
+    let dice: i64 = gov["dice"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| d.as_i64().unwrap())
+        .sum();
+    assert_eq!(gov["total"], (dice - 7 + 8).clamp(0, 15), "{gov}");
+    assert!(
+        gov["why"].as_str().unwrap().contains("+ population 8"),
+        "{gov}"
+    );
+    let law = step(&a, "law");
+    assert!(
+        law["why"]
+            .as_str()
+            .unwrap()
+            .contains(&format!("+ government {}", gov["total"])),
+        "{law}"
+    );
+    let port = step(&a, "starport")["symbol"].as_str().unwrap().to_string();
+    assert!(
+        ["A", "B", "C", "D", "E", "X"].contains(&port.as_str()),
+        "{port}"
+    );
+    assert!(a.get("state_hash").is_none());
+
+    // Written: the codes read back as authored, with how they were rolled.
+    let w = send(&mut k, ask(busy, true));
+    assert_eq!(w["events"].as_array().unwrap().len(), 1, "{w}");
+    let c = send(
+        &mut k,
+        serde_json::json!({"op": "codes", "scope": busy, "at_s": 0}),
+    );
+    let reading = &c["readings"][0]["reading"];
+    let seg = reading["segments"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["id"] == "government")
+        .unwrap();
+    assert_eq!(seg["symbol"], gov["symbol"], "{seg}");
+    assert_eq!(seg["why"]["kind"], "authored", "{seg}");
+    // Again: every code is now set, so each is kept.
+    let again = send(&mut k, ask(busy, false));
+    assert_eq!(step(&again, "government")["how"], "kept", "{again}");
+    let re = send(
+        &mut k,
+        serde_json::json!({"op": "roll_profile", "program": "traveller.social", "body": busy,
+            "reroll": true, "at_s": 0}),
+    );
+    assert_eq!(step(&re, "government")["how"], "rolled", "{re}");
+
+    // Uninhabited: 0 without a roll.
+    let e = send(&mut k, ask(empty, false));
+    for id in ["government", "law", "tech"] {
+        let s = step(&e, id);
+        assert_eq!(
+            (s["how"].as_str(), s["symbol"].as_str()),
+            (Some("zero"), Some("0")),
+            "{id}: {s}"
+        );
+    }
+
+    let bad = send(
+        &mut k,
+        serde_json::json!({"op": "roll_profile", "program": "nope", "body": busy, "at_s": 0}),
+    );
+    assert_eq!(bad["code"], "unknown_program", "{bad}");
+}
