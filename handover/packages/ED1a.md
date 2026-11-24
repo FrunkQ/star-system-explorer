@@ -15,16 +15,30 @@ Status: part 1 done 24 Nov 2026 (thread "Build planet and star editing"). Design
 
 - `packages/ui-contract/src/figures-said.json` is the "How figures are said" table: kinds, readings, rungs, where each rung takes over, the words, prefixes, which units take prefixes, the twelve scale classes, and how each unit is written in words. It holds **no factor**: every unit is a row of the master data sheet's Units table. It moves into a pack with unit schemes (MP15) so that a setting can edit it on Reference.
 - `scripts/build-ui-reference.py` now also writes `unit_rows` (symbol, name, what it measures, factor, offset) into the interface's generated copy of the sheet, because °C needs its offset and the parser needs names and symbols.
-- Seventeen units the table names are not on the sheet yet (arcmin, min, tonne, Moon radius and mass, Earth oceans, Earth's sunlight, percent, ppm, tonnes of TNT, and the imperial set). The data sheet thread is adding them (asked 24 Nov 15:28; agreed 15:29). Until then the engine skips those rungs and `waitingUnits()` lists them; `figures.test.ts` holds the list, so a typo in the table fails and each row is struck off as it lands. The Moon's tilt typed as "23d 26m" is a skipped test until arcminutes arrive.
+- (Done 24 Nov: PR 419 added them; WAITING is empty and "23d 26m" reads.) Seventeen units the table names were not on the sheet (arcmin, min, tonne, Moon radius and mass, Earth oceans, Earth's sunlight, percent, ppm, tonnes of TNT, and the imperial set). The data sheet thread is adding them (asked 24 Nov 15:28; agreed 15:29). Until then the engine skips those rungs and `waitingUnits()` lists them; `figures.test.ts` holds the list, so a typo in the table fails and each row is struck off as it lands. The Moon's tilt typed as "23d 26m" is a skipped test until arcminutes arrive.
 
 ## Checks
 
 - `packages/ui-contract/test/figures.test.ts`: the table is well formed (families, classes, unique readings, Imperial never first); the design's own examples at each depth; honest precision; sticky boundaries and a held rung; click order and remembered choices; typing with words, prefixes, exponents, grams, compounds and °C; another kind told apart; and every reading of sixteen kinds at three depths reads back to its value within what was shown.
 - `scripts/build-ui-reference.py --check` (run by `sheet.test.ts`).
 
-## Next (part 2)
+## Part 2a: the body card (done 24 Nov)
 
-Move every existing figure onto `say` (about 250 places format their own numbers today), a pressable unit on screen that steps the reading, the choices saved with the campaign and inherited by player seats, "How figures are said" on the Reference screen beside Units, and the editing-grammar check that fails a screen formatting its own numbers. Planet radii as a rung for a moon's orbit needs the parent's radius passed in; local days and years need the world's calendar.
+- `sayFact(fact, cls, opts)` says a scene fact through the engine: its unit symbol ("AU", "M⊕", "K", "g", "μT") is found among the sheet's units (a unit's own symbol first, so g is the gee and d the day), its field says what it is about (`fact_about` in figures-said.json: a_au is an orbit, radius_* a size, surface_k a surface), and its source sets the figures (a catalogued or typed value keeps the figures its own text gave, up to six; a computed one shows three). A fact in a unit the sheet lacks ("dex") or with none keeps the scene's text.
+- `readFact(fact, text, shownUnit)` reads typing back in the fact's own unit: any unit of its kind, words and prefixes ("412 thousand km" for an orbit held in AU); a bare number is in the unit on screen. The card's `parseFact` uses it (decimal commas still read).
+- A world's surface temperature reads in °C first (`*.surface`, like a site). Science depth too: Kelvin is a press away.
+- Pressing a unit steps to the next reading for every body of that scale class (CardField `unit` and `onunit`; `ws.setUnitChoice`). The choices are in `ws.unit_choices` and the campaign save (`workspace.unit_choices`). The handles row and the strip say figures in the same reading.
+- `subjectClass(subject)` (handles.ts) gives a scene subject's scale class.
+- Tests that read figures as text moved with it: shell.e2e (Tarn's surface in °C, Hasp's orbit "412 thousand km"), walk.e2e (Mars warms past about 230 K, in K or °C); editing.e2e presses the card's orbit unit round its readings and checks the handle follows.
+
+## Part 2b: the check and the table (done 24 Nov)
+
+- `tests/ui/figures-ledger.test.ts`: the editing grammar's check on figures. Each file's own number formatting (toFixed, toPrecision, toLocaleString, outside comments) in views, shell, chart grammar, ui-contract and renderer is counted against `tests/ui/figures-ledger.json`; figures.ts itself is exempt. A file may go down, never up, and a new file starts at none; when one goes down, lower its row (`WRITE_LEDGER=1 node --test tests/ui/figures-ledger.test.ts` rewrites the ledger from the code). 309 on 24 Nov.
+- Reference, Units page: "How figures are said", from `figureTable()`: each kind and what it is about, its readings in click order with their units, the chosen one marked; "Use the scheme's everywhere" clears the campaign's choices.
+
+## Next (part 2c)
+
+Bring the ledger down, biggest first: ui-contract/src/replay.ts (15), GalaxyChart (14), Surface (14), Body (10), BodyTimeline, StarDisc (9). Not every count is a figure (a CSS percentage, an id), but each is either moved onto `say` or given a small named helper outside the views. Player seats inheriting the GM's choices; planet radii as a rung for a moon's orbit (needs the parent's radius); local days and years (needs the world's calendar).
 
 ## Integration points
 

@@ -8,7 +8,7 @@ export function tablePort(share: Share, live: () => Shown): TablePort {
       const st = share.state;
       return {
         board: st.board,
-        roles: st.plan.seats.filter((x) => x.authority !== "gm").map((x) => ({ id: x.id, label: x.id === "table" ? "Table" : x.label, sealed: x.sealed })),
+        roles: st.plan.seats.filter((x) => x.authority !== "gm").map((x) => ({ id: x.id, label: x.id === "table" ? "Table" : x.label, sealed: x.sealed, audience: x.audience })),
         players: st.players,
         link: st.link,
         can_undo: st.can_undo,

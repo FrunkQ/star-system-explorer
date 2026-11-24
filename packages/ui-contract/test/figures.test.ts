@@ -212,3 +212,60 @@ test("everything said reads back to the value, within what was shown", () => {
 test("every kind has a reading on the sheet today", () => {
   for (const kind of FIGURE_KINDS) assert.ok(readingsFor(kind).length > 0, kind);
 });
+
+// ED1a part 2: a card's facts through the engine.
+import { factUnit, readFact, sayFact } from "../src/figures.ts";
+import { subjectClass } from "../src/handles.ts";
+
+test("a scene's unit symbols are the sheet's units, a unit's own symbol first", () => {
+  assert.equal(factUnit("AU")?.unit, "au");
+  assert.equal(factUnit("M⊕")?.kind, "mass");
+  assert.equal(factUnit("g")?.unit, "gee", "g on a card is the gee, not a gram");
+  assert.equal(factUnit("d")?.unit, "day", "d is a day, not a degree");
+  assert.equal(factUnit("μT")?.unit, "ut", "Greek mu and the micro sign are one");
+  assert.equal(factUnit("dex"), null);
+  assert.equal(factUnit(undefined), null);
+});
+
+test("a card's facts are said like the same value anywhere else", () => {
+  const f = (field: string, value: number, unit: string, source = "derived") => ({ field, value, unit, source });
+  assert.equal(sayFact(f("a_au", 1.524, "AU", "catalogued"), "planet", { depth: "science" })?.text, "1.524 AU");
+  assert.equal(sayFact(f("a_au", 1.524, "AU", "catalogued"), "planet", { depth: "curious" })?.text, "about 1.52 AU");
+  assert.equal(sayFact(f("a_au", 0.00257, "AU"), "moon", { depth: "science" })?.text, "384 thousand km", "a moon's orbit in thousand km");
+  assert.equal(sayFact(f("mass_earth", 0.10700000000000001, "M⊕", "catalogued"), "planet", { depth: "science" })?.text, "0.107 M⊕", "float noise gains no figures");
+  assert.equal(sayFact(f("surface_k", 288.15, "K"), "planet", { depth: "science" })?.text, "15 °C", "a world's surface reads in °C");
+  assert.equal(sayFact(f("teff_k", 5772, "K"), "star", { depth: "science" })?.text, "5,770 K");
+  assert.equal(sayFact(f("luminosity_sun", 1, "L☉"), "star", { depth: "curious" })?.text, "about 1 Sun");
+  assert.equal(sayFact({ field: "metallicity", value: -0.08, unit: "dex" }, "star"), null, "a unit the sheet lacks keeps the scene's text");
+  assert.equal(sayFact({ field: "name", value: "Tarn" }, "planet"), null);
+});
+
+test("typing over a card's fact takes any unit of its kind, and a bare number in the unit on screen", () => {
+  const orbit = { field: "a_au", value: 1, unit: "AU" };
+  const r = readFact(orbit, "412 thousand km");
+  assert.ok(r?.ok && Math.abs(r.value * constant("au") - 4.12e8) < 1);
+  const c = readFact({ field: "surface_k", value: 288, unit: "K" }, "15", "degc");
+  assert.ok(c?.ok && Math.abs(c.value - 288.15) < 1e-9);
+  const bad = readFact(orbit, "3 kg");
+  assert.ok(bad && !bad.ok);
+});
+
+test("a subject's scale class", () => {
+  assert.equal(subjectClass({ kind: "planet", facts: [{ field: "mass_earth", value: 317.8 }] }), "giant");
+  assert.equal(subjectClass({ kind: "planet", facts: [{ field: "mass_earth", value: 0.8 }] }), "planet");
+  assert.equal(subjectClass({ kind: "moon" }), "moon");
+  assert.equal(subjectClass({ kind: "belt" }), "ring");
+});
+
+// ED1a part 2c: numbers with no unit, rounding for keys, and a story's figures without "about".
+import { roundTo, sayNumber } from "../src/figures.ts";
+import { sheetUnitFactor } from "../src/sheet.ts";
+
+test("a number with no unit is written by the engine too", () => {
+  assert.equal(sayNumber(0.0523, 2), "0.052");
+  assert.equal(sayNumber(-0.08, 2, { decimals: 2 }), "−0.08");
+  assert.equal(sayNumber(1234.5, 4), "1,235");
+  assert.equal(sayNumber(-0.001, 2, { decimals: 2 }), "0.00", "no minus on a rounded zero");
+  assert.equal(roundTo(1.23456789, 3), 1.23);
+  assert.equal(say(4.57e9 * sheetUnitFactor("yr"), "time", undefined, { depth: "curious", about: false }).text, "4.57 billion years");
+});

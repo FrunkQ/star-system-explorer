@@ -53,6 +53,12 @@ export function spinAt(day_h: number | undefined, t: number, pace: "same" | "tru
   return Math.sign(day_h) * 2 * Math.PI * (turns % 1);
 }
 
+/** The body's own seconds gone by after `t` seconds of watching, at the pace `spinAt` turns it (0 if its day is not known). */
+export function bodySeconds(day_h: number | undefined, t: number, pace: "same" | "true", quickest_h: number): number {
+  if (!day_h || !Number.isFinite(day_h)) return 0;
+  return (t / SECONDS_PER_TURN) * (pace === "same" ? Math.abs(day_h) : quickest_h) * 3600;
+}
+
 /** Hours of the body's day shown in each second watched, at true pace. */
 export function hoursPerSecond(quickest_h: number): number {
   return quickest_h / SECONDS_PER_TURN;

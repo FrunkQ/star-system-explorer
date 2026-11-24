@@ -66,7 +66,14 @@
 - About 250k lines of code and tests. Approved tidy-ups: split sse-kernel/src/lib.rs; remove old Rust copies in sse-atoms/src/test/ once golden checks are trusted.
 - Caveats: Pluto's air too thick; Mercury's field dies early and Earth's inner core too big (fudge register); stellar halo about 100x low until GH4.
 
+- Exotic objects build (track XO): memory sse4-exotic-build (PR order 443, XO17, XO18 part 1; XO1 part 2 and XO18 part 2 need the golden lane).
+
 ## Waiting on Alex
 - Asked 24 Nov: roughly what time on the 25th the window closes.
 - Older items (class thresholds, hycean class, colour per class, Night chart accent) return as proper questions when work reaches them.
 - Star glow and flares (track SG, thread "Build star glow and flares", 24 Nov): glare halo, churning cells, lumpy giants, flares and ejections in True, PR 439. Memory sse4-star-look.
+- Visual polish (track VP, 24 Nov): design note SSE4-visual-polish-design.md accepted in full by Alex 24 Nov 18:57 (PR 462); packages by owner thread in its section 12. Memory sse4-visual-polish.
+- Aurorae and night lights (drawing, track VP-AU, thread "Build aurorae and night lights", 24 Nov): memory sse4-aurora-drawing (split with light and star glow threads, PR 469).
+- Atlas and editions (track AT, 24 Nov): the star atlas as a view, editions as data (Survey atlas, The Guide with jokes, Company report), print under the view; ACCEPTED 24 Nov 20:14 (16 questions, yes to all, his notes in section 14A); four starter interface kits; builder thread to open. Memory sse4-atlas-and-editions.
+- SSE3 source (jokes, starter logos): memory sse3-source-repo.
+- Outside models and the kernel as a module (track OM, 24 Nov): BANKED by Alex, not accepted, nothing queued ("find a proper use case first"); note in handover/design/ (PR 484). Memory sse4-outside-models.

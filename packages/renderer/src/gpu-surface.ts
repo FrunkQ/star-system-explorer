@@ -6,9 +6,11 @@
 //
 // Three looks: "true" (the light as it is, tone-mapped), "3d" (the same ground as a diagram: shaded relief in the
 // chart's colours with contour lines), "wireframe" (the mesh's edges on the chart's ground).
-import { ACESFilmicToneMapping, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Scene, SphereGeometry, SRGBColorSpace, Vector3 } from "three";
-import { MeshBasicNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
-import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
+import { ACESFilmicToneMapping, AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Points, Scene, SphereGeometry, SRGBColorSpace, Vector3, Vector4 } from "three";
+import { MeshBasicNodeMaterial, PointsNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
+import { fresnelNode } from "./sea-node.ts";
+import { frothToDraw, MAX_TRAINS, trainsToDraw, type SeaOptics, type TrainDraw } from "./sea.ts";
+import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, sin, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
 
 export interface SurfaceMesh {
   key: string;
@@ -22,6 +24,10 @@ export interface SurfaceMesh {
   kernel_z: Float32Array;
   /** 1 where a liquid covers the ground (its sea surface), else 0. Absent: all dry. */
   wet?: Float32Array;
+  /** Depth of the liquid over the ground, m (0 where dry). Absent: taken as deep. */
+  depth?: Float32Array;
+  /** The ground's own reflectance under the liquid (the kernel's tile albedo). Absent: as `albedo`. */
+  floor?: Float32Array;
   indices: Uint32Array;
   /** Drawn over lower layers where they overlap (a finer ring inside a coarser one). */
   layer: number;
@@ -56,7 +62,12 @@ export interface SurfaceFrame {
    * height and peak period, the way the wind blows them (radians from east), the world's gravity, the tide's height
    * now above mean sea level, and the clock the waves run on (seconds).
    */
-  sea?: { wave_m: number; period_s: number; dir_rad: number; gravity_m_s2: number; tide_m: number; time_s: number };
+  sea?: { wave_m: number; period_s: number; dir_rad: number; gravity_m_s2: number; tide_m: number; time_s: number; optics?: SeaOptics };
+  /**
+   * True look: the stars over the site (night-sky.ts `starsOverSite`), keyed so they are uploaded once a moment:
+   * unit directions in the site's frame, and each star's light as a share of the home star's, times its colour.
+   */
+  stars?: { key: string; dirs: Float32Array; light: Float32Array };
 }
 
 /**
@@ -76,6 +87,24 @@ export function waveAmplitude(wave_m: number): number {
   const sum = WAVE_TRAINS.reduce((t, w) => t + w[2] * w[2], 0);
   return (Math.max(0, wave_m) / 4) * Math.sqrt(2 / sum);
 }
+
+/** The stand-in trains for a significant height and peak period (V10k), in the form the shader draws. */
+export function standInTrains(wave_m: number, period_s: number, dir_rad: number, gravity_m_s2: number): TrainDraw[] {
+  if (!(wave_m > 0 && period_s > 0)) return [];
+  const kPeak = (4 * Math.PI * Math.PI) / (gravity_m_s2 * period_s * period_s);
+  const a = waveAmplitude(wave_m);
+  return WAVE_TRAINS.map(([len, ang, share, ph]) => {
+    const k = kPeak / len;
+    return { k, a: a * share, w: Math.sqrt(gravity_m_s2 * k), dir: dir_rad + ang, phase: ph };
+  });
+}
+
+/**
+ * The mean share of a foam cell its soft streak covers: an ellipse fading from 0.35 to 0.95 of the cell's half-size,
+ * jittered by up to a fifth (∫ over the cell of 1 − smoothstep(0.35, 0.95, r), taken numerically: 0.35). Shares
+ * above it saturate at it (whitecaps rarely cover more than a tenth of a sea).
+ */
+export const FOAM_FILL = 0.35;
 
 export interface SurfaceGpu {
   readonly backend: "webgpu" | "webgl2";
@@ -113,12 +142,21 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   // The sea (V10k): the eye in the site's frame (the waves are fixed to the ground), the peak wavenumber, amplitude
   // and direction, gravity, time and the tide.
   const uEyeXY = uniform(new Vector3(0, 0, 0));
-  const uWaveK = uniform(0);
-  const uWaveA = uniform(0);
-  const uWaveDir = uniform(0);
-  const uG = uniform(9.8);
+  // Six wave trains (sea.ts trainsToDraw): per train (k, a, ω, heading) and its phase; the kernel's own when sent.
+  const uTrain = Array.from({ length: MAX_TRAINS }, () => uniform(new Vector4(0, 0, 0, 0)));
+  const uTrainPh = Array.from({ length: MAX_TRAINS }, () => uniform(0));
+  // Froth (W-sea4): the share of the surface white, its reflectance, the streaks' heading; cover 0 draws none.
+  const uFoamCover = uniform(0);
+  const uFoamAlb = uniform(0);
+  const uFoamDir = uniform(0);
   const uTime = uniform(0);
   const uTide = uniform(0);
+  // The liquid's own optics when the kernel sends them (W-sea2): deep-water reflectance, absorption per metre, and
+  // refractive index. uHasBody is 0 until the colour numbers come; then the water's body is the kernel's.
+  const uDeep = uniform(new Vector3(0, 0, 0));
+  const uAbsorb = uniform(new Vector3(0, 0, 0));
+  const uHasBody = uniform(0);
+  const uN = uniform(0);
 
   const airMass = (mu: Node<"float">) => sqrt(uK.mul(mu).mul(uK.mul(mu)).add(uK.mul(2)).add(1)).sub(uK.mul(mu));
   /** Single-scattered sky light along a unit direction d (the closed form of surface-sky.ts). */
@@ -155,6 +193,24 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   dome.frustumCulled = false;
   scene.add(dome);
 
+  // The stars (True): points on the dome, each its light over one pixel's solid angle, dimmed by the air along its
+  // line of sight, added to the sky so a lit sky hides them and a dark one shows them.
+  const uStarScale = uniform(1);
+  const starMat = new PointsNodeMaterial({ transparent: true, blending: AdditiveBlending, depthWrite: false, sizeAttenuation: false });
+  starMat.colorNode = Fn(() => {
+    const d = normalize(positionWorld);
+    const T = exp(uTauEye.mul(airMass(max(d.z, float(0.02)))).negate());
+    const c = attribute("light", "vec3").mul(T).mul(uStarScale).mul(uExp).mul(select(d.z.lessThan(0), float(0), float(1)));
+    return vec4(c, 1);
+  })();
+  const starGeom = new BufferGeometry();
+  const stars = new Points(starGeom, starMat);
+  stars.renderOrder = 1000;
+  stars.frustumCulled = false;
+  stars.visible = false;
+  scene.add(stars);
+  let starKey = "";
+
   // The ground, true look: albedo lit by the sun through the air and by the sky, seen through the air.
   const trueNode = Fn(() => {
     const alb = attribute("albedo", "vec3");
@@ -170,27 +226,61 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     const site = vec2(positionWorld.x.add(uEyeXY.x), positionWorld.y.add(uEyeXY.y));
     let sx: Node<"float"> = float(0);
     let sy: Node<"float"> = float(0);
-    for (const [len, ang, share, ph] of WAVE_TRAINS) {
-      const k = uWaveK.div(len);
-      const dx = cos(uWaveDir.add(ang));
-      const dy = cos(uWaveDir.add(ang - Math.PI / 2));
+    for (let i = 0; i < MAX_TRAINS; i++) {
+      const t = uTrain[i]!;
+      const k = t.x;
+      const dx = cos(t.w);
+      const dy = cos(t.w.sub(Math.PI / 2));
       const phase = k.mul(site.x.mul(dx).add(site.y.mul(dy)));
       // A train finer than a pixel averages out: faded where its phase turns faster than once a few pixels.
       const fade = float(1).sub(smoothstep(float(0.4), float(1.5), fwidth(phase)));
-      const slope = uWaveA.mul(share).mul(k).mul(cos(phase.sub(sqrt(uG.mul(k)).mul(uTime)).add(ph))).mul(fade);
+      const slope = t.y.mul(k).mul(cos(phase.sub(t.z.mul(uTime)).add(uTrainPh[i]!))).mul(fade);
       sx = sx.add(slope.mul(dx));
       sy = sy.add(slope.mul(dy));
     }
     const nw = normalize(vec3(sx.negate(), sy.negate(), 1));
     const view = normalize(positionWorld);
     const cosV = max(dot(view.negate(), nw), float(0));
-    const fres = float(0.02).add(float(0.98).mul(pow(float(1).sub(cosV), 5)));
+    // Fresnel: the exact unpolarised split at the liquid's own index when the kernel sends it; Schlick's water-like
+    // curve until then (fudge register).
+    const schlick = float(0.02).add(float(0.98).mul(pow(float(1).sub(cosV), 5)));
+    const fres = select(uN.greaterThan(1), fresnelNode(uN, cosV), schlick);
     const refl = view.sub(nw.mul(dot(view, nw).mul(2)));
     const mirrored = skyAlong(vec3(refl.x, refl.y, max(refl.z, float(0.02))));
     // The sun's disc mirrored, spread by the slopes finer than the trains drawn (a narrow lobe; fudge register).
     const glint = uSunRgb.mul(sunT()).mul(pow(max(dot(refl, uSun), float(0)), 1500)).mul(2000);
-    const body = alb.mul(uSunRgb.mul(sunT()).mul(max(dot(nw, uSun), float(0))).add(skyLight)).div(Math.PI);
-    const water = body.mul(float(1).sub(fres)).add(mirrored.add(glint).mul(fres));
+    // The water's body: light that went in, came back up from the liquid itself (the kernel's deep reflectance) or from
+    // the floor seen through it, faded by the round trip, exp(−2 a z) (Beer–Lambert). Until the kernel sends the
+    // liquid's numbers, the ground colour under the sea as before.
+    const depth = attribute("depth", "float");
+    const floorAlb = vec3(attribute("floor", "float"));
+    const through = exp(uAbsorb.mul(depth.mul(-2)));
+    const own = uDeep.mul(vec3(1, 1, 1).sub(through)).add(floorAlb.mul(through));
+    const seaAlb = select(uHasBody.greaterThan(0.5), own, alb);
+    const body = seaAlb.mul(uSunRgb.mul(sunT()).mul(max(dot(nw, uSun), float(0))).add(skyLight)).div(Math.PI);
+    const clear = body.mul(float(1).sub(fres)).add(mirrored.add(glint).mul(fres));
+    // Froth (W-sea4): streaks along the wind, cells 1 m across and 6 m along it; a cell is white when its hash falls
+    // under the kernel's whitecap share, so the white area is that share on average (fudge register: where the froth
+    // lies is a picture choice; how much is the kernel's). Lit like the ground, at the froth's own reflectance.
+    const fdx = cos(uFoamDir);
+    const fdy = cos(uFoamDir.sub(Math.PI / 2));
+    const along = site.x.mul(fdx).add(site.y.mul(fdy)).div(6);
+    const across = site.y.mul(fdx).sub(site.x.mul(fdy));
+    // Each cell holds at most one soft streak, an ellipse filling FOAM_FILL of the cell on average; a cell carries one
+    // when its hash falls under cover / FOAM_FILL, so the white area is the kernel's share. The streak sits at a random
+    // spot in its cell so the pattern does not read as a grid.
+    const cell = vec2(along.floor(), across.floor());
+    const hash = fract(sin(dot(cell, vec2(12.9898, 78.233))).mul(43758.5453));
+    const jx = fract(hash.mul(17.0)).sub(0.5).mul(0.4);
+    const jy = fract(hash.mul(131.0)).sub(0.5).mul(0.4);
+    const fu = fract(along).sub(0.5).sub(jx).mul(2);
+    const fv = fract(across).sub(0.5).sub(jy).mul(2);
+    const fr = sqrt(fu.mul(fu).add(fv.mul(fv)));
+    const blob = float(1).sub(smoothstep(float(0.35), float(0.95), fr));
+    const carries = select(hash.lessThan(uFoamCover.div(FOAM_FILL)), float(1), float(0));
+    const foamy = carries.mul(blob).mul(float(1).sub(smoothstep(float(0.5), float(2), fwidth(across))));
+    const foamLit = vec3(uFoamAlb).mul(uSunRgb.mul(sunT()).mul(max(uSun.z, float(0))).add(skyLight)).div(Math.PI);
+    const water = mix(clear, foamLit, foamy);
     const lit = mix(land, water, select(wet.greaterThan(0.5), float(1), float(0)));
     // Aerial perspective: the eye is at the origin, the point at positionWorld (camera-relative).
     const v = positionWorld;
@@ -233,7 +323,17 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       const fade = smoothstep(float(1e-5), float(1e-4), w).mul(float(1).sub(smoothstep(float(0.12), float(0.3), w)));
       return line.mul(fade).mul(ink);
     };
-    const lines = max(contour(uC, 0.45), max(contour(uC.mul(5), 0.7), contour(uC.mul(25), 0.85)));
+    // A faint ground grid every five contour intervals, east and north in the site's frame, so level ground (a plain
+    // with no contour crossing it) still reads as ground running away to the horizon.
+    const gridLine = (u: Node<"float">) => {
+      const f = fract(u);
+      const w = fwidth(u);
+      const line = float(1).sub(smoothstep(float(0), max(w, float(1e-6)).mul(1.2), min(f, float(1).sub(f))));
+      return line.mul(float(1).sub(smoothstep(float(0.12), float(0.3), w))).mul(0.25);
+    };
+    const gx = positionWorld.x.add(uEyeXY.x).div(uC.mul(5));
+    const gy = positionWorld.y.add(uEyeXY.y).div(uC.mul(5));
+    const lines = max(max(contour(uC, 0.45), max(contour(uC.mul(5), 0.7), contour(uC.mul(25), 0.85))), max(gridLine(gx), gridLine(gy)));
     const c = mix(col.mul(shade), vec3(uInk), lines);
     return vec4(c, 1);
   })();
@@ -282,6 +382,8 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         g.setAttribute("chart", new BufferAttribute(s.chart, 3));
         g.setAttribute("kernel_z", new BufferAttribute(s.kernel_z, 1));
         g.setAttribute("wet", new BufferAttribute(s.wet ?? new Float32Array(s.kernel_z.length), 1));
+        g.setAttribute("depth", new BufferAttribute(s.depth ?? new Float32Array(s.kernel_z.length).fill(1e4), 1));
+        g.setAttribute("floor", new BufferAttribute(s.floor ?? Float32Array.from({ length: s.kernel_z.length }, (_, i) => s.albedo[i * 3 + 1]!), 1));
         g.setIndex(new BufferAttribute(s.indices, 1));
         g.computeVertexNormals();
         g.computeBoundingSphere();
@@ -315,15 +417,19 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       uLow.value = 0;
       const sea = f.sea;
       uEyeXY.value.set(f.eye[0], f.eye[1], 0);
-      if (sea && sea.wave_m > 0 && sea.period_s > 0) {
-        const lambda = (sea.gravity_m_s2 * sea.period_s * sea.period_s) / (2 * Math.PI);
-        uWaveK.value = (2 * Math.PI) / lambda;
-        uWaveA.value = waveAmplitude(sea.wave_m);
-      } else ((uWaveK.value = 0), (uWaveA.value = 0));
-      uWaveDir.value = sea?.dir_rad ?? 0;
-      uG.value = sea?.gravity_m_s2 ?? 9.8;
+      const { trains } = trainsToDraw(sea?.optics ?? {}, sea ? standInTrains(sea.wave_m, sea.period_s, sea.dir_rad, sea.gravity_m_s2) : []);
+      trains.forEach((t, i) => (uTrain[i]!.value.set(t.k, t.a, t.w, t.dir), (uTrainPh[i]!.value = t.phase)));
+      const froth = sea?.optics ? frothToDraw(sea.optics, sea.dir_rad) : null;
+      uFoamCover.value = froth?.cover ?? 0;
+      uFoamAlb.value = froth?.albedo ?? 0;
+      uFoamDir.value = froth?.dir ?? 0;
       uTime.value = sea?.time_s ?? 0;
       uTide.value = sea?.tide_m ?? 0;
+      const op = sea?.optics;
+      const hasBody = !!(op?.deep_rgb && op.absorb_per_m);
+      uHasBody.value = hasBody ? 1 : 0;
+      if (hasBody) (uDeep.value.set(...op!.deep_rgb!), uAbsorb.value.set(...op!.absorb_per_m!));
+      uN.value = op?.refractive_index ?? 0;
       // Diagram looks pass the theme's display colours straight through; True is light, tone-mapped and encoded.
       bg.setStyle(f.ground, LinearSRGBColorSpace);
       ink.setStyle(f.ink, LinearSRGBColorSpace);
@@ -335,6 +441,19 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         for (const m of allMats()) m.needsUpdate = true;
       }
       dome.visible = isTrue;
+      // The stars: one pixel's solid angle sets how bright a point is for its light.
+      if (f.stars && f.stars.key !== starKey) {
+        starKey = f.stars.key;
+        const pos = new Float32Array(f.stars.dirs.length);
+        for (let i = 0; i < pos.length; i++) pos[i] = f.stars.dirs[i]! * 2.9e6;
+        starGeom.setAttribute("position", new BufferAttribute(pos, 3));
+        starGeom.setAttribute("light", new BufferAttribute(f.stars.light, 3));
+        starGeom.computeBoundingSphere();
+      }
+      stars.visible = isTrue && !!f.stars;
+      const pxAngle = f.fovY / Math.max(1, f.height);
+      uStarScale.value = 1 / (pxAngle * pxAngle);
+      stars.position.set(0, 0, 0);
       renderer.setClearColor(isTrue ? 0x000000 : bg, 1);
       for (const s of order) {
         const m = meshes.get(s.key)!;
@@ -348,6 +467,8 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     dispose() {
       dropAll();
       dome.geometry.dispose();
+      starGeom.dispose();
+      starMat.dispose();
       for (const m of allMats()) m.dispose();
       renderer.dispose();
     },
