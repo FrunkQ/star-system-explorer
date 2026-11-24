@@ -1,0 +1,39 @@
+{
+  "schema": "sse.edition/1",
+  "id": "sse.edition.guide",
+  "name": "The Guide",
+  "description": "Friendly, illustrated, mostly accurate: the same pages in the Guide's own words, gaps said in its voice.",
+  "look": "deck",
+  "vocab": "guide",
+  "plates": "chart",
+  "gaps": "voice",
+  "sources": "off",
+  "voice": {
+    "gap": "nobody has looked yet",
+    "gap_short": "who knows",
+    "labels": {
+      "section.summary": "In short",
+      "section.overview": "The lie of the land",
+      "section.star": "The local sun",
+      "section.worlds": "Places to go",
+      "section.world": "The basics",
+      "section.air": "Breathing and swimming",
+      "section.hazards": "Things that may kill you",
+      "section.people": "Who lives here",
+      "section.moons": "Moons worth a look",
+      "section.systems": "Stars worth a visit",
+      "section.story": "What people say",
+      "section.plate": "The picture",
+      "column.size": "How big",
+      "column.orbit": "How far out",
+      "column.mass": "Heft",
+      "prose.empty": "The Guide has nothing on this one yet. Send a postcard.",
+      "page.system": "A system",
+      "page.world": "A world",
+      "page.moon": "A moon",
+      "page.star": "A star",
+      "page.station": "Somewhere to dock",
+      "page.sector": "A patch of sky"
+    }
+  }
+}

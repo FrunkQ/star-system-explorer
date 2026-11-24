@@ -91,6 +91,8 @@
               <blockquote data-deliver-text><span class="said">{l.label}:</span> {l.text}</blockquote>
             {/each}
           </section>
+        {:else if b.type === "note"}
+          <p class="note" data-deliver-item>{b.text}</p>
         {:else if b.type === "rule"}
           <hr data-deliver-item />
         {/if}
@@ -225,6 +227,11 @@
   .dot:focus-visible {
     outline: 2px solid var(--sse-focus, var(--sse-accent));
     outline-offset: 2px;
+  }
+  .note {
+    margin: 18px 0 0;
+    font-size: 13px;
+    color: var(--sse-ink-muted);
   }
   blockquote {
     margin: 6px 0;

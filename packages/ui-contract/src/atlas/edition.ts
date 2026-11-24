@@ -3,6 +3,8 @@
 // figure's precision and never shows anything the audience's scene does not hold: the page builder (page.ts) is the
 // only thing that turns a scene into blocks, and an edition only steers it.
 import survey from "./editions/survey.edition.json" with { type: "json" };
+import guide from "./editions/guide.edition.json" with { type: "json" };
+import company from "./editions/company.edition.json" with { type: "json" };
 
 export const EDITION_SCHEMA = "sse.edition/1";
 
@@ -53,6 +55,8 @@ export interface EditionDoc {
   extends?: string;
   /** A look (player theme) id; its print tokens are used on paper. */
   look?: string;
+  /** The vocabulary layer whose words and sentences the page reads with ("plain", "guide"); `voice.labels` go on top. */
+  vocab?: string;
   plates?: PlateStyle;
   voice?: EditionVoice;
   gaps?: GapStyle;
@@ -71,6 +75,7 @@ export interface Edition {
   /** The chain this edition was made from, itself first. */
   chain: string[];
   look: string;
+  vocab: string;
   plates: PlateStyle;
   gaps: GapStyle;
   sources: SourcesStyle;
@@ -83,7 +88,9 @@ export interface Edition {
 
 /** The editions shipped with the base Atlas. */
 export const SURVEY_EDITION = survey as unknown as EditionDoc;
-export const SHIPPED_EDITIONS: readonly EditionDoc[] = [SURVEY_EDITION];
+export const GUIDE_EDITION = guide as unknown as EditionDoc;
+export const COMPANY_EDITION = company as unknown as EditionDoc;
+export const SHIPPED_EDITIONS: readonly EditionDoc[] = [SURVEY_EDITION, GUIDE_EDITION, COMPANY_EDITION];
 export const DEFAULT_EDITION = SURVEY_EDITION.id;
 
 /** Why a document is not an edition by its shape alone, or null (loader check 1, before `extends` is followed). */
@@ -134,6 +141,7 @@ export function resolveEdition(id: string, docs: readonly EditionDoc[] = []): Ed
     description: chain[0]!.description,
     chain: chain.map((c) => c.id),
     look: root.look ?? "paper",
+    vocab: root.vocab ?? "plain",
     plates: root.plates ?? "chart",
     gaps: root.gaps ?? "plain",
     sources: root.sources ?? "endnotes",
@@ -146,6 +154,7 @@ export function resolveEdition(id: string, docs: readonly EditionDoc[] = []): Ed
   // From the root's child up to the edition itself, each layer overrides what it states.
   for (const d of chain.slice(0, -1).reverse()) {
     if (d.look) out.look = d.look;
+    if (d.vocab) out.vocab = d.vocab;
     if (d.plates) out.plates = d.plates;
     if (d.gaps) out.gaps = d.gaps;
     if (d.sources) out.sources = d.sources;

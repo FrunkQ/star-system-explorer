@@ -16,6 +16,10 @@ import {
   FIGURE_FIELDS,
   COUNT_FIELDS,
   DEFAULT_EDITION,
+  SHIPPED_EDITIONS,
+  checkEdition,
+  testRender,
+  typedFigures,
   type AtlasPage,
   type EditionDoc,
 } from "../src/atlas/index.ts";
@@ -180,3 +184,62 @@ test("every field a shipped template names is catalogued, and every number in on
     if (w?.scale !== undefined || w?.unit !== undefined || w?.percent) assert.ok(f in FIGURE_FIELDS || COUNT_FIELDS.includes(f), `${f} is a number with no figure kind`);
   }
 });
+
+// ---------------------------------------------------------------------------------------------------------- AT3
+
+const guideVocab: Vocab = json("packages/shell/src/documents/vocab.guide.json");
+const VOCABS = { plain: vocab, guide: guideVocab };
+const gmAfter: PlayerScene = { ...after, audience: "gm" };
+const STACK = { looks: ["chart", "paper", "deck", "phosphor", "glass", "guide"], vocabs: ["plain", "guide"], noteSets: [] };
+
+test("the shipped editions load, and their test render matches the Survey atlas", () => {
+  for (const d of SHIPPED_EDITIONS) {
+    assert.deepEqual(checkEdition(d, STACK), [], d.id);
+    assert.deepEqual(testRender(d, [gmAfter, before, after], VOCABS), [], d.id);
+  }
+});
+
+test("switching edition changes no figure, compared block by block", () => {
+  for (const scene of [gmAfter, before, after]) {
+    for (const l of atlasContents(scene)) {
+      const pages = SHIPPED_EDITIONS.map((d) => {
+        const ed = resolveEdition(d.id);
+        return buildPage(scene, l.address, ed, { vocab: VOCABS[ed.vocab as keyof typeof VOCABS] })!;
+      });
+      const figs = pages.map((p) => facts(p).filter((r) => r.figure).map((r) => [r.field, r.text, JSON.stringify(r.figure)]).sort());
+      for (const f of figs.slice(1)) {
+        const common = f.filter((x) => figs[0]!.some((y) => y[0] === x[0]));
+        assert.deepEqual(common, figs[0]!.filter((y) => f.some((x) => x[0] === y[0])), l.address);
+      }
+      // The same gaps on every edition: from the template and the audience, never from the edition's taste.
+      const gapsOf = (p: AtlasPage) => facts(p).filter((r) => r.state === "gap").map((r) => r.field).sort();
+      for (const p of pages) if (resolveEdition(p.edition).gaps !== "omit") assert.deepEqual(gapsOf(p), gapsOf(pages[0]!), `${p.edition} ${l.address}`);
+    }
+  }
+  const guide = page(after, TARN, resolveEdition("sse.edition.guide"));
+  const rows = Object.fromEntries(facts(guide).map((r) => [r.field, r]));
+  assert.equal(rows["resources"]!.text, "nobody has looked yet");
+  const company = page(before, TARN, resolveEdition("sse.edition.company"));
+  assert.ok(facts(company).filter((r) => r.state === "gap").every((r) => r.bar));
+});
+
+test("the loader refuses with sentences that say what to change", () => {
+  const base: EditionDoc = { schema: "sse.edition/1", id: "x.bad", name: "Bad", description: "bad" };
+  const says = (d: Partial<EditionDoc>, re: RegExp) => {
+    const got = checkEdition({ ...base, ...d }, STACK);
+    assert.ok(got.some((s) => re.test(s)), `${JSON.stringify(d)} gave ${JSON.stringify(got)}`);
+  };
+  assert.deepEqual(checkEdition({ schema: "nope" }), [`an edition's schema is "sse.edition/1".`]);
+  says({ extends: "ghost" }, /extends ghost, which is not here/);
+  says({ templates: { world: [{ key: "section.x", lines: ["magic.level"] }] } }, /names "magic\.level", which is not a fact/);
+  says({ voice: { labels: { "section.air": "Air (about 1.2 bar)" } } }, /states a figure \("1\.2 bar\)"\)|states a figure/);
+  says({ voice: { gap: "71% unknown" } }, /states a figure/);
+  says({ letterhead: { use: "brand", lines: ["{brand.colour}"] } }, /unknown slot \{brand\.colour\}/);
+  says({ voice: { labels: { "section.air": "{audience}'s air" } } }, /slots go only in the letterhead/);
+  says({ look: "neon" }, /look "neon" is not in the pack stack/);
+  says({ vocab: "pirate" }, /vocabulary "pirate"/);
+  says({ description: "x".repeat(300) }, /keep it to 200/);
+  assert.deepEqual(typedFigures("1. Summary, 2. Primary, 42 things"), []);
+  assert.deepEqual(typedFigures("about 5 kg and 3 days"), ["5 kg", "3 days"]);
+});
+

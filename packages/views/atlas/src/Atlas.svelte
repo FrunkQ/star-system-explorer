@@ -7,11 +7,12 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { EVERYONE, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, type ContentsLine, type PlayerScene, type Vocab, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { EVERYONE, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
 
-  let { ctx, scene, vocab }: { ctx: ViewContext; scene: SystemScene; vocab: Vocab } = $props();
+  let { ctx, scene, host }: { ctx: ViewContext; scene: SystemScene; host: AtlasHost } = $props();
   const ws = $derived(ctx.workspace);
 
   // Who the book is seen by: the GM or everyone at the table. Each audience of the seat plan joins this list when the
@@ -21,9 +22,14 @@
     { value: EVERYONE, label: "Everyone" },
   ];
   let audience = $state("gm");
-  const audienceWords = $derived(audience === "gm" ? "the GM" : audiences.find((a) => a.value === audience)?.label ?? audience);
 
-  const edition = resolveEdition(DEFAULT_EDITION);
+  // The edition is the GM's own choice for browsing (design 14A note 6): a player's screen has no Edition switch; an
+  // Atlas sent to the table carries its edition with it. Switching re-dresses the same page in place.
+  const editions = SHIPPED_EDITIONS.map((d) => ({ value: d.id, label: d.name, hint: d.description }));
+  let editionId = $state(DEFAULT_EDITION);
+  const edition = $derived(resolveEdition(editionId));
+  const vocab = $derived(host.vocabs[edition.vocab] ?? host.vocabs.plain!);
+  const look = $derived(host.lookCss(edition.look));
 
   // The audience's own scene for this system, read again when the record moves or the audience changes.
   let book = $state<PlayerScene | null>(null);
@@ -42,6 +48,9 @@
     });
   });
 
+  // Words for the audience of the book on screen (the one read, not the one just asked for).
+  const shownAudience = $derived(book?.audience ?? audience);
+  const audienceWords = $derived(shownAudience === "gm" ? "the GM" : audiences.find((a) => a.value === shownAudience)?.label ?? shownAudience);
   const lines = $derived<ContentsLine[]>(book ? atlasContents(book) : []);
   // The page in front: the one asked for, else the selected object's, else the top of the book.
   let asked = $state<string | null>(null);
@@ -111,7 +120,8 @@
 
 <div class="atlas" bind:this={root} role="region" aria-label="Atlas">
   <div class="bar">
-    <span class="what">{edition.name}</span>
+    <Segmented label="Edition" options={editions} value={editionId} onchange={(v) => (editionId = v)} slide />
+    <span class="gapfill"></span>
     <Segmented label="Seen by" options={audiences} value={audience} onchange={(v) => (audience = v)} slide />
     <button type="button" class="fold" aria-expanded={folded} onclick={() => (folded = !folded)}>Contents</button>
   </div>
@@ -132,7 +142,9 @@
     </nav>
     <div class="pagebox" bind:this={pageBox} onpointerdown={pdown} onpointerup={pup} role="presentation">
       {#if page}
+        <div class="look" style={look} data-atlas-edition={edition.id} data-atlas-audience={book?.audience}>
         <AtlasPage {page} onlink={go} footer="{edition.name} · {titleOf(lines[0]?.address ?? null)} · as known to {audienceWords}" />
+        </div>
         {@render stepper("below")}
       {:else if failed}
         <p class="empty">The Atlas could not be read: {failed}</p>
@@ -163,11 +175,12 @@
     gap: 14px;
     flex-wrap: wrap;
   }
-  .what {
-    font-family: var(--sse-font-display);
-    font-style: italic;
-    font-size: 17px;
+  .gapfill {
     margin-right: auto;
+  }
+  .look {
+    background: transparent;
+    color: var(--sse-ink);
   }
   .fold {
     display: none;

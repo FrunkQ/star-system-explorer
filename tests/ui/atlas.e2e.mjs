@@ -58,11 +58,29 @@ try {
   await gm.waitForFunction(() => document.querySelector("[data-atlas-page] h1")?.textContent === "Tarn");
   assert.equal(await gm.evaluate(() => document.activeElement?.closest("[data-atlas-page]") !== null), true, "focus follows the page");
 
+  // The Edition switch (the GM's own, for browsing) re-dresses the same page in place: words and look change, figures do not.
+  const figures = () => gm.locator("[data-atlas-page] .fig").allInnerTexts();
+  const surveyFigs = await figures();
+  const edition = atlas.getByRole("group", { name: "Edition" });
+  await edition.getByRole("button", { name: "The Guide" }).click();
+  await gm.waitForFunction(() => document.querySelector("[data-atlas-edition]")?.getAttribute("data-atlas-edition") === "sse.edition.guide");
+  assert.equal(await title(gm), "Tarn", "the same page");
+  assert.match(await atlas.locator("[data-atlas-page]").innerText(), /Heft/i, "the Guide's own words");
+  assert.deepEqual(await figures(), surveyFigs, "switching edition changes no figure");
+  await shot(gm, "atlas-guide-desk");
+  await edition.getByRole("button", { name: "Company" }).click();
+  await gm.waitForFunction(() => document.querySelector("[data-atlas-edition]")?.getAttribute("data-atlas-edition") === "sse.edition.company");
+  assert.deepEqual(await figures(), surveyFigs);
+  await shot(gm, "atlas-company-desk");
+
   // Seen by the table: their own book, never larger than the GM's, with gaps said in plain words.
   await atlas.getByRole("group", { name: "Seen by" }).getByRole("button", { name: "Everyone" }).click();
-  await gm.waitForFunction(() => /as known to Everyone/.test(document.querySelector("[data-atlas-page] .foot")?.textContent ?? ""), null, { timeout: 10000 });
+  await gm.waitForFunction(() => document.querySelector("[data-atlas-audience]")?.getAttribute("data-atlas-audience") === "everyone", null, { timeout: 10000 });
   const tablePages = await contents.locator("li").count();
   assert.ok(tablePages <= gmPages, "the table's book has no page the GM's lacks");
+  assert.ok((await gm.locator("[data-atlas-page] .bar").count()) > 0, "the Company edition bars what the table has not learnt");
+  await shot(gm, "atlas-table-company-desk");
+  await edition.getByRole("button", { name: "Survey atlas" }).click();
   await shot(gm, "atlas-table-desk");
 
   await more(gm, /Night chart/);

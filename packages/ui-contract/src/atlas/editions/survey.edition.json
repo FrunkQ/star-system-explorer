@@ -4,6 +4,7 @@
   "name": "Survey atlas",
   "description": "The traditional star guide: plain words, chart plates, a note on how each figure is known.",
   "look": "paper",
+  "vocab": "plain",
   "plates": "chart",
   "gaps": "plain",
   "sources": "endnotes",

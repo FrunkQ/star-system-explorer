@@ -41,6 +41,7 @@ export type Block =
   | { type: "table"; key: string; title: string; columns: string[]; rows: TableRow[] }
   | { type: "plate"; key: string; title: string; style: PlateStyle; subject: string; addresses: string[]; names: string[] }
   | { type: "story"; key: string; title: string; lines: { label: string; text: string }[] }
+  | { type: "note"; text: string }
   | { type: "rule" };
 
 export interface AtlasOptions {
@@ -258,6 +259,10 @@ export function buildPage(scene: PlayerScene, address: string, ed: Edition, opts
   const isGm = scene.audience === "gm";
   const blocks: Block[] = [{ type: "title", text: subjectName(s), subtitle: subtitleFor(scene, s, kind, ed, opts), kind }];
   for (const sec of ed.templates[kind] ?? []) blocks.push(...sectionBlocks(scene, s, sec, ed, opts, isGm));
+  // A barred page says once what a bar means: it is the same sentence whatever is behind the bars.
+  if (blocks.some((b) => (b.type === "facts" && b.rows.some((r) => r.bar)) || (b.type === "table" && b.rows.some((r) => r.cells.some((c) => c.bar))))) {
+    blocks.push({ type: "note", text: editionWord(ed, "note.bars", "Lines marked with a bar are above this document's clearance or await survey.") });
+  }
   return {
     address,
     kind,
