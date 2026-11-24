@@ -28,7 +28,7 @@ The rule (Alex, 23 Nov 2026): one set of controls, and similar levels of drawing
 | World | Body (globe) | ✓ | —13 | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable, Real | Chart, True | ✓ | —14 | —14 | —14 | —14 | ✓ |
 | On the ground | Land (surface) | ✓ | ✓ | ✓ | ✓ | Free | Real | 3D, True, Wireframe | ✓ | —15 | —15 | —15 | —15 | —16 |
 | Inside a world | Cutaway | ✓ | —17 | —8 | —1 | Above | Readable, Real | Chart | ✓ | —2 | —3 | —4 | —5 | —6 |
-| Side by side | Size comparison | ✓ | —18 | —8 | —1 | Above | Readable, Real | always labelled | ✓ | —2 | —3 | —4 | —5 | —6 |
+| Side by side | Size comparison | ✓ | ✓ | ✓ | ✓ | Above, Tilted, Edge-on, Free | Readable, Real | always labelled | ✓ | —2 | —3 | —4 | —5 | —6 |
 | Down a lava tube | Caves | not built yet: the kernel's lava tubes (survey_caves) drawn underground come after the walk |
 
 ### Why a switch is not offered
@@ -50,4 +50,3 @@ The rule (Alex, 23 Nov 2026): one set of controls, and similar levels of drawing
 15. The ground is drawn in visible light for now.
 16. The field at the ground is not drawn yet: the Globe's Mag shows the world's field.
 17. The cutaway is a slice: it is drawn flat.
-18. The lineup is drawn flat, side by side.

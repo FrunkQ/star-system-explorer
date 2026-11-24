@@ -289,6 +289,16 @@
   }
 
   let selection = $state<string | null>(null);
+  // A send that names a thing (a bookmark's selection, PB3) selects it here, once per send, if this screen's scene has it.
+  let focusSent = "";
+  $effect(() => {
+    const f = shown && "scope" in shown ? (shown.focus ?? "") : "";
+    const key = f ? `${f}|${shown && "scope" in shown ? shown.title : ""}` : "";
+    if (key === focusSent) return;
+    if (f && !scene?.subjects.some((x) => x.address === f)) return;
+    focusSent = key;
+    if (f) selection = f;
+  });
   // The Scanned control acts on the body in focus; the kernel says which view each tap left in force.
   const target = $derived(scene ? focusOf(scene, selection) : undefined);
   let scanned = $state<Record<string, boolean>>({});

@@ -7,19 +7,23 @@
   measured radii and references). A body that dwarfs the rest is drawn as a
   limb from the left edge, as on a poster; anything under a pixel is marked,
   never dropped. Radii come from the bodies' own facts: a body without one is
-  not offered, and the panel says how many.
+  not offered, and the panel says how many. In 3D, True and Wireframe the same
+  lineup stands up as globes, each turning on its own axis (Lineup3D).
 -->
 <script lang="ts">
-  import { checkReferences, formatKmLength, itemFromReference, itemFromSubject, layoutLineup, listedTitle, sceneFromResolved, scaleBar, sizeWords, starColour, subjectOf, viewOptions, DEFAULT_VIEW, type CompareItem, type Json, type ReferenceDoc, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { untrack } from "svelte";
+  import { checkReferences, formatKmLength, itemFromReference, itemFromSubject, layoutLineup, listedTitle, sceneFromResolved, scaleBar, sizeWords, starColour, subjectOf, viewOptions, DEFAULT_VIEW, SEEN_ELEVATION, type CompareItem, type Json, type ReferenceDoc, type SceneSubject, type SolDoc, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { HatchDefs, markPattern } from "../../../chart-grammar/src/index.ts";
   import { lineups } from "./lineup.svelte.ts";
   import { COMPARE_CONTROLS } from "./controls.ts";
+  import Lineup3D from "./Lineup3D.svelte";
+  import { hoursPerSecond, SECONDS_PER_TURN } from "../../../renderer/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
   const ws = $derived(ctx.workspace);
   const shown = (s: SceneSubject) => s.kind === "star" || s.kind === "planet" || s.kind === "moon";
-  const own = $derived(scene.subjects.filter(shown).map((s) => itemFromSubject(s, scene.title)).filter((x): x is CompareItem => x !== null));
+  const own = $derived(scene.subjects.filter(shown).map((s) => itemFromSubject(s, scene.title, scene.subjects)).filter((x): x is CompareItem => x !== null));
   const missing = $derived(scene.subjects.filter(shown).length - own.length);
   // This system's worlds and star, in orbit order: where the lineup starts.
   const starting = $derived(own.filter((i) => i.kind !== "moon"));
@@ -41,7 +45,42 @@
   let sorted = $state(false);
   const order = $derived(sorted ? [...items].sort((a, b) => a.radius_km - b.radius_km) : items);
   // Scale is the view controls' (one set of controls, Alex 23 Nov): Real is one true scale, Readable a log scale.
-  const mode = $derived(viewOptions(COMPARE_CONTROLS, ws.view ?? DEFAULT_VIEW).shown.scale === "real" ? "true" : "log");
+  const shownView = $derived(viewOptions(COMPARE_CONTROLS, ws.view ?? DEFAULT_VIEW).shown);
+  const mode = $derived(shownView.scale === "real" ? "true" : "log");
+  // 3D, True and Wireframe: the lineup as turning globes, unless this device cannot draw them.
+  let noGpu = $state(false);
+  const globes = $derived(shownView.style === "3d" || shownView.style === "true" || shownView.style === "wireframe");
+  const look = $derived(globes && !noGpu ? (shownView.style as "3d" | "true" | "wireframe") : null);
+  let pace = $state<"same" | "true">("same");
+  // Seen from tips every globe together over their orbits' plane, the row staying put; Free is turned by hand.
+  let freeElev = $state(SEEN_ELEVATION.tilted);
+  let yaw = $state(0);
+  const globeView = $derived({ elevation: shownView.seen === "free" ? freeElev : SEEN_ELEVATION[shownView.seen], yaw });
+  $effect(() => {
+    void shownView.framed;
+    untrack(() => {
+      if (shownView.seen !== "free") ((yaw = 0), (freeElev = SEEN_ELEVATION[shownView.seen]));
+    });
+  });
+  let drag: { x: number; y: number; moved: number } | null = null;
+  let dragged = false;
+  function down(e: PointerEvent) {
+    if (!look || shownView.seen !== "free") return;
+    drag = { x: e.clientX, y: e.clientY, moved: 0 };
+    dragged = false;
+  }
+  function move(e: PointerEvent) {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
+    drag = { x: e.clientX, y: e.clientY, moved: drag.moved + Math.abs(dx) + Math.abs(dy) };
+    if (drag.moved > 4) {
+      dragged = true;
+      yaw += dx * 0.01;
+      freeElev = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, freeElev + dy * 0.01));
+    }
+  }
+  const up = () => (drag = null);
 
   // Reference objects: a document the shell serves (a pack may ship more).
   let refs = $state<ReferenceDoc | null>(null);
@@ -56,6 +95,16 @@
         else refs = d as ReferenceDoc;
       })
       .catch((e) => (refProblem = String(e)));
+  });
+  // The Solar System's measured days, tilts and rings (base-sol pack) for the reference bodies that name a row in it.
+  const SOL = "packs/base-sol.json";
+  let sol = $state<SolDoc | null>(null);
+  $effect(() => {
+    if (sol) return;
+    fetch(new URL(SOL, document.baseURI))
+      .then((r) => r.json())
+      .then((d) => (sol = (d?.provides?.other?.sol as SolDoc | undefined) ?? null))
+      .catch(() => {});
   });
 
   // Everything else in the campaign: each system the kernel lists, read back with its facts.
@@ -75,7 +124,7 @@
         const r = await ctx.session.resolvedSystem(x.system);
         if (!r.ok) continue;
         const sc = sceneFromResolved(r.result, listedTitle(x));
-        const its = sc.subjects.filter(shown).map((s) => itemFromSubject(s, sc.title)).filter((v): v is CompareItem => v !== null);
+        const its = sc.subjects.filter(shown).map((s) => itemFromSubject(s, sc.title, sc.subjects)).filter((v): v is CompareItem => v !== null);
         out.push({ title: sc.title, system: x.system, items: its, without: sc.subjects.filter(shown).length - its.length });
       }
     poolLoading = false;
@@ -90,7 +139,7 @@
   }
   async function surprise() {
     const p = await loadPool();
-    const choices = [...own, ...p.flatMap((x) => x.items), ...(refs?.objects.map(itemFromReference) ?? [])].filter((i) => !inLineup(i.key));
+    const choices = [...own, ...p.flatMap((x) => x.items), ...(refs?.objects.map((o) => itemFromReference(o, sol)) ?? [])].filter((i) => !inLineup(i.key));
     if (!choices.length) {
       note = "Everything there is to compare is already in the lineup.";
       return;
@@ -104,7 +153,7 @@
   const H = $derived(narrow ? 220 : 300);
   const labelH = 64;
   const base = $derived(H - labelH);
-  const lineup = $derived(layoutLineup(order, base - 16, Math.max(280, w - 8), mode, Number(params.limb_ratio ?? 5), narrow ? 64 : 76));
+  const lineup = $derived(layoutLineup(order, base - 16, Math.max(280, w - 8), mode, Number(params.limb_ratio ?? 5), narrow ? 64 : 76, globes));
   const svgW = $derived(Math.max(w - 8, lineup.width));
   const vis = $derived(Math.min(svgW, Math.max(280, w - 8)));
   const bar = $derived(mode === "true" && Number.isFinite(lineup.km_per_px) ? scaleBar(lineup.km_per_px, narrow ? 80 : 120) : null);
@@ -122,6 +171,7 @@
   }
   const selectable = (i: CompareItem) => scene.subjects.some((s) => s.address === i.key);
   function pick(i: CompareItem) {
+    if (dragged) return void (dragged = false);
     if (selectable(i)) ws.select(i.key);
     else note = `${i.label}: ${i.type ? `${i.type}, ` : ""}${tidy(i.radius_km)}, from ${i.where}.${i.ref ? ` ${i.ref.cite}.` : ""}`;
   }
@@ -132,6 +182,9 @@
     return `${k >= 10 ? Math.round(k).toLocaleString("en-GB") : k >= 1 ? k.toFixed(1) : k.toFixed(2)} × ${sel.label}`;
   };
   const tidy = (km: number) => `${km.toLocaleString("en-GB", { maximumFractionDigits: km < 100 ? 1 : 0 })} km`;
+  const quickest = $derived(order.reduce<CompareItem | null>((q, i) => (i.day_h && (!q || Math.abs(i.day_h) < Math.abs(q.day_h!)) ? i : q), null));
+  const stillOnes = $derived(order.filter((i) => !i.day_h).length);
+  const hours = (h: number) => (h >= 48 ? `${(h / 24).toLocaleString("en-GB", { maximumFractionDigits: 1 })} days` : `${h.toLocaleString("en-GB", { maximumFractionDigits: h < 10 ? 1 : 0 })} hours`);
   const summary = $derived(order.map((i) => `${i.label} ${tidy(i.radius_km)}`).join(", "));
 </script>
 
@@ -178,7 +231,7 @@
           <h3>{g.label}</h3>
           <ul class="picks">
             {#each refs.objects.filter((o) => o.group === g.id) as o (o.id)}
-              {@const i = itemFromReference(o)}
+              {@const i = itemFromReference(o, sol)}
               <li><button type="button" disabled={inLineup(i.key)} onclick={() => add(i)} title={o.type}>{o.label}</button></li>
             {/each}
           </ul>
@@ -193,6 +246,8 @@
     {#if !items.length}
       <p class="note empty">Nothing to compare. Add bodies from this system, the campaign or the reference objects.</p>
     {:else}
+      <div class="frame" class:globes={look} class:space={look === "true"} class:free={look && shownView.seen === "free"} onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} role="presentation">
+      {#if look}<Lineup3D {ctx} system={scene.system} placed={lineup.placed} width={svgW} height={H} {base} {look} view={globeView} {pace} colour={fill} own={selectable} onfail={() => (noGpu = true)} />{/if}
       <svg width={svgW} height={H} role="img" aria-label={`Size comparison${mode === "log" ? ", not to scale (log)" : ""}: ${summary}`}>
         <HatchDefs prefix="cmp" />
         {#if lineup.limb}
@@ -217,8 +272,8 @@
             onclick={() => pick(p.item)}
             onkeydown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), pick(p.item))}
           >
-            <circle cx={p.x} cy={base - p.r} r={p.r} fill={fill(p.item)} stroke="var(--sse-ink)" stroke-width={p.r < 3 ? 0.6 : 1} />
-            {#if pattern(p.item) && p.r > 4}<circle cx={p.x} cy={base - p.r} r={p.r} fill={pattern(p.item)} />{/if}
+            <circle class="face" cx={p.x} cy={base - p.r} r={p.r} fill={fill(p.item)} stroke="var(--sse-ink)" stroke-width={p.r < 3 ? 0.6 : 1} />
+            {#if pattern(p.item) && p.r > 4 && !look}<circle cx={p.x} cy={base - p.r} r={p.r} fill={pattern(p.item)} />{/if}
             {#if p.tiny}<circle class="tinyring" cx={p.x} cy={base - p.r} r={p.r + 5} />{/if}
             {#if ws.selection === p.item.key}<circle class="sel" cx={p.x} cy={base - p.r} r={p.r + (p.tiny ? 9 : 4)} />{/if}
             <text class="lab" x={p.x} y={base + 16 + row * 22} text-anchor="middle">{p.item.label}</text>
@@ -236,8 +291,17 @@
           <text class="stamp" x={vis - 16} y={20} text-anchor="end">Not to scale: radius on a log scale</text>
         {/if}
       </svg>
+      </div>
     {/if}
   </div>
+  {#if look}
+    <p class="note turning" data-pace={pace}>
+      <button type="button" aria-pressed={pace === "true"} onclick={() => (pace = pace === "same" ? "true" : "same")}>True pace</button>
+      {#if pace === "same"}Each body turns once every {SECONDS_PER_TURN} seconds, its own way round and leaning by its own tilt.{:else if quickest}True pace: one second is {hours(hoursPerSecond(Math.abs(quickest.day_h!)))} of turning; {quickest.label}, the quickest, turns once every {SECONDS_PER_TURN} seconds and the rest in proportion.{/if}
+      {#if stillOnes}{stillOnes === 1 ? "One body's day is" : `${stillOnes} bodies' days are`} not known, so {stillOnes === 1 ? "it stands" : "they stand"} still.{/if}
+    </p>
+  {/if}
+  {#if noGpu && globes}<p class="note" data-no-globes>This device cannot draw the globes, so the lineup is drawn flat.</p>{/if}
   {#if note}<p class="note" role="status">{note}</p>{/if}
   {#if mode === "true" && lineup.placed.some((p) => p.tiny)}<p class="note" data-hint="tiny">Some bodies are under a pixel beside the largest: try Scale: Readable (a log scale), or remove the largest.</p>{/if}
 
@@ -331,6 +395,37 @@
   .stage {
     overflow-x: auto;
     max-width: 100%;
+  }
+  .frame {
+    position: relative;
+    width: max-content;
+  }
+  .frame svg {
+    position: relative;
+  }
+  /* Globes: the lineup's discs become the picking spots over the GPU's globes; labels keep a halo of the ground. */
+  .globes .face {
+    fill: transparent;
+    stroke: none;
+  }
+  .globes text {
+    paint-order: stroke;
+    stroke: var(--sse-ground);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+  .space .baseline {
+    stroke: var(--sse-ink-muted);
+  }
+  .free {
+    cursor: grab;
+    touch-action: none;
+  }
+  .turning {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    align-items: center;
   }
   svg {
     display: block;
