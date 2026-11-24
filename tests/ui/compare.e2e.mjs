@@ -124,16 +124,23 @@ try {
     await cmp2.getByRole("group", { name: "Add a reference object" }).getByRole("button", { name: "Saturn", exact: true }).click().catch(() => {});
     for (const look of ["3d", "true", "wireframe"]) {
       await styleBar.getByRole("button", { name: { "3d": "3D", true: "True", wireframe: "Wireframe" }[look], exact: true }).click();
-      await cmp2.locator(`canvas[data-lineup-3d="${look}"]`).waitFor({ timeout: 10000 });
+      // A browser with no GPU path (Firefox headless in CI) keeps the flat lineup and says so.
+      await cmp2.locator(`canvas[data-lineup-3d="${look}"], [data-no-globes]`).first().waitFor({ timeout: 10000 });
+      if (await cmp2.locator("[data-no-globes]").count()) {
+        assert.equal(await cmp2.locator("canvas[data-lineup-3d]").count(), 0);
+        continue;
+      }
       assert.match(await cmp2.locator("[data-pace]").innerText(), /turns once every 40 seconds, its own way round/);
       await gm.waitForTimeout(look === "true" ? 4000 : 800);
       await shot(gm, `globes-${look}-${name}`);
     }
-    await cmp2.getByRole("button", { name: "True pace" }).click();
-    assert.match(await cmp2.locator("[data-pace]").innerText(), /True pace: one second is .* of turning; .*, the quickest/);
-    await gm.getByRole("group", { name: "Seen from" }).getByRole("button", { name: "Above", exact: true }).click();
-    await gm.waitForTimeout(500);
-    await shot(gm, `globes-above-${name}`);
+    if (!(await cmp2.locator("[data-no-globes]").count())) {
+      await cmp2.getByRole("button", { name: "True pace" }).click();
+      assert.match(await cmp2.locator("[data-pace]").innerText(), /True pace: one second is .* of turning; .*, the quickest/);
+      await gm.getByRole("group", { name: "Seen from" }).getByRole("button", { name: "Above", exact: true }).click();
+      await gm.waitForTimeout(500);
+      await shot(gm, `globes-above-${name}`);
+    }
     await styleBar.getByRole("button", { name: "Chart", exact: true }).click();
     assert.equal(await cmp2.locator("canvas[data-lineup-3d]").count(), 0, "Chart is the flat lineup again");
 

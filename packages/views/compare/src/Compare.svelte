@@ -301,7 +301,7 @@
       {#if stillOnes}{stillOnes === 1 ? "One body's day is" : `${stillOnes} bodies' days are`} not known, so {stillOnes === 1 ? "it stands" : "they stand"} still.{/if}
     </p>
   {/if}
-  {#if noGpu && globes}<p class="note">This device cannot draw the globes, so the lineup is drawn flat.</p>{/if}
+  {#if noGpu && globes}<p class="note" data-no-globes>This device cannot draw the globes, so the lineup is drawn flat.</p>{/if}
   {#if note}<p class="note" role="status">{note}</p>{/if}
   {#if mode === "true" && lineup.placed.some((p) => p.tiny)}<p class="note" data-hint="tiny">Some bodies are under a pixel beside the largest: try Scale: Readable (a log scale), or remove the largest.</p>{/if}
 
