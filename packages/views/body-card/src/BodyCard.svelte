@@ -12,6 +12,7 @@
   import NameCard from "./NameCard.svelte";
   import { Pictures } from "../../pictures/src/index.ts";
   import BodyPicture from "../../body/src/BodyPicture.svelte";
+  import Handles from "../../editing/src/Handles.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -166,6 +167,8 @@
           <BodyPicture {ctx} {scene} address={subject.address} label={subject.label} kind={subject.kind} show={id === "disc" || id === "x-ray" || id === "map" ? id : "globe"} />
         {/snippet}
       </Pictures>
+      <!-- The handles (track ED): what you can set, one row; Build moves them, Explore shows them; Run has none. -->
+      {#if ws.desk !== "run" && ctx.session.seat.authority === "gm"}<Handles {ctx} {scene} {subject} />{/if}
       {#if depth === "engine"}<p class="address" data-depth="engine" title="This body's address in the universe">{subject.address}</p>{/if}
       <div class="grid" class:line={rule.density === "line"} style="--cols: {cols}">
         {#each listed as f (f.field)}
