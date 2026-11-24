@@ -264,7 +264,8 @@ export function landingLinkSite(show: unknown): Place["site"] | null {
   if (!s) return null;
   const time = landingTimeOf(s.hour_deg);
   const lander = typeof s.lander === "string" ? s.lander : "ship" in s.lander ? "party" : null;
-  return { lat_deg: +s.site.lat_deg.toFixed(4), lon_deg: +s.site.lon_deg.toFixed(4), ...(time ? { time } : {}), ...(lander ? { lander } : {}) };
+  const r4 = (x: number) => Math.round(x * 1e4) / 1e4;
+  return { lat_deg: r4(s.site.lat_deg), lon_deg: r4(s.site.lon_deg), ...(time ? { time } : {}), ...(lander ? { lander } : {}) };
 }
 
 /** A landing as the table and the Playbook name it: "Mars, Dribeque Planitia at midday". */
@@ -272,6 +273,7 @@ export function landingTitle(show: unknown, world?: string | null): string {
   const s = landingShowOf(show);
   if (!s) return world ? `${world}, landing` : "Landing";
   const time = landingTimeOf(s.hour_deg);
-  const where = s.site.label || `${Math.abs(s.site.lat_deg).toFixed(1)}° ${s.site.lat_deg >= 0 ? "N" : "S"}, ${Math.abs(s.site.lon_deg).toFixed(1)}° ${s.site.lon_deg >= 0 ? "E" : "W"}`;
+  const deg = (x: number) => Math.round(Math.abs(x) * 10) / 10;
+  const where = s.site.label || `${deg(s.site.lat_deg)}° ${s.site.lat_deg >= 0 ? "N" : "S"}, ${deg(s.site.lon_deg)}° ${s.site.lon_deg >= 0 ? "E" : "W"}`;
   return `${world || s.label}, ${where}${time ? ` at ${time}` : ""}`;
 }
