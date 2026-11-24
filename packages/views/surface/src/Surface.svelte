@@ -21,7 +21,7 @@
 
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { constant, DEFAULT_VIEW, DESCENT_VERDICT_WORDS, LANDER_WORDS, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { constant, DEFAULT_VIEW, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
@@ -123,6 +123,7 @@
         radius_m: radius,
         pressure_bar: surfacePressureOf(f) / 1e5,
         t_k: surf?.t_surface_now_k ?? 0,
+        ...(surf?.gravity_m_s2 ? { gravity_m_s2: surf.gravity_m_s2 } : {}),
         air,
         star_k: star_k || constant("T_sun"),
         sun_radius: star_r > 0 && dist > 0 ? star_r / dist : 0.0047,
@@ -224,6 +225,25 @@
   const fmtLon = (v: number) => `${Math.abs(v).toFixed(2)}° ${v >= 0 ? "E" : "W"}`;
   const fmtT = (s: number) => (s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min` : s >= 90 ? `${Math.floor(s / 60)} min ${Math.round(s % 60)} s` : `${Math.round(s)} s`);
   const fmtM = (m: number) => (Math.abs(m) >= 10000 ? `${(m / 1000).toFixed(0)} km` : Math.abs(m) >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
+
+  // ── The sea at the site (V10k): the kernel's weather report for the wind and waves there, and the tide now ──────
+  let seaRead = $state<LandingSea | null>(null);
+  let seaGen = 0;
+  $effect(() => {
+    const s = site;
+    const sub = subject;
+    const sys = system;
+    const g = ++seaGen;
+    seaRead = null;
+    if (watching || !s || !sub) return;
+    const w = ctx!.workspace;
+    const t_s = w.now_yr * constant("yr_julian");
+    const day = (w.now_yr - (w.campaign_epoch_yr ?? w.now_yr)) * 365.25;
+    void ctx!.session.weather({ want: "report", system: sys, body: sub.address, lat: s.lat, lon: s.lon, day }).then((r) => {
+      if (g === seaGen && r.ok) seaRead = landingSeaOf(r.data, t_s);
+    });
+  });
+  const seaNow = $derived<LandingSea | null>(watching ? (show?.sea ?? null) : seaRead);
 
   // ── The ground round the site ─────────────────────────────────────────────────────────────
   let phase = $state<"choose" | "loading" | "flying" | "down">("choose");
@@ -386,6 +406,7 @@
       flight_s: flightS,
       ...(p === "flying" ? { fly_u: Math.round(flyU * 1000) / 1000 } : {}),
       ...(p === "down" ? { pose: roundPose({ x_m: walk.x, y_m: walk.y, yaw: walk.yaw, pitch: walk.pitch, drone }) } : {}),
+      sea: seaRead,
       hour_deg: Math.round(sunHour * 100) / 100,
       decl_deg: Math.round(sunDecl * 100) / 100,
       look,
@@ -409,7 +430,7 @@
   // The choosing moments (a site, a lander, landing, taking off) go at once; the pose goes from the frame loop.
   $effect(() => {
     if (watching) return;
-    void [site, landerKey, phase, world, sunHour, sunDecl, drone, look];
+    void [site, landerKey, phase, world, sunHour, sunDecl, drone, look, seaRead];
     untrack(() => publish(performance.now(), true));
   });
 
@@ -530,6 +551,7 @@
         ground: tok("--sse-ground"),
         ink: tok("--sse-ink"),
         contour_m: contourFor(eye[2] - siteZ),
+        ...(seaNow ? { sea: { wave_m: seaNow.wave_m, period_s: seaNow.period_s, dir_rad: seaNow.wind_m_s < 0 ? Math.PI : 0, gravity_m_s2: world.gravity_m_s2 ?? plan?.gravity_m_s2 ?? 9.8, tide_m: seaNow.tide_m, time_s: now / 1000 } } : {}),
       });
     } else if (using === "canvas" && line) drawLines(line, eye, fwd);
   }
@@ -717,6 +739,7 @@
           <span>{fmtM(eyeNow[2] - siteZ)} above the site</span>
           <span>{fmtM(fromSite)} from it</span>
           <span>horizon {fmtM(horizon)}</span>
+          {#if seaNow}<span data-sea>waves {seaNow.wave_m.toFixed(1)} m every {Math.round(seaNow.period_s)} s · tide {seaNow.tide_m >= 0 ? "+" : ""}{seaNow.tide_m.toFixed(2)} m</span>{/if}
           {#each nearMarks as m (m.l.id)}<span class="quiet">{m.l.name ?? m.l.original_name} {fmtM(m.d)} at {Math.round(m.brg)}°</span>{/each}
         </div>
       {/if}
@@ -744,6 +767,7 @@
     <p class="note quiet" data-ground-note>
       The ground is the kernel's to {near ? Math.round(near.spacing_m) : "?"} m (its fact floor here); finer than that within {fmtM(DETAIL_HALF)} of the site it is decoration sized to the site's roughness. You can walk {fmtM(WALK_HALF)} from where you landed; further means taking off.
       {#if world && !world.air}No air: the sky is black and nothing dims the far ground.{:else}Sky from single scattering in the kernel's air optics.{/if}
+      {#if seaNow}{seaNow.line ?? ""}{seaNow.line ? "." : ""} The sea is drawn as a few wave trains of that height and period round the wind; the tide stands {Math.abs(seaNow.tide_m).toFixed(2)} m {seaNow.tide_m >= 0 ? "above" : "below"} mean sea level.{/if}
       {#if watching}The sun stands where the game master's clock puts it, local time {localTime}.{:else if clock}The sun stands where {subject?.label}'s spin and its place on its orbit put it at the time in view: local time {localTime}{clock.solar_day_s === Infinity ? " (it keeps one face to its star)" : ""}, declination {sunDecl.toFixed(1)}°{shift ? `, moved ${Math.round(shift / 15)} h by hand` : ""}.{:else}The world's spin is not on record, so the hour is chosen by hand and the sun stands as at an equinox.{/if} Drawn on {reason}.
     </p>
     {/if}
