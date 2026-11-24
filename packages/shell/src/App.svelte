@@ -41,7 +41,7 @@
   import { programTarget, ruleEntries, sifterEntries, sifterTarget } from "../../agents/src/orac-rules.ts";
   import { blockEntries, boxTarget, tableTarget } from "../../agents/src/orac-blocks.ts";
   import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
-  import { triggerEntries, triggerTarget } from "../../agents/src/orac-triggers.ts";
+  import { templateTarget, triggerEntries, triggerTarget } from "../../agents/src/orac-triggers.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -49,7 +49,7 @@
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
   import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
-  import { menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
+  import { actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
   import ObjectMenu from "./ObjectMenu.svelte";
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
@@ -1109,6 +1109,7 @@
         tableTarget(s, ws),
         substanceTarget(s, ws),
         triggerTarget(s, ws),
+        templateTarget(s, ws),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
       catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...handbookEntries()],
@@ -1370,6 +1371,9 @@
   const objMenuItems = $derived(
     objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }) : null,
   );
+  // More's edit group says what the object menu says: the same words and keys, from the one list.
+  const moreWords = (id: string) => actionById(id)!.label({ address: ws.selection ?? "", kind: "", label: selName ?? "" });
+  const moreKey = (id: string) => keyWords(actionById(id)!.key!);
   async function runAction(id: string, address: string) {
     ws.select(address);
     if (id === "open") return toWorld(address);
@@ -1493,6 +1497,8 @@
       {steps}
       title={scene.title}
       baseTitle={base.title}
+      session={session ?? null}
+      systemAddress={scene.system}
       subjects={scene.subjects}
       selection={ws.selection}
       {selName}
@@ -1535,10 +1541,11 @@
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
           <div class="depth-more"><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
           {#if clipArmed}
-            <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>Copy {selName ?? "a body"} <kbd>Ctrl+C</kbd></button>
-            {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>Cut {selName} <kbd>Ctrl+X</kbd></button>{/if}
-            <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
-            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>Add here… <kbd>A</kbd></button>
+            <!-- The edit group reads its words and keys from the one action list (ui-contract actions.ts), as the object menu does. -->
+            <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>{moreWords("copy")} {selName ?? "a body"} <kbd>{moreKey("copy")}</kbd></button>
+            {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>{moreWords("cut")} {selName} <kbd>{moreKey("cut")}</kbd></button>{/if}
+            <button type="button" data-more-paste onclick={pasteFromMenu}>{moreWords("paste")} <kbd>{moreKey("paste")}</kbd></button>
+            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>{moreWords("add")} <kbd>{moreKey("add")}</kbd></button>
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
           <button type="button" data-more-open onclick={() => ((moreOpen = false), (offered = null), (given = null), (confirmFresh = false), openCampaign(true))}>Open a file… <kbd>Ctrl+O</kbd></button>

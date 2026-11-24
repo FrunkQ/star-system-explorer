@@ -2,7 +2,8 @@
 // (scripts/build-shell.sh first). Usage: node tests/ui/picker.e2e.mjs [--screens <dir>]
 // Browsing is the real hierarchy with the levels above first and moons folded behind a count that opens in place;
 // typing searches a flat list that says where each match is; kind chips add together and keep the path to a match;
-// Escape clears the search, then closes and gives the chip the keyboard; arrows and Enter pick. Moving about writes nothing.
+// Escape clears the search, then closes and gives the chip the keyboard; arrows and Enter pick. Typing also finds
+// things elsewhere in the campaign, and picking one goes there. Moving about writes nothing.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -86,6 +87,19 @@ try {
   await chip.click();
   await pop.locator('[data-pick="up:system"]').click();
   await gm.waitForFunction(() => document.querySelector(".place h1.title")?.getAttribute("data-place") === "system", null, { timeout: 20000 });
+
+  // Search covers the campaign (V3 gap 37): from the galaxy, typing finds a body of a system already read, saying
+  // where it is, and picking it goes straight there.
+  await gm.locator('.place [data-place-step="galaxy"]').click();
+  await gm.waitForFunction(() => document.querySelector(".place h1.title")?.getAttribute("data-place") === "galaxy", null, { timeout: 20000 });
+  await chip.click();
+  await pop.locator("[data-picker-find]").fill("earth");
+  const away = pop.locator("[data-picker-elsewhere] + ul .row").filter({ has: gm.locator(".name", { hasText: /^Earth$/ }) });
+  assert.match(await away.locator(".cap").innerText(), /^in The Solar System$/);
+  await shot(gm, "picker-find-elsewhere");
+  await away.click();
+  await gm.waitForFunction(() => document.querySelector(".place h1.title")?.getAttribute("data-place") === "world", null, { timeout: 20000 });
+  assert.equal((await gm.locator(".place h1.title").innerText()).trim(), "Earth");
 
   // A phone: a small ▾ beside the name opens the list across the screen.
   const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true })).newPage();
