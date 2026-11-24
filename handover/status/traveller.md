@@ -25,27 +25,26 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | Example packs 4.1: the Traveller standard ships (12 starships, 6 small craft) as templates and as pack ships the voyage planner flies and the designer draws (`nav_ships`, `packShips`); Mongoose's notice word for word (`provides.other.notice`, shown on Packs); the World hooks tag set (`sse.world-hooks`, 13 prompts) | done (Traveller pack track); pack ships in the voyage pickers (travel thread), tidal lock hooks | packages/X3g-standard-ships.md |
 | A game system's difficulty numbers beside SSE4's words: `provides.other.difficulty` (dice, ladder, typical operator, words, skills), ui-contract `gameDifficulty` from odds or words; Traveller's ladder and skills from the Cepheus Engine SRD | done (Traveller pack track); shown on the At world card and route console (travel thread) next | packages/X3h-difficulty.md |
 | Traveller sensors as instruments (RK11 pack share): each of the twelve kinds carries an sse-sense instrument (method, band, aperture, noise) so `detect` computes its reach; V3 ranges kept as authored | done; triggers asking `detect` (kernel lane), fits per tech level (FT8) next | packages/X3i-sensor-instruments.md |
-| Resources on the books (TG11 kept half): `resource.<kind>.extracted` and `.stock` kept on any address, held = natural - extracted + stock in `read_inventory`, new op `transfer` that conserves | done; mining step and `resource.*` labels (X3k) next | packages/X3j-resource-books.md |
+| Resources on the books (TG11 kept half): `resource.<kind>.extracted` and `.stock` kept on any address, held = natural - extracted + stock in `read_inventory`, new op `transfer` that conserves | done | packages/X3j-resource-books.md |
+| Mining and resource labels (TG11 mining step, TG8 part 2): `resource.*` labels read off held kg, so a mined-out rock loses its label; base pack `sse.base-resources` (metal, water, hydrogen, helium-3); new op `mine` at a ship's `mining.rate_kg_h` | done; a refinery's named effects, a computed drill rate next | packages/X3k-mining-labels.md |
+| X3l, sector routes as links: `sse-sector-io` reads the metadata's `<Routes>`; `import_sector` takes `metadata`, `route_audience`, `route_tier` and writes each route between two imported worlds as a link (source `import_sector`, GM only by default); the Sector map fetches or takes the XML and says which routes were left out | done; cross-sector routes, routes drawn on the hex map next | packages/X3l-sector-routes.md |
 
 ## Open now
 
-- **PR 400** (X3j, resources on the books). Green, and it changes `tests/golden/contract.jsonl`. It merges in the golden lane after the travel flight log (PR 403) and the kernel's barycentre PR. To land it: merge main, run `SSE_BLESS=1 cargo test -q -p sse-kernel contract_matches_golden`, check, push, merge on green.
+- **PR 400** (X3j, X3k and X3l together). It appends two lines to `tests/golden/contract.jsonl` (the `transfer` and
+  `mine` refusals) and merges in its turn in the golden lane. To land it: merge main, run
+  `SSE_BLESS=1 cargo test -q -p sse-kernel contract`, `scripts/check.sh`, push, merge on green.
 
 ## Next packages, in order
 
-1. **X3k: mining and resource labels** (TG11 program step, TG8 part 2).
-   - A ship's program moves ore at a computed rate by `transfer`.
-   - `resource.*` labels are derived from `held_kg`, so a mined-out rock loses its label by itself.
-   - Packs name their making and consuming effects (a refinery).
-   - Check: helium-3 on all four giants (MP8c: kind with matter `he3`, reach `envelope`).
-2. **Sector routes as links.** Import the routes in sector files (trade, courier, jump lanes) through the travel thread's `set_link` (PR 377), with `source` set to the import and `audience` and `tier` for routes players don't know. `plan_voyage` already uses crew-known links.
-3. **RK12, the Traveller mapping** (Atomic Rockets plan, accepted in full): weapons as "effect at range" (in range, marginal or out of range; nothing fired), with the game's table beside the physics. Then the RK16 pack side: stealth and countermeasure gear onto the counters list. Design questions go to the Atomic Rockets track.
-4. **MP16 counted measures.** "2 jumps" and a "Jump-2" drive rating (never "J2"). The default count is ceil(route pc / rating), and the GM's count overrules it. This needs the kernel's counted-measure declarations, and links carry `counted` in `nav`.
-5. **WBH extended profile** as one swappable "big block".
+1. **RK12, the Traveller mapping** (Atomic Rockets plan, accepted in full): weapons as "effect at range" (in range, marginal or out of range; nothing fired), with the game's table beside the physics. Then the RK16 pack side: stealth and countermeasure gear onto the counters list. Design questions go to the Atomic Rockets track.
+2. **MP16 counted measures.** "2 jumps" and a "Jump-2" drive rating (never "J2"). The default count is ceil(route pc / rating), and the GM's count overrules it. This needs the kernel's counted-measure declarations, and links carry `counted` in `nav` (imported routes could carry it too).
+3. **WBH extended profile** as one swappable "big block".
    - Read the physical profile off SSE4's physics; never roll a physical digit. Then add a seeded, GM-only social layer.
    - Use Cepheus Engine SRD (OGL) numbers for the basic social rolls, and keep WBH tables out (Mongoose copyright).
    - Port ideas, not code, from Roy Martin's TravellerSystemGenerator (GPL-3.0, so its code cannot enter this Apache repo). Credit it in sources and the log according to its licence, and say nothing about permission.
-6. **Smaller items:**
+4. **Resources, next steps:** a refinery's named making and consuming effects; a computed drill rate; catalogue Sol compositions (Mercury reads 23% iron like every catalogue body; inventory thread).
+5. **Smaller items:**
    - Triggers that ask `detect` for the pair instead of reading `range_m` (kernel lane).
    - Fits per tech level, and the Traveller TL table as a tech ladder (FT8, after FT1 and FT2).
    - SV7: the pack names its own "Known to" rungs.
@@ -53,7 +52,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
    - Gap 25 rest: hide orbit lines, sealed seats.
    - Gap 18 rest: imported worlds tied to the stars under their hexes.
    - Tidal-lock hooks once a lock fact exists.
-   - OV10 pack half: allegiance and travel zones as hex map layers.
+   - OV10 pack half: allegiance and travel zones as hex map layers; routes drawn on the hex map.
 
 ## Alex's rulings for this track (23 and 24 Nov)
 

@@ -33,8 +33,8 @@ resource kind. This package adds the books on top.
 - Food nobody stocked cannot be moved. Once the GM stocks it, it moves.
 - Bad asks are refused in words: the same place twice, a negative amount, an unknown kind.
 
-Golden changed on purpose (`contract.jsonl`): the hello op list and the bad-request message gain `transfer`, and one
-new contract case shows the refusal for a kind the stack does not declare. Every other line is unchanged.
+Golden changed on purpose (`contract.jsonl`): one new contract case shows the refusal for a kind the stack does not
+declare. (The op list lines are masked since PR 454.) Every other line is unchanged.
 
 ## Next (X3k)
 

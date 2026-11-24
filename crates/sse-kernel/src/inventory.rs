@@ -65,6 +65,33 @@ pub struct Kind {
     pub reach: Reach,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub about: Option<String>,
+    /// TG8 part 2: the `resource.*` label a place carries while it holds
+    /// enough (held, not natural, so a mined-out rock loses it by itself).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<Label>,
+}
+
+/// When a place earns a resource kind's label: at least `min_kg` held, and
+/// at least `min_per_kg` held per kilogram of the body (either may be left out).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Label {
+    pub tag: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min_kg: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min_per_kg: Option<f64>,
+}
+
+impl Label {
+    /// Whether `held_kg` on a body of `mass_kg` earns the label.
+    pub fn earned(&self, held_kg: f64, mass_kg: f64) -> bool {
+        held_kg > 0.0
+            && self.min_kg.is_none_or(|m| held_kg >= m)
+            && self
+                .min_per_kg
+                .is_none_or(|m| mass_kg > 0.0 && held_kg / mass_kg >= m)
+    }
 }
 
 #[derive(Clone, PartialEq, Debug, Default, Deserialize)]
@@ -323,6 +350,7 @@ pub(crate) fn read(
                         matter: Some(id.clone()),
                         reach: Reach::Surface,
                         about: None,
+                        label: None,
                     });
                 } else {
                     return Err(err(
@@ -372,6 +400,7 @@ pub(crate) fn read(
             "deposits are part of the crust: survey_surface's holdings say how much of it is ore"
                 .to_string(),
         ];
+        let mut labels: Vec<String> = vec![];
         let kinds: Vec<serde_json::Value> = wanted
             .iter()
             .map(|k| {
@@ -381,15 +410,29 @@ pub(crate) fn read(
                 if let (Some(o), serde_json::Value::Object(extra)) = (v.as_object_mut(), h.json()) {
                     o.extend(extra);
                 }
+                if let Some(l) = &k.label {
+                    let on = l.earned(h.held_kg(), c.bulk.mass_kg);
+                    if let Some(o) = v.as_object_mut() {
+                        o.insert(
+                            "label".into(),
+                            serde_json::json!({"tag": l.tag, "earned": on}),
+                        );
+                    }
+                    if on && !labels.contains(&l.tag) {
+                        labels.push(l.tag.clone());
+                    }
+                }
                 v
             })
             .collect();
+        labels.sort();
         out.push(serde_json::json!({
             "body": b.address.to_string(),
             "label": b.label,
             "mass_kg": c.bulk.mass_kg,
             "source": c.bulk.source,
             "kinds": kinds,
+            "labels": labels,
             "stand_ins": stand_ins,
         }));
     }

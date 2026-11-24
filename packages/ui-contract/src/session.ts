@@ -895,7 +895,7 @@ export class Session implements ViewSession {
 
   async importSector(ask: import("./sector.ts").SectorImportAsk): Promise<{ ok: true; result: import("./sector.ts").SectorImported } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "sectors are imported on the game master's machine" };
-    const r = await this.#call({ op: "import_sector", text: ask.text, ...(ask.format ? { format: ask.format } : {}), ...(ask.sheet ? { sheet: ask.sheet } : {}), apply: !!ask.apply, grow: !!ask.grow, at_s: ask.at_s ?? 0 });
+    const r = await this.#call({ op: "import_sector", text: ask.text, ...(ask.format ? { format: ask.format } : {}), ...(ask.sheet ? { sheet: ask.sheet } : {}), apply: !!ask.apply, grow: !!ask.grow, ...(ask.metadata ? { metadata: ask.metadata } : {}), ...(ask.route_audience ? { route_audience: ask.route_audience } : {}), ...(ask.route_tier ? { route_tier: ask.route_tier } : {}), at_s: ask.at_s ?? 0 });
     return r.type === "sector_import" ? { ok: true, result: r as unknown as import("./sector.ts").SectorImported } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 

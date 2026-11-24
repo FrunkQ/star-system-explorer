@@ -112,7 +112,9 @@ fn messy_paste_keeps_good_lines_and_warns_on_the_rest() {
 #[test]
 fn xml_metadata_and_merge() {
     let meta = parse_sector_xml(XML);
-    assert!(meta.warnings.is_empty(), "{:?}", meta.warnings);
+    // One route with a broken hex is left out, in words.
+    assert_eq!(meta.warnings.len(), 1, "{:?}", meta.warnings);
+    assert!(meta.warnings[0].text.contains("09x2"));
     assert_eq!(meta.name.as_deref(), Some("Kestrel Reach"));
     assert_eq!(meta.abbreviation.as_deref(), Some("Kstr"));
     assert_eq!(meta.subsectors.len(), 3);
@@ -124,11 +126,32 @@ fn xml_metadata_and_merge() {
     assert_eq!(merged.subsectors.len(), 3);
     assert_eq!(merged.worlds.len(), 12);
 
+    assert_eq!(merged.routes.len(), 4);
+
     let back = parse_sector_xml(&write_sector_xml(&meta));
     assert_eq!(
-        (back.name, back.abbreviation, back.subsectors),
-        (meta.name, meta.abbreviation, meta.subsectors)
+        (back.name, back.abbreviation, back.subsectors, back.routes),
+        (meta.name, meta.abbreviation, meta.subsectors, meta.routes)
     );
+}
+
+#[test]
+fn routes_read_with_their_offsets_and_words() {
+    let meta = parse_sector_xml(XML);
+    let r = &meta.routes;
+    assert_eq!(r.len(), 4);
+    assert_eq!((r[0].start.as_str(), r[0].end.as_str()), ("0912", "1013"));
+    assert_eq!(r[0].kind.as_deref(), Some("Trade"));
+    assert_eq!(r[0].style.as_deref(), Some("Dashed"));
+    assert_eq!(r[1].allegiance.as_deref(), Some("Kv"));
+    assert_eq!(r[1].colour.as_deref(), Some("#c0a040"));
+    assert!(r[0].inside() && r[1].inside());
+    assert_eq!(r[2].end_offset, (1, 0));
+    assert!(!r[2].inside());
+    assert_eq!(r[3].kind, None);
+    // A subsector keeps the routes with both ends inside it.
+    let f = meta.subsector('F');
+    assert_eq!(f.routes.len(), 2, "{:?}", f.routes);
 }
 
 #[test]

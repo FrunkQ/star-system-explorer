@@ -53,7 +53,25 @@ export interface SectorImportAsk {
   apply?: boolean;
   /** With apply: grow each world's whole system first (heavy for a whole sector). */
   grow?: boolean;
+  /** The sector's metadata XML: its routes between imported worlds become links. */
+  metadata?: string;
+  /** Who knows the imported routes (absent: the GM only). */
+  route_audience?: "everyone" | "gm" | string[];
+  /** The routes' "Known to" rung. */
+  route_tier?: string;
   at_s?: number | bigint;
+}
+
+/** One route from the metadata: its ends' systems and, once written, its link; or why it was left out. */
+export interface SectorRouteRow {
+  start: string;
+  end: string;
+  kind?: string;
+  a?: string;
+  b?: string;
+  link?: string;
+  event_id?: string;
+  left_out?: string;
 }
 
 export interface ImportedWorldRow {
@@ -81,6 +99,8 @@ export interface SectorImported {
   summary: string;
   events: string[];
   state_hash?: string;
+  routes?: SectorRouteRow[];
+  record_hash?: string;
 }
 
 export interface SectorExported {

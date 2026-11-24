@@ -1233,6 +1233,19 @@ pub enum Request {
         reason: Option<String>,
         at_s: i64,
     },
+    /// The record (X3k): a ship mines `hours` of resource `kind` from a
+    /// body at its `mining.rate_kg_h` fact, capped by what the body holds,
+    /// by `transfer`. Refused when the ship has no rate or the body none left.
+    Mine {
+        ship: String,
+        body: String,
+        kind: String,
+        hours: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        at_s: i64,
+    },
     /// The record: an actor (empire, guild, noble, party, crew) at
     /// `<root>/actor:<id>` or under `parent`.
     AddActor {
@@ -1739,6 +1752,22 @@ pub enum Request {
         /// adopt it, and write the coded facts on the grown main world.
         #[serde(default)]
         grow: bool,
+        /// The sector's metadata XML (name, subsectors, routes). Its routes
+        /// between two imported worlds become links (`set_link`, kind the
+        /// route's type, source "import_sector"); routes reaching another
+        /// sector, or a hex with no world, are listed as left out.
+        #[serde(default)]
+        #[ts(optional)]
+        metadata: Option<String>,
+        /// Who knows the imported routes (as `set_link`'s `audience`;
+        /// absent: the GM only, until the GM tells the players).
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        route_audience: Option<serde_json::Value>,
+        /// The routes' "Known to" rung (as `set_link`'s `tier`).
+        #[serde(default)]
+        #[ts(optional)]
+        route_tier: Option<String>,
         at_s: i64,
     },
     /// Write a campaign's mapped systems (those with `map.hex`) at or under
@@ -2247,6 +2276,7 @@ impl Request {
             Request::AddNote { .. } => "add_note",
             Request::SetKept { .. } => "set_kept",
             Request::Transfer { .. } => "transfer",
+            Request::Mine { .. } => "mine",
             Request::AddActor { .. } => "add_actor",
             Request::Record { .. } => "record",
             Request::Hold { .. } => "hold",
@@ -2575,6 +2605,7 @@ pub fn ops() -> Vec<OpInfo> {
         o("add_note", Cost::Light, "one event"),
         o("set_kept", Cost::Light, "one fold and one event"),
         o("transfer", Cost::Light, "two reads of the natural amount at Survey, two kept changes"),
+        o("mine", Cost::Light, "one fact, then a transfer"),
         o("add_actor", Cost::Light, "one fold and one event"),
         o("record", Cost::Light, "linear in the record events"),
         o(
@@ -3632,6 +3663,15 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional)]
         state_hash: Option<String>,
+        /// The metadata's routes: each with its ends' systems and, once
+        /// applied, its link and event; or why it was left out.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        #[ts(optional, type = "unknown[]")]
+        routes: Vec<serde_json::Value>,
+        /// With `apply` and routes: the record's hash after the links.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        record_hash: Option<String>,
     },
     /// `export_sector`: the file's text, the systems written, and those
     /// skipped (no main world found), by address.

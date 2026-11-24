@@ -310,3 +310,88 @@ fn traveller_ports_and_bases_are_dressing_candidates_from_the_codes() {
             .starts_with("society.starport")
             || w["field"].as_str().unwrap().starts_with("traveller.bases."))));
 }
+
+/// Sector routes as links (X3l): a metadata file's routes between two
+/// imported worlds become charted links, known to the GM until told; the
+/// rest are listed with the reason. Importing again rewrites the same links.
+#[test]
+fn sector_routes_become_links_known_to_the_gm() {
+    let mut k = crate::Kernel::new();
+    let r = load(
+        &mut k,
+        vec![
+            pack("packs/base-physics/pack.json"),
+            pack("packs/base-atlas/pack.json"),
+            pack("packs/base-time/pack.json"),
+            pack("packs/traveller/pack.json"),
+        ],
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "kestrel", "seed": "k"}),
+    );
+    let text =
+        std::fs::read_to_string(root().join("tests/fixtures/sector/lanternfall.tab")).unwrap();
+    let meta =
+        std::fs::read_to_string(root().join("tests/fixtures/sector/kestrel-reach.xml")).unwrap();
+    let ask = |apply: bool| {
+        serde_json::json!({"op": "import_sector", "text": text, "metadata": meta,
+            "apply": apply, "at_s": 0})
+    };
+    let links = |k: &mut crate::Kernel, audience: &str| -> Vec<serde_json::Value> {
+        let r = send(
+            k,
+            serde_json::json!({"op": "links_in", "audience": audience}),
+        );
+        assert_eq!(r["type"], "links_listed", "{r}");
+        r["links"].as_array().unwrap().clone()
+    };
+
+    let r = send(&mut k, ask(false));
+    assert_eq!(r["type"], "sector_import", "{r}");
+    let routes = r["routes"].as_array().unwrap();
+    assert_eq!(routes.len(), 4, "{r}");
+    assert_eq!(routes[0]["a"], "u:kestrel/sys:0912");
+    assert_eq!(routes[0]["b"], "u:kestrel/sys:1013");
+    assert!(routes[0].get("link").is_none(), "a preview writes nothing");
+    assert!(routes[2]["left_out"]
+        .as_str()
+        .unwrap()
+        .contains("neighbouring sector"));
+    assert!(routes[3]["left_out"].as_str().unwrap().contains("2525"));
+    assert!(r.get("record_hash").is_none());
+    assert!(links(&mut k, "gm").is_empty());
+
+    let r = send(&mut k, ask(true));
+    assert_eq!(
+        r["routes"][0]["link"],
+        "u:kestrel/link:route-0912-1013-trade"
+    );
+    assert_eq!(
+        r["routes"][1]["link"],
+        "u:kestrel/link:route-1013-1114-courier"
+    );
+    assert!(r["record_hash"].is_string());
+    let gm = links(&mut k, "gm");
+    assert_eq!(gm.len(), 2, "{gm:?}");
+    let trade = gm.iter().find(|l| l["kind"] == "Trade").unwrap();
+    assert_eq!(trade["source"], "import_sector", "{trade}");
+    assert_eq!(trade["name"], "Trade route 0912 to 1013");
+    assert!(
+        links(&mut k, "players").is_empty(),
+        "the players do not know them yet"
+    );
+
+    // Again, told to everyone: the same two links, now known to the players.
+    let mut again = ask(true);
+    again["route_audience"] = serde_json::json!("everyone");
+    let r = send(&mut k, again);
+    assert_eq!(r["type"], "sector_import", "{r}");
+    assert_eq!(links(&mut k, "gm").len(), 2);
+    assert_eq!(links(&mut k, "players").len(), 2);
+
+    let mut bad = ask(false);
+    bad["route_audience"] = serde_json::json!(7);
+    assert_eq!(send(&mut k, bad)["code"], "bad_link");
+}

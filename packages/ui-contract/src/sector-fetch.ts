@@ -21,6 +21,21 @@ export function sectorPath(sector: string, subsector?: string): string {
   return `/tmap/sector?${q.toString()}`;
 }
 
+/** The Worker path for a sector's metadata (name, subsectors, routes; XML). */
+export function metadataPath(sector: string): string {
+  return `/tmap/metadata?${new URLSearchParams({ sector }).toString()}`;
+}
+
+/** A sector's metadata XML, or null when the Worker has none for it (routes are optional). */
+export async function fetchMetadata(get: Fetch, sector: string, base = ""): Promise<string | null> {
+  try {
+    const res = await get(base + metadataPath(sector));
+    return res.ok ? await res.text() : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchSector(get: Fetch, sector: string, subsector?: string, base = ""): Promise<SectorText> {
   const res = await get(base + sectorPath(sector, subsector));
   const body = await res.text();

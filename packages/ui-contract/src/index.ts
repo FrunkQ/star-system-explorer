@@ -84,7 +84,7 @@ export { termsOf, word } from "./words.ts";
 export { DEPTHS, CURIOUS_FACTS, headline, isDepth, roughly, curiousDisplay, curiousSentence } from "./depth.ts";
 export type { Depth } from "./depth.ts";
 export type { Terms } from "./words.ts";
-export { fetchSector, sectorPath } from "./sector-fetch.ts";
+export { fetchMetadata, fetchSector, metadataPath, sectorPath } from "./sector-fetch.ts";
 export type { SectorText } from "./sector-fetch.ts";
 export { SECTOR_FORMATS, mapFields, stackProvides } from "./sector.ts";
 export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateOf } from "./constructs.ts";
