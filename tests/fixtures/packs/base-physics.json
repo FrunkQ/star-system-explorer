@@ -2703,6 +2703,34 @@
         "range": null
       },
       {
+        "description": "van der Waals C6: the pull between an atom and a neighbour, falling as the sixth power of distance",
+        "dim": [
+          6,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.interaction_constant",
+        "range": null
+      },
+      {
+        "description": "energy to tear the outer electron off an absorbing atom",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.ionisation_energy",
+        "range": null
+      },
+      {
         "description": "King correction factor for scattering by non-spherical molecules (1 for spheres)",
         "dim": [
           0,
@@ -2910,6 +2938,34 @@
           0
         ],
         "id": "gas.perturber_density",
+        "range": null
+      },
+      {
+        "description": "mass of one particle crowding an absorbing atom",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.perturber_mass",
+        "range": null
+      },
+      {
+        "description": "polarisability volume of a particle crowding an absorbing atom",
+        "dim": [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.perturber_polarisability",
         "range": null
       },
       {

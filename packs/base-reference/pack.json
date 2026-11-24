@@ -11566,6 +11566,12 @@
        "unit": "1",
        "src": "fudge-register",
        "check": "authored"
+      },
+      "polarisability": {
+       "v": 1.501e-30,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "1.501 cubic angstroms, static, experimental"
       }
      },
      "chemical": {
@@ -12088,7 +12094,13 @@
         "src": "karkoschka1994",
         "note": "The methane bands that colour Uranus and Neptune and darken the giants in the red, measured from the giants' own spectra at their temperatures (125 to 128 K). Sampled every 5 nm from a 1 nm table, so narrow band edges are smoothed; near-zero values are the table's floor."
        }
-      ]
+      ],
+      "polarisability": {
+       "v": 2.448e-30,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "2.448 cubic angstroms, static, experimental"
+      }
      },
      "chemical": {
       "states": {
@@ -12319,6 +12331,12 @@
        "unit": "1",
        "src": "fudge-register",
        "check": "authored"
+      },
+      "polarisability": {
+       "v": 1.71e-30,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "1.71 cubic angstroms, static, experimental"
       }
      },
      "chemical": {
@@ -12518,6 +12536,12 @@
        "unit": "1",
        "src": "fudge-register",
        "check": "authored"
+      },
+      "polarisability": {
+       "v": 1.6640000000000002e-30,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "1.664 cubic angstroms, static, experimental"
       }
      }
     },
@@ -12562,6 +12586,12 @@
        ],
        "src": "fudge-register",
        "check": "authored"
+      },
+      "polarisability": {
+       "v": 7.870000000000001e-31,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "0.787 cubic angstroms, static, experimental"
       }
      },
      "chemical": {
@@ -12624,6 +12654,12 @@
         0.0
        ],
        "src": "atom-isotropic"
+      },
+      "polarisability": {
+       "v": 2.0800000000000002e-31,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "0.208 cubic angstroms, static, experimental"
       }
      }
     },
@@ -12733,7 +12769,13 @@
         "src": "nist-handbook-na",
         "note": "Sodium's D1 line (3s to 3p 1/2), air wavelength. f worked out from Aki = 6.140e+07 s-1 and g_u/g_l = 2/2; radiative damping is that Aki (the upper level's only decay). No collisional widening row yet: the pressure-widened wings of dense airs (white dwarfs, brown dwarfs) wait for a cited widening law (Allard et al.)."
        }
-      ]
+      ],
+      "ionisation_energy": {
+       "v": 5.139076,
+       "unit": "eV",
+       "src": "nist-handbook-na",
+       "note": "41449.451 cm-1, Baugh et al. 1998"
+      }
      }
     },
     {
@@ -12768,7 +12810,13 @@
         "src": "nist-handbook-k",
         "note": "Potassium's D1 line (4s to 4p 1/2), air wavelength. f worked out from Aki = 3.740e+07 s-1 and g_u/g_l = 2/2; radiative damping is that Aki (the upper level's only decay). No collisional widening row yet: the pressure-widened wings of dense airs (white dwarfs, brown dwarfs) wait for a cited widening law (Allard et al.)."
        }
-      ]
+      ],
+      "ionisation_energy": {
+       "v": 4.3406633,
+       "unit": "eV",
+       "src": "nist-handbook-k",
+       "note": "35009.8140 cm-1, Sugar and Corliss 1985"
+      }
      }
     },
     {
@@ -16314,6 +16362,12 @@
      "text": "Niemann, H. B. et al. 2005, Nature 438, 779: Titan's atmosphere from the Huygens probe (5.65% methane by volume near the surface)",
      "status": "unverified",
      "doi": "10.1038/nature04122"
+    },
+    {
+     "id": "nist-cccbdb",
+     "text": "NIST Computational Chemistry Comparison and Benchmark Database, Release 22 (May 2022), list of experimental static dipole polarizabilities (in cubic angstroms; most from Olney, Cann, Cooper and Brion 1997, Chem. Phys. 223, 59)",
+     "status": "verified",
+     "url": "https://cccbdb.nist.gov/pollistx.asp"
     },
     {
      "id": "nist-handbook-k",

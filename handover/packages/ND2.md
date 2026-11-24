@@ -53,10 +53,25 @@ Owner: Build light and nebulae. Data rows with the matter data sheet thread.
   that load it, and the G reach report lists the new blocks. No world's values changed.
 - Fudge F52. Atom count 94 to 105 (P1.md).
 
+## Part 2a (24 Nov): widening from a cited law
+
+- Block `sse.gas.van_der_waals_widening` (gas.json, atom count 122 to 123): Unsöld's C6 =
+  (e²/4πε₀) α_p a₀² (5/2) Ry² / h · [1/(I − E_u)² − 1/(I − E_l)²] and the Lindholm width per
+  perturber 17 v^(3/5) C6^(2/5), with v the mean relative speed. e, ε₀, a₀, h, c, R∞ and k from the sheet;
+  17 is a model number (Gray chapter 11).
+- Sheet (through the builder): `optical.polarisability` (m³, NIST CCCBDB) on h2, he, n2, ch4, ar, h2o;
+  `optical.ionisation_energy` (eV, NIST Handbook) on na and k. `GasOptics` reads both.
+- `pass`: a line with no `broadening` row is widened by every gas in its layer that has a
+  polarisability, when the line's own gas has an ionisation energy; the why-lines say so and the
+  block's references join the reply. With nothing to work from it says so under `stand_ins`.
+- Test `sodium_crowded_by_helium_widens_by_van_der_waals`: C6 by hand; 1 nm off D2 darkens more than
+  ten times in 1e27 m⁻³ of helium at 6000 K. Fudge F54 (Unsöld is often about two times narrow).
+- No golden change beyond the base-physics and base-reference pack hashes.
+
 ## Next (part 2)
 
 - More rows: H₂-H₂ and H₂-He pairs (HITRAN CIA; hitran.org was not reachable from the build machine), a cited
-  collisional widening law for the Na and K lines (Allard et al.), methane below 410 nm and in the near
+  measured widening rows where they exist (Allard et al., ABO), which win over Unsöld's estimate, methane below 410 nm and in the near
   infrared, TiO and C₂ substance rows, ammonia and the giants' chromophores.
 - A spectrum on a wire (a `list<number>` on the eye's or a named grid) and the gas block in flows.
 - Limb law per channel; the light of a description's lines in the colour; screens read colour from the op.
