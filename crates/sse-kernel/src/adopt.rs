@@ -1035,6 +1035,23 @@ pub(crate) fn resolved_system(
             }
         }
     }
+    // MF3 part 1: a magnetised world's dipole tilt. Nothing predicts it, so
+    // it is drawn from the body's address (Rayleigh, spread of the dipolar
+    // planets' measured tilts), and said to be.
+    for b in &bodies {
+        let row = facts.entry(b.address.clone()).or_default();
+        let on = row
+            .get("body.magnetic_moment")
+            .and_then(as_f64)
+            .is_some_and(|x| x > 0.0);
+        if on && !row.contains_key("field.tilt") {
+            row.insert(
+                "field.tilt".to_string(),
+                f(drawn_tilt_deg(seed, &b.address)),
+            );
+            row.insert("field.tilt_grade".to_string(), t("drawn"));
+        }
+    }
     // Every world's moment of inertia factor (for flattening and
     // precession), unless the record holds a measured one.
     for (b, e) in bodies.iter().zip(&envelopes) {
@@ -1310,4 +1327,16 @@ pub(crate) fn inertia_factor(
     let c = e.core.as_ref()?;
     let r = b.radius_earth * R_EARTH;
     (r > 0.0).then(|| ia::two_layer(b.core_mass_fraction, c.core_radius_km * 1000.0, r))
+}
+
+/// Spread of the dipolar planets' dipole tilts, degrees (Earth 9.4,
+/// Jupiter 9.6, Ganymede 4; Stevenson 2003, Earth Planet. Sci. Lett. 208, 1).
+pub(crate) const TILT_SPREAD_DEG: f64 = 10.0;
+
+/// A keyed Rayleigh draw of a dipole's tilt from the spin axis, degrees.
+pub(crate) fn drawn_tilt_deg(seed: &Seed, address: &Address) -> f64 {
+    let stream = sse_core::draw::Stream::new("mf3.tilt.v1").expect("stream name");
+    let d = sse_core::draw::Draws::new(*seed, address.clone(), stream);
+    let u = d.unit(0).clamp(0.0, 1.0 - f64::EPSILON);
+    (TILT_SPREAD_DEG * m::sqrt(-2.0 * m::ln(1.0 - u))).min(90.0)
 }

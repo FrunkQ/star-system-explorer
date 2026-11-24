@@ -47,3 +47,38 @@ All four are held to their sums by `ledger_blocks_match_the_field_sums`. That te
 - The liquid iron conductivity is a typed stand-in (1e6 S/m) until the sheet row lands. Part 2 points it at Look up.
 - The flow scaling drops Christensen and Aubert's geometric factor.
 - The 24 h spin is used for a world that publishes none.
+
+# MF2 part 2: giants and ice giants (`sse-surface` `giant_field.rs`)
+
+The data sheet's MP30 rows (PR 419) made this possible. A giant has no iron core, so its dynamo is the deep hydrogen, which conducts once it is squeezed hard enough.
+
+- **Pressure inside.** An n = 1 polytrope (Hubbard 1984): P = K ρ², with ρ = ρc sin ξ/ξ, K = 2 G R²/π and ρc = π M/(4 R³).
+- **Conductivity.** σ(P) comes from the sheet's `giant-envelope` `sigma_elec_profile` (French et al. 2012, along Jupiter's adiabat), interpolated log-log. Above the table's top it falls on along the first segment's slope.
+- **Dynamo top.** Walking down from the cloud tops, the dynamo's top is the first radius where σ reaches the sheet's `metallic_from` (2e4 S/m).
+- **Power.** The giant's own cooling light (formation's `self_light`), all of it passing through the dynamo's top.
+- **The ledger as for a core.** Flow speed (α 1e-5 per K and c_p 1.4e4 J/kg/K for the deep fluid, `GiantDynamo`), Rm with σ at mid-depth, the onset, and the Rossby factor.
+- **Field and facts.** The field is Christensen (2010) on the dynamo's mean density. The surface dipole is computed as for a core. The same facts as a rocky world's are published, through `core::field_facts`.
+
+**Core σ from the sheet.** The core history now reads liquid iron's σ from the sheet's `earth-core-liquid` row (1.11e6 S/m, Pozzo et al. 2012), not the typed 1e6.
+
+Solar System results (`sol_tests::giants_make_their_fields_in_their_deep_hydrogen`):
+
+| World | Equatorial field, computed | Measured | Moment, computed | Moment, measured | Dynamo top |
+|---|---|---|---|---|---|
+| Jupiter | 278 μT | 417 μT | 9.5e26 A m² | 1.56e27 A m² | 0.91 R |
+| Saturn | 76 μT | 21 μT | 1.5e26 A m² | 4.6e25 A m² | 0.80 R |
+| Uranus | 25 μT | 23 μT | 4.1e24 A m² | 3.9e24 A m² | 0.76 R |
+| Neptune | 34 μT | 14 μT | 5.1e24 A m² | 2.2e24 A m² | 0.80 R |
+
+All are within a factor of about 3. Saturn's field is too strong because nothing yet models the stable helium-rain layer that weakens and aligns it (MF3).
+
+# MF3 part 1: the dipole's tilt
+
+Every magnetised world publishes `field.tilt` (degrees from the spin axis), with `field.tilt_grade` "drawn". The design says nothing can predict the tilt, so it is a keyed Rayleigh draw from the body's address (stream `mf3.tilt.v1`), with a spread of 10°, the spread of the dipolar planets' tilts. A tilt in the record wins. `read_field` uses the same tilt, so the glance and the drawings agree.
+
+Still to come in MF3 part 2:
+- dipole share from the local Rossby number;
+- low-order coefficients;
+- offset;
+- the stable layer, which keeps Saturn aligned;
+- reversals and excursions as dated record events.

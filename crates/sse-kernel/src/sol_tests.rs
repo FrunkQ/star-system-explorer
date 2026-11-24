@@ -672,3 +672,61 @@ fn catalogued_earth_feels_the_faint_young_sun() {
     let pending = r.to_string();
     assert!(!pending.contains("this world's climate is a fixed value"));
 }
+
+/// MF2 part 2: the giants make their fields in their metallic hydrogen.
+/// Jupiter's equatorial field is about 420 μT (Connerney et al. 2018) and
+/// Saturn's about 21 μT; the ice giants are weaker still. Within a factor
+/// of a few, as the scaling law promises.
+#[test]
+fn giants_make_their_fields_in_their_deep_hydrogen() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let fact = |name: &str, key: &str| -> f64 {
+        r["facts"]
+            .as_object()
+            .unwrap()
+            .values()
+            .find(|f| f["name"] == name)
+            .and_then(|f| f[key].as_f64())
+            .unwrap_or_else(|| panic!("no {key} for {name}"))
+    };
+    for n in ["Jupiter", "Saturn", "Uranus", "Neptune"] {
+        eprintln!(
+            "MF2 {n}: B_eq {:.1} μT, moment {:.2e}, top {:.2} R, Rm {:.2e}, flow {:.2e}",
+            fact(n, "body.surface_magnetic_field") * 1e6,
+            fact(n, "body.magnetic_moment"),
+            fact(n, "interior.dynamo_radius") / fact(n, "body.radius"),
+            fact(n, "interior.magnetic_reynolds"),
+            fact(n, "interior.dynamo_flow_speed"),
+        );
+    }
+    let bj = fact("Jupiter", "body.surface_magnetic_field") * 1e6;
+    assert!((140.0..1300.0).contains(&bj), "Jupiter {bj} μT");
+    let bs = fact("Saturn", "body.surface_magnetic_field") * 1e6;
+    assert!(bs > 3.0 && bs < bj, "Saturn {bs} μT");
+    let top = fact("Jupiter", "interior.dynamo_radius") / fact("Jupiter", "body.radius");
+    assert!(
+        (0.7..0.95).contains(&top),
+        "Jupiter's dynamo top at {top} R"
+    );
+    // MF3 part 1: every magnetised world has a drawn tilt, marked drawn; a
+    // world with no field has none.
+    for f in r["facts"].as_object().unwrap().values() {
+        let on = f["body.magnetic_moment"].as_f64().is_some_and(|x| x > 0.0);
+        if on {
+            let tilt = f["field.tilt"].as_f64().unwrap();
+            assert!((0.0..=90.0).contains(&tilt), "{tilt}");
+            assert_eq!(f["field.tilt_grade"], "drawn");
+        } else {
+            assert!(f.get("field.tilt").is_none(), "{f}");
+        }
+    }
+    let again = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    assert_eq!(again["facts"], r["facts"]);
+}

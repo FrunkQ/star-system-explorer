@@ -163,7 +163,7 @@ impl Default for CoreSettings {
             step_myr: 20.0,
             field_c: 0.63,
             field_f_ohm: 0.9,
-            sigma_core: 1.0e6,
+            sigma_core: crate::giant_field::core_sigma().unwrap_or(1.0e6),
             spin_hours_default: 24.0,
         }
     }
@@ -632,6 +632,9 @@ pub fn core_history(
 /// the dynamo's outer radius, the stirring flow, Rm and onset. SI units.
 /// None for a world without an iron core history.
 pub fn field_facts(env: &SurfaceEnvelope, b: &Body) -> Option<Vec<(&'static str, f64)>> {
+    if b.deep_envelope {
+        return crate::giant_field::field_facts(b);
+    }
     let c = env.core.as_ref()?;
     let now = c.steps.last()?;
     let rms_t = now.field_ut * 1e-6;

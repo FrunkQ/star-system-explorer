@@ -64,6 +64,7 @@ fn glance(r: &sse_field::FieldRead, field: &str, dynamo_now: Option<bool>) -> se
 
 pub(crate) fn read_system(
     ch: &Chronicle,
+    seed: &sse_core::Seed,
     system: &Address,
     at_s: Option<i64>,
     run: Option<&SystemRun>,
@@ -148,7 +149,14 @@ pub(crate) fn read_system(
                 .unwrap_or(0.0),
             free_space_dose_msv_day: None,
             orbits_m: vec![],
-            magnetic_tilt_deg: fact("field.tilt").unwrap_or(0.0),
+            // MF3: the record's tilt, else the drawn one resolved_system gives.
+            magnetic_tilt_deg: fact("field.tilt").unwrap_or_else(|| {
+                if moment > 0.0 {
+                    crate::adopt::drawn_tilt_deg(seed, &addr)
+                } else {
+                    0.0
+                }
+            }),
             plasma_source_kg_s: 0.0,
             pedersen_conductance_s: 0.0,
             moons: vec![],

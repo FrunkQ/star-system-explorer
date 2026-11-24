@@ -21,6 +21,7 @@ pub mod core;
 pub mod cover;
 pub mod detail;
 pub mod frames;
+pub mod giant_field;
 pub mod impacts;
 pub mod named;
 pub mod plates;

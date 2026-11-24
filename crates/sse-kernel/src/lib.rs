@@ -3047,6 +3047,7 @@ impl Kernel {
                 }
                 fields::read_system(
                     &u.chronicle,
+                    &u.seed,
                     &a,
                     at_s,
                     u.runs.get(&system),
