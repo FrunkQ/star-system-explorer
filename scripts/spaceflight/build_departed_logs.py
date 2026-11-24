@@ -635,7 +635,7 @@ SAT = {r["JCAT"]: r for r in table("satcat.tsv")}
 # Landing sites GCAT names without coordinates (positions from the sites' published runway and zone centres,
 # written from memory and marked estimated).
 SITES = {"KSC": (28.615, -80.695), "EAFB": (34.905, -117.884), "EDW": (34.905, -117.884),
-         "WSSH": (32.943, -106.419), "Kazakhstan": (47.36, 69.59)}
+         "WSSH": (32.943, -106.419), "WSMR": (32.943, -106.419), "Kazakhstan": (47.36, 69.59)}
 
 
 # Landing days for crewed flights GCAT leaves docked (Wikidata P620, CC0; scripts/spaceflight/wikidata_landings.json).
@@ -644,9 +644,75 @@ WD_LANDED = json.load(open(os.path.join(ROOT, "scripts/spaceflight/wikidata_land
 # Each programme's usual landing zone, from memory and marked so: Soyuz on the Kazakh steppe near Dzhezkazgan, the
 # Shuttle at the Kennedy Space Center, Shenzhou at Dongfeng in Inner Mongolia.
 PROGRAM_SITES = {"Soyuz": (47.36, 69.59), "7K-": (47.36, 69.59), "STS": (28.615, -80.695), "OV-": (28.615, -80.695),
-                 "Shenzhou": (41.62, 100.08)}
+                 "Shenzhou": (41.62, 100.08), "Vostok": (47.36, 69.59), "Voskhod": (47.36, 69.59),
+                 "TKS VA": (47.36, 69.59), "Buran": (45.95, 63.35)}
+# Shenzhou 1 to 11 came down at Siziwang in Inner Mongolia; Dongfeng took over from Shenzhou 12 (June 2021).
+SIZIWANG, DONGFENG_FROM = (42.3, 111.4), 674_000_000 + J2000_S
 # Cargo craft that burn up on leaving: a Wikidata landing for one would be a slip, so none is taken.
 BURN_UP = ("Progress", "Cygnus", "HTV", "Tianzhou", "ATV")
+
+
+# End of mission (GCAT psatcat TDate): for a flight that docks, the day (often the hour) it landed or was deorbited.
+PSAT = {r["JCAT"]: r for r in table("psatcat.tsv")}
+# Apollo command modules splashed down in the Pacific; the recovery areas changed per flight, so one stand-in point
+# (north of Hawaii, written from memory) is used and marked so.
+APOLLO_SEA = (21.0, -160.0)
+# The same for the other capsules that come down at sea, and Starliner's White Sands landing (from memory, marked):
+# Gemini in the western Atlantic, Dragon off Florida (earlier cargo Dragons came down off Baja California).
+SEA_STAND_INS = {"Apollo": APOLLO_SEA, "Gemini": (26.0, -70.0), "Dragon": (29.0, -85.0),
+                 "Starliner": (32.943, -106.419)}
+STAND_IN = (0.0, 0.0)
+
+
+def program_site(kind, name, t):
+    """The usual landing or recovery zone of a programme (from memory, always marked estimated), or None."""
+    if "Shenzhou" in kind and t < DONGFENG_FROM:
+        return SIZIWANG
+    site = next((v for k_, v in PROGRAM_SITES.items() if k_ in kind), None)
+    return site or next((v for k_, v in SEA_STAND_INS.items() if k_ in kind or k_ in name), None)
+
+
+def docked_end(r, kind, t_docked):
+    """How a flight that GCAT leaves docked ended: crewed ships land at their programme's zone, the rest (cargo
+    craft, modules, TKS) burn up. GCAT's psatcat TDate gives the end of mission; Wikidata P620 the landing day when
+    psatcat has none. The undocking and deorbit burn are folded into that end (docked up to it): a fudge of hours
+    for crewed ships, of up to a few days for cargo craft."""
+    td = gdate(PSAT.get(r["JCAT"], {}).get("TDate", "-"))
+    wd = WD_LANDED.get(r["Piece"], {}).get("landed", [])
+    site = program_site(kind, r["Name"], t_docked)
+    if site is None and len(wd) == 1:
+        site = STAND_IN
+    if any(b in kind or b in r["Name"] for b in BURN_UP):
+        site = None
+    if site is not None:
+        has_hour = bool(re.search(r"\d{4} \w{3} +\d+ \d{4}", PSAT.get(r["JCAT"], {}).get("TDate", "")))
+        if td and has_hour:
+            at, sure, src, how = td[0], td[1], "gcat", "the landing time is GCAT's end of mission (psatcat TDate)"
+        elif len(wd) == 1:
+            y, mo, dd = (int(x) for x in wd[0][:10].split("-"))
+            at, sure, src = gdate("%d %s %2d" % (y, list(MONTHS)[mo - 1], dd))[0], False, "wikidata"
+            how = "landing day from Wikidata (P620, %s), noon UTC standing in for the hour" % \
+                WD_LANDED[r["Piece"]]["wikidata"]
+        elif td:
+            at, sure, src = td[0], False, "gcat"
+            how = "landing day from GCAT's end of mission (psatcat TDate), noon UTC standing in for the hour"
+        else:
+            return None
+        if at <= t_docked:
+            return None
+        where = ("no site given; the point is a stand-in" if site is STAND_IN else
+                 "the point stands in for the programme's usual recovery area, from memory")
+        return {"kind": "landed", "at": at, "sure": False, "src": src, "site": site, "why": how + "; " + where,
+                "event_why": how if not sure else "the hour is GCAT's; the site is estimated",
+                "docked_why": "it stays docked here until it lands; the undocking is folded into the landing (a "
+                              "fudge of hours)"}
+    if not td or td[0] <= t_docked:
+        return None
+    return {"kind": "gone", "at": td[0], "sure": td[1], "src": "gcat",
+            "why": None if td[1] else "GCAT gives the end of mission (psatcat TDate) without an hour",
+            "event_why": "GCAT gives the end of mission without an hour",
+            "docked_why": "it stays docked here until its end of mission (GCAT psatcat TDate), when it burns up; the "
+                          "undocking and deorbit burn are folded into that (a fudge of up to a few days)"}
 
 
 def earth_log(jcat, name, kind):
@@ -700,31 +766,32 @@ def earth_log(jcat, name, kind):
             why = None
             if not c:
                 site = next((k for k in SITES if k.lower() in r["Dest"].lower()), None)
-                c = SITES.get(site, (0.0, 0.0))
+                prog = None if site else program_site(kind, r["Name"], t1)
+                c = SITES[site] if site else prog or STAND_IN
                 why = ("GCAT names the site (%s); its coordinates are written from memory" % r["Dest"]) if site else \
+                    ("GCAT gives no site; the point stands in for the programme's usual landing or recovery area, "
+                     "from memory") if prog else \
                     ("GCAT names the site (%s) without coordinates; the point is a stand-in" % (r["Dest"] or "-"))
             piece(t1, {"kind": "landed", "body": P("earth"), "lat_deg": c[0], "lon_deg": c[1]}, d1[1], why)
             events.append({"at_s": t1, "kind": "landing", "mark": "recorded" if d1[1] else "estimated", "src": "gcat",
                            "writer": "pack", **({} if d1[1] else {"why": "GCAT marks this date uncertain"})})
         elif st in ("DK", "GRP", "ATT") and r["Dest"]:
-            back = WD_LANDED.get(r["Piece"], {}).get("landed", [])
-            land = None
-            if len(back) == 1 and not any(b in kind for b in BURN_UP):
-                y, mo, dd = (int(x) for x in back[0][:10].split("-"))
-                land = gdate("%d %s %2d" % (y, list(MONTHS)[mo - 1], dd))
+            end = docked_end(r, kind, t1)
             piece(t1, {"kind": "docked", "to": "gcat:" + r["Dest"]}, d1[1],
-                  "docked to %s; %s" % (r["Dest"], "it stays docked here until it lands, as the undocking is not in "
-                                        "GCAT's tables or Wikidata" if land and land[0] > t1 else
+                  "docked to %s; %s" % (r["Dest"], end["docked_why"] if end else
                                         "GCAT's tables give no later phase (undocking, landing)"))
-            if land and land[0] > t1:
-                site = next((v for k_, v in PROGRAM_SITES.items() if k_ in kind), None)
-                piece(land[0], {"kind": "landed", "body": P("earth"), "lat_deg": (site or (0.0, 0.0))[0],
-                                "lon_deg": (site or (0.0, 0.0))[1]}, False,
-                      "landing day from Wikidata (P620, %s), noon UTC standing in for the hour; %s" % (
-                          WD_LANDED[r["Piece"]]["wikidata"], "the site is the programme's usual landing zone, from "
-                          "memory" if site else "no site given; the point is a stand-in"))
-                events.append({"at_s": land[0], "kind": "landing", "mark": "estimated", "src": "wikidata",
-                               "writer": "pack", "why": "landing day from Wikidata; the hour is not given"})
+            if end:
+                if end["kind"] == "landed":
+                    piece(end["at"], {"kind": "landed", "body": P("earth"), "lat_deg": end["site"][0],
+                                      "lon_deg": end["site"][1]}, end["sure"], end["why"])
+                    events.append({"at_s": end["at"], "kind": "landing", "mark": "recorded" if end["sure"] else
+                                   "estimated", "src": end["src"], "writer": "pack",
+                                   **({} if end["sure"] else {"why": end["event_why"]})})
+                else:
+                    piece(end["at"], {"kind": "gone", "how": "reentered"}, end["sure"], end["why"])
+                    events.append({"at_s": end["at"], "kind": "entry", "mark": "recorded" if end["sure"] else
+                                   "estimated", "src": "gcat", "writer": "pack",
+                                   **({} if end["sure"] else {"why": end["event_why"]})})
         elif st in ("E", "C"):
             piece(t1, {"kind": "gone", "how": "impacted"}, d1[1], "broke up in orbit (GCAT status %s)" % st)
     return {"construct": cid, "name": r["Name"] or name, "gcat": jcat, "about": (

@@ -403,7 +403,7 @@ fn stations_and_crewed_flights_have_logs() {
             matches!(all[&id].pieces.last().unwrap().state, State::Landed { .. })
         })
         .count();
-    assert!(landed >= 400, "{landed} landed");
+    assert!(landed >= 440, "{landed} landed");
     let sts = &all["discovery-sts-103"];
     match &sts.pieces.last().unwrap().state {
         State::Landed {
@@ -415,5 +415,41 @@ fn stations_and_crewed_flights_have_logs() {
             )
         }
         s => panic!("STS-103 ends {s:?}"),
+    }
+    // RS8 part 5: GCAT's end of mission (psatcat TDate) ends what docks. Soyuz 17 lands on 9 Feb 1975 at
+    // 11:03 UTC (Wikidata's August date for it was wrong), and Progress 1 burns up on 8 Feb 1978.
+    let soyuz17 = all["soyuz-17"].pieces.last().unwrap();
+    assert!(matches!(soyuz17.state, State::Landed { .. }));
+    let feb9 = 63_115_200_000 - 9_092 * 86_400 - 3_600; // 1975 Feb 9 11:00 UTC, about (J2000 is noon)
+    assert!(
+        (soyuz17.from_s - feb9).abs() < 2 * 3_600,
+        "Soyuz 17 lands on 9 Feb 1975"
+    );
+    assert!(matches!(
+        all["progress-1"].pieces.last().unwrap().state,
+        State::Gone { .. }
+    ));
+    let docked = std::fs::read_dir(dir.join("logs/earth-orbit"))
+        .unwrap()
+        .filter(|p| {
+            let id = p
+                .as_ref()
+                .unwrap()
+                .path()
+                .file_stem()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
+            matches!(all[&id].pieces.last().unwrap().state, State::Docked { .. })
+        })
+        .count();
+    assert!(
+        docked <= 12,
+        "{docked} still docked: only modules and flights docked today"
+    );
+    // Columbia's STS-3 came down at White Sands, which GCAT names.
+    match &all["columbia-sts-3"].pieces.last().unwrap().state {
+        State::Landed { lon_deg, .. } => assert!((lon_deg + 106.4).abs() < 0.5, "White Sands"),
+        s => panic!("STS-3 ends {s:?}"),
     }
 }
