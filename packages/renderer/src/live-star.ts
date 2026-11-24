@@ -52,7 +52,40 @@ export interface GivenStar {
  * Read a star's facts and activity from the kernel: a LiveStar, or why there is none. A star the resolved system
  * does not describe (an authored system) is taken from its scene facts when they give all three numbers.
  */
-export async function readLiveStar(session: StarReader, system: string, address: string, given: GivenStar = {}): Promise<LiveStar | string> {
+/** A world the kernel checks each mass ejection against (read_activity's targets: a circular orbit in the star's equator). */
+export interface ActivityTarget {
+  address: string;
+  distance_m: number;
+  period_s?: number;
+  /** Angle round the star at age zero, radians. */
+  phase_rad: number;
+}
+
+/**
+ * The worlds circling `star`, as read_activity's targets, from the resolved system's own orbit facts (the same facts
+ * the system views place planets by): distance the semi-major axis, period the kernel's (or Kepler's from the host's
+ * mass), and the angle at age zero wound back from the mean anomaly at the orbit's epoch.
+ */
+export function targetsFromFacts(facts: Record<string, Record<string, Json> | undefined>, star: string): ActivityTarget[] {
+  const out: ActivityTarget[] = [];
+  const hostMass = Number(facts[star]?.["body.mass"]);
+  for (const [address, f] of Object.entries(facts)) {
+    if (!f || address === star || f["orbit.host"] !== star) continue;
+    const a = Number(f["orbit.semi_major_axis"]);
+    if (!(a > 0)) continue;
+    const given = Number(f["orbit.period"] ?? f["orbit.period_s"]);
+    const period = given > 0 ? given : hostMass > 0 ? 2 * Math.PI * Math.sqrt(a ** 3 / (constant("G") * hostMass)) : NaN;
+    const m = Number(f["orbit.mean_anomaly_at_epoch"] ?? 0) || 0;
+    const epoch = Number(f["orbit.epoch_s"] ?? 0) || 0;
+    const turn = 2 * Math.PI;
+    const phase = period > 0 ? m - (turn * (epoch % period)) / period : m;
+    out.push({ address, distance_m: a, ...(period > 0 ? { period_s: period } : {}), phase_rad: ((phase % turn) + turn) % turn });
+  }
+  return out;
+}
+
+/** `targets`: worlds to check each ejection against (hits and misses); "system" fills them from the system's own orbits. */
+export async function readLiveStar(session: StarReader, system: string, address: string, given: GivenStar = {}, targets?: ActivityTarget[] | "system"): Promise<LiveStar | string> {
   const rs = await session.resolvedSystem(system);
   if (!rs.ok) return rs.message;
   const f = rs.result.facts[address] ?? {};
@@ -64,7 +97,8 @@ export async function readLiveStar(session: StarReader, system: string, address:
   if (!(teff > 0 && mass > 0 && radius > 0)) return "The kernel has no temperature, mass and radius for this star yet, so there is nothing true to draw.";
   const lum = 4 * Math.PI * radius * radius * constant("sigma_SB") * teff ** 4;
   const age_s = age > 0 ? age : 4.6e9 * constant("yr_julian");
-  const star = { address, mass_kg: mass, radius_m: radius, luminosity_w: lum, teff_k: teff, age_s };
+  const aim = targets === "system" ? targetsFromFacts(rs.result.facts as Record<string, Record<string, Json>>, address) : targets;
+  const star = { address, mass_kg: mass, radius_m: radius, luminosity_w: lum, teff_k: teff, age_s, ...(aim?.length ? { targets: aim as unknown as Json[] } : {}) };
   const r = await session.readActivity({ stars: [star], at_s: age_s, window: { from_s: age_s - 2 * constant("day"), to_s: age_s + constant("yr_julian"), min_energy_j: 1e24 } });
   if (!r.ok) return r.message;
   const one = r.stars[0] as unknown as { activity: Record<string, Json>; moment: Record<string, Json>; flares?: { flares?: Flare[] } };

@@ -4,7 +4,7 @@ import { glarePsf, glareProfile, glowReach, drawGlow, GLOW_REACH_DEG } from "../
 import { churningGranules, granuleBlur, limbLumps } from "../src/star-churn.ts";
 import { addEjections, ejectionShare, ejectionsAt, flareBoost, patchRadiusDeg, shownFlares, FLASHES_PER_SECOND_MAX } from "../src/star-events.ts";
 import { drawStar, granuleCount } from "../src/star.ts";
-import { flarePlace, turnAt, type Flare, type LiveStar } from "../src/live-star.ts";
+import { flarePlace, targetsFromFacts, turnAt, type Flare, type LiveStar } from "../src/live-star.ts";
 import { drawStarNow } from "../src/star-now.ts";
 
 const DAY = 86400;
@@ -201,4 +201,33 @@ test("the hidden-disc corona: a millionth of the disc, streamers along the equat
   const at = (x: number, y: number) => o.data[(y * 64 + x) * 4]!;
   assert.equal(at(32, 32), 0, "the disc is hidden");
   assert.ok(at(32 + 14, 32) > at(32, 32 - 14), "brighter along the equator than over the pole");
+});
+
+test("the flash cap works for any events (aurora pulses, pulsars): three a second at most, none when calm", async () => {
+  const { capFlashes } = await import("../src/star-events.ts");
+  const clock = 600; // ten minutes of the event's time a second
+  const pulses = Array.from({ length: 60 }, (_, i) => ({ start_s: i * 10, size: 1 + (i % 4), rise_s: 1, decay_s: 5 }));
+  const began = new Set<number>();
+  for (let t = 0; t <= clock; t += clock / 30) for (const p of capFlashes(pulses, t, clock)) began.add(p.index);
+  assert.ok(began.size <= 4, `${began.size} began in one screen second`);
+  assert.equal(capFlashes(pulses, 100, clock, true).length, 0);
+});
+
+test("ejection targets come from the system's own orbit facts, wound back to age zero", () => {
+  const year = 365.25 * 86400;
+  const facts = {
+    "sys/sun": { "body.mass": 1.989e30 },
+    "sys/earth": { "orbit.host": "sys/sun", "orbit.semi_major_axis": 1.496e11, "orbit.mean_anomaly_at_epoch": 1, "orbit.epoch_s": 2.25 * year },
+    "sys/mars": { "orbit.host": "sys/sun", "orbit.semi_major_axis": 2.28e11, "orbit.period": 1.88 * year, "orbit.mean_anomaly_at_epoch": 0.5, "orbit.epoch_s": 0 },
+    "sys/moon": { "orbit.host": "sys/earth", "orbit.semi_major_axis": 3.84e8 },
+  };
+  const t = targetsFromFacts(facts, "sys/sun");
+  assert.deepEqual(t.map((x) => x.address), ["sys/earth", "sys/mars"]);
+  // Kepler's period from the host's mass: about a year.
+  assert.ok(Math.abs(t[0]!.period_s! / year - 1) < 0.01);
+  // A quarter turn after a whole number of years: the angle at age zero is a quarter turn behind.
+  const back = (((1 - (2 * Math.PI * (2.25 * year % t[0]!.period_s!)) / t[0]!.period_s!) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  assert.ok(Math.abs(t[0]!.phase_rad - back) < 1e-9);
+  assert.equal(t[1]!.period_s, 1.88 * year);
+  assert.equal(t[1]!.phase_rad, 0.5);
 });

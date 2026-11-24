@@ -6,7 +6,7 @@
 // descriptor: the gas's density from its shells' masses and sizes, its light summed along each line of sight
 // (density squared for glowing gas, density for dust that shines by its own heat or the star's light), coloured by
 // the descriptor's own light: its emission lines at their wavelengths, or its dust temperature.
-import { LINES, planck, thermalColour, type ViewBand } from "../../ui-contract/src/index.ts";
+import { constant, LINES, planck, thermalColour, type ViewBand } from "../../ui-contract/src/index.ts";
 
 export const SHELL_REFERENCES = [
   { text: "Osterbrock, D. E. and Ferland, G. J. (2006). Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd ed. University Science Books (recombination and forbidden lines scale with the density squared along the line of sight: the emission measure).", url: "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/" },
@@ -61,7 +61,7 @@ const hexRgb = (hex: string) => (hex.match(/[0-9a-f]{2}/gi) ?? ["ff", "ff", "ff"
  * has lines, else its continuum's black-body colour (dust at its own temperature is red to infrared, so in Visible a
  * dust shell shows the starlight it reflects, `starTeff`). Infrared: the dust's own heat, mapped grey.
  */
-export function nebulaColour(s: NebulaShape, band: Extract<ViewBand, "visible" | "infrared">, starTeff = 5772): [number, number, number] {
+export function nebulaColour(s: NebulaShape, band: Extract<ViewBand, "visible" | "infrared">, starTeff = constant("T_sun")): [number, number, number] {
   if (band === "infrared") return [1, 1, 1];
   const lines = s.light?.lines ?? [];
   let c: [number, number, number] = [0, 0, 0];
@@ -185,8 +185,9 @@ export function drawShells(out: { width: number; data: Uint8ClampedArray }, s: N
 
 /** The nebula in words, for the note beside the view. */
 export function narrateShells(s: NebulaShape): string {
-  const au = 1.495978707e11;
-  const size = (m: number) => (m >= 0.1 * 9.4607e15 ? `${(m / 9.4607e15).toPrecision(2)} light-years` : `${Math.round(m / au).toLocaleString("en-GB")} au`);
+  const au = constant("au");
+  const ly = constant("ly");
+  const size = (m: number) => (m >= 0.1 * ly ? `${(m / ly).toPrecision(2)} light-years` : `${Math.round(m / au).toLocaleString("en-GB")} au`);
   if (s.kind === "jet" && s.jet) return `A jet from the young star, ${size(s.jet.length_m)} each way along its spin axis${s.jet.knots?.length ? `, with ${s.jet.knots.length} knots from bursts of feeding` : ""}: drawn from the kernel's flow, on a log scale ${SHELL_DECADES} decades deep.`;
   if (s.kind === "dust-shell") return `Dust the giant has shed, from ${size(s.shells[0]?.radius_m ?? 0)} out${s.shells.length > 1 ? `, in ${s.shells.length} shells from separate episodes` : ""}: drawn from the kernel's shells, on a log scale ${SHELL_DECADES} decades deep.`;
   return `Gas the star has shed, ${size(Math.max(...s.shells.map((x) => x.radius_m), 0))} across its outer shell${s.lobes ? ", pinched into two lobes" : ""}: drawn from the kernel's shells, on a log scale ${SHELL_DECADES} decades deep.`;
