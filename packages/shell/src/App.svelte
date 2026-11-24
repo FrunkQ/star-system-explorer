@@ -4,7 +4,7 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
-  import { untrack } from "svelte";
+  import { tick, untrack } from "svelte";
   import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
@@ -46,7 +46,10 @@
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
-  import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
+  import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
+  import { menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
+  import ObjectMenu from "./ObjectMenu.svelte";
+  import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
   import { Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
@@ -567,7 +570,9 @@
     void ws.revision;
     const l = lens;
     const s = session;
-    const aud = lensAudience(l);
+    // Pencil and ink (track SV): on the Build and Run desks the GM's chart always knows what the table knows, so an
+    // unknown body is drawn in pencil whatever the lens; a player lens looks through its own audience.
+    const aud = lensAudience(l) ?? (desk === "build" || desk === "run" ? EVERYONE : null);
     const g = ++lensGen;
     // The system in view, not the shipped sample's: a lens on the Solar System looks at the Solar System.
     const sys = scene.system || (factsDoc as unknown as AuthoredFacts).scope;
@@ -1321,6 +1326,50 @@
     clipNote = `Cut ${c.words}. Paste it anywhere on the Build desk; Undo puts it back.`;
   }
 
+  // The menu on any object (V3 gap 38): right-click, or press and hold, on anything carrying `data-address`. Its items
+  // are the one action list (ui-contract actions.ts) for the desk in front; each runs the same function as the tool,
+  // the key or the More entry that does it, on the object the menu was opened on.
+  let objMenu = $state<{ target: ActionTarget; at: { x: number; y: number }; from: Element | null; kicker: string } | null>(null);
+  $effect(() =>
+    watchObjectMenu(window, (ask, from) => {
+      const sub = scene.subjects.find((x) => x.address === ask.address);
+      if (!sub || railScale === "workshop") return;
+      const host = sub.parent ? scene.subjects.find((x) => x.address === sub.parent) : sub.orbit ? primaryOf(scene) : undefined;
+      ws.select(sub.address);
+      objMenu = { target: { address: sub.address, kind: sub.kind, label: sub.label }, at: { x: ask.x, y: ask.y }, from, kicker: `${sub.kind.replace(/_/g, " ")}${host ? ` · orbits ${host.label}` : ""}` };
+    }),
+  );
+  const objMenuItems = $derived(
+    objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }) : null,
+  );
+  async function runAction(id: string, address: string) {
+    ws.select(address);
+    if (id === "open") return toWorld(address);
+    if (id === "describe") return describe(address);
+    if (id === "copy") return copyBody();
+    if (id === "paste") return pasteFromMenu();
+    if (id === "add") return openAdd();
+    if (id === "cut") return cutBody();
+    if (id === "voyage") return go("voyages");
+    if (id === "land") return (toWorld(address), go("surface"));
+    if (id === "link") {
+      const url = `${location.origin}${location.pathname}${location.search}${placeHash({ scale: "world", system: viewing?.system ?? "", world: address })}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        clipNote = `Copied a link to ${placeName(address) ?? "it"}. It opens the chart room on it.`;
+      } catch {
+        clipNote = `The browser would not let the chart room use the clipboard. The link is ${url}`;
+      }
+      return;
+    }
+    if (id === "send" && share) {
+      toWorld(address);
+      await tick();
+      share.show(here());
+      clipNote = `The players now see ${placeName(address) ?? "it"}, as far as they know it.`;
+    }
+  }
+
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
     const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
@@ -1766,6 +1815,8 @@
   <HelpDoor bind:page={helpPage} onstart={() => (help?.close(), (startOpen = true))} onask={() => (help?.close(), (agentsOpen = true), agentsDialog?.showModal())} onsol={() => (help?.close(), void openSol())} />
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
+
+{#if objMenu && objMenuItems}{@const om = objMenu}<ObjectMenu target={om.target} menu={objMenuItems} at={om.at} from={om.from} kicker={om.kicker} onpick={(id) => void runAction(id, om.target.address)} ondesk={chooseDesk} onclose={() => (objMenu = null)} />{/if}
 
 <style>
   :global(html, body) {

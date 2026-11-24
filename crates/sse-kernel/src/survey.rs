@@ -107,6 +107,9 @@ pub(crate) struct Resolved {
     pub at_s: Option<i64>,
     pub opts: SurveyOptions,
     pub settings: sse_surface::SurfaceSettings,
+    /// SF1: the orbit track over the window that ends at the epoch (the
+    /// survey's own track starts there), for dating past ice ages.
+    pub track_before: Option<sse_climate::forcing::OrbitTrack>,
 }
 
 pub(crate) fn resolve(
@@ -125,6 +128,7 @@ pub(crate) fn resolve(
         s = sse_surface::detail::orbit_settings(&s);
         s.atlas.tile_samples = 32;
     }
+    let mut track_before = None;
     let (source, body, seed, epoch_gyr, at_s): (String, Body, Seed, f64, Option<i64>) = match from {
         From::Fixture(name) => {
             let all = sse_surface::scenario::fixtures();
@@ -178,6 +182,14 @@ pub(crate) fn resolve(
                     opts.moons = moons;
                 }
             }
+            track_before = crate::ice_ages::orbit_inputs_from(
+                &s.climate,
+                seed,
+                &w.bodies,
+                &b,
+                -s.climate.forcing.window_yr,
+            )
+            .0;
             (
                 w.source.to_string(),
                 b,
@@ -195,6 +207,7 @@ pub(crate) fn resolve(
         at_s,
         opts,
         settings: s,
+        track_before,
     })
 }
 

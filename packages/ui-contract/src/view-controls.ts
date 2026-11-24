@@ -75,6 +75,9 @@ export interface ViewChoice {
   hud?: boolean;
   /** Visible when left out. */
   band?: ViewBand;
+  /** Counts the times a fixed "Seen from" was picked (re-picking the one shown counts too): each pick puts the camera
+   * back at that framing, undoing free look, zoom and slide (Alex, 24 Nov). A view watches the number, not its value. */
+  framed?: number;
 }
 export const DEFAULT_VIEW: ViewChoice = { style: "chart", seen: "tilted", scale: "readable" };
 
@@ -128,7 +131,7 @@ export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice): { style
   });
   const wantBand = choice.band ?? "visible";
   const shownBand: ViewBand = bands.find((o) => o.value === wantBand && !o.unavailable) ? wantBand : "visible";
-  return { styles, seen, scales, huds, bands, shown: { style, seen: shownSeen, scale: shownScale, hud: shownHud, band: shownBand }, turnable: !flat || turnTo };
+  return { styles, seen, scales, huds, bands, shown: { style, seen: shownSeen, scale: shownScale, hud: shownHud, band: shownBand, framed: choice.framed ?? 0 }, turnable: !flat || turnTo };
 }
 
 const NOT_TO_SCALE = "Not drawn to scale here yet";
@@ -150,9 +153,10 @@ export function pickScale(spec: ViewControlsSpec, choice: ViewChoice, scale: Vie
 export function pickSeen(spec: ViewControlsSpec, choice: ViewChoice, seen: SeenFrom): ViewChoice {
   const style = shownStyle(spec, choice);
   const flat = !!spec.flat && style === "chart";
-  if (flat && seen !== "above" && can(spec.styles["3d"])) return { style: "3d", seen };
-  if (flat && seen === "above") return choice;
-  return { ...choice, style, seen };
+  const framed = (choice.framed ?? 0) + (seen === "free" ? 0 : 1);
+  if (flat && seen !== "above" && can(spec.styles["3d"])) return { style: "3d", seen, framed };
+  if (flat && seen === "above") return { ...choice, framed };
+  return { ...choice, style, seen, framed };
 }
 
 /** Choosing a style keeps the way it is seen from. */
