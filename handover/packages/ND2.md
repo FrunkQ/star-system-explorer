@@ -51,7 +51,7 @@ Owner: Build light and nebulae. Data rows with the matter data sheet thread.
 - Golden `contract.jsonl` changes on purpose: the op list gains `light_through_gas` (hello and the unknown
   variant list), two contract cases at the end, the base-physics pack's hash (new blocks) in the stacks
   that load it, and the G reach report lists the new blocks. No world's values changed.
-- Fudge F51. Atom count 90 to 101 (P1.md).
+- Fudge F52. Atom count 94 to 105 (P1.md).
 
 ## Next (part 2)
 

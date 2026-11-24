@@ -903,6 +903,18 @@ pub mod mixture_density {
     pub const FORMATION_CO: f64 = 900.0;
     /// rp-1 (nistir6646).
     pub const RP_1: f64 = 799.0;
+    /// tungsten (nist-srd126).
+    pub const TUNGSTEN: f64 = 19300.0;
+    /// niobium-c103 (materion-c103).
+    pub const NIOBIUM_C103: f64 = 8850.0;
+    /// inconel-718 (smc-inconel718).
+    pub const INCONEL_718: f64 = 8193.0;
+    /// uo2-fuel (popov2000).
+    pub const UO2_FUEL: f64 = 10970.0;
+    /// polyethylene (nist-srd126).
+    pub const POLYETHYLENE: f64 = 930.0;
+    /// lead (nist-srd126).
+    pub const LEAD: f64 = 11350.0;
 }
 
 /// Yield strength, Pa, by mixture (the sheet's mixtures).
@@ -911,6 +923,10 @@ pub mod mixture_yield_strength {
     pub const SURFACE_ROCK: f64 = 154000000.0;
     /// surface-ice (lineweaver2010).
     pub const SURFACE_ICE: f64 = 5600000.0;
+    /// niobium-c103 (materion-c103).
+    pub const NIOBIUM_C103: f64 = 275800000.0;
+    /// inconel-718 (smc-inconel718).
+    pub const INCONEL_718: f64 = 1034200000.0;
 }
 
 /// Each unit's factor to SI, by unit id (the sheet's units table).

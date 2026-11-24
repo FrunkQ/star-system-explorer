@@ -8,7 +8,7 @@
 // chart's colours with contour lines), "wireframe" (the mesh's edges on the chart's ground).
 import { ACESFilmicToneMapping, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Scene, SphereGeometry, SRGBColorSpace, Vector3 } from "three";
 import { MeshBasicNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
-import { Fn, abs, attribute, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionWorld, select, smoothstep, sqrt, uniform, vec3, vec4 } from "three/tsl";
+import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
 
 export interface SurfaceMesh {
   key: string;
@@ -20,6 +20,8 @@ export interface SurfaceMesh {
   chart: Float32Array;
   /** The kernel's height per vertex before decoration, metres (contour lines follow it). */
   kernel_z: Float32Array;
+  /** 1 where a liquid covers the ground (its sea surface), else 0. Absent: all dry. */
+  wet?: Float32Array;
   indices: Uint32Array;
   /** Drawn over lower layers where they overlap (a finer ring inside a coarser one). */
   layer: number;
@@ -49,6 +51,30 @@ export interface SurfaceFrame {
   ground: string;
   ink: string;
   contour_m: number;
+  /**
+   * The sea at the site, when there is one (the kernel's weather report, `sse.ocean.wind_waves`): significant wave
+   * height and peak period, the way the wind blows them (radians from east), the world's gravity, the tide's height
+   * now above mean sea level, and the clock the waves run on (seconds).
+   */
+  sea?: { wave_m: number; period_s: number; dir_rad: number; gravity_m_s2: number; tide_m: number; time_s: number };
+}
+
+/**
+ * The wind-sea drawn on the water (V10k): a few long-crested deep-water wave trains round the wind's direction, each
+ * with its own wavelength and the deep-water dispersion ω² = g k, scaled so their combined variance is the kernel's
+ * significant height (Hs = 4σ). Wavelength ratio to the peak, angle from the wind (radians), share of amplitude and
+ * phase. A stand-in for a full spectrum (fudge register).
+ */
+export const WAVE_TRAINS: readonly (readonly [number, number, number, number])[] = [
+  [1, 0, 0.6, 0],
+  [0.62, 0.45, 0.4, 1.7],
+  [1.5, -0.35, 0.45, 4.1],
+  [0.4, -0.8, 0.25, 2.9],
+];
+/** The peak train's amplitude for a significant height: Σ (A·share)²/2 = (Hs/4)². */
+export function waveAmplitude(wave_m: number): number {
+  const sum = WAVE_TRAINS.reduce((t, w) => t + w[2] * w[2], 0);
+  return (Math.max(0, wave_m) / 4) * Math.sqrt(2 / sum);
 }
 
 export interface SurfaceGpu {
@@ -84,6 +110,15 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   const uEyeZ = uniform(0);
   const uExp = uniform(1);
   const uSunR = uniform(0.0047);
+  // The sea (V10k): the eye in the site's frame (the waves are fixed to the ground), the peak wavenumber, amplitude
+  // and direction, gravity, time and the tide.
+  const uEyeXY = uniform(new Vector3(0, 0, 0));
+  const uWaveK = uniform(0);
+  const uWaveA = uniform(0);
+  const uWaveDir = uniform(0);
+  const uG = uniform(9.8);
+  const uTime = uniform(0);
+  const uTide = uniform(0);
 
   const airMass = (mu: Node<"float">) => sqrt(uK.mul(mu).mul(uK.mul(mu)).add(uK.mul(2)).add(1)).sub(uK.mul(mu));
   /** Single-scattered sky light along a unit direction d (the closed form of surface-sky.ts). */
@@ -129,7 +164,34 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     const sunLight = uSunRgb.mul(sunT()).mul(ndl);
     // The sky's light on the ground (half of what the beam lost on the way down; surface-sky.ts skyIrradiance).
     const skyLight = uSunRgb.mul(max(muS, float(0))).mul(float(1).sub(sunT())).mul(0.5).mul(n.z.mul(0.5).add(0.5));
-    const lit = alb.mul(sunLight.add(skyLight)).div(Math.PI);
+    const land = alb.mul(sunLight.add(skyLight)).div(Math.PI);
+    // The sea: wave slopes on the water's normal, the sky mirrored in it by Fresnel's law and the sun's glint.
+    const wet = attribute("wet", "float");
+    const site = vec2(positionWorld.x.add(uEyeXY.x), positionWorld.y.add(uEyeXY.y));
+    let sx: Node<"float"> = float(0);
+    let sy: Node<"float"> = float(0);
+    for (const [len, ang, share, ph] of WAVE_TRAINS) {
+      const k = uWaveK.div(len);
+      const dx = cos(uWaveDir.add(ang));
+      const dy = cos(uWaveDir.add(ang - Math.PI / 2));
+      const phase = k.mul(site.x.mul(dx).add(site.y.mul(dy)));
+      // A train finer than a pixel averages out: faded where its phase turns faster than once a few pixels.
+      const fade = float(1).sub(smoothstep(float(0.4), float(1.5), fwidth(phase)));
+      const slope = uWaveA.mul(share).mul(k).mul(cos(phase.sub(sqrt(uG.mul(k)).mul(uTime)).add(ph))).mul(fade);
+      sx = sx.add(slope.mul(dx));
+      sy = sy.add(slope.mul(dy));
+    }
+    const nw = normalize(vec3(sx.negate(), sy.negate(), 1));
+    const view = normalize(positionWorld);
+    const cosV = max(dot(view.negate(), nw), float(0));
+    const fres = float(0.02).add(float(0.98).mul(pow(float(1).sub(cosV), 5)));
+    const refl = view.sub(nw.mul(dot(view, nw).mul(2)));
+    const mirrored = skyAlong(vec3(refl.x, refl.y, max(refl.z, float(0.02))));
+    // The sun's disc mirrored, spread by the slopes finer than the trains drawn (a narrow lobe; fudge register).
+    const glint = uSunRgb.mul(sunT()).mul(pow(max(dot(refl, uSun), float(0)), 1500)).mul(2000);
+    const body = alb.mul(uSunRgb.mul(sunT()).mul(max(dot(nw, uSun), float(0))).add(skyLight)).div(Math.PI);
+    const water = body.mul(float(1).sub(fres)).add(mirrored.add(glint).mul(fres));
+    const lit = mix(land, water, select(wet.greaterThan(0.5), float(1), float(0)));
     // Aerial perspective: the eye is at the origin, the point at positionWorld (camera-relative).
     const v = positionWorld;
     const dist = length(v);
@@ -185,6 +247,8 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         const m = new MeshBasicNodeMaterial({ wireframe });
         m.colorNode = node;
         if (layer > 0) ((m.polygonOffset = true), (m.polygonOffsetFactor = -2 * layer), (m.polygonOffsetUnits = -4 * layer));
+        // The tide raises and lowers the sea surface (wet vertices) about mean sea level.
+        m.positionNode = positionLocal.add(vec3(0, 0, attribute("wet", "float").mul(uTide)));
         return m;
       };
       e = { true: make(trueNode), chart: make(chartNode), wire: make(wireNode, true) };
@@ -217,6 +281,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         g.setAttribute("albedo", new BufferAttribute(s.albedo, 3));
         g.setAttribute("chart", new BufferAttribute(s.chart, 3));
         g.setAttribute("kernel_z", new BufferAttribute(s.kernel_z, 1));
+        g.setAttribute("wet", new BufferAttribute(s.wet ?? new Float32Array(s.kernel_z.length), 1));
         g.setIndex(new BufferAttribute(s.indices, 1));
         g.computeVertexNormals();
         g.computeBoundingSphere();
@@ -248,6 +313,17 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       uSunR.value = f.sun_radius;
       uC.value = Math.max(1, f.contour_m);
       uLow.value = 0;
+      const sea = f.sea;
+      uEyeXY.value.set(f.eye[0], f.eye[1], 0);
+      if (sea && sea.wave_m > 0 && sea.period_s > 0) {
+        const lambda = (sea.gravity_m_s2 * sea.period_s * sea.period_s) / (2 * Math.PI);
+        uWaveK.value = (2 * Math.PI) / lambda;
+        uWaveA.value = waveAmplitude(sea.wave_m);
+      } else ((uWaveK.value = 0), (uWaveA.value = 0));
+      uWaveDir.value = sea?.dir_rad ?? 0;
+      uG.value = sea?.gravity_m_s2 ?? 9.8;
+      uTime.value = sea?.time_s ?? 0;
+      uTide.value = sea?.tide_m ?? 0;
       // Diagram looks pass the theme's display colours straight through; True is light, tone-mapped and encoded.
       bg.setStyle(f.ground, LinearSRGBColorSpace);
       ink.setStyle(f.ink, LinearSRGBColorSpace);

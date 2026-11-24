@@ -34,6 +34,9 @@ import element_origins  # noqa: E402
 import water_phases  # noqa: E402
 import element_affinity  # noqa: E402
 import propellant_rows  # noqa: E402
+import nuclear_rows  # noqa: E402
+import isotope_shares  # noqa: E402
+import material_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -759,6 +762,25 @@ for _id, _groups in _add.items():
             _row[_g][_k] = _v
 MIXTURES += _mix
 
+# RK1 part 2: nuclear reactions and U-235's fission split (scripts/nuclear_rows.py).
+for _k, _v in nuclear_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+next(i for i in ISOTOPES if i["id"] == "u235")["fission_thermal"] = nuclear_rows.fission_u235(val)
+
+# Protosolar isotope shares (scripts/isotope_shares.py, for MP8c): Lodders 2021
+# Table 4. Isotopes with a share but no row yet (Be, B, O-17, F, Ne) wait for
+# their AME2020 masses.
+ISOTOPE_SHARES_WAITING = isotope_shares.apply(ISOTOPES, val)
+
+# RK1 part 3: hot-structure, fuel and shield materials (scripts/material_rows.py).
+for _k, _v in material_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+for _m in material_rows.rows(val, {c[0]: c[2]["v"] for c in CONSTANTS}):
+    assert all(x["id"] != _m["id"] for x in MIXTURES), _m["id"]
+    MIXTURES.append(_m)
+
 
 def elements():
     rows = []
@@ -825,6 +847,7 @@ def build():
                 "isotopes": ISOTOPES,
                 "substances": SUBSTANCES,
                 "mixtures": MIXTURES,
+                "reactions": nuclear_rows.reactions(ISOTOPES, {c[0]: c[2]["v"] for c in CONSTANTS}, val),
                 "sources": sources,
             }
         },

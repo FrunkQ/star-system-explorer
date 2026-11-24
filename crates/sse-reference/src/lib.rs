@@ -325,6 +325,53 @@ impl Reference {
         Some(sum / 1000.0)
     }
 
+    /// A nuclide's mass number and charge: an isotope row (its `a`, and its
+    /// element's `z`), or the free neutron, which the sheet names
+    /// `neutron` (its mass is the constant `m_n`).
+    pub fn nuclide(&self, id: &str) -> Option<(f64, f64)> {
+        if id == "neutron" {
+            return Some((1.0, 0.0));
+        }
+        let iso = self.row("isotopes", id)?;
+        let a = iso.get("a").and_then(J::as_f64)?;
+        let el = iso.get("element").and_then(J::as_str)?;
+        let z = self.row("elements", el)?.get("z").and_then(J::as_f64)?;
+        Some((a, z))
+    }
+
+    /// A nuclear reaction's terms name nuclides (isotope ids, or `neutron`)
+    /// and must conserve nucleons and charge; elements change, by design.
+    fn nuclear_problems(&self, id: &str, terms: &[J]) -> Vec<String> {
+        let mut p = vec![];
+        let (mut a, mut z) = (0.0, 0.0);
+        for t in terms {
+            let (Some(s), Some(nu)) = (t.get(0).and_then(J::as_str), t.get(1).and_then(J::as_f64))
+            else {
+                p.push(format!(
+                    "reaction {id}: a term is not [nuclide, coefficient]"
+                ));
+                continue;
+            };
+            let Some((ai, zi)) = self.nuclide(s) else {
+                p.push(format!(
+                    "reaction {id}: names nuclide {s}, which is not in the isotopes table"
+                ));
+                continue;
+            };
+            a += nu * ai;
+            z += nu * zi;
+        }
+        if p.is_empty() {
+            if a.abs() > 1e-9 {
+                p.push(format!("reaction {id} does not conserve nucleons: {a:+}"));
+            }
+            if z.abs() > 1e-9 {
+                p.push(format!("reaction {id} does not conserve charge: {z:+}"));
+            }
+        }
+        p
+    }
+
     fn charge(&self, id: &str) -> f64 {
         self.row("substances", id)
             .and_then(|r| r.get("charge"))
@@ -817,6 +864,10 @@ impl Reference {
                 p.push(format!("reaction {id} has no terms"));
                 continue;
             };
+            if row.get("kind").and_then(J::as_str) == Some("nuclear") {
+                p.extend(self.nuclear_problems(id, terms));
+                continue;
+            }
             let mut atoms: BTreeMap<String, f64> = BTreeMap::new();
             let mut charge = 0.0;
             let mut ok = true;

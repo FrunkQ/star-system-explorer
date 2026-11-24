@@ -1,7 +1,7 @@
 {
  "format": "sse.formulas/1",
  "family": "sse.composition",
- "about": "MP6: where a body's elements are, as blocks (matter pack design section 5, steps 3 and 4). The composition chain runs each once per element; the sums are also in sse_atoms::matter, held together by a test.",
+ "about": "MP6 and MP8: where a body's elements are, and what its ore deposits hold, as blocks (matter pack design section 5, steps 3 to 6). The composition chain runs each once per element; the sums are also in sse_atoms::matter, held together by a test.",
  "atoms": [
   {
    "id": "sse.composition.share_in_material",
@@ -519,6 +519,149 @@
       "h": 20000.0,
       "rho": 2700.0,
       "fc": 0.006927008225961541
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.composition.deposit_amount",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "area",
+     "letter": "A"
+    },
+    {
+     "port": "crust_share",
+     "letter": "c"
+    },
+    {
+     "port": "enrichment",
+     "letter": "k"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "mass",
+     "letter": "m"
+    },
+    {
+     "port": "grade",
+     "letter": "g"
+    }
+   ],
+   "params": [
+    {
+     "param": "depth",
+     "letter": "h",
+     "default": 3300.0,
+     "range": [
+      0.0,
+      20000.0
+     ],
+     "description": "depth the ore is counted to, m (Kesler and Wilkinson 2008's 3.3 km)"
+    },
+    {
+     "param": "density",
+     "letter": "rho",
+     "default": 2700.0,
+     "range": [
+      1000.0,
+      4000.0
+     ],
+     "description": "crust density, kg/m3 (the sheet's crust-rock)"
+    },
+    {
+     "param": "ore_share",
+     "letter": "f",
+     "default": 4.5e-05,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "share of a footprint's crust to that depth that is ore: calibrated so that Earth's arcs hold Kesler and Wilkinson's porphyry copper, one value for every kind (fudge register)"
+    }
+   ],
+   "references": [
+    "Kesler, S. E. and Wilkinson, B. H. 2008, Geology 36, 255: Earth's copper resources estimated from tectonic diffusion of porphyry copper deposits (about 1.7e11 t of copper in porphyry deposits above 3.3 km). doi:10.1130/G24317A.1",
+    "Rudnick, R. L. and Gao, S. 2003, Treatise on Geochemistry 3, 1: composition of the continental crust. doi:10.1016/B0-08-043751-6/03016-4"
+   ],
+   "shown": "grade = min(1, c · k);  m = A · h · ρ · f · grade",
+   "equation": {
+    "name": "What an ore deposit holds",
+    "formula": "g = clamp(c * k, 0, 1)\nm = max(A, 0) * h * rho * clamp(f, 0, 1) * g",
+    "inputs": {
+     "A": {
+      "kind": "deposit.footprint_area",
+      "unit": "m2",
+      "name": "area of the deposit or province"
+     },
+     "c": {
+      "kind": "element.crust_mass_fraction",
+      "unit": "1",
+      "name": "the element's share of the world's crust",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "k": {
+      "kind": "element.ore_enrichment",
+      "unit": "1",
+      "name": "how many times the ore process raised it over the crust",
+      "valid": [
+       0.0,
+       10000000.0
+      ]
+     },
+     "h": {
+      "kind": "model.ore_depth",
+      "unit": "m",
+      "name": "depth the ore is counted to"
+     },
+     "rho": {
+      "kind": "model.crust_density",
+      "unit": "kg m-3",
+      "name": "density of the crust"
+     },
+     "f": {
+      "kind": "model.ore_share",
+      "unit": "1",
+      "name": "share of that crust that is ore"
+     }
+    },
+    "outputs": {
+     "m": {
+      "kind": "deposit.element_mass",
+      "unit": "kg",
+      "name": "mass of the element in the ore"
+     },
+     "g": {
+      "kind": "deposit.grade",
+      "unit": "1",
+      "name": "the element's share of the ore"
+     }
+    },
+    "source": {
+     "text": "Kesler, S. E. and Wilkinson, B. H. 2008, Geology 36, 255",
+     "doi": "10.1130/G24317A.1",
+     "where": "copper in porphyry deposits above 3.3 km"
+    },
+    "explain": {
+     "curious": "A mine is a place where something in the rock did the hard work first: hot fluids over a sinking plate, a giant impact's melt pool, a collision squeezing water through a mountain belt. Each gathered a metal from a vast volume of crust into a small one, hundreds or thousands of times richer. How much ore there is comes from where those processes ran.",
+     "science": "The ore under a footprint is a share of the crust to a depth; its grade is the crust's concentration of the element times the enrichment its process reaches (typical ore grade over the continental crust, Rudnick and Gao 2003). The ore share is one value, calibrated on Earth's porphyry copper; the deposits are part of the crust, never more than it holds."
+    },
+    "examples": [
+     {
+      "A": 10000000000000.0,
+      "c": 6e-05,
+      "k": 160.0,
+      "h": 3300.0,
+      "rho": 2700.0,
+      "f": 4.5e-05,
+      "m": 38491200000000.01,
+      "g": 0.009600000000000001
      }
     ]
    }

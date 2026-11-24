@@ -13,7 +13,9 @@
 //!   metal, by mass balance with its metal-silicate partition;
 //! - `sse.composition.crust_share`: the share of the silicate's element that
 //!   the crust holds, by its enrichment over the mantle;
-//! - `sse.composition.crust_fraction`: the crust's share of the silicate.
+//! - `sse.composition.crust_fraction`: the crust's share of the silicate;
+//! - `sse.composition.deposit_amount` (MP8): what an ore deposit holds, from
+//!   its footprint and the enrichment its process reached over the crust.
 //!
 //! Partitions and enrichments are read from Earth's measured core, mantle
 //! and crust (the sheet's `earth_mass_fraction`): single typical values, not
@@ -27,6 +29,7 @@ pub const RG03: &str = "Rudnick, R. L. and Gao, S. 2003, Treatise on Geochemistr
 pub const L03: &str = "Lodders, K. 2003, ApJ 591, 1220: solar system abundances and condensation temperatures of the elements (host phases, table 8). doi:10.1086/375492";
 pub const ET12: &str = "Elkins-Tanton, L. T. 2012, Annual Review of Earth and Planetary Sciences 40, 113: magma oceans in the inner solar system (accretion and Al-26 energy against the energy to melt). doi:10.1146/annurev-earth-042711-105503";
 pub const PO14: &str = "Palme, H. and O'Neill, H. St. C. 2014, Treatise on Geochemistry (2nd ed.) 3, 1: cosmochemical estimates of mantle composition (CI H and O). doi:10.1016/B978-0-08-095975-7.00201-1";
+pub const KW08: &str = "Kesler, S. E. and Wilkinson, B. H. 2008, Geology 36, 255: Earth's copper resources estimated from tectonic diffusion of porphyry copper deposits (about 1.7e11 t of copper in porphyry deposits above 3.3 km). doi:10.1130/G24317A.1";
 
 /// An element's mass share of its material, and the oxygen its oxide binds
 /// with it, from the material's summed weight `total` (the sum of
@@ -90,4 +93,21 @@ pub fn crust_fraction(radius_m: f64, silicate_kg: f64, thickness_m: f64, density
     let inner = radius_m - h;
     let shell = 4.0 / 3.0 * m::PI * (radius_m * radius_m * radius_m - inner * inner * inner);
     (shell * density / silicate_kg).clamp(0.0, 0.5)
+}
+
+/// What an ore deposit holds of one element, kg, and its grade: the ore is
+/// `ore_share` of the crust under a footprint of `area_m2` to `depth_m`, at
+/// the crust's concentration `crust_fraction` raised by the process's
+/// enrichment `factor` (a grade never above one).
+pub fn deposit_amount(
+    area_m2: f64,
+    depth_m: f64,
+    density: f64,
+    ore_share: f64,
+    crust_fraction: f64,
+    factor: f64,
+) -> (f64, f64) {
+    let grade = (crust_fraction * factor).clamp(0.0, 1.0);
+    let ore = area_m2.max(0.0) * depth_m.max(0.0) * density.max(0.0) * ore_share.clamp(0.0, 1.0);
+    (ore * grade, grade)
 }

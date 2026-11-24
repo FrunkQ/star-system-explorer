@@ -217,9 +217,13 @@ pub fn cell(hs: &Haloes, res: &Reservoirs, lp: &LedgerParams, idx: [i64; 3]) -> 
         haloes_below_floor: (1.0 - fb) * below,
         never_collapsed: (1.0 - fb) * (cell.mass - cell.halo_mass - below).max(0.0),
     };
-    // Environments over the cell's volume.
+    // Environments over the cell: parcels on the grid they started on, each
+    // the same mass, read at the truncated Zel'dovich smoothing (the same web
+    // the slice and the 3D view show) and given the room the Zel'dovich step
+    // leaves them today, so voids hold less matter than space.
     let n = lp.samples.max(1);
-    let up = hs.web.params.octaves - 1;
+    let up = hs.web.truncation(1.0);
+    let th = hs.web.threshold(up, 1.0);
     let mut cache = Cache::default();
     let mut vol = [0.0_f64; 4];
     let mut mat = [0.0_f64; 4];
@@ -228,10 +232,10 @@ pub fn cell(hs: &Haloes, res: &Reservoirs, lp: &LedgerParams, idx: [i64; 3]) -> 
             for i in 0..n {
                 let f = |q: u32, id: i64| (id as f64 + (f64::from(q) + 0.5) / f64::from(n)) * side;
                 let x = [f(i, idx[0]), f(j, idx[1]), f(k, idx[2])];
-                let d = hs.web.density(&mut cache, x, up, 1.0);
-                let e = hs.web.environment(&mut cache, x, up, 1.0) as usize;
-                vol[e] += 1.0;
-                mat[e] += d;
+                let ev = hs.web.tidal_eigenvalues(&mut cache, x, up);
+                let e = Environment::from_count(ev.iter().filter(|l| **l > th).count()) as usize;
+                vol[e] += crate::web::zeldovich_volume(ev);
+                mat[e] += 1.0;
             }
         }
     }

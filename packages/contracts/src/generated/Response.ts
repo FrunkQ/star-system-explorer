@@ -42,7 +42,7 @@ composition: unknown, state_hash: string, } | { "type": "discarded", branch: str
 /**
  * The view now in force for the audience at that address.
  */
-view: string, state_hash: string, } | { "type": "granted", event_id: string, 
+view: string, state_hash: string, } | { "type": "known_to", value: unknown, } | { "type": "known_set", undo?: string, changed: number, state_hash: string, } | { "type": "known_counted", bounds: string, audiences: unknown[], } | { "type": "granted", event_id: string, 
 /**
  * The view now in force for the audience at that address (grants and
  * defaults; tag grants show in scenes).

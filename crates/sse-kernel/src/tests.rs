@@ -850,6 +850,40 @@ fn adopt_age_and_read_back_a_system() {
     );
     let assumed = sv["survey"]["climate"]["assumed"].to_string();
     assert!(assumed.contains("authored (V3)"), "{assumed}");
+    // W-sea: the card's tides and waves, from the formula blocks.
+    let sea = &sv["survey"]["climate"]["sea"];
+    let by = sea["tides"]["by"].as_array().expect("tides by raiser");
+    assert!(by.iter().any(|t| t["raiser"] == "host"), "{sea}");
+    // The imported Moon, listed beside Earth, raises the larger tide: about
+    // half a metre every 12.42 hours, and the Sun's is about 0.46 of it.
+    let moon = &by[0];
+    assert_eq!(moon["raiser"], "moon 1", "{sea}");
+    assert!(
+        (moon["range_m"].as_f64().unwrap() - 0.535).abs() < 0.01,
+        "{moon}"
+    );
+    assert!(
+        (moon["period_h"].as_f64().unwrap() - 12.42).abs() < 0.01,
+        "{moon}"
+    );
+    for t in by {
+        let h = t["range_m"].as_f64().unwrap();
+        assert!(h > 0.0 && h < 10.0, "{t}");
+    }
+    let typical = sea["waves"]["typical_m"].as_f64().unwrap();
+    assert!((0.3..8.0).contains(&typical), "{sea}");
+    // And the landing site's sea state under the wind blowing there.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "report", "system": sys, "body": earth["address"], "lat": -50.0, "lon": 160.0}),
+    );
+    let site = &r["data"]["sea"];
+    let wave = site["wave_m"].as_f64().unwrap_or(-1.0);
+    assert!((0.0..20.0).contains(&wave), "{r:.600}");
+    assert!(
+        site["tides"]["spring_range_m"].as_f64().unwrap() > 0.0,
+        "{site}"
+    );
     // A formation world spins at its settled spin.
     let f = send(
         &mut k,
@@ -2018,6 +2052,8 @@ fn intents_through_the_api() {
             "stack_packs",
             "scan_toggle",
             "grant",
+            "set_known",
+            "undo_known",
             "add_note",
             "set_campaign_now",
             "hail"
@@ -3359,6 +3395,81 @@ fn detect_on_the_magnetic_channel_with_range_bands() {
     assert_eq!(d["channel"], "magnetic", "{d}");
     assert_eq!(d["detectable"], true, "{d}");
     assert_eq!(d["distance_band"], "distant", "{d}");
+}
+
+/// X3i (RK11, our share): every Traveller sensor kind carries an instrument
+/// the kernel's `detect` reads. Each computes its range from what the target
+/// gives off (only the datalink, a handshake, keeps V3's authored range), and
+/// each detection is labelled with the pack's own range bands.
+#[test]
+fn the_traveller_sensors_compute_their_ranges() {
+    let mut k = crate::Kernel::new();
+    let pack = |p: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
+    };
+    let traveller = pack("packs/traveller/pack.json");
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-reference/pack.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let sensors = &traveller["provides"]["other"]["sensors"];
+    let kinds = sensors["kinds"].as_array().unwrap();
+    assert_eq!(kinds.len(), 12);
+    // A 200-tonne ship 1 au from a Sun-like star: sunlit hull, warm radiators,
+    // a transponder, a radar cross-section and its mass.
+    let au = 1.495978707e11;
+    let ship = |d: f64| {
+        serde_json::json!({"address": "u:t/sys:0/ship:0", "distance_m": d,
+            "conditions": {"address": "u:t/sys:0/ship:0", "radius_m": 15.0, "bond_albedo": 0.3,
+                "lit_by": [{"address": "u:t/sys:0/star:0", "luminosity_w": 3.828e26, "t_k": 5772.0, "distance_m": au}],
+                "radiators": [{"t_k": 400.0, "area_m2": 200.0}],
+                "transmitters": [{"frequency_hz": 3e9, "bandwidth_hz": 1e6, "power_w": 100.0}]},
+            "radar_cross_section_m2": 100.0, "mass_kg": 2.0e6})
+    };
+    let instruments: Vec<serde_json::Value> =
+        kinds.iter().map(|s| s["instrument"].clone()).collect();
+    let r = send(
+        serde_json::json!({"op": "detect", "targets": [ship(1.0e7)], "sensors": instruments,
+        "range_bands": sensors["range_bands"]}),
+    );
+    assert_eq!(r["type"], "detected", "{r}");
+    let ds = r["detections"].as_array().unwrap();
+    assert_eq!(ds.len(), 12);
+    for (s, d) in kinds.iter().zip(ds) {
+        let id = s["id"].as_str().unwrap();
+        let range = d["range_m"].as_f64().unwrap();
+        assert!(range.is_finite() && range > 0.0, "{id}: {d}");
+        let want = if id == "datalink" {
+            "authored"
+        } else {
+            "computed"
+        };
+        assert_eq!(d["range_source"], want, "{id}: {d}");
+        assert_eq!(d["authored_range_m"], s["range_m"], "{id}: {d}");
+        assert!(d["distance_band"].is_string(), "{id}: {d}");
+        eprintln!(
+            "{id}: {} reaches {range:.3e} m ({}), V3 typed {:.3e} m",
+            d["method"],
+            d["range_band"],
+            s["range_m"].as_f64().unwrap()
+        );
+    }
+    let by = |id: &str| &ds[kinds.iter().position(|s| s["id"] == id).unwrap()];
+    // The radar is heard further than it sees; the radar's power is reported
+    // for the power ledger.
+    let radar = by("search_radar");
+    assert!(radar["heard_to_m"].as_f64().unwrap() > radar["range_m"].as_f64().unwrap());
+    assert_eq!(radar["transmit_power_w"], 1e5);
+    // A spectrum reaches less far than an image through the same telescope.
+    assert!(
+        by("spectral_5au")["range_m"].as_f64().unwrap()
+            < by("telescope_15au")["range_m"].as_f64().unwrap()
+    );
+    // The gravimetric grid finds a ship's mass only close by.
+    assert!(by("gravimetric")["range_m"].as_f64().unwrap() < 1.0e5);
 }
 
 /// ND2: light through gas reads each gas's absorption from the data sheet

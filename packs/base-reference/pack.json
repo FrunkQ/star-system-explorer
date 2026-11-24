@@ -8302,6 +8302,61 @@
       "v": 0.000569,
       "unit": "W kg-1",
       "src": "ruedas2017"
+     },
+     "fission_thermal": {
+      "total": {
+       "v": 202.48,
+       "unit": "MeV",
+       "src": "sher-beck1981",
+       "check": "unverified",
+       "note": "all of it, neutrinos included"
+      },
+      "split": {
+       "fragments": {
+        "v": 169.12,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified"
+       },
+       "prompt_neutrons": {
+        "v": 4.79,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified"
+       },
+       "prompt_gammas": {
+        "v": 6.97,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified"
+       },
+       "delayed_betas": {
+        "v": 6.5,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified"
+       },
+       "delayed_gammas": {
+        "v": 6.33,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified"
+       },
+       "neutrinos": {
+        "v": 8.75,
+        "unit": "MeV",
+        "src": "sher-beck1981",
+        "check": "unverified",
+        "note": "leave the reactor unseen"
+       }
+      },
+      "recoverable": {
+       "v": 193.73,
+       "unit": "MeV",
+       "src": "sher-beck1981",
+       "check": "unverified",
+       "note": "worked out: the total less the neutrinos"
+      }
      }
     },
     {
@@ -8383,6 +8438,13 @@
       "v": 1.00782503224,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 0.99998,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.998 atom % (Table 4)"
      }
     },
     {
@@ -8394,6 +8456,13 @@
       "v": 2.01410177812,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 1.97e-05,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.00197 atom % (Table 4)"
      }
     },
     {
@@ -8423,6 +8492,13 @@
       "v": 3.01602932197,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 0.000166,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.0166 atom % (Table 4)"
      }
     },
     {
@@ -8434,31 +8510,66 @@
       "v": 4.00260325413,
       "unit": "u",
       "src": "ame2020"
+     },
+     "abundance_protosolar": {
+      "v": 0.999834,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.9834 atom % (Table 4)"
      }
     },
     {
      "id": "li6",
      "element": "li",
      "a": 6,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.07589,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "7.589 atom % (Table 4)"
+     }
     },
     {
      "id": "li7",
      "element": "li",
      "a": 7,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.92411,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "92.411 atom % (Table 4)"
+     }
     },
     {
      "id": "c12",
      "element": "c",
      "a": 12,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.98965,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "98.965 atom % (Table 4)"
+     }
     },
     {
      "id": "c13",
      "element": "c",
      "a": 13,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.01035,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "1.035 atom % (Table 4)"
+     }
     },
     {
      "id": "c14",
@@ -8477,25 +8588,53 @@
      "id": "n14",
      "element": "n",
      "a": 14,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.99774,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.774 atom % (Table 4)"
+     }
     },
     {
      "id": "n15",
      "element": "n",
      "a": 15,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.00226,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.226 atom % (Table 4)"
+     }
     },
     {
      "id": "o16",
      "element": "o",
      "a": 16,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.99777,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "99.777 atom % (Table 4)"
+     }
     },
     {
      "id": "o18",
      "element": "o",
      "a": 18,
-     "stable": true
+     "stable": true,
+     "abundance_protosolar": {
+      "v": 0.00188,
+      "unit": "atom fraction of the element",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "0.188 atom % (Table 4)"
+     }
     },
     {
      "id": "be10",
@@ -14342,6 +14481,541 @@
       "note": "measured near 23.3 C; the report's own digits to be checked against the PDF"
      },
      "note": "a refinery cut, not one molecule: the report's 14-component surrogate has the approximate formula C11.8H23.0 (hydrogen to carbon 1.95)"
+    },
+    {
+     "id": "tungsten",
+     "names": {
+      "physics": "tungsten metal",
+      "plain": "tungsten",
+      "story": "tungsten"
+     },
+     "recipe": {},
+     "by": "mass",
+     "melting_point_k": {
+      "v": 3683.0,
+      "unit": "K",
+      "src": "lundberg1985",
+      "check": "unverified",
+      "note": "the text says 3685 K; NASA SP-5035 gives 6126 F, 3659 K"
+     },
+     "density": {
+      "v": 19300.0,
+      "unit": "kg m-3",
+      "src": "nist-srd126",
+      "check": "unverified"
+     },
+     "service_limit_k": {
+      "v": 2800.0,
+      "unit": "K",
+      "src": "lundberg1985",
+      "check": "unverified",
+      "note": "vacuum-furnace heat shields run near this; thermionic emitters run for very long times at 1700 K"
+     }
+    },
+    {
+     "id": "molybdenum",
+     "names": {
+      "physics": "molybdenum metal",
+      "plain": "molybdenum",
+      "story": "molybdenum"
+     },
+     "recipe": {},
+     "by": "mass",
+     "melting_point_k": {
+      "v": 2883.0,
+      "unit": "K",
+      "src": "lundberg1985",
+      "check": "unverified",
+      "note": "TZM and Mo-Hf-C keep high strength from 1145 to 1475 K; must be kept from air when hot"
+     }
+    },
+    {
+     "id": "niobium",
+     "names": {
+      "physics": "niobium metal",
+      "plain": "niobium",
+      "story": "niobium"
+     },
+     "recipe": {},
+     "by": "mass",
+     "melting_point_k": {
+      "v": 2741.0,
+      "unit": "K",
+      "src": "lundberg1985",
+      "check": "unverified",
+      "note": "NASA SP-5035 gives 4474 F, 2741 K"
+     }
+    },
+    {
+     "id": "tantalum",
+     "names": {
+      "physics": "tantalum metal",
+      "plain": "tantalum",
+      "story": "tantalum"
+     },
+     "recipe": {},
+     "by": "mass",
+     "melting_point_k": {
+      "v": 3269.0,
+      "unit": "K",
+      "src": "lundberg1985",
+      "check": "unverified",
+      "note": "NASA SP-5035 gives 5428 F, 3271 K"
+     }
+    },
+    {
+     "id": "rhenium",
+     "names": {
+      "physics": "rhenium metal",
+      "plain": "rhenium",
+      "story": "rhenium"
+     },
+     "recipe": {},
+     "by": "mass",
+     "melting_point_k": {
+      "v": 3453.0,
+      "unit": "K",
+      "src": "lundberg1985",
+      "check": "unverified",
+      "note": "NASA SP-5035 gives 5720 F, 3433 K; the two disagree by about 20 K"
+     }
+    },
+    {
+     "id": "niobium-c103",
+     "names": {
+      "physics": "niobium alloy C-103 (Nb-10Hf-1Ti)",
+      "plain": "niobium rocket-nozzle alloy",
+      "story": "nozzle alloy"
+     },
+     "recipe": {},
+     "by": "mass",
+     "melting_point_k": {
+      "v": 2623.15,
+      "unit": "K",
+      "src": "materion-c103",
+      "check": "unverified",
+      "note": "4262 F (2350 C)"
+     },
+     "density": {
+      "v": 8850.0,
+      "unit": "kg m-3",
+      "src": "materion-c103",
+      "check": "unverified"
+     },
+     "yield_strength": {
+      "v": 275800000.0,
+      "unit": "Pa",
+      "src": "materion-c103",
+      "check": "unverified",
+      "at_k": 294.26,
+      "note": "40 ksi, sheet up to 0.05 in."
+     },
+     "tensile_strength": {
+      "v": 386100000.0,
+      "unit": "Pa",
+      "src": "materion-c103",
+      "check": "unverified",
+      "at_k": 294.26,
+      "note": "56 ksi, sheet up to 0.05 in."
+     },
+     "yield_strength_hot": {
+      "v": 110300000.0,
+      "unit": "Pa",
+      "src": "materion-c103",
+      "check": "unverified",
+      "at_k": 1366.48,
+      "note": "16 ksi at 2000 F"
+     },
+     "tensile_strength_hot": {
+      "v": 144800000.0,
+      "unit": "Pa",
+      "src": "materion-c103",
+      "check": "unverified",
+      "at_k": 1366.48,
+      "note": "21 ksi at 2000 F"
+     },
+     "note": "the usual alloy for radiation-cooled thruster nozzles and skirts"
+    },
+    {
+     "id": "inconel-718",
+     "names": {
+      "physics": "nickel superalloy Inconel 718",
+      "plain": "nickel superalloy",
+      "story": "superalloy"
+     },
+     "recipe": {},
+     "by": "mass",
+     "solidus_k": {
+      "v": 1533.15,
+      "unit": "K",
+      "src": "smc-inconel718",
+      "check": "unverified",
+      "note": "melting range 2300-2437 F"
+     },
+     "liquidus_k": {
+      "v": 1609.26,
+      "unit": "K",
+      "src": "smc-inconel718",
+      "check": "unverified"
+     },
+     "density": {
+      "v": 8193.0,
+      "unit": "kg m-3",
+      "src": "smc-inconel718",
+      "check": "unverified",
+      "note": "0.296 lb/in3, annealed; 0.297 aged"
+     },
+     "yield_strength": {
+      "v": 1034200000.0,
+      "unit": "Pa",
+      "src": "smc-inconel718",
+      "check": "unverified",
+      "note": "AMS 5596 sheet minimum, 150 ksi"
+     },
+     "tensile_strength": {
+      "v": 1241100000.0,
+      "unit": "Pa",
+      "src": "smc-inconel718",
+      "check": "unverified",
+      "note": "AMS 5596 sheet minimum, 180 ksi"
+     },
+     "yield_strength_hot": {
+      "v": 999700000.0,
+      "unit": "Pa",
+      "src": "smc-inconel718",
+      "check": "unverified",
+      "at_k": 922.04,
+      "note": "145.0 ksi at 1200 F, hot-rolled bar, aged"
+     },
+     "tensile_strength_hot": {
+      "v": 1134200000.0,
+      "unit": "Pa",
+      "src": "smc-inconel718",
+      "check": "unverified",
+      "at_k": 922.04,
+      "note": "164.5 ksi at 1200 F, hot-rolled bar, aged"
+     },
+     "service_limit_k": {
+      "v": 977.59,
+      "unit": "K",
+      "src": "smc-inconel718",
+      "check": "unverified",
+      "note": "used from -423 F to 1300 F"
+     },
+     "note": "turbopumps, injectors and engine structure; works from liquid hydrogen to red heat"
+    },
+    {
+     "id": "uo2-fuel",
+     "names": {
+      "physics": "uranium dioxide fuel (UO2)",
+      "plain": "uranium oxide fuel",
+      "story": "reactor fuel"
+     },
+     "recipe": {},
+     "by": "mass",
+     "melting_point_k": {
+      "v": 3120.0,
+      "unit": "K",
+      "src": "popov2000",
+      "check": "unverified",
+      "note": "+- 30 K, unirradiated",
+      "also": [
+       "iaea-tecdoc1496"
+      ]
+     },
+     "density": {
+      "v": 10970.0,
+      "unit": "kg m-3",
+      "src": "popov2000",
+      "check": "unverified",
+      "at_k": 273.0,
+      "note": "theoretical density, +- 70 kg/m3"
+     },
+     "note": "formula UO2; reactor ceramic, unirradiated"
+    },
+    {
+     "id": "uc-fuel",
+     "names": {
+      "physics": "uranium monocarbide fuel (UC)",
+      "plain": "uranium carbide fuel",
+      "story": "carbide fuel"
+     },
+     "recipe": {},
+     "by": "mass",
+     "melting_point_k": {
+      "v": 2798.15,
+      "unit": "K",
+      "src": "panda-msfc",
+      "check": "unverified",
+      "note": "2525 C"
+     }
+    },
+    {
+     "id": "uc2-fuel",
+     "names": {
+      "physics": "uranium dicarbide fuel (UC2)",
+      "plain": "uranium dicarbide fuel",
+      "story": "carbide fuel"
+     },
+     "recipe": {},
+     "by": "mass",
+     "melting_point_k": {
+      "v": 2753.15,
+      "unit": "K",
+      "src": "panda-msfc",
+      "check": "unverified",
+      "note": "2480 C; late Rover and NERVA fuels used (U,Zr)C solid solutions to run hotter"
+     }
+    },
+    {
+     "id": "polyethylene",
+     "names": {
+      "physics": "polyethylene (CH2)n",
+      "plain": "polyethylene plastic",
+      "story": "plastic"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 930.0,
+      "unit": "kg m-3",
+      "src": "nist-srd126",
+      "check": "unverified"
+     },
+     "hydrogen_mass_fraction": {
+      "v": 0.143716,
+      "unit": "1",
+      "src": "nist-srd126",
+      "check": "unverified",
+      "note": "the (CH2)n formula gives the same"
+     },
+     "note": "hydrogen-rich neutron shield; NIST gives one generic grade, not high-density polyethylene"
+    },
+    {
+     "id": "lead",
+     "names": {
+      "physics": "lead metal",
+      "plain": "lead",
+      "story": "lead"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 11350.0,
+      "unit": "kg m-3",
+      "src": "nist-srd126",
+      "check": "unverified"
+     },
+     "note": "gamma shield"
+    }
+   ],
+   "reactions": [
+    {
+     "id": "d-t",
+     "kind": "nuclear",
+     "name": "deuterium-tritium fusion",
+     "terms": [
+      [
+       "h2",
+       -1
+      ],
+      [
+       "h3",
+       -1
+      ],
+      [
+       "he4",
+       1
+      ],
+      [
+       "neutron",
+       1
+      ]
+     ],
+     "q": {
+      "v": 17.5893,
+      "unit": "MeV",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "worked out from the AME2020 atomic masses on this sheet",
+      "also": [
+       "fitzpatrick-fusion"
+      ]
+     },
+     "product_energy": {
+      "he4": {
+       "v": 3.5404,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      },
+      "neutron": {
+       "v": 14.0489,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      }
+     },
+     "neutron_share": {
+      "v": 0.7987,
+      "unit": "1",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "the neutron's share of Q; it carries this energy out of a magnetic bottle and into the shield"
+     }
+    },
+    {
+     "id": "d-d-n",
+     "kind": "nuclear",
+     "name": "deuterium-deuterium fusion, helium-3 branch",
+     "terms": [
+      [
+       "h2",
+       -2
+      ],
+      [
+       "he3",
+       1
+      ],
+      [
+       "neutron",
+       1
+      ]
+     ],
+     "q": {
+      "v": 3.2689,
+      "unit": "MeV",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "worked out from the AME2020 atomic masses on this sheet"
+     },
+     "product_energy": {
+      "he3": {
+       "v": 0.8193,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      },
+      "neutron": {
+       "v": 2.4497,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      }
+     },
+     "neutron_share": {
+      "v": 0.7494,
+      "unit": "1",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "the neutron's share of Q; it carries this energy out of a magnetic bottle and into the shield"
+     }
+    },
+    {
+     "id": "d-d-p",
+     "kind": "nuclear",
+     "name": "deuterium-deuterium fusion, tritium branch",
+     "terms": [
+      [
+       "h2",
+       -2
+      ],
+      [
+       "h3",
+       1
+      ],
+      [
+       "h1",
+       1
+      ]
+     ],
+     "q": {
+      "v": 4.0327,
+      "unit": "MeV",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "worked out from the AME2020 atomic masses on this sheet"
+     },
+     "product_energy": {
+      "h3": {
+       "v": 1.01,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      },
+      "h1": {
+       "v": 3.0226,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      }
+     },
+     "neutron_share": {
+      "v": 0.0,
+      "unit": "1",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "no neutron in the main branch; side reactions add some"
+     }
+    },
+    {
+     "id": "d-he3",
+     "kind": "nuclear",
+     "name": "deuterium-helium-3 fusion",
+     "terms": [
+      [
+       "h2",
+       -1
+      ],
+      [
+       "he3",
+       -1
+      ],
+      [
+       "he4",
+       1
+      ],
+      [
+       "h1",
+       1
+      ]
+     ],
+     "q": {
+      "v": 18.3531,
+      "unit": "MeV",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "worked out from the AME2020 atomic masses on this sheet"
+     },
+     "product_energy": {
+      "he4": {
+       "v": 3.6916,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      },
+      "h1": {
+       "v": 14.6614,
+       "unit": "MeV",
+       "src": "ame2020",
+       "check": "unverified",
+       "note": "share by momentum, reactants at rest"
+      }
+     },
+     "neutron_share": {
+      "v": 0.0,
+      "unit": "1",
+      "src": "ame2020",
+      "check": "unverified",
+      "note": "no neutron in the main branch; side reactions add some"
+     }
     }
    ],
    "sources": [
@@ -14491,6 +15165,12 @@
      "url": "https://arxiv.org/abs/1912.01132"
     },
     {
+     "id": "fitzpatrick-fusion",
+     "text": "Fitzpatrick, R., Plasma physics lecture notes, Nuclear fusion reactions, University of Texas at Austin: D-T releases 17.59 MeV, the neutron carrying 14.05 MeV and the alpha 3.541 MeV",
+     "status": "unverified",
+     "url": "https://farside.ph.utexas.edu/teaching/plasma1/Fusionhtml/node6.html"
+    },
+    {
      "id": "fixsen2009",
      "text": "Fixsen, D. J. 2009, ApJ 707, 916: the temperature of the cosmic microwave background (2.72548 +- 0.00057 K)",
      "status": "verified",
@@ -14531,6 +15211,12 @@
      "text": "Hui, L., Ostriker, J. P., Tremaine, S. and Witten, E. 2017, Phys. Rev. D 95, 043541: ultralight scalars as cosmological dark matter",
      "status": "verified",
      "doi": "10.1103/PhysRevD.95.043541"
+    },
+    {
+     "id": "iaea-tecdoc1496",
+     "text": "IAEA 2006, Thermophysical properties database of materials for light water reactors and heavy water reactors, IAEA-TECDOC-1496, section 6.1.1.1: UO2 melting point 3120 K",
+     "status": "unverified",
+     "url": "https://www-pub.iaea.org/MTCD/Publications/PDF/te_1496_web.pdf"
     },
     {
      "id": "iapws1992-sat",
@@ -14669,6 +15355,12 @@
      "doi": "10.1007/s11214-021-00825-8"
     },
     {
+     "id": "lundberg1985",
+     "text": "Lundberg, L. B. 1985, Refractory metals in the space age, LA-UR-85-4120 (DE86 003650), Los Alamos National Laboratory, Table 1: melting points W 3683 K, Re 3453 K, Ta 3269 K, Mo 2883 K, Nb 2741 K; tungsten heat shields operate near 2800 K",
+     "status": "unverified",
+     "url": "https://www.osti.gov/servlets/purl/6468954"
+    },
+    {
      "id": "mangano2005",
      "text": "Mangano, G. et al. 2005, Nucl. Phys. B 729, 221: relic neutrino decoupling including flavour oscillations (N_eff 3.046; Omega_nu h2 = sum of neutrino masses / 93.14 eV)",
      "status": "verified",
@@ -14685,6 +15377,12 @@
      "text": "Mastin, L. G. et al. 2009, J. Volcanol. Geotherm. Res. 186, 10: eruption column heights, magma at 2500 kg/m3 dense-rock equivalent",
      "status": "verified",
      "doi": "10.1016/j.jvolgeores.2009.01.008"
+    },
+    {
+     "id": "materion-c103",
+     "text": "Materion, Niobium C-103 alloy plate and sheet products, data sheet DS-AM-621: Nb-10Hf-1Ti, melting point 4262 F (2350 C), density 8.850 g/cm3; sheet up to 0.05 in.: at 70 F yield 40 ksi, ultimate 56 ksi; at 2000 F yield 16 ksi, ultimate 21 ksi",
+     "status": "unverified",
+     "url": "https://hkvxni.files.cmp.optimizely.com/download/assets/Niobium+C-103+Plate+and+Sheet+Data+Sheet/091fbfb6300911ef95efb661c407e4bc"
     },
     {
      "id": "mattsson2006",
@@ -14742,6 +15440,12 @@
      "url": "https://ntrs.nasa.gov/api/citations/19780005291/downloads/19780005291.pdf"
     },
     {
+     "id": "nasa-sp5035",
+     "text": "Barth, V. D. and McIntire, H. O. 1965, Tungsten powder metallurgy, NASA SP-5035, Battelle Memorial Institute, Table I: melting points W 6126 F, Re 5720 F, Ta 5428 F, Nb 4474 F",
+     "status": "unverified",
+     "url": "https://apps.dtic.mil/sti/pdfs/ADA399829.pdf"
+    },
+    {
      "id": "niemann2005",
      "text": "Niemann, H. B. et al. 2005, Nature 438, 779: Titan's atmosphere from the Huygens probe (5.65% methane by volume near the surface)",
      "status": "unverified",
@@ -14760,6 +15464,12 @@
      "status": "verified",
      "doi": "10.1063/1.1800011",
      "url": "https://physics.nist.gov/PhysRefData/Handbook/Tables/sodiumtable3.htm"
+    },
+    {
+     "id": "nist-srd126",
+     "text": "Hubbell, J. H. and Seltzer, S. M., X-ray mass attenuation coefficients, NIST Standard Reference Database 126, Tables 1 and 2: densities W 19.30, Pb 11.35, polyethylene 0.930 g/cm3; hydrogen mass fraction of polyethylene 0.143716",
+     "status": "unverified",
+     "url": "https://physics.nist.gov/PhysRefData/XrayMassCoef/tab2.html"
     },
     {
      "id": "nist-webbook",
@@ -14864,6 +15574,12 @@
      "doi": "10.1016/B978-0-08-095975-7.00201-1"
     },
     {
+     "id": "panda-msfc",
+     "text": "Panda, B., Hickman, R. R. and Shah, S., Solid solution carbides are the key fuels for future nuclear thermal propulsion, NASA Marshall Space Flight Center, NTRS 20060004773: UC melts at 2525 C, UC2 at 2480 C",
+     "status": "unverified",
+     "url": "https://ntrs.nasa.gov/api/citations/20060004773/downloads/20060004773.pdf"
+    },
+    {
      "id": "pdg-gas",
      "text": "Particle Data Group, Atomic and Nuclear Properties of Materials: gas refractive indices (n-1) at 0 °C, 1 atm, 589.3 nm, from Kaye and Laby",
      "status": "verified",
@@ -14887,6 +15603,12 @@
      "status": "verified",
      "doi": "10.1051/0004-6361/201833910",
      "url": "https://www.aanda.org/articles/aa/full_html/2020/09/aa33910-18/T2.html"
+    },
+    {
+     "id": "popov2000",
+     "text": "Popov, S. G., Ivanov, V. K., Carbajo, J. J. and Yoder, G. L. 2000, Thermophysical properties of MOX and UO2 fuels including the effects of irradiation, ORNL/TM-2000/351, Oak Ridge National Laboratory, sections 2.3 and 3.1: UO2 melting point 3120 +- 30 K unirradiated, theoretical density 10 970 +- 70 kg/m3 at 273 K",
+     "status": "unverified",
+     "url": "https://rsicc.ornl.gov/fmdp/tm2000-351.pdf"
     },
     {
      "id": "randall2008",
@@ -14960,6 +15682,12 @@
      "doi": "10.1063/1.555898"
     },
     {
+     "id": "sher-beck1981",
+     "text": "Sher, R. and Beck, C. 1981, Fission energy release for 16 fissioning nuclides, EPRI NP-1771, Stanford University, Table VI (U-235, thermal): 202.48 MeV in all, fragments 169.12, prompt neutrons 4.79, prompt gammas 6.97, delayed betas 6.50, delayed gammas 6.33, neutrinos 8.75 MeV per fission",
+     "status": "unverified",
+     "url": "https://www.osti.gov/servlets/purl/6614291"
+    },
+    {
      "id": "si2019",
      "text": "The International System of Units (SI), 9th edition 2019, BIPM: the seven defining constants are exact (CODATA 2018 Table I)",
      "status": "verified",
@@ -14970,6 +15698,12 @@
      "text": "Sifner, O. and Klomfar, J. 1994, J. Phys. Chem. Ref. Data 23, 63: thermodynamic properties of xenon from the triple point to 800 K (critical point 289.734 K, 5.840 MPa; normal boiling point 165.03 K)",
      "status": "unverified",
      "doi": "10.1063/1.555958"
+    },
+    {
+     "id": "smc-inconel718",
+     "text": "Special Metals Corporation 2007, INCONEL alloy 718, publication SMC-045: melting range 2300-2437 F, density 0.296 lb/in3 (annealed), used from -423 F to 1300 F; AMS 5596 sheet minimum 180 ksi ultimate and 150 ksi yield; hot-rolled bar aged, at 1200 F, 164.5 ksi ultimate and 145.0 ksi yield",
+     "status": "unverified",
+     "url": "https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-718.pdf"
     },
     {
      "id": "tegeler1999",

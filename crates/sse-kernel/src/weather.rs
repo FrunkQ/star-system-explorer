@@ -26,6 +26,8 @@ pub(crate) struct Ask {
     pub block: Option<serde_json::Value>,
     /// The epoch the climate is kept under (a body's age, Myr; 0 otherwise).
     pub epoch_myr: f64,
+    /// The body and its moons, when asked by system and body (tides).
+    pub raisers: Option<(sse_surface::Body, Vec<sse_climate::forcing::MoonPull>)>,
 }
 
 pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
@@ -124,7 +126,16 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
         }
         "report" => {
             rule_only("report")?;
-            to_json(&block.report(&c, date, a.lat, a.lon, &pins, None))
+            let r = block.report(&c, date, a.lat, a.lon, &pins, None);
+            let mut out = to_json(&r);
+            // The sea at the site: waves under this wind, and the tides.
+            let cs = &block.settings.climate;
+            let core = climates.orbit(cs, &c, a.epoch_myr);
+            let body = a.raisers.as_ref().map(|(b, m)| (b, m.as_slice()));
+            if let Some(sea) = crate::sea::site(cs, core, a.lat, r.wind_km_h, body) {
+                out["sea"] = sea;
+            }
+            out
         }
         "column" => {
             rule_only("column")?;

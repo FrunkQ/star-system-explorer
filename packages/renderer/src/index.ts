@@ -3,9 +3,11 @@
 // only when a view asks for it, so pages without 3D never fetch it.
 export { tree, pathTo, relative, basis, project, projectExact, projectFlattened, rebase, frameFor } from "./frames.ts";
 export type { Vec3, FrameNode, Tree, Camera, Pixel } from "./frames.ts";
-export type { Gpu, GpuGlow, GpuItem, GpuLight, GpuRing, GpuSheet } from "./gpu.ts";
+export type { Gpu, GpuDots, GpuGlow, GpuItem, GpuLight, GpuRing, GpuSheet } from "./gpu.ts";
 export { armField, cloudNoise, GALAXY_BANDS, GALAXY_LIGHT, GALAXY_LIGHT_REFS, galaxyFace, glowPicture, sheetWeights, surfaceAt } from "./galaxy-true.ts";
 export type { GalaxyBand, GalaxyPicture } from "./galaxy-true.ts";
+export { cubeEdges, SPACE_CSS, webGlow, webParcels, WEB_KINDS, WEB_LIGHT_K } from "./web-cube.ts";
+export type { WebCubeData, WebKind } from "./web-cube.ts";
 // V10a: True in the system view, each world wrapped in its own surface.
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
 export type { TrueTexture } from "./true-look.ts";
@@ -78,7 +80,7 @@ export async function startShip(...a: Parameters<typeof import("./gpu-ship.ts").
 
 export { curveDrop, decoration, descentTrack, floorFromRefusal, groundColours, groundMesh, heightAt as groundHeightAt, horizonDistance, levelFor, localToDir, patchKeys, patchPoint, playbackKeys, readPatch, siteFrame, tileSpot } from "./surface-patch.ts";
 export type { GroundPoint, Patch, TileKey as SurfaceTileKey } from "./surface-patch.ts";
-export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunDirection, sunTransmittance } from "./surface-sky.ts";
+export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunAt, sunDirection, sunTransmittance } from "./surface-sky.ts";
 export type { SurfaceFrame, SurfaceGpu, SurfaceMesh } from "./gpu-surface.ts";
 
 /** Draw the ground round a site on the GPU (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */

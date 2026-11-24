@@ -23,6 +23,10 @@ pub struct Mark {
     pub law: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub what: Option<String>,
+    /// A ceiling that holds only for one fuel or material (`"for"` in the
+    /// pack): it is shown beside that thing, never applied to the figure.
+    #[serde(rename = "for", skip_serializing_if = "Option::is_none")]
+    pub for_: Option<String>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize)]
@@ -44,11 +48,13 @@ impl Figure {
             have <= need
         }
     }
-    /// The ceiling a need passes, if any.
+    /// The ceiling a need passes, if any. A ceiling `for` one fuel or
+    /// material (hydrogen-oxygen's exhaust, tungsten melting) is not the
+    /// figure's own and is skipped.
     pub fn past_ceiling(&self, need: f64) -> Option<&Mark> {
         self.marks
             .iter()
-            .filter(|m| m.mark == "ceiling")
+            .filter(|m| m.mark == "ceiling" && m.for_.is_none())
             .find(|m| !self.meets(m.v, need))
     }
 }
@@ -130,6 +136,7 @@ impl Tech {
                             v: num(&m["v"])?,
                             law: m["law"].as_str().map(str::to_string),
                             what: m["what"].as_str().map(str::to_string),
+                            for_: m["for"].as_str().map(str::to_string),
                         })
                     })
                     .collect::<Vec<_>>();
@@ -299,7 +306,15 @@ pub fn reading(
                 .values()
                 .filter(|a| a.sets.get(fid).is_some_and(|&v| f.meets(v, need)))
                 .collect();
-            meets.sort_by(|a, b| a.level.cmp(&b.level).then(a.id.cmp(&b.id)));
+            // An advance made for this kind of part first (a "drive" need is
+            // not met by an "electric drive", which also needs a power plant),
+            // then the lowest level, then by id.
+            meets.sort_by(|a, b| {
+                (a.part != p.part)
+                    .cmp(&(b.part != p.part))
+                    .then(a.level.cmp(&b.level))
+                    .then(a.id.cmp(&b.id))
+            });
             let held = meets.iter().find(|a| tech.holds(of, a));
             let mut row = serde_json::json!({
                 "part": p.part, "figure": fid, "plain": f.plain, "unit": f.unit, "need": need,

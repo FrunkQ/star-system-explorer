@@ -29,6 +29,12 @@ export type Intent =
    */
   | { kind: "scan_toggle"; address: string; audience: string; at_yr: number }
   /**
+   * Add a system to the universe (V13, kernel `adopt`): an imported V3 save or one grown by formation. GM only. It is
+   * an intent so that it travels to players' screens like every other change (a replica that never saw it had no copy
+   * of the system: the landing run-through, 24 Nov).
+   */
+  | { kind: "adopt"; source: { import_v3: string } | { formation: Json }; occurred_at_s?: number }
+  /**
    * Grant an audience a data view of one subject and everything under it
    * (K9 grant, chronicled as observe.grant: "Vesh learned Tarn"). `view`
    * null takes the grant back, so the subject falls back to its parent, its
@@ -71,7 +77,7 @@ export type Intent =
 
 export type IntentKind = Intent["kind"];
 
-export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant", "set_values", "withdraw", "restore", "rename", "set_naming", "set_known", "undo_known"];
+export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant", "set_values", "withdraw", "restore", "rename", "set_naming", "set_known", "undo_known", "adopt"];
 
 /** Machine-readable description of an intent a view may send (H8.1 `intents`). */
 export interface IntentSchema {
@@ -109,6 +115,14 @@ export function secondsToYears(s: number | bigint): number {
 
 /** Why an intent is malformed, or null when it is well formed. */
 export function checkIntent(i: Intent): string | null {
+  if (i.kind === "adopt") {
+    const src = i.source as Record<string, unknown> | null;
+    if (!src || typeof src !== "object") return "adopt needs a source";
+    const keys = Object.keys(src);
+    if (keys.length !== 1 || !(typeof src.import_v3 === "string" || (keys[0] === "formation" && src.formation && typeof src.formation === "object"))) return "adopt's source is one import_v3 save or one formation request";
+    if (i.occurred_at_s !== undefined && !Number.isFinite(i.occurred_at_s)) return "time must be finite";
+    return null;
+  }
   if (i.kind === "stack_packs") {
     if (!Array.isArray(i.packs)) return "packs must be a list";
     for (const p of i.packs as { id?: unknown; format?: unknown }[]) {
@@ -205,6 +219,7 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
   if (i.kind === "rename") return { op: "rename" as const, address: i.address, layer: i.layer, ...(i.text !== null ? { text: i.text.trim() } : {}), at_s: yearsToSeconds(i.at_yr) };
   if (i.kind === "set_naming")
     return { op: "set_naming" as const, address: i.address, layer: i.layer, ...(i.scheme !== null ? { scheme: i.scheme } : {}), ...(i.of_kind ? { kind: i.of_kind } : {}), ...(i.rename_fixed ? { rename_fixed: true } : {}), at_s: yearsToSeconds(i.at_yr) };
+  if (i.kind === "adopt") return { op: "adopt" as const, ...(i.source as Record<string, Json>), ...(i.occurred_at_s !== undefined ? { occurred_at_s: i.occurred_at_s } : {}) };
   if (i.kind === "undo_known") return { op: "undo_known" as const, undo: i.undo, at_s: yearsToSeconds(i.at_yr) };
   if (i.kind === "set_known")
     return {

@@ -1073,6 +1073,28 @@
   "at_s": 145480536000000000
  },
  {
+  "op": "known_to",
+  "address": "u:kestrel/sys:0/body:3",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "known_in",
+  "bounds": "u:kestrel/sys:0",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "set_known",
+  "address": "u:kestrel/sys:0/body:3",
+  "audience": "vesh",
+  "landmark": "seen",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "undo_known",
+  "undo": "00",
+  "at_s": 145480536000000000
+ },
+ {
   "op": "look_ahead",
   "system": {
    "name": "the Sun",
@@ -2188,6 +2210,12 @@
   "op": "web_slice",
   "extent_mpc": 50,
   "n": 1
+ },
+ {
+  "op": "web_slice",
+  "cube": true,
+  "extent_mpc": 64,
+  "n": 4
  },
  {
   "op": "galaxy_chart",

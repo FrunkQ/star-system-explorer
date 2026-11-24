@@ -23,6 +23,9 @@ mod glow;
 #[cfg(test)]
 mod hooks_tests;
 mod ice_ages;
+mod known;
+#[cfg(test)]
+mod known_tests;
 #[cfg(test)]
 mod matter_tests;
 mod names;
@@ -31,6 +34,7 @@ mod names_tests;
 mod nav;
 mod orbits;
 pub mod protocol;
+mod sea;
 mod sky;
 #[cfg(test)]
 mod sol_tests;
@@ -723,7 +727,15 @@ impl Kernel {
         system: &str,
         body: &str,
         at_s: Option<i64>,
-    ) -> Result<(serde_json::Value, f64), Response> {
+    ) -> Result<
+        (
+            serde_json::Value,
+            f64,
+            sse_surface::Body,
+            Vec<sse_climate::forcing::MoonPull>,
+        ),
+        Response,
+    > {
         let a: Address = system
             .parse()
             .map_err(|e| err("bad_address", format!("{e}")))?;
@@ -747,14 +759,17 @@ impl Kernel {
         let w = adopt::worlds_at(&u.chronicle, &a, at_s, u.runs.get(system), &s)?;
         let b = w
             .bodies
-            .into_iter()
+            .iter()
             .find(|b| b.address.to_string() == body)
+            .cloned()
             .ok_or_else(|| {
                 err(
                     "no_surface_body",
                     format!("{body} is not a surface body of {system}"),
                 )
             })?;
+        // Its moons, for the tides a landing site reads.
+        let (_, moons) = ice_ages::orbit_inputs(&s.climate, &u.seed, &w.bodies, &b);
         let env = sse_surface::envelope(&s, &b);
         // The epoch the survey reads the body at, so both keep one key.
         let epoch_gyr = (b.age_gyr + w.shift_gyr).max(0.0);
@@ -782,7 +797,12 @@ impl Kernel {
             }
         };
         let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &x);
-        Ok((serde_json::to_value(&c).expect("plain data"), epoch_myr))
+        Ok((
+            serde_json::to_value(&c).expect("plain data"),
+            epoch_myr,
+            b,
+            moons,
+        ))
     }
 
     /// Handle one JSON request; always returns one JSON response.
@@ -2862,11 +2882,13 @@ impl Kernel {
                 block,
             } => {
                 let mut epoch_myr = 0.0;
+                let mut raisers = None;
                 let conditions = match (conditions, system, body) {
                     (Some(c), _, _) => Some(c),
                     (None, Some(system), Some(body)) => {
-                        let (c, e) = self.body_conditions(&system, &body, at_s)?;
+                        let (c, e, b, moons) = self.body_conditions(&system, &body, at_s)?;
                         epoch_myr = e;
+                        raisers = Some((b, moons));
                         Some(c)
                     }
                     (None, Some(_), None) | (None, None, Some(_)) => {
@@ -2891,6 +2913,7 @@ impl Kernel {
                         sources,
                         block,
                         epoch_myr,
+                        raisers,
                     },
                     &mut self.climates,
                 )?
@@ -3316,6 +3339,7 @@ impl Kernel {
                 Response::WindowViewed { view }
             }
             Request::WebSlice {
+                cube,
                 z,
                 t_gyr,
                 centre,
@@ -3331,6 +3355,7 @@ impl Kernel {
                     centre: centre.unwrap_or([0.0; 3]),
                     extent_mpc,
                     n,
+                    cube: cube.unwrap_or(false),
                 })?;
                 Response::WebSliced { web }
             }
@@ -3543,6 +3568,7 @@ impl Kernel {
                             tiles: &tiles,
                             quick,
                             limit,
+                            reference: &self.observe.reference,
                         },
                         &mut self.surveys,
                     )?,
@@ -3580,6 +3606,7 @@ impl Kernel {
                                 tiles: &tiles,
                                 quick,
                                 limit,
+                                reference: &self.observe.reference,
                             },
                             &mut self.surveys,
                         )?
@@ -4578,7 +4605,7 @@ impl Kernel {
                     )
                 })?;
                 if let Some(v) = &view {
-                    if !setup.views.iter().any(|d| &d.id == v) {
+                    if v != sse_observe::GM_ONLY_VIEW && !setup.views.iter().any(|d| &d.id == v) {
                         return Err(err("unknown_view", format!("no data view {v:?}")));
                     }
                 }
@@ -4618,6 +4645,30 @@ impl Kernel {
                     state_hash: state.hash().hex(),
                 }
             }
+            Request::KnownTo {
+                address,
+                field,
+                at_s,
+            } => self.known_to(&address, field.as_deref(), at_s)?,
+            Request::SetKnown {
+                address,
+                audience,
+                landmark,
+                field,
+                scope,
+                from_s,
+                at_s,
+            } => self.set_known(
+                &address,
+                &audience,
+                landmark.as_deref(),
+                field.as_deref(),
+                scope.as_ref(),
+                from_s,
+                at_s,
+            )?,
+            Request::UndoKnown { undo, at_s } => self.undo_known(&undo, at_s)?,
+            Request::KnownIn { bounds, at_s } => self.known_in(&bounds, at_s)?,
             Request::RulesStep { at_s } => {
                 let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
                 let tpl = self.observe.templates.clone();

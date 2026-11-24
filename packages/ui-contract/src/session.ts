@@ -226,6 +226,8 @@ export interface ViewSession {
   exportSector?(ask: { scope: string; format: import("./sector.ts").SectorFormat; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorExported } | { ok: false; code: string; message: string }>;
   /** A slice of the cosmic web at one epoch (V9, kernel `web_slice`, G1). Read only; GM only. */
   webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }>;
+  /** A cube of the cosmic web for the 3D view (kernel `web_slice` with `cube`): n^3 parcels moved by the truncated Zel'dovich approximation. Read only; GM only. */
+  webCube(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebCube } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
   resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
@@ -355,6 +357,8 @@ export class Session implements ViewSession {
   readonly #pending: Intent[] = [];
   readonly #listeners: AppliedListener[] = [];
   #grantedViews: readonly string[] = [];
+  /** The kernel's answer to the last adopt, for `adopt()` to hand back. */
+  #adopted: Adopted | null = null;
   #flows: string[] = [];
   #opening: PackDoc[] = [];
   #added: PackDoc[] = [];
@@ -540,6 +544,11 @@ export class Session implements ViewSession {
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
     if (intent.kind === "grant" && r.type === "granted")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
+    if (intent.kind === "adopt" && r.type === "adopted") {
+      const a = r as unknown as Adopted;
+      this.#adopted = a;
+      return { status: "applied", event_id: a.events[0] ?? `adopt:${a.state_hash}`, state_hash: a.state_hash, affected: a.systems };
+    }
     if (r.type === "authored")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
     if ((intent.kind === "set_known" || intent.kind === "undo_known") && (r.type === "known_set" || r.type === "known_undone"))
@@ -631,8 +640,14 @@ export class Session implements ViewSession {
 
   async adopt(source: { import_v3: string } | { formation: FormationRequest }, occurred_at_s?: number): Promise<{ ok: true; result: Adopted } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master adds systems to the universe" };
-    const r = await this.#call({ op: "adopt", ...source, ...(occurred_at_s !== undefined ? { occurred_at_s } : {}) } as never);
-    return r.type === "adopted" ? { ok: true, result: r as unknown as Adopted } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    // Through the intent path, so players' screens replay it (and a kept log holds it).
+    // Plain data: a caller's reactive object would not survive the copy every applied intent makes for the log.
+    const plain = JSON.parse(JSON.stringify(source)) as { import_v3: string } | { formation: Json };
+    const res = await this.#apply({ kind: "adopt", source: plain, ...(occurred_at_s !== undefined ? { occurred_at_s } : {}) });
+    const got = this.#adopted;
+    this.#adopted = null;
+    if (res.status === "applied" && got) return { ok: true, result: got };
+    return { ok: false, code: res.status === "error" ? res.code : res.status, message: res.status === "error" ? res.message : res.status === "refused" ? res.reason : "not applied" };
   }
 
   async readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }> {
@@ -894,6 +909,12 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the cosmic web is read on the game master's machine" };
     const r = await this.#call({ op: "web_slice", ...ask });
     return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebSlice }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async webCube(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebCube } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the cosmic web is read on the game master's machine" };
+    const r = await this.#call({ op: "web_slice", cube: true, ...ask });
+    return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebCube }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }> {
