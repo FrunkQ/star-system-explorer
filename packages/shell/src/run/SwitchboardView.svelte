@@ -8,7 +8,7 @@
 </script>
 
 {#if table}
-  <Switchboard {table} />
+  <Switchboard {table} ws={ctx.workspace} />
 {:else}
   <p class="wait" data-switchboard-waiting>The table opens with the campaign; one moment.</p>
 {/if}

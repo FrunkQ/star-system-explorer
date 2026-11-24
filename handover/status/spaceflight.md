@@ -15,4 +15,28 @@ The pack is "Sol today" on Explorers, not built into SSE4; the onboarding tour (
 | RS5 ascent from the ground | travel thread | |
 | RS6 shape hints and finishes for real hardware | renderer thread | |
 | RS7 missions on the ruler; flown and SSE4-says lines; the tour step | chart room thread | |
-| RS8 flight logs for all ~300 departed craft, stations and crewed flights | part 1 done 24 Nov: `scripts/spaceflight/build_departed_logs.py` writes 462 logs to `store-packs/sol-today/logs/departed/` from GCAT's phase tables, one for every departed payload besides the showcase ones (108 end on the ground at landercat's sites, 133 gone, 221 still flying or docked; 118 heliocentric legs solved to meet their planet). Measured against Horizons in cruise: 0.4 to 5% of distance from the Sun, MESSENGER 23%. Next: part 2, stations and crewed flights in Earth orbit (psatcat), and splits between carriers and the probes they release | packages/RS8.md |
+| RS8 flight logs for all ~300 departed craft, stations and crewed flights | part 1 done 24 Nov: `scripts/spaceflight/build_departed_logs.py` writes 462 logs to `store-packs/sol-today/logs/departed/` from GCAT's phase tables, one for every departed payload besides the showcase ones (PR 415, merged; 108 end on the ground at landercat's sites, 133 gone, 221 still flying or docked; 118 heliocentric legs solved to meet their planet). Measured against Horizons in cruise: 0.4 to 5% of distance from the Sun, MESSENGER 23%. Next package: RS8 part 2, stations and crewed flights in Earth orbit (psatcat, stations.json), then splits between carriers and the probes they release (see the package log) | packages/RS8.md |
+
+## How to rebuild the pack (no chat history needed)
+
+1. GCAT tables: download from https://planet4589.org/space/gcat/tsv/ into one folder outside the repo, flat:
+   launch/launch.tsv, cat/deepcat.tsv, cat/hcocat.tsv, cat/lprcat.tsv, cat/landercat.tsv, cat/psatcat.tsv, and
+   for the parts the vehicle, stage, engine and site tables build_parts.py names in its header.
+2. `python3 -I scripts/spaceflight/import_gcat.py <folder> store-packs/sol-today` (catalogue), then
+   `python3 -I scripts/spaceflight/build_parts.py <folder> store-packs/sol-today` (parts).
+3. `python3 -I scripts/spaceflight/build_logs.py` (the showcase logs, from the horizons_*.json files here and the
+   sources it names), then `python3 -I scripts/spaceflight/build_departed_logs.py <folder>` (GCAT logs; run it
+   after build_logs.py, which it reads to avoid clashing ids).
+4. New Horizons figures: `scripts/spaceflight/horizons.py` (elements, vectors, lookup; burn delta-v method in its
+   header). `craft.json` is authored by hand from the sources in docs/citations/spaceflight.md.
+5. Check: `cargo test -p sse-nav --test sol_today_logs`, then `scripts/check.sh`.
+
+## Alex's rulings that shape this track (23 to 24 Nov 2026)
+
+- The design (`design/SSE4-real-spaceflight-feasibility.md`) was accepted in full ("yes to all"), question 10 as
+  amended: the pack is on Explorers, not built in, and the onboarding tour uses it to teach loading a pack.
+- "And turns this into a historical records tool!": the logs are the record of what flew, so every figure is cited,
+  every estimate says why, and the flown line and the SSE4-says line can be compared (RS7).
+- Big burns and flybys only, stable orbits between (fudge register, Real spaceflight).
+- Every craft is built from its real parts, sensors included; SSE3 constructs are the import point, so the shapes
+  are additive; power is a general input an engine draws (Atomic Rockets plan 11.3).
