@@ -90,7 +90,7 @@ export { fetchSector, sectorPath } from "./sector-fetch.ts";
 export type { SectorText } from "./sector-fetch.ts";
 export { SECTOR_FORMATS, mapFields, stackProvides } from "./sector.ts";
 export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateOf } from "./constructs.ts";
-export { shipLog, writerWords } from "./constructs.ts";
+export { flightLines, LOG_RANK, shipLog, writerWords } from "./constructs.ts";
 export type { ConstructTemplate, Created, KeptChange, ShipLogEntry, RecordRead } from "./constructs.ts";
 export { navShipOf, partyLander, voyageStart, voyageLogEntries, voyageFuelWrites } from "./party.ts";
 export type { PartyShip, FlightEntryAsk } from "./party.ts";

@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { BOOKKEEPING, PICTURE_FIELDS, FUEL_FIELDS, MANIFEST_WORDS, PERSON, CARGO, aboardLog, entryFrom, type AboardEntry, type RecordRead, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { BOOKKEEPING, PICTURE_FIELDS, FUEL_FIELDS, MANIFEST_WORDS, PERSON, CARGO, aboardLog, flightLines, LOG_RANK, entryFrom, type AboardEntry, type RecordRead, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, yearsToSeconds, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
   import { Aboard, Picture } from "../../manifest/src/index.ts";
@@ -95,14 +95,22 @@
   let logBtn = $state<HTMLElement | null>(null);
   let log = $state<ShipLogEntry[]>([]);
   const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
+  // A place's name as this card knows it: the system, a construct in the list, or a body of the scene.
+  const placeName = (a: string) => (a === scene.system ? scene.title : listed.find((x) => x.address === a) ? nameOf(listed.find((x) => x.address === a)!) : (scene.subjects.find((x) => x.address === a)?.label ?? "elsewhere"));
   async function loadLog(address: string) {
-    const [h, r, aboardAll] = await Promise.all([session.history(address, { changes: true }), session.record?.(address), aboardEntries(address)]);
+    const [h, r, aboardAll, flown] = await Promise.all([
+      session.history(address, { changes: true }),
+      session.record?.(address),
+      aboardEntries(address),
+      // Its flights, from its flight log on the record (travel track V8; read on the GM's machine).
+      gm ? session.flightLog({ construct: address }).catch(() => null) : Promise.resolve(null),
+    ]);
     if (picked !== address) return;
     const own = shipLog(h, r?.ok ? r.record : null, (s) => secondsToYears(s), (k) => fieldWords(k, MANIFEST_WORDS).label);
     // Who and what came aboard, left and changed state here (track MC), from the entries' own histories.
-    const moves = aboardLog(address, aboardAll, (s) => secondsToYears(s), (a) => (a === scene.system ? scene.title : listed.find((x) => x.address === a) ? nameOf(listed.find((x) => x.address === a)!) : (scene.subjects.find((x) => x.address === a)?.label ?? "elsewhere")));
-    const rank = (w: ShipLogEntry["what"]) => ({ made: 0, edited: 1, event: 1, kept: 2, aboard: 2, note: 3, retired: 4 })[w];
-    log = [...own, ...moves].sort((a, b) => a.at_yr - b.at_yr || rank(a.what) - rank(b.what)).reverse();
+    const moves = aboardLog(address, aboardAll, (s) => secondsToYears(s), placeName);
+    const flights = flown?.ok ? flightLines(flown.log, (s) => secondsToYears(s), placeName) : [];
+    log = [...own, ...moves, ...flights].sort((a, b) => a.at_yr - b.at_yr || LOG_RANK[a.what] - LOG_RANK[b.what]).reverse();
   }
   // Everyone and everything that is or was aboard anything: record entries at the universe root (base manifest pack).
   async function aboardEntries(address: string): Promise<AboardEntry[]> {

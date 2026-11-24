@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { ABOARD, aboard, ageNow, crewAboard, entryFrom, entryId, lifeSupport, lifeSupportFrom, massKg, startingValues, storeOf, type AboardEntry } from "../../packages/ui-contract/src/manifest.ts";
 import type { Json } from "../../packages/ui-contract/src/json.ts";
-import { shipLog, type RecordRead } from "../../packages/ui-contract/src/constructs.ts";
+import { flightLines, shipLog, type RecordRead } from "../../packages/ui-contract/src/constructs.ts";
 
 const YR = 31_557_600;
 const pack = JSON.parse(readFileSync(fileURLToPath(new URL("../../packs/base-manifest/pack.json", import.meta.url)), "utf8")) as Json;
@@ -157,4 +157,30 @@ test("a refit's log line says what changed, from what to what (MC6)", () => {
   const log = shipLog([refit, made, plain], null, (s) => s, (k) => ({ jump_rating: "Jump drive", "construct.design": "Design", "picture.own": "Pictures" })[k] ?? k);
   assert.equal(log[1]!.text, "Changed: Jump drive 2 → 3; Design changed; Pictures changed; picture.shown picture 1");
   assert.equal(log[2]!.text, "Facts edited", "an event without its changes keeps the old words");
+});
+
+test("the ship's flights read from its flight log (MC7): one line a voyage, and what happened on the way", () => {
+  const D = 86_400;
+  const log = {
+    events: [
+      { at_s: 20 * D, kind: "stop", type: "arrive", place_id: "mars", mark: "planned" },
+      { at_s: 8 * D, kind: "stop", type: "depart", place_id: "earth", mark: "planned" },
+      { at_s: 9 * D, kind: "burn", dv_m_s: 3600, propellant_t: 12.5, mark: "estimated", why: "impulsive equivalent", writer: "pack" },
+      { at_s: 15 * D, kind: "flyby", body: "venus", periapsis_m: 6.4e6, mark: "recorded" },
+      { at_s: 30 * D, kind: "stop", type: "refuel", place_id: "mars", mark: "planned" },
+      { at_s: 31 * D, kind: "stop", type: "depart", place_id: "mars", mark: "planned" },
+    ],
+  };
+  const names: Record<string, string> = { earth: "Earth", mars: "Mars", venus: "Venus" };
+  const lines = flightLines(log as unknown as Json, (s) => s / D, (a) => names[a] ?? a);
+  assert.deepEqual(lines.map((l) => [l.at_yr, l.text, l.why ?? null]), [
+    [9, "Burn of 3.6 km/s, 12.5 t of propellant", "estimated: impulsive equivalent"],
+    [15, "Flew by Venus", null],
+    [20, "Flew Earth to Mars (12 days)", "planned"],
+    [30, "Refuelled at Mars", "planned"],
+    [31, "Left Mars, under way", "planned"],
+  ]);
+  assert.equal(lines[0]!.who, "pack");
+  assert.ok(lines.every((l) => l.what === "flight"));
+  assert.deepEqual(flightLines(null, (s) => s, (a) => a), [], "no flight log, no lines");
 });
