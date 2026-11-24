@@ -33,6 +33,8 @@ pub mod kinds {
     pub const HOLD: &str = "record.hold";
     /// A civilisation's technology (track FT): see [`crate::tech`].
     pub const TECH: &str = "record.tech";
+    /// A link between places (space highways): see [`crate::links`].
+    pub const LINK: &str = "record.link";
 }
 
 /// Fields an actor carries from `add_actor`.
@@ -820,9 +822,12 @@ pub fn actors(ch: &Chronicle, scope: &Address, at: UniverseTime) -> Vec<(Address
 }
 
 pub mod holdings;
+pub mod links;
 pub mod tech;
 
 #[cfg(test)]
 mod holdings_tests;
+#[cfg(test)]
+mod links_tests;
 #[cfg(test)]
 mod tests;

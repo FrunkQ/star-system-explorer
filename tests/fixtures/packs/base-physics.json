@@ -2339,6 +2339,104 @@
         "range": null
       },
       {
+        "description": "light level of one screen colour, 0 to 1, in proportion to light",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "eye.linear_level",
+        "range": null
+      },
+      {
+        "description": "height of the lobe at this wavelength, 1 at its peak",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "eye.lobe",
+        "range": null
+      },
+      {
+        "description": "wavelength the lobe peaks at, in nanometres",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "eye.lobe_centre_nm",
+        "range": null
+      },
+      {
+        "description": "width of the lobe on its blue side, in nanometres",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "eye.lobe_width_blue_nm",
+        "range": null
+      },
+      {
+        "description": "width of the lobe on its red side, in nanometres",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "eye.lobe_width_red_nm",
+        "range": null
+      },
+      {
+        "description": "level sent to the screen, 0 to 1",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "eye.screen_level",
+        "range": null
+      },
+      {
+        "description": "wavelength in nanometres",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "eye.wavelength_nm",
+        "range": null
+      },
+      {
         "description": "period with which the outside magnetic field seen by a body changes",
         "dim": [
           0,
@@ -2381,6 +2479,104 @@
         "range": null
       },
       {
+        "description": "absorbing cross-section of one particle at this wavelength",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.absorption_cross_section",
+        "range": null
+      },
+      {
+        "description": "how the band strength follows temperature (0: not at all)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.band_temperature_exponent",
+        "range": null
+      },
+      {
+        "description": "particles in the way, per square metre of the beam",
+        "dim": [
+          -2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.column",
+        "range": null
+      },
+      {
+        "description": "share of the line shape that is damping wings rather than the thermal core",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.damping_share",
+        "range": null
+      },
+      {
+        "description": "half width of the line's damping wings in frequency",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.damping_width",
+        "range": null
+      },
+      {
+        "description": "distance in frequency from the line's centre",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.detuning",
+        "range": null
+      },
+      {
+        "description": "spread of the line in frequency from the atoms' thermal motion (one standard deviation)",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.doppler_width",
+        "range": null
+      },
+      {
         "description": "number density of hydrogen nuclei in the surrounding gas",
         "dim": [
           -3,
@@ -2406,6 +2602,216 @@
           0
         ],
         "id": "gas.king_factor",
+        "range": null
+      },
+      {
+        "description": "share of the line's strength per hertz at this distance from its centre",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.line_shape",
+        "range": null
+      },
+      {
+        "description": "cross-section of one atom summed over the whole line (per hertz of width)",
+        "dim": [
+          2,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.line_strength",
+        "range": null
+      },
+      {
+        "description": "wavelength at the line's centre",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.line_wavelength",
+        "range": null
+      },
+      {
+        "description": "energy of the level the line absorbs from, above the ground state",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.lower_level_energy",
+        "range": null
+      },
+      {
+        "description": "cross-section per molecule as measured at this wavelength",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.measured_cross_section",
+        "range": null
+      },
+      {
+        "description": "temperature the band was measured at",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "gas.measured_temperature",
+        "range": null
+      },
+      {
+        "description": "natural damping rate of the line (from the levels' lifetimes)",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.natural_damping",
+        "range": null
+      },
+      {
+        "description": "optical depth: each unit dims the light to about a third",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.optical_depth",
+        "range": null
+      },
+      {
+        "description": "oscillator strength of the line (how many electrons' worth it absorbs)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.oscillator_strength",
+        "range": null
+      },
+      {
+        "description": "absorption by a colliding pair, per density of each partner",
+        "dim": [
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.pair_coefficient",
+        "range": null
+      },
+      {
+        "description": "mass of one absorbing atom or molecule",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.particle_mass",
+        "range": null
+      },
+      {
+        "description": "number of partner particles per cubic metre",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.partner_density",
+        "range": null
+      },
+      {
+        "description": "how many straight paths the light takes through the gas (2 for down and back up at the vertical, more when slanted)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.path_factor",
+        "range": null
+      },
+      {
+        "description": "number of perturbing particles per cubic metre",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.perturber_density",
+        "range": null
+      },
+      {
+        "description": "full width at half depth of the combined line shape",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.profile_width",
         "range": null
       },
       {
@@ -2448,6 +2854,62 @@
           0
         ],
         "id": "gas.refractivity",
+        "range": null
+      },
+      {
+        "description": "temperature of the gas",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "gas.temperature",
+        "range": null
+      },
+      {
+        "description": "damping added per perturbing particle per cubic metre, at the reference temperature",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.widening_per_density",
+        "range": null
+      },
+      {
+        "description": "temperature the widening per particle was measured at",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "gas.widening_reference_temperature",
+        "range": null
+      },
+      {
+        "description": "how the widening per particle grows with temperature (0.3 for van der Waals)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.widening_temperature_exponent",
         "range": null
       },
       {
@@ -2955,6 +3417,20 @@
           0
         ],
         "id": "light.reflected_area",
+        "range": null
+      },
+      {
+        "description": "light arriving at this wavelength",
+        "dim": [
+          -1,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.spectral_flux",
         "range": null
       },
       {

@@ -4,10 +4,7 @@
   "GCAT books a stage's engines where they fire from: the Shuttle's SSMEs appear on its ET stage although they ride on the orbiter (OV). The construct record puts them on the orbiter; the stage keeps GCAT's row."
  ],
  "credit": "Stage and engine data from GCAT, Jonathan C. McDowell, https://planet4589.org/space/gcat/ , CC BY 4.0. Exhaust speed is GCAT's Isp times the master data sheet's g0.",
- "sheet_missing": [
-  "htpb-ap-al",
-  "pban-ap-al"
- ],
+ "sheet_missing": [],
  "engines": [
   {
    "id": "A-4",
