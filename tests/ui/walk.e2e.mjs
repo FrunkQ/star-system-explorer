@@ -158,16 +158,15 @@ async function walk(browser, vp) {
   await tap(page.locator(".area-ruler").getByRole("button", { name: "Pause" }));
 
   await step("out to the cosmic web", async () => {
-    // A desktop has the step on the line. A phone shows only the step above, so it opens the list beside the name and
-    // picks the web under "Further out": a press to open the list, and the choice (the test's choice is not a trusted
-    // event, so it is counted here by hand).
+    // A desktop has the step on the line. A phone shows only the step above, so it opens the picker beside the name and
+    // picks the web from the levels above at its top: a press to open it, and a press on the row.
     const web = page.locator('.place [data-place-step="web"]');
     if (await web.isVisible()) await tap(web);
     else {
-      const list = page.locator(".place .goto select").first();
-      await tap(list);
-      await list.selectOption("up:web");
-      await page.evaluate(() => window.__presses++);
+      await tap(page.locator(".place [data-picker-chip]").first());
+      // The list grows out of the chip; a person's second tap lands once it has settled.
+      await page.waitForFunction(() => document.querySelector("[data-picker-pop]")?.getAnimations().length === 0, null, { timeout: 5000 });
+      await tap(page.locator('[data-picker-pop] [data-pick="up:web"]'));
     }
     await page.waitForFunction(() => document.querySelector(".place h1.title")?.getAttribute("data-place") === "web", null, { timeout: 30000 });
   });
