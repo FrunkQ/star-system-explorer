@@ -24,6 +24,12 @@ Khare's Table I was read from the text layer of the HITRAN aerosol archive's PDF
 - The column order was inferred as: wavelength, k mantissa, k exponent, n. One leading column, running 1.57 to 2.15, could not be identified and is not used.
 - The rows are unverified until checked against the page image (page 133).
 
+## MP34 part 1 rows
+
+| Id | What | Source |
+|---|---|---|
+| mixtures `jsc-mars-1`, `mms-2`, `mgs-1` (Mars dust and soil simulants) | k at 15 wavelengths from 250 to 2000 nm; n is held at 1.5 (assumed, as in the paper) | Martikainen et al. 2023, ApJS 268, 47, Table 3 (irregular-grain shape GRS1). The note on each row also gives the airborne Martian dust of Wolff et al. 2009, read through Dabrowska et al. 2015 Table 1: k about 0.01 at 488 nm and 0.001 to 0.002 at 647 nm, darker than the simulants. |
+
 ## Waiting, same shape
 
 | Wanted | By | Lead | Blocker |
@@ -33,4 +39,4 @@ Khare's Table I was read from the text layer of the HITRAN aerosol archive's PDF
 | `jupiter-chromophore` (red-brown chromophore) | giant bands | Carlson et al. 2016, Icarus 274, 106; Sromovsky et al. 2017, Icarus 291, 232, Fig. 6B (n = 1.4 assumed) | k is printed only in a figure. |
 | H2S ice, silicate, sulphide, alkali haze, iron | giant bands | (not yet searched) | |
 | SO2 frost; S8 and the red S3/S4 allotropes; N2 ice and CH4 ice in the visible; CO2 frost (Hansen 2005); a space-weathering darkening rule (Hapke 2001, npFe0) | plumes | Lab sources Trumbo et al. 2022 (PSJ, HST/STIS Io map) uses, read from the summary of its reference list and still to be checked: SO2 frost, Hapke et al. 1981 (Icarus 47, 361, about 77 K); alpha-S8, Gradie et al. 1980 (Icarus 44, 373); beta-S8 and quenched melt, Moses and Nash 1991 (Icarus 89, 277); S4 and red sulphur glass, Meyer et al. 1972 (J. Mol. Spectrosc. 42, 335; ACS Adv. Chem. 110, 53); Na2S, Nash and Nelson 1979 (Nature 280, 763); S2O, Hapke and Graham 1989 (Icarus 79, 47). Also Grundy and Schmitt 1998 (CH4), Grundy 1993 (N2). | Queued as MP34. Where only reflectance is published, use a `{lambda_nm, reflectance, grain size}` table. |
-| Mars bright dust (nanophase ferric oxide or palagonite); crystalline hematite; fresh basalt and mature lunar regolith reflectance | plumes thread, to replace the typed `cover.colours` in packs/base-surface | Morris et al. 2000 and Bell et al. 2000 (Pathfinder spectra); Christensen et al. 2000 (hematite); RELAB spectra; Hapke 2001 (npFe0) | Queued as MP34. The plumes thread's order of use: tholin, ferric oxide, SO2 and sulphur, N2 and CH4 ice, then the rest. |
+| Crystalline hematite; fresh basalt and mature lunar regolith reflectance | plumes thread, to replace the typed `cover.colours` in packs/base-surface | Morris et al. 2000 and Bell et al. 2000 (Pathfinder spectra); Christensen et al. 2000 (hematite); RELAB spectra; Hapke 2001 (npFe0) | Queued as MP34. The plumes thread's order of use: tholin, ferric oxide, SO2 and sulphur, N2 and CH4 ice, then the rest. |

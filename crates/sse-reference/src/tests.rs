@@ -922,3 +922,18 @@ fn tholin_absorbs_blue_more_than_red() {
     assert!(at(440.0) > at(690.0) && at(690.0) > at(1000.0));
     assert!(n.iter().all(|&x| (1.5..1.8).contains(&x)));
 }
+
+#[test]
+fn mars_dust_simulants_are_on_the_sheet() {
+    // MP34: Martikainen et al. 2023 k for three Mars simulants, 250 to 2000 nm.
+    let r = Reference::base();
+    for id in ["jsc-mars-1", "mms-2", "mgs-1"] {
+        let t = r
+            .row("mixtures", id)
+            .and_then(|x| x.get("optical"))
+            .and_then(|o| o.get("refractive_index"))
+            .unwrap_or_else(|| panic!("{id}"));
+        let n = |k: &str| t.get(k).unwrap().as_array().unwrap().len();
+        assert!(n("lambda_nm") == 15 && n("n") == 15 && n("k") == 15, "{id}");
+    }
+}
