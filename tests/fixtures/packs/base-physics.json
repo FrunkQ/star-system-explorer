@@ -3882,6 +3882,20 @@
         "range": null
       },
       {
+        "description": "angular momentum an orbit lacks against a flat circle of the same size (kg m2 s-1)",
+        "dim": [
+          2,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.angular_momentum_deficit",
+        "range": null
+      },
+      {
         "description": "farthest distance from the host",
         "dim": [
           1,
@@ -3893,6 +3907,34 @@
           0
         ],
         "id": "orbit.apoapsis",
+        "range": null
+      },
+      {
+        "description": "longitude of an orbit's ascending node, radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.ascending_node",
+        "range": null
+      },
+      {
+        "description": "widest (round one star) or nearest (round both) lasting planet orbit in a binary",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.binary_limit",
         "range": null
       },
       {
@@ -3927,6 +3969,34 @@
         ]
       },
       {
+        "description": "inner apoapsis to outer periapsis, in mutual Hill radii",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.hill_gap",
+        "range": null
+      },
+      {
+        "description": "gap between two neighbouring orbits, in mutual Hill radii",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.hill_spacing",
+        "range": null
+      },
+      {
         "description": "mass of the body being orbited",
         "dim": [
           0,
@@ -3941,6 +4011,48 @@
         "range": null
       },
       {
+        "description": "tilt of an orbit against its host's reference plane, radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.inclination",
+        "range": null
+      },
+      {
+        "description": "time for one Kozai-Lidov swing of an inner orbit",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.kozai_time",
+        "range": null
+      },
+      {
+        "description": "a binary's mass ratio, the chosen star's share of the pair's mass",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.mass_share",
+        "range": null
+      },
+      {
         "description": "mean anomaly in radians: the share of the period elapsed since periapsis, times 2π",
         "dim": [
           0,
@@ -3952,6 +4064,48 @@
           0
         ],
         "id": "orbit.mean_anomaly",
+        "range": null
+      },
+      {
+        "description": "widest orbit a moon keeps round its planet",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.moon_limit",
+        "range": null
+      },
+      {
+        "description": "radius of the gravity bubble two neighbours share",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.mutual_hill_radius",
+        "range": null
+      },
+      {
+        "description": "angle between two orbital planes, radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.mutual_inclination",
         "range": null
       },
       {
@@ -3997,6 +4151,20 @@
         "range": null
       },
       {
+        "description": "a system's angular momentum deficit against an outer planet's circular angular momentum",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.relative_amd",
+        "range": null
+      },
+      {
         "description": "semi-major axis of an orbit",
         "dim": [
           1,
@@ -4008,6 +4176,20 @@
           0
         ],
         "id": "orbit.semi_major_axis",
+        "range": null
+      },
+      {
+        "description": "a stability check's verdict as a number: 0 lasts, higher is worse (each block says what its numbers mean)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.stability_verdict",
         "range": null
       },
       {

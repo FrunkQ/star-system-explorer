@@ -34,11 +34,16 @@ mod names;
 mod names_tests;
 mod nav;
 mod orbits;
+#[cfg(test)]
+mod power_books_tests;
 pub mod protocol;
 mod sea;
 mod sky;
 #[cfg(test)]
 mod sol_tests;
+mod stability;
+#[cfg(test)]
+mod stability_tests;
 mod star_elements;
 #[cfg(test)]
 mod star_elements_tests;
@@ -280,6 +285,18 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             inventory::Kinds::default()
         }
     };
+    // RK9: the stack's engine designs (`provides.other.engines`, id to
+    // design), later packs over earlier.
+    let mut engines = BTreeMap::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("engines") {
+            let j = serde_json::to_value(v).map_err(|e| vec![format!("{}: engines: {e}", p.id)])?;
+            match serde_json::from_value::<BTreeMap<String, sse_nav::power::EngineDef>>(j) {
+                Ok(m) => engines.extend(m),
+                Err(e) => problems.push(format!("{}: engines: {e}", p.id)),
+            }
+        }
+    }
     if !problems.is_empty() {
         return Err(problems);
     }
@@ -328,6 +345,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         layers,
         tech,
         resources,
+        engines,
     })
 }
 
@@ -508,6 +526,8 @@ struct Observe {
     tech: tech::Tech,
     /// Resource kinds (`provides.other.resources`, TG11).
     resources: inventory::Kinds,
+    /// Engine designs by id (`provides.other.engines`, RK9).
+    engines: BTreeMap<String, sse_nav::power::EngineDef>,
 }
 
 pub struct Kernel {
@@ -3195,6 +3215,7 @@ impl Kernel {
                     prefer: prefer.as_deref(),
                     rescue: rescue.as_ref(),
                     sheet: &self.observe.reference,
+                    engines: &self.observe.engines,
                 };
                 let plan = match (fixture.as_deref(), nav.as_ref(), system) {
                     (Some(f), None, None) => nav::plan_route(ask(nav::Source::Fixture(f)))?,
@@ -5219,6 +5240,96 @@ impl Kernel {
                 }
             }
             Request::ProgramsStep { at_s } => self.programs_step(at_s)?,
+            Request::ShipPower {
+                ship,
+                flux_w_m2,
+                at_s,
+            } => {
+                let s = sse_nav::scenario::settings();
+                let ship = nav::ship(&s, &ship)?;
+                let flux = flux_w_m2.unwrap_or(sse_core::sheet::S_SUN);
+                let t = at_s.unwrap_or(0);
+                let (l, fitted) = match ship.effective(&self.observe.engines, flux, t) {
+                    Some(x) => x,
+                    None => (
+                        sse_nav::power::ledger(
+                            &ship.power,
+                            &ship.engines,
+                            &ship.loads,
+                            &self.observe.engines,
+                            sse_nav::power::Conditions {
+                                flux_w_m2: flux,
+                                t_s: t,
+                            },
+                        ),
+                        ship.clone(),
+                    ),
+                };
+                let mut power = nav::books(&l, &fitted, flux);
+                power["ship"] = ship.name.clone().into();
+                Response::ShipPowerIs { power }
+            }
+            Request::OrbitStability {
+                system,
+                bodies,
+                add,
+                at_s,
+            } => {
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let mut facts = match &bodies {
+                    Some(b) => orbits::inline_facts(b)?,
+                    None => {
+                        let u = self.universe()?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        let st = u
+                            .chronicle
+                            .state_at(UniverseTime::seconds(at_s.unwrap_or(i64::MAX)));
+                        st.facts
+                            .iter()
+                            .filter(|(x, _)| a.contains(x))
+                            .map(|(x, r)| (x.clone(), r.clone()))
+                            .collect()
+                    }
+                };
+                let mut focus = vec![];
+                if let Some(extra) = &add {
+                    for (x, row) in orbits::inline_facts(extra)? {
+                        focus.push(x.to_string());
+                        facts.entry(x).or_default().extend(row);
+                    }
+                }
+                let (checks, unchecked) = stability::checks(&facts, &a);
+                let hosts: Vec<String> = checks
+                    .iter()
+                    .filter(|c| c.bodies.iter().any(|b| focus.contains(b)))
+                    .map(|c| c.around.clone())
+                    .collect();
+                let checks = stability::concerning(checks, &focus, &hosts);
+                let unchecked: Vec<_> = unchecked
+                    .into_iter()
+                    .filter(|u| focus.is_empty() || u.bodies.iter().any(|b| focus.contains(b)))
+                    .collect();
+                let worst = checks.iter().map(|c| c.level).max().unwrap_or(0);
+                Response::OrbitStabilityIs {
+                    system,
+                    verdict: stability::verdict_word(worst).into(),
+                    checks: checks
+                        .iter()
+                        .map(|c| serde_json::to_value(c).unwrap_or_default())
+                        .collect(),
+                    unchecked: unchecked
+                        .iter()
+                        .map(|c| serde_json::to_value(c).unwrap_or_default())
+                        .collect(),
+                }
+            }
             Request::OrbitsAt {
                 system,
                 at_s,
@@ -5669,6 +5780,7 @@ impl Kernel {
                     minimise: voyage::minimise(minimise.as_deref())?,
                     visited: &visited,
                     sheet: &self.observe.reference,
+                    engines: &self.observe.engines,
                 };
                 let voyage = match (fixture.as_deref(), nav.as_ref(), system) {
                     (Some(f), None, None) => nav::plan_voyage(nav::Source::Fixture(f), ask)?,
@@ -5730,6 +5842,7 @@ impl Kernel {
                 audience,
                 ..
             } => {
+                let engines = self.observe.engines.clone();
                 let u = self.universe()?;
                 let audience = audience.unwrap_or_else(|| "gm".into());
                 let records = sse_record::links::links_at(
@@ -5766,6 +5879,7 @@ impl Kernel {
                             surveyed: &surveyed,
                             gambles: gambles.unwrap_or(false),
                             links: &links,
+                            engines: &engines,
                         },
                     )
                 })?;

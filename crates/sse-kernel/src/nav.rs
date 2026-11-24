@@ -12,6 +12,7 @@ use sse_core::quantity::consts::{JULIAN_YEAR, L_SUN, R_EARTH, R_SUN, STEFAN_BOLT
 use sse_core::{math as m, Address};
 use sse_formation::pipeline::SystemRun;
 use sse_nav::{Belt, NavBody, NavSettings, NavSystem, RouteRequest, Ship};
+use std::collections::BTreeMap;
 
 pub(crate) enum Source<'a> {
     Fixture(&'a str),
@@ -299,6 +300,76 @@ pub(crate) fn fill_belts(
     }
 }
 
+/// Starlight at a body of the system, W/m² (none: not a body there).
+fn flux_at(sys: &NavSystem, place: &serde_json::Value) -> Option<f64> {
+    let b = sys.body(place.as_str()?)?;
+    let r = b.a_au * sse_core::sheet::AU;
+    (r > 0.0).then(|| sys.luminosity_w() / (4.0 * sse_core::math::PI * r * r))
+}
+
+/// Tolerance of the power books: what the stated figures need may exceed
+/// what the ledger gives by this share before the books are said not to
+/// close (the same 2% as FT6's energy in against energy out).
+pub(crate) const POWER_TOLERANCE: f64 = 0.02;
+
+/// RK9 part 2: a ship as its fitted parts make it, at the dimmer of the
+/// leg's ends (sunlight power is held at the dimmer end, not integrated
+/// along the path: fudge register), with its power books. A ship with no
+/// `engines` comes back as given, with no books.
+pub(crate) fn powered(
+    ship: Ship,
+    defs: &BTreeMap<String, sse_nav::power::EngineDef>,
+    fluxes: &[Option<f64>],
+    t_s: f64,
+) -> (Ship, Option<serde_json::Value>) {
+    let known: Vec<f64> = fluxes.iter().flatten().copied().collect();
+    let flux = known.iter().copied().fold(f64::INFINITY, f64::min);
+    let flux = if flux.is_finite() { flux } else { 0.0 };
+    let Some((l, s)) = ship.effective(defs, flux, t_s as i64) else {
+        return (ship, None);
+    };
+    let mut b = books(&l, &s, flux);
+    if ship.sunlit_power() && known.is_empty() {
+        b["why"]
+            .as_array_mut()
+            .expect("a list")
+            .push("no world to read the starlight at: sunlight power is taken as none".into());
+    }
+    (s, Some(b))
+}
+
+/// The ledger as the card reads it: the flows, spare power, heat, what came
+/// from nowhere, and one balance shaped like `tech_reading`'s.
+pub(crate) fn books(l: &sse_nav::power::Ledger, s: &Ship, flux: f64) -> serde_json::Value {
+    let supply = l.engines.iter().map(|e| e.jet_w - e.nowhere_w).sum::<f64>();
+    let demand = supply + l.nowhere_w;
+    let closes = l.nowhere_w <= POWER_TOLERANCE * demand.max(0.0);
+    let mut balance = serde_json::json!({
+        "id": "power-books", "name": "Power the jets carry against power they are given",
+        "demand": demand, "supply": supply, "unit": "W", "closes": "at_most",
+        "tolerance": POWER_TOLERANCE, "ok": closes,
+        "times": if supply > 0.0 { demand / supply } else if demand > 0.0 { f64::INFINITY } else { 1.0 },
+        "inputs": {"made_w": l.made_w, "wanted_w": l.wanted_w, "nowhere_w": l.nowhere_w},
+    });
+    if !closes {
+        balance["says"] = format!(
+            "the books do not close by {} MW: {}",
+            (l.nowhere_w / 1e4).round() / 100.0,
+            l.why.join("; ")
+        )
+        .into();
+    }
+    serde_json::json!({
+        "flux_w_m2": flux,
+        "accel_g": s.accel_g,
+        "exhaust_km_s": s.exhaust_km_s,
+        "ledger": l,
+        "balance": balance,
+        "fictional": !closes,
+        "why": l.why,
+    })
+}
+
 pub(crate) struct Ask<'a> {
     pub source: Source<'a>,
     pub ship: &'a serde_json::Value,
@@ -309,6 +380,7 @@ pub(crate) struct Ask<'a> {
     pub prefer: Option<&'a str>,
     pub rescue: Option<&'a serde_json::Value>,
     pub sheet: &'a sse_reference::Reference,
+    pub engines: &'a BTreeMap<String, sse_nav::power::EngineDef>,
 }
 
 /// The NAV system a source names, and the time it was read at (a system's).
@@ -342,8 +414,11 @@ pub(crate) fn plan_route(a: Ask) -> Result<serde_json::Value, Response> {
     let s = sse_nav::scenario::settings();
     let (mut sys, t_read) = nav_system(a.source)?;
     fill_belts(&mut sys, a.sheet, &s);
+    let t0 = a.depart_s.or(t_read).unwrap_or(sys.t0_s);
+    let fluxes = [Some(a.from), a.to].map(|p| p.and_then(|p| flux_at(&sys, p)));
+    let (fitted, power) = powered(ship(&s, a.ship)?, a.engines, &fluxes, t0);
     let mut req = serde_json::json!({
-        "ship": ship(&s, a.ship)?,
+        "ship": fitted,
         "from": a.from,
         "window_days": a.window_days.unwrap_or(365.0),
     });
@@ -361,7 +436,11 @@ pub(crate) fn plan_route(a: Ask) -> Result<serde_json::Value, Response> {
     }
     let req: RouteRequest = serde_json::from_value(req).map_err(|e| bad(format!("route: {e}")))?;
     let plan = sse_nav::plan(&s, &sys, &req).map_err(|e| err("route_refused", e))?;
-    Ok(serde_json::to_value(plan).expect("plain data"))
+    let mut v = serde_json::to_value(plan).expect("plain data");
+    if let (Some(p), Some(o)) = (power, v.as_object_mut()) {
+        o.insert("power".into(), p);
+    }
+    Ok(v)
 }
 
 /// `window_view`: what a sensor sees from beside a body or a point, in a fixture or inline system.
@@ -416,6 +495,7 @@ pub(crate) struct VoyageAsk<'a> {
     pub minimise: sse_nav::voyage::Minimise,
     pub visited: &'a [String],
     pub sheet: &'a sse_reference::Reference,
+    pub engines: &'a BTreeMap<String, sse_nav::power::EngineDef>,
 }
 
 pub(crate) fn plan_voyage(source: Source, a: VoyageAsk) -> Result<serde_json::Value, Response> {
@@ -423,8 +503,10 @@ pub(crate) fn plan_voyage(source: Source, a: VoyageAsk) -> Result<serde_json::Va
     let s = sse_nav::scenario::settings();
     let (mut sys, t_read) = nav_system(source)?;
     fill_belts(&mut sys, a.sheet, &s);
-    let ship = ship(&s, a.ship)?;
     let t0 = a.depart_s.or(t_read).unwrap_or(sys.t0_s);
+    let ends =
+        [Some(a.from), a.to].map(|p| p.and_then(|p| flux_at(&sys, &serde_json::Value::from(p))));
+    let (ship, power) = powered(ship(&s, a.ship)?, a.engines, &ends, t0);
     let places = sse_nav::insystem::places(&sys, &s.voyage.in_system);
     let home = sys
         .body(a.from)
@@ -464,7 +546,7 @@ pub(crate) fn plan_voyage(source: Source, a: VoyageAsk) -> Result<serde_json::Va
         Ok((v, _)) => (serde_json::to_value(v).expect("plain data"), vec![]),
         Err(r) => (serde_json::Value::Null, r),
     };
-    Ok(serde_json::json!({
+    let mut out = serde_json::json!({
         "scale": "system",
         "system": sys.name,
         "ship": ship.name,
@@ -478,5 +560,9 @@ pub(crate) fn plan_voyage(source: Source, a: VoyageAsk) -> Result<serde_json::Va
             "belts: Hohmann transfers or torch flights to the belt's middle radius, met anywhere on the ring with no window",
             "the same search as between the stars: fuel carried, refuel where fuel is known, the chosen measure minimised",
         ],
-    }))
+    });
+    if let Some(p) = power {
+        out["power"] = p;
+    }
+    Ok(out)
 }
