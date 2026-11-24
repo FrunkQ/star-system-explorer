@@ -439,6 +439,7 @@ pub fn effect_at_range(ask: &Ask, sheet: &Sheet) -> Result<Effect, String> {
                 reject_k: *reject_k,
                 mass_t: None,
                 off: false,
+                role: Some("weapon".into()),
             })
         }
         _ => None,

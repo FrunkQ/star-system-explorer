@@ -686,6 +686,24 @@ pub enum Request {
         #[ts(optional)]
         at_s: Option<i64>,
     },
+    /// Natural resource inventory (TG11, MP8b): for each world of `system`
+    /// (or `body`), the kilograms of each resource kind in `kinds` (pack
+    /// kinds from `provides.other.resources`, or any element id or `h2o`
+    /// straight from the sheet; left out, every pack kind) within the
+    /// kind's reach (crust, sea, air, surface or whole), read off
+    /// `read_composition` at Survey. No dice; no surface stage runs.
+    ReadInventory {
+        system: String,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        kinds: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
     /// Magnitudes in photometric bands (night sky Y2, light side): for each
     /// of `stars` (a photosphere: `temperature_k` with `radius_m` or
     /// `luminosity_w`, and a sight line: `distance_m`, dust `a_v` and `r_v`),
@@ -2062,6 +2080,7 @@ impl Request {
             Request::ReadActivity { .. } => "read_activity",
             Request::ReadField { .. } => "read_field",
             Request::ReadComposition { .. } => "read_composition",
+            Request::ReadInventory { .. } => "read_inventory",
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
@@ -2303,6 +2322,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_composition",
             Cost::Trivial,
             "per body: a few hundred multiplications over the sheet's elements",
+        ),
+        o(
+            "read_inventory",
+            Cost::Trivial,
+            "per body: read_composition at Survey, then one sum per kind",
         ),
         o(
             "read_photometry",
@@ -2899,6 +2923,13 @@ pub enum Response {
     /// (bulk materials, separation strength, elements heaviest first with
     /// reservoirs at Survey, stand-ins).
     CompositionRead {
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+    },
+    /// `read_inventory`: each of `bodies` is a world's address, mass and
+    /// kinds (id, matter, reach, kg, per_kg, by_reservoir, note), with
+    /// stand-ins.
+    InventoryRead {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
     },

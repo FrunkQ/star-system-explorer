@@ -3379,6 +3379,7 @@
     ]
    }
   ]
+<<<<<<< HEAD
  },
  {
   "op": "effect_at_range",
@@ -3404,5 +3405,17 @@
     "distance_m": 1.0e5
    }
   ]
+=======
+  },
+ {
+  "op": "read_inventory",
+  "system": "u:matter/sys:1",
+  "kinds": ["fe", "h2o"]
+ },
+ {
+  "op": "read_inventory",
+  "system": "u:matter/sys:1",
+  "kinds": ["unobtainium"]
+>>>>>>> origin/main
  }
 ]

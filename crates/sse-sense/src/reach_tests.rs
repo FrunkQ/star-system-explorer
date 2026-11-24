@@ -84,6 +84,7 @@ fn a_twenty_megawatt_beam_puts_forty_seven_on_the_heat_bus() {
     let heat = l.electric_w - 2e7;
     assert!((heat / 1e6 - 46.667).abs() < 1e-3, "{heat}");
     assert_eq!(l.reject_k, Some(600.0));
+    assert_eq!(l.role.as_deref(), Some("weapon"));
     assert!(ask(beam(2e7, None), target(Some(1e7)), 1e5).load.is_none());
 }
 
