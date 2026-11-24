@@ -100,7 +100,26 @@ Mason, L. S. 2003, A power conversion concept for the Jupiter Icy Moons Orbiter,
 Johnson, S. 2003, Project Prometheus (workshop slides), NASA/TM-2003-212598. https://ntrs.nasa.gov/api/citations/20040034798/downloads/20040034798.pdf : "Up to 100 kWe", "specific mass (alpha) 50 kg/kWe" (slide 13).
 Parkin, K. L. G. 2018, The Breakthrough Starshot system model, Acta Astronautica 152, 370, arXiv:1805.01306 (v3). https://arxiv.org/pdf/1805.01306 : 200 GW transmitted, 2.7 km optics, 1.06 µm, 4.1 m sail, 3.6 g with a 1 g payload, 0.2 c, 550 s of acceleration, 14,900 g peak, 63 GWh stored, 1.9 GWh kinetic, $8.0B beamer (Tables 1 and 2).
 
+## NASA DRA 5.0 nuclear thermal crew vehicle (added in part 2)
+
+Borowski, S. K., McCurdy, D. R. and Packard, T. W. 2009, Nuclear thermal rocket/vehicle characteristics and sensitivity trades for NASA's Mars Design Reference Architecture (DRA) 5.0 study, Nuclear and Emerging Technologies for Space 2009, paper 203599 (NASA E-18236). https://ntrs.nasa.gov/api/citations/20120012928/downloads/20120012928.pdf . Clean text.
+- Three 25 klbf "Pewee-class" engines; Isp "900 s (2650 K) - 910 s (2700 K)", the analysis used 900 s (Table II).
+- Phase II 4-launch crewed vehicle with twin drop tanks: IMLEO "~333 t" (section V); total usable LH2 ~180.2 t; crewed payload ~51.3 t (section III).
+- Table I: crew 6; transit habitat 27.5 t; consumables 13.23 t; "180 day transit times to and from Mars"; ~540 days at Mars; Earth departure C3 ~18.40 km²/s², TMI ~3.992 km/s, Mars capture ~1.771 km/s, TEI ~1.562 km/s (ideal, no gravity losses).
+- Power: ~30 kWe life support, ~15 kWe zero boil-off cryocoolers, ~5 kWe communications.
+- Engine mass not given (thrust-to-weight ~3.43).
+Borowski, McCurdy and Packard 2012, AIAA-2012-5144. https://ntrs.nasa.gov/api/citations/20150006732/downloads/20150006732.pdf : "Isp~906 s" (p. 8); four 12.5 kWe arrays give "~50 kWe of electrical power at Mars" (p. 12).
+Check: the ideal delta-v sum 7.325 km/s at 8.826 km/s needs a mass ratio of 2.29, so 333 t leaves about 145 t; the record's 152.8 t dry (IMLEO less usable hydrogen) agrees to 5%.
+
+## Longshot follow-up (part 2)
+- Range "4.3 light-years" (sec. 3.4); "4.3 light years ... is equivalent to 41,000 terra meters" (sec. 3.2.2).
+- Turnover "at the 71.27 year point in the mission" (sec. 2.2); after braking, "the two remaining fuel tanks and the fusion drive will be discarded" (sec. 2.2): the probe stages.
+
+## Looked for, not found as open text (part 2)
+- Moravec 1977, A non-synchronous orbital skyhook, J. Astronautical Sciences 25(4) 307: only the abstract is open (CMU publications page); no figures read.
+- Project Daedalus final report (JBIS 1978 supplement): library catalogue entries only.
+- Lofstrom 1985 launch loop: only secondary pages found.
+
 ## Wanted, not yet read
 - Project Daedalus (Bond, Martin et al. 1978, JBIS supplement): no open primary text found; the pack waits for it rather than using secondary figures.
-- NASA DRA 5.0 Addendum (NASA-SP-2009-566-ADD) for the nuclear thermal Mars ship: the nasa.gov PDF refused the fetch.
 - EMPIRE (1962 to 1963 Aeronutronic, General Dynamics and Lockheed studies), launch loops (Lofstrom 1985), skyhooks (Moravec 1977).
