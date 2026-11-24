@@ -3,3 +3,4 @@ export * from "./edition.ts";
 export * from "./catalogue.ts";
 export * from "./page.ts";
 export * from "./loader.ts";
+export * from "./text.ts";

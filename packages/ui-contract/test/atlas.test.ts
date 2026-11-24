@@ -20,6 +20,9 @@ import {
   checkEdition,
   testRender,
   typedFigures,
+  pageText,
+  atlasHtml,
+  TEXT_BAR,
   type AtlasPage,
   type EditionDoc,
 } from "../src/atlas/index.ts";
@@ -243,3 +246,35 @@ test("the loader refuses with sentences that say what to change", () => {
   assert.deepEqual(typedFigures("about 5 kg and 3 days"), ["5 kg", "3 days"]);
 });
 
+
+test("Copy as text says what the page says: same figures, gaps as words or a fixed bar, Markdown when asked", () => {
+  const p = page(after, TARN);
+  const plain = pageText(p, { footer: "Survey atlas · Kestrel" });
+  for (const r of facts(p).filter((r) => r.state !== "gap")) assert.ok(plain.includes(r.text), `${r.field} is in the copy`);
+  assert.match(plain, /^Tarn\n====/);
+  assert.ok(plain.trimEnd().endsWith("Survey atlas · Kestrel"));
+  const md = pageText(p, { markdown: true });
+  assert.match(md, /^# Tarn\n/);
+  assert.match(md, /- \*\*.+:\*\* 0\.63 AU/);
+  // Company bars what the table has not learnt: the bar is the same length whatever is behind it.
+  const company = resolveEdition("sse.edition.company");
+  const seat = page(before, TARN, company);
+  const t = pageText(seat);
+  if (facts(seat).some((r) => r.bar)) assert.ok(t.includes(TEXT_BAR));
+  for (const m of t.matchAll(/█+/g)) assert.equal(m[0], TEXT_BAR);
+  assert.equal(pageText(p), pageText(page(after, TARN)), "the same page copies the same");
+});
+
+test("Save page is one self-contained HTML file: escaped, no script, nothing from the web", () => {
+  const p = page(after, TARN);
+  const odd = { ...p, blocks: [...p.blocks, { type: "note" as const, text: "<script>alert(1)</script> & co" }] };
+  const html = atlasHtml([page(after, SYS), odd], { title: "Survey atlas: <Kestrel>", tokens: "--sse-ink: #222;", footer: "Survey atlas" });
+  assert.match(html, /^<!doctype html>/);
+  assert.ok(!/<script/i.test(html), "no script, not even an escaped page note");
+  assert.ok(html.includes("&lt;script&gt;alert(1)&lt;/script&gt; &amp; co"));
+  assert.ok(html.includes("<title>Survey atlas: &lt;Kestrel&gt;</title>"));
+  assert.ok(!/(src|href)=["']?https?:/i.test(html), "nothing loaded from the web");
+  assert.equal(html.match(/<article>/g)!.length, 2, "one article per page");
+  assert.ok(html.includes("0.63 AU"));
+  assert.ok(html.includes("--sse-ink: #222;"));
+});

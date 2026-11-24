@@ -6,11 +6,13 @@
   a "Contents" button.
 -->
 <script lang="ts">
-  import { untrack } from "svelte";
-  import { EVERYONE, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { tick, untrack } from "svelte";
+  import { EVERYONE, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
   import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
+  import AtlasPrint from "./AtlasPrint.svelte";
+  import { dateWords, defaultCalendar, fromPackCalendar } from "../../../chart-grammar/src/calendar.ts";
 
   let { ctx, scene, host }: { ctx: ViewContext; scene: SystemScene; host: AtlasHost } = $props();
   const ws = $derived(ctx.workspace);
@@ -62,6 +64,73 @@
   });
   const page = $derived(book && address ? buildPage(book, address, edition, { vocab, depth: ws.depth }) : null);
   const titleOf = (a: string | null) => lines.find((l) => l.address === a)?.title ?? "";
+
+  // The date the page speaks for: the ruler's time, in the campaign's calendar. A printed page says it in its footer.
+  const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
+  const date = $derived(dateWords(ws.now_yr, calendar));
+  const footer = $derived(`${edition.name} · ${titleOf(lines[0]?.address ?? null)} · as known to ${audienceWords}, ${date}`);
+
+  // ---- Print under the view (AT4): this page, this chapter or the whole Atlas, in the edition showing, in place.
+  let printOpen = $state(false);
+  let scope = $state<"page" | "chapter" | "atlas">("page");
+  // Letter where the device's language says North America; A4 everywhere else. Changeable.
+  let paper = $state<"A4" | "Letter">(typeof navigator !== "undefined" && /^(en-US|en-CA|es-MX|fr-CA)$/i.test(navigator.language) ? "Letter" : "A4");
+  let saveInk = $state(true);
+  let printing = $state<{ pages: import("../../../ui-contract/src/index.ts").AtlasPage[]; look: string } | null>(null);
+  let said = $state<string | null>(null);
+
+  function pagesFor(which: "page" | "chapter" | "atlas") {
+    if (!book || !address) return [];
+    const want = which === "page" ? [address] : which === "chapter" ? chapterOf(lines, address).map((l) => l.address) : lines.map((l) => l.address);
+    return want.map((a) => buildPage(book!, a, edition, { vocab, depth: ws.depth })).filter((p) => p !== null);
+  }
+
+  async function print(which: "page" | "chapter" | "atlas") {
+    said = null;
+    printOpen = false;
+    const pages = pagesFor(which);
+    if (!pages.length) return void (said = "There is no page to print yet.");
+    printing = { pages, look: saveInk ? host.paperCss(edition.look, edition.print.save_ink_look) : look };
+    await tick();
+    let started = false;
+    const mark = () => (started = true);
+    window.addEventListener("beforeprint", mark, { once: true });
+    try {
+      if (typeof window.print !== "function") throw new Error("this browser has no print");
+      window.print();
+    } catch (e) {
+      said = `Printing could not start: ${(e as Error).message}. Try your browser's own Print, or Copy as text.`;
+    }
+    window.removeEventListener("beforeprint", mark);
+    if (!started && !said) said = "Printing did not start. This browser may block printing here; try your browser's own Print, or Save page.";
+    printing = null;
+  }
+
+  async function copyText(markdown: boolean) {
+    said = null;
+    printOpen = false;
+    const text = pagesFor(scope).map((p) => pageText(p, { markdown, footer })).join(markdown ? "\n---\n\n" : "\n\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      said = markdown ? "Copied as Markdown." : "Copied as text.";
+    } catch {
+      said = "The browser would not let the Atlas copy. Use Save page instead.";
+    }
+  }
+
+  function savePage() {
+    said = null;
+    printOpen = false;
+    const pages = pagesFor(scope);
+    if (!pages.length) return;
+    const html = atlasHtml(pages, { title: `${edition.name}: ${pages[0]!.title}`, tokens: saveInk ? host.paperCss(edition.look, edition.print.save_ink_look) : look, footer });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    a.download = `${edition.name} - ${pages[0]!.title}.html`.replace(/[\\/:*?"<>|]/g, "-");
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    said = "Saved as one page you can open anywhere.";
+  }
 
   let folded = $state(false);
   let pageBox = $state<HTMLElement | null>(null);
@@ -123,8 +192,27 @@
     <Segmented label="Edition" options={editions} value={editionId} onchange={(v) => (editionId = v)} slide />
     <span class="gapfill"></span>
     <Segmented label="Seen by" options={audiences} value={audience} onchange={(v) => (audience = v)} slide />
+    <button type="button" class="printnow" onclick={() => print("page")} disabled={!page}>Print this page</button>
+    <span class="printwrap">
+      <button type="button" class="printmore" aria-expanded={printOpen} aria-controls="atlas-print-panel" onclick={() => (printOpen = !printOpen)} disabled={!page}>Print…</button>
+      {#if printOpen}
+        <div class="panel" id="atlas-print-panel" role="group" aria-label="Print">
+          <Segmented label="What to print" options={[{ value: "page", label: "This page" }, { value: "chapter", label: "This chapter" }, { value: "atlas", label: "Whole atlas" }]} value={scope} onchange={(v) => (scope = v)} />
+          <Segmented label="Paper" options={[{ value: "A4", label: "A4" }, { value: "Letter", label: "Letter" }]} value={paper} onchange={(v) => (paper = v)} />
+          <label class="ink"><input type="checkbox" bind:checked={saveInk} /> Save ink</label>
+          <button type="button" class="printnow" onclick={() => print(scope)}>Print</button>
+          <p class="others">Or, as {edition.name} words:</p>
+          <div class="row2">
+            <button type="button" onclick={() => copyText(false)}>Copy as text</button>
+            <button type="button" onclick={() => copyText(true)}>Copy as Markdown</button>
+            <button type="button" onclick={savePage}>Save page</button>
+          </div>
+        </div>
+      {/if}
+    </span>
     <button type="button" class="fold" aria-expanded={folded} onclick={() => (folded = !folded)}>Contents</button>
   </div>
+  {#if said}<p class="said" role="status">{said}</p>{/if}
   <div class="spread">
     <nav class="contents" class:open={folded} aria-label="Contents">
       <p class="book">{titleOf(lines[0]?.address ?? null)}</p>
@@ -143,7 +231,7 @@
     <div class="pagebox" bind:this={pageBox} onpointerdown={pdown} onpointerup={pup} role="presentation">
       {#if page}
         <div class="look" style={look} data-atlas-edition={edition.id} data-atlas-audience={book?.audience}>
-        <AtlasPage {page} onlink={go} footer="{edition.name} · {titleOf(lines[0]?.address ?? null)} · as known to {audienceWords}" />
+        <AtlasPage {page} onlink={go} {footer} />
         </div>
         {@render stepper("below")}
       {:else if failed}
@@ -156,6 +244,8 @@
     </div>
   </div>
 </div>
+
+{#if printing}<AtlasPrint pages={printing.pages} look={printing.look} {footer} {paper} />{/if}
 
 <style>
   .atlas {
@@ -184,6 +274,82 @@
   }
   .fold {
     display: none;
+  }
+  .printwrap {
+    position: relative;
+  }
+  .printnow,
+  .printmore,
+  .row2 button {
+    font: inherit;
+    padding: 6px 12px;
+    border-radius: var(--sse-radius);
+    border: 1px solid var(--sse-ink);
+    background: var(--sse-ground);
+    color: var(--sse-ink);
+    cursor: pointer;
+  }
+  .printnow {
+    background: var(--sse-accent);
+    border-color: var(--sse-accent);
+    color: var(--sse-on-ink);
+  }
+  .printnow:not(:disabled):active,
+  .printmore:not(:disabled):active,
+  .row2 button:active {
+    transform: translateY(1px);
+  }
+  .printnow:focus-visible,
+  .printmore:focus-visible,
+  .row2 button:focus-visible {
+    outline: 2px solid var(--sse-focus, var(--sse-accent));
+    outline-offset: 2px;
+  }
+  .panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 5;
+    display: grid;
+    gap: 10px;
+    width: max-content;
+    max-width: min(92vw, 380px);
+    padding: 14px;
+    background: var(--sse-ground-raised);
+    border: 1px solid var(--sse-line);
+    border-radius: var(--sse-radius);
+    box-shadow: var(--sse-card-shadow);
+    transform-origin: top right;
+    justify-items: start;
+    animation: open var(--sse-motion-quick, 120ms) var(--sse-ease, ease-out);
+  }
+  .panel > .printnow {
+    justify-self: stretch;
+  }
+  @keyframes open {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+  }
+  .ink {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .others {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--sse-ink-muted);
+  }
+  .row2 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .said {
+    margin: 0;
+    color: var(--sse-ink-muted);
   }
   .spread {
     display: grid;
@@ -308,6 +474,9 @@
   @media (prefers-reduced-motion: reduce) {
     li button {
       transition: none;
+    }
+    .panel {
+      animation: none;
     }
   }
 </style>

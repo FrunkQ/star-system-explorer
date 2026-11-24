@@ -14,6 +14,7 @@ const { chromium } = createRequire(import.meta.url)("playwright");
 const args = process.argv.slice(2);
 const si = args.indexOf("--screens");
 const screens = si >= 0 ? args.splice(si, 2)[1] : null;
+const pdfs = args.indexOf("--pdfs") >= 0 ? args.splice(args.indexOf("--pdfs"), 2)[1] : screens;
 const port = 9500 + Math.floor(Math.random() * 90);
 const root = `http://localhost:${port}/`;
 const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
@@ -29,7 +30,9 @@ const title = (page) => page.locator("[data-atlas-page] h1").innerText();
 try {
   const browser = await chromium.launch();
   const errors = [];
-  const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 })).newPage();
+  const gmContext = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1, acceptDownloads: true });
+  await gmContext.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const gm = await gmContext.newPage();
   gm.on("pageerror", (e) => errors.push(e.message));
   await gm.goto(root + "#chart");
   await ready(gm);
@@ -72,6 +75,75 @@ try {
   await gm.waitForFunction(() => document.querySelector("[data-atlas-edition]")?.getAttribute("data-atlas-edition") === "sse.edition.company");
   assert.deepEqual(await figures(), surveyFigs);
   await shot(gm, "atlas-company-desk");
+
+  // Print under the view (AT4). The browser's print is stood in for: it keeps what would print (the print-only pages
+  // and the sheet size) and says printing began. Each edition prints in its own words; Save ink prints a dark look light.
+  await gm.evaluate(() => {
+    window.__prints = [];
+    window.print = () => {
+      const node = document.querySelector(".atlas-print:not([data-kept-print])");
+      const size = document.querySelector("style[data-atlas-page-size]:not([data-kept-print])");
+      window.__prints.push({ pages: Number(node?.getAttribute("data-atlas-print") ?? 0), size: size?.textContent ?? "" });
+      document.querySelectorAll("[data-kept-print]").forEach((n) => n.remove());
+      for (const n of [node, size]) if (n) document.body.appendChild(Object.assign(n.cloneNode(true), {})).setAttribute("data-kept-print", "");
+      window.dispatchEvent(new Event("beforeprint"));
+    };
+  });
+  const prints = () => gm.evaluate(() => window.__prints);
+  const pdf = async (n) => {
+    if (!pdfs) return;
+    mkdirSync(pdfs, { recursive: true });
+    await gm.evaluate(() => {
+      const kept = [...document.querySelectorAll("[data-kept-print]")];
+      for (const k of kept) if (k.tagName === "STYLE") document.head.appendChild(k);
+    });
+    await gm.emulateMedia({ media: "print" });
+    await gm.pdf({ path: `${pdfs}/${n}.pdf`, preferCSSPageSize: true, printBackground: true });
+    await gm.emulateMedia({ media: "screen" });
+  };
+  for (const [name, id] of [["Survey atlas", "survey"], ["The Guide", "guide"], ["Company", "company"]]) {
+    await edition.getByRole("button", { name }).click();
+    await gm.waitForFunction((x) => document.querySelector("[data-atlas-edition]")?.getAttribute("data-atlas-edition") === x, `sse.edition.${id}`);
+    const n = (await prints()).length + 1;
+    await atlas.getByRole("button", { name: "Print this page" }).click();
+    await gm.waitForFunction((x) => window.__prints.length === x, n);
+    const kept = await gm.locator(".atlas-print[data-kept-print] [data-atlas-page] h1").allInnerTexts();
+    assert.deepEqual(kept, ["Tarn"], `${name}: this page prints, and only it`);
+    const keptFigs = await gm.locator(".atlas-print[data-kept-print] [data-atlas-page] .fig").allInnerTexts();
+    assert.deepEqual(keptFigs, surveyFigs, `${name}: the printed figures are the page's own`);
+    await pdf(`atlas-tarn-${id}`);
+  }
+  assert.equal(await gm.locator(".atlas-print:not([data-kept-print])").count(), 0, "the print pages go once printing is over");
+  // Print…: the whole atlas on Letter.
+  await atlas.getByRole("button", { name: "Print…" }).click();
+  const panel = atlas.getByRole("group", { name: "Print" });
+  await panel.getByRole("group", { name: "What to print" }).getByRole("button", { name: "Whole atlas" }).click();
+  await panel.getByRole("group", { name: "Paper" }).getByRole("button", { name: "Letter" }).click();
+  await atlas.getByRole("button", { name: "Print…" }).scrollIntoViewIfNeeded();
+  await shot(gm, "atlas-print-panel-desk");
+  await panel.getByRole("button", { name: "Print", exact: true }).click();
+  await gm.waitForFunction(() => window.__prints.length === 4);
+  const whole = (await prints())[3];
+  assert.equal(whole.pages, gmPages, "the whole atlas prints every page in the book");
+  assert.match(whole.size, /size: letter/);
+  await pdf("atlas-whole-company");
+  // When printing cannot start, the Atlas says so in a sentence.
+  await gm.evaluate(() => (window.print = () => {}));
+  await atlas.getByRole("button", { name: "Print this page" }).click();
+  await atlas.getByRole("status").filter({ hasText: "Printing did not start" }).waitFor();
+  // Copy as text and Save page carry the same words and figures.
+  await atlas.getByRole("button", { name: "Print…" }).click();
+  await panel.getByRole("group", { name: "What to print" }).getByRole("button", { name: "This page" }).click();
+  await panel.getByRole("button", { name: "Copy as Markdown" }).click();
+  await atlas.getByRole("status").filter({ hasText: "Copied as Markdown" }).waitFor();
+  const md = await gm.evaluate(() => navigator.clipboard.readText());
+  assert.match(md, /^# Tarn/);
+  for (const f of surveyFigs) assert.ok(md.includes(f), `the copy says ${f}`);
+  await atlas.getByRole("button", { name: "Print…" }).click();
+  const [download] = await Promise.all([gm.waitForEvent("download"), panel.getByRole("button", { name: "Save page" }).click()]);
+  assert.match(download.suggestedFilename(), /^Company - Tarn\.html$/);
+  if (pdfs) await download.saveAs(`${pdfs}/atlas-tarn-company.html`);
+  await gm.evaluate(() => document.querySelectorAll("[data-kept-print]").forEach((n) => n.remove()));
 
   // Seen by the table: their own book, never larger than the GM's, with gaps said in plain words.
   await atlas.getByRole("group", { name: "Seen by" }).getByRole("button", { name: "Everyone" }).click();

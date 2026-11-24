@@ -5,6 +5,8 @@ import type { SystemScene, ViewModule, Vocab } from "../../../ui-contract/src/in
 export interface AtlasHost {
   vocabs: Readonly<Record<string, Vocab>>;
   lookCss(look: string): string;
+  /** The look's paper form for "Save ink": a dark look gives way to a light one (the edition's `save_ink_look`, else paper). */
+  paperCss(look: string, saveInkLook?: string): string;
 }
 import Atlas from "./Atlas.svelte";
 
