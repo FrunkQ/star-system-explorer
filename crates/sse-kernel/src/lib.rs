@@ -38,6 +38,9 @@ mod sea;
 mod sky;
 #[cfg(test)]
 mod sol_tests;
+mod stability;
+#[cfg(test)]
+mod stability_tests;
 mod star_elements;
 #[cfg(test)]
 mod star_elements_tests;
@@ -5062,6 +5065,67 @@ impl Kernel {
                 }
             }
             Request::ProgramsStep { at_s } => self.programs_step(at_s)?,
+            Request::OrbitStability {
+                system,
+                bodies,
+                add,
+                at_s,
+            } => {
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let mut facts = match &bodies {
+                    Some(b) => orbits::inline_facts(b)?,
+                    None => {
+                        let u = self.universe()?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        let st = u
+                            .chronicle
+                            .state_at(UniverseTime::seconds(at_s.unwrap_or(i64::MAX)));
+                        st.facts
+                            .iter()
+                            .filter(|(x, _)| a.contains(x))
+                            .map(|(x, r)| (x.clone(), r.clone()))
+                            .collect()
+                    }
+                };
+                let mut focus = vec![];
+                if let Some(extra) = &add {
+                    for (x, row) in orbits::inline_facts(extra)? {
+                        focus.push(x.to_string());
+                        facts.entry(x).or_default().extend(row);
+                    }
+                }
+                let (checks, unchecked) = stability::checks(&facts, &a);
+                let hosts: Vec<String> = checks
+                    .iter()
+                    .filter(|c| c.bodies.iter().any(|b| focus.contains(b)))
+                    .map(|c| c.around.clone())
+                    .collect();
+                let checks = stability::concerning(checks, &focus, &hosts);
+                let unchecked: Vec<_> = unchecked
+                    .into_iter()
+                    .filter(|u| focus.is_empty() || u.bodies.iter().any(|b| focus.contains(b)))
+                    .collect();
+                let worst = checks.iter().map(|c| c.level).max().unwrap_or(0);
+                Response::OrbitStabilityIs {
+                    system,
+                    verdict: stability::verdict_word(worst).into(),
+                    checks: checks
+                        .iter()
+                        .map(|c| serde_json::to_value(c).unwrap_or_default())
+                        .collect(),
+                    unchecked: unchecked
+                        .iter()
+                        .map(|c| serde_json::to_value(c).unwrap_or_default())
+                        .collect(),
+                }
+            }
             Request::OrbitsAt {
                 system,
                 at_s,

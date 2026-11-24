@@ -78,6 +78,19 @@ pub fn registry() -> AtomRegistry {
 /// missing here fails `every_port_kind_is_described`.
 pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("star.mass", "mass of a star"),
+    ("orbit.angular_momentum_deficit", "angular momentum an orbit lacks against a flat circle of the same size (kg m2 s-1)"),
+    ("orbit.ascending_node", "longitude of an orbit's ascending node, radians"),
+    ("orbit.inclination", "tilt of an orbit against its host's reference plane, radians"),
+    ("orbit.binary_limit", "widest (round one star) or nearest (round both) lasting planet orbit in a binary"),
+    ("orbit.hill_gap", "inner apoapsis to outer periapsis, in mutual Hill radii"),
+    ("orbit.hill_spacing", "gap between two neighbouring orbits, in mutual Hill radii"),
+    ("orbit.kozai_time", "time for one Kozai-Lidov swing of an inner orbit"),
+    ("orbit.mass_share", "a binary's mass ratio, the chosen star's share of the pair's mass"),
+    ("orbit.moon_limit", "widest orbit a moon keeps round its planet"),
+    ("orbit.mutual_hill_radius", "radius of the gravity bubble two neighbours share"),
+    ("orbit.mutual_inclination", "angle between two orbital planes, radians"),
+    ("orbit.relative_amd", "a system's angular momentum deficit against an outer planet's circular angular momentum"),
+    ("orbit.stability_verdict", "a stability check's verdict as a number: 0 lasts, higher is worse (each block says what its numbers mean)"),
     (
         "chem.standard_gibbs_298",
         "standard free energy of a reaction at 298.15 K, per mole of reaction as written",

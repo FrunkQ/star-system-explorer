@@ -1372,6 +1372,25 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// ST1: whether the orbits at or under `system` last (Hill spacing,
+    /// angular momentum deficit, moon limits, Kozai-Lidov swings, binary
+    /// limits), each check a formula block shown with its numbers. Reads the
+    /// universe's facts at `at_s` (absent: all of them), or `bodies`
+    /// (`[{address, facts}]`); `add` (same shape) is laid over them, and
+    /// then only the checks that concern the added bodies come back (the
+    /// card's verdict on add).
+    OrbitStability {
+        system: String,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        add: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
     /// Set the campaign's now (`campaign.now_s` on the universe root, a
     /// `time.campaign_now` event). It moves forwards or back.
     SetCampaignNow {
@@ -2006,6 +2025,7 @@ impl Request {
             Request::RulesPolicy { .. } => "rules_policy",
             Request::Rules => "rules",
             Request::OrbitsAt { .. } => "orbits_at",
+            Request::OrbitStability { .. } => "orbit_stability",
             Request::SetCampaignNow { .. } => "set_campaign_now",
             Request::CampaignNow => "campaign_now",
             Request::Calendar => "calendar",
@@ -2315,6 +2335,11 @@ pub fn ops() -> Vec<OpInfo> {
             "orbits_at",
             Cost::Light,
             "linear in bodies x times (at most 64 times); 16 Newton steps each",
+        ),
+        o(
+            "orbit_stability",
+            Cost::Light,
+            "linear in bodies, plus the outer bodies of each (Kozai); 16 Newton steps per neighbour pair",
         ),
         o("set_campaign_now", Cost::Trivial, "one universe event"),
         o("campaign_now", Cost::Trivial, "a scan of the universe events"),
@@ -3147,6 +3172,18 @@ pub enum Response {
         system: String,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `orbit_stability`: `verdict` (`lasts`, `watch` or `unstable`, the
+    /// worst check), `checks` (`{check, block, around, bodies, level, says,
+    /// inputs, results}`; level 0 lasts, 1 watch, 2 will not last, 3 the
+    /// orbits cross) and `unchecked` (`{check, bodies, missing}`).
+    OrbitStabilityIs {
+        system: String,
+        verdict: String,
+        #[ts(type = "unknown[]")]
+        checks: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        unchecked: Vec<serde_json::Value>,
     },
     /// `set_campaign_now` and `campaign_now`.
     CampaignNowIs {
