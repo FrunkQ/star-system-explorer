@@ -162,3 +162,4 @@ export type { RadiatorRule, PowerReading } from "./power.ts";
 // Range rings (RK12): effect at range as rings round the one who holds the weapon, a HUD overlay.
 export { RANGE_RING_LAYER, rangeRings, rangeText, ringPoints } from "./range-rings.ts";
 export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, RangeTarget, RangeWeapon } from "./range-rings.ts";
+export * from "./place-notes.ts";
