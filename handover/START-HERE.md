@@ -66,6 +66,8 @@ leave the browser.
 - **Golden lane:** until the golden is split by area (agreed by Alex; kernel thread first takes the op list, line 1, and the unknown-op line, 41, out of `tests/golden/contract.jsonl`, then per-area files), one golden-changing PR merges at a time, in order of readiness, each merged with main, regenerated and green. Tell the kernel thread when one opens and when it merges.
 - **Data sheet UI copy:** after any change to the data sheet or `scripts/build-ui-reference.py`, merge main, run `python3 scripts/build-ui-reference.py`, then `--check`, before merging.
 - **"Call me if there is a stop"** (Alex): if a stage is blocked on him, ask him; don't wait silently.
+- **Figures go through one door (ED1a, accepted; check lands with the editing thread's PR):** a screen never formats its own numbers. Use `packages/ui-contract/src/figures.ts` (`say`, `sayText`, `sayFact`, `sayNumber`, `roundTo`). `tests/ui/figures-ledger.test.ts` counts `toFixed`, `toPrecision` and `toLocaleString` per file under views, shell, chart-grammar, ui-contract and renderer against `tests/ui/figures-ledger.json`: a file's count may go down, never up, and a new file starts at zero. After removing calls, rewrite the ledger with `WRITE_LEDGER=1 node --test tests/ui/figures-ledger.test.ts`.
+- **Consensus for research** (Alex 18:47 UTC): the Consensus research connector is there for deep research; on the new account Claude has it directly, so use it yourself rather than writing briefs for Alex.
 - Other rulings of the day (Composite band, Hazard map, seas, pulsar glitches, CoolProp only in scratch with his yes) are in `handover/memory/sse4-rulings-24nov-evening.md`.
 
 ## Standing rule: real physics, documented fudges (Alex, 19 Nov 2026)
@@ -121,6 +123,8 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
+
+Added after 18:15 UTC (status files to follow): "Build quality tiers and speed probe", "Build detail ladder and world textures", "Build aurorae and night lights". Design: "Design visual polish and flourishes" (accepted, note in `handover/design/`); the exotic objects note's section 15 adds pulsating stars (XO19) and clocks (XO20).
 
 Design (Fable) threads take design questions for their notes: "Bring Atomic Rockets into SSE4" (RK), "Design exotic stars and black holes" (XO). A status file marked "arrives with PR n" is on that PR's branch; until it merges, its text is kept in `handover/status-on-open-prs.md`. Threads marked "none yet" were asked to start a file.
 
