@@ -40,6 +40,7 @@
   import { atomIssueTarget, flowEntries, lensEntries, lensTarget, loadAtoms, physicsTarget } from "../../agents/src/orac-targets.ts";
   import { programTarget, ruleEntries, sifterEntries, sifterTarget } from "../../agents/src/orac-rules.ts";
   import { blockEntries, boxTarget, tableTarget } from "../../agents/src/orac-blocks.ts";
+  import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -940,6 +941,13 @@
     agentsOpen = true;
     agentsDialog?.showModal();
   }
+  // "Ask Orac to create it" (editing screens, Alex 24 Nov): opens Orac with the request written in; nothing is drafted until the GM presses Draft.
+  let asking = $state<string | null>(null);
+  function askOrac(request: string) {
+    asking = request;
+    agentsOpen = true;
+    agentsDialog?.showModal();
+  }
   let makeDialog: HTMLDialogElement | undefined = $state();
   let makeOpen = $state(false);
   let makeStart = $state<"import" | "generate">("import");
@@ -1015,7 +1023,8 @@
       else if ("screen" in a) (toSystem(), go(a.screen));
       else if ("world" in a) (toWorld(someWorld()), (ws.screen = a.world));
       else if ("dialog" in a) {
-        if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
+        if (a.dialog === "ask" && a.orac) askOrac(a.orac);
+        else if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
         else if (a.dialog === "grow") openMake("generate");
         else if (a.dialog === "bring") openCampaign();
         else if (a.dialog === "share" && share) window.open(share.start(here()), "_blank", "noopener");
@@ -1064,9 +1073,10 @@
         sifterTarget(s, ws, (factsDoc as unknown as AuthoredFacts).scope),
         boxTarget(s, ws),
         tableTarget(s, ws),
+        substanceTarget(s, ws),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
-      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s)],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...handbookEntries()],
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
@@ -1656,8 +1666,8 @@
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
-<dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => ((agentsOpen = !!agentsDialog?.open), agentsOpen || (describing = null))}>
-  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} describe={describing} />{/if}
+<dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => ((agentsOpen = !!agentsDialog?.open), agentsOpen || ((describing = null), (asking = null)))}>
+  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} describe={describing} ask={asking} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 

@@ -26,6 +26,7 @@
 
 pub mod intents;
 pub mod programs;
+pub mod split;
 pub mod templates;
 
 use serde::{Deserialize, Serialize};

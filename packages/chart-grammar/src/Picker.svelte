@@ -5,7 +5,7 @@
      rule). Keyboard: type to search, arrows move, Enter picks, Escape closes and gives the keyboard back. -->
 <script lang="ts">
   import { opensFrom } from "./motion.ts";
-  import { childWordsFor, kindChips, pickerRows, type PickItem } from "../../ui-contract/src/index.ts";
+  import { childWordsFor, elsewhereRows, kindChips, pickerRows, type ElsewhereItem, type PickItem } from "../../ui-contract/src/index.ts";
 
   interface Entry {
     id: string;
@@ -23,6 +23,7 @@
     sections = [],
     placeholder = "Find…",
     heading,
+    elsewhere = [],
     onpick,
   }: {
     /** What the chip says while closed ("12 bodies"). */
@@ -41,6 +42,8 @@
     placeholder?: string;
     /** A line naming what the list is in ("In Cell 3 · 4 · 1"), above it. */
     heading?: string;
+    /** Places elsewhere in the campaign, found while typing after this level's own (the picker doubles as Find). */
+    elsewhere?: readonly ElsewhereItem[];
     onpick: (id: string) => void;
   } = $props();
 
@@ -58,6 +61,7 @@
   const chips = $derived(kindChips(items, kindOrder));
   const list = $derived(pickerRows(items, { query, kinds, open: opened, childWords: childWordsFor }));
   const searching = $derived(list.mode === "search");
+  const away = $derived(elsewhereRows(elsewhere, query, items));
 
   function toggleKind(k: string) {
     kinds = kinds.includes(k) ? kinds.filter((x) => x !== k) : [...kinds, k];
@@ -158,7 +162,7 @@
         <ul class="tree" id="{uid}-tree">
           {#each list.rows as r (r.id)}
             <li style:--depth={r.depth}>
-              <button type="button" class="row" class:sel={r.id === selected} class:context={r.context} disabled={r.context} data-pick={r.context ? undefined : r.id} data-pick-row={r.id} aria-current={r.id === selected ? "true" : undefined} onclick={() => pick(r.id)}>
+              <button type="button" class="row" class:sel={r.id === selected} class:context={r.context} disabled={r.context} data-pick={r.context ? undefined : r.id} data-pick-row={r.id} data-address={r.context ? undefined : r.id} aria-current={r.id === selected ? "true" : undefined} onclick={() => pick(r.id)}>
                 <span class="name">{r.label}</span>{#if r.caption}<span class="cap">{r.caption}</span>{/if}
               </button>
               {#if r.folded || r.opened}
@@ -166,9 +170,13 @@
               {/if}
             </li>
           {:else}
-            <li class="none">{searching ? "Nothing here by that name." : "Nothing to show: try clearing the kinds."}</li>
+            {#if !away.rows.length}<li class="none">{searching ? (query.trim().startsWith("#") ? "Nothing here carries that tag." : "Nothing here by that name.") : "Nothing to show: try clearing the kinds."}</li>{/if}
           {/each}
         </ul>
+        {#if searching && away.rows.length}
+          <p class="head" data-picker-elsewhere>Elsewhere in the campaign{away.more ? `, first ${away.rows.length}` : ""}</p>
+          <ul>{#each away.rows as e (e.id)}<li><button type="button" class="row" data-pick={e.id} onclick={() => pick(e.id)}><span class="name">{e.label}</span>{#if e.caption}<span class="cap">{e.caption}</span>{/if}</button></li>{/each}</ul>
+        {/if}
         {#if !searching}
           {#each sections.filter((s) => s.entries.length) as s (s.label)}
             <p class="head">{s.label}</p>

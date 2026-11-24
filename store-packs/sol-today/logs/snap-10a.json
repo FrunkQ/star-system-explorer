@@ -1,0 +1,66 @@
+{
+ "construct": "snap-10a",
+ "name": "SNAP-10A (Snapshot)",
+ "about": "The first nuclear reactor in orbit, launched 3 Apr 1965 from Vandenberg on an Atlas-Agena. The reactor ran 43 days; the craft stays in its 1,300 km polar orbit. Orbit and times from a secondary account (drewexmachina, 2015), marked.",
+ "pieces": [
+  {
+   "from_s": 62016139479,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 34.63,
+    "lon_deg": -120.61
+   },
+   "mark": "authored",
+   "src": "drewexmachina-snap-10a",
+   "writer": "pack",
+   "why": "at Vandenberg before launch; position from memory",
+   "to_s": 62018731479
+  },
+  {
+   "from_s": 62018731479,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ascent"
+    }
+   },
+   "mark": "estimated",
+   "src": "drewexmachina-snap-10a",
+   "writer": "pack",
+   "why": "Atlas-Agena ascent; RS5 flies it",
+   "to_s": 62018735079
+  },
+  {
+   "from_s": 62018735079,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 7674637.0,
+     "e": 0.0012378435618518504,
+     "i_deg": 90.3,
+     "node_deg": 0.0,
+     "peri_deg": 0.0,
+     "m0_deg": 0.0,
+     "epoch_s": 62018735079
+    }
+   },
+   "mark": "estimated",
+   "src": "drewexmachina-snap-10a",
+   "writer": "pack",
+   "why": "1,287 by 1,306 km at 90.3 degrees (secondary); node and phase not set; the Agena stays attached"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 62018731479,
+   "kind": "launch",
+   "mark": "estimated",
+   "src": "drewexmachina-snap-10a",
+   "writer": "pack",
+   "why": "1:24 p.m. PST (secondary)"
+  }
+ ]
+}

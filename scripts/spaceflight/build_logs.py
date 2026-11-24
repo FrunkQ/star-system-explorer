@@ -144,8 +144,8 @@ g = lambda s: met(L, s)
 csm = Log("apollo-11", "Apollo 11 (Columbia)",
           "The CSM Columbia, which keeps the mission's name from the pad to the Pacific. The Saturn V's stages, "
           "Eagle and the service module become their own constructs at each split, with their own logs. Event times "
-          "from NASA SP-4029; orbit sizes and burn delta-v from the Apollo 11 Mission Report, written from memory and "
-          "marked estimated until read from the report. Needs a Moon body (u:sol/sys:sun/body:earth/body:moon), which "
+          "from NASA SP-4029; orbit sizes from the Apollo 11 Mission Report (sections 1 to 4, read 24 Nov 2026); burn delta-v "
+          "from memory and marked estimated, as the report's trajectory tables are not read yet. Needs a Moon body (u:sol/sys:sun/body:earth/body:moon), which "
           "the NAV Sol fixture does not hold yet.", SP)
 t_eoi, t_tli, t_ext = g("0:11:49.33"), utc("1969-07-16 16:16:16"), utc("1969-07-16 17:49:03")
 t_loi1, t_loi2 = utc("1969-07-19 17:21:50"), utc("1969-07-19 21:43:36")
@@ -153,15 +153,15 @@ t_und, t_dock, t_jet = utc("1969-07-20 17:44:00"), utc("1969-07-21 21:35:00"), u
 t_tei, t_cmsm, t_ei, t_spl = utc("1969-07-22 04:55:42"), utc("1969-07-24 16:21:12"), utc("1969-07-24 16:35:05"), utc("1969-07-24 16:50:35")
 csm.piece(L - 60 * DAY, PAD(28.6082, -80.6041), "authored", "60 days on pad 39A before launch")
 csm.piece(L, planned("ascent"), "recorded", "ascent to orbit insertion at 11 min 49 s; the ascent itself waits on RS5")
-csm.piece(t_eoi, orbit(EARTH, 183.2e3, 186.0e3, 32.52, t_eoi, RE), "estimated",
-          "parking orbit 183 by 186 km at 32.5 degrees (mission report, from memory); node and phase not set", MR)
+csm.piece(t_eoi, orbit(EARTH, 99.2 * NMI, 100.7 * NMI, 32.52, t_eoi, RE), "recorded",
+          "parking orbit 100.7 by 99.2 nautical miles (mission report section 3); inclination 32.5 degrees from memory; node and phase not set", MR)
 csm.piece(t_tli, lambert(MOON, t_loi1), "recorded", "translunar coast; the one midcourse correction (3 s burn, 26:44:58) is below the big-burns line")
-csm.piece(t_loi1, orbit(MOON, 61 * NMI, 169 * NMI, 1.25, t_loi1, RM), "estimated", "after LOI-1, 61 by 169 nautical miles (mission report, from memory)", MR)
-csm.piece(t_loi2, orbit(MOON, 54 * NMI, 66 * NMI, 1.25, t_loi2, RM), "estimated", "after LOI-2, 54 by 66 nautical miles, held stable to TEI (mission report, from memory)", MR)
+csm.piece(t_loi1, orbit(MOON, 60.9 * NMI, 169.9 * NMI, 1.25, t_loi1, RM), "recorded", "after LOI-1, 169.9 by 60.9 nautical miles by the onboard computer (mission report section 4)", MR)
+csm.piece(t_loi2, orbit(MOON, 53.8 * NMI, 65.7 * NMI, 1.25, t_loi2, RM), "recorded", "after LOI-2, 65.7 by 53.8 nautical miles (mission report section 3), held stable to TEI", MR)
 csm.piece(t_tei, lambert(EARTH, t_ei))
 csm.piece(t_ei, planned("entry"), "recorded", "entry flown by sse-nav entry.rs")
-csm.piece(t_spl, {"kind": "landed", "body": EARTH, "lat_deg": 13.32, "lon_deg": -169.15}, "estimated",
-          "splashdown 13 deg 19 min N, 169 deg 9 min W (mission report, from memory); recovered by USS Hornet", MR)
+csm.piece(t_spl, {"kind": "landed", "body": EARTH, "lat_deg": 13.3167, "lon_deg": -169.15}, "recorded",
+          "splashdown 13 deg 19 min N, 169 deg 09 min W by the onboard computer (mission report section 1); recovered by USS Hornet", MR)
 csm.ev(L, "launch")
 csm.split(g("0:02:42.30"), ["as-506-s-ic"], why="S-IC/S-II separation (commanded time)")
 csm.split(g("0:09:09.00"), ["as-506-s-ii"], why="S-II/S-IVB separation (commanded time)")
@@ -197,14 +197,14 @@ eagle = Log("apollo-11-eagle", "Apollo 11 Eagle (LM-5)",
 t_doi, t_pdi, t_land = utc("1969-07-20 19:08:14"), utc("1969-07-20 20:05:05"), utc("1969-07-20 20:17:40")
 t_lift, t_ins = utc("1969-07-21 17:54:01"), utc("1969-07-21 18:01:16")
 TRANQ = {"kind": "landed", "body": MOON, "lat_deg": 0.67416, "lon_deg": 23.47314}
-eagle.piece(t_und, orbit(MOON, 54 * NMI, 66 * NMI, 1.25, t_und, RM), "estimated", "Columbia's orbit after LOI-2")
-eagle.piece(t_doi, orbit(MOON, 8.5 * NMI, 57.2 * NMI, 1.25, t_doi, RM), "estimated", "descent orbit about 8.5 by 57 nautical miles (mission report, from memory)", MR)
+eagle.piece(t_und, orbit(MOON, 53.8 * NMI, 65.7 * NMI, 1.25, t_und, RM), "estimated", "Columbia's orbit after LOI-2")
+eagle.piece(t_doi, orbit(MOON, 9.1 * NMI, 57.2 * NMI, 1.25, t_doi, RM), "recorded", "descent orbit 57.2 by 9.1 nautical miles by the onboard computer (mission report section 4)", MR)
 eagle.piece(t_pdi, planned("powered descent"), "recorded", "powered descent, 12 min 35 s")
 eagle.piece(t_land, TRANQ, "recorded", "Tranquility Base (NSSDCA 1969-059C)", "nssdca-craft")
 eagle.piece(t_lift, planned("ascent"), "recorded", "ascent stage lifts off; the descent stage stays")
-eagle.piece(t_ins, orbit(MOON, 9.4 * NMI, 47.3 * NMI, 1.25, t_ins, RM), "estimated", "ascent orbit about 9.4 by 47 nautical miles (mission report, from memory)", MR)
+eagle.piece(t_ins, orbit(MOON, 9.5 * NMI, 47.3 * NMI, 1.25, t_ins, RM), "recorded", "ascent orbit 47.3 by 9.5 nautical miles (mission report section 4)", MR)
 eagle.piece(t_dock, {"kind": "docked", "to": "apollo-11"}, "recorded")
-eagle.piece(t_jet, orbit(MOON, 54 * NMI, 66 * NMI, 1.25, t_jet, RM), "estimated", "left in lunar orbit; it later fell to the Moon, when and where unknown")
+eagle.piece(t_jet, orbit(MOON, 53.8 * NMI, 65.7 * NMI, 1.25, t_jet, RM), "estimated", "left in lunar orbit; it later fell to the Moon, when and where unknown")
 eagle.ev(t_doi, "burn", "estimated", "descent orbit insertion, 30 s, about 76 ft/s (from memory)", MR, dv_m_s=23.2, engine="lm-descent-engine")
 eagle.ev(t_land, "landing", why="20:17:39.9, engine cutoff 20:17:41")
 eagle.split(t_lift, ["apollo-11-eagle-descent-stage"], why="the ascent stage leaves the descent stage on the surface")
@@ -350,6 +350,199 @@ hu.ev(t_hl, "landing", "estimated", "on Titan; Huygens kept sending for about 70
 cen = Log("cassini-centaur", "Cassini's Centaur upper stage", "Left in orbit about the Sun after the Earth departure burn.", H)
 cen.piece(t_dep, planned("heliocentric orbit"), "estimated", "follows Cassini's departure; its own elements are not read yet")
 keep(cas, hu, cen)
+
+# ---------------------------------------------------------------- Juno, Dawn, Curiosity (MSL) and JWST, from Horizons
+HM = json.load(open(os.path.join(ROOT, "scripts/spaceflight/horizons_more.json"), encoding="utf-8"))
+MU_E = 398600.4418
+
+
+def departure(el, parking_km=185.0):
+    """Impulsive equivalent from a parking orbit to Horizons' Earth-relative hyperbola."""
+    import math
+    vinf = math.sqrt(MU_E / abs(el["A"]))
+    r = 6378.137 + parking_km
+    return round(1000 * (math.sqrt(vinf * vinf + 2 * MU_E / r) - math.sqrt(MU_E / r))), round(vinf, 3)
+
+
+def depart_why(el):
+    dv, vinf = departure(el)
+    return dv, (f"impulsive equivalent from a 185 km parking orbit to Horizons' Earth-relative hyperbola "
+                f"(v-infinity {vinf} km/s on {el['date'].strip()[5:16]}); the upper stage's real burns wait on RS5")
+
+
+def hzdate(k):
+    return k.split("_", 1)[1]
+
+
+def launch_block(log, t_launch, pad, stage_id, stage_name, el, engine, src_launch):
+    dv, why = depart_why(el)
+    t_dep = t_launch + 1800
+    log.piece(t_launch - 60 * DAY, PAD(*pad), "authored", "on the pad before launch")
+    log.piece(t_launch, planned("ascent"), "estimated", "ascent; RS5 flies it")
+    log.piece(t_launch + 600, orbit(EARTH, 185e3, 185e3, 28.5, t_launch + 600, RE), "estimated",
+              "a 185 km parking orbit stands in for the upper stage's coast before departure")
+    log.ev(t_launch, "launch", src=src_launch)
+    log.ev(t_dep, "burn", "estimated", why, dv_m_s=float(dv), engine=engine)
+    log.split(t_dep, [stage_id], "estimated", "the upper stage separates after the departure burn")
+    st = Log(stage_id, stage_name, "Left about the Sun after the departure burn.", H)
+    st.piece(t_dep, planned("heliocentric orbit"), "estimated", "follows the craft's departure; its own elements are not read yet")
+    return t_dep, st
+
+
+# Juno: launch 5 Aug 2011 16:25 UTC (from memory), two deep space manoeuvres, Earth flyby, Jupiter orbit insertion.
+JU = HM["juno"]
+LJ = utc("2011-08-05 16:25:00")
+juno = Log("juno", "Juno", "Juno from Cape Canaveral to Jupiter: the two deep space manoeuvres of 2012, the Earth flyby of 2013 "
+           "and Jupiter orbit insertion on 5 Jul 2016, then its 53-day polar orbits, kept as one osculating orbit a year "
+           "(the big-burns fudge). Still flying. From JPL Horizons (scripts/spaceflight/horizons_more.json); the launch time is from memory.", H)
+t_dep, jst = launch_block(juno, LJ, (28.5833, -80.5833), "juno-centaur", "Juno's Centaur upper stage", JU["depart"], "rl10a-4-2", "nssdca-craft")
+t_d1, t_d2 = tdb("2012-08-30 22:50"), tdb("2012-09-14 22:50")
+t_ef = jd_s(JU["earth_flyby"]["Tp"])
+t_joi = jd_s(JU["joi"]["post_Tp"])
+juno.piece(t_dep, hz_orbit(SUN, JU["helio_before_dsm"]), "recorded", "about the Sun after departure (Horizons, 2012-01-01)")
+juno.piece(t_d1, hz_orbit(SUN, JU["helio_between"]), "recorded", "between the two manoeuvres (Horizons, 2012-09-07)")
+juno.piece(t_d2, lambert(EARTH, t_ef), "recorded", "back to Earth for the flyby")
+juno.piece(t_ef, lambert(P("jupiter"), t_joi), "recorded", "to Jupiter")
+juno.piece(t_joi, hz_orbit(P("jupiter"), JU["jup_after_joi"]), "recorded", "the capture orbit, about 53 days (Horizons, 2016-07-06)")
+for y in range(2017, 2027):
+    juno.piece(tdb(f"{y}-01-01 00:00"), hz_orbit(P("jupiter"), JU[f"jup_{y}"]), "recorded",
+               f"osculating orbit on {y}-01-01 (Horizons); perijove trims and Jupiter's oblateness fall below the big-burns line")
+for k, t in (("dsm1", t_d1), ("dsm2", t_d2)):
+    juno.ev(t, "burn", "estimated", f"deep space manoeuvre: Horizons' elements before ({JU[k]['pre'][5:22]}) and after ({JU[k]['post'][5:22]}), compared at the midpoint",
+            dv_m_s=JU[k]["dv_m_s"], engine="leros-1b")
+juno.ev(t_ef, "flyby", body=EARTH, periapsis_m=round(JU["earth_flyby"]["QR"] * 1000.0))
+juno.ev(t_joi, "burn", "estimated", "Jupiter orbit insertion (35 min, 03:18 to 03:53 UTC): " + JU["joi"]["how"], dv_m_s=JU["joi"]["dv_m_s"], engine="leros-1b")
+keep(juno, jst)
+
+# Dawn: ion thrust nearly all the way, so there are no big burns: the log keeps Horizons' osculating orbit
+# every six months (the big-burns fudge at its weakest; in the fudge register), the Mars flyby, and the
+# orbits at Vesta and Ceres from Horizons' vectors.
+DA = HM["dawn"]
+LD = utc("2007-09-27 11:34:00")
+VESTA, CERES = P("vesta"), P("ceres")
+dawn = Log("dawn", "Dawn", "Dawn from Cape Canaveral to Vesta and Ceres. Its ion engines thrust for most of the cruise, so in place of "
+           "big burns the log keeps Horizons' osculating orbit about the Sun every few months, the Mars flyby of 2009, and its "
+           "orbits at Vesta (2011 to 2012) and Ceres (2015 to 2018), where it fell silent on 31 Oct 2018 and still orbits. "
+           "Arrival and departure dates follow the Horizons header; their hours are from memory.", H)
+t_dep, dst = launch_block(dawn, LD, (28.4667, -80.5667), "dawn-star-48", "Dawn's Star 48 third stage", DA["depart"], "star-48b", "nssdca-craft")
+t_mars = jd_s(DA["mars_flyby"]["Tp"])
+ion = "ion thrust bends it between samples"
+seq = [(t_dep, SUN, "helio_2007-12-01"), (tdb("2008-06-01 00:00"), SUN, "helio_2008-06-01"), (tdb("2008-12-01 00:00"), SUN, "helio_2008-12-01"),
+       (t_mars, SUN, "helio_2009-06-01"), (tdb("2009-12-01 00:00"), SUN, "helio_2009-12-01"), (tdb("2010-06-01 00:00"), SUN, "helio_2010-06-01"),
+       (tdb("2010-12-01 00:00"), SUN, "helio_2010-12-01"), (tdb("2011-04-01 00:00"), SUN, "helio_2011-04-01"),
+       (tdb("2011-07-16 04:47"), VESTA, "vesta_2011-08-15"), (tdb("2011-10-01 00:00"), VESTA, "vesta_2011-10-15"),
+       (tdb("2011-12-12 00:00"), VESTA, "vesta_2012-01-15"), (tdb("2012-05-01 00:00"), VESTA, "vesta_2012-06-15"),
+       (tdb("2012-09-05 06:26"), SUN, "helio_2013-01-01"), (tdb("2013-07-01 00:00"), SUN, "helio_2014-01-01"),
+       (tdb("2014-07-01 00:00"), SUN, "helio_2014-10-01"),
+       (tdb("2015-03-06 12:39"), CERES, "ceres_2015-04-30"), (tdb("2015-08-01 00:00"), CERES, "ceres_2015-08-15"),
+       (tdb("2015-12-01 00:00"), CERES, "ceres_2016-01-01"), (tdb("2016-11-01 00:00"), CERES, "ceres_2017-01-01"),
+       (tdb("2017-11-01 00:00"), CERES, "ceres_2018-01-01"), (tdb("2018-06-01 00:00"), CERES, "ceres_2018-07-01")]
+for t, around, k in seq:
+    where = {SUN: "the Sun", VESTA: "Vesta", CERES: "Ceres"}[around]
+    why = f"about {where}, osculating on {hzdate(k)} (Horizons)" + (f"; {ion}" if around == SUN else "; the spiral between science orbits is below the big-burns line")
+    dawn.piece(t, hz_orbit(around, DA[k]), "recorded", why)
+t_dawn_end = utc("2018-11-01 00:00:00")
+dawn.end(t_dawn_end, "lost_contact", "recorded", "missed DSN contacts on 31 Oct and 1 Nov 2018, out of hydrazine; it still orbits Ceres (Horizons header)")
+dawn.ev(t_mars, "flyby", body=P("mars"), periapsis_m=round(DA["mars_flyby"]["QR"] * 1000.0))
+keep(dawn, dst)
+
+# Curiosity (MSL): launch 26 Nov 2011 15:02 UTC, cruise, entry, sky crane landing at Gale crater on 6 Aug 2012.
+# Cruise from Horizons; entry, descent and landing times and the site from memory, marked, to verify.
+MS = HM["msl"]
+LM_ = utc("2011-11-26 15:02:00")
+t_cs, t_ei_m, t_hs, t_bs, t_td = utc("2012-08-06 05:00:46"), utc("2012-08-06 05:10:46"), utc("2012-08-06 05:14:25"), utc("2012-08-06 05:16:40"), utc("2012-08-06 05:17:57")
+GALE = {"kind": "landed", "body": P("mars"), "lat_deg": -4.5895, "lon_deg": 137.4417}
+msl = Log("curiosity", "Curiosity (Mars Science Laboratory)",
+          "MSL from Cape Canaveral to Gale crater. The cruise stage, heat shield, back shell and sky crane each split off as their "
+          "own constructs and end on Mars; the rover stays at Bradbury Landing in this log (its drives are not logged yet). "
+          "Cruise from JPL Horizons; the entry and landing times (spacecraft time at Mars, UTC) and the site are from memory, marked.", H)
+t_dep, mst = launch_block(msl, LM_, (28.5833, -80.5833), "msl-centaur", "MSL's Centaur upper stage", MS["depart"], "rl10a-4-2", "nssdca-craft")
+msl.piece(t_dep, lambert(P("mars"), t_ei_m), "recorded", "cruise to Mars; the trajectory corrections (the largest about 5 m/s) are below the big-burns line")
+msl.piece(t_ei_m, planned("entry, parachute and sky crane"), "estimated", "entry interface 05:10:46, about 125 km up (NSSDCA); guided entry flown by sse-nav entry.rs")
+msl.piece(t_td, GALE, "estimated", "touchdown at Bradbury Landing, 4.5895 S 137.4417 E (from memory)")
+msl.split(t_cs, ["msl-cruise-stage"], "estimated", "cruise stage separates ten minutes before entry (from memory)")
+msl.ev(t_ei_m, "entry", "estimated", "entry interface (from memory)")
+msl.split(t_hs, ["msl-heat-shield"], "estimated", "heat shield released under the parachute (from memory)")
+msl.split(t_bs, ["msl-back-shell"], "estimated", "back shell and parachute released; powered descent (from memory)")
+msl.split(t_td + 1, ["msl-sky-crane"], "estimated", "the sky crane cuts the bridles and flies away to crash (from memory)")
+msl.ev(t_td, "landing", "estimated", "touchdown 05:17:57 UTC at Mars (from memory)")
+parts = []
+for cid, name, t0, t1, why in (("msl-cruise-stage", "MSL cruise stage", t_cs, t_ei_m + 60, "burnt up and broke on entry, falling near the landing ellipse"),
+                               ("msl-heat-shield", "MSL heat shield", t_hs, t_hs + 120, "fell to the ground a few km from the rover"),
+                               ("msl-back-shell", "MSL back shell and parachute", t_bs, t_bs + 120, "came down under its parachute about 600 m from the rover"),
+                               ("msl-sky-crane", "MSL sky crane (descent stage)", t_td + 1, t_td + 20, "flew off and struck about 650 m away")):
+    s = Log(cid, name, "Cast off by MSL on the way down to Gale crater.", H)
+    s.piece(t0, planned("fall"), "estimated", "separated on the way down (from memory)")
+    s.end(t1, "impacted", "estimated", why + " (from memory)")
+    parts.append(s)
+keep(msl, mst, *parts)
+
+# JWST: launch 25 Dec 2021 12:20 UTC on Ariane 5 (from memory), MCC-1a from Horizons, then near Sun-Earth L2,
+# kept as Horizons' osculating orbit about the Sun every few months (Earth's pull moves it; the fudge register says so).
+JW = HM["jwst"]
+LW = utc("2021-12-25 12:20:00")
+jw = Log("jwst", "James Webb Space Telescope",
+         "JWST from Kourou to its halo orbit about Sun-Earth L2. The Ariane 5 upper stage splits off 27 minutes after launch; "
+         "the first course correction, about 12 hours later, is the only big burn. Near L2 the log keeps Horizons' osculating "
+         "orbit about the Sun every few months, which Earth's pull moves between samples (the big-burns fudge). Still flying.", H)
+t_sep = LW + 27 * 60
+jw.piece(LW - 30 * DAY, PAD(5.239, -52.768), "authored", "at Kourou ELA-3 before launch; position from memory")
+jw.piece(LW, planned("ascent"), "estimated", "Ariane 5 ECA ascent; RS5 flies it")
+jw.piece(t_sep, hz_orbit(EARTH, JW["after_launch"]), "recorded", "the transfer leaving Earth (Horizons, 14:00 UTC on launch day)")
+t_mcc = tdb("2021-12-26 01:25")
+helios = sorted(k for k in JW if k.startswith("helio_"))
+jw.piece(t_mcc, hz_orbit(SUN, JW[helios[0]]), "recorded", "after MCC-1a, about the Sun (Horizons, 2022-01-01)")
+for k in helios[1:]:
+    jw.piece(tdb(hzdate(k) + " 00:00"), hz_orbit(SUN, JW[k]), "recorded", f"near L2: osculating orbit about the Sun on {hzdate(k)} (Horizons); station-keeping below the big-burns line")
+jw.ev(LW, "launch", src="nssdca-craft")
+jw.split(t_sep, ["jwst-ariane-5-upper-stage"], "estimated", "separation from the Ariane 5 upper stage, 27 min after launch (from memory)")
+jw.ev(t_mcc, "burn", "estimated", f"MCC-1a: Horizons' Earth-relative elements before ({JW['mcc1a']['pre'][5:22]}) and after ({JW['mcc1a']['post'][5:22]}), compared at the midpoint",
+      dv_m_s=JW["mcc1a"]["dv_m_s"], engine="jwst-sct")
+aus = Log("jwst-ariane-5-upper-stage", "JWST's Ariane 5 ESC-D upper stage", "Left on JWST's transfer away from Earth.", H)
+aus.piece(t_sep, hz_orbit(EARTH, JW["after_launch"]), "estimated", "on the same transfer as JWST at separation; it was not corrected and drifted away")
+keep(jw, aus)
+
+# ---------------------------------------------------------------- ISS and SNAP-10A, in Earth orbit
+# ISS: Horizons' TLE-based elements on 1 Jan each year. Reboosts and drag are below the big-burns line, so in low orbit
+# the phase along the orbit is right only near each sample (the fudge register says how far). The modules that join it
+# are their own constructs in RS8. Zarya's launch time is from memory.
+IS = HM["iss"]
+LZ = utc("1998-11-20 06:40:00")
+iss = Log("iss", "International Space Station",
+          "The ISS from Zarya's launch on 20 Nov 1998, as one osculating orbit a year from JPL Horizons (TLE-based). "
+          "Reboosts and drag are below the big-burns line. The modules and visiting craft join it as their own constructs in RS8.", H)
+iss.piece(LZ - 30 * DAY, PAD(45.92, 63.34), "authored", "at Baikonur before launch; position from memory")
+iss.piece(LZ, planned("ascent"), "estimated", "Proton ascent; RS5 flies it")
+iss.piece(LZ + 600, hz_orbit(EARTH, IS["iss_1999"]), "estimated", "Horizons' orbit of 1 Jan 1999 stands in for the weeks before")
+for y in range(1999, 2027):
+    iss.piece(tdb(f"{y}-01-01 00:00"), hz_orbit(EARTH, IS[f"iss_{y}"]), "recorded", f"osculating orbit on {y}-01-01 (Horizons, from TLEs)")
+iss.ev(LZ, "launch", "estimated", "Zarya on a Proton from Baikonur (time from memory)")
+keep(iss)
+
+# SNAP-10A (Snapshot): the first reactor in orbit, still up there. Orbit from the secondary account (craft.json).
+LS10 = utc("1965-04-03 21:24:00")
+snap = Log("snap-10a", "SNAP-10A (Snapshot)",
+           "The first nuclear reactor in orbit, launched 3 Apr 1965 from Vandenberg on an Atlas-Agena. The reactor ran 43 days; "
+           "the craft stays in its 1,300 km polar orbit. Orbit and times from a secondary account (drewexmachina, 2015), marked.", "drewexmachina-snap-10a")
+snap.piece(LS10 - 30 * DAY, PAD(34.63, -120.61), "authored", "at Vandenberg before launch; position from memory")
+snap.piece(LS10, planned("ascent"), "estimated", "Atlas-Agena ascent; RS5 flies it")
+snap.piece(LS10 + 3600, orbit(EARTH, 1287e3, 1306e3, 90.3, LS10 + 3600, RE), "estimated",
+           "1,287 by 1,306 km at 90.3 degrees (secondary); node and phase not set; the Agena stays attached")
+snap.ev(LS10, "launch", "estimated", "1:24 p.m. PST (secondary)")
+keep(snap)
+
+# ---------------------------------------------------------------- V-2 flight MW 18014: the first craft past 100 km
+# GCAT (launch.tsv, 1944-S95) gives 14 Sep 1944 from Peenemunde, apogee 175 km, citing von Braun (1958); the date
+# usually quoted is 20 Jun 1944. The hour, the fall and the impact are estimated.
+LV2 = utc("1944-09-14 12:00:00")
+v2 = Log("v-2-mw-18014", "V-2 MW 18014",
+         "An A-4 (V-2) fired straight up from Peenemunde, the first craft known to pass 100 km. GCAT lists it on 14 Sep 1944 "
+         "with an apogee of 175 km (citing von Braun, 1958); 20 Jun 1944 is the date most often given. The hour is unknown.", "gcat")
+v2.piece(LV2 - DAY, PAD(54.173, 13.801), "authored", "on its stand at Peenemunde (GCAT site HVP); the day before is authored")
+v2.piece(LV2, planned("vertical flight to 175 km"), "estimated", "about 65 s of thrust, then a coast to 175 km and the fall back; the hour is unknown, noon is a stand-in")
+v2.end(LV2 + 420, "impacted", "estimated", "came down in the Baltic; about seven minutes for a 175 km vertical flight")
+v2.ev(LV2, "launch", "estimated", "date from GCAT; the hour is unknown")
+keep(v2)
 
 # ---------------------------------------------------------------- Voyager 2 (the travel thread's fixture) and its stages
 voy = json.load(open(os.path.join(ROOT, "tests/fixtures/flightlog/voyager-2.json"), encoding="utf-8"))

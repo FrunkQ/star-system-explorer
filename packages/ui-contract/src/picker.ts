@@ -23,6 +23,8 @@ export interface PickItem {
   order?: number;
   /** A short line saying where it is or what it is ("1.0 AU", "orbits Earth"). */
   caption?: string;
+  /** Its tags (labels only, never physics), found by typing "#" and the tag ("#ruins"). */
+  tags?: readonly string[];
 }
 
 export interface PickRow {
@@ -75,6 +77,42 @@ function tree(items: readonly PickItem[]) {
   return kids;
 }
 
+/**
+ * Does an item answer a search? By name, any part of it; a query starting with "#" asks for a tag instead, matching
+ * the start of a tag or of any part of one after ":" or "/" ("#ruin" finds "ruins", "#ocean" finds
+ * "class:planet/ocean", "#size:small" finds "size:small"), ignoring case. A tag's own leading "#" is ignored too.
+ */
+export function matchesQuery(i: Pick<PickItem, "label" | "tags">, q: string): boolean {
+  const t = q.trim().toLowerCase();
+  if (!t) return true;
+  if (t.startsWith("#")) {
+    const want = t.slice(1);
+    if (!want) return false;
+    return (i.tags ?? []).some((g) => {
+      const tag = g.toLowerCase().replace(/^#/, "");
+      return tag.startsWith(want) || [...tag.matchAll(/[:/]/g)].some((m) => tag.startsWith(want, m.index + 1));
+    });
+  }
+  return i.label.toLowerCase().includes(t);
+}
+
+/** A place elsewhere in the campaign, searched with this level when typing (the picker doubles as Find). */
+export interface ElsewhereItem extends PickItem {
+  /** Where it is, in words ("in Sol", "Sol › Earth"), shown as its caption. */
+  where: string;
+}
+
+/**
+ * The hits elsewhere in the campaign for a search, after this level's own: matches by name or "#tag", this level's
+ * ids left out (they are listed already), in the order given, at most `cap`. Nothing while not searching.
+ */
+export function elsewhereRows(items: readonly ElsewhereItem[], query: string, here: readonly PickItem[] = [], cap = 50): { rows: PickRow[]; more: number } {
+  if (!query.trim()) return { rows: [], more: 0 };
+  const mine = new Set(here.map((i) => i.id));
+  const hit = items.filter((i) => !mine.has(i.id) && matchesQuery(i, query));
+  return { rows: hit.slice(0, cap).map((i) => ({ id: i.id, label: i.label, depth: 0, caption: i.where })), more: Math.max(0, hit.length - cap) };
+}
+
 const matchesKinds = (i: PickItem, kinds: readonly string[]) => !kinds.length || i.kinds.some((k) => kinds.includes(k));
 
 /** The rows to show for an ask: a folded tree when browsing, a flat list when searching. */
@@ -82,7 +120,7 @@ export function pickerRows(items: readonly PickItem[], ask: PickAsk = {}): { row
   const kinds = ask.kinds ?? [];
   const q = (ask.query ?? "").trim().toLowerCase();
   if (q) {
-    const hit = items.filter((i) => i.label.toLowerCase().includes(q) && matchesKinds(i, kinds));
+    const hit = items.filter((i) => matchesQuery(i, q) && matchesKinds(i, kinds));
     const byId = new Map(items.map((i) => [i.id, i]));
     const rows = hit.slice(0, SEARCH_CAP).map((i): PickRow => {
       // Where a match is: "in Earth" for a moon; a planet keeps its own caption (its distance from the star).
@@ -169,7 +207,7 @@ export function subjectItems(subjects: readonly SceneSubject[]): PickItem[] {
     const host = s.parent ? byId.get(s.parent) : undefined;
     const top = host && !host.parent;
     const caption = !top ? undefined : s.orbit ? auWords(s.orbit.a_au) : s.band_au ? `${auWords(s.band_au[0]).replace(" AU", "")} to ${auWords(s.band_au[1])}` : undefined;
-    return { id: s.address, label: s.label, parent: s.parent ?? null, kinds: subjectKinds(s), order: out(s), ...(caption ? { caption } : {}) };
+    return { id: s.address, label: s.label, parent: s.parent ?? null, kinds: subjectKinds(s), order: out(s), ...(caption ? { caption } : {}), ...(s.tags?.length ? { tags: s.tags } : {}) };
   });
 }
 

@@ -7,7 +7,7 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | Package | State | Log |
 |---|---|---|
 | NV1 a menu on every object (item 38): one action list, desk-aware, greyed with reasons, phone sheet | done | packages/NV1.md |
-| NV2 selector part 2 (item 37): whole-campaign search, › on each row, every "which one?" opens it, menu on its rows | next | |
+| NV2 selector part 2 (item 37): find by #tag, search across the campaign, menu on its rows (part 1 done); wire campaign search, › on each row, every "which one?" opens it (part 2 next, after the shell split) | part 1 done | packages/NV2.md |
 | NV3 Build tools and More read the one action list; menu on ships, stations and System 3D | queued | |
 | NV4 find by tag and light it up (item 41) | queued | |
 | NV5 description and notes for the campaign and each system (item 42) | queued | |

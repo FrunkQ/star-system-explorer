@@ -1,0 +1,22 @@
+{
+ "construct": "juno-centaur",
+ "name": "Juno's Centaur upper stage",
+ "about": "Left about the Sun after the departure burn.",
+ "pieces": [
+  {
+   "from_s": 63481035366,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "heliocentric orbit"
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "follows the craft's departure; its own elements are not read yet"
+  }
+ ],
+ "events": []
+}

@@ -1,0 +1,360 @@
+{
+ "construct": "jwst",
+ "name": "James Webb Space Telescope",
+ "about": "JWST from Kourou to its halo orbit about Sun-Earth L2. The Ariane 5 upper stage splits off 27 minutes after launch; the first course correction, about 12 hours later, is the only big burn. Near L2 the log keeps Horizons' osculating orbit about the Sun every few months, which Earth's pull moves between samples (the big-burns fudge). Still flying.",
+ "pieces": [
+  {
+   "from_s": 63806314869,
+   "state": {
+    "kind": "landed",
+    "body": "u:sol/sys:sun/body:earth",
+    "lat_deg": 5.239,
+    "lon_deg": -52.768
+   },
+   "mark": "authored",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "at Kourou ELA-3 before launch; position from memory",
+   "to_s": 63808906869
+  },
+  {
+   "from_s": 63808906869,
+   "state": {
+    "kind": "course",
+    "course": {
+     "kind": "planned",
+     "course": "ascent"
+    }
+   },
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "Ariane 5 ECA ascent; RS5 flies it",
+   "to_s": 63808908489
+  },
+  {
+   "from_s": 63808908489,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun/body:earth",
+    "elements": {
+     "a_m": 512858246.2936267,
+     "e": 0.9869461297587485,
+     "i_deg": 23.72453245199746,
+     "node_deg": 169.5864382273308,
+     "peri_deg": 110.3693450229248,
+     "m0_deg": 0.0,
+     "epoch_s": 63808907978
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "the transfer leaving Earth (Horizons, 14:00 UTC on launch day)",
+   "to_s": 63808953900
+  },
+  {
+   "from_s": 63808953900,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 151462164996.1866,
+     "e": 0.03197485655283722,
+     "i_deg": 0.4796141536022854,
+     "node_deg": 267.2746929128154,
+     "peri_deg": 151.8503266101078,
+     "m0_deg": 0.0,
+     "epoch_s": 63806009731
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "after MCC-1a, about the Sun (Horizons, 2022-01-01)",
+   "to_s": 63812145600
+  },
+  {
+   "from_s": 63812145600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 153169720904.2538,
+     "e": 0.03064070561584951,
+     "i_deg": 0.2229942759747668,
+     "node_deg": 172.5233068768923,
+     "peri_deg": 301.5332378053286,
+     "m0_deg": 0.0,
+     "epoch_s": 63810649149
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2022-02-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63819835200
+  },
+  {
+   "from_s": 63819835200,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 156770330392.8458,
+     "e": 0.0350650041029665,
+     "i_deg": 0.2784530640568678,
+     "node_deg": 57.82083937127877,
+     "peri_deg": 133.083478460702,
+     "m0_deg": 0.0,
+     "epoch_s": 63817231709
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2022-05-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63827784000
+  },
+  {
+   "from_s": 63827784000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 153845811580.36868,
+     "e": 0.01052958808092396,
+     "i_deg": 0.2347837920347882,
+     "node_deg": 344.4747080026011,
+     "peri_deg": 39.3933781677685,
+     "m0_deg": 0.0,
+     "epoch_s": 63834590812
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2022-08-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63835732800
+  },
+  {
+   "from_s": 63835732800,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 156756497842.3425,
+     "e": 0.04658121127150011,
+     "i_deg": 0.2794261167299741,
+     "node_deg": 233.3721861008632,
+     "peri_deg": 181.8608697727783,
+     "m0_deg": 0.0,
+     "epoch_s": 63837169418
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2022-11-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63843681600
+  },
+  {
+   "from_s": 63843681600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 154303401826.97388,
+     "e": 0.03543093727044465,
+     "i_deg": 0.2549867756346844,
+     "node_deg": 160.1822332146242,
+     "peri_deg": 323.4900797350896,
+     "m0_deg": 0.0,
+     "epoch_s": 63843030758
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2023-02-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63859320000
+  },
+  {
+   "from_s": 63859320000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 154109526661.9957,
+     "e": 0.01156348451440525,
+     "i_deg": 0.2396716688476269,
+     "node_deg": 337.0468128661939,
+     "peri_deg": 37.50590287161047,
+     "m0_deg": 0.0,
+     "epoch_s": 63865312732
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2023-08-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63875217600
+  },
+  {
+   "from_s": 63875217600,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 154621366259.8022,
+     "e": 0.03772000866148461,
+     "i_deg": 0.25466595510688,
+     "node_deg": 153.6134314115901,
+     "peri_deg": 330.7039950200583,
+     "m0_deg": 0.0,
+     "epoch_s": 63874647430
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2024-02-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63890942400
+  },
+  {
+   "from_s": 63890942400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 154450133793.7046,
+     "e": 0.01327229273824016,
+     "i_deg": 0.2416682703107662,
+     "node_deg": 329.4853403427216,
+     "peri_deg": 35.97240482060049,
+     "m0_deg": 0.0,
+     "epoch_s": 63896051625
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2024-08-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63906840000
+  },
+  {
+   "from_s": 63906840000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 155019700266.5076,
+     "e": 0.04045395264720877,
+     "i_deg": 0.2522041465189267,
+     "node_deg": 146.8142271166271,
+     "peri_deg": 338.4425295833467,
+     "m0_deg": 0.0,
+     "epoch_s": 63906288465
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2025-02-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63922478400
+  },
+  {
+   "from_s": 63922478400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 154747103442.5572,
+     "e": 0.01458604774764552,
+     "i_deg": 0.2382393559370309,
+     "node_deg": 322.3479203695804,
+     "peri_deg": 35.53772193396824,
+     "m0_deg": 0.0,
+     "epoch_s": 63926928430
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2025-08-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63938376000
+  },
+  {
+   "from_s": 63938376000,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 155346939006.52502,
+     "e": 0.04275703895126455,
+     "i_deg": 0.2466288530535072,
+     "node_deg": 140.1415559128574,
+     "peri_deg": 345.1886236643686,
+     "m0_deg": 0.0,
+     "epoch_s": 63937854479
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2026-02-01 (Horizons); station-keeping below the big-burns line",
+   "to_s": 63954014400
+  },
+  {
+   "from_s": 63954014400,
+   "state": {
+    "kind": "orbit",
+    "around": "u:sol/sys:sun",
+    "elements": {
+     "a_m": 155045983718.96588,
+     "e": 0.0159603320889243,
+     "i_deg": 0.2379563717866626,
+     "node_deg": 315.2103128489413,
+     "peri_deg": 36.22331479375328,
+     "m0_deg": 0.0,
+     "epoch_s": 63957905727
+    }
+   },
+   "mark": "recorded",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "why": "near L2: osculating orbit about the Sun on 2026-08-01 (Horizons); station-keeping below the big-burns line"
+  }
+ ],
+ "events": [
+  {
+   "at_s": 63808906869,
+   "kind": "launch",
+   "mark": "recorded",
+   "src": "nssdca-craft",
+   "writer": "pack"
+  },
+  {
+   "at_s": 63808908489,
+   "kind": "split",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "into": [
+    "jwst-ariane-5-upper-stage"
+   ],
+   "keeps_identity": true,
+   "why": "separation from the Ariane 5 upper stage, 27 min after launch (from memory)"
+  },
+  {
+   "at_s": 63808953900,
+   "kind": "burn",
+   "mark": "estimated",
+   "src": "jpl-horizons",
+   "writer": "pack",
+   "dv_m_s": 20.0,
+   "engine": "jwst-sct",
+   "why": "MCC-1a: Horizons' Earth-relative elements before (2021-Dec-26 00:50) and after (2021-Dec-26 02:00), compared at the midpoint"
+  }
+ ]
+}
