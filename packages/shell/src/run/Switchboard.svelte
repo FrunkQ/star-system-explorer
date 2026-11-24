@@ -8,10 +8,10 @@
   decides what each screen shows; this file only draws it and turns presses into board changes.
 -->
 <script lang="ts">
-  import { addBookmark, addPreset, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type Workspace } from "../../../ui-contract/src/index.ts";
+  import { addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type Workspace } from "../../../ui-contract/src/index.ts";
   import Playbook from "./Playbook.svelte";
   import PresetMonitor from "./PresetMonitor.svelte";
-  import { noteFired } from "./fired.svelte.ts";
+  import { justSent, noteFired, noteSent, type JustSent } from "./fired.svelte.ts";
 
   let { table, ws, onopenseats }: { table: TablePort; ws?: Workspace; onopenseats?: () => void } = $props();
 
@@ -80,12 +80,28 @@
     // The GM's stage opens; as they fly, the screen follows.
     if (ws) ws.screen = "system";
   }
+  // Keep on the "just now" strip: the send becomes a bookmark (its place and thing) and a preset on the open page.
+  function keepSent(j: JustSent) {
+    if (!ws || "off" in j.shown) return;
+    const list = ws.bookmarks ?? [];
+    const b = makeBookmark(list, { scope: j.shown.scope, now_yr: ws.now_yr, instrument: "system", selected: j.shown.focus ?? null }, j.shown.title ?? "Sent", "");
+    ws.bookmarks = addBookmark(list, b);
+    const page = findPage(pb, pageId)?.page;
+    const section = page?.sections.find((x) => !folded.has(x.id)) ?? page?.sections[0];
+    const to = j.dest === "everyone" ? "everyone" : j.dest.startsWith("role:") ? j.dest.slice(5) : (board.screens[j.dest.slice(7)]?.role ?? "everyone");
+    const r = addPreset(pb, section?.id ?? "", { title: b.name, to, steps: [{ show: { bookmark: b.id } }] });
+    setPlaybook(r.pb, r.id);
+  }
   function dragPreset(e: PointerEvent, id: string) {
     startDrag(e, { kind: "source", id });
   }
 
   const act = (f: (b: Board) => Board) => table.act(f);
-  const sendLive = (dest: Dest) => act((b) => send(b, dest, table.live(), "live"));
+  function sendLive(dest: Dest) {
+    const live = table.live();
+    noteSent(live, dest);
+    act((b) => send(b, dest, live, "live"));
+  }
   function toggleHold(dest: Dest, role: string, screen?: string) {
     const line = board.lines[dest];
     if (line?.held) act((b) => release(b, dest));
@@ -283,6 +299,20 @@
       </article>
       {/if}
       <Playbook {pb} {board} {bookmarks} roles={st.roles} bind:pageId bind:folded {selected} armed={armed?.kind === "source" && armed.id !== "live" ? armed.id : null} onchange={setPlaybook} onselect={(id) => ((selected = id), (editing = false))} onfire={firePreset} ondrag={dragPreset} />
+      {#if justSent().length}
+        <section class="just" aria-label="Just now" data-just-now>
+          <h4>Just now</h4>
+          <ol>
+            {#each justSent() as j (j.id)}
+              <li data-just={j.id}>
+                <span class="jt">{"off" in j.shown ? "" : (j.shown.title ?? "the opening place")} <span class="sub">to {destName(j.dest)} · {j.at}</span></span>
+                {#if ws}<button type="button" class="quiet" data-just-keep={j.id} onclick={() => keepSent(j)} title="Keep it as a preset on this page">Keep</button>{/if}
+                <button type="button" class="quiet" data-just-again={j.id} onclick={() => (noteSent(j.shown, j.dest), act((b) => send(b, j.dest, j.shown, "live")))} title="Send it again">Again</button>
+              </li>
+            {/each}
+          </ol>
+        </section>
+      {/if}
     </div>
 
     <div class="dests">
@@ -619,6 +649,40 @@
     transform: rotate(45deg);
     background: var(--sse-accent);
     border-color: var(--sse-accent);
+  }
+  .just {
+    margin-top: 14px;
+    border-top: var(--sse-line) solid var(--sse-rule);
+    padding-top: 6px;
+  }
+  .just h4 {
+    margin: 0 0 4px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sse-ink-muted);
+    font-weight: normal;
+  }
+  .just ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .just li {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .jt {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .lines path.driving {
     stroke: var(--sse-accent);

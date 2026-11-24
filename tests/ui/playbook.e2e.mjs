@@ -132,12 +132,25 @@ try {
   await book.locator("[data-page-choose='p1']").click();
   assert.equal(await book.locator("[data-preset]").count(), 3);
 
+  // The "just now" strip: a live send, kept afterwards as a preset; Again sends it again.
+  await sb.locator("[data-send-live]").click();
+  const just = gm.locator("[data-just-now]");
+  await just.waitFor();
+  assert.equal(await just.locator("[data-just]").count(), 1);
+  await just.locator("[data-just-keep]").first().click();
+  await monitor.waitFor();
+  await monitor.locator("[data-monitor-done]").click();
+  await monitor.locator("[data-monitor-close]").click();
+  assert.equal(await book.locator("[data-preset]").count(), 4);
+  await just.locator("[data-just-again]").first().click();
+  await shot(gm, "playbook-just-now");
+
   // Kept with the campaign.
   await gm.waitForTimeout(2500);
   await gm.reload();
   await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
   await gm.locator("[data-playbook]").waitFor({ timeout: 15000 });
-  assert.equal(await gm.locator("[data-playbook] [data-preset]").count(), 3);
+  assert.equal(await gm.locator("[data-playbook] [data-preset]").count(), 4);
   assert.match(await gm.locator("[data-playbook]").innerText(), /The rings of Vault/);
 
   assert.deepEqual(errors, []);
