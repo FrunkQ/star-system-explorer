@@ -1,0 +1,129 @@
+{
+ "note": "RK12: effect_at_range answers for a fixture (made from the real kernel by the asks beside them). A 20 MW laser against a typed armour figure, and a 1 kg slug at 3 km/s.",
+ "asks": [
+  {
+   "weapon": {
+    "kind": "beam",
+    "beam_power_w": 20000000,
+    "wavelength_m": 0.000001,
+    "aperture_m": 1,
+    "efficiency": 0.3,
+    "reject_k": 600
+   },
+   "target": {
+    "skin": {
+     "takes_j_m2": 10000000,
+     "thickness_m": 0
+    },
+    "radius_m": 10,
+    "accel_m_s2": 10
+   },
+   "distance_m": 100000
+  },
+  {
+   "weapon": {
+    "kind": "projectile",
+    "mass_kg": 1,
+    "muzzle_m_s": 3000,
+    "face_m2": 0.01
+   },
+   "target": {
+    "skin": {
+     "takes_j_m2": 1000000,
+     "thickness_m": 0
+    },
+    "radius_m": 10,
+    "accel_m_s2": 10
+   },
+   "distance_m": 100000
+  }
+ ],
+ "effects": [
+  {
+   "arrives_j_m2": 358430105.64635396,
+   "delay_s": 0.0006671281903963041,
+   "load": {
+    "electric_w": 66666666.66666667,
+    "name": "beam weapon",
+    "reject_k": 600,
+    "role": "weapon"
+   },
+   "missing": [],
+   "odds": 1,
+   "ratio": 35.8430105646354,
+   "reading": "in range",
+   "references": [
+    {
+     "doi": "10.1017/CBO9781139644181",
+     "text": "Born, M. and Wolf, E. 1999, Principles of Optics, 7th edn, Cambridge University Press, section 8.5.2: a circular aperture's light falls to its first dark ring at 1.22 wavelengths over the aperture, and 83.8% of the light lies inside it.",
+     "url": "https://doi.org/10.1017/CBO9781139644181"
+    },
+    {
+     "doi": "10.1117/12.18425",
+     "text": "Siegman, A. E. 1990, New developments in laser resonators, Proc. SPIE 1224, 2: the beam quality M², the factor by which a real beam spreads faster than a perfect one.",
+     "url": "https://doi.org/10.1117/12.18425"
+    },
+    {
+     "text": "SSE4 Atomic Rockets plan section 13 (accepted 23 Nov 2026): three readings, in range, marginal and out of range, with marginal within a stated factor either way of what the target can take.",
+     "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/handover/design/SSE4-atomic-rockets-plan.md"
+    },
+    {
+     "text": "Computed (SSE4, plan section 13, our own derivation, not the Atomic Rockets formula): the target was seen as it was a light-travel time ago and the shot takes its own flight time to arrive; in that time a target that can accelerate at a may be anywhere within ½ a t² of where it was aimed, taken as evenly spread over that disc, so the chance of a hit is (R / ½ a t²)² capped at one.",
+     "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/handover/design/SSE4-atomic-rockets-plan.md"
+    }
+   ],
+   "rings": {
+    "enough_m": 598690.325332182,
+    "even_odds_m": 252094403.25229976,
+    "in_range_m": 423337.9888731661,
+    "marginal_m": 846675.9777463322
+   },
+   "spot_radius_m": 0.122,
+   "takes_from": "authored",
+   "takes_j_m2": 10000000,
+   "wander_m": 0.000002225300112107237,
+   "why": [
+    "The skin is taken to absorb all that reaches it; give its share absorbed for a shiny or ablative skin.",
+    "What the target can take, 1.000e7 J/m², is a figure typed by hand, kept as authored.",
+    "The target is seen as it was and the shot takes time to arrive: 0.001 s in all, in which it could move 2.225e-6 m against its own 1.000e1 m, so the chance of a hit is 100%.",
+    "It draws 6.667e7 W from the electric bus and puts 4.667e7 W on the heat bus: a warship is radiators with a gun attached."
+   ]
+  },
+  {
+   "arrives_j_m2": 450000000,
+   "delay_s": 33.333666897428536,
+   "missing": [],
+   "odds": 0.0000032398703135242074,
+   "ratio": 450,
+   "reading": "in range",
+   "references": [
+    {
+     "text": "Computed (SSE4): energy is half the mass times the closing speed squared, spread over the projectile's face; the textbook kinetic energy. Halliday, D., Resnick, R. and Walker, J. 2013, Fundamentals of Physics, 10th edn, Wiley, chapter 7.",
+     "url": "https://www.wiley.com/en-us/Fundamentals+of+Physics%2C+10th+Edition-p-9781118230718"
+    },
+    {
+     "text": "SSE4 Atomic Rockets plan section 13 (accepted 23 Nov 2026): three readings, in range, marginal and out of range, with marginal within a stated factor either way of what the target can take.",
+     "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/handover/design/SSE4-atomic-rockets-plan.md"
+    },
+    {
+     "text": "Computed (SSE4, plan section 13, our own derivation, not the Atomic Rockets formula): the target was seen as it was a light-travel time ago and the shot takes its own flight time to arrive; in that time a target that can accelerate at a may be anywhere within ½ a t² of where it was aimed, taken as evenly spread over that disc, so the chance of a hit is (R / ½ a t²)² capped at one.",
+     "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/handover/design/SSE4-atomic-rockets-plan.md"
+    }
+   ],
+   "rings": {
+    "enough_m": null,
+    "even_odds_m": 5045.328003314175,
+    "in_range_m": null,
+    "marginal_m": null
+   },
+   "takes_from": "authored",
+   "takes_j_m2": 1000000,
+   "wander_m": 5555.666744143615,
+   "why": [
+    "The skin is taken to absorb all that reaches it; give its share absorbed for a shiny or ablative skin.",
+    "What the target can take, 1.000e6 J/m², is a figure typed by hand, kept as authored.",
+    "The target is seen as it was and the shot takes time to arrive: 33.334 s in all, in which it could move 5.556e3 m against its own 1.000e1 m, so the chance of a hit is 0%."
+   ]
+  }
+ ]
+}

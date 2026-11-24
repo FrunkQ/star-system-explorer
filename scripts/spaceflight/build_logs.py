@@ -14,7 +14,7 @@ down whole (a reused booster). Each piece and event carries a mark and a source 
 docs/citations/spaceflight.md; an estimate says why. Nothing here is typed from memory unless marked so.
 Horizons figures come from scripts/spaceflight/horizons_cassini.json (queried 24 Nov 2026).
 """
-import datetime, json, os
+import datetime, json, math, os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, "store-packs/sol-today/logs")
@@ -67,10 +67,26 @@ def met(t0, s):
     return t0 + int(round(int(h) * 3600 + int(m_) * 60 + float(sec)))
 
 
+EPS = math.radians(23.4392911)
+
+
+def equatorial_to_ecliptic(i_deg, node_deg=0.0):
+    """Inclination and node about the ecliptic for an orbit given about the Earth's equator (node at the equinox)."""
+    i, node = math.radians(i_deg), math.radians(node_deg)
+    hq = [math.sin(i) * math.sin(node), -math.sin(i) * math.cos(node), math.cos(i)]
+    h = [hq[0], hq[1] * math.cos(EPS) + hq[2] * math.sin(EPS), -hq[1] * math.sin(EPS) + hq[2] * math.cos(EPS)]
+    return math.degrees(math.acos(max(-1, min(1, h[2])))), math.degrees(math.atan2(h[0], -h[1])) % 360
+
+
 def orbit(around, hp_m, ha_m, i, epoch, r0, **ang):
+    """An orbit from its periapsis and apoapsis heights. Around the Earth the inclination given is the published
+    one, to the equator: it is turned to the ecliptic (the node at the equinox, as the node is not known)."""
     a = r0 + (hp_m + ha_m) / 2
     e = (ha_m - hp_m) / (2 * r0 + hp_m + ha_m)
-    el = {"a_m": round(a, 1), "e": e, "i_deg": i, "node_deg": 0.0, "peri_deg": 0.0, "m0_deg": 0.0, "epoch_s": epoch}
+    node = 0.0
+    if around == EARTH:
+        i, node = equatorial_to_ecliptic(i)
+    el = {"a_m": round(a, 1), "e": e, "i_deg": i, "node_deg": node, "peri_deg": 0.0, "m0_deg": 0.0, "epoch_s": epoch}
     el.update(ang)
     return {"kind": "orbit", "around": around, "elements": el}
 
