@@ -15588,6 +15588,282 @@
      }
     }
    ],
+   "bands": [
+    {
+     "id": "view-visible",
+     "kind": "view",
+     "view_id": "visible",
+     "names": {
+      "physics": "Visible",
+      "plain": "visible light",
+      "story": "Visible"
+     }
+    },
+    {
+     "id": "view-infrared",
+     "kind": "view",
+     "view_id": "infrared",
+     "names": {
+      "physics": "Infrared",
+      "plain": "heat light",
+      "story": "Infrared"
+     }
+    },
+    {
+     "id": "view-ultraviolet",
+     "kind": "view",
+     "view_id": "ultraviolet",
+     "names": {
+      "physics": "Ultraviolet",
+      "plain": "ultraviolet",
+      "story": "Ultraviolet"
+     }
+    },
+    {
+     "id": "view-xray",
+     "kind": "view",
+     "view_id": "xray",
+     "names": {
+      "physics": "X-ray",
+      "plain": "X-rays",
+      "story": "X-ray"
+     }
+    },
+    {
+     "id": "view-radio",
+     "kind": "view",
+     "view_id": "radio",
+     "names": {
+      "physics": "Radio",
+      "plain": "radio",
+      "story": "Radio"
+     }
+    },
+    {
+     "id": "view-mag",
+     "kind": "view",
+     "view_id": "mag",
+     "names": {
+      "physics": "Mag",
+      "plain": "magnetic field",
+      "story": "Mag"
+     }
+    },
+    {
+     "id": "gamma",
+     "kind": "light",
+     "names": {
+      "physics": "Gamma rays",
+      "plain": "gamma rays",
+      "story": "Gamma rays"
+     },
+     "from_m": {
+      "v": 1e-14,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "to_m": {
+      "v": 1e-11,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "view": "view-xray"
+    },
+    {
+     "id": "xray",
+     "kind": "light",
+     "names": {
+      "physics": "X-rays",
+      "plain": "X-rays",
+      "story": "X-rays"
+     },
+     "from_m": {
+      "v": 1e-11,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "to_m": {
+      "v": 1e-08,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "view": "view-xray",
+     "recipe": "xray"
+    },
+    {
+     "id": "uv",
+     "kind": "light",
+     "names": {
+      "physics": "Ultraviolet",
+      "plain": "ultraviolet",
+      "story": "Ultraviolet"
+     },
+     "from_m": {
+      "v": 1e-08,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "to_m": {
+      "v": 3.8e-07,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "view": "view-ultraviolet",
+     "recipe": "uv"
+    },
+    {
+     "id": "visible",
+     "kind": "light",
+     "names": {
+      "physics": "Visible",
+      "plain": "visible light",
+      "story": "Visible"
+     },
+     "from_m": {
+      "v": 3.8e-07,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "to_m": {
+      "v": 7.5e-07,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "view": "view-visible",
+     "recipe": "eye"
+    },
+    {
+     "id": "near-ir",
+     "kind": "light",
+     "names": {
+      "physics": "Near infrared",
+      "plain": "near infrared",
+      "story": "Near infrared"
+     },
+     "from_m": {
+      "v": 7.5e-07,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "to_m": {
+      "v": 5e-06,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "view": "view-infrared",
+     "recipe": "near-ir"
+    },
+    {
+     "id": "mid-ir",
+     "kind": "light",
+     "names": {
+      "physics": "Mid infrared",
+      "plain": "thermal infrared",
+      "story": "Mid infrared"
+     },
+     "from_m": {
+      "v": 5e-06,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "to_m": {
+      "v": 2.5e-05,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "view": "view-infrared",
+     "recipe": "mid-ir"
+    },
+    {
+     "id": "far-ir",
+     "kind": "light",
+     "names": {
+      "physics": "Far infrared",
+      "plain": "far infrared",
+      "story": "Far infrared"
+     },
+     "from_m": {
+      "v": 2.5e-05,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "to_m": {
+      "v": 0.00035,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "view": "view-infrared"
+    },
+    {
+     "id": "mm",
+     "kind": "light",
+     "names": {
+      "physics": "Millimetre",
+      "plain": "millimetre waves",
+      "story": "Millimetre"
+     },
+     "from_m": {
+      "v": 0.00035,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "to_m": {
+      "v": 0.01,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "view": "view-radio"
+    },
+    {
+     "id": "radio",
+     "kind": "light",
+     "names": {
+      "physics": "Radio",
+      "plain": "radio",
+      "story": "Radio"
+     },
+     "from_m": {
+      "v": 0.01,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "to_m": {
+      "v": 10000.0,
+      "unit": "m",
+      "src": "sse-light-bands",
+      "check": "authored"
+     },
+     "view": "view-radio",
+     "recipe": "radio"
+    },
+    {
+     "id": "magnetic",
+     "kind": "channel",
+     "names": {
+      "physics": "Magnetic field",
+      "plain": "magnetic field",
+      "story": "Magnetic field"
+     },
+     "view": "view-mag"
+    }
+   ],
    "sources": [
     {
      "id": "abbott2017",
@@ -16304,6 +16580,11 @@
      "text": "Special Metals Corporation 2007, INCONEL alloy 718, publication SMC-045: melting range 2300-2437 F, density 0.296 lb/in3 (annealed), used from -423 F to 1300 F; AMS 5596 sheet minimum 180 ksi ultimate and 150 ksi yield; hot-rolled bar aged, at 1200 F, 164.5 ksi ultimate and 145.0 ksi yield",
      "status": "unverified",
      "url": "https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-718.pdf"
+    },
+    {
+     "id": "sse-light-bands",
+     "text": "SSE4 nebulae and light design, the fixed band set (handover/design/SSE4-nebulae-and-light-design.md): band edges are conventions chosen for the renderer, not measurements; the ultraviolet and visible edges follow common astronomical usage",
+     "status": "authored"
     },
     {
      "id": "tegeler1999",

@@ -730,3 +730,28 @@ fn hull_skins_carry_the_burn_through_heats() {
     assert!(get("graphite", "latent_sublimation").is_some());
     assert!(get("inconel-718", "heat_capacity").is_some());
 }
+
+#[test]
+fn bands_meet_end_to_end_and_name_a_view() {
+    // RK10: one Bands table. Light bands run without gaps; every light or
+    // channel row is seen in a view row.
+    let mut g = good();
+    g["bands"] = json!([
+        {"id": "view-visible", "kind": "view", "view_id": "visible"},
+        {"id": "view-mag", "kind": "view", "view_id": "mag"},
+        {"id": "blue", "kind": "light", "from_m": 4e-7, "to_m": 5e-7, "view": "view-visible"},
+        {"id": "red", "kind": "light", "from_m": 5e-7, "to_m": 7e-7, "view": "view-visible"},
+        {"id": "magnetic", "kind": "channel", "view": "view-mag"}
+    ]);
+    assert!(Reference::from_json(&[("base".into(), g.clone())]).is_ok());
+    g["bands"] = json!([
+        {"id": "view-visible", "kind": "view"},
+        {"id": "blue", "kind": "light", "from_m": 4e-7, "to_m": 5e-7, "view": "view-visible"},
+        {"id": "red", "kind": "light", "from_m": 6e-7, "to_m": 7e-7, "view": "view-red"},
+        {"id": "odd", "kind": "smell"}
+    ]);
+    let e = Reference::from_json(&[("base".into(), g)]).unwrap_err();
+    assert!(e.iter().any(|m| m.contains("do not meet")), "{e:#?}");
+    assert!(e.iter().any(|m| m.contains("view-red")), "{e:#?}");
+    assert!(e.iter().any(|m| m.contains("band odd")), "{e:#?}");
+}

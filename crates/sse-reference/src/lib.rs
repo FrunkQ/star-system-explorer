@@ -75,7 +75,7 @@ fn unit_dim(row: &Map<String, J>) -> Option<sse_core::Dimension> {
 const DERIVED_TOL: f64 = 1e-9;
 
 /// The tables, in the order they are checked.
-pub const TABLES: [&str; 7] = [
+pub const TABLES: [&str; 8] = [
     "constants",
     "units",
     "elements",
@@ -83,6 +83,7 @@ pub const TABLES: [&str; 7] = [
     "substances",
     "mixtures",
     "reactions",
+    "bands",
 ];
 
 /// Gas constant for the vapour-curve slope check, J/(mol K) (CODATA 2018,
@@ -910,6 +911,55 @@ impl Reference {
                         "reaction {id} does not conserve charge: {charge:+}"
                     ));
                 }
+            }
+        }
+        p.extend(self.band_problems());
+        p
+    }
+
+    /// The Bands table (RK10): every band any part of SSE4 names. A `view`
+    /// row is one the view switch offers; a `light` row is a wavelength
+    /// range shown in a view; a `channel` row is something not light (the
+    /// magnetic field) shown in a view of its own. Light bands run end to
+    /// end without gaps or overlaps, so a wavelength is in exactly one.
+    fn band_problems(&self) -> Vec<String> {
+        let empty = BTreeMap::new();
+        let bands = self.tables.get("bands").unwrap_or(&empty);
+        let mut p = vec![];
+        let mut light: Vec<(f64, f64, &str)> = vec![];
+        for (id, row) in bands {
+            let kind = row.get("kind").and_then(J::as_str).unwrap_or("");
+            if !matches!(kind, "view" | "light" | "channel") {
+                p.push(format!("band {id}: kind is view, light or channel"));
+                continue;
+            }
+            if kind != "view" {
+                let view = row.get("view").and_then(J::as_str).unwrap_or("");
+                let is_view = bands
+                    .get(view)
+                    .and_then(|v| v.get("kind"))
+                    .and_then(J::as_str)
+                    == Some("view");
+                if !is_view {
+                    p.push(format!("band {id}: view {view:?} is not a view row"));
+                }
+            }
+            if kind == "light" {
+                match (num(row.get("from_m")), num(row.get("to_m"))) {
+                    (Some(a), Some(b)) if a > 0.0 && b > a => light.push((a, b, id)),
+                    _ => p.push(format!(
+                        "band {id}: from_m and to_m, with 0 < from_m < to_m"
+                    )),
+                }
+            }
+        }
+        light.sort_by(|a, b| a.0.total_cmp(&b.0));
+        for w in light.windows(2) {
+            if (w[0].1 - w[1].0).abs() > 1e-12 * w[1].0 {
+                p.push(format!(
+                    "bands {} and {} do not meet: {} m against {} m",
+                    w[0].2, w[1].2, w[0].1, w[1].0
+                ));
             }
         }
         p
