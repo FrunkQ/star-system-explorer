@@ -2,7 +2,8 @@
 // engine (`say`, `sayFact` in ui-contract/src/figures.ts), never by formatting it itself. Today's own formatting
 // (toFixed, toPrecision, toLocaleString) is counted per file in figures-ledger.json; a file may go down, never up,
 // and a new file starts at none. When a file goes down, lower its row (or run with WRITE_LEDGER=1 to rewrite the
-// ledger from the code), so the count only ever falls, to zero, as the typed-copy ledger did.
+// ledger from the code), so the count only ever falls, to zero, as the typed-copy ledger did. A row may be raised only
+// on purpose, with the reason in the pull request (two pull requests merged side by side is the usual one).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -45,7 +46,7 @@ test("the checker counts a screen's own number formatting", () => {
   assert.equal(ownFormatting(`say(x, "length").text`), 0);
 });
 
-test("no screen formats more of its own numbers than the ledger allows", () => {
+test("no screen formats more of its own numbers than the ledger allows", (t) => {
   const now = counts();
   if (process.env.WRITE_LEDGER) {
     writeFileSync(LEDGER, JSON.stringify({ about: "Own number formatting per file (tests/ui/figures-ledger.test.ts). Goes down, never up.", total: Object.values(now).reduce((a, b) => a + b, 0), files: now }, null, 1) + "\n");
@@ -61,5 +62,7 @@ test("no screen formats more of its own numbers than the ledger allows", () => {
   }
   for (const [f, was] of Object.entries(ledger.files)) if (!(f in now)) down.push(`${f}: 0 (ledger ${was})`);
   assert.deepEqual(up, [], "more own number formatting than the ledger allows");
-  assert.deepEqual(down, [], "fewer than the ledger: lower these rows (WRITE_LEDGER=1 rewrites it)");
+  // A row above the code is reported, not failed: with many builders merging side by side, a file's owner lowering it
+  // must never turn someone else's pull request red. Lower the rows when you pass (WRITE_LEDGER=1 rewrites them).
+  if (down.length) t.diagnostic(`fewer than the ledger, lower these rows: ${down.join("; ")}`);
 });
