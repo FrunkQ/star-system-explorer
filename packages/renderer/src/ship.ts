@@ -8,7 +8,7 @@
 //   delta-v = c tanh((v_e / c) ln(m0 / m1)), full-thrust burn t = (m0 - m1) / mdot.
 // Constants come from the master data sheet; densities come from the sheet's substance rows (phases.density_liquid),
 // passed in by the view, never typed here.
-import { constant, readRow, type MatterReader } from "../../ui-contract/src/index.ts";
+import { constant, readRow, SHEET_BANDS, type MatterReader } from "../../ui-contract/src/index.ts";
 
 /** How each fuel is stored, read from the master data sheet: base-nav fuel `id` is the mixture `fuel-<id>`, whose
  * recipe gives each substance's mass share; each substance's `phases.density_liquid` gives its stored density. A
@@ -100,14 +100,11 @@ export function driveFacts(s: ShipRecord): DriveFacts {
   };
 }
 
-/** The band light of a wavelength falls in: a label read off the number, never a gate. */
+/** The band light of a wavelength falls in, in plain words: a label read off the sheet's Bands table (RK10), never a gate. */
 export function bandOf(m: number): string {
-  if (m < 1e-11) return "gamma rays";
-  if (m < 1e-8) return "X-rays";
-  if (m < 3.8e-7) return "ultraviolet";
-  if (m < 7.5e-7) return "visible light";
-  if (m < 1e-3) return "infrared";
-  return "radio";
+  const rows = SHEET_BANDS.filter((b) => b.kind === "light" && b.from_m !== undefined && b.to_m !== undefined);
+  const row = rows.find((b) => m >= b.from_m! && m < b.to_m!) ?? (m < rows[0]!.from_m! ? rows[0]! : rows.at(-1)!);
+  return row.plain;
 }
 
 export type HullPartKind = "engine" | "tank" | "crew";

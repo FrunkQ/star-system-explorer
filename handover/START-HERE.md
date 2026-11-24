@@ -85,6 +85,12 @@ In his words: "try and do everything in the physics chain blocks... other than B
 - Each block or Big Block has a UI element that makes sense to visualise what it does.
 - Logic hidden in Rust that could be a flow is listed in `docs/fudges.md` (section "Candidates to move into flows") until it moves.
 
+## Banked ideas (not accepted, nothing queued)
+
+Design notes kept for the future. They are **not** rulings and no builder starts on them without Alex's own yes.
+
+- `design/SSE4-outside-models-design.md` (track OM, banked 24 Nov 2026): a scientist's own model feeding a physics flow through recorded answers, and the kernel as a published module. Alex: "find a proper use case first". Revisit when a real use case appears.
+
 ## Where we are
 
 Since 23 Nov 2026 the state of each track is its own small file in `handover/status/`, edited only by the thread that owns it (Alex's yes to question 5 of `design/SSE4-coming-together.md`). This page is the index and the standing rules. **Do not add package rows here.**
@@ -94,7 +100,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | Status file | Owner thread (24 Nov 2026, 18:15 UTC) | Covers |
 |---|---|---|
 | `status/kernel.md` | Build kernel resolve and rules | K, J, C, T1, T2, G, L, E, the kernel side of Y, TG, GH, DM2 to DM5, ND3, ND3b, ND6, ED kernel asks K1 to K17, the golden split |
-| none yet | Build galaxy arm fix and atmosphere advice (split from the kernel thread) | the galaxy arm sign fix (golden), atmosphere advice ("the science expects", "Suggest an atmosphere") |
+| `status/kernel-handoffs.md` (arrives with PR 463) | Build galaxy arm fix and atmosphere advice (split from the kernel thread) | the galaxy arm sign fix (golden), atmosphere advice ("the science expects", "Suggest an atmosphere") |
 | `status/proven-core.md` | Build SSE4 proven core | P, F, S, SF, B, T3, S5, the source side of MF (MF1 to MF3, MF10), MP19, MP20, ND1 |
 | `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
 | `status/navigation.md` | Build object selector and menus (now "Build look transitions for screens") | NV (selector part 2, object menu, find by tag, notes); AT15a screen delivery (how a screen arrives and leaves) |
@@ -111,23 +117,23 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/quality-tiers.md` | Build quality tiers and speed probe (split from the renderer) | VP4, VP5: the `gpu-ultra` tier, the speed probe and placement by measured speed, heat watch, Quality choice, drawing bench rows; recipes and the governor on every True view; sharpen at rest |
 | `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
 | `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map, pulsating stars, ship clocks); XO is a code only, never shown in the product |
-| `status/true-air.md` (arrives with PR 444) | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
-| `status/true-surface.md` (arrives with PR 449) | Build plumes, frosts and small bodies (listed as "Build plumes, frosts and hot glow") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
-| none yet | Build asteroids and rings up close | asteroids and rings seen close |
+| `status/true-air.md` | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
+| `status/true-surface.md` | Build plumes, frosts and hot glow (was "... and small bodies") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
+| `status/small-bodies.md` (arrives with PR 459) | Build asteroids and rings up close (took small bodies from the plumes thread) | SB: belt members resolved into definite bodies, asteroids and rings up close |
 | `status/surface-timelapse.md` | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse, the drawing side of W-sea2 to W-sea4 |
 | `status/names-and-life.md` | Build names gallery and life board | rest of NM6 (Classes, names gallery), U7 Life board |
 | `status/naming.md` | no live owner (NM design done) | NM |
-| `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9, SV7 |
+| `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9, SV7, AT11, AT16 |
 | `status/traveller.md` | Build Traveller pack | X3, TG8, TG9, TG11, TG13, MP16 |
 | `status/manifest.md` | Build ship manifest and crew roster | MC |
-| `status/atomic-rockets.md` (arrives with PR 447) | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
+| `status/atomic-rockets.md` | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
 | `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
 
-Added after 18:15 UTC (status files to follow): "Verify every cited paper" (master citation list, daily Consensus batches), "Build quality tiers and speed probe", "Build detail ladder and world textures", "Build aurorae and night lights". Design: "Design visual polish and flourishes" (accepted, note in `handover/design/`); the exotic objects note's section 15 adds pulsating stars (XO19) and clocks (XO20).
+Added after 18:15 UTC: "Verify every cited paper" (`status/citations.md`, arrives with PR 471; master citation list, daily Consensus batches), "Build quality tiers and speed probe" (`status/quality-tiers.md`, PR 470), "Build detail ladder and world textures" (`status/detail-ladder.md`, PR 467), "Build aurorae and night lights" (`status/aurora.md`, PR 469). Designs: "Design visual polish and flourishes" (accepted, note in `handover/design/`); the exotic objects note's section 15 adds pulsating stars (XO19) and clocks (XO20); outside models and the kernel as a module (track OM, PR 484) is banked, not accepted.
 
 Design (Fable) threads take design questions for their notes: "Bring Atomic Rockets into SSE4" (RK), "Design exotic stars and black holes" (XO). A status file marked "arrives with PR n" is on that PR's branch; until it merges, its text is kept in `handover/status-on-open-prs.md`. Threads marked "none yet" were asked to start a file.
 
