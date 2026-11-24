@@ -390,10 +390,33 @@ fn hosts_ok(
         if &h == a {
             return Err(format!("{a} cannot orbit itself"));
         }
-        if !facts.contains_key(&h) && !set.contains_key(&h) {
+        // A host need not carry facts: a generated system's bodies are there
+        // without any (a paste into one names them). It must be in the same
+        // system and not withdrawn; a host that resolves to nothing leaves
+        // the body unplaced with the reason named, never silently.
+        let sys_of = |x: &Address| {
+            let mut y = Some(x.clone());
+            while let Some(z) = y {
+                if z.last().kind() == "sys" {
+                    return Some(z);
+                }
+                y = z.parent();
+            }
+            None
+        };
+        if sys_of(&h) != sys_of(a) {
             return Err(format!(
-                "{a} orbit.host: {h} is not in the universe; add it first, or in the same edit"
+                "{a} orbit.host: {h} is not in the same system; move it with its system, or pick a host there"
             ));
+        }
+        let gone = |r: Option<&BTreeMap<String, Value>>| {
+            matches!(
+                r.and_then(|r| r.get(withdraw::WITHDRAWN)),
+                Some(Value::Bool(true))
+            )
+        };
+        if gone(set.get(&h)) || (!set.contains_key(&h) && gone(facts.get(&h))) {
+            return Err(format!("{a} orbit.host: {h} has been removed"));
         }
         let mut at = Some(h);
         let mut steps = 0;

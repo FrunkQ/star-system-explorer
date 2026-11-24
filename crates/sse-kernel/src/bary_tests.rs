@@ -191,8 +191,8 @@ fn hosts_are_checked_on_write() {
     assert_eq!(r["type"], "authored", "{r}");
     for (edits, says) in [
         (
-            serde_json::json!([{"address":"u:t/sys:0/body:2","field":"orbit.host","value":"u:t/sys:0/body:9"}]),
-            "is not in the universe",
+            serde_json::json!([{"address":"u:t/sys:0/body:2","field":"orbit.host","value":"u:t/sys:1/star:0"}]),
+            "not in the same system",
         ),
         (
             serde_json::json!([{"address":"u:t/sys:0/body:1","field":"orbit.host","value":"u:t/sys:0/body:1"}]),
@@ -210,9 +210,33 @@ fn hosts_are_checked_on_write() {
     let r = send(
         &mut k,
         serde_json::json!({"op":"set_authored","edit":{"address":"u:t/sys:0/body:3",
-            "field":"orbit.host","value":"u:t/sys:0/body:8","occurred_at_s":0}}),
+            "field":"orbit.host","value":"u:t/sys:0/body:3","occurred_at_s":0}}),
     );
     assert_eq!(r["code"], "bad_host", "{r}");
+    // A removed host is refused; a body of a generated system with no facts
+    // of its own may be named.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"withdraw","address":"u:t/sys:0/body:1","at_s":0,"others":"take"}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let r = send(
+        &mut k,
+        batch(
+            serde_json::json!([{"address":"u:t/sys:0/body:4","field":"orbit.host","value":"u:t/sys:0/body:1"}]),
+        ),
+    );
+    assert!(
+        r["message"].as_str().unwrap().contains("has been removed"),
+        "{r}"
+    );
+    let r = send(
+        &mut k,
+        batch(
+            serde_json::json!([{"address":"u:t/sys:0/body:4","field":"orbit.host","value":"u:t/sys:0/body:9"}]),
+        ),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
 }
 
 /// K13 `rehost`: keep the motion (the Moon set loose round the Sun stays
