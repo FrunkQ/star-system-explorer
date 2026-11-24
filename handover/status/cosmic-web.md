@@ -15,10 +15,10 @@ Boundaries agreed 24 Nov 2026:
 | Package | What it does | State | Log |
 |---|---|---|---|
 | V9w | Voids fill 77% of space (cited, editable `void_fraction`), one web for slice, cube and ledger; the foam map turns a cube of it in 3D and True | done (PR 368, by the renderer thread); voids hold about 40% of the matter against 15% measured (fudge) | packages/V9w.md |
-| V9w2 | Light from haloes: True shines by the cube's galaxies, G2's haloes from 10¹¹ M☉ (pack `web_light.floor_msun`, the floor grows with the cube's volume) moved by the cube's own truncated Zel'dovich step, each lit by its G3 galaxy's stars and star formation then (old light warm, young blue); HUD adds the dark matter faintly; kernel `web_slice` with `cube` and `haloes` | in review | packages/V9w2.md |
+| V9w2 | Light from haloes: True shines by the cube's galaxies, G2's haloes from 10¹¹ M☉ (pack `web_light.floor_msun`, the floor grows with the cube's volume) moved by the cube's own truncated Zel'dovich step, each lit by its G3 galaxy's stars and star formation then (old light warm, young blue); HUD adds the dark matter faintly; kernel `web_slice` with `cube` and `haloes` | in review (PR 453) | packages/V9w2.md |
+| V9w3 | The web reads as a web: parcels in 3D inked by their density today (one over their room), each dot kept inside its squeezed room, big galaxies, groups and clusters marked in 3D, Play runs on the parcels | in review | packages/V9w3.md |
 
 ## Next
-- Check the live view against Alex's ruling (spiderweb, not wrinkled rug) and fix what does not read that way.
-- Galaxies in 3D (Chart) as well as True; void galaxies bluer and fainter by environment (Hoyle et al. 2005).
+- Anisotropic scatter along each parcel's stretch (threads and walls); void galaxies bluer and fainter by environment (Hoyle et al. 2005).
 - A contract case for `haloes: true` in `tests/golden/contract.jsonl`, through the golden lane (the coordinator keeps the order).
 - The voids' matter share toward 15% (NEXUS+ or a 2LPT step), a kernel change in the golden lane.
