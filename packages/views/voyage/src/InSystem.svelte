@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, voyageLogEntries, voyageFuelWrites, withPartyChoice, partyShipNow, FUEL_FIELDS, fuelGauges, type FuelShip, type NavShip, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, voyageLogEntries, voyageFuelWrites, tanksWords, withPartyChoice, partyShipNow, FUEL_FIELDS, fuelGauges, type FuelShip, type NavShip, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
   import AtWorld from "./AtWorld.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -194,7 +194,7 @@
       const r = await ctx.session.setKept({ address: construct, ...w, at_s });
       if (!r.ok) return void (drawn = `Tanks not updated: ${r.message}`);
     }
-    drawn = writes.length ? `Tanks now: ${writes.map((w) => `${w.kind === FUEL_FIELDS.jump ? "jump fuel" : "reaction mass"} ${w.value.toFixed(1)} t`).join(", ")}.` : null;
+    drawn = tanksWords(writes);
     await readTanks();
   }
   function nextStop() {

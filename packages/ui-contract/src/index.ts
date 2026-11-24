@@ -92,7 +92,7 @@ export { SECTOR_FORMATS, mapFields, stackProvides } from "./sector.ts";
 export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateOf } from "./constructs.ts";
 export { shipLog, writerWords } from "./constructs.ts";
 export type { ConstructTemplate, Created, KeptChange, ShipLogEntry, RecordRead } from "./constructs.ts";
-export { navShipOf, partyLander, voyageStart, voyageLogEntries, voyageFuelWrites, systemOfPlace, withPartyChoice, partyShipNow, PARTY_CHOICE } from "./party.ts";
+export { navShipOf, partyLander, voyageStart, voyageLogEntries, voyageFuelWrites, tanksWords, systemOfPlace, withPartyChoice, partyShipNow, PARTY_CHOICE } from "./party.ts";
 export type { PartyShip, FlightEntryAsk } from "./party.ts";
 export { arrivalOffer, arrivalReveal } from "./arrival.ts";
 export type { ArrivalOffer } from "./arrival.ts";

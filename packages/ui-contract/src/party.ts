@@ -6,7 +6,7 @@
 // the record; until then `at` is the table's own note of it.
 import type { Json } from "./json.ts";
 import { constant } from "./sheet.ts";
-import { FUEL_FIELDS, fuelNow, shipRecordOf, type FuelShip } from "./manifest.ts";
+import { FUEL_FIELDS, fuelNow, shipRecordOf, tonnesWords, type FuelShip } from "./manifest.ts";
 import type { NavShip, ShipChoice } from "./route.ts";
 
 export interface PartyShip {
@@ -131,4 +131,10 @@ export function voyageFuelWrites(
   if (tanks.includes("propellant") && Number.isFinite(last.propellant_left_t)) out.push({ kind: FUEL_FIELDS.propellant, value: Math.max(0, last.propellant_left_t), reason });
   if (tanks.includes("jump") && Number.isFinite(last.jump_fuel_left_t)) out.push({ kind: FUEL_FIELDS.jump, value: Math.max(0, last.jump_fuel_left_t), reason });
   return out;
+}
+
+/** What the tanks hold after a draw-down, in words for the voyage panel ("Tanks now: reaction mass 25.6 t, jump fuel 40.0 t."). */
+export function tanksWords(writes: readonly { kind: string; value: number }[]): string | null {
+  if (!writes.length) return null;
+  return `Tanks now: ${writes.map((w) => `${w.kind === FUEL_FIELDS.jump ? "jump fuel" : "reaction mass"} ${tonnesWords(w.value)}`).join(", ")}.`;
 }

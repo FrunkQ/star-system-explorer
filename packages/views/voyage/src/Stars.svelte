@@ -11,7 +11,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { Overlays } from "../../../chart-grammar/src/index.ts";
-  import { MINIMISE_WORDS, VOYAGE_CONTROLS, DEFAULT_VIEW, overlaysFor, overlaySpecsOf, viewOptions, VOYAGE_SHIPS, shipChoices, shipToSend, agesWords, systemShort, voyageFrame, voyageSpan, powerWords, nowhereWords, withPartyChoice, partyShipNow, systemOfPlace, voyageLogEntries, voyageFuelWrites, fuelGauges, FUEL_FIELDS, PARTY_CHOICE, YEAR_S, type FuelShip, type NavShip, type Json, type Minimise, type StarCell, type SystemScene, type ViewContext, type VoyagePlan } from "../../../ui-contract/src/index.ts";
+  import { MINIMISE_WORDS, VOYAGE_CONTROLS, DEFAULT_VIEW, overlaysFor, overlaySpecsOf, viewOptions, VOYAGE_SHIPS, shipChoices, shipToSend, agesWords, systemShort, voyageFrame, voyageSpan, powerWords, nowhereWords, withPartyChoice, partyShipNow, systemOfPlace, voyageLogEntries, voyageFuelWrites, tanksWords, fuelGauges, FUEL_FIELDS, PARTY_CHOICE, YEAR_S, type FuelShip, type NavShip, type Json, type Minimise, type StarCell, type SystemScene, type ViewContext, type VoyagePlan } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   // The party's ship (landing run-through): picked first when the campaign has one; it flies from the system it is in.
@@ -161,7 +161,7 @@
         const r = await ctx.session.setKept({ address: p.ship, ...w, at_s });
         if (!r.ok) return void (drawn = `Tanks not updated: ${r.message}`);
       }
-      drawn = writes.length ? `Tanks now: ${writes.map((w) => `${w.kind === FUEL_FIELDS.jump ? "jump fuel" : "reaction mass"} ${w.value.toFixed(1)} t`).join(", ")}.` : null;
+      drawn = tanksWords(writes);
       await readTanks();
     }
   }
