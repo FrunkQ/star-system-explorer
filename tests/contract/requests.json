@@ -3515,5 +3515,6 @@
  {"op": "small_body", "system": "u:small/sys:1", "cloud": "u:small/sys:1/cloud:0", "rank": 40},
  {"op": "small_body", "system": "u:small/sys:1", "member": "u:small/sys:1/cloud:0/obj:0"},
  {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-1", "kind": "contact-binary", "diameter_km": 1.0, "a_au": 1.5},
- {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-2", "kind": "dragon", "diameter_km": 1.0, "a_au": 1.5}
+ {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-2", "kind": "dragon", "diameter_km": 1.0, "a_au": 1.5},
+ {"op": "light_through_gas", "passages": [{"address": "ta2-deck", "t_k": 5772.0, "layers": [], "particles": [{"material": "nh3", "radius_m": 1e-06, "optical_depth": 6.0, "at_nm": 550.0, "asymmetry": 0.85}], "floor": 0.1}]}
 ]
