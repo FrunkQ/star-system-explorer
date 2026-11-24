@@ -16,6 +16,8 @@ export type Shown =
       screen?: string;
       /** A landing the table is watching (renderer's `LandingShow`, ui-contract landing.ts): players replay it on their own kernel. */
       landing?: Json;
+      /** The thing a bookmark was looking at (PB3): the screen selects it when its role knows it. Older players ignore it. */
+      focus?: string;
     }
   /**
    * Nothing of any place: screens off, or a held line (Switchboard, PB1). `card` is the holding card's words, chosen on

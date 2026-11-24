@@ -51,6 +51,7 @@
       recycled = typeof r === "number" ? r : 0;
       const rd = own.record.kept.find((k) => k.kind === "ship.readiness")?.value;
       readiness = typeof rd === "number" ? rd : null;
+      ownKept = Object.fromEntries(own.record.kept.map((k) => [k.kind, k.value]));
     }
   }
   $effect(() => {
@@ -181,13 +182,13 @@
     const g = ++fuelGen;
     void shipRecordOf(session, n).then((r) => g === fuelGen && (fuelShip = r.ok ? (r.ship as unknown as FuelShip) : null));
   });
-  const gauges = $derived(fuelShip ? fuelGauges(fuelShip, (f) => factOf(construct, f)) : []);
+  let ownKept = $state.raw<Record<string, unknown>>({});
+  const gauges = $derived(fuelShip ? fuelGauges(fuelShip, (k) => ownKept[k]) : []);
   const TANK_WORDS: Record<FuelTank, string> = { propellant: "Reaction mass", jump: "Jump fuel" };
-  async function setFuel(tank: FuelTank, t: number, said: string) {
+  // Kept values (base manifest pack, fuel.*): each change is dated with its reason and shows in the ship's log.
+  async function setFuel(tank: FuelTank, t: number, reason: string, said: string) {
     if (!Number.isFinite(t) || t < 0) return void (note = "Fuel is a number of tonnes, 0 or more.");
-    const r = await session.send({ kind: "set_value", address: construct.address, field: FUEL_FIELDS[tank], value: t, at_yr: ws.campaign_now_yr ?? ws.now_yr });
-    if (r.status !== "applied") return void (note = whyNot(r));
-    void done(said);
+    if (await keep(construct.address, FUEL_FIELDS[tank], t, reason)) void done(said);
   }
   const crewMax = $derived(fact(/(^|\.)crew_max$/));
   const berths = $derived(fact(/(^|\.)berths$/));
@@ -249,8 +250,8 @@
             <span>{TANK_WORDS[g.tank]}<span class="muted small">{` · ${g.fuel}`}</span></span>
 <span class="bar-track" class:low={g.share < 0.25} role="meter" aria-valuemin="0" aria-valuemax={g.full_t} aria-valuenow={g.now_t} aria-label={`${TANK_WORDS[g.tank]}: ${Math.round(g.share * 100)}% full`} data-now={g.now_t} data-full={g.full_t}><span class="bar-fill" style:width="{g.share * 100}%"></span></span>
             {#if gm}
-              <span><input type="number" min="0" max={g.full_t} step="any" value={Number(g.now_t.toFixed(3))} onchange={(e) => setFuel(g.tank, Number((e.currentTarget as HTMLInputElement).value), `${TANK_WORDS[g.tank]} set.`)} aria-label={`${TANK_WORDS[g.tank]} aboard, tonnes`} data-fuel-now /> <span class="muted">of {tonnesWords(g.full_t)}</span></span>
-              {#if g.share < 1}<button type="button" class="quiet-btn" onclick={() => setFuel(g.tank, g.full_t, `${TANK_WORDS[g.tank]} topped up to ${tonnesWords(g.full_t)}.`)} data-fuel-top>Top up</button>{:else}<span class="muted small">full</span>{/if}
+              <span><input type="number" min="0" max={g.full_t} step="any" value={Number(g.now_t.toFixed(3))} onchange={(e) => setFuel(g.tank, Number((e.currentTarget as HTMLInputElement).value), "set by the GM", `${TANK_WORDS[g.tank]} set.`)} aria-label={`${TANK_WORDS[g.tank]} aboard, tonnes`} data-fuel-now /> <span class="muted">of {tonnesWords(g.full_t)}</span></span>
+              {#if g.share < 1}<button type="button" class="quiet-btn" onclick={() => setFuel(g.tank, g.full_t, "topped up", `${TANK_WORDS[g.tank]} topped up to ${tonnesWords(g.full_t)}.`)} data-fuel-top>Top up</button>{:else}<span class="muted small">full</span>{/if}
             {:else}<span class="mono">{tonnesWords(g.now_t)} of {tonnesWords(g.full_t)}</span><span></span>{/if}
           </div>
         {/each}

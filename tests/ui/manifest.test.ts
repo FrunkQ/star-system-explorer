@@ -126,3 +126,26 @@ test("fuel gauges read the kept levels, full by default, and plan from them", as
   assert.equal(now.jump!.fuel_t, 9.919);
   assert.deepEqual(fuelGauges({ wet_t: 10, dry_t: 10 }, none), [], "no tanks, no gauge");
 });
+
+test("the ship's log reads who came aboard, left and changed state while aboard", async () => {
+  const { aboardLog } = await import("../../packages/ui-contract/src/index.ts");
+  const ch = (at_s: number, value: string, reason?: string) => ({ event: `e${at_s}`, at_s, value, writer: "gm", ...(reason ? { reason } : {}) });
+  const ship = "u:1/c:ship";
+  const entries = [
+    { address: "u:1/actor:ada", name: "Ada", kind: "person", state: "awake", moves: [ch(10, ship)], states: [ch(10, "awake"), ch(20, "cold_sleep"), ch(40, "awake")] },
+    { address: "u:1/actor:parts", name: "parts", kind: "cargo", amount: 3, unit: "t", state: "awake", moves: [ch(5, "u:1/c:yard"), ch(12, ship), ch(30, "u:1/c:lark", "sold")], states: [] },
+    // A state change elsewhere is not this ship's.
+    { address: "u:1/actor:bo", name: "Bo", kind: "person", state: "dead", moves: [ch(1, ship), ch(2, "u:1/c:lark")], states: [ch(1, "awake"), ch(3, "dead")] },
+  ] as never;
+  const names: Record<string, string> = { "u:1/c:yard": "the yard", "u:1/c:lark": "Brass Lark" };
+  const log = aboardLog(ship, entries, (s: number) => s, (a: string) => names[a] ?? a);
+  assert.deepEqual(log.map((e) => [e.at_yr, e.text, e.why]), [
+    [1, "Bo came aboard", undefined],
+    [2, "Bo left for Brass Lark", undefined],
+    [10, "Ada came aboard", undefined],
+    [12, "parts (3 t) came aboard from the yard", undefined],
+    [20, "Ada is in cold sleep", undefined],
+    [30, "parts (3 t) left for Brass Lark", "sold"],
+    [40, "Ada is awake", undefined],
+  ]);
+});
