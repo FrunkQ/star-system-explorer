@@ -3128,6 +3128,7 @@ impl Kernel {
                 member,
                 cloud,
                 rank,
+                r_au,
             } => {
                 let u = self.universe()?;
                 let a = in_universe(&u.root, &system)?;
@@ -3142,6 +3143,7 @@ impl Kernel {
                     member.as_deref(),
                     cloud.as_deref(),
                     rank,
+                    r_au,
                 )?
             }
             Request::MakeSmallBody {

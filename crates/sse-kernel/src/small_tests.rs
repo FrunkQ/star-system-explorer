@@ -108,6 +108,11 @@ fn notables_list_resolves_and_made_bodies_follow_their_pins() {
         serde_json::json!({"op":"make_small_body","system":SYS,"address":addr,"kind":"comet-nucleus","diameter_km":4.0,"a_au":3.5,"e":0.7}),
     );
     assert_eq!(comet["type"], "small_body_is", "{comet}");
+    // SB4: a comet nucleus at perihelion (3.5 x 0.3 = 1.05 AU) is active, water leading.
+    let act = &comet["body"]["activity"];
+    assert_eq!(act["active"], true, "{act}");
+    assert_eq!(act["dominant"], "h2o", "{act}");
+    assert!(act["coma_km"].as_f64().unwrap() > 1e4);
     let bad = send(
         &mut k,
         serde_json::json!({"op":"make_small_body","system":SYS,"address":addr,"kind":"dragon","diameter_km":1.0,"a_au":1.0}),

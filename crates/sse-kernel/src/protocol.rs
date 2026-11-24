@@ -708,6 +708,11 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         rank: Option<u64>,
+        /// SB4: distance from the star for an icy body's activity, AU
+        /// (perihelion when left out).
+        #[serde(default)]
+        #[ts(optional)]
+        r_au: Option<f64>,
     },
     /// SB2: a small body a GM adds by hand (the Add list), made of the
     /// system's own nearest cloud: `kind` asteroid, comet-nucleus,

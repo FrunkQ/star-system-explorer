@@ -93,6 +93,61 @@ pub struct WeatheringSettings {
     pub t_myr_at_1au: f64,
 }
 
+/// One ice a nucleus can lose, with its sheet values filled at load.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct VolatileSettings {
+    /// The sheet's substance id (h2o, co2, co).
+    pub id: String,
+    /// Which of formation's solid groups it is (3 water, 4 CO2, 5 CO).
+    pub group: usize,
+    /// Photodissociation lifetime at 1 AU, s (scales as r^2).
+    pub lifetime_s_at_1au: f64,
+    #[serde(skip)]
+    pub molar_kg_mol: f64,
+    #[serde(skip)]
+    pub phases: serde_json::Map<String, serde_json::Value>,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct CometSettings {
+    /// Share of the surface that sublimates (the rest is a dust mantle).
+    pub active_fraction: f64,
+    /// Share of the subsolar insolation a fast-turning nucleus gets on average (1/4 isothermal).
+    pub insolation_share: f64,
+    pub emissivity: f64,
+    /// Bond albedo over geometric albedo.
+    pub phase_integral: f64,
+    pub dust_to_gas: f64,
+    /// Gas outflow speed at 1 AU, km/s (scales as r^-0.5).
+    pub outflow_km_s_at_1au: f64,
+    /// Sublimation counts as activity once it takes this share of the absorbed sunlight.
+    pub onset_share: f64,
+    /// Insolation share for the onset: 1, the subsolar point (Cowan and A'Hearn 1979's subsolar model).
+    pub onset_insolation_share: f64,
+    /// Free sublimation rate of an ice under the dust mantle, as a share of the bare rate.
+    pub mantle_factor: f64,
+    /// How long dust has been leaving when the tail is drawn, days.
+    pub tail_age_days: f64,
+    /// Radiation pressure over gravity for the dust that makes the visible tail.
+    pub dust_beta: f64,
+    pub solar_wind_km_s: f64,
+    pub volatiles: Vec<VolatileSettings>,
+    #[serde(skip)]
+    pub sigma_sb: f64,
+    #[serde(skip)]
+    pub r_gas: f64,
+    #[serde(skip)]
+    pub n_a: f64,
+    #[serde(skip)]
+    pub s_sun_w_m2: f64,
+    #[serde(skip)]
+    pub gm_sun: f64,
+    #[serde(skip)]
+    pub au_m: f64,
+    #[serde(skip)]
+    pub day_s: f64,
+}
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct RecipeInput {
     pub id: String,
@@ -123,6 +178,7 @@ pub struct Settings {
     pub pairs: PairSettings,
     pub figure: FigureSettings,
     pub weathering: WeatheringSettings,
+    pub comet: CometSettings,
     pub recipes: Vec<Recipe>,
 }
 
@@ -156,6 +212,30 @@ impl Settings {
                 .and_then(|d| d.get("v"))
                 .and_then(|v| v.as_f64())
                 .ok_or_else(|| format!("the sheet has no density for {id}"))?;
+        }
+        let c = &mut out.comet;
+        let k = |id: &str| {
+            sheet
+                .constant(id)
+                .ok_or_else(|| format!("the sheet has no constant {id}"))
+        };
+        c.sigma_sb = k("sigma_SB")?;
+        c.r_gas = k("R_gas")?;
+        c.n_a = k("N_A")?;
+        c.s_sun_w_m2 = k("S_sun")?;
+        c.gm_sun = k("GM_sun")?;
+        c.au_m = k("au")?;
+        c.day_s = k("day")?;
+        for v in &mut c.volatiles {
+            v.molar_kg_mol = sheet
+                .molar_mass_kg_mol(&v.id)
+                .ok_or_else(|| format!("the sheet has no molar mass for {}", v.id))?;
+            v.phases = sheet
+                .row("substances", &v.id)
+                .and_then(|r| r.get("phases"))
+                .and_then(|p| p.as_object())
+                .cloned()
+                .ok_or_else(|| format!("the sheet has no phases for {}", v.id))?;
         }
         Ok(out)
     }

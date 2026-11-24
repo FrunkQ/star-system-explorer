@@ -46,8 +46,25 @@ fn star_au(run: &SystemRun, c: &Cloud) -> Option<f64> {
     l.worlds.iter().find(|w| &w.id == id).map(|w| w.a_au)
 }
 
-fn member_json(m: &Member) -> serde_json::Value {
-    serde_json::to_value(m).expect("plain")
+/// The member as JSON, with its activity when it holds ice (SB4): at
+/// `r_au` from the star, or at perihelion (a planet-bound body at its
+/// planet's distance). `cloud` gives the shares of its ices.
+fn member_json(
+    m: &Member,
+    cloud: &Cloud,
+    host: &Host,
+    star: Option<f64>,
+    r_au: Option<f64>,
+    s: &Settings,
+) -> serde_json::Value {
+    let mut j = serde_json::to_value(m).expect("plain");
+    if m.makeup.ice > 0.0 {
+        let r = r_au.or(star).unwrap_or(m.orbit.a_au * (1.0 - m.orbit.e));
+        let shares = sse_small::ice_shares(cloud, &s.comet);
+        let a = sse_small::activity(m, &shares, r, host, &s.comet);
+        j["activity"] = serde_json::to_value(a).expect("plain");
+    }
+    j
 }
 
 /// `small_body`: with `member` (a cloud member's address, `<cloud>/obj:<k>`)
@@ -58,6 +75,7 @@ pub(crate) fn read(
     member: Option<&str>,
     cloud: Option<&str>,
     rank: Option<u64>,
+    r_au: Option<f64>,
 ) -> Result<Response, Response> {
     let run = run.ok_or_else(|| {
         err(
@@ -106,7 +124,7 @@ pub(crate) fn read(
                 .filter_map(|nb| {
                     let c = find(&nb.cloud)?;
                     let m = sse_small::resolve(&seed, c, nb.rank, &host, star_au(run, c), u, &s);
-                    let mut j = member_json(&m);
+                    let mut j = member_json(&m, c, &host, star_au(run, c), r_au, &s);
                     j["why"] = nb.why.into();
                     Some(j)
                 })
@@ -128,7 +146,7 @@ pub(crate) fn read(
     }
     let m = sse_small::resolve(&seed, c, k, &host, star_au(run, c), u, &s);
     Ok(Response::SmallBodyIs {
-        body: Some(member_json(&m)),
+        body: Some(member_json(&m, c, &host, star_au(run, c), r_au, &s)),
         notables: None,
     })
 }
@@ -205,18 +223,10 @@ pub(crate) fn make(run: Option<&SystemRun>, req: Make) -> Result<Response, Respo
         pair: pair.map(str::to_string),
         e: req.e,
     };
-    let mut m = sse_small::resolve_pinned(
-        &seed_of(run),
-        &field,
-        1,
-        &host_of(run),
-        None,
-        None,
-        &s,
-        &pins,
-    );
+    let host = host_of(run);
+    let mut m = sse_small::resolve_pinned(&seed_of(run), &field, 1, &host, None, None, &s, &pins);
     m.address = address.to_string();
-    let mut j = member_json(&m);
+    let mut j = member_json(&m, template, &host, None, None, &s);
     j["made_from"] = template.address.to_string().into();
     Ok(Response::SmallBodyIs {
         body: Some(j),

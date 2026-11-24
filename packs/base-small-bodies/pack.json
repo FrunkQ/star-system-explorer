@@ -100,6 +100,26 @@
      "about": "Solar wind darkens and reddens an exposed surface in about a million years at 1 AU, slower as a^2.",
      "t_myr_at_1au": 1.0
     },
+    "comet": {
+     "about": "A nucleus's ices sublimate where sunlight can pay their latent heat: each ice's free-sublimation energy balance (Cowan and A'Hearn 1979) with its vapour curve and molar mass read from the sheet. Lifetimes and the outflow speed are recalled survey values (fudge SB-comet-coma).",
+     "active_fraction": 0.05,
+     "insolation_share": 0.25,
+     "emissivity": 0.9,
+     "phase_integral": 0.3,
+     "dust_to_gas": 1.0,
+     "outflow_km_s_at_1au": 0.85,
+     "onset_share": 0.5,
+     "onset_insolation_share": 1.0,
+     "mantle_factor": 0.1,
+     "tail_age_days": 10.0,
+     "dust_beta": 0.5,
+     "solar_wind_km_s": 400.0,
+     "volatiles": [
+      {"id": "h2o", "group": 3, "lifetime_s_at_1au": 83000.0},
+      {"id": "co2", "group": 4, "lifetime_s_at_1au": 500000.0},
+      {"id": "co", "group": 5, "lifetime_s_at_1au": 1300000.0}
+     ]
+    },
     "recipes": [
      {
       "id": "small-body",

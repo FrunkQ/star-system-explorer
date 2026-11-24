@@ -20,10 +20,12 @@
 
 #![forbid(unsafe_code)]
 
+pub mod comet;
 pub mod figure;
 mod member;
 pub mod settings;
 
+pub use comet::{activity, ice_shares, onset_au, Activity, Volatile};
 pub use figure::{jacobi_axes, maclaurin_c_over_a, Q_BIFURCATION, Q_JACOBI_END, Q_MACLAURIN_MAX};
 pub use member::{
     made_field, mass_for_diameter, nearest_cloud, notables, rank_of, resolve, resolve_pinned,
@@ -34,6 +36,8 @@ pub use settings::Settings;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+#[cfg(test)]
+mod comet_tests;
 #[cfg(test)]
 mod tests;
 
