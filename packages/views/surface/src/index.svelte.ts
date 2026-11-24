@@ -49,7 +49,8 @@ export const playerSurface: ViewModule<PlayerScene, PlayerContext> = {
   box: "fill",
   tiers: ["canvas", "gpu-basic"],
   inputs: [{ addresses: [], quantity_kinds: [] }],
-  params: [surface.params![0]!],
+  // The same settings as the GM's (one schema per view id); a seat flies at the GM's pace whatever flight_s says.
+  params: surface.params,
   mount(el, ctx) {
     const c = mount(Surface, { target: el, props: { follow: ctx, params: ctx.params } });
     return {

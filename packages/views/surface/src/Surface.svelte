@@ -44,7 +44,7 @@
   // The party's ship (party.ts) is offered first as the lander when it is at this world.
   const party = $derived(watching ? null : (ctx!.workspace.party ?? null));
   const partyHere = $derived(party && subject && party.at === subject.address ? party : null);
-  const flightS = $derived(Math.min(120, Math.max(6, Number(params.flight_s ?? 24))));
+  const flightS = $derived(Math.min(120, Math.max(6, Number((watching ? show?.flight_s : undefined) ?? params.flight_s ?? 24))));
   const eyeM = $derived(Math.min(3, Math.max(0.3, Number(params.eye_m ?? 1.7))));
 
   // ── The world: map tiles, landmarks, air, star ─────────────────────────────────────────────
