@@ -36,6 +36,25 @@ export function sheetUnitFactor(id: string): number {
   return f;
 }
 
+/** A row of the sheet's Bands table (RK10): a view the switch offers, a wavelength range, or a channel that is not light. */
+export interface SheetBand {
+  id: string;
+  kind: "view" | "light" | "channel";
+  name: string;
+  plain: string;
+  /** On a view row: the view switch's own id ("infrared"). */
+  view_id?: string;
+  /** On a light or channel row: the id of the view row it is seen in. */
+  view?: string;
+  /** On a light row: its default recipe, where one exists. */
+  recipe?: string;
+  from_m?: number;
+  to_m?: number;
+}
+
+/** Every band any screen, sensor or recipe names, in the sheet's order. Light rows run end to end without gaps. */
+export const SHEET_BANDS: readonly SheetBand[] = doc.bands as SheetBand[];
+
 /**
  * A sheet reference in a document: `{ "sheet": "constants/au" }` or `{ "sheet": "units/day" }`, with an optional
  * `"in": "<unit id>"` to give the value in that unit. The same form packs use (sse-reference refs), so a document
