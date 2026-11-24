@@ -4,6 +4,8 @@
 // the kernel's passage floor; where a standing roof meets a fallen one the trench ends in the cave's mouth. Going
 // inside is parked (interior sites, about 4.2); this draws the holes and says where they are.
 
+import { say } from "../../ui-contract/src/index.ts";
+
 /** One stretch of fallen roof, in the site's frame (x east, y north of the site, metres). */
 export interface CaveOpening {
   passage: string;
@@ -101,7 +103,7 @@ export function nearestOpening(openings: readonly CaveOpening[], x: number, y: n
 /** One line for the ground's HUD: the nearest opening, what it is, how wide and deep, and where. */
 export function openingLine(n: ReturnType<typeof nearestOpening>): string {
   if (!n) return "";
-  const m = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(1)} km` : `${Math.round(v)} m`);
+  const m = (v: number) => say(v, "length", undefined, { sig: 2 }).text;
   const what = `${n.o.kind} ${m(n.o.width_m)} across, ${m(n.depth_m)} deep${n.o.speculative ? " (speculative)" : ""}`;
   return n.d_m < 1 ? `over a ${what}` : `${what}, ${m(n.d_m)} at ${Math.round(n.bearing_deg)}°`;
 }
