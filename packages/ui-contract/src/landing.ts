@@ -268,12 +268,12 @@ export function landingLinkSite(show: unknown): Place["site"] | null {
   return { lat_deg: r4(s.site.lat_deg), lon_deg: r4(s.site.lon_deg), ...(time ? { time } : {}), ...(lander ? { lander } : {}) };
 }
 
-/** A landing as the table and the Playbook name it: "Landing: Mars, Dribeque Planitia at midday". */
+/** A landing as the table and the Playbook name it: "Mars, landing at Dribeque Planitia, midday". */
 export function landingTitle(show: unknown, world?: string | null): string {
   const s = landingShowOf(show);
-  if (!s) return world ? `Landing: ${world}` : "Landing";
+  if (!s) return world ? `${world}, landing` : "Landing";
   const time = landingTimeOf(s.hour_deg);
   const deg = (x: number) => Math.round(Math.abs(x) * 10) / 10;
   const where = s.site.label || `${deg(s.site.lat_deg)}° ${s.site.lat_deg >= 0 ? "N" : "S"}, ${deg(s.site.lon_deg)}° ${s.site.lon_deg >= 0 ? "E" : "W"}`;
-  return `Landing: ${world || s.label}, ${where}${time ? ` at ${time}` : ""}`;
+  return `${world || s.label}, landing at ${where}${time ? `, ${time}` : ""}`;
 }

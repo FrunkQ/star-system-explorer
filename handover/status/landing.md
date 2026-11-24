@@ -37,7 +37,7 @@ renderer.md (SL1, V10g, V10i, V10j, V10k), run-desk.md (RD1 reveal on arrival).
 | LR3 the ground at night and in 3D: True at night is black with no stars, 3D is a flat grey slab (headless WebGL2) | renderer | asked 24 Nov | |
 | LR4 approach and orbit for the table: between arrival and the site the players see only the header; a "Beowulf in orbit of Mars" view (the world turning below, the At-world card's chosen act) for Send this view | here, with the Run desk thread for the preset | queued | |
 | LR5 a whole landing in its link: `~surface?site=lat,lon&time=midday&lander=party` (place.ts); Land applies hour and lander with the site, and a site link is followed even with Land open, so a bookmark or Playbook preset is a place link | here | done | packages/LR2.md |
-| LR5b the Land screen's own link and title: on Land the place (and so the address bar) carries the site, the quick hour and the lander as the GM picks them (`landingLinkSite`), and `here()`'s title names the landing ("Landing: Mars, Dribeque Planitia at midday", `landingTitle`), so a kept beat or a copied link brings it back. Bookmarks (PB2b `Whereabouts`) do not carry the site yet: Run desk thread told | here | done | packages/LR2.md |
+| LR5b the Land screen's own link and title: on Land the place (and so the address bar) carries the site, the quick hour and the lander as the GM picks them (`landingLinkSite`), and `here()`'s title names the landing ("Mars, landing at Dribeque Planitia, midday", `landingTitle`), so a kept beat or a copied link brings it back. Bookmarks (PB2b `Whereabouts`) do not carry the site yet: Run desk thread told | here | done | packages/LR2.md |
 | Gap 10, Mass on the Run desk card at Curious | Run desk thread (asking Alex) | open | |
 
 ## Next

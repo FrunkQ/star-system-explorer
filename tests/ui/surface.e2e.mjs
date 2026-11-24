@@ -110,7 +110,8 @@ try {
     // Night: the stars come out over the site and the eye opens up to see them (SL-night).
     await gm.waitForSelector("[data-surface]:not([data-stars='0'])", { timeout: 20000 }).catch(async (e) => { console.log(await gm.locator("[data-surface]").evaluateAll((l) => l.map((x) => x.outerHTML.slice(0, 600)))); throw e; });
     let darkest = { at: 0, exposure: 0 };
-    for (let h = -180; h <= 180; h += 30) {
+    for (let h = -12; h <= 12; h += 2) {
+      // The slider is in the world's local hours (LR2).
       await gm.locator("[data-hour]").fill(String(h));
       await gm.waitForTimeout(150);
       const e = Number(await gm.locator("[data-surface]").getAttribute("data-exposure"));
@@ -122,7 +123,7 @@ try {
     const stars = Number(await gm.locator("[data-surface]").getAttribute("data-stars"));
     assert.ok(stars > 500, `stars over the site: ${stars}`);
     await shot(gm, "sl1-ground-true-night");
-    await gm.locator("[data-hour]").fill("-80");
+    await gm.locator("[data-hour]").fill("-5.25");
     await gm.locator("[data-drone]").check();
     await gm.waitForTimeout(500);
     await shot(gm, "sl1-ground-true-drone");

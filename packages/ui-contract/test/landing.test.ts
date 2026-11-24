@@ -134,12 +134,12 @@ test("the Land screen's own link and title carry the landing (LR5b)", () => {
     world: { radius_m: 3.39e6, star_k: 5772, sun_radius: 0.004 },
   };
   assert.deepEqual(landingLinkSite(show), { lat_deg: 20.4301, lon_deg: -108.71, time: "midday", lander: "party" });
-  assert.equal(landingTitle(show, "Mars"), "Landing: Mars, Dribeque Planitia at midday");
+  assert.equal(landingTitle(show, "Mars"), "Mars, landing at Dribeque Planitia, midday");
   assert.equal(landingTimeOf(-82.5), "dawn");
   assert.equal(landingTimeOf(180), "night");
   assert.equal(landingTimeOf(40), null, "14:40 is no quick hour");
   const capsule = { ...show, lander: "capsule", hour_deg: 40, site: { lat_deg: -3, lon_deg: 12, label: "" } };
   assert.deepEqual(landingLinkSite(capsule), { lat_deg: -3, lon_deg: 12, lander: "capsule" });
-  assert.equal(landingTitle(capsule, "Mars"), "Landing: Mars, 3° S, 12° E");
+  assert.equal(landingTitle(capsule, "Mars"), "Mars, landing at 3° S, 12° E");
   assert.equal(landingLinkSite({ nope: 1 }), null);
 });

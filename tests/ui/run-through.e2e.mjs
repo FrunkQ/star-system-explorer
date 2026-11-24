@@ -126,7 +126,7 @@ try {
   assert.equal(await pl.locator("[data-surface]").getAttribute("data-verdict"), verdict, "the same verdict on both kernels");
   assert.equal(await pl.locator("[data-surface]").getAttribute("data-site"), await gm.locator("[data-surface]").getAttribute("data-site"));
   assert.match(await pl.locator("[data-lander-shown]").innerText(), /the party's ship/);
-  assert.match(await gm.locator("[data-table-sees]").innerText(), /Mars, .+ at midday/);
+  assert.match(await gm.locator("[data-table-sees]").innerText(), /Mars, landing at .+, midday/);
   await shot(pl, "rt-4-player-site");
 
   // 6. Land, skip to the ground, walk; the player follows; take off.

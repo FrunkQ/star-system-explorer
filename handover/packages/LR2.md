@@ -26,7 +26,7 @@ a link with `time=dusk&lander=capsule` comes back whole).
 ## LR5b: the Land screen's own link
 On Land, App's `place` carries `site` from the landing being chosen (ui-contract landing.ts `landingLinkSite`: site,
 quick hour within half an hour, lander "party" for a `{ship}` lander), kept as text so a pose never stirs it; the
-address bar follows. `here()`'s title is `landingTitle` ("Landing: Mars, Dribeque Planitia at midday"). Test in
+address bar follows. `here()`'s title is `landingTitle` ("Mars, landing at Dribeque Planitia, midday"). Test in
 `landing.test.ts` and `run-through.e2e` (the hash ends `&time=midday&lander=party`; the table line names the landing).
 
 ## For the Run desk (PB3 "A landing")
