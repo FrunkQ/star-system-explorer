@@ -2686,6 +2686,28 @@ pub fn ops() -> Vec<OpInfo> {
         o("join_constructs", Cost::Trivial, "GM machine only; one universe event"),
         o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
         o("attach_program", Cost::Trivial, "GM machine only; one record event"),
+        o("hold", Cost::Trivial, "GM machine only; one record event"),
+        o(
+            "who_holds",
+            Cost::Light,
+            "one place on one layer: its holdings, inherited and rolled up, linear in the layer's holdings",
+        ),
+        o(
+            "holdings_in",
+            Cost::Light,
+            "every place held inside the bounds on one layer, linear in the layer's holdings (with history, every dated change)",
+        ),
+        o("set_tech", Cost::Trivial, "GM machine only; one record event"),
+        o(
+            "tech_of",
+            Cost::Trivial,
+            "one civilisation's ladder level with its parents' and the setting's, linear in their tech events",
+        ),
+        o(
+            "tech_reading",
+            Cost::Light,
+            "one design's parts against one civilisation's ladder, linear in parts x needs",
+        ),
         o("detach_program", Cost::Trivial, "GM machine only; one record event"),
         o(
             "programs_step",
