@@ -8,9 +8,12 @@
   decides what each screen shows; this file only draws it and turns presses into board changes.
 -->
 <script lang="ts">
-  import { back, hold, holdAll, lift, moveScreen, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Shown, type TablePort } from "../../../ui-contract/src/index.ts";
+  import { addBookmark, addPreset, back, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type Workspace } from "../../../ui-contract/src/index.ts";
+  import Playbook from "./Playbook.svelte";
+  import PresetMonitor from "./PresetMonitor.svelte";
+  import { noteFired } from "./fired.svelte.ts";
 
-  let { table, onopenseats }: { table: TablePort; onopenseats?: () => void } = $props();
+  let { table, ws, onopenseats }: { table: TablePort; ws?: Workspace; onopenseats?: () => void } = $props();
 
   const st = $derived(table.state);
   const board = $derived(st.board);
@@ -27,6 +30,52 @@
   const heldCount = $derived(Object.values(board.lines).filter((l) => l?.held).length + (board.all ? 1 : 0));
   // The card a click holds with: the kind used last (6.2), plain to begin with.
   let lastCard = $state<HoldCard>("plain");
+
+  // The Playbook (PB3): kept with the campaign in the workspace; the open page and folded sections are this device's.
+  const pb = $derived(ws?.playbook ?? emptyPlaybook());
+  const bookmarks = $derived(ws?.bookmarks ?? []);
+  const loadPref = (k: string) => {
+    try {
+      return localStorage.getItem(k);
+    } catch {
+      return null;
+    }
+  };
+  const savePref = (k: string, v: string) => {
+    try {
+      localStorage.setItem(k, v);
+    } catch {
+      /* private window: the choice lasts this visit */
+    }
+  };
+  let pageId = $state<string | null>(loadPref("sse4.playbook.page"));
+  let folded = $state<Set<string>>(new Set(JSON.parse(loadPref("sse4.playbook.folded") ?? "[]") as string[]));
+  $effect(() => savePref("sse4.playbook.page", pageId ?? ""));
+  $effect(() => savePref("sse4.playbook.folded", JSON.stringify([...folded])));
+  let selected = $state<string | null>(null);
+  let editing = $state(false);
+  function setPlaybook(next: PlaybookDoc, select?: string) {
+    if (ws) ws.playbook = next;
+    if (select) ((selected = select), (editing = true));
+    if (selected && !findPreset(next, selected)) ((selected = null), (editing = false));
+  }
+  function firePreset(p: Preset, at?: Dest) {
+    noteFired(p.id);
+    act((b) => fire(b, p, bookmarks, st.roles.map((r) => r.id), at));
+  }
+  // Keep on Live (4.4): bookmark where the GM is and put it on the open page as a preset for Everyone, named ready to change.
+  function keepLive() {
+    if (!ws?.markHere) return;
+    const b = ws.markHere();
+    ws.bookmarks = addBookmark(bookmarks, b);
+    const page = findPage(pb, pageId)?.page;
+    const section = page?.sections.find((x) => !folded.has(x.id)) ?? page?.sections[0];
+    const r = addPreset(pb, section?.id ?? "", { title: b.name, to: "everyone", steps: [{ show: { bookmark: b.id } }] });
+    setPlaybook(r.pb, r.id);
+  }
+  function dragPreset(e: PointerEvent, id: string) {
+    startDrag(e, { kind: "source", id });
+  }
 
   const act = (f: (b: Board) => Board) => table.act(f);
   const sendLive = (dest: Dest) => act((b) => send(b, dest, table.live(), "live"));
@@ -52,7 +101,7 @@
 
   // Dragging: a source's dot onto a destination; a screen onto a role (move) or another screen (swap). Every drag has
   // a press-then-press twin: press the dot (or a screen's grip), then press where it goes.
-  let armed = $state<{ kind: "source"; id: "live" } | { kind: "screen"; id: string } | null>(null);
+  let armed = $state<{ kind: "source"; id: string } | { kind: "screen"; id: string } | null>(null);
   let dragging = $state(false);
   function destAt(x: number, y: number): HTMLElement | null {
     return (document.elementFromPoint(x, y) as HTMLElement | null)?.closest<HTMLElement>("[data-dest]") ?? null;
@@ -62,7 +111,11 @@
     armed = null;
     if (!a || !el) return;
     const dest = el.dataset.dest as Dest;
-    if (a.kind === "source") return sendLive(dest);
+    if (a.kind === "source") {
+      if (a.id === "live") return sendLive(dest);
+      const p = findPreset(pb, a.id)?.preset;
+      return void (p && firePreset(p, dest));
+    }
     if (dest.startsWith("role:")) act((b) => moveScreen(b, a.id, dest.slice(5)));
     else if (dest.startsWith("screen:") && dest.slice(7) !== a.id) act((b) => swapScreens(b, a.id, dest.slice(7)));
   }
@@ -100,10 +153,12 @@
   function measure() {
     if (!root) return;
     const box = root.getBoundingClientRect();
-    const dot = root.querySelector<HTMLElement>('[data-source-dot="live"]')?.getBoundingClientRect();
-    if (!dot) return;
-    const x0 = dot.left + dot.width / 2 - box.left;
-    const y0 = dot.top + dot.height / 2 - box.top;
+    const dotAt = (id: string) => {
+      const r = (root!.querySelector<HTMLElement>(`[data-source-dot="${CSS.escape(id)}"]`) ?? root!.querySelector<HTMLElement>('[data-source-dot="live"]'))?.getBoundingClientRect();
+      return r ? { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top } : null;
+    };
+    const liveDot = dotAt("live");
+    if (!liveDot) return;
     const out: typeof paths = [];
     const layered = board.over.length > 0;
     for (const el of root.querySelectorAll<HTMLElement>("[data-dest]")) {
@@ -114,19 +169,27 @@
       const r = el.getBoundingClientRect();
       const x1 = r.left - box.left - 4;
       const y1 = r.top + Math.min(r.height / 2, 20) - box.top;
-      const cx = (x0 + x1) / 2;
+      // From the preset that sent it, when its row is in view; else from Live.
+      const from = isLayer ? (board.over_from ?? [])[board.over.length - 1] : line?.from;
+      const { x: sx, y: sy } = (from && from !== "live" ? dotAt(from) : null) ?? liveDot;
+      const cx = (sx + x1) / 2;
       const role = el.dataset.role ?? "";
       const screen = el.dataset.screen;
-      out.push({ key: dest, d: `M${x0},${y0} C${cx},${y0} ${cx},${y1} ${x1},${y1}`, held: !!board.all || (!!line?.held && !isLayer), faint: layered && !isLayer, mid: { x: cx, y: (y0 + y1) / 2 }, dest, role, ...(screen ? { screen } : {}) });
+      out.push({ key: dest, d: `M${sx},${sy} C${cx},${sy} ${cx},${y1} ${x1},${y1}`, held: !!board.all || (!!line?.held && !isLayer), faint: layered && !isLayer, mid: { x: cx, y: (sy + y1) / 2 }, dest, role, ...(screen ? { screen } : {}) });
     }
     paths = out;
-    if (pointer && armed) drag = `M${x0},${y0} L${pointer.x - box.left},${pointer.y - box.top}`;
-    else drag = null;
+    const ad = armed?.kind === "source" ? (dotAt(armed.id) ?? liveDot) : liveDot;
+    drag = pointer && armed ? `M${ad.x},${ad.y} L${pointer.x - box.left},${pointer.y - box.top}` : null;
   }
   $effect(() => {
     void board;
     void st.roles;
     void pointer;
+    void pb;
+    void pageId;
+    void folded;
+    void selected;
+    void editing;
     requestAnimationFrame(measure);
   });
   $effect(() => {
@@ -143,6 +206,12 @@
     if (e.key === "Escape" && armed) return void (armed = null);
     if ((e.key === "h" || e.key === "H") && !e.ctrlKey && !e.metaKey && !e.altKey) return void (e.preventDefault(), act((b) => (b.all ? releaseAll(b) : holdAll(b, lastCard === "joke" ? "plain" : lastCard))));
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") return void (e.preventDefault(), e.stopPropagation(), e.shiftKey ? table.redo() : table.undo());
+    // Keys 1 to 9 fire the presets in view on the open page, in order (4.5).
+    if (/^[1-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const page = findPage(pb, pageId)?.page;
+      const p = page ? presetsInView(page, folded)[Number(e.key) - 1] : undefined;
+      if (p) (e.preventDefault(), firePreset(p));
+    }
   }
   let copied = $state(false);
 </script>
@@ -165,10 +234,30 @@
 
   <div class="cols">
     <div class="sources">
+      {#if selected && findPreset(pb, selected)}
+        <PresetMonitor
+          {pb}
+          id={selected}
+          {board}
+          {bookmarks}
+          roles={st.roles}
+          bind:editing
+          markHere={ws?.markHere}
+          onchange={(next) => setPlaybook(next)}
+          onbookmarks={(next) => ws && (ws.bookmarks = next)}
+          onfire={firePreset}
+          onclose={() => ((selected = null), (editing = false))}
+        />
+        <!-- Live stays a source while a preset is in the monitor: its dot is still here to drag. -->
+        <p class="sub livebar">Live · {words(live)} <button type="button" class="dot" class:on={armed?.kind === "source" && armed.id === "live"} data-source-dot="live" aria-label="Send Live somewhere: press, then press where it goes" onpointerdown={(e) => startDrag(e, { kind: "source", id: "live" })}></button></p>
+      {:else}
       <article class="live" data-source="live">
         <header>
           <span><b>Live</b> · <span data-live-title>{words(live)}</span></span>
-          <button type="button" class="pri" data-send-live onclick={() => sendLive("everyone")} title="Send your view to every screen">Send</button>
+          <span class="acts">
+            {#if ws?.markHere}<button type="button" data-keep-live onclick={keepLive} title="Bookmark where you are and keep it on this page as a preset">Keep</button>{/if}
+            <button type="button" class="pri" data-send-live onclick={() => sendLive("everyone")} title="Send your view to every screen">Send</button>
+          </span>
         </header>
         <p class="sub">Your view, as each screen's role knows it. Only you see it until you send.</p>
         <footer>
@@ -176,7 +265,8 @@
           <button type="button" class="dot" class:on={armed?.kind === "source"} data-source-dot="live" aria-label="Send Live somewhere: press, then press where it goes" aria-pressed={armed?.kind === "source"} onpointerdown={(e) => startDrag(e, { kind: "source", id: "live" })} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), (armed = armed ? null : { kind: "source", id: "live" }))}></button>
         </footer>
       </article>
-      <p class="sub playbook-later">The Playbook's pages of presets come here.</p>
+      {/if}
+      <Playbook {pb} {board} {bookmarks} roles={st.roles} bind:pageId bind:folded {selected} armed={armed?.kind === "source" && armed.id !== "live" ? armed.id : null} onchange={setPlaybook} onselect={(id) => ((selected = id), (editing = false))} onfire={firePreset} ondrag={dragPreset} />
     </div>
 
     <div class="dests">
@@ -361,6 +451,17 @@
     border-top: var(--sse-line) solid var(--sse-rule);
     justify-content: flex-end;
   }
+  .live .acts {
+    display: inline-flex;
+    gap: 4px;
+  }
+  .livebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    margin: 0;
+  }
   .live > .sub {
     padding: 0 12px;
   }
@@ -504,9 +605,6 @@
     content: "";
     position: absolute;
     inset: -8px;
-  }
-  .playbook-later {
-    margin: 12px 0 0;
   }
   @media (max-width: 760px) {
     .sb {
