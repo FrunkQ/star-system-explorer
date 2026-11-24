@@ -75,6 +75,7 @@ In his words: "the physics is WAY more interesting than faking it. But understan
 
 - Every deliberate simplification, stand-in or tuned constant goes in `docs/fudges.md` (where it lives, why it exists, what real physics would replace it) in the same PR that adds it.
 - Every reference, published relation or quoted constant goes in `docs/citations.md` with its check status (verified, corrected, unverified). Check a relation against its source before relying on it.
+- **Master citation list (from PR 471, thread "Verify every cited paper"):** a new citation in a pack or in the code fails the checks until it is added to the master list with `python3 scripts/citations.py --add`. The list (about 1,475 papers, tiered, with statuses) and how papers are verified (with Consensus, which the new account has directly) are in `handover/citations/README.md`. Still also add the citation to `docs/citations.md` with its status.
 
 ## Standing rule: physics in the chain blocks, each with a view (Alex, 19 Nov 2026)
 In his words: "try and do everything in the physics chain blocks... other than Big Blocks. And have a UI element that makes sense to visualise".
