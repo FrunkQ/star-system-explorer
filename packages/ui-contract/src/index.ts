@@ -156,6 +156,14 @@ export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem,
 // One units engine (ED1a): every figure said and read back the same way.
 export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, factAbout, factUnit, sayFact, readFact, figureTable, sayNumber, roundTo, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
 export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices, FactLike, FactUnit } from "./figures.ts";
+// The Flow view (RK13): any ledger's rows laid out in columns; the Power card is its first user.
+export { layoutFlow, flowRowColumns, HAIRLINE_SHARE } from "./flow.ts";
+export type { FlowRow, FlowNode, FlowBand, FlowLayout, FlowOptions } from "./flow.ts";
+export { POWER_COLUMNS, NOWHERE, JET, FUEL_NODE, RADIATORS, heatTemperatures, radiatorNode, powerFlowRows, powerColumn, powerRank, powerReadings, radiatorArea, newtonsText, areaText, VISIBLE_AT_M } from "./power.ts";
+export type { RadiatorRule, PowerReading } from "./power.ts";
+// Range rings (RK12): effect at range as rings round the one who holds the weapon, a HUD overlay.
+export { RANGE_RING_LAYER, rangeRings, rangeText, ringPoints } from "./range-rings.ts";
+export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, RangeTarget, RangeWeapon } from "./range-rings.ts";
 // Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
 export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed } from "./handles.ts";
