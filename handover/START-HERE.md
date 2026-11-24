@@ -59,6 +59,15 @@ leave the browser.
 | Sister sites | Explorers `FrunkQ/starsystemx-creator-hub`; converter `FrunkQ/starsystem-convert` |
 
 
+## Standing rulings of 24 Nov 2026 (afternoon and evening)
+
+- **CI test lines, add only** (Alex 18:07 UTC: "yes - if it makes your job easier - do it!"): a builder may add lines to `.github/workflows/ci.yml` so its new tests run automatically. Never remove, skip or loosen a check. Every other CI workflow or merge-check edit still needs Alex's own yes.
+- **Frozen physics for the golden** (Alex 18:07 UTC): the shared contract golden may run on a frozen copy of the base-physics pack, with the live pack's loading tested separately. The kernel thread builds this after the barycentre PR.
+- **Golden lane:** until the golden is split by area (agreed by Alex; kernel thread first takes the op list, line 1, and the unknown-op line, 41, out of `tests/golden/contract.jsonl`, then per-area files), one golden-changing PR merges at a time, in order of readiness, each merged with main, regenerated and green. Tell the kernel thread when one opens and when it merges.
+- **Data sheet UI copy:** after any change to the data sheet or `scripts/build-ui-reference.py`, merge main, run `python3 scripts/build-ui-reference.py`, then `--check`, before merging.
+- **"Call me if there is a stop"** (Alex): if a stage is blocked on him, ask him; don't wait silently.
+- Other rulings of the day (Composite band, Hazard map, seas, pulsar glitches, CoolProp only in scratch with his yes) are in `handover/memory/sse4-rulings-24nov-evening.md`.
+
 ## Standing rule: real physics, documented fudges (Alex, 19 Nov 2026)
 In his words: "the physics is WAY more interesting than faking it. But understand a browser has limited capability. Fall on physics rather than simplification where practical. If we decide to "fudge" it is a known and documented fudge with a damn fine reason to exist."
 
@@ -79,30 +88,41 @@ Since 23 Nov 2026 the state of each track is its own small file in `handover/sta
 
 The order in which tracks are joined up into the app is the six stages of `design/SSE4-coming-together.md` (accepted 23 Nov): 1 test drive, 2 one system told in full, 3 one language underneath, 4 the galaxy has a past, 5 run a game, 6 show it. Its section 4 gives one lane to each change that touches many blocks; read it before a sweep or a pull request that changes golden hashes.
 
-| Status file | Owner thread | Covers |
+| Status file | Owner thread (24 Nov 2026, 18:15 UTC) | Covers |
 |---|---|---|
-| `status/kernel.md` | Build kernel resolve and rules | K, J, C, T1, T2, G, L, E, the kernel side of Y, TG, GH, DM2 to DM5, ND3, ND3b, ND6 |
+| `status/kernel.md` | Build kernel resolve and rules | K, J, C, T1, T2, G, L, E, the kernel side of Y, TG, GH, DM2 to DM5, ND3, ND3b, ND6, ED kernel asks K1 to K17, the golden split |
+| none yet | Build galaxy arm fix and atmosphere advice (split from the kernel thread) | the galaxy arm sign fix (golden), atmosphere advice ("the science expects", "Suggest an atmosphere") |
 | `status/proven-core.md` | Build SSE4 proven core | P, F, S, SF, B, T3, S5, the source side of MF (MF1 to MF3, MF10), MP19, MP20, ND1 |
 | `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
-| `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | U6, U8, V8, V9, voyages, GH8 |
+| `status/navigation.md` | Build object selector and menus | NV (selector part 2, object menu, find by tag, notes) |
+| `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, `shell/src/run/`, Bookmarks, Playbook and Switchboard (RD, PB) |
+| `status/landing.md` (arrives with PR 437) | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
+| `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
+| `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | V8, voyages, the flight log, travel panels, HW |
+| `status/galaxy.md` (arrives with PR 431) | Build galaxy charts and histories (split from travel) | U6, U8, V9, GH8, V3 gap 39 |
+| none yet | Build cosmic web view | the cosmic web view (V9w follow-ups) |
 | `status/light.md` | Build light and nebulae | O, the light side of Y, MF6, MF7, MF9, ND2 |
-| `status/weather.md` | Build shared climate and weather | W |
-| `status/data-sheet.md` | Build the master matter data sheet | MP data waves, MP22, SOL, DM1, DM6, citation checks |
-| `status/renderer.md` | Build photoreal renderer | R, the drawing side of Y5 and MF14a |
-| `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9 |
-| `status/traveller.md` | Build Traveller pack | X3a to X3d, TG8, TG9, TG11, TG13, MP16 |
-| `status/manifest.md` | Build ship manifest and crew roster | MC (ship manifest and crew roster) |
-| `status/naming.md` | the thread that owns track NM | NM |
-| `status/performance.md` | Measure performance for minimum specs | PF |
-| `status/across-tracks.md` | each row names its owners | the umbrella rows for MF, Y, GH, ND, TG, and the converter module |
-| `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, run/ (table line, seats, arrival), Bookmarks, Playbook and Switchboard (RD, PB) |
+| `status/weather.md` | Build shared climate and weather | W, seas (colour, waves, whitecaps) |
+| `status/data-sheet.md` | Build the master matter data sheet | MP data waves, MP22, SOL, DM1, DM6, RK1, RK2, RK10, citation checks |
+| `status/renderer.md` | Build photoreal renderer | R, the drawing side of Y5 and MF14a, V14 |
+| `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
+| `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map); XO is a code only, never shown in the product |
+| `status/true-air.md` (arrives with PR 444) | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
+| `status/true-surface.md` (arrives with PR 449) | Build plumes, frosts and small bodies (listed as "Build plumes, frosts and hot glow") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
+| `status/small-bodies.md` (arrives with PR 459) | Build asteroids and rings up close | SB: belt and ring members resolved up close, notable bodies (a shattered world's core), small body kinds for the Add list, comets whole (takes VP-P3), VP-R1 to VP-R5 |
+| `status/surface-timelapse.md` (arrives with PR 436) | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse |
+| `status/names-and-life.md` | Build names gallery and life board | rest of NM6 (Classes, names gallery), U7 Life board |
+| `status/naming.md` | no live owner (NM design done) | NM |
+| `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9, SV7 |
+| `status/traveller.md` | Build Traveller pack | X3, TG8, TG9, TG11, TG13, MP16 |
+| `status/manifest.md` | Build ship manifest and crew roster | MC |
+| `status/atomic-rockets.md` (arrives with PR 447) | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
+| `status/paper-spacecraft.md` (arrives with PR 438) | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
-| `status/navigation.md` | Build object selector and menus | NV (finding your way: selector part 2, object menu, find by tag, notes) |
-| `status/exotic-objects.md` | no builder thread yet (design by "Design exotic stars and black holes") | XO (black holes with real light bending, pulsars, stripped stars, Composite band, the Hazard map for any hazardous body) |
-| `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs as edited, the Solar System built through the UI) |
-| `status/small-bodies.md` | Build asteroids and rings up close | SB (belt and ring members resolved up close, notable bodies, the small body kinds for the Add list) |
-| none yet | Build Paper spacecraft pack | RK6 (other RK packages are rows in the files above) |
-| none yet | designed only (XO note, PR 420) | XO exotic objects |
+| `status/performance.md` | no live owner (thread finished) | PF |
+| `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
+
+Design (Fable) threads take design questions for their notes: "Bring Atomic Rockets into SSE4" (RK), "Design exotic stars and black holes" (XO). A status file marked "arrives with PR n" is on that PR's branch; until it merges, its text is kept in `handover/status-on-open-prs.md`. Threads marked "none yet" were asked to start a file.
 
 A package that does not fit a file goes in its owner thread's file. A new track gets a new file and one line in the table above. Milestone M1 "Proven core" (K0 to K6) is complete.
 
