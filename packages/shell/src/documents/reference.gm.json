@@ -11,7 +11,7 @@
     {
       "view": "sse.view.reference",
       "area": "chart",
-      "params": { "page": "constants", "names_offer": "packs/base-names.json" }
+      "params": { "page": "constants", "names_offer": "packs/base-names.json", "classes_offer": "packs/base-atlas.json, packs/sse3-classic.json" }
     },
     {
       "view": "sse.view.time-ruler",
@@ -24,14 +24,14 @@
       "group": "understand",
       "label": "Look up",
       "order": 3,
-      "hint": "Constants, elements, units and names, each with where it comes from"
+      "hint": "Constants, elements, units, names and classes, each with where it comes from"
     },
     {
       "scale": "world",
       "group": "understand",
       "label": "Look up",
       "order": 3,
-      "hint": "Constants, elements, units and names, each with where it comes from"
+      "hint": "Constants, elements, units, names and classes, each with where it comes from"
     },
     {
       "scale": "workshop",
