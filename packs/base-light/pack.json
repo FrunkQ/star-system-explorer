@@ -53,7 +53,21 @@
             "species": "H I",
             "at_m": 1.21567e-07,
             "medium": "vacuum",
-            "matter": "h"
+            "matter": "h",
+            "aurora": {
+              "lifetime_s": 1.6e-09,
+              "from": [
+                {
+                  "matter": "h2",
+                  "yield": 0.02
+                },
+                {
+                  "matter": "h",
+                  "yield": 0.1
+                }
+              ],
+              "source": "Giants' ultraviolet aurorae are H2 bands and Lyman-alpha (Ingersoll et al. 1998, Icarus 135, 251, doi:10.1006/icar.1998.5971); yields authored (fudge register F59)."
+            }
           },
           {
             "id": "oii",
@@ -69,7 +83,17 @@
             "species": "N2+",
             "at_m": 3.9144e-07,
             "medium": "air",
-            "matter": "n2"
+            "matter": "n2",
+            "aurora": {
+              "lifetime_s": 6.6e-08,
+              "from": [
+                {
+                  "matter": "n2",
+                  "yield": 0.0046
+                }
+              ],
+              "source": "N2+ first negative, prompt (about 1e-8 s; Whiter et al. 2023, doi:10.5194/angeo-41-1-2023); 391.4 nm is about 3.3 times 427.8 nm in photons, from Earth yields per energy: about 1 kR of 557.7 nm and 200 R of 427.8 nm per erg cm⁻² s⁻¹ of electrons (Rees and Luckey 1974, J. Geophys. Res. 79, 5181, doi:10.1029/JA079i034p05181), divided by oxygen's or nitrogen's share of the air near 110 km"
+            }
           },
           {
             "id": "ca-k",
@@ -116,7 +140,21 @@
             "species": "H I",
             "at_m": 4.86133e-07,
             "medium": "air",
-            "matter": "h"
+            "matter": "h",
+            "aurora": {
+              "lifetime_s": 1e-08,
+              "from": [
+                {
+                  "matter": "h2",
+                  "yield": 0.00015
+                },
+                {
+                  "matter": "h",
+                  "yield": 0.0015
+                }
+              ],
+              "source": "Balmer series with H-alpha (Dyudina et al. 2016, doi:10.1016/j.icarus.2015.05.022); yields authored, about a quarter of H-alpha's (fudge register F59)."
+            }
           },
           {
             "id": "oiii-4959",
@@ -156,7 +194,22 @@
             "species": "O I",
             "at_m": 5.57734e-07,
             "medium": "air",
-            "matter": "o"
+            "matter": "o",
+            "aurora": {
+              "lifetime_s": 0.74,
+              "quench_m3_s": 4e-20,
+              "from": [
+                {
+                  "matter": "o",
+                  "yield": 0.033
+                },
+                {
+                  "matter": "co2",
+                  "yield": 0.005
+                }
+              ],
+              "source": "Kawamura et al. 2020, Earth Planets Space 72, doi:10.1186/s40623-020-01229-8 (lifetime 0.7 s, 100 to 115 km); Earth yields per energy: about 1 kR of 557.7 nm and 200 R of 427.8 nm per erg cm⁻² s⁻¹ of electrons (Rees and Luckey 1974, J. Geophys. Res. 79, 5181, doi:10.1029/JA079i034p05181), divided by oxygen's or nitrogen's share of the air near 110 km; quenching mainly by O2, effective against the whole air, set so the line is not put out at its measured height; the carbon dioxide yield is authored (Mars's green aurora, Knutsen et al. 2025, doi:10.1126/sciadv.ads1563, has no measured yield). Fudge register F59."
+            }
           },
           {
             "id": "hei",
@@ -180,7 +233,22 @@
             "species": "O I",
             "at_m": 6.3003e-07,
             "medium": "air",
-            "matter": "o"
+            "matter": "o",
+            "aurora": {
+              "lifetime_s": 110.0,
+              "quench_m3_s": 2e-17,
+              "from": [
+                {
+                  "matter": "o",
+                  "yield": 0.15
+                },
+                {
+                  "matter": "co2",
+                  "yield": 0.02
+                }
+              ],
+              "source": "Lifetime about 110 s (Kawamura et al. 2020, doi:10.1186/s40623-020-01229-8; Kalogerakis et al. 2009, doi:10.5194/angeo-27-2183-2009); quenching by N2, about 2e-11 cm³ s⁻¹ (Streit et al. 1976, J. Chem. Phys. 65, 4761, doi:10.1063/1.432930); yields authored (fudge register F59)."
+            }
           },
           {
             "id": "nii-6548",
@@ -196,7 +264,21 @@
             "species": "H I",
             "at_m": 6.56281e-07,
             "medium": "air",
-            "matter": "h"
+            "matter": "h",
+            "aurora": {
+              "lifetime_s": 1e-08,
+              "from": [
+                {
+                  "matter": "h2",
+                  "yield": 0.0006
+                },
+                {
+                  "matter": "h",
+                  "yield": 0.006
+                }
+              ],
+              "source": "Saturn's aurora shows a strong H-alpha line (Dyudina et al. 2016, Icarus 263, 32, doi:10.1016/j.icarus.2015.05.022); prompt; yields authored, no measured visible yield (fudge register F59)."
+            }
           },
           {
             "id": "nii",

@@ -427,6 +427,12 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("body.equatorial_surface_field", "magnetic field strength at the surface on the magnetic equator"),
     ("magnetosphere.plasma_source_rate", "mass of plasma added to a magnetosphere each second (by a moon's volcanoes or geysers)"),
     ("magnetosphere.corotation_limit", "distance beyond which trapped plasma stops turning with the planet (Hill distance)"),
+    ("aurora.electron_energy", "energy of the electrons raining into the air along the field lines"),
+    ("aurora.electron_range", "mass of air above each square metre that a falling electron gets through before it stops"),
+    ("aurora.power", "power coming down into the air as aurora, both hemispheres together"),
+    ("light.radiative_lifetime", "mean time an excited atom or molecule waits before giving off its light"),
+    ("light.quenching_rate_coefficient", "rate coefficient for a collision taking an excited atom's energy away before it shines"),
+    ("light.surviving_share", "share of excited atoms that give off their light rather than lose it in a collision"),
     // dust extinction (Y2)
     ("dust.extinction_ratio", "how much dust dims light at a wavelength, relative to the V band (A_λ / A_V)"),
     // cosmic-ray shielding and dose (MF7)

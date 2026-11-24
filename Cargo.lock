@@ -596,6 +596,8 @@ dependencies = [
  "sse-atoms",
  "sse-core",
  "sse-flow",
+ "sse-light",
+ "sse-reference",
 ]
 
 [[package]]

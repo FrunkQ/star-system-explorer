@@ -1042,3 +1042,33 @@ fn rainbows_and_halos_follow_the_refractive_index() {
     assert!((ice.halo_90_deg.unwrap() - 45.7).abs() < 0.1, "{ice:?}");
     assert!(crate::bows::bows("x", 1.3, "fog").is_err());
 }
+
+/// MF9 part 2b: a line's colour, and the aurora lines' parents on the sheet.
+#[test]
+fn aurora_lines_have_colours_and_sheet_parents() {
+    let tb = t();
+    let eye = tb.eye.as_ref().unwrap();
+    let g = crate::colour::colour_of_lines(eye, &[(5.577e-7, 1.0)]).unwrap();
+    assert_eq!(g.linear_srgb[1], 1.0, "{:?}", g.linear_srgb);
+    let r = crate::colour::colour_of_lines(eye, &[(6.300e-7, 1.0)]).unwrap();
+    assert_eq!(r.linear_srgb[0], 1.0, "{:?}", r.linear_srgb);
+    let uv = crate::colour::colour_of_lines(eye, &[(1.216e-7, 1.0)]).unwrap();
+    assert_eq!(uv.xyz, [0.0; 3]);
+    assert!(crate::colour::colour_of_lines(eye, &[(5.0e-7, -1.0)]).is_err());
+    let s = sse_reference::Reference::base();
+    let lit: Vec<&LineDef> = tb.lines.iter().filter(|l| l.aurora.is_some()).collect();
+    assert!(lit.len() >= 5);
+    for l in lit {
+        let a = l.aurora.as_ref().unwrap();
+        assert!(a.lifetime_s > 0.0 && a.quench_m3_s >= 0.0 && !a.source.is_empty());
+        for p in &a.from {
+            assert!(
+                s.row("elements", &p.matter).is_some() || s.row("substances", &p.matter).is_some(),
+                "line {}: no sheet row {}",
+                l.id,
+                p.matter
+            );
+            assert!(p.energy_share > 0.0 && p.energy_share < 1.0);
+        }
+    }
+}

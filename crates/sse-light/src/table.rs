@@ -30,6 +30,36 @@ pub struct LineDef {
     /// (annihilation, TiO, CH).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub matter: Option<String>,
+    /// How the line shines in an aurora (MF9 part 2b): absent for a line
+    /// no falling electron excites.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aurora: Option<AuroraLine>,
+}
+
+/// A line's part in aurorae: how long its upper state lives, how readily a
+/// collision puts it out, and which gases give it off when electrons rain in.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AuroraLine {
+    /// Radiative lifetime of the upper state, s.
+    pub lifetime_s: f64,
+    /// Rate coefficient for collisions with the air taking the energy away
+    /// before it shines, m³/s (0 for a prompt line).
+    #[serde(default)]
+    pub quench_m3_s: f64,
+    /// The gases that give it off, each with the share of the falling
+    /// electrons' energy that goes into the line (before quenching) when
+    /// that gas is all of the air.
+    pub from: Vec<AuroraParent>,
+    #[serde(default)]
+    pub source: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AuroraParent {
+    /// Element or substance id on the master data sheet.
+    pub matter: String,
+    #[serde(rename = "yield")]
+    pub energy_share: f64,
 }
 
 /// Photospheric absorption: each line's strength (0 to 1) at the listed temperatures.
