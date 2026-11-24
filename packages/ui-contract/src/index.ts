@@ -49,6 +49,10 @@ export type { ReferenceIn, ShownReference } from "./reference.ts";
 export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
 export type { Hub, Wire, Manifest, Shown, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest, SealedManifest, ScreenHello } from "./p2p.ts";
 export { BoardHistory, emptyBoard, upgradeBoard, sourceOf, landing, send, lift, back, rejoin, hold, release, holdAll, releaseAll, screenHello, moveScreen, swapScreens, redirect, setSignal, resolve, signalOf, cardWords, boardWire } from "./board.ts";
+export { BOOKMARK_SCHEMA, addBookmark, bookmarkName, bookmarkReachable, bookmarksFrom, makeBookmark, moveBookmark, nextBookmarkId, removeBookmark, renameBookmark, updateBookmark } from "./bookmark.ts";
+export type { Bookmark, Whereabouts } from "./bookmark.ts";
+export { PLAYBOOK_SCHEMA, addChapter, addPage, addPreset, addSection, destOf, emptyPlaybook, findPage, findPreset, fire, isUp, movePreset, movePresetToPage, nextId, pages, playbookFrom, presetWords, presetsInView, removePart, removePreset, rename, showOf, updatePreset } from "./playbook.ts";
+export type { Chapter, Page, Playbook, Preset, Section, Step } from "./playbook.ts";
 export type { Board, BoardScreen, Dest, HoldCard, Line, Showing, TablePort } from "./board.ts";
 // The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
 export type { Session } from "./session.ts";
@@ -128,6 +132,8 @@ export type { FormsHere } from "./add-here.ts";
 // Find in Look up: an element, constant or unit by name, symbol or id.
 export { findInSheet } from "./reference-find.ts";
 export type { RefHit } from "./reference-find.ts";
+export { classesOnStack, classTree, className, classBandWords, classNumber, needsWords, findClass, findClasses } from "./classes.ts";
+export type { AtlasAxis, AtlasBand, AtlasClass, AtlasScheme, ClassAtlas, ClassNode } from "./classes.ts";
 export { namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMore, sourceWords, layerOrder, SAMPLE_KINDS } from "./names.ts";
 export type { SampleAsk, SampledName, NameSample, NamePart, SchemeInfo, NamesOnStack, ShownName, NamesRead } from "./names.ts";
 export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedAsk, EmbedBridge } from "./embed.ts";
@@ -148,3 +154,7 @@ export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem,
 // One units engine (ED1a): every figure said and read back the same way.
 export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
 export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices } from "./figures.ts";
+// Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
+export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
+export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed } from "./handles.ts";
+export * from "./place-notes.ts";

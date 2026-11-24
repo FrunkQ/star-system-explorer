@@ -10,3 +10,4 @@ are not lost. They are reference and planning material, not code.
 - `names/`: name lists used by the naming packs' tests and examples.
 - `data/affinity/`: element affinity tables (Lodders 2003, Rudnick and Gao crust, Earth core and mantle) with their
   README, the source data behind the element inventory.
+- `small-bodies-handover.md`: the small-bodies approach (Alex 24 Nov 18:02 and 18:05) and notes from "Build plumes, frosts and small bodies", copied 18:15 UTC; that thread may move a newer copy into its status file.
