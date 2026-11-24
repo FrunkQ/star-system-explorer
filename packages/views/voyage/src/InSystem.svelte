@@ -9,23 +9,35 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
   import AtWorld from "./AtWorld.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
-  const first = untrack(() => ({ ship: String(params.ship ?? "fusion-torch"), minimise: String(params.minimise ?? "home_time") }));
+  // The party's ship (landing run-through): picked first when the campaign has one; it flies from where it is.
+  const party = $derived(ctx.workspace.party ?? null);
+  const PARTY = "party";
+  const first = untrack(() => ({ ship: ctx.workspace.party ? PARTY : String(params.ship ?? "fusion-torch"), minimise: String(params.minimise ?? "home_time") }));
   let ship = $state(first.ship);
   // Ships the stacked packs list (the Traveller pack's standard ships) beside the stock ones; a pack ship goes whole.
   const choices = $derived.by(() => {
     void ctx.workspace.revision;
     const st = ctx.session.stack();
-    return shipChoices(IN_SYSTEM_SHIPS, [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof shipChoices>[1]);
+    const rows = shipChoices(IN_SYSTEM_SHIPS, [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof shipChoices>[1]);
+    if (!party) return rows;
+    const like = typeof party.nav === "string" ? rows.find((r) => r.id === party.nav) : undefined;
+    const drive = like?.drive ?? (typeof party.nav === "string" ? "" : rows.find((r) => r.ship === party.nav)?.drive ?? `${party.nav.accel_g} g`);
+    return [{ id: PARTY, name: `${party.name} (the party's ship)`, drive, ...(typeof party.nav === "string" ? {} : { ship: party.nav }) }, ...rows];
+  });
+  // A new party ship is picked at once.
+  $effect(() => {
+    if (party?.ship) untrack(() => (ship = PARTY));
   });
   $effect(() => {
     if (!choices.some((c) => c.id === ship)) ship = "fusion-torch";
   });
   const shipInfo = $derived(choices.find((c) => c.id === ship) ?? choices.find((c) => c.id === "fusion-torch") ?? choices[0]);
-  const sending = $derived(shipInfo ? shipToSend(shipInfo) : ship);
+  const sending = $derived(shipInfo?.id === PARTY && party ? party.nav : shipInfo ? shipToSend(shipInfo) : ship);
+  const flyingParty = $derived(shipInfo?.id === PARTY && !!party);
   let minimise = $state<Minimise>((MINIMISE_WORDS.some((m) => m.id === first.minimise) ? first.minimise : "home_time") as Minimise);
   let mode = $state<"explore" | "to">("to");
   const fromScene = $derived(navFromScene(scene));
@@ -48,11 +60,37 @@
       const port = nav.bodies.find((b) => (b as { port?: boolean }).port)?.address;
       const zone = scene.subjects.find((x) => x.kind === "zone" && x.band_au);
       const inZone = zone ? nav.bodies.find((b) => b.a_au >= zone.band_au![0] && b.a_au <= zone.band_au![1])?.address : undefined;
-      from = home = port ?? inZone ?? bs[0]!.address;
+      from = home = voyageStart(bs.map((b) => b.address), ctx.workspace.party, ctx.workspace.selection, port ?? inZone ?? bs[0]!.address);
       visited = [from];
       const i = bs.findIndex((b) => b.address === from);
       to = bs[i + 1 < bs.length ? i + 1 : Math.max(0, i - 1)]!.address;
     });
+  });
+
+  // Picking a world on the chart, or the party's ship moving, sets where the voyage starts (gap 9).
+  $effect(() => {
+    void party?.at;
+    void ctx.workspace.selection;
+    const bs = fromScene.bodies;
+    untrack(() => {
+      if (!bs.length || !from) return;
+      const s = voyageStart(bs.map((b) => b.address), party, ctx.workspace.selection, from);
+      if (s === from) return;
+      from = home = s;
+      visited = [s];
+      if (to === s || !to) {
+        const i = bs.findIndex((b) => b.address === s);
+        to = bs[i + 1 < bs.length ? i + 1 : Math.max(0, i - 1)]!.address;
+      }
+    });
+  });
+
+  // The goal is never the start: going "to" where the ship already is picks the next world out instead.
+  $effect(() => {
+    const bs = fromScene.bodies;
+    if (mode !== "to" || !from || to !== from || bs.length < 2) return;
+    const i = bs.findIndex((b) => b.address === from);
+    to = bs[i + 1 < bs.length ? i + 1 : Math.max(0, i - 1)]!.address;
   });
 
   let gen = 0;
@@ -76,10 +114,13 @@
   const v = $derived(plan?.voyage ?? null);
   const places = $derived(plan?.places ?? []);
   const W = 640;
-  const H = 220;
+  const H = 232;
   const AXIS_Y = 160;
   const real = $derived(viewOptions(VOYAGE_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown.scale === "real");
   const x = $derived(orbitAxis(W, places, 28, real));
+  // Names in up to four rows under the axis, none overlapping; the start and the goal always get theirs.
+  const LANES = 4;
+  const lanes = $derived(labelLanes(places.map((p) => ({ x: x(p.a_au), width: p.name.length * 6.6, first: p.address === from || p.address === v?.to || p.address === to })), LANES));
   const farAu = $derived(Math.max(1, ...places.map((p) => p.a_au)));
   const at = (a: string) => places.find((p) => p.address === a);
   const arcs = $derived(
@@ -116,10 +157,21 @@
   }
   function nextStop() {
     if (!v) return;
+    // The party's ship arrives: it is there now (the players' screens move only when the GM sends the view).
+    if (flyingParty && party && ctx.workspace.setParty) {
+      const c = (ctx.workspace as { campaign_now_yr?: number }).campaign_now_yr;
+      ctx.workspace.setParty({ ...$state.snapshot(party), at: v.to, voyage: { from: v.from, to: v.to, days: v.home_days, ...(typeof c === "number" ? { depart_yr: c } : {}) } } as typeof party);
+      arrived = v.to;
+      arrivedName = nameOf(v.to);
+    }
     visited = [...visited, ...v.legs.map((l) => l.to).filter((s) => !visited.includes(s))];
     from = v.to;
-    if (mode === "to") to = "";
+    // The goal becomes the next world on (the guard above picks it), so the chart stays drawn.
+    if (mode === "to") to = from;
   }
+  let arrived = $state<string | null>(null);
+  let arrivedName = $state("");
+  const landHref = $derived(arrived && !arrived.startsWith("belt:") ? placeHash({ scale: "world", system: scene.system, world: arrived, screen: "surface" }) : null);
   function restart() {
     from = home;
     visited = [home];
@@ -164,7 +216,8 @@
       <g class="place" class:here={p.address === from} class:dest={v && p.address === v.to} class:seen={visited.includes(p.address)}>
         {#if p.fuel.length}<circle class="fuel" cx={px} cy={AXIS_Y} r="8" />{/if}
         <circle class="dot" cx={px} cy={AXIS_Y} r={p.address === from || (v && p.address === v.to) ? 5 : 3} />
-        <text x={px} y={AXIS_Y + (i % 2 ? 34 : 22)} text-anchor="middle">{p.name}</text>
+        {#if lanes[i] !== null && lanes[i] !== undefined}<text x={px} y={AXIS_Y + 22 + lanes[i]! * 13} text-anchor="middle" data-label-lane={lanes[i]}>{p.name}</text>{/if}
+        <title>{p.name}</title>
         <circle class="hit" role="button" tabindex="-1" aria-label={p.name} data-place={p.address} cx={px} cy={AXIS_Y} r="12" onclick={() => pick(p.address)} onkeydown={(e) => e.key === "Enter" && pick(p.address)} />
       </g>
     {/each}
@@ -173,6 +226,7 @@
   <div class="ledger" data-voyage-ledger>
     {#if failed}<p class="warn" data-failed>{failed}</p>{/if}
     {#if busy && !plan}<p class="muted">Charting…</p>{/if}
+    {#if landHref && arrived === from}<p data-arrived>{party?.name} is at {arrivedName}. <a href={landHref} data-land-here>Land here</a></p>{/if}
     {#if plan && !v}
       <h3>No voyage</h3>
       {#each plan.refusals as r, i (i)}<p class="warn" data-refusal>{r}</p>{/each}
@@ -191,7 +245,7 @@
           <li data-leg={l.course ?? l.means}>{l.words}. <span class="muted">Left on arrival: {l.propellant_left_t.toFixed(1)} t.</span></li>
         {/each}
       </ol>
-      <button type="button" class="go" data-next onclick={nextStop}>{mode === "explore" ? "Next stop: go there" : "Arrive there"}</button>
+      <button type="button" class="go" data-next onclick={nextStop}>{flyingParty ? `Fly ${party?.name} there` : mode === "explore" ? "Next stop: go there" : "Arrive there"}</button>
       {#if visited.length > 1}<button type="button" class="quiet-btn" data-restart onclick={restart}>Back to the start</button>{/if}
       <AtWorld {ctx} ask={atAsk} arriving={arriving} />
     {/if}

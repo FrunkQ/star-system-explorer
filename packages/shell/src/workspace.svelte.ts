@@ -38,6 +38,10 @@ export function createWorkspace(now_yr: number): Workspace {
     setCampaignNow(yr: number) {
       ws.campaign_now_yr = yr;
     },
+    party: null,
+    setParty(p) {
+      ws.party = p;
+    },
     overlay_anchors: {},
     setOverlayAnchor(id, a) {
       const next = { ...(ws.overlay_anchors ?? {}) };

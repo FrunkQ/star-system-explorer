@@ -1,0 +1,26 @@
+{
+  "format": "sse.pack/1",
+  "id": "sse.sol-today",
+  "version": "0.1.0",
+  "kind": ["universe"],
+  "kernel_range": "^0.1",
+  "licence": "CC-BY-4.0 AND Apache-2.0",
+  "provides": {
+    "other": {
+      "about": {
+        "label": "Sol today",
+        "text": "Real spaceflight from 1957 to now: every orbital launch, every station, every craft that left Earth orbit and every landing on another world, with flight logs for the showcase missions. Real craft are assembled from their real parts.",
+        "fictional": false,
+        "note": "Track RS (handover/design/SSE4-real-spaceflight-feasibility.md). Published on Explorers, not built into SSE4; the onboarding tour uses it to teach loading a pack."
+      },
+      "credit": [
+        "Catalogue data from GCAT: General Catalog of Artificial Space Objects, Jonathan C. McDowell, https://planet4589.org/space/gcat/ , CC BY 4.0. Rearranged and filtered; values unchanged.",
+        "Trajectories from JPL Horizons, NASA/JPL-Caltech, https://ssd.jpl.nasa.gov/horizons/ ."
+      ],
+      "files": {
+        "catalogue": "catalogue.json",
+        "stations": "stations.json"
+      }
+    }
+  }
+}

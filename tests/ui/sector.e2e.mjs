@@ -8,7 +8,7 @@
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go } from "./nav.mjs";
+import { go, view } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -47,14 +47,14 @@ try {
   assert.equal(await map.getAttribute("data-hud"), "on", "HUD starts on: the sector map is a diagram");
   assert.ok(on.names >= 4 && on.nums === on.hexes && on.lit > 1, JSON.stringify(on));
   if (shots) await page.screenshot({ path: `${shots}/sector-hud-on.png` });
-  await page.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off" }).click();
+  await view(page, "HUD", "Off");
   await page.waitForFunction(() => document.querySelector("svg.hex-map")?.getAttribute("data-hud") === "off");
   const off = { hexes: await map.locator("polygon").count(), names: await map.locator("text.name").count(), nums: await map.locator("text.num").count(), marks: await map.locator(".mark, .ring").count(), lit: await map.locator(".range").count() };
   assert.equal(off.hexes, on.hexes, "the grid stays");
   assert.deepEqual([off.names, off.nums, off.lit], [0, 0, 0], JSON.stringify(off));
   assert.ok(off.marks >= 4 && off.marks < on.marks, `each world keeps its own mark only: ${JSON.stringify({ on, off })}`);
   if (shots) await page.screenshot({ path: `${shots}/sector-hud-off.png` });
-  await page.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On" }).click();
+  await view(page, "HUD", "On");
   await page.waitForFunction(() => document.querySelector("svg.hex-map")?.getAttribute("data-hud") === "on");
 
   // V3 gap 18 (overlay.ts): the pack's sector grid on Voyages, between stars, placed on a picked star.

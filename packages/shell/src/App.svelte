@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
@@ -132,6 +132,13 @@
   });
   // The view controls' height: what sits below them starts there, however many rows they wrap to.
   let viewbarH = $state(0);
+  /** The place in view, as the table would be shown it: on the Land screen, with the landing the GM is flying. */
+  let lastLanding = $state.raw<Json | null>(null);
+  const LAND_SCREEN = "players.land.screen.json";
+  const here = (): Shown =>
+    ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+  // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
+  let kickerW = $state(999);
 
   // The instrument rail (top-level design 2.2) at the scale in view: system, world, or the Workshop.
   let railScale = $state<RailScale>("system");
@@ -218,6 +225,12 @@
 
   // Sharing with players (V4): recording starts as the campaign opens, before any fact is entered.
   let share = $state<Share | null>(null);
+  // The party's ship (run-through): the table always knows where it is, so every change goes to the players' screens.
+  // It never moves their view: that is the GM's "Send this view".
+  $effect(() => {
+    const p = ws.party ? ($state.snapshot(ws.party) as unknown as Json) : null;
+    if (share) share.host.setState({ party: p });
+  });
   let opened: unknown[] = [];
   loadPacks()
     .then((packs) => ((opened = packs), openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: base.universe, packs })))
@@ -298,6 +311,7 @@
     ws.campaign_now_yr = save.workspace.campaign_now_yr ?? save.workspace.now_yr;
     ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
     ws.overlay_anchors = save.workspace.overlay_anchors ?? {};
+    ws.party = save.workspace.party ?? null;
     savedAt = save.saved_at;
     const events = savedEvents(save);
     keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
@@ -316,7 +330,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {} })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, party: ws.party ?? null })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -508,6 +522,11 @@
   });
   $effect(() => {
     ws.players_online = share?.state.players ?? 0;
+    ws.sendLanding = (show) => {
+      lastLanding = show;
+      const sh = share?.state.shown;
+      if (share && sh && "landing" in sh && sh.landing) share.show({ ...(JSON.parse(JSON.stringify(sh)) as typeof sh), landing: show });
+    };
     ws.shared = !!share?.state.link;
   });
   const lenses = $derived.by(() => {
@@ -550,8 +569,10 @@
     const s = session;
     const aud = lensAudience(l);
     const g = ++lensGen;
+    // The system in view, not the shipped sample's: a lens on the Solar System looks at the Solar System.
+    const sys = scene.system || (factsDoc as unknown as AuthoredFacts).scope;
     if (!s || !aud) return void (ws.lensScene = null);
-    s.scene((factsDoc as unknown as AuthoredFacts).scope, { audience: aud, ...(l.data ? { data_view: l.data } : {}) }).then((r) => {
+    s.scene(sys, { audience: aud, ...(l.data ? { data_view: l.data } : {}) }).then((r) => {
       if (g === lensGen) ws.lensScene = r.ok ? r.scene : null;
     });
   });
@@ -856,6 +877,8 @@
       toScale(p.scale);
     }
     if (p.screen && SCREENS[p.screen] && scalesOf(SCREENS[p.screen]!).includes(p.scale)) ws.screen = p.screen;
+    // A landing site in the link (Voyages' "Land here"): the Land screen picks it up once it has read the world.
+    if (p.site && p.world) ws.landing_site = { body: p.world, lat_deg: p.site.lat_deg, lon_deg: p.site.lon_deg };
   }
   /** Up one scale, from above the system (Esc); at a world, up to its system. */
   function upAStep() {
@@ -1007,7 +1030,7 @@
         if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
         else if (a.dialog === "grow") openMake("generate");
         else if (a.dialog === "bring") openCampaign();
-        else if (a.dialog === "share" && share) window.open(share.start(), "_blank", "noopener");
+        else if (a.dialog === "share" && share) window.open(share.start(here()), "_blank", "noopener");
       } else if ("control" in a) document.querySelector<HTMLButtonElement>(a.control === "light" ? ".light .toggle" : ".sound .toggle")?.click();
       else if ("link" in a) window.open(a.link, "_blank", "noopener");
     });
@@ -1448,7 +1471,7 @@
       {/each}
     </nav>
     <!-- The system's subtitle belongs to the system; above it the line itself says where. -->
-    {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
+    {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker" class:gone={kickerW < 140} bind:clientWidth={kickerW} title="{scene.subtitle} · {formatYears(ws.now_yr)}">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
     <div class="spacer"></div>
     <!-- What (2.3): the desk. Explore looks, Build changes, Run is the table. -->
     <Segmented label="Desk" value={desk} options={DESKS} onchange={chooseDesk} slide />
@@ -1585,6 +1608,11 @@
           {#if share.state.link}
             <a href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' screen</a>
             <span data-players={share.state.players}>{share.state.players} {share.state.players === 1 ? "screen" : "screens"} · {share.state.seq} events</span>
+            <!-- What the table is shown (the landing run-through): the place the GM last sent, or screens off. -->
+            {@const shown = share.state.shown}
+            <span class="table-sees" data-table-sees={"off" in shown ? "off" : shown.scope}>Table sees: {"off" in shown ? "nothing (screens off)" : (shown.title ?? "the opening place")}</span>
+            {#if "off" in shown || shown.scope !== scene.system || (ws.screen === "surface" && lastLanding && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => share!.show(here())} title="Show the players' screens {scene.title}, as far as they know it">Send this view</button>{/if}
+            {#if !("off" in shown)}<button type="button" class="linkbtn quiet" data-screens-off onclick={() => share!.show({ off: true })} title="Blank the players' screens until you send a view">Screens off</button>{/if}
             <button type="button" class="linkbtn quiet" onclick={() => ((seatsOpen = true), seatsDialog?.showModal())}>{share.state.plan.seats.length > 1 ? `${share.state.plan.seats.length} seats` : "More seats"}</button>
             {#if share.state.waiting.length}
               <span class="requests" role="group" aria-label="Players' requests">
@@ -1598,7 +1626,7 @@
               </span>
             {/if}
           {:else}
-            <button type="button" class="linkbtn" onclick={() => window.open(share!.start(), "_blank", "noopener")}>Share with players</button>
+            <button type="button" class="linkbtn" onclick={() => window.open(share!.start(here()), "_blank", "noopener")}>Share with players</button>
           {/if}
         </span>
       {/if}
@@ -1623,7 +1651,7 @@
 
 <dialog bind:this={seatsDialog} class="help seats-dialog" aria-label="Seats" onclose={() => (seatsOpen = !!seatsDialog?.open)}>
   {#if seatsOpen && share && session}
-    <SeatsPanel {share} session={session} bodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)} scope={(factsDoc as unknown as AuthoredFacts).scope} at_yr={(factsDoc as unknown as AuthoredFacts).at_yr} onchange={() => ws.notePhysics()} />
+    <SeatsPanel {share} session={session} bodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)} scope={(factsDoc as unknown as AuthoredFacts).scope} at_yr={(factsDoc as unknown as AuthoredFacts).at_yr} onchange={() => ws.notePhysics()} {here} />
   {/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
@@ -1918,6 +1946,7 @@
   .barbtn {
     height: 32px;
     padding: 0 14px;
+    white-space: nowrap;
     border: var(--sse-line) solid var(--sse-ink);
     background: transparent;
     color: var(--sse-ink);
@@ -2081,6 +2110,9 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .kicker.gone {
+    visibility: hidden;
   }
   .spacer {
     flex: 1;

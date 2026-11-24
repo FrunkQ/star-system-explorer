@@ -8,6 +8,7 @@
 // step fails here. A step that needs more than one press is listed in handover/test-drive.md as a rough edge.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
+import { view } from "./nav.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
@@ -30,7 +31,7 @@ const BUDGET = {
   "see what followed": 1,
   "add a world": { desktop: 3, phone: 4 }, // pick the star, Add here (in More on a phone), then one of what forms there
   "open the globe": 1,
-  "its magnetic field": 1,
+  "its magnetic field": 2, // Band is folded with HUD into the Show chip (changed far less than style, seen from, scale)
   "cut it open": 1,
   "run time": 1,
   "out to the cosmic web": { desktop: 1, phone: 2 }, // a phone's line shows one step up: the list beside the name, then the web
@@ -139,7 +140,7 @@ async function walk(browser, vp) {
     await page.waitForFunction(() => Number(document.querySelector("[data-body] [data-tier]")?.getAttribute("data-frames") ?? 0) > 0, null, { timeout: 30000 });
   });
   await step("its magnetic field", async () => {
-    await tap(page.getByRole("group", { name: "Band" }).getByRole("button", { name: "Mag", exact: true }));
+    await view(page, "Band", "Mag");
     await page.getByText(/Field \d+(\.\d+)? µT at the equator/).waitFor({ timeout: 20000 });
   });
   await step("cut it open", async () => {

@@ -1,5 +1,5 @@
 import { mount, unmount } from "svelte";
-import type { ViewModule } from "../../../ui-contract/src/index.ts";
+import type { PlayerContext, PlayerScene, ViewModule } from "../../../ui-contract/src/index.ts";
 import { SURFACE_CONTROLS } from "./controls.ts";
 import Surface from "./Surface.svelte";
 
@@ -29,6 +29,32 @@ export const surface: ViewModule = {
       update(s) {
         props.scene = s;
       },
+      dispose() {
+        void unmount(c);
+      },
+    };
+  },
+};
+
+/**
+ * The same view on a player's screen (the landing run-through): it follows the landing the GM sent the table, on the
+ * seat's own kernel (the same tiles and the same descent, from the same site and lander), with the GM's pose on the
+ * ground. It needs the host's `landing` and `ground`; a screen without them says it is waiting. Players watch and
+ * never steer. The player scene itself is not read: the ground is not in it.
+ */
+export const playerSurface: ViewModule<PlayerScene, PlayerContext> = {
+  id: "sse.view.surface",
+  version: "0.1.0",
+  scene: "player",
+  box: "fill",
+  tiers: ["canvas", "gpu-basic"],
+  inputs: [{ addresses: [], quantity_kinds: [] }],
+  // The same settings as the GM's (one schema per view id); a seat flies at the GM's pace whatever flight_s says.
+  params: surface.params,
+  mount(el, ctx) {
+    const c = mount(Surface, { target: el, props: { follow: ctx, params: ctx.params } });
+    return {
+      update() {},
       dispose() {
         void unmount(c);
       },

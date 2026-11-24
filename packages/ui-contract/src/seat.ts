@@ -1,7 +1,23 @@
 // Seats (H8.7) and the approval rule. The GM is the seat whose audience is
 // all knowledge and whose intents apply at once (H8.8).
 import type { SeatBrand } from "./brand.ts";
+import type { Json } from "./json.ts";
 import { INTENT_KINDS, type Intent, type IntentKind } from "./intent.ts";
+
+/**
+ * What the table is shown (the landing run-through, 23 Nov): the place the GM last sent, or screens off. Players'
+ * screens build their scene for this scope; nothing the GM looks at privately reaches them until it is sent.
+ */
+export type Shown =
+  | {
+      scope: string;
+      title?: string;
+      /** The players' screen document to show it on (`documents/<screen>`); absent: the seat's own screen. */
+      screen?: string;
+      /** A landing the table is watching (renderer's `LandingShow`, ui-contract landing.ts): players replay it on their own kernel. */
+      landing?: Json;
+    }
+  | { off: true };
 
 export interface AutoApprove {
   intent: IntentKind;
@@ -34,6 +50,12 @@ export interface Seat {
    * parameters by name, laid over every screen this seat shows.
    */
   live?: Record<string, boolean>;
+  /**
+   * What this seat alone is shown (Looks 4D seat rows, first cut): the GM's per-seat "Send" or "Screens off". Absent:
+   * the seat sees what the whole table is shown. Like `live`, sent at once and never saved; "Send this view" for
+   * everyone clears it.
+   */
+  shown?: Shown;
 }
 
 export type Decision = { action: "apply" } | { action: "ask_gm" } | { action: "refuse"; reason: string };
@@ -65,6 +87,8 @@ export function decide(seat: Seat, intent: Intent): Decision {
   if (intent.kind === "adopt_physics" || intent.kind === "stack_packs" || intent.kind === "scan_toggle" || intent.kind === "grant") return { action: "ask_gm" };
   // Placing and withdrawing bodies is the GM's (paste and cut on the Build desk): never auto-approved.
   if (intent.kind === "set_values" || intent.kind === "withdraw" || intent.kind === "restore") return { action: "ask_gm" };
+  // Adding a system to the universe is the GM's (V13).
+  if (intent.kind === "adopt") return { action: "refuse", reason: "only the game master adds systems to the universe" };
   // Who knows what is the GM's (SV): a player seat never reveals or hides, even with auto-approve.
   if (intent.kind === "set_known" || intent.kind === "undo_known") return { action: "refuse", reason: "what players know is set by the game master" };
   // What things are called is the GM's (NM2): a player's rename goes to the GM.

@@ -1,0 +1,111 @@
+{
+  "format": "sse.pack/1",
+  "id": "sse.base-manifest",
+  "version": "0.1.0",
+  "kind": [
+    "base-physics"
+  ],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "other": {
+      "about": "Ship manifest and crew roster (track MC): what is aboard a ship, station or site. Everyone and everything aboard is a record entry (an actor of kind person or cargo) with an aboard.on link, so moving someone or something is one dated change and the history keeps it. No game's rules: roles, kinds of being and goods are plain words a pack or the GM writes. Life support days come from the stores aboard and from who is awake, at the rates below per kind of being; a kind with no rates says so rather than borrowing a human's.",
+      "record": {
+        "kept": [
+          {
+            "id": "aboard.on",
+            "shape": "ref",
+            "tier": "scanned",
+            "writers": ["gm"],
+            "describes": "where this person or cargo is: the ship, station, site or place it is aboard or at"
+          },
+          {
+            "id": "aboard.role",
+            "shape": "text",
+            "tier": "scanned",
+            "writers": ["gm"],
+            "describes": "what this person does aboard, in the setting's own words (captain, pilot, passenger)"
+          },
+          {
+            "id": "aboard.state",
+            "shape": "choice",
+            "choices": ["awake", "cold_sleep", "missing", "dead"],
+            "default": "awake",
+            "tier": "scanned",
+            "writers": ["gm"],
+            "describes": "awake, in cold sleep, missing or dead"
+          },
+          {
+            "id": "aboard.being",
+            "shape": "text",
+            "tier": "scanned",
+            "writers": ["gm"],
+            "describes": "the kind of being this person is (human, or a pack's species); blank when not stated"
+          },
+          {
+            "id": "aboard.age_yr",
+            "shape": "number",
+            "range": [0.0, 1000000.0],
+            "unit": "yr",
+            "tier": "scanned",
+            "writers": ["gm"],
+            "describes": "this person's own age in years on the date it was set; it moves on while they are awake"
+          },
+          {
+            "id": "aboard.what",
+            "shape": "text",
+            "tier": "scanned",
+            "writers": ["gm"],
+            "describes": "what this cargo is: a store the life support reads (oxygen, water, food) or any goods in plain words"
+          },
+          {
+            "id": "aboard.amount",
+            "shape": "number",
+            "range": [0.0, 1.0e15],
+            "tier": "scanned",
+            "writers": ["gm"],
+            "describes": "how much of it there is, in aboard.unit"
+          },
+          {
+            "id": "aboard.unit",
+            "shape": "text",
+            "tier": "scanned",
+            "writers": ["gm"],
+            "describes": "the unit of aboard.amount: kg, t, m3, or a count such as crates"
+          },
+          {
+            "id": "life_support.recycled",
+            "shape": "number",
+            "range": [0.0, 1.0],
+            "default": 0,
+            "tier": "surveyed",
+            "writers": ["gm"],
+            "describes": "the share of oxygen and water the life support recovers on this ship or station, from 0 (none) to 1 (closed loop)"
+          }
+        ]
+      },
+      "life_support": {
+        "about": "What one person of each kind of being uses a day, by store. A store is matched by aboard.what (oxygen, water, food). Cold sleep uses nothing from the stores (fudge register).",
+        "rates": {
+          "human": {
+            "oxygen_kg_day": 0.82,
+            "water_kg_day": 2.5,
+            "food_kg_day": 1.8,
+            "recyclable": ["oxygen", "water"],
+            "why": "nominal crew member: oxygen breathed, water drunk and used to make up food, and packaged food, per crew member per day",
+            "src": "nasa-bvad-2018",
+            "check": "unverified"
+          }
+        },
+        "store_words": {
+          "oxygen": ["oxygen", "o2", "lox"],
+          "water": ["water", "h2o"],
+          "food": ["food", "rations", "provisions"]
+        },
+        "sources": {
+          "nasa-bvad-2018": "Anderson, M. S., Ewert, M. K. and Keener, J. F. 2018, Life Support Baseline Values and Assumptions Document, NASA/TP-2015-218570/REV1. https://ntrs.nasa.gov/citations/20180001338"
+        }
+      }
+    }
+  }
+}

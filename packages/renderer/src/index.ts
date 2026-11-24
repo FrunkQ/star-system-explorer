@@ -9,6 +9,9 @@ export type { GalaxyBand, GalaxyPicture } from "./galaxy-true.ts";
 // V10a: True in the system view, each world wrapped in its own surface.
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
 export type { TrueTexture } from "./true-look.ts";
+// V10f: rings and belts in True, from the universe's ring and belt data.
+export { BELT_DUST, beltHaze, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
+export type { RingBand, RingProfile } from "./rings.ts";
 // R1: render recipes, the pass library, the governor and the globe runtime.
 export { checkRecipe, plan, estimateMs, pickRecipe, bestTier, maxLevel, stepsFrom, TIER_ORDER, DEFAULT_BUDGET_MS } from "./recipe.ts";
 export type { RecipeDoc, RecipePass, PassSpec, PassCost, Knob, DegradeStep, Plan, RecipeCheck } from "./recipe.ts";
@@ -75,7 +78,7 @@ export async function startShip(...a: Parameters<typeof import("./gpu-ship.ts").
 
 export { curveDrop, decoration, descentTrack, floorFromRefusal, groundColours, groundMesh, heightAt as groundHeightAt, horizonDistance, levelFor, localToDir, patchKeys, patchPoint, playbackKeys, readPatch, siteFrame, tileSpot } from "./surface-patch.ts";
 export type { GroundPoint, Patch, TileKey as SurfaceTileKey } from "./surface-patch.ts";
-export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunDirection, sunTransmittance } from "./surface-sky.ts";
+export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunAt, sunDirection, sunTransmittance } from "./surface-sky.ts";
 export type { SurfaceFrame, SurfaceGpu, SurfaceMesh } from "./gpu-surface.ts";
 
 /** Draw the ground round a site on the GPU (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */

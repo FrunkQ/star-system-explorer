@@ -1,15 +1,8 @@
-# MP22 ledger: every constant of nature, reference value and material number
-# still typed outside the master data sheet (packs/base-reference and
-# crates/sse-reference), outside tests. Design: SSE4-matter-pack-design.md 3A.
+# MP22 ledger: CLOSED 23 Nov 2026 at 0 typed copies.
 #
-# Columns, tab separated: file, the sheet row it should read, the line as
-# written (code) or json:<path> (a pack property). "new:" means the sheet has
-# no row for it yet; add the row when the copy is moved.
-#
-# This file may only shrink. When you edit a file listed here, move its copies
-# to the Look up block or the reader and delete their lines in the same change.
-# scripts/audit-matter.py --ledger fails on a copy not listed here, on a line
-# here that no longer matches a copy, and on a ledger that grew.
-crates/sse-atoms/src/heat.rs	isotope:al26	pub const AL26_H0: f64 = 0.00865 * 5.25e-5 * 0.3583;
-crates/sse-atoms/src/layers.rs	new:water_kf	pub const WATER_KF: f64 = 1.86;
-crates/sse-atoms/src/light.rs	new:omega_sun	pub const OMEGA_SUN: f64 = 2.0 * m::PI / (25.38 * DAY);
+# Every constant of nature, reference value and material number is read from
+# the master data sheet (packs/base-reference, crates/sse-core/src/sheet.rs).
+# This file stays empty for good. It is kept only because CI's audit step
+# still names it; check.sh runs `scripts/audit-matter.py --closed`, which
+# fails on any typed copy with no ledger at all. Never add a line here: move
+# the number to the sheet and read it.

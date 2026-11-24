@@ -493,6 +493,16 @@ pub mod molar_mass {
     pub const NIO: f64 = 0.07469239999999999;
     /// ch2o.
     pub const CH2O: f64 = 0.030026;
+    /// n2h4.
+    pub const N2H4: f64 = 0.032046;
+    /// mmh.
+    pub const MMH: f64 = 0.046072999999999996;
+    /// udmh.
+    pub const UDMH: f64 = 0.060099999999999994;
+    /// n2o4.
+    pub const N2O4: f64 = 0.09201000000000001;
+    /// h2o2.
+    pub const H2O2: f64 = 0.034014;
 }
 
 /// Triple point temperature, K, by substance (the sheet's `phases.triple_point_k`).
@@ -511,6 +521,8 @@ pub mod triple_point_k {
     pub const AR: f64 = 83.81;
     /// co (nist-webbook).
     pub const CO: f64 = 68.13;
+    /// n2o4 (nasa-rp1013).
+    pub const N2O4: f64 = 261.9;
 }
 
 /// Triple point pressure, Pa, by substance (the sheet's `phases.triple_point_pa`).
@@ -529,6 +541,8 @@ pub mod triple_point_pa {
     pub const AR: f64 = 68900.0;
     /// co (nist-webbook).
     pub const CO: f64 = 15370.0;
+    /// n2o4 (nasa-rp1013).
+    pub const N2O4: f64 = 18637.0;
 }
 
 /// Density of the solid at its reference state, kg/m3, by substance (the sheet's `phases.density_solid`).
@@ -565,6 +579,16 @@ pub mod density_liquid {
     pub const D2: f64 = 163.5;
     /// he3 (fudge-register).
     pub const HE3: f64 = 59.0;
+    /// n2h4 (marshall-deans2013).
+    pub const N2H4: f64 = 1004.0;
+    /// mmh (nrc-aegl2000).
+    pub const MMH: f64 = 874.0;
+    /// udmh (uscg-chris-dmh).
+    pub const UDMH: f64 = 791.0;
+    /// n2o4 (uscg-chris-nox).
+    pub const N2O4: f64 = 1450.0;
+    /// h2o2 (evonik-h2o2).
+    pub const H2O2: f64 = 1450.0;
 }
 
 /// Latent heat of vaporisation, J/kg, by substance (the sheet's `phases.latent_vaporisation`).
@@ -873,6 +897,20 @@ pub mod mixture_density {
     pub const FORMATION_CO2: f64 = 1500.0;
     /// formation-co (fudge-register).
     pub const FORMATION_CO: f64 = 900.0;
+    /// rp-1 (nistir6646).
+    pub const RP_1: f64 = 799.0;
+    /// tungsten (nist-srd126).
+    pub const TUNGSTEN: f64 = 19300.0;
+    /// niobium-c103 (materion-c103).
+    pub const NIOBIUM_C103: f64 = 8850.0;
+    /// inconel-718 (smc-inconel718).
+    pub const INCONEL_718: f64 = 8193.0;
+    /// uo2-fuel (popov2000).
+    pub const UO2_FUEL: f64 = 10970.0;
+    /// polyethylene (nist-srd126).
+    pub const POLYETHYLENE: f64 = 930.0;
+    /// lead (nist-srd126).
+    pub const LEAD: f64 = 11350.0;
 }
 
 /// Yield strength, Pa, by mixture (the sheet's mixtures).
@@ -881,6 +919,10 @@ pub mod mixture_yield_strength {
     pub const SURFACE_ROCK: f64 = 154000000.0;
     /// surface-ice (lineweaver2010).
     pub const SURFACE_ICE: f64 = 5600000.0;
+    /// niobium-c103 (materion-c103).
+    pub const NIOBIUM_C103: f64 = 275800000.0;
+    /// inconel-718 (smc-inconel718).
+    pub const INCONEL_718: f64 = 1034200000.0;
 }
 
 /// Each unit's factor to SI, by unit id (the sheet's units table).

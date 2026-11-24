@@ -9,10 +9,17 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { STOCK_SHIPS, shipChoices, shipToSend, aerobrakeOption, chanceWords, constant, verdictWords, worstDangers, type WorldCheck, daysWords, delayWords, difficultyPips, doseWords, dvWords, fromNowWords, fuelLeft, navFromScene, orbitEllipse, routeFrame, safestFirst, shortlist, trackIndexAt, trackPath, trackPoint, type Course, type Json, type Prefer, type RoutePlan, type SystemScene, type ViewContext, YEAR_S } from "../../../ui-contract/src/index.ts";
+  import { STOCK_SHIPS, difficultyLadderOf, gameDifficulty, shipChoices, shipToSend, aerobrakeOption, chanceWords, constant, verdictWords, worstDangers, type WorldCheck, daysWords, delayWords, difficultyPips, doseWords, dvWords, fromNowWords, fuelLeft, navFromScene, orbitEllipse, routeFrame, safestFirst, shortlist, trackIndexAt, trackPath, trackPoint, type Course, type Json, type Prefer, type RoutePlan, type SystemScene, type ViewContext, YEAR_S } from "../../../ui-contract/src/index.ts";
 
   const YEAR_S_NUM = Number(YEAR_S);
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
+  // A game pack's own task ladder (X3h): its numbers beside SSE4's words, on the GM's screens only; nothing rolled.
+  const ladder = $derived.by(() => {
+    void ctx.workspace.revision;
+    if (ctx.session.seat.authority !== "gm") return null;
+    const st = ctx.session.stack();
+    return difficultyLadderOf([...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof difficultyLadderOf>[0]);
+  });
 
   type Want = Prefer | "safest";
   const WANTS: { id: Want; label: string }[] = [
@@ -279,7 +286,7 @@
               <span class:warn={fl.under}><b>{Math.round(fl.left * 100)}%</b> fuel left</span>
               <span><b>{c.peak_g < 0.01 ? c.peak_g.toFixed(3) : c.peak_g.toFixed(2)} g</b> peak</span>
             </div>
-            <div class="diff"><span class="cap">Difficulty</span><span class="pips" aria-hidden="true">{#each [1, 2, 3, 4] as p (p)}<span class="pip" class:lit={difficultyPips(c.difficulty.label) >= p}></span>{/each}</span><span>{c.difficulty.label}</span></div>
+            <div class="diff"><span class="cap">Difficulty</span><span class="pips" aria-hidden="true">{#each [1, 2, 3, 4] as p (p)}<span class="pip" class:lit={difficultyPips(c.difficulty.label) >= p}></span>{/each}</span><span>{c.difficulty.label}</span>{#if gameDifficulty(ladder, { word: c.difficulty.label })}<span class="game" data-game-difficulty title="From the game pack's task ladder; nothing is rolled">{gameDifficulty(ladder, { word: c.difficulty.label })!.words}</span>{/if}</div>
             <ul>
               <li>Dose {doseWords(c.dose_msv)}{c.spe_chance > 0.01 ? `, ${Math.round(c.spe_chance * 100)}% chance of a solar storm` : ""}</li>
               {#each c.hazards.slice(0, 3) as h, j (j)}<li class="haz">{h.text}</li>{/each}
@@ -484,6 +491,14 @@
     flex-wrap: wrap;
     gap: 4px 12px;
     font-family: var(--sse-font-mono, monospace);
+  }
+  .game {
+    margin-left: 6px;
+    padding: 0 5px;
+    border: 1px solid var(--sse-rule);
+    font-family: var(--sse-font-mono, monospace);
+    font-size: 0.9em;
+    white-space: nowrap;
   }
   .diff {
     display: flex;

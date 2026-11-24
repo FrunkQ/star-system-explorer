@@ -211,6 +211,28 @@ export interface SystemVoyagePlan {
   model: string[];
 }
 
+/**
+ * Labels along one axis without overlaps (Voyages gap 9): each label, in order
+ * along the axis, takes the first lane whose last label it clears by `gap`.
+ * A label that clears none gets null (it is drawn only on hover); `first`
+ * labels (the start and the goal) are placed before the rest.
+ */
+export function labelLanes(items: readonly { x: number; width: number; first?: boolean }[], lanes: number, gap = 6): (number | null)[] {
+  const out: (number | null)[] = items.map(() => null);
+  const taken: [number, number][][] = Array.from({ length: lanes }, () => []);
+  const clears = (lane: [number, number][], a: number, b: number) => lane.every(([l, r]) => b + gap <= l || a >= r + gap);
+  const order = items.map((_, i) => i).sort((i, j) => Number(!!items[j]!.first) - Number(!!items[i]!.first) || items[i]!.x - items[j]!.x);
+  for (const i of order) {
+    const { x, width } = items[i]!;
+    const [a, b] = [x - width / 2, x + width / 2];
+    const lane = taken.findIndex((l) => clears(l, a, b));
+    if (lane < 0) continue;
+    taken[lane]!.push([a, b]);
+    out[i] = lane;
+  }
+  return out;
+}
+
 /** A log-radius axis: x for an orbit's size in au, so inner worlds and the Kuiper belt fit one line. */
 export function orbitAxis(w: number, places: readonly { a_au: number }[], pad = 28, real = false): (a_au: number) => number {
   const as = places.map((p) => p.a_au).filter((a) => a > 0);

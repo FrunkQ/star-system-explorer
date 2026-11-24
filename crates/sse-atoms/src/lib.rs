@@ -18,6 +18,7 @@ pub mod heat;
 pub mod layers;
 pub mod light;
 pub mod magnetic;
+pub mod matter;
 pub mod nebula;
 pub mod orbit;
 pub mod planet;
@@ -178,6 +179,25 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
         "power stirring the dynamo region, as a heat flux: convected heat plus compositional buoyancy",
     ),
     ("interior.core_heat_flux", "heat flux leaving the top of the core"),
+    ("element.ci_mass_fraction", "an element's mass share in CI chondrites"),
+    ("star.element_ratio", "an element's abundance in a star over the Sun's, by mass per hydrogen"),
+    ("element.oxide_oxygen_ratio", "mass of oxygen an element binds in its rock oxide, per mass of the element"),
+    ("material.ci_weight", "a formation material's summed CI weight over its riders, bound oxygen included"),
+    ("element.material_share", "an element's mass share of the formation material it rides in"),
+    ("element.bound_oxygen_share", "mass share of a material that is oxygen bound to one element's oxide"),
+    ("interior.separation_strength", "how far a world separated into metal and silicate, 0 to 1"),
+    ("element.metal_silicate_partition", "an element's concentration in metal over its concentration in silicate"),
+    ("interior.metal_fraction", "metal's mass share of a separated body's metal and silicate"),
+    ("element.core_share", "share of a body's element held in its core"),
+    ("element.crust_enrichment", "an element's concentration in crust over its concentration in mantle"),
+    ("interior.crust_fraction", "the crust's mass share of a body's silicate"),
+    ("element.crust_share", "share of the silicate's element held in the crust"),
+    ("interior.silicate_mass", "mass of a body's silicate (mantle and crust)"),
+    ("deposit.footprint_area", "area of an ore deposit or ore province"),
+    ("element.crust_mass_fraction", "an element's share of a world's crust by mass"),
+    ("element.ore_enrichment", "how many times an ore process raised an element over the crust"),
+    ("deposit.element_mass", "mass of an element held in an ore deposit"),
+    ("deposit.grade", "an element's share of the ore by mass"),
     ("interior.core_top_temperature", "temperature at the top of the core"),
     ("interior.core_top_gravity", "gravity at the top of the core"),
     (
@@ -297,6 +317,15 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
         "tides.locking_time",
         "time to despin to synchronous rotation",
     ),
+    ("tides.raiser_mass", "mass of a body raising a tide on the world"),
+    ("tides.raiser_distance", "distance from the world's centre to a body raising a tide on it"),
+    ("tides.raiser_period", "time for a body raising a tide to go once round the world's sky: its orbit about the world, or the world's year for the star"),
+    ("tides.equilibrium_range", "height from low to high water of the open-sea equilibrium tide one body raises"),
+    ("tides.period", "time between one high tide and the next"),
+    ("weather.wind_speed_10m", "wind speed ten metres above the ground or water"),
+    ("ocean.fetch", "length of open water a wind blows over"),
+    ("ocean.significant_wave_height", "significant wave height: the mean of the highest third of the waves"),
+    ("ocean.wave_peak_period", "period of the waves carrying the most energy"),
     (
         "ocean.salinity_mass_fraction",
         "dissolved salt as a fraction of the brine's mass",

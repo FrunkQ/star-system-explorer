@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 85,
+        n, 94,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1184,4 +1184,123 @@ fn moved_blocks_keep_their_faces_and_bits() {
         }
     }
     assert!(n >= was.len() * 50, "{n}");
+}
+
+#[test]
+fn tides_of_the_moon_and_the_sun_on_earth() {
+    let (me, re) = (5.972e24, 6.371e6);
+    let moon = run("sse.tides.ocean_range", &[7.342e22, me, re, 3.844e8])[0];
+    let sun = run("sse.tides.ocean_range", &[1.989e30, me, re, 1.496e11])[0];
+    // The textbook equilibrium figures: about 0.53 m from the Moon, and the
+    // Sun's about 0.46 of it.
+    close(moon, 0.535, 0.01, "lunar range");
+    close(sun / moon, 0.46, 0.02, "solar to lunar");
+    let t = run("sse.tides.period", &[86_164.1, 27.321_66 * 86_400.0])[0];
+    close(t / 3600.0, 12.42, 0.001, "lunar semidiurnal period");
+    // A backward spin turns under the moon faster: a shorter tide.
+    let back = run("sse.tides.period", &[-86_164.1, 27.321_66 * 86_400.0])[0];
+    assert!(back < t);
+}
+
+#[test]
+fn waves_grow_with_wind_and_fetch_until_the_sea_is_full_grown() {
+    let h = |u: f64, x: f64, g: f64| run("sse.ocean.wind_waves", &[u, x, g]);
+    let a = h(10.0, 1.0e4, 9.81);
+    let b = h(10.0, 1.0e5, 9.81);
+    let c = h(10.0, 1.0e7, 9.81);
+    let d = h(10.0, 1.0e8, 9.81);
+    assert!(a[0] < b[0] && b[0] < c[0] && a[1] < b[1]);
+    // Fully grown: more fetch adds nothing.
+    assert_eq!(c[0], d[0]);
+    assert!(h(20.0, 1.0e5, 9.81)[0] > b[0]);
+    // A 10 m/s wind over 300 km of sea: near 2.75 m and 7 s (the manual's
+    // relations); full grown about 3.1 m, as observed for that wind.
+    let e = h(10.0, 3.0e5, 9.81);
+    close(e[0], 2.75, 0.01, "wave height");
+    close(c[0], 3.12, 0.02, "full grown height");
+    // Weaker gravity, taller waves for the same wind.
+    assert!(h(2.0, 1.0e5, 1.352)[0] > h(2.0, 1.0e5, 9.81)[0]);
+}
+
+/// MP6: the composition blocks (Equations) and the sums the composition
+/// chain runs (`matter`) agree over a spread of inputs.
+#[test]
+fn composition_blocks_match_the_chain() {
+    use crate::matter as mt;
+    let near = |a: f64, b: f64, what: &str| {
+        assert!(
+            (a - b).abs() <= 1e-12 * a.abs().max(b.abs()).max(1e-30),
+            "{what}: {a} against {b}"
+        );
+    };
+    for (ci, r, o, w) in [
+        (0.0965, 1.0, 0.6583, 0.43),
+        (1e-7, 3.0, 0.0, 0.25),
+        (0.0, 1.0, 0.0, 0.4),
+        (0.1, 1.0, 0.5, 0.0),
+    ] {
+        let got = run("sse.composition.share_in_material", &[ci, r, o, w]);
+        let (s, b) = mt::share_in_material(ci, r, o, w);
+        near(got[0], s, "share");
+        near(got[1], b, "bound oxygen");
+    }
+    let g = sse_core::constants::g();
+    for (mass, radius, e) in [
+        (5.9722e24, 6.371e6, 0.0),
+        (9.38e20, 4.697e5, 0.0),
+        (2.59e20, 2.63e5, 1.0e6),
+    ] {
+        let got = run("sse.composition.separation_strength", &[mass, radius, e]);
+        near(
+            got[0],
+            mt::separation_strength(g, mass, radius, e, 1.8e6),
+            "separation",
+        );
+    }
+    for (d, f, s) in [
+        (13.66, 0.325, 1.0),
+        (500.0, 0.2, 0.4),
+        (0.0, 0.3, 1.0),
+        (2.0, 0.0, 1.0),
+    ] {
+        near(
+            run("sse.composition.core_share", &[d, f, s])[0],
+            mt::core_share(d, f, s),
+            "core",
+        );
+        near(
+            run("sse.composition.crust_share", &[d, f / 10.0, s])[0],
+            mt::crust_share(d, f / 10.0, s),
+            "crust",
+        );
+    }
+    for (radius, sil) in [(6.371e6, 4.03e24), (1.7374e6, 7.0e22), (2.0e5, 1.0e19)] {
+        near(
+            run("sse.composition.crust_fraction", &[radius, sil])[0],
+            mt::crust_fraction(
+                radius,
+                sil,
+                2.0e4,
+                sse_core::sheet::mixture_density::CRUST_ROCK,
+            ),
+            "crust fraction",
+        );
+    }
+    for (a, c, k) in [
+        (1.0e13, 6.0e-5, 160.0),
+        (3.0e9, 1.5e-9, 3800.0),
+        (1.0e6, 0.5, 10.0),
+    ] {
+        let got = run("sse.composition.deposit_amount", &[a, c, k]);
+        let want = mt::deposit_amount(
+            a,
+            3300.0,
+            sse_core::sheet::mixture_density::CRUST_ROCK,
+            4.5e-5,
+            c,
+            k,
+        );
+        near(got[0], want.0, "deposit mass");
+        near(got[1], want.1, "deposit grade");
+    }
 }

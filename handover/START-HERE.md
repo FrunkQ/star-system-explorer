@@ -34,9 +34,11 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/renderer.md` | Build photoreal renderer | R, the drawing side of Y5 and MF14a |
 | `status/agents.md` | Build Orac, Minerva and Tars | A, ND4, ND5, ND9 |
 | `status/traveller.md` | Build Traveller pack | X3a to X3d, TG8, TG9, TG11, TG13, MP16 |
+| `status/manifest.md` | Build ship manifest and crew roster | MC (ship manifest and crew roster) |
 | `status/naming.md` | the thread that owns track NM | NM |
 | `status/performance.md` | Measure performance for minimum specs | PF |
 | `status/across-tracks.md` | each row names its owners | the umbrella rows for MF, Y, GH, ND, TG, and the converter module |
+| `status/spaceflight.md` | Build real spaceflight history pack | RS |
 
 A package that does not fit a file goes in its owner thread's file. A new track gets a new file and one line in the table above. Milestone M1 "Proven core" (K0 to K6) is complete.
 
@@ -55,6 +57,7 @@ The site is the GM shell (chart room) at `/`, the players page at `/players.html
 1. Read `/CLAUDE.md`, then this file, then the log of the last package. Any view or renderer package also follows `rendering-rules.md` (no precision jiggle: local orbits, nested frames, camera-relative numbers).
 2. `cargo test --workspace` must pass before you change anything.
 3. Open your track's file in `status/` and take the first package marked "next"; write its log in `packages/` as you go (evidence packet format: build plan section 2).
+   Screenshots are not committed (they had grown to 73 MB of the repo). Write them to `handover/packages/<PKG>-screens/` as before, which git now ignores, and copy that folder to the project files at `sse4/handover-screens/<PKG>-screens/`, where every earlier package's screenshots now live. Links in package logs such as `U16-screens/` mean that folder.
 4. At the end of a package: `scripts/check.sh`, update your track's file in `status/`, re-sync `design/`, commit as FrunkQ, push.
 
 ## Environment

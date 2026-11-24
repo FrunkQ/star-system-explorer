@@ -10,6 +10,14 @@
 //! - Radar: the radar equation for the echo against the direct pulse that
 //!   any listener in the beam receives, so a radar is heard further than it
 //!   can see.
+//!
+//! RK11 (Atomic Rockets plan section 12): one instrument shape with a
+//! `method` (image, spectrum, astrometry, active, magnetometer,
+//! gradiometer), and objects publish on channels: light by band, their
+//! magnetic field, their gravity. No range is typed: how far an instrument
+//! reaches is computed from what the target gives off. A range typed in an
+//! older file (SSE3's sensors) is kept as an authored range, marked, and used
+//! only where the instrument has no aperture or noise figure to compute with.
 
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
@@ -25,6 +33,17 @@ const R_RADIOMETER: &str = "Radiometer equation ΔT = T_sys / √(B t): Wilson, 
 const R_RADAR: &str = "Radar equation P_r = P G² λ² σ / ((4π)³ R⁴) and effective aperture A_e = G λ² / 4π: Skolnik, M. I. 2001, Introduction to Radar Systems, 3rd edn, McGraw-Hill, chapter 2";
 const R_DUST: &str = "Interstellar extinction falls with wavelength: A_λ/A_V ≈ (λ/0.55 µm)^−1.75 in the near and mid infrared (Draine, B. T. 2003, Interstellar dust grains, ARA&A 41, 241. doi:10.1146/annurev.astro.41.011802.094840); the optical shape follows Cardelli, Clayton and Mathis 1989, ApJ 345, 245. doi:10.1086/167900";
 const R_DIFFRACTION: &str = "Diffraction limit 1.22 λ / D (Airy disc first minimum)";
+const R_DIPOLE: &str = "Kivelson, M. G. and Russell, C. T. (eds) 1995, Introduction to Space Physics, Cambridge University Press: a dipole's field falls as μ0 M / (4π r³) on its equator plane, twice that along its axis. https://www.cambridge.org/9780521457149";
+const R_GRADIENT: &str = "The gravity gradient of a mass M at distance r is 2GM / r³ along the line of sight (the second derivative of GM / r); a gradiometer's noise is a spectral density in s⁻² per √Hz, 1 eötvös = 1e-9 s⁻² (Rummel, R., Yi, W. and Stummer, C. 2011, GOCE gravitational gradiometry, J. Geod. 85, 777. doi:10.1007/s00190-011-0500-0)";
+const R_NOISE: &str = "White noise of spectral density n averaged for t seconds leaves σ = n / √(2t) (the equivalent noise bandwidth 1 / (2t) of an average): Wilson, Rohlfs and Hüttemeister 2013, Tools of Radio Astronomy, chapter 4. doi:10.1007/978-3-642-39950-3";
+const R_CENTROID: &str = "A star image's position error, relative to the image's size, is very like its brightness error relative to its brightness, so position is found to about the image's width over the signal to noise: King, I. R. 1983, Accuracy of measurement of star images on a pixel array, PASP 95, 163. https://ui.adsabs.harvard.edu/abs/1983PASP...95..163K/abstract";
+
+/// Constants of nature the field channels need, from the master data sheet.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Nature {
+    pub g: f64,
+    pub mu0: f64,
+}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Sensor {
@@ -57,10 +76,37 @@ pub struct Sensor {
     /// How long it may stare, s.
     #[serde(default = "one")]
     pub stare_s: f64,
+    /// What it does with what it catches: "image" (default), "spectrum",
+    /// "astrometry", "active" (radar or lidar), "magnetometer", "gradiometer".
+    #[serde(default = "image")]
+    pub method: String,
+    /// Spectrum: resolving power λ/Δλ, which splits the light into that many
+    /// elements per e-fold of wavelength.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolving_power: Option<f64>,
+    /// Active: power sent, W. It is a load on the electric bus and lights
+    /// the ship up for anyone in the beam.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transmit_power_w: Option<f64>,
+    /// Field instruments: noise spectral density in the channel's own unit
+    /// per √Hz (T for a magnetometer, s⁻² for a gradiometer).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub noise_density: Option<f64>,
+    /// Field instruments: the channel's own wander here (the wind's field,
+    /// a planet's gravity left after modelling), same unit as the reading.
+    #[serde(default)]
+    pub field_clutter: f64,
+    /// A range typed in an older file (SSE3), kept and marked "authored";
+    /// used only when the instrument lacks the figures to compute one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authored_range_m: Option<f64>,
 }
 
 fn photon() -> String {
     "photon".into()
+}
+fn image() -> String {
+    "image".into()
 }
 fn half() -> f64 {
     0.5
@@ -110,12 +156,38 @@ pub struct Seen {
     pub extinction_av: f64,
     #[serde(default)]
     pub neighbours: Vec<Neighbour>,
+    /// The magnetic channel: the target's dipole moment, A m².
+    #[serde(default)]
+    pub magnetic_moment_a_m2: f64,
+    /// The gravity channel: the target's mass, kg.
+    #[serde(default)]
+    pub mass_kg: f64,
+    /// For an active instrument: the target's radar cross-section, m².
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub radar_cross_section_m2: Option<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Detection {
     pub target: String,
     pub sensor: String,
+    pub method: String,
+    /// "light", "magnetic" or "gravity".
+    pub channel: String,
+    /// "computed" from what the target gives off, or "authored" (a range
+    /// typed in an older file, kept as it was).
+    pub range_source: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authored_range_m: Option<f64>,
+    /// Astrometry: how precisely its position is fixed, rad.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub precision_rad: Option<f64>,
+    /// Active: power sent, W, and how far the pulse is heard by a listener
+    /// with the same receiver.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transmit_power_w: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub heard_to_m: Option<f64>,
     /// Flux in the band at the sensor, after dust, W/m².
     pub flux_w_m2: f64,
     /// Dimming by dust in the band, magnitudes.
@@ -160,6 +232,31 @@ fn snr_photon(s: f64, b: f64, t: f64) -> f64 {
 }
 
 pub fn detect(seen: &Seen, sensor: &Sensor, table: &LightTable) -> Result<Detection, String> {
+    detect_with(seen, sensor, table, None)
+}
+
+/// Detection on any channel; field instruments need the constants of nature.
+pub fn detect_with(
+    seen: &Seen,
+    sensor: &Sensor,
+    table: &LightTable,
+    nature: Option<&Nature>,
+) -> Result<Detection, String> {
+    match sensor.method.as_str() {
+        "magnetometer" | "gradiometer" => return detect_field(seen, sensor, nature),
+        "image" | "spectrum" | "astrometry" | "active" => {}
+        other => {
+            return Err(format!(
+                "{}: no method {other}; methods: image, spectrum, astrometry, active, magnetometer, gradiometer",
+                sensor.name
+            ))
+        }
+    }
+    if sensor.aperture_m <= 0.0 {
+        if let Some(r) = sensor.authored_range_m {
+            return Ok(authored(seen, sensor, "light", r));
+        }
+    }
     if !(sensor.to_m > sensor.from_m
         && sensor.from_m > 0.0
         && sensor.aperture_m > 0.0
@@ -228,10 +325,24 @@ pub fn detect(seen: &Seen, sensor: &Sensor, table: &LightTable) -> Result<Detect
     } else {
         refs.push(Reference::parse(R_PHOTON));
         let e_ph = H * C / lc;
-        let s = flux * sensor.area() / e_ph;
+        // A spectrum spreads the light over its resolution elements; each must
+        // reach the threshold on its own (dark counts are per element already).
+        let elements = match (sensor.method.as_str(), sensor.resolving_power) {
+            ("spectrum", Some(r)) if r > 0.0 => (r * m::ln(sensor.to_m / sensor.from_m)).max(1.0),
+            _ => 1.0,
+        };
+        if elements > 1.0 {
+            why.push(format!(
+                "As a spectrum at resolving power {:.0}, the light is split over {:.0} elements, and each must stand out on its own.",
+                sensor.resolving_power.unwrap_or(0.0),
+                elements
+            ));
+        }
+        let s = flux * sensor.area() / e_ph / elements;
         let omega = m::PI * res * res;
-        let bg = sensor.background_w_m2_sr * omega * sensor.area() / e_ph
-            + glare_flux * sensor.area() / e_ph;
+        let bg = (sensor.background_w_m2_sr * omega * sensor.area() / e_ph
+            + glare_flux * sensor.area() / e_ph)
+            / elements;
         let b = bg + sensor.dark_photons_s;
         let snr = snr_photon(s, b, sensor.stare_s);
         let k2 = sensor.threshold_snr * sensor.threshold_snr;
@@ -260,8 +371,50 @@ pub fn detect(seen: &Seen, sensor: &Sensor, table: &LightTable) -> Result<Detect
         ));
         (snr, need, range)
     };
-    let detectable = snr >= sensor.threshold_snr;
+    let mut detectable = snr >= sensor.threshold_snr;
+    let mut range = range;
     let lost_in_glare = !detectable && glare_flux > flux;
+    // Astrometry: the position to about the resolution over the S/N.
+    let precision = (sensor.method == "astrometry" && snr > 0.0).then(|| {
+        refs.push(Reference::parse(R_CENTROID));
+        let p = res / snr;
+        why.push(format!(
+            "Its position is fixed to about {:.2e} rad (the resolution {:.2e} rad over S/N {:.1}).",
+            p, res, snr
+        ));
+        p
+    });
+    // Active: the echo of what it sends, by the radar equation, with the
+    // gain of its own aperture; the pulse is heard much further.
+    let mut heard = None;
+    if sensor.method == "active" {
+        let (Some(pw), Some(sigma)) = (sensor.transmit_power_w, seen.radar_cross_section_m2) else {
+            return Err(format!(
+                "{} / {}: an active instrument needs transmit_power_w, and the target radar_cross_section_m2",
+                seen.address, sensor.name
+            ));
+        };
+        let gain = 4.0 * m::PI * sensor.area() / (lc * lc);
+        let bw = sensor.bandwidth();
+        let p_min = sensor.threshold_snr * K_B * sensor.system_temperature_k * bw
+            / m::sqrt(bw * sensor.stare_s);
+        let rr = radar_ranges(&Radar {
+            power_w: pw,
+            gain,
+            wavelength_m: lc,
+            cross_section_m2: sigma,
+            min_power_w: p_min,
+        });
+        refs.extend(rr.references);
+        why.extend(rr.why);
+        why.push(format!(
+            "Sending {:.3e} W draws that much from the electric bus, and lights the ship up for anyone in the beam.",
+            pw
+        ));
+        range = rr.sees_to_m;
+        detectable = seen.distance_m <= rr.sees_to_m;
+        heard = Some(rr.heard_to_m);
+    }
     why.push(if detectable {
         format!(
             "Detected (needs S/N {}); it would still be seen out to {:.3e} m.",
@@ -275,9 +428,24 @@ pub fn detect(seen: &Seen, sensor: &Sensor, table: &LightTable) -> Result<Detect
             stare_needed, range
         )
     });
+    if let Some(a) = sensor.authored_range_m {
+        why.push(format!(
+            "An older file typed its range as {:.3e} m; that is kept as authored, and the computed range above is the one used.",
+            a
+        ));
+    }
     Ok(Detection {
         target: seen.address.clone(),
         sensor: sensor.name.clone(),
+        method: sensor.method.clone(),
+        channel: "light".into(),
+        range_source: "computed".into(),
+        authored_range_m: sensor.authored_range_m,
+        precision_rad: precision,
+        transmit_power_w: sensor
+            .transmit_power_w
+            .filter(|_| sensor.method == "active"),
+        heard_to_m: heard,
         flux_w_m2: flux,
         extinction_mag: ext,
         snr,
@@ -290,11 +458,179 @@ pub fn detect(seen: &Seen, sensor: &Sensor, table: &LightTable) -> Result<Detect
     })
 }
 
+/// An instrument with only a typed range: kept as authored, marked.
+fn authored(seen: &Seen, sensor: &Sensor, channel: &str, r: f64) -> Detection {
+    let detectable = seen.distance_m <= r;
+    Detection {
+        target: seen.address.clone(),
+        sensor: sensor.name.clone(),
+        method: sensor.method.clone(),
+        channel: channel.into(),
+        range_source: "authored".into(),
+        authored_range_m: Some(r),
+        precision_rad: None,
+        transmit_power_w: None,
+        heard_to_m: None,
+        flux_w_m2: 0.0,
+        extinction_mag: 0.0,
+        snr: 0.0,
+        detectable,
+        stare_needed_s: if detectable { 0.0 } else { f64::INFINITY },
+        range_m: r,
+        lost_in_glare: false,
+        why: vec![format!(
+            "This instrument has only a typed range, {:.3e} m, kept as authored from an older file: the target is {} it. Give it an aperture (or a noise figure) and the range is computed from what the target gives off.",
+            r,
+            if detectable { "within" } else { "beyond" }
+        )],
+        references: vec![],
+    }
+}
+
+/// Field channels: a magnetometer reads the target's dipole field, a
+/// gradiometer its gravity gradient. Noise averages down as 1/√(2t), and the
+/// channel's own wander here adds in quadrature.
+fn detect_field(
+    seen: &Seen,
+    sensor: &Sensor,
+    nature: Option<&Nature>,
+) -> Result<Detection, String> {
+    let magnetic = sensor.method == "magnetometer";
+    let channel = if magnetic { "magnetic" } else { "gravity" };
+    let Some(n) = sensor.noise_density.filter(|n| *n > 0.0) else {
+        if let Some(r) = sensor.authored_range_m {
+            return Ok(authored(seen, sensor, channel, r));
+        }
+        return Err(format!(
+            "{}: a {} needs noise_density (its noise per √Hz)",
+            sensor.name, sensor.method
+        ));
+    };
+    let Some(k) = nature else {
+        return Err(format!(
+            "{}: the constants of nature (G, μ0) were not supplied from the data sheet",
+            sensor.name
+        ));
+    };
+    if seen.distance_m <= 0.0 || sensor.stare_s <= 0.0 {
+        return Err(format!(
+            "{} / {}: bad distance or stare",
+            seen.address, sensor.name
+        ));
+    }
+    // What the target gives off on this channel, as strength × r³.
+    let (strength, unit, what, source) = if magnetic {
+        (
+            k.mu0 * seen.magnetic_moment_a_m2 / (4.0 * m::PI),
+            "T",
+            "its magnetic field",
+            R_DIPOLE,
+        )
+    } else {
+        (
+            2.0 * k.g * seen.mass_kg,
+            "s⁻²",
+            "its gravity gradient",
+            R_GRADIENT,
+        )
+    };
+    let d = seen.distance_m;
+    let signal = strength / (d * d * d);
+    let sigma = n / m::sqrt(2.0 * sensor.stare_s);
+    let noise = m::sqrt(sigma * sigma + sensor.field_clutter * sensor.field_clutter);
+    let snr = signal / noise;
+    let detectable = snr >= sensor.threshold_snr;
+    let need_signal = sensor.threshold_snr * noise;
+    let range = if strength > 0.0 {
+        m::cbrt(strength / need_signal)
+    } else {
+        0.0
+    };
+    // Stare needed: only the instrument's own noise averages down.
+    let floor = sensor.threshold_snr * sensor.field_clutter;
+    let stare_needed = if signal > floor && signal > 0.0 {
+        let s_allowed = m::sqrt(
+            (signal / sensor.threshold_snr) * (signal / sensor.threshold_snr)
+                - sensor.field_clutter * sensor.field_clutter,
+        );
+        n * n / (2.0 * s_allowed * s_allowed)
+    } else {
+        f64::INFINITY
+    };
+    let mut why = vec![format!(
+        "{} reaches the {} as {:.3e} {} at {:.3e} m, against {:.3e} {} of noise ({:.3e} per √Hz over {:.0} s{}): S/N {:.2}.",
+        what,
+        sensor.name,
+        signal,
+        unit,
+        d,
+        noise,
+        unit,
+        n,
+        sensor.stare_s,
+        if sensor.field_clutter > 0.0 { ", with the channel's own wander here" } else { "" },
+        snr
+    )];
+    why.push(format!(
+        "It falls as the cube of distance, so this instrument reaches {:.3e} m{}",
+        range,
+        if magnetic {
+            "."
+        } else {
+            ": detecting a ship by its mass is real, but only this close."
+        }
+    ));
+    if let Some(a) = sensor.authored_range_m {
+        why.push(format!(
+            "An older file typed its range as {:.3e} m; that is kept as authored, and the computed range is the one used.",
+            a
+        ));
+    }
+    Ok(Detection {
+        target: seen.address.clone(),
+        sensor: sensor.name.clone(),
+        method: sensor.method.clone(),
+        channel: channel.into(),
+        range_source: "computed".into(),
+        authored_range_m: sensor.authored_range_m,
+        precision_rad: None,
+        transmit_power_w: None,
+        heard_to_m: None,
+        flux_w_m2: 0.0,
+        extinction_mag: 0.0,
+        snr,
+        detectable,
+        stare_needed_s: stare_needed,
+        range_m: range,
+        lost_in_glare: false,
+        why,
+        references: vec![Reference::parse(source), Reference::parse(R_NOISE)],
+    })
+}
+
 fn sensor_neighbours(seen: &Seen, res: f64) -> Vec<&Neighbour> {
     seen.neighbours
         .iter()
         .filter(|n| n.separation_rad < res)
         .collect()
+}
+
+/// A setting's named slice of distance ("adjacent" to "far" in Traveller):
+/// a labelled reading of a real distance, a measure of the setting and not a
+/// sensor. Bands are read in order; a distance takes the first band it fits.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct RangeBand {
+    pub id: String,
+    pub label: String,
+    /// Upper edge, m.
+    pub range_m: f64,
+}
+
+/// The band a distance falls in, or None beyond the last.
+pub fn band_of(distance_m: f64, bands: &[RangeBand]) -> Option<&RangeBand> {
+    let mut sorted: Vec<&RangeBand> = bands.iter().collect();
+    sorted.sort_by(|a, b| a.range_m.total_cmp(&b.range_m));
+    sorted.into_iter().find(|b| distance_m <= b.range_m)
 }
 
 /// A radar and who can hear it.
