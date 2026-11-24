@@ -17,7 +17,7 @@ const base = `http://localhost:${port}/`;
 const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
 await new Promise((r) => setTimeout(r, 400));
 const shot = async (page, n) => {
-  if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png` }));
+  if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png`, fullPage: true }));
 };
 const noOverlap = async (page) => {
   const boxes = await page.$$eval(".insys text[data-label-lane]", (ts) => ts.map((t) => { const r = t.getBoundingClientRect(); return { n: t.textContent, l: r.left, r: r.right, t: r.top, b: r.bottom }; }));
@@ -85,6 +85,14 @@ try {
   await gm.waitForFunction((m) => document.querySelector(".insys")?.getAttribute("data-voyage")?.endsWith(`>${m}`), mars, { timeout: 60000 });
   assert.ok((await ins.getAttribute("data-voyage")).startsWith(`${earth}>`));
   assert.match(await ins.locator("[data-next]").innerText(), /Fly Beowulf there/);
+  // X3h: with the Traveller pack on, each danger on the At world card carries the game's own task (GM only).
+  await gm.waitForSelector(".insys [data-at-world] [data-act]", { timeout: 60000 });
+  const dangers = await ins.locator("[data-at-world] [data-danger]").count();
+  assert.equal(await ins.locator("[data-at-world] [data-danger] [data-game-difficulty]").count(), dangers);
+  if (dangers) assert.match(await ins.locator("[data-game-difficulty]").first().innerText(), /\d+\+/);
+  console.log(`dangers with the game's task: ${dangers}`);
+  if (dangers) await ins.locator("[data-game-difficulty]").first().scrollIntoViewIfNeeded();
+  await shot(gm, "x3h-at-world-traveller");
   await ins.locator("[data-next]").click();
   await ins.locator("[data-land-here]").waitFor({ timeout: 15000 });
   assert.match(await ins.locator("[data-arrived]").innerText(), /Beowulf is at Mars/);

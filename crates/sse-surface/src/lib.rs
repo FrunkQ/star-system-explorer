@@ -16,6 +16,7 @@
 pub mod atlas;
 pub mod caves;
 pub mod climate;
+pub mod composition;
 pub mod core;
 pub mod cover;
 pub mod detail;

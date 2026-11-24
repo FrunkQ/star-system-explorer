@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
@@ -132,6 +132,11 @@
   });
   // The view controls' height: what sits below them starts there, however many rows they wrap to.
   let viewbarH = $state(0);
+  /** The place in view, as the table would be shown it: on the Land screen, with the landing the GM is flying. */
+  let lastLanding = $state.raw<Json | null>(null);
+  const LAND_SCREEN = "players.land.screen.json";
+  const here = (): Shown =>
+    ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
   // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
   let kickerW = $state(999);
 
@@ -511,6 +516,11 @@
   });
   $effect(() => {
     ws.players_online = share?.state.players ?? 0;
+    ws.sendLanding = (show) => {
+      lastLanding = show;
+      const sh = share?.state.shown;
+      if (share && sh && "landing" in sh && sh.landing) share.show({ ...(JSON.parse(JSON.stringify(sh)) as typeof sh), landing: show });
+    };
     ws.shared = !!share?.state.link;
   });
   const lenses = $derived.by(() => {
@@ -553,8 +563,10 @@
     const s = session;
     const aud = lensAudience(l);
     const g = ++lensGen;
+    // The system in view, not the shipped sample's: a lens on the Solar System looks at the Solar System.
+    const sys = scene.system || (factsDoc as unknown as AuthoredFacts).scope;
     if (!s || !aud) return void (ws.lensScene = null);
-    s.scene((factsDoc as unknown as AuthoredFacts).scope, { audience: aud, ...(l.data ? { data_view: l.data } : {}) }).then((r) => {
+    s.scene(sys, { audience: aud, ...(l.data ? { data_view: l.data } : {}) }).then((r) => {
       if (g === lensGen) ws.lensScene = r.ok ? r.scene : null;
     });
   });
@@ -1010,7 +1022,7 @@
         if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
         else if (a.dialog === "grow") openMake("generate");
         else if (a.dialog === "bring") openCampaign();
-        else if (a.dialog === "share" && share) window.open(share.start(), "_blank", "noopener");
+        else if (a.dialog === "share" && share) window.open(share.start(here()), "_blank", "noopener");
       } else if ("control" in a) document.querySelector<HTMLButtonElement>(a.control === "light" ? ".light .toggle" : ".sound .toggle")?.click();
       else if ("link" in a) window.open(a.link, "_blank", "noopener");
     });
@@ -1588,6 +1600,11 @@
           {#if share.state.link}
             <a href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' screen</a>
             <span data-players={share.state.players}>{share.state.players} {share.state.players === 1 ? "screen" : "screens"} · {share.state.seq} events</span>
+            <!-- What the table is shown (the landing run-through): the place the GM last sent, or screens off. -->
+            {@const shown = share.state.shown}
+            <span class="table-sees" data-table-sees={"off" in shown ? "off" : shown.scope}>Table sees: {"off" in shown ? "nothing (screens off)" : (shown.title ?? "the opening place")}</span>
+            {#if "off" in shown || shown.scope !== scene.system || (ws.screen === "surface" && lastLanding && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => share!.show(here())} title="Show the players' screens {scene.title}, as far as they know it">Send this view</button>{/if}
+            {#if !("off" in shown)}<button type="button" class="linkbtn quiet" data-screens-off onclick={() => share!.show({ off: true })} title="Blank the players' screens until you send a view">Screens off</button>{/if}
             <button type="button" class="linkbtn quiet" onclick={() => ((seatsOpen = true), seatsDialog?.showModal())}>{share.state.plan.seats.length > 1 ? `${share.state.plan.seats.length} seats` : "More seats"}</button>
             {#if share.state.waiting.length}
               <span class="requests" role="group" aria-label="Players' requests">
@@ -1601,7 +1618,7 @@
               </span>
             {/if}
           {:else}
-            <button type="button" class="linkbtn" onclick={() => window.open(share!.start(), "_blank", "noopener")}>Share with players</button>
+            <button type="button" class="linkbtn" onclick={() => window.open(share!.start(here()), "_blank", "noopener")}>Share with players</button>
           {/if}
         </span>
       {/if}

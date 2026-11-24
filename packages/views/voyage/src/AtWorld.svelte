@@ -8,12 +8,19 @@
   does every sum; this only words the answer.
 -->
 <script lang="ts">
-  import { chanceWords, verdictWords, worstDangers, type ShipAtWorld, type ShipAtWorldAsk, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { chanceWords, difficultyLadderOf, gameDifficulty, verdictWords, worstDangers, type ShipAtWorld, type ShipAtWorldAsk, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { readPropellants, type Propellants, type ShipRecord } from "../../../renderer/src/index.ts";
   import { ShipAtWorldView } from "../../ship/src/index.ts";
 
   // `arriving`: how the voyage gets there, in words, when the ask carries the leg's own speed.
   let { ctx, ask, arriving }: { ctx: ViewContext; ask: ShipAtWorldAsk | null; arriving?: string } = $props();
+  // A game pack's own task ladder (X3h): its numbers beside SSE4's words, on the GM's screens only; nothing rolled.
+  const ladder = $derived.by(() => {
+    void ctx.workspace.revision;
+    if (ctx.session.seat.authority !== "gm") return null;
+    const st = ctx.session.stack();
+    return difficultyLadderOf([...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof difficultyLadderOf>[0]);
+  });
   let world = $state<ShipAtWorld | null>(null);
   let ship = $state<ShipRecord | null>(null);
   let fuels = $state<Propellants>({});
@@ -56,6 +63,7 @@
           {#each ds as d (d.id)}
             <p class="danger" data-danger={d.id} data-level={d.level}>
               {d.why}. If it goes wrong ({chanceWords(d.chance.p)}): {d.if_wrong}.
+              {#if gameDifficulty(ladder, { p_wrong: d.chance.p, role: d.role })}{@const g = gameDifficulty(ladder, { p_wrong: d.chance.p, role: d.role })!}<span class="game" data-game-difficulty title={`${g.system}: a typical operator's task for this chance, from the game pack; nothing is rolled`}>{g.words}</span>{/if}
             </p>
           {/each}
           {#if c.would_pass?.length}<p class="muted">Safer with {c.would_pass.join("; or ")}.</p>{/if}
@@ -101,6 +109,14 @@
   .verdict[data-level="dangerous"],
   .danger[data-level="danger"] {
     color: var(--sse-alert, var(--sse-accent));
+  }
+  .game {
+    margin-left: 6px;
+    padding: 0 5px;
+    border: 1px solid var(--sse-rule);
+    font-family: var(--sse-font-mono, monospace);
+    font-size: 0.9em;
+    white-space: nowrap;
   }
   .danger {
     margin: 4px 0 0;
