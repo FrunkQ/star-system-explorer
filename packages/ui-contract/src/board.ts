@@ -47,6 +47,14 @@ export interface Board {
   redirects: Record<string, string>;
   /** Hold all (6.1): every destination shows this card; lines held before stay held after Release all. */
   all?: HoldCard;
+  /**
+   * Who steers (5.3, PB3b): destinations set to Read only follow the GM and take no input; the rest are Theirs (the
+   * default), where the player has the screen's own controls within what was sent. A screen's own setting wins over its
+   * role's, a role's over Everyone's.
+   */
+  steer?: Partial<Record<Dest, "read" | "theirs">>;
+  /** The read-only destination the GM is driving: as the GM moves, it follows (5.3). */
+  driving?: Dest;
 }
 
 /** The board at the start of a share: the table sees `floor`, nothing else is set. */
@@ -246,6 +254,56 @@ export function resolve(b: Board, role: string, screen?: string): Showing {
   return { shown: underneath(b, role, screen) };
 }
 
+/** Who steers a screen (5.3): its own setting, else its role's, else Everyone's; Theirs when none is set. */
+export function steerOf(b: Board, role: string, screen?: string): "theirs" | "read" {
+  return (screen ? b.steer?.[`screen:${screen}`] : undefined) ?? (role ? b.steer?.[`role:${role}`] : undefined) ?? b.steer?.everyone ?? "theirs";
+}
+
+/**
+ * Set who steers `dest`. A role's heading sets all its screens (their own settings go); Everyone sets every role and
+ * screen. A screen may differ from its role. Making a driven destination Theirs lets go of it.
+ */
+export function setSteer(b: Board, dest: Dest, mode: "theirs" | "read"): Board {
+  const n = clone(b);
+  const steer: Partial<Record<Dest, "read" | "theirs">> = { ...(n.steer ?? {}) };
+  const under = (k: Dest) => dest === "everyone" || (dest.startsWith("role:") && k.startsWith("screen:") && n.screens[k.slice(7)]?.role === dest.slice(5));
+  for (const k of Object.keys(steer) as Dest[]) if (k !== dest && under(k)) delete steer[k];
+  delete steer[dest];
+  if (dest.startsWith("screen:")) {
+    // Only a screen that differs from its role keeps a setting of its own.
+    const role = n.screens[dest.slice(7)]?.role ?? "";
+    if (steerOf({ ...n, steer }, role) !== mode) steer[dest] = mode;
+  } else if (mode === "read") steer[dest] = "read";
+  n.steer = steer;
+  if (n.driving && mode === "theirs" && (n.driving === dest || under(n.driving))) delete n.driving;
+  return n;
+}
+
+/** Start driving a destination (it becomes Read only), or let go with null. */
+export function drive(b: Board, dest: Dest | null): Board {
+  const n = dest ? setSteer(b, dest, "read") : clone(b);
+  if (dest) n.driving = dest;
+  else delete n.driving;
+  return n;
+}
+
+/**
+ * Where the GM is now goes to the driven destination (5.3): its line takes `live` without a new history step. On
+ * Everyone it is the top layer when one is on, else the floor.
+ */
+export function driveTo(b: Board, live: Shown): Board {
+  const dest = b.driving;
+  if (!dest) return b;
+  const n = clone(b);
+  const src = clone(live);
+  if (dest === "everyone" && n.over.length) n.over[n.over.length - 1] = src;
+  else {
+    const line = n.lines[dest];
+    n.lines[dest] = line ? { ...line, source: src, from: "live" } : { source: src, from: "live", before: null };
+  }
+  return n;
+}
+
 /** The signal level a screen shows: its own dial, else its role's (7.1). */
 export function signalOf(b: Board, role: string, screen?: string): number {
   return (screen ? b.signal[`screen:${screen}`] : undefined) ?? b.signal[`role:${role}`] ?? 0;
@@ -310,18 +368,18 @@ function defaultPick(kind: "plain" | "joke"): string {
  */
 export function boardWire(b: Board, roles: readonly string[], words: (card: HoldCard) => string = (c) => cardWords(c)): { shown: Shown; roles: Record<string, Shown>; screens: Record<string, Shown> } {
   const said = new Map<string, string>();
-  const wire = (r: Showing): Shown => {
-    if (!r.held) return r.shown;
+  const wire = (r: Showing, read: boolean): Shown => {
+    if (!r.held) return read && "scope" in r.shown ? { ...r.shown, steer: "read" } : r.shown;
     const key = JSON.stringify(r.held);
     if (!said.has(key)) said.set(key, words(r.held));
     const card = said.get(key)!;
     return card ? { off: true, card } : { off: true };
   };
-  const table = wire(resolve(b, ""));
+  const table = wire(resolve(b, ""), steerOf(b, "") === "read");
   const out: Record<string, Shown> = {};
-  for (const role of roles) out[role] = wire(resolve(b, role));
+  for (const role of roles) out[role] = wire(resolve(b, role), steerOf(b, role) === "read");
   const screens: Record<string, Shown> = {};
-  for (const [id, s] of Object.entries(b.screens)) screens[id] = wire(resolve(b, s.role, id));
+  for (const [id, s] of Object.entries(b.screens)) screens[id] = wire(resolve(b, s.role, id), steerOf(b, s.role, id) === "read");
   return { shown: table, roles: out, screens };
 }
 

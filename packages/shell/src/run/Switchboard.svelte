@@ -8,7 +8,7 @@
   decides what each screen shows; this file only draws it and turns presses into board changes.
 -->
 <script lang="ts">
-  import { addBookmark, addPreset, back, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type Workspace } from "../../../ui-contract/src/index.ts";
+  import { addBookmark, addPreset, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type Workspace } from "../../../ui-contract/src/index.ts";
   import Playbook from "./Playbook.svelte";
   import PresetMonitor from "./PresetMonitor.svelte";
   import { noteFired } from "./fired.svelte.ts";
@@ -72,6 +72,13 @@
     const section = page?.sections.find((x) => !folded.has(x.id)) ?? page?.sections[0];
     const r = addPreset(pb, section?.id ?? "", { title: b.name, to: "everyone", steps: [{ show: { bookmark: b.id } }] });
     setPlaybook(r.pb, r.id);
+  }
+  // Who steers (PB3b, 5.3): Theirs or Read only per role or screen; a read-only one can be driven from the chart.
+  const destName = (d: Dest) => (d === "everyone" ? "Everyone" : d.startsWith("role:") ? (st.roles.find((r) => `role:${r.id}` === d)?.label ?? d.slice(5)) : (board.screens[d.slice(7)]?.name ?? "a screen"));
+  function startDriving(d: Dest) {
+    act((b) => drive(b, d));
+    // The GM's stage opens; as they fly, the screen follows.
+    if (ws) ws.screen = "system";
   }
   function dragPreset(e: PointerEvent, id: string) {
     startDrag(e, { kind: "source", id });
@@ -148,7 +155,7 @@
 
   // The lines, drawn over the board from each source's dot to what it reaches. Measured after layout.
   let root: HTMLElement | undefined = $state();
-  let paths = $state<{ key: string; d: string; held: boolean; faint: boolean; mid: { x: number; y: number }; dest: Dest; role: string; screen?: string }[]>([]);
+  let paths = $state<{ driving?: boolean; key: string; d: string; held: boolean; faint: boolean; mid: { x: number; y: number }; dest: Dest; role: string; screen?: string }[]>([]);
   let drag = $state<string | null>(null);
   function measure() {
     if (!root) return;
@@ -175,7 +182,7 @@
       const cx = (sx + x1) / 2;
       const role = el.dataset.role ?? "";
       const screen = el.dataset.screen;
-      out.push({ key: dest, d: `M${sx},${sy} C${cx},${sy} ${cx},${y1} ${x1},${y1}`, held: !!board.all || (!!line?.held && !isLayer), faint: layered && !isLayer, mid: { x: cx, y: (sy + y1) / 2 }, dest, role, ...(screen ? { screen } : {}) });
+      out.push({ driving: board.driving === dest, key: dest, d: `M${sx},${sy} C${cx},${sy} ${cx},${y1} ${x1},${y1}`, held: !!board.all || (!!line?.held && !isLayer), faint: layered && !isLayer, mid: { x: cx, y: (sy + y1) / 2 }, dest, role, ...(screen ? { screen } : {}) });
     }
     paths = out;
     const ad = armed?.kind === "source" ? (dotAt(armed.id) ?? liveDot) : liveDot;
@@ -216,6 +223,14 @@
   let copied = $state(false);
 </script>
 
+{#snippet steerCtl(dest: Dest, mode: "theirs" | "read")}
+  <button type="button" class="quiet steer" class:read={mode === "read"} data-steer={dest} data-steer-mode={mode} onclick={(e) => (e.stopPropagation(), act((b) => setSteer(b, dest, mode === "read" ? "theirs" : "read")))} title={mode === "read" ? "Read only: it follows you and takes no input. Press for Theirs." : "Theirs: the player has the screen's own controls, within what you sent. Press for Read only."}>{mode === "read" ? "Read only" : "Theirs"}</button>
+  {#if mode === "read"}
+    {#if board.driving === dest}<button type="button" class="pri" data-let-go={dest} onclick={(e) => (e.stopPropagation(), act((b) => drive(b, null)))}>Let go</button>
+    {:else}<button type="button" class="quiet" data-drive={dest} onclick={(e) => (e.stopPropagation(), startDriving(dest))} title="Drive it: your chart becomes its picture, drawn as its role knows it">Drive</button>{/if}
+  {/if}
+{/snippet}
+
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <section class="sb" bind:this={root} aria-label="Switchboard" onkeydown={key} data-switchboard data-armed={armed ? `${armed.kind}:${armed.id}` : undefined}>
   <header class="top">
@@ -225,6 +240,7 @@
     {:else}
       <button type="button" class="pri" data-go-on-air onclick={() => table.start()}>Go on air</button>
     {/if}
+    {#if board.driving}<span class="driving" data-driving={board.driving}>You are driving {destName(board.driving)} <button type="button" class="quiet" data-let-go onclick={() => act((b) => drive(b, null))}>Let go</button></span>{/if}
     <span class="grow"></span>
     <button type="button" data-board-undo disabled={!st.can_undo} onclick={() => table.undo()} title="Take back the last change to what screens show (Ctrl Z)">Undo</button>
     <button type="button" data-board-redo disabled={!st.can_redo} onclick={() => table.redo()} title="Ctrl Shift Z">Redo</button>
@@ -283,6 +299,7 @@
         <span><b>Everyone</b> · <span data-dest-shows>{board.over.length ? `${words(board.over[board.over.length - 1]!)}, over the set-up` : evText}</span></span>
         <span class="acts">
           {#if board.over.length}<button type="button" data-lift onclick={(e) => (e.stopPropagation(), act(lift))} title="Take this off; every screen goes back to what it had">Lift</button>{/if}
+          {@render steerCtl("everyone", steerOf(board, ""))}
           <button type="button" class="quiet" data-hold="everyone" aria-pressed={!!board.lines.everyone?.held} onclick={(e) => (e.stopPropagation(), toggleHold("everyone", ""))}>{board.lines.everyone?.held ? "Release" : "Hold"}</button>
         </span>
       </div>
@@ -297,6 +314,7 @@
             <span class="acts">
               {#if own && !own.held && own.before !== undefined}<button type="button" class="quiet" data-back={`role:${r.id}`} onclick={(e) => (e.stopPropagation(), act((b) => back(b, `role:${r.id}`)))} title="What it had before this send">Back</button>{/if}
               {#if own && !own.for_hold}<button type="button" class="quiet" data-rejoin={`role:${r.id}`} onclick={(e) => (e.stopPropagation(), act((b) => rejoin(b, `role:${r.id}`)))}>With Everyone</button>{/if}
+              {@render steerCtl(`role:${r.id}`, steerOf(board, r.id))}
               <button type="button" class="quiet" data-hold={`role:${r.id}`} aria-pressed={!!own?.held} onclick={(e) => (e.stopPropagation(), toggleHold(`role:${r.id}`, r.id))}>{own?.held ? "Release" : "Hold"}</button>
               {#if own?.held}
                 <select aria-label="Holding card for {r.label}" data-card={`role:${r.id}`} onclick={(e) => e.stopPropagation()} onchange={(e) => chooseCard(`role:${r.id}`, (e.currentTarget as HTMLSelectElement).value as HoldCard)} value={typeof own.held === "string" ? own.held : "plain"}>
@@ -316,6 +334,7 @@
               <span class="sub" data-dest-shows>Showing {ss.text}</span>
               <span class="acts">
                 {#if mineLine && !mineLine.for_hold}<button type="button" class="quiet" data-rejoin={`screen:${id}`} onclick={(e) => (e.stopPropagation(), act((b) => rejoin(b, `screen:${id}`)))}>Back with {r.label}</button>{/if}
+                {@render steerCtl(`screen:${id}`, steerOf(board, r.id, id))}
                 <button type="button" class="quiet" data-hold={`screen:${id}`} aria-pressed={!!mineLine?.held} onclick={(e) => (e.stopPropagation(), toggleHold(`screen:${id}`, r.id, id))}>{mineLine?.held ? "Release" : "Hold"}</button>
               </span>
             </div>
@@ -329,7 +348,7 @@
 
   <svg class="lines" aria-hidden="true">
     {#each paths as p (p.key)}
-      <path d={p.d} class:held={p.held} class:faint={p.faint} data-line={p.key} />
+      <path d={p.d} class:held={p.held} class:faint={p.faint} class:driving={p.driving} data-line={p.key} />
     {/each}
     {#if drag}<path d={drag} class="dragline" />{/if}
   </svg>
@@ -600,6 +619,18 @@
     transform: rotate(45deg);
     background: var(--sse-accent);
     border-color: var(--sse-accent);
+  }
+  .lines path.driving {
+    stroke: var(--sse-accent);
+    stroke-width: 2.5;
+  }
+  .driving {
+    font-size: 13px;
+    color: var(--sse-accent-ink, var(--sse-accent));
+  }
+  .steer.read {
+    border-color: var(--sse-ink);
+    color: var(--sse-ink);
   }
   .lozenge::after {
     content: "";
