@@ -89,8 +89,11 @@ The aim: heat capacity per place, so that coasts are mild and interiors harsh. A
   - The warm current is off the east coast.
   - A backward spin swaps the two coasts.
 
+## Part 2c (24 Nov 2026): evaporation from the sea column
+- `ebm::diagnose_two` passes the sea column's temperature to the moisture block. On a two-column world, each band's evaporation is now ρ C|U| q_sat(T_sea)(1 − rh), times the band's sea share. Single-column worlds keep the old path bit for bit.
+- Earth fixture: global evaporation and precipitation go from 0.86 to 0.84 m a year (about 1.0 measured). The summer sea is cooler than the band.
+
 ### Not yet (rest of part 2)
 - A cell's temperature from its distance to the coast, so land cells read the land column and coasts lean to the sea.
-- Evaporation from the sea column.
 - The ITCZ lag from heat capacity.
 - Eyeball sea ice on locked worlds.
