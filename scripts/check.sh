@@ -16,13 +16,9 @@ python3 scripts/build-base-atlas.py --check
 python3 scripts/build-traveller-pack.py --check
 # The future tech base pack works its figures out from the sheet (FT1).
 python3 scripts/build-base-tech.py --check
-# MP22: no new typed constant or material number, and the ledger only shrinks.
+# MP22 closed: no typed constant or material number anywhere outside the sheet.
 python3 scripts/test-audit-matter.py >/dev/null
-if git rev-parse -q --verify origin/main >/dev/null; then
-  python3 scripts/audit-matter.py --ledger handover/packages/MP0-typed-copies.txt --base origin/main
-else
-  python3 scripts/audit-matter.py --ledger handover/packages/MP0-typed-copies.txt
-fi
+python3 scripts/audit-matter.py --closed
 # The importer must still build without formation (the converter module).
 cargo build -q -p sse-convert-wasm
 echo "all checks passed"

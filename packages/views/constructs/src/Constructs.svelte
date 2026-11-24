@@ -8,9 +8,10 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { BOOKKEEPING, IN_SYSTEM_SHIPS, navShipOf, shipChoices, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
+  import { Aboard } from "../../manifest/src/index.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const session = untrack(() => ctx.session);
@@ -105,6 +106,13 @@
     if (a && logOpen) untrack(() => void loadLog(a));
   });
 
+  // ---- Aboard (track MC): crew and manifest in one panel, opened from the card ----
+  let aboardOpen = $state(false);
+  const places = $derived([
+    ...listed.map((s) => ({ address: s.address, label: nameOf(s) })),
+    ...scene.subjects.map((s) => ({ address: s.address, label: s.address === scene.system ? `${s.label} (the system)` : s.label })),
+  ]);
+
   // ---- Edit and retire ----
   let edits = $state<Record<string, string>>({});
   async function setFact(field: string, raw: string, was: unknown) {
@@ -157,6 +165,20 @@
     reason = "";
     picked = null;
     ws.revision++;
+  }
+  // The party's ship (landing run-through): a ship that names a nav ship can be the one the table travels in.
+  const shipRows = $derived.by(() => {
+    void ws.revision;
+    const st = session.stack();
+    return shipChoices(IN_SYSTEM_SHIPS, [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof shipChoices>[1]);
+  });
+  const navOf = (s: PlayerSubject) => navShipOf(factOf(s, "construct.nav_ship"), shipRows);
+  const isParty = (s: PlayerSubject) => ws.party?.ship === s.address;
+  function makeParty(s: PlayerSubject) {
+    const nav = navOf(s);
+    if (!nav || !ws.setParty) return;
+    ws.setParty(isParty(s) ? null : { ship: s.address, name: nameOf(s), nav, at: parentOf(s.address) });
+    note = isParty(s) ? `${nameOf(s)} is the party's ship: Voyages starts where it is, and Land lands it.` : `The party has no ship.`;
   }
   const bodyAt = (a: string) => {
     const p = parentOf(a);
@@ -213,7 +235,7 @@
           <li class:pencil={eyes && landmarkOf(s.address) !== "known"}>
             {#if eyes && known[s.address]}<KnownTo read={known[s.address]!} label={nameOf(s)} hold={(ws.players_online ?? 0) > 0} onset={setKnownOf(s.address)} onundo={undoKnown} />{/if}
             <button type="button" class="row-btn" aria-pressed={picked === s.address} onclick={() => ((picked = picked === s.address ? null : s.address), (retiring = false))} data-construct={s.address}>
-              <b>{nameOf(s)}</b> <span class="muted">{templateOf(s, templates)?.label ?? kindOf(s.address)} · {whereWords(s.address)}</span>
+              <b>{nameOf(s)}</b>{#if isParty(s)} <span class="party" data-party title="The party's ship">party</span>{/if} <span class="muted">{templateOf(s, templates)?.label ?? kindOf(s.address)} · {whereWords(s.address)}</span>
             </button>
           </li>
         {:else}
@@ -245,9 +267,16 @@
           {#if depth === "curious" && current.facts.length > shownFacts.length}<p class="small muted">More at Science depth.</p>{/if}
           <nav class="links">
             {#if bodyAt(current.address)}<a href={placeHash({ scale: "world", system: scene.system, world: bodyAt(current.address)! })}>Open the world it is at</a>{/if}
+            {#if gm && ws.setParty && navOf(current)}<button type="button" class="quiet-btn" aria-pressed={isParty(current)} onclick={() => makeParty(current!)} data-party-ship>{isParty(current) ? "The party's ship" : "Make this the party's ship"}</button>{/if}
+            {#if gm}<button type="button" class="quiet-btn" aria-expanded={aboardOpen} onclick={() => (aboardOpen = !aboardOpen)} data-aboard-toggle>Aboard</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" bind:this={logBtn} aria-expanded={logOpen} onclick={() => (logOpen = !logOpen)} data-log-toggle>Log</button>{/if}
             {#if gm && current.facts.some((f) => f.field === "template.id")}<button type="button" class="quiet-btn" onclick={() => (retiring = !retiring)} data-retire>Take out of play…</button>{/if}
           </nav>
+          {#if aboardOpen}
+            <div use:opensFrom={() => document.querySelector("[data-aboard-toggle]")}>
+              <Aboard {ctx} construct={current} {places} />
+            </div>
+          {/if}
           {#if logOpen}
             <section class="log" aria-label="Log" use:opensFrom={() => logBtn}>
               <h4>Log, newest first</h4>
@@ -286,6 +315,7 @@
   .lbl { font-family: var(--sse-font-mono, monospace); display: inline-flex; gap: 6px; align-items: center; }
   select, input[type="text"] { font: inherit; min-height: 34px; color: var(--sse-ink); background: var(--sse-ground); border: 1px solid var(--sse-rule); }
   dd input[type="text"] { min-height: 26px; width: 9em; }
+  .party { font-size: 0.75em; padding: 0 5px; border: 1px solid currentColor; border-radius: 8px; color: var(--sse-accent, var(--sse-ink)); }
   .quiet-btn, .go, .tpl, .row-btn { font: inherit; min-height: 34px; padding: 0 10px; border: 1px solid var(--sse-rule); background: transparent; color: var(--sse-ink); cursor: pointer; text-align: left; transition: transform var(--sse-motion-quick, 120ms) var(--sse-ease, ease-out); }
   .quiet-btn:hover, .go:hover, .tpl:hover, .row-btn:hover { transform: translateY(-1px); border-color: var(--sse-ink); }
   .go { background: var(--sse-ink); color: var(--sse-ground); border-color: var(--sse-ink); }

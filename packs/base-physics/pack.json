@@ -2129,6 +2129,118 @@
         "range": null
       },
       {
+        "description": "mass share of a material that is oxygen bound to one element's oxide",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "element.bound_oxygen_share",
+        "range": null
+      },
+      {
+        "description": "an element's mass share in CI chondrites",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "element.ci_mass_fraction",
+        "range": null
+      },
+      {
+        "description": "share of a body's element held in its core",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "element.core_share",
+        "range": null
+      },
+      {
+        "description": "an element's concentration in crust over its concentration in mantle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "element.crust_enrichment",
+        "range": null
+      },
+      {
+        "description": "share of the silicate's element held in the crust",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "element.crust_share",
+        "range": null
+      },
+      {
+        "description": "an element's mass share of the formation material it rides in",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "element.material_share",
+        "range": null
+      },
+      {
+        "description": "an element's concentration in metal over its concentration in silicate",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "element.metal_silicate_partition",
+        "range": null
+      },
+      {
+        "description": "mass of oxygen an element binds in its rock oxide, per mass of the element",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "element.oxide_oxygen_ratio",
+        "range": null
+      },
+      {
         "description": "mass thrown out by an explosion",
         "dim": [
           0,
@@ -2916,6 +3028,20 @@
         "range": null
       },
       {
+        "description": "the crust's mass share of a body's silicate",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.crust_fraction",
+        "range": null
+      },
+      {
         "description": "mean density of the convecting, conducting region that runs the dynamo",
         "dim": [
           -3,
@@ -2986,6 +3112,20 @@
         "range": null
       },
       {
+        "description": "metal's mass share of a separated body's metal and silicate",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.metal_fraction",
+        "range": null
+      },
+      {
         "description": "radiogenic heat per square metre of surface",
         "dim": [
           0,
@@ -3025,6 +3165,34 @@
           0
         ],
         "id": "interior.radiogenic_power",
+        "range": null
+      },
+      {
+        "description": "how far a world separated into metal and silicate, 0 to 1",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.separation_strength",
+        "range": null
+      },
+      {
+        "description": "mass of a body's silicate (mantle and crust)",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.silicate_mass",
         "range": null
       },
       {
@@ -3263,6 +3431,20 @@
           0
         ],
         "id": "magnetosphere.plasma_source_rate",
+        "range": null
+      },
+      {
+        "description": "a formation material's summed CI weight over its riders, bound oxygen included",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "material.ci_weight",
         "range": null
       },
       {
@@ -3846,6 +4028,20 @@
           0
         ],
         "id": "star.effective_temperature",
+        "range": null
+      },
+      {
+        "description": "an element's abundance in a star over the Sun's, by mass per hydrogen",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.element_ratio",
         "range": null
       },
       {

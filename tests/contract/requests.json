@@ -3305,6 +3305,24 @@
   "rule": {"id": "bad", "name": "No messages"}
  },
  {
+  "op": "open_universe",
+  "id": "matter",
+  "seed": "matter"
+ },
+ {
+  "op": "adopt",
+  "formation": {"seed": "kernel-form-9", "system": "u:matter/sys:1", "star_pins": {"primary_mass": 1.0}}
+ },
+ {
+  "op": "read_composition",
+  "system": "u:matter/sys:1"
+ },
+ {
+  "op": "read_composition",
+  "system": "u:matter/sys:1",
+  "level": "site"
+ },
+ {
   "op": "light_through_gas",
   "passages": [
    {

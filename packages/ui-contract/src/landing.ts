@@ -116,3 +116,80 @@ export function landmarkOrder(list: readonly Landmark[]): Landmark[] {
   const tier = (l: Landmark) => (l.remarkable.length ? 0 : l.kind !== "crater" ? 1 : 2);
   return [...list].sort((a, b) => tier(a) - tier(b) || b.extent_km - a.extent_km || a.id.localeCompare(b.id));
 }
+
+// ── What the table watches (the landing run-through, 23 Nov) ─────────────────────────────────────────────────────
+// The GM's Land screen keeps a LandingShow up to date (`ws.sendLanding`); "Send this view" carries it to the table
+// (p2p `Shown.landing`). An ordinary player seat replays it on its own kernel: the same tiles, the same descent
+// planned from the same site and lander, so nothing heavy crosses the wire. Only what the GM's own reads found
+// about the world (its size, its air's optics, its star) travels with it, so a seat never reads the world's record.
+
+/** The world as the Land screen draws it: plain numbers, the same on every seat. */
+export interface LandingWorld {
+  radius_m: number;
+  pressure_bar: number;
+  t_k: number;
+  /** The air's optics (renderer `Air`) as the GM's kernel read them; null when the world has none. */
+  air: { rayleigh_m: [number, number, number]; scale_height_m: number; density_m3: number; mean_molar_mass: number; zenith_depth: [number, number, number]; unknown_gases: string[]; unknown_share: number } | null;
+  star_k: number;
+  /** The star's angular radius from the world, in radians. */
+  sun_radius: number;
+  tilt_deg: number;
+}
+
+/** Where the GM is looking on the ground: metres east and north of the site, facing, and whether flying the drone. */
+export interface LandingPose {
+  x_m: number;
+  y_m: number;
+  yaw: number;
+  pitch: number;
+  drone: boolean;
+}
+
+/** One landing as the table watches it. */
+export interface LandingShow {
+  system: string;
+  body: string;
+  /** The world's name as the table knows it. */
+  label: string;
+  site: { lat_deg: number; lon_deg: number; label: string };
+  /** A stock lander's id, or a lander object such as `{ ship }` (party.ts `partyLander`). */
+  lander: string | Record<string, unknown>;
+  /** choose (a site picked, not yet landing), flying (the descent playing) or down (on the ground). */
+  phase: "choose" | "flying" | "down";
+  /** How long the flown descent takes to play, and how far into it the GM is (0..1). */
+  flight_s: number;
+  fly_u?: number;
+  pose?: LandingPose;
+  /** The sun's hour angle in degrees (the Land screen's time of day). */
+  hour_deg: number;
+  /** How the GM's screen draws the ground (true, 3d or wireframe); a seat draws the same. */
+  look?: "true" | "3d" | "wireframe";
+  world: LandingWorld;
+}
+
+const isNum = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x);
+
+/** A LandingShow from what came over the wire, or null when it is not one. */
+export function landingShowOf(x: unknown): LandingShow | null {
+  if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+  const s = x as Partial<LandingShow>;
+  if (typeof s.system !== "string" || typeof s.body !== "string" || !s.site || !isNum(s.site.lat_deg) || !isNum(s.site.lon_deg)) return null;
+  if (s.phase !== "choose" && s.phase !== "flying" && s.phase !== "down") return null;
+  if (typeof s.lander !== "string" && (!s.lander || typeof s.lander !== "object")) return null;
+  const w = s.world;
+  if (!w || !isNum(w.radius_m) || w.radius_m <= 0 || !isNum(w.star_k) || !isNum(w.sun_radius)) return null;
+  return s as LandingShow;
+}
+
+/** The pose rounded for the wire: centimetres and milliradians are far finer than a screen shows. */
+export function roundPose(p: LandingPose): LandingPose {
+  const r = (v: number, k: number) => Math.round(v * k) / k;
+  return { x_m: r(p.x_m, 100), y_m: r(p.y_m, 100), yaw: r(p.yaw, 1000), pitch: r(p.pitch, 1000), drone: p.drone };
+}
+
+/** What a player seat may read of one world while the table watches its landing (its own kernel, granted for that body only). */
+export interface LandingGround {
+  surfaceTiles: import("./session.ts").ViewSession["surfaceTiles"];
+  surfaceTilesAt: import("./session.ts").ViewSession["surfaceTilesAt"];
+  planDescent: import("./session.ts").ViewSession["planDescent"];
+}

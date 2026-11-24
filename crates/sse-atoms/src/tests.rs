@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 96,
+        n, 101,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1184,4 +1184,70 @@ fn moved_blocks_keep_their_faces_and_bits() {
         }
     }
     assert!(n >= was.len() * 50, "{n}");
+}
+
+/// MP6: the composition blocks (Equations) and the sums the composition
+/// chain runs (`matter`) agree over a spread of inputs.
+#[test]
+fn composition_blocks_match_the_chain() {
+    use crate::matter as mt;
+    let near = |a: f64, b: f64, what: &str| {
+        assert!(
+            (a - b).abs() <= 1e-12 * a.abs().max(b.abs()).max(1e-30),
+            "{what}: {a} against {b}"
+        );
+    };
+    for (ci, r, o, w) in [
+        (0.0965, 1.0, 0.6583, 0.43),
+        (1e-7, 3.0, 0.0, 0.25),
+        (0.0, 1.0, 0.0, 0.4),
+        (0.1, 1.0, 0.5, 0.0),
+    ] {
+        let got = run("sse.composition.share_in_material", &[ci, r, o, w]);
+        let (s, b) = mt::share_in_material(ci, r, o, w);
+        near(got[0], s, "share");
+        near(got[1], b, "bound oxygen");
+    }
+    let g = sse_core::constants::g();
+    for (mass, radius, e) in [
+        (5.9722e24, 6.371e6, 0.0),
+        (9.38e20, 4.697e5, 0.0),
+        (2.59e20, 2.63e5, 1.0e6),
+    ] {
+        let got = run("sse.composition.separation_strength", &[mass, radius, e]);
+        near(
+            got[0],
+            mt::separation_strength(g, mass, radius, e, 1.8e6),
+            "separation",
+        );
+    }
+    for (d, f, s) in [
+        (13.66, 0.325, 1.0),
+        (500.0, 0.2, 0.4),
+        (0.0, 0.3, 1.0),
+        (2.0, 0.0, 1.0),
+    ] {
+        near(
+            run("sse.composition.core_share", &[d, f, s])[0],
+            mt::core_share(d, f, s),
+            "core",
+        );
+        near(
+            run("sse.composition.crust_share", &[d, f / 10.0, s])[0],
+            mt::crust_share(d, f / 10.0, s),
+            "crust",
+        );
+    }
+    for (radius, sil) in [(6.371e6, 4.03e24), (1.7374e6, 7.0e22), (2.0e5, 1.0e19)] {
+        near(
+            run("sse.composition.crust_fraction", &[radius, sil])[0],
+            mt::crust_fraction(
+                radius,
+                sil,
+                2.0e4,
+                sse_core::sheet::mixture_density::CRUST_ROCK,
+            ),
+            "crust fraction",
+        );
+    }
 }
