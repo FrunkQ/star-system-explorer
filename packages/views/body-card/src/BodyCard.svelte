@@ -34,12 +34,15 @@
   let namesOpen = $state(false);
   // Known to (SV2): who knows this body, read from the kernel on the GM's Build and Run desks. The eye shows once
   // secrecy matters here (something held back, or the campaign shared); a press reveals or hides through set_known.
+  // A reread after a change keeps the eye in place (its slip carries the Undo); only another body clears it.
   let known = $state.raw<KnownRead | null>(null);
+  let knownOf: string | null = null;
   $effect(() => {
     const a = subject?.address;
     void ws.revision;
-    known = null;
-    if (!a || ctx.session.seat.authority !== "gm" || (ws.desk !== "build" && ws.desk !== "run")) return;
+    if (a !== knownOf) known = null;
+    knownOf = a ?? null;
+    if (!a || ctx.session.seat.authority !== "gm" || (ws.desk !== "build" && ws.desk !== "run")) return void (known = null);
     let live = true;
     void ctx.session.knownTo(a).then((r) => {
       if (live && r.ok) known = r.value;
