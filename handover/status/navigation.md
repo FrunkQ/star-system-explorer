@@ -18,3 +18,9 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 - System rows in the picker: the galaxy charts thread ("Build galaxy charts and histories") adds `ui-contract/src/system-summary.ts` (`systemSummary`, `summaryWords`; PR 431) and then `your-systems.ts` `readCampaignSystems(session)`. When they land, give the `sys:` rows in `nav/PlaceLine.svelte` `caption = summaryWords(systemSummary(subjects))` and switch the `seen` cache to `readCampaignSystems` for systems not yet opened (keep `seen` for the campaign's own system, which reads back with no bodies). Agreed with that thread: they do not edit `nav/`.
 - After NV3: NV2 part 3 (every "which one?" opens the Picker; touches the voyages and Build threads' dialogs, so agree it with them), then lighting up tagged systems on the galaxy map (needs the map's systems to carry `data-address`).
 - Alex's rulings for this track (24 Nov, second V3 audit, "yes to all"): one selector on the place line that replaces Below and doubles as Find; one menu on every object from one action list, desk-aware; find by tag and light it up; a description and GM notes for the campaign and each system. A press on a picker row goes there in one step (no separate ›).
+
+## AT15a screen delivery (from 24 Nov 20:19)
+| Package | State | Log |
+|---|---|---|
+| AT15a part 1: deliveries data, player (three scales), looks carry them, players' screen powers on, arrives and powers off | done (PR below) | packages/AT15a.md |
+| AT15a part 2: Turn on the Atlas page (atlas thread wires it), Leave, drag page turn, look card row, Orac | next | packages/AT15a.md |

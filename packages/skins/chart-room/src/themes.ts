@@ -1,3 +1,4 @@
+import type { LookDelivery } from "../../../ui-contract/src/index.ts";
 // The two GM modes (H8.5). Night chart inherits Chart room and changes only
 // the colours, so the structure is the same in both.
 export interface ThemeDoc {
@@ -17,6 +18,8 @@ export interface ThemeDoc {
   vocab?: string;
   /** A palette offered to the colour channel when a symbology asks for "theme palette" (H8.4A). */
   palette?: string[];
+  /** How a screen in this look arrives and leaves, one delivery per moment (atlas design 11A.4a). Presentation only. */
+  delivery?: LookDelivery;
 }
 
 /** One step of a theme's filter chain. Strength is 0 to 1. */
