@@ -12168,6 +12168,46 @@
        },
        "note": "pure liquid water near room temperature; light falls to 1/e over 1/alpha metres (about 22 m at 420 nm, 0.4 m at 750 nm), which is why deep water is blue"
       },
+      "scattering_liquid": {
+       "kind": "table",
+       "lambda_nm": [
+        450.0,
+        550.0
+       ],
+       "b": {
+        "v": [
+         0.0035,
+         0.0015
+        ],
+        "unit": "m-1",
+        "src": "morel-prieur1977",
+        "check": "unverified"
+       },
+       "exponent": {
+        "v": -4.3,
+        "unit": "1",
+        "src": "morel-prieur1977",
+        "check": "unverified",
+        "note": "b scales as lambda to this power between and beyond the table's points"
+       },
+       "backscatter_share": {
+        "v": 0.5,
+        "unit": "1",
+        "src": "morel-prieur1977",
+        "check": "unverified",
+        "note": "b_b / b for molecular scattering, which is symmetric fore and aft"
+       },
+       "seawater_factor": {
+        "v": 1.3,
+        "unit": "1",
+        "src": "morel-prieur1977",
+        "check": "unverified",
+        "note": "seawater scatters about 30 % more than pure water (dissolved salts)"
+       },
+       "src": "morel-prieur1977",
+       "check": "unverified",
+       "note": "pure liquid water; the 650 nm entry of Table 1 was unreadable in the scan, so use the exponent beyond 550 nm"
+      },
       "refractive_index_liquid": {
        "kind": "table",
        "lambda_nm": [
@@ -19061,6 +19101,11 @@
      "text": "Monogenidou, S. A., Assael, M. J. and Huber, M. L. 2018, J. Phys. Chem. Ref. Data 47, 023102: reference correlation for the viscosity of ammonia from the triple point to 725 K and up to 50 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
      "status": "unverified",
      "doi": "10.1063/1.5036724"
+    },
+    {
+     "id": "morel-prieur1977",
+     "text": "Morel, A. and Prieur, L. 1977, Limnology and Oceanography 22, 709: analysis of variations in ocean color; Table 1 pure-water scattering b_w, the wavelength exponent -4.3 (p. 712, after Morel 1974), backscatter share 1/2 for molecular scattering (p. 711, eq. 3) and seawater about 30 % higher (p. 714). Read by the climate and weather thread from a scan on 24 Nov 2026",
+     "status": "unverified"
     },
     {
      "id": "moritz2000",

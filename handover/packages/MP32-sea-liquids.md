@@ -28,6 +28,10 @@ The builder checks that Segelstein's k agrees with Hale and Querry's alpha throu
 
 The values were read from the Oregon Medical Laser Center's copies of the authors' tables and are unverified.
 
+### Scattering (added 24 Nov for W-sea2)
+
+`optical.scattering_liquid` on `h2o`: `{kind table, lambda_nm [450, 550], b {v [0.0035, 0.0015], unit m-1}, exponent -4.3, backscatter_share 0.5, seawater_factor 1.3}`, all from Morel and Prieur 1977 (Limnol. Oceanogr. 22, 709), as read by the climate and weather thread from a scan; unverified. The 650 nm entry of Table 1 was unreadable, so readers use the exponent beyond 550 nm. The sea's deep colour is R = 0.33 b_b / (a + b_b) with `absorption_liquid`.
+
 ## Part 2 rows (on each substance's `phases` block)
 
 `saturated_liquid` is a table of the liquid along its boiling curve. It runs from just above the triple point to 0.95 of the critical temperature, in nine rows.

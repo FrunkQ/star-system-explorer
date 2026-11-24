@@ -1041,3 +1041,25 @@ fn rock_minerals_order_by_darkness() {
     assert!(k_near("limonite", 450.0) > 5.0 * k_near("limonite", 700.0));
     assert!(k_near("basalt", 550.0) < 0.01);
 }
+
+#[test]
+fn water_scatters_blue_more_than_green() {
+    // W-sea2: Morel and Prieur 1977, pure-water scattering, and its law.
+    let r = Reference::base();
+    let t = r
+        .row("substances", "h2o")
+        .and_then(|x| x.get("optical"))
+        .and_then(|o| o.get("scattering_liquid"))
+        .unwrap();
+    let b: Vec<f64> = t
+        .get("b")
+        .and_then(|b| b.get("v"))
+        .and_then(|v| v.as_array())
+        .unwrap()
+        .iter()
+        .map(|x| x.as_f64().unwrap())
+        .collect();
+    assert!(b[0] > 2.0 * b[1]);
+    assert!((num(t.get("backscatter_share")).unwrap() - 0.5).abs() < 1e-12);
+    assert!(num(t.get("exponent")).unwrap() < -4.0);
+}
