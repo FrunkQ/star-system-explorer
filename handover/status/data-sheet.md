@@ -27,3 +27,33 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | MP30 electrical conductivity for MF2's field ledger: `earth-core-liquid` and liquid iron (Pozzo 2012), `giant-envelope` sigma profile along Jupiter's adiabat (French 2012), `seawater` with PSS-78 fits | done (this PR); ionic water's 1e4 S/m still recalled | packages/MP30-conductivity.md |
 | MP31 units for the units engine (ED1a): 16 working units, 10 imperial units (group `imperial`), source NIST SP 811; reader knows `area` and `volume` | done (this PR) | packages/MP31-units.md |
 | MP32 sea liquids, part 1: liquid water's absorption spectrum 380 to 2000 nm (Pope and Fry 1997, Hale and Querry 1973) and refractive index (Segelstein 1981) | part 1 done (this PR); density, viscosity, surface tension and the cold liquids wait for readable tables | packages/MP32-sea-liquids.md |
+
+
+## Next, in order (as of 24 Nov 2026, for whoever picks this track up)
+
+1. **MP32 part 2: sea liquids for the climate thread.** The climate thread wants these for sea colour and waves by liquid:
+   - saturated-liquid density, viscosity and surface tension for water, methane, ethane, ammonia, nitrogen, helium-4 and propane;
+   - liquid methane and ethane absorption;
+   - a new `c2h6` substance row with a Fray and Schmitt 2009 vapour-pressure fit.
+   
+   The values are in the NIST WebBook fluid pages (Lemmon, McLinden and Friend), which the cloud could not read. From a local machine, read them there or with CoolProp. Cite the original correlation paper for each value, and note when a value was read through CoolProp. Absorption leads: Ramaprasad et al. 1978 (Icarus 35, 400) and Grundy et al. 2002 (Icarus 155, 486; it includes liquid methane at 93 K). Details are in packages/MP32-sea-liquids.md.
+2. **Still unsourced, and searched without luck so far:**
+   - heats of combustion for the solid propellants (JPL TM 33-649, JPL 79-29 and Thiokol TWR-13009 searched);
+   - ionic water's conductivity: `h2o.ionic_fluid` still holds a recalled 1e4 S/m, because Knudson 2012 gives only reflectivity;
+   - latent heats for Ti-6Al-4V and Al 6061;
+   - rhenium's heat of melting;
+   - the solar-metallicity end of the element `scatter_dex` (Bensby 2014 Table C.3 at CDS was not read).
+   
+   The Cayrel 2004 metal-poor scatter values are written down in packages/scatter-dex-notes.md and are still to be put on the rows.
+3. **Waiting on the readers of new rows.**
+   - Proven core reads MP30's conductivities for MF2, through these fields:
+     - `earth-core-liquid.sigma_elec` and `sigma_elec_icb`;
+     - `iron.sigma_elec_liquid`;
+     - `giant-envelope.sigma_elec_profile` and `metallic_from`;
+     - `seawater.sigma_elec`, `sigma_elec_25c` and the PSS-78 fits.
+   - The editing thread strikes the MP31 units off its WAITING list in figures.test.ts. Imperial units are in group `imperial`.
+4. **Later:** p-B11 fusion (the B-11 mass is now on the sheet); OV12 naming at stage 5.
+
+Working notes for this track:
+- From the cloud, janaf.nist.gov, the AME2020 hosts, webbook.nist.gov, omlc.org and srd.nist.gov all refuse curl. A web-reading agent reaches janaf, physics.nist.gov and omlc.
+- Values read from fetched text are marked `unverified` until the citation check reads the paper.
