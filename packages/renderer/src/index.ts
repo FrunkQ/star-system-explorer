@@ -103,3 +103,6 @@ export async function startSurface(canvas: HTMLCanvasElement) {
 // The size comparison's turning globes (3D, True, Wireframe).
 export { circleSteps, globeFrame, graticule, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
 export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";
+// A body's face in True, one door for every view (true-body.ts).
+export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
+export type { TrueBody, TrueLook } from "./true-body.ts";

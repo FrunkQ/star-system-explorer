@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawLiveStar, poleOf, ringProfile, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
+  import { basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawLiveStar, poleOf, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
@@ -372,32 +372,8 @@
     return out;
   }
 
-  // Rings in True (V10f): each ringed world's profile, worked out once per world and its rings. The ring material's
-  // colour is the world's own mean surface colour when its surface has been read, else a neutral grey: the ring data
-  // carries no colour yet (fudge register).
-  const ringCache = new Map<string, { sig: string; item: NonNullable<import("../../../renderer/src/index.ts").GpuItem["rings"]> | null; assumed: boolean }>();
-  function ringsFor(b: Body3D): NonNullable<import("../../../renderer/src/index.ts").GpuItem["rings"]> | undefined {
-    if (!b.rings?.length || !(b.radius_m && b.radius_m > 0)) return undefined;
-    const t = surfaces.get(b.id);
-    const sig = `${JSON.stringify(b.rings)}|${b.tilt_rad ?? ""}|${t ? "s" : "-"}`;
-    let e = ringCache.get(b.id);
-    if (!e || e.sig !== sig) {
-      const tint = t ? meanColour(t) : ([0.5, 0.5, 0.5] as [number, number, number]);
-      const p = ringProfile(b.rings, tint);
-      e = { sig, item: p ? { key: `${b.id}|${sig}`, inner: p.inner_m / b.radius_m, outer: p.outer_m / b.radius_m, normal: poleOf(b.tilt_rad), width: p.width, data: p.data } : null, assumed: p?.assumed ?? false };
-      ringCache.set(b.id, e);
-    }
-    return e.item ?? undefined;
-  }
-  /** A surface texture's mean colour, 0..1 linear-ish (sRGB bytes over 255; a tint, not a measurement). */
-  function meanColour(t: TrueTexture): [number, number, number] {
-    let r = 0;
-    let g = 0;
-    let bl = 0;
-    let n = 0;
-    for (let i = 0; i < t.data.length; i += 4 * 17) ((r += t.data[i]!), (g += t.data[i + 1]!), (bl += t.data[i + 2]!), n++);
-    return n ? [r / n / 255, g / n / 255, bl / n / 255] : [0.5, 0.5, 0.5];
-  }
+  // Rings in True (V10f) and every other part of a body's True face come from one door, trueLook (true-body.ts), shared
+  // with the size comparison's gallery.
   // Belts in True: a haze of points between each disc belt's drawn edges, in the star's frame, as faint as starlight
   // on dust allows a screen to show (fudge register: the count is a drawing's, not the belt's).
   const BELT_POINTS = 2400;
@@ -457,8 +433,8 @@
             const face = isStar && !mag && trueBand !== "infrared" ? faceFor(b, radius) : undefined;
             // Mag: the worlds dark under their fields, the star a dim grey (its own field is not drawn yet).
             const emit = mag ? (isStar ? 0.35 : magShapes.has(b.id) ? 0.18 : 0.08) : trueBand === "infrared" ? thermalGrey(b.t_k ?? 0, starK) : trueBand === "xray" && !isStar ? 0 : undefined;
-            const rings = !isStar && emit === undefined ? ringsFor(b) : undefined;
-            return { id: b.id, rel: relOf(b.id), radius, colour: isStar ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: isStar, ...(t ? { surface: { key: b.id, texture: t } } : {}), ...(face ? { face } : {}), ...(emit !== undefined ? { emit } : {}), ...(rings ? { rings } : {}) };
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(t ? { surface: t } : {}), ...(b.rings && emit === undefined ? { rings: b.rings } : {}), pole: poleOf(b.tilt_rad) });
+            return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(face ? { face } : {}), ...(emit !== undefined ? { emit } : {}) };
           }),
           rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...magRings(fieldOut, fieldIn, faint)],
           // Belts as haze in visible light only: in the other bands they give off next to nothing a screen could show.
