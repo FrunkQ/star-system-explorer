@@ -559,3 +559,16 @@ fn venus_descent_meets_acid_cloud() {
         c.levels
     );
 }
+
+#[test]
+fn field_layers_carry_the_column_heights() {
+    let b = block();
+    let e = fixture("Earth");
+    let p = b.prepare(&e, Date { day: 100.0 });
+    let cell = b.zonal_cell(&e, &p, 30.0, 0.0);
+    let h = e.scale_height_m();
+    assert_eq!(cell.layers[0].base_m, 0.0);
+    assert!((cell.layers[0].top_m - 0.24 * h).abs() < 1.0);
+    assert!((cell.layers[1].base_m - cell.layers[0].top_m).abs() < 1e-9);
+    assert!(cell.layers[2].top_m > cell.layers[2].base_m);
+}

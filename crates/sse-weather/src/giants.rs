@@ -183,6 +183,23 @@ pub struct GiantClouds {
     /// The red chromophore layer above an ammonia deck (W10a).
     #[serde(default)]
     pub chromophore: Option<Chromophore>,
+    /// How the decks' heights are worked out (W-heights).
+    #[serde(default)]
+    pub heights: Option<DeckHeights>,
+    pub source: String,
+}
+
+/// A deck's base is where its vapour saturates on the giant's adiabat
+/// (W-heights): x p = p_sat(T(p)), with T = T₁ (p / 1 bar)^κ below the
+/// tropopause and isothermal above it.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct DeckHeights {
+    pub tropopause_bar: f64,
+    /// Deck thickness in pressure scale heights.
+    pub thickness_h: f64,
+    /// Base pressure of the low, middle and high deck where no vapour curve
+    /// or abundance is held, bar.
+    pub fallback_bar: [f64; 3],
     pub source: String,
 }
 
@@ -641,6 +658,105 @@ pub fn jet_profile(gs: &GiantSettings, c: &Conditions, l: &GiantLayout) -> JetPr
     p
 }
 
+/// The heat-capacity ratio κ = R / c_p of the gas mix: monatomic gases
+/// c_p = 5/2 R, diatomic 7/2 R, others 4 R (ideal gases near room
+/// temperature).
+fn kappa(c: &Conditions) -> f64 {
+    let (mut x, mut cp) = (0.0, 0.0);
+    for (g, f) in &c.gases {
+        let k = match g.as_str() {
+            "he" | "ne" | "ar" | "kr" | "xe" => 2.5,
+            "h2" | "n2" | "o2" | "co" => 3.5,
+            _ => 4.0,
+        };
+        x += f;
+        cp += f * k;
+    }
+    if cp > 0.0 {
+        x / cp
+    } else {
+        2.0 / 7.0
+    }
+}
+
+/// Base pressure of each deck, bar: where the deck's vapour first saturates
+/// going up the adiabat, else the pack's fallback (low, middle, high).
+pub fn deck_base_bar(
+    dh: &DeckHeights,
+    cs: &sse_climate::settings::ClimateSettings,
+    c: &Conditions,
+    decks: &[String; 3],
+) -> [f64; 3] {
+    let k = kappa(c);
+    let t1 = c.t_surface_k;
+    let t_at = |p_bar: f64| t1 * m::pow(p_bar.max(dh.tropopause_bar), k);
+    let mut out = dh.fallback_bar;
+    for (i, d) in decks.iter().enumerate() {
+        let name = d.trim_end_matches(" ice");
+        let Some(sub) = cs.substances.iter().find(|s| s.name == name) else {
+            continue;
+        };
+        let Some(x) = c.gases.get(&sub.gas).copied().filter(|x| *x > 0.0) else {
+            continue;
+        };
+        let sat = |p_bar: f64| x * p_bar * 1.0e5 >= sse_climate::ebm::p_sat(sub, t_at(p_bar));
+        // Up from 100 bar in steps of 1/50 of a scale height of pressure,
+        // then halve the bracket.
+        let (mut lo, mut hi) = (f64::NAN, f64::NAN);
+        let mut p = 100.0;
+        let mut prev_sat = sat(p);
+        while p > 1.0e-3 {
+            let q = p * m::exp(-0.02);
+            let now = sat(q);
+            if now && !prev_sat {
+                (lo, hi) = (q, p);
+                break;
+            }
+            prev_sat = now;
+            p = q;
+        }
+        if lo.is_nan() {
+            continue;
+        }
+        for _ in 0..40 {
+            let mid = m::sqrt(lo * hi);
+            if sat(mid) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        out[i] = m::sqrt(lo * hi);
+    }
+    // Keep the decks in order, low deepest: a deck below one that sits
+    // deeper than it goes half again deeper.
+    for k in (0..2).rev() {
+        if out[k] <= out[k + 1] {
+            out[k] = 1.5 * out[k + 1];
+        }
+    }
+    out
+}
+
+/// Each deck's base and top above the 1 bar level, m: z = H ln(1 bar / p).
+pub fn set_heights(
+    gs: &GiantSettings,
+    cs: &sse_climate::settings::ClimateSettings,
+    c: &Conditions,
+    l: &GiantLayout,
+    cell: &mut Cell,
+) {
+    let Some(dh) = &gs.clouds.heights else {
+        return;
+    };
+    let h = c.scale_height_m();
+    let p = deck_base_bar(dh, cs, c, &l.layers);
+    for (k, layer) in cell.layers.iter_mut().enumerate().take(3) {
+        layer.base_m = -h * m::ln(p[k]);
+        layer.top_m = layer.base_m + dh.thickness_h * h;
+    }
+}
+
 /// Longitude at `day` of something at `lat` that was at `lon0` on `born`,
 /// drifting with the local wind: Δλ = u Δt / (a cos φ).
 pub fn drift_lon(u: f64, a_m: f64, lat: f64, lon0: f64, born: f64, day: f64) -> f64 {
@@ -1078,6 +1194,8 @@ pub fn giant_cell(
         wind_m_s: [0.0, 0.0],
         turbulence: 0.0,
         particle_radius_um: cl.particle_radius_um.get(cond).copied().unwrap_or(0.0),
+        base_m: 0.0,
+        top_m: 0.0,
     };
     let mut ly = vec![
         deck(cl.low_cover, &l.layers[0], cl.low_tau),

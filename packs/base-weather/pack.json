@@ -399,6 +399,16 @@
      "particle_radius_um": {
       "ammonia ice": 1.0
      },
+     "heights": {
+      "tropopause_bar": 0.1,
+      "thickness_h": 0.5,
+      "fallback_bar": [
+       5.0,
+       2.0,
+       0.7
+      ],
+      "source": "A deck's base is where its vapour first saturates going up the dry adiabat, x p = p_sat(T), T = T1 (p / 1 bar)^kappa with kappa = R/c_p of the gas mix (c_p 5/2 R monatomic, 7/2 R diatomic, 4 R others), isothermal above the 0.1 bar tropopause; vapour curves from the data sheet through the climate's p_sat. Puts Jupiter's ammonia cloud base near 0.7 bar (Braude et al. 2020 find the cloud no deeper than about 0.7 bar outside the Great Red Spot). Height above 1 bar z = H ln(1 bar / p). Thickness half a scale height and the fallback pressures (decks with no vapour curve or abundance held: ammonium hydrosulphide, water on giants with no water listed) are stand-ins (docs/fudges.md)"
+     },
      "chromophore": {
       "above": "ammonia ice",
       "tau_zone_1um": 0.06,

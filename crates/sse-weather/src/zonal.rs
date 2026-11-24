@@ -269,6 +269,8 @@ impl ZonalBlock {
                 wind_m_s: [zs.wind_m_s[j] * (1.0 + 1.5 * k as f64), 0.0],
                 turbulence: 0.0,
                 particle_radius_um: 0.0,
+                base_m: 0.0,
+                top_m: 0.0,
             })
             .collect();
         let set = |l: &mut Layer, cv: f64, kind: &str, tau: f64| {

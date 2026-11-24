@@ -552,3 +552,40 @@ fn golden() -> serde_json::Value {
 fn golden_weather_giants() {
     check_golden("weather-giants.json", &golden());
 }
+
+#[test]
+fn deck_bases_sit_where_their_vapour_saturates() {
+    let gs = base_settings();
+    let cs = crate::scenario::settings().climate;
+    let dh = gs.clouds.heights.as_ref().unwrap();
+    for f in fixtures() {
+        let c = &f.conditions;
+        let l = layout(&gs, c);
+        let p = deck_base_bar(dh, &cs, c, &l.layers);
+        assert!(p[0] > p[1] && p[1] > p[2], "{}: {p:?}", c.label);
+    }
+    // Ice giants' methane cloud near 1.2 to 1.5 bar, Saturn's ammonia near
+    // 1.5 (deeper than Jupiter's: colder at 1 bar, less ammonia).
+    for (w, lo, hi) in [
+        ("Saturn", 1.2, 2.0),
+        ("Uranus", 1.0, 1.6),
+        ("Neptune", 1.1, 1.8),
+    ] {
+        let c = fixture(w);
+        let p = deck_base_bar(dh, &cs, &c, &layout(&gs, &c).layers);
+        assert!((lo..hi).contains(&p[2]), "{w}: {}", p[2]);
+    }
+    // Jupiter's ammonia cloud base near 0.7 bar (Braude et al. 2020: no
+    // deeper than 0.7 ± 0.1 bar outside the Great Red Spot).
+    let c = fixture("Jupiter");
+    let l = layout(&gs, &c);
+    let p = deck_base_bar(dh, &cs, &c, &l.layers);
+    assert_eq!(l.layers[2], "ammonia ice");
+    assert!((0.5..0.9).contains(&p[2]), "{}", p[2]);
+    // Heights rise with the decks and the cell carries them.
+    let gp = prepare(&gs, &c, Date { day: 0.0 });
+    let mut cell = giant_cell(&gs, &c, &gp, 10.0, 0.0);
+    set_heights(&gs, &cs, &c, &l, &mut cell);
+    assert!(cell.layers[2].base_m > cell.layers[1].base_m);
+    assert!(cell.layers[2].top_m > cell.layers[2].base_m);
+}

@@ -62,6 +62,8 @@ fn empty_layer() -> Layer {
         wind_m_s: [0.0, 0.0],
         turbulence: 0.0,
         particle_radius_um: 0.0,
+        base_m: 0.0,
+        top_m: 0.0,
     }
 }
 
@@ -165,7 +167,15 @@ impl RuleBlock {
     ) -> Cell {
         if Self::is_giant(p) {
             let gp = giants::prepare(&self.giants, c, date);
-            return giants::giant_cell(&self.giants, c, &gp, lat, lon);
+            let mut cell = giants::giant_cell(&self.giants, c, &gp, lat, lon);
+            giants::set_heights(
+                &self.giants,
+                &self.settings.climate,
+                c,
+                &gp.layout,
+                &mut cell,
+            );
+            return cell;
         }
         let mut cell = self.zonal_cell(c, p, lat, lon);
         formations::imprint(
@@ -203,7 +213,12 @@ impl RuleBlock {
     ) -> FieldTile {
         let p = self.prepare(c, date);
         if Self::is_giant(&p) {
-            return giants::giant_tile(&self.giants, c, date, key, n);
+            let mut tile = giants::giant_tile(&self.giants, c, date, key, n);
+            let l = giants::layout(&self.giants, c);
+            for cell in &mut tile.cells {
+                giants::set_heights(&self.giants, &self.settings.climate, c, &l, cell);
+            }
+            return tile;
         }
         let systems = self.systems_at(c, &p, date, pins);
         let cells = cell_dirs(key, n)
@@ -277,7 +292,11 @@ impl RuleBlock {
         } else {
             circulation::zonal_wind(s, &p.circ, lat)
         };
+        let bands = crate::hooks::level_bounds(c, s);
         for (k, l) in layers.iter_mut().enumerate() {
+            // The descent column's height bands, so the two agree (W-heights).
+            l.base_m = bands[k].0 * 1000.0;
+            l.top_m = bands[k].1 * 1000.0;
             // Winds strengthen with height toward the jets.
             l.wind_m_s = [u * (1.0 + 1.5 * k as f64), 0.0];
         }
@@ -360,6 +379,8 @@ pub(crate) fn layer(cover: f64, kind: &str, cond: &str, tau: f64, old: &Layer) -
         wind_m_s: old.wind_m_s,
         turbulence: old.turbulence,
         particle_radius_um: 0.0,
+        base_m: old.base_m,
+        top_m: old.top_m,
     }
 }
 

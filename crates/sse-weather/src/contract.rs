@@ -73,6 +73,12 @@ pub struct Layer {
     /// measured size is held (visual polish K-c).
     #[serde(default, skip_serializing_if = "is_zero")]
     pub particle_radius_um: f64,
+    /// The layer's base and top above the reference surface (the ground, or
+    /// a giant's 1 bar level; below it is negative), m (W-heights).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub base_m: f64,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub top_m: f64,
 }
 
 /// One coarse cell on the surface atlas's cube sphere.
