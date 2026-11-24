@@ -15,6 +15,8 @@ export type Dest = "everyone" | `role:${string}` | `screen:${string}`;
 export interface Line {
   /** What this destination is sent. */
   source: Shown;
+  /** Which source on the board it came from ("live", a preset's id), for drawing its line; absent: the table's opening. */
+  from?: string;
   /** Held: the destination shows this card and nothing of the source (6.1). */
   held?: HoldCard;
   /** What this destination showed before this send, for "press again to go back" (5.4). Absent: nothing of its own. */
@@ -34,6 +36,8 @@ export interface BoardScreen {
 export interface Board {
   /** Everyone layers over the set-up, top last (5.4). */
   over: Shown[];
+  /** Which source each layer came from, beside `over`. */
+  over_from?: string[];
   /** The floor ("everyone"), each role's own line and each screen's own line. */
   lines: Partial<Record<Dest, Line>>;
   screens: Record<string, BoardScreen>;
@@ -89,20 +93,21 @@ const hasOwn = (b: Board) => Object.keys(b.lines).some((k) => k !== "everyone");
  * floor; otherwise a layer over the set-up that Lift takes off. To a role or a screen: its own line, keeping what it
  * had so pressing again goes back. A held line takes the new source and stays held (6.1: the line shows what waits).
  */
-export function send(b: Board, dest: Dest, source: Shown): Board {
+export function send(b: Board, dest: Dest, source: Shown, from?: string): Board {
   const n = clone(b);
   const to = landing(n, dest);
   const src = clone(source);
+  const tag = from ? { from } : {};
   if (to === "everyone") {
     if (!n.over.length && !hasOwn(n)) {
       const was = n.lines.everyone;
-      n.lines.everyone = { source: src, ...(was?.held ? { held: was.held } : {}), before: was ? { source: was.source } : null };
-    } else n.over.push(src);
+      n.lines.everyone = { source: src, ...tag, ...(was?.held ? { held: was.held } : {}), before: was ? { source: was.source, ...(was.from ? { from: was.from } : {}) } : null };
+    } else (n.over.push(src), (n.over_from ??= []).push(from ?? ""));
     return n;
   }
   const was = n.lines[to];
-  const prior = was && !was.for_hold ? { source: was.source, ...(was.before !== undefined ? { before: was.before } : {}) } : null;
-  n.lines[to] = { source: src, ...(was?.held ? { held: was.held } : {}), before: prior };
+  const prior = was && !was.for_hold ? { source: was.source, ...(was.from ? { from: was.from } : {}), ...(was.before !== undefined ? { before: was.before } : {}) } : null;
+  n.lines[to] = { source: src, ...tag, ...(was?.held ? { held: was.held } : {}), before: prior };
   return n;
 }
 
@@ -110,6 +115,7 @@ export function send(b: Board, dest: Dest, source: Shown): Board {
 export function lift(b: Board): Board {
   const n = clone(b);
   n.over.pop();
+  n.over_from?.pop();
   return n;
 }
 
@@ -317,4 +323,33 @@ export function boardWire(b: Board, roles: readonly string[], words: (card: Hold
   const screens: Record<string, Shown> = {};
   for (const [id, s] of Object.entries(b.screens)) screens[id] = wire(resolve(b, s.role, id));
   return { shown: table, roles: out, screens };
+}
+
+/**
+ * The table as the Switchboard sees it (PB2): the board, the roles (seats), how many screens are connected, and the
+ * ways to change it. The shell makes one from its share and puts it on the workspace (`Workspace.table`), so the
+ * Switchboard view needs nothing else of the shell.
+ */
+export interface TablePort {
+  readonly state: {
+    board: Board;
+    roles: readonly { id: string; label: string; sealed: boolean }[];
+    /** Screens connected now (players' pages that said hello and have not gone). */
+    players: number;
+    /** The players' link once on air, else null. */
+    link: string | null;
+    can_undo: boolean;
+    can_redo: boolean;
+    /** Players' requests waiting for the GM. */
+    waiting: number;
+  };
+  act(f: (b: Board) => Board): void;
+  undo(): void;
+  redo(): void;
+  /** Go on air (share), showing the table the live view; returns the players' link. */
+  start(): string;
+  /** Join links for a role: one per screen document it opens. */
+  links(role: string): { screen: string | null; href: string }[];
+  /** The live source: where the GM is now, as the table would be sent it. */
+  live(): Shown;
 }

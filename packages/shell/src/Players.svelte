@@ -388,7 +388,7 @@
   {#if !bare}
   <header class="bar">
     {#if brand}<span class="brand" data-brand>{#if brand.logo}<img src={brand.logo} alt="" />{/if}{brand.name}</span>{/if}
-    <h1>{star ? subjectName(star) : "System"}</h1>
+    <h1>{shown && "off" in shown ? "Stand by" : star ? subjectName(star) : "System"}</h1>
     <span class="kicker">{screenDoc?.label ?? "…"}{screenDoc?.data_view ? ` · seen through ${screenDoc.data_view}` : ""} · audience {scene?.audience ?? "…"}</span>
     {#if party}<span class="ship" data-party-ship={party.ship} data-party-at={party.at} title={party.voyage ? `Last voyage: ${placeName(party.voyage.from)} to ${placeName(party.voyage.to)}, ${dayWords(party.voyage.days)}` : undefined}>Aboard <strong>{party.name}</strong>, {party.at === scopeNow() ? "in this system" : `at ${placeName(party.at)}`}</span>{/if}
     <span class="spacer"></span>
@@ -438,7 +438,7 @@
       <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
     {/key}
   {/if}
-  {#if joined && scene && mayAsk && !bare && !watching}
+  {#if joined && scene && mayAsk && !bare && !watching && !(shown && "off" in shown)}
     <section class="ask" aria-label="Ask the game master">
       <form onsubmit={(e) => (e.preventDefault(), askName())}>
         <label>Suggest a name for {target ? subjectName(target) : "the body in focus"} <input type="text" bind:value={ask} maxlength="40" disabled={link.state !== "live" || !target} /></label>

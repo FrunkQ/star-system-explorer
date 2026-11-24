@@ -78,8 +78,9 @@ try {
   await pl.waitForFunction((b) => document.querySelector("[data-surface]")?.getAttribute("data-walk") !== b, before, { timeout: 15000 });
   await shot(pl, "landing-player-down");
 
-  // Screens off ends it.
-  await gm.locator("[data-screens-off]").click();
+  // Hold all on the Switchboard ends it.
+  await gm.locator("[data-on-air]").click();
+  await gm.locator("[data-hold-all]").click();
   await pl.locator("[data-screens-off]").waitFor({ timeout: 10000 });
   assert.equal(await pl.locator("[data-surface]").count(), 0);
 
