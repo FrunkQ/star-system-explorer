@@ -90,7 +90,7 @@ const tagsOf = (p: PackDoc | undefined): TagRow[] => {
 /** The campaign triggers pack's tag declarations, with the draft's new tags added. */
 function withTags(mine: PackDoc | undefined, fresh: TagRow[]) {
   const tags = [...tagsOf(mine), ...fresh];
-  return tags.length ? { tags: { about: "Tags the campaign's own triggers name (TG1): labels only.", groups: [], tags } } : {};
+  return tags.length ? { tags: { about: "Tags the campaign's own triggers and templates name (TG1): labels only.", groups: [], tags } } : {};
 }
 
 /** The triggers and tags in force, for the catalogue. */
@@ -101,4 +101,64 @@ export function triggerEntries(session: ViewSession): Entry[] {
     { key: "tags", line: `the ${tags.length} tags packs declare`, full: tags.map((t) => `${t.id}: ${t.label ?? ""}${t.about ? ` (${t.about})` : ""}`).join("\n") || "none" },
     ...packs.flatMap(rulesOf).map((r) => ({ key: `trigger:${r.id}`, line: `${r.id}: ${whenWords(r.when)}${r.explain ? `, ${r.explain}` : ""}`, full: JSON.stringify(r) })),
   ];
+}
+
+export const TEMPLATES_PACK = "campaign.templates";
+
+export interface TemplateDraft {
+  id: string;
+  kind: string;
+  label: string;
+  facts?: Record<string, unknown>;
+  kept?: Record<string, unknown>;
+  tags?: string[];
+  programs?: string[];
+  explain?: string;
+  /** New tags it names that no pack declares yet. */
+  declare?: TagRow[];
+}
+
+const templatesOf = (p: PackDoc | undefined): Omit<TemplateDraft, "declare">[] => {
+  const t = (p?.provides?.other as { templates?: { templates?: Omit<TemplateDraft, "declare">[] } } | undefined)?.templates;
+  return Array.isArray(t?.templates) ? t.templates : [];
+};
+
+/**
+ * Object templates (J5, J6): what a created object starts with, its tags, and
+ * the programs it may run. A program Orac drafts runs only on an object whose
+ * template lists it, so this is how a new autopilot or patrol gets a body. The
+ * kernel's template load refuses a bad id or kind, an id declared twice, a
+ * missing label, a fact create sets itself, an undeclared tag; a kept value
+ * must list `template.<id>` among its writers.
+ */
+export function templateTarget(session: ViewSession, ws: Workspace): OracTarget<{ doc: TemplateDraft; added: PackDoc[] }> {
+  return {
+    kind: "template",
+    what: "An object template: a kind of thing the GM or a trigger can create (a patrol ship, a mining drone, a beacon), with the facts and kept values it starts with, its tags and the programs it may run. A program runs only on an object whose template lists it. Read the programs (need program:<id>), the templates in force (need template:<id>) and the tags (need tags) first.",
+    form: [
+      '{"id": "<lower-case-id>", "kind": "<one lower-case word: ship, station, drone...>", "label": "<name>", "facts": {"<fact>": <value>}, "kept": {"<kept kind>": <value>}, "tags": ["<tag>"], "programs": ["<program id>"], "explain": "<one plain sentence>", "declare": [{"id": "<new tag>", "label": "<words>"}]}',
+      "Tags must be declared by a pack; put any new ones in declare. A kept value must be a kept kind whose writers include template.<id>. Leave facts out that the object's physics will give it.",
+    ].join("\n"),
+    async check(doc) {
+      if (!obj(doc)) return { problems: ["a template is one JSON object"] };
+      const { declare, ...d } = doc as unknown as TemplateDraft;
+      const problems: string[] = [];
+      if (typeof d.id !== "string" || !d.id) problems.push("a template needs an id");
+      if (typeof d.kind !== "string" || !d.kind) problems.push("a template needs a kind");
+      if (typeof d.id === "string" && packsOf(session).some((p) => templatesOf(p).some((t) => t.id === d.id))) problems.push(`there is already a template ${d.id}`);
+      if (declare !== undefined && !Array.isArray(declare)) problems.push("declare is a list of {id, label}");
+      if (problems.length) return { problems };
+      const st = session.stack();
+      const mine = st.added.find((p) => p.id === TEMPLATES_PACK);
+      const pack = { format: "sse.pack/1", id: TEMPLATES_PACK, version: bump(mine?.version ?? "0.0.0"), kind: ["game-system"], kernel_range: "^0.1", licence: "Apache-2.0", provides: { other: { templates: { templates: [...templatesOf(mine), d] }, ...withTags(mine, declare ?? []) } } } as unknown as PackDoc;
+      const added = [...st.added.filter((p) => p.id !== TEMPLATES_PACK), pack];
+      const t = await session.trial({ added }, async () => true);
+      return t.ok ? { problems: [], value: { doc: d, added } } : { problems: t.issues.length ? t.issues : [t.report] };
+    },
+    summary: ({ doc: d }) => `${d.label} (${d.kind})${d.tags?.length ? `, tagged ${d.tags.join(", ")}` : ""}${d.programs?.length ? `, may run ${d.programs.join(", ")}` : ""}${d.explain ? `. ${d.explain}` : ""}. Accept adds it to the campaign's templates, so objects can be made from it.`,
+    async accept({ added }) {
+      const r = await stackPacks(session, ws, added);
+      return r.status === "applied" ? null : r.status === "refused" ? r.reason : r.status === "error" ? r.message : "waiting for approval";
+    },
+  };
 }
