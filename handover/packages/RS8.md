@@ -64,6 +64,19 @@ whose first phase ends at a station; GCAT's public tables keep no later phase fo
 orbit. The coordinates reader now takes either order, so Apollo 13's Odyssey and Chang'e 6's return capsule land
 at GCAT's coordinates. Test `stations_and_crewed_flights_have_logs` (Mir gone, STS-103 at KSC).
 
+## Part 3 (24 Nov 2026): landing the docked flights; Earth inclinations in the showcase logs
+
+- Crewed flights GCAT leaves docked now land on Wikidata's landing day (P620, `scripts/spaceflight/wikidata_landings.json`,
+  501 COSPAR ids, queried 24 Nov, CC0): 255 of the 520 docked logs. Noon UTC stands in for the hour; the site is the
+  programme's usual zone (Soyuz on the Kazakh steppe, the Shuttle at KSC, Shenzhou at Dongfeng; written from memory and
+  marked so) for 193, a stand-in point for 62. The undocking is in neither source, so the docked piece runs to the
+  landing. Cargo craft that burn up (Progress, Cygnus, HTV, Tianzhou, ATV) are never landed. 265 stay docked.
+- `build_logs.py`'s `orbit()` turns Earth-orbit inclinations from the equator to the ecliptic (node at the equinox),
+  so Apollo 11's parking orbit, STS-1, Falcon 9 flight 20 and SNAP-10A sit in the right tilt to the planets.
+
+Next: the undocking and landing hour and site from press kits for the 62 without a site and the 265 still docked;
+splits between carriers and what they release (Viking, Galileo).
+
 ### Checks
 
 `crates/sse-nav/tests/sol_today_logs.rs` now reads `logs/` and `logs/departed/`: every log runs in order with
