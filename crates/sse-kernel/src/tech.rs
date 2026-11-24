@@ -191,6 +191,36 @@ pub struct Tech {
     pub figures: BTreeMap<String, Figure>,
     pub advances: BTreeMap<String, Advance>,
     pub families: BTreeMap<String, Family>,
+    /// Balance checks (design 15.1), by id, later packs replacing earlier.
+    pub balances: BTreeMap<String, Balance>,
+}
+
+/// How a balance closes.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Closes {
+    /// What is asked for is no more than what pays for it.
+    AtMost,
+    /// The two agree within the tolerance.
+    Equal,
+}
+
+/// One balance check: an Equation block giving `demand` and `supply` from
+/// the design's own quantities (design 15.1). Kept as its config, parsed
+/// (and its worked examples run) when the stack loads.
+#[derive(Clone, PartialEq, Debug)]
+pub struct Balance {
+    pub id: String,
+    pub name: String,
+    pub law: String,
+    pub closes: Closes,
+    pub tolerance: f64,
+    pub defaults: BTreeMap<String, f64>,
+    /// Constant symbol to master data sheet row.
+    pub look_up: BTreeMap<String, String>,
+    pub says: String,
+    pub check: serde_json::Value,
+    pub pack: String,
 }
 
 fn num(v: &serde_json::Value) -> Option<f64> {
@@ -306,6 +336,73 @@ impl Tech {
                     },
                 );
             }
+            for b in v["balances"].as_array().into_iter().flatten() {
+                let id = b["id"].as_str().unwrap_or("").to_string();
+                if b.get("check").is_none() {
+                    // A balance written only as text is shown, not checked.
+                    continue;
+                }
+                let closes = match b["closes"].as_str() {
+                    Some("at_most") => Closes::AtMost,
+                    Some("equal") => Closes::Equal,
+                    _ => {
+                        problems.push(format!(
+                            "{pack}: balance {id:?}: closes is at_most or equal"
+                        ));
+                        continue;
+                    }
+                };
+                let p = match sse_logic::equation::Parsed::new(Some(&b["check"])) {
+                    Ok(p) => p,
+                    Err(e) => {
+                        problems.push(format!("{pack}: balance {id:?}: {e}"));
+                        continue;
+                    }
+                };
+                if !(p.outputs.iter().any(|o| o == "demand")
+                    && p.outputs.iter().any(|o| o == "supply"))
+                {
+                    problems.push(format!(
+                        "{pack}: balance {id:?}: its Equation gives demand and supply"
+                    ));
+                    continue;
+                }
+                let strs = |k: &str| -> BTreeMap<String, String> {
+                    b[k].as_object()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|(k, v)| Some((k.clone(), v.as_str()?.to_string())))
+                        .collect()
+                };
+                let look_up = strs("look_up");
+                for (sym, row) in &look_up {
+                    if !sse_core::sheet::ALL.iter().any(|(n, _)| n == row) {
+                        problems.push(format!(
+                            "{pack}: balance {id:?}: {sym} looks up {row:?}, which is not a sheet row"
+                        ));
+                    }
+                }
+                t.balances.insert(
+                    id.clone(),
+                    Balance {
+                        name: b["name"].as_str().unwrap_or(&id).to_string(),
+                        law: b["law"].as_str().unwrap_or("").to_string(),
+                        closes,
+                        tolerance: num(&b["tolerance"]).unwrap_or(1e-9),
+                        defaults: b["defaults"]
+                            .as_object()
+                            .into_iter()
+                            .flatten()
+                            .filter_map(|(k, v)| Some((k.clone(), num(v)?)))
+                            .collect(),
+                        look_up,
+                        says: b["says"].as_str().unwrap_or("").to_string(),
+                        check: b["check"].clone(),
+                        pack: pack.clone(),
+                        id,
+                    },
+                );
+            }
             for a in v["advances"].as_array().into_iter().flatten() {
                 let id = a["id"].as_str().unwrap_or("").to_string();
                 let sets: BTreeMap<String, f64> = a["sets"]
@@ -384,10 +481,118 @@ impl Tech {
 #[derive(Clone, PartialEq, Debug, serde::Deserialize)]
 pub struct PartNeed {
     pub part: String,
+    #[serde(default)]
     pub needs: BTreeMap<String, f64>,
     /// The fuel the part burns, for ceilings `for` one fuel.
     #[serde(default)]
     pub fuel: Option<String>,
+    /// The design's own quantities for the balance checks (thrust_n,
+    /// mdot_kg_s, plant_w, q_w and so on), each in the unit its name says.
+    #[serde(default)]
+    pub quantities: BTreeMap<String, f64>,
+}
+
+/// Run every balance check that a part has the quantities for (design 15.1):
+/// its quantities, then its needs, then what the advances it leans on set.
+/// A check without enough to go on is listed under `unchecked`, never guessed.
+fn balance_rows(
+    tech: &Tech,
+    p: &PartNeed,
+    leaned: &[&Advance],
+    rows: &mut Vec<serde_json::Value>,
+    unchecked: &mut Vec<serde_json::Value>,
+) -> Result<(), String> {
+    let mut have: BTreeMap<String, f64> = BTreeMap::new();
+    for a in leaned {
+        for (k, v) in &a.sets {
+            have.entry(k.clone()).or_insert(*v);
+        }
+    }
+    for (k, v) in &p.needs {
+        have.insert(k.clone(), *v);
+    }
+    for (k, v) in &p.quantities {
+        if !v.is_finite() {
+            return Err(format!("part {:?}: {k} must be a finite number", p.part));
+        }
+        have.insert(k.clone(), *v);
+    }
+    for b in tech.balances.values() {
+        let eq = sse_logic::equation::Parsed::new(Some(&b.check))
+            .map_err(|e| format!("balance {:?}: {e}", b.id))?;
+        let mut x = vec![];
+        let mut missing = vec![];
+        let mut own = false;
+        for (i, sym) in eq.inputs.iter().enumerate() {
+            let v = if let Some(row) = b.look_up.get(sym) {
+                // A fact of nature, already in SI.
+                sse_core::sheet::ALL
+                    .iter()
+                    .find(|(n, _)| n == row)
+                    .map(|(_, v)| *v / eq.in_scales[i])
+            } else if let Some(v) = have.get(sym) {
+                own |= p.quantities.contains_key(sym) || p.needs.contains_key(sym);
+                Some(*v)
+            } else {
+                b.defaults.get(sym).copied()
+            };
+            match v {
+                Some(v) => x.push(v * eq.in_scales[i]),
+                None => missing.push(sym.clone()),
+            }
+        }
+        if !own {
+            // Nothing of this part's own goes in: not its check.
+            continue;
+        }
+        if !missing.is_empty() {
+            unchecked.push(serde_json::json!({
+                "part": p.part, "balance": b.id, "name": b.name, "missing": missing,
+            }));
+            continue;
+        }
+        let out = eq
+            .run_numbers(&x)
+            .map_err(|e| format!("balance {:?} on part {:?}: {e}", b.id, p.part))?;
+        let at = |n: &str| eq.outputs.iter().position(|o| o == n).map(|i| out[i]);
+        let (demand, supply) = (at("demand").unwrap_or(0.0), at("supply").unwrap_or(0.0));
+        let closes = match b.closes {
+            Closes::AtMost => demand <= supply + b.tolerance * supply.abs(),
+            Closes::Equal => {
+                let d = demand - supply;
+                let big = if demand.abs() > supply.abs() {
+                    demand.abs()
+                } else {
+                    supply.abs()
+                };
+                (if d < 0.0 { -d } else { d }) <= b.tolerance * big
+            }
+        };
+        let unit = eq.cfg.outputs.get("supply").map_or("", |u| u.unit.as_str());
+        let mut row = serde_json::json!({
+            "part": p.part, "balance": b.id, "name": b.name, "law": b.law,
+            "demand": demand, "supply": supply, "unit": unit, "closes": closes,
+            "inputs": eq.inputs.iter().zip(&x).map(|(n, v)| (n.clone(), *v)).collect::<BTreeMap<_, _>>(),
+        });
+        if supply != 0.0 {
+            row["times"] = serde_json::json!(demand / supply);
+        }
+        if !closes {
+            let times = if supply == 0.0 {
+                "unbounded (nothing pays for it)".to_string()
+            } else {
+                fmt_x(demand / supply)
+            };
+            row["words"] = serde_json::json!(format!(
+                "{}: {}, which breaks {}",
+                b.name,
+                b.says.replace("{times}", &times),
+                if b.law.is_empty() { "a law" } else { &b.law }
+            ));
+        }
+        rows.push(row);
+    }
+    Ok(())
 }
 
 fn fmt_x(x: f64) -> String {
@@ -689,6 +894,29 @@ pub fn reading(
         let e = part_sizes.entry(p).or_insert(1.0);
         *e = e.max(f);
     }
+    // The books (design 15.1): a balance that does not close is fictional
+    // by arithmetic too, and is named; never a refusal.
+    let mut balances = vec![];
+    let mut unchecked = vec![];
+    for p in parts {
+        let leaned: Vec<&Advance> = rows
+            .iter()
+            .filter(|r| r["part"] == p.part.as_str())
+            .filter_map(|r| r["advance"].as_str())
+            .filter_map(|a| tech.advances.get(a))
+            .collect();
+        balance_rows(tech, p, &leaned, &mut balances, &mut unchecked)?;
+    }
+    let books_fail = balances.iter().any(|b| b["closes"] == false);
+    for b in balances.iter().filter(|b| b["closes"] == false) {
+        for r in &rows {
+            if r["part"] == b["part"] {
+                if let Some(c) = r["advance"].as_str().and_then(|a| leans.get_mut(a)) {
+                    c["ink"] = serde_json::json!("fictional");
+                }
+            }
+        }
+    }
     let overall = ["can build", "short", "past known"][worst];
     Ok(serde_json::json!({
         "reading": overall,
@@ -697,6 +925,8 @@ pub fn reading(
         "needs": rows,
         "part_sizes": part_sizes,
         "leans_on": leans.into_values().collect::<Vec<_>>(),
-        "fictional": rows.iter().any(|r| r.get("fictional").is_some()),
+        "fictional": books_fail || rows.iter().any(|r| r.get("fictional").is_some()),
+        "balances": balances,
+        "unchecked": unchecked,
     }))
 }

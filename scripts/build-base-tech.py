@@ -327,6 +327,124 @@ BALANCES = [
 for b in BALANCES:
     b["src"] = "ft-design-15"
 
+
+# Each balance is also an inspectable Equation block (FT6, design 15.1): it
+# works out what the design asks for (`demand`) and what pays for it
+# (`supply`) from quantities the design already has, in the same units as
+# their names. `closes` is `at_most` (demand no more than supply) or `equal`
+# (within `tolerance`, relative). `defaults` fill quantities a design may
+# leave out; `look_up` gives the sheet row behind a constant; `says` words a
+# check that does not close ({times} is demand over supply).
+def port(kind, unit, name):
+    return {"kind": kind, "unit": unit, "name": name}
+
+
+def ex(**kw):
+    return kw
+
+
+def _energy_pays(v, e):
+    g = 1 + e / (C * C)
+    vmax = C * (1 - 1 / (g * g)) ** 0.5
+    return v * 1e3, vmax
+
+
+def _heat_pump(q, tr, ts):
+    return q * (tr - ts) / ts if tr > ts else 0.0
+
+
+CHECKS = {
+    "energy-pays-exhaust": {
+        "closes": "at_most", "tolerance": 1e-9, "look_up": {"c": "c"},
+        "says": "the exhaust is {times} times as fast as its fuel's energy can make it",
+        "check": {
+            "name": "Fastest exhaust the fuel's energy can pay for",
+            "formula": "g = 1 + fuel_j_per_kg / c^2\nsupply = c * sqrt(1 - 1 / g^2)\ndemand = exhaust_km_s",
+            "inputs": {"exhaust_km_s": port("design.exhaust_speed", "km/s", "exhaust speed"),
+                       "fuel_j_per_kg": port("design.fuel_energy", "J/kg", "energy per kilogram thrown"),
+                       "c": port("constant.speed_of_light", "m/s", "speed of light")},
+            "outputs": {"demand": port("design.exhaust_speed", "m/s", "exhaust speed asked for"),
+                        "supply": port("design.exhaust_speed", "m/s", "fastest the energy pays for")},
+            "source": {"text": "Einstein 1905, kinetic energy (gamma - 1) m c^2 of a moving mass; below a few per cent of c it is the familiar half m v^2",
+                       "doi": "10.1002/andp.19053221004", "where": "section 10"},
+            "explain": {"curious": "Throwing exhaust takes energy. If every joule in the fuel went into the jet, this is the fastest it could leave.",
+                        "science": "(gamma - 1) c^2 <= E per kg thrown, so v <= c sqrt(1 - 1/(1 + E/c^2)^2); for E much less than c^2, v <= sqrt(2E)."},
+            "examples": [ex(exhaust_km_s=4.168, fuel_j_per_kg=HYDROLOX_VAPOUR_J_KG, c=C,
+                            demand=_energy_pays(4.168, HYDROLOX_VAPOUR_J_KG)[0],
+                            supply=_energy_pays(4.168, HYDROLOX_VAPOUR_J_KG)[1])]}},
+    "jet-power": {
+        "closes": "at_most", "tolerance": 1e-9,
+        "says": "the jet needs {times} times the power the plant gives",
+        "check": {
+            "name": "Power the jet carries away",
+            "formula": "demand = thrust_n * exhaust_km_s / 2\nsupply = plant_w",
+            "inputs": {"thrust_n": port("design.thrust", "N", "thrust"),
+                       "exhaust_km_s": port("design.exhaust_speed", "km/s", "exhaust speed"),
+                       "plant_w": port("design.plant_power", "W", "power the plant gives the drive")},
+            "outputs": {"demand": port("design.jet_power", "W", "jet power"),
+                        "supply": port("design.plant_power", "W", "plant power")},
+            "logic": True,
+            "explain": {"curious": "A jet carries energy away as fast as it leaves. Something on board has to make that much power.",
+                        "science": "Jet power is half the thrust times the exhaust speed (thrust = mass flow x speed, power = half mass flow x speed squared)."},
+            "examples": [ex(thrust_n=1000.0, exhaust_km_s=30.0, plant_w=2.0e7, demand=1.5e7, supply=2.0e7)]}},
+    "energy-in-out": {
+        "closes": "equal", "tolerance": 0.02, "defaults": {"stored_w": 0.0, "loads_w": 0.0},
+        "says": "{times} times as much power goes out as comes in",
+        "check": {
+            "name": "Power out against power in",
+            "formula": "demand = jet_w + waste_w + stored_w + loads_w\nsupply = plant_w",
+            "inputs": {"jet_w": port("design.jet_power", "W", "jet power"),
+                       "waste_w": port("design.waste_power", "W", "waste heat"),
+                       "stored_w": port("design.stored_power", "W", "going into store"),
+                       "loads_w": port("design.load_power", "W", "other loads"),
+                       "plant_w": port("design.plant_power", "W", "plant power")},
+            "outputs": {"demand": port("design.plant_power", "W", "power going out"),
+                        "supply": port("design.plant_power", "W", "power coming in")},
+            "logic": True,
+            "explain": {"curious": "Every watt the plant makes goes somewhere: the jet, waste heat, a store or the ship's other loads.",
+                        "science": "Plant output = jet power + waste heat + power stored + other loads, within 2 per cent."},
+            "examples": [ex(jet_w=6.0e9, waste_w=4.0e9, stored_w=0.0, loads_w=0.0, plant_w=1.0e10, demand=1.0e10, supply=1.0e10)]}},
+    "momentum": {
+        "closes": "at_most", "tolerance": 0.01, "look_up": {"c": "c"}, "defaults": {"plant_w": 0.0},
+        "says": "the thrust is {times} times what is thrown can give",
+        "check": {
+            "name": "Thrust what is thrown can give",
+            "formula": "demand = thrust_n\nsupply = mdot_kg_s * exhaust_km_s + plant_w / c",
+            "inputs": {"thrust_n": port("design.thrust", "N", "thrust"),
+                       "mdot_kg_s": port("design.mass_flow", "kg/s", "mass thrown per second"),
+                       "exhaust_km_s": port("design.exhaust_speed", "km/s", "exhaust speed"),
+                       "plant_w": port("design.plant_power", "W", "power thrown as light, if any"),
+                       "c": port("constant.speed_of_light", "m/s", "speed of light")},
+            "outputs": {"demand": port("design.thrust", "N", "thrust asked for"),
+                        "supply": port("design.thrust", "N", "thrust the mass and light thrown give")},
+            "logic": True,
+            "explain": {"curious": "To push forward, a ship has to throw something back. With nothing thrown and no partner named, there is no thrust.",
+                        "science": "Thrust is at most mass flow x exhaust speed, plus P/c for power thrown as light."},
+            "examples": [ex(thrust_n=33851000.0, mdot_kg_s=13010.0, exhaust_km_s=2.602, plant_w=0.0, c=C,
+                            demand=33851000.0, supply=13010.0 * 2602.0)]}},
+    "heat-downhill": {
+        "closes": "at_most", "tolerance": 1e-9, "defaults": {"pump_w": 0.0},
+        "says": "heat is pushed uphill with {times} times the pump work paid for",
+        "check": {
+            "name": "Work to pump heat uphill to the radiators",
+            "formula": "demand = if radiator_k > waste_heat_k then q_w * (radiator_k - waste_heat_k) / waste_heat_k else 0\nsupply = pump_w",
+            "inputs": {"q_w": port("design.waste_power", "W", "heat to shed"),
+                       "radiator_k": port("design.radiator_temperature", "K", "radiator temperature"),
+                       "waste_heat_k": port("design.source_temperature", "K", "temperature of what is cooled"),
+                       "pump_w": port("design.pump_power", "W", "heat pump power paid for")},
+            "outputs": {"demand": port("design.pump_power", "W", "least pump work (Carnot)"),
+                        "supply": port("design.pump_power", "W", "pump work paid for")},
+            "source": {"text": "Clausius 1854: heat passes of itself only from hotter to colder; the least work to lift heat Q from T_cold to T_hot is Q (T_hot - T_cold) / T_cold",
+                       "doi": "10.1002/andp.18541691202", "where": "section 1"},
+            "explain": {"curious": "Heat runs downhill. A radiator hotter than what it cools needs a heat pump, and the pump's work is more heat to shed.",
+                        "science": "W >= Q (T_r - T_s) / T_s when T_r > T_s, else nothing (Carnot coefficient of performance)."},
+            "examples": [ex(q_w=1.0e5, radiator_k=600.0, waste_heat_k=300.0, pump_w=0.0,
+                            demand=_heat_pump(1.0e5, 600.0, 300.0), supply=0.0),
+                         ex(q_w=70000.0, radiator_k=275.95, waste_heat_k=300.0, pump_w=0.0, demand=0.0, supply=0.0)]}},
+}
+for b in BALANCES:
+    b.update(CHECKS[b["id"]])
+
 # What every fictional advance must say (design 15.3, question 11): where its
 # light, heat, momentum and energy go. "nowhere" or "nothing" is allowed and shows.
 FICTIONAL_WHERE = [
@@ -338,7 +456,7 @@ FICTIONAL_WHERE = [
 
 ADVANCES = [
     {"id": "steel-wire", "name": "Steel cable", "level": 1, "sets": {"strength_for_weight": strength_for_weight("steel-wire")}, "family": "material", "part": "structure"},
-    {"id": "chemical-rocket", "name": "Hydrogen-oxygen rocket", "level": 3, "sets": {"exhaust_km_s": isp_km_s(465.5), "waste_per_jet": 0.0}, "fuel": "hydrogen-oxygen", "family": "near-ceiling", "fixed": ["waste_per_jet"], "part": "drive"},
+    {"id": "chemical-rocket", "name": "Hydrogen-oxygen rocket", "level": 3, "sets": {"exhaust_km_s": isp_km_s(465.5), "waste_per_jet": 0.0, "fuel_j_per_kg": HYDROLOX_VAPOUR_J_KG}, "fuel": "hydrogen-oxygen", "family": "near-ceiling", "fixed": ["waste_per_jet", "fuel_j_per_kg"], "part": "drive"},
     {"id": "fission-reactor", "name": "Fission reactor", "level": 3, "sets": {"plant_w_per_kg": SNAP10A_W_KG}, "family": "engine", "part": "reactor",
      "least_size": {"v": 53.9, "unit": "kg", "what": "fissile metal: a bare sphere of 93 to 94% U-235 goes critical at 53.9 kg; a reflector lowers it", "src": "gwin-mee1959", "check": "unverified"}},
     {"id": "aramid", "name": "Aramid fibre", "level": 3, "sets": {"strength_for_weight": strength_for_weight("aramid")}, "family": "material", "part": "structure"},
