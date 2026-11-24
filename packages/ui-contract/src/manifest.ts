@@ -266,3 +266,66 @@ export function crewAboard(subject: { address: string; facts: readonly { field: 
   const v = subject.facts.find((f) => f.field === "construct.crew")?.value;
   return typeof v === "number" ? v : undefined;
 }
+
+// ---- Fuel aboard (MC4, Alex 24 Nov: "fuel gauge (and an edit fuel) to top up"): how full each tank is now ----
+// Facts on the construct, changed in play like what is aboard. The kernel's ship already reads both ("propellant now,
+// default full"; a jump drive's "fuel aboard now"), so a voyage planned from `fuelNow` starts from what is in the tanks.
+
+export const FUEL_FIELDS = { propellant: "construct.propellant_t", jump: "construct.jump_fuel_t" } as const;
+export type FuelTank = keyof typeof FUEL_FIELDS;
+
+export interface FuelGauge {
+  tank: FuelTank;
+  /** What is in it, for the label ("deuterium", "hydrogen"). */
+  fuel: string;
+  full_t: number;
+  now_t: number;
+  /** now / full, 0 to 1. */
+  share: number;
+}
+
+/** The ship's numbers this needs: the kernel's ship (nav) record. */
+export interface FuelShip {
+  wet_t: number;
+  dry_t: number;
+  propellant_t?: number;
+  fuels?: string[];
+  jump?: { tank_t: number; fuel_t?: number; fuel?: string } | null;
+}
+
+const level = (v: unknown, full: number) => (typeof v === "number" && Number.isFinite(v) ? Math.max(0, Math.min(full, v)) : full);
+
+/** A gauge per tank the ship has (reaction mass, and jump fuel when it has a jump drive); kept levels, else full. */
+export function fuelGauges(ship: FuelShip, kept: (field: string) => unknown): FuelGauge[] {
+  const out: FuelGauge[] = [];
+  const full = Math.max(0, ship.wet_t - ship.dry_t);
+  if (full > 0) {
+    const now = level(kept(FUEL_FIELDS.propellant), full);
+    out.push({ tank: "propellant", fuel: ship.fuels?.join(" and ") || "propellant", full_t: full, now_t: now, share: now / full });
+  }
+  const j = ship.jump;
+  if (j && j.tank_t > 0) {
+    const now = level(kept(FUEL_FIELDS.jump), j.tank_t);
+    out.push({ tank: "jump", fuel: j.fuel || "jump fuel", full_t: j.tank_t, now_t: now, share: now / j.tank_t });
+  }
+  return out;
+}
+
+/** The ship as it is now, for planning: its own record with the tanks at the kept levels. */
+export function fuelNow<S extends FuelShip>(ship: S, kept: (field: string) => unknown): S {
+  const g = fuelGauges(ship, kept);
+  const prop = g.find((x) => x.tank === "propellant");
+  const jump = g.find((x) => x.tank === "jump");
+  return { ...ship, ...(prop ? { propellant_t: prop.now_t } : {}), ...(jump && ship.jump ? { jump: { ...ship.jump, fuel_t: jump.now_t } } : {}) };
+}
+
+/** Tonnes in words, to a sensible precision. */
+export function tonnesWords(t: number): string {
+  return t >= 100 ? `${Math.round(t)} t` : t >= 10 ? `${t.toFixed(1)} t` : `${t.toFixed(2)} t`;
+}
+
+/** A ship's full numbers from the kernel: a stock id or a pack ship resolved (ship_at_world with no worlds). */
+export async function shipRecordOf(session: { shipAtWorld(a: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: { ship: unknown } } | { ok: false; message: string }> }, nav: string | import("./route.ts").NavShip): Promise<{ ok: true; ship: Record<string, unknown> } | { ok: false; message: string }> {
+  const r = await session.shipAtWorld({ fixture: "sol", ship: nav, worlds: [] });
+  return r.ok ? { ok: true, ship: r.report.ship as Record<string, unknown> } : r;
+}

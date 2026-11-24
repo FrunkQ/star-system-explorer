@@ -712,7 +712,9 @@ fn hull_skins_carry_the_burn_through_heats() {
         "niobium",
         "molybdenum",
         "tantalum",
+        "tungsten",
         "lead",
+        "stainless-304l",
     ] {
         for k in [
             "heat_capacity",
@@ -727,7 +729,13 @@ fn hull_skins_carry_the_burn_through_heats() {
     }
     let lf = get("aluminium", "latent_fusion").unwrap();
     assert!((lf - 397_000.0).abs() < 2_000.0, "{lf}");
+    // MP28: graphite sublimes near 4080 K, mostly to C3, at 1 bar.
+    let ts = get("graphite", "sublimation_point_k").unwrap();
+    assert!((3900.0..4200.0).contains(&ts), "{ts}");
+    assert!(get("graphite", "heat_to_sublime").is_some());
     assert!(get("graphite", "latent_sublimation").is_some());
+    let tb = get("tungsten", "boiling_point_k").unwrap();
+    assert!((5800.0..6300.0).contains(&tb), "{tb}");
     assert!(get("inconel-718", "heat_capacity").is_some());
 }
 

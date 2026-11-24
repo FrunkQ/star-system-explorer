@@ -40,6 +40,7 @@ export { showReference } from "./reference.ts";
 export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
+export * from "./picker.ts";
 export * from "./overlay.ts";
 export * from "./landing.ts";
 export * from "./map-controls.ts";
@@ -129,7 +130,7 @@ export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedA
 export type { EmbedMode, EmbedOut } from "./embed.ts";
 export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
 export type { JoinWords, SeatBrand } from "./brand.ts";
-export { ABOARD, PERSON, CARGO, STATES, STATE_WORDS, STORES, entryFrom, aboard, crewAboard, living, ageNow, lifeSupportFrom, storeOf, massKg, lifeSupport, entryId, startingValues } from "./manifest.ts";
+export { FUEL_FIELDS, fuelGauges, fuelNow, tonnesWords, shipRecordOf, type FuelTank, type FuelGauge, type FuelShip, ABOARD, PERSON, CARGO, STATES, STATE_WORDS, STORES, entryFrom, aboard, crewAboard, living, ageNow, lifeSupportFrom, storeOf, massKg, lifeSupport, entryId, startingValues } from "./manifest.ts";
 export type { AboardEntry, AboardState, LifeSupport, LifeSupportPack, LifeSupportRate, Store, StoreDays } from "./manifest.ts";
 export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableOf, fieldLandmark, hasException, lineChange, pressedLandmark, knownOverall, knownChangedWords, eyesShow, secrecyRelevant, holdReveal } from "./known.ts";
 export type { Landmark as KnownLandmark, KnownTo, KnownAudience, KnownException, KnownScope, KnownChange, Held } from "./known.ts";
@@ -137,5 +138,9 @@ export { difficultyLadderOf, chanceToMeet, stepTarget, gameDifficulty } from "./
 export type { DifficultyLadder, DifficultyStep, GameDifficulty } from "./difficulty.ts";
 export { wattsText, powerWords, nowhereWords } from "./power.ts";
 export type { PowerBooks, PowerLedger, PowerFlow, PowerEngine } from "./power.ts";
+export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX, PICTURE_MAX, PICTURE_SIDE, checkPicture, picturesOf, shownOf, designOf, fitSide, type PictureShown } from "./picture.ts";
 export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
 export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";
+// One units engine (ED1a): every figure said and read back the same way.
+export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
+export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices } from "./figures.ts";

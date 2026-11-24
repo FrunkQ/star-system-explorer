@@ -1,0 +1,348 @@
+{
+ "about": "How figures are said (ED1a, editing design section 3C). For each kind of quantity and what it is about, the readings a click steps through (first is the default), each a ladder of rungs. Every unit is a row of the master data sheet's Units table (packs/base-reference): no factor is typed here. A rung whose unit the sheet does not hold yet is skipped. 'from' is where a rung takes over, in that rung's own unit. Words (thousand, million) are written above plain_below; exponents when nothing fits. This table moves into a pack with unit schemes (MP15).",
+ "comfort": [0.1, 1000],
+ "plain_below": 100000,
+ "stickiness": 0.1,
+ "words": [
+  { "word": "thousand", "exp": 3 },
+  { "word": "million", "exp": 6 },
+  { "word": "billion", "exp": 9 },
+  { "word": "trillion", "exp": 12 }
+ ],
+ "prefixes": [
+  { "symbol": "q", "name": "quecto", "exp": -30 },
+  { "symbol": "r", "name": "ronto", "exp": -27 },
+  { "symbol": "y", "name": "yocto", "exp": -24 },
+  { "symbol": "z", "name": "zepto", "exp": -21 },
+  { "symbol": "a", "name": "atto", "exp": -18 },
+  { "symbol": "f", "name": "femto", "exp": -15 },
+  { "symbol": "p", "name": "pico", "exp": -12 },
+  { "symbol": "n", "name": "nano", "exp": -9 },
+  { "symbol": "µ", "name": "micro", "exp": -6 },
+  { "symbol": "m", "name": "milli", "exp": -3 },
+  { "symbol": "c", "name": "centi", "exp": -2 },
+  { "symbol": "d", "name": "deci", "exp": -1 },
+  { "symbol": "da", "name": "deca", "exp": 1 },
+  { "symbol": "h", "name": "hecto", "exp": 2 },
+  { "symbol": "k", "name": "kilo", "exp": 3 },
+  { "symbol": "M", "name": "mega", "exp": 6 },
+  { "symbol": "G", "name": "giga", "exp": 9 },
+  { "symbol": "T", "name": "tera", "exp": 12 },
+  { "symbol": "P", "name": "peta", "exp": 15 },
+  { "symbol": "E", "name": "exa", "exp": 18 },
+  { "symbol": "Z", "name": "zetta", "exp": 21 },
+  { "symbol": "Y", "name": "yotta", "exp": 24 },
+  { "symbol": "R", "name": "ronna", "exp": 27 },
+  { "symbol": "Q", "name": "quetta", "exp": 30 }
+ ],
+ "prefixable": ["m", "s", "pa", "j", "w", "hz", "t", "n", "bar", "ev", "tonne", "m_s", "ut"],
+ "gram": { "unit": "kg", "symbol": "g", "name": "gram", "exp": -3 },
+ "families": [
+  { "id": "scientific", "name": "Scientific" },
+  { "id": "si", "name": "SI" },
+  { "id": "imperial", "name": "Imperial" }
+ ],
+ "classes": [
+  { "id": "star", "name": "star" },
+  { "id": "giant", "name": "giant planet" },
+  { "id": "planet", "name": "planet" },
+  { "id": "moon", "name": "moon" },
+  { "id": "small", "name": "small body" },
+  { "id": "ring", "name": "ring or belt" },
+  { "id": "construct", "name": "construct" },
+  { "id": "megaconstruct", "name": "megaconstruct" },
+  { "id": "site", "name": "surface site" },
+  { "id": "system", "name": "system" },
+  { "id": "neighbourhood", "name": "stellar neighbourhood" },
+  { "id": "galaxy", "name": "galaxy" }
+ ],
+ "units": {
+  "au": { "symbol": "AU", "word": "AU" },
+  "ly": { "word": "light years", "word_one": "light year" },
+  "pc": { "word": "parsecs", "word_one": "parsec" },
+  "r_sun": { "word": "Sun radii", "word_one": "Sun radius" },
+  "r_earth": { "word": "Earth radii", "word_one": "Earth radius" },
+  "r_jupiter": { "word": "Jupiter radii", "word_one": "Jupiter radius" },
+  "r_moon": { "word": "Moon radii", "word_one": "Moon radius" },
+  "m_sun": { "word": "Sun masses", "word_one": "Sun mass" },
+  "m_earth": { "word": "Earth masses", "word_one": "Earth mass" },
+  "m_jupiter": { "word": "Jupiter masses", "word_one": "Jupiter mass" },
+  "m_moon": { "word": "Moon masses", "word_one": "Moon mass" },
+  "l_sun": { "word": "Suns", "word_one": "Sun" },
+  "s_earth": { "word": "Earth's sunlight" },
+  "ocean_earth": { "word": "Earth oceans", "word_one": "Earth ocean" },
+  "h": { "word": "hours", "word_one": "hour" },
+  "day": { "word": "days", "word_one": "day" },
+  "yr": { "word": "years", "word_one": "year" },
+  "myr": { "word": "million years" },
+  "gyr": { "word": "billion years" },
+  "min": { "word": "minutes", "word_one": "minute" },
+  "gee": { "word": "g" },
+  "degree": { "word": "°", "tight": true },
+  "tonne": { "symbol": "tonnes", "word": "tonnes", "word_one": "tonne" },
+  "percent": { "tight": true }
+ },
+ "kinds": {
+  "length": {
+   "measures": "length",
+   "aliases": { "AU": "au", "light years": "ly", "lightyears": "ly", "light-years": "ly", "miles": "mi", "mile": "mi", "feet": "ft", "foot": "ft", "km": "km", "kms": "km", "kilometres": "km", "kilometers": "km", "metres": "m", "meters": "m", "Rsun": "r_sun", "Rearth": "r_earth", "Rjup": "r_jupiter", "Earth radii": "r_earth", "Sun radii": "r_sun", "Jupiter radii": "r_jupiter", "Moon radii": "r_moon" },
+   "say": {
+    "default": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "m" }, { "unit": "km", "from": 1, "words": true }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "m" }, { "unit": "km", "from": 1, "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "ft" }, { "unit": "mi", "from": 1, "words": true }] }
+    ],
+    "*.orbit": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "km", "words": true }, { "unit": "au", "from": 0.01 }, { "unit": "ly", "from": 0.2 }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "km", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "mi", "words": true }] }
+    ],
+    "moon.orbit": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "km", "words": true }, { "unit": "au", "from": 0.05 }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "km", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "mi", "words": true }] }
+    ],
+    "*.size": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "m" }, { "unit": "km", "from": 1, "words": true }] },
+     { "id": "earth", "family": "scientific", "rungs": [{ "unit": "r_earth" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "m" }, { "unit": "km", "from": 1, "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "ft" }, { "unit": "mi", "from": 1, "words": true }] }
+    ],
+    "moon.size": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "m" }, { "unit": "km", "from": 1, "words": true }] },
+     { "id": "moon", "family": "scientific", "rungs": [{ "unit": "r_moon" }] },
+     { "id": "earth", "family": "scientific", "rungs": [{ "unit": "r_earth" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "m" }, { "unit": "km", "from": 1, "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "ft" }, { "unit": "mi", "from": 1, "words": true }] }
+    ],
+    "giant.size": [
+     { "id": "jupiter", "family": "scientific", "rungs": [{ "unit": "r_jupiter" }] },
+     { "id": "earth", "family": "scientific", "rungs": [{ "unit": "r_earth" }] },
+     { "id": "km", "family": "scientific", "rungs": [{ "unit": "km", "words": true }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "km", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "mi", "words": true }] }
+    ],
+    "star.size": [
+     { "id": "sun", "family": "scientific", "rungs": [{ "unit": "km", "words": true }, { "unit": "r_sun", "from": 0.05 }] },
+     { "id": "jupiter", "family": "scientific", "rungs": [{ "unit": "r_jupiter" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "km", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "mi", "words": true }] }
+    ],
+    "megaconstruct.size": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "km", "words": true }, { "unit": "au", "from": 0.01 }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "km", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "mi", "words": true }] }
+    ],
+    "system.size": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "au" }, { "unit": "ly", "from": 0.2 }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "km", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "mi", "words": true }] }
+    ],
+    "neighbourhood": [
+     { "id": "ly", "family": "scientific", "rungs": [{ "unit": "au" }, { "unit": "ly", "from": 0.1, "words": true }] },
+     { "id": "pc", "family": "scientific", "rungs": [{ "unit": "au" }, { "unit": "pc", "from": 0.05, "prefixes": ["k", "M"] }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "km", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "mi", "exponent": true }] }
+    ],
+    "galaxy": [
+     { "id": "ly", "family": "scientific", "rungs": [{ "unit": "ly", "words": true }] },
+     { "id": "pc", "family": "scientific", "rungs": [{ "unit": "pc", "prefixes": ["k", "M", "G"] }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "km", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "mi", "exponent": true }] }
+    ]
+   }
+  },
+  "mass": {
+   "measures": "mass",
+   "aliases": { "Earth masses": "m_earth", "Earths": "m_earth", "Mearth": "m_earth", "Sun masses": "m_sun", "solar masses": "m_sun", "Msun": "m_sun", "Suns": "m_sun", "Jupiter masses": "m_jupiter", "Jupiters": "m_jupiter", "Mjup": "m_jupiter", "Moon masses": "m_moon", "tons": "tonne", "tonnes": "tonne", "ton": "tonne", "pounds": "lb", "pound": "lb", "lbs": "lb", "kilograms": "kg", "Earth oceans": "ocean_earth", "oceans": "ocean_earth" },
+   "say": {
+    "default": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "kg", "exponent": true }] },
+     { "id": "tonnes", "family": "scientific", "rungs": [{ "unit": "kg" }, { "unit": "tonne", "from": 1, "prefixes": ["k", "M", "G"] }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "lb", "exponent": true }] }
+    ],
+    "star.mass": [
+     { "id": "sun", "family": "scientific", "rungs": [{ "unit": "m_sun" }] },
+     { "id": "jupiter", "family": "scientific", "rungs": [{ "unit": "m_jupiter" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "kg", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "lb", "exponent": true }] }
+    ],
+    "giant.mass": [
+     { "id": "jupiter", "family": "scientific", "rungs": [{ "unit": "m_jupiter" }] },
+     { "id": "earth", "family": "scientific", "rungs": [{ "unit": "m_earth" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "kg", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "lb", "exponent": true }] }
+    ],
+    "planet.mass": [
+     { "id": "earth", "family": "scientific", "rungs": [{ "unit": "m_earth" }] },
+     { "id": "jupiter", "family": "scientific", "rungs": [{ "unit": "m_jupiter" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "kg", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "lb", "exponent": true }] }
+    ],
+    "moon.mass": [
+     { "id": "moon", "family": "scientific", "rungs": [{ "unit": "m_moon" }] },
+     { "id": "earth", "family": "scientific", "rungs": [{ "unit": "m_earth" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "kg", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "lb", "exponent": true }] }
+    ],
+    "construct.mass": [
+     { "id": "tonnes", "family": "scientific", "rungs": [{ "unit": "kg" }, { "unit": "tonne", "from": 1, "prefixes": ["k", "M", "G"] }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "kg", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "lb", "exponent": true }] }
+    ],
+    "*.water": [
+     { "id": "oceans", "family": "scientific", "rungs": [{ "unit": "ocean_earth" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "kg", "exponent": true }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "lb", "exponent": true }] }
+    ]
+   }
+  },
+  "density": {
+   "measures": "density",
+   "say": {
+    "default": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "g_cm3" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "kg_m3" }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "lb_ft3" }] }
+    ]
+   }
+  },
+  "gravity": {
+   "measures": "acceleration",
+   "aliases": { "G": "gee", "gees": "gee" },
+   "say": {
+    "default": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "gee" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "m_s2" }] }
+    ]
+   }
+  },
+  "pressure": {
+   "measures": "pressure",
+   "aliases": { "bars": "bar", "atmospheres": "atm", "pascals": "pa", "pascal": "pa" },
+   "say": {
+    "default": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "bar", "prefixes": ["n", "µ", "m"], "exponent": true }] },
+     { "id": "atm", "family": "scientific", "rungs": [{ "unit": "atm" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "pa", "prefixes": ["m", "k", "M", "G", "T"] }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "psi" }] }
+    ],
+    "*.inside": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "pa", "prefixes": ["k", "M", "G", "T"] }] },
+     { "id": "bar", "family": "scientific", "rungs": [{ "unit": "bar", "prefixes": ["k", "M"] }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "psi", "exponent": true }] }
+    ]
+   }
+  },
+  "temperature": {
+   "measures": "temperature",
+   "aliases": { "kelvin": "k", "kelvins": "k", "C": "degc", "°c": "degc", "celsius": "degc", "F": "degf", "°F": "degf", "fahrenheit": "degf" },
+   "say": {
+    "default": [
+     { "id": "kelvin", "family": "scientific", "rungs": [{ "unit": "k", "exponent": true }] },
+     { "id": "celsius", "family": "scientific", "rungs": [{ "unit": "degc" }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "degf" }] }
+    ],
+    "site": [
+     { "id": "celsius", "family": "scientific", "rungs": [{ "unit": "degc" }] },
+     { "id": "kelvin", "family": "scientific", "rungs": [{ "unit": "k" }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "degf" }] }
+    ]
+   }
+  },
+  "time": {
+   "measures": "time",
+   "aliases": { "m": "min", "mins": "min", "minutes": "min", "minute": "min", "hr": "h", "hrs": "h", "hours": "h", "hour": "h", "d": "day", "days": "day", "y": "yr", "yrs": "yr", "years": "yr", "year": "yr", "a": "yr", "seconds": "s", "sec": "s", "secs": "s", "million years": "myr", "billion years": "gyr", "Ma": "myr", "Ga": "gyr" },
+   "say": {
+    "default": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "s", "prefixes": ["n", "µ", "m"] }, { "unit": "min", "from": 2 }, { "unit": "h", "from": 2 }, { "unit": "day", "from": 2 }, { "unit": "yr", "from": 2, "words": true }, { "unit": "myr", "from": 1 }, { "unit": "gyr", "from": 1 }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "s", "prefixes": ["n", "µ", "m"], "exponent": true }] }
+    ]
+   }
+  },
+  "speed": {
+   "measures": "velocity",
+   "aliases": { "kps": "km_s", "km/s": "km_s", "m/s": "m_s" },
+   "say": {
+    "default": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "m_s" }, { "unit": "km_s", "from": 1 }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "m_s", "prefixes": ["k"] }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "mph" }] }
+    ],
+    "site": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "m_s" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "m_s" }] },
+     { "id": "imperial", "family": "imperial", "rungs": [{ "unit": "mph" }] }
+    ]
+   }
+  },
+  "power": {
+   "measures": "power",
+   "aliases": { "watts": "w", "watt": "w", "Suns": "l_sun", "Lsun": "l_sun" },
+   "say": {
+    "default": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "w", "prefixes": ["m", "k", "M", "G", "T", "P"], "exponent": true }] }
+    ],
+    "star.light": [
+     { "id": "sun", "family": "scientific", "rungs": [{ "unit": "l_sun" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "w", "exponent": true }] }
+    ]
+   }
+  },
+  "energy": {
+   "measures": "energy",
+   "aliases": { "joules": "j", "joule": "j" },
+   "say": {
+    "default": [
+     { "id": "scientific", "family": "scientific", "rungs": [{ "unit": "j", "prefixes": ["k", "M", "G", "T", "P"], "exponent": true }] },
+     { "id": "tnt", "family": "scientific", "rungs": [{ "unit": "tnt_tonne", "prefixes": ["k", "M", "G"], "exponent": true }] },
+     { "id": "ev", "family": "scientific", "rungs": [{ "unit": "ev", "prefixes": ["k", "M", "G", "T"], "exponent": true }] }
+    ]
+   }
+  },
+  "light": {
+   "measures": "flux",
+   "say": {
+    "default": [
+     { "id": "earth", "family": "scientific", "rungs": [{ "unit": "s_earth" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "w_m2", "exponent": true }] }
+    ]
+   }
+  },
+  "field": {
+   "measures": "magnetic_field",
+   "aliases": { "uT": "ut", "microtesla": "ut", "tesla": "t", "G": "gauss" },
+   "say": {
+    "default": [
+     { "id": "gauss", "family": "scientific", "rungs": [{ "unit": "gauss", "exponent": true }] },
+     { "id": "microtesla", "family": "scientific", "rungs": [{ "unit": "ut" }] },
+     { "id": "si", "family": "si", "rungs": [{ "unit": "t", "prefixes": ["n", "µ", "m"], "exponent": true }] }
+    ],
+    "star": [
+     { "id": "tesla", "family": "scientific", "rungs": [{ "unit": "t", "prefixes": ["n", "µ", "m", "k", "M", "G"], "exponent": true }] },
+     { "id": "gauss", "family": "scientific", "rungs": [{ "unit": "gauss", "exponent": true }] }
+    ]
+   }
+  },
+  "angle": {
+   "measures": "angle",
+   "aliases": { "d": "degree", "deg": "degree", "degrees": "degree", "°": "degree", "m": "arcmin", "′": "arcmin", "'": "arcmin", "arcminutes": "arcmin", "s": "arcsec", "″": "arcsec", "\"": "arcsec", "''": "arcsec", "arcseconds": "arcsec" },
+   "say": {
+    "default": [
+     { "id": "degrees", "family": "scientific", "rungs": [{ "unit": "degree" }] },
+     { "id": "dms", "family": "scientific", "rungs": [{ "unit": "degree", "dms": true }] }
+    ]
+   }
+  },
+  "share": {
+   "measures": "dimensionless",
+   "aliases": { "%": "percent", "per cent": "percent" },
+   "say": {
+    "default": [
+     { "id": "percent", "family": "scientific", "rungs": [{ "unit": "ppm" }, { "unit": "percent", "from": 1 }] },
+     { "id": "fraction", "family": "si", "rungs": [{ "unit": "one", "exponent": true }] }
+    ]
+   }
+  }
+ }
+}

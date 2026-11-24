@@ -3434,5 +3434,12 @@
    "power": [{"id": "plant", "kind": "fission-reactor", "electric_w": 100000.0}],
    "loads": [{"name": "quarters", "electric_w": 20000.0, "reject_k": 290.0}],
    "engines": [{"engine": {"name": "Hall thruster", "thrust_n": 530.0, "exhaust_km_s": 20.0, "energy_from": "electric", "electric_w": 100000.0, "efficiency": 0.6, "reject_k": 500.0}}]}
- }
+ },
+ {"op": "load_stack", "packs": ["$pack:rpg-templates"]},
+ {"op": "open_universe", "id": "rs4", "seed": "rs4"},
+ {"op": "create", "template": "freighter", "under": "u:rs4/sys:0", "name": "Columbia", "at_s": 100},
+ {"op": "set_authored_batch", "occurred_at_s": 100, "edits": [{"address": "u:rs4/sys:0/ship:1", "field": "construct.mass_kg", "value": 45000.0}, {"address": "u:rs4/sys:0/ship:1", "field": "part.eagle.mass_kg", "value": 15000.0}]},
+ {"op": "split_construct", "address": "u:rs4/sys:0/ship:1", "key": "eagle", "name": "Eagle", "parts": ["eagle"], "at_s": 500},
+ {"op": "join_constructs", "address": "u:rs4/sys:0/ship:1", "with": "u:rs4/sys:0/ship:eagle", "at_s": 600},
+ {"op": "join_constructs", "address": "u:rs4/sys:0/ship:1", "with": "u:rs4/sys:0/ship:eagle", "how": "merge", "at_s": 700}
 ]
