@@ -256,6 +256,8 @@
   $effect(() => {
     const sys = scene.system;
     if (!looksTrue || skyBehind?.key === sys) return;
+    // The worlds' surfaces first: they share the kernel with the sky, and a world's face matters more than its stars.
+    if (ctx.session.seat.authority === "gm" && (!reading || reading.done < reading.of)) return;
     untrack(() =>
       void (async () => {
         const ask = { limit_mag: SKY_LIMIT, band: "V", bands: ["B", "V"] };
