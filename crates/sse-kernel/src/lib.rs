@@ -45,13 +45,14 @@ mod sky;
 mod sol_tests;
 #[cfg(test)]
 mod split_tests;
-mod tree;
 mod stability;
 #[cfg(test)]
 mod stability_tests;
 mod star_elements;
 #[cfg(test)]
 mod star_elements_tests;
+#[cfg(test)]
+mod starters_tests;
 mod survey;
 mod systems;
 mod tags;
@@ -63,6 +64,7 @@ mod tech_tests;
 mod territory;
 #[cfg(test)]
 mod territory_tests;
+mod tree;
 mod trust;
 #[cfg(test)]
 mod trust_tests;
@@ -5320,8 +5322,13 @@ impl Kernel {
                 at_s,
                 edits,
             } => {
-                const EDIT_OPS: [&str; 5] =
-                    ["set_authored", "set_authored_batch", "rehost", "withdraw", "restore"];
+                const EDIT_OPS: [&str; 5] = [
+                    "set_authored",
+                    "set_authored_batch",
+                    "rehost",
+                    "withdraw",
+                    "restore",
+                ];
                 let reqs: Vec<Request> = edits
                     .iter()
                     .enumerate()
@@ -5330,7 +5337,10 @@ impl Kernel {
                         if !EDIT_OPS.contains(&op) {
                             return Err(err(
                                 "bad_request",
-                                format!("edit {i}: {op:?} is not an edit a tree can preview ({})", EDIT_OPS.join(", ")),
+                                format!(
+                                    "edit {i}: {op:?} is not an edit a tree can preview ({})",
+                                    EDIT_OPS.join(", ")
+                                ),
                             ));
                         }
                         serde_json::from_value(e.clone())
@@ -5357,7 +5367,11 @@ impl Kernel {
                         break;
                     }
                 }
-                let after = if failed.is_none() { read(self) } else { Ok(serde_json::Value::Null) };
+                let after = if failed.is_none() {
+                    read(self)
+                } else {
+                    Ok(serde_json::Value::Null)
+                };
                 self.universe = saved;
                 if let Some(e) = failed {
                     return Err(e);

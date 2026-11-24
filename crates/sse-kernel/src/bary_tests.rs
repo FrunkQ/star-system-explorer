@@ -439,7 +439,10 @@ fn preview_tree_shows_before_and_after_and_writes_nothing() {
     assert_eq!(row(&r["after"], moon)["host"], SUN);
     assert_eq!(row(&r["before"], CHARON)["pair"], true, "{r}");
     assert_eq!(row(&r["before"], moon)["pair"], false, "{r}");
-    assert!(r["changed"].as_array().unwrap().iter().any(|c| c == moon), "{r}");
+    assert!(
+        r["changed"].as_array().unwrap().iter().any(|c| c == moon),
+        "{r}"
+    );
     // Nothing was written.
     let r = send(
         &mut k,
