@@ -5350,6 +5350,7 @@ impl Kernel {
                 ship,
                 flux_w_m2,
                 at_s,
+                radiator,
             } => {
                 let s = sse_nav::scenario::settings();
                 let ship = nav::ship(&s, &ship)?;
@@ -5373,6 +5374,9 @@ impl Kernel {
                 };
                 let mut power = nav::books(&l, &fitted, flux);
                 power["ship"] = ship.name.clone().into();
+                if let Some(r) = radiator {
+                    power["radiators"] = nav::radiators(&l, &r)?;
+                }
                 Response::ShipPowerIs { power }
             }
             Request::LogFlight {

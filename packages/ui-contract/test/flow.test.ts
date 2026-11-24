@@ -106,6 +106,13 @@ test("the Power card: three columns, broken books from Nowhere on the GM's seat 
     const rank = powerRank(p);
     assert.ok(rank(NOWHERE) < rank("plant"));
     assert.ok(rank(JET) < rank(radiatorNode(900)) && rank(radiatorNode(900)) < rank(radiatorNode(300)));
+    // Asked with the panel rule, the kernel sizes each temperature's radiators through its block, and the card shows that figure.
+    const sized = await s.shipPower({ ship: hall, radiator: rule });
+    assert.ok(sized.ok && sized.power.radiators?.length === 2, JSON.stringify(sized));
+    const hot = sized.power.radiators!.find((x) => x.reject_k === 900)!;
+    assert.equal(hot.block, "sse.ship.radiator_area");
+    assert.ok(Math.abs(hot.area_m2 - radiatorArea(hot.heat_w, 900, rule)) < 1e-9 * hot.area_m2);
+    assert.equal(powerReadings(sized.power, rule).find((x) => x.label === "Hot radiators")?.block, "sse.ship.radiator_area");
     const read = powerReadings(p, rule);
     assert.deepEqual(read.map((x) => x.label), ["Thrust", "Power to spare", "Hot radiators", "Cool radiators", "How visible"]);
     assert.match(read[0]!.value, /530\.0 N/);

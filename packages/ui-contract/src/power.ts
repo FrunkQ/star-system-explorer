@@ -46,6 +46,17 @@ export interface PowerBooks {
   balance: { id: string; demand: number; supply: number; ok: boolean; says?: string };
   fictional: boolean;
   why: string[];
+  /** Asked with a panel rule: each temperature's panels, sized by the kernel's `sse.ship.radiator_area` block (RK3). */
+  radiators?: PowerRadiator[];
+}
+
+/** One temperature's radiator panels, as the kernel sized them. */
+export interface PowerRadiator {
+  reject_k: number;
+  heat_w: number;
+  area_m2: number;
+  block: string;
+  inputs: Record<string, number>;
 }
 
 /** Watts in the unit a reader would use: W, kW, MW, GW. */
@@ -192,6 +203,8 @@ export interface PowerReading {
   /** The figure, in a reader's unit. */
   value: string;
   words: string;
+  /** The formula block that worked the figure out, when the kernel did. */
+  block?: string;
 }
 
 /** Newtons in the unit a reader would use. */
@@ -241,7 +254,9 @@ export function powerReadings(p: PowerBooks, rule: RadiatorRule): PowerReading[]
   temps.forEach((k, i) => {
     const w = l.heat_by_k[String(k)]!;
     const label = temps.length === 1 ? "Radiators" : i === 0 ? "Hot radiators" : i === temps.length - 1 ? "Cool radiators" : "Warm radiators";
-    out.push({ id: "radiators", label, value: areaText(radiatorArea(w, k, rule)), words: `at ${k} K for ${wattsText(w)}, emissivity ${rule.emissivity}${rule.two_sided ? ", both faces" : ""}` });
+    // The kernel's block when it sized them; the same sum here for an answer asked without the panel rule.
+    const sized = p.radiators?.find((r) => r.reject_k === k);
+    out.push({ id: "radiators", label, value: areaText(sized ? sized.area_m2 : radiatorArea(w, k, rule)), ...(sized ? { block: sized.block } : {}), words: `at ${k} K for ${wattsText(w)}, emissivity ${rule.emissivity}${rule.two_sided ? ", both faces" : ""}` });
   });
   if (!temps.length) out.push({ id: "radiators", label: "Radiators", value: "none", words: "no heat to shed" });
   const given = jet + Object.values(l.heat_by_k).reduce((a, b) => a + b, 0);

@@ -53,8 +53,9 @@
     if (!r || !fitted) return void (books = null);
     const ship = { ...r, loads: loadsOf(r).map((l) => ({ ...l, off: !!offs[l.name] })) } as unknown as Json;
     const flux = constant("S_sun") / (au * au);
+    const panels = rule;
     const g = ++gen;
-    void session.shipPower({ ship, flux_w_m2: flux }).then((res) => {
+    void session.shipPower({ ship, flux_w_m2: flux, ...(panels ? { radiator: panels } : {}) }).then((res) => {
       if (g !== gen) return;
       if (res.ok) ((books = res.power), (asked = ship), (note = null));
       else ((books = null), (note = res.message));
@@ -102,7 +103,7 @@
     {#if nowhere}<p class="nowhere" data-nowhere title={books.balance.says ?? ""}>{nowhere}</p>{/if}
     <dl class="read" data-power-readings>
       {#each readings as r, i (i)}
-        <div data-reading={r.id}>
+        <div data-reading={r.id} title={r.block && depth !== "curious" ? `Worked out by the ${r.block} block` : undefined}>
           <dt>{r.label}</dt>
           <dd><b>{r.value}</b> {r.words}</dd>
         </div>
