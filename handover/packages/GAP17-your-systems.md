@@ -25,6 +25,10 @@ see what is in it); Alex accepted both for stage 2 (23 and 24 Nov).
   press to open, night chart, phone without sideways scroll). Screens in project files
   `sse4/handover-screens/GX-screens/` (not in the repo).
 
+- **Names here** (24 Nov, with the names thread's NM6 part 5): beside the map every system has a row (On the map,
+  Not on the map yet) with a "Names here ›" door that opens `NamesHere` from `views/reference` for that system's
+  address (read its names; on Build set the scheme per layer). The e2e opens it on the sample.
+
 ## Honest limits
 - Systems are not yet placed in the galaxy's own star cells (G5 pins and G7, the campaign's galaxy): a grown system
   has no place. A V3 map's unit is read from `v3.distanceUnit` when the read-back carries it; the universe-level fact

@@ -7,11 +7,14 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
+  import { NamesHere } from "../../reference/src/index.ts";
   import { layoutSystems, placeHash, readCampaignSystems, mapScaleBar, summaryWords, systemSummary, type CampaignSystem, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
   let listed = $state<CampaignSystem[] | null>(null);
+  // The system whose names are open below its row (the names gallery block: read, and on Build set the scheme).
+  let naming = $state<string | null>(null);
   let failed = $state<string | null>(null);
   let gen = 0;
   // Read again when the campaign changes (a system adopted, a body added): the workspace's revision moves.
@@ -157,22 +160,29 @@
       </figure>
     {/if}
 
-    {#if unplaced.length}
-      <aside class="unplaced" data-unplaced={unplaced.length}>
+    <aside class="unplaced">
+      {#snippet row(x: CampaignSystem)}
+        <li>
+          <a href={link(x)} data-system={x.system} onpointerenter={(e) => rest(e, x)} onpointerleave={() => leave(x)}>
+            <b>{x.title}</b>
+            <span class="sum">{x.subjects.length ? summaryWords(x.summary) : "Not counted yet: open it once and it says what it holds"}</span>
+          </a>
+          <button type="button" class="door" aria-expanded={naming === x.system} onclick={() => (naming = naming === x.system ? null : x.system)} data-names-door={x.system}>Names here {naming === x.system ? "‹" : "›"}</button>
+          {#if naming === x.system}
+            <div class="names" data-names-open={x.system}><NamesHere session={ctx.session} workspace={ctx.workspace} address={x.system} label={x.title} depth={ctx.workspace.depth ?? "science"} /></div>
+          {/if}
+        </li>
+      {/snippet}
+      {#if placed.length}
+        <h3>On the map</h3>
+        <ul data-placed={placed.length}>{#each placed as x (x.system)}{@render row(x)}{/each}</ul>
+      {/if}
+      {#if unplaced.length}
         <h3>{placed.length ? "Not on the map yet" : "In this campaign"}</h3>
-        <ul>
-          {#each unplaced as x (x.system)}
-            <li>
-              <a href={link(x)} data-system={x.system} onpointerenter={(e) => rest(e, x)} onpointerleave={() => leave(x)}>
-                <b>{x.title}</b>
-                <span class="sum">{x.subjects.length ? summaryWords(x.summary) : "Not counted yet: open it once and it says what it holds"}</span>
-              </a>
-            </li>
-          {/each}
-        </ul>
+        <ul data-unplaced={unplaced.length}>{#each unplaced as x (x.system)}{@render row(x)}{/each}</ul>
         <p class="hint">{placed.length ? "Their data gives no place among the others." : "None of them has a place of its own yet."} Placing systems in the galaxy's own stars comes with the campaign's galaxy (G7); until then a system sits where its V3 map put it, or here.</p>
-      </aside>
-    {/if}
+      {/if}
+    </aside>
   </div>
 
   {#if peeked && peek}
@@ -302,6 +312,25 @@
   .unplaced a:focus-visible {
     border-left-color: var(--sse-accent);
     background: color-mix(in srgb, var(--sse-accent) 8%, transparent);
+  }
+  .door {
+    margin: 0 0 4px 8px;
+    padding: 2px 6px;
+    font: inherit;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .door:hover,
+  .door[aria-expanded="true"] {
+    color: var(--sse-accent);
+  }
+  .names {
+    padding: 4px 8px 8px;
+    border-left: 2px solid var(--sse-rule);
+    margin-left: 8px;
   }
   .sum {
     color: var(--sse-ink-muted);

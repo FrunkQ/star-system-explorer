@@ -67,6 +67,12 @@ try {
     assert.match(words, /^1 star · \d+ planets? · \d+ moons?/, `the peek counts (${words})`);
     await shot(gm, "your-systems-desk");
 
+    // Names here: the names gallery's block opens under the sample's row, reading that system's names.
+    await ys.locator("[data-placed] [data-names-door]").first().click();
+    await ys.locator("[data-placed] [data-names-here]").waitFor({ timeout: 15000 });
+    assert.ok((await ys.locator("[data-placed] [data-names-here]").innerText()).trim().length > 0, "the names block says something");
+    await ys.locator("[data-placed] [data-names-door]").first().click();
+
     // Press a listed system: it opens.
     const grown = ys.locator("[data-unplaced] a", { hasText: "first light" });
     const target = await grown.getAttribute("data-system");
