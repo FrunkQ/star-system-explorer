@@ -195,6 +195,9 @@ def files_under(roots, exts):
         for d, dirs, fs in os.walk(top):
             dirs[:] = sorted(x for x in dirs if x not in SKIP_DIRS)
             for f in sorted(fs):
+                # A citation check's own report lists the evidence it read, not claims SSE4 rests on.
+                if f.endswith("-citation-check.md"):
+                    continue
                 if os.path.splitext(f)[1] in exts:
                     out.append(os.path.join(d, f))
     return sorted(out)
@@ -523,8 +526,12 @@ def check():
     notes = gather(NOTE_ROOTS, {".md"})
     missing = sorted(k for k in code if k not in known)
     missing_notes = sorted(k for k in notes if k not in known and k not in code)
-    for k in missing_notes:
-        print(f"note: design-note citation {k} ({notes[k]['places'][0]}) is not on the list yet", file=sys.stderr)
+    if missing_notes:
+        print(
+            f"note: {len(missing_notes)} design-note citations are not on the list yet (first: {missing_notes[0]}); "
+            "run --add when convenient",
+            file=sys.stderr,
+        )
     if bad:
         print("citations: unknown status on " + ", ".join(bad) + f"; use one of {STATUSES}", file=sys.stderr)
     if missing:
