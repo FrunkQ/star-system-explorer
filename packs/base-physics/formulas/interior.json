@@ -414,6 +414,285 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.interior.redox_iw",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "core_mass_fraction",
+     "letter": "f"
+    },
+    {
+     "port": "carbon",
+     "letter": "c"
+    },
+    {
+     "port": "iron_molar_mass",
+     "letter": "mfe"
+    },
+    {
+     "port": "feo_molar_mass",
+     "letter": "mfeo"
+    },
+    {
+     "port": "carbon_molar_mass",
+     "letter": "mc"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "redox",
+     "letter": "d"
+    },
+    {
+     "port": "redox_at_core_formation",
+     "letter": "core"
+    }
+   ],
+   "params": [
+    {
+     "param": "bulk_iron",
+     "letter": "fe",
+     "default": 0.32,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "iron's share of the rock and metal by mass (bulk Earth 0.32, McDonough 2003)"
+    },
+    {
+     "param": "core_iron",
+     "letter": "fc",
+     "default": 0.85,
+     "range": [
+      0.5,
+      1.0
+     ],
+     "description": "iron's share of the core by mass (Earth 0.85, McDonough 2003)"
+    },
+    {
+     "param": "metal_iron",
+     "letter": "xm",
+     "default": 0.79,
+     "range": [
+      0.1,
+      1.0
+     ],
+     "description": "iron's mole fraction in the core metal (Earth about 0.79 from McDonough 2003's core)"
+    },
+    {
+     "param": "activity_ratio",
+     "letter": "g",
+     "default": 1.0,
+     "range": [
+      0.1,
+      10.0
+     ],
+     "description": "activity coefficient of FeO in the melt over that of iron in the metal (1: ideal, as Wade and Wood 2005)"
+    },
+    {
+     "param": "silicate_molar_mass",
+     "letter": "ms",
+     "default": 0.0506,
+     "range": [
+      0.03,
+      0.1
+     ],
+     "description": "mean molar mass of the silicate's other oxides, kg/mol (pyrolite, McDonough and Sun 1995)"
+    },
+    {
+     "param": "least_feo",
+     "letter": "x0",
+     "default": 0.001,
+     "range": [
+      1e-06,
+      0.1
+     ],
+     "description": "the least FeO mole fraction a mantle keeps (Mercury, the most reduced known, keeps about one percent FeO)"
+    },
+    {
+     "param": "magma_ocean_oxidation",
+     "letter": "s",
+     "default": 2.7,
+     "range": [
+      0.0,
+      6.0
+     ],
+     "description": "how far a deep magma ocean oxidises itself above its core-formation value, log10 units (Armstrong et al. 2019; 2.7 puts Earth at Sossi et al. 2020's IW+0.5)"
+    }
+   ],
+   "references": [
+    "Wade, J. and Wood, B. J. 2005, EPSL 236, 78: core formation and the oxidation state of the Earth; ΔIW = 2 log10(x_FeO / x_Fe) between silicate and metal. doi:10.1016/j.epsl.2005.05.017",
+    "McDonough, W. F. 2003, Treatise on Geochemistry 2, 547: bulk Earth 32 wt% iron, the core 85 wt% iron (tables 3 and 4). doi:10.1016/B0-08-043751-6/02015-6",
+    "McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223: pyrolite, the silicate Earth's oxides. doi:10.1016/0009-2541(94)00140-4",
+    "Armstrong, K., Frost, D. J., McCammon, C. A., Rubie, D. C. and Ballaran, T. B. 2019, Science 365, 903: a deep magma ocean oxidises itself as FeO turns to Fe2O3 and metal under pressure. doi:10.1126/science.aax8376",
+    "Sossi, P. A., Burnham, A. D., Badro, J., Lanzirotti, A., Newville, M. and O'Neill, H. St. C. 2020, Science Advances 6, eabd1387: Earth's magma ocean surface near IW+0.5. doi:10.1126/sciadv.abd1387",
+    "Hirschmann, M. M. 2012, EPSL 341, 48: magma ocean influence on early atmosphere mass and composition. doi:10.1016/j.epsl.2012.06.015"
+   ],
+   "shown": "ΔIW = 2 log10(γ x_FeO / x_Fe) + oxidation, x_FeO from the iron the core did not take",
+   "equation": {
+    "name": "How oxidised a young mantle is",
+    "formula": "fem = max(fe - fc * f, 0)\nn = max(fem / mfe - c / mc, 0)\nns = max(1 - f - n * mfeo, 0) / ms\nx = if n + ns <= 0 then 1 else n / (n + ns)\ncore = 2 * log10(max(g * x, x0) / xm)\nd = clamp(core + s, -8, 6)",
+    "inputs": {
+     "f": {
+      "kind": "interior.core_mass_fraction",
+      "unit": "1",
+      "name": "the core's share of the rock and metal",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "c": {
+      "kind": "interior.reducing_carbon_share",
+      "unit": "1",
+      "name": "carbon free to smelt iron oxide, share of the rock and metal",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "mfe": {
+      "kind": "matter.molar_mass_fe",
+      "unit": "kg mol-1",
+      "name": "molar mass of iron"
+     },
+     "mfeo": {
+      "kind": "matter.molar_mass_feo",
+      "unit": "kg mol-1",
+      "name": "molar mass of iron oxide, FeO"
+     },
+     "mc": {
+      "kind": "matter.molar_mass_c",
+      "unit": "kg mol-1",
+      "name": "molar mass of carbon"
+     },
+     "fe": {
+      "kind": "model.bulk_iron_share",
+      "unit": "1",
+      "name": "iron's share of the rock and metal"
+     },
+     "fc": {
+      "kind": "model.core_iron_share",
+      "unit": "1",
+      "name": "iron's share of the core"
+     },
+     "xm": {
+      "kind": "model.metal_iron_mole_fraction",
+      "unit": "1",
+      "name": "iron's mole fraction in the metal"
+     },
+     "g": {
+      "kind": "model.feo_activity_ratio",
+      "unit": "1",
+      "name": "activity coefficient ratio"
+     },
+     "ms": {
+      "kind": "model.silicate_oxide_molar_mass",
+      "unit": "kg mol-1",
+      "name": "mean molar mass of the other oxides"
+     },
+     "x0": {
+      "kind": "model.least_feo_mole_fraction",
+      "unit": "1",
+      "name": "the least FeO a mantle keeps"
+     },
+     "s": {
+      "kind": "model.magma_ocean_oxidation",
+      "unit": "1",
+      "name": "a deep magma ocean's self-oxidation"
+     }
+    },
+    "outputs": {
+     "d": {
+      "kind": "interior.redox_iw",
+      "unit": "1",
+      "name": "the mantle's oxygen fugacity against iron-wüstite, log10 units, at the magma ocean's surface"
+     },
+     "core": {
+      "kind": "interior.redox_iw_core",
+      "unit": "1",
+      "name": "the same at core formation, where metal and rock last met"
+     }
+    },
+    "source": {
+     "text": "Wade, J. and Wood, B. J. 2005, EPSL 236, 78",
+     "doi": "10.1016/j.epsl.2005.05.017",
+     "where": "the iron-wüstite equilibrium between core metal and mantle silicate"
+    },
+    "explain": {
+     "curious": "How oxidised a planet's rock is decides what its volcanoes breathe out. A world that kept most of its iron as metal in a big core has a reduced mantle that gives off hydrogen and carbon monoxide; one whose iron rusted into the rock gives off water and carbon dioxide.",
+     "science": "Iron the core did not take stays in the mantle as FeO; its mole fraction against iron's in the metal sets ΔIW = 2 log10(γ x_FeO / x_Fe) at core formation (Wade and Wood 2005). Water has already oxidised some metal (a smaller core), and free carbon smelts FeO back to metal first. A deep magma ocean then oxidises itself, ferrous iron turning to ferric under pressure (Armstrong et al. 2019), which lifts the surface value; one shift for every world (fudge register). Earth comes out near IW-2.2 at core formation and IW+0.5 at its magma ocean's surface (Sossi et al. 2020), Mars about IW+1.2."
+    },
+    "examples": [
+     {
+      "f": 0.325,
+      "c": 0.0,
+      "mfe": 0.055845,
+      "mfeo": 0.071844,
+      "mc": 0.012011,
+      "fe": 0.32,
+      "fc": 0.85,
+      "xm": 0.79,
+      "g": 1.0,
+      "ms": 0.0506,
+      "x0": 0.001,
+      "s": 2.7,
+      "d": 0.4641113813305613,
+      "core": -2.235888618669439
+     },
+     {
+      "f": 0.24,
+      "c": 0.0,
+      "mfe": 0.055845,
+      "mfeo": 0.071844,
+      "mc": 0.012011,
+      "fe": 0.32,
+      "fc": 0.85,
+      "xm": 0.79,
+      "g": 1.0,
+      "ms": 0.0506,
+      "x0": 0.001,
+      "s": 2.7,
+      "d": 1.2383229618260034,
+      "core": -1.4616770381739967
+     },
+     {
+      "f": 0.7,
+      "c": 0.0,
+      "mfe": 0.055845,
+      "mfeo": 0.071844,
+      "mc": 0.012011,
+      "fe": 0.32,
+      "fc": 0.85,
+      "xm": 0.79,
+      "g": 1.0,
+      "ms": 0.0506,
+      "x0": 0.001,
+      "s": 2.7,
+      "d": -3.0952541825808826,
+      "core": -5.795254182580883
+     },
+     {
+      "f": 0.3,
+      "c": 0.02,
+      "mfe": 0.055845,
+      "mfeo": 0.071844,
+      "mc": 0.012011,
+      "fe": 0.32,
+      "fc": 0.85,
+      "xm": 0.79,
+      "g": 1.0,
+      "ms": 0.0506,
+      "x0": 0.001,
+      "s": 2.7,
+      "d": -3.0952541825808826,
+      "core": -5.795254182580883
+     }
+    ]
+   }
   }
  ]
 }

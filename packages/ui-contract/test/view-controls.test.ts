@@ -69,7 +69,7 @@ test("Band: Visible by default; the others listed quiet until a view declares th
   const o = viewOptions(system, { style: "chart", seen: "above", band: "xray" });
   assert.deepEqual(o.bands.map((b) => b.label), ["Visible", "Infrared", "Ultraviolet", "X-ray", "Radio", "Mag"]);
   assert.equal(o.shown.band, "visible");
-  assert.match(o.bands[3]!.unavailable!, /not seen in x-ray here yet/i);
+  assert.match(o.bands[3]!.unavailable!, /X-ray is not drawn here yet/);
   const lit: ViewControlsSpec = { ...system, bands: { visible: true, xray: true, mag: true } };
   assert.equal(viewOptions(lit, { style: "chart", seen: "above", band: "xray" }).shown.band, "xray");
   assert.equal(readViewChoice('{"style":"chart","seen":"above","band":"mag"}').band, "mag");
@@ -82,4 +82,13 @@ test("Scale on a flat slice: Real is drawn flat when the view says it can; a fla
   assert.deepEqual(pickScale(slice, { style: "chart", seen: "above" }, "real"), { style: "chart", seen: "above", scale: "real" });
   assert.equal(viewOptions(flatChart(), { style: "chart", seen: "above", scale: "real" }).shown.scale, "readable", "Real not declared");
   assert.equal(viewOptions({ ...system, scale: { readable: true, real: true } }, { style: "chart", seen: "above", scale: "real" }).shown.scale, "readable", "the system's flat log chart");
+});
+
+test("the band switch reads its words from the master sheet's Bands table, one view row per band", async () => {
+  const { SHEET_BANDS } = await import("../src/sheet.ts");
+  const { VIEW_BANDS, VIEW_BAND_WORDS, VIEW_BAND_PLAIN } = await import("../src/view-controls.ts");
+  const views = SHEET_BANDS.filter((b) => b.kind === "view").map((b) => b.view_id);
+  assert.deepEqual([...VIEW_BANDS].sort(), [...views].sort() as string[]);
+  assert.equal(VIEW_BAND_WORDS.xray, "X-ray");
+  assert.equal(VIEW_BAND_PLAIN.infrared, "heat light");
 });

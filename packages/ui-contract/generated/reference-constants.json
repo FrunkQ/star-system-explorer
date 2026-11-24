@@ -424,5 +424,143 @@
   "ut": 1e-06,
   "gauss": 0.0001,
   "a_m2": 1.0
- }
+ },
+ "bands": [
+  {
+   "id": "view-visible",
+   "kind": "view",
+   "name": "Visible",
+   "plain": "visible light",
+   "view_id": "visible"
+  },
+  {
+   "id": "view-infrared",
+   "kind": "view",
+   "name": "Infrared",
+   "plain": "heat light",
+   "view_id": "infrared"
+  },
+  {
+   "id": "view-ultraviolet",
+   "kind": "view",
+   "name": "Ultraviolet",
+   "plain": "ultraviolet",
+   "view_id": "ultraviolet"
+  },
+  {
+   "id": "view-xray",
+   "kind": "view",
+   "name": "X-ray",
+   "plain": "X-rays",
+   "view_id": "xray"
+  },
+  {
+   "id": "view-radio",
+   "kind": "view",
+   "name": "Radio",
+   "plain": "radio",
+   "view_id": "radio"
+  },
+  {
+   "id": "view-mag",
+   "kind": "view",
+   "name": "Mag",
+   "plain": "magnetic field",
+   "view_id": "mag"
+  },
+  {
+   "id": "gamma",
+   "kind": "light",
+   "name": "Gamma rays",
+   "plain": "gamma rays",
+   "view": "view-xray",
+   "from_m": 1e-14,
+   "to_m": 1e-11
+  },
+  {
+   "id": "xray",
+   "kind": "light",
+   "name": "X-rays",
+   "plain": "X-rays",
+   "view": "view-xray",
+   "recipe": "xray",
+   "from_m": 1e-11,
+   "to_m": 1e-08
+  },
+  {
+   "id": "uv",
+   "kind": "light",
+   "name": "Ultraviolet",
+   "plain": "ultraviolet",
+   "view": "view-ultraviolet",
+   "recipe": "uv",
+   "from_m": 1e-08,
+   "to_m": 3.8e-07
+  },
+  {
+   "id": "visible",
+   "kind": "light",
+   "name": "Visible",
+   "plain": "visible light",
+   "view": "view-visible",
+   "recipe": "eye",
+   "from_m": 3.8e-07,
+   "to_m": 7.5e-07
+  },
+  {
+   "id": "near-ir",
+   "kind": "light",
+   "name": "Near infrared",
+   "plain": "near infrared",
+   "view": "view-infrared",
+   "recipe": "near-ir",
+   "from_m": 7.5e-07,
+   "to_m": 5e-06
+  },
+  {
+   "id": "mid-ir",
+   "kind": "light",
+   "name": "Mid infrared",
+   "plain": "thermal infrared",
+   "view": "view-infrared",
+   "recipe": "mid-ir",
+   "from_m": 5e-06,
+   "to_m": 2.5e-05
+  },
+  {
+   "id": "far-ir",
+   "kind": "light",
+   "name": "Far infrared",
+   "plain": "far infrared",
+   "view": "view-infrared",
+   "from_m": 2.5e-05,
+   "to_m": 0.00035
+  },
+  {
+   "id": "mm",
+   "kind": "light",
+   "name": "Millimetre",
+   "plain": "millimetre waves",
+   "view": "view-radio",
+   "from_m": 0.00035,
+   "to_m": 0.01
+  },
+  {
+   "id": "radio",
+   "kind": "light",
+   "name": "Radio",
+   "plain": "radio",
+   "view": "view-radio",
+   "recipe": "radio",
+   "from_m": 0.01,
+   "to_m": 10000.0
+  },
+  {
+   "id": "magnetic",
+   "kind": "channel",
+   "name": "Magnetic field",
+   "plain": "magnetic field",
+   "view": "view-mag"
+  }
+ ]
 }

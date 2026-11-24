@@ -358,3 +358,160 @@ fn ceilings_for_one_fuel_and_electric_drives() {
     );
     assert!(r["reading"]["needs"][0]["fictional"].is_string(), "{r}");
 }
+
+fn part(k: &mut Kernel, p: serde_json::Value) -> serde_json::Value {
+    let r = ask(
+        k,
+        serde_json::json!({"op": "tech_reading", "holder": "u:ft/actor:vesh", "parts": [p]}),
+    );
+    assert_eq!(r["type"], "tech_availability", "{r}");
+    r["reading"].clone()
+}
+
+fn balance<'a>(r: &'a serde_json::Value, id: &str) -> &'a serde_json::Value {
+    r["balances"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|b| b["balance"] == id)
+        .unwrap_or_else(|| panic!("no {id} in {r}"))
+}
+
+#[test]
+fn the_books_must_close() {
+    // FT6 (design 15.1): each balance is an Equation block in base-tech.
+    let mut k = open();
+    // A "chemical" drive with a torch's exhaust: under every ceiling it
+    // names, but its own fuel cannot pay for it.
+    let r = part(
+        &mut k,
+        serde_json::json!({"part": "drive", "needs": {"exhaust_km_s": 4.0},
+            "quantities": {"exhaust_km_s": 40.0}}),
+    );
+    let b = balance(&r, "energy-pays-exhaust");
+    assert_eq!(b["closes"], false, "{b}");
+    assert!((b["supply"].as_f64().unwrap() - 5176.0).abs() < 5.0, "{b}");
+    assert!(
+        b["words"]
+            .as_str()
+            .unwrap()
+            .contains("7.73 times as fast as its fuel's energy"),
+        "{b}"
+    );
+    assert_eq!(r["fictional"], true);
+    assert_eq!(r["leans_on"][0]["ink"], "fictional", "{r}");
+    // The real one closes: the J-2's 4.168 km/s is 81% of what the fuel pays for.
+    let r = part(
+        &mut k,
+        serde_json::json!({"part": "drive", "needs": {"exhaust_km_s": 4.168}}),
+    );
+    let b = balance(&r, "energy-pays-exhaust");
+    assert_eq!(b["closes"], true, "{b}");
+    assert_eq!(r["fictional"], false);
+    // Thrust with nothing thrown: momentum does not close, and says so.
+    let r = part(
+        &mut k,
+        serde_json::json!({"part": "drive", "quantities": {"thrust_n": 1.0e5, "mdot_kg_s": 0.0,
+            "exhaust_km_s": 0.0, "plant_w": 1.0e6}}),
+    );
+    let b = balance(&r, "momentum");
+    assert_eq!(b["closes"], false, "{b}");
+    assert!(b["words"]
+        .as_str()
+        .unwrap()
+        .contains("conservation of momentum"));
+    // Not enough to go on is listed, never guessed.
+    let r = part(
+        &mut k,
+        serde_json::json!({"part": "drive", "quantities": {"thrust_n": 1.0e5}}),
+    );
+    let u = r["unchecked"].to_string();
+    assert!(u.contains("jet-power") && u.contains("plant_w"), "{u}");
+}
+
+#[test]
+fn heat_flows_downhill_unless_a_pump_is_paid_for() {
+    let mut k = open();
+    // 100 kW from quarters at 300 K, shed by a 600 K radiator: Carnot asks
+    // at least 100 kW of pump work.
+    let q = |pump: f64| {
+        serde_json::json!({"part": "radiator", "quantities": {"q_w": 1.0e5,
+            "radiator_k": 600.0, "waste_heat_k": 300.0, "pump_w": pump}})
+    };
+    let r = part(&mut k, q(0.0));
+    let b = balance(&r, "heat-downhill");
+    assert_eq!(b["closes"], false, "{b}");
+    assert!((b["demand"].as_f64().unwrap() - 1.0e5).abs() < 1e-6);
+    assert!(b["words"].as_str().unwrap().contains("nothing pays for it"));
+    let r = part(&mut k, q(1.0e5));
+    assert_eq!(balance(&r, "heat-downhill")["closes"], true);
+    // A radiator cooler than its source needs no pump.
+    let r = part(
+        &mut k,
+        serde_json::json!({"part": "radiator", "quantities": {"q_w": 1.0e5,
+            "radiator_k": 276.0, "waste_heat_k": 300.0}}),
+    );
+    let b = balance(&r, "heat-downhill");
+    assert_eq!(b["closes"], true, "{b}");
+    assert_eq!(b["demand"], 0.0);
+}
+
+#[test]
+fn real_craft_close_their_books() {
+    // Design 15.6: the craft in base-tech that name a balance, read through
+    // the same blocks, close it. Quantities are converted from each row's
+    // unit to the unit its name says; a row without enough is unchecked.
+    // ISS: the ammonia loops cool cabin air at a crew's 300 K (the
+    // waste_heat_k figure's built mark), the row's one missing quantity.
+    let pack = base_tech();
+    let craft = pack["provides"]["other"]["tech"]["real_craft"]
+        .as_array()
+        .unwrap()
+        .clone();
+    let mut k = open();
+    let mut closed = vec![];
+    for c in &craft {
+        let tests: Vec<&str> = c["tests"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|t| t.as_str())
+            .collect();
+        let mut quantities = serde_json::Map::new();
+        for (name, q) in c["quantities"].as_object().unwrap() {
+            quantities.insert(name.clone(), q["v"].clone());
+        }
+        if c["id"] == "iss-radiators" {
+            quantities.insert("waste_heat_k".into(), 300.0.into());
+        }
+        let mut p = serde_json::json!({"part": c["id"], "quantities": quantities});
+        if let Some(v) = c["quantities"]["exhaust_km_s"]["v"].as_f64() {
+            // A hydrogen-oxygen stage: the drive need finds the rocket and its fuel.
+            if v > 4.0 {
+                p["needs"] = serde_json::json!({"exhaust_km_s": v});
+                p["part"] = "drive".into();
+            }
+        }
+        let r = part(&mut k, p);
+        for b in r["balances"].as_array().unwrap() {
+            assert_eq!(b["closes"], true, "{}: {b}", c["id"]);
+            if tests.contains(&b["balance"].as_str().unwrap()) {
+                closed.push(format!(
+                    "{}:{}",
+                    c["id"].as_str().unwrap(),
+                    b["balance"].as_str().unwrap()
+                ));
+            }
+        }
+    }
+    for want in [
+        "iss-radiators:heat-downhill",
+        "saturn-v-s-ii:energy-pays-exhaust",
+        "saturn-v-s-ivb:energy-pays-exhaust",
+    ] {
+        assert!(
+            closed.iter().any(|c| c == want),
+            "{want} not checked: {closed:?}"
+        );
+    }
+}

@@ -34,6 +34,26 @@ fn base_table_parses_and_checks() {
     assert!(bad.check().is_err());
 }
 
+/// RK10: the band set is the sheet's Bands table (its light rows), read in
+/// order of wavelength; a pack that gives its own list still overrides it.
+#[test]
+fn bands_come_from_the_sheet_unless_a_pack_gives_its_own() {
+    let sheet = sse_reference::Reference::base();
+    let from_sheet = crate::table::bands_from_sheet(&sheet).unwrap();
+    assert_eq!(t().bands, from_sheet);
+    assert_eq!(from_sheet.last().unwrap().id, "radio");
+    assert_eq!(from_sheet.last().unwrap().to_m, 1.0e4);
+    let mut v: serde_json::Value =
+        serde_json::from_str(include_str!("../../../packs/base-light/pack.json")).unwrap();
+    assert!(v["provides"]["other"]["light"].get("bands").is_none());
+    v["provides"]["other"]["light"]["bands"] = serde_json::json!([
+        {"id": "short", "name": "Short", "from_m": 1e-9, "to_m": 1e-6},
+        {"id": "long", "name": "Long", "from_m": 1e-6, "to_m": 1.0}]);
+    let p = sse_pack::PackManifest::from_json(&v.to_string()).unwrap();
+    let own = crate::table::LightTable::from_pack(&p).unwrap();
+    assert_eq!(own.bands.len(), 2);
+}
+
 /// The band set covers the whole of a blackbody's light from 3 K to 10⁷ K:
 /// summed bands equal σT⁴ per unit area (Stefan-Boltzmann).
 #[test]

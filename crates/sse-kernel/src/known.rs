@@ -42,10 +42,20 @@ impl Kernel {
 
     fn known_now(&mut self, at_s: Option<i64>) -> Result<i64, Response> {
         let u = self.universe()?;
+        // With no time asked: the campaign's now, else the latest time any
+        // event in the record speaks of (never the origin by default, which
+        // would read a reveal made at the present as not yet made).
         Ok(at_s.unwrap_or_else(|| {
             crate::orbits::campaign_now(&u.chronicle, &u.root)
                 .0
-                .unwrap_or(0)
+                .unwrap_or_else(|| {
+                    u.chronicle
+                        .events()
+                        .iter()
+                        .map(|e| e.body.occurred_at.s.max(e.body.activated_at.s))
+                        .max()
+                        .unwrap_or(0)
+                })
         }))
     }
 

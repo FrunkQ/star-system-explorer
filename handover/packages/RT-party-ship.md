@@ -37,3 +37,14 @@ Screens: /mnt/project-files/sse4/handover-screens/RT-party-ship-screens/ (not in
 - App.svelte sends `ws.party` to every players' screen through the chart room's `party` host-state key (PR 344) whenever it changes, and null when there is none. It never moves their view: "Send this view" does.
 - `p2p.test.ts`'s round trip now carries a typed `PartyShip` with its last voyage.
 - Next (chart room or renderer): the players' screens show where the ship is.
+
+## Part 4 (24 Nov): world names on the At world card
+
+The kernel's `ship_at_world` names a NAV body by its address (adopt's
+PlanetSpec carries no drawn name), so the GM's At world card read "At
+u:kestrel/sys:sol/body:3" and "Fit it for u:…". Voyages now passes the
+chart's own name into `AtWorld` (`name`), used when the report's name is
+empty or an address. party.e2e checks the heading. The kernel-side fix
+(PlanetSpec names from the names layer) is left to the kernel thread; this
+covers every screen that shows the card.
+

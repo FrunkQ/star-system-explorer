@@ -117,6 +117,40 @@ pub struct Passbands {
     pub list: Vec<Passband>,
 }
 
+/// How the eye turns light into colour: the CIE 1931 2° observer as sums of
+/// lopsided Gaussian lobes `[weight, centre nm, blue width nm, red width nm]`
+/// (Wyman, Sloan and Shirley 2013), summed over `from_nm..=to_nm` in
+/// `step_nm`, and the matrix from XYZ to linear sRGB (IEC 61966-2-1).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Eye {
+    #[serde(default)]
+    pub note: String,
+    pub lobes: EyeLobes,
+    pub from_nm: f64,
+    pub to_nm: f64,
+    pub step_nm: f64,
+    pub xyz_to_linear_srgb: [[f64; 3]; 3],
+    #[serde(default)]
+    pub sources: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct EyeLobes {
+    pub x: Vec<[f64; 4]>,
+    pub y: Vec<[f64; 4]>,
+    pub z: Vec<[f64; 4]>,
+}
+
+impl Eye {
+    /// The wavelengths the eye is summed over, m.
+    pub fn wavelengths_m(&self) -> Vec<f64> {
+        let n = ((self.to_nm - self.from_nm) / self.step_nm + 0.5) as usize;
+        (0..=n)
+            .map(|i| (self.from_nm + self.step_nm * i as f64) * 1e-9)
+            .collect()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Grid {
     pub from_m: f64,
@@ -126,6 +160,10 @@ pub struct Grid {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LightTable {
+    /// The fixed band set. Read from the master data sheet's Bands table
+    /// (its `light` rows, RK10) when the pack gives none; a pack that
+    /// gives its own list overrides the sheet.
+    #[serde(default)]
     pub bands: Vec<Band>,
     pub visible_slices: Vec<Band>,
     pub lines: Vec<LineDef>,
@@ -138,6 +176,8 @@ pub struct LightTable {
     pub gases: Option<Gases>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub passbands: Option<Passbands>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub eye: Option<Eye>,
     #[serde(default)]
     pub references: Vec<Reference>,
 }
@@ -175,6 +215,40 @@ fn fill_from_sheet(g: &mut GasDef, sheet: &sse_reference::Reference) -> Result<(
     Ok(())
 }
 
+/// The light rows of the sheet's Bands table (RK10), in order of wavelength.
+pub fn bands_from_sheet(sheet: &sse_reference::Reference) -> Result<Vec<Band>, String> {
+    let num = |row: &serde_json::Map<String, serde_json::Value>, k: &str| {
+        row.get(k)
+            .and_then(|v| v.get("v").and_then(|x| x.as_f64()).or_else(|| v.as_f64()))
+    };
+    let mut out = vec![];
+    for (id, row) in sheet.tables.get("bands").into_iter().flatten() {
+        if row.get("kind").and_then(|k| k.as_str()) != Some("light") {
+            continue;
+        }
+        let (Some(from_m), Some(to_m)) = (num(row, "from_m"), num(row, "to_m")) else {
+            return Err(format!("sheet band {id} has no from_m or to_m"));
+        };
+        let name = row
+            .get("names")
+            .and_then(|n| n.get("physics"))
+            .and_then(|n| n.as_str())
+            .unwrap_or(id)
+            .to_string();
+        out.push(Band {
+            id: id.clone(),
+            name,
+            from_m,
+            to_m,
+        });
+    }
+    if out.is_empty() {
+        return Err("the sheet has no light bands (Bands table, RK10)".into());
+    }
+    out.sort_by(|a, b| a.from_m.total_cmp(&b.from_m));
+    Ok(out)
+}
+
 impl LightTable {
     /// The base pack's table.
     pub fn base() -> Self {
@@ -197,11 +271,17 @@ impl LightTable {
         let mut t: LightTable = serde_json::to_value(v)
             .and_then(serde_json::from_value)
             .map_err(|e| format!("light table: {e}"))?;
-        if let Some(g) = t.gases.as_mut() {
-            let sheet = sse_reference::Reference::from_packs(stack)
+        let sheet = || {
+            sse_reference::Reference::from_packs(stack)
                 .ok()
                 .filter(|r| r.row("constants", "c").is_some())
-                .unwrap_or_else(sse_reference::Reference::base);
+                .unwrap_or_else(sse_reference::Reference::base)
+        };
+        if t.bands.is_empty() {
+            t.bands = bands_from_sheet(&sheet())?;
+        }
+        if let Some(g) = t.gases.as_mut() {
+            let sheet = sheet();
             for gas in &mut g.list {
                 fill_from_sheet(gas, &sheet)?;
             }
@@ -252,6 +332,16 @@ impl LightTable {
                 .find(|b| b.effective_m.is_nan() || b.effective_m <= 0.0)
             {
                 return Err(format!("passband {} needs a positive wavelength", b.id));
+            }
+        }
+        if let Some(e) = &self.eye {
+            if !(e.step_nm > 0.0 && e.to_nm > e.from_nm && e.from_nm > 0.0) {
+                return Err("the eye's wavelengths need a positive step and a rising range".into());
+            }
+            for l in e.lobes.x.iter().chain(&e.lobes.y).chain(&e.lobes.z) {
+                if !(l[2] > 0.0 && l[3] > 0.0) {
+                    return Err("each eye lobe needs positive widths".into());
+                }
             }
         }
         if self.steps_per_decade < 8 || self.grid.points < 2 {

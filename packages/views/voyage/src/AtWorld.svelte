@@ -13,7 +13,8 @@
   import { ShipAtWorldView } from "../../ship/src/index.ts";
 
   // `arriving`: how the voyage gets there, in words, when the ask carries the leg's own speed.
-  let { ctx, ask, arriving }: { ctx: ViewContext; ask: ShipAtWorldAsk | null; arriving?: string } = $props();
+  // `name`: the world's name as the chart shows it, used when the kernel's report carries only its address.
+  let { ctx, ask, arriving, name }: { ctx: ViewContext; ask: ShipAtWorldAsk | null; arriving?: string; name?: string } = $props();
   // A game pack's own task ladder (X3h): its numbers beside SSE4's words, on the GM's screens only; nothing rolled.
   const ladder = $derived.by(() => {
     void ctx.workspace.revision;
@@ -36,7 +37,8 @@
       if (g !== gen) return;
       if (!r.ok) return void ((failed = r.message), (world = null));
       failed = null;
-      world = r.report.worlds[0] ?? null;
+      const w = r.report.worlds[0] ?? null;
+      world = w && name && (!w.name || w.name === w.body || w.name.includes("/body:")) ? { ...w, name } : w;
       const s = r.report.ship as unknown as ShipRecord;
       ship = s;
       const f = await readPropellants(ctx.session, s.fuels ?? []).catch(() => ({}));

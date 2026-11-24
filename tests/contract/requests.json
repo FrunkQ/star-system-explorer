@@ -3349,5 +3349,90 @@
   "op": "read_composition",
   "system": "u:matter/sys:1",
   "level": "site"
+ },
+ {
+  "op": "light_through_gas",
+  "passages": [
+   {
+    "address": "u:t/sys:0/star:0",
+    "t_k": 5800.0,
+    "layers": []
+   }
+  ]
+ },
+ {
+  "op": "light_through_gas",
+  "passages": [
+   {
+    "t_k": 5000.0,
+    "layers": [
+     {
+      "t_k": 80.0,
+      "path_m": 1.0,
+      "gases": [
+       {
+        "gas": "unobtainium",
+        "number_density_m3": 1.0
+       }
+      ]
+     }
+    ]
+   }
+  ]
+  },
+ {
+  "op": "read_inventory",
+  "system": "u:matter/sys:1",
+  "kinds": ["fe", "h2o"]
+ },
+ {
+  "op": "read_inventory",
+  "system": "u:matter/sys:1",
+  "kinds": ["unobtainium"]
+ },
+ {
+  "op": "effect_at_range",
+  "asks": [
+   {
+    "weapon": {"kind": "beam", "beam_power_w": 2.0e7, "wavelength_m": 1.0e-6, "aperture_m": 1.0, "efficiency": 0.3, "reject_k": 600.0},
+    "target": {"skin": {"takes_j_m2": 1.0e7}, "radius_m": 10.0, "accel_m_s2": 10.0},
+    "distance_m": 1.0e5
+   },
+   {
+    "weapon": {"kind": "burst", "yield_j": 4.184e12, "xray_share": 0.7},
+    "target": {"skin": {"material": "h2o", "thickness_m": 0.01, "takes_j_m2": 2.0e3}, "radius_m": 10.0},
+    "distance_m": 1.0e4
+   }
+  ]
+ },
+ {
+  "op": "effect_at_range",
+  "asks": [
+   {
+    "weapon": {"kind": "projectile", "mass_kg": 1.0, "muzzle_m_s": 3000.0, "face_m2": 0.01},
+    "target": {"skin": {"material": "unobtainium", "thickness_m": 0.01}, "radius_m": 10.0},
+    "distance_m": 1.0e5
+   }
+  ]
+ },
+ {
+  "op": "orbit_stability",
+  "system": "u:st/sys:0",
+  "bodies": [
+   {"address": "u:st/sys:0/star:0", "facts": {"body.kind": "star", "body.mass": 1.98840987e30}},
+   {"address": "u:st/sys:0/star:0/planet:0", "facts": {"body.kind": "planet", "orbit.host": "u:st/sys:0/star:0", "body.mass": 5.9722e24, "orbit.semi_major_axis": 149597870700.0, "orbit.eccentricity": 0.0167}},
+   {"address": "u:st/sys:0/star:0/planet:0/moon:0", "facts": {"body.kind": "moon", "orbit.host": "u:st/sys:0/star:0/planet:0", "body.mass": 7.342e22, "orbit.semi_major_axis": 3.844e8, "orbit.eccentricity": 0.0549}},
+   {"address": "u:st/sys:0/star:0/planet:1", "facts": {"body.kind": "planet", "orbit.host": "u:st/sys:0/star:0", "body.mass": 6.417e23, "orbit.semi_major_axis": 227987154946.80002, "orbit.eccentricity": 0.0934}}
+  ],
+  "add": [
+   {"address": "u:st/sys:0/star:0/planet:2", "facts": {"body.kind": "planet", "orbit.host": "u:st/sys:0/star:0", "body.mass": 5.9722e24, "orbit.semi_major_axis": 154085806821.0}}
+  ]
+ },
+ {
+  "op": "ship_power",
+  "ship": {"name": "Hall tug", "accel_g": 0.05, "sustained": true, "exhaust_km_s": 20.0, "wet_t": 400.0, "dry_t": 200.0,
+   "power": [{"id": "plant", "kind": "fission-reactor", "electric_w": 100000.0}],
+   "loads": [{"name": "quarters", "electric_w": 20000.0, "reject_k": 290.0}],
+   "engines": [{"engine": {"name": "Hall thruster", "thrust_n": 530.0, "exhaust_km_s": 20.0, "energy_from": "electric", "electric_w": 100000.0, "efficiency": 0.6, "reject_k": 500.0}}]}
  }
 ]

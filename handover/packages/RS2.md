@@ -9,7 +9,7 @@ Owner: "Build real spaceflight history pack". Design: `handover/design/SSE4-real
   - 13 stages;
   - 17 engines, including those on the craft themselves: Apollo's SPS, the Shuttle's OMS, Voyager's kick motor, Cassini's R-4D-11, Juno's Leros 1b and Dawn's NSTAR-30.
 - Exhaust speed is GCAT's Isp times g0, with g0 read from the master data sheet. No constant is typed in the script.
-- Propellants are named by sheet substance ids. RP-1 is on the sheet as a mixture (`rp-1`, PR 348). Two solids are not yet: `pban-ap-al` (the Shuttle SRB's propellant) and `htpb-ap-al` (GCAT's generic "Solid"); the data sheet thread is adding both under those ids.
+- Propellants are named by sheet substance ids. RP-1 is on the sheet as a mixture (`rp-1`, PR 348). Two solids are not yet: `pban-ap-al` (the Shuttle SRB's propellant) and `htpb-ap-al` (GCAT's generic "Solid"); the data sheet thread added both under those ids in PR 372, and parts.json was rebuilt on 24 Nov with `sheet_missing` now empty.
 - What GCAT does not give is listed per engine under `to_read`:
   - engine mass;
   - sea-level thrust;

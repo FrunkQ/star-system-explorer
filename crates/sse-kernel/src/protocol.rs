@@ -580,6 +580,31 @@ pub enum Request {
         #[ts(optional)]
         wavelengths_m: Option<Vec<f64>>,
     },
+    /// Light through gas (ND2): each passage is a light (`light`, a light
+    /// description, or `t_k`, a black body) and the gas it crosses
+    /// (`layers` of temperature, depth and number density per sheet gas,
+    /// and a `path_factor`: 1 for a glow seen straight on, 2 for light down
+    /// to a cloud deck and back). Each gas's absorption (measured bands,
+    /// pressure-widened lines, colliding pairs) comes from its row on the
+    /// data sheet. Returns the light that comes out at `wavelengths_m`
+    /// (default: the eye's), what each feature did, and the colour to the
+    /// eye before and after.
+    LightThroughGas {
+        #[ts(type = "unknown[]")]
+        passages: Vec<serde_json::Value>,
+    },
+    /// Effect at range (RK12, Atomic Rockets plan section 13): each of
+    /// `asks` is `sse_sense::reach::Ask`, a weapon (beam, burst or
+    /// projectile), a target (its skin as a sheet material or a typed
+    /// figure, its size and how hard it can dodge) and a distance. Returns
+    /// what arrives, what the skin can take, the reading (in range,
+    /// marginal, out of range), the chance of a hit from light lag, the
+    /// distances where the reading changes for a ring, and a beam's load on
+    /// the power ledger. Nothing is fired.
+    EffectAtRange {
+        #[ts(type = "unknown[]")]
+        asks: Vec<serde_json::Value>,
+    },
     /// Spectrum as it reaches an observer (O12): each target is one or more
     /// components (`conditions` as for `read_light`, or a ready `light`
     /// description), each with a line-of-sight speed; the observer gives the
@@ -657,6 +682,24 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         level: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// Natural resource inventory (TG11, MP8b): for each world of `system`
+    /// (or `body`), the kilograms of each resource kind in `kinds` (pack
+    /// kinds from `provides.other.resources`, or any element id or `h2o`
+    /// straight from the sheet; left out, every pack kind) within the
+    /// kind's reach (crust, sea, air, surface or whole), read off
+    /// `read_composition` at Survey. No dice; no surface stage runs.
+    ReadInventory {
+        system: String,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        kinds: Option<Vec<String>>,
         #[serde(default)]
         #[ts(optional)]
         at_s: Option<i64>,
@@ -1274,6 +1317,64 @@ pub enum Request {
         #[ts(optional)]
         history: Option<bool>,
     },
+    /// Space highways: a link between two places in the universe, one dated
+    /// record event. `nav` is the travel part in sse-nav's `Link` shape
+    /// (each end's `place` conditions as `{a: {place}, b: {place}}`, an
+    /// optional `rule` of its own, `counted` measures); without a rule the
+    /// link is a charted lane. `withdraw` ends it.
+    SetLink {
+        id: String,
+        a: String,
+        b: String,
+        #[serde(default)]
+        #[ts(optional)]
+        name: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        kind: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        one_way: Option<bool>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        tier: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        audience: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        source: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        withdraw: Option<bool>,
+        at_s: i64,
+    },
+    /// Space highways: the links in force at `at_s` (absent: latest) that
+    /// `audience` knows (absent: the GM), with an end inside `bounds`
+    /// (absent: the whole universe); with `history`, every one by date.
+    LinksIn {
+        #[serde(default)]
+        #[ts(optional)]
+        bounds: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        history: Option<bool>,
+    },
     /// FT2: a civilisation's technology, one dated record event on an actor
     /// (or on the universe root, for the whole setting): a `level` on the
     /// setting's ladder, advances gained early (`gain`, "Develop it") or
@@ -1371,6 +1472,41 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
+    },
+    /// RK9: a ship's power books (the four-bus ledger, `sse-nav` power):
+    /// what its sources make at `flux_w_m2` (default 1361, the Earth's) and
+    /// `at_s` (default 0), what its loads and engines take, heat by the
+    /// temperature it leaves at, what came from nowhere with why, and one
+    /// balance shaped like `tech_reading`'s. Fitted engines set `accel_g`
+    /// and `exhaust_km_s`. `ship` is a template id or a ship in full.
+    ShipPower {
+        #[ts(type = "unknown")]
+        ship: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional)]
+        flux_w_m2: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// ST1: whether the orbits at or under `system` last (Hill spacing,
+    /// angular momentum deficit, moon limits, Kozai-Lidov swings, binary
+    /// limits), each check a formula block shown with its numbers. Reads the
+    /// universe's facts at `at_s` (absent: all of them), or `bodies`
+    /// (`[{address, facts}]`); `add` (same shape) is laid over them, and
+    /// then only the checks that concern the added bodies come back (the
+    /// card's verdict on add).
+    OrbitStability {
+        system: String,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        add: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
     },
     /// Set the campaign's now (`campaign.now_s` on the universe root, a
     /// `time.campaign_now` event). It moves forwards or back.
@@ -1697,6 +1833,18 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         depart_s: Option<f64>,
+        /// Links the crew may use beyond the record's (sse-nav `Link`s), and
+        /// whether every leg must run along one. The record's links come in
+        /// as `audience` knows them (absent: the GM).
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        links: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        only_links: Option<bool>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
     },
     /// Make a fill star permanent: its whole drawn description (address,
     /// cell, frame and slot, birth, mass, companions, abundances, orbit) is
@@ -1967,9 +2115,12 @@ impl Request {
             Request::ReadActivity { .. } => "read_activity",
             Request::ReadField { .. } => "read_field",
             Request::ReadComposition { .. } => "read_composition",
+            Request::ReadInventory { .. } => "read_inventory",
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
+            Request::LightThroughGas { .. } => "light_through_gas",
+            Request::EffectAtRange { .. } => "effect_at_range",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -1996,6 +2147,8 @@ impl Request {
             Request::Hold { .. } => "hold",
             Request::WhoHolds { .. } => "who_holds",
             Request::HoldingsIn { .. } => "holdings_in",
+            Request::SetLink { .. } => "set_link",
+            Request::LinksIn { .. } => "links_in",
             Request::SetTech { .. } => "set_tech",
             Request::TechOf { .. } => "tech_of",
             Request::TechReading { .. } => "tech_reading",
@@ -2006,6 +2159,8 @@ impl Request {
             Request::RulesPolicy { .. } => "rules_policy",
             Request::Rules => "rules",
             Request::OrbitsAt { .. } => "orbits_at",
+            Request::OrbitStability { .. } => "orbit_stability",
+            Request::ShipPower { .. } => "ship_power",
             Request::SetCampaignNow { .. } => "set_campaign_now",
             Request::CampaignNow => "campaign_now",
             Request::Calendar => "calendar",
@@ -2176,6 +2331,16 @@ pub fn ops() -> Vec<OpInfo> {
             "per air and wavelength: a few closed-form blocks",
         ),
         o(
+            "light_through_gas",
+            Cost::Light,
+            "per passage: a few formula blocks per wavelength per absorption feature, at the eye's 81 wavelengths and any asked for",
+        ),
+        o(
+            "effect_at_range",
+            Cost::Light,
+            "per ask: a few formula blocks, and four bisections of about eighty steps for the rings",
+        ),
+        o(
             "read_spectrum",
             Cost::Light,
             "per target: the grid, band integrals and a 400-point peak scan per covered range",
@@ -2194,6 +2359,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_composition",
             Cost::Trivial,
             "per body: a few hundred multiplications over the sheet's elements",
+        ),
+        o(
+            "read_inventory",
+            Cost::Trivial,
+            "per body: read_composition at Survey, then one sum per kind",
         ),
         o(
             "read_photometry",
@@ -2315,6 +2485,12 @@ pub fn ops() -> Vec<OpInfo> {
             "orbits_at",
             Cost::Light,
             "linear in bodies x times (at most 64 times); 16 Newton steps each",
+        ),
+        o("ship_power", Cost::Trivial, "linear in the ship's parts"),
+        o(
+            "orbit_stability",
+            Cost::Light,
+            "linear in bodies, plus the outer bodies of each (Kozai); 16 Newton steps per neighbour pair",
         ),
         o("set_campaign_now", Cost::Trivial, "one universe event"),
         o("campaign_now", Cost::Trivial, "a scan of the universe events"),
@@ -2756,6 +2932,18 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         airs: Vec<serde_json::Value>,
     },
+    /// `light_through_gas`: each of `passages` is `{ passed, colour_in,
+    /// colour_out }` with `sse_light::gas::Passed` and
+    /// `sse_light::colour::Colour`.
+    GasPassed {
+        #[ts(type = "unknown[]")]
+        passages: Vec<serde_json::Value>,
+    },
+    /// `effect_at_range`: each of `effects` is `sse_sense::reach::Effect`.
+    EffectsAtRange {
+        #[ts(type = "unknown[]")]
+        effects: Vec<serde_json::Value>,
+    },
     /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
     SpectrumRead {
         #[ts(type = "unknown[]")]
@@ -2778,6 +2966,13 @@ pub enum Response {
     /// (bulk materials, separation strength, elements heaviest first with
     /// reservoirs at Survey, stand-ins).
     CompositionRead {
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+    },
+    /// `read_inventory`: each of `bodies` is a world's address, mass and
+    /// kinds (id, matter, reach, kg, per_kg, by_reservoir, note), with
+    /// stand-ins.
+    InventoryRead {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
     },
@@ -2994,6 +3189,19 @@ pub enum Response {
         #[ts(optional, type = "unknown[]")]
         changes: Vec<serde_json::Value>,
     },
+    /// `set_link`: the link as stored.
+    LinkSet {
+        link: String,
+        event_id: String,
+        #[ts(type = "unknown")]
+        record: serde_json::Value,
+        record_hash: String,
+    },
+    /// `links_in`: each link with its travel part (`nav`) as an object.
+    LinksListed {
+        #[ts(type = "unknown[]")]
+        links: Vec<serde_json::Value>,
+    },
     /// `set_tech`: the event's id.
     TechSet {
         change_id: String,
@@ -3147,6 +3355,24 @@ pub enum Response {
         system: String,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `ship_power`: `{ship, flux_w_m2, accel_g, exhaust_km_s, ledger,
+    /// balance, fictional, why}`.
+    ShipPowerIs {
+        #[ts(type = "unknown")]
+        power: serde_json::Value,
+    },
+    /// `orbit_stability`: `verdict` (`lasts`, `watch` or `unstable`, the
+    /// worst check), `checks` (`{check, block, around, bodies, level, says,
+    /// inputs, results}`; level 0 lasts, 1 watch, 2 will not last, 3 the
+    /// orbits cross) and `unchecked` (`{check, bodies, missing}`).
+    OrbitStabilityIs {
+        system: String,
+        verdict: String,
+        #[ts(type = "unknown[]")]
+        checks: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        unchecked: Vec<serde_json::Value>,
     },
     /// `set_campaign_now` and `campaign_now`.
     CampaignNowIs {

@@ -112,8 +112,8 @@ export { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "./
 // The performance readout and its reports (PF1).
 export * from "./perf.ts";
 // The master data sheet's constants (MP22): one door to a constant's value for every package.
-export { constant, constantOf, constantIds, SHEET_PACK, numberOf, sheetUnitFactor, sheetValue, type SheetRef } from "./sheet.ts";
-export type { SheetConstant } from "./sheet.ts";
+export { constant, constantOf, constantIds, SHEET_BANDS, SHEET_PACK, numberOf, sheetUnitFactor, sheetValue, type SheetRef } from "./sheet.ts";
+export type { SheetBand, SheetConstant } from "./sheet.ts";
 // One Open door (V3 gap 28): what a file is, by looking inside it; Explorers V4 listings, checked by sha256.
 export { sniffFile, sha256Hex, explorersUrl, fetchExplorers, creditWords, CONVERTER_URL } from "./open-file.ts";
 export type { FileKind, Sniffed, ExplorersListing, ExplorersFetched } from "./open-file.ts";
@@ -135,3 +135,5 @@ export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableOf, fieldLandm
 export type { Landmark as KnownLandmark, KnownTo, KnownAudience, KnownException, KnownScope, KnownChange, Held } from "./known.ts";
 export { difficultyLadderOf, chanceToMeet, stepTarget, gameDifficulty } from "./difficulty.ts";
 export type { DifficultyLadder, DifficultyStep, GameDifficulty } from "./difficulty.ts";
+export { wattsText, powerWords, nowhereWords } from "./power.ts";
+export type { PowerBooks, PowerLedger, PowerFlow, PowerEngine } from "./power.ts";

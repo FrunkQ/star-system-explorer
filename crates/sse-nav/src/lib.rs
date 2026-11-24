@@ -17,11 +17,13 @@ pub mod courses;
 pub mod descent;
 pub mod drift;
 pub mod entry;
+pub mod flightlog;
 pub mod ftl;
 pub mod hazards;
 pub mod insystem;
 pub mod kepler;
 pub mod links;
+pub mod power;
 pub mod refuel;
 pub mod scenario;
 pub mod sky;
@@ -267,9 +269,54 @@ pub struct Ship {
     /// Most deceleration the hull bears, g (none given: not checked).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub structure_g: Option<f64>,
+    /// Power sources, fitted engines and electric loads (RK9, `power`): the
+    /// four-bus ledger. A ship with no `engines` keeps its typed
+    /// `accel_g` and `exhaust_km_s`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub power: Vec<power::PowerSource>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub engines: Vec<power::EngineMount>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub loads: Vec<power::Load>,
 }
 
 impl Ship {
+    /// RK9 part 2: the ship as its fitted parts make it here and now. With
+    /// `engines`, the four-bus ledger at `flux_w_m2` and `t_s` sets
+    /// `accel_g` (thrust over the mass aboard) and `exhaust_km_s` (thrust
+    /// weighted); with none, `None`, and the typed figures stand. Engine
+    /// ids resolve against `defs` (the stacked packs' engines); an unknown
+    /// one is named in the ledger's `why`.
+    pub fn effective(
+        &self,
+        defs: &BTreeMap<String, power::EngineDef>,
+        flux_w_m2: f64,
+        t_s: i64,
+    ) -> Option<(power::Ledger, Ship)> {
+        if self.engines.is_empty() {
+            return None;
+        }
+        let l = power::ledger(
+            &self.power,
+            &self.engines,
+            &self.loads,
+            defs,
+            power::Conditions { flux_w_m2, t_s },
+        );
+        let (a, ve) = power::readings(&l, self.dry_t + self.propellant());
+        let mut s = self.clone();
+        s.accel_g = a;
+        if ve > 0.0 {
+            s.exhaust_km_s = ve;
+        }
+        Some((l, s))
+    }
+    /// Whether any power source follows the starlight where the ship is.
+    pub fn sunlit_power(&self) -> bool {
+        self.power
+            .iter()
+            .any(|p| matches!(p.law, power::Law::Sunlight { .. }))
+    }
     /// Whether the ship has a refuelling capability.
     pub fn can(&self, capability: &str) -> bool {
         self.refuel
@@ -729,10 +776,14 @@ mod descent_tests;
 #[cfg(test)]
 mod entry_tests;
 #[cfg(test)]
+mod flightlog_tests;
+#[cfg(test)]
 mod ftl_tests;
 #[cfg(test)]
 mod links_tests;
 #[cfg(test)]
 mod mission_tests;
+#[cfg(test)]
+mod power_tests;
 #[cfg(test)]
 mod tests;
