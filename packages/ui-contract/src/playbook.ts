@@ -13,7 +13,13 @@ export type Step =
   | { show: { bookmark: string } }
   | { hold: { card: HoldCard } }
   /** Words for the GM to read; nothing goes to any screen (a card on screens comes with the Looks work). */
-  | { say: { text: string } };
+  | { say: { text: string } }
+  /**
+   * Tell the role's audience about a thing (secrets design; design 4.2): the one step that changes what anyone knows.
+   * It is not a send: every screen of the role redraws where it stands. It is never on the board's undo (the eye takes
+   * it back). `name` is for the row's words only.
+   */
+  | { reveal: { address: string; landmark: "known" | "heard_of"; name?: string } };
 
 export interface Preset {
   id: string;
@@ -224,7 +230,7 @@ export function fire(b: Board, p: Preset, bookmarks: readonly Bookmark[], roles:
 /** What a preset does, in words, for its row and its title ("Show Tarn, the approach", "Hold: a joke", "Read aloud"). */
 export function presetWords(p: Preset, bookmarks: readonly Bookmark[]): string {
   return p.steps
-    .map((s) => ("show" in s ? `Show ${bookmarks.find((b) => b.id === s.show.bookmark)?.name ?? "a bookmark that has gone"}` : "hold" in s ? `Hold: ${s.hold.card === "blank" ? "dark" : s.hold.card === "plain" ? "awaiting transmission" : s.hold.card === "joke" ? "a joke" : s.hold.card.text}` : "Read aloud"))
+    .map((s) => ("show" in s ? `Show ${bookmarks.find((b) => b.id === s.show.bookmark)?.name ?? "a bookmark that has gone"}` : "reveal" in s ? `${s.reveal.landmark === "known" ? "Reveal" : "Hint at"} ${s.reveal.name ?? "a thing"}` : "hold" in s ? `Hold: ${s.hold.card === "blank" ? "dark" : s.hold.card === "plain" ? "awaiting transmission" : s.hold.card === "joke" ? "a joke" : s.hold.card.text}` : "Read aloud"))
     .join(", ");
 }
 
@@ -243,6 +249,8 @@ export function playbookFrom(raw: unknown): Playbook {
       if (c && typeof c === "object" && typeof (c as { text?: unknown }).text === "string") return { hold: { card: { text: (c as { text: string }).text } } };
     }
     if (v("say") && typeof v("say")!.text === "string") return { say: { text: v("say")!.text as string } };
+    const rv = v("reveal");
+    if (rv && typeof rv.address === "string" && (rv.landmark === "known" || rv.landmark === "heard_of")) return { reveal: { address: rv.address, landmark: rv.landmark, ...(typeof rv.name === "string" ? { name: rv.name } : {}) } };
     return null;
   };
   const pb: Playbook = {
@@ -265,4 +273,13 @@ export function playbookFrom(raw: unknown): Playbook {
   };
   pb.chapters = pb.chapters.filter((c) => c.pages.length);
   return pb.chapters.length ? pb : emptyPlaybook();
+}
+
+/** The reveals a preset makes when fired (they go to the kernel as `set_known`, not on the board). */
+export function revealsOf(p: Preset): { address: string; landmark: "known" | "heard_of" }[] {
+  return p.steps.flatMap((s) => ("reveal" in s ? [{ address: s.reveal.address, landmark: s.reveal.landmark }] : []));
+}
+/** Does the preset tell anyone anything? Its row wears the eye (design 4.2). */
+export function reveals(p: Preset): boolean {
+  return p.steps.some((s) => "reveal" in s);
 }

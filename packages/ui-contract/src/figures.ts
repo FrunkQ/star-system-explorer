@@ -148,6 +148,93 @@ export function withChoice(choices: UnitChoices | undefined, kind: FigureKind, a
   return out;
 }
 
+// ------------------------------------------------------------------------------------------- a card's facts
+
+/** A card fact as the units engine reads it: a number in a unit the sheet holds. */
+export interface FactLike {
+  field: string;
+  value: unknown;
+  unit?: string;
+  source?: string;
+  digits?: number;
+  /** The scene's own text: a typed or catalogued value's figures are counted from it ("500,000 km" has one). */
+  display?: string;
+}
+
+/** A fact's unit as the sheet holds it: its kind, and how to take it to SI. */
+export interface FactUnit {
+  kind: FigureKind;
+  unit: string;
+  factor: number;
+  offset: number;
+}
+
+const FACT_ABOUT = ((T as unknown as { fact_about?: { field: string; what: string }[] }).fact_about ?? []).map((r) => ({ re: new RegExp(r.field), what: r.what }));
+
+/** What a card's fact is about, from its field (the table's `fact_about`): a_au is an orbit, radius_earth a size. */
+export function factAbout(field: string, cls: string): About {
+  const what = FACT_ABOUT.find((r) => r.re.test(field))?.what;
+  return { class: cls, ...(what ? { what } : {}) };
+}
+
+/**
+ * The sheet's unit for a symbol a scene writes ("AU", "M⊕", "K", "g", "μT"), with the kind it measures; null for a
+ * unit the sheet does not hold ("dex") or none. A symbol that is a unit's own (g is the gee, d the day) wins over a
+ * prefixed or aliased reading of it (g as a gram, d as degrees).
+ */
+export function factUnit(symbol: string | undefined): FactUnit | null {
+  const s = symbol?.trim().replace(/μ/g, "µ");
+  if (!s) return null;
+  const of = (kind: FigureKind, r: Resolved): FactUnit => ({ kind, unit: r.id, factor: r.factor, offset: r.offset });
+  for (const kind of FIGURE_KINDS) {
+    const k = kindRow(kind);
+    const u = [...ROWS.values()].find((x) => x.measures === k.measures && (x.symbol === s || look(x.id).symbol === s));
+    if (u) return of(kind, { factor: u.factor, offset: u.offset ?? 0, id: u.id });
+  }
+  for (const kind of FIGURE_KINDS) {
+    const r = resolveIn(kindRow(kind), s);
+    if (r) return of(kind, r);
+  }
+  return null;
+}
+
+/** Strip float noise from a stored value before counting its figures (0.10700000000000001 is 0.107). */
+const clean = (v: number): string => String(Number(v.toPrecision(12)));
+
+/**
+ * A card's fact said by the units engine, or null when it is not a number in a unit the sheet holds (a name, a dex,
+ * a ratio): the caller then shows the scene's own text. `cls` is the body's scale class; `choices` the remembered
+ * readings. A value someone set or a catalogue gave keeps its own figures (up to six); a computed one shows three.
+ */
+export function sayFact(f: FactLike, cls: string, opts: SayOptions & { choices?: UnitChoices } = {}): (Said & { kind: FigureKind; about: About }) | null {
+  if (typeof f.value !== "number" || !Number.isFinite(f.value)) return null;
+  const u = factUnit(f.unit);
+  if (!u) return null;
+  const about = factAbout(f.field, cls);
+  const si = f.value * u.factor + u.offset;
+  const kept = (f.source === "authored" || f.source === "catalogued") && opts.depth !== "curious";
+  const { choices, ...rest } = opts;
+  const said = say(si, u.kind, about, {
+    ...rest,
+    reading: opts.reading ?? chosenReading(choices, u.kind, about),
+    ...(kept ? { source: "catalogued" as const, sig: Math.min(6, f.digits ?? significantFigures(/[-+−]?[\d,]*\.?\d+/.exec(f.display ?? "")?.[0] ?? clean(f.value))) } : {}),
+  });
+  return { ...said, kind: u.kind, about };
+}
+
+/**
+ * Typed text for a fact read back in the fact's own unit (what an edit sends): any unit of its kind, words and
+ * prefixes included ("412 thousand km" for an orbit held in AU). A bare number is taken in `shownUnit` (the unit on
+ * screen), else the fact's.
+ */
+export function readFact(f: FactLike, text: string, shownUnit?: string): { ok: true; value: number; sig: number } | { ok: false; why: string } | null {
+  const u = factUnit(f.unit);
+  if (!u) return null;
+  const r = readFigure(text, u.kind, { unit: shownUnit ?? u.unit });
+  if (!r.ok) return { ok: false, why: r.why };
+  return { ok: true, value: (r.si - u.offset) / u.factor, sig: r.sig };
+}
+
 // --------------------------------------------------------------------------------------------- numbers as text
 
 const SUP: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "+": "⁺" };
@@ -230,6 +317,8 @@ export interface Said {
   reading: string;
   family: string;
   rung: RungRef;
+  /** The sheet's id for the rung's unit ("au", "degc"): a bare number typed over this figure is read in it. */
+  unitId: string;
 }
 
 function look(id: string): UnitLook {
@@ -294,7 +383,7 @@ export function say(si: number, kind: FigureKind, about?: About, opts: SayOption
   const sig = Math.max(1, opts.sig ?? 3);
   const approx = depth === "curious" && source === "computed";
   if (!Number.isFinite(si)) {
-    return { text: String(si), number: String(si), unit: "", approx: false, reading: reading.id, family: reading.family, rung: `${reading.id}/0` };
+    return { text: String(si), number: String(si), unit: "", approx: false, reading: reading.id, family: reading.family, rung: `${reading.id}/0`, unitId: reading.rungs[0]!.unit };
   }
   const ri = pickRung(reading.rungs, si, reading.id, opts);
   const rung = reading.rungs[ri]!;
@@ -345,7 +434,7 @@ export function say(si: number, kind: FigureKind, about?: About, opts: SayOption
   const unit = [mult, label].filter(Boolean).join(" ");
   const tight = look(rung.unit).tight && !mult;
   const body = rung.dms ? number : unit ? `${number}${tight ? "" : " "}${unit}` : number;
-  return { text: `${approx ? "about " : ""}${body}`, number, unit, approx, reading: reading.id, family: reading.family, rung: `${reading.id}/${ri}` };
+  return { text: `${approx ? "about " : ""}${body}`, number, unit, approx, reading: reading.id, family: reading.family, rung: `${reading.id}/${ri}`, unitId: rung.unit };
 }
 
 /** `say(...).text`. */
