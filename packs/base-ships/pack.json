@@ -1,7 +1,7 @@
 {
   "format": "sse.pack/1",
   "id": "sse.base-ships",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "kind": [
     "base-physics"
   ],
@@ -362,6 +362,615 @@
                 "metalness": 0.0
               }
             }
+          }
+        }
+      },
+      "station_design": {
+        "about": "Station and land construct builder (renderer station-design.ts): a construct's description picks a shape, its population sizes it, and its gravity, power and traffic size the parts. A shape decides the arrangement only, never a size. The megastructure line is read off the physics: the strength a spun hull needs against the materials on base-tech's strength_for_weight ladder, the height a tower can stand, and whether its own gravity holds a walker.",
+        "living": [
+          {
+            "id": "post",
+            "m3_per_person": 50.0,
+            "why": "a working post: the ship rule, 25 m3 of net habitable volume per person over a net to gross of 0.5",
+            "src": "nasa-std-3001",
+            "check": "unverified"
+          },
+          {
+            "id": "home",
+            "m3_per_person": 6900.0,
+            "why": "a settlement people live their lives in: the Stanford torus's volume over its 10,000 people (a tube 130 m across round a 830 m radius)",
+            "src": "johnson-holbrow-1977"
+          }
+        ],
+        "spin": {
+          "g_default": 1.0,
+          "why": "spun to one standard gravity unless the record or the GM says otherwise; the spin rate is capped by base-tech's spin_rpm (comfort)",
+          "src": "globus-hall2017"
+        },
+        "hoop": {
+          "safety": 2.0,
+          "load_over_shell": 1.0,
+          "why": "a spun ring's hull carries its own weight (stress over density = g R) and as much again of air, soil and shielding, with a safety factor of 2",
+          "src": "authored"
+        },
+        "tower": {
+          "safety": 2.0,
+          "why": "a tower of one material stands to its strength over density over g; a safety factor of 2",
+          "src": "authored"
+        },
+        "self_gravity": {
+          "escape_m_s": 1.0,
+          "why": "when a walker can no longer jump off it, its own gravity matters: it is a body, not a building",
+          "src": "authored"
+        },
+        "mass_kg_per_m3": {
+          "v": 150.0,
+          "why": "structure, air and shielding over enclosed volume, about the Stanford torus's",
+          "src": "johnson-holbrow-1977",
+          "check": "unverified"
+        },
+        "power": {
+          "w_per_person": 10000.0,
+          "efficiency": 0.3,
+          "radiator_k": 300.0,
+          "why": "about 10 kW a head for life support, industry and light; solar panels at 30%; waste heat radiated at room temperature from both faces",
+          "src": "authored"
+        },
+        "urban_density_per_km2": {
+          "v": 4000.0,
+          "why": "a town on the ground spreads at about the density of a European city",
+          "src": "authored"
+        },
+        "docks": {
+          "people_per_berth": 500.0,
+          "size_share": 0.5,
+          "port_bonus": 2.0,
+          "classes": [
+            {
+              "id": "small",
+              "name": "small craft",
+              "max_ship_m": 50.0
+            },
+            {
+              "id": "ship",
+              "name": "ships",
+              "max_ship_m": 200.0
+            },
+            {
+              "id": "large",
+              "name": "large ships",
+              "max_ship_m": 1000.0
+            },
+            {
+              "id": "capital",
+              "name": "capital ships",
+              "max_ship_m": 5000.0
+            }
+          ],
+          "why": "a berth for every 500 people, doubled at a port; a berth takes ships up to half the station's size; each class up has half as many berths",
+          "src": "authored"
+        },
+        "bolt_on_share": 0.02,
+        "sources": {
+          "johnson-holbrow-1977": "Johnson, R. D. and Holbrow, C. (eds) 1977, Space Settlements: A Design Study, NASA SP-413. https://ntrs.nasa.gov/citations/19770014162",
+          "globus-hall2017": "Globus, A. and Hall, T. 2017, Space settlement population rotation tolerance, NSS Space Settlement Journal 2.",
+          "nasa-std-3001": "NASA 2015, NASA Space Flight Human-System Standard, NASA-STD-3001 Volume 2 Revision A. https://www.nasa.gov/reference/nasa-std-3001/",
+          "authored": "authored for play and pictures; in the fudge register"
+        }
+      },
+      "station_shapes": {
+        "ring": {
+          "name": "Ring",
+          "form": "ring",
+          "place": "space",
+          "living": "home",
+          "spin": true,
+          "words": [
+            "ring",
+            "ring station",
+            "wheel",
+            "torus",
+            "spun",
+            "spin",
+            "gravity"
+          ],
+          "count": 1,
+          "spokes": 4,
+          "aspect": 0.08
+        },
+        "twin_ring": {
+          "name": "Twin rings",
+          "form": "ring",
+          "place": "space",
+          "living": "home",
+          "spin": true,
+          "words": [
+            "twin",
+            "contra",
+            "two rings",
+            "pair of rings"
+          ],
+          "count": 2,
+          "spokes": 3,
+          "aspect": 0.08
+        },
+        "wheel_stack": {
+          "name": "Wheel stack",
+          "form": "ring",
+          "place": "space",
+          "living": "home",
+          "spin": true,
+          "words": [
+            "stack",
+            "spindle",
+            "tiers",
+            "decks of rings"
+          ],
+          "count": 4,
+          "spokes": 3,
+          "aspect": 0.1
+        },
+        "spoked_wheel": {
+          "name": "Spoked wheel",
+          "form": "ring",
+          "place": "space",
+          "living": "home",
+          "spin": true,
+          "words": [
+            "spokes",
+            "spoked",
+            "stanford",
+            "hub"
+          ],
+          "count": 1,
+          "spokes": 6,
+          "aspect": 0.078,
+          "hub_sphere": true
+        },
+        "spin_cylinder": {
+          "name": "Spin cylinder",
+          "form": "cylinder",
+          "place": "space",
+          "living": "home",
+          "spin": true,
+          "words": [
+            "cylinder",
+            "o'neill",
+            "oneill",
+            "island",
+            "colony",
+            "habitat"
+          ],
+          "count": 1,
+          "length_over_r": 5.0,
+          "windows": 3
+        },
+        "twin_cylinder": {
+          "name": "Twin cylinders",
+          "form": "cylinder",
+          "place": "space",
+          "living": "home",
+          "spin": true,
+          "words": [
+            "pair of cylinders",
+            "twin cylinders",
+            "counter-rotating"
+          ],
+          "count": 2,
+          "length_over_r": 5.0,
+          "windows": 3
+        },
+        "bernal_sphere": {
+          "name": "Bernal sphere",
+          "form": "sphere",
+          "place": "space",
+          "living": "home",
+          "spin": true,
+          "words": [
+            "bernal",
+            "globe",
+            "spun sphere"
+          ]
+        },
+        "spin_barrel": {
+          "name": "Spin barrel",
+          "form": "cylinder",
+          "place": "space",
+          "living": "home",
+          "spin": true,
+          "words": [
+            "barrel",
+            "drum",
+            "kalpana"
+          ],
+          "count": 1,
+          "length_over_r": 1.0,
+          "windows": 0
+        },
+        "tether_pair": {
+          "name": "Tether pair",
+          "form": "tether",
+          "place": "space",
+          "living": "post",
+          "spin": true,
+          "words": [
+            "tether",
+            "dumbbell",
+            "bolo",
+            "tumbling",
+            "tumbles"
+          ]
+        },
+        "truss": {
+          "name": "Truss",
+          "form": "truss",
+          "place": "space",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "truss",
+            "laboratory",
+            "lab",
+            "research",
+            "outpost",
+            "isolated",
+            "science"
+          ]
+        },
+        "cluster": {
+          "name": "Module cluster",
+          "form": "cluster",
+          "place": "space",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "cluster",
+            "node",
+            "core",
+            "modules",
+            "small station"
+          ]
+        },
+        "cross": {
+          "name": "Cross of arms",
+          "form": "cross",
+          "place": "space",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "arms",
+            "cross",
+            "picket",
+            "patrol",
+            "navy",
+            "naval",
+            "military",
+            "fleet",
+            "sensors",
+            "base"
+          ]
+        },
+        "can": {
+          "name": "Big can",
+          "form": "can",
+          "place": "space",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "tank",
+            "can",
+            "depot",
+            "fuel",
+            "refuel",
+            "skimmer",
+            "reservoir"
+          ]
+        },
+        "fortress_ball": {
+          "name": "Armoured ball",
+          "form": "ball",
+          "place": "space",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "ball",
+            "citadel",
+            "fortress",
+            "armoured",
+            "bastion",
+            "throne"
+          ]
+        },
+        "disc": {
+          "name": "Disc",
+          "form": "disc",
+          "place": "space",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "disc",
+            "saucer",
+            "concourse",
+            "highport",
+            "trade",
+            "market",
+            "hostel"
+          ]
+        },
+        "dock_ring": {
+          "name": "Dock ring",
+          "form": "dock_ring",
+          "place": "space",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "free port",
+            "berth",
+            "docking",
+            "yard",
+            "shipyard",
+            "drydock",
+            "starport"
+          ]
+        },
+        "spike": {
+          "name": "Spike",
+          "form": "spike",
+          "place": "space",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "needle",
+            "spike",
+            "spire",
+            "relay",
+            "way station",
+            "courier",
+            "beacon",
+            "message"
+          ]
+        },
+        "hollow_rock": {
+          "name": "Hollowed rock",
+          "form": "rock",
+          "place": "space",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "rock",
+            "asteroid",
+            "hollowed",
+            "hollow",
+            "mine",
+            "mining",
+            "hidden",
+            "smugglers",
+            "den",
+            "corsair",
+            "pirate",
+            "loot"
+          ]
+        },
+        "derelict_ship": {
+          "name": "Derelict ship",
+          "form": "derelict",
+          "place": "space",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "derelict",
+            "hulk",
+            "wreck",
+            "abandoned",
+            "old ship",
+            "grounded ship"
+          ]
+        },
+        "dome": {
+          "name": "Dome",
+          "form": "dome",
+          "place": "ground",
+          "living": "home",
+          "spin": false,
+          "words": [
+            "dome",
+            "colony",
+            "base",
+            "outpost"
+          ],
+          "count": 1
+        },
+        "dome_cluster": {
+          "name": "Dome cluster",
+          "form": "dome",
+          "place": "ground",
+          "living": "home",
+          "spin": false,
+          "words": [
+            "domes",
+            "settlement",
+            "town",
+            "village"
+          ],
+          "count": 5
+        },
+        "arcology": {
+          "name": "Arcology",
+          "form": "tower",
+          "place": "ground",
+          "living": "home",
+          "spin": false,
+          "words": [
+            "arcology",
+            "tower",
+            "spire",
+            "high-rise",
+            "city"
+          ]
+        },
+        "pyramid": {
+          "name": "Pyramid",
+          "form": "pyramid",
+          "place": "ground",
+          "living": "home",
+          "spin": false,
+          "words": [
+            "pyramid",
+            "ziggurat",
+            "megacity",
+            "hive"
+          ]
+        },
+        "sprawl": {
+          "name": "Sprawl",
+          "form": "sprawl",
+          "place": "ground",
+          "living": "home",
+          "spin": false,
+          "words": [
+            "sprawl",
+            "city",
+            "town",
+            "downport",
+            "streets",
+            "spaceport"
+          ]
+        },
+        "buried": {
+          "name": "Buried base",
+          "form": "buried",
+          "place": "ground",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "buried",
+            "underground",
+            "bunker",
+            "regolith",
+            "shelter",
+            "vault",
+            "research"
+          ]
+        },
+        "crater_city": {
+          "name": "Roofed crater",
+          "form": "crater",
+          "place": "ground",
+          "living": "home",
+          "spin": false,
+          "words": [
+            "crater",
+            "roofed",
+            "rim"
+          ]
+        },
+        "aerostat": {
+          "name": "Floating city",
+          "form": "aerostat",
+          "place": "air",
+          "living": "home",
+          "spin": false,
+          "words": [
+            "floating",
+            "aerostat",
+            "cloud",
+            "balloon",
+            "sky city",
+            "airship"
+          ]
+        },
+        "sea_platform": {
+          "name": "Sea platform",
+          "form": "platform",
+          "place": "sea",
+          "living": "post",
+          "spin": false,
+          "words": [
+            "sea",
+            "ocean",
+            "platform",
+            "rig",
+            "offshore"
+          ]
+        }
+      },
+      "station_skin": {
+        "panel_m": 4.0,
+        "patchiness": 0.45,
+        "wear": 0.35,
+        "why": "white hull plating, dark glass and solar cells, a bare metal truss, black radiators, grey rock and soil",
+        "surfaces": {
+          "hull": {
+            "albedo": [
+              0.74,
+              0.74,
+              0.71
+            ],
+            "roughness": 0.7,
+            "metalness": 0.05
+          },
+          "habitat": {
+            "albedo": [
+              0.62,
+              0.63,
+              0.62
+            ],
+            "roughness": 0.55,
+            "metalness": 0.3
+          },
+          "glass": {
+            "albedo": [
+              0.06,
+              0.08,
+              0.1
+            ],
+            "roughness": 0.1,
+            "metalness": 0.6
+          },
+          "truss": {
+            "albedo": [
+              0.4,
+              0.41,
+              0.43
+            ],
+            "roughness": 0.4,
+            "metalness": 0.8
+          },
+          "radiators": {
+            "albedo": [
+              0.05,
+              0.05,
+              0.06
+            ],
+            "roughness": 0.5,
+            "metalness": 0.1
+          },
+          "solar": {
+            "albedo": [
+              0.04,
+              0.05,
+              0.12
+            ],
+            "roughness": 0.25,
+            "metalness": 0.5
+          },
+          "rock": {
+            "albedo": [
+              0.22,
+              0.2,
+              0.18
+            ],
+            "roughness": 0.95,
+            "metalness": 0.0
+          },
+          "dock": {
+            "albedo": [
+              0.85,
+              0.6,
+              0.2
+            ],
+            "roughness": 0.5,
+            "metalness": 0.3
           }
         }
       }
