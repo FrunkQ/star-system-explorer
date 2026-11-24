@@ -285,6 +285,15 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             inventory::Kinds::default()
         }
     };
+    // X3j: every resource kind keeps `extracted` and `stock` (record-logic
+    // design 2.4); a pack that keeps one itself keeps its own.
+    let mut record = record;
+    for k in inventory::kept_kinds(&resources) {
+        record
+            .kinds
+            .entry(k.id.clone())
+            .or_insert_with(|| ("sse.resources".into(), k));
+    }
     // RK9: the stack's engine designs (`provides.other.engines`, id to
     // design), later packs over earlier.
     let mut engines = BTreeMap::new();
@@ -585,6 +594,60 @@ fn record_err(e: sse_record::RecordError) -> Response {
         E::Chronicle(_) => "chronicle",
     };
     err(code, e.to_string())
+}
+
+/// A place's natural amount of a resource kind: a world's, read off its
+/// composition at Survey (`read_inventory`); zero for anything else (a ship,
+/// a station, a settlement's store), which holds only stock.
+fn natural_kg(
+    u: &mut Universe,
+    a: &Address,
+    kind: &str,
+    at_s: i64,
+    sheet: &sse_reference::Reference,
+    kinds: &inventory::Kinds,
+    kept: &sse_chronicle::State,
+) -> Result<f64, Response> {
+    let text = a.to_string();
+    let Some(cut) = text.find("/sys:") else {
+        return Ok(0.0);
+    };
+    let rest = &text[cut + 1..];
+    let sys_end = rest.find('/').map_or(text.len(), |i| cut + 1 + i);
+    let system = &text[..sys_end];
+    if system.len() == text.len() || text[sys_end..].contains("/ship:") {
+        return Ok(0.0);
+    }
+    let sa: Address = system
+        .parse()
+        .map_err(|e| err("bad_address", format!("{e}")))?;
+    if !u.runs.contains_key(system) {
+        if let Some(req) = adopt::formation_request(&u.chronicle, &sa) {
+            let (_, run, _) = systems::form(req.into())?;
+            u.runs.insert(system.to_string(), run);
+        }
+    }
+    let r = inventory::read(
+        &u.chronicle,
+        &sa,
+        Some(&text),
+        Some(&[kind.to_string()]),
+        Some(at_s),
+        u.runs.get(system),
+        sheet,
+        kinds,
+        kept,
+    );
+    match r {
+        Ok(Response::InventoryRead { bodies }) => Ok(bodies
+            .first()
+            .and_then(|b| b["kinds"][0]["kg"].as_f64())
+            .unwrap_or(0.0)),
+        Ok(_) => Ok(0.0),
+        // Not a world with a mass and a radius: a construct or a place on one.
+        Err(Response::Error { code, .. }) if code == "unknown_body" => Ok(0.0),
+        Err(e) => Err(e),
+    }
 }
 
 fn in_universe(root: &Address, a: &str) -> Result<Address, Response> {
@@ -3111,6 +3174,8 @@ impl Kernel {
                     u.runs.get(&system),
                     &self.observe.reference,
                     &self.observe.resources,
+                    &u.record
+                        .state_at(UniverseTime::seconds(at_s.unwrap_or(i64::MAX))),
                 )?
             }
             Request::ReadPhotometry { stars, bands } => {
@@ -3916,6 +3981,124 @@ impl Kernel {
                     previous: previous.map_or(serde_json::Value::Null, |v| {
                         serde_json::to_value(&v).expect("plain")
                     }),
+                    state_hash: latest_hash(&u.chronicle),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::Transfer {
+                kind,
+                from,
+                to,
+                kg,
+                writer,
+                reason,
+                at_s,
+            } => {
+                if !(kg.is_finite() && kg > 0.0) {
+                    return Err(err(
+                        "bad_value",
+                        "move a positive, finite number of kilograms",
+                    ));
+                }
+                if !self.observe.resources.kinds.contains_key(&kind) {
+                    return Err(err(
+                        "unknown_resource",
+                        format!("{kind:?} is not a resource kind of this stack (provides.other.resources)"),
+                    ));
+                }
+                let reg = self.observe.record.clone();
+                let sheet = self.observe.reference.clone();
+                let kinds = self.observe.resources.clone();
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let a = in_universe(&u.root, &from)?;
+                let b = in_universe(&u.root, &to)?;
+                if a == b {
+                    return Err(err(
+                        "bad_address",
+                        "a transfer goes from one place to another",
+                    ));
+                }
+                let at = UniverseTime::seconds(at_s);
+                let state = u.record.state_at(at);
+                let natural = |u: &mut Universe, x: &Address| -> Result<f64, Response> {
+                    natural_kg(u, x, &kind, at_s, &sheet, &kinds, &state)
+                };
+                let na = natural(u, &a)?;
+                let nb = natural(u, &b)?;
+                let ha = inventory::Held::at(&state, &a, &kind, na);
+                let hb = inventory::Held::at(&state, &b, &kind, nb);
+                let Some((extracted, stock)) = ha.take(kg) else {
+                    return Err(err(
+                        "not_enough",
+                        format!(
+                            "{a} holds {:.6e} kg of {kind}, less than {kg:.6e} kg",
+                            ha.held_kg()
+                        ),
+                    ));
+                };
+                let writer = writer.unwrap_or_else(|| "transfer".into());
+                let reason = reason.or_else(|| Some(format!("{kg} kg of {kind}: {a} to {b}")));
+                let publisher = Publisher::new("gm", "transfer", "1");
+                let mut ids = vec![];
+                let mut set = |u: &mut Universe,
+                               address: &Address,
+                               kept: String,
+                               v: f64,
+                               old: f64|
+                 -> Result<(), Response> {
+                    if v == old {
+                        return Ok(());
+                    }
+                    let id = sse_record::set_kept(
+                        &mut u.record,
+                        &reg,
+                        &sse_record::KeptSet {
+                            address: address.clone(),
+                            kind: kept,
+                            value: Some(Value::Float(v)),
+                            writer: writer.clone(),
+                            reason: reason.clone(),
+                            causes: vec![],
+                        },
+                        at,
+                        &publisher,
+                    )
+                    .map_err(record_err)?;
+                    ids.push(id.hex());
+                    Ok(())
+                };
+                // Checked first, so the writes below cannot half-happen.
+                reg.check(
+                    &inventory::stock_kind(&kind),
+                    Some(&Value::Float(0.0)),
+                    &writer,
+                )
+                .map_err(record_err)?;
+                set(
+                    u,
+                    &a,
+                    inventory::extracted_kind(&kind),
+                    extracted,
+                    ha.extracted_kg,
+                )?;
+                set(u, &a, inventory::stock_kind(&kind), stock, ha.stock_kg)?;
+                set(
+                    u,
+                    &b,
+                    inventory::stock_kind(&kind),
+                    hb.stock_kg + kg,
+                    hb.stock_kg,
+                )?;
+                let after = u.record.state_at(at);
+                Response::Transferred {
+                    kind: kind.clone(),
+                    kg,
+                    from: inventory::Held::at(&after, &a, &kind, na).json(),
+                    to: inventory::Held::at(&after, &b, &kind, nb).json(),
+                    change_ids: ids,
                     state_hash: latest_hash(&u.chronicle),
                     record_hash: record_hash(u),
                 }

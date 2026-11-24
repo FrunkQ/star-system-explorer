@@ -1215,6 +1215,24 @@ pub enum Request {
         reason: Option<String>,
         at_s: i64,
     },
+    /// The record (X3j, record-logic design 2.4): move `kg` of resource
+    /// `kind` from one address to another in one decision. The source loses
+    /// what the destination gains: its stock first, then its natural amount
+    /// (raising `resource.<kind>.extracted`); the destination's stock rises.
+    /// Refused when the source holds less. Nothing is made from nothing.
+    Transfer {
+        kind: String,
+        from: String,
+        to: String,
+        kg: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        at_s: i64,
+    },
     /// The record: an actor (empire, guild, noble, party, crew) at
     /// `<root>/actor:<id>` or under `parent`.
     AddActor {
@@ -2142,6 +2160,7 @@ impl Request {
             Request::ImportChronicle { .. } => "import_chronicle",
             Request::AddNote { .. } => "add_note",
             Request::SetKept { .. } => "set_kept",
+            Request::Transfer { .. } => "transfer",
             Request::AddActor { .. } => "add_actor",
             Request::Record { .. } => "record",
             Request::Hold { .. } => "hold",
@@ -2465,6 +2484,7 @@ pub fn ops() -> Vec<OpInfo> {
         ),
         o("add_note", Cost::Light, "one event"),
         o("set_kept", Cost::Light, "one fold and one event"),
+        o("transfer", Cost::Light, "two reads of the natural amount at Survey, two kept changes"),
         o("add_actor", Cost::Light, "one fold and one event"),
         o("record", Cost::Light, "linear in the record events"),
         o(
@@ -3146,6 +3166,18 @@ pub enum Response {
         change_id: String,
         #[ts(type = "unknown")]
         previous: serde_json::Value,
+        state_hash: String,
+        record_hash: String,
+    },
+    Transferred {
+        kind: String,
+        kg: f64,
+        /// Natural, extracted, stock and held kilograms after the move.
+        #[ts(type = "unknown")]
+        from: serde_json::Value,
+        #[ts(type = "unknown")]
+        to: serde_json::Value,
+        change_ids: Vec<String>,
         state_hash: String,
         record_hash: String,
     },

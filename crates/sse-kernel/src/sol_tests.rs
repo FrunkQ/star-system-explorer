@@ -485,6 +485,123 @@ fn inventories_follow_the_makeup() {
     assert_eq!(r["code"], "unknown_resource", "{r}");
 }
 
+/// X3j (record-logic design 2.4): a resource moves only by `transfer`, which
+/// conserves it. Mining a rock raises its `extracted` and the ship's `stock`;
+/// what a place holds is natural - extracted + stock; a place cannot give
+/// more than it holds, and a made good cannot appear from nothing.
+#[test]
+fn transfers_conserve_and_mining_draws_down_a_rock() {
+    let pack = serde_json::json!({
+        "format": "sse.pack/1", "id": "test.mining", "version": "0.1.0",
+        "kind": ["universe"], "kernel_range": "^0.1", "licence": "Apache-2.0",
+        "provides": {"other": {"resources": {"kinds": [
+            {"id": "iron", "name": "Iron", "matter": "fe", "reach": "crust"},
+            {"id": "packaged-food", "name": "Packaged food"}
+        ]}}}
+    });
+    let mut k = open_sol_with(&[pack], &[]);
+    let rock = format!("{SOL}/body:40");
+    let mut edits = vec![];
+    for (f, v) in [
+        ("name", serde_json::json!("Metal rock")),
+        ("body.mass", 2.0e19.into()),
+        ("body.radius", 1.2e5.into()),
+        ("orbit.semi_major_axis", 4.2e11.into()),
+        ("orbit.host", format!("{SOL}/star:0").into()),
+        ("makeup.metal", 0.7.into()),
+        ("makeup.rock", 0.3.into()),
+        ("makeup.carbon", 0.0.into()),
+        ("makeup.ice", 0.0.into()),
+    ] {
+        edits.push(serde_json::json!({"address": rock, "field": f, "value": v}));
+    }
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,
+        "evidence":"authored","source":"test","edits":edits}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let ship = format!("{SOL}/ship:7");
+    let station = format!("{SOL}/station:2");
+    let iron = |k: &mut crate::Kernel| {
+        let r = send(
+            k,
+            serde_json::json!({"op":"read_inventory","system":SOL,"body":rock,"kinds":["iron"]}),
+        );
+        assert_eq!(r["type"], "inventory_read", "{r}");
+        r["bodies"][0]["kinds"][0].clone()
+    };
+    let before = iron(&mut k);
+    let natural = before["kg"].as_f64().unwrap();
+    assert!(natural > 1e15, "{before}");
+    assert_eq!(before["held_kg"].as_f64().unwrap(), natural);
+    assert_eq!(before["extracted_kg"].as_f64().unwrap(), 0.0);
+    let move_ = |k: &mut crate::Kernel, from: &str, to: &str, kind: &str, kg: f64, at_s: i64| {
+        send(
+            k,
+            serde_json::json!({"op":"transfer","kind":kind,"from":from,"to":to,"kg":kg,"at_s":at_s}),
+        )
+    };
+    // Mine 5 kt into the ship.
+    let r = move_(&mut k, &rock, &ship, "iron", 5.0e6, 100);
+    assert_eq!(r["type"], "transferred", "{r}");
+    assert_eq!(r["from"]["extracted_kg"].as_f64().unwrap(), 5.0e6, "{r}");
+    assert_eq!(r["to"]["stock_kg"].as_f64().unwrap(), 5.0e6, "{r}");
+    assert_eq!(
+        r["to"]["natural_kg"].as_f64().unwrap(),
+        0.0,
+        "a ship holds only stock"
+    );
+    let after = iron(&mut k);
+    assert_eq!(after["extracted_kg"].as_f64().unwrap(), 5.0e6, "{after}");
+    assert_eq!(after["held_kg"].as_f64().unwrap(), natural - 5.0e6);
+    // Earlier reads are unchanged: the record is dated.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"read_inventory","system":SOL,"body":rock,"kinds":["iron"],"at_s":50}),
+    );
+    assert_eq!(
+        r["bodies"][0]["kinds"][0]["held_kg"].as_f64().unwrap(),
+        natural,
+        "{r}"
+    );
+    // Unload 2 kt at the station; the ship cannot give more than it holds.
+    let r = move_(&mut k, &ship, &station, "iron", 2.0e6, 200);
+    assert_eq!(r["from"]["held_kg"].as_f64().unwrap(), 3.0e6, "{r}");
+    assert_eq!(r["to"]["held_kg"].as_f64().unwrap(), 2.0e6, "{r}");
+    let r = move_(&mut k, &ship, &station, "iron", 3.5e6, 300);
+    assert_eq!(r["code"], "not_enough", "{r}");
+    // Putting ore back on the rock adds stock there, so the books still balance.
+    let r = move_(&mut k, &ship, &rock, "iron", 1.0e6, 400);
+    assert_eq!(r["to"]["stock_kg"].as_f64().unwrap(), 1.0e6, "{r}");
+    assert_eq!(r["to"]["held_kg"].as_f64().unwrap(), natural - 4.0e6, "{r}");
+    // Nothing from nothing: food nobody has stocked cannot be moved.
+    let r = move_(&mut k, &station, &ship, "packaged-food", 1.0, 500);
+    assert_eq!(r["code"], "not_enough", "{r}");
+    // The GM stocks it by hand (a kept value), then it moves.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_kept","address":station,"kind":"resource.packaged-food.stock","value":800.0,"at_s":600}),
+    );
+    assert_eq!(r["type"], "kept_set", "{r}");
+    let r = move_(&mut k, &station, &ship, "packaged-food", 300.0, 700);
+    assert_eq!(r["to"]["held_kg"].as_f64().unwrap(), 300.0, "{r}");
+    assert_eq!(r["from"]["held_kg"].as_f64().unwrap(), 500.0, "{r}");
+    // Bad asks are refused in words.
+    assert_eq!(
+        move_(&mut k, &ship, &ship, "iron", 1.0, 800)["code"],
+        "bad_address"
+    );
+    assert_eq!(
+        move_(&mut k, &ship, &station, "iron", -1.0, 800)["code"],
+        "bad_value"
+    );
+    assert_eq!(
+        move_(&mut k, &ship, &station, "unobtainium", 1.0, 800)["code"],
+        "unknown_resource"
+    );
+}
+
 /// MP8c: a giant is mostly an envelope of hydrogen and helium, at the birth
 /// cloud's shares, around the mass-metallicity relation's heavy elements
 /// (Thorngren et al. 2016): Jupiter about 14% heavy, Neptune far more.

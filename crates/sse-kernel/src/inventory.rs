@@ -7,7 +7,10 @@
 //! kind by itself, so a resource nobody declared still has an inventory.
 //! No dice: the same world always holds the same amounts. What is mined
 //! out (`extracted`) and what is brought in (`stock`) are kept values on
-//! top, owned by the record (the Traveller pack thread).
+//! top (record-logic design 2.4, X3j): every resource kind gets the two kept
+//! kinds `resource.<kind>.extracted` and `resource.<kind>.stock`, on any
+//! address, and what a place holds is natural - extracted + stock. Goods
+//! move only by `transfer`, which conserves them.
 
 use crate::adopt::worlds_at;
 use crate::err;
@@ -112,7 +115,89 @@ impl Kinds {
     }
 }
 
-/// One kind's amount on one world.
+/// The record's kept kind for what has been taken from a place's natural
+/// amount of `kind`, and for what has been put or made there.
+pub fn extracted_kind(kind: &str) -> String {
+    format!("resource.{kind}.extracted")
+}
+pub fn stock_kind(kind: &str) -> String {
+    format!("resource.{kind}.stock")
+}
+
+/// The two kept kinds every resource kind gets (record-logic design 2.4).
+/// Writers: the GM and `transfer`; a pack's own effects name them to join.
+pub fn kept_kinds(kinds: &Kinds) -> Vec<sse_record::KeptKind> {
+    let mut out = vec![];
+    for (id, (_, k)) in &kinds.kinds {
+        let name = k.name.clone().unwrap_or_else(|| id.clone());
+        for (kept, describes) in [
+            (
+                extracted_kind(id),
+                format!("{name} taken from this place's natural amount, kg"),
+            ),
+            (stock_kind(id), format!("{name} put or made here, kg")),
+        ] {
+            out.push(sse_record::KeptKind {
+                id: kept,
+                shape: sse_record::Shape::Number,
+                unit: Some("kg".into()),
+                range: Some((0.0, f64::MAX)),
+                choices: vec![],
+                default: None,
+                tier: "surveyed".into(),
+                writers: vec!["gm".into(), "transfer".into()],
+                describes,
+            });
+        }
+    }
+    out
+}
+
+/// A kept number in kilograms (absent: 0).
+pub fn kept_kg(state: &sse_chronicle::State, a: &Address, kind: &str) -> f64 {
+    match state.get(a, kind) {
+        Some(sse_core::cbor::Value::Float(f)) => *f,
+        Some(sse_core::cbor::Value::Int(i)) => *i as f64,
+        _ => 0.0,
+    }
+}
+
+/// Natural, extracted, stock and held kilograms of `kind` at `a`.
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub struct Held {
+    pub natural_kg: f64,
+    pub extracted_kg: f64,
+    pub stock_kg: f64,
+}
+impl Held {
+    pub fn at(state: &sse_chronicle::State, a: &Address, kind: &str, natural_kg: f64) -> Held {
+        Held {
+            natural_kg,
+            extracted_kg: kept_kg(state, a, &extracted_kind(kind)),
+            stock_kg: kept_kg(state, a, &stock_kind(kind)),
+        }
+    }
+    pub fn held_kg(&self) -> f64 {
+        (self.natural_kg - self.extracted_kg).max(0.0) + self.stock_kg
+    }
+    /// Take `kg` away: stock first, then the natural amount. The new
+    /// (extracted, stock), or None when the place holds less.
+    pub fn take(&self, kg: f64) -> Option<(f64, f64)> {
+        if kg > self.held_kg() {
+            return None;
+        }
+        let from_stock = kg.min(self.stock_kg);
+        Some((
+            self.extracted_kg + (kg - from_stock),
+            self.stock_kg - from_stock,
+        ))
+    }
+    pub fn json(&self) -> serde_json::Value {
+        serde_json::json!({"natural_kg": self.natural_kg, "extracted_kg": self.extracted_kg,
+            "stock_kg": self.stock_kg, "held_kg": self.held_kg()})
+    }
+}
+
 /// An isotope resource: its element and its mass share of that element
 /// (the sheet's protosolar atom fraction), or why it cannot be counted.
 type Isotope = Option<Result<(String, f64), String>>;
@@ -210,6 +295,7 @@ pub(crate) fn read(
     run: Option<&SystemRun>,
     sheet: &sse_reference::Reference,
     declared: &Kinds,
+    kept: &sse_chronicle::State,
 ) -> Result<Response, Response> {
     let rows = Sheet::read(sheet);
     let is_isotope = |id: &str| sheet.row("isotopes", id).is_some();
@@ -283,15 +369,27 @@ pub(crate) fn read(
             &settings,
         );
         let stand_ins = vec![
-            "natural amounts only: what has been mined out and what has been brought in are kept values on top".to_string(),
-            "deposits are part of the crust: survey_surface's holdings say how much of it is ore".to_string(),
+            "deposits are part of the crust: survey_surface's holdings say how much of it is ore"
+                .to_string(),
         ];
+        let kinds: Vec<serde_json::Value> = wanted
+            .iter()
+            .map(|k| {
+                let mut v = amount(&c, k, &isotope_of(k));
+                let natural = v["kg"].as_f64().unwrap_or(0.0);
+                let h = Held::at(kept, &b.address, &k.id, natural);
+                if let (Some(o), serde_json::Value::Object(extra)) = (v.as_object_mut(), h.json()) {
+                    o.extend(extra);
+                }
+                v
+            })
+            .collect();
         out.push(serde_json::json!({
             "body": b.address.to_string(),
             "label": b.label,
             "mass_kg": c.bulk.mass_kg,
             "source": c.bulk.source,
-            "kinds": wanted.iter().map(|k| amount(&c, k, &isotope_of(k))).collect::<Vec<_>>(),
+            "kinds": kinds,
             "stand_ins": stand_ins,
         }));
     }

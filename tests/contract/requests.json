@@ -3391,6 +3391,14 @@
   "kinds": ["unobtainium"]
  },
  {
+  "op": "transfer",
+  "kind": "iron",
+  "from": "u:matter/sys:1/body:0",
+  "to": "u:matter/sys:1/ship:0",
+  "kg": 1000.0,
+  "at_s": 0
+ },
+ {
   "op": "effect_at_range",
   "asks": [
    {
