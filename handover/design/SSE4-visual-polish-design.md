@@ -1,6 +1,6 @@
 # SSE4 visual polish: closing the gap to SpaceEngine, pass by pass
 
-Design note, 24 Nov 2026. Track code **VP** (never shown in the product). Status: **accepted by Alex, 24 Nov 2026 18:57 UTC ("yes to all" ten questions in section 14)**. Builders may take the packages in section 12. Design only: no code was written for this note. **Addendum of 24 Nov 19:06 in section 16** (systems, not Solar System fixes; aurorae) has three new questions waiting on Alex. Still open: the citations marked "from memory" (Alex is bringing a research pass back) and every cost marked as an estimate.
+Design note, 24 Nov 2026. Track code **VP** (never shown in the product). Status: **accepted by Alex, 24 Nov 2026 18:57 UTC ("yes to all" ten questions in section 14)**. Builders may take the packages in section 12. Design only: no code was written for this note. **Addendum of 24 Nov 19:06 in section 16** (systems, not Solar System fixes; aurorae) has four new questions waiting on Alex. Still open: the citations marked "from memory" (Alex is bringing a research pass back) and every cost marked as an estimate.
 
 Asked for by Alex, 24 Nov, in four lines:
 
@@ -702,7 +702,7 @@ From memory, to verify before building (title, formula and licence each): Hillai
 
 Alex, 19:06: "As we improve this renderer we are not just fixing it for the solar system. We are instead building SYSTEMS to ensure the right visuals get overlaid the right way, so they are concepts applied to all exoplanets and can be scaled accordingly and applied when the physics says so. Auroras are key too. Now we can have several different types and places they can occur (calculated) and we know their colours (in SSE3, multiband for O2)."
 
-The first part is a ruling as given. The second adds a package group. Three new questions are in 16.4.
+The first part is a ruling as given. The second adds a package group. Four new questions are in 16.6.
 
 ### 16.1 The rule: every look is a system that the physics switches on
 
@@ -804,11 +804,11 @@ One mechanism: **a driver puts energetic particles into some air at some place; 
 
 ### 16.4 Packages added, and owners
 
-**Facts: Build light and nebulae** (extends MF9 part 2; replaces VP-L2):
+**Facts: Build light and nebulae.** These are **MF9 part 2 as the magnetic fields design already assigns it**, not a second aurora track: the VP-AU numbers below only name its slices and add the heights and the missing kinds. They stay rows under MF9 in `status/light.md`, and they replace VP-L2:
 
 | Package | What |
 |---|---|
-| **VP-AU1** | Emission line rows on the data sheet for the air gases (wavelength, lifetime, yield), read through Look up; with the data sheet thread |
+| **VP-AU1** | Emission lines move from the light pack's list onto the data sheet, each naming its element or substance id, with lifetime and yield added (16.5); read through Look up. Data sheet thread, with the light thread |
 | **VP-AU2** | Power per driver and brightness per line; height per line from stopping depth and collision quenching; `read_field`'s `aurora` gains a list of kinds, each with place, lines, heights and brightness |
 | **VP-AU3** | The missing kinds: proton aurora, dayside spots, moon tails, glow in a host's belts, storm events from O10 |
 | **VP-AU4** | Airglow as a driver (if question 14 is yes) |
@@ -825,9 +825,29 @@ One mechanism: **a driver puts energetic particles into some air at some place; 
 
 Proving worlds for aurora packages: an Earth-like fixture; proving worlds 2 (no star), 6 (tall curtains), 7 (host's plasma) and 9 (ovals far from the spin poles); and world 8 as the one where it stays off.
 
-### 16.5 Questions for Alex (numbering continues from section 14)
+### 16.5 "Does our element editor have the aurora colours in it?" (Alex, 19:07)
+
+**Not yet.** Checked on main at 9a29dc0:
+
+| Piece | State |
+|---|---|
+| Where the lines are | A list of 27 named lines in the light pack (`packs/base-light`), each with a wavelength and a **free-text** species. It has oxygen's green (557.7 nm) and red (630.0 nm), nitrogen's violet (391.4 nm), hydrogen's Balmer lines and sodium's yellow. So oxygen already has two of its bands, as SSE3 did |
+| What is missing from that list for aurorae | Oxygen's second red line (636.4 nm) and its near-infrared lines; nitrogen's blue (427.8 nm) and the red-pink band that makes the lower fringe; carbon dioxide's and carbon monoxide's ultraviolet bands; hydrogen's ultraviolet bands and the infrared glow of giants' upper air. And for every line, the two numbers the height rule needs: how long the line takes to emit, and how readily it is excited **[each row to be checked against its source]** |
+| Lines tied to elements | **Designed, not built.** The matter design says "spectral lines name an element or substance id instead of free text" (its section on the optical group). Today nothing joins "O I" in the light pack to oxygen on the sheet |
+| The Elements screen | **Built, read only** (MP10b): the periodic table coloured by where each element was made, with a card per element. It shows no lines and has no editing |
+| Aurora colours from the lines | **Designed, not built** (magnetic fields 6.5; MF9 part 2) |
+
+**What it should be** (and question 15):
+
+- Each element's and each substance's card in Reference gains a section, **"Light it gives off"**: its lines as a strip across the spectrum in their real colours, each with its wavelength, how long it takes to emit and how readily it is excited, and its source. One line of plain words under it: "In air like this world's it glows green at about 100 km and red above 200 km", computed for the world you came from.
+- On the Build desk a GM can **edit a line or add one**, as a pack overlay like any other sheet edit, marked authored. An invented gas given lines gets its own aurora, at heights the same rule computes, with no code. "Ask Orac for a gas that glows teal" then works end to end.
+- The aurora card on a world lists which gases are glowing, in which colours, at which heights, and each links back to its element card. That is SSE3's "multiband for O2" made general: any gas, any number of bands, heights computed.
+- Owners: the rows and ids are the data sheet thread's (VP-AU1); the card section is the chart room thread's (the screen side of MP10); editing follows the editing design's rules for sheet values.
+
+### 16.6 Questions for Alex (numbering continues from section 14)
 
 11. **Ten proving worlds** (16.1) kept as shared fixtures, and every VP package shown on a Solar System body, on a world that is not, and on a world where the look must stay off. *Recommend yes.*
 12. **A new builder thread, "Build aurorae and night lights"**, for the drawing (aurorae, city lights, lightning), with the facts staying in the light thread. *Recommend yes.*
 13. **Aurora to the eye and to the camera.** Really faint aurorae look grey-white to the eye, and green and red only in a long exposure. In True, the exposure adapts on the night side so bright aurorae show their colour, faint ones are pale, and "Long exposure" shows full colour and says so. *Recommend yes: it is true, testable, and the long exposure still gives the spectacular picture.* The alternative is always full colour, which is prettier and not what an eye sees.
 14. **Airglow** as one more driver in the same machinery, after the aurora kinds. *Recommend yes.*
+15. **"Light it gives off" on every element and substance card**, with the lines editable on the Build desk so an invented gas gets its own aurora. *Recommend yes.*
