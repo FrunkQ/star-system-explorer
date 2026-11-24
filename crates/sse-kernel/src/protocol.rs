@@ -183,6 +183,11 @@ pub enum Request {
     },
     History {
         address: String,
+        /// Also give each event's fact changes at exactly this address (the ship's Log names what a refit
+        /// changed). Off by default, so the plain answer is unchanged.
+        #[serde(default)]
+        #[ts(optional)]
+        changes: Option<bool>,
     },
     StateHash {
         #[serde(default)]
@@ -2691,6 +2696,31 @@ pub struct EventSummary {
     pub occurred_at_s: i64,
     pub evidence: String,
     pub subject: Vec<String>,
+    /// The facts this event set or unset at the asked address, by field (only when `history` asked for changes).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub changes: Option<Vec<FactChange>>,
+}
+
+/// One fact an event set (`value`) or unset (`unset: true`). A value over `FactChange::LARGE` bytes of JSON (a
+/// picture) is left out and marked `large`, so a history stays small.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FactChange {
+    pub field: String,
+    #[ts(type = "unknown")]
+    #[serde(default)]
+    pub value: serde_json::Value,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(type = "boolean | undefined")]
+    pub unset: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(type = "boolean | undefined")]
+    pub large: bool,
+}
+
+impl FactChange {
+    pub const LARGE: usize = 4096;
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]

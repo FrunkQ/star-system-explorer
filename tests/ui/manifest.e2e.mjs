@@ -180,12 +180,13 @@ try {
   await man.locator("[data-move-confirm]").click();
   await man.locator("[data-aboard-note]", { hasText: "moved to Brass Lark" }).waitFor();
   await man.locator("[data-cargo] li", { hasText: "machine parts" }).waitFor({ state: "detached" });
-  // The ship's log (MC5) reads the comings and goings, the cold sleep and the fuel top-up, newest first.
+  // The ship's log (MC5) reads the comings and goings, the cold sleep and the fuel top-up, newest first; and (MC6)
+  // each Build change says what changed: the design, the pictures and the one it opens on.
   await desk.locator("[data-log-toggle]").click();
   const logOf = desk.locator("[data-log]");
   await logOf.locator("[data-log-what=aboard]", { hasText: "machine parts (3 t) left for Brass Lark" }).waitFor();
   const lines = await logOf.locator("li").allInnerTexts();
-  for (const want of [/Ada Moss came aboard/, /Rhee is in cold sleep/, /water \(500 kg\) came aboard/, /Jump fuel: 19\.838 \(\+14\.838\)[\s\S]*topped up/]) assert.ok(lines.some((l) => want.test(l)), `log has ${want}: ${lines.join(" | ")}`);
+  for (const want of [/Ada Moss came aboard/, /Rhee is in cold sleep/, /water \(500 kg\) came aboard/, /Jump fuel: 19\.838 \(\+14\.838\)[\s\S]*topped up/, /Changed: Design changed/, /Changed: Pictures changed/, /Opens on [a-z]+ → picture:0|Opens on picture:0/]) assert.ok(lines.some((l) => want.test(l)), `log has ${want}: ${lines.join(" | ")}`);
   await logOf.scrollIntoViewIfNeeded();
   await shot(page, "log-aboard-desk");
   await desk.locator("[data-log-toggle]").click();
