@@ -1,6 +1,6 @@
 import { mount, unmount } from "svelte";
-import { flatChart, type ViewModule } from "../../../ui-contract/src/index.ts";
-import { GALAXY_CONTROLS } from "./controls.ts";
+import type { ViewModule } from "../../../ui-contract/src/index.ts";
+import { GALAXY_CONTROLS, YOUR_SYSTEMS_CONTROLS } from "./controls.ts";
 import GalaxyChart from "./GalaxyChart.svelte";
 import YourSystems from "./YourSystems.svelte";
 
@@ -46,7 +46,7 @@ export const yourSystems: ViewModule = {
   id: "sse.view.your-systems",
   version: "0.1.0",
   tiers: ["text", "canvas"],
-  controls: flatChart("The campaign's map is drawn from above for now"),
+  controls: YOUR_SYSTEMS_CONTROLS,
   inputs: [{ event_kinds: [] }],
   params: [],
   intents: [],

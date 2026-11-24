@@ -29,6 +29,13 @@ see what is in it); Alex accepted both for stage 2 (23 and 24 Nov).
   Not on the map yet) with a "Names here ›" door that opens `NamesHere` from `views/reference` for that system's
   address (read its names; on Build set the scheme per layer). The e2e opens it on the sample.
 
+- **Part 2a, routes, grid and heights** (24 Nov): `Session.linksIn` reads the kernel's `links_in`; `systemRoutes`
+  joins the links between places in two campaign systems into one route per pair (`systemOf` matches the longest
+  system prefix), one way only when every link runs the same way (dashed, with an arrow). The view has its own controls
+  (`YOUR_SYSTEMS_CONTROLS`, chart from above only for now); HUD shows a grid at the scale bar's step (`gridLines`) and
+  names. `layoutSystems` fits both a system and the foot of its stalk; the stalk runs from the map up (or down) to the
+  system, and the e2e checks it joins.
+
 ## Honest limits
 - Systems are not yet placed in the galaxy's own star cells (G5 pins and G7, the campaign's galaxy): a grown system
   has no place. A V3 map's unit is read from `v3.distanceUnit` when the read-back carries it; the universe-level fact
@@ -38,5 +45,4 @@ see what is in it); Alex accepted both for stage 2 (23 and 24 Nov).
   scale, which the design allows to become the patch scale later.
 
 ## Next
-Picker rows read `summaryWords` (navigation thread, NV2 part 2). Part 2: routes between systems as authored links
-(HW1), "Add system here" and "Add near here", the home star cell behind the map from `star_cell`.
+Picker rows read `summaryWords` (navigation thread, NV2 part 2). Part 2b: "Add system here" and "Add near here", the home star cell behind the map from `star_cell`.

@@ -104,7 +104,9 @@ export function layoutSystems(list: readonly Pick<CampaignSystem, "system" | "po
   const placed = list.filter((x): x is { system: string; position: MapPoint } => x.position !== null);
   if (!placed.length) return { marks: [], unitsPerPx: 1 };
   const xs = placed.map((p) => p.position.x);
-  const ys = placed.map((p) => p.position.y);
+  // A system above or below the plane is drawn lifted by its height (y up on the page), so both the foot of its
+  // stalk and the system itself must fit.
+  const ys = placed.flatMap((p) => [p.position.y, p.position.y + p.position.z]);
   const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
   const span = Math.max(x1 - x0, y1 - y0);
   const inner = size - 2 * margin;
@@ -124,4 +126,66 @@ export function mapScaleBar(unitsPerPx: number, target = 100): { units: number; 
   const p = 10 ** Math.floor(Math.log10(want));
   const units = [1, 2, 5, 10].map((m) => m * p).reduce((a, b) => (Math.abs(b - want) < Math.abs(a - want) ? b : a));
   return { units, px: units / unitsPerPx };
+}
+
+/** A link the record holds between two places (kernel `links_in`, HW1), as the map reads it. */
+export interface RecordLink {
+  id: string;
+  a: string;
+  b: string;
+  name?: string;
+  kind?: string;
+  one_way?: boolean;
+}
+
+/** A route on the map: two of the campaign's systems joined by one or more links between places in them. */
+export interface SystemRoute {
+  a: string;
+  b: string;
+  /** The links' own names or kinds, in the order the record gave them ("jump-2 lane", "the Spinward Gate"). */
+  words: string[];
+  /** Every link one way from a to b. */
+  one_way: boolean;
+  links: string[];
+}
+
+/** The system an address sits in: the longest system address that is it or holds it; null when none does. */
+export function systemOf(address: string, systems: readonly string[]): string | null {
+  let best: string | null = null;
+  for (const s of systems) if (s && (address === s || address.startsWith(s + "/")) && (!best || s.length > best.length)) best = s;
+  return best;
+}
+
+/**
+ * Routes between the campaign's systems from the record's links: a link between places in two different systems is a
+ * route between them (a link inside one system, or to a place outside every system, is not drawn here). Links between
+ * the same pair join into one route; it is one way only if every one of them runs the same way.
+ */
+export function systemRoutes(links: readonly RecordLink[], systems: readonly string[]): SystemRoute[] {
+  const out = new Map<string, SystemRoute & { dirs: Set<string> }>();
+  for (const l of links) {
+    const a = systemOf(l.a, systems);
+    const b = systemOf(l.b, systems);
+    if (!a || !b || a === b) continue;
+    const [x, y] = a < b ? [a, b] : [b, a];
+    const key = `${x}\u0000${y}`;
+    const r = out.get(key) ?? { a: x, b: y, words: [], one_way: true, links: [], dirs: new Set<string>() };
+    r.links.push(l.id);
+    const w = l.name || l.kind;
+    if (w && !r.words.includes(w)) r.words.push(w);
+    r.dirs.add(l.one_way ? (a === x ? "ab" : "ba") : "both");
+    out.set(key, r);
+  }
+  return [...out.values()].map(({ dirs, ...r }) => {
+    const one = dirs.size === 1 && !dirs.has("both");
+    return one && dirs.has("ba") ? { ...r, a: r.b, b: r.a, one_way: true } : { ...r, one_way: one };
+  });
+}
+
+/** Grid lines for a square grid every `step` drawing units across a square drawing `size` wide, centred on `mid`. */
+export function gridLines(size: number, step: number, mid = size / 2): number[] {
+  if (!(step > 0) || size / step > 200) return [];
+  const out: number[] = [];
+  for (let v = mid - Math.floor(mid / step) * step; v <= size; v += step) out.push(v);
+  return out;
 }

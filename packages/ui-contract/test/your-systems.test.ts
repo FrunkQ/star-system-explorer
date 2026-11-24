@@ -68,3 +68,26 @@ test("the loader reads each system back, counts it, and keeps one it cannot read
   assert.equal(lost!.position, null);
   assert.equal(mapUnit({ facts: {} }), null);
 });
+
+test("routes join systems from the record's links; links inside one system or to nowhere are left out", async () => {
+  const { systemOf, systemRoutes, gridLines } = await import("../src/your-systems.ts");
+  const sys = ["u/sys:1", "u/sys:2", "u/sys:10"];
+  assert.equal(systemOf("u/sys:10/planet:3", sys), "u/sys:10", "sys:1 does not claim sys:10's bodies");
+  assert.equal(systemOf("u/elsewhere", sys), null);
+  const routes = systemRoutes(
+    [
+      { id: "l1", a: "u/sys:1/planet:1", b: "u/sys:2", name: "the Spinward Gate", one_way: true },
+      { id: "l2", a: "u/sys:2/moon:1", b: "u/sys:1/planet:2", kind: "jump lane" },
+      { id: "l3", a: "u/sys:10/planet:1", b: "u/sys:10/planet:2", kind: "tether" },
+      { id: "l4", a: "u/sys:10", b: "u/void", kind: "lane" },
+      { id: "l5", a: "u/sys:10", b: "u/sys:1", one_way: true, kind: "slipstream" },
+    ],
+    sys,
+  );
+  assert.equal(routes.length, 2);
+  const [r12, r101] = routes;
+  assert.deepEqual([r12!.a, r12!.b, r12!.one_way, r12!.words, r12!.links], ["u/sys:1", "u/sys:2", false, ["the Spinward Gate", "jump lane"], ["l1", "l2"]]);
+  assert.deepEqual([r101!.a, r101!.b, r101!.one_way], ["u/sys:10", "u/sys:1", true], "a one-way route keeps its direction");
+  assert.deepEqual(gridLines(100, 25), [0, 25, 50, 75, 100]);
+  assert.deepEqual(gridLines(100, 0), []);
+});

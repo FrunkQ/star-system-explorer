@@ -184,6 +184,8 @@ export interface ViewSession {
   calendar(): Promise<{ ok: true; calendar?: PackCalendar } | { ok: false; code: string; message: string }>;
   /** Every system in the open universe that has facts (kernel `systems`): adopted ones and authored ones. */
   listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
+  /** The links between places the record holds (kernel `links_in`, HW1): gates, lanes, routes; the GM sees all. Read only. */
+  linksIn?(ask?: { bounds?: string; audience?: string }): Promise<{ ok: true; links: import("./your-systems.ts").RecordLink[] } | { ok: false; code: string; message: string }>;
   /** Candidate courses (V8, kernel `plan_route`, T3): from an inline system any seat may ask about; an adopted `system` is GM only. Writes nothing. */
   planRoute(ask: import("./route.ts").RouteAsk): Promise<{ ok: true; plan: import("./route.ts").RoutePlan } | { ok: false; code: string; message: string }>;
   /** What a ship can do at each of some worlds (kernel `ship_at_world`): aerocapture, entry, landing, take-off, with dangers, margins and rough chances; nothing rolled. An adopted `system` is GM only. Writes nothing. */
@@ -950,6 +952,11 @@ export class Session implements ViewSession {
     if (r.type !== "calendar_is") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const c = (r as unknown as { calendar?: PackCalendar }).calendar;
     return c ? { ok: true, calendar: c } : { ok: true };
+  }
+
+  async linksIn(ask: { bounds?: string; audience?: string } = {}): Promise<{ ok: true; links: import("./your-systems.ts").RecordLink[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "links_in", ...ask });
+    return r.type === "links_listed" ? { ok: true, links: (r as unknown as { links: import("./your-systems.ts").RecordLink[] }).links } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }> {

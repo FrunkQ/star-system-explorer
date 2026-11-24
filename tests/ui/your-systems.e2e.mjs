@@ -9,6 +9,9 @@ import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 import { more } from "./nav.mjs";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+
+const sample = JSON.parse(readFileSync("packages/shell/src/documents/sample-sol.v3.json", "utf8"));
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
 const args = process.argv.slice(2);
@@ -43,18 +46,28 @@ try {
     await gm.waitForFunction(() => document.querySelector("[aria-label='System on the chart']")?.getAttribute("data-viewing"), null, { timeout: 15000 });
     await more(gm, "Make a system");
     await dlg.getByRole("tab", { name: "Import a V3 save" }).click();
-    await dlg.getByRole("button", { name: "Try a sample save" }).click();
+    // The sample save as a starmap with a twin 5 light years off (and 1 above), so two systems have places of their own.
+    const twin = structuredClone(sample.systems[0]);
+    twin.name = "Twin";
+    twin.position = { x: 4, y: 3, z: 1 };
+    if (twin.system) twin.system.name = "Twin";
+    await dlg.locator("input[type=file]").setInputFiles({ name: "starmap.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify({ ...sample, systems: [sample.systems[0], twin] })) });
     await dlg.getByLabel("Import report").waitFor({ timeout: 8000 });
-    await dlg.getByRole("button", { name: "Add this system to the campaign" }).click();
+    await dlg.getByRole("button", { name: /Add (this system|these systems|them|.*) to the campaign/ }).first().click();
     await gm.waitForFunction(() => document.querySelector("[aria-label='System on the chart']")?.getAttribute("data-viewing")?.endsWith("sys:@1"), null, { timeout: 15000 });
 
     // Your systems, the galaxy scale's second instrument (a link to it, as the place line writes one).
     await gm.evaluate(() => (location.hash = "#chart/galaxy~systems"));
     const ys = gm.locator(".ys");
     await gm.waitForFunction(() => Number(document.querySelector(".ys")?.getAttribute("data-your-systems")) >= 2, null, { timeout: 30000 });
-    assert.match(await ys.locator("[data-lede]").innerText(), /systems in this campaign, 1 placed by its own map/);
-    const sol = ys.locator("svg a.sys").first();
-    assert.equal(await ys.locator("svg a.sys").count(), 1, "the sample sits on the map where its save puts it");
+    await gm.waitForFunction(() => document.querySelectorAll(".ys svg a.sys").length >= 2, null, { timeout: 15000 });
+    assert.match(await ys.locator("[data-lede]").innerText(), /systems in this campaign, 2 placed by their own map/);
+    const sol = ys.locator("svg a.sys", { hasText: "Sol" }).first();
+    assert.equal(await ys.locator("svg a.sys").count(), 2, "the sample and its twin sit on the map where their save puts them");
+    assert.ok((await ys.locator("[data-grid] line").count()) >= 4, "a grid under HUD");
+    assert.equal(await ys.locator("svg .stalk").count(), 1, "the twin above the plane has its stalk");
+    const joins = await ys.locator("svg a.sys:has(.stalk)").evaluate((a) => Math.abs(Number(a.querySelector(".stalk").getAttribute("y2")) - Number(a.querySelector(".star").getAttribute("cy"))));
+    assert.ok(joins < 0.01, `the stalk runs from the map up to the system (${joins})`);
     assert.ok((await ys.locator("[data-unplaced] li").count()) >= 1, "the grown system is listed, not put somewhere made up");
     // Every listed system says what it holds; the campaign's own one fills in once the chart's scene for it arrives.
     await gm.waitForFunction(() => [...document.querySelectorAll(".ys [data-unplaced] li")].every((li) => /\d+ (star|planet)/.test(li.textContent ?? "")), null, { timeout: 15000 });

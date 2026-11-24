@@ -8,7 +8,8 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { NamesHere } from "../../reference/src/index.ts";
-  import { layoutSystems, placeHash, readCampaignSystems, mapScaleBar, summaryWords, systemSummary, type CampaignSystem, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { YOUR_SYSTEMS_CONTROLS } from "./controls.ts";
+  import { DEFAULT_VIEW, gridLines, hudShows, systemRoutes, viewOptions, type RecordLink, layoutSystems, placeHash, readCampaignSystems, mapScaleBar, summaryWords, systemSummary, type CampaignSystem, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -27,7 +28,12 @@
       failed = null;
       listed = r.systems;
     });
+    ctx.session.linksIn?.().then((r) => g === gen && (links = r.ok ? r.links : []));
   });
+  // Routes between the campaign's systems: the record's links (HW1) between places in two of them.
+  let links = $state<RecordLink[]>([]);
+  // HUD (rule 12): the grid and the names are the overlay; routes and systems always show.
+  const hud = $derived(viewOptions(YOUR_SYSTEMS_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown.hud);
   // Bodies the shell has shown this session, by system: a system whose read-back holds no bodies (the campaign's
   // own, which lives in the shipped fixture, not the universe) still says what it holds once the chart has drawn it.
   let seen = $state<Record<string, SystemScene["subjects"]>>({});
@@ -52,6 +58,7 @@
   /** The campaign's own system opens as itself (an empty system in the link); the others by address. */
   const link = (x: CampaignSystem) => placeHash({ scale: "system", system: x.system === (ownSystem ?? "") ? "" : x.system });
   const S = 560;
+  const routes = $derived(systemRoutes(links, all.map((x) => x.system)));
   let zoom = $state(1);
   let pan = $state<[number, number]>([0, 0]);
   const laid = $derived(layoutSystems(all, S, 56));
@@ -61,6 +68,8 @@
   const unit = $derived(placed.find((x) => x.unit)?.unit ?? null);
   const unitWords = $derived(unit === "ly" ? "light years" : unit === "pc" ? "parsecs" : unit ? unit : "map units");
   const bar = $derived(mapScaleBar(laid.unitsPerPx / zoom, 110));
+  // The grid under HUD: one line every scale-bar length, through the map's middle.
+  const grid = $derived(gridLines(S, mapScaleBar(laid.unitsPerPx, 110).px));
 
   // Zoom and slide (interface rule 11: a flat chart zooms and slides): the wheel or a pinch zooms about the pointer,
   // a drag slides. Double-click puts it back.
@@ -143,13 +152,24 @@
           data-zoom={zoom}
         >
           <rect class="box" x="8" y="8" width={S - 16} height={S - 16} />
+          {#if hudShows(hud, "grid") && placed.length > 1}
+            <g class="grid" data-grid>{#each grid as v (v)}<line x1={v} y1="8" x2={v} y2={S - 8} /><line x1="8" y1={v} x2={S - 8} y2={v} />{/each}</g>
+          {/if}
+          {#each routes as r (r.a + "|" + r.b)}
+            {@const p = at.get(r.a)}
+            {@const q = at.get(r.b)}
+            {#if p && q}
+              <line class="route" class:one-way={r.one_way} x1={p.px} y1={p.py - p.pz} x2={q.px} y2={q.py - q.pz} marker-end={r.one_way ? "url(#ys-arrow)" : undefined} data-route={r.links.join(" ")}><title>{r.words.length ? r.words.join(", ") : "A route the record holds"}</title></line>
+            {/if}
+          {/each}
+          <defs><marker id="ys-arrow" viewBox="0 0 8 8" refX="14" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="arrow" /></marker></defs>
           {#each placed as x (x.system)}
             {@const m = at.get(x.system)!}
             <a href={link(x)} class="sys" data-system={x.system} aria-label="{x.title}: {summaryWords(x.summary)}" onpointerenter={(e) => rest(e, x)} onpointerleave={() => leave(x)} onclick={(e) => drag?.moved && e.preventDefault()}>
-              {#if Math.abs(m.pz) > 1}<line class="stalk" x1={m.px} y1={m.py} x2={m.px} y2={m.py + m.pz} />{/if}
+              {#if Math.abs(m.pz) > 1}<line class="stalk" x1={m.px} y1={m.py} x2={m.px} y2={m.py - m.pz} />{/if}
               <circle class="star" class:life={x.summary.life.length > 0} cx={m.px} cy={m.py - m.pz} r={size(x) / Math.sqrt(zoom)} />
               {#if x.summary.stars > 1}<circle class="ring" cx={m.px} cy={m.py - m.pz} r={(size(x) + 4) / Math.sqrt(zoom)} />{/if}
-              <text class="name" x={m.px + (size(x) + 6) / Math.sqrt(zoom)} y={m.py - m.pz + 4 / Math.sqrt(zoom)} style="font-size: {18 / Math.sqrt(zoom)}px">{x.title}</text>
+              {#if hudShows(hud, "labels")}<text class="name" x={m.px + (size(x) + 6) / Math.sqrt(zoom)} y={m.py - m.pz + 4 / Math.sqrt(zoom)} style="font-size: {18 / Math.sqrt(zoom)}px">{x.title}</text>{/if}
             </a>
           {/each}
         </svg>
@@ -241,6 +261,22 @@
     fill: none;
     stroke: var(--sse-rule);
     vector-effect: non-scaling-stroke;
+  }
+  .grid line {
+    stroke: var(--sse-rule);
+    stroke-width: 0.5;
+    vector-effect: non-scaling-stroke;
+  }
+  .route {
+    stroke: var(--sse-accent);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+  .route.one-way {
+    stroke-dasharray: 6 4;
+  }
+  .arrow {
+    fill: var(--sse-accent);
   }
   .star {
     fill: var(--sse-ink);
