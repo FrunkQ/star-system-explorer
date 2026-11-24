@@ -19,5 +19,6 @@ import { reference } from "../../views/reference/src/index.ts";
 import { MORE_VIEWS } from "./screens.more.ts";
 import { GAME_VIEWS } from "./screens.game.ts";
 import { RENDER_VIEWS } from "./screens.renderer.ts";
+import { RUN_VIEWS } from "./run/screens.run.ts";
 
-export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles, reference, ...MORE_VIEWS, ...GAME_VIEWS, ...RENDER_VIEWS];
+export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles, reference, ...MORE_VIEWS, ...GAME_VIEWS, ...RENDER_VIEWS, ...RUN_VIEWS];

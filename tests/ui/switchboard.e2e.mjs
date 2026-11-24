@@ -1,0 +1,119 @@
+// The Switchboard (track PB2), in a real browser against the built shell (scripts/build-shell.sh first).
+// Usage: node tests/ui/switchboard.e2e.mjs [--screens <dir>]
+// The GM goes on air from the Switchboard; two screens join the table and appear under it by name. Send puts the live
+// view on both. One screen is held with a card while the other carries on; released, it comes back. Live is sent to one
+// screen alone by pressing its dot and then the screen; "Back with Table" ends that. Hold all holds both; Undo takes it
+// back. A send to the table's role, then a Send to Everyone, is a layer: Lift gives the role its own send again.
+import { spawn } from "node:child_process";
+import { mkdirSync } from "node:fs";
+import assert from "node:assert/strict";
+import { createRequire } from "node:module";
+import { desk, more } from "./nav.mjs";
+
+const { chromium } = createRequire(import.meta.url)("playwright");
+const args = process.argv.slice(2);
+const si = args.indexOf("--screens");
+const screens = si >= 0 ? args.splice(si, 2)[1] : null;
+const port = 9400 + Math.floor(Math.random() * 90);
+const base = `http://localhost:${port}/`;
+const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
+await new Promise((r) => setTimeout(r, 400));
+const shot = async (page, n) => {
+  await page.waitForTimeout(600);
+  if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png` }));
+};
+
+try {
+  const browser = await chromium.launch();
+  const context = await browser.newContext();
+  const errors = [];
+  const gm = await context.newPage();
+  await gm.setViewportSize({ width: 1440, height: 1000 });
+  gm.on("pageerror", (e) => errors.push(`gm: ${e.message}`));
+  await gm.goto(base + "#chart");
+  await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
+  await desk(gm, "Run");
+
+  // The rail's Table group opens the Switchboard; it goes on air from there.
+  await gm.getByRole("button", { name: "Switchboard" }).first().click();
+  await gm.locator("[data-switchboard]").waitFor();
+  await gm.locator("[data-go-on-air]").click();
+  await gm.locator("[data-on-air]").first().waitFor();
+  const link = await gm.locator("[data-switchboard] [data-players-link]").getAttribute("data-players-link");
+
+  const join = async (name) => {
+    const p = await context.newPage();
+    await p.setViewportSize({ width: 1024, height: 700 });
+    p.on("pageerror", (e) => errors.push(`${name}: ${e.message}`));
+    await p.goto(`${link}&name=${encodeURIComponent(name)}`);
+    await p.waitForSelector("footer[data-link='live'][data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
+    return p;
+  };
+  const wall = await join("Wall TV");
+  const mira = await join("Mira's tablet");
+  const box = (name) => gm.locator("[data-switchboard] .screen", { hasText: name });
+  await box("Wall TV").waitFor({ timeout: 15000 });
+  await box("Mira's tablet").waitFor({ timeout: 15000 });
+  const wallId = await box("Wall TV").getAttribute("data-screen");
+
+  // The GM opens the Solar System and sends it: both screens follow.
+  await more(gm, "Start sheet");
+  await gm.locator('[data-door="sol"]').click();
+  await gm.waitForFunction(() => [...document.querySelectorAll(".area-chart .body")].some((b) => /^Earth\b/.test(b.getAttribute("aria-label") ?? "")), null, { timeout: 30000 });
+  await gm.locator("[data-on-air]").first().click();
+  await gm.locator("[data-switchboard]").waitFor();
+  assert.match(await gm.locator("[data-live-title]").innerText(), /Solar System/);
+  await gm.locator("[data-send-live]").click();
+  for (const p of [wall, mira]) await p.waitForFunction(() => /Sun/.test(document.body.textContent ?? ""), null, { timeout: 20000 });
+  await shot(gm, "switchboard-sent");
+
+  // One screen held with a card; the other carries on. Released, it comes back.
+  await gm.locator(`[data-hold="screen:${wallId}"]`).click();
+  await wall.locator("[data-screens-off][data-held]").waitFor({ timeout: 10000 });
+  assert.ok((await wall.locator("[data-held]").getAttribute("data-held")).length > 0, "a holding card's words");
+  assert.equal(await mira.locator("[data-screens-off]").count(), 0, "Mira's tablet carries on");
+  assert.equal(await wall.locator("section.ask").count(), 0, "nothing of the place behind the card: no name to suggest");
+  assert.equal(await wall.locator("header h1").innerText(), "Stand by");
+  assert.equal(await gm.locator(`[data-line="screen:${wallId}"].held`).count(), 1, "the line is drawn broken");
+  await shot(gm, "switchboard-held");
+  await shot(wall, "switchboard-wall-held");
+  await gm.locator(`[data-hold="screen:${wallId}"]`).click();
+  await wall.locator("[data-screens-off]").waitFor({ state: "detached", timeout: 10000 });
+
+  // Live to one screen alone: press the dot, then the screen. Back with Table ends it.
+  await gm.locator('[data-source-dot="live"]').click();
+  await box("Mira's tablet").locator("[data-dest-shows]").click();
+  await gm.locator(`[data-line="screen:${await box("Mira's tablet").getAttribute("data-screen")}"]`).waitFor();
+  await box("Mira's tablet").getByRole("button", { name: /Back with/ }).click();
+  assert.equal(await box("Mira's tablet").getByRole("button", { name: /Back with/ }).count(), 0);
+
+  // Hold all, and Undo takes it back.
+  await gm.locator("[data-hold-all]").click();
+  for (const p of [wall, mira]) await p.locator("[data-screens-off]").waitFor({ timeout: 10000 });
+  await shot(gm, "switchboard-hold-all");
+  await gm.locator("[data-board-undo]").click();
+  for (const p of [wall, mira]) await p.locator("[data-screens-off]").waitFor({ state: "detached", timeout: 10000 });
+
+  // A send to the table's role, then Send to Everyone: a layer over it, which Lift takes off.
+  await gm.locator('[data-source-dot="live"]').click();
+  await gm.locator('[data-dest="role:table"] b').click();
+  await gm.locator('[data-dest="role:table"] [data-dest-shows]').filter({ hasText: /Solar System/ }).waitFor();
+  await gm.locator("[data-send-live]").click();
+  await gm.locator("[data-lift]").waitFor();
+  assert.match(await gm.locator('[data-dest="everyone"]').innerText(), /over the set-up/);
+  await shot(gm, "switchboard-layer");
+  await gm.locator("[data-lift]").click();
+  assert.equal(await gm.locator("[data-lift]").count(), 0);
+
+  // On a phone the board is one column, without the drawn lines.
+  await gm.setViewportSize({ width: 390, height: 844 });
+  await gm.waitForTimeout(400);
+  assert.equal(await gm.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, "no sideways scroll on a phone");
+  await shot(gm, "switchboard-phone");
+
+  assert.deepEqual(errors, []);
+  await browser.close();
+  console.log("switchboard e2e: ok");
+} finally {
+  server.kill();
+}

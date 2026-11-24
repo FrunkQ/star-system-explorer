@@ -17,7 +17,11 @@ export type Shown =
       /** A landing the table is watching (renderer's `LandingShow`, ui-contract landing.ts): players replay it on their own kernel. */
       landing?: Json;
     }
-  | { off: true };
+  /**
+   * Nothing of any place: screens off, or a held line (Switchboard, PB1). `card` is the holding card's words, chosen on
+   * the GM's machine ("Awaiting transmission", a joke); absent or empty, the screen is blank. Older screens draw blank.
+   */
+  | { off: true; card?: string };
 
 export interface AutoApprove {
   intent: IntentKind;
