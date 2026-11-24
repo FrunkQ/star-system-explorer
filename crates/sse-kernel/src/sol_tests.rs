@@ -309,3 +309,74 @@ fn small_worlds_barely_separate() {
     );
     assert_eq!(bad["code"], "bad_level", "{bad}");
 }
+
+/// MP8: Earth's deposits hold real kilograms drawn from its crust. The ore
+/// share is calibrated so that its arc copper is Kesler and Wilkinson 2008's
+/// porphyry copper (about 1.7e11 t above 3.3 km); every element's deposits
+/// and the rest add up to the crust `read_composition` gives at Survey.
+#[test]
+fn earths_deposits_hold_its_porphyry_copper() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let earth = r["facts"]
+        .as_object()
+        .unwrap()
+        .iter()
+        .find(|(_, f)| f["name"] == "Earth")
+        .map(|(a, _)| a.clone())
+        .unwrap();
+    let s = send(
+        &mut k,
+        serde_json::json!({"op":"survey_surface","system":SOL,"body":earth,"limit":0}),
+    );
+    assert_eq!(s["type"], "surface_surveyed", "{s}");
+    let h = &s["survey"]["holdings"];
+    let kind = |k: &str| {
+        h["kinds"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["kind"] == k)
+            .cloned()
+            .unwrap()
+    };
+    let held = |x: &serde_json::Value, id: &str| {
+        x["elements"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|e| e["id"] == id)
+            .map(|e| e["kg"].as_f64().unwrap())
+            .unwrap_or(0.0)
+    };
+    let arc = kind("copper-arc");
+    let cu = held(&arc, "cu");
+    // Kesler and Wilkinson 2008: about 1.7e11 t (1.7e14 kg).
+    assert!((cu / 1.7e14 - 1.0).abs() < 0.3, "arc copper {cu:.3e} kg");
+    assert!(held(&kind("gold-orogenic"), "au") > 0.0, "{h}");
+    let c = composition(&mut k, "Earth", "survey");
+    for x in h["crust"].as_array().unwrap() {
+        let id = x["id"].as_str().unwrap();
+        let crust = x["crust_kg"].as_f64().unwrap();
+        let (a, b) = (
+            x["in_deposits_kg"].as_f64().unwrap(),
+            x["disseminated_kg"].as_f64().unwrap(),
+        );
+        assert!(a >= 0.0 && b >= 0.0, "{x}");
+        assert!(((a + b) - crust).abs() <= 1e-9 * crust, "{x}");
+        let want = c["elements"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|e| e["id"] == id)
+            .map(|e| e["reservoirs"]["crust_kg"].as_f64().unwrap())
+            .unwrap();
+        assert!(
+            (want - crust).abs() <= 1e-9 * want,
+            "{id}: {want} against {crust}"
+        );
+    }
+}

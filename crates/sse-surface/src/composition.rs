@@ -513,3 +513,211 @@ pub fn compose(
         stand_ins,
     }
 }
+
+// ---------------------------------------------------------------- MP8 deposits
+
+pub const HOLDINGS_VERSION: &str = "deposit-holdings-v1";
+
+/// One element a deposit kind holds.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Held {
+    pub id: String,
+    pub kg: f64,
+    /// Mass share of the ore.
+    pub grade: f64,
+}
+
+/// What one deposit kind holds across a world.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Holding {
+    pub kind: String,
+    /// Plate cells (provinces) and point deposits of this kind.
+    pub places: usize,
+    pub footprint_km2: f64,
+    pub ore_kg: f64,
+    pub elements: Vec<Held>,
+}
+
+/// One point deposit's share (an impact melt sheet, a cold trap).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct PlaceHolding {
+    pub id: String,
+    pub kind: String,
+    pub elements: Vec<Held>,
+}
+
+/// An element's crust split into deposits and the rest: the two always add
+/// to the crust that `read_composition` gives at Survey.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct CrustSplit {
+    pub id: String,
+    pub crust_kg: f64,
+    pub in_deposits_kg: f64,
+    pub disseminated_kg: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Holdings {
+    pub version: String,
+    pub depth_m: f64,
+    pub ore_share: f64,
+    pub kinds: Vec<Holding>,
+    pub places: Vec<PlaceHolding>,
+    pub crust: Vec<CrustSplit>,
+    pub references: Vec<String>,
+    pub stand_ins: Vec<String>,
+}
+
+/// MP8: what a world's deposits hold, drawn from its crust (Survey
+/// composition). Each kind's footprint is its plate cells (a sphere's area
+/// shared evenly over the cube grid) plus its point deposits' discs; the
+/// amounts are `sse.composition.deposit_amount`; where the deposits would
+/// hold more of an element than the crust has, all are scaled to the crust.
+pub fn holdings(
+    comp: &Composition,
+    layers: &crate::cover::Layers,
+    ores: &crate::cover::Ores,
+    density: f64,
+) -> Holdings {
+    use crate::cover::DEPOSITS;
+    let r = comp.bulk.radius_m;
+    let crust_of = |id: &str| -> f64 {
+        comp.elements
+            .iter()
+            .find(|e| e.id == id)
+            .and_then(|e| e.reservoirs.as_ref())
+            .map(|x| x.crust_kg)
+            .unwrap_or(0.0)
+    };
+    let crust_mass: f64 = comp
+        .elements
+        .iter()
+        .filter_map(|e| e.reservoirs.as_ref())
+        .map(|x| x.crust_kg)
+        .sum();
+    let cell_area = if layers.cell_n > 0 {
+        4.0 * sse_core::math::PI * r * r / (6.0 * (layers.cell_n as f64) * (layers.cell_n as f64))
+    } else {
+        0.0
+    };
+    let conc = |id: &str| {
+        if crust_mass > 0.0 {
+            crust_of(id) / crust_mass
+        } else {
+            0.0
+        }
+    };
+    // Footprints: plate cells and point discs, per kind.
+    let mut kinds: Vec<Holding> = vec![];
+    let mut places: Vec<PlaceHolding> = vec![];
+    for (kind, grades) in &ores.kinds {
+        let code = DEPOSITS.iter().position(|k| k == kind).unwrap_or(0) as u8;
+        let cells = if code == 0 {
+            0
+        } else {
+            layers.cell_deposit.iter().filter(|c| **c == code).count()
+        };
+        let points: Vec<_> = layers.deposits.iter().filter(|d| d.kind == *kind).collect();
+        let disc = |d: &crate::cover::Deposit| {
+            let rr = d.radius_km * 1000.0;
+            sse_core::math::PI * rr * rr
+        };
+        let area = cells as f64 * cell_area + points.iter().map(|d| disc(d)).sum::<f64>();
+        let held = |a: f64| -> Vec<Held> {
+            grades
+                .iter()
+                .map(|(id, k)| {
+                    let (kg, grade) =
+                        mt::deposit_amount(a, ores.depth_m, density, ores.ore_share, conc(id), *k);
+                    Held {
+                        id: id.clone(),
+                        kg,
+                        grade,
+                    }
+                })
+                .collect()
+        };
+        for d in &points {
+            places.push(PlaceHolding {
+                id: d.id.clone(),
+                kind: kind.clone(),
+                elements: held(disc(d)),
+            });
+        }
+        kinds.push(Holding {
+            kind: kind.clone(),
+            places: cells + points.len(),
+            footprint_km2: area / 1.0e6,
+            ore_kg: area * ores.depth_m.max(0.0) * density * ores.ore_share.clamp(0.0, 1.0),
+            elements: held(area),
+        });
+    }
+    // Never more than the crust holds: scale each element down to it.
+    let mut ids: Vec<String> = kinds
+        .iter()
+        .flat_map(|h| h.elements.iter().map(|e| e.id.clone()))
+        .collect();
+    ids.sort();
+    ids.dedup();
+    let mut crust = vec![];
+    let mut capped = vec![];
+    for id in &ids {
+        let have = crust_of(id);
+        let want: f64 = kinds
+            .iter()
+            .flat_map(|h| h.elements.iter())
+            .filter(|e| e.id == *id)
+            .map(|e| e.kg)
+            .sum();
+        if want > have && want > 0.0 {
+            let k = have / want;
+            for e in kinds
+                .iter_mut()
+                .flat_map(|h| h.elements.iter_mut())
+                .chain(places.iter_mut().flat_map(|p| p.elements.iter_mut()))
+                .filter(|e| e.id == *id)
+            {
+                e.kg *= k;
+            }
+            capped.push(id.clone());
+        }
+        let held = want.min(have);
+        crust.push(CrustSplit {
+            id: id.clone(),
+            crust_kg: have,
+            in_deposits_kg: held,
+            disseminated_kg: have - held,
+        });
+    }
+    let mut stand_ins = vec![
+        format!(
+            "one ore share ({:.1e}) for every kind, calibrated on Earth's porphyry copper; each kind's own endowment is not yet separate",
+            ores.ore_share
+        ),
+        "plate cells count as equal shares of the sphere; a province's ore is counted evenly over it".into(),
+    ];
+    let unheld: Vec<&str> = DEPOSITS[1..]
+        .iter()
+        .copied()
+        .filter(|k| !ores.kinds.contains_key(*k))
+        .collect();
+    if !unheld.is_empty() {
+        stand_ins.push(format!("not yet counted: {}", unheld.join(", ")));
+    }
+    if !capped.is_empty() {
+        stand_ins.push(format!(
+            "deposits would hold more {} than the crust has, so they are scaled to the crust",
+            capped.join(", ")
+        ));
+    }
+    Holdings {
+        version: HOLDINGS_VERSION.into(),
+        depth_m: ores.depth_m,
+        ore_share: ores.ore_share,
+        kinds,
+        places,
+        crust,
+        references: ores.references.clone(),
+        stand_ins,
+    }
+}
