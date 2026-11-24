@@ -34,11 +34,11 @@ The rule (Alex, 23 Nov 2026): one set of controls, and similar levels of drawing
 ### Why a switch is not offered
 
 1. Wireframe is coming with the view styles.
-2. Not seen in infrared here yet.
-3. Not seen in ultraviolet here yet.
-4. Not seen in x-ray here yet.
-5. Not seen in radio here yet.
-6. Not seen in Mag here yet.
+2. Infrared (heat light) is not drawn here yet.
+3. Ultraviolet is not drawn here yet.
+4. X-ray is not drawn here yet.
+5. Radio is not drawn here yet.
+6. Mag (magnetic field) is not drawn here yet.
 7. 3D cells come with the galaxy charts' Free view.
 8. True is coming: the photoreal views are held for now.
 9. The galaxy's magnetic field is not drawn yet.
