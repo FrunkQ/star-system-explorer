@@ -71,6 +71,15 @@ One screen, three parts, read left to right the way a signal travels.
 - **Add a screen** sits at the foot of the column: the join link, a QR code, "Open a screen on this computer", and "Clean output link" (section 9). A new screen arrives in the role its link named, or in the first role if it used the plain link.
 - **A role's heading opens the role card** (section 7.3). It is the old "Add a seat" form, opened from the thing it describes.
 
+**Screens on this computer.** Alex, 24 Nov 16:37 to 16:38: "how do we add screens on our PC - I suggest we have a 'screen' as a physical screen connected to a PC or a subdivision - a simple dual/3/quad layout... so a physical screen could be a composite screen made up of 2-4 screens - useful on big 4k displays."
+
+- **A screen is a display attached to this computer, or a part of one.** "Add a screen", "On this computer" lists the displays the computer has (the second monitor, the projector, the wall TV on HDMI), each drawn as a small rectangle in its real position. Press one and SSE opens a full-screen window on it. Where the browser cannot list displays, the same button opens a window to drag there and press F for full screen.
+- **Split.** Each display on the board has one choice: **Whole, Two, Three or Four**. Two is side by side; Three is one large and two small; Four is two by two. Each part is a screen in its own right: its own box on the board, its own role, line, dial and hold. So one 4K television can be the Bridge on the left and the Telescope on the right, or four roles at once.
+- On the board the parts of one display sit together under its name ("Wall TV: left", "Wall TV: right") and can be dragged to different roles like any screen. Dragging one part onto another swaps them on the glass.
+- **A split is not a layout.** A layout arranges boxes inside one screen for one role (one audience, one look). A split makes several screens out of one piece of glass, each of which then has its role's layout. The GM only needs to know: split the glass first, then treat each part as a screen.
+- The split belongs to the table set-up on this computer, never to the Playbook, like every other fact about screens.
+- A phone or tablet that joined by link is always Whole.
+
 ### 3.3 Between: the lines
 
 A line is drawn from a source to whatever it was sent to. Its look says its state without words:
@@ -561,7 +570,7 @@ Files in `packages/shell/src/run/` and `packages/ui-contract/src/`. One at a tim
 | **PB6** | Read aloud: the `say` source, the GM monitor reading card, "also show on screens" as a player document. | PB3 | yes if the run-through has narration |
 | **PB7** | The role card: the Seats dialog's fields moved in; one layout per role with the upgrade of two-screen seats; redirects; requests on the screen that asked. `SeatsPanel.svelte` deleted. | PB2 | no |
 | **PB8** | Clean output link: `?clean=1`, fixed 16:9, transparent option, marked "Output" on the board. | PB2; renderer for the transparent ground | no, but small |
-| **PB9** | Phone layout; "Open in its own window"; "Open a screen on this computer" keeping a link to its opener. | PB2 | no |
+| **PB9** | Phone layout; "Open in its own window"; "On this computer": the attached displays listed, a full-screen window on the chosen one, and Split (Whole, Two, Three, Four) making each part a screen of its own. | PB2 | no |
 | **PB10** | Looks on the board: the look card opening here with a bookmark as its preview; look per role, the dials on role headings and screen boxes always present, the kind of fault read from the look, deliveries on arrival and hold; the transmission card as part of a look. | renderer's looks (filters, faults, deliveries) | no |
 | **PB11** | Later: camera in, on local screens only. | PB9 | no |
 | **PB12** | Play: pictures and sound as a source, from a pack, a file or a web address; "Here" as a sound destination; one asset on a Read aloud; the "Incoming transmission…" card while a sound plays on screens. | PB6 | no, but wanted |
