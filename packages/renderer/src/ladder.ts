@@ -9,7 +9,7 @@
 // Rules (design section 3): a drawn rung is never clickable, named or read by a rule; it is seeded by the body's
 // address and clocked by the universe clock, so every seat sees the same detail; a declaration whose kernel value
 // is missing draws nothing, and says why; each one is in docs/fudges.md.
-import type { Tier } from "../../ui-contract/src/index.ts";
+import { say, type Tier } from "../../ui-contract/src/index.ts";
 import starters from "./ladder-layers.json" with { type: "json" };
 import { cell, curl, NUM, WRAP, ridged, simplex, type V3 } from "./ladder-noise.ts";
 
@@ -344,13 +344,9 @@ export function rungs(r: ResolvedLayer, view: ViewScale, tier: Tier | "gpu-ultra
   return out;
 }
 
-/** A size in the body's own terms: km above 10 km, m above 1 m, else cm or mm. */
+/** A size in the body's own terms, said by the units engine (two figures). */
 export function sizeWords(m: number): string {
-  if (m >= 10_000) return `${Math.round(m / 1000).toLocaleString("en-GB")} km`;
-  if (m >= 1000) return `${(m / 1000).toFixed(1)} km`;
-  if (m >= 1) return `${Math.round(m)} m`;
-  if (m >= 0.01) return `${Math.round(m * 100)} cm`;
-  return `${Math.max(1, Math.round(m * 1000))} mm`;
+  return say(m, "length", undefined, { sig: 2 }).text;
 }
 
 /**

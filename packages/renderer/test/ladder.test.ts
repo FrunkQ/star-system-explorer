@@ -197,7 +197,7 @@ test("the HUD's detail line names where facts end in the body's own units", () =
   assert.equal(detailLine([{ layer: r, shown: rungs(r, v, "gpu-high", 0, 1) }]), "Curls at band edges: finer than 10,000 km is drawn from the wind's figures, not computed.");
   assert.equal(detailLine([{ layer: r, shown: [] }]), "");
   assert.equal(sizeWords(76), "76 m");
-  assert.equal(sizeWords(0.05), "5 cm");
+  assert.equal(sizeWords(0.05), "0.05 m");
   assert.equal(sizeWords(2500), "2.5 km");
 });
 

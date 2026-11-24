@@ -11,7 +11,7 @@
 // - `sampleFaces` and `reliefNormal` are the processor twin of the GPU bake (texture-ladder-gpu.ts): bilinear inside
 //   a face, and the surface normal tilted by the real slope between neighbouring texels (Horn 1981's idea, on the
 //   sphere), so craters and ranges catch the light near the terminator where the sun grazes them.
-import { SURFACE_COVERS as COVERS, sampleColour, type SurfaceTile, type Tier } from "../../ui-contract/src/index.ts";
+import { say, SURFACE_COVERS as COVERS, sampleColour, type SurfaceTile, type Tier } from "../../ui-contract/src/index.ts";
 
 /** The kernel's samples along a tile's edge (atlas settings `tile_samples`; the survey uses 32). */
 export const TILE_SAMPLES = 32;
@@ -259,6 +259,5 @@ export function faceWords(c: Composite, radius_m: number): string {
   let best = Infinity;
   for (const f of c.faces) if (f) best = Math.min(best, (radius_m * (Math.PI / 2)) / f.n);
   if (!Number.isFinite(best)) return "";
-  const km = best / 1000;
-  return `Ground read to ${km >= 10 ? Math.round(km).toLocaleString("en-GB") : km.toFixed(1)} km.`;
+  return `Ground read to ${say(best, "length").text}.`;
 }
