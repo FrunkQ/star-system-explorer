@@ -2,7 +2,7 @@
 
 Status: **PROPOSED 24 Nov 2026**, for Alex. The direction was accepted by Alex on 24 Nov 15:39 ("agree... on all counts", six questions, in memory `sse4-run-desk-beats`); this note designs it in detail. Design and mockup only; nothing here is built by this note. The 14 questions are in section 14, each with a recommendation.
 
-Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the line card and its dial, Hold all, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
+Mockup, clickable: `/mnt/project-files/sse4/handover-screens/PB-screens/switchboard-mockup.html`, with desktop and phone screenshots beside it; live at https://claude.ai/artifact/FJYtkbakTj4kbi55PdczU2 . The mockup shows the Switchboard on a desktop and a phone, light and dark: sending, dragging, holding, the signal dials on the boxes, the line card, Hold all, Keep and Again. The role card, Add a screen and the page picker are described here and not mocked.
 
 Alex's brief, in his words (24 Nov): "a gm must always be able to adapt and remix... presets... are great to have 'in hand' but live is the key"; "no need for next - just let the GM build up a 'playbook'... chapters and pages and sections - each can be a preset that is fired at various windows"; "a routing diagram showing what everyone sees - gm can pause any one by clicking on the line"; "a mini video routing package"; "the routing screen should be generally available and does remove the need for a bunch of other smaller interfaces - we corral the user to the 'nerve centre'".
 
@@ -76,7 +76,7 @@ A line is drawn from a source to whatever it was sent to. Its look says its stat
 | solid ink | live: the destination is showing this source |
 | solid accent | following: the destination follows the GM's live view as it moves (section 5.3) |
 | broken, with a small lozenge in the gap | held: the destination shows a holding card |
-| dashed more and more coarsely | the signal dial is turned up on this line |
+| dashed more and more coarsely | the signal dial is turned up on the box this line reaches |
 | thin and quiet | a role's line that one of its screens has left for a line of its own |
 
 There is one line per role by default. A screen gets its own line only when the GM sends something to that screen alone ("one player's phone can be its own destination"). "Back with Bridge" on that screen removes its own line.
@@ -93,7 +93,8 @@ Placed by how often it is done (Alex's rule, 23 Nov).
 | often | hold or release one line | click the line |
 | often | hold everything | **Hold all**, always in the same corner, key H |
 | often | take the last send back | **Back** on the line: the destination returns to what it showed before |
-| sometimes | turn the signal dial, choose the holding card, latch Following | click the line's dot: the **line card** opens on the line itself |
+| often | turn the signal dial | the dial on the role's heading (all its screens) or on one screen's box |
+| sometimes | choose the holding card, latch Following | click the line's dot: the **line card** opens on the line itself |
 | sometimes | move a screen to another role | drag the screen onto the role's heading |
 | sometimes | swap two screens | drag one screen onto another: they trade roles |
 | sometimes | keep what was just done | **Keep** on the "just now" strip (section 4.4) |
@@ -246,11 +247,16 @@ The Looks rulings carry over unchanged: no fault or card flashes the whole scree
 
 ## 7. Looks and roles on the Switchboard
 
-### 7.1 The signal dial sits on the line
+### 7.1 The signal dial sits on the boxes
 
-Clicking a line's dot opens the line card, with the dial first: clear at one end, lost at the other, a tick at the look's saved level. It is there only when the role's look has a signal fault, as ruled. The line itself roughens as the dial rises, so the whole board shows at a glance who has a bad picture. "Tune in" is a held line released at the far end and drawn down.
+Alex, 24 Nov 15:52: "the 'interference slider' should probably make it to the relevant right hand boxes". It does. The first draft put the dial on a card behind the line's dot, which hid a control that is used often.
 
-The dial belongs to a line, so a role's dial moves all its screens together and a screen with its own line has its own dial.
+- **Every screen's box carries its own dial**, under its preview, so the hand is beside the picture it changes: clear at one end, lost at the other, a tick at the look's saved level.
+- **A role's heading carries one dial for all its screens.** Moving it moves every screen in the role together and their own dials follow. Moving one screen's dial afterwards changes only that screen.
+- A dial is there only when the role's look has a signal fault, as ruled.
+- The line into a role or a screen roughens as its dial rises, so the whole board shows at a glance who has a bad picture.
+- "Tune in" is a held line released with the dial at the far end and drawn down.
+- A Look step in a preset ("Signal breaks up") sets the role's dial, and the GM's hand can take it from there.
 
 ### 7.2 The look belongs to the role
 
@@ -288,7 +294,7 @@ Found by reading main (`packages/shell/src`) and from the builder's account (`/m
 | Seat rows: Send, Screens off, Back with the table | `SeatsPanel.svelte` | a line to that role; hold; removing its own line |
 | Seat rows: quick switches | `SeatsPanel.svelte` | role card, More |
 | Seat rows: mark as discovered | `SeatsPanel.svelte` | already going to the eye (SV); not carried here |
-| Looks seat rows: Look, signal dial, Send (designed, not built) | example packs 4D | role heading; the dial on the line |
+| Looks seat rows: Look, signal dial, Send (designed, not built) | example packs 4D | role heading; a dial on each role heading and each screen's box |
 | Pinned preview (designed, not built) | example packs 4D | Pin on any preview |
 | "See as: the table ▾" | desk menu | "See full size" on a preview; the menu keeps one entry, "As players see it", which opens the Switchboard |
 | "Tell the table?" on arrival | `arrival.ts`, uncommitted | a suggested send on the "just now" strip, with Send and Keep |
@@ -343,9 +349,10 @@ Names are proposals. Everything is plain data; nothing here feeds physics or RES
 
 // Tonight, on the GM's machine only (host state; replaces `shown` and `Seat.shown`).
 { "lines": { "everyone": { "source": …, "state": "live" },
-             "role:bridge": { "source": …, "state": "held", "card": …, "signal": 0.18, "before": … },
+             "role:bridge": { "source": …, "state": "held", "card": …, "before": … },
              "screen:k3f9": { "source": …, "state": "following" } },
   "screens": { "k3f9": { "name": "Mira's tablet", "role": "bridge", "local": false, "showing": … } },
+  "signal": { "role:bridge": 0.52, "screen:k3f9": 0.12 },   // a screen's own level wins over its role's
   "redirects": { "telescope": "bridge" } }
 ```
 
@@ -401,7 +408,7 @@ Files in `packages/shell/src/run/` and `packages/ui-contract/src/`. One at a tim
 | **PB7** | The role card: the Seats dialog's fields moved in; one layout per role with the upgrade of two-screen seats; redirects; requests on the screen that asked. `SeatsPanel.svelte` deleted. | PB2 | no |
 | **PB8** | Clean output link: `?clean=1`, fixed 16:9, transparent option, marked "Output" on the board. | PB2; renderer for the transparent ground | no, but small |
 | **PB9** | Phone layout; "Open in its own window"; "Open a screen on this computer" keeping a link to its opener. | PB2 | no |
-| **PB10** | Looks on the board: look per role, the dial on the line, deliveries on arrival and hold, Following latch. | renderer's looks (filters, faults, deliveries) | no |
+| **PB10** | Looks on the board: look per role, the dials on role headings and screen boxes, deliveries on arrival and hold, Following latch. | renderer's looks (filters, faults, deliveries) | no |
 | **PB11** | Later: camera in, on local screens only. | PB9 | no |
 
 Asks of other threads: the renderer for the cheap Chart preview at thumbnail size, the transparent ground and the looks pieces already assigned to it; the secrets work (SV) for the eye on Reveal steps; navigation (NV1) for the two object-menu entries.
