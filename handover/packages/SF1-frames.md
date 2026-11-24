@@ -1,4 +1,4 @@
-# SF1: surface time-lapse frames (`surface_frames`), part 1
+# SF1: surface time-lapse frames (`surface_frames`), parts 1 and 2
 
 Asked for by the renderer thread (22 Nov) for Alex's video of system generation, showing geology, volcanism,
 glaciation and climate working together. The renderer builds the time-lapse layers on the Body globe against this shape.
@@ -57,9 +57,25 @@ frames, events, pending, why}}}`.
   The surface fixtures' climates are fixed values, so their temperature history is pending. A world from a formed
   system (a star climate) gets its faint young star.
 
+## Part 2 (24 Nov): the land of then, and ice ages
+
+**Land strips per frame.** Each frame's climate now reads that frame's own land and coasts by latitude strip (W7c's `climate::with_land`), from its tectonic heights above that date's sea level. The ocean fraction follows too, so an early, nearly all-sea Earth has a sea world's climate, not today's continents under a fainter Sun. Dry worlds are unchanged.
+
+**Ice-age onsets as events** (`kind: "ice-age"`):
+- The kernel gives the frames an orbit track over the 400 kyr window that ends at the epoch. This is `ice_ages::orbit_inputs_from` with a start of −window; T1's secular theory runs either way in time, and the survey's own track still starts at the epoch.
+- On the last frame's climate and heights, W9 part 2's model (`climate::ice_ages`, `IceAgeModel::onsets_yr`) dates where each land cell's ice balance turns from losing to gaining.
+- Onsets are grouped by date. One is listed when it starts ice on at least 0.5% of the land; smaller ones are a mountain glacier's flicker.
+- The text gives the share of the land, and why names the track.
+- A world with no track (no sibling planets, a moon, or a fixture) keeps "ice-age onsets" in pending, with the reason.
+- `Resolved.track_before` carries the track; `surface_frames` gains `track_before: Option<&OrbitTrack>`.
+
+Check: `frames_tests::ice_ages_and_the_land_of_then` gives Earth one inclination mode and the Moon's pull, as the wear test does. The onsets fall inside the window, and without a track they are pending. That gives 2 onsets in 400 kyr; Earth's first frame is all sea, against 1180 land cells now.
+
+Fudge register: the spin integration starts the window with today's tilt and perihelion, though the window ends today. Over 400 kyr Earth's tilt drifts about a degree, inside the drawn sibling inclinations' own spread.
+
+Goldens: `contract.jsonl`, re-blessed on purpose for the Mars frames case, whose pending line now gives the reason ice-age onsets wait (no orbit track).
+
 ## Still to do
 - Worn elevation per frame: wear each frame's window, or carry S3 through the whole history.
-- Ice-age onsets as events (W9 part 2's `IceAgeModel::onsets_yr`, inside the orbit-history window), and land per
-  latitude strip for the climate (W7c's `land_by_lat`, `coasts_by_lat`) from each frame's heights.
 - Oceans and air over time (atmosphere history), and sea ice.
 - base64 f32 arrays (`_b64` names) if JSON size bites at the Survey level.

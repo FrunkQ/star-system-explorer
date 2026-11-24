@@ -46,7 +46,7 @@
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
-  import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
+  import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
   import ObjectMenu from "./ObjectMenu.svelte";
   import { watchObjectMenu } from "./object-menu.ts";
@@ -570,7 +570,9 @@
     void ws.revision;
     const l = lens;
     const s = session;
-    const aud = lensAudience(l);
+    // Pencil and ink (track SV): on the Build and Run desks the GM's chart always knows what the table knows, so an
+    // unknown body is drawn in pencil whatever the lens; a player lens looks through its own audience.
+    const aud = lensAudience(l) ?? (desk === "build" || desk === "run" ? EVERYONE : null);
     const g = ++lensGen;
     // The system in view, not the shipped sample's: a lens on the Solar System looks at the Solar System.
     const sys = scene.system || (factsDoc as unknown as AuthoredFacts).scope;

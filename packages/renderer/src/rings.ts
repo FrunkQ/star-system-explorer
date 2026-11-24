@@ -6,6 +6,7 @@
 // (1/μ), nor cast the world's shadow on it; both are in the fudge register. A ring with no τ or albedo on record is
 // drawn at the fallbacks below, also in the register.
 // Belts round the star are a haze of points, one per draw slot, never the real count (also in the register).
+import { constant } from "../../ui-contract/src/index.ts";
 
 import { constant } from "../../ui-contract/src/index.ts";
 

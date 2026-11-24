@@ -234,7 +234,7 @@
     <div class="map">
       {#if turned}
         {#if cube}
-          <Web3D {cube} look={shownView.style === "true" ? "true" : "3d"} seen={shownView.seen} hud={shownView.hud} shrink={real ? cube.volume.scale_factor : 1} onturned={() => ctx.workspace.turned?.()} />
+          <Web3D {cube} look={shownView.style === "true" ? "true" : "3d"} seen={shownView.seen} hud={shownView.hud} reframe={shownView.framed} shrink={real ? cube.volume.scale_factor : 1} onturned={() => ctx.workspace.turned?.()} />
         {:else}
           <p class="lede">Growing the cube…</p>
         {/if}
