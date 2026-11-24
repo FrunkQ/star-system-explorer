@@ -3361,6 +3361,7 @@ impl Kernel {
                 system,
                 at_s,
                 tiles,
+                branch,
             } => {
                 let a: Address = system
                     .parse()
@@ -3378,8 +3379,22 @@ impl Kernel {
                         u.runs.insert(system.clone(), run);
                     }
                 }
+                let what_if = match &branch {
+                    Some(b) => {
+                        let id = u
+                            .branches
+                            .get(b)
+                            .ok_or_else(|| err("unknown_branch", b.clone()))?;
+                        Some(
+                            u.chronicle
+                                .branch_as_main(id)
+                                .map_err(|e| err("chronicle", format!("{e}")))?,
+                        )
+                    }
+                    None => None,
+                };
                 let r = adopt::resolved_system(
-                    &u.chronicle,
+                    what_if.as_ref().unwrap_or(&u.chronicle),
                     &u.seed,
                     &a,
                     at_s,

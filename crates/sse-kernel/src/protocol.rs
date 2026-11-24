@@ -794,6 +794,12 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         tiles: Option<Vec<TileRequest>>,
+        /// A what-if branch (from `branch`) to resolve instead of the main
+        /// line: the line it was cut from plus its own edits. Nothing is
+        /// committed (editing design ED1: the exact answer on a pause).
+        #[serde(default)]
+        #[ts(optional)]
+        branch: Option<String>,
     },
     /// Preview a class atlas scheme over the open campaign (GM machine):
     /// label every body in `scope` (default the whole universe) at `at_s`

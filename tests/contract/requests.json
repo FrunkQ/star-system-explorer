@@ -3448,5 +3448,7 @@
  {"op": "preview_tree", "system": "u:k13/sys:0", "at_s": 100, "edits": [{"op": "rehost", "address": "u:k13/sys:0/body:3/body:0", "to": "u:k13/sys:0/body:4", "keep": "tidy", "at_s": 100}]},
  {"op": "rehost", "address": "u:k13/sys:0/body:3/body:0", "to": "u:k13/sys:0/star:0", "keep": "motion", "at_s": 1000000},
  {"op": "withdraw", "address": "u:k13/sys:0/body:4", "at_s": 2000000, "others": "leave"},
- {"op": "orbit_stability", "system": "u:k13/sys:0", "at_s": 3000000}
+ {"op": "orbit_stability", "system": "u:k13/sys:0", "at_s": 3000000},
+ {"op": "branch", "label": "held"},
+ {"op": "resolved_system", "system": "u:k13/sys:0", "branch": "not-a-branch"}
 ]

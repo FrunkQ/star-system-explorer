@@ -479,3 +479,52 @@ fn preview_tree_shows_before_and_after_and_writes_nothing() {
     );
     assert_eq!(r["code"], "bad_request", "{r}");
 }
+
+/// ED1's exact answer on a pause: `resolved_system` with `branch` reads a
+/// what-if's held value; the main line is untouched until a commit.
+#[test]
+fn resolved_system_reads_a_what_if_branch() {
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let earth = "u:t/sys:0/body:3";
+    let mut k = crate::Kernel::new();
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"t","seed":"t"}),
+    );
+    let e = |a: &str, f: &str, v: serde_json::Value| serde_json::json!({"address":a,"field":f,"value":v});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,"edits":[
+            e(SUN, "body.mass", M_SUN.into()),
+            e(earth, "body.mass", 5.9722e24.into()), e(earth, "orbit.host", SUN.into()),
+            e(earth, "orbit.semi_major_axis", 1.496e11.into()),
+        ]}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let mass = |r: &serde_json::Value| r["facts"][earth]["body.mass"].clone();
+    let r = send(&mut k, serde_json::json!({"op":"branch","label":"held"}));
+    let b = r["branch"].as_str().unwrap().to_string();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"branch_set","branch":b,"edit":{"address":earth,"field":"body.mass","value":1.2e25,"occurred_at_s":0}}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":"u:t/sys:0","branch":b}),
+    );
+    assert_eq!(r["type"], "system_resolved", "{r}");
+    assert_eq!(mass(&r), 1.2e25, "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":"u:t/sys:0"}),
+    );
+    assert_eq!(mass(&r), 5.9722e24, "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":"u:t/sys:0","branch":"nope"}),
+    );
+    assert_eq!(r["code"], "unknown_branch", "{r}");
+}
