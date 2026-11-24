@@ -647,3 +647,28 @@ fn worlds_publish_their_moment_of_inertia_factor() {
     assert!(saturn > 0.19 && saturn < jupiter, "Saturn {saturn}");
     eprintln!("C: Earth {earth:.4} Mars {mars:.4} Moon {:.4} Jupiter {jupiter:.4} Saturn {saturn:.4} Uranus {:.4}", c("Moon"), c("Uranus"));
 }
+
+/// A catalogued world's measured temperature is today's: its time-lapse
+/// follows the young Sun's fainter light back (the faint young Sun), and
+/// the frames no longer say the history waits.
+#[test]
+fn catalogued_earth_feels_the_faint_young_sun() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"surface_frames","system":SOL,"body":"u:home/sys:sol/body:2"}),
+    );
+    assert_eq!(r["type"], "frames_made");
+    let frames = r["frames"]["frames"]["frames"].as_array().expect("frames");
+    let mean = |f: &serde_json::Value| {
+        let t = f["temp_k"].as_array().unwrap();
+        t.iter().map(|x| x.as_f64().unwrap()).sum::<f64>() / t.len() as f64
+    };
+    let (first, last) = (mean(&frames[0]), mean(frames.last().unwrap()));
+    assert!(
+        first < last - 10.0,
+        "young Earth {first:.1} K, today {last:.1} K"
+    );
+    let pending = r.to_string();
+    assert!(!pending.contains("this world's climate is a fixed value"));
+}

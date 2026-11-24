@@ -212,7 +212,7 @@ pub fn surface_frames(
         "oceans over time (held at today's volume)".to_string(),
         "sea ice".to_string(),
     ];
-    if matches!(body.climate, Climate::Fixed { .. }) {
+    if matches!(body.climate, Climate::Fixed { then: None, .. }) {
         pending.push("temperature history (this world's climate is a fixed value)".into());
     }
     if track_before.is_none() {

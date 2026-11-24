@@ -567,6 +567,17 @@ fn bodies_from_facts(
     let host_of = |r: &BTreeMap<String, Value>| -> Option<Address> {
         r.get("orbit.host").and_then(as_text)?.parse().ok()
     };
+    // Today's temperatures are anchored to the host star's life line, so a
+    // world's history follows the star's light (the faint young Sun).
+    let fits = sse_formation::hurley::Fits::new(spec.z);
+    let anchor = sse_formation::lifeline::LifeLine::new(&fits, spec.star_mass)
+        .ok()
+        .map(|life| sse_surface::Anchor {
+            life: Box::new(life),
+            z: spec.z,
+            formed_myr: 0.0,
+            measured_myr: spec.age_myr,
+        });
     let mut out = vec![];
     let system: Address = spec.system.parse().expect("spec system address");
     for (a, r) in facts.iter().filter(|(a, _)| system.contains(a)) {
@@ -677,7 +688,10 @@ fn bodies_from_facts(
             r_process_rel: 1.0,
             age_gyr: spec.age_myr / 1000.0,
             magma_end_myr: 0.0,
-            climate: sse_surface::Climate::Fixed { t_surface_k },
+            climate: sse_surface::Climate::Fixed {
+                t_surface_k,
+                then: anchor.clone(),
+            },
             tidal_w_m2: None,
             orbit: Some(sse_surface::Orbit {
                 a_au: a_own / AU,
