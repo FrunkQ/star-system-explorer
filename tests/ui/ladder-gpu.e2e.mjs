@@ -1,4 +1,4 @@
-// The detail ladder's GPU node matches its processor twin (VP6), on WebGL2 always and on WebGPU where the browser
+// The detail ladder's GPU node (VP6) and the texture ladder's bake (VP3) match their processor twins, on WebGL2 always and on WebGPU where the browser
 // has it. Builds tests/ui/ladder-gpu/ with Vite into a temporary folder, serves it, draws every noise kind into a
 // float target and compares each pixel with ladderAt. Usage: node tests/ui/ladder-gpu.e2e.mjs
 import { spawn } from "node:child_process";
@@ -39,6 +39,11 @@ try {
       console.log(`${ok ? "ok" : "FAIL"} ${label} ${kind}: largest difference ${maxErr.toExponential(2)} of ${maxVal.toFixed(3)}`);
       if (!ok) failed = true;
     }
+    // VP3: the baked cubes against the processor twin. Colour is linear 0..1; the normal's error is a length.
+    const { colourErr, normalErr, tiltMax } = out.bake;
+    const bakeOk = colourErr <= 0.03 && normalErr <= 0.02 && tiltMax > 0.003;
+    console.log(`${bakeOk ? "ok" : "FAIL"} ${label} texture bake: colour within ${colourErr.toFixed(4)}, normal within ${normalErr.toFixed(4)} (largest true tilt ${(tiltMax * 180 / Math.PI).toFixed(2)}°)`);
+    if (!bakeOk) failed = true;
   }
 } finally {
   server.kill();
