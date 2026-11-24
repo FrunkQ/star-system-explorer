@@ -175,6 +175,7 @@ fn ice_sheet(grid: &Grid, glaciated: &[bool], cell_m: f64, g: f64) -> Vec<f64> {
 
 /// The time-lapse frames of `body` up to `epoch_gyr`. `survey` picks the
 /// fine plate grid (Survey level); otherwise the coarse Orbit grid.
+#[allow(clippy::too_many_arguments)]
 pub fn surface_frames(
     s: &SurfaceSettings,
     body: &Body,
