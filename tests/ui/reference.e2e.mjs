@@ -213,6 +213,15 @@ try {
       await gm.locator('[data-names="stack"]').waitFor({ timeout: 20000 });
       await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hash0);
       await gm.locator('[data-names="stack"] [data-sample] li').nth(11).waitFor({ timeout: 20000 });
+      // Names here for the whole system, from the Names page: name every planet in Kestrel in Oluen.
+      const here = gm.locator("[data-names-here='u:kestrel/sys:1']");
+      await here.waitFor({ timeout: 20000 });
+      await here.locator("[data-names-here-kind]").selectOption("planet");
+      await here.locator('[data-names-here-layer="common"]').selectOption("oluen");
+      await here.locator("[data-names-here-note]").getByText(/Common names for planets in Kestrel now come from Oluen/).waitFor({ timeout: 20000 });
+      await shot(gm, "names-here-desk");
+      await here.locator('[data-names-here-layer="common"]').selectOption("-");
+      await here.locator("[data-names-here-note]").getByText(/follow the setting above again/).waitFor({ timeout: 20000 });
       // The name card: every name a body has, by layer, with where it came from.
       await go(gm, "system");
       await gm.locator("[role=button][aria-label^='Tarn']").click();

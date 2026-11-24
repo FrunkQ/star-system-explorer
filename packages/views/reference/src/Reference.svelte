@@ -13,7 +13,7 @@
   import Names from "./Names.svelte";
   import Classes from "./Classes.svelte";
 
-  let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
+  let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const depth = $derived(ctx.workspace.depth ?? "science");
   const full = $derived(depth !== "curious");
 
@@ -168,7 +168,7 @@
   {#if page === "elements"}
     <div class="body"><Elements session={ctx.session} {depth} {pick} /></div>
   {:else if page === "names"}
-    <div class="body"><Names session={ctx.session} workspace={ctx.workspace} {depth} offer={typeof params.names_offer === "string" ? params.names_offer : ""} /></div>
+    <div class="body"><Names session={ctx.session} workspace={ctx.workspace} {depth} offer={typeof params.names_offer === "string" ? params.names_offer : ""} here={scene.system ? { address: scene.system, label: scene.title } : null} /></div>
   {:else if page === "classes"}
     <div class="body"><Classes session={ctx.session} workspace={ctx.workspace} {depth} symbology={ctx.symbology} offer={typeof params.classes_offer === "string" && params.classes_offer ? params.classes_offer.split(",").map((x) => x.trim()) : []} /></div>
   {:else if failed}
