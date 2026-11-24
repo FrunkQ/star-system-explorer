@@ -23,8 +23,8 @@ renderer.md (SL1, V10g, V10i, V10j, V10k), run-desk.md (RD1 reveal on arrival).
 | Approach and orbit | At-world card (aerocapture, entry, powered landing) | nothing until sent | gap LR4 |
 | Pick a site (Land here, landmark or anywhere) | yes, party's ship as lander | nothing until sent | works |
 | Send this view | yes | Landing screen, same site and verdict on own kernel | works (send race fixed in RD1) |
-| Descend | flown from the kernel's log | flies too, a few seconds behind | works; verdict wrong, gap LR1 |
-| Land, look about, walk | yes | follows the GM's pose | works; night and 3D ground, gaps LR2, LR3 |
+| Descend | flown from the kernel's log | flies too, a few seconds behind | works (a torch ship flies down from orbit since LR1) |
+| Land, look about, walk | yes, hour by Dawn/Midday/Dusk/Night (LR2) | follows the GM's pose | works; 3D ground a flat slab and night black, gap LR3 |
 | Take off | yes | back to the site | works |
 
 ## Gaps and packages
@@ -32,12 +32,13 @@ renderer.md (SL1, V10g, V10i, V10j, V10k), run-desk.md (RD1 reveal on arrival).
 | Package | Owner | State | Notes |
 |---|---|---|---|
 | LR0 this file and `run-through.e2e` (the whole journey as one check) | here | done | not in CI (workflow edits need Alex's yes); in `npm run ui:e2e` |
-| LR1 a ship that can fly down flies down: plan_descent with a capable engine (thrust over weight, delta-v enough, as ship_at_world's powered-landing check) plans a powered descent from orbit instead of a ballistic entry, picking the better of the two and saying which and why. Today a Traveller far trader at Mars "burns up" (aerobrake only, 7 W/cm² against a 1 W/cm² hull, 2392 m/s touchdown) while the At-world card says "Powered landing from orbit: within limits" | here (kernel thread agreed, sse-nav descent) | next | may move golden plan_descent cases: ask the coordinator for a lane slot first |
-| LR2 choosing the hour: the Land screen's "Hours from now" slider binds degrees (±180) under an hours label; label it in hours and add Dawn, Midday, Dusk and Night presses on the world's own clock, so the GM can land in daylight | here (renderer agreed) | next | Surface.svelte only |
+| LR1 a ship that can fly down flies down: `sse-nav` `plan_down` flies the entry and, for a lander whose thrust is over its weight, a powered descent from the entry interface, keeping the powered one only when it ends better (method `engines-from-orbit`, the reason first in `why`). The far trader at Mars now lands ("engines from orbit, 7 min 50 s"); stock landers keep their entries | here | done | packages/LR1.md; no golden change |
+| LR2 choosing the hour: the Land slider in the world's local hours with the local time beside it, and Dawn, Midday, Dusk, Night presses on the site card and the walk pad | here | done | packages/LR2.md |
 | LR3 the ground at night and in 3D: True at night is black with no stars, 3D is a flat grey slab (headless WebGL2) | renderer | asked 24 Nov | |
 | LR4 approach and orbit for the table: between arrival and the site the players see only the header; a "Beowulf in orbit of Mars" view (the world turning below, the At-world card's chosen act) for Send this view | here, with the Run desk thread for the preset | queued | |
-| LR5 a landing preset for the Playbook (PB3 "A landing"): an exported pure helper `landingFor(world, site) -> LandingShow`, so a preset stores {world, site} and builds the landing when fired | here, for the Run desk thread | queued | |
+| LR5 a whole landing in its link: `~surface?site=lat,lon&time=midday&lander=party` (place.ts); Land applies hour and lander with the site, and a site link is followed even with Land open, so a bookmark or Playbook preset is a place link | here | done | packages/LR2.md |
+| LR5b the Land screen's own link (App `here()`) carries the site, hour and lander the GM picked, so "keep this as a beat" captures a landing | here, with the Run desk thread | next | |
 | Gap 10, Mass on the Run desk card at Curious | Run desk thread (asking Alex) | open | |
 
 ## Next
-LR1, then LR2, then LR5 (the Run desk needs it for PB3), then LR4.
+LR5b, then LR4.

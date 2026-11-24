@@ -104,7 +104,7 @@ try {
     await gm.waitForTimeout(400);
     await shot(gm, "sl1-ground-true-hud");
     await view(gm, "HUD", "Off");
-    await gm.locator("[data-hour]").fill("-80");
+    await gm.locator("[data-hour]").fill("-5.25");
     await gm.waitForTimeout(500);
     await shot(gm, "sl1-ground-true-morning");
     await gm.locator("[data-drone]").check();

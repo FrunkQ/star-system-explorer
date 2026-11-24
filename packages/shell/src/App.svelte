@@ -911,7 +911,7 @@
     }
     if (p.screen && SCREENS[p.screen] && scalesOf(SCREENS[p.screen]!).includes(p.scale)) ws.screen = p.screen;
     // A landing site in the link (Voyages' "Land here"): the Land screen picks it up once it has read the world.
-    if (p.site && p.world) ws.landing_site = { body: p.world, lat_deg: p.site.lat_deg, lon_deg: p.site.lon_deg };
+    if (p.site && p.world) ws.landing_site = { body: p.world, ...p.site };
   }
   /** Up one scale, from above the system (Esc); at a world, up to its system. */
   function upAStep() {
@@ -922,7 +922,8 @@
   // The address bar's Back and Forward, and a pasted link, move through places.
   function fromHash() {
     const p = parsePlaceHash(location.hash);
-    if (p && session && !(place && samePlace(place, p) && (!p.screen || p.screen === ws.screen))) goPlace(p);
+    // A link with a landing site always goes (a bookmarked landing fired while the Land screen is already open).
+    if (p && session && !(place && samePlace(place, p) && (!p.screen || p.screen === ws.screen) && !p.site)) goPlace(p);
   }
   // A chart can send the GM to another scale (the galaxies nearby's "Chart this galaxy"): a bubbling "sse:explore" event
   // naming the section. Inside the Explore screen its own tabs answer it; on the place line it is a scale.

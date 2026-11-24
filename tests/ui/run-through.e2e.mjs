@@ -6,9 +6,11 @@
 //  1. the Solar System with the Traveller pack; a far trader at Earth is made the party's ship; the GM takes Run;
 //  2. the table joins and sees "Aboard Beowulf, at Earth";
 //  3. Voyages flies Beowulf to Mars; the player's header follows; "Land here" opens Land on Mars;
-//  4. the party's ship is the lander; the GM picks a landmark; nothing reaches the table until it is sent;
+//  4. the party's ship is the lander; the GM picks a landmark and sets midday; the ship flies down on its drive (LR1);
+//     nothing reaches the table until it is sent;
 //  5. Send this view: the player's screen is the Landing screen, judging the same site the same way;
-//  6. Land: both fly; skip to the ground; the GM walks and the player follows; take off.
+//  6. Land: both fly; skip to the ground; the GM walks and the player follows; take off;
+//  7. a whole landing (site, hour, lander) comes back from its link, as a bookmark or a Playbook preset fires it (LR5).
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -102,8 +104,14 @@ try {
   await gm.waitForSelector("[data-surface]:not([data-verdict=''])", { timeout: 40000 });
   assert.equal(await gm.locator("[data-lander]").inputValue(), "party", "the party's ship is offered first as the lander");
   const verdict = await gm.locator("[data-surface]").getAttribute("data-verdict");
-  console.log(`Beowulf's descent at Mars: ${verdict}`);
+  // LR1: a far trader can hold itself up at Mars, so it flies down on its drive from orbit and lands.
+  assert.equal(verdict, "landed", "Beowulf flies down from orbit on its drive");
+  assert.match(await gm.locator("[data-verdict-card] .says").innerText(), /engines from orbit/);
   assert.equal(await pl.locator("[data-surface]").count(), 0, "nothing of the landing reaches the table before it is sent");
+  // LR2: the GM sets the landing at midday on Mars's own clock with one press.
+  await gm.locator('[data-times] [data-time="midday"]').click();
+  assert.match(await gm.locator("[data-times] [data-local-time]").innerText(), /^1[12]:/);
+  assert.equal(await gm.locator('[data-times] [data-time="midday"]').getAttribute("aria-pressed"), "true");
   await shot(gm, "rt-3-gm-site");
 
   // 5. Sent: the players watch the same landing, judged the same way on their own kernel.
@@ -131,9 +139,19 @@ try {
   await gm.waitForTimeout(1500);
   await gm.keyboard.up("ArrowUp");
   await pl.waitForFunction((b) => document.querySelector("[data-surface]")?.getAttribute("data-walk") !== b, before, { timeout: 15000 });
+  assert.match(await pl.locator("[data-ground-note]").innerText(), /local time 1[12]:/, "the table lands at the GM's hour");
   await shot(pl, "rt-6-player-down");
   await gm.locator("[data-take-off]").click();
   await gm.waitForFunction(() => document.querySelector("[data-surface]")?.getAttribute("data-phase") !== "down", null, { timeout: 15000 });
+
+  // LR5: a whole landing comes back from its link (a bookmark or a Playbook preset): site, hour and lander.
+  const land = (await gm.evaluate(() => location.hash)).split("?")[0];
+  assert.match(land, /~surface$/, `on the Land screen: ${land}`);
+  await gm.evaluate((h) => (location.hash = h), `${land}?site=-14.5,175.4&time=dusk&lander=capsule`);
+  await gm.waitForFunction(() => document.querySelector("[data-surface]")?.getAttribute("data-site") === "-14.50,175.40", null, { timeout: 30000 });
+  await gm.waitForSelector("[data-times] [data-local-time]", { timeout: 30000 });
+  await gm.waitForFunction(() => /^1[78]:/.test(document.querySelector("[data-times] [data-local-time]")?.textContent ?? ""), null, { timeout: 15000 });
+  assert.equal(await gm.locator("[data-lander]").inputValue(), "capsule");
 
   assert.deepEqual(errors, []);
   await browser.close();
