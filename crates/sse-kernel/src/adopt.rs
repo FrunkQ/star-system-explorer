@@ -1021,6 +1021,17 @@ pub(crate) fn resolved_system(
             }
         }
     }
+    // Every world's moment of inertia factor (for flattening and
+    // precession), unless the record holds a measured one.
+    for (b, e) in bodies.iter().zip(&envelopes) {
+        if let Some(c) = inertia_factor(b, e) {
+            facts
+                .entry(b.address.clone())
+                .or_default()
+                .entry("body.moment_of_inertia_factor".to_string())
+                .or_insert(f(c));
+        }
+    }
     let mut out_tiles = vec![];
     let mut refused = vec![];
     for tr in tiles {
@@ -1261,4 +1272,28 @@ pub(crate) fn unhex(s: &str) -> Option<Vec<u8>> {
         .chunks(2)
         .map(|p| Some(v(p[0])? << 4 | v(p[1])?))
         .collect()
+}
+
+/// A world's moment of inertia factor C = I/(M R²): a giant as an n = 1
+/// polytrope less its heavy-element core (`sse.interior.inertia_giant`, its
+/// heavy share from the mass-metallicity relation at the default star), a
+/// world with an iron core as core and mantle (`sse.interior.inertia_two_layer`).
+pub(crate) fn inertia_factor(
+    b: &sse_surface::Body,
+    e: &sse_surface::SurfaceEnvelope,
+) -> Option<f64> {
+    use sse_atoms::{inertia as ia, matter as mt};
+    if b.deep_envelope {
+        let z = mt::heavy_element_share(
+            DEFAULT_Z,
+            b.mass_earth * sse_core::sheet::M_EARTH,
+            sse_core::sheet::M_JUP,
+            mt::GIANT_METAL_COEFFICIENT,
+            mt::GIANT_METAL_SLOPE,
+        );
+        return Some(ia::giant(z, ia::CORE_SHARE));
+    }
+    let c = e.core.as_ref()?;
+    let r = b.radius_earth * R_EARTH;
+    (r > 0.0).then(|| ia::two_layer(b.core_mass_fraction, c.core_radius_km * 1000.0, r))
 }

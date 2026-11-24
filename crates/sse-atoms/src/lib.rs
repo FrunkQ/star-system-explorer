@@ -15,6 +15,7 @@ pub mod extinction;
 pub mod field;
 pub mod formulas;
 pub mod heat;
+pub mod inertia;
 pub mod layers;
 pub mod ledger;
 pub mod light;
@@ -425,6 +426,7 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("interior.dynamo_local_rossby", "a stirring flow's speed over the spin speed across its layer"),
     ("interior.magnetic_reynolds", "magnetic Reynolds number of a stirred layer: stretching over leaking"),
     ("interior.magnetic_decay_time", "time an unstirred field takes to leak out of a conducting layer"),
+    ("body.moment_of_inertia_factor", "moment of inertia over mass times radius squared: 0.4 for a uniform ball, less as mass gathers in the middle"),
     ("interior.dynamo_onset", "how far a dynamo runs, 0 to 1, from its magnetic Reynolds number"),
     ("interior.dynamo_rossby", "spin period over a dynamo's stirring time"),
     ("interior.dynamo_rossby_factor", "factor on a dynamo's field from its spin, 1 when saturated"),

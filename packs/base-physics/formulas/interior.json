@@ -693,6 +693,175 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.interior.inertia_two_layer",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "core_mass_fraction",
+     "letter": "q"
+    },
+    {
+     "port": "core_radius",
+     "letter": "rc"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "inertia_factor",
+     "letter": "C"
+    }
+   ],
+   "references": [
+    "Stacey, F. D. and Davis, P. M. 2008, Physics of the Earth, 4th edn, Cambridge University Press: the moment of inertia of a layered Earth, C/MR² = 0.3307 measured against 0.4 for a uniform sphere. doi:10.1017/CBO9780511812910"
+   ],
+   "shown": "C = 2/5 [q x² + (1 − q)(1 − x⁵)/(1 − x³)],  x = r_core / R",
+   "equation": {
+    "name": "How much of a rocky world's mass sits in the middle",
+    "formula": "x = if R <= 0 then 1 else max(rc / R, 0)\nC = if x >= 1 then 2 / 5 else 2 / 5 * (clamp(q, 0, 1) * x ^ 2 + (1 - clamp(q, 0, 1)) * (1 - x ^ 5) / (1 - x ^ 3))",
+    "inputs": {
+     "q": {
+      "kind": "interior.core_mass_fraction",
+      "unit": "1",
+      "name": "core's share of the mass"
+     },
+     "rc": {
+      "kind": "interior.core_radius",
+      "unit": "m",
+      "name": "core radius"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius"
+     }
+    },
+    "outputs": {
+     "C": {
+      "kind": "body.moment_of_inertia_factor",
+      "unit": "1",
+      "name": "moment of inertia factor"
+     }
+    },
+    "source": {
+     "text": "Stacey, F. D. and Davis, P. M. 2008, Physics of the Earth, 4th edn",
+     "doi": "10.1017/CBO9780511812910",
+     "where": "the moment of inertia of a layered planet"
+    },
+    "explain": {
+     "curious": "A uniform ball has a moment of inertia factor of 0.4. Gather mass into a heavy iron core and it falls: Earth's is 0.33, the Moon's, with almost no core, 0.39. Spinning worlds with a low factor bulge less at the equator.",
+     "science": "A core of mass share q and radius ratio x inside a uniform mantle: I = 2/5 q M r_c² + 2/5 (1 − q) M R² (1 − x⁵)/(1 − x³). Self-compression is left out, so a large rocky world comes out a few per cent above its measured value (Earth 0.35 against 0.3307)."
+    },
+    "examples": [
+     {
+      "q": 0.325,
+      "rc": 3480000.0,
+      "R": 6371000.0,
+      "C": 0.34567225004116775
+     },
+     {
+      "q": 0.24,
+      "rc": 1830000.0,
+      "R": 3390000.0,
+      "C": 0.3721872105665876
+     },
+     {
+      "q": 0.0,
+      "rc": 0.0,
+      "R": 1737400.0,
+      "C": 0.4
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.interior.inertia_giant",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "heavy_element_share",
+     "letter": "z"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "inertia_factor",
+     "letter": "C"
+    }
+   ],
+   "params": [
+    {
+     "param": "core_share",
+     "letter": "f",
+     "default": 0.5,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "share of the heavy elements gathered into a small core; the rest mixes through the envelope (a dilute core, Wahl et al. 2017)"
+    }
+   ],
+   "references": [
+    "Hubbard, W. B. 1984, Planetary Interiors, Van Nostrand Reinhold: the n = 1 polytrope for a giant planet, density ρ = ρc sin(πr/R)/(πr/R), whose moment of inertia factor is 2/3 − 4/π² ≈ 0.261",
+    "Wahl, S. M. et al. 2017, Geophysical Research Letters 44, 4649: Juno's gravity field asks for a dilute core, Jupiter's heavy elements spread through about half its radius rather than gathered in the middle. doi:10.1002/2017GL073160"
+   ],
+   "shown": "C = (2/3 − 4/π²)(1 − f Z)",
+   "equation": {
+    "name": "How much of a giant's mass sits in the middle",
+    "formula": "C = (2 / 3 - 4 / (pi * pi)) * (1 - clamp(f, 0, 1) * clamp(z, 0, 1))",
+    "inputs": {
+     "z": {
+      "kind": "interior.heavy_element_share",
+      "unit": "1",
+      "name": "heavy elements' share of the mass"
+     },
+     "f": {
+      "kind": "model.giant_core_share",
+      "unit": "1",
+      "name": "share of the heavy elements in a small core"
+     }
+    },
+    "outputs": {
+     "C": {
+      "kind": "body.moment_of_inertia_factor",
+      "unit": "1",
+      "name": "moment of inertia factor"
+     }
+    },
+    "source": {
+     "text": "Hubbard, W. B. 1984, Planetary Interiors",
+     "url": "https://openlibrary.org/works/OL4269347W",
+     "where": "the n = 1 polytrope"
+    },
+    "explain": {
+     "curious": "A gas giant squeezes its own gas, so it is far denser in the middle than at the top, like a ball of hydrogen pressed by its own weight. That gives Jupiter a factor near 0.25 and Saturn, with more of its mass in a heavy core, near 0.21.",
+     "science": "Hydrogen and helium under a giant's pressure behave close to an n = 1 polytrope (pressure as density squared), whose density falls as sin(πr/R)/(πr/R) and whose C is exactly 2/3 − 4/π² ≈ 0.261. The heavy elements gathered in a small central core add almost nothing to I, so that share of the mass is taken out; the rest mixes through the envelope (Juno: a dilute core)."
+    },
+    "examples": [
+     {
+      "z": 0.0,
+      "f": 0.5,
+      "C": 0.26138193209731553
+     },
+     {
+      "z": 0.1,
+      "f": 0.5,
+      "C": 0.24831283549244973
+     },
+     {
+      "z": 0.25,
+      "f": 0.5,
+      "C": 0.2287091905851511
+     }
+    ]
+   }
   }
  ]
 }

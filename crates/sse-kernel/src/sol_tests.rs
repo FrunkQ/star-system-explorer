@@ -621,3 +621,29 @@ fn reference_bodies_have_surfaces_without_a_campaign() {
     assert_eq!(r["code"], "no_reference_body", "{r}");
     assert!(r["message"].as_str().unwrap().contains("mars"), "{r}");
 }
+
+/// Every Solar System world publishes its moment of inertia factor: the
+/// rocky ones from core and mantle, the giants as polytropes less a core.
+#[test]
+fn worlds_publish_their_moment_of_inertia_factor() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let c = |name: &str| -> f64 {
+        r["facts"]
+            .as_object()
+            .unwrap()
+            .values()
+            .find(|f| f["name"] == name)
+            .and_then(|f| f["body.moment_of_inertia_factor"].as_f64())
+            .unwrap_or_else(|| panic!("no C for {name}"))
+    };
+    let (earth, mars, jupiter, saturn) = (c("Earth"), c("Mars"), c("Jupiter"), c("Saturn"));
+    assert!(earth > 0.3 && earth < 0.37, "Earth {earth}");
+    assert!(mars > 0.3 && mars < 0.4, "Mars {mars}");
+    assert!(jupiter > 0.22 && jupiter < 0.27, "Jupiter {jupiter}");
+    assert!(saturn > 0.19 && saturn < jupiter, "Saturn {saturn}");
+    eprintln!("C: Earth {earth:.4} Mars {mars:.4} Moon {:.4} Jupiter {jupiter:.4} Saturn {saturn:.4} Uranus {:.4}", c("Moon"), c("Uranus"));
+}

@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 126,
+        n, 128,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1450,4 +1450,35 @@ fn the_dipole_ratio_constant_is_the_blocks_default() {
         .decl();
     let k = d.param("dipole_ratio").expect("param").1.default;
     assert_eq!(k, crate::magnetic::DIPOLE_RATIO);
+}
+
+/// The inertia blocks give the same C as `inertia`'s sums; Earth's comes
+/// out a few per cent over its measured 0.3307 (no self-compression), the
+/// coreless Moon near a uniform ball's 0.4, a giant at the polytrope's 0.261.
+#[test]
+fn inertia_blocks_match_their_sums() {
+    use crate::inertia as ia;
+    for (q, rc, r) in [
+        (0.325, 3.48e6, 6.371e6),
+        (0.24, 1.83e6, 3.39e6),
+        (0.0, 0.0, 1.7374e6),
+        (0.5, 7.0e6, 6.0e6),
+    ] {
+        let got = run("sse.interior.inertia_two_layer", &[q, rc, r])[0];
+        assert!(
+            (got - ia::two_layer(q, rc, r)).abs() < 1e-12,
+            "{q} {rc} {r}: {got}"
+        );
+    }
+    let earth = ia::two_layer(0.325, 3.48e6, 6.371e6);
+    assert!(earth > 0.3307 && earth < 0.36, "{earth}");
+    assert!((ia::two_layer(0.0, 0.0, 1.7374e6) - 0.4).abs() < 1e-12);
+    for z in [0.0, 0.1, 0.25] {
+        let got = run("sse.interior.inertia_giant", &[z])[0];
+        assert!(
+            (got - ia::giant(z, ia::CORE_SHARE)).abs() < 1e-12,
+            "{z}: {got}"
+        );
+    }
+    assert!((ia::giant(0.0, 0.5) - 0.2614).abs() < 1e-4);
 }

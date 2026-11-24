@@ -1849,6 +1849,20 @@
         "range": null
       },
       {
+        "description": "moment of inertia over mass times radius squared: 0.4 for a uniform ball, less as mass gathers in the middle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.moment_of_inertia_factor",
+        "range": null
+      },
+      {
         "description": "volumetric mean radius of a planet, moon or minor body",
         "dim": [
           1,
