@@ -84,3 +84,63 @@ fn spirals_are_repeatable() {
     // The fission fragment ship's study needs over 2,100 days; more Δv here, as it goes down to a low orbit.
     assert!(c.days > 2100.0, "{}", c.days);
 }
+
+fn to_mars(ship: Ship) -> crate::RoutePlan {
+    let sys = sol();
+    let req = RouteRequest {
+        ship,
+        from: Endpoint::Body("Earth".into()),
+        to: Some(Endpoint::Body("Mars".into())),
+        depart_s: Some(sys.t0_s),
+        window_days: 800.0,
+        prefer: Prefer::Fastest,
+        rescue: None,
+    };
+    plan(&settings(), &sys, &req).unwrap()
+}
+
+#[test]
+fn a_sail_spirals_on_sunlight_and_spends_nothing() {
+    // A sail of 1 mm/s² at 1 au (a characteristic acceleration in the range studied for Mars cargo sails).
+    let mut sail = gentle(1e-4, 0.0);
+    sail.sunlit = true;
+    sail.sustained = false;
+    sail.wet_t = sail.dry_t;
+    sail.propellant_t = None;
+    let p = to_mars(sail.clone());
+    let c = p
+        .candidates
+        .iter()
+        .find(|c| c.id == "spiral")
+        .unwrap_or_else(|| panic!("{:#?}", p.refused));
+    assert_eq!(c.propellant_t, 0.0, "no reaction mass");
+    assert!(
+        c.why[0].contains("falling with the starlight"),
+        "{}",
+        c.why[0]
+    );
+    // Going outward the light fades, so the same sail without that would be quicker.
+    let mut steady = sail.clone();
+    steady.sunlit = false;
+    steady.exhaust_km_s = 1.0e6;
+    steady.wet_t = steady.dry_t * 1.001;
+    let q = to_mars(steady);
+    let d = q.candidates.iter().find(|c| c.id == "spiral").unwrap();
+    assert!(c.days > d.days, "{} vs {}", c.days, d.days);
+}
+
+#[test]
+fn a_solar_electric_drive_slows_as_it_leaves_the_sun() {
+    let mut sep = gentle(6e-5, 30.0);
+    sep.sunlit = true;
+    let lit = to_mars(sep.clone());
+    sep.sunlit = false;
+    let plain = to_mars(sep);
+    let a = lit.candidates.iter().find(|c| c.id == "spiral").unwrap();
+    let b = plain.candidates.iter().find(|c| c.id == "spiral").unwrap();
+    assert!(a.days > b.days, "{} vs {}", a.days, b.days);
+    assert!(
+        a.propellant_t > 0.0 && (a.dv_m_s - b.dv_m_s).abs() < 1e-6,
+        "same Δv, more time"
+    );
+}

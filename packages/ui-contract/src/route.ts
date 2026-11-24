@@ -14,6 +14,8 @@ export interface NavShip {
   accel_g: number;
   sustained: boolean;
   exhaust_km_s: number;
+  /** Thrust falls with sunlight (a sail, a solar-electric drive): accel_g is at 1 au from a Sun-like star (RK5). A sail has exhaust 0. */
+  sunlit?: boolean;
   wet_t: number;
   dry_t: number;
   propellant_t?: number;

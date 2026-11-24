@@ -608,16 +608,19 @@ fn spiral(c: &Ctx, t0: f64, window: f64, max_share: f64) -> Option<Course> {
     };
     let (f, t) = (sys.body(fa)?, sys.body(ta)?);
     let ship = &req.ship;
-    let a0 = ship.accel_m_s2();
     let ve = ship.exhaust_km_s * 1000.0;
-    if a0 <= 0.0 || ve <= 0.0 || f.a_au <= 0.0 || t.a_au <= 0.0 {
+    let sail = ship.is_sail();
+    // Thrust where the ship is: a sunlit drive by the starlight at `r` (the Sun's at 1 au is 1).
+    let lum = sys.star_luminosity_lsun.max(0.0);
+    let accel = |r: f64| ship.accel_at(lum * (AU / r) * (AU / r));
+    if ship.accel_m_s2() <= 0.0 || (ve <= 0.0 && !sail) || f.a_au <= 0.0 || t.a_au <= 0.0 {
         return None;
     }
     let mu = sys.mu();
     let (ra, rb) = (f.a_au * AU, t.a_au * AU);
     // Only when the textbook transfer's own burns would be long.
     let (d1, d2) = hohmann_dv(mu, ra, rb);
-    let short = (end_burn(s, Some(f), d1) + end_burn(s, Some(t), d2)) / a0;
+    let short = end_burn(s, Some(f), d1) / accel(ra) + end_burn(s, Some(t), d2) / accel(rb);
     if short <= max_share * hohmann_time(mu, ra, rb) {
         return None;
     }
@@ -625,11 +628,17 @@ fn spiral(c: &Ctx, t0: f64, window: f64, max_share: f64) -> Option<Course> {
     let (out_dv, in_dv) = (parking_speed(s, Some(f)), parking_speed(s, Some(t)));
     let across = (v1 - v2).abs();
     let dv = out_dv + across + in_dv;
-    // Time to have spent `x` of Δv, with the mass going down as it burns.
-    let time_for = |x: f64| (ve / a0) * (1.0 - m::exp(-x / ve));
-    let t_out = time_for(out_dv);
-    let t_across = time_for(out_dv + across) - t_out;
-    let t_in = time_for(dv) - t_out - t_across;
+    // Time to spend Δv from x0 to x1 at distance r: thrust is constant (or follows the starlight), and the ship gets
+    // lighter as it burns, so a = a(r)·e^(x/vₑ) and dt = (vₑ/a(r))(e^(−x0/vₑ) − e^(−x1/vₑ)); a sail loses no mass.
+    let dt = |x0: f64, x1: f64, r: f64| {
+        let ar = accel(r);
+        if sail {
+            (x1 - x0) / ar
+        } else {
+            (ve / ar) * (m::exp(-x0 / ve) - m::exp(-x1 / ve))
+        }
+    };
+    let t_out = dt(0.0, out_dv, ra);
     // The angle swept on the way across: dθ = (v/r) dt with r = μ/v², stepped in Δv.
     let steps = 2000u32;
     let mut theta = 0.0;
@@ -638,14 +647,16 @@ fn spiral(c: &Ctx, t0: f64, window: f64, max_share: f64) -> Option<Course> {
     for k in 0..steps {
         let x0 = across * k as f64 / steps as f64;
         let x1 = across * (k + 1) as f64 / steps as f64;
-        let dt = time_for(out_dv + x1) - time_for(out_dv + x0);
         let xm = 0.5 * (x0 + x1);
         let v = if rb > ra { v1 - xm } else { v1 + xm };
         let r = mu / (v * v);
-        theta += v / r * dt;
-        tau += dt;
+        let step = dt(out_dv + x0, out_dv + x1, r);
+        theta += v / r * step;
+        tau += step;
         track.push((tau, r, theta));
     }
+    let t_across = tau;
+    let t_in = dt(out_dv + across, dv, rb);
     // The far world must be alongside where the spiral ends: search the window.
     let lon = |r: V3| m::atan2(r[1], r[0]);
     let n = 720u32;
@@ -719,8 +730,8 @@ fn spiral(c: &Ctx, t0: f64, window: f64, max_share: f64) -> Option<Course> {
     }
     let why = vec![
         format!(
-            "slow spiral at {:.1e} g: thrusting the whole way, {:.0} days ({:.0} out of orbit about {}, {:.0} across, {:.0} down to {})",
-            ship.accel_g, total / DAY, t_out / DAY, f.name, t_across / DAY, t_in / DAY, t.name
+            "slow spiral at {:.1e} g{}: thrusting the whole way, {:.0} days ({:.0} out of orbit about {}, {:.0} across, {:.0} down to {})",
+            ship.accel_g, if ship.sunlit { " at 1 au, falling with the starlight" } else { "" }, total / DAY, t_out / DAY, f.name, t_across / DAY, t_in / DAY, t.name
         ),
         format!(
             "Δv about the differences of circular speeds (Edelbaum): {:.2} km/s to leave, {:.2} across, {:.2} to arrive",

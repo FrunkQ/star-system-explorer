@@ -18,7 +18,14 @@ Atomic Rockets plan, section 9 and the Mission, Orbits row: "Slow spirals for lo
   - Spirals are repeatable.
 - No stock ship is gentle enough to change, so no goldens move.
 
+## Part 2a: thrust that follows the starlight (24 Nov 2026)
+
+- `Ship.sunlit` (serde default false): `accel_g` is at 1 au from a Sun-like star, and NAV scales it by the starlight where the ship is (L/L☉ · (1 au/r)²). This covers sails and solar-electric drives. A sail has `exhaust_km_s` 0: `is_sail()` gives it unlimited Δv and no propellant.
+- The spiral steps time in Δv, reading the thrust at each step's distance: dt = (vₑ/a(r))(e^(−x0/vₑ) − e^(−x1/vₑ)), or Δv/a(r) for a sail. The escape and capture parts use the two worlds' distances. The short-burn test reads the thrust at each end.
+- Checks (spiral_tests.rs): a 1 mm/s² sail spirals Earth to Mars spending nothing, and takes longer than the same thrust held steady; a solar-electric drive needs the same Δv but more time than an unlit one.
+- Kernel note: RK9's `ship_power` already sets a fitted ship's acceleration from its power at the leg's dimmer end. A ship that is both power-fitted and `sunlit` would be scaled twice. Leave `sunlit` off for power-fitted ships until the kernel reads the ledger per step.
+
 ## Next
 
-- Part 2: a beamed leg that depends on its sender (thrust from a construct elsewhere; the "beams spread" Equation). Sails get thrust that falls with distance squared, which also needs the spiral's Δv steps to read the local flux.
+- Part 2b: a beamed leg that depends on its sender (thrust from a construct elsewhere; the "beams spread" Equation), and a sail's thrust on a torch-like straight course.
 - A parking orbit chosen per mission (for example Callisto's orbit rather than a low one), and plane changes (Edelbaum's full formula).
