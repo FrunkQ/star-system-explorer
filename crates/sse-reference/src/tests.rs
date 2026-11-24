@@ -657,3 +657,26 @@ fn the_compiled_molar_masses_are_the_readers() {
         assert_eq!(w.to_bits(), v.to_bits(), "{id}");
     }
 }
+
+#[test]
+fn nuclear_reactions_conserve_nucleons_and_charge() {
+    let mut g = good();
+    g["elements"].as_array_mut().unwrap().push(json!({"id": "he", "z": 2, "atomic_weight": {"v": 4.0026, "unit": "g/mol", "src": "ciaaw-2021"}}));
+    g["isotopes"] = json!([
+        {"id": "h2", "element": "h", "a": 2},
+        {"id": "h3", "element": "h", "a": 3},
+        {"id": "he4", "element": "he", "a": 4}
+    ]);
+    g["reactions"] = json!([{"id": "d-t", "kind": "nuclear", "terms": [["h2", -1], ["h3", -1], ["he4", 1], ["neutron", 1]]}]);
+    assert!(Reference::from_json(&[("base".into(), g.clone())]).is_ok());
+    g["reactions"] = json!([
+        {"id": "lost-neutron", "kind": "nuclear", "terms": [["h2", -1], ["h3", -1], ["he4", 1]]},
+        {"id": "ghost", "kind": "nuclear", "terms": [["li99", -1]]}
+    ]);
+    let e = Reference::from_json(&[("base".into(), g)]).unwrap_err();
+    assert!(
+        e.iter().any(|m| m.contains("does not conserve nucleons")),
+        "{e:#?}"
+    );
+    assert!(e.iter().any(|m| m.contains("li99")), "{e:#?}");
+}
