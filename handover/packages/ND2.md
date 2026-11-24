@@ -84,6 +84,15 @@ Owner: Build light and nebulae. Data rows with the matter data sheet thread.
   k = 1 and a brighter edge for k < 1; kernel `read_limb_gives_the_edge_of_a_disc`. Fudge F55.
 - Golden change: the base-physics pack hash and the contract cases for the new op only.
 
+## Correction (24 Nov): methane rows were 10⁴ too strong
+
+The giants thread found Jupiter coming out deep blue: an optical depth of 7834 at 725 nm where
+Karkoschka's 2.3 per km-amagat gives about 0.55. The MPI-Mainz atlas serves cm² per molecule, and
+the first copy of `ND2-data/ch4-karkoschka1994.csv` used those figures as m². Every row is now
+divided by 1e4, so 725 nm reads 1.22e-28 m², which is 3.3 per km-amagat. The test's km-amagat is
+now 2.687e28 per m² of column; it had been 2.687e24, which hid the slip. The colours in the test
+are unchanged, because both factors moved together. Golden: the base-reference pack hash only.
+
 ## Next (part 2)
 
 - More rows: H₂-H₂ and H₂-He pairs (HITRAN CIA; hitran.org was not reachable from the build machine), a cited

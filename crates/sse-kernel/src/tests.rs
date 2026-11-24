@@ -3494,7 +3494,7 @@ fn light_through_gas_gives_the_colour_to_the_eye() {
             {"address": "sun", "t_k": 5800.0, "layers": []},
             {"address": "giant", "t_k": 5772.0, "path_factor": 2.0,
              "layers": [{"t_k": 80.0, "path_m": 5e4, "gases": [
-                 {"gas": "h2", "number_density_m3": 1e25}, {"gas": "ch4", "number_density_m3": 2e22}]}],
+                 {"gas": "h2", "number_density_m3": 1e25}, {"gas": "ch4", "number_density_m3": 2e24}]}],
              "wavelengths_m": [5.5e-7, 8.9e-7]}]}),
     );
     assert_eq!(r["type"], "gas_passed", "{r}");

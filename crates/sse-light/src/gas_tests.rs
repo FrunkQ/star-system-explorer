@@ -286,7 +286,9 @@ fn methane_from_the_sheet_turns_a_giant_blue_green() {
     let e = eye();
     let wl = e.wavelengths_m();
     let sun: Vec<f64> = wl.iter().map(|l| planck(*l, 5772.0)).collect();
-    let km_amagat = 2.686_78e24;
+    // One km-amagat: 2.687e25 molecules per m³ over 1000 m, here as a
+    // density over the slab's 1 m of path.
+    let km_amagat = 2.686_78e28;
     let seen = |km: f64| {
         let p = Passage {
             address: "giant".into(),
