@@ -43,7 +43,7 @@ try {
   }
   const open = async (name) => {
     await desk.locator("[data-construct]", { hasText: name }).click();
-    const t = desk.locator("[data-station-picture-toggle]");
+    const t = desk.locator("[data-picture-toggle]");
     if ((await t.getAttribute("aria-expanded")) !== "true") await t.click();
     const plans = desk.locator("[data-station-plans]");
     await plans.waitFor();
