@@ -1,0 +1,148 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-small-bodies",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": "Small bodies up close (track SB). A belt, ring or cloud stays a probability field until one member is looked at; that member then resolves, from the seed and its address alone, into a definite body: what it is made of, the type read off that, rubble pile or monolith, single, contact binary or separated pair, its spin, its figure and a short history. Every number below is editable and cited; the citations are in docs/citations.md (rows SB-*) and the simplifications in docs/fudges.md (rows SB-*).",
+   "small_bodies": {
+    "makeup": {
+     "about": "Grain densities are read from the master data sheet (mixtures formation-metal, -rock, -carbon, -water). A member's makeup scatters around its cloud's mean (metal, rock, carbon, ice) by a log-normal factor per share, then renormalises. Fragments of a differentiated parent come mostly from one layer.",
+     "scatter_ln": 0.5,
+     "differentiated_share": {
+      "asteroid-belt": 0.1,
+      "belt": 0.05,
+      "debris-belt": 1.0
+     },
+     "layer_purity": 0.85,
+     "core_keeps": 0.9
+    },
+    "ice": {
+     "about": "Water ice survives on the surface where the blackbody temperature 278.6 K L^0.25 / sqrt(a) is below this (sublimation over billions of years).",
+     "survives_below_k": 150.0,
+     "reddened_below_k": 50.0
+    },
+    "types": {
+     "about": "The type is a label read off the member's makeup and surface, never an input. Albedos are survey means.",
+     "metal_min": 0.5,
+     "icy_min": 0.3,
+     "carbon_min": 0.15,
+     "fresh_below": 0.3,
+     "albedo": {
+      "S": 0.25,
+      "Q": 0.29,
+      "C": 0.06,
+      "M": 0.14,
+      "V": 0.35,
+      "P": 0.05,
+      "D": 0.05,
+      "ice": 0.6,
+      "comet": 0.04,
+      "ring": 0.5
+     }
+    },
+    "collisions": {
+     "about": "Disruption lifetime of a main-belt body t = t0 (R / 1 m)^0.5 (Farinella et al. 1998 eq. 14 and 15), scaled by how crowded and fast the member's cloud is against the main belt. A body disrupted within its system's age has re-accumulated as a rubble pile if self-gravity, not strength, holds it (D above the strength-gravity transition near 0.3 km, Benz and Asphaug 1999).",
+     "t0_rock_myr": 20.0,
+     "t0_metal_myr": 1400.0,
+     "gravity_transition_km": 0.3,
+     "main_belt_over_1km": 1.2e6,
+     "main_belt_a_au": [2.1, 3.3],
+     "main_belt_e": 0.15,
+     "main_belt_i_deg": 10.0,
+     "porosity_rubble": 0.4,
+     "porosity_monolith": 0.1
+    },
+    "yorp": {
+     "about": "Sunlight spins small bodies up or down (YORP). The time to change the spin by its own size grows as D^2 a^2 / L. Where it has had time, spins are spread flat in frequency up to the spin barrier and rubble piles shed mass into pairs.",
+     "t_myr_at_1km_1au": 1.0,
+     "flat_below_hours": 2.2
+    },
+    "spin": {
+     "about": "Bodies YORP has not reached keep a Maxwellian spread of spin rates from their collisional past. Monoliths below the transition may spin faster than the barrier.",
+     "maxwell_mean_per_day": 2.0,
+     "monolith_fastest_hours": 0.05
+    },
+    "pairs": {
+     "about": "Shares among bodies YORP has worked on (near-Earth asteroids over 200 m by radar and light curves), among cold, primordial discs (gentle mergers, like Arrokoth), and for large bodies with impact moons.",
+     "yorp_contact": 0.11,
+     "yorp_separated": 0.16,
+     "cold_speed_km_s": 0.4,
+     "cold_contact": 0.15,
+     "cold_separated": 0.3,
+     "large_moon_km": 100.0,
+     "large_moon_share": 0.05,
+     "yorp_secondary": [0.18, 0.58],
+     "contact_secondary": [0.45, 1.0],
+     "cold_secondary": [0.5, 1.0],
+     "yorp_separation_primary_radii": [1.5, 4.0],
+     "cold_separation_primary_radii": [10.0, 300.0],
+     "moon_separation_primary_radii": [3.0, 15.0]
+    },
+    "figure": {
+     "about": "Large bodies relax to the figure of a spinning fluid (Maclaurin, then Jacobi); small ones keep an irregular figure held by strength or friction. Round above roughly 600 km for rock and 400 km for ice.",
+     "round_km_rock": 600.0,
+     "round_km_icy": 400.0,
+     "elongation_b_over_a": [0.35, 0.95],
+     "flattening_c_over_b": [0.6, 0.95],
+     "top_shape_share_of_barrier": 0.85,
+     "cold_lobe_c_over_a": 0.45,
+     "neck_overlap": 0.15,
+     "relief_monolith": [0.08, 0.25],
+     "relief_rubble": [0.03, 0.1]
+    },
+    "weathering": {
+     "about": "Solar wind darkens and reddens an exposed surface in about a million years at 1 AU, slower as a^2.",
+     "t_myr_at_1au": 1.0
+    },
+    "recipes": [
+     {
+      "id": "small-body",
+      "label": "Small body",
+      "kernel_kind": "asteroid",
+      "inputs": [
+       {"id": "diameter", "default": 1.0, "unit": "km", "kind": "length"},
+       {"id": "a", "default": 2.7, "unit": "au", "kind": "length"}
+      ],
+      "citation": "SB-farinella98, SB-margot02, SB-benner08"
+     },
+     {
+      "id": "comet",
+      "label": "Comet",
+      "kernel_kind": "comet-nucleus",
+      "inputs": [
+       {"id": "diameter", "default": 4.0, "unit": "km", "kind": "length"},
+       {"id": "a", "default": 3.5, "unit": "au", "kind": "length"}
+      ],
+      "citation": "SB-farinella98"
+     },
+     {
+      "id": "contact-binary",
+      "label": "Contact binary",
+      "kernel_kind": "contact-binary",
+      "inputs": [
+       {"id": "diameter", "default": 1.0, "unit": "km", "kind": "length"},
+       {"id": "a", "default": 1.5, "unit": "au", "kind": "length"}
+      ],
+      "citation": "SB-benner08"
+     },
+     {
+      "id": "binary-asteroid",
+      "label": "Binary asteroid",
+      "kernel_kind": "binary-pair",
+      "inputs": [
+       {"id": "diameter", "default": 1.0, "unit": "km", "kind": "length"},
+       {"id": "a", "default": 1.5, "unit": "au", "kind": "length"}
+      ],
+      "citation": "SB-margot02"
+     }
+    ]
+   }
+  }
+ }
+}

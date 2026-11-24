@@ -884,6 +884,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-small"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-formation",
+ "sse-reference",
+]
+
+[[package]]
 name = "sse-suite"
 version = "0.1.0"
 dependencies = [

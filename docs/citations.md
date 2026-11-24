@@ -94,3 +94,22 @@ Checked by two research passes on 19 Nov (raw results `handover/packages/W-citat
 | Where | Reference | What is relied on | Status | Checked |
 |---|---|---|---|---|
 | `packs/base-manifest` `life_support.rates.human` (MC1) | Anderson, M. S., Ewert, M. K. and Keener, J. F. 2018, Life Support Baseline Values and Assumptions Document, NASA/TP-2015-218570/REV1, https://ntrs.nasa.gov/citations/20180001338 | a nominal crew member uses 0.82 kg oxygen, about 2.5 kg drinking and food-preparation water and about 1.8 kg packaged food a day | unverified | figures from memory of the document's tables; the document was found but its tables were not read here |
+
+## Small bodies (track SB)
+
+| Where | Reference | What is relied on | Status | Checked |
+|---|---|---|---|---|
+| `packs/base-small-bodies` `pairs.yorp_contact` 0.11 (SB-benner08) | Benner, L. A. M. et al. 2008, Arecibo and Goldstone radar imaging of contact binary asteroids, Binary Asteroid Dynamics workshop, Paris (abstract) | about 11% (14 of 132) of near-Earth asteroids larger than 200 m imaged by radar are contact binaries | verified | abstract read 24 Nov 2026 (it also says binaries and contact binaries together exceed 25% above 200 m) |
+| `pairs.yorp_separated` 0.16 (SB-margot02) | Margot, J. L. et al. 2002, Science 296, 1445 | about 16% of near-Earth asteroids larger than 200 m may be binary systems | verified | abstract and text read 24 Nov 2026 |
+| `collisions.t0_rock_myr` 20, `t0_metal_myr` 1400 (SB-farinella98) | Farinella, P., Vokrouhlicky, D. and Hartmann, W. K. 1998, Icarus 132, 378, eqs. 14 and 15 | disruption lifetime about 2.0e7 yr (R / 1 m)^0.5 for stony bodies and 1.4e9 yr for iron ones | partly verified | read from a text extraction of the PDF; the strength term inside the bracket was unclear, recheck |
+| `collisions.gravity_transition_km` 0.3 | Benz, W. and Asphaug, E. 1999, Icarus 142, 5 | the disruption energy Q*_D is lowest near 0.3 km; larger bodies are held by gravity | unverified | from memory |
+| `collisions.main_belt_over_1km` 1.2e6 | Tedesco, E. F. and Desert, F.-X. 2002, AJ 123, 2070 | about 1.2 million main-belt asteroids larger than 1 km | unverified | from memory |
+| `yorp.flat_below_hours` 2.2, spin barrier | Pravec, P. and Harris, A. W. 2000, Icarus 148, 12; Pravec, P. et al. 2008, Icarus 197, 497 | rubble piles over about 200 m do not spin faster than about 2.2 h; small asteroids' spin rates are nearly flat in frequency | unverified | from memory; the barrier itself is computed as sqrt(3 pi / (G rho)) |
+| `pairs.cold_contact` 0.15, `cold_separated` 0.3 | Noll, K. S. et al. 2008 (The Solar System Beyond Neptune, 345); Thirouin, A. and Sheppard, S. S. 2019, AJ 157, 228 | about 30% of cold classical Kuiper belt objects are resolved binaries; perhaps 10 to 25% are contact binaries | unverified | from memory |
+| `figure.cold_lobe_c_over_a` 0.45 | Spencer, J. R. et al. 2020, Science 367, eaay3999; Keane, J. T. et al. 2022, JGR Planets 127 | Arrokoth's lobes are flattened, the larger about 20.6 x 19.9 x 9.4 km | unverified | from memory |
+| figure.rs Maclaurin and Jacobi constants | Chandrasekhar, S. 1969, Ellipsoidal Figures of Equilibrium | bifurcation at Omega^2/(pi G rho) = 0.37423 (e = 0.81267), Maclaurin maximum 0.44933 (e = 0.92996), Jacobi end b/a 0.432, c/a 0.345 | verified by test | the Maclaurin relation is computed and checked against these values in `sse-small` tests |
+| `figure.round_km_rock` 600, `round_km_ice` 400 | Lineweaver, C. H. and Norman, M. 2010, arXiv 1004.1091 | rocky bodies round above about 600 km, icy ones above about 400 km | unverified | from memory |
+| `ice.survives_below_k` 150 | Schorghofer, N. 2008, ApJ 682, 697 | exposed water ice lasts the age of the Solar System only below about 145 to 150 K | unverified | from memory |
+| `weathering.t_myr_at_1au` 1.0 | Vernazza, P. et al. 2009, Nature 458, 993 | space weathering darkens a fresh stony surface in about a million years | unverified | from memory |
+| `types.albedo` | Mainzer, A. et al. 2011, ApJ 741, 90 (NEOWISE); DeMeo, F. E. and Carry, B. 2013, Icarus 226, 723 | typical geometric albedos by type | unverified | from memory |
+| type mix check | DeMeo, F. E. and Carry, B. 2014, Nature 505, 629 | the main belt mixes types, with S inner and C outer by mass | unverified | used as a check, not an input |
