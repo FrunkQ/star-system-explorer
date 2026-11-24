@@ -47,15 +47,6 @@ jobs:
           echo "rust=$rust" >> "$GITHUB_OUTPUT"; echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "rust=$rust web=$web"
 
-  # Every paper a pack or the code cites is on the citation run-through's master list (handover/citations/).
-  # Runs on every pull request, UI-only ones too, since the UI copy cites papers as well.
-  citations:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: python3 scripts/test-citations.py
-      - run: python3 scripts/citations.py --check
-
   rust:
     name: rust (${{ matrix.os }})
     needs: changes

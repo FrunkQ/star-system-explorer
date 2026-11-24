@@ -47,14 +47,17 @@ gives another number or formula), **not found**.
 
 Inside a tier: papers the first pass left unverified (or never saw) first, then the most-cited. `--batches` follows this.
 
-## The rule for every builder (a check enforces it)
+## The rule for every builder
 
-When a pack, the kernel, the UI or the worker cites a paper that is not on the list, `scripts/check.sh` and the CI
-job `citations` fail. Fix: `python3 scripts/citations.py --add`, then commit `handover/citations/master.jsonl`.
-`--add` only adds the new papers as unchecked and touches no other line, so two pull requests rarely conflict; if they
-do, take both sides (lines are independent and sorted by key). Design-note citations are listed too but only warned
-about, since design notes arrive by docs-only pull requests. Keep adding your row to `docs/citations.md` with what you
-checked, as before: that register is the builders' own record and this list reads its statuses into `earlier`.
+When a pack, the kernel, the UI or the worker cites a paper that is not on the list, `scripts/check.sh` prints a
+warning (`python3 scripts/citations.py --check --warn`). Fix: `python3 scripts/citations.py --add`, then commit
+`handover/citations/master.jsonl`. `--add` only adds the new papers as unchecked and touches no other line, so two
+pull requests rarely conflict; if they do, take both sides (lines are independent and sorted by key). The run-through
+thread also adds any it finds each day. Making the check fail, in check.sh and as a CI job, waits on Alex's yes (CI
+edits are his call; a new failing check turns main red for every open PR until each adds its papers).
+
+Keep adding your row to `docs/citations.md` with what you checked, as before: that register is the builders' own
+record and this list reads its statuses into `earlier`.
 
 ## Daily round: on the old account (until 25 Nov 2026)
 

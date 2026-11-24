@@ -518,7 +518,7 @@ def order_key(r):
     return (r["tier"], weak, -len(r["places"]), r["key"])
 
 
-def check():
+def check(warn=False):
     rows = load_master()
     known = {r["key"] for r in rows} | {"doi:" + d for r in rows for d in r.get("doi", [])}
     bad = [r["key"] for r in rows if r.get("status") not in STATUSES]
@@ -539,6 +539,9 @@ def check():
             print(f"citations: {k} cited at {code[k]['places'][0]} is not on handover/citations/master.jsonl", file=sys.stderr)
         print("Run python3 scripts/citations.py --add and commit handover/citations/master.jsonl.", file=sys.stderr)
     if bad or missing:
+        if warn:
+            print(f"citations: warning only: {len(missing)} new papers to add", file=sys.stderr)
+            return
         sys.exit(1)
     print(f"citations: all {len(code)} pack and code citations are on the master list")
 
@@ -658,6 +661,7 @@ def main():
     ap.add_argument("--size", type=int, default=30)
     ap.add_argument("--count", type=int, default=1)
     ap.add_argument("--start", type=int, default=1, help="number of the first batch written")
+    ap.add_argument("--warn", action="store_true", help="with --check: report missing papers but do not fail")
     ap.add_argument("--score", metavar="FILE")
     ap.add_argument("--date", default=datetime.date.today().isoformat())
     ap.add_argument("--extra", action="append", default=[], help="another folder of design notes to read")
@@ -671,7 +675,7 @@ def main():
     if a.batches:
         batches(a.batches, a.size, a.count, a.start)
     if a.check:
-        check()
+        check(a.warn)
     if not (a.update or a.add or a.check or a.batches or a.score):
         ap.print_help()
 
