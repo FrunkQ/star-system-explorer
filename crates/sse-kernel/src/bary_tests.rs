@@ -148,8 +148,8 @@ fn stability_reads_the_barycentre_hierarchy() {
     assert!(checks.iter().any(|c| c.check == "binary_both_stars"));
 }
 
-/// Withdrawing a world takes what orbits it too, even a V3 moon that sits
-/// beside it in the address tree.
+/// A withdrawn world takes what orbits it too (withdraw's `take`, "remove
+/// them too"), even a V3 moon that sits beside it in the address tree.
 #[test]
 fn a_withdrawn_world_takes_its_moons() {
     let mut f = BTreeMap::new();
@@ -300,8 +300,10 @@ fn rehost_keeps_motion_or_tidies() {
     assert_eq!(r["type"], "authored", "{r}");
 }
 
-/// K13 withdraw's three choices: take what went round it (the default),
-/// leave it round the body's host, or hand it to a named body; one event.
+/// K13 withdraw's three choices: leave what went round it round the body's
+/// host (the default), take it too, or hand it to a named body; one event.
+/// A body nothing goes round, or one that goes round nothing, is simply
+/// withdrawn by default.
 #[test]
 fn withdraw_takes_leaves_or_hands_on() {
     let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
@@ -357,14 +359,16 @@ fn withdraw_takes_leaves_or_hands_on() {
     let mut k = setup();
     let r = send(
         &mut k,
-        serde_json::json!({"op":"withdraw","address":earth,"at_s":100}),
+        serde_json::json!({"op":"withdraw","address":earth,"at_s":100,"others":"take"}),
     );
     assert_eq!(r["type"], "authored", "{r}");
     assert!(gone(&mut k));
+    // With no choice named, what went round it stays round its host,
+    // moving as it was (Alex 24 Nov 2026).
     let mut k = setup();
     let r = send(
         &mut k,
-        serde_json::json!({"op":"withdraw","address":earth,"at_s":100,"others":"leave"}),
+        serde_json::json!({"op":"withdraw","address":earth,"at_s":100}),
     );
     assert_eq!(r["type"], "authored", "{r}");
     assert_eq!(
@@ -386,6 +390,16 @@ fn withdraw_takes_leaves_or_hands_on() {
         serde_json::json!({"op":"withdraw","address":mars,"at_s":150,"others":"hand"}),
     );
     assert_eq!(r["code"], "bad_request", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"withdraw","address":mars,"at_s":150}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"withdraw","address":SUN,"at_s":160}),
+    );
+    assert_eq!(r["type"], "authored", "a star goes round nothing: {r}");
 }
 
 /// K13 `preview_tree`: the tree before and after edits, nothing written;

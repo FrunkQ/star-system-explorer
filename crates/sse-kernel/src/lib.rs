@@ -2268,11 +2268,22 @@ impl Kernel {
         hand: bool,
         to: Option<&str>,
         keep: orbits::Keep,
+        by_default: bool,
     ) -> Result<Response, Response> {
+        // Alex 24 Nov 2026: removing a body leaves what went round it round
+        // its host, moving as it was; "remove them too" is `take`. With no
+        // choice named, a subject that goes round nothing, or that nothing
+        // goes round, is simply withdrawn.
+        if by_default && to.is_some() {
+            return Err(err("bad_request", "to needs others: hand"));
+        }
         let u = self.universe()?;
         let a = in_universe(&u.root, address)?;
         let mut st = u.chronicle.state_at(UniverseTime::seconds(at_s));
         withdraw::drop_withdrawn(&mut st.facts);
+        if by_default && !st.facts.contains_key(&a) {
+            return self.set_withdrawn(address, at_s, true);
+        }
         let row = st.facts.get(&a).ok_or_else(|| {
             err(
                 "unknown_address",
@@ -2286,6 +2297,9 @@ impl Kernel {
         let new_host = match (hand, to) {
             (true, Some(t)) => in_universe(&u.root, t)?,
             (true, None) => return Err(err("bad_request", "hand needs to: the body that takes them")),
+            (false, _) if by_default && host_of(row).is_none() => {
+                return self.set_withdrawn(address, at_s, true);
+            }
             (false, _) => host_of(row).ok_or_else(|| {
                 err(
                     "rehost_refused",
@@ -2325,6 +2339,9 @@ impl Kernel {
             })
             .map(|(x, _)| x.clone())
             .collect();
+        if by_default && kids.is_empty() {
+            return self.set_withdrawn(address, at_s, true);
+        }
         let mut set: BTreeMap<Address, BTreeMap<String, Value>> = BTreeMap::new();
         for k in &kids {
             let r = orbits::rehost(&facts, &system, k, &new_host, at_s, Some(&u.seed), keep)
@@ -2658,14 +2675,15 @@ impl Kernel {
                 others,
                 to,
                 keep,
-            } => match others.as_deref().unwrap_or("take") {
+            } => match others.as_deref().unwrap_or("default") {
                 "take" if to.is_none() => self.set_withdrawn(&address, at_s, true)?,
-                "leave" | "hand" => self.withdraw_rehoming(
+                "leave" | "hand" | "default" => self.withdraw_rehoming(
                     &address,
                     at_s,
                     others.as_deref() == Some("hand"),
                     to.as_deref(),
                     keep.unwrap_or(orbits::Keep::Motion),
+                    others.is_none(),
                 )?,
                 other => {
                     return Err(err(

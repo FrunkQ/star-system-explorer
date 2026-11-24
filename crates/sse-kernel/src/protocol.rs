@@ -171,10 +171,10 @@ pub enum Request {
     /// Withdraw a subject and everything under it from `at_s` on (Undo of
     /// a paste, or removing a body): it drops out of scene, resolved_system
     /// and systems. Nothing is deleted; the history keeps the event. What
-    /// went round it (K13, editing design 10A): `take` them too (the
-    /// default), `leave` them round its own host, or `hand` them to `to`,
-    /// keeping their motion (`keep`, default `motion`) or a tidy orbit. One
-    /// event, so one step.
+    /// went round it (K13, editing design 10A): `leave` them round its own
+    /// host (the default, Alex 24 Nov 2026), `take` them too ("remove them
+    /// too"), or `hand` them to `to`, keeping their motion (`keep`, default
+    /// `motion`) or a tidy orbit. One event, so one step.
     Withdraw {
         address: String,
         at_s: i64,
