@@ -85,7 +85,13 @@ pub(crate) fn read(
     let w = worlds_at(ch, system, at_s, run, &ss)?;
     let rows = Sheet::read(sheet);
     let settings = Settings::default();
-    let ratio: BTreeMap<String, f64> = BTreeMap::new();
+    // MP7: the star's own elements, from what it inherited; a system with no
+    // formation run reads as the Sun's (compose notes the stand-in).
+    let ratio: BTreeMap<String, f64> = match run {
+        Some(r) => crate::star_elements::star_element_ratios(&r.history.inheritance, sheet)
+            .map_err(|e| err("bad_pack", e))?,
+        None => BTreeMap::new(),
+    };
     let mut out = vec![];
     for b in &w.bodies {
         if want.as_ref().is_some_and(|a| *a != b.address) {
