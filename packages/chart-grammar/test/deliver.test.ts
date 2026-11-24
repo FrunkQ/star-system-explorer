@@ -42,3 +42,16 @@ test("parts follow one another inside the plan's time; type on gives long lines 
   assert.equal(t[1]!.delay, 300);
   assert.equal(t[1]!.ms, 600);
 });
+
+test("a page follows the finger about its spine and turns past a third, or on a flick", async () => {
+  const { turnDrag, turnCommits } = await import("../src/page-turn.ts");
+  assert.equal(turnDrag(4, 600).dir, 0, "a small wobble is not a turn");
+  const fwd = turnDrag(-250, 600);
+  assert.equal(fwd.dir, 1);
+  assert.ok(fwd.angle < 0 && fwd.angle > -90);
+  assert.equal(turnDrag(-2000, 600).angle, -90);
+  assert.equal(turnDrag(250, 600).dir, -1);
+  assert.ok(turnCommits(turnDrag(-250, 600), 0), "past a third");
+  assert.ok(!turnCommits(turnDrag(-60, 600), 0.1), "short and slow settles back");
+  assert.ok(turnCommits(turnDrag(-60, 600), -1.2), "a flick turns");
+});
