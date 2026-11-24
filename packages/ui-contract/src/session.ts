@@ -156,6 +156,11 @@ export interface ViewSession {
   surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }>;
   /** A world's landmarks (SL1): its named landscape from a quick survey (`survey_surface`'s register, the same world the globe shows); GM only. */
   surfaceLandmarks(system: string, body: string, limit?: number): Promise<{ ok: true; landmarks: import("./landing.ts").Landmark[]; total: number } | { ok: false; code: string; message: string }>;
+  /**
+   * Let this seat read one world's ground while the table watches its landing (the landing run-through): its tiles
+   * and a descent planned to a site, on this seat's own kernel, for that body only. Null ends it. A GM needs none.
+   */
+  grantLanding?(g: { system: string; body: string } | null): void;
   /** A descent planned to any site (SL1, kernel `plan_descent` on the quick survey): the site judged, a lander flown down; GM only. */
   planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
@@ -206,6 +211,10 @@ export interface ViewSession {
   /** The record at `address` (kernel `record`): its notes, kept values with their history, and actors. GM only: seats get disclosures. */
   record?(address: string, at_s?: number | bigint): Promise<{ ok: true; record: import("./constructs.ts").RecordRead } | { ok: false; code: string; message: string }>;
   /** Write a note in the record (kernel `add_note`, J1) about `address`, for `audience` ("everyone", "gm" or audience ids). `narrative` marks a storyteller's text. Notes never change the universe's state. GM only. */
+  /** Track MC: add a record actor (a person or a lot aboard, an empire, a crew) at the universe root or under another actor. GM only. */
+  addActor?(a: { id: string; name: string; kind: string; parent?: string; at_s?: number | bigint }): Promise<{ ok: true; address: string } | { ok: false; code: string; message: string }>;
+  /** Track MC: change one kept value (kernel `set_kept`; null clears it), with a reason for the record. GM only. */
+  setKept?(k: { address: string; kind: string; value: Json | null; reason?: string; at_s?: number | bigint }): Promise<{ ok: true; change_id: string } | { ok: false; code: string; message: string }>;
   addNote?(n: { address: string; text: string; audience: "everyone" | "gm" | string[]; tags?: string[]; narrative?: boolean; supersedes?: string; at_s?: number | bigint }): Promise<{ ok: true; note_id: string } | { ok: false; code: string; message: string }>;
   /** Game-system codes (X3a, kernel `codes`) for every body at or under `scope`, read by a code sheet (the first in the stack when none is named). Read only; GM only. */
   codes?(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").CodesRead } | { ok: false; code: string; message: string }>;
@@ -631,8 +640,17 @@ export class Session implements ViewSession {
     return r.type === "world_stack_read" ? { ok: true, result: r as unknown as WorldStackRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  // The one world a player seat may read the ground of, while the table watches its landing.
+  #landing: { system: string; body: string } | null = null;
+  grantLanding(g: { system: string; body: string } | null): void {
+    this.#landing = g ? { system: g.system, body: g.body } : null;
+  }
+  #mayLand(system: string, body: string): boolean {
+    return this.seat.authority === "gm" || (this.#landing !== null && this.#landing.system === system && this.#landing.body === body);
+  }
+
   async surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }> {
-    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
+    if (!this.#mayLand(system, body)) return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
     const tiles = [0, 1, 2, 3, 4, 5].map((face) => ({ body, face, level: 0, x: 0, y: 0 }));
     const r = await this.#call({ op: "resolved_system", system, tiles });
     if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
@@ -641,7 +659,7 @@ export class Session implements ViewSession {
   }
 
   async surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }> {
-    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
+    if (!this.#mayLand(system, body)) return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
     const r = await this.#call({ op: "resolved_system", system, tiles: keys.map((k) => ({ body, face: k.face, level: k.level, x: k.x, y: k.y })) });
     if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const x = r as unknown as { tiles?: SurfaceTile[]; refused?: { face: number; level: number; x: number; y: number; why: string }[] };
@@ -657,7 +675,7 @@ export class Session implements ViewSession {
   }
 
   async planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }> {
-    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master plans a descent against a world's full record" };
+    if (!this.#mayLand(ask.system, ask.body)) return { ok: false, code: "not_gm", message: "only the game master plans a descent against a world's full record" };
     const r = await this.#call({ op: "plan_descent", system: ask.system, body: ask.body, quick: true, lander: ask.lander as Json, lat_deg: ask.lat_deg, lon_deg: ask.lon_deg });
     return r.type === "descent_planned" ? { ok: true, plan: (r as unknown as { descent: import("./landing.ts").DescentPlan }).descent } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
@@ -828,6 +846,18 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the game master writes the record; seats ask" };
     const r = await this.#call({ op: "add_note", address: n.address, text: n.text, audience: n.audience, ...(n.tags?.length ? { tags: n.tags } : {}), ...(n.narrative ? { narrative: true } : {}), ...(n.supersedes ? { supersedes: n.supersedes } : {}), at_s: n.at_s ?? 0 });
     return r.type === "note_added" ? { ok: true, note_id: String(r.note_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async addActor(a: { id: string; name: string; kind: string; parent?: string; at_s?: number | bigint }): Promise<{ ok: true; address: string } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the game master writes the record; seats ask" };
+    const r = await this.#call({ op: "add_actor", id: a.id, name: a.name, kind: a.kind, ...(a.parent ? { parent: a.parent } : {}), at_s: a.at_s ?? 0 });
+    return r.type === "actor_added" ? { ok: true, address: String(r.address) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async setKept(k: { address: string; kind: string; value: Json | null; reason?: string; at_s?: number | bigint }): Promise<{ ok: true; change_id: string } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the game master writes the record; seats ask" };
+    const r = await this.#call({ op: "set_kept", address: k.address, kind: k.kind, value: k.value, ...(k.reason ? { reason: k.reason } : {}), at_s: k.at_s ?? 0 });
+    return r.type === "kept_set" ? { ok: true, change_id: String(r.change_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async record(address: string, at_s?: number | bigint): Promise<{ ok: true; record: import("./constructs.ts").RecordRead } | { ok: false; code: string; message: string }> {

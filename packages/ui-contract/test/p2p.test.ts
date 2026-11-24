@@ -11,6 +11,8 @@ import { enterFacts, type AuthoredFacts } from "../src/data-views.ts";
 import { GmHost, PlayerReplica, memoryRoom, type Manifest, type ReplicaStatus } from "../src/p2p.ts";
 import type { PackDoc } from "../src/physics.ts";
 import { nodeKernel } from "./node-kernel.ts";
+import type { PartyShip } from "../src/party.ts";
+import type { Json } from "../src/json.ts";
 
 const root = new URL("../../../", import.meta.url);
 const json = (p: string) => JSON.parse(readFileSync(new URL(p, root), "utf8"));
@@ -101,9 +103,11 @@ test("players replay the GM's events and agree by state hash; GM drop goes read-
     await settle();
     assert.deepEqual(phone.p.shown(), { off: true }, "a clock tick keeps what is shown");
     // The party's ship travels as its own key: the table always knows where it is.
-    host.setState({ party: { ship: "u:kestrel/sys:1/c:1", name: "Kittiwake", at: TARN } });
+    const kittiwake: PartyShip = { ship: "u:kestrel/sys:1/c:1", name: "Kittiwake", nav: "fusion-torch", at: TARN, voyage: { from: "u:kestrel/sys:1/body:1", to: TARN, days: 12 } };
+    host.setState({ party: kittiwake as unknown as Json });
     await settle();
     assert.equal((phone.p.party() as { name: string }).name, "Kittiwake");
+    assert.equal((phone.p.party() as unknown as PartyShip).voyage?.days, 12);
     assert.equal((host.manifest().party as { at: string }).at, TARN);
     host.setState({ party: null });
     await settle();
