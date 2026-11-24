@@ -594,7 +594,7 @@ print(n, "logs,", lam, "solved courses; no phases for", len(skipped), skipped[:2
 
 
 # ---------------------------------------------------------------- RS8 part 2: stations and crewed flights in Earth orbit
-# GCAT's satcat gives each object's first phase only (later phases are in its auxiliary catalogues, not read yet):
+# GCAT's satcat gives each object's first phase only (GCAT's public tables keep no later phases for these: auxcat.tsv lists the objects attached to them, not their own undocking and landing):
 # launch, shape and inclination of the orbit, and how that phase ended (reentered, deorbited, landed, docked or
 # grappled). One log per station core (stations.json) and per human spaceflight vehicle record (catalogue.json).
 OUT2 = os.path.join(PACK, "logs/earth-orbit")
@@ -664,7 +664,7 @@ def earth_log(jcat, name, kind):
                            "writer": "pack", **({} if d1[1] else {"why": "GCAT marks this date uncertain"})})
         elif st in ("DK", "GRP", "ATT") and r["Dest"]:
             piece(t1, {"kind": "docked", "to": "gcat:" + r["Dest"]}, d1[1],
-                  "docked to %s; GCAT's later phases (auxiliary catalogues) are not read yet" % r["Dest"])
+                  "docked to %s; GCAT's tables give no later phase (undocking, landing)" % r["Dest"])
         elif st in ("E", "C"):
             piece(t1, {"kind": "gone", "how": "impacted"}, d1[1], "broke up in orbit (GCAT status %s)" % st)
     return {"construct": cid, "name": r["Name"] or name, "gcat": jcat, "about": (

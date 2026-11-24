@@ -60,7 +60,7 @@ spaceflight vehicle record in `catalogue.json` (`crewed`), from GCAT's satcat (o
 around the Earth with GCAT's shape and inclination at its epoch (turned to the ecliptic), a launch event, and the
 phase's end: 169 landed (sites from GCAT's coordinates, or KSC, Edwards, White Sands and the Kazakh steppe placed
 from memory, or a stand-in), 60 gone (reentered or deorbited, Mir among them), 520 docked (a Soyuz or a Shuttle
-whose first phase ends at a station; GCAT's later phases are in its auxiliary catalogues, not read yet), 21 still in
+whose first phase ends at a station; GCAT's public tables keep no later phase for these; auxcat.tsv, checked 24 Nov, lists only the objects attached to them), 21 still in
 orbit. The coordinates reader now takes either order, so Apollo 13's Odyssey and Chang'e 6's return capsule land
 at GCAT's coordinates. Test `stations_and_crewed_flights_have_logs` (Mir gone, STS-103 at KSC).
 
