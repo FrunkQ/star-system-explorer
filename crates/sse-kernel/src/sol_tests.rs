@@ -27,13 +27,16 @@ fn open_sol_with(
     more: &[serde_json::Value],
     extra: &[(&str, &str, serde_json::Value)],
 ) -> crate::Kernel {
-    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
     let mut k = crate::Kernel::new();
     let sheet: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(root().join("packs/base-reference/pack.json")).unwrap(),
     )
     .unwrap();
-    let mut stack = vec![sheet, packs["base-physics"].clone()];
+    let physics: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-physics/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let mut stack = vec![sheet, physics];
     stack.extend(more.iter().cloned());
     let r = send(&mut k, serde_json::json!({"op":"load_stack","packs":stack}));
     assert_eq!(r["type"], "stack_loaded", "{r}");
