@@ -43,6 +43,19 @@ try {
   const pop = gm.locator("[data-picker-pop]");
   await pop.locator("[data-picker-find]").fill("#ocean");
   assert.deepEqual((await pop.locator(".tree .name").allInnerTexts()).map((t) => t.trim()), ["Tarn"]);
+  // Light up (V3 gap 41): the tag's holders are marked on the chart until turned off from the chip on the line.
+  const tarnAddr = await pop.locator(".tree [data-pick-row]").first().getAttribute("data-pick-row");
+  const glow = () => gm.evaluate((a) => getComputedStyle(document.querySelector(`.body[data-address="${a}"]`)).filter, tarnAddr);
+  assert.equal(await glow(), "none");
+  await pop.locator("[data-picker-light]").click();
+  assert.match(await glow(), /drop-shadow/);
+  assert.equal((await gm.locator(".place [data-lit-chip]").innerText()).replace("×", "").trim(), "#ocean");
+  await shot(gm, "light-up-ocean");
+  await gm.keyboard.press("Escape");
+  await gm.keyboard.press("Escape");
+  await gm.locator(".place [data-lit-chip]").click();
+  assert.equal(await glow(), "none");
+  await gm.locator(".place [data-picker-chip]").click();
   await pop.locator("[data-picker-find]").fill("");
   const row = pop.locator(".tree [data-pick-row][data-address]").nth(1);
   const rowAddress = await row.getAttribute("data-address");
@@ -113,6 +126,25 @@ try {
   await more(gm, /Night chart/);
   await gm.goto(root + "#chart");
   await ready(gm);
+  // System 3D: a right-click on a body's pin, or on the canvas beside it, opens the same menu; the view does not fly.
+  await gm.getByRole("button", { name: "3D", exact: true }).click();
+  const s3d = gm.locator("[aria-roledescription='3D chart']");
+  await s3d.waitFor();
+  const pin = s3d.locator(`[data-body="${address}"]`);
+  await pin.waitFor({ timeout: 20000 });
+  const frame0 = await s3d.getAttribute("data-frame");
+  await pin.click({ button: "right" });
+  await gm.locator(`[data-object-menu="${address}"]`).waitFor({ timeout: 5000 });
+  await gm.keyboard.press("Escape");
+  await gm.locator("[data-object-menu]").waitFor({ state: "detached", timeout: 3000 });
+  const pb3 = await pin.boundingBox();
+  await gm.mouse.click(pb3.x + pb3.width / 2 + 14, pb3.y + pb3.height / 2 + 2, { button: "right" });
+  await gm.locator(`[data-object-menu="${address}"]`).waitFor({ timeout: 5000 });
+  assert.equal(await s3d.getAttribute("data-frame"), frame0, "a right-click never flies");
+  await shot(gm, "menu-system-3d");
+  await gm.keyboard.press("Escape");
+  await gm.getByRole("button", { name: "3D", exact: true }).locator("xpath=..").getByRole("button", { name: "Chart", exact: true }).click();
+
   await gm.locator(`.body[data-address="${address}"]`).click({ button: "right" });
   await menu.waitFor();
   await shot(gm, "menu-night-desk");
