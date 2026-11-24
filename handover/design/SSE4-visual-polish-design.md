@@ -1,6 +1,6 @@
 # SSE4 visual polish: closing the gap to SpaceEngine, pass by pass
 
-Design note, 24 Nov 2026. Track code **VP** (never shown in the product). Status: **proposed, waiting on Alex's answers to section 14**. Design only: no code was written for this note.
+Design note, 24 Nov 2026. Track code **VP** (never shown in the product). Status: **accepted by Alex, 24 Nov 2026 18:57 UTC ("yes to all" ten questions in section 14)**. Builders may take the packages in section 12. Design only: no code was written for this note. Still open: the citations marked "from memory" (Alex is bringing a research pass back) and every cost marked as an estimate.
 
 Asked for by Alex, 24 Nov, in four lines:
 
@@ -534,7 +534,7 @@ Wins 1, 3, 4, 6, 7, 9 and 21 are the ones to show first: each is a single screen
 
 ## 11. Could the long physics calculations move to the GPU?
 
-Alex: "Not sure, but bear in mind." This section weighs it and decides nothing.
+Alex: "Not sure, but bear in mind." This section weighs it. Alex accepted the recommendation in 11.4 on 24 Nov (question 10).
 
 ### 11.1 What is long today
 
@@ -667,7 +667,7 @@ Order: VP1, VP2, VP3 first (the three biggest gains), VP4 and VP6 beside them (t
 
 ## 14. Questions for Alex
 
-Each has my recommendation. Answer like "yes to 1, 2 and 4".
+**Alex accepted all ten recommendations on 24 Nov 2026, 18:57 UTC ("yes to all").** They stand as rulings; the questions are kept as asked.
 
 1. **Three grades for everything drawn** (fact; drawn from the numbers; camera effect), with one HUD line saying where facts end, and the rule that a flourish with no kernel number behind it is not drawn. *Recommend yes.*
 2. **Add an Ultra tier** for the passes that hammer the GPU, switched on only by a measured probe, with every Ultra pass having a plain form on weaker machines. *Recommend yes.*
