@@ -302,6 +302,189 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.tides.ocean_range",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "raiser_mass",
+     "letter": "m"
+    },
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "distance",
+     "letter": "d"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "range",
+     "letter": "H"
+    }
+   ],
+   "params": [
+    {
+     "param": "diminishing",
+     "letter": "gam",
+     "default": 1.0,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "how much of the tide the sea keeps against the ground's own tide, 1 + k2 - h2 (a rigid world: 1; Earth: about 0.69)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "raiser_mass",
+     "says": "mass of the body raising the tide"
+    },
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "distance",
+     "says": "distance"
+    }
+   ],
+   "references": [
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press. doi:10.1017/CBO9781139174817"
+   ],
+   "shown": "H = (3/2) γ (m/M) (R/d)³ R",
+   "equation": {
+    "name": "Rise and fall of the sea under another body's pull",
+    "formula": "r = R / d\nH = 3/2 * gam * m / M * r * r * r * R",
+    "inputs": {
+     "m": {
+      "kind": "tides.raiser_mass",
+      "unit": "kg",
+      "name": "mass of the body raising the tide"
+     },
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "d": {
+      "kind": "tides.raiser_distance",
+      "unit": "m",
+      "name": "distance to the body raising the tide"
+     },
+     "gam": {
+      "kind": "model.tidal_diminishing_factor",
+      "unit": "1",
+      "name": "share of the tide the sea keeps"
+     }
+    },
+    "outputs": {
+     "H": {
+      "kind": "tides.equilibrium_range",
+      "unit": "m",
+      "name": "height from low tide to high tide in the open sea"
+     }
+    },
+    "source": {
+     "text": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "chapter 4, the tidal potential: the degree-2 term over the surface gravity"
+    },
+    "explain": {
+     "curious": "A moon or star pulls harder on the near side of a world than on the far side, so the sea heaps up in two bulges and the shore sees it rise and fall. Closer and heavier pulls make bigger tides, falling off with the cube of the distance.",
+     "science": "Equilibrium tide: the degree-2 tidal potential G m R² (3cos²θ − 1) / (2 d³) over g = G M / R² gives a height (m/M)(R/d)³ R (3cos²θ − 1)/2, so the range from the sub-body point to 90° away is 3/2 (m/M)(R/d)³ R. Real coasts resonate: open-ocean ranges are near this; shelves and bays reach several to tens of times it."
+    },
+    "examples": [
+     {
+      "m": 7.3e+22,
+      "M": 6e+24,
+      "R": 6400000.0,
+      "d": 380000000.0,
+      "H": 0.5579971424405888
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.tides.period",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "spin_period",
+     "letter": "Ps"
+    },
+    {
+     "port": "raiser_period",
+     "letter": "Po"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "period",
+     "letter": "T"
+    }
+   ],
+   "references": [
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press. doi:10.1017/CBO9781139174817"
+   ],
+   "shown": "T = 1 / (2 |1/P_spin − 1/P_orbit|)",
+   "equation": {
+    "name": "Time from one high tide to the next",
+    "formula": "T = 1 / (2 * abs(1 / Ps - 1 / Po))",
+    "inputs": {
+     "Ps": {
+      "kind": "body.rotation_period",
+      "unit": "s",
+      "name": "time for one turn of the world (negative if it spins backwards)"
+     },
+     "Po": {
+      "kind": "tides.raiser_period",
+      "unit": "s",
+      "name": "time for the body raising the tide to go once round the world's sky (its orbit, or the world's year for the star)"
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "tides.period",
+      "unit": "s",
+      "name": "time between high tides"
+     }
+    },
+    "source": {
+     "text": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "chapter 4: the semidiurnal tide at twice the synodic frequency"
+    },
+    "explain": {
+     "curious": "There are two bulges, so a place passes under a high tide twice for every time the moon comes back round its sky: on Earth about every 12 hours 25 minutes.",
+     "science": "The degree-2 tide's main term has twice the synodic frequency 2|Ω_spin − n|. A world locked to the body raising the tide has a fixed bulge and no tidal cycle from it."
+    },
+    "examples": [
+     {
+      "Ps": 86164.1,
+      "Po": 2360591.5,
+      "T": 44714.16455525246
+     }
+    ]
+   }
   }
  ]
 }

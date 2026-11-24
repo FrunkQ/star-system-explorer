@@ -65,3 +65,14 @@ test("above a system, a place is one of that scale's own (a cell, a galaxy), nam
   assert.ok(!rememberPlace([cell], { ...cell, id: "cell:1.0.0" }).every((p) => p.id === "cell:0.0.0"));
   assert.equal(rememberPlace([cell], { ...cell, id: "cell:1.0.0" }).length, 2);
 });
+
+test("a landing site rides in the link after its screen (Voyages' Land here)", () => {
+  const p: Place = { scale: "world", system: "u/sys:sol", world: "u/sys:sol/planet:3", screen: "surface", site: { lat_deg: 10.5, lon_deg: 75.97 } };
+  const h = placeHash(p);
+  assert.equal(h, "#chart/world/u%2Fsys%3Asol/u%2Fsys%3Asol%2Fplanet%3A3~surface?site=10.5,75.97");
+  assert.deepEqual(parsePlaceHash(h), p);
+  assert.deepEqual(parsePlaceHash("#chart/world/s/w~surface?site=-12.25,200")?.site, { lat_deg: -12.25, lon_deg: -160 });
+  assert.equal(parsePlaceHash("#chart/world/s/w~surface?site=95,0")?.site, undefined, "no such latitude");
+  assert.equal(parsePlaceHash("#chart/world/s/w~surface")?.screen, "surface");
+  assert.equal(placeHash({ scale: "world", system: "s", world: "w", site: { lat_deg: 1, lon_deg: 2 } }), "#chart/world/s/w", "a site needs its screen");
+});

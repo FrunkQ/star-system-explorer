@@ -3,15 +3,18 @@
 // shares. A room is a random id; the players' link opens players.html with it.
 // The GM serves both at once: BroadcastChannel for other windows and screens
 // of this computer, and the site's relay (worker/index.js) for other devices.
-import { GmHost, SealedHost, sealedLink, observeOf, addSeat, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type Json, type PlayerRequest, type SeatPlan, type Session } from "../../ui-contract/src/index.ts";
+import { GmHost, SealedHost, sealedLink, observeOf, addSeat, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type Json, type PlayerRequest, type SeatPlan, type Session, type Shown } from "../../ui-contract/src/index.ts";
 
 declare const __SSE_APP__: string;
 export const APP_VERSION: string = typeof __SSE_APP__ === "string" ? __SSE_APP__ : "dev";
 
 export interface Share {
   readonly host: GmHost;
-  readonly state: HostState & { room: string | null; link: string | null; waiting: PlayerRequest[]; plan: SeatPlan };
-  start(): string;
+  readonly state: HostState & { room: string | null; link: string | null; waiting: PlayerRequest[]; plan: SeatPlan; shown: Shown };
+  /** Share, showing the table `first` (the place in view when the GM shares). */
+  start(first?: Shown): string;
+  /** Send the table a place, or turn their screens off. Nothing reaches them until it is sent. */
+  show(s: Shown): void;
   setClock(yr: number): void;
   /** V10: add a seat with its own audience; a fog-of-war audience's starting view is chronicled at once. */
   addSeat(o: Parameters<typeof addSeat>[1]): Promise<string | null>;
@@ -33,7 +36,7 @@ function roomId(): string {
 export async function createShare(session: Session, opening: { universe: { id: string; seed: string }; packs: unknown[]; opening_export?: Json; clock_yr: number; views: () => string[]; scope: string }, hubFor: (room: string, id: string) => Hub = (room, id) => multiHub(id, [broadcastHub(room, id), relayHub(document.baseURI, room, id)])): Promise<Share> {
   const run = roomId();
   const host = new GmHost(session, null, { run, kernel: await session.kernelVersion(), app: APP_VERSION, universe: opening.universe, packs: opening.packs, ...(opening.opening_export !== undefined ? { opening_export: opening.opening_export } : {}), opening_hash: await session.stateHash(), clock_yr: opening.clock_yr, seats: defaultPlan().seats });
-  const st = $state({ ...host.state(), room: null as string | null, link: null as string | null, waiting: [] as PlayerRequest[], plan: defaultPlan() });
+  const st = $state({ ...host.state(), room: null as string | null, link: null as string | null, waiting: [] as PlayerRequest[], plan: defaultPlan(), shown: { scope: opening.scope } as Shown });
   const root = `u:${opening.universe.id}`;
   const failed = (r: Awaited<ReturnType<Session["send"]>>) => (r.status === "applied" ? null : r.status === "refused" ? r.reason : r.status === "error" ? r.message : "not applied");
   host.onChange = (s) => Object.assign(st, s, { waiting: [...host.requests()] });
@@ -46,14 +49,16 @@ export async function createShare(session: Session, opening: { universe: { id: s
     for (const seat of st.plan.seats) {
       if (!seat.sealed || sealed.has(seat.id)) continue;
       const room = roomId();
-      sealed.set(seat.id, { room, host: new SealedHost(session, host, hubFor(room, "gm"), { seat: $state.snapshot(seat) as typeof seat, scope: opening.scope, app: APP_VERSION, clock_yr: clock, data_views: opening.views() }) });
+      sealed.set(seat.id, { room, host: new SealedHost(session, host, hubFor(room, "gm"), { seat: $state.snapshot(seat) as typeof seat, scope: "scope" in st.shown ? st.shown.scope : opening.scope, app: APP_VERSION, clock_yr: clock, data_views: opening.views() }) });
     }
   }
   return {
     host,
     state: st,
-    start() {
+    start(first?: Shown) {
       if (st.link) return st.link;
+      if (first) st.shown = first;
+      host.setState({ shown: JSON.parse(JSON.stringify(st.shown)) as Shown });
       const room = roomId();
       host.attach(hubFor(room, "gm"));
       timer ??= setInterval(() => (host.beat(), sealed.forEach((x) => x.host.beat())), 2000);
@@ -64,6 +69,11 @@ export async function createShare(session: Session, opening: { universe: { id: s
       st.link = joinLink(document.baseURI, room);
       serveSealed();
       return st.link;
+    },
+    show(s: Shown) {
+      st.shown = s;
+      host.setState({ shown: s });
+      if ("scope" in s) sealed.forEach((x) => void x.host.setScope(s.scope));
     },
     setClock(yr: number) {
       clock = yr;

@@ -30,7 +30,7 @@ pub(crate) fn survey_caves(a: Ask, cache: &mut Cache) -> Result<serde_json::Valu
     if !(radius.is_finite() && radius > 0.0) {
         return Err(err("bad_request", "radius_km must be above 0"));
     }
-    let (source, body, at_s, sv) = surveyed(a.from, a.options, a.quick, cache)?;
+    let (source, body, at_s, sv, _) = surveyed(a.from, a.options, a.quick, cache)?;
     if sv.atlas.layers().is_none() {
         return Err(err(
             "no_ground",

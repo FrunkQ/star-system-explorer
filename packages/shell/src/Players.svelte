@@ -13,7 +13,7 @@
 <script lang="ts">
   import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
-  import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus } from "../../ui-contract/src/index.ts";
+  import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus, type Shown } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import LightControl from "./LightControl.svelte";
@@ -34,6 +34,7 @@
   import PerfReadout from "./PerfReadout.svelte";
   import { perf } from "../../ui-contract/src/index.ts";
   import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
+  import { landingShowOf, type LandingGround } from "../../ui-contract/src/index.ts";
   import { DEFAULT_JOIN, joinLine, joinWordsOf, type JoinWords, type SeatBrand } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
@@ -44,7 +45,9 @@
   // V10: a seat names the screens it opens; `?screen=` picks one, else the seat's first.
   let seatScreen: string | null = null;
   async function loadScreen(): Promise<ScreenDoc> {
-    const asked = new URLSearchParams(location.search).get("screen") ?? seatScreen;
+    // What the GM sent names its own screen (a landing is watched on the Landing screen), else the link's, else the seat's.
+    const sent = shown && "scope" in shown ? shown.screen : undefined;
+    const asked = sent ?? new URLSearchParams(location.search).get("screen") ?? seatScreen;
     if (asked === "composed") {
       const raw = loadPref("composed-screen");
       if (!raw) throw new Error("No screen has been handed over from the composer on this device.");
@@ -67,11 +70,16 @@
   let mayAsk = $state(true);
   let session: ViewSession | null = null;
   let scene = $state<PlayerScene | null>(null);
+  // What the game master has sent the table (the landing run-through): a place, or screens off. A screen that is not
+  // joined, or a GM from before this, uses the screen's own campaign scope.
+  let shown = $state<Shown | undefined>(undefined);
+  const scopeNow = () => (shown && "scope" in shown && shown.scope ? shown.scope : facts.scope);
   let sceneHash = $state("");
   let sceneErrors = $state<string[]>([]);
   async function refresh() {
     const view = lens ?? screenDoc?.data_view;
-    const r = await session!.scene(facts.scope, { audience, ...(view ? { data_view: view } : {}) });
+    if (shown && "off" in shown) return;
+    const r = await session!.scene(scopeNow(), { audience, ...(view ? { data_view: view } : {}) });
     if (!r.ok) return void (sceneErrors = [r.message]);
     const bad = checkPlayerScene(r.scene);
     sceneErrors = bad ? [bad] : [];
@@ -93,6 +101,23 @@
   const isSealed = sealedRoom !== null && /^[a-z0-9]{4,40}$/.test(sealedRoom);
   const room = isSealed ? sealedRoom : new URLSearchParams(location.search).get("join");
   const joined = room !== null && /^[a-z0-9]{4,40}$/.test(room);
+  // The landing the table watches (the landing run-through): this seat's own kernel may read that one world's ground
+  // while it lasts, and no longer (the grant ends with the landing). A sealed seat has no kernel and gets neither.
+  const watching = $derived(isSealed ? null : landingShowOf(shown && "scope" in shown ? shown.landing : null));
+  let sessionReady = $state(false);
+  $effect(() => {
+    const w = watching;
+    if (!sessionReady || !session) return;
+    session.grantLanding?.(w ? { system: w.system, body: w.body } : null);
+  });
+  const landingNow = () => watching;
+  const ground: LandingGround | undefined = isSealed
+    ? undefined
+    : {
+        surfaceTiles: (system, body) => session!.surfaceTiles(system, body),
+        surfaceTilesAt: (system, body, keys) => session!.surfaceTilesAt(system, body, keys),
+        planDescent: (ask) => session!.planDescent(ask),
+      };
   // Inside a virtual tabletop (V3 gap 26): `?embed=1`, and only for a tabletop the GM listed on this seat.
   const asksEmbed = embedAsked(location.search);
   const framing = framingOrigin(window, document.referrer);
@@ -197,12 +222,22 @@
       };
       replica.onSession = (s) => {
         session = s;
+        sessionReady = true;
+        shown = replica.shown();
         perfEdge = s.device();
         void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
       };
       replica.onUpdate = () => {
         const mine = replica.seats().find((x) => x.id === seatId);
         if (JSON.stringify(mine?.live ?? null) !== JSON.stringify(live ?? null)) live = mine?.live;
+        const sent = replica.shown();
+        if (JSON.stringify(sent ?? null) !== JSON.stringify(shown ?? null)) {
+          const was = shown && "scope" in shown ? shown.screen : undefined;
+          shown = sent;
+          const now = sent && "scope" in sent ? sent.screen : undefined;
+          // Another screen named: load it before the scene is built for it.
+          if (was !== now && session) return void useScreen(session).then(refresh).catch((e) => (sceneErrors = [String(e)]));
+        }
         if (session && screenDoc) void refresh();
       };
       replica.join();
@@ -351,13 +386,15 @@
   {/if}
   {#if embed.mode === "refused"}
     <main class="problem" role="alert"><h2>This view cannot be shown here</h2><p>{embed.reason}</p></main>
+  {:else if shown && "off" in shown}
+    <main class="problem off" data-screens-off><p>The game master has the screens off for now.</p></main>
   {:else if (checked && !checked.ok) || sceneErrors.length}
     <main class="problem" role="alert"><h2>This screen cannot be shown</h2><ul>{#each [...(checked && !checked.ok ? checked.errors : []), ...sceneErrors] as e (e)}<li>{e}</li>{/each}</ul></main>
   {:else if !scene || !checked?.ok}
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p></main>
   {:else}
     {#key vocabId}
-      <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} bind:selection /></main>
+      <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
     {/key}
   {/if}
   {#if joined && scene && mayAsk && !bare}

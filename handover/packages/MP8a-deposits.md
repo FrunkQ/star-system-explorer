@@ -48,7 +48,7 @@ Element ids are the sheet's, in lower case (`cu`, `au`, `ni`).
 - every element's deposits plus disseminated equal its crust;
 - that crust equals `read_composition` at Survey.
 
-`composition_blocks_match_the_chain` also covers `deposit_amount`. The atom count goes from 90 to 91.
+`composition_blocks_match_the_chain` also covers `deposit_amount`. The atom count goes up by one (94 on main at merge).
 
 On Earth with the calibrated share:
 - orogenic gold reads about 6e7 t, which is in line with known orogenic gold scaled the way Kesler and Wilkinson scale copper;
