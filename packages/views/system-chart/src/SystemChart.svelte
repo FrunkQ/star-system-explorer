@@ -21,6 +21,8 @@
   import { untrack } from "svelte";
   import { KM_PER_AU, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
+  import RangeRings from "./RangeRings.svelte";
+  import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
   import { readLiveStar, readTrueFace, starCss, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
@@ -162,6 +164,14 @@
   // The world stays put while dragging; a ghost and its orbit line follow the pointer (editing design section 4).
   const aOf = (s: SceneSubject) => s.orbit!.a_au;
   const rr = (au: number) => radius(au, drag ? drag.scale : scale);
+  // Range rings (RK12): whatever the host feeds (a pack's weapons), placed round each holder shown on this chart.
+  const rangeProject = $derived(chartProject(cx, cy, rr));
+  const rangeSets = $derived(
+    (ctx.rangeRings?.() ?? []).flatMap((g) => {
+      const s = all.find((b) => b.address === g.holder);
+      return s && g.rings.length ? [{ ...g, centre_m: s === centre ? ([0, 0] as [number, number]) : holderAt(s.orbit) }] : [];
+    }),
+  );
   const pos = (s: SceneSubject): [number, number] => polar(cx, cy, rr(aOf(s)), s.orbit!.phase_deg);
   let svgEl: SVGSVGElement | undefined = $state();
 
@@ -549,6 +559,10 @@
           </g>
         {/each}
         <!-- Names in their own layer, over every mark (chart-labels.ts places them); a press on a name chooses its body. -->
+        <!-- Range rings (RK12), under the HUD like the grid: round each weapon's holder, bent by the chart's scale. -->
+        {#if hudShows(shownView.hud, "range") && rangeSets.length}
+          {#each rangeSets as r (r.holder + r.label)}<RangeRings rings={r.rings} centre_m={r.centre_m} project={rangeProject} label={r.label} />{/each}
+        {/if}
         <g class="names">
           {#each all as s (s.address)}
             {#if places.get(s.address)}
