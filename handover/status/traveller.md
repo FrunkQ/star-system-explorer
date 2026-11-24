@@ -26,3 +26,40 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | A game system's difficulty numbers beside SSE4's words: `provides.other.difficulty` (dice, ladder, typical operator, words, skills), ui-contract `gameDifficulty` from odds or words; Traveller's ladder and skills from the Cepheus Engine SRD | done (Traveller pack track); shown on the At world card and route console (travel thread) next | packages/X3h-difficulty.md |
 | Traveller sensors as instruments (RK11 pack share): each of the twelve kinds carries an sse-sense instrument (method, band, aperture, noise) so `detect` computes its reach; V3 ranges kept as authored | done; triggers asking `detect` (kernel lane), fits per tech level (FT8) next | packages/X3i-sensor-instruments.md |
 | Resources on the books (TG11 kept half): `resource.<kind>.extracted` and `.stock` kept on any address, held = natural - extracted + stock in `read_inventory`, new op `transfer` that conserves | done; mining step and `resource.*` labels (X3k) next | packages/X3j-resource-books.md |
+
+## Open now
+
+- **PR 400** (X3j, resources on the books). Green, and it changes `tests/golden/contract.jsonl`. It merges in the golden lane after the travel flight log (PR 403) and the kernel's barycentre PR. To land it: merge main, run `SSE_BLESS=1 cargo test -q -p sse-kernel contract_matches_golden`, check, push, merge on green.
+
+## Next packages, in order
+
+1. **X3k: mining and resource labels** (TG11 program step, TG8 part 2).
+   - A ship's program moves ore at a computed rate by `transfer`.
+   - `resource.*` labels are derived from `held_kg`, so a mined-out rock loses its label by itself.
+   - Packs name their making and consuming effects (a refinery).
+   - Check: helium-3 on all four giants (MP8c: kind with matter `he3`, reach `envelope`).
+2. **Sector routes as links.** Import the routes in sector files (trade, courier, jump lanes) through the travel thread's `set_link` (PR 377), with `source` set to the import and `audience` and `tier` for routes players don't know. `plan_voyage` already uses crew-known links.
+3. **RK12, the Traveller mapping** (Atomic Rockets plan, accepted in full): weapons as "effect at range" (in range, marginal or out of range; nothing fired), with the game's table beside the physics. Then the RK16 pack side: stealth and countermeasure gear onto the counters list. Design questions go to the Atomic Rockets track.
+4. **MP16 counted measures.** "2 jumps" and a "Jump-2" drive rating (never "J2"). The default count is ceil(route pc / rating), and the GM's count overrules it. This needs the kernel's counted-measure declarations, and links carry `counted` in `nav`.
+5. **WBH extended profile** as one swappable "big block".
+   - Read the physical profile off SSE4's physics; never roll a physical digit. Then add a seeded, GM-only social layer.
+   - Use Cepheus Engine SRD (OGL) numbers for the basic social rolls, and keep WBH tables out (Mongoose copyright).
+   - Port ideas, not code, from Roy Martin's TravellerSystemGenerator (GPL-3.0, so its code cannot enter this Apache repo). Credit it in sources and the log according to its licence, and say nothing about permission.
+6. **Smaller items:**
+   - Triggers that ask `detect` for the pair instead of reading `range_m` (kernel lane).
+   - Fits per tech level, and the Traveller TL table as a tech ladder (FT8, after FT1 and FT2).
+   - SV7: the pack names its own "Known to" rungs.
+   - Switch `shipLog` to `crewAboard` (PR 318).
+   - Gap 25 rest: hide orbit lines, sealed seats.
+   - Gap 18 rest: imported worlds tied to the stars under their hexes.
+   - Tidal-lock hooks once a lock fact exists.
+   - OV10 pack half: allegiance and travel zones as hex map layers.
+
+## Alex's rulings for this track (23 and 24 Nov)
+
+- Never the TAS logo or other trademarked art. Ship no copyrighted rules text, and bundle no official setting data.
+- The Traveller pack data alone is CC BY-NC 4.0 (`packs/traveller/LICENCE.md`, which quotes Mongoose's fair use notice word for word); the repo stays Apache-2.0. Alex emails Mongoose (sales@mongoosepublishing.com) himself.
+- Traveller is the 4.0 showcase. Other game packs (Mothership game side, Eclipse Phase, 2300AD) wait for 4.2.
+- SSE4 never rolls dice or decides. A game pack may show its own difficulty ladder beside SSE4's words: odds through the system's dice first, then the word table; GM screens only; the skill shown when the pack knows the game's skills (X3h).
+- Sensors must "just work", and stay tweakable by those who care (X3i).
+- The World Builder's Handbook way of making worlds is wanted. It ships as one "big block" a GM can grab and change (see next package 5).
