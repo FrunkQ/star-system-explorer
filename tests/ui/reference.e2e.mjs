@@ -203,6 +203,14 @@ try {
       assert.ok(over <= 0, `classes overflow by ${over} px`);
     }
     assert.equal(await gm.locator("[data-classes-add]").count(), 0, "adding an atlas waits for the Build desk");
+    // Parts (AT13), under "This setting": the parts of a player screen with the controls a screen can switch.
+    await gm.locator('[data-page="parts"]').click();
+    const parts = gm.locator("[data-parts]");
+    await parts.waitFor();
+    assert.deepEqual(await parts.locator('[data-part="sse.view.table"] [data-part-control]').evaluateAll((els) => els.map((e) => e.dataset.partControl)), ["sort", "select"]);
+    assert.match(await parts.locator('[data-part="sse.view.text"]').innerText(), /No controls/);
+    if (vp === "phone") assert.ok((await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)) <= 0, "parts fit a phone");
+    await shot(gm, `parts-${vp}`);
     await gm.locator('[data-page="names"]').click();
     await names.waitFor();
     assert.equal(await gm.locator("[data-names-add]").count(), 0, "adding a pack waits for the Build desk");

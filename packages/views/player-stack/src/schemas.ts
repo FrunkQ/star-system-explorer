@@ -1,7 +1,7 @@
 // Parameter schemas of the player views (H8.9), apart from the components so
 // tools and tests read them without a renderer. Every setting is described
 // for Orac; a few are promoted as plain controls.
-import type { ParamSpec } from "../../../ui-contract/src/index.ts";
+import type { ParamSpec, PartControl } from "../../../ui-contract/src/index.ts";
 
 export const CHART_PARAMS: ParamSpec[] = [
   { name: "distance_field", type: "string", default: "orbit.semi_major_axis_m", group: "content", meaning: "Field that places a body radially (SI metres)." },
@@ -47,4 +47,14 @@ export const READOUT_PARAMS: ParamSpec[] = [
   { name: "range", type: "list", default: [0, 1], meaning: "Gauge ends in display units ([min, max])." },
   { name: "tag", type: "string", default: "", meaning: "Tag a status light shows." },
   { name: "label", type: "string", default: "", group: "look", meaning: "Caption; empty uses the vocabulary's label.", promoted: true },
+];
+
+// The parts' own controls (AT13): what a layout can switch on or off. Text and readouts have none: they are pictures.
+export const CHART_CONTROLS: PartControl[] = [{ id: "select", words: "Pick a world on the chart (the screen's other parts follow it)", kind: "button", default: true }];
+
+export const CARD_CONTROLS: PartControl[] = [{ id: "open", words: "Open a moon from its link on the card", kind: "link", default: true }];
+
+export const TABLE_CONTROLS: PartControl[] = [
+  { id: "sort", words: "Sort by a column, pressing its heading", kind: "button", default: true },
+  { id: "select", words: "Pick a world by its name in the table", kind: "link", default: true },
 ];

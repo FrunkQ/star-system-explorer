@@ -4,7 +4,7 @@
   add. Fields listed in `fields` come first, in that order.
 -->
 <script lang="ts">
-  import { describeFact, subjectName, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
+  import { controlOn, describeFact, subjectName, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
   import { childrenOf, focusOf } from "./pick.ts";
 
   let { ctx, scene }: { ctx: PlayerContext; scene: PlayerScene } = $props();
@@ -38,7 +38,7 @@
       {/each}
     </dl>
     {#if moons.length && ctx.params.show_moons !== false}
-      <p class="moons">Moons: {#each moons as m, i (m.address)}{i ? ", " : ""}<button type="button" onclick={() => ctx.select(m.address)}>{subjectName(m)}</button>{/each}</p>
+      <p class="moons">Moons: {#each moons as m, i (m.address)}{i ? ", " : ""}{#if controlOn(ctx.controls, "open")}<button type="button" onclick={() => ctx.select(m.address)}>{subjectName(m)}</button>{:else}{subjectName(m)}{/if}{/each}</p>
     {/if}
   {:else}
     <p class="empty">Nothing in view.</p>

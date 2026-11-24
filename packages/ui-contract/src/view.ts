@@ -202,6 +202,8 @@ export interface PlayerContext {
   landing?(): import("./landing.ts").LandingShow | null;
   /** This seat's own reads of that landing's world (granted for it alone). Absent on a sealed seat, which has no kernel. */
   ground?: import("./landing.ts").LandingGround;
+  /** Which of the part's own controls the screen has on (AT13); absent: every declared control is on. Read with `controlOn`. */
+  controls?: Readonly<Record<string, boolean>>;
 }
 
 export interface ViewHandle<S = SystemScene> {
@@ -227,6 +229,8 @@ export interface ViewModule<S = SystemScene, C = ViewContext> {
   box?: "fill" | "content";
   /** The standard view controls (interface style rule 12): what it draws in each view style and from where. Absent: not a diagram, no controls. */
   controls?: import("./view-controls.ts").ViewControlsSpec;
+  /** The part's own presses a layout can switch on or off (AT13): sort, select, step... Absent: it draws none. */
+  switchable?: readonly import("./part-controls.ts").PartControl[];
   mount(el: HTMLElement, ctx: C, scene: S): ViewHandle<S>;
 }
 

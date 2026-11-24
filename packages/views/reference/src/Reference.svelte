@@ -12,18 +12,19 @@
   import Elements from "./Elements.svelte";
   import Names from "./Names.svelte";
   import Classes from "./Classes.svelte";
+  import Parts from "./Parts.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const depth = $derived(ctx.workspace.depth ?? "science");
   const full = $derived(depth !== "curious");
 
-  type PageId = "constants" | "elements" | "units" | "names" | "classes";
-  const PAGES: { group: string; pages: { id: PageId; label: string }[] }[] = [
+  type PageId = "constants" | "elements" | "units" | "names" | "classes" | "parts";
+  const PAGES: { group: string; pages: { id: PageId; label: string }[] }[] = $derived([
     { group: "Nature", pages: [{ id: "constants", label: "Constants" }, { id: "elements", label: "Elements" }] },
     { group: "Names and classes", pages: [{ id: "names", label: "Names" }, { id: "classes", label: "Classes" }] },
-    { group: "This setting", pages: [{ id: "units", label: "Units" }] },
-  ];
-  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" || params.page === "names" || params.page === "classes" ? params.page : "constants")));
+    { group: "This setting", pages: [{ id: "units", label: "Units" }, ...(ctx.styles ? [{ id: "parts" as const, label: "Parts" }] : [])] },
+  ]);
+  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" || params.page === "names" || params.page === "classes" || params.page === "parts" ? params.page : "constants")));
 
   let sheet = $state.raw<ConstantsPage | null>(null);
   let failed = $state<string | null>(null);
@@ -129,7 +130,7 @@
   <header>
     <div class="title">
       <h1>Reference</h1>
-      <p class="lede">{page === "units" ? "How this setting counts and shows things. Nothing here changes the physics." : page === "names" ? "What this campaign calls things. Names never change the physics." : page === "classes" ? "Every kind of world, as the charts mark it. Classes are labels read off the physics, never rules." : "What nature gives the simulation. Real unless marked."}</p>
+      <p class="lede">{page === "units" ? "How this setting counts and shows things. Nothing here changes the physics." : page === "names" ? "What this campaign calls things. Names never change the physics." : page === "classes" ? "Every kind of world, as the charts mark it. Classes are labels read off the physics, never rules." : page === "parts" ? "What players' screens are made of, and the controls each can have on or off." : "What nature gives the simulation. Real unless marked."}</p>
     </div>
     <div class="find" role="search">
       <input
@@ -171,6 +172,8 @@
     <div class="body"><Names session={ctx.session} workspace={ctx.workspace} {depth} offer={typeof params.names_offer === "string" ? params.names_offer : ""} here={scene.system ? { address: scene.system, label: scene.title } : null} /></div>
   {:else if page === "classes"}
     <div class="body"><Classes session={ctx.session} workspace={ctx.workspace} {depth} symbology={ctx.symbology} offer={typeof params.classes_offer === "string" && params.classes_offer ? params.classes_offer.split(",").map((x) => x.trim()) : []} /></div>
+  {:else if page === "parts" && ctx.styles}
+    <div class="body"><Parts views={ctx.styles.views()} {depth} /></div>
   {:else if failed}
     <p class="note" data-reference-error>Could not read the data sheet: {failed}</p>
   {:else if !sheet}

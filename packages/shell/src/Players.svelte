@@ -455,7 +455,7 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p><p class="alpha" data-alpha>An alpha preview of what is coming. To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener">version 3 ›</a></p></main>
   {:else}
     {#key vocabId}
-      <main class="grid" class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
+      <main class="grid" class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} still={clean} bind:selection /></main>
       {#if readOnly && !clean}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
     {/key}
     {#if sayWords && sayHidden !== sayWords}

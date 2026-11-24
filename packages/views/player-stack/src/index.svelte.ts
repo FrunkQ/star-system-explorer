@@ -3,7 +3,7 @@
 // adding another is adding a module here or in any other package (H8.1).
 import type { PlayerContext, PlayerScene, ViewModule } from "../../../ui-contract/src/index.ts";
 import { mountPlayer } from "./mount.svelte.ts";
-import { CARD_PARAMS, CHART_PARAMS, READOUT_PARAMS, TABLE_PARAMS, TEXT_PARAMS } from "./schemas.ts";
+import { CARD_CONTROLS, CARD_PARAMS, CHART_CONTROLS, CHART_PARAMS, READOUT_PARAMS, TABLE_CONTROLS, TABLE_PARAMS, TEXT_PARAMS } from "./schemas.ts";
 import PlayerChart from "./PlayerChart.svelte";
 import PlayerCard from "./PlayerCard.svelte";
 import PlayerTable from "./PlayerTable.svelte";
@@ -23,6 +23,7 @@ export const playerChart: PlayerView = {
   tiers: ["canvas", "text"],
   inputs: scenes,
   params: CHART_PARAMS,
+  switchable: CHART_CONTROLS,
   mount: (el, ctx, scene) => mountPlayer(PlayerChart, el, ctx, scene),
 };
 
@@ -33,6 +34,7 @@ export const playerCard: PlayerView = {
   tiers: ["text"],
   inputs: scenes,
   params: CARD_PARAMS,
+  switchable: CARD_CONTROLS,
   mount: (el, ctx, scene) => mountPlayer(PlayerCard, el, ctx, scene),
 };
 
@@ -43,6 +45,7 @@ export const playerTable: PlayerView = {
   tiers: ["text"],
   inputs: scenes,
   params: TABLE_PARAMS,
+  switchable: TABLE_CONTROLS,
   mount: (el, ctx, scene) => mountPlayer(PlayerTable, el, ctx, scene),
 };
 

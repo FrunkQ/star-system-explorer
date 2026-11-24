@@ -128,6 +128,11 @@ try {
   const size = await out.locator("[data-clean]").evaluate((e) => [e.clientWidth, e.clientHeight]);
   assert.ok(Math.abs(size[0] / size[1] - 16 / 9) < 0.01, `16:9, got ${size}`);
   assert.equal(await out.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgba(0, 0, 0, 0)", "clear ground");
+  // Every part on the output is a picture (AT13 rule 6): inert, so not one control is reached by keyboard either.
+  const parts = await out.locator("[data-clean] section.area").count();
+  assert.ok(parts > 0 && (await out.locator("[data-clean] section.area[data-picture][inert]").count()) === parts, "every part a picture");
+  for (let i = 0; i < 6; i++) await out.keyboard.press("Tab");
+  assert.equal(await out.evaluate(() => !!document.activeElement?.closest("section.area")), false, "nothing on the output takes the keyboard");
   await box("Stream").locator("[data-output-screen]").waitFor({ timeout: 15000 });
   await shot(out, "clean-output");
   await shot(gm, "switchboard-output");

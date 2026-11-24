@@ -4,6 +4,7 @@ import type { Json } from "./json.ts";
 import { resolveParams, type TopicQuery, type ViewModule } from "./view.ts";
 import { checkStyle, COSTS, settingsCost, TIER_RUNS_UP_TO, type StyleDoc } from "./style.ts";
 import type { ParamSpec } from "./view.ts";
+import { checkItemControls, isPicture, resolveControls, type ItemControls } from "./part-controls.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyView = ViewModule<any, any>;
@@ -16,6 +17,8 @@ export interface ScreenItem {
   bind?: TopicQuery;
   /** A style document for this item's view (H8.9); the item's own params go on top. */
   style?: string;
+  /** The part's own controls on this screen (AT13): "none" for a pure display, "all", or each by id; unstated take the part's default. */
+  controls?: ItemControls;
 }
 
 export interface ScreenDoc {
@@ -124,7 +127,8 @@ export const LAYOUT_AREAS: Record<ScreenDoc["layout"], string[]> = {
 
 export interface CheckedScreen {
   doc: ScreenDoc;
-  mounts: { module: AnyView; area: string; params: Record<string, Json>; bind?: TopicQuery }[];
+  /** `controls`: which of the part's own controls are on; `picture`: every one is off, so nothing in it can be reached. */
+  mounts: { module: AnyView; area: string; params: Record<string, Json>; bind?: TopicQuery; controls: Record<string, boolean>; picture: boolean }[];
 }
 
 /**
@@ -171,7 +175,9 @@ export function checkScreen(doc: ScreenDoc, registry: readonly AnyView[], dataVi
     errors.push(...r.errors.map((e) => `${item.view}: ${e}`));
     const bad = item.bind ? checkBind(item.bind) : null;
     if (bad) errors.push(`${item.view}: bind ${bad}`);
-    mounts.push({ module, area: item.area, params: r.params, ...(item.bind ? { bind: item.bind } : {}) });
+    errors.push(...checkItemControls(module.switchable, item.controls).map((e) => `${item.view}: ${e}`));
+    const controls = resolveControls(module.switchable, item.controls);
+    mounts.push({ module, area: item.area, params: r.params, ...(item.bind ? { bind: item.bind } : {}), controls, picture: isPicture(module.switchable, item.controls) });
   }
   return errors.length ? { ok: false, errors } : { ok: true, screen: { doc, mounts } };
 }
