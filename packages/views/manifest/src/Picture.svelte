@@ -1,10 +1,15 @@
+<script lang="ts" module>
+  // What each construct shows in play this session (Explore and Run choose freely but keep nothing; Build keeps it).
+  const chosenHere = new Map<string, string>();
+</script>
+
 <script lang="ts">
-  // A construct's picture on the Ships and stations card. By default a ship shows itself designed from its own parts
-  // (the renderer's plans and 3D model from the base-ships pack); in edit mode (the Build desk) its style, remix and
-  // hand overrides are kept with the construct as a recipe. On Explore and Run the look is fixed (Alex, 24 Nov: play
-  // changes what is aboard, never the ship). The GM can instead give it a picture of their own (scaled down, raster only),
-  // and take it away again. Stations and sites without a drive have no designed picture, so they take an own one.
-  import { DESIGN_FIELD, PICTURE_FIELD, checkPicture, designOf, factOf, fitSide, pictureOf, type Json, type NavShip, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
+  // A construct's pictures on the Ships and stations card, with a selector: a ship designed from its own parts seen as
+  // plans or as a 3D model (the renderer's ShipPlans, from the base-ships pack), and any pictures the GM gives it
+  // (scaled down, raster only). On the Build desk the design's style, remix and overrides are kept as a recipe, pictures
+  // are added and removed, and the one last chosen is kept as the one it opens on (Alex, 24 Nov). On Explore and Run
+  // the look is fixed (play changes what is aboard, never the ship): any view can be chosen, nothing is kept.
+  import { DESIGN_FIELD, PICTURES_FIELD, PICTURES_MAX, SHOWN_FIELD, checkPicture, designOf, factOf, fitSide, picturesOf, shownOf, type Json, type NavShip, type PlayerSubject, type PictureShown, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { readPropellants, type DesignRecipe, type DesignRules, type DesignShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
   import { ShipPlans } from "../../ship/src/index.ts";
 
@@ -12,7 +17,7 @@
   const session = $derived(ctx.session);
   const ws = $derived(ctx.workspace);
 
-  const picture = $derived(pictureOf(factOf(construct, PICTURE_FIELD)));
+  const pictures = $derived(picturesOf(factOf(construct, PICTURES_FIELD)));
   const design = $derived(designOf(factOf(construct, DESIGN_FIELD)));
   let note = $state<string | null>(null);
 
@@ -90,32 +95,66 @@
       const uri = await shrink(file);
       const why = checkPicture(uri);
       if (why) return void (note = `Not kept: ${why}.`);
-      if (await keep(PICTURE_FIELD, uri)) note = "Picture kept with it.";
+      const list = [...pictures, uri];
+      if (await keep(PICTURES_FIELD, list as unknown as Json)) await choose(`picture:${list.length - 1}`, "Picture kept with it; it opens on this one.");
     } catch {
       note = "That file could not be read as a picture.";
     } finally {
       busy = false;
     }
   }
-  async function takeAway() {
-    if (await keep(PICTURE_FIELD, "")) note = ship ? "Back to the ship designed from its parts." : "Picture taken away.";
+  async function takeAway(i: number) {
+    const list = pictures.filter((_, j) => j !== i);
+    if (!(await keep(PICTURES_FIELD, list as unknown as Json))) return;
+    chosenHere.delete(construct.address);
+    if (shown === `picture:${i}` || (shown?.startsWith("picture:") && Number(shown.slice(8)) > i)) await keep(SHOWN_FIELD, (designed ? "plans" : list.length ? "picture:0" : "") as Json);
+    note = "Picture taken away.";
   }
+
+  // Which one shows: this session's choice in play, else the one kept with the construct, else the plans or first picture.
+  const designed = $derived(!!(nav && ship && pack));
+  let tick = $state(0);
+  const shown = $derived.by(() => {
+    void tick;
+    const here = chosenHere.get(construct.address);
+    return (here && shownOf(here, pictures.length, designed)) || shownOf(factOf(construct, SHOWN_FIELD), pictures.length, designed);
+  });
+  async function choose(s: PictureShown, said?: string) {
+    chosenHere.set(construct.address, s);
+    tick++;
+    if (editing && factOf(construct, SHOWN_FIELD) !== s && (await keep(SHOWN_FIELD, s))) note = said ?? "It opens on this one from now on.";
+    else if (said) note = said;
+  }
+  const options = $derived<{ id: PictureShown; label: string; src?: string }[]>([
+    ...(designed ? ([{ id: "plans", label: "Plans" }, { id: "model", label: "3D model" }] as const) : []),
+    ...pictures.map((src, i) => ({ id: `picture:${i}` as PictureShown, label: `Picture ${i + 1}`, src })),
+  ]);
+  const shownPicture = $derived(shown?.startsWith("picture:") ? pictures[Number(shown.slice(8))] : undefined);
 </script>
 
-{#if picture || (nav && ship && pack) || editing}
-  <section class="picture" aria-label="Picture" data-picture={picture ? "own" : nav ? "designed" : "none"}>
-    {#if picture}
-      <img src={picture} alt={`${name}, the game master's picture`} data-own-picture />
-    {:else if nav && ship && pack}
-      {#key construct.address}
-        <ShipPlans {ship} {fuels} rules={pack.rules} styles={pack.styles} segments={24} fit="hull" locked={!editing} {...design && pack.styles[design.style] ? { recipe: design as DesignRecipe } : {}} onchange={designChanged} />
+{#if shown || editing}
+  <section class="picture" aria-label="Picture" data-picture={shown ?? "none"}>
+    {#if options.length > 1}
+      <div class="pick" role="group" aria-label="Show">
+        {#each options as o (o.id)}
+          <button type="button" class="chip" aria-pressed={shown === o.id} onclick={() => choose(o.id)} data-show={o.id} title={o.label}>
+            {#if o.src}<img src={o.src} alt={o.label} />{:else}{o.label}{/if}
+          </button>
+        {/each}
+      </div>
+    {/if}
+    {#if shownPicture}
+      <img class="own" src={shownPicture} alt={`${name}, the game master's picture`} data-own-picture />
+    {:else if (shown === "plans" || shown === "model") && ship && pack}
+      {#key `${construct.address} ${shown}`}
+        <ShipPlans {ship} {fuels} rules={pack.rules} styles={pack.styles} segments={24} fit="hull" locked={!editing} start={shown} onview={(v) => choose(v)} {...design && pack.styles[design.style] ? { recipe: design as DesignRecipe } : {}} onchange={designChanged} />
       {/key}
     {/if}
     {#if editing}
       <div class="row small">
-        <label class="quiet-btn file" class:busy>{picture ? "Replace the picture…" : nav ? "Use my own picture…" : "Add a picture…"}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onchange={(e) => give(e.currentTarget.files?.[0])} data-picture-file /></label>
-        {#if picture}<button type="button" class="quiet-btn" onclick={takeAway} data-picture-clear>{nav ? "Use the designed ship" : "Take the picture away"}</button>{/if}
-        {#if !picture && nav}<span class="muted">Style and remix are kept with the ship.</span>{/if}
+        {#if pictures.length < PICTURES_MAX}<label class="quiet-btn file" class:busy>Add a picture…<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onchange={(e) => give(e.currentTarget.files?.[0])} data-picture-file /></label>{/if}
+        {#if shownPicture}<button type="button" class="quiet-btn" onclick={() => takeAway(Number(shown!.slice(8)))} data-picture-clear>Remove this picture</button>{/if}
+        <span class="muted">{designed ? "Style and remix are kept with the ship; it" : "It"} opens on the one last chosen here.</span>
       </div>
     {/if}
     {#if note}<p class="small muted" aria-live="polite" data-picture-note>{note}</p>{/if}
@@ -124,7 +163,11 @@
 
 <style>
   .picture { margin: 8px 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  img { display: block; max-width: 100%; max-height: 320px; object-fit: contain; border: 1px solid var(--sse-rule); background: var(--sse-ground-raised, var(--sse-ground)); }
+  .pick { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font: inherit; font-size: 12px; min-height: 34px; padding: 0 10px; border: 1px solid var(--sse-rule); background: transparent; color: var(--sse-ink); cursor: pointer; display: inline-flex; align-items: center; }
+  .chip[aria-pressed="true"] { border-color: var(--sse-accent); box-shadow: inset 0 -2px 0 var(--sse-accent); }
+  .chip img { height: 26px; width: auto; max-width: 48px; object-fit: cover; display: block; }
+  img.own { display: block; max-width: 100%; max-height: 320px; object-fit: contain; border: 1px solid var(--sse-rule); background: var(--sse-ground-raised, var(--sse-ground)); }
   .row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
   .quiet-btn { font: inherit; min-height: 34px; padding: 0 10px; border: 1px solid var(--sse-rule); background: transparent; color: var(--sse-ink); cursor: pointer; display: inline-flex; align-items: center; transition: transform var(--sse-motion-quick, 120ms) var(--sse-ease, ease-out); }
   .quiet-btn:hover { transform: translateY(-1px); border-color: var(--sse-ink); }
