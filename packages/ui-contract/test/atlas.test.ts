@@ -251,6 +251,7 @@ test("the loader refuses with sentences that say what to change", () => {
   says({ templates: { world: [{ key: "section.x", lines: ["magic.level"] }] } }, /names "magic\.level", which is not a fact/);
   says({ voice: { labels: { "section.air": "Air (about 1.2 bar)" } } }, /states a figure \("1\.2 bar\)"\)|states a figure/);
   says({ voice: { gap: "71% unknown" } }, /states a figure/);
+  says({ description: "Surveys to 5 AU and back" }, /The description states a figure \("5 AU"\)|description.*states a figure/);
   says({ letterhead: { use: "brand", lines: ["{brand.colour}"] } }, /unknown slot \{brand\.colour\}/);
   says({ voice: { labels: { "section.air": "{audience}'s air" } } }, /slots go only in the letterhead/);
   says({ look: "neon" }, /look "neon" is not in the pack stack/);
@@ -388,6 +389,7 @@ test("the note sets load: Alex's list (no Douglas Adams names in the base set), 
   assert.deepEqual(checkNoteSet(GUIDE_NOTES), []);
   const fanPack = atlasDocsOf([json("store-packs/guide-fan-notes/pack.json")]);
   assert.deepEqual(fanPack.refused, []);
+  assert.deepEqual(json("store-packs/guide-fan-notes/pack.json").kind, ["presentation"], "a kind the kernel's load_stack knows");
   const fan = fanPack.note_sets[0]!;
   assert.deepEqual(checkNoteSet(fan), []);
   const borrowed = /Zaphod|Vogon|Beeblebrox|Sirius Cybernetics|Improbability|Gargle Blaster|Ford Prefect|Megadodo|Eccentrica|petunias|\b42\b|forgot your towel|Bugblatter|Nutri-Matic|Genuine People|bypass/i;

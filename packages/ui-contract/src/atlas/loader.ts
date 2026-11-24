@@ -37,6 +37,8 @@ export function typedFigures(text: string): string[] {
 /** Every piece of text an edition carries, with where it is, for the text checks. */
 function textsOf(d: EditionDoc): { where: string; text: string; slots: boolean }[] {
   const out: { where: string; text: string; slots: boolean }[] = [];
+  if (typeof d.name === "string") out.push({ where: "the name", text: d.name, slots: false });
+  if (typeof d.description === "string") out.push({ where: "the description", text: d.description, slots: false });
   for (const [k, v] of Object.entries(d.voice?.labels ?? {})) out.push({ where: `the label ${k}`, text: v, slots: false });
   if (d.voice?.gap !== undefined) out.push({ where: "the gap words", text: d.voice.gap, slots: false });
   if (d.voice?.gap_short !== undefined) out.push({ where: "the short gap words", text: d.voice.gap_short, slots: false });
