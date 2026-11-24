@@ -17,7 +17,7 @@ const w = window as unknown as { __done?: Out };
     out.backend = (r.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? "webgpu" : "webgl2";
     const W = 64;
     const X = 2e7;
-    const layer = resolveLayer(ladderLayer("giant.curls")!, { rhines_scale_m: 1e7, deformation_radius_m: 2.5e6, jet_shear_m_s: 60, jet_speed_m_s: 120 }) as ResolvedLayer;
+    const layer = resolveLayer(ladderLayer("giant.curls")!, { rhines_scale_m: 1e7, deformation_radius_m: 2.5e6, jet_shear_m_s: 60, jet_speed_m_s: 120, eddy_speed_m_s: 30 }) as ResolvedLayer;
     // A far anchor, a time well past the epoch and a stretch, so origins, phases and the squash are all exercised.
     const rs = rungs(layer, { metres_per_px: 3e4, span_m: 1e9 }, "gpu-high", 12345, 777, [3e7, -2e7, 5e6]);
     out.rungs = rs.length;

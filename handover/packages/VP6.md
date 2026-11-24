@@ -24,7 +24,7 @@ Each rung is a noise whose **largest size, amplitude and speed are kernel values
 import { ladderLayer, resolveLayer, rungs, discScale, ladderSeed, detailLine } from "@sse/renderer"; // or ../src/ladder.ts
 import { ladderNode } from ".../renderer/src/ladder-node.ts"; // GPU code only (loads three.js)
 
-const layer = resolveLayer(ladderLayer("giant.curls")!, facts);   // facts: { rhines_scale_m, deformation_radius_m, jet_shear_m_s, jet_speed_m_s }
+const layer = resolveLayer(ladderLayer("giant.curls")!, facts);   // facts: { rhines_scale_m, deformation_radius_m, jet_shear_m_s, jet_speed_m_s, eddy_speed_m_s }
 const lad = ladderNode("curl", localMetres /* vec3 node, metres from your anchor */, { normal /* vec3 node, for curl */, along /* vec3 node, for flow */ });
 material.colorNode = yourFacts(warpedBy(lad.node));                // float for simplex/flow/cell/ridged; vec3 metres for curl
 // each frame (or when the view, tier or clock moves):
@@ -32,7 +32,7 @@ if (layer.drawn) lad.set(rungs(layer, discScale(radius_m, disc_px, view_px), tie
 hud = detailLine([{ layer, shown }]);
 ```
 
-**Per-latitude facts** (the climate thread's `jets` on the weather op's giant output: `lat_deg` and same-length `jet_speed_m_s`, `jet_shear_m_s`, `rhines_scale_m`, `deformation_radius_m`): pass the arrays as they are. The rung table is one per body, so a profile is resolved at its peak magnitude (a ratio at its peak element-by-element ratio); `profileShare(layer.amplitude, facts)` gives each band's share (0..1), which the caller interpolates by latitude and multiplies into `lad.node`, so each band shows its own strength.
+**Per-latitude facts** (the climate thread's `jets` on the weather op's giant output: `lat_deg` and same-length `jet_speed_m_s`, `jet_shear_m_s`, `eddy_speed_m_s`, `rhines_scale_m`, `deformation_radius_m`): pass the arrays as they are. The rung table is one per body, so a profile is resolved at its peak magnitude (a ratio at its peak element-by-element ratio); `profileShare(layer.amplitude, facts)` gives each band's share (0..1), which the caller interpolates by latitude and multiplies into `lad.node`, so each band shows its own strength.
 
 The processor twin `ladderAt(kind, rungs, at, { normal, along, axis, stretch })` gives the same values (canvas tier, CPU bakes, tests).
 

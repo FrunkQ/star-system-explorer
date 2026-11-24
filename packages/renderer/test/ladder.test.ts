@@ -4,7 +4,7 @@ import { profileShare, checkLayer, detailLine, discScale, LADDER_LAYERS, ladderA
 import { cell, curl, NUM, WRAP, simplex, type V3 } from "../src/ladder-noise.ts";
 
 // A Jupiter-like giant's curl figures (round numbers, for the mechanism only).
-const JUPITER = { rhines_scale_m: 1.0e7, deformation_radius_m: 2.5e6, jet_shear_m_s: 60, jet_speed_m_s: 120 };
+const JUPITER = { rhines_scale_m: 1.0e7, deformation_radius_m: 2.5e6, jet_shear_m_s: 60, jet_speed_m_s: 120, eddy_speed_m_s: 30 };
 const R_JUP = 6.9911e7;
 const curls = () => resolveLayer(ladderLayer("giant.curls")!, JUPITER) as ResolvedLayer;
 
@@ -18,7 +18,7 @@ test("every starter declaration is sound and binds its sizes, amplitude and spee
 });
 
 test("a missing kernel value means nothing is drawn, and the HUD says which value", () => {
-  const r = resolveLayer(ladderLayer("giant.curls")!, { rhines_scale_m: 1e7, jet_speed_m_s: 120 });
+  const r = resolveLayer(ladderLayer("giant.curls")!, { rhines_scale_m: 1e7, jet_speed_m_s: 120, eddy_speed_m_s: 30 });
   assert.equal(r.drawn, false);
   if (!r.drawn) assert.match(r.why, /no jet_shear_m_s/);
   // A ratio whose divisor is missing names the divisor.
@@ -33,7 +33,7 @@ test("bindings read the facts: ratios, factors and the stretch cap", () => {
   assert.equal(r.largest_m, 1e7);
   assert.equal(r.amplitude, 0.5);
   assert.equal(r.stretch, 4);
-  assert.equal(r.speed_m_s, 120);
+  assert.equal(r.speed_m_s, 30);
   const ring = resolveLayer(ladderLayer("ring.fine")!, { profile_spacing_m: 100, ring_radius_m: 1e8, opacity_contrast: 0.2, kepler_shear_m_s: 1 }) as ResolvedLayer;
   assert.equal(ring.stretch, MAX_STRETCH);
 });
@@ -202,11 +202,11 @@ test("the HUD's detail line names where facts end in the body's own units", () =
 });
 
 test("per-latitude profiles (the weather op's jets): resolved at their peak, shares per band for the caller", () => {
-  const jets = { rhines_scale_m: [4e6, 1e7, 6e6], deformation_radius_m: [2e6, 2.5e6, 3e6], jet_speed_m_s: [-40, 150, 60], jet_shear_m_s: [20, 75, null] };
+  const jets = { rhines_scale_m: [4e6, 1e7, 6e6], deformation_radius_m: [2e6, 2.5e6, 3e6], jet_speed_m_s: [-40, 150, 60], jet_shear_m_s: [20, 75, null], eddy_speed_m_s: [10, 35, 20] };
   const r = resolveLayer(ladderLayer("giant.curls")!, jets) as ResolvedLayer;
   assert.equal(r.drawn, true);
   assert.equal(r.largest_m, 1e7);
-  assert.equal(r.speed_m_s, 150);
+  assert.equal(r.speed_m_s, 35);
   // Shear over speed, element by element: 0.5, 0.5, missing.
   assert.equal(r.amplitude, 0.5);
   assert.equal(r.stretch, 4);
