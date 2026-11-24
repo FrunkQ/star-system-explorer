@@ -3,8 +3,9 @@
      Seats dialog it opens. -->
 <script lang="ts">
   import SeatsPanel from "./SeatsPanel.svelte";
+  import ArrivalSlip from "./ArrivalSlip.svelte";
   import type { Share } from "../share.svelte.ts";
-  import type { SceneSubject, Shown, ViewSession } from "../../../ui-contract/src/index.ts";
+  import type { PartyShip, SceneSubject, Shown, ViewSession } from "../../../ui-contract/src/index.ts";
 
   let {
     share,
@@ -17,6 +18,9 @@
     at_yr,
     landingUnsent,
     here,
+    onswitchboard,
+    party,
+    now_yr,
     onchange,
   }: {
     share: Share;
@@ -33,6 +37,12 @@
     landingUnsent: boolean;
     /** What "Send this view" sends: the place in view. */
     here: () => Shown;
+    /** Open the Switchboard. */
+    onswitchboard: () => void;
+    /** The party's ship, for the offer to tell the table about a world it arrives at. */
+    party: PartyShip | null;
+    /** The campaign's now, in years. */
+    now_yr: number;
     /** A change the table made (an approved request, a seat's grant): the physics moved. */
     onchange: () => void;
   } = $props();
@@ -43,14 +53,18 @@
 
 <span class="share" aria-label="Players">
   {#if share.state.link}
-    <a href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' screen</a>
-    <span data-players={share.state.players}>{share.state.players} {share.state.players === 1 ? "screen" : "screens"} · {share.state.seq} events</span>
-    <!-- What the table is shown (the landing run-through): the place the GM last sent, or screens off. -->
+    <!-- On air (Switchboard PB2): one chip that says how many screens and what the table sees, and opens the
+         Switchboard; the one Send of the live view stays here, a press from the chart. -->
     {@const shown = share.state.shown}
-    <span class="table-sees" data-table-sees={"off" in shown ? "off" : shown.scope}>Table sees: {"off" in shown ? "nothing (screens off)" : (shown.title ?? "the opening place")}</span>
-    {#if "off" in shown || shown.scope !== system || (landingUnsent && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => share.show(here())} title="Show the players' screens {title}, as far as they know it">Send this view</button>{/if}
-    {#if !("off" in shown)}<button type="button" class="linkbtn quiet" data-screens-off onclick={() => share.show({ off: true })} title="Blank the players' screens until you send a view">Screens off</button>{/if}
+    {@const held = Object.values(share.state.board.lines).filter((l) => l?.held).length + (share.state.board.all ? 1 : 0)}
+    <button type="button" class="chip" data-on-air data-players={share.state.players} onclick={onswitchboard} title="Open the Switchboard: what every screen shows">
+      On air · {share.state.players} {share.state.players === 1 ? "screen" : "screens"}{held ? ` · ${held} held` : ""} ·
+      <span class="table-sees" data-table-sees={"off" in shown ? "off" : shown.scope}>{"off" in shown ? (shown.card ? `held: ${shown.card}` : "screens dark") : (shown.title ?? "the opening place")}</span>
+    </button>
+    {#if "off" in shown || shown.scope !== system || (landingUnsent && !shown.landing)}<button type="button" class="linkbtn" data-send-view onclick={() => share.show(here())} title="Show every screen {title}, as far as each knows it">Send this view</button>{/if}
+    <a class="quietlink" href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' link</a>
     <button type="button" class="linkbtn quiet" onclick={() => ((seatsOpen = true), seatsDialog?.showModal())}>{share.state.plan.seats.length > 1 ? `${share.state.plan.seats.length} seats` : "More seats"}</button>
+    <ArrivalSlip {session} {party} {subjects} {now_yr} {onchange} />
     {#if share.state.waiting.length}
       <span class="requests" role="group" aria-label="Players' requests">
         {#each share.state.waiting as r (r.from + r.id)}
@@ -93,6 +107,23 @@
     border-radius: var(--sse-radius);
   }
   .share a,
+  .chip {
+    font: inherit;
+    color: var(--sse-ink);
+    background: var(--sse-ground-raised);
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    padding: 0 8px;
+    cursor: pointer;
+  }
+  .chip::before {
+    content: "●";
+    color: var(--sse-accent);
+    margin-right: 6px;
+  }
+  .quietlink {
+    color: var(--sse-ink-muted);
+  }
   .linkbtn {
     color: var(--sse-accent);
     font: inherit;
