@@ -4,7 +4,7 @@
 // going up to the galaxy keeps the way back (the system and the world stay on the line, quietly) and the rail offers
 // "Back to <world>". The picker beside the name at the galaxy offers the campaign's systems and recent places. Esc climbs one
 // scale. Each place is the address bar's hash: Back and Forward move through places, and a link opens straight on its
-// place with no start sheet. On a phone the line is "name ▾", the levels above at the top of the picker. Moving about writes nothing.
+// place with no start sheet. On a phone the line is "‹ name ▾". Moving about writes nothing.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -142,7 +142,7 @@ try {
   await go(gm, "galaxy");
   await shot(gm, "u24-galaxy-night");
 
-  // Phone: "name ▾".
+  // Phone: "‹ name ▾".
   const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
   phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
   await phone.goto(root + `#chart/world//${encodeURIComponent(tarn)}`);
@@ -150,7 +150,7 @@ try {
   await until(phone, "world");
   const pl = phone.locator(".place");
   assert.equal(await pl.locator("[data-place-step].far").first().isVisible(), false);
-  assert.equal(await pl.locator(".step.up").isVisible(), false, "the levels above are in the picker, so the name has the room");
+  assert.ok(await pl.locator(".step.up").isVisible(), "the up arrow shows");
   assert.ok(await pl.locator("[data-picker-chip] .caret").isVisible(), "the down mark shows");
   await shot(phone, "u24-phone-world");
   await go(phone, "galaxy");

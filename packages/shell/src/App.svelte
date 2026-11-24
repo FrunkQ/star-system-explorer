@@ -2540,11 +2540,6 @@
     .sep.below {
       display: none;
     }
-    /* The name gets the room: the levels above are the picker's first rows, so the up step waits for a wider screen. */
-    .place .step.up,
-    .place .up-sep {
-      display: none;
-    }
     /* Down is a small ▾ beside the name (the picker draws it); the list opens across the screen. */
     .place .goto {
       flex: none;
