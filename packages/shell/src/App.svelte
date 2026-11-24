@@ -44,6 +44,9 @@
   import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
   import { templateTarget, triggerEntries, triggerTarget } from "../../agents/src/orac-triggers.ts";
   import { placeEntries, revealTarget } from "../../agents/src/orac-known.ts";
+  import { atlasEntries, editionTarget, kitTarget, noteSetTarget, sessionAtlasHost } from "../../agents/src/orac-atlas.ts";
+  import guideVocab from "./documents/vocab.guide.json";
+  import { ATLAS_LOOKS } from "./atlas/screens.atlas.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -1179,6 +1182,7 @@
     const s = session;
     if (!s || !oracMay(s.seat)) return undefined;
     const places = () => scene.subjects.map((x) => ({ address: x.address, name: x.label }));
+    const atlasHost = sessionAtlasHost(s, ws, { looks: () => ATLAS_LOOKS.map((t) => t.id), vocabs: { plain: plainVocab as unknown as Vocab, guide: guideVocab as unknown as Vocab }, system: () => scene.system ?? null });
     const fields = () => Object.fromEntries(Object.entries(lensFields).filter(([k]) => k !== "*").map(([k, v]) => [k, v.map((f) => f.id)]));
     return {
       targets: () => [
@@ -1199,9 +1203,12 @@
         triggerTarget(s, ws),
         templateTarget(s, ws),
         revealTarget(s, ws, places),
+        editionTarget(atlasHost),
+        noteSetTarget(atlasHost),
+        kitTarget(atlasHost),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
-      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...placeEntries(places()), ...handbookEntries()],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...placeEntries(places()), ...atlasEntries(atlasHost), ...handbookEntries()],
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
@@ -1247,9 +1254,10 @@
         return r.ok ? r.result : null;
       },
       // A kept description is a narrative note in the record, for the audience it was written for (the GM sees every note).
-      keep: async (address, text, audience) => {
+      // A Guide's note (AT11) is the GM's own until revealed: written from the audience's facts, kept GM only, tagged for the Atlas's margin.
+      keep: async (address, text, audience, as = "description") => {
         if (!s.addNote) return "This session cannot write the record.";
-        const r = await s.addNote({ address, text, audience: audience === "everyone" ? "everyone" : [audience], tags: ["description"], narrative: true, at_s: yearsToSeconds(ws.now_yr) });
+        const r = await s.addNote({ address, text, audience: as === "guide-note" ? "gm" : audience === "everyone" ? "everyone" : [audience], tags: [as], narrative: true, at_s: yearsToSeconds(ws.now_yr) });
         return r.ok ? null : r.message;
       },
     };
