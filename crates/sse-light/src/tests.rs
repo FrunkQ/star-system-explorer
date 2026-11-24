@@ -1002,3 +1002,28 @@ fn sun_magnitudes_and_reddening() {
     // blackbody near B−V 0; the effective-wavelength stand-in reads 0.14.
     assert!(hb < 0.2 && hb < bv.value - 0.4, "10,000 K B−V {hb}");
 }
+
+/// MF9 part 2: every line names the element or substance that gives it off,
+/// by its id on the master data sheet, so its card can show "Light it gives
+/// off" and an invented gas can carry lines of its own.
+#[test]
+fn every_line_names_its_matter_on_the_sheet() {
+    let s = sse_reference::Reference::base();
+    let lines = &t().lines;
+    let named: Vec<&LineDef> = lines.iter().filter(|l| l.matter.is_some()).collect();
+    assert!(named.len() >= 24, "{}", named.len());
+    for l in named {
+        let id = l.matter.as_deref().unwrap();
+        assert!(
+            s.row("elements", id).is_some() || s.row("substances", id).is_some(),
+            "line {}: no sheet row {id}",
+            l.id
+        );
+    }
+    let o: Vec<&str> = lines
+        .iter()
+        .filter(|l| l.matter.as_deref() == Some("o"))
+        .map(|l| l.id.as_str())
+        .collect();
+    assert!(o.contains(&"oi-5577") && o.contains(&"oi-6300"), "{o:?}");
+}

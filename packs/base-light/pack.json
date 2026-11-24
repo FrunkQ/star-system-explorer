@@ -44,42 +44,48 @@
             "name": "Iron K-alpha 6.4 keV",
             "species": "Fe",
             "at_m": 1.9373e-10,
-            "medium": "vacuum"
+            "medium": "vacuum",
+            "matter": "fe"
           },
           {
             "id": "lya",
             "name": "Lyman-alpha 121.6 nm",
             "species": "H I",
             "at_m": 1.21567e-07,
-            "medium": "vacuum"
+            "medium": "vacuum",
+            "matter": "h"
           },
           {
             "id": "oii",
             "name": "[O II] 372.7 nm (doublet)",
             "species": "O II",
             "at_m": 3.7274e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "o"
           },
           {
             "id": "n2p",
             "name": "N2+ 391.4 nm (aurora)",
             "species": "N2+",
             "at_m": 3.9144e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "n2"
           },
           {
             "id": "ca-k",
             "name": "Calcium K 393.4 nm (Fraunhofer K)",
             "species": "Ca II",
             "at_m": 3.93366e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "ca"
           },
           {
             "id": "ca-h",
             "name": "Calcium H 396.8 nm (Fraunhofer H)",
             "species": "Ca II",
             "at_m": 3.96847e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "ca"
           },
           {
             "id": "ch-g",
@@ -93,112 +99,128 @@
             "name": "H-gamma 434.0 nm",
             "species": "H I",
             "at_m": 4.34047e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "h"
           },
           {
             "id": "heii",
             "name": "He II 468.6 nm",
             "species": "He II",
             "at_m": 4.68568e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "he"
           },
           {
             "id": "hb",
             "name": "H-beta 486.1 nm",
             "species": "H I",
             "at_m": 4.86133e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "h"
           },
           {
             "id": "oiii-4959",
             "name": "[O III] 495.9 nm",
             "species": "O III",
             "at_m": 4.95891e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "o"
           },
           {
             "id": "oiii",
             "name": "[O III] 500.7 nm",
             "species": "O III",
             "at_m": 5.00684e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "o"
           },
           {
             "id": "mg-b",
             "name": "Magnesium b 517.3 nm (Fraunhofer b)",
             "species": "Mg I",
             "at_m": 5.17268e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "mg"
           },
           {
             "id": "fe-e",
             "name": "Iron E 527.0 nm (Fraunhofer E)",
             "species": "Fe I",
             "at_m": 5.27039e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "fe"
           },
           {
             "id": "oi-5577",
             "name": "[O I] 557.7 nm (green aurora, airglow)",
             "species": "O I",
             "at_m": 5.57734e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "o"
           },
           {
             "id": "hei",
             "name": "He I 587.6 nm",
             "species": "He I",
             "at_m": 5.87562e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "he"
           },
           {
             "id": "na-d",
             "name": "Sodium D 589.3 nm (doublet; sodium lamps)",
             "species": "Na I",
             "at_m": 5.8929e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "na"
           },
           {
             "id": "oi-6300",
             "name": "[O I] 630.0 nm (red aurora)",
             "species": "O I",
             "at_m": 6.3003e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "o"
           },
           {
             "id": "nii-6548",
             "name": "[N II] 654.8 nm",
             "species": "N II",
             "at_m": 6.54805e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "n"
           },
           {
             "id": "ha",
             "name": "H-alpha 656.3 nm",
             "species": "H I",
             "at_m": 6.56281e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "h"
           },
           {
             "id": "nii",
             "name": "[N II] 658.4 nm",
             "species": "N II",
             "at_m": 6.58345e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "n"
           },
           {
             "id": "sii",
             "name": "[S II] 671.6 nm",
             "species": "S II",
             "at_m": 6.71644e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "s"
           },
           {
             "id": "sii-6731",
             "name": "[S II] 673.1 nm",
             "species": "S II",
             "at_m": 6.73082e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "s"
           },
           {
             "id": "tio-7054",
@@ -212,14 +234,16 @@
             "name": "Carbon monoxide J=1-0 2.6 mm (115.27 GHz)",
             "species": "CO",
             "at_m": 0.002600757,
-            "medium": "vacuum"
+            "medium": "vacuum",
+            "matter": "co"
           },
           {
             "id": "hi-21",
             "name": "Neutral hydrogen 21 cm (1420.41 MHz)",
             "species": "H I",
             "at_m": 0.21106114,
-            "medium": "vacuum"
+            "medium": "vacuum",
+            "matter": "h"
           }
         ],
         "grid": {

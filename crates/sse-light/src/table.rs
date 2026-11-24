@@ -24,6 +24,12 @@ pub struct LineDef {
     pub at_m: f64,
     /// "air" or "vacuum".
     pub medium: String,
+    /// The element or substance that gives it off, by its id on the master
+    /// data sheet (lower-case symbols for elements: "o", "h"; substances as
+    /// they are: "n2", "co"). Absent for a line no sheet row stands for yet
+    /// (annihilation, TiO, CH).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub matter: Option<String>,
 }
 
 /// Photospheric absorption: each line's strength (0 to 1) at the listed temperatures.

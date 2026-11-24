@@ -35,10 +35,19 @@ Each driver of aurorae is computed on every world and kept where it lands inside
 No open-flux budget (the wind oval is the nose line's footprint), dipole geometry for both ovals, no power,
 no colours, no storm events yet.
 
+## Part 2a (24 Nov): every line names its matter
+
+- Each line in base-light's light table gains `matter`, the element or substance that gives it off,
+  by its id on the master data sheet (lower-case symbols for elements: `o`, `h`; substances as they
+  are: `n2`, `co`). The annihilation line, TiO and CH carry none until the sheet has rows for them.
+- `sse_light::table::LineDef.matter`; test `every_line_names_its_matter_on_the_sheet`. The data sheet
+  thread adds a sheet check on the same ids and a "Light it gives off" section on the cards.
+
 ## Next (part 2)
 
 - Power: the wind oval's as a share of the wind's power through the bubble, the spin oval's from the
   corotation currents.
-- Colours from the air's own emission lines in the light table.
+- Colours from the air's own emission lines in the light table, in the output shape agreed with the
+  aurora drawing thread on 24 Nov (handover/status/light.md, Next item 2, VP-L2).
 - Storm response as dated events from O10's ejections (the bubble shrinks, the oval moves equatorward).
 - Patchy aurorae over crustal fields once MF10 lands.
