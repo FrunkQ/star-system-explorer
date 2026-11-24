@@ -85,6 +85,8 @@
   import { MORE_SCREENS } from "./screens.more.ts";
   import { GAME_SCREENS } from "./screens.game.ts";
   import { RENDER_SCREENS } from "./screens.renderer.ts";
+  import { RUN_SCREENS } from "./run/screens.run.ts";
+  import { tablePort } from "./run/table-port.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { createSymbols } from "./symbols.svelte.ts";
@@ -112,7 +114,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -140,8 +142,12 @@
   /** The place in view, as the table would be shown it: on the Land screen, with the landing the GM is flying. */
   let lastLanding = $state.raw<Json | null>(null);
   const LAND_SCREEN = "players.land.screen.json";
-  const here = (): Shown =>
-    ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+  // A send made on the Land screen before its first landing arrived waits for it, then goes again with it.
+  let landingAwaited = false;
+  const here = (): Shown => {
+    landingAwaited = ws.screen === "surface" && !lastLanding;
+    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding } : { scope: scene.system, title: scene.title };
+  };
   // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
   let kickerW = $state(999);
 
@@ -235,6 +241,10 @@
   $effect(() => {
     const p = ws.party ? ($state.snapshot(ws.party) as unknown as Json) : null;
     if (share) share.host.setState({ party: p });
+  });
+  // The table for the Switchboard (PB2): the share, with the live view as its first source.
+  $effect(() => {
+    ws.table = share ? tablePort(share, () => here()) : undefined;
   });
   let opened: unknown[] = [];
   loadPacks()
@@ -530,6 +540,8 @@
     ws.sendLanding = (show) => {
       lastLanding = show;
       const sh = share?.state.shown;
+      if (landingAwaited && share && ws.screen === "surface" && sh && "scope" in sh && sh.scope === scene.system && !sh.landing) return void share.show(here());
+      landingAwaited = false;
       if (share && sh && "landing" in sh && sh.landing) share.show({ ...(JSON.parse(JSON.stringify(sh)) as typeof sh), landing: show });
     };
     ws.shared = !!share?.state.link;
@@ -1607,7 +1619,10 @@
           at_yr={(factsDoc as unknown as AuthoredFacts).at_yr}
           landingUnsent={ws.screen === "surface" && !!lastLanding}
           {here}
-          onchange={() => ws.notePhysics()}
+          onswitchboard={() => go("switchboard")}
+          party={ws.party ?? null}
+          now_yr={ws.campaign_now_yr ?? ws.now_yr}
+          onchange={() => (ws.revision++, ws.notePhysics())}
         />
       {/if}
       <!-- The engine's own numbers by depth (2.4): Science adds the device tier, Engine the kernel and the hashes. -->

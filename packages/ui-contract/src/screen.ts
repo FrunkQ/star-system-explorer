@@ -43,9 +43,9 @@ export interface ScreenDoc {
 export const RAIL_SCALES = ["web", "cluster", "galaxy", "system", "world", "workshop"] as const;
 export type RailScale = (typeof RAIL_SCALES)[number];
 /** The rail's groups, always in this order; "world" is "This world". */
-export const RAIL_GROUPS = ["look", "find", "world", "travel", "understand", "workshop"] as const;
+export const RAIL_GROUPS = ["look", "find", "world", "travel", "understand", "table", "workshop"] as const;
 export type RailGroup = (typeof RAIL_GROUPS)[number];
-export const RAIL_GROUP_WORDS: Record<RailGroup, string> = { look: "Look", find: "Find", world: "This world", travel: "Travel", understand: "Understand", workshop: "Workshop" };
+export const RAIL_GROUP_WORDS: Record<RailGroup, string> = { look: "Look", find: "Find", world: "This world", travel: "Travel", understand: "Understand", table: "Table", workshop: "Workshop" };
 /** At most this many entries at one scale (design 3.4 rule 4). */
 export const RAIL_MAX = 10;
 

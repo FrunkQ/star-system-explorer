@@ -11,7 +11,7 @@
     "other": {
       "about": {
         "label": "Sol today",
-        "text": "Real spaceflight from 1957 to now: every orbital launch, every station, every craft that left Earth orbit and every landing on another world, with flight logs for the showcase missions. Real craft are assembled from their real parts.",
+        "text": "Real spaceflight from 1957 to now: every orbital launch, every station, every craft that left Earth orbit and every landing on another world, with a flight log for every craft that left Earth orbit (full detail for the showcase missions). Real craft are assembled from their real parts.",
         "fictional": false,
         "note": "Track RS (handover/design/SSE4-real-spaceflight-feasibility.md). Published on Explorers, not built into SSE4; the onboarding tour uses it to teach loading a pack."
       },

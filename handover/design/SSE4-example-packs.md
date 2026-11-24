@@ -6,6 +6,16 @@ Purpose: every shelf on Explorers should hold at least one example, so people se
 
 Licence notes below are practical guidance from the owners' published pages, read on 23 Nov 2026. They are not legal advice. Where a page could not be read, it says "not confirmed".
 
+## 0. Scope ruling, 23 Nov 19:50
+
+Alex: "hold that powder... in 4.2 we will go hard into RPG support. So all the game packs can wait a bit. Traveller is our showcase."
+
+- **Traveller is the one game pack for 4.0.** Its standard ships and notice go ahead.
+- **Waiting for 4.2, handed to nobody now:** the Mothership game pack and everything in section 4.3A (ship manifest as a play screen, crew roster, character sheet from pack data, table rolls, the failed-jump table), Cepheus Engine, the umpired 4X, and with them the Mothership licence email and the question of in-app dice.
+- **Reading, not a ruling:** this covers packs that carry game rules. Setting, look and data packs with no game rules carry on in the order of section 7A: Sol today, World hooks, the small data packs, sky overlays, Pulp solar system, A working Sol, Megastructures, tours, and the FTL rule families in the voyage finder.
+- **Settled by Alex, 23 Nov 19:52 and 19:53:** "Author all the looks, those are useful and let GMs use it in their universes properly", and "apart from that all the game specific stuff (except Traveller) is parked for 4.2". So Retro future and Bridge console carry on now as looks, with no game's name or rules. Eclipse Phase and 2300AD wait for 4.2 with the game packs (the coordinator's reading of "game specific", which Alex can correct).
+- **Also from Alex, 19:52:** the green screen should be "any colour mono", and a select few of SSE3's player view shaders belong here. Section 4C.
+
 ## 1. The short answer
 
 1. **Traveller with the full standard ship list: yes.** Mongoose's fair use policy allows free downloadable aids set in the official universe. Keep our own generated hulls, no deck plans, no logos.
@@ -81,7 +91,7 @@ Things a pack can carry that have **no shelf of their own**, because they ride i
 | Example | Shows | State |
 |---|---|---|
 | SSE3 classic | a class atlas as a look | Have |
-| **Retro future**: green CRT wireframe view style, a proximity-ping sensor recipe, chunky industrial ship style (tugs, haulers, refineries) | in-universe view styles as filters, style per panel, ship styles as pack data, sensor recipes | New, after view styles are built |
+| **Retro future**: a one-colour terminal view style in any colour the GM picks (section 4C), a proximity-ping sensor recipe, chunky industrial ship style (tugs, haulers, refineries) | in-universe view styles as filters, style per panel, ship styles as pack data, sensor recipes | New, after view styles are built |
 | **Bridge console** (original design, not LCARS): a player screen theme with a decimal date and a galactic quadrant overlay | themes, a calendar that is not days and months, a HUD overlay that is not a hex grid | New |
 | **Tours**: "Grand tour of Sol" and "Life of a Sun-like star" | tours as data; deep time for teaching | New, with tours |
 | **Sky overlays**: constellation lines and boundaries, galactic coordinate grid | overlays from real public data on any chart | New, small |
@@ -128,6 +138,36 @@ Explorer, courier, miner, trader, patrol and pirate ship as the programs inside 
 - **Mothership.** Tuesday Knight Games runs a third-party licence that hundreds of supplements use. One creator's account says approval was given by the publisher and a compatibility logo issued. The licence text itself was not readable from here (not confirmed: fee, exact terms). It is the friendliest named game on this list.
 - **Alien RPG.** Free League's open licences cover the Year Zero Engine rules and five other games (Dragonbane, Forbidden Lands, Symbaroum, both Coriolis games). Alien is not among them; it is a film licence held from the studio. The Year Zero Engine licence forbids "any Free League brand names or other copyrighted material beyond the SRD".
 - **Ruled by Alex, 23 Nov ("do others similarly").** One pack, "Retro future", in Looks and tours, free, on our library only, with no film or game owner's words in it. Apply for the Mothership licence (an email in Alex's name, drafted for him) and add "Compatible with Mothership" when granted.
+
+### 4.3A The Mothership game pack, widened (Alex, 23 Nov 19:28) **[waits for 4.2, see section 0]**
+
+Alex: "a ship manifest screen and a crew, and MS char gen is easy, so possible to run inside SSE, even down to crashed spaceship wreckage and entering a lava tube. I LOVE Mothership! We can even roll the jump encounter when they fail."
+
+So Mothership becomes the example of a game that can be **run inside SSE4**, not only dressed for it. Split by who owns what:
+
+**General, for every game pack (ours, no licence needed):**
+
+| Piece | What it is | Built on |
+|---|---|---|
+| **Ship manifest** | A screen on any construct: its parts, tanks and stores as real amounts, cargo, berths, what is damaged | the ship's own numbers, kept values (stock), the Ships and stations screen |
+| **Crew roster** | People as records on a construct: name, role, where they are, awake or asleep, age by ship time | the record's actors; crew limits from the species (future tech limits 4, 5, 9) |
+| **Character sheet from pack data** | A pack declares the sheet's fields and how each is made (rolled, picked, derived). Traveller, Mothership or any game fills the same mechanism | code sheets and kept kinds; dice as keyed draws with the GM's table secret |
+| **Roll on a table** | A pack table, a trigger, a keyed draw, the result as a record note through the GM gate | triggers and effects (track J) |
+| **Failed FTL has consequences** | The "what can go wrong" field of the FTL rule names a table to roll on | the six FTL fields above |
+| **Natural places you can go into** (4.0) | Caves and lava tubes, found from physics where the world has them (lava tubes follow from volcanic history and low gravity), entered at Site level. Wrecks and built interiors are parked to about 4.2, see below | surfaces from history, detail level Site; the interior sites design thread |
+
+**Mothership's own (needs the licence answer before it ships):**
+
+- its character generation: the stats, saves, classes and loadouts by name;
+- Stress and Panic and their tables;
+- its jump ratings and the jump encounter table;
+- its ship terms, and the "Compatible with Mothership" line and logo.
+
+Until the licence answer, the pack is built on the general pieces with placeholder tables of our own wording, so nothing waits.
+
+**One tension for Alex to settle.** On 23 Nov he said the game layer could roll dice and map onto skill checks "but not just yet". Rolling character stats and a jump encounter in the app would be the first use of that. Recommended: allow it here in its smallest form, a table roll that writes a note, with no skill-check engine. The dice design is already ruled (computed on the GM machine, a GM-only secret), and a table roll needs nothing new from it. Skill checks during play stay "not yet". The coordinator is asking him.
+
+**Scope, Alex 23 Nov 19:47:** authored wrecks and built sites you can go inside are parked until about 4.2, when a co-GM makes encounters, pirate skirmishes and wrecks from the living simulation ("this was a flippant one liner that has become a designed feature... maybe 4.2?"). Natural caves and lava tubes stay in 4.0, in the interior sites design thread. No build thread is handed wreck or built interiors now.
 
 ### 4.4 The Expanse as a fully working solar system
 
@@ -242,6 +282,159 @@ Three points that apply to every setting:
 
 **Recommended:** step 2 for everything we write and feature. Step 3 is open to you for the fan shelf if you want it, most safely for Retro future (a period computer look belongs to nobody) and least safely for Bridge console.
 
+## 4C. Looks from SSE3 worth carrying over
+
+Alex, 23 Nov 19:52: the green screen "should be any colour mono", and "we had a load of VERY cool shaders in SSE3 to totally mess with player views... we don't need all of them but a select few make sense here".
+
+What SSE3 has (read on AC-ProArt, `star-system-generator/src/lib/holo/filters`, `transitions` and `player`). I read the filter schema, the player presets and the plain-CSS twin of the filters. The shader files themselves sit too deep in the folder tree to copy over, so the notes on Night vision and Thermal come from their settings, and the transitions I did not open are judged by name.
+
+- **Three filters:** CRT (phosphor colour, tint, scan lines, vignette, barrel distortion, tearing, a rolling noise bar, skew, rounded corners, invert), Night vision, Thermal.
+- **Ten transitions between screens:** fade, wipe, iris, CRT collapse, scanline, static dissolve, typewriter, written, written reveal, blood spatter.
+- **A plain-CSS twin of each filter** for parts of the screen that are not drawn by the graphics card.
+
+"Don't copy V3, do it better" applies. In SSE4 a look is a filter chain on a view style (`sse.view-style/1`), so SSE3's one big CRT shader becomes small pieces that stack, each usable alone.
+
+**Untangled, 23 Nov 19:57.** Alex: "you have mixed up transitions, with effects and more there, so make sure you don't mess yourself up." He was right: the first list put several different kinds of thing in one table, and then claimed one dial covered them all. It does not. The kinds below are separate, each with what it applies to and how it is controlled.
+
+### Kind 1: Filters (how a view looks, lasting)
+
+Applies to a view or a single panel, as the filter chain of its view style. Controlled by settings the GM tunes once and saves in a look. Nothing moves at the table.
+
+| Filter | From SSE3 | What it does | Recommend |
+|---|---|---|---|
+| **Mono, any colour** | the CRT's phosphor colour and tint | One colour the GM picks: green, amber, white, red for alert, blue for a hologram (Alex: "any colour mono") | yes, first |
+| **Tube** | the CRT's glass | Scan lines, vignette, curved glass, rounded corners | yes |
+| **Grain** | part of Night vision | Sensor speckle | yes, small |
+
+### Kind 2: Palettes (how a reading is coloured)
+
+Applies to a band's reading, inside its recipe. Not a filter: it changes which colour a real number gets, not the picture afterwards.
+
+| Palette | From SSE3 | What it does | Recommend |
+|---|---|---|---|
+| **False colour** | replaces Thermal | A colour ramp over any real band (Infrared, Mag, X-ray). SSE4 has a real Infrared band, so a fake heat filter would break "never fake it" | yes |
+
+### Kind 3: Signal faults (what the GM does to a feed, live)
+
+Applies to a seat's whole screen, one seat or all. Controlled by **one live dial** in the GM's hand. This is the kind Alex shaped on 23 Nov (19:55 and 19:56).
+
+| Fault | From SSE3 | What it does |
+|---|---|---|
+| **Analogue** | the CRT's tearing, noise bar and skew | Tearing, a rolling bar, snow, ghosting; at the far end, nothing but static |
+| **Digital** | new | Blocks, frozen patches, colour smears, dropped frames; at the far end, blocks and black |
+
+- A look says which kind it uses and its **saved level**. The dial runs from clear, through the saved level, to the far end.
+- "A dial that just clears it up from the preset it started at": one drag down cleans the picture.
+- "Tune in": the GM starts at the far end and draws the dial down until the picture comes through.
+- Pushing past the saved level toward the far end is the coordinator's working choice, which Alex can reverse.
+- Later a pack may move the dial from something true (readiness, distance, a storm). The GM's hand wins.
+
+### Kind 4: Screen delivery (how a screen arrives)
+
+Alex, 23 Nov 19:59: "screen delivery rather than text delivery; a transition from nothing is always an option." So the old kinds 4 and 5 are one kind. Delivery is how any screen arrives, words and pictures alike, and it can start from the screen before or from nothing.
+
+Applies to the moment a seat gets a screen: a new view, a new document, a GM push, or a screen coming on. Controlled by two choices saved in the look, **arrives by** and **from** (the screen before, or nothing), and a duration. It plays once and is over. It is not a dial.
+
+| Arrives by | From SSE3 | What it does | Recommend |
+|---|---|---|---|
+| **Fade** | fade | The quiet default | yes |
+| **Scene wipes** | wipe and iris, widened | One delivery with its shape as data: straight in four directions, diagonal, clock sweep, iris in and out, hard or soft edge. Old film grammar that belongs to nobody, named plainly (Alex, 19:56) | yes |
+| **Power on** (and off) | CRT collapse | The picture grows from a dot and a line; off is the reverse, to nothing | yes |
+| **Static burst** | static dissolve | The screen forms out of static. It borrows the fault's static for a second; it is still a delivery | yes |
+| **Typewriter** | typewriter | The screen is typed out, character by character. Works on any screen, best on documents | yes |
+| **Scan in** | scanline | The screen is drawn line by line from the top, as a slow terminal or a plotter would. Back in, now that it has a place | yes |
+| Written, written reveal | written, written reveal | Handwriting appearing; needs a journal document style SSE4 does not have yet | later |
+| Blood spatter | blood spatter | Horror game flavour | 4.2, with the game packs |
+
+Two sorts sit in this one kind, and the difference is only what they do with the screen before. Fade, wipes and Power replace one screen with the next. Typewriter, Scan in and Static burst build the new screen up and do not need an old one. Any of them may start from nothing.
+
+**A seat's screen can be off.** That is a state of the seat, not a delivery: the GM turns a screen off (Power off plays) and on again (the look's delivery plays, from nothing).
+
+### Looks: saved combinations of the kinds above
+
+A look is what a GM picks and a pack ships. It names a view style, its filters and their settings, a palette where it matters, a fault kind and saved level, and a screen delivery.
+
+- **Green terminal** (or amber, or any colour): Mono, Tube, analogue fault at a low saved level, arrives by Power on (or Typewriter for documents).
+- **Night vision**: Mono in green, Grain, a hard vignette. No shader of its own.
+- **Hologram**: Mono in blue, digital fault at a low saved level, arrives by Static burst.
+- **Space opera**: no filter, arrives by Scene wipes.
+
+Retro future ships the first of these with the ping sensor recipe and the industrial ship style. Owner: the renderer thread, with the view styles work.
+
+### Does "one shared amount for everything" hold? No.
+
+I wrote earlier that one amount, played or held, covered faults and every transition. Separated out, that was wrong:
+
+- **Filters** have many settings each and no single amount.
+- **Palettes** are a mapping, with nothing to dial.
+- **Signal faults** are the one kind with a live dial. Static and tuning in belong here.
+- **Screen delivery** has progress from start to end, but that is a clock, not a control. Nobody needs to hold a wipe half way. If the GM wants a screen dark, that is the seat's "screen off" state.
+
+So there are four small mechanisms (filters, palettes, signal faults, screen delivery), each simple, and one dial. The earlier lines about holding a fade or scrubbing a wipe are withdrawn.
+
+## 4D. Looks on the GM's screen
+
+Alex, 23 Nov 19:58: "how the UI is put on the GM's screen to manipulate these at edit time and uses them at run/explore time (do they get a preview window option?)". Mockup, live: https://claude.ai/artifact/MUWHuo5mwY5fTXED7fvaSP ("SSE4 Looks controls mockup"). It follows `interface-style.md`: no new panel family, things appear when they are relevant, and the GM's own chart stays clean.
+
+### Edit time: Workshop › Looks
+
+Looks join the Workshop entries that already exist (Player screens, Styles). No new door.
+
+- **One card, four rows, always in the same order:** Filters, Palette, Signal fault, Screen delivery. Each row reads as one line of words when closed ("Mono, amber · Tube") and opens in place for its settings.
+- **The stage beside the card is the preview.** It shows the place the GM was looking at, through the look, so nothing has to be imagined. "Play delivery" plays the arrival. The signal fault row carries the kind and the saved level.
+- **"Preview as: Desktop, Phone"** shows the cheap twin a weak device would draw.
+- **Start from** any existing look; **Save** to the campaign or into a pack.
+
+### Using a look yourself: Explore, Build, or the GM's own view
+
+Saved looks appear in the **View style** switch after the four built-in styles (Chart, 3D, True, Wireframe), past a divider. This is what the view styles design already says: an in-universe look is a filter chain over a base style, chosen like any style, per device and later per panel. No dial here. A "Tune" link on a look opens it in Workshop.
+
+### Run time: the Seats panel on the Run desk
+
+Each seat already has a row. The row gains three small things, and nothing else moves:
+
+- **Look ▾**: which look this seat's screen wears.
+- **Signal dial**: a short slider from clear to lost, with a tick at the look's saved level. It is only there when the seat's look has a signal fault. Drag down to clear the picture up, start at lost and draw down to let them tune in.
+- **Send**, which pushes the GM's current view to that seat, arriving by the look's delivery.
+- **No Preview button** (Alex, 23 Nov 20:05: "clicking on the box to activate it should just do that"). Pressing a seat's row, or touching its dial, makes it the active seat and its screen shows in the preview window.
+
+Above the rows, for all seats at once: **Send this view** and **Screens off / on**.
+
+### The preview window: yes
+
+- **The active seat's screen shows in a small window pinned at the corner of the GM's stage** (Alex, 20:05: "genius"): : its knowledge, its look, its fault, its deliveries as they play. One seat at a time: whichever row was pressed last. The window can be closed, and pressing a row brings it back.
+- It is drawn on the GM's machine from what the seat has been sent, so it shows what the seat **should** be showing. It is not a camera on the player's device, and the caption says so.
+- For a full-size look, the desk's existing **See as** menu ("as players see it") gains the seats by name.
+- The preview draws the cheap twin when the GM's machine is busy, and only redraws when something moves.
+- On a phone the Seats panel is a sheet, the dial is full width, and Preview opens full screen.
+
+### Care for the people watching
+
+- Signal faults never flash the whole screen faster than three times a second.
+- A player's reduced-motion setting turns faults into a still picture and deliveries into a plain fade, whatever the GM does. The player's device always wins on this.
+
+### Questions for Alex (4D)
+
+**All seven accepted as recommended, and the looks short list of section 4C with them (Alex, 23 Nov 20:08: "All good here - your recs resonate - so solid").** That includes question 3: a look the GM gives a seat holds by default, with a per-seat "player may change" switch, and the player's accessibility settings always win. Pushing the signal dial past the saved level stands as recommended.
+
+1. **Build looks in Workshop › Looks as one card with four rows (Filters, Palette, Signal fault, Screen delivery), with the stage as the live preview?** Recommended: yes.
+2. **Saved looks appear in the View style switch after the built-in four, for anyone?** Recommended: yes. It is the mechanism already designed.
+3. **A look the GM gives a seat holds for that seat unless the GM unlocks it?** Your earlier ruling is that view style is each user's own choice. Recommended: keep that for the plain styles, and let a GM-given look hold by default so the table shares one fiction, with a per-seat "player may change" switch. Accessibility settings on the player's device always win.
+4. **The signal dial lives on each seat's row, appears only when that seat's look has a fault, and there are "Send this view" and "Screens off" for all seats?** Recommended: yes.
+5. **A small pinned preview of one seat at the corner of the GM's stage, plus the seats by name in "See as"?** Recommended: yes.
+6. **Fold Typewriter and Scan in into Screen delivery, so there are four kinds, and "from nothing" is a choice on every delivery?** Recommended: yes; this is your correction as I understand it.
+7. **The flashing limit and reduced-motion rule above?** Recommended: yes.
+
+Owners, now accepted: the renderer thread (filters, faults, deliveries, the preview's drawing), the chart room thread (Workshop › Looks, the Seats rows, the pinned preview).
+
+Three rules to keep from SSE3, because they were right:
+
+- **Every filter and fault has a cheap twin.** A phone on the older graphics path, or a text panel, gets the plain version (colour, lines, vignette, snow, blocks) and skips what it cannot afford (curved glass, tearing). The style's "needs" and "cost" fields already say which.
+- **Settings are pack data with their own controls**, so a GM tunes a look and saves it, and a pack ships tuned ones. SSE3's fully tuned green terminal is the model.
+- **Anything that moves says so**, so a still view is not redrawn sixty times a second for nothing.
+
+One thing **not** to carry over: SSE3's built-in presets include a company logo on the "Datapad" cover (the asset is named `builtin-wy-logo`) and a cover reading "DON'T PANIC!" from "Megadodo Publications". Those are other people's marks and words, which is step 4 of section 4B. SSE4's shipped looks use our own.
+
 ## 5. Other candidates
 
 | Candidate | Fit with SSE4 | Licence position | Call |
@@ -297,13 +490,16 @@ In the accepted order (question 9). Each pack is its own work package in the own
 | 2 | Small data packs: Darian calendar (check its terms), astronomer's units, decimal date, survey designations names | Build the master matter data sheet (calendars, units, naming packs) | nothing |
 | 2 | Sky overlays (constellations, galactic grid) and the quadrant overlay | Build photoreal renderer (owns the overlay slot) | nothing |
 | 2 | Pulp solar system; What if G drifts | Build kernel resolve and rules | DM6 for the second |
-| 3 | Retro future look: CRT view style, ping sensor recipe, Retro industrial ship style | Build photoreal renderer (view styles, ship generator) | view styles; future tech question 14 |
+| 3 | Retro future look: any colour mono and tube view styles (section 4C), ping sensor recipe, Retro industrial ship style | Build photoreal renderer (view styles, ship generator) | view styles; future tech question 14 |
 | 3 | Bridge console look: console theme at step 2 of section 4B | Build photoreal renderer for the style; the chart room thread for the player screen theme | view styles; question 10 |
 | 3 | Formula FTL and rate-per-distance FTL rules; the five fields; gates and messages | Build galaxy charts and travel screens | question 12 |
-| 3 | Mothership compatibility (game side) | Build Traveller pack | the licence answer |
+| waits for 4.2 | General game pieces (section 4.3A): ship manifest, crew roster, character sheet from pack data, roll on a table | Build Traveller pack (manifest, roster, sheet); Build kernel resolve and rules (table rolls through triggers) | Alex's answer on in-app rolling |
+| waits for 4.2 | Mothership game pack on those pieces, with our own placeholder tables until licensed | Build Traveller pack | the general pieces; the licence answer for Mothership's own names and tables |
+| 4 | Natural caves and lava tubes | the interior sites design thread, then the surface side | its design note |
+| parked, about 4.2 | Wrecks and built sites you can go inside; a co-GM generating encounters and wrecks from the living simulation | nobody now | Alex, 23 Nov 19:47 |
 | 4 | A working Sol: campaign, three powers on different rungs, the six role programs running | Build galaxy charts and travel screens, with templates from the Traveller pack thread | voyages, role programs, future tech accepted |
-| 4 | Eclipse Phase fan pack (CC BY-NC-SA, credit and link) | Build Traveller pack (universe packs) | gates; the fan shelf on the site |
-| 4 | 2300AD fan pack | Build Traveller pack | naming packs; hop-with-a-tether rule |
+| waits for 4.2 | Eclipse Phase fan pack (CC BY-NC-SA, credit and link) | Build Traveller pack (universe packs) | gates; the fan shelf on the site |
+| waits for 4.2 | 2300AD fan pack | Build Traveller pack | naming packs; hop-with-a-tether rule |
 | 4 | Tours: Grand tour of Sol, Life of a Sun-like star | the chart room thread | tours |
 | 5 | Megastructures | design note first, as already ruled (Traveller and kernel threads) | future tech accepted |
 | skipped | Cepheus Engine | nobody, until someone asks | |
