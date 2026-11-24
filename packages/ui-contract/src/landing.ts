@@ -134,6 +134,23 @@ export interface LandingWorld {
   /** The star's angular radius from the world, in radians. */
   sun_radius: number;
   tilt_deg: number;
+  /** Surface gravity, m/s² (the sea's waves run on it). */
+  gravity_m_s2?: number;
+}
+
+/** The sea at a landing site (kernel weather report `data.sea`, `sse.ocean.wind_waves`), with the tide now. */
+export interface LandingSea {
+  liquid?: string | null;
+  /** Significant wave height, m, and peak period, s. */
+  wave_m: number;
+  period_s: number;
+  /** Wind toward the east, m/s (negative: toward the west). */
+  wind_m_s: number;
+  fetch_km?: number;
+  /** The tide's height now above mean sea level, m. */
+  tide_m: number;
+  /** The kernel's line about it. */
+  line?: string;
 }
 
 /** Where the GM is looking on the ground: metres east and north of the site, facing, and whether flying the drone. */
@@ -164,6 +181,8 @@ export interface LandingShow {
   hour_deg: number;
   /** The star's declination in the world's sky, in degrees (from its tilt and season). */
   decl_deg?: number;
+  /** The sea at the site, when it has one. */
+  sea?: LandingSea | null;
   /** How the GM's screen draws the ground (true, 3d or wireframe); a seat draws the same. */
   look?: "true" | "3d" | "wireframe";
   world: LandingWorld;
@@ -194,4 +213,34 @@ export interface LandingGround {
   surfaceTiles: import("./session.ts").ViewSession["surfaceTiles"];
   surfaceTilesAt: import("./session.ts").ViewSession["surfaceTilesAt"];
   planDescent: import("./session.ts").ViewSession["planDescent"];
+}
+
+/** The tide's height at a time from the kernel's tide raisers (each a range and a period), all in phase at time 0 (the phase is not on record; fudge register). */
+export function tideNow(by: readonly { range_m?: number; period_h?: number }[], t_s: number): number {
+  let z = 0;
+  for (const b of by) {
+    const r = Number(b.range_m ?? 0);
+    const p = Number(b.period_h ?? 0) * 3600;
+    if (r > 0 && p > 0) z += (r / 2) * Math.cos((2 * Math.PI * (t_s % p)) / p);
+  }
+  return z;
+}
+
+/** The sea from a weather report's `data`, with the tide at `t_s`; null when the site has no sea. */
+export function landingSeaOf(data: unknown, t_s: number): LandingSea | null {
+  const sea = (data as { sea?: Record<string, unknown> } | null)?.sea;
+  if (!sea || typeof sea !== "object") return null;
+  const wave_m = Number(sea.wave_m);
+  const period_s = Number(sea.period_s);
+  if (!Number.isFinite(wave_m) || !Number.isFinite(period_s)) return null;
+  const by = ((sea.tides as { by?: { range_m?: number; period_h?: number }[] } | undefined)?.by ?? []).filter((x) => x && typeof x === "object");
+  return {
+    liquid: typeof sea.liquid === "string" ? sea.liquid : null,
+    wave_m,
+    period_s,
+    wind_m_s: Number(sea.wind_m_s ?? 0) || 0,
+    ...(Number.isFinite(Number(sea.fetch_km)) ? { fetch_km: Number(sea.fetch_km) } : {}),
+    tide_m: Math.round(tideNow(by, t_s) * 100) / 100,
+    ...(typeof sea.line === "string" ? { line: sea.line } : {}),
+  };
 }
