@@ -3,7 +3,7 @@
   "id": "sse.edition.guide",
   "name": "The Guide",
   "description": "Friendly, illustrated, mostly accurate: the same pages in the Guide's own words, gaps said in its voice.",
-  "look": "deck",
+  "look": "guide-gadget",
   "vocab": "guide",
   "plates": "chart",
   "gaps": "voice",
@@ -33,7 +33,26 @@
       "page.moon": "A moon",
       "page.star": "A star",
       "page.station": "Somewhere to dock",
-      "page.sector": "A patch of sky"
+      "page.sector": "A patch of sky",
+      "note.margin": "Margin notes are the Guide's opinions and are not facts."
     }
+  },
+  "margin": {
+    "sets": [
+      "sse.notes.guide"
+    ],
+    "max": 2,
+    "signature": "The Guide says"
+  },
+  "cover": {
+    "big": "DON'T PANIC",
+    "title": "The Guide to the {place} system",
+    "strap": "Friendly · illustrated · mostly accurate"
+  },
+  "device": {
+    "label": "The Guide · Model 2",
+    "status": "Batt ▮▮▯ · made cheaply, with love",
+    "keys": true,
+    "change": "wipe"
   }
 }

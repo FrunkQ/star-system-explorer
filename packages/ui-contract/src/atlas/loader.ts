@@ -43,6 +43,8 @@ function textsOf(d: EditionDoc): { where: string; text: string; slots: boolean }
   if (d.letterhead?.stamp) out.push({ where: "the stamp", text: d.letterhead.stamp, slots: true });
   if (d.print?.running_head) out.push({ where: "the running head", text: d.print.running_head, slots: true });
   if (d.print?.footer) out.push({ where: "the footer", text: d.print.footer, slots: true });
+  for (const k of ["big", "title", "strap", "publisher"] as const) if (d.cover?.[k]) out.push({ where: `the cover's ${k} line`, text: d.cover[k]!, slots: k === "title" });
+  for (const k of ["label", "status"] as const) if (d.device?.[k]) out.push({ where: `the device's ${k} line`, text: d.device[k]!, slots: false });
   return out;
 }
 

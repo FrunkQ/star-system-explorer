@@ -7,11 +7,13 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { EVERYONE, BUILTIN_LOGOS, withLetterhead, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { EVERYONE, BUILTIN_LOGOS, SHIPPED_NOTE_SETS, withLetterhead, withMargin, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
   import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
   import AtlasPrint from "./AtlasPrint.svelte";
+  import AtlasDevice from "./AtlasDevice.svelte";
+  import AtlasCover from "./AtlasCover.svelte";
   import { dateParts, dateWords, defaultCalendar, fromPackCalendar } from "../../../chart-grammar/src/calendar.ts";
 
   let { ctx, scene, host }: { ctx: ViewContext; scene: SystemScene; host: AtlasHost } = $props();
@@ -84,10 +86,27 @@
     est: String(dateParts(ws.campaign_epoch_yr ?? ws.now_yr, calendar).year),
     pages: lines.length,
   });
+  // Margin notes (AT7): the edition's sets, picked by page and edition from what the audience knows. "Not this one"
+  // turns a note away on this page for this sitting; keeping it with the campaign comes with the GM's notes.
+  let turnedAway = $state<string[]>([]);
+  const noteSets = $derived([...SHIPPED_NOTE_SETS, ...(host.noteSets ?? [])]);
   const dressed = (a: string) => {
     const p = book ? buildPage(book, a, edition, { vocab, depth: ws.depth }) : null;
-    return p ? withLetterhead(p, edition, letterhead) : null;
+    if (!p || !book) return null;
+    return withMargin(withLetterhead(p, edition, letterhead), book, edition, noteSets, { vocab, depth: ws.depth, exclude: turnedAway });
   };
+  const notThisOne = (id: string) => (turnedAway = [...turnedAway, id]);
+
+  // The cover (AT7): once each time an edition with a cover is opened; its key brings it back.
+  let covered = $state(false);
+  $effect(() => {
+    void editionId;
+    untrack(() => (covered = !!edition.cover));
+  });
+  function openCover() {
+    covered = false;
+    tick().then(() => pageBox?.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true }));
+  }
   const page = $derived(book && address ? dressed(address) : null);
 
   // ---- Print under the view (AT4): this page, this chapter or the whole Atlas, in the edition showing, in place.
@@ -180,6 +199,10 @@
   function onkey(e: KeyboardEvent) {
     const t = e.target as HTMLElement | null;
     if (t && (t.closest("input, textarea, select, [contenteditable]") || e.altKey || e.ctrlKey || e.metaKey)) return;
+    if (covered) {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") (e.preventDefault(), openCover());
+      return;
+    }
     if (e.key === "ArrowRight" && page?.next) (e.preventDefault(), go(page.next));
     else if (e.key === "ArrowLeft" && page?.prev) (e.preventDefault(), go(page.prev));
   }
@@ -259,9 +282,35 @@
     <div class="pagebox" bind:this={pageBox} onpointerdown={pdown} onpointerup={pup} role="presentation">
       {#if page}
         <div class="look" style={look} data-atlas-edition={edition.id} data-atlas-audience={book?.audience}>
-        <AtlasPage {page} onlink={go} {footer} />
+          {#snippet screen()}
+            {#if covered && edition.cover}
+              <AtlasCover cover={edition.cover} place={titleOf(lines[0]?.address ?? null)} onopen={openCover} />
+            {:else}
+              {#key page!.address}
+                <div class="sheet" class:wipe={edition.device?.change === "wipe"}>
+                  <AtlasPage page={page!} onlink={go} {footer} onturnaway={shownAudience === "gm" ? notThisOne : undefined} />
+                </div>
+              {/key}
+            {/if}
+          {/snippet}
+          {#if edition.device}
+            <AtlasDevice
+              device={edition.device}
+              coverKey={edition.cover?.big ?? "Cover"}
+              onhome={() => ((covered = false), go(lines[0]?.address ?? null))}
+              onback={() => ((covered = false), go(page?.prev ?? null))}
+              oncover={() => (covered = true)}
+              onnext={() => ((covered = false), go(page?.next ?? null))}
+              onprint={() => print("page")}
+              canBack={!!page.prev}
+              canNext={!!page.next}
+              children={screen}
+            />
+          {:else}
+            {@render screen()}
+          {/if}
         </div>
-        {@render stepper("below")}
+        {#if !edition.device}{@render stepper("below")}{/if}
       {:else if failed}
         <p class="empty">The Atlas could not be read: {failed}</p>
       {:else if book}
@@ -317,6 +366,17 @@
     border: 1px solid var(--sse-line);
     border-radius: var(--sse-radius);
     padding: 4px 6px;
+  }
+  .sheet.wipe {
+    animation: wipe 260ms steps(7, end);
+  }
+  @keyframes wipe {
+    from {
+      clip-path: inset(0 0 100% 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
   }
   .printwrap {
     position: relative;
@@ -518,7 +578,8 @@
     li button {
       transition: none;
     }
-    .panel {
+    .panel,
+    .sheet.wipe {
       animation: none;
     }
   }

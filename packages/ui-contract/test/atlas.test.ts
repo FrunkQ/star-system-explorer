@@ -29,6 +29,12 @@ import {
   docNumber,
   withLetterhead,
   BUILTIN_LOGOS,
+  SHIPPED_NOTE_SETS,
+  GUIDE_NOTES,
+  withMargin,
+  fillNote,
+  meets,
+  checkNoteSet,
   type AtlasPage,
   type EditionDoc,
 } from "../src/atlas/index.ts";
@@ -199,7 +205,7 @@ test("every field a shipped template names is catalogued, and every number in on
 const guideVocab: Vocab = json("packages/shell/src/documents/vocab.guide.json");
 const VOCABS = { plain: vocab, guide: guideVocab };
 const gmAfter: PlayerScene = { ...after, audience: "gm" };
-const STACK = { looks: ["chart", "paper", "deck", "phosphor", "glass", "guide"], vocabs: ["plain", "guide"], noteSets: [] };
+const STACK = { looks: ["chart", "paper", "deck", "phosphor", "glass", "guide", "guide-gadget"], vocabs: ["plain", "guide"], noteSets: ["sse.notes.guide"] };
 
 test("the shipped editions load, and their test render matches the Survey atlas", () => {
   for (const d of SHIPPED_EDITIONS) {
@@ -334,4 +340,70 @@ test("the built-in logos: SSE3's starters, credited, each a brand logo the brand
     assert.ok(l.credit.length > 10, `${l.id} is credited`);
   }
   assert.ok(!BUILTIN_LOGOS.some((l) => /weyland|yutani/i.test(l.id + l.name)));
+});
+
+test("margin notes: fit by what the audience knows, slots said by the figures door, the same pick every time", () => {
+  const guide = resolveEdition("sse.edition.guide");
+  const p = page(after, TARN, guide);
+  const a = withMargin(p, after, guide, SHIPPED_NOTE_SETS, opts);
+  const m = a.blocks.find((b) => b.type === "margin");
+  assert.ok(m && m.type === "margin");
+  if (!m || m.type !== "margin") return;
+  assert.ok(m.notes.length >= 1 && m.notes.length <= 2, "at most two to a page");
+  assert.equal(m.signature, "The Guide says");
+  assert.deepEqual(withMargin(p, JSON.parse(JSON.stringify(after)), guide, SHIPPED_NOTE_SETS, opts), a, "the same page gives the same notes");
+  assert.equal(a.blocks[a.blocks.length - 1]!.type, "note", "the line saying notes are opinions");
+  assert.deepEqual(a.blocks.slice(0, p.blocks.length), p.blocks, "notes add to the page, never change a fact");
+  // A slotted note says the audience's own figure through the figures door.
+  const sea = GUIDE_NOTES.notes.find((n) => n.id === "guide.new.sea-market")!;
+  const tarn = after.subjects.find((s) => s.address === TARN)!;
+  assert.equal(fillNote(sea, tarn, opts), `With 71% of it under water, the local property market is best described as "liquid".`);
+  // A note never fires on a fact the seat lacks: with ocean cover unknown, no note about the sea fits.
+  const blind: PlayerScene = { ...after, subjects: after.subjects.map((s) => (s.address === TARN ? { ...s, facts: s.facts.filter((f) => f.field !== "ocean.fraction") } : s)) };
+  const fits = (sc: PlayerScene) => {
+    const all: string[] = [];
+    const one = withMargin(page(sc, TARN, guide), sc, { ...guide, margin: { ...guide.margin!, max: 999 } }, SHIPPED_NOTE_SETS, opts);
+    for (const b of one.blocks) if (b.type === "margin") all.push(...b.notes.map((n) => n.id));
+    return all;
+  };
+  assert.ok(fits(after).includes("guide.new.sea-market"));
+  for (const id of fits(blind)) {
+    const n = GUIDE_NOTES.notes.find((x) => x.id === id)!;
+    assert.ok(!JSON.stringify(n.when ?? {}).includes("ocean.fraction"), `${id} does not read the unknown sea`);
+  }
+  // A band meets a bound only when all of it does.
+  assert.equal(meets({ address: "x", view: "gm", tags: [], facts: [{ field: "surface.temp_mean_k", band: [220, 240] }] }, { fact: "surface.temp_mean_k", at_most: 230 }), false);
+  assert.equal(meets({ address: "x", view: "gm", tags: [], facts: [{ field: "surface.temp_mean_k", band: [200, 225] }] }, { fact: "surface.temp_mean_k", at_most: 230 }), true);
+  // "Not this one" turns a note away and another may take its place, still deterministically.
+  const first = m.notes[0]!.id;
+  const again = withMargin(p, after, guide, SHIPPED_NOTE_SETS, { ...opts, exclude: [first] });
+  assert.ok(!JSON.stringify(again.blocks).includes(`"${first}"`));
+  // The Survey atlas has no margin.
+  assert.deepEqual(withMargin(page(after, TARN), after, survey, SHIPPED_NOTE_SETS, opts), page(after, TARN));
+});
+
+test("the note sets load: Alex's list (no Douglas Adams names in the base set), the fan pack apart, the loader's refusals", () => {
+  assert.deepEqual(checkNoteSet(GUIDE_NOTES), []);
+  const fan = json("store-packs/guide-fan-notes/notes.json");
+  assert.deepEqual(checkNoteSet(fan), []);
+  const borrowed = /Zaphod|Vogon|Beeblebrox|Sirius Cybernetics|Improbability|Gargle Blaster|Ford Prefect|Megadodo|Eccentrica|petunias|\b42\b|forgot your towel|Bugblatter|Nutri-Matic|Genuine People|bypass/i;
+  for (const n of GUIDE_NOTES.notes) assert.ok(!borrowed.test(n.text), `${n.id} is in the base set`);
+  const alex = GUIDE_NOTES.notes.filter((n) => n.id.startsWith("guide.alex.")).length + fan.notes.length;
+  assert.equal(alex, 131 - 5, "every line of Alex's list is in one set or held for him (five type a figure)");
+  const ed = json("store-packs/guide-fan-notes/edition.json");
+  assert.deepEqual(checkEdition(ed, { ...STACK, noteSets: ["sse.notes.guide", "fan.notes.guide-classic"] }), []);
+  assert.equal(resolveEdition(ed.id, [ed]).cover?.publisher, "Megadodo Publications");
+  assert.equal(resolveEdition("sse.edition.guide").cover?.publisher, undefined, "the base Guide's cover names no publisher");
+  assert.equal(resolveEdition("sse.edition.guide").cover?.big, "DON'T PANIC");
+  const bad = { schema: "sse.margin-notes/1", id: "x", name: "X", notes: [
+    { id: "a", about: "world", text: "The sea covers 71% of it." },
+    { id: "a", about: "planet", text: "At {gravity.surface} you bounce." },
+    { id: "b", about: "world", text: "With {ocean.fraction} wet, bring a towel." },
+  ] };
+  const said = checkNoteSet(bad).join("\n");
+  assert.match(said, /states a figure \("71%"\)/);
+  assert.match(said, /appears twice/);
+  assert.match(said, /about "planet"/);
+  assert.match(said, /\{gravity\.surface\}, which is not a fact/);
+  assert.match(said, /slot \{ocean\.fraction\} that its "when" does not test/);
 });

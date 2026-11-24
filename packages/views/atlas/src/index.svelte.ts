@@ -8,6 +8,8 @@ export interface AtlasHost {
   /** The look's paper form for "Save ink": a dark look gives way to a light one (the edition's `save_ink_look`, else paper). */
   paperCss(look: string, saveInkLook?: string): string;
   /** The brand whose paper an audience's copy is on (the role's, AT9); absent, the Atlas draws the placeholder. */
+  /** Margin note sets from the pack stack, beside the shipped ones. */
+  noteSets?: readonly import("../../../ui-contract/src/index.ts").NoteSet[];
   brand?(audience: string): import("../../../ui-contract/src/index.ts").LetterheadBrand | undefined;
 }
 import Atlas from "./Atlas.svelte";

@@ -65,6 +65,29 @@ export interface EditionDoc {
   margin?: { sets: string[]; max?: number; signature?: string };
   templates?: Partial<Record<PageKind, TemplateSection[]>>;
   print?: { running_head?: string; footer?: string; save_ink_look?: string };
+  /** A cover shown once each time the edition is opened (14A note 4): big words, a title line, a strap line, a publisher. Words only. */
+  cover?: EditionCover;
+  /** The edition is a device, not paper: its case's words and its hardware keys (14A note 4). Drawn by the look. */
+  device?: EditionDevice;
+}
+
+export interface EditionCover {
+  big?: string;
+  /** `{place}` is the book's place. */
+  title?: string;
+  strap?: string;
+  publisher?: string;
+}
+
+export interface EditionDevice {
+  /** The maker's line on the case. */
+  label?: string;
+  /** The status line on the case (battery and the like). */
+  status?: string;
+  /** Hardware keys under the screen: Home (the cover), Back, Next, Print. */
+  keys?: boolean;
+  /** How a page changes on the screen: a stepped wipe (cheap electronics), or a plain change. */
+  change?: "wipe" | "plain";
 }
 
 /** An edition with its `extends` chain applied: every field the page builder reads is present. */
@@ -84,6 +107,8 @@ export interface Edition {
   margin: { sets: string[]; max: number; signature: string } | null;
   templates: Record<PageKind, TemplateSection[]>;
   print: { running_head?: string; footer?: string; save_ink_look?: string };
+  cover: EditionCover | null;
+  device: EditionDevice | null;
 }
 
 /** The editions shipped with the base Atlas. */
@@ -150,6 +175,8 @@ export function resolveEdition(id: string, docs: readonly EditionDoc[] = []): Ed
     margin: null,
     templates: Object.fromEntries(PAGE_KINDS.map((k) => [k, root.templates?.[k] ?? []])) as Record<PageKind, TemplateSection[]>,
     print: { ...(root.print ?? {}) },
+    cover: root.cover ? { ...root.cover } : null,
+    device: root.device ? { ...root.device } : null,
   };
   // From the root's child up to the edition itself, each layer overrides what it states.
   for (const d of chain.slice(0, -1).reverse()) {
@@ -164,6 +191,8 @@ export function resolveEdition(id: string, docs: readonly EditionDoc[] = []): Ed
     if (d.letterhead) out.letterhead = { use: d.letterhead.use, lines: [...(d.letterhead.lines ?? out.letterhead.lines)], ...(d.letterhead.stamp ?? out.letterhead.stamp ? { stamp: d.letterhead.stamp ?? out.letterhead.stamp } : {}) };
     for (const k of PAGE_KINDS) if (d.templates?.[k]) out.templates[k] = d.templates[k]!;
     if (d.print) out.print = { ...out.print, ...d.print };
+    if (d.cover) out.cover = { ...(out.cover ?? {}), ...d.cover };
+    if (d.device) out.device = { ...(out.device ?? {}), ...d.device };
   }
   for (const d of [...chain].reverse()) {
     if (d.margin) out.margin = { sets: [...d.margin.sets], max: d.margin.max ?? 2, signature: d.margin.signature ?? out.margin?.signature ?? "" };

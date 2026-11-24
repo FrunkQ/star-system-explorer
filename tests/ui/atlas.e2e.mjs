@@ -67,7 +67,34 @@ try {
   const edition = atlas.getByRole("group", { name: "Edition" });
   await edition.getByRole("button", { name: "The Guide" }).click();
   await gm.waitForFunction(() => document.querySelector("[data-atlas-edition]")?.getAttribute("data-atlas-edition") === "sse.edition.guide");
+  // AT7: the Guide is a gadget. Opening it shows the cover every time; one press goes past it.
+  const cover = gm.locator("[data-atlas-cover]");
+  await cover.waitFor();
+  assert.match(await cover.innerText(), /DON'T PANIC/);
+  assert.match(await cover.innerText(), /The Guide to the Kestrel system/);
+  assert.doesNotMatch(await cover.innerText(), /Megadodo/, "the base Guide's cover names no publisher");
+  assert.equal(await gm.evaluate(() => document.activeElement?.hasAttribute("data-atlas-cover")), true, "the cover takes focus, so Enter opens it");
+  await shot(gm, "atlas-guide-cover-desk");
+  await gm.keyboard.press("Enter");
+  await gm.locator("[data-atlas-page]").waitFor();
   assert.equal(await title(gm), "Tarn", "the same page");
+  // Margin notes: at most two, signed, the same ones each time, and the line saying they are opinions.
+  const notes = gm.locator("[data-margin-note]");
+  const noteIds = await notes.evaluateAll((ns) => ns.map((n) => n.getAttribute("data-margin-note")));
+  assert.ok(noteIds.length >= 1 && noteIds.length <= 2, `one or two margin notes (${noteIds})`);
+  assert.match(await notes.first().innerText(), /The Guide says/i);
+  assert.match(await atlas.locator("[data-atlas-page]").innerText(), /opinions and are not facts/);
+  // The keys: Next steps the book with a stepped wipe; the cover key brings the cover back; Back returns.
+  const keys = atlas.getByRole("group", { name: "Keys" });
+  await keys.getByRole("button", { name: "Next ›" }).click();
+  await gm.waitForFunction(() => document.querySelector("[data-atlas-page] h1")?.textContent !== "Tarn");
+  await keys.getByRole("button", { name: "‹ Back" }).click();
+  await gm.waitForFunction(() => document.querySelector("[data-atlas-page] h1")?.textContent === "Tarn");
+  assert.deepEqual(await notes.evaluateAll((ns) => ns.map((n) => n.getAttribute("data-margin-note"))), noteIds, "the same notes on the same page");
+  await keys.getByRole("button", { name: "DON'T PANIC" }).click();
+  await cover.waitFor();
+  await cover.click();
+  await gm.locator("[data-atlas-page]").waitFor();
   assert.match(await atlas.locator("[data-atlas-page]").innerText(), /Heft/i, "the Guide's own words");
   assert.deepEqual(await figures(), surveyFigs, "switching edition changes no figure");
   await shot(gm, "atlas-guide-desk");
@@ -120,6 +147,7 @@ try {
   for (const [name, id] of [["Survey atlas", "survey"], ["The Guide", "guide"], ["Company", "company"]]) {
     await edition.getByRole("button", { name }).click();
     await gm.waitForFunction((x) => document.querySelector("[data-atlas-edition]")?.getAttribute("data-atlas-edition") === x, `sse.edition.${id}`);
+    if (await gm.locator("[data-atlas-cover]").count()) await gm.locator("[data-atlas-cover]").click();
     const n = (await prints()).length + 1;
     await atlas.getByRole("button", { name: "Print this page" }).click();
     await gm.waitForFunction((x) => window.__prints.length === x, n);
@@ -194,6 +222,15 @@ try {
   const wide = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   assert.ok(wide <= 1, `nothing runs off the side (${wide}px)`);
   await shot(phone, "atlas-page-phone");
+  // The Guide on a phone: the cover, then the page with its keys, nothing off the side.
+  await pa.getByRole("group", { name: "Edition" }).getByRole("button", { name: "The Guide" }).click();
+  await phone.locator("[data-atlas-cover]").waitFor();
+  await shot(phone, "atlas-guide-cover-phone");
+  await phone.locator("[data-atlas-cover]").click();
+  await phone.locator("[data-atlas-page]").waitFor();
+  const wideGuide = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  assert.ok(wideGuide <= 1, `the Guide fits the phone (${wideGuide}px)`);
+  await shot(phone, "atlas-guide-phone");
 
   assert.deepEqual(errors, []);
   await browser.close();

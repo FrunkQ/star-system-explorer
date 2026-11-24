@@ -10,12 +10,13 @@
 <script lang="ts">
   import type { AtlasPage, Block } from "../../../ui-contract/src/index.ts";
 
-  let { page, onlink, footer = "" }: { page: AtlasPage; onlink: (address: string) => void; footer?: string } = $props();
+  let { page, onlink, footer = "", onturnaway }: { page: AtlasPage; onlink: (address: string) => void; footer?: string; onturnaway?: (id: string) => void } = $props();
 
   const title = $derived(page.blocks.find((b): b is Extract<Block, { type: "title" }> => b.type === "title"));
   const plates = $derived(page.blocks.filter((b): b is Extract<Block, { type: "plate" }> => b.type === "plate"));
   const head = $derived(page.blocks.find((b): b is Extract<Block, { type: "letterhead" }> => b.type === "letterhead"));
-  const body = $derived(page.blocks.filter((b) => b.type !== "title" && b.type !== "plate" && b.type !== "letterhead"));
+  const margins = $derived(page.blocks.filter((b): b is Extract<Block, { type: "margin" }> => b.type === "margin"));
+  const body = $derived(page.blocks.filter((b) => b.type !== "title" && b.type !== "plate" && b.type !== "letterhead" && b.type !== "margin"));
 
   // The plate's schematic: the subject's children on one line, in book order, each a link to its page.
   const PLATE_W = 300;
@@ -51,7 +52,7 @@
       <h1 id="atlas-title-{page.number}" tabindex="-1">{title.text}</h1>
     </header>
   {/if}
-  <div class="cols" class:with-plate={plates.length > 0}>
+  <div class="cols" class:with-plate={plates.length > 0 || margins.length > 0}>
     <div class="main">
       {#each body as b, i (i)}
         {#if b.type === "prose"}
@@ -116,6 +117,7 @@
         {/if}
       {/each}
     </div>
+    {#if plates.length || margins.length}<div class="side">
     {#each plates as p (p.key)}
       <figure class="plate" data-deliver-item aria-label={p.title}>
         <svg viewBox="0 0 {PLATE_W} 120" role="img" aria-label="{p.title}: {p.names.join(', ')}">
@@ -131,6 +133,16 @@
         <figcaption>{p.title}, chart style. Each mark is a page.</figcaption>
       </figure>
     {/each}
+    {#each margins as m, mi (mi)}
+      {#each m.notes as n (n.id)}
+        <aside class="margin" data-deliver-item data-margin-note={n.id}>
+          <p class="sig">{m.signature}</p>
+          <p class="said" data-deliver-text>{n.text}</p>
+          {#if onturnaway}<button type="button" class="away" title={n.id} onclick={() => onturnaway(n.id)}>Not this one</button>{/if}
+        </aside>
+      {/each}
+    {/each}
+    </div>{/if}
   </div>
   {#if footer}<footer class="foot" data-deliver-item><span>{footer}</span><span>{page.number}</span></footer>{/if}
 </article>
@@ -150,9 +162,10 @@
     font-size: 13px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--sse-ink-muted);
+    color: var(--sse-label-ink, var(--sse-ink-muted));
   }
   h1 {
+    color: var(--sse-title-ink, var(--sse-ink));
     outline: none;
     margin: 4px 0 18px;
     font-family: var(--sse-font-display);
@@ -180,7 +193,7 @@
     font-size: 13px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--sse-ink-muted);
+    color: var(--sse-label-ink, var(--sse-ink-muted));
   }
   .facts {
     margin: 0;
@@ -261,6 +274,44 @@
   .said {
     font-style: normal;
     color: var(--sse-ink-muted);
+  }
+  .side {
+    display: grid;
+    gap: 18px;
+    align-content: start;
+  }
+  .margin {
+    border-left: 4px solid var(--sse-accent);
+    padding: 2px 0 2px 16px;
+  }
+  .margin .sig {
+    margin: 0 0 6px;
+    font: 700 12px/1.3 var(--sse-font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sse-label-ink, var(--sse-ink-muted));
+  }
+  .margin .said {
+    margin: 0;
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--sse-margin-ink, var(--sse-ink));
+  }
+  .away {
+    margin-top: 8px;
+    font: inherit;
+    font-size: 12px;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--sse-ink-muted);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .away:focus-visible {
+    outline: 2px solid var(--sse-focus);
+    outline-offset: 2px;
   }
   .plate {
     margin: 0;

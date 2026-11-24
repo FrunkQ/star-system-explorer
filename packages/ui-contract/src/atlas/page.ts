@@ -43,6 +43,8 @@ export type Block =
   | { type: "story"; key: string; title: string; lines: { label: string; text: string }[] }
   | { type: "note"; text: string }
   | { type: "rule" }
+  /** The edition's margin notes for this page (opinions, never facts), headed by its signature. */
+  | { type: "margin"; signature: string; notes: { id: string; text: string }[] }
   | {
       type: "letterhead";
       /** The brand's name, or the edition's fallback. */

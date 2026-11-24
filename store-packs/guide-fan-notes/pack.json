@@ -1,0 +1,27 @@
+{
+  "format": "sse.pack/1",
+  "id": "fan.guide-classic",
+  "version": "0.1.0",
+  "kind": [
+    "other"
+  ],
+  "kernel_range": "^0.1",
+  "licence": "Unofficial fan work. Not affiliated with or endorsed by the estate of Douglas Adams or any publisher.",
+  "provides": {
+    "other": {
+      "about": {
+        "label": "The Guide: classic lines (unofficial)",
+        "text": "Thirty-five margin notes for The Guide edition of the Atlas that borrow names and phrases from Douglas Adams' books, and an edition, The Guide (classic), that shows them with the publisher on its cover. Free, unofficial fan work, kept out of the base app so its Apache-2.0 pack stays clean.",
+        "fictional": true,
+        "note": "Track AT, package AT7 (atlas design 6.6 and 14A note 4). The lines are FrunkQ's (Alex's) own SSE3 list. Published on Explorers, not built into SSE4."
+      },
+      "credit": [
+        "Margin notes written by FrunkQ (Alex) for Star System Explorer 3, in homage to The Hitchhiker's Guide to the Galaxy by Douglas Adams."
+      ],
+      "files": {
+        "margin_notes": "notes.json",
+        "edition": "edition.json"
+      }
+    }
+  }
+}
