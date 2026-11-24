@@ -6,11 +6,14 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts" module>
-  import type { FieldReadJson, LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
+  import type { AirShape as AirKept, FieldReadJson, LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
   const trueSaid = new Map<string, string[]>();
+  /** Its clouds alone, its ground under them, and its air (VP-A3, VP-A4), by system and world. */
+  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept };
+  const trueAirs = new Map<string, TrueAir>();
   /** Stars read for True's living star, by system and star (a string: why there is none). */
   const liveStars = new Map<string, LiveStar | string>();
   /** read_field's Solar System fixture, read once for the page (Mag, V10e). */
@@ -22,7 +25,7 @@
   import { KM_PER_AU, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, readTrueFace, starCss, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
+  import { readLiveStar, readTrueFace, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -249,6 +252,7 @@
   // kernel), one at a time, the selected world first, and kept for this page. Only on the GM's seat, which reads tiles.
   const looksTrue = $derived(shownView.style === "true");
   let surfaces = $state<Map<string, TrueTexture>>(new Map());
+  let airs = $state<Map<string, TrueAir>>(new Map());
   let reading = $state<{ done: number; of: number; none: number; why: string } | null>(null);
   let trueGen = 0;
   $effect(() => {
@@ -273,10 +277,14 @@
           const f = await readTrueFace(ctx.session as unknown as FaceReader, sys, s.address);
           trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
           if (typeof f !== "string") trueSaid.set(key, f.said);
+          // Its clouds alone over its ground, and its air's rim (VP-A3, VP-A4).
+          if (typeof f !== "string" && (f.clouds || f.air)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}) });
         }
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
         if (t && typeof t !== "string") surfaces = new Map(surfaces).set(s.address, t);
+        const a = trueAirs.get(key);
+        if (a && airs.get(s.address) !== a) airs = new Map(airs).set(s.address, a);
         else (none++, (noneWhy = String(t)));
         done++;
       }
@@ -372,7 +380,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}

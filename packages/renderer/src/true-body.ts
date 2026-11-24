@@ -7,6 +7,7 @@ import type { Vec3 } from "./frames.ts";
 import { ringProfile, type RingBand } from "./rings.ts";
 import type { TrueTexture } from "./true-look.ts";
 import { flowFace, type AirFlow } from "./true-air.ts";
+import { airLuts, type AirLuts, type AirShape } from "./air-luts.ts";
 
 export interface TrueBody {
   /** Unique among what is drawn: keys the textures and ring profiles uploaded once. */
@@ -28,10 +29,14 @@ export interface TrueBody {
    * drawing is, in the body's own seconds: the bands slide at their jets' speeds and the storms turn (VP-A1).
    */
   flow?: { flow: AirFlow; dt_s: number };
+  /** Its clouds and haze alone (true-air.ts `AirLook.clouds`), drawn as a lit layer over `surface` (VP-A4). */
+  clouds?: TrueTexture;
+  /** Its air in its own radius (true-air.ts `readTrueAir`): the rim and terminator (VP-A3). */
+  air?: AirShape;
 }
 
 /** The GPU fields of a body's True face. */
-export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings">;
+export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "clouds" | "air">;
 
 /** A surface texture's mean colour, 0..1 (sRGB bytes over 255; a tint, not a measurement). */
 export function meanColour(t: TrueTexture): [number, number, number] {
@@ -45,6 +50,8 @@ export function meanColour(t: TrueTexture): [number, number, number] {
 
 type Profile = { inner: number; outer: number; width: number; data: Uint8ClampedArray; assumed: boolean };
 const profiles = new Map<string, Profile | null>();
+// The air's look-up tables, worked out once per world and air (about a tenth of a second each).
+const tables = new Map<string, AirLuts>();
 
 /**
  * The rings' profile for a body, worked out once per body, rings and surface: their colour is the world's own mean
@@ -77,6 +84,12 @@ export function trueLook(b: TrueBody): TrueLook {
     if (f && f.dt_s && b.radius_m && b.radius_m > 0)
       out.surface = { key: b.key, texture: flowFace(b.surface, f.flow, { radius_m: b.radius_m, dt_s: f.dt_s }), version: f.dt_s };
     else out.surface = { key: b.key, texture: b.surface };
+  }
+  if (!b.star && b.clouds) out.clouds = { key: `${b.key}|clouds`, texture: b.clouds };
+  if (!b.star && b.air) {
+    const key = `${b.key}|air|${b.air.beta.join(",")}|${b.air.scale_height}`;
+    if (!tables.has(key)) tables.set(key, airLuts(b.air));
+    out.air = { key, shape: b.air, luts: tables.get(key)! };
   }
   const r = b.star ? null : ringsOf(b);
   if (r) out.rings = { key: r.key, inner: r.inner, outer: r.outer, normal: b.pole, width: r.width, data: r.data };

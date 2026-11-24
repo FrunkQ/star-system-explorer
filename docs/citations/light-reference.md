@@ -159,3 +159,10 @@ Status key: **verified** (source read, number matches) / **corrected-metadata** 
 | **Total** | **92** | **44** | **13** | **4** | **16** | **15** |
 
 How rows are counted: Proxima is counted unverified (its radius is verified, but its teff is not in the cited paper). Sirius A is counted corrected-physics for teff only. Sirius B is verified (its teff 25000 is a rounding of 25369; an optional fix is listed). "Verified (existence/bibcode)" rows confirm that the work exists as named; they do not confirm any number, and the design files quote none from them.
+
+
+## Air in True (track TA, visual polish VP-A)
+
+| Where | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| air-luts.ts, gpu-air-shell.ts (VP-A3) | Hillaire 2020, A Scalable and Production Ready Sky and Atmosphere Rendering Technique, Computer Graphics Forum 39(4), 13-22, doi 10.1111/cgf.14050 | transmittance table; multiple scattering as L2 / (1 - f_ms) with an isotropic phase, sampled over the sphere of directions (section 5.5) | verified (citation check of 24 Nov, `handover/design/SSE4-visual-polish-citation-check.md` item 2: checked, primary) | the second-order and f_ms integrals as in the paper; table sizes smaller than his PC settings (256 × 64 and 32 × 32) and said in the fudge register |
