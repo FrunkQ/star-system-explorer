@@ -36,7 +36,12 @@ Only the owner thread edits this file. One row per package: update it in the sam
 ## Next, in order (24 Nov, for whoever picks this track up)
 
 1. **RK14 part 2**: the kernel thread writes `fog_of_war` marks as dated `observe.grant` events when something changes; the light side may add tech rungs beyond `today` and plume spectra. Design questions go to the thread "Bring Atomic Rockets into SSE4".
-2. **ND2 part 2c**: H₂-H₂ and H₂-He collision pairs (HITRAN CIA; hitran.org was not reachable from the cloud build machine, so fetch on Alex's PC), measured widening rows (Allard et al.) that win over Unsöld, methane below 410 nm and in the near infrared.
-3. **ND2 part 2d**: a spectrum on a wire (`list<number>` on the eye's grid) and the gas block in flows; then V3 gap items 9 (own daylight) and 36/36a (gas giant colours from cloud chemistry) on top of it.
-4. **RK16 counters** (my share), after RK14 and the kernel's RK15.
-5. Then the rows still marked "next" above: FT5, MF7 2b-ii, MF9 part 2, Y3 far infrared and radio, Y4, Y6, MF4, MF5.
+2. **Visual polish asks** (SSE4-visual-polish-design.md section 12, accepted 24 Nov; the three-grade rule of section 3 applies, so a flourish with no kernel number behind it is not drawn):
+   - **VP-L4** rainbow and halo angles from a liquid's or ice's refractive index (data sheet look-up; Descartes' minimum deviation for the bows, prism minimum deviation for 22° and 46° halos);
+   - **VP-L1** nebula shapes and line strengths in a form the renderer can march (a density recipe and line colours per kind) from `read_nebulae`;
+   - **VP-L2 / MF9 part 2** (first in this list, Alex 24 Nov: "Auroras are key"): aurora power, width and colours. Each oval and footprint (and crustal patches, airglow later) gains `power_w`, `width_deg`, `emissions [{line, matter, wavelength_m, power_w, share, peak_height_m, colour}]` and a blended `colour`. `peak_height_m` is where the line's lifetime equals the collision time in that air. Every base-light line gains a `matter` id (element or substance) so the cards can show "Light it gives off" and invented gases get their own aurora. The drawing is the thread "Build aurorae and night lights";
+   - **VP-L3** the colour of light inside a world's shadow, from `light_through_gas` along a grazing path.
+3. **ND2 part 2c**: H₂-H₂ and H₂-He collision pairs (HITRAN CIA; hitran.org was not reachable from the cloud build machine, so fetch on Alex's PC), measured widening rows (Allard et al.) that win over Unsöld, methane below 410 nm and in the near infrared.
+4. **ND2 part 2d**: a spectrum on a wire (`list<number>` on the eye's grid) and the gas block in flows; then V3 gap items 9 (own daylight) and 36/36a (gas giant colours from cloud chemistry) on top of it.
+5. **RK16 counters** (my share), after RK14 and the kernel's RK15.
+6. Then the rows still marked "next" above: FT5, MF7 2b-ii, MF9 part 2, Y3 far infrared and radio, Y4, Y6, MF4, MF5.
