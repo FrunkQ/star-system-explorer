@@ -554,3 +554,70 @@ fn giants_are_mostly_envelope() {
         "helium-3 {he3:.3e} against {want:.3e}"
     );
 }
+
+/// `reference_tiles`: Mars, the Moon and the rest show their own faces
+/// without a campaign, the campaign is left as it was, and an unknown id
+/// says which bodies there are.
+#[test]
+fn reference_bodies_have_surfaces_without_a_campaign() {
+    let mut k = open_sol(&[]);
+    let before = send(&mut k, serde_json::json!({"op":"state_hash"}));
+    let tiles: Vec<_> = (0..6)
+        .map(|face| serde_json::json!({"face":face,"level":0,"x":0,"y":0}))
+        .collect();
+    for id in ["mercury", "venus", "moon", "mars"] {
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"reference_tiles","body":id,"tiles":tiles}),
+        );
+        assert_eq!(r["type"], "reference_tiles", "{r}");
+        assert_eq!(r["tiles"].as_array().unwrap().len(), 6, "{id}: {r}");
+        assert!(
+            r["address"]
+                .as_str()
+                .unwrap()
+                .starts_with("u:reference/sys:sol/"),
+            "{r}"
+        );
+    }
+    let moon = send(
+        &mut k,
+        serde_json::json!({"op":"reference_tiles","body":"moon","tiles":tiles}),
+    );
+    assert_eq!(moon["address"], "u:reference/sys:sol/body:2/body:0");
+    // The same tiles as the opened Solar System's own Mars.
+    let mars = send(
+        &mut k,
+        serde_json::json!({"op":"reference_tiles","body":"mars","tiles":tiles}),
+    );
+    assert_eq!(send(&mut k, serde_json::json!({"op":"state_hash"})), before);
+    // With no campaign open at all, it still answers.
+    let mut bare = crate::Kernel::new();
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let sheet: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-reference/pack.json")).unwrap(),
+    )
+    .unwrap();
+    send(
+        &mut bare,
+        serde_json::json!({"op":"load_stack","packs":[sheet, packs["base-physics"].clone()]}),
+    );
+    let r = send(
+        &mut bare,
+        serde_json::json!({"op":"reference_tiles","body":"venus","tiles":tiles}),
+    );
+    assert_eq!(r["tiles"].as_array().unwrap().len(), 6, "{r}");
+    // The reference Mars is one world, whatever campaign is open (its own
+    // seed, not the campaign's).
+    let m2 = send(
+        &mut bare,
+        serde_json::json!({"op":"reference_tiles","body":"mars","tiles":tiles}),
+    );
+    assert_eq!(m2["tiles"], mars["tiles"]);
+    let r = send(
+        &mut bare,
+        serde_json::json!({"op":"reference_tiles","body":"vulcan","tiles":tiles}),
+    );
+    assert_eq!(r["code"], "no_reference_body", "{r}");
+    assert!(r["message"].as_str().unwrap().contains("mars"), "{r}");
+}

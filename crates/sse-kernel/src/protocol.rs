@@ -782,6 +782,14 @@ pub enum Request {
         #[ts(optional)]
         tiles: Option<Vec<TileRequest>>,
     },
+    /// A catalogued Solar System body's surface tiles without a campaign:
+    /// `body` is its base-sol id (`mars`, `moon`, ...). The Solar System is
+    /// entered from `packs/base-sol` into a private reference universe,
+    /// never the campaign's, and read as `resolved_system` reads tiles.
+    ReferenceTiles {
+        body: String,
+        tiles: Vec<ReferenceTile>,
+    },
     /// Preview a class atlas scheme over the open campaign (GM machine):
     /// label every body in `scope` (default the whole universe) at `at_s`
     /// (default the latest state) with `scheme`, from the atlas of the
@@ -2145,6 +2153,16 @@ pub struct SurfaceTile {
     pub y: u32,
 }
 
+/// One S1 tile of a reference body: cube face 0 to 5, level, x and y.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ReferenceTile {
+    pub face: u8,
+    pub level: u8,
+    pub x: u32,
+    pub y: u32,
+}
+
 /// One S1 tile of one world: cube face 0 to 5, level, x and y.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -2209,6 +2227,7 @@ impl Request {
             Request::EffectAtRange { .. } => "effect_at_range",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
+            Request::ReferenceTiles { .. } => "reference_tiles",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::SurveySurface { .. } => "survey_surface",
             Request::PlanRoute { .. } => "plan_route",
@@ -3567,6 +3586,20 @@ pub enum Response {
         /// evidence ("drawn"), source, model}`.
         #[ts(type = "unknown")]
         frame: serde_json::Value,
+    },
+    /// `reference_tiles`: the body's address in the reference Solar System,
+    /// its tiles (as `system_resolved` gives them), the tiles refused with
+    /// why, and its surface regime's label.
+    ReferenceTiles {
+        body: String,
+        address: String,
+        #[ts(type = "unknown[]")]
+        tiles: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        refused: Vec<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        regime_label: Option<String>,
     },
     /// `classify_preview`: one row per body in address order, `{address,
     /// base, fit, modifiers}` (`base` null when nothing fits), with the
