@@ -97,7 +97,9 @@
         pencil = null;
         held = undefined;
       } else onclose();
+      // The strip's Esc is the strip's: it never also clears the selection behind it.
       e.preventDefault();
+      e.stopPropagation();
       return;
     }
     if (!editable) return;
