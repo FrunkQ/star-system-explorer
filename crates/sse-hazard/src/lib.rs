@@ -31,12 +31,14 @@ use sse_reference::Reference as Sheet;
 mod tests;
 
 const SETTINGS: &str = include_str!("../data/hazard.json");
+const SOL: &str = include_str!("../../../packs/base-sol/pack.json");
 
 /// The blocks the reading runs, in the order their references are listed.
 const BLOCKS: &[&str] = &[
     "sse.climate.insolation",
     "sse.climate.equilibrium_temperature",
     "sse.planet.escape_velocity",
+    "sse.belts.latitude_falloff",
 ];
 
 /// Points along the line, spaced evenly on a stretched (logarithmic) scale.
@@ -309,12 +311,14 @@ fn hull_limit(ship: &Ship, sheet: &Sheet) -> Result<(f64, String), String> {
 
 /// The belts as a dose rate (Sv an hour) behind one shield, at a distance
 /// and magnetic latitude: the field line through the point, on a dipole, is
-/// the shell at L = r / cos²λ, and the dose along it is taken as the shell's
-/// equatorial dose (an upper bound until the latitude fall-off block lands).
+/// the shell at L = r / cos²λ, and the dose along it is the shell's
+/// equatorial dose thinned by `sse.belts.latitude_falloff`.
 struct BeltDose<'a> {
     belts: &'a Belts,
     /// ln(dose) per shell behind this ship's shield (−inf where none).
     ln_dose: Vec<f64>,
+    /// The belt model's own pitch-angle anisotropy, for the fall-off.
+    anisotropy: f64,
 }
 
 impl<'a> BeltDose<'a> {
@@ -324,7 +328,11 @@ impl<'a> BeltDose<'a> {
             .iter()
             .map(|sh| Self::pick(&belts.shields_kg_m2, &sh.dose_sv_h, shield))
             .collect();
-        BeltDose { belts, ln_dose }
+        BeltDose {
+            belts,
+            ln_dose,
+            anisotropy: sse_field::Settings::default().belts.anisotropy,
+        }
     }
 
     /// ln(dose) behind `shield`, from doses listed behind shields `s`.
@@ -407,7 +415,14 @@ impl<'a> BeltDose<'a> {
             // Straight over the pole: the field line there never closes.
             return 0.0;
         }
-        self.on_shell(r / cos2_lat)
+        let at_equator = self.on_shell(r / cos2_lat);
+        if at_equator <= 0.0 || cos2_lat >= 1.0 {
+            return at_equator;
+        }
+        // Away from the equator the belt thins along its line
+        // (`sse.belts.latitude_falloff`).
+        let lat = m::acos(m::sqrt(cos2_lat));
+        at_equator * run("sse.belts.latitude_falloff", &[lat], &[self.anisotropy]).unwrap_or(1.0)
     }
 }
 
@@ -523,6 +538,7 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
     }
     if let Some(bl) = &ask.belts {
         far = far.max(bl.outer_m);
+        used.push("sse.belts.latitude_falloff");
     }
     if let Some(x) = b.bubble_m {
         far = far.max(x);
@@ -890,7 +906,7 @@ pub fn hazard_map(ask: &Ask, sheet: &Sheet) -> Result<HazardMap, String> {
     }
     if ask.belts.is_some() {
         stand_ins.push("belts are electrons only until the proton belt lands (fudge register F40), so Earth's inner belt and doses behind thick shields read low".into());
-        stand_ins.push("along a field line away from the magnetic equator the dose is taken as the shell's equatorial dose, an upper bound, until the latitude fall-off block lands".into());
+        stand_ins.push("away from the magnetic equator the dose thins by the dipole fall-off for the belt's pitch-angle spread; the loss cone is not cut and the field is taken as an untilted dipole".into());
         if ship.shield_kg_m2
             < ask
                 .belts
@@ -970,4 +986,60 @@ fn refs_of(ids: &[&str]) -> Vec<Reference> {
         }
     }
     out
+}
+
+/// An ask for a body of the Solar System as measured (`read_field`'s fixture
+/// "solar-system"): its mass, radius and light from `packs/base-sol`, its
+/// belts and bubble from the measured fields. `id` is "jupiter" or
+/// "sol/jupiter".
+pub fn solar_system_ask(
+    id: &str,
+    ship: Option<Ship>,
+    line: Line,
+    sheet: &Sheet,
+) -> Result<Ask, String> {
+    let id = id.strip_prefix("sol/").unwrap_or(id);
+    let v: serde_json::Value = serde_json::from_str(SOL).map_err(|e| format!("base-sol: {e}"))?;
+    let b = v["provides"]["other"]["sol"]["bodies"]
+        .as_array()
+        .ok_or("base-sol has no bodies")?
+        .iter()
+        .find(|b| b["id"] == id)
+        .ok_or_else(|| format!("no body {id} in the Solar System"))?;
+    let val = |k: &str| b["values"][k]["v"].as_f64();
+    let set = sse_field::Settings {
+        electron: match (
+            sheet.constant("m_e"),
+            sheet.constant("e"),
+            sheet.constant("eps0"),
+        ) {
+            (Some(mass_kg), Some(charge_c), Some(eps0)) => Some(sse_field::Electron {
+                mass_kg,
+                charge_c,
+                eps0,
+            }),
+            _ => None,
+        },
+        ..sse_field::Settings::default()
+    };
+    let mp = sheet
+        .constant("m_p")
+        .ok_or("the data sheet has no proton mass")?;
+    let fields = sse_field::solar_system(&set, mp)?;
+    let f = fields
+        .iter()
+        .find(|f| f.read.address == format!("sol/{id}"));
+    Ok(Ask {
+        body: Body {
+            address: format!("sol/{id}"),
+            mass_kg: val("body.mass").ok_or_else(|| format!("{id} has no mass"))?,
+            radius_m: val("body.radius").ok_or_else(|| format!("{id} has no radius"))?,
+            luminosity_w: val("star.luminosity").unwrap_or(0.0),
+            air_top_m: None,
+            bubble_m: f.map(|f| f.read.obstacle.standoff_m),
+        },
+        belts: f.and_then(|f| f.read.belts.clone()),
+        ship,
+        line,
+    })
 }

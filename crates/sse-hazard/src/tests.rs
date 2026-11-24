@@ -1,46 +1,12 @@
 use super::*;
 
-const SOL: &str = include_str!("../../../packs/base-sol/pack.json");
-
 fn sheet() -> Sheet {
     Sheet::base()
 }
 
-/// A body of the Solar System from base-sol, with its belts from the
-/// `read_field` fixture.
 fn sol(id: &str) -> (Body, Option<Belts>) {
-    let s = sheet();
-    let v: serde_json::Value = serde_json::from_str(SOL).unwrap();
-    let b = v["provides"]["other"]["sol"]["bodies"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|b| b["id"] == id)
-        .unwrap();
-    let val = |k: &str| b["values"][k]["v"].as_f64();
-    let set = sse_field::Settings {
-        electron: Some(sse_field::Electron {
-            mass_kg: s.constant("m_e").unwrap(),
-            charge_c: s.constant("e").unwrap(),
-            eps0: s.constant("eps0").unwrap(),
-        }),
-        ..sse_field::Settings::default()
-    };
-    let fields = sse_field::solar_system(&set, s.constant("m_p").unwrap()).unwrap();
-    let f = fields
-        .iter()
-        .find(|f| f.read.address == format!("sol/{id}"));
-    (
-        Body {
-            address: format!("sol/{id}"),
-            mass_kg: val("body.mass").unwrap(),
-            radius_m: val("body.radius").unwrap(),
-            luminosity_w: val("star.luminosity").unwrap_or(0.0),
-            air_top_m: None,
-            bubble_m: f.map(|f| f.read.obstacle.standoff_m),
-        },
-        f.and_then(|f| f.read.belts.clone()),
-    )
+    let a = solar_system_ask(id, None, Line::Equator, &sheet()).unwrap();
+    (a.body, a.belts)
 }
 
 fn read(id: &str, ship: Option<Ship>, line: Line) -> HazardMap {

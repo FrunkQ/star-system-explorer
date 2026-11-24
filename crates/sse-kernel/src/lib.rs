@@ -3578,6 +3578,20 @@ impl Kernel {
             Request::EffectAtRange { asks } => {
                 systems::effect_at_range(asks, &self.observe.reference)?
             }
+            Request::HazardMap {
+                asks,
+                fixture,
+                body,
+                ship,
+                line,
+            } => systems::hazard_map(
+                asks,
+                fixture.as_deref(),
+                body.as_deref(),
+                ship,
+                line.as_deref(),
+                &self.observe.reference,
+            )?,
             Request::Detect {
                 targets,
                 sensors,

@@ -156,5 +156,6 @@ jobs:
       - run: node tests/ui/ladder-gpu.e2e.mjs
       - run: node tests/ui/aurora.e2e.mjs --screens ui-screens
       - run: node tests/ui/composite.e2e.mjs --screens ui-screens
+      - run: node tests/ui/hazard.e2e.mjs --screens ui-screens
       - uses: actions/upload-artifact@v4
         with: { name: ui-screens, path: ui-screens }

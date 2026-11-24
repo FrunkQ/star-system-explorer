@@ -1,0 +1,5 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics"]},
+ {"op": "hazard_map", "fixture": "solar-system", "body": "earth"},
+ {"op": "hazard_map", "fixture": "solar-system", "body": "jupiter", "line": "sideways"}
+]
