@@ -35,6 +35,8 @@ pub mod kinds {
     pub const TECH: &str = "record.tech";
     /// A link between places (space highways): see [`crate::links`].
     pub const LINK: &str = "record.link";
+    /// An entry of a construct's flight log: see [`crate::flights`].
+    pub const FLIGHT: &str = "record.flight";
 }
 
 /// Fields an actor carries from `add_actor`.
@@ -821,6 +823,7 @@ pub fn actors(ch: &Chronicle, scope: &Address, at: UniverseTime) -> Vec<(Address
         .collect()
 }
 
+pub mod flights;
 pub mod holdings;
 pub mod links;
 pub mod tech;
