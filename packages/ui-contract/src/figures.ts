@@ -107,6 +107,24 @@ export function readingsFor(kind: FigureKind, about?: About): Reading[] {
     .filter((r) => r.rungs.length > 0);
 }
 
+/**
+ * The "How figures are said" table as Reference shows it: for each kind, each "what it is about" key ("planet.orbit",
+ * "*.size", "default") and its readings in click order, each with the symbols of its rungs, smallest first.
+ */
+export function figureTable(): { kind: FigureKind; measures: string; keys: { key: string; readings: { id: string; family: string; units: string[] }[] }[] }[] {
+  return FIGURE_KINDS.map((kind) => {
+    const k = kindRow(kind);
+    return {
+      kind,
+      measures: k.measures,
+      keys: Object.entries(k.say).map(([key, rs]) => ({
+        key,
+        readings: rs.map((r) => ({ id: r.id, family: r.family, units: r.rungs.filter((g) => has(g.unit)).map((g) => (g.dms ? "° ′ ″" : (look(g.unit).symbol ?? ROWS.get(g.unit)!.symbol) || ROWS.get(g.unit)!.name)) })).filter((r) => r.units.length),
+      })),
+    };
+  });
+}
+
 /** The reading after `current` in click order, round again at the end. */
 export function nextReading(kind: FigureKind, about: About | undefined, current: string): string {
   const rs = readingsFor(kind, about);
