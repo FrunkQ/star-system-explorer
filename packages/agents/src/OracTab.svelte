@@ -51,6 +51,7 @@
     box: "Added to the campaign's boxes: any flow can use it as one block now.",
     table: "Added to the class atlas: the codes are worked out from each world's facts.",
     substance: "Added to your setting's data sheet: the editing screens offer it now.",
+    trigger: "Added to the campaign's triggers: it fires from now on.",
     program: "Added to the campaign's programs. It runs once you attach it to an object whose template lists it.",
   };
   async function accept(i: number) {
@@ -68,7 +69,7 @@
 </script>
 
 <div role="tabpanel" aria-label="Orac">
-  <p>Orac drafts changes from a sentence: physics, lenses, styles, player screens, symbols, data views, programs (autopilots), story sifters, boxes (blocks made of blocks), game tables as classes, missing gases and substances for the data sheet, and new physics blocks as issues. SSE checks every draft and sends problems back to Orac, up to three times. Only drafts that pass can be accepted, and nothing changes until you accept.</p>
+  <p>Orac drafts changes from a sentence: physics, lenses, styles, player screens, symbols, data views, programs (autopilots), triggers, story sifters, boxes (blocks made of blocks), game tables as classes, missing gases and substances for the data sheet, and new physics blocks as issues. SSE checks every draft and sends problems back to Orac, up to three times. Only drafts that pass can be accepted, and nothing changes until you accept.</p>
   {#if !host}
     <p class="hint" data-agent-off="orac">Orac works on the GM's chart room only.</p>
   {:else}

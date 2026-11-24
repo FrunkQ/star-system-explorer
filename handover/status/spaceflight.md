@@ -15,4 +15,4 @@ The pack is "Sol today" on Explorers, not built into SSE4; the onboarding tour (
 | RS5 ascent from the ground | travel thread | |
 | RS6 shape hints and finishes for real hardware | renderer thread | |
 | RS7 missions on the ruler; flown and SSE4-says lines; the tour step | chart room thread | |
-| RS8 flight logs for all ~300 departed craft, stations and crewed flights | after RS3 | |
+| RS8 flight logs for all ~300 departed craft, stations and crewed flights | part 1 done 24 Nov: `scripts/spaceflight/build_departed_logs.py` writes 462 logs to `store-packs/sol-today/logs/departed/` from GCAT's phase tables, one for every departed payload besides the showcase ones (108 end on the ground at landercat's sites, 133 gone, 221 still flying or docked; 118 heliocentric legs solved to meet their planet). Measured against Horizons in cruise: 0.4 to 5% of distance from the Sun, MESSENGER 23%. Next: part 2, stations and crewed flights in Earth orbit (psatcat), and splits between carriers and the probes they release | packages/RS8.md |

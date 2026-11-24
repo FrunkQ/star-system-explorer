@@ -1,0 +1,84 @@
+symbol,tc50_k,host_phase_as_written,note
+H,,H2O ice,No 50% Tc in Barak copy; initial condensation Tc=182 K (H2O ice). ExoInt copy lists 182 K in its 50%Tc column. UNSURE which column of Table 8 this is.
+He,,He ice,No 50% Tc in Barak copy; initial condensation Tc=3 K (He ice). ExoInt copy lists 3 K in its 50%Tc column. UNSURE which column of Table 8 this is.
+Li,1142,Forsterite + enstatite,"initial condensate {Li4SiO4, Li2SiO3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Be,1452,Melilite,"initial condensate {BeCa2Si2O7} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+B,908,Feldspar,"initial condensate {CaB2Si2O8} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+C,40,CH4·7H2O + CH4 ice,initial condensate CH4·7H2O at Tc=78 K; tc50 agrees across 3 independent reproductions
+N,123,NH3·H2O,initial condensate NH3·H2O at Tc=131 K; tc50 agrees across 3 independent reproductions
+O,180,rock + water ice,initial condensate Water ice at Tc=182 K; tc50 agrees across 3 independent reproductions
+F,734,F apatite,initial condensate Ca5[PO4]3F at Tc=739 K; tc50 agrees across 3 independent reproductions
+Ne,9.1,Ne ice,initial condensate Ne ice at Tc=9.3 K; tc50 agrees across 3 independent reproductions
+Na,958,Feldspar,"initial condensate {NaAlSi3O8} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Mg,1336,Forsterite,"Also: Initial-condensate row only (Tc=1397 K, Spinel); no 50% Tc on this row; initial condensate Forsterite at Tc=1354 K; tc50 agrees across 3 independent reproductions"
+Al,1653,Hibonite,initial condensate Al2O3 at Tc=1677 K; tc50 agrees across 3 independent reproductions
+Si,1310,Forsterite + enstatite,"Also: Initial-condensate row only (Tc=1529 K, Gehlenite); no 50% Tc on this row; initial condensate Forsterite at Tc=1354 K; tc50 agrees across 3 independent reproductions"
+P,1229,Schreibersite,initial condensate Fe3P at Tc=1248 K; tc50 agrees across 3 independent reproductions
+S,664,Troilite,initial condensate FeS at Tc=704 K; tc50 agrees across 3 independent reproductions
+Cl,948,Sodalite,initial condensate Na4[Al3Si3O12]Cl at Tc=954 K; tc50 agrees across 3 independent reproductions
+Ar,47,Ar·6H2O,initial condensate Ar·6H2O at Tc=48 K; tc50 agrees across 3 independent reproductions
+K,1006,Feldspar,"initial condensate {KAlSi3O8} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ca,1517,Hibonite + gehlenite,initial condensate CaAl12O19 at Tc=1659 K; tc50 agrees across 3 independent reproductions
+Sc,1659,Hibonite,"initial condensate {Sc2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ti,1582,Titanate,initial condensate CaTiO3 at Tc=1593 K; tc50 agrees across 3 independent reproductions
+V,1429,Titanate,"initial condensate {VO, V2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Cr,1296,Fe alloy,"initial condensate {Cr} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Mn,1158,Forsterite + enstatite,"initial condensate {Mn2SiO4, MnSiO3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Fe,1334,Fe alloy,initial condensate Fe metal at Tc=1357 K; tc50 agrees across 3 independent reproductions
+Co,1352,Fe alloy,"initial condensate {Co} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ni,1353,Fe alloy,"initial condensate {Ni} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Cu,1037,Fe alloy,"initial condensate {Cu} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Zn,726,Forsterite + enstatite,"initial condensate {Zn2SiO4, ZnSiO3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ga,968,Fe alloy + feldspar,"initial condensate {Ga, Ga2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ge,883,Fe alloy,"initial condensate {Ge} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+As,1065,Fe alloy,"initial condensate {As} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Se,697,Troilite,"initial condensate {FeSe0.96} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Br,546,Cl apatite,"initial condensate {CaBr2} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Kr,52,Kr·6H2O,initial condensate Kr·6H2O at Tc=53 K; tc50 agrees across 3 independent reproductions
+Rb,800,Feldspar,"initial condensate {Rb silicate} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Sr,1464,Titanate,"initial condensate {SrTiO3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Y,1659,Hibonite,"initial condensate {Y2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Zr,1741,ZrO2,initial condensate ZrO2 at Tc=1764 K; tc50 agrees across 3 independent reproductions
+Nb,1559,Titanate,"initial condensate {NbO, NbO2} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Mo,1590,Refractory metal alloy,"initial condensate {Mo} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ru,1551,Refractory metal alloy,"initial condensate {Ru} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Rh,1392,Refractory metal alloy,"initial condensate {Rh} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Pd,1324,Fe alloy,"initial condensate {Pd} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ag,996,Fe alloy,"initial condensate {Ag} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Cd,652,Enstatite + troilite,"initial condensate {CdSiO3, CdS} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+In,536,FeS,"initial condensate {InS, InSe, InTe} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Sn,704,Fe alloy,"initial condensate {Sn} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Sb,979,Fe alloy,"initial condensate {Sb} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Te,709,Fe alloy,"initial condensate {Te} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+I,535,Cl apatite,"initial condensate {CaI2} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Xe,68,Xe·6H2O,initial condensate Xe·6H2O at Tc=69 K; tc50 agrees across 3 independent reproductions
+Cs,799,Feldspar,"initial condensate {Cs silicate} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ba,1455,Titanate,"initial condensate {BaTiO3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+La,1578,Hibonite + titanate,"initial condensate {La2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ce,1478,Hibonite + titanate,"initial condensate {CeO2, Ce2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Pr,1582,Hibonite + titanate,"initial condensate {Pr2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Nd,1602,Hibonite,"initial condensate {Nd2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Sm,1590,Hibonite + titanate,"initial condensate {Sm2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Eu,1356,Hibonite + titanate + feldspar,"initial condensate {EuO, Eu2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Gd,1659,Hibonite,"initial condensate {Gd2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Tb,1659,Hibonite,"initial condensate {Tb2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Dy,1659,Hibonite,"initial condensate {Dy2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ho,1659,Hibonite,"initial condensate {Ho2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Er,1659,Hibonite,"initial condensate {Er2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Tm,1659,Hibonite,"initial condensate {Tm2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Yb,1487,Hibonite + titanate,"initial condensate {Yb2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Lu,1659,hibonite,"initial condensate {Lu2O3} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Hf,1684,HfO2,initial condensate HfO2 at Tc=1703 K; tc50 agrees across 3 independent reproductions
+Ta,1573,Hibonite + titanate,"initial condensate {Ta2O5} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+W,1789,Refractory metal alloy,"initial condensate {W} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Re,1821,Refractory metal alloy,"initial condensate {Re} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Os,1812,Refractory metal alloy,"initial condensate {Os} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Ir,1603,Refractory metal alloy,"initial condensate {Ir} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Pt,1408,Refractory metal alloy,"initial condensate {Pt} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Au,1060,Fe alloy,"initial condensate {Au} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Hg,252,Troilite,"initial condensate {HgS, HgSe, HgTe} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Tl,532,Troilite,"initial condensate {Tl2S, Tl2Se, Tl2Te} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Pb,727,Fe alloy,"initial condensate {Pb} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Bi,746,Fe alloy,"initial condensate {Bi} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+Th,1659,Hibonite,"initial condensate {ThO2} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"
+U,1610,Hibonite,"initial condensate {UO2} (braces as in source: element dissolves in host phase, no pure condensate); tc50 agrees across 3 independent reproductions"

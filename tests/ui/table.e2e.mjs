@@ -2,7 +2,7 @@
 // (scripts/build-shell.sh first). Usage: node tests/ui/table.e2e.mjs [--screens <dir>]
 // The GM shares from Kestrel: the players' screen shows Kestrel. The GM opens the Solar System privately: the players
 // still see Kestrel, and the GM's bar says so and offers "Send this view". Sent, the players' screen follows to the
-// Solar System, as far as the table knows it. "Screens off" blanks the players' screens until a view is sent again.
+// Solar System, as far as the table knows it. Hold all on the Switchboard puts a holding card up until a view is sent again.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -39,7 +39,7 @@ try {
   (await popup)?.close();
   const link = await gm.getAttribute("[data-players-link]", "data-players-link");
   const sees = gm.locator("[data-table-sees]");
-  assert.match(await sees.innerText(), /Table sees: Kestrel/);
+  assert.match(await sees.innerText(), /Kestrel/);
   assert.equal(await gm.locator("[data-send-view]").count(), 0, "nothing to send: the table already sees this");
   const pl = await context.newPage();
   await pl.setViewportSize({ width: 1280, height: 860 });
@@ -54,22 +54,24 @@ try {
   await gm.locator('[data-door="sol"]').click();
   await gm.waitForFunction(() => [...document.querySelectorAll(".area-chart .body")].some((b) => /^Earth\b/.test(b.getAttribute("aria-label") ?? "")), null, { timeout: 30000 });
   await gm.locator("[data-send-view]").waitFor();
-  assert.match(await sees.innerText(), /Table sees: Kestrel/);
+  assert.match(await sees.innerText(), /Kestrel/);
   await pl.waitForTimeout(1500);
   assert.match(await pl.locator("header.bar").innerText(), /Kestrel/, "the players still see Kestrel");
   await shot(gm, "table-gm-private");
 
   // Sent: the players follow.
   await gm.locator("[data-send-view]").click();
-  assert.match(await sees.innerText(), /Table sees: The Solar System/);
+  assert.match(await sees.innerText(), /The Solar System/);
   assert.equal(await gm.locator("[data-send-view]").count(), 0);
   await pl.waitForFunction(() => !/Kestrel/.test(document.querySelector("header.bar")?.textContent ?? "") && /Sun/.test(document.body.textContent ?? ""), null, { timeout: 20000 });
   await shot(pl, "table-player-sol");
 
-  // Screens off, then a view sent again.
-  await gm.locator("[data-screens-off]").click();
-  await pl.locator("[data-screens-off]").waitFor({ timeout: 10000 });
-  assert.match(await sees.innerText(), /screens off/);
+  // Hold all on the Switchboard (the on-air chip opens it): the table gets a holding card, then a view sent again.
+  await gm.locator("[data-on-air]").click();
+  await gm.locator("[data-switchboard]").waitFor();
+  await gm.locator("[data-hold-all]").click();
+  await pl.locator("[data-screens-off][data-held]").waitFor({ timeout: 10000 });
+  assert.match(await sees.innerText(), /held/);
   await shot(pl, "table-player-off");
   await gm.locator("[data-send-view]").click();
   await pl.locator("[data-screens-off]").waitFor({ state: "detached", timeout: 10000 });
@@ -104,7 +106,7 @@ try {
   await row.locator(`[data-seat-off='${seatId}']`).click();
   await sp.locator("[data-screens-off]").waitFor({ timeout: 10000 });
   await seats.getByRole("button", { name: "Close" }).click();
-  await gm.locator("[data-screens-off]").first().click();
+  await gm.locator("[data-hold-all]").click();
   await gm.locator("[data-send-view]").click();
   await sp.locator("[data-screens-off]").waitFor({ state: "detached", timeout: 10000 });
 

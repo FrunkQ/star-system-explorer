@@ -2,7 +2,7 @@
 //! `scripts/spaceflight/build_logs.py`: every log reads as a `FlightLog`, its
 //! pieces run in order without gaps, every split names constructs that have
 //! their own log from that moment, and Cassini rewinds through its flybys.
-use sse_nav::flightlog::{Ephemeris, FlightLog, Mark, State, What};
+use sse_nav::flightlog::{Course, Ephemeris, FlightLog, Mark, State, What};
 use sse_nav::kepler::{norm, sub};
 use sse_nav::scenario::sol;
 use std::collections::BTreeMap;
@@ -10,8 +10,11 @@ use std::path::PathBuf;
 
 fn logs() -> BTreeMap<String, FlightLog> {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today/logs");
-    let mut names: Vec<PathBuf> = std::fs::read_dir(&dir)
-        .unwrap()
+    // The showcase logs (build_logs.py) and, under departed/, one per craft that left Earth orbit
+    // (build_departed_logs.py, RS8).
+    let mut names: Vec<PathBuf> = [dir.clone(), dir.join("departed")]
+        .iter()
+        .flat_map(|d| std::fs::read_dir(d).unwrap())
         .map(|e| e.unwrap().path())
         .filter(|p| p.extension().is_some_and(|x| x == "json"))
         .collect();
@@ -23,7 +26,7 @@ fn logs() -> BTreeMap<String, FlightLog> {
             serde_json::from_str(&text).unwrap_or_else(|e| panic!("{}: {e}", p.display()));
         let stem = p.file_stem().unwrap().to_string_lossy().to_string();
         assert_eq!(stem, l.construct, "file name and construct");
-        assert!(out.insert(stem, l).is_none());
+        assert!(out.insert(stem.clone(), l).is_none(), "{stem} twice");
     }
     out
 }
@@ -223,7 +226,7 @@ fn every_solved_course_arrives() {
     for (id, l) in &logs() {
         for p in &l.pieces {
             if let State::Course {
-                course: sse_nav::flightlog::Course::Lambert { to, arrive_s },
+                course: Course::Lambert { to, arrive_s },
             } = &p.state
             {
                 let Some(b) = Ephemeris::body(&sys, to, *arrive_s as f64) else {
@@ -273,4 +276,86 @@ fn iss_phase_drift_against_horizons() {
     }
     // An hour after the sample the orbit is still right to within a few hundred km.
     assert!(first < 500e3, "{} km an hour after", first / 1e3);
+}
+
+/// RS8: every craft that left Earth orbit has a log from GCAT's phases, and the
+/// logs end the way GCAT says: on the ground where landercat puts them, gone
+/// into a world, or still flying.
+#[test]
+fn every_departed_craft_has_a_log() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today");
+    let cat: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(dir.join("catalogue.json")).unwrap())
+            .unwrap();
+    let departed = cat["departed"].as_array().unwrap().len();
+    let all = logs();
+    let mut from_gcat = 0;
+    let (mut landed, mut gone, mut flying) = (0, 0, 0);
+    for p in std::fs::read_dir(dir.join("logs/departed")).unwrap() {
+        let id = p
+            .unwrap()
+            .path()
+            .file_stem()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+        let l = &all[&id];
+        from_gcat += 1;
+        match &l.pieces.last().unwrap().state {
+            State::Landed {
+                lat_deg, lon_deg, ..
+            } => {
+                assert!(lat_deg.abs() <= 90.0 && lon_deg.abs() <= 360.0, "{id}");
+                landed += 1;
+            }
+            State::Gone { .. } => gone += 1,
+            _ => flying += 1,
+        }
+    }
+    println!("{from_gcat} of {departed}: {landed} on the ground, {gone} gone, {flying} still flying or docked");
+    // The showcase missions (Cassini, Huygens, Juno, Dawn, Curiosity, JWST, Voyager 2, Columbia, Eagle) are written
+    // in full by build_logs.py; GCAT's logs cover the rest.
+    assert!(from_gcat + 12 >= departed, "{from_gcat} of {departed}");
+    assert!(landed >= 100 && gone >= 100, "{landed} landed, {gone} gone");
+}
+
+/// The generic logs measured: GCAT's shapes, the arcs solved from their ends
+/// and the orbits turned to start at the last body, against JPL Horizons'
+/// heliocentric positions in cruise (scripts/spaceflight/horizons_departed.json).
+#[test]
+fn departed_cruise_against_horizons() {
+    let sys = sol();
+    let all = logs();
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../scripts/spaceflight/horizons_departed.json");
+    let hz: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    let mut worst = 0.0_f64;
+    for (id, dates) in hz.as_object().unwrap() {
+        let l = &all[id];
+        for (date, m) in dates.as_object().unwrap() {
+            let jd = m["jd"].as_f64().unwrap();
+            let t = (63_115_200_000.0 + (jd - 2_451_545.0) * 86_400.0) as i64;
+            let r: Vec<f64> = m["r_km"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|x| x.as_f64().unwrap() * 1e3)
+                .collect();
+            let at = l.at(t, &sys);
+            let got = at
+                .r_m
+                .unwrap_or_else(|| panic!("{id} {date}: {}", at.words));
+            let err = norm(sub(got, [r[0], r[1], r[2]]));
+            let frac = err / norm([r[0], r[1], r[2]]);
+            println!(
+                "{id} {date}: {} off by {:.1} million km, {:.1}% of its distance",
+                at.kind,
+                err / 1e9,
+                100.0 * frac
+            );
+            worst = worst.max(frac);
+        }
+    }
+    assert!(worst < 0.3, "worst {:.1}%", 100.0 * worst);
 }
