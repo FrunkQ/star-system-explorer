@@ -1,6 +1,6 @@
 # SSE4 exotic objects on screen: black holes, pulsars and stripped stars (track XO)
 
-Written 24 Nov 2026 by the design thread "Design exotic stars and black holes", after Alex's "yes to all" (24 Nov 16:41) to starting it. **Status: proposed. Nothing here is a ruling until Alex answers the questions in section 13.**
+Written 24 Nov 2026 by the design thread "Design exotic stars and black holes", after Alex's "yes to all" (24 Nov 16:41) to starting it. **Status: ACCEPTED by Alex, 24 Nov 2026 17:03 ("Yes to all" to the eleven questions), with two additions he asked for the same day: Composite in the band switch (section 6A) and the approach diagram in place of a list of readings (section 3.8). Section 13 records the rulings.** "XO" stands for exotic objects. It is only the short code on this track's packages and never appears in the product.
 
 Read with `SSE4-star-census.md` (which objects exist and who makes them), `SSE4-nebulae-and-light-design.md` (light descriptions, band recipes, shifts, jets, activity), `SSE4-magnetic-fields-design.md` (the field ledger, remnants in MF11, the Mag band) and `interface-style.md` rule 12 (View style, Seen from, Scale, HUD, Band).
 
@@ -17,7 +17,7 @@ Mockup: https://claude.ai/artifact/RHxpiUGRM3QVemo4EveD1n (file and screenshots 
 5. **Pulsars are honest too.** A beam is not a visible shaft of light. You see a pulse only when the beam sweeps over you, which is geometry the kernel decides per observer. The cones are a diagram under HUD and Mag. What True shows is the tiny hot star, its glowing wind nebula, and the flicker, slowed down and labelled.
 6. **Stripped giants have no surface to see.** A Wolf-Rayet star is seen through its own wind, so its edge is soft and it sits in a nebula it blew itself. With a companion, the two winds collide and make a dust spiral that turns with the orbit. That spiral is plain arithmetic from facts the kernel has.
 
-Sixteen packages, XO1 to XO16 (section 12). The showpiece (XO1 to XO6) needs no new stellar physics: it runs on a fixture first, like the Mag layer did on the Solar System.
+Eighteen packages, XO1 to XO18 (section 12). The showpiece (XO1 to XO6) needs no new stellar physics: it runs on a fixture first, like the Mag layer did on the Solar System.
 
 ---
 
@@ -195,17 +195,39 @@ A black hole of ten Suns is 60 km across. In a system view at **Real** scale it 
 - **Readable**: the body's mark is enlarged like any other body's, and the bending is drawn round the enlarged mark at the same ratio, so the picture reads. This is the same exaggeration Readable already applies to planets, and the Scale switch already says so.
 - **The close-up** (press the body, "click to fly" as on any other) is where the showpiece lives: the camera sits a few hundred gravitational radii out, where Real and Readable agree.
 
-### 3.8 Being near one: numbers for the table
+### 3.8 The approach diagram: how close can you get **[Alex, 24 Nov 17:03]**
 
-Danger is drama, never forbidden. For any observer or ship position the same op gives, each with its "Why?":
+Alex asked for a diagram, not a list of orbit options: how close you can get, the radiation at each distance, what it costs to climb back out, and for a ship the closest it can go before it is "too late", as a figure the GM has and can choose to show the players. He asked for the same diagram on exotics and on most ordinary stars. So it is one general thing, for **any massive body**: a black hole, a neutron star, the Sun, Jupiter with its belts.
 
-| Reading | Rule | What it is for |
-|---|---|---|
-| **Clock rate** | a clock hovering at distance r runs slow by √(1 − 2GM / rc²); one in a circular orbit by √(1 − 3GM / rc²) | the voyages ruling (campaign clock by home time, crews age by ship time) already carries ship time: this is one more term in it. A day close in costs the crew's families more than a day |
-| **Tide** | stretch per metre of height = 2GM / r³ | lethal long before the surface for a stellar hole; gentle at the edge of a supermassive one. Shown as "pull across a two-metre body" and across the ship's length |
-| **Dose** | the disc's X-ray and gamma light at this distance, through the hull (existing dose and shield blocks) | the real killer near a fed hole |
-| **Orbits** | no stable orbit inside the last stable orbit; none at all inside the photon orbit | the orbital stability card says so, like any other verdict |
-| **Colour of the outside** | the sky seen from deep in the well is blueshifted and crowded towards overhead | the Window uses the same `light-path` stage from the inside looking out |
+**What it is.** One strip chart on the body's card, opening from the body. Distance from the body runs along the bottom on a stretched (logarithmic) scale, from its surface or point of no return on the left to far away on the right. Each hazard is one thin row above that axis, drawn in three tones: clear, harsh, deadly. Danger is drama, never forbidden: the diagram informs, and nothing stops a ship going past a line.
+
+| Row | What it reads, at each distance | From | Where it bites |
+|---|---|---|---|
+| **Heat** | the temperature a hull settles at in the body's light, against what this hull can take | the body's light (`read_light`), the hull's skin from the data sheet | the Sun and every ordinary star (this is what stopped Parker Solar Probe at about ten Sun radii); any fed black hole, from astonishingly far out |
+| **Radiation** | dose per hour behind this ship's shield, from X-rays and gamma rays, trapped belts and particle storms | the existing dose and shield blocks (MF7), the disc's light | fed black holes; Jupiter's belts; magnetars |
+| **Tide** | the stretch across the ship's length and across a person | 2GM / r³ per metre | small dense things: stellar black holes and neutron stars, thousands of km out. Never, outside the surface, for a supermassive hole or the Sun |
+| **Field** | magnetic field strength against what electronics and bodies stand | the Mag layer's field | neutron stars; magnetars from a thousand km and more |
+| **Clocks** | how slowly the ship's clock runs against home | √(1 − 2GM / rc²) hovering, √(1 − 3GM / rc²) orbiting | compact bodies only. Shown as "an hour here is 1 hour 25 minutes at home". Feeds ship time in voyages |
+| **Climbing out** | the speed change needed to leave from a circular orbit at this distance, against the fuel on board | orbital speed there (relativistic where it matters) and the ship's remaining delta-v from its record | everything. This is the row that makes the "too late" line |
+
+Rows that never leave "clear" for this body fold away into one line ("Tide, field and clocks: nothing to worry about here"), so an ordinary star shows two or three rows and a neutron star all six. That is the space Alex noticed simple bodies have.
+
+**Fixed marks on the axis**, from the body alone: its surface; for a black hole the surface of no return, the last orbit light can hold and the last stable orbit; the distance inside which a loosely held ship or moon is pulled apart; belts; the disc's edges.
+
+**Two marks for a ship**, in the accent colour, each saying which row set it:
+
+- **Park: the closest orbit this ship can settle into and still climb out of.** Set by the fuel on board against the "Climbing out" row, or by whichever hazard turns deadly first if that comes sooner. A deep well makes this surprisingly far out: a ship with 30 km/s in its tanks cannot park closer to the Sun than about a sixth of Earth's distance and still leave.
+- **Dive: the closest pass on a fall-through that still comes back out.** Alex's point about stretched orbits is right, and it is the heart of the diagram: a ship that falls in from far away and swings past leaves again **for free**, because it arrives with the speed it needs to escape. So a dive goes far deeper than a park, limited only by heat, radiation over the hours of the pass, tide, and, for a black hole, the distance inside which even a fall-through is swallowed (about four gravitational radii for no spin). It is easier and more vicious, exactly as he said: the tide and the dose are at their worst, and briefly.
+
+Inside the Dive mark is "too late": the ship does not come back, or comes back dead. The card says which ("limited by heat: hull reaches 1,600 K").
+
+**A quiet hole lets you get very close; a fed one does not.** This falls out of the rows. Round a starved or bare black hole the Heat and Radiation rows are clear almost to the last stable orbit, so the Dive mark sits a few radii from the shadow and only the tide (for a small hole) decides. Round a well-fed stellar hole the heat stops a ship several times Earth's distance from the Sun away, and the hard X-rays stop a thinly shielded one far further out still. That is many millions of times further out than the hole is wide.
+
+**Who sees it.** The GM always. It shows for the party's ship by default (the ship record gives fuel, hull skin, shield and length); with no ship chosen it uses a stated stock ship. The players see it when the GM opens the eye on it, through the one "Known to" control like anything else, and a seat sees only the rows its sensors could measure. Each mark answers "Why?".
+
+**Kernel side.** One op, proposed name `approach_profile {body, ship?, at}`: for a ladder of distances it returns each row's value and tone, the fixed marks, and the two ship marks with the row that set each. Every row is an existing block or a one-line formula block; the op only gathers them. Cost class light. A pack can add a row (a fictional field, a psychic hazard) as data, marked fictional.
+
+**Under the diagram, not on it**: full orbit planning stays in voyages. The diagram is the GM's quick answer to "how close dare they go".
 
 ### 3.9 From further away, and over time
 
@@ -333,6 +355,20 @@ When a carbon-rich Wolf-Rayet star has a hot massive companion, their winds meet
 
 No new switch. One addition to every True view of these objects: the time stretch chip (2.4).
 
+### 6A. Composite: several bands in one picture, on every view **[Alex, 24 Nov 17:03]**
+
+Alex asked for a **Composite** entry at the end of the band switch, as the early demo had: press it and a drop-down lets you combine bands into one picture. The light design already names composites as a kind of band recipe ("several bands layered, as in observatory press images"). This makes it a control, and it is one mechanism for every view that has a band switch, not something for exotics.
+
+- **Where.** Last entry of Band, after Mag: Visible, Infrared, Ultraviolet, X-ray, Radio, Mag, **Composite**. Pressing it shows the last composite used at once (so it is one press for the common case) and opens a small drop-down from the entry itself.
+- **The drop-down** is a tick list of the bands this view and this seat can show, each with its colour beside it. Tick two or more. Visible keeps its natural colours; every other band is laid over it in its own stated colour. The starting colours follow observatory habit: X-ray violet, ultraviolet blue, infrared red, radio orange. A colour can be changed from the same row. Mag may be ticked too: field lines drawn over the light picture.
+- **Presets** at the top of the list, as plain data in the presentation pack: "Observatory" (X-ray, visible, infrared, radio), "Hot and cold" (X-ray with infrared), "Radio over visible". A pack or Orac can add more. The viewer's own mix is remembered per device, like the rest of the view choice.
+- **Honesty.** The legend chip lists every layer and its colour ("Composite: visible actual · X-ray violet · radio orange"), and reads "mapped" as soon as any band but Visible is in. It never degrades.
+- **Each band keeps its own brightness scale** before the layers are added, so a faint radio jet is not drowned by a bright disc. The chip says so ("each band scaled to its own brightest").
+- **Seats** can tick only the bands their sensors carry, as with single bands. A composite is never a way round that.
+- **Cost.** The picture is worked out once per ticked band and added. Phones allow two bands at a time and say why on the third.
+- **What it is for here.** A fed black hole in Observatory shows the X-ray inner ring, the blue-white disc and the radio jet in one frame. A pulsar shows its X-ray surface inside its radio and visible wind nebula. A Wolf-Rayet pair shows the infrared spiral round the visible stars with the X-ray wall between them.
+- **In the code.** Band becomes "one band or a list with colours" in the saved view choice (`ui-contract/view-controls.ts`), read from the sheet's Bands table like every band id. A view that already declares its bands gets Composite with no work of its own.
+
 ---
 
 ## 7. Rendering, tiers and what a phone gets
@@ -368,6 +404,8 @@ Names are plain words. Each is a formula block or a table in a pack, with its so
 | `sse.gravity.weak_bend` | 4GM / (c² b); Einstein ring angle | Einstein 1915, 1936 | settled |
 | `sse.gravity.clock_rate` | how slowly a clock runs, hovering or orbiting | textbook (Misner, Thorne and Wheeler 1973) | settled |
 | `sse.gravity.tide` | stretch per metre | textbook | settled |
+| `sse.approach.hull_heat` | the temperature a hull settles at in a body's light | Stefan and Boltzmann; textbook radiative balance | settled |
+| `sse.approach.climb_out` | speed change to leave from a circular orbit, and the deepest free fall-through | textbook; Misner, Thorne and Wheeler 1973 for the swallowed distance | settled |
 | `sse.gravity.spin_light_path` (reference, XO7) | ray paths round a spinning hole | Carter 1968; Bardeen 1973; James et al. 2015 | settled |
 | `sse.feed.eddington_rate` | feeding rate at which light balances gravity | Eddington 1926; textbook | settled |
 | `sse.feed.capture_from_surroundings` | gas swept up by a moving mass | Bondi and Hoyle 1944; Bondi 1952 | settled, rough in practice |
@@ -452,6 +490,10 @@ Real objects as fixtures, each a number against a measurement.
 | WR 140 | spacing between dust shells = wind speed × 7.93 years |
 | WR 104 | one turn of the spiral per 241 days |
 | Achernar | flattening near the measured 1.35 to 1 or more; poles brighter |
+| Approach diagram, the Sun, a probe with Parker Solar Probe's shield | heat limit close to its real closest pass, 9.9 Sun radii from the centre |
+| Approach diagram, Jupiter | radiation row turns deadly inside Europa's orbit for a thin shield, from the built belt doses |
+| Approach diagram, a 10 Sun hole, bare | Dive mark set by tide at thousands of km; fed at a tenth of the Eddington rate, set by heat or radiation at several au or more, by the shield |
+| Composite | legend lists every ticked band; a seat cannot tick a band it lacks; a phone stops at two |
 | Any view | no element flashes above 3 per second; reduced motion gives a steady glow |
 
 ---
@@ -467,7 +509,7 @@ One package, one builder, one pull request, evidence in it. Owners are proposals
 | **XO3** | The disc's light point by point: `disc_shift`, tilt and shifts into `read_light` so chart and picture agree; exposure note for over-bright sources | XO2, O7 | Build light and nebulae | Luminet fixture brightness profile; approaching side brighter by the stated factor |
 | **XO4** | The `light-path` stage in the renderer with the strong and weak benders; the black hole in True in every band; sky bent from the cube map; HUD labels; degrade order and badge | XO1 to XO3 | Build photoreal renderer (its R5b) | screenshots for 3.4's nine cells at desktop and phone width; shadow and arch positions measured off the frame against the table; frame budget held |
 | **XO5** | Phone path: table lookups in WebGL2 inside a screen box; two orders | XO4 | Build photoreal renderer | emulated phone holds its frame rate; geometry identical to desktop within a pixel |
-| **XO6** | The close-up and the controls: fly to a hole, Seen from, Scale behaviour (3.7), Wireframe bent grid, time stretch chip in ViewControls, card readings (3.8) | XO4 | chart room, with the renderer | e2e: press a hole, change band and view, readings show with Why; chip always present on moving True views |
+| **XO6** | The close-up and the controls: fly to a hole, Seen from, Scale behaviour (3.7), Wireframe bent grid, time stretch chip in ViewControls | XO4 | chart room, with the renderer | e2e: press a hole, change band and view, readings show with Why; chip always present on moving True views |
 | **XO7** | Spin: reference integrator in the kernel (tests only), spin pass in the shader on GPU-high and for stills; badge elsewhere | XO4 | Build photoreal renderer, with light | shader against reference at a grid of rays; shadow shift and flattening at spin 0.9 match published figures |
 | **XO8** | Real feeds: capture from surroundings, lobe overflow and wind feeding from B4's dated facts, outbursts and tidal disruptions as events; donor star, stream and hot spot | XO2, B4 | proven core, with light | a fixture binary turns on and off on the time ruler; disc edges follow the orbit |
 | **XO9** | The galaxy's centre as a body: spin and feed from `feed.rs`; nucleus brightness and jets on the galaxy chart in True; fly to it | XO4, G nucleus package | kernel thread, with the renderer | a galaxy's past quasar phase shows on the time ruler; the close-up opens |
@@ -477,31 +519,37 @@ One package, one builder, one pull request, evidence in it. Owners are proposals
 | **XO13** | Shape from spin and pull, gravity darkening, lit faces: blocks and a shaped-body mesh in the renderer (stars and planets alike) | B1 one body | light for blocks, renderer for mesh | Achernar and Saturn flattening; teardrop donor at lobe filling |
 | **XO14** | The wind you can see: optical depth and soft edge; Wolf-Rayet line rows; ring nebula tie; class labels | B2, O4 | light, then renderer | a wind's edge moves out smoothly as mass loss rises; an ordinary star is unchanged |
 | **XO15** | Colliding winds and spirals: wall, dust spiral and shells, turning on the time ruler; red giant spiral shells by the same block | XO14, B4 | light, then renderer | WR 140 and WR 104 rows |
+| **XO17** | Composite in the band switch, every view (6A): the entry, drop-down, presets as pack data, per-band scaling, legend, seat and phone limits; the saved view choice carries a band list | V10b band switch (built) | chart room for the control, renderer for the layering | section 11 Composite row; works on the system chart, the galaxy chart and the globe as well as XO4's hole |
+| **XO18** | The approach diagram (3.8): op `approach_profile`, the two formula blocks, the strip chart on the card for any massive body, Park and Dive marks from the party's ship, shown to players through the eye | MF7 doses (built), `read_light` (built), the ship record; XO1 for compact bodies. **The Sun and Jupiter need nothing from XO** | light for the op, chart room for the card | section 11's three approach rows |
 | **XO16** | Later: relativistic disc profile; thick and warped discs as volumes; cluster arcs at the web scale; the plunge shot; pack-supplied benders | XO7 | as they come | |
 
-Suggested order: XO1, XO2, XO3, XO4 (the showpiece on screen), then XO5 and XO6, then XO10 (pulsars on MF0's fixtures) while XO7 runs, then the rest as B2 to B4 and MF11 land.
+Suggested order: XO1, XO2, XO3, XO4 (the showpiece on screen), then XO5 and XO6, with XO17 and XO18 beside them (both are small, general, and useful at once on ordinary stars and planets), then XO10 (pulsars on MF0's fixtures) while XO7 runs, then the rest as B2 to B4 and MF11 land.
 
 None of XO1 to XO6 changes a golden hash on an existing system: they add an op, blocks and a table. XO8 onward add facts to bodies and will change goldens, one pull request at a time in the golden lane.
 
 ---
 
-## 13. Questions for Alex
+## 13. Rulings (Alex, 24 Nov 2026 17:03: "Yes to all")
 
-Each has my recommendation. Answer in the usual way ("yes to 1, 2 and 4").
+1. **Decided.** Exact bending for a non-spinning hole on every device first (the bend table); spin's effect on the bending as a second pass for capable machines and stills; phones stay on the no-spin table with a badge.
+2. **Decided.** A well-fed black hole's disc is blue-white in Visible; the orange ring is the Radio band's mapped colour with its legend.
+3. **Decided.** Pulsar beams are cones only in the diagram (Chart, 3D, HUD, Mag); True shows the pulse only when the beam crosses the viewer.
+4. **Decided.** `light-path` is one general stage (strong gravity, weak gravity, motion, pack-supplied).
+5. **Decided.** The feed is one descriptor on any body.
+6. **Decided.** Shape from spin and pull, and brightness following gravity, for every body (XO13, after B1).
+7. **Decided.** The time stretch chip on every moving True view; never more than three flashes a second.
+8. **Decided.** XO1 to XO4 start on fixtures, ahead of B3 and B4, behind the landing run-through's blockers.
+9. **Decided, changed by Alex:** not a list of readings but **the approach diagram** (3.8), for exotics and ordinary stars alike, with the closest a ship can go before it is too late as a figure the GM has and may show the players. Alex said he was unsure of the details; 3.8 is the proposal and the mockup shows it. Small open points are below.
+10. **Decided.** 4.0 scope is XO1 to XO12, plus XO17 and XO18; XO13 to XO15 follow B2 and B4; XO16 later.
+11. **Decided**, with Alex's query answered: "XO" (exotic objects) is only the package code. The op is `read_light_paths`.
 
-1. **Exact bending for a non-spinning hole on every device first (the bend table), with spin's effect on the bending as a second pass for capable machines and stills, and phones staying on the no-spin table with a badge?** Recommended: yes. It gets the true picture on screen soonest and keeps phones honest about what they show.
-2. **A well-fed black hole's disc is blue-white in Visible, as physics says, and the orange ring is the Radio band's mapped colour with its legend?** Recommended: yes. It is the truth, it teaches something, and the famous look is one press away. The alternative is a warmer "Camera" default that would be a fake.
-3. **Pulsar beams are drawn as cones only in the diagram (Chart, 3D, HUD, Mag); True shows the pulse only when the beam crosses the viewer?** Recommended: yes. A visible searchlight in vacuum is the best-known wrong picture in astronomy. HUD on gives the cones over the True view for anyone who wants them.
-4. **The `light-path` stage as one general mechanism (strong gravity, weak gravity, motion, pack-supplied), so the fast-ship Window and microlensing use it too?** Recommended: yes.
-5. **The feed as one descriptor on any body, with the disc's inner edge from surface, last stable orbit or magnetic field, whichever is largest?** Recommended: yes. It covers black holes, X-ray pulsars, nova-making white dwarfs and newborn stars with no list of kinds.
-6. **Shape from spin and pull, and brightness following gravity, for every body (squashed fast stars, teardrop donors, Saturn)?** Recommended: yes, as XO13 after one-body (B1). It is small and fixes spheres everywhere.
-7. **The time stretch chip on every moving True view, with a hard cap of three flashes a second?** Recommended: yes.
-8. **Start XO1 to XO4 now on fixtures, ahead of B3 and B4, the way the Mag layer started on the Solar System?** Recommended: yes, after the landing run-through's blockers, in the light and renderer threads' queues.
-9. **Near-hole readings on the card (clock rate, tide, dose) in 4.0, with ship time picking up the clock rate?** Recommended: yes for the readings (they are one-line blocks); ship time picks the term up when voyages next touches its clock.
-10. **Scope for 4.0: XO1 to XO12 (holes, feeds, the galaxy's centre, pulsars, magnetars); XO13 to XO15 (shaped stars, Wolf-Rayet, pinwheels) follow B2 and B4 whenever those land; XO16 later?** Recommended: yes.
-11. **This note's name for the track, "XO", and for the op, `read_light_paths`?** Recommended: yes; say if you would rather other words.
+**Added by Alex the same day:** Composite at the end of the band switch with a drop-down to combine bands (6A, package XO17). Pulsar glitches (4.3, 16:53).
 
----
+### Still open (small; builders go ahead on the recommendation)
+
+12. **Approach diagram: two ship marks, Park and Dive, as in 3.8?** Recommended: yes. They are the two honest answers to "how close": one for staying, one for a pass.
+13. **With no ship chosen, the diagram uses a stated stock ship, not a blank?** Recommended: yes, so every star's card has it from the first press.
+14. **Composite on a phone stops at two bands?** Recommended: yes, with the reason on the third tick.
 
 ## 14. Sources
 
