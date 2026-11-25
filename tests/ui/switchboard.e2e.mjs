@@ -188,6 +188,30 @@ try {
   await shot(gm, "switchboard-output");
   await out.close();
 
+  // Screens on this computer (PB9): where the browser does not list the displays, one button opens a window to drag there.
+  // It is a screen marked "this computer" that offers to fill the display; Split makes each part a screen of its own.
+  await gm.evaluate(() => (window.getScreenDetails = () => Promise.reject(new Error("not allowed"))));
+  await gm.locator("[data-otc-toggle]").click();
+  await gm.locator("[data-on-this-computer] [data-otc-role]").selectOption("table");
+  await gm.locator("[data-on-this-computer] [data-otc-find]").click();
+  await gm.locator("[data-on-this-computer] [data-otc-failed]").waitFor();
+  const [win] = await Promise.all([context.waitForEvent("page"), gm.locator("[data-on-this-computer] [data-otc-open]").click()]);
+  win.on("pageerror", (e) => errors.push(`window: ${e.message}`));
+  await win.locator("[data-fill-screen]").waitFor({ timeout: 30000 });
+  await box("This computer").locator(".sub", { hasText: "· this computer" }).waitFor({ timeout: 60000 });
+  await shot(gm, "on-this-computer");
+  await gm.locator("[data-otc-window] [data-otc-split]").selectOption("three");
+  await win.locator('[data-split="three"] iframe[data-split-part="3"]').waitFor({ timeout: 30000 });
+  for (const n of [1, 2, 3]) await box(`This computer ${n}`).waitFor({ timeout: 60000 });
+  assert.equal(await win.locator("[data-fill-screen]").count(), 1, "the frame offers to fill the display");
+  assert.equal(await win.frameLocator('[data-split-part="1"]').locator("[data-fill-screen]").count(), 0, "a part does not ask");
+  await shot(win, "split-three");
+  const closed = win.waitForEvent("close", { timeout: 10000 });
+  await gm.locator("[data-otc-window] [data-otc-close]").click();
+  await closed;
+  assert.equal(await gm.locator("[data-otc-window]").count(), 0);
+  await gm.locator("[data-otc-done]").click();
+
   // On a phone the board is one column, without the drawn lines.
   await gm.setViewportSize({ width: 390, height: 844 });
   await gm.waitForTimeout(400);

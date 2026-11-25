@@ -1,0 +1,148 @@
+{
+ "about": "Aurora proving worlds (visual polish design 16.1, rule 5): read_field's answers (sse_field::read, main at ab99ecb, 24 Nov 2026, default settings; references, shield and why lines dropped) for handed bodies, and the world facts the drawing reads beside them. tall-tilted: not in the Solar System, small cold low-gravity world with nitrogen-oxygen air and a field tilted 40 degrees (tall curtains, ovals far from the spin poles). airless-lava: proving world 8, where the aurora must stay off. tipped-giant: proving world 9, hydrogen air, field tilted 70 degrees, a moon in the bubble (ovals placed, colours wait on MF9 part 2, no oxygen borrowed). earth-handed: Earth's own numbers, to set beside the Solar System fixture. Regenerate with a small program calling sse_field::read on the inputs in each read's address; the inputs are listed in handover/packages/VP-AU5.md.",
+ "worlds": {
+  "airless-lava": {
+   "read": {
+    "address": "proving/airless-lava",
+    "obstacle": {
+     "kind": "surface",
+     "standoff_m": 5200000.0,
+     "standoff_radii": 1.0
+    }
+   },
+   "world": {
+    "radius_m": 5200000.0
+   }
+  },
+  "earth-handed": {
+   "read": {
+    "address": "sol/earth",
+    "obstacle": {
+     "kind": "field",
+     "standoff_m": 55620147.969827,
+     "standoff_radii": 8.730206870165908
+    },
+    "aurora": {
+     "diffuse": false,
+     "footprints": [],
+     "ovals": [
+      {
+       "driver": "wind",
+       "latitude_range_deg": [
+        67.67304755601607,
+        72.45108167251342
+       ],
+       "magnetic_latitude_deg": 70.2178541926716,
+       "maps_to_m": 55620147.969827,
+       "spin_latitude_range_deg": [
+        60.8178541926716,
+        79.6178541926716
+       ]
+      }
+     ]
+    }
+   },
+   "world": {
+    "radius_m": 6371000.0,
+    "scale_height_m": 8500.0,
+    "composition": {
+     "N2": 0.7808,
+     "O2": 0.2095,
+     "Ar": 0.0093
+    },
+    "tilt_deg": 9.4
+   }
+  },
+  "tall-tilted": {
+   "read": {
+    "address": "proving/tall-tilted",
+    "obstacle": {
+     "kind": "field",
+     "standoff_m": 24629248.98640219,
+     "standoff_radii": 6.841458051778386
+    },
+    "aurora": {
+     "diffuse": false,
+     "footprints": [],
+     "ovals": [
+      {
+       "driver": "wind",
+       "latitude_range_deg": [
+        64.58710961434689,
+        70.08611931966719
+       ],
+       "magnetic_latitude_deg": 67.52261075485265,
+       "maps_to_m": 24629248.98640219,
+       "spin_latitude_range_deg": [
+        27.52261075485265,
+        72.47738924514735
+       ]
+      }
+     ]
+    }
+   },
+   "world": {
+    "radius_m": 3600000.0,
+    "scale_height_m": 21000.0,
+    "composition": {
+     "N2": 0.7,
+     "O2": 0.28,
+     "Ar": 0.02
+    },
+    "tilt_deg": 40.0
+   }
+  },
+  "tipped-giant": {
+   "read": {
+    "address": "proving/tipped-giant",
+    "obstacle": {
+     "kind": "field",
+     "standoff_m": 2011109385.260463,
+     "standoff_radii": 50.27773463151158
+    },
+    "aurora": {
+     "diffuse": false,
+     "footprints": [
+      {
+       "magnetic_latitude_deg": 71.56505117707799,
+       "moon": "proving/tipped-giant/m1"
+      }
+     ],
+     "ovals": [
+      {
+       "driver": "wind",
+       "latitude_range_deg": [
+        80.89170275446725,
+        82.78207375378064
+       ],
+       "magnetic_latitude_deg": 81.89253562702301,
+       "maps_to_m": 2011109385.260463,
+       "spin_latitude_range_deg": [
+        11.892535627023008,
+        28.10746437297699
+       ]
+      },
+      {
+       "driver": "spin",
+       "magnetic_latitude_deg": 81.42425581618163,
+       "maps_to_m": 1798900550.156805,
+       "spin_latitude_range_deg": [
+        11.424255816181628,
+        28.575744183818372
+       ]
+      }
+     ]
+    }
+   },
+   "world": {
+    "radius_m": 40000000.0,
+    "scale_height_m": 30000.0,
+    "composition": {
+     "H2": 0.86,
+     "He": 0.14
+    },
+    "tilt_deg": 70.0
+   }
+  }
+ }
+}

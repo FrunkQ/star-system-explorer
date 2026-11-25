@@ -140,6 +140,51 @@ assert.equal(s.copies + s.flaps, 0);
 await page.evaluate(() => window.turning.done);
 assert.equal((await state()).title, "Page 3");
 
+// Like the Atlas: the page sits centred in a static sheet inside a positioned box with an offset, the swap replaces
+// the page element (a keyed block) with a taller one, and going back the page fills in a little late. The copies must
+// lie exactly where the pages stand, and the flap fit the copy on top.
+await page.emulateMedia({ reducedMotion: "no-preference" });
+await page.goto("about:blank");
+await page.setContent(`<!doctype html><body style="margin:0;background:#cfc8b8;font:16px Georgia,serif">
+<div style="display:grid;grid-template-columns:300px 1fr;gap:30px;padding:30px"><nav>Contents</nav>
+<div id="box" style="position:relative;padding:12px"><div id="sheet" style="padding:0 20px">
+<article class="pg" style="max-width:520px;margin:0 auto;background:#f4efe2;padding:24px;height:300px"><h1>Page 1</h1></article>
+</div></div></div></body>`);
+await page.addScriptTag({
+  content: `${src}
+window.mk = (n, h) => { const a = document.createElement("article"); a.className = "pg"; a.style.cssText = "max-width:520px;margin:0 auto;background:#f4efe2;padding:24px;height:" + h + "px"; a.innerHTML = "<h1>Page " + n + "</h1>"; return a; };
+window.replace = (n, h, late) => { const sheet = document.getElementById("sheet"); const old = sheet.querySelector("article.pg"); const a = mk(n, late ? 300 : h); old.replaceWith(a); if (late) setTimeout(() => { a.style.height = h + "px"; a.querySelector("h1").textContent = "Page " + n + " (filled)"; }, 120); };`,
+});
+const rects = () =>
+  page.evaluate(() => {
+    const r = (el) => (el ? (({ x, y, width, height }) => ({ x: Math.round(x), y: Math.round(y), w: Math.round(width), h: Math.round(height) }))(el.getBoundingClientRect()) : null);
+    const copies = [...document.querySelectorAll("[data-page-curl='copy']")].sort((a, b) => Number(a.style.zIndex) - Number(b.style.zIndex));
+    return { real: r(document.querySelector("#sheet > article.pg:not([data-page-curl])")), copies: copies.map((c) => ({ ...r(c), text: c.textContent.trim() })), flap: r(document.querySelector("[data-page-curl='flap']")) };
+  });
+const old = (await rects()).real;
+await page.evaluate(() => (window.turning = curlTurn(document.querySelector("#sheet > article.pg"), 1, () => replace(2, 520), { ms: 1400 })));
+await page.waitForTimeout(400);
+let r = await rects();
+assert.deepEqual({ ...r.copies[0], text: undefined }, { ...old, text: undefined }, "forward: the old page's copy lies exactly where it stood");
+assert.equal(r.copies[0].text, "Page 1");
+assert.deepEqual(r.flap, old, "the flap fits the copy");
+assert.equal(r.real.h, 568, "the taller new page is beneath");
+await shot("4-offset-taller-forward");
+await page.evaluate(() => window.turning.done);
+const tall = (await rects()).real;
+await page.evaluate(() => (window.turning = curlTurn(document.querySelector("#sheet > article.pg"), -1, () => replace(1, 300, true), { ms: 1400 })));
+await page.waitForTimeout(500);
+r = await rects();
+assert.deepEqual({ ...r.copies[0], text: undefined }, { ...tall, text: undefined }, "back: this page's copy lies beneath where it stood");
+assert.equal(r.copies[1].text, "Page 1 (filled)", "the page coming back is copied again once it has filled in");
+assert.deepEqual({ ...r.copies[1], text: undefined }, { ...r.real, text: undefined }, "and lies exactly over the real page");
+assert.deepEqual(r.flap, r.real, "the flap fits it");
+await shot("5-offset-back-late");
+await page.evaluate(() => window.turning.done);
+r = await rects();
+assert.equal(r.copies.length + (r.flap ? 1 : 0), 0);
+assert.equal(await page.evaluate(() => document.getElementById("sheet").style.position), "", "the sheet's own position is put back");
+
 assert.deepEqual(errors, []);
 await browser.close();
 console.log("page turn e2e: ok");

@@ -8,7 +8,7 @@
 // the size strip is the distance with that year; Retrograde mirrors the lean past 90 degrees; the place now is a ring
 // that catches at the far point; Locked sets the day to the year and the sun's day says so; each one change, one Undo.
 // ED7: on Explore, "Try changing it" opens an example what-if where the strip moves and the main line does not; on
-// Build, Add a moon offers formation's own rules for the chosen planet.
+// Build, Add a moon offers formation's own rules for the chosen planet, and Add round a star offers Kinds; Pluto's Orbit box shows its pair with Charon; on a phone the open strip docks above the ruler.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -54,6 +54,13 @@ try {
     assert.ok(await strip.locator("[data-strip-figure]").isDisabled(), "read-only on Explore");
     for (const n of ["Earth", "Jupiter"]) assert.equal(await strip.locator(`[data-dot="${n}"]`).count(), 1, `${n} is a reference dot`);
     await shot(gm, `explore-orbit-${vp}`);
+    if (vp === "phone") {
+      // ED7 phone dock: the open strip docks above the time ruler, and the mark is where the thumb can reach it.
+      const [dock, ruler, mark] = await gm.evaluate(() => [document.querySelector("[data-dock]"), document.querySelector('footer[aria-label="Time"]'), document.querySelector('[data-strip="orbit"] .mark')].map((e) => e?.getBoundingClientRect().toJSON()));
+      assert.ok(dock && ruler && mark, "dock, ruler and mark");
+      assert.ok(dock.bottom <= ruler.top + 1, `the dock sits above the ruler (${dock.bottom} against ${ruler.top})`);
+      assert.ok(mark.top >= dock.top && mark.bottom <= dock.bottom, "the mark is in view in the dock");
+    }
 
     // Press a unit (ED1a): the card's Orbit steps to the next reading and the handle follows, for every planet; round
     // the readings it comes back to AU.
@@ -84,6 +91,10 @@ try {
       await strip.locator("[data-strip-entry]").press("Enter");
       await gm.waitForFunction(() => /(^|about )1 AU$/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
       assert.match(await gm.locator("[data-followed]").innerText(), /EXAMPLE · change anything only/);
+      // ED1 part 3: the branch's own resolve (BC1) says what followed there: Mars at 1 AU warms.
+      await gm.locator('[data-followed-row="Surface"]').waitFor({ timeout: 20000 });
+      const [k0, k1] = (await gm.locator('[data-followed-row="Surface"]').innerText()).match(/\d+(?= K)/g).map(Number);
+      assert.ok(k1 > k0 + 20, `Mars at 1 AU is warmer on the example: ${k0} K to ${k1} K`);
       assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), main, "the main line does not move");
       await shot(gm, `explore-example-${vp}`);
       await gm.locator(".whatif button", { hasText: "Throw away" }).click();
@@ -106,7 +117,7 @@ try {
     assert.match(await followed.innerText(), /(Orbit|How far out)\s+(about )?1\.52 AU → 1 AU/);
     assert.match(await followed.locator('[data-followed-row="Surface"]').innerText(), /K → (about )?\d+ K/);
     await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hash0);
-    assert.match(await row.locator('[data-handle="orbit"] .value').innerText(), /(^|about )1 AU$/);
+    await gm.waitForFunction(() => /(^|about )1 AU$/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
     await shot(gm, `build-followed-${vp}`);
     await gm.keyboard.press("Control+z");
     await gm.waitForFunction(() => /1\.52 AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
@@ -250,6 +261,33 @@ try {
       await add.locator('[data-moon-recipe="impact"] button').click();
       await gm.waitForFunction(() => !document.querySelector("dialog[data-add]")?.open, null, { timeout: 20000 });
       await gm.waitForFunction((n) => document.querySelectorAll('.area-chart .body[aria-label*="moon of Mars" i]').length > n, before, { timeout: 20000 });
+      await undoTo();
+
+      // ED6 Kinds: round the Sun, Add offers a world of each kind the class atlas knows, smallest first.
+      await gm.locator('.area-chart .body[aria-label^="Sun"]').first().locator(".hit").click();
+      await gm.getByRole("button", { name: "More", exact: true }).click();
+      await gm.locator("[data-more-add]").click();
+      await add.locator("[data-kinds]").waitFor({ timeout: 20000 });
+      const kinds = await add.locator("[data-kind]").evaluateAll((ls) => ls.map((l) => l.dataset.kind));
+      for (const k of ["rocky", "gas-giant", "ice-giant"]) assert.ok(kinds.includes(k), `${k} is a kind: ${kinds}`);
+      assert.match(await add.locator('[data-kind="gas-giant"]').innerText(), /like Jupiter/);
+      await shot(gm, `add-kinds-${vp}`);
+      await add.getByRole("button", { name: "Close" }).click();
+
+      // ED0 pairs: Pluto's Orbit box says where the hidden centre is (outside Pluto) and shows the pair's two orbits;
+      // "Round each other" writes Charon's orbit, one change, one Undo.
+      await gm.locator('.area-chart .body[aria-label^="Pluto,"]').first().locator(".hit").click();
+      await gm.waitForFunction(() => /AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? "") && document.querySelector("section[aria-label='Pluto']"), null, { timeout: 20000 });
+      if (!(await gm.locator('[data-box="orbit"]').isVisible())) await row.locator('[data-handle="orbit"]').click();
+      const says = gm.locator("[data-pair-says]");
+      await says.waitFor({ timeout: 20000 });
+      assert.match(await says.innerText(), /Pluto and Charon go round a point between them .* outside Pluto/);
+      const each = gm.locator('[data-strip="orbit.pair.each"]');
+      await each.locator("[data-strip-figure]").click();
+      await each.locator("[data-strip-entry]").fill("25000 km");
+      await each.locator("[data-strip-entry]").press("Enter");
+      await gm.waitForFunction(() => /Round each other/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, `pair-pluto-${vp}`);
       await undoTo();
       await depth(gm, "Curious");
     }

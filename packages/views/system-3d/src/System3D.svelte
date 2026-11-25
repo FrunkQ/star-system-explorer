@@ -15,12 +15,13 @@
   looks like a photograph. Scale Real: distances and sizes in proportion.
 -->
 <script lang="ts">
-  import { onDestroy } from "svelte";
-  import { closeMin, grazeLook, groundUnder, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape } from "../../../renderer/src/index.ts";
+  import { onDestroy, untrack } from "svelte";
+  import { closeMin, grazeLook, groundUnder, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
+  import { SYSTEM_TRUE } from "../../../renderer/src/recipes.ts";
   import { constant, SEEN_ELEVATION, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { rangeRingLines } from "./range-rings.ts";
-  import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
+  import { bandLines, hasChildren, layout, layoutReal, moonsOf, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
     bodies,
@@ -324,7 +325,7 @@
       reason = "canvas tier chosen";
       return;
     }
-    void startGpu(canvas).then((g) => {
+    void startGpu(canvas, { timing: true }).then((g) => {
       if (g) {
         gpu = g;
         using = "gpu";
@@ -336,6 +337,45 @@
     });
   });
   onDestroy(() => gpu?.dispose());
+
+  // Quality in True (VP4 part 2b, VP5): one controller places the view by the device's measured speed, steps it down
+  // on slow frames by the system-true recipe, and sharpens the picture once the view holds still (the finish keeps the
+  // running mean of jittered frames). `qv` redraws when its settings change; `restTick` draws the next sharpening frame.
+  let run: TrueRun | null = null;
+  let qv = $state(0);
+  let restTick = $state(0);
+  let drawnRestTick = 0;
+  let restTimer: ReturnType<typeof setTimeout> | undefined;
+  let quality = $state("");
+  const viewPixels = () => {
+    const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
+    return Math.max(1, Math.round(w * h * dpr * dpr));
+  };
+  $effect(() => {
+    if (!isTrue || using !== "gpu" || !gpu) return;
+    const r = new TrueRun({ recipe: SYSTEM_TRUE, library: LIBRARY, pixels: untrack(viewPixels), backend: gpu.backend, source: "render.system", onChange: () => qv++ });
+    run = r;
+    void r.place();
+    return () => {
+      clearTimeout(restTimer);
+      r.dispose();
+      run = null;
+      quality = "";
+    };
+  });
+  $effect(() => {
+    const px = viewPixels();
+    untrack(() => run?.update({ pixels: px }));
+  });
+  /** Ask for the next sharpening frame when it falls due (none while moving, or once sharp). */
+  function restLater(now: number) {
+    clearTimeout(restTimer);
+    const r = run;
+    if (!r) return;
+    const due = r.rest.dueIn(now);
+    if (Number.isFinite(due)) restTimer = setTimeout(() => restTick++, due);
+  }
+  onDestroy(() => clearTimeout(restTimer));
 
   // The star's light: from the star itself when it is in the frame, else from where it lies as seen from this frame's
   // centre (opposite the centre's own place on its orbit round the star).
@@ -513,10 +553,26 @@
             // The body's face from the one door every True view uses (renderer true-body.ts): surface, rings, and
             // whatever looks other builders hook in there.
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(b.rings && emit === undefined ? { rings: b.rings } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}) });
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}) };
           });
+        // The controller's settings: moving, the placed tier's; on a sharpening frame, the still passes at full size.
+        void qv;
+        const tick = restTick;
+        const now = performance.now();
+        const r = run;
+        const resting = r !== null && tick !== drawnRestTick;
+        drawnRestTick = tick;
+        const step = resting ? r!.rest.next(now) : null;
+        // Sharp (or out of time): the mean on screen stays as it is. Still waiting (a timer fired a hair early): ask again.
+        if (resting && !step) return void untrack(() => restLater(performance.now()));
+        const q = r?.settings(step !== null) ?? null;
+        const fin = q?.params["finish"] ?? {};
+        const bodiesQ = q?.params["bodies"] ?? {};
+        const t0 = performance.now();
         gpu.draw({
+          ...(typeof bodiesQ["sphere_detail"] === "number" ? { sphere_detail: bodiesQ["sphere_detail"] } : {}),
+          ...(step ? { jitter: step.jitter } : {}),
           items,
           rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...(hud ? rangeLocal.map((l) => ({ points: l.points.map((q) => rel(q as [number, number, number])), colour: l.kind === "even odds" ? faint : accent })) : []), ...magRings(fieldOut, fieldIn, faint)],
           // Belts as haze in visible light only: in the other bands they give off next to nothing a screen could show.
@@ -531,10 +587,26 @@
           light: lightFor(),
           // The shared finish (VP1). While the star draws its own glow (SG1's sprite) the eye's glare stays off, so
           // the star is not glared twice; the glow moves onto the finish when the star is drawn at its real brightness.
-          finish: { glare: halo === null },
+          finish: {
+            glare: halo === null,
+            ...(typeof fin["glare_rungs"] === "number" ? { rungs: fin["glare_rungs"] } : {}),
+            ...(typeof fin["glare_scale"] === "number" ? { glare_scale: fin["glare_scale"] } : {}),
+            ...(q ? { render_scale: q.render_scale } : {}),
+            ...(step ? { accumulate: step.k } : {}),
+          },
           near: nearPlane,
           ...(sky && trueBand === "visible" && !mag ? { stars: { ...sky, gain: long ? longGain(sky.share, cam.fovY / h) : 1 } } : {}),
         });
+        // The GPU's own time where the device has timestamps (a frame late), else the work of asking for the frame.
+        const ms = Math.max(performance.now() - t0, gpu.gpuMs ?? 0);
+        if (r) {
+          // A sharpening frame adds to the mean; any other frame is the view moving (the governor's signal).
+          if (step) r.rest.done(performance.now(), ms);
+          else if (!resting) r.frame(ms, now);
+          const st = r.status();
+          quality = `${st.tier}|${st.level}|${st.rest}|${st.rest_frames}`;
+          untrack(() => restLater(performance.now()));
+        }
         return;
       }
       gpu.draw({
@@ -742,7 +814,7 @@
   data-dist={Math.round(dist * 1000) / 1000}
   class:true-look={isTrue && using === "gpu"}
 >
-  <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true"></canvas>
+  <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true" data-quality={quality || undefined}></canvas>
   <canvas bind:this={canvas2d} class="c2d" class:off={using !== "canvas"} aria-hidden="true"></canvas>
   {#each pins as { b, p } (b.id)}
     {#if p && p.x > -40 && p.x < w + 40 && p.y > -40 && p.y < h + 40}

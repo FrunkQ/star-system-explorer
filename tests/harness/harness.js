@@ -62,7 +62,8 @@ function benchSection(version) {
     const drawRows = d.scenes_ms && Object.keys(d.scenes_ms).length
       ? `<tr><td><strong>Drawing (${d.backend}, ${d.method}${d.steady ? "" : ", unsteady"}): placed at ${words[d.earned] ?? d.earned}</strong></td><td class="n"></td></tr>` +
         Object.entries(d.scenes_ms).map(([k, v]) => `<tr><td class="muted">&nbsp;&nbsp;probe ${k} (${d.factors[k].toFixed(2)}× reference)</td><td class="n">${v.toFixed(2)} ms</td></tr>`).join("") +
-        d.predictions.map((p) => `<tr><td class="muted">&nbsp;&nbsp;standard True at 1080p, ${words[p.tier] ?? p.tier} (budget ${Math.round(p.budget_ms)} ms)</td><td class="n">${p.ms === null ? "no form" : `${p.ms.toFixed(1)} ms ${p.fits ? "fits" : "too slow"}`}</td></tr>`).join("")
+        d.predictions.map((p) => `<tr><td class="muted">&nbsp;&nbsp;standard True at 1080p, ${words[p.tier] ?? p.tier} (budget ${Math.round(p.budget_ms)} ms)</td><td class="n">${p.ms === null ? "no form" : `${p.ms.toFixed(1)} ms ${p.fits ? "fits" : "too slow"}`}</td></tr>`).join("") +
+        (d.standard ?? []).map((f) => `<tr><td class="muted">&nbsp;&nbsp;standard True at 1080p, ${words[f.tier] ?? f.tier}, drawn (${f.method})</td><td class="n">${f.ms.toFixed(1)} ms</td></tr>`).join("")
       : `<tr><td><strong>Drawing</strong></td><td class="n">${d.error ? "could not draw" : "no GPU"}</td></tr>`;
     $("benchnote").textContent = "Done.";
     $("benchtable").innerHTML = rep.chunks
@@ -140,6 +141,16 @@ async function kernelCheck() {
   const client = new KernelClient(browserPort(worker), { jsUrl: new URL("./pkg/sse_wasm.js", import.meta.url).href });
   const got = await runContract(client, requests, packs);
   const bad = got.map((l, i) => (l === golden[i] ? -1 : i)).filter((i) => i >= 0);
+  // Contract areas: each on a fresh kernel in its own worker, as natively.
+  const areas = await get("./pkg/fixtures/areas.json");
+  for (const a of areas) {
+    const w = new Worker(new URL("./pkg/client/worker.js", import.meta.url), { type: "module" });
+    const c = new KernelClient(browserPort(w), { jsUrl: new URL("./pkg/sse_wasm.js", import.meta.url).href });
+    const g = await runContract(c, a.requests, packs);
+    g.forEach((l, i) => { if (l !== a.golden[i]) bad.push(`${a.name}:${i}`); });
+    if (g.length !== a.golden.length) bad.push(`${a.name}:length`);
+    w.terminate();
+  }
   const ok = bad.length === 0 && got.length === golden.length;
   const v = $("kverdict");
   v.textContent = ok

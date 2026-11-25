@@ -102,6 +102,29 @@ export const ATMOSPHERE: PassSpec = {
   ],
 };
 
+export const AURORA: PassSpec = {
+  id: "aurora",
+  version: "1.0.0",
+  name: "Aurora",
+  meaning: "Where the kernel says particles come down into the air (read_field's aurora: wind and spin ovals round the magnetic poles, a diffuse glow on airy worlds with no field), each line the air gives off as a thin glowing shell at its own height, stacked at the limb. Colours and heights come from the air's own lines; worlds where the kernel finds no aurora draw nothing. GPU tiers only.",
+  kind: "overlay",
+  inputs: ["body.field", "body.air"],
+  tiers: ["still", "gpu-high", "gpu-basic"],
+  params: [
+    { name: "exposure", type: "enum", default: "long", options: ["long", "eye"], meaning: "Long exposure (the default): faint light is lifted by one stated ratio so the aurora shows in full colour, as a camera's long exposure records it. Eye: one exposure for the sunlit world, the aurora at its true brightness and grey where it is too faint for colour vision.", group: "look", promoted: true },
+    { name: "lift_target", type: "number", default: 0.6, range: [0.05, 2], meaning: "Long exposure: the brightest line is lifted to this share of the sunlit ground's brightness; the other lines keep their true ratio to it.", group: "look" },
+  ],
+  cost: {
+    "gpu-high": { fixed_ms: 0.2, per_mpix_ms: 1 },
+    "gpu-basic": { fixed_ms: 0.2, per_mpix_ms: 1 },
+    still: { fixed_ms: 0.2, per_mpix_ms: 1 },
+  },
+  references: [
+    { text: "Chamberlain, J. W. (1961). Physics of the Aurora and Airglow. Academic Press, New York.", doi: "10.1029/SP041" },
+    { text: "Hunten, D. M., Roach, F. E., Chamberlain, J. W. (1956). A photometric unit for the airglow and aurora. Journal of Atmospheric and Terrestrial Physics 8, 345-346.", doi: "10.1016/0021-9169(56)90111-8" },
+  ],
+};
+
 export const NARRATION: PassSpec = {
   id: "text-narration",
   version: "1.0.0",
@@ -114,5 +137,62 @@ export const NARRATION: PassSpec = {
   cost: { text: { fixed_ms: 2, per_mpix_ms: 0 }, canvas: { fixed_ms: 0, per_mpix_ms: 0 }, "gpu-basic": { fixed_ms: 0, per_mpix_ms: 0 }, "gpu-high": { fixed_ms: 0, per_mpix_ms: 0 }, still: { fixed_ms: 0, per_mpix_ms: 0 } },
 };
 
+// System True (VP4): the worlds and star of a system in their own light, and the shared finish over them. Costs are
+// estimates on the reference device until the bench times the standard recipe (handover/packages/VP4.md).
+
+export const TRUE_BODIES: PassSpec = {
+  id: "true-bodies",
+  version: "1.0.0",
+  name: "Worlds and star",
+  meaning: "Every world in its own surface, lit by its star, with its rings; the star's living face; belts as a haze of their members. Facts only: what the kernel has for each body.",
+  kind: "image",
+  inputs: ["system.bodies", "body.surface", "star.face"],
+  tiers: ["still", "gpu-high", "gpu-basic"],
+  params: [
+    { name: "sphere_detail", type: "integer", default: 64, range: [16, 256], meaning: "Segments round each globe. More is rounder at the limb, and costs more.", group: "look" },
+    { name: "belt_share", type: "number", default: 1, range: [0.1, 1], meaning: "Share of a belt's members drawn as its haze.", group: "look" },
+  ],
+  cost: {
+    "gpu-basic": { fixed_ms: 1, per_mpix_ms: 1, scale: [{ param: "sphere_detail", ref: 64, power: 1 }], load: MESH },
+    "gpu-high": { fixed_ms: 1, per_mpix_ms: 1.2, scale: [{ param: "sphere_detail", ref: 64, power: 1 }], load: MESH },
+    still: { fixed_ms: 1, per_mpix_ms: 1.2, scale: [{ param: "sphere_detail", ref: 64, power: 1 }], load: MESH },
+  },
+};
+
+export const TRUE_GROUND: PassSpec = {
+  id: "true-ground",
+  version: "1.0.0",
+  name: "Ground, sea and sky",
+  meaning: "The ground round a site and its sea, lit by the star through the air, under the sky's colour and the night's stars. Facts only: the kernel's ground, sea and air for that place. Its mesh detail is the detail ladder's, not this pass's.",
+  kind: "image",
+  inputs: ["site.ground", "site.sea", "body.air"],
+  tiers: ["still", "gpu-high", "gpu-basic"],
+  params: [],
+  cost: {
+    "gpu-basic": { fixed_ms: 1.5, per_mpix_ms: 2.5, load: { geometry: 0.4, fill: 0.6 } },
+    "gpu-high": { fixed_ms: 1.5, per_mpix_ms: 2.5, load: { geometry: 0.4, fill: 0.6 } },
+    still: { fixed_ms: 1.5, per_mpix_ms: 2.5, load: { geometry: 0.4, fill: 0.6 } },
+  },
+};
+
+export const TRUE_FINISH: PassSpec = {
+  id: "true-finish",
+  version: "1.0.0",
+  name: "Finish",
+  meaning: "The shared finish (VP1): a high-range picture, exposure, the eye's glare from real brightness as a ladder of blurs (an eye effect, not the world), tone mapping and dither. Fewer glare rungs and a smaller glare picture cost less and spread the glare less far.",
+  kind: "overlay",
+  inputs: [],
+  tiers: ["still", "gpu-high", "gpu-basic"],
+  params: [
+    { name: "glare_rungs", type: "integer", default: 6, range: [0, 6], meaning: "Blurs in the glare ladder (each twice as wide as the last). 0 is no glare.", group: "look" },
+    { name: "glare_scale", type: "number", default: 0.5, range: [0.25, 1], meaning: "Size of the glare picture against the view (a quarter, half or full).", group: "look" },
+  ],
+  cost: {
+    "gpu-basic": { fixed_ms: 0.3, per_mpix_ms: 1.5, scale: [{ param: "glare_rungs", ref: 6, power: 1 }, { param: "glare_scale", ref: 0.5, power: 2 }], load: { fill: 1 } },
+    "gpu-high": { fixed_ms: 0.3, per_mpix_ms: 1.5, scale: [{ param: "glare_rungs", ref: 6, power: 1 }, { param: "glare_scale", ref: 0.5, power: 2 }], load: { fill: 1 } },
+    still: { fixed_ms: 0.3, per_mpix_ms: 1.5, scale: [{ param: "glare_rungs", ref: 6, power: 1 }, { param: "glare_scale", ref: 0.5, power: 2 }], load: { fill: 1 } },
+  },
+};
+
 /** Every pass this release ships. */
-export const LIBRARY: readonly PassSpec[] = [RELIEF, GRATICULE, CONTOURS, ATMOSPHERE, NARRATION];
+export const LIBRARY: readonly PassSpec[] = [RELIEF, GRATICULE, CONTOURS, ATMOSPHERE, AURORA, NARRATION, TRUE_BODIES, TRUE_GROUND, TRUE_FINISH];

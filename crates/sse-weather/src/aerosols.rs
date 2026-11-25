@@ -1003,6 +1003,7 @@ fn add(list: &mut Vec<Aerosol>, kind: &str, tau: f64, colour: [f64; 3]) {
             kind: kind.into(),
             optical_depth: tau,
             colour,
+            particle_radius_um: 0.0,
         });
     }
 }
