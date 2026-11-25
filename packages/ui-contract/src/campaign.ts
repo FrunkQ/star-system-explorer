@@ -39,6 +39,8 @@ export interface CampaignSave {
     bookmarks?: import("./bookmark.ts").Bookmark[];
     /** The Playbook, `sse.playbook/1` (older saves have none). */
     playbook?: import("./playbook.ts").Playbook;
+    /** Layouts the GM made, `sse.screen/1` with `mine.` ids (older saves have none). */
+    layouts?: import("./screen.ts").ScreenDoc[];
   };
   /**
    * The packs over the opening stack (Packs screen) and the campaign's own

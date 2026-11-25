@@ -65,6 +65,8 @@ fn gas(id: &str, features: Option<Vec<Feature>>) -> GasOptics {
         gas: id.into(),
         particle_mass_kg: 2.0 * 1.66e-27,
         features,
+        polarisability_m3: None,
+        ionisation_j: None,
     }
 }
 
@@ -150,6 +152,8 @@ fn sodium_like(cw: f64) -> GasOptics {
             note: String::new(),
             check: None,
         }]),
+        polarisability_m3: None,
+        ionisation_j: None,
     }
 }
 
@@ -282,7 +286,9 @@ fn methane_from_the_sheet_turns_a_giant_blue_green() {
     let e = eye();
     let wl = e.wavelengths_m();
     let sun: Vec<f64> = wl.iter().map(|l| planck(*l, 5772.0)).collect();
-    let km_amagat = 2.686_78e24;
+    // One km-amagat: 2.687e25 molecules per m³ over 1000 m, here as a
+    // density over the slab's 1 m of path.
+    let km_amagat = 2.686_78e28;
     let seen = |km: f64| {
         let p = Passage {
             address: "giant".into(),
@@ -335,4 +341,77 @@ fn sodium_and_potassium_lines_from_the_sheet() {
     let r = pass(&p, &[na], &[550e-9, 588.995e-9], &[1.0, 1.0], &s).unwrap();
     assert!(r.light_out[0] > 0.999_999, "{:?}", r.light_out);
     assert!(r.light_out[1] < 0.5, "{:?}", r.light_out);
+}
+
+/// ND2 part 2a: a line with no measured widening row is widened by its
+/// neighbours by van der Waals forces, worked out from the sheet: the
+/// atom's ionisation energy and each neighbour's polarisability.
+#[test]
+fn sodium_crowded_by_helium_widens_by_van_der_waals() {
+    let s = sheet();
+    let na = GasOptics::from_sheet(&s, "na").unwrap();
+    let he = GasOptics::from_sheet(&s, "he").unwrap();
+    assert!((na.ionisation_j.unwrap() / s.constant("e").unwrap() - 5.139076).abs() < 1e-9);
+    assert!((he.polarisability_m3.unwrap() - 0.208e-30).abs() < 1e-40);
+    // Unsöld's C6 for sodium D2 against helium, by hand.
+    let (e, eps0, a0, h, c) = (
+        s.constant("e").unwrap(),
+        s.constant("eps0").unwrap(),
+        s.constant("a0").unwrap(),
+        s.constant("h").unwrap(),
+        s.constant("c").unwrap(),
+    );
+    let ry = h * c * s.constant("R_inf").unwrap();
+    let ion = na.ionisation_j.unwrap();
+    let eu = h * c / 588.995e-9;
+    let c6 = e * e / (4.0 * sse_core::math::PI * eps0) * 0.208e-30 * a0 * a0 * 2.5 * ry * ry / h
+        * (1.0 / ((ion - eu) * (ion - eu)) - 1.0 / (ion * ion));
+    let w = crate::colour::run(
+        "sse.gas.van_der_waals_widening",
+        &[
+            ion,
+            0.0,
+            588.995e-9,
+            6000.0,
+            na.particle_mass_kg,
+            he.particle_mass_kg,
+            0.208e-30,
+        ],
+    )
+    .unwrap();
+    assert!((w[1] / c6 - 1.0).abs() < 1e-12, "{} {}", w[1], c6);
+    // About 7e-33 cm⁶/s in the old units: Unsöld's 2e-32 for hydrogen
+    // scaled by helium's smaller polarisability (0.208 against 0.667 Å³).
+    assert!(w[1] * 1e12 > 5e-33 && w[1] * 1e12 < 9e-33, "{}", w[1]);
+    // A thin sodium vapour in a dense helium air: the wing 1 nm off the
+    // line darkens many times over once the helium is there.
+    let wl = [589.995e-9];
+    let pass_with = |n_he: f64| {
+        let p = Passage {
+            address: "t".into(),
+            layers: vec![slab(&[("na", 1e18), ("he", n_he)], 6000.0, 1e3)],
+            path_factor: 1.0,
+        };
+        pass(&p, &[na.clone(), he.clone()], &wl, &[1.0], &s).unwrap()
+    };
+    let thin = pass_with(0.0);
+    let dense = pass_with(1e27);
+    assert!(
+        dense.optical_depth[0] > 10.0 * thin.optical_depth[0],
+        "{} {}",
+        dense.optical_depth[0],
+        thin.optical_depth[0]
+    );
+    assert!(
+        dense.why.iter().any(|w| w.contains("van der Waals")),
+        "{:?}",
+        dense.why
+    );
+    assert!(dense.references.iter().any(|r| r.text.contains("Unsöld")));
+    // With nothing to work it out from, it is said.
+    assert!(
+        thin.stand_ins.iter().any(|w| w.contains("no widening row")),
+        "{:?}",
+        thin.stand_ins
+    );
 }

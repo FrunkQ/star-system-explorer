@@ -115,6 +115,32 @@ fn galaxies_light_the_web_not_the_voids() {
             stars_void += g.stars_msun;
         }
     }
+    // Void galaxies form later, so they are younger: more star formation for their stars than the rest.
+    let ssfr = |void: bool| {
+        let (mut sf, mut st) = (0.0, 0.0);
+        for g in &gals {
+            let mut best = (f64::INFINITY, Environment::Void);
+            for (i, e) in v.environment.iter().enumerate() {
+                let d: f64 = (0..3)
+                    .map(|k| {
+                        let q = v.position[3 * i + k] - g.position[k];
+                        q * q
+                    })
+                    .sum();
+                if d < best.0 {
+                    best = (d, *e);
+                }
+            }
+            if (best.1 == Environment::Void) == void && g.halo_msun < 3.0e12 {
+                sf += g.sfr_msun_yr;
+                st += g.stars_msun;
+            }
+        }
+        sf / st
+    };
+    let (sv, sw) = (ssfr(true), ssfr(false));
+    println!("specific star formation: voids {sv:.3e} per year, the web {sw:.3e}");
+    assert!(sv > sw, "void galaxies are younger ({sv} against {sw})");
     let share = in_void as f64 / gals.len() as f64;
     let light = stars_void / stars_all;
     println!("galaxies in voids {share:.2}, their share of the stars {light:.2}");

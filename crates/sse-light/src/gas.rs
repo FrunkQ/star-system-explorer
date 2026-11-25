@@ -213,6 +213,14 @@ pub struct GasOptics {
     /// `None`: the sheet row has no absorption list yet (not looked up).
     /// `Some(empty)`: none known.
     pub features: Option<Vec<Feature>>,
+    /// Polarisability volume, m³: how this gas widens others' lines when
+    /// it crowds them (van der Waals, ND2 part 2a).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub polarisability_m3: Option<f64>,
+    /// Ionisation energy of the absorbing atom, J: what its own lines'
+    /// van der Waals widening reads.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ionisation_j: Option<f64>,
 }
 
 impl GasOptics {
@@ -238,10 +246,27 @@ impl GasOptics {
                 Some(f)
             }
         };
+        let fig = |k: &str| {
+            row.get("optical")
+                .and_then(|o| o.get(k))
+                .and_then(|v| v.get("v"))
+                .and_then(|v| v.as_f64())
+        };
+        let polarisability_m3 = fig("polarisability");
+        let ionisation_j = match fig("ionisation_energy") {
+            Some(ev) => Some(
+                ev * sheet
+                    .constant("e")
+                    .ok_or("the data sheet has no elementary charge")?,
+            ),
+            None => None,
+        };
         Ok(GasOptics {
             gas: gas.into(),
             particle_mass_kg,
             features,
+            polarisability_m3,
+            ionisation_j,
         })
     }
 }
@@ -356,6 +381,8 @@ pub fn pass(
     let mut none_known = vec![];
     let mut not_looked_up = vec![];
     let mut why = vec![];
+    let mut extra_stand_ins = vec![];
+    let mut used_vdw = false;
     let x = passage.path_factor;
     if !(x.is_finite() && x >= 0.0) {
         return Err(format!("path factor must be zero or more, got {x}"));
@@ -456,7 +483,47 @@ pub fn pass(
                                 b.t_exponent,
                                 b.at_k,
                             ),
-                            None => (0.0, 0.0, 0.0, t),
+                            // No measured widening: van der Waals from the
+                            // atom's ionisation energy and each neighbour's
+                            // polarisability (Unsöld), summed over the layer.
+                            None => {
+                                let mut sum = 0.0;
+                                let mut by = vec![];
+                                if let Some(ion) = g.ionisation_j {
+                                    for p in &layer.gases {
+                                        let Some(pg) = gases.iter().find(|x| x.gas == p.gas) else {
+                                            continue;
+                                        };
+                                        let Some(ap) = pg.polarisability_m3 else {
+                                            continue;
+                                        };
+                                        if p.number_density_m3 <= 0.0 {
+                                            continue;
+                                        }
+                                        let w = run(
+                                            "sse.gas.van_der_waals_widening",
+                                            &[
+                                                ion,
+                                                lower_ev * ev,
+                                                l0,
+                                                t,
+                                                g.particle_mass_kg,
+                                                pg.particle_mass_kg,
+                                                ap,
+                                            ],
+                                        )?;
+                                        sum += w[0] * p.number_density_m3;
+                                        by.push(p.gas.clone());
+                                    }
+                                }
+                                if by.is_empty() {
+                                    note(&mut extra_stand_ins, format!("{} {}: no widening row and nothing to work one out from (an ionisation energy for it, a polarisability for its neighbours), so only heat and its own lifetime widen it", a.gas, f.id()));
+                                } else {
+                                    note(&mut why, format!("{} {}: widened by its neighbours ({}) by van der Waals forces, worked out from the sheet (Unsöld's estimate, often about half the measured width)", a.gas, f.id(), by.join(", ")));
+                                    used_vdw = true;
+                                }
+                                (sum, 1.0, 0.0, t)
+                            }
                         };
                         let w = run(
                             "sse.gas.line_widths",
@@ -563,17 +630,21 @@ pub fn pass(
         passage.layers.len(),
         x
     ));
-    let mut references: Vec<Reference> = sse_atoms::decls_of(&[
+    let mut ids = vec![
         "sse.gas.line_strength",
         "sse.gas.line_widths",
         "sse.gas.voigt_width",
         "sse.gas.band_cross_section",
         "sse.gas.pair_optical_depth",
         "sse.gas.transmission",
-    ])
-    .into_iter()
-    .flat_map(|d| d.references)
-    .collect();
+    ];
+    if used_vdw {
+        ids.push("sse.gas.van_der_waals_widening");
+    }
+    let mut references: Vec<Reference> = sse_atoms::decls_of(&ids)
+        .into_iter()
+        .flat_map(|d| d.references)
+        .collect();
     references.dedup_by(|a, b| a.text == b.text);
     Ok(Passed {
         address: passage.address.clone(),
@@ -590,7 +661,10 @@ pub fn pass(
             "each layer is one temperature and make-up (a stack of layers stands in for a smooth air)".into(),
             "absorption only: light scattered out of or into the beam is not counted here (Rayleigh scattering is in the air optics)".into(),
             "a line's lower level is filled by the Boltzmann factor alone (no partition function), and its wings follow the pseudo-Voigt shape to any distance (real far wings fall off faster)".into(),
-        ],
+        ]
+        .into_iter()
+        .chain(extra_stand_ins)
+        .collect(),
         references,
     })
 }
