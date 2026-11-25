@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat } from "../src/seat.ts";
 import { LIFE_EXAMPLES, type LifeView } from "../src/life.ts";
-import { STAGES, lifeFlow, placeStages, stageOfEvent } from "../src/life-flow.ts";
+import { STAGES, askWhatIf, lifeFlow, placeStages, stageOfEvent, whatMoved } from "../src/life-flow.ts";
 import type { PackDoc } from "../src/physics.ts";
 import { nodeKernel } from "./node-kernel.ts";
 
@@ -76,4 +76,49 @@ test("events go to the stage that made them", () => {
   assert.equal(stageOfEvent({ kind: "capability_lost" }), "catastrophes");
   assert.equal(stageOfEvent({ kind: "recovery" }), "catastrophes");
   assert.equal(stageOfEvent({ kind: "sterilisation" }), "catastrophes");
+});
+
+test("a what-if under other dials is read only, and the board knows whether the kernel took the dials", async () => {
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "kestrel reach campaign" }, [base], k.scratch);
+    const r = await s.lifeView({ fixture: "earth" });
+    assert.ok(r.ok);
+    const [dial, value] = Object.entries(r.view.dials)[0]!;
+    const asked = { [dial]: value * 2 + 0.5 };
+    const w = await askWhatIf(s, { fixture: "earth" }, asked);
+    // A kernel from before dials answers with the pack's world (honoured false) or refuses the field; one with dials
+    // answers with the asked value in force. Either way nothing in the campaign moves.
+    if (w.ok && w.honoured) assert.equal(w.view.dials[dial], asked[dial]);
+    else if (w.ok) assert.equal(w.view.dials[dial], value, "an ignored dial leaves the pack's value");
+    const again = await s.lifeView({ fixture: "earth" });
+    assert.ok(again.ok);
+    assert.deepEqual(again.view, r.view, "a what-if changes nothing");
+    // Asking for the values already in force is honoured by any kernel that answers.
+    const same = await askWhatIf({ lifeView: async () => r }, { fixture: "earth" }, { [dial]: value });
+    assert.ok(same.ok && same.honoured);
+  } finally {
+    await k.close();
+  }
+});
+
+test("what moved between the pack's world and a what-if, stage by stage", async () => {
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "kestrel reach campaign" }, [base], k.scratch);
+    const earth = await s.lifeView({ fixture: "earth" });
+    const dead = await s.lifeView({ fixture: "dead-earth" });
+    assert.ok(earth.ok && dead.ok);
+    assert.deepEqual(whatMoved(earth.view, earth.view), [], "the same world moved nowhere");
+    const m = whatMoved(earth.view, dead.view);
+    assert.ok(m.length > 0);
+    const sig = m.find((x) => x.id === "signatures");
+    assert.ok(sig && sig.was !== sig.now, "the signatures read differently");
+    // A what-if that only takes an innovation away shows it gone from that stage.
+    const without = { ...earth.view, events: earth.view.events.filter((e) => !(e.kind === "capability" && e.subject === "oxygenic")) };
+    const inn = whatMoved(earth.view, without).find((x) => x.id === "innovations");
+    assert.ok(inn && inn.gone.length === 1 && inn.added.length === 0);
+  } finally {
+    await k.close();
+  }
 });

@@ -11,6 +11,7 @@
   import { untrack } from "svelte";
   import { BODY_SHAPES, PATTERNS, coloursFromV3Save, objectColourSummary, parseV3Palette, symbologyFromV3Palette, v3SaveText, withV3TagColours, campaignCopy, legendFor, markerFor, resolveSymbology, subjectOf, type Binding, type Channel, type Json, type MarkSubject, type SymbologyDoc, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { HatchDefs, Legend, Mark, Stamp } from "../../../chart-grammar/src/index.ts";
+  import MapColours from "./MapColours.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const host = $derived(ctx.symbology!);
@@ -253,6 +254,7 @@
       {/each}
     {/if}
   </section>
+  <MapColours oneColour={host.theme().supports.colours !== "full"} gm={ctx.session.seat.authority === "gm" && (ctx.workspace.desk === "build" || ctx.workspace.desk === "run")} />
 </div>
 
 <style>

@@ -1,6 +1,6 @@
 # SSE4: postcards and hold backdrops (track PC)
 
-Status: **PROPOSED, 25 Nov 2026. Not accepted. Nothing here is built and no builder starts on it without Alex's yes** (questions in section 12). Design and mockup only. PC is a code only and is never shown in the product.
+Status: **ACCEPTED by Alex, 25 Nov 2026 01:27 UTC** ("yes to all... they look great and are a great promo tool": questions 2 to 7, 9, 11 and 13 yes, 12 later as recommended; questions 1, 8, 10 and 14 answered by his rulings in section 12A, which wins where it differs from the rest). Design and mockup only; nothing here is built by this note. Packages for the builder are in section 11. PC8 (Explorers storage) still needs his own yes when its package is ready, as every Explorers storage change does.
 
 Mockup, clickable: project files `sse4/handover-screens/PC-screens/postcards-mockup.html`, with desktop and phone screenshots beside it and its source in `PC-screens/source/`. The pictures in the mockup are painted stand-ins, not SSE4 output; each says so.
 
@@ -38,7 +38,9 @@ Read with: `SSE4-playbook-and-switchboard-design.md` (bookmarks in 4A, holding i
   "bookmark": { "schema": "sse.bookmark/1", "scope": "u:…/kestrel", "at_yr": 4.6100213e9, "instrument": "system",
                 "view": { "style": "true", "seen": "free", "scale": "real", "band": "visible", "hud": false }, "selected": "u:…/kestrel/iv" },
   // New: the camera. Absent, the view's fixed "Seen from" framing is used.
-  "pose": { "about": "u:…/kestrel/iv", "from_m": [x, y, z], "up": [x, y, z], "fov_deg": 28, "exposure_ev": -1.5,
+  // Stored the way the renderer builds its camera (renderer thread, section 14): the eye is a direction in the body's frame and a distance.
+  "pose": { "about": "u:…/kestrel/iv", "eye_dir": [x, y, z], "eye_m": 4.1e8, "up": [x, y, z], "fov_deg": 28,
+            "exposure": { "mode": "long", "ev": 0 },                 // "long" | "eye"; ev is 0 until exposure is metered (VP4)
             "keep": [0.18, 0.22, 0.80, 0.74] },                      // the part of the frame that must stay in view, any screen shape
   // New: how to get the world.
   "world": { "how": "address", "root": "u:<id>", "packs": [ { "id": "base-physics", "range": "^4.0" } ], "made_with": "4.0.0" }
@@ -78,7 +80,7 @@ Rules that keep this honest:
 **Back.** Laid out like the back of a postcard, in the chart room's type:
 
 - left: the caption, then **Why it looks like this**, three to five lines, each ending "why?" into the physics as everywhere else;
-- right: where (place line), when (date, and the local time of day where that means something), how (band, scale, field of view, exposure in plain words: "Exposed for the rings. The planet's night side is truly this dark"), who (credit chain), and what it travels with (address or clip, packs);
+- right: where (place line), when (date, and the local time of day where that means something), how (band, scale, field of view, exposure in plain words: "A long exposure. To the eye the rings would be fainter and the night side black"; where the sky, the glare or the long-exposure lift make the picture a composite, the back says so), who (credit chain), and what it travels with (address or clip, packs);
 - foot: **Go there**, **Keep** (to this campaign's postcards), **Send**, **Save picture**.
 
 **Where the reasons come from.** Every True recipe pass already draws from kernel facts (air from its composition, sea from the liquid's absorption, rings from their particles, the glow from the eye's glare equation). The ask of the renderer is that a pass which contributes to the frame also hands back one line: what it drew, the facts it read, and the block they came from. The back shows the lines for the passes that cover the most of the picture. Later, pressing a spot on the front answers "what am I looking at here?" with that spot's line. This is the "clever user can test it" touch: change the liquid, and the reason and the sea change together.
@@ -108,9 +110,9 @@ A postcard is small text, so it goes the ways a clip goes:
 Extends section 6 of the Playbook design; the Run desk thread owns it.
 
 1. **Kinds of card:** Blank, Plain, Jokes, and now **Quotes**.
-2. **Ground:** None (today), **A postcard**, or **Postcards in turn** (from a set or the campaign's own; never the same twice running; changes by a slow fade every few minutes, and not at all under reduced motion).
+2. **Ground:** None (today), **A postcard**, or **Postcards in turn** (from the universe's default set first, another set, or the campaign's own; never the same twice running; changes by a slow fade every few minutes, and not at all under reduced motion).
 3. **On the line card**, under the kind: one row "Ground" with the three choices and a strip of stamps. A click on a line still uses the kind and ground used last, so the common case stays one press.
-4. **What a held screen shows:** the picture full screen; the card's words in the display face on the picture's quiet side over a soft shade so they always read; for a quote, who said it beneath. Top and bottom lines come from the Atlas banner picker with the `waiting` use, in the look's own style.
+4. **What a held screen shows:** the picture full screen; the card's words in the display face on the picture's quiet side over a soft shade so they always read; for a quote, who said it beneath. One piece of words only: a waiting line from the Atlas banner picker appears at the foot only with Blank and Plain cards, never under a quote or a joke (Alex, section 12A point 5).
 5. **Still nothing behind the card.** A hold stays a send: the screen gets the postcard and the words and nothing of what it was showing.
 6. **Knowledge.** A postcard from a set is somewhere else entirely, so there is nothing to hide. A campaign postcard (`here`) is drawn through the role's knowledge like everything else; if the role does not know the place, that screen falls back to the next one in turn, or to no ground.
 7. **Look.** Drawn through the role's look, with the same "look off for this picture" switch as a Play picture (Playbook 4.7). A green terminal showing a green postcard is right; a wall TV in the plain look gets the photograph.
@@ -151,12 +153,12 @@ Extends section 6 of the Playbook design; the Run desk thread owns it.
 | **PC5** | Grounds on holding and transmission cards; the Quotes kind; the line card's Ground row | Run desk | PB5, PC1 |
 | **PC6** | The base set of about 24 and its check | new thread with trailer | PC2, PC3 |
 | **PC7** | The quote set | Atlas | question 7 |
-| **PC8** | Explorers: kind, shelf, stamp, offer | Explorers | Alex's yes |
+| **PC8** | Explorers: kind, shelf with an always-free selection, stamp, offer; the link page with its preview picture; private sends with a message; the Discord webhook | Explorers | Alex's yes |
 | later | a postcard on the start sheet; a poster-size picture through the Atlas print path; a "living postcard" that lets time run slowly; press a spot for its reason | | |
 
 PC1, PC3 for the globe, and PC5 can start on main today. Only PC2 and PC8 wait on anyone.
 
-## 12. Questions for Alex
+## 12. Questions, all answered (25 Nov 2026: 1, 8, 10 and 14 by section 12A; the rest "yes to all" at 01:27, with 12 left for later)
 
 1. **The name "postcard".** It has a front and a back, and it is something you send. Recommend: yes. (Others considered: plate, snapshot, vista.)
 2. **A postcard is a bookmark plus camera, date and world, and the camera goes onto plain bookmarks too.** Recommend: yes.
@@ -171,6 +173,31 @@ PC1, PC3 for the globe, and PC5 can start on main today. Only PC2 and PC8 wait o
 11. **No filters or effects on a postcard beyond the role's look: framing, band, exposure and date only.** Recommend: yes ("lean into the physics, never fake it").
 12. **A postcard on the start sheet as its backdrop, changing each visit.** Recommend: later, once the set exists.
 
+## 12A. Alex's rulings, 25 Nov 2026 01:08 UTC
+
+His words: "postcards - amazing idea - always a selection free in the shop - it will tell the user packs it needs to download to replicate - so really can only show content in game or on the store".
+
+1. **The name is postcard** (question 1: yes).
+2. **There is always a free selection of postcards in the shop** (Explorers). This answers question 10 in direction: the shelf is wanted, and it is never empty and never paid. The Explorers work itself (a new kind, stored stamps) is still built by the Explorers owner as its own package, PC8.
+3. **A postcard tells the user which packs it needs to download to replicate it.** On the back, "Travels as" becomes a list of the packs needed, each with its state on this device (have it, free to get, paid) and a "Get" press that goes to that pack in the shop. A postcard of a paid pack's world can sit in the free selection as that pack's shop window: the stamp shows the picture, and the live still and "Go there" need the pack.
+4. **So a postcard on the shop shows only content that is in the game or on the store.** A published postcard travels as an address plus named packs, never as a carried clip: everything it shows must come from the base game or from something published on Explorers (a pack, or a published campaign or system). Someone whose picture is of their own authored world publishes that world first, and the postcard names it. The site refuses a postcard whose packs or world it does not hold, and says which.
+
+5. **A quote stands alone** (01:10 UTC: "Quote does not need a joke below as well"). A held screen carries one piece of words. Over a Quote card there is no waiting line or joke at the foot: only the quote, who said it, and the quiet labels (the role, the place). The Atlas banner picker's waiting line is used only with Blank and Plain cards, and a Joke card is its own words with nothing added. This replaces section 8 point 4's "top and bottom lines" for quotes and jokes.
+6. **A universe has a default set** (01:10 UTC: "a universe will have a default set"). A universe pack carries its own `sse.postcards/1` set (and may carry its own quote set). In a campaign in that universe, "Postcards in turn" and the wall open on that universe's set first, so a setting's hold screens show its own places with no setting up. The base app's set of about 24 is the default set of the base universe, and the fallback for a universe pack that brings none. The GM can still choose another set or the campaign's own.
+
+7. **Every band, and Composite** (01:15 UTC: "i love the way you can pick IR - a wavelength - and even better when we have others and composite views too"). The front's band switch is the standard Band control: every band the view can draw (Visible, Infrared, Ultraviolet, X-ray, Radio, Mag), then Composite, with the unavailable ones quiet and saying why, as everywhere. A postcard is kept in one band (or one Composite mix, stored as the mix), and whoever opens it may look in any other. The reasons on the back are the reasons for the band showing.
+8. **Send to anyone, with a personal message** (01:15: "being able to send to anyone with a personal message would be cool"). Send gains "Write on the back": a short message and who it is from, shown on the right-hand side of the back, where a postcard's message goes. The message box opens already holding **"Wish you were here!"** (Alex, 01:15: 'default message "Wish you were here!" :)'), ready to send as it is or to type over; a universe pack may give its own default line. The message belongs to that sending, not to the postcard: it travels in the link or file, is never published to the shop, and is plain text only (no links made live, no markup).
+9. **A postcard link works for someone without SSE4, and takes them there** (01:15: "if one is sent to someone without SSE it can take them there - a great tool to build interest"). The link opens a page that needs nothing installed: the stamp at once, the message, the caption, and "See it live", which opens SSE4 in the browser on that postcard as a visit (the alpha notice and the way to V3 for real use stay as they are on the opening page). Where the device cannot draw True the stamp stays, with the reason. This is why the stamp is kept (question 8 is in effect answered yes).
+10. **The Discord sharing channel** (01:15: "We can have them come through the sharing channel on the discord too"). A postcard link pasted into Discord unfurls as a picture card: the page carries the stamp as its preview picture, with the name and caption. Posting newly published shop postcards into the channel automatically is a webhook on the Explorers side, part of PC8 and needing Alex to supply the channel's webhook address as a secret.
+
+Two things follow for the builder. A link that shows a stamp and a message needs somewhere to keep them, since a web address cannot hold a picture: a shop postcard already has its page; a private send stores a small sealed copy (stamp, message, the postcard data) on Explorers behind an unguessable address, with a lifetime (question 14). And a private send is the first user-written text and picture that is not moderated before someone sees it, so it carries a Report link and is never listed or searchable.
+
+14. **Answered by Alex, 01:26 UTC:** "let the user decide when it times out - max 1 year. the postcard will still work - just not with their message". So Send offers how long the message lasts (a day, a week, a month, a year; never longer than a year), and the sender can remove it sooner from "Sent" on the wall. **The postcard itself never expires**: the link carries the postcard's own data (its address, date, camera and packs), and only the message and the stamp for that sending are kept on Explorers, sealed, behind the link's unguessable key. After the time is up the same link still opens the postcard, drawn live, and where the message was the back reads **"Message expired, but look at that view!"** (Alex's line, 01:26). The page's preview picture goes with the message. The storage itself still needs Alex's own yes when PC8 is built, as any Explorers storage does.
+
+What this changes above: section 4's "clip" case and section 7's file with a clip are **not for the shop**. Whether a clip-carrying postcard is still allowed directly between friends (copy, file) is new question 13. Section 9's moderation gets simpler: the only new thing the site stores is the stamp.
+
+13. **New question: may a postcard still carry a clip of an unpublished authored world when sent directly to a friend (copy or file, never the shop)?** Recommend: yes. It is the same act as pasting a clip to a friend today, through what the maker's seat can see, and it keeps "send me that view" working for a GM's private world. If no, every postcard is an address plus packs and `world.how: "clip"` is dropped.
+
 ## 13. Standing rulings, checked
 
 One general mechanism (bookmark, clip, still tier, holding cards, margin notes reused; nothing special-cased). Don't copy V3 (static images become live stills that explain themselves). GM streams only data. Honesty marks on the GM's view only. Sound off. Reduced motion honoured. No new tab. Tags never feed physics; nothing here feeds physics. Figures on the back go through `figures.ts`.
@@ -180,9 +207,9 @@ One general mechanism (bookmark, clip, still tier, holding cards, margin notes r
 - **Run desk** ("Build Run desk playbook and players' side"): yes to all four, with changes now folded into sections 3, 6 and 8. Pose optional on the bookmark and read leniently; the ground on the held card, not the hold source; the Quotes kind with the `CardDeck` fallback and identity notes; one store, so no `show: { postcard }`. It will own PC5 once Alex accepts.
 - **Atlas** ("Build star atlas and editions"): a margin note has no speaker or source today; it adds `by` and `source` in PC7 and will own PC7. margin.ts reaches main with PR 481; `uses`, `pickBanners` (situation "holding") and the waiting lines follow in its next PR.
 - **Trailer** ("Capture footage for SSE4 trailers"): no separate stills list; the candidates are in the two files named in section 9. Happy for postcards to be picked from them and for the rig to film from a postcard's pose later.
-- **Renderer** ("Build photoreal renderer"): asked, no answer yet. PC2 and the pose's `exposure_ev` and `fov_deg` stay proposals until it answers.
+- **Renderer** ("Build photoreal renderer"): sound, and nothing in it is costly. (1) A still of any True view is the same `gpu.draw` with its `finish` (VP1, PR 488) into an offscreen target of the asked size, read back once; refinement uses the tiers thread's accumulate on FinishFrame (jittered frames averaged before glare), so a postcard matches the live view exactly, and `photograph` becomes a thin caller of that, not a second renderer. (2) The pose is stored as the camera is built: frame body's address, eye as a body-frame direction plus distance from centre in metres, up, `fov_deg`, the keep box; style, band, seen and the date come from the bookmark. The close-up camera fits it (distance down to a grazing height, plus a ground point the detail ladder reads). There is no metered exposure yet: True is fixed at 1 (white in the star's daylight, fudge row VP1) with a choice of long or eye, so the pose stores `exposure: { mode, ev: 0 }` and `ev` becomes the metered value when VP4 meters it. (3) Reason lines are cheap: `trueLook` (true-body.ts) is the one door every True face comes through and already collects what a face could not show; it is extended to a list per body of pass, facts read and block id, with coverage from the body's projected disc. A pixel pick is one extra id draw at the click. The sky, the glare and the long-exposure lift give their own lines, so the back can say which parts are a composite.
 - **Explorers**: not asked; nothing there moves before Alex's yes to question 10.
 
 ## 15. Picking this up without the chat
 
-Read sections 1, 3 and 4, then open the mockup. The mockup shows: a held wall screen with a quote over a postcard, light and through a green look; the same on a phone; the card's front and back; the wall; the Switchboard line card with its Ground row; and "What goes with it". It does not show the visit, the Explorers shelf or the framing ticks. If Alex has answered, his answers are in `handover/decisions.md` and this note's status line; if he has not, nothing is to be built.
+Read sections 1, 3 and 4, then open the mockup. The mockup shows: a held wall screen with a quote over a postcard, light and through a green look; the same on a phone; the card's front and back; the wall; the Switchboard line card with its Ground row; and "What goes with it". It does not show the visit, the Explorers shelf or the framing ticks. Alex accepted the design on 25 Nov 2026 (status line, sections 12 and 12A); section 12A wins where it differs from the earlier sections.
