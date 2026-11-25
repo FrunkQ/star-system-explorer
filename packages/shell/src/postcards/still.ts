@@ -2,7 +2,7 @@
 // The globe draws one today through the renderer's still tier (R3, `photograph`); other views join as the renderer's
 // still of any True view arrives (PC2), and until then the card says so plainly and shows the stamp if it has one.
 import type { Globe, Postcard, SystemScene, ViewContext } from "../../../ui-contract/src/index.ts";
-import { globeOfPose, VIEW_BAND_WORDS } from "../../../ui-contract/src/index.ts";
+import { COMPOSITE, COMPOSITE_WORD, globeOfPose, VIEW_BAND_WORDS } from "../../../ui-contract/src/index.ts";
 import { LIBRARY, photograph, type Photo } from "../../../renderer/src/index.ts";
 import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
 import { loadSurface } from "../../../views/body/src/surface.ts";
@@ -17,7 +17,7 @@ export function stillBlocker(p: Postcard, scene: SystemScene): string | null {
   if (b.instrument !== "body") return "A still of this view comes with the renderer's next step; the kept picture is shown until then.";
   if (!b.pose) return "It has no camera, so it cannot be drawn the same way again.";
   const band = b.view?.band ?? "visible";
-  if (band !== "visible" && band !== "mag") return `The globe is drawn in visible light for now, not ${VIEW_BAND_WORDS[band]}.`;
+  if (band !== "visible" && band !== "mag") return `The globe is drawn in visible light for now, not ${band === COMPOSITE ? COMPOSITE_WORD : VIEW_BAND_WORDS[band]}.`;
   if (!scene.subjects.some((s) => s.address === b.pose!.about)) return "The world it shows is not in this system any more.";
   return null;
 }

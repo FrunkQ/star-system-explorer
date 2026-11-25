@@ -3,7 +3,7 @@
   // of a postcard (left the caption and why it looks like this; right where, when, how, who, the message and what it
   // travels with; foot Go there, Send, Save picture). Presentation only.
   import { untrack } from "svelte";
-  import { creditWords, goesWith, packsNeeded, sayNumber, SCALE_WORDS, VIEW_BAND_WORDS, VIEW_STYLE_WORDS, STAMP_SIDE, stampOf, type Postcard, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { COMPOSITE, COMPOSITE_WORD, creditWords, goesWith, packsNeeded, sayNumber, SCALE_WORDS, VIEW_BAND_WORDS, VIEW_STYLE_WORDS, STAMP_SIDE, stampOf, type Postcard, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { dateWords, defaultCalendar, formatYears, fromPackCalendar } from "../../../chart-grammar/src/index.ts";
   import { drawStill, stillBlocker } from "./still.ts";
   import Send from "./Send.svelte";
@@ -97,7 +97,7 @@
   const when = $derived(b.scope === scene.system ? dateWords(b.at_yr, calendar, true) : `${formatYears(b.at_yr)} on its system's clock`);
   const view = $derived(b.view);
   const how = $derived.by(() => {
-    const parts = [view ? VIEW_STYLE_WORDS[view.style] : null, `${VIEW_BAND_WORDS[view?.band ?? "visible"]} band`, `${SCALE_WORDS[view?.scale ?? "readable"]} scale`, b.pose ? `${sayNumber(b.pose.fov_deg, 2)}° across` : null].filter(Boolean);
+    const parts = [view ? VIEW_STYLE_WORDS[view.style] : null, `${view?.band === COMPOSITE ? COMPOSITE_WORD : VIEW_BAND_WORDS[view?.band ?? "visible"]} band`, `${SCALE_WORDS[view?.scale ?? "readable"]} scale`, b.pose ? `${sayNumber(b.pose.fov_deg, 2)}° across` : null].filter(Boolean);
     return parts.join(", ");
   });
   const exposure = $derived(b.pose?.exposure.mode === "eye" ? "As an eye would see it." : b.pose ? "A long exposure: to the eye the night side would be darker." : null);
