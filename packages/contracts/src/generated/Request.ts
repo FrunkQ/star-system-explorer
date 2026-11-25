@@ -5,6 +5,7 @@ import type { FormationRequest } from "./FormationRequest";
 import type { HoldPoint } from "./HoldPoint";
 import type { InputSpec } from "./InputSpec";
 import type { JobSpec } from "./JobSpec";
+import type { ReferenceTile } from "./ReferenceTile";
 import type { SkyCone } from "./SkyCone";
 import type { SurfaceTile } from "./SurfaceTile";
 import type { TileRequest } from "./TileRequest";
@@ -100,7 +101,7 @@ young?: unknown[], } | { "op": "adopt", import_v3?: string, formation?: Formatio
  * line: the line it was cut from plus its own edits. Nothing is
  * committed (editing design ED1: the exact answer on a pause).
  */
-branch?: string, } | { "op": "classify_preview", packs: unknown[], scheme: string, scope?: string, at_s?: number, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "ship_at_world", fixture?: string, nav?: unknown, system?: string, at_s?: number, ship: unknown, worlds: Array<string>, v_inf_m_s?: number, } | { "op": "jump_map", fixture?: string, nav?: unknown, system?: string, at_s?: number, rule: unknown, end?: boolean, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, 
+branch?: string, } | { "op": "reference_tiles", body: string, tiles: Array<ReferenceTile>, } | { "op": "classify_preview", packs: unknown[], scheme: string, scope?: string, at_s?: number, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "ship_at_world", fixture?: string, nav?: unknown, system?: string, at_s?: number, ship: unknown, worlds: Array<string>, v_inf_m_s?: number, } | { "op": "jump_map", fixture?: string, nav?: unknown, system?: string, at_s?: number, rule: unknown, end?: boolean, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, 
 /**
  * The system an inline `nav` is, so the view's `frame` can be
  * keyed (needs an open universe); the Sol fixture's is measured.
