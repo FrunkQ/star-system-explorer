@@ -6,6 +6,7 @@
 import { typedFigures } from "./loader.ts";
 import { sayNumber } from "../figures.ts";
 import { ARRANGEMENTS } from "../layouts.ts";
+import { checkLookDelivery, PAGE_TURN_MAX_MS, STARTER_DELIVERIES, TURN_MAX_MS, type LookDelivery } from "../delivery.ts";
 import type { PartControl } from "../part-controls.ts";
 import { VIEW_STYLES, type ViewStyle } from "../view-controls.ts";
 import starters from "./kits/starters.json" with { type: "json" };
@@ -14,12 +15,6 @@ export const KIT_SCHEMA = "sse.kit/1";
 export const SITUATIONS = ["sector", "system", "world", "ship", "landing", "holding"] as const;
 export type Situation = (typeof SITUATIONS)[number];
 export const TIERS = ["text", "canvas", "gpu-basic", "gpu-high"] as const;
-/** The five moments a screen arrives and leaves at (11A.4a). */
-export const MOMENTS = ["power_on", "arrive", "turn", "leave", "power_off"] as const;
-/** The deliveries in the toolkit (11A.4a); each look owns how they are drawn. */
-export const DELIVERIES = ["none", "fade", "wipe", "build-up", "type-on", "scan-in", "warm-up", "collapse-to-dot", "static-burst", "dissolve-blocks", "slide", "page-turn", "stepped-wipe", "iris"] as const;
-/** A Turn is always short, so stepping through an Atlas never becomes a wait (11A.4a rule 2). */
-export const TURN_MAX_SECONDS = 0.4;
 
 export interface KitItem {
   view: string;
@@ -38,14 +33,6 @@ export interface KitLayout {
   card?: string;
 }
 
-export interface KitDelivery {
-  use: string;
-  seconds?: number;
-  then?: string;
-  by?: "screen" | "part" | "inside";
-  order?: string[];
-  chars_per_second?: number;
-}
 
 /** A named colour set a look may wear (11A.5): checked for contrast when the kit loads. */
 export interface Palette {
@@ -67,7 +54,11 @@ export interface KitDoc {
   view_style?: ViewStyle;
   vocab?: string;
   atlas?: { edition: string; look?: string };
-  delivery?: Partial<Record<(typeof MOMENTS)[number], KitDelivery>>;
+  /**
+   * How its screens arrive and leave (11A.4a; AT15a's one mechanism): a starter's set by name (hauler, corporate,
+   * deck, paper, guide), or a look's own deliveries moment by moment, checked by `checkLookDelivery`.
+   */
+  delivery?: keyof typeof STARTER_DELIVERIES | LookDelivery;
   needs?: { tier: (typeof TIERS)[number]; falls_back_to?: string };
   layouts?: Partial<Record<Situation, KitLayout>>;
   /** One-liners at the top and bottom of the role's screens (SSE3's guide tips), from these note sets by situation. */
@@ -139,6 +130,12 @@ export function checkPalette(p: Palette): string[] {
 }
 
 /** The kit `id` with its `extends` chain applied (layouts merge by situation). Throws a sentence on a missing or looping parent. */
+/** A kit's deliveries moment by moment: a starter's set when named, else as given. */
+export function lookDeliveryOf(d: KitDoc["delivery"]): LookDelivery {
+  if (d === undefined) return {};
+  return typeof d === "string" ? { ...(STARTER_DELIVERIES[d] ?? {}) } : d;
+}
+
 export function resolveKit(id: string, docs: readonly KitDoc[] = []): KitDoc {
   const all = [...STARTER_KITS, ...docs];
   const byId = (x: string) => {
@@ -158,7 +155,8 @@ export function resolveKit(id: string, docs: readonly KitDoc[] = []): KitDoc {
   const out: KitDoc = { schema: KIT_SCHEMA, id: chain[0]!.id, name: chain[0]!.name, description: chain[0]!.description, layouts: {} };
   for (const d of [...chain].reverse()) {
     for (const k of ["look", "palettes", "view_style", "vocab", "atlas", "needs"] as const) if (d[k] !== undefined) (out as unknown as Record<string, unknown>)[k] = d[k];
-    if (d.delivery) out.delivery = { ...(out.delivery ?? {}), ...d.delivery };
+    // A starter named by its id is read in full; a kit that extends one overrides moment by moment.
+    if (d.delivery) out.delivery = { ...lookDeliveryOf(out.delivery), ...lookDeliveryOf(d.delivery) };
     for (const [s, l] of Object.entries(d.layouts ?? {})) out.layouts![s as Situation] = l;
   }
   // A layout that extends another situation takes its arrangement and items unless it states its own.
@@ -205,12 +203,13 @@ export function checkKit(doc: unknown, stack: KitStack = {}): string[] {
       else out.push(...checkPalette(hit));
     } else out.push(...checkPalette(p));
   }
-  for (const [m, dl] of Object.entries(d.delivery ?? {})) {
-    if (!(MOMENTS as readonly string[]).includes(m)) out.push(`"${m}" is not a moment; the moments are ${MOMENTS.join(", ")}.`);
-    if (!dl || !(DELIVERIES as readonly string[]).includes(dl.use)) out.push(`The ${m} delivery "${dl?.use}" is not in the toolkit (${DELIVERIES.join(", ")}).`);
-    if (dl?.then && !(DELIVERIES as readonly string[]).includes(dl.then)) out.push(`The ${m} delivery goes on to "${dl.then}", which is not in the toolkit.`);
-    if (dl?.seconds !== undefined && !(dl.seconds >= 0 && dl.seconds <= 4)) out.push(`The ${m} delivery lasts ${dl.seconds} s; keep a delivery between 0 and 4 seconds.`);
-    if (m === "turn" && dl?.seconds !== undefined && dl.seconds > TURN_MAX_SECONDS) out.push(`A Turn lasts at most ${TURN_MAX_SECONDS} s, so stepping a book never becomes a wait.`);
+  if (typeof d.delivery === "string") {
+    if (!(d.delivery in STARTER_DELIVERIES)) out.push(`The delivery "${d.delivery}" is not a starter's (${Object.keys(STARTER_DELIVERIES).join(", ")}); name one, or give the deliveries moment by moment.`);
+  } else {
+    for (const e of checkLookDelivery(d.delivery)) out.push(`The kit's ${e}.`);
+    const turn = d.delivery?.turn;
+    const cap = turn?.kind === "page_turn" ? PAGE_TURN_MAX_MS : TURN_MAX_MS;
+    for (const ms of [turn?.ms, turn?.short_ms]) if (typeof ms === "number" && ms > cap) out.push(`A Turn lasts at most ${sayNumber(cap / 1000, 2, { decimals: 1 })} s, so stepping a book never becomes a wait.`);
   }
   if (d.banners !== undefined) {
     if (!["top", "bottom", "both"].includes(d.banners?.at)) out.push(`The banners sit at "${String(d.banners?.at)}"; use top, bottom or both.`);

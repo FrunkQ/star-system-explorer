@@ -3,6 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { atlasDocsOf, checkKit, checkPalette, contrastOf, partsOf, resolveKit, SHIPPED_PALETTES, STARTER_KITS, type KitDoc, type PartInfo } from "../src/atlas/index.ts";
 import { SHIPPED_EDITIONS } from "../src/atlas/index.ts";
+import { STARTER_DELIVERIES } from "../src/delivery.ts";
 
 // The players' parts as they declare their controls (AT13; tests/ui/kit-parts.test.ts reads the real declarations).
 const PARTS: PartInfo[] = [
@@ -49,7 +50,7 @@ test("the loader refuses with sentences that say what to change", () => {
     extends: "sse.kit.nowhere",
     look: "neon",
     palettes: ["no-such", { id: "murky", name: "Murky", tokens: { ground: "#333333", ink: "#444444", "ink-muted": "#555555", accent: "#666666", "accent-ink": "#777777" } }],
-    delivery: { turn: { use: "type-on", seconds: 1.5 }, arrive: { use: "explode" } },
+    delivery: { turn: { kind: "type_on", ms: 1500 }, arrive: { kind: "explode" } },
     needs: { tier: "gpu-high" },
     banners: { at: "middle", sets: ["sse.notes.nowhere"] },
     layouts: {
@@ -58,7 +59,7 @@ test("the loader refuses with sentences that say what to change", () => {
     },
   };
   const said = checkKit(bad, STACK).join("\n");
-  for (const m of [/extends sse\.kit\.nowhere, which is not here/, /state a figure \("5 kg"\)/, /look "neon"/, /palette "no-such"/, /murky, ink on ground has a contrast of 1\.\d to 1/, /A Turn lasts at most 0\.4 s/, /"explode" is not in the toolkit/, /names a kit a weaker device falls back to/, /area "c", which four does not have \(1, 2, 3, 4\)/, /switches "teleport" on sse\.view\.atlas/, /"sse\.view\.flow-editor", which is not a part on a player's screen/, /"bridge" is not a situation/, /banners sit at "middle"/, /note set "sse\.notes\.nowhere" is not in the pack stack/]) {
+  for (const m of [/extends sse\.kit\.nowhere, which is not here/, /state a figure \("5 kg"\)/, /look "neon"/, /palette "no-such"/, /murky, ink on ground has a contrast of 1\.\d to 1/, /A Turn lasts at most 0\.4 s/, /"explode" is not a delivery/, /names a kit a weaker device falls back to/, /area "c", which four does not have \(1, 2, 3, 4\)/, /switches "teleport" on sse\.view\.atlas/, /"sse\.view\.flow-editor", which is not a part on a player's screen/, /"bridge" is not a situation/, /banners sit at "middle"/, /note set "sse\.notes\.nowhere" is not in the pack stack/]) {
     assert.match(said, m);
   }
 });
@@ -79,4 +80,13 @@ test("atlasDocsOf gathers editions, note sets and kits from provides.other.atlas
   assert.deepEqual(docs.kits.map((k) => [k.id, k.name]), [["sse.kit.hauler", "Hauler (ours)"], ["mine.kit.salvage", "Hauler"]]);
   assert.match(docs.refused.join("\n"), /atlas\.charts; the lists are editions, note_sets and kits/);
   assert.match(docs.refused.join("\n"), /atlas\.note_sets that is not a list/);
+});
+
+test("a kit's deliveries are AT15a's: a starter by name, or a look's own moment by moment", () => {
+  assert.deepEqual(resolveKit("sse.kit.hauler").delivery, STARTER_DELIVERIES.hauler, "Hauler warms up and builds up, as the Hauler look does");
+  assert.deepEqual(resolveKit("sse.kit.guide").delivery, STARTER_DELIVERIES.guide, "the Guide redraws in bands");
+  const quiet = { ...STARTER_KITS[0]!, id: "mine.kit.quiet", extends: "sse.kit.hauler", delivery: { power_on: { kind: "fade" as const } } };
+  const k = resolveKit(quiet.id, [quiet]);
+  assert.deepEqual(k.delivery, { ...STARTER_DELIVERIES.hauler, power_on: { kind: "fade" } }, "a kit that extends a starter changes one moment");
+  assert.match(checkKit({ ...quiet, delivery: "disco" as never }, {}).join(" "), /"disco" is not a starter's/);
 });

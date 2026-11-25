@@ -140,33 +140,7 @@
     "edition": "sse.edition.company",
     "look": "phosphor"
    },
-   "delivery": {
-    "power_on": {
-     "use": "warm-up",
-     "seconds": 2.0,
-     "then": "build-up"
-    },
-    "arrive": {
-     "use": "build-up",
-     "by": "part",
-     "order": [
-      "a",
-      "b",
-      "c"
-     ]
-    },
-    "turn": {
-     "use": "type-on",
-     "seconds": 0.3
-    },
-    "leave": {
-     "use": "none"
-    },
-    "power_off": {
-     "use": "collapse-to-dot",
-     "seconds": 1.2
-    }
-   },
+   "delivery": "hauler",
    "needs": {
     "tier": "text"
    },
@@ -245,28 +219,7 @@
     "edition": "sse.edition.survey",
     "look": "glass"
    },
-   "delivery": {
-    "power_on": {
-     "use": "iris",
-     "seconds": 0.9
-    },
-    "arrive": {
-     "use": "fade",
-     "seconds": 0.5
-    },
-    "turn": {
-     "use": "slide",
-     "seconds": 0.25
-    },
-    "leave": {
-     "use": "fade",
-     "seconds": 0.3
-    },
-    "power_off": {
-     "use": "iris",
-     "seconds": 0.8
-    }
-   },
+   "delivery": "corporate",
    "needs": {
     "tier": "gpu-basic",
     "falls_back_to": "sse.kit.deck"
@@ -347,34 +300,7 @@
     "edition": "sse.edition.survey",
     "look": "deck"
    },
-   "delivery": {
-    "power_on": {
-     "use": "scan-in",
-     "seconds": 1.2,
-     "then": "build-up"
-    },
-    "arrive": {
-     "use": "build-up",
-     "by": "part",
-     "order": [
-      "a",
-      "b",
-      "c",
-      "d"
-     ]
-    },
-    "turn": {
-     "use": "wipe",
-     "seconds": 0.3
-    },
-    "leave": {
-     "use": "none"
-    },
-    "power_off": {
-     "use": "fade",
-     "seconds": 0.6
-    }
-   },
+   "delivery": "deck",
    "needs": {
     "tier": "canvas",
     "falls_back_to": "sse.kit.hauler"
@@ -459,27 +385,7 @@
    "atlas": {
     "edition": "sse.edition.guide"
    },
-   "delivery": {
-    "power_on": {
-     "use": "fade",
-     "seconds": 0.6
-    },
-    "arrive": {
-     "use": "stepped-wipe",
-     "seconds": 0.4
-    },
-    "turn": {
-     "use": "stepped-wipe",
-     "seconds": 0.26
-    },
-    "leave": {
-     "use": "none"
-    },
-    "power_off": {
-     "use": "fade",
-     "seconds": 0.6
-    }
-   },
+   "delivery": "guide",
    "needs": {
     "tier": "text"
    },
