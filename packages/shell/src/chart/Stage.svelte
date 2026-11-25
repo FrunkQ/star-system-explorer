@@ -67,9 +67,9 @@
 
 <main class="stage" style:--viewbar-h={viewbarH ? `${viewbarH}px` : undefined} data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={cardMount ? undefined : ""} data-lens={lensId} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
   {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
-  {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH}><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
+  {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH} data-chart-overlay><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
   <div class="area-chart">{#if chartMount}{#key openings}<div class="fill" use:view={chartMount}></div>{/key}{/if}</div>
-  <nav class="tools" aria-label="Tools">
+  <nav class="tools" aria-label="Tools" data-chart-overlay>
     <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
     {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
     <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
@@ -81,7 +81,7 @@
   </nav>
   {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
   {#if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
-  <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if cardMount}<div use:view={cardMount}></div>{/if}</aside>
+  <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if cardMount}<div use:view={cardMount} data-chart-overlay></div>{/if}</aside>
 </main>
 
 <style>

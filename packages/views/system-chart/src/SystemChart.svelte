@@ -19,8 +19,10 @@
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { KM_PER_AU, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
+  import RangeRings from "./RangeRings.svelte";
+  import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
   import { readLiveStar, readTrueFace, starsBehind, starCss, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
@@ -31,13 +33,23 @@
   let w = $state(0);
   let h = $state(0);
   let zoom = $state(1);
+  // What lies over the chart, in its own pixels (measured in measureOverlays below).
+  let overlays = $state<Box[]>([]);
   $effect(() => {
     zoom = Number(params.zoom);
   });
 
   const narrow = $derived(w < 700);
   const cx = $derived(w * (narrow ? 0.5 : Number(params.centre_x)));
-  const cy = $derived(h * 0.5);
+  // On a phone the key and the zoom sit over the foot of the chart: the system is drawn in the band above them, so no
+  // world hides under them (overlays are measured below; until then the whole height).
+  const band = $derived.by(() => {
+    if (!narrow) return { top: 0, bottom: h };
+    const top = Math.max(0, ...overlays.filter((o) => o.y + o.h < h * 0.4).map((o) => o.y + o.h));
+    const bottom = Math.min(h, ...overlays.filter((o) => o.y > h * 0.5).map((o) => o.y));
+    return bottom - top > 160 ? { top, bottom } : { top: 0, bottom: h };
+  });
+  const cy = $derived((band.top + band.bottom) / 2);
   const star = $derived(primaryOf(scene));
   // Orbits are local to their parent (handover/rendering-rules.md). The chart shows one frame at a time:
   // the star's (frame null) with its planets, or a planet's with its moons. Choosing a moon anywhere opens
@@ -87,10 +99,11 @@
   const catalogued = $derived(!scene.fixture && !authoredImport && scene.subjects.length > 0 && scene.subjects.every((s) => s.stamps.includes("catalogued")));
   const scale = $derived(
     fitScale(
-      // A sphere round the system (the Oort cloud) reaches far past everything else; the chart shows where it begins.
-      [...orbiting.map((s) => s.orbit!.a_au), ...bands.flatMap((b) => (isShell(b) ? [b.band_au![0]] : b.band_au!))],
+      // A sphere round the system (the Oort cloud) is drawn as a haze from where it begins; the fit frames the worlds and
+      // belts, so they fill the chart instead of huddling in the middle of a cloud a thousand times wider.
+      [...orbiting.map((s) => s.orbit!.a_au), ...bands.filter((b) => !isShell(b)).flatMap((b) => b.band_au!)],
       narrow ? 22 : 34,
-      Math.max(60, Math.min(w, h) * (narrow ? 0.47 : 0.44) * zoom),
+      Math.max(60, Math.min(w, band.bottom - band.top) * (narrow ? 0.47 : 0.44) * zoom),
     ),
   );
   const r = (au: number) => radius(au, drag ? drag.scale : scale);
@@ -151,6 +164,14 @@
   // The world stays put while dragging; a ghost and its orbit line follow the pointer (editing design section 4).
   const aOf = (s: SceneSubject) => s.orbit!.a_au;
   const rr = (au: number) => radius(au, drag ? drag.scale : scale);
+  // Range rings (RK12): whatever the host feeds (a pack's weapons), placed round each holder shown on this chart.
+  const rangeProject = $derived(chartProject(cx, cy, rr));
+  const rangeSets = $derived(
+    (ctx.rangeRings?.() ?? []).flatMap((g) => {
+      const s = all.find((b) => b.address === g.holder);
+      return s && g.rings.length ? [{ ...g, centre_m: s === centre ? ([0, 0] as [number, number]) : holderAt(s.orbit) }] : [];
+    }),
+  );
   const pos = (s: SceneSubject): [number, number] => polar(cx, cy, rr(aOf(s)), s.orbit!.phase_deg);
   let svgEl: SVGSVGElement | undefined = $state();
 
@@ -236,6 +257,66 @@
   }
   const all = $derived(centre ? [centre, ...orbiting] : orbiting);
   const selected = $derived(scene.subjects.find((s) => s.address === ctx.workspace.selection));
+  // Where each name sits (chart-labels.ts): round its mark, clear of the other names and marks, the belt names and the
+  // scale figures, inside the chart. A body that is not named takes no place.
+  const bandLabels = $derived(
+    (on("zones") && on("labels") ? bands : []).map((b) => {
+      const [lx, ly] = polar(cx, cy, isShell(b) ? r(b.band_au![0]) + 14 : r(b.band_au![1]) + 10, b.kind === "zone" ? -62 : isShell(b) ? 132 : 58);
+      const text = `${label(b)}${isShell(b) ? " · sphere" : ""}`;
+      const bw = Math.ceil(text.length * 11 * 0.78);
+      return { b, lx, ly, text, box: { x: lx, y: ly - 11, w: bw, h: 13 } as Box };
+    }),
+  );
+  // What lies over the chart (the view controls, tools, card, key and zoom: anything marked data-chart-overlay), in the
+  // chart's own pixels, measured after each layout change: no name or scale figure is put underneath.
+  function measureOverlays() {
+    const svg = svgEl;
+    if (!svg) return;
+    const sb = svg.getBoundingClientRect();
+    const root = svg.closest(".stage") ?? svg.parentElement ?? document;
+    overlays = [...root.querySelectorAll("[data-chart-overlay]")]
+      .map((e) => e.getBoundingClientRect())
+      .filter((b) => b.width > 0 && b.height > 0 && b.right > sb.left && b.left < sb.right && b.bottom > sb.top && b.top < sb.bottom)
+      .map((b) => ({ x: b.left - sb.left, y: b.top - sb.top, w: b.width, h: b.height }));
+  }
+  $effect(() => {
+    void [w, h, ctx.workspace.selection, frame, ctx.workspace.view, ctx.workspace.desk];
+    const raf = requestAnimationFrame(measureOverlays);
+    // Cards and dialogs open with a short motion; measure again once they have settled.
+    const t = setTimeout(measureOverlays, 450);
+    return () => (cancelAnimationFrame(raf), clearTimeout(t));
+  });
+  const under = (b: Box) => overlays.some((o) => b.x < o.x + o.w && o.x < b.x + b.w && b.y < o.y + o.h && o.y < b.y + b.h);
+  const distLabels = $derived(
+    (on("distances") ? decades : [])
+      .filter((g) => cy - r(g.au) > 12)
+      .map((g) => ({ g, y: cy - r(g.au) - 4, text: frame ? km(g.au) : `${g.units.toLocaleString("en-GB")} AU` }))
+      .filter((d) => !under({ x: cx + 2, y: d.y - 10, w: d.text.length * 6.6 + 4, h: 12 })),
+  );
+  const named = $derived(all.filter((s) => showLabel(s) && (s.orbit || s === centre) && !(s === centre && !frame)));
+  const places = $derived.by(() => {
+    if (!w || !h) return new Map();
+    const sel = ctx.workspace.selection;
+    const bodies = all.map((s) => {
+      const atCentre = s === centre;
+      const [x, y] = atCentre ? [cx, cy] : pos(s);
+      const m0 = ctx.mark(s);
+      const m = atCentre && frame ? { ...m0, size: m0.size * 2.2 } : m0;
+      const px = s.address === sel ? 18 : 16;
+      return { s, b: { id: s.address, x, y, r: Math.max(markExtent(m), m.size) + 3, w: textWidth(label(s), px), h: px, first: s.address === sel } };
+    });
+    const label_ = new Set(named.map((s) => s.address));
+    // Bodies that are not named still keep their marks clear.
+    const clear: Box[] = [
+      ...overlays.map((o) => ({ ...o, w: o.w, h: o.h })),
+      ...bandLabels.map((l) => l.box),
+      ...distLabels.map((d) => ({ x: cx + 2, y: d.y - 10, w: d.text.length * 6.6 + 4, h: 12 })),
+      ...bodies.filter((x) => !label_.has(x.s.address)).map((x) => ({ x: x.b.x - x.b.r, y: x.b.y - x.b.r, w: x.b.r * 2, h: x.b.r * 2 })),
+    ];
+    const placed = placeLabels(bodies.filter((x) => label_.has(x.s.address)).map((x) => x.b), clear, { x: 4, y: 4, w: w - 8, h: h - 8 });
+    return new Map(placed.map((p) => [p.id, p]));
+  });
+
   const canOpen = $derived(!frame && selected && selected !== star && moonsOf(selected) > 0 ? selected : undefined);
   // V6: the same frame in 3D (view only; edits stay on the 2D chart).
   // The standard view controls (rule 12) choose it: Chart is this flat log chart, 3D turns. A view without a shell's
@@ -399,7 +480,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
@@ -441,8 +522,8 @@
             <Ink circle={{ cx, cy, r: (r0 + r1) / 2 }} tone="muted" dash="belt" />
           {/if}
         {/each}
-        {#each on("distances") ? decades : [] as g (g.au)}
-          {#if cy - r(g.au) > 12}<text class="dist" x={cx + 4} y={cy - r(g.au) - 4} aria-hidden="true">{frame ? km(g.au) : `${g.units.toLocaleString("en-GB")} AU`}</text>{/if}
+        {#each distLabels as d (d.g.au)}
+          <text class="dist" x={cx + 4} y={d.y} aria-hidden="true">{d.text}</text>
         {/each}
         {#each orbiting as s (s.address)}
           {@const sel = ctx.workspace.selection === s.address}
@@ -450,12 +531,12 @@
             <Ink circle={{ cx, cy, r: rr(s.orbit!.a_au) }} tone="faint" dash="dashed" />
             <Ink circle={{ cx, cy, r: rr(drag.a_au) }} tone="accent" weight="heavy" dash="dashed" />
           {:else if on("orbits") || sel}
-            <Ink circle={{ cx, cy, r: rr(s.orbit!.a_au) }} tone={sel ? "accent" : "faint"} weight={sel ? "heavy" : "line"} />
+            <!-- Resting on a body lifts its orbit out of the grid, so the eye can follow it round. -->
+            <Ink circle={{ cx, cy, r: rr(s.orbit!.a_au) }} tone={sel ? "accent" : peek?.address === s.address ? "ink" : "faint"} weight={sel ? "heavy" : "line"} />
           {/if}
         {/each}
-        {#each on("zones") && on("labels") ? bands : [] as b (b.address)}
-          {@const [lx, ly] = polar(cx, cy, isShell(b) ? r(b.band_au![0]) + 14 : r(b.band_au![1]) + 10, b.kind === "zone" ? -62 : isShell(b) ? 132 : 58)}
-          <text class="band {b.kind}" class:sphere={isShell(b)} x={lx} y={ly} aria-hidden="true">{label(b)}{isShell(b) ? " · sphere" : ""}</text>
+        {#each bandLabels as l (l.b.address)}
+          <text class="band {l.b.kind}" class:sphere={isShell(l.b)} x={l.lx} y={l.ly} aria-hidden="true">{l.text}</text>
         {/each}
         {#each all as s, i (s.address)}
           {@const atCentre = s === centre}
@@ -489,7 +570,8 @@
               <g class="pencilled" data-pencil><Mark mark={m} cx={x} cy={y} {prefix} /></g>
               <circle class="pencil-ring" cx={x} cy={y} r={markExtent(m) + 3} aria-hidden="true" />
             {:else}
-              <Mark mark={m} cx={x} cy={y} {prefix} />
+              <!-- The mark lifts a little under the pointer (dynamic minimalism): a body answers before it is pressed. -->
+              <g class="lift" style="transform-origin: {x}px {y}px"><Mark mark={m} cx={x} cy={y} {prefix} /></g>
             {/if}
             {#each { length: on("moons") ? Math.min(moons, 4) : 0 } as _, k (k)}
               {@const [mx, my] = polar(x, y, markExtent(m) + 5, 200 + k * 28)}
@@ -501,18 +583,31 @@
               <g class="ghost" data-ghost aria-hidden="true"><Mark mark={m} cx={gx} cy={gy} {prefix} /></g>
               <text class="dragv" data-drag-readout x={gx + m.size + 9} y={gy + m.size + 16}>{dist(drag.a_au)}</text>
             {/if}
-            {#if showLabel(s) && (s.orbit || atCentre) && !(atCentre && !frame)}
-              {@const left = x > w - 110}
+          </g>
+        {/each}
+        <!-- Names in their own layer, over every mark (chart-labels.ts places them); a press on a name chooses its body. -->
+        <!-- Range rings (RK12), under the HUD like the grid: round each weapon's holder, bent by the chart's scale. -->
+        {#if hudShows(shownView.hud, "range") && rangeSets.length}
+          {#each rangeSets as r (r.holder + r.label)}<RangeRings rings={r.rings} centre_m={r.centre_m} project={rangeProject} label={r.label} />{/each}
+        {/if}
+        <g class="names">
+          {#each all as s (s.address)}
+            {#if places.get(s.address)}
+              {@const p = places.get(s.address)}
+              {@const atCentre = s === centre}
+              {@const view = known?.get(s.address)}
+              {@const sel = ctx.workspace.selection === s.address}
               <!-- Who knows (track SV, pencil and ink): a name the table does not know is drawn in pencil, quiet and dotted,
                    with no words; one they know is in ink, with how they know it ("long range") under it. -->
               {@const pencil = pencilOn && !atCentre && !view && !knows(s)}
-              <text class="name" class:selname={sel} class:pencil x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size - 4} text-anchor={left ? "end" : "start"}>{label(s)}{#if pencil}<title>Not known to the table</title>{/if}</text>
+              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the body's own mark is the keyboard's way in) -->
+              <text class="name" class:selname={sel} class:pencil class:unknown={through && !knows(s)} x={p.x} y={p.y} text-anchor={p.anchor} data-label-side={p.side} data-label-for={s.address} aria-hidden="true" onclick={() => (measuring ? measurePick(s) : ctx.workspace.select(s.address))}>{label(s)}{#if pencil}<title>Not known to the table</title>{/if}</text>
               {#if on("known") && known && !atCentre && view && view !== usualView}
-                <text class="knownv" x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size + 9} text-anchor={left ? "end" : "start"} aria-hidden="true">{view.replace(/-/g, " ")}</text>
+                <text class="knownv" x={p.x} y={p.y + 13} text-anchor={p.anchor} aria-hidden="true">{view.replace(/-/g, " ")}</text>
               {/if}
             {/if}
-          </g>
-        {/each}
+          {/each}
+        </g>
         {#if measuring && picks.length}
           {@const p0 = at(picks[0]!)}
           {@const p1 = picks[1] ? at(picks[1]) : null}
@@ -543,22 +638,22 @@
         </div>
       {/if}
       {#if framed}
-        <div class="frame" role="group" aria-label="Chart frame">
+        <div class="frame" role="group" aria-label="Chart frame" data-chart-overlay>
           <button type="button" onclick={closeFrame}>‹ {scene.title}</button>
           <span>Moons of <b>{framed.label}</b>, distances from its centre</span>
         </div>
       {:else if canOpen}
-        <div class="frame">
+        <div class="frame" data-chart-overlay>
           <button type="button" onclick={() => openFrame(canOpen)}>Moons of {canOpen.label} ›</button>
         </div>
       {/if}
       <p id="chart-drag-hint" class="sr">Drag along the radius, or press Page Up or Page Down, to move the orbit.</p>
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
-      <div class="legend">
+      <div class="legend" class:short={narrow} data-chart-overlay>
         {#if authoredImport}<span class="authored-import" data-authored-import><Stamp kind="authored" title="Every name and value here was written in a V3 save, not modelled by SSE4's physics. A body called Earth is the save's Earth, not the real one." /><span class="words">As written in a V3 save, not modelled</span></span>{/if}
         {#if catalogued}<span class="authored-import" data-catalogued><Stamp kind="catalogued" title="Every value here is a measurement from a catalogue, with its source on the card's why?." /><span class="words">As measured, each value with its source</span></span>{/if}
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
-        <span data-scale-note>{on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${g.units.toLocaleString("en-GB")} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
+        <span data-scale-note>{narrow ? `Log scale${frame ? ", km" : ""}` : on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${g.units.toLocaleString("en-GB")} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
         {#if on("known") && known && usualView && !through}<span class="usual-known" data-usual-known={usualView}>The table knows these at {usualView.replace(/-/g, " ")}; dotted names, not at all</span>{/if}
         {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}
         {#if key?.entries.length && on("key")}
@@ -567,9 +662,9 @@
             <div class="key-body"><Legend entries={key.entries} prefix="sck" note={key.note} label="Key to the chart's marks" /></div>
           </details>
         {/if}
-        {#if params.unsurveyed_hatch && on("unsurveyed") && !frame}<span>Hatched: unsurveyed beyond {scene.surveyed_to_au} AU</span>{/if}
+        {#if params.unsurveyed_hatch && on("unsurveyed") && !frame && !narrow}<span>Hatched: unsurveyed beyond {scene.surveyed_to_au} AU</span>{/if}
       </div>
-      <div class="zoom" role="group" aria-label="Zoom">
+      <div class="zoom" role="group" aria-label="Zoom" data-chart-overlay>
         <button type="button" aria-label="Zoom in" onclick={() => zoomBy(1.25)}>+</button>
         <button type="button" aria-label="Zoom out" onclick={() => zoomBy(0.8)}>−</button>
         <button type="button" aria-label={frame ? "Fit the moons" : "Fit the system"} onclick={() => (zoom = Number(params.zoom))}>Fit</button>
@@ -596,6 +691,15 @@
   }
   .hit {
     fill: transparent;
+  }
+  .lift {
+    transition: transform var(--sse-motion-quick) var(--sse-ease);
+  }
+  .body:hover .lift {
+    transform: scale(1.3);
+  }
+  .dragging .body:hover .lift {
+    transform: none;
   }
   .dragging,
   .dragging .body {
@@ -726,6 +830,7 @@
     color: var(--sse-panel-muted);
   }
   .name {
+    cursor: pointer;
     fill: var(--sse-ink);
     font-family: var(--sse-font-display);
     font-style: italic;
@@ -746,7 +851,8 @@
     stroke: var(--sse-ground);
     stroke-width: 4px;
   }
-  .body.unknown {
+  .body.unknown,
+  .name.unknown {
     opacity: 0.25;
   }
   .pencilled {
