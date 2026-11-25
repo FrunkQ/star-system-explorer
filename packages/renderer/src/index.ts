@@ -6,7 +6,7 @@ export type { Vec3, FrameNode, Tree, Camera, Pixel } from "./frames.ts";
 export type { Gpu, GpuDots, GpuGlow, GpuItem, GpuLight, GpuRing, GpuSheet } from "./gpu.ts";
 export { armField, cloudNoise, GALAXY_BANDS, GALAXY_LIGHT, GALAXY_LIGHT_REFS, galaxyFace, glowPicture, sheetWeights, surfaceAt } from "./galaxy-true.ts";
 export type { GalaxyBand, GalaxyPicture } from "./galaxy-true.ts";
-export { cubeEdges, galaxyLight, SPACE_CSS, webGlow, webLights, webParcels, WEB_DARK_GLOW, WEB_KINDS, WEB_LIGHT_K, WEB_LIGHT_SHOW } from "./web-cube.ts";
+export { cubeEdges, densityLevel, galaxyLight, mixCss, SPACE_CSS, webGlow, webLights, webParcelLevels, webParcels, WEB_DARK_GLOW, WEB_DENSITY_LEVELS, WEB_LEVEL_INK, WEB_LEVELS, WEB_KINDS, WEB_MARKS, webMarks, WEB_LIGHT_K, WEB_LIGHT_SHOW } from "./web-cube.ts";
 export type { WebCubeData, WebGalaxyData, WebKind, WebLightGroup } from "./web-cube.ts";
 // V10a: True in the system view, each world wrapped in its own surface.
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
