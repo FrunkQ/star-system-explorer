@@ -22,6 +22,8 @@
         "Crews and who was where from Jonathan C. McDowell's human spaceflight lists, https://planet4589.org/space/astro/ (CC BY 4.0).",
         "Mission times from NASA SP-4029 (Apollo by the Numbers), NASA press kits, the 45th Space Wing and Spaceflight101; each flight log names its sources."
       ],
+      "crews": "crews.json",
+      "in_memory": "in-memory.json",
       "files": {
         "catalogue": "catalogue.json",
         "stations": "stations.json",
