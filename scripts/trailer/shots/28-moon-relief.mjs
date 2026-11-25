@@ -23,9 +23,18 @@ export default {
     await pick(page, d, "HUD", "On");
     await d.hold(1500);
     await d.caption("Earth, then its Moon", "Click a world and the camera flies in.");
-    await d.click(pin(page, "Earth"));
+    // The inner planets crowd at system scale, so a click on the pin's centre can land on a
+    // neighbour (25 Nov GPU take: no fly-in). Glide there, then click the pin element itself.
+    const flyTo = async (name, next) => {
+      await d.glide(pin(page, name));
+      await pin(page, name).click({ timeout: 8000 }).catch(() => pin(page, name).dispatchEvent("click"));
+      if (next && !(await pin(page, next).isVisible().catch(() => false))) {
+        await pin(page, next).waitFor({ state: "visible", timeout: 6000 }).catch(() => pin(page, name).dispatchEvent("click"));
+      }
+    };
+    await flyTo("Earth", "Moon");
     await d.hold(2000);
-    await d.click(pin(page, "Moon"));
+    await flyTo("Moon");
     await d.hold(1500);
     await pick(page, d, "HUD", "Off");
     await d.caption("The Moon", "Craters and highlands at true scale, lit by the Sun: relief drawn from the kernel's own surface.");
