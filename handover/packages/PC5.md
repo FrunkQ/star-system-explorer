@@ -45,5 +45,5 @@ and 6), accepted by Alex 25 Nov 2026 01:27 UTC. Owner: "Build Run desk playbook 
 - `tests/ui/hold-grounds.e2e.mjs`: a postcard kept from Earth's globe; the Bookmarks stamp and "Make a postcard"; on
   air, a held screen of the table gets no ground while the table does not know Earth, then the postcard full screen
   once Earth is revealed; a quote is marked; ground None takes the picture away. Run locally with the switchboard,
-  playbook, bookmarks, postcards, players and table browser tests (all pass, 25 Nov). It is not in CI yet: adding its
-  line to ci.yml was held by a permission check, so it waits for Alex's own yes.
+  playbook, bookmarks, postcards, players and table browser tests (all pass, 25 Nov). It runs in CI, one line in the ui
+  job beside the postcards test (Alex's standing yes, 25 Nov 02:00: a thread may add its own test line).
