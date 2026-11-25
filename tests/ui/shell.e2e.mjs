@@ -198,19 +198,33 @@ try {
     await haspCard.waitFor();
     const haspOrbit = () => haspCard.locator(".field").filter({ hasText: /^orbit/i }).locator("input").inputValue();
     assert.equal(await haspOrbit(), "412 thousand km", "a moon's orbit said by the units engine (ED1a)");
-    const hb = await chartSvg.locator("[role=button][aria-label^='Hasp'] circle.hit").boundingBox();
-    const vb = await chartSvg.locator("[role=button][aria-label^='Vault'] circle.hit").boundingBox();
+    // The chart settles after the card opens (the frame's grow and any re-layout): measure only once the marks are still.
+    const still = async (sel) => {
+      let last = null;
+      for (let k = 0; k < 40; k++) {
+        const b = await chartSvg.locator(sel).boundingBox();
+        if (b && last && Math.abs(b.x - last.x) < 0.5 && Math.abs(b.y - last.y) < 0.5) return b;
+        last = b;
+        await page.waitForTimeout(100);
+      }
+      return last;
+    };
+    const vb = await still("[role=button][aria-label^='Vault'] circle.hit");
+    const hb = await still("[role=button][aria-label^='Hasp'] circle.hit");
+    const hashBeforeDrag = await page.locator("[data-state-hash]").first().getAttribute("data-state-hash");
     const [hx, hy, vx, vy] = [hb.x + hb.width / 2, hb.y + hb.height / 2, vb.x + vb.width / 2, vb.y + vb.height / 2];
     await page.mouse.move(hx, hy);
     await page.mouse.down();
     for (let k = 1; k <= 8; k++) await page.mouse.move(hx + ((hx - vx) * 0.2 * k) / 8, hy + ((hy - vy) * 0.2 * k) / 8);
     await page.mouse.up();
+    // Letting go is one change: wait for the kernel to take it (the state hash moves), then for the card to say it.
+    await page.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hashBeforeDrag, { timeout: 20000 });
     await haspCard.locator(".field").filter({ hasText: /^orbit/i }).locator("input").waitFor();
     await page.waitForFunction(() => {
       const i = [...document.querySelectorAll("section[aria-label='Hasp'] .field")].find((x) => /^orbit/i.test(x.textContent.trim()))?.querySelector("input");
       const km = i && /km$/.test(i.value) ? parseFloat(i.value.replace(/,/g, "")) * (/thousand/.test(i.value) ? 1e3 : /million/.test(i.value) ? 1e6 : 1) : 0;
       return km > 412000;
-    }, null, { timeout: 5000 });
+    }, null, { timeout: 20000 });
     const haspDragged = await haspOrbit();
     const orbitInput = haspCard.locator(".field").filter({ hasText: /^orbit/i }).locator("input");
     await orbitInput.fill("500,000 km");

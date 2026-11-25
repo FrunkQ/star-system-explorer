@@ -147,7 +147,9 @@ jobs:
       - run: node tests/ui/campaign.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/biosphere.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/time.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/rollcall.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/tactile.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/your-systems.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/perf.e2e.mjs --screens ui-screens
       - run: node tests/ui/ladder-gpu.e2e.mjs
       - uses: actions/upload-artifact@v4

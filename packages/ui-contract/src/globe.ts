@@ -20,6 +20,13 @@ export interface SurfaceTile {
   surface_age_myr: number[];
   pending: string[];
   hash: string;
+  /** Space weathering of bare ground (kernel SW1), 0 fresh to 255 fully mature; absent where nothing from space reaches the ground. */
+  maturity?: number[];
+  /**
+   * Presentation only, never from the kernel: bare ground's measured colour, sRGB 0..255 as r, g, b per sample, laid on
+   * by the renderer from the data sheet's reflectance rows and `maturity` (renderer ground-optics.ts). NaN where not known.
+   */
+  ground_rgb?: Float32Array | number[];
 }
 
 /** The kernel's names for the material and cover codes (atlas.rs MATERIALS and COVERS). */
@@ -89,8 +96,8 @@ const MATERIAL_RGB: Record<string, V3> = {
 
 /**
  * A sample's colour, presentation only: water by depth, magma glowing,
- * hydrocarbon dark; bare ground by its material, lightened with height and
- * by its albedo. Shading (`light`, 0 to 1) comes from the view.
+ * hydrocarbon dark; bare ground by its measured colour where the renderer laid
+ * one on (`ground_rgb`), else by its material, lightened with height and by its albedo. Shading (`light`, 0 to 1) comes from the view.
  */
 export function sampleColour(t: SurfaceTile, i: number, light = 1): V3 {
   const elev = t.elevation_dm[i]! / 10;
@@ -102,6 +109,7 @@ export function sampleColour(t: SurfaceTile, i: number, light = 1): V3 {
   } else if (cover === "magma") c = [235, 110, 40];
   else if (cover === "hydrocarbon") c = [60, 46, 30];
   else if (cover === "ice") c = [232, 240, 246];
+  else if (t.ground_rgb && t.ground_rgb[i * 3]! >= 0) c = [t.ground_rgb[i * 3]!, t.ground_rgb[i * 3 + 1]!, t.ground_rgb[i * 3 + 2]!];
   else {
     const m = MATERIAL_RGB[MATERIALS[t.material[i]!] ?? "regolith"] ?? MATERIAL_RGB.regolith!;
     const h = Math.min(1, Math.max(0, elev / 8000));

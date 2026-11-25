@@ -27,6 +27,9 @@
   import { themeCss } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES, PLAYER_THEMES, filterLayers } from "../../skins/player/src/index.ts";
   import { FilterChain, Segmented } from "../../chart-grammar/src/index.ts";
+  import { deliver, deliverOut } from "../../chart-grammar/src/deliver.ts";
+  import { resolveDelivery, type DeliveryPlan } from "../../ui-contract/src/index.ts";
+  import { untrack } from "svelte";
   import vocabDoc from "./documents/vocab.plain.json";
   import { SHIPPED } from "./symbols.svelte.ts";
   import { allStyles } from "./styles.svelte.ts";
@@ -35,7 +38,7 @@
   import PerfReadout from "./PerfReadout.svelte";
   import { perf } from "../../ui-contract/src/index.ts";
   import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
-  import { landingShowOf, type LandingGround, type PartyShip } from "../../ui-contract/src/index.ts";
+  import { groundGrant, landingShowOf, type LandingGround, type PartyShip } from "../../ui-contract/src/index.ts";
   import { DEFAULT_JOIN, joinLine, joinWordsOf, type JoinWords, type SeatBrand } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
@@ -132,9 +135,13 @@
   $effect(() => {
     const w = watching;
     if (!sessionReady || !session) return;
-    session.grantLanding?.(w ? { system: w.system, body: w.body } : null);
+    // A landing's world, or the world an "In orbit" send names when the table knows it (LR4): that one map, no more.
+    const sh = shown && "scope" in shown ? shown : null;
+    const known = new Set((scene?.subjects ?? []).map((x) => x.address));
+    session.grantLanding?.(w ? { system: w.system, body: w.body } : groundGrant(sh, (a) => known.has(a)));
   });
   const landingNow = () => watching;
+  const shownNow = () => shown ?? null;
   const ground: LandingGround | undefined = isSealed
     ? undefined
     : {
@@ -380,6 +387,29 @@
   });
   const layers = $derived(filterLayers(themeDoc.filters, { reducedMotion: media("(prefers-reduced-motion: reduce)"), off: !effects || media("(prefers-contrast: more)") }));
   const rootFx = $derived(layers.map((l) => l.root).join(" "));
+  // Screen delivery (atlas design 11A.4a, AT15a): the picture arrives and leaves in the look's own way. Power on when
+  // the screen first shows a picture or a hold is released; Arrive for each new send (in full the first time); Power
+  // off as the GM holds the screen or turns it off. A look with no deliveries just shows the picture, as before. A tap
+  // or a key finishes any delivery; reduced motion makes each a plain fade.
+  const reducedNow = () => media("(prefers-reduced-motion: reduce)");
+  const sendKey = $derived(shown && "scope" in shown ? JSON.stringify(shown) : "");
+  const picture = $derived(!!scene && !!checked?.ok && !(shown && "off" in shown) && embed.mode !== "refused");
+  let arrival = $state<DeliveryPlan | null>(null);
+  let pictureWasOn = false;
+  const sendsSeen = new Set<string>();
+  $effect(() => {
+    const on = picture;
+    const key = sendKey;
+    const look = themeDoc.delivery;
+    untrack(() => {
+      if (!on) return void (pictureWasOn = false);
+      if (look && !pictureWasOn) arrival = resolveDelivery(look, "power_on", { first: true, reducedMotion: reducedNow() });
+      else if (look && key && !sendsSeen.has(key)) arrival = resolveDelivery(look, "arrive", { first: true, reducedMotion: reducedNow() });
+      if (key) sendsSeen.add(key);
+      pictureWasOn = true;
+    });
+  });
+  const powerOff = () => (shown && "off" in shown && themeDoc.delivery ? resolveDelivery(themeDoc.delivery, "power_off", { reducedMotion: reducedNow() }) : null);
   $effect(() => {
     const root = document.documentElement;
     root.setAttribute("style", themeCss(theme, ALL_THEMES));
@@ -488,7 +518,7 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p><p class="alpha" data-alpha>An alpha preview of what is coming. To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener">version 3 ›</a></p></main>
   {:else}
     {#key vocabId}
-      <main class="grid" class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} still={clean} {places} bind:selection /></main>
+      <main class="grid" use:deliver={arrival} out:deliverOut|global={powerOff()} class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} shown={shownNow} still={clean} {places} bind:selection /></main>
       {#if readOnly && !clean}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
     {/key}
     {#if sayWords && sayHidden !== sayWords}

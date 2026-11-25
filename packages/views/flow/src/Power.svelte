@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { POWER_COLUMNS, constant, nowhereWords, powerColumn, powerFlowRows, powerRank, powerReadings, shipRecordOf, wattsText, type Json, type NavShip, type PowerBooks, type RadiatorRule, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { POWER_COLUMNS, sayNumber, constant, nowhereWords, powerColumn, powerFlowRows, powerRank, powerReadings, shipRecordOf, wattsText, type Json, type NavShip, type PowerBooks, type RadiatorRule, type ViewContext } from "../../../ui-contract/src/index.ts";
   import Flow from "./Flow.svelte";
 
   let { ctx, nav }: { ctx: ViewContext; nav: string | NavShip | null } = $props();
@@ -83,7 +83,7 @@
           <label class="ctl">
             <span>Starlight as at</span>
             <input type="range" min="0.3" max="10" step="0.1" bind:value={au} data-power-au />
-            <output>{au.toFixed(1)} au</output>
+            <output>{sayNumber(au, 3, { decimals: 1 })} au</output>
           </label>
         {/if}
         {#if record}

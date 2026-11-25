@@ -9,6 +9,8 @@ mod adopt;
 mod atmos;
 #[cfg(test)]
 mod atmos_tests;
+#[cfg(test)]
+mod bary_tests;
 mod caves;
 mod clock;
 mod composition;
@@ -45,6 +47,9 @@ mod power_books_tests;
 pub mod protocol;
 mod sea;
 mod sky;
+mod small;
+#[cfg(test)]
+mod small_tests;
 #[cfg(test)]
 mod sol_tests;
 #[cfg(test)]
@@ -55,6 +60,8 @@ mod stability_tests;
 mod star_elements;
 #[cfg(test)]
 mod star_elements_tests;
+#[cfg(test)]
+mod starters_tests;
 mod survey;
 mod systems;
 mod tags;
@@ -66,6 +73,7 @@ mod tech_tests;
 mod territory;
 #[cfg(test)]
 mod territory_tests;
+mod tree;
 mod trust;
 #[cfg(test)]
 mod trust_tests;
@@ -90,6 +98,7 @@ use std::collections::BTreeMap;
 
 pub const KERNEL_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(Clone)]
 struct Universe {
     root: Address,
     seed: Seed,
@@ -370,6 +379,82 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
 /// The stack's tag declarations plus the campaign's own (kept in the
 /// record at the universe root, TG1). A pack loaded later that declares a
 /// tag the campaign already had wins; the campaign's copy is ignored.
+/// K13: an `orbit.host` written by hand names a body that is there (now, or
+/// in the same edit), not the body itself, and no ring of hosts: so nothing
+/// is ever silently unplaced.
+fn hosts_ok(
+    facts: &BTreeMap<Address, BTreeMap<String, Value>>,
+    set: &BTreeMap<Address, BTreeMap<String, Value>>,
+) -> Result<(), String> {
+    let host_of = |a: &Address| -> Option<Address> {
+        let v = set
+            .get(a)
+            .and_then(|r| r.get("orbit.host"))
+            .or_else(|| facts.get(a).and_then(|r| r.get("orbit.host")))?;
+        match v {
+            Value::Text(t) => t.parse().ok(),
+            _ => None,
+        }
+    };
+    for (a, row) in set {
+        let Some(v) = row.get("orbit.host") else {
+            continue;
+        };
+        let Value::Text(t) = v else {
+            return Err(format!("{a} orbit.host: an address, not {v:?}"));
+        };
+        let h: Address = t
+            .parse()
+            .map_err(|e| format!("{a} orbit.host {t:?}: {e}"))?;
+        if &h == a {
+            return Err(format!("{a} cannot orbit itself"));
+        }
+        // A host need not carry facts: a generated system's bodies are there
+        // without any (a paste into one names them). It must be in the same
+        // system and not withdrawn; a host that resolves to nothing leaves
+        // the body unplaced with the reason named, never silently.
+        let sys_of = |x: &Address| {
+            let mut y = Some(x.clone());
+            while let Some(z) = y {
+                if z.last().kind() == "sys" {
+                    return Some(z);
+                }
+                y = z.parent();
+            }
+            None
+        };
+        if sys_of(&h) != sys_of(a) {
+            return Err(format!(
+                "{a} orbit.host: {h} is not in the same system; move it with its system, or pick a host there"
+            ));
+        }
+        let gone = |r: Option<&BTreeMap<String, Value>>| {
+            matches!(
+                r.and_then(|r| r.get(withdraw::WITHDRAWN)),
+                Some(Value::Bool(true))
+            )
+        };
+        if gone(set.get(&h)) || (!set.contains_key(&h) && gone(facts.get(&h))) {
+            return Err(format!("{a} orbit.host: {h} has been removed"));
+        }
+        let mut at = Some(h);
+        let mut steps = 0;
+        while let Some(x) = at {
+            if &x == a {
+                return Err(format!(
+                    "{a} orbit.host: its hosts would go round in a ring back to it"
+                ));
+            }
+            steps += 1;
+            if steps > 64 {
+                break;
+            }
+            at = host_of(&x);
+        }
+    }
+    Ok(())
+}
+
 fn campaign_tags(u: &Universe, stack: &tags::TagSet) -> Result<tags::TagSet, Response> {
     let mut set = stack.clone();
     let rec = u.record.state_at(UniverseTime::seconds(i64::MAX));
@@ -1043,13 +1128,7 @@ impl Kernel {
             };
             // Sense: what the seat's audience has been shown, never the GM's truth.
             let root = self.universe()?.root.to_string();
-            let scene = match self.dispatch(Request::Scene {
-                audience: seat.audience.clone(),
-                scope: root,
-                data_view: None,
-                at_s,
-                observe: None,
-            })? {
+            let scene = match self.scene_op(seat.audience.clone(), root, None, at_s, None)? {
                 Response::Scene { scene, .. } => scene,
                 other => return Err(other),
             };
@@ -2002,16 +2081,11 @@ impl Kernel {
             sse_sift::sift(&sifters, &w, &scope)
         } else {
             let audience = audience.clone().expect("not the GM");
-            let scene = match self.dispatch(Request::Scene {
-                audience: audience.clone(),
-                scope: scope.to_string(),
-                data_view: None,
-                at_s,
-                observe: None,
-            })? {
-                Response::Scene { scene, .. } => scene,
-                other => return Err(other),
-            };
+            let scene =
+                match self.scene_op(audience.clone(), scope.to_string(), None, at_s, None)? {
+                    Response::Scene { scene, .. } => scene,
+                    other => return Err(other),
+                };
             let scene: sse_observe::scene::Scene =
                 serde_json::from_value(scene).expect("scenes round-trip");
             let mut state = sse_chronicle::State::default();
@@ -2181,6 +2255,8 @@ impl Kernel {
             }
             set.entry(a).or_default().insert(e.field.clone(), v);
         }
+        let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        hosts_ok(&latest.facts, &set).map_err(|m| err("bad_host", m))?;
         let t = UniverseTime::seconds(occurred_at_s);
         let subject: Vec<Address> = set.keys().cloned().collect();
         let ev = Event::new(EventBody {
@@ -2253,6 +2329,130 @@ impl Kernel {
         })
     }
 
+    /// `withdraw` with `leave` or `hand`: what went round the body goes
+    /// round its host (or `to`) from `at_s`, in the same event as the
+    /// withdrawal.
+    fn withdraw_rehoming(
+        &mut self,
+        address: &str,
+        at_s: i64,
+        hand: bool,
+        to: Option<&str>,
+        keep: orbits::Keep,
+        by_default: bool,
+    ) -> Result<Response, Response> {
+        // Alex 24 Nov 2026: removing a body leaves what went round it round
+        // its host, moving as it was; "remove them too" is `take`. With no
+        // choice named, a subject that goes round nothing, or that nothing
+        // goes round, is simply withdrawn.
+        if by_default && to.is_some() {
+            return Err(err("bad_request", "to needs others: hand"));
+        }
+        let u = self.universe()?;
+        let a = in_universe(&u.root, address)?;
+        let mut st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+        withdraw::drop_withdrawn(&mut st.facts);
+        if by_default && !st.facts.contains_key(&a) {
+            return self.set_withdrawn(address, at_s, true);
+        }
+        let row = st.facts.get(&a).ok_or_else(|| {
+            err(
+                "unknown_address",
+                format!("{a} has no facts at that time: nothing to withdraw"),
+            )
+        })?;
+        let host_of = |r: &BTreeMap<String, Value>| match r.get("orbit.host") {
+            Some(Value::Text(t)) => t.parse::<Address>().ok(),
+            _ => None,
+        };
+        let new_host = match (hand, to) {
+            (true, Some(t)) => in_universe(&u.root, t)?,
+            (true, None) => return Err(err("bad_request", "hand needs to: the body that takes them")),
+            (false, _) if by_default && host_of(row).is_none() => {
+                return self.set_withdrawn(address, at_s, true);
+            }
+            (false, _) => host_of(row).ok_or_else(|| {
+                err(
+                    "rehost_refused",
+                    format!("{a} goes round nothing, so what goes round it has nowhere to be left: take them, or hand them to a body"),
+                )
+            })?,
+        };
+        let system = {
+            let mut x = Some(a.clone());
+            let mut found = None;
+            while let Some(y) = x {
+                if y.last().kind() == "sys" {
+                    found = Some(y.clone());
+                    break;
+                }
+                x = y.parent();
+            }
+            found.ok_or_else(|| err("bad_address", format!("{a} is not in a system")))?
+        };
+        let facts: BTreeMap<Address, BTreeMap<String, Value>> = st
+            .facts
+            .iter()
+            .filter(|(x, _)| system.contains(x))
+            .map(|(x, r)| (x.clone(), r.clone()))
+            .collect();
+        let kids: Vec<Address> = facts
+            .iter()
+            .filter(|(x, r)| {
+                *x != &a
+                    && match host_of(r) {
+                        Some(h) => h == a,
+                        None => {
+                            x.parent().as_ref() == Some(&a)
+                                && r.contains_key("orbit.semi_major_axis")
+                        }
+                    }
+            })
+            .map(|(x, _)| x.clone())
+            .collect();
+        if by_default && kids.is_empty() {
+            return self.set_withdrawn(address, at_s, true);
+        }
+        let mut set: BTreeMap<Address, BTreeMap<String, Value>> = BTreeMap::new();
+        for k in &kids {
+            let r = orbits::rehost(&facts, &system, k, &new_host, at_s, Some(&u.seed), keep)
+                .map_err(|m| err("rehost_refused", format!("{k}: {m}")))?;
+            set.insert(k.clone(), r);
+        }
+        set.entry(a.clone())
+            .or_default()
+            .insert(withdraw::WITHDRAWN.into(), Value::Bool(true));
+        let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        hosts_ok(&latest.facts, &set).map_err(|m| err("bad_host", m))?;
+        let t = UniverseTime::seconds(at_s);
+        let subject: Vec<Address> = set.keys().cloned().collect();
+        let ev = Event::new(EventBody {
+            kind: kinds::AUTHORED_SET.into(),
+            subject: subject.clone(),
+            occurred_at: t,
+            activated_at: t,
+            recognised_at: u.chronicle.next_stamp(),
+            causes: vec![],
+            payload: Payload {
+                set,
+                ..Default::default()
+            },
+            evidence: Evidence::Authored,
+            publisher: Publisher::new("gm", "withdraw", "1"),
+        })
+        .map_err(|e| err("bad_event", format!("{e}")))?;
+        let id = u
+            .chronicle
+            .append(ev)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        Ok(Response::Authored {
+            event_id: id.hex(),
+            affected: subject.iter().map(|x| x.to_string()).collect(),
+            state_hash: latest_hash(&u.chronicle),
+            declared_tag: None,
+        })
+    }
+
     fn flow_inputs(
         &self,
         flow: &Flow,
@@ -2278,6 +2478,115 @@ impl Kernel {
             out.insert(fi.name.clone(), InputValue { q, source });
         }
         Ok(out)
+    }
+
+    /// `scene`, outside `dispatch`, for ops that read a scene as part of
+    /// their own work (see `resolved_system_op`).
+    pub(crate) fn scene_op(
+        &mut self,
+        audience: String,
+        scope: String,
+        data_view: Option<String>,
+        at_s: i64,
+        observe: Option<serde_json::Value>,
+    ) -> Result<Response, Response> {
+        let scope: Address = scope
+            .parse()
+            .map_err(|e| err("bad_address", format!("{e}")))?;
+        let draft = match observe {
+            None => None,
+            Some(v) => Some(
+                sse_observe::ObserveSetup::from_stack(&[("draft".into(), v)])
+                    .map_err(|e| err("bad_observe", e))?
+                    .ok_or_else(|| err("bad_observe", "the draft setup is empty"))?,
+            ),
+        };
+        let setup = draft
+            .as_ref()
+            .or(self.observe.setup.as_ref())
+            .ok_or_else(|| {
+                err(
+                    "no_data_views",
+                    "the pack stack defines no data views (provides.other.observe)",
+                )
+            })?;
+        let u = self
+            .universe
+            .as_ref()
+            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+        let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+        // Paste support: withdrawn subjects are not in the scene.
+        withdraw::drop_withdrawn(&mut state.facts);
+        // NM2: each subject's shown names, disclosed as `name.<layer>`.
+        names::inject(&mut state, &self.observe.names, &u.seed, &u.root);
+        // Authored tags out of the facts; rule tags from the stack.
+        // TG3: authored true forces a tag, authored false holds a
+        // rule's tag off; both come out of the facts.
+        let mut tags: BTreeMap<Address, std::collections::BTreeSet<String>> = BTreeMap::new();
+        let mut authored: BTreeMap<Address, BTreeMap<String, bool>> = BTreeMap::new();
+        for (a, f) in state.facts.iter_mut() {
+            let mine = sse_sift::authored_tags(f);
+            f.retain(|k, _| !k.starts_with(TAG_FIELD));
+            if !mine.is_empty() {
+                authored.insert(a.clone(), mine);
+            }
+        }
+        let none = BTreeMap::new();
+        for (a, f) in &state.facts {
+            let subject = sse_sift::Subject {
+                address: Some(a.clone()),
+                facts: f.clone(),
+                parent: a
+                    .parent()
+                    .and_then(|p| state.facts.get(&p).cloned())
+                    .unwrap_or_default(),
+                now_s: at_s,
+                ..Default::default()
+            };
+            for t in self
+                .observe
+                .rules
+                .apply_authored(
+                    &subject,
+                    &BTreeMap::new(),
+                    authored.get(a).unwrap_or(&none),
+                    Some(&u.seed),
+                )
+                .into_keys()
+            {
+                tags.entry(a.clone()).or_default().insert(t);
+            }
+        }
+        state.facts.retain(|_, f| !f.is_empty());
+        let fictional = self
+            .stack
+            .as_ref()
+            .map(|(s, _)| s.fictional_kinds.iter().cloned().collect())
+            .unwrap_or_default();
+        let views = setup.views_by_id();
+        let disclosure = with_record(&setup.disclosure, &self.observe.record);
+        let notes = sse_record::notes_at(u.record.events(), UniverseTime::seconds(at_s));
+        // Kept values and actors live in the record; the GM machine
+        // folds them in here and filters them like any fact.
+        for (a, f) in u.record.state_at(UniverseTime::seconds(at_s)).facts {
+            state.facts.entry(a).or_default().extend(f);
+        }
+        let inp = sse_observe::SceneInput {
+            state: &state,
+            chronicle: Some(&u.chronicle),
+            tags: &tags,
+            fictional: &fictional,
+            disclosure: &disclosure,
+            views: &views,
+            campaign: &setup.campaign,
+            notes: &notes,
+        };
+        let scene = sse_observe::build_scene_through(&inp, &audience, &scope, data_view.as_deref())
+            .map_err(|e| err("bad_data_view", e))?;
+        Ok(Response::Scene {
+            scene_hash: scene.hash().hex(),
+            scene: serde_json::to_value(&scene).expect("scenes are plain data"),
+        })
     }
 
     fn dispatch(&mut self, req: Request) -> Result<Response, Response> {
@@ -2513,6 +2822,8 @@ impl Kernel {
                         declare = Some(tag.to_string());
                     }
                 }
+                let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                hosts_ok(&latest.facts, &e.body.payload.set).map_err(|m| err("bad_host", m))?;
                 let affected = e.body.subject.iter().map(|a| a.to_string()).collect();
                 let id = u
                     .chronicle
@@ -2538,7 +2849,29 @@ impl Kernel {
                 evidence,
                 source,
             } => self.set_authored_batch(&edits, occurred_at_s, evidence.as_deref(), source)?,
-            Request::Withdraw { address, at_s } => self.set_withdrawn(&address, at_s, true)?,
+            Request::Withdraw {
+                address,
+                at_s,
+                others,
+                to,
+                keep,
+            } => match others.as_deref().unwrap_or("default") {
+                "take" if to.is_none() => self.set_withdrawn(&address, at_s, true)?,
+                "leave" | "hand" | "default" => self.withdraw_rehoming(
+                    &address,
+                    at_s,
+                    others.as_deref() == Some("hand"),
+                    to.as_deref(),
+                    keep.unwrap_or(orbits::Keep::Motion),
+                    others.is_none(),
+                )?,
+                other => {
+                    return Err(err(
+                        "bad_request",
+                        format!("others: take, leave or hand (with to), not {other:?}"),
+                    ))
+                }
+            },
             Request::Restore { address, at_s } => self.set_withdrawn(&address, at_s, false)?,
             Request::CampaignTags => {
                 let stack_tags = self.observe.tags.clone();
@@ -2835,107 +3168,7 @@ impl Kernel {
                 data_view,
                 at_s,
                 observe,
-            } => {
-                let scope: Address = scope
-                    .parse()
-                    .map_err(|e| err("bad_address", format!("{e}")))?;
-                let draft = match observe {
-                    None => None,
-                    Some(v) => Some(
-                        sse_observe::ObserveSetup::from_stack(&[("draft".into(), v)])
-                            .map_err(|e| err("bad_observe", e))?
-                            .ok_or_else(|| err("bad_observe", "the draft setup is empty"))?,
-                    ),
-                };
-                let setup = draft
-                    .as_ref()
-                    .or(self.observe.setup.as_ref())
-                    .ok_or_else(|| {
-                        err(
-                            "no_data_views",
-                            "the pack stack defines no data views (provides.other.observe)",
-                        )
-                    })?;
-                let u = self
-                    .universe
-                    .as_ref()
-                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
-                let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
-                // Paste support: withdrawn subjects are not in the scene.
-                withdraw::drop_withdrawn(&mut state.facts);
-                // NM2: each subject's shown names, disclosed as `name.<layer>`.
-                names::inject(&mut state, &self.observe.names, &u.seed, &u.root);
-                // Authored tags out of the facts; rule tags from the stack.
-                // TG3: authored true forces a tag, authored false holds a
-                // rule's tag off; both come out of the facts.
-                let mut tags: BTreeMap<Address, std::collections::BTreeSet<String>> =
-                    BTreeMap::new();
-                let mut authored: BTreeMap<Address, BTreeMap<String, bool>> = BTreeMap::new();
-                for (a, f) in state.facts.iter_mut() {
-                    let mine = sse_sift::authored_tags(f);
-                    f.retain(|k, _| !k.starts_with(TAG_FIELD));
-                    if !mine.is_empty() {
-                        authored.insert(a.clone(), mine);
-                    }
-                }
-                let none = BTreeMap::new();
-                for (a, f) in &state.facts {
-                    let subject = sse_sift::Subject {
-                        address: Some(a.clone()),
-                        facts: f.clone(),
-                        parent: a
-                            .parent()
-                            .and_then(|p| state.facts.get(&p).cloned())
-                            .unwrap_or_default(),
-                        now_s: at_s,
-                        ..Default::default()
-                    };
-                    for t in self
-                        .observe
-                        .rules
-                        .apply_authored(
-                            &subject,
-                            &BTreeMap::new(),
-                            authored.get(a).unwrap_or(&none),
-                            Some(&u.seed),
-                        )
-                        .into_keys()
-                    {
-                        tags.entry(a.clone()).or_default().insert(t);
-                    }
-                }
-                state.facts.retain(|_, f| !f.is_empty());
-                let fictional = self
-                    .stack
-                    .as_ref()
-                    .map(|(s, _)| s.fictional_kinds.iter().cloned().collect())
-                    .unwrap_or_default();
-                let views = setup.views_by_id();
-                let disclosure = with_record(&setup.disclosure, &self.observe.record);
-                let notes = sse_record::notes_at(u.record.events(), UniverseTime::seconds(at_s));
-                // Kept values and actors live in the record; the GM machine
-                // folds them in here and filters them like any fact.
-                for (a, f) in u.record.state_at(UniverseTime::seconds(at_s)).facts {
-                    state.facts.entry(a).or_default().extend(f);
-                }
-                let inp = sse_observe::SceneInput {
-                    state: &state,
-                    chronicle: Some(&u.chronicle),
-                    tags: &tags,
-                    fictional: &fictional,
-                    disclosure: &disclosure,
-                    views: &views,
-                    campaign: &setup.campaign,
-                    notes: &notes,
-                };
-                let scene =
-                    sse_observe::build_scene_through(&inp, &audience, &scope, data_view.as_deref())
-                        .map_err(|e| err("bad_data_view", e))?;
-                Response::Scene {
-                    scene_hash: scene.hash().hex(),
-                    scene: serde_json::to_value(&scene).expect("scenes are plain data"),
-                }
-            }
+            } => self.scene_op(audience, scope, data_view, at_s, observe)?,
             Request::ImportV3 {
                 save,
                 universe_id,
@@ -3150,6 +3383,59 @@ impl Kernel {
                     &self.observe.reference,
                 )?
             }
+            Request::SmallBody {
+                system,
+                member,
+                cloud,
+                rank,
+                r_au,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &system)?;
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                small::read(
+                    u.runs.get(&system),
+                    member.as_deref(),
+                    cloud.as_deref(),
+                    rank,
+                    r_au,
+                )?
+            }
+            Request::MakeSmallBody {
+                system,
+                address,
+                kind,
+                diameter_km,
+                mass_kg,
+                a_au,
+                e,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &system)?;
+                in_universe(&u.root, &address)?;
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                small::make(
+                    u.runs.get(&system),
+                    small::Make {
+                        address: &address,
+                        kind: &kind,
+                        diameter_km,
+                        mass_kg,
+                        a_au,
+                        e,
+                    },
+                )?
+            }
             Request::ReadInventory {
                 system,
                 body,
@@ -3223,6 +3509,7 @@ impl Kernel {
                 system,
                 at_s,
                 tiles,
+                branch,
             } => {
                 let a: Address = system
                     .parse()
@@ -3240,8 +3527,22 @@ impl Kernel {
                         u.runs.insert(system.clone(), run);
                     }
                 }
+                let what_if = match &branch {
+                    Some(b) => {
+                        let id = u
+                            .branches
+                            .get(b)
+                            .ok_or_else(|| err("unknown_branch", b.clone()))?;
+                        Some(
+                            u.chronicle
+                                .branch_as_main(id)
+                                .map_err(|e| err("chronicle", format!("{e}")))?,
+                        )
+                    }
+                    None => None,
+                };
                 let r = adopt::resolved_system(
-                    &u.chronicle,
+                    what_if.as_ref().unwrap_or(&u.chronicle),
                     &u.seed,
                     &a,
                     at_s,
@@ -4035,13 +4336,7 @@ impl Kernel {
                     ));
                 }
                 let root = self.universe()?.root.to_string();
-                let scene = match self.dispatch(Request::Scene {
-                    audience: audience.clone(),
-                    scope: root,
-                    data_view: None,
-                    at_s,
-                    observe: None,
-                })? {
+                let scene = match self.scene_op(audience.clone(), root, None, at_s, None)? {
                     Response::Scene { scene, .. } => scene,
                     other => return Err(other),
                 };
@@ -5201,6 +5496,144 @@ impl Kernel {
                     state_hash: latest_hash(&u.chronicle),
                 }
             }
+            Request::PreviewTree {
+                system,
+                at_s,
+                edits,
+            } => {
+                const EDIT_OPS: [&str; 5] = [
+                    "set_authored",
+                    "set_authored_batch",
+                    "rehost",
+                    "withdraw",
+                    "restore",
+                ];
+                let reqs: Vec<Request> = edits
+                    .iter()
+                    .enumerate()
+                    .map(|(i, e)| {
+                        let op = e["op"].as_str().unwrap_or("");
+                        if !EDIT_OPS.contains(&op) {
+                            return Err(err(
+                                "bad_request",
+                                format!(
+                                    "edit {i}: {op:?} is not an edit a tree can preview ({})",
+                                    EDIT_OPS.join(", ")
+                                ),
+                            ));
+                        }
+                        serde_json::from_value(e.clone())
+                            .map_err(|x| err("bad_request", format!("edit {i}: {x}")))
+                    })
+                    .collect::<Result<_, _>>()?;
+                let (root, seed) = {
+                    let u = self.universe()?;
+                    (u.root.clone(), u.seed)
+                };
+                let a = in_universe(&root, &system)?;
+                let read = |k: &mut Kernel| -> Result<serde_json::Value, Response> {
+                    let u = k.universe()?;
+                    let mut st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                    withdraw::drop_withdrawn(&mut st.facts);
+                    Ok(tree::tree(&st, &a, at_s, Some(&seed)))
+                };
+                let before = read(self)?;
+                let saved = self.universe.clone();
+                let mut failed = None;
+                for (i, r) in reqs.into_iter().enumerate() {
+                    if let Response::Error { code, message } = self.handle(r) {
+                        failed = Some(err(&code, format!("edit {i}: {message}")));
+                        break;
+                    }
+                }
+                let after = if failed.is_none() {
+                    read(self)
+                } else {
+                    Ok(serde_json::Value::Null)
+                };
+                self.universe = saved;
+                if let Some(e) = failed {
+                    return Err(e);
+                }
+                let after = after?;
+                Response::TreePreviewed {
+                    changed: tree::changed(&before, &after),
+                    before,
+                    after,
+                }
+            }
+            Request::Rehost {
+                address,
+                to,
+                keep,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let h = in_universe(&u.root, &to)?;
+                let system = a
+                    .segments()
+                    .iter()
+                    .position(|s| s.kind() == "sys")
+                    .and_then(|i| {
+                        let mut x = Some(a.clone());
+                        while let Some(y) = x.clone() {
+                            if y.segments().len() == i + 1 {
+                                return Some(y);
+                            }
+                            x = y.parent();
+                        }
+                        None
+                    })
+                    .ok_or_else(|| err("bad_address", format!("{a} is not in a system")))?;
+                let mut st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                withdraw::drop_withdrawn(&mut st.facts);
+                let facts: BTreeMap<Address, BTreeMap<String, Value>> = st
+                    .facts
+                    .iter()
+                    .filter(|(x, _)| system.contains(x))
+                    .map(|(x, r)| (x.clone(), r.clone()))
+                    .collect();
+                let row = orbits::rehost(
+                    &facts,
+                    &system,
+                    &a,
+                    &h,
+                    at_s,
+                    Some(&u.seed),
+                    keep.unwrap_or(orbits::Keep::Tidy),
+                )
+                .map_err(|m| err("rehost_refused", m))?;
+                let set: BTreeMap<Address, BTreeMap<String, Value>> = [(a.clone(), row)].into();
+                let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                hosts_ok(&latest.facts, &set).map_err(|m| err("bad_host", m))?;
+                let t = UniverseTime::seconds(at_s);
+                let ev = Event::new(EventBody {
+                    kind: kinds::AUTHORED_SET.into(),
+                    subject: vec![a.clone()],
+                    occurred_at: t,
+                    activated_at: t,
+                    recognised_at: u.chronicle.next_stamp(),
+                    causes: vec![],
+                    payload: Payload {
+                        set,
+                        ..Default::default()
+                    },
+                    evidence: Evidence::Authored,
+                    publisher: Publisher::new("gm", "rehost", "1"),
+                })
+                .map_err(|e| err("bad_event", format!("{e}")))?;
+                let id = u
+                    .chronicle
+                    .append(ev)
+                    .map_err(|e| err("chronicle", format!("{e}")))?;
+                Response::Authored {
+                    event_id: id.hex(),
+                    affected: vec![a.to_string()],
+                    state_hash: latest_hash(&u.chronicle),
+                    declared_tag: None,
+                }
+            }
             Request::SplitConstruct {
                 address,
                 key,
@@ -5522,9 +5955,10 @@ impl Kernel {
                                 format!("{a} is not in universe {}", u.root),
                             ));
                         }
-                        let st = u
+                        let mut st = u
                             .chronicle
                             .state_at(UniverseTime::seconds(at_s.unwrap_or(i64::MAX)));
+                        withdraw::drop_withdrawn(&mut st.facts);
                         st.facts
                             .iter()
                             .filter(|(x, _)| a.contains(x))
