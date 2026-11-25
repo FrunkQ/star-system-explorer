@@ -14,7 +14,7 @@
       "name": "Working out a system",
       "meaning": "Resolving a system and its worlds from the packs and the chronicle: what every card, chart, edit and search reads. A click must not wait on it.",
       "budget_ms": 100,
-      "sources": ["derive", "explain", "draw", "scene", "atoms", "manifest", "pack_reports", "resolved_system", "systems", "read_world_stack", "classify_preview", "atmosphere_advice", "history", "state_hash", "branch_state_hash", "set_authored", "set_authored_batch", "withdraw", "rehost", "preview_tree", "restore", "branch", "branch_set", "commit", "discard", "adopt", "read_reach", "dressing", "adopt_dressing", "hold_dressing", "campaign_tags", "sift"],
+      "sources": ["derive", "explain", "draw", "scene", "atoms", "manifest", "pack_reports", "resolved_system", "systems", "read_world_stack", "classify_preview", "atmosphere_advice", "history", "state_hash", "branch_state_hash", "set_authored", "set_authored_batch", "withdraw", "rehost", "preview_tree", "restore", "branch", "branch_set", "commit", "discard", "adopt", "read_reach", "dressing", "adopt_dressing", "hold_dressing", "campaign_tags", "sift", "expects", "class_sample"],
       "bench": ["resolve", "sift", "observe", "suite", "classify", "place"]
     },
     {
@@ -76,7 +76,7 @@
       "name": "Orbits, routes and voyages",
       "meaning": "Where everything is at a time, the calendar, routes between stars and voyages in a system.",
       "budget_ms": 300,
-      "sources": ["orbits_at", "orbit_stability", "ship_power", "calendar", "campaign_now", "set_campaign_now", "plan_route", "plan_voyage", "ship_at_world", "jump_map"],
+      "sources": ["orbits_at", "orbit_stability", "ship_power", "calendar", "campaign_now", "set_campaign_now", "plan_route", "plan_voyage", "ship_at_world", "jump_map", "elements_in"],
       "bench": ["time", "time-generated", "nav"]
     },
     {

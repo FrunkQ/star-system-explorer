@@ -17,6 +17,9 @@
     if (visits.open) {
       openId = `visit:${visits.open}`;
       visits.open = null;
+    } else if (visits.own) {
+      openId = visits.own;
+      visits.own = null;
     }
   });
   const opened = $derived.by((): { card: Postcard; visiting: boolean } | null => {

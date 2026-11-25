@@ -29,7 +29,7 @@ pub const M_SUN: f64 = GM_SUN / G;
 const KEV_M: f64 = sse_core::sheet::H * sse_core::sheet::C / (1e3 * sse_core::sheet::E);
 
 const PALL81: &str = "Pallavicini, R. et al. 1981, Relations among stellar X-ray emission observed from Einstein, stellar rotation and bolometric luminosity, ApJ 248, 279: hot (O and B) stars give L_X ≈ 10⁻⁷ L_bol from their winds, independent of rotation. doi:10.1086/159152";
-const SKUM72: &str = "Skumanich, A. 1972, Time scales for Ca II emission decay, rotational braking, and lithium depletion, ApJ 171, 565: spin falls as the square root of age. doi:10.1086/151310";
+const SKUM72: &str = "Skumanich, A. 1972, Time scales for Ca II emission decay, rotational braking, and lithium depletion, ApJ 171, 565: rotation and Ca II emission fall as the inverse square root of age (so the spin period grows as its square root), calibrated on a Hyades age of 0.4 Gyr. doi:10.1086/151310";
 const SHIB13_T: &str = "Shibayama, T. et al. 2013, Superflares on solar-type stars observed with Kepler I, ApJS 209, 5: flare light as a 10 000 K black body. https://arxiv.org/abs/1308.1480";
 const YASHIRO06: &str = "Yashiro, S. et al. 2006, Different power-law indices in the frequency distributions of flares with and without coronal mass ejections, ApJ 650, L143: the share of flares with ejections rises with flare size, to nearly all of the largest. doi:10.1086/508876";
 
@@ -244,7 +244,7 @@ pub fn activity(seed: &Seed, s: &Star, set: &Settings) -> Result<Activity, Strin
             let p = (26.09 * DAY * tau / tau_sun
                 * m::sqrt(s.age_s.max(0.0) / (4.57e9 * JULIAN_YEAR)))
             .max(set.birth_period_d * DAY);
-            why.push(format!("Spun down with age as the square root of time (Skumanich), from the Sun's 26.1 days at 4.57 billion years: about {:.1} days now.", p / DAY));
+            why.push(format!("Spun down with age, the spin period growing as the square root of time (Skumanich), from the Sun's 26.1 days at 4.57 billion years: about {:.1} days now.", p / DAY));
             stand_ins.push("spin from age is a Skumanich law scaled by turnover time, never faster than a 1-day birth spin; the life line's own spin wins when it has one (F7)".into());
             refs.push(r(SKUM72));
             (p, "age")

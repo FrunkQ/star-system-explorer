@@ -90,7 +90,8 @@ fn own_field_noses() {
 }
 
 /// Bodies with air and no field: an induced boundary a few hundred km up
-/// (Venus ionopause 250 to 400 km, Brace and Kliore 1991; Mars 300 to 800 km);
+/// (Venus ionopause 200 to 300 km at solar minimum and 200 to over 1000 km at
+/// maximum, Brace and Kliore 1991 with Kliore and Luhmann 1991; Mars 300 to 800 km);
 /// the airless Moon is struck at its surface.
 #[test]
 fn air_and_bare_surfaces() {

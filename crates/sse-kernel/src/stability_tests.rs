@@ -368,3 +368,107 @@ fn adding_a_body_reads_only_what_it_touches() {
     );
     let _ = Request::Hello;
 }
+
+/// K15: Pluto crosses Neptune's orbit and never meets it, because a 3:2
+/// resonance times their passes (Murray and Dermott 1999 section 8.7).
+#[test]
+fn pluto_is_held_by_neptune_in_a_three_to_two() {
+    let mut k = crate::Kernel::new();
+    let mut b = sol(false);
+    let s = "u:t/sys:0/star:0";
+    b.push(body(
+        &format!("{s}/planet:8"),
+        "planet",
+        Some(s),
+        1.303e22,
+        39.48,
+        0.2488,
+        17.16,
+    ));
+    let v = ask(&mut k, b, None);
+    let hill = find(&v, "hill", "planet:7");
+    assert_eq!(
+        hill["results"]["verdict"], 3.0,
+        "the orbits do cross: {hill}"
+    );
+    assert_eq!(hill["level"], 1, "{hill}");
+    assert!(hill["says"].as_str().unwrap().contains("3:2"), "{hill}");
+    let res = find(&v, "resonance", "planet:7");
+    assert_eq!(res["block"], "sse.stability.resonance");
+    assert_eq!(res["inputs"]["inner_turns"], 3.0, "{res}");
+    assert_eq!(res["inputs"]["outer_turns"], 2.0, "{res}");
+    assert!(res["results"]["offset"].as_f64() < res["results"]["width"].as_f64());
+    // Nowhere else in the planets is held: Uranus and Neptune's near 2:1 is
+    // outside its width.
+    let held = v["checks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|c| c["check"] == "resonance")
+        .count();
+    assert_eq!(held, 1, "{v}");
+}
+
+/// K15: a Trojan shares Jupiter's orbit; that is a resonance (1:1), not two
+/// orbits of the same size to refuse. Moved off the shared orbit it is two
+/// crossing orbits again.
+#[test]
+fn a_trojan_shares_its_planets_orbit() {
+    let mut k = crate::Kernel::new();
+    let s = "u:t/sys:0/star:0";
+    let mut b = vec![body(s, "star", None, M_SUN, 0.0, 0.0, 0.0)];
+    b.push(body(
+        &format!("{s}/planet:0"),
+        "planet",
+        Some(s),
+        1898e24,
+        5.203,
+        0.0484,
+        1.3,
+    ));
+    b.push(body(
+        &format!("{s}/planet:1"),
+        "asteroid",
+        Some(s),
+        1e17,
+        5.203,
+        0.1,
+        10.0,
+    ));
+    let v = ask(&mut k, b.clone(), None);
+    let res = find(&v, "resonance", "planet:0");
+    assert!(res["says"].as_str().unwrap().contains("one orbit"), "{res}");
+    assert_eq!(res["level"], 1);
+    assert!(
+        v["unchecked"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|u| u["check"] != "hill"),
+        "{v}"
+    );
+    // A little wide of the shared orbit: still held (a horseshoe or tadpole).
+    b[2] = body(
+        &format!("{s}/planet:1"),
+        "asteroid",
+        Some(s),
+        1e17,
+        5.25,
+        0.1,
+        10.0,
+    );
+    let v = ask(&mut k, b.clone(), None);
+    assert_eq!(find(&v, "hill", "planet:0")["level"], 1, "{v}");
+    // Far wide of it: no resonance holds a world 20% out, and the orbits cross.
+    b[2] = body(
+        &format!("{s}/planet:1"),
+        "asteroid",
+        Some(s),
+        1e17,
+        6.2,
+        0.25,
+        10.0,
+    );
+    let v = ask(&mut k, b, None);
+    assert_eq!(find(&v, "hill", "planet:0")["level"], 3, "{v}");
+}

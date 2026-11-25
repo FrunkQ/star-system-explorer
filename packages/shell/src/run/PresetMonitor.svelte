@@ -5,8 +5,9 @@
   never sends: what is on screens stays as it was sent until it is fired again. Done or Escape goes back to Live.
 -->
 <script lang="ts">
-  import { addBookmark, findPreset, wordsOnly, isUp, presetWords, removePreset, updatePreset, type Board, type Bookmark, type HoldCard, type Playbook, type Preset, type Step } from "../../../ui-contract/src/index.ts";
+  import { addBookmark, findPreset, wordsOnly, isUp, presetWords, removePreset, updatePreset, type Board, type Bookmark, type HoldCard, type HoldKind, holdKind, holdText, withWords, type Playbook, type Preset, type Step } from "../../../ui-contract/src/index.ts";
   import { firedAt } from "./fired.svelte.ts";
+  import GroundPick from "./GroundPick.svelte";
 
   let {
     pb,
@@ -55,7 +56,7 @@
     setStep(i, { show: { bookmark: b.id, ...(was && "show" in was && was.show.layout ? { layout: was.show.layout } : {}) } });
     note = "Now shows where you are. Fire again to send it.";
   }
-  const cardValue = (c: HoldCard) => (typeof c === "string" ? c : "text");
+  const cardValue = (c: HoldCard) => holdKind(c) ?? "text";
   function key(e: KeyboardEvent) {
     if (e.key === "Escape" && !(e.target as HTMLElement).closest("select")) (e.stopPropagation(), editing ? (editing = false) : onclose());
   }
@@ -129,14 +130,16 @@
           {:else if "hold" in s}
             <label
               >Card
-              <select value={cardValue(s.hold.card)} data-edit-card onchange={(e) => setStep(i, { hold: { card: e.currentTarget.value === "text" ? { text: "Stand by" } : (e.currentTarget.value as HoldCard) } })}>
+              <select value={cardValue(s.hold.card)} data-edit-card onchange={(e) => setStep(i, { hold: { card: withWords(s.hold.card, e.currentTarget.value === "text" ? { text: "Stand by" } : (e.currentTarget.value as HoldKind)) } })}>
                 <option value="plain">Awaiting transmission</option>
                 <option value="joke">A joke</option>
+                <option value="quote">A quote</option>
                 <option value="blank">Dark</option>
                 <option value="text">My own words</option>
               </select>
             </label>
-            {#if typeof s.hold.card === "object"}<label>Words <input value={s.hold.card.text} onchange={(e) => setStep(i, { hold: { card: { text: e.currentTarget.value } } })} /></label>{/if}
+            {#if holdText(s.hold.card) !== null}<label>Words <input value={holdText(s.hold.card)} onchange={(e) => setStep(i, { hold: { card: withWords(s.hold.card, { text: e.currentTarget.value }) } })} /></label>{/if}
+            <GroundPick card={s.hold.card} {bookmarks} label="this hold" onpick={(c) => setStep(i, { hold: { card: c } })} />
           {/if}
         {/each}
         <label class="wide">Note to self <input value={k.note ?? ""} placeholder="Wait for them to ask about the moon" data-edit-note onchange={(e) => onchange(updatePreset(pb, k.id, { note: e.currentTarget.value }))} /></label>

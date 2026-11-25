@@ -82,6 +82,7 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("orbit.angular_momentum_deficit", "angular momentum an orbit lacks against a flat circle of the same size (kg m2 s-1)"),
     ("orbit.ascending_node", "longitude of an orbit's ascending node, radians"),
     ("orbit.inclination", "tilt of an orbit against its host's reference plane, radians"),
+    ("orbit.chaotic_zone", "orbit gap, as a fraction, inside which neighbouring resonances overlap and the motion is chaotic"),
     ("orbit.binary_limit", "widest (round one star) or nearest (round both) lasting planet orbit in a binary"),
     ("orbit.hill_gap", "inner apoapsis to outer periapsis, in mutual Hill radii"),
     ("orbit.hill_spacing", "gap between two neighbouring orbits, in mutual Hill radii"),
@@ -90,6 +91,9 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("orbit.moon_limit", "widest orbit a moon keeps round its planet"),
     ("orbit.mutual_hill_radius", "radius of the gravity bubble two neighbours share"),
     ("orbit.mutual_inclination", "angle between two orbital planes, radians"),
+    ("orbit.resonance_offset", "how far two orbits' period ratio is from a whole-number ratio, as a fraction"),
+    ("orbit.resonance_turns", "turns one body makes in one cycle of a mean motion resonance"),
+    ("orbit.resonance_width", "how far a period ratio may be from a resonance and still be held, as a fraction"),
     ("orbit.relative_amd", "a system's angular momentum deficit against an outer planet's circular angular momentum"),
     ("orbit.stability_verdict", "a stability check's verdict as a number: 0 lasts, higher is worse (each block says what its numbers mean)"),
     (
