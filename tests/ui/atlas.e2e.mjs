@@ -72,7 +72,7 @@ try {
   await cover.waitFor();
   assert.match(await cover.innerText(), /DON'T PANIC/);
   assert.match(await cover.innerText(), /The Guide to the Kestrel system/);
-  assert.doesNotMatch(await cover.innerText(), /Megadodo/, "the base Guide's cover names no publisher");
+  assert.match(await cover.innerText(), /Megadodo Publications/i, "the Guide's own publisher (Alex, 25 Nov)");
   assert.equal(await gm.evaluate(() => document.activeElement?.hasAttribute("data-atlas-cover")), true, "the cover takes focus, so Enter opens it");
   // One-liners at the top and bottom of the gadget's screen (Alex, 25 Nov): on the cover, waiting lines.
   const banner = (at) => gm.locator(`[data-atlas-banner="${at}"]`).innerText();

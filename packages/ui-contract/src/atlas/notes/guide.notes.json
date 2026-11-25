@@ -2,8 +2,18 @@
  "schema": "sse.margin-notes/1",
  "id": "sse.notes.guide",
  "name": "The Guide's margin notes",
- "note": "Alex's own list from SSE3 (Mostly_harmless.txt), each given an 'about' and a 'when' (atlas design 6.4), plus new notes with slots that react to the real world. The lines with Douglas Adams' names and phrases are in the separate unofficial fan pack (store-packs/guide-fan-notes); the lines that type a figure have numbers that plainly cannot be true (over 100% together), so the rest can be relied on (Alex, 25 Nov). Every line says what it is for in `uses`: the Atlas margin (page) or the one-liners at the top and bottom of a screen (arrival, travel, danger, settled, empty, waiting, ship), chosen by the screen's situation.",
+ "note": "Alex's own list from SSE3 (Mostly_harmless.txt), all 131 lines, each given an 'about' and a 'when' (atlas design 6.4), plus new lines with slots that react to the real world and new one-liners for screens. The lines that borrow from Douglas Adams' books stay in the Guide (Alex, 25 Nov: \"everyone is fine with a Douglas Adams joke. The whole point is that this IS the guide\"), written by Alex in homage to The Hitchhiker's Guide to the Galaxy. Lines that type a figure have numbers that plainly cannot be true (over 100% together), so the rest can be relied on (Alex, 25 Nov). Every line says what it is for in `uses`: the Atlas margin (page) or the one-liners at the top and bottom of a screen (arrival, travel, danger, settled, empty, waiting, ship), chosen by the screen's situation.",
  "notes": [
+  {
+   "id": "guide.alex.001",
+   "about": "any",
+   "text": "Mostly harmless.",
+   "uses": [
+    "page",
+    "arrival",
+    "waiting"
+   ]
+  },
   {
    "id": "guide.alex.002",
    "about": "world",
@@ -14,9 +24,19 @@
    ]
   },
   {
+   "id": "guide.alex.003",
+   "about": "any",
+   "text": "The local dominant lifeforms still think digital watches are a pretty neat idea."
+  },
+  {
    "id": "guide.alex.004",
    "about": "world",
    "text": "Currently undergoing a temporary existential crisis. Check back next millennium."
+  },
+  {
+   "id": "guide.alex.005",
+   "about": "any",
+   "text": "A planet where the population is so unhappy that they invented a currency system based on the movement of small green pieces of paper."
   },
   {
    "id": "guide.alex.006",
@@ -42,6 +62,21 @@
    ]
   },
   {
+   "id": "guide.alex.009",
+   "about": "any",
+   "text": "Zaphod Beeblebrox drank near here. Twice. Simultaneously."
+  },
+  {
+   "id": "guide.alex.010",
+   "about": "any",
+   "text": "The ultimate destination for people who want to watch the universe end while eating a steak that actively wants to be eaten."
+  },
+  {
+   "id": "guide.alex.011",
+   "about": "any",
+   "text": "Do not order the Pan Galactic Gargle Blaster unless your brain insurance is fully paid up."
+  },
+  {
    "id": "guide.alex.012",
    "about": "world",
    "text": "The toilets here are temporarily out of order due to an unexpected localized spatial anomaly.",
@@ -49,6 +84,11 @@
     "page",
     "arrival"
    ]
+  },
+  {
+   "id": "guide.alex.013",
+   "about": "any",
+   "text": "Ford Prefect still owes a bar tab here dating back to the pre-destruction era."
   },
   {
    "id": "guide.alex.014",
@@ -71,6 +111,26 @@
    ]
   },
   {
+   "id": "guide.alex.016",
+   "about": "any",
+   "text": "Rated 1 out of 5 stars by the Sirius Cybernetics Corporation (which means it’s probably lovely)."
+  },
+  {
+   "id": "guide.alex.017",
+   "about": "any",
+   "text": "If you see a Vogon constructor fleet, do not under any circumstances ask them to read their poetry."
+  },
+  {
+   "id": "guide.alex.018",
+   "about": "any",
+   "text": "The probability of surviving a jump through this sector is 2 to the power of 276,709 against. Enjoy your flight."
+  },
+  {
+   "id": "guide.alex.019",
+   "about": "any",
+   "text": "Space is big. You just won't believe how vastly, hugely, mind-bogglingly big it is."
+  },
+  {
    "id": "guide.alex.020",
    "about": "system",
    "text": "A highly dangerous sector where logic and physics have agreed to a temporary separation.",
@@ -78,6 +138,11 @@
     "page",
     "danger"
    ]
+  },
+  {
+   "id": "guide.alex.021",
+   "about": "any",
+   "text": "Do not panic. Unless you forgot your towel, in which case, panic immediately."
   },
   {
    "id": "guide.alex.022",
@@ -89,6 +154,11 @@
    ]
   },
   {
+   "id": "guide.alex.023",
+   "about": "any",
+   "text": "Home of the Ravenous Bugblatter Beast of Traal. If you can’t see it, it thinks it can’t see you."
+  },
+  {
    "id": "guide.alex.024",
    "about": "system",
    "text": "This region of space is entirely populated by lost ballpoint pens and socks.",
@@ -98,9 +168,29 @@
    ]
   },
   {
+   "id": "guide.alex.025",
+   "about": "any",
+   "text": "Your ship's computer is currently feeling very depressed. Please treat it with kindness, or it might turn off the life support."
+  },
+  {
+   "id": "guide.alex.026",
+   "about": "any",
+   "text": "The Infinite Improbability Drive is currently warming up. Expect your shoes to turn into marmalade shortly."
+  },
+  {
+   "id": "guide.alex.027",
+   "about": "any",
+   "text": "Warning: The automatic doors have been upgraded with a GPP (Genuine People Personality). They are far too cheerful for this time of day."
+  },
+  {
    "id": "guide.alex.028",
    "about": "ship",
    "text": "The propulsion system is operating at 99% efficiency and 11% utter confusion."
+  },
+  {
+   "id": "guide.alex.029",
+   "about": "any",
+   "text": "Nutri-Matic Drink Dispenser: Currently producing something that is almost, but not quite, entirely unlike tea."
   },
   {
    "id": "guide.alex.030",
@@ -116,6 +206,11 @@
    "id": "guide.alex.032",
    "about": "ship",
    "text": "This ship is equipped with state-of-the-art technology that doesn't actually work when you need it to."
+  },
+  {
+   "id": "guide.alex.033",
+   "about": "any",
+   "text": "The answer is 42. We are still trying to figure out what the question was."
   },
   {
    "id": "guide.alex.034",
@@ -167,6 +262,11 @@
    ]
   },
   {
+   "id": "guide.alex.038",
+   "about": "any",
+   "text": "The local government is run by a man in a shack who doesn't believe anything is real. He’s doing a fantastic job."
+  },
+  {
    "id": "guide.alex.039",
    "about": "system",
    "text": "A popular tourist destination for people who enjoy being bored in five different dimensions.",
@@ -214,6 +314,16 @@
     "page",
     "danger"
    ]
+  },
+  {
+   "id": "guide.alex.044",
+   "about": "any",
+   "text": "A perfectly normal system. Move along, nothing to see here, definitely no secret hyper-spatial bypasses."
+  },
+  {
+   "id": "guide.alex.045",
+   "about": "any",
+   "text": "The local sun is currently sponsored by the Sirius Cybernetics Corporation."
   },
   {
    "id": "guide.alex.046",
@@ -266,6 +376,41 @@
     "travel",
     "waiting"
    ]
+  },
+  {
+   "id": "guide.alex.051",
+   "about": "any",
+   "text": "Eccentrica Gallumbits once hosted a party so wild, the Infinite Improbability Drive registered it as a predictable Tuesday."
+  },
+  {
+   "id": "guide.alex.052",
+   "about": "any",
+   "text": "Galactic cartographers had to officially classify Eccentrica Gallumbits personal space as a major interstellar tourist destination."
+  },
+  {
+   "id": "guide.alex.053",
+   "about": "any",
+   "text": "Eccentrica Gallumbits remains the only living being capable of making a Vogon completely forget about his paperwork."
+  },
+  {
+   "id": "guide.alex.054",
+   "about": "any",
+   "text": "A sperm whale once fell from the sky here thinking, \"I wonder if it will be friends with me?\""
+  },
+  {
+   "id": "guide.alex.055",
+   "about": "any",
+   "text": "A bowl the petunias once fell from the sky here and just thought, \"Oh no, not again.\""
+  },
+  {
+   "id": "guide.alex.056",
+   "about": "any",
+   "text": "If a whale can manage to reconcile its own existence, velocity, and tail-flapping in under two minutes, you really have no excuse for failing your starship navigation exam."
+  },
+  {
+   "id": "guide.alex.057",
+   "about": "any",
+   "text": "Experts agree that the probability of a sperm whale spontaneously materializing in an atmosphere is exactly equal to the probability of the universe proving it makes any sense at all."
   },
   {
    "id": "guide.alex.058",
@@ -364,6 +509,11 @@
    ]
   },
   {
+   "id": "guide.alex.069",
+   "about": "any",
+   "text": "Highly advanced civilization. Completely undone by a sudden shortage of phone sanitisers."
+  },
+  {
    "id": "guide.alex.070",
    "about": "system",
    "text": "This sector is property of the Galactic Tax Fleet. If you see them, pretend you are a cloud of space dust.",
@@ -413,6 +563,11 @@
    ]
   },
   {
+   "id": "guide.alex.075",
+   "about": "any",
+   "text": "A planet entirely populated by middle-managers who were exiled from a sensible planet three million years ago."
+  },
+  {
    "id": "guide.alex.076",
    "about": "ship",
    "text": "The autopilot is currently having a mild panic attack. Please don't make any sudden movements."
@@ -446,6 +601,11 @@
    "id": "guide.alex.082",
    "about": "ship",
    "text": "The central computer has decided to stop calculating trajectories and start writing experimental poetry. We are doomed."
+  },
+  {
+   "id": "guide.alex.083",
+   "about": "ship",
+   "text": "The shields are currently at 142% efficiency. The ship's computer considers this a good omen. It isn't."
   },
   {
    "id": "guide.alex.084",
@@ -608,6 +768,11 @@
    "text": "If you feel like you've been here before, you have. You died here in a parallel timeline."
   },
   {
+   "id": "guide.alex.099",
+   "about": "any",
+   "text": "The local language has 42 different words for \"Oops.\""
+  },
+  {
    "id": "guide.alex.100",
    "about": "world",
    "text": "A world where the history books are written in advance to save time."
@@ -685,6 +850,11 @@
    ]
   },
   {
+   "id": "guide.alex.108",
+   "about": "any",
+   "text": "Warning: The local stellar core is currently sponsored by the Sirius Cybernetics Corporation. Expect unskippable solar flares."
+  },
+  {
    "id": "guide.alex.109",
    "about": "system",
    "text": "Warning: This system is legally classified as a \"Minor Inconvenience.\" Proceed at your own boredom.",
@@ -692,6 +862,11 @@
     "page",
     "arrival"
    ]
+  },
+  {
+   "id": "guide.alex.110",
+   "about": "any",
+   "text": "Warning: A perfectly normal system. Move along, nothing to see here, definitely no illegal hyper-spatial bypasses."
   },
   {
    "id": "guide.alex.111",
@@ -810,6 +985,11 @@
    ]
   },
   {
+   "id": "guide.alex.123",
+   "about": "any",
+   "text": "Warning: This system’s hyper-spatial bypass was built upside down. If you exit the jump lane feeling like your feet are in your mouth, this is normal."
+  },
+  {
    "id": "guide.alex.124",
    "about": "system",
    "text": "Warning: The local asteroid belt is currently on strike demanding better orbital trajectories. Watch out for picketing space rocks.",
@@ -839,6 +1019,11 @@
     "page",
     "danger"
    ]
+  },
+  {
+   "id": "guide.alex.127",
+   "about": "any",
+   "text": "Warning: A rogue Vogon filing cabinet is currently adrift in this system. Collision will result in catastrophic structural damage and immediate auditing."
   },
   {
    "id": "guide.alex.128",

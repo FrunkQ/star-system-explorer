@@ -47,7 +47,8 @@
   "cover": {
     "big": "DON'T PANIC",
     "title": "The Guide to the {place} system",
-    "strap": "Friendly · illustrated · mostly accurate"
+    "strap": "Friendly · illustrated · mostly accurate",
+    "publisher": "Megadodo Publications"
   },
   "device": {
     "label": "The Guide · Model 2",

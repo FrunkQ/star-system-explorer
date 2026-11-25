@@ -388,26 +388,15 @@ test("margin notes: fit by what the audience knows, slots said by the figures do
   assert.deepEqual(withMargin(page(after, TARN), after, survey, SHIPPED_NOTE_SETS, opts), page(after, TARN));
 });
 
-test("the note sets load: Alex's list (no Douglas Adams names in the base set), the fan pack apart, the loader's refusals", () => {
+test("the note sets load: all of Alex's list is the Guide's, Douglas Adams lines included; the loader's refusals", () => {
   assert.deepEqual(checkNoteSet(GUIDE_NOTES), []);
-  const fanPack = atlasDocsOf([json("store-packs/guide-fan-notes/pack.json")]);
-  assert.deepEqual(fanPack.refused, []);
-  assert.deepEqual(json("store-packs/guide-fan-notes/pack.json").kind, ["presentation"], "a kind the kernel's load_stack knows");
-  const fan = fanPack.note_sets[0]!;
-  assert.deepEqual(checkNoteSet(fan), []);
-  const borrowed = /Zaphod|Vogon|Beeblebrox|Sirius Cybernetics|Improbability|Gargle Blaster|Ford Prefect|Megadodo|Eccentrica|petunias|\b42\b|forgot your towel|Bugblatter|Nutri-Matic|Genuine People|bypass/i;
-  for (const n of GUIDE_NOTES.notes) assert.ok(!borrowed.test(n.text), `${n.id} is in the base set`);
-  const alex = GUIDE_NOTES.notes.filter((n) => n.id.startsWith("guide.alex.")).length + fan.notes.length;
-  assert.equal(alex, 131, "every line of Alex's list is in one set");
-  for (const [id, set] of [["guide.alex.007", GUIDE_NOTES], ["guide.alex.096", GUIDE_NOTES], ["fan.alex.083", fan]] as const) {
-    const n = set.notes.find((x) => x.id === id)!;
-    assert.ok(n, id);
-  }
-  const ed = fanPack.editions[0]!;
-  assert.deepEqual(checkEdition(ed, { ...STACK, noteSets: ["sse.notes.guide", "fan.notes.guide-classic"] }), []);
-  assert.equal(resolveEdition(ed.id, [ed]).cover?.publisher, "Megadodo Publications");
-  assert.equal(resolveEdition("sse.edition.guide").cover?.publisher, undefined, "the base Guide's cover names no publisher");
-  assert.equal(resolveEdition("sse.edition.guide").cover?.big, "DON'T PANIC");
+  const alex = GUIDE_NOTES.notes.filter((n) => n.id.startsWith("guide.alex."));
+  assert.equal(alex.length, 131, "every line of Alex's list is in the Guide (Alex, 25 Nov: this IS the guide)");
+  for (const id of ["guide.alex.007", "guide.alex.083", "guide.alex.096", "guide.alex.117"]) assert.ok(alex.some((n) => n.id === id), id);
+  assert.ok(alex.some((n) => /Vogon/.test(n.text)), "the Douglas Adams lines are in");
+  const guide = resolveEdition("sse.edition.guide");
+  assert.equal(guide.cover?.big, "DON'T PANIC");
+  assert.equal(guide.cover?.publisher, "Megadodo Publications");
   const bad = { schema: "sse.margin-notes/1", id: "x", name: "X", notes: [
     { id: "a", about: "world", text: "The sea covers 71% of it." },
     { id: "a", about: "planet", text: "At {gravity.surface} you bounce." },

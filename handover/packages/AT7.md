@@ -13,16 +13,17 @@ Track AT (atlas design section 6, 12.5, 14A note 4). Built 24 Nov 2026.
   slot's field must be tested by the note's `when`, catalogued fields, ids unique, under 200 characters.
 - **Alex's list** (SSE3 `src/lib/catalogue/guideNotes.ts` in FrunkQ/star-system-generator, from his
   Mostly_harmless.txt): 131 lines.
-  - 91 are in the base set `ui-contract/src/atlas/notes/guide.notes.json` as `guide.alex.NNN` (NNN is his line
-    number), each given an `about` and a `when` as a first pass. Lines about inhabitants need settlements; wildlife
+  - All 131 are in the Guide's set `ui-contract/src/atlas/notes/guide.notes.json` as `guide.alex.NNN` (NNN is his
+    line number), each given an `about` and a `when` as a first pass. Lines about inhabitants need settlements; wildlife
     needs thick air; sea jokes need a sea; ship notes wait for ship pages.
-  - 35 use Douglas Adams' names or phrases and are in the unofficial fan pack `store-packs/guide-fan-notes/` (notes
-    and an edition, "The Guide (classic)", extending the Guide with "Megadodo Publications" on its cover). It is not
-    built into SSE4.
+  - 36 use Douglas Adams' names or phrases. They were first split into an unofficial fan pack; Alex, 25 Nov 00:57:
+    "keep them all everyone is fine with a douglas adams joke. the whole point is that this IS the guide". So they are
+    in the Guide's own set, the fan pack is gone, and the Guide's cover carries "Megadodo Publications" as in SSE3.
+    This overrides design 6.6 and 14A note 4 on this point.
   - 5 typed a figure about the subject. Alex, 25 Nov: "let them through as obvious jokes BUT have them as the
     proportion that adds up over 100% - then you know you can rely on what's left." They are back with their
     numbers made plainly impossible: lines 7, 28 and 96 now total 110% (12% misplaced optimism, 11% utter confusion,
-    20% pure spite), line 117 offers 120% off all gravity, and fan line 83 has shields at 142%. The loader's rule
+    20% pure spite), line 117 offers 120% off all gravity, and line 83 has shields at 142%. The loader's rule
     (`obviousJoke` in `margin.ts`): a note may type percentages only when they total over 100% or one is over 100%;
     every other figure still goes through a slot.
   - 15 new notes with slots (`guide.new.*`, weight 2) react to the real world: sea cover, year length, temperature,
@@ -47,7 +48,7 @@ Track AT (atlas design section 6, 12.5, 14A note 4). Built 24 Nov 2026.
 - "Not this one" is kept for the sitting; keeping it with the campaign, and the GM's own "Guide's notes" with a
   "Known to" eye, need a campaign field (with SV's notes work).
 - Minerva's drafted notes are AT11 (Orac thread).
-- The fan pack's loading into the stack (note sets and editions from packs) arrives with the pack loader step.
+- Note sets and editions from packs (`atlasDocsOf`) reach the view with the pack loader step.
 
 ## Seen, for another thread
 - The Guide vocabulary's year sentence reads "Birthdays come round every about 214 days" (the figures door's "about"
@@ -56,10 +57,9 @@ Track AT (atlas design section 6, 12.5, 14A note 4). Built 24 Nov 2026.
 ## Checks
 - `node --test packages/ui-contract/test/atlas.test.ts`: notes fit by what the audience knows; a slot is the
   figures door's text; the same page gives the same notes; a note never reads an unknown fact; bands meet bounds only
-  wholly; "Not this one"; Survey has no margin; both sets load; no borrowed names in the base set; every line of
-  Alex's list is placed or held; the fan edition puts the publisher on its cover and the base Guide does not; the
-  loader's refusals.
-- `tests/ui/atlas.e2e.mjs`: the Guide opens on its cover (DON'T PANIC, the place, no publisher, focus on the cover);
+  wholly; "Not this one"; Survey has no margin; the set loads with all 131 of Alex's lines; the Guide's cover has
+  DON'T PANIC and Megadodo Publications; the loader's refusals.
+- `tests/ui/atlas.e2e.mjs`: the Guide opens on its cover (DON'T PANIC, the place, Megadodo Publications, focus on the cover);
   Enter opens; one or two signed notes and the opinions line; Next and Back keys; the same notes on return; the cover
   key brings the cover back; the Guide fits a phone.
 - Screenshots: project files `sse4/handover-screens/AT7-screens/`.

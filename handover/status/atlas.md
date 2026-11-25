@@ -15,7 +15,7 @@ are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`.
 template and the audience, never from the value: the kernel writes a placeholder only where a value exists, so the
 Atlas never reads a placeholder (a placeholder and an absent fact read the same). Figures go through
 `ui-contract/src/figures.ts`; nothing in the Atlas formats a number itself. The SSE3 joke file is on Alex's PC only:
-ask him for it; never recreate his jokes from memory. The Weyland-Yutani logo stays out unless Alex says otherwise.
+it is in the public SSE3 repo FrunkQ/star-system-generator (`src/lib/catalogue/guideNotes.ts`); never recreate his jokes from memory. The Weyland-Yutani logo stays out unless Alex says otherwise.
 
 | Package | State | Log |
 |---|---|---|
@@ -25,7 +25,7 @@ ask him for it; never recreate his jokes from memory. The Weyland-Yutani logo st
 | AT4 print under the view: this page, chapter, whole atlas; A4 and Letter; Save ink; sheet furniture; page turn for paper editions (14A note 5, through PR 483's `resolveDelivery` and `playDelivery`); Copy as text, Save page | done but the page turn, which waits on PR 483 reaching main (one call, see the log) | packages/AT4.md |
 | AT5 gaps and redaction, "Show as withheld" (kernel `withheld` precision) | not started; kernel thread for `withheld` | |
 | AT6 letterhead, brand `accent` and `motto`, built-in SSE3 logos (six; not Weyland-Yutani), ASCII art; the Company edition | done; `accent` and `motto` reach `SeatBrand` with the Run desk thread's PB6 to PB8 PR (read as optional until then) | packages/AT6.md |
-| AT7 margin notes and The Guide edition (gadget look, cover every time; 14A note 4) | done; Alex's five figure lines back as plain jokes (over 100%, 25 Nov); one-liners by use case for the top and bottom of screens (`pickBanners`, 25 Nov); campaign-kept "Not this one" and the GM's Guide's notes next; Alex reads the note set before it ships | packages/AT7.md |
+| AT7 margin notes and The Guide edition (gadget look, cover every time; 14A note 4) | done; all 131 of Alex's lines in the Guide, Douglas Adams lines included, and Megadodo on its cover (25 Nov, no fan pack); his five figure lines back as plain jokes (over 100%, 25 Nov); one-liners by use case for the top and bottom of screens (`pickBanners`, 25 Nov); campaign-kept "Not this one" and the GM's Guide's notes next; Alex reads the note set before it ships | packages/AT7.md |
 | AT8 Why on the Atlas, "How we know" | not started | |
 | AT10 the GM's copy: pencil and ink on the page and in print | not started | |
 | AT14 `sse.kit/1`, its loader and checks, palettes with a contrast check, the four starters as documents | done for the document and checks; "Interface" on the role card and swatches are the Run desk thread's (AT13) | packages/AT14.md |
