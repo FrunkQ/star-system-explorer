@@ -82,6 +82,41 @@ Do this on the new account, on 26 Nov 2026 or later, in one pull request, never 
 Keep adding your row to `docs/citations.md` with what you checked, as before: that register is the builders' own
 record and this list reads its statuses into `earlier`.
 
+## Where it stands and when it restarts (25 Nov 2026)
+
+Batches 1 to 9 went out. Batches 1 to 5 came back whole; batches 6 to 9 came back in part, because Alex's
+Consensus plan reached 100% of its month. **The plan resets on 1 December 2026: no new batch before then.**
+
+- Done: 294 papers scored (219 confirmed, 63 not found, 6 say something else, 6 wrong citation). Tiers 1 and 2
+  (from memory, and behind golden numbers) are finished except one tier 1 paper.
+- Left: 1,231 unchecked, all tier 3 (code and packs, 712) or tier 4 (design notes only, 518), plus the one tier 1.
+  The papers of batches 6 to 9 that got no reply line are still `unchecked` in `master.jsonl`, so they need no
+  list of their own: the next `--batches` run picks them up first, by tier.
+- Restart on or after 1 December: `python3 scripts/citations.py --batches <folder> --start 10 --size 50`, then the
+  round for whichever account is in use (below). At 50 a day, about 25 days; a month's plan held about 400 papers,
+  so expect one more pause before the end, around tier 4.
+- Corrections waiting on owners: `sse4/citations/corrections-01.md` and `corrections-02-05.md` in the project
+  files (sections B0, B, C). Batches 6 to 9 add theirs to the same table in the status file.
+
+### The papers Consensus cannot check (the "not found" rows)
+
+Most "not found" rows exist and match, but are books, reports, standards or data notes that Consensus does not
+index, or the number sits in a paywalled text. Do not spend Consensus on them again. Route instead:
+
+1. Reports with their own page (NIST technical notes and JANAF, NASA technical reports, USGS circulars, ESA and
+   IAU documents): fetch the publisher's page or the PDF from ntrs.nasa.gov, nvlpubs.nist.gov, pubs.usgs.gov and
+   the like, and check the figure in the text itself. These are free and usually full text.
+2. DOIs: resolve them through doi.org (or the Crossref API) to confirm the title, authors, year and venue. That
+   settles "exists and is cited right"; the claim still needs the text.
+3. Books (Osterbrock, Rybicki and Lightman, Born and Wolf, Turcotte and Schubert, Pierrehumbert, Perryman,
+   Skolnik, Gray, Liou and others): confirm the edition and chapter through the publisher or a library catalogue,
+   and check the figure against a page Alex or a reader can open. Mark `confirmed` only with the page or equation
+   number in the note; otherwise leave `not found` with "book, needs a page check".
+4. arXiv preprints: the arXiv abstract page and PDF are free; check there.
+
+Score these by hand with the same reply line format (`key | status | found | figure | note`, with "checked via
+<route>" in the note) and run `--score` as usual.
+
 ## Daily round: on the old account (until 25 Nov 2026)
 
 Claude on that account cannot reach Consensus, so Alex carries the batches.

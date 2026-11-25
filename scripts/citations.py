@@ -50,14 +50,17 @@ UP = "A-ZÀ-ÖØ-ÞĀ-ſ"
 LO = "a-zß-öø-ÿĀ-ſ"
 # A surname: capitalised, may carry a particle (van, de, von, Mc, O') or a hyphen.
 SUR = rf"(?:(?:van der |van den |van |von |de la |de |del |le |du |da |dos |di |ten |ter )?(?:O'|O’|Mc|Mac|D'|d')?[{UP}][{LO}]+(?:[{UP}][{LO}]{{2,}})?(?:[-‐][{UP}][{LO}]+)?)"
-INIT = rf"(?:,?\s(?:[{UP}]\.(?:[\s-]?[{UP}]\.)*))"
-AUTH = rf"{SUR}(?:{INIT})?"
+# Initials, including two-letter ones such as "Ch." (Tegeler, Ch.).
+INIT = rf"(?:,?\s(?:[{UP}][a-z]?\.(?:[\s-]?[{UP}][a-z]?\.)*))"
+# A co-author may carry a two-word surname before initials ("Correa Barrios, A.").
+AUTH = rf"(?:{SUR}(?:{INIT})?|{SUR} {SUR}{INIT})"
 SEP = r"(?:,\s(?:and\s|&\s)?|\s(?:and|&)\s)"
 LIST = rf"(?P<authors>{AUTH}(?:{SEP}{AUTH}){{0,7}}(?:,?\set\.?\sal\.?)?)"
 # A year, not a date or a launch designation ("1961-01-12", "1985-056A").
 YEAR = r"(?P<year>1[6-9]\d\d|20[0-2]\d)(?P<suffix>[a-z])?(?![\d]|[-‐/]\d)"
 CITE_RE = re.compile(rf"(?<![{UP}{LO}\-])(?:{LIST})(?:,|\s)\s?\(?{YEAR}")
-DOI_RE = re.compile(r"\b(10\.\d{4,9}/[^\s\"'<>\]\[{}|]+)")
+# SICI-style DOIs carry angle brackets: 10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2.
+DOI_RE = re.compile(r"\b(10\.\d{4,9}/(?:[^\s\"'<>\]\[{}|]|<[^\s<>\"]{1,40}>)+)")
 ARXIV_RE = re.compile(r"(?:arxiv\.org/(?:abs|pdf)/|arXiv[:\s]\s?)((?:\d{4}\.\d{4,5})|(?:[a-z\-]+(?:\.[A-Z]{2})?/\d{7}))", re.I)
 MARK_RE = re.compile(
     r"from memory|to verify|verify before|not read here|not yet checked|to check|reference to find|"
@@ -277,6 +280,9 @@ def gather(roots, exts):
                 # A bare DOI or arXiv id still names a paper.
                 for d in DOI_RE.findall(text):
                     d = clean_doi(d)
+                    # Placeholder DOIs in test fixtures ("10.0000/example") name no paper.
+                    if d.startswith("10.0000/"):
+                        continue
                     key = "doi:" + d
                     add(papers, key, d, None, where, text, 0, len(text), [d], [])
                 continue

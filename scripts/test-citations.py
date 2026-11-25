@@ -25,6 +25,8 @@ CASES = [
     ("O'Neill, Emanuel and Flierl 2015", ["oneill2015"]),
     ("Kopparapu et al. 2013a and 2013b", ["kopparapu2013a"]),
     ("LaRowe, D. E. and Amend, J. P. 2015, Frontiers", ["larowe2015"]),
+    ("Tegeler, Ch., Span, R. and Wagner, W. 1999, J. Phys. Chem.", ["tegeler1999"]),
+    ("Millot, M., Coppari, F., Rygg, J. R., Correa Barrios, A., Hamel, S., Swift, D. C. and Eggert, J. H. 2019, Nature", ["millot2019"]),
     # Not citations: dates, launch designations, missions, months, journals.
     ("launched 1961 Feb 12; Venera (1961-003A)", []),
     ("Horizons, 2004-07-02", []),
@@ -43,6 +45,10 @@ def main():
     if c.clean_doi("doi:10.1086/160960).") != "doi:10.1086/160960" and c.clean_doi("10.1086/160960).") != "10.1086/160960":
         print("FAIL clean_doi")
         bad += 1
+    sici = c.DOI_RE.findall("doi:10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2 and more")
+    if sici != ["10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2"]:
+        print(f"FAIL SICI doi: {sici}")
+        bad += 1
     m = c.LINE_RE.match("shakura1973 | confirmed | Shakura and Sunyaev 1973, A&A 24, 337 | T^4 law | read")
     if not m or m.group(1) != "shakura1973" or m.group(2) != "confirmed":
         print("FAIL reply line")
@@ -53,7 +59,7 @@ def main():
         bad += 1
     if bad:
         sys.exit(1)
-    print(f"citations tests: {len(CASES) + 3} passed")
+    print(f"citations tests: {len(CASES) + 4} passed")
 
 
 if __name__ == "__main__":
