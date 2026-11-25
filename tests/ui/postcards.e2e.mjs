@@ -133,6 +133,19 @@ try {
     return el && Math.abs(Number(el.getAttribute("data-lon")) - k.lon) <= 1 && Math.abs(Number(el.getAttribute("data-lat")) - k.lat) <= 1;
   }, kept, { timeout: 15000 });
 
+  // Any bookmark made where a camera is kept is a postcard already (a bookmark fixes its date when made): it is on
+  // the wall and draws at once.
+  await gm.getByRole("button", { name: "Bookmarks" }).click();
+  const marks = gm.locator("[data-bookmarks-list]");
+  await marks.locator("[data-bookmark-add]").click();
+  await marks.locator("[data-bookmark-name]").fill("Earth from the bookmark");
+  await marks.locator("[data-bookmark-name]").press("Enter");
+  await gm.keyboard.press("Escape");
+  await go(gm, "postcards");
+  const fromMark = gm.locator('[data-postcard-row="campaign"] [data-postcard-tile]', { hasText: "Earth from the bookmark" });
+  await fromMark.click();
+  await gm.locator("[data-postcard-drawn]").waitFor({ timeout: 60000 });
+
   // A postcard link opens as a visit, read-only and marked; a damaged one is refused in plain words.
   const card = {
     schema: "sse.postcard/1",
