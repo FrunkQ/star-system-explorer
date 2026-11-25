@@ -781,6 +781,33 @@ impl CraterField {
         m::exp(-self.n_prod(d, t0_myr, t1_myr.max(t0_myr)) / self.n_sat(d))
     }
 
+    /// The share of ground made at `t0_myr` that no crater made by `t1_myr`
+    /// has cut deeper than `depth_m` into (S14a part 3, a lava tube's roof).
+    /// A fresh bowl (`crater_shape`) is taken as a paraboloid, so a crater
+    /// of depth d cuts below `depth_m` over 1 − depth_m/d of its floor;
+    /// craters fall at random, so the share left is e^(−A), A the area cut
+    /// per unit area. Unlike `erasure_survival` this does not saturate: a
+    /// roof once holed stays holed, and later craters only add holes.
+    pub fn cut_through_kept(&self, depth_m: f64, t0_myr: f64, t1_myr: f64) -> f64 {
+        let t1 = t1_myr.max(t0_myr);
+        // The smallest crater deep enough: a bowl's depth grows as D.
+        let (_, d1, _, _) = crater_shape(&self.s, self.g, 1.0);
+        let d_min = (depth_m / d1.max(1e-9)).max(1e-4);
+        let bins = 96u32;
+        let span = 4.0; // decades of size above d_min
+        let mut cut = 0.0;
+        for i in 0..bins {
+            let lo = d_min * m::pow(10.0, span * i as f64 / bins as f64);
+            let hi = d_min * m::pow(10.0, span * (i + 1) as f64 / bins as f64);
+            let n = self.n_prod(lo, t0_myr, t1) - self.n_prod(hi, t0_myr, t1);
+            let d = m::sqrt(lo * hi);
+            let (_, depth, _, _) = crater_shape(&self.s, self.g, d);
+            let share = (1.0 - depth_m / depth.max(1e-9)).max(0.0);
+            cut += n.max(0.0) * 0.25 * m::PI * d * d * share;
+        }
+        m::exp(-cut)
+    }
+
     /// The share of ground made at `t_myr` that no regime has resurfaced
     /// since (buried under later lava or ice, or recycled).
     pub fn renewal_kept(&self, t_myr: f64) -> f64 {

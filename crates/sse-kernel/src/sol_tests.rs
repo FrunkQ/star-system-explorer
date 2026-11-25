@@ -815,3 +815,29 @@ fn catalogued_worlds_breathe_their_measured_air() {
         "{mars}"
     );
 }
+
+/// S14a part 3: the catalogued Moon's younger maria keep whole tube roofs
+/// (Haruyama et al. 2009), while its oldest have opened into rilles.
+#[test]
+fn the_moons_younger_maria_keep_roofed_tubes() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let moon = r["facts"]
+        .as_object()
+        .unwrap()
+        .iter()
+        .find(|(_, f)| f["name"] == "Moon")
+        .map(|(a, _)| a.clone())
+        .unwrap();
+    let s = send(
+        &mut k,
+        serde_json::json!({"op":"survey_surface","system":SOL,"body":moon,"limit":0}),
+    );
+    assert_eq!(s["type"], "surface_surveyed", "{s}");
+    let tubes = s["survey"]["tubes"].as_array().expect("tubes");
+    let stages: Vec<&str> = tubes.iter().filter_map(|t| t["stage"].as_str()).collect();
+    assert!(stages.contains(&"intact roof"), "{stages:?}");
+}

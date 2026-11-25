@@ -64,6 +64,10 @@ fn tube_roofs_scale_with_gravity_and_wear_with_time() {
     // The Moon's oldest maria have lost their roofs to craters; some kept.
     assert!(moon.iter().any(|x| x.stage == "sinuous rille"));
     assert!(moon.iter().any(|x| x.roof_kept >= 0.5));
+    // S14a part 3: only bowls deeper than the roof hole it, so the younger
+    // maria keep whole roofs (Haruyama et al. 2009: the Marius Hills hole
+    // opens into a roofed void in mare some 3.5 Gyr old).
+    assert!(moon.iter().any(|x| x.stage == "intact roof"));
     // No lava, no tubes.
     assert!(tubes_of("Europa").is_empty());
     // The same world gives the same tubes.

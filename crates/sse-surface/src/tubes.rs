@@ -197,11 +197,10 @@ pub fn lava_tubes(
         let roof = t.roof_over_width * width;
         let area = m::PI * radius_km * radius_km;
         let length = t.km_per_km2 * forming * area;
-        // Impacts breach the roof where a crater cuts deeper than it
-        // (depth about a fifth of the width), and rain wears it down.
-        let by_impacts = inp
-            .craters
-            .erasure_survival(5.0 * roof / 1000.0, formed, epoch);
+        // Impacts breach the roof where a crater's bowl cuts deeper than
+        // it (S14a part 3: only the bowl's deep middle, never saturating),
+        // and rain wears it down.
+        let by_impacts = inp.craters.cut_through_kept(roof, formed, epoch);
         let wet = (epoch.min(inp.wet_myr.1) - formed.max(inp.wet_myr.0)).max(0.0);
         let rain = (inp.rain_m_yr)(dir);
         let worn_m = t.wear_m_myr_per_m_rain * rain * wet;
