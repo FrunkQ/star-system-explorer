@@ -619,7 +619,7 @@ def batches(out_dir, size, count, start):
 
 # --- scoring a reply --------------------------------------------------------------
 
-LINE_RE = re.compile(r"^[\W_]*([a-z]+\d{4}[a-z]?|doi:\S+?)[*`:.\s]*\|\s*([a-z ]+?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|?\s*`?$", re.I)
+LINE_RE = re.compile(r"^[\W_]*([a-z][a-z0-9]*|doi:\S+?)[*`:.\s]*\|\s*([a-z ]+?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|?\s*`?$", re.I)
 
 
 def score(path, date):
