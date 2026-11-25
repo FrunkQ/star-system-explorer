@@ -8,6 +8,7 @@ import type { SceneFact, SceneSubject, SystemScene } from "./scene.ts";
 import { YEAR_S } from "./intent.ts";
 import { constant } from "./sheet.ts";
 import { PICTURE_FIELDS } from "./picture.ts";
+import { roundTo, sayNumber } from "./figures.ts";
 
 // ── Kernel shapes (the parts the screens read; full types in packages/contracts) ──
 
@@ -117,7 +118,7 @@ export const AU_M = constant("au");
 /** The Sun's luminosity (IAU 2015 nominal), in watts. */
 export const L_SUN_W = constant("L_sun");
 
-const round = (v: number, d = 3) => Number(v.toPrecision(d));
+const round = (v: number, d = 3) => roundTo(v, d);
 
 /** One of F5's leftover clouds, as the formation run and `resolved_system` give it. */
 export interface LeftoverCloud {
@@ -181,7 +182,7 @@ export function cloudSubjects(clouds: readonly LeftoverCloud[], star: string | u
   return out;
 }
 
-const roughAu = (a: number) => (a >= 100 ? Math.round(a).toLocaleString("en-GB") : a.toPrecision(2));
+const roughAu = (a: number) => (a >= 100 ? sayNumber(a, 0, { decimals: 0 }) : sayNumber(a, 2));
 
 /**
  * A belt's band on the chart, in AU from its star: its inner and outer edges when the save gives them at orbital scale

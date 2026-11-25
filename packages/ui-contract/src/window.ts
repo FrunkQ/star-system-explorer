@@ -2,6 +2,7 @@
 // says where each object is in the sky, how big and how bright, and whether
 // the sensor sees it; this file only points a camera (a gnomonic projection,
 // geometry) and puts words to the numbers. No physics here.
+import { sayNumber } from "./figures.ts";
 
 export interface WindowAsk {
   nav?: import("./route.ts").NavSystem;
@@ -123,11 +124,11 @@ export function magWords(mag: number): string {
 }
 
 export function angleWords(deg: number): string {
-  if (deg >= 1) return `${deg.toFixed(deg < 10 ? 1 : 0)}°`;
+  if (deg >= 1) return `${sayNumber(deg, 0, { decimals: deg < 10 ? 1 : 0 })}°`;
   const arcmin = deg * 60;
-  if (arcmin >= 1) return `${arcmin.toFixed(arcmin < 10 ? 1 : 0)}′`;
+  if (arcmin >= 1) return `${sayNumber(arcmin, 0, { decimals: arcmin < 10 ? 1 : 0 })}′`;
   const arcsec = arcmin * 60;
-  return `${arcsec < 0.1 ? arcsec.toExponential(1) : arcsec.toFixed(arcsec < 10 ? 2 : 0)}″`;
+  return `${arcsec < 0.1 ? arcsec.toExponential(1) : sayNumber(arcsec, 0, { decimals: arcsec < 10 ? 2 : 0 })}″`;
 }
 
 /** The screen angle (radians, canvas y down) from a point toward a sky direction, even one outside the picture. */

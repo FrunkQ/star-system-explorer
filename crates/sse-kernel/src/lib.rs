@@ -7,6 +7,11 @@
 
 mod adopt;
 #[cfg(test)]
+mod adopt_bary_tests;
+mod atmos;
+#[cfg(test)]
+mod atmos_tests;
+#[cfg(test)]
 mod bary_tests;
 mod caves;
 #[cfg(test)]
@@ -342,6 +347,15 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         return Err(issues);
     }
     let calendar = orbits::load_calendar(ms)?;
+    // ATMOS: the stack's chemistry, when a pack provides one.
+    let chemistry = if ms
+        .iter()
+        .any(|p| p.provides.other.contains_key("life_chemistry"))
+    {
+        Some(sse_life::chemistry::ThermoTable::from_packs(ms).map_err(|e| vec![e])?)
+    } else {
+        None
+    };
     // TG1: every tag named anywhere in the stack is declared.
     let tags = tags::declarations(ms)?;
     let mut problems = tags::check(&tags::references(ms), &tags);
@@ -379,6 +393,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         tech,
         resources,
         engines,
+        chemistry,
     })
 }
 
@@ -639,6 +654,9 @@ struct Observe {
     resources: inventory::Kinds,
     /// Engine designs by id (`provides.other.engines`, RK9).
     engines: BTreeMap<String, sse_nav::power::EngineDef>,
+    /// The stack's gas and water chemistry (`provides.other.life_chemistry`,
+    /// E0), for `atmosphere_advice`; absent, the base life pack's.
+    chemistry: Option<sse_life::chemistry::ThermoTable>,
 }
 
 pub struct Kernel {
@@ -7157,9 +7175,27 @@ impl Kernel {
                     .iter()
                     .filter_map(|g| g.authored.clone().map(|f| (g.id.clone(), f)))
                     .collect();
-                let steps =
-                    sse_codes::roll::roll(&prog, &reading, &authored, &u.seed, &body, reroll)
-                        .map_err(|e| err("bad_roll", e))?;
+                let decided = prog.decided_by.as_ref().and_then(|f| {
+                    let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                    state
+                        .facts
+                        .get(&body)
+                        .and_then(|m| m.get(f))
+                        .map(|v| match v {
+                            Value::Text(t) => format!("{f} {t}"),
+                            _ => f.clone(),
+                        })
+                });
+                let steps = sse_codes::roll::roll(
+                    &prog,
+                    &reading,
+                    &authored,
+                    decided.as_deref(),
+                    &u.seed,
+                    &body,
+                    reroll,
+                )
+                .map_err(|e| err("bad_roll", e))?;
                 let mut events = Vec::new();
                 if apply {
                     let mut set: BTreeMap<String, Value> = BTreeMap::new();
@@ -7568,6 +7604,9 @@ impl Kernel {
                 parent.as_deref(),
                 &facts.unwrap_or_default(),
             )?,
+            Request::AtmosphereAdvice { body, at_s, facts } => {
+                self.atmosphere_advice(&body, at_s, facts.as_ref())?
+            }
             Request::PackReports { pack } => {
                 let reports: Vec<&trust::PackReport> = self
                     .reports

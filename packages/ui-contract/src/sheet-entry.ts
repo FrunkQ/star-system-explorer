@@ -98,7 +98,28 @@ export interface TableRead {
   columns: { heading: string; row: string | null }[];
 }
 
-const cellsOf = (line: string) => line.split(/\t|;|,(?=\s*\S)|\s{2,}/).map((c) => c.trim());
+/**
+ * A line's cells: split on tabs, semicolons, commas or a run of spaces. A spreadsheet's saved CSV quotes a cell holding
+ * a comma or a quote ("1,234", "Mars ""B"""), so a quoted cell is read whole and its doubled quotes made single.
+ */
+function cellsOf(line: string): string[] {
+  if (!line.includes('"')) return line.split(/\t|;|,(?=\s*\S)|\s{2,}/).map((c) => c.trim());
+  const out: string[] = [];
+  let cur = "";
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i]!;
+    if (quoted) {
+      if (c !== '"') cur += c;
+      else if (line[i + 1] === '"') (cur += '"'), i++;
+      else quoted = false;
+    } else if (c === '"') quoted = true;
+    else if (c === "\t" || c === ";" || c === ",") out.push(cur.trim()), (cur = "");
+    else cur += c;
+  }
+  out.push(cur.trim());
+  return out;
+}
 
 /**
  * The system sheet (ED13a, design 10B F1): a pasted table for the whole system, a row per body and a column per
@@ -108,7 +129,8 @@ const cellsOf = (line: string) => line.split(/\t|;|,(?=\s*\S)|\s{2,}/).map((c) =
  */
 export function readTable(text: string, rowsFor: (b: SheetBody) => readonly SheetRow[], bodies: readonly SheetBody[], depth: Depth): TableRead {
   const out: TableRead = { edits: [], understood: [], problems: [], columns: [] };
-  const lines = text.split(/\r?\n/).filter((l) => l.trim().length);
+  // A spreadsheet's CSV may open with a byte-order mark.
+  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter((l) => l.trim().length);
   if (!lines.length) return out;
   if (lines.length < 2) return (out.problems.push({ where: "the table", why: "it needs a line of column names, then a line per body" }), out);
   const heads = cellsOf(lines[0]!);
@@ -137,7 +159,7 @@ export function readTable(text: string, rowsFor: (b: SheetBody) => readonly Shee
       const v = cells[i]?.trim();
       if (!id || !v || v === "-" || v === "—") continue;
       const u = unitOf(h);
-      typed[id] = u && /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v) ? `${v} ${u}` : v;
+      typed[id] = u && /^[+−-]?(\d{1,3}(,\d{3})+(\.\d*)?|\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v) ? `${v} ${u}` : v;
     }
     const r = readSheet(rows, typed, body.facts, body.cls, depth);
     for (const e of r.edits) out.edits.push({ address: body.address, field: e.field, value: e.value, before: e.before });

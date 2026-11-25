@@ -61,6 +61,11 @@ export type { Hub, Wire, Manifest, Shown, LogEntry, HostState, ReplicaStatus, Pl
 export { BoardHistory, emptyBoard, upgradeBoard, sourceOf, landing, send, lift, back, rejoin, hold, release, holdAll, releaseAll, screenHello, moveScreen, swapScreens, redirect, setSignal, resolve, signalOf, cardWords, boardWire, steerOf, setSteer, drive, driveTo } from "./board.ts";
 export { BOOKMARK_SCHEMA, addBookmark, bookmarkName, bookmarkReachable, bookmarksFrom, makeBookmark, moveBookmark, nextBookmarkId, removeBookmark, renameBookmark, updateBookmark } from "./bookmark.ts";
 export type { Bookmark, Whereabouts } from "./bookmark.ts";
+export { KEEP_ALL, POSE_FOV_MAX, POSE_FOV_MIN, checkPose, fovToFit, globeOfPose, poseFrom, poseOfGlobe } from "./pose.ts";
+export type { Pose, PoseExposure, Vec3 } from "./pose.ts";
+export { keepStamp, stampFor, stampOf } from "./postcard-stamps.ts";
+export { CAPTION_MAX, DEFAULT_MESSAGE, FROM_MAX, MESSAGE_EXPIRED, MESSAGE_MAX, NAME_MAX, POSTCARD_FILE_SUFFIX, POSTCARD_LINK_KEY, POSTCARD_MAX, POSTCARD_SCHEMA, POSTCARD_SITE, STAMP_SIDE, MIX_LINES, STILL_INSTRUMENTS, checkMessage, mixFrom, checkPostcard, clipThroughSeat, envelope, fixDate, forShop, goesWith, isPostcard, looksLikePostcard, makeMessage, packsNeeded, postcardBlocker, postcardFile, postcardHere, postcardId, postcardLink, postcardText, readPostcard, shopRefusal, withMessage } from "./postcard.ts";
+export type { MixEntry, PostcardReference, PostcardView, PackNamed, PackNeeded, PackState, Postcard, PostcardLink, PostcardMessage, PostcardRead, PostcardWorld, SeatSees } from "./postcard.ts";
 export { PLAYBOOK_SCHEMA, addChapter, addPage, addPreset, addSection, destOf, emptyPlaybook, findPage, findPreset, fire, isUp, movePreset, movePresetToPage, nextId, pages, playbookFrom, presetWords, presetsInView, reveals, revealsOf, removePart, removePreset, rename, sayOf, showOf, updatePreset, wordsOnly } from "./playbook.ts";
 export type { Chapter, Page, Playbook, Preset, Section, Step } from "./playbook.ts";
 export type { Board, BoardScreen, Dest, HoldCard, Line, SeatPort, Showing, TablePort } from "./board.ts";
@@ -74,7 +79,7 @@ export { SOUND_SCENE_SCHEMA, SOUND_RECIPE_SCHEMA, SOUND_LABELS, SOUND_LAYERS, NO
 export type { SoundLabel, SoundLayer, SoundTier, SoundSource, ScoreNote, SoundScene, Voice, NodeType, RecipeNode, SoundRecipe, SoundSettings } from "./sound.ts";
 export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight, recipeBand, bandChoices, paintedBands, lightForBand, linearSrgb, xyz, cmf } from "./light.ts";
 export type { BandRecipe, Honesty, LightDescription, LitBody } from "./light.ts";
-export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy, sceneFromResolved, listedTitle, cloudShape, cloudSubjects, v3BeltShape } from "./make.ts";
+export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy, sceneFromResolved, listedTitle, cloudShape, cloudSubjects, v3BeltShape, R_EARTH_M, R_SUN_M } from "./make.ts";
 export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld, Adopted, SystemResolved, ListedSystem, LeftoverCloud } from "./make.ts";
 export { specFromScene, sceneAt, snapshotAt, fateEvents, subjectNames, fmtAge, KIND_WORDS, PHASE_WORDS, Z_SUN } from "./fate.ts";
 export type { SystemSpec, LookedAhead, FateEvent, FateSnapshot } from "./fate.ts";
@@ -168,7 +173,7 @@ export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX
 export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
 export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";
 // One units engine (ED1a): every figure said and read back the same way.
-export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, factAbout, factUnit, sayFact, readFact, figureTable, sayNumber, roundTo, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
+export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, factAbout, factUnit, sayFact, readFact, figureTable, sayNumber, roundTo, drawn, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
 export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices, FactLike, FactUnit } from "./figures.ts";
 // The Flow view (RK13): any ledger's rows laid out in columns; the Power card is its first user.
 export { layoutFlow, flowRowColumns, HAIRLINE_SHARE } from "./flow.ts";

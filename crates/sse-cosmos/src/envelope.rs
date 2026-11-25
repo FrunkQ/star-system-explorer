@@ -266,15 +266,15 @@ impl GalaxyEnvelope<'_> {
     }
 
     /// 1 + A cos(m (phi - phi_arm)): a trailing log spiral, rotating at the pattern speed.
+    /// The disc turns towards +phi (stars' `omega` > 0), so a trailing arm's
+    /// crest falls back in phi as r grows: phi_arm = w_p t - ln(r/r_d)/tan(pitch).
     pub fn arm(&self, p: &Place) -> f64 {
         let e = &self.params;
         let rd = self.galaxy.now.disc_kpc.max(0.1);
         let tan_pitch = m::tan(e.pitch_deg * m::PI / 180.0);
         let omega_p = e.pattern_kms_kpc * 1.0227; // radians per Gyr
         let phase = f64::from(e.arms)
-            * (p.phi
-                - omega_p * p.t_gyr
-                - m::ln(p.r_kpc.max(0.01) / rd) / tan_pitch
+            * (p.phi - omega_p * p.t_gyr + m::ln(p.r_kpc.max(0.01) / rd) / tan_pitch
                 - e.arm_phase0);
         1.0 + e.arm_contrast * m::cos(phase)
     }

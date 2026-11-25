@@ -49,9 +49,79 @@ pub struct ResponseParams {
     pub pass_bursts: bool,
     /// Marks weaker than this are not listed.
     pub mark_floor: f64,
+    /// A leading arm (design 9.4): a small companion on a backwards orbit
+    /// passing close to the centre of a disc held in a heavy halo winds one
+    /// arm against the rest (Byrd, Freeman and Howard 1993, AJ 105, 477:
+    /// best match for NGC 4622 a companion 0.01 of the galaxy's mass,
+    /// closest approach within a tenth of the disc's radius, a halo eight
+    /// times the disc; it still leads after three rotations of the disc's
+    /// edge, about a Gyr). Stand-ins, F47.
+    pub leading_arm: LeadingArmParams,
     /// Per kind: the driving number at which a mark has half its strength,
     /// and how long it takes to fade by a factor e (0 = for good).
     pub marks: BTreeMap<String, MarkKind>,
+}
+
+/// How a leading arm is driven, and the yardstick it is checked against.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct LeadingArmParams {
+    /// Companion mass over the host's mass inside its pass that drives the
+    /// arm fully (Byrd et al. 1993: 0.01; at 0.005 the arm is too weak).
+    pub mu_full: f64,
+    /// Above this the companion wrecks the outer arms rather than turning
+    /// one (Byrd et al. 1993: "too massive, the outer arms are too
+    /// irregular"; their runs went up to equal masses).
+    pub mu_wreck: f64,
+    /// Closest approach, in disc scale lengths, at which the drive falls by
+    /// e (Byrd et al. 1993: within a tenth of the disc's radius, about 0.4
+    /// scale lengths for an edge at four; at twice that the arm is too weak).
+    pub reach_scale_lengths: f64,
+    /// Halo over disc mass inside the pass below which a self-gravitating
+    /// disc suppresses the arm, and at which it is fully allowed (Byrd et
+    /// al. 1993: "practically absent" at 2, needed 8).
+    pub halo_disc_min: f64,
+    pub halo_disc_full: f64,
+    /// The yardstick: at most this share of spirals shows a leading arm now
+    /// (Iye, Tadaki and Fukumoto 2019, arXiv:1910.10926: all 146 spirals
+    /// with known spin and tilt trail, two "somewhat questionable"), and the
+    /// strength at which an arm counts as seen.
+    pub seen_share_max: f64,
+    pub seen_strength: f64,
+}
+
+impl Default for LeadingArmParams {
+    fn default() -> Self {
+        LeadingArmParams {
+            mu_full: 0.01,
+            mu_wreck: 0.1,
+            reach_scale_lengths: 0.4,
+            halo_disc_min: 2.0,
+            halo_disc_full: 8.0,
+            seen_share_max: 0.01,
+            seen_strength: 0.25,
+        }
+    }
+}
+
+impl LeadingArmParams {
+    /// The driving number of a pass or meal: the backwards share of its
+    /// spin, times how near the mass ratio is to the one that turns an arm,
+    /// times how close in it came, times how far the halo holds the disc.
+    pub fn drive(&self, prograde: f64, mu: f64, r_kpc: f64, disc_kpc: f64, halo_disc: f64) -> f64 {
+        let back = (-prograde).max(0.0);
+        if back <= 0.0 || mu <= 0.0 {
+            return 0.0;
+        }
+        let wreck = mu / self.mu_wreck.max(1.0e-12);
+        let mass = (mu / self.mu_full.max(1.0e-12)).min(1.0) / (1.0 + wreck * wreck);
+        let near = sse_core::math::exp(
+            -r_kpc.max(0.0) / (self.reach_scale_lengths * disc_kpc).max(1.0e-6),
+        );
+        let span = (self.halo_disc_full - self.halo_disc_min).max(1.0e-12);
+        let held = ((halo_disc - self.halo_disc_min) / span).clamp(0.0, 1.0);
+        back * mass * near * held
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
@@ -76,6 +146,9 @@ impl Default for ResponseParams {
             ("gas_trail", k(0.01, 0.5)),
             ("warm_side", k(0.1, 0.1)),
             ("fresh_gas", k(0.1, 2.0)),
+            // Driven by `LeadingArmParams::drive`; a third left after a Gyr,
+            // about three rotations of the disc's edge (Byrd et al. 1993).
+            ("leading_arm", k(0.5, 0.9)),
         ]
         .into_iter()
         .map(|(n, v)| (n.to_string(), v))
@@ -85,6 +158,7 @@ impl Default for ResponseParams {
             heat_merge_k: 0.1,
             pass_bursts: false,
             mark_floor: 1.0e-2,
+            leading_arm: LeadingArmParams::default(),
             marks,
         }
     }
@@ -536,6 +610,11 @@ impl Feeding<'_> {
                     let thin = (*pl.stars - *pl.bulge).max(1.0);
                     self.mark("thick_disc", &from, t_gyr, heated / thin, &[]);
                     self.mark("tilt", &from, t_gyr, mu, &[("prograde", prograde)]);
+                    // A small meal on a backwards orbit reaches the centre:
+                    // its last pass came as close in as a pass can.
+                    let held = (mh - disc) / disc.max(1.0);
+                    let x = self.rp.leading_arm.drive(prograde, mu, 0.0, 1.0, held);
+                    self.mark("leading_arm", &from, t_gyr, x, &[("prograde", prograde)]);
                     self.mark("lopsided", &from, t_gyr, mu, &[]);
                     self.mark("burst_knots", &from, t_gyr, burst / before.max(1.0), &[]);
                     if gas > 0.0 {
@@ -569,6 +648,12 @@ impl Feeding<'_> {
                         let fwd = 0.5 * (1.0 + p.prograde);
                         self.mark("driven_arms", &from, p.t_gyr, mu * slow * fwd, &shape);
                         self.mark("warm_side", &from, p.t_gyr, mu, &shape);
+                        let held = (p.host_inside_msun - p.disc_msun) / p.disc_msun.max(1.0);
+                        let x = self
+                            .rp
+                            .leading_arm
+                            .drive(p.prograde, mu, p.r_kpc, p.disc_kpc, held);
+                        self.mark("leading_arm", &from, p.t_gyr, x, &shape);
                         if self.rp.pass_bursts {
                             let before = *pl.gas;
                             let burst = (gp.burst_fraction * mu.min(1.0) * *pl.gas).min(*pl.gas);

@@ -22,12 +22,16 @@ export interface FactRow {
   figure?: Extract<FactShown, { figure?: unknown }>["figure"];
   /** Its number in "How we know" (AT8, an edition with endnotes). */
   mark?: number;
+  /** On the GM's copy: the table has not been told this line (AT10). Drawn and printed in pencil. */
+  pencil?: boolean;
 }
 
 export interface TableCell {
   text: string;
   state: "known" | "band" | "gap";
   bar?: boolean;
+  /** On the GM's copy: the table has not been told this (AT10). */
+  pencil?: boolean;
 }
 
 export interface TableRow {
@@ -46,13 +50,17 @@ export type Block =
       phrase?: import("./voice.ts").VoiceSaid;
       /** The edition's verdict stamp, with its Why (design 6.5). */
       verdict?: import("./voice.ts").VoiceSaid;
+      /** On the GM's copy: the table does not know this thing at all (AT10). */
+      pencil?: boolean;
     }
   | { type: "prose"; key: string; title: string; text: string }
   | { type: "facts"; key: string; title: string; rows: FactRow[]; /** "Source: …" under the section (AT8, `sources: section`). */ source?: string }
-  | { type: "table"; key: string; title: string; columns: string[]; rows: TableRow[] }
+  | { type: "table"; key: string; title: string; columns: string[]; rows: TableRow[]; /** The fact field of each column ("name" first). */ fields?: string[] }
   | { type: "plate"; key: string; title: string; style: PlateStyle; subject: string; addresses: string[]; names: string[] }
   | { type: "story"; key: string; title: string; lines: { label: string; text: string }[] }
-  | { type: "note"; text: string }
+  | { type: "note"; text: string; /** Says what pencil means, on the GM's copy (AT10). */ pencil?: boolean }
+  /** The GM's notes for this place, on the GM's copy only (AT10). */
+  | { type: "gmnotes"; title: string; lines: string[] }
   | { type: "rule" }
   /** "How we know" (AT8, `sources: endnotes`): a note for each marked figure on the page. */
   | { type: "sources"; title: string; notes: import("./sources.ts").SourceNote[] }
@@ -263,6 +271,7 @@ function sectionBlocks(scene: PlayerScene, s: PlayerSubject, sec: TemplateSectio
           title,
           columns: t.columns.map((c) => editionWord(ed, c, c.replace(/^column\./, ""))),
           rows: kids.map((k) => ({ link: k.address, cells: t.lines.map((f) => cellFor(k, f, ed, opts, isGm)) })),
+          fields: [...t.lines],
         },
       ];
     }

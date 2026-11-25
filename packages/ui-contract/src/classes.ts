@@ -4,6 +4,7 @@
 // bands in words with their units, and the named worlds the atlas checks it against. A class is a label read off a
 // world's results; nothing here decides anything about a world, and nothing reaches the kernel.
 import type { PackDoc } from "./physics.ts";
+import { roundTo } from "./figures.ts";
 
 export interface AtlasAxis {
   field: string;
@@ -152,16 +153,16 @@ export function classNumber(v: number): string {
   const a = Math.abs(v);
   if (a >= 1e6 || a < 1e-3) {
     const e = Math.floor(Math.log10(a));
-    const m = Number((v / 10 ** e).toPrecision(2));
+    const m = roundTo(v / 10 ** e, 2);
     return `${m === 1 ? "" : `${m}×`}10${superscript(e)}`;
   }
-  return String(Number(v.toPrecision(4)));
+  return String(roundTo(v, 4));
 }
 
 const SUP: Record<string, string> = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
 const superscript = (n: number) => [...String(n)].map((c) => SUP[c] ?? c).join("");
 
-const pct = (v: number) => `${Number((v * 100).toPrecision(3))}%`;
+const pct = (v: number) => `${roundTo(v * 100, 3)}%`;
 
 /** One band in words: "equilibrium temperature 0 to 150 K (fades out by 170 K)", "main gas: carbon dioxide", "has rings". */
 export function classBandWords(b: AtlasBand, axes: ReadonlyMap<string, AtlasAxis>, withFringe = true): string {

@@ -6,6 +6,7 @@
  */
 import type { SceneFact, SceneSubject } from "./scene.ts";
 import { constant } from "./sheet.ts";
+import { sayNumber } from "./figures.ts";
 
 export type Depth = "curious" | "science" | "engine";
 
@@ -47,7 +48,7 @@ export function roughly(x: number): string {
   const step = Math.pow(10, mag - 1);
   const r = Math.round(x / step) * step;
   const digits = Math.max(0, 1 - mag);
-  return r.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: digits });
+  return sayNumber(r, 0, { upTo: digits });
 }
 
 const NUM = /^(-?\d[\d,]*(?:\.\d+)?(?:e[+-]?\d+)?)\s*(.*)$/i;

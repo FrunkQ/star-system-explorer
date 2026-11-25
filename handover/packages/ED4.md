@@ -16,10 +16,19 @@
   here near 1 AU); `tests/ui/walk.e2e.mjs` "add a world" budget raised by one press (desktop 4, phone 5) for the press
   on the chart. Screens: project files `sse4/handover-screens/ED4-screens/`.
 
-## Part 2 (queued)
+## Part 2a (25 Nov): what forms here, on the ghost
 
-- The live panel beside the ghost (What forms here cached per distance band, Kinds, Something else) in place of the
-  dialog, and the stability verdict on the ghost (ST1).
+- While the ghost rests (400 ms) on an orbit round a star, one formation run round a star of that mass says what forms
+  there, under the distance: "forms a world of 0.42 Earth masses here" or "no world forms here in one run"
+  (`data-add-forms`, SystemChart). It is `formsHere` with one try, the first of the runs Add here then offers, so the
+  two agree. Each orbit (three significant figures) is asked once per chart; nothing is written.
+- e2e: editing (desk), resting near Earth's orbit. Screen: project files
+  `sse4/handover-screens/ED4-screens/add-ghost-forms-desk.png`.
+
+## Part 2 (rest, queued)
+
+- The live panel beside the ghost (Kinds, Something else) in place of the dialog, and the stability verdict on the
+  ghost (ST1).
 - Round a planet in its close-up (the chart framed on it), and a companion star (ED6 part 2).
 - Paste and Duplicate (Ctrl+D) as the ghost; a clip file dropped on the chart; drop on a parent; paste onto a body.
 - The family tree before and after (R1) and R3's words for which body it would go round.
