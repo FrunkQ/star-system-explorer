@@ -107,7 +107,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
 | `status/navigation.md` | Build object selector and menus | NV (selector part 2, object menu, find by tag, notes) |
 | `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, `shell/src/run/`, Bookmarks, Playbook and Switchboard (RD, PB) |
-| `status/landing.md` (arrives with PR 437) | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
+| `status/landing.md` | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | V8, voyages, the flight log, travel panels, HW |
 | `status/galaxy.md` | Build galaxy charts and histories (split from travel) | U6, U8, V9 (not the 3D web cube), GH8, V3 gaps 17 and 39 |
@@ -123,7 +123,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map, pulsating stars, ship clocks); XO is a code only, never shown in the product |
 | `status/true-air.md` | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
 | `status/true-surface.md` | Build plumes, frosts and hot glow (was "... and small bodies") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
-| `status/small-bodies.md` (arrives with PR 459) | Build asteroids and rings up close (took small bodies from the plumes thread) | SB: belt members resolved into definite bodies, asteroids and rings up close |
+| `status/small-bodies.md` | Build asteroids and rings up close (took small bodies from the plumes thread) | SB: belt and ring members resolved up close, notable bodies (a shattered world's core), small body kinds for the Add list, comets whole (takes VP-P3), VP-R1 to VP-R5 |
 | `status/surface-timelapse.md` | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse, the drawing side of W-sea2 to W-sea4 |
 | `status/names-and-life.md` | Build names gallery and life board | rest of NM6 (Classes, names gallery), U7 Life board |
 | `status/naming.md` | no live owner (NM design done) | NM |
@@ -137,6 +137,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
 | `status/postcards.md` | Build postcards and hold backdrops (design: "Design saved views and hold backdrops") | PC: postcards (a bookmark that can travel and is drawn live as a still, with the reasons on its back), grounds and quotes on hold screens. ACCEPTED by Alex 25 Nov 01:27 UTC; builder thread "Build postcards and hold backdrops" (Opus) owns PC1, PC3, PC4, PC6; PC is a code only |
+| `status/from-here.md` | none yet: proposed as "Build views and sounds from inside worlds" (design: "Design views and sounds from inside worlds") | FH: the standing view at any depth in any fluid (down through a gas giant), the "As lit" exposure, and the Aids (range markers, colour card, light meter, Listen). PROPOSED 25 Nov 2026, not yet accepted: 14 questions in the note's section 17; FH is a code only |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
 
 Added after 18:15 UTC: "Verify every cited paper" (`status/citations.md`, arrives with PR 471; master citation list, daily Consensus batches), "Build quality tiers and speed probe" (`status/quality-tiers.md`, PR 470), "Build detail ladder and world textures" (`status/detail-ladder.md`, PR 467), "Build aurorae and night lights" (`status/aurora.md`, PR 469). Designs: "Design visual polish and flourishes" (accepted, note in `handover/design/`); the exotic objects note's section 15 adds pulsating stars (XO19) and clocks (XO20); outside models and the kernel as a module (track OM, PR 484) is banked, not accepted.

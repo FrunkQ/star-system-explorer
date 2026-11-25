@@ -161,8 +161,18 @@
       if (phase !== "choose") takeOff();
       const near = landmarks.find((l) => Math.abs(l.lat_deg - asked.lat_deg) < 0.05 && Math.abs(l.lon_deg - asked.lon_deg) < 0.05);
       site = { lat: asked.lat_deg, lon: asked.lon_deg, label: near ? (near.name ?? near.original_name) : "" };
+      // The link's hour and lander, when it carries them (a bookmark or a Playbook preset of a whole landing, LR5).
+      if (asked.lander === "party" ? partyHere : (STOCK_LANDERS as readonly string[]).includes(asked.lander ?? "")) landerPick = asked.lander!;
+      askedTime = asked.time ?? null;
       ctx!.workspace.landing_site = null;
     });
+  });
+  // The hour a link asked for is set once the world's clock at the site is known.
+  let askedTime = $state<string | null>(null);
+  $effect(() => {
+    const t = TIMES.find((x) => x.id === askedTime);
+    if (!t || !clock) return;
+    untrack(() => ((askedTime = null), setLocal(t.local)));
   });
 
   // ── The map (Chart) ───────────────────────────────────────────────────────────────────────
@@ -388,6 +398,7 @@
   let hour = $state(-30);
   // The world's own clock (Land part 2): its star's hour and declination at the time being viewed, from its spin and
   // its place on its orbit; the GM can shift the hour from there. Without a known spin, the hour is the GM's choice.
+  // `shift` is in the world's own local hours (a 24th of its solar day, 15° of its turn), so 6 is a quarter turn.
   let shift = $state(0);
   const clock = $derived.by(() => {
     if (watching || !world || !site) return null;
@@ -437,10 +448,31 @@
   let auroraPlan = $state.raw<AuroraPlan | null>(null);
   let auroraSays = $state("");
   const wrapDeg = (d: number) => ((((d + 180) % 360) + 360) % 360) - 180;
-  const sunHour = $derived(watching ? (show?.hour_deg ?? hour) : clock ? wrapDeg(clock.hour_deg + shift) : hour);
+  const sunHour = $derived(watching ? (show?.hour_deg ?? hour) : clock ? wrapDeg(clock.hour_deg + shift * 15) : hour);
   const sunDecl = $derived(watching ? (show?.decl_deg ?? 0) : (clock?.declination_deg ?? 0));
   /** Local solar time as a clock face (12:00 is noon), for the note. */
   const localTime = $derived(`${String(Math.floor((((sunHour / 15 + 12) % 24) + 24) % 24)).padStart(2, "0")}:${String(Math.floor((((((sunHour / 15 + 12) % 24) + 24) % 24) % 1) * 60)).padStart(2, "0")}`);
+  /** Local solar hour now, 0 to 24 (12 is noon). */
+  const localHour = $derived((((sunHour / 15 + 12) % 24) + 24) % 24);
+  // Quick choices of the hour (LR2): the GM can set a landing in daylight with a press. Each moves the world's own clock
+  // to the next such hour (or the hand-set hour without a known spin); nothing else about the world changes.
+  const TIMES = [
+    { id: "dawn", label: "Dawn", local: 6.5 },
+    { id: "midday", label: "Midday", local: 12 },
+    { id: "dusk", label: "Dusk", local: 17.5 },
+    { id: "night", label: "Night", local: 0 },
+  ] as const;
+  function setLocal(local: number) {
+    const target = (local - 12) * 15;
+    if (clock) {
+      const base = wrapDeg(clock.hour_deg);
+      // Forward from now when that fits on the slider, else back.
+      let h = ((((target - base) / 15) % 24) + 24) % 24;
+      if (h > 12) h -= 24;
+      shift = Math.round(h * 4) / 4;
+    } else hour = Math.max(-100, Math.min(100, target));
+  }
+  const nearTime = $derived(TIMES.find((t) => Math.min(Math.abs(localHour - t.local), 24 - Math.abs(localHour - t.local)) < 0.5)?.id ?? null);
   let flyU = 0;
 
   // ── The table's view of this landing (the landing run-through) ──────────────────────────────
@@ -732,6 +764,13 @@
   );
 </script>
 
+{#snippet hourControls()}
+  <span class="time-presets" role="group" aria-label="Time of day">
+    {#each TIMES as t (t.id)}<button type="button" aria-pressed={nearTime === t.id} onclick={() => setLocal(t.local)} data-time={t.id}>{t.label}</button>{/each}
+  </span>
+  {#if clock}<label>Local hours from now <input type="range" min="-12" max="12" step="0.25" bind:value={shift} data-hour /> <span data-local-time>{localTime}</span></label>{:else}<label>Time of day <input type="range" min="-100" max="100" step="1" bind:value={hour} data-hour /> <span data-local-time>{localTime}</span></label>{/if}
+{/snippet}
+
 <section class="surface" bind:this={host} data-surface data-watching={watching || undefined} data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""} data-stars={siteStars ? siteStars.dirs.length / 3 : 0} data-exposure={Math.round(seenExposure)}>
   {#if watching && !show}
     <p class="quiet" data-surface-waiting>Waiting for the game master to send a landing.</p>
@@ -786,6 +825,7 @@
                 {#each plan.hazards as z (z.kind)}<li class={z.level} data-hazard={z.kind} data-level={z.level}><span class="lv">{z.level}</span> {z.kind}: {z.why}</li>{/each}
               </ul>
               <details><summary>How the site was read</summary><ul>{#each plan.site.why as y, i (i)}<li>{y}</li>{/each}{#each plan.descent.outcome.why as y, i (i)}<li>{y}</li>{/each}</ul></details>
+              {#if !watching}<div class="times" data-times>{@render hourControls()}</div>{/if}
               {#if watching}<p class="quiet" data-watch-phase>{phase === "loading" ? "Reading the ground…" : "Waiting for the game master to land."}</p>{:else}<button class="land" onclick={land} disabled={phase === "loading"} data-land>{phase === "loading" ? "Reading the ground…" : worst === "danger" ? "Land anyway" : "Land"}</button>{/if}
               {#if groundFailed}<p class="quiet">{groundFailed}</p>{/if}
             {/if}
@@ -824,7 +864,7 @@
           <button onpointerdown={() => press("ArrowDown", true)} onpointerup={() => press("ArrowDown", false)} onpointerleave={() => press("ArrowDown", false)} aria-label="Walk back">▼</button>
           <button onpointerdown={() => press("ArrowRight", true)} onpointerup={() => press("ArrowRight", false)} onpointerleave={() => press("ArrowRight", false)} aria-label="Turn right">▶</button>
           <label><input type="checkbox" bind:checked={drone} data-drone /> Drone</label>
-          {#if clock}<label>Hours from now <input type="range" min="-180" max="180" step="1" bind:value={shift} data-hour /></label>{:else}<label>Time of day <input type="range" min="-100" max="100" step="1" bind:value={hour} data-hour /></label>{/if}
+          {@render hourControls()}
           <button onclick={takeOff} data-take-off>Take off</button>
         </div>
       {/if}
@@ -835,7 +875,7 @@
       {#if world && !world.air}No air: the sky is black and nothing dims the far ground.{:else}Sky from single scattering in the kernel's air optics.{/if}
       {#if look === "true" && auroraSays}<span data-aurora-sky>{auroraSays}</span>{/if}
       {#if seaNow}{seaNow.line ?? ""}{seaNow.line ? "." : ""} {seaOptics ? `${seaWords(seaOptics.optics, seaOptics.missing)} ` : ""}{seaOptics?.optics.trains ? `The sea is drawn as the kernel's own ${seaOptics.optics.trains.length} wave trains for this liquid` : "The sea is drawn as a few wave trains of that height and period round the wind"}{seaOptics?.optics.whitecap_fraction ? `, white with froth over ${Math.round(seaOptics.optics.whitecap_fraction * 100)}% of it` : ""}; the tide stands {Math.abs(seaNow.tide_m).toFixed(2)} m {seaNow.tide_m >= 0 ? "above" : "below"} mean sea level.{/if}
-      {#if watching}The sun stands where the game master's clock puts it, local time {localTime}.{:else if clock}The sun stands where {subject?.label}'s spin and its place on its orbit put it at the time in view: local time {localTime}{clock.solar_day_s === Infinity ? " (it keeps one face to its star)" : ""}, declination {sunDecl.toFixed(1)}°{shift ? `, moved ${Math.round(shift / 15)} h by hand` : ""}.{:else}The world's spin is not on record, so the hour is chosen by hand and the sun stands as at an equinox.{/if} Drawn on {reason}.
+      {#if watching}The sun stands where the game master's clock puts it, local time {localTime}.{:else if clock}The sun stands where {subject?.label}'s spin and its place on its orbit put it at the time in view: local time {localTime}{clock.solar_day_s === Infinity ? " (it keeps one face to its star)" : ""}, declination {sunDecl.toFixed(1)}°{shift ? `, moved ${shift > 0 ? "+" : ""}${shift} local h by hand` : ""}.{:else}The world's spin is not on record, so the hour is chosen by hand and the sun stands as at an equinox.{/if} Drawn on {reason}.
     </p>
     {/if}
   {/if}
@@ -998,5 +1038,20 @@
   }
   .quiet {
     color: var(--sse-ink-muted, var(--sse-ink));
+  }
+  .times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    align-items: center;
+    margin: 6px 0;
+  }
+  .time-presets {
+    display: inline-flex;
+    gap: 2px;
+  }
+  .time-presets button[aria-pressed="true"] {
+    background: var(--sse-ink);
+    color: var(--sse-ground);
   }
 </style>
