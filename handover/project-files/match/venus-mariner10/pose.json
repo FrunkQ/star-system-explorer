@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye (and Ultraviolet for the cloud streaks)",
+  "frame": "Venus",
+  "camera": "about 720,000 km, near half phase",
+  "date": "1974-02-05/06",
+  "needs": [
+    "sulphuric acid cloud colour from the data sheet",
+    "the unknown UV absorber for the Ultraviolet band"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Earth",
+  "camera": "29,000 km from Earth's centre, toward the Sun side (full phase), south pole tipped toward the camera",
+  "date": "1972-12-07T10:39Z",
+  "needs": [
+    "Earth's turn at the date (the system view does not spin worlds yet)",
+    "clouds"
+  ]
+}

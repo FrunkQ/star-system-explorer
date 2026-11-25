@@ -21,7 +21,7 @@ Checks are as read at 22:50 UTC. "Green" means every CI job passed or was skippe
 | 495 | claude/project-thread-7xs7xp | RK3: ship sizing as named Equations; ship_power radiators (golden) | **ui job red** (24 Nov) | merge main, rebless, fix ui |
 | 452 | claude/project-thread-qax0fc | V8 and RK5: party ship logged and fuelled, players in step, slow spirals | **ui job red** | merge main, fix ui |
 
-Branches with work and no PR: `l1e9pw` (renderer, V14i), `3jxtpq` (TRUE4 part 1b, ready), `7g5v90` (R6d, after 589), `bvlyq1` (Local Arm, WIP), `h9y77o` (IG1 ice ground, WIP); all `claude/project-thread-*`.
+Branches with work and no PR: `l1e9pw` (renderer, V14i), `3jxtpq` (TRUE4 part 1b, ready), `7g5v90` (R6d, after 589), `bvlyq1` (Local Arm, WIP), `dzkz4p` (kernel K18 and GZ0, ready, area golden only), `h9y77o` (IG1 ice ground, WIP); all `claude/project-thread-*`.
 
 ## 2. Thread reports at the freeze (was doing, left, next)
 
@@ -65,7 +65,10 @@ take its state from its branch, its PR above and its `handover/status/` file.
   - Doing: the home galaxy's arms from measured positions (Reid et al. 2019), Local Arm included, as one measured-arms list in `packs/base-cosmology`, plus chart arm_names. ATMOS check: the hydrogen_per_carbon ratio was upside down (fixed), and the escape constant is credited to Hunten and Strobel 1974.
   - Left: `the_glow_follows_the_galaxy_and_its_dust` fails its centre-over-anticentre dust check (V 0.96, Ks 1.03; it wants Ks > V + 0.5). Tune the arm run-on or the Sun's arm boost, or revisit the check. Then re-bless, check.sh, UI checks, and open the PR.
   - Next: core lane (galaxy chart, sky and glow lines move). Log `packages/GH-local-arm.md`, status `status/kernel-handoffs.md`.
-- **Kernel resolve and rules**: no report received. See `status/kernel.md`. A per-branch sample names PR is awaited by the renderer.
+- **Kernel resolve and rules**: branch dzkz4p at 08283765, no PR. PRs 468, 536, 546 merged.
+  - Doing: two pushed commits, full local checks green. K18 describe_star (the editing star chooser); a fix for grown systems coming out 13,783 Gyr old (the galaxy's now in Myr read as Gyr, which caused the wasm out-of-memory); `systems` at any depth; class_sample addresses carrying branch and class (the renderer waits on this). GZ0 kernel checks: no campaign system gets a site event history today, and a halo's two places are a median 7.2 Mpc apart. Logs `packages/K18-describe-star.md`, `packages/GZ0-kernel-checks.md`.
+  - Left: open the PR (merge main, re-bless). It moves only `tests/golden/areas/kernel.jsonl`, so no core slot is needed. Merge on green, then tell the editing, galaxy charts and renderer threads.
+  - Next (`status/kernel.md` queue 2 and 2b): GZ12 (core slot), GZ13, GZ2, GZ17, GZ15, GZ14; then K16, K4, K12, K5, K7 to K11, K14; K3 for small bodies; life_view dials.
 - **SSE4 proven core**: branch h9y77o, WIP head c2d6d0c4, no PR. PR 417 merged 13:18 UTC.
   - Doing: IG1 ice ground, three cited blocks in `packs/base-physics/formulas/surface.json` (from `scripts/build-weathering-blocks.py`; crate code in `sse-atoms/src/ice_ground.rs`, `sse-surface/src/ice_ground.rs`). Icy moons, Pluto and Triton get ice ground; the Moon and Ceres lose open ice; albedo comes from the sheet's optics. It also fixes the sol_tests helper that put every moon at body:0.
   - Left: Europa is too dark (0.32, resurfacing not wired); Titan needs measured air and temperature in base-sol; Io needs sulphur; remove the ignored zz_probe_ground test; fudge rows, log, status row, bless, full checks. Core golden slot (pack hash lines move).
@@ -121,6 +124,6 @@ take its state from its branch, its PR above and its `handover/status/` file.
 
 ## 7. Could not capture
 
-- A report from "Kernel resolve and rules" (section 2): none arrived.
+- Galaxy charts and histories (PR 581) and exotic objects (PR 559) were not among the cut-off threads and sent no report.
 - Design notes: every `SSE4-*.md` in project files matches its `handover/design/` copy, except surfaces-and-rendering, where the repo copy is the newer. Citations batches, results and corrections are copied to `handover/citations/batches/`. The `match/` photo poses and credits (not the 53 reference photos, 80 MB), the atlas notes and the exogeology notes are copied to `handover/project-files/`.
 - Screenshots and clips are never committed. They are in project files and the PC zips.

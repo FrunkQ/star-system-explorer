@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Io",
+  "camera": "about 500,000 km, full phase",
+  "date": "1999-07-03",
+  "needs": [
+    "plume deposits (TRUE1/TRUE2 plumes thread)"
+  ]
+}
