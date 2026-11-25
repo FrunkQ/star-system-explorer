@@ -21,7 +21,7 @@ fn kernel(packs: Vec<serde_json::Value>) -> crate::Kernel {
     k
 }
 fn base() -> serde_json::Value {
-    pack("tests/fixtures/packs/base-physics.json")
+    pack("packs/base-physics/pack.json")
 }
 fn names() -> serde_json::Value {
     pack("tests/fixtures/packs/names-toy.json")

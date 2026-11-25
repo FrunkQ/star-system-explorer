@@ -59,6 +59,13 @@ pub fn mask_ops(line: &str) -> String {
             }
         }
     }
+    if line.starts_with(REACH) {
+        if let Some(s) = line.find(REACH_FROM) {
+            if line.ends_with("]}") {
+                return format!("{}{REACH_MASK}}}", &line[..s]);
+            }
+        }
+    }
     if let Some(s) = line.find(UNKNOWN_FROM) {
         let s = s + UNKNOWN_FROM.len();
         if let Some(e) = line[s..].find(UNKNOWN_TO) {
@@ -66,6 +73,29 @@ pub fn mask_ops(line: &str) -> String {
         }
     }
     line.to_string()
+}
+
+/// The constants reach report lists every block, so every new block used to
+/// change its line. The golden keeps the line's head; the lists go one entry
+/// per line to `tests/golden/contract-reach.txt` (`reach_entries`), where a
+/// new block is one new line.
+pub const REACH: &str = "{\"type\":\"reach\"";
+pub const REACH_FROM: &str = "\"follows\":[";
+pub const REACH_MASK: &str = "\"lists\":\"one line per block in tests/golden/contract-reach.txt\"";
+
+/// A reach report's lists, one entry per line: `<constant> <list> <entry>`.
+pub fn reach_entries(line: &str) -> Vec<String> {
+    let Ok(v) = serde_json::from_str::<Value>(line) else {
+        return vec![];
+    };
+    let c = v["constant"].as_str().unwrap_or("?");
+    let mut out = vec![];
+    for list in ["follows", "estimated", "cannot_follow"] {
+        for e in v[list].as_array().into_iter().flatten() {
+            out.push(format!("{c} {list} {e}"));
+        }
+    }
+    out
 }
 
 pub const HELLO: &str = "{\"type\":\"hello\"";
