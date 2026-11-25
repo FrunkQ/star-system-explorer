@@ -21,6 +21,8 @@
     stabilityFor,
     outerWall,
     pairOf,
+    reachIt,
+    surfaceKelvin,
     trueAnomalyFrom,
     yearsToSeconds,
     type Depth,
@@ -165,6 +167,33 @@
   const rot = $derived(num("body.rotation_period"));
   const kernelSays = $derived(resultsOf(surfaces, subject.address));
   const lockRow = RESULTS.find((r) => r.key === "locked");
+
+  // Reach it (ED5, design section 8): ask for the result, the box finds the orbit that gives it. The search runs on a
+  // scratch what-if the kernel resolves and throws away; the answer is set as one change (one Undo), the world stays
+  // wholly physical. Main line only for now: a what-if's own Reach it waits on a branch inside a branch.
+  const warmth = $derived(typeof kernelSays.t_surface_now_k === "number" ? (kernelSays.t_surface_now_k as number) : null);
+  let reachAsk = $state("");
+  let reachSaid = $state<string | null>(null);
+  let reachBusy = $state(false);
+  async function reach() {
+    const target = Number(reachAsk.replace(/\s*K\s*$/i, ""));
+    const a = num("orbit.semi_major_axis");
+    reachSaid = null;
+    if (!Number.isFinite(target) || target <= 0) return void (reachSaid = "Type a temperature in kelvin, such as 288.");
+    if (!scene.system || a === null) return;
+    reachBusy = true;
+    try {
+      const r = await reachIt(ctx.session, { system: scene.system, address: subject.address, field: "orbit.semi_major_axis", at_yr: ws.now_yr, lo: a / 8, hi: a * 8, log: true, target, read: surfaceKelvin(subject.address), within: 2e-3 });
+      if (!r.ok) {
+        reachSaid = r.closest ? `No orbit from ${said(a / 8, "length", "orbit")} to ${said(a * 8, "length", "orbit")} gets there: the nearest is ${sayNumber(r.closest.got, 3)} K at ${said(r.closest.value, "length", "orbit")}.` : `Could not reach it: ${r.why}.`;
+        return;
+      }
+      const problem = await commit(handle, r.value, { source: "computed" }, `${said(r.value, "length", "orbit")}, for a surface about ${sayNumber(r.got, 3)} K`);
+      reachSaid = problem ?? `Moved to ${said(r.value, "length", "orbit")}: the surface is about ${sayNumber(r.got, 3)} K.`;
+    } finally {
+      reachBusy = false;
+    }
+  }
   let chipProblem = $state<string | null>(null);
   let chipSaid = $state<string | null>(null);
   async function chip(id: string, does: string) {
@@ -263,6 +292,14 @@
     {/if}
     {#if chipProblem || chipSaid}<p class="chip-said" class:problem={!!chipProblem} aria-live="polite" data-chip-said>{chipProblem ?? chipSaid}</p>{/if}
   {/if}
+  {#if isOrbit && warmth !== null && !ws.branch && editable}
+    <form class="reach" data-reach onsubmit={(ev) => (ev.preventDefault(), reach())}>
+      <span>Surface about {sayNumber(warmth, 3)} K. Reach</span>
+      <input aria-label="Surface temperature to reach, in kelvin" data-reach-ask bind:value={reachAsk} placeholder="288 K" inputmode="decimal" />
+      <button type="submit" class="chip" data-reach-go disabled={reachBusy}>{reachBusy ? "Finding…" : "by moving the orbit"}</button>
+    </form>
+    {#if reachSaid}<p class="chip-said" aria-live="polite" data-reach-said>{reachSaid}</p>{/if}
+  {/if}
   {#if ws.branch && box.results.length}<p class="chip-said" data-box-branch>The year and the verdict follow once it is kept.</p>{/if}
   {#if results.length}
     <dl class="results" data-box-results>
@@ -274,6 +311,26 @@
 </div>
 
 <style>
+  .reach {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 18px 2px;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+  }
+  .reach input {
+    width: 7em;
+    min-height: 30px;
+    padding: 2px 8px;
+    border: var(--sse-line) solid var(--sse-ink-muted);
+    border-radius: 4px;
+    background: var(--sse-ground-raised);
+    color: var(--sse-ink);
+    font: inherit;
+    font-family: var(--sse-font-mono);
+  }
   .pair {
     padding: 4px 0 6px;
     border-top: var(--sse-line) solid var(--sse-rule);

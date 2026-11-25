@@ -190,3 +190,5 @@ export * from "./rollcall.ts";
 // In memory (track SH6): the names of those who died, from a pack's in-memory.json.
 export * from "./inmemory.ts";
 export * from "./namescarried.ts";
+export { reachIt, surfaceKelvin } from "./reach.ts";
+export type { ReachAsk, Reached } from "./reach.ts";

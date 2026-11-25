@@ -212,6 +212,17 @@ try {
       });
       await undoTo(marsAt);
 
+      // ED5 Reach it: ask for a 260 K surface; the box finds the orbit on a scratch what-if and sets it as one change.
+      await obox.locator("[data-reach]").waitFor({ timeout: 20000 });
+      await obox.locator("[data-reach-ask]").fill("260 K");
+      await obox.locator("[data-reach-go]").click();
+      await gm.waitForFunction(() => /surface is about 2(59|60|61)/.test(document.querySelector("[data-reach-said]")?.textContent ?? ""), null, { timeout: 60000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nbox says: ${await obox.innerText()}`);
+      });
+      assert.match(await gm.locator('[data-handle="orbit"] .value').innerText(), /1\.[0-4]\d? AU/, "Mars moves in to warm");
+      await shot(gm, `reach-it-${vp}`);
+      await undoTo(marsAt);
+
       // Retrograde: the lean goes past 90 degrees, and the chip says so.
       await obox.locator('[data-chip="retrograde"]').click();
       await gm.waitForFunction(() => document.querySelector('[data-box="orbit"] [data-chip="retrograde"]')?.getAttribute("aria-pressed") === "true", null, { timeout: 20000 });
