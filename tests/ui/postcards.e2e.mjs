@@ -4,12 +4,25 @@
 // a bookmark with the globe's camera and a fixed date. The wall (rail, Look) shows it; opening it draws the front live
 // from the same camera, the back says where, when and how, and Send packs it (as a clip of the bodies in frame), with
 // "Wish you were here!" ready on the back. Going there turns the globe back to the kept camera. A postcard link opens
-// as a visit, read-only, marked as one; a damaged link is refused in plain words. On a phone the card fits.
+// as a visit, read-only, marked as one; a damaged link is refused in plain words. A sent postcard that carries its world,
+// pasted on a fresh page, is drawn live from a visiting universe. On a phone the card fits.
 import { spawn } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { go, more } from "./nav.mjs";
+
+// A 24 by 24 grey thumbnail of a canvas, 0 to 1, for comparing two drawings of the same picture.
+const thumb = (c) => {
+  const t = document.createElement("canvas");
+  t.width = t.height = 24;
+  const g = t.getContext("2d");
+  g.drawImage(c, 0, 0, 24, 24);
+  const d = g.getImageData(0, 0, 24, 24).data;
+  const out = [];
+  for (let i = 0; i < d.length; i += 4) out.push((d[i] + d[i + 1] + d[i + 2]) / 765);
+  return out;
+};
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const args = process.argv.slice(2);
@@ -75,6 +88,7 @@ try {
   await gm.locator("[data-postcard-drawn]").waitFor({ timeout: 60000 });
   await gm.waitForFunction(() => !document.querySelector("[data-postcard-progress]"), null, { timeout: 60000 });
   await shot(gm, "desk-2-front");
+  const sentLook = await gm.locator("[data-postcard-drawn]").evaluate(thumb);
   const lit = await gm.locator("[data-postcard-drawn]").evaluate((c) => {
     const s = document.createElement("canvas");
     s.width = c.width;
@@ -104,6 +118,11 @@ try {
   assert.ok(await box.locator("[data-postcard-link]").isDisabled(), "a postcard that carries its world goes as a file, not a link");
   const [download] = await Promise.all([gm.waitForEvent("download"), box.locator("[data-postcard-file]").click()]);
   assert.match(download.suggestedFilename(), /\.ssepostcard\.json$/);
+  const sent = readFileSync(await download.path(), "utf8");
+  const world = JSON.parse(sent).world;
+  assert.match(world.about ?? "", /^n\d+$/, "a clip postcard names the clip node its camera is about");
+  assert.ok(world.origin?.facts.some((f) => f.field === "body.surface_water_oceans"), "its origin carries the facts that shape the world");
+  assert.ok(!world.origin.facts.some((f) => /note|description/i.test(f.field)), "never notes or words for the GM");
   await shot(gm, "desk-4-send");
 
   // Go there: the globe comes back to the kept camera.
@@ -113,6 +132,19 @@ try {
     const el = document.querySelector("[data-body] [data-lon]");
     return el && Math.abs(Number(el.getAttribute("data-lon")) - k.lon) <= 1 && Math.abs(Number(el.getAttribute("data-lat")) - k.lat) <= 1;
   }, kept, { timeout: 15000 });
+
+  // Any bookmark made where a camera is kept is a postcard already (a bookmark fixes its date when made): it is on
+  // the wall and draws at once.
+  await gm.getByRole("button", { name: "Bookmarks" }).click();
+  const marks = gm.locator("[data-bookmarks-list]");
+  await marks.locator("[data-bookmark-add]").click();
+  await marks.locator("[data-bookmark-name]").fill("Earth from the bookmark");
+  await marks.locator("[data-bookmark-name]").press("Enter");
+  await gm.keyboard.press("Escape");
+  await go(gm, "postcards");
+  const fromMark = gm.locator('[data-postcard-row="campaign"] [data-postcard-tile]', { hasText: "Earth from the bookmark" });
+  await fromMark.click();
+  await gm.locator("[data-postcard-drawn]").waitFor({ timeout: 60000 });
 
   // A postcard link opens as a visit, read-only and marked; a damaged one is refused in plain words.
   const card = {
@@ -137,6 +169,33 @@ try {
   assert.ok(!/#postcard=/.test(visitor.url()), "the address bar drops the postcard once it is open");
   await shot(visitor, "desk-5-visit");
   await visitor.close();
+
+  // A postcard that carries its world (the file Send saved), pasted on a fresh page: its world is laid into a visiting
+  // universe and the front is drawn live from the same camera, not from a kept picture.
+  // Someone else's browser: nothing of the sender's campaign is kept there.
+  const elsewhere = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 });
+  const guest = await elsewhere.newPage();
+  guest.on("pageerror", (e) => errors.push(e.message));
+  await guest.goto(base);
+  await guest.waitForSelector("[data-start] button, [data-chart]", { timeout: 30000 }).catch(() => {});
+  await guest.keyboard.press("Escape");
+  await guest.evaluate((text) => {
+    const dt = new DataTransfer();
+    dt.setData("text/plain", text);
+    document.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, sent);
+  await guest.waitForSelector("[data-postcard-wall] [data-postcard]", { timeout: 30000 });
+  await guest.waitForSelector("[data-postcard-drawn], [data-postcard-why]", { state: "attached", timeout: 90000 });
+  const whyNot = await guest.locator("[data-postcard-why]").allInnerTexts();
+  assert.deepEqual(whyNot, [], `the visit draws its front: ${whyNot.join(" ")}`);
+  await shot(guest, "desk-6-visit-drawn");
+  // The same world from the same camera: the visit's front matches the sender's (graphics cards differ by a hair).
+  const seenLook = await guest.locator("[data-postcard-drawn]").evaluate(thumb);
+  const diff = sentLook.reduce((t, v, i) => t + Math.abs(v - seenLook[i]), 0) / sentLook.length;
+  assert.ok(diff < 0.03, `the visit draws the sender's picture (mean difference ${diff.toFixed(3)})`);
+  await guest.locator("[data-postcard-turn]").click();
+  assert.match(await guest.locator("[data-postcard-visiting]").innerText(), /Visiting: a postcard/);
+  await elsewhere.close();
 
   // On a phone the card fits.
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
