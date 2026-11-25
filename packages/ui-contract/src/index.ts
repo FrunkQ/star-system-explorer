@@ -43,6 +43,7 @@ export * from "./view-controls.ts";
 export * from "./picker.ts";
 export * from "./system-summary.ts";
 export * from "./your-systems.ts";
+export * from "./chart-labels.ts";
 export * from "./overlay.ts";
 export * from "./landing.ts";
 export * from "./map-controls.ts";
