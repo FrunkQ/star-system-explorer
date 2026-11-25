@@ -118,7 +118,7 @@ export const LONG_CLIP = 4;
 
 export interface Gpu {
   readonly backend: "webgpu" | "webgl2";
-  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number }; /** True: draw through the shared finish (finish.ts): high range, the eye's glare, exposure, AgX, dither. */ finish?: { exposure?: number; glare?: boolean }; /** True: the sky's stars behind everything (VP2, stars-behind.ts). */ stars?: GpuStars }): void;
+  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number }; /** True: draw through the shared finish (finish.ts): high range, the eye's glare, exposure, AgX, dither. */ finish?: { exposure?: number; glare?: boolean }; /** True: the sky's stars behind everything (VP2, stars-behind.ts). */ stars?: GpuStars; /** Perspective near and far planes, display units (default 1e-3 and 1e4): a close-up brings the near plane down under its height. */ near?: number; far?: number }): void;
   dispose(): void;
 }
 
@@ -147,6 +147,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   const sphere = new SphereGeometry(1, 32, 16);
   // True look: a finer sphere with its poles on z, as the globe's (true-look.ts `equirect`).
   const globe = new SphereGeometry(1, 64, 32).rotateX(Math.PI / 2);
+  // Close-up: a globe that fills the screen many times over shows its limb's facets at 64 segments, so it takes a finer one.
+  const fineGlobe = new SphereGeometry(1, 512, 256).rotateX(Math.PI / 2);
   const textures = new Map<string, DataTexture>();
   const versions = new Map<string, number>();
   const litMats = new Map<string, MeshStandardMaterial>();
@@ -364,7 +366,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         const dist = Math.hypot(it.rel[0], it.rel[1], it.rel[2]);
         const disc_px = o.ortho ? (2 * it.radius * o.width) / o.ortho.width : dist > it.radius ? (it.radius / dist / Math.tan(o.fovY / 2)) * o.height : o.height;
         const surfaceMat = lit && it.surface?.texture.faces ? bakedMat(it, disc_px) : null;
-        const m = new Mesh(o.light || it.frame ? globe : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? (surfaceMat ?? litMat(it)) : mat(it.colour));
+        const m = new Mesh(o.light || it.frame ? (dist < 1.5 * it.radius ? fineGlobe : globe) : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? (surfaceMat ?? litMat(it)) : mat(it.colour));
         m.position.set(it.rel[0], it.rel[1], it.rel[2]);
         m.scale.setScalar(it.radius);
         if (it.frame) {
@@ -450,6 +452,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         flat.far = o.ortho.far;
       } else {
         camera.fov = (o.fovY * 180) / Math.PI;
+        camera.near = o.near ?? 1e-3;
+        camera.far = o.far ?? 1e4;
         camera.aspect = o.width / Math.max(1, o.height);
       }
       cam.position.set(0, 0, 0);
@@ -464,6 +468,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     dispose() {
       sphere.dispose();
       globe.dispose();
+      fineGlobe.dispose();
       torus.dispose();
       textures.forEach((t) => t.dispose());
       faces.forEach((e) => (e.tex.dispose(), e.mat.dispose()));

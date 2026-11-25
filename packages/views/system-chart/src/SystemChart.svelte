@@ -24,7 +24,7 @@
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, readTrueFace, starsBehind, starCss, type FaceReader, type StarReader, type TrueTexture, withFiner } from "../../../renderer/src/index.ts";
+  import { readLiveStar, readTrueFace, starsBehind, starCss, type FaceReader, type StarReader, type TrueTexture, type GroundView, withFiner } from "../../../renderer/src/index.ts";
   import { finerTiles, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -397,16 +397,21 @@
       const base = ck ? trueSurfaces.get(ck) : undefined;
       // Only a world whose True face is its ground alone (no clouds painted over it) wears the finer faces.
       if (ck && base && typeof base !== "string" && base.faces && g === trueGen) {
+        // Close-up: the ground under the camera is read first when the camera is over this world.
+        const under = untrack(() => groundView);
         void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
           const now = trueSurfaces.get(ck);
           if (!now || typeof now === "string") return;
           const t = withFiner(now, fine);
           trueSurfaces.set(ck, t);
           surfaces = new Map(surfaces).set(chosen!.address, t);
-        });
+        }, under?.body === chosen!.address ? under.toward : undefined);
       }
     })());
   });
+  // Close-up (Alex, 25 Nov): the ground under the 3D camera while it is low over a world in True; the detail ladder's
+  // deep tiles (VP3 part 4) read it.
+  let groundView = $state<GroundView | null>(null);
   // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.
   let liveStar = $state<LiveStar | null>(null);
   let liveStarWhy = $state("");
@@ -499,7 +504,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
