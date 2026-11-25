@@ -31,6 +31,15 @@ export const PAPER: ThemeDoc = {
   vocab: "plain",
   tokens: {
     ground: "#FFFFFF",
+    // One colour: every map slot is the ink, and the slot's pattern carries the answer (OV4).
+    "map-1": "#111111",
+    "map-2": "#111111",
+    "map-3": "#111111",
+    "map-4": "#111111",
+    "map-5": "#111111",
+    "map-6": "#111111",
+    "map-7": "#111111",
+    "map-8": "#111111",
     "ground-raised": "#FFFFFF",
     ink: "#111111",
     "ink-muted": "#555555",
@@ -88,6 +97,15 @@ export const DECK: ThemeDoc = {
   palette: ["#3BB4A9", "#F0A23B", "#E2675A", "#6FA8E8", "#C9D46B", "#D98BC0", "#E8ECF2"],
   tokens: {
     ground: "#0D0F14",
+    // A dark ground takes the Night chart's map palette (OV4).
+    "map-1": "#E39B41",
+    "map-2": "#57AEFF",
+    "map-3": "#6CC48A",
+    "map-4": "#EECF46",
+    "map-5": "#DB6FE4",
+    "map-6": "#4ED7D0",
+    "map-7": "#F47FAB",
+    "map-8": "#CCD186",
     "ground-raised": "#161A22",
     ink: "#E8ECF2",
     "ink-muted": "#A3ADBD",
@@ -163,6 +181,15 @@ export const PHOSPHOR: ThemeDoc = {
   ],
   tokens: {
     ground: "#050A06",
+    // One colour: every map slot is the ink, and the slot's pattern carries the answer (OV4).
+    "map-1": "#5CFF8A",
+    "map-2": "#5CFF8A",
+    "map-3": "#5CFF8A",
+    "map-4": "#5CFF8A",
+    "map-5": "#5CFF8A",
+    "map-6": "#5CFF8A",
+    "map-7": "#5CFF8A",
+    "map-8": "#5CFF8A",
     "ground-raised": "#07100A",
     ink: "#5CFF8A",
     "ink-muted": "#2FBF5C",
