@@ -3,6 +3,16 @@
 // Only this file and host-browser.ts may import the kernel client (checked by
 // tests/ui/boundary.test.ts).
 import type { OrbitPlaced } from "./orbits.ts";
+/** One orbital stability check (kernel `orbit_stability`): level 0 lasts, 1 watch, 2 will not last, 3 the orbits cross. */
+export interface StabilityCheck {
+  check: string;
+  block?: string;
+  around?: string;
+  bodies: string[];
+  level: number;
+  says: string;
+}
+
 /** A pack's calendar as the kernel serves it (`provides.other.calendar`). */
 /** Where and how a sky is asked for (`sky_from_here`, `sky_glow`): a system address or a galactic position in pc (neither: the Sun's place). */
 export interface SkyAsk {
@@ -177,6 +187,11 @@ export interface ViewSession {
   lifeView(by: { body?: string; fixture?: string; dials?: Record<string, number> }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }>;
   /** Bodies on their orbits at given times (kernel `orbits_at`, U11 part 2): relative to each host, up to 64 times. `bodies` places a scene the kernel does not hold. */
   orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }>;
+  /**
+   * Whether the orbits at or under a system last (kernel `orbit_stability`, ST1): the worst verdict, and every check
+   * with its block, its numbers and what it says. `bodies` lays facts over the kernel's (a held value not yet written).
+   */
+  orbitStability(system: string, opts?: { bodies?: { address: string; facts: Record<string, number | string> }[]; at_s?: bigint }): Promise<{ ok: true; verdict: string; checks: StabilityCheck[] } | { ok: false; code: string; message: string }>;
   /** The campaign's now kept in the universe (kernel `campaign_now`); absent if never set. */
   campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; code: string; message: string }>;
   /** Move the campaign's now (kernel `set_campaign_now`); GM only. */
@@ -957,6 +972,13 @@ export class Session implements ViewSession {
   async orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "orbits_at", system, at_s: [...at_s], ...(bodies ? { bodies } : {}) });
     return r.type === "orbits_placed" ? { ok: true, bodies: (r as unknown as { bodies: OrbitPlaced[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async orbitStability(system: string, opts: { bodies?: { address: string; facts: Record<string, number | string> }[]; at_s?: bigint } = {}): Promise<{ ok: true; verdict: string; checks: StabilityCheck[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "orbit_stability", system, ...(opts.bodies ? { bodies: opts.bodies } : {}), ...(opts.at_s !== undefined ? { at_s: opts.at_s } : {}) });
+    return r.type === "orbit_stability_is"
+      ? { ok: true, verdict: String(r.verdict), checks: (r as unknown as { checks: StabilityCheck[] }).checks }
+      : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; code: string; message: string }> {

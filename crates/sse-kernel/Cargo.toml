@@ -21,6 +21,7 @@ sse-logic = { path = "../sse-logic" }
 sse-time = { path = "../sse-time" }
 sse-life = { path = "../sse-life" }
 sse-formation.workspace = true
+sse-small = { path = "../sse-small" }
 sse-import-v3 = { workspace = true, features = ["reconstruct"] }
 sse-cosmos = { path = "../sse-cosmos" }
 sse-surface.workspace = true
