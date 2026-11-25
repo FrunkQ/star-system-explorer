@@ -40,9 +40,21 @@
      "spin_up_years": 6,
      "source": "Seasonal energy balance with heat capacity, C dT/dt (North and Coakley 1979; North, Cahalan and Coakley 1981). C is the sea's mixed layer (about 50 m of water) over the sea fraction, the ground's seasonal skin, thermal inertia I times sqrt(year / pi) (Pierrehumbert 2010, ch. 7), over the land, plus the air column c_p p / g. One ground inertia (1500 SI, between dry regolith near 200 and wet rock near 2500) on every world until cover publishes it per cell (docs/fudges.md)."
     },
+    "wind10": {
+     "gust_share": 0.5,
+     "source": "The 10 m wind is the circulation's prevailing wind plus storms as an isotropic Gaussian vector wind (Monahan 2006, J. Climate 19, 497): each component spreads by gust_share x the eddy wind x the eddies' share of the heat transport (1 - exp(-x^2/sigma^2), the moisture block's Hadley width), slower as the cube root of the air's density over Earth's. gust_share is fitted to Earth's storm-track spread of about 5 to 6 m/s: docs/fudges.md."
+    },
     "sea": {
      "storm_fetch_m": 1000000.0,
-     "source": "Tides (sse.tides.ocean_range, sse.tides.period) and wind waves (sse.ocean.wind_waves, Coastal Engineering Manual eqs. II-2-36 and II-2-37). A wind's fetch is the band's open water between coasts, (1 - land) x the band's circumference / (coasts / 2), held to a storm's size of about 1000 km (synoptic storms span 1000 to 2000 km; one wind direction holds over a part of that): docs/fudges.md."
+     "reference_density_ratio": 0.0012,
+     "whitecaps": {
+      "coefficient": 5e-05,
+      "onset_m_s": 4.47,
+      "exponent": 3.0,
+      "foam_albedo": 0.22,
+      "source": "Whitecap share W = 5.0e-5 (U10 - 4.47)^3 for developed seas (Stramska and Petelski 2003, as used for ocean colour: Ocean Optics Web Book, whitecaps, eq. 2), read with the wind scaled by the liquid's drive; effective whitecap reflectance 0.22, about +-50% (Koepke 1984, Appl. Opt. 23, 1816), flat across the visible to 555 nm and lower in the red (Frouin et al. 1996)."
+     },
+     "source": "Tides (sse.tides.ocean_range, sse.tides.period) and wind waves (sse.ocean.wind_waves, Coastal Engineering Manual eqs. II-2-36 and II-2-37). A wind's fetch is the band's open water between coasts, (1 - land) x the band's circumference / (coasts / 2), held to a storm's size of about 1000 km (synoptic storms span 1000 to 2000 km; one wind direction holds over a part of that): docs/fudges.md. Another liquid's waves read the wind scaled by sqrt((rho_air / rho_liquid) / 0.0012), Earth's air over water (1.2 / 1000), since the waves' momentum comes from the air and their weight from the liquid (a stand-in, docs/fudges.md); trains drawn from the Pierson-Moskowitz spectrum with capillary-gravity dispersion, the liquid's density, viscosity and surface tension from the data sheet."
     },
     "land_sea": {
      "coasts_per_band": 2.0,
@@ -83,7 +95,7 @@
     "circulation": {
      "delta_h": 0.3333,
      "tropopause_scale_heights": 1.8,
-     "source": "Hadley edge from Held and Hou 1980 (small-angle form, phi_H = (5/3 g H dh / (Omega a)^2)^1/2); cells from the Rhines arrest wavenumber k = (beta/2U)^1/2 (Rhines 1975); trends checked against Kaspi and Showman 2015. The wind scale comes from the thermal wind (W7b, strengths); the contrast is tuned to Earth (docs/fudges.md). The regime is a label read off the strengths and facts: the first rule whose conditions hold. The physics never reads it.",
+     "source": "Hadley edge from Held and Hou 1980 (small-angle form, phi_H = (5/3 g H dh / (Omega a)^2)^1/2); cells from the Rhines arrest wavenumber k = (beta/2U)^1/2, one cell pi/k wide, U the eddy speed (Rhines 1975); trends checked against Kaspi and Showman 2015. The wind scale comes from the thermal wind (W7b, strengths); the contrast is tuned to Earth (docs/fudges.md). The regime is a label read off the strengths and facts: the first rule whose conditions hold. The physics never reads it.",
      "rules": [
       {
        "regime": "airless",
@@ -110,7 +122,7 @@
          "min": 0.5
         }
        },
-       "because": "One face to the star: rising air and a permanent cloud shield under the star, clearer night side (Yang, Cowan and Abbot 2013; Showman and Polvani 2011)."
+       "because": "One face to the star: rising air and a permanent cloud shield under the star, clearer night side (Yang, Cowan and Abbot 2013); the day-night heating drives standing waves and an eastward equatorial jet (Showman and Polvani 2011)."
       },
       {
        "regime": "thin-air",
@@ -164,9 +176,29 @@
       "ar": 0.0093,
       "co2": 0.0004,
       "h2o": 0.0
-     }
+     },
+     "giant_gases": {
+      "h2": 0.8384,
+      "he": 0.1601,
+      "h2o": 0.0009,
+      "ch4": 0.000495,
+      "nh3": 0.000124
+     },
+     "giant_gases_source": "Asplund et al. 2009, protosolar He, C, N and O by number with hydrogen as H2"
     },
     "references": [
+     {
+      "text": "Stramska, M. and Petelski, T. 2003, Observations of oceanic whitecaps in the north polar waters of the Atlantic, J. Geophys. Res. 108, 3086 (as quoted in the Ocean Optics Web Book, whitecaps)",
+      "url": "https://oceanopticsbook.info/view/atmospheric-correction/level-2/whitecaps"
+     },
+     {
+      "text": "Koepke, P. 1984, Effective reflectance of oceanic whitecaps, Appl. Opt. 23, 1816",
+      "url": "https://scilit.com/publications/d02e8fb48e351aa7a4b6391ef50b0338"
+     },
+     {
+      "text": "Morel, A. and Prieur, L. 1977, Analysis of variations in ocean color, Limnol. Oceanogr. 22, 709",
+      "url": "https://frouingroup.ucsd.edu/Aw_Chl/REFRENCES/Morel_and_Prieur_LO_77.pdf"
+     },
      {
       "text": "North, G. R. 1975, Theory of energy-balance climate models, J. Atmos. Sci. 32, 2033-2043",
       "doi": "10.1175/1520-0469(1975)032<2033:TOEBCM>2.0.CO;2"

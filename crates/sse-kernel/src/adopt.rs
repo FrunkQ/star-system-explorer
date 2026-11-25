@@ -1169,13 +1169,17 @@ pub(crate) fn resolved_system(
         at_s: (at_s != i64::MAX).then_some(at_s),
         facts: serde_json::Value::Object(facts_json),
         spec: spec.map(|x| serde_json::to_value(x).expect("plain data")),
-        // Each world's surface record, with how its bare ground weathers
-        // (SW1) where something from space reaches the ground.
+        // Each world's surface record, with its vapour plumes when it has
+        // any (third audit R10: drawn above the limb in True), and how its
+        // bare ground weathers (SW1) where something from space reaches it.
         surfaces: bodies
             .iter()
             .zip(&envelopes)
             .map(|(b, e)| {
                 let mut v = serde_json::to_value(e).expect("plain data");
+                if let Some(p) = sse_surface::plumes::plumes(b, e, seed) {
+                    v["plumes"] = serde_json::to_value(p).expect("plain data");
+                }
                 if let Some(w) =
                     sse_surface::weathering::weathering(b, e, star_distance_au(&bodies, b))
                         .filter(|w| w.active)

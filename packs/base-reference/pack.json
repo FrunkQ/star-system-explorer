@@ -9428,11 +9428,12 @@
         },
         "props": {
          "sigma_elec": {
-          "v": 10000.0,
+          "v": 15000.0,
           "unit": "S m-1",
-          "src": "redmer2011",
+          "src": "millot2018",
           "check": "unverified",
-          "note": "order of magnitude, recalled"
+          "at_place": "70 to 180 GPa, below about 5000 K (reverberating shocks)",
+          "note": "Millot et al. 2018 quote about 150 S/cm on reverberating shocks at 70 to 180 GPa, against about 30 S/cm (3000 S/m) on the single-shock Hugoniot above 30 GPa and 2000 K, which rises from 0.1 S/cm at 10 GPa; Yakushev 1998 gives 2000 S/m at 75 GPa. Mostly ionic: the electronic part is under 100 S/cm below 200 GPa and 5000 K"
          }
         }
        },
@@ -11034,7 +11035,7 @@
          "millot2018"
         ],
         "check": "unverified",
-        "note": "3250 K at 100 GPa is Cheng et al.'s; 5000 K at 190 GPa is recalled from Millot et al. 2018 and must be checked; beyond 190 GPa extrapolated"
+        "note": "3250 K at 100 GPa is Cheng et al.'s; 5000 K at 190 GPa is Millot et al. 2018's (abstract); beyond 190 GPa extrapolated"
        },
        {
         "between": [
@@ -11943,6 +11944,102 @@
        "encoding": "rle: rows split by '/', runs by ' '; run = phase digit (base 36) then length (base 36)",
        "built_by": "scripts/water_phases.py",
        "rle": "5bz 42x 0qt/5bz 42x 0qt/5bz 42x 0qt/5bz 42x 0qt/5bz 42x 0qt/5bz 42x 0qt/5bz 42x 0qt/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5c0 43z 0pq/5c0 43z 0pq/5c0 43z 0pq/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1s 0ky/5c1 47y 1s 0ky/5c1 47y 1s 0ky/5c1 47y 1s 0ky/5c1 47y 1s 0ky/5c1 47y 1s 0ky/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1v 0kv/5c1 47y 1v 0kv/5c1 47y 1v 0kv/5c1 47y 1v 0kv/5c1 47y 1v 0kv/5c1 47y 1v 0kv/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1x 0kt/5c1 47y 1x 0kt/5c1 47y 1x 0kt/5c1 47y 1x 0kt/5c1 47y 1x 0kt/5c1 47y 1x 0kt/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1z 0kr/5c1 47y 1z 0kr/5c1 47y 1z 0kr/5c1 47y 1z 0kr/5c1 47y 1z 0kr/5c1 47y 1z 0kr/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 111 0kp/5c1 47y 111 0kp/5c1 47y 111 0kp/5c1 47y 111 0kp/5c1 47y 111 0kp/5c1 47y 111 0kp/5c1 47y 112 0ko/5c1 47y 112 0ko/5c1 47y 112 0ko/5c1 47y 112 0ko/5c1 47y 112 0ko/5c1 47y 112 0ko/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 114 0km/5c1 47y 114 0km/5c1 47y 114 0km/5c1 47y 114 0km/5c1 47y 114 0km/5c1 47y 114 0km/5c1 47y 115 0kl/5c1 47y 115 0kl/5c1 47y 115 0kl/5c1 47y 115 0kl/5c1 47y 115 0kl/5c1 47y 115 0kl/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 117 0kj/5c1 47y 117 0kj/5c1 47y 117 0kj/5c1 47y 117 0kj/5c1 47y 117 0kj/5c1 47y 117 0kj/5c1 47y 118 0ki/5c1 47y 118 0ki/5c1 47y 118 0ki/5c1 47y 118 0ki/5c1 47y 118 0ki/5c1 47y 118 0ki/5c1 47y 119 0kh/5c1 47y 119 0kh/5c1 47y 119 0kh/5c1 47y 119 0kh/5c1 47y 119 0kh/5c1 47y 119 0kh/5c1 47y 11a 0kg/5c1 47y 11a 0kg/5c1 47y 11a 0kg/5c1 47y 11a 0kg/5c1 47y 11a 0kg/5c1 47y 11a 0kg/5c1 47y 11b 0kf/5c1 47y 11b 0kf/5c1 47y 11b 0kf/5c1 47y 11b 0kf/5c1 47y 11b 0kf/5c1 47y 11b 0kf/5c1 47y 11c 0ke/5c1 47y 11c 0ke/5c1 47y 11c 0ke/5c1 47y 11c 0ke/5c1 47y 11c 0ke/5c1 47y 11c 0ke/5c1 47y 11d 0kd/5c1 47y 11d 0kd/5c1 47y 11d 0kd/5c1 47y 11d 0kd/5c1 47y 11d 0kd/5c1 47y 11d 0kd/5c1 47y 11e 0kc/5c1 47y 11e 0kc/5c1 47y 11e 0kc/5c1 47y 11e 0kc/5c1 47y 11e 0kc/5c1 47y 11e 0kc/5c1 47y 11f 0kb/5c1 47y 11f 0kb/5c1 47y 11f 0kb/5c1 47y 11f 0kb/5c1 47y 11f 0kb/5c1 47y 11f 0kb/5c1 47y 11g 0ka/5c1 47y 11g 0ka/5c1 47y 11g 0ka/5c1 47y 11g 0ka/5c1 47y 11g 0ka/5c1 47y 11h 0k9/5c1 47y 11h 0k9/5c1 47y 11h 0k9/5c1 47y 11h 0k9/5c1 47y 11h 0k9/5c1 47y 11h 0k9/5c1 47y 11i 0k8/5c1 47y 11i 0k8/5c1 47y 11i 0k8/5c1 47y 11i 0k8/5c1 47y 11i 0k8/5c1 47y 11i 0k8/5c1 47y 11j 0k7/5c1 47y 11j 0k7/5c1 47y 11j 0k7/5c1 47y 11j 0k7/5c1 47y 11j 0k7/5c1 47y 11j 0k7/5c1 47y 11k 0k6/5c1 47y 11k 0k6/5c1 47y 11k 0k6/5c1 47y 11k 0k6/5c1 47y 11k 0k6/5c1 47y 11k 0k6/5c1 47y 11l 0k5/5c1 47y 11l 0k5/5c1 47y 11l 0k5/5c1 47y 11l 0k5/5c1 47y 11l 0k5/5c1 47y 11m 0k4/5c1 47y 11m 0k4/5c1 47y 11m 0k4/5c1 47y 11m 0k4/5c1 47y 11m 0k4/5c1 47y 11m 0k4/5c1 47y 11n 0k3/5c1 47y 11n 0k3/5c1 47y 11n 0k3/5c1 47y 11n 0k3/5c1 47y 11n 0k3/5c1 47y 11o 0k2/5c1 47y 11o 0k2/5c1 47y 11o 0k2/5c1 47y 11o 0k2/5c1 47y 11o 0k2/5c1 47y 11o 0k2/5c1 47y 11p 0k1/5c1 47y 11p 0k1/5c1 47y 11p 0k1/5c1 47y 11p 0k1/5c1 47y 11p 0k1/5c1 47y 11p 0k1/5c1 47y 11q 0k0/5c1 47y 11q 0k0/5c1 47y 11q 0k0/5c1 47y 11q 0k0/5c1 47y 11q 0k0/5c1 47y 11r 0jz/5c1 47y 11r 0jz/5c1 47y 11r 0jz/5c1 47y 11r 0jz/5c1 47y 11r 0jz/5c1 47y 11s 0jy/5c1 47y 11s 0jy/5c1 47y 11s 0jy/5c1 47y 11s 0jy/5c1 47y 11s 0jy/5c1 47y 11s 0jy/5c1 47y 11t 0jx/5c1 47y 11t 0jx/5c1 47y 11t 0jx/5c1 47y 11t 0jx/5c1 47y 11t 0jx/5c1 47y 11u 0jw/5c1 47y 11u 0jw/5c1 47y 11u 0jw/5c1 47y 11u 0jw/5c1 47y 11u 0jw/5c1 47y 11u 0jw/5c1 47y 11v 0jv/5c1 47y 11v 0jv/5c1 47y 11v 0jv/5c1 47y 11v 0jv/5c1 47y 11v 0jv/5c1 47y 11w 0ju/5c1 47y 11w 0ju/5c1 47y 11w 0ju/5c1 47y 11w 0ju/5c1 47y 11w 0ju/5c1 47y 11x 0jt/5c1 47y 11x 0jt/5c1 47y 11x 0jt/5c1 47y 11x 0jt/5c1 47y 11x 0jt/5c1 47y 11x 0jt/5c1 47y 11y 0js/5c1 47y 11y 0js/5c1 47y 11y 0js/5c1 47y 11y 0js/5c1 47y 11y 0js/5c1 47y 11z 0jr/5c1 47y 11z 0jr/5c1 47y 11z 0jr/5c1 47y 11z 0jr/5c1 47y 11z 0jr/5c1 47y 120 0jq/5c1 47y 120 0jq/5c1 47y 120 0jq/5c1 47y 120 0jq/5c1 47y 120 0jq/5c1 47y 121 0jp/5c1 47y 121 0jp/5c1 47y 121 0jp/5c1 47y 121 0jp/5c1 47y 121 0jp/5c1 47y 122 0jo/5c1 47y 122 0jo/5c1 47y 122 0jo/5c1 47y 122 0jo/5c1 47y 122 0jo/5c1 47y 122 0jo/5c1 47y 123 0jn/5c1 47y 123 0jn/5c1 47y 123 0jn/5c1 47y 123 0jn/5c1 47y 123 0jn/5c1 47y 124 0jm/5c1 47y 124 0jm/5c1 47y 124 0jm/5c1 47y 124 0jm/5c1 47y 124 0jm/5c1 47y 125 0jl/5c1 47y 125 0jl/5c1 47y 125 0jl/5c1 47y 125 0jl/5c1 47y 125 0jl/5c1 47y 126 0jk/5c1 47y 126 0jk/5c1 47y 126 0jk/5c1 47y 126 0jk/5c1 47y 126 0jk/5c1 47y 127 0jj/5c1 47y 127 0jj/5c1 47y 127 0jj/5c1 47y 127 0jj/5c1 47y 127 0jj/5c1 47y 128 0ji/5c1 47y 128 0ji/5c1 47y 128 0ji/5c1 47y 128 0ji/5c1 47y 128 0ji/5c1 47y 129 0jh/5c1 47y 129 0jh/5c1 47y 129 0jh/5c1 47y 129 0jh/5c1 47y 129 0jh/5c1 47y 12a 0jg/5c1 47y 12a 0jg/5c1 47y 12a 0jg/5c1 47y 12a 0jg/5c1 47y 12b 0jf/5c1 47y 12b 0jf/5c1 47y 12b 0jf/5c1 47y 12b 0jf/5c1 47y 12b 0jf/5c1 47y 12c 0je/5c1 47y 12c 0je/5c1 47y 12c 0je/5c1 47y 12c 0je/5c1 47y 12c 0je/5c1 47y 12d 0jd/5c1 47y 12d 0jd/5c1 47y 12d 0jd/5c1 47y 12d 0jd/5c1 47y 12d 0jd/5c1 47y 12e 0jc/5c1 47y 12e 0jc/5c1 47y 12e 0jc/5c1 47y 12e 0jc/5c1 47y 12e 0jc/5c1 47y 12f 0jb/5c1 47y 12f 0jb/5c1 47y 12f 0jb/5c1 47y 12f 0jb/5c1 47y 12g 0ja/5c1 47y 12g 0ja/5c1 47y 12g 0ja/5c1 47y 12g 0ja/5c1 47y 12g 0ja/5c1 47y 12h 0j9/5c1 47y 12h 0j9/5c1 47y 12h 0j9/5c1 47y 12h 0j9/5c1 47y 12h 0j9/5c1 47y 12i 0j8/5c1 47y 12i 0j8/5c1 47y 12i 0j8/5c1 47y 12i 0j8/5c1 47y 12i 0j8/5c1 47y 12j 0j7/5c1 47y 12j 0j7/5c1 47y 12j 0j7/5c1 47y 12j 0j7/5c1 47y 12k 0j6/5c1 47y 12k 0j6/5c1 47y 12k 0j6/5c1 47y 12k 0j6/5c1 47y 12k 0j6/5c1 47y 12l 0j5/5c1 47y 12l 0j5/5c1 47y 12l 0j5/5c1 47y 12l 0j5/5c1 47y 12m 0j4/5c1 47y 12m 0j4/5c1 47y 12m 0j4/5c1 47y 12m 0j4/5c1 47y 12m 0j4/5c1 47y 12n 0j3/5c1 47y 12n 0j3/5c1 47y 12n 0j3/5c1 47y 12n 0j3/5c1 47y 12o 0j2/5c1 47y 12o 0j2/5c1 47y 12o 0j2/5c1 47y 12o 0j2/5c1 47y 12o 0j2/5c1 47y 12p 0j1/5c1 47y 12p 0j1/5c1 47y 12p 0j1/5c1 47y 12p 0j1/5c1 47y 12q 0j0/5c1 47y 12q 0j0/5c1 47y 12q 0j0/5c1 47y 12q 0j0/5c1 47y 12q 0j0/5c1 47y 12r 0iz/5c1 47y 12r 0iz/5c1 47y 12r 0iz/5c1 47y 12r 0iz/5c1 47y 12s 0iy/5c1 47y 12s 0iy/5c1 47y 12s 0iy/5c1 47y 12s 0iy/5c1 47y 12s 0iy/5c1 47y 12t 0ix/5c1 47y 12t 0ix/5c1 47y 12t 0ix/5c1 47y 12t 0ix/5c1 47y 12u 0iw/5c1 47y 12u 0iw/5c1 47y 12u 0iw/5c1 47y 12u 0iw/5c1 47y 12v 0iv/5c1 47y 12v 0iv/5c1 47y 12v 0iv/5c1 47y 12v 0iv/5c1 47y 12v 0iv/5c1 47y 12w 0iu/5c1 47y 12w 0iu/5c1 47y 12w 0iu/5c1 47y 12w 0iu/5c1 47y 12x 0it/5c1 47y 12x 0it/5c1 47y 12x 0it/5c1 47y 12x 0it/5c1 47y 12y 0is/5c1 47y 12y 0is/5c1 47y 12y 0is/5c1 47y 12y 0is/5c1 47y 12y 0is/5c1 47y 12z 0ir/5c1 47y 12z 0ir/5c1 47y 12z 0ir/5c1 47y 12z 0ir/5c1 47y 130 0iq/5c1 47y 130 0iq/5c1 47y 130 0iq/5c1 47y 130 0iq/5c1 47y 131 0ip/5c1 47y 131 0ip/5c1 47y 131 0ip/5c1 47y 131 0ip/5c1 47y 132 0io/5c1 47y 132 0io/5c1 47y 132 0io/5c1 47y 132 0io/5c1 47y 133 0in/5c1 47y 133 0in/5c1 47y 133 0in/5c1 47y 133 0in/5c1 47y 133 0in/5c1 47y 134 0im/5c1 47y 134 0im/5c1 47y 134 0im/5c1 47y 134 0im/5c1 47y 135 0il/5c1 47y 135 0il/5c1 47y 135 0il/5c1 47y 135 0il/5c1 47y 136 0ik/5c1 47y 136 0ik/5c1 47y 136 0ik/5c1 47y 136 0ik/5c1 47y 137 0ij/5c1 47y 137 0ij/5c1 47y 137 0ij/5c1 47y 137 0ij/5c1 47y 138 0ii/5c1 47y 138 0ii/5c1 47y 138 0ii/5c1 47y 138 0ii/5c1 47y 139 0ih/5c1 47y 139 0ih/5c1 47y 139 0ih/5c1 47y 139 0ih/5c1 47y 13a 0ig/5c1 47y 13a 0ig/5c1 47y 13a 0ig/5c1 47y 13a 0ig/5c1 47y 13b 0if/5c1 47y 13b 0if/5c1 47y 13b 0if/5c1 47y 13b 0if/5c1 47y 13c 0ie/5c1 47y 13c 0ie/5c1 47y 13c 0ie/5c1 47y 13c 0ie/5c1 47y 13d 0id/5c1 47y 13d 0id/5c1 47y 13d 0id/5c1 47y 13d 0id/5c1 47y 13e 0ic/5c1 47y 13e 0ic/5c1 47y 13e 0ic/5c1 47y 13e 0ic/5c1 47y 13f 0ib/5c1 47y 13f 0ib/5c1 47y 13f 0ib/5c1 47y 13g 0ia/5c1 47y 13g 0ia/5c1 47y 13g 0ia/5c1 47y 13g 0ia/5c1 47y 13h 0i9/5c1 47y 13h 0i9/5c1 47y 13h 0i9/5c1 47y 13h 0i9/5c1 47y 13i 0i8/5c1 47y 13i 0i8/5c1 47y 13i 0i8/5c1 47y 13i 0i8/5c1 47y 13j 0i7/5c1 47y 13j 0i7/5c1 47y 13j 0i7/5c1 47y 13j 0i7/5c1 47y 13k 0i6/5c1 47y 13k 0i6/5c1 47y 13k 0i6/5c1 47y 13k 0i6/5c1 47y 13l 0i5/5c1 47y 13l 0i5/5c1 47y 13l 0i5/5c1 47y 13m 0i4/5c1 47y 13m 0i4/5c1 47y 13m 0i4/5c1 47y 13m 0i4/5c1 47y 13n 0i3/5c1 47y 13n 0i3/5c1 47y 13n 0i3/5c1 47y 13n 0i3/5c1 47y 13o 0i2/5c1 47y 13o 0i2/5c1 47y 13o 0i2/5c1 47y 13p 0i1/5c1 47y 13p 0i1/5c1 47y 13p 0i1/5c1 47y 13p 0i1/5c1 47y 13q 0i0/5c1 47y 13q 0i0/5c1 47y 13q 0i0/5c1 47y 13q 0i0/5c1 47y 13r 0hz/5c1 47y 13r 0hz/5c1 47y 13r 0hz/5c1 47y 13s 0hy/5c1 47y 13s 0hy/5c1 47y 13s 0hy/5c1 47y 13s 0hy/5c1 47y 13t 0hx/5c1 47y 13t 0hx/5c1 47y 13t 0hx/5c1 47y 13t 0hx/5c1 47x 13v 0hw/5c1 47x 13v 0hw/5c1 47x 13v 0hw/5c1 47x 13w 0hv/5c1 47x 13w 0hv/5c1 47x 13w 0hv/5c1 47x 13w 0hv/5c1 47x 13x 0hu/5c1 47x 13x 0hu/5c1 47x 13x 0hu/5c1 47x 13y 0ht/5c1 47x 13y 0ht/5c1 47x 13y 0ht/5c1 47x 13y 0ht/5c1 47x 13z 0hs/5c1 47x 13z 0hs/5c1 47x 13z 0hs/5c1 47x 140 0hr/5c1 47x 140 0hr/5c1 47x 140 0hr/5c1 47x 140 0hr/5c1 47x 141 0hq/5c1 47x 141 0hq/5c1 47x 141 0hq/5c1 47x 142 0hp/5c1 47x 142 0hp/5c1 47x 142 0hp/5c1 47x 142 0hp/5c1 47x 143 0ho/5c1 47x 143 0ho/5c1 47x 143 0ho/5c1 47x 144 0hn/5c1 47x 144 0hn/5c1 47x 144 0hn/5c1 47x 144 0hn/5c1 47x 145 0hm/5c1 47x 145 0hm/5c1 47x 145 0hm/5c1 47x 146 0hl/5c1 47x 146 0hl/5c1 47x 146 0hl/5c1 47x 147 0hk/5c1 47x 147 0hk/5c1 47x 147 0hk/5c1 47x 147 0hk/5c1 47x 148 0hj/5c1 47x 148 0hj/5c1 47x 148 0hj/5c1 47x 149 0hi/5c1 47x 149 0hi/5c1 47x 149 0hi/5c1 47x 149 0hi/5c1 47x 14a 0hh/5c1 47x 14a 0hh/5c1 47x 14a 0hh/5c1 47x 14b 0hg/5c1 47x 14b 0hg/5c1 47x 14b 0hg/5c1 47x 14c 0hf/5c1 47x 14c 0hf/5c1 47x 14c 0hf/5c1 47x 14c 0hf/5c1 47x 14d 0he/5c1 47x 14d 0he/5c1 47x 14d 0he/5c1 47x 14e 0hd/5c1 47x 14e 0hd/5c1 47x 14e 0hd/5c1 47x 14f 0hc/5c1 47x 14f 0hc/5c1 47x 14f 0hc/5c1 47x 14g 0hb/5c1 47x 14g 0hb/5c1 47x 14g 0hb/5c1 47x 14g 0hb/5c1 47x 14h 0ha/5c1 47x 14h 0ha/5c1 47x 14h 0ha/5c1 47x 14i 0h9/5c1 47x 14i 0h9/5c1 47x 14i 0h9/5c1 47x 14j 0h8/5c1 47x 14j 0h8/5c1 47x 14j 0h8/5c1 47x 14k 0h7/5c1 47x 14k 0h7/5c1 47x 14k 0h7/5c1 47x 14l 0h6/5c1 47x 14l 0h6/5c1 47x 14l 0h6/5c1 47x 14l 0h6/5c1 47x 14m 0h5/5c1 47x 14m 0h5/5c1 47x 14m 0h5/5c1 47x 14n 0h4/5c1 47x 14n 0h4/5c1 47x 14n 0h4/5c1 47x 14o 0h3/5c1 47x 14o 0h3/5c1 47x 14o 0h3/5c1 47x 14p 0h2/5c1 47x 14p 0h2/5c1 47x 14p 0h2/5c1 47x 14q 0h1/5c1 47x 14q 0h1/5c1 47x 14q 0h1/5c1 47x 14r 0h0/5c1 47x 14r 0h0/5c1 47x 14r 0h0/5c1 47x 14r 0h0/5c1 47x 14s 0gz/5c1 47x 14s 0gz/5c1 47x 14s 0gz/5c1 47x 14t 0gy/5c1 47x 14t 0gy/5c1 47x 14t 0gy/5c1 47x 14u 0gx/5c1 47x 14u 0gx/5c1 47x 14u 0gx/5c1 47x 14v 0gw/5c1 47x 14v 0gw/5c1 47x 14v 0gw/5c1 47x 14w 0gv/5c1 47x 14w 0gv/5c1 47x 14w 0gv/5c1 47x 14x 0gu/5c1 47x 14x 0gu/5c1 47x 14x 0gu/5c1 47x 14y 0gt/5c1 47x 14y 0gt/5c1 47x 14y 0gt/5c1 47x 14z 0gs/5c1 47x 14z 0gs/5c1 47x 14z 0gs/5c1 47x 150 0gr/5c1 47x 150 0gr/5c1 47x 150 0gr/5c1 47x 151 0gq/5c1 47x 151 0gq/5c1 47x 151 0gq/5c1 47x 152 0gp/5c1 47x 152 0gp/5c1 47x 152 0gp/5c1 47x 153 0go/5c1 47x 153 0go/5c1 47x 153 0go/5c1 47x 154 0gn/5c1 47x 154 0gn/5c1 47x 154 0gn/5c1 47x 154 0gn/5c1 47w 156 0gm/5c1 47w 156 0gm/5c1 47w 156 0gm/5c1 47w 157 0gl/5c1 47w 157 0gl/5c1 47w 157 0gl/5c1 47w 158 0gk/5c1 47w 158 0gk/5c1 47w 158 0gk/5c1 47w 159 0gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/64 5bx 47v 15a 2gj/612 5az 47v 15a 2gj/61v 5a6 47v 15a 2gj/62l 59g 47v 15a 2gj/638 58t 47v 15a 2gj/63s 589 47v 15a 2gj/64b 57q 47u 15b 2gj/64t 578 47u 15b 2gj/659 56s 47u 15b 2gj/65o 56d 47u 15b 2gj/662 55z 47u 15b 2gj/66f 55m 47u 15b 2gj/66s 559 47u 15b 2gj/674 54x 47u 15b 2gj/67f 54m 47u 15b 2gj/67p 54c 47u 15b 2gj/67z 542 47u 15b 2gj/689 53s 47u 15b 2gj/68i 53j 47u 15b 2gj/68r 53a 47u 15b 2gj/690 531 47u 15b 2gj/698 52t 47u 15b 2gj/69g 52l 47u 15b 2gj/69o 52d 47u 15b 2gj/69v 526 47u 15b 2gj/6a2 51z 47u 15b 2gj/6a9 51s 47u 15b 2gj/6ag 51l 47u 15b 2gj/6am 51f 47t 15c 2gj/6as 519 47t 15c 2gj/6az 512 47t 15c 2gj/6b5 5w 47t 15c 2gj/6ba 5r 47t 15c 2gj/6bg 5l 47t 15c 2gj/6bm 5f 47t 15c 2gj/6br 5a 47t 15c 2gj/6bw 55 47t 15c 2gj/6c1 47t 15c 2gj/6c6 47o 15c 2gj/6cb 47j 15c 2gj/6cg 47e 15c 2gj/6cl 479 15c 2gj/6cp 475 15c 2gj/6cu 470 15c 2gj/6cy 46v 15d 2gj/6d2 46r 15d 2gj/6d7 46m 15d 2gj/6db 46i 15d 2gj/6df 46e 15d 2gj/6dj 46a 15d 2gj/6dn 466 15d 2gj/6dr 462 15d 2gj/6du 45z 15d 2gj/6dy 45v 15d 2gj/6e2 45r 15d 2gj/6e5 45o 15d 2gj/6e9 45k 15d 2gj/6ec 45g 15e 2gj/6eg 45c 15e 2gj/6ej 459 15e 2gj/6em 456 15e 2gj/6eq 452 15e 2gj/6et 44z 15e 2gj/6ew 44w 15e 2gj/6ez 44t 15e 2gj/6f2 44q 15e 2gj/6f5 44n 15e 2gj/6f8 44k 15e 2gj/6fb 44g 15f 2gj/6fe 44d 15f 2gj/6fh 44a 15f 2gj/6fk 447 15f 2gj/6fn 444 15f 2gj/6fp 442 15f 2gj/6fs 43z 15f 2gj/6fv 43w 15f 2gj/6fy 43t 15f 2gj/6g0 43r 15f 2gj/6g3 43n 15g 2gj/6g5 43l 15g 2gj/6g8 43i 15g 2gj/6ga 43g 15g 2gj/6gd 43d 15g 2gj/6gf 43b 15g 2gj/6gi 438 15g 2gj/6gk 436 15g 2gj/6gn 432 15h 2gj/6gp 430 15h 2gj/6gr 42y 15h 2gj/6gu 42v 15h 2gj/6gw 42t 15h 2gj/6gy 42r 15h 2gj/6h0 42p 15h 2gj/6h2 42m 15i 2gj/6h5 42j 15i 2gj/6h7 42h 15i 2gj/6h9 42f 15i 2gj/6hb 42d 15i 2gj/6hd 42b 15i 2gj/6hf 429 15i 2gj/6hh 426 15j 2gj/6hj 424 15j 2gj/6hl 422 15j 2gj/6hn 420 15j 2gj/6hp 41y 15j 2gj/6hr 41w 15j 2gj/6ht 41t 15k 2gj/6hv 41r 15k 2gj/6hx 41p 15k 2gj/6hz 41n 15k 2gj/6i1 41l 15k 2gj/6i3 41i 15l 2gj/6i5 41g 15l 2gj/6i6 41f 15l 2gj/6i8 41d 15l 2gj/6ia 41b 15l 2gj/6ic 418 15m 2gj/6ie 416 15m 2gj/6if 415 15m 2gj/6ih 413 15m 2gj/6ij 410 15n 2gj/6il 4y 15n 2gj/6im 4x 15n 2gj/6io 4v 15n 2gj/6iq 4t 15n 2gj/6ir 4r 15o 2gj/6it 4p 15o 2gj/6iv 4n 15o 2gj/6iw 4m 15o 2gj/6iy 4j 15p 2gj/6iz 4i 15p 2gj/6j1 4g 15p 2gj/6j3 4d 71 15p 2gj/6j4 45 78 15p 2gj/6j5 7c 15p 2gj/6j6 7b 15p 2gj/6j6 7b 15p 2gj/6j6 7b 15p 2gj/6j6 7b 15p 2gj/6j6 7b 15p 2gj/6j7 7b 15o 2gj/6j7 7b 15o 2gj/6j7 7b 15o 2gj/6j7 7b 15o 2gj/6j8 7a 15o 2gj/6j8 7a 15o 2gj/6j8 7a 15o 2gj/6j8 7a 15o 2gj/6j8 7a 15o 2gj/6j9 79 15o 2gj/6j9 7a 15n 2gj/6j9 7a 15n 2gj/6j9 7a 15n 2gj/6ja 79 15n 2gj/6ja 79 15n 2gj/6ja 79 15n 2gj/6ja 79 15n 2gj/6ja 79 15n 2gj/6jb 78 15n 2gj/6jb 78 15n 2gj/6jb 78 15n 2gj/6jb 79 15m 2gj/6jc 78 15m 2gj/6jc 78 15m 2gj/6jc 78 15m 2gj/6jc 78 15m 2gj/6jc 78 15m 2gj/6jd 77 15m 2gj/6jd 77 15m 2gj/6jd 77 15m 2gj/6jd 77 15m 2gj/6je 76 15m 2gj/6je 76 15m 2gj/6je 76 15m 2gj/6je 77 15l 2gj/6je 77 15l 2gj/6je 83 74 15l 2gj/6je 87 15l 2gj/6jd 88 15l 2gj/6jd 88 15l 2gj/6jc 8a 15k 2gj/6jb 8b 15k 2gj/6jb 8b 15k 2gj/6ja 8c 15k 2gj/6ja 8d 15j 2gj/6j9 8e 15j 2gj/6j9 8e 15j 2gj/6j8 8f 15j 2gj/6j8 8g 15i 2gj/6j7 8h 15i 2gj/6j7 8h 15i 2gj/6j6 8j 15h 2gj/6j6 8j 15h 2gj/6j5 8k 15h 2gj/6j4 8l 15h 2gj/6j4 8m 15g 2gj/6j3 8n 15g 2gj/6j3 8n 15g 2gj/6j2 8o 15g 2gj/6j2 8p 15f 2gj/6j1 8q 15f 2gj/6j1 8q 15f 2gj/6j0 8s 15e 2gj/6iz 8t 15e 2gj/6iz 8t 15e 2gj/6iy 8u 15e 2gj/6iy 8v 15d 2gj/6ix 8w 15d 2gj/6ix 8w 15d 2gj/6iw 8x 15d 2gj/6iv 8z 15c 2gj/6iv 8z 15c 2gj/6iu 810 15c 2gj/6iu 811 15b 2gj/6it 812 15b 2gj/6it 812 15b 2gj/6is 813 15b 2gj/6ir 815 15a 2gj/6ir 815 15a 2gj/6iq 816 15a 2gj/6iq 817 159 2gj/6ip 818 159 2gj/6io 819 159 2gj/6io 819 159 2gj/6in 81b 158 2gj/6in 81b 158 2gj/6im 81c 158 2gj/6ik 9i 8w 158 2gj/6ig 91e 85 157 2gj/6ic 91n 157 2gj/6i7 91t 156 2gj/6i3 91x 156 2gj/6hz 922 155 2gj/6hu 927 155 2gj/6hq 92c 154 2gj/6hl 92h 154 2gj/6hg 92n 153 2gj/6hb 92s 153 2gj/6h7 92x 152 2gj/6h1 933 152 2gj/6gw 939 151 2gj/6gr 93e 151 2gj/6gl 93l 150 2gj/6gg 93q 150 2gj/6ga 93x 14z 2gj/6g4 943 14z 2gj/6fy 94a 14y 2gj/6fs 94g 14y 2gj/6fm 94n 14x 2gj/6ff a2 94s 14x 2gj/6f8 a9 94t 14w 2gj/6f1 ag 94t 14w 2gj/6eu an 94u 14v 2gj/6em av 94u 14v 2gj/6ee a13 94v 14u 2gj/6e6 a1b 94w 14t 2gj/6dy a1j 94w 14t 2gj/6dp a1s 94x 14s 2gj/6dg a21 94x 14s 2gj/6d7 a2a 94y 14r 2gj/6cx a2k 94y 14r 2gj/6cm a2v 94z 14q 2gj/6cb a36 94z 14q 2gj/6c0 a3h 950 14p 2gj/6bn a3u 950 14p 2gj/6bb a46 951 14o 2gj/6ax a4k 951 14o 2gj/6ai a4z 952 14n 2gj/6a2 a5f 952 14n 2gj/69m a5v 953 14m 2gj/693 a6e 953 14m 2gj/68j a6y 954 14l 2gj/67x a7k 954 14l 2gj/678 a89 955 14k 2gj/66h a90 955 14k 2gj/65l a9w 956 14j 2gj/64j aay 956 14j 2gj/63a ac7 957 14i 2gj/61p ads 957 14i 2gj/afh 958 14h 2gj/afh 958 14h 2gj/afh 959 14g 2gj/afh 95a 14f 2gj/afh 95a 14f 2gj/afh 95b 14e 2gj/afh 95b 14e 2gj/afh 95c 14d 2gj/afh 95c 14d 2gj/afh 95d 14c 2gj/afh 95d 14c 2gj/afh 95e 14b 2gj/afh 95e 14b 2gj/afh 95f 14a 2gj/afh 95f 14a 2gj/afh 95g 149 2gj/afh 95g 149 2gj/afh 95h 148 2gj/afh 95h 148 2gj/afh 95i 147 2gj/afh 95i 147 2gj/afh 95j 146 2gj/afh 95j 146 2gj/afh 95k 145 2gj/afh 95l 144 2gj/cfo 95e 144 2gj/cfw 957 143 2gj/cg4 94z 143 2gj/cgb 94t 142 2gj/cgj 94l 142 2gj/cgq 94f 141 2gj/cgw 949 141 2gj/ch3 943 140 2gj/ch9 93x 140 2gj/chg 93r 13z 2gj/chm 93l 13z 2gj/chr 93h 13y 2gj/chx 93b 13y 2gj/ci3 936 13x 2gj/ci8 931 13x 2gj/cie 92w 13w 2gj/cij 92s 13v 2gj/cio 92n 13v 2gj/cit 92j 13u 2gj/ciy 92e 13u 2gj/cj2 92b 13t 2gj/cj7 926 13t 2gj/cjb 923 13s 2gj/cjg 91y 13s 2gj/cjk 91v 13r 2gj/cjo 91r 13r 2gj/cjt 91n 13q 2gj/cjx 91j 13q 2gj/ck1 91g 13p 2gj/ck2 b8 917 13p 2gj/ck2 bk 9w 13o 2gj/ck1 bw 9l 13o 2gj/ck1 b17 9b 13n 2gj/ck0 b1i 92 13m 2gj/ck0 b1l 13l 2gj/cjz b1n 13k 2gj/cjz b1o 13j 2gj/cjy b1q 13i 2gj/cjy b1s 13g 2gj/cjx b1u 13f 2gj/cjx b1v 13e 2gj/cjx b1w 13d 2gj/cjw b1z 13b 2gj/cjw b20 13a 2gj/cjv b22 139 2gj/cjv b23 138 2gj/cju b26 136 2gj/cju b27 135 2gj/cjt b29 134 2gj/cjt b2a 133 2gj/cjs b2d 131 2gj/cjs b2e 130 2gj/cjr b2g 12z 2gj/cjr b2h 12y 2gj/cjq b2k 12w 2gj/cjq b2l 12v 2gj/cjp b2n 12u 2gj/cjp b2o 12t 2gj/cjo b2q 12s 2gj/cjo b2s 12q 2gj/cjn b2u 12p 2gj/cjn b2v 12o 2gj/cjm b2x 12n 2gj/cjm b2y 12m 2gj/cjl b31 12k 2gj/cjl b32 12j 2gj/cjk b34 12i 2gj/cjj b36 12h 2gj/cjj b37 12g 2gj/cji b3a 12e 2gj/cji b3b 12d 2gj/cjh b3d 12c 2gj/cjh b3e 12b 2gj/cjg b3g 12a 2gj/cjg b3h 129 2gj/cjf b3j 128 2gj/cjf b3k 127 2gj/cje b3n 125 2gj/cje b3o 124 2gj/cjd b3q 123 2gj/cjd b3r 122 2gj/cjc b3t 121 2gj/cjc b3u 120 2gj/cjb b3w 11z 2gj/cjb b3x 11y 2gj/cja b3z 11x 2gj/cj9 b41 11w 2gj/cj9 b42 11v 2gj/cj8 b44 11u 2gj/cj8 b45 11t 2gj/cj7 b47 11s 2gj/cj7 b48 11r 2gj/cj6 b4a 11q 2gj/cj6 b4b 11p 2gj/cj5 b4d 11o 2gj/cj5 b4e 11n 2gj/cj4 b4g 11m 2gj/cj3 b4i 11l 2gj/cj3 b4j 11k 2gj/cj2 b4l 11j 2gj/cj2 b4l 11j 2gj/cj1 b4n 11i 2gj/cj1 b4o 11h 2gj/cj0 b4q 11g 2gj/ciz b4s 11f 2gj/ciz b4t 11e 2gj/ciy b4v 11d 2gj/ciy b4w 11c 2gj/cix b4x 11c 2gj/cix b4y 11b 2gj/ciw b50 11a 2gj/civ b52 119 2gj/civ b53 118 2gj/ciu b54 118 2gj/ciu b55 117 2gj/cit b57 116 2gj/cit b58 115 2gj/cis b5a 114 2gj/cir b5b 114 2gj/cir b5c 113 2gj/ciq b5e 112 2gj/ciq b5f 111 2gj/cip b5g 111 2gj/cio b5i 110 2gj/cio b5j 1z 2gj/cin b5k 1z 2gj/cin b5l 1y 2gj/cim b5n 1x 2gj/cil b5o 1x 2gj/cil b5p 1w 2gj/cik b5r 1v 2gj/cik b5r 1v 2gj/cij b5t 1u 2gj/cii b5v 1t 2gj/cii b5v 1t 2gj/cih b5x 1s 2gj/cih b5y 1r 2gj/cig b5z 1r 2gj/cif b61 1q 2gj/cif b62 1p 2gj/cie b63 1p 2gj/cid b65 1o 2gj/cid b65 1o 2gj/cic b67 1n 2gj/cic b68 1m 2gj/cib b69 1m 2gj/cia b6b 1l 2gj/cia b6c 1k 2gj/ci9 b6d 1k 2gj/ci8 b6f 1j 2gj/ci8 b6g 1i 2gj/ci7 b6h 1i 2gj/ci6 b6j 1h 2gj/ci6 b6k 1g 2gj/ci5 b6l 1g 2gj/ci5 b6m 1f 2gj/ci4 b6o 1e 2gj/ci3 b6q 1d 2gj/ci3 b6q 1d 2gj/ci2 b6s 1c 2gj/ci1 b6u 1b 2gj/ci1 b6u 1b 2gj/ci0 b6w 1a 2gj/chz b6y 19 2gj/chz b6y 19 2gj/chy b70 18 2gj/chx b72 17 2gj/chx b72 17 2gj/chw b74 16 2gj/chv b76 15 2gj/chu b77 15 2gj/chu b78 14 2gj/cht b7a 13 2gj/chs b7b 13 2gj/chs b7c 12 2gj/chr b7e 11 2gj/chq b7f 11 2gj/chq b7g 2gj/chp b7i 2gi/cho b7j 2gi/cho b7k 2gh/chn b7m 2gg/chm b7n 2gg/chl b7p 2gf/chl b7q 2ge/chk b7r 2ge/chj b7t 2gd/chj b7t 2gd/chi b7v 2gc/chh b7x 2gb/chg b7y 2gb/chg b7z 2ga/chf b81 2g9/che b82 2g9/chd b84 2g8/chd b85 2g7/chc b86 2g7/chb b88 2g6/cha b8a 2g5/cha b8a 2g5/ch9 b8c 2g4/ch8 b8d 2g4/ch7 b8f 2g3/ch7 b8g 2g2/ch6 b8h 2g2/ch5 b8j 2g1/ch4 b8l 2g0/ch4 b8l 2g0/ch3 b8n 2fz/ch2 b8p 2fy/ch1 b8q 2fy/ch0 b8s 2fx/ch0 b8s 2fx/cgz b8u 2fw/cgy b8w 2fv/cgx b8x 2fv/cgx b8y 2fu/cgw b90 2ft/cgv b91 2ft/cgu b93 2fs/cgt b94 2fs/cgs b96 2fr/cgs b97 2fq/cgr b98 2fq/cgq b9a 2fp/cgp b9c 25y 39q/cgo b9d 25y 39q/cgo b9e 25x 39q/cgn b9f 25x 39q/cgm b9h 25w 39q/cgl b9j 25v 39q/cgk b9k 25v 39q/cgj b9m 25u 39q/cgi b9o 25t 39q/cgi b9o 25t 39q/cgh b9q 25s 39q/cgg b9r 25s 39q/cgf b9t 25r 39q/cge b9v 25q 39q/cgd b9w 25q 39q/cgc b9y 25p 39q/cgc b9y 25p 39q/cgb ba0 25o 39q/cga ba2 25n 39q/cg9 ba3 25n 39q/cg8 ba5 25m 39q/cg7 ba7 25l 39q/cg6 ba8 25l 39q/cg5 baa 25k 39q/cg4 bab 25k 39q/cg3 bad 25j 39q/cg3 bae 25i 39q/cg2 baf 25i 39q/cg1 bah 25h 39q/cg0 bai 25h 39q/cfz bak 25g 39q/cfy bam 25f 39q/cfx ban 25f 39q/cfw bap 25e 39q/cfv baq 25e 39q/cfu bas 25d 39q/cft bau 25c 39q/cfs bav 25c 39q/cfr bax 25b 39q/cfq bay 25b 39q/cfp bb0 25a 39q/cfo bb2 259 39q/cfn bb3 259 39q/cfm bb5 258 39q/cfl bb6 258 39q/cfk bb8 257 39q/cfj bba 256 39q/cfi bbb 256 39q/cfh bbd e1 254 39q/cfg bbi e4 24x 39q/cff bbm e7 24r 39q/cfe bbq ea 24l 39q/cfd bbu ed 24f 39q/cfc bby eg 249 39q/cfb bc2 ej 243 39q/cfa bc2 d4 el 23y 39q/cf9 bbz db eo 23s 39q/cf8 bbw dh er 23n 39q/cf7 bbt do et 23i 39q/cf6 bbr du ev 23d 39q/cf5 bbo d11 ex 238 39q/cf4 bbk d18 e10 233 39q/cf3 bbh d1f e12 22y 39q/cf2 bbe d1m e13 22u 39q/cf1 bbb d1s e16 22p 39q/cez bb8 d20 e17 22l 39q/cey bb5 d26 e1a 22g 39q/cex bb1 d2e e1b 22c 39q/cew bax d2l e1d 228 39q/cev bau d2s e1e 224 39q/ceu baq d2z e1g 220 39q/cet bam d37 e1h 21w 39q/ces bai d3e e1j 21s 39q/cer bad d3m e1l 21o 39q/cep baa d3u e1l 21l 39q/ceo ba5 d42 e1n 21h 39q/cen ba1 d49 e1p 21d 39q/cem b9w d4i e1p 21a 39q/cel b9r d4q e1r 216 39q/cek b9m d4y e1s 213 39q/cei b9h d57 e1u 2z 39q/ceh b9c d5f e1v 2w 39q/ceg b96 d5p e1v 2t 39q/cef b90 d5y e1w 2q 39q/cee b8u d67 e1y 2m 39q/cec b8o d6h e1z 2j 39q/ceb b8h d6r e20 2g 39q/cea b8a d71 e21 2d 39q/ce9 b83 d7b e22 2a 39q/ce7 b7w d7m e23 27 39q/ce6 b7o d7x e24 24 39q/ce5 b7g d88 e25 21 39q/ce4 b77 d8k e26 39o/ce2 b6z d8w e26 39m/ce1 b6p d99 e27 39j/ce0 b5z da2 e28 39g/cdy b49 dbv e2a 39d/cdx b1q deh e2a 39b/du6 e2b 398/du8 e2c 395/dua e2c 393/duc e2d 390/dud e2e 38y/duf e2f 38v/duh e2f 38t/duj e2g 38q/duk e2h 38o/dum e2h 38m/duo e2i 38j/duq e2i 38h/dur e2j 38f/dut e2k 38c/duv e2k 38a/duw e2l 388/duy e2l 386/duz f2n 383/dv1 f2n 381/dv3 f2n 37z/dv4 f2o 37x/dv6 f2o 37v/dv7 f2p 37t/dv9 f2p 37r/dva f2q 37p/dvc f2q 37n/dvd f2r 37l/dvf f2r 37j/dvg f2s 37h/dvi f2s 37f/dvj f2t 37d/dvl f2t 37b/dvm f2u 379/dvo f2u 377/dvp f2v 375/dvr f2v 373/dvs f2v 372/dvt f2w 370/dvv f2w 36y/dvw f2x 36w/dvy f2x 36u/dvz f2x 36t/dvz f30 36q/dvz f32 36o/dvz f34 36m/dvz f36 36k/dvz f38 36i/dvz f3a 36g/dvz f3c 36e/dvz f3e 36c/dvz f3g 36a/dvz f3h 369/dvz f3j 367/dvz f3l 365/dvz f3n 363/dvz f3p 361/dvz f3r 35z/dvz f3t 35x/dvz f3u 35w/dvz f3w 35u/dvz f3y 35s/dvz f40 35q/dvz f42 35o/dvz f43 35n/dvz f45 35l/dvz f47 35j/dvz f48 35i/dvz f4a 35g/dvz f4c 35e/dvz f4d 35d/dvz f4f 35b/dvz f4h 359/dvz f4i 358/dvz f4k 356/dvz f4m 354/dvz f4n 353/dvz f4p 351/dvz f4q 350/dvz f4s 34y/dvz f4t 34x/dvz f4v 34v/dvz f4w 34u/dvz f4y 34s/dvz f4z 34r/dvz f51 34p/dvz f52 34o/dvz f54 34m/dvz f55 34l/dvz f57 34j/dvz f58 34i/dvz f5a 34g/dvz f5b 34f/dvz f5c 34e/dvz f5e 34c/dvz f5f 34b/dvz f5h 349/dvz f5i 348/dvz f5j 347/dvz f5l 345/dvz f5m 344/dvz f5n 343/dvz f5p 341/dvz f5q 340/dvz f5r 33z/dvz f5t 33x/dvz f5u 33w/dvz f5v 33v/dvz f5x 33t/dvz f5y 33s/dvz f5z 33r/dvz f60 33q/dvz f62 33o/dvz f63 33n/dvz f64 33m/dvz f65 33l/dvz f67 33j/dvz f68 33i/dvz f69 33h/dvz f6a 33g/dvz f6b 33f/dvz f6d 33d/dvz f6e 33c/dvz f6f 33b/dvz f6g 33a/dvz f6h 339/dvz f6i 338/dvz f6k 336/dvz f6l 335/dvz f6m 334/dvz f6n 333/dvz f6o 332/dvz f6p 331/dvz f6q 330/dvz f6s 32y/dvz f6t 32x/dvz f6u 32w/dvz f6v 32v/dvz f6w 32u/dvz f6x 32t/dvz f6y 32s/dvz f6z 32r/dvz f70 32q/dvz f71 32p/dvz f72 32o/dvz f73 32n/dvz f74 32m/dvz f75 32l/dvz f77 32j/dvz f78 32i/dvz f79 32h/dvz f7a 32g/dvz f7b 32f/dvz f7c 32e/dvz f7d 32d/dvz f7e 32c/dvz f7f 32b/dvz f7g 32a/dvz f7h 329/dvz f7i 328/dvz f7j 327/dvz f7k 326/dvz f7l 325/dvz f7m 324/dvz f7n 323/dvz f7n 323/dvz f7o 322/dvz f7p 321/dvz f7q 320/dvz f7r 31z/dvz f7s 31y/dvz f7t 31x/dvz f7u 31w/dvz f7v 31v/dvz f7w 31u/dvz f7x 31t/dvz f7y 31s/dvz f7z 31r/dvz f80 31q/dvz f80 31q/dvz f81 31p/dvz f82 31o/dvz f83 31n/dvz f84 31m/dvz f85 31l/dvz f86 31k/dvz f87 31j/dvz f88 31i/dvz f88 31i/dvz f89 31h/dvz f8a 31g/dvz f8b 31f/dvz f8c 31e/dvz f8d 31d/dvz f8e 31c/dvz f8e 31c/dvz f8f 31b/dvz f8g 31a/dvz f8h 319/dvz f8i 318/dvz f8j 317/dvz f8j 317/dvz f8k 316/dvz f8l 315/dvz f8m 314/dvz f8n 313/dvz f8o 312/dvz f8o 312/dvz f8p 311/dvz f8q 310/dvz f8r 3z/dvz f8s 3y/dvz f8s 3y/dvz f8t 3x/dvz f8u 3w/dvz f8v 3v/dvz f8w 3u/dvz f8w 3u/dvz f8x 3t/dvz f8y 3s/dvz f8z 3r/dvz f8z 3r/dvz f90 3q/dvz f91 3p/dvz f92 3o/dvz f92 3o/dvz f93 3n/dvz f94 3m/dvz f95 3l/dvz f95 3l/dvz f96 3k/dvz f97 3j/dvz f98 3i/dvz f98 3i/dvz f99 3h/dvz f9a 3g/dvz f9b 3f/dvz f9b 3f/dvz f9c 3e/dvz f9d 3d/dvz f9e 3c/dvz f9e 3c/dvz f9f 3b"
+      },
+      "saturated_liquid": {
+       "kind": "table",
+       "columns": [
+        "t_k",
+        "p_pa",
+        "density",
+        "viscosity",
+        "surface_tension"
+       ],
+       "units": [
+        "K",
+        "Pa",
+        "kg m-3",
+        "Pa s",
+        "N m-1"
+       ],
+       "rows": [
+        [
+         273.17,
+         612.099,
+         999.793,
+         0.00179073,
+         0.0757041
+        ],
+        [
+         315.86,
+         8520.81,
+         991.112,
+         0.000620792,
+         0.0692357
+        ],
+        [
+         358.56,
+         58803.4,
+         968.326,
+         0.00033144,
+         0.0617091
+        ],
+        [
+         401.25,
+         255270.0,
+         936.439,
+         0.000216335,
+         0.0532734
+        ],
+        [
+         443.95,
+         807622.0,
+         896.632,
+         0.000158979,
+         0.0440936
+        ],
+        [
+         486.65,
+         2044790.0,
+         848.409,
+         0.000125666,
+         0.0343748
+        ],
+        [
+         529.35,
+         4409430.0,
+         789.527,
+         0.00010348,
+         0.0243764
+        ],
+        [
+         572.04,
+         8454410.0,
+         714.407,
+         8.62744e-05,
+         0.0144661
+        ],
+        [
+         614.74,
+         14894400.0,
+         605.42,
+         6.96482e-05,
+         0.00527204
+        ]
+       ],
+       "src": "wagner-pruss2002",
+       "also": [
+        "huber2009-water",
+        "mulero2012",
+        "coolprop"
+       ],
+       "check": "unverified",
+       "src_by_column": {
+        "p_pa": "wagner-pruss2002",
+        "density": "wagner-pruss2002",
+        "viscosity": "huber2009-water",
+        "surface_tension": "mulero2012"
+       },
+       "note": "liquid along its boiling curve, from just above the triple point (273.16 K) to 0.95 of the critical point (647.096 K); waves on a sea of it read density, viscosity and surface tension here"
       }
      },
      "thermal": {
@@ -11987,6 +12084,238 @@
        "unit": "1",
        "src": "fudge-register",
        "check": "authored"
+      },
+      "absorption_liquid": {
+       "kind": "table",
+       "lambda_nm": [
+        380.0,
+        400.0,
+        420.0,
+        440.0,
+        460.0,
+        480.0,
+        500.0,
+        520.0,
+        540.0,
+        560.0,
+        580.0,
+        600.0,
+        620.0,
+        640.0,
+        660.0,
+        680.0,
+        700.0,
+        750.0,
+        800.0,
+        900.0,
+        1000.0,
+        1200.0,
+        1440.0,
+        1460.0,
+        1600.0,
+        2000.0
+       ],
+       "alpha": {
+        "v": [
+         0.01137,
+         0.00663,
+         0.00454,
+         0.00635,
+         0.00979,
+         0.0127,
+         0.0204,
+         0.0409,
+         0.0474,
+         0.0619,
+         0.0896,
+         0.2224,
+         0.2755,
+         0.3108,
+         0.41,
+         0.465,
+         0.624,
+         2.6,
+         2.0,
+         6.8,
+         36.0,
+         104.0,
+         2880.0,
+         2840.0,
+         672.0,
+         6912.0
+        ],
+        "unit": "m-1",
+        "src": "pope-fry1997",
+        "also": [
+         "hale-querry1973"
+        ],
+        "check": "unverified"
+       },
+       "src": "pope-fry1997",
+       "also": [
+        "hale-querry1973"
+       ],
+       "check": "unverified",
+       "src_from_nm": {
+        "pope-fry1997": [
+         380.0,
+         700.0
+        ],
+        "hale-querry1973": [
+         750.0,
+         2000.0
+        ]
+       },
+       "note": "pure liquid water near room temperature; light falls to 1/e over 1/alpha metres (about 22 m at 420 nm, 0.4 m at 750 nm), which is why deep water is blue"
+      },
+      "scattering_liquid": {
+       "kind": "table",
+       "lambda_nm": [
+        450.0,
+        550.0
+       ],
+       "b": {
+        "v": [
+         0.0035,
+         0.0015
+        ],
+        "unit": "m-1",
+        "src": "morel-prieur1977",
+        "check": "unverified"
+       },
+       "exponent": {
+        "v": -4.3,
+        "unit": "1",
+        "src": "morel-prieur1977",
+        "check": "unverified",
+        "note": "b scales as lambda to this power between and beyond the table's points"
+       },
+       "backscatter_share": {
+        "v": 0.5,
+        "unit": "1",
+        "src": "morel-prieur1977",
+        "check": "unverified",
+        "note": "b_b / b for molecular scattering, which is symmetric fore and aft"
+       },
+       "seawater_factor": {
+        "v": 1.3,
+        "unit": "1",
+        "src": "morel-prieur1977",
+        "check": "unverified",
+        "note": "seawater scatters about 30 % more than pure water (dissolved salts)"
+       },
+       "src": "morel-prieur1977",
+       "check": "unverified",
+       "note": "pure liquid water; the 650 nm entry of Table 1 was unreadable in the scan, so use the exponent beyond 550 nm"
+      },
+      "refractive_index_liquid": {
+       "kind": "table",
+       "lambda_nm": [
+        500.0,
+        599.8,
+        749.9,
+        799.8,
+        899.5,
+        1000.0,
+        1199.0,
+        1449.0,
+        1600.0,
+        2000.0
+       ],
+       "n": [
+        1.33943,
+        1.3331,
+        1.327201,
+        1.325874,
+        1.323648,
+        1.321695,
+        1.318008,
+        1.313055,
+        1.309642,
+        1.296913
+       ],
+       "k": [
+        9.243e-10,
+        9.634e-09,
+        1.559e-07,
+        1.25e-07,
+        4.862e-07,
+        3e-06,
+        1.199e-05,
+        0.0003637,
+        9.347e-05,
+        0.001101
+       ],
+       "src": "segelstein1981",
+       "check": "unverified",
+       "note": "liquid water near room temperature; k is the imaginary index (alpha = 4 pi k / lambda)"
+      },
+      "refractive_index_solid": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1250.0,
+        1504.0,
+        2000.0
+       ],
+       "n": [
+        1.3509,
+        1.3339,
+        1.3249,
+        1.3194,
+        1.3157,
+        1.313,
+        1.311,
+        1.3094,
+        1.308,
+        1.3069,
+        1.3049,
+        1.3032,
+        1.3015,
+        1.2971,
+        1.2916,
+        1.2744
+       ],
+       "k": [
+        2e-11,
+        2e-11,
+        2e-11,
+        2.365e-11,
+        9.239e-11,
+        5.889e-10,
+        2.289e-09,
+        5.73e-09,
+        1.43e-08,
+        2.9e-08,
+        1.34e-07,
+        4.2e-07,
+        1.62e-06,
+        1.29e-05,
+        0.0005373,
+        0.00164
+       ],
+       "src": "warren-brandt2008",
+       "check": "unverified",
+       "at_k": 266.15,
+       "note": "ordinary ice Ih at -7 C; k below 400 nm is an upper limit (printed as <2.0E-11); alpha = 4 pi k / lambda; ice is bluest where k is least"
+      },
+      "polarisability": {
+       "v": 1.501e-30,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "1.501 cubic angstroms, static, experimental"
       }
      },
      "chemical": {
@@ -12079,6 +12408,102 @@
         "lisse2021"
        ],
        "note": "CO2-1"
+      },
+      "saturated_liquid": {
+       "kind": "table",
+       "columns": [
+        "t_k",
+        "p_pa",
+        "density",
+        "viscosity",
+        "surface_tension"
+       ],
+       "units": [
+        "K",
+        "Pa",
+        "kg m-3",
+        "Pa s",
+        "N m-1"
+       ],
+       "rows": [
+        [
+         216.6,
+         518145.0,
+         1178.43,
+         0.000253344,
+         0.0164926
+        ],
+        [
+         225.63,
+         753725.0,
+         1145.31,
+         0.000217943,
+         0.0143876
+        ],
+        [
+         234.67,
+         1061890.0,
+         1110.42,
+         0.000188001,
+         0.0123411
+        ],
+        [
+         243.72,
+         1455290.0,
+         1073.32,
+         0.000162483,
+         0.0103592
+        ],
+        [
+         252.76,
+         1946050.0,
+         1033.46,
+         0.000140566,
+         0.00845365
+        ],
+        [
+         261.8,
+         2548280.0,
+         989.843,
+         0.000121458,
+         0.00663173
+        ],
+        [
+         270.84,
+         3276790.0,
+         941.014,
+         0.000104479,
+         0.00490664
+        ],
+        [
+         279.88,
+         4148130.0,
+         884.406,
+         8.89548e-05,
+         0.00329776
+        ],
+        [
+         288.92,
+         5182160.0,
+         814.462,
+         7.40053e-05,
+         0.00183719
+        ]
+       ],
+       "src": "span-wagner1996-co2",
+       "also": [
+        "laesecke-muzny2017-co2",
+        "mulero2012",
+        "coolprop"
+       ],
+       "check": "unverified",
+       "src_by_column": {
+        "p_pa": "span-wagner1996-co2",
+        "density": "span-wagner1996-co2",
+        "viscosity": "laesecke-muzny2017-co2",
+        "surface_tension": "mulero2012"
+       },
+       "note": "liquid along its boiling curve, from just above the triple point (216.592 K) to 0.95 of the critical point (304.128 K); waves on a sea of it read density, viscosity and surface tension here"
       }
      },
      "optical": {
@@ -12220,6 +12645,102 @@
        "src": "setzmann-wagner1991",
        "check": "unverified",
        "at_pa": 101325.0
+      },
+      "saturated_liquid": {
+       "kind": "table",
+       "columns": [
+        "t_k",
+        "p_pa",
+        "density",
+        "viscosity",
+        "surface_tension"
+       ],
+       "units": [
+        "K",
+        "Pa",
+        "kg m-3",
+        "Pa s",
+        "N m-1"
+       ],
+       "rows": [
+        [
+         90.7,
+         11704.9,
+         451.467,
+         0.000206001,
+         0.0170616
+        ],
+        [
+         101.99,
+         42118.3,
+         436.13,
+         0.00014662,
+         0.0148231
+        ],
+        [
+         113.28,
+         115488.0,
+         419.992,
+         0.000112776,
+         0.0126059
+        ],
+        [
+         124.57,
+         261318.0,
+         402.791,
+         8.97648e-05,
+         0.0104309
+        ],
+        [
+         135.86,
+         514221.0,
+         384.159,
+         7.26594e-05,
+         0.00831694
+        ],
+        [
+         147.16,
+         912386.0,
+         363.506,
+         5.91995e-05,
+         0.00628157
+        ],
+        [
+         158.45,
+         1495260.0,
+         339.882,
+         4.8146e-05,
+         0.00435125
+        ],
+        [
+         169.74,
+         2306590.0,
+         311.251,
+         3.86012e-05,
+         0.00255785
+        ],
+        [
+         181.04,
+         3399210.0,
+         271.735,
+         2.9544e-05,
+         0.0009671
+        ]
+       ],
+       "src": "setzmann-wagner1991-eos",
+       "also": [
+        "sotiriadou2025-methane",
+        "mulero2012",
+        "coolprop"
+       ],
+       "check": "unverified",
+       "src_by_column": {
+        "p_pa": "setzmann-wagner1991-eos",
+        "density": "setzmann-wagner1991-eos",
+        "viscosity": "sotiriadou2025-methane",
+        "surface_tension": "mulero2012"
+       },
+       "note": "liquid along its boiling curve, from just above the triple point (90.6941 K) to 0.95 of the critical point (190.564 K); waves on a sea of it read density, viscosity and surface tension here"
       }
      },
      "optical": {
@@ -12378,125 +12899,125 @@
         ],
         "sigma": {
          "v": [
-          3.72e-29,
+          3.72e-33,
           0.0,
-          3.35e-28,
+          3.35e-32,
           0.0,
-          3.72e-29,
-          7.44e-29,
-          1.34e-27,
+          3.72e-33,
+          7.44e-33,
+          1.34e-31,
           0.0,
-          3.72e-29,
-          3.35e-28,
-          1.6e-27,
-          1.86e-28,
-          1.12e-28,
-          2.98e-28,
-          1.97e-27,
-          1.23e-26,
-          2.6e-28,
-          1.12e-28,
-          5.21e-28,
-          1.97e-27,
-          5.84e-27,
-          4.09e-28,
-          1.67e-27,
-          1.56e-27,
-          1.26e-27,
-          5.8e-27,
-          2.67e-26,
-          2.89e-26,
-          4.09e-28,
-          1.12e-27,
-          1.08e-27,
-          1.86e-27,
-          6.32e-27,
-          1.71e-26,
-          7.44e-27,
-          7.44e-28,
-          1.12e-27,
-          1e-26,
-          8.18e-27,
-          3.35e-27,
-          1.53e-26,
-          1.15e-25,
-          2.54e-25,
-          4.32e-26,
-          3.35e-27,
-          1.49e-27,
-          5.58e-27,
-          8.18e-27,
-          1.41e-26,
-          2.27e-26,
-          3.46e-26,
-          5.06e-26,
-          4.58e-26,
-          6.7e-27,
-          7.44e-27,
-          1.64e-26,
-          5.95e-27,
-          1.38e-26,
-          9.08e-26,
-          1.11e-25,
-          4.54e-26,
-          4.32e-26,
-          4.69e-25,
-          1.22e-24,
-          1.03e-24,
-          2.93e-25,
-          5.32e-26,
-          5.21e-27,
-          5.21e-27,
-          4.09e-27,
-          2.9e-26,
-          5.77e-26,
-          5.36e-26,
-          9.19e-26,
-          2.06e-25,
-          2.49e-25,
-          2.05e-25,
-          3.61e-25,
-          3.35e-25,
-          2.16e-25,
-          1.3e-25,
-          5.58e-26,
-          1.86e-26,
-          1.12e-26,
-          3.72e-27,
-          5.58e-26,
-          2.23e-25,
-          1.82e-25,
-          9.67e-26,
-          3.27e-25,
-          9.34e-25,
-          1.63e-24,
-          6.62e-25,
-          3.76e-25,
-          1.21e-24,
-          6.62e-24,
-          8.97e-24,
-          1e-23,
-          4.72e-24,
-          9.9e-25,
-          2.83e-25,
-          3.12e-25,
-          1.71e-25,
-          6.7e-26,
-          2.98e-26,
-          7.44e-27,
-          7.44e-27,
-          3.72e-26,
-          7.07e-26,
-          1e-25,
-          2.27e-25,
-          8.89e-25,
-          1.39e-24,
-          1.33e-24,
-          1.26e-24,
-          3.05e-24,
-          4.58e-24,
-          3.72e-24,
-          2.53e-24
+          3.72e-33,
+          3.35e-32,
+          1.6e-31,
+          1.86e-32,
+          1.12e-32,
+          2.98e-32,
+          1.97e-31,
+          1.23e-30,
+          2.6e-32,
+          1.12e-32,
+          5.21e-32,
+          1.97e-31,
+          5.84e-31,
+          4.09e-32,
+          1.67e-31,
+          1.56e-31,
+          1.26e-31,
+          5.8e-31,
+          2.67e-30,
+          2.89e-30,
+          4.09e-32,
+          1.12e-31,
+          1.08e-31,
+          1.86e-31,
+          6.32e-31,
+          1.71e-30,
+          7.44e-31,
+          7.44e-32,
+          1.12e-31,
+          1e-30,
+          8.18e-31,
+          3.35e-31,
+          1.53e-30,
+          1.15e-29,
+          2.54e-29,
+          4.32e-30,
+          3.35e-31,
+          1.49e-31,
+          5.58e-31,
+          8.18e-31,
+          1.41e-30,
+          2.27e-30,
+          3.46e-30,
+          5.06e-30,
+          4.58e-30,
+          6.7e-31,
+          7.44e-31,
+          1.64e-30,
+          5.95e-31,
+          1.38e-30,
+          9.08e-30,
+          1.11e-29,
+          4.54e-30,
+          4.32e-30,
+          4.69e-29,
+          1.22e-28,
+          1.03e-28,
+          2.93e-29,
+          5.32e-30,
+          5.21e-31,
+          5.21e-31,
+          4.09e-31,
+          2.9e-30,
+          5.77e-30,
+          5.36e-30,
+          9.19e-30,
+          2.06e-29,
+          2.49e-29,
+          2.05e-29,
+          3.61e-29,
+          3.35e-29,
+          2.16e-29,
+          1.3e-29,
+          5.58e-30,
+          1.86e-30,
+          1.12e-30,
+          3.72e-31,
+          5.58e-30,
+          2.23e-29,
+          1.82e-29,
+          9.67e-30,
+          3.27e-29,
+          9.34e-29,
+          1.63e-28,
+          6.62e-29,
+          3.76e-29,
+          1.21e-28,
+          6.62e-28,
+          8.97e-28,
+          1e-27,
+          4.72e-28,
+          9.9e-29,
+          2.83e-29,
+          3.12e-29,
+          1.71e-29,
+          6.7e-30,
+          2.98e-30,
+          7.44e-31,
+          7.44e-31,
+          3.72e-30,
+          7.07e-30,
+          1e-29,
+          2.27e-29,
+          8.89e-29,
+          1.39e-28,
+          1.33e-28,
+          1.26e-28,
+          3.05e-28,
+          4.58e-28,
+          3.72e-28,
+          2.53e-28
          ],
          "unit": "m2"
         },
@@ -12509,7 +13030,21 @@
         "src": "karkoschka1994",
         "note": "The methane bands that colour Uranus and Neptune and darken the giants in the red, measured from the giants' own spectra at their temperatures (125 to 128 K). Sampled every 5 nm from a 1 nm table, so narrow band edges are smoothed; near-zero values are the table's floor."
        }
-      ]
+      ],
+      "n_solid": {
+       "v": 1.32,
+       "unit": "1",
+       "src": "protopapa2015",
+       "check": "unverified",
+       "at_place": "methane ice, 15800 cm-1 (633 nm)",
+       "note": "real index of methane ice in the visible; its visible k is not on the sheet yet"
+      },
+      "polarisability": {
+       "v": 2.448e-30,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "2.448 cubic angstroms, static, experimental"
+      }
      },
      "chemical": {
       "states": {
@@ -12598,6 +13133,102 @@
         "lisse2021"
        ],
        "note": "NH3-1"
+      },
+      "saturated_liquid": {
+       "kind": "table",
+       "columns": [
+        "t_k",
+        "p_pa",
+        "density",
+        "viscosity",
+        "surface_tension"
+       ],
+       "units": [
+        "K",
+        "Pa",
+        "kg m-3",
+        "Pa s",
+        "N m-1"
+       ],
+       "rows": [
+        [
+         195.5,
+         6058.24,
+         733.843,
+         0.000570475,
+         0.0439305
+        ],
+        [
+         219.22,
+         32151.8,
+         706.375,
+         0.000352167,
+         0.0388373
+        ],
+        [
+         242.94,
+         118160.0,
+         677.801,
+         0.000240584,
+         0.033395
+        ],
+        [
+         266.67,
+         334655.0,
+         647.357,
+         0.000177391,
+         0.0278184
+        ],
+        [
+         290.39,
+         783921.0,
+         614.42,
+         0.000137467,
+         0.022273
+        ],
+        [
+         314.11,
+         1596340.0,
+         578.055,
+         0.000109158,
+         0.0168784
+        ],
+        [
+         337.84,
+         2926500.0,
+         536.598,
+         8.68689e-05,
+         0.0117339
+        ],
+        [
+         361.56,
+         4950910.0,
+         486.664,
+         6.77992e-05,
+         0.00695228
+        ],
+        [
+         385.28,
+         7885130.0,
+         418.138,
+         4.99451e-05,
+         0.00270731
+        ]
+       ],
+       "src": "gao2023-ammonia",
+       "also": [
+        "monogenidou2018-ammonia",
+        "mulero2012",
+        "coolprop"
+       ],
+       "check": "unverified",
+       "src_by_column": {
+        "p_pa": "gao2023-ammonia",
+        "density": "gao2023-ammonia",
+        "viscosity": "monogenidou2018-ammonia",
+        "surface_tension": "mulero2012"
+       },
+       "note": "liquid along its boiling curve, from just above the triple point (195.495 K) to 0.95 of the critical point (405.56 K); waves on a sea of it read density, viscosity and surface tension here"
       }
      },
      "optical": {
@@ -12711,6 +13342,102 @@
         "lisse2021"
        ],
        "note": "N2-1, alpha nitrogen"
+      },
+      "saturated_liquid": {
+       "kind": "table",
+       "columns": [
+        "t_k",
+        "p_pa",
+        "density",
+        "viscosity",
+        "surface_tension"
+       ],
+       "units": [
+        "K",
+        "Pa",
+        "kg m-3",
+        "Pa s",
+        "N m-1"
+       ],
+       "rows": [
+        [
+         63.16,
+         12540.5,
+         867.185,
+         0.000312387,
+         0.012203
+        ],
+        [
+         70.24,
+         39919.2,
+         837.484,
+         0.000216428,
+         0.0105194
+        ],
+        [
+         77.33,
+         101027.0,
+         806.198,
+         0.000159435,
+         0.00888528
+        ],
+        [
+         84.43,
+         216539.0,
+         772.909,
+         0.00012292,
+         0.00730645
+        ],
+        [
+         91.52,
+         409653.0,
+         737.082,
+         9.77809e-05,
+         0.00579464
+        ],
+        [
+         98.61,
+         705846.0,
+         697.643,
+         7.90638e-05,
+         0.00435745
+        ],
+        [
+         105.7,
+         1131950.0,
+         652.761,
+         6.39987e-05,
+         0.00300917
+        ],
+        [
+         112.79,
+         1717020.0,
+         598.669,
+         5.08566e-05,
+         0.00177283
+        ],
+        [
+         119.88,
+         2495490.0,
+         524.935,
+         3.81401e-05,
+         0.000693778
+        ]
+       ],
+       "src": "span2000-nitrogen",
+       "also": [
+        "huber2024-nitrogen",
+        "mulero2012",
+        "coolprop"
+       ],
+       "check": "unverified",
+       "src_by_column": {
+        "p_pa": "span2000-nitrogen",
+        "density": "span2000-nitrogen",
+        "viscosity": "huber2024-nitrogen",
+        "surface_tension": "mulero2012"
+       },
+       "note": "liquid along its boiling curve, from just above the triple point (63.151 K) to 0.95 of the critical point (126.192 K); waves on a sea of it read density, viscosity and surface tension here"
       }
      },
      "optical": {
@@ -12740,6 +13467,20 @@
        "unit": "1",
        "src": "fudge-register",
        "check": "authored"
+      },
+      "n_solid": {
+       "v": 1.23,
+       "unit": "1",
+       "src": "quirico-sshade-n2",
+       "check": "unverified",
+       "at_place": "nitrogen ice, visible",
+       "note": "real index of nitrogen ice in the visible, held constant through the near infrared in the SSHADE optical constants"
+      },
+      "polarisability": {
+       "v": 1.71e-30,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "1.71 cubic angstroms, static, experimental"
       }
      },
      "chemical": {
@@ -12910,6 +13651,102 @@
        "src": "tegeler1999",
        "check": "unverified",
        "at_pa": 101325.0
+      },
+      "saturated_liquid": {
+       "kind": "table",
+       "columns": [
+        "t_k",
+        "p_pa",
+        "density",
+        "viscosity",
+        "surface_tension"
+       ],
+       "units": [
+        "K",
+        "Pa",
+        "kg m-3",
+        "Pa s",
+        "N m-1"
+       ],
+       "rows": [
+        [
+         83.81,
+         68924.3,
+         1416.74,
+         0.000290136,
+         0.013403
+        ],
+        [
+         91.22,
+         150382.0,
+         1370.95,
+         0.000231593,
+         0.0115732
+        ],
+        [
+         98.64,
+         290194.0,
+         1322.83,
+         0.000188061,
+         0.00979719
+        ],
+        [
+         106.06,
+         509205.0,
+         1271.59,
+         0.00015495,
+         0.00808359
+        ],
+        [
+         113.48,
+         829592.0,
+         1216.18,
+         0.000129009,
+         0.00644003
+        ],
+        [
+         120.9,
+         1274420.0,
+         1155.02,
+         0.000107866,
+         0.00487686
+        ],
+        [
+         128.32,
+         1867830.0,
+         1085.49,
+         8.97112e-05,
+         0.00340892
+        ],
+        [
+         135.73,
+         2635020.0,
+         1002.41,
+         7.30779e-05,
+         0.0020614
+        ],
+        [
+         143.15,
+         3609640.0,
+         891.221,
+         5.64539e-05,
+         0.000875196
+        ]
+       ],
+       "src": "tegeler1999-argon",
+       "also": [
+        "lemmon-jacobsen2004",
+        "mulero2012",
+        "coolprop"
+       ],
+       "check": "unverified",
+       "src_by_column": {
+        "p_pa": "tegeler1999-argon",
+        "density": "tegeler1999-argon",
+        "viscosity": "lemmon-jacobsen2004",
+        "surface_tension": "mulero2012"
+       },
+       "note": "liquid along its boiling curve, from just above the triple point (83.806 K) to 0.95 of the critical point (150.687 K); waves on a sea of it read density, viscosity and surface tension here"
       }
      },
      "optical": {
@@ -12939,6 +13776,12 @@
        "unit": "1",
        "src": "fudge-register",
        "check": "authored"
+      },
+      "polarisability": {
+       "v": 1.6640000000000002e-30,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "1.664 cubic angstroms, static, experimental"
       }
      }
     },
@@ -12983,6 +13826,12 @@
        ],
        "src": "fudge-register",
        "check": "authored"
+      },
+      "polarisability": {
+       "v": 7.870000000000001e-31,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "0.787 cubic angstroms, static, experimental"
       }
      },
      "chemical": {
@@ -13045,6 +13894,138 @@
         0.0
        ],
        "src": "atom-isotropic"
+      },
+      "polarisability": {
+       "v": 2.0800000000000002e-31,
+       "unit": "m3",
+       "src": "nist-cccbdb",
+       "note": "0.208 cubic angstroms, static, experimental"
+      }
+     },
+     "phases": {
+      "saturated_liquid": {
+       "kind": "table",
+       "columns": [
+        "t_k",
+        "p_pa",
+        "density",
+        "viscosity",
+        "surface_tension"
+       ],
+       "units": [
+        "K",
+        "Pa",
+        "kg m-3",
+        "Pa s",
+        "N m-1"
+       ],
+       "rows": [
+        [
+         2.18,
+         5078.98,
+         146.013,
+         3.57616e-06,
+         0.000286074
+        ],
+        [
+         2.52,
+         10635.0,
+         144.773,
+         3.74073e-06,
+         0.000257614
+        ],
+        [
+         2.87,
+         19679.6,
+         142.321,
+         3.71516e-06,
+         0.000225353
+        ],
+        [
+         3.21,
+         32463.5,
+         139.17,
+         3.61436e-06,
+         0.000191956
+        ],
+        [
+         3.56,
+         50520.3,
+         135.155,
+         3.47494e-06,
+         0.000156321
+        ],
+        [
+         3.9,
+         73578.4,
+         130.359,
+         3.31956e-06,
+         0.000121321
+        ],
+        [
+         4.25,
+         103840.0,
+         124.146,
+         3.1414e-06,
+         8.5775e-05
+        ],
+        [
+         4.59,
+         140532.0,
+         116.084,
+         2.94182e-06,
+         5.25774e-05
+        ],
+        [
+         4.94,
+         187184.0,
+         103.149,
+         2.67263e-06,
+         2.07345e-05
+        ]
+       ],
+       "src": "ortizvega2023-helium",
+       "also": [
+        "arp1998-helium",
+        "mulero2012",
+        "coolprop"
+       ],
+       "check": "unverified",
+       "src_by_column": {
+        "p_pa": "ortizvega2023-helium",
+        "density": "ortizvega2023-helium",
+        "viscosity": "arp1998-helium",
+        "surface_tension": "mulero2012"
+       },
+       "note": "liquid along its boiling curve, from just above the triple point (2.1768 K) to 0.95 of the critical point (5.1953 K); waves on a sea of it read density, viscosity and surface tension here; the p_pa column is helium's vapour-pressure curve (it has no triple point at saturation, so climate reads the vapour curve here)"
+      },
+      "lambda_point_k": {
+       "v": 2.1768,
+       "unit": "K",
+       "src": "ortizvega2023-helium",
+       "check": "unverified",
+       "at_pa": 5039.33,
+       "note": "below this, liquid helium-4 is a superfluid (He II); helium has no triple point at its own vapour pressure, so this is where its sea's liquid-vapour curve starts"
+      },
+      "lambda_point_pa": {
+       "v": 5039.33,
+       "unit": "Pa",
+       "src": "ortizvega2023-helium",
+       "check": "unverified",
+       "note": "vapour pressure at the lambda point"
+      },
+      "critical_point_k": {
+       "v": 5.1953,
+       "unit": "K",
+       "src": "ortizvega2023-helium",
+       "check": "unverified",
+       "note": "above this there can be no helium sea"
+      },
+      "critical_point_pa": {
+       "v": 228322.8,
+       "unit": "Pa",
+       "src": "ortizvega2023-helium",
+       "check": "unverified"
       }
      }
     },
@@ -13068,7 +14049,7 @@
        "also": [
         "richardson2014"
        ],
-       "note": "normal deuterium at its normal boiling point, from CoolProp's saturated-liquid fit to Richardson et al. 2014 (fit good to 0.17%)"
+       "note": "normal deuterium at its normal boiling point, computed by CoolProp from Richardson et al. 2014, whose equation of state is good to about 3% for saturated liquid density (the 0.17% is only CoolProp's ancillary fit to that equation)"
       }
      }
     },
@@ -13154,7 +14135,13 @@
         "src": "nist-handbook-na",
         "note": "Sodium's D1 line (3s to 3p 1/2), air wavelength. f worked out from Aki = 6.140e+07 s-1 and g_u/g_l = 2/2; radiative damping is that Aki (the upper level's only decay). No collisional widening row yet: the pressure-widened wings of dense airs (white dwarfs, brown dwarfs) wait for a cited widening law (Allard et al.)."
        }
-      ]
+      ],
+      "ionisation_energy": {
+       "v": 5.139076,
+       "unit": "eV",
+       "src": "nist-handbook-na",
+       "note": "41449.451 cm-1, Baugh et al. 1998"
+      }
      }
     },
     {
@@ -13189,7 +14176,13 @@
         "src": "nist-handbook-k",
         "note": "Potassium's D1 line (4s to 4p 1/2), air wavelength. f worked out from Aki = 3.740e+07 s-1 and g_u/g_l = 2/2; radiative damping is that Aki (the upper level's only decay). No collisional widening row yet: the pressure-widened wings of dense airs (white dwarfs, brown dwarfs) wait for a cited widening law (Allard et al.)."
        }
-      ]
+      ],
+      "ionisation_energy": {
+       "v": 4.3406633,
+       "unit": "eV",
+       "src": "nist-handbook-k",
+       "note": "35009.8140 cm-1, Sugar and Corliss 1985"
+      }
      }
     },
     {
@@ -14249,6 +15242,266 @@
        "check": "unverified",
        "at_k": 293.15,
        "note": "pure (100%)"
+      }
+     }
+    },
+    {
+     "id": "c2h6",
+     "formula": {
+      "c": 2,
+      "h": 6
+     },
+     "names": {
+      "physics": "ethane",
+      "plain": "ethane",
+      "story": "liquid ethane"
+     },
+     "phases": {
+      "saturated_liquid": {
+       "kind": "table",
+       "columns": [
+        "t_k",
+        "p_pa",
+        "density",
+        "viscosity",
+        "surface_tension"
+       ],
+       "units": [
+        "K",
+        "Pa",
+        "kg m-3",
+        "Pa s",
+        "N m-1"
+       ],
+       "rows": [
+        [
+         90.37,
+         1.14271,
+         651.527,
+         0.00127967,
+         0.031663
+        ],
+        [
+         115.33,
+         176.746,
+         624.109,
+         0.000546244,
+         0.0274931
+        ],
+        [
+         140.29,
+         3925.7,
+         596.253,
+         0.000317925,
+         0.0233628
+        ],
+        [
+         165.25,
+         31167.0,
+         567.355,
+         0.000214307,
+         0.0192898
+        ],
+        [
+         190.21,
+         136027.0,
+         536.698,
+         0.000155226,
+         0.0152984
+        ],
+        [
+         215.17,
+         409898.0,
+         503.21,
+         0.000116183,
+         0.0114226
+        ],
+        [
+         240.13,
+         970678.0,
+         465.093,
+         8.76517e-05,
+         0.00771398
+        ],
+        [
+         265.09,
+         1953820.0,
+         418.562,
+         6.49859e-05,
+         0.004262
+        ],
+        [
+         290.06,
+         3520570.0,
+         351.095,
+         4.45486e-05,
+         0.00126477
+        ]
+       ],
+       "src": "buecker-wagner2006",
+       "also": [
+        "friend1991-ethane",
+        "mulero2012",
+        "coolprop"
+       ],
+       "check": "unverified",
+       "src_by_column": {
+        "p_pa": "buecker-wagner2006",
+        "density": "buecker-wagner2006",
+        "viscosity": "friend1991-ethane",
+        "surface_tension": "mulero2012"
+       },
+       "note": "liquid along its boiling curve, from just above the triple point (90.368 K) to 0.95 of the critical point (305.322 K); waves on a sea of it read density, viscosity and surface tension here"
+      },
+      "triple_point_k": {
+       "v": 90.368,
+       "unit": "K",
+       "src": "buecker-wagner2006",
+       "check": "unverified"
+      },
+      "critical_point_k": {
+       "v": 305.322,
+       "unit": "K",
+       "src": "buecker-wagner2006",
+       "check": "unverified"
+      },
+      "density_liquid": {
+       "v": 651.527,
+       "unit": "kg m-3",
+       "src": "buecker-wagner2006",
+       "check": "unverified",
+       "at_k": 90.37,
+       "note": "saturated liquid just above the triple point"
+      }
+     }
+    },
+    {
+     "id": "c3h8",
+     "formula": {
+      "c": 3,
+      "h": 8
+     },
+     "names": {
+      "physics": "propane",
+      "plain": "propane",
+      "story": "liquid propane"
+     },
+     "phases": {
+      "saturated_liquid": {
+       "kind": "table",
+       "columns": [
+        "t_k",
+        "p_pa",
+        "density",
+        "viscosity",
+        "surface_tension"
+       ],
+       "units": [
+        "K",
+        "Pa",
+        "kg m-3",
+        "Pa s",
+        "N m-1"
+       ],
+       "rows": [
+        [
+         85.53,
+         0.0001723,
+         733.12,
+         0.0107796,
+         0.0330586
+        ],
+        [
+         118.76,
+         2.32137,
+         699.047,
+         0.00157069,
+         0.029888
+        ],
+        [
+         151.99,
+         357.35,
+         665.436,
+         0.000626373,
+         0.026048
+        ],
+        [
+         185.23,
+         7519.83,
+         631.137,
+         0.000353508,
+         0.0217979
+        ],
+        [
+         218.46,
+         56114.6,
+         595.172,
+         0.000228394,
+         0.0173606
+        ],
+        [
+         251.69,
+         231922.0,
+         556.257,
+         0.000157153,
+         0.0129217
+        ],
+        [
+         284.93,
+         669278.0,
+         512.18,
+         0.000111299,
+         0.00864403
+        ],
+        [
+         318.16,
+         1534660.0,
+         458.386,
+         7.83873e-05,
+         0.00469544
+        ],
+        [
+         351.4,
+         3030610.0,
+         379.239,
+         5.03385e-05,
+         0.00131868
+        ]
+       ],
+       "src": "lemmon2009-propane",
+       "also": [
+        "vogel1998-propane",
+        "mulero2012",
+        "coolprop"
+       ],
+       "check": "unverified",
+       "src_by_column": {
+        "p_pa": "lemmon2009-propane",
+        "density": "lemmon2009-propane",
+        "viscosity": "vogel1998-propane",
+        "surface_tension": "mulero2012"
+       },
+       "note": "liquid along its boiling curve, from just above the triple point (85.525 K) to 0.95 of the critical point (369.89 K); waves on a sea of it read density, viscosity and surface tension here"
+      },
+      "triple_point_k": {
+       "v": 85.525,
+       "unit": "K",
+       "src": "lemmon2009-propane",
+       "check": "unverified"
+      },
+      "critical_point_k": {
+       "v": 369.89,
+       "unit": "K",
+       "src": "lemmon2009-propane",
+       "check": "unverified"
+      },
+      "density_liquid": {
+       "v": 733.12,
+       "unit": "kg m-3",
+       "src": "lemmon2009-propane",
+       "check": "unverified",
+       "at_k": 85.53,
+       "note": "saturated liquid just above the triple point"
       }
      }
     }
@@ -16195,6 +17448,895 @@
       "src": "unesco37",
       "check": "unverified"
      }
+    },
+    {
+     "id": "titan-tholin",
+     "names": {
+      "physics": "Titan tholin (N2-CH4 discharge organics)",
+      "plain": "Titan's orange haze stuff",
+      "story": "tholin"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "a laboratory stand-in for Titan's organic haze and for the red-brown stains on icy worlds; real hazes differ with how they were made",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        263.8,
+        295.2,
+        326.3,
+        354.2,
+        387.4,
+        413.3,
+        442.8,
+        563.5,
+        688.8,
+        873.1,
+        1016.0,
+        1148.0,
+        1192.0,
+        1357.0,
+        1381.0,
+        1802.0,
+        1813.0,
+        1823.0,
+        1873.0,
+        2019.0,
+        2214.0,
+        2393.0,
+        2403.0,
+        2422.0
+       ],
+       "n": [
+        1.68,
+        1.66,
+        1.64,
+        1.63,
+        1.66,
+        1.69,
+        1.72,
+        1.7,
+        1.68,
+        1.66,
+        1.65,
+        1.65,
+        1.65,
+        1.64,
+        1.64,
+        1.64,
+        1.64,
+        1.64,
+        1.63,
+        1.63,
+        1.63,
+        1.62,
+        1.62,
+        1.62
+       ],
+       "k": [
+        0.18,
+        0.15,
+        0.13,
+        0.11,
+        0.091,
+        0.076,
+        0.06,
+        0.023,
+        0.0088,
+        0.0024,
+        0.001,
+        0.00064,
+        0.00052,
+        0.00042,
+        0.00041,
+        0.0004,
+        0.00042,
+        0.00044,
+        0.00052,
+        0.00072,
+        0.00089,
+        0.0008,
+        0.00085,
+        0.0012
+       ],
+       "src": "khare1984",
+       "check": "unverified",
+       "at_k": 300.0,
+       "note": "thin films and pellets of tholin from 0.9 N2 / 0.1 CH4 at 0.2 mbar, room temperature; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "jsc-mars-1",
+     "names": {
+      "physics": "JSC Mars-1 palagonitic tephra (Mars dust simulant)",
+      "plain": "Mars dust simulant (JSC Mars-1)",
+      "story": "red Mars dust"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "a laboratory stand-in for Martian dust and soil; Mars' airborne dust absorbs more (Wolff et al. 2009: k about 0.01 at 488 nm and 0.001 to 0.002 at 647 nm, via Dabrowska et al. 2015)",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5
+       ],
+       "k": [
+        0.001308,
+        0.001296,
+        0.00117,
+        0.000926,
+        0.000742,
+        0.000666,
+        0.000571,
+        0.000498,
+        0.000468,
+        0.000452,
+        0.00051,
+        0.00062,
+        0.000721,
+        0.001036,
+        0.001192
+       ],
+       "src": "martikainen2023",
+       "also": [
+        "dabrowska2015"
+       ],
+       "check": "unverified",
+       "note": "k retrieved from the powder's reflectance with irregular grains (GRS1) and n fixed at 1.5; n is assumed, not measured; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "mms-2",
+     "names": {
+      "physics": "Enhanced Mojave Mars Simulant (MMS-2)",
+      "plain": "Mars soil simulant (Mojave)",
+      "story": "Mars soil"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "a laboratory stand-in for Martian dust and soil; Mars' airborne dust absorbs more (Wolff et al. 2009: k about 0.01 at 488 nm and 0.001 to 0.002 at 647 nm, via Dabrowska et al. 2015)",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5
+       ],
+       "k": [
+        0.000704,
+        0.000751,
+        0.000773,
+        0.000849,
+        0.000819,
+        0.000788,
+        0.000658,
+        0.000292,
+        0.000243,
+        0.000205,
+        0.000202,
+        0.000236,
+        0.000184,
+        0.000227,
+        0.000287
+       ],
+       "src": "martikainen2023",
+       "also": [
+        "dabrowska2015"
+       ],
+       "check": "unverified",
+       "note": "k retrieved from the powder's reflectance with irregular grains (GRS1) and n fixed at 1.5; n is assumed, not measured; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "mgs-1",
+     "names": {
+      "physics": "Mars Global Simulant (MGS-1)",
+      "plain": "Mars soil simulant (global)",
+      "story": "Mars soil"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "a laboratory stand-in for Martian dust and soil; Mars' airborne dust absorbs more (Wolff et al. 2009: k about 0.01 at 488 nm and 0.001 to 0.002 at 647 nm, via Dabrowska et al. 2015)",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5
+       ],
+       "k": [
+        0.000493,
+        0.000431,
+        0.000357,
+        0.000311,
+        0.0003,
+        0.0003,
+        0.000302,
+        0.0003,
+        0.000315,
+        0.000323,
+        0.000394,
+        0.000571,
+        0.000596,
+        0.000685,
+        0.00088
+       ],
+       "src": "martikainen2023",
+       "also": [
+        "dabrowska2015"
+       ],
+       "check": "unverified",
+       "note": "k retrieved from the powder's reflectance with irregular grains (GRS1) and n fixed at 1.5; n is assumed, not measured; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "troilite",
+     "names": {
+      "physics": "troilite (FeS)",
+      "plain": "iron sulphide",
+      "story": "iron sulphide"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the iron sulphide of meteorites and of the sulphide clouds of hot giants; dark and metallic in the visible",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        774.0
+       ],
+       "n": [
+        1.92,
+        2.04,
+        2.08,
+        2.09,
+        2.1,
+        2.13,
+        2.19,
+        2.27,
+        2.37,
+        2.47,
+        2.64
+       ],
+       "k": [
+        1.41,
+        1.36,
+        1.37,
+        1.45,
+        1.56,
+        1.7,
+        1.85,
+        2.0,
+        2.13,
+        2.26,
+        2.43
+       ],
+       "src": "kranhold2026",
+       "check": "unverified",
+       "at_k": 300.0,
+       "note": "light polarised along the crystal's x axis; the z axis is in refractive_index_ez; the files read stop at 774 nm"
+      },
+      "refractive_index_ez": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        774.0
+       ],
+       "n": [
+        1.87,
+        1.98,
+        2.0,
+        2.02,
+        2.07,
+        2.17,
+        2.31,
+        2.47,
+        2.64,
+        2.82,
+        3.08
+       ],
+       "k": [
+        1.5,
+        1.45,
+        1.49,
+        1.62,
+        1.79,
+        1.97,
+        2.13,
+        2.28,
+        2.39,
+        2.47,
+        2.54
+       ],
+       "src": "kranhold2026",
+       "check": "unverified",
+       "at_k": 300.0,
+       "note": "light polarised along the crystal's z axis"
+      }
+     }
+    },
+    {
+     "id": "hematite",
+     "names": {
+      "physics": "hematite (Fe2O3)",
+      "plain": "rust-red iron oxide",
+      "story": "red iron oxide"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ferric oxide that reddens Mars and desert dust; strong blue and green absorption, nearly clear past 600 nm",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0
+       ],
+       "n": [
+        1.853,
+        2.234,
+        2.354,
+        2.686,
+        3.063,
+        3.147,
+        3.203,
+        3.12,
+        2.962,
+        2.868,
+        2.756,
+        2.716,
+        2.69
+       ],
+       "k": [
+        1.311,
+        1.213,
+        1.078,
+        1.245,
+        0.9663,
+        0.6541,
+        0.4903,
+        0.1565,
+        0.07494,
+        0.04628,
+        0.03242,
+        0.03529,
+        0.02602
+       ],
+       "src": "sokolik-toon1999",
+       "check": "unverified",
+       "note": "bulk crystal values as compiled by Sokolik and Toon 1999; orientation not stated; the files read stop at 1001 nm; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "lunar-soil-mature-highland",
+     "names": {
+      "physics": "mature lunar highland soil (Apollo 16, 62231)",
+      "plain": "Moon dust (highlands)",
+      "story": "regolith"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ground of an airless rocky world after long exposure to space: grey to the eye, a few to twenty per cent reflective, rising slowly towards the red",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        414.9,
+        753.3,
+        898.8,
+        951.5,
+        1000.4
+       ],
+       "r": [
+        0.1077,
+        0.1776,
+        0.1893,
+        0.1941,
+        0.2004
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 30.0,
+       "e_deg": 0.0,
+       "maturity": "mature",
+       "src": "pieters1999-62231",
+       "check": "unverified",
+       "note": "laboratory spectrum of Apollo soil 62231, relative to a Lambertian surface; space weathering (nanophase iron) darkens and reddens soil as it matures; interpolate linearly, hold the ends"
+      }
+     }
+    },
+    {
+     "id": "lunar-soil-mature-mare",
+     "names": {
+      "physics": "mature lunar mare soil (Apollo 11, 10084)",
+      "plain": "Moon dust (maria)",
+      "story": "regolith"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ground of an airless rocky world after long exposure to space: grey to the eye, a few to twenty per cent reflective, rising slowly towards the red",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        750.0,
+        900.0,
+        1000.0
+       ],
+       "r": [
+        0.043507,
+        0.048341,
+        0.052659,
+        0.057191,
+        0.061273,
+        0.065615,
+        0.069243,
+        0.072632,
+        0.079021,
+        0.081303
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 30.0,
+       "e_deg": 0.0,
+       "maturity": "mature",
+       "src": "taylor2001-lscc",
+       "check": "unverified",
+       "note": "laboratory spectrum of Apollo soil 10084, relative to a Lambertian surface; space weathering (nanophase iron) darkens and reddens soil as it matures; interpolate linearly, hold the ends",
+       "maturity_index": {
+        "v": 88.0,
+        "unit": "1",
+        "src": "wu2024-ce5",
+        "check": "unverified",
+        "note": "Is/FeO of the <45 micron fraction (Taylor et al. 2001, via Wu et al. 2024 Table 1); immature < 30, submature 30 to 60, mature > 60"
+       }
+      }
+     }
+    },
+    {
+     "id": "lunar-soil-submature-mare",
+     "names": {
+      "physics": "submature lunar mare soil (Apollo 17, 71501)",
+      "plain": "Moon dust (young maria)",
+      "story": "regolith"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ground of an airless rocky world after long exposure to space: grey to the eye, a few to twenty per cent reflective, rising slowly towards the red",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        750.0,
+        900.0,
+        1000.0
+       ],
+       "r": [
+        0.044713,
+        0.050048,
+        0.054586,
+        0.059588,
+        0.063925,
+        0.068261,
+        0.072944,
+        0.076743,
+        0.08377,
+        0.086709
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 30.0,
+       "e_deg": 0.0,
+       "maturity": "submature",
+       "src": "taylor2001-lscc",
+       "check": "unverified",
+       "note": "laboratory spectrum of Apollo soil 71501, relative to a Lambertian surface; space weathering (nanophase iron) darkens and reddens soil as it matures; interpolate linearly, hold the ends",
+       "maturity_index": {
+        "v": 44.0,
+        "unit": "1",
+        "src": "wu2024-ce5",
+        "check": "unverified",
+        "note": "Is/FeO of the <45 micron fraction (Taylor et al. 2001, via Wu et al. 2024 Table 1); immature < 30, submature 30 to 60, mature > 60"
+       }
+      }
+     }
+    },
+    {
+     "id": "lunar-soil-immature-mare",
+     "names": {
+      "physics": "immature lunar mare soil (Apollo 12, 12030)",
+      "plain": "fresh Moon dust",
+      "story": "regolith"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ground of an airless rocky world after long exposure to space: grey to the eye, a few to twenty per cent reflective, rising slowly towards the red",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        750.0,
+        900.0,
+        1000.0
+       ],
+       "r": [
+        0.10514,
+        0.11845,
+        0.12714,
+        0.13629,
+        0.14455,
+        0.15286,
+        0.16113,
+        0.16827,
+        0.15721,
+        0.16071
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 30.0,
+       "e_deg": 0.0,
+       "maturity": "immature",
+       "src": "taylor2001-lscc",
+       "check": "unverified",
+       "note": "laboratory spectrum of Apollo soil 12030, relative to a Lambertian surface; space weathering (nanophase iron) darkens and reddens soil as it matures; interpolate linearly, hold the ends",
+       "maturity_index": {
+        "v": 20.0,
+        "unit": "1",
+        "src": "wu2024-ce5",
+        "check": "unverified",
+        "note": "Is/FeO of the <45 micron fraction (Taylor et al. 2001, via Wu et al. 2024 Table 1); immature < 30, submature 30 to 60, mature > 60"
+       }
+      }
+     }
+    },
+    {
+     "id": "basalt",
+     "names": {
+      "physics": "basalt",
+      "plain": "basalt",
+      "story": "dark volcanic rock"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the commonest volcanic rock on the rocky planets; grey-black and only faintly coloured",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        260.0,
+        300.0,
+        355.0,
+        400.0,
+        466.0,
+        500.0,
+        566.0,
+        600.0,
+        666.0,
+        700.0,
+        817.0,
+        907.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        1.644,
+        1.644,
+        1.634,
+        1.621,
+        1.611,
+        1.613,
+        1.599,
+        1.609,
+        1.597,
+        1.597,
+        1.595,
+        1.595,
+        1.593,
+        1.59,
+        1.589
+       ],
+       "k": [
+        0.002692,
+        0.002692,
+        0.002399,
+        0.002239,
+        0.001995,
+        0.00195,
+        0.001698,
+        0.001738,
+        0.001698,
+        0.001738,
+        0.00195,
+        0.002455,
+        0.00302,
+        0.002455,
+        0.003311
+       ],
+       "src": "egan-hilgeman1979",
+       "check": "unverified",
+       "note": "rock sample as measured by Egan and Hilgeman; no sample or locality named where read; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "limonite",
+     "names": {
+      "physics": "limonite (hydrous ferric oxides, mostly goethite)",
+      "plain": "yellow-brown rust",
+      "story": "ochre"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the yellow-brown rust of weathered iron-bearing rock; absorbs violet and blue",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        260.0,
+        300.0,
+        355.0,
+        400.0,
+        466.0,
+        500.0,
+        566.0,
+        600.0,
+        666.0,
+        700.0,
+        817.0,
+        907.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        2.15,
+        2.282,
+        2.33,
+        2.528,
+        2.544,
+        2.513,
+        2.4,
+        2.35,
+        2.228,
+        2.2,
+        2.146,
+        2.122,
+        2.108,
+        2.045,
+        2.03
+       ],
+       "k": [
+        0.007079,
+        0.00955,
+        0.0123,
+        0.02239,
+        0.02399,
+        0.01698,
+        0.004786,
+        0.004169,
+        0.003388,
+        0.00309,
+        0.003162,
+        0.003802,
+        0.003802,
+        0.00263,
+        0.002455
+       ],
+       "src": "egan-hilgeman1979",
+       "check": "unverified",
+       "note": "limonite is the general term for hydrous ferric oxides, mostly goethite (the NPSG page, after Roberts et al. 1990); alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "magnetite",
+     "names": {
+      "physics": "magnetite (Fe3O4)",
+      "plain": "black iron oxide",
+      "story": "lodestone"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the black, magnetic iron oxide of black sands and lodestones; absorbs strongly at every colour",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        310.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1230.0
+       ],
+       "n": [
+        2.103,
+        2.179,
+        2.233,
+        2.186,
+        2.169,
+        2.164,
+        2.152,
+        2.164,
+        2.125,
+        2.05,
+        1.938,
+        1.939,
+        2.082
+       ],
+       "k": [
+        0.6236,
+        0.7265,
+        0.874,
+        1.015,
+        1.051,
+        1.1,
+        1.153,
+        1.191,
+        1.243,
+        1.27,
+        1.212,
+        1.109,
+        0.9478
+       ],
+       "src": "schlegel1979",
+       "check": "unverified",
+       "note": "single-crystal values; the files read run from 310 to 1230 nm; alpha = 4 pi k / lambda"
+      }
+     }
     }
    ],
    "reactions": [
@@ -16696,6 +18838,11 @@
      "doi": "10.1088/1674-1137/abddaf"
     },
     {
+     "id": "arp1998-helium",
+     "text": "Arp, V. D., McCarty, R. D. and Friend, D. G. 1998, NIST Technical Note 1334 (revised): thermophysical properties of helium-4 from 0.8 to 1500 K with pressures to 2000 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified"
+    },
+    {
      "id": "ati-304",
      "text": "ATI 2014, ATI 302/304/304L/305 technical data sheet (v1, 17 Feb 2014), page 4: melting range 2550-2590 F (1399-1421 C), specific heat 0.12 Btu/lb F (500 J/kg K) over 0-100 C, density 0.285 lb/in3 (7.90 g/cm3); typical values",
      "status": "unverified",
@@ -16724,6 +18871,12 @@
      "text": "Boran, S. et al. 2018, Phys. Rev. D 97, 041501: GW170817 falsifies dark matter emulators",
      "status": "verified",
      "doi": "10.1103/PhysRevD.97.041501"
+    },
+    {
+     "id": "buecker-wagner2006",
+     "text": "Buecker, D. and Wagner, W. 2006, J. Phys. Chem. Ref. Data 35, 205: a reference equation of state for the thermodynamic properties of ethane from the melting line to 675 K and pressures up to 900 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/1.1859286"
     },
     {
      "id": "cezairliyan1977",
@@ -16786,6 +18939,13 @@
      "url": "https://goldbook.iupac.org/"
     },
     {
+     "id": "coolprop",
+     "text": "Bell, I. H., Wronski, J., Quoilin, S. and Lemort, V. 2014, Ind. Eng. Chem. Res. 53, 2498: pure and pseudo-pure fluid thermophysical property evaluation and the open-source thermophysical property library CoolProp (version 8.1.0 used, scratch only, to evaluate the reference correlations cited on each row)",
+     "status": "unverified",
+     "doi": "10.1021/ie4033999",
+     "url": "https://coolprop.org"
+    },
+    {
      "id": "coolprop2014",
      "text": "Bell, I. H., Wronski, J., Quoilin, S. and Lemort, V. 2014, Ind. Eng. Chem. Res. 53, 2498: CoolProp, pure and pseudo-pure fluid property evaluation (MIT licence; its saturated-liquid density fits to the equations of state, dev/fluids/*.json)",
      "status": "unverified",
@@ -16797,6 +18957,13 @@
      "text": "Haynes, W. M. (ed.) 2016, CRC Handbook of Chemistry and Physics, 97th edition, CRC Press (quartz 2650 kg/m3)",
      "status": "unverified",
      "doi": "10.1201/9781315380476"
+    },
+    {
+     "id": "dabrowska2015",
+     "text": "Dabrowska, D. D., Munoz, O., Moreno, F., Ramos, J. L., Martinez-Frias, J. and Wurm, G. 2015, Icarus 250, 83: scattering matrices of martian dust analogs at 488 nm and 647 nm; Table 1 lists the Martian dust index of Wolff et al. 2009 (1.495 + 0.012 to 0.008i at 488 nm, 1.5 + 0.002 to 0.001i at 647 nm)",
+     "status": "unverified",
+     "doi": "10.1016/j.icarus.2014.11.024",
+     "url": "https://old-scattering.iaa.csic.es/site_media/download/DabrowskaetalIcarus2015.pdf"
     },
     {
      "id": "des2025",
@@ -16821,6 +18988,12 @@
      "text": "Eakins, B. W. and Sharman, G. F. 2010, Volumes of the World's Oceans from ETOPO1, NOAA National Geophysical Data Center (1.335e9 km3, mean depth 3688 m)",
      "status": "unverified",
      "url": "https://www.ngdc.noaa.gov/mgg/global/etopo1_ocean_volumes.html"
+    },
+    {
+     "id": "egan-hilgeman1979",
+     "text": "Egan, W. G. and Hilgeman, T. W. 1979, Optical Properties of Inhomogeneous Materials: Applications to Geology, Astronomy, Chemistry, and Engineering, Academic Press; basalt and limonite n and k as read from the University of Waterloo Natural Phenomena Simulation Group's files riBas/ecBas and riLim/ecLim (185 to 2500 and 185 to 2600 nm) on 24 Nov 2026; no sample description on the page",
+     "status": "unverified",
+     "url": "https://www.npsg.uwaterloo.ca/data/sand.php"
     },
     {
      "id": "evonik-h2o2",
@@ -16871,10 +19044,22 @@
      "doi": "10.1088/0067-0049/202/1/5"
     },
     {
+     "id": "friend1991-ethane",
+     "text": "Friend, D. G., Ingham, H. and Ely, J. F. 1991, J. Phys. Chem. Ref. Data 20, 275: thermophysical properties of ethane; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/1.555881"
+    },
+    {
      "id": "fudge-register",
      "text": "SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)",
      "status": "authored",
      "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/docs/fudges.md"
+    },
+    {
+     "id": "gao2023-ammonia",
+     "text": "Gao, K., Wu, J., Bell, I. H., Harvey, A. H. and Lemmon, E. W. 2023, J. Phys. Chem. Ref. Data 52, 013102: a reference equation of state with an associating term for the thermodynamic properties of ammonia; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/5.0128269"
     },
     {
      "id": "haldemann2020",
@@ -16883,10 +19068,29 @@
      "url": "https://arxiv.org/abs/2009.10098"
     },
     {
+     "id": "hale-querry1973",
+     "text": "Hale, G. M. and Querry, M. R. 1973, Applied Optics 12, 555: optical constants of water in the 200 nm to 200 micron wavelength region; absorption in 1/cm (OMLC copy hale73.txt)",
+     "status": "unverified",
+     "doi": "10.1364/AO.12.000555",
+     "url": "https://omlc.org/spectra/water/data/hale73.txt"
+    },
+    {
      "id": "harvey2015",
      "text": "Harvey, D. et al. 2015, Science 347, 1462: the nongravitational interactions of dark matter in colliding galaxy clusters",
      "status": "verified",
      "doi": "10.1126/science.1261381"
+    },
+    {
+     "id": "huber2009-water",
+     "text": "Huber, M. L. et al. 2009, J. Phys. Chem. Ref. Data 38, 101: new international formulation for the viscosity of H2O; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/1.3088050"
+    },
+    {
+     "id": "huber2024-nitrogen",
+     "text": "Huber, M. L., Perkins, R. A. and Lemmon, E. W. 2024, Int. J. Thermophys. 45, 146: reference correlation for the viscosity of nitrogen from the triple point to 1000 K and pressures up to 2200 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1007/s10765-024-03440-1"
     },
     {
      "id": "hui2017",
@@ -16989,6 +19193,13 @@
      "url": "https://pdg.lbl.gov/2023/AtomicNuclearProperties/explain_gas.html"
     },
     {
+     "id": "khare1984",
+     "text": "Khare, B. N., Sagan, C., Arakawa, E. T., Suits, F., Callcott, T. A. and Williams, M. W. 1984, Icarus 60, 127: optical constants of organic tholins produced in a simulated Titanian atmosphere, from soft X-ray to microwave frequencies; Table I, n and k = a 10^b (n to +/-0.05, k to +/-30 %)",
+     "status": "unverified",
+     "doi": "10.1016/0019-1035(84)90142-8",
+     "url": "https://hitran.org/data/Aerosols/Aerosols%20data%20from%20previous%20HITRAN/Aerosols-2016/papers/khare_tholins_1984.pdf"
+    },
+    {
      "id": "kibbey-star48",
      "text": "Kibbey, T. P., New solid propellant additives: evaluation for NASA mission use cases, NASA Marshall Space Flight Center (JANNAF), Table 1 (STAR-48BV): aluminium 18% by mass, polymer 22% by volume, theoretical bulk density 1.813 g/cm3, propellant Isp 294.2 s at expansion ratio 54.8",
      "status": "unverified",
@@ -17013,10 +19224,35 @@
      "doi": "10.3847/1538-4357/abae65"
     },
     {
+     "id": "kranhold2026",
+     "text": "Kranhold et al. 2026, Astronomy and Astrophysics: optical constants of pyrrhotites and troilite, UV to far infrared (title not printed where read); troilite FeS at 300 K, E parallel to x and to z, from the Jena Database of Optical Constants for Cosmic Dust files troilite_FeS_300K_ex.txt and _ez.txt (wl_um, n, k)",
+     "status": "unverified",
+     "doi": "10.1051/0004-6361/202659441",
+     "url": "https://www2.astro.uni-jena.de/Laboratory/OCDB/sulfides_2026.html"
+    },
+    {
+     "id": "laesecke-muzny2017-co2",
+     "text": "Laesecke, A. and Muzny, C. D. 2017, J. Phys. Chem. Ref. Data 46: reference correlation for the viscosity of carbon dioxide; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/1.4977429"
+    },
+    {
      "id": "leachman2009",
      "text": "Leachman, J. W., Jacobsen, R. T., Penoncello, S. G. and Lemmon, E. W. 2009, J. Phys. Chem. Ref. Data 38, 721: fundamental equations of state for parahydrogen, normal hydrogen and orthohydrogen",
      "status": "unverified",
      "doi": "10.1063/1.3160306"
+    },
+    {
+     "id": "lemmon-jacobsen2004",
+     "text": "Lemmon, E. W. and Jacobsen, R. T 2004, Int. J. Thermophys. 25, 21: viscosity and thermal conductivity equations for nitrogen, oxygen, argon and air; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1023/B:IJOT.0000022327.04529.f3"
+    },
+    {
+     "id": "lemmon2009-propane",
+     "text": "Lemmon, E. W., McLinden, M. O. and Wagner, W. 2009, J. Chem. Eng. Data 54, 3141: thermodynamic properties of propane III, a reference equation of state from the melting line to 650 K and pressures up to 1000 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1021/je900217v"
     },
     {
      "id": "lewis1980",
@@ -17079,6 +19315,13 @@
      "url": "https://ntrs.nasa.gov/api/citations/20140009573/downloads/20140009573.pdf"
     },
     {
+     "id": "martikainen2023",
+     "text": "Martikainen, J., Munoz, O., Jardiel, T., Gomez Martin, J. C., Peiteado, M., Willame, Y., Penttila, A., Muinonen, K., Wurm, G. and Becker, T. 2023, ApJS 268, 47: optical constants of Martian dust analogs at UV-visible-near-infrared wavelengths; Table 3, k for shape GRS1 with n = 1.5 (k is insensitive to n between 1.4 and 1.6, Table 4)",
+     "status": "unverified",
+     "doi": "10.3847/1538-4365/acf0be",
+     "url": "https://scattering.iaa.es/sites/default/files/media/downloads/2023_Martikainen.pdf"
+    },
+    {
      "id": "mastin2009",
      "text": "Mastin, L. G. et al. 2009, J. Volcanol. Geotherm. Res. 186, 10: eruption column heights, magma at 2500 kg/m3 dense-rock equivalent",
      "status": "verified",
@@ -17117,9 +19360,10 @@
     },
     {
      "id": "millot2018",
-     "text": "Millot, M. et al. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression. Not read; its melting point near 5000 K at 190 GPa is recalled",
+     "text": "Millot, M., Hamel, S., Rygg, J. R., Celliers, P. M., Collins, G. W., Coppari, F., Fratanduono, D. E., Jeanloz, R., Swift, D. C. and Eggert, J. H. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression (ice melts near 5000 K at 190 GPa; conductivity about 30 S/cm on the Hugoniot and about 150 S/cm on reverberating shocks). Read from the OSTI copy (osti.gov 1542614) on 24 Nov 2026; volume and page not on that copy",
      "status": "unverified",
-     "doi": "10.1038/s41567-017-0017-4"
+     "doi": "10.1038/s41567-017-0017-4",
+     "url": "https://www.osti.gov/biblio/1542614"
     },
     {
      "id": "millot2019",
@@ -17128,10 +19372,27 @@
      "doi": "10.1038/s41586-019-1114-6"
     },
     {
+     "id": "monogenidou2018-ammonia",
+     "text": "Monogenidou, S. A., Assael, M. J. and Huber, M. L. 2018, J. Phys. Chem. Ref. Data 47, 023102: reference correlation for the viscosity of ammonia from the triple point to 725 K and up to 50 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/1.5036724"
+    },
+    {
+     "id": "morel-prieur1977",
+     "text": "Morel, A. and Prieur, L. 1977, Limnology and Oceanography 22, 709: analysis of variations in ocean color; Table 1 pure-water scattering b_w, the wavelength exponent -4.3 (p. 712, after Morel 1974), backscatter share 1/2 for molecular scattering (p. 711, eq. 3) and seawater about 30 % higher (p. 714). Read by the climate and weather thread from a scan on 24 Nov 2026",
+     "status": "unverified"
+    },
+    {
      "id": "moritz2000",
      "text": "Moritz, H. 2000, J. Geodesy 74, 128: Geodetic Reference System 1980 (Earth's angular velocity 7 292 115e-11 rad/s)",
      "status": "verified",
      "doi": "10.1007/s001900050278"
+    },
+    {
+     "id": "mulero2012",
+     "text": "Mulero, A., Cachadina, I. and Parra, M. I. 2012, J. Phys. Chem. Ref. Data 41, 043105: recommended correlations for the surface tension of common fluids; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/1.4768782"
     },
     {
      "id": "nadler2021",
@@ -17162,6 +19423,12 @@
      "text": "Niemann, H. B. et al. 2005, Nature 438, 779: Titan's atmosphere from the Huygens probe (5.65% methane by volume near the surface)",
      "status": "unverified",
      "doi": "10.1038/nature04122"
+    },
+    {
+     "id": "nist-cccbdb",
+     "text": "NIST Computational Chemistry Comparison and Benchmark Database, Release 22 (May 2022), list of experimental static dipole polarizabilities (in cubic angstroms; most from Olney, Cann, Cooper and Brion 1997, Chem. Phys. 223, 59)",
+     "status": "verified",
+     "url": "https://cccbdb.nist.gov/pollistx.asp"
     },
     {
      "id": "nist-compositions",
@@ -17311,6 +19578,12 @@
      "doi": "10.1088/2041-8205/743/1/L16"
     },
     {
+     "id": "ortizvega2023-helium",
+     "text": "Ortiz-Vega, D. O., Hall, K. R., Holste, J. C., Harvey, A. H. and Lemmon, E. W. 2023, NIST IR 8474: an equation of state for the thermodynamic properties of helium; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.6028/NIST.IR.8474"
+    },
+    {
      "id": "palme-oneill2014",
      "text": "Palme, H. and O'Neill, H. St. C. 2014, Cosmochemical estimates of mantle composition, Treatise on Geochemistry 2nd edition vol. 3, 1: CI chondrite hydrogen and oxygen (read from the pyrolite package's copy)",
      "status": "unverified",
@@ -17341,6 +19614,12 @@
      "doi": "10.1093/acprof:oso/9780198518945.001.0001"
     },
     {
+     "id": "pieters1999-62231",
+     "text": "Pieters, C. M. (about 1999; venue not printed on the copy read): the Moon as a spectral calibration standard enabled by lunar samples, the Clementine example; Table 2, reflectance of mature Apollo 16 soil 62231 at the Clementine UVVIS wavelengths, i = 30, e = 0, as used in the USGS Clementine mosaics. Read from the PDS Geosciences copy on 25 Nov 2026",
+     "status": "unverified",
+     "url": "https://pds-geosciences.wustl.edu/Lunar/mk88-l-120cvf-3-rdr-120color-v1/mkls_0001/document/pieter99.pdf"
+    },
+    {
      "id": "planck2018",
      "text": "Planck Collaboration 2020, A&A 641, A6: Planck 2018 results VI, cosmological parameters. Table 2, last column (TT,TE,EE+lowE+lensing+BAO, 68% limits): Omega_b h2 0.02242 +- 0.00014, Omega_c h2 0.11933 +- 0.00091, n_s 0.9665 +- 0.0038, H0 67.66 +- 0.42, Omega_Lambda 0.6889 +- 0.0056, Omega_m 0.3111 +- 0.0056, Omega_m h2 0.14240 +- 0.00087, sigma8 0.8102 +- 0.0060, age 13.787 +- 0.020 Gyr. Section 2.1: one massive neutrino of 0.06 eV",
      "status": "verified",
@@ -17354,6 +19633,13 @@
      "url": "https://nvlpubs.nist.gov/nistpubs/jres/070/2/V70.N02.A07.pdf"
     },
     {
+     "id": "pope-fry1997",
+     "text": "Pope, R. M. and Fry, E. S. 1997, Applied Optics 36, 8710: absorption spectrum (380-700 nm) of pure water. II. Integrating cavity measurements; table on a 2.5 nm grid in 1/cm (OMLC copy pope97.txt)",
+     "status": "unverified",
+     "doi": "10.1364/AO.36.008710",
+     "url": "https://omlc.org/spectra/water/data/pope97.txt"
+    },
+    {
      "id": "popov2000",
      "text": "Popov, S. G., Ivanov, V. K., Carbajo, J. J. and Yoder, G. L. 2000, Thermophysical properties of MOX and UO2 fuels including the effects of irradiation, ORNL/TM-2000/351, Oak Ridge National Laboratory, sections 2.3 and 3.1: UO2 melting point 3120 +- 30 K unirradiated, theoretical density 10 970 +- 70 kg/m3 at 273 K",
      "status": "unverified",
@@ -17365,6 +19651,19 @@
      "status": "unverified",
      "doi": "10.1038/nature11031",
      "url": "https://arxiv.org/abs/1203.4970"
+    },
+    {
+     "id": "protopapa2015",
+     "text": "Protopapa, S., Grundy, W. M., Tegler, S. C. and Bergonio, J. M. 2015, Icarus (arXiv:1503.00703): absorption coefficients of the methane-nitrogen binary ice system, implications for Pluto; section 3.1 takes the real index of methane ice n0 = 1.32 at 15800 cm-1 from Trotta 1996",
+     "status": "unverified",
+     "url": "https://arxiv.org/abs/1503.00703"
+    },
+    {
+     "id": "quirico-sshade-n2",
+     "text": "Quirico, E., Schmitt, B. and Grundy, W. 1992, near-IR optical constants spectra of alpha and beta N2 ices at different temperatures, SSHADE/GhoSST dataset (linked to Grundy et al. 1993, Icarus 105, 254); its analysis note holds the real index constant at the visible value n = 1.23",
+     "status": "unverified",
+     "doi": "10.26302/SSHADE/EXPERIMENT_BS_20120925_001",
+     "url": "https://sshade.eu/data/SPECTRUM_BS_20120925_005/details"
     },
     {
      "id": "randall2008",
@@ -17420,6 +19719,12 @@
      "doi": "10.1063/1.5085163"
     },
     {
+     "id": "schlegel1979",
+     "text": "Schlegel, A., Alvarado, S. F. and Wachter, P. 1979, Journal of Physics C: Solid State Physics 12, 1157-1164: optical properties of magnetite (Fe3O4); n and k as read from the University of Waterloo Natural Phenomena Simulation Group's files riMag.txt and ecMag.txt (interpolated to 1 nm, 310 to 1230 nm) on 24 Nov 2026",
+     "status": "unverified",
+     "url": "https://www.npsg.uwaterloo.ca/data/sand.php"
+    },
+    {
      "id": "schmidt-wagner1985",
      "text": "Schmidt, R. and Wagner, W. 1985, Fluid Phase Equilibria 19, 175: a new form of the equation of state for pure substances and its application to oxygen",
      "status": "unverified",
@@ -17438,8 +19743,20 @@
      "url": "https://pscfiles.apl.uw.edu/woodgate/BeringStraitArchive/BeringStraitMooringData/BeringStraitMoorings2007to2009IPY_versionMar10/SeasoftForWavesProcessingSoftware/website/application_notes/AN14.htm"
     },
     {
+     "id": "segelstein1981",
+     "text": "Segelstein, D. J. 1981, The complex refractive index of water, M.S. thesis, University of Missouri-Kansas City; real and imaginary index against wavelength (OMLC copy segelstein81_index.txt)",
+     "status": "unverified",
+     "url": "https://omlc.org/spectra/water/data/segelstein81_index.txt"
+    },
+    {
      "id": "setzmann-wagner1991",
      "text": "Setzmann, U. and Wagner, W. 1991, J. Phys. Chem. Ref. Data 20, 1061: a new equation of state and tables of thermodynamic properties for methane (values read from the NIST WebBook fluid tables, which use it: saturated liquid 422.36 kg/m3 at the normal boiling point, 111.67 K)",
+     "status": "unverified",
+     "doi": "10.1063/1.555898"
+    },
+    {
+     "id": "setzmann-wagner1991-eos",
+     "text": "Setzmann, U. and Wagner, W. 1991, J. Phys. Chem. Ref. Data 20, 1061: a new equation of state and tables of thermodynamic properties for methane from the melting line to 625 K at pressures up to 1000 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
      "status": "unverified",
      "doi": "10.1063/1.555898"
     },
@@ -17468,13 +19785,49 @@
      "url": "https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-718.pdf"
     },
     {
+     "id": "sokolik-toon1999",
+     "text": "Sokolik, I. N. and Toon, O. B. 1999, Journal of Geophysical Research 104(D8), 9423-9444: incorporation of mineralogical composition into models of the radiative properties of mineral aerosol from UV to IR wavelengths; hematite n and k as compiled there, read from the University of Waterloo Natural Phenomena Simulation Group's files riHm.txt and ecHm.txt (interpolated to 1 nm, 212 to 1001 nm) on 24 Nov 2026; crystal orientation not stated",
+     "status": "unverified",
+     "url": "https://www.npsg.uwaterloo.ca/data/sand.php"
+    },
+    {
+     "id": "sotiriadou2025-methane",
+     "text": "Sotiriadou, S. G., Antoniadis, K. D., Assael, M. J., Martinek, V. and Huber, M. L. 2025, Int. J. Thermophys. 47, 18: correlation for the viscosity of methane from the triple point to 625 K and pressures to 1000 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1007/s10765-025-03690-7"
+    },
+    {
+     "id": "span-wagner1996-co2",
+     "text": "Span, R. and Wagner, W. 1996, J. Phys. Chem. Ref. Data 25, 1509: a new equation of state for carbon dioxide from the triple point to 1100 K at pressures up to 800 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/1.555991"
+    },
+    {
+     "id": "span2000-nitrogen",
+     "text": "Span, R., Lemmon, E. W., Jacobsen, R. T., Wagner, W. and Yokozeki, A. 2000, J. Phys. Chem. Ref. Data 29, 1361: a reference equation of state for the thermodynamic properties of nitrogen from 63.151 to 1000 K and pressures to 2200 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/1.1349047"
+    },
+    {
      "id": "sse-light-bands",
      "text": "SSE4 nebulae and light design, the fixed band set (handover/design/SSE4-nebulae-and-light-design.md): band edges are conventions chosen for the renderer, not measurements; the ultraviolet and visible edges follow common astronomical usage",
      "status": "authored"
     },
     {
+     "id": "taylor2001-lscc",
+     "text": "Taylor, L. A., Pieters, C. M., Morris, R. V., Keller, L. P. and McKay, D. S. 2001, Journal of Geophysical Research 106(E11), 27985: lunar mare soils, space weathering and the major effects of surface-correlated nanophase Fe. Lunar Soil Characterization Consortium reflectance-factor spectra (i = 30, e = 0, 300 to 2600 nm), bulk <45 micron column, read from RELAB's files nnnnnKdata.txt on 25 Nov 2026",
+     "status": "unverified",
+     "url": "https://sites.brown.edu/relab/lscc/"
+    },
+    {
      "id": "tegeler1999",
      "text": "Tegeler, Ch., Span, R. and Wagner, W. 1999, J. Phys. Chem. Ref. Data 28, 779: a new equation of state for argon (critical point 150.687 K, 4.863 MPa; normal boiling point 87.303 K)",
+     "status": "unverified",
+     "doi": "10.1063/1.556037"
+    },
+    {
+     "id": "tegeler1999-argon",
+     "text": "Tegeler, Ch., Span, R. and Wagner, W. 1999, J. Phys. Chem. Ref. Data 28, 779: a new equation of state for argon from the melting line to 700 K at pressures up to 1000 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
      "status": "unverified",
      "doi": "10.1063/1.556037"
     },
@@ -17527,16 +19880,41 @@
      "doi": "10.1103/PhysRevLett.126.141104"
     },
     {
+     "id": "vogel1998-propane",
+     "text": "Vogel, E., Kuechenmeister, C., Bich, E. and Laesecke, A. 1998, J. Phys. Chem. Ref. Data 27, 947: reference correlation of the viscosity of propane; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/1.556025"
+    },
+    {
+     "id": "wagner-pruss2002",
+     "text": "Wagner, W. and Pruss, A. 2002, J. Phys. Chem. Ref. Data 31, 387: the IAPWS Formulation 1995 for the thermodynamic properties of ordinary water substance; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
+     "status": "unverified",
+     "doi": "10.1063/1.1461829"
+    },
+    {
      "id": "wallace-hobbs2006",
      "text": "Wallace, J. M. and Hobbs, P. V. 2006, Atmospheric Science: An Introductory Survey, 2nd edition, Academic Press (dry air c_p = 1004 J/kg/K)",
      "status": "unverified",
      "doi": "10.1016/C2009-0-00034-8"
     },
     {
+     "id": "warren-brandt2008",
+     "text": "Warren, S. G. and Brandt, R. E. 2008, Journal of Geophysical Research 113, D14220: optical constants of ice from the ultraviolet to the microwave, a revised compilation (ice Ih at -7 C, 43 nm to 2 m). Read from the printable table IOPtable_2008.pdf on 24 Nov 2026",
+     "status": "unverified",
+     "doi": "10.1029/2007JD009744",
+     "url": "https://atmos.uw.edu/ice_optical_constants/"
+    },
+    {
      "id": "wikipedia-ice-phases",
      "text": "Wikipedia, Phases of ice (read 22 Nov 2026): table of phases with formation conditions; used only where it agrees with the LSBU tables",
      "status": "verified",
      "url": "https://en.wikipedia.org/wiki/Phases_of_ice"
+    },
+    {
+     "id": "wu2024-ce5",
+     "text": "Wu, Y. Z., Chai, Y. M., Lu, Y., Chen, X. J., Wang, W. W. and Jin, Q. 2024, Astronomy and Astrophysics 682, A112: visible and near-infrared spectral results of Chang'E-5 surficial and subsurface soils; Table 1 lists the Is/FeO maturity of the LSCC Apollo soils (<45 micron, from Taylor et al. 2001) and the classes immature < 30, submature 30 to 60, mature > 60 (Morris 1976, 1978)",
+     "status": "unverified",
+     "doi": "10.1051/0004-6361/202347577"
     },
     {
      "id": "yu2000",

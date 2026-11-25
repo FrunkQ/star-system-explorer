@@ -8,18 +8,21 @@
   decides what each screen shows; this file only draws it and turns presses into board changes.
 -->
 <script lang="ts">
-  import { addBookmark, addPreset, back, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type Workspace } from "../../../ui-contract/src/index.ts";
+  import RoleCard from "./RoleCard.svelte";
+  import LayoutPicker from "./LayoutPicker.svelte";
+  import OnThisComputer from "./OnThisComputer.svelte";
+  import { SHIPPED_LAYOUTS, cardLabel, outputLink, addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
   import Playbook from "./Playbook.svelte";
   import PresetMonitor from "./PresetMonitor.svelte";
-  import { noteFired } from "./fired.svelte.ts";
+  import { justSent, noteFired, noteSent, type JustSent } from "./fired.svelte.ts";
 
-  let { table, ws, onopenseats }: { table: TablePort; ws?: Workspace; onopenseats?: () => void } = $props();
+  let { table, ws, session, onopenseats }: { table: TablePort; ws?: Workspace; session?: ViewSession; onopenseats?: () => void } = $props();
 
   const st = $derived(table.state);
   const board = $derived(st.board);
   const live = $derived(table.live());
   const words = (s: Shown) => ("off" in s ? (s.card ? s.card : "screens dark") : (s.title ?? "the opening place"));
-  const cardWords = (c: HoldCard) => (c === "blank" ? "dark" : c === "plain" ? "awaiting transmission" : c === "joke" ? "a joke" : c.text);
+  const cardWords = cardLabel;
   // What a destination shows now, in words, and whether it is held.
   function showing(b: Board, role: string, screen?: string): { text: string; held: boolean } {
     const r = resolve(b, role, screen);
@@ -30,6 +33,8 @@
   const heldCount = $derived(Object.values(board.lines).filter((l) => l?.held).length + (board.all ? 1 : 0));
   // The card a click holds with: the kind used last (6.2), plain to begin with.
   let lastCard = $state<HoldCard>("plain");
+  // Screens on this computer (PB9): the displays panel, opened from the Screens heading.
+  let otc = $state(false);
 
   // The Playbook (PB3): kept with the campaign in the workspace; the open page and folded sections are this device's.
   const pb = $derived(ws?.playbook ?? emptyPlaybook());
@@ -59,9 +64,26 @@
     if (select) ((selected = select), (editing = true));
     if (selected && !findPreset(next, selected)) ((selected = null), (editing = false));
   }
+  let revealNote = $state<string | null>(null);
   function firePreset(p: Preset, at?: Dest) {
     noteFired(p.id);
     act((b) => fire(b, p, bookmarks, st.roles.map((r) => r.id), at));
+    void reveal(p, at);
+  }
+  // A Reveal step is not a send (4.2, 5.3): it tells the role's audience, at the campaign's now, and every screen of
+  // that role redraws where it stands. The kernel's set_known; never on the board's undo.
+  async function reveal(p: Preset, at?: Dest) {
+    const rs = revealsOf(p);
+    if (!rs.length || !session || !ws) return;
+    const dest = at ?? (p.to === "everyone" ? "everyone" : `role:${p.to}`);
+    const role = dest.startsWith("role:") ? dest.slice(5) : dest.startsWith("screen:") ? (board.screens[dest.slice(7)]?.role ?? "") : "";
+    const audience = role ? (st.roles.find((r) => r.id === role)?.audience ?? "everyone") : "everyone";
+    const now = ws.campaign_now_yr ?? ws.now_yr;
+    for (const r of rs) {
+      const res = await session.send({ kind: "set_known", address: r.address, audience, landmark: r.landmark, scope: "this", at_yr: now, at_s: String(yearsToSeconds(now)) });
+      revealNote = res.status === "applied" ? `${p.title}: told ${audience === "everyone" ? "the table" : destName(dest)}.` : `${p.title}: not told (${res.status === "refused" ? res.reason : res.status === "error" ? res.message : res.status}).`;
+    }
+    ws.notePhysics();
   }
   // Keep on Live (4.4): bookmark where the GM is and put it on the open page as a preset for Everyone, named ready to change.
   function keepLive() {
@@ -73,12 +95,35 @@
     const r = addPreset(pb, section?.id ?? "", { title: b.name, to: "everyone", steps: [{ show: { bookmark: b.id } }] });
     setPlaybook(r.pb, r.id);
   }
+  // Who steers (PB3b, 5.3): Theirs or Read only per role or screen; a read-only one can be driven from the chart.
+  const destName = (d: Dest) => (d === "everyone" ? "Everyone" : d.startsWith("role:") ? (st.roles.find((r) => `role:${r.id}` === d)?.label ?? d.slice(5)) : (board.screens[d.slice(7)]?.name ?? "a screen"));
+  function startDriving(d: Dest) {
+    act((b) => drive(b, d));
+    // The GM's stage opens; as they fly, the screen follows.
+    if (ws) ws.screen = "system";
+  }
+  // Keep on the "just now" strip: the send becomes a bookmark (its place and thing) and a preset on the open page.
+  function keepSent(j: JustSent) {
+    if (!ws || "off" in j.shown) return;
+    const list = ws.bookmarks ?? [];
+    const b = makeBookmark(list, { scope: j.shown.scope, now_yr: ws.now_yr, instrument: "system", selected: j.shown.focus ?? null }, j.shown.title ?? "Sent", "");
+    ws.bookmarks = addBookmark(list, b);
+    const page = findPage(pb, pageId)?.page;
+    const section = page?.sections.find((x) => !folded.has(x.id)) ?? page?.sections[0];
+    const to = j.dest === "everyone" ? "everyone" : j.dest.startsWith("role:") ? j.dest.slice(5) : (board.screens[j.dest.slice(7)]?.role ?? "everyone");
+    const r = addPreset(pb, section?.id ?? "", { title: b.name, to, steps: [{ show: { bookmark: b.id } }] });
+    setPlaybook(r.pb, r.id);
+  }
   function dragPreset(e: PointerEvent, id: string) {
     startDrag(e, { kind: "source", id });
   }
 
   const act = (f: (b: Board) => Board) => table.act(f);
-  const sendLive = (dest: Dest) => act((b) => send(b, dest, table.live(), "live"));
+  function sendLive(dest: Dest) {
+    const live = table.live();
+    noteSent(live, dest);
+    act((b) => send(b, dest, live, "live"));
+  }
   function toggleHold(dest: Dest, role: string, screen?: string) {
     const line = board.lines[dest];
     if (line?.held) act((b) => release(b, dest));
@@ -95,8 +140,41 @@
     void screen;
   }
   function chooseCard(dest: Dest, c: HoldCard) {
-    lastCard = c;
+    // A click holds with the kind used last (6.2); a particular card or typed words are for this moment only.
+    if (typeof c === "string") lastCard = c;
     act((b) => hold(b, dest, c));
+  }
+  // The role card (PB7): undefined closed, null adding a role, else the role open.
+  let card = $state<string | null | undefined>(undefined);
+  // A role's layout (PB13): its name on the heading opens the list and the editor.
+  let layoutOf = $state<string | null>(null);
+  const layoutWords = (role: string) => {
+    const sc = table.seats?.plan().seats.find((x) => x.id === role)?.screens?.[0] ?? "";
+    return SHIPPED_LAYOUTS.find((l) => l.file === sc)?.label.replace(/ \(.*\)$/, "") ?? ws?.layouts?.find((d) => d.id === sc)?.label ?? sc;
+  };
+  const asks = (role: string) => table.seats?.requests().filter((q) => q.seat === role).length ?? 0;
+  // The clean output link (PB8, design 9): copied, never opened here.
+  let copiedOut = $state<string | null>(null);
+  function copyOut(key: string, href: string) {
+    navigator.clipboard?.writeText(href).catch(() => {});
+    copiedOut = key;
+    setTimeout(() => (copiedOut = copiedOut === key ? null : copiedOut), 1500);
+  }
+  // The line card's choices (PB5): a kind, a particular card from the stack's list, or words typed now.
+  const cards = $derived(st.cards ?? []);
+  let ownWords = $state<Dest | null>(null);
+  function cardValue(c: HoldCard): string {
+    if (typeof c === "string") return c;
+    const i = cards.findIndex((x) => x.words === c.text);
+    return i >= 0 ? `card:${i}` : "own";
+  }
+  function pickCard(dest: Dest, v: string) {
+    if (v === "own") return void (ownWords = dest);
+    ownWords = null;
+    if (v.startsWith("card:")) {
+      const c = cards[Number(v.slice(5))];
+      if (c) chooseCard(dest, { text: c.words });
+    } else chooseCard(dest, v as HoldCard);
   }
 
   // Dragging: a source's dot onto a destination; a screen onto a role (move) or another screen (swap). Every drag has
@@ -148,7 +226,7 @@
 
   // The lines, drawn over the board from each source's dot to what it reaches. Measured after layout.
   let root: HTMLElement | undefined = $state();
-  let paths = $state<{ key: string; d: string; held: boolean; faint: boolean; mid: { x: number; y: number }; dest: Dest; role: string; screen?: string }[]>([]);
+  let paths = $state<{ driving?: boolean; key: string; d: string; held: boolean; faint: boolean; mid: { x: number; y: number }; dest: Dest; role: string; screen?: string }[]>([]);
   let drag = $state<string | null>(null);
   function measure() {
     if (!root) return;
@@ -175,7 +253,7 @@
       const cx = (sx + x1) / 2;
       const role = el.dataset.role ?? "";
       const screen = el.dataset.screen;
-      out.push({ key: dest, d: `M${sx},${sy} C${cx},${sy} ${cx},${y1} ${x1},${y1}`, held: !!board.all || (!!line?.held && !isLayer), faint: layered && !isLayer, mid: { x: cx, y: (sy + y1) / 2 }, dest, role, ...(screen ? { screen } : {}) });
+      out.push({ driving: board.driving === dest, key: dest, d: `M${sx},${sy} C${cx},${sy} ${cx},${y1} ${x1},${y1}`, held: !!board.all || (!!line?.held && !isLayer), faint: layered && !isLayer, mid: { x: cx, y: (sy + y1) / 2 }, dest, role, ...(screen ? { screen } : {}) });
     }
     paths = out;
     const ad = armed?.kind === "source" ? (dotAt(armed.id) ?? liveDot) : liveDot;
@@ -216,6 +294,33 @@
   let copied = $state(false);
 </script>
 
+{#snippet cardCtl(dest: Dest, label: string, held: HoldCard)}
+  {@const v = ownWords === dest ? "own" : cardValue(held)}
+  <select aria-label="Holding card for {label}" data-card={dest} onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} onchange={(e) => pickCard(dest, (e.currentTarget as HTMLSelectElement).value)} value={v}>
+    <option value="plain">Plain ({cards.filter((c) => c.kind === "plain").length})</option>
+    <option value="joke">A joke ({cards.filter((c) => c.kind === "joke").length})</option>
+    <option value="blank">Dark</option>
+    <option value="own">My own words…</option>
+    {#each [["plain", "Plain cards"], ["joke", "Jokes"]] as [kind, head] (kind)}
+      <optgroup label={head}>
+        {#each cards as c, i (i)}{#if c.kind === kind}<option value={`card:${i}`}>{c.words}</option>{/if}{/each}
+      </optgroup>
+    {/each}
+  </select>
+  {#if v === "own"}
+    <!-- svelte-ignore a11y_autofocus -->
+    <input class="own" aria-label="Words for {label}'s screens" data-card-words={dest} placeholder="Stand by" value={typeof held === "object" ? held.text : ""} autofocus onclick={(e) => e.stopPropagation()} onkeydown={(e) => (e.stopPropagation(), e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur())} onchange={(e) => { const t = (e.currentTarget as HTMLInputElement).value.trim(); if (t) chooseCard(dest, { text: t }); }} />
+  {/if}
+{/snippet}
+
+{#snippet steerCtl(dest: Dest, mode: "theirs" | "read")}
+  <button type="button" class="quiet steer" class:read={mode === "read"} data-steer={dest} data-steer-mode={mode} onclick={(e) => (e.stopPropagation(), act((b) => setSteer(b, dest, mode === "read" ? "theirs" : "read")))} title={mode === "read" ? "Read only: it follows you and takes no input. Press for Theirs." : "Theirs: the player has the screen's own controls, within what you sent. Press for Read only."}>{mode === "read" ? "Read only" : "Theirs"}</button>
+  {#if mode === "read"}
+    {#if board.driving === dest}<button type="button" class="pri" data-let-go={dest} onclick={(e) => (e.stopPropagation(), act((b) => drive(b, null)))}>Let go</button>
+    {:else}<button type="button" class="quiet" data-drive={dest} onclick={(e) => (e.stopPropagation(), startDriving(dest))} title="Drive it: your chart becomes its picture, drawn as its role knows it">Drive</button>{/if}
+  {/if}
+{/snippet}
+
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <section class="sb" bind:this={root} aria-label="Switchboard" onkeydown={key} data-switchboard data-armed={armed ? `${armed.kind}:${armed.id}` : undefined}>
   <header class="top">
@@ -225,6 +330,7 @@
     {:else}
       <button type="button" class="pri" data-go-on-air onclick={() => table.start()}>Go on air</button>
     {/if}
+    {#if board.driving}<span class="driving" data-driving={board.driving}>You are driving {destName(board.driving)} <button type="button" class="quiet" data-let-go onclick={() => act((b) => drive(b, null))}>Let go</button></span>{/if}
     <span class="grow"></span>
     <button type="button" data-board-undo disabled={!st.can_undo} onclick={() => table.undo()} title="Take back the last change to what screens show (Ctrl Z)">Undo</button>
     <button type="button" data-board-redo disabled={!st.can_redo} onclick={() => table.redo()} title="Ctrl Shift Z">Redo</button>
@@ -241,6 +347,7 @@
           {board}
           {bookmarks}
           roles={st.roles}
+          layouts={[...SHIPPED_LAYOUTS.filter((l) => l.file).map((l) => ({ id: l.file, label: l.label })), ...(ws?.layouts ?? []).map((d) => ({ id: d.id, label: d.label }))]}
           bind:editing
           markHere={ws?.markHere}
           onchange={(next) => setPlaybook(next)}
@@ -267,6 +374,21 @@
       </article>
       {/if}
       <Playbook {pb} {board} {bookmarks} roles={st.roles} bind:pageId bind:folded {selected} armed={armed?.kind === "source" && armed.id !== "live" ? armed.id : null} onchange={setPlaybook} onselect={(id) => ((selected = id), (editing = false))} onfire={firePreset} ondrag={dragPreset} />
+      {#if revealNote}<p class="sub" role="status" data-reveal-note>{revealNote}</p>{/if}
+      {#if justSent().length}
+        <section class="just" aria-label="Just now" data-just-now>
+          <h4>Just now</h4>
+          <ol>
+            {#each justSent() as j (j.id)}
+              <li data-just={j.id}>
+                <span class="jt">{"off" in j.shown ? "" : (j.shown.title ?? "the opening place")} <span class="sub">to {destName(j.dest)} · {j.at}</span></span>
+                {#if ws}<button type="button" class="quiet" data-just-keep={j.id} onclick={() => keepSent(j)} title="Keep it as a preset on this page">Keep</button>{/if}
+                <button type="button" class="quiet" data-just-again={j.id} onclick={() => (noteSent(j.shown, j.dest), act((b) => send(b, j.dest, j.shown, "live")))} title="Send it again">Again</button>
+              </li>
+            {/each}
+          </ol>
+        </section>
+      {/if}
     </div>
 
     <div class="dests">
@@ -275,15 +397,20 @@
         {#if st.link}
           <button type="button" data-copy-link onclick={() => (navigator.clipboard?.writeText(st.link!).catch(() => {}), (copied = true), setTimeout(() => (copied = false), 1500))}>{copied ? "Link copied" : "Copy the players' link"}</button>
           <a href={st.link} target="_blank" rel="noopener" data-players-link={st.link}>Open a screen here</a>
+          <button type="button" data-otc-toggle aria-expanded={otc} onclick={() => (otc = !otc)}>On this computer…</button>
         {/if}
-        {#if onopenseats}<button type="button" data-open-seats onclick={onopenseats}>Roles…</button>{/if}
+        {#if table.seats}<button type="button" data-add-role aria-expanded={card === null} onclick={() => (card = card === null ? undefined : null)}>+ Add a role</button>{:else if onopenseats}<button type="button" data-open-seats onclick={onopenseats}>Roles…</button>{/if}
       </header>
+      {#if otc && st.link}<OnThisComputer roles={st.roles} linkOf={(r) => table.links(r)[0]?.href} onclose={() => (otc = false)} />{/if}
+      {#if card === null && table.seats}<RoleCard {table} seats={table.seats} role={null} onclose={() => (card = undefined)} />{/if}
 
       <div class="everyone" class:layer={board.over.length > 0} data-dest="everyone" data-role="" role="button" tabindex="0" onclick={pressDest} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && pressDest(e)}>
         <span><b>Everyone</b> · <span data-dest-shows>{board.over.length ? `${words(board.over[board.over.length - 1]!)}, over the set-up` : evText}</span></span>
         <span class="acts">
           {#if board.over.length}<button type="button" data-lift onclick={(e) => (e.stopPropagation(), act(lift))} title="Take this off; every screen goes back to what it had">Lift</button>{/if}
+          {@render steerCtl("everyone", steerOf(board, ""))}
           <button type="button" class="quiet" data-hold="everyone" aria-pressed={!!board.lines.everyone?.held} onclick={(e) => (e.stopPropagation(), toggleHold("everyone", ""))}>{board.lines.everyone?.held ? "Release" : "Hold"}</button>
+          {#if board.lines.everyone?.held}{@render cardCtl("everyone", "Everyone", board.lines.everyone.held)}{/if}
         </span>
       </div>
 
@@ -292,36 +419,48 @@
         {@const sh = showing(board, r.id)}
         <section class="role" data-role-id={r.id}>
           <div class="rhead" class:held={sh.held} data-dest={`role:${r.id}`} data-role={r.id} role="button" tabindex="0" onclick={pressDest} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && pressDest(e)}>
-            <span><b>{r.label}</b>{#if r.sealed}<span class="sub"> · sealed</span>{/if}</span>
+            <span
+              >{#if table.seats}<button type="button" class="rname" data-role-open={r.id} aria-expanded={card === r.id} title="The role card: name, what it knows, layout, links and more" onclick={(e) => armed || (e.stopPropagation(), (card = card === r.id ? undefined : r.id))}><b>{r.label}</b></button>{:else}<b>{r.label}</b>{/if}{#if r.sealed}<span class="sub"> · sealed</span>{/if}{#if board.redirects[r.id]}<span class="sub" data-redirected> · to {roles.find((x) => x.id === board.redirects[r.id])?.label ?? board.redirects[r.id]}'s screens</span>{/if}{#if asks(r.id)}<span class="asks" data-role-asks={r.id} title="Requests waiting: open the role card">{asks(r.id)} asking</span>{/if}{#if table.seats && !r.sealed}<button type="button" class="lchip" data-role-layout-chip={r.id} aria-expanded={layoutOf === r.id} title="The layout this role's screens open" onclick={(e) => armed || (e.stopPropagation(), (layoutOf = layoutOf === r.id ? null : r.id))}>{layoutWords(r.id)} ▾</button>{/if}</span
+            >
             <span class="sub" data-dest-shows>{own ? sh.text : sh.held ? sh.text : `with Everyone`}</span>
             <span class="acts">
               {#if own && !own.held && own.before !== undefined}<button type="button" class="quiet" data-back={`role:${r.id}`} onclick={(e) => (e.stopPropagation(), act((b) => back(b, `role:${r.id}`)))} title="What it had before this send">Back</button>{/if}
               {#if own && !own.for_hold}<button type="button" class="quiet" data-rejoin={`role:${r.id}`} onclick={(e) => (e.stopPropagation(), act((b) => rejoin(b, `role:${r.id}`)))}>With Everyone</button>{/if}
+              {@render steerCtl(`role:${r.id}`, steerOf(board, r.id))}
               <button type="button" class="quiet" data-hold={`role:${r.id}`} aria-pressed={!!own?.held} onclick={(e) => (e.stopPropagation(), toggleHold(`role:${r.id}`, r.id))}>{own?.held ? "Release" : "Hold"}</button>
-              {#if own?.held}
-                <select aria-label="Holding card for {r.label}" data-card={`role:${r.id}`} onclick={(e) => e.stopPropagation()} onchange={(e) => chooseCard(`role:${r.id}`, (e.currentTarget as HTMLSelectElement).value as HoldCard)} value={typeof own.held === "string" ? own.held : "plain"}>
-                  <option value="plain">Awaiting transmission</option>
-                  <option value="joke">A joke</option>
-                  <option value="blank">Dark</option>
-                </select>
-              {/if}
+              {#if own?.held}{@render cardCtl(`role:${r.id}`, r.label, own.held)}{/if}
             </span>
           </div>
+          {#if card === r.id && table.seats}<RoleCard {table} seats={table.seats} role={r.id} onclose={() => (card = undefined)} />{/if}
+          {#if layoutOf === r.id && table.seats}<LayoutPicker seats={table.seats} role={r.id} {ws} {session} {live} onclose={() => (layoutOf = null)} />{/if}
           {#each r.screens as [id, s] (id)}
             {@const mineLine = board.lines[`screen:${id}`]}
             {@const ss = showing(board, r.id, id)}
             <div class="screen" class:held={ss.held} class:armed={armed?.kind === "screen" && armed.id === id} data-dest={`screen:${id}`} data-role={r.id} data-screen={id} role="button" tabindex="0" onclick={pressDest} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && pressDest(e)}>
               <button type="button" class="grip" aria-label="Move {s.name}: press, then press a role, or another screen to swap" aria-pressed={armed?.kind === "screen" && armed.id === id} onpointerdown={(e) => (e.stopPropagation(), startDrag(e, { kind: "screen", id }))} onclick={(e) => e.stopPropagation()} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), e.stopPropagation(), (armed = armed ? null : { kind: "screen", id }))}>⠿</button>
-              <span class="sname"><b>{s.name}</b>{#if s.local}<span class="sub"> · this computer</span>{/if}</span>
+              <span class="sname"><b>{s.name}</b>{#if s.local}<span class="sub"> · this computer</span>{/if}{#if s.output}<span class="tag" data-output-screen> Output</span>{/if}</span>
               <span class="sub" data-dest-shows>Showing {ss.text}</span>
               <span class="acts">
                 {#if mineLine && !mineLine.for_hold}<button type="button" class="quiet" data-rejoin={`screen:${id}`} onclick={(e) => (e.stopPropagation(), act((b) => rejoin(b, `screen:${id}`)))}>Back with {r.label}</button>{/if}
+                {@render steerCtl(`screen:${id}`, steerOf(board, r.id, id))}
                 <button type="button" class="quiet" data-hold={`screen:${id}`} aria-pressed={!!mineLine?.held} onclick={(e) => (e.stopPropagation(), toggleHold(`screen:${id}`, r.id, id))}>{mineLine?.held ? "Release" : "Hold"}</button>
+                {#if mineLine?.held}{@render cardCtl(`screen:${id}`, s.name, mineLine.held)}{/if}
               </span>
             </div>
           {:else}
             <p class="sub none">No screen tonight.{#if st.link} {#each table.links(r.id).slice(0, 1) as l (l.href)}<a href={l.href} target="_blank" rel="noopener" data-role-link={r.id}>Open one</a>{/each}{/if}</p>
           {/each}
+          {#if st.link}
+            {@const join = table.links(r.id)[0]?.href}
+            {#if join}
+              <p class="sub out">
+                Stream {r.label}:
+                <button type="button" class="linkish" data-output-link={r.id} title="A screen with no controls at 16:9, for an OBS browser source; viewers see only what {r.label} knows" onclick={() => copyOut(r.id, outputLink(join))}>{copiedOut === r.id ? "copied" : "output link"}</button>
+                ·
+                <button type="button" class="linkish" data-output-clear={r.id} title="The same with no background, so the picture floats over your own scene" onclick={() => copyOut(`${r.id}:clear`, outputLink(join, true))}>{copiedOut === `${r.id}:clear` ? "copied" : "clear ground"}</button>
+              </p>
+            {/if}
+          {/if}
         </section>
       {/each}
     </div>
@@ -329,7 +468,7 @@
 
   <svg class="lines" aria-hidden="true">
     {#each paths as p (p.key)}
-      <path d={p.d} class:held={p.held} class:faint={p.faint} data-line={p.key} />
+      <path d={p.d} class:held={p.held} class:faint={p.faint} class:driving={p.driving} data-line={p.key} />
     {/each}
     {#if drag}<path d={drag} class="dragline" />{/if}
   </svg>
@@ -389,6 +528,41 @@
     padding: 3px 10px;
     cursor: pointer;
     transition: background var(--sse-motion-quick) var(--sse-ease);
+  }
+  .out {
+    margin: 2px 0 6px 16px;
+  }
+  .linkish {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    text-decoration: underline;
+  }
+  .linkish:hover:not(:disabled) {
+    background: transparent;
+    color: var(--sse-accent);
+  }
+  .tag {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sse-accent);
+  }
+  select[data-card] {
+    max-width: 13em;
+    padding: 3px 6px;
+  }
+  input.own {
+    font: inherit;
+    font-size: 13px;
+    color: var(--sse-ink);
+    background: var(--sse-ground-raised);
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    padding: 3px 8px;
+    width: 12em;
   }
   button:hover:not(:disabled) {
     background: var(--sse-ink);
@@ -494,6 +668,37 @@
     font-size: 13px;
   }
   .everyone,
+  .lchip {
+    margin-left: 8px;
+    font: inherit;
+    font-size: 12px;
+    padding: 0 6px;
+    border: var(--sse-line) solid var(--sse-rule);
+    border-radius: var(--sse-radius);
+    background: transparent;
+    color: var(--sse-ink-muted);
+  }
+  .rname {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-decoration: underline dotted var(--sse-rule);
+    text-underline-offset: 3px;
+  }
+  .rname:hover:not(:disabled) {
+    background: transparent;
+    color: var(--sse-accent);
+  }
+  .asks {
+    margin-left: 8px;
+    font-size: 12px;
+    padding: 0 6px;
+    border: var(--sse-line) solid var(--sse-accent);
+    border-radius: var(--sse-radius);
+    color: var(--sse-accent);
+  }
   .rhead,
   .screen {
     display: flex;
@@ -600,6 +805,52 @@
     transform: rotate(45deg);
     background: var(--sse-accent);
     border-color: var(--sse-accent);
+  }
+  .just {
+    margin-top: 14px;
+    border-top: var(--sse-line) solid var(--sse-rule);
+    padding-top: 6px;
+  }
+  .just h4 {
+    margin: 0 0 4px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sse-ink-muted);
+    font-weight: normal;
+  }
+  .just ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .just li {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .jt {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lines path.driving {
+    stroke: var(--sse-accent);
+    stroke-width: 2.5;
+  }
+  .driving {
+    font-size: 13px;
+    color: var(--sse-accent-ink, var(--sse-accent));
+  }
+  .steer.read {
+    border-color: var(--sse-ink);
+    color: var(--sse-ink);
   }
   .lozenge::after {
     content: "";

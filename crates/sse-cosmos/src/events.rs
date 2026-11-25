@@ -61,7 +61,8 @@ pub struct EventParams {
     pub grb_cell_pc: f64,
     pub grb_bin_myr: f64,
     /// Close-encounter bins (Myr) and the passage distance inside which an Oort-like
-    /// cloud is shaken into a comet shower (pc; about 10,000 au, Hills 1981).
+    /// cloud is shaken into a comet shower (pc; about 10,000 au, our reading of
+    /// Hills 1981, whose 10^4 au is the comets' semimajor axis, not a stated miss distance).
     pub encounter_bin_myr: f64,
     pub shower_pc: f64,
     /// Arm crossings: the path is sampled every `arm_step_myr`, and a site is in an arm

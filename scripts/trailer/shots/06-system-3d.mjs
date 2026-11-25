@@ -12,17 +12,16 @@ export default {
     await d.click(page.getByRole("button", { name: "3D", exact: true }));
     const view = page.locator("[aria-roledescription='3D chart']");
     await view.waitFor();
-    await d.hold(2500);
+    await d.hold(2000);
     await d.glide({ x: 1100, y: 500 }, 600);
     await page.mouse.down();
     await d.glide({ x: 800, y: 420 }, 2500);
     await page.mouse.up();
     await d.hold(1000);
-    const vault = view.locator("[data-body]").filter({ has: page.locator("text=Vault") }).first();
-    const vaultAny = (await vault.count()) ? vault : view.locator("[data-body]").nth(4);
-    await d.click(vaultAny);
-    await d.click(view.getByRole("button", { name: "Moons of Vault ›" }));
-    await d.caption("Into a planet's own frame", "Moons orbit the planet, not the star.");
-    await d.hold(3500);
+    // A click on a world flies in to its close-up, in its own frame with its moons (24 Nov).
+    const pin = view.locator(".pin").filter({ hasText: /^Vault/ }).first();
+    await d.caption("Into a planet's own frame", "Click a world and the camera flies in: its moons orbit it, not the star.");
+    await d.click((await pin.count()) ? pin : view.locator(".pin").nth(4));
+    await d.hold(2100);
   },
 };

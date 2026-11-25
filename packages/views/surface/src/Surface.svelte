@@ -21,8 +21,8 @@
 
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { constant, DEFAULT_VIEW, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
+  import { constant, DEFAULT_VIEW, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { airFactsOf, airFromOptics, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params, follow }: { ctx?: ViewContext; scene?: SystemScene; params: Record<string, Json>; follow?: PlayerContext } = $props();
@@ -49,7 +49,7 @@
 
   // ── The world: map tiles, landmarks, air, star ─────────────────────────────────────────────
   /** The world as drawn, with (on the GM's screen) what its clock needs: its spin, its year and what goes round the star. */
-  type World = LandingWorld & { air: Air | null; spin_s?: number; orbit_s?: number; orbiter?: string };
+  type World = LandingWorld & { air: Air | null; spin_s?: number; orbit_s?: number; orbiter?: string; host_lsun?: number; orbit_m?: number };
   let tiles = $state<SurfaceTile[] | null>(null);
   let landmarks = $state<Landmark[]>([]);
   let world = $state<World | null>(null);
@@ -91,6 +91,7 @@
       let star_k = 0;
       let star_r = 0;
       let star_m = 0;
+      let star_l = 0;
       // The body going round the star: the world itself, or the planet a moon circles (its year sets the seasons).
       let orbiter = sub.address;
       for (let i = 0; host && i < 6; i++) {
@@ -99,6 +100,8 @@
           star_k = h["star.effective_temperature"] as number;
           star_r = Number(h["body.radius"] ?? 0);
           star_m = Number(h["body.mass"] ?? 0);
+          // Its light: the kernel's luminosity, else Stefan and Boltzmann's from its size and temperature.
+          star_l = typeof h["star.luminosity"] === "number" ? (h["star.luminosity"] as number) : 4 * Math.PI * star_r * star_r * constant("sigma_SB") * star_k ** 4;
           break;
         }
         dist = Number(h["orbit.semi_major_axis"] ?? dist);
@@ -132,8 +135,15 @@
         ...(spin ? { spin_s: tiltDeg > 90 ? -Math.abs(spin) : spin } : {}),
         ...(gm > 0 && orbitA > 0 ? { orbit_s: 2 * Math.PI * Math.sqrt((orbitA * orbitA * orbitA) / gm) } : {}),
         orbiter,
+        ...(star_l > 0 ? { host_lsun: star_l / constant("L_sun") } : {}),
+        ...(orbitA > 0 ? { orbit_m: orbitA } : {}),
       };
       landerPick = untrack(() => partyHere) ? "party" : suggestLander(world.pressure_bar, world.t_k);
+      // The aurora over the site (VP-AU7): the same plan as the Body globe's, from read_field and this air.
+      auroraPlan = null;
+      void loadAurora(ctx!.session, sys, sub, { radius_m: radius, scale_height_m: air?.scale_height_m, composition: af?.composition }).then((v) => {
+        if (g === gen) auroraPlan = v?.plan ?? null;
+      });
       const lm: Landmark[] = marks.get(key) ?? (await ctx!.session.surfaceLandmarks(sys, sub.address).then((r) => (r.ok ? r.landmarks : [])));
       if (g !== gen) return;
       marks.set(key, lm);
@@ -151,8 +161,18 @@
       if (phase !== "choose") takeOff();
       const near = landmarks.find((l) => Math.abs(l.lat_deg - asked.lat_deg) < 0.05 && Math.abs(l.lon_deg - asked.lon_deg) < 0.05);
       site = { lat: asked.lat_deg, lon: asked.lon_deg, label: near ? (near.name ?? near.original_name) : "" };
+      // The link's hour and lander, when it carries them (a bookmark or a Playbook preset of a whole landing, LR5).
+      if (asked.lander === "party" ? partyHere : (STOCK_LANDERS as readonly string[]).includes(asked.lander ?? "")) landerPick = asked.lander!;
+      askedTime = asked.time ?? null;
       ctx!.workspace.landing_site = null;
     });
+  });
+  // The hour a link asked for is set once the world's clock at the site is known.
+  let askedTime = $state<string | null>(null);
+  $effect(() => {
+    const t = TIMES.find((x) => x.id === askedTime);
+    if (!t || !clock) return;
+    untrack(() => ((askedTime = null), setLocal(t.local)));
   });
 
   // ── The map (Chart) ───────────────────────────────────────────────────────────────────────
@@ -245,6 +265,8 @@
     });
   });
   const seaNow = $derived<LandingSea | null>(watching ? (show?.sea ?? null) : seaRead);
+  // The liquid's own numbers (W-sea2 to W-sea4), read once per sea; the words say what the kernel has not sent yet.
+  const seaOptics = $derived(seaNow?.optics ? readSeaOptics(seaNow.optics) : null);
 
   // ── The ground round the site ─────────────────────────────────────────────────────────────
   let phase = $state<"choose" | "loading" | "flying" | "down">("choose");
@@ -295,9 +317,14 @@
   function skip() {
     toGround();
   }
-  /** Down: facing on along the way the lander came in (from the west), or where the GM is looking. */
+  /**
+   * Down: a few of its own heights west of the lander, facing it, so the ship that came down is in frame (LR6); or
+   * where the GM is standing.
+   */
+  const landerH = $derived(plan ? landerHeightOf(plan.lander.mass_kg) : 0);
   function toGround(pose?: LandingShow["pose"]) {
-    walk = pose ? { x: pose.x_m, y: pose.y_m, yaw: pose.yaw, pitch: pose.pitch } : { x: 0, y: 0, yaw: 0, pitch: -0.05 };
+    const back = Math.max(12, 3 * landerH);
+    walk = pose ? { x: pose.x_m, y: pose.y_m, yaw: pose.yaw, pitch: pose.pitch } : { x: -back, y: 0, yaw: 0, pitch: Math.atan2(landerH * 0.4 - eyeM, back) };
     phase = "down";
   }
   function takeOff() {
@@ -335,6 +362,16 @@
   let using = $state<"" | "gpu" | "canvas">("");
   let reason = $state("");
   let built = false;
+  // The lander drawn on the ground (LR6): what was last set, and for the page's marks whether its lamps are lit.
+  let landerSet = "";
+  let landerShown = $state<"" | "lit" | "dark">("");
+  /** A floodlamp's colour temperature (a warm white LED): a picture choice, fudge register "The lander on the ground". */
+  const LAMP_K = 4000;
+  // The lander's lamps (LR6): the GM's switch on the walk pad; lit only once the sun is near the horizon.
+  let lamps = $state(false);
+  let hullLight = 0;
+  /** The lit hull's brightness after the eye adapts to it: a mid grey (fudge register, "The lander on the ground"). */
+  const HULL_GREY = 0.35;
   $effect(() => {
     if (!canvas || using) return;
     if (String(params.tier ?? "auto") === "canvas") return void ((using = "canvas"), (reason = "canvas tier chosen"));
@@ -376,17 +413,81 @@
   let hour = $state(-30);
   // The world's own clock (Land part 2): its star's hour and declination at the time being viewed, from its spin and
   // its place on its orbit; the GM can shift the hour from there. Without a known spin, the hour is the GM's choice.
+  // `shift` is in the world's own local hours (a 24th of its solar day, 15° of its turn), so 6 is a quarter turn.
   let shift = $state(0);
   const clock = $derived.by(() => {
     if (watching || !world || !site) return null;
     const orb = world.orbiter ? scene!.subjects.find((x) => x.address === world!.orbiter) : undefined;
     return sunAt({ tilt_deg: world.tilt_deg, orbit_phase_deg: orb?.orbit?.phase_deg ?? 0, ...(world.spin_s ? { spin_s: world.spin_s } : {}), ...(world.orbit_s ? { orbit_s: world.orbit_s } : {}), t_s: ctx!.workspace.now_yr * constant("yr_julian"), lon_deg: site.lon });
   });
+  // The stars over the site at night (True): the kernel's sky from this system, turned onto the site's sky round the
+  // same pole as the sun (night-sky.ts), read once per system. The eye adapts to the light about it, so they show
+  // when the sky is dark.
+  const STAR_LIMIT = 6.5;
+  const SQUARE: SiteSkyFrame = { to_galactic: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] };
+  let skyRead = $state<{ system: string; stars: SiteSkyStar[]; frame: SiteSkyFrame } | null>(null);
+  $effect(() => {
+    const sys = scene?.system;
+    if (!sys || !ctx || look !== "true" || skyRead?.system === sys) return;
+    untrack(() =>
+      void (async () => {
+        // From this system's own place when the kernel knows it; otherwise the Sun's sky, laid square on the system's
+        // frame (its turn against the galaxy is not on record: fudge register, "Stars over the site at night").
+        const ask = { limit_mag: STAR_LIMIT, band: "V", bands: ["B", "V"] };
+        let r = await ctx!.session.skyFromHere({ ...ask, observer: sys });
+        if (!r.ok) r = await ctx!.session.skyFromHere(ask);
+        const sky = r.ok ? (r.sky as { frame?: unknown; stars?: { dir: number[]; luminosity_lsun: number; distance_pc: number; teff_k?: number; components?: { teff_k: number }[] }[] }) : null;
+        if (!sky?.stars) return;
+        const frame = sky.frame && typeof sky.frame === "object" && Array.isArray((sky.frame as SiteSkyFrame).to_galactic) ? (sky.frame as SiteSkyFrame) : SQUARE;
+        skyRead = { system: sys, frame, stars: sky.stars.map((x) => ({ dir: [x.dir[0]!, x.dir[1]!, x.dir[2]!], luminosity_lsun: x.luminosity_lsun, distance_pc: x.distance_pc, teff_k: x.teff_k ?? x.components?.[0]?.teff_k ?? 5800 })) };
+      })(),
+    );
+  });
+  const siteStars = $derived.by(() => {
+    if (!skyRead || !world || !site || !world.host_lsun || !world.orbit_m) return null;
+    const orb = world.orbiter ? scene!.subjects.find((x) => x.address === world!.orbiter) : undefined;
+    const list = starsOverSite({ stars: skyRead.stars, frame: skyRead.frame, tilt_deg: world.tilt_deg, orbit_phase_deg: orb?.orbit?.phase_deg ?? 0, sun_hour_deg: sunHour, lat_deg: site.lat, retrograde: (world.spin_s ?? 0) < 0, host_lsun: world.host_lsun, orbit_m: world.orbit_m });
+    const dirs = new Float32Array(list.length * 3);
+    const light = new Float32Array(list.length * 3);
+    list.forEach((x, i) => {
+      const c = linear(thermalColour(x.teff_k));
+      dirs.set(x.dir, i * 3);
+      light.set([c[0] * x.share, c[1] * x.share, c[2] * x.share], i * 3);
+    });
+    return { key: `${skyRead.system}|${site.lat}|${site.lon}|${sunHour}|${sunDecl}`, dirs, light };
+  });
+  // The exposure last drawn at, for the page's marks (tests read the eye opening up at night).
+  let seenExposure = $state(6);
+  // The aurora's plan for this world (aurora.ts), and its words as last drawn. Long exposure, the default in every True
+  // view (Alex, 24 Nov), until VP1's shared Exposure control carries the choice here.
+  let auroraPlan = $state.raw<AuroraPlan | null>(null);
+  let auroraSays = $state("");
   const wrapDeg = (d: number) => ((((d + 180) % 360) + 360) % 360) - 180;
-  const sunHour = $derived(watching ? (show?.hour_deg ?? hour) : clock ? wrapDeg(clock.hour_deg + shift) : hour);
+  const sunHour = $derived(watching ? (show?.hour_deg ?? hour) : clock ? wrapDeg(clock.hour_deg + shift * 15) : hour);
   const sunDecl = $derived(watching ? (show?.decl_deg ?? 0) : (clock?.declination_deg ?? 0));
   /** Local solar time as a clock face (12:00 is noon), for the note. */
   const localTime = $derived(`${String(Math.floor((((sunHour / 15 + 12) % 24) + 24) % 24)).padStart(2, "0")}:${String(Math.floor((((((sunHour / 15 + 12) % 24) + 24) % 24) % 1) * 60)).padStart(2, "0")}`);
+  /** Local solar hour now, 0 to 24 (12 is noon). */
+  const localHour = $derived((((sunHour / 15 + 12) % 24) + 24) % 24);
+  // Quick choices of the hour (LR2): the GM can set a landing in daylight with a press. Each moves the world's own clock
+  // to the next such hour (or the hand-set hour without a known spin); nothing else about the world changes.
+  const TIMES = [
+    { id: "dawn", label: "Dawn", local: 6.5 },
+    { id: "midday", label: "Midday", local: 12 },
+    { id: "dusk", label: "Dusk", local: 17.5 },
+    { id: "night", label: "Night", local: 0 },
+  ] as const;
+  function setLocal(local: number) {
+    const target = (local - 12) * 15;
+    if (clock) {
+      const base = wrapDeg(clock.hour_deg);
+      // Forward from now when that fits on the slider, else back.
+      let h = ((((target - base) / 15) % 24) + 24) % 24;
+      if (h > 12) h -= 24;
+      shift = Math.round(h * 4) / 4;
+    } else hour = Math.max(-100, Math.min(100, target));
+  }
+  const nearTime = $derived(TIMES.find((t) => Math.min(Math.abs(localHour - t.local), 24 - Math.abs(localHour - t.local)) < 0.5)?.id ?? null);
   let flyU = 0;
 
   // ── The table's view of this landing (the landing run-through) ──────────────────────────────
@@ -406,7 +507,7 @@
       phase: p,
       flight_s: flightS,
       ...(p === "flying" ? { fly_u: Math.round(flyU * 1000) / 1000 } : {}),
-      ...(p === "down" ? { pose: roundPose({ x_m: walk.x, y_m: walk.y, yaw: walk.yaw, pitch: walk.pitch, drone }) } : {}),
+      ...(p === "down" ? { pose: roundPose({ x_m: walk.x, y_m: walk.y, yaw: walk.yaw, pitch: walk.pitch, drone, lamps }) } : {}),
       sea: seaRead,
       hour_deg: Math.round(sunHour * 100) / 100,
       decl_deg: Math.round(sunDecl * 100) / 100,
@@ -447,6 +548,7 @@
       if (l.pose) {
         walk = { x: l.pose.x_m, y: l.pose.y_m, yaw: l.pose.yaw, pitch: l.pose.pitch };
         drone = l.pose.drone;
+        lamps = !!l.pose.lamps;
       }
       if (l.phase === "choose" && (phase === "flying" || phase === "down")) takeOff();
       // Keep pace with the GM's flight: a second or more apart, jump to where the GM is.
@@ -534,6 +636,18 @@
     const air = world.air;
     if (using === "gpu" && gpu) {
       buildMeshes();
+      // The lander where it touched down (LR6), on the ground there; its lamps lit once the sun is near the horizon.
+      const lights = lamps && sun[2] < 0.1;
+      const lk = phase === "down" && landerH > 0 ? `${landerH}|${lights}` : "";
+      if (lk !== landerSet) {
+        landerSet = lk;
+        const lamp = lights ? lampRadiance(landerH, world.host_lsun ?? 0, world.orbit_m ?? 0) : 0;
+        const c = linear(thermalColour(LAMP_K));
+        gpu.setLander(lk ? { at_m: [0, 0], ground_m: groundAt(0, 0).z, heading_deg: 0, height_m: landerH, lights: lamp > 0, lamp: [c[0] * lamp, c[1] * lamp, c[2] * lamp] } : null);
+        landerShown = lk ? (lamp > 0 ? "lit" : "dark") : "";
+        // A lit hull is the brightest large thing in view: the eye adapts to it (and the stars fade, as they do).
+        hullLight = lamp > 0 ? (LANDER_HULL_ALBEDO * lamp * LAMP_SPILL) / Math.PI : 0;
+      }
       gpu.draw({
         look,
         eye,
@@ -548,11 +662,14 @@
         scale_height_m: air?.scale_height_m ?? 8000,
         radius_m: world.radius_m,
         sun_radius: world.sun_radius,
-        exposure: 6,
+        // The eye adapts: a dark sky opens it up until the stars show (night-sky.ts).
+        exposure: (seenExposure = look === "true" ? Math.min(adaptedExposure(6, { sun_z: sun[2], tau_green: air ? air.zenith_depth[1] : 0, radius_m: world.radius_m, scale_height_m: air?.scale_height_m ?? 8000 }), hullLight > 0 ? HULL_GREY / hullLight : Infinity) : 6),
+        ...(look === "true" && siteStars ? { stars: siteStars } : {}),
+        ...(look === "true" && auroraPlan?.layers.length && world.host_lsun && world.orbit_m ? { aurora: skyAurora(auroraPlan, world.host_lsun, world.orbit_m) } : {}),
         ground: tok("--sse-ground"),
         ink: tok("--sse-ink"),
         contour_m: contourFor(eye[2] - siteZ),
-        ...(seaNow ? { sea: { wave_m: seaNow.wave_m, period_s: seaNow.period_s, dir_rad: seaNow.wind_m_s < 0 ? Math.PI : 0, gravity_m_s2: world.gravity_m_s2 ?? plan?.gravity_m_s2 ?? 9.8, tide_m: seaNow.tide_m, time_s: now / 1000 } } : {}),
+        ...(seaNow ? { sea: { wave_m: seaNow.wave_m, period_s: seaNow.period_s, dir_rad: seaNow.wind_m_s < 0 ? Math.PI : 0, gravity_m_s2: world.gravity_m_s2 ?? plan?.gravity_m_s2 ?? 9.8, tide_m: seaNow.tide_m, time_s: now / 1000, ...(seaOptics ? { optics: seaOptics.optics } : {}) } } : {}),
       });
     } else if (using === "canvas" && line) drawLines(line, eye, fwd);
   }
@@ -563,6 +680,14 @@
       raf = requestAnimationFrame(frame);
     }
   });
+  /** The aurora for this frame: its plan at the site, lifted for the view's exposure, and its words kept for the note. */
+  function skyAurora(p: AuroraPlan, host_lsun: number, orbit_m: number) {
+    const flux = (host_lsun * constant("L_sun")) / (4 * Math.PI * orbit_m * orbit_m);
+    const a = auroraSky(p, world!.radius_m, { lat_deg: site!.lat, lon_deg: site!.lon }, "long", flux, seenExposure);
+    const words = a ? `${p.note} ${a.says}` : "";
+    if (words !== auroraSays) auroraSays = words;
+    return a;
+  }
   const contourFor = (alt: number) => (alt > 20000 ? 500 : alt > 3000 ? 100 : alt > 300 ? 20 : 10);
 
   /** No GPU: the ground ahead as lines of its profile (the line-terrain style), nearest drawn last. */
@@ -667,7 +792,14 @@
   );
 </script>
 
-<section class="surface" bind:this={host} data-surface data-watching={watching || undefined} data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""}>
+{#snippet hourControls()}
+  <span class="time-presets" role="group" aria-label="Time of day">
+    {#each TIMES as t (t.id)}<button type="button" aria-pressed={nearTime === t.id} onclick={() => setLocal(t.local)} data-time={t.id}>{t.label}</button>{/each}
+  </span>
+  {#if clock}<label>Local hours from now <input type="range" min="-12" max="12" step="0.25" bind:value={shift} data-hour /> <span data-local-time>{localTime}</span></label>{:else}<label>Time of day <input type="range" min="-100" max="100" step="1" bind:value={hour} data-hour /> <span data-local-time>{localTime}</span></label>{/if}
+{/snippet}
+
+<section class="surface" bind:this={host} data-surface data-watching={watching || undefined} data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""} data-stars={siteStars ? siteStars.dirs.length / 3 : 0} data-exposure={Math.round(seenExposure)} data-lander-drawn={landerShown || undefined}>
   {#if watching && !show}
     <p class="quiet" data-surface-waiting>Waiting for the game master to send a landing.</p>
   {:else if !subject || subject.kind === "star"}
@@ -721,6 +853,7 @@
                 {#each plan.hazards as z (z.kind)}<li class={z.level} data-hazard={z.kind} data-level={z.level}><span class="lv">{z.level}</span> {z.kind}: {z.why}</li>{/each}
               </ul>
               <details><summary>How the site was read</summary><ul>{#each plan.site.why as y, i (i)}<li>{y}</li>{/each}{#each plan.descent.outcome.why as y, i (i)}<li>{y}</li>{/each}</ul></details>
+              {#if !watching}<div class="times" data-times>{@render hourControls()}</div>{/if}
               {#if watching}<p class="quiet" data-watch-phase>{phase === "loading" ? "Reading the ground…" : "Waiting for the game master to land."}</p>{:else}<button class="land" onclick={land} disabled={phase === "loading"} data-land>{phase === "loading" ? "Reading the ground…" : worst === "danger" ? "Land anyway" : "Land"}</button>{/if}
               {#if groundFailed}<p class="quiet">{groundFailed}</p>{/if}
             {/if}
@@ -759,7 +892,8 @@
           <button onpointerdown={() => press("ArrowDown", true)} onpointerup={() => press("ArrowDown", false)} onpointerleave={() => press("ArrowDown", false)} aria-label="Walk back">▼</button>
           <button onpointerdown={() => press("ArrowRight", true)} onpointerup={() => press("ArrowRight", false)} onpointerleave={() => press("ArrowRight", false)} aria-label="Turn right">▶</button>
           <label><input type="checkbox" bind:checked={drone} data-drone /> Drone</label>
-          {#if clock}<label>Hours from now <input type="range" min="-180" max="180" step="1" bind:value={shift} data-hour /></label>{:else}<label>Time of day <input type="range" min="-100" max="100" step="1" bind:value={hour} data-hour /></label>{/if}
+          <label title="The lander's floodlamps, lit once the sun is down"><input type="checkbox" bind:checked={lamps} data-lamps /> Lamps</label>
+          {@render hourControls()}
           <button onclick={takeOff} data-take-off>Take off</button>
         </div>
       {/if}
@@ -768,8 +902,9 @@
     <p class="note quiet" data-ground-note>
       The ground is the kernel's to {near ? Math.round(near.spacing_m) : "?"} m (its fact floor here); finer than that within {fmtM(DETAIL_HALF)} of the site it is decoration sized to the site's roughness. You can walk {fmtM(WALK_HALF)} from where you landed; further means taking off.
       {#if world && !world.air}No air: the sky is black and nothing dims the far ground.{:else}Sky from single scattering in the kernel's air optics.{/if}
-      {#if seaNow}{seaNow.line ?? ""}{seaNow.line ? "." : ""} The sea is drawn as a few wave trains of that height and period round the wind; the tide stands {Math.abs(seaNow.tide_m).toFixed(2)} m {seaNow.tide_m >= 0 ? "above" : "below"} mean sea level.{/if}
-      {#if watching}The sun stands where the game master's clock puts it, local time {localTime}.{:else if clock}The sun stands where {subject?.label}'s spin and its place on its orbit put it at the time in view: local time {localTime}{clock.solar_day_s === Infinity ? " (it keeps one face to its star)" : ""}, declination {sunDecl.toFixed(1)}°{shift ? `, moved ${Math.round(shift / 15)} h by hand` : ""}.{:else}The world's spin is not on record, so the hour is chosen by hand and the sun stands as at an equinox.{/if} Drawn on {reason}.
+      {#if look === "true" && auroraSays}<span data-aurora-sky>{auroraSays}</span>{/if}
+      {#if seaNow}{seaNow.line ?? ""}{seaNow.line ? "." : ""} {seaOptics ? `${seaWords(seaOptics.optics, seaOptics.missing)} ` : ""}{seaOptics?.optics.trains ? `The sea is drawn as the kernel's own ${seaOptics.optics.trains.length} wave trains for this liquid` : "The sea is drawn as a few wave trains of that height and period round the wind"}{seaOptics?.optics.whitecap_fraction ? `, white with froth over ${Math.round(seaOptics.optics.whitecap_fraction * 100)}% of it` : ""}; the tide stands {Math.abs(seaNow.tide_m).toFixed(2)} m {seaNow.tide_m >= 0 ? "above" : "below"} mean sea level.{/if}
+      {#if watching}The sun stands where the game master's clock puts it, local time {localTime}.{:else if clock}The sun stands where {subject?.label}'s spin and its place on its orbit put it at the time in view: local time {localTime}{clock.solar_day_s === Infinity ? " (it keeps one face to its star)" : ""}, declination {sunDecl.toFixed(1)}°{shift ? `, moved ${shift > 0 ? "+" : ""}${shift} local h by hand` : ""}.{:else}The world's spin is not on record, so the hour is chosen by hand and the sun stands as at an equinox.{/if} Drawn on {reason}.
     </p>
     {/if}
   {/if}
@@ -932,5 +1067,20 @@
   }
   .quiet {
     color: var(--sse-ink-muted, var(--sse-ink));
+  }
+  .times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    align-items: center;
+    margin: 6px 0;
+  }
+  .time-presets {
+    display: inline-flex;
+    gap: 2px;
+  }
+  .time-presets button[aria-pressed="true"] {
+    background: var(--sse-ink);
+    color: var(--sse-ground);
   }
 </style>

@@ -21,10 +21,7 @@ The proven core asked for these values for MF2. The field ledger reads the magne
 
 ## Not done
 
-- **Ionic water (`h2o.ionic_fluid`) keeps its recalled 1e4 S/m.** No numeric conductivity was found in the readable sources:
-  - Knudson et al. 2012 PRL gives reflectivities about 0.1 to 0.22, which Nellis's Viewpoint says correspond to "poor metal" conductivities.
-  - The Redmer–Knudson slides show the values only on plots.
-  - Redmer et al. 2011 Icarus itself was not reached.
+- **Ionic water (`h2o.ionic_fluid`) now reads 1.5e4 S/m** (MP34 batch, 24 Nov), from Millot et al. 2018 (Nature Physics, OSTI copy): about 150 S/cm on reverberating shocks at 70 to 180 GPa below about 5000 K, the states closest to an ice giant's interior. The note on the row also gives the single-shock Hugoniot plateau (about 30 S/cm above 30 GPa and 2000 K) and Yakushev 1998 (2000 S/m at 75 GPa). No Rust reader takes this field yet, so no golden moved. Earlier misses: Knudson et al. 2012 gives only reflectivities; the Redmer and Knudson slides show values only on plots; Redmer et al. 2011 was not reached.
 - **Salinity dependence away from 15 °C needs PSS-78's full eq. 9.** Its constant k was not legible in the OCR, so only the r_T fit at salinity 35 and the 15 °C definition are on the row.
 
 All values were read on 24 Nov 2026 from fetched text and are unverified.

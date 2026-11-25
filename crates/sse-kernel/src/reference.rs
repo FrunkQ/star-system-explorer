@@ -177,6 +177,7 @@ impl Kernel {
         let r = self.dispatch(Request::ResolvedSystem {
             system: SYSTEM.into(),
             at_s: None,
+            branch: None,
             tiles: Some(
                 tiles
                     .iter()

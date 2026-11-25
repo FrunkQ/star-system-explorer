@@ -12,7 +12,8 @@ import type { Json } from "./json.ts";
 import type { Lens } from "./lens.ts";
 import type { PlayerScene } from "./player-scene.ts";
 
-export type Tier = "still" | "gpu-high" | "gpu-basic" | "canvas" | "text";
+/** Drawing tiers, richest first after `still`. `gpu-ultra` (VP4): passes that hammer the GPU, reached only when the speed probe places the device there (renderer probe.ts). */
+export type Tier = "still" | "gpu-ultra" | "gpu-high" | "gpu-basic" | "canvas" | "text";
 
 export interface TopicQuery {
   addresses?: string[];
@@ -70,6 +71,10 @@ export interface Workspace {
   /** The party's ship (party.ts): Voyages starts where it is, Land lands it. Kept with the campaign. */
   party?: import("./party.ts").PartyShip | null;
   setParty?(p: import("./party.ts").PartyShip | null): void;
+  /** The readings chosen by pressing a unit (figures.ts `withChoice`), per kind and scale class; kept with the campaign. */
+  unit_choices?: import("./figures.ts").UnitChoices;
+  /** Keep a reading for a kind and what it is about (null puts the scheme's back). */
+  setUnitChoice?(kind: string, about: import("./figures.ts").About | undefined, reading: string | null): void;
   /** Where the GM put each pack overlay (overlay.ts), by overlay id; kept with the campaign. */
   overlay_anchors?: Record<string, import("./overlay.ts").OverlayAnchor>;
   /** Place an overlay (null takes it off the map). */
@@ -78,6 +83,8 @@ export interface Workspace {
   view?: import("./view-controls.ts").ViewChoice;
   /** A view says the viewer turned it by hand: the choice becomes Free. */
   turned?(): void;
+  /** A view sets the viewer's choice for them, as a press of its own asks (the size comparison's Gallery opens in True). */
+  pickView?(c: import("./view-controls.ts").ViewChoice): void;
   /** The time being viewed (the ruler's stroke); views derive and draw at it. */
   now_yr: number;
   /**
@@ -109,10 +116,12 @@ export interface Workspace {
   markHere?: () => import("./bookmark.ts").Bookmark;
   /** The Playbook (PB3): the GM's presets in chapters, pages and sections, kept with the campaign. */
   playbook?: import("./playbook.ts").Playbook;
+  /** Layouts the GM made (PB13): players' screen documents with `mine.` ids, kept with the campaign. */
+  layouts?: import("./screen.ts").ScreenDoc[];
   /** The table, for the Switchboard (PB2): the board, roles and screens, and the ways to change what they show. */
   table?: import("./board.ts").TablePort;
   /** A site a link asked to land at (`~surface?site=lat,lon`): the Land screen takes it once its world is read, then clears it. */
-  landing_site?: { body: string; lat_deg: number; lon_deg: number } | null;
+  landing_site?: { body: string; lat_deg: number; lon_deg: number; time?: "dawn" | "midday" | "dusk" | "night"; lander?: string } | null;
   /** Values applied by intents in this session, keyed "address#field", shown until scenes come from the kernel. */
   applied: Record<string, { value: Json; display: string; event_id: string }>;
   /** Bumped whenever an intent is applied, so views can refresh history. */
@@ -164,6 +173,8 @@ export interface ViewContext {
   describe?(address: string): void;
   /** The catalogued Solar System (packs/base-sol, read once by the shell), for reference worlds; null where it cannot be read. */
   solSheet?(): Promise<import("./sol.ts").SolSheet | null>;
+  /** Range rings to draw (RK12): who holds the weapon (a body's address), its name, and the rings from `rangeRings`. Absent or empty: none. A pack's weapons feed it; the chart draws it under the HUD (layer `range`). */
+  rangeRings?(): readonly { holder: string; label: string; rings: readonly import("./range-rings.ts").RangeRing[] }[];
 }
 
 /** What a shell offers views about style documents. Presentation only: kept on the device, never in the universe. */
@@ -196,6 +207,10 @@ export interface PlayerContext {
   landing?(): import("./landing.ts").LandingShow | null;
   /** This seat's own reads of that landing's world (granted for it alone). Absent on a sealed seat, which has no kernel. */
   ground?: import("./landing.ts").LandingGround;
+  /** Which of the part's own controls the screen has on (AT13); absent: every declared control is on. Read with `controlOn`. */
+  controls?: Readonly<Record<string, boolean>>;
+  /** What the GM sent this screen now (seat.ts `Shown`), or null. Read it in an effect: it changes. */
+  shown?(): import("./seat.ts").Shown | null;
 }
 
 export interface ViewHandle<S = SystemScene> {
@@ -221,6 +236,8 @@ export interface ViewModule<S = SystemScene, C = ViewContext> {
   box?: "fill" | "content";
   /** The standard view controls (interface style rule 12): what it draws in each view style and from where. Absent: not a diagram, no controls. */
   controls?: import("./view-controls.ts").ViewControlsSpec;
+  /** The part's own presses a layout can switch on or off (AT13): sort, select, step... Absent: it draws none. */
+  switchable?: readonly import("./part-controls.ts").PartControl[];
   mount(el: HTMLElement, ctx: C, scene: S): ViewHandle<S>;
 }
 

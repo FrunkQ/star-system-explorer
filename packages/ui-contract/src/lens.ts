@@ -61,6 +61,11 @@ export interface Lens {
   tools: ToolId[];
   /** Cost class of the heaviest layer, so the device edge rule applies. */
   cost: Cost;
+  /**
+   * Which name layer labels the chart (NM6, naming design 4.3): "designation" for a hard-science chart, "local" for
+   * the chart a native would draw, any other layer a pack names. Absent: the common name, else the designation.
+   */
+  names?: string;
   /** Where it came from: shipped, the GM's own, a pack, or a player data view. Not saved in packs. */
   origin?: "shipped" | "mine" | "pack" | "players";
 }
@@ -208,6 +213,7 @@ export function checkLens(l: unknown): string[] {
       if (c?.fields !== undefined && (!Array.isArray(c.fields) || c.fields.some((f) => typeof f !== "string"))) e.push("card fields must be a list of field names");
     }
   if (!COSTS.includes(o.cost as Cost)) e.push(`cost must be one of ${COSTS.join(", ")}`);
+  if (o.names !== undefined && (typeof o.names !== "string" || !ID.test(o.names))) e.push("names must be a name layer, such as designation, common or local");
   return e;
 }
 
@@ -217,6 +223,7 @@ export function saved(l: Lens): Lens {
   if (l.description) out.description = l.description;
   if (l.data) out.data = l.data;
   if (l.view_as) out.view_as = l.view_as;
+  if (l.names) out.names = l.names;
   return out;
 }
 

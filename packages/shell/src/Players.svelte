@@ -11,7 +11,8 @@
   recorded facts, and its Scanned control stands in for the GM's button.
 -->
 <script lang="ts">
-  import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
+  import FillScreen from "./FillScreen.svelte";
+  import { checkPlayerScene, checkScreen, screenKey, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus, type Shown } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
@@ -27,6 +28,9 @@
   import { themeCss } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES, PLAYER_THEMES, filterLayers } from "../../skins/player/src/index.ts";
   import { FilterChain, Segmented } from "../../chart-grammar/src/index.ts";
+  import { deliver, deliverOut } from "../../chart-grammar/src/deliver.ts";
+  import { resolveDelivery, type DeliveryPlan } from "../../ui-contract/src/index.ts";
+  import { untrack } from "svelte";
   import vocabDoc from "./documents/vocab.plain.json";
   import { SHIPPED } from "./symbols.svelte.ts";
   import { allStyles } from "./styles.svelte.ts";
@@ -35,7 +39,7 @@
   import PerfReadout from "./PerfReadout.svelte";
   import { perf } from "../../ui-contract/src/index.ts";
   import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
-  import { landingShowOf, type LandingGround, type PartyShip } from "../../ui-contract/src/index.ts";
+  import { groundGrant, landingShowOf, type LandingGround, type PartyShip } from "../../ui-contract/src/index.ts";
   import { DEFAULT_JOIN, joinLine, joinWordsOf, type JoinWords, type SeatBrand } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
@@ -54,6 +58,9 @@
       if (!raw) throw new Error("No screen has been handed over from the composer on this device.");
       return JSON.parse(raw) as ScreenDoc;
     }
+    // A layout the GM made (PB13) travels with the session; the shipped ones are files beside the shell.
+    const made = asked?.startsWith("mine.") ? (replicaRef?.layouts ?? []).find((d) => (d as unknown as ScreenDoc).id === asked) : undefined;
+    if (made) return structuredClone(made) as unknown as ScreenDoc;
     const file = asked && /^[a-z0-9._-]+\.json$/i.test(asked) ? asked : "players.screen.json";
     const r = await fetch(new URL(`documents/${file}`, document.baseURI));
     if (!r.ok) throw new Error(`No screen document ${file}.`);
@@ -89,12 +96,29 @@
     sceneErrors = bad ? [bad] : [];
     scene = r.scene;
     sceneHash = r.hash;
+    await refreshPlaces(view);
+  }
+  // Boxes that hold a place (PB13 part 2): each place drawn for this screen's audience, as the main scene is.
+  let places = $state.raw<Record<string, PlayerScene>>({});
+  async function refreshPlaces(view: string | undefined) {
+    const scopes = [...new Set((checked?.ok ? checked.screen.mounts : []).flatMap((m) => (m.place ? [m.place.scope] : [])))];
+    if (!scopes.length) return void (Object.keys(places).length && (places = {}));
+    const next: Record<string, PlayerScene> = {};
+    for (const sc of scopes) {
+      const r = await session!.scene(sc, { audience, ...(view ? { data_view: view } : {}) });
+      if (r.ok) next[sc] = r.scene;
+    }
+    places = next;
   }
   async function useScreen(s: ViewSession) {
     await useScreenWith(observeOf(s.stack().base)?.setup.views.map((v) => v.id), s.device()?.tier ?? "standard");
   }
+  // Two loads in flight (the role's layout named, then its document arriving): only the last one asked is used.
+  let screenAsk = 0;
   async function useScreenWith(views: string[] | undefined, tier: string) {
+    const ask = ++screenAsk;
     const doc = await loadScreen();
+    if (ask !== screenAsk) return;
     checked = checkScreen(doc, PLAYER_STACK, views, { registry: allStyles(), tier: tier as "standard" });
     screenDoc = doc;
   }
@@ -112,9 +136,13 @@
   $effect(() => {
     const w = watching;
     if (!sessionReady || !session) return;
-    session.grantLanding?.(w ? { system: w.system, body: w.body } : null);
+    // A landing's world, or the world an "In orbit" send names when the table knows it (LR4): that one map, no more.
+    const sh = shown && "scope" in shown ? shown : null;
+    const known = new Set((scene?.subjects ?? []).map((x) => x.address));
+    session.grantLanding?.(w ? { system: w.system, body: w.body } : groundGrant(sh, (a) => known.has(a)));
   });
   const landingNow = () => watching;
+  const shownNow = () => shown ?? null;
   const ground: LandingGround | undefined = isSealed
     ? undefined
     : {
@@ -134,7 +162,12 @@
   let live = $state<Record<string, boolean> | undefined>(undefined);
   const say = (t: string) => joinLine(t, { seat: seatLabel, ...(brand ? { brand: brand.name } : {}) });
   const embed = $derived(seatKnown ? embedMode(asksEmbed, framing, embedList) : asksEmbed && framing !== "unframed" ? ({ mode: "waiting" } as const) : ({ mode: "page" } as const));
-  const bare = $derived(embed.mode !== "page");
+  // A clean output (PB8, design 9): `?clean=1`, no controls, a fixed 16:9 picture for a stream; `&ground=none` drops the
+  // page's ground so the picture floats over the streamer's own scene. A screen like any other: it joins its role.
+  const clean = new URLSearchParams(location.search).get("clean") === "1";
+  const clearGround = clean && new URLSearchParams(location.search).get("ground") === "none";
+  const bare = $derived(embed.mode !== "page" || clean);
+  if (clearGround) document.body.classList.add("sse-clear-ground");
   let link = $state<ReplicaStatus>({ state: "joining" });
   let stateHash = $state("");
   // How this screen reached the room: the site's relay (other devices) or this browser.
@@ -150,7 +183,7 @@
     return broadcastHub(room!, id);
   }
   // V5: asking the GM. A request becomes an event only if the GM approves it.
-  let replicaRef: Pick<PlayerReplica, "request"> | null = null;
+  let replicaRef: (Pick<PlayerReplica, "request"> & { layouts?: PlayerReplica["layouts"] }) | null = null;
   let mine = $state<OwnRequest[]>([]);
   let ask = $state("");
   let askError = $state("");
@@ -164,7 +197,8 @@
   // This screen (Switchboard, PB1): an id kept in this tab, so a reload comes back as the same screen, and a name the
   // GM sees on the board (`?name=`, else a short one from the id).
   const screenId = (() => {
-    const key = `sse4.screen.${room ?? "alone"}`;
+    // One id per room on this device, and one per part of a split window (PB9), whose parts share the tab's storage.
+    const key = screenKey(room, new URLSearchParams(location.search).get("part"));
     try {
       const had = sessionStorage.getItem(key);
       if (had && /^[a-z0-9-]{4,40}$/.test(had)) return had;
@@ -176,7 +210,8 @@
     }
   })();
   const screenName = (new URLSearchParams(location.search).get("name") ?? "").slice(0, 40) || `Screen ${screenId.slice(4).toUpperCase()}`;
-  const hello = { id: screenId, name: screenName, role: seatId };
+  // A window the GM opened on one of their own displays (PB9) says so: the board marks it "this computer".
+  const hello = { id: screenId, name: screenName, role: seatId, ...(new URLSearchParams(location.search).get("clean") === "1" ? { output: true } : {}), ...(new URLSearchParams(location.search).get("local") === "1" ? { local: true } : {}) };
   // What this screen is shown: its own line if the GM gave it one, else its seat's, else the table's.
   const shownFor = (r: PlayerReplica) => r.shownFor(seatId, screenId);
   if (isSealed) {
@@ -245,16 +280,24 @@
         link = st;
         if (st.state === "live" || st.state === "offline") stateHash = st.state_hash;
       };
+      let layoutKey = "";
       replica.onSession = (s) => {
         session = s;
         sessionReady = true;
         shown = shownFor(replica);
         party = partyOf(replica.party());
         perfEdge = s.device();
+        layoutKey = layoutNow();
         void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
+      };
+      // The role's layout (PB7 role card, PB13): a change of it, or of the made layout it names, reloads the screen.
+      const layoutNow = () => {
+        const asked = (shown && "scope" in shown ? shown.screen : undefined) ?? seatScreen;
+        return `${asked ?? ""}|${asked?.startsWith("mine.") ? JSON.stringify(replica.layouts.find((d) => (d as unknown as ScreenDoc).id === asked) ?? null) : ""}`;
       };
       replica.onUpdate = () => {
         const mine = replica.seats().find((x) => x.id === seatId);
+        if (!new URLSearchParams(location.search).get("screen")) seatScreen = mine ? (mine.screens?.[0] ?? null) : seatScreen;
         if (JSON.stringify(mine?.live ?? null) !== JSON.stringify(live ?? null)) live = mine?.live;
         const ship = partyOf(replica.party());
         if (JSON.stringify(ship) !== JSON.stringify(party)) party = ship;
@@ -265,6 +308,11 @@
           const now = sent && "scope" in sent ? sent.screen : undefined;
           // Another screen named: load it before the scene is built for it.
           if (was !== now && session) return void useScreen(session).then(refresh).catch((e) => (sceneErrors = [String(e)]));
+        }
+        const key = layoutNow();
+        if (key !== layoutKey && session && screenDoc) {
+          layoutKey = key;
+          return void useScreen(session).then(refresh).catch((e) => (sceneErrors = [String(e)]));
         }
         if (session && screenDoc) void refresh();
       };
@@ -289,6 +337,11 @@
   }
 
   let selection = $state<string | null>(null);
+  // Read only (PB3b): the GM steers this screen; it watches and takes no input but sound.
+  // Words sent with what is shown (PB6): a card over the picture until the GM takes them back or the player puts it away.
+  const sayWords = $derived(shown && "scope" in shown && shown.say ? shown.say : "");
+  let sayHidden = $state("");
+  const readOnly = $derived(!!shown && "scope" in shown && shown.steer === "read");
   // A send that names a thing (a bookmark's selection, PB3) selects it here, once per send, if this screen's scene has it.
   let focusSent = "";
   $effect(() => {
@@ -337,6 +390,29 @@
   });
   const layers = $derived(filterLayers(themeDoc.filters, { reducedMotion: media("(prefers-reduced-motion: reduce)"), off: !effects || media("(prefers-contrast: more)") }));
   const rootFx = $derived(layers.map((l) => l.root).join(" "));
+  // Screen delivery (atlas design 11A.4a, AT15a): the picture arrives and leaves in the look's own way. Power on when
+  // the screen first shows a picture or a hold is released; Arrive for each new send (in full the first time); Power
+  // off as the GM holds the screen or turns it off. A look with no deliveries just shows the picture, as before. A tap
+  // or a key finishes any delivery; reduced motion makes each a plain fade.
+  const reducedNow = () => media("(prefers-reduced-motion: reduce)");
+  const sendKey = $derived(shown && "scope" in shown ? JSON.stringify(shown) : "");
+  const picture = $derived(!!scene && !!checked?.ok && !(shown && "off" in shown) && embed.mode !== "refused");
+  let arrival = $state<DeliveryPlan | null>(null);
+  let pictureWasOn = false;
+  const sendsSeen = new Set<string>();
+  $effect(() => {
+    const on = picture;
+    const key = sendKey;
+    const look = themeDoc.delivery;
+    untrack(() => {
+      if (!on) return void (pictureWasOn = false);
+      if (look && !pictureWasOn) arrival = resolveDelivery(look, "power_on", { first: true, reducedMotion: reducedNow() });
+      else if (look && key && !sendsSeen.has(key)) arrival = resolveDelivery(look, "arrive", { first: true, reducedMotion: reducedNow() });
+      if (key) sendsSeen.add(key);
+      pictureWasOn = true;
+    });
+  });
+  const powerOff = () => (shown && "off" in shown && themeDoc.delivery ? resolveDelivery(themeDoc.delivery, "power_off", { reducedMotion: reducedNow() }) : null);
   $effect(() => {
     const root = document.documentElement;
     root.setAttribute("style", themeCss(theme, ALL_THEMES));
@@ -394,7 +470,7 @@
   });
 </script>
 
-<div class="page" class:bare style={rootFx} data-embed={embed.mode}>
+<div class="page" class:bare class:clean class:clear={clearGround} style={rootFx} data-embed={embed.mode} data-clean={clean ? "" : undefined}>
   {#if !bare}
   <header class="bar">
     {#if brand}<span class="brand" data-brand>{#if brand.logo}<img src={brand.logo} alt="" />{/if}{brand.name}</span>{/if}
@@ -445,10 +521,18 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p><p class="alpha" data-alpha>An alpha preview of what is coming. To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener">version 3 ›</a></p></main>
   {:else}
     {#key vocabId}
-      <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} bind:selection /></main>
+      <main class="grid" use:deliver={arrival} out:deliverOut|global={powerOff()} class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} shown={shownNow} still={clean} {places} bind:selection /></main>
+      {#if readOnly && !clean}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
     {/key}
+    {#if sayWords && sayHidden !== sayWords}
+      <!-- A Read aloud sent to screens (PB6, design 4.3): plain words on a card over the picture. The player may put it away; new words bring it back. -->
+      <aside class="say-card" data-say role="status" aria-live="polite">
+        <p>{sayWords}</p>
+        {#if !clean}<button type="button" class="say-hide" data-say-hide onclick={() => (sayHidden = sayWords)}>Put away</button>{/if}
+      </aside>
+    {/if}
   {/if}
-  {#if joined && scene && mayAsk && !bare && !watching && !(shown && "off" in shown)}
+  {#if joined && scene && mayAsk && !bare && !watching && !readOnly && !(shown && "off" in shown)}
     <section class="ask" aria-label="Ask the game master">
       <form onsubmit={(e) => (e.preventDefault(), askName())}>
         <label>Suggest a name for {target ? subjectName(target) : "the body in focus"} <input type="text" bind:value={ask} maxlength="40" disabled={link.state !== "live" || !target} /></label>
@@ -463,6 +547,7 @@
   {#if scene && !bare}<div class="soundbar"><LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.players" /><SoundControl scene={orbitScene(scene.scope, voicesFromPlayers(scene))} key="sound.players" /></div>{/if}
   <footer class="status" hidden={bare} data-state-hash={stateHash} data-scene-hash={sceneHash} data-sealed={isSealed || undefined} data-seat={joined ? seatId : undefined} data-audience={audience} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {isSealed ? "the game master's machine (sealed seat: this screen holds no seed and runs no kernel)" : joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for {seatLabel && seatId !== "table" ? `the seat ${seatLabel}, ` : ""}the {audience} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
+<FillScreen />
 {#if perfOn}
   <PerfReadout kernel="" edge={perfEdge} onclose={() => (perfOn = false)} />
 {/if}
@@ -500,6 +585,22 @@
   }
   .page.bare {
     grid-template-rows: 1fr;
+  }
+  /* The clean output: a 16:9 picture, letterboxed in whatever window the stream gives it, no pointer. */
+  .page.clean {
+    width: min(100vw, calc(100vh * 16 / 9));
+    height: min(100vh, calc(100vw * 9 / 16));
+    min-height: 0;
+    margin: auto;
+    overflow: hidden;
+    cursor: none;
+  }
+  .page.clear {
+    background: transparent;
+  }
+  :global(body.sse-clear-ground),
+  :global(html:has(body.sse-clear-ground)) {
+    background: transparent;
   }
   .bar {
     display: flex;
@@ -648,5 +749,56 @@
     .grid {
       padding: 12px;
     }
+  }
+  .say-card {
+    position: fixed;
+    left: 50%;
+    bottom: 64px;
+    transform: translateX(-50%);
+    width: min(640px, calc(100vw - 32px));
+    margin: 0;
+    padding: 16px 20px 12px;
+    background: var(--sse-ground-raised);
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    box-shadow: var(--sse-card-shadow);
+    z-index: 5;
+    animation: card-in var(--sse-motion) var(--sse-ease);
+  }
+  .say-card p {
+    margin: 0 0 8px;
+    font-family: var(--sse-font-display);
+    font-size: 20px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+  .say-hide {
+    font: inherit;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    background: transparent;
+    border: var(--sse-line) solid var(--sse-rule);
+    border-radius: var(--sse-radius);
+    padding: 2px 8px;
+    cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .say-card {
+      animation: none;
+    }
+  }
+  .steered {
+    position: fixed;
+    right: 16px;
+    bottom: 12px;
+    margin: 0;
+    padding: 3px 10px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--sse-ink-muted);
+    background: var(--sse-ground-raised);
+    border: var(--sse-line) solid var(--sse-rule);
+    border-radius: var(--sse-radius);
+    pointer-events: none;
   }
 </style>

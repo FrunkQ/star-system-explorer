@@ -52,7 +52,40 @@ export interface GivenStar {
  * Read a star's facts and activity from the kernel: a LiveStar, or why there is none. A star the resolved system
  * does not describe (an authored system) is taken from its scene facts when they give all three numbers.
  */
-export async function readLiveStar(session: StarReader, system: string, address: string, given: GivenStar = {}): Promise<LiveStar | string> {
+/** A world the kernel checks each mass ejection against (read_activity's targets: a circular orbit in the star's equator). */
+export interface ActivityTarget {
+  address: string;
+  distance_m: number;
+  period_s?: number;
+  /** Angle round the star at age zero, radians. */
+  phase_rad: number;
+}
+
+/**
+ * The worlds circling `star`, as read_activity's targets, from the resolved system's own orbit facts (the same facts
+ * the system views place planets by): distance the semi-major axis, period the kernel's (or Kepler's from the host's
+ * mass), and the angle at age zero wound back from the mean anomaly at the orbit's epoch.
+ */
+export function targetsFromFacts(facts: Record<string, Record<string, Json> | undefined>, star: string): ActivityTarget[] {
+  const out: ActivityTarget[] = [];
+  const hostMass = Number(facts[star]?.["body.mass"]);
+  for (const [address, f] of Object.entries(facts)) {
+    if (!f || address === star || f["orbit.host"] !== star) continue;
+    const a = Number(f["orbit.semi_major_axis"]);
+    if (!(a > 0)) continue;
+    const given = Number(f["orbit.period"] ?? f["orbit.period_s"]);
+    const period = given > 0 ? given : hostMass > 0 ? 2 * Math.PI * Math.sqrt(a ** 3 / (constant("G") * hostMass)) : NaN;
+    const m = Number(f["orbit.mean_anomaly_at_epoch"] ?? 0) || 0;
+    const epoch = Number(f["orbit.epoch_s"] ?? 0) || 0;
+    const turn = 2 * Math.PI;
+    const phase = period > 0 ? m - (turn * (epoch % period)) / period : m;
+    out.push({ address, distance_m: a, ...(period > 0 ? { period_s: period } : {}), phase_rad: ((phase % turn) + turn) % turn });
+  }
+  return out;
+}
+
+/** `targets`: worlds to check each ejection against (hits and misses); "system" fills them from the system's own orbits. */
+export async function readLiveStar(session: StarReader, system: string, address: string, given: GivenStar = {}, targets?: ActivityTarget[] | "system"): Promise<LiveStar | string> {
   const rs = await session.resolvedSystem(system);
   if (!rs.ok) return rs.message;
   const f = rs.result.facts[address] ?? {};
@@ -64,7 +97,8 @@ export async function readLiveStar(session: StarReader, system: string, address:
   if (!(teff > 0 && mass > 0 && radius > 0)) return "The kernel has no temperature, mass and radius for this star yet, so there is nothing true to draw.";
   const lum = 4 * Math.PI * radius * radius * constant("sigma_SB") * teff ** 4;
   const age_s = age > 0 ? age : 4.6e9 * constant("yr_julian");
-  const star = { address, mass_kg: mass, radius_m: radius, luminosity_w: lum, teff_k: teff, age_s };
+  const aim = targets === "system" ? targetsFromFacts(rs.result.facts as Record<string, Record<string, Json>>, address) : targets;
+  const star = { address, mass_kg: mass, radius_m: radius, luminosity_w: lum, teff_k: teff, age_s, ...(aim?.length ? { targets: aim as unknown as Json[] } : {}) };
   const r = await session.readActivity({ stars: [star], at_s: age_s, window: { from_s: age_s - 2 * constant("day"), to_s: age_s + constant("yr_julian"), min_energy_j: 1e24 } });
   if (!r.ok) return r.message;
   const one = r.stars[0] as unknown as { activity: Record<string, Json>; moment: Record<string, Json>; flares?: { flares?: Flare[] } };
@@ -157,3 +191,29 @@ export function drawLiveStar(out: { width: number; data: Uint8ClampedArray }, s:
  * shows for a moment; the universe clock is not moved.
  */
 export const STAR_SECONDS_PER_SECOND = constant("day") / 4;
+
+/**
+ * Differential rotation (VP-S4): a star's surface turns faster at its equator than near its poles. The Sun's rate is
+ * ω(φ) = A + B sin²φ + C sin⁴φ with A = 14.713, B = −2.396, C = −1.787 degrees a day (Snodgrass and Ulrich 1990, from
+ * Doppler shifts). Other stars take the same shape, scaled to their own spin (a stand-in: Barnes et al. 2005 find the
+ * shear depends weakly on temperature): the share of the equator's rate at latitude φ.
+ */
+export const DIFFERENTIAL_ROTATION = { a: 14.713, b: -2.396, c: -1.787 };
+export function rateShare(lat_deg: number): number {
+  const s2 = Math.sin((lat_deg * Math.PI) / 180) ** 2;
+  const { a, b, c } = DIFFERENTIAL_ROTATION;
+  return (a + b * s2 + c * s2 * s2) / a;
+}
+
+/**
+ * The star's spots at time t, each carried round at its own latitude's rate: placed at the star's present (the
+ * kernel's moment), they drift against the equator's turn (which `turnAt` follows) by the difference in rate, so a
+ * high-latitude spot falls behind over the days. Without a known spin they stay put.
+ */
+export function spotsAt(s: LiveStar, t: number): Spot[] {
+  const p = Number(s.activity.rotation_period_s ?? 0);
+  const spots = spotsOf(s);
+  if (!(p > 0)) return spots;
+  const turns = (t - s.age_s) / p;
+  return spots.map((sp) => ({ ...sp, lon_deg: ((((sp.lon_deg + (rateShare(sp.lat_deg) - 1) * 360 * turns) % 360) + 360) % 360) }));
+}

@@ -5,29 +5,46 @@
   Letting go (or Enter after the arrow keys, or a typed figure) is one change. Esc puts it back.
 -->
 <script lang="ts">
-  import { readFigure, say, stretchTo, stripDomain, stripPos, stripStep, stripValue, aboutFor, type Depth, type Handle, type StripDot, type StripDomain } from "../../../ui-contract/src/index.ts";
+  import { readFigure, say, stretchTo, stripDomain, stripPos, stripStep, stripValue, aboutFor, type Depth, type Handle, type PartMark, type StripDot, type StripDomain } from "../../../ui-contract/src/index.ts";
 
   let {
     handle,
+    reading,
     value,
     dots,
     cls,
     depth,
     editable,
+    marks = [],
+    walls = [],
+    fromTime,
+    ontry,
     oncommit,
     onclose,
   }: {
     handle: Handle;
+    /** The reading to say figures in (the remembered choice). */
+    reading?: string;
     /** The value in SI, or null when the body has none yet. */
     value: number | null;
     dots: StripDot[];
     cls: string;
     depth: Depth;
     editable: boolean;
+    /** Labelled places along the line ("past 90 is backwards"). */
+    marks?: PartMark[];
+    /** Real limits at the line's end ("leaves the system" at a shape of 1): typing may pass one, dragging stops short. */
+    walls?: PartMark[];
+    /** A typed time turned into this value (a year into an orbit's size), or null where it cannot be. */
+    fromTime?: (si: number) => number | null;
+    /** Read-only on Explore: "Try changing it" opens an example what-if where the strip moves (ED7). */
+    ontry?: () => void;
     /** One change; resolves to null when it was applied, or the reason it was not. */
     oncommit: (si: number, how: { source: "computed" | "typed"; sig?: number }) => Promise<string | null>;
-    onclose: () => void;
+    /** Absent in a box, where the box closes as one. */
+    onclose?: () => void;
   } = $props();
+  const read = $derived(reading ?? handle.part.reading);
 
   const about = $derived(aboutFor(handle, cls));
   const sign = $derived(handle.part.signed && value !== null && value < 0 ? -1 : 1);
@@ -47,11 +64,11 @@
   let track: HTMLDivElement | undefined = $state();
 
   const shown = $derived(pencil ?? (value === null ? null : Math.abs(value)));
-  const said = $derived(shown === null ? null : say(shown, handle.part.kind, about, { depth, ...(held ? { hold: held } : {}), ...(typed && pencil === null ? { source: "typed" as const, sig: typed.sig } : {}) }));
+  const said = $derived(shown === null ? null : say(shown, handle.part.kind, about, { depth, reading: read, ...(held ? { hold: held } : {}), ...(typed && pencil === null ? { source: "typed" as const, sig: typed.sig } : {}) }));
   const markPos = $derived(shown === null ? null : stripPos(domain, shown));
   // Dots in order along the line; a name is written only where it does not run into the last one written.
   const placed = $derived.by(() => {
-    const out = dots.map((d) => ({ ...d, pos: stripPos(domain, d.si), text: say(Math.abs(d.si), handle.part.kind, about, { depth }).text, named: false })).sort((a, b) => a.pos - b.pos);
+    const out = dots.map((d) => ({ ...d, pos: stripPos(domain, d.si), text: say(Math.abs(d.si), handle.part.kind, about, { depth, reading: read }).text, named: false })).sort((a, b) => a.pos - b.pos);
     let last = -1;
     for (const d of out) if (d.pos - last >= 0.1) ((d.named = true), (last = d.pos));
     return out;
@@ -61,17 +78,19 @@
     const r = track!.getBoundingClientRect();
     return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
   }
+  // A wall at or past the line's end: dragging stops just short of it (typing may pass).
+  const stopAt = (v: number) => walls.reduce((x, w) => (w.at > domain.lo && x >= w.at ? domain.lo + (w.at - domain.lo) * 0.999 : x), v);
   let dragging = false;
   function down(e: PointerEvent) {
     if (!editable || busy) return;
     dragging = true;
     track!.setPointerCapture(e.pointerId);
-    held = shown !== null ? say(shown, handle.part.kind, about, { depth }).rung : undefined;
-    pencil = stripValue(domain, posAt(e));
+    held = shown !== null ? say(shown, handle.part.kind, about, { depth, reading: read }).rung : undefined;
+    pencil = stopAt(stripValue(domain, posAt(e)));
     problem = null;
   }
   function move(e: PointerEvent) {
-    if (dragging) pencil = stripValue(domain, posAt(e));
+    if (dragging) pencil = stopAt(stripValue(domain, posAt(e)));
   }
   async function up() {
     if (!dragging) return;
@@ -93,14 +112,17 @@
       if (pencil !== null) {
         pencil = null;
         held = undefined;
-      } else onclose();
+      } else if (onclose) onclose();
+      else return;
+      // The strip's Esc is the strip's: it never also clears the selection behind it.
       e.preventDefault();
+      e.stopPropagation();
       return;
     }
     if (!editable) return;
     if (e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowDown") {
       const from = pencil ?? shown ?? domain.lo;
-      if (held === undefined && shown !== null) held = say(shown, handle.part.kind, about, { depth }).rung;
+      if (held === undefined && shown !== null) held = say(shown, handle.part.kind, about, { depth, reading: read }).rung;
       pencil = stripStep(domain, from, e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : -1, e.shiftKey);
       e.preventDefault();
     } else if (e.key === "Enter" && pencil !== null) {
@@ -125,9 +147,22 @@
     }
     if (e.key !== "Enter") return;
     e.preventDefault();
-    const r = readFigure(entry, handle.part.kind);
+    const text = entry.trim();
+    // A bare number is in the unit the figure shows (a shape has none).
+    const bare = /^[-+−]?\d[\d.,]*(e[-+]?\d+)?$/i.test(text);
+    let r: ReturnType<typeof readFigure> = readFigure(bare && said?.unit ? `${text} ${said.unit}` : text, handle.part.kind);
+    if (!r.ok && bare && said && !said.unit) {
+      const x = Number(text.replace("−", "-").replace(",", "."));
+      if (Number.isFinite(x)) r = { ok: true, si: x, unit: "one", sig: text.replace(/^[-+−]?0*\.?0*/, "").replace(/[^\d]/g, "").length || 1, terms: 1 };
+    }
+    // An orbit's size takes a year too: "300 d" is the distance whose year that is.
+    if (!r.ok && fromTime) {
+      const t = readFigure(text, "time");
+      const si = t.ok ? fromTime(Math.abs(t.si)) : null;
+      if (t.ok && si !== null) r = { ...t, si };
+    }
     if (!r.ok) {
-      problem = r.as ? `${r.why}. Type a ${handle.part.kind}${handle.id === "orbit" ? " (turning a year into a distance comes with the Orbit box)" : ""}.` : r.why;
+      problem = r.as ? `${r.why}. Type a ${handle.part.kind}${fromTime ? " or a year" : ""}.` : r.why;
       return;
     }
     editing = false;
@@ -154,7 +189,7 @@
         {#if said}{said.number}{#if said.unit}<span class="unit">{said.unit.startsWith("°") || said.unit === "%" ? "" : " "}{said.unit}</span>{/if}{:else}none{/if}
       </button>
     {/if}
-    <button type="button" class="close" aria-label="Close the strip" onclick={onclose}>×</button>
+    {#if onclose}<button type="button" class="close" aria-label="Close the strip" onclick={onclose}>×</button>{/if}
   </div>
   <!-- svelte-ignore a11y_no_static_element_interactions (the mark inside is the slider; the line takes the pointer) -->
   <div
@@ -176,6 +211,12 @@
       <span class="dot" class:here={d.from === "here"} style="left: {d.pos * 100}%" title={`${d.label}: ${d.text}`} data-dot={d.label}></span>
       {#if d.named}<span class="dot-label" class:here={d.from === "here"} style="left: {d.pos * 100}%">{d.label}</span>{/if}
     {/each}
+    {#each [...marks, ...walls] as m (m.says)}
+      {@const wall = walls.includes(m)}
+      {@const p = stripPos(domain, m.at)}
+      <span class="tick" class:wall style="left: {p * 100}%" data-tick={m.says}></span>
+      <span class="tick-label" class:wall style="left: {p * 100}%; transform: translateX({p < 0.1 ? 0 : p > 0.9 ? -100 : -50}%)">{m.says}</span>
+    {/each}
     {#if markPos !== null}
       <span
         class="mark"
@@ -194,7 +235,8 @@
   </div>
   <p class="verdict" aria-live="polite">
     {#if problem}<span class="problem">{problem}</span>
-    {:else if !editable}Where this world sits among the reference worlds. Change it on the Build desk.
+    {:else if !editable}Where this world sits among the reference worlds.{#if ontry}
+        <button type="button" class="try" data-try onclick={ontry}>Try changing it</button>{:else} Change it on the Build desk.{/if}
     {:else if pencil !== null}Let go, or press Enter, to set it. Esc puts it back.
     {:else}Drag along the line, use the arrow keys (Shift for bigger steps), or press the figure to type a value in any unit.{/if}
   </p>
@@ -307,6 +349,26 @@
   .dot-label.here {
     color: var(--sse-ink-muted);
   }
+  .tick {
+    position: absolute;
+    top: 6px;
+    height: 16px;
+    border-left: var(--sse-line) solid var(--sse-ink-muted);
+  }
+  .tick.wall {
+    border-left: var(--sse-line-heavy) solid var(--sse-alert);
+  }
+  .tick-label {
+    position: absolute;
+    top: 30px;
+    font-size: 10px;
+    color: var(--sse-ink-muted);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .tick-label.wall {
+    color: var(--sse-alert);
+  }
   .mark {
     position: absolute;
     top: 4px;
@@ -330,17 +392,34 @@
     line-height: 1.4;
     color: var(--sse-ink-muted);
   }
+  .try {
+    margin-left: 4px;
+    padding: 2px 8px;
+    border: var(--sse-line) solid var(--sse-accent);
+    background: var(--sse-ground-raised);
+    color: var(--sse-accent-ink);
+    font: inherit;
+    cursor: pointer;
+  }
   .problem {
     color: var(--sse-accent-ink);
   }
-  @media (max-width: 420px) {
+  @media (max-width: 600px) {
+    /* A thumb-sized mark on a phone: a little bigger to see, and a 44 px square to touch (the touch target
+       guidelines' least) that leaves the reference names readable. */
     .track {
       height: 52px;
     }
     .mark {
-      width: 22px;
-      height: 28px;
-      margin-left: -11px;
+      top: 1px;
+      width: 18px;
+      height: 26px;
+      margin-left: -9px;
+    }
+    .mark::before {
+      content: "";
+      position: absolute;
+      inset: -9px -13px;
     }
   }
   @media (prefers-reduced-motion: reduce) {

@@ -74,9 +74,31 @@ The aim: heat capacity per place, so that coasts are mild and interiors harsh. A
 - **Reason:** a surveyed world with seas now takes its land and sea from its own height map instead of one global share.
 - **Unchanged:** the surface goldens. They build their climates directly, without the survey chain.
 
+## Part 2b (24 Nov 2026): currents as rules
+
+### What was built
+- **Eastern-boundary upwelling** (`formations::upwelling`, `weather_formations.currents`). Under the subtropical high, a sea place's nearness to a coast lying to the spin's east is exp(−d / `upwelling_km`), with d read along the parallel. That nearness cools the place by `upwelling_cooling_k` and is the only place the marine deck forms (Klein and Hartmann 1993). The open ocean and the far shore get no deck.
+- **Western boundary currents**: within `gyre_half_width_deg` of the Hadley edge, a sea place near a coast lying to the spin's west is warmed by `boundary_warming_k` × exp(−d / `boundary_km`).
+- On a backward-spinning world, east and west swap, so the upwelling and the warm currents move to the other coasts.
+- Worlds with no height map keep the old deck over every subtropical sea.
+
+### Tests
+- `sse-weather::marine_decks_sit_over_upwelling_coasts_and_flip_with_the_spin`: one continent from 0° to 40° E.
+  - Off its west coast: a deck and cold water.
+  - Off its east coast and mid-ocean: no deck.
+  - The warm current is off the east coast.
+  - A backward spin swaps the two coasts.
+
+## Part 2c (24 Nov 2026): evaporation from the sea column
+- `ebm::diagnose_two` passes the sea column's temperature to the moisture block. On a two-column world, each band's evaporation is now ρ C|U| q_sat(T_sea)(1 − rh), times the band's sea share. Single-column worlds keep the old path bit for bit.
+- Earth fixture: global evaporation and precipitation go from 0.86 to 0.84 m a year (about 1.0 measured). The summer sea is cooler than the band.
+
+### Goldens changed (parts 2b and 2c, on purpose; they ship in PR 418 alongside W-wind10)
+- **Changed:** `weather.json`, `weather-swap.json`, `weather-storms.json`, `surface-wear.json`, `surface-cover.json`, and the survey and weather lines of `contract.jsonl`.
+- **Reason:** on two-column worlds the sea now evaporates at its own temperature, which moves rain and therefore wear and cover. Marine decks now sit only over upwelling coasts where there is a map.
+- **Unchanged:** single-column worlds keep the old evaporation path bit for bit.
+
 ### Not yet (rest of part 2)
 - A cell's temperature from its distance to the coast, so land cells read the land column and coasts lean to the sea.
-- Evaporation from the sea column.
-- Current rules: western boundaries warm, eastern upwelling cold, marine decks only over upwelling. A retrograde fixture's currents flip.
 - The ITCZ lag from heat capacity.
 - Eyeball sea ice on locked worlds.

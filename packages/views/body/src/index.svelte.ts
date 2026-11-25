@@ -1,9 +1,10 @@
 import { mount, unmount } from "svelte";
-import type { ViewModule } from "../../../ui-contract/src/index.ts";
+import type { PlayerContext, PlayerScene, ViewModule } from "../../../ui-contract/src/index.ts";
 import { BODY_CONTROLS } from "./controls.ts";
 import { cutaway } from "../../cutaway/src/index.ts";
 import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
 import Body from "./Body.svelte";
+import PlayerOrbit from "./PlayerOrbit.svelte";
 
 /**
  * Body view (V6, handoff 8.2): the selected world as a globe drawn from its
@@ -35,6 +36,34 @@ export const body: ViewModule = {
   mount(el, ctx, scene) {
     const props = $state({ ctx, scene, params: ctx.params });
     const c = mount(Body, { target: el, props });
+    return {
+      update(s) {
+        props.scene = s;
+      },
+      dispose() {
+        void unmount(c);
+      },
+    };
+  },
+};
+
+/**
+ * In orbit, on a player's screen (landing run-through LR4): the world the GM's send names, turning below, from this
+ * seat's own kernel (its six map tiles, granted for that world alone). The world's own globe path, true colour, spin
+ * on, no cutaway and no controls. Players watch.
+ */
+export const playerBody: ViewModule<PlayerScene, PlayerContext> = {
+  id: "sse.view.body",
+  version: "0.1.0",
+  scene: "player",
+  box: "fill",
+  tiers: ["canvas", "gpu-basic"],
+  inputs: [{ addresses: [], quantity_kinds: [] }],
+  // One settings schema per view id: the GM's; a seat reads only tier and spin.
+  params: body.params,
+  mount(el, ctx, scene) {
+    const props = $state({ ctx, scene, params: ctx.params });
+    const c = mount(PlayerOrbit, { target: el, props });
     return {
       update(s) {
         props.scene = s;

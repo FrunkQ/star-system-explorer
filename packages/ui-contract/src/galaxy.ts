@@ -4,6 +4,8 @@
 // physics here: radii, abundances, rates, arm crests and green bands are the
 // kernel's own.
 
+import { sayNumber } from "./figures.ts";
+
 export interface GalaxyAsk {
   /** A named halo, or (with `cell`) one of that cell's catalogued haloes, `halo:N`. */
   halo?: string;
@@ -167,6 +169,8 @@ export interface SliceAsk {
   centre?: [number, number, number];
   extent_mpc: number;
   n: number;
+  /** With the cube's galaxies: the smallest halo drawn, solar masses (never below the pack's floor). */
+  galaxy_floor_msun?: number;
 }
 
 export interface WebSlice {
@@ -209,6 +213,23 @@ export interface WebCube {
     /** The room each parcel takes today as a share of the room it started in: over 1 in voids. */
     room: number[];
   };
+  model: string[];
+}
+
+/**
+ * The galaxies in a cube of the web (kernel `web_slice` with `cube` and `haloes`, V9w light from haloes): G2's haloes
+ * from the pack's floor up whose matter started inside the cube, moved by the cube's own step, each with its G3
+ * galaxy's stars and star formation then.
+ */
+export interface WebGalaxies {
+  t_gyr: number;
+  z: number;
+  now_gyr: number;
+  centre: [number, number, number];
+  extent: number;
+  galaxies: { position: [number, number, number]; halo_msun: number; stars_msun: number; sfr_msun_yr: number; quenched: boolean }[];
+  /** Smallest halo drawn, solar masses (pack `web_light.floor_msun`). */
+  galaxy_floor_msun: number;
   model: string[];
 }
 
@@ -441,4 +462,35 @@ export function overdensityWords(delta_l: number): string {
   const p = Math.round(Math.abs(delta_l) * 100);
   if (Math.abs(delta_l) < 0.15) return "about as dense as the universe on average";
   return delta_l > 0 ? `denser than average (linear overdensity +${p}%)` : `emptier than average (linear underdensity ${p}%)`;
+}
+
+/**
+ * GH8 (galaxy histories design 9.4, Alex 24 Nov 2026): the leading arm in words. Arms trail as a result of the disc's
+ * differential rotation; a leading arm is only ever the mark of a recent pass or merger on a backwards orbit, and it
+ * fades as the rotation winds it back. The chart names the latest one made by `t_gyr`: "A leading arm, from a
+ * backwards pass 300 Myr ago". `strengthAt` is the renderer's own fade (markStrengthAt), passed in so this stays
+ * pure; `showing` is the chart's floor for a mark still visible. Rarity is the kernel's (GH3 draws it from history;
+ * the yardstick, at most about 1 in 100 spirals, is a pack parameter), never decided here.
+ */
+export interface LeadingArmWords {
+  /** How many leading arms the history made by this time. */
+  made: number;
+  /** The latest, in a sentence. */
+  line: string;
+  /** Whether that one still shows at this time. */
+  live: boolean;
+  /** Its strength now (0 to 1). */
+  strength: number;
+}
+export function leadingArmWords(marks: readonly GalaxyMark[], t_gyr: number, strengthAt: (m: GalaxyMark, t: number) => number, showing = 0.02): LeadingArmWords | null {
+  const made = marks.filter((m) => m.kind === "leading_arm" && m.began_gyr <= t_gyr);
+  if (!made.length) return null;
+  const last = made.reduce((a, b) => (b.began_gyr > a.began_gyr ? b : a));
+  const ago = t_gyr - last.began_gyr;
+  const when = ago < 0.001 ? "just now" : ago < 1 ? `${Math.round(ago * 1000)} Myr ago` : `${sayNumber(ago, 2, { decimals: 1 })} Gyr ago`;
+  const pass = typeof last.shape.r_kpc === "number" ? `a backwards pass ${sayNumber(last.shape.r_kpc, 2, { decimals: 0 })} kpc out` : "a backwards merger";
+  const strength = strengthAt(last, t_gyr);
+  const live = strength >= showing;
+  const line = `A leading arm, from ${pass} ${when}: ${live ? "it still winds against the spin" : "the rotation has wound it back into the trailing sense"}.`;
+  return { made: made.length, line, live, strength };
 }

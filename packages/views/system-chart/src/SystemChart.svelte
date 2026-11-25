@@ -6,9 +6,24 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts" module>
-  import type { FieldReadJson, LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
+  import { withFiner, TILE_SAMPLES, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
+  /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
+  const trueSaid = new Map<string, string[]>();
+  /** Its clouds alone, its ground under them, and its air (VP-A3, VP-A4), by system and world. */
+  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept };
+  const trueAirs = new Map<string, TrueAir>();
+  /** Lays finer tiles (VP3 part 2) over the ground under a world's clouds; the new entry, or null when nothing changed. */
+  function finerGround(key: string, fine: Parameters<typeof withFiner>[1]): TrueAir | null {
+    const a = trueAirs.get(key);
+    if (!a?.ground?.faces || !fine.length) return null;
+    const ground = withFiner(a.ground, fine);
+    if (ground === a.ground) return null;
+    const next = { ...a, ground };
+    trueAirs.set(key, next);
+    return next;
+  }
   /** Stars read for True's living star, by system and star (a string: why there is none). */
   const liveStars = new Map<string, LiveStar | string>();
   /** read_field's Solar System fixture, read once for the page (Mag, V10e). */
@@ -17,11 +32,14 @@
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, gearing, nearestCatch, resonanceCatches, roundFigures, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
+  import RangeRings from "./RangeRings.svelte";
+  import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, starCss, trueSurface, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
-  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
+  import { readLiveStar, readTrueFace, starsBehind, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
+  import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
+  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -29,13 +47,23 @@
   let w = $state(0);
   let h = $state(0);
   let zoom = $state(1);
+  // What lies over the chart, in its own pixels (measured in measureOverlays below).
+  let overlays = $state<Box[]>([]);
   $effect(() => {
     zoom = Number(params.zoom);
   });
 
   const narrow = $derived(w < 700);
   const cx = $derived(w * (narrow ? 0.5 : Number(params.centre_x)));
-  const cy = $derived(h * 0.5);
+  // On a phone the key and the zoom sit over the foot of the chart: the system is drawn in the band above them, so no
+  // world hides under them (overlays are measured below; until then the whole height).
+  const band = $derived.by(() => {
+    if (!narrow) return { top: 0, bottom: h };
+    const top = Math.max(0, ...overlays.filter((o) => o.y + o.h < h * 0.4).map((o) => o.y + o.h));
+    const bottom = Math.min(h, ...overlays.filter((o) => o.y > h * 0.5).map((o) => o.y));
+    return bottom - top > 160 ? { top, bottom } : { top: 0, bottom: h };
+  });
+  const cy = $derived((band.top + band.bottom) / 2);
   const star = $derived(primaryOf(scene));
   // Orbits are local to their parent (handover/rendering-rules.md). The chart shows one frame at a time:
   // the star's (frame null) with its planets, or a planet's with its moons. Choosing a moon anywhere opens
@@ -85,10 +113,11 @@
   const catalogued = $derived(!scene.fixture && !authoredImport && scene.subjects.length > 0 && scene.subjects.every((s) => s.stamps.includes("catalogued")));
   const scale = $derived(
     fitScale(
-      // A sphere round the system (the Oort cloud) reaches far past everything else; the chart shows where it begins.
-      [...orbiting.map((s) => s.orbit!.a_au), ...bands.flatMap((b) => (isShell(b) ? [b.band_au![0]] : b.band_au!))],
+      // A sphere round the system (the Oort cloud) is drawn as a haze from where it begins; the fit frames the worlds and
+      // belts, so they fill the chart instead of huddling in the middle of a cloud a thousand times wider.
+      [...orbiting.map((s) => s.orbit!.a_au), ...bands.filter((b) => !isShell(b)).flatMap((b) => b.band_au!)],
       narrow ? 22 : 34,
-      Math.max(60, Math.min(w, h) * (narrow ? 0.47 : 0.44) * zoom),
+      Math.max(60, Math.min(w, band.bottom - band.top) * (narrow ? 0.47 : 0.44) * zoom),
     ),
   );
   const r = (au: number) => radius(au, drag ? drag.scale : scale);
@@ -96,7 +125,11 @@
   // How far out a drag may move an orbit: the survey edge in the star's frame, a little past the outermost moon in a planet's.
   const limitAu = $derived(frame ? scale.outer_au * 2 : scene.surveyed_to_au);
   const km = (au: number) => `${sig(au * KM_PER_AU, 3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} km`;
-  const dist = (au: number) => (frame ? km(au) : `${au} AU`);
+  // An orbit's size as the units engine says it (ED1a): AU round a star, thousand km round a planet, in the campaign's
+  // chosen reading, at the workspace depth.
+  const orbitAbout = $derived({ class: frame ? "moon" : "planet", what: "orbit" });
+  const dist = (au: number) =>
+    sayText(au * sheetUnitFactor("au"), "length", orbitAbout, { depth: ctx.workspace.depth ?? "science", reading: chosenReading(ctx.workspace.unit_choices, "length", orbitAbout) });
   const unsurveyed = $derived(
     `M0 0H${w}V${h}H0Z M${cx - surveyR} ${cy}a${surveyR} ${surveyR} 0 1 0 ${surveyR * 2} 0a${surveyR} ${surveyR} 0 1 0 ${-surveyR * 2} 0Z`,
   );
@@ -139,11 +172,22 @@
 
   // Dragging a body along its radius moves its orbit; the edit is an intent
   // sent when the drag ends. The scale is frozen during the drag.
-  let drag = $state<{ address: string; a_au: number; moved: boolean; scale: typeof scale } | null>(null);
+  // ED3 part 2: the drag is geared (the further the pointer from the line, the less a move counts; Shift a tenth) and
+  // lightly magnetic (round figures, resonances with the neighbours; named as it catches; Alt runs free).
+  let drag = $state<{ address: string; a_au: number; moved: boolean; scale: typeof scale; lastD: number; rpx: number; caught: string | null } | null>(null);
   let problem = $state<string | null>(null);
   const editable = (s: SceneSubject) => ctx.workspace.mode === "edit" && hasTool(L, "drag") && !!s.orbit && !!s.facts.find((f) => f.field === "a_au" && f.editable);
-  const aOf = (s: SceneSubject) => (drag && drag.address === s.address ? drag.a_au : s.orbit!.a_au);
+  // The world stays put while dragging; a ghost and its orbit line follow the pointer (editing design section 4).
+  const aOf = (s: SceneSubject) => s.orbit!.a_au;
   const rr = (au: number) => radius(au, drag ? drag.scale : scale);
+  // Range rings (RK12): whatever the host feeds (a pack's weapons), placed round each holder shown on this chart.
+  const rangeProject = $derived(chartProject(cx, cy, rr));
+  const rangeSets = $derived(
+    (ctx.rangeRings?.() ?? []).flatMap((g) => {
+      const s = all.find((b) => b.address === g.holder);
+      return s && g.rings.length ? [{ ...g, centre_m: s === centre ? ([0, 0] as [number, number]) : holderAt(s.orbit) }] : [];
+    }),
+  );
   const pos = (s: SceneSubject): [number, number] => polar(cx, cy, rr(aOf(s)), s.orbit!.phase_deg);
   let svgEl: SVGSVGElement | undefined = $state();
 
@@ -155,16 +199,42 @@
   function startDrag(e: PointerEvent, s: SceneSubject) {
     if (!editable(s) || e.button !== 0) return;
     svgEl!.setPointerCapture(e.pointerId);
-    drag = { address: s.address, a_au: s.orbit!.a_au, moved: false, scale };
+    const box = svgEl!.getBoundingClientRect();
+    drag = { address: s.address, a_au: s.orbit!.a_au, moved: false, scale, lastD: Math.hypot(e.clientX - box.left - cx, e.clientY - box.top - cy), rpx: radius(s.orbit!.a_au, scale), caught: null };
   }
 
   function moveDrag(e: PointerEvent) {
     if (!drag) return;
     const box = svgEl!.getBoundingClientRect();
-    const d = Math.hypot(e.clientX - box.left - cx, e.clientY - box.top - cy);
-    const a = round(Math.min(limitAu, Math.max(drag.scale.inner_au, distanceAt(d, drag.scale))));
-    if (a !== drag.a_au) drag = { ...drag, a_au: a, moved: true };
+    const [x, y] = [e.clientX - box.left - cx, e.clientY - box.top - cy];
+    const d = Math.hypot(x, y);
+    const s = scene.subjects.find((q) => q.address === drag!.address);
+    if (!s?.orbit) return;
+    // Off the line: the pointer's distance from the radius through the world.
+    const [ux, uy] = polar(0, 0, 1, s.orbit.phase_deg);
+    const off = Math.abs(x * uy - y * ux);
+    const lo = radius(drag.scale.inner_au, drag.scale);
+    const hi = radius(limitAu, drag.scale);
+    const rpx = Math.min(hi, Math.max(lo, drag.rpx + (d - drag.lastD) * gearing(off, e.shiftKey)));
+    const raw = Math.min(limitAu, Math.max(drag.scale.inner_au, distanceAt(rpx, drag.scale)));
+    const neighbours = scene.subjects.filter((q) => q.address !== s.address && q.orbit && q.parent === s.parent).map((q) => ({ label: q.label, a: q.orbit!.a_au }));
+    const c = e.altKey ? null : nearestCatch(rpx, [...roundFigures(raw, frame ? KM_PER_AU : 1, frame ? "km" : "AU"), ...resonanceCatches(raw, neighbours)], (v) => radius(v, drag!.scale));
+    const a = c ? c.at : round(raw);
+    drag = { ...drag, rpx, lastD: d, caught: c?.says ?? null, ...(a !== drag.a_au ? { a_au: a, moved: true } : {}) };
   }
+
+  // Esc while dragging puts the orbit back and writes nothing (editing design section 4).
+  $effect(() => {
+    if (!drag) return;
+    const cancel = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      drag = null;
+    };
+    window.addEventListener("keydown", cancel, true);
+    return () => window.removeEventListener("keydown", cancel, true);
+  });
 
   async function endDrag() {
     const d = drag;
@@ -216,6 +286,66 @@
   }
   const all = $derived(centre ? [centre, ...orbiting] : orbiting);
   const selected = $derived(scene.subjects.find((s) => s.address === ctx.workspace.selection));
+  // Where each name sits (chart-labels.ts): round its mark, clear of the other names and marks, the belt names and the
+  // scale figures, inside the chart. A body that is not named takes no place.
+  const bandLabels = $derived(
+    (on("zones") && on("labels") ? bands : []).map((b) => {
+      const [lx, ly] = polar(cx, cy, isShell(b) ? r(b.band_au![0]) + 14 : r(b.band_au![1]) + 10, b.kind === "zone" ? -62 : isShell(b) ? 132 : 58);
+      const text = `${label(b)}${isShell(b) ? " · sphere" : ""}`;
+      const bw = Math.ceil(text.length * 11 * 0.78);
+      return { b, lx, ly, text, box: { x: lx, y: ly - 11, w: bw, h: 13 } as Box };
+    }),
+  );
+  // What lies over the chart (the view controls, tools, card, key and zoom: anything marked data-chart-overlay), in the
+  // chart's own pixels, measured after each layout change: no name or scale figure is put underneath.
+  function measureOverlays() {
+    const svg = svgEl;
+    if (!svg) return;
+    const sb = svg.getBoundingClientRect();
+    const root = svg.closest(".stage") ?? svg.parentElement ?? document;
+    overlays = [...root.querySelectorAll("[data-chart-overlay]")]
+      .map((e) => e.getBoundingClientRect())
+      .filter((b) => b.width > 0 && b.height > 0 && b.right > sb.left && b.left < sb.right && b.bottom > sb.top && b.top < sb.bottom)
+      .map((b) => ({ x: b.left - sb.left, y: b.top - sb.top, w: b.width, h: b.height }));
+  }
+  $effect(() => {
+    void [w, h, ctx.workspace.selection, frame, ctx.workspace.view, ctx.workspace.desk];
+    const raf = requestAnimationFrame(measureOverlays);
+    // Cards and dialogs open with a short motion; measure again once they have settled.
+    const t = setTimeout(measureOverlays, 450);
+    return () => (cancelAnimationFrame(raf), clearTimeout(t));
+  });
+  const under = (b: Box) => overlays.some((o) => b.x < o.x + o.w && o.x < b.x + b.w && b.y < o.y + o.h && o.y < b.y + b.h);
+  const distLabels = $derived(
+    (on("distances") ? decades : [])
+      .filter((g) => cy - r(g.au) > 12)
+      .map((g) => ({ g, y: cy - r(g.au) - 4, text: frame ? km(g.au) : `${g.units.toLocaleString("en-GB")} AU` }))
+      .filter((d) => !under({ x: cx + 2, y: d.y - 10, w: d.text.length * 6.6 + 4, h: 12 })),
+  );
+  const named = $derived(all.filter((s) => showLabel(s) && (s.orbit || s === centre) && !(s === centre && !frame)));
+  const places = $derived.by(() => {
+    if (!w || !h) return new Map();
+    const sel = ctx.workspace.selection;
+    const bodies = all.map((s) => {
+      const atCentre = s === centre;
+      const [x, y] = atCentre ? [cx, cy] : pos(s);
+      const m0 = ctx.mark(s);
+      const m = atCentre && frame ? { ...m0, size: m0.size * 2.2 } : m0;
+      const px = s.address === sel ? 18 : 16;
+      return { s, b: { id: s.address, x, y, r: Math.max(markExtent(m), m.size) + 3, w: textWidth(label(s), px), h: px, first: s.address === sel } };
+    });
+    const label_ = new Set(named.map((s) => s.address));
+    // Bodies that are not named still keep their marks clear.
+    const clear: Box[] = [
+      ...overlays.map((o) => ({ ...o, w: o.w, h: o.h })),
+      ...bandLabels.map((l) => l.box),
+      ...distLabels.map((d) => ({ x: cx + 2, y: d.y - 10, w: d.text.length * 6.6 + 4, h: 12 })),
+      ...bodies.filter((x) => !label_.has(x.s.address)).map((x) => ({ x: x.b.x - x.b.r, y: x.b.y - x.b.r, w: x.b.r * 2, h: x.b.r * 2 })),
+    ];
+    const placed = placeLabels(bodies.filter((x) => label_.has(x.s.address)).map((x) => x.b), clear, { x: 4, y: 4, w: w - 8, h: h - 8 });
+    return new Map(placed.map((p) => [p.id, p]));
+  });
+
   const canOpen = $derived(!frame && selected && selected !== star && moonsOf(selected) > 0 ? selected : undefined);
   // V6: the same frame in 3D (view only; edits stay on the 2D chart).
   // The standard view controls (rule 12) choose it: Chart is this flat log chart, 3D turns. A view without a shell's
@@ -228,7 +358,32 @@
   // True (V10a): each world's surface is read from its level-0 tiles (the Body globe's own, about 3 s a world in the
   // kernel), one at a time, the selected world first, and kept for this page. Only on the GM's seat, which reads tiles.
   const looksTrue = $derived(shownView.style === "true");
+  // True (VP2): the sky's stars from this system's place, read once per system and drawn behind everything; from the
+  // Sun's place, laid square on the system's frame, when the system has none yet (fudge register).
+  const SKY_LIMIT = 6.5;
+  const SQUARE = { to_galactic: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] as [[number, number, number], [number, number, number], [number, number, number]] };
+  let skyBehind = $state<{ key: string; dirs: Float32Array; share: Float32Array } | null>(null);
+  $effect(() => {
+    const sys = scene.system;
+    if (!looksTrue || skyBehind?.key === sys) return;
+    // The worlds' surfaces first: they share the kernel with the sky, and a world's face matters more than its stars.
+    if (ctx.session.seat.authority === "gm" && (!reading || reading.done < reading.of)) return;
+    untrack(() =>
+      void (async () => {
+        const ask = { limit_mag: SKY_LIMIT, band: "V", bands: ["B", "V"] };
+        let r = await ctx.session.skyFromHere({ ...ask, observer: sys });
+        if (!r.ok) r = await ctx.session.skyFromHere(ask);
+        const sky = r.ok ? (r.sky as { frame?: unknown; stars?: { dir: number[]; luminosity_lsun: number; distance_pc: number; teff_k?: number; components?: { teff_k: number }[] }[] }) : null;
+        if (!sky?.stars || scene.system !== sys) return;
+        const f = sky.frame as { to_galactic?: unknown } | null | undefined;
+        const frame = f && typeof f === "object" && Array.isArray(f.to_galactic) ? (f as typeof SQUARE) : SQUARE;
+        const stars = sky.stars.map((x) => ({ dir: [x.dir[0]!, x.dir[1]!, x.dir[2]!] as [number, number, number], luminosity_lsun: x.luminosity_lsun, distance_pc: x.distance_pc, teff_k: x.teff_k ?? x.components?.[0]?.teff_k ?? 5800 }));
+        skyBehind = { key: sys, ...starsBehind(stars, frame) };
+      })(),
+    );
+  });
   let surfaces = $state<Map<string, TrueTexture>>(new Map());
+  let airs = $state<Map<string, TrueAir>>(new Map());
   let reading = $state<{ done: number; of: number; none: number; why: string } | null>(null);
   let trueGen = 0;
   $effect(() => {
@@ -249,18 +404,86 @@
         const key = `${sys}|${s.address}`;
         if (!trueSurfaces.has(key)) {
           reading = { done, of: order.length, none, why: noneWhy };
-          const r = await ctx.session.surfaceTiles(sys, s.address);
-          const why = r.ok ? String((r.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : r.message;
-          trueSurfaces.set(key, (r.ok && trueSurface(r.tiles)) || why);
+          // Ground, then today's clouds and haze; a giant is its cloud decks (renderer true-air.ts).
+          const f = await readTrueFace(ctx.session as unknown as FaceReader, sys, s.address);
+          trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
+          if (typeof f !== "string") trueSaid.set(key, f.said);
+          // Its clouds alone over its ground, and its air's rim (VP-A3, VP-A4).
+          if (typeof f !== "string" && (f.clouds || f.air)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}) });
+          // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
+          const kept = trueSurfaces.get(key);
+          if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));
+          finerGround(key, finerTiles(key));
         }
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
         if (t && typeof t !== "string") surfaces = new Map(surfaces).set(s.address, t);
         else (none++, (noneWhy = String(t)));
+        const a = trueAirs.get(key);
+        if (a && airs.get(s.address) !== a) airs = new Map(airs).set(s.address, a);
         done++;
       }
       reading = { done, of: order.length, none, why: noneWhy };
+      // VP3 part 2: finer tiles for the chosen world only, four at a time, once it has been left chosen for a while
+      // (finer-tiles.ts); stops between requests when another world is chosen or True is left.
+      const chosen = order[0];
+      const ck = chosen && chosen.address === sel ? `${sys}|${chosen.address}` : "";
+      const base = ck ? trueSurfaces.get(ck) : undefined;
+      // A world wears the finer faces on its ground: its True face when that is the ground alone, or the ground under
+      // its own cloud layer (VP-A4), which is what gpu.ts draws when the clouds are there.
+      const under = ck ? trueAirs.get(ck)?.ground : undefined;
+      if (ck && base && typeof base !== "string" && (base.faces || under?.faces) && g === trueGen) {
+        // Close-up: the ground under the camera is read first when the camera is over this world.
+        const below = untrack(() => groundView);
+        void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
+          const now = trueSurfaces.get(ck);
+          if (!now || typeof now === "string") return;
+          const t = withFiner(now, fine);
+          trueSurfaces.set(ck, t);
+          surfaces = new Map(surfaces).set(chosen!.address, t);
+          const a = finerGround(ck, fine);
+          if (a) airs = new Map(airs).set(chosen!.address, a);
+        }, below?.body === chosen!.address ? below.toward : undefined);
+      }
     })());
+  });
+  // Close-up (Alex, 25 Nov): the ground under the 3D camera while it is low over a world in True; the detail ladder's
+  // deep tiles (VP3 part 4) read it.
+  let groundView = $state<GroundView | null>(null);
+  // VP3 part 4: once the camera has stayed low over the chosen world for DEEP_SETTLE_MS, the tiles under it are read
+  // at the screen's own scale (down to the kernel's fact floor) and laid over its ground as a patch. A newer view
+  // stops the read between requests; the last patch stays where it was read (it is the world's real ground).
+  const DEEP_SETTLE_MS = 600;
+  let deepGen = 0;
+  /** The level of the deep patch last laid, for the page's checks (data-deep-level). */
+  let deepLevel = $state<number | null>(null);
+  $effect(() => {
+    const below = groundView;
+    const sys = scene.system;
+    const sel = ctx.workspace.selection;
+    const my = ++deepGen;
+    if (!looksTrue || ctx.session.seat.authority !== "gm" || !below || below.body !== sel) return;
+    const radius_m = untrack(() => bodies3d.find((b) => b.id === below.body)?.radius_m);
+    if (!radius_m) return;
+    const timer = setTimeout(() => untrack(() => void (async () => {
+      const p = await readDeep(ctx.session, sys, below.body, { toward: below.toward, m_per_px: below.m_per_px }, radius_m, TILE_SAMPLES, () => my === deepGen);
+      if (!p || my !== deepGen) return;
+      deepLevel = p.level;
+      const key = `${sys}|${below.body}`;
+      const t = trueSurfaces.get(key);
+      if (t && typeof t !== "string") {
+        const next = { ...t, patch: p };
+        trueSurfaces.set(key, next);
+        surfaces = new Map(surfaces).set(below.body, next);
+      }
+      const a = trueAirs.get(key);
+      if (a?.ground) {
+        const next = { ...a, ground: { ...a.ground, patch: p } };
+        trueAirs.set(key, next);
+        airs = new Map(airs).set(below.body, next);
+      }
+    })()), DEEP_SETTLE_MS);
+    return () => clearTimeout(timer);
   });
   // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.
   let liveStar = $state<LiveStar | null>(null);
@@ -275,7 +498,7 @@
     if (kept !== undefined) return void show(kept);
     let live = true;
     const num = (k: string) => Number(star?.facts.find((x) => x.field === k)?.value);
-    void readLiveStar(ctx.session as unknown as StarReader, sys, a, { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") }).then((r) => {
+    void readLiveStar(ctx.session as unknown as StarReader, sys, a, { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") }, "system").then((r) => {
       liveStars.set(key, r);
       if (live) show(r);
     });
@@ -320,7 +543,12 @@
             ? `${reading.none} of ${reading.of} worlds are drawn plain, with no surface to show (the kernel: ${reading.why}).`
             : "",
   );
-  const trueNote = $derived([surfaceNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
+  // The long exposure (the default, Alex 24 Nov) says its lift, so the picture never claims to be what an eye sees;
+  // at the eye's exposure the faint stars speak for themselves.
+  const skyNote = $derived(skyBehind && shownView.exposure === "long" ? "Long exposure: faint light is lifted, a composite." : "");
+  // Each thing a face could not show, said once for the system (a colour the sheet lacks, a giant's dark deep air).
+  const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
+  const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : "", skyNote].filter(Boolean).join(" "));
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
@@ -347,9 +575,9 @@
   const peeked = $derived(peek && peek.address !== ctx.workspace.selection && !drag && !measuring ? all.find((s) => s.address === peek!.address) : undefined);
 </script>
 
-<div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
+<div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
@@ -391,8 +619,8 @@
             <Ink circle={{ cx, cy, r: (r0 + r1) / 2 }} tone="muted" dash="belt" />
           {/if}
         {/each}
-        {#each on("distances") ? decades : [] as g (g.au)}
-          {#if cy - r(g.au) > 12}<text class="dist" x={cx + 4} y={cy - r(g.au) - 4} aria-hidden="true">{frame ? km(g.au) : `${g.units.toLocaleString("en-GB")} AU`}</text>{/if}
+        {#each distLabels as d (d.g.au)}
+          <text class="dist" x={cx + 4} y={d.y} aria-hidden="true">{d.text}</text>
         {/each}
         {#each orbiting as s (s.address)}
           {@const sel = ctx.workspace.selection === s.address}
@@ -400,13 +628,22 @@
             <Ink circle={{ cx, cy, r: rr(s.orbit!.a_au) }} tone="faint" dash="dashed" />
             <Ink circle={{ cx, cy, r: rr(drag.a_au) }} tone="accent" weight="heavy" dash="dashed" />
           {:else if on("orbits") || sel}
-            <Ink circle={{ cx, cy, r: rr(s.orbit!.a_au) }} tone={sel ? "accent" : "faint"} weight={sel ? "heavy" : "line"} />
+            <!-- Resting on a body lifts its orbit out of the grid, so the eye can follow it round. -->
+            <Ink circle={{ cx, cy, r: rr(s.orbit!.a_au) }} tone={sel ? "accent" : peek?.address === s.address ? "ink" : "faint"} weight={sel ? "heavy" : "line"} />
           {/if}
         {/each}
-        {#each on("zones") && on("labels") ? bands : [] as b (b.address)}
-          {@const [lx, ly] = polar(cx, cy, isShell(b) ? r(b.band_au![0]) + 14 : r(b.band_au![1]) + 10, b.kind === "zone" ? -62 : isShell(b) ? 132 : 58)}
-          <text class="band {b.kind}" class:sphere={isShell(b)} x={lx} y={ly} aria-hidden="true">{label(b)}{isShell(b) ? " · sphere" : ""}</text>
+        {#each bandLabels as l (l.b.address)}
+          <text class="band {l.b.kind}" class:sphere={isShell(l.b)} x={l.lx} y={l.ly} aria-hidden="true">{l.text}</text>
         {/each}
+        <!-- A press on a name chooses its body: the name's box is a quiet target under every world's own hit circle, so
+             a name that lands near another world never takes that world's press or drag (the names drawn on top take none). -->
+        <g class="name-hits" aria-hidden="true">
+          {#each all as s (s.address)}
+            {@const p = places.get(s.address)}
+            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the body's own mark is the keyboard's way in) -->
+            {#if p}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} data-name-hit={s.address} onclick={() => (measuring ? measurePick(s) : ctx.workspace.select(s.address))} />{/if}
+          {/each}
+        </g>
         {#each all as s, i (s.address)}
           {@const atCentre = s === centre}
           {@const [x, y] = atCentre ? [cx, cy] : pos(s)}
@@ -435,11 +672,11 @@
           >
             <circle class="hit" cx={x} cy={y} r={Math.max(22, m.size + 12)} />
             {#if pencilOn && !atCentre && !knows(s)}
-              <!-- Pencil (design 5): the mark of a body the table does not know is quiet, inside a thin dotted ring. -->
-              <g class="pencilled" data-pencil><Mark mark={m} cx={x} cy={y} {prefix} /></g>
-              <circle class="pencil-ring" cx={x} cy={y} r={markExtent(m) + 3} aria-hidden="true" />
+              <!-- Pencil (SV3, the shared pencil kit): the mark of a body the table does not know is quiet, inside a thin dotted ring. -->
+              <g data-pencil><Pencilled pen={penOf("gm_only")} cx={x} cy={y} r={markExtent(m)}><Mark mark={m} cx={x} cy={y} {prefix} /></Pencilled></g>
             {:else}
-              <Mark mark={m} cx={x} cy={y} {prefix} />
+              <!-- The mark lifts a little under the pointer (dynamic minimalism): a body answers before it is pressed. -->
+              <g class="lift" style="transform-origin: {x}px {y}px"><Mark mark={m} cx={x} cy={y} {prefix} /></g>
             {/if}
             {#each { length: on("moons") ? Math.min(moons, 4) : 0 } as _, k (k)}
               {@const [mx, my] = polar(x, y, markExtent(m) + 5, 200 + k * 28)}
@@ -447,20 +684,34 @@
             {/each}
             {#if sel}<circle class="sel" cx={x} cy={y} r={Math.max(markExtent(m) + 4, m.size * 2 + 6)} />{/if}
             {#if drag?.address === s.address}
-              <text class="dragv" x={x + m.size + 9} y={y + m.size + 16}>{dist(drag.a_au)}</text>
-            {/if}
-            {#if showLabel(s) && (s.orbit || atCentre) && !(atCentre && !frame)}
-              {@const left = x > w - 110}
-              <!-- Who knows (track SV, pencil and ink): a name the table does not know is drawn in pencil, quiet and dotted,
-                   with no words; one they know is in ink, with how they know it ("long range") under it. -->
-              {@const pencil = pencilOn && !atCentre && !view && !knows(s)}
-              <text class="name" class:selname={sel} class:pencil x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size - 4} text-anchor={left ? "end" : "start"}>{label(s)}{#if pencil}<title>Not known to the table</title>{/if}</text>
-              {#if on("known") && known && !atCentre && view && view !== usualView}
-                <text class="knownv" x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size + 9} text-anchor={left ? "end" : "start"} aria-hidden="true">{view.replace(/-/g, " ")}</text>
-              {/if}
+              {@const [gx, gy] = polar(cx, cy, rr(drag.a_au), s.orbit!.phase_deg)}
+              <g class="ghost" data-ghost aria-hidden="true"><Mark mark={m} cx={gx} cy={gy} {prefix} /></g>
+              <text class="dragv" data-drag-readout data-caught={drag.caught ?? undefined} x={gx + m.size + 9} y={gy + m.size + 16}>{dist(drag.a_au)}{drag.caught && !drag.caught.startsWith("a round") ? ` · ${drag.caught}` : ""}</text>
             {/if}
           </g>
         {/each}
+        <!-- Names in their own layer, over every mark (chart-labels.ts places them); a press on a name chooses its body. -->
+        <!-- Range rings (RK12), under the HUD like the grid: round each weapon's holder, bent by the chart's scale. -->
+        {#if hudShows(shownView.hud, "range") && rangeSets.length}
+          {#each rangeSets as r (r.holder + r.label)}<RangeRings rings={r.rings} centre_m={r.centre_m} project={rangeProject} label={r.label} />{/each}
+        {/if}
+        <g class="names">
+          {#each all as s (s.address)}
+            {#if places.get(s.address)}
+              {@const p = places.get(s.address)}
+              {@const atCentre = s === centre}
+              {@const view = known?.get(s.address)}
+              {@const sel = ctx.workspace.selection === s.address}
+              <!-- Who knows (track SV, pencil and ink): a name the table does not know is drawn in pencil, quiet and dotted,
+                   with no words; one they know is in ink, with how they know it ("long range") under it. -->
+              {@const pencil = pencilOn && !atCentre && !view && !knows(s)}
+              <text class="name" class:selname={sel} class:pencil style={pencil ? penStyle(penOf("gm_only"), "name") : undefined} class:unknown={through && !knows(s)} x={p.x} y={p.y} text-anchor={p.anchor} data-label-side={p.side} data-label-for={s.address} aria-hidden="true">{label(s)}{#if pencil}<title>{PEN_WORDS.pencil}</title>{/if}</text>
+              {#if on("known") && known && !atCentre && view && view !== usualView}
+                <text class="knownv" x={p.x} y={p.y + 13} text-anchor={p.anchor} aria-hidden="true">{view.replace(/-/g, " ")}</text>
+              {/if}
+            {/if}
+          {/each}
+        </g>
         {#if measuring && picks.length}
           {@const p0 = at(picks[0]!)}
           {@const p1 = picks[1] ? at(picks[1]) : null}
@@ -491,22 +742,22 @@
         </div>
       {/if}
       {#if framed}
-        <div class="frame" role="group" aria-label="Chart frame">
+        <div class="frame" role="group" aria-label="Chart frame" data-chart-overlay>
           <button type="button" onclick={closeFrame}>‹ {scene.title}</button>
           <span>Moons of <b>{framed.label}</b>, distances from its centre</span>
         </div>
       {:else if canOpen}
-        <div class="frame">
+        <div class="frame" data-chart-overlay>
           <button type="button" onclick={() => openFrame(canOpen)}>Moons of {canOpen.label} ›</button>
         </div>
       {/if}
-      <p id="chart-drag-hint" class="sr">Drag along the radius, or press Page Up or Page Down, to move the orbit.</p>
+      <p id="chart-drag-hint" class="sr">Drag along the radius, or press Page Up or Page Down, to move the orbit. Further from the line it moves more slowly, Shift slower still; it catches at round figures and at resonances with its neighbours, and Alt lets it run free.</p>
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
-      <div class="legend">
+      <div class="legend" class:short={narrow} data-chart-overlay>
         {#if authoredImport}<span class="authored-import" data-authored-import><Stamp kind="authored" title="Every name and value here was written in a V3 save, not modelled by SSE4's physics. A body called Earth is the save's Earth, not the real one." /><span class="words">As written in a V3 save, not modelled</span></span>{/if}
         {#if catalogued}<span class="authored-import" data-catalogued><Stamp kind="catalogued" title="Every value here is a measurement from a catalogue, with its source on the card's why?." /><span class="words">As measured, each value with its source</span></span>{/if}
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
-        <span data-scale-note>{on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${g.units.toLocaleString("en-GB")} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
+        <span data-scale-note>{narrow ? `Log scale${frame ? ", km" : ""}` : on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${g.units.toLocaleString("en-GB")} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
         {#if on("known") && known && usualView && !through}<span class="usual-known" data-usual-known={usualView}>The table knows these at {usualView.replace(/-/g, " ")}; dotted names, not at all</span>{/if}
         {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}
         {#if key?.entries.length && on("key")}
@@ -515,9 +766,9 @@
             <div class="key-body"><Legend entries={key.entries} prefix="sck" note={key.note} label="Key to the chart's marks" /></div>
           </details>
         {/if}
-        {#if params.unsurveyed_hatch && on("unsurveyed") && !frame}<span>Hatched: unsurveyed beyond {scene.surveyed_to_au} AU</span>{/if}
+        {#if params.unsurveyed_hatch && on("unsurveyed") && !frame && !narrow}<span>Hatched: unsurveyed beyond {scene.surveyed_to_au} AU</span>{/if}
       </div>
-      <div class="zoom" role="group" aria-label="Zoom">
+      <div class="zoom" role="group" aria-label="Zoom" data-chart-overlay>
         <button type="button" aria-label="Zoom in" onclick={() => zoomBy(1.25)}>+</button>
         <button type="button" aria-label="Zoom out" onclick={() => zoomBy(0.8)}>−</button>
         <button type="button" aria-label={frame ? "Fit the moons" : "Fit the system"} onclick={() => (zoom = Number(params.zoom))}>Fit</button>
@@ -545,9 +796,25 @@
   .hit {
     fill: transparent;
   }
+  .lift {
+    transition: transform var(--sse-motion-quick) var(--sse-ease);
+  }
+  .body:hover .lift {
+    transform: scale(1.3);
+  }
+  .dragging .body:hover .lift {
+    transform: none;
+  }
   .dragging,
   .dragging .body {
     cursor: grabbing;
+  }
+  .dragging {
+    user-select: none;
+  }
+  .ghost {
+    opacity: 0.55;
+    pointer-events: none;
   }
   .dragv {
     fill: var(--sse-accent-ink);
@@ -666,7 +933,12 @@
   .peek span {
     color: var(--sse-panel-muted);
   }
+  .name-hits rect {
+    fill: transparent;
+    cursor: pointer;
+  }
   .name {
+    pointer-events: none;
     fill: var(--sse-ink);
     font-family: var(--sse-font-display);
     font-style: italic;
@@ -687,23 +959,9 @@
     stroke: var(--sse-ground);
     stroke-width: 4px;
   }
-  .body.unknown {
+  .body.unknown,
+  .name.unknown {
     opacity: 0.25;
-  }
-  .pencilled {
-    opacity: 0.4;
-  }
-  .pencil-ring {
-    fill: none;
-    stroke: var(--sse-ink-muted);
-    stroke-width: 0.8;
-    stroke-dasharray: 1.5 2.5;
-    pointer-events: none;
-  }
-  .name.pencil {
-    fill: var(--sse-ink-muted);
-    text-decoration: underline dotted;
-    text-underline-offset: 3px;
   }
   .knownv {
     font-family: var(--sse-font-body);

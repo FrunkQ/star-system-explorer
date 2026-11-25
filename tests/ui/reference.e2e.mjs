@@ -91,6 +91,10 @@ try {
     await units.waitFor();
     assert.match(await units.locator('[data-unit="pc"] .val').innerText(), /^1 pc = 3\.085 677 581 × 10¹⁶ m$/);
     assert.match(await units.locator('[data-unit="m"] .val').innerText(), /SI/);
+    // How figures are said (ED1a): the units engine's table, the default reading marked.
+    const orbitRow = units.locator('[data-figures-said] [data-said="length|*.orbit"]');
+    assert.match(await orbitRow.innerText(), /AU/);
+    assert.match(await orbitRow.locator(".chosen").innerText(), /AU/, "the first reading is the default");
     await shot(gm, `units-${vp}`);
 
     if (vp === "phone") {
@@ -178,6 +182,9 @@ try {
     await tiles.nth(14).waitFor({ timeout: 20000 });
     assert.ok((await tiles.count()) >= 15, "the physical scheme's base classes are tiles");
     assert.equal(await tiles.locator("svg.icon").count(), await tiles.count(), "every tile has its mark");
+    // SSE4's atlas classes have marks of their own (scripts/add-atlas-marks.py): no two physical tiles draw alike.
+    const looks = await tiles.locator("svg.icon").evaluateAll((els) => els.map((e) => e.innerHTML));
+    assert.equal(new Set(looks).size, looks.length, "every physical class draws its own mark");
     await classes.locator('[data-class="gas-giant/ammonia-clouds"]').click();
     const ccard = gm.locator('[data-class-card="gas-giant/ammonia-clouds"]');
     await ccard.waitFor();
@@ -195,7 +202,7 @@ try {
     await classes.locator('[data-class="habitable/shirt-sleeve"]').click();
     await gm.locator('[data-class-card="habitable/shirt-sleeve"] [data-misses]').waitFor();
     await gm.keyboard.press("Escape");
-    // SSE 3's classic list, the classes the charts mark today.
+    // SSE 3's classic list, which the charts marked first.
     await classes.locator('[data-atlas-pick="sse.sse3-classic"]').click();
     await gm.locator('[data-atlas="sse.sse3-classic"] [data-gallery="sse3-classic"] .tile').nth(60).waitFor();
     if (vp === "phone") {
@@ -203,6 +210,14 @@ try {
       assert.ok(over <= 0, `classes overflow by ${over} px`);
     }
     assert.equal(await gm.locator("[data-classes-add]").count(), 0, "adding an atlas waits for the Build desk");
+    // Parts (AT13), under "This setting": the parts of a player screen with the controls a screen can switch.
+    await gm.locator('[data-page="parts"]').click();
+    const parts = gm.locator("[data-parts]");
+    await parts.waitFor();
+    assert.deepEqual(await parts.locator('[data-part="sse.view.table"] [data-part-control]').evaluateAll((els) => els.map((e) => e.dataset.partControl)), ["sort", "select"]);
+    assert.match(await parts.locator('[data-part="sse.view.text"]').innerText(), /No controls/);
+    if (vp === "phone") assert.ok((await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)) <= 0, "parts fit a phone");
+    await shot(gm, `parts-${vp}`);
     await gm.locator('[data-page="names"]').click();
     await names.waitFor();
     assert.equal(await gm.locator("[data-names-add]").count(), 0, "adding a pack waits for the Build desk");
@@ -213,6 +228,15 @@ try {
       await gm.locator('[data-names="stack"]').waitFor({ timeout: 20000 });
       await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hash0);
       await gm.locator('[data-names="stack"] [data-sample] li').nth(11).waitFor({ timeout: 20000 });
+      // Names here for the whole system, from the Names page: name every planet in Kestrel in Oluen.
+      const here = gm.locator("[data-names-here='u:kestrel/sys:1']");
+      await here.waitFor({ timeout: 20000 });
+      await here.locator("[data-names-here-kind]").selectOption("planet");
+      await here.locator('[data-names-here-layer="common"]').selectOption("oluen");
+      await here.locator("[data-names-here-note]").getByText(/Common names for planets in Kestrel now come from Oluen/).waitFor({ timeout: 20000 });
+      await shot(gm, "names-here-desk");
+      await here.locator('[data-names-here-layer="common"]').selectOption("-");
+      await here.locator("[data-names-here-note]").getByText(/follow the setting above again/).waitFor({ timeout: 20000 });
       // The name card: every name a body has, by layer, with where it came from.
       await go(gm, "system");
       await gm.locator("[role=button][aria-label^='Tarn']").click();
@@ -235,6 +259,18 @@ try {
       await card.locator('[data-name-here="designation"]').selectOption("vesh");
       await card.locator("[data-name-note]").getByText(/take designation names from Vesh/).waitFor({ timeout: 20000 });
       await gm.waitForFunction(() => /drawn from Vesh/.test(document.querySelector('[data-name-card] [data-layer="designation"]')?.textContent ?? ""), null, { timeout: 20000 });
+      // Layer choice in lenses: a lens of the GM's own that labels the chart by designation shows Tarn's Vesh designation.
+      const vesh = await desig();
+      await gm.getByRole("combobox", { name: "Lens", exact: true }).selectOption("__make");
+      const dlg = gm.getByRole("dialog", { name: "Lens editor" });
+      await dlg.getByLabel("Lens name").fill("Survey names");
+      await dlg.getByLabel("Names on the chart").selectOption("designation");
+      await dlg.getByRole("button", { name: "Save lens" }).click();
+      await gm.waitForFunction(() => document.querySelector("main.stage")?.getAttribute("data-lens") === "mine.survey-names");
+      await dlg.getByRole("button", { name: "Close" }).click();
+      await gm.waitForFunction((n) => !!document.querySelector(`[role=button][aria-label^="${n}"]`), vesh, { timeout: 20000 });
+      assert.equal(await gm.locator("[role=button][aria-label^='Tarn']").count(), 0, "the chart is labelled by designation");
+      await shot(gm, "names-lens-desk");
     }
     assert.deepEqual(errors, []);
     await browser.close();

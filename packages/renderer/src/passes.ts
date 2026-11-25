@@ -3,8 +3,13 @@
 // for Orac first (name, type, range, default, unit, meaning, group) in the
 // same ParamSpec shape the views use (V11). Costs are per frame on the
 // reference device and are estimates until the probe measures this device
-// (probe.ts); the governor works from measured frame times either way.
-import type { PassSpec } from "./recipe.ts";
+// (probe.ts); the governor works from measured frame times either way. A GPU
+// cost's `load` says which of the probe's three scenes bounds it.
+import type { PassCost, PassSpec } from "./recipe.ts";
+
+const MESH: PassCost["load"] = { geometry: 0.5, fill: 0.5 };
+const LINES: PassCost["load"] = { geometry: 1 };
+const MARCH: PassCost["load"] = { march: 1 };
 
 const HILLSHADE_REF = {
   text: "Horn, B. K. P. (1981). Hill shading and the reflectance map. Proceedings of the IEEE 69(1), 14-47.",
@@ -31,9 +36,9 @@ export const RELIEF: PassSpec = {
   ],
   cost: {
     canvas: { fixed_ms: 0.5, per_mpix_ms: 60 },
-    "gpu-basic": { fixed_ms: 1.5, per_mpix_ms: 1.5, scale: [{ param: "grid", ref: 128, power: 1.2 }] },
-    "gpu-high": { fixed_ms: 1.5, per_mpix_ms: 2, scale: [{ param: "grid", ref: 128, power: 1.2 }] },
-    still: { fixed_ms: 1.5, per_mpix_ms: 2, scale: [{ param: "grid", ref: 128, power: 1.2 }] },
+    "gpu-basic": { fixed_ms: 1.5, per_mpix_ms: 1.5, scale: [{ param: "grid", ref: 128, power: 1.2 }], load: MESH },
+    "gpu-high": { fixed_ms: 1.5, per_mpix_ms: 2, scale: [{ param: "grid", ref: 128, power: 1.2 }], load: MESH },
+    still: { fixed_ms: 1.5, per_mpix_ms: 2, scale: [{ param: "grid", ref: 128, power: 1.2 }], load: MESH },
   },
   references: [HILLSHADE_REF],
 };
@@ -50,7 +55,7 @@ export const GRATICULE: PassSpec = {
     { name: "spacing_deg", type: "number", default: 30, range: [5, 90], unit: "°", meaning: "Degrees between lines.", group: "look", promoted: true },
     { name: "opacity", type: "number", default: 0.3, range: [0, 1], meaning: "How strongly the lines show.", group: "look" },
   ],
-  cost: { canvas: { fixed_ms: 0, per_mpix_ms: 8 }, "gpu-basic": { fixed_ms: 0.3, per_mpix_ms: 0.2 }, still: { fixed_ms: 0.3, per_mpix_ms: 0.2 } },
+  cost: { canvas: { fixed_ms: 0, per_mpix_ms: 8 }, "gpu-basic": { fixed_ms: 0.3, per_mpix_ms: 0.2, load: LINES }, still: { fixed_ms: 0.3, per_mpix_ms: 0.2, load: LINES } },
 };
 
 export const CONTOURS: PassSpec = {
@@ -85,15 +90,38 @@ export const ATMOSPHERE: PassSpec = {
     { name: "thickness", type: "number", default: 1, range: [1, 20], unit: "×", meaning: "Draw the air this many times thicker than it is (1 is true scale). Above 1 is a look, not the world, and the badge says so.", group: "look" },
   ],
   cost: {
-    "gpu-high": { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }] },
-    still: { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }] },
-    "gpu-basic": { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }] },
+    "gpu-high": { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }], load: MARCH },
+    still: { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }], load: MARCH },
+    "gpu-basic": { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }], load: MARCH },
     canvas: { fixed_ms: 0, per_mpix_ms: 6 },
   },
   references: [
     { text: "Nishita, T., Sirai, T., Tadamura, K., Nakamae, E. (1993). Display of the Earth taking into account atmospheric scattering. SIGGRAPH 93, 175-182.", doi: "10.1145/166117.166140" },
     { text: "Bucholtz, A. (1995). Rayleigh-scattering calculations for the terrestrial atmosphere. Applied Optics 34(15), 2765-2773.", doi: "10.1364/AO.34.002765" },
     { text: "Kasten, F., Young, A. T. (1989). Revised optical air mass tables and approximation formula. Applied Optics 28(22), 4735-4738.", doi: "10.1364/AO.28.004735" },
+  ],
+};
+
+export const AURORA: PassSpec = {
+  id: "aurora",
+  version: "1.0.0",
+  name: "Aurora",
+  meaning: "Where the kernel says particles come down into the air (read_field's aurora: wind and spin ovals round the magnetic poles, a diffuse glow on airy worlds with no field), each line the air gives off as a thin glowing shell at its own height, stacked at the limb. Colours and heights come from the air's own lines; worlds where the kernel finds no aurora draw nothing. GPU tiers only.",
+  kind: "overlay",
+  inputs: ["body.field", "body.air"],
+  tiers: ["still", "gpu-high", "gpu-basic"],
+  params: [
+    { name: "exposure", type: "enum", default: "long", options: ["long", "eye"], meaning: "Long exposure (the default): faint light is lifted by one stated ratio so the aurora shows in full colour, as a camera's long exposure records it. Eye: one exposure for the sunlit world, the aurora at its true brightness and grey where it is too faint for colour vision.", group: "look", promoted: true },
+    { name: "lift_target", type: "number", default: 0.6, range: [0.05, 2], meaning: "Long exposure: the brightest line is lifted to this share of the sunlit ground's brightness; the other lines keep their true ratio to it.", group: "look" },
+  ],
+  cost: {
+    "gpu-high": { fixed_ms: 0.2, per_mpix_ms: 1 },
+    "gpu-basic": { fixed_ms: 0.2, per_mpix_ms: 1 },
+    still: { fixed_ms: 0.2, per_mpix_ms: 1 },
+  },
+  references: [
+    { text: "Chamberlain, J. W. (1961). Physics of the Aurora and Airglow. Academic Press, New York.", doi: "10.1029/SP041" },
+    { text: "Hunten, D. M., Roach, F. E., Chamberlain, J. W. (1956). A photometric unit for the airglow and aurora. Journal of Atmospheric and Terrestrial Physics 8, 345-346.", doi: "10.1016/0021-9169(56)90111-8" },
   ],
 };
 
@@ -110,4 +138,4 @@ export const NARRATION: PassSpec = {
 };
 
 /** Every pass this release ships. */
-export const LIBRARY: readonly PassSpec[] = [RELIEF, GRATICULE, CONTOURS, ATMOSPHERE, NARRATION];
+export const LIBRARY: readonly PassSpec[] = [RELIEF, GRATICULE, CONTOURS, ATMOSPHERE, AURORA, NARRATION];

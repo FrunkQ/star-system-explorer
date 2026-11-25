@@ -39,7 +39,7 @@ Run on `main` (fc31eff) with the base-surface pack. The probe is a throwaway tes
 
 1. **Ice shell is the only door for a water-rich cold world.** The rule is `water_fraction ≥ 0.05` and nothing else, so every icy world gets Europa's grammar scaled by heat flow. That suits Europa and Ganymede, but Callisto, Ceres, Iapetus and Pluto are not cracking ice shells. *Fix*: the ice-shell rule also needs an active shell (tidal heat or heat flow above a threshold, or a modelled ocean under a thin shell). The rest go to a **cold ice lid** (the stagnant-lid grammar on ice material: craters kept, no ridges) and get their character from the new mechanisms below.
 2. **Roundness ignores material.** `small-body` is `radius_km ≤ 300`. Lineweaver and Norman 2010 put the irregular-to-round transition at about 200 km for ice and 300 km for rock, because ice is weaker. *Fix*: threshold by material (water fraction), about 200 km for icy bodies. Enceladus (252 km) and Miranda (236 km) become round; Vesta (263 km, rock) stays lumpy.| **read**
-3. **Renewal depends on today's heat flow alone.** Callisto's early radiogenic heat (36 mW/m²) drives the cube-law renewal that erases its craters. Triton's real heat came from tides after its capture (Agnor and Hamilton 2006), which the code cannot know. *Fix*: renewal only where the regime is actually active (point 1); a moon's **tidal history** as an input (imports and the Milky Way pack give it; formation fills it when F makes captures).
+3. **Renewal depends on today's heat flow alone.** Callisto's early radiogenic heat (36 mW/m²) drives the cube-law renewal that erases its craters. Triton's real heat came from tides after its capture (capture: Agnor and Hamilton 2006; tides after it: Correia 2009, to add), which the code cannot know. *Fix*: renewal only where the regime is actually active (point 1); a moon's **tidal history** as an input (imports and the Milky Way pack give it; formation fills it when F makes captures).
 4. **No volatile ices at all.** The cover stage knows water ice only (cold traps at 165 K). N2, CH4, CO, CO2, NH3, SO2 and the hydrocarbons never appear as surface ice. This is the big one: section 4, mechanism M1.
 
 These four are why Pluto fails. Points 1 to 3 are rule changes in `packs/base-surface` and S4, with golden changes on purpose. Point 4 is new physics.
@@ -69,7 +69,7 @@ Legend: **built** (in `main` with tests), **designed** (in an accepted design, s
 | Reorientation of the world by a basin load | Pluto | a loaded basin rolls to the tidal axis; implies an ocean (Nimmo et al. 2016; Keane et al. 2016) | gap | M8 (true polar wander) |
 | Cantaloupe terrain | Triton | solid-state diapirs in the ice crust (Schenk and Jackson 1993) | gap | M2 diapirs |
 | Nitrogen geysers, dark streaks | Triton (also Mars spiders) | solid-state greenhouse: sunlight heats the base of translucent ice until gas bursts through (Soderblom et al. 1990; Kirk et al. 1990; Kieffer et al. 2006) | gap | M1 at D2, plus W4's plume code |
-| Young surface | Triton | tidal heating after capture (Agnor and Hamilton 2006; Schenk and Zahnle 2007) | gap | fix 3 in 2.2 |
+| Young surface | Triton | tidal heating after capture (capture: Agnor and Hamilton 2006; the tidal evolution after it: Correia 2009, to add; Schenk and Zahnle 2007) | gap | fix 3 in 2.2 |
 | Contact binary of two flattened lobes | Arrokoth | gentle merger in the collapse of a pebble cloud (McKinnon et al. 2020) | gap | M5 (small bodies) |
 
 ### 3.2 Inner Solar System
@@ -80,7 +80,7 @@ Legend: **built** (in `main` with tests), **designed** (in an accepted design, s
 | Shields, Tharsis, Valles Marineris, dichotomy | Mars | stagnant lid, plume, flexure | built (S4, S6, S0) | none |
 | Outflow channels and chaos terrain | Mars | sudden release of pressurised groundwater from below a frozen cryosphere (Carr 1979) | gap | M4 (water released from a crust), on the accepted water-table block |
 | Polar layered deposits | Mars | ice and dust laid down in layers paced by obliquity cycles (Laskar et al. 2002) | gap | M1 over deep time, writing S9 strata |
-| Seasonal CO2 caps, "Swiss cheese" pits | Mars south cap | CO2 frost by season; pits retreat by metres a year (Thomas et al. 2000; Byrne and Ingersoll 2003) | gap (W2 has seasonal frost only as weather) | M1 |
+| Seasonal CO2 caps, "Swiss cheese" pits | Mars south cap | CO2 frost by season; pits retreat by metres a year (1 to 3 m per Mars year: Malin, Caplinger and Davis 2001, Science, doi:10.1126/science.1066416; the terrain: Thomas et al. 2000; Byrne and Ingersoll 2003) | gap (W2 has seasonal frost only as weather) | M1 |
 | Spiders (araneiforms), dark fans | Mars south polar | CO2 jets under translucent slab ice (Kieffer et al. 2006) | gap | M1 solid-state greenhouse |
 | Recurring slope lineae | Mars | seasonal dark streaks on warm slopes; first read as brine (McEwen et al. 2011), now mostly as dry granular flows (Dundas et al. 2017) | gap | M4 rule with the debate stated; low priority |
 | Gullies, glaciers under debris, patterned ground | Mars, Earth | CO2 frost or melt on slopes; ice under rock cover; thermal contraction polygons (Levy et al. 2009) | gap (glacial factor in S3 only) | M1, M6 (periglacial rules) |

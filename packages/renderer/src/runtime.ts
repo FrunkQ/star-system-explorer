@@ -2,16 +2,24 @@
 // recipe, draws it, measures every frame, lets the governor walk the degrade
 // order, and reports what it did so the view can show the quality badge.
 // Presentation only: nothing here reaches the kernel or the state hash.
-import { cubeDirection, perf, type Globe, type Tier } from "../../ui-contract/src/index.ts";
-import { layersFor, narrateFrame, pickAt, recolour, type LayerSpec, type TimeLapse } from "./timelapse.ts";
+import { constant, cubeDirection, perf, type Globe, type Tier } from "../../ui-contract/src/index.ts";
+import { iceAges, iceAgeWords, layersFor, narrateFrame, pickAt, recolour, type LayerSpec, type TimeLapse } from "./timelapse.ts";
 import { narrateWeather, weatherAt, withWeather, type WeatherMap } from "./weather.ts";
+import { withFace } from "./globe-face.ts";
+import { flowFace, type AirFlow } from "./true-air.ts";
+import type { TrueTexture } from "./true-look.ts";
 import { badge, Governor, type Badge } from "./governor.ts";
 import { DEFAULT_BUDGET_MS, estimateMs, maxLevel, pickRecipe, plan, TIER_ORDER, type PassSpec, type Plan, type RecipeDoc } from "./recipe.ts";
 import { drawCanvas } from "./canvas.ts";
 import { lightDir, narrate, prepare, type Prepared } from "./surface.ts";
 import type { GlobeGpu } from "./gpu-globe.ts";
 import { air as airOf, type Air, type AirFacts } from "./atmosphere.ts";
+import { HeatWatch, loadProbe, loadQuality, place, probeKey, saveProbe, saveQuality, type Capabilities, type Placement, type ProbeResult, type QualityChoice } from "./probe.ts";
 import type { AirRender } from "./gpu-air.ts";
+import { exposeAurora, type AuroraExposure, type AuroraPlan } from "./aurora.ts";
+
+/** The Sun's light at 1 au, W/m² (Kopp and Lean 2011), when a world's own is not handed in. */
+const SOLAR_FLUX_1AU = constant("S_sun");
 
 /** The air in render units (globe radius 1): coefficients × radius, scale height ÷ radius, shell to 10 scale heights. */
 export function airRender(a: { air: Air; radius_m: number }, thickness = 1): AirRender {
@@ -36,6 +44,8 @@ export interface GlobeRunOptions {
   label: string;
   /** The world's air facts (absent or null: no air, and the atmosphere pass draws nothing). */
   air?: AirFacts | null;
+  /** The world's aurora (aurora.ts `planAurora` from read_field), its radius, and the star's light at it in W/m² (for Eye). */
+  aurora?: { plan: AuroraPlan; radius_m: number; flux_w_m2?: number } | null;
 }
 
 export interface GlobeStatus {
@@ -58,6 +68,8 @@ export interface GlobeStatus {
   lat: number;
   /** The air in words (where it came from and what it does), or why there is none. */
   air_note: string;
+  /** The aurora in words (what glows where, the exposure), or why none is drawn. */
+  aurora_note: string;
   /** The last frame's own drawing time, ms (the rest of a frame interval is the page and the browser). */
   work_ms: number;
 }
@@ -72,12 +84,18 @@ export interface GlobeRun {
   setTime(t_myr: number): void;
   /** The layers this time lapse can show: id, label, legend, limits, and whether its fields are present or pending. */
   layers(): { id: string; label: string; legend: LayerSpec["legend"]; limits: string; available: boolean; pending: string[] }[];
-  /** Keyframe times and dated events, for the scrubber's marks. */
-  frames(): { times: number[]; events: { t_myr: number; kind: string; label: string; lon?: number; lat?: number }[] };
+  /** Keyframe times and dated events, for the scrubber's marks; the ice ages' window (they fall within a few million years of today) for a strip of their own. */
+  frames(): { times: number[]; events: { t_myr: number; kind: string; label: string; lon?: number; lat?: number; why?: string[] }[]; iceAges: { from_myr: number; to_myr: number; words: string[] } | null };
   /** What lies under a point on the globe at the time shown: field values, the nearest event and the kernel's why lines. */
   pick(lon_deg: number, lat_deg: number): ReturnType<typeof pickAt> | null;
   /** Today's weather over the globe (the kernel's weather op, read): null takes it off. A time lapse shows its own past instead. */
   setWeather(w: WeatherMap | null): void;
+  /**
+   * The world's True face (true-air.ts `readTrueFace`) worn in place of the tiles' colours, for a world with no
+   * ground to show (a giant's cloud decks), carried by its winds `dt_s` after it was read when a flow comes with it.
+   * Null goes back to the tiles. A time lapse shows its own past instead; the face replaces the weather layer.
+   */
+  setFace(f: { tex: TrueTexture; flow?: AirFlow; radius_m?: number; dt_s?: number } | null): void;
   /** The weather at a point: the cell's layers and rain, and a storm over it (radius sizes the storms). */
   weatherAt(lon_deg: number, lat_deg: number, radius_km: number): ReturnType<typeof weatherAt>;
   setView(lon: number, lat: number): void;
@@ -90,6 +108,72 @@ export interface GlobeRun {
 /** What this device can draw: probed once a page. */
 let gpuProbe: Promise<"webgpu" | "webgl2" | null> | null = null;
 
+/** The device's capabilities and measured speed (VP4 probe.ts): read once a page, the speed cached on the device. */
+let capsRead: Promise<Capabilities> | null = null;
+let speedProbe: Promise<ProbeResult | null> | null = null;
+const speedListeners = new Set<() => void>();
+/** The heat watch is the visit's, not one view's: a hot device stays lowered on every view. */
+const heat = new HeatWatch();
+let lastSpeed: ProbeResult | null = null;
+
+const storage = (): Storage | null => {
+  try {
+    return typeof localStorage !== "undefined" ? localStorage : null;
+  } catch {
+    return null;
+  }
+};
+
+async function deviceCaps(): Promise<Capabilities> {
+  capsRead ??= import("./probe-gpu.ts").then((m) => m.readCapabilities());
+  return capsRead;
+}
+
+/** The measured speed: the cached probe for this adapter and browser, else null while one is measured in the background. */
+async function deviceSpeed(caps: Capabilities): Promise<ProbeResult | null> {
+  const key = probeKey(caps, typeof navigator !== "undefined" ? navigator.userAgent : "");
+  const kept = loadProbe(storage(), key);
+  if (kept) return (lastSpeed = kept);
+  if (!speedProbe) {
+    speedProbe = import("./probe-gpu.ts")
+      .then((m) => m.measureProbe(caps))
+      .then((r) => {
+        if (r) (saveProbe(storage(), { ...r, key }), (lastSpeed = r));
+        for (const l of speedListeners) l();
+        return r;
+      })
+      .catch(() => null);
+  }
+  return null;
+}
+
+/** Forget the measured speed and measure again (More › Performance › Measure again). Resolves with the new result. */
+export async function measureAgain(): Promise<ProbeResult | null> {
+  const caps = await deviceCaps();
+  try {
+    storage()?.removeItem("sse4.render.probe");
+  } catch {
+    // Nothing kept.
+  }
+  speedProbe = null;
+  await deviceSpeed(caps);
+  return (await speedProbe) ?? null;
+}
+
+/** The quality choice (More › Performance): kept on the device, and every open view is placed again at once. */
+export function setQuality(q: QualityChoice): void {
+  saveQuality(storage(), q);
+  for (const l of speedListeners) l();
+}
+
+export const quality = (): QualityChoice => loadQuality(storage());
+
+/** The device's capabilities and its cached speed, for the performance readout. */
+export async function deviceReadout(): Promise<{ caps: Capabilities; probe: ProbeResult | null }> {
+  const caps = await deviceCaps();
+  return { caps, probe: loadProbe(storage(), probeKey(caps, typeof navigator !== "undefined" ? navigator.userAgent : "")) };
+}
+
 export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (s: GlobeStatus) => void): GlobeRun {
   let o = { ...opts };
   let globe: Globe | null = null;
@@ -99,6 +183,8 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
   let lapseLayer = "land";
   let lapseT = 0;
   let wx: WeatherMap | null = null;
+  let face: { tex: TrueTexture; flow?: AirFlow; radius_m?: number; dt_s?: number } | null = null;
+  let faceN = 0;
   let shown: Prepared | null = null;
   let shownKey = "";
   let lon = 0;
@@ -134,6 +220,12 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     const th = Number(current()?.plan.passes.find((x) => x.pass === "atmosphere")?.params.thickness ?? 1);
     return `Air from the kernel: ${(f.pressure_pa / 100).toFixed(0)} hPa at ${Math.round(f.temperature_k)} K, ${mix}; scale height ${(a.scale_height_m / 1000).toFixed(1)} km; blue light's path straight up scatters ${Math.round((1 - Math.exp(-a.zenith_depth[2])) * 100)}% (Rayleigh, single scattering).${a.unknown_gases.length ? ` Left out (no data): ${a.unknown_gases.join(", ")}.` : ""}${th > 1 ? ` Drawn ${th}× thicker than true.` : ""}`;
   };
+  const auroraNote = (pass: Record<string, unknown> | undefined, d: ReturnType<typeof exposeAurora>) => {
+    if (!o.aurora) return "No aurora drawn: the kernel has not read this world's field.";
+    if (!pass) return `${o.aurora.plan.note} Drawn in True on the GPU only.`;
+    const cav = o.aurora.plan.caveats.length ? ` Not yet: ${o.aurora.plan.caveats.join("; ")}.` : "";
+    return `${o.aurora.plan.note}${d ? ` ${d.says}` : ""}${o.aurora.flux_w_m2 ? "" : d && pass.exposure === "eye" ? " The star's light here is taken as the Sun's at Earth." : ""}${cav}`;
+  };
   let lastEmit = -1e9;
   let switching = false;
 
@@ -153,19 +245,25 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     return gpuProbe;
   }
 
-  let available: Tier[] = ["canvas", "text"];
   let startTier: Tier = "canvas";
   async function chooseTier() {
     const want = o.tier;
-    const gpuKind = !gpuFailed && (want === "auto" || want === "gpu-basic" || want === "gpu-high") ? await probeGpu() : null;
+    const gpuKind = !gpuFailed && (want === "auto" || want === "gpu-basic" || want === "gpu-high" || want === "gpu-ultra") ? await probeGpu() : null;
     const hasGpu = !!gpuKind;
-    // gpu-high is chosen by itself only on WebGPU; it can be asked for on WebGL2.
-    available = gpuKind === "webgpu" ? ["gpu-high", "gpu-basic", "canvas", "text"] : hasGpu ? ["gpu-basic", "canvas", "text"] : ["canvas", "text"];
     if (want === "auto") {
+      // Placed by measured speed (VP4), not by which graphics layer the device has: a fast WebGL2 device can earn High.
       const doc = o.registry.find((r) => r.id === o.recipe) ?? recipe(hasGpu ? "gpu-basic" : "canvas")?.doc;
-      startTier = TIER_ORDER.find((t) => doc?.tiers.includes(t) && available.includes(t)) ?? "text";
-      tierNote = gpuKind === "webgpu" ? "Chosen for this device: it has WebGPU." : hasGpu ? "Chosen for this device: it can draw on the GPU (WebGL2; the high tier waits for WebGPU)." : "Chosen for this device: no WebGPU or WebGL2 here, so the globe is drawn on a 2D canvas.";
-    } else if ((want === "gpu-basic" || want === "gpu-high") && !hasGpu) {
+      if (!doc) {
+        startTier = "text";
+        tierNote = "No recipe to draw with.";
+        return;
+      }
+      const caps = hasGpu ? await deviceCaps().catch(() => null) : null;
+      const speed = caps && hasGpu ? await deviceSpeed({ ...caps, backend: gpuKind }) : null;
+      const placed: Placement = place({ caps: { backend: gpuKind, compute: gpuKind === "webgpu" && !!caps?.compute }, probe: speed, pixels: full() * full(), recipe: doc, library: o.library, choice: loadQuality(storage()), heat_ceiling: heat.ceiling });
+      startTier = placed.tier;
+      tierNote = placed.note;
+    } else if ((want === "gpu-basic" || want === "gpu-high" || want === "gpu-ultra") && !hasGpu) {
       startTier = "canvas";
       tierNote = "GPU tier asked for, but this device has neither WebGPU nor WebGL2: drawn on a 2D canvas instead.";
     } else {
@@ -173,6 +271,12 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       tierNote = `Drawn on ${want} as set, not by this device's own choice.`;
     }
   }
+  // When the background probe returns, place this view again by the measured speed.
+  const onSpeed = () => {
+    if (disposed || o.tier !== "auto") return;
+    ready = chooseTier().then(() => ((gov = null), (dirty = true), kick()));
+  };
+  speedListeners.add(onSpeed);
 
   function current(): { doc: RecipeDoc; stood_in?: string; plan: Plan; budget: number } | null {
     const r = recipe(startTier);
@@ -235,14 +339,23 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     if (lapse) {
       const k = `${preparedKey}|${lapseLayer}|${lapseT}`;
       if (!shown || shownKey !== k || shown.globe !== globe) ((shown = recolour(prepared, lapse, lapseLayer, lapseT, cubeDirection)), (shownKey = k));
+    } else if (face) {
+      const k = `${preparedKey}|face|${faceN}|${face.dt_s ?? 0}`;
+      if (!shown || shownKey !== k || shown.globe !== globe) {
+        const f = face;
+        const tex = f.flow && f.dt_s && f.radius_m && f.radius_m > 0 ? flowFace(f.tex, f.flow, { radius_m: f.radius_m, dt_s: f.dt_s }) : f.tex;
+        ((shown = withFace(prepared, tex, cubeDirection)), (shownKey = k));
+      }
     } else if (wx) {
       const k = `${preparedKey}|weather|${wx.day}`;
       if (!shown || shownKey !== k || shown.globe !== globe) ((shown = withWeather(prepared, wx, cubeDirection)), (shownKey = k));
     } else shown = prepared;
     const drawn = shown!;
-    const want = pl.tier === "gpu-basic" || pl.tier === "gpu-high" ? "gpu" : pl.tier === "canvas" ? "canvas" : "text";
+    const want = pl.tier === "gpu-basic" || pl.tier === "gpu-high" || pl.tier === "gpu-ultra" ? "gpu" : pl.tier === "canvas" ? "canvas" : "text";
     const atm = pl.passes.find((x) => x.pass === "atmosphere")?.params;
     const airNow = atm && airPhys ? airRender(airPhys, Number(atm.thickness ?? 1)) : null;
+    const auPass = pl.passes.find((x) => x.pass === "aurora")?.params;
+    const auNow = auPass && o.aurora ? exposeAurora(o.aurora.plan, o.aurora.radius_m, (auPass.exposure === "eye" ? "eye" : "long") as AuroraExposure, Number(atm?.sun ?? 6), o.aurora.flux_w_m2 ?? SOLAR_FLUX_1AU, Number(auPass.lift_target ?? 0.6)) : null;
     ensureSurface(want);
     const t0 = performance.now();
     let drew = false;
@@ -252,14 +365,16 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       drew = true;
     } else if (want === "gpu" && gpu && canvas && !switching) {
       if (canvas.style.width !== `${o.size_px}px`) canvas.style.width = canvas.style.height = `${o.size_px}px`;
-      gpu.draw(drawn, pl, lon, lat, full(), airNow);
+      gpu.draw(drawn, pl, lon, lat, full(), airNow, undefined, auNow);
       drew = true;
     }
     const work = performance.now() - t0;
     if (drew) {
       frames++;
-      // The performance readout (PF1), when it is on: the globe's own drawing time, by tier.
+      // The performance readout (PF1), when it is on: the globe's own drawing time, by tier, and each pass's share
+      // of it (VP4; estimated from the passes' declared costs until per-pass GPU timing lands).
       perf.record("render.globe", work, { detail: pl.tier });
+      if (perf.enabled) for (const x of passShares(pl, o.library, full() * full(), speedNow())) perf.record("render.pass", work * x.share, { detail: `${x.pass} (${pl.tier}, estimated share)` });
       // Continuous frames: the interval between them is the frame time; a lone frame: its own work.
       const ms = lastFrameAt >= 0 && now - lastFrameAt < 250 ? Math.max(work, now - lastFrameAt) : work;
       lastFrameAt = now;
@@ -271,6 +386,8 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
         const ratio = est > 0 && Number.isFinite(gov.ewma) ? gov.ewma / est : null;
         const move = gov.sample(ms, (lv) => (ratio === null ? null : estimateMs(plan(cur.doc, o.library, startTier, lv, o.knobs), o.library, pixels) * ratio));
         if (move) dirty = true;
+        // Three steps down inside a minute: a hot device. Lower the ceiling for the visit and place again.
+        if (move === "down" && o.tier === "auto" && heat.down(now, pl.tier)) ready = chooseTier().then(() => ((gov = null), (dirty = true), kick()));
       }
     }
     const c2 = current()!;
@@ -286,7 +403,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       const narration = lapse ? narrateFrame(lapse, lapseLayer, lapseT, o.label) : `${narrate(prepared, o.label, lon, lat, String(narr?.params.detail ?? "full"), L)}${wx ? ` ${narrateWeather(wx, "")}` : ""}`;
       onStatus({
       tier: c2.plan.tier,
-      backend: c2.plan.tier === "gpu-basic" || c2.plan.tier === "gpu-high" ? (gpu?.backend ?? "none") : c2.plan.tier === "canvas" ? "canvas2d" : "none",
+      backend: c2.plan.tier === "gpu-basic" || c2.plan.tier === "gpu-high" || c2.plan.tier === "gpu-ultra" ? (gpu?.backend ?? "none") : c2.plan.tier === "canvas" ? "canvas2d" : "none",
       recipe: c2.doc.id,
       level: c2.plan.level,
       max: gov?.max ?? 0,
@@ -302,6 +419,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       lat,
       work_ms: work,
       air_note: airNote(),
+      aurora_note: auroraNote(auPass, auNow),
       });
     }
     if (!drew && want !== "text") dirty = true;
@@ -343,9 +461,15 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       return lapse ? layersFor(lapse).map((l) => ({ id: l.spec.id, label: l.spec.label, legend: l.spec.legend, limits: l.spec.limits, available: l.available, pending: l.pending })) : [];
     },
     frames() {
-      if (!lapse) return { times: [], events: [] };
+      if (!lapse) return { times: [], events: [], iceAges: null };
       const ll = (d: readonly number[]) => ({ lon: (Math.atan2(d[1]!, d[0]!) * 180) / Math.PI, lat: (Math.asin(Math.max(-1, Math.min(1, d[2]!))) * 180) / Math.PI });
-      return { times: lapse.frames.map((f) => f.t_myr), events: lapse.events.map((e) => ({ t_myr: e.t_myr, kind: e.kind, label: e.text, ...(e.dir ? ll(e.dir) : {}) })) };
+      const ia = iceAges(lapse);
+      const tl = lapse;
+      return {
+        times: lapse.frames.map((f) => f.t_myr),
+        events: lapse.events.map((e) => ({ t_myr: e.t_myr, kind: e.kind, label: e.text, ...(e.dir ? ll(e.dir) : {}), ...(e.why?.length ? { why: e.why } : {}) })),
+        iceAges: ia ? { from_myr: ia.from_myr, to_myr: ia.to_myr, words: ia.events.map((e) => iceAgeWords(tl, e)) } : null,
+      };
     },
     pick(lo, la) {
       if (!lapse) return null;
@@ -355,6 +479,13 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     },
     setWeather(w) {
       wx = w;
+      shown = null;
+      dirty = true;
+      kick();
+    },
+    setFace(f) {
+      if (f?.tex !== face?.tex) faceN++;
+      face = f;
       shown = null;
       dirty = true;
       kick();
@@ -384,9 +515,20 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     frameTimes: () => times,
     dispose() {
       disposed = true;
+      speedListeners.delete(onSpeed);
       if (raf) cancelAnimationFrame(raf);
       gpu?.dispose();
       canvas?.remove();
     },
   };
+}
+
+/** The speed now, if it has been measured (the readout's estimated shares use it). */
+const speedNow = (): ProbeResult | null => lastSpeed;
+
+/** Each pass's share of a frame, from its declared cost (scaled by the probe's factors when measured). */
+export function passShares(pl: Plan, library: readonly PassSpec[], pixels: number, speed: Pick<ProbeResult, "factors"> | null): { pass: string; share: number }[] {
+  const each = pl.passes.map((p) => ({ pass: p.pass, ms: estimateMs({ ...pl, passes: [p] }, library, pixels, {}, speed?.factors ?? null) }));
+  const total = each.reduce((a, x) => a + x.ms, 0);
+  return total > 0 ? each.filter((x) => x.ms > 0).map((x) => ({ pass: x.pass, share: x.ms / total })) : [];
 }

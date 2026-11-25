@@ -5,7 +5,7 @@
   never sends: what is on screens stays as it was sent until it is fired again. Done or Escape goes back to Live.
 -->
 <script lang="ts">
-  import { addBookmark, findPreset, isUp, presetWords, removePreset, updatePreset, type Board, type Bookmark, type HoldCard, type Playbook, type Preset, type Step } from "../../../ui-contract/src/index.ts";
+  import { addBookmark, findPreset, wordsOnly, isUp, presetWords, removePreset, updatePreset, type Board, type Bookmark, type HoldCard, type Playbook, type Preset, type Step } from "../../../ui-contract/src/index.ts";
   import { firedAt } from "./fired.svelte.ts";
 
   let {
@@ -14,6 +14,7 @@
     board,
     bookmarks,
     roles,
+    layouts = [],
     editing = $bindable(),
     markHere,
     onchange,
@@ -26,6 +27,8 @@
     board: Board;
     bookmarks: readonly Bookmark[];
     roles: readonly { id: string; label: string }[];
+    /** Layouts a Show step may bring (PB13): shipped files and the campaign's made ones; "" keeps the role's own. */
+    layouts?: readonly { id: string; label: string }[];
     editing: boolean;
     markHere?: () => Bookmark;
     onchange: (next: Playbook) => void;
@@ -48,7 +51,8 @@
     if (!k || !markHere) return;
     const b = markHere();
     onbookmarks(addBookmark(bookmarks, { ...b, name: `${k.title} (from live)` }));
-    setStep(i, { show: { bookmark: b.id } });
+    const was = k.steps[i];
+    setStep(i, { show: { bookmark: b.id, ...(was && "show" in was && was.show.layout ? { layout: was.show.layout } : {}) } });
     note = "Now shows where you are. Fire again to send it.";
   }
   const cardValue = (c: HoldCard) => (typeof c === "string" ? c : "text");
@@ -62,13 +66,13 @@
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <article class="monitor" data-monitor={k.id} data-editing={editing ? "" : undefined} onkeydown={key} aria-label="Preset {k.title}">
     <header>
-      <span class="mt"><b data-monitor-title>{k.title}</b>{#if !k.steps.every((x) => "say" in x)} <span class="sub to">▸ {roleWords(k.to)}</span>{/if}</span>
+      <span class="mt"><b data-monitor-title>{k.title}</b>{#if !wordsOnly(k)} <span class="sub to">▸ {roleWords(k.to)}</span>{/if}</span>
       <span class="acts">
         {#if editing}
           <button type="button" class="pri" data-monitor-done onclick={() => (editing = false)}>Done</button>
         {:else}
           <button type="button" data-monitor-edit onclick={() => (editing = true)}>Edit</button>
-          <button type="button" class="pri" class:on={up} aria-pressed={up} data-monitor-fire onclick={() => onfire(k)}>{up ? "Take back" : k.steps.every((x) => "say" in x) ? "Mark read" : "Fire"}</button>
+          <button type="button" class="pri" class:on={up} aria-pressed={up} data-monitor-fire onclick={() => onfire(k)}>{up ? "Take back" : wordsOnly(k) ? "Mark read" : "Fire"}</button>
         {/if}
         <button type="button" class="quiet" aria-label="Back to Live" title="Back to Live (Escape)" data-monitor-close onclick={onclose}>×</button>
       </span>
@@ -96,14 +100,32 @@
           {#if "show" in s}
             <label
               >Shows
-              <select value={s.show.bookmark} data-edit-bookmark onchange={(e) => setStep(i, { show: { bookmark: e.currentTarget.value } })}>
+              <select value={s.show.bookmark} data-edit-bookmark onchange={(e) => setStep(i, { show: { ...s.show, bookmark: e.currentTarget.value } })}>
                 {#each bookmarks as b (b.id)}<option value={b.id}>{b.name}</option>{/each}
                 {#if !bookmarks.some((b) => b.id === s.show.bookmark)}<option value={s.show.bookmark}>a bookmark that has gone</option>{/if}
               </select>
             </label>
+            {#if layouts.length}
+              <label
+                >On the layout
+                <select value={s.show.layout ?? ""} data-edit-layout onchange={(e) => setStep(i, { show: { bookmark: s.show.bookmark, ...(e.currentTarget.value ? { layout: e.currentTarget.value } : {}) } })}>
+                  <option value="">The role's own</option>
+                  {#each layouts as l (l.id)}<option value={l.id}>{l.label}</option>{/each}
+                </select>
+              </label>
+            {/if}
             {#if markHere}<button type="button" class="ghost" data-update-from-live onclick={() => updateFromLive(i)}>Update from live</button>{/if}
+          {:else if "reveal" in s}
+            <label
+              >Tells them
+              <select value={s.reveal.landmark} data-edit-landmark onchange={(e) => setStep(i, { reveal: { ...s.reveal, landmark: e.currentTarget.value as "known" | "heard_of" } })}>
+                <option value="known">it is there (known)</option>
+                <option value="heard_of">of it (heard of)</option>
+              </select>
+            </label>
           {:else if "say" in s}
-            <label class="wide">Words to read <textarea rows="4" value={s.say.text} data-edit-say oninput={(e) => setStep(i, { say: { text: e.currentTarget.value } })}></textarea></label>
+            <label class="wide">Words to read <textarea rows="4" value={s.say.text} data-edit-say oninput={(e) => setStep(i, { say: { text: e.currentTarget.value, ...(s.say.on_screens ? { on_screens: true as const } : {}) } })}></textarea></label>
+            <label class="check"><input type="checkbox" checked={!!s.say.on_screens} data-edit-on-screens onchange={(e) => setStep(i, { say: { text: s.say.text, ...(e.currentTarget.checked ? { on_screens: true as const } : {}) } })} /> Also show on screens</label>
           {:else if "hold" in s}
             <label
               >Card
@@ -218,6 +240,13 @@
   }
   label.wide {
     width: 100%;
+  }
+  label.check {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--sse-ink);
   }
   textarea {
     font-family: var(--sse-font-display);

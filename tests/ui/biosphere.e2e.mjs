@@ -22,6 +22,7 @@ const base = `http://localhost:${port}/`;
 const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
 await new Promise((r) => setTimeout(r, 400));
 const shot = async (page, n) => {
+  await page.waitForTimeout(300);
   if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png`, fullPage: false }));
 };
 
@@ -69,6 +70,39 @@ try {
     assert.equal(await bio.locator("[data-hook=false_positive]").count(), 1);
     assert.match(await bio.locator("[data-tier=surveyed] + dd").innerText(), /no biosphere found/);
 
+    // The LifeFlow board (U7 part 2): the pipeline that worked it out, stage by stage.
+    await bio.locator("[data-show=board]").click();
+    await bio.locator("[data-lifeflow]").waitFor();
+    assert.equal(await bio.locator("[data-stage][data-live=false][data-stage=ecosystem]").count(), 1, "a false alarm has no ecosystem");
+    await bio.getByLabel("Example world").selectOption("earth");
+    await gm.waitForSelector("[data-biosphere='fixture:earth'] [data-lifeflow]");
+    assert.equal(await bio.locator("g[data-stage]").count(), 11, "eleven stages");
+    assert.ok((await bio.locator("path[data-wire]").count()) >= 12, "wired");
+    await bio.locator("g[data-stage=innovations]").click();
+    const stage = bio.locator("[data-stage-card=innovations]");
+    await stage.waitFor();
+    assert.ok(Number(await stage.locator("[data-stage-events]").getAttribute("data-stage-events")) >= 5, "its dated inventions");
+    // The knobs: a what-if when the kernel's life_view takes dials, read only (and saying so) when it does not yet.
+    const live = stage.locator("[data-dials-live]:not([data-dials-live=asking])");
+    await live.waitFor();
+    if ((await live.getAttribute("data-dials-live")) === "true") {
+      await stage.locator("input[data-dial=oxygenic]").fill("2.5");
+      await bio.locator("[data-whatif]").waitFor();
+      assert.match(await bio.locator("[data-whatif]").innerText(), /nothing in the campaign changes/);
+      await shot(gm, "u7-board-whatif");
+      await bio.locator("[data-whatif-back]").click();
+      await bio.locator("[data-whatif]").waitFor({ state: "detached" });
+    } else assert.equal(await stage.locator("input[data-dial=oxygenic]").isDisabled(), true, "dials are read only until the kernel takes them");
+    await bio.locator("g[data-stage=origin]").press("Enter");
+    await bio.locator("[data-stage-card=origin] input[data-dial=origin]").waitFor();
+    await shot(gm, "u7-board");
+    await bio.getByLabel("Example world").selectOption("europa");
+    await gm.waitForSelector("[data-biosphere='fixture:europa'] [data-lifeflow]");
+    await bio.locator("g[data-stage=hooks]").click();
+    await bio.locator("[data-stage-card=hooks] [data-hook=hidden_life]").waitFor();
+    await bio.locator("[data-show=story]").click();
+    await bio.locator("rect.band").first().waitFor({ state: "attached" }).catch(() => {});
+
     // A world on the chart: the kernel has no biosphere for it yet, and says so.
     await go(gm, "system");
     await gm.locator('.area-chart .body[aria-label^="Tarn"]').first().click();
@@ -92,10 +126,16 @@ try {
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);
     await shot(phone, "u7-phone");
+    await phone.locator("[data-show=board]").click();
+    await phone.locator("[data-stage-row=signatures]").click();
+    await phone.locator("[data-stage-card=signatures]").waitFor();
+    const over2 = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    assert.ok(over2 <= 1, `the board fits a phone (${over2}px over)`);
+    await shot(phone, "u7-board-phone");
 
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`${name}: biosphere view of the example worlds, epochs in lenses, a chart world's honest note, phone`);
+    console.log(`${name}: biosphere view of the example worlds, epochs in lenses, the LifeFlow board, a chart world's honest note, phone`);
   }
 } finally {
   server.kill();

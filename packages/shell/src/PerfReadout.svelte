@@ -6,9 +6,11 @@
   report is made only when the person copies or saves it; nothing is sent.
 -->
 <script lang="ts">
-  import { describeDevice, jsHeapMb, perf, perfReport, watchPage, type ChunkSummary, type DeviceDescription } from "../../ui-contract/src/index.ts";
+  import { describeDevice, jsHeapMb, perf, perfReport, sayNumber, watchPage, type ChunkSummary, type DeviceDescription } from "../../ui-contract/src/index.ts";
   import { opensFrom } from "../../chart-grammar/src/index.ts";
   import { loadPref, savePref } from "./prefs.ts";
+  import { deviceReadout, measureAgain, quality, setQuality } from "../../renderer/src/runtime.ts";
+  import { QUALITY_WORDS, type ProbeResult, type QualityChoice } from "../../renderer/src/probe.ts";
 
   let { kernel = "", edge, from, onclose }: { kernel?: string; edge?: { tier: string; unitsPerSecond: number }; from?: () => Element | null; onclose: () => void } = $props();
 
@@ -23,7 +25,25 @@
   let note = $state("");
   let device: DeviceDescription | null = null;
 
-  const ms = (x: number) => (x >= 1000 ? `${(x / 1000).toFixed(x >= 10_000 ? 0 : 1)} s` : `${x >= 100 ? Math.round(x) : x.toFixed(1)} ms`);
+  // VP4: drawing quality. The device's measured speed (the probe), the person's choice, and "Measure again".
+  let q = $state<QualityChoice>(quality());
+  let speed = $state<ProbeResult | null>(null);
+  let measuring = $state(false);
+  const QUALITIES = Object.entries(QUALITY_WORDS) as [QualityChoice, string][];
+  const speedWords = (r: ProbeResult | null) =>
+    r ? `Graphics measured on ${r.backend === "webgpu" ? "WebGPU" : "WebGL2"}: fill ${sayNumber(r.factors.fill, 3, { decimals: 1 })}×, march ${sayNumber(r.factors.march, 3, { decimals: 1 })}×, geometry ${sayNumber(r.factors.geometry, 3, { decimals: 1 })}× the reference's time${r.steady ? "" : " (unsteady: the device paused)"}.` : "Graphics speed not measured yet: it is measured with the first view drawn on the GPU.";
+  $effect(() => void deviceReadout().then((d) => (speed = d.probe)).catch(() => undefined));
+  function pickQuality(v: QualityChoice) {
+    q = v;
+    setQuality(v);
+  }
+  async function again() {
+    measuring = true;
+    speed = await measureAgain().catch(() => null);
+    measuring = false;
+  }
+
+  const ms = (x: number) => (x >= 1000 ? `${sayNumber(x / 1000, 3, { decimals: x >= 10_000 ? 0 : 1 })} s` : `${x >= 100 ? Math.round(x) : sayNumber(x, 3, { decimals: 1 })} ms`);
   const fill = (c: ChunkSummary) => Math.min(1, c.p95_ms / c.budget_ms);
   const STAGES: [string, string][] = [
     ["startup.packs", "packs"],
@@ -135,6 +155,11 @@
       {#if wasmMb !== null}<span>kernel memory {wasmMb} MB</span>{/if}
       {#if heapMb !== null}<span>page memory {heapMb} MB</span>{/if}
       <span title="Main-thread tasks over 50 ms since the readout started">{longTasks} long {longTasks === 1 ? "task" : "tasks"}</span>
+    </p>
+    <p class="m line" data-perf-drawing>
+      <label title="Auto places this device by its measured speed; the others are your choice, and views say so">Quality <select value={q} onchange={(e) => pickQuality(e.currentTarget.value as QualityChoice)}>{#each QUALITIES as [v, w] (v)}<option value={v}>{w}</option>{/each}</select></label>
+      <span>{measuring ? "Measuring the graphics (about half a second)…" : speedWords(speed)}</span>
+      <button type="button" class="quiet" onclick={again} disabled={measuring} data-perf-measure>Measure again</button>
     </p>
     <div class="acts">
       <label class="lab"><span>This device</span><input type="text" bind:value={label} placeholder="e.g. my phone" maxlength="60" /></label>

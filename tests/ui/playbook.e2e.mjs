@@ -2,7 +2,7 @@
 // Usage: node tests/ui/playbook.e2e.mjs [--screens <dir>]
 // The GM bookmarks Vault, goes on air, and on the Switchboard adds the bookmark to the page as a preset. Selecting it
 // shows it in the monitor and sends nothing; its fire button sends it, and the players' screen turns to Vault. Pressed
-// again it takes it back. A Read aloud preset shows its words large in the monitor and sends nothing. Keep on Live
+// again it takes it back. A Read aloud preset shows its words large in the monitor and sends nothing; with "also show on screens" they go on a card over the players' picture. Keep on Live
 // makes a preset from where the GM is. Key 1 fires the first preset. A folded section hides its presets. The Playbook
 // is kept with the campaign: it is all still there after a reload.
 import { spawn } from "node:child_process";
@@ -23,6 +23,7 @@ const shot = async (page, n) => {
   await page.waitForTimeout(600);
   if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png` }));
 };
+const cardIs = (p, name) => p.waitForFunction((n) => document.querySelector("[data-view='sse.view.card'] article")?.getAttribute("aria-label") === n, name, { timeout: 15000 });
 const playerCard = () => document.querySelector("[data-view='sse.view.card'] article")?.getAttribute("aria-label");
 
 try {
@@ -41,6 +42,13 @@ try {
   await gm.keyboard.press("b");
   await gm.locator("[data-bookmark-add]").click();
   await gm.locator("[data-bookmark-name]").fill("Vault, the rings");
+  await gm.locator("[data-bookmark-name]").press("Enter");
+  await gm.keyboard.press("Escape");
+  // And Tarn, for a reveal.
+  await gm.locator("[role=button][aria-label^='Tarn'] circle.hit").first().click();
+  await gm.keyboard.press("b");
+  await gm.locator("[data-bookmark-add]").click();
+  await gm.locator("[data-bookmark-name]").fill("Tarn");
   await gm.locator("[data-bookmark-name]").press("Enter");
   await gm.keyboard.press("Escape");
   await gm.keyboard.press("Escape");
@@ -98,6 +106,19 @@ try {
   await monitor.locator("[data-monitor-done]").click();
   assert.match(await monitor.locator("[data-monitor-say]").innerText(), /ninety seconds/);
   await shot(gm, "playbook-read-aloud");
+  // "Also show on screens" (PB6): the words go on a card over what the players' screen shows; again, they go.
+  await pl.waitForTimeout(500);
+  assert.equal(await pl.locator("[data-say]").count(), 0, "a plain Read aloud sends nothing");
+  await monitor.locator("[data-monitor-edit]").click();
+  await monitor.locator("[data-edit-on-screens]").check();
+  await monitor.locator("[data-monitor-done]").click();
+  assert.equal(await monitor.locator("[data-monitor-fire]").innerText(), "Fire");
+  await monitor.locator("[data-monitor-fire]").click();
+  await pl.locator("[data-say]").waitFor({ timeout: 15000 });
+  assert.match(await pl.locator("[data-say] p").innerText(), /ninety seconds/);
+  await shot(pl, "read-aloud-on-screens");
+  await monitor.locator("[data-monitor-fire]").click();
+  await pl.locator("[data-say]").waitFor({ state: "detached", timeout: 15000 });
   await monitor.locator("[data-monitor-close]").click();
   await monitor.waitFor({ state: "detached" });
 
@@ -132,12 +153,48 @@ try {
   await book.locator("[data-page-choose='p1']").click();
   assert.equal(await book.locator("[data-preset]").count(), 3);
 
+  // The "just now" strip: a live send, kept afterwards as a preset; Again sends it again.
+  await sb.locator("[data-send-live]").click();
+  const just = gm.locator("[data-just-now]");
+  await just.waitFor();
+  assert.equal(await just.locator("[data-just]").count(), 1);
+  await just.locator("[data-just-keep]").first().click();
+  await monitor.waitFor();
+  await monitor.locator("[data-monitor-done]").click();
+  await monitor.locator("[data-monitor-close]").click();
+  assert.equal(await book.locator("[data-preset]").count(), 4);
+  await just.locator("[data-just-again]").first().click();
+  await shot(gm, "playbook-just-now");
+
+  // A reveal: the row wears the eye; firing it tells the table about Tarn, and the player's card fills in. Not a send.
+  await book.locator("[data-add-to]").first().click();
+  await book.locator("[data-add-kind='bookmark']").click();
+  await book.locator("[data-add-bookmark]").filter({ hasText: /^Tarn$/ }).click();
+  await monitor.locator("[data-monitor-done]").click();
+  await monitor.locator("[data-monitor-fire]").click();
+  await cardIs(pl, "Tarn");
+  await monitor.locator("[data-monitor-close]").click();
+  const plMass = () => pl.locator("[data-field='mass_kg'] dd").first().innerText();
+  assert.match(await plMass(), /not yet scanned/);
+  await book.locator("[data-add-to]").first().click();
+  await book.locator("[data-add-kind='reveal']").click();
+  await book.locator("[data-add-bookmark]").filter({ hasText: /^Tarn$/ }).click();
+  await monitor.locator("[data-monitor-done]").click();
+  const rid = await monitor.getAttribute("data-monitor");
+  await monitor.locator("[data-monitor-close]").click();
+  assert.equal(await book.locator(`[data-preset='${rid}'] [data-reveals]`).count(), 1, "the eye on the row");
+  await book.locator(`[data-fire='${rid}']`).click();
+  await gm.locator("[data-reveal-note]").waitFor();
+  assert.match(await gm.locator("[data-reveal-note]").innerText(), /told the table/);
+  await pl.waitForFunction(() => !/not yet scanned/.test(document.querySelector("[data-field='mass_kg'] dd")?.textContent ?? "not yet scanned"), null, { timeout: 15000 });
+  await shot(gm, "playbook-reveal");
+
   // Kept with the campaign.
   await gm.waitForTimeout(2500);
   await gm.reload();
   await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
   await gm.locator("[data-playbook]").waitFor({ timeout: 15000 });
-  assert.equal(await gm.locator("[data-playbook] [data-preset]").count(), 3);
+  assert.equal(await gm.locator("[data-playbook] [data-preset]").count(), 6);
   assert.match(await gm.locator("[data-playbook]").innerText(), /The rings of Vault/);
 
   assert.deepEqual(errors, []);

@@ -107,7 +107,8 @@ async function walk(browser, vp) {
   });
   await step("see what followed", async () => {
     const surface = field("Mars", "surface");
-    await page.waitForFunction(() => /2[3-9]\d K|3\d\d K/.test(document.querySelector("section[aria-label='Mars']")?.textContent ?? ""), null, { timeout: 20000 });
+    // Warmer than about 230 K: in kelvin, or in °C as a world's surface is said (ED1a).
+    await page.waitForFunction(() => /2[3-9]\d K|3\d\d K|(^|[^\d])−?([0-3]?\d|4\d)(\.\d)? °C/.test(document.querySelector("section[aria-label='Mars']")?.textContent ?? ""), null, { timeout: 20000 });
     await tap(surface.getByRole("button", { name: /why/i }));
     await page.locator(".area-card").getByText(/./).first().waitFor();
   });
@@ -179,7 +180,25 @@ async function walk(browser, vp) {
   await step("look up an element", async () => {
     await tap(rail("reference"));
     const find = page.locator("[data-ref-find]");
-    if (phone) await tap(find);
+    // The screen slides in; a person's tap on the box lands once it has settled (mid-slide it hit the page tabs).
+    if (phone) {
+      await find.scrollIntoViewIfNeeded();
+      await page.waitForFunction(
+        () =>
+          new Promise((done) => {
+            const box = () => document.querySelector("[data-ref-find]")?.getBoundingClientRect();
+            const a = box();
+            setTimeout(() => {
+              const b = box();
+              const top = b && document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+              done(!!a && !!b && a.x === b.x && a.y === b.y && !!top?.closest("[data-ref-find]") && document.getAnimations().length === 0);
+            }, 300);
+          }),
+        null,
+        { timeout: 8000, polling: 200 },
+      );
+      await tap(find);
+    }
     else await page.waitForFunction(() => document.activeElement?.hasAttribute("data-ref-find"), null, { timeout: 20000 });
     await page.keyboard.type("iron");
     await page.locator('[data-ref-hit="elements:fe"]').waitFor({ timeout: 20000 });

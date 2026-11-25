@@ -40,6 +40,8 @@ import material_rows  # noqa: E402
 import solid_rows  # noqa: E402
 import thermal_rows  # noqa: E402
 import conductivity_rows  # noqa: E402
+import liquid_rows  # noqa: E402
+import optical_rows  # noqa: E402
 import band_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
@@ -59,6 +61,7 @@ SOURCES = {
     "karkoschka1994": ("Karkoschka, E. 1994, Icarus 111, 174: spectrophotometry of the Jovian planets and Titan at 300 to 1000 nm, the methane spectrum (absorption coefficients at the giants' temperatures, Table VIII); read as served by the MPI-Mainz UV/VIS Spectral Atlas (Keller-Rudek, H. et al. 2013, Earth Syst. Sci. Data 5, 365, doi:10.5194/essd-5-365-2013), every 5 nm of its 1 nm table: handover/packages/ND2-data/ch4-karkoschka1994.csv", "10.1006/icar.1994.1139", "https://uv-vis-spectral-atlas-mainz.org/uvvis/cross_sections/Alkanes+alkyl%20radicals/Alkanes/CH4_Karkoschka(1994)_125-128K_406-1000nm.txt", "verified"),
     "nist-handbook-na": ("NIST Handbook of Basic Atomic Spectroscopic Data (Sansonetti, J. E. and Martin, W. C. 2005, J. Phys. Chem. Ref. Data 34, 1559), sodium, strong lines of Na I: wavelengths (air, A) and transition probabilities Aki; oscillator strengths here are worked out from Aki and the levels' statistical weights", "10.1063/1.1800011", "https://physics.nist.gov/PhysRefData/Handbook/Tables/sodiumtable3.htm", "verified"),
     "nist-handbook-k": ("NIST Handbook of Basic Atomic Spectroscopic Data (Sansonetti, J. E. and Martin, W. C. 2005, J. Phys. Chem. Ref. Data 34, 1559), potassium, strong lines of K I: wavelengths (air, A) and transition probabilities Aki; oscillator strengths here are worked out from Aki and the levels' statistical weights", "10.1063/1.1800011", "https://physics.nist.gov/PhysRefData/Handbook/Tables/potassiumtable3.htm", "verified"),
+    "nist-cccbdb": ("NIST Computational Chemistry Comparison and Benchmark Database, Release 22 (May 2022), list of experimental static dipole polarizabilities (in cubic angstroms; most from Olney, Cann, Cooper and Brion 1997, Chem. Phys. 223, 59)", None, "https://cccbdb.nist.gov/pollistx.asp", "verified"),
     "fray2009": ("Fray, N. and Schmitt, B. 2009, Planet. Space Sci. 57, 2053: sublimation of ices of astrophysical interest, a bibliographic review (recommended fits ln P[bar] = A0 + sum A_i / T^i; water by Feistel and Wagner 2007). Coefficients read from Lisse et al. 2021's reproduction of the table (SOM Table 2); which fit covers which range checked against each ice's triple point", "10.1016/j.pss.2009.09.011", None, "verified"),
     "lisse2021": ("Lisse, C. M. et al. 2021, Icarus 356, 114072: on the origin and thermal stability of Arrokoth's and Pluto's ices; Supplementary Online Material Table 2 reproduces Fray and Schmitt 2009's sublimation fits", None, "https://ntrs.nasa.gov/api/citations/20210019502/downloads/Supplementary%20Online%20Material%2020210019502.pdf", "verified"),
     "ame2020": ("Wang, M., Huang, W. J., Kondev, F. G., Audi, G. and Naimi, S. 2021, Chinese Phys. C 45, 030003: the AME 2020 atomic mass evaluation (II), tables", "10.1088/1674-1137/abddaf", None, "unverified"),
@@ -553,6 +556,25 @@ KING_ONE = ("fudge-register", "authored")  # King factor 1: molecular depolarisa
 T = "thauer1977"
 NIST = "nist-webbook"
 
+# ND2 part 2a: what van der Waals widening reads. Polarisability volumes (Å³, NIST CCCBDB) of the
+# particles that crowd an atom; ionisation energies (eV, NIST Handbook) of the atoms whose lines widen.
+POLARISABILITY_A3 = {"h2": 0.787, "he": 0.208, "n2": 1.710, "ch4": 2.448, "ar": 1.664, "h2o": 1.501}
+IONISATION_EV = {"na": (5.139076, "nist-handbook-na", "41449.451 cm-1, Baugh et al. 1998"),
+                 "k": (4.3406633, "nist-handbook-k", "35009.8140 cm-1, Sugar and Corliss 1985")}
+
+
+def add_widening_figures(subs):
+    for row in subs:
+        sid = row["id"]
+        if sid in POLARISABILITY_A3:
+            row.setdefault("optical", {})["polarisability"] = val(POLARISABILITY_A3[sid] * 1e-30, "m3", "nist-cccbdb",
+                                                                  note=f"{POLARISABILITY_A3[sid]} cubic angstroms, static, experimental")
+        if sid in IONISATION_EV:
+            v, src, note = IONISATION_EV[sid]
+            row.setdefault("optical", {})["ionisation_energy"] = val(v, "eV", src, note=note)
+    return subs
+
+
 SUBSTANCES = [
     substance("h2o", {"h": 2, "o": 1}, "water", plain="water", story="water",
               phases={
@@ -642,7 +664,7 @@ SUBSTANCES = [
     # Fusion fuels (hull tanks, ship ranges). Formulas name the isotope, so the molar mass is the isotope's own.
     substance("d2", {"h2": 2}, "deuterium", "heavy hydrogen",
               phases={"density_liquid": val(163.5, "kg m-3", "coolprop2014", "computed", at_k=23.31, also=["richardson2014"],
-                                            note="normal deuterium at its normal boiling point, from CoolProp's saturated-liquid fit to Richardson et al. 2014 (fit good to 0.17%)")}),
+                                            note="normal deuterium at its normal boiling point, computed by CoolProp from Richardson et al. 2014, whose equation of state is good to about 3% for saturated liquid density (the 0.17% is only CoolProp's ancillary fit to that equation)")}),
     substance("he3", {"he3": 1}, "helium-3",
               phases={"density_liquid": val(59.0, "kg m-3", "fudge-register", "unverified", at_k=3.19,
                                             note="about 59 kg/m3 at its 3.19 K boiling point; from memory, not read: check against a helium-3 equation of state")}),
@@ -861,6 +883,21 @@ for _m in conductivity_rows.apply(MIXTURES, val, {c[0]: c[2]["v"] for c in CONST
     assert all(x["id"] != _m["id"] for x in MIXTURES), _m["id"]
     MIXTURES.append(_m)
 
+# MP32: sea liquids for the climate thread (scripts/liquid_rows.py): liquid optics and
+# saturated-liquid density, viscosity and surface tension.
+for _k, _v in liquid_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+liquid_rows.apply(SUBSTANCES, math.pi, val)
+
+# MP33: optical constants of condensates for bands, hazes and ground stains (scripts/optical_rows.py).
+for _k, _v in optical_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+for _m in optical_rows.apply(MIXTURES):
+    MIXTURES.append(_m)
+optical_rows.apply_ices(SUBSTANCES, val)
+
 
 def elements():
     rows = []
@@ -925,7 +962,7 @@ def build():
                 "origin_legend": [{"id": k, "physics": v[0], "plain": v[1], "story": v[2]} for k, v in element_origins.SOURCE_NAMES.items()],
                 "elements": elements(),
                 "isotopes": ISOTOPES,
-                "substances": SUBSTANCES,
+                "substances": add_widening_figures(SUBSTANCES),
                 "mixtures": MIXTURES,
                 "reactions": nuclear_rows.reactions(ISOTOPES, {c[0]: c[2]["v"] for c in CONSTANTS}, val),
                 "bands": band_rows.rows(val),

@@ -25,6 +25,7 @@ pub mod giant_field;
 pub mod impacts;
 pub mod named;
 pub mod plates;
+pub mod plumes;
 pub mod regimes;
 pub mod scenario;
 pub mod site;
