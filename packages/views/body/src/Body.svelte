@@ -63,7 +63,7 @@
     got = null;
     failed = null;
     if (!sub || sub.kind === "star") return;
-    const hit = surfaceKept(sys, sub.address);
+    const hit = surfaceKept(ctx, sys, sub.address);
     if (hit) {
       got = hit;
       return;
