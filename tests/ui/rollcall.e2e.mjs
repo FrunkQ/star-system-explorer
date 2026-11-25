@@ -57,6 +57,15 @@ try {
     await page.waitForFunction(() => /in space, aboard/.test(document.querySelector("[data-rollcall-sentence]")?.textContent ?? ""));
     assert.ok((await panel.locator("[data-rollcall-person]").count()) > 0, "people listed");
 
+    // The count (SH3): a stepped line over the pack's span; pressing it goes to that day; losses are hollow marks.
+    const strip = panel.locator("[data-rollcall-strip] svg");
+    await strip.waitFor();
+    const before = await panel.locator("[data-rollcall-date]").textContent();
+    const box = await strip.boundingBox();
+    await page.mouse.click(box.x + box.width * 0.2, box.y + box.height / 2);
+    await page.waitForFunction((b) => document.querySelector("[data-rollcall-date]")?.textContent !== b, before);
+    assert.match(await panel.locator("[data-rollcall-strip-read]").textContent(), /people in space|person in space/i);
+
     // Type a date: the title takes it, and the roster is that day's.
     const typeDate = async (text) => {
       await panel.locator("[data-rollcall-date]").click();
