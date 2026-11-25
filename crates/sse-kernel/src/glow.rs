@@ -176,8 +176,12 @@ mod tests {
         // inner galaxy. And the midplane lane is deeper in V than in Ks.
         let v_gain = mag_at(g, "V", 180.0, 0.0) - mag_at(g, "V", 0.0, 0.0);
         let k_gain = mag_at(g, "Ks", 180.0, 0.0) - mag_at(g, "Ks", 0.0, 0.0);
+        // With the measured arms the Sagittarius-Carina arm lies about 1.5
+        // kpc inward of the Sun, inside V's reach, so V's centre gain is
+        // real (the bright Sagittarius Milky Way); Ks still sees deeper.
+        // Was v_gain + 0.5 with the generic two-arm wave (Local Arm PR).
         assert!(
-            k_gain > v_gain + 0.5,
+            k_gain > v_gain,
             "centre over anticentre V {v_gain} Ks {k_gain}"
         );
         let v_lane = mag_at(g, "V", 0.0, 0.0) - mag_at(g, "V", 0.0, -8.0);
