@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { EVERYONE, BUILTIN_LOGOS, resolveDelivery, SHIPPED_NOTE_SETS, pickBanners, controlOn, withLetterhead, withMargin, withVoice, withSources, firstSentence, cardFieldsOf, showReference, type HowKnown, type FactRow, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { EVERYONE, BUILTIN_LOGOS, resolveDelivery, SHIPPED_NOTE_SETS, pickBanners, controlOn, withLetterhead, withMargin, withVoice, withSources, withGmCopy, drawingOf, type ControlSet, placeNoteOf, firstSentence, cardFieldsOf, showReference, type HowKnown, type FactRow, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
   import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
@@ -16,6 +16,7 @@
   import AtlasDevice from "./AtlasDevice.svelte";
   import AtlasCover from "./AtlasCover.svelte";
   import Explain from "../../body-card/src/Explain.svelte";
+  import KitControl from "../../../chart-grammar/src/KitControl.svelte";
   import { curlTurn, pageTurn, playDelivery } from "../../../chart-grammar/src/index.ts";
   import { dateParts, dateWords, defaultCalendar, fromPackCalendar } from "../../../chart-grammar/src/calendar.ts";
 
@@ -54,6 +55,35 @@
       failed = r.ok ? null : r.message;
     });
   });
+
+  // The GM's copy (AT10): the table's own scene beside the GM's, so what the table has not been told is drawn in
+  // pencil (the same bytes the table is sent; nothing guessed), and the GM's notes at each place.
+  let tableBook = $state<PlayerScene | null>(null);
+  let tgen = 0;
+  $effect(() => {
+    void ws.revision;
+    const sys = scene.system;
+    const at = ws.now_yr;
+    const g = ++tgen;
+    if (audience !== "gm") return void (tableBook = null);
+    ctx.session.scene(sys, { audience: EVERYONE, at_yr: at }).then((r) => {
+      if (g === tgen) tableBook = r.ok ? r.scene : null;
+    });
+  });
+  let gmNotes = $state<Record<string, string[]>>({});
+  function readGmNotes(want: readonly string[]) {
+    if (audience !== "gm" || !ctx.session.record) return;
+    const rev = ws.revision;
+    for (const a of want) {
+      const k = `${rev}|${a}`;
+      if (k in gmNotes) continue;
+      gmNotes[k] = [];
+      ctx.session.record(a).then((r) => {
+        const n = r.ok ? placeNoteOf(r.record.notes, "gm-notes") : null;
+        if (n?.text.trim()) gmNotes[k] = [n.text];
+      }, () => {});
+    }
+  }
 
   // Words for the audience of the book on screen (the one read, not the one just asked for).
   const shownAudience = $derived(book?.audience ?? audience);
@@ -100,7 +130,8 @@
     if (!p || !book) return null;
     const voiced = withVoice(p, book, edition, { vocab, depth: ws.depth });
     const margined = withMargin(withLetterhead(voiced, edition, letterhead), book, edition, noteSets, { vocab, depth: ws.depth, exclude: turnedAway, order });
-    return withSources(margined, edition, howOf, { depth: ws.depth });
+    const gmCopy = withGmCopy(margined, book.audience, edition, { vocab, table: tableBook, gmNotes: gmNotes[`${ws.revision}|${a}`] ?? [] });
+    return withSources(gmCopy, edition, howOf, { depth: ws.depth });
   };
 
   // ---- Every number keeps its Why (AT8; design section 8). How a figure is known starts with the audience: for the
@@ -180,7 +211,7 @@
     void edition;
     void ws.depth;
     const a = address;
-    if (a && book) untrack(() => learn([a]));
+    if (a && book) untrack(() => (learn([a]), readGmNotes([a])));
   });
   $effect(() => {
     void address;
@@ -188,6 +219,10 @@
   });
   // The part's own controls (AT13): a screen may switch each off; off means not drawn and not pressable.
   const on = (id: string) => controlOn((ctx as { controls?: Readonly<Record<string, boolean>> }).controls, id);
+  // The kit's control set (AT15): on a players' screen wearing a kit, every control is drawn in its look by the one
+  // shared drawing, and a set that shows keys answers them. Absent (the GM's chart room), the Atlas's own buttons.
+  const kitSet = $derived((ctx as { control_set?: string | ControlSet }).control_set);
+  const showsKeys = $derived(!!kitSet && drawingOf(typeof kitSet === "object" ? kitSet.id : kitSet, "button", typeof kitSet === "object" ? [kitSet] : undefined).hotkey === true);
   // The one-liners at the top and bottom of a device's screen (SSE3's guide tips, Alex 25 Nov): by the page's use,
   // from the edition's own sets; the cover is a holding screen. Seeded by the edition, so they repeat like the page.
   const SITUATION_OF: Record<string, string> = { sector: "sector", system: "system", star: "system", world: "world", moon: "world", station: "world" };
@@ -325,6 +360,13 @@
       if (e.key === "ArrowRight" || e.key === "ArrowLeft") (e.preventDefault(), openCover());
       return;
     }
+    if (showsKeys && e.key.length === 1) {
+      const k = e.key.toUpperCase();
+      if (k === "P" && on("print") && page) return void (e.preventDefault(), printThisPage());
+      if (k === "C" && on("contents")) return void (e.preventDefault(), (folded = !folded));
+      if (k === "N" && on("step") && page?.next) return void (e.preventDefault(), turn(page.next, 1));
+      if (k === "B" && on("step") && page?.prev) return void (e.preventDefault(), turn(page.prev, -1));
+    }
     if (!on("step")) return;
     if (e.key === "ArrowRight" && page?.next) (e.preventDefault(), turn(page.next, 1));
     else if (e.key === "ArrowLeft" && page?.prev) (e.preventDefault(), turn(page.prev, -1));
@@ -346,7 +388,10 @@
 {/snippet}
 
 {#snippet stepper(where: string)}
-  {#if on("step")}<div class="step {where}">
+  {#if on("step") && kitSet}<div class="step kit {where}">
+    <KitControl set={kitSet} kind="step" words="Back" hotkey="B" disabled={!page?.prev} onclick={() => turn(page?.prev ?? null, -1)} label="Previous page{page?.prev ? `: ${titleOf(page.prev)}` : ''}" />
+    <KitControl set={kitSet} kind="step" words="Next" hotkey="N" disabled={!page?.next} onclick={() => turn(page?.next ?? null, 1)} label="Next page{page?.next ? `: ${titleOf(page.next)}` : ''}" />
+  </div>{:else if on("step")}<div class="step {where}">
     <button type="button" disabled={!page?.prev} onclick={() => turn(page?.prev ?? null, -1)} aria-label="Previous page{page?.prev ? `: ${titleOf(page.prev)}` : ''}">‹ {titleOf(page?.prev ?? null) || "Back"}</button>
     <button type="button" disabled={!page?.next} onclick={() => turn(page?.next ?? null, 1)} aria-label="Next page{page?.next ? `: ${titleOf(page.next)}` : ''}">{titleOf(page?.next ?? null) || "Next"} ›</button>
   </div>{/if}
@@ -365,9 +410,11 @@
         </select>
       </label>
     {/if}
-    {#if on("print")}<button type="button" class="printnow" onclick={printThisPage} disabled={!page}>Print this page</button>
-    <button type="button" class="printmore" aria-haspopup="dialog" onclick={() => (learn(lines.map((l) => l.address)), (viewOpen = true))} disabled={!page}>Print…</button>{/if}
-    {#if on("contents")}<button type="button" class="fold" aria-expanded={folded} onclick={() => (folded = !folded)}>Contents</button>{/if}
+    {#if on("print") && kitSet}<KitControl set={kitSet} words="Print" hotkey="P" onclick={printThisPage} disabled={!page} label="Print this page" />
+    {:else if on("print")}<button type="button" class="printnow" onclick={printThisPage} disabled={!page}>Print this page</button>
+    <button type="button" class="printmore" aria-haspopup="dialog" onclick={() => (learn(lines.map((l) => l.address)), readGmNotes(lines.map((l) => l.address)), (viewOpen = true))} disabled={!page}>Print…</button>{/if}
+    {#if on("contents") && kitSet}<span class="fold"><KitControl set={kitSet} kind="switch" words="Contents" hotkey="C" on={folded} onclick={() => (folded = !folded)} /></span>
+    {:else if on("contents")}<button type="button" class="fold" aria-expanded={folded} onclick={() => (folded = !folded)}>Contents</button>{/if}
   </div>
   {#if said}<p class="said" role="status">{said}</p>{/if}
   <div class="spread">
