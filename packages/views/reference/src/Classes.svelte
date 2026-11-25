@@ -90,7 +90,8 @@
 
   // The tile's mark: what the charts draw for a world of this class under this screen's symbology.
   const marker = $derived(symbology?.marker() ?? null);
-  const markOf = (c: AtlasClass) => marker?.mark({ kind: c.id.startsWith("asteroid/") || c.id.startsWith("small-body") ? "asteroid" : "planet", classes: [c.id], tags: [] }) ?? null;
+  // Class looks are bound to planets (a small body on a chart is drawn by the same tables), so every tile asks as one.
+  const markOf = (c: AtlasClass) => marker?.mark({ kind: "planet", classes: [c.id], tags: [] }) ?? null;
 
   const editable = $derived(workspace.mode === "edit" && session.seat.authority === "gm");
   let note = $state<string | null>(null);
@@ -173,8 +174,9 @@
           {@const m = markOf(n.cls)}
           <li class:under={n.depth > 0} style:--depth={n.depth}>
             <button type="button" class="tile" aria-pressed={openId === n.cls.id} data-class={n.cls.id} onclick={(e) => show(n.cls, e.currentTarget)}>
-              <svg class="icon" width="44" height="40" viewBox="0 0 44 40" aria-hidden="true">
-                {#if m}<Mark mark={{ ...m, size: Math.max(9, Math.min(14, m.size * 1.4)) }} cx={22} cy={20} prefix="cl" />{:else}<circle cx="22" cy="20" r="11" fill="none" stroke="currentColor" />{/if}
+              <svg class="icon" width="84" height="40" viewBox="0 0 84 40" aria-hidden="true">
+                <!-- The mark centred, with room on its right for its class code (up to three letters). -->
+                {#if m}<Mark mark={{ ...m, size: Math.max(9, Math.min(14, m.size * 1.4)) }} cx={42} cy={20} prefix="cl" />{:else}<circle cx="42" cy="20" r="11" fill="none" stroke="currentColor" />{/if}
               </svg>
               <span class="tname">{className(n.cls)}</span>
               {#if n.depth > 0 && parentOf(n.cls)}<span class="muted small">a kind of {parentOf(n.cls)!.names.plain}</span>{/if}
@@ -202,7 +204,7 @@
     {@const outs = open.examples.filter((e) => !e.in)}
     <section class="card" aria-labelledby="class-title" data-class-card={open.id} tabindex="-1" bind:this={detail}>
       <div class="head">
-        <svg class="icon big" width="64" height="56" viewBox="0 0 64 56" aria-hidden="true">
+        <svg class="icon big" width="84" height="64" viewBox="0 0 84 64" aria-hidden="true">
           {#if m}<Mark mark={{ ...m, size: 18 }} cx={32} cy={28} prefix="cl" />{:else}<circle cx="32" cy="28" r="16" fill="none" stroke="currentColor" />{/if}
         </svg>
         <div>

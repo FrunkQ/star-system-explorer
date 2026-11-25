@@ -1749,6 +1749,19 @@ fn plan_descent_lands_the_partys_own_ship() {
     assert_eq!(r2["descent"], r["descent"]);
     let r = send(&mut k, ask(serde_json::json!({"ship": "no-such-ship"})));
     assert_eq!(r["code"], "unknown_ship", "{r}");
+    // LR1: a torch ship with a bare hull (a Traveller far trader) at Mars is
+    // flown down on its engines from orbit, not through the air to burn up.
+    let trader = serde_json::json!({"name": "Far trader", "accel_g": 1.0, "sustained": true,
+        "exhaust_km_s": 3000.0, "dry_t": 800.0, "wet_t": 840.0});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "plan_descent", "fixture": "Mars", "quick": true,
+            "lander": {"ship": trader}, "lat_deg": 20.4, "lon_deg": -108.7}),
+    );
+    assert_eq!(r["type"], "descent_planned", "{r}");
+    let o = &r["descent"]["descent"]["outcome"];
+    assert_eq!(o["result"], "landed", "{o}");
+    assert_eq!(o["method"], "engines-from-orbit", "{o}");
 }
 
 /// J3: a stack with boxes loads (box golden cases run, flows are compiled
@@ -3555,7 +3568,7 @@ fn light_through_gas_gives_the_colour_to_the_eye() {
             {"address": "sun", "t_k": 5800.0, "layers": []},
             {"address": "giant", "t_k": 5772.0, "path_factor": 2.0,
              "layers": [{"t_k": 80.0, "path_m": 5e4, "gases": [
-                 {"gas": "h2", "number_density_m3": 1e25}, {"gas": "ch4", "number_density_m3": 2e22}]}],
+                 {"gas": "h2", "number_density_m3": 1e25}, {"gas": "ch4", "number_density_m3": 2e24}]}],
              "wavelengths_m": [5.5e-7, 8.9e-7]}]}),
     );
     assert_eq!(r["type"], "gas_passed", "{r}");
@@ -3574,6 +3587,97 @@ fn light_through_gas_gives_the_colour_to_the_eye() {
             {"layers": [{"t_k": 80.0, "path_m": 1.0, "gases": [{"gas": "unobtainium", "number_density_m3": 1.0}]}], "t_k": 5000.0}]}),
     );
     assert_eq!(r["code"], "bad_gas", "{r}");
+}
+
+/// VP-L4: read_bows gives a water rainbow and ice halos.
+#[test]
+fn read_bows_gives_rainbows_and_halos() {
+    let mut k = crate::Kernel::new();
+    let r: serde_json::Value = serde_json::from_str(&k.handle_json(
+        &serde_json::json!({"op": "read_bows", "items": [
+            {"id": "water", "n": 1.333, "kind": "drop"}, {"id": "ice", "n": 1.31, "kind": "crystal"}]})
+        .to_string(),
+    ))
+    .unwrap();
+    assert_eq!(r["type"], "bows_read", "{r}");
+    assert!(
+        (r["items"][0]["primary_deg"].as_f64().unwrap() - 42.08).abs() < 0.05,
+        "{r}"
+    );
+    assert!(r["items"][1]["halo_60_deg"].as_f64().unwrap() > 21.0, "{r}");
+}
+
+/// O3b: read_nebulae gives a giant's dusty shell and a young star's jets.
+#[test]
+fn read_nebulae_gives_dust_shells_and_jets() {
+    let mut k = crate::Kernel::new();
+    let r: serde_json::Value = serde_json::from_str(&k.handle_json(
+        &serde_json::json!({"op": "read_nebulae", "at_s": 3.15576e11,
+            "giants": [{"address": "u:o/sys:0/neb:s", "star": "u:o/sys:0/star:0", "luminosity_w": 1.9e30,
+                        "radius_m": 1.4e11, "mass_kg": 2.4e30, "teff_k": 3000.0, "started_s": 0.0}],
+            "young": [{"address": "u:o/sys:1/neb:j", "star": "u:o/sys:1/star:0", "mass_kg": 1.0e30,
+                       "radius_m": 1.4e9, "accretion_kg_s": 6.3e15, "started_s": 0.0, "ends_s": 3.0e13,
+                       "axis": [0.0, 0.0, 1.0]}]})
+        .to_string(),
+    ))
+    .unwrap();
+    assert_eq!(r["type"], "nebulae_read", "{r}");
+    let n = r["nebulae"].as_array().unwrap();
+    assert_eq!(n[0]["kind"], "dust-shell", "{r}");
+    assert_eq!(n[1]["kind"], "jet", "{r}");
+    assert!(n[1]["jet"]["knots"].as_array().unwrap().len() > 1, "{r}");
+}
+
+/// RK14: fog of war marks a lit torch far off and leaves a ring where a
+/// lost coaster could be.
+#[test]
+fn fog_of_war_marks_contacts_for_a_seat() {
+    let mut k = crate::Kernel::new();
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "fog_of_war", "seats": [
+        {"seat": "kestrel", "fit": {"tech": "today", "hull_length_m": 50.0},
+         "own": {"address": "kestrel", "radius_m": 25.0, "heat_by_k": {"400": 1.0e5}},
+         "contacts": [
+            {"craft": {"address": "torch", "radius_m": 25.0, "heat_by_k": {"400": 1.0e6},
+                       "plumes": [{"jet_power_w": 1.0e9, "exhaust_m_s": 3.0e6}]}, "distance_m": 2.0e10},
+            {"craft": {"address": "coaster", "radius_m": 25.0, "heat_by_k": {"400": 1.0e5}},
+             "distance_m": 1.0e11, "lost_for_s": 3600.0, "speed_m_s": 1000.0, "accel_m_s2": 1.0}]}]}));
+    assert_eq!(r["type"], "fog_read", "{r}");
+    let s = &r["seats"][0];
+    assert_eq!(s["marks"][0]["mark"], "dotted", "{s}");
+    assert_eq!(s["marks"][1]["mark"], "unseen", "{s}");
+    assert!(s["marks"][1]["ring_m"].as_f64().unwrap() > 6e6, "{s}");
+    assert!(s["noticed_to_m"].as_f64().unwrap() > 1e9, "{s}");
+    assert_eq!(s["sensors"].as_array().unwrap().len(), 4);
+    let r = send(
+        serde_json::json!({"op": "fog_of_war", "seats": [{"seat": "nobody", "contacts": []}]}),
+    );
+    assert_eq!(r["code"], "bad_seat", "{r}");
+}
+
+/// ND2 part 2b: the limb law reads a glowing disc darker and redder at its
+/// edge, and a lit one by Minnaert's law.
+#[test]
+fn read_limb_gives_the_edge_of_a_disc() {
+    let mut k = crate::Kernel::new();
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "read_limb", "discs": [
+        {"teff_k": 5772.0, "mus": [1.0, 0.2], "wavelengths_m": [4.0e-7, 8.0e-7]},
+        {"minnaert_k": [1.0], "mu0": 0.6, "mus": [0.3]}]}));
+    assert_eq!(r["type"], "limb_read", "{r}");
+    let edge = &r["discs"][0]["points"][1]["share"];
+    assert!(edge[0].as_f64().unwrap() < edge[1].as_f64().unwrap(), "{r}");
+    assert!(
+        r["discs"][0]["points"][1]["colour"]["hex"].is_string(),
+        "{r}"
+    );
+    assert!((r["discs"][1]["points"][0]["share"][0].as_f64().unwrap() - 0.6).abs() < 1e-12);
+    let r = send(serde_json::json!({"op": "read_limb", "discs": [{"mus": [1.0]}]}));
+    assert_eq!(r["code"], "bad_disc", "{r}");
 }
 
 /// RK12: effect at range gives the reading, the odds from light lag, the

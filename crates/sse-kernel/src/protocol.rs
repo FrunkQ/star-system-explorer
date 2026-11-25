@@ -598,6 +598,35 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
+    /// Rainbows and halos (VP-L4): each of `items` is `{id, n, kind}` with
+    /// `kind` "drop" (rain of a liquid of refractive index `n`: its bows)
+    /// or "crystal" (ice-like crystals: their 22° and 46° style halos).
+    ReadBows {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// Fog of war from sensors (RK14, Atomic Rockets plan section 17), the
+    /// sums: each seat gives `seat`, its instruments (`sensors`, or `fit`
+    /// `{tech, hull_length_m}` for the free default set), optionally `own`
+    /// (its craft, for the "noticed out to here" ring) and `contacts`
+    /// (`sse_sense::fog::Contact`: a craft read from its power flow, its
+    /// distance, and when it was last seen). Each contact comes back
+    /// `ink`, `dotted` or `unseen`; writing the marks as `observe.grant`
+    /// events is the caller's.
+    FogOfWar {
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+    },
+    /// The limb law (ND2 part 2b): how each disc's brightness and colour
+    /// change from centre (`mu` 1) to edge (`mu` 0). A glowing disc gives
+    /// `teff_k` (Eddington-Barbier in a grey atmosphere: the layer seen,
+    /// its temperature, brightness per wavelength against the centre and
+    /// the colour to the eye); a lit disc gives `minnaert_k` (one, or one
+    /// per wavelength) and `mu0`, the sunlight's cosine.
+    ReadLimb {
+        #[ts(type = "unknown[]")]
+        discs: Vec<serde_json::Value>,
+    },
     /// Effect at range (RK12, Atomic Rockets plan section 13): each of
     /// `asks` is `sse_sense::reach::Ask`, a weapon (beam, burst or
     /// projectile), a target (its skin as a sheet material or a typed
@@ -691,6 +720,48 @@ pub enum Request {
         #[ts(optional)]
         at_s: Option<i64>,
     },
+    /// SB2: one member of a system's belt, ring or cloud resolved into a
+    /// definite body (makeup, type, rubble pile or monolith, single, contact
+    /// or separated pair, spin, figure, weathering, history, and facts for
+    /// the resource books). Give `member` (`<cloud>/obj:<k>`), or `cloud` and
+    /// `rank`; give neither for the bodies formation made before anyone
+    /// looked (a shattered world's bared core). Nothing is stored.
+    SmallBody {
+        system: String,
+        #[serde(default)]
+        #[ts(optional)]
+        member: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        cloud: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        rank: Option<u64>,
+        /// SB4: distance from the star for an icy body's activity, AU
+        /// (perihelion when left out).
+        #[serde(default)]
+        #[ts(optional)]
+        r_au: Option<f64>,
+    },
+    /// SB2: a small body a GM adds by hand (the Add list), made of the
+    /// system's own nearest cloud: `kind` asteroid, comet-nucleus,
+    /// contact-binary or binary-pair, a `diameter_km` or `mass_kg`, at
+    /// `a_au` (optional eccentricity `e`), living at `address`.
+    MakeSmallBody {
+        system: String,
+        address: String,
+        kind: String,
+        #[serde(default)]
+        #[ts(optional)]
+        diameter_km: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_kg: Option<f64>,
+        a_au: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        e: Option<f64>,
+    },
     /// Natural resource inventory (TG11, MP8b): for each world of `system`
     /// (or `body`), the kilograms of each resource kind in `kinds` (pack
     /// kinds from `provides.other.resources`, or any element id or `h2o`
@@ -753,6 +824,16 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         glows: Option<Vec<serde_json::Value>>,
+        /// Cool giants losing mass (`sse_nebula::outflow::GiantInput`): their
+        /// dusty shells (O3b).
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        giants: Option<Vec<serde_json::Value>>,
+        /// Young stars still accreting (`sse_nebula::outflow::YoungStarInput`):
+        /// their jets (O3b).
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        young: Option<Vec<serde_json::Value>>,
     },
     /// Bring a system into the open universe as facts: an SSE 3 save
     /// (`import_v3`, its text) or a formation run (`formation`, the same
@@ -2220,11 +2301,16 @@ impl Request {
             Request::ReadField { .. } => "read_field",
             Request::ReadComposition { .. } => "read_composition",
             Request::ReadInventory { .. } => "read_inventory",
+            Request::SmallBody { .. } => "small_body",
+            Request::MakeSmallBody { .. } => "make_small_body",
             Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
             Request::LightThroughGas { .. } => "light_through_gas",
             Request::EffectAtRange { .. } => "effect_at_range",
+            Request::ReadLimb { .. } => "read_limb",
+            Request::FogOfWar { .. } => "fog_of_war",
+            Request::ReadBows { .. } => "read_bows",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2444,6 +2530,21 @@ pub fn ops() -> Vec<OpInfo> {
             "per passage: a few formula blocks per wavelength per absorption feature, at the eye's 81 wavelengths and any asked for",
         ),
         o(
+            "read_bows",
+            Cost::Trivial,
+            "per item: one or two formula blocks",
+        ),
+        o(
+            "fog_of_war",
+            Cost::Light,
+            "per seat, contact and instrument: one light description and one detection",
+        ),
+        o(
+            "read_limb",
+            Cost::Trivial,
+            "per disc and point: one formula block and a Planck sum at the eye's 81 wavelengths",
+        ),
+        o(
             "effect_at_range",
             Cost::Light,
             "per ask: a few formula blocks, and four bisections of about eighty steps for the rings",
@@ -2472,6 +2573,16 @@ pub fn ops() -> Vec<OpInfo> {
             "read_inventory",
             Cost::Trivial,
             "per body: read_composition at Survey, then one sum per kind",
+        ),
+        o(
+            "small_body",
+            Cost::Trivial,
+            "one member: a few dozen draws and closed-form relations (the system's formation run is made once if missing)",
+        ),
+        o(
+            "make_small_body",
+            Cost::Trivial,
+            "one body: the same as small_body on a one-member field",
         ),
         o(
             "read_photometry",
@@ -3076,6 +3187,23 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
+    /// `read_bows`: each of `items` is `sse_light::bows::Bows`.
+    BowsRead {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// `fog_of_war`: each of `seats` is `{seat, sensors, noticed_to_m?,
+    /// marks}` with `sse_sense::fog::Mark`.
+    FogRead {
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+    },
+    /// `read_limb`: each of `discs` is `{ points, references }` with
+    /// `sse_light::limb::LimbPoint`.
+    LimbRead {
+        #[ts(type = "unknown[]")]
+        discs: Vec<serde_json::Value>,
+    },
     /// `effect_at_range`: each of `effects` is `sse_sense::reach::Effect`.
     EffectsAtRange {
         #[ts(type = "unknown[]")]
@@ -3105,6 +3233,20 @@ pub enum Response {
     CompositionRead {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `small_body` and `make_small_body`: `body` (sse-small `Member`:
+    /// address, cloud, kind, rank, orbit, mass_kg, diameter_km,
+    /// bulk_density_kg_m3, makeup, temperature_k, type_label, type_why,
+    /// structure, pair, spin_hours, barrier_hours, yorp_strength, figure
+    /// {kind, axes_m, lobes, relief, q}, albedo, weathering, history, facts),
+    /// or `notables` (each a `Member` with `why`).
+    SmallBodyIs {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        body: Option<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown[]")]
+        notables: Option<Vec<serde_json::Value>>,
     },
     /// `read_inventory`: each of `bodies` is a world's address, mass and
     /// kinds (id, matter, reach, kg, per_kg, by_reservoir, note), with

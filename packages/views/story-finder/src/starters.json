@@ -2,6 +2,9 @@
   "schema": "sse.sifters/0",
   "note": "Starter sifters for the story finder (U8): plain data, meant to be edited and added to (by the GM or Orac). Each is a pattern over facts or events and how much a hit matters: how long it lasts, how far it reaches, how hard it is to undo, and how rare it is under its parent's cloud.",
   "sifters": [
+    { "id": "story.star-turns", "label": "A star changing, and its worlds with it",
+      "pattern": { "match": "event", "kind": "evolve.transition", "field": "star.phase" },
+      "significance": { "persistence": { "from": "fixed", "yr": 1e6 }, "reach": { "from": "descendants" }, "reversibility": 0 } },
     { "id": "story.danger-at-home", "label": "Danger where people live", "applies_to": ["body"],
       "pattern": { "match": "facts", "when": { "if": "all", "of": [ { "if": "has", "field": "hazards" }, { "if": "range", "field": "settlements.count", "min": 1 } ] } },
       "significance": { "persistence": { "from": "fixed", "yr": 100 }, "reach": { "from": "fixed", "n": 1000 }, "reversibility": 0.3 } },
