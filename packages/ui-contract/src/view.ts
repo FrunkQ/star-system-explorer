@@ -215,6 +215,8 @@ export interface PlayerContext {
   ground?: import("./landing.ts").LandingGround;
   /** Which of the part's own controls the screen has on (AT13); absent: every declared control is on. Read with `controlOn`. */
   controls?: Readonly<Record<string, boolean>>;
+  /** What the GM sent this screen now (seat.ts `Shown`), or null. Read it in an effect: it changes. */
+  shown?(): import("./seat.ts").Shown | null;
 }
 
 export interface ViewHandle<S = SystemScene> {

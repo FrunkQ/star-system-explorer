@@ -33,6 +33,7 @@ pub const CAMPAIGN_NOW: &str = "time.campaign_now";
 pub const CAMPAIGN_NOW_FIELD: &str = "campaign.now_s";
 
 type Facts = BTreeMap<Address, BTreeMap<String, Value>>;
+type Points = BTreeMap<Address, [f64; 3]>;
 
 fn num(v: &Value) -> Option<f64> {
     match v {
@@ -50,6 +51,11 @@ pub struct At {
     pub r_m: [f64; 3],
     /// Longitude in the host's reference plane, degrees in [0, 360).
     pub phase_deg: f64,
+    /// Position from the barycentre of the whole hierarchy it belongs to, metres.
+    pub sys_m: [f64; 3],
+    /// The centre its orbit goes round (the barycentre of its host and
+    /// everything further in), from the host's centre, metres.
+    pub centre_m: [f64; 3],
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -79,14 +85,268 @@ pub fn eccentric_anomaly(mean: f64, e: f64) -> f64 {
     ea
 }
 
+/// A body's own orbit, read from its facts (pass 1 of `orbits_at`).
+struct Orbit {
+    host: Address,
+    a_m: f64,
+    e: f64,
+    m0: f64,
+    epoch: f64,
+    /// R3(-node) R1(-inc) R3(-peri), rows x, y, z by perifocal (x, y).
+    rot: [[f64; 2]; 3],
+    mass: f64,
+    source: &'static str,
+}
+
+impl Orbit {
+    /// The relative vector at `t` for mean motion `n`.
+    fn rel(&self, n: f64, t: i64) -> [f64; 3] {
+        let mean = self.m0 + n * (t as f64 - self.epoch);
+        let ea = eccentric_anomaly(mean, self.e);
+        let b = self.a_m * m::sqrt(1.0 - self.e * self.e);
+        let (xp, yp) = (self.a_m * (m::cos(ea) - self.e), b * m::sin(ea));
+        let r = &self.rot;
+        [
+            r[0][0] * xp + r[0][1] * yp,
+            r[1][0] * xp + r[1][1] * yp,
+            r[2][0] * xp + r[2][1] * yp,
+        ]
+    }
+}
+
+fn add(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
+    [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
+}
+fn sub(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
+    [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
+}
+fn scale(a: [f64; 3], k: f64) -> [f64; 3] {
+    [a[0] * k, a[1] * k, a[2] * k]
+}
+
+/// The barycentre hierarchy (Jacobi): each body orbits the centre of mass
+/// of its host and everything round that host further in (with their own
+/// moons), with mu = G(inner mass + its own group's mass). No threshold:
+/// a small partner's pull just rounds towards nothing.
+struct Tree<'a> {
+    orbits: &'a BTreeMap<Address, Orbit>,
+    /// Host -> children, innermost first.
+    kids: BTreeMap<Address, Vec<Address>>,
+    /// Own mass of every body in the tree (hosts included).
+    mass: BTreeMap<Address, f64>,
+    /// Mass of a body and everything round it.
+    group: BTreeMap<Address, f64>,
+    /// Mean motion of each child.
+    n: BTreeMap<Address, f64>,
+}
+
+impl<'a> Tree<'a> {
+    fn new(orbits: &'a BTreeMap<Address, Orbit>, host_mass: &BTreeMap<Address, f64>) -> Self {
+        let mut kids: BTreeMap<Address, Vec<Address>> = BTreeMap::new();
+        for (a, o) in orbits {
+            kids.entry(o.host.clone()).or_default().push(a.clone());
+        }
+        for v in kids.values_mut() {
+            v.sort_by(|x, y| orbits[x].a_m.total_cmp(&orbits[y].a_m).then(x.cmp(y)));
+        }
+        let mut mass: BTreeMap<Address, f64> = host_mass.clone();
+        for (a, o) in orbits {
+            mass.insert(a.clone(), o.mass);
+        }
+        let mut t = Tree {
+            orbits,
+            kids,
+            mass,
+            group: BTreeMap::new(),
+            n: BTreeMap::new(),
+        };
+        for r in t.roots() {
+            t.fill(&r, 0);
+        }
+        t
+    }
+
+    /// Hosts that orbit nothing placed: the tops of the hierarchy.
+    fn roots(&self) -> Vec<Address> {
+        self.kids
+            .keys()
+            .filter(|h| !self.orbits.contains_key(*h))
+            .cloned()
+            .collect()
+    }
+
+    fn fill(&mut self, h: &Address, depth: usize) -> f64 {
+        let own = self.mass.get(h).copied().unwrap_or(0.0);
+        if depth > 64 {
+            return own;
+        }
+        let mut inner = own;
+        for c in self.kids.get(h).cloned().unwrap_or_default() {
+            let g = self.fill(&c, depth + 1);
+            let a = self.orbits[&c].a_m;
+            self.n
+                .insert(c.clone(), m::sqrt(G * (inner + g) / (a * a * a)));
+            inner += g;
+        }
+        self.group.insert(h.clone(), inner);
+        inner
+    }
+
+    /// Positions and orbit centres of everything in the tree at each time,
+    /// from each top's barycentre.
+    fn frames(&self, times: &[i64]) -> Vec<(Points, Points)> {
+        times
+            .iter()
+            .map(|&t| {
+                let mut pos = BTreeMap::new();
+                let mut cen = BTreeMap::new();
+                for r in self.roots() {
+                    self.place(&r, t, &mut pos, &mut cen, 0);
+                }
+                (pos, cen)
+            })
+            .collect()
+    }
+
+    /// `h` and everything round it, at any depth.
+    fn subtree(&self, h: &Address, out: &mut Vec<Address>, depth: usize) {
+        out.push(h.clone());
+        if depth > 64 {
+            return;
+        }
+        for c in self.kids.get(h).into_iter().flatten() {
+            self.subtree(c, out, depth + 1);
+        }
+    }
+
+    /// Positions of `h` and everything round it relative to their common
+    /// barycentre at `t`, and each child's orbit centre (the barycentre of
+    /// what lies inside it) in the same frame.
+    fn place(
+        &self,
+        h: &Address,
+        t: i64,
+        pos: &mut BTreeMap<Address, [f64; 3]>,
+        centre: &mut BTreeMap<Address, [f64; 3]>,
+        depth: usize,
+    ) {
+        let mut local: BTreeMap<Address, [f64; 3]> = BTreeMap::new();
+        let mut cen: BTreeMap<Address, [f64; 3]> = BTreeMap::new();
+        local.insert(h.clone(), [0.0; 3]);
+        let mut b = [0.0; 3];
+        let mut mc = self.mass.get(h).copied().unwrap_or(0.0);
+        if depth <= 64 {
+            for c in self.kids.get(h).cloned().unwrap_or_default() {
+                let (Some(n), Some(g)) = (self.n.get(&c), self.group.get(&c)) else {
+                    continue;
+                };
+                let x = add(b, self.orbits[&c].rel(*n, t));
+                cen.insert(c.clone(), b);
+                let mut sp = BTreeMap::new();
+                let mut sc = BTreeMap::new();
+                self.place(&c, t, &mut sp, &mut sc, depth + 1);
+                for (k, v) in sp {
+                    local.insert(k, add(x, v));
+                }
+                for (k, v) in sc {
+                    cen.insert(k, add(x, v));
+                }
+                let tot = mc + g;
+                if tot > 0.0 {
+                    b = scale(add(scale(b, mc), scale(x, *g)), 1.0 / tot);
+                }
+                mc = tot;
+            }
+        }
+        for (k, v) in local {
+            pos.insert(k, sub(v, b));
+        }
+        for (k, v) in cen {
+            centre.insert(k, sub(v, b));
+        }
+    }
+}
+
 /// Every orbiting body at or under `system` in `facts`, at each time.
+///
+/// Barycentre always: positions come from the Jacobi hierarchy (`Tree`), so
+/// a host moves by its children's pull (Pluto round its point outside
+/// itself with Charon, a binary's stars round each other, a planet outside
+/// a companion round the pair). `r_m` stays relative to the host's centre;
+/// `sys_m` is from the barycentre of the whole hierarchy and `centre_m` the
+/// orbit's own centre, from the host's centre.
 pub fn orbits_at(
     facts: &Facts,
     system: &Address,
     times: &[i64],
     seed: Option<&Seed>,
 ) -> Vec<Placed> {
-    let mut out = vec![];
+    let (mut out, orbits, host_mass) = read_orbits(facts, system, seed);
+    let tree = Tree::new(&orbits, &host_mass);
+    let frames = tree.frames(times);
+    for (a, o) in &orbits {
+        let Some(n) = tree.n.get(a) else {
+            // Never reached from a top: its hosts go round in a circle.
+            out.push(Placed {
+                address: a.to_string(),
+                placed: false,
+                parent: Some(o.host.to_string()),
+                period_s: None,
+                phase_source: None,
+                missing: vec!["orbit.host chain that ends at a body orbiting nothing".into()],
+                at: vec![],
+            });
+            continue;
+        };
+        let at = times
+            .iter()
+            .zip(&frames)
+            .map(|(&t, (pos, cen))| {
+                let me = pos[a];
+                let hp = pos[&o.host];
+                let [x, y, z] = sub(me, hp);
+                let mut ph = m::atan2(y, x) * (180.0 / m::PI);
+                if ph < 0.0 {
+                    ph += 360.0;
+                }
+                if ph >= 360.0 {
+                    ph -= 360.0;
+                }
+                At {
+                    at_s: t,
+                    r_m: [x, y, z],
+                    phase_deg: ph,
+                    sys_m: me,
+                    centre_m: sub(cen[a], hp),
+                }
+            })
+            .collect();
+        out.push(Placed {
+            address: a.to_string(),
+            placed: true,
+            parent: Some(o.host.to_string()),
+            period_s: Some(m::TAU / n),
+            phase_source: Some(o.source.into()),
+            missing: vec![],
+            at,
+        });
+    }
+    out.sort_by(|x, y| x.address.cmp(&y.address));
+    out
+}
+
+type Read = (
+    Vec<Placed>,
+    BTreeMap<Address, Orbit>,
+    BTreeMap<Address, f64>,
+);
+
+/// Pass 1: every orbit under `system` read from its facts; the unplaced
+/// come back with what they miss.
+fn read_orbits(facts: &Facts, system: &Address, seed: Option<&Seed>) -> Read {
+    let mut out: Vec<Placed> = vec![];
+    let mut orbits: BTreeMap<Address, Orbit> = BTreeMap::new();
+    let mut host_mass: BTreeMap<Address, f64> = BTreeMap::new();
     for (a, row) in facts.iter().filter(|(a, _)| system.contains(a)) {
         let Some(sma) = row.get("orbit.semi_major_axis") else {
             continue;
@@ -100,7 +360,7 @@ pub fn orbits_at(
                 _ => None,
             })
             .or_else(|| a.parent());
-        let host_mass = host
+        let mh = host
             .as_ref()
             .and_then(|h| facts.get(h))
             .and_then(|r| r.get("body.mass"))
@@ -109,11 +369,14 @@ pub fn orbits_at(
         if a_m.is_none() {
             missing.push("orbit.semi_major_axis".to_string());
         }
-        if host_mass.is_none() {
+        if mh.is_none() {
             missing.push(match &host {
                 Some(h) => format!("{h} body.mass"),
                 None => "orbit.host".into(),
             });
+        }
+        if host.as_ref() == Some(a) {
+            missing.push("orbit.host other than itself".into());
         }
         let e = row.get("orbit.eccentricity").and_then(num).unwrap_or(0.0);
         if !(0.0..1.0).contains(&e) {
@@ -136,7 +399,9 @@ pub fn orbits_at(
                 }
             },
         };
-        let (Some(a_m), Some(mh), Some(m0), true) = (a_m, host_mass, m0, missing.is_empty()) else {
+        let (Some(h), Some(a_m), Some(mh), Some(m0), true) =
+            (host.clone(), a_m, mh, m0, missing.is_empty())
+        else {
             out.push(Placed {
                 address: a.to_string(),
                 placed: false,
@@ -148,9 +413,6 @@ pub fn orbits_at(
             });
             continue;
         };
-        let mass = row.get("body.mass").and_then(num).unwrap_or(0.0);
-        let mu = G * (mh + mass);
-        let n = m::sqrt(mu / (a_m * a_m * a_m));
         let epoch = row
             .get("orbit.epoch_s")
             .and_then(num)
@@ -169,42 +431,215 @@ pub fn orbits_at(
         let (co, so) = (m::cos(node), m::sin(node));
         let (cw, sw) = (m::cos(peri), m::sin(peri));
         let (ci, si) = (m::cos(inc), m::sin(inc));
-        let b = a_m * m::sqrt(1.0 - e * e);
-        let at = times
-            .iter()
-            .map(|&t| {
-                let mean = m0 + n * (t as f64 - epoch);
-                let ea = eccentric_anomaly(mean, e);
-                let (xp, yp) = (a_m * (m::cos(ea) - e), b * m::sin(ea));
-                // Perifocal to reference frame: R3(-node) R1(-inc) R3(-peri).
-                let x = (co * cw - so * sw * ci) * xp + (-co * sw - so * cw * ci) * yp;
-                let y = (so * cw + co * sw * ci) * xp + (-so * sw + co * cw * ci) * yp;
-                let z = (sw * si) * xp + (cw * si) * yp;
-                let mut ph = m::atan2(y, x) * (180.0 / m::PI);
-                if ph < 0.0 {
-                    ph += 360.0;
-                }
-                if ph >= 360.0 {
-                    ph -= 360.0;
-                }
-                At {
-                    at_s: t,
-                    r_m: [x, y, z],
-                    phase_deg: ph,
-                }
-            })
-            .collect();
-        out.push(Placed {
-            address: a.to_string(),
-            placed: true,
-            parent: host.map(|h| h.to_string()),
-            period_s: Some(m::TAU / n),
-            phase_source: Some(source.into()),
-            missing: vec![],
-            at,
-        });
+        host_mass.insert(h.clone(), mh);
+        orbits.insert(
+            a.clone(),
+            Orbit {
+                host: h,
+                a_m,
+                e,
+                m0,
+                epoch,
+                rot: [
+                    [co * cw - so * sw * ci, -co * sw - so * cw * ci],
+                    [so * cw + co * sw * ci, -so * sw + co * cw * ci],
+                    [sw * si, cw * si],
+                ],
+                mass: row.get("body.mass").and_then(num).unwrap_or(0.0),
+                source,
+            },
+        );
     }
-    out
+    (out, orbits, host_mass)
+}
+
+/// What a re-parent keeps (editing design 10A, R4).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Keep {
+    /// A round orbit at its present distance from the new centre.
+    Tidy,
+    /// Where it is and how it is moving now, re-expressed round the new host.
+    Motion,
+}
+
+fn dot(a: [f64; 3], b: [f64; 3]) -> f64 {
+    a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
+fn cross(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
+    [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    ]
+}
+fn norm(a: [f64; 3]) -> f64 {
+    m::sqrt(dot(a, a))
+}
+fn wrap(x: f64) -> f64 {
+    let y = x - m::TAU * m::floor(x / m::TAU);
+    if y >= m::TAU {
+        0.0
+    } else {
+        y
+    }
+}
+
+/// Keplerian elements from a relative position and velocity (the usual
+/// vector route, e.g. Vallado, Fundamentals of Astrodynamics, alg. 9):
+/// a, e, inclination, node, argument of periapsis and the mean anomaly, all
+/// in the frame of the vectors. None when unbound (e >= 1).
+pub fn elements_from_state(r: [f64; 3], v: [f64; 3], mu: f64) -> Option<[f64; 6]> {
+    let rn = norm(r);
+    let h = cross(r, v);
+    let hn = norm(h);
+    if rn <= 0.0 || hn <= 0.0 || mu <= 0.0 {
+        return None;
+    }
+    let energy = dot(v, v) / 2.0 - mu / rn;
+    if energy >= 0.0 {
+        return None;
+    }
+    let a = -mu / (2.0 * energy);
+    let ev = sub(scale(cross(v, h), 1.0 / mu), scale(r, 1.0 / rn));
+    let e = norm(ev);
+    if e >= 1.0 {
+        return None;
+    }
+    let inc = m::acos((h[2] / hn).clamp(-1.0, 1.0));
+    let nvec = [-h[1], h[0], 0.0];
+    let nn = norm(nvec);
+    let node = if nn > 1e-12 * hn {
+        wrap(m::atan2(nvec[1], nvec[0]))
+    } else {
+        0.0
+    };
+    // Argument of latitude of the periapsis and of the body, measured in
+    // the orbit's plane from the node (or the x axis when flat).
+    let (p, q) = if nn > 1e-12 * hn {
+        let p = scale(nvec, 1.0 / nn);
+        (p, cross(scale(h, 1.0 / hn), p))
+    } else {
+        let p = [1.0, 0.0, 0.0];
+        (p, cross(scale(h, 1.0 / hn), p))
+    };
+    let at = |x: [f64; 3]| wrap(m::atan2(dot(x, q), dot(x, p)));
+    let peri = if e > 1e-12 { at(ev) } else { 0.0 };
+    let nu = wrap(at(r) - peri);
+    let ea = 2.0
+        * m::atan2(
+            m::sqrt(1.0 - e) * m::sin(nu / 2.0),
+            m::sqrt(1.0 + e) * m::cos(nu / 2.0),
+        );
+    let mean = wrap(ea - e * m::sin(ea));
+    Some([a, e, inc, node, peri, mean])
+}
+
+/// K13 `rehost`: the facts that put `body` (with everything round it) round
+/// `to` at `t`, keeping a tidy orbit or its present motion. Worked out in the
+/// same hierarchy `orbits_at` uses: the new orbit is about the barycentre of
+/// `to` and what goes round `to` inside the body's present distance.
+pub fn rehost(
+    facts: &Facts,
+    system: &Address,
+    body: &Address,
+    to: &Address,
+    t: i64,
+    seed: Option<&Seed>,
+    keep: Keep,
+) -> Result<BTreeMap<String, Value>, String> {
+    if body == to {
+        return Err(format!("{body} cannot orbit itself"));
+    }
+    let (_, orbits, host_mass) = read_orbits(facts, system, seed);
+    if !orbits.contains_key(body) {
+        return Err(format!(
+            "{body} has no orbit to move (it needs one placed first)"
+        ));
+    }
+    let tree = Tree::new(&orbits, &host_mass);
+    let mut mine = vec![];
+    tree.subtree(body, &mut mine, 0);
+    if mine.contains(to) {
+        return Err(format!(
+            "{to} goes round {body}: a body cannot orbit what orbits it"
+        ));
+    }
+    let dt = 30_i64;
+    let fr = tree.frames(&[t - dt, t, t + dt]);
+    if !fr[1].0.contains_key(to) {
+        return Err(format!(
+            "{to} is not placed at that time, so nothing can go round it"
+        ));
+    }
+    let mass_of = |a: &Address| tree.mass.get(a).copied().unwrap_or(0.0);
+    // The barycentre of a set of bodies in one frame.
+    let bary = |set: &[Address], pos: &Points| -> ([f64; 3], f64) {
+        let mut tot = 0.0;
+        let mut b = [0.0; 3];
+        for x in set {
+            if let Some(p) = pos.get(x) {
+                let w = mass_of(x);
+                b = add(b, scale(*p, w));
+                tot += w;
+            }
+        }
+        if tot > 0.0 {
+            (scale(b, 1.0 / tot), tot)
+        } else {
+            (pos.get(&set[0]).copied().unwrap_or([0.0; 3]), 0.0)
+        }
+    };
+    let d = norm(sub(fr[1].0[body], fr[1].0[to]));
+    let mut inner = vec![];
+    tree.subtree(to, &mut inner, 0);
+    inner.retain(|x| !mine.contains(x));
+    // Only `to`'s own children further in than the body count (with theirs).
+    let outer: Vec<Address> = tree
+        .kids
+        .get(to)
+        .into_iter()
+        .flatten()
+        .filter(|c| !mine.contains(c) && orbits[*c].a_m >= d)
+        .cloned()
+        .collect();
+    let mut drop = vec![];
+    for c in &outer {
+        tree.subtree(c, &mut drop, 0);
+    }
+    inner.retain(|x| !drop.contains(x));
+    let state = |pos: &Points| {
+        let (bi, mi) = bary(&inner, pos);
+        let (bb, mb) = bary(&mine, pos);
+        (sub(bb, bi), mi + mb)
+    };
+    let (r, mu_mass) = state(&fr[1].0);
+    let (rm, _) = state(&fr[0].0);
+    let (rp, _) = state(&fr[2].0);
+    let v = scale(sub(rp, rm), 1.0 / (2.0 * dt as f64));
+    let mu = G * mu_mass;
+    let el = match keep {
+        Keep::Tidy => {
+            let rn = norm(r);
+            [rn, 0.0, 0.0, 0.0, 0.0, wrap(m::atan2(r[1], r[0]))]
+        }
+        Keep::Motion => elements_from_state(r, v, mu).ok_or_else(|| {
+            format!(
+                "moving as it is, {body} is not bound to {to}: it would escape (keep a tidy orbit, or pick a heavier or nearer host)"
+            )
+        })?,
+    };
+    let f = Value::Float;
+    let mut row = BTreeMap::new();
+    row.insert("orbit.host".to_string(), Value::Text(to.to_string()));
+    row.insert("orbit.semi_major_axis".to_string(), f(el[0]));
+    row.insert("orbit.eccentricity".to_string(), f(el[1]));
+    row.insert("orbit.inclination".to_string(), f(el[2]));
+    row.insert("orbit.ascending_node".to_string(), f(el[3]));
+    row.insert("orbit.argument_of_periapsis".to_string(), f(el[4]));
+    row.insert("orbit.mean_anomaly_at_epoch".to_string(), f(el[5]));
+    row.insert("orbit.epoch_s".to_string(), Value::Int(t.into()));
+    Ok(row)
 }
 
 /// Facts from an inline `[{address, facts: {..}}]` list.

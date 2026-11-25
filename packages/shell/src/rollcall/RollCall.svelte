@@ -105,7 +105,7 @@
   {:else if !feed}
     <p class="words muted">Reading who flew…</p>
   {:else if page === "memory" && feed.memory}
-    <InMemory memory={feed.memory} calendar={feed.calendar} onback={() => (page = "roll")} onday={(s) => ((page = "roll"), go(s))} />
+    <InMemory memory={feed.memory} carried={feed.carried ?? []} calendar={feed.calendar} onback={() => (page = "roll")} onday={(s) => ((page = "roll"), go(s))} />
   {:else}
     {#if typing}
       <form class="typing" onsubmit={(e) => (e.preventDefault(), takeTyped())}>
