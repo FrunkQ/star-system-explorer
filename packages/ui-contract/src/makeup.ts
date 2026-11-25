@@ -44,13 +44,16 @@ export function retradeMakeup(m: readonly MixGas[], part: MakeupPart, share: num
   return ordered(retrade(from, part, share));
 }
 
-/** The fields a makeup change writes, for one change: only those that moved (a part never set before has null). */
+/**
+ * The fields a makeup change writes, for one change: those that moved, and every part not yet set (at nothing), so the
+ * world carries all five as the class atlas's examples do (a class region reads each part; one missing and no class
+ * fits). A part never set before has null before it.
+ */
 export function makeupEdits(facts: Record<string, Json>, after: readonly MixGas[]): { field: string; value: number; before: Json }[] {
   const out: { field: string; value: number; before: Json }[] = [];
   for (const g of ordered(after)) {
     const was = facts[MAKEUP_FIELD + g.gas];
     if (typeof was === "number" && was === g.share) continue;
-    if (was === undefined && g.share === 0 && MAKEUP_PARTS.some((p) => typeof facts[MAKEUP_FIELD + p] === "number")) continue;
     out.push({ field: MAKEUP_FIELD + g.gas, value: g.share, before: was ?? null });
   }
   return out;

@@ -19,9 +19,12 @@ test("setting one part trades it against the rest, which keep their proportions;
   const get = (p: string) => r.find((g) => g.gas === p)!.share;
   assert.equal(get("ice"), 0.5);
   assert.ok(Math.abs(get("metal") / get("rock") - 0.32 / 0.68) < 1e-9, "metal to rock as before");
-  // One edit per field that moved; a part never set before goes in with null before it.
+  // One edit per field that moved, and every part not yet set (at nothing) so all five are carried; null before.
   const e = makeupEdits(earth, r);
-  assert.deepEqual(e.map((x) => x.field), ["makeup.metal", "makeup.rock", "makeup.ice"]);
+  assert.deepEqual(e.map((x) => x.field), ["makeup.metal", "makeup.rock", "makeup.carbon", "makeup.ice", "makeup.gas"]);
+  assert.equal(e.find((x) => x.field === "makeup.carbon")!.value, 0);
+  const five = { ...earth, "makeup.carbon": 0, "makeup.ice": 0, "makeup.gas": 0 };
+  assert.deepEqual(makeupEdits(five, retradeMakeup(makeupOf(five), "ice", 0.5)).map((x) => x.field), ["makeup.metal", "makeup.rock", "makeup.ice"]);
   assert.equal(e.find((x) => x.field === "makeup.ice")!.before, null);
 });
 

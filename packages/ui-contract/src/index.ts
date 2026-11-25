@@ -208,7 +208,7 @@ export { readSheet, readTable, sheetRows, spreadPaste } from "./sheet-entry.ts";
 export type { SheetBody, SheetRead, SheetRow, TableRead } from "./sheet-entry.ts";
 export { COULD_BE, couldBeNow, recipeFor } from "./could-be.ts";
 export type { CouldBe, RecipeStep } from "./could-be.ts";
-export { sweepAsk, sweepMarks } from "./sweep.ts";
+export { atlasPacks, classNamesIn, sweepAsk, sweepMarks } from "./sweep.ts";
 export { MAKEUP_FIELD, MAKEUP_PARTS, makeupEdits, makeupKinds, makeupOf, PART_WORDS, retradeMakeup } from "./makeup.ts";
 export type { MakeupKind, MakeupPart } from "./makeup.ts";
 export type { SweepAsk, Swept, SweepStep, SweepTip } from "./sweep.ts";

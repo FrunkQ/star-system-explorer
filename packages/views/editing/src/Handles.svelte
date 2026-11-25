@@ -8,7 +8,7 @@
   Values are the kernel's facts for the body (resolved_system), never the card's display strings.
 -->
 <script lang="ts">
-  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, makeupOf, PART_WORDS, type MakeupPart, scaleClass, stripDomain, sweepAsk, sweepMarks, whatFollowed, type Followed, type PartMark, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, makeupOf, PART_WORDS, type MakeupPart, scaleClass, stripDomain, sweepAsk, sweepMarks, atlasPacks, yearsToSeconds, classNamesIn, whatFollowed, type Followed, type PartMark, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
   import Strip from "./Strip.svelte";
   import Box from "./Box.svelte";
@@ -108,6 +108,23 @@
   // kernel runs that input over the strip's range on a scratch branch it throws away, and the strip marks where the
   // world stops lasting and where a yes-or-no result it can reach flips ("turns freely from here"). Nothing is
   // written; it runs again only when the value moves.
+  // The class atlas (packs/base-atlas): on the stack, or the one the shell ships. The Mass strip's sweep labels each step
+  // with it, so the strip also marks where the world's class changes; the Makeup box takes its Kinds from it.
+  const stackedAtlas = $derived(atlasPacks(ctx.session.stack().base));
+  let shippedAtlas = $state.raw<unknown[]>([]);
+  $effect(() => {
+    if (stackedAtlas.length || shippedAtlas.length || on !== "world") return;
+    void fetch("packs/base-atlas.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => p && (shippedAtlas = [p]))
+      .catch(() => {});
+  });
+  const atlas = $derived(stackedAtlas.length ? stackedAtlas : shippedAtlas);
+  const classNames = $derived(classNamesIn(atlas, "physical"));
+  // The class regions read every part of the makeup, so only a world with its makeup set gets class marks; a change of
+  // makeup makes the Mass strip's marks stale, so it is part of the sweep's key.
+  const makeupSig = $derived(makeupOf(mine).map((g) => g.share).join(","));
+  const sweepKey = (h: Handle, v: number | null) => `${h.id === "mass" ? makeupSig : ""}§${subject.address}|${h.id}|${v}`;
   let swept = $state.raw<{ key: string; marks: PartMark[]; why?: string } | null>(null);
   let sweeping = $state<{ key: string; done: number; total: number } | null>(null);
   let sweepRunning = $state<string | null>(null);
@@ -120,24 +137,29 @@
     const h = handles.find((x) => x.id === id);
     const v = h ? handleValue(h, mine) : null;
     if (!h || v === null || !(v > 0)) return;
-    const key = `${subject.address}|${h.id}|${v}`;
+    const key = sweepKey(h, v);
+    const classes = h.id === "mass" && makeupSig && atlas.length ? { packs: atlas, scheme: "physical" } : undefined;
     // One sweep per value at a time: the kernel names its scratch branch after the body and field, so a second
     // sweep of the same started before the first ends would share (and lose) its branch.
     if (swept?.key === key || sweepRunning) return;
     const d = stripDomain(h, v, untrack(() => dotsFor(h.id)));
     sweepRunning = key;
     sweeping = { key, done: 0, total: 0 };
-    void sweep(sweepAsk(h, { system: sys, address: subject.address }, d.lo, d.hi, 12), (done, total) => {
+    void sweep(sweepAsk(h, { system: sys, address: subject.address, at_s: yearsToSeconds(untrack(() => ws.now_yr)) }, d.lo, d.hi, 12, classes), (done, total) => {
       sweeping = { key, done, total };
-    }).then((r) => {
-      sweepRunning = null;
-      sweeping = null;
-      swept = r.ok ? { key, marks: sweepMarks(h, r.result) } : { key, marks: [], why: r.message };
-    });
+    })
+      .then((r) => (r.ok ? { key, marks: sweepMarks(h, r.result, undefined, classNames) } : { key, marks: [], why: r.message }))
+      // A sweep that throws (its scratch branch gone under it) must not hold the next one back.
+      .catch((e: unknown) => ({ key, marks: [], why: e instanceof Error ? e.message : String(e) }))
+      .then((done) => {
+        sweepRunning = null;
+        sweeping = null;
+        swept = done;
+      });
   });
   const sweptFor = (h: Handle) => {
     const v = handleValue(h, mine);
-    return swept && swept.key === `${subject.address}|${h.id}|${v}` ? swept.marks : [];
+    return swept && swept.key === sweepKey(h, v) ? swept.marks : [];
   };
 
   // The held value's exact answer on a pause (design section 3, point 4): a scratch branch holds a what-if's own edits
@@ -265,7 +287,7 @@
       <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} swept={sweptFor(h)} {commit} {pause} onclose={() => (open = null)} />
     {:else}
       {#if h.id === "makeup"}
-        <MakeupBox {ctx} handle={h} system={scene.system} address={subject.address} facts={mine} {cls} {depth} {editable} onbranch={!!ws.branch} {commitMix} />
+        <MakeupBox {ctx} {atlas} at_s={yearsToSeconds(ws.now_yr)} handle={h} system={scene.system} address={subject.address} facts={mine} {cls} {depth} {editable} onbranch={!!ws.branch} {commitMix} />
       {:else}
       <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} marks={sweptFor(h)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
       {#if h.id === "air" && h.on === "world"}

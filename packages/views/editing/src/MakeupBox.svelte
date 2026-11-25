@@ -14,6 +14,8 @@
 
   let {
     ctx,
+    atlas,
+    at_s,
     handle,
     system,
     address,
@@ -25,6 +27,10 @@
     commitMix,
   }: {
     ctx: ViewContext;
+    /** The class atlas packs, for Kinds for makeup. */
+    atlas: readonly unknown[];
+    /** The campaign's now in seconds: the radius left out is read there, past any edit on the main line. */
+    at_s: bigint;
     /** The Makeup handle (this box is all of it). */
     handle: Handle;
     system: string;
@@ -51,17 +57,8 @@
       .map((g) => `${words(g.gas)} ${share(g.share)}`)
       .join(", ");
 
-  // Kinds for makeup from the class atlas on the stack, or the atlas the shell ships when none is stacked.
-  const stacked = $derived(makeupKinds(ctx.session.stack().base).length ? ctx.session.stack().base : null);
-  let shipped = $state.raw<unknown[] | null>(null);
-  $effect(() => {
-    if (stacked || shipped) return;
-    void fetch("packs/base-atlas.json")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((p) => p && (shipped = [p]))
-      .catch(() => {});
-  });
-  const kinds = $derived(makeupKinds(stacked ?? shipped ?? []));
+  // Kinds for makeup from the class atlas (handed over by the handles row: the stack's, or the one the shell ships).
+  const kinds = $derived(makeupKinds(atlas));
 
   let open = $state<MakeupPart | null>(null);
   const partHandle = (p: MakeupPart): Handle => ({
@@ -94,7 +91,7 @@
     void facts;
     if (onbranch || !ctx.session.expects) return void (expected = null);
     let live = true;
-    void ctx.session.expects(system, address, ["body.radius"]).then((r) => {
+    void ctx.session.expects(system, address, ["body.radius"], at_s).then((r) => {
       if (!live || !r.ok) return;
       const f = r.fields[0];
       expected = f ? { set: typeof f.set === "number" ? f.set : null, expects: typeof f.expects === "number" ? f.expects : null, ...(f.why ? { why: f.why } : {}) } : null;

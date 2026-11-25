@@ -26,11 +26,26 @@ between}]`, narrowed by halving. It runs on a scratch branch the kernel throws a
 - e2e: editing (desk), the Orbit box waits for "turns freely from here" and checks the hash. Screen: project files
   `sse4/handover-screens/ED2-screens/orbit-sweep-desk.png`.
 
+## Part 2a (25 Nov): classes on the Mass strip's marks, the sweep at the campaign's now
+
+- The Mass strip's sweep passes the class atlas (`packs/base-atlas`, the stack's or the one the shell ships;
+  `atlasPacks`) and the `physical` scheme, so the kernel labels each step and the strip marks where the class
+  changes, in the atlas's own words (`classNamesIn`): "rocky from here", "no longer rocky from here" when no class
+  fits past it. Only a world with its makeup set gets these: the class regions read every part of the makeup (one
+  missing and no class fits), which is why the Makeup box (ED9) writes all five. The makeup is part of the sweep's key,
+  so a change of makeup sweeps again.
+- The sweep's edits and reads are at the campaign's now (`at_s`, sent as a whole number of seconds). Before this they
+  were at time zero, so a later edit on the main line hid the swept value. Example: Undo sends a mass back at now, and
+  every step then read the same mass and marked nothing. The Makeup box's `expects` call takes the same `at_s`.
+- A sweep that throws lets the next one run, and says why.
+- Checked against the kernel (`test/sweep.test.ts`): Mars with Earth-like makeup is rocky across its strip and no
+  longer rocky past about 12 Earth masses; the state hash does not move. e2e (editing, desk and phone): Mars set like
+  Venus, the Mass strip shows a rocky mark. Screen: project files `sse4/handover-screens/ED2-screens/mass-class-marks-desk.png`.
+
 ## Next
 
-- Classes on the marks: pass `packs` and `scheme` (as `classify_preview`) so the class tipping points show
-  ("super-Earth from here").
 - Pencil figures along the strip while held, read from the sweep's steps instead of a pause's resolve (ED3 part 2b's
   year and quick look come from the same steps).
 - "What followed" across the range: the results row for each step, drawn as a small line under the strip.
 - Swap Reach it's bisection (ED5) and Could be's per-handle search (ED10) for the sweep's steps.
+- A sweep of a makeup part (ED9 part 2's tipping points on the bar's joins).

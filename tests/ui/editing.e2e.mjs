@@ -319,6 +319,17 @@ try {
       await mk.locator("[data-makeup-use-radius]").waitFor({ timeout: 20000 });
       await shot(gm, `makeup-box-${vp}`);
       await undoTo(['[data-makeup-box]', "No makeup is set"]);
+      // ED2 part 2: with its makeup set (like Venus, a rocky world), the Mass strip's sweep labels each step with the class
+      // atlas, so the strip marks where the world's class changes (past about ten Earth masses it is no longer rocky).
+      await mk.locator('[data-makeup-kind="rocky:Venus"]').click();
+      await gm.waitForFunction(() => /metal 32/.test(document.querySelector('[data-makeup-bar] [data-part="metal"]')?.textContent ?? ""), null, { timeout: 20000 });
+      await row.locator('[data-handle="mass"]').click();
+      await gm.locator('[data-strip="mass"] [data-tick*="rocky"]').first().waitFor({ state: "attached", timeout: 90000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nticks: ${await gm.locator("[data-tick]").evaluateAll((t) => t.map((x) => x.getAttribute("data-tick")))}; ${await gm.locator("[data-sweeping], [data-sweep-why]").allInnerTexts()}`);
+      });
+      await shot(gm, `mass-class-marks-${vp}`);
+      await row.locator('[data-handle="makeup"]').click();
+      await undoTo(['[data-makeup-box]', "No makeup is set"]);
       await mk.locator('[data-part-chip="ice"]').click();
       await mk.locator('[data-strip="makeup.ice"] [data-strip-figure]').click();
       await mk.locator('[data-strip="makeup.ice"] [data-strip-entry]').fill("40%");
