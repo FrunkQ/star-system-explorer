@@ -165,7 +165,10 @@
      "sunlight_swing",
      "stability"
     ]
-   }
+   },
+   "reach": [
+    "t_surface_now_k"
+   ]
   },
   {
    "id": "mass",
@@ -195,6 +198,10 @@
    ],
    "desks": [
     "build"
+   ],
+   "reach": [
+    "gravity_m_s2",
+    "core.dynamo_now"
    ]
   },
   {

@@ -44,6 +44,16 @@
     "text": "The Traveller, 2300AD, Twilight: 2000 and Dark Conspiracy games in all forms are owned by Mongoose Publishing. Copyright 1977 - 2025 Mongoose Publishing. Traveller is a registered trademark of Mongoose Publishing. Mongoose Publishing permits web sites and fanzines for this game, provided it contains this notice, that Mongoose Publishing is notified, and subject to a withdrawal of permission on 90 days notice. The contents of this site are for personal, non-commercial use only. Any use of Mongoose Publishing's copyrighted material or trademarks anywhere on this web site and its files should not be viewed as a challenge to those copyrights or trademarks. In addition, any program/articles/file on this site cannot be republished or distributed without the consent of the author who contributed it.",
     "source": "https://www.mongoosepublishing.com/pages/traveller-licensing (Fair Use Policy, 2025)"
    },
+   "credits": [
+    {
+     "text": "Cepheus Engine System Reference Document (Samardan Press), Open Game Licence: task difficulty, skills, ship weapon lines.",
+     "url": "https://www.orffenspace.com/cepheus-srd/"
+    },
+    {
+     "text": "Roy Martin, TravellerSystemGenerator (GPL-3.0): the idea of an extended world profile beside the UWP; ideas only, no code or tables.",
+     "url": "https://github.com/rtrm/TravellerSystemGenerator"
+    }
+   ],
    "difficulty": {
     "system": "Traveller task",
     "dice": {
@@ -7766,6 +7776,433 @@
        }
       }
      ]
+    },
+    {
+     "id": "traveller.extended",
+     "label": "Extended world profile",
+     "about": "The physical profile behind the UWP, read off the world's own physics (never rolled): size, density, gravity, air, surface and orbit. One block: swap it or edit a line.",
+     "segments": [
+      {
+       "id": "diameter_km",
+       "label": "Diameter (km)",
+       "source": {
+        "from": "value",
+        "field": "body.radius",
+        "times": 0.002,
+        "digits": 4
+       }
+      },
+      {
+       "id": "mass",
+       "label": "Mass (Earth masses)",
+       "source": {
+        "from": "value",
+        "field": "body.mass",
+        "times": 1.0,
+        "digits": 3,
+        "per": "M_earth"
+       }
+      },
+      {
+       "id": "density",
+       "label": "Density (g/cm\u00b3)",
+       "source": {
+        "from": "value",
+        "field": "body.bulk_density",
+        "times": 0.001,
+        "digits": 3
+       }
+      },
+      {
+       "id": "gravity",
+       "label": "Surface gravity (g)",
+       "source": {
+        "from": "value",
+        "field": "body.surface_gravity",
+        "times": 1.0,
+        "digits": 2,
+        "per": "g0"
+       }
+      },
+      {
+       "id": "escape",
+       "label": "Escape velocity (km/s)",
+       "source": {
+        "from": "value",
+        "field": "body.escape_velocity",
+        "times": 0.001,
+        "digits": 3
+       }
+      },
+      {
+       "id": "pressure",
+       "label": "Surface pressure (atm)",
+       "source": {
+        "from": "value",
+        "field": "atmosphere.surface_pressure",
+        "times": 1.0,
+        "digits": 3,
+        "per": "atm"
+       }
+      },
+      {
+       "id": "oxygen",
+       "label": "Oxygen partial pressure (bar)",
+       "source": {
+        "from": "value",
+        "field": "atmosphere.pp.o2",
+        "times": 1.0,
+        "digits": 2
+       }
+      },
+      {
+       "id": "liquid",
+       "label": "Surface liquid (%)",
+       "source": {
+        "from": "value",
+        "field": "surface.liquid_fraction",
+        "times": 100.0,
+        "digits": 2
+       }
+      },
+      {
+       "id": "temperature",
+       "label": "Mean surface temperature (K)",
+       "source": {
+        "from": "value",
+        "field": "planet.surface_temperature",
+        "times": 1.0,
+        "digits": 3
+       }
+      },
+      {
+       "id": "distance",
+       "label": "Distance from its star (au)",
+       "source": {
+        "from": "value",
+        "field": "orbit.semi_major_axis",
+        "times": 1.0,
+        "digits": 3,
+        "per": "au"
+       }
+      },
+      {
+       "id": "eccentricity",
+       "label": "Eccentricity",
+       "source": {
+        "from": "value",
+        "field": "orbit.eccentricity",
+        "times": 1.0,
+        "digits": 2
+       }
+      },
+      {
+       "id": "year",
+       "label": "Year (Earth years)",
+       "source": {
+        "from": "value",
+        "field": "orbit.period",
+        "times": 1.0,
+        "digits": 3,
+        "per": "yr_julian"
+       }
+      }
+     ],
+     "layouts": {
+      "size": "{diameter_km} km across, {mass} Earth masses, {density} g/cm\u00b3, {gravity} g, escape {escape} km/s",
+      "air": "{pressure} atm at the surface, oxygen {oxygen} bar",
+      "surface": "{liquid}% liquid, {temperature} K",
+      "orbit": "{distance} au, eccentricity {eccentricity}, a year of {year} Earth years"
+     },
+     "fact_prefix": "traveller.uwp."
+    }
+   ],
+   "rolls": [
+    {
+     "id": "traveller.social",
+     "label": "Roll the social codes",
+     "about": "Starport, government, law, tech level and bases for a world the physics cannot decide, rolled from the universe's seed (the same on every device). GM only; a code set by hand is kept; every rolled code can be overruled.",
+     "sheet": "traveller.world",
+     "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 12 Worlds. https://www.orffenspace.com/cepheus-srd/book3/worlds.html",
+     "steps": [
+      {
+       "id": "government",
+       "label": "Government",
+       "dice": 2,
+       "plus": -7,
+       "add": [
+        "population"
+       ],
+       "zero_when": [
+        {
+         "segment": "population",
+         "in": [
+          "0"
+         ]
+        }
+       ],
+       "min": 0,
+       "max": 15
+      },
+      {
+       "id": "law",
+       "label": "Law level",
+       "dice": 2,
+       "plus": -7,
+       "add": [
+        "government"
+       ],
+       "zero_when": [
+        {
+         "segment": "government",
+         "in": [
+          "0"
+         ]
+        }
+       ],
+       "min": 0,
+       "max": 18
+      },
+      {
+       "id": "starport",
+       "label": "Starport",
+       "dice": 2,
+       "plus": -7,
+       "add": [
+        "population"
+       ],
+       "table": [
+        [
+         2,
+         "X"
+        ],
+        [
+         3,
+         "E"
+        ],
+        [
+         5,
+         "D"
+        ],
+        [
+         7,
+         "C"
+        ],
+        [
+         9,
+         "B"
+        ],
+        [
+         11,
+         "A"
+        ]
+       ]
+      },
+      {
+       "id": "tech",
+       "label": "Tech level",
+       "dice": 1,
+       "dm": {
+        "starport": {
+         "A": 6,
+         "B": 4,
+         "C": 2,
+         "X": -4
+        },
+        "size": {
+         "0": 2,
+         "1": 2,
+         "2": 1,
+         "3": 1,
+         "4": 1
+        },
+        "atmosphere": {
+         "0": 1,
+         "1": 1,
+         "2": 1,
+         "3": 1,
+         "A": 1,
+         "B": 1,
+         "C": 1,
+         "D": 1,
+         "E": 1,
+         "F": 1
+        },
+        "hydrographics": {
+         "0": 1,
+         "9": 1,
+         "A": 2
+        },
+        "population": {
+         "1": 1,
+         "2": 1,
+         "3": 1,
+         "4": 1,
+         "5": 1,
+         "9": 1,
+         "A": 2,
+         "B": 3,
+         "C": 4
+        },
+        "government": {
+         "0": 1,
+         "5": 1,
+         "7": 2,
+         "D": -2,
+         "E": -2
+        }
+       },
+       "zero_when": [
+        {
+         "segment": "population",
+         "in": [
+          "0"
+         ]
+        }
+       ],
+       "min": 0,
+       "floors": [
+        {
+         "when": [
+          {
+           "segment": "hydrographics",
+           "in": [
+            "0",
+            "A"
+           ]
+          },
+          {
+           "segment": "population",
+           "in": [
+            "6",
+            "7",
+            "8",
+            "9",
+            "A",
+            "B",
+            "C"
+           ]
+          }
+         ],
+         "min": 4
+        },
+        {
+         "when": [
+          {
+           "segment": "atmosphere",
+           "in": [
+            "4",
+            "7",
+            "9"
+           ]
+          }
+         ],
+         "min": 5
+        },
+        {
+         "when": [
+          {
+           "segment": "atmosphere",
+           "in": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "A",
+            "B",
+            "C"
+           ]
+          }
+         ],
+         "min": 7
+        },
+        {
+         "when": [
+          {
+           "segment": "atmosphere",
+           "in": [
+            "D",
+            "E"
+           ]
+          },
+          {
+           "segment": "hydrographics",
+           "in": [
+            "A"
+           ]
+          }
+         ],
+         "min": 7
+        }
+       ]
+      },
+      {
+       "id": "naval",
+       "label": "Naval base",
+       "writes": "traveller.bases.N",
+       "dice": 2,
+       "target": 8,
+       "only_when": [
+        {
+         "segment": "starport",
+         "in": [
+          "A",
+          "B"
+         ]
+        }
+       ]
+      },
+      {
+       "id": "scout",
+       "label": "Scout base",
+       "writes": "traveller.bases.S",
+       "dice": 2,
+       "target": 7,
+       "only_when": [
+        {
+         "segment": "starport",
+         "in": [
+          "A",
+          "B",
+          "C",
+          "D"
+         ]
+        }
+       ],
+       "dm": {
+        "starport": {
+         "C": -1,
+         "B": -2,
+         "A": -3
+        }
+       }
+      },
+      {
+       "id": "corsair",
+       "label": "Corsair base",
+       "writes": "traveller.bases.C",
+       "dice": 2,
+       "target": 12,
+       "only_when": [
+        {
+         "segment": "starport",
+         "in": [
+          "B",
+          "C",
+          "D",
+          "E",
+          "X"
+         ]
+        },
+        {
+         "segment": "naval",
+         "in": [
+          "no"
+         ]
+        }
+       ]
+      }
+     ]
     }
    ],
    "views": {
@@ -8881,6 +9318,217 @@
      "scanned",
      "surveyed",
      "detailed"
+    ]
+   },
+   "weapons": {
+    "about": "Ship weapons as effect at range: the game's tech level, optimum band and damage beside what the physics says arrives. Nothing is fired.",
+    "standard_target": {
+     "label": "a small armed hull (2 mm aluminium, 15 m, 2 g)",
+     "skin": {
+      "material": "aluminium",
+      "thickness_m": 0.002
+     },
+     "radius_m": 15.0,
+     "accel_m_s2": 19.6
+    },
+    "kinds": [
+     {
+      "id": "pulse_laser",
+      "label": "pulse laser",
+      "mount": "turret",
+      "game": {
+       "tl": 7,
+       "optimum": {
+        "band": "short",
+        "from_m": 10000.0,
+        "to_m": 1250000.0
+       },
+       "damage": "2D6",
+       "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+      },
+      "weapon": {
+       "kind": "beam",
+       "beam_power_w": 500000000.0,
+       "wavelength_m": 3.5e-07,
+       "aperture_m": 2.0,
+       "dwell_s": 0.1,
+       "efficiency": 0.3,
+       "reject_k": 600.0
+      },
+      "about": "short, hard ultraviolet pulses: a lot of energy on a spot, but the spot grows with distance"
+     },
+     {
+      "id": "beam_laser",
+      "label": "beam laser",
+      "mount": "turret",
+      "game": {
+       "tl": null,
+       "optimum": {
+        "band": "medium",
+        "from_m": 1250000.0,
+        "to_m": 10000000.0
+       },
+       "damage": null,
+       "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+      },
+      "weapon": {
+       "kind": "beam",
+       "beam_power_w": 50000000.0,
+       "wavelength_m": 3.5e-07,
+       "aperture_m": 3.0,
+       "dwell_s": 10.0,
+       "efficiency": 0.3,
+       "reject_k": 600.0
+      },
+      "about": "a steady beam held on the spot; the SRD gives no stat line, so the band is the one its prose puts above the pulse laser"
+     },
+     {
+      "id": "particle_beam",
+      "label": "particle beam",
+      "mount": "turret",
+      "game": {
+       "tl": 8,
+       "optimum": {
+        "band": "long",
+        "from_m": 10000000.0,
+        "to_m": 25000000.0
+       },
+       "damage": "3D6 + radiation",
+       "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+      },
+      "weapon": {
+       "kind": "beam",
+       "beam_power_w": 200000000.0,
+       "wavelength_m": 1e-12,
+       "aperture_m": 0.5,
+       "jitter_rad": 1e-07,
+       "dwell_s": 10.0,
+       "efficiency": 0.2,
+       "reject_k": 800.0
+      },
+      "about": "a neutral particle beam: its spread is its divergence, not diffraction"
+     },
+     {
+      "id": "particle_bay",
+      "label": "particle beam bay",
+      "mount": "bay",
+      "game": {
+       "tl": 8,
+       "optimum": {
+        "band": "long",
+        "from_m": 10000000.0,
+        "to_m": 25000000.0
+       },
+       "damage": "6D6 + radiation",
+       "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+      },
+      "weapon": {
+       "kind": "beam",
+       "beam_power_w": 1000000000.0,
+       "wavelength_m": 1e-12,
+       "aperture_m": 1.0,
+       "jitter_rad": 1e-07,
+       "dwell_s": 10.0,
+       "efficiency": 0.2,
+       "reject_k": 800.0
+      },
+      "about": "the bay's larger accelerator: five times the energy, so it is still in range at the far edge of long"
+     },
+     {
+      "id": "fusion_bay",
+      "label": "fusion gun bay",
+      "mount": "bay",
+      "game": {
+       "tl": 12,
+       "optimum": {
+        "band": "medium",
+        "from_m": 1250000.0,
+        "to_m": 10000000.0
+       },
+       "damage": "5D6",
+       "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+      },
+      "weapon": {
+       "kind": "beam",
+       "beam_power_w": 5000000000.0,
+       "wavelength_m": 1e-12,
+       "aperture_m": 1.0,
+       "jitter_rad": 1e-06,
+       "dwell_s": 6.0,
+       "efficiency": 0.5,
+       "reject_k": 1200.0
+      },
+      "about": "a plasma bolt: it spreads ten times faster than a particle beam, so its reach is shorter"
+     },
+     {
+      "id": "meson_bay",
+      "label": "meson gun bay",
+      "mount": "bay",
+      "game": {
+       "tl": 11,
+       "optimum": {
+        "band": "long",
+        "from_m": 10000000.0,
+        "to_m": 25000000.0
+       },
+       "damage": "5D6 + radiation",
+       "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+      },
+      "weapon": null,
+      "about": "fictional physics (mesons that decay inside the target): no figures to compute, so the game's band stands alone"
+     },
+     {
+      "id": "nuclear_missile",
+      "label": "nuclear missile",
+      "mount": "turret",
+      "game": {
+       "tl": 6,
+       "optimum": null,
+       "damage": "2D6 + radiation",
+       "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+      },
+      "weapon": {
+       "kind": "burst",
+       "yield_j": 4184000000000.0,
+       "xray_share": 0.7
+      },
+      "about": "a kiloton warhead read where it bursts: in vacuum it must burst within about 50 m of a small hull to boil through; how it gets there is the missile's flight (NAV)"
+     },
+     {
+      "id": "standard_missile",
+      "label": "standard missile",
+      "mount": "turret",
+      "game": {
+       "tl": 6,
+       "optimum": null,
+       "damage": "1D6",
+       "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+      },
+      "weapon": {
+       "kind": "projectile",
+       "mass_kg": 50.0,
+       "muzzle_m_s": 3000.0,
+       "face_m2": 0.05
+      },
+      "about": "a kinetic and fragment hit at its closing speed; how it gets there is the missile's flight (NAV)"
+     },
+     {
+      "id": "sandcaster",
+      "label": "sandcaster",
+      "mount": "turret",
+      "game": {
+       "tl": 7,
+       "optimum": {
+        "band": "close",
+        "from_m": 1000.0,
+        "to_m": 10000.0
+       },
+       "damage": "special",
+       "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+      },
+      "weapon": null,
+      "about": "a defence, not a weapon at range: no figures"
+     }
     ]
    },
    "observe": {

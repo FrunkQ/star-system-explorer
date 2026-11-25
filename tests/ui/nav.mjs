@@ -74,6 +74,7 @@ export async function view(page, group, option, scope = page.locator(".viewbar [
   if (folded) {
     await scope.locator("[data-view-more]").click();
     g = scope.getByRole("group", { name: group, exact: true });
+    await g.waitFor({ state: "visible", timeout: 15000 });
   }
   await g.getByRole("button", { name: option, exact: true }).click();
 }

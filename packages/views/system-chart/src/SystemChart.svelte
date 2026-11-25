@@ -9,6 +9,8 @@
   import { withFiner, TILE_SAMPLES, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
+  /** Plume facts from the same reads (the world's surface record), by system and world. */
+  const truePlumes = new Map<string, import("../../../renderer/src/index.ts").PlumeFacts>();
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
   const trueSaid = new Map<string, string[]>();
   /** Its clouds alone, its ground under them, and its air (VP-A3, VP-A4), by system and world. */
@@ -37,7 +39,7 @@
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, readTrueFace, starsBehind, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
+  import { plumeFacts, readLiveStar, readTrueFace, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -223,6 +225,44 @@
     drag = { ...drag, rpx, lastD: d, caught: c?.says ?? null, ...(a !== drag.a_au ? { a_au: a, moved: true } : {}) };
   }
 
+  // ED4, Add with the ghost first (editing design section 5): while the shell is adding round the body at this chart's
+  // centre, a ghost and its orbit follow the pointer with the distance; a press drops it there (Add here opens with that
+  // orbit), Esc puts it away. Catches as the drag's: round figures, resonances with the worlds already there.
+  const adding = $derived.by(() => {
+    const a = ctx.workspace.adding;
+    return a && a.a_au === null && centre && a.host === centre.address ? a : null;
+  });
+  let ghostAt = $state<{ a_au: number; x: number; y: number; caught: string | null } | null>(null);
+  function moveGhost(e: PointerEvent) {
+    if (!adding) return void (ghostAt = null);
+    const box = svgEl!.getBoundingClientRect();
+    const [x, y] = [e.clientX - box.left, e.clientY - box.top];
+    const d = Math.hypot(x - cx, y - cy);
+    const raw = Math.min(limitAu, Math.max(scale.inner_au, distanceAt(d, scale)));
+    const neighbours = orbiting.filter((q) => q.orbit).map((q) => ({ label: q.label, a: q.orbit!.a_au }));
+    const c = e.altKey ? null : nearestCatch(d, [...roundFigures(raw, frame ? KM_PER_AU : 1, frame ? "km" : "AU"), ...resonanceCatches(raw, neighbours)], (v) => radius(v, scale));
+    ghostAt = { a_au: c ? c.at : round(raw), x, y, caught: c?.says ?? null };
+  }
+  function dropGhost(e: PointerEvent) {
+    if (!adding) return;
+    e.stopPropagation();
+    e.preventDefault();
+    if (!ghostAt) moveGhost(e);
+    if (ghostAt) ctx.workspace.adding = { ...adding, a_au: ghostAt.a_au };
+    ghostAt = null;
+  }
+  $effect(() => {
+    if (!adding) return void (ghostAt = null);
+    const cancel = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      ctx.workspace.adding = null;
+    };
+    window.addEventListener("keydown", cancel, true);
+    return () => window.removeEventListener("keydown", cancel, true);
+  });
+
   // Esc while dragging puts the orbit back and writes nothing (editing design section 4).
   $effect(() => {
     if (!drag) return;
@@ -383,6 +423,8 @@
     );
   });
   let surfaces = $state<Map<string, TrueTexture>>(new Map());
+  // Each world's plume facts from the same read (its surface record), for plumes above the limb.
+  let plumes = $state<Map<string, PlumeFacts>>(new Map());
   let airs = $state<Map<string, TrueAir>>(new Map());
   let reading = $state<{ done: number; of: number; none: number; why: string } | null>(null);
   let trueGen = 0;
@@ -404,10 +446,28 @@
         const key = `${sys}|${s.address}`;
         if (!trueSurfaces.has(key)) {
           reading = { done, of: order.length, none, why: noneWhy };
-          // Ground, then today's clouds and haze; a giant is its cloud decks (renderer true-air.ts).
-          const f = await readTrueFace(ctx.session as unknown as FaceReader, sys, s.address);
+          // Ground, then today's clouds and haze; a giant is its cloud decks (renderer true-air.ts). The surface record
+          // read on the way carries the world's plume facts (renderer plumes.ts).
+          let record: unknown = null;
+          const k = ctx.session as unknown as FaceReader;
+          // The session's own methods, bound to it (they use its private state), with its tile read noting the record.
+          const reader = new Proxy(k, {
+            get: (t, p) =>
+              p === "surfaceTiles"
+                ? async (a: string, b: string) => {
+                    const r = await ctx.session.surfaceTiles(a, b);
+                    if (r.ok) record = r.record ?? null;
+                    return r;
+                  }
+                : typeof (t as unknown as Record<string | symbol, unknown>)[p] === "function"
+                  ? ((t as unknown as Record<string | symbol, (...x: unknown[]) => unknown>)[p]!).bind(t)
+                  : (t as unknown as Record<string | symbol, unknown>)[p],
+          });
+          const f = await readTrueFace(reader, sys, s.address);
           trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
           if (typeof f !== "string") trueSaid.set(key, f.said);
+          const pf = plumeFacts(record);
+          if (pf) truePlumes.set(key, pf);
           // Its clouds alone over its ground, and its air's rim (VP-A3, VP-A4).
           if (typeof f !== "string" && (f.clouds || f.air)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}) });
           // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
@@ -415,6 +475,8 @@
           if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));
           finerGround(key, finerTiles(key));
         }
+        const kp = truePlumes.get(key);
+        if (kp && g === trueGen) plumes = new Map(plumes).set(s.address, kp);
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
         if (t && typeof t !== "string") surfaces = new Map(surfaces).set(s.address, t);
@@ -465,6 +527,12 @@
     if (!looksTrue || ctx.session.seat.authority !== "gm" || !below || below.body !== sel) return;
     const radius_m = untrack(() => bodies3d.find((b) => b.id === below.body)?.radius_m);
     if (!radius_m) return;
+    // Only a world whose ground True already wears (faces read from its tiles), as for the finer tiles: a world the
+    // kernel has no surface for is never asked again, so a close fly-in does not queue kernel work in front of the
+    // chart's own (a world with none answered each read with a refusal, and on a slow runner held the kernel).
+    const key0 = `${sys}|${below.body}`;
+    const worn = untrack(() => trueSurfaces.get(key0));
+    if (!worn || typeof worn === "string" || !(worn.faces || untrack(() => trueAirs.get(key0)?.ground?.faces))) return;
     const timer = setTimeout(() => untrack(() => void (async () => {
       const p = await readDeep(ctx.session, sys, below.body, { toward: below.toward, m_per_px: below.m_per_px }, radius_m, TILE_SAMPLES, () => my === deepGen);
       if (!p || my !== deepGen) return;
@@ -577,7 +645,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {plumes} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
@@ -588,10 +656,13 @@
         viewBox="0 0 {w} {h}"
         role="group"
         aria-label={framed ? `Chart of ${framed.label} and its moons` : `System chart of ${scene.title}`}
-        onpointermove={moveDrag}
+        onpointermove={(e) => (moveDrag(e), moveGhost(e))}
+        onpointerdowncapture={dropGhost}
+        onpointerleave={() => (ghostAt = null)}
         onpointerup={endDrag}
         onpointercancel={() => (drag = null)}
         class:dragging={drag !== null}
+        class:adding={adding !== null}
       >
         <HatchDefs {prefix} />
         {#if on("grid")}
@@ -690,6 +761,15 @@
             {/if}
           </g>
         {/each}
+        {#if adding && ghostAt}
+          {@const gr = radius(ghostAt.a_au, scale)}
+          {@const [gx, gy] = polar(cx, cy, gr, (Math.atan2(cy - ghostAt.y, ghostAt.x - cx) * 180) / Math.PI)}
+          <g class="add-ghost" data-add-ghost aria-hidden="true">
+            <Ink circle={{ cx, cy, r: gr }} tone="accent" weight="heavy" dash="dashed" />
+            <circle class="ghost-dot" cx={gx} cy={gy} r="6" />
+            <text class="dragv" data-add-readout x={gx + 14} y={gy + 20}>{dist(ghostAt.a_au)} round {centre?.label}{ghostAt.caught && !ghostAt.caught.startsWith("a round") ? ` · ${ghostAt.caught}` : ""}</text>
+          </g>
+        {/if}
         <!-- Names in their own layer, over every mark (chart-labels.ts places them); a press on a name chooses its body. -->
         <!-- Range rings (RK12), under the HUD like the grid: round each weapon's holder, bent by the chart's scale. -->
         {#if hudShows(shownView.hud, "range") && rangeSets.length}
@@ -811,6 +891,15 @@
   }
   .dragging {
     user-select: none;
+  }
+  svg.adding {
+    cursor: crosshair;
+  }
+  .ghost-dot {
+    fill: none;
+    stroke: var(--sse-accent);
+    stroke-width: 2;
+    stroke-dasharray: 3 2;
   }
   .ghost {
     opacity: 0.55;

@@ -28,6 +28,9 @@ export { Governor, badge } from "./governor.ts";
 export type { Badge, GovernorOptions, GovernorMove } from "./governor.ts";
 export { LIBRARY } from "./passes.ts";
 export { mountGlobe, airRender, deviceReadout, measureAgain, passShares, quality, setQuality } from "./runtime.ts";
+// VP4 part 2b, VP5: one quality controller per True view (placement, governor, heat, sharpen at rest).
+export { TrueRun, type TrueSettings, type TrueStatus } from "./true-run.ts";
+export { REST_FRAMES, RestClock, restJitter, type RestState } from "./still.ts";
 // VP4: the speed probe and placement by measured speed.
 export { BENCH_PIXELS, drawingBench, factorsFrom, gpuTiersAllowed, HeatWatch, loadProbe, loadQuality, place, PLACE_MARGIN, PROBE_SCENES, probeKey, QUALITY_WORDS, tierWords, ULTRA_HEADROOM } from "./probe.ts";
 export type { Capabilities, DeviceFactors, DrawingBench, Placement, ProbeResult, ProbeScene, QualityChoice, TierPrediction } from "./probe.ts";
@@ -36,9 +39,9 @@ export type { Air, AirFacts } from "./atmosphere.ts";
 export type { GlobeRun, GlobeRunOptions, GlobeStatus } from "./runtime.ts";
 
 /** Start the GPU path (WebGPU, else WebGL2), or null when this device has neither. */
-export async function startGpu(canvas: HTMLCanvasElement) {
+export async function startGpu(canvas: HTMLCanvasElement, opts: { timing?: boolean } = {}) {
   const { createGpu } = await import("./gpu.ts");
-  return createGpu(canvas);
+  return createGpu(canvas, opts);
 }
 // R3: the still tier, "take photograph", and photographs kept on this device.
 export { photograph, halton } from "./photograph.ts";
@@ -111,7 +114,7 @@ export { fresnel, MAX_TRAINS, readSeaOptics, SEA_STEPS, seaBody, seaWords } from
 export type { SeaOptics, WaveTrain } from "./sea.ts";
 export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunAt, sunDirection, sunTransmittance } from "./surface-sky.ts";
 export type { SurfaceFrame, SurfaceGpu, SurfaceMesh } from "./gpu-surface.ts";
-export type { LanderPose } from "./surface-lander.ts";
+export type { LanderPose, LanderShip } from "./surface-lander.ts";
 
 /** Draw the ground round a site on the GPU (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */
 export async function startSurface(canvas: HTMLCanvasElement) {
@@ -128,6 +131,19 @@ export { DIFFERENTIAL_ROTATION, rateShare, spotsAt } from "./live-star.ts";
 // A body's face in True, one door for every view (true-body.ts).
 export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
 export type { TrueBody, TrueLook } from "./true-body.ts";
+// Hot things glow in Visible and plumes above the limb (third audit R10 to R12, track TRUE).
+export { drawnGlow, GLOW_FLOOR, hotGlow } from "./hot-glow.ts";
+export type { HotGlow } from "./hot-glow.ts";
+export { plumeBrightness, plumeFacts, plumeGrains, plumeNote } from "./plumes.ts";
+export type { PlumeFacts } from "./plumes.ts";
+// Lava tube openings cut into the ground at a landing site (third audit, TRUE6).
+export { caveCut, caveOpenings, nearestOpening, openingLine } from "./cave-mouths.ts";
+export type { CaveOpening } from "./cave-mouths.ts";
+// Surface stains hued from the data sheet's optics (TRUE4).
+export { grainAlbedo, indexTableOf, layerReflectance, mixAlbedo, seenColour, GRAIN_UM } from "./sheet-optics.ts";
+export type { GrainShare, IndexTable } from "./sheet-optics.ts";
+export { stainFacts, stainHue, stainNote, stainPrepared, STAIN_GRAIN_UM } from "./stain-look.ts";
+export type { StainFact, StainHue } from "./stain-look.ts";
 // Small bodies' own shapes in True (SB3, small-body.ts).
 export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
 export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";

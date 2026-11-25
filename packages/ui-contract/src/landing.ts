@@ -1,4 +1,5 @@
 import type { LandingTime, Place } from "./place.ts";
+import type { Json } from "./json.ts";
 import { constant } from "./sheet.ts";
 
 // Getting down to a world and walking about (SL1; surfaces design 4.1, Alex 23 Nov 2026). The kernel's three
@@ -199,6 +200,13 @@ export interface LandingShow {
   /** How the GM's screen draws the ground (true, 3d or wireframe); a seat draws the same. */
   look?: "true" | "3d" | "wireframe";
   world: LandingWorld;
+  /**
+   * The party's ship's own model on the ground (LR6b), when it is the lander: its numbers, how its fuels are stored
+   * (renderer ship.ts `Propellants`, read by the GM, since a seat does not read the data sheet) and the
+   * design kept with the construct (`construct.design`: its base-ships style, remix seed and overrides). A seat designs
+   * and draws the same ship from these.
+   */
+  ship_model?: { ship: Json; store: Json; style: string; seed?: number; overrides?: Json };
 }
 
 const isNum = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x);
@@ -226,6 +234,7 @@ export interface LandingGround {
   surfaceTiles: import("./session.ts").ViewSession["surfaceTiles"];
   surfaceTilesAt: import("./session.ts").ViewSession["surfaceTilesAt"];
   planDescent: import("./session.ts").ViewSession["planDescent"];
+  surveyCaves?: import("./session.ts").ViewSession["surveyCaves"];
 }
 
 /** The tide's height at a time from the kernel's tide raisers (each a range and a period), all in phase at time 0 (the phase is not on record; fudge register). */

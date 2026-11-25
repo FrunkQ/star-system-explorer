@@ -101,15 +101,57 @@
     const g = globe;
     if (has) untrack(() => run)?.setGlobe(g);
   });
+
+  // The party's ship in orbit (LR4c): a marker going round the world on a tilted ring, named, passing behind the
+  // world on the far side. A presentation drift like the globe's spin: one turn in ORBIT_S, not its real period, and
+  // the ring drawn clear of the limb, not at its real height (fudge register, "The ship in orbit on the table").
+  const ORBIT_S = 24;
+  const TILT = 0.28;
+  const ship = $derived.by(() => {
+    const sh = ctx.shown?.();
+    return sh && "scope" in sh && sh.focus === address && sh.ship ? sh.ship : "";
+  });
+  let phase = $state(0);
+  $effect(() => {
+    if (!ship) return;
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      phase = (((t - t0) / 1000 / ORBIT_S) % 1) * 2 * Math.PI;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  });
+  const ring = $derived({ rx: size * 0.62, ry: size * 0.62 * TILT });
+  const shipAt = $derived.by(() => {
+    const x = Math.cos(phase) * ring.rx;
+    const y = Math.sin(phase) * ring.ry;
+    // The far half of the ring (y < 0, above the centre) is behind the world where it crosses the disc.
+    const behind = y < 0 && Math.abs(x) < size * 0.48;
+    return { x, y, behind };
+  });
 </script>
 
 <section class="orbit" data-orbit={address || undefined} data-orbit-drawn={has ? backend || "yes" : undefined} data-orbit-air={air ? "yes" : undefined} bind:clientWidth={w} bind:clientHeight={h} aria-label={name ? `In orbit of ${name}` : "In orbit"}>
   {#if !subject}
     <p class="quiet">Waiting for the game master to name the world below.</p>
   {:else}
-    <div class="globe" style:width="{size}px" style:height="{size}px" bind:this={host} role="img" aria-label="{name}, turning below"></div>
+    <div class="sky" style:width="{size}px" style:height="{size}px">
+      <div class="globe" style:width="{size}px" style:height="{size}px" bind:this={host} role="img" aria-label="{name}, turning below"></div>
+      {#if ship && has}
+        {@const pad = size * 0.2}
+        <svg class="ring" width={size + 2 * pad} height={size + 2 * pad} viewBox="{-size / 2 - pad} {-size / 2 - pad} {size + 2 * pad} {size + 2 * pad}" data-orbit-ship={ship} data-orbit-ship-behind={shipAt.behind || undefined} aria-label="{ship}, in orbit">
+          <path class="near" d="M {-ring.rx} 0 A {ring.rx} {ring.ry} 0 0 0 {ring.rx} 0" />
+          {#if !shipAt.behind}
+            <circle class="ship" cx={shipAt.x} cy={shipAt.y} r={Math.max(3, size * 0.012)} />
+            <text class="name" x={shipAt.x + 8} y={shipAt.y - 8}>{ship}</text>
+          {/if}
+        </svg>
+      {/if}
+    </div>
     <p class="caption" data-orbit-caption>
-      {#if has}{name}, turning below.{:else if failed}{name}: the map could not be read on this screen ({failed}).{:else}Reading {name}'s map…{/if}
+      {#if has}{name}, turning below{ship ? `, ${ship} in orbit` : ""}.{:else if failed}{name}: the map could not be read on this screen ({failed}).{:else}Reading {name}'s map…{/if}
     </p>
   {/if}
 </section>
@@ -127,6 +169,35 @@
   }
   .globe {
     max-width: 100%;
+  }
+  .sky {
+    position: relative;
+    max-width: 100%;
+  }
+  .ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    overflow: visible;
+  }
+  .ring .near {
+    fill: none;
+    stroke: var(--sse-ink-muted, var(--sse-ink));
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+    opacity: 0.6;
+  }
+  .ring .ship {
+    fill: var(--sse-accent);
+  }
+  .ring .name {
+    fill: var(--sse-ink);
+    font-size: 0.8rem;
+    paint-order: stroke;
+    stroke: var(--sse-ground);
+    stroke-width: 3px;
   }
   .caption,
   .quiet {

@@ -11,6 +11,7 @@
 // - `sampleFaces` and `reliefNormal` are the processor twin of the GPU bake (texture-ladder-gpu.ts): bilinear inside
 //   a face, and the surface normal tilted by the real slope between neighbouring texels (Horn 1981's idea, on the
 //   sphere), so craters and ranges catch the light near the terminator where the sun grazes them.
+import { groundStains, stainTexel, type StainHue } from "./stain-look.ts";
 import { say, SURFACE_COVERS as COVERS, sampleColour, type SurfaceTile, type Tier } from "../../ui-contract/src/index.ts";
 
 /** The kernel's samples along a tile's edge (atlas settings `tile_samples`: 256 on the sample Sol; read `tile.samples` where a tile is at hand). */
@@ -120,6 +121,8 @@ export interface Composite {
   radius_m: number;
   /** The tiles it was composed from, so finer ones can be laid over it later (withFiner). */
   tiles: readonly SurfaceTile[];
+  /** The stains laid on its bare ground (stain-look.ts, TRUE4), kept so finer tiles are stained alike. */
+  stains?: readonly StainHue[];
 }
 
 /**
@@ -127,7 +130,8 @@ export interface Composite {
  * COMPOSE_MAX texels); coarser tiles are laid first and finer ones over them, so a part of the face read only at
  * level 0 still shows, at its own coarseness. A face with no tile is null (drawn plain, as today).
  */
-export function composeFaces(tiles: readonly SurfaceTile[]): Composite {
+export function composeFaces(tiles: readonly SurfaceTile[], stains: readonly StainHue[] = []): Composite {
+  const ground = groundStains(stains);
   const byFace: SurfaceTile[][] = [[], [], [], [], [], []];
   for (const t of tiles) if (t && t.key.face >= 0 && t.key.face < 6) byFace[t.key.face]!.push(t);
   const sig: string[] = [];
@@ -154,7 +158,12 @@ export function composeFaces(tiles: readonly SurfaceTile[]): Composite {
       for (let j = 0; j < ts; j++) {
         for (let i = 0; i < ts; i++) {
           const k = j * ts + i;
-          const c = sampleColour(t, k, 1);
+          let c: readonly [number, number, number] = sampleColour(t, k, 1);
+          if (ground.length && t.cover[k] === 0) {
+            const one = new Uint8Array(c);
+            stainTexel(one, 0, ground);
+            c = [one[0]!, one[1]!, one[2]!];
+          }
           const h = t.elevation_dm[k]! / 10;
           const wet = (COVERS[t.cover[k]!] ?? "none") !== "none" && COVERS[t.cover[k]!] !== "ice" ? 1 : 0;
           for (let b = 0; b < span; b++) {
@@ -176,7 +185,7 @@ export function composeFaces(tiles: readonly SurfaceTile[]): Composite {
     }
     return { n, rgb, height_m, liquid, level };
   });
-  return { faces, signature: sig.join("|"), radius_m, tiles };
+  return { faces, signature: sig.join("|"), radius_m, tiles, ...(ground.length ? { stains } : {}) };
 }
 
 /**
@@ -190,7 +199,7 @@ export function withFiner<T extends { faces?: Composite }>(tex: T, fine: readonl
   const have = new Set(tex.faces.tiles.map(k));
   const more = fine.filter((t) => !have.has(k(t)));
   if (!more.length) return tex;
-  return { ...tex, faces: composeFaces([...tex.faces.tiles, ...more]) };
+  return { ...tex, faces: composeFaces([...tex.faces.tiles, ...more], tex.faces.stains) };
 }
 
 /** Bilinear inside a face picture at cube coordinates (u, v), clamped to the face (no bleeding across an edge). */

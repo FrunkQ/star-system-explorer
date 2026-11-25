@@ -19,6 +19,7 @@
     walls = [],
     fromTime,
     ontry,
+    onpause,
     oncommit,
     onclose,
   }: {
@@ -39,6 +40,8 @@
     fromTime?: (si: number) => number | null;
     /** Read-only on Explore: "Try changing it" opens an example what-if where the strip moves (ED7). */
     ontry?: () => void;
+    /** On a pause while held (150 ms), the exact answer for the held value, as a line of words; null for none. */
+    onpause?: (si: number) => Promise<string | null>;
     /** One change; resolves to null when it was applied, or the reason it was not. */
     oncommit: (si: number, how: { source: "computed" | "typed"; sig?: number }) => Promise<string | null>;
     /** Absent in a box, where the box closes as one. */
@@ -64,6 +67,17 @@
   let track: HTMLDivElement | undefined = $state();
 
   const shown = $derived(pencil ?? (value === null ? null : Math.abs(value)));
+  // On a pause of 150 ms while held, one exact answer (editing design section 3, point 4): the kernel resolves the held
+  // value on a scratch branch. A later move makes an answer still on its way stale; letting go clears it.
+  let pauseSaid = $state<string | null>(null);
+  $effect(() => {
+    const v = pencil;
+    pauseSaid = null;
+    if (v === null || !onpause) return;
+    let live = true;
+    const t = setTimeout(() => void onpause(sign * v).then((x) => live && pencil === v && (pauseSaid = x)), 150);
+    return () => ((live = false), clearTimeout(t));
+  });
   const said = $derived(shown === null ? null : say(shown, handle.part.kind, about, { depth, reading: read, ...(held ? { hold: held } : {}), ...(typed && pencil === null ? { source: "typed" as const, sig: typed.sig } : {}) }));
   const markPos = $derived(shown === null ? null : stripPos(domain, shown));
   // Dots in order along the line; a name is written only where it does not run into the last one written.
@@ -237,7 +251,7 @@
     {#if problem}<span class="problem">{problem}</span>
     {:else if !editable}Where this world sits among the reference worlds.{#if ontry}
         <button type="button" class="try" data-try onclick={ontry}>Try changing it</button>{:else} Change it on the Build desk.{/if}
-    {:else if pencil !== null}Let go, or press Enter, to set it. Esc puts it back.
+    {:else if pencil !== null}{#if pauseSaid}<span class="pause" data-strip-pause>Held here: {pauseSaid}.</span>{" "}{/if}Let go, or press Enter, to set it. Esc puts it back.
     {:else}Drag along the line, use the arrow keys (Shift for bigger steps), or press the figure to type a value in any unit.{/if}
   </p>
 </div>
@@ -277,6 +291,9 @@
   .figure:disabled {
     cursor: default;
     border-bottom-color: transparent;
+    color: var(--sse-ink);
+  }
+  .pause {
     color: var(--sse-ink);
   }
   .figure.pencil {

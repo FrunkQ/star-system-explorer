@@ -21,3 +21,12 @@ Packs screen shows it:
 > of the author who contributed it.
 
 Source: https://www.mongoosepublishing.com/pages/traveller-licensing
+
+## Credits
+
+- Task difficulty, skills and the ship weapons' tech levels, optimum bands and damage: the Cepheus Engine System
+  Reference Document (Samardan Press), used under the Open Game Licence. Numbers and names only, no rules text.
+  https://www.orffenspace.com/cepheus-srd/
+- The idea of an extended world profile beside the UWP (code sheet `traveller.extended`): Roy Martin's
+  TravellerSystemGenerator (GPL-3.0), https://github.com/rtrm/TravellerSystemGenerator. Ideas only: no code or
+  tables from it are used, and every figure here is read off SSE4's own physics.
