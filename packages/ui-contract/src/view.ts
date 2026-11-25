@@ -171,6 +171,8 @@ export interface ViewContext {
   describe?(address: string): void;
   /** The catalogued Solar System (packs/base-sol, read once by the shell), for reference worlds; null where it cannot be read. */
   solSheet?(): Promise<import("./sol.ts").SolSheet | null>;
+  /** Range rings to draw (RK12): who holds the weapon (a body's address), its name, and the rings from `rangeRings`. Absent or empty: none. A pack's weapons feed it; the chart draws it under the HUD (layer `range`). */
+  rangeRings?(): readonly { holder: string; label: string; rings: readonly import("./range-rings.ts").RangeRing[] }[];
 }
 
 /** What a shell offers views about style documents. Presentation only: kept on the device, never in the universe. */
