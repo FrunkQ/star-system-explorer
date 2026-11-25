@@ -8,9 +8,14 @@
 export interface SeatBrand {
   name: string;
   logo?: string;
+  /** One colour for rules and stamps on the role's letterhead (Atlas design 7.1, AT6): "#rrggbb". */
+  accent?: string;
+  /** One line under the name on its letterhead ("Moving cargo since 2240"). */
+  motto?: string;
 }
 
 export const BRAND_NAME_MAX = 40;
+export const BRAND_MOTTO_MAX = 60;
 /** About 64 KB of image once decoded. */
 export const BRAND_LOGO_MAX = 90_000;
 const LOGO = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/;
@@ -24,6 +29,8 @@ export function checkBrand(b: SeatBrand): string[] {
     if (!LOGO.test(b.logo)) out.push("the logo must be a PNG, JPEG or WebP picture");
     else if (b.logo.length > BRAND_LOGO_MAX) out.push("the logo is too big: keep it under about 64 KB");
   }
+  if (b.accent !== undefined && !/^#[0-9a-f]{6}$/i.test(b.accent)) out.push("the accent must be a colour written #rrggbb");
+  if (b.motto !== undefined && b.motto.length > BRAND_MOTTO_MAX) out.push(`the motto is longer than ${BRAND_MOTTO_MAX} characters`);
   return out;
 }
 

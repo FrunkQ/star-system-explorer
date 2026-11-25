@@ -192,6 +192,6 @@ export function flatChart(why3d = "3D is not drawn here yet"): ViewControlsSpec 
 }
 
 /** The lens layers a diagram hides when HUD is off: the overlay of scale, survey, distances, orbit lines and names. */
-export const HUD_OVERLAY_LAYERS: readonly string[] = ["grid", "unsurveyed", "distances", "orbits", "labels"];
+export const HUD_OVERLAY_LAYERS: readonly string[] = ["grid", "unsurveyed", "distances", "orbits", "labels", "range"];
 /** Whether a lens layer is drawn under this HUD choice. */
 export const hudShows = (hud: boolean, layer: string): boolean => hud || !HUD_OVERLAY_LAYERS.includes(layer);

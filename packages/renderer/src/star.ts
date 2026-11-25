@@ -6,7 +6,7 @@
 // file turns them into pixels; where it has to choose something the kernel
 // does not publish (spot places, spot temperature, coronal temperature) the
 // choice is named here and in docs/fudges.md.
-import { constant, planck, thermalColour } from "../../ui-contract/src/index.ts";
+import { constant, planck, thermalColour, type ViewBand } from "../../ui-contract/src/index.ts";
 
 export const STAR_REFERENCES = [
   { text: "Eddington, A. S. (1926). The Internal Constitution of the Stars. Cambridge University Press (grey atmosphere limb darkening, I(mu)/I(1) = (2 + 3 mu) / 5).", url: "https://archive.org/details/internalconstitu0000eddi" },
@@ -248,7 +248,8 @@ export interface StarDraw {
   lon_deg: number;
   /** Tilt of the pole towards the viewer, degrees. */
   lat_deg: number;
-  light: "visible" | "xray";
+  /** The bands a star face is drawn in: two of the sheet's view bands (ui-contract `ViewBand`). */
+  light: Extract<ViewBand, "visible" | "xray">;
   /** Coronal scale height in stellar radii (X-ray view). */
   corona_h: number;
   /** Flares going on now: where and how bright (peak power over the star's X-ray power). */
