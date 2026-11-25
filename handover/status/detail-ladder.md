@@ -12,6 +12,7 @@ Files: `packages/views/body/src/finer-tiles.ts` (VP3 part 2), `packages/renderer
 | VP3 part 1: texture ladder and relief normals: cube faces 64 to 2048 px by screen size, baked on the GPU from the kernel's tiles at any levels, relief normals at true scale, LRU by budget; System True wears it | done | packages/VP3.md |
 | VP3 part 2: finer tiles (levels 1 and 2) for the chosen world, 4 tiles a request after a 1.2 s settle, stopping when not wanted, kept for the page in `views/body/src/finer-tiles.ts`; the chart room agreed the edit in `SystemChart.svelte`'s True surface reader | done | packages/VP3.md |
 | VP3 part 2b: clouds as their own shell over the baked ground, so worlds with air keep their relief in True (with the air thread, true-air.ts) | next | |
+| VP3 part 4: the deep patch under a close camera (renderer's close-up package hands `GroundView {body, toward, m_per_px}` from System3D's `onground`): level from metres a pixel (`patchLevel`), the tiles round the point over cube edges (`tilesNear`, `patchFor`), drawn over the bake, ground roughness from the ladder below the fact floor. Planner done (on branch); reading and drawing wait on close-up.ts | in progress | packages/VP3.md |
 | VP3 part 3: the Body screen and the body card's globe read `finerTiles` through the shared surface cache (after PR 428); the detail ladder's ground roughness below the tiles on the globe | next | |
 
 No kernel change and no golden change.

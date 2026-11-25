@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { composeFaces, directionFace, faceDirection, faceSize, faceWords, levelFor, reliefNormal, sampleFaces, texelAngle, tilesFacing, TILE_SAMPLES, withFiner } from "../src/texture-ladder.ts";
+import { composeFaces, directionFace, faceDirection, faceSize, faceWords, levelFor, reliefNormal, sampleFaces, texelAngle, tilesFacing, TILE_SAMPLES, withFiner, patchLevel, tilesNear, patchFor, PATCH_TILES } from "../src/texture-ladder.ts";
 import { faceOf, type SurfaceTile } from "../../ui-contract/src/index.ts";
 
 /** A tile filled from a height function of direction (metres), sea below `sea`. */
@@ -115,4 +115,23 @@ test("finer tiles laid over a kept surface: recomposed once, never doubled; a pa
   assert.equal(withFiner(t, fine), t);
   const painted = { width: 1 };
   assert.equal(withFiner(painted, fine), painted);
+});
+
+test("the deep patch: its level from metres a pixel, its tiles round the point, over a cube edge too", () => {
+  const R = 6.371e6;
+  // Level 0 spacing on Earth is about 313 km; at 100 m a pixel a sample every 200 m is level 11.
+  assert.equal(patchLevel(100, R), 11);
+  assert.equal(patchLevel(100, R, TILE_SAMPLES, 9), 9);
+  assert.equal(patchLevel(1e6, R), 0);
+  assert.equal(patchFor({ toward: [1, 0, 0], m_per_px: 5e4 }, R).keys.length, 0);
+  const mid = tilesNear([1, 0.0001, 0.0001], 8);
+  assert.equal(mid.length, PATCH_TILES);
+  assert.deepEqual(mid[0], { face: 0, level: 8, x: 128, y: 128 });
+  assert.ok(mid.every((k) => k.face === 0 && Math.abs(k.x - 128) <= 2 && Math.abs(k.y - 128) <= 2));
+  // On the edge between face 0 (+x) and face 2 (+y): both faces' tiles.
+  const edge = tilesNear([1, 1, 0.001], 6);
+  assert.ok(edge.some((k) => k.face === 0) && edge.some((k) => k.face === 2));
+  const p = patchFor({ toward: [0, 0, 1], m_per_px: 100 }, R);
+  assert.equal(p.level, 11);
+  assert.equal(p.keys[0]!.face, 4);
 });

@@ -261,3 +261,76 @@ export function faceWords(c: Composite, radius_m: number): string {
   if (!Number.isFinite(best)) return "";
   return `Ground read to ${say(best, "length").text}.`;
 }
+
+// ------------------------------------------------------------------ the deep patch under a close camera (VP3 part 4)
+
+/** At most this many deep tiles round the point under the camera (3 × 3: about 2 s of kernel time). */
+export const PATCH_TILES = 9;
+/** A sample to every this many screen pixels at the point under the camera (bilinear between them). */
+export const PATCH_PX_PER_SAMPLE = 2;
+
+/** What the camera looks down on (the renderer's close-up GroundView): the body-frame direction and metres a pixel. */
+export interface GroundAsk {
+  toward: readonly number[];
+  m_per_px: number;
+}
+
+/**
+ * The level the ground under the camera needs: the coarsest whose sample spacing is at or below a sample every
+ * PATCH_PX_PER_SAMPLE pixels, from level 0's spacing (a quarter of the way round over `samples`), never past
+ * `floor_level` (the kernel's fact floor: below it the detail ladder draws, not the tiles). 0 when the globe's own
+ * faces are already fine enough.
+ */
+export function patchLevel(m_per_px: number, radius_m: number, samples = TILE_SAMPLES, floor_level = 30): number {
+  if (!(m_per_px > 0) || !(radius_m > 0)) return 0;
+  const spacing0 = (radius_m * (Math.PI / 2)) / samples;
+  const want = m_per_px * PATCH_PX_PER_SAMPLE;
+  let l = 0;
+  while (l < floor_level && spacing0 / 2 ** l > want) l++;
+  return l;
+}
+
+/**
+ * The tiles at `level` nearest a direction, nearest first: found by looking round the point (so a patch that runs
+ * over a cube edge takes the neighbour face's tiles), never by walking a whole level.
+ */
+export function tilesNear(toward: readonly number[], level: number, max = PATCH_TILES): TileKey[] {
+  const l = Math.hypot(toward[0]!, toward[1]!, toward[2]!) || 1;
+  const t: V3 = [toward[0]! / l, toward[1]! / l, toward[2]! / l];
+  // A frame on the sphere at t, and one tile's angular span at this level.
+  const a: V3 = Math.abs(t[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+  const e = norm([a[1] * t[2] - a[2] * t[1], a[2] * t[0] - a[0] * t[2], a[0] * t[1] - a[1] * t[0]]);
+  const nn: V3 = [t[1] * e[2] - t[2] * e[1], t[2] * e[0] - t[0] * e[2], t[0] * e[1] - t[1] * e[0]];
+  const span = Math.PI / 2 / (1 << level);
+  const found = new Map<string, { k: TileKey; d: number }>();
+  const N = 6;
+  for (let j = -N; j <= N; j++) {
+    for (let i = -N; i <= N; i++) {
+      const s = ((1.6 * span) / N);
+      const d = norm([t[0] + i * s * e[0] + j * s * nn[0], t[1] + i * s * e[1] + j * s * nn[1], t[2] + i * s * e[2] + j * s * nn[2]]);
+      const f = directionFace(d);
+      const n = 1 << level;
+      const x = Math.min(n - 1, Math.max(0, Math.floor(((f.u + 1) / 2) * n)));
+      const y = Math.min(n - 1, Math.max(0, Math.floor(((f.v + 1) / 2) * n)));
+      const id = `${f.face}/${x}/${y}`;
+      if (found.has(id)) continue;
+      const c = faceDirection(f.face, -1 + (2 * (x + 0.5)) / n, -1 + (2 * (y + 0.5)) / n);
+      found.set(id, { k: { face: f.face, level, x, y }, d: c[0] * t[0] + c[1] * t[1] + c[2] * t[2] });
+    }
+  }
+  return [...found.values()]
+    .sort((p, q) => q.d - p.d || p.k.face - q.k.face || p.k.y - q.k.y || p.k.x - q.k.x)
+    .slice(0, Math.max(0, max))
+    .map((o) => o.k);
+}
+
+/** The deep patch to read for what the camera looks down on: its level and tiles, or none when level 2 will do. */
+export function patchFor(g: GroundAsk, radius_m: number, samples = TILE_SAMPLES, floor_level = 30): { level: number; keys: TileKey[] } {
+  const level = patchLevel(g.m_per_px, radius_m, samples, floor_level);
+  return level <= 2 ? { level, keys: [] } : { level, keys: tilesNear(g.toward, level) };
+}
+
+function norm(v: V3): V3 {
+  const l = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / l, v[1] / l, v[2] / l];
+}
