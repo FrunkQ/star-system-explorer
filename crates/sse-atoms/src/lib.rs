@@ -31,6 +31,7 @@ pub mod star;
 #[cfg(test)]
 #[path = "test/mod.rs"]
 mod was;
+pub mod ice_ground;
 pub mod weathering;
 
 use sse_core::{Dimension, QuantityKind};
@@ -438,6 +439,16 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("surface.weathering_factor_650", "weathered over fresh reflectance of the same soil at 650 nm (red)"),
     ("surface.weathering_factor_550", "weathered over fresh reflectance of the same soil at 550 nm (green)"),
     ("surface.weathering_factor_450", "weathered over fresh reflectance of the same soil at 450 nm (blue)"),
+    ("body.ice_share", "share of a world's mass that is ice"),
+    ("material.rock_density", "density of rock at low pressure"),
+    ("material.ice_density", "density of ice at low pressure"),
+    ("material.vapour_pressure", "pressure of a substance's own vapour over its solid or liquid at a temperature"),
+    ("material.molar_mass", "mass of one mole of a substance"),
+    ("orbit.star_distance", "distance from the star (a moon's is its planet's)"),
+    ("surface.ice_lost", "depth of open ice an airless world loses over its age"),
+    ("material.reflectance", "share of light a material's ground sends back, against a white Lambertian surface"),
+    ("surface.lag_share", "share of icy ground under a dark lag of dust and rock"),
+    ("surface.ground_reflectance", "share of light the ground sends back"),
     ("body.moment_of_inertia_factor", "moment of inertia over mass times radius squared: 0.4 for a uniform ball, less as mass gathers in the middle"),
     ("interior.dynamo_onset", "how far a dynamo runs, 0 to 1, from its magnetic Reynolds number"),
     ("interior.dynamo_rossby", "spin period over a dynamo's stirring time"),

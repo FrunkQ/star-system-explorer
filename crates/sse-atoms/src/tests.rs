@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 150,
+        n, 153,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -1514,4 +1514,49 @@ fn weathering_blocks_match_their_sums() {
     assert_eq!(w::factors(0.0, w::MATURE_OVER_FRESH), [1.0, 1.0, 1.0]);
     let f = w::factors(1.0, w::MATURE_OVER_FRESH);
     assert!(f[0] > f[1] && f[1] > f[2]);
+}
+
+#[test]
+fn ice_ground_blocks_match_their_sums() {
+    use crate::ice_ground as ig;
+    use sse_core::sheet::{density_solid, mixture_density, molar_mass};
+    let (rr, ri) = (mixture_density::SURFACE_ROCK, mixture_density::SURFACE_ICE);
+    for rho in [3013.0, 1936.0, 3344.0, 5514.0, 800.0] {
+        let got = run("sse.surface.ice_share_from_density", &[rho, rr, ri])[0];
+        let want = ig::ice_share(rho, rr, ri);
+        assert!((got - want).abs() < 1e-12, "{rho}: {got} against {want}");
+    }
+    // Europa is a little ice, Ganymede about a third, Earth none.
+    assert!((ig::ice_share(3013.0, rr, ri) - 0.058).abs() < 0.002);
+    assert!(ig::ice_share(5514.0, rr, ri) == 0.0);
+    let mw = molar_mass::H2O;
+    for (p, t, g, ve, d) in [
+        (76.0, 250.0, 1.62, 2380.0, 1.0),
+        (2.0e-6, 130.0, 1.24, 2440.0, 5.2),
+        (0.0, 100.0, 1.31, 2025.0, 5.2),
+    ] {
+        let got = run(
+            "sse.surface.open_ice_loss",
+            &[p, t, mw, g, ve, d * sse_core::sheet::AU, 1.4e17, ri],
+        )[0];
+        let want = ig::open_loss_m(p, t, mw, g, ve, d, 1.4e17, ri, ig::PHOTO_RATE_1AU);
+        assert!(
+            (got - want).abs() <= 1e-9 * want.abs().max(1e-30),
+            "{p} {t}: {got} against {want}"
+        );
+    }
+    // The warm Moon loses kilometres; cold Callisto a few hundred metres at most.
+    assert!(ig::open_loss_m(76.0, 250.0, mw, 1.62, 2380.0, 1.0, 1.4e17, ri, ig::PHOTO_RATE_1AU) > 1e6);
+    assert!(ig::open_loss_m(2.0e-6, 130.0, mw, 1.24, 2440.0, 5.2, 1.4e17, ri, ig::PHOTO_RATE_1AU) < 1e3);
+    let _ = density_solid::H2O;
+    for t in [1.4e17, 6.3e16, 1.9e15, 0.0] {
+        let got = run("sse.surface.ice_dust_lag", &[t, 0.95, 0.0572]);
+        let d = ig::lag_share(t, ig::LAG_TAU_S);
+        assert!((got[0] - d).abs() < 1e-12, "{t}: {got:?}");
+        let r = ig::lagged_reflectance(0.95, 0.0572, d);
+        assert!((got[1] - r).abs() < 1e-12, "{t}: {got:?}");
+    }
+    // Callisto's old ground is dark, Europa's young ground bright.
+    assert!(ig::lagged_reflectance(0.95, 0.0572, ig::lag_share(1.4e17, ig::LAG_TAU_S)) < 0.25);
+    assert!(ig::lagged_reflectance(0.95, 0.0572, ig::lag_share(1.9e15, ig::LAG_TAU_S)) > 0.9);
 }

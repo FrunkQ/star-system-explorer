@@ -61,8 +61,13 @@ fn open_sol_with(
                 format!("{SOL}/body:{}", n - 1)
             }
             Some(h) => {
+                // Each moon its own slot under its host.
                 let ha = &addr.iter().find(|(i, _)| i == h).unwrap().1;
-                format!("{ha}/body:0")
+                let k = addr
+                    .iter()
+                    .filter(|(_, a)| a.rsplit_once('/').is_some_and(|(p, _)| p == ha))
+                    .count();
+                format!("{ha}/body:{k}")
             }
         };
         edits.push(serde_json::json!({"address":a,"field":"name","value":b["name"]}));
@@ -1258,4 +1263,27 @@ fn saturns_top_deck_is_ammonia_from_its_one_bar_temperature() {
         serde_json::json!({"op":"weather","want":"field","system":SOL,"body":u["address"]}),
     );
     assert!(w.to_string().contains("methane ice"), "{w:.600}");
+}
+
+#[test]
+#[ignore]
+fn zz_probe_ground() {
+    let mut k = open_sol(&[]);
+    let r = send(&mut k, serde_json::json!({"op":"resolved_system","system":SOL}));
+    let tiles: Vec<serde_json::Value> = (0..6)
+        .map(|f| serde_json::json!({"face":f,"level":0,"x":0,"y":0}))
+        .collect();
+    for name in ["Europa","Ganymede","Callisto","Enceladus"] {
+        let Some(a) = r["facts"].as_object().unwrap().iter().find(|(_, f)| f["name"] == name).map(|(a, _)| a.clone()) else { println!("{name}: none"); continue };
+        let s = send(&mut k, serde_json::json!({"op":"survey_surface","system":SOL,"body":a,"limit":0,"tiles":tiles}));
+        let sv = &s["survey"];
+        let mut mats = std::collections::BTreeMap::<u64,usize>::new();
+        let mut al = 0.0; let mut n = 0.0;
+        for t in sv["tiles"].as_array().unwrap() {
+            for m in t["material"].as_array().unwrap() { *mats.entry(m.as_u64().unwrap()).or_default() += 1; }
+            for x in t["albedo"].as_array().unwrap() { al += x.as_f64().unwrap(); n += 1.0; }
+        }
+        let ages: Vec<u64> = sv["tiles"][0]["age"].as_array().unwrap().iter().step_by(997).map(|x| x.as_u64().unwrap()).collect();
+        println!("{name}: mats {:?} albedo {:.0} regime {} timeline {} ages {:?}", mats, al/n, sv["envelope"]["regime_now"], sv["envelope"]["timeline"], &ages[..8.min(ages.len())]);
+    }
 }
