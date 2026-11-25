@@ -6,9 +6,11 @@
 //
 // Three looks: "true" (the light as it is, tone-mapped), "3d" (the same ground as a diagram: shaded relief in the
 // chart's colours with contour lines), "wireframe" (the mesh's edges on the chart's ground).
-import { ACESFilmicToneMapping, AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Points, Scene, SphereGeometry, SRGBColorSpace, Vector3, Vector4 } from "three";
+import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Points, Scene, SphereGeometry, SRGBColorSpace, Vector3, Vector4 } from "three";
+import { startFinish, type Finish } from "./finish.ts";
 import { MeshBasicNodeMaterial, PointsNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
 import { fresnelNode } from "./sea-node.ts";
+import { createLander, type LanderPose } from "./surface-lander.ts";
 import { frothToDraw, MAX_TRAINS, trainsToDraw, type SeaOptics, type TrainDraw } from "./sea.ts";
 import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, sin, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
 
@@ -109,6 +111,8 @@ export const FOAM_FILL = 0.35;
 export interface SurfaceGpu {
   readonly backend: "webgpu" | "webgl2";
   setMeshes(meshes: SurfaceMesh[]): void;
+  /** The lander standing on the ground (LR6, surface-lander.ts); null: none. */
+  setLander(l: LanderPose | null): void;
   draw(f: SurfaceFrame): void;
   dispose(): void;
 }
@@ -122,6 +126,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     return null;
   }
   renderer.outputColorSpace = LinearSRGBColorSpace;
+  let finish: Finish | null = null;
   const backend = (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? "webgpu" : "webgl2";
   const scene = new Scene();
   // A logarithmic depth buffer holds a pebble at 5 cm and the far ring 300 km off in one frame.
@@ -358,6 +363,20 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   };
   const allMats = () => [skyMat, ...[...layers.values()].flatMap((e) => [e.true, e.chart, e.wire])];
 
+  // The lander on the ground (LR6): lit as the ground is, by the sun through the air and by the sky; its lamps glow.
+  const lander = createLander({
+    lit: (alb) =>
+      Fn(() => {
+        const n = normalize(normalWorld);
+        const sunLight = uSunRgb.mul(sunT()).mul(max(dot(n, uSun), float(0)));
+        const skyLight = uSunRgb.mul(max(uSun.z, float(0))).mul(float(1).sub(sunT())).mul(0.5).mul(n.z.mul(0.5).add(0.5));
+        return vec4(alb.mul(sunLight.add(skyLight)).div(Math.PI).mul(uExp), 1);
+      })(),
+    glow: (radiance) => vec4(radiance.mul(uExp), 1),
+    ink: vec4(vec3(uInk), 1),
+  });
+  scene.add(lander.group);
+
   const meshes = new Map<string, Mesh>();
   let order: SurfaceMesh[] = [];
   const dropAll = () => {
@@ -393,6 +412,9 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         meshes.set(s.key, m);
         scene.add(m);
       }
+    },
+    setLander(l) {
+      lander.set(l);
     },
     draw(f) {
       renderer.setSize(f.width, f.height, false);
@@ -436,7 +458,8 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       uInk.value.set(ink.r, ink.g, ink.b);
       if (f.look !== lastLook) {
         lastLook = f.look;
-        renderer.toneMapping = isTrue ? ACESFilmicToneMapping : NoToneMapping;
+        // True's tone mapping is the shared finish's (AgX, finish.ts); the diagram looks are drawn straight.
+        renderer.toneMapping = NoToneMapping;
         renderer.outputColorSpace = isTrue ? SRGBColorSpace : LinearSRGBColorSpace;
         for (const m of allMats()) m.needsUpdate = true;
       }
@@ -462,10 +485,16 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         m.material = isTrue ? ms.true : f.look === "wireframe" ? ms.wire : ms.chart;
 
       }
-      renderer.render(scene, camera);
+      lander.place(f.eye, f.look);
+      // True through the shared finish (VP1): half-float light, the eye's glare (the sun's disc and glint bloom by
+      // the CIE curve), AgX and dither; the exposure is already in the materials (`uExp`).
+      if (isTrue) (finish ??= startFinish(renderer)).render(scene, camera, { exposure: 1, pixel_deg: (pxAngle * 180) / Math.PI });
+      else renderer.render(scene, camera);
     },
     dispose() {
+      finish?.dispose();
       dropAll();
+      lander.dispose();
       dome.geometry.dispose();
       starGeom.dispose();
       starMat.dispose();

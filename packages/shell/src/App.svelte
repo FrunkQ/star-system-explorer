@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
@@ -50,7 +50,7 @@
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
   import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
-  import { actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
+  import { OBJECT_ACTIONS, actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
   import ObjectMenu from "./ObjectMenu.svelte";
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
@@ -91,6 +91,7 @@
   import { GAME_SCREENS } from "./screens.game.ts";
   import { RENDER_SCREENS } from "./screens.renderer.ts";
   import { RUN_SCREENS } from "./run/screens.run.ts";
+  import { ROLLCALL_SCREENS } from "./rollcall/screens.rollcall.svelte.ts";
   import Bookmarks from "./run/Bookmarks.svelte";
   import OnAir from "./run/OnAir.svelte";
   import { tablePort } from "./run/table-port.ts";
@@ -123,7 +124,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -156,7 +157,11 @@
   const here = (): Shown => {
     landingAwaited = ws.screen === "surface" && !lastLanding;
     const focus = ws.selection ? { focus: ws.selection } : {};
-    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding, ...focus } : { scope: scene.system, title: scene.title, ...focus };
+    if (ws.screen === "surface" && lastLanding) return { scope: scene.system, title: landingTitle(lastLanding, selName), screen: LAND_SCREEN, landing: lastLanding, ...focus };
+    // A world's own screen (not Land): the table is shown it in orbit, turning below (LR4).
+    const world = orbitWorld;
+    if (world) return { scope: scene.system, title: orbitTitle(world.label, ws.party, world.address), screen: ORBIT_SCREEN, focus: world.address };
+    return { scope: scene.system, title: scene.title, ...focus };
   };
   // Driving a read-only screen (PB3b): as the GM moves, the screen follows. Never while on the Switchboard itself.
   $effect(() => {
@@ -931,10 +936,25 @@
   let notes = $state<Partial<Record<PlaceScale, PlaceNote>>>({});
   const UPPER: readonly PlaceScale[] = ["web", "cluster", "galaxy"];
   const noteId = (scale: RailScale) => (UPPER.includes(scale as PlaceScale) ? notes[scale as PlaceScale]?.id : undefined);
+  // On the Land screen the place carries the landing being chosen (LR5b): its site, quick hour and lander, so the
+  // address bar, a bookmark or a kept beat brings the whole landing back. Kept as text so a new pose (a few times a
+  // second) never stirs the place; only a new site, hour or lander does.
+  // A world's own screen (LR4): the planet or moon the table would be shown in orbit, and whether it has been sent.
+  const orbitWorld = $derived(railScale === "world" && ws.screen !== "surface" ? scene.subjects.find((x) => x.address === ws.selection && (x.kind === "planet" || x.kind === "moon")) : undefined);
+  const orbitUnsent = $derived.by(() => {
+    const sh = share?.state.shown;
+    return !!orbitWorld && !!sh && "scope" in sh && sh.scope === scene.system && !(sh.screen === ORBIT_SCREEN && sh.focus === orbitWorld.address);
+  });
+  const landSite = $derived.by(() => {
+    if (railScale !== "world" || ws.screen !== "surface" || !lastLanding) return "";
+    const l = lastLanding as { body?: string };
+    const site = l.body === ws.selection ? landingLinkSite(lastLanding) : null;
+    return site ? JSON.stringify(site) : "";
+  });
   const place = $derived<Place | null>(
     railScale === "workshop"
       ? null
-      : { scale: railScale, system: viewing?.system ?? "", ...(railScale === "world" && ws.selection ? { world: ws.selection } : {}), ...(noteId(railScale) ? { id: noteId(railScale) } : {}), ...(ws.screen !== firstScreen(railScale) ? { screen: ws.screen } : {}) },
+      : { scale: railScale, system: viewing?.system ?? "", ...(railScale === "world" && ws.selection ? { world: ws.selection } : {}), ...(noteId(railScale) ? { id: noteId(railScale) } : {}), ...(ws.screen !== firstScreen(railScale) ? { screen: ws.screen } : {}), ...(landSite ? { site: JSON.parse(landSite) as Place["site"] } : {}) },
   );
   // A place to open a scale's view on (a link, a step, a child picked in Below), passed as its `place` param; a new one
   // mounts the view afresh. Without one, a scale's view opens on the place it last named.
@@ -1012,7 +1032,7 @@
     }
     if (p.screen && SCREENS[p.screen] && scalesOf(SCREENS[p.screen]!).includes(p.scale)) ws.screen = p.screen;
     // A landing site in the link (Voyages' "Land here"): the Land screen picks it up once it has read the world.
-    if (p.site && p.world) ws.landing_site = { body: p.world, lat_deg: p.site.lat_deg, lon_deg: p.site.lon_deg };
+    if (p.site && p.world) ws.landing_site = { body: p.world, ...p.site };
   }
   /** Up one scale, from above the system (Esc); at a world, up to its system. */
   function upAStep() {
@@ -1023,7 +1043,8 @@
   // The address bar's Back and Forward, and a pasted link, move through places.
   function fromHash() {
     const p = parsePlaceHash(location.hash);
-    if (p && session && !(place && samePlace(place, p) && (!p.screen || p.screen === ws.screen))) goPlace(p);
+    // A link with a landing site always goes (a bookmarked landing fired while the Land screen is already open).
+    if (p && session && !(place && samePlace(place, p) && (!p.screen || p.screen === ws.screen) && !p.site)) goPlace(p);
   }
   // A chart can send the GM to another scale (the galaxies nearby's "Chart this galaxy"): a bubbling "sse:explore" event
   // naming the section. Inside the Explore screen its own tabs answer it; on the place line it is a scale.
@@ -1398,14 +1419,33 @@
   let placing = $state(false);
   // Add here (V3 gap 2): one world or moon by hand, round the selected star or planet (else the primary).
   let addDialog: HTMLDialogElement | undefined = $state();
-  let addFor = $state<{ address: string; label: string; kind: string; mass_sun: number | null } | null>(null);
+  let addFor = $state<{
+    address: string;
+    label: string;
+    kind: string;
+    mass_sun: number | null;
+    /** A planet's own figures and where it goes round its star, for the moon recipes. */
+    planet?: { mass_earth: number; radius_earth: number; a_au: number | null; star_mass_sun: number | null };
+  } | null>(null);
   const addOrbits = $derived(addFor ? scene.subjects.filter((x) => (addFor!.kind === "star" ? x.kind === "planet" : x.parent === addFor!.address) && x.orbit).map((x) => x.orbit!.a_au) : []);
   function openAdd() {
     const sel = scene.subjects.find((x) => x.address === ws.selection);
     const h = sel && (sel.kind === "star" || sel.kind === "planet") ? sel : primaryOf(scene);
     if (!h) return void (clipNote = "There is no star here to add round.");
     const m = h.facts.find((f) => f.field === "mass_sun")?.value;
-    addFor = { address: h.address, label: h.label, kind: h.kind, mass_sun: typeof m === "number" ? m : null };
+    const fact = (x: typeof h, field: string) => {
+      const v = x.facts.find((f) => f.field === field)?.value;
+      return typeof v === "number" ? v : null;
+    };
+    const star = scene.subjects.find((x) => x.address === h.parent && x.kind === "star") ?? primaryOf(scene);
+    const [me, re] = [fact(h, "mass_earth"), fact(h, "radius_earth")];
+    addFor = {
+      address: h.address,
+      label: h.label,
+      kind: h.kind,
+      mass_sun: typeof m === "number" ? m : null,
+      planet: h.kind === "planet" && me !== null && re !== null ? { mass_earth: me, radius_earth: re, a_au: h.orbit?.a_au ?? null, star_mass_sun: star ? fact(star, "mass_sun") : null } : undefined,
+    };
     addDialog?.showModal();
   }
   async function addClip(clip: Clip, words: string): Promise<string | null> {
@@ -1469,8 +1509,10 @@
       objMenu = { target: { address: sub.address, kind: sub.kind, label: sub.label }, at: { x: ask.x, y: ask.y }, from, kicker: `${sub.kind.replace(/_/g, " ")}${host ? ` · orbits ${host.label}` : ""}` };
     }),
   );
+  // An action whose screen is not in this build is left out (the Atlas arrives with its own screen).
+  const menuActions = OBJECT_ACTIONS.filter((a) => a.id !== "atlas" || "atlas" in SCREENS);
   const objMenuItems = $derived(
-    objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }) : null,
+    objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }, menuActions) : null,
   );
   // More's edit group says what the object menu says: the same words and keys, from the one list.
   const moreWords = (id: string) => actionById(id)!.label({ address: ws.selection ?? "", kind: "", label: selName ?? "" });
@@ -1484,6 +1526,7 @@
     if (id === "add") return openAdd();
     if (id === "cut") return cutBody();
     if (id === "voyage") return go("voyages");
+    if (id === "atlas") return go("atlas");
     if (id === "land") return (toWorld(address), go("surface"));
     if (id === "link") {
       const url = `${location.origin}${location.pathname}${location.search}${placeHash({ scale: "world", system: viewing?.system ?? "", world: address })}`;
@@ -1756,6 +1799,7 @@
           title={scene.title}
           subjects={scene.subjects}
           landingUnsent={ws.screen === "surface" && !!lastLanding}
+          {orbitUnsent}
           focus={ws.selection ?? undefined}
           {here}
           onswitchboard={() => go("switchboard")}

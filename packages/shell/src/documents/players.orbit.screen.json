@@ -1,0 +1,16 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.screen.players.orbit",
+  "label": "In orbit",
+  "description": "The world the party's ship is circling, turning below, drawn on this screen's own kernel, with what the table knows of it.",
+  "audience": "players",
+  "layout": "grid",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "plain",
+  "items": [
+    { "view": "sse.view.body", "area": "a", "params": { "tier": "auto", "spin": true } },
+    { "view": "sse.view.card", "area": "b", "params": { "fields": ["kind", "size_class", "mass_kg", "surface.temp_mean_k"] } },
+    { "view": "sse.view.text", "area": "e" }
+  ]
+}

@@ -51,6 +51,15 @@ For the renderer's close-up package (True down to a grazing orbit). The renderer
   - The material mixes in the patch only where its weight is above zero. Off the patch's side of the globe its read is NaN, and NaN times zero is still NaN: the first build blacked out every True world. `ladder-gpu.e2e.mjs` now draws the lit baked globe with no patch and fails on any black or NaN pixel.
 - **Next:** SystemChart reads `groundView` (when the renderer's close-up lands), calls `readDeep` once the camera has settled, and sets `patch` on the world's True face. After that comes the detail ladder's ground roughness below the fact floor.
 
+## Part 5: bare ground in its measured colour (Alex 25 Nov, "the moon is very brown")
+
+True's ground was a typed palette (packs/base-surface `colours`, ui-contract `sampleColour`): the Moon's "sediment" and "regolith" were beige, and nothing weathered airless soil. Now:
+- **Data.** The data sheet holds laboratory spectra of Apollo soils (MP35, PR 512: mature highland 62231, mature, submature and immature mare 10084, 71501, 12030). `renderer/src/ground-rows.json` names which rows each kernel material reads (a fudge row until base-surface names them in the golden lane).
+- **Weathering.** The kernel's space weathering (proven core SW1) gives each bare-ground sample a `maturity`, 0 fresh to 255 mature, only on worlds where space reaches the ground (no air). Mature soil is darker and redder (nanophase iron, Hapke 2001).
+- **Drawing.** `ground-optics.ts` samples each row at 650, 550 and 450 nm, blends fresh to mature in log space by the sample's maturity, and lays the result on the tiles as `ground_rgb` (sRGB). ui-contract `sampleColour` uses it for bare ground, so True, the Body globe, the card and finer and deep tiles all agree. Applied in `readTrueFace`, `views/body/src/surface.ts` and `finer-tiles.ts`.
+- **Dormant until SW1 lands**: a tile with no `maturity` keeps the palette, so Earth and every world with air are unchanged.
+- **Look.** With every sample mature, the sample Sol's Moon goes from beige to a dark neutral grey (mature mare soil about 6 % reflective, highland about 13 %). Screens: `VP-screens/VP3-part5-moon-palette-vs-measured.png`.
+
 ## Code
 
 - `packages/renderer/src/texture-ladder.ts`: `faceSize`, `levelFor`, `tilesFacing`, `faceDirection`, `directionFace`, `composeFaces` (with `radius_m` from the tiles' spacing, and the tiles it was made from), `withFiner`, `sampleFaces`, `reliefNormal`, `texelAngle`, `cubeBytes`, `BAKE_BUDGET`, `faceWords`.

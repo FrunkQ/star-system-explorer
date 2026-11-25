@@ -1118,3 +1118,45 @@ fn every_light_line_names_matter_on_the_sheet() {
     }
     assert!(seen > 10, "base-light should name its matter on every line");
 }
+
+#[test]
+fn fresh_moon_dust_is_brighter_than_mature() {
+    // Space weathering darkens lunar soil: immature 12030 against mature 10084
+    // (LSCC, Taylor et al. 2001); every row says its maturity.
+    let r = Reference::base();
+    let refl = |id: &str| {
+        r.row("mixtures", id)
+            .and_then(|x| x.get("optical"))
+            .and_then(|o| o.get("reflectance"))
+            .unwrap()
+            .clone()
+    };
+    let at = |t: &J, nm: f64| {
+        let lam = t.get("lambda_nm").unwrap().as_array().unwrap();
+        let i = lam
+            .iter()
+            .position(|x| (x.as_f64().unwrap() - nm).abs() < 1e-9)
+            .unwrap();
+        t.get("r").unwrap().as_array().unwrap()[i].as_f64().unwrap()
+    };
+    let (fresh, old) = (
+        refl("lunar-soil-immature-mare"),
+        refl("lunar-soil-mature-mare"),
+    );
+    assert!(at(&fresh, 550.0) > 2.0 * at(&old, 550.0));
+    assert!(
+        at(&old, 700.0) > at(&old, 450.0),
+        "mature soil is red-sloped"
+    );
+    for id in [
+        "lunar-soil-mature-highland",
+        "lunar-soil-mature-mare",
+        "lunar-soil-submature-mare",
+        "lunar-soil-immature-mare",
+    ] {
+        assert!(
+            refl(id).get("maturity").and_then(|m| m.as_str()).is_some(),
+            "{id}"
+        );
+    }
+}
