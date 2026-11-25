@@ -6,9 +6,18 @@
   redirect. Look and sensors come with looks (PB10) and bands on players' screens; the card says so.
 -->
 <script lang="ts">
-  import { SHIPPED_LAYOUTS, EVERYONE, LIVE_OVERRIDES, checkBrand, embedOrigins, redirect, type Board, type SeatBrand, type SeatPort, type TablePort } from "../../../ui-contract/src/index.ts";
+  import { SHIPPED_LAYOUTS, SHIPPED_PALETTES, STARTER_KITS, resolveKit, type Palette, EVERYONE, LIVE_OVERRIDES, checkBrand, embedOrigins, redirect, type Board, type SeatBrand, type SeatPort, type TablePort } from "../../../ui-contract/src/index.ts";
 
   let { table, seats, role, onclose }: { table: TablePort; seats: SeatPort; role: string | null; onclose: (made?: string) => void } = $props();
+  // The interface a role wears (AT14): a kit, and one of its palettes as swatches; the first is the kit's default.
+  function palettesOf(kit: string | undefined): Palette[] {
+    if (!kit) return [];
+    try {
+      return (resolveKit(kit).palettes ?? []).flatMap((p) => (typeof p === "string" ? SHIPPED_PALETTES.filter((x) => x.id === p) : [p]));
+    } catch {
+      return [];
+    }
+  }
 
   const LAYOUTS = SHIPPED_LAYOUTS;
 
@@ -164,7 +173,24 @@
           {#if seat.screens?.[0] && !LAYOUTS.some((l) => l.file === seat.screens?.[0])}<option value={seat.screens[0]}>{seat.screens[0]}</option>{/if}
         </select>
       </label>
-      <p class="row sub">Look and sensors: a role's look comes with looks on the board; its bands with sensors.</p>
+      <label
+        >Interface
+        <select value={seat.kit ?? ""} data-role-kit onchange={(e) => seats.update(seat.id, { kit: e.currentTarget.value || null })} title="How its screens look and move: the kit's layouts, look and controls">
+          <option value="">Plain (the chart room)</option>
+          {#each STARTER_KITS as k (k.id)}<option value={k.id}>{k.name}</option>{/each}
+          {#if seat.kit && !STARTER_KITS.some((k) => k.id === seat.kit)}<option value={seat.kit}>{seat.kit}</option>{/if}
+        </select>
+      </label>
+      {#if palettesOf(seat.kit).length}
+        {@const pals = palettesOf(seat.kit)}
+        <div class="row swatches" role="radiogroup" aria-label="Palette" data-role-palettes>
+          {#each pals as p, i (p.id)}
+            {@const on = (seat.palette ?? pals[0]!.id) === p.id}
+            <button type="button" class="swatch" role="radio" aria-checked={on} title={p.name} data-role-palette={p.id} onclick={() => seats.update(seat.id, { palette: i === 0 ? null : p.id })} style:background={p.tokens.ground} style:color={p.tokens.ink} style:border-color={on ? p.tokens.accent : p.tokens["ink-muted"]}><span style:background={p.tokens.accent}></span>{p.name}</button>
+          {/each}
+        </div>
+      {/if}
+      <p class="row sub">Sensors: a role's bands come with sensors.</p>
       {#if table.state.link}
         <p class="row links">
           <span class="k">Links</span>
@@ -360,5 +386,29 @@
   .problem {
     color: var(--sse-accent);
     margin: 8px 0 0;
+  }
+  .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .swatch {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    font: inherit;
+    font-size: 12px;
+    padding: 3px 8px;
+    border: 2px solid;
+    border-radius: var(--sse-radius);
+    cursor: pointer;
+  }
+  .swatch span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .swatch[aria-checked="true"] {
+    font-weight: 600;
   }
 </style>

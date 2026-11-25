@@ -97,6 +97,14 @@ try {
   await sp.goto(await sc.locator("[data-seat-link]").first().getAttribute("href"));
   await sp.waitForSelector("footer[data-link='live'][data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
   await sp.waitForFunction(() => /Sun/.test(document.body.textContent ?? ""), null, { timeout: 20000 });
+  // The interface it wears (AT14): a kit, then one of the kit's palettes; the kit's first is its default.
+  await sc.locator("[data-role-kit]").selectOption("sse.kit.hauler");
+  await sc.locator("[data-role-palettes] [data-role-palette]").first().waitFor();
+  assert.equal(await sc.locator('[data-role-palette][aria-checked="true"]').getAttribute("data-role-palette"), "phosphor-green");
+  await sc.locator('[data-role-palette="phosphor-amber"]').click();
+  await sc.locator('[data-role-palette="phosphor-amber"][aria-checked="true"]').waitFor();
+  await sc.locator("[data-role-kit]").selectOption("sse.kit.corporate");
+  assert.equal(await sc.locator('[data-role-palette][aria-checked="true"]').getAttribute("data-role-palette"), "glass-blue", "another kit starts at its own default");
   await shot(gm, "table-role-card");
   await gm.locator("[data-role-card-close]").click();
   await gm.locator("[data-hold='role:sensors']").click();
