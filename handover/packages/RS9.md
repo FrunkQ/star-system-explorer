@@ -83,3 +83,20 @@ death points back, no toll under the names given, and nobody in space as Challen
   "named_small_body", "remains_carried"), name, people, names_text, since_s, since_date, where { construct, body,
   lat_deg, lon_deg } or { mpc, elements {a_m, e, i_deg, node_deg, peri_deg, m0_deg, epoch_s, frame}, src },
   sources [2+] }. Real memorials only (Alex, 25 Nov: "stay restrained and respectful - one place we don't joke").
+
+## Part 3 (begun 25 Nov): memorials
+
+`scripts/spaceflight/memorials.py` writes `store-packs/sol-today/memorials.json` from
+`scripts/spaceflight/memorials_sources.json` (`--fetch` queries again: one Wikidata query for asteroids whose "named
+after" (P138) is a person in memory, with their Minor Planet Center number (P5736); then one JPL Horizons OBJ_DATA
+record per number). 21 bodies: 1772 Gagarin, 1789 Dobrovolsky, 1790 Volkov, 1791 Patsayev, 1836 Komarov, 2161
+Grissom, 3350 to 3356 for Challenger's seven, 8032 Michaeladams, 51823 to 51829 for Columbia's seven. Elements are
+the Horizons osculating set at its solution epoch, heliocentric ecliptic J2000; `since_s` is null until the MPC
+citations are read. Run it after build_crews.py (it reads the people's Wikidata ids from crews.json).
+
+Held for a second source: 23 lunar craters and Columbia's five hills on Mars (Wikidata gives coordinates; the IAU
+Gazetteer at planetarynames.wr.usgs.gov was unreachable from the build container), the Fallen Astronaut and its
+plaque at Hadley, Clyde Tombaugh's ashes on New Horizons, Eugene Shoemaker's on Lunar Prospector.
+
+The test `memorials_are_real_with_two_sources` checks two sources each, every person named is in memory, bound orbits
+between 1 and 3.5 au, and 3350 Scobee at 2.311 au.

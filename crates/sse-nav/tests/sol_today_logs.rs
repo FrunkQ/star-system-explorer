@@ -680,3 +680,51 @@ fn the_log_index_lists_every_log() {
         );
     }
 }
+
+#[test]
+fn memorials_are_real_with_two_sources() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today");
+    let read = |f: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(dir.join(f)).unwrap()).unwrap()
+    };
+    let (mem, crews) = (read("memorials.json"), read("crews.json"));
+    let dead: BTreeMap<&str, &serde_json::Value> = crews["people"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|p| p.get("death").is_some())
+        .map(|p| (p["id"].as_str().unwrap(), p))
+        .collect();
+    let list = mem["memorials"].as_array().unwrap();
+    assert!(list.len() >= 21, "{} memorials", list.len());
+    for m in list {
+        let id = m["id"].as_str().unwrap();
+        assert!(
+            m["sources"].as_array().unwrap().len() >= 2,
+            "{id}: two sources"
+        );
+        let people = m["people"].as_array().unwrap();
+        assert!(!people.is_empty(), "{id}: names someone");
+        for p in people {
+            assert!(
+                dead.contains_key(p.as_str().unwrap()),
+                "{id}: {p} is in memory"
+            );
+        }
+        assert_eq!(m["kind"], "named_small_body", "{id}");
+        let el = &m["where"]["elements"];
+        let (a_au, e) = (
+            el["a_m"].as_f64().unwrap() / 1.495_978_707e11,
+            el["e"].as_f64().unwrap(),
+        );
+        // Every one of these is a main-belt or near-Earth asteroid on a bound orbit.
+        assert!(
+            (1.0..3.5).contains(&a_au) && (0.0..1.0).contains(&e),
+            "{id}: a {a_au} au, e {e}"
+        );
+    }
+    let scobee = list.iter().find(|m| m["where"]["mpc"] == "3350").unwrap();
+    assert_eq!(scobee["name"], "3350 Scobee");
+    let a = scobee["where"]["elements"]["a_m"].as_f64().unwrap() / 1.495_978_707e11;
+    assert!((a - 2.311).abs() < 0.01, "3350 Scobee at {a} au");
+}
