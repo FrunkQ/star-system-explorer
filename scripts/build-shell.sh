@@ -28,6 +28,8 @@ cp packs/base-tech/pack.json packages/shell/public/packs/base-tech.json
 cp packs/base-manifest/pack.json packages/shell/public/packs/base-manifest.json
 # The holding cards a held screen shows (PB5), read by the share; not on the stack, so no state hash changes.
 cp packs/base-presentation/pack.json packages/shell/public/packs/base-presentation.json
+# The base postcard set (PC6): one recorded world per card, kept beside the pack.
+cp packs/base-presentation/postcards.json packages/shell/public/packs/base-postcards.json
 cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/public/packs/kestrel-player-data.json
 mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json
