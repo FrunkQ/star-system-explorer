@@ -15,6 +15,7 @@
     title,
     subjects,
     landingUnsent,
+    orbitUnsent = false,
     focus,
     here,
     onswitchboard,
@@ -31,6 +32,8 @@
     subjects: readonly SceneSubject[];
     /** A landing is in view that the table has not been sent. */
     landingUnsent: boolean;
+    /** A world's own screen is in view whose "In orbit" send the table has not been sent (LR4). */
+    orbitUnsent?: boolean;
     /** The thing selected in view: a send carries it (\`Shown.focus\`), so another one offers Send again. */
     focus?: string;
     /** What "Send this view" sends: the place in view. */
@@ -54,7 +57,7 @@
     <!-- On air (PB2): in the top bar on the Run desk, here on the others. The one Send of the live view stays here. -->
     {@const shown = share.state.shown}
     {#if chip}<OnAir {share} {onswitchboard} />{/if}
-    {#if "off" in shown || shown.scope !== system || (landingUnsent && !shown.landing) || focus !== shown.focus}<button type="button" class="linkbtn" data-send-view onclick={() => { const h = here(); noteSent(h, "everyone"); share.show(h); }} title="Show every screen {title}, as far as each knows it">Send this view</button>{/if}
+    {#if "off" in shown || shown.scope !== system || (landingUnsent && !shown.landing) || focus !== shown.focus || orbitUnsent}<button type="button" class="linkbtn" data-send-view onclick={() => { const h = here(); noteSent(h, "everyone"); share.show(h); }} title="Show every screen {title}, as far as each knows it">Send this view</button>{/if}
     <a class="quietlink" href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' link</a>
     <button type="button" class="linkbtn quiet" data-roles onclick={onswitchboard} title="Roles, their links and requests are on the Switchboard">{share.state.plan.seats.length > 1 ? `${share.state.plan.seats.length} roles` : "Roles"}</button>
     <ArrivalSlip {session} {party} {subjects} {now_yr} {onchange} />

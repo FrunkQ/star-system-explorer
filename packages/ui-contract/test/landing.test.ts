@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
 import { sceneFromResolved } from "../src/make.ts";
-import { landingSeaOf, landingShowOf, landmarkOrder, roundPose, suggestLander } from "../src/landing.ts";
+import { landingLinkSite, landingSeaOf, landingShowOf, landingTimeOf, landingTitle, landmarkOrder, landerHeightOf, lampRadiance, orbitTitle, groundGrant, ORBIT_SCREEN, roundPose, suggestLander } from "../src/landing.ts";
 import { nodeKernel } from "./node-kernel.ts";
 import { floorFromRefusal, levelFor, patchKeys, readPatch, groundHeightAt } from "../../renderer/src/index.ts";
 
@@ -125,4 +125,45 @@ test("the sea at a site from the weather report, with the tide now", () => {
   assert.equal(landingSeaOf(data, 6.21 * 3600)!.tide_m < 0, true, "half a lunar tide on: lower");
   assert.equal(landingSeaOf({ sea: null }, 0), null);
   assert.equal(landingSeaOf({}, 0), null);
+});
+
+test("the Land screen's own link and title carry the landing (LR5b)", () => {
+  const show = {
+    system: "s", body: "s/planet:4", label: "Mars", site: { lat_deg: 20.43012, lon_deg: -108.71, label: "Dribeque Planitia" },
+    lander: { ship: "traveller.far_trader" }, phase: "choose", flight_s: 24, hour_deg: 0,
+    world: { radius_m: 3.39e6, star_k: 5772, sun_radius: 0.004 },
+  };
+  assert.deepEqual(landingLinkSite(show), { lat_deg: 20.4301, lon_deg: -108.71, time: "midday", lander: "party" });
+  assert.equal(landingTitle(show, "Mars"), "Mars, landing at Dribeque Planitia, midday");
+  assert.equal(landingTimeOf(-82.5), "dawn");
+  assert.equal(landingTimeOf(180), "night");
+  assert.equal(landingTimeOf(40), null, "14:40 is no quick hour");
+  const capsule = { ...show, lander: "capsule", hour_deg: 40, site: { lat_deg: -3, lon_deg: 12, label: "" } };
+  assert.deepEqual(landingLinkSite(capsule), { lat_deg: -3, lon_deg: 12, lander: "capsule" });
+  assert.equal(landingTitle(capsule, "Mars"), "Mars, landing at 3° S, 12° E");
+  assert.equal(landingLinkSite({ nope: 1 }), null);
+});
+
+test("LR4: an orbit is named for the party's ship, and a seat reads only a known world's map", () => {
+  assert.equal(orbitTitle("Mars", { name: "Beowulf", at: "u:k/sys:sol/body:4" }, "u:k/sys:sol/body:4"), "Beowulf in orbit of Mars");
+  assert.equal(orbitTitle("Mars", { name: "Beowulf", at: "u:k/sys:sol/body:3" }, "u:k/sys:sol/body:4"), "In orbit of Mars");
+  const mars = "u:k/sys:sol/body:4";
+  const shown = { scope: "u:k/sys:sol", screen: ORBIT_SCREEN, focus: mars };
+  assert.deepEqual(groundGrant(shown, (a) => a === mars), { system: "u:k/sys:sol", body: mars });
+  assert.equal(groundGrant(shown, () => false), null, "a world the table does not know is not read");
+  assert.equal(groundGrant({ scope: "u:k/sys:sol", focus: mars }, () => true), null, "a plain send of a world grants nothing");
+  assert.equal(groundGrant(null, () => true), null);
+});
+
+test("LR6: a lander's height from its mass, and its lamps against the star's light", () => {
+  assert.ok(Math.abs(landerHeightOf(15000) - 6.69) < 0.05, "a 15 t lander stands about 7 m");
+  assert.ok(Math.abs(landerHeightOf(840000) - 25.6) < 0.1, "a far trader about 25 m");
+  assert.equal(landerHeightOf(0), 0);
+  assert.equal(landerHeightOf(10), 2, "never smaller than a person can stand by");
+  const au = 1.495978707e11;
+  const atEarth = lampRadiance(25, 1, au);
+  const atMars = lampRadiance(25, 1, 1.524 * au);
+  assert.ok(atEarth > 0.01 && atEarth < 0.5, `faint against sunlight at Earth: ${atEarth}`);
+  assert.ok(Math.abs(atMars / atEarth - 1.524 * 1.524) < 1e-9, "brighter against a fainter sun");
+  assert.equal(lampRadiance(25, 0, au), 0);
 });
