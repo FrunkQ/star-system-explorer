@@ -7,13 +7,20 @@ import { constant } from "./sheet.ts";
 import { say, type About, type Said, type SayOptions } from "./figures.ts";
 import type { Json } from "./json.ts";
 import type { SolSheet } from "./sol.ts";
+import type { Depth } from "./depth.ts";
 import { toSI } from "./sol.ts";
 
 export interface HandlePart {
   field: string;
   kind: string;
   what?: string;
-  scale: "log" | "linear" | "bar";
+  scale: "log" | "linear" | "bar" | "ring";
+  /** A strip's fixed ends in SI (a shape from round to 0.99, a lean from 0 to 180 degrees); absent, the ends follow the dots. */
+  range?: [number, number];
+  /** The reading figures are said in unless the campaign chose another ("fraction" for a shape, said as 0.0167). */
+  reading?: string;
+  /** How a ring reads its field: `true_anomaly_now` is the place round the orbit at the campaign's now. */
+  as?: "true_anomaly_now";
   /** The sheet constant the field is held in multiples of ("M_ocean_earth": surface water in Earth oceans). */
   per?: string;
   /** None at all is a value the strip offers (no air, no seas), at its left end. */
@@ -32,6 +39,43 @@ export interface Handle {
   moon_refs?: string[];
   desks: string[];
   waits?: string;
+  /** What the handle opens (design section 11F): its own strip first, then these. */
+  box?: HandleBox;
+}
+
+/** A labelled place on a strip or a ring, in SI. */
+export interface PartMark {
+  at: number;
+  says: string;
+}
+
+/** One more control in a handle's box: a strip or a ring on a kernel field. */
+export interface BoxPart {
+  id: string;
+  /** Shown from this depth up. */
+  depth: Depth;
+  names: { curious: string; science: string };
+  part: HandlePart;
+  marks?: PartMark[];
+  /** Real limits at the strip's end: passable by typing, never by dragging. */
+  walls?: PartMark[];
+  /** Where a ring's dot catches. */
+  catches?: PartMark[];
+}
+
+/** A chip: one press, one set_value, and it says what it set. */
+export interface BoxChip {
+  id: string;
+  depth: Depth;
+  does: "mirror" | "flip" | "lock" | "resonance";
+  field: string;
+  names: { curious: string; science: string };
+}
+
+export interface HandleBox {
+  parts: BoxPart[];
+  chips: BoxChip[];
+  results: string[];
 }
 
 export const HANDLES: readonly Handle[] = (sheet as unknown as { handles: Handle[] }).handles;
@@ -108,6 +152,10 @@ export function stripDomain(h: Handle, value: number | null, dots: readonly Stri
   const scale = h.part.scale === "linear" ? "linear" : "log";
   const vs = [...dots.map((d) => Math.abs(d.si)), ...(value !== null ? [Math.abs(value)] : [])].filter((x) => Number.isFinite(x) && (scale === "linear" || x > 0));
   const zero = !!h.part.zero;
+  if (h.part.range) {
+    const [lo, hi] = h.part.range;
+    return { scale, lo: Math.min(lo, ...vs), hi: Math.max(hi, ...vs), zero };
+  }
   if (!vs.length) return { scale, lo: scale === "log" ? 1 : 0, hi: scale === "log" ? 1e3 : 1, zero };
   const min = Math.min(...vs);
   const max = Math.max(...vs);
