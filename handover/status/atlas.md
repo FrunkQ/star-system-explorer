@@ -17,7 +17,7 @@ Atlas never reads a placeholder (a placeholder and an absent fact read the same)
 `ui-contract/src/figures.ts`; nothing in the Atlas formats a number itself. The SSE3 joke file is on Alex's PC only:
 it is in the public SSE3 repo FrunkQ/star-system-generator (`src/lib/catalogue/guideNotes.ts`); never recreate his jokes from memory. The Weyland-Yutani logo stays out unless Alex says otherwise.
 
-**On main:** AT1 to AT4 (with AT4b), AT6, AT7 (with AT7c), AT14 and PC7 merged in PR 481 on 25 Nov 2026 08:26 UTC. AT8 part 1 merged in PR 543 (25 Nov 09:22 UTC). Next here, in order: AT15, AT5 (waits on the kernel's `withheld`), AT8 part 2 (the grant's own source and day).
+**On main:** AT1 to AT4 (with AT4b), AT6, AT7 (with AT7c), AT14 and PC7 merged in PR 481 on 25 Nov 2026 08:26 UTC. AT8 part 1 merged in PR 543 (25 Nov 09:22 UTC). Next here, in order: AT15 part 2 (with the Run desk's wiring), AT5 (waits on the kernel's `withheld`), AT8 part 2 (the grant's own source and day).
 
 | Package | State | Log |
 |---|---|---|
@@ -31,7 +31,7 @@ it is in the public SSE3 repo FrunkQ/star-system-generator (`src/lib/catalogue/g
 | AT8 Why on the Atlas, "How we know" | part 1 done (25 Nov): figures open their Why (how we know, then the kernel chain on the GM seat); endnotes in the Survey atlas, Source lines in Company, none in the Guide; text, Markdown and HTML carry them. Next: the grant's own source and day when the kernel's grant carries them | packages/AT8.md |
 | AT10 the GM's copy: pencil and ink on the page and in print | done (25 Nov): what the table has not been told is in pencil (dotted, quieter) on screen and in print, read off the table's own scene; a place the table does not know pencilled whole; GM notes (the record's `gm-notes`) in their section; text and HTML carry both | packages/AT10.md |
 | AT14 `sse.kit/1`, its loader and checks, palettes with a contrast check, the four starters as documents | done for the document and checks; "Interface" on the role card and swatches are the Run desk thread's (AT13) | packages/AT14.md |
-| AT15 wearing a kit: the four starters on screen | not started; needs AT13 (parts declare controls) and AT15a | |
+| AT15 wearing a kit: the four starters on screen | part 1 done (25 Nov): control sets as kit data (`control_set`; hauler, corporate, deck, guide over plain), the one shared drawing `chart-grammar/KitControl.svelte`, the Atlas part wearing it from `ctx.control_set`, `kitScreen(kit, situation)` for the Run desk's players' screen (Seat.kit, Seat.palette agreed). Next, part 2: the four kits on players' screens, desktop and phone | packages/AT15.md |
 | PC7 (postcards track, owned here) the quote set: `by` and `source` on a margin line, 21 scientists' and astronauts' quotes in the base app, 51 others in `store-packs/space-quotes-fan` | done | packages/PC7.md |
 | AT9, AT13 (Run desk), AT11, AT16 (Orac), AT15a (look transitions thread) | other threads | |
 

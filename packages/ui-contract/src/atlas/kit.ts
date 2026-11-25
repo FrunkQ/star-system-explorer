@@ -6,9 +6,12 @@
 import { typedFigures } from "./loader.ts";
 import { sayNumber } from "../figures.ts";
 import { ARRANGEMENTS } from "../layouts.ts";
+import type { ScreenDoc } from "../screen.ts";
+import type { Json } from "../json.ts";
 import { checkLookDelivery, PAGE_TURN_MAX_MS, STARTER_DELIVERIES, TURN_MAX_MS, type LookDelivery } from "../delivery.ts";
 import type { PartControl } from "../part-controls.ts";
 import { VIEW_STYLES, type ViewStyle } from "../view-controls.ts";
+import { checkControlSet, STARTER_CONTROL_SETS, type ControlSet } from "./controlset.ts";
 import starters from "./kits/starters.json" with { type: "json" };
 
 export const KIT_SCHEMA = "sse.kit/1";
@@ -61,6 +64,8 @@ export interface KitDoc {
   delivery?: keyof typeof STARTER_DELIVERIES | LookDelivery;
   needs?: { tier: (typeof TIERS)[number]; falls_back_to?: string };
   layouts?: Partial<Record<Situation, KitLayout>>;
+  /** How every kind of control is drawn in this kit (AT15; 11A.4 rule 5): a set by id, or a set of the kit's own. */
+  control_set?: string | ControlSet;
   /** One-liners at the top and bottom of the role's screens (SSE3's guide tips), from these note sets by situation. */
   banners?: { at: "top" | "bottom" | "both"; sets: string[] };
 }
@@ -85,6 +90,8 @@ export interface KitStack {
   editions?: readonly string[];
   vocabs?: readonly string[];
   noteSets?: readonly string[];
+  /** Control sets from the pack stack, beside the starters'. */
+  controlSets?: readonly ControlSet[];
 }
 
 /** The shipped palettes: the starters' swatches (11A.3), each passing the contrast check (a test holds this). */
@@ -211,6 +218,12 @@ export function checkKit(doc: unknown, stack: KitStack = {}): string[] {
     const cap = turn?.kind === "page_turn" ? PAGE_TURN_MAX_MS : TURN_MAX_MS;
     for (const ms of [turn?.ms, turn?.short_ms]) if (typeof ms === "number" && ms > cap) out.push(`A Turn lasts at most ${sayNumber(cap / 1000, 2, { decimals: 1 })} s, so stepping a book never becomes a wait.`);
   }
+  if (d.control_set !== undefined) {
+    const sets = [...STARTER_CONTROL_SETS, ...(stack.controlSets ?? [])];
+    if (typeof d.control_set === "string") {
+      if (!sets.some((x) => x.id === d.control_set)) out.push(`The control set "${d.control_set}" is not loaded (there are ${sets.map((x) => x.id).join(", ")}).`);
+    } else out.push(...checkControlSet(d.control_set, sets));
+  }
   if (d.banners !== undefined) {
     if (!["top", "bottom", "both"].includes(d.banners?.at)) out.push(`The banners sit at "${String(d.banners?.at)}"; use top, bottom or both.`);
     if (!Array.isArray(d.banners?.sets) || !d.banners.sets.length) out.push("The banners name no note sets to draw their lines from.");
@@ -239,4 +252,51 @@ export function checkKit(doc: unknown, stack: KitStack = {}): string[] {
     }
   }
   return out;
+}
+
+/** The control set a kit draws its controls in: its own, else by id, else the plain set. */
+export function controlSetOf(kit: KitDoc | undefined, sets: readonly ControlSet[] = STARTER_CONTROL_SETS): ControlSet {
+  const c = kit?.control_set;
+  if (c && typeof c === "object") return c;
+  return sets.find((x) => x.id === c) ?? STARTER_CONTROL_SETS[0]!;
+}
+
+/** The symbology a kit's screens draw in when they name none: the players' diagrammatic one. */
+export const KIT_SYMBOLOGY = "sse.symbology.diagrammatic";
+
+/**
+ * A kit's screen for one situation, as an ordinary `sse.screen/1` document (11A.2: layouts are screen documents made
+ * of parts), for the players' screen to show when the role has no layout of its own chosen on the Switchboard. The kit
+ * is resolved first (its `extends` and each layout's `extends`). Null when the kit has no boxes for the situation (a
+ * holding card is a card, not a screen): the caller falls back to the Bridge.
+ */
+export function kitScreen(kit: KitDoc | string, situation: Situation, docs: readonly KitDoc[] = []): ScreenDoc | null {
+  let k: KitDoc;
+  try {
+    k = resolveKit(typeof kit === "string" ? kit : kit.id, typeof kit === "string" ? docs : [...docs.filter((d) => d.id !== kit.id), kit]);
+  } catch {
+    return null;
+  }
+  const l = k.layouts?.[situation];
+  if (!l?.items?.length) return null;
+  const arrangement = (l.arrangement && l.arrangement in ARRANGEMENTS ? l.arrangement : l.items.length === 1 ? "one" : "report") as keyof typeof ARRANGEMENTS;
+  const vocab = k.vocab === "physics" || k.vocab === "story" ? k.vocab : "plain";
+  return {
+    schema: "sse.screen/1",
+    id: `${k.id}.${situation}`,
+    label: `${k.name}: ${situation}`,
+    description: k.description,
+    audience: "players",
+    layout: ARRANGEMENTS[arrangement].layout,
+    theme: k.look ?? "chart",
+    symbology: KIT_SYMBOLOGY,
+    vocab,
+    items: l.items.map((it) => ({
+      view: it.view,
+      area: it.area,
+      ...(it.style ? { style: it.style } : {}),
+      ...(it.params ? { params: it.params as Record<string, Json> } : {}),
+      ...(it.controls !== undefined ? { controls: it.controls } : {}),
+    })),
+  };
 }
