@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Mercury",
+  "camera": "about 20,000 km, full phase, over 0 N 0 E",
+  "tests": "Visible: space-weathered silicate grey; the faint colour differences",
+  "needs": [
+    "crater relief at globe scale"
+  ]
+}

@@ -1,0 +1,9 @@
+Title: Enceladus (NIRCam Image)
+Credit: NASA, ESA, CSA, STScI, G. Villanueva (NASA’s Goddard Space Flight Center), A. Pagan (STScI)
+Date: 
+Source: https://esawebb.org/images/weic2314a/
+Licence: CC BY 4.0 (ESA/Webb image use policy, https://esawebb.org/copyright/). Attribution required, exactly as the credit line.
+Picked for: Webb's Enceladus with its water plume spread along its orbit.
+
+About (from the source page):
+Images from the NASA/ESA/CSA James Webb Space Telescope’s NIRCam (Near-Infrared Camera) show a water vapour plume jetting from the south pole of Saturn’s moon Enceladus, extending out 40 times the size of the moon itself. The inset, an image from the Cassini orbiter, emphasises how small Enceladus appears in the Webb image compared to the water plume.

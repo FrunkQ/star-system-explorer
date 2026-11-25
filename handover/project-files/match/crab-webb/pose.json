@@ -1,0 +1,9 @@
+{
+  "system": "Crab Nebula (M1)",
+  "view": "Exotic object, Infrared band",
+  "camera": "from Earth",
+  "tests": "Infrared: dust and synchrotron light",
+  "needs": [
+    "the pulsar wind nebula's synchrotron light"
+  ]
+}

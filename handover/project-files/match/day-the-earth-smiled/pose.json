@@ -1,0 +1,12 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Long exposure",
+  "frame": "Saturn",
+  "camera": "in Saturn's shadow, about 1.2 million km out, the Sun behind the planet",
+  "date": "2013-07-19",
+  "needs": [
+    "a ring phase function (forward scatter)",
+    "backlit limb haze",
+    "Composite (their mosaic uses colour filters)"
+  ]
+}

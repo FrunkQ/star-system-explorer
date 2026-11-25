@@ -4,6 +4,8 @@ Last updated: 24 Nov 2026 (handover to a new Claude account). Live site v4.stars
 
 ## New to this project? Read this section first
 
+**Final state at the old account's close (25 Nov 2026, about 23:00 UTC): `handover/FINAL-HANDOVER-2026-11-25.md`** lists open PRs, thread reports, questions for Alex, unstarted work and everything kept outside the repo.
+
 On 25 Nov 2026 Alex (GitHub `FrunkQ`, the owner) moves SSE4 to a new Claude account. The old account's
 window closes at **7 pm London time on 25 Nov 2026** (19:00 UTC; Alex, 01:31 UTC 25 Nov); work still open then
 is picked up from this repo. The old account's project chat,

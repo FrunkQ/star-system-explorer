@@ -1,0 +1,13 @@
+Title: Venus from Mariner 10
+Credit: NASA / NASA/JPL-Caltech
+Date: 08 June 2020
+Source: https://images.nasa.gov/details/PIA23791
+Licence: NASA media: generally not subject to copyright in the United States (NASA Images and Media Usage Guidelines, https://www.nasa.gov/nasa-brand-center/images-and-media/). Credit NASA; do not imply endorsement.
+Picked for: Venus's cloud tops from Mariner 10 (1974), reprocessed: an almost featureless cream disc in visible light. Tests the cloud deck's colour and limb darkening; the famous ultraviolet streaks need an Ultraviolet band picture.
+
+About (from the source page):
+As it sped away from Venus, NASA's Mariner 10 spacecraft captured this seemingly peaceful view of a planet the size of Earth, wrapped in a dense, global cloud layer. But, contrary to its serene appearance, the clouded globe of Venus is a world of intense heat, crushing atmospheric pressure and clouds of corrosive acid.
+
+This newly processed image revisits the original data with modern image processing software. A contrast-enhanced version of this view, also provided here, makes features in the planet's thick cloud cover visible in greater detail.
+
+The clouds seen here are located about 40 miles (60 kilometers) above the planet's surface, at altitudes where Earth-like atmospheric pressures and temperatures exist. They are comprised of sulfuric acid particles, as opposed to water droplets or ice crystals, as on Earth. These cloud particles are mostly white in appearance; however, patches o

@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Ultraviolet band (false colour)",
+  "frame": "Sun",
+  "camera": "from Earth's place",
+  "date": "1999-09-14",
+  "needs": [
+    "an extreme-ultraviolet line band (He II 30.4 nm)",
+    "prominences (star glow thread)"
+  ]
+}
