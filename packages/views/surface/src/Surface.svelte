@@ -22,7 +22,8 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { constant, DEFAULT_VIEW, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
+  import { LAND_TRUE } from "../../../renderer/src/recipes.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params, follow }: { ctx?: ViewContext; scene?: SystemScene; params: Record<string, Json>; follow?: PlayerContext } = $props();
@@ -273,6 +274,8 @@
   let near = $state<Patch | null>(null);
   let far = $state<Patch | null>(null);
   let groundFailed = $state<string | null>(null);
+  // Lava tube openings near the site (TRUE6): the kernel's cave survey, its fallen roofs cut into the walk patch.
+  let openings = $state<CaveOpening[]>([]);
   const NEAR_HALF = 6000;
   const DETAIL_HALF = 2000;
   const FAR_HALF = 120000;
@@ -307,6 +310,8 @@
     if (typeof n2 === "string") return void ((groundFailed = n2), (phase = "choose"));
     const b = await readGround(Math.max(0, n2.level - 4), FAR_HALF, () => 161);
     if (typeof b === "string") return void ((groundFailed = b), (phase = "choose"));
+    const cv = reads?.surveyCaves ? await reads.surveyCaves({ system, body: subject!.address, lat_deg: site.lat, lon_deg: site.lon, radius_km: 25 }) : null;
+    openings = cv && cv.ok ? caveOpenings(cv.caves) : [];
     near = n2;
     far = b;
     built = false;
@@ -329,12 +334,14 @@
   }
   function takeOff() {
     phase = "choose";
+    openings = [];
     near = null;
     far = null;
     built = false;
   }
   function reset() {
     phase = "choose";
+    openings = [];
     site = null;
     plan = null;
     near = null;
@@ -348,7 +355,7 @@
     const p = near!;
     const g = patchPoint(p, x, y);
     g.kernel_z = g.z;
-    if (g.cover === 0 && Math.abs(x) < DETAIL_HALF && Math.abs(y) < DETAIL_HALF) g.z += decoration(x, y, roughness, p.spacing_m);
+    if (g.cover === 0 && Math.abs(x) < DETAIL_HALF && Math.abs(y) < DETAIL_HALF) g.z += decoration(x, y, roughness, p.spacing_m) - caveCut(openings, x, y);
     return g;
   };
 
@@ -383,6 +390,29 @@
   onDestroy(() => {
     cancelAnimationFrame(raf);
     gpu?.dispose();
+  });
+
+  // Quality in True (VP4 part 2b, VP5): placed by the device's measured speed on the land-true recipe, stepped down on
+  // slow frames, and sharpened while the view holds still (no moving sea, nobody walking): jittered frames averaged in
+  // the finish. Once sharp the picture is left on screen and nothing is drawn until something changes.
+  let run: TrueRun | null = null;
+  let quality = $state("");
+  let heldKey = "";
+  let lastDrawn = -1;
+  const landPixels = () => {
+    const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
+    return Math.max(1, Math.round(w * h * dpr * dpr));
+  };
+  $effect(() => {
+    if (!gpu) return;
+    const r = new TrueRun({ recipe: LAND_TRUE, library: LIBRARY, pixels: untrack(landPixels), backend: gpu.backend, source: "render.land" });
+    run = r;
+    void r.place();
+    return () => (r.dispose(), (run = null));
+  });
+  $effect(() => {
+    const px = landPixels();
+    untrack(() => run?.update({ pixels: px }));
   });
   function buildMeshes() {
     if (!gpu || !near || !far || built) return;
@@ -648,7 +678,19 @@
         // A lit hull is the brightest large thing in view: the eye adapts to it (and the stars fade, as they do).
         hullLight = lamp > 0 ? (LANDER_HULL_ALBEDO * lamp * LAMP_SPILL) / Math.PI : 0;
       }
+      // What the picture depends on: while it is the same, the view rests and sharpens; any change draws it moving.
+      const r = look === "true" ? run : null;
+      const key = r ? [look, w, h, ...eye.map((x) => Math.round(x * 1e3)), ...fwd.map((x) => Math.round(x * 1e5)), ...sun.map((x) => Math.round(x * 1e5)), seaNow ? now : 0, landerSet, siteStars?.key ?? "", lamps].join("|") : "";
+      const still = r !== null && key === heldKey;
+      heldKey = key;
+      const step = still ? r!.rest.next(now) : null;
+      // Sharp: the averaged picture stays on screen.
+      if (still && !step) return;
+      const q = r?.settings(step !== null) ?? null;
+      const fin = q?.params["finish"] ?? {};
+      const t0 = performance.now();
       gpu.draw({
+        ...(q ? { quality: { ...(typeof fin["glare_rungs"] === "number" ? { rungs: fin["glare_rungs"] } : {}), ...(typeof fin["glare_scale"] === "number" ? { glare_scale: fin["glare_scale"] } : {}), render_scale: q.render_scale, ...(step ? { accumulate: step.k, jitter: step.jitter } : {}) } } : {}),
         look,
         eye,
         forward: fwd,
@@ -671,6 +713,18 @@
         contour_m: contourFor(eye[2] - siteZ),
         ...(seaNow ? { sea: { wave_m: seaNow.wave_m, period_s: seaNow.period_s, dir_rad: seaNow.wind_m_s < 0 ? Math.PI : 0, gravity_m_s2: world.gravity_m_s2 ?? plan?.gravity_m_s2 ?? 9.8, tide_m: seaNow.tide_m, time_s: now / 1000, ...(seaOptics ? { optics: seaOptics.optics } : {}) } } : {}),
       });
+      if (r) {
+        const work = performance.now() - t0;
+        if (step) r.rest.done(performance.now(), work);
+        else {
+          // Frames running on: the time between them; a lone frame: its own work.
+          const ms = lastDrawn >= 0 && now - lastDrawn < 250 ? Math.max(work, now - lastDrawn) : work;
+          r.frame(ms, now);
+        }
+        lastDrawn = now;
+        const st = r.status();
+        quality = `${st.tier}|${st.level}|${st.rest}|${st.rest_frames}`;
+      } else if (quality) quality = "";
     } else if (using === "canvas" && line) drawLines(line, eye, fwd);
   }
   $effect(() => {
@@ -773,6 +827,8 @@
   const horizon = $derived(world ? horizonDistance(Math.max(0.1, eyeNow[2] - (near ? groundAt(eyeNow[0], eyeNow[1]).z : 0)), world.radius_m) : 0);
   const DIRS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   const compass = $derived(DIRS[Math.round(headingNow / 45) % 8]);
+  /** The nearest lava tube opening, while one lies within the near ground. */
+  const caveLine = $derived(openingLine(nearestOpening(openings, eyeNow[0], eyeNow[1])));
   /** Landmarks near enough to name over the ground, with their bearing. */
   const nearMarks = $derived(
     site && world
@@ -865,7 +921,7 @@
   {#if tiles}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
     <div class="stage" class:hidden={!(phase === "flying" || phase === "down")} bind:clientWidth={w} bind:clientHeight={h} role="application" aria-label={watching ? `The ground at ${site ? fmtLat(site.lat) : ""}, as the game master sees it` : `The ground at ${site ? fmtLat(site.lat) : ""}: drag to look about, arrow keys or W A S D to walk`} tabindex="0" onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} onkeydown={keyDown} onkeyup={keyUp} data-ground>
-      <canvas bind:this={canvas} class:hidden={using === "canvas"}></canvas>
+      <canvas bind:this={canvas} class:hidden={using === "canvas"} data-quality={quality || undefined}></canvas>
       <canvas bind:this={line} class:hidden={using !== "canvas"}></canvas>
       {#if hud}
         <div class="hud" data-surface-hud>
@@ -874,6 +930,7 @@
           <span>{fmtM(fromSite)} from it</span>
           <span>horizon {fmtM(horizon)}</span>
           {#if seaNow}<span data-sea>waves {seaNow.wave_m.toFixed(1)} m every {Math.round(seaNow.period_s)} s · tide {seaNow.tide_m >= 0 ? "+" : ""}{seaNow.tide_m.toFixed(2)} m</span>{/if}
+          {#if caveLine}<span data-cave-opening>{caveLine}</span>{/if}
           {#each nearMarks as m (m.l.id)}<span class="quiet">{m.l.name ?? m.l.original_name} {fmtM(m.d)} at {Math.round(m.brg)}°</span>{/each}
         </div>
       {/if}
@@ -901,6 +958,7 @@
     {#if phase === "flying" || phase === "down"}
     <p class="note quiet" data-ground-note>
       The ground is the kernel's to {near ? Math.round(near.spacing_m) : "?"} m (its fact floor here); finer than that within {fmtM(DETAIL_HALF)} of the site it is decoration sized to the site's roughness. You can walk {fmtM(WALK_HALF)} from where you landed; further means taking off.
+      {#if openings.length}{openings.length} stretch{openings.length === 1 ? "" : "es"} of fallen lava tube roof lie within 25 km (the kernel's cave survey): within {fmtM(DETAIL_HALF)} each is cut down to the tube's floor; going inside waits for interior sites.{/if}
       {#if world && !world.air}No air: the sky is black and nothing dims the far ground.{:else}Sky from single scattering in the kernel's air optics.{/if}
       {#if look === "true" && auroraSays}<span data-aurora-sky>{auroraSays}</span>{/if}
       {#if seaNow}{seaNow.line ?? ""}{seaNow.line ? "." : ""} {seaOptics ? `${seaWords(seaOptics.optics, seaOptics.missing)} ` : ""}{seaOptics?.optics.trains ? `The sea is drawn as the kernel's own ${seaOptics.optics.trains.length} wave trains for this liquid` : "The sea is drawn as a few wave trains of that height and period round the wind"}{seaOptics?.optics.whitecap_fraction ? `, white with froth over ${Math.round(seaOptics.optics.whitecap_fraction * 100)}% of it` : ""}; the tide stands {Math.abs(seaNow.tide_m).toFixed(2)} m {seaNow.tide_m >= 0 ? "above" : "below"} mean sea level.{/if}
