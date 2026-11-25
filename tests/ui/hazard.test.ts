@@ -39,6 +39,6 @@ test("distances are said in radii, or in au round a star far out", () => {
 
 test("the push to hover reads in m/s² and g, and says when nothing can", () => {
   assert.equal(hoverWords(9.80665), "holding still there instead takes 9.81 m/s² (1.00 g) of thrust");
-  assert.match(hoverWords(2.7e11), /\(\d+ g\)/);
+  assert.match(hoverWords(2.7e11), /\([\d,]+ g\)/);
   assert.equal(hoverWords(Infinity), "no push can hold still there");
 });

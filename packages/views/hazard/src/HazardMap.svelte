@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { DEFAULT_VIEW, viewOptions, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { DEFAULT_VIEW, sayNumber, viewOptions, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { Card } from "../../../chart-grammar/src/index.ts";
   import { HAZARD_CONTROLS } from "./controls.ts";
   import { distanceWords, hoverWords, labelled, radiusTicks, shortMark, xOf, type HazardMapRead, type Tone } from "./profile.ts";
@@ -62,8 +62,8 @@
   const radius = $derived(map?.marks.find((m) => m.what === "surface")?.distance_m ?? map?.from_m ?? 1);
   const TONE: Record<Tone, string> = {
     clear: "transparent",
-    harsh: "color-mix(in srgb, var(--sse-alert, #d98a00) 45%, transparent)",
-    deadly: "var(--sse-danger, #c0392b)",
+    harsh: "color-mix(in srgb, var(--sse-ink) 30%, transparent)",
+    deadly: "color-mix(in srgb, var(--sse-ink) 80%, transparent)",
   };
   const ticks = $derived(map ? radiusTicks(map) : []);
   const fixed = $derived(map ? labelled(map.marks.map((m) => ({ ...m, label: shortMark(m.what), x: x(m.distance_m) }))) : []);
@@ -139,12 +139,12 @@
         <li><span class="sw clear"></span>clear</li>
         <li><span class="sw harsh"></span>harsh</li>
         <li><span class="sw deadly"></span>deadly</li>
-        <li><span class="sw park"></span>Park and Dive for {map.stock_ship ? "the stock ship" : map.ship.name} ({(map.ship.delta_v_m_s / 1e3).toFixed(1)} km/s, {(map.ship.shield_kg_m2 / 10).toFixed(0)} g/cm² shield)</li>
+        <li><span class="sw park"></span>Park and Dive for {map.stock_ship ? "the stock ship" : map.ship.name} ({sayNumber(map.ship.delta_v_m_s / 1e3, 3, { decimals: 1 })} km/s, {sayNumber(map.ship.shield_kg_m2 / 10, 3, { decimals: 0 })} g/cm² shield)</li>
       </ul>
       <div class="words">
         {#if map.park}<p data-says="park"><b>Park</b> {distanceWords(map.park.distance_m, radius)}, set by the {word(map.park.set_by)}. {map.park.says} At Park, {hoverWords(map.park.hover_m_s2)}.</p>{/if}
         {#if map.dive}<p data-says="dive"><b>Dive</b> {distanceWords(map.dive.distance_m, radius)}, set by the {word(map.dive.set_by)}. {map.dive.says} Inside it is too late.</p>{/if}
-        {#if map.pass}<p data-says="pass">That pass: {map.pass.dose_sv.toFixed(2)} Sv soaked up{map.pass.peak_hull_k > 0 ? `, hull peaks at ${map.pass.peak_hull_k.toFixed(0)} K` : ""}{map.pass.hours_in_belts > 0 ? `, ${map.pass.hours_in_belts.toFixed(1)} hours inside the belts` : ""}.</p>{/if}
+        {#if map.pass}<p data-says="pass">That pass: {sayNumber(map.pass.dose_sv, 3, { decimals: 2 })} Sv soaked up{map.pass.peak_hull_k > 0 ? `, hull peaks at ${sayNumber(map.pass.peak_hull_k, 3, { decimals: 0 })} K` : ""}{map.pass.hours_in_belts > 0 ? `, ${sayNumber(map.pass.hours_in_belts, 3, { decimals: 1 })} hours inside the belts` : ""}.</p>{/if}
         {#each map.rows as r (r.hazard)}<p class="say" data-says={r.hazard}>{r.name}: {r.says}.</p>{/each}
         {#if map.quiet.length}<p class="say" data-says="quiet">{map.quiet.join(", ")}: nothing to worry about here.</p>{/if}
         {#if map.moons.length}
@@ -152,7 +152,7 @@
             <thead><tr><th>Beside</th><th>Dose a day</th><th></th></tr></thead>
             <tbody>
               {#each map.moons as mo (mo.moon)}
-                <tr data-moon={mo.moon} data-tone={mo.tone}><td>{moonName(mo.moon)}</td><td>{mo.sv_per_day <= 0 ? "none" : mo.sv_per_day < 0.01 ? `${mo.sv_per_day.toExponential(1)} Sv` : `${mo.sv_per_day.toFixed(2)} Sv`}</td><td class="t-{mo.tone}">{mo.tone}</td></tr>
+                <tr data-moon={mo.moon} data-tone={mo.tone}><td>{moonName(mo.moon)}</td><td>{mo.sv_per_day <= 0 ? "none" : mo.sv_per_day < 0.01 ? `${sayNumber(mo.sv_per_day, 2)} Sv` : `${sayNumber(mo.sv_per_day, 3, { decimals: 2 })} Sv`}</td><td class="t-{mo.tone}">{mo.tone}</td></tr>
               {/each}
             </tbody>
           </table>
@@ -247,10 +247,10 @@
     border: 1px solid var(--sse-ink-muted);
   }
   .sw.harsh {
-    background: color-mix(in srgb, var(--sse-alert, #d98a00) 45%, transparent);
+    background: color-mix(in srgb, var(--sse-ink) 30%, transparent);
   }
   .sw.deadly {
-    background: var(--sse-danger, #c0392b);
+    background: color-mix(in srgb, var(--sse-ink) 80%, transparent);
   }
   .sw.park {
     background: var(--sse-accent);
@@ -274,11 +274,11 @@
     text-align: left;
   }
   .t-deadly {
-    color: var(--sse-danger, #c0392b);
+    color: var(--sse-ink);
     font-weight: 600;
   }
   .t-harsh {
-    color: var(--sse-alert, #d98a00);
+    color: var(--sse-ink-muted);
   }
   .limits {
     font-size: 12px;

@@ -4048,6 +4048,7 @@ fn the_traveller_weapons_reach_their_game_bands() {
         seen += 1;
     }
     assert_eq!(seen, 7);
+}
 
 /// `hazard_map` (XO18): a measured Solar System body by name, a ship given
 /// inline, a line; and the plain words for a bad ask.

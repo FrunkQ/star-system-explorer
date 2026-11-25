@@ -2,7 +2,7 @@
 // reading. Distance runs along the bottom on a stretched (logarithmic) scale from the surface out; one thin row per
 // hazard in three tones; the fixed marks under it and the ship's Park and Dive marks over it. Nothing here is physics:
 // every number is the kernel's.
-import { constant } from "../../../ui-contract/src/sheet.ts";
+import { constant, sayNumber } from "../../../ui-contract/src/index.ts";
 
 export type Tone = "clear" | "harsh" | "deadly";
 export interface HazardBand { from_m: number; to_m: number; tone: Tone }
@@ -16,7 +16,7 @@ export interface HazardPass { closest_m: number; dose_sv: number; peak_hull_k: n
 export function hoverWords(a: number): string {
   if (!Number.isFinite(a)) return "no push can hold still there";
   const g = a / constant("g0");
-  return `holding still there instead takes ${a < 10 ? a.toFixed(2) : a.toFixed(0)} m/s² (${g.toFixed(g < 10 ? 2 : 0)} g) of thrust`;
+  return `holding still there instead takes ${a < 10 ? sayNumber(a, 3, { decimals: 2 }) : sayNumber(a, 3)} m/s² (${g < 10 ? sayNumber(g, 3, { decimals: 2 }) : sayNumber(g, 3)} g) of thrust`;
 }
 export interface HazardMapRead {
   address: string;
@@ -49,9 +49,9 @@ export function xOf(map: Pick<HazardMapRead, "from_m" | "to_m">, d: number, x0: 
 /** A distance in the body's radii, or in au round a star far out (as the kernel words it). */
 export function distanceWords(d: number, radius: number): string {
   const AU_M = constant("au");
-  if (radius > 1e8 && d > 0.05 * AU_M) return `${(d / AU_M).toFixed(2)} au`;
+  if (radius > 1e8 && d > 0.05 * AU_M) return `${sayNumber(d / AU_M, 3, { decimals: 2 })} au`;
   const r = d / radius;
-  return `${r < 10 ? r.toFixed(2) : r.toFixed(1)} radii`;
+  return `${sayNumber(r, 3, { decimals: r < 10 ? 2 : 1 })} radii`;
 }
 
 /** Tick distances for the strip: 1, 2, 5 steps of each power of ten radii between the ends. */
