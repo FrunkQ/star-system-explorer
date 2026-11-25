@@ -1,19 +1,19 @@
 # Status: postcards and hold backdrops (track PC)
 
-Owner thread: "Design saved views and hold backdrops" (Fable, design only, from 25 Nov 2026). No builder thread yet: to be opened as "Build postcards and hold backdrops" (Opus) once Alex accepts the design.
-Design: `design/SSE4-postcards-design.md`, **PROPOSED 25 Nov 2026**. Alex 01:08 UTC: "postcards - amazing idea", with three rulings (its section 12A: always a free selection in the shop; the card names the packs needed; a shop postcard shows only content in the game or on the store; a quote stands alone with no joke under it; a universe carries a default set; every band and Composite on the card; send to anyone with a personal message; a link works without SSE4 and unfurls in Discord). Still open: questions 2 to 7, 9, 11, 12 and new 13 (14 answered: the sender sets how long a message lasts, a year at most; the postcard itself keeps working). Mockup in project files at `sse4/handover-screens/PC-screens/`.
+Owner thread: "Design saved views and hold backdrops" (Fable, design only, 25 Nov 2026) for the note. Builder thread: to be opened as "Build postcards and hold backdrops" (Opus); asked of the coordinator 25 Nov 01:28 UTC.
+Design: `design/SSE4-postcards-design.md`, **ACCEPTED by Alex 25 Nov 2026 01:27 UTC** ("yes to all... they look great and are a great promo tool"). Read its sections 1, 3 and 12A first; 12A (his rulings in his own words) wins where it differs. Mockup in project files at `sse4/handover-screens/PC-screens/`.
 
-Nothing is built, and nothing is to be built until Alex answers. PC is a code only, never shown in the product.
+Nothing is built yet. PC is a code only, never shown in the product. For 4.0.
 
 | Package | State | Log |
 |---|---|---|
-| PC1 contract: `pose` on the bookmark, `sse.postcard/1` | waits on Alex's yes | |
-| PC2 a still of any True view from a pose; the reason line per pass | waits on Alex's yes; for the renderer thread | |
-| PC3 the card (front, back), making one, the wall | waits on Alex's yes | |
-| PC4 opening one from outside: the visit | waits on Alex's yes | |
-| PC5 grounds on holding and transmission cards, the Quotes kind | waits on Alex's yes; for the Run desk thread | |
-| PC6 the base set of about 24 and its check | waits on Alex's yes; with the trailer thread | |
-| PC7 the quote set | waits on Alex's answer on quote rights (question 7, also the Atlas thread's); for the Atlas thread | |
-| PC8 Explorers shelf, stamps, "Offer for the shipped set" | needs Alex's own yes (a new kind and stored pictures on Explorers) | |
+| PC1 contract: `pose` on the bookmark, `sse.postcard/1` | next; needs nothing that is not on main | |
+| PC2 a still of any True view from a pose; the reason line per pass | next; for the renderer thread (agreed, design section 14) | |
+| PC3 the card (front, back), making one, the wall | queued | |
+| PC4 opening one from outside: the visit | queued | |
+| PC5 grounds on holding and transmission cards, the Quotes kind | queued; for the Run desk thread (agreed) | |
+| PC6 the base set of about 24 and its check | queued; with the trailer thread | |
+| PC7 the quote set | queued; for the Atlas thread. Quote rights answered yes: real scientists' and astronauts' words in the base app, film, song and game quotes in the free fan pack | |
+| PC8 Explorers: shelf with an always-free selection, stamps, the link page, private sends with a message (sender sets its life, a year at most), Discord webhook, "Offer for the shipped set" | wanted by Alex; each migration or storage change still needs his own yes when ready | |
 
-Seams asked by message on 25 Nov (Run desk, renderer, Atlas, trailer); answers go in the design note's section 14.
+Seams agreed by message on 25 Nov with the Run desk, renderer, Atlas and trailer threads: design note section 14.

@@ -1,6 +1,6 @@
 # SSE4: postcards and hold backdrops (track PC)
 
-Status: **PROPOSED, 25 Nov 2026; the idea and the name are welcomed by Alex (01:08 UTC: "postcards - amazing idea"), with three rulings in section 12A, which wins where it differs from the rest. Not yet accepted in full: questions 2 to 7, 9, 11 and 12 of section 12 and new question 13 are still open, and no builder starts until he answers them.** Design and mockup only. PC is a code only and is never shown in the product.
+Status: **ACCEPTED by Alex, 25 Nov 2026 01:27 UTC** ("yes to all... they look great and are a great promo tool": questions 2 to 7, 9, 11 and 13 yes, 12 later as recommended; questions 1, 8, 10 and 14 answered by his rulings in section 12A, which wins where it differs from the rest). Design and mockup only; nothing here is built by this note. Packages for the builder are in section 11. PC8 (Explorers storage) still needs his own yes when its package is ready, as every Explorers storage change does.
 
 Mockup, clickable: project files `sse4/handover-screens/PC-screens/postcards-mockup.html`, with desktop and phone screenshots beside it and its source in `PC-screens/source/`. The pictures in the mockup are painted stand-ins, not SSE4 output; each says so.
 
@@ -158,7 +158,7 @@ Extends section 6 of the Playbook design; the Run desk thread owns it.
 
 PC1, PC3 for the globe, and PC5 can start on main today. Only PC2 and PC8 wait on anyone.
 
-## 12. Questions for Alex
+## 12. Questions, all answered (25 Nov 2026: 1, 8, 10 and 14 by section 12A; the rest "yes to all" at 01:27, with 12 left for later)
 
 1. **The name "postcard".** It has a front and a back, and it is something you send. Recommend: yes. (Others considered: plate, snapshot, vista.)
 2. **A postcard is a bookmark plus camera, date and world, and the camera goes onto plain bookmarks too.** Recommend: yes.
@@ -212,4 +212,4 @@ One general mechanism (bookmark, clip, still tier, holding cards, margin notes r
 
 ## 15. Picking this up without the chat
 
-Read sections 1, 3 and 4, then open the mockup. The mockup shows: a held wall screen with a quote over a postcard, light and through a green look; the same on a phone; the card's front and back; the wall; the Switchboard line card with its Ground row; and "What goes with it". It does not show the visit, the Explorers shelf or the framing ticks. If Alex has answered, his answers are in `handover/decisions.md` and this note's status line; if he has not, nothing is to be built.
+Read sections 1, 3 and 4, then open the mockup. The mockup shows: a held wall screen with a quote over a postcard, light and through a green look; the same on a phone; the card's front and back; the wall; the Switchboard line card with its Ground row; and "What goes with it". It does not show the visit, the Explorers shelf or the framing ticks. Alex accepted the design on 25 Nov 2026 (status line, sections 12 and 12A); section 12A wins where it differs from the earlier sections.
