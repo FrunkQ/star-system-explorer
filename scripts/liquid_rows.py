@@ -6,6 +6,8 @@ Part 1: liquid water's optics, the one sea liquid with readable primary tables:
                       (Pope and Fry 1997, integrating cavity) and 750 to 2000 nm
                       (Hale and Querry 1973), on substance h2o's optical block
   refractive_index_liquid  real index n at 0.5 to 2 micron (Segelstein 1981)
+  scattering_liquid   pure water's molecular scattering b at 450 and 550 nm, its
+                      lambda^-4.3 law and backscatter share 1/2 (Morel and Prieur 1977)
 
 The values were read on 24 Nov 2026 from the Oregon Medical Laser Center's
 copies of the authors' tables (omlc.org/spectra/water/data/), printed in 1/cm
@@ -28,6 +30,7 @@ from pathlib import Path
 SAT_CSV = Path(__file__).resolve().parent.parent / "handover/packages/MP32-data/sat-liquids.csv"
 
 SOURCES = {
+    "morel-prieur1977": ("Morel, A. and Prieur, L. 1977, Limnology and Oceanography 22, 709: analysis of variations in ocean color; Table 1 pure-water scattering b_w, the wavelength exponent -4.3 (p. 712, after Morel 1974), backscatter share 1/2 for molecular scattering (p. 711, eq. 3) and seawater about 30 % higher (p. 714). Read by the climate and weather thread from a scan on 24 Nov 2026", None, None, "unverified"),
     "pope-fry1997": ("Pope, R. M. and Fry, E. S. 1997, Applied Optics 36, 8710: absorption spectrum (380-700 nm) of pure water. II. Integrating cavity measurements; table on a 2.5 nm grid in 1/cm (OMLC copy pope97.txt)", "10.1364/AO.36.008710", "https://omlc.org/spectra/water/data/pope97.txt", "unverified"),
     "hale-querry1973": ("Hale, G. M. and Querry, M. R. 1973, Applied Optics 12, 555: optical constants of water in the 200 nm to 200 micron wavelength region; absorption in 1/cm (OMLC copy hale73.txt)", "10.1364/AO.12.000555", "https://omlc.org/spectra/water/data/hale73.txt", "unverified"),
     "segelstein1981": ("Segelstein, D. J. 1981, The complex refractive index of water, M.S. thesis, University of Missouri-Kansas City; real and imaginary index against wavelength (OMLC copy segelstein81_index.txt)", None, "https://omlc.org/spectra/water/data/segelstein81_index.txt", "unverified"),
@@ -113,6 +116,10 @@ SEGELSTEIN = [
 ]
 
 
+HE_LAMBDA_K, HE_LAMBDA_PA = 2.1768, 5039.33  # CoolProp 8.1.0, Helium Ttriple and ptriple
+HE_CRIT_K, HE_CRIT_PA = 5.1953, 228322.8  # CoolProp 8.1.0, Helium Tcrit and pcrit
+
+
 def apply(substances, pi, val):
     """Add the liquid optics and saturated-liquid tables to the substance rows
     in place; append the new substance rows (ethane, propane)."""
@@ -143,6 +150,17 @@ def apply(substances, pi, val):
             ph["triple_point_k"] = val(float(m["t_triple"]), "K", eos, U)
             ph["critical_point_k"] = val(float(m["t_crit"]), "K", eos, U)
             ph["density_liquid"] = val(rows[0][2], "kg m-3", eos, U, at_k=rows[0][0], note="saturated liquid just above the triple point")
+    # Helium (asked by the climate thread for the helium-sea test). Read from CoolProp 8.1.0,
+    # PropsSI("Tmin"/"Ttriple", "ptriple", "Tcrit", "pcrit", "Helium"), i.e. the Ortiz-Vega 2023
+    # equation of state, whose lower limit is the lambda line at saturation.
+    he = by_id["he"]["phases"]
+    eos = BY_KEY[meta["he"]["eos"]]
+    assert abs(float(meta["he"]["t_triple"]) - HE_LAMBDA_K) < 1e-9 and abs(float(meta["he"]["t_crit"]) - HE_CRIT_K) < 1e-3
+    he["lambda_point_k"] = val(HE_LAMBDA_K, "K", eos, U, at_pa=HE_LAMBDA_PA, note="below this, liquid helium-4 is a superfluid (He II); helium has no triple point at its own vapour pressure, so this is where its sea's liquid-vapour curve starts")
+    he["lambda_point_pa"] = val(HE_LAMBDA_PA, "Pa", eos, U, note="vapour pressure at the lambda point")
+    he["critical_point_k"] = val(HE_CRIT_K, "K", eos, U, note="above this there can be no helium sea")
+    he["critical_point_pa"] = val(HE_CRIT_PA, "Pa", eos, U)
+    he["saturated_liquid"]["note"] += "; the p_pa column is helium's vapour-pressure curve (it has no triple point at saturation, so climate reads the vapour curve here)"
     lam = [float(n) for n, _ in POPE + HALE]
     assert lam == sorted(lam)
     alpha = [round(a * PER_CM, 6) for _, a in POPE + HALE]
@@ -152,6 +170,16 @@ def apply(substances, pi, val):
         "src": "pope-fry1997", "also": ["hale-querry1973"], "check": U,
         "src_from_nm": {"pope-fry1997": [380.0, 700.0], "hale-querry1973": [750.0, 2000.0]},
         "note": "pure liquid water near room temperature; light falls to 1/e over 1/alpha metres (about 22 m at 420 nm, 0.4 m at 750 nm), which is why deep water is blue",
+    }
+    # Pure water's own (molecular) scattering, for the sea's deep colour R = 0.33 b_b / (a + b_b).
+    h2o["optical"]["scattering_liquid"] = {
+        "kind": "table", "lambda_nm": [450.0, 550.0],
+        "b": {"v": [0.0035, 0.0015], "unit": "m-1", "src": "morel-prieur1977", "check": U},
+        "exponent": {"v": -4.3, "unit": "1", "src": "morel-prieur1977", "check": U, "note": "b scales as lambda to this power between and beyond the table's points"},
+        "backscatter_share": {"v": 0.5, "unit": "1", "src": "morel-prieur1977", "check": U, "note": "b_b / b for molecular scattering, which is symmetric fore and aft"},
+        "seawater_factor": {"v": 1.3, "unit": "1", "src": "morel-prieur1977", "check": U, "note": "seawater scatters about 30 % more than pure water (dissolved salts)"},
+        "src": "morel-prieur1977", "check": U,
+        "note": "pure liquid water; the 650 nm entry of Table 1 was unreadable in the scan, so use the exponent beyond 550 nm",
     }
     # The index rows' k agrees with alpha = 4 pi k / lambda, which ties the two tables.
     for um, _, k in SEGELSTEIN:

@@ -44,4 +44,4 @@ with `controlOn` from `ui-contract/src/part-controls.ts`; `kit.ts` then takes pa
 and its own `controlsOn` is dropped. Agreed with the Orac thread (AT11, AT16): accepted drafts live in the campaign
 pack `campaign.atlas` (kind `presentation`) under `provides.other.atlas`, ids starting `mine.`, read by `atlasDocsOf`.
 
-Open with Alex: whether the Weyland-Yutani logo is in the built-in set (design section 14A, note 2; left out until he says).
+Settled 25 Nov 2026: no Weyland-Yutani logo in the built-in set ("can wait for the game pack"); paper editions curl their pages from the corner (design section 14A, notes 2 and 5).

@@ -7,7 +7,7 @@ import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { desk } from "./nav.mjs";
+import { desk, go } from "./nav.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const args = process.argv.slice(2);
@@ -100,6 +100,17 @@ try {
   await pl.waitForFunction(() => !/not yet scanned/.test(document.querySelector("[data-field='mass_kg'] dd")?.textContent ?? "not yet scanned"), null, { timeout: 15000 });
   await gm.waitForTimeout(1000);
   assert.equal(await mark.getAttribute("data-known"), "known", "the eye stays open after the kernel is read again");
+
+  // The body globe in pencil (SV3, the shared draw style): Ember, still unknown to the table, opens in a dotted ring
+  // with words saying so on the Run desk; on Explore the same globe is plain ink.
+  await body("Ember").click();
+  await go(gm, "body");
+  await gm.locator("[data-body] .globe[data-pen=pencil]").waitFor({ timeout: 20000 });
+  assert.match(await gm.locator("[data-pen-note]").innerText(), /not known to the table/);
+  await shot(gm, "known-body-pencil");
+  await desk(gm, "Explore");
+  await gm.locator("[data-body] .globe[data-pen=ink]").waitFor();
+  assert.equal(await gm.locator("[data-pen-note]").count(), 0);
   assert.deepEqual(errors, []);
   await browser.close();
   console.log("known e2e: ok");
