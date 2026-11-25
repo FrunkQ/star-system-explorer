@@ -84,6 +84,35 @@ pub fn colour_of(eye: &Eye, light: &[f64]) -> Result<Colour, String> {
             xyz[k] += v * r[k] * eye.step_nm;
         }
     }
+    from_xyz(eye, xyz)
+}
+
+/// The colour of light that is all in narrow lines, each given as its
+/// wavelength (m) and power (any unit): an aurora's or a nebula's glow.
+/// Lines outside the eye's range add nothing.
+pub fn colour_of_lines(eye: &Eye, lines: &[(f64, f64)]) -> Result<Colour, String> {
+    let mut xyz = [0.0; 3];
+    for (l, p) in lines {
+        if !(p.is_finite() && *p >= 0.0) {
+            return Err(format!(
+                "a line's power must be zero or more, got {p} at {:.0} nm",
+                l * 1e9
+            ));
+        }
+        let nm = l * 1e9;
+        if nm < eye.from_nm || nm > eye.to_nm {
+            continue;
+        }
+        let r = response(eye, *l)?;
+        for k in 0..3 {
+            xyz[k] += p * r[k];
+        }
+    }
+    from_xyz(eye, xyz)
+}
+
+/// Chromaticity, screen colour and hex from summed CIE XYZ.
+fn from_xyz(eye: &Eye, xyz: [f64; 3]) -> Result<Colour, String> {
     let total = xyz[0] + xyz[1] + xyz[2];
     let chromaticity = if total > 0.0 {
         [xyz[0] / total, xyz[1] / total]
