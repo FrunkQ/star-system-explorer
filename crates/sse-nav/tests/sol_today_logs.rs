@@ -17,6 +17,7 @@ fn logs() -> BTreeMap<String, FlightLog> {
         .flat_map(|d| std::fs::read_dir(d).unwrap())
         .map(|e| e.unwrap().path())
         .filter(|p| p.extension().is_some_and(|x| x == "json"))
+        .filter(|p| p.file_name().is_some_and(|n| n != "index.json"))
         .collect();
     names.sort();
     let mut out = BTreeMap::new();
@@ -650,4 +651,32 @@ fn in_memory_names_only_what_two_sources_give() {
         .as_i64()
         .unwrap();
     assert_eq!(n, 0, "in space as Challenger flew");
+}
+
+/// `logs/index.json` lists every log once, with its path, GCAT id and span, so
+/// a viewer can fetch only the logs it needs (written by build_crews.py).
+#[test]
+fn the_log_index_lists_every_log() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today/logs");
+    let index: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(dir.join("index.json")).unwrap()).unwrap();
+    let all = logs();
+    let rows = index["logs"].as_array().unwrap();
+    assert_eq!(rows.len(), all.len(), "one row per log");
+    for r in rows {
+        let id = r["construct"].as_str().unwrap();
+        let l = &all[id];
+        let text = std::fs::read_to_string(dir.join(r["path"].as_str().unwrap())).unwrap();
+        assert!(text.contains(id), "{id}: path");
+        assert_eq!(
+            r["from_s"].as_i64().unwrap(),
+            l.pieces[0].from_s,
+            "{id}: from"
+        );
+        assert_eq!(
+            r["to_s"].as_i64(),
+            l.pieces.last().unwrap().to_s,
+            "{id}: to"
+        );
+    }
 }

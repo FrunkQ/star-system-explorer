@@ -83,10 +83,26 @@ UPDATED = next(line[len("# Updated "):].strip() for line in open(os.path.join(SR
 # ---------------------------------------------------------------- the pack's logs, by name
 LOGS = {}
 for f in glob.glob(os.path.join(PACK, "logs/**/*.json"), recursive=True):
+    if os.path.basename(f) == "index.json":
+        continue
     d = json.load(open(f, encoding="utf-8"))
     LOGS.setdefault(d.get("name", ""), d["construct"])
     LOGS.setdefault(d["construct"], d["construct"])
 BY_LOWER = {k.lower(): v for k, v in LOGS.items()}
+# logs/index.json: one row per log, so a viewer fetches only the logs it needs and finds a station from a
+# "docked to gcat:S16609" piece by its GCAT id.
+INDEX = []
+for f in sorted(glob.glob(os.path.join(PACK, "logs/**/*.json"), recursive=True)):
+    if os.path.basename(f) == "index.json":
+        continue
+    d = json.load(open(f, encoding="utf-8"))
+    INDEX.append({"construct": d["construct"], "path": os.path.relpath(f, os.path.join(PACK, "logs")).replace(os.sep, "/"),
+                  "name": d.get("name"), "gcat": d.get("gcat"), "from_s": d["pieces"][0]["from_s"],
+                  "to_s": d["pieces"][-1].get("to_s")})
+with open(os.path.join(PACK, "logs/index.json"), "w", encoding="utf-8") as fh:
+    json.dump({"about": "One row per flight log in this folder (written by scripts/spaceflight/build_crews.py).",
+               "logs": INDEX}, fh, ensure_ascii=False, indent=0)
+    fh.write("\n")
 # McDowell's station and craft names where the pack's logs are named otherwise (the showcase logs).
 ALIASES = {"ISS": "iss", "Skylab": "skylab-orbital-workshop", "Apollo 11 CSM": "apollo-11", "Apollo 11": "apollo-11",
            "Columbia (STS-1)": "sts-1-columbia", "LM 5": "apollo-11-eagle"}
