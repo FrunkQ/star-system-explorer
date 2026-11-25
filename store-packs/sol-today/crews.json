@@ -432,7 +432,7 @@
 },
 {
 "id": "AS-00025",
-"name": "Conrad, Charles 'Pete' Jr",
+"name": "Conrad, Charles 'Pete', Jr",
 "name_mcdowell": "Conrad, Charles 'Pete' Jr",
 "short": "Conrad, C.",
 "being": "human",
@@ -1839,7 +1839,7 @@
 },
 {
 "id": "AS-00119",
-"name": "Overmyer,  Robert Franklyn",
+"name": "Overmyer, Robert Franklyn",
 "name_mcdowell": "Overmyer,  Robert Franklyn",
 "short": "Overmyer, R.F.",
 "being": "human",
@@ -2767,7 +2767,7 @@
 },
 {
 "id": "AS-00179",
-"name": "Al-Saud,Sultan ibn Salman ibn Abdulaziz",
+"name": "Al-Saud, Sultan ibn Salman ibn Abdulaziz",
 "name_mcdowell": "Al-Saud,Sultan ibn Salman ibn Abdulaziz",
 "short": "Al-Saud, S.",
 "being": "human",
@@ -11590,7 +11590,8 @@
 },
 {
 "id": "TR-bondarenko",
-"name": "Bondarenko,Valentin Vasilevich 'Jr'",
+"name": "Bondarenko, Valentin Vasilevich 'Jr'",
+"name_mcdowell": "Bondarenko,Valentin Vasilevich 'Jr'",
 "short": "Bondarenko,V.V.",
 "being": "human",
 "citizen": "RU",
@@ -11626,6 +11627,7 @@
 {
 "id": "TR-freeman",
 "name": "Freeman, Theodore Cordy",
+"name_mcdowell": "Freeman, Theodore Cordy",
 "short": "Freeman, T.C.",
 "being": "human",
 "citizen": "US",
@@ -11661,6 +11663,7 @@
 {
 "id": "TR-see",
 "name": "See, Elliott McKay, Jr",
+"name_mcdowell": "See, Elliott McKay, Jr",
 "short": "See, E.M.",
 "being": "human",
 "citizen": "US",
@@ -11695,7 +11698,8 @@
 },
 {
 "id": "TR-bassett",
-"name": "Bassett, Charles Arthur,II",
+"name": "Bassett, Charles Arthur, II",
+"name_mcdowell": "Bassett, Charles Arthur,II",
 "short": "Bassett, C.A.",
 "being": "human",
 "citizen": "US",
@@ -11731,6 +11735,7 @@
 {
 "id": "TR-chaffee",
 "name": "Chaffee, Roger Bruce",
+"name_mcdowell": "Chaffee, Roger Bruce",
 "short": "Chaffee, R.B.",
 "being": "human",
 "citizen": "US",
@@ -11766,6 +11771,7 @@
 {
 "id": "TR-williams",
 "name": "Williams, Clifton Curtis, Jr",
+"name_mcdowell": "Williams, Clifton Curtis, Jr",
 "short": "Williams, C.C.",
 "being": "human",
 "citizen": "US",
@@ -11801,6 +11807,7 @@
 {
 "id": "TR-lawrence",
 "name": "Lawrence, Robert Henry, Jr",
+"name_mcdowell": "Lawrence, Robert Henry, Jr",
 "short": "Lawrence, R.H.",
 "being": "human",
 "citizen": "US",
@@ -11836,6 +11843,7 @@
 {
 "id": "TR-vozovikov",
 "name": "Vozovikov, Sergey Yurievich",
+"name_mcdowell": "Vozovikov, Sergey Yurievich",
 "short": "Vozovikov, S.Yu.",
 "being": "human",
 "citizen": "RU",
@@ -11871,6 +11879,7 @@
 {
 "id": "TR-alsbury",
 "name": "Alsbury, Michael Tyner",
+"name_mcdowell": "Alsbury, Michael Tyner",
 "short": "Alsbury, M.T.",
 "being": "human",
 "citizen": "US",

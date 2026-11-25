@@ -23,6 +23,8 @@ Who was in space at time t is every leg with from_s <= t < to_s.
 import glob, json, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import in_memory  # noqa: E402
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 PACK = os.path.join(ROOT, "store-packs/sol-today")
 SRC = sys.argv[1]
@@ -152,7 +154,7 @@ def target(event):
 people, index = [], {}
 for r in table("astro.tsv"):
     born, died = gdate(r["Born"]), gdate(r["Died"])
-    p = {"id": r["No"], "name": r["Name"].replace("*", ""), "name_mcdowell": r["Name"], "short": r["ShortName"], "being": "human", "citizen": r["Citizen"],
+    p = {"id": r["No"], "name": in_memory.tidy_name(r["Name"]), "name_mcdowell": r["Name"], "short": r["ShortName"], "being": "human", "citizen": r["Citizen"],
          "sources": {"mcdowell": r["No"]},
          "born": r["Born"] or None, "died": r["Died"] if r["Died"] and not r["Died"].startswith("-") else None,
          "died_in_flight": False}
@@ -166,7 +168,7 @@ for r in table("segments.tsv"):
     by_person.setdefault(r["ID"], []).append(r)
 for pid, rows in by_person.items():
     if pid not in index:  # the chimpanzees Ham and Enos (AA- numbers) fly in the segments but not in astro.tsv
-        index[pid] = {"id": pid, "name": rows[0]["Name"], "short": rows[0]["Name"],
+        index[pid] = {"id": pid, "name": in_memory.tidy_name(rows[0]["Name"]), "name_mcdowell": rows[0]["Name"], "short": rows[0]["Name"],
                       "being": "chimpanzee" if pid.startswith("AA-") else None, "citizen": None,
                       "sources": {"mcdowell": pid}, "born": None, "died": None, "died_in_flight": False}
         people.append(index[pid])

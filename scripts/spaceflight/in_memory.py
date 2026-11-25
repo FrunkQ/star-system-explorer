@@ -24,6 +24,13 @@ MCDOWELL = {"text": "J. C. McDowell, Jonathan's Space Report human spaceflight l
             "url": "https://planet4589.org/space/astro/web/index.html"}
 
 
+def tidy_name(raw):
+    """McDowell's name as shown: his "*" mark dropped, one space after each comma, single spaces, and a suffix (Jr,
+    II, III) set off by a comma. Spelling and nicknames are kept as he gives them (name_mcdowell keeps his form)."""
+    n = re.sub(r"\s+", " ", re.sub(r",\s*", ", ", raw.replace("*", ""))).strip()
+    return re.sub(r"(?<=[^,]) (Jr|II|III|IV)$", r", \1", n)
+
+
 def wd(qid):
     return {"text": "Wikidata %s" % qid, "url": "https://www.wikidata.org/wiki/%s" % qid}
 
@@ -178,7 +185,7 @@ def build(people, aboard, pack_dir, gdate, logs, src):
             pid = "TR-" + re.sub(r"[^a-z]+", "-", full.split(",")[0].lower()).strip("-")
             p = next((x for x in people if x["id"] == pid), None)
             if not p:
-                p = {"id": pid, "name": r["Name"], "short": r["ShortName"] or r["Name"], "being": "human",
+                p = {"id": pid, "name": tidy_name(r["Name"]), "name_mcdowell": r["Name"], "short": r["ShortName"] or r["Name"], "being": "human",
                      "citizen": r["Citizen"], "sources": {"mcdowell": "trainee list"}, "born": r["Born"] or None,
                      "died": r["Died"] or None, "died_in_flight": False}
                 people.append(p)
