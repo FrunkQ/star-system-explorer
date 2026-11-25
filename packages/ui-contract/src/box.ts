@@ -142,3 +142,13 @@ export function stabilityFor(checks: readonly StabilityCheck[], address: string)
   const worst = mine.reduce((w, c) => (c.level > w.level ? c : w));
   return { level: worst.level, word: LEVEL[Math.min(3, Math.max(0, worst.level))]!, says: worst.says, check: worst.check };
 }
+
+/**
+ * The outer wall on an orbit's size strip, from the kernel's stability checks: the widest orbit that lasts round its
+ * host (a moon round its planet against the star's pull; a world round one star of a pair). Null when no check gives one.
+ */
+export function outerWall(checks: readonly StabilityCheck[], address: string): { at: number; says: string } | null {
+  const c = checks.find((x) => (x.check === "moon" || x.check === "binary_one_star") && x.bodies?.[0] === address && typeof x.results?.limit === "number");
+  if (!c) return null;
+  return { at: c.results!.limit!, says: c.check === "moon" ? "the star pulls it away beyond" : "the other star throws it out beyond" };
+}

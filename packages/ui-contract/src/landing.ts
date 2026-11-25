@@ -1,4 +1,5 @@
 import type { LandingTime, Place } from "./place.ts";
+import { constant } from "./sheet.ts";
 
 // Getting down to a world and walking about (SL1; surfaces design 4.1, Alex 23 Nov 2026). The kernel's three
 // pieces, as plain data: the world's landmarks (its named landscape, `survey_surface`'s register), a descent
@@ -170,6 +171,8 @@ export interface LandingPose {
   yaw: number;
   pitch: number;
   drone: boolean;
+  /** The lander's lamps switched on (LR6); absent: off. */
+  lamps?: boolean;
 }
 
 /** One landing as the table watches it. */
@@ -215,7 +218,7 @@ export function landingShowOf(x: unknown): LandingShow | null {
 /** The pose rounded for the wire: centimetres and milliradians are far finer than a screen shows. */
 export function roundPose(p: LandingPose): LandingPose {
   const r = (v: number, k: number) => Math.round(v * k) / k;
-  return { x_m: r(p.x_m, 100), y_m: r(p.y_m, 100), yaw: r(p.yaw, 1000), pitch: r(p.pitch, 1000), drone: p.drone };
+  return { x_m: r(p.x_m, 100), y_m: r(p.y_m, 100), yaw: r(p.yaw, 1000), pitch: r(p.pitch, 1000), drone: p.drone, ...(p.lamps ? { lamps: true } : {}) };
 }
 
 /** What a player seat may read of one world while the table watches its landing (its own kernel, granted for that body only). */
@@ -311,4 +314,38 @@ export function groundGrant(shown: { scope: string; screen?: string; focus?: str
   if (l) return { system: l.system, body: l.body };
   if (shown.screen === ORBIT_SCREEN && shown.focus && known(shown.focus)) return { system: shown.scope, body: shown.focus };
   return null;
+}
+
+/**
+ * A lander's height from its mass (LR6): a body of a ship's bulk density, its height that of a cube of that volume,
+ * so a 15 t crew lander stands about 7 m and a 840 t far trader about 25 m. A picture choice for a ship with no model
+ * of its own (fudge register, "The lander on the ground"): the size, never the physics, comes from it.
+ */
+export const LANDER_BULK_KG_M3 = 50;
+export function landerHeightOf(mass_kg: number): number {
+  return mass_kg > 0 ? Math.max(2, Math.cbrt(mass_kg / LANDER_BULK_KG_M3)) : 0;
+}
+
+/**
+ * A lander's floodlamp, drawn as a glowing disc of radius a twenty-fifth of its height (renderer surface-lander.ts `LAMP_DISC`): the radiance of a lamp putting out
+ * `LAMP_W` of light (radiant) from that disc into a hemisphere (L = Φ / (π A)), in the surface's units, where the
+ * star's light at the top of the air is 1 (its irradiance there, L★ / 4π a²). Zero for an unknown star or orbit.
+ */
+export const LAMP_W = 500;
+/** A lamp's disc radius, in the lander's heights. */
+export const LAMP_DISC = 0.04;
+/**
+ * The lamps' light falling back on the hull and legs, as an irradiance over a lamp's radiance: a disc of radiance L
+ * and radius r puts out P = π² r² L, spread over a hemisphere at about a quarter of the height, E = P / (2π d²)
+ * (fudge register, "The lander on the ground": one spill for the whole ship, not each lamp's cone).
+ */
+export const LAMP_SPILL = (Math.PI * LAMP_DISC * LAMP_DISC) / (2 * 0.25 * 0.25);
+/** The hull's albedo (a light thermal finish), for the eye adapting to the lit hull. */
+export const LANDER_HULL_ALBEDO = 0.6;
+export function lampRadiance(height_m: number, host_lsun: number, orbit_m: number): number {
+  if (!(height_m > 0 && host_lsun > 0 && orbit_m > 0)) return 0;
+  const r = LAMP_DISC * height_m;
+  const L = LAMP_W / (Math.PI * Math.PI * r * r);
+  const E = (host_lsun * constant("L_sun")) / (4 * Math.PI * orbit_m * orbit_m);
+  return L / E;
 }

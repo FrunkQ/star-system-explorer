@@ -23,6 +23,8 @@ export interface Body3D {
   rings?: Ring3D[];
   /** Its axial tilt, radians, when known: the rings lie in its equator. */
   tilt_rad?: number;
+  /** Its mass, kg, when known: a ringed world's moons cut gaps and edges in its rings by it (renderer ring-structure.ts). */
+  mass_kg?: number;
 }
 
 export interface Ring3D {
@@ -39,8 +41,25 @@ export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => M
     .filter((s) => s === star || s.orbit)
     .map((s) => {
       const rings = scene.subjects.filter((r) => r.ring && r.parent === s.address).map((r) => ({ name: r.label, ...r.ring! }));
-      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}) };
+      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...massOf(s) };
     });
+}
+
+/** A subject's mass in kg from its facts (Earth masses for worlds, Sun masses for stars), when known. */
+function massOf(s: SceneSubject): { mass_kg?: number } {
+  const v = (field: string) => {
+    const f = s.facts.find((x) => x.field === field);
+    return typeof f?.value === "number" && f.value > 0 ? f.value : null;
+  };
+  const me = v("mass_earth");
+  if (me !== null) return { mass_kg: me * constant("M_earth") };
+  const ms = v("mass_sun");
+  return ms !== null ? { mass_kg: ms * constant("M_sun") } : {};
+}
+
+/** A world's moons as the rings need them: name, distance and mass, for those known. */
+export function moonsOf(bodies: readonly Body3D[], id: string): { name: string; a_m: number; mass_kg: number }[] {
+  return bodies.filter((b) => b.parent === id && b.a_m !== null && b.mass_kg !== undefined).map((b) => ({ name: b.name, a_m: b.a_m!, mass_kg: b.mass_kg! }));
 }
 
 /** A subject's surface temperature in kelvin: a star's effective, a world's surface, else its equilibrium. */

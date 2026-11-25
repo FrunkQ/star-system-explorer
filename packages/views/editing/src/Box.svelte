@@ -19,6 +19,7 @@
     sayNumber,
     solarDay,
     stabilityFor,
+    outerWall,
     trueAnomalyFrom,
     yearsToSeconds,
     type Depth,
@@ -121,6 +122,10 @@
     return isOrbit && a !== null && P ? (t: number) => a * (t / P) ** (2 / 3) : undefined;
   });
 
+  // The widest orbit that lasts round the host (ED7, design section 11: a moon's strip runs to the Hill limit), from the
+  // kernel's stability checks; dragging stops short of it, typing may pass.
+  const wall = $derived(isOrbit && checks && !ws.branch ? outerWall(checks, subject.address) : null);
+
   // Chips.
   const lean = $derived(handle.box?.parts.find((p) => p.part.field === "orbit.inclination"));
   const steps = $derived.by(() => {
@@ -185,7 +190,7 @@
 </script>
 
 <div class="box" data-box={handle.id}>
-  <Strip {handle} {reading} value={num(handle.part.field)} {dots} {cls} {depth} {editable} {ontry} fromTime={fromYear} oncommit={(si, how) => commit(handle, si, how)} {onclose} />
+  <Strip {handle} {reading} value={num(handle.part.field)} {dots} {cls} {depth} {editable} {ontry} walls={wall ? [wall] : []} fromTime={fromYear} oncommit={(si, how) => commit(handle, si, how)} {onclose} />
   {#if box.parts.length || box.chips.length}
     <div class="parts">
       {#each box.parts as p (p.id)}

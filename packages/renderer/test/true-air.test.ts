@@ -188,3 +188,19 @@ test("the one True door carries a giant's face by its winds, and the size compar
   assert.equal(bodySeconds(24, SECONDS_PER_TURN, "true", 9.9), 9.9 * 3600);
   assert.equal(bodySeconds(undefined, 10, "true", 9.9), 0);
 });
+
+test("a world's clouds come alone beside its ground, and laid together they make the face", () => {
+  const ground = { width: 16, height: 8, data: new Uint8Array(16 * 8 * 4).fill(100), mean: [100, 100, 100] as [number, number, number] };
+  const clear = withAir(ground, tiles(() => [layer("water", 0, 0)]), sheetColours(SHEET));
+  assert.equal(clear.ground, ground, "the ground is the ground's own picture, faces and all");
+  assert.equal(clear.clouds!.data[3], 0, "clear air: the clouds cover nothing");
+  const cloudy = withAir(ground, tiles(() => [layer("water", 0.95, 40)]), sheetColours(SHEET));
+  const a = cloudy.clouds!.data[3]! / 255;
+  assert.ok(a > 0.6, `thick cloud covers most: ${a}`);
+  // Premultiplied: the clouds' own light plus what of the ground shows through is close to the face (the adding
+  // method lets a little more of the ground's light back out between the layers).
+  const lin = (v: number) => ((v / 255) <= 0.04045 ? v / 255 / 12.92 : Math.pow((v / 255 + 0.055) / 1.055, 2.4));
+  const over = lin(cloudy.clouds!.data[0]!) + (1 - a) * lin(100);
+  const face = lin(cloudy.tex.data[0]!);
+  assert.ok(Math.abs(over - face) < 0.05, `over ${over} face ${face}`);
+});
