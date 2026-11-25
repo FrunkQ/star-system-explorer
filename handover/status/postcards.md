@@ -1,7 +1,7 @@
 # Status: postcards and hold backdrops (track PC)
 
 Owner thread: "Design saved views and hold backdrops" (Fable, design only, from 25 Nov 2026). No builder thread yet: to be opened as "Build postcards and hold backdrops" (Opus) once Alex accepts the design.
-Design: `design/SSE4-postcards-design.md`, **PROPOSED 25 Nov 2026, not accepted**. Twelve questions for Alex in its section 12. Mockup in project files at `sse4/handover-screens/PC-screens/`.
+Design: `design/SSE4-postcards-design.md`, **PROPOSED 25 Nov 2026**. Alex 01:08 UTC: "postcards - amazing idea", with three rulings (its section 12A: always a free selection in the shop; the card names the packs needed; a shop postcard shows only content in the game or on the store). Still open: questions 2 to 9, 11, 12 and new 13. Mockup in project files at `sse4/handover-screens/PC-screens/`.
 
 Nothing is built, and nothing is to be built until Alex answers. PC is a code only, never shown in the product.
 

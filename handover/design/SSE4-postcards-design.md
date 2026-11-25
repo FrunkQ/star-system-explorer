@@ -1,6 +1,6 @@
 # SSE4: postcards and hold backdrops (track PC)
 
-Status: **PROPOSED, 25 Nov 2026. Not accepted. Nothing here is built and no builder starts on it without Alex's yes** (questions in section 12). Design and mockup only. PC is a code only and is never shown in the product.
+Status: **PROPOSED, 25 Nov 2026; the idea and the name are welcomed by Alex (01:08 UTC: "postcards - amazing idea"), with three rulings in section 12A, which wins where it differs from the rest. Not yet accepted in full: questions 2 to 9, 11 and 12 of section 12 are still open, and no builder starts until he answers them.** Design and mockup only. PC is a code only and is never shown in the product.
 
 Mockup, clickable: project files `sse4/handover-screens/PC-screens/postcards-mockup.html`, with desktop and phone screenshots beside it and its source in `PC-screens/source/`. The pictures in the mockup are painted stand-ins, not SSE4 output; each says so.
 
@@ -170,6 +170,19 @@ PC1, PC3 for the globe, and PC5 can start on main today. Only PC2 and PC8 wait o
 10. **Explorers gets a Postcards shelf with moderated stamps and "Offer for the shipped set"** (your own yes needed: a new kind and stored pictures). Recommend: yes, after PC1 to PC6 work without it.
 11. **No filters or effects on a postcard beyond the role's look: framing, band, exposure and date only.** Recommend: yes ("lean into the physics, never fake it").
 12. **A postcard on the start sheet as its backdrop, changing each visit.** Recommend: later, once the set exists.
+
+## 12A. Alex's rulings, 25 Nov 2026 01:08 UTC
+
+His words: "postcards - amazing idea - always a selection free in the shop - it will tell the user packs it needs to download to replicate - so really can only show content in game or on the store".
+
+1. **The name is postcard** (question 1: yes).
+2. **There is always a free selection of postcards in the shop** (Explorers). This answers question 10 in direction: the shelf is wanted, and it is never empty and never paid. The Explorers work itself (a new kind, stored stamps) is still built by the Explorers owner as its own package, PC8.
+3. **A postcard tells the user which packs it needs to download to replicate it.** On the back, "Travels as" becomes a list of the packs needed, each with its state on this device (have it, free to get, paid) and a "Get" press that goes to that pack in the shop. A postcard of a paid pack's world can sit in the free selection as that pack's shop window: the stamp shows the picture, and the live still and "Go there" need the pack.
+4. **So a postcard on the shop shows only content that is in the game or on the store.** A published postcard travels as an address plus named packs, never as a carried clip: everything it shows must come from the base game or from something published on Explorers (a pack, or a published campaign or system). Someone whose picture is of their own authored world publishes that world first, and the postcard names it. The site refuses a postcard whose packs or world it does not hold, and says which.
+
+What this changes above: section 4's "clip" case and section 7's file with a clip are **not for the shop**. Whether a clip-carrying postcard is still allowed directly between friends (copy, file) is new question 13. Section 9's moderation gets simpler: the only new thing the site stores is the stamp.
+
+13. **New question: may a postcard still carry a clip of an unpublished authored world when sent directly to a friend (copy or file, never the shop)?** Recommend: yes. It is the same act as pasting a clip to a friend today, through what the maker's seat can see, and it keeps "send me that view" working for a GM's private world. If no, every postcard is an address plus packs and `world.how: "clip"` is dropped.
 
 ## 13. Standing rulings, checked
 
