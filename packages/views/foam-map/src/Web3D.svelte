@@ -10,7 +10,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, cubeEdges, SPACE_CSS, starCss, startGpu, webGlow, webLights, webParcels, WEB_DARK_GLOW, WEB_KINDS, WEB_LIGHT_K, type Gpu, type GpuDots, type Vec3, type WebKind } from "../../../renderer/src/index.ts";
+  import { basis, cubeEdges, mixCss, SPACE_CSS, starCss, startGpu, webGlow, webLights, webMarks, webParcelLevels, WEB_DARK_GLOW, WEB_LEVEL_INK, WEB_LIGHT_K, type Gpu, type GpuDots, type Vec3, type WebKind } from "../../../renderer/src/index.ts";
   import { SEEN_ELEVATION, sayNumber, type SeenFrom, type WebCube, type WebGalaxies } from "../../../ui-contract/src/index.ts";
 
   let {
@@ -39,7 +39,9 @@
   } = $props();
 
   const isTrue = $derived(look === "true");
-  const parcels = $derived(webParcels(cube.volume, shrink));
+  const levels = $derived(webParcelLevels(cube.volume, shrink));
+  const marks = $derived(!isTrue && galaxies ? webMarks(galaxies.galaxies, cube.volume, shrink) : []);
+  const marked = $derived(marks.reduce((a, m) => a + m.points.length, 0));
   const half = $derived(cube.volume.extent / 2);
   const lights = $derived(isTrue && galaxies ? webLights(galaxies.galaxies, cube.volume, shrink) : null);
   const lit = $derived(lights ? lights.reduce((a, g) => a + g.points.length, 0) : 0);
@@ -110,13 +112,11 @@
   });
 
   const LIGHT = starCss(WEB_LIGHT_K);
-  const sciMass = (m: number) => {
-    const e = Math.floor(Math.log10(m));
-    const f = m / 10 ** e;
-    return `${Math.abs(f - 1) < 0.05 ? "" : `${f.toFixed(1)} × `}10${String(e).replace(/./g, (d) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[Number(d)]!)}`;
-  };
-  const total = $derived(WEB_KINDS.reduce((a, k) => a + parcels[k].length, 0));
+  const sciMass = (m: number) => sayNumber(m, 2);
+  const total = $derived(levels.reduce((a, g) => a + g.points.length, 0));
 
+  // What is drawn, as layers of alike dots in display units: the GPU and the canvas draw the same list.
+  type Layer = { points: Vec3[]; colour: string; glow?: number; size: number };
   $effect(() => {
     if (w === 0 || h === 0) return;
     const colours: Record<WebKind, string> = {
@@ -128,16 +128,21 @@
     const ground = token("--sse-ground", "--sse-ground-raised");
     const edgeColour = isTrue ? token("--sse-ink-faint", "--sse-ink-muted") : token("--sse-rule", "--sse-ink-faint");
     const hs = half * shrink;
+    const layers: Layer[] = [];
+    if (isTrue) {
+      if (lights) {
+        if (hud) for (const g of levels) layers.push({ points: g.points, colour: colours.sheet, glow: WEB_DARK_GLOW * WEB_LEVEL_INK[g.level]!, size: 1 });
+        for (const g of lights) layers.push({ points: g.points, colour: starCss(g.colour_k), glow: g.glow, size: g.size });
+      } else for (const g of levels) layers.push({ points: g.points, colour: LIGHT, glow: webGlow(total) * (0.4 + 0.6 * WEB_LEVEL_INK[g.level]!), size: 1.5 });
+    } else {
+      // Fainter to stronger, so the dense are drawn over the sparse.
+      for (const g of [...levels].sort((x, y) => x.level - y.level))
+        layers.push({ points: g.points, colour: mixCss(ground, colours[g.kind], WEB_LEVEL_INK[g.level]!), size: (g.level >= 2 ? 1.5 : 1) + (g.kind === "knot" ? 1 : 0) });
+      for (const m of marks) layers.push({ points: m.points, colour: m.name === "galaxy" ? colours.filament : colours.knot, size: m.size });
+    }
     if (using === "gpu" && gpu) {
       const { f, u } = basis(eye, [0, 0, 0]);
-      const dots: GpuDots[] = lights
-        ? [
-            ...(hud ? [{ points: WEB_KINDS.flatMap((k) => parcels[k].map(rel)), colour: colours.sheet, glow: WEB_DARK_GLOW, size: 1 }] : []),
-            ...lights.map((g) => ({ points: g.points.map(rel), colour: starCss(g.colour_k), glow: g.glow, size: g.size })),
-          ]
-        : isTrue
-        ? [{ points: WEB_KINDS.flatMap((k) => parcels[k].map(rel)), colour: LIGHT, glow: webGlow(total), size: 1.5 }]
-        : WEB_KINDS.map((k) => ({ points: parcels[k].map(rel), colour: colours[k], size: k === "knot" ? 2.5 : k === "filament" ? 1.5 : 1 }));
+      const dots: GpuDots[] = layers.map((l) => ({ points: l.points.map(rel), colour: l.colour, size: l.size, ...(l.glow !== undefined ? { glow: l.glow } : {}) }));
       gpu.draw({
         items: [],
         rings: hud ? cubeEdges(hs).map((e) => ({ points: e.map(rel), colour: edgeColour })) : [],
@@ -151,7 +156,7 @@
         ground,
       });
     } else if (using === "canvas" && canvas2d) {
-      // No GPU: the same parcels projected by hand.
+      // No GPU: the same layers projected by hand.
       const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
       canvas2d.width = Math.round(w * dpr);
       canvas2d.height = Math.round(h * dpr);
@@ -168,30 +173,13 @@
         if (d <= 0) return null;
         return [w / 2 + (k * (q[0] * r[0] + q[1] * r[1] + q[2] * r[2])) / d, h / 2 - (k * (q[0] * u[0] + q[1] * u[1] + q[2] * u[2])) / d] as const;
       };
-      if (isTrue) g.globalCompositeOperation = "lighter";
-      const spot = (p: Vec3, s: number) => {
-        const xy = put(p);
-        if (xy) g.fillRect(xy[0] - s / 2, xy[1] - s / 2, s, s);
-      };
-      if (lights) {
-        if (hud) {
-          g.fillStyle = colours.sheet;
-          g.globalAlpha = WEB_DARK_GLOW;
-          for (const kind of WEB_KINDS) for (const p of parcels[kind]) spot(p, 1);
-        }
-        for (const grp of lights) {
-          g.fillStyle = starCss(grp.colour_k);
-          g.globalAlpha = grp.glow;
-          for (const p of grp.points) spot(p, grp.size);
-        }
-      }
-      for (const kind of lights ? [] : WEB_KINDS) {
-        g.fillStyle = isTrue ? LIGHT : colours[kind];
-        g.globalAlpha = isTrue ? webGlow(total) : 1;
-        const s = isTrue ? 1.5 : kind === "knot" ? 2.5 : kind === "filament" ? 1.5 : 1;
-        for (const p of parcels[kind]) {
+      for (const l of layers) {
+        g.globalCompositeOperation = l.glow !== undefined ? "lighter" : "source-over";
+        g.globalAlpha = l.glow ?? 1;
+        g.fillStyle = l.colour;
+        for (const p of l.points) {
           const xy = put(p);
-          if (xy) g.fillRect(xy[0] - s / 2, xy[1] - s / 2, s, s);
+          if (xy) g.fillRect(xy[0] - l.size / 2, xy[1] - l.size / 2, l.size, l.size);
         }
       }
       g.globalAlpha = 1;
@@ -269,6 +257,7 @@
   data-look={isTrue ? "true" : "3d"}
   data-parcels={total}
   data-galaxies={lit}
+  data-marks={marked}
   data-spinning={spinning ? "yes" : "no"}
 >
   <div class="stage" bind:clientWidth={w} bind:clientHeight={h}>
@@ -281,8 +270,8 @@
     </div>
   </div>
   <p class="note">
-    <span>Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}: {sayNumber(total, 3, { decimals: 0 })} parcels of matter, each the same mass, moved from a grid {cube.volume.n} a side by the field smoothed over {sayNumber(cube.volume.smoothing_mpc, 3, { decimals: 0 })} Mpc.</span>
-    {#if isTrue && lights}<span>Light: {sayNumber(lit, 3, { decimals: 0 })} galaxies, the haloes above {sciMass(galaxies?.galaxy_floor_msun ?? 0)} solar masses, each where its matter has been carried and shining by its own stars: old stars warm, young ones blue. The gas and dark matter between them are dark{hud ? " (HUD shows the dark matter faintly)" : ""}.</span>{:else if isTrue}<span>Lighting the galaxies… for now every parcel shines alike, one colour, old starlight at about {sayNumber(WEB_LIGHT_K, 3, { decimals: 0 })} K.</span>{:else}<span>Faint: voids. Grey: sheets. Ink: filaments. Accent: knots, where clusters grow.</span>{/if}
+    <span>Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}: {sayNumber(total, 6)} parcels of matter, each the same mass, moved from a grid {cube.volume.n} a side by the field smoothed over {sayNumber(cube.volume.smoothing_mpc, 2)} Mpc.</span>
+    {#if isTrue && lights}<span>Light: {sayNumber(lit, 6)} galaxies, the haloes above {sciMass(galaxies?.galaxy_floor_msun ?? 0)} solar masses, each where its matter has been carried and shining by its own stars: old stars warm, young ones blue. The gas and dark matter between them are dark{hud ? " (HUD shows the dark matter faintly)" : ""}.</span>{:else if isTrue}<span>Lighting the galaxies… for now every parcel shines alike, one colour, old starlight at about {sayNumber(WEB_LIGHT_K, 2)} K.</span>{:else}<span>Faint: voids. Grey: sheets. Ink: filaments. Accent: knots, where clusters grow. Each dot is inked by how crowded its matter is today, so the dense web stands out of the thin voids.{marked ? ` Bigger dots: ${sayNumber(marked, 6)} big galaxies, groups and clusters (haloes over 10¹² solar masses).` : ""}</span>{/if}
   </p>
 </div>
 
