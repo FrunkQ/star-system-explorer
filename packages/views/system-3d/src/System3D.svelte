@@ -219,7 +219,8 @@
       requestAnimationFrame(step);
     });
   }
-  const closeDist = (id: string) => (hasChildren(bodies, id) ? 26 : 9);
+  // A world with no moons fills more of the view in True, where its face is the point (about 60% of the height).
+  const closeDist = (id: string) => (hasChildren(bodies, id) ? 26 : isTrue ? 2.2 : 9);
   async function flyTo(id: string) {
     onselect(id);
     if (id === centreId) return;
@@ -338,7 +339,12 @@
   function lightFor(): GpuLight {
     const c = lay!.centre;
     if (c.parent === null) return { at: relOf(c.id) };
-    const a = (c.phase_deg * Math.PI) / 180;
+    // The star lies opposite the world that circles it, whatever frame inside that world's family is shown: a moon is
+    // lit from where its planet's star is, not from its own place round the planet (the Moon was lit from behind the
+    // camera, evenly, with no day and night).
+    let top = c;
+    for (let up = byId(top.parent); up && up.parent !== null; up = byId(up.parent)) top = up;
+    const a = (top.phase_deg * Math.PI) / 180;
     return { from: [-Math.cos(a), -Math.sin(a), 0.15] };
   }
 
