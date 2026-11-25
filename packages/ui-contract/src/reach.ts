@@ -63,6 +63,19 @@ export async function reachIt(session: ViewSession, ask: ReachAsk): Promise<Reac
       if (fb === null) fb = await at((b = mid(mid(a, b), b)));
     }
     if (fa === null || fb === null) return { ok: false, why: "the kernel could not work the result out at the ends of the range", tries };
+    // Both ends on one side: the result may cross and come back inside the range (a dynamo runs only in a window of
+    // masses), so look at a few points between them, from the low end up, before saying no value gets there.
+    if ((fa - ask.target) * (fb - ask.target) > 0) {
+      const scan = 7;
+      for (let k = 1; k <= scan; k++) {
+        const x = ask.log ? a * Math.pow(b / a, k / (scan + 1)) : a + ((b - a) * k) / (scan + 1);
+        const fx = await at(x);
+        if (fx !== null && (fa - ask.target) * (fx - ask.target) <= 0) {
+          [b, fb] = [x, fx];
+          break;
+        }
+      }
+    }
     if ((fa - ask.target) * (fb - ask.target) > 0) {
       const closest = Math.abs(fa - ask.target) < Math.abs(fb - ask.target) ? { value: a, got: fa } : { value: b, got: fb };
       return { ok: false, why: "no value in the range gets there", closest, tries };

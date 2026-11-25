@@ -167,6 +167,8 @@ export interface ViewSession {
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
   /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. */
   surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json; kind?: string } | { ok: false; code: string; message: string }>;
+  /** A catalogued Solar System body's six level-0 tiles by its base-sol id (`mars`, `moon`, ...), with no campaign: for the size comparison and other reference views. Any seat may read it: these are public facts. */
+  referenceTiles(body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }>;
   /** Tiles of a world at any level (S1, through resolved_system; at most 24 a call), with the kernel's refusals; GM only. The ground round a landing site (SL1). */
   surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }>;
   /** A world's landmarks (SL1): its named landscape from a quick survey (`survey_surface`'s register, the same world the globe shows); GM only. */
@@ -713,6 +715,14 @@ export class Session implements ViewSession {
     // The world's whole surface record rides along (its plumes, for True: renderer plumes.ts). Its `kind` is the outermost
     // layer (solid, ice-shell, ocean, lava, cloud-deck, small-body): a cloud deck has no ground to draw.
     return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: record?.regime_label, ...(record ? { record: record as unknown as Json } : {}), ...(record?.kind ? { kind: record.kind } : {}) };
+  }
+
+  async referenceTiles(body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }> {
+    const tiles = [0, 1, 2, 3, 4, 5].map((face) => ({ face, level: 0, x: 0, y: 0 }));
+    const r = await this.#call({ op: "reference_tiles", body, tiles });
+    if (r.type !== "reference_tiles") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const x = r as unknown as { tiles?: SurfaceTile[]; refused?: Json[]; regime_label?: string };
+    return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: x.regime_label };
   }
 
   async surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }> {
