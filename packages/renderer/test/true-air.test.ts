@@ -2,7 +2,7 @@
 // rocky world's clouds and haze lie over its ground.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { flowFace, nameKey, sheetColours, trueGiant, withAir, type SheetSubstance } from "../src/true-air.ts";
+import { albedoOfColour, CHANNEL_NM, deepAirOf, deepReflectance, flowFace, nameKey, sheetColours, trueGiant, withAir, type SheetSubstance } from "../src/true-air.ts";
 import type { TrueTexture } from "../src/true-look.ts";
 import type { WeatherCell, WeatherTile } from "../src/weather.ts";
 
@@ -78,13 +78,29 @@ test("a haze is laid over the ground in its own colour, and clear air leaves the
 test("a giant's deep air below thin decks sends light back, not black; an absorbing haze takes its colour's complement out", () => {
   const thin = trueGiant(tiles(() => [layer("ammonia ice", 0.3, 0.5)]), sheetColours(SHEET), 16, 8)!;
   assert.ok(thin.tex.data[1]! > 200, `deep air bright: ${thin.tex.data[1]}`);
-  assert.ok(thin.said.some((s) => s.includes("methane")), thin.said.join(" "));
+  assert.ok(thin.said.some((s) => s.includes("gases are not known")), thin.said.join(" "));
   // Over a grey ground, a thick orange haze leaves less blue than a white one of the same depth.
   const ground = { width: 16, height: 8, data: new Uint8Array(16 * 8 * 4).fill(150), mean: [150, 150, 150] as [number, number, number] };
   const hz = (colour: [number, number, number]) => withAir(ground, tiles(() => [layer("water", 0, 0)], () => [{ kind: "haze", optical_depth: 2, colour }]), sheetColours(SHEET)).tex.data;
   const white = hz([1, 1, 1]);
   const orange = hz([0.85, 0.55, 0.25]);
   assert.ok(orange[2]! < white[2]! - 60, `blue taken out: ${orange[2]} vs ${white[2]}`);
+});
+
+test("a giant's deep air (TA4): Rayleigh scattering with methane eating the red is cyan; a thick layer's colour reads back as its albedo", () => {
+  // Hydrogen-like Rayleigh cross-sections (falling as the fourth power of wavelength) and a methane-like absorption
+  // that is strong in the red channel and weak elsewhere: the deep air comes out blue-green, brightest in the blue.
+  const nm = CHANNEL_NM.flat();
+  const ray = nm.map((l) => 1e-31 * (550 / l) ** 4);
+  const ch4 = nm.map((l) => (l >= 600 ? 3e-31 : 1e-34));
+  const deep = deepAirOf(ray, ch4);
+  assert.ok(deep[2] > deep[1] && deep[1] > deep[0] && deep[0] < 0.5, `cyan: ${deep}`);
+  assert.deepEqual(deepAirOf(ray, []), [1, 1, 1], "no absorber: all the light comes back");
+  const giant = trueGiant(tiles(() => [layer("ammonia ice", 0.3, 0.5)]), sheetColours(SHEET), 16, 8, null, deep)!;
+  assert.ok(giant.tex.data[2]! > giant.tex.data[0]! + 30, `blue over red: ${[...giant.tex.data.slice(0, 3)]}`);
+  assert.ok(giant.said.some((s) => s.includes("methane")), giant.said.join(" "));
+  // A colour is how a thick layer looks: its albedo's deep reflectance gives the colour back.
+  for (const c of [0.13, 0.27, 0.55, 0.95]) assert.ok(Math.abs(deepReflectance(albedoOfColour(c)) - c) < 1e-9, `${c}`);
 });
 
 test("a world with no weather cells keeps its ground; a giant with none has no face", () => {
