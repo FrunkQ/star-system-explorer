@@ -49,7 +49,7 @@ CODE_EXT = {".rs", ".ts", ".js", ".mjs", ".svelte", ".json", ".py"}
 UP = "A-ZÀ-ÖØ-ÞĀ-ſ"
 LO = "a-zß-öø-ÿĀ-ſ"
 # A surname: capitalised, may carry a particle (van, de, von, Mc, O') or a hyphen.
-SUR = rf"(?:(?:van der |van den |van |von |de la |de |del |le |du |da |dos |di |ten |ter )?(?:O'|O’|Mc|Mac|D'|d')?[{UP}][{LO}]+(?:[-‐][{UP}][{LO}]+)?)"
+SUR = rf"(?:(?:van der |van den |van |von |de la |de |del |le |du |da |dos |di |ten |ter )?(?:O'|O’|Mc|Mac|D'|d')?[{UP}][{LO}]+(?:[{UP}][{LO}]{{2,}})?(?:[-‐][{UP}][{LO}]+)?)"
 INIT = rf"(?:,?\s(?:[{UP}]\.(?:[\s-]?[{UP}]\.)*))"
 AUTH = rf"{SUR}(?:{INIT})?"
 SEP = r"(?:,\s(?:and\s|&\s)?|\s(?:and|&)\s)"

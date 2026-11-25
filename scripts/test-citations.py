@@ -24,6 +24,7 @@ CASES = [
     ("Sánchez-Lavega et al. 2011, Nature 475, 71", ["sanchezlavega2011"]),
     ("O'Neill, Emanuel and Flierl 2015", ["oneill2015"]),
     ("Kopparapu et al. 2013a and 2013b", ["kopparapu2013a"]),
+    ("LaRowe, D. E. and Amend, J. P. 2015, Frontiers", ["larowe2015"]),
     # Not citations: dates, launch designations, missions, months, journals.
     ("launched 1961 Feb 12; Venera (1961-003A)", []),
     ("Horizons, 2004-07-02", []),

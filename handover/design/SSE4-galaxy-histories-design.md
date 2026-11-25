@@ -203,7 +203,7 @@ Proposed: one list. The **major mergers are pins** that claim their share of the
 
 ### 7.2 Each progenitor's own galaxy
 
-Already built: Y4 part 2 grows each satellite's galaxy with G3 on a halo that had its mass at infall. That run gives stars, gas, metals, a star formation history and an **age to metallicity track**. The track is what makes one swallowed galaxy's stars and clusters tell apart from another's. It is also how the real family tree was worked out (Kruijssen et al. 2020, doi:10.1093/mnras/staa2452; Aguado-Agelet et al. 2026, arXiv:2608.27611).
+Already built: Y4 part 2 grows each satellite's galaxy with G3 on a halo that had its mass at infall. That run gives stars, gas, metals, a star formation history and an **age to metallicity track**. The track is what makes one swallowed galaxy's stars and clusters tell apart from another's. It is also how the real family tree was worked out (Kruijssen et al. 2020, doi:10.1093/mnras/staa2452; Aguado-Agelet et al. 2026 (A&A, doi:10.1051/0004-6361/202661469; the arXiv id 2608.27611 unconfirmed), arXiv:2608.27611).
 
 Cost is about 2 ms a galaxy (Y4 log). For the unseen thousands, the Sketch rung gives an envelope instead (stellar mass from halo mass with its scatter, metals from stellar mass; Kirby et al. 2013, doi:10.1088/0004-637X/779/2/102), shown as "about", and looking fixes it once.
 
