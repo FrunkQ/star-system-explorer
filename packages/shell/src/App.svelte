@@ -89,7 +89,6 @@
   import { RENDER_SCREENS } from "./screens.renderer.ts";
   import { RUN_SCREENS } from "./run/screens.run.ts";
   import { ROLLCALL_SCREENS } from "./rollcall/screens.rollcall.svelte.ts";
-  import { frontDoorGives } from "./rollcall/feed.ts";
   import Bookmarks from "./run/Bookmarks.svelte";
   import OnAir from "./run/OnAir.svelte";
   import { tablePort } from "./run/table-port.ts";
@@ -173,8 +172,7 @@
     void ws.revision;
     const st = session?.stack();
     const packs = st ? [...st.base, ...(st.campaign ? [st.campaign] : [])] : [];
-    // The Roll call front door (`?spaceflight=<folder>`, track SH) gives the crews its rail entry needs.
-    return (need: string) => stackProvides(packs, need) || frontDoorGives(need);
+    return (need: string) => stackProvides(packs, need);
   });
   const rail = $derived(railOf(SCREENS, railScale, stackHas));
   // A screen opened from elsewhere (a why?'s "Open the flow", a key) takes the rail to a scale that lists it.

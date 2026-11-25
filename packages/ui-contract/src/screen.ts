@@ -61,8 +61,12 @@ export type RailScale = (typeof RAIL_SCALES)[number];
 export const RAIL_GROUPS = ["look", "find", "world", "travel", "understand", "table", "workshop"] as const;
 export type RailGroup = (typeof RAIL_GROUPS)[number];
 export const RAIL_GROUP_WORDS: Record<RailGroup, string> = { look: "Look", find: "Find", world: "This world", travel: "Travel", understand: "Understand", table: "Table", workshop: "Workshop" };
-/** At most this many entries at one scale (design 3.4 rule 4). */
-export const RAIL_MAX = 10;
+/**
+ * At most this many entries at one scale (design 3.4 rule 4: ten). Eleven since Roll call (track SH): Alex, 25 Nov 2026
+ * 01:59 UTC, "we can overpack the UI a bit for now - there will have to be a rationalisation once everything is in
+ * place". Back to ten when the rails are rationalised.
+ */
+export const RAIL_MAX = 11;
 
 export interface RailEntry {
   scale: RailScale;

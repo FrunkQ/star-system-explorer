@@ -24,14 +24,13 @@ Data: `store-packs/sol-today/crews.json` from RS9 part 1 (PR 506, thread "Build 
   press to type one; the sentence; ‹ Event, ‹ Day, Day ›, Event ›; the roster; "Also in flight" when every log is at
   hand; the credit), `feed.ts` (where the people and logs come from), `screens.rollcall.svelte.ts` (view
   `sse.view.roll-call`, screen `rollcall`), document `documents/rollcall.gm.json` (chart, roll call, ruler; rail entry
-  system / travel / "Roll call", `needs: ["crews"]`).
+  system / travel / "Roll call", on every campaign).
   - **The front door, part 1 (SH8):** `?spaceflight=<folder URL>` names a "Sol today" folder (crews.json, pack.json,
     logs/). The pack stays on Explorers (Alex, 23 Nov); the feed fetches crews.json and pack.json once, then only the
     logs of the day's crewed craft and what they dock to. A pack opened on a day outside its span starts on its latest
     day. Without the parameter, Roll call reads the open campaign.
-  - Shared shell edits (one line each, following the Run desk's pattern): `App.svelte` spreads `ROLLCALL_SCREENS` and
-    lets the front door's folder satisfy the rail's `crews` need (`frontDoorGives`); `registry.ts` spreads
-    `ROLLCALL_VIEWS`.
+  - Shared shell edits (one line each, following the Run desk's pattern): `App.svelte` spreads `ROLLCALL_SCREENS`;
+    `registry.ts` spreads `ROLLCALL_VIEWS`.
 
 ## Checks
 
@@ -41,9 +40,8 @@ Data: `store-packs/sol-today/crews.json` from RS9 part 1 (PR 506, thread "Build 
   counts the same people. No figure from a book is pinned (design 4.6).
 - `tests/ui/rollcall.e2e.mjs`: serves `store-packs/sol-today` at `/sol-today/` as Explorers would, opens Roll call from
   the rail, types 20 July 1969, steps by day and event, reads an empty day before 1961, refuses a date it cannot read,
-  and fits 390 px. It exits quietly while crews.json is not in the pack. Run locally in chromium (passes). **Not yet a
-  CI line:** adding it to `.github/workflows/ci.yml` was stopped by a session permission check, which needs Alex's own
-  yes. The line is `- run: node tests/ui/rollcall.e2e.mjs chromium firefox --screens ui-screens` after `time.e2e.mjs`.
+  and fits 390 px. It exits quietly while crews.json is not in the pack. Run locally in chromium (passes). A CI line
+  since Alex's yes (25 Nov 01:59 UTC), after `time.e2e.mjs`.
 - `tests/ui/constructs.test.ts` rail bound now includes the rollcall document.
 - Screenshots: project files `sse4/handover-screens/SH-screens/SH2-*.png` (not in the repo).
 - No golden change. Nothing here feeds physics or the state hash.
@@ -55,10 +53,10 @@ with no log piece at the clock's moment is placed at another moment of its day.
 
 ## Open and next
 
-1. **Rail room (question for Alex):** the system rail is full at ten with Ships and stations (RAIL_MAX). Roll call's
-   entry therefore `needs: ["crews"]` and shows only when a pack with crews is stacked or the front door names one; a
-   campaign with its own flight logs does not yet see it on the rail. Recommended: keep it so until the rail owner (thread "Build object selector and menus") folds two
-   travel entries together.
+1. **Rail room** (Alex, 25 Nov 01:59 UTC: "we can overpack the UI a bit for now - there will have to be a
+   rationalisation once everything is in place"): Roll call is on the system rail for every campaign, so `RAIL_MAX` is
+   11 for now (`ui-contract/screen.ts`, with his words). A campaign with no flights reads "No flights are recorded here
+   yet." At the rationalisation: back to ten.
 2. Campaign mode reads flight logs through `session.flightLog`, which arrives with PR 452 (travel thread); until then a
    campaign's people are found but nobody is "in flight".
 3. Pack mode cannot count "Also in flight" (it fetches only the crewed craft's logs). Asked of the pack thread:

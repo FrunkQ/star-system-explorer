@@ -31,7 +31,6 @@
       "group": "travel",
       "label": "Roll call",
       "order": 4,
-      "needs": ["crews"],
       "hint": "Who was in space on any day, aboard what, and where"
     }
   ]

@@ -35,11 +35,6 @@ export function packFolder(): string | null {
   }
 }
 
-/** What the front door's folder gives a rail entry that `needs` it: the crews, when `?spaceflight=` names a folder. */
-export function frontDoorGives(need: string): boolean {
-  return need === "crews" && packFolder() !== null;
-}
-
 async function getJson(url: string): Promise<Json | null> {
   try {
     const r = await fetch(url);

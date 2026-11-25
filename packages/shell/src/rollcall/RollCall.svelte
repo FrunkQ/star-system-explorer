@@ -118,7 +118,9 @@
       <button onclick={() => event(1)} data-rollcall-step="event-on">Event ›</button>
     </div>
 
-    {#if roll?.empty}
+    {#if !feed.ix.stays.length}
+      <p class="words" data-rollcall-none>No flights are recorded here yet. People aboard a craft with a flight log are listed here on the days they flew.</p>
+    {:else if roll?.empty}
       <p class="words" data-rollcall-empty>
         {#if roll.empty.before_first}
           Nobody had been to space yet.{#if roll.empty.next}
