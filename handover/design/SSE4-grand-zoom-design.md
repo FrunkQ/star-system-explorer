@@ -1,6 +1,6 @@
 # SSE4: the grand zoom, and travelling between places (track GZ)
 
-Status: **PROPOSED 25 Nov 2026, not yet accepted.** Twelve questions for Alex in section 14, each with a recommendation. Design and mockup only; nothing here is built by this note. Packages for builders are in section 13. GZ is a code only, never shown in the product.
+Status: **PROPOSED 25 Nov 2026, not yet accepted.** Eighteen questions for Alex in section 14 (13 to 18 added the same day after his follow-up, which is quoted in section 6), each with a recommendation. Design and mockup only; nothing here is built by this note. Packages for builders are in section 13. GZ is a code only, never shown in the product.
 
 Mockup, clickable: project files `sse4/handover-screens/GZ-screens/grand-zoom-mockup.html` (also published privately to Alex as the artifact https://claude.ai/artifact/662RbMkMjyz2CZSEm5CKAb), with 17 desktop and phone screenshots beside it: the seven stops, two seams, a pressed galaxy, and the proposed Galaxies nearby view at both reaches and both scales. The pictures in the mockup are painted stand-ins, not SSE4 output; the mockup says so.
 
@@ -14,9 +14,10 @@ Read with: `SSE4-top-level-ui-and-onboarding.md` (the place line in 2.1, tours i
 2. **What is new is small in idea: a change of place can be travelled instead of cut.** Going to a bookmark today is a cut. This note adds one property to the *use* of a bookmark, the **way in**: where the journey starts, whether it stops at each level, and what is shown on the way. The grand zoom is the longest way in. The same mechanism, in a short form, makes every step on the place line a zoom rather than a swap.
 3. **It cannot be one 3D scene, and does not need to be.** The range is about 10²² to 1 in size. Each level keeps its own view and its own renderer. At each change of level the outgoing view zooms onto the target, the incoming view opens already aimed the same way with the target on the same pixel, and the two cross-fade while both keep zooming. That hand-off is the one new fudge, and it is registered (section 9).
 4. **A stop is the real screen, held.** At a stop the level is the ordinary view of that level, so everything in it can be pressed and opens its ordinary card. Nothing is a film.
-5. **From the system down, everything truly lines up. Above it, it lines up by stand-ins that are already in the fudge register.** Our galaxy is not yet a galaxy of the web, and a system has no real place in its galaxy unless it was generated there. Section 6 says what to do about each.
+5. **The levels are tied together, with three gaps.** Web, halo, galaxy, star cell, star and formation are one computed chain: a star's birth date and metals come from its own ring of its own galaxy, and formation inherits them. The gaps are that our galaxy is not yet one of the web's own galaxies, that systems not grown from a drawn star have no cell, and that the screens do not pass the place along. Section 6 closes all three, computed once.
 6. **The Local Group level needs rebuilding, and the facts for it are already worked out.** The kernel already gives every neighbour galaxy a broad type, a size, a tilt, a colour and its star formation, and gives our own satellites their orbits. Only the night sky reads them today. Section 7 turns "Galaxies nearby" into a 3D view drawn from those facts, with real histories for the biggest two or three.
-7. **About twelve packages**, in an order where the first three already give a zoom from system to site that is true all the way (section 13).
+7. **A Motion layer on the HUD** (Alex's ask): velocity and pull as arrows with the speed said, on every level, from one mechanism (section 8A).
+8. **About sixteen packages**, in an order where the first three already give a zoom from system to site that is true all the way (section 13).
 
 ## 2. Words
 
@@ -55,8 +56,8 @@ Read with: `SSE4-top-level-ui-and-onboarding.md` (the place line in 2.1, tours i
 
 1. **Nothing carries a camera across a change of level.** Each level is a screen with a camera of its own, and changing level swaps the screen.
 2. **No single answer to "where is this place at every level".** The pieces are in different ops and in the shell. A journey needs, for one address and date, the target's position, size and orientation in each parent's frame.
-3. **Our galaxy is not in the web.** The campaign's galaxy is the median halo of its mass, set at the centre of cell 0, and any web halo within 0.3 Mpc is taken to be us (fudge F37). The chart of "the galaxy" is that median halo (fudge register, `galaxy_chart` halo).
-4. **A system has no place in its galaxy unless it was generated there.** An imported or hand-made system is put at the Sun's radius, azimuth 0 (`reconstruct_origin` place). "Your systems" already refuses to invent a place: it lists such systems beside the map.
+3. **Our galaxy is not one of the web's galaxies.** The campaign's galaxy is the median halo of its mass (`named_halo`: "milky-way-like", 10¹² suns), grown and fed properly, but set at the centre of cell 0, and any web halo within 0.3 Mpc is taken to be us (fudge F37).
+4. **A system that was not grown from a drawn star has no cell.** The shipped sample system, V3 imports and hand-built systems carry no galactic place; when one is re-aged it is put at the Sun's radius, azimuth 0 (`reconstruct_origin` place). "Your systems" already refuses to invent a place: it lists such systems beside the map. A system grown from a drawn star (`from_star`, PR 546) has a real one.
 5. **Galaxies nearby is flat and stepped by cube.** No 3D, no True, no types, not centred on us (section 7).
 6. **Two rungs are missing from the place line:** the local stars between galaxy and system, and the site below the world.
 7. **Two views may disagree about where a galaxy is.** The web cube moves each halo by the cube's own truncated Zel'dovich step; the cluster map draws `position_mpc` from the halo cell. If those differ, galaxies would jump at the seam. To be checked in GZ0 and, if they differ, settled as one position per galaxy at every level.
@@ -167,14 +168,47 @@ The place line, the picker and "Chart this galaxy" all change level by swapping 
 - A device with no GPU, or one the speed probe places too low for True, travels in **Chart** style: the flat charts (web slice, galaxies nearby, galaxy chart, system chart, the world's map) zoom and cross-fade the same way. The mechanism is the same; only the port's answers differ.
 - Phones: the place line is already two rows; Go on is a thumb-sized button at the bottom edge at a stop; the caption is a sheet that slides up from the target's side.
 
-## 6. Making the top half line up
+## 6. The chain of places: what is tied today, and the tie-up
 
-From the system down the chain is true today: a world's place in its system comes from the kernel's orbits at the date, its pole from its tilt, the site from latitude and longitude. Above the system:
+Alex, 25 Nov 12:22 UTC, on reading "a system has no real place in its galaxy": "where does it get its initial components to accrete, etc? I thought we HAD tied these levels together - each is a point in the map above effectively - if not - we need a rethink on how to achieve this. Preferably without too much 'fudging' and be scientifically literate (short cuts are allowed... we are simulating the universe in a browser - we will get some slack!) But these things only need to be calculated once."
 
-1. **One read for the whole chain.** A new kernel read, `place_chain {address, t}`, returns for each rung the target's position, natural size and orientation in its parent's frame, and an honesty mark where a stand-in was used. Every seat gets the same answer, and the stand-ins stay in one place. It is a read only and goes in the kernel's own golden area.
-2. **Home in the web.** Keep F37 as it is for now, so the sky, the galaxies nearby and the journey all agree: home at the centre of cell 0, the web's axes taken as the galaxy's. Then let "Find a home" finish its job: when the GM picks a web galaxy whose history fits, that halo **becomes the campaign's home** at every level, the galaxy chart charts that halo's own history, and F37 retires for that campaign. That is the "home halo drawn in the web" that the register already names as F37's replacement (question 6).
-3. **A system's place in its galaxy.** A generated system has a real place (its star cell and slot). An imported one may have a map position (Your systems reads a V3 starmap's). One with neither is travelled to at the stand-in place, and the GM's caption carries the honesty mark: "placed at the Sun's distance from the centre as a stand-in". The players' caption simply does not name a place in the galaxy. Giving it a real place is one press: "Find it a place" on Your systems picks a drawn star of fitting mass and age nearby (this wants the kernel's `from_star`, already queued).
-4. **Orientation.** The journey needs each frame's turn relative to its parent: the galaxy's axis in the web (F37's convention today), the system's plane in the galaxy (the convention `sky_from_here` already uses for galactic longitude and latitude), the world's pole in the system. `place_chain` returns them; GZ0 checks they are the same ones the sky uses, so the Milky Way's band in a world's sky is where the journey came from.
+He is right in the main, and the first draft of this note put it too strongly. Read from the kernel:
+
+### 6.1 What is tied today
+
+| Link | How it is computed | Where |
+|---|---|---|
+| Web to halo | Haloes are drawn cell by cell on the web's own density, each with its mass, place, spin and merger tree | `sse-cosmos/haloes.rs` (G2), `assembly.rs` (GH1) |
+| Halo to galaxy | The galaxy is grown on the halo's growth history and fed by its tree's members, each on its own orbit | `galaxy.rs` (G3), `feed.rs`, `infall.rs` (GH2, GH3) |
+| Galaxy to place in it | The disc evolves ring by ring: each radius has its own star formation history and gas chemistry through time. The envelope gives, at any radius, azimuth, height and time: gas and star densities and the gas's [Fe/H], alpha, C/O | `rings.rs`, `envelope.rs` (G4) |
+| Place to star | Space is cut into 10 pc cells. Each star in a cell is drawn from the envelope there: birth time from the ring's own history, mass, companions, [Fe/H], alpha, C/O, r-process and potassium-40 from the gas at birth plus scatter, its birth cluster's mass, and an orbit round the galaxy. A looked-at star is pinned and never redrawn. A halo star knows the torn-apart galaxy it was born in | `stars.rs` (G5, GH4), ops `star_cell`, `sky_from_here` |
+| Star to system | Formation inherits the star's birth (population, mass, age, metals) and the system takes the star's address | `Stars::birth`, `from_star` on `run_formation` and `adopt` (PR 546, merged 25 Nov) |
+| System to world to site | Orbits at the date, the world's pole, latitude and longitude, the kernel's tiles | resolve, `orbits_at`, `survey_surface` |
+
+So a system grown from a drawn star is a point in a cell, the cell a point in a ring of a galaxy, and its starting ingredients are that ring's gas at its birth.
+
+### 6.2 The three gaps
+
+1. **Our galaxy is not one of the web's galaxies** (section 4, item 3). The chain is whole from the galaxy down and whole from the web down to any catalogued galaxy; ours is the one galaxy that is not in the catalogue.
+2. **Systems not grown from a drawn star have no cell** (item 4): the shipped sample, V3 imports, hand-built systems.
+3. **The screens do not pass the place along**: the web view opens on the origin, Galaxies nearby on cell 0.0.0, and "Grow a system here" on a drawn star is not yet wired to `from_star`.
+
+### 6.3 The tie-up, each part computed once
+
+1. **Home is chosen from the web's own catalogue when a universe is opened, and stored.** The kernel searches the cells outward from the origin for the catalogued halo that best fits the universe pack's "home wish" (by default the Milky Way wish that "Find a home" already uses and cites: mass, a quiet recent history, an early big merger, a bound large neighbour) and writes its address as a fact of the universe. Every op that today asks for the median "milky-way-like" halo (`galaxy_chart`'s default, `with_world`, `reconstruct_origin`, the sky, `star_cell`) reads that halo instead. F37 and the two `reconstruct_origin` and `galaxy_chart` stand-ins retire. It is one search of a few dozen cells, done once per universe; the answer is the same on every device. The GM can still choose another ("Make this home" on Find a home), and a Milky Way pack (G7) can pin the real one. This moves the core golden on purpose (the default galaxy changes) and goes through the core lane.
+2. **Every system has a star slot in a cell.** A generated system has one already. For an authored or imported system the kernel finds one at adoption: if the system carries a map position (a V3 starmap), the cell there; otherwise the nearest cell to home with a drawn star of fitting mass, age and companions. The system becomes a pin in that cell and claims its share of the count, by the pin rule that exists, so nothing is counted twice. Its authored facts stay authored. Where they differ from what that place would have made (a metal-rich star in a metal-poor ring), the card says "unusual for its birthplace" through the check `reconstruct_origin` already has, as advice, never a refusal. Done once, at adoption; the GM can move it on Your systems.
+3. **One read for the whole chain.** `place_chain {address, t}` returns, for each rung, the target's position, velocity, natural size and orientation in its parent's frame, with an honesty mark wherever something was authored over what the place would have given. The journey, the Motion layer (section 8A), the place line's names and "centre this view on where I am" all read it.
+4. **The screens centre on the chain.** The web cube opens centred on home's cell, Galaxies nearby on home, the galaxy chart on the home halo with the system's place marked, Local stars on the system's cell.
+5. **A galaxy's tilt from the web's tides.** Today each galaxy's tilt is a keyed isotropic draw. The web already computes the tidal tensor at any point. Tidal torque theory and the surveys agree on the trend: the spins of small haloes lie along their filament and those of massive haloes across it. The shortcut: draw the spin axis about the tensor's axes with a mass-dependent preference, as a cited editable block. It costs three eigenvectors per halo, once. It is also a small correct touch a clever user can test: discs along a thread tend to line up. (The citations for the trend are from memory and go through the citation check before the block is written.)
+6. **Every galaxy's drift from the web's own displacement.** In the Zel'dovich step the kernel already takes, a parcel's velocity is its displacement times the growth rate and the expansion rate: one multiplication. That gives every halo a peculiar velocity, retires F37's "Hubble flow alone, so the nearest galaxies all recede", lets a near neighbour be blueshifted in the sky as Andromeda is, and feeds the Motion arrows at the two top levels.
+
+### 6.4 What stays a shortcut (each in the register)
+
+- The home galaxy is the best fit in a few dozen cells, not a constrained realisation of the real Local Group. The Milky Way pack replaces it with pins.
+- An authored system's slot is the best-fitting drawn star, not a derivation of that system from the galaxy.
+- The spin rule is a statistical preference about the tidal axes, not a torque integrated through the halo's growth.
+- Velocities are linear (Zel'dovich); inside a group the bound-pair orbit and the satellites' stored orbits take over.
+- A system's own plane within the galaxy stays a keyed isotropic draw. That matches what is observed.
 
 ## 7. The galaxies nearby, rebuilt
 
@@ -233,6 +267,32 @@ Between the galaxy (tens of thousands of parsecs) and a system (a thousandth of 
 - **The dive through the disc.** From the whole galaxy to the cell is a factor of three thousand with no stars drawn one by one in between. On the way down the galaxy's glow layers thin out and the cell's stars brighten in, and around them the **sky as seen from the target** comes up behind (the renderer's night sky, from `sky_from_here`), so the galaxy just left becomes the band across the sky. This is the longest seam and it is registered.
 - Sector and hex maps are a pack's way of drawing the same rung. Where a pack with a hex map is stacked (Traveller), the Chart style of this rung is that map.
 
+## 8A. Motion: velocity and pull as arrows, on every level
+
+Alex, 25 Nov 12:22 UTC: "Another option for the HUD is velocity... vector arrows on velocity/accel - (and speed shown) to show relative movement of stars, galaxies and local system (ships), etc."
+
+One HUD layer, **Motion**, the same on every level and every view that has a HUD. It sits in the HUD and Band chip beside the HUD switch: **Motion: Off, Velocity, Velocity and pull.**
+
+- **An arrow is drawn by one mark** in the chart grammar, used by every view. Its length is the speed on a stated key shown beside the scale bar ("this long = 200 km/s"). Where speeds on one screen span more than a factor of about thirty the key is logarithmic and says so. The speed is written at the arrow's head, through the figures door, in the viewer's units.
+- **Pull** is a second, thinner arrow in the field colour: the acceleration, with its own key ("this long = 1 mm/s²", or in g for a ship under thrust).
+- **Relative to** is always said, and can be changed: by default the thing at the centre of the picture (so at Galaxies nearby the arrows are motions relative to home), or the level's own rest frame (the galaxy's centre, the system's barycentre), or the expansion (the web's comoving frame). Pressing an arrow opens a line: "Varrow: 110 km/s toward home, 40 km/s across. Relative to your galaxy."
+- **Every arrow is a number the kernel already has**, read through `place_chain` and the level's own op:
+
+| Level | Velocity | Pull |
+|---|---|---|
+| Cosmic web | each galaxy's drift from the web's displacement (6.3 point 6): matter streaming out of voids, along threads, into knots. An option adds the expansion itself | the gradient of the web's potential, which the kernel has |
+| Galaxies nearby | drift relative to home; the bound pair closing; satellites along their stored orbits | toward each dark halo |
+| Galaxy | the rotation curve from the halo structure block, as arrows round the disc; the target star's own motion against it | toward the centre |
+| Local stars | each star's velocity from its orbit round the galaxy, relative to the target: who is passing, who is coming | too small to draw; said in the press line |
+| System | orbital velocities of worlds, moons, small bodies and ships at the date | toward the star, or the planet for a moon; a ship's thrust as its own arrow, in g |
+| World | the ground's speed from the spin at the site; moons, stations and ships in orbit | surface gravity |
+| Site | the wind from the weather track, drawn with the same mark | none |
+
+- **Play agrees with the arrows.** Where a level can run on the clock, things move along their arrows; the arrows are the first step of what Play shows.
+- **On a journey** the Motion layer is part of the HUD, so it comes up at stops when the way in says HUD at stops.
+- **Players** see Motion like any HUD layer, as their role knows the world. A later refinement (question 18): a table's sensors measure speed along the line of sight at once and the rest only by watching, so a player's arrow could start as a line-of-sight arrow and fill in. Not in the first package.
+- **Night chart, phones, colour vision**: the arrow uses the ink and field tokens with shape, never colour alone; on a phone, arrows show for named things only until one is pressed.
+
 ## 9. Fudges to register
 
 Each goes in `docs/fudges.md` in the pull request that builds it. None changes a number the kernel gives.
@@ -246,7 +306,11 @@ Each goes in `docs/fudges.md` in the pull request that builds it. None changes a
 | GZ-F5 | web, galaxies nearby, galaxy | Everything is shown at one now, with no light-travel delay | It is a map. The sky op shows the delayed view | A "seen from here, as the light arrives" option on these views |
 | GZ-F6 | world to site | From 3 km over the globe to the ground patch is a seam between the globe and the Land screen's ground, whose detail below the kernel's fact floor is decoration (already said by that view) | The globe and the ground are two renderers | The detail ladder carried down to the ground |
 | GZ-F7 | the camera | The camera crosses the picture far faster than light. Nothing travels: it is a change of map scale | So that the journey takes a minute | Nothing. The one-line HUD names it a zoom, never a flight |
-| (F37, `reconstruct_origin`, `galaxy_chart` halo) | home in the web, a system's place | Existing stand-ins, read through `place_chain` with their marks | See section 6 | "Find a home" making the halo the campaign's; a real place for each system |
+| (F37, `reconstruct_origin`, `galaxy_chart` halo) | home in the web, a system's place | Existing stand-ins. They **retire** with GZ12 and GZ13 (section 6.3) | See section 6 | Home chosen from the web's catalogue; a star slot for every system |
+| GZ-F8 | home | Home is the best-fitting catalogued galaxy within a few dozen cells of the origin, not a constrained copy of the real Local Group | A constrained realisation is far beyond a browser | The Milky Way pack's pins (G7) |
+| GZ-F9 | authored systems | An authored or imported system takes the slot of the best-fitting drawn star near its place; its authored facts are kept and marked where they differ | The system was not derived from the galaxy | Nothing: it is authored. The mark says so |
+| GZ-F10 | galaxy tilt | A spin axis drawn about the web's tidal axes with a mass-dependent preference | Integrating tidal torque through a halo's growth is too dear | A torque integral along the merger tree |
+| GZ-F11 | galaxy drift | Peculiar velocities are linear (Zel'dovich); bound pairs and satellites use their own orbits | The web is a Zel'dovich web | 2LPT or an n-body step |
 
 ## 10. Speed
 
@@ -287,6 +351,7 @@ Each goes in `docs/fudges.md` in the pull request that builds it. None changes a
 - **Physics never faked.** The journey changes no number. Every stand-in is registered (section 9) and marked for the GM.
 - **Processes, not classes.** A galaxy's type is the label the kernel reads off its state.
 - **Same world at every level.** A stop is the real view.
+- **Little fudging, computed once** (Alex, 25 Nov). Home, each system's slot, each galaxy's tilt and drift are each worked out once and stored or keyed; four new shortcuts, all registered (GZ-F8 to F11), and three old stand-ins retire.
 - **Dynamic minimalism.** No new chrome: the place line is the progress bar, Go on is one button, the options are four switches behind one ▾. Rule 7's 120 to 240 ms is for interface motion; a journey is content, like Play on the ruler, and is always interruptible. Rules 8 and 9 hold.
 - **Seats.** Players never steer the journey unless their role may; the GM streams only data; a role sees only what it knows.
 - **One universe clock.** The journey never moves it.
@@ -311,7 +376,13 @@ Order matters: GZ1 to GZ3 give a true zoom from system to site with nothing fudg
 | **GZ9** | Stops in full: captions from facts and authored words per rung, the width line, the target ring, free look and return | "Build travel between places" | GZ3 |
 | **GZ10** | Where it is offered: bookmark rows, the postcard's back and link, the Show step's way in on the Playbook, the players' side (one kernel each, the knowledge ceiling, who goes on), the clean output link | Run desk thread and postcards thread | GZ3, GZ9 |
 | **GZ11** | Small devices and film: the basic tier's lighter journey and the Chart-style journey, bench rows, capture by journey time, the shipped preset "The grand zoom" and the start sheet entry; "ends with the landing" | "Build travel between places", quality tiers thread, trailer thread | GZ8 |
-| **GZ12** | Home in the web: "Make this home" from Find a home, the campaign's own halo at every level, F37 retired for that campaign | kernel thread and "Build galaxy charts and histories" | GZ2, GZ5 |
+| **GZ12** | Home in the web (6.3 point 1): the kernel chooses the home halo from the catalogue when a universe opens and stores it; every default-galaxy op reads it; "Make this home" on Find a home; F37 and the two stand-ins retired. Core golden changes on purpose | kernel thread ("Build kernel resolve and rules"), core lane; "Build galaxy charts and histories" for the button | GZ0 |
+| **GZ13** | A star slot for every system (6.3 point 2): at adoption and import, by map position or best fit; the pin claims its count; "unusual for its birthplace" advice; move it on Your systems; "Grow a system here" wired to `from_star` | kernel thread or its hand-off thread ("Build galaxy arm fix and atmosphere advice"); "Build galaxy charts and histories" for Your systems | GZ12 |
+| **GZ14** | Tilt from the web's tides (6.3 point 5): eigenvectors of the tidal tensor, the spin block with its citations checked first, the sky and Galaxies nearby reading one axis. Moves the sky's golden on purpose | kernel thread, citations thread | GZ12 |
+| **GZ15** | Drift from the web's displacement (6.3 point 6): a velocity per halo, redshift with peculiar motion in `galaxies_seen`, velocities in `place_chain`. Moves the sky's golden on purpose | kernel thread | GZ2 |
+| **GZ16** | The Motion layer (section 8A): the arrow mark and its key in the chart grammar, the Motion switch in the shared view controls, System 3D and the system chart first (their numbers exist today), then each level as its velocities arrive | "Build travel between places" for the mark and switch; each view's owner for its level | GZ1; GZ15 for the top two levels |
+
+GZ12 to GZ15 are kernel work that changes goldens, so they queue in the coordinator's lane order. None of them blocks GZ1 to GZ11: the journey reads `place_chain`, and `place_chain` gives the stand-ins with their marks until the real places land.
 
 A cave's inside is not here. Interior sites are parked to about 4.2, so in 4.0 the grand zoom ends at the tube's mouth, looking in.
 
@@ -322,13 +393,22 @@ A cave's inside is not here. Interior sites are parked to about 4.2, so in 4.0 t
 3. **Two new steps on the place line: "Local stars" between Galaxy and System, and "Site" below World.** *Recommend yes.*
 4. **Galaxies nearby is rebuilt centred on a galaxy, as a sphere with two reaches (the neighbourhood, 12 Mpc, and the group, about 1.5 Mpc), in Chart, 3D and True.** Today's cube-by-cube catalogue stays inside Chart. *Recommend yes.*
 5. **Broad types for every galaxy, real histories for home and the two or three biggest neighbours read in the background, and our own satellites on their real orbits with Play.** *Recommend yes.*
-6. **Home in the web.** Keep the registered stand-in for now, and make "Find a home" able to set the campaign's own galaxy at every level (GZ12). *Recommend yes.*
+6. **Home in the web.** Superseded by question 13 after Alex's follow-up: home becomes one of the web's own galaxies by default, not only when the GM uses Find a home.
 7. **The default way in when "Zoom in from" is chosen:** True, a stop at each level, HUD and captions at stops, go on by a press. "One smooth zoom" is one switch that turns stops, HUD and words off together. *Recommend yes.*
 8. **Pace:** Brisk (about 25 s for the whole grand zoom), Stately (about 45 s, the default) and Slow (about 90 s, for film). *Recommend yes.*
 9. **At the table:** by default the GM's Go on moves every screen of the role together, and a role travels only from as high as it knows. *Recommend yes.*
 10. **A sent postcard may arrive by zooming in**, as the sender's choice, off by default; three of the shipped base postcards have it on as showpieces. *Recommend yes.*
 11. **The one-line width readout while moving** ("30 million light years across · 10²³ m"), part of the HUD. *Recommend yes.*
-12. **For 4.0.** The whole of it is a showcase and reuses what 4.0 already has. *Recommend* GZ0 to GZ11 in 4.0, in the order of section 13, with GZ12 when the kernel's lane allows, and the cave's inside left to 4.2 with interior sites.
+12. **For 4.0.** The whole of it is a showcase and reuses what 4.0 already has. *Recommend* GZ0 to GZ11 and GZ16 in 4.0, in the order of section 13, with GZ12 to GZ15 as the kernel's lane allows, and the cave's inside left to 4.2 with interior sites.
+
+Added after Alex's follow-up of 12:22 UTC (sections 6 and 8A):
+
+13. **Home is one of the web's own galaxies, chosen once by the kernel when a universe is opened** (best fit to the pack's home wish, stored, the same on every device), and the GM may choose another. This changes the default galaxy, so existing campaigns' galaxy charts and skies change once. *Recommend yes.* It closes the one broken link.
+14. **Every authored or imported system is given a real star slot in a cell at adoption, automatically**, by its map position or the best-fitting drawn star near home, keeping its authored facts and saying where they are unusual for that birthplace. The GM can move it. *Recommend yes, automatic,* so no system is ever without a place.
+15. **A galaxy's tilt from the web's tides** (small haloes along their thread, massive ones across it) as a cited editable block, replacing the isotropic draw. *Recommend yes,* after the citations are checked.
+16. **Every galaxy's drift from the web's own displacement**, so near neighbours can approach and the sky's redshifts include it. *Recommend yes.*
+17. **The Motion layer as section 8A has it:** Off, Velocity, Velocity and pull; one arrow mark with a stated key and the speed written; "relative to" always said and changeable; the system level first. *Recommend yes.*
+18. **Players' arrows from what their sensors can measure** (line-of-sight speed at once, the rest by watching). *Recommend later,* with the sensors work, not in the first package.
 
 ## 15. Picking this up without the chat
 
