@@ -124,6 +124,23 @@ try {
       }
       assert.ok(clicked >= 3, `bodies clicked: ${clicked}`);
       await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();
+      // Close-up (Alex, 25 Nov): in True the camera comes down to a grazing orbit over a world (Readable draws it 0.55
+      // across), and the HUD's switch leaves the camera where it is.
+      if (tier === "gpu") {
+        await view.locator(`[data-body='${VAULT}']`).click();
+        await gm.waitForFunction((v) => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-frame") === v, VAULT);
+        await gm.waitForTimeout(1100);
+        const d0 = await view.getAttribute("data-dist");
+        await pick(gm, "HUD", "Off");
+        await gm.waitForFunction(() => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-hud") === "off");
+        assert.equal(await view.getAttribute("data-dist"), d0, "HUD off keeps the camera");
+        for (let i = 0; i < 45; i++) await view.getByRole("button", { name: "Zoom in" }).click();
+        const low = Number(await view.getAttribute("data-dist"));
+        assert.ok(low > 0.55 && low < 0.552, `down to a grazing orbit: ${low}`);
+        await shot(gm, `close-up-graze-${mode}`);
+        await pick(gm, "HUD", "On");
+        await view.locator(".crumb button, button").filter({ hasText: /^‹ / }).first().click();
+      }
       await gm.getByRole("button", { name: "3D", exact: true }).click();
       await gm.getByRole("group", { name: "View style" }).getByRole("button", { name: "Chart", exact: true }).click();
       // HUD on the flat chart too (one set of controls, Alex 23 Nov): off leaves the bodies and belts without the

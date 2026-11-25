@@ -11,7 +11,8 @@
   recorded facts, and its Scanned control stands in for the GM's button.
 -->
 <script lang="ts">
-  import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
+  import FillScreen from "./FillScreen.svelte";
+  import { checkPlayerScene, checkScreen, screenKey, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus, type Shown } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
@@ -27,6 +28,9 @@
   import { themeCss } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES, PLAYER_THEMES, filterLayers } from "../../skins/player/src/index.ts";
   import { FilterChain, Segmented } from "../../chart-grammar/src/index.ts";
+  import { deliver, deliverOut } from "../../chart-grammar/src/deliver.ts";
+  import { resolveDelivery, type DeliveryPlan } from "../../ui-contract/src/index.ts";
+  import { untrack } from "svelte";
   import vocabDoc from "./documents/vocab.plain.json";
   import { SHIPPED } from "./symbols.svelte.ts";
   import { allStyles } from "./styles.svelte.ts";
@@ -138,6 +142,7 @@
     session.grantLanding?.(w ? { system: w.system, body: w.body } : groundGrant(sh, (a) => known.has(a)));
   });
   const landingNow = () => watching;
+  const shownNow = () => shown ?? null;
   const ground: LandingGround | undefined = isSealed
     ? undefined
     : {
@@ -192,7 +197,8 @@
   // This screen (Switchboard, PB1): an id kept in this tab, so a reload comes back as the same screen, and a name the
   // GM sees on the board (`?name=`, else a short one from the id).
   const screenId = (() => {
-    const key = `sse4.screen.${room ?? "alone"}`;
+    // One id per room on this device, and one per part of a split window (PB9), whose parts share the tab's storage.
+    const key = screenKey(room, new URLSearchParams(location.search).get("part"));
     try {
       const had = sessionStorage.getItem(key);
       if (had && /^[a-z0-9-]{4,40}$/.test(had)) return had;
@@ -204,7 +210,8 @@
     }
   })();
   const screenName = (new URLSearchParams(location.search).get("name") ?? "").slice(0, 40) || `Screen ${screenId.slice(4).toUpperCase()}`;
-  const hello = { id: screenId, name: screenName, role: seatId, ...(new URLSearchParams(location.search).get("clean") === "1" ? { output: true } : {}) };
+  // A window the GM opened on one of their own displays (PB9) says so: the board marks it "this computer".
+  const hello = { id: screenId, name: screenName, role: seatId, ...(new URLSearchParams(location.search).get("clean") === "1" ? { output: true } : {}), ...(new URLSearchParams(location.search).get("local") === "1" ? { local: true } : {}) };
   // What this screen is shown: its own line if the GM gave it one, else its seat's, else the table's.
   const shownFor = (r: PlayerReplica) => r.shownFor(seatId, screenId);
   if (isSealed) {
@@ -383,6 +390,29 @@
   });
   const layers = $derived(filterLayers(themeDoc.filters, { reducedMotion: media("(prefers-reduced-motion: reduce)"), off: !effects || media("(prefers-contrast: more)") }));
   const rootFx = $derived(layers.map((l) => l.root).join(" "));
+  // Screen delivery (atlas design 11A.4a, AT15a): the picture arrives and leaves in the look's own way. Power on when
+  // the screen first shows a picture or a hold is released; Arrive for each new send (in full the first time); Power
+  // off as the GM holds the screen or turns it off. A look with no deliveries just shows the picture, as before. A tap
+  // or a key finishes any delivery; reduced motion makes each a plain fade.
+  const reducedNow = () => media("(prefers-reduced-motion: reduce)");
+  const sendKey = $derived(shown && "scope" in shown ? JSON.stringify(shown) : "");
+  const picture = $derived(!!scene && !!checked?.ok && !(shown && "off" in shown) && embed.mode !== "refused");
+  let arrival = $state<DeliveryPlan | null>(null);
+  let pictureWasOn = false;
+  const sendsSeen = new Set<string>();
+  $effect(() => {
+    const on = picture;
+    const key = sendKey;
+    const look = themeDoc.delivery;
+    untrack(() => {
+      if (!on) return void (pictureWasOn = false);
+      if (look && !pictureWasOn) arrival = resolveDelivery(look, "power_on", { first: true, reducedMotion: reducedNow() });
+      else if (look && key && !sendsSeen.has(key)) arrival = resolveDelivery(look, "arrive", { first: true, reducedMotion: reducedNow() });
+      if (key) sendsSeen.add(key);
+      pictureWasOn = true;
+    });
+  });
+  const powerOff = () => (shown && "off" in shown && themeDoc.delivery ? resolveDelivery(themeDoc.delivery, "power_off", { reducedMotion: reducedNow() }) : null);
   $effect(() => {
     const root = document.documentElement;
     root.setAttribute("style", themeCss(theme, ALL_THEMES));
@@ -491,7 +521,7 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p><p class="alpha" data-alpha>An alpha preview of what is coming. To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener">version 3 ›</a></p></main>
   {:else}
     {#key vocabId}
-      <main class="grid" class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} still={clean} {places} bind:selection /></main>
+      <main class="grid" use:deliver={arrival} out:deliverOut|global={powerOff()} class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} shown={shownNow} still={clean} {places} bind:selection /></main>
       {#if readOnly && !clean}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
     {/key}
     {#if sayWords && sayHidden !== sayWords}
@@ -517,6 +547,7 @@
   {#if scene && !bare}<div class="soundbar"><LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.players" /><SoundControl scene={orbitScene(scene.scope, voicesFromPlayers(scene))} key="sound.players" /></div>{/if}
   <footer class="status" hidden={bare} data-state-hash={stateHash} data-scene-hash={sceneHash} data-sealed={isSealed || undefined} data-seat={joined ? seatId : undefined} data-audience={audience} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {isSealed ? "the game master's machine (sealed seat: this screen holds no seed and runs no kernel)" : joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for {seatLabel && seatId !== "table" ? `the seat ${seatLabel}, ` : ""}the {audience} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
+<FillScreen />
 {#if perfOn}
   <PerfReadout kernel="" edge={perfEdge} onclose={() => (perfOn = false)} />
 {/if}

@@ -15,6 +15,8 @@ export type { TrueTexture } from "./true-look.ts";
 export { flowFace, gasAbove, gasTint, readTrueAir, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
 // VP-A3: the air's look-up tables (Hillaire 2020) for its rim and terminator in True.
 export { airLuts, airShapeOf, AIR_LUT_REFS, type AirLuts, type AirShape } from "./air-luts.ts";
+// VP3 part 5: bare ground in its measured colour (data sheet reflectance rows, kernel SW1 maturity), ground-optics.ts.
+export { bandsOf, groundReflectance, readGroundOptics, reflectanceAt, withGround, GROUND_BANDS_NM, GROUND_ROWS, type GroundOptics, type MatterReader, type ReflectanceTable } from "./ground-optics.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
 export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
@@ -132,6 +134,16 @@ export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";
 // The stars over a landing site and the eye's adaptation (night-sky.ts).
 export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";
 export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";
+// Aurorae (VP-AU5): the plan from read_field and the air, and its exposure.
+export { AURORA_REFERENCES, auroraSky, lineName, cieXyz, COLOUR_VISION_CD_M2, exposeAurora, loadAurora, skyGlowAlong, toSite, kiloRayleighRadiance, lineRgb, oxygenShare, OXYGEN_STAND_IN, planAurora, RAYLEIGH_PH_M2_S_SR } from "./aurora.ts";
+export type { AuroraDraw, AuroraDrawLayer, AuroraSession, AuroraSky, AuroraEmissionJson, AuroraExposure, AuroraJson, AuroraLayer, AuroraOvalJson, AuroraPlan, AuroraWorld } from "./aurora.ts";
+// Close-up: the camera down to a grazing orbit over a world in True, and the ground under it.
+export { CLOSE_FLOOR_M, CLOSE_FLOOR_SHARE, CLOSE_REACH, closeMin, grazeLook, groundUnder, zoomNear, type GroundView } from "./close-up.ts";
+// The shared finish (VP1) and the sky's stars behind True (VP2).
+export { startFinish, type Finish, type FinishFrame } from "./finish.ts";
+export { GLARE_FLOOR_DEG, glareLadder, glareShare, glareTotal, rungScale, type GlareRung } from "./finish-glare.ts";
+export { longGain, starsBehind, starTint, type SkyStar as BehindStar } from "./stars-behind.ts";
+export type { GpuStars } from "./gpu.ts";
 export { cutRings, ringMarks, RESONANCE_F, RING_VISCOSITY_M2_S, GAP_PER_ROOT_MU, EDGE_SLACK } from "./ring-structure.ts";
 export type { RingMark, RingMoon } from "./ring-structure.ts";
 // VP6: the detail ladder (rung table, bindings, seed and clock, HUD detail line). The GPU node is ladder-node.ts,

@@ -91,3 +91,17 @@ test("routes join systems from the record's links; links inside one system or to
   assert.deepEqual(gridLines(100, 25), [0, 25, 50, 75, 100]);
   assert.deepEqual(gridLines(100, 0), []);
 });
+
+test("a map layer's reach in the map's own units, and a held place where its system sits", async () => {
+  const { reachInMapUnits, placeOnMap } = await import("../src/your-systems.ts");
+  assert.equal(reachInMapUnits({ value: 4, unit: "pc" }, "pc"), 4);
+  assert.ok(Math.abs(reachInMapUnits({ value: 4, unit: "pc" }, "ly")! - 13.04624) < 1e-4);
+  assert.equal(reachInMapUnits({ value: 4, unit: "pc" }, null), null, "an unknown map unit is said, not guessed");
+  const list = [
+    { system: "u:k/sys:@1", position: { x: 1, y: 2, z: 3 } },
+    { system: "u:k/sys:@2", position: null },
+  ];
+  assert.deepEqual(placeOnMap("u:k/sys:@1/body:@4", list), [1, 2]);
+  assert.equal(placeOnMap("u:k/sys:@2", list), null);
+  assert.equal(placeOnMap("u:other/sys:@1", list), null);
+});

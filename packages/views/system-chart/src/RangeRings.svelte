@@ -21,7 +21,7 @@
   const drawn = $derived(
     rings.map((g) => {
       const pts = ringPoints([centre_m[0], centre_m[1], 0], g.radius_m).map(([x, y]) => project(x, y));
-      const d = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ") + " Z";
+      const d = pts.map(([x, y], i) => `${i ? "L" : "M"}${Math.round(x * 10) / 10},${Math.round(y * 10) / 10}`).join(" ") + " Z";
       // The label sits at the ring's top as drawn.
       const top = pts.reduce((a, p) => (p[1] < a[1] ? p : a), pts[0]!);
       return { g, d, top };
