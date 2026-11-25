@@ -33,7 +33,7 @@ pub const ET12: &str = "Elkins-Tanton, L. T. 2012, Annual Review of Earth and Pl
 pub const PO14: &str = "Palme, H. and O'Neill, H. St. C. 2014, Treatise on Geochemistry (2nd ed.) 3, 1: cosmochemical estimates of mantle composition (CI H and O). doi:10.1016/B978-0-08-095975-7.00201-1";
 pub const TF16: &str = "Thorngren, D. P., Fortney, J. J., Murray-Clay, R. A. and Lopez, E. D. 2016, ApJ 831, 64: the mass-metallicity relation for giant planets (Z_planet / Z_star = 9.7 (M / M_Jup)^-0.45). doi:10.3847/0004-637X/831/1/64";
 pub const L21: &str = "Lodders, K. 2021, Space Science Reviews 217, 44: relative atomic solar system abundances, mass fractions, and atomic masses of the elements and their isotopes (protosolar). doi:10.1007/s11214-021-00825-8";
-pub const KW08: &str = "Kesler, S. E. and Wilkinson, B. H. 2008, Geology 36, 255: Earth's copper resources estimated from tectonic diffusion of porphyry copper deposits (about 1.7e11 t of copper in porphyry deposits above 3.3 km). doi:10.1130/G24317A.1";
+pub const KW08: &str = "Kesler, S. E. and Wilkinson, B. H. 2008, Geology 36, 255: Earth's copper resources estimated from tectonic diffusion of porphyry copper deposits (about 1.7e11 t of copper in porphyry deposits, at all crustal depths). doi:10.1130/G24317A.1";
 
 /// An element's mass share of its material, and the oxygen its oxide binds
 /// with it, from the material's summed weight `total` (the sum of

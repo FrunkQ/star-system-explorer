@@ -303,7 +303,8 @@ fn orbit_totals_are_survey_reservoirs_summed() {
 }
 
 /// A small world barely melted, so it barely separated: Ceres keeps its
-/// metal through its rock (Park et al. 2016 find it only partly separated).
+/// metal through its rock (Park et al. 2016 find Ceres only partly
+/// differentiated, rock from volatiles; they say nothing of metal sinking).
 #[test]
 fn small_worlds_barely_separate() {
     let mut k = open_sol(&[]);
@@ -319,7 +320,7 @@ fn small_worlds_barely_separate() {
 
 /// MP8: Earth's deposits hold real kilograms drawn from its crust. The ore
 /// share is calibrated so that its arc copper is Kesler and Wilkinson 2008's
-/// porphyry copper (about 1.7e11 t above 3.3 km); every element's deposits
+/// porphyry copper (about 1.7e11 t, at all crustal depths); every element's deposits
 /// and the rest add up to the crust `read_composition` gives at Survey.
 #[test]
 fn earths_deposits_hold_its_porphyry_copper() {
@@ -840,4 +841,70 @@ fn the_moons_younger_maria_keep_roofed_tubes() {
     let tubes = s["survey"]["tubes"].as_array().expect("tubes");
     let stages: Vec<&str> = tubes.iter().filter_map(|t| t["stage"].as_str()).collect();
     assert!(stages.contains(&"intact roof"), "{stages:?}");
+}
+
+/// SW1: the airless Moon's bare ground weathers dark and red with exposure
+/// age, while young craters stay fresher; Earth's air stops it, and
+/// Mercury, closer to the Sun, weathers faster.
+#[test]
+fn airless_ground_weathers_with_exposure_age() {
+    let mut k = open_sol(&[]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":SOL}),
+    );
+    let addr = |name: &str| {
+        r["facts"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .find(|(_, f)| f["name"] == name)
+            .map(|(a, _)| a.clone())
+            .unwrap()
+    };
+    let tiles: Vec<serde_json::Value> = (0..6)
+        .map(|f| serde_json::json!({"face":f,"level":1,"x":0,"y":0}))
+        .collect();
+    let survey = |k: &mut crate::Kernel, name: &str| {
+        let s = send(
+            k,
+            serde_json::json!({"op":"survey_surface","system":SOL,"body":addr(name),"limit":0,"tiles":tiles}),
+        );
+        assert_eq!(s["type"], "surface_surveyed", "{s}");
+        s
+    };
+    let moon = survey(&mut k, "Moon");
+    let w = &moon["survey"]["weathering"];
+    assert_eq!(w["active"], true, "{w}");
+    assert_eq!(w["wind_reaches_ground"], true, "{w}");
+    let f = w["mature_factor_rgb"].as_array().unwrap();
+    assert!(f[0].as_f64() > f[2].as_f64(), "mature soil is redder: {w}");
+    let mut all: Vec<u8> = vec![];
+    for t in moon["survey"]["tiles"].as_array().unwrap() {
+        all.extend(
+            t["maturity"]
+                .as_array()
+                .expect("maturity")
+                .iter()
+                .map(|x| x.as_u64().unwrap() as u8),
+        );
+    }
+    let mean = all.iter().map(|x| *x as f64).sum::<f64>() / all.len() as f64;
+    let least = *all.iter().min().unwrap();
+    let moon_tau = w["tau_myr"].as_f64().unwrap();
+    assert!(mean > 200.0, "old lunar ground is mature: {mean}");
+    assert!(least < 200, "young craters stay fresher: {least}");
+    let earth = survey(&mut k, "Earth");
+    assert!(
+        earth["survey"]["weathering"].is_null(),
+        "air stops weathering"
+    );
+    for t in earth["survey"]["tiles"].as_array().unwrap() {
+        assert!(t.get("maturity").is_none(), "air stops weathering");
+    }
+    let mercury = survey(&mut k, "Mercury");
+    let w = &mercury["survey"]["weathering"];
+    assert_eq!(w["active"], true, "{w}");
+    // Closer in, the wind is stronger, so Mercury's soil matures faster.
+    assert!(w["tau_myr"].as_f64().unwrap() < moon_tau, "{w}");
 }

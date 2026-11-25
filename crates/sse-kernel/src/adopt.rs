@@ -986,6 +986,24 @@ pub(crate) fn catalogued_gases(
     (!gases.is_empty()).then_some(gases)
 }
 
+/// SW1: a world's distance from its star, AU: its own orbit when it goes
+/// round a star, else its host planet's (a moon), walking up the addresses.
+pub(crate) fn star_distance_au(bodies: &[sse_surface::Body], b: &sse_surface::Body) -> Option<f64> {
+    let mut cur = b;
+    for _ in 0..4 {
+        if let Some(o) = cur
+            .orbit
+            .as_ref()
+            .filter(|o| o.host_msun >= sse_surface::weathering::STAR_MSUN)
+        {
+            return Some(o.a_au);
+        }
+        let up = cur.address.parent()?;
+        cur = bodies.iter().find(|x| x.address == up)?;
+    }
+    None
+}
+
 /// Orbit atlases kept so that reopening a world reuses its plate run.
 pub const ORBIT_CACHE_SIZE: usize = 8;
 
@@ -1005,7 +1023,7 @@ fn orbit_atlas<'c>(
     let key = format!(
         "{}/{}",
         sse_surface::detail::orbit_key(env, seed, epoch_gyr),
-        serde_json::to_string(&opts.gases).expect("plain data")
+        serde_json::to_string(&(&opts.gases, opts.star_distance_au)).expect("plain data")
     );
     match cache.iter().position(|(k, _)| *k == key) {
         Some(i) => {
@@ -1106,6 +1124,7 @@ pub(crate) fn resolved_system(
                 // survey later refines; reused while it is in the cache.
                 let opts = sse_surface::survey::SurveyOptions {
                     gases: catalogued_gases(facts.get(&b.address)),
+                    star_distance_au: star_distance_au(&bodies, b),
                     ..Default::default()
                 };
                 let atlas = orbit_atlas(
@@ -1150,9 +1169,21 @@ pub(crate) fn resolved_system(
         at_s: (at_s != i64::MAX).then_some(at_s),
         facts: serde_json::Value::Object(facts_json),
         spec: spec.map(|x| serde_json::to_value(x).expect("plain data")),
-        surfaces: envelopes
+        // Each world's surface record, with how its bare ground weathers
+        // (SW1) where something from space reaches the ground.
+        surfaces: bodies
             .iter()
-            .map(|e| serde_json::to_value(e).expect("plain data"))
+            .zip(&envelopes)
+            .map(|(b, e)| {
+                let mut v = serde_json::to_value(e).expect("plain data");
+                if let Some(w) =
+                    sse_surface::weathering::weathering(b, e, star_distance_au(&bodies, b))
+                        .filter(|w| w.active)
+                {
+                    v["weathering"] = serde_json::to_value(w).expect("plain data");
+                }
+                v
+            })
             .collect(),
         tiles: out_tiles,
         refused,

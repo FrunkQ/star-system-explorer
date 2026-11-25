@@ -910,7 +910,7 @@
                 "value": 6371.0
               }
             },
-            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, McDonough and Sun 1995)"
+            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; the radiogenic total about 20 TW, from the McDonough and Sun 1995 abundances, a source for the total still to cite)"
           },
           {
             "expect": {
@@ -946,7 +946,7 @@
                 "value": 3389.5
               }
             },
-            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (Frank et al. 2014 calibration)"
+            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (an observed date, its source still to cite; the heating model is Frank et al. 2014)"
           },
           {
             "expect": {
@@ -5372,6 +5372,104 @@
           0
         ],
         "id": "star.xray_luminosity",
+        "range": null
+      },
+      {
+        "description": "time bare ground has lain open to space since it was last renewed, by lava, ice or a crater's ejecta",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.exposure_age",
+        "range": null
+      },
+      {
+        "description": "how weathered bare ground is, 0 fresh to 1 fully mature",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.maturity",
+        "range": null
+      },
+      {
+        "description": "weathered over fresh reflectance of the same soil at 450 nm (blue)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.weathering_factor_450",
+        "range": null
+      },
+      {
+        "description": "weathered over fresh reflectance of the same soil at 550 nm (green)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.weathering_factor_550",
+        "range": null
+      },
+      {
+        "description": "weathered over fresh reflectance of the same soil at 650 nm (red)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.weathering_factor_650",
+        "range": null
+      },
+      {
+        "description": "the star's wind flux at the world against its flux at 1 AU (the inverse square of distance)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.wind_flux_ratio",
+        "range": null
+      },
+      {
+        "description": "1 when the star's wind reaches the ground, 0 when a magnetic field holds it off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.wind_reaches_ground",
         "range": null
       },
       {

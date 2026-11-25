@@ -32,6 +32,7 @@ pub mod sketch;
 pub mod survey;
 pub mod tubes;
 pub mod wear;
+pub mod weathering;
 
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;

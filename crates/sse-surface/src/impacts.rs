@@ -286,7 +286,7 @@ pub const REFS: [&str; 7] = [
     "Melosh, H. J. 1989, Impact Cratering: A Geologic Process (Oxford): simple-to-complex transition scaling as 1/g; peak-ring and multi-ring basins. https://global.oup.com/academic/product/impact-cratering-9780195042849",
     "Gault, D. E. 1970, Radio Science 5, 273, and Hartmann, W. K. 1984, Icarus 60, 56: empirical crater saturation at 1 to 10 percent of geometric saturation (1.54 D^-2); 0.15 D^-2 is taken, the top of that range. doi:10.1016/0019-1035(84)90138-6",
     "Fassett, C. I. and Thomson, B. J. 2014, JGR Planets 119, 2255: lunar crater degradation as topographic diffusion, about 5.5 m² per Myr. doi:10.1002/2014JE004698",
-    "Zahnle, K. et al. 2003, Icarus 163, 263: cratering rates in the outer Solar System; Europa's surface about 60 Myr old (Schenk et al. 2004, in Jupiter, ch. 18). doi:10.1016/S0019-1035(03)00048-4",
+    "Zahnle, K. et al. 2003, Icarus 163, 263: cratering rates in the outer Solar System; Europa's surface around 50 Myr old (Schenk et al. 2004, in Jupiter, ch. 18, give about 60 Myr; not checked). doi:10.1016/S0019-1035(03)00048-4",
 ];
 
 /// Everything a crater draw needs, shared by the listed population and the

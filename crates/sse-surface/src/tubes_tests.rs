@@ -30,7 +30,7 @@ fn tubes_form_on_gentle_slopes() {
     assert!(f(1.0) > 0.7 && f(4.0) > 0.7);
 }
 
-/// A roof spans wider as gravity falls; airless worlds keep old roofs only
+/// A roof spans wider as gravity falls (our 1/g inference from Blair et al. 2017); airless worlds keep old roofs only
 /// where craters have not cut through; Earth's young hot-spot tubes stand.
 #[test]
 fn tube_roofs_scale_with_gravity_and_wear_with_time() {

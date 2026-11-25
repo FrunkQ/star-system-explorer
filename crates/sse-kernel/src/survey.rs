@@ -177,6 +177,9 @@ pub(crate) fn resolve(
             if opts.gases.is_none() {
                 opts.gases = crate::adopt::catalogued_gases(w.facts.get(&b.address));
             }
+            if opts.star_distance_au.is_none() {
+                opts.star_distance_au = crate::adopt::star_distance_au(&w.bodies, &b);
+            }
             // W9 part 2: the orbit's wobble from its siblings (T1), unless
             // the caller gave one.
             if opts.orbit_track.is_none() {
@@ -261,6 +264,9 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
         "envelope": v(&sv.envelope),
         "deposit_kinds": sse_surface::cover::DEPOSITS,
         "tubes": v(&sv.tubes),
+        // SW1: how its bare ground weathers (tiles carry each sample's
+        // maturity); absent where nothing from space reaches the ground.
+        "weathering": v(&sv.weathering.as_ref().filter(|w| w.active)),
         "tiles": tiles,
         "refused": refused,
     });

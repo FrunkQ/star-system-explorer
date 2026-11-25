@@ -33,9 +33,9 @@ use sse_core::math as m;
 pub const TUBES_VERSION: &str = "surface-tubes-v1";
 
 pub const REFS: [&str; 5] = [
-    "Greeley, R. 1971, Modern Geology 2, 207: lava tubes and channels in the lunar Marius Hills and on Hawaii; tubes form in fluid pahoehoe on gentle slopes.",
+    "Greeley, R. 1971, The Moon 3, 289 (now Earth, Moon, and Planets): lava tubes and channels in the lunar Marius Hills; tubes form in fluid pahoehoe on gentle slopes. doi:10.1007/BF00561842",
     "Calvari, S. and Pinkerton, H. 1998, JGR 103, 27291: formation of lava tubes and extensive flow fields during the 1991-1993 eruption of Mount Etna. doi:10.1029/97JB03388",
-    "Blair, D. M. et al. 2017, Icarus 282, 47: the structural stability of lunar lava tubes; a roof spans wider as gravity falls. doi:10.1016/j.icarus.2016.10.008",
+    "Blair, D. M. et al. 2017, Icarus 282, 47: the structural stability of lunar lava tubes; under the Moon's gravity tubes kilometres wide can stand (the 1/g scaling of roof span is SSE4's inference from it). doi:10.1016/j.icarus.2016.10.008",
     "Sauro, F. et al. 2020, Earth-Science Reviews 209, 103288: lava tubes on Earth, Moon and Mars; terrestrial tubes up to about 30 m wide. doi:10.1016/j.earscirev.2020.103288",
     "Haruyama, J. et al. 2009, GRL 36, L21206: a possible lunar lava tube skylight in the Marius Hills, about 65 m across. doi:10.1029/2009GL040635",
 ];
@@ -222,7 +222,7 @@ pub fn lava_tubes(
             format!("{:.1} Myr ago", age)
         };
         let cause = format!(
-            "Lava tubes in the {what}, {age}: slope {slope:.1}° gives a forming strength of {forming:.2} (tubes form best near {best:.0}°, Greeley 1971; Calvari and Pinkerton 1998). Gravity {g:.2} m/s² lets a roof span about {w:.0} m ({ratio:.1} times Earth's; Blair et al. 2017). {kept_pc:.0}% of the roof still stands: {imp}{wear}.",
+            "Lava tubes in the {what}, {age}: slope {slope:.1}° gives a forming strength of {forming:.2} (tubes form best near {best:.0}°, Greeley 1971; Calvari and Pinkerton 1998). Gravity {g:.2} m/s² lets a roof span about {w:.0} m ({ratio:.1} times Earth's, scaled as 1/g: SSE4's inference from Blair et al. 2017). {kept_pc:.0}% of the roof still stands: {imp}{wear}.",
             best = t.slope_best_deg,
             w = width,
             ratio = gscale,

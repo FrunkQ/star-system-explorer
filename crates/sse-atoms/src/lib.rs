@@ -31,6 +31,7 @@ pub mod star;
 #[cfg(test)]
 #[path = "test/mod.rs"]
 mod was;
+pub mod weathering;
 
 use sse_core::{Dimension, QuantityKind};
 use sse_flow::AtomRegistry;
@@ -426,6 +427,13 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("interior.dynamo_local_rossby", "a stirring flow's speed over the spin speed across its layer"),
     ("interior.magnetic_reynolds", "magnetic Reynolds number of a stirred layer: stretching over leaking"),
     ("interior.magnetic_decay_time", "time an unstirred field takes to leak out of a conducting layer"),
+    ("surface.exposure_age", "time bare ground has lain open to space since it was last renewed, by lava, ice or a crater's ejecta"),
+    ("surface.wind_flux_ratio", "the star's wind flux at the world against its flux at 1 AU (the inverse square of distance)"),
+    ("surface.wind_reaches_ground", "1 when the star's wind reaches the ground, 0 when a magnetic field holds it off"),
+    ("surface.maturity", "how weathered bare ground is, 0 fresh to 1 fully mature"),
+    ("surface.weathering_factor_650", "weathered over fresh reflectance of the same soil at 650 nm (red)"),
+    ("surface.weathering_factor_550", "weathered over fresh reflectance of the same soil at 550 nm (green)"),
+    ("surface.weathering_factor_450", "weathered over fresh reflectance of the same soil at 450 nm (blue)"),
     ("body.moment_of_inertia_factor", "moment of inertia over mass times radius squared: 0.4 for a uniform ball, less as mass gathers in the middle"),
     ("interior.dynamo_onset", "how far a dynamo runs, 0 to 1, from its magnetic Reynolds number"),
     ("interior.dynamo_rossby", "spin period over a dynamo's stirring time"),

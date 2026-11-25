@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 128,
+        n, 130,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -430,10 +430,10 @@ fn brine_freezing_points() {
 #[test]
 fn ice_shell_conduction() {
     // Europa-like: 100 K surface, base at 270 K, 0.05 W/m² gives about 13 km,
-    // inside the 10 to 30 km range of conductive models (Ojakangas and Stevenson 1989).
+    // under the 25 km bound on a conductive shell (Ojakangas and Stevenson 1989).
     let d = run("sse.heat.ice_shell_thickness", &[0.05, 100.0, 270.0])[0];
     close(d, 651.0 / 0.05 * m::ln(2.7), 1e-12, "formula");
-    assert!(d > 1e4 && d < 3e4);
+    assert!(d > 1e4 && d < 2.5e4);
     let q = run("sse.heat.ice_shell_heat_flow", &[d, 100.0, 270.0])[0];
     close(q, 0.05, 1e-12, "round trip");
 }
@@ -1481,4 +1481,37 @@ fn inertia_blocks_match_their_sums() {
         );
     }
     assert!((ia::giant(0.0, 0.5) - 0.2614).abs() < 1e-4);
+}
+
+#[test]
+fn weathering_blocks_match_their_sums() {
+    use crate::weathering as w;
+    for (t, f, o) in [
+        (3.2e16, 1.0, 1.0),
+        (3.2e15, 1.0, 1.0),
+        (3.2e16, 7.0, 0.0),
+        (0.0, 1.0, 1.0),
+    ] {
+        let got = run("sse.surface.space_weathering", &[t, f, o])[0];
+        let want = w::maturity(t, f, o > 0.5, w::TAU_1AU_S, w::WIND_SHARE);
+        assert!(
+            (got - want).abs() < 1e-12,
+            "{t} {f} {o}: {got} against {want}"
+        );
+    }
+    assert_eq!(
+        w::maturity(0.0, 1.0, true, w::TAU_1AU_S, w::WIND_SHARE),
+        0.0
+    );
+    for m in [0.0, 0.3, 1.0] {
+        let got = run("sse.surface.weathered_reflectance", &[m]);
+        let want = w::factors(m, w::MATURE_OVER_FRESH);
+        for i in 0..3 {
+            assert!((got[i] - want[i]).abs() < 1e-12, "{m}: {got:?}");
+        }
+    }
+    // Fresh ground is exactly unchanged; mature ground is redder.
+    assert_eq!(w::factors(0.0, w::MATURE_OVER_FRESH), [1.0, 1.0, 1.0]);
+    let f = w::factors(1.0, w::MATURE_OVER_FRESH);
+    assert!(f[0] > f[1] && f[1] > f[2]);
 }

@@ -493,7 +493,7 @@
     ],
     "sources": {
      "j_per_g_carbon": "About 479 kJ per mole of CH2O for CO2 + H2O to CH2O + O2 (standard free energy of photosynthesis), 12 g C per mole",
-     "window_k": "Lower: about 253 K, the limit of cell division in brines (Clarke et al. 2013); upper: 395 K, Methanopyrus kandleri strain 116 (Takai et al. 2008)",
+     "window_k": "Lower: about 253 K, the limit of cell division in brines (Clarke et al. 2013); upper: 395 K, Methanopyrus kandleri strain 116 under 20 MPa (Takai et al. 2008)",
      "min_water_activity": "0.585, the lowest water activity known to support cell division: Aspergillus penicillioides (Stevenson et al. 2017, Environmental Microbiology 19, 687; https://pubmed.ncbi.nlm.nih.gov/27871132/)",
      "max_dose_msv_yr": "About 1000 Sv per year (around 0.1 Gy per hour), within what radiation-resistant microbes such as Deinococcus radiodurans grow under (Daly 2009)",
      "light_efficiency": "0.6% of 400 to 700 nm sunlight stored as fixed carbon, about the global mean that makes about 105 Gt C per year (Field et al. 1998); anoxygenic photosynthesis reaches 1100 nm (bacteriochlorophylls) but is limited by its electron donor",

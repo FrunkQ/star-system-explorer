@@ -43,7 +43,7 @@
       10.0,
       300.0
      ],
-     "description": "thermal conductivity of the liquid alloy (Pozzo et al. 2012 give about 150; Konopkova et al. 2016 about 30; until MP21's iron rows)"
+     "description": "thermal conductivity of the liquid alloy (Pozzo et al. 2012 give about 150; Konopkova et al. 2016 about 30, measured on solid iron; until MP21's iron rows)"
     },
     {
      "param": "alpha",

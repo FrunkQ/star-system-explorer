@@ -18,6 +18,8 @@ export interface SurfaceTile {
   albedo: number[];
   slope_ddeg: number[];
   surface_age_myr: number[];
+  /** SW1: bare ground's weathering, 0 fresh to 255 mature; absent where nothing weathers. Reflectance is fresh × weathering.mature_factor_rgb ^ (maturity / 255). */
+  maturity?: number[];
   pending: string[];
   hash: string;
 }
