@@ -40,9 +40,9 @@ try {
       if (!ok) failed = true;
     }
     // VP3: the baked cubes against the processor twin. Colour is linear 0..1; the normal's error is a length.
-    const { colourErr, normalErr, tiltMax } = out.bake;
-    const bakeOk = colourErr <= 0.03 && normalErr <= 0.02 && tiltMax > 0.003;
-    console.log(`${bakeOk ? "ok" : "FAIL"} ${label} texture bake: colour within ${colourErr.toFixed(4)}, normal within ${normalErr.toFixed(4)} (largest true tilt ${(tiltMax * 180 / Math.PI).toFixed(2)}°)`);
+    const { colourErr, normalErr, tiltMax, lit, dark } = out.bake;
+    const bakeOk = colourErr <= 0.03 && normalErr <= 0.02 && tiltMax > 0.003 && lit > 0 && dark === 0;
+    console.log(`${bakeOk ? "ok" : "FAIL"} ${label} texture bake: colour within ${colourErr.toFixed(4)}, normal within ${normalErr.toFixed(4)} (largest true tilt ${(tiltMax * 180 / Math.PI).toFixed(2)}°); lit globe ${lit} pixels lit, ${dark} black or not a number`);
     if (!bakeOk) failed = true;
     // VP3 part 4: the deep patch read at texel centres. Colour 0..1 sRGB bytes; the normal is stored as half floats.
     const p = out.patch;

@@ -48,6 +48,7 @@ For the renderer's close-up package (True down to a grazing orbit). The renderer
   - Normals come from the true slope between neighbouring texels, one-sided where a neighbour was not read, and are kept in floats (a byte a component bands gentle slopes).
   - Gaps keep alpha 0. It takes about 0.26 s for 9 tiles of 256.
 - **Drawing.** The bake's material (`texture-ladder-gpu.ts` `patchNodes`, `Baked.setPatch`) lays the patch over the cube where it was read, eased in over its outer seventh. `TrueTexture.patch` carries it, and `gpu.ts` hands it to the bake each frame (additive, in `bakedMat`).
+  - The material mixes in the patch only where its weight is above zero. Off the patch's side of the globe its read is NaN, and NaN times zero is still NaN: the first build blacked out every True world. `ladder-gpu.e2e.mjs` now draws the lit baked globe with no patch and fails on any black or NaN pixel.
 - **Next:** SystemChart reads `groundView` (when the renderer's close-up lands), calls `readDeep` once the camera has settled, and sets `patch` on the world's True face. After that comes the detail ladder's ground roughness below the fact floor.
 
 ## Code

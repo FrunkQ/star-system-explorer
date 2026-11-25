@@ -9,10 +9,10 @@ import { ladderAt, ladderLayer, resolveLayer, rungs, type NoiseKind, type Resolv
 import { composeFaces, composePatch, faceDirection, reliefNormal, sampleFaces, samplePatch, texelAngle, tilesNear } from "../../../packages/renderer/src/texture-ladder.ts";
 import { createTextureBaker, patchNodes } from "../../../packages/renderer/src/texture-ladder-gpu.ts";
 import { cubeTexture, floor, normalize, sRGBTransferEOTF, uniform } from "three/tsl";
-import { Vector3 } from "three";
+import { DirectionalLight, PerspectiveCamera, SphereGeometry, Vector3 } from "three";
 import type { SurfaceTile } from "../../../packages/ui-contract/src/index.ts";
 
-type Out = { backend?: string; rungs?: number; results?: Record<string, { maxErr: number; maxVal: number }>; bake?: { colourErr: number; normalErr: number; tiltMax: number }; patch?: { colourErr: number; weightErr: number; normalErr: number; tiltMax: number; texels: number }; error?: string };
+type Out = { backend?: string; rungs?: number; results?: Record<string, { maxErr: number; maxVal: number }>; bake?: { colourErr: number; normalErr: number; tiltMax: number; lit: number; dark: number }; patch?: { colourErr: number; weightErr: number; normalErr: number; tiltMax: number; texels: number }; error?: string };
 
 /** Made-up deep tiles (level 6, 64 samples) round a point: rolling hills a few hundred metres high. */
 function deepTiles(toward: [number, number, number]): SurfaceTile[] {
@@ -154,7 +154,33 @@ const normalize3 = (v: [number, number, number]): [number, number, number] => {
         normalErr = Math.max(normalErr, Math.hypot(g[0]! - n[0], g[1]! - n[1], g[2]! - n[2]));
         tiltMax = Math.max(tiltMax, Math.acos(Math.min(1, n[0] * d[0] + n[1] * d[1] + n[2] * d[2])));
       }
-      out.bake = { colourErr, normalErr, tiltMax };
+      // The baked world's own material, lit, with no deep patch laid: every pixel on the globe must be a finite number
+      // and its sunlit side must not be black (a NaN from the unlaid patch once blacked out every True world).
+      let lit = 0;
+      let dark = 0;
+      {
+        const scene = new Scene();
+        scene.add(new Mesh(new SphereGeometry(1, 64, 32), b.material));
+        const sun = new DirectionalLight(0xffffff, 3);
+        sun.position.set(0, 0, 5);
+        scene.add(sun);
+        const cam = new PerspectiveCamera(30, 1, 0.1, 10);
+        cam.position.set(0, 0, 5);
+        cam.lookAt(0, 0, 0);
+        const G = 32;
+        const rt = new RenderTarget(G, G, { type: FloatType, format: RGBAFormat, minFilter: NearestFilter, magFilter: NearestFilter });
+        r.setRenderTarget(rt);
+        await r.renderAsync(scene, cam);
+        const px = (await r.readRenderTargetPixelsAsync(rt, 0, 0, G, G)) as Float32Array;
+        // The disc's middle half (the sphere fills about 0.54 of the frame at this distance).
+        for (let j = G / 2 - 4; j < G / 2 + 4; j++) for (let i = G / 2 - 4; i < G / 2 + 4; i++) {
+          const o = (j * G + i) * 4;
+          const v = px[o]! + px[o + 1]! + px[o + 2]!;
+          if (Number.isFinite(v) && v > 0.01) lit++;
+          else dark++;
+        }
+      }
+      out.bake = { colourErr, normalErr, tiltMax, lit, dark };
       baker.dispose();
 
       // VP3 part 4: the deep patch's read on the GPU against samplePatch, at texel centres inside its eased edge.

@@ -24,9 +24,9 @@ export interface Baked {
   setPatch(p: PatchPicture | null): void;
 }
 
-/** A blank patch texture while none is laid (alpha 0: the cube shows). */
+/** A blank patch texture while none is laid (alpha 0: the cube shows; never all zero, so a normal read from it is not NaN). */
 const blank = () => {
-  const t = new DataTexture(new Uint8Array(4), 1, 1, RGBAFormat, UnsignedByteType);
+  const t = new DataTexture(new Uint8Array([128, 128, 255, 0]), 1, 1, RGBAFormat, UnsignedByteType);
   t.needsUpdate = true;
   return t;
 };
@@ -248,8 +248,13 @@ export function createTextureBaker(renderer: WebGPURenderer): TextureBaker {
     const material = new MeshStandardNodeMaterial({ roughness: 1, metalness: 0 });
     const d = normalize(positionLocal);
     const patch = patchNodes(d);
-    material.colorNode = sRGBTransferEOTF(mix(cubeTexture(colour.texture, d).xyz, patch.colour, patch.weight)) as N;
-    material.normalNode = transformNormalToView(normalize(mix(normalize(cubeTexture(normal.texture, d).xyz.mul(2).sub(1)), patch.normal, patch.weight)));
+    // Only where the patch has weight: elsewhere its read can be NaN (off its side of the globe), and NaN times zero is
+    // still NaN, which would black out the whole world.
+    const on = patch.weight.greaterThan(0);
+    const cubeCol = cubeTexture(colour.texture, d).xyz;
+    const cubeNor = normalize(cubeTexture(normal.texture, d).xyz.mul(2).sub(1));
+    material.colorNode = sRGBTransferEOTF(select(on, mix(cubeCol, patch.colour, patch.weight), cubeCol)) as N;
+    material.normalNode = transformNormalToView(select(on, normalize(mix(cubeNor, patch.normal, patch.weight)), cubeNor));
     const b: Baked = { key, signature: c.signature, size, colour, normal, bytes: cubeBytes(size) * 1.5, material, setPatch: (p) => patch.set(p) };
     patches.set(key, patch);
     return b;
