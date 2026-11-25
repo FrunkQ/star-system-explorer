@@ -107,7 +107,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
 | `status/navigation.md` | Build object selector and menus | NV (selector part 2, object menu, find by tag, notes) |
 | `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, `shell/src/run/`, Bookmarks, Playbook and Switchboard (RD, PB) |
-| `status/landing.md` (arrives with PR 437) | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
+| `status/landing.md` | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | V8, voyages, the flight log, travel panels, HW |
 | `status/galaxy.md` | Build galaxy charts and histories (split from travel) | U6, U8, V9 (not the 3D web cube), GH8, V3 gaps 17 and 39 |
@@ -122,7 +122,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map, pulsating stars, ship clocks); XO is a code only, never shown in the product |
 | `status/true-air.md` | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
 | `status/true-surface.md` | Build plumes, frosts and hot glow (was "... and small bodies") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
-| `status/small-bodies.md` (arrives with PR 459) | Build asteroids and rings up close (took small bodies from the plumes thread) | SB: belt members resolved into definite bodies, asteroids and rings up close |
+| `status/small-bodies.md` | Build asteroids and rings up close (took small bodies from the plumes thread) | SB: belt and ring members resolved up close, notable bodies (a shattered world's core), small body kinds for the Add list, comets whole (takes VP-P3), VP-R1 to VP-R5 |
 | `status/surface-timelapse.md` | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse, the drawing side of W-sea2 to W-sea4 |
 | `status/names-and-life.md` | Build names gallery and life board | rest of NM6 (Classes, names gallery), U7 Life board |
 | `status/naming.md` | no live owner (NM design done) | NM |
