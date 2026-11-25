@@ -160,8 +160,8 @@ export interface MinervaNotes {
   seed?: string;
   /** The voice: "ship's log", "guidebook", "briefing" (V3 style). */
   style?: string;
-  /** "short" (a paragraph), "medium", "long" (V3 length). */
-  length?: "short" | "medium" | "long";
+  /** "short" (a paragraph), "medium", "long" (V3 length); "note" is a Guide's margin note (AT11). */
+  length?: "short" | "medium" | "long" | "note";
 }
 
 export function minervaSystem(): string {
@@ -177,7 +177,10 @@ export function minervaSystem(): string {
   ].join("\n");
 }
 
-const LENGTH = { short: "one paragraph", medium: "two or three paragraphs", long: "four to six paragraphs" };
+/** A Guide's margin note is at most this long (the Atlas's own limit for a note, atlas design 6.2). */
+export const NOTE_MAX = 200;
+
+const LENGTH = { short: "one paragraph", medium: "two or three paragraphs", long: "four to six paragraphs", note: `one or two sentences for the margin of the Guide, at most ${NOTE_MAX} characters on one line: opinion and wit, never a new fact` };
 
 export function minervaRequest(bundle: FactsBundle, notes: MinervaNotes): string {
   return [
@@ -200,6 +203,11 @@ export async function runMinerva(o: { bundle: FactsBundle; hidden?: readonly str
       if (m.kind !== "narrative") return { problems: ['make one thing of kind "narrative"'] };
       const text = (m.doc as { text?: unknown } | null)?.text;
       const problems = checkNarrative(text, o.bundle, o.hidden ?? []);
+      if (o.notes?.length === "note" && typeof text === "string") {
+        const t = text.trim();
+        if (t.length > NOTE_MAX) problems.push(`a Guide's note is at most ${NOTE_MAX} characters on one line; this one is ${t.length}`);
+        if (/\n/.test(t)) problems.push("a Guide's note is one line, with no breaks");
+      }
       return problems.length ? { problems } : { problems: [], value: { label: "narrative", audience: o.bundle.audience, text: String(text).trim() } };
     },
   });
