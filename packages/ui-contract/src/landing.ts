@@ -234,6 +234,7 @@ export interface LandingGround {
   surfaceTiles: import("./session.ts").ViewSession["surfaceTiles"];
   surfaceTilesAt: import("./session.ts").ViewSession["surfaceTilesAt"];
   planDescent: import("./session.ts").ViewSession["planDescent"];
+  surveyCaves?: import("./session.ts").ViewSession["surveyCaves"];
 }
 
 /** The tide's height at a time from the kernel's tide raisers (each a range and a period), all in phase at time 0 (the phase is not on record; fudge register). */
