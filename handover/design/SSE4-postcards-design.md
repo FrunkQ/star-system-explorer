@@ -38,7 +38,9 @@ Read with: `SSE4-playbook-and-switchboard-design.md` (bookmarks in 4A, holding i
   "bookmark": { "schema": "sse.bookmark/1", "scope": "u:…/kestrel", "at_yr": 4.6100213e9, "instrument": "system",
                 "view": { "style": "true", "seen": "free", "scale": "real", "band": "visible", "hud": false }, "selected": "u:…/kestrel/iv" },
   // New: the camera. Absent, the view's fixed "Seen from" framing is used.
-  "pose": { "about": "u:…/kestrel/iv", "from_m": [x, y, z], "up": [x, y, z], "fov_deg": 28, "exposure_ev": -1.5,
+  // Stored the way the renderer builds its camera (renderer thread, section 14): the eye is a direction in the body's frame and a distance.
+  "pose": { "about": "u:…/kestrel/iv", "eye_dir": [x, y, z], "eye_m": 4.1e8, "up": [x, y, z], "fov_deg": 28,
+            "exposure": { "mode": "long", "ev": 0 },                 // "long" | "eye"; ev is 0 until exposure is metered (VP4)
             "keep": [0.18, 0.22, 0.80, 0.74] },                      // the part of the frame that must stay in view, any screen shape
   // New: how to get the world.
   "world": { "how": "address", "root": "u:<id>", "packs": [ { "id": "base-physics", "range": "^4.0" } ], "made_with": "4.0.0" }
@@ -78,7 +80,7 @@ Rules that keep this honest:
 **Back.** Laid out like the back of a postcard, in the chart room's type:
 
 - left: the caption, then **Why it looks like this**, three to five lines, each ending "why?" into the physics as everywhere else;
-- right: where (place line), when (date, and the local time of day where that means something), how (band, scale, field of view, exposure in plain words: "Exposed for the rings. The planet's night side is truly this dark"), who (credit chain), and what it travels with (address or clip, packs);
+- right: where (place line), when (date, and the local time of day where that means something), how (band, scale, field of view, exposure in plain words: "A long exposure. To the eye the rings would be fainter and the night side black"; where the sky, the glare or the long-exposure lift make the picture a composite, the back says so), who (credit chain), and what it travels with (address or clip, packs);
 - foot: **Go there**, **Keep** (to this campaign's postcards), **Send**, **Save picture**.
 
 **Where the reasons come from.** Every True recipe pass already draws from kernel facts (air from its composition, sea from the liquid's absorption, rings from their particles, the glow from the eye's glare equation). The ask of the renderer is that a pass which contributes to the frame also hands back one line: what it drew, the facts it read, and the block they came from. The back shows the lines for the passes that cover the most of the picture. Later, pressing a spot on the front answers "what am I looking at here?" with that spot's line. This is the "clever user can test it" touch: change the liquid, and the reason and the sea change together.
@@ -193,7 +195,7 @@ One general mechanism (bookmark, clip, still tier, holding cards, margin notes r
 - **Run desk** ("Build Run desk playbook and players' side"): yes to all four, with changes now folded into sections 3, 6 and 8. Pose optional on the bookmark and read leniently; the ground on the held card, not the hold source; the Quotes kind with the `CardDeck` fallback and identity notes; one store, so no `show: { postcard }`. It will own PC5 once Alex accepts.
 - **Atlas** ("Build star atlas and editions"): a margin note has no speaker or source today; it adds `by` and `source` in PC7 and will own PC7. margin.ts reaches main with PR 481; `uses`, `pickBanners` (situation "holding") and the waiting lines follow in its next PR.
 - **Trailer** ("Capture footage for SSE4 trailers"): no separate stills list; the candidates are in the two files named in section 9. Happy for postcards to be picked from them and for the rig to film from a postcard's pose later.
-- **Renderer** ("Build photoreal renderer"): asked, no answer yet. PC2 and the pose's `exposure_ev` and `fov_deg` stay proposals until it answers.
+- **Renderer** ("Build photoreal renderer"): sound, and nothing in it is costly. (1) A still of any True view is the same `gpu.draw` with its `finish` (VP1, PR 488) into an offscreen target of the asked size, read back once; refinement uses the tiers thread's accumulate on FinishFrame (jittered frames averaged before glare), so a postcard matches the live view exactly, and `photograph` becomes a thin caller of that, not a second renderer. (2) The pose is stored as the camera is built: frame body's address, eye as a body-frame direction plus distance from centre in metres, up, `fov_deg`, the keep box; style, band, seen and the date come from the bookmark. The close-up camera fits it (distance down to a grazing height, plus a ground point the detail ladder reads). There is no metered exposure yet: True is fixed at 1 (white in the star's daylight, fudge row VP1) with a choice of long or eye, so the pose stores `exposure: { mode, ev: 0 }` and `ev` becomes the metered value when VP4 meters it. (3) Reason lines are cheap: `trueLook` (true-body.ts) is the one door every True face comes through and already collects what a face could not show; it is extended to a list per body of pass, facts read and block id, with coverage from the body's projected disc. A pixel pick is one extra id draw at the click. The sky, the glare and the long-exposure lift give their own lines, so the back can say which parts are a composite.
 - **Explorers**: not asked; nothing there moves before Alex's yes to question 10.
 
 ## 15. Picking this up without the chat
