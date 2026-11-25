@@ -3,7 +3,7 @@
   "id": "true-colour",
   "name": "True colour",
   "family": "survey-globe",
-  "description": "The world as an eye in space would see it: ground colours lit by its star, the night side dark, and its air scattering light from the kernel's own pressure, temperature, gravity and gas mix. Worlds without air show bare ground.",
+  "description": "The world as an eye in space would see it: ground colours lit by its star, the night side dark, and its air scattering light from the kernel's own pressure, temperature, gravity and gas mix. Worlds without air show bare ground. Aurorae glow where the kernel places them, in the air's own lines at their own heights, in a long exposure by default.",
   "scene": "body",
   "tiers": [
     "still",
@@ -74,6 +74,15 @@
       "tiers": [
         "gpu-basic",
         "canvas"
+      ]
+    },
+    {
+      "id": "aurora",
+      "pass": "aurora",
+      "tiers": [
+        "still",
+        "gpu-high",
+        "gpu-basic"
       ]
     },
     {

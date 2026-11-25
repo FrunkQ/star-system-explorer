@@ -6,11 +6,13 @@
 // the canvas tier drawn at twice the size and scaled down. Presentation
 // only: a photograph never touches the kernel or the state hash.
 import type { Globe, Tier } from "../../ui-contract/src/index.ts";
+import { constant } from "../../ui-contract/src/index.ts";
 import { pickRecipe, plan, type PassSpec, type RecipeDoc } from "./recipe.ts";
 import { prepare } from "./surface.ts";
 import { drawCanvas } from "./canvas.ts";
 import { air as airOf, type AirFacts } from "./atmosphere.ts";
-import { airRender } from "./runtime.ts";
+import { airRender, type GlobeRunOptions } from "./runtime.ts";
+import { exposeAurora } from "./aurora.ts";
 
 export interface PhotoOptions {
   registry: readonly RecipeDoc[];
@@ -19,6 +21,8 @@ export interface PhotoOptions {
   knobs: Record<string, number>;
   globe: Globe;
   air?: AirFacts | null;
+  /** The world's aurora, as the globe runtime takes it (runtime.ts `GlobeRunOptions.aurora`). */
+  aurora?: GlobeRunOptions["aurora"];
   label: string;
   lon: number;
   lat: number;
@@ -74,13 +78,15 @@ export async function photograph(o: PhotoOptions): Promise<Photo> {
         const prepared = prepare(o.globe, String(relief.colour ?? "survey"), Number(relief.exaggeration ?? 12));
         const atm = pl.passes.find((x) => x.pass === "atmosphere")?.params;
         const air = atm && airPhys ? airRender(airPhys, Number(atm.thickness ?? 1)) : null;
+        const auPass = pl.passes.find((x) => x.pass === "aurora")?.params;
+        const aurora = auPass && o.aurora ? exposeAurora(o.aurora.plan, o.aurora.radius_m, auPass.exposure === "eye" ? "eye" : "long", Number(atm?.sun ?? 6), o.aurora.flux_w_m2 ?? constant("S_sun"), Number(auPass.lift_target ?? 0.6)) : null;
         const most = Math.max(1, Math.min(64, Math.round(o.frames)));
         const budget = o.budget_ms ?? 6000;
         let n = 0;
         let slowest = 0;
         for (let k = 0; k < most; k++) {
           const f0 = performance.now();
-          gpu.draw(prepared, pl, o.lon, o.lat, o.size, air, [halton(k + 1, 2) - 0.5, halton(k + 1, 3) - 0.5]);
+          gpu.draw(prepared, pl, o.lon, o.lat, o.size, air, [halton(k + 1, 2) - 0.5, halton(k + 1, 3) - 0.5], aurora);
           // Running average: frame k weighs 1/(k+1). Read back in the same task as the draw.
           acc.globalAlpha = 1 / (k + 1);
           acc.drawImage(glCanvas, 0, 0, o.size, o.size);
