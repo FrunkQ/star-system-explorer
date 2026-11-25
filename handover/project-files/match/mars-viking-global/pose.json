@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Mars",
+  "camera": "about 25,000 km",
+  "tests": "Visible: iron-oxide dust colour, the canyon's relief",
+  "needs": [
+    "the dust's colour from the data sheet (sheet MP34 Mars dust)"
+  ]
+}

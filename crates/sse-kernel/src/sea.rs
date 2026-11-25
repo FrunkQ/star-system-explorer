@@ -730,7 +730,10 @@ mod helium_tests {
         b.pressure_bar = 0.02;
         // σT⁴ at 1.8 K is about 6e-7 W/m².
         let t_k = 1.8;
-        b.climate = sse_surface::Climate::Fixed { t_surface_k: t_k };
+        b.climate = sse_surface::Climate::Fixed {
+            t_surface_k: t_k,
+            then: None,
+        };
         let env = sse_surface::envelope(&s, &b);
         let x = sse_climate::Extra {
             flux_w_m2: Some(0.0),

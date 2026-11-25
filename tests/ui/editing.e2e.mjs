@@ -206,6 +206,14 @@ try {
       assert.match(await obox.locator('[data-result="year"]').innerText(), /68\d (d|days)|1\.88 (years|yr)/);
       assert.match(await obox.locator('[data-result="stability"]').innerText(), /Lasts|Watch/);
       assert.match(await obox.locator('[data-strip="orbit.shape"] [data-strip-figure]').innerText(), /^0\.09/);
+      // ED2, the sweep behind the strip (kernel K1): Mars's orbit run across the strip on a scratch branch marks where
+      // its day locks and where it stops lasting; nothing is written.
+      const hashSw = await hash();
+      await obox.locator('[data-strip="orbit"] [data-tick="turns freely from here"]').waitFor({ state: "attached", timeout: 90000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nticks: ${await obox.locator("[data-tick]").evaluateAll((t) => t.map((x) => x.getAttribute("data-tick")))}; ${await gm.locator("[data-sweeping], [data-sweep-why]").allInnerTexts()}`);
+      });
+      assert.ok((await obox.locator('[data-strip="orbit"] [data-tick]').count()) >= 2, "more than one mark from the sweep");
+      assert.equal(await hash(), hashSw, "the sweep writes nothing");
       await shot(gm, `orbit-box-${vp}`);
 
       // A year typed on the size: one Earth year puts Mars at 1 AU.
@@ -219,12 +227,14 @@ try {
 
       // ED5 Reach it: ask for a 260 K surface; the box finds the orbit on a scratch what-if and sets it as one change.
       await obox.locator('[data-reach="t_surface_now_k"]').waitFor({ timeout: 20000 });
-      await obox.locator("[data-reach-ask]").fill("260 K");
-      await obox.locator("[data-reach-go]").click();
+      await obox.locator('[data-reach="t_surface_now_k"] [data-reach-ask]').fill("260 K");
+      await obox.locator('[data-reach="t_surface_now_k"] [data-reach-go]').click();
       await gm.waitForFunction(() => /surface (about )?2(59|60|61)/.test(document.querySelector("[data-reach-said]")?.textContent ?? ""), null, { timeout: 60000 }).catch(async (e) => {
         throw new Error(`${e.message}\nbox says: ${await obox.innerText()}`);
       });
       assert.match(await gm.locator('[data-handle="orbit"] .value').innerText(), /1\.[0-4]\d? AU/, "Mars moves in to warm");
+      // ED5 part 2c: the orbit also reaches "locked to its star" (a yes-or-no result), offered beside the surface.
+      assert.match(await obox.locator('[data-reach="locked"]').innerText(), /turns freely/);
       await shot(gm, `reach-it-${vp}`);
       await undoTo(marsAt);
 
@@ -258,6 +268,12 @@ try {
       await gm.locator('[data-recipe="field"] [data-do="mass"]').click();
       await gm.waitForFunction(() => /to have a field of its own/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
       await undoTo();
+      // ED10 part 2: "Stop suggesting this" takes one suggestion off this world's line, kept with the campaign; the rest stay.
+      const hashQ = await hash();
+      await gm.locator('[data-could-be] [data-could="locked"]').click();
+      await gm.locator('[data-could-quiet="locked"]').click();
+      await gm.waitForFunction(() => !document.querySelector('[data-could-be] [data-could="locked"]') && !!document.querySelector('[data-could-be] [data-could="field"]'), null, { timeout: 10000 });
+      assert.equal(await hash(), hashQ, "stopping a suggestion writes nothing to the universe");
 
       // ED8 part 1, the Air box: Mars's air as one mix bar (carbon dioxide most of it), traces as chips in ppm. Setting
       // carbon dioxide to half trades it against the rest, which keep their proportions: one change, one Undo.
@@ -286,6 +302,43 @@ try {
       await gm.waitForFunction(() => /1,000 ppm|0\.1%/.test(document.querySelector('[data-air-box] [data-gas="ch4"]')?.textContent ?? ""), null, { timeout: 20000 });
       await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
 
+      // ED9 part 1, the Makeup box: Mars has no makeup set (the physics takes Earth's); "Like Mercury" from the class atlas
+      // sets the five shares as one change, the radius the science expects for it is said in pencil, and a part's own strip
+      // trades it against the rest. Each is one Undo.
+      await row.locator('[data-handle="makeup"]').click();
+      const mk = gm.locator("[data-makeup-box]");
+      await mk.waitFor({ timeout: 10000 });
+      await mk.locator('[data-makeup-radius]').waitFor({ timeout: 20000 });
+      assert.match(await mk.locator("[data-makeup-radius]").innerText(), /expects a radius of/);
+      await mk.locator('[data-makeup-kind="iron-rich:Mercury"]').click();
+      await gm.waitForFunction(() => /Makeup .*Like Mercury/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nfollowed: ${await gm.locator("[data-followed]").allInnerTexts()}\nbox: ${await mk.innerText()}`);
+      });
+      await gm.waitForFunction(() => /metal 70/.test(document.querySelector('[data-makeup-bar] [data-part="metal"]')?.textContent ?? ""), null, { timeout: 20000 });
+      assert.match(await row.locator('[data-handle="makeup"] .value').innerText(), /metal 70/);
+      await mk.locator("[data-makeup-use-radius]").waitFor({ timeout: 20000 });
+      await shot(gm, `makeup-box-${vp}`);
+      await undoTo(['[data-makeup-box]', "No makeup is set"]);
+      // ED2 part 2: with its makeup set (like Venus, a rocky world), the Mass strip's sweep labels each step with the class
+      // atlas, so the strip marks where the world's class changes (past about ten Earth masses it is no longer rocky).
+      await mk.locator('[data-makeup-kind="rocky:Venus"]').click();
+      await gm.waitForFunction(() => /metal 32/.test(document.querySelector('[data-makeup-bar] [data-part="metal"]')?.textContent ?? ""), null, { timeout: 20000 });
+      await row.locator('[data-handle="mass"]').click();
+      await gm.locator('[data-strip="mass"] [data-tick*="rocky"]').first().waitFor({ state: "attached", timeout: 90000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nticks: ${await gm.locator("[data-tick]").evaluateAll((t) => t.map((x) => x.getAttribute("data-tick")))}; ${await gm.locator("[data-sweeping], [data-sweep-why]").allInnerTexts()}`);
+      });
+      await shot(gm, `mass-class-marks-${vp}`);
+      await row.locator('[data-handle="makeup"]').click();
+      await undoTo(['[data-makeup-box]', "No makeup is set"]);
+      await mk.locator('[data-part-chip="ice"]').click();
+      await mk.locator('[data-strip="makeup.ice"] [data-strip-figure]').click();
+      await mk.locator('[data-strip="makeup.ice"] [data-strip-entry]').fill("40%");
+      await mk.locator('[data-strip="makeup.ice"] [data-strip-entry]').press("Enter");
+      await gm.waitForFunction(() => /ices 40/.test(document.querySelector('[data-makeup-bar] [data-part="ice"]')?.textContent ?? ""), null, { timeout: 20000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nbox: ${await mk.innerText()}`);
+      });
+      await undoTo(['[data-makeup-box]', "No makeup is set"]);
+
       // ED13, "Type it all in": every input as a row; what it understood before anything is written; one change, marked
       // catalogued with its source; one Undo.
       await row.locator('[data-handle="sheet"]').click();
@@ -311,6 +364,12 @@ try {
       // numbers), bodies by name; one change across them all, one Undo.
       if (!(await sheet.isVisible())) await row.locator('[data-handle="sheet"]').click();
       await sheet.locator("[data-sheet-whole]").click();
+      // A spreadsheet saved as CSV (quoted cells, a byte-order mark) opens into the box to check first.
+      await sheet.locator("[data-sheet-file]").setInputFiles({ name: "worlds.csv", mimeType: "text/csv", buffer: Buffer.from('\uFEFF"Name","Orbit (AU)"\r\n"Mars","1.7"\r\n') });
+      await sheet.locator('[data-table-understood="Mars"]').waitFor({ timeout: 5000 });
+      assert.match(await sheet.locator('[data-table-understood="Mars"]').innerText(), /1\.7 AU/);
+      assert.match(await sheet.locator("[data-sheet-table]").inputValue(), /"Mars","1\.7"/);
+      await shot(gm, `sheet-file-${vp}`);
       await sheet.locator("[data-sheet-table]").fill("Name\tOrbit (AU)\tMass\nMars\t1.6\t\nEarth\t\t1.1 M⊕\nVulcan\t0.1\t");
       await sheet.locator('[data-table-understood="Mars"]').waitFor({ timeout: 5000 });
       assert.match(await sheet.locator('[data-table-understood="Earth"]').innerText(), /1\.1 M⊕/);
@@ -389,8 +448,11 @@ try {
       await gm.mouse.move(ex0, ey0, { steps: 4 });
       await gm.locator("[data-add-ghost]").waitFor({ timeout: 5000 });
       assert.match(await gm.locator("[data-add-readout]").textContent(), /AU round Sun/);
-      await shot(gm, `add-ghost-${vp}`);
+      // Resting there, one formation run says what forms at that orbit (ED4 part 2a); nothing is written.
       const hashG = await hash();
+      await gm.locator("[data-add-forms]").waitFor({ timeout: 15000 });
+      assert.match(await gm.locator("[data-add-forms]").textContent(), /forms a world of [\d.]+ Earth masses here|no world forms here/);
+      await shot(gm, `add-ghost-${vp}`);
       await gm.keyboard.press("Escape");
       await gm.waitForFunction(() => !document.querySelector("[data-add-note]") && !document.querySelector("[data-add-ghost]"), null, { timeout: 5000 });
       assert.equal(await hash(), hashG, "Esc puts the ghost away and writes nothing");

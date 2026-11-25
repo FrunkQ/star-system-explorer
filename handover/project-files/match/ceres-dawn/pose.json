@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Visible and Infrared",
+  "frame": "Ceres",
+  "camera": "about 13,600 km",
+  "tests": "Visible and Infrared: dark hydrated clays, bright carbonates",
+  "needs": [
+    "salt deposits (bright spots)"
+  ]
+}

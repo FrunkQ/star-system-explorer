@@ -282,7 +282,7 @@ fn disc_origin(env: &GalaxyEnvelope, p: &OriginParams, a: &OriginAsk) -> Origin 
     let r_out = rings.last().map_or(20.0, |g| g.outer_kpc);
     let refs = vec![
         "Sellwood, J. A. and Binney, J. J. 2002, MNRAS 336, 785, radial mixing in galactic discs, https://doi.org/10.1046/j.1365-8711.2002.05806.x".to_string(),
-        "Frankel, N. et al. 2018, ApJ 865, 96, the radial migration strength of the Milky Way disc, https://doi.org/10.3847/1538-4357/aadba5".to_string(),
+        "Frankel, N. et al. 2018, Measuring Radial Orbit Migration in the Galactic Disk, ApJ 865, 96, https://doi.org/10.3847/1538-4357/aadba5".to_string(),
     ];
     let base = |impossible: Option<String>, why: String| Origin {
         label: "one plausible past".into(),

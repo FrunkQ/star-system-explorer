@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Radio band (radar), clouds off",
+  "frame": "Venus",
+  "camera": "global view",
+  "needs": [
+    "a radar (Radio band) surface view",
+    "the Venera-tinted colour scheme as a labelled false colour"
+  ]
+}

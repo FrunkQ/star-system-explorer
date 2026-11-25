@@ -12,9 +12,10 @@
 -->
 <script lang="ts">
   import FillScreen from "./FillScreen.svelte";
-  import { checkPlayerScene, checkScreen, screenKey, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { controlSetOf, kitScreen, resolveKit, screenFor, situationOf } from "../../ui-contract/src/index.ts";
+  import { sayNumber, checkPlayerScene, checkScreen, screenKey, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
-  import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus, type Shown } from "../../ui-contract/src/index.ts";
+  import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus, type Shown, type HeldGround } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
   import { V3_URL } from "./alpha.ts";
   import SoundControl from "../../sound/src/SoundControl.svelte";
@@ -40,6 +41,7 @@
   import { perf } from "../../ui-contract/src/index.ts";
   import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
   import { groundGrant, landingShowOf, type LandingGround, type PartyShip } from "../../ui-contract/src/index.ts";
+  import { kitLookOf } from "./atlas/kitlook.ts";
   import { DEFAULT_JOIN, joinLine, joinWordsOf, type JoinWords, type SeatBrand } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
@@ -49,10 +51,20 @@
   let checked = $state<{ ok: true; screen: CheckedScreen } | { ok: false; errors: string[] } | null>(null);
   // V10: a seat names the screens it opens; `?screen=` picks one, else the seat's first.
   let seatScreen: string | null = null;
+  // The interface kit the role wears (AT14): its layout for the situation when no layout was chosen for the role.
+  let seatKit = $state<string | undefined>(undefined);
+  // The kit's look in the palette chosen on the role card (AT15 part 2): the role wears it over the player's own theme.
+  let seatPalette = $state<string | undefined>(undefined);
+  const kitLook = $derived(kitLookOf(seatKit, seatPalette));
+  const controlSet = $derived(seatKit ? controlSetOf((() => { try { return resolveKit(seatKit); } catch { return undefined; } })()) : undefined);
   async function loadScreen(): Promise<ScreenDoc> {
-    // What the GM sent names its own screen (a landing is watched on the Landing screen), else the link's, else the seat's.
+    // What the GM sent names its own screen (a landing is watched on the Landing screen), else the link's, else the
+    // seat's chosen layout, else its kit's layout for the situation, else the Bridge.
     const sent = shown && "scope" in shown ? shown.screen : undefined;
-    const asked = sent ?? new URLSearchParams(location.search).get("screen") ?? seatScreen;
+    const picked = screenFor({ sent, chosen: new URLSearchParams(location.search).get("screen") ?? seatScreen, kit: seatKit, shown, kitScreen });
+    // A kit layout whose parts this screen cannot draw yet falls back to the Bridge, rather than a screen of errors.
+    if (picked && typeof picked === "object" && picked.items.every((i) => PLAYER_STACK.some((v) => v.id === i.view))) return structuredClone(picked);
+    const asked = typeof picked === "string" ? picked : null;
     if (asked === "composed") {
       const raw = loadPref("composed-screen");
       if (!raw) throw new Error("No screen has been handed over from the composer on this device.");
@@ -243,6 +255,8 @@
         if (first) {
           first = false;
           seatScreen = seat.screens?.[0] ?? null;
+          seatKit = seat.kit;
+          seatPalette = seat.palette;
           void useScreenWith([...replica.dataViews], "standard").catch((e) => (sceneErrors = [String(e)]));
         }
       };
@@ -266,6 +280,8 @@
           seatLabel = seat.label;
           mayAsk = seat.may_send.includes("set_value");
           seatScreen = seat.screens?.[0] ?? null;
+          seatKit = seat.kit;
+          seatPalette = seat.palette;
           embedList = seat.embed_origins;
           brand = seat.brand ?? null;
           live = seat.live;
@@ -294,11 +310,15 @@
       // The role's layout (PB7 role card, PB13): a change of it, or of the made layout it names, reloads the screen.
       const layoutNow = () => {
         const asked = (shown && "scope" in shown ? shown.screen : undefined) ?? seatScreen;
-        return `${asked ?? ""}|${asked?.startsWith("mine.") ? JSON.stringify(replica.layouts.find((d) => (d as unknown as ScreenDoc).id === asked) ?? null) : ""}`;
+        // A kit's layout changes with the situation (AT14): a send from a system to a world swaps the screen.
+        const kitWay = seatKit ? `${seatKit}:${asked ? "" : situationOf(shown)}` : "";
+        return `${asked ?? ""}|${kitWay}|${asked?.startsWith("mine.") ? JSON.stringify(replica.layouts.find((d) => (d as unknown as ScreenDoc).id === asked) ?? null) : ""}`;
       };
       replica.onUpdate = () => {
         const mine = replica.seats().find((x) => x.id === seatId);
         if (!new URLSearchParams(location.search).get("screen")) seatScreen = mine ? (mine.screens?.[0] ?? null) : seatScreen;
+        if (mine && mine.kit !== seatKit) seatKit = mine.kit;
+        if (mine && mine.palette !== seatPalette) seatPalette = mine.palette;
         if (JSON.stringify(mine?.live ?? null) !== JSON.stringify(live ?? null)) live = mine?.live;
         const ship = partyOf(replica.party());
         if (JSON.stringify(ship) !== JSON.stringify(party)) party = ship;
@@ -339,6 +359,20 @@
 
   let selection = $state<string | null>(null);
   // Read only (PB3b): the GM steers this screen; it watches and takes no input but sound.
+  // The held screen's ground (PC5): the postcard sent with the card. Postcards in turn change by a slow fade; under
+  // reduced motion the screen keeps the first one for as long as the same card is held.
+  let heldGround = $state<HeldGround | null>(null);
+  let heldFor: string | null = null;
+  $effect(() => {
+    const s = shown;
+    // Only a picture as plain data is drawn (it also goes into a style); anything else is no ground.
+    const g = s && "off" in s && s.ground && /^data:image\/[a-z+.-]+;base64,[A-Za-z0-9+/=]+$/.test(s.ground.picture) ? s.ground : null;
+    const card = s && "off" in s ? (s.card ?? "") : null;
+    if (!g) return void ((heldGround = null), (heldFor = null));
+    if (heldGround && heldFor === card && reducedNow()) return;
+    if (heldGround?.id !== g.id || heldGround.picture !== g.picture) heldGround = g;
+    heldFor = card;
+  });
   // Words sent with what is shown (PB6): a card over the picture until the GM takes them back or the player puts it away.
   const sayWords = $derived(shown && "scope" in shown && shown.say ? shown.say : "");
   let sayHidden = $state("");
@@ -370,7 +404,7 @@
   }
   const saved = loadPref("player-theme");
   let theme = $state(PLAYER_THEMES.some((t) => t.id === saved) ? saved! : "chart");
-  const themeDoc = $derived(PLAYER_THEMES.find((t) => t.id === theme)!);
+  const themeDoc = $derived(kitLook?.doc ?? PLAYER_THEMES.find((t) => t.id === theme)!);
   const vocabId = $derived(themeDoc.vocab && VOCABS[themeDoc.vocab] ? themeDoc.vocab : screenDoc && screenDoc.vocab in VOCABS ? screenDoc.vocab : "plain");
   const vocab = $derived(VOCABS[vocabId]!);
   // Symbols are the player's choice, apart from the theme; the theme says what it can carry.
@@ -416,9 +450,9 @@
   const powerOff = () => (shown && "off" in shown && themeDoc.delivery ? resolveDelivery(themeDoc.delivery, "power_off", { reducedMotion: reducedNow() }) : null);
   $effect(() => {
     const root = document.documentElement;
-    root.setAttribute("style", themeCss(theme, ALL_THEMES));
+    root.setAttribute("style", kitLook ? kitLook.css : themeCss(theme, ALL_THEMES));
     root.style.colorScheme = themeDoc.mode;
-    root.dataset.theme = theme;
+    root.dataset.theme = kitLook ? kitLook.theme : theme;
     savePref("player-theme", theme);
     savePref("effects", effects ? "on" : "off");
   });
@@ -443,7 +477,7 @@
     const last = a.split("/").pop() ?? a;
     return last.charAt(0).toUpperCase() + last.slice(1).replace(/[-_]/g, " ");
   }
-  const dayWords = (d: number) => (d < 2 ? `${Math.round(d * 24)} hours` : d < 400 ? `${Math.round(d)} days` : `${(d / 365.25).toFixed(1)} years`);
+  const dayWords = (d: number) => (d < 2 ? `${Math.round(d * 24)} hours` : d < 400 ? `${Math.round(d)} days` : `${sayNumber(d / 365.25, 0, { decimals: 1 })} years`);
   const star = $derived(scene ? scene.subjects.find((s) => s.address === scene!.scope) : undefined);
 
   // The tabletop bridge: tell the allowed tabletop the view is ready and what is in focus; take its "focus this" asks for subjects this seat already sees.
@@ -490,9 +524,9 @@
       onchange={(v) => setSensor(v)}
     />
     {/if}
-    <label class="pick">Theme
+    {#if !kitLook}<label class="pick">Theme
       <select bind:value={theme} title={themeDoc.description}>{#each PLAYER_THEMES as t (t.id)}<option value={t.id}>{t.name}</option>{/each}</select>
-    </label>
+    </label>{/if}
     <label class="pick">Symbols
       <select bind:value={symbology}>{#each SHIPPED as d (d.id)}<option value={d.id}>{d.name}</option>{/each}</select>
     </label>
@@ -511,8 +545,20 @@
   {#if embed.mode === "refused"}
     <main class="problem" role="alert"><h2>This view cannot be shown here</h2><p>{embed.reason}</p></main>
   {:else if shown && "off" in shown}
-    {#if shown.card}
-      <main class="problem off held" data-screens-off data-held={shown.card}><p class="card">{shown.card}</p></main>
+    {#if heldGround}
+      <!-- A held card with a ground (PC5, postcards design 8.4): the postcard full screen, the card's words over a soft shade on its quiet side, who said a quote beneath. One piece of words only. -->
+      <main class="off held grounded" data-screens-off data-held={shown.card ?? ""} data-held-ground={heldGround.id}>
+        {#key heldGround.id}<div class="ground-wash" style:background-image={`url("${heldGround.picture}")`} aria-hidden="true"></div><img class="ground" src={heldGround.picture} alt={heldGround.name} data-ground-picture />{/key}
+        {#if shown.card}
+          <div class="words" data-held-kind={shown.kind ?? "plain"}>
+            <p class="card">{shown.card}</p>
+            {#if shown.by}<p class="by" data-held-by>{shown.by}</p>{/if}
+          </div>
+        {/if}
+        <p class="ground-name" data-ground-name>{heldGround.name}</p>
+      </main>
+    {:else if shown.card}
+      <main class="problem off held" data-screens-off data-held={shown.card} data-held-kind={shown.kind ?? "plain"}><div class="words"><p class="card">{shown.card}</p>{#if shown.by}<p class="by" data-held-by>{shown.by}</p>{/if}</div></main>
     {:else}
       <main class="problem off" data-screens-off><p>The game master has the screens off for now.</p></main>
     {/if}
@@ -522,7 +568,7 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p><p class="alpha" data-alpha>An alpha preview of what is coming. To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener">version 3 ›</a></p></main>
   {:else}
     {#key vocabId}
-      <main class="grid" use:deliver={arrival} out:deliverOut|global={powerOff()} class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} shown={shownNow} still={clean} {places} bind:selection /></main>
+      <main class="grid" use:deliver={arrival} out:deliverOut|global={powerOff()} class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} shown={shownNow} {controlSet} still={clean} {places} bind:selection /></main>
       {#if readOnly && !clean}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
     {/key}
     {#if sayWords && sayHidden !== sayWords}
@@ -733,13 +779,77 @@
     margin: 0;
     animation: card-in var(--sse-motion) var(--sse-ease);
   }
+  .held .by {
+    margin: 8px 0 0;
+    font-size: clamp(12px, 1.4vw, 16px);
+    color: var(--sse-ink-muted);
+  }
+  .held .by::before {
+    content: "— ";
+  }
+  /* A ground: the postcard fills the glass; the words sit low on the left over a soft shade so they always read. */
+  .grounded {
+    position: relative;
+    min-height: calc(100dvh - 66px);
+    overflow: hidden;
+    place-items: end start;
+    text-align: left;
+    background: #000;
+  }
+  /* The whole picture, never cropped (a globe stays round), on a soft wash of itself that fills the glass. */
+  .grounded .ground,
+  .grounded .ground-wash {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    animation: ground-in 2.4s ease;
+  }
+  .grounded .ground {
+    object-fit: contain;
+  }
+  .grounded .ground-wash {
+    background-size: cover;
+    background-position: center;
+    filter: blur(28px) brightness(0.55);
+    transform: scale(1.1);
+  }
+  .grounded .words {
+    position: relative;
+    margin: 0 0 clamp(28px, 7vh, 72px) clamp(20px, 5vw, 64px);
+    padding: 14px 18px;
+    border-radius: var(--sse-radius);
+    background: linear-gradient(90deg, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0.3));
+    color: #fff;
+  }
+  .grounded .by {
+    color: rgb(255 255 255 / 0.78);
+  }
+  .grounded .ground-name {
+    position: absolute;
+    right: 14px;
+    bottom: 10px;
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: var(--sse-label-tracking);
+    text-transform: var(--sse-label-case);
+    color: rgb(255 255 255 / 0.7);
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+  }
+  @keyframes ground-in {
+    from {
+      opacity: 0;
+    }
+  }
   @keyframes card-in {
     from {
       opacity: 0;
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .held .card {
+    .held .card,
+    .grounded .ground,
+    .grounded .ground-wash {
       animation: none;
     }
   }

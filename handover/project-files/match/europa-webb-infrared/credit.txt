@@ -1,0 +1,9 @@
+Title: Europa (NIRCam image)
+Credit: NASA, ESA, CSA, G. Villanueva (NASA/GSFC), S. Trumbo (Cornell Univ.), A. Pagan (STScI)
+Date: 
+Source: https://esawebb.org/images/weic2323a/
+Licence: CC BY 4.0 (ESA/Webb image use policy, https://esawebb.org/copyright/). Attribution required, exactly as the credit line.
+Picked for: Webb's infrared Europa: carbon dioxide ice in Tara Regio.
+
+About (from the source page):
+Webb’s NIRCam (Near Infrared Camera) captured this picture of the surface of Jupiter’s moon Europa. Webb identified carbon dioxide on the icy surface of Europa that likely originated in the moon’s subsurface ocean. This discovery has important implications for the potential habitability of Europa’s ocean. The moon appears mostly blue because it is brighter at shorter infrared wavelengths. The white features correspond with the chaos terrain Powys Regio (left) and Tara Regio (centre and right), which show enhanced carbon dioxide ice on the surface.

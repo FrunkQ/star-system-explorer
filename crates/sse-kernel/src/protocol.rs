@@ -125,12 +125,46 @@ pub struct BatchEdit {
     pub impossible: Option<bool>,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize, TS)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
 pub enum JobSpec {
     /// Deterministic benchmark: `units` Kepler solves. Used for capability tiers.
     Benchmark { units: u32 },
+    /// K1 (editing design 15): one field of one body swept from `from` to
+    /// `to` in `count` steps (`log` spacing when `log`), each step resolved
+    /// on a what-if branch that is thrown away at the end: per step the
+    /// value, the asked `results`, the class label (`packs` and `scheme`, as
+    /// `classify_preview`) and the stability verdict about the body. Where
+    /// the label or the verdict changes between steps, the tipping point is
+    /// narrowed by halving `refine` times (default 4). One unit is one
+    /// resolve. A result name is a fact on the body or a dotted path into
+    /// its `resolved_system` surface (`climate.t_mean_k`).
+    Sweep {
+        system: String,
+        address: String,
+        field: String,
+        from: f64,
+        to: f64,
+        count: u32,
+        #[serde(default)]
+        #[ts(optional)]
+        log: Option<bool>,
+        #[serde(default)]
+        results: Vec<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        packs: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        scheme: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        refine: Option<u32>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+    },
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
@@ -482,6 +516,15 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         pins: Option<serde_json::Value>,
+        /// A drawn star of the campaign's galaxy (its system address, as
+        /// `star_cell` lists it) to grow this system from: the kernel promotes
+        /// it if it is not yet, the system's address becomes the star's, and
+        /// the formation inherits the star's birth (`Stars::birth`: population,
+        /// mass, age, metals) with `now_gyr` the galaxy's now plus campaign time
+        /// elapsed, unless given. Not with `birth` or `envelope`.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        from_star: Option<String>,
     },
     /// A body's world stack (`sse.world-stack/1`: shells, regions, features)
     /// with its depth ladder and physics notes. Served from the P4 fixtures
@@ -914,6 +957,14 @@ pub enum Request {
         #[ts(optional)]
         branch: Option<String>,
     },
+    /// A catalogued Solar System body's surface tiles without a campaign:
+    /// `body` is its base-sol id (`mars`, `moon`, ...). The Solar System is
+    /// entered from `packs/base-sol` into a private reference universe,
+    /// never the campaign's, and read as `resolved_system` reads tiles.
+    ReferenceTiles {
+        body: String,
+        tiles: Vec<ReferenceTile>,
+    },
     /// Preview a class atlas scheme over the open campaign (GM machine):
     /// label every body in `scope` (default the whole universe) at `at_s`
     /// (default the latest state) with `scheme`, from the atlas of the
@@ -930,6 +981,70 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "number")]
         at_s: Option<i64>,
+    },
+    /// K17 (editing design 10B, F4): orbital elements typed in another
+    /// convention, converted to the kernel's (the system's own plane, about
+    /// the host, with the orbit's own epoch). `measured_from` is `system`
+    /// (the default) or a plane `{pole_lon_rad, pole_lat_rad, zero_lon_rad?}`
+    /// in the system's frame (Earth's equator in an ecliptic frame: pole at
+    /// longitude 90°, latitude 90° less the obliquity, zero 0). `centred_on`
+    /// is `parent` (the default) or `shared`, the pair's shared centre,
+    /// which needs the masses (read from the record, or `mass_kg`). `true_on_s`
+    /// is the elements' date, kept as the orbit's epoch. Nothing is written:
+    /// the reply holds the edits to send (`set_authored_batch`).
+    ElementsIn {
+        address: String,
+        semi_major_axis_m: f64,
+        eccentricity: f64,
+        inclination_rad: f64,
+        ascending_node_rad: f64,
+        argument_of_periapsis_rad: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        mean_anomaly_at_epoch_rad: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        measured_from: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        centred_on: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        host: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_kg: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        true_on_s: Option<i64>,
+    },
+    /// K2 (editing design 15): "what the science expects" for fields that
+    /// are set: each field left out on a what-if branch that is thrown away,
+    /// the system resolved, and the result read where the kernel works it
+    /// out (`body.radius` from the mass and makeup, `planet.surface_temperature`
+    /// from the starlight and the air, `body.surface_gravity` from both).
+    /// A field the kernel does not work out yet answers null, with why.
+    Expects {
+        system: String,
+        address: String,
+        fields: Vec<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+    },
+    /// A sample world for each class (the class gallery's pictures, V3 gaps
+    /// item 35): from the atlas of `packs` (as `classify_preview`), the
+    /// class's own `in` example that sits most centrally in its bands is
+    /// hand-set on a new what-if branch, one system per class round a
+    /// Sun-like star, and resolved. Only the example's inputs are set (mass,
+    /// radius, makeup, orbit, spin, air); everything else is worked out, and
+    /// `fit` is the class's fit on the resolved world, so a sample that the
+    /// physics carries out of its class says so. Nothing on the main line
+    /// changes: read a sample with `resolved_system {system, branch}`.
+    ClassSample {
+        #[ts(type = "unknown[]")]
+        packs: Vec<serde_json::Value>,
+        classes: Vec<String>,
     },
     /// NAV (T3): candidate courses between two places, or the ways out
     /// for a drifting ship (no `to`). The system is a NAV `fixture` (`sol`),
@@ -2333,6 +2448,22 @@ pub enum Request {
         #[ts(optional)]
         pack: Option<String>,
     },
+    /// ATMOS: advice on a world's air (editing design 11A). What the rock
+    /// gives off from the mantle's redox ("the science expects"), how the
+    /// hand-set air differs from it, the pairs in it that do not go
+    /// together (E8) and how long they last, and one `set_authored_batch`
+    /// for "Suggest an atmosphere". Reads the body's facts at `at_s`
+    /// (absent: all of them); `facts` is laid over them (a draft mix).
+    /// Advice only: nothing is written or refused. Read-only.
+    AtmosphereAdvice {
+        body: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "Record<string, unknown>")]
+        facts: Option<serde_json::Value>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -2340,6 +2471,15 @@ pub enum Request {
 #[ts(export)]
 pub struct FormationRequest {
     pub seed: String,
+    /// A drawn star of the campaign's galaxy (its system address, as
+    /// `star_cell` lists it) to grow this system from: the kernel promotes
+    /// it if it is not yet, the system's address becomes the star's, and
+    /// the formation inherits the star's birth (`Stars::birth`: population,
+    /// mass, age, metals) with `now_gyr` the galaxy's now plus campaign time
+    /// elapsed, unless given. Not with `birth` or `envelope`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub from_star: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub system: Option<String>,
@@ -2370,6 +2510,16 @@ pub struct FormationRequest {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct SurfaceTile {
+    pub face: u8,
+    pub level: u8,
+    pub x: u32,
+    pub y: u32,
+}
+
+/// One S1 tile of a reference body: cube face 0 to 5, level, x and y.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ReferenceTile {
     pub face: u8,
     pub level: u8,
     pub x: u32,
@@ -2446,6 +2596,7 @@ impl Request {
             Request::HazardMap { .. } => "hazard_map",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
+            Request::ReferenceTiles { .. } => "reference_tiles",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::SurveySurface { .. } => "survey_surface",
             Request::PlanRoute { .. } => "plan_route",
@@ -2456,6 +2607,9 @@ impl Request {
             Request::WindowView { .. } => "window_view",
             Request::Sift { .. } => "sift",
             Request::ClassifyPreview { .. } => "classify_preview",
+            Request::ClassSample { .. } => "class_sample",
+            Request::Expects { .. } => "expects",
+            Request::ElementsIn { .. } => "elements_in",
             Request::PlanDescent { .. } => "plan_descent",
             Request::SurveyCaves { .. } => "survey_caves",
             Request::SurfaceFrames { .. } => "surface_frames",
@@ -2531,6 +2685,7 @@ impl Request {
             Request::Rename { .. } => "rename",
             Request::FixNames { .. } => "fix_names",
             Request::PackReports { .. } => "pack_reports",
+            Request::AtmosphereAdvice { .. } => "atmosphere_advice",
         }
     }
 }
@@ -2792,6 +2947,17 @@ pub fn ops() -> Vec<OpInfo> {
             Cost::Light,
             "GM machine only; one atlas load plus one label per body in scope (a campaign of a few systems: milliseconds)",
         ),
+        o("elements_in", Cost::Trivial, "a few rotations; no resolve"),
+        o(
+            "expects",
+            Cost::Light,
+            "GM machine only; per field one branch edit and one system resolve",
+        ),
+        o(
+            "class_sample",
+            Cost::Light,
+            "GM machine only; one atlas load, then per class a few dozen branch edits and one system resolve (a handful of classes: well under a second)",
+        ),
         o(
             "window_view",
             Cost::Light,
@@ -2878,6 +3044,28 @@ pub fn ops() -> Vec<OpInfo> {
         o("join_constructs", Cost::Trivial, "GM machine only; one universe event"),
         o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
         o("attach_program", Cost::Trivial, "GM machine only; one record event"),
+        o("hold", Cost::Trivial, "GM machine only; one record event"),
+        o(
+            "who_holds",
+            Cost::Light,
+            "one place on one layer: its holdings, inherited and rolled up, linear in the layer's holdings",
+        ),
+        o(
+            "holdings_in",
+            Cost::Light,
+            "every place held inside the bounds on one layer, linear in the layer's holdings (with history, every dated change)",
+        ),
+        o("set_tech", Cost::Trivial, "GM machine only; one record event"),
+        o(
+            "tech_of",
+            Cost::Trivial,
+            "one civilisation's ladder level with its parents' and the setting's, linear in their tech events",
+        ),
+        o(
+            "tech_reading",
+            Cost::Light,
+            "one design's parts against one civilisation's ladder, linear in parts x needs",
+        ),
         o("detach_program", Cost::Trivial, "GM machine only; one record event"),
         o(
             "programs_step",
@@ -3000,6 +3188,11 @@ pub fn ops() -> Vec<OpInfo> {
             "pack_reports",
             Cost::Trivial,
             "reads reports worked out when the stack loaded; read only",
+        ),
+        o(
+            "atmosphere_advice",
+            Cost::Light,
+            "two formula blocks and one equilibrium search (about 60 sweeps of 5 reactions); read only",
         ),
     ]
 }
@@ -3932,6 +4125,20 @@ pub enum Response {
         #[ts(type = "unknown")]
         frame: serde_json::Value,
     },
+    /// `reference_tiles`: the body's address in the reference Solar System,
+    /// its tiles (as `system_resolved` gives them), the tiles refused with
+    /// why, and its surface regime's label.
+    ReferenceTiles {
+        body: String,
+        address: String,
+        #[ts(type = "unknown[]")]
+        tiles: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        refused: Vec<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        regime_label: Option<String>,
+    },
     /// `classify_preview`: one row per body in address order, `{address,
     /// base, fit, modifiers}` (`base` null when nothing fits), with the
     /// candidate atlas's hash and the scheme's class examples it gets wrong.
@@ -3945,6 +4152,39 @@ pub enum Response {
         bodies: Vec<serde_json::Value>,
         unclassified: u32,
         failing_examples: Vec<String>,
+    },
+    /// `elements_in`: the elements in the kernel's convention and the
+    /// `edits` that set them (`{address, field, value}`, for
+    /// `set_authored_batch`).
+    ElementsConverted {
+        address: String,
+        #[ts(type = "unknown")]
+        elements: serde_json::Value,
+    },
+    /// `expects`: per field asked, `{field, set, expects, from}` (`expects`
+    /// null with `why` when the kernel does not work it out yet).
+    Expected {
+        address: String,
+        #[ts(type = "unknown[]")]
+        fields: Vec<serde_json::Value>,
+    },
+    /// `class_sample`: the branch holding the samples, one sample per class
+    /// found, in the order asked: `{class, scheme, example, system, body,
+    /// radius_m, tilt_rad, day_s, rings, fit, example_fit, limiting,
+    /// surface}`. `radius_m`, `tilt_rad` and `day_s` are null when the
+    /// example gives none. `fit` is the class's fit on the sample as the
+    /// campaign reads it (as `classify_preview` would), `example_fit` on the
+    /// atlas example's own figures; `limiting` (null at a full fit) is
+    /// `{axis, why}`. `surface` is false when the world has no ground to draw
+    /// yet (for now, a body with no radius). `refused` names each class with
+    /// no sample and why.
+    ClassSampled {
+        branch: String,
+        atlas_hash: String,
+        #[ts(type = "unknown[]")]
+        samples: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        refused: Vec<serde_json::Value>,
     },
     /// `codes`: one entry per body, in address order:
     /// `{address, reading}` with the sse-codes `Reading` unchanged in shape.
@@ -4131,6 +4371,15 @@ pub enum Response {
         #[ts(type = "unknown")]
         description: serde_json::Value,
         state_hash: String,
+    },
+    /// `atmosphere_advice`: `{body, says, redox_iw, redox_from (formation,
+    /// core or unknown), expected (gas to share), pressure_pa, set,
+    /// set_pressure_pa, differs ([{gas, set, expected, why}]), clashes
+    /// ([{pair, sink, j_mol, time_s, why}]), available_j_mol, suggest
+    /// ({op, edits} or null), notes, blocks ([{block, inputs, results}])}`.
+    AtmosphereAdvised {
+        #[ts(type = "unknown")]
+        advice: serde_json::Value,
     },
 }
 

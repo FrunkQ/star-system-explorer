@@ -69,7 +69,8 @@ pub struct TraitParams {
     pub lost_strain: f64,
     pub rescue_from: f64,
     /// Life's temperature limits, K (about -20 C to 122 C: Takai et al. 2008
-    /// for the upper limit; fudge F32 for the lower).
+    /// for the upper limit, which holds under 20 MPa; the lower near 253 K is
+    /// Clarke et al. 2013's, with fudge F32).
     pub t_min_k: f64,
     pub t_max_k: f64,
     /// Tallest a tree can grow at Earth's gravity, m: the hydraulic limit of

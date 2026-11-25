@@ -6,6 +6,7 @@ import { bodyCard } from "../../views/body-card/src/index.ts";
 import { cutaway } from "../../views/cutaway/src/index.ts";
 import { body } from "../../views/body/src/index.ts";
 import { compare } from "../../views/compare/src/index.ts";
+import { POSTCARD_VIEWS } from "./postcards/screens.postcards.svelte.ts";
 import { biosphere } from "../../views/biosphere/src/index.ts";
 import { timeRuler } from "../../views/time-ruler/src/index.ts";
 import { flowEditor } from "../../views/flow-editor/src/index.ts";
@@ -24,4 +25,4 @@ import { EXOTIC_VIEWS } from "./screens.exotic.ts";
 import { ATLAS_VIEWS } from "./atlas/screens.atlas.ts";
 import { ROLLCALL_VIEWS } from "./rollcall/screens.rollcall.svelte.ts";
 
-export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles, reference, ...MORE_VIEWS, ...GAME_VIEWS, ...RENDER_VIEWS, ...RUN_VIEWS, ...ATLAS_VIEWS, ...ROLLCALL_VIEWS, ...EXOTIC_VIEWS];
+export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles, reference, ...MORE_VIEWS, ...GAME_VIEWS, ...RENDER_VIEWS, ...RUN_VIEWS, ...ATLAS_VIEWS, ...ROLLCALL_VIEWS, ...POSTCARD_VIEWS, ...EXOTIC_VIEWS];

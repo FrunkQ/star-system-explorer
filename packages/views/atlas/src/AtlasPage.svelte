@@ -67,7 +67,7 @@
   {#if title}
     <header class="head" data-deliver-item>
       <p class="sub">{title.subtitle}</p>
-      <h1 id="atlas-title-{page.number}" tabindex="-1">{title.text}</h1>
+      <h1 id="atlas-title-{page.number}" tabindex="-1" class:pencil={title.pencil} data-pencil={title.pencil ? "" : undefined}>{title.text}</h1>
       {#if title.verdict}
         <details class="verdict" data-verdict>
           <summary>{title.verdict.label ? `${title.verdict.label}: ` : ""}{title.verdict.text}</summary>
@@ -89,7 +89,7 @@
             <h2>{b.title}</h2>
             <dl class="facts">
               {#each b.rows as r (r.field)}
-                <div class="row" class:gap={r.state === "gap"}>
+                <div class="row" class:gap={r.state === "gap"} class:pencil={r.pencil} data-pencil={r.pencil ? "" : undefined} title={r.pencil ? "Not told to the table" : undefined}>
                   <dt>{r.label}</dt>
                   {#if r.state === "gap" && r.bar}
                     <dd><span class="bar" role="img" aria-label="withheld from this document"></span></dd>
@@ -126,7 +126,7 @@
                 {#each b.rows as r (r.link)}
                   <tr>
                     {#each r.cells as c, j (j)}
-                      <td class:gap={c.state === "gap"} class:fig={j > 0 && c.state !== "gap"}>
+                      <td class:gap={c.state === "gap"} class:fig={j > 0 && c.state !== "gap"} class:pencil={c.pencil} data-pencil={c.pencil ? "" : undefined}>
                         {#if j === 0}
                           <button type="button" class="link" onclick={() => onlink(r.link)}>{c.text}</button>
                         {:else if c.bar}
@@ -149,7 +149,12 @@
             {/each}
           </section>
         {:else if b.type === "note"}
-          <p class="note" data-deliver-item>{b.text}</p>
+          <p class="note" class:pencilnote={b.pencil} data-deliver-item>{b.text}</p>
+        {:else if b.type === "gmnotes"}
+          <section class="gmnotes" data-deliver-item data-atlas-gmnotes aria-label={b.title}>
+            <h2>{b.title}</h2>
+            {#each b.lines as l, j (j)}<p data-deliver-text>{l}</p>{/each}
+          </section>
         {:else if b.type === "rule"}
           <hr data-deliver-item />
         {/if}
@@ -221,6 +226,34 @@
     font-size: 0.85em;
     font-style: italic;
     color: var(--sse-ink-muted);
+  }
+  /* The GM's copy (AT10): what the table has not been told, in pencil as on the chart. It prints the same way. */
+  .pencil dd,
+  td.pencil,
+  h1.pencil {
+    color: var(--sse-ink-muted);
+  }
+  .pencil dd,
+  td.pencil,
+  h1.pencil,
+  .pencil .figbtn {
+    text-decoration: underline dotted;
+    text-decoration-color: var(--sse-ink-muted);
+    text-underline-offset: 3px;
+  }
+  .pencilnote {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+  }
+  .gmnotes {
+    margin-top: 18px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--sse-accent);
+    background: color-mix(in srgb, var(--sse-accent) 6%, transparent);
+  }
+  .gmnotes p {
+    margin: 0 0 6px;
+    white-space: pre-wrap;
   }
   .sources {
     margin-top: 18px;
@@ -575,6 +608,19 @@
     }
     .row {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+  /* A page in a narrow box (a part beside a chart, a phone): one column, the figures under their labels. */
+  @container atlas (max-width: 460px) {
+    .atlas-page {
+      padding: 16px 12px 14px;
+    }
+    h1 {
+      font-size: 28px;
+      overflow-wrap: anywhere;
+    }
+    .row {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
   /*

@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Long exposure",
+  "frame": "Pluto",
+  "camera": "New Horizons after closest approach, about 200,000 km, Sun behind Pluto",
+  "date": "2015-07-14",
+  "needs": [
+    "Pluto's haze layers and their forward scattering (air thread)",
+    "Pluto's air thickness (a known caveat: too thick)"
+  ]
+}

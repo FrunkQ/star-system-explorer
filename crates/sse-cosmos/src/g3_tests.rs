@@ -224,7 +224,7 @@ fn shapes_and_black_holes() {
         if lm > 13.5 {
             assert_eq!(g.morphology, gx::Morphology::Elliptical);
         }
-        // Black holes stay below about a percent of their galaxy (Kormendy and Ho 2013 give 0.1 to 0.5% of bulges).
+        // Black holes stay below about a percent of their galaxy (Kormendy and Ho 2013 give 0.1 to 0.5% of bulges; holes track bulges, not whole galaxies).
         assert!(n.black_hole < 0.01 * n.stars, "black hole at 1e{lm}");
         // Gas, stars and history are finite and ordered in time.
         assert!(g.history.windows(2).all(|w| w[1].t_gyr > w[0].t_gyr));

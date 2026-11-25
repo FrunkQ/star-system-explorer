@@ -30,19 +30,20 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | X3l, sector routes as links: `sse-sector-io` reads the metadata's `<Routes>`; `import_sector` takes `metadata`, `route_audience`, `route_tier` and writes each route between two imported worlds as a link (source `import_sector`, GM only by default); the Sector map fetches or takes the XML and says which routes were left out | done; cross-sector routes, routes drawn on the hex map next | packages/X3l-sector-routes.md |
 | RK12, the Traveller mapping: nine ship weapons in `provides.other.weapons`, each with the game's tech level, optimum band and damage (Cepheus Engine SRD) beside an sse-sense weapon; a standard target; fudge F60 | done; rings on the chart (renderer, chart room), RK16 pack side next | packages/RK12-traveller-weapons.md |
 | WBH part 1, the extended world profile: `sse-codes` `value` segments (a fact, scaled, over a sheet constant, to significant figures); code sheet `traveller.extended` (twelve physical lines, none rolled) as the swappable block; a "Read as" sheet picker on World codes; credits for the Cepheus SRD and TravellerSystemGenerator | done | packages/WBH1-extended-profile.md |
-| WBH part 2, the social codes rolled: `sse-codes::roll` (a pack's dice procedure as data, seeded per world and step, hand-set codes kept); kernel op `roll_profile` (preview, or authored codes with how each was rolled); Traveller `traveller.social` from the Cepheus SRD (government, law, starport, tech level, bases); a roll button on World codes | done; a whole sector in one ask next | packages/WBH2-social-rolls.md |
+| WBH part 2, the social codes rolled: `sse-codes::roll` (a pack's dice procedure as data, seeded per world and step, hand-set codes kept); kernel op `roll_profile` (preview, or authored codes with how each was rolled); Traveller `traveller.social` from the Cepheus SRD (government, law, starport, tech level, bases); a roll button on World codes | done | packages/WBH2-social-rolls.md |
+| WBH part 3, a whole sector rolled: "Roll every world…" on the Sector desk (GM), one tally; `decided_by` on a rolled program so an imported world keeps its whole profile, bases included (fixes part 2 rolling over imported codes) | done | packages/WBH3-sector-rolls.md |
 
 ## Open now
 
-- **PR 400** (X3j, X3k, X3l, the RK12 Traveller mapping and WBH parts 1 and 2 together). Its contract cases live in the
-  traveller area (`tests/contract/areas/traveller.json`, golden `tests/golden/areas/traveller.jsonl`), so it moves no core
-  golden line and merges when green. Re-bless with `SSE_BLESS=1 CARGO_INCREMENTAL=0 cargo test -q --release -p sse-kernel contract`.
+- PR 400 merged 25 Nov (67a2bf82). WBH part 3 is in its own PR. Contract cases for this track go in the traveller area
+  (`tests/contract/areas/traveller.json`, golden `tests/golden/areas/traveller.jsonl`), which merges when green. Re-bless
+  with `SSE_BLESS=1 CARGO_INCREMENTAL=0 cargo test -q --release -p sse-kernel contract`.
 
 ## Next packages, in order
 
 1. **RK16 pack side:** stealth and countermeasure gear onto the counters list. Design questions go to the Atomic Rockets track.
 2. **MP16 counted measures.** "2 jumps" and a "Jump-2" drive rating (never "J2"). The default count is ceil(route pc / rating), and the GM's count overrules it. This needs the kernel's counted-measure declarations, and links carry `counted` in `nav` (imported routes could carry it too).
-3. **WBH next:** roll a whole sector's unset worlds in one ask; more social lines once there are OGL or our own numbers.
+3. **WBH next:** more social lines once there are OGL or our own numbers; a browser check of a sector roll over grown worlds.
 4. **Resources, next steps:** a refinery's named making and consuming effects; a computed drill rate; catalogue Sol compositions (Mercury reads 23% iron like every catalogue body; inventory thread).
 5. **Smaller items:**
    - Triggers that ask `detect` for the pair instead of reading `range_m` (kernel lane).

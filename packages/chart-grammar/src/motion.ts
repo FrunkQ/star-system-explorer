@@ -2,6 +2,7 @@
 // a change of state and never delays input: durations come from the theme's
 // tokens (--sse-motion-quick, --sse-motion, --sse-ease), and a reduced-motion
 // setting makes all of them zero. Only transform and opacity are animated.
+import { drawn } from "../../ui-contract/src/index.ts";
 
 /** True when the person has asked for less motion. */
 export function reducedMotion(): boolean {
@@ -40,7 +41,7 @@ export function fromKeyframes(node: DOMRect, source: DOMRect | null): Keyframe[]
   const dx = source ? (source.x + source.width / 2 - (node.x + node.width / 2)) * 0.3 : 0;
   const dy = source ? (source.y + source.height / 2 - (node.y + node.height / 2)) * 0.3 : 8;
   return [
-    { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(0.94)`, opacity: 0 },
+    { transform: `translate(${drawn(dx)}px, ${drawn(dy)}px) scale(0.94)`, opacity: 0 },
     { transform: "none", opacity: 1 },
   ];
 }

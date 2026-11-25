@@ -5,6 +5,7 @@
 // top-down map. It computes no physics.
 
 import { constant } from "./sheet.ts";
+import { sayNumber } from "./figures.ts";
 
 /** Stock ships that can cross between stars (base-nav pack), by template id. */
 export const VOYAGE_SHIPS: readonly { id: string; name: string; drive: string }[] = [
@@ -142,15 +143,15 @@ export function systemShort(address: string): string {
 export function voyageSpan(d: number): string {
   if (!Number.isFinite(d)) return "never";
   const y = d / 365.25;
-  if (y >= 100) return `${Math.round(y).toLocaleString("en-GB")} years`;
-  if (y >= 2) return `${y.toFixed(1)} years`;
+  if (y >= 100) return `${sayNumber(y, 0, { decimals: 0 })} years`;
+  if (y >= 2) return `${sayNumber(y, 0, { decimals: 1 })} years`;
   if (d >= 2) return `${Math.round(d)} days`;
   return `${Math.round(d * 24)} hours`;
 }
 
 /** Peak speed in words: a share of light, or km/s when slow. */
 export function speedWords(beta: number): string {
-  return beta >= 0.01 ? `${(beta * 100).toFixed(1)}% of light` : `${Math.round((beta * constant("c")) / 1e3).toLocaleString("en-GB")} km/s`;
+  return beta >= 0.01 ? `${sayNumber(beta * 100, 0, { decimals: 1 })}% of light` : `${sayNumber((beta * constant("c")) / 1e3, 0, { decimals: 0 })} km/s`;
 }
 
 /** The difference the crew feels: how much younger they come home. */

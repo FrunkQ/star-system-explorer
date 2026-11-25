@@ -47,6 +47,7 @@ export function createWorkspace(now_yr: number): Workspace {
     bookmarks: [],
     playbook: emptyPlaybook(),
     unit_choices: {},
+    could_quiet: [],
     setUnitChoice(kind, about, reading) {
       ws.unit_choices = withChoice(ws.unit_choices, kind, about, reading);
     },

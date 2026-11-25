@@ -1,0 +1,9 @@
+Title: Wolf-Rayet 124 (NIRCam and MIRI composite image)
+Credit: NASA, ESA, CSA, STScI, Webb ERO Production Team
+Date: 
+Source: https://esawebb.org/images/weic2307a/
+Licence: CC BY 4.0 (ESA/Webb image use policy, https://esawebb.org/copyright/). Attribution required, exactly as the credit line.
+Picked for: Webb's Wolf-Rayet 124: a massive star shedding its outer layers in dusty shells.
+
+About (from the source page):
+The luminous, hot star Wolf-Rayet 124 (WR 124) is prominent at the centre of the NASA/ESA/CSA James Webb Space Telescope’s composite image combining near-infrared and mid-infrared wavelengths of light. The star displays the characteristic diffraction spikes of Webb’s Near-infrared Camera (NIRCam), caused by the physical structure of the telescope itself. NIRCam effectively balances the brightness of the star with the fainter gas and dust surrounding it, while Webb’s Mid-Infrared Instrument (MIRI) reveals the nebula’s structure.

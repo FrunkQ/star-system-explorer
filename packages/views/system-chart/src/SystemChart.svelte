@@ -34,7 +34,7 @@
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { KM_PER_AU, gearing, nearestCatch, resonanceCatches, roundFigures, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, gearing, nearestCatch, resonanceCatches, roundFigures, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, formsHere, roundTo, sayNumber, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
@@ -243,6 +243,30 @@
     const c = e.altKey ? null : nearestCatch(d, [...roundFigures(raw, frame ? KM_PER_AU : 1, frame ? "km" : "AU"), ...resonanceCatches(raw, neighbours)], (v) => radius(v, scale));
     ghostAt = { a_au: c ? c.at : round(raw), x, y, caught: c?.says ?? null };
   }
+  // ED4 part 2a: while the ghost rests on an orbit round a star, one formation run round a star like this one says
+  // what forms there (the first of the runs Add here offers, so the two agree). Each orbit is asked once.
+  let formsAt = $state<{ key: string; words: string } | null>(null);
+  const formsSaid = new Map<string, string>();
+  const formsKey = (a_au: number) => `${scene.system} ${centre?.address} ${roundTo(a_au, 3)}`;
+  $effect(() => {
+    const g = ghostAt;
+    const c = centre;
+    const system = scene.system;
+    const m = c?.facts.find((f) => f.field === "mass_sun")?.value;
+    if (!adding || !g || !c || c.kind !== "star" || !system || typeof m !== "number") return;
+    const key = formsKey(g.a_au);
+    const said = formsSaid.get(key);
+    if (said !== undefined) return void (formsAt = { key, words: said });
+    const t = setTimeout(async () => {
+      const r = await formsHere(ctx.session, { system, star_mass_sun: m, a_au: g.a_au, tries: 1 });
+      if (!r.ok) return;
+      const f = r.found[0];
+      const words = f ? `forms a world of ${sayNumber(f.mass_earth, 2)} Earth masses here` : "no world forms here in one run";
+      formsSaid.set(key, words);
+      formsAt = { key, words };
+    }, 400);
+    return () => clearTimeout(t);
+  });
   function dropGhost(e: PointerEvent) {
     if (!adding) return;
     e.stopPropagation();
@@ -359,7 +383,7 @@
   const distLabels = $derived(
     (on("distances") ? decades : [])
       .filter((g) => cy - r(g.au) > 12)
-      .map((g) => ({ g, y: cy - r(g.au) - 4, text: frame ? km(g.au) : `${g.units.toLocaleString("en-GB")} AU` }))
+      .map((g) => ({ g, y: cy - r(g.au) - 4, text: frame ? km(g.au) : `${sayNumber(g.units, 0, { upTo: 3 })} AU` }))
       .filter((d) => !under({ x: cx + 2, y: d.y - 10, w: d.text.length * 6.6 + 4, h: 12 })),
   );
   const named = $derived(all.filter((s) => showLabel(s) && (s.orbit || s === centre) && !(s === centre && !frame)));
@@ -500,8 +524,10 @@
       // its own cloud layer (VP-A4), which is what gpu.ts draws when the clouds are there.
       const under = ck ? trueAirs.get(ck)?.ground : undefined;
       if (ck && base && typeof base !== "string" && (base.faces || under?.faces) && g === trueGen) {
-        // Close-up: the ground under the camera is read first when the camera is over this world.
+        // Close-up: the ground under the camera is read first when the camera is over this world; from further out,
+        // the side the camera sees (so the face in view sharpens first, not the far side).
         const below = untrack(() => groundView);
+        const facing = (a: string) => untrack(() => (ctx.workspace.camera?.about === a ? ([...ctx.workspace.camera.eye_dir] as [number, number, number]) : undefined));
         void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
           const now = trueSurfaces.get(ck);
           if (!now || typeof now === "string") return;
@@ -510,7 +536,7 @@
           surfaces = new Map(surfaces).set(chosen!.address, t);
           const a = finerGround(ck, fine);
           if (a) airs = new Map(airs).set(chosen!.address, a);
-        }, below?.body === chosen!.address ? below.toward : undefined);
+        }, below?.body === chosen!.address ? below.toward : () => facing(chosen!.address));
       }
     })());
   });
@@ -623,6 +649,21 @@
   const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
   const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : "", skyNote].filter(Boolean).join(" "));
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
+  // PC2: the 3D camera about the world at the centre, kept on the workspace for a bookmark or postcard made here (the
+  // pose's distance in metres from the world's radius); a bookmark's camera handed to the 3D view once its world is centred.
+  function keepCamera(c: { about: string; dir: [number, number, number]; radii: number; fov_deg: number } | null) {
+    const r = c ? untrack(() => bodies3d.find((b) => b.id === c.about)?.radius_m) : null;
+    ctx.workspace.camera = c && r ? { about: c.about, eye_dir: c.dir, eye_m: c.radii * r, up: [0, 0, 1], fov_deg: c.fov_deg, exposure: { mode: shownView.exposure === "eye" ? "eye" : "long", ev: 0 }, keep: [0, 0, 1, 1] } : null;
+  }
+  const aim3d = $derived.by(() => {
+    const a = ctx.workspace.aim;
+    const r = a ? bodies3d.find((b) => b.id === a.about)?.radius_m : null;
+    return a && r ? { about: a.about, dir: a.eye_dir, radii: a.eye_m / r } : null;
+  });
+  $effect(() => {
+    if (dims !== "3d") untrack(() => (ctx.workspace.camera = null));
+    return () => untrack(() => (ctx.workspace.camera = null));
+  });
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
   let measuring = $state(false);
@@ -648,10 +689,10 @@
   const peeked = $derived(peek && peek.address !== ctx.workspace.selection && !drag && !measuring ? all.find((s) => s.address === peek!.address) : undefined);
 </script>
 
-<div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined}>
+<div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined} data-true-read={reading ? `${reading.done}/${reading.of}` : undefined}>
   {#if dims === "3d"}
     {#snippet in3d(band: string, base: boolean)}
-      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
+      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} oncamera={keepCamera} aim={aim3d} onaimed={() => (ctx.workspace.aim = null)} />
     {/snippet}
     {#if viewed.composite}
       <!-- Composite (XO17): the system drawn once per band and laid into one picture. -->
@@ -781,6 +822,7 @@
             <Ink circle={{ cx, cy, r: gr }} tone="accent" weight="heavy" dash="dashed" />
             <circle class="ghost-dot" cx={gx} cy={gy} r="6" />
             <text class="dragv" data-add-readout x={gx + 14} y={gy + 20}>{dist(ghostAt.a_au)} round {centre?.label}{ghostAt.caught && !ghostAt.caught.startsWith("a round") ? ` · ${ghostAt.caught}` : ""}</text>
+            {#if formsAt && formsAt.key === formsKey(ghostAt.a_au)}<text class="dragv forms" data-add-forms x={gx + 14} y={gy + 36}>{formsAt.words}</text>{/if}
           </g>
         {/if}
         <!-- Names in their own layer, over every mark (chart-labels.ts places them); a press on a name chooses its body. -->
@@ -850,7 +892,7 @@
         {#if authoredImport}<span class="authored-import" data-authored-import><Stamp kind="authored" title="Every name and value here was written in a V3 save, not modelled by SSE4's physics. A body called Earth is the save's Earth, not the real one." /><span class="words">As written in a V3 save, not modelled</span></span>{/if}
         {#if catalogued}<span class="authored-import" data-catalogued><Stamp kind="catalogued" title="Every value here is a measurement from a catalogue, with its source on the card's why?." /><span class="words">As measured, each value with its source</span></span>{/if}
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
-        <span data-scale-note>{narrow ? `Log scale${frame ? ", km" : ""}` : on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${g.units.toLocaleString("en-GB")} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
+        <span data-scale-note>{narrow ? `Log scale${frame ? ", km" : ""}` : on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${sayNumber(g.units, 0, { upTo: 3 })} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
         {#if on("known") && known && usualView && !through}<span class="usual-known" data-usual-known={usualView}>The table knows these at {usualView.replace(/-/g, " ")}; dotted names, not at all</span>{/if}
         {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}
         {#if key?.entries.length && on("key")}
@@ -917,6 +959,10 @@
   .ghost {
     opacity: 0.55;
     pointer-events: none;
+  }
+  .dragv.forms {
+    fill: var(--sse-ink-muted);
+    font-size: 11px;
   }
   .dragv {
     fill: var(--sse-accent-ink);

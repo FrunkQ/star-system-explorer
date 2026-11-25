@@ -5,6 +5,7 @@
 // Presentation arithmetic on the scene's numbers only; no physics.
 import { KM_PER_AU, type SceneSubject, type SystemScene } from "./scene.ts";
 import { constant } from "./sheet.ts";
+import { sayNumber } from "./figures.ts";
 
 export const C_KM_S = constant("c") / 1000;
 
@@ -54,14 +55,14 @@ export function separation(scene: SystemScene, a: string, b: string): Separation
 /** "1.23 AU (184 million km)" or "384,000 km" below a hundredth of an AU. */
 export function distanceWords(au: number): string {
   const km = au * KM_PER_AU;
-  const kmw = km >= 1e6 ? `${(km / 1e6).toLocaleString("en-GB", { maximumFractionDigits: km >= 1e8 ? 0 : 1 })} million km` : `${Math.round(km).toLocaleString("en-GB")} km`;
+  const kmw = km >= 1e6 ? `${sayNumber(km / 1e6, 0, { upTo: km >= 1e8 ? 0 : 1 })} million km` : `${sayNumber(km, 0, { decimals: 0 })} km`;
   if (au < 0.01) return kmw;
-  return `${au.toLocaleString("en-GB", { maximumSignificantDigits: 3 })} AU (${kmw})`;
+  return `${sayNumber(au, 3)} AU (${kmw})`;
 }
 
 /** "8.3 light minutes", "1.3 light seconds", "4.2 light hours". */
 export function lightWords(s: number): string {
-  const f = (x: number) => x.toLocaleString("en-GB", { maximumSignificantDigits: 2 });
+  const f = (x: number) => sayNumber(x, 2);
   if (s < 60) return `${f(s)} light seconds`;
   if (s < 3600) return `${f(s / 60)} light minutes`;
   if (s < constant("day") * 2) return `${f(s / 3600)} light hours`;

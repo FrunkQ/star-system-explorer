@@ -155,8 +155,9 @@ test("on the wire: a held role gets off with one card for all its screens; other
   let n = 0;
   const w = boardWire(b, ["table", "bridge", "telescope"], () => `joke ${++n}`);
   assert.deepEqual(w.shown, sol);
-  assert.deepEqual(w.roles.bridge, { off: true, card: "joke 1" });
-  assert.deepEqual(w.screens.k3f9, { off: true, card: "joke 1" }, "the same words on every screen of the role");
+  // A joke says it is one (PC5): it stands alone, so no waiting line is added under it.
+  assert.deepEqual(w.roles.bridge, { off: true, card: "joke 1", kind: "joke" });
+  assert.deepEqual(w.screens.k3f9, { off: true, card: "joke 1", kind: "joke" }, "the same words on every screen of the role");
   assert.deepEqual(w.roles.telescope, sol);
   assert.deepEqual(w.screens.w1, mars);
   assert.deepEqual(boardWire(holdAll(b, "blank"), ["table"]).roles.table, { off: true });

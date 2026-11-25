@@ -276,3 +276,45 @@ fn pack_settings_are_the_defaults_and_golden_holds() {
     assert_eq!(cp.green, GreenParams::default());
     crate::golden::check("envelope.json", &crate::scenario::envelope_golden());
 }
+
+/// Arms trail (design 9.4, Alex 24 Nov): the disc turns towards +phi (the
+/// stars' orbits advance phi), so walking outward along a crest the arm
+/// falls back in phi. All 146 spirals with known spin and tilt in Iye,
+/// Tadaki and Fukumoto (2019, arXiv:1910.10926) trail.
+#[test]
+fn arms_trail_the_disc_turning() {
+    let (c, w) = world();
+    let (g, d) = milky_way_like(&c, &w);
+    let e = env(&g, &d);
+    let p = &e.params;
+    let rd = g.now.disc_kpc.max(0.1);
+    let tan_pitch = sse_core::math::tan(p.pitch_deg * sse_core::math::PI / 180.0);
+    let t = 13.8;
+    // The crest's phi at a radius: the azimuth (of 720) where the arm term peaks,
+    // searched within half an arm spacing of the inner crest.
+    let crest = |r: f64, near: f64| {
+        let span = sse_core::math::PI / f64::from(p.arms.max(1));
+        (0..=720)
+            .map(|i| near - span + 2.0 * span * f64::from(i) / 720.0)
+            .max_by(|a, b| {
+                let at = |phi: f64| {
+                    e.arm(&Place {
+                        r_kpc: r,
+                        phi,
+                        z_pc: 0.0,
+                        t_gyr: t,
+                    })
+                };
+                at(*a).total_cmp(&at(*b))
+            })
+            .unwrap()
+    };
+    let inner = crest(rd, 0.0);
+    // Out by a radius that winds the crest by 0.3 rad.
+    let r_out = rd * sse_core::math::exp(0.3 * tan_pitch);
+    let outer = crest(r_out, inner);
+    assert!(
+        (outer - (inner - 0.3)).abs() < 0.02,
+        "crest at {inner} inside, {outer} outside: the arm should fall back by 0.3 rad"
+    );
+}

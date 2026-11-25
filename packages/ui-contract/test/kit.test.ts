@@ -1,7 +1,7 @@
 // AT14: interface kits as data. The loader's checks are the same for a starter, a pack's kit and Orac's draft.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { atlasDocsOf, checkKit, checkPalette, contrastOf, partsOf, resolveKit, SHIPPED_PALETTES, STARTER_KITS, type KitDoc, type PartInfo } from "../src/atlas/index.ts";
+import { atlasDocsOf, checkKit, checkControlSet, controlSetOf, controlWords, drawingOf, kitScreen, STARTER_CONTROL_SETS, checkPalette, contrastOf, partsOf, resolveKit, SHIPPED_PALETTES, STARTER_KITS, type KitDoc, type PartInfo } from "../src/atlas/index.ts";
 import { SHIPPED_EDITIONS } from "../src/atlas/index.ts";
 import { STARTER_DELIVERIES } from "../src/delivery.ts";
 
@@ -89,4 +89,63 @@ test("a kit's deliveries are AT15a's: a starter by name, or a look's own moment 
   const k = resolveKit(quiet.id, [quiet]);
   assert.deepEqual(k.delivery, { ...STARTER_DELIVERIES.hauler, power_on: { kind: "fade" } }, "a kit that extends a starter changes one moment");
   assert.match(checkKit({ ...quiet, delivery: "disco" as never }, {}).join(" "), /"disco" is not a starter's/);
+});
+
+// ---- AT15: control sets and the kit's screens.
+test("control sets: every starter's set loads, each kit names one, and a kind a set leaves out comes from plain", () => {
+  for (const s of STARTER_CONTROL_SETS) assert.deepEqual(checkControlSet(s), [], s.id);
+  for (const k of STARTER_KITS) {
+    assert.ok(typeof k.control_set === "string" && STARTER_CONTROL_SETS.some((s) => s.id === k.control_set), `${k.id} names a set`);
+    assert.equal(controlSetOf(k).id, k.control_set);
+  }
+  assert.equal(drawingOf("hauler", "button").frame, "bracket");
+  assert.equal(drawingOf("hauler", "dial").frame, "plain", "Hauler draws no dial of its own: the plain one");
+  assert.equal(drawingOf("deck", "button").frame, "cap");
+  assert.equal(drawingOf("nobody", "tab").frame, "plain");
+  const variant = { id: "amber-hauler", name: "Amber hauler", extends: "hauler", kinds: {} };
+  assert.deepEqual(checkControlSet(variant), []);
+  assert.equal(drawingOf("amber-hauler", "button", [...STARTER_CONTROL_SETS, variant]).frame, "bracket", "a variant costs nothing");
+});
+
+test("control words follow the set: Print is [P]RINT on Hauler's command line and Print in the Guide", () => {
+  assert.deepEqual(controlWords("Print", drawingOf("hauler", "button")), { text: "[P]RINT", key: "P" });
+  assert.deepEqual(controlWords("Next page", drawingOf("hauler", "step"), "N"), { text: "[N]EXT PAGE", key: "N" });
+  assert.deepEqual(controlWords("Contents", drawingOf("hauler", "button"), "X"), { text: "[X] CONTENTS", key: "X" }, "a key not in the word goes in front");
+  assert.deepEqual(controlWords("Print", drawingOf("guide", "button")), { text: "Print" });
+  assert.deepEqual(controlWords("Print", drawingOf("deck", "button")), { text: "PRINT" });
+});
+
+test("checkControlSet says what to change", () => {
+  const bad = { id: "x", name: "X", extends: "nope", kinds: { lever: { frame: "plain" }, button: { frame: "round", lit: "sparkle" }, tab: { frame: "pill", hotkey: true } } };
+  const errs = checkControlSet(bad);
+  assert.ok(errs.some((e) => /extends "nope"/.test(e)));
+  assert.ok(errs.some((e) => /"lever", which is not a kind of control/.test(e)));
+  assert.ok(errs.some((e) => /button needs a frame/.test(e)));
+  assert.ok(errs.some((e) => /lit as "sparkle"/.test(e)));
+  assert.ok(errs.some((e) => /tab shows its key, which needs a frame of bracket or key/.test(e)));
+  const k = { ...STARTER_KITS[0]!, id: "mine.k", control_set: "missing" };
+  assert.ok(checkKit(k).some((e) => /control set "missing" is not loaded/.test(e)));
+  assert.ok(!checkKit({ ...STARTER_KITS[0]!, id: "mine.k2", control_set: bad }).every((e) => !/lever/.test(e)));
+});
+
+test("kitScreen: a starter's layout for a situation is an ordinary screen document; a holding card is not", () => {
+  const sys = kitScreen("sse.kit.hauler", "system")!;
+  assert.equal(sys.schema, "sse.screen/1");
+  assert.equal(sys.audience, "players");
+  assert.equal(sys.id, "sse.kit.hauler.system");
+  assert.equal(sys.layout, "grid");
+  assert.ok(sys.items.some((i) => i.view === "sse.view.atlas" && typeof i.controls === "object"), "the Atlas part with its controls");
+  const world = kitScreen("sse.kit.hauler", "world")!;
+  assert.deepEqual(world.items, sys.items, "world extends system");
+  assert.equal(kitScreen("sse.kit.hauler", "holding"), null);
+  assert.equal(controlSetOf(resolveKit("sse.kit.hauler")).id, "hauler", "the resolved kit keeps its control set");
+  assert.equal(controlSetOf(resolveKit("sse.kit.guide")).id, "guide");
+  assert.equal(kitScreen("no.such.kit", "system"), null);
+  for (const k of STARTER_KITS) for (const s of ["sector", "system", "world", "landing"] as const) {
+    const d = kitScreen(k, s);
+    for (const i of d?.items ?? []) if (i.view === "sse.view.atlas") assert.equal(i.params?.edition, k.atlas?.edition, `${k.id} ${s}: the Atlas part wears the kit's edition`);
+    assert.ok(d, `${k.id} has a ${s} screen`);
+    const areas = d.items.map((i) => i.area);
+    assert.equal(new Set(areas).size, areas.length, `${k.id} ${s}: one part to an area`);
+  }
 });

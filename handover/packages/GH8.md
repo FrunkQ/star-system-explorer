@@ -24,3 +24,13 @@ thread notes most drawn leading arms are early and long wound back, so most char
 ## Next
 When GH3's mark merges: an e2e that finds a halo with one (or inks a backwards merger once G6 edits can say so), and
 the yardstick on the wire if the kernel sends `seen_share_max`.
+
+## Part 2: with the kernel's mark (25 Nov 2026, after PR 463)
+- The kernel makes a `leading_arm` mark from every backwards pass or meal, mostly weak. The chart's line now counts
+  only arms strong enough to be seen: `LEADING_ARM_SEEN` = 0.25, kept in step with the kernel's
+  `LeadingArmParams.seen_strength` (not on the wire). Weaker ones stay in the history list with the other marks.
+- The line shows while the latest seen arm still winds against the spin, then "wound back" for one fading time, then
+  goes; the history list keeps it.
+- `data-leading-seen` on the chart lists when seen arms were made; `tests/ui/galaxy.e2e.mjs` scrubs to just after
+  the latest and checks the line. In the default campaign the Milky-Way-like galaxy's latest is at 8.34 Gyr; at now
+  no arm shows. Screen `GX-screens/gh8-leading-arm.png`.

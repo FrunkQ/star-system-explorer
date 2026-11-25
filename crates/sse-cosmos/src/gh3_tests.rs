@@ -217,3 +217,81 @@ fn feeding_is_deterministic_and_closes_its_budget() {
     let r = a.galaxy.now.stars / unfed.now.stars;
     assert!((0.6..1.4).contains(&r), "{r}");
 }
+
+/// Leading arms are rare (design 9.4): Iye, Tadaki and Fukumoto (2019,
+/// arXiv:1910.10926) found all 146 spirals with known spin and tilt
+/// trailing. Over drawn disc hosts, at most `seen_share_max` show one now.
+#[test]
+fn leading_arms_are_rare() {
+    let w = world();
+    let la = ResponseParams::default().leading_arm;
+    let (mut spirals, mut seen, mut ever) = (0u32, 0u32, 0u32);
+    for mass in [3.0e11, 1.0e12] {
+        for i in 0..12 {
+            let f = fed(&w, "lead", mass, &format!("l{i}"));
+            use crate::galaxy::Morphology::{Barred, Disc};
+            if !matches!(f.galaxy.morphology, Disc | Barred) {
+                continue;
+            }
+            spirals += 1;
+            let now = f.galaxy.now.t_gyr;
+            let a = f.galaxy.assembled.unwrap();
+            let arms = a.marks.iter().filter(|m| m.kind == "leading_arm");
+            ever += u32::from(arms.clone().any(|m| m.strength >= la.seen_strength));
+            seen += u32::from(arms.clone().any(|m| m.strength_at(now) >= la.seen_strength));
+        }
+    }
+    assert!(spirals >= 20, "{spirals}");
+    // The early, crowded universe makes them; now they have wound back.
+    assert!(ever > 0, "no leading arm in any history");
+    assert!(
+        f64::from(seen) <= la.seen_share_max * f64::from(spirals),
+        "{seen} of {spirals} spirals lead now"
+    );
+}
+
+/// An NGC 4622-like pass (Byrd, Freeman and Howard 1993): a companion a
+/// hundredth of the host's mass, backwards, within a tenth of the disc's
+/// radius, in a heavy halo, leaves a leading arm still seen after a Gyr;
+/// the same pass forwards, or into a disc as heavy as its halo, leaves none.
+#[test]
+fn a_small_backwards_pass_leaves_a_leading_arm() {
+    let w = world();
+    let hs = haloes(&w, "ngc4622");
+    let h = hs.median(1.0e12, "ngc4622");
+    let gp = GalaxyParams::default();
+    let rp = ResponseParams::default();
+    let la = &rp.leading_arm;
+    let t = 12.0;
+    let pass = |prograde: f64, disc_msun: f64| crate::feed::Arrival::Pass {
+        from: "companion".into(),
+        pass: crate::infall::Pass {
+            t_gyr: t,
+            disc: false,
+            r_kpc: 1.0,
+            big_r_kpc: 1.0,
+            speed_kms: 400.0,
+            vz_kms: 0.0,
+            prograde,
+            bound_msun: 1.0e9,
+            v_c_kms: 200.0,
+            host_inside_msun: 1.0e11,
+            disc_msun,
+            disc_kpc: 3.0,
+        },
+    };
+    let arm = |a: crate::feed::Arrival| {
+        let g = crate::galaxy::evolve_feeding(&w.c, &gp, &h, &[], Some((&rp, &[a])));
+        g.assembled
+            .unwrap()
+            .marks
+            .into_iter()
+            .find(|m| m.kind == "leading_arm")
+    };
+    let m = arm(pass(-1.0, 1.0e10)).expect("a leading arm");
+    assert!(m.strength >= la.seen_strength, "{}", m.strength);
+    assert!(m.strength_at(t + 1.0) >= 0.3 * m.strength, "{m:?}");
+    assert!(m.strength_at(t + 4.0) < la.seen_strength, "{m:?}");
+    assert!(arm(pass(1.0, 1.0e10)).is_none());
+    assert!(arm(pass(-1.0, 5.0e10)).is_none());
+}

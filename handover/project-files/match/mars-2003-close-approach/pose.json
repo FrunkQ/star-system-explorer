@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Mars",
+  "camera": "from Earth's place at the 2003 close approach (56 million km); the real picture is a Mars Global Surveyor mosaic made to show that view",
+  "date": "2003-08-26",
+  "needs": [
+    "the polar cap from the climate thread"
+  ]
+}

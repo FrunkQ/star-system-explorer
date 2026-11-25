@@ -7,6 +7,7 @@ import type { ViewSession } from "./session.ts";
 import type { PackDoc } from "./physics.ts";
 import { AU_M, M_EARTH, M_SUN, R_EARTH_M, sceneFromFormation } from "./make.ts";
 import { copyClip, clipWords, type Clip } from "./clip.ts";
+import { roundTo } from "./figures.ts";
 
 export interface FormsHere {
   clip: Clip;
@@ -118,7 +119,7 @@ export function freeOrbit(orbits_au: readonly number[], first_au = 0.4): number 
     const ratio = a[i]! / a[i - 1]!;
     if (ratio > best.ratio && ratio > 1.6) best = { ratio, at: Math.sqrt(a[i]! * a[i - 1]!) };
   }
-  return Number(best.at.toPrecision(2));
+  return roundTo(best.at, 2);
 }
 
 /** One of the three moon recipes: formation's own leftovers rules (F5) for one chosen planet, until Ask K5 lands. */
