@@ -173,3 +173,42 @@ Checked 24 Nov 2026 through Crossref and the URLs named.
 | **Total** | **92** | **44** | **13** | **4** | **16** | **15** |
 
 How rows are counted: Proxima is counted unverified (its radius is verified, but its teff is not in the cited paper). Sirius A is counted corrected-physics for teff only. Sirius B is verified (its teff 25000 is a rounding of 25369; an optional fix is listed). "Verified (existence/bibcode)" rows confirm that the work exists as named; they do not confirm any number, and the design files quote none from them.
+
+## ND2 part 2b: the limb law (added 24 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.light.limb_temperature` | Rybicki, G. B. and Lightman, A. P. 1979, *Radiative Processes in Astrophysics*, Wiley, §1.8. doi:10.1002/9783527618170 | grey atmosphere T⁴ = ¾Teff⁴(τ + ⅔) and Eddington-Barbier (light at μ leaves τ ≈ μ) | textbook | Standard result; the test recovers Eddington's (2 + 3μ)/5 law. |
+| `sse.light.reflected_limb` | Minnaert, M. 1941, ApJ 93, 403. doi:10.1086/144279 | b = μ0^k μ^(k−1); k = 1 is Lambert | textbook | Law as stated in the paper's title and abstract; k = 1 reduces to Lambert in the test. |
+
+## O3b: outflows from stars (added 24 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.outflow.giant_mass_loss` | Schröder, K.-P. and Cuntz, M. 2005, ApJ 630, L73. doi:10.1086/491579 | Ṁ = 8e-14 L R / M (T/4000 K)^3.5 (1 + g☉/(4300 g)) M☉/yr | textbook | Equation 4 as widely quoted; not re-fetched 24 Nov. |
+| `sse.outflow.dust_shell` | Höfner, S. and Olofsson, H. 2018, A&ARv 26, 1. doi:10.1007/s00159-017-0106-5 | R_c = (R/2)(T/T_c)^((4+p)/2), condensation near 1000 to 1500 K, winds 5 to 30 km/s | textbook | Review; values as quoted. |
+| `sse.outflow.young_jet` | Hartigan, P., Edwards, S. and Ghandour, L. 1995, ApJ 452, 736. doi:10.1086/176343; Bally, J. 2016, ARA&A 54, 491. doi:10.1146/annurev-astro-081915-023341 | jets carry about 0.1 of the accretion; speeds near the escape speed at launch, a few hundred km/s; knots from episodic accretion | textbook | As quoted in the reviews. |
+
+## VP-L4: rainbows and halos (added 24 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.light.rainbow` | Nussenzveig, H. M. 1977, The theory of the rainbow, Scientific American 236 (4), 116. doi:10.1038/scientificamerican0477-116 | Descartes' ray: cos² i = (n² − 1)/(k(k + 2)), deviation kπ + 2i − 2(k + 1)r | textbook | Reproduces water's 42° and 51°. |
+| `sse.light.halo` | Tape, W. 1994, Atmospheric Halos, AGU Antarctic Research Series 64. doi:10.1029/AR064 | prism minimum deviation D = 2 asin(n sin(A/2)) − A | textbook | Reproduces the 22° and 46° halos for ice. |
+
+
+## MF9 part 2b: how aurorae shine (added 24 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.glow.electron_range` | Rees, M. H. 1989, Physics and Chemistry of the Upper Atmosphere, Cambridge University Press, section 3.3. doi:10.1017/CBO9780511573118 | electron range in air R = 4.30e-7 + 5.36e-6 E^1.67 g cm⁻², E in keV | from memory | The fit as widely quoted; not re-fetched 24 Nov. Earth's green line lands at 100 to 115 km with it. |
+| `sse.glow.wind_power` | Akasofu, S.-I. 1981, Energy coupling between the solar wind and the magnetosphere, Space Sci. Rev. 28, 121. doi:10.1007/BF00218810 | a few per cent of the wind's power on the bubble's cross-section gets in | textbook | The 1 % that comes down as aurora is a stand-in (F59); Earth then gives about 37 GW a hemisphere, inside NOAA's 5 to 100 GW. |
+| `sse.glow.spin_power` | Hill, T. W. 2001, The Jovian auroral oval, J. Geophys. Res. 106, 8101. doi:10.1029/2000JA000302 | power to spin up plasma loaded at Ṁ to the corotation limit, of order 10¹⁴ W for Jupiter | textbook | Jupiter with Io's tonne a second gives 1.2e14 W. |
+| `sse.glow.line_survival` | Kalogerakis, K. S. et al. 2009, Ann. Geophys. 27, 2183. doi:10.5194/angeo-27-2183-2009; Kawamura, S. et al. 2020, Earth Planets Space 72. doi:10.1186/s40623-020-01229-8 | radiative lifetime against collisional quenching; green 0.7 s, red about 110 s | checked (visual polish citation check, section 15) | Heights: green 110 km, red 203 km, N2+ 110 km for 8 keV electrons in the US Standard Atmosphere 1976. |
+| base-light `aurora` on `oi-6300` | Streit, G. E. et al. 1976, J. Chem. Phys. 65, 4761. doi:10.1063/1.432930 | O(¹D) quenched by N2 at about 2e-11 cm³ s⁻¹ | from memory | Not re-fetched. |
+| base-light `aurora` yields (Earth) | Rees, M. H. and Luckey, D. 1974, J. Geophys. Res. 79, 5181. doi:10.1029/JA079i034p05181 | about 1 kR of 557.7 nm and 200 R of 427.8 nm per erg cm⁻² s⁻¹ | from memory | Yields divided by the parent's share near 110 km; others authored (F59). |
+| base-light `aurora` on `ha`, `hb` | Dyudina, U. A. et al. 2016, Saturn's aurora observed by the Cassini camera at visible wavelengths, Icarus 263, 32. doi:10.1016/j.icarus.2015.05.022 | a strong H-alpha line, pink low down | checked (visual polish citation check, section 15) | Jupiter's mix comes out pink (#FF4D9A). |
+| base-light `aurora` on `lya` | Ingersoll, A. P. et al. 1998, Icarus 135, 251. doi:10.1006/icar.1998.5971 | giants' aurorae are hydrogen lines and bands | checked (visual polish citation check, section 15) | Yield authored. |
+| base-light `aurora` on `oi-5577` (CO2) | Knutsen, E. W. et al. 2025, Detection of visible-wavelength aurora on Mars, Sci. Adv. 11, eads1563. doi:10.1126/sciadv.ads1563 | green 557.7 nm on Mars, 101 ± 14 R | checked (visual polish citation check, section 15) | No measured yield; the CO2 yield is authored. |
+| Earth's upper air (sol-field.json) | US Standard Atmosphere 1976, NOAA-S/T 76-1562. https://ntrs.nasa.gov/citations/19770009539 | number density and mean molecular weight, 90 to 500 km | from memory | Values as tabulated; not re-fetched. |
+| `AuroraSettings` | Evans, D. S. 1974, J. Geophys. Res. 79, 2853. doi:10.1029/JA079i019p02853; Gustin, J. et al. 2004, Icarus 171, 336. doi:10.1016/j.icarus.2004.04.020 | auroral arc electrons of a few to about ten keV; Jupiter's main oval tens of keV | from memory | 8 keV and 50 keV are chosen within those ranges (F59). |

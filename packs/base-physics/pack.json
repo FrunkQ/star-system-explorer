@@ -1555,6 +1555,34 @@
         "range": null
       },
       {
+        "description": "energy of the electrons raining into the air along the field lines",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "aurora.electron_energy",
+        "range": null
+      },
+      {
+        "description": "mass of air above each square metre that a falling electron gets through before it stops",
+        "dim": [
+          -2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "aurora.electron_range",
+        "range": null
+      },
+      {
         "description": "distance at which a field line crosses the magnetic equator",
         "dim": [
           1,
@@ -1580,6 +1608,20 @@
           0
         ],
         "id": "aurora.magnetic_latitude",
+        "range": null
+      },
+      {
+        "description": "power coming down into the air as aurora, both hemispheres together",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "aurora.power",
         "range": null
       },
       {
@@ -1804,6 +1846,20 @@
           0
         ],
         "id": "body.ionopause_altitude",
+        "range": null
+      },
+      {
+        "description": "power a body radiates in total",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.luminosity",
         "range": null
       },
       {
@@ -2591,6 +2647,174 @@
         "range": null
       },
       {
+        "description": "most a contact's drive can accelerate it",
+        "dim": [
+          1,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.acceleration",
+        "range": null
+      },
+      {
+        "description": "speed a drive's exhaust leaves at",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.exhaust_speed",
+        "range": null
+      },
+      {
+        "description": "heat a craft must shed at one temperature",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.heat_power",
+        "range": null
+      },
+      {
+        "description": "power carried away in a drive's exhaust",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.jet_power",
+        "range": null
+      },
+      {
+        "description": "mass of one exhaust particle",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.particle_mass",
+        "range": null
+      },
+      {
+        "description": "light a drive plume gives off",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.plume_luminosity",
+        "range": null
+      },
+      {
+        "description": "temperature of a drive's hot exhaust",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "fog.plume_temperature",
+        "range": null
+      },
+      {
+        "description": "glowing radiator area that sheds a craft's heat",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.radiator_area",
+        "range": null
+      },
+      {
+        "description": "temperature a craft's waste heat leaves at",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "fog.radiator_temperature",
+        "range": null
+      },
+      {
+        "description": "radius of the ring a lost contact could be anywhere inside",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.ring_radius",
+        "range": null
+      },
+      {
+        "description": "time since a contact was last seen",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.since",
+        "range": null
+      },
+      {
+        "description": "speed a contact was last seen moving at",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.speed",
+        "range": null
+      },
+      {
         "description": "absorbing cross-section of one particle at this wavelength",
         "dim": [
           2,
@@ -2700,6 +2924,34 @@
           0
         ],
         "id": "gas.hydrogen_density",
+        "range": null
+      },
+      {
+        "description": "van der Waals C6: the pull between an atom and a neighbour, falling as the sixth power of distance",
+        "dim": [
+          6,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.interaction_constant",
+        "range": null
+      },
+      {
+        "description": "energy to tear the outer electron off an absorbing atom",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.ionisation_energy",
         "range": null
       },
       {
@@ -2910,6 +3162,34 @@
           0
         ],
         "id": "gas.perturber_density",
+        "range": null
+      },
+      {
+        "description": "mass of one particle crowding an absorbing atom",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.perturber_mass",
+        "range": null
+      },
+      {
+        "description": "polarisability volume of a particle crowding an absorbing atom",
+        "dim": [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.perturber_polarisability",
         "range": null
       },
       {
@@ -3560,6 +3840,62 @@
         "range": null
       },
       {
+        "description": "radius of a rainbow round the point opposite the sun, as an angle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.bow_radius",
+        "range": null
+      },
+      {
+        "description": "brightness of a lit surface against a matt one seen square on in full sun",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.brightness_share",
+        "range": null
+      },
+      {
+        "description": "radius of a halo round the sun or moon, as an angle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.halo_radius",
+        "range": null
+      },
+      {
+        "description": "cosine of the angle sunlight arrives at on a surface",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.incidence_cosine",
+        "range": null
+      },
+      {
         "description": "photons per second able to ionise hydrogen (above 13.6 eV)",
         "dim": [
           0,
@@ -3571,6 +3907,76 @@
           0
         ],
         "id": "light.ionising_photon_rate",
+        "range": null
+      },
+      {
+        "description": "cosine between the line of sight and straight out of a surface: 1 at a disc's centre, 0 at its edge",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.limb_cosine",
+        "range": null
+      },
+      {
+        "description": "Minnaert's k: how a lit surface's brightness falls toward its edge (1 is matt)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.minnaert_k",
+        "range": null
+      },
+      {
+        "description": "angle between two faces of a crystal light passes through",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.prism_angle",
+        "range": null
+      },
+      {
+        "description": "rate coefficient for a collision taking an excited atom's energy away before it shines",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.quenching_rate_coefficient",
+        "range": null
+      },
+      {
+        "description": "mean time an excited atom or molecule waits before giving off its light",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.radiative_lifetime",
         "range": null
       },
       {
@@ -3588,6 +3994,34 @@
         "range": null
       },
       {
+        "description": "how strongly a liquid or crystal bends light",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.refractive_index",
+        "range": null
+      },
+      {
+        "description": "temperature of the layer a disc's light comes from at one point",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "light.seen_temperature",
+        "range": null
+      },
+      {
         "description": "light arriving at this wavelength",
         "dim": [
           -1,
@@ -3599,6 +4033,20 @@
           0
         ],
         "id": "light.spectral_flux",
+        "range": null
+      },
+      {
+        "description": "share of excited atoms that give off their light rather than lose it in a collision",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.surviving_share",
         "range": null
       },
       {
@@ -4218,6 +4666,174 @@
           0
         ],
         "id": "orbit.true_anomaly",
+        "range": null
+      },
+      {
+        "description": "mass falling onto a young star each second",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.accretion_rate",
+        "range": null
+      },
+      {
+        "description": "distance from a star where its wind turns to dust",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.condensation_radius",
+        "range": null
+      },
+      {
+        "description": "optical depth of a star's dusty wind, looking out",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.dust_depth",
+        "range": null
+      },
+      {
+        "description": "starlight the dust takes in and glows out again",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.dust_luminosity",
+        "range": null
+      },
+      {
+        "description": "temperature of a giant's new-made dust",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "outflow.dust_temperature",
+        "range": null
+      },
+      {
+        "description": "mass a young star's jets carry away each second",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.jet_mass_rate",
+        "range": null
+      },
+      {
+        "description": "power carried by a young star's jets",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.jet_power",
+        "range": null
+      },
+      {
+        "description": "speed of a young star's jets",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.jet_speed",
+        "range": null
+      },
+      {
+        "description": "distance from a young star where its jet leaves the disc",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.launch_radius",
+        "range": null
+      },
+      {
+        "description": "mass a star sheds into its wind each second",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.mass_loss_rate",
+        "range": null
+      },
+      {
+        "description": "light a jet's shocks give off",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.shock_light",
+        "range": null
+      },
+      {
+        "description": "speed of a star's dusty wind",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.wind_speed",
         "range": null
       },
       {

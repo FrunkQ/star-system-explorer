@@ -7,7 +7,7 @@
   reorder, onto another section, or onto a page in the picker.
 -->
 <script lang="ts">
-  import { addChapter, addPage, addPreset, addSection, findPage, isUp, reveals, movePreset, movePresetToPage, pages, presetWords, removePart, rename, type Board, type Bookmark, type Playbook, type Preset } from "../../../ui-contract/src/index.ts";
+  import { addChapter, addPage, addPreset, addSection, findPage, isUp, reveals, wordsOnly, movePreset, movePresetToPage, pages, presetWords, removePart, rename, type Board, type Bookmark, type Playbook, type Preset } from "../../../ui-contract/src/index.ts";
   import { KnownEye } from "../../../chart-grammar/src/index.ts";
   import { firedAt } from "./fired.svelte.ts";
 
@@ -182,8 +182,8 @@
                   <span class="ktitle">{k.title}</span>
                   {#if at}<span class="tick" data-fired={k.id} title="Fired tonight at {at}">✓ {at}</span>{/if}
                 </button>
-                <button type="button" class="fire" class:on={up} aria-pressed={up} data-fire={k.id} onclick={() => onfire(k)} title={up ? "Take it back" : k.steps.every((x) => "say" in x) ? "Mark read" : `Send to ${roleWords(k.to)}${n ? ` (${n})` : ""}`}>{k.steps.every((x) => "say" in x) ? "Read" : `▸ ${roleWords(k.to)}`}</button>
-                {#if !k.steps.every((x) => "say" in x)}
+                <button type="button" class="fire" class:on={up} aria-pressed={up} data-fire={k.id} onclick={() => onfire(k)} title={up ? "Take it back" : wordsOnly(k) ? "Mark read" : `Send to ${roleWords(k.to)}${n ? ` (${n})` : ""}`}>{wordsOnly(k) ? "Read" : `▸ ${roleWords(k.to)}`}</button>
+                {#if !wordsOnly(k)}
                   <button type="button" class="dot" class:on={armed === k.id} data-source-dot={k.id} aria-label="Send {k.title} somewhere else: press, then press where it goes" aria-pressed={armed === k.id} onpointerdown={(e) => ondrag(e, k.id)}></button>
                 {/if}
               </li>

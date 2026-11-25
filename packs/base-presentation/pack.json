@@ -1,0 +1,132 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-presentation",
+ "version": "0.1.0",
+ "kind": [
+  "presentation"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "holding_cards": {
+    "schema": "sse.holding-cards/1",
+    "about": "Holding cards (track PB, design handover/design/SSE4-playbook-and-switchboard-design.md 6.2 and 6.3): the one line of words a held screen shows. Plain cards say what is happening; jokes are drawn at random, never the same one twice running. A later pack adds cards, or replaces a kind with \"replace\": [\"joke\"] so a setting's screens speak in its own voice. All original: none quotes a film, a book or a game. The first joke is Alex's.",
+    "cards": [
+     {
+      "kind": "plain",
+      "words": "Awaiting transmission"
+     },
+     {
+      "kind": "plain",
+      "words": "Signal lost"
+     },
+     {
+      "kind": "plain",
+      "words": "Stand by"
+     },
+     {
+      "kind": "plain",
+      "words": "No carrier"
+     },
+     {
+      "kind": "joke",
+      "words": "Hold on: tracking down the missing gold atoms. I think the black hole swallowed them."
+     },
+     {
+      "kind": "joke",
+      "words": "Awaiting transmission. Light is doing its best."
+     },
+     {
+      "kind": "joke",
+      "words": "Signal lost. It was last seen heading for the Oort cloud."
+     },
+     {
+      "kind": "joke",
+      "words": "Recalculating. Someone moved the barycentre."
+     },
+     {
+      "kind": "joke",
+      "words": "Please wait. The star is being asked nicely to hold still."
+     },
+     {
+      "kind": "joke",
+      "words": "Stand by. Counting the moons again. There was one more a minute ago."
+     },
+     {
+      "kind": "joke",
+      "words": "Your picture is in a queue behind 4.2 light-years of other pictures."
+     },
+     {
+      "kind": "joke",
+      "words": "No carrier. The carrier says the same about you."
+     },
+     {
+      "kind": "joke",
+      "words": "Tuning. This frequency is mostly hydrogen."
+     },
+     {
+      "kind": "joke",
+      "words": "One moment. The navigator has dropped the slide rule."
+     },
+     {
+      "kind": "joke",
+      "words": "Signal lost. Have you tried turning the antenna toward the thing?"
+     },
+     {
+      "kind": "joke",
+      "words": "Hold on. Waiting for the photons to finish their random walk out of the core."
+     },
+     {
+      "kind": "joke",
+      "words": "Buffering. About eight minutes at this distance."
+     },
+     {
+      "kind": "joke",
+      "words": "Stand by. The ship's computer is having a quiet word with itself."
+     },
+     {
+      "kind": "joke",
+      "words": "Transmission delayed by solar weather. Bring a coat."
+     },
+     {
+      "kind": "joke",
+      "words": "Please wait. Re-deriving the orbit from first principles, in pencil."
+     },
+     {
+      "kind": "joke",
+      "words": "Interference. Possibly a pulsar. Possibly the microwave in the galley."
+     },
+     {
+      "kind": "joke",
+      "words": "Signal lost. The relay has gone behind a planet. It does this."
+     },
+     {
+      "kind": "joke",
+      "words": "Hold on. Somebody divided by the eccentricity."
+     },
+     {
+      "kind": "joke",
+      "words": "Stand by for picture. The picture is standing by for you."
+     },
+     {
+      "kind": "joke",
+      "words": "Nothing to see here yet. Space is like that."
+     },
+     {
+      "kind": "joke",
+      "words": "Aligning the dish. Left a bit. No, your left."
+     },
+     {
+      "kind": "joke",
+      "words": "Awaiting transmission. The message is redshifted and in a mood."
+     },
+     {
+      "kind": "joke",
+      "words": "Please wait. The tide is out."
+     }
+    ]
+   }
+  }
+ }
+}
