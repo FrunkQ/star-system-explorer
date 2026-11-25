@@ -1358,14 +1358,33 @@
   let placing = $state(false);
   // Add here (V3 gap 2): one world or moon by hand, round the selected star or planet (else the primary).
   let addDialog: HTMLDialogElement | undefined = $state();
-  let addFor = $state<{ address: string; label: string; kind: string; mass_sun: number | null } | null>(null);
+  let addFor = $state<{
+    address: string;
+    label: string;
+    kind: string;
+    mass_sun: number | null;
+    /** A planet's own figures and where it goes round its star, for the moon recipes. */
+    planet?: { mass_earth: number; radius_earth: number; a_au: number | null; star_mass_sun: number | null };
+  } | null>(null);
   const addOrbits = $derived(addFor ? scene.subjects.filter((x) => (addFor!.kind === "star" ? x.kind === "planet" : x.parent === addFor!.address) && x.orbit).map((x) => x.orbit!.a_au) : []);
   function openAdd() {
     const sel = scene.subjects.find((x) => x.address === ws.selection);
     const h = sel && (sel.kind === "star" || sel.kind === "planet") ? sel : primaryOf(scene);
     if (!h) return void (clipNote = "There is no star here to add round.");
     const m = h.facts.find((f) => f.field === "mass_sun")?.value;
-    addFor = { address: h.address, label: h.label, kind: h.kind, mass_sun: typeof m === "number" ? m : null };
+    const fact = (x: typeof h, field: string) => {
+      const v = x.facts.find((f) => f.field === field)?.value;
+      return typeof v === "number" ? v : null;
+    };
+    const star = scene.subjects.find((x) => x.address === h.parent && x.kind === "star") ?? primaryOf(scene);
+    const [me, re] = [fact(h, "mass_earth"), fact(h, "radius_earth")];
+    addFor = {
+      address: h.address,
+      label: h.label,
+      kind: h.kind,
+      mass_sun: typeof m === "number" ? m : null,
+      planet: h.kind === "planet" && me !== null && re !== null ? { mass_earth: me, radius_earth: re, a_au: h.orbit?.a_au ?? null, star_mass_sun: star ? fact(star, "mass_sun") : null } : undefined,
+    };
     addDialog?.showModal();
   }
   async function addClip(clip: Clip, words: string): Promise<string | null> {
