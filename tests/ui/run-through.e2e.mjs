@@ -108,6 +108,8 @@ try {
   await gm.waitForFunction(() => /Beowulf in orbit of Mars/.test(document.querySelector("[data-table-sees]")?.textContent ?? ""), null, { timeout: 15000 });
   await pl.waitForSelector(`[data-orbit="${mars}"][data-orbit-drawn]`, { timeout: 60000 });
   assert.match(await pl.locator("[data-orbit-caption]").innerText(), /Mars, turning below/);
+  // LR4b: Mars's air, read on the GM's kernel, comes with the send and is drawn on the player's globe.
+  await pl.waitForSelector(`[data-orbit="${mars}"][data-orbit-air]`, { timeout: 30000 });
   await shot(pl, "rt-2b-player-orbit");
   await gm.evaluate((h) => (location.hash = h), landHref);
 

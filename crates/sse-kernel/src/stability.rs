@@ -131,7 +131,10 @@ fn bodies(facts: &Facts, system: &Address) -> Vec<Body> {
             let f = |k: &str| row.get(k).and_then(num);
             Body {
                 address: a.clone(),
-                star: matches!(row.get("body.kind"), Some(Value::Text(t)) if t == "star"),
+                // A star by its kind, its temperature or a V3 save's role.
+                star: matches!(row.get("body.kind"), Some(Value::Text(t)) if t == "star")
+                    || row.contains_key("star.effective_temperature")
+                    || matches!(row.get("v3.roleHint"), Some(Value::Text(t)) if t == "star"),
                 host,
                 mass: f("body.mass").filter(|m| *m > 0.0),
                 a: f("orbit.semi_major_axis").filter(|x| *x > 0.0),
@@ -242,6 +245,24 @@ pub fn checks(facts: &Facts, system: &Address) -> (Vec<Check>, Vec<Unchecked>) {
             continue;
         };
         let worlds: Vec<&Body> = list.iter().copied().filter(|b| !b.star).collect();
+        // Barycentre always (Jacobi): each body goes round its host and
+        // everything further in, so the central mass is all of that.
+        let mut central: BTreeMap<&Address, f64> = BTreeMap::new();
+        let mut inside = mh;
+        for b in list {
+            central.insert(&b.address, inside);
+            inside += b.mass.unwrap_or(0.0);
+        }
+        let cm = |b: &Body| central.get(&b.address).copied().unwrap_or(mh);
+        // Neighbours are worlds with no star between them.
+        let mut runs: Vec<Vec<&Body>> = vec![vec![]];
+        for b in list {
+            if b.star {
+                runs.push(vec![]);
+            } else if let Some(r) = runs.last_mut() {
+                r.push(b);
+            }
+        }
         // Hill spacing and the deficit, neighbour by neighbour.
         let mut amd = Some(0.0);
         for w in &worlds {
@@ -253,7 +274,7 @@ pub fn checks(facts: &Facts, system: &Address) -> (Vec<Check>, Vec<Unchecked>) {
             }
             match run(
                 "sse.stability.amd_term",
-                &[w.a.unwrap_or(0.0), w.e, w.i, w.mass.unwrap_or(0.0), mh],
+                &[w.a.unwrap_or(0.0), w.e, w.i, w.mass.unwrap_or(0.0), cm(w)],
             ) {
                 Ok((_, o)) => amd = amd.map(|s| s + o["amd"]),
                 Err(e) => {
@@ -262,8 +283,9 @@ pub fn checks(facts: &Facts, system: &Address) -> (Vec<Check>, Vec<Unchecked>) {
                 }
             }
         }
-        for pair in worlds.windows(2) {
+        for pair in runs.iter().flat_map(|r| r.windows(2)) {
             let (p, q) = (pair[0], pair[1]);
+            let mh = cm(p);
             let m: Vec<String> = need(p, true, true)
                 .into_iter()
                 .chain(need(q, true, true))

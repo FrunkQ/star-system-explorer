@@ -139,8 +139,8 @@ export type { SheetBand, SheetConstant } from "./sheet.ts";
 export { sniffFile, sha256Hex, explorersUrl, fetchExplorers, creditWords, CONVERTER_URL } from "./open-file.ts";
 export type { FileKind, Sniffed, ExplorersListing, ExplorersFetched } from "./open-file.ts";
 // Add here (V3 gap 2): what this orbit would make, from formation runs, or anything, marked impossible.
-export { formsHere, anythingClip, clipAt, freeOrbit } from "./add-here.ts";
-export type { FormsHere } from "./add-here.ts";
+export { formsHere, anythingClip, clipAt, freeOrbit, moonRecipes, GIANT_MASS_EARTH } from "./add-here.ts";
+export type { FormsHere, MoonRecipe } from "./add-here.ts";
 // Find in Look up: an element, constant or unit by name, symbol or id.
 export { findInSheet } from "./reference-find.ts";
 export type { RefHit } from "./reference-find.ts";
@@ -183,3 +183,7 @@ export * from "./place-notes.ts";
 export * from "./delivery.ts";
 export { gearing, roundFigures, resonanceCatches, nearestCatch } from "./drag.ts";
 export type { Catch } from "./drag.ts";
+// Roll call (track SH): who was in flight on a day, aboard what and where, from flight logs and stays.
+export * from "./rollcall.ts";
+// In memory (track SH6): the names of those who died, from a pack's in-memory.json.
+export * from "./inmemory.ts";
