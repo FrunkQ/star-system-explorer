@@ -3,7 +3,7 @@
      exactly as it was left. Rename, update to where you are now, remove, and drag to reorder. Nothing about players. -->
 <script lang="ts">
   import { ToolButton, opensFrom } from "../../../chart-grammar/src/index.ts";
-  import { bookmarkReachable, moveBookmark, removeBookmark, renameBookmark, updateBookmark, type Bookmark, type Whereabouts } from "../../../ui-contract/src/index.ts";
+  import { bookmarkReachable, isPostcard, moveBookmark, removeBookmark, renameBookmark, updateBookmark, type Bookmark, type Whereabouts } from "../../../ui-contract/src/index.ts";
 
   let {
     list,
@@ -12,6 +12,7 @@
     where,
     go,
     onchange,
+    postcard,
   }: {
     list: readonly Bookmark[];
     /** The place in view: another campaign's bookmarks cannot be opened from here. */
@@ -22,6 +23,8 @@
     where: () => Whereabouts;
     go: (b: Bookmark) => void;
     onchange: (next: Bookmark[]) => void;
+    /** "Make a postcard" (PC5, postcards design 6): opens it on the wall; returns why it cannot be one yet, or null. */
+    postcard?: (b: Bookmark) => string | null;
   } = $props();
 
   let open = $state(false);
@@ -110,7 +113,9 @@
               {:else}
                 <button type="button" class="go" onclick={() => choose(b)} ondblclick={() => (renaming = b.id)} data-bookmark-go={b.id} title={bookmarkReachable(b, scope) ? "Go back there" : "In another campaign"}>{b.name}</button>
               {/if}
+              {#if isPostcard(b)}<span class="stamp" data-bookmark-stamp={b.id} title="A postcard" aria-label="A postcard"></span>{/if}
               <span class="acts">
+                {#if postcard && bookmarkReachable(b, scope)}<button type="button" class="act" aria-label="Make a postcard of {b.name}" title={isPostcard(b) ? "Open its postcard" : "Make a postcard"} data-bookmark-postcard={b.id} onclick={() => { const why = postcard(b); if (why) note = why; else open = false; }}>✉</button>{/if}
                 <button type="button" class="act" aria-label="Rename {b.name}" title="Rename" onclick={() => (renaming = b.id)}>✎</button>
                 <button type="button" class="act" aria-label="Update {b.name} to where I am" title="Update to where I am" data-bookmark-update={b.id} onclick={() => ((note = `${b.name} now keeps where you are.`), onchange(updateBookmark(list, b.id, where())))}>↻</button>
                 <button type="button" class="act" aria-label="Remove {b.name}" title="Remove" data-bookmark-remove={b.id} onclick={() => onchange(removeBookmark(list, b.id))}>×</button>
@@ -211,6 +216,16 @@
     min-width: 0;
     font: inherit;
     padding: 3px 6px;
+  }
+  /* A postcard's mark: a small stamp with a perforated edge. */
+  .stamp {
+    flex: none;
+    width: 10px;
+    height: 12px;
+    margin-right: 4px;
+    border: 1px dashed var(--sse-ink-muted);
+    border-radius: 1px;
+    background: var(--sse-accent-wash, transparent);
   }
   .acts {
     display: inline-flex;
