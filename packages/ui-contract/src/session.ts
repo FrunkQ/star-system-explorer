@@ -166,7 +166,7 @@ export interface ViewSession {
   /** A body's world stack (P4) with the kernel's ladder and physics notes, by body address or fixture name. */
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
   /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. */
-  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }>;
+  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json } | { ok: false; code: string; message: string }>;
   /** Tiles of a world at any level (S1, through resolved_system; at most 24 a call), with the kernel's refusals; GM only. The ground round a landing site (SL1). */
   surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }>;
   /** A world's landmarks (SL1): its named landscape from a quick survey (`survey_surface`'s register, the same world the globe shows); GM only. */
@@ -178,6 +178,8 @@ export interface ViewSession {
   grantLanding?(g: { system: string; body: string } | null): void;
   /** A descent planned to any site (SL1, kernel `plan_descent` on the quick survey): the site judged, a lander flown down; GM only. */
   planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }>;
+  /** The lava tube passages within `radius_km` of a site (S14a, kernel `survey_caves` on the quick survey): their fallen-roof openings are cut into the ground (renderer cave-mouths.ts). */
+  surveyCaves(ask: { system: string; body: string; lat_deg: number; lon_deg: number; radius_km?: number }): Promise<{ ok: true; caves: Json } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
   surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }>;
   /** The open universe as a document to keep (U10, kernel `export_chronicle`); GM only. */
@@ -260,7 +262,8 @@ export interface ViewSession {
   /** The galaxies in the same cube (kernel `web_slice` with `cube` and `haloes`, V9w): what True lights. Read only; GM only. */
   webGalaxies?(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebGalaxies } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
-  resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
+  /** With `branch`, the what-if's own line resolved (kernel BC1): nothing is committed (editing design ED1). */
+  resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
   readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
   /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
@@ -696,13 +699,15 @@ export class Session implements ViewSession {
     return this.seat.authority === "gm" || (this.#landing !== null && this.#landing.system === system && this.#landing.body === body);
   }
 
-  async surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }> {
+  async surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json } | { ok: false; code: string; message: string }> {
     if (!this.#mayLand(system, body)) return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
     const tiles = [0, 1, 2, 3, 4, 5].map((face) => ({ body, face, level: 0, x: 0, y: 0 }));
     const r = await this.#call({ op: "resolved_system", system, tiles });
     if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const x = r as unknown as { tiles?: SurfaceTile[]; refused?: Json[]; surfaces?: { address: string; regime_label?: string }[] };
-    return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: x.surfaces?.find((s2) => s2.address === body)?.regime_label };
+    const record = x.surfaces?.find((s2) => s2.address === body);
+    // The world's whole surface record rides along (its plumes, for True: renderer plumes.ts).
+    return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: record?.regime_label, ...(record ? { record: record as unknown as Json } : {}) };
   }
 
   async surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }> {
@@ -719,6 +724,12 @@ export class Session implements ViewSession {
     if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const reg = (r as unknown as { survey?: { register?: { features?: import("./landing.ts").Landmark[]; features_total?: number } } }).survey?.register;
     return { ok: true, landmarks: reg?.features ?? [], total: reg?.features_total ?? 0 };
+  }
+
+  async surveyCaves(ask: { system: string; body: string; lat_deg: number; lon_deg: number; radius_km?: number }): Promise<{ ok: true; caves: Json } | { ok: false; code: string; message: string }> {
+    if (!this.#mayLand(ask.system, ask.body)) return { ok: false, code: "not_gm", message: "only the game master surveys a world's caves" };
+    const r = await this.#call({ op: "survey_caves", system: ask.system, body: ask.body, quick: true, lat_deg: ask.lat_deg, lon_deg: ask.lon_deg, ...(ask.radius_km ? { radius_km: ask.radius_km } : {}) });
+    return r.type === "caves_surveyed" ? { ok: true, caves: ((r as unknown as { caves: { caves?: Json } }).caves.caves ?? null) as Json } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }> {
@@ -1020,9 +1031,9 @@ export class Session implements ViewSession {
     return r.type === "systems_listed" ? { ok: true, systems: (r as unknown as { systems: ListedSystem[] }).systems } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
-  async resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
+  async resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads resolved systems" };
-    const r = await this.#call({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}) });
+    const r = await this.#call({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}), ...(branch ? { branch } : {}) } as never);
     return r.type === "system_resolved" ? { ok: true, result: r as unknown as SystemResolved } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 

@@ -104,3 +104,16 @@ Abbreviations: P = `packs/base-surface/pack.json`; I = `crates/sse-surface/src/i
 | plumes.rs gas speed | adiabatic expansion into vacuum, v = sqrt(2γ/(γ−1) RT/M) | γ = 4/3 for a nonlinear triatomic ideal gas | textbook | the law; gives 1004 m/s at 273.16 K |
 | plumes.rs height | energy conservation in a point-mass field, h = R v² / (v_esc² − v²) | rise of a grain launched straight up | textbook | the law |
 | plumes.rs pole | Nimmo and Pappalardo 2006, Nature 441, 614, doi:10.1038/nature04821 | a polar hot spot by reorientation | unverified | not read in this pass |
+
+## Surface stains (TRUE4, `crates/sse-surface/src/stains.rs`, renderer `sheet-optics.ts`, `stain-look.ts`)
+
+| Where | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| stains.rs ferric oxide | Bibring et al. 2006, Science 312, 400, doi:10.1126/science.1122659 | Mars's late anhydrous era of ferric oxides formed by slow atmospheric oxidation | unverified | not read in this pass |
+| stains.rs ferric oxide | Morris et al. 2000, JGR 105, 1757, doi:10.1029/1999JE001059 | nanophase ferric oxide colours Mars's bright dust | unverified | not read in this pass |
+| stains.rs tholin | Khare et al. 1984, Icarus 60, 127, doi:10.1016/0019-1035(84)90142-8 | tholin from N2/CH4 irradiation (the sheet's titan-tholin optics) | unverified | the sheet's row (MP33) |
+| stains.rs tholin | Grundy et al. 2016, Science 351, aad9189, doi:10.1126/science.aad9189 | Pluto's red regions are tholin-like, its bright plains fresh N2 ice | unverified | not read in this pass |
+| stains.rs sulphur | Veeder et al. 2012, Icarus 219, 701, doi:10.1016/j.icarus.2012.04.004 | Io's heat flow about 2 to 3 W/m² | unverified | not read in this pass |
+| stains.rs sulphur | Carlson et al. 2007, in Io After Galileo, ch. 9 (Springer) | Io's colours from sulphur allotropes and SO2 frost | unverified | not read in this pass |
+| sheet-optics.ts | Hapke 2012, Theory of Reflectance and Emittance Spectroscopy, 2nd ed., Cambridge, doi:10.1017/CBO9781139025683 | equivalent-slab grain albedo, intimate mixing by cross-section, diffusive reflectance r0 | textbook | the equations as printed in Hapke 1993 and 2012 |
+| stain-look.ts STAIN_GRAIN_UM | Wolff et al. 2006, JGR 111, E12S17, doi:10.1029/2006JE002786 | Mars dust effective radius near 1.5 µm | unverified | not read in this pass |

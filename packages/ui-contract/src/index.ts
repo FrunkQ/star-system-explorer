@@ -18,7 +18,7 @@ export { deriveScene, applyEdits, sig } from "./derivation.ts";
 export type { DerivationDoc, DerivationRule, InputBinding, OutputBinding } from "./derivation.ts";
 export { resolveParams } from "./view.ts";
 export type { StylesHost, ViewModule, ViewContext, PlayerContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace, AppliedEdit, WhatIf } from "./view.ts";
-export { commitEdit, factEdit, placeBodies, withdrawBodies, PRESENCE, undoEdit, redoEdit, openWhatIf, dropWhatIf, keepWhatIf, compareScenes } from "./edit.ts";
+export { commitEdit, commitFields, FIELDS, factEdit, placeBodies, withdrawBodies, PRESENCE, undoEdit, redoEdit, openWhatIf, dropWhatIf, keepWhatIf, compareScenes } from "./edit.ts";
 export type { Difference } from "./edit.ts";
 export { checkScreen, boundScene, LAYOUT_AREAS, RAIL_SCALES, RAIL_GROUPS, RAIL_GROUP_WORDS, RAIL_MAX, railOf, scalesOf } from "./screen.ts";
 export { resolveStyle, checkStyle, settingCost, settingsCost, promotedOf, settingsDiff, COSTS, TIER_RUNS_UP_TO } from "./style.ts";
@@ -70,7 +70,7 @@ export { LENS_SCHEMA, LAYERS, TOOLS, SHIPPED_LENSES, HONESTY_MARKS, playerLenses
 export type { Lens, LensCard, LayerId, ToolId, Density, LensPackMeta } from "./lens.ts";
 export { SOUND_SCENE_SCHEMA, SOUND_RECIPE_SCHEMA, SOUND_LABELS, SOUND_LAYERS, NODE_TYPES, hash32, draw, intoOctave, settle, dialled, bandFor, orbitScene, voicesFromSystem, voicesFromPlayers, score, scoreHash, checkRecipe, defaultSound, readSound, voiceLimit } from "./sound.ts";
 export type { SoundLabel, SoundLayer, SoundTier, SoundSource, ScoreNote, SoundScene, Voice, NodeType, RecipeNode, SoundRecipe, SoundSettings } from "./sound.ts";
-export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight, recipeBand, bandChoices, paintedBands, lightForBand } from "./light.ts";
+export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight, recipeBand, bandChoices, paintedBands, lightForBand, linearSrgb, xyz, cmf } from "./light.ts";
 export type { BandRecipe, Honesty, LightDescription, LitBody } from "./light.ts";
 export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy, sceneFromResolved, listedTitle, cloudShape, cloudSubjects, v3BeltShape } from "./make.ts";
 export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld, Adopted, SystemResolved, ListedSystem, LeftoverCloud } from "./make.ts";
@@ -179,8 +179,8 @@ export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, R
 // Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
 export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed, BoxPart, BoxChip, HandleBox, PartMark } from "./handles.ts";
-export { atDepth, boxAt, partHandle, wrap, mirrorAngle, trueFromMean, meanFromTrueRad, trueAnomalyFrom, epochMeanFor, orbitShape, solarDay, resonances, stabilityFor, outerWall } from "./box.ts";
-export type { Resonance } from "./box.ts";
+export { atDepth, boxAt, partHandle, wrap, mirrorAngle, trueFromMean, meanFromTrueRad, trueAnomalyFrom, epochMeanFor, orbitShape, solarDay, resonances, stabilityFor, outerWall, pairOf } from "./box.ts";
+export type { Resonance, Pair } from "./box.ts";
 export * from "./place-notes.ts";
 export * from "./delivery.ts";
 export { gearing, roundFigures, resonanceCatches, nearestCatch } from "./drag.ts";
@@ -190,3 +190,9 @@ export * from "./rollcall.ts";
 // In memory (track SH6): the names of those who died, from a pack's in-memory.json.
 export * from "./inmemory.ts";
 export * from "./namescarried.ts";
+export { reachIt, resolveWith, resultFrom, surfaceKelvin } from "./reach.ts";
+export type { ReachAsk, Reached } from "./reach.ts";
+export { airMix, formulaOf, mixEdits, MIX_FIELD, retrade, substanceNames, TRACE } from "./air.ts";
+export type { MixGas } from "./air.ts";
+export { readSheet, sheetRows, spreadPaste } from "./sheet-entry.ts";
+export type { SheetRead, SheetRow } from "./sheet-entry.ts";

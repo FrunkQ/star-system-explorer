@@ -19,6 +19,24 @@ Checks: `packages/ui-contract/test/handles.test.ts`.
 
 Checks: `tests/ui/editing.e2e.mjs` (desk and phone: the six handles with Mars's figures, read-only on Explore with the Earth and Jupiter dots, typed "1 AU" is one change that warms Mars and Undo puts it back, a drag is one change, Esc writes nothing, no overflow on a phone). Screens in project files `sse4/handover-screens/ED1-screens/`.
 
-## Part 3 (waits on kernel BC1)
+## Part 3a: a what-if's own figures (done 25 Nov 2026, after kernel BC1, PR 468)
 
-The strip's exact answer on a pause through `resolved_system {branch}`; Titan on the Air strip's moon dots; the walk step "Change a world".
+- `Session.resolvedSystem(system, at_s?, branch?)`: with a branch, the kernel resolves the what-if's own line and commits nothing.
+- The handles row reads the open what-if's own resolve, and rereads it after each change there. So on a what-if, "What followed" lists what moved there: "Try changing it" with Mars at 1 AU on the example shows Surface about 214 K → about 264 K. The main line does not move. Before, the row said "What followed shows once it is kept".
+- In the Orbit and Spin boxes on a what-if, the tides line (the surface's `locked`) now comes from the branch too. The year and the verdict stay hidden there ("The year and the verdict follow once it is kept"), because `orbits_at` and `orbit_stability` read the main line only. A `branch` on those two ops would finish it.
+- `editing.e2e.mjs`: on the example, Mars at 1 AU is at least 20 K warmer. The handle's figure after a Build change is now waited for, not read once (the card rereads twice).
+
+## Part 3b (still to do)
+
+The strip's exact answer on a pause (the held value resolved on a scratch branch); Titan on the Air strip's moon dots; the walk step "Change a world".
+
+## Part 3b (25 Nov): the held value's exact answer on a pause
+
+- `Strip.svelte` takes `onpause(si)`: after 150 ms with the pencil still, it asks once; a later move makes an answer on
+  its way stale; the line shows "Held here: …" before "Let go". `Handles.svelte` `pause(h, si)` calls `resolveWith`
+  (`ui-contract/src/reach.ts`): a scratch branch gets the what-if's own edits (if any) and the held value, the kernel
+  resolves it (BC1), the branch is discarded. The words are `whatFollowed` rows (first three). The Orbit box's own strip
+  gets the same through Box's `pause` prop.
+- e2e (`editing.e2e.mjs`, desk and phone): a drag held still shows the line and the state hash does not move.
+  Screen: project files `sse4/handover-screens/ED1-screens/held-desk.png`.
+- Left: Titan on the Air strip's moon dots, the walk step "Change a world" (part 3c).
