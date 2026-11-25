@@ -174,12 +174,12 @@ impl Sweep {
             },
         })?;
         self.units += 1;
-        let (facts, surfaces) = match k.dispatch(Request::ResolvedSystem {
-            system: self.system.clone(),
-            at_s: self.at_s,
-            tiles: None,
-            branch: Some(self.branch.clone()),
-        })? {
+        let (facts, surfaces) = match k.resolved_system_op(
+            self.system.clone(),
+            self.at_s,
+            None,
+            Some(self.branch.clone()),
+        )? {
             Response::SystemResolved {
                 facts, surfaces, ..
             } => (facts, surfaces),
@@ -377,12 +377,7 @@ pub(crate) fn expects(
                     impossible: false,
                 },
             })?;
-            match k.dispatch(Request::ResolvedSystem {
-                system: system.clone(),
-                at_s,
-                tiles: None,
-                branch: Some(branch.clone()),
-            })? {
+            match k.resolved_system_op(system.clone(), at_s, None, Some(branch.clone()))? {
                 Response::SystemResolved { surfaces, .. } => Ok(surfaces
                     .iter()
                     .find(|s| s["address"] == a.to_string().as_str())

@@ -1799,7 +1799,7 @@ impl Kernel {
             .map_err(|e| err("bad_record", format!("{address}: {e}")))?;
         let u = self.universe()?;
         let elapsed_gyr = clock::elapsed_myr(&u.chronicle) / 1000.0;
-        let (seed, root) = (u.seed.clone(), u.root.clone());
+        let (seed, root) = (u.seed, u.root.clone());
         cosmos::with_stars(&seed, &root, None, |st, now| {
             let b = serde_json::to_value(st.birth(&s)).expect("plain data");
             Ok((b, now + elapsed_gyr))
@@ -2029,17 +2029,13 @@ impl Kernel {
                     },
                 })?;
             }
-            let (facts, surfaces) = match self.dispatch(Request::ResolvedSystem {
-                system: system.clone(),
-                at_s: None,
-                tiles: None,
-                branch: Some(branch.clone()),
-            })? {
-                Response::SystemResolved {
-                    facts, surfaces, ..
-                } => (facts, surfaces),
-                other => return Err(other),
-            };
+            let (facts, surfaces) =
+                match self.resolved_system_op(system.clone(), None, None, Some(branch.clone()))? {
+                    Response::SystemResolved {
+                        facts, surfaces, ..
+                    } => (facts, surfaces),
+                    other => return Err(other),
+                };
             let surface = surfaces.iter().any(|s| s["address"] == body.as_str());
             let f = &facts[&body];
             let mut resolved = BTreeMap::new();
@@ -2688,6 +2684,70 @@ impl Kernel {
             out.insert(fi.name.clone(), InputValue { q, source });
         }
         Ok(out)
+    }
+
+    /// `resolved_system`, outside `dispatch`: ops that resolve a system as
+    /// part of their own work (class samples, sweeps) call this, so a debug
+    /// build does not stack two of `dispatch`'s large frames under a resolve.
+    pub(crate) fn resolved_system_op(
+        &mut self,
+        system: String,
+        at_s: Option<i64>,
+        tiles: Option<Vec<protocol::TileRequest>>,
+        branch: Option<String>,
+    ) -> Result<Response, Response> {
+        let a: Address = system
+            .parse()
+            .map_err(|e| err("bad_address", format!("{e}")))?;
+        let u = self.universe()?;
+        if !u.root.contains(&a) {
+            return Err(err(
+                "bad_address",
+                format!("{a} is not in universe {}", u.root),
+            ));
+        }
+        if !u.runs.contains_key(&system) {
+            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                let (_, run, _) = systems::form(req.into())?;
+                u.runs.insert(system.clone(), run);
+            }
+        }
+        let what_if = match &branch {
+            Some(b) => {
+                let id = u
+                    .branches
+                    .get(b)
+                    .ok_or_else(|| err("unknown_branch", b.clone()))?;
+                Some(
+                    u.chronicle
+                        .branch_as_main(id)
+                        .map_err(|e| err("chronicle", format!("{e}")))?,
+                )
+            }
+            None => None,
+        };
+        let r = adopt::resolved_system(
+            what_if.as_ref().unwrap_or(&u.chronicle),
+            &u.seed,
+            &a,
+            at_s,
+            tiles.as_deref().unwrap_or(&[]),
+            u.runs.get(&system),
+            &mut u.orbits,
+        )?;
+        Ok(Response::SystemResolved {
+            system,
+            source: r.source,
+            at_s: r.at_s,
+            facts: r.facts,
+            evidence: r.evidence,
+            spec: r.spec,
+            surfaces: r.surfaces,
+            tiles: r.tiles,
+            refused: r.refused,
+            clouds: r.clouds,
+            frame: frame::drawn(&u.seed, &a)?.json(),
+        })
     }
 
     fn dispatch(&mut self, req: Request) -> Result<Response, Response> {
@@ -3743,60 +3803,7 @@ impl Kernel {
                 at_s,
                 tiles,
                 branch,
-            } => {
-                let a: Address = system
-                    .parse()
-                    .map_err(|e| err("bad_address", format!("{e}")))?;
-                let u = self.universe()?;
-                if !u.root.contains(&a) {
-                    return Err(err(
-                        "bad_address",
-                        format!("{a} is not in universe {}", u.root),
-                    ));
-                }
-                if !u.runs.contains_key(&system) {
-                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
-                        let (_, run, _) = systems::form(req.into())?;
-                        u.runs.insert(system.clone(), run);
-                    }
-                }
-                let what_if = match &branch {
-                    Some(b) => {
-                        let id = u
-                            .branches
-                            .get(b)
-                            .ok_or_else(|| err("unknown_branch", b.clone()))?;
-                        Some(
-                            u.chronicle
-                                .branch_as_main(id)
-                                .map_err(|e| err("chronicle", format!("{e}")))?,
-                        )
-                    }
-                    None => None,
-                };
-                let r = adopt::resolved_system(
-                    what_if.as_ref().unwrap_or(&u.chronicle),
-                    &u.seed,
-                    &a,
-                    at_s,
-                    tiles.as_deref().unwrap_or(&[]),
-                    u.runs.get(&system),
-                    &mut u.orbits,
-                )?;
-                Response::SystemResolved {
-                    system,
-                    source: r.source,
-                    at_s: r.at_s,
-                    facts: r.facts,
-                    evidence: r.evidence,
-                    spec: r.spec,
-                    surfaces: r.surfaces,
-                    tiles: r.tiles,
-                    refused: r.refused,
-                    clouds: r.clouds,
-                    frame: frame::drawn(&u.seed, &a)?.json(),
-                }
-            }
+            } => self.resolved_system_op(system, at_s, tiles, branch)?,
             Request::PlanRoute {
                 fixture,
                 nav,
@@ -6019,7 +6026,10 @@ impl Kernel {
                         ))
                     }
                 };
-                if !(semi_major_axis_m > 0.0) || !(0.0..1.0).contains(&eccentricity) {
+                if semi_major_axis_m.is_nan()
+                    || semi_major_axis_m <= 0.0
+                    || !(0.0..1.0).contains(&eccentricity)
+                {
                     return Err(err("bad_request", "an orbit needs a > 0 and 0 <= e < 1"));
                 }
                 Response::ElementsConverted {

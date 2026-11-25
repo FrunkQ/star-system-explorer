@@ -3479,5 +3479,9 @@
  {"op": "tech_of", "holder": "u:k13"},
  {"op": "tech_reading", "holder": "u:k13", "parts": [{"part": "structure", "needs": {}}]},
  {"op": "expects", "system": "u:k13/sys:0", "address": "u:k13/sys:0/body:3", "fields": ["body.radius", "body.albedo"]},
- {"op": "elements_in", "address": "u:k13/sys:0/body:3/body:0", "semi_major_axis_m": 3.844e8, "eccentricity": 0.0549, "inclination_rad": 0.0898, "ascending_node_rad": 2.18, "argument_of_periapsis_rad": 5.55, "measured_from": {"pole_lon_rad": 1.5707963267948966, "pole_lat_rad": 1.1616, "zero_lon_rad": 0.0}, "true_on_s": 0}
+ {"op": "elements_in", "address": "u:k13/sys:0/body:3/body:0", "semi_major_axis_m": 3.844e8, "eccentricity": 0.0549, "inclination_rad": 0.0898, "ascending_node_rad": 2.18, "argument_of_periapsis_rad": 5.55, "measured_from": {"pole_lon_rad": 1.5707963267948966, "pole_lat_rad": 1.1616, "zero_lon_rad": 0.0}, "true_on_s": 0},
+ {"op": "orbit_stability", "system": "u:k15/sys:0", "bodies": [
+   {"address": "u:k15/sys:0/star:0", "facts": {"body.kind": "star", "body.mass": 1.98840987e30}},
+   {"address": "u:k15/sys:0/star:0/planet:7", "facts": {"body.kind": "planet", "orbit.host": "u:k15/sys:0/star:0", "body.mass": 1.024e26, "orbit.semi_major_axis": 4.4984e12, "orbit.eccentricity": 0.0086}},
+   {"address": "u:k15/sys:0/star:0/planet:8", "facts": {"body.kind": "planet", "orbit.host": "u:k15/sys:0/star:0", "body.mass": 1.303e22, "orbit.semi_major_axis": 5.9061e12, "orbit.eccentricity": 0.2488}}]}
 ]

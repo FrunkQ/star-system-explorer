@@ -97,7 +97,7 @@ fn epochs_in_order_and_where_they_belong() {
         );
     }
     let get = |id: &str| ep.iter().find(|e| e.id == id).unwrap();
-    // First stars: 3-sigma 1e6 solar-mass minihaloes near z = 20 to 30 (Tegmark et al. 1997; Barkana and Loeb 2001 fig. 6).
+    // First stars: 3-sigma peaks (our choice) of 1e6 solar-mass minihaloes (after Tegmark et al. 1997, whose 1e6 is baryonic at z about 15; Barkana and Loeb 2001 fig. 6).
     let zf = get("first_stars").z.unwrap();
     assert!(zf > 15.0 && zf < 35.0, "{zf}");
     // Reionisation half way: Planck 2018 table 2 7.82 +- 0.71 (with BAO, the column our parameters use; 7.67 +- 0.73 without); complete by about z = 5.5 to 6.5 (quasar spectra).

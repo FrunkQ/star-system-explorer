@@ -7,7 +7,9 @@
 //! This module reads that growth as physics a chart can show:
 //! - **Seeds.** A halo that is already an atomic-cooling halo (virial speed
 //!   above about 16.5 km/s, T_vir 1e4 K) by z = 10 may host a direct-collapse
-//!   seed of about 1e5 Msun (Loeb and Rasio 1994; Bromm and Loeb 2003);
+//!   seed of about 1e5 Msun, the middle of the 1e4 to 1e6 Msun range of
+//!   direct-collapse models (Lodato and Natarajan 2006; Latif and Ferrara
+//!   2016; Bromm and Loeb 2003's own runs give 1e6 or more; fudge F54);
 //!   otherwise the seed is a Population III remnant of about 100 Msun, and
 //!   the module says how long Eddington-limited growth takes to reach the
 //!   reservoir's starting mass. A keyed draw decides, with the chance as pack data.
@@ -15,7 +17,8 @@
 //!   is swallowed at the Eddington limit, so it lasts t_Sal ln(1 + feed / M)
 //!   (Salpeter 1964). Luminosity is eps Mdot c^2 for a thin disc
 //!   (Shakura and Sunyaev 1973), falling as the Eddington ratio squared below
-//!   about 1% where the flow turns radiatively inefficient (Narayan and Yi 1995).
+//!   alpha squared, where the flow turns radiatively inefficient (Narayan and
+//!   Yi 1995); the disc's viscosity alpha is pack data (0.1, so about 1%).
 //! - **Class** from luminosity and Eddington ratio: quasar, Seyfert,
 //!   low-luminosity (LINER-like), dormant. Blazar, type 1 or type 2 depend on
 //!   where the observer stands relative to the jet axis and the dusty torus
@@ -58,8 +61,10 @@ pub const T_EDD_GYR: f64 = 0.4505;
 pub struct NucleusParams {
     /// Thin-disc radiative efficiency (0.057 non-spinning to 0.42 maximal; 0.1 typical, Soltan argument).
     pub radiative_efficiency: f64,
-    /// Below this Eddington ratio the flow is radiatively inefficient (L falls as lambda^2).
-    pub thin_lambda: f64,
+    /// The hot flow's viscosity alpha (Shakura and Sunyaev's). Below an
+    /// Eddington ratio of about alpha squared the flow is radiatively
+    /// inefficient and L falls as lambda^2 (Narayan and Yi 1995).
+    pub disc_alpha: f64,
     /// Class thresholds: bolometric luminosity (W) and Eddington ratio.
     pub quasar_w: f64,
     pub seyfert_w: f64,
@@ -91,7 +96,7 @@ impl Default for NucleusParams {
     fn default() -> Self {
         NucleusParams {
             radiative_efficiency: 0.1,
-            thin_lambda: 0.01,
+            disc_alpha: 0.1,
             quasar_w: 1.0e38,
             seyfert_w: 1.0e35,
             seyfert_lambda: 1.0e-3,
@@ -218,14 +223,15 @@ impl NucleusParams {
         let thin = self.radiative_efficiency * mdot_kg_s * C_M_S * C_M_S;
         let l_edd = L_EDD_PER_MSUN * mass;
         let raw = thin / l_edd;
-        let (l, lambda) = if raw >= self.thin_lambda {
+        let thin_lambda = self.disc_alpha * self.disc_alpha;
+        let (l, lambda) = if raw >= thin_lambda {
             (thin, raw)
         } else {
             // Radiatively inefficient: L falls as the square of the accretion rate.
-            let l = thin * raw / self.thin_lambda;
+            let l = thin * raw / thin_lambda;
             (l, l / l_edd)
         };
-        let peak = if raw >= self.thin_lambda {
+        let peak = if raw >= thin_lambda {
             // Shakura-Sunyaev: T(r)^4 = 3 G M Mdot / (8 pi sigma r^3) (1 - sqrt(r_in / r)),
             // r_in = 6 G M / c^2, peak at r = (49/36) r_in.
             let m_kg = mass * M_SUN_KG;
