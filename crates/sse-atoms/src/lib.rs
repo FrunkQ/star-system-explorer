@@ -586,6 +586,22 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("light.brightness_share", "brightness of a lit surface against a matt one seen square on in full sun"),
     ("eye.linear_level", "light level of one screen colour, 0 to 1, in proportion to light"),
     ("eye.screen_level", "level sent to the screen, 0 to 1"),
+    ("particle.radius", "radius of one particle"),
+    ("particle.wavelength", "wavelength of the light"),
+    ("particle.index_real", "refractive index of the particle's material (real part)"),
+    ("particle.index_imaginary", "how strongly the material absorbs (imaginary part of the refractive index)"),
+    ("particle.extinction_efficiency", "light taken out of the beam, per particle's cross-section"),
+    ("particle.absorption_efficiency", "light absorbed, per particle's cross-section"),
+    ("particle.single_scattering_albedo", "share of the light taken out that is scattered, not absorbed"),
+    ("particle.optical_depth", "optical depth of a layer of particles straight down"),
+    ("particle.asymmetry", "how far forward the particles scatter (0 alike every way, 1 straight on)"),
+    ("slab.reflectance", "share of the light a layer sends back"),
+    ("slab.transmission", "share of the light a layer lets through"),
+    ("model.moment_of_inertia_factor", "moment of inertia over M R² (0.4 uniform, lower when mass sinks to the centre)"),
+    ("shape.flattening", "how much shorter the pole-to-pole radius is, as a share of the equator's"),
+    ("shape.equatorial_radius", "radius at the equator"),
+    ("shape.polar_radius", "radius at the poles"),
+    ("shape.spin_parameter", "spin's pull outward at the equator over gravity's pull in"),
 ];
 
 /// Quantity kinds for the base-physics pack, from the atoms' port kinds.
@@ -611,6 +627,10 @@ fn range_of(kind: &str, _dim: Dimension) -> Option<(f64, f64)> {
     match kind {
         "orbit.eccentricity" => Some((0.0, 1.0)),
         "planet.bond_albedo" => Some((0.0, 1.0)),
+        "particle.single_scattering_albedo" | "slab.reflectance" | "slab.transmission" => {
+            Some((0.0, 1.0))
+        }
+        "particle.asymmetry" => Some((-1.0, 1.0)),
         "interior.core_mass_fraction" => Some((0.0, 1.0)),
         "planetesimal.water_kept_fraction" => Some((0.0, 1.0)),
         _ => None,

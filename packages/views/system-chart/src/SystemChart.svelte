@@ -14,7 +14,7 @@
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
   const trueSaid = new Map<string, string[]>();
   /** Its clouds alone, its ground under them, and its air (VP-A3, VP-A4), by system and world. */
-  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept };
+  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept; flatten?: number };
   const trueAirs = new Map<string, TrueAir>();
   /** Lays finer tiles (VP3 part 2) over the ground under a world's clouds; the new entry, or null when nothing changed. */
   function finerGround(key: string, fine: Parameters<typeof withFiner>[1]): TrueAir | null {
@@ -39,9 +39,9 @@
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { plumeFacts, readLiveStar, readTrueFace, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
+  import { plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
-  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
+  import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -390,7 +390,8 @@
   // V6: the same frame in 3D (view only; edits stay on the 2D chart).
   // The standard view controls (rule 12) choose it: Chart is this flat log chart, 3D turns. A view without a shell's
   // choice (a screen document elsewhere) stays on Chart.
-  const shownView = $derived(viewOptions(SYSTEM_CHART_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  const viewed = $derived(viewOptions(SYSTEM_CHART_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW));
+  const shownView = $derived(viewed.shown);
   // Pencil (track SV): a body the table does not know is drawn in pencil on the GM's chart, on the Build and Run desks
   // whatever the lens, and wherever a lens carries the "What the table knows" layer; never through a player lens.
   const pencilOn = $derived(!!known && !through && hudShows(shownView.hud, "known") && (hasLayer(L, "known") || ctx.workspace.desk === "build" || ctx.workspace.desk === "run"));
@@ -469,7 +470,11 @@
           const pf = plumeFacts(record);
           if (pf) truePlumes.set(key, pf);
           // Its clouds alone over its ground, and its air's rim (VP-A3, VP-A4).
-          if (typeof f !== "string" && (f.clouds || f.air)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}) });
+          // And how much its spin flattens it (TA6).
+          const shape = await readTrueShape(ctx.session as unknown as ShapeReader, sys, s.address);
+          if (typeof shape !== "string") trueSaid.set(key, [...(trueSaid.get(key) ?? []), `${label(s)}: ${shape.said}.`]);
+          const flat = typeof shape === "string" ? {} : { flatten: shape.f };
+          if (typeof f !== "string" && (f.clouds || f.air || "flatten" in flat)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}), ...flat });
           // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
           const kept = trueSurfaces.get(key);
           if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));
@@ -527,6 +532,12 @@
     if (!looksTrue || ctx.session.seat.authority !== "gm" || !below || below.body !== sel) return;
     const radius_m = untrack(() => bodies3d.find((b) => b.id === below.body)?.radius_m);
     if (!radius_m) return;
+    // Only a world whose ground True already wears (faces read from its tiles), as for the finer tiles: a world the
+    // kernel has no surface for is never asked again, so a close fly-in does not queue kernel work in front of the
+    // chart's own (a world with none answered each read with a refusal, and on a slow runner held the kernel).
+    const key0 = `${sys}|${below.body}`;
+    const worn = untrack(() => trueSurfaces.get(key0));
+    if (!worn || typeof worn === "string" || !(worn.faces || untrack(() => trueAirs.get(key0)?.ground?.faces))) return;
     const timer = setTimeout(() => untrack(() => void (async () => {
       const p = await readDeep(ctx.session, sys, below.body, { toward: below.toward, m_per_px: below.m_per_px }, radius_m, TILE_SAMPLES, () => my === deepGen);
       if (!p || my !== deepGen) return;
@@ -574,7 +585,7 @@
   $effect(() => {
     const sys = scene.system;
     const subjects = scene.subjects;
-    if (dims !== "3d" || shownView.band !== "mag" || !/\/sys:sol$/.test(sys)) return void (fields = new Map());
+    if (dims !== "3d" || !viewed.layers.some((l) => l.band === "mag") || !/\/sys:sol$/.test(sys)) return void (fields = new Map());
     let live = true;
     solFields ??= ctx.session.readField({ fixture: "solar-system" }).then((r) => (r.ok ? (r.bodies as unknown as FieldReadJson[]) : []));
     void solFields.then((read) => {
@@ -639,7 +650,15 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {plumes} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
+    {#snippet in3d(band: string, base: boolean)}
+      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
+    {/snippet}
+    {#if viewed.composite}
+      <!-- Composite (XO17): the system drawn once per band and laid into one picture. -->
+      <CompositeStack layers={viewed.layers} dark={looksTrue ? true : undefined}>{#snippet children(band, base)}{@render in3d(band, base)}{/snippet}</CompositeStack>
+    {:else}
+      {@render in3d(shownView.band, true)}
+    {/if}
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}

@@ -757,6 +757,11 @@ pub fn diagnose_two(
 /// `sse.volatile.species`); above it, over the liquid, Clausius-Clapeyron
 /// from the triple point with the heat of vaporisation.
 pub fn p_sat(sub: &Substance, t_k: f64) -> f64 {
+    if sub.liquid_only {
+        if let Some(c) = crate::settings::saturated_curve(&sub.phases) {
+            return crate::settings::curve_pa(&c, t_k);
+        }
+    }
     if t_k < sub.triple_k {
         if let Some(p) = sse_reference::sublimation_pa(&sub.phases, t_k) {
             return p;
@@ -772,6 +777,22 @@ pub fn p_sat(sub: &Substance, t_k: f64) -> f64 {
 pub fn frost_k(sub: &Substance, p_pa: f64) -> f64 {
     let l_r = sub.latent_j_kg * sub.molar_kg / R_GAS;
     let liquid = || 1.0 / (1.0 / sub.triple_k - m::ln(p_pa / sub.triple_pa) / l_r);
+    if sub.liquid_only {
+        // ln p is monotone in T along the curve: bisect ln T over 0.01 K
+        // to the critical point (twice the lowest point without one).
+        let target = m::ln(p_pa.max(1e-300));
+        let top = sub.critical_k.unwrap_or(2.0 * sub.triple_k);
+        let (mut lo, mut hi) = (m::ln(0.01), m::ln(top));
+        for _ in 0..60 {
+            let mid = 0.5 * (lo + hi);
+            if m::ln(p_sat(sub, m::exp(mid)).max(1e-300)) < target {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        return m::exp(0.5 * (lo + hi));
+    }
     if p_pa >= sub.triple_pa || sse_reference::sublimation_pa(&sub.phases, sub.triple_k).is_none() {
         return liquid();
     }

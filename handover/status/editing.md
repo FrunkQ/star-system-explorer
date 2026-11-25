@@ -42,7 +42,10 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED13 part 1 "Type it all in" for one body: a button at the end of the handles row opens every input as a row (handles, then their box's strips and rings; `sheetRows`), each typed in any unit of its kind; a paste of several lines spreads down, or goes to the rows it names (`spreadPaste`); what it understood and what it could not read before anything is written (`readSheet`); "Set N as one change" (one set_values, one Undo), optionally catalogued with its source | done | packages/ED13.md |
 | ED13a part 1 the system sheet: "Every body here" in the sheet takes a pasted table, a first line of column names (matched to inputs by name, a bracketed unit for bare numbers) and a line per body named as on the chart (`readTable`); what it understood per body, columns and bodies it left out; one change across every body (`commitFields` with an address per edit), one Undo | done | packages/ED13.md |
 | ED13a part 2 a file (CSV, spreadsheet) or an ephemeris table; the measured-from, centred-on and true-on header (kernel K17) | queued | packages/ED13.md |
-| ED9 to ED11, ED10a | queued, in the design's order | |
+| ED10 part 1 "Could be…": a line under a world's handles offers what it is not yet (`could_be` records in the handle sheet: a field of its own, locked to its star, turning freely; `couldBeNow`); pressing one works out the recipe on a scratch what-if (`recipeFor`: Reach it per named handle, smallest move first), each with "Do this" as one change | done | packages/ED10.md |
+| ED10 part 2 requirement profiles (Home to humans) as survivability bands, Pin it steps, "stop suggesting this", Curious-depth sentence; records in a pack; the GM-only "What does not add up" list | queued (profiles are ED10a with kernel K14) | packages/ED10.md |
+| ED9 the Makeup box | waits on kernel K3 (a hand-made world's makeup reaching its physics; Sol's worlds carry no makeup facts) | |
+| ED11, ED10a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 
 ## Decisions and agreements that live only in threads (written down 24 Nov for the handover)

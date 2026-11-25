@@ -1,17 +1,17 @@
 # Status: Exotic objects on screen
 
-Owner thread: "Design exotic stars and black holes" wrote the design; no builder thread owns the track yet. Until one does, the builder of each package updates its row. Covers: XO (short for exotic objects; a package code only, never shown in the product).
+Owner thread: "Build exotic stars and black holes" builds the track (from 24 Nov 2026); "Design exotic stars and black holes" wrote the design and takes design questions. Covers: XO (short for exotic objects; a package code only, never shown in the product).
 
 One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`. Stage order: `handover/design/SSE4-coming-together.md`.
 
 Design: `handover/design/SSE4-exotic-objects-design.md`, **accepted by Alex 24 Nov 2026** (rulings in its section 13; small open points 12 to 15, each with a recommendation builders follow; the addendum in section 15 (questions 16 to 21) was accepted by Alex 24 Nov 18:36). Mockup and screenshots are in project files at `sse4/handover-screens/XO-screens/` (`black-hole-mockup.html` is a working picture: light traced from the real bending equation, the band switch with Composite, and the Hazard map for the hole, the Sun and Jupiter).
 
-Nothing is built. The design's section 1 says what the kernel and renderer already hold (checked at main 67a5957): the thin disc and the spectrum shifts in `sse-light`, remnants with mass only, no light bending anywhere.
+Built: XO1 part 1, the bend table, XO17, Composite, and XO18 part 1, the Hazard map's reading (24 Nov). The design's section 1 says what the kernel and renderer already hold (checked at main 67a5957): the thin disc and the spectrum shifts in `sse-light`, remnants with mass only, no light bending anywhere.
 
 | Package | State | Proposed builder | Needs |
 |---|---|---|---|
-| XO1 gravity blocks and the bend table (design 3.2, section 8) | **next**: start here | Build light and nebulae | none |
-| XO2 the feed descriptor on three fixtures, op `read_light_paths` (2.2, 3.5) | waiting on XO1 | Build light and nebulae | XO1 |
+| XO1 gravity blocks and the bend table (design 3.2, section 8) | part 1 **done** 24 Nov: `crates/sse-gravity` bend table, golden `gravity.json`. Part 2, the nine `sse.gravity.*` formula blocks, is **next** and changes `contract.jsonl`: golden lane, ready in `packages/XO1-part2/` (log `packages/XO1.md` says how to land it) | Build exotic stars and black holes | none |
+| XO2 the feed descriptor on three fixtures, op `read_light_paths` (2.2, 3.5) | after XO1 part 2 (adds an op: golden lane, tell the coordinator first) | Build light and nebulae | XO1 |
 | XO3 the disc's light point by point; tilt and shifts into `read_light` (3.3) | waiting on XO2 | Build light and nebulae | XO2, O7 (built) |
 | XO4 the `light-path` stage and the black hole in True, every band (2.1, 3.1 to 3.4, 7); was the renderer's R5b | waiting on XO1 to XO3 | Build photoreal renderer | XO1 to XO3 |
 | XO5 phone path, table lookups in WebGL2 (7) | waiting on XO4 | Build photoreal renderer | XO4 |
@@ -26,8 +26,8 @@ Nothing is built. The design's section 1 says what the kernel and renderer alrea
 | XO14 the wind you can see; Wolf-Rayet stars (5.1) | waiting on B2 | light, then renderer | B2, O4 |
 | XO15 colliding winds and dust spirals (5.2) | waiting on XO14 | light, then renderer | XO14, B4 |
 | XO16 later: relativistic disc, thick and warped discs, cluster arcs, the plunge shot, pack benders | later | as they come | XO7 |
-| XO17 Composite in the band switch, every view (6A) | **next**: needs nothing from XO | chart room for the control, renderer for the layering | V10b (built) |
-| XO18 the Hazard map for any hazardous body, op `hazard_map` (3.8): Map and Profile, radiation belts from `read_field` with edges, gaps and latitude, Park and Dive marks | **next**: start on Jupiter, Saturn, Earth and the Sun, which need nothing from XO; compact bodies after XO1 | light for the op, renderer for the Map, chart room for the rail entry and card | MF7 belts and shielding, `read_light`, `read_activity`, the MF14a tracer (all built), the ship record |
+| XO17 Composite in the band switch, every view (6A) | **done** 24 Nov: contract, presets as data, tick list, legend, seat and phone limits, `CompositeStack` on the system chart (3D, True), galaxy chart (3D, True) and globe (log `packages/XO17.md`; next views listed there) | Build exotic stars and black holes | V10b (built) |
+| XO18 the Hazard map for any hazardous body, op `hazard_map` (3.8): Map and Profile, radiation belts from `read_field` with edges, gaps and latitude, Park and Dive marks | part 1 **done** 24 Nov: `crates/sse-hazard`, the reading (rows heat, trapped belts, air, climbing out along the equator or over the poles; safe bands, Park, Dive, totals for the pass, dose beside each moon, fixed marks) checked on the Sun, Jupiter, Saturn, Earth and Venus (log `packages/XO18.md`). **Next**: part 2, the op `hazard_map` and `sse.belts.latitude_falloff` (golden lane, with XO1 part 2); part 3, the Profile and Map on screen, rail entry and card line | light for the op, renderer for the Map, chart room for the rail entry and card | MF7 belts and shielding, `read_light`, `read_activity`, the MF14a tracer (all built), the ship record |
 | XO19 pulsating stars (design 15.2 to 15.6): strip, period from density, light curve, `star.light_now` with modulators, op `read_light_curve`, readers | **can start now** on fixtures and main-sequence stars, beside XO1; golden lane for stars inside a strip | light for the kernel part; renderer, climate and chart room for the readers | none; B2 for Cepheids and RR Lyrae in real galaxies |
 | XO20 clocks (15.7): `clock_rate` widened, offset over the flight log, the clock chip, Hazard map marks, stream rate | waiting on XO1 | travel thread for the kernel side, chart room for the chip | XO1, voyages V8 (built) |
 

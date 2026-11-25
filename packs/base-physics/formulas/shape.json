@@ -1,0 +1,163 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.shape",
+ "about": "A body's shape from its spin (and, later, a companion's pull): XO design, 'shape from spin and a companion's pull for every body'. The tidal part (sse.shape.spin_and_pull, Roche model) will take this block's output.",
+ "atoms": [
+  {
+   "id": "sse.shape.spin_flattening",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "mean_radius",
+     "letter": "R"
+    },
+    {
+     "port": "rotation_period",
+     "letter": "P"
+    },
+    {
+     "port": "inertia_factor",
+     "letter": "C"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "flattening",
+     "letter": "f"
+    },
+    {
+     "port": "equatorial_radius",
+     "letter": "Re"
+    },
+    {
+     "port": "polar_radius",
+     "letter": "Rp"
+    },
+    {
+     "port": "spin_parameter",
+     "letter": "q"
+    }
+   ],
+   "constants": {
+    "G": "sheet/G"
+   },
+   "checks": [
+    {
+     "port": "mass",
+     "min": 0,
+     "finite": true,
+     "says": "mass must be more than zero, got {}"
+    },
+    {
+     "port": "mean_radius",
+     "min": 0,
+     "finite": true,
+     "says": "radius must be more than zero, got {}"
+    },
+    {
+     "port": "rotation_period",
+     "finite": true,
+     "says": "rotation period must be a number, got {}"
+    },
+    {
+     "port": "inertia_factor",
+     "min": 0,
+     "max": 0.4,
+     "says": "the moment of inertia factor lies between 0 (all mass at the centre) and 0.4 (uniform), got {}"
+    }
+   ],
+   "references": [
+    "Radau, R. 1885 and Darwin, G. H. 1899, the Darwin-Radau relation between flattening and the moment of inertia of a body in hydrostatic equilibrium; as given in Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press, eq. 4.48 and 4.49. doi:10.1017/CBO9781139174817",
+    "Hubbard, W. B. 1984, Planetary Interiors, Van Nostrand Reinhold (q = ω²R³/GM and first-order flattening)"
+   ],
+   "shown": "q = ω²R_eq³/GM, ω = 2π/P; f = (5/2) q / (1 + (25/4)(1 − (3/2)C)²); R_eq = R (1 − f)^(−1/3) (one step from the mean radius), R_pol = R_eq (1 − f)",
+   "equation": {
+    "name": "How much a spinning world bulges at its equator",
+    "formula": "w = 2 * pi / abs(P)\nd = 1 - 3 / 2 * C\nk = 5 / 2 / (1 + 25 / 4 * d * d)\nq0 = w * w * R * R * R / (G * M)\nR1 = R / cbrt(1 - k * q0)\nq = w * w * R1 * R1 * R1 / (G * M)\nf = k * q\nRe = R / cbrt(1 - f)\nRp = Re * (1 - f)",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "mean radius of the world (a sphere of the same volume)"
+     },
+     "P": {
+      "kind": "body.rotation_period",
+      "unit": "s",
+      "name": "time for one turn (negative when it turns backwards)"
+     },
+     "C": {
+      "kind": "model.moment_of_inertia_factor",
+      "unit": "1",
+      "name": "moment of inertia over M R² (0.4 uniform, lower when mass sinks to the centre)",
+      "valid": [
+       0.0,
+       0.4
+      ]
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     }
+    },
+    "outputs": {
+     "f": {
+      "kind": "shape.flattening",
+      "unit": "1",
+      "name": "flattening: how much shorter the pole-to-pole radius is, as a share of the equator's",
+      "valid": [
+       0.0,
+       0.5
+      ]
+     },
+     "Re": {
+      "kind": "shape.equatorial_radius",
+      "unit": "m",
+      "name": "radius at the equator"
+     },
+     "Rp": {
+      "kind": "shape.polar_radius",
+      "unit": "m",
+      "name": "radius at the poles"
+     },
+     "q": {
+      "kind": "shape.spin_parameter",
+      "unit": "1",
+      "name": "spin's pull outward at the equator over gravity's pull in"
+     }
+    },
+    "source": {
+     "text": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "section 4.6, the Darwin-Radau relation"
+    },
+    "explain": {
+     "curious": "A world that spins fast flings its equator outward, so it bulges; Saturn spins in under 11 hours and is a tenth wider than it is tall.",
+     "science": "Hydrostatic flattening to first order from the spin parameter q (with the equatorial radius, found in one step from the mean radius) and the moment of inertia factor C (Darwin-Radau). Within about a percent for the giants and Earth; very fast spinners (q above about 0.3) need the Maclaurin sequence."
+    },
+    "examples": [
+     {
+      "M": 1.9e+27,
+      "R": 70000000.0,
+      "P": 35730.0,
+      "C": 0.254,
+      "f": 0.0656402985044836,
+      "Re": 71602250.65647323,
+      "Rp": 66902257.54978947,
+      "q": 0.08913312543998453
+     }
+    ]
+   }
+  }
+ ]
+}
