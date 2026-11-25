@@ -11,6 +11,8 @@ export interface StabilityCheck {
   bodies: string[];
   level: number;
   says: string;
+  /** The block's results in SI (`limit`, metres, for the widest lasting orbit). */
+  results?: Record<string, number>;
 }
 
 /** A pack's calendar as the kernel serves it (`provides.other.calendar`). */
