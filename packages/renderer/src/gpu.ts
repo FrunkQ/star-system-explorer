@@ -142,6 +142,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     bakedSize.set(it.surface.key, size);
     const b = baker.get(it.surface.key, c, size, c.radius_m);
     baker.trim(BAKE_BUDGET[ladderTier]);
+    b.setPatch(it.surface.texture.patch ?? null);
     return b.material;
   };
   const litMat = (it: GpuItem) => {
