@@ -57,8 +57,7 @@ with no log piece at the clock's moment is placed at another moment of its day.
 
 1. **Rail room (question for Alex):** the system rail is full at ten with Ships and stations (RAIL_MAX). Roll call's
    entry therefore `needs: ["crews"]` and shows only when a pack with crews is stacked or the front door names one; a
-   campaign with its own flight logs reaches Roll call by its address (`#chart/system/<system>~rollcall`) but not yet
-   from the rail. Recommended: keep it so until the rail owner (thread "Build object selector and menus") folds two
+   campaign with its own flight logs does not yet see it on the rail. Recommended: keep it so until the rail owner (thread "Build object selector and menus") folds two
    travel entries together.
 2. Campaign mode reads flight logs through `session.flightLog`, which arrives with PR 452 (travel thread); until then a
    campaign's people are found but nobody is "in flight".
