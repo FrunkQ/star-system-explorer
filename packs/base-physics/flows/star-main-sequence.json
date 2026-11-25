@@ -45,10 +45,10 @@
       }
     },
     {
-      "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 25.4 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave",
+      "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 24.74 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave",
       "inputs": { "mass": { "value": 2.063, "unit": "m_sun" }, "age": { "value": 0.24, "unit": "gyr" } },
       "expect": {
-        "star.luminosity": { "value": 25.4, "unit": "l_sun", "tol": 5.0 },
+        "star.luminosity": { "value": 24.74, "unit": "l_sun", "tol": 5.0 },
         "star.radius": { "value": 1.711, "unit": "r_sun", "tol": 0.3 }
       }
     }

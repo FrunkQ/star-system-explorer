@@ -690,7 +690,7 @@
       0.0,
       20000.0
      ],
-     "description": "depth the ore is counted to, m (Kesler and Wilkinson 2008's 3.3 km)"
+     "description": "depth the ore is counted to, m: an SSE4 choice; Kesler and Wilkinson 2008's 1.7e11 t is for all depths, so counting it within 3.3 km overstates ore near the surface (fudge F61)"
     },
     {
      "param": "density",
@@ -714,7 +714,7 @@
     }
    ],
    "references": [
-    "Kesler, S. E. and Wilkinson, B. H. 2008, Geology 36, 255: Earth's copper resources estimated from tectonic diffusion of porphyry copper deposits (about 1.7e11 t of copper in porphyry deposits above 3.3 km). doi:10.1130/G24317A.1",
+    "Kesler, S. E. and Wilkinson, B. H. 2008, Geology 36, 255: Earth's copper resources estimated from tectonic diffusion of porphyry copper deposits (about 1.7e11 t of copper in porphyry deposits at all crustal depths; 3e11 t for all deposit types). doi:10.1130/G24317A.1",
     "Rudnick, R. L. and Gao, S. 2003, Treatise on Geochemistry 3, 1: composition of the continental crust. doi:10.1016/B0-08-043751-6/03016-4"
    ],
    "shown": "grade = min(1, c · k);  m = A · h · ρ · f · grade",
@@ -776,7 +776,7 @@
     "source": {
      "text": "Kesler, S. E. and Wilkinson, B. H. 2008, Geology 36, 255",
      "doi": "10.1130/G24317A.1",
-     "where": "copper in porphyry deposits above 3.3 km"
+     "where": "copper in porphyry deposits at all crustal depths"
     },
     "explain": {
      "curious": "A mine is a place where something in the rock did the hard work first: hot fluids over a sinking plate, a giant impact's melt pool, a collision squeezing water through a mountain belt. Each gathered a metal from a vast volume of crust into a small one, hundreds or thousands of times richer. How much ore there is comes from where those processes ran.",

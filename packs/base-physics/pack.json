@@ -119,7 +119,7 @@
                 "value": 1.0
               }
             },
-            "name": "Jupiter: Juno's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)"
+            "name": "Jupiter: Cassini's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)"
           },
           {
             "expect": {
@@ -910,7 +910,7 @@
                 "value": 6371.0
               }
             },
-            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, McDonough and Sun 1995)"
+            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, our sum from McDonough and Sun 1995's abundances)"
           },
           {
             "expect": {
@@ -946,7 +946,7 @@
                 "value": 3389.5
               }
             },
-            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (Frank et al. 2014 calibration)"
+            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (our reading of its youngest lavas; Frank et al. 2014 give the heating, not this date)"
           },
           {
             "expect": {
@@ -1281,7 +1281,7 @@
               "star.luminosity": {
                 "tol": 5.0,
                 "unit": "l_sun",
-                "value": 25.4
+                "value": 24.74
               },
               "star.radius": {
                 "tol": 0.3,
@@ -1299,7 +1299,7 @@
                 "value": 2.063
               }
             },
-            "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 25.4 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave"
+            "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 24.74 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave"
           }
         ],
         "version": "0.1.0",
@@ -4386,6 +4386,20 @@
         "range": null
       },
       {
+        "description": "orbit gap, as a fraction, inside which neighbouring resonances overlap and the motion is chaotic",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.chaotic_zone",
+        "range": null
+      },
+      {
         "description": "eccentric anomaly in radians",
         "dim": [
           0,
@@ -4610,6 +4624,48 @@
           0
         ],
         "id": "orbit.relative_amd",
+        "range": null
+      },
+      {
+        "description": "how far two orbits' period ratio is from a whole-number ratio, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_offset",
+        "range": null
+      },
+      {
+        "description": "turns one body makes in one cycle of a mean motion resonance",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_turns",
+        "range": null
+      },
+      {
+        "description": "how far a period ratio may be from a resonance and still be held, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_width",
         "range": null
       },
       {

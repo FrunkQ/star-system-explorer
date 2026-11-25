@@ -40,7 +40,7 @@
   ],
   "tests": [
     {
-      "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, McDonough and Sun 1995)",
+      "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, our sum from McDonough and Sun 1995's abundances)",
       "inputs": {
         "age": { "value": 4.567, "unit": "gyr" }, "mass": { "value": 1.0, "unit": "m_earth" },
         "core_mass_fraction": { "value": 0.325, "unit": "one" }, "radius": { "value": 6371.0, "unit": "km" },
@@ -53,7 +53,7 @@
       }
     },
     {
-      "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (Frank et al. 2014 calibration)",
+      "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (our reading of its youngest lavas; Frank et al. 2014 give the heating, not this date)",
       "inputs": {
         "age": { "value": 4.567, "unit": "gyr" }, "mass": { "value": 0.107, "unit": "m_earth" },
         "core_mass_fraction": { "value": 0.24, "unit": "one" }, "radius": { "value": 3389.5, "unit": "km" },
