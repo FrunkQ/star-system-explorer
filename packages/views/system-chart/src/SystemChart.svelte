@@ -34,7 +34,7 @@
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { KM_PER_AU, gearing, nearestCatch, resonanceCatches, roundFigures, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, gearing, nearestCatch, resonanceCatches, roundFigures, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, formsHere, roundTo, sayNumber, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
@@ -243,6 +243,30 @@
     const c = e.altKey ? null : nearestCatch(d, [...roundFigures(raw, frame ? KM_PER_AU : 1, frame ? "km" : "AU"), ...resonanceCatches(raw, neighbours)], (v) => radius(v, scale));
     ghostAt = { a_au: c ? c.at : round(raw), x, y, caught: c?.says ?? null };
   }
+  // ED4 part 2a: while the ghost rests on an orbit round a star, one formation run round a star like this one says
+  // what forms there (the first of the runs Add here offers, so the two agree). Each orbit is asked once.
+  let formsAt = $state<{ key: string; words: string } | null>(null);
+  const formsSaid = new Map<string, string>();
+  const formsKey = (a_au: number) => `${scene.system} ${centre?.address} ${roundTo(a_au, 3)}`;
+  $effect(() => {
+    const g = ghostAt;
+    const c = centre;
+    const system = scene.system;
+    const m = c?.facts.find((f) => f.field === "mass_sun")?.value;
+    if (!adding || !g || !c || c.kind !== "star" || !system || typeof m !== "number") return;
+    const key = formsKey(g.a_au);
+    const said = formsSaid.get(key);
+    if (said !== undefined) return void (formsAt = { key, words: said });
+    const t = setTimeout(async () => {
+      const r = await formsHere(ctx.session, { system, star_mass_sun: m, a_au: g.a_au, tries: 1 });
+      if (!r.ok) return;
+      const f = r.found[0];
+      const words = f ? `forms a world of ${sayNumber(f.mass_earth, 2)} Earth masses here` : "no world forms here in one run";
+      formsSaid.set(key, words);
+      formsAt = { key, words };
+    }, 400);
+    return () => clearTimeout(t);
+  });
   function dropGhost(e: PointerEvent) {
     if (!adding) return;
     e.stopPropagation();
@@ -777,6 +801,7 @@
             <Ink circle={{ cx, cy, r: gr }} tone="accent" weight="heavy" dash="dashed" />
             <circle class="ghost-dot" cx={gx} cy={gy} r="6" />
             <text class="dragv" data-add-readout x={gx + 14} y={gy + 20}>{dist(ghostAt.a_au)} round {centre?.label}{ghostAt.caught && !ghostAt.caught.startsWith("a round") ? ` · ${ghostAt.caught}` : ""}</text>
+            {#if formsAt && formsAt.key === formsKey(ghostAt.a_au)}<text class="dragv forms" data-add-forms x={gx + 14} y={gy + 36}>{formsAt.words}</text>{/if}
           </g>
         {/if}
         <!-- Names in their own layer, over every mark (chart-labels.ts places them); a press on a name chooses its body. -->
@@ -913,6 +938,10 @@
   .ghost {
     opacity: 0.55;
     pointer-events: none;
+  }
+  .dragv.forms {
+    fill: var(--sse-ink-muted);
+    font-size: 11px;
   }
   .dragv {
     fill: var(--sse-accent-ink);

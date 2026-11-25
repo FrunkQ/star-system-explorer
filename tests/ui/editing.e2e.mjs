@@ -395,8 +395,11 @@ try {
       await gm.mouse.move(ex0, ey0, { steps: 4 });
       await gm.locator("[data-add-ghost]").waitFor({ timeout: 5000 });
       assert.match(await gm.locator("[data-add-readout]").textContent(), /AU round Sun/);
-      await shot(gm, `add-ghost-${vp}`);
+      // Resting there, one formation run says what forms at that orbit (ED4 part 2a); nothing is written.
       const hashG = await hash();
+      await gm.locator("[data-add-forms]").waitFor({ timeout: 15000 });
+      assert.match(await gm.locator("[data-add-forms]").textContent(), /forms a world of [\d.]+ Earth masses here|no world forms here/);
+      await shot(gm, `add-ghost-${vp}`);
       await gm.keyboard.press("Escape");
       await gm.waitForFunction(() => !document.querySelector("[data-add-note]") && !document.querySelector("[data-add-ghost]"), null, { timeout: 5000 });
       assert.equal(await hash(), hashG, "Esc puts the ghost away and writes nothing");
