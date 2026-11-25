@@ -114,6 +114,12 @@ export interface Workspace {
   bookmarks?: import("./bookmark.ts").Bookmark[];
   /** Bookmark where the GM is now, without adding it to the list (Keep on Live, Update from live). Set by the shell. */
   markHere?: () => import("./bookmark.ts").Bookmark;
+  /** The camera of the view in front (PC1), kept current by a view that has one (the globe, a True view); the shell
+   * puts it on a bookmark made here. Null or absent: the view has no camera of its own to keep. */
+  camera?: import("./pose.ts").Pose | null;
+  /** A camera to go to, set by the shell when a bookmark with a pose is opened. The view whose camera it is about
+   * takes it once and clears it. */
+  aim?: import("./pose.ts").Pose | null;
   /** The Playbook (PB3): the GM's presets in chapters, pages and sections, kept with the campaign. */
   playbook?: import("./playbook.ts").Playbook;
   /** Layouts the GM made (PB13): players' screen documents with `mine.` ids, kept with the campaign. */
