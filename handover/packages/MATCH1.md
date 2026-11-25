@@ -76,3 +76,24 @@ SSE4's side and checks each licence before publishing.
 - The false-colour four (Pale Blue Dot's streak, Cassini backlit, Pillars, Crab) wait on the missing options above,
   each with its owner.
 - If PC2 doesn't fit before the 25 Nov 7 pm London close, this note and the status row carry it to the next account.
+
+## First round of shots (25 Nov)
+
+Eleven worlds of the Solar System were drawn live in the system view (True, Readable, full phase, Long exposure) and
+put beside their photographs. The side-by-side sheets and the per-world findings are in project files at
+`sse4/handover-screens/MATCH1-screens/` (`MATCH1-findings.md`). The scratch shooter clicks each world's pin, zooms to
+3 radii, turns to the brightest face, and hides the overlays while it snaps.
+
+- **Matches:** Venus (pale, featureless in visible light), and Saturn's rings and tilt.
+- **Misses, with their owners told:**
+  - Every airless rocky and icy body shares one tan palette with grey blob maria. Mercury, Mars, Io, Europa and Pluto
+    should each take their own materials' colour (iron-oxide dust, sulphur, water ice, tholin, nitrogen ice) through
+    the data sheet's Look up block. Owners: detail ladder and world textures, and the data sheet.
+  - Earth's clouds are drawn as zonal bands, and its land is blocky and grey. Owners: climate (clouds), and detail
+    ladder and world textures (land).
+  - Jupiter is pastel pink with weak belts and no storms, and Saturn is pinkish rather than butterscotch. Uranus and
+    Neptune are white-grey where methane should make them cyan and blue. Owner: giant bands.
+- **Exposure is not the cause:** Uranus and Mars drawn with Eye exposure look the same as with Long.
+- **Not yet shot:** Titan (the shooter didn't find its pin under Saturn), Earthrise, and the false-colour four.
+
+The next round re-shoots the same eleven once those fixes land; the sheets make the before and after.
