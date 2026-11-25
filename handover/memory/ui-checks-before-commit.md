@@ -10,3 +10,5 @@ metadata:
 
 **Why:** both passed check.sh locally and still failed CI (21 Nov).
 **How to apply:** before committing UI changes, run check.sh, `npm run ui:check`, `npm run ui:test`, and the e2e suite (`npm run ui:e2e` after `scripts/build-shell.sh`; run `scripts/build-wasm.sh` first after merging kernel changes, or the shell reports unknown atoms).
+
+Also (24 Nov): `tests/ui/figures-ledger.test.ts` (in ui:test) fails any file that adds toFixed/toPrecision/toLocaleString beyond `tests/ui/figures-ledger.json`; say numbers with `say`/`sayFact` from ui-contract/src/figures.ts (e.g. `say(m, "length", { class: "star", what: "orbit" }, { sig: 2 })` gives AU then ly). Don't raise the ledger. After merging main, rebuild wasm before `npm test` or the contract golden test fails on stale wasm.
