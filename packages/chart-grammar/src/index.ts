@@ -33,3 +33,7 @@ export { markExtent, markPattern } from "./extent.ts";
 export { default as Settings } from "./Settings.svelte";
 export { default as References } from "./References.svelte";
 export { opensFrom, tactileDialogs, motionMs, easing, reducedMotion, fromKeyframes } from "./motion.ts";
+export { deliver, deliverOut, playDelivery, keyframesFor, easingFor, staggerOf, targetsOf } from "./deliver.ts";
+export type { Playing } from "./deliver.ts";
+export { pageTurn, turnDrag, turnCommits, curlTurn, curlAt, easeTurn, CURL_MS } from "./page-turn.ts";
+export type { TurnDrag, PageTurnOptions, Curl, CurlTurnOptions } from "./page-turn.ts";

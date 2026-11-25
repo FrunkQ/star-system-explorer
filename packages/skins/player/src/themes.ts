@@ -3,6 +3,7 @@
 // fonts, colours or logos. A theme is tokens, frame parts and a filter chain:
 // it restyles every view without the view knowing, and never changes data.
 import { CHART_ROOM, NIGHT_CHART, type ThemeDoc } from "../../chart-room/src/index.ts";
+import { STARTER_DELIVERIES } from "../../../ui-contract/src/index.ts";
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 
@@ -23,6 +24,7 @@ export const CHART: ThemeDoc = {
 export const PAPER: ThemeDoc = {
   schema: "sse.theme/1",
   id: "paper",
+  delivery: STARTER_DELIVERIES.paper,
   name: "Paper",
   description: "Black on white for printing, e-ink and handouts.",
   extends: "chart-room",
@@ -88,6 +90,7 @@ export const PAPER: ThemeDoc = {
 export const DECK: ThemeDoc = {
   schema: "sse.theme/1",
   id: "deck",
+  delivery: STARTER_DELIVERIES.deck,
   name: "Deck panels",
   description: "Lit console panels with rounded caps, condensed capitals and amber readings.",
   extends: "chart-room",
@@ -167,6 +170,7 @@ export const DECK: ThemeDoc = {
 export const PHOSPHOR: ThemeDoc = {
   schema: "sse.theme/1",
   id: "phosphor",
+  delivery: STARTER_DELIVERIES.hauler,
   name: "Phosphor",
   description: "A green-screen terminal: one colour, scanlines and glow.",
   extends: "chart-room",
@@ -246,6 +250,7 @@ export const PHOSPHOR: ThemeDoc = {
 export const GLASS: ThemeDoc = {
   schema: "sse.theme/1",
   id: "glass",
+  delivery: STARTER_DELIVERIES.corporate,
   name: "Clean glass",
   description: "Bright, quiet panels with soft depth and one blue.",
   extends: "chart-room",
@@ -303,6 +308,7 @@ export const GLASS: ThemeDoc = {
 export const GUIDE: ThemeDoc = {
   schema: "sse.theme/1",
   id: "guide",
+  delivery: STARTER_DELIVERIES.guide,
   name: "Field guide",
   description: "A friendly pocket guide: warm paper, round letters and chatty words.",
   extends: "chart-room",
