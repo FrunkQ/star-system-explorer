@@ -278,6 +278,21 @@ try {
       assert.notEqual(await hash(), hashS);
       await shot(gm, `sheet-${vp}`);
       await undoTo(['[data-handle="mass"] .value', "0\\.107"]);
+
+      // ED13a, the system sheet: a pasted table for every body here, columns by name (a bracketed unit for bare
+      // numbers), bodies by name; one change across them all, one Undo.
+      if (!(await sheet.isVisible())) await row.locator('[data-handle="sheet"]').click();
+      await sheet.locator("[data-sheet-whole]").click();
+      await sheet.locator("[data-sheet-table]").fill("Name\tOrbit (AU)\tMass\nMars\t1.6\t\nEarth\t\t1.1 M⊕\nVulcan\t0.1\t");
+      await sheet.locator('[data-table-understood="Mars"]').waitFor({ timeout: 5000 });
+      assert.match(await sheet.locator('[data-table-understood="Earth"]').innerText(), /1\.1 M⊕/);
+      assert.ok(/Vulcan/.test(await sheet.locator("[data-table-problem]").allInnerTexts().then((t) => t.join(" "))), "a body not here is said");
+      await sheet.locator("[data-sheet-catalogued]").uncheck();
+      await sheet.locator("[data-sheet-set]").click();
+      await gm.waitForFunction(() => /Typed in for the system .*2 figures for 2 bodies/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await gm.waitForFunction(() => /1\.6 AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, `system-sheet-${vp}`);
+      await undoTo(marsAt);
       await row.locator('[data-handle="orbit"]').click();
 
       // Retrograde: the lean goes past 90 degrees, and the chip says so.
