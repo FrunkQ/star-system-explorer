@@ -198,6 +198,8 @@ export interface ViewSession {
    * (`start_job` then `step_job`); per step the value, the asked results and the stability verdict, and where the
    * verdict or class changes, the tipping point narrowed. Nothing is written. GM only.
    */
+  /** K2: what the science expects for each set field if it were left out (GM only); nothing moves. */
+  expects?(system: string, address: string, fields: string[]): Promise<{ ok: true; fields: { field: string; set: Json | null; expects: Json | null; from?: string; why?: string }[] } | { ok: false; code: string; message: string }>;
   sweep?(ask: import("./sweep.ts").SweepAsk, onprogress?: (done: number, total: number) => void): Promise<{ ok: true; result: import("./sweep.ts").Swept } | { ok: false; code: string; message: string }>;
   /**
    * Whether the orbits at or under a system last (kernel `orbit_stability`, ST1): the worst verdict, and every check
@@ -1019,6 +1021,14 @@ export class Session implements ViewSession {
   async orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "orbits_at", system, at_s: [...at_s], ...(bodies ? { bodies } : {}) });
     return r.type === "orbits_placed" ? { ok: true, bodies: (r as unknown as { bodies: OrbitPlaced[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async expects(system: string, address: string, fields: string[]): Promise<{ ok: true; fields: { field: string; set: Json | null; expects: Json | null; from?: string; why?: string }[] } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master asks what the science expects" };
+    const r = await this.#call({ op: "expects", system, address, fields });
+    return r.type === "expected"
+      ? { ok: true, fields: (r as unknown as { fields: { field: string; set: Json | null; expects: Json | null; from?: string; why?: string }[] }).fields }
+      : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async sweep(ask: import("./sweep.ts").SweepAsk, onprogress?: (done: number, total: number) => void): Promise<{ ok: true; result: import("./sweep.ts").Swept } | { ok: false; code: string; message: string }> {

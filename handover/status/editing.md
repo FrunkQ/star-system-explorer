@@ -50,7 +50,8 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED10 part 1 "Could be…": a line under a world's handles offers what it is not yet (`could_be` records in the handle sheet: a field of its own, locked to its star, turning freely; `couldBeNow`); pressing one works out the recipe on a scratch what-if (`recipeFor`: Reach it per named handle, smallest move first), each with "Do this" as one change | done | packages/ED10.md |
 | ED10 part 2a "Stop suggesting this" per world, kept with the campaign (`could_quiet`); the Curious-depth sentence | done | packages/ED10.md |
 | ED10 part 2 rest: requirement profiles (Home to humans) as survivability bands, Pin it steps; records in a pack; the GM-only "What does not add up" list | queued (profiles are ED10a with kernel K14) | packages/ED10.md |
-| ED9 the Makeup box | waits on kernel K3 (a hand-made world's makeup reaching its physics; Sol's worlds carry no makeup facts) | |
+| ED9 part 1 the Makeup box: bulk bar of `makeup.*` shares (one part's strip trades it against the rest), Kinds for makeup from the class atlas's examples, the radius the science expects (kernel K2) in pencil with "Set the radius to it" | done | packages/ED9.md |
+| ED9 part 2 the cutaway wedge (layers as results), dragging the joins with tipping points from a sweep, heat and redox strips at Science depth | next (the cutaway needs kernel K9 for layers per sweep sample) | packages/ED9.md |
 | ED11, ED10a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 

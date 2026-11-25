@@ -8,12 +8,13 @@
   Values are the kernel's facts for the body (resolved_system), never the card's display strings.
 -->
 <script lang="ts">
-  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, scaleClass, stripDomain, sweepAsk, sweepMarks, whatFollowed, type Followed, type PartMark, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, makeupOf, PART_WORDS, type MakeupPart, scaleClass, stripDomain, sweepAsk, sweepMarks, whatFollowed, type Followed, type PartMark, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
   import Strip from "./Strip.svelte";
   import Box from "./Box.svelte";
   import Reach from "./Reach.svelte";
   import AirBox from "./AirBox.svelte";
+  import MakeupBox from "./MakeupBox.svelte";
   import Sheet from "./Sheet.svelte";
   import CouldBe from "./CouldBe.svelte";
 
@@ -164,6 +165,16 @@
       }),
   );
 
+  // The Makeup handle's figure (ED9): its two largest parts, or "Earth's" when none is set (the physics' own default).
+  function makeupWords(f: Record<string, Json>): string {
+    const m = makeupOf(f).filter((g) => g.share > 0).sort((a, b) => b.share - a.share);
+    if (!m.length) return depth === "curious" ? "like Earth" : "Earth's (not set)";
+    return m
+      .slice(0, 2)
+      .map((g) => `${PART_WORDS[g.gas as MakeupPart][depth === "curious" ? "curious" : "science"]} ${say(g.share, "share", { class: cls }, { depth }).text}`)
+      .join(", ");
+  }
+
   // The Air box's mix (ED8): several shares as one change, one Undo; the card then says what followed, as for a handle.
   async function commitMix(edits: { address?: string; field: string; value: number; before: Json }[], display: string, before_display: string, label = "Air", source: string | null = null): Promise<string | null> {
     const system = scene.system;
@@ -175,7 +186,7 @@
       facts = again.result.facts as Record<string, Record<string, Json>>;
       surfaces = (again.result as { surfaces?: unknown }).surfaces ?? null;
     }
-    followed = { handle: label === "Air" ? "air" : "sheet", change: { label, before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
+    followed = { handle: label === "Air" ? "air" : label === "Makeup" || label === "Radius" ? "makeup" : "sheet", change: { label, before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
     return null;
   }
 
@@ -214,7 +225,8 @@
   <div class="handles" data-handles={on} role="toolbar" aria-label={editable ? "What you can set" : "What sets this world"}>
     {#each handles as h (h.id)}
       {@const fig = handleFigure(h, mine, cls, { depth, reading: pick(h) })}
-      {@const waits = h.part.scale === "bar"}
+      {@const waits = h.part.scale === "bar" && h.id !== "makeup"}
+      {@const built = h.id === "makeup" ? makeupWords(mine) : null}
       <button
         type="button"
         class="handle"
@@ -230,7 +242,7 @@
         }}
       >
         <span class="label">{depth === "curious" ? h.names.curious : h.names.science}</span>
-        <span class="value">{#if fig}{fig.main.text}{#if fig.also}, {fig.also.text}{/if}{:else if waits}soon{:else}not set{/if}</span>
+        <span class="value">{#if built}{built}{:else if fig}{fig.main.text}{#if fig.also}, {fig.also.text}{/if}{:else if waits}soon{:else}not set{/if}</span>
       </button>
     {/each}
     {#if editable}
@@ -252,9 +264,13 @@
     {#if h.box}
       <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} swept={sweptFor(h)} {commit} {pause} onclose={() => (open = null)} />
     {:else}
+      {#if h.id === "makeup"}
+        <MakeupBox {ctx} handle={h} system={scene.system} address={subject.address} facts={mine} {cls} {depth} {editable} onbranch={!!ws.branch} {commitMix} />
+      {:else}
       <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} marks={sweptFor(h)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
       {#if h.id === "air" && h.on === "world"}
         <AirBox {ctx} handle={h} facts={mine} {cls} {depth} {editable} {sol} {commitMix} />
+      {/if}
       {/if}
       {#if h.reach?.length && editable && !ws.branch && scene.system && handleValue(h, mine) !== null}
         <Reach {ctx} system={scene.system} address={subject.address} handle={h} value={handleValue(h, mine)!} results={resultsOf(surfaces, subject.address)} {cls} {depth} {commit} />
