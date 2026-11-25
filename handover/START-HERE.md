@@ -51,7 +51,7 @@ leave the browser.
 | Rulings during the build | `handover/decisions.md`, plus the "Standing rulings" in `handover/memory/MEMORY.md` |
 | Track status | `handover/status/<track>.md` (table below) |
 | Package logs and evidence | `handover/packages/<PKG>.md` |
-| Fudge register / citations | `docs/fudges.md` / `docs/citations.md` |
+| Fudge register / citations | `docs/fudges.md` / `docs/citations.md`; the Consensus run-through of every cited paper and its master list `handover/citations/` (README there) |
 | Interface style, top-level UI | `handover/interface-style.md`, `handover/design/SSE4-top-level-ui-and-onboarding.md` |
 | Old project memory | `handover/memory/` |
 | Screenshots, mockups, trailer clips | Not in the repo. Alex's PC: `C:\Development\sse4-project-files\` (13 zips of the old project files `sse4/`, 24 Nov snapshot) |
@@ -115,6 +115,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/data-sheet.md` | Build the master matter data sheet | MP data waves, MP22, SOL, DM1, DM6, RK1, RK2, RK10, citation checks |
 | `status/renderer.md` | Build photoreal renderer | R, the drawing side of Y5 and MF14a, V14 |
 | `status/quality-tiers.md` | Build quality tiers and speed probe (split from the renderer) | VP4, VP5: the `gpu-ultra` tier, the speed probe and placement by measured speed, heat watch, Quality choice, drawing bench rows; recipes and the governor on every True view; sharpen at rest |
+| `status/detail-ladder.md` | Build detail ladder and world textures (split from the renderer) | VP6 the detail ladder, VP3 texture ladder and relief normals |
 | `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
 | `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map, pulsating stars, ship clocks); XO is a code only, never shown in the product |
 | `status/true-air.md` | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
@@ -128,9 +129,11 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/manifest.md` | Build ship manifest and crew roster | MC |
 | `status/atomic-rockets.md` | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
 | `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
+| `status/citations.md` | Verify every cited paper | CR: the Consensus check of every cited paper, the master list in `handover/citations/` and its check |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
+| `status/postcards.md` | Build postcards and hold backdrops (design: "Design saved views and hold backdrops") | PC: postcards (a bookmark that can travel and is drawn live as a still, with the reasons on its back), grounds and quotes on hold screens. ACCEPTED by Alex 25 Nov 01:27 UTC; builder thread "Build postcards and hold backdrops" (Opus) owns PC1, PC3, PC4, PC6; PC is a code only |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
 
 Added after 18:15 UTC: "Verify every cited paper" (`status/citations.md`, arrives with PR 471; master citation list, daily Consensus batches), "Build quality tiers and speed probe" (`status/quality-tiers.md`, PR 470), "Build detail ladder and world textures" (`status/detail-ladder.md`, PR 467), "Build aurorae and night lights" (`status/aurora.md`, PR 469). Designs: "Design visual polish and flourishes" (accepted, note in `handover/design/`); the exotic objects note's section 15 adds pulsating stars (XO19) and clocks (XO20); outside models and the kernel as a module (track OM, PR 484) is banked, not accepted.

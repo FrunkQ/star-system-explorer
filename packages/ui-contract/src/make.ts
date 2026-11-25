@@ -7,6 +7,7 @@ import type { Json } from "./json.ts";
 import type { SceneFact, SceneSubject, SystemScene } from "./scene.ts";
 import { YEAR_S } from "./intent.ts";
 import { constant } from "./sheet.ts";
+import { PICTURE_FIELDS } from "./picture.ts";
 
 // ── Kernel shapes (the parts the screens read; full types in packages/contracts) ──
 
@@ -516,6 +517,11 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         const day = num(a, "body.rotation_period");
         if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h", srcOf(a, "body.rotation_period"), at("body.rotation_period", 3600)));
         if (s) out.push(f("surface_k", "Surface", s.t_surface_now_k, "K", "derived"));
+      }
+      // The GM's own pictures and the one it opens on (views/pictures): carried for the card, never shown as facts.
+      for (const k of PICTURE_FIELDS) {
+        const v = facts[a]?.[k];
+        if (v !== undefined && v !== null) out.push({ field: k, label: k, value: v as Json, display: "", editable: false, source: "authored" });
       }
       const band = kind === "belt" && (!parent || parent === primary) ? beltBand(sma, num(a, "body.radius_inner"), num(a, "body.radius_outer")) : undefined;
       // A belt round a world, not the star, is its ring: edges from the world's centre, and what it is made of.

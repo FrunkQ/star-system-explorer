@@ -39,5 +39,12 @@ export default {
     await d.hold(5000);
     await pick(page, d, "Band", "Visible");
     await d.hold(1500);
+    // A click on any body flies in to its close-up (24 Nov), with its rings and moons.
+    const saturn = page.locator("[aria-roledescription='3D chart'] .pin").filter({ hasText: /^Saturn/ }).first();
+    if (await saturn.isVisible().catch(() => false)) {
+      await d.caption("Fly in", "Click any world and the camera flies to it: Saturn, its rings and moons.");
+      await d.click(saturn);
+      await d.hold(5000);
+    }
   },
 };

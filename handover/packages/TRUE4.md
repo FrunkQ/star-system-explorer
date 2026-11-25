@@ -33,3 +33,7 @@ Track TRUE-surface, third V3 audit R15 and R16 ("tholins and coloured frosts"), 
 - A few % of tholin tints ice.
 - Stains tint ground, not sea.
 - A row without optics is not drawn.
+- The GPU's cube-face pictures (VP3 `composeFaces`, and `withFiner` when finer tiles arrive) are stained the same way as the flat picture; sea is not stained.
+
+## Where the stain is drawn
+`trueSurface` stains the flat equirect picture (`stainPrepared`) and the GPU's face pictures (`composeFaces(tiles, stains)`). The face pictures keep their stains on `Composite.stains`, so a finer tile laid in later (`withFiner`) is stained alike. Bare ground (cover none) is stained and every other cover is left alone. That includes ice: frost has its own cover in the tiles.
