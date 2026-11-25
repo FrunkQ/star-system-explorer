@@ -3,20 +3,18 @@
 import type { ScreenDoc, ViewModule, Vocab } from "../../../ui-contract/src/index.ts";
 import { atlasView } from "../../../views/atlas/src/index.ts";
 import { themeCss } from "../../../skins/chart-room/src/index.ts";
-import { ALL_THEMES, PAPER } from "../../../skins/player/src/index.ts";
+import { PAPER } from "../../../skins/player/src/index.ts";
 import plain from "../documents/vocab.plain.json";
 import guide from "../documents/vocab.guide.json";
 import atlasDoc from "./atlas.gm.json";
-import { ATLAS_LOOK_EXTRAS, GUIDE_GADGET } from "./guide-gadget.theme.ts";
+import { ATLAS_LOOKS, ATLAS_LOOK_EXTRA_CSS } from "./looks.ts";
 
-/** The player themes, and the looks that live with the Atlas until the interface kits move them (AT14). */
-export const ATLAS_LOOKS = [...ALL_THEMES, GUIDE_GADGET];
+export { ATLAS_LOOKS } from "./looks.ts";
 
 /** The looks an edition may wear: the player themes. A look the shell does not know leaves the page in the screen's own. */
 const lookCss = (look: string): string => {
   if (!ATLAS_LOOKS.some((t) => t.id === look)) return "";
-  const extra = Object.entries(ATLAS_LOOK_EXTRAS[look] ?? {}).map(([k, v]) => ` --sse-${k}: ${v};`).join("");
-  return themeCss(look, ATLAS_LOOKS) + extra;
+  return themeCss(look, ATLAS_LOOKS) + ATLAS_LOOK_EXTRA_CSS(look);
 };
 
 /** "Save ink": a dark look prints in its paper form (white ground, dark ink); a light look prints as it is. */

@@ -41,6 +41,7 @@
   import { perf } from "../../ui-contract/src/index.ts";
   import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
   import { groundGrant, landingShowOf, type LandingGround, type PartyShip } from "../../ui-contract/src/index.ts";
+  import { kitLookOf } from "./atlas/kitlook.ts";
   import { DEFAULT_JOIN, joinLine, joinWordsOf, type JoinWords, type SeatBrand } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
@@ -52,6 +53,9 @@
   let seatScreen: string | null = null;
   // The interface kit the role wears (AT14): its layout for the situation when no layout was chosen for the role.
   let seatKit = $state<string | undefined>(undefined);
+  // The kit's look in the palette chosen on the role card (AT15 part 2): the role wears it over the player's own theme.
+  let seatPalette = $state<string | undefined>(undefined);
+  const kitLook = $derived(kitLookOf(seatKit, seatPalette));
   const controlSet = $derived(seatKit ? controlSetOf((() => { try { return resolveKit(seatKit); } catch { return undefined; } })()) : undefined);
   async function loadScreen(): Promise<ScreenDoc> {
     // What the GM sent names its own screen (a landing is watched on the Landing screen), else the link's, else the
@@ -252,6 +256,7 @@
           first = false;
           seatScreen = seat.screens?.[0] ?? null;
           seatKit = seat.kit;
+          seatPalette = seat.palette;
           void useScreenWith([...replica.dataViews], "standard").catch((e) => (sceneErrors = [String(e)]));
         }
       };
@@ -276,6 +281,7 @@
           mayAsk = seat.may_send.includes("set_value");
           seatScreen = seat.screens?.[0] ?? null;
           seatKit = seat.kit;
+          seatPalette = seat.palette;
           embedList = seat.embed_origins;
           brand = seat.brand ?? null;
           live = seat.live;
@@ -312,6 +318,7 @@
         const mine = replica.seats().find((x) => x.id === seatId);
         if (!new URLSearchParams(location.search).get("screen")) seatScreen = mine ? (mine.screens?.[0] ?? null) : seatScreen;
         if (mine && mine.kit !== seatKit) seatKit = mine.kit;
+        if (mine && mine.palette !== seatPalette) seatPalette = mine.palette;
         if (JSON.stringify(mine?.live ?? null) !== JSON.stringify(live ?? null)) live = mine?.live;
         const ship = partyOf(replica.party());
         if (JSON.stringify(ship) !== JSON.stringify(party)) party = ship;
@@ -383,7 +390,7 @@
   }
   const saved = loadPref("player-theme");
   let theme = $state(PLAYER_THEMES.some((t) => t.id === saved) ? saved! : "chart");
-  const themeDoc = $derived(PLAYER_THEMES.find((t) => t.id === theme)!);
+  const themeDoc = $derived(kitLook?.doc ?? PLAYER_THEMES.find((t) => t.id === theme)!);
   const vocabId = $derived(themeDoc.vocab && VOCABS[themeDoc.vocab] ? themeDoc.vocab : screenDoc && screenDoc.vocab in VOCABS ? screenDoc.vocab : "plain");
   const vocab = $derived(VOCABS[vocabId]!);
   // Symbols are the player's choice, apart from the theme; the theme says what it can carry.
@@ -429,9 +436,9 @@
   const powerOff = () => (shown && "off" in shown && themeDoc.delivery ? resolveDelivery(themeDoc.delivery, "power_off", { reducedMotion: reducedNow() }) : null);
   $effect(() => {
     const root = document.documentElement;
-    root.setAttribute("style", themeCss(theme, ALL_THEMES));
+    root.setAttribute("style", kitLook ? kitLook.css : themeCss(theme, ALL_THEMES));
     root.style.colorScheme = themeDoc.mode;
-    root.dataset.theme = theme;
+    root.dataset.theme = kitLook ? kitLook.theme : theme;
     savePref("player-theme", theme);
     savePref("effects", effects ? "on" : "off");
   });
@@ -503,9 +510,9 @@
       onchange={(v) => setSensor(v)}
     />
     {/if}
-    <label class="pick">Theme
+    {#if !kitLook}<label class="pick">Theme
       <select bind:value={theme} title={themeDoc.description}>{#each PLAYER_THEMES as t (t.id)}<option value={t.id}>{t.name}</option>{/each}</select>
-    </label>
+    </label>{/if}
     <label class="pick">Symbols
       <select bind:value={symbology}>{#each SHIPPED as d (d.id)}<option value={d.id}>{d.name}</option>{/each}</select>
     </label>

@@ -151,6 +151,7 @@ jobs:
       - run: node tests/ui/rollcall.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/tactile.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/atlas.e2e.mjs --screens ui-screens
+      - run: node tests/ui/kits.e2e.mjs --screens ui-screens/kits
       - run: node tests/ui/your-systems.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/perf.e2e.mjs --screens ui-screens
       - run: node tests/ui/enlarge.e2e.mjs
