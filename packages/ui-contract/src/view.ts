@@ -220,6 +220,11 @@ export interface PlayerContext {
   ground?: import("./landing.ts").LandingGround;
   /** Which of the part's own controls the screen has on (AT13); absent: every declared control is on. Read with `controlOn`. */
   controls?: Readonly<Record<string, boolean>>;
+  /**
+   * The control set of the interface kit the role wears (AT14, Atlas `controlSetOf`): parts that draw their controls
+   * in the kit's look read it (chart-grammar KitControl). Absent: the plain set, as before.
+   */
+  control_set?: import("./atlas/controlset.ts").ControlSet;
   /** What the GM sent this screen now (seat.ts `Shown`), or null. Read it in an effect: it changes. */
   shown?(): import("./seat.ts").Shown | null;
 }
