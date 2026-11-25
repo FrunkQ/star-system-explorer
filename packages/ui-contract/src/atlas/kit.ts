@@ -161,7 +161,7 @@ export function resolveKit(id: string, docs: readonly KitDoc[] = []): KitDoc {
   }
   const out: KitDoc = { schema: KIT_SCHEMA, id: chain[0]!.id, name: chain[0]!.name, description: chain[0]!.description, layouts: {} };
   for (const d of [...chain].reverse()) {
-    for (const k of ["look", "palettes", "view_style", "vocab", "atlas", "needs"] as const) if (d[k] !== undefined) (out as unknown as Record<string, unknown>)[k] = d[k];
+    for (const k of ["look", "palettes", "view_style", "vocab", "atlas", "needs", "control_set", "banners"] as const) if (d[k] !== undefined) (out as unknown as Record<string, unknown>)[k] = d[k];
     // A starter named by its id is read in full; a kit that extends one overrides moment by moment.
     if (d.delivery) out.delivery = { ...lookDeliveryOf(out.delivery), ...lookDeliveryOf(d.delivery) };
     for (const [s, l] of Object.entries(d.layouts ?? {})) out.layouts![s as Situation] = l;
@@ -294,8 +294,11 @@ export function kitScreen(kit: KitDoc | string, situation: Situation, docs: read
     items: l.items.map((it) => ({
       view: it.view,
       area: it.area,
-      ...(it.style ? { style: it.style } : {}),
-      ...(it.params ? { params: it.params as Record<string, Json> } : {}),
+      // A shared view style ("wireframe") is how the part starts drawing, not a style document: the screen names only
+      // style documents, so a view style stays with the kit until the players' parts take one.
+      ...(it.style && !(VIEW_STYLES as readonly string[]).includes(it.style) ? { style: it.style } : {}),
+      // The Atlas part dresses its pages in the kit's edition, unless the layout names another.
+      ...(it.params || (it.view === "sse.view.atlas" && k.atlas?.edition) ? { params: { ...(it.view === "sse.view.atlas" && k.atlas?.edition ? { edition: k.atlas.edition } : {}), ...((it.params ?? {}) as Record<string, Json>) } } : {}),
       ...(it.controls !== undefined ? { controls: it.controls } : {}),
     })),
   };
