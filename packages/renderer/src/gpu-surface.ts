@@ -176,6 +176,10 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     return select(muS.lessThan(-0.2), vec3(0, 0, 0), L);
   };
   const sunT = () => select(uSun.z.lessThan(-0.1), vec3(0, 0, 0), exp(uTauEye.mul(airMass(uSun.z)).negate()));
+  /** The sun's light on a surface of normal n, through the air. */
+  const sunLightOn = (n: Node<"vec3">) => uSunRgb.mul(sunT()).mul(max(dot(n, uSun), float(0)));
+  /** The sky's light on a surface of normal n (half of what the beam lost on the way down; surface-sky.ts skyIrradiance). */
+  const skyLightOn = (n: Node<"vec3">) => uSunRgb.mul(max(uSun.z, float(0))).mul(float(1).sub(sunT())).mul(0.5).mul(n.z.mul(0.5).add(0.5));
 
   // The sky: a dome round the eye.
   const skyMat = new MeshBasicNodeMaterial({ side: BackSide, depthWrite: false });
@@ -218,11 +222,8 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   const trueNode = Fn(() => {
     const alb = attribute("albedo", "vec3");
     const n = normalize(normalWorld);
-    const ndl = max(dot(n, uSun), float(0));
-    const muS = uSun.z;
-    const sunLight = uSunRgb.mul(sunT()).mul(ndl);
-    // The sky's light on the ground (half of what the beam lost on the way down; surface-sky.ts skyIrradiance).
-    const skyLight = uSunRgb.mul(max(muS, float(0))).mul(float(1).sub(sunT())).mul(0.5).mul(n.z.mul(0.5).add(0.5));
+    const sunLight = sunLightOn(n);
+    const skyLight = skyLightOn(n);
     const land = alb.mul(sunLight.add(skyLight)).div(Math.PI);
     // The sea: wave slopes on the water's normal, the sky mirrored in it by Fresnel's law and the sun's glint.
     const wet = attribute("wet", "float");
@@ -366,9 +367,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     lit: (alb) =>
       Fn(() => {
         const n = normalize(normalWorld);
-        const sunLight = uSunRgb.mul(sunT()).mul(max(dot(n, uSun), float(0)));
-        const skyLight = uSunRgb.mul(max(uSun.z, float(0))).mul(float(1).sub(sunT())).mul(0.5).mul(n.z.mul(0.5).add(0.5));
-        return vec4(alb.mul(sunLight.add(skyLight)).div(Math.PI).mul(uExp), 1);
+        return vec4(alb.mul(sunLightOn(n).add(skyLightOn(n))).div(Math.PI).mul(uExp), 1);
       })(),
     glow: (radiance) => vec4(radiance.mul(uExp), 1),
     ink: vec4(vec3(uInk), 1),
