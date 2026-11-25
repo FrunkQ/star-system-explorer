@@ -47,10 +47,10 @@ The chain, link by link, and who owns each:
 
 1. **Data sheet** ("Build the master matter data sheet"): helium needs `lambda_point_k`, a critical point and a vapour curve. Its `saturated_liquid` table is there (2.18 to 4.9 K). Asked 24 Nov.
 2. **Climate volatiles** (this thread): `sse-climate` `volatile_species` needs a triple point, and helium has none at its own vapour pressure. A liquid-vapour-only path is needed. Next on this thread's list.
-3. **Surface cover's sea liquid** (`sse-surface` `cover.rs`, owner of S7): it picks "hydrocarbon" below 200 K and water otherwise. It needs to pick the liquid by phase, from the sheet's substances at the surface temperature and pressure.
+3. **Surface cover's sea liquid** (`sse-surface` `cover.rs`): DONE in PR 418, with the surface time-lapse thread's yes (25 Nov). The sea liquid is now the one climate's `conditions.liquid` by the sheet's plain name, so the phase choice lives in one place (the climate, step 2). The old split (methane below 200 K, else water) stands in only when the climate names none, and is a fudge row. A flood basin of any liquid but water draws as the non-water liquid cover class; the cover classes (`COVERS`, `named.rs`, `globe.ts`) are unchanged.
 4. **The world itself:** a rogue planet's surface stays near 2 K only with a very small internal heat flux, about 1e-6 W/m² (σT⁴ at 2 K). The editor must let the GM set that.
 
-Once 1 to 3 land, the sea code above already gives helium its ripples (σ about 3e-4 N/m, so cut-off waves of about 0.9 cm under 1 g), waves and superfluid line with no special model. Add the end-to-end test then.
+Once 1 and 2 land, the sea code above already gives helium its ripples (σ about 3e-4 N/m, so cut-off waves of about 0.9 cm under 1 g), waves and superfluid line with no special model. Add the end-to-end test then.
 
 ## Tests
 
