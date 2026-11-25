@@ -63,14 +63,14 @@
     },
     {
       "body": "Jupiter",
-      "jets": 9,
+      "jets": 13,
       "landforms": 0,
       "overturns": 0,
       "regime": "cloud-deck",
-      "surface": "210f86b1236f443006d49160988d700c3fd81111865e2b6e5fc51f83b4be2d6c",
+      "surface": "ce682acef7badc7915a6efc754d8f7df751afd724e6cedaa835e45269671b89b",
       "tiles": [
-        "7be4a94ca2ac8ad6e9d780bd3ef92f5631d61855d13bb50a36815968a1b20faa",
-        "282131882ee81dcdad1405f6cd1455a5327dc2faa9168ceaf813efbbd56b6239"
+        "d8dbba6bc68de62c1138528e87bef9f9174fd1cb6d5010101807a885dbd6c908",
+        "d18c564f1f1a6926967a7605f6b785dcace6e6d7589a4fbff7e0ae093e924173"
       ]
     }
   ]

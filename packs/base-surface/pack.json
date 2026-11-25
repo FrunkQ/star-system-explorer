@@ -801,6 +801,8 @@
      "clouds": {
       "wind_gas_m_s": 150.0,
       "wind_ice_m_s": 400.0,
+      "eddy_gas_m_s": 17.0,
+      "eddy_ice_m_s": 100.0,
       "ice_giant_mass_earth": 50.0,
       "storms_per_jet": 1.5,
       "chemistry": [
@@ -836,7 +838,7 @@
        ]
       ],
       "mean_molar_kg": {"sheet": "mixtures/giant-air", "property": "molar_mass"},
-      "source": "jets from the Rhines scale (Rhines 1975, J. Fluid Mech. 69, 417. doi:10.1017/S0022112075001504) with empirical wind scales: gas giants about 150 m/s, ice giants about 400 m/s; cloud chemistry by 1-bar temperature, adapted from the effective-temperature classes of Sudarsky et al. 2000 (ApJ 538, 885. doi:10.1086/309160: ammonia below about 150 K Teff, water, clear, alkali 900 to 1500 K, silicate above); the thresholds here are on the 1-bar temperature, the clear class is not modelled and the methane-ice row is an ice-giant addition (docs/fudges.md)"
+      "source": "prograde jets from the Rhines scale, round(1/2 sqrt(a Omega / U_eddy)): one jet is pi sqrt(2U/beta) wide and eastward jets sit twice that apart, with U the local eddy speed, not the jet speed (Rhines 1975, J. Fluid Mech. 69, 417. doi:10.1017/S0022112075001504; Gastine et al. 2014, PEPI 232, 36. doi:10.1016/j.pepi.2014.03.011): eddy speed 17 m/s on gas giants, 100 m/s on ice giants (held to keep their 3 jets); jet speed scales gas giants about 150 m/s, ice giants about 400 m/s; cloud chemistry by 1-bar temperature, adapted from the effective-temperature classes of Sudarsky et al. 2000 (ApJ 538, 885. doi:10.1086/309160: ammonia below about 150 K Teff, water, clear, alkali 900 to 1500 K, silicate above); the thresholds here are on the 1-bar temperature, the clear class is not modelled and the methane-ice row is an ice-giant addition (docs/fudges.md)"
      }
     },
     "cover": {
