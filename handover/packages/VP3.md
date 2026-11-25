@@ -25,6 +25,16 @@ The chart reads level-0 tiles (256 samples a face: `tile_samples` on the sample 
 
 In the shell (sample Sol, WebGL2, cloud container), with the Moon chosen and zoomed in, the face 3 s after choosing already has part of level 1. At 28 s level 2 is in: finer craters and smoother edges between materials (screens below). `walk.e2e` and `perf.e2e` pass inside their budgets, and both open True.
 
+## Part 3, first piece: giants on the Body globe and the card wear their decks
+
+Alex saw Saturn black and white on the Body screen. The Body globe drew the tiles of a giant's cloud-deck relief as grey ground.
+
+- **Body side.** `views/body/src/surface.ts` keeps the world's outermost layer `kind` from `surfaceTiles` (it arrives with the giant bands thread's TA3a). For a `cloud-deck` world, `loadDecks` reads the same True face as the system chart (`readTrueFace`) once and keeps it, and uses it only when that face says `decks: true`.
+- **Globe and card.** The Body screen globe, the card's globe and the card's map wear it.
+  - The renderer's `globe-face.ts` holds the one lookup for both tiers: `faceSample` (the equirect read) and `withFace` (recolours the globe's samples, with flat normals and albedo from the colour). `runtime.ts` gains `setFace`, and gpu-globe.ts and the canvas tier take the recoloured samples unchanged. This was agreed with the renderer thread.
+  - The face's `flow` is passed through. The Body screen gives no time since the read yet, so its bands stand still.
+- **Before TA3a lands** no world carries `kind`, so nothing changes. When it lands, giants switch over by themselves.
+
 ## Part 4: the deep patch under a close camera (building blocks)
 
 For the renderer's close-up package (True down to a grazing orbit). The renderer hands `GroundView { body, toward, m_per_px }` (renderer `close-up.ts`, System3D's `onground`); this part turns it into ground at the screen's own scale.
@@ -50,6 +60,8 @@ For the renderer's close-up package (True down to a grazing orbit). The renderer
 - `packages/views/system-chart/src/SystemChart.svelte` (True surface reader only): finer tiles laid over with `withFiner`, `readFiner` for the chosen world.
 
 ## Checks
+
+- Part 3: `packages/renderer/test/globe-face.test.ts` (a face read along a pixel's own direction gives that pixel, longitude wraps; the samples wear the face with flat normals). `globe`, `body-pictures`, `render`, `compare` and `walk` e2e pass.
 
 - Part 4: `texture-ladder.test.ts` (level from metres a pixel at the fact floor, tiles round a point and over a cube edge, the patch picture's colour, gaps and true tilt); `tests/ui/finer-tiles.test.ts` (readDeep drops to the floor a refusal names, keeps tiles and floor, nothing read from far off); `tests/ui/ladder-gpu.e2e.mjs` reads the patch on WebGL2 and WebGPU at texel centres against `samplePatch` (colour within 0.0002, weight within 0.0005, normal within 0.0004).
 

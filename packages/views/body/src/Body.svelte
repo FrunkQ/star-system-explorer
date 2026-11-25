@@ -28,7 +28,7 @@
   import ClimateWhy from "./ClimateWhy.svelte";
   import BodyTimeline from "./BodyTimeline.svelte";
   import BodyMag from "./BodyMag.svelte";
-  import { loadSurface, surfaceKept, type Surface } from "./surface.ts";
+  import { decksKept, isDecks, loadDecks, loadSurface, surfaceKept, type Decks, type Surface } from "./surface.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -314,6 +314,26 @@
     if (untrack(() => wxKey) && key !== untrack(() => wxKey)) untrack(() => weather.hide());
   });
 
+  // A giant wears its cloud decks, the same True face as the system chart (VP3 part 3), not its tiles' grey.
+  let decks = $state<Decks | null>(null);
+  const faceOf = (d: Decks | null) => (d ? { tex: d.tex, ...(d.flow ? { flow: d.flow } : {}) } : null);
+  $effect(() => {
+    const sub = subject;
+    const sys = scene.system;
+    const s = got;
+    decks = null;
+    if (!sub || !s || !isDecks(s)) return;
+    const kept = decksKept(sys, sub.address);
+    if (kept !== undefined) return void (decks = kept);
+    void loadDecks(ctx, sys, sub.address).then((v) => {
+      if (subject?.address === sub.address && scene.system === sys) decks = v;
+    });
+  });
+  $effect(() => {
+    const d = decks;
+    untrack(() => run)?.setFace(faceOf(d));
+  });
+
   // One runtime per globe element; settings and turns are passed to it.
   $effect(() => {
     const h = host;
@@ -325,6 +345,7 @@
     run = r;
     untrack(() => attachLapse());
     if (wxData) r.setWeather(wxData);
+    if (decks) r.setFace(faceOf(decks));
     return () => {
       r.dispose();
       run = null;
