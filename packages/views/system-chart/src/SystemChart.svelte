@@ -383,7 +383,7 @@
   const distLabels = $derived(
     (on("distances") ? decades : [])
       .filter((g) => cy - r(g.au) > 12)
-      .map((g) => ({ g, y: cy - r(g.au) - 4, text: frame ? km(g.au) : `${g.units.toLocaleString("en-GB")} AU` }))
+      .map((g) => ({ g, y: cy - r(g.au) - 4, text: frame ? km(g.au) : `${sayNumber(g.units, 0, { upTo: 3 })} AU` }))
       .filter((d) => !under({ x: cx + 2, y: d.y - 10, w: d.text.length * 6.6 + 4, h: 12 })),
   );
   const named = $derived(all.filter((s) => showLabel(s) && (s.orbit || s === centre) && !(s === centre && !frame)));
@@ -875,7 +875,7 @@
         {#if authoredImport}<span class="authored-import" data-authored-import><Stamp kind="authored" title="Every name and value here was written in a V3 save, not modelled by SSE4's physics. A body called Earth is the save's Earth, not the real one." /><span class="words">As written in a V3 save, not modelled</span></span>{/if}
         {#if catalogued}<span class="authored-import" data-catalogued><Stamp kind="catalogued" title="Every value here is a measurement from a catalogue, with its source on the card's why?." /><span class="words">As measured, each value with its source</span></span>{/if}
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
-        <span data-scale-note>{narrow ? `Log scale${frame ? ", km" : ""}` : on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${g.units.toLocaleString("en-GB")} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
+        <span data-scale-note>{narrow ? `Log scale${frame ? ", km" : ""}` : on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${sayNumber(g.units, 0, { upTo: 3 })} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
         {#if on("known") && known && usualView && !through}<span class="usual-known" data-usual-known={usualView}>The table knows these at {usualView.replace(/-/g, " ")}; dotted names, not at all</span>{/if}
         {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}
         {#if key?.entries.length && on("key")}

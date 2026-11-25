@@ -38,10 +38,11 @@ Status: part 1 done 24 Nov 2026 (thread "Build planet and star editing"). Design
 
 ## Part 2c, first chunk (25 Nov): ui-contract and the chart grammar
 
-- The ledger fell from 293 to 221. Every word helper in ui-contract that wrote its own number (route, voyage, window,
+- The ledger fell from 293 to 214. Every word helper in ui-contract that wrote its own number (route, voyage, window,
   measure, compare, galaxy, life, life-flow, manifest, make, depth, classes, picker, fate, add-here, matter) now says it
   through `sayNumber` or `roundTo`; the output is the same text, except that thousands are grouped and a minus is a
   true minus everywhere (and `galaxy.sci` no longer strips "100" to "1").
+- Then the chart grammar's ruler, calendar and scale, Add here and the system chart's scale notes (214).
 - `sayNumber` takes `upTo` (at most that many decimals, trailing zeros dropped: "1.5 million km").
 - `drawn(x, decimals = 1)` in figures.ts is for drawing coordinates (SVG paths, CSS translate and percentages): plain
   digits a browser reads, never a figure. The chart grammar's Overlays, TimeRuler and motion use it.

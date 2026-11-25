@@ -6,7 +6,7 @@
 // starts, not the Big Bang. Presentation only: the kernel's time is seconds,
 // and positions at a time come from the kernel.
 import { formatYears, niceStep, type Tick } from "./ruler.ts";
-import { constant } from "../../ui-contract/src/index.ts";
+import { constant, sayNumber } from "../../ui-contract/src/index.ts";
 
 /** Seconds in the workspace's year (the Julian year, as the kernel's YEAR_S). */
 export const YEAR_S = constant("yr_julian");
@@ -123,7 +123,7 @@ export function spanWords(yr: number, c: Calendar = defaultCalendar(0)): string 
   const a = Math.abs(yr);
   const n = (v: number, one: string, many: string) => {
     const r = v >= 10 ? Math.round(v) : Math.round(v * 10) / 10;
-    return `${r.toLocaleString("en-GB")} ${r === 1 ? one : many}`;
+    return `${sayNumber(r, 0, { upTo: 1 })} ${r === 1 ? one : many}`;
   };
   if (a >= 1e4) return formatYears(yr);
   if (a >= yearYr(c) * 0.999) return n(a / yearYr(c), "year", "years");
@@ -174,7 +174,7 @@ export function calendarTicks(from: number, to: number, c: Calendar, count = 10)
     { yr: 7 * d, label: (t: number) => dateWords(t, c) },
     { yr: y / 12, label: (t: number) => dateWords(t, c) },
     { yr: y, label: (t: number) => `Year ${dateParts(t, c).year}` },
-    ...[10, 100, 1000].map((k) => ({ yr: k * y, label: (t: number) => `Year ${dateParts(t, c).year.toLocaleString("en-GB")}` })),
+    ...[10, 100, 1000].map((k) => ({ yr: k * y, label: (t: number) => `Year ${sayNumber(dateParts(t, c).year, 0, { decimals: 0 })}` })),
   ];
   const unit = units.find((u) => span / u.yr <= count) ?? units[units.length - 1]!;
   // Ticks sit on the calendar's grid (counted from its epoch), so "day 3" is a real day boundary.
