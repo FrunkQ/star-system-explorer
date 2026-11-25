@@ -52,8 +52,7 @@ see what is in it); Alex accepted both for stage 2 (23 and 24 Nov).
   scale, which the design allows to become the patch scale later.
 
 ## Next
-Picker rows read `summaryWords` (navigation thread, NV2 part 2). Then "Add near here" (a star picked by what the GM
-wants nearby) and the home star cell drawn behind the map itself from `star_cell`.
+Picker rows read `summaryWords` (navigation thread, NV2 part 2). Part 2b: "Grow a system here" once `from_star` lands, then "Add system here" and "Add near here", the home star cell behind the map from `star_cell`.
 
 ## Part 3: pencil and map layers (25 Nov 2026)
 - Pencil and ink (SV3): on the Build and Run desks each system is drawn by what the table knows of it, read with
@@ -64,11 +63,3 @@ wants nearby) and the home star cell drawn behind the map itself from `star_cell
   layer (`between_stars.reach`, else 4 pc) in the map's units (`reachInMapUnits`), or as map units when the V3 map
   gives none (the hint says so). Slots by `assignSlots`; drawn by `Overlays` under the routes; `AreaKey` lifts a power.
   `your-systems-areas.test.ts` runs it through the kernel with a test layer pack and two held systems.
-
-## Part 2b, Grow a system here (25 Nov 2026)
-- On the GM's seat, pressing a drawn star in "Stars around home" keeps it said and offers "Grow a system at <star>".
-  That is the kernel's `adopt` with `formation: { seed: <star address>, from_star: <star address> }` (PR 546): the
-  system takes the star's address and its own birth (mass, age, metals), so the chart and the system you fly into
-  agree. The list and the map re-read (workspace revision), the star fills as a campaign system, and an "Open it ›"
-  link goes to the new system. A star already grown says so. `FormationRequest` gains the optional `from_star`.
-- Players never see the button. The e2e grows the last drawn star and checks it joins the list and fills in the cell.
