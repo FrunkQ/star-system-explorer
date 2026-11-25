@@ -3524,5 +3524,6 @@
  {"op": "withdraw", "address": "u:k13/sys:0/body:4", "at_s": 2000000, "others": "leave"},
  {"op": "orbit_stability", "system": "u:k13/sys:0", "at_s": 3000000},
  {"op": "branch", "label": "held"},
- {"op": "resolved_system", "system": "u:k13/sys:0", "branch": "not-a-branch"}
+ {"op": "resolved_system", "system": "u:k13/sys:0", "branch": "not-a-branch"},
+ {"op": "weather", "want": "climate", "world": "Jupiter"}
 ]

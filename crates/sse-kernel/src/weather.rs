@@ -28,6 +28,8 @@ pub(crate) struct Ask {
     pub epoch_myr: f64,
     /// The body and its moons, when asked by system and body (tides).
     pub raisers: Option<(sse_surface::Body, Vec<sse_climate::forcing::MoonPull>)>,
+    /// The data sheet (the sea's optics).
+    pub sheet: std::sync::Arc<sse_reference::Reference>,
 }
 
 pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
@@ -106,11 +108,18 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
                 Some(b) => b.climate(&c),
                 None => sse_weather::circulation::averages(&block.settings, &c, core),
             };
-            serde_json::json!({
+            let mut out = serde_json::json!({
                 "climate": to_json(&averages),
                 "circulation": to_json(&core.circulation),
                 "core": to_json(core),
-            })
+            });
+            // A giant's jets by latitude, for the curls and drift (K-a).
+            if core.circulation.regime == "banded-giant" {
+                let gs = &block.giants;
+                let l = sse_weather::giants::layout(gs, &c);
+                out["jets"] = to_json(&sse_weather::giants::jet_profile(gs, &c, &l));
+            }
+            out
         }
         "systems" => to_json(&chosen.systems(&c, date, &pins)),
         "field" => {
@@ -132,7 +141,15 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
             let cs = &block.settings.climate;
             let core = climates.orbit(cs, &c, a.epoch_myr);
             let body = a.raisers.as_ref().map(|(b, m)| (b, m.as_slice()));
-            if let Some(sea) = crate::sea::site(cs, core, a.lat, r.wind_km_h, body) {
+            if let Some(sea) = crate::sea::site(
+                &a.sheet,
+                cs,
+                core,
+                a.lat,
+                r.wind_km_h,
+                r.wind_from_deg,
+                body,
+            ) {
                 out["sea"] = sea;
             }
             out

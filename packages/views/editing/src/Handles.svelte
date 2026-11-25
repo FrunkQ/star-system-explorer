@@ -27,19 +27,24 @@
   // The kernel's facts and results for every body of this system, reread after each change.
   let facts = $state.raw<Record<string, Record<string, Json>>>({});
   let surfaces = $state.raw<unknown>(null);
+  // On a what-if, the branch's own line (kernel BC1): the exact figures and results there, nothing committed (ED1 part 3).
+  const branchId = $derived(ws.branch?.id);
   $effect(() => {
     const sys = scene.system;
     void ws.revision;
+    const b = branchId;
+    void (b ? ws.branch?.edits.length : 0);
     if (!sys || scene.fixture) return;
     let live = true;
-    void ctx.session.resolvedSystem(sys).then((r) => {
+    void ctx.session.resolvedSystem(sys, undefined, b).then((r) => {
       if (!live || !r.ok) return;
       facts = r.result.facts as Record<string, Record<string, Json>>;
       surfaces = (r.result as { surfaces?: unknown }).surfaces ?? null;
     });
     return () => (live = false);
   });
-  // On a what-if, its own values over the main line's (the kernel's branch resolve comes with BC1).
+  // On a what-if, its own values over the line read (until the branch's own resolve has come back, and for a kernel
+  // without BC1).
   const seen = $derived.by(() => {
     const b = ws.branch;
     if (!b) return facts;
@@ -93,13 +98,14 @@
     return [...refs.filter((r) => !here.some((x) => x.label === r.label)), ...here];
   }
 
-  async function commit(h: Handle, si: number, how: { source: "computed" | "typed"; sig?: number }, shown?: string): Promise<string | null> {
+  async function commit(h: Handle, si: number, how: { source: "computed" | "typed"; sig?: number }, shown?: string, at?: string): Promise<string | null> {
     const id = h.id.split(".")[0]!;
-    // Held now: the card rereads its scene after the change, and the subject is a new object by then.
-    const address = subject.address;
+    // Held now: the card rereads its scene after the change, and the subject is a new object by then. A pair's part
+    // writes to the other member (`at`: "round each other" is the lighter one's orbit); what followed is still this body's.
+    const address = at ?? subject.address;
     const system = scene.system;
-    const before = resultsOf(surfaces, address);
-    const old = handleValue(h, mine);
+    const before = resultsOf(surfaces, subject.address);
+    const old = handleValue(h, seen[address] ?? {});
     // A signed value's sign is said in words (a day of −24 h spins backwards); a box part may name the change itself.
     const words = (v: number, t: string) => (h.part.signed && v < 0 ? `${t} backwards` : t);
     const sayIt = (v: number, extra = {}) => words(v, say(Math.abs(v), h.part.kind, aboutFor(h, cls), { depth, reading: pick(h) ?? h.part.reading, ...extra }).text);
@@ -112,13 +118,13 @@
       before: { value: old === null ? null : fieldValue(h, old), display: old === null ? "not set" : sayIt(old) },
     });
     if (r.status !== "applied") return r.status === "pending" ? "Sent to the GM to approve." : r.status === "refused" ? r.reason : r.message;
-    const again = await ctx.session.resolvedSystem(system);
+    const again = await ctx.session.resolvedSystem(system, undefined, ws.branch?.id);
     if (again.ok) {
       facts = again.result.facts as Record<string, Record<string, Json>>;
       surfaces = (again.result as { surfaces?: unknown }).surfaces ?? null;
     }
     const change = { label: depth === "curious" ? h.names.curious : h.names.science, before: shown !== undefined ? "" : old === null ? "not set" : sayIt(old), after: display };
-    followed = { handle: id, change, rest: ws.branch ? null : whatFollowed(before, resultsOf(surfaces, address), cls, { depth }) };
+    followed = { handle: id, change, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
     return null;
   }
 </script>
@@ -147,6 +153,9 @@
       </button>
     {/each}
   </div>
+  <!-- On a phone the open strip docks across the full width above the time ruler, with the verdict over it (design
+       section 15, "Phone"). -->
+  <div class="dock" data-dock class:docked={open !== null || followed !== null}>
   {#if open}
     {@const h = handles.find((x) => x.id === open)!}
     {#if h.box}
@@ -158,9 +167,9 @@
   {/if}
   {#if followed}
     <div class="followed" data-followed aria-live="polite">
-      <p class="what"><strong>{followed.change.label}</strong> {followed.change.before ? `${followed.change.before} → ` : ""}{followed.change.after}. <span class="undo">{followed.rest ? "Undo takes it back." : `On ${ws.branch?.label ?? "the what-if"} only: Keep it or Throw away under the time ruler.`}</span></p>
+      <p class="what"><strong>{followed.change.label}</strong> {followed.change.before ? `${followed.change.before} → ` : ""}{followed.change.after}. <span class="undo">{!ws.branch ? "Undo takes it back." : `On ${ws.branch.label} only: Keep it or Throw away under the time ruler.`}</span></p>
       {#if !followed.rest}
-        <p class="sub">What followed shows once it is kept.</p>
+        <p class="sub">What followed could not be worked out on {ws.branch?.label ?? "the what-if"}; it shows once it is kept.</p>
       {:else if followed.rest.length}
         <p class="sub">What followed</p>
         <ul>
@@ -171,9 +180,31 @@
       {/if}
     </div>
   {/if}
+  </div>
 {/if}
 
 <style>
+  .dock {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  @media (max-width: 600px) {
+    .dock.docked {
+      position: sticky;
+      /* Above the time ruler, which is sticky at the foot of a phone's page (the shell gives its height). */
+      bottom: var(--sse-ruler-h, 0px);
+      z-index: 3;
+      max-height: max(160px, min(50vh, calc(100vh - var(--sse-ruler-h, 0px) - 96px)));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: var(--sse-ground-raised);
+      border-top: var(--sse-line) solid var(--sse-rule);
+    }
+    .dock .followed {
+      order: -1;
+    }
+  }
   .handles {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

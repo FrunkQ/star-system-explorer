@@ -7,6 +7,8 @@ export { audienceOf, decide, gmSeat, tableSeat, sharedTableSeat, within } from "
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
 export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, updateSeat, oneLayoutPerRole, removeSeat, checkSeats, startIntents, discoverIntent, joinLink, outputLink, sealedLink, fogViews } from "./seats.ts";
 export type { Audience, SeatChange, SeatPlan } from "./seats.ts";
+export { SPLITS, isSplit, displayLink, partLinks, displaysFrom, displayMap, screenKey } from "./displays.ts";
+export type { Split, Display } from "./displays.ts";
 export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, PackCalendar, StabilityCheck } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
@@ -139,8 +141,8 @@ export type { SheetBand, SheetConstant } from "./sheet.ts";
 export { sniffFile, sha256Hex, explorersUrl, fetchExplorers, creditWords, CONVERTER_URL } from "./open-file.ts";
 export type { FileKind, Sniffed, ExplorersListing, ExplorersFetched } from "./open-file.ts";
 // Add here (V3 gap 2): what this orbit would make, from formation runs, or anything, marked impossible.
-export { formsHere, anythingClip, clipAt, freeOrbit, moonRecipes, GIANT_MASS_EARTH } from "./add-here.ts";
-export type { FormsHere, MoonRecipe } from "./add-here.ts";
+export { formsHere, anythingClip, clipAt, freeOrbit, moonRecipes, GIANT_MASS_EARTH, worldKinds } from "./add-here.ts";
+export type { FormsHere, MoonRecipe, WorldKind } from "./add-here.ts";
 // Find in Look up: an element, constant or unit by name, symbol or id.
 export { findInSheet } from "./reference-find.ts";
 export type { RefHit } from "./reference-find.ts";
@@ -177,8 +179,8 @@ export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, R
 // Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
 export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed, BoxPart, BoxChip, HandleBox, PartMark } from "./handles.ts";
-export { atDepth, boxAt, partHandle, wrap, mirrorAngle, trueFromMean, meanFromTrueRad, trueAnomalyFrom, epochMeanFor, orbitShape, solarDay, resonances, stabilityFor, outerWall } from "./box.ts";
-export type { Resonance } from "./box.ts";
+export { atDepth, boxAt, partHandle, wrap, mirrorAngle, trueFromMean, meanFromTrueRad, trueAnomalyFrom, epochMeanFor, orbitShape, solarDay, resonances, stabilityFor, outerWall, pairOf } from "./box.ts";
+export type { Resonance, Pair } from "./box.ts";
 export * from "./place-notes.ts";
 export * from "./delivery.ts";
 export { gearing, roundFigures, resonanceCatches, nearestCatch } from "./drag.ts";
@@ -187,3 +189,4 @@ export type { Catch } from "./drag.ts";
 export * from "./rollcall.ts";
 // In memory (track SH6): the names of those who died, from a pack's in-memory.json.
 export * from "./inmemory.ts";
+export * from "./namescarried.ts";

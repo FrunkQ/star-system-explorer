@@ -262,7 +262,8 @@ export interface ViewSession {
   /** The galaxies in the same cube (kernel `web_slice` with `cube` and `haloes`, V9w): what True lights. Read only; GM only. */
   webGalaxies?(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebGalaxies } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
-  resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
+  /** With `branch`, the what-if's own line resolved (kernel BC1): nothing is committed (editing design ED1). */
+  resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
   readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
   /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
@@ -276,7 +277,7 @@ export interface ViewSession {
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   /** What stops the wind at each body, and its field (read only): `fixture: "solar-system"` or handed `bodies`. */
-  readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
+  readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
   /** SV2: who knows a thing, or one fact on it (kernel `known_to`): per audience its landmark, rung and exceptions. GM only. */
   knownTo(address: string, field?: string, at_s?: bigint): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }>;
   /** NM6: every name a thing has, by layer (kernel `read_names`); a player seat sees only the layers its view discloses. */
@@ -826,7 +827,7 @@ export class Session implements ViewSession {
     return r.type === "activity_read" ? { ok: true, stars: (r as unknown as { stars: Json[] }).stars } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
-  async readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
+  async readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_field", ...ask } as Json);
     return r.type === "field_read" ? { ok: true, bodies: (r as unknown as { bodies: Json[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
@@ -1030,9 +1031,9 @@ export class Session implements ViewSession {
     return r.type === "systems_listed" ? { ok: true, systems: (r as unknown as { systems: ListedSystem[] }).systems } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
-  async resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
+  async resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads resolved systems" };
-    const r = await this.#call({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}) });
+    const r = await this.#call({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}), ...(branch ? { branch } : {}) } as never);
     return r.type === "system_resolved" ? { ok: true, result: r as unknown as SystemResolved } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 

@@ -22,7 +22,8 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { constant, DEFAULT_VIEW, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
+  import { LAND_TRUE } from "../../../renderer/src/recipes.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params, follow }: { ctx?: ViewContext; scene?: SystemScene; params: Record<string, Json>; follow?: PlayerContext } = $props();
@@ -139,6 +140,11 @@
         ...(orbitA > 0 ? { orbit_m: orbitA } : {}),
       };
       landerPick = untrack(() => partyHere) ? "party" : suggestLander(world.pressure_bar, world.t_k);
+      // The aurora over the site (VP-AU7): the same plan as the Body globe's, from read_field and this air.
+      auroraPlan = null;
+      void loadAurora(ctx!.session, sys, sub, { radius_m: radius, scale_height_m: air?.scale_height_m, composition: af?.composition }).then((v) => {
+        if (g === gen) auroraPlan = v?.plan ?? null;
+      });
       const lm: Landmark[] = marks.get(key) ?? (await ctx!.session.surfaceLandmarks(sys, sub.address).then((r) => (r.ok ? r.landmarks : [])));
       if (g !== gen) return;
       marks.set(key, lm);
@@ -385,6 +391,29 @@
     cancelAnimationFrame(raf);
     gpu?.dispose();
   });
+
+  // Quality in True (VP4 part 2b, VP5): placed by the device's measured speed on the land-true recipe, stepped down on
+  // slow frames, and sharpened while the view holds still (no moving sea, nobody walking): jittered frames averaged in
+  // the finish. Once sharp the picture is left on screen and nothing is drawn until something changes.
+  let run: TrueRun | null = null;
+  let quality = $state("");
+  let heldKey = "";
+  let lastDrawn = -1;
+  const landPixels = () => {
+    const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
+    return Math.max(1, Math.round(w * h * dpr * dpr));
+  };
+  $effect(() => {
+    if (!gpu) return;
+    const r = new TrueRun({ recipe: LAND_TRUE, library: LIBRARY, pixels: untrack(landPixels), backend: gpu.backend, source: "render.land" });
+    run = r;
+    void r.place();
+    return () => (r.dispose(), (run = null));
+  });
+  $effect(() => {
+    const px = landPixels();
+    untrack(() => run?.update({ pixels: px }));
+  });
   function buildMeshes() {
     if (!gpu || !near || !far || built) return;
     built = true;
@@ -459,6 +488,10 @@
   });
   // The exposure last drawn at, for the page's marks (tests read the eye opening up at night).
   let seenExposure = $state(6);
+  // The aurora's plan for this world (aurora.ts), and its words as last drawn. Long exposure, the default in every True
+  // view (Alex, 24 Nov), until VP1's shared Exposure control carries the choice here.
+  let auroraPlan = $state.raw<AuroraPlan | null>(null);
+  let auroraSays = $state("");
   const wrapDeg = (d: number) => ((((d + 180) % 360) + 360) % 360) - 180;
   const sunHour = $derived(watching ? (show?.hour_deg ?? hour) : clock ? wrapDeg(clock.hour_deg + shift * 15) : hour);
   const sunDecl = $derived(watching ? (show?.decl_deg ?? 0) : (clock?.declination_deg ?? 0));
@@ -645,7 +678,19 @@
         // A lit hull is the brightest large thing in view: the eye adapts to it (and the stars fade, as they do).
         hullLight = lamp > 0 ? (LANDER_HULL_ALBEDO * lamp * LAMP_SPILL) / Math.PI : 0;
       }
+      // What the picture depends on: while it is the same, the view rests and sharpens; any change draws it moving.
+      const r = look === "true" ? run : null;
+      const key = r ? [look, w, h, ...eye.map((x) => Math.round(x * 1e3)), ...fwd.map((x) => Math.round(x * 1e5)), ...sun.map((x) => Math.round(x * 1e5)), seaNow ? now : 0, landerSet, siteStars?.key ?? "", lamps].join("|") : "";
+      const still = r !== null && key === heldKey;
+      heldKey = key;
+      const step = still ? r!.rest.next(now) : null;
+      // Sharp: the averaged picture stays on screen.
+      if (still && !step) return;
+      const q = r?.settings(step !== null) ?? null;
+      const fin = q?.params["finish"] ?? {};
+      const t0 = performance.now();
       gpu.draw({
+        ...(q ? { quality: { ...(typeof fin["glare_rungs"] === "number" ? { rungs: fin["glare_rungs"] } : {}), ...(typeof fin["glare_scale"] === "number" ? { glare_scale: fin["glare_scale"] } : {}), render_scale: q.render_scale, ...(step ? { accumulate: step.k, jitter: step.jitter } : {}) } } : {}),
         look,
         eye,
         forward: fwd,
@@ -662,11 +707,24 @@
         // The eye adapts: a dark sky opens it up until the stars show (night-sky.ts).
         exposure: (seenExposure = look === "true" ? Math.min(adaptedExposure(6, { sun_z: sun[2], tau_green: air ? air.zenith_depth[1] : 0, radius_m: world.radius_m, scale_height_m: air?.scale_height_m ?? 8000 }), hullLight > 0 ? HULL_GREY / hullLight : Infinity) : 6),
         ...(look === "true" && siteStars ? { stars: siteStars } : {}),
+        ...(look === "true" && auroraPlan?.layers.length && world.host_lsun && world.orbit_m ? { aurora: skyAurora(auroraPlan, world.host_lsun, world.orbit_m) } : {}),
         ground: tok("--sse-ground"),
         ink: tok("--sse-ink"),
         contour_m: contourFor(eye[2] - siteZ),
         ...(seaNow ? { sea: { wave_m: seaNow.wave_m, period_s: seaNow.period_s, dir_rad: seaNow.wind_m_s < 0 ? Math.PI : 0, gravity_m_s2: world.gravity_m_s2 ?? plan?.gravity_m_s2 ?? 9.8, tide_m: seaNow.tide_m, time_s: now / 1000, ...(seaOptics ? { optics: seaOptics.optics } : {}) } } : {}),
       });
+      if (r) {
+        const work = performance.now() - t0;
+        if (step) r.rest.done(performance.now(), work);
+        else {
+          // Frames running on: the time between them; a lone frame: its own work.
+          const ms = lastDrawn >= 0 && now - lastDrawn < 250 ? Math.max(work, now - lastDrawn) : work;
+          r.frame(ms, now);
+        }
+        lastDrawn = now;
+        const st = r.status();
+        quality = `${st.tier}|${st.level}|${st.rest}|${st.rest_frames}`;
+      } else if (quality) quality = "";
     } else if (using === "canvas" && line) drawLines(line, eye, fwd);
   }
   $effect(() => {
@@ -676,6 +734,14 @@
       raf = requestAnimationFrame(frame);
     }
   });
+  /** The aurora for this frame: its plan at the site, lifted for the view's exposure, and its words kept for the note. */
+  function skyAurora(p: AuroraPlan, host_lsun: number, orbit_m: number) {
+    const flux = (host_lsun * constant("L_sun")) / (4 * Math.PI * orbit_m * orbit_m);
+    const a = auroraSky(p, world!.radius_m, { lat_deg: site!.lat, lon_deg: site!.lon }, "long", flux, seenExposure);
+    const words = a ? `${p.note} ${a.says}` : "";
+    if (words !== auroraSays) auroraSays = words;
+    return a;
+  }
   const contourFor = (alt: number) => (alt > 20000 ? 500 : alt > 3000 ? 100 : alt > 300 ? 20 : 10);
 
   /** No GPU: the ground ahead as lines of its profile (the line-terrain style), nearest drawn last. */
@@ -855,7 +921,7 @@
   {#if tiles}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
     <div class="stage" class:hidden={!(phase === "flying" || phase === "down")} bind:clientWidth={w} bind:clientHeight={h} role="application" aria-label={watching ? `The ground at ${site ? fmtLat(site.lat) : ""}, as the game master sees it` : `The ground at ${site ? fmtLat(site.lat) : ""}: drag to look about, arrow keys or W A S D to walk`} tabindex="0" onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} onkeydown={keyDown} onkeyup={keyUp} data-ground>
-      <canvas bind:this={canvas} class:hidden={using === "canvas"}></canvas>
+      <canvas bind:this={canvas} class:hidden={using === "canvas"} data-quality={quality || undefined}></canvas>
       <canvas bind:this={line} class:hidden={using !== "canvas"}></canvas>
       {#if hud}
         <div class="hud" data-surface-hud>
@@ -894,6 +960,7 @@
       The ground is the kernel's to {near ? Math.round(near.spacing_m) : "?"} m (its fact floor here); finer than that within {fmtM(DETAIL_HALF)} of the site it is decoration sized to the site's roughness. You can walk {fmtM(WALK_HALF)} from where you landed; further means taking off.
       {#if openings.length}{openings.length} stretch{openings.length === 1 ? "" : "es"} of fallen lava tube roof lie within 25 km (the kernel's cave survey): within {fmtM(DETAIL_HALF)} each is cut down to the tube's floor; going inside waits for interior sites.{/if}
       {#if world && !world.air}No air: the sky is black and nothing dims the far ground.{:else}Sky from single scattering in the kernel's air optics.{/if}
+      {#if look === "true" && auroraSays}<span data-aurora-sky>{auroraSays}</span>{/if}
       {#if seaNow}{seaNow.line ?? ""}{seaNow.line ? "." : ""} {seaOptics ? `${seaWords(seaOptics.optics, seaOptics.missing)} ` : ""}{seaOptics?.optics.trains ? `The sea is drawn as the kernel's own ${seaOptics.optics.trains.length} wave trains for this liquid` : "The sea is drawn as a few wave trains of that height and period round the wind"}{seaOptics?.optics.whitecap_fraction ? `, white with froth over ${Math.round(seaOptics.optics.whitecap_fraction * 100)}% of it` : ""}; the tide stands {Math.abs(seaNow.tide_m).toFixed(2)} m {seaNow.tide_m >= 0 ? "above" : "below"} mean sea level.{/if}
       {#if watching}The sun stands where the game master's clock puts it, local time {localTime}.{:else if clock}The sun stands where {subject?.label}'s spin and its place on its orbit put it at the time in view: local time {localTime}{clock.solar_day_s === Infinity ? " (it keeps one face to its star)" : ""}, declination {sunDecl.toFixed(1)}°{shift ? `, moved ${shift > 0 ? "+" : ""}${shift} local h by hand` : ""}.{:else}The world's spin is not on record, so the hour is chosen by hand and the sun stands as at an equinox.{/if} Drawn on {reason}.
     </p>

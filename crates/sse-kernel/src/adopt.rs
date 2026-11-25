@@ -950,6 +950,23 @@ pub(crate) fn worlds_at(
     })
 }
 
+/// SOL5: a world's measured air, from its `atmosphere.composition.<gas>`
+/// facts (volume fractions, 0 to 1), for the climate's gas mix. None when
+/// the record holds no composition, so the climate says it assumed one.
+pub(crate) fn catalogued_gases(
+    row: Option<&BTreeMap<String, Value>>,
+) -> Option<BTreeMap<String, f64>> {
+    let gases: BTreeMap<String, f64> = row?
+        .iter()
+        .filter_map(|(k, v)| {
+            let gas = k.strip_prefix("atmosphere.composition.")?;
+            let x = as_f64(v).filter(|x| (0.0..=1.0).contains(x))?;
+            Some((gas.to_ascii_lowercase(), x))
+        })
+        .collect();
+    (!gases.is_empty()).then_some(gases)
+}
+
 /// Orbit atlases kept so that reopening a world reuses its plate run.
 pub const ORBIT_CACHE_SIZE: usize = 8;
 

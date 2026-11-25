@@ -11,20 +11,25 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED1a part 2a the body card's figures through the engine: `sayFact` and `readFact` (figures.ts) say a scene fact by its unit symbol and field (`fact_about` in figures-said.json; a world's surface reads °C first); typing over a figure takes any unit of its kind; pressing a unit steps the reading for every body of that class (CardField `unit`/`onunit`), kept in `ws.unit_choices` and the campaign save; the handles and strips follow the same choice | done | packages/ED1a.md |
 | ED1a part 2b the editing-grammar check on figures: `tests/ui/figures-ledger.test.ts` counts each file's own number formatting (toFixed, toPrecision, toLocaleString) against `figures-ledger.json` (309 on 24 Nov before replay.ts; 303 with life-flow.ts, which merged first); a file may go down, never up. "How figures are said" on Reference's Units page (`figureTable`), the campaign's chosen readings marked, "Use the scheme's everywhere" | done | packages/ED1a.md |
 | ED1a part 2c **next**: bring the ledger down (303: replay.ts moved onto the engine with `sayNumber`, `roundTo` and `about: false`), biggest first (GalaxyChart, Surface, Body, BodyTimeline, StarDisc), each figure onto `say`; player seats inherit the GM's choices | next | |
-| ED0 the Solar System with pairs (Pluto and Charon, Earth and Moon, the Sun's wobble) and the checked list of structural edits; family tree in the ghost's panel and the selector | waits on kernel BC1 and the rest of K13 | |
+| ED0 part 1 a pair's two orbits in the Orbit box ("Round each other", "Together round"), the hidden centre in words (`pairOf`) | done | packages/ED0.md |
+| ED0 part 2 the checked list of structural edits as UI e2e; the walk step; pairs on the chart and in the selector (renderer and selector threads) | queued | packages/ED0.md |
 | ED1 part 2 the handles row and the strip on the body card (`packages/views/editing/`: Handles, Strip), mounted in BodyCard for the GM off the Run desk; Build moves it (drag, arrows, typing in any unit), Explore shows it read-only; letting go is one set_value through `commitEdit`, one Undo; what followed from `resolved_system` surfaces before and after; e2e `tests/ui/editing.e2e.mjs` on desk and phone | done | packages/ED1.md |
-| ED1 part 3 exact figures on a pause through `resolved_system {branch}`; Titan on the Air strip; walk step "Change a world" | waits on kernel BC1 | |
+| ED1 part 3a a what-if's own figures: the row reads `resolved_system {branch}` (BC1), so What followed and the tides show on the example | done | packages/ED1.md |
+| ED1 part 3b the held value's exact answer on a pause; Titan on the Air strip; walk step "Change a world" | queued (BC1 is on main) | packages/ED1.md |
 | ED2 the sweep behind the strip: tipping points, pencil figures, "what followed" | queued (K1) | |
 | ED3 part 1 the chart drag: a ghost and its orbit line follow the pointer while the world stays put; the readout is the units engine's (`dist` in SystemChart says the orbit in the campaign's chosen reading); Esc cancels and writes nothing; the strip's Esc no longer clears the selection | done | packages/ED3.md |
 | ED3 part 2a geared drag (further from the line slower, Shift a tenth) and light magnetism to round figures and resonances, named as it catches, Alt off (`ui-contract/src/drag.ts`) | done | packages/ED3.md |
 | ED3 part 2b: the readout adds the year, the surface's quick look and the ST1 verdict; the "Where things can orbit" layer during a drag; tipping-point catches; the far-point and lean grips | queued (year, quick look and tipping points want kernel K1's sweep) | |
 | ED12 part 1 the Orbit and Spin boxes in full (`box` in the handle sheet; `Box.svelte`, `Ring.svelte`, `box.ts`): shape, where it is now, lean, the two small rings, tilt; Retrograde, Locked, In step with; the year, closest and farthest, sunlight swing, the ST1 verdict, the sun's day, tides; a typed year on the size | done | packages/ED12.md |
 | ED7 part 1 "Try changing it" on Explore: an example what-if where the strip moves; handles move on any what-if | done | packages/ED12.md |
-| ED12 part 2 season phase and oblateness (K12); gravity at equator and poles; the ring's catches against neighbours and the held value's year and verdict (BC1) | waits on kernel K12 and BC1 | |
+| ED12 part 2 season phase and oblateness (K12); gravity at equator and poles; the ring's catches against neighbours and the held value's year and verdict (BC1, plus a `branch` on orbits_at and orbit_stability) | waits on kernel K12 | |
 | ED7 part 2a a moon's (and a binary world's) Orbit strip ends at the kernel's widest lasting orbit (`outerWall`) | done | packages/ED12.md |
 | ED7 part 2b Add a moon's three recipes (disc, impact, captured) from formation's F5 rules until K5 (`moonRecipes`) | done | packages/ED12.md |
-| ED7 part 2c the Roche wall (wants a kernel block); the phone dock | queued | |
-| ED4 to ED6, ED8 to ED11, ED13, ED10a, ED13a | queued, in the design's order | |
+| ED7 part 2c the phone dock: the open strip and its verdict dock above the time ruler, a thumb-sized mark | done | packages/ED12.md |
+| ED7 part 2d the Roche wall on a moon's size strip | waits on a kernel block that gives the Roche limit | |
+| ED6 part 1 Kinds in Add round a star: each top-level world class's example from the atlas (`worldKinds`) | done | packages/ED6.md |
+| ED6 part 2 the star chooser with Kinds chips; changing a star with worlds; a companion star | queued (star recipes need a pack; the branch view needs BC1) | packages/ED6.md |
+| ED4, ED5, ED8 to ED11, ED13, ED10a, ED13a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 
 ## Decisions and agreements that live only in threads (written down 24 Nov for the handover)

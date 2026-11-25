@@ -9,6 +9,8 @@
 import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Points, Scene, SphereGeometry, SRGBColorSpace, Vector3, Vector4 } from "three";
 import { startFinish, type Finish } from "./finish.ts";
 import { MeshBasicNodeMaterial, PointsNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
+import { makeAuroraSky, type AuroraSkyGpu } from "./gpu-aurora-sky.ts";
+import type { AuroraSky } from "./aurora.ts";
 import { fresnelNode } from "./sea-node.ts";
 import { createLander, type LanderPose } from "./surface-lander.ts";
 import { frothToDraw, MAX_TRAINS, trainsToDraw, type SeaOptics, type TrainDraw } from "./sea.ts";
@@ -70,6 +72,13 @@ export interface SurfaceFrame {
    * unit directions in the site's frame, and each star's light as a share of the home star's, times its colour.
    */
   stars?: { key: string; dirs: Float32Array; light: Float32Array };
+  /**
+   * True look, from the view's quality controller (true-run.ts, recipe land-true): the glare ladder's rungs and size,
+   * the drawing size, and at rest the running mean's frame index and the sub-pixel shift (VP4 part 2b, VP5).
+   */
+  quality?: { rungs?: number; glare_scale?: number; render_scale?: number; accumulate?: number; jitter?: [number, number] };
+  /** True look: the aurora over the site (aurora.ts `auroraSky`, VP-AU7), drawn by gpu-aurora-sky.ts. */
+  aurora?: AuroraSky | null;
 }
 
 /**
@@ -219,6 +228,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   stars.visible = false;
   scene.add(stars);
   let starKey = "";
+  let auroraSky: AuroraSkyGpu | null = null;
 
   // The ground, true look: albedo lit by the sun through the air and by the sky, seen through the air.
   const trueNode = Fn(() => {
@@ -419,6 +429,9 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       renderer.setSize(f.width, f.height, false);
       camera.aspect = f.width / Math.max(1, f.height);
       camera.fov = (f.fovY * 180) / Math.PI;
+      const j = f.quality?.jitter;
+      if (j && (j[0] !== 0 || j[1] !== 0)) camera.setViewOffset(f.width, f.height, -j[0], j[1], f.width, f.height);
+      else camera.clearViewOffset();
       camera.updateProjectionMatrix();
       camera.position.set(0, 0, 0);
       camera.up.set(f.up[0], f.up[1], f.up[2]);
@@ -473,8 +486,16 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         starGeom.computeBoundingSphere();
       }
       stars.visible = isTrue && !!f.stars;
+      // The aurora (VP-AU7): shells seen from inside, over the site, in the sky's units.
+      if (isTrue && f.aurora && !auroraSky) {
+        auroraSky = makeAuroraSky();
+        scene.add(auroraSky.mesh);
+      }
+      auroraSky?.set(isTrue ? (f.aurora ?? null) : null, { eye: 1 + Math.max(0, f.eye[2]) / Math.max(1, f.radius_m), sun: f.sun, tauEye: [f.tau[0] * thin, f.tau[1] * thin, f.tau[2] * thin], k: f.radius_m / Math.max(1, f.scale_height_m), exposure: f.exposure });
       const pxAngle = f.fovY / Math.max(1, f.height);
-      uStarScale.value = 1 / (pxAngle * pxAngle);
+      // Drawn smaller than the view (the tier's render scale), each pixel spans more sky: a star's light spreads over it.
+      const rs = isTrue ? Math.max(0.25, Math.min(1, f.quality?.render_scale ?? 1)) : 1;
+      uStarScale.value = (rs * rs) / (pxAngle * pxAngle);
       stars.position.set(0, 0, 0);
       renderer.setClearColor(isTrue ? 0x000000 : bg, 1);
       for (const s of order) {
@@ -487,7 +508,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       lander.place(f.eye, f.look);
       // True through the shared finish (VP1): half-float light, the eye's glare (the sun's disc and glint bloom by
       // the CIE curve), AgX and dither; the exposure is already in the materials (`uExp`).
-      if (isTrue) (finish ??= startFinish(renderer)).render(scene, camera, { exposure: 1, pixel_deg: (pxAngle * 180) / Math.PI });
+      if (isTrue) (finish ??= startFinish(renderer)).render(scene, camera, { exposure: 1, pixel_deg: (pxAngle * 180) / Math.PI, ...(f.quality ?? {}) });
       else renderer.render(scene, camera);
     },
     dispose() {
@@ -496,6 +517,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       lander.dispose();
       dome.geometry.dispose();
       starGeom.dispose();
+      auroraSky?.dispose();
       starMat.dispose();
       for (const m of allMats()) m.dispose();
       renderer.dispose();
