@@ -119,7 +119,7 @@ fn a_grown_system_is_as_old_as_its_star() {
     assert!(t.len() < 20_000_000, "run is {} bytes", t.len());
     let at = t.find("\"age_gyr\":").expect("an age");
     let age: f64 = t[at + 10..]
-        .split(|c| c == ',' || c == '}')
+        .split([',', '}'])
         .next()
         .unwrap()
         .parse()
