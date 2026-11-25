@@ -91,6 +91,10 @@ try {
     await units.waitFor();
     assert.match(await units.locator('[data-unit="pc"] .val').innerText(), /^1 pc = 3\.085 677 581 × 10¹⁶ m$/);
     assert.match(await units.locator('[data-unit="m"] .val').innerText(), /SI/);
+    // How figures are said (ED1a): the units engine's table, the default reading marked.
+    const orbitRow = units.locator('[data-figures-said] [data-said="length|*.orbit"]');
+    assert.match(await orbitRow.innerText(), /AU/);
+    assert.match(await orbitRow.locator(".chosen").innerText(), /AU/, "the first reading is the default");
     await shot(gm, `units-${vp}`);
 
     if (vp === "phone") {
@@ -178,6 +182,9 @@ try {
     await tiles.nth(14).waitFor({ timeout: 20000 });
     assert.ok((await tiles.count()) >= 15, "the physical scheme's base classes are tiles");
     assert.equal(await tiles.locator("svg.icon").count(), await tiles.count(), "every tile has its mark");
+    // SSE4's atlas classes have marks of their own (scripts/add-atlas-marks.py): no two physical tiles draw alike.
+    const looks = await tiles.locator("svg.icon").evaluateAll((els) => els.map((e) => e.innerHTML));
+    assert.equal(new Set(looks).size, looks.length, "every physical class draws its own mark");
     await classes.locator('[data-class="gas-giant/ammonia-clouds"]').click();
     const ccard = gm.locator('[data-class-card="gas-giant/ammonia-clouds"]');
     await ccard.waitFor();
@@ -195,7 +202,7 @@ try {
     await classes.locator('[data-class="habitable/shirt-sleeve"]').click();
     await gm.locator('[data-class-card="habitable/shirt-sleeve"] [data-misses]').waitFor();
     await gm.keyboard.press("Escape");
-    // SSE 3's classic list, the classes the charts mark today.
+    // SSE 3's classic list, which the charts marked first.
     await classes.locator('[data-atlas-pick="sse.sse3-classic"]').click();
     await gm.locator('[data-atlas="sse.sse3-classic"] [data-gallery="sse3-classic"] .tile').nth(60).waitFor();
     if (vp === "phone") {
@@ -203,6 +210,14 @@ try {
       assert.ok(over <= 0, `classes overflow by ${over} px`);
     }
     assert.equal(await gm.locator("[data-classes-add]").count(), 0, "adding an atlas waits for the Build desk");
+    // Parts (AT13), under "This setting": the parts of a player screen with the controls a screen can switch.
+    await gm.locator('[data-page="parts"]').click();
+    const parts = gm.locator("[data-parts]");
+    await parts.waitFor();
+    assert.deepEqual(await parts.locator('[data-part="sse.view.table"] [data-part-control]').evaluateAll((els) => els.map((e) => e.dataset.partControl)), ["sort", "select"]);
+    assert.match(await parts.locator('[data-part="sse.view.text"]').innerText(), /No controls/);
+    if (vp === "phone") assert.ok((await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)) <= 0, "parts fit a phone");
+    await shot(gm, `parts-${vp}`);
     await gm.locator('[data-page="names"]').click();
     await names.waitFor();
     assert.equal(await gm.locator("[data-names-add]").count(), 0, "adding a pack waits for the Build desk");

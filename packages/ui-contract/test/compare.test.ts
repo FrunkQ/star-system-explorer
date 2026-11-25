@@ -128,3 +128,15 @@ test("a Solar System reference body takes its day, tilt and rings from base-sol;
   assert.equal(of("rigel").day_h, undefined, "no day on record: it stands still");
   assert.equal(itemFromReference(doc.objects.find((o) => o.id === "earth")!).day_h, undefined, "without base-sol, none");
 });
+
+test("a whole system's lineup fits the view in both scales: crowded rows narrow their slots instead of scrolling", () => {
+  const items = ["sun", "mercury", "earth", "moon", "mars", "ceres", "jupiter", "saturn", "neptune", "titan", "europa"].map(ref);
+  for (const mode of ["true", "log"] as const) {
+    const l = layoutLineup(items, 220, 728, mode, 5, 76, true);
+    assert.ok(l.width <= 728 + 1, `${mode}: ${l.width}`);
+    assert.ok(l.slot < 76 && l.slot >= 28, `${mode} slot ${l.slot}`);
+    for (let n = 1; n < l.placed.length; n++) assert.ok(l.placed[n]!.x > l.placed[n - 1]!.x, "in order, apart");
+  }
+  // Room to spare keeps the asked slot.
+  assert.equal(layoutLineup([ref("earth"), ref("mars")], 220, 728, "true", 5, 76).slot, 76);
+});

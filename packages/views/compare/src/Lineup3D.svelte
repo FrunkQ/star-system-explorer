@@ -6,14 +6,18 @@
   are the lineup's whatever the distance. The labels, the limb and the picking stay with the lineup's own drawing.
 -->
 <script lang="ts" module>
-  import type { TrueTexture } from "../../../renderer/src/index.ts";
+  import type { LiveStar, TrueTexture } from "../../../renderer/src/index.ts";
   // Surfaces read once per world for the page's life: about 3 s each from the kernel.
   const kept = new Map<string, TrueTexture | string>();
+  // This system's own stars as the kernel's activity reads them (spin, cells, spots, flares), once per page.
+  const keptStars = new Map<string, LiveStar | string>();
+  // A giant's winds, read with its face: the bands slide and the storms turn as the globe turns (VP-A1).
+  const flows = new Map<string, AirFlow>();
 </script>
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { globeFrame, graticule, nearSide, ringEdge, spinAt, startGpu, trueLook, trueSurface, type Gpu, type GpuItem, type GpuRing, type LineupView, type Vec3 } from "../../../renderer/src/index.ts";
+  import { bodySeconds, globeFrame, graticule, liveFace, nearSide, readLiveStar, readTrueFace, ringEdge, spinAt, startGpu, STAR_SECONDS_PER_SECOND, trueLook, type AirFlow, type FaceReader, type Gpu, type GpuItem, type GpuRing, type LineupView, type StarReader, type Vec3 } from "../../../renderer/src/index.ts";
   import { reachKm, type CompareItem, type Placed, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let {
@@ -28,6 +32,7 @@
     pace,
     colour,
     own,
+    given = () => ({}),
     onfail,
   }: {
     ctx: ViewContext;
@@ -44,6 +49,8 @@
     colour: (i: CompareItem) => string;
     /** Whether the item is one of this system's own bodies (its surface can be read). */
     own: (i: CompareItem) => boolean;
+    /** A star's temperature, mass and radius as the scene holds them, for a star the kernel has no facts for. */
+    given?: (i: CompareItem) => { teff_k?: number; mass_sun?: number; radius_sun?: number };
     onfail: () => void;
   } = $props();
 
@@ -102,11 +109,31 @@
         for (const i of worlds) {
           const key = `${system}|${i.key}`;
           if (!kept.has(key)) {
-            const r = await ctx.session.surfaceTiles(system, i.key);
-            kept.set(key, (r.ok && trueSurface(r.tiles)) || "none");
+            // Ground, then today's clouds and haze; a giant is its cloud decks, with the winds that carry them (true-air.ts).
+            const f = await readTrueFace(ctx.session as unknown as FaceReader, system, i.key);
+            kept.set(key, typeof f === "string" ? "none" : f.tex);
+            if (typeof f !== "string" && f.flow) flows.set(key, f.flow);
           }
           const t = kept.get(key);
           if (t && typeof t !== "string" && !surfaces.has(i.key)) surfaces = new Map(surfaces).set(i.key, t);
+        }
+      })(),
+    );
+  });
+
+  // True: this system's own stars live, the same star as the system's True (star-now.ts): churning cells, spots
+  // drifting by latitude, the kernel's flares. No glare here: the lineup compares sizes side by side.
+  let stars = $state(new Map<string, LiveStar>());
+  $effect(() => {
+    if (look !== "true" || ctx.session.seat.authority !== "gm") return;
+    const own_stars = placed.map((p) => p.item).filter((i) => i.kind === "star" && own(i));
+    untrack(() =>
+      void (async () => {
+        for (const i of own_stars) {
+          const key = `${system}|${i.key}`;
+          if (!keptStars.has(key)) keptStars.set(key, await readLiveStar(ctx.session as unknown as StarReader, system, i.key, given(i)));
+          const s = keptStars.get(key);
+          if (s && typeof s !== "string" && !stars.has(i.key)) stars = new Map(stars).set(i.key, s);
         }
       })(),
     );
@@ -146,9 +173,12 @@
       if (look !== "wireframe") {
         // True: the body's face from the one door every True view uses (true-body.ts), so each new look shows here too.
         // A world not read is the plain grey of the system's True; 3D keeps the chart's colour.
+        // A live star's face at its own clock (six hours a second, a picture every tenth of a second).
+        const live = look === "true" && i.kind === "star" ? stars.get(i.key) : undefined;
+        const starFace = live ? liveFace(`${system}|${i.key}`, live, { t: live.age_s + (Math.floor(t * 10) / 10) * STAR_SECONDS_PER_SECOND, clock: STAR_SECONDS_PER_SECOND, span: STAR_SECONDS_PER_SECOND / 10, calm: still, px: 2 * p.r * dpr }).face : undefined;
         const face =
           look === "true"
-            ? trueLook({ key: `${system}|${i.key}`, star: i.kind === "star", colour: i.kind === "star" ? rgb(colour(i)) : faint, radius_m: i.radius_km * 1000, ...(surfaces.get(i.key) ? { surface: surfaces.get(i.key)! } : {}), ...(i.rings ? { rings: i.rings.map((r) => ({ name: "", inner_m: r.inner_km * 1000, outer_m: r.outer_km * 1000, tau: r.tau, albedo: r.albedo })) } : {}), pole: f[2] })
+            ? trueLook({ ...(starFace ? { face: starFace } : {}), key: `${system}|${i.key}`, star: i.kind === "star", colour: i.kind === "star" ? rgb(colour(i)) : faint, radius_m: i.radius_km * 1000, ...(surfaces.get(i.key) ? { surface: surfaces.get(i.key)! } : {}), ...(flows.has(`${system}|${i.key}`) ? { flow: { flow: flows.get(`${system}|${i.key}`)!, dt_s: bodySeconds(i.day_h, t, pace, Number.isFinite(quickest) ? quickest : 24) } } : {}), ...(i.rings ? { rings: i.rings.map((r) => ({ name: "", inner_m: r.inner_km * 1000, outer_m: r.outer_km * 1000, tau: r.tau, albedo: r.albedo })) } : {}), pole: f[2] })
             : { colour: rgb(colour(i)), ...(i.kind === "star" ? { shines: true } : {}) };
         items.push({ id: i.key, rel: c, radius: p.r, frame: f, ...face });
       }
@@ -175,11 +205,13 @@
       ground: token("--sse-chart-ground", "--sse-ground"),
       ...(look === "true" ? { light: { from: [-0.75, 0.45, 0.6] } } : look === "3d" ? { light: { from: [-0.6, 0.5, 0.9], ambient: 0.35, ground: true } } : {}),
       ortho: { width, height, near: 1, far: 2 * deepest + 10 },
+      // True through the shared finish (VP1): high range, AgX and dither as every True view; no glare straight on.
+      ...(look === "true" ? { finish: { glare: false } } : {}),
     });
   });
 </script>
 
-<canvas bind:this={canvas} class="globes" style:width="{width}px" style:height="{height}px" data-lineup-3d={look} data-turning={still ? "still" : "turning"} data-surfaces={surfaces.size} aria-hidden="true"></canvas>
+<canvas bind:this={canvas} class="globes" style:width="{width}px" style:height="{height}px" data-lineup-3d={look} data-turning={still ? "still" : "turning"} data-surfaces={surfaces.size} data-live-stars={stars.size} aria-hidden="true"></canvas>
 
 <style>
   .globes {

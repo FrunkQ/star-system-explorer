@@ -1,0 +1,498 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.outflow",
+ "about": "Outflows from stars (O3b, gap R26): a cool giant's dusty wind and a young star's jets, published as nebulae for the renderer to draw.",
+ "atoms": [
+  {
+   "id": "sse.outflow.giant_mass_loss",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "luminosity",
+     "letter": "L"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "teff",
+     "letter": "T"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "mass_loss_rate",
+     "letter": "Md"
+    }
+   ],
+   "constants": {
+    "Lsun": "sheet/L_sun",
+    "Rsun": "sheet/R_sun",
+    "Msun": "sheet/M_sun",
+    "G": "constants/G",
+    "yr": "sheet/yr_julian"
+   },
+   "models": {
+    "eta": {
+     "value": 8e-14,
+     "grade": "fitted",
+     "source": "Schröder and Cuntz 2005, eq. 4"
+    },
+    "t0": {
+     "value": 4000.0,
+     "grade": "fitted",
+     "source": "Schröder and Cuntz 2005, eq. 4"
+    },
+    "gfac": {
+     "value": 4300.0,
+     "grade": "fitted",
+     "source": "Schröder and Cuntz 2005, eq. 4"
+    }
+   },
+   "positive": [
+    {
+     "port": "luminosity",
+     "says": "luminosity"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "teff",
+     "says": "effective temperature"
+    }
+   ],
+   "references": [
+    "Schröder, K.-P. and Cuntz, M. 2005, A new version of Reimers' law of mass loss based on a physical approach, ApJ 630, L73: Ṁ = η L R / M (T_eff / 4000 K)^3.5 (1 + g_sun / (4300 g)) in solar masses a year with η = 8e-14, for cool giants and supergiants. doi:10.1086/491579"
+   ],
+   "shown": "Ṁ = η (L/L☉)(R/R☉)/(M/M☉) (T/4000 K)^3.5 (1 + g☉/(4300 g)) M☉/yr",
+   "equation": {
+    "name": "How fast a cool giant sheds its outer layers",
+    "formula": "l = L / Lsun\nr = R / Rsun\nmm = M / Msun\ng = G * M / (R * R)\ngs = G * Msun / (Rsun * Rsun)\nq = T / t0\nMd = eta * l * r / mm * q^(7/2) * (1 + gs / (gfac * g)) * Msun / yr",
+    "inputs": {
+     "L": {
+      "kind": "body.luminosity",
+      "unit": "W",
+      "name": "the star's luminosity"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "the star's radius"
+     },
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "the star's mass"
+     },
+     "T": {
+      "kind": "body.effective_temperature",
+      "unit": "K",
+      "name": "the star's effective temperature"
+     },
+     "eta": {
+      "kind": "model.mass_loss_efficiency",
+      "unit": "1",
+      "name": "Schröder and Cuntz's efficiency"
+     },
+     "t0": {
+      "kind": "model.mass_loss_reference_temperature",
+      "unit": "K",
+      "name": "reference temperature"
+     },
+     "gfac": {
+      "kind": "model.mass_loss_gravity_factor",
+      "unit": "1",
+      "name": "gravity factor"
+     },
+     "Lsun": {
+      "kind": "constant.L_sun",
+      "unit": "W",
+      "name": "the Sun's luminosity"
+     },
+     "Rsun": {
+      "kind": "constant.R_sun",
+      "unit": "m",
+      "name": "the Sun's radius"
+     },
+     "Msun": {
+      "kind": "constant.M_sun",
+      "unit": "kg",
+      "name": "the Sun's mass"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "yr": {
+      "kind": "constant.yr_julian",
+      "unit": "s",
+      "name": "a Julian year"
+     }
+    },
+    "outputs": {
+     "Md": {
+      "kind": "outflow.mass_loss_rate",
+      "unit": "kg s-1",
+      "name": "mass the star sheds each second"
+     }
+    },
+    "source": {
+     "text": "Schröder, K.-P. and Cuntz, M. 2005, ApJ 630, L73",
+     "doi": "10.1086/491579",
+     "where": "equation 4"
+    },
+    "explain": {
+     "curious": "A swollen red giant holds its outer layers so loosely that its own light and pulsing blow them away, a little every year, building a slow wind around it.",
+     "science": "Reimers-type mass loss with a chromospheric correction for temperature and gravity, calibrated on globular cluster horizontal branches."
+    },
+    "examples": [
+     {
+      "L": 4e+29,
+      "R": 70000000000.0,
+      "M": 2e+30,
+      "T": 3500.0,
+      "Md": 1103080633259505.4
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.outflow.dust_shell",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "luminosity",
+     "letter": "L"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "teff",
+     "letter": "T"
+    },
+    {
+     "port": "mass_loss_rate",
+     "letter": "Md"
+    },
+    {
+     "port": "wind_speed",
+     "letter": "v"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "condensation_radius",
+     "letter": "rc"
+    },
+    {
+     "port": "dust_depth",
+     "letter": "tau"
+    },
+    {
+     "port": "dust_luminosity",
+     "letter": "Ld"
+    },
+    {
+     "port": "dust_temperature",
+     "letter": "Td"
+    }
+   ],
+   "models": {
+    "Tc": {
+     "value": 1200.0,
+     "grade": "measured",
+     "source": "Höfner and Olofsson 2018, section 4: silicate and carbon grains condense near 1000 to 1500 K"
+    },
+    "kap": {
+     "value": 0.3,
+     "grade": "assumed",
+     "source": "a flux-mean dust opacity per mass of gas, of the order Höfner and Olofsson 2018 give for dust-driven winds (fudge F57)"
+    }
+   },
+   "checks": [
+    {
+     "port": "mass_loss_rate",
+     "min": 0,
+     "finite": true,
+     "says": "mass-loss rate must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "luminosity",
+     "says": "luminosity"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "teff",
+     "says": "effective temperature"
+    },
+    {
+     "port": "wind_speed",
+     "says": "wind speed"
+    }
+   ],
+   "references": [
+    "Höfner, S. and Olofsson, H. 2018, Mass loss of stars on the asymptotic giant branch, A&ARv 26, 1, section 4: dust forms where the radiative equilibrium temperature falls to the condensation temperature, R_c = (R/2)(T_eff/T_c)^((4+p)/2), p about 1 for small grains; dust drives the wind. doi:10.1007/s00159-017-0106-5"
+   ],
+   "shown": "R_c = (R/2)(T/T_c)^2.5,  τ = κ Ṁ / (4π v R_c),  L_d = L (1 − e^−τ)",
+   "equation": {
+    "name": "Where a giant's wind turns to dust, and how much light the dust takes and gives again",
+    "formula": "q = T / Tc\nrc = R / 2 * q^(5/2)\ntau = kap * Md / (4 * pi * v * rc)\nLd = L * (1 - exp(-tau))\nTd = Tc",
+    "inputs": {
+     "L": {
+      "kind": "body.luminosity",
+      "unit": "W",
+      "name": "the star's luminosity"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "the star's radius"
+     },
+     "T": {
+      "kind": "body.effective_temperature",
+      "unit": "K",
+      "name": "the star's effective temperature"
+     },
+     "Md": {
+      "kind": "outflow.mass_loss_rate",
+      "unit": "kg s-1",
+      "name": "mass the star sheds each second"
+     },
+     "v": {
+      "kind": "outflow.wind_speed",
+      "unit": "m s-1",
+      "name": "speed of the dusty wind"
+     },
+     "Tc": {
+      "kind": "model.dust_condensation_temperature",
+      "unit": "K",
+      "name": "temperature dust grains form at"
+     },
+     "kap": {
+      "kind": "model.dust_opacity",
+      "unit": "m2 kg-1",
+      "name": "dust's opacity per kilogram of gas"
+     }
+    },
+    "outputs": {
+     "rc": {
+      "kind": "outflow.condensation_radius",
+      "unit": "m",
+      "name": "distance from the star where dust forms"
+     },
+     "tau": {
+      "kind": "outflow.dust_depth",
+      "unit": "1",
+      "name": "how thick the dust is to starlight, looking out"
+     },
+     "Ld": {
+      "kind": "outflow.dust_luminosity",
+      "unit": "W",
+      "name": "starlight the dust takes in and glows out again in the infrared"
+     },
+     "Td": {
+      "kind": "outflow.dust_temperature",
+      "unit": "K",
+      "name": "temperature of the new-made dust"
+     }
+    },
+    "source": {
+     "text": "Höfner, S. and Olofsson, H. 2018, A&ARv 26, 1",
+     "doi": "10.1007/s00159-017-0106-5",
+     "where": "section 4"
+    },
+    "explain": {
+     "curious": "Some way out from a red giant its wind cools enough for soot and sand-like grains to form. That dust hides some of the star and glows warm in the infrared.",
+     "science": "Condensation radius from radiative equilibrium of grains with p = 1; radial optical depth of a steady wind from the condensation radius out; absorbed light re-emitted."
+    },
+    "examples": [
+     {
+      "L": 4e+29,
+      "R": 70000000000.0,
+      "T": 3500.0,
+      "Md": 1103080633259505.4,
+      "v": 15000.0,
+      "rc": 508493071864.02515,
+      "tau": 0.003452568877066917,
+      "Ld": 1.378646245784809e+27,
+      "Td": 1200.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.outflow.young_jet",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "accretion_rate",
+     "letter": "Ma"
+    },
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "launch_radius",
+     "letter": "rl"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "jet_mass_rate",
+     "letter": "Mj"
+    },
+    {
+     "port": "jet_speed",
+     "letter": "vj"
+    },
+    {
+     "port": "jet_power",
+     "letter": "Pj"
+    },
+    {
+     "port": "shock_light",
+     "letter": "Ls"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "models": {
+    "f": {
+     "value": 0.1,
+     "grade": "measured",
+     "source": "Hartigan, Edwards and Ghandour 1995: jets carry about a tenth of the accretion rate"
+    },
+    "share": {
+     "value": 0.01,
+     "grade": "assumed",
+     "source": "share of a jet's power given off as light in its shocks (fudge F57)"
+    }
+   },
+   "checks": [
+    {
+     "port": "accretion_rate",
+     "min": 0,
+     "finite": true,
+     "says": "accretion rate must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "mass",
+     "says": "star mass"
+    },
+    {
+     "port": "launch_radius",
+     "says": "launch radius"
+    }
+   ],
+   "references": [
+    "Hartigan, P., Edwards, S. and Ghandour, L. 1995, Disk accretion and mass loss from young stars, ApJ 452, 736: young stars put about a tenth of what they accrete into their jets. doi:10.1086/176343",
+    "Bally, J. 2016, Protostellar outflows, ARA&A 54, 491: jets leave at speeds near the escape speed from where they are launched in the inner disc, a few hundred km/s, and are knotted by episodic accretion. doi:10.1146/annurev-astro-081915-023341"
+   ],
+   "shown": "Ṁ_j = f Ṁ_acc,  v_j = √(2GM/r_l),  P_j = ½ Ṁ_j v_j²,  L_s = s P_j",
+   "equation": {
+    "name": "How strong and fast a young star's jets are",
+    "formula": "Mj = f * Ma\nvj = sqrt(2 * G * M / rl)\nPj = Mj * vj * vj / 2\nLs = share * Pj",
+    "inputs": {
+     "Ma": {
+      "kind": "outflow.accretion_rate",
+      "unit": "kg s-1",
+      "name": "mass falling onto the young star each second"
+     },
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "the young star's mass"
+     },
+     "rl": {
+      "kind": "outflow.launch_radius",
+      "unit": "m",
+      "name": "distance from the star where the jet is launched from its disc"
+     },
+     "f": {
+      "kind": "model.jet_share_of_accretion",
+      "unit": "1",
+      "name": "share of the accreted mass the jets carry away"
+     },
+     "share": {
+      "kind": "model.jet_shock_light_share",
+      "unit": "1",
+      "name": "share of the jet's power its shocks give off as light"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     }
+    },
+    "outputs": {
+     "Mj": {
+      "kind": "outflow.jet_mass_rate",
+      "unit": "kg s-1",
+      "name": "mass both jets carry away each second"
+     },
+     "vj": {
+      "kind": "outflow.jet_speed",
+      "unit": "m s-1",
+      "name": "speed of the jets"
+     },
+     "Pj": {
+      "kind": "outflow.jet_power",
+      "unit": "W",
+      "name": "power carried by the jets"
+     },
+     "Ls": {
+      "kind": "outflow.shock_light",
+      "unit": "W",
+      "name": "light the jets' shocks give off"
+     }
+    },
+    "source": {
+     "text": "Hartigan, P., Edwards, S. and Ghandour, L. 1995, ApJ 452, 736",
+     "doi": "10.1086/176343",
+     "where": "section 5"
+    },
+    "explain": {
+     "curious": "A star still feeding from its disc fires two thin jets out of its poles at hundreds of kilometres a second. Where they hit slower gas they glow red.",
+     "science": "Jet mass flux as a fixed share of accretion; launch speed at the escape speed from the inner disc; shock luminosity as a share of the mechanical power."
+    },
+    "examples": [
+     {
+      "Ma": 6000000000000000.0,
+      "M": 1e+30,
+      "rl": 7500000000.0,
+      "Mj": 600000000000000.0,
+      "vj": 133409.6448287504,
+      "Pj": 5.339439999999998e+24,
+      "Ls": 5.339439999999998e+22
+     }
+    ]
+   }
+  }
+ ]
+}

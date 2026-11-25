@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { announcePlace, cubeShares, foamCells, parseWebId, sci, viewOptions, webId, DEFAULT_VIEW, FOAM_CONTROLS, type Json, type SystemScene, type ViewContext, type WebCube, type WebSlice } from "../../../ui-contract/src/index.ts";
+  import { announcePlace, cubeShares, foamCells, parseWebId, sci, viewOptions, webId, DEFAULT_VIEW, FOAM_CONTROLS, type Json, type SystemScene, type ViewContext, type WebCube, type WebGalaxies, type WebSlice } from "../../../ui-contract/src/index.ts";
   import Web3D from "./Web3D.svelte";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -54,6 +54,36 @@
       if (g !== cgen) return;
       if (typeof r === "string") return void ((failed = r), (cube = null));
       cube = r;
+    });
+  });
+  // True lights the cube by its galaxies and 3D marks the big ones (V9w light from haloes), asked for apart so the
+  // parcels show first. A bigger
+  // cube keeps to the brighter galaxies, as a survey of a bigger volume does: the smallest halo drawn grows with the
+  // volume, so the count stays near the same.
+  const galaxyFloor = (e: string) => 1e11 * Math.max(1, (Number(e) / 100) ** 3);
+  let galaxies = $state<WebGalaxies | null>(null);
+  const keptGalaxies = new Map<string, WebGalaxies>();
+  async function galaxiesAt(e: string, s: number): Promise<WebGalaxies | string> {
+    const key = `${e}:${s}`;
+    const k = keptGalaxies.get(key);
+    if (k) return k;
+    if (!ctx.session.webGalaxies) return "this seat does not read the web's galaxies";
+    const r = await ctx.session.webGalaxies({ ...(s === STEPS.length - 1 ? {} : { t_gyr: STEPS[s]! }), extent_mpc: Number(e), n: CUBE_N, galaxy_floor_msun: galaxyFloor(e) });
+    if (!r.ok) return r.message;
+    keptGalaxies.set(key, r.web);
+    return r.web;
+  }
+  let ggen = 0;
+  $effect(() => {
+    // Not while playing: each step's galaxies take seconds, so Play runs on the parcels and the galaxies come when
+    // it stops.
+    if (!turned || !cube || playing) return;
+    const e = extent;
+    const s = step;
+    const g = ++ggen;
+    void galaxiesAt(e, s).then((r) => {
+      if (g !== ggen) return;
+      galaxies = typeof r === "string" ? null : r;
     });
   });
   const space = $derived(cube ? cubeShares(cube.volume) : null);
@@ -234,7 +264,7 @@
     <div class="map">
       {#if turned}
         {#if cube}
-          <Web3D {cube} look={shownView.style === "true" ? "true" : "3d"} seen={shownView.seen} hud={shownView.hud} reframe={shownView.framed} shrink={real ? cube.volume.scale_factor : 1} onturned={() => ctx.workspace.turned?.()} />
+          <Web3D {cube} galaxies={galaxies && galaxies.extent === cube.volume.extent && Math.abs(galaxies.t_gyr - cube.t_gyr) < 1e-6 ? galaxies : null} look={shownView.style === "true" ? "true" : "3d"} seen={shownView.seen} hud={shownView.hud} reframe={shownView.framed} shrink={real ? cube.volume.scale_factor : 1} onturned={() => ctx.workspace.turned?.()} />
         {:else}
           <p class="lede">Growing the cube…</p>
         {/if}

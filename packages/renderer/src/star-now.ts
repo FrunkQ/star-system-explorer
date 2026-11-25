@@ -3,7 +3,7 @@
 // show a star turning on its own clock call this; star.ts and live-star.ts stay the parts it is made of.
 import { thermalColour } from "../../ui-contract/src/index.ts";
 import { coronaScaleHeight, drawStar, granulesShow, type Convection, type StarDraw } from "./star.ts";
-import { spotsOf, turnAt, flarePlace, type LiveStar } from "./live-star.ts";
+import { spotsAt, turnAt, flarePlace, type LiveStar } from "./live-star.ts";
 import { churningGranules, granuleBlur, limbLumps, narrateLumps } from "./star-churn.ts";
 import { addEjections, ejectionsAt, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares, type EjectionNow, type ShownFlare } from "./star-events.ts";
 import { drawGlow, glareProfile, GLOW_REACH_DEG, narrateGlow } from "./star-glow.ts";
@@ -64,7 +64,8 @@ export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, ha
   const conv = (s.activity.convection ?? null) as unknown as Convection | null;
   const discPx = face.width * disc;
   const shown = shownFlares(s, ask.t, ask.clock, ask.calm);
-  const spots = spotsOf(s);
+  // Spots drift by latitude (differential rotation); under reduced motion they hold at the star's present.
+  const spots = spotsAt(s, ask.calm ? s.age_s : ask.t);
   const xr = Math.max(1, Number(s.moment.xray_w));
   const flares = shown.map(({ flare, index, k }) => {
     const at = flarePlace(s, flare);
@@ -99,4 +100,32 @@ export function drawStarNow(face: { width: number; data: Uint8ClampedArray }, ha
   if (lumpWords) words.push(lumpWords);
   words.push(narrateEvents(s, shown, light === "visible" ? ejections : [], !!ask.calm));
   return { shown, ejections, boost, reach, words };
+}
+
+/** Face sizes in pixels: drawn at about the size the disc shows, in steps so the texture is not remade at each zoom. */
+export const FACE_STEPS = [16, 32, 64, 128, 256] as const;
+
+const faces = new Map<string, { width: number; data: Uint8ClampedArray; version: number; drawn: string; now: StarNow }>();
+
+/**
+ * A star's face for a view's GPU item (gpu.ts `GpuItem.face`), for views that draw many bodies through true-body.ts:
+ * one buffer per key, redrawn only when the moment or size changes, `px` the disc's diameter on screen in device
+ * pixels. No halo: the caller draws the glare where it has a camera to measure it by.
+ */
+export function liveFace(key: string, s: LiveStar, ask: StarNowAsk & { px: number }): { face: { key: string; version: number; width: number; data: Uint8ClampedArray; disc: number }; now: StarNow } {
+  const disc = ask.disc ?? 0.92;
+  const width = FACE_STEPS.find((n) => n >= ask.px / disc) ?? FACE_STEPS[FACE_STEPS.length - 1]!;
+  const drawn = `${width}|${ask.t}|${ask.light ?? "visible"}|${ask.calm ? 1 : 0}|${disc}|${ask.lat_deg ?? 7}`;
+  let f = faces.get(key);
+  if (!f || f.width !== width) {
+    if (faces.size > 64) faces.clear();
+    f = { width, data: new Uint8ClampedArray(width * width * 4), version: 0, drawn: "", now: { shown: [], ejections: [], boost: 1, reach: 0, words: [] } };
+    faces.set(key, f);
+  }
+  if (f.drawn !== drawn) {
+    f.now = drawStarNow(f, null, s, ask);
+    f.drawn = drawn;
+    f.version++;
+  }
+  return { face: { key: `star:${key}:${ask.light === "xray" ? "x" : "v"}`, version: f.version, width, data: f.data, disc }, now: f.now };
 }

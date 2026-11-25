@@ -57,7 +57,7 @@ test("fact words: plain labels, units from the suffix", () => {
 });
 
 test("Ships and stations is on the rail only while a pack gives templates, and the rails stay in bounds", () => {
-  const docs = ["workspace", "physics", "packs", "reference", "screens", "dataviews", "symbols", "body", "compare", "life", "styles", "route", "window", "stories", "cutaway", "explore", "voyages", "scale-galaxy", "scale-cluster", "scale-web", "sector", "codes", "constructs"];
+  const docs = ["workspace", "physics", "packs", "reference", "screens", "dataviews", "symbols", "body", "compare", "life", "styles", "route", "window", "stories", "cutaway", "explore", "voyages", "scale-galaxy", "scale-cluster", "scale-web", "sector", "codes", "constructs", "rollcall"];
   const screens = Object.fromEntries(docs.map((d) => [d, json(`packages/shell/src/documents/${d}.gm.json`)]));
   const at = (scale: "system" | "world", packs: unknown[]) => railOf(screens, scale, (n) => stackProvides(packs, n)).flatMap((g) => g.lines.map((l) => l.screen));
   assert.ok(!at("system", []).includes("constructs"));

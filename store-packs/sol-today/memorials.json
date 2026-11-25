@@ -1,0 +1,761 @@
+{
+ "about": "Real memorials in space, each with two sources (scripts/spaceflight/memorials.py). This part: the small bodies named for those in in-memory.json, with their orbits.",
+ "memorials": [
+  {
+   "id": "minor-planet-1772",
+   "kind": "named_small_body",
+   "name": "1772 Gagarin",
+   "people": [
+    "AS-00001"
+   ],
+   "names_text": "Gagarin, Yuriy Alekseevich",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "1772",
+    "elements": {
+     "a_m": 377985398678.64636,
+     "e": 0.1051400459266411,
+     "i_deg": 5.742293825700857,
+     "node_deg": 88.18096738475474,
+     "peri_deg": 93.43805617560334,
+     "m0_deg": 97.22080956965036,
+     "epoch_s": 63675374400,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Mar-11_23:30:18)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 1772",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=1772"
+    },
+    {
+     "text": "Wikidata Q143530 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q143530"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-1789",
+   "kind": "named_small_body",
+   "name": "1789 Dobrovolsky",
+   "people": [
+    "AS-00060"
+   ],
+   "names_text": "Dobrovol'skiy, Georgiy Timofeevich",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "1789",
+    "elements": {
+     "a_m": 331078085131.2669,
+     "e": 0.1887920574379652,
+     "i_deg": 1.976078152072433,
+     "node_deg": 102.0936040644649,
+     "peri_deg": 214.929448437672,
+     "m0_deg": 202.0276841771851,
+     "epoch_s": 63674856000,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Mar-11_23:31:29)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 1789",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=1789"
+    },
+    {
+     "text": "Wikidata Q143773 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q143773"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-1790",
+   "kind": "named_small_body",
+   "name": "1790 Volkov",
+   "people": [
+    "AS-00051"
+   ],
+   "names_text": "Volkov, Vladislav Nikolaevich 'Vadim'",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "1790",
+    "elements": {
+     "a_m": 334757480035.16376,
+     "e": 0.1011648658872846,
+     "i_deg": 5.109251312171979,
+     "node_deg": 1.987689958940372,
+     "peri_deg": 147.5314855804356,
+     "m0_deg": 153.7200599502793,
+     "epoch_s": 63704664000,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Aug-08_17:16:42)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 1790",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=1790"
+    },
+    {
+     "text": "Wikidata Q143794 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q143794"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-1791",
+   "kind": "named_small_body",
+   "name": "1791 Patsayev",
+   "people": [
+    "AS-00061"
+   ],
+   "names_text": "Patsaev, Viktor Ivanovich",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "1791",
+    "elements": {
+     "a_m": 411111981207.1977,
+     "e": 0.1410697739712599,
+     "i_deg": 5.368851914442865,
+     "node_deg": 198.890690203614,
+     "peri_deg": 74.48073064224968,
+     "m0_deg": 89.17081861670457,
+     "epoch_s": 63689025600,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-05_05:52:39)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 1791",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=1791"
+    },
+    {
+     "text": "Wikidata Q143797 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q143797"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-1836",
+   "kind": "named_small_body",
+   "name": "1836 Komarov",
+   "people": [
+    "AS-00016"
+   ],
+   "names_text": "Komarov, Vladimir Mikhailovich",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "1836",
+    "elements": {
+     "a_m": 416603398868.081,
+     "e": 0.1912315370415561,
+     "i_deg": 7.021111391907316,
+     "node_deg": 272.739499787328,
+     "peri_deg": 12.48531951169535,
+     "m0_deg": 62.93200483515303,
+     "epoch_s": 63702244800,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-05_05:55:21)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 1836",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=1836"
+    },
+    {
+     "text": "Wikidata Q144512 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q144512"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-2161",
+   "kind": "named_small_body",
+   "name": "2161 Grissom",
+   "people": [
+    "AS-00003"
+   ],
+   "names_text": "Grissom, Virgil Ivan 'Gus'",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "2161",
+    "elements": {
+     "a_m": 411078751588.5578,
+     "e": 0.1626003863665253,
+     "i_deg": 7.304607986880716,
+     "node_deg": 126.4097012432332,
+     "peri_deg": 249.5556195190587,
+     "m0_deg": 64.1029188925975,
+     "epoch_s": 63717364800,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-05_06:14:58)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 2161",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=2161"
+    },
+    {
+     "text": "Wikidata Q508537 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q508537"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-3350",
+   "kind": "named_small_body",
+   "name": "3350 Scobee",
+   "people": [
+    "AS-00146"
+   ],
+   "names_text": "Scobee, Francis Richard 'Dick'",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "3350",
+    "elements": {
+     "a_m": 345694840602.1566,
+     "e": 0.2050893918864402,
+     "i_deg": 3.408523292650224,
+     "node_deg": 353.720385973229,
+     "peri_deg": 330.7572870337513,
+     "m0_deg": 248.182134821679,
+     "epoch_s": 63687556800,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2025-Aug-02_14:41:45)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 3350",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3350"
+    },
+    {
+     "text": "Wikidata Q151361 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q151361"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-3351",
+   "kind": "named_small_body",
+   "name": "3351 Smith",
+   "people": [
+    "AF-00001"
+   ],
+   "names_text": "Smith, Michael John",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "3351",
+    "elements": {
+     "a_m": 454722669247.10364,
+     "e": 0.270967594986202,
+     "i_deg": 13.24383648804055,
+     "node_deg": 185.8099225622826,
+     "peri_deg": 182.1023141852715,
+     "m0_deg": 34.4783703968713,
+     "epoch_s": 63703713600,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-05_07:27:23)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 3351",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3351"
+    },
+    {
+     "text": "Wikidata Q835506 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q835506"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-3352",
+   "kind": "named_small_body",
+   "name": "3352 McAuliffe",
+   "people": [
+    "AF-00002"
+   ],
+   "names_text": "McAuliffe (Corrigan), Sharon Christa",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "3352",
+    "elements": {
+     "a_m": 281064105268.733,
+     "e": 0.3692148419753177,
+     "i_deg": 4.773278592707135,
+     "node_deg": 107.3646107027831,
+     "peri_deg": 15.90032431914877,
+     "m0_deg": 284.7820366128574,
+     "epoch_s": 63720734400,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Nov-24_05:35:05)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 3352",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3352"
+    },
+    {
+     "text": "Wikidata Q151372 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q151372"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-3353",
+   "kind": "named_small_body",
+   "name": "3353 Jarvis",
+   "people": [
+    "AF-00003"
+   ],
+   "names_text": "Jarvis, Gregory Bruce",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "3353",
+    "elements": {
+     "a_m": 278698065497.1004,
+     "e": 0.0846845143089485,
+     "i_deg": 21.80737073846495,
+     "node_deg": 245.5976619005242,
+     "peri_deg": 34.80142256554952,
+     "m0_deg": 78.99689068983727,
+     "epoch_s": 63655156800,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-05_07:27:32)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 3353",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3353"
+    },
+    {
+     "text": "Wikidata Q835511 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q835511"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-3354",
+   "kind": "named_small_body",
+   "name": "3354 McNair",
+   "people": [
+    "AS-00140"
+   ],
+   "names_text": "McNair, Ronald Erwin",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "3354",
+    "elements": {
+     "a_m": 347749948693.7596,
+     "e": 0.0964643342556726,
+     "i_deg": 6.410290804069779,
+     "node_deg": 321.1166185514076,
+     "peri_deg": 326.5934232449582,
+     "m0_deg": 196.9285605129434,
+     "epoch_s": 63719179200,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-05_07:27:33)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 3354",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3354"
+    },
+    {
+     "text": "Wikidata Q754190 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q754190"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-3355",
+   "kind": "named_small_body",
+   "name": "3355 Onizuka",
+   "people": [
+    "AS-00164"
+   ],
+   "names_text": "Onizuka, Ellison Shoji",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "3355",
+    "elements": {
+     "a_m": 327091708625.7548,
+     "e": 0.06682604365513377,
+     "i_deg": 4.065028309684739,
+     "node_deg": 140.8531686075577,
+     "peri_deg": 299.7697879063841,
+     "m0_deg": 354.6350857666544,
+     "epoch_s": 63714945600,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-05_07:27:40)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 3355",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3355"
+    },
+    {
+     "text": "Wikidata Q151385 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q151385"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-3356",
+   "kind": "named_small_body",
+   "name": "3356 Resnik",
+   "people": [
+    "AS-00154"
+   ],
+   "names_text": "Resnik, Judith Arlene",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "3356",
+    "elements": {
+     "a_m": 328049973341.93787,
+     "e": 0.1137370394290858,
+     "i_deg": 4.09651834052585,
+     "node_deg": 108.2883510952825,
+     "peri_deg": 157.9724405723115,
+     "m0_deg": 211.351357034062,
+     "epoch_s": 63725054400,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-05_07:27:42)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 3356",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=3356"
+    },
+    {
+     "text": "Wikidata Q151390 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q151390"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-8032",
+   "kind": "named_small_body",
+   "name": "8032 Michaeladams",
+   "people": [
+    "AS-00038"
+   ],
+   "names_text": "Adams, Michael James",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "8032",
+    "elements": {
+     "a_m": 357063885162.7214,
+     "e": 0.1753619497566673,
+     "i_deg": 9.161257153296205,
+     "node_deg": 35.75311498678663,
+     "peri_deg": 217.0226306467055,
+     "m0_deg": 48.33003130896311,
+     "epoch_s": 63717710400,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-05_11:14:27)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 8032",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=8032"
+    },
+    {
+     "text": "Wikidata Q674095 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q674095"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-51823",
+   "kind": "named_small_body",
+   "name": "51823 Rickhusband",
+   "people": [
+    "AS-00393"
+   ],
+   "names_text": "Husband, Rick Douglas",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "51823",
+    "elements": {
+     "a_m": 470517961187.3905,
+     "e": 0.2178772732681271,
+     "i_deg": 11.5552394025286,
+     "node_deg": 58.04665505626957,
+     "peri_deg": 347.0753748028603,
+     "m0_deg": 31.7969947555402,
+     "epoch_s": 63744926400,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-06_05:34:04)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 51823",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=51823"
+    },
+    {
+     "text": "Wikidata Q155070 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q155070"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-51824",
+   "kind": "named_small_body",
+   "name": "51824 Mikeanderson",
+   "people": [
+    "AS-00378"
+   ],
+   "names_text": "Anderson, Michael Phillip",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "51824",
+    "elements": {
+     "a_m": 449638539186.5875,
+     "e": 0.1118677239591733,
+     "i_deg": 9.771366599256625,
+     "node_deg": 334.3873198093769,
+     "peri_deg": 358.4029514297945,
+     "m0_deg": 121.621648009073,
+     "epoch_s": 63727300800,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-06_05:34:06)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 51824",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=51824"
+    },
+    {
+     "text": "Wikidata Q1454959 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q1454959"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-51825",
+   "kind": "named_small_body",
+   "name": "51825 Davidbrown",
+   "people": [
+    "AS-00435"
+   ],
+   "names_text": "Brown, David McDowell",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "51825",
+    "elements": {
+     "a_m": 443834838265.44916,
+     "e": 0.07015306535596735,
+     "i_deg": 9.618045893055132,
+     "node_deg": 23.45112270752874,
+     "peri_deg": 33.01160310229546,
+     "m0_deg": 42.16934816540649,
+     "epoch_s": 63711144000,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2025-Aug-02_09:08:57)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 51825",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=51825"
+    },
+    {
+     "text": "Wikidata Q2088423 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q2088423"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-51826",
+   "kind": "named_small_body",
+   "name": "51826 Kalpanachawla",
+   "people": [
+    "AS-00373"
+   ],
+   "names_text": "Chawla, Kalpana",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "51826",
+    "elements": {
+     "a_m": 460012681400.14734,
+     "e": 0.08566422838542613,
+     "i_deg": 9.587720745123132,
+     "node_deg": 14.16924693095037,
+     "peri_deg": 50.67177060364162,
+     "m0_deg": 324.0162322228883,
+     "epoch_s": 63708033600,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-06_05:34:11)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 51826",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=51826"
+    },
+    {
+     "text": "Wikidata Q155077 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q155077"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-51827",
+   "kind": "named_small_body",
+   "name": "51827 Laurelclark",
+   "people": [
+    "AS-00436"
+   ],
+   "names_text": "Clark (Salton), Laurel Blair",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "51827",
+    "elements": {
+     "a_m": 453591756835.4193,
+     "e": 0.1459314231767974,
+     "i_deg": 10.23266866266716,
+     "node_deg": 10.6442659385386,
+     "peri_deg": 92.37944219135802,
+     "m0_deg": 304.9588549795448,
+     "epoch_s": 63703022400,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-06_05:34:13)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 51827",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=51827"
+    },
+    {
+     "text": "Wikidata Q2088416 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q2088416"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-51828",
+   "kind": "named_small_body",
+   "name": "51828 Ilanramon",
+   "people": [
+    "AS-00437"
+   ],
+   "names_text": "Ramon (Wolferman), Ilan",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "51828",
+    "elements": {
+     "a_m": 415450094087.4886,
+     "e": 0.1286778803548112,
+     "i_deg": 9.474108432111663,
+     "node_deg": 41.7124635817795,
+     "peri_deg": 42.96125950381138,
+     "m0_deg": 137.6143878072076,
+     "epoch_s": 63698011200,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Jun-06_05:34:13)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 51828",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=51828"
+    },
+    {
+     "text": "Wikidata Q155078 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q155078"
+    }
+   ]
+  },
+  {
+   "id": "minor-planet-51829",
+   "kind": "named_small_body",
+   "name": "51829 Williemccool",
+   "people": [
+    "AS-00434"
+   ],
+   "names_text": "McCool, William Cameron",
+   "since_s": null,
+   "since_date": null,
+   "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
+   "where": {
+    "mpc": "51829",
+    "elements": {
+     "a_m": 340747862865.3052,
+     "e": 0.05443079168438338,
+     "i_deg": 7.567947669330325,
+     "node_deg": 93.32333661497546,
+     "peri_deg": 118.7881266806293,
+     "m0_deg": 81.93404139232919,
+     "epoch_s": 63706132800,
+     "frame": "heliocentric ecliptic J2000"
+    },
+    "src": "jpl-horizons (solution 2026-Aug-20_09:28:46)"
+   },
+   "sources": [
+    {
+     "text": "JPL Horizons small-body record, minor planet number 51829",
+     "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=51829"
+    },
+    {
+     "text": "Wikidata Q155082 (named after)",
+     "url": "https://www.wikidata.org/wiki/Q155082"
+    }
+   ]
+  }
+ ]
+}

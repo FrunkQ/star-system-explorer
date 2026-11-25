@@ -143,6 +143,13 @@ pub(crate) fn read_system(
             plasma_source_kg_s: 0.0,
             pedersen_conductance_s: 0.0,
             moons: vec![],
+            spin_period_s: fact("body.rotation_period")
+                .or_else(|| env.and_then(|b| b.spin_hours).map(|h| h * 3600.0))
+                .map(f64::abs)
+                .unwrap_or(0.0),
+            // The air's gases at height wait on the atmosphere stage; the
+            // ovals carry a power and no lines until then (stand-in said).
+            upper_air: None,
             rings_outer_m: 0.0,
         };
         let mut r = sse_field::read(&body, &set).map_err(|e| err("bad_field", e))?;

@@ -22,22 +22,29 @@ export default {
   async run(page, d) {
     await d.caption("True", "The Solar System as it would look: each world lit by the Sun, the Sun in its own colour.");
     await pick(page, d, "View style", "True");
-    await d.hold(4500);
+    await d.hold(2700);
     await pick(page, d, "Seen from", "Tilted");
-    await d.hold(3500);
+    await d.hold(2100);
     await d.caption("HUD", "Names, orbits and outlines over the true picture, like a heads-up display.");
     await pick(page, d, "HUD", "On");
-    await d.hold(3500);
+    await d.hold(2100);
     await d.caption("Infrared", "Each body glows by its own heat.");
     await pick(page, d, "Band", "Infrared");
-    await d.hold(3500);
+    await d.hold(2100);
     await d.caption("X-ray", "The star's corona and flares; the worlds go dark.");
     await pick(page, d, "Band", "X-ray");
-    await d.hold(3500);
+    await d.hold(2100);
     await d.caption("Mag", "Every world's magnetic field lines, and the wind's bubble round it.");
     await pick(page, d, "Band", "Mag");
-    await d.hold(5000);
+    await d.hold(3000);
     await pick(page, d, "Band", "Visible");
     await d.hold(1500);
+    // A click on any body flies in to its close-up (24 Nov), with its rings and moons.
+    const saturn = page.locator("[aria-roledescription='3D chart'] .pin").filter({ hasText: /^Saturn/ }).first();
+    if (await saturn.isVisible().catch(() => false)) {
+      await d.caption("Fly in", "Click any world and the camera flies to it: Saturn, its rings and moons.");
+      await d.click(saturn);
+      await d.hold(3000);
+    }
   },
 };

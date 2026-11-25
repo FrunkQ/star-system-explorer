@@ -4,10 +4,15 @@
 // Orbit strip opens read-only with the reference worlds. On Build, typing "1 AU" in the strip is one change: the
 // handle says 1 AU, the card lists what followed (Mars warms), the state hash moves, and Undo puts it back. Dragging
 // the mark and letting go is one change too; Esc while dragging writes nothing. On a phone nothing runs off the side.
+// ED12, the Orbit and Spin boxes at Science depth: the year and the stability verdict under the orbit; a year typed on
+// the size strip is the distance with that year; Retrograde mirrors the lean past 90 degrees; the place now is a ring
+// that catches at the far point; Locked sets the day to the year and the sun's day says so; each one change, one Undo.
+// ED7: on Explore, "Try changing it" opens an example what-if where the strip moves and the main line does not; on
+// Build, Add a moon offers formation's own rules for the chosen planet.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { desk } from "./nav.mjs";
+import { depth, desk } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -66,6 +71,26 @@ try {
       assert.equal(await cardOrbit.locator("[data-unit]").innerText(), "AU", "round the readings and back");
     }
 
+    // ED7: on Explore the strip is read-only, with "Try changing it": an example what-if where it moves; the main line
+    // does not; Throw away puts the world back.
+    {
+      if (!(await strip.isVisible())) await row.locator('[data-handle="orbit"]').click();
+      const main = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
+      await strip.locator("[data-try]").click();
+      await gm.waitForFunction(() => /EXAMPLE/.test(document.querySelector(".whatif b")?.textContent ?? ""), null, { timeout: 20000 });
+      assert.ok(!(await strip.locator("[data-strip-figure]").isDisabled()), "the example moves");
+      await strip.locator("[data-strip-figure]").click();
+      await strip.locator("[data-strip-entry]").fill("1 AU");
+      await strip.locator("[data-strip-entry]").press("Enter");
+      await gm.waitForFunction(() => /(^|about )1 AU$/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
+      assert.match(await gm.locator("[data-followed]").innerText(), /EXAMPLE · change anything only/);
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), main, "the main line does not move");
+      await shot(gm, `explore-example-${vp}`);
+      await gm.locator(".whatif button", { hasText: "Throw away" }).click();
+      await gm.waitForFunction(() => /1\.52 AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
+      assert.equal(await strip.locator("[data-try]").count(), 1, "read-only again, with Try changing it");
+    }
+
     // Build: type "1 AU", one change, what followed, Undo.
     await desk(gm, "Build");
     const hash0 = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
@@ -105,6 +130,129 @@ try {
     await gm.keyboard.press("Escape");
     await gm.waitForTimeout(400);
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash2, "Esc writes nothing");
+    assert.equal(await row.count(), 1, "the strip's Esc leaves the world selected");
+
+    // ED3 part 1, the chart: dragging a world shows a ghost and the distance as the engine says it; the world stays
+    // put; Esc puts it back and writes nothing.
+    if (vp === "desk") {
+      await gm.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
+      await gm.keyboard.press("Control+z");
+      await gm.waitForFunction(() => /1\.52 AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
+      await gm.waitForTimeout(1000); // the chart redraws Mars back at 1.52 AU after the card
+      const hit = gm.locator('.area-chart .body[aria-label^="Mars,"] .hit').first();
+      const sun = gm.locator('.area-chart .body[aria-label^="Sun"] .hit').first();
+      const mb = await hit.boundingBox();
+      const sb = await sun.boundingBox();
+      const [mx, my, sx, sy] = [mb.x + mb.width / 2, mb.y + mb.height / 2, sb.x + sb.width / 2, sb.y + sb.height / 2];
+      const hash3 = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
+      await gm.mouse.move(mx, my);
+      await gm.mouse.down();
+      for (let k = 1; k <= 6; k++) await gm.mouse.move(mx + ((mx - sx) * 0.3 * k) / 6, my + ((my - sy) * 0.3 * k) / 6);
+      await gm.locator("[data-ghost]").waitFor({ timeout: 5000 });
+      assert.match(await gm.locator("[data-drag-readout]").textContent(), /AU( · \d+:\d+ with \S+)?$/);
+      // ED3 part 2: Alt runs free of the catches; the figure is the drag's own.
+      await gm.keyboard.down("Alt");
+      await gm.mouse.move(mx + (mx - sx) * 0.33, my + (my - sy) * 0.33);
+      await gm.waitForTimeout(100);
+      assert.equal(await gm.locator("[data-drag-readout]").getAttribute("data-caught"), null, "Alt: no catch");
+      await gm.keyboard.up("Alt");
+      const still = await hit.boundingBox();
+      assert.ok(Math.abs(still.x - mb.x) < 1 && Math.abs(still.y - mb.y) < 1, `the world stays put while the ghost moves: ${JSON.stringify([mb, still])}`);
+      await shot(gm, `chart-drag-${vp}`);
+      await gm.keyboard.press("Escape");
+      await gm.mouse.up();
+      await gm.waitForTimeout(400);
+      assert.equal(await gm.locator("[data-ghost]").count(), 0, "Esc takes the ghost away");
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash3, "Esc on the chart writes nothing");
+    }
+
+    // ED12: the boxes, at Science depth on the Build desk.
+    if (vp === "desk") {
+      await gm.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
+      await depth(gm, "Science");
+      const hash = () => gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
+      // Undo is a change of its own (the hash moves on); the figure it names comes back.
+      const undoTo = async (back) => {
+        const h = await hash();
+        await gm.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
+        await gm.keyboard.press("Control+z");
+        await gm.waitForFunction((x) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== x, h, { timeout: 20000 });
+        if (back) await gm.waitForFunction(([sel, re]) => new RegExp(re).test(document.querySelector(sel)?.textContent ?? ""), back, { timeout: 20000 });
+        assert.equal(await gm.getByText("Nothing to undo").count(), 0, "each Undo takes back the box's own change");
+      };
+      const marsAt = ['[data-handle="orbit"] .value', "1\\.52 AU"];
+      if (!(await gm.locator('[data-box="orbit"]').isVisible())) await row.locator('[data-handle="orbit"]').click();
+      const obox = gm.locator('[data-box="orbit"]');
+      await obox.waitFor();
+      for (const p of ["orbit.shape", "orbit.lean"]) assert.equal(await obox.locator(`[data-strip="${p}"]`).count(), 1, `${p} strip`);
+      for (const r of ["now", "peri", "node"]) assert.equal(await obox.locator(`[data-ring="${r}"]`).count(), 1, `${r} ring`);
+      await obox.locator('[data-result="year"]').waitFor({ timeout: 20000 });
+      assert.match(await obox.locator('[data-result="year"]').innerText(), /68\d (d|days)|1\.88 (years|yr)/);
+      assert.match(await obox.locator('[data-result="stability"]').innerText(), /Lasts|Watch/);
+      assert.match(await obox.locator('[data-strip="orbit.shape"] [data-strip-figure]').innerText(), /^0\.09/);
+      await shot(gm, `orbit-box-${vp}`);
+
+      // A year typed on the size: one Earth year puts Mars at 1 AU.
+      await obox.locator('[data-strip="orbit"] [data-strip-figure]').click();
+      await obox.locator('[data-strip="orbit"] [data-strip-entry]').fill("365.25 d");
+      await obox.locator('[data-strip="orbit"] [data-strip-entry]').press("Enter");
+      await gm.waitForFunction(() => /(^|about )1(\.00)? AU$/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nbox says: ${await obox.innerText()}`);
+      });
+      await undoTo(marsAt);
+
+      // Retrograde: the lean goes past 90 degrees, and the chip says so.
+      await obox.locator('[data-chip="retrograde"]').click();
+      await gm.waitForFunction(() => document.querySelector('[data-box="orbit"] [data-chip="retrograde"]')?.getAttribute("aria-pressed") === "true", null, { timeout: 20000 });
+      assert.match(await obox.locator('[data-strip="orbit.lean"] [data-strip-figure]').innerText(), /18\d|17\d/);
+      await gm.waitForFunction(() => /Lean/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await undoTo(['[data-box="orbit"] [data-chip="retrograde"]', "^Retrograde$"]);
+      await gm.waitForFunction(() => document.querySelector('[data-box="orbit"] [data-chip="retrograde"]')?.getAttribute("aria-pressed") === "false");
+
+      // Where it is now: typed 180 catches at the farthest point.
+      await obox.locator('[data-ring="now"] [data-ring-figure]').click();
+      await obox.locator('[data-ring="now"] [data-ring-entry]').fill("180");
+      await obox.locator('[data-ring="now"] [data-ring-entry]').press("Enter");
+      await gm.waitForFunction(() => /farthest/.test(document.querySelector('[data-ring="now"] [data-ring-caught]')?.textContent ?? ""), null, { timeout: 20000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nring says: ${await obox.locator('[data-ring="now"]').innerText()}`);
+      });
+      await gm.waitForFunction(() => /Where it is now 180° from its closest point/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await undoTo();
+
+      // Spin: Locked sets the day to the year; the sun's day says the same face looks at the star.
+      await row.locator('[data-handle="spin"]').click();
+      const sbox = gm.locator('[data-box="spin"]');
+      await sbox.waitFor();
+      assert.equal(await sbox.locator('[data-strip="spin.tilt"]').count(), 1);
+      await gm.waitForFunction(() => /h|min/.test(document.querySelector('[data-box="spin"] [data-result="solar_day"]')?.textContent ?? ""), null, { timeout: 20000 });
+      await sbox.locator('[data-chip="locked"]').click();
+      await gm.locator("[data-chip-said]").waitFor({ timeout: 20000 });
+      await gm.waitForFunction(() => /same face/.test(document.querySelector('[data-box="spin"] [data-result="solar_day"]')?.textContent ?? ""), null, { timeout: 20000 });
+      assert.match(await sbox.locator("[data-chip-said]").innerText(), /year/);
+      await shot(gm, `spin-box-locked-${vp}`);
+      await undoTo(['[data-handle="spin"] .value', "^24\\.6 h"]);
+      // Backwards: the change says so in words.
+      await sbox.locator('[data-chip="retrograde"]').click();
+      await gm.locator("[data-followed]").waitFor({ timeout: 20000 });
+      await gm.waitForFunction(() => /backwards/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await undoTo();
+
+      // ED7 part 2b: Add a moon offers formation's own rules for Mars (a rocky world: an impact moon and a captured
+      // body, no disc), each at its own orbit; adding one is one change, and one Undo takes it back.
+      await gm.getByRole("button", { name: "More", exact: true }).click();
+      await gm.locator("[data-more-add]").click();
+      const add = gm.locator("dialog[data-add]");
+      await add.locator("[data-moon-recipes]").waitFor({ timeout: 20000 });
+      assert.deepEqual(await add.locator("[data-moon-recipe]").evaluateAll((ls) => ls.map((l) => l.dataset.moonRecipe)), ["impact", "captured"]);
+      assert.match(await add.locator('[data-moon-recipe="impact"]').innerText(), /Canup 2004/);
+      await shot(gm, `add-moon-${vp}`);
+      const before = await gm.locator('.area-chart .body[aria-label*="moon of Mars" i]').count();
+      await add.locator('[data-moon-recipe="impact"] button').click();
+      await gm.waitForFunction(() => !document.querySelector("dialog[data-add]")?.open, null, { timeout: 20000 });
+      await gm.waitForFunction((n) => document.querySelectorAll('.area-chart .body[aria-label*="moon of Mars" i]').length > n, before, { timeout: 20000 });
+      await undoTo();
+      await depth(gm, "Curious");
+    }
 
     if (vp === "phone") {
       const over = await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

@@ -60,9 +60,41 @@ spaceflight vehicle record in `catalogue.json` (`crewed`), from GCAT's satcat (o
 around the Earth with GCAT's shape and inclination at its epoch (turned to the ecliptic), a launch event, and the
 phase's end: 169 landed (sites from GCAT's coordinates, or KSC, Edwards, White Sands and the Kazakh steppe placed
 from memory, or a stand-in), 60 gone (reentered or deorbited, Mir among them), 520 docked (a Soyuz or a Shuttle
-whose first phase ends at a station; GCAT's later phases are in its auxiliary catalogues, not read yet), 21 still in
+whose first phase ends at a station; GCAT's public tables keep no later phase for these; auxcat.tsv, checked 24 Nov, lists only the objects attached to them), 21 still in
 orbit. The coordinates reader now takes either order, so Apollo 13's Odyssey and Chang'e 6's return capsule land
 at GCAT's coordinates. Test `stations_and_crewed_flights_have_logs` (Mir gone, STS-103 at KSC).
+
+## Part 3 (24 Nov 2026): landing the docked flights; Earth inclinations in the showcase logs
+
+- Crewed flights GCAT leaves docked now land on Wikidata's landing day (P620, `scripts/spaceflight/wikidata_landings.json`,
+  501 COSPAR ids, queried 24 Nov, CC0): 255 of the 520 docked logs. Noon UTC stands in for the hour; the site is the
+  programme's usual zone (Soyuz on the Kazakh steppe, the Shuttle at KSC, Shenzhou at Dongfeng; written from memory and
+  marked so) for 193, a stand-in point for 62. The undocking is in neither source, so the docked piece runs to the
+  landing. Cargo craft that burn up (Progress, Cygnus, HTV, Tianzhou, ATV) are never landed. 265 stay docked.
+- `build_logs.py`'s `orbit()` turns Earth-orbit inclinations from the equator to the ecliptic (node at the equinox),
+  so Apollo 11's parking orbit, STS-1, Falcon 9 flight 20 and SNAP-10A sit in the right tilt to the planets.
+
+Next: the undocking and landing hour and site from press kits for the 62 without a site and the 265 still docked;
+splits between carriers and what they release (Viking, Galileo).
+
+## Part 4 (24 Nov 2026): carriers split off what they release
+
+GCAT's REL phases (a craft carried by another, released at the phase's end) become `split` events on the carrier's
+log, kept only where the released craft's own log has a piece starting at that moment, as the showcase logs do: 58
+releases (Viking orbiters and their landers, among others). `splits_and_joins_meet_their_logs` checks each.
+
+## Part 5 (24 Nov 2026): ending what docks from GCAT's end of mission
+
+GCAT's payload catalogue (psatcat.tsv) has an end-of-mission date (TDate) for each payload, with the hour for most
+crewed flights. `docked_end` in the script uses it for every flight GCAT leaves docked: crewed ships (Soyuz, the
+Shuttle, Shenzhou, Apollo, Gemini, Dragon, Starliner) land then at their programme's usual zone, and cargo craft
+(Progress, Cygnus, HTV, Tianzhou, ATV), modules and TKS burn up then. Wikidata's P620 day is used only where psatcat
+has no date; where both exist psatcat wins, since Wikidata had Soyuz 17 landing in August 1975 and some year-only
+dates. Landings GCAT gives with no site now take the programme's zone too (Vostok and Voskhod on the steppe, early
+Shenzhou at Siziwang, Buran at Baikonur, Apollo, Gemini and Dragon at one recovery point each), and White Sands
+(WSMR) joins the named sites. Endings: 443 landed, 296 gone, 21 in orbit, 10 docked (station modules, and Shenzhou 23,
+Tianzhou 10 and Progress MS-34, docked today). The test checks Soyuz 17's landing hour, Progress 1's burn-up, STS-3
+at White Sands and at most 12 still docked.
 
 ### Checks
 
@@ -72,9 +104,8 @@ estimates explained, every solved course meets its planet, every departed craft 
 
 ### Still to do
 
-- Part 2: stations and crewed flights in Earth orbit (psatcat and the station cores), from GCAT's orbits.
-- Splits between carriers and what they release (Viking orbiter and lander, Galileo and its probe): GCAT's REL
-  phases give the times; each would need the child's piece to start at the split, as the showcase logs do.
+- Part 6: each flight's own landing or splashdown point and the undocking hour (press kits, NASA and Roscosmos
+  timelines), in place of the programme recovery points; the 4 landings with no site at all.
 - Moons and small bodies in the NAV fixture, so pieces around them get a position.
 - Horizons state vectors for the craft Horizons holds, in place of turned orbits.
-- Radii of the moons and small bodies are from memory, to verify against JPL SSD.
+- Radii of the small bodies (asteroids, comets) are from memory, to verify; the moons' were checked against JPL SSD on 24 Nov.

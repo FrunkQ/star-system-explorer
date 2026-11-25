@@ -51,7 +51,7 @@ try {
     const h0 = await hash();
     const kicker = await gm.locator(".kicker").textContent();
 
-    await gm.locator(".area-chart [role=button]", { hasText: TARN }).first().click();
+    await gm.locator(".area-chart").getByRole("button", { name: TARN }).first().click();
     const tarn = gm.locator(".area-chart [role=button][aria-pressed=true]");
     assert.match(await tarn.getAttribute("aria-label"), /^Tarn/);
     const all = await fields();

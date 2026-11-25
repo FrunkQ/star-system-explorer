@@ -1,4 +1,4 @@
-import { WHY_WIREFRAME_LATER, type ViewControlsSpec } from "../../../ui-contract/src/index.ts";
+import { WHY_TRUE_HELD, WHY_WIREFRAME_LATER, type ViewControlsSpec } from "../../../ui-contract/src/index.ts";
 
 /**
  * The galaxy chart in the one set of view controls (rule 12; V9t). Chart is the face-on diagram with its rings,
@@ -11,4 +11,14 @@ export const GALAXY_CONTROLS: ViewControlsSpec = {
   flat: true,
   hud: { "3d": true, true: true },
   bands: { visible: true, infrared: true, ultraviolet: true, xray: true, radio: true, mag: "The galaxy's magnetic field is not drawn yet" },
+};
+
+/**
+ * Your systems (V3 gaps 17, 18 and 39): a flat map seen from above. HUD is the overlay: the grid (every scale-bar
+ * length) and the systems' names; routes and the systems themselves always show.
+ */
+export const YOUR_SYSTEMS_CONTROLS: ViewControlsSpec = {
+  styles: { chart: true, "3d": "The campaign's map is drawn from above for now", true: WHY_TRUE_HELD, wireframe: WHY_WIREFRAME_LATER },
+  flat: true,
+  hud: { chart: true },
 };

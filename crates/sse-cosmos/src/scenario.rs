@@ -84,6 +84,9 @@ pub struct CosmologyPack {
     pub sky: crate::sky::SkyParams,
     #[serde(default)]
     pub origin: crate::origin::OriginParams,
+    /// V9w: which galaxies light the web cube.
+    #[serde(default)]
+    pub web_light: crate::web_light::WebLightParams,
 }
 
 /// The pack fields that moved to the sheet, with the sheet's id for each.

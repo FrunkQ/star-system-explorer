@@ -596,6 +596,8 @@ dependencies = [
  "sse-atoms",
  "sse-core",
  "sse-flow",
+ "sse-light",
+ "sse-reference",
 ]
 
 [[package]]
@@ -678,6 +680,7 @@ dependencies = [
  "sse-sense",
  "sse-sift",
  "sse-sky",
+ "sse-small",
  "sse-surface",
  "sse-survey",
  "sse-time",
@@ -759,6 +762,7 @@ dependencies = [
  "serde_json",
  "sse-atoms",
  "sse-core",
+ "sse-flow",
  "sse-light",
 ]
 
@@ -881,6 +885,17 @@ dependencies = [
  "sse-core",
  "sse-cosmos",
  "sse-light",
+]
+
+[[package]]
+name = "sse-small"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-formation",
+ "sse-reference",
 ]
 
 [[package]]

@@ -28,6 +28,7 @@ pub mod star_tree;
 pub mod stars;
 pub mod structure;
 pub mod web;
+pub mod web_light;
 
 pub use birth::SystemBirth;
 pub use model::PatchModel;
@@ -160,6 +161,8 @@ mod g6_tests;
 mod gh3_tests;
 #[cfg(test)]
 mod gh4_tests;
+#[cfg(test)]
+mod web_light_tests;
 #[cfg(test)]
 mod y1_tests;
 

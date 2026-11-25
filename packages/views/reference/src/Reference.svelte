@@ -7,23 +7,38 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { findInSheet, readElementsPage, type ElementRow, type RefHit, dimensionless, formatUnit, formatValue, measureWords, readConstantsPage, readRow, readSource, rowNote, showReference, siUnits, sourceName, unitFactor, type ConstantRow, type ConstantsPage, type Json, type RowDetail, type SheetSource, type SystemScene, type UnitRow, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { figureTable, SCALE_CLASSES, findInSheet, readElementsPage, type ElementRow, type RefHit, dimensionless, formatUnit, formatValue, measureWords, readConstantsPage, readRow, readSource, rowNote, showReference, siUnits, sourceName, unitFactor, type ConstantRow, type ConstantsPage, type Json, type RowDetail, type SheetSource, type SystemScene, type UnitRow, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { Stamp } from "../../../chart-grammar/src/index.ts";
   import Elements from "./Elements.svelte";
   import Names from "./Names.svelte";
   import Classes from "./Classes.svelte";
+  import Parts from "./Parts.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const depth = $derived(ctx.workspace.depth ?? "science");
+  // "How figures are said" (ED1a): the units engine's table, with the readings this campaign chose by pressing a unit.
+  const said = figureTable();
+  const classWords = new Map(SCALE_CLASSES.map((c) => [c.id, c.name]));
+  const keyWords = (key: string): string => {
+    if (key === "default") return "anything else";
+    const [c, w] = key.split(".");
+    const cls = c === "*" ? "any body" : (classWords.get(c!) ?? c!);
+    return w ? `${cls}: ${w}` : cls;
+  };
+  const chosen = (kind: string, key: string): string | undefined => {
+    const [c, w] = key === "default" ? ["*", undefined] : key.split(".");
+    return ctx.workspace.unit_choices?.[`${kind}|${c}${w ? `.${w}` : ""}`];
+  };
+  const anyChosen = $derived(Object.keys(ctx.workspace.unit_choices ?? {}).length > 0);
   const full = $derived(depth !== "curious");
 
-  type PageId = "constants" | "elements" | "units" | "names" | "classes";
-  const PAGES: { group: string; pages: { id: PageId; label: string }[] }[] = [
+  type PageId = "constants" | "elements" | "units" | "names" | "classes" | "parts";
+  const PAGES: { group: string; pages: { id: PageId; label: string }[] }[] = $derived([
     { group: "Nature", pages: [{ id: "constants", label: "Constants" }, { id: "elements", label: "Elements" }] },
     { group: "Names and classes", pages: [{ id: "names", label: "Names" }, { id: "classes", label: "Classes" }] },
-    { group: "This setting", pages: [{ id: "units", label: "Units" }] },
-  ];
-  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" || params.page === "names" || params.page === "classes" ? params.page : "constants")));
+    { group: "This setting", pages: [{ id: "units", label: "Units" }, ...(ctx.styles ? [{ id: "parts" as const, label: "Parts" }] : [])] },
+  ]);
+  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" || params.page === "names" || params.page === "classes" || params.page === "parts" ? params.page : "constants")));
 
   let sheet = $state.raw<ConstantsPage | null>(null);
   let failed = $state<string | null>(null);
@@ -129,7 +144,7 @@
   <header>
     <div class="title">
       <h1>Reference</h1>
-      <p class="lede">{page === "units" ? "How this setting counts and shows things. Nothing here changes the physics." : page === "names" ? "What this campaign calls things. Names never change the physics." : page === "classes" ? "Every kind of world, as the charts mark it. Classes are labels read off the physics, never rules." : "What nature gives the simulation. Real unless marked."}</p>
+      <p class="lede">{page === "units" ? "How this setting counts and shows things. Nothing here changes the physics." : page === "names" ? "What this campaign calls things. Names never change the physics." : page === "classes" ? "Every kind of world, as the charts mark it. Classes are labels read off the physics, never rules." : page === "parts" ? "What players' screens are made of, and the controls each can have on or off." : "What nature gives the simulation. Real unless marked."}</p>
     </div>
     <div class="find" role="search">
       <input
@@ -171,6 +186,8 @@
     <div class="body"><Names session={ctx.session} workspace={ctx.workspace} {depth} offer={typeof params.names_offer === "string" ? params.names_offer : ""} here={scene.system ? { address: scene.system, label: scene.title } : null} /></div>
   {:else if page === "classes"}
     <div class="body"><Classes session={ctx.session} workspace={ctx.workspace} {depth} symbology={ctx.symbology} offer={typeof params.classes_offer === "string" && params.classes_offer ? params.classes_offer.split(",").map((x) => x.trim()) : []} /></div>
+  {:else if page === "parts" && ctx.styles}
+    <div class="body"><Parts views={ctx.styles.views()} {depth} /></div>
   {:else if failed}
     <p class="note" data-reference-error>Could not read the data sheet: {failed}</p>
   {:else if !sheet}
@@ -237,6 +254,23 @@
               </ul>
             </section>
           {/each}
+          <section class="group" aria-labelledby="said" data-figures-said>
+            <h2 id="said">How figures are said</h2>
+            <p class="about">For each kind of figure and what it is about, the units a press steps through, first one the default. Each reading climbs its units as a value grows. Pressing a unit anywhere chooses for every body of that kind.{#if anyChosen} <button type="button" class="reset" data-said-reset onclick={() => { for (const k of Object.keys(ctx.workspace.unit_choices ?? {})) { const [kind, rest] = k.split("|"); const [c, w] = rest!.split("."); ctx.workspace.setUnitChoice?.(kind!, { class: c!, ...(w ? { what: w } : {}) }, null); } }}>Use the scheme's everywhere</button>{/if}</p>
+            <ul class="rows">
+              {#each said as k (k.kind)}
+                {#each k.keys as row (row.key)}
+                  {@const pick = chosen(k.kind, row.key)}
+                  <li data-said={`${k.kind}|${row.key}`}>
+                    <div class="row said-row">
+                      <span class="name">{sentence(k.kind)}<span class="sym">{keyWords(row.key)}</span></span>
+                      <span class="val">{#each row.readings as r, i (r.id)}{i ? " · " : ""}<span class:chosen={pick ? pick === r.id : i === 0} data-reading={r.id}>{r.units.join(", ")}</span>{/each}</span>
+                    </div>
+                  </li>
+                {/each}
+              {/each}
+            </ul>
+          </section>
         {/if}
       </div>
 
@@ -443,6 +477,22 @@
   .num .v {
     font-family: var(--sse-font-mono);
     font-size: 16px;
+  }
+  .said-row {
+    cursor: default;
+  }
+  .chosen {
+    color: var(--sse-accent-ink);
+    border-bottom: var(--sse-line) solid currentColor;
+  }
+  .reset {
+    border: 0;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: var(--sse-accent-ink);
+    text-decoration: underline;
+    cursor: pointer;
   }
   .group {
     margin-top: 18px;

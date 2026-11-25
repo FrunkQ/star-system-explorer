@@ -5,9 +5,12 @@
 // the master data sheet, read by the caller; a haze's colour is the one the weather op sends. This file only stacks
 // the layers by the adding method (Bohren 1987), as weather.ts does on the Body globe.
 import { constant, sheetUnitFactor } from "../../ui-contract/src/index.ts";
-import type { SurfaceTile } from "../../ui-contract/src/index.ts";
+import type { Json, SurfaceTile } from "../../ui-contract/src/index.ts";
 import { trueSurface, type TrueTexture } from "./true-look.ts";
-import { addLayers, CLOUD_G, HAZE_G, slabReflectance, type WeatherCell, type WeatherTile } from "./weather.ts";
+import { readGroundOptics, withGround } from "./ground-optics.ts";
+import { airShapeOf, type AirShape } from "./air-luts.ts";
+import { airFactsOf, airFromOptics, airRequest } from "./atmosphere.ts";
+import { addLayers, CLOUD_G, HAZE_G, liveSystems, slabReflectance, stormAt, type WeatherCell, type WeatherMap, type WeatherSystem, type WeatherTile } from "./weather.ts";
 
 /** Linear RGB, 0..1. */
 export type Rgb = [number, number, number];
@@ -23,6 +26,33 @@ export interface AirLook {
   tex: TrueTexture;
   /** Plain words for the HUD note: decks drawn white because the sheet has no colour for them, and so on. */
   said: string[];
+  /** The wind the picture is carried by (VP-A1), pixel for pixel; left out when the cells carry no wind. */
+  flow?: AirFlow;
+  /** A world with ground: the ground alone (true-look.ts `trueSurface`'s own picture, with its faces), under its air. */
+  ground?: TrueTexture;
+  /**
+   * A world with ground: its clouds and haze alone (VP-A4), in the same layout. RGB is their own reflected light,
+   * premultiplied and sRGB-encoded as every TrueTexture is; alpha is their reflectance, so 1 - alpha reaches the
+   * ground. `tex` is the two laid together.
+   */
+  clouds?: TrueTexture;
+  /** The world's air in its own radius, from the kernel's optics (VP-A3), for the rim and terminator. */
+  air?: AirShape;
+}
+
+/**
+ * The wind at the visible deck, from the weather op's cells, at the face's pixels (the same Gaussian blend as the
+ * colours). Eastward and northward, m/s, row 0 at the south as the face's rows are.
+ */
+export interface AirFlow {
+  width: number;
+  height: number;
+  east: Float32Array;
+  north: Float32Array;
+  /** Each row's mean eastward wind (the zonal jets), m/s. */
+  rowEast: Float64Array;
+  /** The storms alive when the face was made, where they stood (`flowFace` carries each as one piece). */
+  storms?: FlowStorm[];
 }
 
 const toLin = (c: number) => {
@@ -43,12 +73,18 @@ interface Stack {
   slots: number;
   /** Condensates with no colour on the sheet, drawn as white scatterers. */
   white: string[];
+  /** n × 2: the wind of the highest deck that shows (east, north), m/s. */
+  wind: Float32Array;
+  /** Whether any cell has a wind. */
+  windy: boolean;
 }
 
 function stackOf(cells: readonly WeatherCell[], colourOf: ColourOf): Stack {
   const slots = Math.max(1, ...cells.map((c) => c.layers.length)) + 1;
   const vals = new Float32Array(cells.length * slots * 4);
   const dirs = new Float32Array(cells.length * 3);
+  const wind = new Float32Array(cells.length * 2);
+  let windy = false;
   const white = new Set<string>();
   const kept = new Map<string, Rgb | null>();
   const colour = (name: string): Rgb | null => {
@@ -67,6 +103,12 @@ function stackOf(cells: readonly WeatherCell[], colourOf: ColourOf): Stack {
       if (r > 0.01 && l.condensate && !rgb) white.add(l.condensate);
       vals.set([r, ...(rgb ?? [1, 1, 1])], o);
     });
+    // The wind seen is the highest deck's that shows (the layers are bottom up), else the top layer's.
+    const seen = [...c.layers].reverse().find((l) => l.cloud_cover > 0.05 && l.optical_depth > 0.1) ?? c.layers[c.layers.length - 1];
+    const w = seen?.wind_m_s ?? [0, 0];
+    wind[i * 2] = w[0] ?? 0;
+    wind[i * 2 + 1] = w[1] ?? 0;
+    if (w[0] || w[1]) windy = true;
     // Haze: all aerosols as one slab of their summed depth, tinted by the depth-weighted colour (as weather.ts).
     let tau = 0;
     const rgb = [0, 0, 0];
@@ -78,7 +120,7 @@ function stackOf(cells: readonly WeatherCell[], colourOf: ColourOf): Stack {
     const o = (i * slots + slots - 1) * 4;
     vals.set([slabReflectance(tau, HAZE_G), ...(tau > 0 ? rgb.map((v) => v / tau) : [1, 1, 1])], o);
   });
-  return { n: cells.length, dirs, vals, slots, white: [...white].sort() };
+  return { n: cells.length, dirs, vals, slots, white: [...white].sort(), wind, windy };
 }
 
 /** The cells' spacing on the unit sphere: the mean nearest-neighbour angle, estimated from the count (radians). */
@@ -90,7 +132,7 @@ const spacing = (n: number) => Math.sqrt((4 * Math.PI) / Math.max(1, n));
  * `equirect`). Each pixel blends the nearby cells with a Gaussian of half a cell, so the coarse tiles do not show
  * as blocks; each cell's own values are the kernel's.
  */
-function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, height: number, tint: Rgb | null): TrueTexture {
+function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, height: number, tint: Rgb | null, flow: AirFlow | null = null, clouds: Uint8Array | null = null): TrueTexture {
   const data = new Uint8Array(width * height * 4);
   const sig = spacing(st.n) / 2;
   const inv = 1 / (2 * sig * sig);
@@ -111,6 +153,8 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
       const x = -Math.cos(2 * Math.PI * u) * s;
       const y = -Math.sin(2 * Math.PI * u) * s;
       acc.fill(0);
+      let we = 0;
+      let wn = 0;
       let ws = 0;
       let best = -1;
       let bestD = Infinity;
@@ -123,15 +167,23 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
         if (d2 > cut) continue;
         const g = Math.exp(-d2 * inv);
         ws += g;
+        we += g * st.wind[p * 2]!;
+        wn += g * st.wind[p * 2 + 1]!;
         const base = p * st.slots * 4;
         for (let q = 0; q < st.slots * 4; q++) acc[q]! += g * st.vals[base + q]!;
       }
       if (ws <= 0 && best >= 0) {
         ws = 1;
+        we = st.wind[best * 2]!;
+        wn = st.wind[best * 2 + 1]!;
         const base = best * st.slots * 4;
         for (let q = 0; q < st.slots * 4; q++) acc[q] = st.vals[base + q]!;
       }
       const o = (j * width + i) * 4;
+      if (flow) {
+        flow.east[j * width + i] = we / ws;
+        flow.north[j * width + i] = wn / ws;
+      }
       const lin: Rgb = ground ? ground(o) : [0, 0, 0];
       // Bottom up: each layer goes on top of what is stacked so far; then the gas above the decks, then the haze.
       for (let k = 0; k < st.slots; k++) {
@@ -139,6 +191,19 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
         const r = acc[k * 4]! / ws;
         if (!(r > 0)) continue;
         for (let ch = 0; ch < 3; ch++) lin[ch] = addLayers(r * (acc[k * 4 + 1 + ch]! / ws), lin[ch]!);
+      }
+      if (clouds) {
+        // The air alone, over black: its own reflected light (premultiplied) and how much it covers.
+        const c: Rgb = [0, 0, 0];
+        for (let k = 0; k < st.slots; k++) {
+          const r = acc[k * 4]! / ws;
+          if (!(r > 0)) continue;
+          for (let ch = 0; ch < 3; ch++) c[ch] = addLayers(r * (acc[k * 4 + 1 + ch]! / ws), c[ch]!);
+        }
+        clouds[o] = toByte(c[0]);
+        clouds[o + 1] = toByte(c[1]);
+        clouds[o + 2] = toByte(c[2]);
+        clouds[o + 3] = Math.round(255 * Math.min(1, (c[0] + c[1] + c[2]) / 3));
       }
       data[o] = toByte(lin[0]);
       data[o + 1] = toByte(lin[1]);
@@ -150,8 +215,17 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
       mw += s;
     }
   }
+  if (flow)
+    for (let j = 0; j < height; j++) {
+      let sum = 0;
+      for (let i = 0; i < width; i++) sum += flow.east[j * width + i]!;
+      flow.rowEast[j] = sum / width;
+    }
   return { width, height, data, mean: [Math.round(mr / mw), Math.round(mg / mw), Math.round(mb / mw)] };
 }
+
+const newFlow = (st: Stack, width: number, height: number): AirFlow | null =>
+  st.windy ? { width, height, east: new Float32Array(width * height), north: new Float32Array(width * height), rowEast: new Float64Array(height) } : null;
 
 function words(st: Stack, giant: boolean): string[] {
   const said: string[] = [];
@@ -168,7 +242,9 @@ export function trueGiant(tiles: readonly WeatherTile[], colourOf: ColourOf, wid
   const cells = tiles.flatMap((t) => t.cells);
   if (!cells.length) return null;
   const st = stackOf(cells, colourOf);
-  return { tex: paint(st, null, width, height, tint), said: words(st, true) };
+  const flow = newFlow(st, width, height);
+  const tex = paint(st, null, width, height, tint, flow);
+  return flow ? { tex, said: words(st, true), flow } : { tex, said: words(st, true) };
 }
 
 /** A world's True surface with its clouds and haze laid over it, at the surface's own size. */
@@ -177,7 +253,139 @@ export function withAir(ground: TrueTexture, tiles: readonly WeatherTile[], colo
   if (!cells.length) return { tex: ground, said: [] };
   const st = stackOf(cells, colourOf);
   const g = (o: number): Rgb => [toLin(ground.data[o]!), toLin(ground.data[o + 1]!), toLin(ground.data[o + 2]!)];
-  return { tex: paint(st, g, ground.width, ground.height, tint), said: words(st, false) };
+  const c = new Uint8Array(ground.width * ground.height * 4);
+  const tex = paint(st, g, ground.width, ground.height, tint, null, c);
+  return { tex, said: words(st, false), ground, clouds: { width: ground.width, height: ground.height, data: c, mean: [0, 0, 0] } };
+}
+
+// ------------------------------------------------------------------ the picture carried by its winds (VP-A1)
+
+/** A storm as the weather op's `systems` give it, where it stood when the face was made. */
+export interface FlowStorm {
+  lat_deg: number;
+  lon_deg: number;
+  size_km: number;
+}
+
+const DEG = Math.PI / 180;
+const wrap01 = (u: number) => u - Math.floor(u);
+
+/** Bilinear read of a face at a latitude and longitude (degrees), wrapping in longitude. */
+function sample(face: TrueTexture, lat: number, lon: number, out: number[]): void {
+  const { width: w, height: h, data } = face;
+  // Pixel (i, j) is at longitude 360(i + ½)/w - 180 and latitude 180(j + ½)/h - 90 (paint, true-look.ts `equirect`).
+  const x = wrap01((lon + 180) / 360) * w - 0.5;
+  const y = Math.min(h - 1, Math.max(0, ((Math.max(-90, Math.min(90, lat)) + 90) / 180) * h - 0.5));
+  const i0 = Math.floor(x);
+  const j0 = Math.floor(y);
+  const fx = x - i0;
+  const fy = y - j0;
+  const j1 = Math.min(h - 1, j0 + 1);
+  const a = ((i0 % w) + w) % w;
+  const b = (a + 1) % w;
+  for (let ch = 0; ch < 4; ch++) {
+    const top = data[(j0 * w + a) * 4 + ch]! * (1 - fx) + data[(j0 * w + b) * 4 + ch]! * fx;
+    const bot = data[(j1 * w + a) * 4 + ch]! * (1 - fx) + data[(j1 * w + b) * 4 + ch]! * fx;
+    out[ch] = top * (1 - fy) + bot * fy;
+  }
+}
+
+/** The flow's eastward and northward wind nearest a latitude and longitude (degrees). */
+function windAt(f: AirFlow, lat: number, lon: number): [number, number] {
+  const i = Math.floor(wrap01((lon + 180) / 360) * f.width) % f.width;
+  const j = Math.min(f.height - 1, Math.max(0, Math.floor(((lat + 90) / 180) * f.height)));
+  return [f.east[j * f.width + i]!, f.north[j * f.width + i]!];
+}
+
+const rowOf = (f: AirFlow, lat: number) => Math.min(f.height - 1, Math.max(0, Math.floor(((lat + 90) / 180) * f.height)));
+
+/**
+ * The face `dt_s` seconds after it was made, carried by its own winds (visual polish 5.4, VP-A1). Every row slides
+ * east at its jet's speed, u / (a cos φ), so the equator laps the temperate bands as Jupiter's does. A storm moves as
+ * one piece at its centre's speed (the weather block's drift, Δλ = u Δt / (a cos φ)) and turns at the speed its
+ * own winds go round it, read from the cells' winds about its centre. The turning is drawn with two phases blended
+ * (the usual flow-map method, a quarter turn a cycle), so the picture never winds itself into a smear. Grade: fact; every speed is the
+ * kernel's. The caller reads the face again from the kernel when the day changes, as the storms are born and die.
+ */
+export function flowFace(face: TrueTexture, flow: AirFlow, opts: { radius_m: number; dt_s: number; storms?: readonly FlowStorm[] }): TrueTexture {
+  // The flow's own storms unless the caller names others.
+  const { width: w, height: h } = face;
+  const a = opts.radius_m;
+  const dt = opts.dt_s;
+  const data = new Uint8Array(w * h * 4);
+  if (!(a > 0) || !Number.isFinite(dt) || flow.width !== w || flow.height !== h) return { ...face, data: Uint8Array.from(face.data) };
+  // A row's eastward turn rate, degrees of longitude a second.
+  const rate = (lat: number) => {
+    const c = Math.max(0.02, Math.cos(lat * DEG));
+    return (flow.rowEast[rowOf(flow, lat)]! / (a * c)) / DEG;
+  };
+  // Each storm: its radius (the weather block's, half its size), its drift, and how fast its winds go round it.
+  const storms = (opts.storms ?? flow.storms ?? [])
+    .filter((s) => s.size_km > 0)
+    .map((s) => {
+      const R = 0.5 * s.size_km * 1000;
+      const drift = rate(s.lat_deg);
+      const u0 = flow.rowEast[rowOf(flow, s.lat_deg)]!;
+      // Mean angular speed of the wind round the centre at one radius, anticlockwise positive, from eight points.
+      let om = 0;
+      for (let k = 0; k < 8; k++) {
+        const t = (k * Math.PI) / 4;
+        const x = R * Math.cos(t);
+        const y = R * Math.sin(t);
+        const lat = s.lat_deg + (y / a) / DEG;
+        const lon = s.lon_deg + (x / (a * Math.max(0.02, Math.cos(s.lat_deg * DEG)))) / DEG;
+        const [ve, vn] = windAt(flow, lat, lon);
+        om += (x * vn - y * (ve - u0)) / (R * R) / 8;
+      }
+      return { ...s, R, drift, om, u0 };
+    });
+  const A = [0, 0, 0, 0];
+  const B = [0, 0, 0, 0];
+  const C = [0, 0, 0, 0];
+  for (let j = 0; j < h; j++) {
+    const lat = ((j + 0.5) / h) * 180 - 90;
+    const back = rate(lat) * dt;
+    const cl = Math.max(0.02, Math.cos(lat * DEG));
+    for (let i = 0; i < w; i++) {
+      const lon = ((i + 0.5) / w) * 360 - 180;
+      sample(face, lat, lon - back, C);
+      for (const s of storms) {
+        // Where the storm is now, and this pixel's place from its centre in metres (east, north).
+        const lonNow = s.lon_deg + s.drift * dt;
+        const dl = (((lon - lonNow + 180) % 360) + 360) % 360 - 180;
+        const x = dl * DEG * a * cl;
+        const y = (lat - s.lat_deg) * DEG * a;
+        const r2 = (x * x + y * y) / (s.R * s.R);
+        if (r2 > 9) continue;
+        const g = Math.exp(-r2);
+        // Turning: the angle the winds carried this point round, with two phases half a turn apart blended.
+        const read = (turn: number, out: number[]) => {
+          const [ve, vn] = windAt(flow, s.lat_deg + (y / a) / DEG, s.lon_deg + (x / (a * cl)) / DEG);
+          const rr = x * x + y * y + 0.01 * s.R * s.R;
+          const th = -((x * vn - y * (ve - s.u0)) / rr) * turn;
+          const cx = Math.cos(th);
+          const sx = Math.sin(th);
+          const xs = x * cx - y * sx;
+          const ys = x * sx + y * cx;
+          sample(face, s.lat_deg + (ys / a) / DEG, s.lon_deg + (xs / (a * cl)) / DEG, out);
+        };
+        if (Math.abs(s.om) > 1e-12) {
+          // A quarter turn a cycle: short enough that the faster core is not wound into a spiral within one.
+          const T = Math.PI / 2 / Math.abs(s.om);
+          const pa = wrap01(dt / T);
+          const pb = wrap01(dt / T + 0.5);
+          read(pa * T, A);
+          read(pb * T, B);
+          const wa = 1 - Math.abs(2 * pa - 1);
+          for (let ch = 0; ch < 4; ch++) A[ch] = wa * A[ch]! + (1 - wa) * B[ch]!;
+        } else read(0, A);
+        for (let ch = 0; ch < 4; ch++) C[ch] = (1 - g) * C[ch]! + g * A[ch]!;
+      }
+      const o = (j * w + i) * 4;
+      for (let ch = 0; ch < 4; ch++) data[o + ch] = Math.round(C[ch]!);
+    }
+  }
+  return { width: w, height: h, data, mean: face.mean };
 }
 
 // ------------------------------------------------------------------ colours from the sheet
@@ -259,6 +467,27 @@ export async function readAirTiles(k: AirReader, system: string, body: string, o
 export interface FaceReader extends AirReader {
   surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: unknown[] } | { ok: false; message: string }>;
   campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; message: string }>;
+  /** For the air's rim (VP-A3); a reader without them draws no air shell. */
+  resolvedSystem?(system: string): Promise<{ ok: true; result: { surfaces: { address: string }[]; facts: Record<string, Record<string, Json>> } } | { ok: false; message: string }>;
+  readAirOptics?(airs: Json[]): Promise<{ ok: true; airs: Json[] } | { ok: false; message: string }>;
+}
+
+/**
+ * A world's air in its own radius for the rim and terminator in True (VP-A3): its surface pressure, temperature,
+ * gravity and gases from `resolved_system`, its optics from `read_air_optics`, as the Body globe reads them. A string
+ * says why there is none (no air, or a reader without those doors).
+ */
+export async function readTrueAir(k: FaceReader, system: string, body: string): Promise<AirShape | string> {
+  if (!k.resolvedSystem || !k.readAirOptics) return "this view cannot read the air";
+  const rs = await k.resolvedSystem(system);
+  if (!rs.ok) return rs.message;
+  const surf = rs.result.surfaces.find((x) => x.address === body) as Parameters<typeof airFactsOf>[1];
+  const facts = airFactsOf(rs.result.facts[body], surf);
+  const req = facts ? airRequest(body, facts) : null;
+  if (!facts || !req) return "no air";
+  const ao = await k.readAirOptics([req.air]);
+  if (!ao.ok || !ao.airs[0]) return ao.ok ? "no optics" : ao.message;
+  return airShapeOf(airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req), facts.radius_m);
 }
 
 /**
@@ -268,15 +497,26 @@ export interface FaceReader extends AirReader {
  */
 export async function readTrueFace(k: FaceReader, system: string, body: string): Promise<AirLook | string> {
   const s = await k.surfaceTiles(system, body);
-  const ground = s.ok ? trueSurface(s.tiles) : null;
+  // Bare ground in its measured colour where the kernel weathers it (ground-optics.ts, VP3 part 5).
+  const ground = s.ok ? trueSurface(s.tiles.some((t) => t.maturity) ? withGround(s.tiles, await readGroundOptics(k)) : s.tiles) : null;
   const groundWhy = s.ok ? String((s.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : s.message;
   const now = await k.campaignNow();
   const at_s = now.ok && now.at_s !== undefined ? Number(now.at_s) : undefined;
   const air = await readAirTiles(k, system, body, { ...(at_s !== undefined ? { at_s, day: at_s / constant("day") } : {}) });
-  if (!air.ok) return ground ? { tex: ground, said: [`Its clouds are not shown: ${air.message}`] } : groundWhy;
+  const gas = ground ? await readTrueAir(k, system, body) : null;
+  const withGas = <T extends AirLook>(l: T): T => (gas && typeof gas !== "string" ? { ...l, air: gas } : l);
+  if (!air.ok) return ground ? withGas({ tex: ground, ground, said: [`Its clouds are not shown: ${air.message}`] }) : groundWhy;
   const colours = sheetColours(await readSheetSubstances(k));
-  if (ground) return withAir(ground, air.tiles, colours);
-  return trueGiant(air.tiles, colours) ?? groundWhy;
+  if (ground) return withGas(withAir(ground, air.tiles, colours));
+  const giant = trueGiant(air.tiles, colours);
+  if (!giant) return groundWhy;
+  if (giant.flow) {
+    // The storms, so each is carried as one piece as the bands slide (VP-A1).
+    const day = at_s !== undefined ? at_s / constant("day") : 0;
+    const sy = await k.weather({ want: "systems", system, body, ...(at_s !== undefined ? { at_s } : {}), day });
+    if (sy.ok) giant.flow.storms = liveSystems({ day, systems: sy.data as WeatherSystem[] } as WeatherMap).map((x) => ({ ...stormAt(x, day), size_km: x.size_km }));
+  }
+  return giant;
 }
 
 // ------------------------------------------------------------------ the gas above the decks
