@@ -15,7 +15,7 @@
   import { controlSetOf, kitScreen, resolveKit, screenFor, situationOf } from "../../ui-contract/src/index.ts";
   import { checkPlayerScene, checkScreen, screenKey, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
-  import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus, type Shown } from "../../ui-contract/src/index.ts";
+  import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus, type Shown, type HeldGround } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
   import { V3_URL } from "./alpha.ts";
   import SoundControl from "../../sound/src/SoundControl.svelte";
@@ -352,6 +352,20 @@
 
   let selection = $state<string | null>(null);
   // Read only (PB3b): the GM steers this screen; it watches and takes no input but sound.
+  // The held screen's ground (PC5): the postcard sent with the card. Postcards in turn change by a slow fade; under
+  // reduced motion the screen keeps the first one for as long as the same card is held.
+  let heldGround = $state<HeldGround | null>(null);
+  let heldFor: string | null = null;
+  $effect(() => {
+    const s = shown;
+    // Only a picture as plain data is drawn (it also goes into a style); anything else is no ground.
+    const g = s && "off" in s && s.ground && /^data:image\/[a-z+.-]+;base64,[A-Za-z0-9+/=]+$/.test(s.ground.picture) ? s.ground : null;
+    const card = s && "off" in s ? (s.card ?? "") : null;
+    if (!g) return void ((heldGround = null), (heldFor = null));
+    if (heldGround && heldFor === card && reducedNow()) return;
+    if (heldGround?.id !== g.id || heldGround.picture !== g.picture) heldGround = g;
+    heldFor = card;
+  });
   // Words sent with what is shown (PB6): a card over the picture until the GM takes them back or the player puts it away.
   const sayWords = $derived(shown && "scope" in shown && shown.say ? shown.say : "");
   let sayHidden = $state("");
@@ -524,8 +538,20 @@
   {#if embed.mode === "refused"}
     <main class="problem" role="alert"><h2>This view cannot be shown here</h2><p>{embed.reason}</p></main>
   {:else if shown && "off" in shown}
-    {#if shown.card}
-      <main class="problem off held" data-screens-off data-held={shown.card}><p class="card">{shown.card}</p></main>
+    {#if heldGround}
+      <!-- A held card with a ground (PC5, postcards design 8.4): the postcard full screen, the card's words over a soft shade on its quiet side, who said a quote beneath. One piece of words only. -->
+      <main class="off held grounded" data-screens-off data-held={shown.card ?? ""} data-held-ground={heldGround.id}>
+        {#key heldGround.id}<div class="ground-wash" style:background-image={`url("${heldGround.picture}")`} aria-hidden="true"></div><img class="ground" src={heldGround.picture} alt={heldGround.name} data-ground-picture />{/key}
+        {#if shown.card}
+          <div class="words" data-held-kind={shown.kind ?? "plain"}>
+            <p class="card">{shown.card}</p>
+            {#if shown.by}<p class="by" data-held-by>{shown.by}</p>{/if}
+          </div>
+        {/if}
+        <p class="ground-name" data-ground-name>{heldGround.name}</p>
+      </main>
+    {:else if shown.card}
+      <main class="problem off held" data-screens-off data-held={shown.card} data-held-kind={shown.kind ?? "plain"}><div class="words"><p class="card">{shown.card}</p>{#if shown.by}<p class="by" data-held-by>{shown.by}</p>{/if}</div></main>
     {:else}
       <main class="problem off" data-screens-off><p>The game master has the screens off for now.</p></main>
     {/if}
@@ -746,13 +772,77 @@
     margin: 0;
     animation: card-in var(--sse-motion) var(--sse-ease);
   }
+  .held .by {
+    margin: 8px 0 0;
+    font-size: clamp(12px, 1.4vw, 16px);
+    color: var(--sse-ink-muted);
+  }
+  .held .by::before {
+    content: "— ";
+  }
+  /* A ground: the postcard fills the glass; the words sit low on the left over a soft shade so they always read. */
+  .grounded {
+    position: relative;
+    min-height: calc(100dvh - 66px);
+    overflow: hidden;
+    place-items: end start;
+    text-align: left;
+    background: #000;
+  }
+  /* The whole picture, never cropped (a globe stays round), on a soft wash of itself that fills the glass. */
+  .grounded .ground,
+  .grounded .ground-wash {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    animation: ground-in 2.4s ease;
+  }
+  .grounded .ground {
+    object-fit: contain;
+  }
+  .grounded .ground-wash {
+    background-size: cover;
+    background-position: center;
+    filter: blur(28px) brightness(0.55);
+    transform: scale(1.1);
+  }
+  .grounded .words {
+    position: relative;
+    margin: 0 0 clamp(28px, 7vh, 72px) clamp(20px, 5vw, 64px);
+    padding: 14px 18px;
+    border-radius: var(--sse-radius);
+    background: linear-gradient(90deg, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0.3));
+    color: #fff;
+  }
+  .grounded .by {
+    color: rgb(255 255 255 / 0.78);
+  }
+  .grounded .ground-name {
+    position: absolute;
+    right: 14px;
+    bottom: 10px;
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: var(--sse-label-tracking);
+    text-transform: var(--sse-label-case);
+    color: rgb(255 255 255 / 0.7);
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+  }
+  @keyframes ground-in {
+    from {
+      opacity: 0;
+    }
+  }
   @keyframes card-in {
     from {
       opacity: 0;
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .held .card {
+    .held .card,
+    .grounded .ground,
+    .grounded .ground-wash {
       animation: none;
     }
   }

@@ -75,8 +75,8 @@
   import bodyDoc from "./documents/body.gm.json";
   import compareDoc from "./documents/compare.gm.json";
   import { POSTCARD_SCREENS } from "./postcards/screens.postcards.svelte.ts";
-  import { visit, GO_BOOKMARK_EVENT, PASTE_CLIP_EVENT } from "./postcards/visits.svelte.ts";
-  import { checkPostcard, looksLikePostcard, readPostcard } from "../../ui-contract/src/index.ts";
+  import { visit, openOwn, GO_BOOKMARK_EVENT, PASTE_CLIP_EVENT } from "./postcards/visits.svelte.ts";
+  import { checkPostcard, looksLikePostcard, readPostcard, postcardBlocker, isPostcard, fixDate } from "../../ui-contract/src/index.ts";
   import lifeDoc from "./documents/life.gm.json";
   import stylesScreenDoc from "./documents/styles.gm.json";
   import routeDoc from "./documents/route.gm.json";
@@ -279,6 +279,15 @@
       window.removeEventListener(PASTE_CLIP_EVENT, paste);
     };
   });
+  // "Make a postcard" on a Bookmarks row (PC5): the bookmark's date is fixed and the wall opens on it.
+  function makePostcard(b: Bookmark): string | null {
+    const why = postcardBlocker(b);
+    if (why) return why;
+    if (!isPostcard(b)) ws.bookmarks = (ws.bookmarks ?? []).map((x) => (x.id === b.id ? fixDate(x, ws.now_yr) : x));
+    openOwn(b.id);
+    ws.screen = "postcards";
+    return null;
+  }
   function openPostcard(text: string): boolean {
     const r = readPostcard(text);
     if (!r.ok) {
@@ -367,6 +376,8 @@
       const reopened = await reopenKept(s);
       const packs = [...opened, ...s.stack().added, ...(s.stack().campaign ? [s.stack().campaign] : [])];
       share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.campaign_now_yr ?? ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
+      // Grounds on held screens (PC5): the campaign's postcards; the packs' sets join with PC6.
+      share.setGrounds({ bookmarks: () => ws.bookmarks ?? [] });
       // The player-facing facts the GM has recorded, entered when a fresh campaign opens (a reopened one has them).
       if (!reopened) {
         const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
@@ -1812,7 +1823,7 @@
         {cutBody}
         openKeys={() => openHelp("keys")}
       >
-        {#snippet extraTools()}<Bookmarks list={ws.bookmarks ?? []} scope={scene.system} mark={markHere} where={whereabouts} go={goBookmark} onchange={(next) => (ws.bookmarks = next)} />{/snippet}
+        {#snippet extraTools()}<Bookmarks list={ws.bookmarks ?? []} scope={scene.system} mark={markHere} where={whereabouts} go={goBookmark} onchange={(next) => (ws.bookmarks = next)} postcard={makePostcard} />{/snippet}
       </Stage>
       {/key}
     </div>
