@@ -722,7 +722,7 @@ SENSORS = [
 # read by the kernel's `effect_at_range` against a target: what arrives, what
 # the skin can take, in range, marginal or out of range, the odds from light
 # lag, and rings. Nothing is fired and nothing is rolled. The figures are game
-# defaults (fudge register F54), set so that against the standard target
+# defaults (fudge register F60), set so that against the standard target
 # below each beam is in range or marginal at the far edge of its game band.
 # A weapon the physics cannot reach (the meson gun) says so and carries none.
 CEPHEUS_SRD = "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"

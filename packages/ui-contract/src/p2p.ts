@@ -59,6 +59,8 @@ export interface Manifest {
   party?: Json;
   /** What each screen alone is shown (Switchboard), by the screen's own id; absent: its seat's, else the table's. */
   screens?: Record<string, Shown>;
+  /** The layouts the GM made (PB13): screen documents a seat or a send may name by id; absent: only the shipped ones. */
+  layouts?: Json[];
 }
 
 export type Wire =
@@ -67,7 +69,7 @@ export type Wire =
   | { t: "manifest"; to: string; manifest: Manifest }
   | { t: "event"; run: string; entry: LogEntry }
   /** Session state for screens: the clock, the data views granted, and (V10) the seats when the GM changes them. */
-  | { t: "state"; run: string; clock_yr: number; data_views: string[]; seats?: Seat[]; shown?: Shown; party?: Json | null; screens?: Record<string, Shown> }
+  | { t: "state"; run: string; clock_yr: number; data_views: string[]; seats?: Seat[]; shown?: Shown; party?: Json | null; screens?: Record<string, Shown>; layouts?: Json[] }
   | { t: "beat"; run: string; seq: number; state_hash: string }
   | { t: "snapshot"; from: string }
   | { t: "bye"; run: string }
@@ -85,6 +87,10 @@ export interface ScreenHello {
   name: string;
   /** The seat (role) its link named, or the one it had last time. */
   role: string;
+  /** A clean output (PB8, `?clean=1`): no controls, fixed 16:9, for a stream. Marked "Output" on the board. */
+  output?: boolean;
+  /** A window the GM opened on one of their own displays (PB9, `?local=1`). Marked "this computer" on the board. */
+  local?: boolean;
 }
 
 /** What a sealed seat's screen receives on joining: never the seed, the packs or the event log. */
@@ -260,8 +266,9 @@ export interface HostState {
 export class GmHost {
   readonly #session: Session;
   #hub: Hub | null = null;
-  readonly #base: Omit<Manifest, "log" | "state_hash" | "clock_yr" | "data_views" | "seats" | "shown" | "party" | "screens">;
+  readonly #base: Omit<Manifest, "log" | "state_hash" | "clock_yr" | "data_views" | "seats" | "shown" | "party" | "screens" | "layouts">;
   #screens: Record<string, Shown> = {};
+  #layouts: Json[] = [];
   #shown: Shown | undefined;
   #party: Json | undefined;
   readonly #log: LogEntry[] = [];
@@ -307,7 +314,7 @@ export class GmHost {
           // A sealed seat never gets the manifest (seed, packs, log), even if it finds the shared room.
           if (m.t === "hello" && m.seat && this.#seats.find((x) => x.id === m.seat)?.sealed) return;
           this.#players.add(m.from);
-          if (m.t === "hello" && m.screen && typeof m.screen.id === "string") this.onScreen({ id: m.screen.id, name: String(m.screen.name ?? ""), role: String(m.screen.role ?? m.seat ?? "table") });
+          if (m.t === "hello" && m.screen && typeof m.screen.id === "string") this.onScreen({ id: m.screen.id, name: String(m.screen.name ?? ""), role: String(m.screen.role ?? m.seat ?? "table"), ...(m.screen.output === true ? { output: true } : {}), ...(m.screen.local === true ? { local: true } : {}) });
           hub.send({ t: "manifest", to: m.from, manifest: this.manifest() });
           this.#changed();
         } else if (m.t === "request" && m.run === this.#base.run) this.#request(m);
@@ -387,18 +394,19 @@ export class GmHost {
   }
 
   manifest(): Manifest {
-    return { ...structuredClone(this.#base), log: structuredClone(this.#log), state_hash: this.#hash(), clock_yr: this.#clock, data_views: [...this.#views], seats: structuredClone(this.#seats), ...(this.#shown ? { shown: structuredClone(this.#shown) } : {}), ...(this.#party !== undefined ? { party: structuredClone(this.#party) } : {}), ...(Object.keys(this.#screens).length ? { screens: structuredClone(this.#screens) } : {}) };
+    return { ...structuredClone(this.#base), log: structuredClone(this.#log), state_hash: this.#hash(), clock_yr: this.#clock, data_views: [...this.#views], seats: structuredClone(this.#seats), ...(this.#shown ? { shown: structuredClone(this.#shown) } : {}), ...(this.#party !== undefined ? { party: structuredClone(this.#party) } : {}), ...(Object.keys(this.#screens).length ? { screens: structuredClone(this.#screens) } : {}), ...(this.#layouts.length ? { layouts: structuredClone(this.#layouts) } : {}) };
   }
 
   /** The session clock, the data views players' screens may use, (V10) the seats and what the table is shown. */
-  setState(s: { clock_yr?: number; data_views?: string[]; seats?: Seat[]; shown?: Shown; party?: Json | null; screens?: Record<string, Shown> }) {
+  setState(s: { clock_yr?: number; data_views?: string[]; seats?: Seat[]; shown?: Shown; party?: Json | null; screens?: Record<string, Shown>; layouts?: Json[] }) {
     if (s.screens) this.#screens = structuredClone(s.screens);
+    if (s.layouts) this.#layouts = structuredClone(s.layouts);
     if (s.clock_yr !== undefined) this.#clock = s.clock_yr;
     if (s.data_views) this.#views = [...s.data_views];
     if (s.seats) this.#seats.splice(0, this.#seats.length, ...structuredClone(s.seats));
     if (s.shown) this.#shown = structuredClone(s.shown);
     if (s.party !== undefined) this.#party = s.party === null ? undefined : structuredClone(s.party);
-    this.#hub?.send({ t: "state", run: this.#base.run, clock_yr: this.#clock, data_views: [...this.#views], ...(s.seats ? { seats: structuredClone(this.#seats) } : {}), ...(this.#shown ? { shown: structuredClone(this.#shown) } : {}), ...(s.party !== undefined ? { party: s.party === null ? null : structuredClone(s.party) } : {}), ...(s.screens ? { screens: structuredClone(this.#screens) } : {}) });
+    this.#hub?.send({ t: "state", run: this.#base.run, clock_yr: this.#clock, data_views: [...this.#views], ...(s.seats ? { seats: structuredClone(this.#seats) } : {}), ...(this.#shown ? { shown: structuredClone(this.#shown) } : {}), ...(s.party !== undefined ? { party: s.party === null ? null : structuredClone(s.party) } : {}), ...(s.screens ? { screens: structuredClone(this.#screens) } : {}), ...(s.layouts ? { layouts: structuredClone(this.#layouts) } : {}) });
   }
 
   /** What the table is shown now. */
@@ -457,6 +465,7 @@ export class PlayerReplica {
   #shown: Shown | undefined;
   #party: Json | undefined;
   #screens: Record<string, Shown> = {};
+  #layouts: Json[] = [];
   #nextId = 1;
   onStatus: (s: ReplicaStatus) => void = () => {};
   /** The player's own requests changed (sent, approved, declined). */
@@ -526,6 +535,10 @@ export class PlayerReplica {
    * What one screen shows (Switchboard, PB1): its own line if the GM gave it one, else its seat's, else the table's.
    * On a held line this is `{off: true, card}` and nothing of the place.
    */
+  /** The layouts the GM made (PB13), as screen documents; a seat or a send names one by id. */
+  get layouts(): readonly Json[] {
+    return this.#layouts;
+  }
   shownFor(seat: string, screen?: string): Shown | undefined {
     const own = (screen ? this.#screens[screen] : undefined) ?? this.#seats.find((x) => x.id === seat)?.shown ?? this.#shown;
     return own ? structuredClone(own) : undefined;
@@ -608,6 +621,7 @@ export class PlayerReplica {
       if (m.shown) this.#shown = structuredClone(m.shown);
       if (m.party !== undefined) this.#party = m.party === null ? undefined : structuredClone(m.party);
       if (m.screens) this.#screens = structuredClone(m.screens);
+      if (m.layouts) this.#layouts = structuredClone(m.layouts);
       this.#live();
       this.onUpdate();
     } else if (m.t === "beat") {
@@ -649,6 +663,7 @@ export class PlayerReplica {
     this.#shown = man.shown ? structuredClone(man.shown) : undefined;
     this.#party = man.party === undefined ? undefined : structuredClone(man.party);
     this.#screens = man.screens ? structuredClone(man.screens) : {};
+    this.#layouts = man.layouts ? structuredClone(man.layouts) : [];
     this.#lastHeard = this.#now();
     this.onSession(s);
     this.#live();

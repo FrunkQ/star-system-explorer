@@ -53,16 +53,25 @@
       "cloud_type": "haze",
       "layer": 2,
       "cover": 1.0,
-      "optical_depth": 3.0,
+      "optical_depth": 9.6,
       "colour": [
        0.85,
        0.55,
        0.25
       ],
-      "source": "Titan's orange photochemical haze from methane under ultraviolet (Mitchell and Lora 2016); optical depth a stand-in (docs/fudges.md)"
+      "particle_radius_um": 0.72,
+      "source": "Titan's orange photochemical haze from methane under ultraviolet (Mitchell and Lora 2016). Optical depth 9.6 at 500 nm: the sum of the Huygens DISR power-law fits above 80 km, 30 to 80 km and below 30 km (Tomasko et al., DISR results; tau = 1.012e7 lambda^-2.339, 2.029e4 lambda^-1.409, 6.270e2 lambda^-0.9706, lambda in nm). Particles: fractal aggregates of about 3000 monomers of 0.05 um, equal-volume radius 0.72 um, equal projected-area radius 2.03 um (Tomasko et al. 2008; Lavvas, Yelle and Griffith 2010, Icarus 210, 832, find 54 nm and about 4000 monomers). Colour a stand-in (docs/fudges.md)"
      }
     ],
     "references": [
+     {
+      "text": "Tomasko, M. G. et al. 2008, A model of Titan's aerosols based on measurements made inside the atmosphere, Planet. Space Sci. 56, 669",
+      "doi": "10.1016/j.pss.2007.11.019"
+     },
+     {
+      "text": "Lavvas, P., Yelle, R. V. and Griffith, C. A. 2010, Titan's vertical aerosol structure at the Huygens landing site: constraints on particle size, density, charge, and refractive index, Icarus 210, 832",
+      "url": "https://www.lpl.arizona.edu/~yelle/eprints/Lavvas10a.pdf"
+     },
      {
       "text": "Held, I. M. and Hou, A. Y. 1980, Nonlinear axially symmetric circulations in a nearly inviscid atmosphere, J. Atmos. Sci. 37, 515-533",
       "doi": "10.1175/1520-0469(1980)037<0515:NASCIA>2.0.CO;2"
@@ -149,7 +158,8 @@
      "season_phase": 0.69,
      "regional_per_year": 6.0,
      "optical_depth": 3.0,
-     "source": "Planet-encircling dust storms come in some years, in the southern spring and summer near perihelion (Zurek and Martin 1993); chance and depth are stand-ins (docs/fudges.md)"
+     "particle_radius_um": 1.5,
+     "source": "Planet-encircling dust storms come in some years, in the southern spring and summer near perihelion (Zurek and Martin 1993); chance and depth are stand-ins (docs/fudges.md). Dust radius 1.5 um inside Lemmon et al. 2015 (Icarus 251, 96)'s 1 to 2 um for Mars"
     },
     "orography": {
      "rain_per_m_s": 20.0,
@@ -170,8 +180,20 @@
      "source": "Flash rate from cloud-top height, continental and marine (Price and Rind 1992); storm density is a stand-in (docs/fudges.md)"
     },
     "marine_layer": 0.35,
+    "currents": {
+     "upwelling_km": 500.0,
+     "upwelling_cooling_k": 5.0,
+     "boundary_km": 300.0,
+     "boundary_warming_k": 4.0,
+     "gyre_half_width_deg": 15.0,
+     "source": "Eastern-boundary upwelling (W7c): cold water within about 500 km of a coast lying to the spin's east under the subtropical high, the seat of the Californian, Peruvian, Canarian and Benguela stratocumulus decks (Klein and Hartmann 1993); the coast's sea surface runs about 5 K below the zonal mean there. Western boundary currents (Gulf Stream, Kuroshio) run about 4 K above it within about 300 km of the coast lying to the spin's west, across the subtropical gyre (about 15 degrees either side of the Hadley edge). All figures read off observation: docs/fudges.md."
+    },
     "clear_visibility_km": 50.0,
     "references": [
+     {
+      "text": "Lemmon, M. T. et al. 2015, Dust aerosol, clouds, and the atmospheric optical depth record over 5 Mars years of the Mars Exploration Rover mission, Icarus 251, 96",
+      "url": "https://arxiv.org/abs/1403.4234"
+     },
      {
       "text": "Eady, E. T. 1949, Long waves and cyclone waves, Tellus 1(3), 33-52",
       "doi": "10.1111/j.2153-3490.1949.tb01265.x"
@@ -210,13 +232,15 @@
     "bands": {
      "wind_gas_m_s": 150.0,
      "wind_ice_m_s": 400.0,
+     "eddy_gas_m_s": 17.0,
+     "eddy_ice_m_s": 100.0,
      "ice_giant_mass_earth": 50.0,
      "retrograde_ratio": 0.5,
      "equator_gas": 0.6,
      "equator_ice": -1.0,
      "equatorial_bands_gas": 1,
      "equatorial_bands_ice": 99,
-     "source": "Same jets and band edges as the surface pack's S6 cloud deck (base-surface regime_features.clouds): jets = round(sqrt(a Omega / U)) from the Rhines scale (Rhines 1975), U about 150 m/s on gas giants and 400 m/s on ice giants (below 50 Earth masses), 2 x jets bands with edges evenly spaced in sin(latitude), retrograde jets half the prograde. Zones (anticyclonic shear) and belts (cyclonic) alternate from an equatorial zone, so prograde jets sit on the poleward edge of zones (Vasavada and Showman 2005). Gas giants superrotate at the equator; ice giants have one broad retrograde equatorial jet and prograde jets at high latitude (Vasavada and Showman 2005; Smith et al. 1989). Equatorial speed factors are a cartoon (docs/fudges.md)."
+     "source": "Same jets and band edges as the surface pack's S6 cloud deck (base-surface regime_features.clouds): prograde jets = round(1/2 sqrt(a Omega / U_eddy)) from the Rhines scale: one jet is pi sqrt(2U/beta) wide and eastward jets sit twice that apart (Rhines 1975; Gastine et al. 2014), U_eddy the local eddy speed (17 m/s on gas giants, inside Jupiter's 10 to 40 m/s, giving Jupiter 13 prograde jets against 6 to 7 a hemisphere observed; 100 m/s on ice giants, below 50 Earth masses, held so Uranus and Neptune keep their 3, docs/fudges.md), jet speed scale about 150 m/s on gas giants and 400 m/s on ice giants for the band winds and the polar jet, 2 x jets bands with edges evenly spaced in sin(latitude), retrograde jets half the prograde. Zones (anticyclonic shear) and belts (cyclonic) alternate from an equatorial zone, so prograde jets sit on the poleward edge of zones (Vasavada and Showman 2005). Gas giants superrotate at the equator; ice giants have one broad retrograde equatorial jet and prograde jets at high latitude (Vasavada and Showman 2005; Smith et al. 1989). Equatorial speed factors are a cartoon (docs/fudges.md)."
     },
     "stratification": {
      "brunt_s": 0.0148,
@@ -238,7 +262,7 @@
      "ring_gap": 0.5,
      "vortex_ld": 2.0,
      "polar_jet_u": 0.8,
-     "source": "The Burger number Bu = (L_d / a)^2 is the parameter that decides a giant's polar regime: lowering it goes from one polar cyclone (Saturn-like) to many circumpolar cyclones (Jupiter-like), and the forcing energy hardly changes that (Brueshaber, Sayanagi and Dowling 2019). O'Neill, Emanuel and Flierl 2015: a / L_d <= 30 gives one strong polar cyclone, >= 40 many vortices (so Bu <= 6.25e-4 ring, Bu >= 1.111e-3 single, between drawn), and weak convective forcing gives a diffuse pole with no polar cyclone (internal heat below 0.1 W/m2 here). Diffuse cap from Bu >= 4e-3, the geometric mean of the Saturn-regime 1.6e-3 and ice-giant 1e-2 values quoted by Brueshaber and Sayanagi 2021. Ring counts 5 to 9 around Juno's 8 (north) and 5 (south) (Adriani et al. 2018). Cyclone sizes in deformation radii and the ring gap fitted to Jupiter's north ring; polar jet 0.8 of the wind scale (docs/fudges.md)."
+     "source": "The Burger number Bu = (L_d / a)^2 is the parameter that decides a giant's polar regime: lowering it goes from one polar cyclone (Saturn-like) to many circumpolar cyclones (Jupiter-like), and the forcing energy hardly changes that (Brueshaber, Sayanagi and Dowling 2019). The cuts a / L_d <= 30 one compact polar cyclone and >= 40 many vortices (Bu <= 6.25e-4 ring, Bu >= 1.111e-3 single, between drawn) are SSE4's split of Brueshaber, Sayanagi and Dowling's regimes. Moist convection drives polar cyclones (O'Neill, Emanuel and Flierl 2015, before Juno, so not a source for Jupiter's ring); their criterion is L_d / a and an energy parameter, and the internal-heat cut of 0.1 W/m2 for a broad cap is SSE4's own. The high-Bu regime is the paper's large cyclonic polar vortex, drawn as a broad cap. Diffuse cap from Bu >= 4e-3, the geometric mean of the Saturn-regime 1.6e-3 and ice-giant 1e-2 values quoted by Brueshaber and Sayanagi 2021. Ring counts 5 to 9 around Juno's 8 (north) and 5 (south) (Adriani et al. 2018). Cyclone sizes in deformation radii and the ring gap fitted to Jupiter's north ring; polar jet 0.8 of the wind scale (docs/fudges.md)."
     },
     "polar_jet": {
      "source": "The circumpolar jet sits one polar Rhines length from the pole: on the polar gamma-plane f = 2 Omega (1 - r^2 / 2a^2) the Rhines arrest gives L = (U a^2 / 2 Omega)^(1/3) (kernel derivation from Rhines 1975, docs/fudges.md). Saturn: 78.6 degrees, against the hexagon's about 78 degrees N (Godfrey 1988)."
@@ -372,6 +396,32 @@
      "low_cover": 0.6,
      "low_tau": 10.0,
      "cap_tau": 1.5,
+     "particle_radius_um": {
+      "ammonia ice": 1.0
+     },
+     "heights": {
+      "tropopause_bar": 0.1,
+      "thickness_h": 0.5,
+      "fallback_bar": [
+       5.0,
+       2.0,
+       0.7
+      ],
+      "source": "A deck's base is where its vapour first saturates going up the dry adiabat, x p = p_sat(T), T = T1 (p / 1 bar)^kappa with kappa = R/c_p of the gas mix (c_p 5/2 R monatomic, 7/2 R diatomic, 4 R others), isothermal above the 0.1 bar tropopause; vapour curves from the data sheet through the climate's p_sat. Puts Jupiter's ammonia cloud base near 0.7 bar (Braude et al. 2020 find the cloud no deeper than about 0.7 bar outside the Great Red Spot). Height above 1 bar z = H ln(1 bar / p). Thickness half a scale height and the fallback pressures (decks with no vapour curve or abundance held: ammonium hydrosulphide, water on giants with no water listed) are stand-ins (docs/fudges.md)"
+     },
+     "chromophore": {
+      "above": "ammonia ice",
+      "tau_zone_1um": 0.06,
+      "tau_belt_1um": 0.6,
+      "radius_zone_um": 0.15,
+      "radius_belt_um": 0.29,
+      "colour": [
+       0.55,
+       0.27,
+       0.13
+      ],
+      "source": "Sromovsky et al. 2017, Icarus 291, 232 (doi 10.1016/j.icarus.2016.12.014): one red chromophore in a thin layer from the ammonia cloud top up to 0.9 of its pressure; fits give 1 um optical depth 0.06 to 0.76 and effective radius 0.12 to 0.29 um, about 0.05 to 0.06 over the Equatorial Zone and 0.5 to 0.76 over the South Equatorial Belt at medium phase (tables 6 to 8). Zone and belt values here sit inside those. The ammonia deck's 1.0 um radius is Braude et al. 2020's MUSE fit (Icarus 338, 113589; Sromovsky's fits span 0.3 to 2.4 um). Colour a stand-in until the data sheet's chromophore row (MP33) lands (docs/fudges.md)"
+     },
      "chemistry": [
       {
        "max_k": 90.0,
@@ -418,8 +468,20 @@
     },
     "references": [
      {
+      "text": "Sromovsky, L. A., Baines, K. H., Fry, P. M. and Carlson, R. W. 2017, A possibly universal red chromophore for modeling color variations on Jupiter, Icarus 291, 232",
+      "doi": "10.1016/j.icarus.2016.12.014"
+     },
+     {
+      "text": "Braude, A. S., Irwin, P. G. J., Orton, G. S. and Fletcher, L. N. 2020, Colour and tropospheric cloud structure of Jupiter from MUSE/VLT: retrieving a universal chromophore, Icarus 338, 113589",
+      "url": "https://arxiv.org/abs/1912.00918"
+     },
+     {
       "text": "Rhines, P. B. 1975, Waves and turbulence on a beta-plane, J. Fluid Mech. 69, 417",
       "doi": "10.1017/S0022112075001504"
+     },
+     {
+      "text": "Gastine, T., Heimpel, M. and Wicht, J. 2014, Zonal flow scaling in rapidly-rotating compressible convection, Phys. Earth Planet. Inter. 232, 36",
+      "doi": "10.1016/j.pepi.2014.03.011"
      },
      {
       "text": "Vasavada, A. R. and Showman, A. P. 2005, Jovian atmospheric dynamics: an update after Galileo and Cassini, Rep. Prog. Phys. 68, 1935",

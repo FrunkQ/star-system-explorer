@@ -39,7 +39,26 @@ Nothing is computed in the view: `ui-contract/src/life-flow.ts` only sorts the k
 
 ## Next
 
-- Live knobs: when `life_view` takes `dials`, the board re-asks on a knob's change and marks what moved (kernel
-  queue item 6).
+- Live knobs: built (U7 part 2b, below); they switch on by themselves when `life_view` takes `dials` (kernel queue
+  item 6). Nothing in the UI needs to change then.
 - Worlds on the chart when adopted systems carry habitat graphs (as part 1).
 - Habitat names in plain words belong in the kernel's reason text (the origin event still names an address).
+
+## Part 2b: the what-if path (24 Nov 2026)
+
+The knobs are ready for the kernel's what-if. `Session.lifeView` sends `dials` when given (the kernel's queued
+`life_view {body | fixture, dials}`, read only, no events). `askWhatIf` (life-flow.ts) asks and says whether the answer
+has the asked values in force (`honoured`): a kernel from before dials ignores the field and answers with the pack's
+world, so the board finds out once per world by asking with one dial moved, and keeps the knobs read only (with the
+old note) until it is honoured. `whatMoved(base, whatIf)` lists, stage by stage, what changed: its node words before
+and after, whether it now has something to give, and the dated events added and gone.
+
+On the board, turning a knob asks for the what-if under all the world's dials with the turned ones changed; the board
+then draws the what-if, a strip says which dials are turned, how many stages moved and that nothing in the campaign
+changes, with "Back to the pack's values"; moved stages carry an accent edge and "moved", and a moved stage's card
+says what it was and is now, and what is new and gone. Each knob shows the pack's value beside a turned one.
+
+Checks: `life-flow.test.ts` (today's kernel answers a what-if without changing anything, and `honoured` is read from
+the answer; `whatMoved` is empty for the same world, finds the signatures moving from Earth to dead Earth, and a
+removed invention as gone from Innovations); `biosphere.e2e.mjs` turns a knob and goes back when the kernel takes
+dials, and otherwise checks the knob is read only.

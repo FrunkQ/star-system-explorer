@@ -5,7 +5,7 @@
   guess. Selecting a body selects it for the other views of the screen.
 -->
 <script lang="ts">
-  import { constant, fact, subjectName, wordsFor, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
+  import { constant, controlOn, fact, subjectName, wordsFor, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
   import { fitScale, radius, polar } from "../../../chart-grammar/src/scale.ts";
   import { topLevel } from "./pick.ts";
   import HatchDefs from "../../../chart-grammar/src/HatchDefs.svelte";
@@ -47,6 +47,8 @@
   const fontPx = $derived(Number(ctx.params.label_size ?? 15));
   const markScale = $derived(Number(ctx.params.mark_scale ?? 1));
   const sel = $derived(ctx.selection());
+  // AT13: with "select" off the bodies are drawn, not pressed: no button role, no tab stop, no click.
+  const pick = $derived(controlOn(ctx.controls, "select"));
 
   function key(e: KeyboardEvent, address: string) {
     if (e.key === "Enter" || e.key === " ") {
@@ -63,15 +65,16 @@
       {@const r = radius(b.a!, scale)}
       {@const [x, y] = polar(cx, cy, r, angle(i))}
       <circle class="orbit" {cx} {cy} {r} />
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex (a button while "select" is on; then it has a tab stop) -->
       <g
         class="body"
         class:sel={sel === b.s.address}
-        role="button"
-        tabindex="0"
-        aria-pressed={sel === b.s.address}
+        role={pick ? "button" : "img"}
+        tabindex={pick ? 0 : undefined}
+        aria-pressed={pick ? sel === b.s.address : undefined}
         aria-label="{b.name}, {b.a!.toPrecision(2)} AU"
-        onclick={() => ctx.select(b.s.address)}
-        onkeydown={(e) => key(e, b.s.address)}
+        onclick={() => pick && ctx.select(b.s.address)}
+        onkeydown={(e) => pick && key(e, b.s.address)}
       >
         <circle cx={x} cy={y} r="14" class="hit" />
         {#if ctx.mark}
@@ -85,7 +88,8 @@
       </g>
     {/each}
     {#if star}
-      <g class="body star" class:sel={sel === star.address} role="button" tabindex="0" aria-pressed={sel === star.address} aria-label={subjectName(star)} onclick={() => ctx.select(star.address)} onkeydown={(e) => key(e, star.address)}>
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex (as above) -->
+      <g class="body star" class:sel={sel === star.address} role={pick ? "button" : "img"} tabindex={pick ? 0 : undefined} aria-pressed={pick ? sel === star.address : undefined} aria-label={subjectName(star)} onclick={() => pick && ctx.select(star.address)} onkeydown={(e) => pick && key(e, star.address)}>
         <circle {cx} {cy} r="16" class="hit" />
         <circle {cx} {cy} r="9" class="sun" />
         {#if showNames}<text x={cx + 13} y={cy + 22}>{subjectName(star)}</text>{/if}
@@ -99,7 +103,7 @@
     <div class="unplaced" aria-label="Position not known">
       <span class="k">{wordsFor(ctx.vocab, field).label}: not known</span>
       {#each unplaced as b (b.s.address)}
-        <button type="button" aria-pressed={sel === b.s.address} onclick={() => ctx.select(b.s.address)}>{b.name}</button>
+        {#if pick}<button type="button" aria-pressed={sel === b.s.address} onclick={() => ctx.select(b.s.address)}>{b.name}</button>{:else}<span class="name">{b.name}</span>{/if}
       {/each}
     </div>
   {/if}
@@ -140,6 +144,9 @@
     cursor: pointer;
     outline: none;
   }
+  .body[role="img"] {
+    cursor: default;
+  }
   .body text {
     fill: var(--sse-ink);
     font-family: var(--sse-title-font);
@@ -175,6 +182,11 @@
     letter-spacing: var(--sse-label-tracking);
     text-transform: var(--sse-label-case);
     color: var(--sse-ink-muted);
+  }
+  .unplaced .name {
+    color: var(--sse-ink);
+    font-family: var(--sse-title-font);
+    font-size: 15px;
   }
   .unplaced button {
     min-height: 32px;

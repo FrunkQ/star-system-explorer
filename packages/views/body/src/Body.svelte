@@ -11,26 +11,25 @@
   no globe.
 -->
 <script module lang="ts">
-  import type { ClimateSummary, SurfaceTile } from "../../../ui-contract/src/index.ts";
-  import type { AirFacts } from "../../../renderer/src/index.ts";
-  // Tiles take about a second to build; keep them per system and body for the page's life.
-  const cache = new Map<string, { tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null }>();
-  // The climate comes only when asked for (a quick survey, about half a second); kept the same way.
+  import type { ClimateSummary } from "../../../ui-contract/src/index.ts";
+  // The climate comes only when asked for (a quick survey, about half a second); kept per system and body.
   const climates = new Map<string, ClimateSummary>();
 </script>
 
 <script lang="ts">
-  import { globeStats, regimeWords, viewOptions, DEFAULT_VIEW, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { globeStats, regimeWords, tableLandmarks, viewOptions, DEFAULT_VIEW, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { PEN_WORDS, penOf, type Pen } from "../../../chart-grammar/src/pencil.ts";
   import { BODY_CONTROLS, GLOBE_LAT } from "./controls.ts";
   import { untrack } from "svelte";
   import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
-  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { loadAurora, type AuroraPlan, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
   import ClimateWhy from "./ClimateWhy.svelte";
   import BodyTimeline from "./BodyTimeline.svelte";
   import BodyMag from "./BodyMag.svelte";
+  import { decksKept, isDecks, loadDecks, loadSurface, surfaceKept, type Decks, type Surface } from "./surface.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -38,7 +37,21 @@
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
   const size = $derived(Math.round(Math.min(640, Math.max(160, Number(params.size_px ?? 320)))));
 
-  let got = $state<{ tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null } | null>(null);
+  // Pencil and ink (SV3): on the GM's Build and Run desks a world the table does not know is drawn in pencil, its globe
+  // inside a dotted ring (heard of: a thin solid one), as on the charts. Players never see pencil.
+  let pen = $state<Pen>("ink");
+  $effect(() => {
+    const a = subject?.address;
+    void ws.revision;
+    const gmDesk = ctx.session.seat.authority === "gm" && (ws.desk === "build" || ws.desk === "run");
+    pen = "ink";
+    if (!a || !gmDesk) return;
+    void tableLandmarks(ctx.session, [a]).then((m) => {
+      if (subject?.address === a) pen = penOf(m.get(a));
+    });
+  });
+
+  let got = $state<Surface | null>(null);
   let loading = $state(false);
   let failed = $state<string | null>(null);
   let gen = 0;
@@ -49,38 +62,44 @@
     got = null;
     failed = null;
     if (!sub || sub.kind === "star") return;
-    const key = `${sys}|${sub.address}`;
-    const hit = cache.get(key);
+    const hit = surfaceKept(sys, sub.address);
     if (hit) {
       got = hit;
       return;
     }
     loading = true;
-    (async () => {
-      const r = await ctx.session.surfaceTiles(sys, sub.address);
+    void loadSurface(ctx, sys, sub.address).then((v) => {
       if (g !== gen) return;
-      if (!r.ok) {
-        loading = false;
-        failed = r.message;
-        return;
-      }
-      // The air the atmosphere pass draws: the kernel's surface pressure, temperature, gravity and gas mix.
-      const rs = await ctx.session.resolvedSystem(sys);
-      if (g !== gen) return;
-      const surf = rs.ok ? (rs.result.surfaces.find((x) => x.address === sub.address) as Parameters<typeof airFactsOf>[1]) : undefined;
-      const facts = rs.ok ? airFactsOf(rs.result.facts[sub.address], surf) : null;
-      // The optics themselves come from the kernel (light track, read_air_optics).
-      const req = facts ? airRequest(sub.address, facts) : null;
-      if (facts && req) {
-        const ao = await ctx.session.readAirOptics([req.air]);
-        if (g !== gen) return;
-        facts.optics = ao.ok && ao.airs[0] ? airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req) : null;
-      }
-      const v = { tiles: r.tiles, regime: r.regime, refused: r.refused.length, air: facts };
-      cache.set(key, v);
-      got = v;
       loading = false;
+      if (typeof v === "string") failed = v;
+      else got = v;
+    });
+  });
+
+  // Aurorae (VP-AU5): where they glow from the kernel's field read (read_field's aurora), what colours and how high
+  // from the air. The Solar System's own worlds read the measured fixture by name; any other adopted system is read
+  // world by world from its facts. Asked once per world, only when True is shown.
+  const auroraCache = new Map<string, { plan: AuroraPlan; radius_m: number } | null>();
+  let aurora = $state.raw<{ plan: AuroraPlan; radius_m: number } | null>(null);
+  $effect(() => {
+    const sub = subject;
+    const sys = scene.system;
+    const air = got?.air;
+    const isTrue = shownView.style === "true";
+    aurora = null;
+    if (!sub || sub.kind === "star" || !got || !isTrue) return;
+    const key = `${sys}|${sub.address}`;
+    if (auroraCache.has(key)) return void (aurora = auroraCache.get(key) ?? null);
+    let live = true;
+    void (async () => {
+      const v = await loadAurora(ctx.session, sys, sub, { radius_m: air?.radius_m ?? 0, scale_height_m: air?.optics?.scale_height_m, composition: air?.composition });
+      if (!live) return;
+      auroraCache.set(key, v);
+      aurora = v;
     })();
+    return () => {
+      live = false;
+    };
   });
 
   // "Why?" for the climate (W7a): asked for, never fetched on a click of the world alone.
@@ -197,6 +216,7 @@
     size_px: size,
     label: subject?.label ?? "",
     air: got?.air ?? null,
+    aurora,
   });
   // Time lapse (R6): the kernel's surface_frames for this world, played on the same globe. `lapse` is the API the
   // chart room's timeline (BodyTimeline) drives; it is reactive, so a scrubber follows changes made anywhere.
@@ -336,6 +356,26 @@
     if (untrack(() => wxKey) && key !== untrack(() => wxKey)) untrack(() => weather.hide());
   });
 
+  // A giant wears its cloud decks, the same True face as the system chart (VP3 part 3), not its tiles' grey.
+  let decks = $state<Decks | null>(null);
+  const faceOf = (d: Decks | null) => (d ? { tex: d.tex, ...(d.flow ? { flow: d.flow } : {}) } : null);
+  $effect(() => {
+    const sub = subject;
+    const sys = scene.system;
+    const s = got;
+    decks = null;
+    if (!sub || !s || !isDecks(s)) return;
+    const kept = decksKept(sys, sub.address);
+    if (kept !== undefined) return void (decks = kept);
+    void loadDecks(ctx, sys, sub.address).then((v) => {
+      if (subject?.address === sub.address && scene.system === sys) decks = v;
+    });
+  });
+  $effect(() => {
+    const d = decks;
+    untrack(() => run)?.setFace(faceOf(d));
+  });
+
   // One runtime per globe element; settings and turns are passed to it.
   $effect(() => {
     const h = host;
@@ -347,6 +387,7 @@
     run = r;
     untrack(() => attachLapse());
     if (wxData) r.setWeather(wxData);
+    if (decks) r.setFace(faceOf(decks));
     return () => {
       r.dispose();
       run = null;
@@ -393,7 +434,7 @@
     shotNote = null;
     try {
       const o = runOpts;
-      const shot = await photograph({ registry: o.registry, library: o.library, recipe: o.recipe, knobs: o.knobs, globe, air: o.air, label: s.label, lon, lat, size: 1024, frames: 16, onProgress: (d, n) => (shooting = `Refining ${d} of ${n}…`) });
+      const shot = await photograph({ registry: o.registry, library: o.library, recipe: o.recipe, knobs: o.knobs, globe, air: o.air, aurora: o.aurora, label: s.label, lon, lat, size: 1024, frames: 16, onProgress: (d, n) => (shooting = `Refining ${d} of ${n}…`) });
       const png = await new Promise<Blob>((res, rej) => shot.canvas.toBlob((b) => (b ? res(b) : rej(new Error("the browser would not encode the picture"))), "image/png"));
       const now = new Date();
       const caption = `${s.label}, centred on ${lat.toFixed(0)}° ${lon.toFixed(0)}°. ${shot.note} Made in ${(shot.ms / 1000).toFixed(1)} s.`;
@@ -463,7 +504,7 @@
     <StarDisc {ctx} {scene} address={subject.address} label={subject.label} {size} />
   {:else}
     <div class="top">
-      <div class="globe" class:hidden={shownView.band === "mag"} style:width="{size}px" style:height="{size}px">
+      <div class="globe" class:hidden={shownView.band === "mag"} class:pencil={pen === "pencil"} class:heard={pen === "heard"} style:width="{size}px" style:height="{size}px" data-pen={pen}>
         {#if loading}
           <p class="note">Building the surface of {subject.label}… (about a second)</p>
         {:else if has}
@@ -503,6 +544,10 @@
           </p>
         {/if}
       </div>
+      {#if has && shownView.band !== "mag" && aurora?.plan.stand_in && gs?.plan.passes.some((x) => x.pass === "aurora")}
+        <p class="note" data-aurora-stand-in>Aurora colours are a stand-in: oxygen's green and red lines at heights scaled from Earth's, until the kernel gives this air's own lines.</p>
+      {/if}
+      {#if pen !== "ink"}<p class="pennote" data-pen-note>In pencil: {PEN_WORDS[pen]}. The players' screens {pen === "pencil" ? "do not show" : "show only the name and place of"} {subject.label}.</p>{/if}
       {#if has && shownView.band !== "mag"}
         <!-- The time lapse's controls (U22): layer toggles, scrubber with event marks, Play, and the why card. -->
         <BodyTimeline {lapse} depth={ws.depth ?? "science"} label={subject.label} />
@@ -525,6 +570,7 @@
               <div class="badge-detail" data-badge-detail>
                 <p>{gs.tier_note}</p>
                 {#if gs.plan.passes.some((x) => x.pass === "atmosphere")}<p data-air-note>{gs.air_note}</p>{/if}
+                {#if gs.plan.passes.some((x) => x.pass === "aurora")}<p data-aurora-note>{gs.aurora_note}</p>{/if}
                 {#each gs.badge.detail as line (line)}<p>{line}</p>{/each}
                 {#if gs.badge.reduced}<p>{gs.badge.lift}</p>{/if}
                 <p>Recipe {gs.recipe}, level {gs.level} of {gs.max}. {Number.isFinite(gs.ewma_ms) ? `Frames about ${Math.round(gs.ewma_ms)} ms; budget ${Math.round(gs.budget_ms)} ms.` : ""}</p>
@@ -661,6 +707,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 50%;
+  }
+  /* Pencil (SV3): the shared look, a dotted ring for not known, a thin solid one for heard of. */
+  .globe.pencil {
+    outline: 1px dotted var(--sse-ink-muted);
+    outline-offset: 4px;
+  }
+  .globe.heard {
+    outline: 1px solid var(--sse-ink-muted);
+    outline-offset: 4px;
+  }
+  .pennote {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    font-style: italic;
+    color: var(--sse-ink-muted);
   }
   .surface {
     max-width: 100%;

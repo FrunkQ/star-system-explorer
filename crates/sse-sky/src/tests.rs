@@ -9,7 +9,8 @@ fn bad_nside_is_refused() {
     assert_eq!(Grid::new(32).unwrap().npix(), 12_288);
 }
 
-/// Known centres (Górski et al. 2005, figure 3 layout): at nside 1 the
+/// Known centres (Górski et al. 2005, the base-pixel layout; figures 4 and 5 in
+/// the preprint, the ApJ figure number unchecked): at nside 1 the
 /// first pixel sits at z = 2/3, φ = π/4; the last at z = −2/3, φ = 7π/4;
 /// pixel 4 is on the equator at φ = 0.
 #[test]

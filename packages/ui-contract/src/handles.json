@@ -1,5 +1,5 @@
 {
- "about": "The handle sheet (ED1, editing design sections 2, 3 and 3B): the few true inputs of a world, a star and a system, each a handle with the part its strip opens on. Fields are kernel fields; values are SI except where `per` names the sheet constant a field is held in multiples of (surface water in Earth oceans). Figures are said by the units engine (figures.ts) with `kind` and `about`. `scale` is how the strip lays the value out. `refs` are the catalogued Solar System bodies (packs/base-sol ids) drawn as reference dots at Curious depth; this system's other worlds are drawn at every depth. `desks` are where the handle may be moved; Explore shows it read-only. This sheet moves into the base pack beside the units scheme (MP15) so a pack can add a handle for a field of its own. `results` are the kernel's results for a world (resolved_system's surface entry, flattened) that 'what followed' lists when they move.",
+ "about": "The handle sheet (ED1, editing design sections 2, 3 and 3B): the few true inputs of a world, a star and a system, each a handle with the part its strip opens on. Fields are kernel fields; values are SI except where `per` names the sheet constant a field is held in multiples of (surface water in Earth oceans). Figures are said by the units engine (figures.ts) with `kind` and `about`. `scale` is how the strip lays the value out. `refs` are the catalogued Solar System bodies (packs/base-sol ids) drawn as reference dots at Curious depth; this system's other worlds are drawn at every depth. `desks` are where the handle may be moved; Explore shows it read-only. This sheet moves into the base pack beside the units scheme (MP15) so a pack can add a handle for a field of its own. `results` are the kernel's results for a world (resolved_system's surface entry, flattened) that 'what followed' lists when they move. `box` is what a handle opens (design section 11F): the handle's own strip first, then `parts` (each a strip or a ring on a kernel field, shown from its `depth` up; `range` fixes a strip's ends in SI; `as` names how a ring reads its field, `true_anomaly_now` being the place round the orbit at the campaign's now), `chips` (one press, one set_value: `mirror` turns an angle to its mirror past 90 degrees, `flip` the sign, `lock` the day to the year, `resonance` the size to a period in step with a neighbour) and `results` (said under the box).",
  "handles": [
   {
    "id": "orbit",
@@ -29,7 +29,143 @@
    ],
    "desks": [
     "build"
-   ]
+   ],
+   "box": {
+    "parts": [
+     {
+      "id": "shape",
+      "depth": "science",
+      "names": {
+       "curious": "How stretched",
+       "science": "Shape"
+      },
+      "part": {
+       "field": "orbit.eccentricity",
+       "kind": "share",
+       "reading": "fraction",
+       "scale": "linear",
+       "range": [
+        0,
+        0.99
+       ]
+      },
+      "marks": [
+       {
+        "at": 0,
+        "says": "round"
+       }
+      ],
+      "walls": [
+       {
+        "at": 1,
+        "says": "leaves the system"
+       }
+      ]
+     },
+     {
+      "id": "now",
+      "depth": "curious",
+      "names": {
+       "curious": "Where it is now",
+       "science": "Where it is now"
+      },
+      "part": {
+       "field": "orbit.mean_anomaly_at_epoch",
+       "kind": "angle",
+       "scale": "ring",
+       "as": "true_anomaly_now"
+      },
+      "catches": [
+       {
+        "at": 0,
+        "says": "closest point"
+       },
+       {
+        "at": 3.141592653589793,
+        "says": "farthest point"
+       }
+      ]
+     },
+     {
+      "id": "lean",
+      "depth": "science",
+      "names": {
+       "curious": "Lean",
+       "science": "Lean"
+      },
+      "part": {
+       "field": "orbit.inclination",
+       "kind": "angle",
+       "scale": "linear",
+       "range": [
+        0,
+        3.141592653589793
+       ]
+      },
+      "marks": [
+       {
+        "at": 1.5707963267948966,
+        "says": "past 90 is backwards"
+       }
+      ]
+     },
+     {
+      "id": "peri",
+      "depth": "science",
+      "names": {
+       "curious": "Turn of the ellipse",
+       "science": "Turn of the ellipse"
+      },
+      "part": {
+       "field": "orbit.argument_of_periapsis",
+       "kind": "angle",
+       "scale": "ring"
+      }
+     },
+     {
+      "id": "node",
+      "depth": "science",
+      "names": {
+       "curious": "Where it crosses",
+       "science": "Where it crosses the plane"
+      },
+      "part": {
+       "field": "orbit.ascending_node",
+       "kind": "angle",
+       "scale": "ring"
+      }
+     }
+    ],
+    "chips": [
+     {
+      "id": "retrograde",
+      "depth": "science",
+      "does": "mirror",
+      "field": "orbit.inclination",
+      "names": {
+       "curious": "Backwards",
+       "science": "Retrograde"
+      }
+     },
+     {
+      "id": "resonance",
+      "depth": "science",
+      "does": "resonance",
+      "field": "orbit.semi_major_axis",
+      "names": {
+       "curious": "In step with",
+       "science": "In step with"
+      }
+     }
+    ],
+    "results": [
+     "year",
+     "closest",
+     "farthest",
+     "sunlight_swing",
+     "stability"
+    ]
+   }
   },
   {
    "id": "mass",
@@ -151,7 +287,61 @@
    ],
    "desks": [
     "build"
-   ]
+   ],
+   "box": {
+    "parts": [
+     {
+      "id": "tilt",
+      "depth": "curious",
+      "names": {
+       "curious": "Tilt",
+       "science": "Tilt"
+      },
+      "part": {
+       "field": "body.obliquity",
+       "kind": "angle",
+       "scale": "linear",
+       "range": [
+        0,
+        3.141592653589793
+       ]
+      },
+      "marks": [
+       {
+        "at": 1.5707963267948966,
+        "says": "past 90 spins backwards"
+       }
+      ]
+     }
+    ],
+    "chips": [
+     {
+      "id": "retrograde",
+      "depth": "curious",
+      "does": "flip",
+      "field": "body.rotation_period",
+      "names": {
+       "curious": "Backwards",
+       "science": "Retrograde"
+      }
+     },
+     {
+      "id": "locked",
+      "depth": "curious",
+      "does": "lock",
+      "field": "body.rotation_period",
+      "names": {
+       "curious": "Locked",
+       "science": "Locked"
+      }
+     }
+    ],
+    "results": [
+     "solar_day",
+     "days_in_year",
+     "locked"
+    ]
+   }
   },
   {
    "id": "mass",
@@ -197,7 +387,47 @@
    ],
    "desks": [
     "build"
-   ]
+   ],
+   "box": {
+    "parts": [
+     {
+      "id": "tilt",
+      "depth": "curious",
+      "names": {
+       "curious": "Tilt",
+       "science": "Tilt"
+      },
+      "part": {
+       "field": "body.obliquity",
+       "kind": "angle",
+       "scale": "linear",
+       "range": [
+        0,
+        3.141592653589793
+       ]
+      },
+      "marks": [
+       {
+        "at": 1.5707963267948966,
+        "says": "past 90 spins backwards"
+       }
+      ]
+     }
+    ],
+    "chips": [
+     {
+      "id": "retrograde",
+      "depth": "curious",
+      "does": "flip",
+      "field": "body.rotation_period",
+      "names": {
+       "curious": "Backwards",
+       "science": "Retrograde"
+      }
+     }
+    ],
+    "results": []
+   }
   }
  ],
  "results": [

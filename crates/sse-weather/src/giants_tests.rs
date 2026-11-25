@@ -89,7 +89,9 @@ fn fixtures_land_in_their_polar_regimes() {
 fn jupiter_ring_saturn_vortex_with_hexagon_ice_giants_no_polygon() {
     let gs = base_settings();
     let j = layout(&gs, &fixture("Jupiter"));
-    assert_eq!(j.jets, 9);
+    // 6 to 7 eastward jets a hemisphere observed (visual polish citation
+    // check, section 6): the Rhines width with the eddy speed gives 13.
+    assert_eq!(j.jets, 13);
     assert!(j.a_over_ld >= 40.0, "{}", j.a_over_ld);
     for p in &j.poles {
         assert_eq!(p.regime, "cyclone-ring");
@@ -126,6 +128,42 @@ fn jupiter_ring_saturn_vortex_with_hexagon_ice_giants_no_polygon() {
 }
 
 #[test]
+fn jet_profile_reads_the_eddy_speed_and_matches_the_bands() {
+    let gs = base_settings();
+    for f in fixtures() {
+        let c = &f.conditions;
+        let l = layout(&gs, c);
+        let p = jet_profile(&gs, c, &l);
+        let n = 2 * l.jets as usize;
+        for v in [
+            &p.lat_deg,
+            &p.jet_speed_m_s,
+            &p.jet_shear_m_s,
+            &p.eddy_speed_m_s,
+            &p.rhines_scale_m,
+            &p.deformation_radius_m,
+        ] {
+            assert_eq!(v.len(), n, "{}", c.label);
+        }
+        // One jet's Rhines width, a few bands' worth of latitude near 30°:
+        // the bands are as wide as the Rhines width says (within 2, the
+        // factor the literature leaves open).
+        let k = p.lat_deg.iter().position(|x| *x > 25.0).unwrap_or(n - 1);
+        let band_m = (l.band_edges_deg[k + 1] - l.band_edges_deg[k]).to_radians() * c.radius_m;
+        let r = p.rhines_scale_m[k] / band_m;
+        assert!((0.5..2.0).contains(&r), "{}: Rhines over band {r}", c.label);
+        assert!(p.eddy_speed_m_s.iter().all(|u| *u == l.eddy_m_s));
+    }
+    // Jupiter's Rhines width near 30° with U 17 m/s: about 9,000 km
+    // (check file: 9,520 km at U 40 m/s for pi sqrt(U/beta), the same
+    // number as pi sqrt(2U/beta) at 20 m/s).
+    let jc = fixture("Jupiter");
+    let j = layout(&gs, &jc);
+    let w = sse_climate::circulation::rhines_width_m(jc.radius_m, jc.spin_rate(), j.eddy_m_s, 30.0);
+    assert!((7.0e6..1.0e7).contains(&w), "{w}");
+}
+
+#[test]
 fn band_edges_match_the_s6_cloud_deck() {
     // sse-surface regimes::cloud_deck, same inputs (its formula, restated).
     let gs = base_settings();
@@ -133,8 +171,8 @@ fn band_edges_match_the_s6_cloud_deck() {
         let c = &f.conditions;
         let l = layout(&gs, c);
         let omega = std::f64::consts::TAU / (c.rotation_hours * 3600.0);
-        let u = if l.ice { 400.0 } else { 150.0 };
-        let jets = m::round(m::sqrt(c.radius_m * omega / u)).clamp(1.0, 60.0) as u32;
+        let u = if l.ice { 100.0 } else { 17.0 };
+        let jets = m::round(0.5 * m::sqrt(c.radius_m * omega / u)).clamp(1.0, 60.0) as u32;
         let nb = 2 * jets;
         let edges: Vec<f64> = (0..=nb)
             .map(|i| m::asin(-1.0 + 2.0 * i as f64 / nb as f64).to_degrees())
@@ -150,6 +188,8 @@ fn band_edges_match_the_s6_cloud_deck() {
     let cl = &surf.regime_features.clouds;
     assert_eq!(cl.wind_gas_m_s, gs.bands.wind_gas_m_s);
     assert_eq!(cl.wind_ice_m_s, gs.bands.wind_ice_m_s);
+    assert_eq!(cl.eddy_gas_m_s, gs.bands.eddy_gas_m_s);
+    assert_eq!(cl.eddy_ice_m_s, gs.bands.eddy_ice_m_s);
     assert_eq!(cl.ice_giant_mass_earth, gs.bands.ice_giant_mass_earth);
 }
 
@@ -340,6 +380,46 @@ fn most_random_giants_show_no_polygon_and_sides_follow_the_relation() {
 }
 
 #[test]
+fn chromophore_is_thicker_over_belts_and_decks_carry_their_size() {
+    let gs = base_settings();
+    let c = fixture("Jupiter");
+    let p = prepare(&gs, &c, Date { day: 0.0 });
+    let l = &p.layout;
+    let ch = gs.clouds.chromophore.as_ref().unwrap();
+    // Sromovsky et al. 2017: 0.05 to 0.76 at 1 µm, radius 0.12 to 0.29 µm.
+    let nj = l.jets as f64;
+    let at = |x: f64| m::asin(x / nj) * 180.0 / m::PI;
+    let read = |lat: f64| {
+        let cell = giant_cell(&gs, &c, &p, lat, 0.0);
+        let a = cell
+            .aerosols
+            .iter()
+            .find(|a| a.kind == "chromophore")
+            .cloned()
+            .expect("chromophore");
+        (a, cell.layers[2].particle_radius_um)
+    };
+    let (z, rz) = read(at(0.5)); // zone centre (band 0 from the equator)
+    let (b, _) = read(at(1.5)); // belt centre (band 1)
+    assert!(b.optical_depth > z.optical_depth);
+    for a in [&z, &b] {
+        assert!(
+            (0.05..=0.76).contains(&a.optical_depth),
+            "{}",
+            a.optical_depth
+        );
+        assert!((0.12..=0.29).contains(&a.particle_radius_um));
+    }
+    assert_eq!(l.layers[2], ch.above);
+    assert_eq!(rz, 1.0, "ammonia ice deck radius");
+    // Ice giants have no ammonia top deck, so no chromophore.
+    let n = fixture("Neptune");
+    let pn = prepare(&gs, &n, Date { day: 0.0 });
+    let cell = giant_cell(&gs, &n, &pn, 30.0, 0.0);
+    assert!(cell.aerosols.iter().all(|a| a.kind != "chromophore"));
+}
+
+#[test]
 fn cells_show_belts_zones_and_storms() {
     let gs = base_settings();
     let c = fixture("Jupiter");
@@ -471,4 +551,41 @@ fn golden() -> serde_json::Value {
 #[test]
 fn golden_weather_giants() {
     check_golden("weather-giants.json", &golden());
+}
+
+#[test]
+fn deck_bases_sit_where_their_vapour_saturates() {
+    let gs = base_settings();
+    let cs = crate::scenario::settings().climate;
+    let dh = gs.clouds.heights.as_ref().unwrap();
+    for f in fixtures() {
+        let c = &f.conditions;
+        let l = layout(&gs, c);
+        let p = deck_base_bar(dh, &cs, c, &l.layers);
+        assert!(p[0] > p[1] && p[1] > p[2], "{}: {p:?}", c.label);
+    }
+    // Ice giants' methane cloud near 1.2 to 1.5 bar, Saturn's ammonia near
+    // 1.5 (deeper than Jupiter's: colder at 1 bar, less ammonia).
+    for (w, lo, hi) in [
+        ("Saturn", 1.2, 2.0),
+        ("Uranus", 1.0, 1.6),
+        ("Neptune", 1.1, 1.8),
+    ] {
+        let c = fixture(w);
+        let p = deck_base_bar(dh, &cs, &c, &layout(&gs, &c).layers);
+        assert!((lo..hi).contains(&p[2]), "{w}: {}", p[2]);
+    }
+    // Jupiter's ammonia cloud base near 0.7 bar (Braude et al. 2020: no
+    // deeper than 0.7 ± 0.1 bar outside the Great Red Spot).
+    let c = fixture("Jupiter");
+    let l = layout(&gs, &c);
+    let p = deck_base_bar(dh, &cs, &c, &l.layers);
+    assert_eq!(l.layers[2], "ammonia ice");
+    assert!((0.5..0.9).contains(&p[2]), "{}", p[2]);
+    // Heights rise with the decks and the cell carries them.
+    let gp = prepare(&gs, &c, Date { day: 0.0 });
+    let mut cell = giant_cell(&gs, &c, &gp, 10.0, 0.0);
+    set_heights(&gs, &cs, &c, &l, &mut cell);
+    assert!(cell.layers[2].base_m > cell.layers[1].base_m);
+    assert!(cell.layers[2].top_m > cell.layers[2].base_m);
 }

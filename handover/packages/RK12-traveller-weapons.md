@@ -16,7 +16,7 @@ out of range) and rings, and a game pack keeps its own table beside the physics.
     is left as medium (above the pulse laser) and its tech level and damage are left out.
   - The meson gun (fictional physics) and the sandcaster (a defence) carry no `weapon` and say why. The game's band
     stands alone for them.
-- **Fudge F54**: the physical figures are hand-set game defaults, tuned so each beam is in range or marginal at
+- **Fudge F60**: the physical figures are hand-set game defaults, tuned so each beam is in range or marginal at
   the far edge of its game band against the standard target.
 
 ## What the physics says (cheap "cool physics wins")

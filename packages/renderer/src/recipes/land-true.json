@@ -1,0 +1,25 @@
+{
+  "schema": "sse.render-recipe/1",
+  "id": "land-true",
+  "name": "Land in True",
+  "family": "land-true",
+  "description": "The ground round a landing site as an eye standing there would see it: the ground and sea lit through the air, the sky, the stars at night, then the shared finish (exposure, the eye's glare, tone mapping). The ground's own detail is the detail ladder's; this recipe sets the finish and the drawing size (VP4).",
+  "scene": "land",
+  "tiers": ["still", "gpu-high", "gpu-basic"],
+  "passes": [
+    { "id": "ground", "pass": "true-ground", "tiers": ["still", "gpu-high", "gpu-basic"] },
+    { "id": "finish", "pass": "true-finish", "params": { "glare_rungs": 6, "glare_scale": 0.5 }, "tiers": ["gpu-high"] },
+    { "id": "finish-basic", "pass": "true-finish", "params": { "glare_rungs": 3, "glare_scale": 0.25 }, "tiers": ["gpu-basic"] },
+    { "id": "finish-still", "pass": "true-finish", "params": { "glare_rungs": 6, "glare_scale": 1 }, "tiers": ["still"] }
+  ],
+  "degrade": [
+    { "render_scale": 0.85, "says": "Drawn at a little under full resolution." },
+    { "set": { "pass": "finish", "param": "glare_rungs", "value": 4 }, "tiers": ["gpu-high"], "says": "The glare reaches less far." },
+    { "tier": "gpu-basic", "tiers": ["gpu-high"], "says": "Dropped to Light." },
+    { "render_scale": 0.75, "says": "Drawn at three-quarter resolution, enlarged." },
+    { "set": { "pass": "finish-basic", "param": "glare_rungs", "value": 2 }, "tiers": ["gpu-basic"], "says": "The glare reaches less far." },
+    { "render_scale": 0.6, "says": "Drawn at three-fifths resolution, enlarged." },
+    { "render_scale": 0.5, "says": "Drawn at half resolution, enlarged." }
+  ],
+  "lift": "Standing still lets the view sharpen (unless the sea is moving); a smaller window or a faster device lifts it while moving."
+}

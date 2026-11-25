@@ -506,7 +506,7 @@ fn cycle_two(cs: &ClimateSettings, c: &Conditions) -> Vec<Season> {
     }
     out.into_iter()
         .map(|(t, alb, q, l, sea)| {
-            let mut s = diagnose(cs, c, &q, &t, &alb);
+            let mut s = diagnose_two(cs, c, &q, &t, &alb, Some(&sea));
             s.t_land_k = l;
             s.t_sea_k = sea;
             s
@@ -686,6 +686,20 @@ pub fn cycle(cs: &ClimateSettings, c: &Conditions) -> Vec<Season> {
 /// Everything a band temperature implies: absorbed sunlight, gradients,
 /// thermal wind, evaporation, rain and cloud.
 pub fn diagnose(cs: &ClimateSettings, c: &Conditions, q: &[f64], t: &[f64], alb: &[f64]) -> Season {
+    diagnose_two(cs, c, q, t, alb, None)
+}
+
+/// As [`diagnose`], with the sea column's temperature when the world runs
+/// two columns (W7c): the sea evaporates at its own temperature, not the
+/// band's.
+pub fn diagnose_two(
+    cs: &ClimateSettings,
+    c: &Conditions,
+    q: &[f64],
+    t: &[f64],
+    alb: &[f64],
+    t_sea: Option<&[f64]>,
+) -> Season {
     let lat = lats(cs);
     let n = lat.len();
     let dphi = m::PI / n as f64;
@@ -719,7 +733,7 @@ pub fn diagnose(cs: &ClimateSettings, c: &Conditions, q: &[f64], t: &[f64], alb:
         })
         .collect();
     let (evap, precip, cover, condensate) =
-        moisture(cs, c, &lat, &w, &ce, dphi, d, &t, &absorbed, &grad);
+        moisture(cs, c, &lat, &w, &ce, dphi, d, &t, t_sea, &absorbed, &grad);
     Season {
         lat_deg: lat,
         t_k: t,
@@ -784,6 +798,7 @@ fn moisture(
     dphi: f64,
     d: f64,
     t: &[f64],
+    t_sea: Option<&[f64]>,
     absorbed: &[f64],
     grad: &[f64],
 ) -> (Vec<f64>, Vec<f64>, Vec<f64>, String) {
@@ -811,8 +826,19 @@ fn moisture(
         let ssf = surface_sun_fraction(cs, c);
         let evap: Vec<f64> = (0..n)
             .map(|j| {
-                let rho = p0 * c.mean_molar_kg / (R_GAS * t[j]);
-                let bulk = rho * cs.moisture.exchange_m_s * qsat[j] * (1.0 - rh);
+                // The sea evaporates at the sea column's temperature (W7c),
+                // into the air over it, at the model's relative humidity.
+                let bulk = match t_sea.and_then(|v| v.get(j)).copied() {
+                    Some(ts) => {
+                        let q_sea = (sub.molar_kg / c.mean_molar_kg * p_sat(sub, ts) / p0).min(1.0);
+                        let rho = p0 * c.mean_molar_kg / (R_GAS * ts);
+                        rho * cs.moisture.exchange_m_s * q_sea * (1.0 - rh)
+                    }
+                    None => {
+                        let rho = p0 * c.mean_molar_kg / (R_GAS * t[j]);
+                        rho * cs.moisture.exchange_m_s * qsat[j] * (1.0 - rh)
+                    }
+                };
                 let energy = cs.supply.latent_share * ssf * absorbed[j].max(0.0) / sub.latent_j_kg;
                 wet_at(j) * bulk.min(energy)
             })

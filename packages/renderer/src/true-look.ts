@@ -5,6 +5,7 @@
 import { planck, type Globe, type SurfaceTile } from "../../ui-contract/src/index.ts";
 import { starRgb } from "./sky.ts";
 import { fastFace, lookupFast, prepare, type Prepared } from "./surface.ts";
+import { composeFaces, type Composite, type PatchPicture } from "./texture-ladder.ts";
 
 export interface TrueTexture {
   width: number;
@@ -13,6 +14,10 @@ export interface TrueTexture {
   data: Uint8Array;
   /** The disc's mean colour (sRGB 0..255), for the canvas tier and the plain fallback. */
   mean: [number, number, number];
+  /** VP3: the same tiles as cube face pictures, for the GPU's texture ladder (gpu.ts bakes them by screen size). */
+  faces?: Composite;
+  /** VP3 part 4: the deep patch under a close camera, laid over the bake (texture-ladder.ts `composePatch`). */
+  patch?: PatchPicture;
 }
 
 /**
@@ -63,7 +68,7 @@ export function trueSurface(tiles: readonly SurfaceTile[], width = 128, height =
   const globe: Globe = [0, 1, 2, 3, 4, 5].map((f) => tiles.find((t) => t.key.face === f && t.key.level === 0));
   if (!globe.some((t) => t)) return null;
   // The true-colour recipe's ground colours (surface.ts: any colour but "height" reads the tiles' own).
-  return equirect(prepare(globe, "survey", 1), width, height);
+  return { ...equirect(prepare(globe, "survey", 1), width, height), faces: composeFaces(tiles) };
 }
 
 /** A star's own colour as a CSS colour: its surface temperature's (sky.ts `starRgb`, linear) encoded to sRGB. */

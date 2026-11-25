@@ -13,6 +13,9 @@
 //! snowplough remnant). This crate puts them together at a date.
 #![forbid(unsafe_code)]
 
+pub mod outflow;
+#[cfg(test)]
+mod outflow_tests;
 #[cfg(test)]
 mod tests;
 
@@ -39,6 +42,10 @@ pub enum Kind {
     PlanetaryNebula,
     SupernovaRemnant,
     StarFormingGlow,
+    /// A young star's bipolar jets (O3b).
+    Jet,
+    /// A cool giant's dusty wind (O3b).
+    DustShell,
 }
 
 /// One shell, ring or ionised sphere.
@@ -58,6 +65,26 @@ pub struct Lobes {
     /// Lobe length over waist radius.
     pub ratio: f64,
     pub why: String,
+}
+
+/// One knot in a jet: a blob from one burst of accretion, moving out.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Knot {
+    pub distance_m: f64,
+    pub age_s: f64,
+}
+
+/// A pair of jets along the lobes' axis.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Jet {
+    /// Length of each jet from the star, m.
+    pub length_m: f64,
+    pub speed_m_s: f64,
+    /// Full opening angle, rad.
+    pub opening_rad: f64,
+    /// Mass both jets carry away, kg/s.
+    pub mass_rate_kg_s: f64,
+    pub knots: Vec<Knot>,
 }
 
 /// What made it.
@@ -83,6 +110,9 @@ pub struct Descriptor {
     pub shells: Vec<Shell>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lobes: Option<Lobes>,
+    /// A young star's jets: their length, speed, opening and knots.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jet: Option<Jet>,
     /// Elongation of a single shell (1 = round).
     pub elongation: f64,
     pub ambient_h_m3: f64,
@@ -374,6 +404,7 @@ pub fn planetary_nebula(
         phase: if q >= needed { "fully lit" } else { "partly lit" }.into(),
         shells,
         lobes,
+        jet: None,
         elongation,
         ambient_h_m3: p.ambient_h_m3,
         lighting: vec![p.star.clone()],
@@ -512,6 +543,7 @@ pub fn supernova_remnant(
             mass_kg: swept + p.ejecta_kg,
         }],
         lobes: None,
+        jet: None,
         elongation: if p.core_collapse { d.uniform(0, 1.0, 1.3) } else { d.uniform(0, 1.0, 1.05) },
         ambient_h_m3: p.ambient_h_m3,
         lighting,
@@ -610,6 +642,7 @@ pub fn star_forming_glow(
             mass_kg: 4.0 / 3.0 * m::PI * r * r * r * nb::MU_H * nb::M_H * p.cloud_h_m3,
         }],
         lobes: None,
+        jet: None,
         elongation: 1.0,
         ambient_h_m3: p.cloud_h_m3,
         lighting: live.iter().map(|s| s.address.clone()).collect(),

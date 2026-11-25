@@ -3,6 +3,18 @@
 // Only this file and host-browser.ts may import the kernel client (checked by
 // tests/ui/boundary.test.ts).
 import type { OrbitPlaced } from "./orbits.ts";
+/** One orbital stability check (kernel `orbit_stability`): level 0 lasts, 1 watch, 2 will not last, 3 the orbits cross. */
+export interface StabilityCheck {
+  check: string;
+  block?: string;
+  around?: string;
+  bodies: string[];
+  level: number;
+  says: string;
+  /** The block's results in SI (`limit`, metres, for the widest lasting orbit). */
+  results?: Record<string, number>;
+}
+
 /** A pack's calendar as the kernel serves it (`provides.other.calendar`). */
 /** Where and how a sky is asked for (`sky_from_here`, `sky_glow`): a system address or a galactic position in pc (neither: the Sun's place). */
 export interface SkyAsk {
@@ -173,9 +185,15 @@ export interface ViewSession {
   /** Replace the open universe with a kept one (U10, kernel `import_chronicle`). */
   importChronicle(doc: Json): Promise<{ ok: true; state_hash: string; events: number; stack_matches: boolean } | { ok: false; code: string; message: string }>;
   /** One world's life (U7, kernel `life_view`): a body once systems carry habitat graphs, or one of the example fixtures. GM only. */
-  lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }>;
+  /** A world's life; with `dials`, a read-only what-if under other dial values (the kernel changes nothing). */
+  lifeView(by: { body?: string; fixture?: string; dials?: Record<string, number> }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }>;
   /** Bodies on their orbits at given times (kernel `orbits_at`, U11 part 2): relative to each host, up to 64 times. `bodies` places a scene the kernel does not hold. */
   orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }>;
+  /**
+   * Whether the orbits at or under a system last (kernel `orbit_stability`, ST1): the worst verdict, and every check
+   * with its block, its numbers and what it says. `bodies` lays facts over the kernel's (a held value not yet written).
+   */
+  orbitStability(system: string, opts?: { bodies?: { address: string; facts: Record<string, number | string> }[]; at_s?: bigint }): Promise<{ ok: true; verdict: string; checks: StabilityCheck[] } | { ok: false; code: string; message: string }>;
   /** The campaign's now kept in the universe (kernel `campaign_now`); absent if never set. */
   campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; code: string; message: string }>;
   /** Move the campaign's now (kernel `set_campaign_now`); GM only. */
@@ -184,6 +202,10 @@ export interface ViewSession {
   calendar(): Promise<{ ok: true; calendar?: PackCalendar } | { ok: false; code: string; message: string }>;
   /** Every system in the open universe that has facts (kernel `systems`): adopted ones and authored ones. */
   listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
+  /** The links between places the record holds (kernel `links_in`, HW1): gates, lanes, routes; the GM sees all. Read only. */
+  linksIn?(ask?: { bounds?: string; audience?: string }): Promise<{ ok: true; links: import("./your-systems.ts").RecordLink[] } | { ok: false; code: string; message: string }>;
+  /** One map layer's holdings under a place (kernel `holdings_in`, OV3): answers as `who_holds` gives them. */
+  holdingsIn?(ask: { bounds: string; layer: string; audience?: string }): Promise<{ ok: true; holdings: import("./overlay.ts").Holding[] } | { ok: false; code: string; message: string }>;
   /** Candidate courses (V8, kernel `plan_route`, T3): from an inline system any seat may ask about; an adopted `system` is GM only. Writes nothing. */
   planRoute(ask: import("./route.ts").RouteAsk): Promise<{ ok: true; plan: import("./route.ts").RoutePlan } | { ok: false; code: string; message: string }>;
   /** What a ship can do at each of some worlds (kernel `ship_at_world`): aerocapture, entry, landing, take-off, with dangers, margins and rough chances; nothing rolled. An adopted `system` is GM only. Writes nothing. */
@@ -240,7 +262,8 @@ export interface ViewSession {
   /** The galaxies in the same cube (kernel `web_slice` with `cube` and `haloes`, V9w): what True lights. Read only; GM only. */
   webGalaxies?(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebGalaxies } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
-  resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
+  /** With `branch`, the what-if's own line resolved (kernel BC1): nothing is committed (editing design ED1). */
+  resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
   readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
   /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
@@ -254,7 +277,7 @@ export interface ViewSession {
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   /** What stops the wind at each body, and its field (read only): `fixture: "solar-system"` or handed `bodies`. */
-  readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
+  readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
   /** SV2: who knows a thing, or one fact on it (kernel `known_to`): per audience its landmark, rung and exceptions. GM only. */
   knownTo(address: string, field?: string, at_s?: bigint): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }>;
   /** NM6: every name a thing has, by layer (kernel `read_names`); a player seat sees only the layers its view discloses. */
@@ -796,7 +819,7 @@ export class Session implements ViewSession {
     return r.type === "activity_read" ? { ok: true, stars: (r as unknown as { stars: Json[] }).stars } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
-  async readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
+  async readField(ask: { fixture?: string; bodies?: Json[]; system?: string }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_field", ...ask } as Json);
     return r.type === "field_read" ? { ok: true, bodies: (r as unknown as { bodies: Json[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
@@ -953,15 +976,22 @@ export class Session implements ViewSession {
     return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebGalaxies }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
-  async lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }> {
+  async lifeView(by: { body?: string; fixture?: string; dials?: Record<string, number> }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads a world's whole biosphere; players see it through data views" };
-    const r = await this.#call({ op: "life_view", ...(by.body !== undefined ? { body: by.body } : {}), ...(by.fixture !== undefined ? { fixture: by.fixture } : {}) });
+    const r = await this.#call({ op: "life_view", ...(by.body !== undefined ? { body: by.body } : {}), ...(by.fixture !== undefined ? { fixture: by.fixture } : {}), ...(by.dials !== undefined ? { dials: by.dials } : {}) });
     return r.type === "life_viewed" ? { ok: true, source: String(r.source), view: (r as unknown as { view: LifeView }).view } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "orbits_at", system, at_s: [...at_s], ...(bodies ? { bodies } : {}) });
     return r.type === "orbits_placed" ? { ok: true, bodies: (r as unknown as { bodies: OrbitPlaced[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async orbitStability(system: string, opts: { bodies?: { address: string; facts: Record<string, number | string> }[]; at_s?: bigint } = {}): Promise<{ ok: true; verdict: string; checks: StabilityCheck[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "orbit_stability", system, ...(opts.bodies ? { bodies: opts.bodies } : {}), ...(opts.at_s !== undefined ? { at_s: opts.at_s } : {}) });
+    return r.type === "orbit_stability_is"
+      ? { ok: true, verdict: String(r.verdict), checks: (r as unknown as { checks: StabilityCheck[] }).checks }
+      : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; code: string; message: string }> {
@@ -984,14 +1014,24 @@ export class Session implements ViewSession {
     return c ? { ok: true, calendar: c } : { ok: true };
   }
 
+  async linksIn(ask: { bounds?: string; audience?: string } = {}): Promise<{ ok: true; links: import("./your-systems.ts").RecordLink[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "links_in", ...ask });
+    return r.type === "links_listed" ? { ok: true, links: (r as unknown as { links: import("./your-systems.ts").RecordLink[] }).links } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async holdingsIn(ask: { bounds: string; layer: string; audience?: string }): Promise<{ ok: true; holdings: import("./overlay.ts").Holding[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "holdings_in", ...ask });
+    return r.type === "holdings_listed" ? { ok: true, holdings: (r as unknown as { holdings: import("./overlay.ts").Holding[] }).holdings } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "systems" });
     return r.type === "systems_listed" ? { ok: true, systems: (r as unknown as { systems: ListedSystem[] }).systems } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
-  async resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
+  async resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads resolved systems" };
-    const r = await this.#call({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}) });
+    const r = await this.#call({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}), ...(branch ? { branch } : {}) } as never);
     return r.type === "system_resolved" ? { ok: true, result: r as unknown as SystemResolved } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 

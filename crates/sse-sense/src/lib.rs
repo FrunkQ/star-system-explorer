@@ -25,6 +25,9 @@ use sse_flow::Reference;
 use sse_light::table::LightTable;
 use sse_light::{power_between, LightDescription, C, H, K_B};
 
+pub mod fog;
+#[cfg(test)]
+mod fog_tests;
 pub mod reach;
 #[cfg(test)]
 mod reach_tests;

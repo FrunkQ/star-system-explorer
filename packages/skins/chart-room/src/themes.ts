@@ -1,3 +1,4 @@
+import type { LookDelivery } from "../../../ui-contract/src/index.ts";
 // The two GM modes (H8.5). Night chart inherits Chart room and changes only
 // the colours, so the structure is the same in both.
 export interface ThemeDoc {
@@ -17,6 +18,8 @@ export interface ThemeDoc {
   vocab?: string;
   /** A palette offered to the colour channel when a symbology asks for "theme palette" (H8.4A). */
   palette?: string[];
+  /** How a screen in this look arrives and leaves, one delivery per moment (atlas design 11A.4a). Presentation only. */
+  delivery?: LookDelivery;
 }
 
 /** One step of a theme's filter chain. Strength is 0 to 1. */
@@ -54,6 +57,16 @@ export const CHART_ROOM: ThemeDoc = {
     "origin-white-dwarfs": "#7FA06A",
     "origin-neutron-star-mergers": "#6B2A52",
     "origin-human-made": "#C9C1B2",
+    // The map palette (territory overlays OV4): eight colours for map layers, tuned to this ground, each kept ΔE 10
+    // or more from every other for every colour vision (colour-vision.test) and at least 3:1 against the ground.
+    "map-1": "#CB383C",
+    "map-2": "#1C55A4",
+    "map-3": "#437962",
+    "map-4": "#87820B",
+    "map-5": "#795482",
+    "map-6": "#329290",
+    "map-7": "#630A70",
+    "map-8": "#416019",
     zone: "rgba(127, 168, 142, 0.32)",
     "zone-ink": "#3F6B50",
     hatch: "#1E2A33",
@@ -129,6 +142,14 @@ export const NIGHT_CHART: ThemeDoc = {
     "origin-white-dwarfs": "#7FA06A",
     "origin-neutron-star-mergers": "#C45A9A",
     "origin-human-made": "#5A6672",
+    "map-1": "#E39B41",
+    "map-2": "#57AEFF",
+    "map-3": "#6CC48A",
+    "map-4": "#EECF46",
+    "map-5": "#DB6FE4",
+    "map-6": "#4ED7D0",
+    "map-7": "#F47FAB",
+    "map-8": "#CCD186",
     zone: "rgba(62, 140, 106, 0.22)",
     "zone-ink": "#7CC4A0",
     hatch: "#9AA8B6",

@@ -2,11 +2,19 @@
 // device has no WebGPU). It is handed camera-relative positions only, already
 // narrowed from f64 (frames.ts), and draws with the camera at the origin, so
 // no large number ever reaches the GPU (rendering rule 3).
-import { AdditiveBlending, AmbientLight, BufferGeometry, DoubleSide, Quaternion, RingGeometry, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
+import { AdditiveBlending, AmbientLight, CustomBlending, OneFactor, OneMinusSrcAlphaFactor, BufferGeometry, DoubleSide, Quaternion, RingGeometry, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
 import { WebGPURenderer } from "three/webgpu";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
 import { ringLight } from "./rings.ts";
+import { startFinish, type Finish } from "./finish.ts";
+import type { AirLuts, AirShape } from "./air-luts.ts";
+import { makeAirShell, type AirShell } from "./gpu-air-shell.ts";
+import { BAKE_BUDGET, faceSize } from "./texture-ladder.ts";
+import { createTextureBaker } from "./texture-ladder-gpu.ts";
+
+/** Clouds are drawn this far out (over the radius) until the weather op gives their height: a hair, so they do not fight the ground. */
+const CLOUD_LIFT = 1.002;
 
 export interface GpuItem {
   id: string;
@@ -41,6 +49,21 @@ export interface GpuItem {
    * surface or a graticule turns with it (the size comparison's spinning globes). Left out: pole on z, unturned.
    */
   frame?: [Vec3, Vec3, Vec3];
+  /**
+   * True look: the world's air as a shell round it, lit by the star (gpu-air-shell.ts, VP-A3): its shape in its own
+   * radius and its look-up tables (air-luts.ts), keyed so they are uploaded once.
+   */
+  air?: { key: string; shape: AirShape; luts: AirLuts };
+  /**
+   * True look: the world's clouds and haze alone (true-air.ts `AirLook.clouds`: premultiplied colour, alpha their
+   * reflectance), drawn lit over the surface a hair above it until the weather op gives each deck's height (VP-A4).
+   */
+  clouds?: { key: string; texture: TrueTexture };
+  /**
+   * True look: the body's own shape instead of a sphere (small-body.ts `smallBodyMesh`: an asteroid's figure, two lobes
+   * of a contact binary), in units of `radius`, its long axis on x and spin axis on z. Keyed: built once.
+   */
+  mesh?: { key: string; positions: Float32Array; normals: Float32Array; index: Uint32Array };
 }
 
 /** True look: the star's light. `at` a camera-relative point (the star is in the frame), else `from` a direction. */
@@ -97,31 +120,140 @@ export interface GpuGlow {
   radius: number;
 }
 
+/**
+ * The sky's stars behind a True view (VP2): unit directions in the drawing's frame, and each star's flux at the eye as
+ * a share of the flux that lights the exposure's white surface, per colour channel. Each is drawn as one pixel whose
+ * light is π · share / Ω_pixel (a point's flux in one pixel against a white Lambert surface's radiance), times `gain`
+ * (1 as the eye sees; a long exposure lifts it). A new `key` uploads the directions and shares.
+ */
+export interface GpuStars {
+  key: string;
+  dirs: Float32Array;
+  share: Float32Array;
+  gain?: number;
+}
+
+/** The brightest a star's pixel may be at a long exposure, as a share of white. */
+export const LONG_CLIP = 4;
+
 export interface Gpu {
   readonly backend: "webgpu" | "webgl2";
-  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number } }): void;
+  /**
+   * The GPU's own time for the last frames drawn, ms, when the view asked for timing and the device has timestamp
+   * queries (VP4: the governor's signal); null otherwise, and the view times its own work instead.
+   */
+  readonly gpuMs: number | null;
+  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number }; /** True: draw through the shared finish (finish.ts): high range, the eye's glare, exposure, AgX, dither. */ finish?: { exposure?: number; glare?: boolean; /** The tier's glare knobs and render scale, and the running mean's frame index at rest (finish.ts FinishFrame). */ rungs?: number; glare_scale?: number; render_scale?: number; accumulate?: number }; /** True: segments round each globe (the recipe's `true-bodies` sphere_detail; default 64). */ sphere_detail?: number; /** Sharpen at rest: shift the picture by this much of a pixel (still.ts restJitter), x right and y up. */ jitter?: [number, number]; /** True: the sky's stars behind everything (VP2, stars-behind.ts). */ stars?: GpuStars; /** Perspective near and far planes, display units (default 1e-3 and 1e4): a close-up brings the near plane down under its height. */ near?: number; far?: number }): void;
   dispose(): void;
 }
 
-export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> {
+export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: boolean } = {}): Promise<Gpu | null> {
   let renderer: WebGPURenderer;
   try {
-    renderer = new WebGPURenderer({ canvas, antialias: true, alpha: false });
+    renderer = new WebGPURenderer({ canvas, antialias: true, alpha: false, trackTimestamp: !!opts.timing });
     await renderer.init();
   } catch {
     return null;
   }
   const backend = (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? "webgpu" : "webgl2";
+  // Frame timing: each frame's timestamp queries are read back after it (a frame late), so the pool never fills.
+  const timed = !!opts.timing && !!(renderer.backend as { trackTimestamp?: boolean }).trackTimestamp;
+  let gpuMs: number | null = null;
+  let resolving = false;
+  let unread = 0;
+  const resolveTiming = () => {
+    if (!timed) return;
+    unread++;
+    if (resolving) return;
+    resolving = true;
+    // The frames since the last read-back are read together: their mean is the frame's time.
+    const n = unread;
+    unread = 0;
+    renderer
+      .resolveTimestampsAsync("render")
+      .then((d) => {
+        if (typeof d === "number" && d > 0) gpuMs = d / n;
+      })
+      .catch(() => undefined)
+      .finally(() => (resolving = false));
+  };
+  // The shared finish, made on first use (a view that never asks for it never builds its passes).
+  let finish: Finish | null = null;
   const scene = new Scene();
+  // The sky's stars: one geometry per sky, its colours rewritten when the pixel's size or the gain changes.
+  const starGeom = new BufferGeometry();
+  const starMat = new PointsMaterial({ size: 1, sizeAttenuation: false, vertexColors: true, blending: AdditiveBlending, depthWrite: false, transparent: true });
+  const starPoints = new Points(starGeom, starMat);
+  starPoints.renderOrder = -1;
+  starPoints.frustumCulled = false;
+  let starSig = "";
   const camera = new PerspectiveCamera(50, 1, 1e-3, 1e4);
   const flat = new OrthographicCamera(-1, 1, 1, -1, 1e-3, 1e4);
   const turned = new Matrix4();
   const sphere = new SphereGeometry(1, 32, 16);
   // True look: a finer sphere with its poles on z, as the globe's (true-look.ts `equirect`).
-  const globe = new SphereGeometry(1, 64, 32).rotateX(Math.PI / 2);
+  let globe = new SphereGeometry(1, 64, 32).rotateX(Math.PI / 2);
+  let globeDetail = 64;
+  // Close-up: a globe that fills the screen many times over shows its limb's facets at 64 segments, so it takes a finer one.
+  const fineGlobe = new SphereGeometry(1, 512, 256).rotateX(Math.PI / 2);
   const textures = new Map<string, DataTexture>();
+  const shells = new Map<string, AirShell>();
+  // Clouds over a surface: lit like the ground, premultiplied, so the ground shows through where they are thin.
+  const cloudMats = new Map<string, MeshStandardMaterial>();
+  const cloudMat = (c: NonNullable<GpuItem["clouds"]>) => {
+    const hit = cloudMats.get(c.key);
+    if (hit) return hit;
+    const map = new DataTexture(c.texture.data.slice(), c.texture.width, c.texture.height, RGBAFormat);
+    map.colorSpace = SRGBColorSpace;
+    map.magFilter = LinearFilter;
+    map.minFilter = LinearFilter;
+    map.needsUpdate = true;
+    textures.set(c.key, map);
+    const m = new MeshStandardMaterial({ color: 0xffffff, map, roughness: 1, metalness: 0, transparent: true, depthWrite: false });
+    // The texture is premultiplied already: add its light, dim what is behind by its alpha.
+    m.blending = CustomBlending;
+    m.blendSrc = OneFactor;
+    m.blendDst = OneMinusSrcAlphaFactor;
+    m.blendSrcAlpha = OneFactor;
+    m.blendDstAlpha = OneMinusSrcAlphaFactor;
+    cloudMats.set(c.key, m);
+    return m;
+  };
+  const meshGeoms = new Map<string, BufferGeometry>();
+  const meshGeom = (mesh: NonNullable<GpuItem["mesh"]>) => {
+    let g = meshGeoms.get(mesh.key);
+    if (!g) {
+      g = new BufferGeometry();
+      g.setAttribute("position", new Float32BufferAttribute(mesh.positions, 3));
+      g.setAttribute("normal", new Float32BufferAttribute(mesh.normals, 3));
+      g.setIndex(Array.from(mesh.index));
+      meshGeoms.set(mesh.key, g);
+    }
+    return g;
+  };
   const versions = new Map<string, number>();
   const litMats = new Map<string, MeshStandardMaterial>();
+  // VP3: a world with cube face pictures wears a bake sized to its disc on screen (texture-ladder.ts), with relief.
+  const baker = createTextureBaker(renderer);
+  const bakedSize = new Map<string, number>();
+  const ladderTier = backend === "webgpu" ? "gpu-high" : "gpu-basic";
+  const bakedMat = (it: GpuItem, disc_px: number) => {
+    const c = it.surface?.texture.faces;
+    if (!c || !c.radius_m || !it.surface) return null;
+    const finest = Math.max(...c.faces.map((f) => f?.n ?? 0));
+    if (!finest) return null;
+    // No finer than four texels a tile sample (beyond that the bake adds nothing the sampler does not).
+    const want = Math.min(faceSize(disc_px, ladderTier), Math.max(64, 4 * finest));
+    if (want <= 0) return null;
+    // Keep a bake within a factor of two of what is wanted, so a world drifting on screen is not baked again.
+    const had = bakedSize.get(it.surface.key);
+    const size = had && had >= want / 2 && had <= want * 2 ? had : want;
+    bakedSize.set(it.surface.key, size);
+    const b = baker.get(it.surface.key, c, size, c.radius_m);
+    baker.trim(BAKE_BUDGET[ladderTier]);
+    b.setPatch(it.surface.texture.patch ?? null);
+    return b.material;
+  };
   const litMat = (it: GpuItem) => {
     const key = it.surface?.key ?? `plain:${it.colour}`;
     const hit = litMats.get(key);
@@ -285,7 +417,16 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   };
   return {
     backend,
+    get gpuMs() {
+      return gpuMs;
+    },
     draw(o) {
+      const detail = Math.max(16, Math.min(256, Math.round(o.sphere_detail ?? 64)));
+      if (detail !== globeDetail) {
+        globe.dispose();
+        globe = new SphereGeometry(1, detail, Math.max(8, detail >> 1)).rotateX(Math.PI / 2);
+        globeDetail = detail;
+      }
       scene.clear();
       // Space is black in the true look: a physical choice, not a theme colour.
       scene.background = new Color((o.light && !o.light.ground) || o.space ? 0x000000 : o.ground);
@@ -312,7 +453,11 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
           continue;
         }
         const lit = !!o.light && !it.shines && it.emit === undefined;
-        const m = new Mesh(o.light || it.frame ? globe : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? litMat(it) : mat(it.colour));
+        // On screen: the disc's width in pixels (perspective; the ortho view's from its width).
+        const dist = Math.hypot(it.rel[0], it.rel[1], it.rel[2]);
+        const disc_px = o.ortho ? (2 * it.radius * o.width) / o.ortho.width : dist > it.radius ? (it.radius / dist / Math.tan(o.fovY / 2)) * o.height : o.height;
+        const surfaceMat = lit && it.surface?.texture.faces ? bakedMat(it, disc_px) : null;
+        const m = new Mesh(it.mesh ? meshGeom(it.mesh) : o.light || it.frame ? (dist < 1.5 * it.radius ? fineGlobe : globe) : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? (surfaceMat ?? litMat(it)) : mat(it.colour));
         m.position.set(it.rel[0], it.rel[1], it.rel[2]);
         m.scale.setScalar(it.radius);
         if (it.frame) {
@@ -320,6 +465,26 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
           m.quaternion.setFromRotationMatrix(turned.makeBasis(new Vector3(...x), new Vector3(...y), new Vector3(...z)));
         }
         scene.add(m);
+        if (lit && it.clouds) {
+          const cm = new Mesh(dist < 1.5 * it.radius ? fineGlobe : globe, cloudMat(it.clouds));
+          cm.position.copy(m.position);
+          cm.quaternion.copy(m.quaternion);
+          cm.scale.setScalar(it.radius * CLOUD_LIFT);
+          cm.renderOrder = 1;
+          scene.add(cm);
+        }
+        if (o.light && it.air && !it.shines && it.emit === undefined) {
+          let sh = shells.get(it.air.key);
+          if (!sh) shells.set(it.air.key, (sh = makeAirShell(it.air.shape, it.air.luts)));
+          const toStar: Vec3 = o.light.at ? [o.light.at[0] - it.rel[0], o.light.at[1] - it.rel[1], o.light.at[2] - it.rel[2]] : (o.light.from ?? [0, 0, 1]);
+          // The point light's strength (3), as the lit globe gets.
+          sh.set(it.rel, it.radius, toStar, 3);
+          const am = new Mesh(dist < 1.5 * it.radius ? fineGlobe : globe, sh.material);
+          am.position.copy(m.position);
+          am.scale.setScalar(it.radius * sh.top);
+          am.renderOrder = 1;
+          scene.add(am);
+        }
         if (o.light && it.rings) {
           const rs = ringSet(it.rings);
           const n = it.rings.normal;
@@ -367,6 +532,28 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         g.setAttribute("position", new Float32BufferAttribute(d.points.flat(), 3));
         scene.add(new Points(g, dotMat(d)));
       }
+      if (o.stars && !o.ortho) {
+        // One drawn pixel's angle: drawn smaller than the view (the tier's render scale), each spans more sky.
+        const pixel = o.fovY / Math.max(1, o.height) / Math.max(0.25, Math.min(1, o.finish?.render_scale ?? 1));
+        const k = (Math.PI / (pixel * pixel)) * (o.stars.gain ?? 1);
+        const sig = `${o.stars.key}|${k}`;
+        if (sig !== starSig) {
+          if (!starSig.startsWith(`${o.stars.key}|`)) {
+            // Far out along each direction, inside the camera's far plane: behind every body, never in front.
+            const pos = new Float32Array(o.stars.dirs.length);
+            for (let i = 0; i < pos.length; i++) pos[i] = o.stars.dirs[i]! * 9e3;
+            starGeom.setAttribute("position", new Float32BufferAttribute(pos, 3));
+          }
+          const col = new Float32Array(o.stars.share.length);
+          // A long exposure clips each star at a few times white, as a photograph's sensor fills: lifted, the nearest
+          // bright stars would otherwise outshine the system's own star and glare over it.
+          const cap = (o.stars.gain ?? 1) > 1 ? LONG_CLIP : Infinity;
+          for (let i = 0; i < col.length; i++) col[i] = Math.min(cap, o.stars.share[i]! * k);
+          starGeom.setAttribute("color", new Float32BufferAttribute(col, 3));
+          starSig = sig;
+        }
+        scene.add(starPoints);
+      }
       const cam = o.ortho ? flat : camera;
       if (o.ortho) {
         flat.left = -o.ortho.width / 2;
@@ -377,23 +564,35 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         flat.far = o.ortho.far;
       } else {
         camera.fov = (o.fovY * 180) / Math.PI;
+        camera.near = o.near ?? 1e-3;
+        camera.far = o.far ?? 1e4;
         camera.aspect = o.width / Math.max(1, o.height);
       }
       cam.position.set(0, 0, 0);
       cam.up.set(o.up[0], o.up[1], o.up[2]);
       cam.lookAt(new Vector3(o.forward[0], o.forward[1], o.forward[2]));
+      // A sub-pixel shift of the projection for the running mean at rest; cleared otherwise.
+      if (o.jitter && (o.jitter[0] !== 0 || o.jitter[1] !== 0)) cam.setViewOffset(o.width, o.height, -o.jitter[0], o.jitter[1], o.width, o.height);
+      else cam.clearViewOffset();
       cam.updateProjectionMatrix();
       renderer.setSize(o.width, o.height, false);
-      renderer.render(scene, cam);
-      scene.traverse((x) => (x instanceof Line || x instanceof Points) && x.geometry.dispose());
+      if (o.finish) (finish ??= startFinish(renderer)).render(scene, cam, { exposure: o.finish.exposure ?? 1, pixel_deg: o.ortho ? 0 : (o.fovY * 180) / Math.PI / Math.max(1, o.height), glare: !o.ortho && o.finish.glare !== false, rungs: o.finish.rungs, glare_scale: o.finish.glare_scale, render_scale: o.finish.render_scale, accumulate: o.finish.accumulate });
+      else renderer.render(scene, cam);
+      resolveTiming();
+      scene.traverse((x) => (x instanceof Line || x instanceof Points) && x !== starPoints && x.geometry.dispose());
     },
     dispose() {
       sphere.dispose();
       globe.dispose();
+      fineGlobe.dispose();
       torus.dispose();
       textures.forEach((t) => t.dispose());
+      shells.forEach((x) => x.dispose());
+      cloudMats.forEach((m) => m.dispose());
+      meshGeoms.forEach((g) => g.dispose());
       faces.forEach((e) => (e.tex.dispose(), e.mat.dispose()));
       litMats.forEach((m) => m.dispose());
+      baker.dispose();
       mats.forEach((m) => m.dispose());
       greys.forEach((m) => m.dispose());
       pics.forEach((e) => e.tex.dispose());
@@ -403,6 +602,9 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       ringSets.forEach((e) => (e.geom.dispose(), e.tex.dispose(), e.mat.dispose()));
       lineMats.forEach((m) => m.dispose());
       dotMats.forEach((m) => m.dispose());
+      finish?.dispose();
+      starGeom.dispose();
+      starMat.dispose();
       renderer.dispose();
     },
   };

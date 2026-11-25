@@ -64,6 +64,8 @@ try {
     assert.ok(vm < vs - 0.1, `voids hold less of the matter than of the space (${vm} < ${vs})`);
     assert.ok(Number(await gm.locator("[data-web-3d]").getAttribute("data-parcels")) > 20000, "the cube's parcels are drawn");
     await gm.locator("[data-web-3d] [data-spin]").click();
+    // V9w3: 3D marks the big galaxies, groups and clusters once the cube's galaxies are read.
+    await gm.waitForFunction(() => Number(document.querySelector("[data-web-3d]")?.getAttribute("data-marks") ?? 0) > 50, null, { timeout: 90000 });
     await gm.waitForTimeout(500);
     await shot(gm, "v9w-web-3d");
     await style("True").click();
@@ -123,7 +125,7 @@ try {
 
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`${name}: foam map from web_slice: drawn, four environments, 3D and True cube with voids most of the space and less of the matter, True lit by its galaxies, sharpens with time, plays, environments, sizes, night chart, phone`);
+    console.log(`${name}: foam map from web_slice: drawn, four environments, 3D and True cube with voids most of the space and less of the matter, True lit by its galaxies, 3D inked by density with the big galaxies marked, sharpens with time, plays, environments, sizes, night chart, phone`);
   }
 } finally {
   server.kill();

@@ -2,11 +2,14 @@
 // lineup and gallery), so a look added here (a giant's bands, a haze, plumes, frosts, a star's glow) shows in all of
 // them at once with no second code path. It takes what is known of the body and gives the GpuItem fields that draw it;
 // the view keeps only where the body is and how big. Pure, apart from a cache of ring profiles by key.
+import { smallBodyColour, smallBodyMesh, type SmallFigure } from "./small-body.ts";
 import type { GpuItem } from "./gpu.ts";
 import type { Vec3 } from "./frames.ts";
 import { ringProfile, type RingBand } from "./rings.ts";
+import { cutRings, ringMarks, type RingMoon } from "./ring-structure.ts";
 import type { TrueTexture } from "./true-look.ts";
 import { flowFace, type AirFlow } from "./true-air.ts";
+import { airLuts, type AirLuts, type AirShape } from "./air-luts.ts";
 
 export interface TrueBody {
   /** Unique among what is drawn: keys the textures and ring profiles uploaded once. */
@@ -23,15 +26,29 @@ export interface TrueBody {
   rings?: readonly RingBand[];
   /** Its north pole in the drawing's frame: its rings lie in its equator. */
   pole: Vec3;
+  /** A star's living face for this moment (star-now.ts `liveFace` or `drawStarNow`): churning cells, spots, flares. */
+  face?: GpuItem["face"];
   /**
    * The winds its face is carried by (a giant's, from `readTrueFace`), and how long after the face was read the
    * drawing is, in the body's own seconds: the bands slide at their jets' speeds and the storms turn (VP-A1).
    */
   flow?: { flow: AirFlow; dt_s: number };
+  /** Its clouds and haze alone (true-air.ts `AirLook.clouds`), drawn as a lit layer over `surface` (VP-A4). */
+  clouds?: TrueTexture;
+  /** Its air in its own radius (true-air.ts `readTrueAir`): the rim and terminator (VP-A3). */
+  air?: AirShape;
+  /**
+   * A small body's own figure from the kernel (`small_body`, sse-small `Figure` with its albedo and weathering): drawn
+   * as that shape, seeded by `key` (use the body's address), instead of a sphere.
+   */
+  figure?: SmallFigure;
+  /** The world's mass, kg, and its moons: with both, its rings are cut where the moons' resonances and gaps fall (ring-structure.ts). */
+  mass_kg?: number;
+  moons?: readonly RingMoon[];
 }
 
 /** The GPU fields of a body's True face. */
-export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings">;
+export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "face" | "mesh" | "clouds" | "air">;
 
 /** A surface texture's mean colour, 0..1 (sRGB bytes over 255; a tint, not a measurement). */
 export function meanColour(t: TrueTexture): [number, number, number] {
@@ -45,6 +62,8 @@ export function meanColour(t: TrueTexture): [number, number, number] {
 
 type Profile = { inner: number; outer: number; width: number; data: Uint8ClampedArray; assumed: boolean };
 const profiles = new Map<string, Profile | null>();
+// The air's look-up tables, worked out once per world and air (about a tenth of a second each).
+const tables = new Map<string, AirLuts>();
 
 /**
  * The rings' profile for a body, worked out once per body, rings and surface: their colour is the world's own mean
@@ -53,9 +72,17 @@ const profiles = new Map<string, Profile | null>();
  */
 function ringsOf(b: TrueBody): (Profile & { key: string }) | null {
   if (!b.rings?.length || !(b.radius_m && b.radius_m > 0)) return null;
-  const key = `${b.key}|${JSON.stringify(b.rings)}|${b.radius_m}|${b.surface ? "s" : "-"}`;
+  const shaped = !!(b.moons?.length && b.mass_kg && b.mass_kg > 0);
+  const key = `${b.key}|${JSON.stringify(b.rings)}|${b.radius_m}|${b.surface ? "s" : "-"}${shaped ? `|${b.mass_kg}|${JSON.stringify(b.moons)}` : ""}`;
   if (!profiles.has(key)) {
-    const p = ringProfile(b.rings, b.surface ? meanColour(b.surface) : [0.5, 0.5, 0.5]);
+    let rings = b.rings;
+    if (shaped) {
+      const lo = Math.min(...rings.map((r) => r.inner_m));
+      const hi = Math.max(...rings.map((r) => r.outer_m));
+      rings = cutRings(rings, ringMarks(b.moons!, b.mass_kg!, lo, hi));
+    }
+    // Finer when the moons cut it, so a gap a few tens of km wide still shows.
+    const p = ringProfile(rings, b.surface ? meanColour(b.surface) : [0.5, 0.5, 0.5], shaped ? 2048 : 512);
     profiles.set(key, p ? { inner: p.inner_m / b.radius_m, outer: p.outer_m / b.radius_m, width: p.width, data: p.data, assumed: p.assumed } : null);
   }
   const p = profiles.get(key);
@@ -71,6 +98,7 @@ export function ringsAssumed(b: TrueBody): boolean {
 export function trueLook(b: TrueBody): TrueLook {
   const out: TrueLook = { colour: b.colour };
   if (b.star) out.shines = true;
+  if (b.star && b.face) out.face = b.face;
   if (b.surface) {
     const f = b.flow;
     // Carried by its winds: a new picture each time asked, uploaded into the same texture by its version.
@@ -78,7 +106,17 @@ export function trueLook(b: TrueBody): TrueLook {
       out.surface = { key: b.key, texture: flowFace(b.surface, f.flow, { radius_m: b.radius_m, dt_s: f.dt_s }), version: f.dt_s };
     else out.surface = { key: b.key, texture: b.surface };
   }
+  if (!b.star && b.clouds) out.clouds = { key: `${b.key}|clouds`, texture: b.clouds };
+  if (!b.star && b.air) {
+    const key = `${b.key}|air|${b.air.beta.join(",")}|${b.air.scale_height}`;
+    if (!tables.has(key)) tables.set(key, airLuts(b.air));
+    out.air = { key, shape: b.air, luts: tables.get(key)! };
+  }
   const r = b.star ? null : ringsOf(b);
   if (r) out.rings = { key: r.key, inner: r.inner, outer: r.outer, normal: b.pole, width: r.width, data: r.data };
+  if (b.figure && !b.star) {
+    out.mesh = smallBodyMesh(b.figure, b.key);
+    if (!b.surface) out.colour = smallBodyColour(b.figure);
+  }
   return out;
 }
