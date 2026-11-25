@@ -197,6 +197,28 @@ try {
       const pnote = await pv.locator(".note").innerText();
       assert.match(pnote, /spread for display/);
       await shot(pl, `v6-players-3d-${mode}`);
+      // PC2 part 2: a postcard of the system view draws its front live, in True from its camera (off screen, the
+      // same view), and says how it was made on its back.
+      if (mode === "gpu" && name === "chromium") {
+        const card = { schema: "sse.postcard/1", id: "pc-vault", name: "Vault up close",
+          bookmark: { schema: "sse.bookmark/1", id: "b-vault", name: "Vault up close", scope: "u:kestrel/sys:1", at_yr: 4.6e9, instrument: "system", view: { style: "true", seen: "free" }, selected: VAULT,
+            pose: { about: VAULT, eye_dir: [0.6, -0.5, 0.62], eye_m: 2.4e8, up: [0, 0, 1], fov_deg: 45, exposure: { mode: "long", ev: 0 }, keep: [0, 0, 1, 1] } },
+          world: { how: "address", root: "u:kestrel", packs: [], made_with: "0.1.0" }, credit: ["Test"] };
+        const b64 = Buffer.from(JSON.stringify(card)).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        const pc = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+        pc.on("pageerror", (e) => errors.push(`postcard: ${e.message}`));
+        await pc.goto(`${base}#postcard=${b64}`);
+        await pc.locator("[data-postcard-drawn]").waitFor({ timeout: 90000 });
+        const lit = await pc.locator("[data-postcard-drawn]").evaluate((c) => {
+          const g = c.getContext("2d");
+          return [...g.getImageData(c.width / 2, c.height / 2, 1, 1).data];
+        });
+        assert.ok(lit[0] + lit[1] + lit[2] > 60, `Vault fills the middle of the front: ${lit}`);
+        await shot(pc, "pc2-postcard-front");
+        await pc.locator("[data-postcard-turn]").first().click();
+        assert.match(await pc.locator("[data-postcard-back]").innerText(), /The system view in True from the postcard's camera/);
+        await pc.close();
+      }
       assert.deepEqual(errors, []);
       console.log(`V6 ${name} ${mode}: GM tier ${tier} (${note.replace(/\s+/g, " ").match(/Drawn with [^.]*/)?.[0]}); players tier ${ptier}; Vault frame handover and back`);
       await browser.close();

@@ -207,6 +207,7 @@
 
   // PC2: the camera kept for a bookmark or postcard made here, and a kept camera taken back (once its world is centred).
   let cameraSent = "";
+  let aimedAt = $state("");
   $effect(() => {
     if (!oncamera) return;
     const e = centreBody && pan[0] === 0 && pan[1] === 0 ? orbitEye({ yaw, pitch, dist }, centreR) : null;
@@ -232,6 +233,7 @@
       pitch = o.pitch;
       dist = Math.min(MAX, Math.max(MIN, o.dist));
       pan = [0, 0];
+      aimedAt = a.about;
       onaimed?.();
     });
   });
@@ -674,6 +676,9 @@
           quality = `${st.tier}|${st.level}|${st.rest}|${st.rest_frames}`;
           untrack(() => restLater(performance.now()));
         }
+        // PC2: each True frame is offered to a still being taken (photograph-view.ts), in the same task as the draw so
+        // the canvas still holds it; how sharp it is goes with it.
+        untrack(() => host)?.dispatchEvent(new CustomEvent("sse-frame", { bubbles: true, detail: { canvas, rest: r ? r.status().rest : "sharp", backend: gpu.backend } }));
         return;
       }
       gpu.draw({
@@ -857,6 +862,7 @@
 <div
   class="s3d"
   bind:this={host}
+  data-aimed={aimedAt || undefined}
   bind:clientWidth={w}
   bind:clientHeight={h}
   role="application"
