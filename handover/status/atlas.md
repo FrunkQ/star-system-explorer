@@ -17,6 +17,8 @@ Atlas never reads a placeholder (a placeholder and an absent fact read the same)
 `ui-contract/src/figures.ts`; nothing in the Atlas formats a number itself. The SSE3 joke file is on Alex's PC only:
 it is in the public SSE3 repo FrunkQ/star-system-generator (`src/lib/catalogue/guideNotes.ts`); never recreate his jokes from memory. The Weyland-Yutani logo stays out unless Alex says otherwise.
 
+**On main:** AT1 to AT4 (with AT4b), AT6, AT7 (with AT7c), AT14 and PC7 merged in PR 481 on 25 Nov 2026 08:26 UTC. Next here, in order: AT5 (waits on the kernel's `withheld`), AT8, AT10, AT15.
+
 | Package | State | Log |
 |---|---|---|
 | AT1 the page model: blocks, the page builder (pure, over the audience's scene), contents and chapters, the fact catalogue, `sse.edition/1` with `extends`, the Survey atlas edition with templates for sector, system, star, world, moon, station | done | packages/AT1.md |
