@@ -4,7 +4,9 @@ Last updated: 24 Nov 2026 (handover to a new Claude account). Live site v4.stars
 
 ## New to this project? Read this section first
 
-On 25 Nov 2026 Alex (GitHub `FrunkQ`, the owner) moves SSE4 to a new Claude account. The old account's project chat,
+On 25 Nov 2026 Alex (GitHub `FrunkQ`, the owner) moves SSE4 to a new Claude account. The old account's
+window closes at **7 pm London time on 25 Nov 2026** (19:00 UTC; Alex, 01:31 UTC 25 Nov); work still open then
+is picked up from this repo. The old account's project chat,
 threads and project memory do not come with it. **Everything a new Claude needs is in this repo**, mainly in `handover/`.
 Read in this order:
 
@@ -32,7 +34,7 @@ leave the browser.
 - **PRs into `main` merge when their checks pass** ("main is entirely yours"). Every merge deploys the live site.
 - **CI workflow or merge-check edits need Alex's own yes.** So do database, storage or user-data changes on the
   Explorers site (repo `FrunkQ/starsystemx-creator-hub`). The converter (`FrunkQ/starsystem-convert`) merges when green.
-- **One golden-changing PR open at a time** (`tests/golden/` hashes change only on purpose, reason in the package log).
+- **Golden changes by area** (`tests/golden/` hashes change only on purpose, reason in the package log): see the golden lane rule below. PRs in different areas may merge in parallel; within one area, or for the shared core, one at a time.
 - **No temporary files in the repo**: screenshots and working artefacts go to project files
   (`sse4/handover-screens/<PKG>-screens/`), never committed. **No history rewrites** (old screenshots stay in history).
 - **Questions as one numbered list**, each with Claude's own recommendation; Alex answers like "yes to 1, 2 and 4".
@@ -61,9 +63,15 @@ leave the browser.
 
 ## Standing rulings of 24 Nov 2026 (afternoon and evening)
 
-- **CI test lines, add only** (Alex 18:07 UTC: "yes - if it makes your job easier - do it!"): a builder may add lines to `.github/workflows/ci.yml` so its new tests run automatically. Never remove, skip or loosen a check. Every other CI workflow or merge-check edit still needs Alex's own yes.
+- **CI test lines, add only** (Alex 18:07 UTC: "yes - if it makes your job easier - do it!"): a builder may add lines to `.github/workflows/ci.yml` so its new tests run automatically. Never remove, skip or loosen a check. Confirmed as a standing rule on 25 Nov 02:00 UTC (Alex: "in future yes to 'any thread may add its own test line to ci.yml, nothing else'"): a thread may add only its own test line, with no need to ask. Every other CI workflow or merge-check edit still needs Alex's own yes.
 - **Frozen physics for the golden** (Alex 18:07 UTC): the shared contract golden may run on a frozen copy of the base-physics pack, with the live pack's loading tested separately. The kernel thread builds this after the barycentre PR.
-- **Golden lane:** since PR 454 (kernel), adding an op no longer changes golden lines 1 and 41 of `tests/golden/contract.jsonl`: they are masked and checked against `ops()`. After merging main, a golden PR re-runs `SSE_BLESS=1 cargo test -p sse-kernel contract`, and only its own appended cases and real changes should show in the diff; an open golden PR that edited lines 1 or 41 takes main's side and reblesses. Golden-changing PRs still merge one at a time in order of readiness, each merged with main, regenerated and green; tell the kernel thread when one opens and merges. Next from the kernel: the frozen base-physics copy (Alex 18:07), then `class_sample`. Open item: eight request ops have no `ops()` cost row (`hold`, `holdings_in`, `links_in`, `set_link`, `set_tech`, `tech_of`, `tech_reading`, `who_holds`); owner being found.
+- **Golden lane (by area, 25 Nov, the coordinator's call on Alex's "split the golden by area"):** the contract golden is split.
+  - **Areas.** New contract cases go in `tests/contract/areas/<area>.json`, never in `tests/contract/requests.json`. Each area file runs on a fresh kernel, starting with its own `load_stack` (`"$pack:base-physics"` and so on) and `open_universe`. Its golden is `tests/golden/areas/<area>.jsonl`. One area per owning thread; create the file if your area has none. Bless with `SSE_BLESS=1 cargo test -p sse-kernel contract`.
+  - **Core.** `requests.json` and `tests/golden/contract.jsonl` are closed: the test `the_core_sequence_is_closed` fails on an appended case. Their lines still move when an op's output really changes (a physics change, a new field), and that is a core change: one at a time, in the coordinator's order.
+  - **Parallel.** A PR that changes only its own area's golden (and its own crate's goldens, such as `nav.json`) may merge as soon as it is green, in parallel with other areas. After merging main it re-blesses; only its own area file should show in the diff. If core lines move too, it queues in the core lane.
+  - **Frozen physics.** The contract runs on the frozen `tests/fixtures/packs/base-physics.json`, so editing the live `packs/base-physics` text does not move it. Formula blocks are compiled in, though, so a changed or new formula still moves the manifest and stack hashes in core.
+  - **Masked lines.** The op lists (hello, unknown op) are masked and checked against `ops()`. The reach report's lists are one line per block in `tests/golden/contract-reach.txt`.
+  - **Areas so far:** `kernel`, `small-bodies`. Map of areas to threads: `handover/packages/GS2-golden-split-part-two.md`.
 - **Data sheet UI copy:** after any change to the data sheet or `scripts/build-ui-reference.py`, merge main, run `python3 scripts/build-ui-reference.py`, then `--check`, before merging.
 - **"Call me if there is a stop"** (Alex): if a stage is blocked on him, ask him; don't wait silently.
 - **Figures go through one door (ED1a, accepted; check lands with the editing thread's PR):** a screen never formats its own numbers. Use `packages/ui-contract/src/figures.ts` (`say`, `sayText`, `sayFact`, `sayNumber`, `roundTo`). `tests/ui/figures-ledger.test.ts` counts `toFixed`, `toPrecision` and `toLocaleString` per file under views, shell, chart-grammar, ui-contract and renderer against `tests/ui/figures-ledger.json`: a file's count may go down, never up, and a new file starts at zero. After removing calls, rewrite the ledger with `WRITE_LEDGER=1 node --test tests/ui/figures-ledger.test.ts`.
@@ -103,12 +111,12 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/kernel-handoffs.md` (arrives with PR 463) | Build galaxy arm fix and atmosphere advice (split from the kernel thread) | the galaxy arm sign fix (golden), atmosphere advice ("the science expects", "Suggest an atmosphere") |
 | `status/proven-core.md` | Build SSE4 proven core | P, F, S, SF, B, T3, S5, the source side of MF (MF1 to MF3, MF10), MP19, MP20, ND1 |
 | `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
-| `status/navigation.md` | Build object selector and menus | NV (selector part 2, object menu, find by tag, notes) |
+| `status/navigation.md` | Build object selector and menus (now "Build look transitions for screens") | NV (selector part 2, object menu, find by tag, notes); AT15a screen delivery (how a screen arrives and leaves) |
 | `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, `shell/src/run/`, Bookmarks, Playbook and Switchboard (RD, PB) |
-| `status/landing.md` (arrives with PR 437) | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
+| `status/landing.md` | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | V8, voyages, the flight log, travel panels, HW |
-| `status/galaxy.md` (arrives with PR 431) | Build galaxy charts and histories (split from travel) | U6, U8, V9, GH8, V3 gap 39 |
+| `status/galaxy.md` | Build galaxy charts and histories (split from travel) | U6, U8, V9 (not the 3D web cube), GH8, V3 gaps 17 and 39 |
 | `status/cosmic-web.md` | Build cosmic web view | the web cube in 3D and True, light from haloes (V9w follow-ups) |
 | `status/light.md` | Build light and nebulae | O, the light side of Y, MF6, MF7, MF9, ND2 |
 | `status/weather.md` | Build shared climate and weather | W, seas (colour, waves, whitecaps) |
@@ -117,10 +125,11 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/quality-tiers.md` | Build quality tiers and speed probe (split from the renderer) | VP4, VP5: the `gpu-ultra` tier, the speed probe and placement by measured speed, heat watch, Quality choice, drawing bench rows; recipes and the governor on every True view; sharpen at rest |
 | `status/detail-ladder.md` | Build detail ladder and world textures (split from the renderer) | VP6 the detail ladder, VP3 texture ladder and relief normals |
 | `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
+| `status/aurora.md` | Build aurorae and night lights | the drawing side of VP-AU (aurora shells, curtains, ground view, bands, airglow drawn), VP12 (city lights, lightning), construct and drive lights; facts stay with the light thread (MF9 part 2) |
 | `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map, pulsating stars, ship clocks); XO is a code only, never shown in the product |
 | `status/true-air.md` | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
 | `status/true-surface.md` | Build plumes, frosts and hot glow (was "... and small bodies") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |
-| `status/small-bodies.md` (arrives with PR 459) | Build asteroids and rings up close (took small bodies from the plumes thread) | SB: belt members resolved into definite bodies, asteroids and rings up close |
+| `status/small-bodies.md` | Build asteroids and rings up close (took small bodies from the plumes thread) | SB: belt and ring members resolved up close, notable bodies (a shattered world's core), small body kinds for the Add list, comets whole (takes VP-P3), VP-R1 to VP-R5 |
 | `status/surface-timelapse.md` | Build surface time-lapse (R6 part 2 from the renderer) | R6 time-lapse, the drawing side of W-sea2 to W-sea4 |
 | `status/names-and-life.md` | Build names gallery and life board | rest of NM6 (Classes, names gallery), U7 Life board |
 | `status/naming.md` | no live owner (NM design done) | NM |
@@ -131,9 +140,11 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/citations.md` | Verify every cited paper | CR: the Consensus check of every cited paper, the master list in `handover/citations/` and its check |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
+| `status/spaceflight-history.md` | none yet: to be opened as "Build roll call and In memory" (design: "Design spaceflight history view and memorial") | SH: Roll call (who was in space on any day), the count on the ruler, In memory, the real memorials where they are; accepted 25 Nov; SH is a code only, never shown in the product |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
-| `status/postcards.md` | Design saved views and hold backdrops (design only; no builder yet) | PC: postcards (a bookmark that can travel and is drawn live as a still, with the reasons on its back), grounds and quotes on hold screens. PROPOSED 25 Nov, not accepted; PC is a code only |
+| `status/postcards.md` | Build postcards and hold backdrops (design: "Design saved views and hold backdrops") | PC: postcards (a bookmark that can travel and is drawn live as a still, with the reasons on its back), grounds and quotes on hold screens. ACCEPTED by Alex 25 Nov 01:27 UTC; builder thread "Build postcards and hold backdrops" (Opus) owns PC1, PC3, PC4, PC6; PC is a code only |
+| `status/from-here.md` | none yet: proposed as "Build views and sounds from inside worlds" (design: "Design views and sounds from inside worlds") | FH: the standing view at any depth in any fluid (down through a gas giant), the "As lit" exposure, and the Aids (range markers, colour card, light meter, Listen). PROPOSED 25 Nov 2026, not yet accepted: 14 questions in the note's section 17; FH is a code only |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
 
 Added after 18:15 UTC: "Verify every cited paper" (`status/citations.md`, arrives with PR 471; master citation list, daily Consensus batches), "Build quality tiers and speed probe" (`status/quality-tiers.md`, PR 470), "Build detail ladder and world textures" (`status/detail-ladder.md`, PR 467), "Build aurorae and night lights" (`status/aurora.md`, PR 469). Designs: "Design visual polish and flourishes" (accepted, note in `handover/design/`); the exotic objects note's section 15 adds pulsating stars (XO19) and clocks (XO20); outside models and the kernel as a module (track OM, PR 484) is banked, not accepted.
@@ -151,6 +162,10 @@ Each track keeps to its own crates and folders. Integration points are listed at
 https://v4.starsystemx.com: Cloudflare Worker `star-system-explorer` (Workers Builds, set up by Alex 18 Nov 2026).
 Build `npm run build` (scripts/build-site.sh, writes dist/), deploy `npx wrangler deploy` (wrangler.jsonc),
 production branch: switch to `main` in Cloudflare (was `claude/project-thread-h9y77o`); other branches get preview versions.
+There is no deploy workflow in GitHub Actions: `ci.yml` only tests (and never cancels runs on `main`). Cloudflare
+builds every merge to `main` (4 to 10 minutes each). When merges come faster than that, a waiting build can show as
+Skipped, but the next build on `main` contains it, so the site catches up. Alex checked on 25 Nov 01:36 UTC and found
+every build Ready; nothing needs changing in Cloudflare and no GitHub deploy workflow is wanted.
 The site is the GM shell (chart room) at `/`, the players page at `/players.html` and the cross-device check page at `/harness/`.
 
 ## How to resume

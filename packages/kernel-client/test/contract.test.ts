@@ -31,6 +31,25 @@ test("every request through the worker matches the native golden responses", asy
   await worker.terminate();
 });
 
+// Each contract area runs on a fresh kernel, as natively (tests/contract/areas/, tests/golden/areas/).
+test("every contract area through a fresh worker matches its native golden", async () => {
+  const packs: Record<string, unknown> = {};
+  for (const f of readdirSync(new URL("tests/fixtures/packs/", root)).sort()) {
+    if (f.endsWith(".json")) packs[f.slice(0, -5)] = JSON.parse(read(`tests/fixtures/packs/${f}`));
+  }
+  const areas = readdirSync(new URL("tests/contract/areas/", root)).filter((f) => f.endsWith(".json")).sort();
+  assert.ok(areas.length > 0, "at least one contract area");
+  for (const f of areas) {
+    const name = f.slice(0, -5);
+    const { client, worker } = nodeClient();
+    const got = await runContract(client, JSON.parse(read(`tests/contract/areas/${f}`)), packs as never);
+    const golden = read(`tests/golden/areas/${name}.jsonl`).trimEnd().split("\n");
+    assert.equal(got.length, golden.length, `area ${name}`);
+    got.forEach((line, i) => assert.equal(line, golden[i], `area ${name}: response ${i} differs`));
+    await worker.terminate();
+  }
+});
+
 test("jobs report progress in work units and can be cancelled", async () => {
   const { client, worker } = nodeClient();
   const seen: number[] = [];

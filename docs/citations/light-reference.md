@@ -237,3 +237,9 @@ How rows are counted: Proxima is counted unverified (its radius is verified, but
 |---|---|---|---|---|
 | `sse.shadow.refraction_bend`, `sse.shadow.refraction_dilution` | Baum, W. A. and Code, A. D. 1953, A photometric observation of the occultation of σ Arietis by Jupiter, AJ 58, 108. doi:10.1086/106829 | bend θ = ν √(2πr/H) in an exponential atmosphere; spreading 1 / (1 + D θ/H) | textbook (from memory of the paper, to check) | Earth's horizon bend at 550 nm comes to about 1.1° at the ground (about twice the 35′ of one-way horizontal refraction). |
 | `sse.shadow.grazing_column` | Link, F. 1969, Eclipse Phenomena in Astronomy, Springer. doi:10.1007/978-3-642-86775-6 | the column along a grazing ray, n √(2π r H); the eclipse as sunlight bent through the limb | textbook (from memory, to check) | About forty times the vertical column for Earth. |
+
+## Air in True (track TA, visual polish VP-A)
+
+| Where | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| air-luts.ts, gpu-air-shell.ts (VP-A3) | Hillaire 2020, A Scalable and Production Ready Sky and Atmosphere Rendering Technique, Computer Graphics Forum 39(4), 13-22, doi 10.1111/cgf.14050 | transmittance table; multiple scattering as L2 / (1 - f_ms) with an isotropic phase, sampled over the sphere of directions (section 5.5) | verified (citation check of 24 Nov, `handover/design/SSE4-visual-polish-citation-check.md` item 2: checked, primary) | the second-order and f_ms integrals as in the paper; table sizes smaller than his PC settings (256 × 64 and 32 × 32) and said in the fudge register |

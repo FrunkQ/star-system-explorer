@@ -5,7 +5,9 @@
 // tiles at a time (about 0.8 s), checks between requests that it is still wanted, starts only after the world has
 // been chosen and left alone for a while (longer than a camera fly), and pauses again before the finer level.
 import type { SurfaceTile } from "../../../ui-contract/src/index.ts";
-import { tilesFacing, type TileKey } from "../../../renderer/src/texture-ladder.ts";
+import { composePatch, patchFor, type GroundAsk, type PatchPicture, tilesFacing, type TileKey } from "../../../renderer/src/texture-ladder.ts";
+import { floorFromRefusal } from "../../../renderer/src/surface-patch.ts";
+import { readGroundOptics, withGround, type MatterReader } from "../../../renderer/src/ground-optics.ts";
 
 /** Tiles per request: about 0.8 s of kernel time on the sample Sol. */
 export const FINER_BATCH = 4;
@@ -13,7 +15,7 @@ export const FINER_BATCH = 4;
 export const FINER_SETTLE_MS = 1200;
 /** Pause before the next level. */
 export const FINER_PAUSE_MS = 1500;
-/** The levels read: 1 (64 samples a face) and 2 (128). */
+/** The levels read: 1 (512 samples a face with the kernel's 256-sample tiles) and 2 (1024, COMPOSE_MAX). */
 export const FINER_LEVELS: readonly number[] = [1, 2];
 
 /** Keyed `${system}|${body}`: every finer tile read so far (level 0 stays with each screen's own read). */
@@ -28,8 +30,14 @@ export function finerTiles(key: string): SurfaceTile[] {
   return m ? [...m.values()] : [];
 }
 
-export interface FinerReader {
-  surfaceTilesAt(system: string, body: string, keys: readonly TileKey[]): Promise<{ ok: true; tiles: SurfaceTile[] } | { ok: false; code: string; message: string }>;
+export interface FinerReader extends Partial<MatterReader> {
+  surfaceTilesAt(system: string, body: string, keys: readonly TileKey[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused?: readonly { why: string }[] } | { ok: false; code: string; message: string }>;
+}
+
+/** Tiles as read, with bare ground's measured colour laid on when the session can read the sheet (ground-optics.ts). */
+async function grounded(session: FinerReader, tiles: SurfaceTile[]): Promise<SurfaceTile[]> {
+  if (!session.readMatter || !tiles.some((t) => t.maturity)) return tiles;
+  return withGround(tiles, await readGroundOptics(session as MatterReader));
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -65,11 +73,54 @@ export async function readFiner(session: FinerReader, system: string, body: stri
       if (!wanted()) return read;
       const r = await session.surfaceTilesAt(system, body, todo.slice(i, i + FINER_BATCH));
       if (!r.ok) return read;
-      for (const t of r.tiles) m.set(tileKey(t.key), t);
+      for (const t of await grounded(session, r.tiles)) m.set(tileKey(t.key), t);
       read += r.tiles.length;
       if (r.tiles.length && wanted()) got(finerTiles(key));
       for (const k of todo.slice(i, i + FINER_BATCH)) if (!m.has(tileKey(k))) refused.add(`${key}|${tileKey(k)}`);
     }
   }
   return read;
+}
+
+// ------------------------------------------------------------------ the deep patch under a close camera (VP3 part 4)
+
+/** Keyed `${system}|${body}`: deep tiles read so far, by tile key (all levels). */
+const deep = new Map<string, Map<string, SurfaceTile>>();
+/** The kernel's fact floor per world, once a refusal has named it: no tile deeper than this is asked for. */
+const floors = new Map<string, number>();
+
+/**
+ * Read the deep patch for what the camera looks down on (`ask`: the body-frame direction under it and the ground's
+ * metres a screen pixel there), FINER_BATCH tiles a request, nearest first, and hand back its picture. The level
+ * is the coarsest fine enough for the pixels (texture-ladder.ts `patchFor`), never past the kernel's fact floor (a
+ * refusal names it, and it is kept for the world). `wanted()` is asked before each request; null when there is
+ * nothing deeper than the globe's own faces to read, or nothing was read.
+ */
+export async function readDeep(session: FinerReader, system: string, body: string, ask: GroundAsk, radius_m: number, samples: number, wanted: () => boolean): Promise<PatchPicture | null> {
+  const key = `${system}|${body}`;
+  let m = deep.get(key);
+  if (!m) deep.set(key, (m = new Map()));
+  let plan = patchFor(ask, radius_m, samples, floors.get(key) ?? 30);
+  if (!plan.keys.length) return null;
+  for (let pass = 0; pass < 2; pass++) {
+    const todo = plan.keys.filter((k) => !m!.has(tileKey(k)) && !refused.has(`${key}|${tileKey(k)}`));
+    let floor: number | null = null;
+    for (let i = 0; i < todo.length; i += FINER_BATCH) {
+      if (!wanted()) return null;
+      const r = await session.surfaceTilesAt(system, body, todo.slice(i, i + FINER_BATCH));
+      if (!r.ok) return null;
+      for (const t of await grounded(session, r.tiles)) m.set(tileKey(t.key), t);
+      for (const x of r.refused ?? []) floor ??= floorFromRefusal(x.why);
+      if (floor !== null) break;
+      for (const k of todo.slice(i, i + FINER_BATCH)) if (!m.has(tileKey(k))) refused.add(`${key}|${tileKey(k)}`);
+    }
+    if (floor === null) break;
+    // Below the fact floor: read at the floor instead (the detail ladder draws below it).
+    floors.set(key, floor);
+    plan = patchFor(ask, radius_m, samples, floor);
+    if (!plan.keys.length) return null;
+  }
+  if (!wanted()) return null;
+  const tiles = plan.keys.map((k) => m!.get(tileKey(k))).filter((t): t is SurfaceTile => !!t);
+  return composePatch(tiles, ask.toward, radius_m);
 }

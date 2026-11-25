@@ -76,6 +76,8 @@ export const OBJECT_ACTIONS: readonly ActionDef[] = [
     why: (_t, s) => (s.canDescribe ? null : "Minerva needs an agent key: set one up under Ask"),
   },
   { id: "link", label: () => "Copy a link to it", group: "look", desks: DESKS, notKinds: AREAS },
+  // Atlas design AT2: the Atlas screen opens on the selected object's page.
+  { id: "atlas", label: () => "Open in the Atlas", group: "look", desks: DESKS },
   {
     id: "send",
     label: (t) => `Show the players ${t.label}`,

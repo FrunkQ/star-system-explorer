@@ -13,6 +13,8 @@ import { ACESFilmicToneMapping, BufferAttribute, BufferGeometry, LineSegments, L
 import { LineBasicNodeMaterial, MeshBasicNodeMaterial, WebGPURenderer } from "three/webgpu";
 import { acos, attribute, clamp, dot, exp, float, max, normalView, normalize, pow, positionWorld, select, uniform, vec3, vec4, vertexColor } from "three/tsl";
 import { makeAirMaterial, type AirRender } from "./gpu-air.ts";
+import { makeAurora, type AuroraGpu } from "./gpu-aurora.ts";
+import type { AuroraDraw } from "./aurora.ts";
 import { cubeDirection } from "../../ui-contract/src/index.ts";
 import { lightDir, lookup, viewRotation, type Prepared } from "./surface.ts";
 import type { Plan } from "./recipe.ts";
@@ -20,7 +22,7 @@ import type { Plan } from "./recipe.ts";
 export interface GlobeGpu {
   readonly backend: "webgpu" | "webgl2";
   /** Draw one frame. `jitter` shifts the view by a fraction of a pixel (the still tier averages jittered frames). */
-  draw(p: Prepared, plan: Plan, lon: number, lat: number, full: number, air?: AirRender | null, jitter?: [number, number]): void;
+  draw(p: Prepared, plan: Plan, lon: number, lat: number, full: number, air?: AirRender | null, jitter?: [number, number], aurora?: AuroraDraw | null): void;
   dispose(): void;
 }
 
@@ -79,6 +81,7 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
   const uLineA = uniform(0.3);
   lineMat.colorNode = vec4(1, 1, 1, uLineA);
 
+  let auroraGpu: AuroraGpu | null = null;
   let mesh: Mesh | null = null;
   let lines: LineSegments | null = null;
   let built: { p: Prepared; grid: number } | null = null;
@@ -158,7 +161,7 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
 
   return {
     backend,
-    draw(p, plan, lon, lat, full, air, jitter) {
+    draw(p, plan, lon, lat, full, air, jitter, aurora) {
       const relief = plan.passes.find((x) => x.pass === "relief-globe")?.params ?? {};
       const grat = plan.passes.find((x) => x.pass === "graticule")?.params;
       const grid = Math.round(num(relief.grid, 128));
@@ -202,8 +205,15 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
       mesh!.matrix.copy(m);
       mesh!.matrixWorldNeedsUpdate = true;
       if (lines) (lines.matrix.copy(m), (lines.matrixWorldNeedsUpdate = true));
-      // Leave room for the air's limb when it is drawn; otherwise the globe fills the view, as on the canvas tier.
-      const half = shell.visible && air ? Math.max(1, air.top * 1.01) : 1;
+      // Aurora shells (VP-AU5, aurora.ts), in True only: physical lighting.
+      const au = isPhysical ? (aurora ?? null) : null;
+      if (au && !auroraGpu) {
+        auroraGpu = makeAurora();
+        scene.add(auroraGpu.group);
+      }
+      auroraGpu?.set(au, L, m);
+      // Leave room for the air's limb and the aurora's top when they are drawn; otherwise the globe fills the view.
+      const half = Math.max(shell.visible && air ? Math.max(1, air.top * 1.01) : 1, au ? au.top * 1.01 : 1);
       if (camera.right !== half) {
         camera.left = camera.bottom = -half;
         camera.right = camera.top = half;
@@ -224,6 +234,7 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
       airMat?.material.dispose();
       shell.geometry.dispose();
       lineMat.dispose();
+      auroraGpu?.dispose();
       renderer.dispose();
     },
   };

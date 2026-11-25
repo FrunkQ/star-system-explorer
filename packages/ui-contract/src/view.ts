@@ -121,7 +121,7 @@ export interface Workspace {
   /** The table, for the Switchboard (PB2): the board, roles and screens, and the ways to change what they show. */
   table?: import("./board.ts").TablePort;
   /** A site a link asked to land at (`~surface?site=lat,lon`): the Land screen takes it once its world is read, then clears it. */
-  landing_site?: { body: string; lat_deg: number; lon_deg: number } | null;
+  landing_site?: { body: string; lat_deg: number; lon_deg: number; time?: "dawn" | "midday" | "dusk" | "night"; lander?: string } | null;
   /** Values applied by intents in this session, keyed "address#field", shown until scenes come from the kernel. */
   applied: Record<string, { value: Json; display: string; event_id: string }>;
   /** Bumped whenever an intent is applied, so views can refresh history. */
@@ -209,6 +209,8 @@ export interface PlayerContext {
   ground?: import("./landing.ts").LandingGround;
   /** Which of the part's own controls the screen has on (AT13); absent: every declared control is on. Read with `controlOn`. */
   controls?: Readonly<Record<string, boolean>>;
+  /** What the GM sent this screen now (seat.ts `Shown`), or null. Read it in an effect: it changes. */
+  shown?(): import("./seat.ts").Shown | null;
 }
 
 export interface ViewHandle<S = SystemScene> {

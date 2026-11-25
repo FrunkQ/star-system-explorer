@@ -8,7 +8,7 @@
 <script lang="ts">
   import Segmented from "./Segmented.svelte";
   import { opensFrom } from "./motion.ts";
-  import { FREE_HINT, VIEW_BAND_WORDS, pickScale, pickSeen, pickStyle, viewOptions, type ViewBand, type ViewScale, type SeenFrom, type ViewChoice, type ViewControlsSpec, type ViewStyle } from "../../ui-contract/src/index.ts";
+  import { EXPOSURE_WORDS, FREE_HINT, VIEW_BAND_WORDS, pickScale, pickSeen, pickStyle, viewOptions, type ViewBand, type ViewExposure, type ViewScale, type SeenFrom, type ViewChoice, type ViewControlsSpec, type ViewStyle } from "../../ui-contract/src/index.ts";
 
   let { spec, choice, onchange, compact = false }: { spec: ViewControlsSpec; choice: ViewChoice; onchange: (c: ViewChoice) => void; compact?: boolean } = $props();
   const o = $derived(viewOptions(spec, choice));
@@ -16,7 +16,7 @@
   let open = $state(false);
   let chip = $state<HTMLButtonElement | null>(null);
   let fold = $state<HTMLDivElement | null>(null);
-  const summary = $derived(`HUD ${o.shown.hud ? "on" : "off"} · ${VIEW_BAND_WORDS[o.shown.band]}`);
+  const summary = $derived(`HUD ${o.shown.hud ? "on" : "off"} · ${VIEW_BAND_WORDS[o.shown.band]}${o.shown.style === "true" ? ` · ${EXPOSURE_WORDS[o.shown.exposure]}` : ""}`);
   // A choice closes it, as a menu does; so does a press off it, or Escape, which gives the keyboard back to the chip.
   $effect(() => {
     if (!open) return;
@@ -38,7 +38,7 @@
   });
 </script>
 
-<div class="vc" class:compact data-view-controls data-style={o.shown.style} data-seen={o.shown.seen} data-scale={o.shown.scale} data-hud={o.shown.hud ? "on" : "off"} data-band={o.shown.band}>
+<div class="vc" class:compact data-view-controls data-style={o.shown.style} data-seen={o.shown.seen} data-scale={o.shown.scale} data-hud={o.shown.hud ? "on" : "off"} data-band={o.shown.band} data-exposure={o.shown.exposure}>
   <div class="field">
     <span class="k" aria-hidden="true">View style</span>
     <Segmented label="View style" value={o.shown.style} options={o.styles} onchange={(s: ViewStyle) => onchange(pickStyle(choice, s))} />
@@ -63,6 +63,10 @@
         <div class="field">
           <span class="k" aria-hidden="true">Band</span>
           <Segmented label="Band" value={o.shown.band} options={o.bands} onchange={(b: ViewBand) => ((open = false), onchange({ ...choice, band: b }))} />
+        </div>
+        <div class="field">
+          <span class="k" aria-hidden="true">Exposure</span>
+          <Segmented label="Exposure" value={o.shown.exposure} options={o.exposures} onchange={(e: ViewExposure) => ((open = false), onchange({ ...choice, exposure: e }))} />
         </div>
       </div>
     {/if}

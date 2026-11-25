@@ -3508,20 +3508,5 @@
   "op": "read_bows",
   "items": [{"id": "fog", "n": 1.333, "kind": "mist"}]
  },
- {
-  "op": "read_scattering",
-  "items": [{"id": "cloud", "radius_m": 1e-5, "wavelength_m": 5.5e-7, "n": 1.333, "spread": 0.3, "angles_deg": [0, 30, 90, 138, 180]}, {"id": "soot", "radius_m": 5e-8, "wavelength_m": 5.5e-7, "n": 1.75, "k": 0.44, "angles_deg": [0, 90, 180]}]
- },
- {
-  "op": "read_scattering",
-  "items": [{"id": "boulder", "radius_m": 1.0, "wavelength_m": 5.5e-7, "n": 1.5}]
- },
- {
-  "op": "read_shadow_light",
-  "items": [{"id": "earth-moon", "air": {"address": "u:sol/sys:0/planet:2", "gases": [{"gas": "n2", "fraction": 0.7808}, {"gas": "o2", "fraction": 0.2095}, {"gas": "ar", "fraction": 0.0093}, {"gas": "co2", "fraction": 0.0004}], "surface_pressure_pa": 101325, "surface_temperature_k": 288, "gravity_m_s2": 9.81}, "radius_m": 6.371e6, "distance_m": 3.844e8, "star": {"teff_k": 5772, "radius_m": 6.957e8, "distance_m": 1.496e11}}, {"id": "airless", "air": {"address": "u:sol/sys:0/planet:2/moon:0", "gases": [], "surface_pressure_pa": 0, "surface_temperature_k": 250, "gravity_m_s2": 1.62}, "radius_m": 1.737e6, "distance_m": 1e8, "star": {"teff_k": 5772, "radius_m": 6.957e8, "distance_m": 1.496e11}}]
- },
- {
-  "op": "read_shadow_light",
-  "items": [{"id": "bad", "air": {"address": "x", "gases": [], "surface_pressure_pa": 0, "surface_temperature_k": 250, "gravity_m_s2": 1}, "radius_m": -1, "distance_m": 1, "star": {"teff_k": 5772, "radius_m": 6.957e8, "distance_m": 1.496e11}}]
- }
+ {"op": "load_stack", "packs": ["$pack:base-physics"]}
 ]

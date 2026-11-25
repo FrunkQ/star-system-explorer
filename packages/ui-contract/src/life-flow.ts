@@ -226,3 +226,54 @@ export function placeStages(stages: readonly FlowStage[], o: { w: number; h: num
   );
   return { placed, wires, width: cols * o.w + (cols - 1) * o.gapX, height };
 }
+
+/**
+ * A what-if under other dial values: the kernel's life_view re-run with `dials`, read only. `honoured` is false
+ * when the kernel answered without taking the asked values (a kernel from before dials ignores the field and gives
+ * the world as the pack sets it), so a caller keeps its knobs read only instead of showing a what-if that is not one.
+ */
+export type LifeWhatIf = { ok: true; honoured: boolean; view: LifeView } | { ok: false; message: string };
+
+export async function askWhatIf(
+  session: { lifeView(by: { body?: string; fixture?: string; dials?: Record<string, number> }): Promise<{ ok: true; view: LifeView } | { ok: false; message: string }> },
+  by: { body?: string; fixture?: string },
+  dials: Record<string, number>,
+): Promise<LifeWhatIf> {
+  const r = await session.lifeView({ ...by, dials });
+  if (!r.ok) return { ok: false, message: r.message };
+  const honoured = Object.entries(dials).every(([k, v]) => k in r.view.dials && Math.abs(r.view.dials[k]! - v) < 1e-9);
+  return { ok: true, honoured, view: r.view };
+}
+
+/** One stage's change between the pack's world and a what-if. */
+export interface StageMove {
+  id: StageId;
+  /** Its node words before and after (equal when only its events moved). */
+  was: string;
+  now: string;
+  /** Whether it had anything to give, before and after. */
+  wasLive: boolean;
+  nowLive: boolean;
+  /** Dated events the what-if adds and takes away, by their reasons. */
+  added: string[];
+  gone: string[];
+}
+
+/** What moved, stage by stage, between the pack's world and a what-if (stages that did not move are left out). */
+export function whatMoved(base: LifeView, whatIf: LifeView): StageMove[] {
+  const a = new Map(lifeFlow(base).map((s) => [s.id, s]));
+  const out: StageMove[] = [];
+  for (const s of lifeFlow(whatIf)) {
+    const b = a.get(s.id);
+    if (!b) continue;
+    const key = (e: LifeEvent) => `${e.kind}|${e.subject ?? ""}`;
+    const before = new Map(b.events.map((e) => [key(e), e]));
+    const after = new Map(s.events.map((e) => [key(e), e]));
+    const added = [...after].filter(([k]) => !before.has(k)).map(([, e]) => e.why);
+    const gone = [...before].filter(([k]) => !after.has(k)).map(([, e]) => e.why);
+    const linesMoved = b.lines.join("\n") !== s.lines.join("\n");
+    if (b.headline === s.headline && b.live === s.live && !added.length && !gone.length && !linesMoved) continue;
+    out.push({ id: s.id, was: b.headline, now: s.headline, wasLive: b.live, nowLive: s.live, added, gone });
+  }
+  return out;
+}

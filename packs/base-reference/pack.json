@@ -9428,11 +9428,12 @@
         },
         "props": {
          "sigma_elec": {
-          "v": 10000.0,
+          "v": 15000.0,
           "unit": "S m-1",
-          "src": "redmer2011",
+          "src": "millot2018",
           "check": "unverified",
-          "note": "order of magnitude, recalled"
+          "at_place": "70 to 180 GPa, below about 5000 K (reverberating shocks)",
+          "note": "Millot et al. 2018 quote about 150 S/cm on reverberating shocks at 70 to 180 GPa, against about 30 S/cm (3000 S/m) on the single-shock Hugoniot above 30 GPa and 2000 K, which rises from 0.1 S/cm at 10 GPa; Yakushev 1998 gives 2000 S/m at 75 GPa. Mostly ionic: the electronic part is under 100 S/cm below 200 GPa and 5000 K"
          }
         }
        },
@@ -11034,7 +11035,7 @@
          "millot2018"
         ],
         "check": "unverified",
-        "note": "3250 K at 100 GPa is Cheng et al.'s; 5000 K at 190 GPa is recalled from Millot et al. 2018 and must be checked; beyond 190 GPa extrapolated"
+        "note": "3250 K at 100 GPa is Cheng et al.'s; 5000 K at 190 GPa is Millot et al. 2018's (abstract); beyond 190 GPa extrapolated"
        },
        {
         "between": [
@@ -12167,6 +12168,46 @@
        },
        "note": "pure liquid water near room temperature; light falls to 1/e over 1/alpha metres (about 22 m at 420 nm, 0.4 m at 750 nm), which is why deep water is blue"
       },
+      "scattering_liquid": {
+       "kind": "table",
+       "lambda_nm": [
+        450.0,
+        550.0
+       ],
+       "b": {
+        "v": [
+         0.0035,
+         0.0015
+        ],
+        "unit": "m-1",
+        "src": "morel-prieur1977",
+        "check": "unverified"
+       },
+       "exponent": {
+        "v": -4.3,
+        "unit": "1",
+        "src": "morel-prieur1977",
+        "check": "unverified",
+        "note": "b scales as lambda to this power between and beyond the table's points"
+       },
+       "backscatter_share": {
+        "v": 0.5,
+        "unit": "1",
+        "src": "morel-prieur1977",
+        "check": "unverified",
+        "note": "b_b / b for molecular scattering, which is symmetric fore and aft"
+       },
+       "seawater_factor": {
+        "v": 1.3,
+        "unit": "1",
+        "src": "morel-prieur1977",
+        "check": "unverified",
+        "note": "seawater scatters about 30 % more than pure water (dissolved salts)"
+       },
+       "src": "morel-prieur1977",
+       "check": "unverified",
+       "note": "pure liquid water; the 650 nm entry of Table 1 was unreadable in the scan, so use the exponent beyond 550 nm"
+      },
       "refractive_index_liquid": {
        "kind": "table",
        "lambda_nm": [
@@ -12208,6 +12249,67 @@
        "src": "segelstein1981",
        "check": "unverified",
        "note": "liquid water near room temperature; k is the imaginary index (alpha = 4 pi k / lambda)"
+      },
+      "refractive_index_solid": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1250.0,
+        1504.0,
+        2000.0
+       ],
+       "n": [
+        1.3509,
+        1.3339,
+        1.3249,
+        1.3194,
+        1.3157,
+        1.313,
+        1.311,
+        1.3094,
+        1.308,
+        1.3069,
+        1.3049,
+        1.3032,
+        1.3015,
+        1.2971,
+        1.2916,
+        1.2744
+       ],
+       "k": [
+        2e-11,
+        2e-11,
+        2e-11,
+        2.365e-11,
+        9.239e-11,
+        5.889e-10,
+        2.289e-09,
+        5.73e-09,
+        1.43e-08,
+        2.9e-08,
+        1.34e-07,
+        4.2e-07,
+        1.62e-06,
+        1.29e-05,
+        0.0005373,
+        0.00164
+       ],
+       "src": "warren-brandt2008",
+       "check": "unverified",
+       "at_k": 266.15,
+       "note": "ordinary ice Ih at -7 C; k below 400 nm is an upper limit (printed as <2.0E-11); alpha = 4 pi k / lambda; ice is bluest where k is least"
       },
       "polarisability": {
        "v": 1.501e-30,
@@ -12929,6 +13031,14 @@
         "note": "The methane bands that colour Uranus and Neptune and darken the giants in the red, measured from the giants' own spectra at their temperatures (125 to 128 K). Sampled every 5 nm from a 1 nm table, so narrow band edges are smoothed; near-zero values are the table's floor."
        }
       ],
+      "n_solid": {
+       "v": 1.32,
+       "unit": "1",
+       "src": "protopapa2015",
+       "check": "unverified",
+       "at_place": "methane ice, 15800 cm-1 (633 nm)",
+       "note": "real index of methane ice in the visible; its visible k is not on the sheet yet"
+      },
       "polarisability": {
        "v": 2.448e-30,
        "unit": "m3",
@@ -13357,6 +13467,14 @@
        "unit": "1",
        "src": "fudge-register",
        "check": "authored"
+      },
+      "n_solid": {
+       "v": 1.23,
+       "unit": "1",
+       "src": "quirico-sshade-n2",
+       "check": "unverified",
+       "at_place": "nitrogen ice, visible",
+       "note": "real index of nitrogen ice in the visible, held constant through the near infrared in the SSHADE optical constants"
       },
       "polarisability": {
        "v": 1.71e-30,
@@ -13879,7 +13997,35 @@
         "viscosity": "arp1998-helium",
         "surface_tension": "mulero2012"
        },
-       "note": "liquid along its boiling curve, from just above the triple point (2.1768 K) to 0.95 of the critical point (5.1953 K); waves on a sea of it read density, viscosity and surface tension here"
+       "note": "liquid along its boiling curve, from just above the triple point (2.1768 K) to 0.95 of the critical point (5.1953 K); waves on a sea of it read density, viscosity and surface tension here; the p_pa column is helium's vapour-pressure curve (it has no triple point at saturation, so climate reads the vapour curve here)"
+      },
+      "lambda_point_k": {
+       "v": 2.1768,
+       "unit": "K",
+       "src": "ortizvega2023-helium",
+       "check": "unverified",
+       "at_pa": 5039.33,
+       "note": "below this, liquid helium-4 is a superfluid (He II); helium has no triple point at its own vapour pressure, so this is where its sea's liquid-vapour curve starts"
+      },
+      "lambda_point_pa": {
+       "v": 5039.33,
+       "unit": "Pa",
+       "src": "ortizvega2023-helium",
+       "check": "unverified",
+       "note": "vapour pressure at the lambda point"
+      },
+      "critical_point_k": {
+       "v": 5.1953,
+       "unit": "K",
+       "src": "ortizvega2023-helium",
+       "check": "unverified",
+       "note": "above this there can be no helium sea"
+      },
+      "critical_point_pa": {
+       "v": 228322.8,
+       "unit": "Pa",
+       "src": "ortizvega2023-helium",
+       "check": "unverified"
       }
      }
     },
@@ -13903,7 +14049,7 @@
        "also": [
         "richardson2014"
        ],
-       "note": "normal deuterium at its normal boiling point, from CoolProp's saturated-liquid fit to Richardson et al. 2014 (fit good to 0.17%)"
+       "note": "normal deuterium at its normal boiling point, computed by CoolProp from Richardson et al. 2014, whose equation of state is good to about 3% for saturated liquid density (the 0.17% is only CoolProp's ancillary fit to that equation)"
       }
      }
     },
@@ -17400,6 +17546,797 @@
        "note": "thin films and pellets of tholin from 0.9 N2 / 0.1 CH4 at 0.2 mbar, room temperature; alpha = 4 pi k / lambda"
       }
      }
+    },
+    {
+     "id": "jsc-mars-1",
+     "names": {
+      "physics": "JSC Mars-1 palagonitic tephra (Mars dust simulant)",
+      "plain": "Mars dust simulant (JSC Mars-1)",
+      "story": "red Mars dust"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "a laboratory stand-in for Martian dust and soil; Mars' airborne dust absorbs more (Wolff et al. 2009: k about 0.01 at 488 nm and 0.001 to 0.002 at 647 nm, via Dabrowska et al. 2015)",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5
+       ],
+       "k": [
+        0.001308,
+        0.001296,
+        0.00117,
+        0.000926,
+        0.000742,
+        0.000666,
+        0.000571,
+        0.000498,
+        0.000468,
+        0.000452,
+        0.00051,
+        0.00062,
+        0.000721,
+        0.001036,
+        0.001192
+       ],
+       "src": "martikainen2023",
+       "also": [
+        "dabrowska2015"
+       ],
+       "check": "unverified",
+       "note": "k retrieved from the powder's reflectance with irregular grains (GRS1) and n fixed at 1.5; n is assumed, not measured; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "mms-2",
+     "names": {
+      "physics": "Enhanced Mojave Mars Simulant (MMS-2)",
+      "plain": "Mars soil simulant (Mojave)",
+      "story": "Mars soil"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "a laboratory stand-in for Martian dust and soil; Mars' airborne dust absorbs more (Wolff et al. 2009: k about 0.01 at 488 nm and 0.001 to 0.002 at 647 nm, via Dabrowska et al. 2015)",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5
+       ],
+       "k": [
+        0.000704,
+        0.000751,
+        0.000773,
+        0.000849,
+        0.000819,
+        0.000788,
+        0.000658,
+        0.000292,
+        0.000243,
+        0.000205,
+        0.000202,
+        0.000236,
+        0.000184,
+        0.000227,
+        0.000287
+       ],
+       "src": "martikainen2023",
+       "also": [
+        "dabrowska2015"
+       ],
+       "check": "unverified",
+       "note": "k retrieved from the powder's reflectance with irregular grains (GRS1) and n fixed at 1.5; n is assumed, not measured; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "mgs-1",
+     "names": {
+      "physics": "Mars Global Simulant (MGS-1)",
+      "plain": "Mars soil simulant (global)",
+      "story": "Mars soil"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "a laboratory stand-in for Martian dust and soil; Mars' airborne dust absorbs more (Wolff et al. 2009: k about 0.01 at 488 nm and 0.001 to 0.002 at 647 nm, via Dabrowska et al. 2015)",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5,
+        1.5
+       ],
+       "k": [
+        0.000493,
+        0.000431,
+        0.000357,
+        0.000311,
+        0.0003,
+        0.0003,
+        0.000302,
+        0.0003,
+        0.000315,
+        0.000323,
+        0.000394,
+        0.000571,
+        0.000596,
+        0.000685,
+        0.00088
+       ],
+       "src": "martikainen2023",
+       "also": [
+        "dabrowska2015"
+       ],
+       "check": "unverified",
+       "note": "k retrieved from the powder's reflectance with irregular grains (GRS1) and n fixed at 1.5; n is assumed, not measured; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "troilite",
+     "names": {
+      "physics": "troilite (FeS)",
+      "plain": "iron sulphide",
+      "story": "iron sulphide"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the iron sulphide of meteorites and of the sulphide clouds of hot giants; dark and metallic in the visible",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        774.0
+       ],
+       "n": [
+        1.92,
+        2.04,
+        2.08,
+        2.09,
+        2.1,
+        2.13,
+        2.19,
+        2.27,
+        2.37,
+        2.47,
+        2.64
+       ],
+       "k": [
+        1.41,
+        1.36,
+        1.37,
+        1.45,
+        1.56,
+        1.7,
+        1.85,
+        2.0,
+        2.13,
+        2.26,
+        2.43
+       ],
+       "src": "kranhold2026",
+       "check": "unverified",
+       "at_k": 300.0,
+       "note": "light polarised along the crystal's x axis; the z axis is in refractive_index_ez; the files read stop at 774 nm"
+      },
+      "refractive_index_ez": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        774.0
+       ],
+       "n": [
+        1.87,
+        1.98,
+        2.0,
+        2.02,
+        2.07,
+        2.17,
+        2.31,
+        2.47,
+        2.64,
+        2.82,
+        3.08
+       ],
+       "k": [
+        1.5,
+        1.45,
+        1.49,
+        1.62,
+        1.79,
+        1.97,
+        2.13,
+        2.28,
+        2.39,
+        2.47,
+        2.54
+       ],
+       "src": "kranhold2026",
+       "check": "unverified",
+       "at_k": 300.0,
+       "note": "light polarised along the crystal's z axis"
+      }
+     }
+    },
+    {
+     "id": "hematite",
+     "names": {
+      "physics": "hematite (Fe2O3)",
+      "plain": "rust-red iron oxide",
+      "story": "red iron oxide"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ferric oxide that reddens Mars and desert dust; strong blue and green absorption, nearly clear past 600 nm",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        250.0,
+        300.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0
+       ],
+       "n": [
+        1.853,
+        2.234,
+        2.354,
+        2.686,
+        3.063,
+        3.147,
+        3.203,
+        3.12,
+        2.962,
+        2.868,
+        2.756,
+        2.716,
+        2.69
+       ],
+       "k": [
+        1.311,
+        1.213,
+        1.078,
+        1.245,
+        0.9663,
+        0.6541,
+        0.4903,
+        0.1565,
+        0.07494,
+        0.04628,
+        0.03242,
+        0.03529,
+        0.02602
+       ],
+       "src": "sokolik-toon1999",
+       "check": "unverified",
+       "note": "bulk crystal values as compiled by Sokolik and Toon 1999; orientation not stated; the files read stop at 1001 nm; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "lunar-soil-mature-highland",
+     "names": {
+      "physics": "mature lunar highland soil (Apollo 16, 62231)",
+      "plain": "Moon dust (highlands)",
+      "story": "regolith"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ground of an airless rocky world after long exposure to space: grey to the eye, a few to twenty per cent reflective, rising slowly towards the red",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        414.9,
+        753.3,
+        898.8,
+        951.5,
+        1000.4
+       ],
+       "r": [
+        0.1077,
+        0.1776,
+        0.1893,
+        0.1941,
+        0.2004
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 30.0,
+       "e_deg": 0.0,
+       "maturity": "mature",
+       "src": "pieters1999-62231",
+       "check": "unverified",
+       "note": "laboratory spectrum of Apollo soil 62231, relative to a Lambertian surface; space weathering (nanophase iron) darkens and reddens soil as it matures; interpolate linearly, hold the ends"
+      }
+     }
+    },
+    {
+     "id": "lunar-soil-mature-mare",
+     "names": {
+      "physics": "mature lunar mare soil (Apollo 11, 10084)",
+      "plain": "Moon dust (maria)",
+      "story": "regolith"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ground of an airless rocky world after long exposure to space: grey to the eye, a few to twenty per cent reflective, rising slowly towards the red",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        750.0,
+        900.0,
+        1000.0
+       ],
+       "r": [
+        0.043507,
+        0.048341,
+        0.052659,
+        0.057191,
+        0.061273,
+        0.065615,
+        0.069243,
+        0.072632,
+        0.079021,
+        0.081303
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 30.0,
+       "e_deg": 0.0,
+       "maturity": "mature",
+       "src": "taylor2001-lscc",
+       "check": "unverified",
+       "note": "laboratory spectrum of Apollo soil 10084, relative to a Lambertian surface; space weathering (nanophase iron) darkens and reddens soil as it matures; interpolate linearly, hold the ends",
+       "maturity_index": {
+        "v": 88.0,
+        "unit": "1",
+        "src": "wu2024-ce5",
+        "check": "unverified",
+        "note": "Is/FeO of the <45 micron fraction (Taylor et al. 2001, via Wu et al. 2024 Table 1); immature < 30, submature 30 to 60, mature > 60"
+       }
+      }
+     }
+    },
+    {
+     "id": "lunar-soil-submature-mare",
+     "names": {
+      "physics": "submature lunar mare soil (Apollo 17, 71501)",
+      "plain": "Moon dust (young maria)",
+      "story": "regolith"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ground of an airless rocky world after long exposure to space: grey to the eye, a few to twenty per cent reflective, rising slowly towards the red",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        750.0,
+        900.0,
+        1000.0
+       ],
+       "r": [
+        0.044713,
+        0.050048,
+        0.054586,
+        0.059588,
+        0.063925,
+        0.068261,
+        0.072944,
+        0.076743,
+        0.08377,
+        0.086709
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 30.0,
+       "e_deg": 0.0,
+       "maturity": "submature",
+       "src": "taylor2001-lscc",
+       "check": "unverified",
+       "note": "laboratory spectrum of Apollo soil 71501, relative to a Lambertian surface; space weathering (nanophase iron) darkens and reddens soil as it matures; interpolate linearly, hold the ends",
+       "maturity_index": {
+        "v": 44.0,
+        "unit": "1",
+        "src": "wu2024-ce5",
+        "check": "unverified",
+        "note": "Is/FeO of the <45 micron fraction (Taylor et al. 2001, via Wu et al. 2024 Table 1); immature < 30, submature 30 to 60, mature > 60"
+       }
+      }
+     }
+    },
+    {
+     "id": "lunar-soil-immature-mare",
+     "names": {
+      "physics": "immature lunar mare soil (Apollo 12, 12030)",
+      "plain": "fresh Moon dust",
+      "story": "regolith"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the ground of an airless rocky world after long exposure to space: grey to the eye, a few to twenty per cent reflective, rising slowly towards the red",
+     "optical": {
+      "reflectance": {
+       "kind": "table",
+       "lambda_nm": [
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        750.0,
+        900.0,
+        1000.0
+       ],
+       "r": [
+        0.10514,
+        0.11845,
+        0.12714,
+        0.13629,
+        0.14455,
+        0.15286,
+        0.16113,
+        0.16827,
+        0.15721,
+        0.16071
+       ],
+       "quantity": "reflectance factor",
+       "i_deg": 30.0,
+       "e_deg": 0.0,
+       "maturity": "immature",
+       "src": "taylor2001-lscc",
+       "check": "unverified",
+       "note": "laboratory spectrum of Apollo soil 12030, relative to a Lambertian surface; space weathering (nanophase iron) darkens and reddens soil as it matures; interpolate linearly, hold the ends",
+       "maturity_index": {
+        "v": 20.0,
+        "unit": "1",
+        "src": "wu2024-ce5",
+        "check": "unverified",
+        "note": "Is/FeO of the <45 micron fraction (Taylor et al. 2001, via Wu et al. 2024 Table 1); immature < 30, submature 30 to 60, mature > 60"
+       }
+      }
+     }
+    },
+    {
+     "id": "basalt",
+     "names": {
+      "physics": "basalt",
+      "plain": "basalt",
+      "story": "dark volcanic rock"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the commonest volcanic rock on the rocky planets; grey-black and only faintly coloured",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        260.0,
+        300.0,
+        355.0,
+        400.0,
+        466.0,
+        500.0,
+        566.0,
+        600.0,
+        666.0,
+        700.0,
+        817.0,
+        907.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        1.644,
+        1.644,
+        1.634,
+        1.621,
+        1.611,
+        1.613,
+        1.599,
+        1.609,
+        1.597,
+        1.597,
+        1.595,
+        1.595,
+        1.593,
+        1.59,
+        1.589
+       ],
+       "k": [
+        0.002692,
+        0.002692,
+        0.002399,
+        0.002239,
+        0.001995,
+        0.00195,
+        0.001698,
+        0.001738,
+        0.001698,
+        0.001738,
+        0.00195,
+        0.002455,
+        0.00302,
+        0.002455,
+        0.003311
+       ],
+       "src": "egan-hilgeman1979",
+       "check": "unverified",
+       "note": "rock sample as measured by Egan and Hilgeman; no sample or locality named where read; alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "limonite",
+     "names": {
+      "physics": "limonite (hydrous ferric oxides, mostly goethite)",
+      "plain": "yellow-brown rust",
+      "story": "ochre"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the yellow-brown rust of weathered iron-bearing rock; absorbs violet and blue",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        260.0,
+        300.0,
+        355.0,
+        400.0,
+        466.0,
+        500.0,
+        566.0,
+        600.0,
+        666.0,
+        700.0,
+        817.0,
+        907.0,
+        1000.0,
+        1500.0,
+        2000.0
+       ],
+       "n": [
+        2.15,
+        2.282,
+        2.33,
+        2.528,
+        2.544,
+        2.513,
+        2.4,
+        2.35,
+        2.228,
+        2.2,
+        2.146,
+        2.122,
+        2.108,
+        2.045,
+        2.03
+       ],
+       "k": [
+        0.007079,
+        0.00955,
+        0.0123,
+        0.02239,
+        0.02399,
+        0.01698,
+        0.004786,
+        0.004169,
+        0.003388,
+        0.00309,
+        0.003162,
+        0.003802,
+        0.003802,
+        0.00263,
+        0.002455
+       ],
+       "src": "egan-hilgeman1979",
+       "check": "unverified",
+       "note": "limonite is the general term for hydrous ferric oxides, mostly goethite (the NPSG page, after Roberts et al. 1990); alpha = 4 pi k / lambda"
+      }
+     }
+    },
+    {
+     "id": "magnetite",
+     "names": {
+      "physics": "magnetite (Fe3O4)",
+      "plain": "black iron oxide",
+      "story": "lodestone"
+     },
+     "recipe": {},
+     "by": "mass",
+     "note": "the black, magnetic iron oxide of black sands and lodestones; absorbs strongly at every colour",
+     "optical": {
+      "refractive_index": {
+       "kind": "table",
+       "lambda_nm": [
+        310.0,
+        350.0,
+        400.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
+        800.0,
+        900.0,
+        1000.0,
+        1230.0
+       ],
+       "n": [
+        2.103,
+        2.179,
+        2.233,
+        2.186,
+        2.169,
+        2.164,
+        2.152,
+        2.164,
+        2.125,
+        2.05,
+        1.938,
+        1.939,
+        2.082
+       ],
+       "k": [
+        0.6236,
+        0.7265,
+        0.874,
+        1.015,
+        1.051,
+        1.1,
+        1.153,
+        1.191,
+        1.243,
+        1.27,
+        1.212,
+        1.109,
+        0.9478
+       ],
+       "src": "schlegel1979",
+       "check": "unverified",
+       "note": "single-crystal values; the files read run from 310 to 1230 nm; alpha = 4 pi k / lambda"
+      }
+     }
     }
    ],
    "reactions": [
@@ -18022,6 +18959,13 @@
      "doi": "10.1201/9781315380476"
     },
     {
+     "id": "dabrowska2015",
+     "text": "Dabrowska, D. D., Munoz, O., Moreno, F., Ramos, J. L., Martinez-Frias, J. and Wurm, G. 2015, Icarus 250, 83: scattering matrices of martian dust analogs at 488 nm and 647 nm; Table 1 lists the Martian dust index of Wolff et al. 2009 (1.495 + 0.012 to 0.008i at 488 nm, 1.5 + 0.002 to 0.001i at 647 nm)",
+     "status": "unverified",
+     "doi": "10.1016/j.icarus.2014.11.024",
+     "url": "https://old-scattering.iaa.csic.es/site_media/download/DabrowskaetalIcarus2015.pdf"
+    },
+    {
      "id": "des2025",
      "text": "DES Collaboration (Abbott, T. M. C. et al.) 2025, Phys. Rev. D 112, 083535: Dark Energy Survey year 3, cosmological constraints from cluster abundances, weak lensing and galaxy clustering",
      "status": "verified",
@@ -18044,6 +18988,12 @@
      "text": "Eakins, B. W. and Sharman, G. F. 2010, Volumes of the World's Oceans from ETOPO1, NOAA National Geophysical Data Center (1.335e9 km3, mean depth 3688 m)",
      "status": "unverified",
      "url": "https://www.ngdc.noaa.gov/mgg/global/etopo1_ocean_volumes.html"
+    },
+    {
+     "id": "egan-hilgeman1979",
+     "text": "Egan, W. G. and Hilgeman, T. W. 1979, Optical Properties of Inhomogeneous Materials: Applications to Geology, Astronomy, Chemistry, and Engineering, Academic Press; basalt and limonite n and k as read from the University of Waterloo Natural Phenomena Simulation Group's files riBas/ecBas and riLim/ecLim (185 to 2500 and 185 to 2600 nm) on 24 Nov 2026; no sample description on the page",
+     "status": "unverified",
+     "url": "https://www.npsg.uwaterloo.ca/data/sand.php"
     },
     {
      "id": "evonik-h2o2",
@@ -18274,6 +19224,13 @@
      "doi": "10.3847/1538-4357/abae65"
     },
     {
+     "id": "kranhold2026",
+     "text": "Kranhold et al. 2026, Astronomy and Astrophysics: optical constants of pyrrhotites and troilite, UV to far infrared (title not printed where read); troilite FeS at 300 K, E parallel to x and to z, from the Jena Database of Optical Constants for Cosmic Dust files troilite_FeS_300K_ex.txt and _ez.txt (wl_um, n, k)",
+     "status": "unverified",
+     "doi": "10.1051/0004-6361/202659441",
+     "url": "https://www2.astro.uni-jena.de/Laboratory/OCDB/sulfides_2026.html"
+    },
+    {
      "id": "laesecke-muzny2017-co2",
      "text": "Laesecke, A. and Muzny, C. D. 2017, J. Phys. Chem. Ref. Data 46: reference correlation for the viscosity of carbon dioxide; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
      "status": "unverified",
@@ -18358,6 +19315,13 @@
      "url": "https://ntrs.nasa.gov/api/citations/20140009573/downloads/20140009573.pdf"
     },
     {
+     "id": "martikainen2023",
+     "text": "Martikainen, J., Munoz, O., Jardiel, T., Gomez Martin, J. C., Peiteado, M., Willame, Y., Penttila, A., Muinonen, K., Wurm, G. and Becker, T. 2023, ApJS 268, 47: optical constants of Martian dust analogs at UV-visible-near-infrared wavelengths; Table 3, k for shape GRS1 with n = 1.5 (k is insensitive to n between 1.4 and 1.6, Table 4)",
+     "status": "unverified",
+     "doi": "10.3847/1538-4365/acf0be",
+     "url": "https://scattering.iaa.es/sites/default/files/media/downloads/2023_Martikainen.pdf"
+    },
+    {
      "id": "mastin2009",
      "text": "Mastin, L. G. et al. 2009, J. Volcanol. Geotherm. Res. 186, 10: eruption column heights, magma at 2500 kg/m3 dense-rock equivalent",
      "status": "verified",
@@ -18396,9 +19360,10 @@
     },
     {
      "id": "millot2018",
-     "text": "Millot, M. et al. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression. Not read; its melting point near 5000 K at 190 GPa is recalled",
+     "text": "Millot, M., Hamel, S., Rygg, J. R., Celliers, P. M., Collins, G. W., Coppari, F., Fratanduono, D. E., Jeanloz, R., Swift, D. C. and Eggert, J. H. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression (ice melts near 5000 K at 190 GPa; conductivity about 30 S/cm on the Hugoniot and about 150 S/cm on reverberating shocks). Read from the OSTI copy (osti.gov 1542614) on 24 Nov 2026; volume and page not on that copy",
      "status": "unverified",
-     "doi": "10.1038/s41567-017-0017-4"
+     "doi": "10.1038/s41567-017-0017-4",
+     "url": "https://www.osti.gov/biblio/1542614"
     },
     {
      "id": "millot2019",
@@ -18411,6 +19376,11 @@
      "text": "Monogenidou, S. A., Assael, M. J. and Huber, M. L. 2018, J. Phys. Chem. Ref. Data 47, 023102: reference correlation for the viscosity of ammonia from the triple point to 725 K and up to 50 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
      "status": "unverified",
      "doi": "10.1063/1.5036724"
+    },
+    {
+     "id": "morel-prieur1977",
+     "text": "Morel, A. and Prieur, L. 1977, Limnology and Oceanography 22, 709: analysis of variations in ocean color; Table 1 pure-water scattering b_w, the wavelength exponent -4.3 (p. 712, after Morel 1974), backscatter share 1/2 for molecular scattering (p. 711, eq. 3) and seawater about 30 % higher (p. 714). Read by the climate and weather thread from a scan on 24 Nov 2026",
+     "status": "unverified"
     },
     {
      "id": "moritz2000",
@@ -18644,6 +19614,12 @@
      "doi": "10.1093/acprof:oso/9780198518945.001.0001"
     },
     {
+     "id": "pieters1999-62231",
+     "text": "Pieters, C. M. (about 1999; venue not printed on the copy read): the Moon as a spectral calibration standard enabled by lunar samples, the Clementine example; Table 2, reflectance of mature Apollo 16 soil 62231 at the Clementine UVVIS wavelengths, i = 30, e = 0, as used in the USGS Clementine mosaics. Read from the PDS Geosciences copy on 25 Nov 2026",
+     "status": "unverified",
+     "url": "https://pds-geosciences.wustl.edu/Lunar/mk88-l-120cvf-3-rdr-120color-v1/mkls_0001/document/pieter99.pdf"
+    },
+    {
      "id": "planck2018",
      "text": "Planck Collaboration 2020, A&A 641, A6: Planck 2018 results VI, cosmological parameters. Table 2, last column (TT,TE,EE+lowE+lensing+BAO, 68% limits): Omega_b h2 0.02242 +- 0.00014, Omega_c h2 0.11933 +- 0.00091, n_s 0.9665 +- 0.0038, H0 67.66 +- 0.42, Omega_Lambda 0.6889 +- 0.0056, Omega_m 0.3111 +- 0.0056, Omega_m h2 0.14240 +- 0.00087, sigma8 0.8102 +- 0.0060, age 13.787 +- 0.020 Gyr. Section 2.1: one massive neutrino of 0.06 eV",
      "status": "verified",
@@ -18675,6 +19651,19 @@
      "status": "unverified",
      "doi": "10.1038/nature11031",
      "url": "https://arxiv.org/abs/1203.4970"
+    },
+    {
+     "id": "protopapa2015",
+     "text": "Protopapa, S., Grundy, W. M., Tegler, S. C. and Bergonio, J. M. 2015, Icarus (arXiv:1503.00703): absorption coefficients of the methane-nitrogen binary ice system, implications for Pluto; section 3.1 takes the real index of methane ice n0 = 1.32 at 15800 cm-1 from Trotta 1996",
+     "status": "unverified",
+     "url": "https://arxiv.org/abs/1503.00703"
+    },
+    {
+     "id": "quirico-sshade-n2",
+     "text": "Quirico, E., Schmitt, B. and Grundy, W. 1992, near-IR optical constants spectra of alpha and beta N2 ices at different temperatures, SSHADE/GhoSST dataset (linked to Grundy et al. 1993, Icarus 105, 254); its analysis note holds the real index constant at the visible value n = 1.23",
+     "status": "unverified",
+     "doi": "10.26302/SSHADE/EXPERIMENT_BS_20120925_001",
+     "url": "https://sshade.eu/data/SPECTRUM_BS_20120925_005/details"
     },
     {
      "id": "randall2008",
@@ -18728,6 +19717,12 @@
      "text": "Salzmann, C. G. 2019, J. Chem. Phys. 150, 060901: advances in the experimental exploration of water's phase diagram (ices XVI and XVII, amorphous ices, hydrogen order)",
      "status": "verified",
      "doi": "10.1063/1.5085163"
+    },
+    {
+     "id": "schlegel1979",
+     "text": "Schlegel, A., Alvarado, S. F. and Wachter, P. 1979, Journal of Physics C: Solid State Physics 12, 1157-1164: optical properties of magnetite (Fe3O4); n and k as read from the University of Waterloo Natural Phenomena Simulation Group's files riMag.txt and ecMag.txt (interpolated to 1 nm, 310 to 1230 nm) on 24 Nov 2026",
+     "status": "unverified",
+     "url": "https://www.npsg.uwaterloo.ca/data/sand.php"
     },
     {
      "id": "schmidt-wagner1985",
@@ -18790,6 +19785,12 @@
      "url": "https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-718.pdf"
     },
     {
+     "id": "sokolik-toon1999",
+     "text": "Sokolik, I. N. and Toon, O. B. 1999, Journal of Geophysical Research 104(D8), 9423-9444: incorporation of mineralogical composition into models of the radiative properties of mineral aerosol from UV to IR wavelengths; hematite n and k as compiled there, read from the University of Waterloo Natural Phenomena Simulation Group's files riHm.txt and ecHm.txt (interpolated to 1 nm, 212 to 1001 nm) on 24 Nov 2026; crystal orientation not stated",
+     "status": "unverified",
+     "url": "https://www.npsg.uwaterloo.ca/data/sand.php"
+    },
+    {
      "id": "sotiriadou2025-methane",
      "text": "Sotiriadou, S. G., Antoniadis, K. D., Assael, M. J., Martinek, V. and Huber, M. L. 2025, Int. J. Thermophys. 47, 18: correlation for the viscosity of methane from the triple point to 625 K and pressures to 1000 MPa; read through CoolProp 8.1.0 (handover/packages/MP32-data/sat-liquids.csv)",
      "status": "unverified",
@@ -18811,6 +19812,12 @@
      "id": "sse-light-bands",
      "text": "SSE4 nebulae and light design, the fixed band set (handover/design/SSE4-nebulae-and-light-design.md): band edges are conventions chosen for the renderer, not measurements; the ultraviolet and visible edges follow common astronomical usage",
      "status": "authored"
+    },
+    {
+     "id": "taylor2001-lscc",
+     "text": "Taylor, L. A., Pieters, C. M., Morris, R. V., Keller, L. P. and McKay, D. S. 2001, Journal of Geophysical Research 106(E11), 27985: lunar mare soils, space weathering and the major effects of surface-correlated nanophase Fe. Lunar Soil Characterization Consortium reflectance-factor spectra (i = 30, e = 0, 300 to 2600 nm), bulk <45 micron column, read from RELAB's files nnnnnKdata.txt on 25 Nov 2026",
+     "status": "unverified",
+     "url": "https://sites.brown.edu/relab/lscc/"
     },
     {
      "id": "tegeler1999",
@@ -18891,10 +19898,23 @@
      "doi": "10.1016/C2009-0-00034-8"
     },
     {
+     "id": "warren-brandt2008",
+     "text": "Warren, S. G. and Brandt, R. E. 2008, Journal of Geophysical Research 113, D14220: optical constants of ice from the ultraviolet to the microwave, a revised compilation (ice Ih at -7 C, 43 nm to 2 m). Read from the printable table IOPtable_2008.pdf on 24 Nov 2026",
+     "status": "unverified",
+     "doi": "10.1029/2007JD009744",
+     "url": "https://atmos.uw.edu/ice_optical_constants/"
+    },
+    {
      "id": "wikipedia-ice-phases",
      "text": "Wikipedia, Phases of ice (read 22 Nov 2026): table of phases with formation conditions; used only where it agrees with the LSBU tables",
      "status": "verified",
      "url": "https://en.wikipedia.org/wiki/Phases_of_ice"
+    },
+    {
+     "id": "wu2024-ce5",
+     "text": "Wu, Y. Z., Chai, Y. M., Lu, Y., Chen, X. J., Wang, W. W. and Jin, Q. 2024, Astronomy and Astrophysics 682, A112: visible and near-infrared spectral results of Chang'E-5 surficial and subsurface soils; Table 1 lists the Is/FeO maturity of the LSCC Apollo soils (<45 micron, from Taylor et al. 2001) and the classes immature < 30, submature 30 to 60, mature > 60 (Morris 1976, 1978)",
+     "status": "unverified",
+     "doi": "10.1051/0004-6361/202347577"
     },
     {
      "id": "yu2000",

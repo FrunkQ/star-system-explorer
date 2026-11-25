@@ -664,7 +664,7 @@ SUBSTANCES = [
     # Fusion fuels (hull tanks, ship ranges). Formulas name the isotope, so the molar mass is the isotope's own.
     substance("d2", {"h2": 2}, "deuterium", "heavy hydrogen",
               phases={"density_liquid": val(163.5, "kg m-3", "coolprop2014", "computed", at_k=23.31, also=["richardson2014"],
-                                            note="normal deuterium at its normal boiling point, from CoolProp's saturated-liquid fit to Richardson et al. 2014 (fit good to 0.17%)")}),
+                                            note="normal deuterium at its normal boiling point, computed by CoolProp from Richardson et al. 2014, whose equation of state is good to about 3% for saturated liquid density (the 0.17% is only CoolProp's ancillary fit to that equation)")}),
     substance("he3", {"he3": 1}, "helium-3",
               phases={"density_liquid": val(59.0, "kg m-3", "fudge-register", "unverified", at_k=3.19,
                                             note="about 59 kg/m3 at its 3.19 K boiling point; from memory, not read: check against a helium-3 equation of state")}),
@@ -896,6 +896,7 @@ for _k, _v in optical_rows.SOURCES.items():
     SOURCES[_k] = _v
 for _m in optical_rows.apply(MIXTURES):
     MIXTURES.append(_m)
+optical_rows.apply_ices(SUBSTANCES, val)
 
 
 def elements():
