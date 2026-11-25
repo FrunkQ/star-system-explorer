@@ -210,6 +210,10 @@ try {
       const px = await pixelsOf(gm, globe(gm));
       assert.ok(px.upper[2] > px.upper[0] + 20, `${got}: the lit ocean under air is blue: ${px.upper}`);
       await shot(gm, `render-true-colour-${got}-${name}`);
+      // VP5: still for half a second, the globe sharpens (jittered frames of the still passes averaged over it).
+      await gm.waitForSelector('[data-body] canvas[data-rest="sharp"]', { state: "attached", timeout: 20000 });
+      const sharp = await pixelsOf(gm, globe(gm));
+      assert.ok(sharp.upper[2] > sharp.upper[0] + 20, `${got}: sharpened at rest, still the same blue ocean: ${sharp.upper}`);
     }
     await drawOn(gm, "auto");
     await useRecipe(gm, "survey-relief");

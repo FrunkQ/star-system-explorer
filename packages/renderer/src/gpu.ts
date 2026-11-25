@@ -138,19 +138,45 @@ export const LONG_CLIP = 4;
 
 export interface Gpu {
   readonly backend: "webgpu" | "webgl2";
-  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number }; /** True: draw through the shared finish (finish.ts): high range, the eye's glare, exposure, AgX, dither. */ finish?: { exposure?: number; glare?: boolean }; /** True: the sky's stars behind everything (VP2, stars-behind.ts). */ stars?: GpuStars; /** Perspective near and far planes, display units (default 1e-3 and 1e4): a close-up brings the near plane down under its height. */ near?: number; far?: number }): void;
+  /**
+   * The GPU's own time for the last frames drawn, ms, when the view asked for timing and the device has timestamp
+   * queries (VP4: the governor's signal); null otherwise, and the view times its own work instead.
+   */
+  readonly gpuMs: number | null;
+  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number }; /** True: draw through the shared finish (finish.ts): high range, the eye's glare, exposure, AgX, dither. */ finish?: { exposure?: number; glare?: boolean; /** The tier's glare knobs and render scale, and the running mean's frame index at rest (finish.ts FinishFrame). */ rungs?: number; glare_scale?: number; render_scale?: number; accumulate?: number }; /** True: segments round each globe (the recipe's `true-bodies` sphere_detail; default 64). */ sphere_detail?: number; /** Sharpen at rest: shift the picture by this much of a pixel (still.ts restJitter), x right and y up. */ jitter?: [number, number]; /** True: the sky's stars behind everything (VP2, stars-behind.ts). */ stars?: GpuStars; /** Perspective near and far planes, display units (default 1e-3 and 1e4): a close-up brings the near plane down under its height. */ near?: number; far?: number }): void;
   dispose(): void;
 }
 
-export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> {
+export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: boolean } = {}): Promise<Gpu | null> {
   let renderer: WebGPURenderer;
   try {
-    renderer = new WebGPURenderer({ canvas, antialias: true, alpha: false });
+    renderer = new WebGPURenderer({ canvas, antialias: true, alpha: false, trackTimestamp: !!opts.timing });
     await renderer.init();
   } catch {
     return null;
   }
   const backend = (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? "webgpu" : "webgl2";
+  // Frame timing: each frame's timestamp queries are read back after it (a frame late), so the pool never fills.
+  const timed = !!opts.timing && !!(renderer.backend as { trackTimestamp?: boolean }).trackTimestamp;
+  let gpuMs: number | null = null;
+  let resolving = false;
+  let unread = 0;
+  const resolveTiming = () => {
+    if (!timed) return;
+    unread++;
+    if (resolving) return;
+    resolving = true;
+    // The frames since the last read-back are read together: their mean is the frame's time.
+    const n = unread;
+    unread = 0;
+    renderer
+      .resolveTimestampsAsync("render")
+      .then((d) => {
+        if (typeof d === "number" && d > 0) gpuMs = d / n;
+      })
+      .catch(() => undefined)
+      .finally(() => (resolving = false));
+  };
   // The shared finish, made on first use (a view that never asks for it never builds its passes).
   let finish: Finish | null = null;
   const scene = new Scene();
@@ -166,7 +192,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   const turned = new Matrix4();
   const sphere = new SphereGeometry(1, 32, 16);
   // True look: a finer sphere with its poles on z, as the globe's (true-look.ts `equirect`).
-  const globe = new SphereGeometry(1, 64, 32).rotateX(Math.PI / 2);
+  let globe = new SphereGeometry(1, 64, 32).rotateX(Math.PI / 2);
+  let globeDetail = 64;
   // Close-up: a globe that fills the screen many times over shows its limb's facets at 64 segments, so it takes a finer one.
   const fineGlobe = new SphereGeometry(1, 512, 256).rotateX(Math.PI / 2);
   const textures = new Map<string, DataTexture>();
@@ -390,7 +417,16 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   };
   return {
     backend,
+    get gpuMs() {
+      return gpuMs;
+    },
     draw(o) {
+      const detail = Math.max(16, Math.min(256, Math.round(o.sphere_detail ?? 64)));
+      if (detail !== globeDetail) {
+        globe.dispose();
+        globe = new SphereGeometry(1, detail, Math.max(8, detail >> 1)).rotateX(Math.PI / 2);
+        globeDetail = detail;
+      }
       scene.clear();
       // Space is black in the true look: a physical choice, not a theme colour.
       scene.background = new Color((o.light && !o.light.ground) || o.space ? 0x000000 : o.ground);
@@ -497,7 +533,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         scene.add(new Points(g, dotMat(d)));
       }
       if (o.stars && !o.ortho) {
-        const pixel = o.fovY / Math.max(1, o.height);
+        // One drawn pixel's angle: drawn smaller than the view (the tier's render scale), each spans more sky.
+        const pixel = o.fovY / Math.max(1, o.height) / Math.max(0.25, Math.min(1, o.finish?.render_scale ?? 1));
         const k = (Math.PI / (pixel * pixel)) * (o.stars.gain ?? 1);
         const sig = `${o.stars.key}|${k}`;
         if (sig !== starSig) {
@@ -534,10 +571,14 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       cam.position.set(0, 0, 0);
       cam.up.set(o.up[0], o.up[1], o.up[2]);
       cam.lookAt(new Vector3(o.forward[0], o.forward[1], o.forward[2]));
+      // A sub-pixel shift of the projection for the running mean at rest; cleared otherwise.
+      if (o.jitter && (o.jitter[0] !== 0 || o.jitter[1] !== 0)) cam.setViewOffset(o.width, o.height, -o.jitter[0], o.jitter[1], o.width, o.height);
+      else cam.clearViewOffset();
       cam.updateProjectionMatrix();
       renderer.setSize(o.width, o.height, false);
-      if (o.finish) (finish ??= startFinish(renderer)).render(scene, cam, { exposure: o.finish.exposure ?? 1, pixel_deg: o.ortho ? 0 : (o.fovY * 180) / Math.PI / Math.max(1, o.height), glare: !o.ortho && o.finish.glare !== false });
+      if (o.finish) (finish ??= startFinish(renderer)).render(scene, cam, { exposure: o.finish.exposure ?? 1, pixel_deg: o.ortho ? 0 : (o.fovY * 180) / Math.PI / Math.max(1, o.height), glare: !o.ortho && o.finish.glare !== false, rungs: o.finish.rungs, glare_scale: o.finish.glare_scale, render_scale: o.finish.render_scale, accumulate: o.finish.accumulate });
       else renderer.render(scene, cam);
+      resolveTiming();
       scene.traverse((x) => (x instanceof Line || x instanceof Points) && x !== starPoints && x.geometry.dispose());
     },
     dispose() {
