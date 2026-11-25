@@ -653,9 +653,9 @@ export async function readTrueFace(k: FaceReader, system: string, body: string, 
     const h = r.ok ? stainHue(f, (r.value as { row?: unknown }).row) : null;
     if (h) stains.push(h);
   }
-  // Bare ground in its measured colour where the kernel weathers it (ground-optics.ts, VP3 part 5), then stained.
+  // Bare ground in its measured colour from the data sheet (ground-optics.ts, VP3 part 5), then stained.
   const ground =
-    s.ok && !giantDeck ? trueSurface(s.tiles.some((t) => t.maturity) ? withGround(s.tiles, await readGroundOptics(k)) : s.tiles, 128, 64, stains) : null;
+    s.ok && !giantDeck ? trueSurface(withGround(s.tiles, await readGroundOptics(k)), 128, 64, stains) : null;
   const groundWhy = s.ok ? String((s.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : s.message;
   const now = await k.campaignNow();
   const at_s = now.ok && now.at_s !== undefined ? Number(now.at_s) : undefined;
