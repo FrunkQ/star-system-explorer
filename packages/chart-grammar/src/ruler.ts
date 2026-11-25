@@ -1,4 +1,5 @@
 // Time ruler arithmetic. Pure functions so they can be tested without a DOM.
+import { sayNumber } from "../../ui-contract/src/index.ts";
 
 export interface RulerEvent {
   id: string;
@@ -13,11 +14,7 @@ export function formatYears(yr: number): string {
   const [div, unit] = a >= 1e9 ? [1e9, "Gyr"] : a >= 1e6 ? [1e6, "Myr"] : a >= 1e3 ? [1e3, "kyr"] : [1, "yr"];
   const v = yr / div;
   const digits = Math.abs(v) >= 100 ? 0 : Math.abs(v) >= 10 ? 1 : 2;
-  return `${trim(v.toFixed(digits))} ${unit}`;
-}
-
-function trim(s: string): string {
-  return s.includes(".") ? s.replace(/\.?0+$/, "") : s;
+  return `${sayNumber(v, 0, { upTo: digits })} ${unit}`;
 }
 
 /** A "nice" step (1, 2 or 5 times a power of ten) giving about `count` ticks. */

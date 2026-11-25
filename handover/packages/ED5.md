@@ -39,10 +39,17 @@
 - Checked against the kernel: Mars keeps a dynamo today from about 0.165 Earth masses (0.107 now). Test in
   `reach.test.ts`, and an e2e step on the Mass strip, then Undo. Screen: `ED5-screens/reach-field-desk.png`.
 
-## Part 2c (queued)
+## Part 2c, first step (25 Nov): locked, by orbit
+
+- The Orbit handle's `reach` in handles.json adds `locked`, so its Reach offers "Give it locked to its star by changing
+  Orbit" (or "turns freely") beside the surface. No code: Reach's yes-or-no rows are general.
+- Checked against the kernel (`reach.test.ts`): Mars is locked to the Sun today from about 0.564 AU in.
+- e2e: editing (desk), the Orbit box shows the locked row; the surface row's locators are now scoped to their row.
+
+## Part 2c, rest (queued)
 
 - Pin it: force a result, carrying the honesty mark (GM view only).
-- Reach it on other results: gravity by mass, "make the year 365 days" (already a typed year on the size strip),
-  "make it locked", "warm enough for liquid water" offering Orbit, Air or the star's mass.
+- Reach it on other results: "make the year 365 days" (a typed year on the size strip already does it; a reach needs
+  the year among the kernel's surface results), "warm enough for liquid water" offering Orbit, Air or the star's mass.
 - From a what-if: needs a branch inside a branch, or a scratch copy of the what-if's edits.
 - Swap the bisection for kernel K1's sweep when it lands.
