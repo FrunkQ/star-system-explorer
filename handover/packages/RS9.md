@@ -14,11 +14,15 @@ traveller above 80 km; segments.tsv: one row per leg of each person's flight) an
 - `people` (792): McDowell's id, name, short name, kind of being (human; Ham and Enos are chimpanzees, in the
   segments but not in astro.tsv), citizenship, born, died, and `died_in_flight` when the death falls within a day of
   the end of one of their flights (19: Soyuz 1, X-15 flight 3-65-97, Soyuz 11, Challenger, Columbia).
-- `aboard` (3,322 legs): person, from_s and to_s (universe seconds; to_s null for those still up at the list's
+- `aboard` (3,314 legs): person, from_s and to_s (universe seconds; to_s null for those still up at the list's
   date), the craft or station in McDowell's words, `on` (the construct id of its log here, null for suborbital hops,
   Challenger's last flight, the Soyuz MS-10 abort and flights newer than GCAT's tables), role, ride, mark and src.
   A crew that goes up on one ship and down on another has both in its legs; a stay on a station is aboard the
   station; moonwalkers are aboard their lander. Pad aborts (RSLS) are left out, as they never left the ground.
+- Short flights carry `peak_km` from McDowell's suborbital table (suborb.html, 41 flights to Nov 2024; newer ones
+  null, meaning unknown), so the pack value `edge_of_space_km` (100, Alex's ruling on track SH question 11) can mark
+  those between McDowell's 80 km (`listed_from_km`) and 100: 74 of the 133 legs with a height. Aborted X-15 drops
+  and Soyuz T-10-1's pad escape are left out, as they never reached 80 km.
 - `in_space`: the count of people in space at each change, for the time ruler (peak 20).
 
 Craft names resolve against the logs by name, with the few showcase names aliased (ISS, Skylab, Apollo 11, STS-1,
@@ -39,4 +43,18 @@ count agrees with the legs and peaks at 20, and 19 died in flight. No golden cha
 - Memorials as dated cargo (the Fallen Astronaut at Hadley, Tombaugh on New Horizons, Shoemaker on Lunar
   Prospector, Celestis flights) and named features and small bodies, with their sources.
 - The legs as `aboard.on` changes on manifest `person` actors, agreed with the manifest thread.
-- The edge of space as one pack value (100 km), with 80 km flights marked.
+
+### Part 2 shapes, agreed with "Build roll call and In memory" (track SH, 25 Nov 01:23)
+
+- A person's `death`: { at_s, date (the record's calendar date, text), where, `on` (log id when on a craft), during
+  ("flight", "training", "ground_test", "ground_work"), loss (id), sources [at least 2 {text, url}] }. Training and
+  ground deaths are people with no aboard legs.
+- `store-packs/sol-today/in-memory.json`: `losses[]` { id, at_s, date, where, during, sentence (one plain sentence
+  of fact), on, people [ids], unconfirmed (text or null), toll (sourced number, or [low, high]), sources [2+] };
+  animals that died on flights too (with `being` on the person); `earth_memorials[]` (Space Mirror, Kremlin wall,
+  Star City) as text with sources.
+- A lost craft's log ends in the ordinary `gone` state with how "lost".
+- `store-packs/sol-today/memorials.json`: `memorials[]` { id, kind ("object_left", "named_feature",
+  "named_small_body", "remains_carried"), name, people, names_text, since_s, since_date, where { construct, body,
+  lat_deg, lon_deg } or { mpc, elements {a_m, e, i_deg, node_deg, peri_deg, m0_deg, epoch_s, frame}, src },
+  sources [2+] }. Real memorials only (Alex, 25 Nov: "stay restrained and respectful - one place we don't joke").

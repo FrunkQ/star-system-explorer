@@ -1,8 +1,9 @@
 {
-"about": "Everyone who has been above 80 km, and each leg of their flights: who was where, when. From Jonathan McDowell's human spaceflight lists (astro.tsv, segments.tsv), written by scripts/spaceflight/build_crews.py. Who was in space at time t is every leg with from_s <= t < to_s; 'on' is the pack log for the craft or station, null where the pack has none (suborbital hops).",
+"about": "Everyone who has been above 80 km, and each leg of their flights: who was where, when. From Jonathan McDowell's human spaceflight lists (astro.tsv, segments.tsv, suborb.html for the short flights' heights), written by scripts/spaceflight/build_crews.py. Who was in space at time t is every leg with from_s <= t < to_s; 'on' is the pack log for the craft or station, null where the pack has none (suborbital hops).",
 "credit": "Jonathan C. McDowell, Jonathan's Space Report human spaceflight lists, planet4589.org, CC BY 4.0",
 "updated": "2026 Nov  7 2233:22",
-"edge_of_space_km": 80,
+"listed_from_km": 80,
+"edge_of_space_km": 100,
 "people": [
 {
 "id": "AS-00001",
@@ -10312,7 +10313,8 @@
 "ride": "MR2/P",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00001",
@@ -10336,7 +10338,8 @@
 "ride": "MR3/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 186.0
 },
 {
 "person": "AS-00003",
@@ -10348,7 +10351,8 @@
 "ride": "MR4/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 190.0
 },
 {
 "person": "AS-00004",
@@ -10400,45 +10404,6 @@
 },
 {
 "person": "AS-00007",
-"from_s": 61932470437,
-"to_s": 61932470438,
-"craft": "X-15-3 Flight 3-A-11",
-"on": null,
-"role": "X-15 3-A-11 Pilot",
-"ride": "X3A11/PLT",
-"src": "mcdowell",
-"mark": "estimated",
-"why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
-},
-{
-"person": "AS-00007",
-"from_s": 61932556837,
-"to_s": 61932556838,
-"craft": "X-15-3 Flight 3-A-12",
-"on": null,
-"role": "X-15 3-A-12 Pilot",
-"ride": "X3A12/PLT",
-"src": "mcdowell",
-"mark": "estimated",
-"why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
-},
-{
-"person": "AS-00007",
-"from_s": 61932988837,
-"to_s": 61932988838,
-"craft": "X-15-3 Flight 3-A-13",
-"on": null,
-"role": "X-15 3-A-13 Pilot",
-"ride": "X3A13/PLT",
-"src": "mcdowell",
-"mark": "estimated",
-"why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
-},
-{
-"person": "AS-00007",
 "from_s": 61933091507,
 "to_s": 61933092128,
 "craft": "X-15-3 Flight 3-7-14",
@@ -10447,7 +10412,8 @@
 "ride": "X30714/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 95.94
 },
 {
 "person": "AS-00008",
@@ -10495,7 +10461,8 @@
 "ride": "X31424/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 82.81
 },
 {
 "person": "AS-00012",
@@ -10543,7 +10510,8 @@
 "ride": "X32031/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 86.87
 },
 {
 "person": "AS-00011",
@@ -10555,46 +10523,8 @@
 "ride": "X32132/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
-},
-{
-"person": "AS-00011",
-"from_s": 61966339237,
-"to_s": 61966339238,
-"craft": "X-15-3 Flight 3-A-33",
-"on": null,
-"role": "X-15 3-A-33 Pilot",
-"ride": "X3A33/PLT",
-"src": "mcdowell",
-"mark": "estimated",
-"why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
-},
-{
-"person": "AS-00011",
-"from_s": 61966944037,
-"to_s": 61966944038,
-"craft": "X-15-3 Flight 3-A-34",
-"on": null,
-"role": "X-15 3-A-34 Pilot",
-"ride": "X3A34/PLT",
-"src": "mcdowell",
-"mark": "estimated",
-"why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
-},
-{
-"person": "AS-00011",
-"from_s": 61967116837,
-"to_s": 61967116838,
-"craft": "X-15-3 Flight 3-A-35",
-"on": null,
-"role": "X-15 3-A-35 Pilot",
-"ride": "X3A35/PLT",
-"src": "mcdowell",
-"mark": "estimated",
-"why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 106.0
 },
 {
 "person": "AS-00011",
@@ -10606,7 +10536,8 @@
 "ride": "X32236/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.96
 },
 {
 "person": "AS-00016",
@@ -10726,7 +10657,8 @@
 "ride": "X34467/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 85.52
 },
 {
 "person": "AS-00024",
@@ -10738,7 +10670,8 @@
 "ride": "X34670/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 82.6
 },
 {
 "person": "AS-00012",
@@ -10774,7 +10707,8 @@
 "ride": "X34973/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 90.09
 },
 {
 "person": "AS-00024",
@@ -10786,7 +10720,8 @@
 "ride": "X161101/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 81.22
 },
 {
 "person": "AS-00027",
@@ -10966,7 +10901,8 @@
 "ride": "X35683/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 93.54
 },
 {
 "person": "AS-00028",
@@ -11014,7 +10950,8 @@
 "ride": "X36495/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 85.49
 },
 {
 "person": "AS-00038",
@@ -11026,7 +10963,8 @@
 "ride": "X36597/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 81.07
 },
 {
 "person": "AS-00035",
@@ -11038,7 +10976,8 @@
 "ride": "X179139/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 81.53
 },
 {
 "person": "AS-00010",
@@ -12882,7 +12821,8 @@
 "ride": "S18A/KDR",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 192.0
 },
 {
 "person": "AS-00073",
@@ -12894,7 +12834,8 @@
 "ride": "S18A/BI",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 192.0
 },
 {
 "person": "AS-00056",
@@ -15457,30 +15398,6 @@
 "src": "mcdowell",
 "mark": "recorded",
 "suborbital": false
-},
-{
-"person": "AS-00107",
-"from_s": 62601925124,
-"to_s": 62601925454,
-"craft": "[Soyuz T]",
-"on": null,
-"role": "Soyuz T-10A Bortinzhener",
-"ride": "T10A/BI",
-"src": "mcdowell",
-"mark": "recorded",
-"suborbital": true
-},
-{
-"person": "AS-00125",
-"from_s": 62601925124,
-"to_s": 62601925454,
-"craft": "[Soyuz T]",
-"on": null,
-"role": "Soyuz T-10A Komandir",
-"ride": "T10A/KDR",
-"src": "mcdowell",
-"mark": "recorded",
-"suborbital": true
 },
 {
 "person": "AS-00099",
@@ -29844,7 +29761,8 @@
 "ride": "SS1-15P/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 100.1
 },
 {
 "person": "AS-00441",
@@ -29856,7 +29774,8 @@
 "ride": "SS1-16P/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 102.9
 },
 {
 "person": "AS-00442",
@@ -29868,7 +29787,8 @@
 "ride": "SS1-17P/PLT",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 112.1
 },
 {
 "person": "AS-00318",
@@ -39624,7 +39544,8 @@
 "ride": "MS10/KDR",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": false
+"suborbital": true,
+"peak_km": 93.0
 },
 {
 "person": "AS-00565",
@@ -39636,7 +39557,8 @@
 "ride": "MS10/BI",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": false
+"suborbital": true,
+"peak_km": 93.0
 },
 {
 "person": "AS-00482",
@@ -39720,7 +39642,8 @@
 "ride": "SS2-15/COP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 82.7
 },
 {
 "person": "AS-00568",
@@ -39732,7 +39655,8 @@
 "ride": "SS2-15/CP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 82.7
 },
 {
 "person": "AS-00482",
@@ -39816,7 +39740,8 @@
 "ride": "SS2-16/CP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 89.9
 },
 {
 "person": "AS-00570",
@@ -39828,7 +39753,8 @@
 "ride": "SS2-16/COP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 89.9
 },
 {
 "person": "AS-00571",
@@ -39840,7 +39766,8 @@
 "ride": "SS2-16/CAI",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 89.9
 },
 {
 "person": "AS-00553",
@@ -40866,7 +40793,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00569",
@@ -40879,7 +40807,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00555",
@@ -41479,7 +41408,8 @@
 "ride": "SS2-21/CP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 89.2
 },
 {
 "person": "AS-00569",
@@ -41491,7 +41421,8 @@
 "ride": "SS2-21/COP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 89.2
 },
 {
 "person": "AS-00448",
@@ -41575,7 +41506,8 @@
 "ride": "SS2-22/CP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 86.2
 },
 {
 "person": "AS-00570",
@@ -41587,7 +41519,8 @@
 "ride": "SS2-22/COP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 86.2
 },
 {
 "person": "AS-00571",
@@ -41599,7 +41532,8 @@
 "ride": "SS2-22/A02",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 86.2
 },
 {
 "person": "AS-00581",
@@ -41611,7 +41545,8 @@
 "ride": "SS2-22/A01",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 86.2
 },
 {
 "person": "AS-00582",
@@ -41623,7 +41558,8 @@
 "ride": "SS2-22/A03",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 86.2
 },
 {
 "person": "AS-00583",
@@ -41635,7 +41571,8 @@
 "ride": "SS2-22/A04",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 86.2
 },
 {
 "person": "AS-00584",
@@ -41648,7 +41585,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00585",
@@ -41661,7 +41599,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00586",
@@ -41674,7 +41613,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00587",
@@ -41687,7 +41627,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00487",
@@ -42134,7 +42075,8 @@
 "ride": "NS18/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00595",
@@ -42146,7 +42088,8 @@
 "ride": "NS18/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00596",
@@ -42158,7 +42101,8 @@
 "ride": "NS18/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00597",
@@ -42170,7 +42114,8 @@
 "ride": "NS18/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00489",
@@ -42630,7 +42575,8 @@
 "ride": "NS19/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00605",
@@ -42642,7 +42588,8 @@
 "ride": "NS19/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00606",
@@ -42654,7 +42601,8 @@
 "ride": "NS19/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00607",
@@ -42666,7 +42614,8 @@
 "ride": "NS19/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00608",
@@ -42678,7 +42627,8 @@
 "ride": "NS19/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00609",
@@ -42690,7 +42640,8 @@
 "ride": "NS19/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00537",
@@ -42933,7 +42884,8 @@
 "ride": "NS20/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00613",
@@ -42945,7 +42897,8 @@
 "ride": "NS20/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00614",
@@ -42957,7 +42910,8 @@
 "ride": "NS20/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00615",
@@ -42969,7 +42923,8 @@
 "ride": "NS20/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00616",
@@ -42981,7 +42936,8 @@
 "ride": "NS20/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00617",
@@ -42993,7 +42949,8 @@
 "ride": "NS20/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00341",
@@ -43416,7 +43373,8 @@
 "ride": "NS21/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 108.1
 },
 {
 "person": "AS-00623",
@@ -43428,7 +43386,8 @@
 "ride": "NS21/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 108.1
 },
 {
 "person": "AS-00624",
@@ -43440,7 +43399,8 @@
 "ride": "NS21/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 108.1
 },
 {
 "person": "AS-00625",
@@ -43452,7 +43412,8 @@
 "ride": "NS21/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 108.1
 },
 {
 "person": "AS-00626",
@@ -43464,7 +43425,8 @@
 "ride": "NS21/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 108.1
 },
 {
 "person": "AS-00627",
@@ -43476,7 +43438,8 @@
 "ride": "NS21/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 108.1
 },
 {
 "person": "AS-00534",
@@ -43563,7 +43526,8 @@
 "ride": "NS22/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00630",
@@ -43575,7 +43539,8 @@
 "ride": "NS22/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00631",
@@ -43587,7 +43552,8 @@
 "ride": "NS22/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00632",
@@ -43599,7 +43565,8 @@
 "ride": "NS22/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00633",
@@ -43611,7 +43578,8 @@
 "ride": "NS22/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00634",
@@ -43623,7 +43591,8 @@
 "ride": "NS22/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.1
 },
 {
 "person": "AS-00563",
@@ -44695,7 +44664,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.3
 },
 {
 "person": "AS-00570",
@@ -44708,7 +44678,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.3
 },
 {
 "person": "AS-00571",
@@ -44721,7 +44692,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.3
 },
 {
 "person": "AS-00648",
@@ -44734,7 +44706,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.3
 },
 {
 "person": "AS-00649",
@@ -44747,7 +44720,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.3
 },
 {
 "person": "AS-00650",
@@ -44760,7 +44734,8 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.3
 },
 {
 "person": "AS-00491",
@@ -44970,7 +44945,8 @@
 "ride": "SS2-G01/CP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 85.1
 },
 {
 "person": "AS-00582",
@@ -44982,7 +44958,8 @@
 "ride": "SS2-G01/AI",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 85.1
 },
 {
 "person": "AS-00653",
@@ -44994,7 +44971,8 @@
 "ride": "SS2-G01/COP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 85.1
 },
 {
 "person": "AS-00654",
@@ -45006,7 +44984,8 @@
 "ride": "SS2-G01/MCDR",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 85.1
 },
 {
 "person": "AS-00655",
@@ -45018,7 +44997,8 @@
 "ride": "SS2-G01/P1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 85.1
 },
 {
 "person": "AS-00656",
@@ -45030,7 +45010,8 @@
 "ride": "SS2-G01/P2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 85.1
 },
 {
 "person": "AS-00391",
@@ -45042,7 +45023,8 @@
 "ride": "SS2-G02/CP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.5
 },
 {
 "person": "AS-00571",
@@ -45054,7 +45036,8 @@
 "ride": "SS2-G02/AI",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.5
 },
 {
 "person": "AS-00657",
@@ -45066,7 +45049,8 @@
 "ride": "SS2-G02/COP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.5
 },
 {
 "person": "AS-00658",
@@ -45078,7 +45062,8 @@
 "ride": "SS2-G02/P1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.5
 },
 {
 "person": "AS-00659",
@@ -45090,7 +45075,8 @@
 "ride": "SS2-G02/P2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.5
 },
 {
 "person": "AS-00660",
@@ -45102,7 +45088,8 @@
 "ride": "SS2-G02/P3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.5
 },
 {
 "person": "AS-00529",
@@ -45258,7 +45245,8 @@
 "ride": "SS2-G03/COP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.6
 },
 {
 "person": "AS-00571",
@@ -45270,7 +45258,8 @@
 "ride": "SS2-G03/AI",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.6
 },
 {
 "person": "AS-00653",
@@ -45282,7 +45271,8 @@
 "ride": "SS2-G03/CP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.6
 },
 {
 "person": "AS-00663",
@@ -45294,7 +45284,8 @@
 "ride": "SS2-G03/P1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.6
 },
 {
 "person": "AS-00664",
@@ -45306,7 +45297,8 @@
 "ride": "SS2-G03/P2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.6
 },
 {
 "person": "AS-00665",
@@ -45318,7 +45310,8 @@
 "ride": "SS2-G03/P3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 88.6
 },
 {
 "person": "AS-00482",
@@ -45522,7 +45515,8 @@
 "ride": "SS2-G04/COP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00571",
@@ -45534,7 +45528,8 @@
 "ride": "SS2-G04/AI",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00657",
@@ -45546,7 +45541,8 @@
 "ride": "SS2-G04/CP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00668",
@@ -45558,7 +45554,8 @@
 "ride": "SS2-G04/P1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00669",
@@ -45570,7 +45567,8 @@
 "ride": "SS2-G04/P2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00670",
@@ -45582,7 +45580,8 @@
 "ride": "SS2-G04/P3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00580",
@@ -45738,7 +45737,8 @@
 "ride": "SS2-G05/CP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.4
 },
 {
 "person": "AS-00582",
@@ -45750,7 +45750,8 @@
 "ride": "SS2-G05/AI",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.4
 },
 {
 "person": "AS-00657",
@@ -45762,7 +45763,8 @@
 "ride": "SS2-G05/COP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.4
 },
 {
 "person": "AS-00673",
@@ -45774,7 +45776,8 @@
 "ride": "SS2-G05/P1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.4
 },
 {
 "person": "AS-00674",
@@ -45786,7 +45789,8 @@
 "ride": "SS2-G05/P2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.4
 },
 {
 "person": "AS-00675",
@@ -45798,7 +45802,8 @@
 "ride": "SS2-G05/P3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.4
 },
 {
 "person": "AS-00341",
@@ -45907,7 +45912,9 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00653",
@@ -45920,7 +45927,9 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00678",
@@ -45933,7 +45942,9 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00679",
@@ -45946,7 +45957,9 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00680",
@@ -45959,7 +45972,9 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00681",
@@ -45972,7 +45987,9 @@
 "src": "mcdowell",
 "mark": "estimated",
 "why": "McDowell gives a time here without the hour, or marks it uncertain",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00341",
@@ -46698,7 +46715,8 @@
 "ride": "NS25/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00689",
@@ -46710,7 +46728,8 @@
 "ride": "NS25/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00690",
@@ -46722,7 +46741,8 @@
 "ride": "NS25/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00691",
@@ -46734,7 +46754,8 @@
 "ride": "NS25/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00692",
@@ -46746,7 +46767,8 @@
 "ride": "NS25/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00693",
@@ -46758,7 +46780,8 @@
 "ride": "NS25/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 107.0
 },
 {
 "person": "AS-00460",
@@ -46818,7 +46841,8 @@
 "ride": "SS2-G07/CP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00694",
@@ -46830,7 +46854,8 @@
 "ride": "SS2-G07/COP",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00695",
@@ -46842,7 +46867,8 @@
 "ride": "SS2-G07/P1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00696",
@@ -46854,7 +46880,8 @@
 "ride": "SS2-G07/P2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00697",
@@ -46866,7 +46893,8 @@
 "ride": "SS2-G07/P3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00698",
@@ -46878,7 +46906,8 @@
 "ride": "SS2-G07/P4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 87.5
 },
 {
 "person": "AS-00699",
@@ -46890,7 +46919,8 @@
 "ride": "NS26/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 105.4
 },
 {
 "person": "AS-00700",
@@ -46902,7 +46932,8 @@
 "ride": "NS26/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 105.4
 },
 {
 "person": "AS-00701",
@@ -46914,7 +46945,8 @@
 "ride": "NS26/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 105.4
 },
 {
 "person": "AS-00702",
@@ -46926,7 +46958,8 @@
 "ride": "NS26/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 105.4
 },
 {
 "person": "AS-00703",
@@ -46938,7 +46971,8 @@
 "ride": "NS26/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 105.4
 },
 {
 "person": "AS-00704",
@@ -46950,7 +46984,8 @@
 "ride": "NS26/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 105.4
 },
 {
 "person": "AS-00460",
@@ -47691,7 +47726,9 @@
 "ride": "NS28/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 106.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00614",
@@ -47703,7 +47740,9 @@
 "ride": "NS28/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 106.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00711",
@@ -47715,7 +47754,9 @@
 "ride": "NS28/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 106.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00712",
@@ -47727,7 +47768,9 @@
 "ride": "NS28/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 106.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00713",
@@ -47739,7 +47782,9 @@
 "ride": "NS28/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 106.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00714",
@@ -47751,7 +47796,9 @@
 "ride": "NS28/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": 106.0,
+"peak_why": "McDowell marks this height uncertain"
 },
 {
 "person": "AS-00607",
@@ -47763,7 +47810,8 @@
 "ride": "NS30/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00715",
@@ -47775,7 +47823,8 @@
 "ride": "NS30/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00716",
@@ -47787,7 +47836,8 @@
 "ride": "NS30/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00717",
@@ -47799,7 +47849,8 @@
 "ride": "NS30/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00718",
@@ -47811,7 +47862,8 @@
 "ride": "NS30/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00719",
@@ -47823,7 +47875,8 @@
 "ride": "NS30/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00554",
@@ -48189,7 +48242,8 @@
 "ride": "NS31/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00729",
@@ -48201,7 +48255,8 @@
 "ride": "NS31/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00730",
@@ -48213,7 +48268,8 @@
 "ride": "NS31/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00731",
@@ -48225,7 +48281,8 @@
 "ride": "NS31/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00732",
@@ -48237,7 +48294,8 @@
 "ride": "NS31/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00733",
@@ -48249,7 +48307,8 @@
 "ride": "NS31/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00433",
@@ -48525,7 +48584,8 @@
 "ride": "NS32/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00737",
@@ -48537,7 +48597,8 @@
 "ride": "NS32/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00738",
@@ -48549,7 +48610,8 @@
 "ride": "NS32/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00739",
@@ -48561,7 +48623,8 @@
 "ride": "NS32/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00740",
@@ -48573,7 +48636,8 @@
 "ride": "NS32/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00741",
@@ -48585,7 +48649,8 @@
 "ride": "NS32/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00426",
@@ -48693,7 +48758,8 @@
 "ride": "NS33/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00746",
@@ -48705,7 +48771,8 @@
 "ride": "NS33/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00747",
@@ -48717,7 +48784,8 @@
 "ride": "NS33/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00748",
@@ -48729,7 +48797,8 @@
 "ride": "NS33/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00749",
@@ -48741,7 +48810,8 @@
 "ride": "NS33/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00750",
@@ -48753,7 +48823,8 @@
 "ride": "NS33/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00426",
@@ -48909,7 +48980,8 @@
 "ride": "NS34/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00753",
@@ -48921,7 +48993,8 @@
 "ride": "NS34/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00754",
@@ -48933,7 +49006,8 @@
 "ride": "NS34/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00755",
@@ -48945,7 +49019,8 @@
 "ride": "NS34/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00756",
@@ -48957,7 +49032,8 @@
 "ride": "NS34/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00757",
@@ -48969,7 +49045,8 @@
 "ride": "NS34/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00439",
@@ -49113,7 +49190,8 @@
 "ride": "NS36/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00758",
@@ -49125,7 +49203,8 @@
 "ride": "NS36/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00759",
@@ -49137,7 +49216,8 @@
 "ride": "NS36/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00760",
@@ -49149,7 +49229,8 @@
 "ride": "NS36/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00761",
@@ -49161,7 +49242,8 @@
 "ride": "NS36/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00762",
@@ -49173,7 +49255,8 @@
 "ride": "NS36/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00641",
@@ -49525,7 +49608,8 @@
 "ride": "NS37/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00768",
@@ -49537,7 +49621,8 @@
 "ride": "NS37/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00769",
@@ -49549,7 +49634,8 @@
 "ride": "NS37/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00770",
@@ -49561,7 +49647,8 @@
 "ride": "NS37/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00771",
@@ -49573,7 +49660,8 @@
 "ride": "NS37/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00772",
@@ -49585,7 +49673,8 @@
 "ride": "NS37/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00439",
@@ -49649,7 +49738,8 @@
 "ride": "NS38/A1",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00774",
@@ -49661,7 +49751,8 @@
 "ride": "NS38/A2",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00775",
@@ -49673,7 +49764,8 @@
 "ride": "NS38/A3",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00776",
@@ -49685,7 +49777,8 @@
 "ride": "NS38/A4",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00777",
@@ -49697,7 +49790,8 @@
 "ride": "NS38/A5",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00778",
@@ -49709,7 +49803,8 @@
 "ride": "NS38/A6",
 "src": "mcdowell",
 "mark": "recorded",
-"suborbital": true
+"suborbital": true,
+"peak_km": null
 },
 {
 "person": "AS-00574",
@@ -50415,30 +50510,6 @@
 0
 ],
 [
-61932470437,
-1
-],
-[
-61932470438,
-0
-],
-[
-61932556837,
-1
-],
-[
-61932556838,
-0
-],
-[
-61932988837,
-1
-],
-[
-61932988838,
-0
-],
-[
 61933091507,
 1
 ],
@@ -50516,30 +50587,6 @@
 ],
 [
 61964803926,
-0
-],
-[
-61966339237,
-1
-],
-[
-61966339238,
-0
-],
-[
-61966944037,
-1
-],
-[
-61966944038,
-0
-],
-[
-61967116837,
-1
-],
-[
-61967116838,
 0
 ],
 [
@@ -51264,14 +51311,6 @@
 ],
 [
 62600067696,
-2
-],
-[
-62601925124,
-4
-],
-[
-62601925454,
 2
 ],
 [

@@ -157,8 +157,8 @@ for pid, rows in by_person.items():
     where = None
     for r in rows:
         a, b = gdate(r["Date1"]), gdate(r["Date2"])
-        if not a or "Abort" in r["Event1"]:
-            continue  # a pad abort (RSLS) never left the ground
+        if not a or "Abort" in r["Event1"] or re.search(r"X-15-\d Flight \d-A-|\[Soyuz T\]", r["Event1"]):
+            continue  # pad aborts (RSLS, Soyuz T-10-1's escape) and aborted X-15 drops never reached 80 km
         start = target(r["Event1"])
         if start:
             where = start
@@ -190,12 +190,31 @@ for pid, rows in by_person.items():
 
 aboard.sort(key=lambda x: (x["from_s"], x["person"]))
 
+# Peak heights of the short flights, from McDowell's suborbital table (suborb.html, saved beside the TSVs from
+# https://planet4589.org/space/astro/web/suborb.html). The pack's edge of space is one value (edge_of_space_km,
+# 100 by default); McDowell lists everyone above 80 km, so a viewer marks the flights between the two (most X-15 and
+# SpaceShipTwo flights). Matched by launch day; flights newer than the table keep no height.
+PEAKS = {}
+SUB = os.path.join(SRC, "suborb.html")
+if os.path.exists(SUB):
+    for line in re.sub(r"<[^>]*>", " ", open(SUB, encoding="utf-8").read()).split("\n"):
+        m = re.match(r"\s*SO\d+ (\d{4}) (\w{3}) +(\d+) .*? (\d+(?:\.\d+)?)(\??) (\d+:[\d?]+)", re.sub(r" +", " ", line))
+        if m:
+            PEAKS[(int(m.group(1)), MONTHS[m.group(2)], int(m.group(3)))] = (float(m.group(4)), not m.group(5))
+
 # How many were in space, as steps through time (each change in the count), for drawing along the time ruler.
-# The pack's own edge of space decides who counts as having been to space; McDowell's list starts at 80 km and the
-# legs with no pack log are the suborbital hops (X-15, New Shepard, SpaceShipTwo), flagged per leg below.
+# The legs with no pack log are mostly the suborbital hops (X-15, New Shepard, SpaceShipTwo), flagged per leg.
 for leg in aboard:
     leg["suborbital"] = leg["on"] is None and bool(re.match(
-        r"(X-15|New Shepard|Spaceship|Unity|Galactic|Mercury MR|Freedom Seven|Liberty Bell|\[Soyuz)", leg["craft"] or ""))
+        r"(X-15|New Shepard|Spaceship|Unity|Galactic|Mercury MR|Freedom Seven|Liberty Bell|\[Soyuz|Soyuz MS-10$)",
+        leg["craft"] or ""))
+    if leg["suborbital"]:
+        import datetime
+        day = datetime.datetime(2000, 1, 1, 12) + datetime.timedelta(seconds=leg["from_s"] - J2000_S - 60)
+        peak = PEAKS.get((day.year, day.month, day.day))
+        leg["peak_km"] = peak[0] if peak else None
+        if peak and not peak[1]:
+            leg["peak_why"] = "McDowell marks this height uncertain"
 changes = {}
 for leg in aboard:
     changes[leg["from_s"]] = changes.get(leg["from_s"], 0) + 1
@@ -207,16 +226,18 @@ for t in sorted(changes):
         n += changes[t]
         steps.append([t, n])
 out = {"about": ("Everyone who has been above 80 km, and each leg of their flights: who was where, when. From "
-                 "Jonathan McDowell's human spaceflight lists (astro.tsv, segments.tsv), written by "
+                 "Jonathan McDowell's human spaceflight lists (astro.tsv, segments.tsv, suborb.html for the short flights' heights), written by "
                  "scripts/spaceflight/build_crews.py. Who was in space at time t is every leg with from_s <= t < to_s; "
                  "'on' is the pack log for the craft or station, null where the pack has none (suborbital hops)."),
        "credit": "Jonathan C. McDowell, Jonathan's Space Report human spaceflight lists, planet4589.org, CC BY 4.0",
-       "updated": UPDATED, "edge_of_space_km": 80,
+       "updated": UPDATED, "listed_from_km": 80, "edge_of_space_km": 100,
        "people": people, "aboard": aboard, "in_space": steps}
 with open(os.path.join(PACK, "crews.json"), "w", encoding="utf-8") as fh:
     json.dump(out, fh, ensure_ascii=False, indent=0)
     fh.write("\n")
 n_on = sum(1 for x in aboard if x["on"])
+print(len(PEAKS), "suborbital heights;", sum(1 for x in aboard if x.get("peak_km")), "legs with one,",
+      sum(1 for x in aboard if x.get("peak_km") and x["peak_km"] < 100), "of them below 100 km")
 print(len(people), "people,", len(aboard), "legs,", n_on, "on a pack log;",
       sum(p["died_in_flight"] for p in people), "died in flight")
 print("unresolved", [k for k in sorted(unresolved, key=lambda k: -unresolved[k]) if not k.startswith(("New Shepard", "Galactic", "Unity"))])

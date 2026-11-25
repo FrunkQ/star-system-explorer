@@ -550,4 +550,23 @@ fn crews_ride_the_craft_their_logs_fly() {
         .filter(|p| p["died_in_flight"] == true)
         .count();
     assert_eq!(lost, 19, "died in flight");
+    // Short flights carry their peak height, so the pack's edge of space (100 km by default) can mark the flights
+    // that reached McDowell's 80 km but not 100: Michael Adams's X-15 flight 3-65-97 peaked at 81.07 km.
+    assert_eq!(crews["edge_of_space_km"], 100);
+    let peaks: Vec<f64> = legs.iter().filter_map(|l| l["peak_km"].as_f64()).collect();
+    assert!(
+        peaks.len() >= 120,
+        "{} short flights with a height",
+        peaks.len()
+    );
+    assert!(
+        peaks.iter().all(|p| (80.0..250.0).contains(p)),
+        "heights between 80 and 250 km"
+    );
+    assert!(
+        legs.iter()
+            .any(|l| l["craft"].as_str().is_some_and(|c| c.contains("3-65"))
+                && l["peak_km"].as_f64() == Some(81.07)),
+        "Adams, 81.07 km"
+    );
 }
