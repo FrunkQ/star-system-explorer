@@ -76,3 +76,16 @@ test("colours, light travel and the scale bar say round, plain things", () => {
   assert.match(bar.words, /light years$/);
   assert.ok(bar.px > 50 && bar.px < 200);
 });
+
+test("bound pairs come from the cells' own neighbours, once each, both on view", async () => {
+  const { boundPairs, meetWords } = await import("../src/galaxies-nearby.ts");
+  const n = (address: string, bound: boolean, approach_gyr: number | null = 4.2) => ({ address, distance_mpc: 0.8, bound, approach_gyr });
+  const cells = [
+    { haloes: [{ address: "a", neighbour: n("b", true) }, { address: "b", neighbour: n("a", true) }, { address: "c", neighbour: n("a", false) }, { address: "d", neighbour: n("zz", true) }] },
+  ];
+  const p = boundPairs(cells, new Set(["a", "b", "c", "d"]));
+  assert.deepEqual(p.map((x) => [x.a, x.b]), [["a", "b"]], "one pair; unbound and off-view neighbours left out");
+  assert.equal(meetWords(4.2), "meet in about 4 Gyr");
+  assert.equal(meetWords(0.43), "meet in about 0.4 Gyr");
+  assert.equal(meetWords(0), "already meeting");
+});

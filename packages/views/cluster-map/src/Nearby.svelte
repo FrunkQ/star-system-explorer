@@ -4,11 +4,11 @@
   distance), with stalks to our disc's plane. Two reaches: the group (1.5 Mpc) and the neighbourhood (12 Mpc). Seen
   from above, tilted or edge-on; Real draws true sizes (most are points of light), Readable one stated factor larger.
   Each galaxy is drawn by the kernel's own facts: its type, half-light size, axis ratio, tilt on the sky and colour.
-  HUD: names, dark-halo rings and the scale bar. Pressing one opens its card. Read only, GM only.
+  HUD: names, dark-halo rings, bound pairs (from halo_cell) and the scale bar. Pressing one opens its card. Read only, GM only.
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { NEARBY_REACHES, cellHalo, galaxyDistanceWords, galaxyColour, galaxyTypeWords, haloR200, lightTravelWords, nearbyAt, nearbyRadius, nearbyScaleBar, projectNearby, readNearby, readableFactor, sci, withinReach, type NearGalaxy, type NearbyRead, type NearbyReach, type NearbySeen, type ViewSession } from "../../../ui-contract/src/index.ts";
+  import { NEARBY_REACHES, boundPairs, meetWords, cellHalo, galaxyDistanceWords, galaxyColour, galaxyTypeWords, haloR200, lightTravelWords, nearbyAt, nearbyRadius, nearbyScaleBar, projectNearby, readNearby, readableFactor, sci, withinReach, type HaloCell, type NearGalaxy, type NearbyRead, type NearbyReach, type NearbySeen, type ViewSession } from "../../../ui-contract/src/index.ts";
 
   let { session, seen, scale, hud, onchart }: { session: ViewSession; seen: NearbySeen; scale: "real" | "readable"; hud: boolean; onchart: (address: string) => void } = $props();
 
@@ -64,7 +64,29 @@
   const centre = $derived(projectNearby([0, 0, 0], seen, S, R));
   const pxPerMpc = $derived((S / 2 - 24) / R);
   const bar = $derived(nearbyScaleBar(S, R));
+  // Bound pairs (HUD): the cells holding the galaxies on view, read once each from the kernel's halo_cell, whose
+  // haloes carry their nearest big neighbour and whether the two are bound.
+  let cells = $state<Record<string, HaloCell>>({});
+  let cgen = 0;
+  $effect(() => {
+    const want = [...new Set(inReach.map((g) => cellHalo(g.address)?.cell.join(".")).filter((k): k is string => !!k))];
+    const have = untrack(() => cells);
+    const todo = want.filter((k) => !have[k]);
+    if (!todo.length) return;
+    const g = ++cgen;
+    void (async () => {
+      for (const k of todo) {
+        const r = await session.haloCell({ cell: k.split(".").map(Number) as [number, number, number], min_mass_msun: 1e10 });
+        if (g !== cgen) return;
+        if (r.ok) cells = { ...cells, [k]: r.cell };
+      }
+    })();
+  });
+  const pairs = $derived(boundPairs(Object.values(cells), new Set(inReach.map((g) => g.address))));
+  const pairOf = (a: string) => pairs.find((p) => p.a === a || p.b === a) ?? null;
+
   const one = $derived(read?.galaxies.find((g) => g.address === picked) ?? null);
+  const at = $derived(new Map(marks.map((m) => [m.g.address, m])));
   const said = $derived(read?.galaxies.find((g) => g.address === hover) ?? null);
   const nameOf = (a: string) => {
     const c = cellHalo(a);
@@ -106,6 +128,13 @@
               {#if m.g.halo_mass_msun >= 1e11 && !m.g.satellite && rr > 3}<circle class="halo" cx={m.x} cy={m.y} r={rr} />{/if}
             {/each}
             <circle class="halo home" cx={centre.x} cy={centre.y} r={home.r200_mpc * pxPerMpc} data-home-halo />
+          {/if}
+          {#if hud}
+            {#each pairs as p (p.a + p.b)}
+              {@const a = at.get(p.a)}
+              {@const b = at.get(p.b)}
+              {#if a && b}<line class="pair" x1={a.x} y1={a.y} x2={b.x} y2={b.y} data-bound-pair={p.a + " " + p.b}><title>{nameOf(p.a)} and {nameOf(p.b)}: {meetWords(p.approach_gyr)}</title></line>{/if}
+            {/each}
           {/if}
           {#each marks as m (m.g.address)}
             {#if seen !== "above" && stalked(m.g) && Math.abs(m.y - m.fy) > 1}<line class="stalk" x1={m.fx} y1={m.fy} x2={m.x} y2={m.y} />{/if}
@@ -155,6 +184,10 @@
             <dt>Dark halo</dt><dd>{sci(one.halo_mass_msun)} suns</dd>
             <dt>Distance</dt><dd>{galaxyDistanceWords(one.distance_mpc)}; its light takes {lightTravelWords(one.distance_mpc)} to reach us</dd>
             <dt>Half its light within</dt><dd>{Math.round(one.half_light_kpc * 10) / 10} kpc</dd>
+            {#if pairOf(one.address)}
+              {@const p = pairOf(one.address)!}
+              <dt>Bound to</dt><dd data-card-bound>{nameOf(p.a === one.address ? p.b : p.a)}, {Math.round(p.distance_mpc * 100) / 100} Mpc away: they {meetWords(p.approach_gyr)}</dd>
+            {/if}
             {#if one.orbit_words.length}<dt>Its orbit</dt><dd>{one.orbit_words.join(", ")}</dd>{/if}
           </dl>
           {#if cellHalo(one.address)}
@@ -245,6 +278,10 @@
     fill: none;
     stroke: color-mix(in srgb, var(--sse-ground) 22%, transparent);
     stroke-dasharray: 2 4;
+  }
+  .pair {
+    stroke: color-mix(in srgb, var(--sse-ground) 55%, transparent);
+    stroke-dasharray: 5 4;
   }
   .halo.home {
     stroke: color-mix(in srgb, var(--sse-accent) 60%, transparent);

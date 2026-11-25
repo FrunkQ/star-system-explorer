@@ -25,6 +25,12 @@ package GZ5 in section 13 (Stage B, after the kernel tie-up, before the zoom).
   `tests/ui/cluster.e2e.mjs` (3D, both reaches, several types, the card, Edge-on and Real). Screens:
   project files `sse4/handover-screens/GZ5-screens/`.
 
+## Part 1b: bound pairs (25 Nov 2026)
+- Under HUD, a dashed line joins two galaxies bound to fall together, with "meet in about N Gyr" on it and on the
+  card ("Bound to"). Read from the kernel's `halo_cell` for each cell holding a galaxy on view (each halo's nearest
+  big neighbour, `bound`, `approach_gyr`), one cell at a time in the background, cached; `boundPairs` keeps one line
+  per pair with both on view. The e2e finds 24 pairs in the neighbourhood of the default universe.
+
 ## Honest limits
 - Shapes are drawn as seen from home (the sky's tilt), not from an axis in space (GZ14 gives one).
 - One place per halo is not yet true: the web cube moves haloes by the Zel'dovich step, `galaxies_seen` does not
@@ -34,6 +40,5 @@ package GZ5 in section 13 (Stage B, after the kernel tie-up, before the zoom).
 - Space is an inverted panel (ink ground) so the theme tokens hold; True will draw it in light.
 
 ## Next
-Part 2: True with the renderer's type pictures and Free; bound pairs and "meet in about" from `halo_cell`; the sky at
-campaign time; the group's edge. Then GZ6: home's satellites on their orbits with Play, streams under HUD, the biggest
+Part 2: True with the renderer's type pictures and Free; the sky at campaign time; the group's edge. Then GZ6: home's satellites on their orbits with Play, streams under HUD, the biggest
 neighbours' real charts read in the background.

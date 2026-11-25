@@ -120,6 +120,9 @@ try {
     const inHood = Number(await clu.locator("[data-nearby]").getAttribute("data-nearby"));
     const morphs = await clu.locator("[data-galaxy]").evaluateAll((gs) => [...new Set(gs.map((g) => g.getAttribute("data-morphology")))]);
     assert.ok(morphs.length >= 2, `several kinds of galaxy: ${morphs.join()}`);
+    // Bound pairs under HUD, from the cells' own neighbours (read in the background, one cell at a time).
+    await gm.waitForFunction(() => document.querySelectorAll(".clu [data-bound-pair]").length > 0, null, { timeout: 120000 });
+    const pairsSeen = await clu.locator("[data-bound-pair]").count();
     await shot(gm, "gz5-nearby-neighbourhood");
     await clu.locator("[data-galaxy]").last().click({ force: true });
     await gm.waitForFunction(() => !!document.querySelector(".clu [data-galaxy-card]")?.getAttribute("data-galaxy-card"), null, { timeout: 10000 });
@@ -132,7 +135,7 @@ try {
     await vgroup("Seen from", "Tilted").click();
     await vgroup("View style", "Chart").click();
     await clu.locator("[data-halo-dot]").first().waitFor({ timeout: 30000 });
-    const nearbyNote = `galaxies nearby: ${inGroup} in the group, ${inHood} in the neighbourhood (${morphs.join(", ")})`;
+    const nearbyNote = `galaxies nearby: ${inGroup} in the group, ${inHood} in the neighbourhood (${morphs.join(", ")}), ${pairsSeen} bound pairs`;
 
     await more(gm, "Night chart");
     await gm.waitForTimeout(400);

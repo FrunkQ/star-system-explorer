@@ -193,3 +193,35 @@ export function nearbyScaleBar(size: number, reach_mpc: number, pad = 24): { px:
   const mly = steps.reduce((a, b) => (Math.abs(b - want) < Math.abs(a - want) ? b : a));
   return { px: mly * kPerMly, words: mly < 1 ? `${Math.round(mly * 1000)} thousand light years` : `${mly} million light years` };
 }
+
+/** A pair of galaxies bound to fall together, from the kernel's `halo_cell` (each halo's nearest big neighbour). */
+export interface BoundPair {
+  a: string;
+  b: string;
+  distance_mpc: number;
+  /** When they first meet, Gyr from now, as the kernel's two-body estimate gives it; null if it gave none. */
+  approach_gyr: number | null;
+}
+
+/**
+ * The bound pairs among the galaxies shown: each halo whose nearest big neighbour is bound to it, both of them on
+ * the view, once per pair. Read from the cells' own answers; nothing estimated here.
+ */
+export function boundPairs(cells: readonly { haloes: readonly { address: string; neighbour: { address: string; distance_mpc: number; bound: boolean; approach_gyr: number | null } | null }[] }[], shown: ReadonlySet<string>): BoundPair[] {
+  const out = new Map<string, BoundPair>();
+  for (const c of cells)
+    for (const h of c.haloes) {
+      const n = h.neighbour;
+      if (!n?.bound || !shown.has(h.address) || !shown.has(n.address)) continue;
+      const [a, b] = h.address < n.address ? [h.address, n.address] : [n.address, h.address];
+      if (!out.has(`${a}|${b}`)) out.set(`${a}|${b}`, { a, b, distance_mpc: n.distance_mpc, approach_gyr: n.approach_gyr });
+    }
+  return [...out.values()].sort((x, y) => x.distance_mpc - y.distance_mpc || (x.a < y.a ? -1 : 1));
+}
+
+/** "meet in about 4 Gyr", or "already meeting" when the kernel says now. */
+export function meetWords(approach_gyr: number | null): string {
+  if (approach_gyr === null) return "bound, falling together";
+  if (approach_gyr < 0.05) return "already meeting";
+  return `meet in about ${approach_gyr < 1 ? Math.round(approach_gyr * 10) / 10 : Math.round(approach_gyr)} Gyr`;
+}
