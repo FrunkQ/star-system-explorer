@@ -22,7 +22,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { constant, DEFAULT_VIEW, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
   import { LAND_TRUE } from "../../../renderer/src/recipes.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
@@ -274,6 +274,8 @@
   let near = $state<Patch | null>(null);
   let far = $state<Patch | null>(null);
   let groundFailed = $state<string | null>(null);
+  // Lava tube openings near the site (TRUE6): the kernel's cave survey, its fallen roofs cut into the walk patch.
+  let openings = $state<CaveOpening[]>([]);
   const NEAR_HALF = 6000;
   const DETAIL_HALF = 2000;
   const FAR_HALF = 120000;
@@ -308,6 +310,8 @@
     if (typeof n2 === "string") return void ((groundFailed = n2), (phase = "choose"));
     const b = await readGround(Math.max(0, n2.level - 4), FAR_HALF, () => 161);
     if (typeof b === "string") return void ((groundFailed = b), (phase = "choose"));
+    const cv = reads?.surveyCaves ? await reads.surveyCaves({ system, body: subject!.address, lat_deg: site.lat, lon_deg: site.lon, radius_km: 25 }) : null;
+    openings = cv && cv.ok ? caveOpenings(cv.caves) : [];
     near = n2;
     far = b;
     built = false;
@@ -330,12 +334,14 @@
   }
   function takeOff() {
     phase = "choose";
+    openings = [];
     near = null;
     far = null;
     built = false;
   }
   function reset() {
     phase = "choose";
+    openings = [];
     site = null;
     plan = null;
     near = null;
@@ -349,7 +355,7 @@
     const p = near!;
     const g = patchPoint(p, x, y);
     g.kernel_z = g.z;
-    if (g.cover === 0 && Math.abs(x) < DETAIL_HALF && Math.abs(y) < DETAIL_HALF) g.z += decoration(x, y, roughness, p.spacing_m);
+    if (g.cover === 0 && Math.abs(x) < DETAIL_HALF && Math.abs(y) < DETAIL_HALF) g.z += decoration(x, y, roughness, p.spacing_m) - caveCut(openings, x, y);
     return g;
   };
 
@@ -821,6 +827,8 @@
   const horizon = $derived(world ? horizonDistance(Math.max(0.1, eyeNow[2] - (near ? groundAt(eyeNow[0], eyeNow[1]).z : 0)), world.radius_m) : 0);
   const DIRS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   const compass = $derived(DIRS[Math.round(headingNow / 45) % 8]);
+  /** The nearest lava tube opening, while one lies within the near ground. */
+  const caveLine = $derived(openingLine(nearestOpening(openings, eyeNow[0], eyeNow[1])));
   /** Landmarks near enough to name over the ground, with their bearing. */
   const nearMarks = $derived(
     site && world
@@ -922,6 +930,7 @@
           <span>{fmtM(fromSite)} from it</span>
           <span>horizon {fmtM(horizon)}</span>
           {#if seaNow}<span data-sea>waves {seaNow.wave_m.toFixed(1)} m every {Math.round(seaNow.period_s)} s · tide {seaNow.tide_m >= 0 ? "+" : ""}{seaNow.tide_m.toFixed(2)} m</span>{/if}
+          {#if caveLine}<span data-cave-opening>{caveLine}</span>{/if}
           {#each nearMarks as m (m.l.id)}<span class="quiet">{m.l.name ?? m.l.original_name} {fmtM(m.d)} at {Math.round(m.brg)}°</span>{/each}
         </div>
       {/if}
@@ -949,6 +958,7 @@
     {#if phase === "flying" || phase === "down"}
     <p class="note quiet" data-ground-note>
       The ground is the kernel's to {near ? Math.round(near.spacing_m) : "?"} m (its fact floor here); finer than that within {fmtM(DETAIL_HALF)} of the site it is decoration sized to the site's roughness. You can walk {fmtM(WALK_HALF)} from where you landed; further means taking off.
+      {#if openings.length}{openings.length} stretch{openings.length === 1 ? "" : "es"} of fallen lava tube roof lie within 25 km (the kernel's cave survey): within {fmtM(DETAIL_HALF)} each is cut down to the tube's floor; going inside waits for interior sites.{/if}
       {#if world && !world.air}No air: the sky is black and nothing dims the far ground.{:else}Sky from single scattering in the kernel's air optics.{/if}
       {#if look === "true" && auroraSays}<span data-aurora-sky>{auroraSays}</span>{/if}
       {#if seaNow}{seaNow.line ?? ""}{seaNow.line ? "." : ""} {seaOptics ? `${seaWords(seaOptics.optics, seaOptics.missing)} ` : ""}{seaOptics?.optics.trains ? `The sea is drawn as the kernel's own ${seaOptics.optics.trains.length} wave trains for this liquid` : "The sea is drawn as a few wave trains of that height and period round the wind"}{seaOptics?.optics.whitecap_fraction ? `, white with froth over ${Math.round(seaOptics.optics.whitecap_fraction * 100)}% of it` : ""}; the tide stands {Math.abs(seaNow.tide_m).toFixed(2)} m {seaNow.tide_m >= 0 ? "above" : "below"} mean sea level.{/if}

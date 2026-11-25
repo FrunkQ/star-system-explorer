@@ -6,19 +6,22 @@ Only the owner thread edits this file. Visual polish rule (`design/SSE4-visual-p
 
 | Package | State | Log |
 |---|---|---|
-| TRUE1 plumes part 1: the kernel's plume facts (ocean, polar cracks, speeds, height, rate) on `resolved_system` surface records | in review | packages/TRUE1.md |
-| TRUE2 plumes part 2: drawn above the limb in System True | next | |
-| TRUE3 hot things glow in Visible (Planck against the world's own daylight) | module written, drawing next | |
-| TRUE4 tholins and coloured frosts | waits on data sheet MP33, MP34 | |
+| TRUE1 plumes part 1: the kernel's plume facts (ocean, polar cracks, speeds, height, rate) on `resolved_system` surface records | done (PR 449) | packages/TRUE1.md |
+| TRUE2 plumes part 2: drawn above the limb in System True | done (PR with TRUE3 and TRUE6) | packages/TRUE2.md |
+| TRUE3 part 1 hot things glow in Visible (Planck against the world's own daylight, one temperature a world) | done (same PR); part 2 is VP-P1 (hot ground per tile) | packages/TRUE2.md |
+| TRUE4 part 1 surface stains (rust, tholin, sulphur, frost) from the kernel, hued from the sheet's optics | done (PR 492); shows on Sol once proven core's SOL5 brings the catalogued air into the climate | packages/TRUE4.md |
+| TRUE4 part 2 SO2 frost and sulphur rows on the sheet (MP34, agreed with the data sheet thread); per-tile stains | next, after the data sheet's PR 475 | |
 | TRUE5 small bodies and comets | handed over to "Build asteroids and rings up close" (24 Nov) | |
-| TRUE6 lava tube openings on the ground (from `survey_caves`) | not started | |
+| TRUE6 lava tube openings on the ground (from `survey_caves`): cut into the walk patch, named on the HUD; going inside parked to 4.2 | done (same PR) | packages/TRUE6.md |
 | VP-P1 hot ground and lava as emitted light into the shared glare, crust from cell noise (visual polish design, accepted 24 Nov; extends TRUE3) | waits on VP1, VP6 | |
 | VP-P2 plumes with size-driven forward scatter and the umbrella shape (extends TRUE2) | waits on kernel ask K-c | |
 | VP-P3 comets (coma switch-on, two tails, green head) | goes with TRUE5 to "Build asteroids and rings up close" | |
 | VP-P4 ice cracks and frost sparkle below the fact floor through the detail ladder | waits on VP6 | |
 
 ## Live checks (audit R3, per body)
-Not yet run. Note: the default Solar System (`packs/base-sol`) has no Enceladus, Io, Europa, Titan, Triton or Charon yet, so those lines cannot be judged on the live site until the big moons are added.
+- Earth (24 Nov, Node on the catalogued Sol): 288 K, plate tectonics, oceans; test-drive rough edge 1 is gone (packages/TRUE2.md).
+- Lava tubes: the sample Moon's tube fields have lost all their roof to cratering, so its openings are rilles (packages/TRUE6.md, a question for the surface owner).
+- The rest not yet run. Note: the default Solar System (`packs/base-sol`) has no Enceladus, Io, Europa, Titan, Triton or Charon yet, so those lines cannot be judged on the live site until the big moons are added.
 
 ## Small bodies: handed over
 On 24 Nov the small-body part (TRUE5: the resolving field for belts and rings, shapes, contact binaries and pairs, Psyche-like bodies from formation, comets, the Add list entry) moved to the thread "Build asteroids and rings up close", with this track's approach and notes (the shape block, the formation records, the Traveller mining hook, what the editing thread wants). Those notes live in that thread's status file once it has one, and until then in project files `sse4/small-bodies-handover.md`.

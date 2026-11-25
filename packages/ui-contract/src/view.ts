@@ -146,6 +146,11 @@ export interface Workspace {
    * and the main line does not move until the GM keeps it.
    */
   branch?: WhatIf | null;
+  /**
+   * Add with the ghost first (ED4, editing design section 5): the body things are added round, while the chart's ghost
+   * follows the pointer (`a_au` null), and where it was dropped (`a_au` set) for Add here to take. Never saved.
+   */
+  adding?: { host: string; label: string; a_au: number | null } | null;
   /** The GM's lens (H8.6): which layers, card fields and tools show. Never changes data. */
   lens?: Lens;
   /** How much every card, number and why? says (top-level design 2.4). Presentation only; Science when absent. */

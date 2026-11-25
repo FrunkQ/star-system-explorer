@@ -132,6 +132,11 @@ try {
     await gm.mouse.down();
     await gm.mouse.move(box.x + box.width * 0.7, box.y + 15, { steps: 5 });
     assert.ok(await strip.locator(".figure.pencil").count(), "the figure is in pencil while dragging");
+    // ED1 part 3b: held still, the exact answer for the held value comes back from a scratch branch; nothing is written.
+    await strip.locator("[data-strip-pause]").waitFor({ timeout: 20000 });
+    assert.match(await strip.locator("[data-strip-pause]").innerText(), /Held here: .*(K|°C|nothing else)/);
+    assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash1, "a held value writes nothing");
+    await shot(gm, `held-${vp}`);
     await gm.mouse.up();
     await followed.waitFor({ timeout: 20000 });
     await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hash1);
@@ -212,6 +217,69 @@ try {
       });
       await undoTo(marsAt);
 
+      // ED5 Reach it: ask for a 260 K surface; the box finds the orbit on a scratch what-if and sets it as one change.
+      await obox.locator('[data-reach="t_surface_now_k"]').waitFor({ timeout: 20000 });
+      await obox.locator("[data-reach-ask]").fill("260 K");
+      await obox.locator("[data-reach-go]").click();
+      await gm.waitForFunction(() => /surface (about )?2(59|60|61)/.test(document.querySelector("[data-reach-said]")?.textContent ?? ""), null, { timeout: 60000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nbox says: ${await obox.innerText()}`);
+      });
+      assert.match(await gm.locator('[data-handle="orbit"] .value').innerText(), /1\.[0-4]\d? AU/, "Mars moves in to warm");
+      await shot(gm, `reach-it-${vp}`);
+      await undoTo(marsAt);
+
+      // ED5 part 2: the same on the Mass strip: a surface gravity of 1 g by changing the mass.
+      await row.locator('[data-handle="mass"]').click();
+      const mreach = gm.locator('[data-reach="gravity_m_s2"]');
+      await mreach.waitFor({ timeout: 20000 });
+      await mreach.locator("[data-reach-ask]").fill("9.81 m/s²");
+      await mreach.locator("[data-reach-go]").click();
+      await gm.waitForFunction(() => /gravity .*(9\.(79|8\d)|1(\.00)? g|0\.99\d* g)/.test(document.querySelector("[data-reach-said]")?.textContent ?? ""), null, { timeout: 60000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nreach says: ${await gm.locator("[data-reach-said]").allInnerTexts()}`);
+      });
+      await shot(gm, `reach-gravity-${vp}`);
+      await undoTo();
+
+      // ED8 part 1, the Air box: Mars's air as one mix bar (carbon dioxide most of it), traces as chips in ppm. Setting
+      // carbon dioxide to half trades it against the rest, which keep their proportions: one change, one Undo.
+      await row.locator('[data-handle="air"]').click();
+      const air = gm.locator("[data-air-box]");
+      await air.locator('[data-mix-bar] [data-gas="co2"]').waitFor({ timeout: 20000 });
+      assert.ok((await air.locator(".traces [data-gas]").count()) >= 3, "traces as chips");
+      assert.match(await air.locator('.traces [data-gas="xe"]').innerText(), /ppm|ppb/);
+      await air.locator('[data-mix-bar] [data-gas="co2"]').click();
+      await air.locator('[data-strip="air.co2"] [data-strip-figure]').click();
+      await air.locator('[data-strip="air.co2"] [data-strip-entry]').fill("50%");
+      await air.locator('[data-strip="air.co2"] [data-strip-entry]').press("Enter");
+      await gm.waitForFunction(() => /Air .*CO₂ 95.*→.*carbon dioxide 50/i.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nfollowed: ${await gm.locator("[data-followed]").allInnerTexts()}\nair: ${await air.innerText()}`);
+      });
+      await gm.waitForFunction(() => /N₂ 2[67]/.test(document.querySelector('[data-mix-bar] [data-gas="n2"]')?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, `air-box-${vp}`);
+      await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
+
+      // ED13, "Type it all in": every input as a row; what it understood before anything is written; one change, marked
+      // catalogued with its source; one Undo.
+      await row.locator('[data-handle="sheet"]').click();
+      const sheet = gm.locator("[data-sheet]");
+      await sheet.locator('[data-sheet-row="orbit.shape"]').waitFor({ timeout: 10000 });
+      await sheet.locator('[data-sheet-entry="mass"]').fill("0.2 Earth masses");
+      await sheet.locator('[data-sheet-entry="orbit.shape"]').fill("0.05");
+      await sheet.locator('[data-sheet-entry="spin"]').fill("banana");
+      assert.match(await sheet.locator('[data-sheet-understood="mass"]').innerText(), /0\.107 M⊕ → 0\.2 M⊕/);
+      assert.equal(await sheet.locator('[data-sheet-problem="spin"]').count(), 1, "what it could not read");
+      await sheet.locator('[data-sheet-entry="spin"]').fill("");
+      await sheet.locator("[data-sheet-catalogued]").check();
+      await sheet.locator("[data-sheet-source]").fill("A paper's table");
+      const hashS = await hash();
+      await sheet.locator("[data-sheet-set]").click();
+      await gm.waitForFunction(() => /Typed in .*Mass 0\.2 M⊕/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await gm.waitForFunction(() => /0\.2 M⊕/.test(document.querySelector('[data-handle="mass"] .value')?.textContent ?? ""), null, { timeout: 20000 });
+      assert.notEqual(await hash(), hashS);
+      await shot(gm, `sheet-${vp}`);
+      await undoTo(['[data-handle="mass"] .value', "0\\.107"]);
+      await row.locator('[data-handle="orbit"]').click();
+
       // Retrograde: the lean goes past 90 degrees, and the chip says so.
       await obox.locator('[data-chip="retrograde"]').click();
       await gm.waitForFunction(() => document.querySelector('[data-box="orbit"] [data-chip="retrograde"]')?.getAttribute("aria-pressed") === "true", null, { timeout: 20000 });
@@ -267,7 +335,32 @@ try {
       await gm.locator('.area-chart .body[aria-label^="Sun"]').first().locator(".hit").click();
       await gm.getByRole("button", { name: "More", exact: true }).click();
       await gm.locator("[data-more-add]").click();
+      // ED4: the ghost comes first. It follows the pointer with the distance round the Sun; Esc puts it away and
+      // writes nothing; a press opens Add here at that orbit.
+      await gm.locator("[data-add-note]").waitFor({ timeout: 10000 });
+      const sunAt = await gm.locator('.area-chart .body[aria-label^="Sun"] .hit').first().boundingBox();
+      const earthAt = await gm.locator('.area-chart .body[aria-label^="Earth,"] .hit').first().boundingBox();
+      const [sx0, sy0] = [sunAt.x + sunAt.width / 2, sunAt.y + sunAt.height / 2];
+      const [ex0, ey0] = [earthAt.x + earthAt.width / 2, earthAt.y + earthAt.height / 2];
+      await gm.mouse.move(sx0 + (ex0 - sx0) * 0.5, sy0 + (ey0 - sy0) * 0.5);
+      await gm.mouse.move(ex0, ey0, { steps: 4 });
+      await gm.locator("[data-add-ghost]").waitFor({ timeout: 5000 });
+      assert.match(await gm.locator("[data-add-readout]").textContent(), /AU round Sun/);
+      await shot(gm, `add-ghost-${vp}`);
+      const hashG = await hash();
+      await gm.keyboard.press("Escape");
+      await gm.waitForFunction(() => !document.querySelector("[data-add-note]") && !document.querySelector("[data-add-ghost]"), null, { timeout: 5000 });
+      assert.equal(await hash(), hashG, "Esc puts the ghost away and writes nothing");
+      await gm.getByRole("button", { name: "More", exact: true }).click();
+      await gm.locator("[data-more-add]").click();
+      await gm.locator("[data-add-note]").waitFor({ timeout: 10000 });
+      await gm.mouse.move(ex0 - 3, ey0, { steps: 2 });
+      await gm.mouse.move(ex0, ey0, { steps: 2 });
+      await gm.mouse.down();
+      await gm.mouse.up();
       await add.locator("[data-kinds]").waitFor({ timeout: 20000 });
+      const at = Number(await add.locator("[data-add-orbit]").inputValue());
+      assert.ok(at > 0.8 && at < 1.25, `Add here opens at the ghost's orbit, near Earth's: ${at} AU`);
       const kinds = await add.locator("[data-kind]").evaluateAll((ls) => ls.map((l) => l.dataset.kind));
       for (const k of ["rocky", "gas-giant", "ice-giant"]) assert.ok(kinds.includes(k), `${k} is a kind: ${kinds}`);
       assert.match(await add.locator('[data-kind="gas-giant"]').innerText(), /like Jupiter/);
