@@ -119,6 +119,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/quality-tiers.md` | Build quality tiers and speed probe (split from the renderer) | VP4, VP5: the `gpu-ultra` tier, the speed probe and placement by measured speed, heat watch, Quality choice, drawing bench rows; recipes and the governor on every True view; sharpen at rest |
 | `status/detail-ladder.md` | Build detail ladder and world textures (split from the renderer) | VP6 the detail ladder, VP3 texture ladder and relief normals |
 | `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
+| `status/aurora.md` | Build aurorae and night lights | the drawing side of VP-AU (aurora shells, curtains, ground view, bands, airglow drawn), VP12 (city lights, lightning), construct and drive lights; facts stay with the light thread (MF9 part 2) |
 | `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map, pulsating stars, ship clocks); XO is a code only, never shown in the product |
 | `status/true-air.md` | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
 | `status/true-surface.md` | Build plumes, frosts and hot glow (was "... and small bodies") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |

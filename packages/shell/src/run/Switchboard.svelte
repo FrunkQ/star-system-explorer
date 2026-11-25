@@ -10,6 +10,7 @@
 <script lang="ts">
   import RoleCard from "./RoleCard.svelte";
   import LayoutPicker from "./LayoutPicker.svelte";
+  import OnThisComputer from "./OnThisComputer.svelte";
   import { SHIPPED_LAYOUTS, cardLabel, outputLink, addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
   import Playbook from "./Playbook.svelte";
   import PresetMonitor from "./PresetMonitor.svelte";
@@ -32,6 +33,8 @@
   const heldCount = $derived(Object.values(board.lines).filter((l) => l?.held).length + (board.all ? 1 : 0));
   // The card a click holds with: the kind used last (6.2), plain to begin with.
   let lastCard = $state<HoldCard>("plain");
+  // Screens on this computer (PB9): the displays panel, opened from the Screens heading.
+  let otc = $state(false);
 
   // The Playbook (PB3): kept with the campaign in the workspace; the open page and folded sections are this device's.
   const pb = $derived(ws?.playbook ?? emptyPlaybook());
@@ -394,9 +397,11 @@
         {#if st.link}
           <button type="button" data-copy-link onclick={() => (navigator.clipboard?.writeText(st.link!).catch(() => {}), (copied = true), setTimeout(() => (copied = false), 1500))}>{copied ? "Link copied" : "Copy the players' link"}</button>
           <a href={st.link} target="_blank" rel="noopener" data-players-link={st.link}>Open a screen here</a>
+          <button type="button" data-otc-toggle aria-expanded={otc} onclick={() => (otc = !otc)}>On this computer…</button>
         {/if}
         {#if table.seats}<button type="button" data-add-role aria-expanded={card === null} onclick={() => (card = card === null ? undefined : null)}>+ Add a role</button>{:else if onopenseats}<button type="button" data-open-seats onclick={onopenseats}>Roles…</button>{/if}
       </header>
+      {#if otc && st.link}<OnThisComputer roles={st.roles} linkOf={(r) => table.links(r)[0]?.href} onclose={() => (otc = false)} />{/if}
       {#if card === null && table.seats}<RoleCard {table} seats={table.seats} role={null} onclose={() => (card = undefined)} />{/if}
 
       <div class="everyone" class:layer={board.over.length > 0} data-dest="everyone" data-role="" role="button" tabindex="0" onclick={pressDest} onkeydown={(e) => (e.key === "Enter" || e.key === " ") && pressDest(e)}>

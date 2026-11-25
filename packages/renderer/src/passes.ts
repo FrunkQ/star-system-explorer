@@ -102,6 +102,29 @@ export const ATMOSPHERE: PassSpec = {
   ],
 };
 
+export const AURORA: PassSpec = {
+  id: "aurora",
+  version: "1.0.0",
+  name: "Aurora",
+  meaning: "Where the kernel says particles come down into the air (read_field's aurora: wind and spin ovals round the magnetic poles, a diffuse glow on airy worlds with no field), each line the air gives off as a thin glowing shell at its own height, stacked at the limb. Colours and heights come from the air's own lines; worlds where the kernel finds no aurora draw nothing. GPU tiers only.",
+  kind: "overlay",
+  inputs: ["body.field", "body.air"],
+  tiers: ["still", "gpu-high", "gpu-basic"],
+  params: [
+    { name: "exposure", type: "enum", default: "long", options: ["long", "eye"], meaning: "Long exposure (the default): faint light is lifted by one stated ratio so the aurora shows in full colour, as a camera's long exposure records it. Eye: one exposure for the sunlit world, the aurora at its true brightness and grey where it is too faint for colour vision.", group: "look", promoted: true },
+    { name: "lift_target", type: "number", default: 0.6, range: [0.05, 2], meaning: "Long exposure: the brightest line is lifted to this share of the sunlit ground's brightness; the other lines keep their true ratio to it.", group: "look" },
+  ],
+  cost: {
+    "gpu-high": { fixed_ms: 0.2, per_mpix_ms: 1 },
+    "gpu-basic": { fixed_ms: 0.2, per_mpix_ms: 1 },
+    still: { fixed_ms: 0.2, per_mpix_ms: 1 },
+  },
+  references: [
+    { text: "Chamberlain, J. W. (1961). Physics of the Aurora and Airglow. Academic Press, New York.", doi: "10.1029/SP041" },
+    { text: "Hunten, D. M., Roach, F. E., Chamberlain, J. W. (1956). A photometric unit for the airglow and aurora. Journal of Atmospheric and Terrestrial Physics 8, 345-346.", doi: "10.1016/0021-9169(56)90111-8" },
+  ],
+};
+
 export const NARRATION: PassSpec = {
   id: "text-narration",
   version: "1.0.0",
@@ -115,4 +138,4 @@ export const NARRATION: PassSpec = {
 };
 
 /** Every pass this release ships. */
-export const LIBRARY: readonly PassSpec[] = [RELIEF, GRATICULE, CONTOURS, ATMOSPHERE, NARRATION];
+export const LIBRARY: readonly PassSpec[] = [RELIEF, GRATICULE, CONTOURS, ATMOSPHERE, AURORA, NARRATION];
