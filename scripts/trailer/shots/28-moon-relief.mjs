@@ -37,7 +37,9 @@ export default {
     await flyTo("Moon");
     // 25 Nov GPU take: the surface arrives about 3 s after the fly-in, and HUD Off pulled the
     // camera back to a small dot, so the HUD stays as it is and the shot waits for the surface.
-    await d.hold(3500);
+    // Detail ladder thread: the finer tiles (1024 a face on WebGPU) need about 30 s, left alone.
+    // The editor cuts this wait; the relief shows best along the day/night line.
+    await d.hold(30000);
     await d.caption("The Moon", "Craters and highlands at true scale, lit by the Sun: relief drawn from the kernel's own surface.");
     await d.hold(4800);
     await d.caption(null);
