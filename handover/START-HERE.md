@@ -131,7 +131,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/citations.md` | Verify every cited paper | CR: the Consensus check of every cited paper, the master list in `handover/citations/` and its check |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
-| `status/spaceflight-history.md` | none yet: to be opened as "Build roll call and In memory" (design: "Design spaceflight history view and memorial") | SH: Roll call (who was in space on any day), the count on the ruler, In memory, the real memorials where they are; PROPOSED, not accepted; SH is a code only, never shown in the product |
+| `status/spaceflight-history.md` | none yet: to be opened as "Build roll call and In memory" (design: "Design spaceflight history view and memorial") | SH: Roll call (who was in space on any day), the count on the ruler, In memory, the real memorials where they are; accepted 25 Nov; SH is a code only, never shown in the product |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |

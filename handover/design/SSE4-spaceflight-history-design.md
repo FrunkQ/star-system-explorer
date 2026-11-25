@@ -1,8 +1,8 @@
 # SSE4: the history of spaceflight as a view, and those who died (track SH)
 
-Status: **PROPOSED, 25 Nov 2026. Not accepted. Nothing here is built and no builder starts on it without Alex's yes** (questions in section 14). Design and mockup only. SH is a code only and is never shown in the product.
+Status: **ACCEPTED by Alex, 25 Nov 2026 01:20 UTC**: "yes to all - stay restrained and respectful - one place we don't joke! :)". All 13 recommendations in section 14 are rulings. Section 8.1's rules of restraint are standing rules, and his own words add one emphasis: this is the one place SSE4 never jokes. Design and mockup only; nothing is built yet. SH is a code only and is never shown in the product.
 
-One part is already Alex's direction (25 Nov 01:04 UTC, "great idea - show the memorials that have been placed in space - very clever"): the memorial shows the real memorials where they really are. Section 8 is built on that.
+Earlier the same night (01:04 UTC) he had already chosen the direction for the memorial: "great idea - show the memorials that have been placed in space - very clever". Section 8 is built on that.
 
 Mockup, clickable: project files `sse4/handover-screens/SH-screens/spaceflight-history-mockup.html`, with desktop, night and phone screenshots beside it and its source in `SH-screens/source/`. Every name, date and figure in the mockup was typed by hand for the picture. The product types none of them: it reads them from the pack (section 10).
 
@@ -259,6 +259,8 @@ One column: date, sentence, the count as a strip you drag, the roster. The chart
 SH1 and SH2 need only what is on main plus RS9. Nothing here changes a golden hash.
 
 ## 14. Questions for Alex, each with a recommendation
+
+**All answered yes, 25 Nov 2026 01:20 UTC ("yes to all"). Each recommendation below is now a ruling.** On question 5: no invented monument. On question 11: the edge of space defaults to 100 km.
 
 1. **Names: "Roll call" for the view, "In memory" for the page, "Names carried" for the layer.** Recommended: yes. (Alternatives: "Who was up"; "Remembered".)
 2. **Roll call is general: it works in any campaign, and the real pack is one use of it.** Recommended: yes. This is the one-mechanism rule, and it gives every GM a fleet history.
