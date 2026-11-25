@@ -21,6 +21,7 @@
     stabilityFor,
     outerWall,
     pairOf,
+    handleValue,
     trueAnomalyFrom,
     yearsToSeconds,
     type Depth,
@@ -35,6 +36,7 @@
   } from "../../../ui-contract/src/index.ts";
   import Strip from "./Strip.svelte";
   import Ring from "./Ring.svelte";
+  import Reach from "./Reach.svelte";
 
   type How = { source: "computed" | "typed"; sig?: number };
   let {
@@ -50,6 +52,7 @@
     reading,
     dots,
     commit,
+    pause,
     ontry,
     onclose,
   }: {
@@ -67,6 +70,8 @@
     dots: StripDot[];
     /** One set_value of `h`'s field to `si`; `shown` is what the change is called (the place now, not the epoch's angle). */
     commit: (h: Handle, si: number, how: How, shown?: string, at?: string) => Promise<string | null>;
+    /** The held value's exact answer on a pause (the box's own strip). */
+    pause?: (h: Handle, si: number) => Promise<string | null>;
     ontry?: () => void;
     onclose: () => void;
   } = $props();
@@ -165,6 +170,7 @@
   const rot = $derived(num("body.rotation_period"));
   const kernelSays = $derived(resultsOf(surfaces, subject.address));
   const lockRow = RESULTS.find((r) => r.key === "locked");
+
   let chipProblem = $state<string | null>(null);
   let chipSaid = $state<string | null>(null);
   async function chip(id: string, does: string) {
@@ -216,7 +222,7 @@
 </script>
 
 <div class="box" data-box={handle.id}>
-  <Strip {handle} {reading} value={num(handle.part.field)} {dots} {cls} {depth} {editable} {ontry} walls={wall ? [wall] : []} fromTime={fromYear} oncommit={(si, how) => commit(handle, si, how)} {onclose} />
+  <Strip {handle} {reading} value={num(handle.part.field)} {dots} {cls} {depth} {editable} {ontry} walls={wall ? [wall] : []} fromTime={fromYear} onpause={pause ? (si) => pause(handle, si) : undefined} oncommit={(si, how) => commit(handle, si, how)} {onclose} />
   {#if pair}
     <div class="pair" data-pair={`${pair.primary} ${pair.secondary}`}>
       <p class="pair-says" data-pair-says>{pairSays}</p>
@@ -262,6 +268,9 @@
       </div>
     {/if}
     {#if chipProblem || chipSaid}<p class="chip-said" class:problem={!!chipProblem} aria-live="polite" data-chip-said>{chipProblem ?? chipSaid}</p>{/if}
+  {/if}
+  {#if handle.reach?.length && !ws.branch && editable && scene.system && num(handle.part.field) !== null}
+    <Reach {ctx} system={scene.system} address={subject.address} {handle} value={handleValue(handle, mine)!} results={kernelSays} {cls} {depth} {commit} />
   {/if}
   {#if ws.branch && box.results.length}<p class="chip-said" data-box-branch>The year and the verdict follow once it is kept.</p>{/if}
   {#if results.length}
