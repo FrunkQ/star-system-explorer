@@ -50,7 +50,7 @@
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
   import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
-  import { actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
+  import { OBJECT_ACTIONS, actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
   import ObjectMenu from "./ObjectMenu.svelte";
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
@@ -88,6 +88,7 @@
   import { GAME_SCREENS } from "./screens.game.ts";
   import { RENDER_SCREENS } from "./screens.renderer.ts";
   import { RUN_SCREENS } from "./run/screens.run.ts";
+  import { ROLLCALL_SCREENS } from "./rollcall/screens.rollcall.svelte.ts";
   import Bookmarks from "./run/Bookmarks.svelte";
   import OnAir from "./run/OnAir.svelte";
   import { tablePort } from "./run/table-port.ts";
@@ -120,7 +121,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -1357,14 +1358,33 @@
   let placing = $state(false);
   // Add here (V3 gap 2): one world or moon by hand, round the selected star or planet (else the primary).
   let addDialog: HTMLDialogElement | undefined = $state();
-  let addFor = $state<{ address: string; label: string; kind: string; mass_sun: number | null } | null>(null);
+  let addFor = $state<{
+    address: string;
+    label: string;
+    kind: string;
+    mass_sun: number | null;
+    /** A planet's own figures and where it goes round its star, for the moon recipes. */
+    planet?: { mass_earth: number; radius_earth: number; a_au: number | null; star_mass_sun: number | null };
+  } | null>(null);
   const addOrbits = $derived(addFor ? scene.subjects.filter((x) => (addFor!.kind === "star" ? x.kind === "planet" : x.parent === addFor!.address) && x.orbit).map((x) => x.orbit!.a_au) : []);
   function openAdd() {
     const sel = scene.subjects.find((x) => x.address === ws.selection);
     const h = sel && (sel.kind === "star" || sel.kind === "planet") ? sel : primaryOf(scene);
     if (!h) return void (clipNote = "There is no star here to add round.");
     const m = h.facts.find((f) => f.field === "mass_sun")?.value;
-    addFor = { address: h.address, label: h.label, kind: h.kind, mass_sun: typeof m === "number" ? m : null };
+    const fact = (x: typeof h, field: string) => {
+      const v = x.facts.find((f) => f.field === field)?.value;
+      return typeof v === "number" ? v : null;
+    };
+    const star = scene.subjects.find((x) => x.address === h.parent && x.kind === "star") ?? primaryOf(scene);
+    const [me, re] = [fact(h, "mass_earth"), fact(h, "radius_earth")];
+    addFor = {
+      address: h.address,
+      label: h.label,
+      kind: h.kind,
+      mass_sun: typeof m === "number" ? m : null,
+      planet: h.kind === "planet" && me !== null && re !== null ? { mass_earth: me, radius_earth: re, a_au: h.orbit?.a_au ?? null, star_mass_sun: star ? fact(star, "mass_sun") : null } : undefined,
+    };
     addDialog?.showModal();
   }
   async function addClip(clip: Clip, words: string): Promise<string | null> {
@@ -1428,8 +1448,10 @@
       objMenu = { target: { address: sub.address, kind: sub.kind, label: sub.label }, at: { x: ask.x, y: ask.y }, from, kicker: `${sub.kind.replace(/_/g, " ")}${host ? ` · orbits ${host.label}` : ""}` };
     }),
   );
+  // An action whose screen is not in this build is left out (the Atlas arrives with its own screen).
+  const menuActions = OBJECT_ACTIONS.filter((a) => a.id !== "atlas" || "atlas" in SCREENS);
   const objMenuItems = $derived(
-    objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }) : null,
+    objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }, menuActions) : null,
   );
   // More's edit group says what the object menu says: the same words and keys, from the one list.
   const moreWords = (id: string) => actionById(id)!.label({ address: ws.selection ?? "", kind: "", label: selName ?? "" });
@@ -1443,6 +1465,7 @@
     if (id === "add") return openAdd();
     if (id === "cut") return cutBody();
     if (id === "voyage") return go("voyages");
+    if (id === "atlas") return go("atlas");
     if (id === "land") return (toWorld(address), go("surface"));
     if (id === "link") {
       const url = `${location.origin}${location.pathname}${location.search}${placeHash({ scale: "world", system: viewing?.system ?? "", world: address })}`;

@@ -53,3 +53,13 @@ see what is in it); Alex accepted both for stage 2 (23 and 24 Nov).
 
 ## Next
 Picker rows read `summaryWords` (navigation thread, NV2 part 2). Part 2b: "Grow a system here" once `from_star` lands, then "Add system here" and "Add near here", the home star cell behind the map from `star_cell`.
+
+## Part 3: pencil and map layers (25 Nov 2026)
+- Pencil and ink (SV3): on the Build and Run desks each system is drawn by what the table knows of it, read with
+  `tableLandmarks`: ink, heard of (outline) or pencil (faint, dotted ring, muted italic name, "not known to the
+  table" in the list and the hover). Explore and players draw ink. The e2e checks every placed system has a pen.
+- Map layers (OV3, OV4): a "Map layer" picker when a stacked pack declares an area layer; `Session.holdingsIn` reads
+  `holdings_in` under the universe; `placeOnMap` puts each held place at its campaign system; the reach comes from the
+  layer (`between_stars.reach`, else 4 pc) in the map's units (`reachInMapUnits`), or as map units when the V3 map
+  gives none (the hint says so). Slots by `assignSlots`; drawn by `Overlays` under the routes; `AreaKey` lifts a power.
+  `your-systems-areas.test.ts` runs it through the kernel with a test layer pack and two held systems.

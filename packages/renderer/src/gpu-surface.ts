@@ -9,6 +9,7 @@
 import { ACESFilmicToneMapping, AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Points, Scene, SphereGeometry, SRGBColorSpace, Vector3, Vector4 } from "three";
 import { MeshBasicNodeMaterial, PointsNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
 import { fresnelNode } from "./sea-node.ts";
+import { createLander, type LanderPose } from "./surface-lander.ts";
 import { frothToDraw, MAX_TRAINS, trainsToDraw, type SeaOptics, type TrainDraw } from "./sea.ts";
 import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, sin, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
 
@@ -109,6 +110,8 @@ export const FOAM_FILL = 0.35;
 export interface SurfaceGpu {
   readonly backend: "webgpu" | "webgl2";
   setMeshes(meshes: SurfaceMesh[]): void;
+  /** The lander standing on the ground (LR6, surface-lander.ts); null: none. */
+  setLander(l: LanderPose | null): void;
   draw(f: SurfaceFrame): void;
   dispose(): void;
 }
@@ -358,6 +361,20 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   };
   const allMats = () => [skyMat, ...[...layers.values()].flatMap((e) => [e.true, e.chart, e.wire])];
 
+  // The lander on the ground (LR6): lit as the ground is, by the sun through the air and by the sky; its lamps glow.
+  const lander = createLander({
+    lit: (alb) =>
+      Fn(() => {
+        const n = normalize(normalWorld);
+        const sunLight = uSunRgb.mul(sunT()).mul(max(dot(n, uSun), float(0)));
+        const skyLight = uSunRgb.mul(max(uSun.z, float(0))).mul(float(1).sub(sunT())).mul(0.5).mul(n.z.mul(0.5).add(0.5));
+        return vec4(alb.mul(sunLight.add(skyLight)).div(Math.PI).mul(uExp), 1);
+      })(),
+    glow: (radiance) => vec4(radiance.mul(uExp), 1),
+    ink: vec4(vec3(uInk), 1),
+  });
+  scene.add(lander.group);
+
   const meshes = new Map<string, Mesh>();
   let order: SurfaceMesh[] = [];
   const dropAll = () => {
@@ -393,6 +410,9 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         meshes.set(s.key, m);
         scene.add(m);
       }
+    },
+    setLander(l) {
+      lander.set(l);
     },
     draw(f) {
       renderer.setSize(f.width, f.height, false);
@@ -462,10 +482,12 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         m.material = isTrue ? ms.true : f.look === "wireframe" ? ms.wire : ms.chart;
 
       }
+      lander.place(f.eye, f.look);
       renderer.render(scene, camera);
     },
     dispose() {
       dropAll();
+      lander.dispose();
       dome.geometry.dispose();
       starGeom.dispose();
       starMat.dispose();
