@@ -8,6 +8,7 @@
   import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
@@ -157,7 +158,8 @@
     if (ws.screen === "surface" && lastLanding) return { scope: scene.system, title: landingTitle(lastLanding, selName), screen: LAND_SCREEN, landing: lastLanding, ...focus };
     // A world's own screen (not Land): the table is shown it in orbit, turning below (LR4).
     const world = orbitWorld;
-    if (world) return { scope: scene.system, title: orbitTitle(world.label, ws.party, world.address), screen: ORBIT_SCREEN, focus: world.address };
+    const air = world && orbitAir?.key === `${scene.system}|${world.address}` && orbitAir.air ? { air: orbitAir.air } : {};
+    if (world) return { scope: scene.system, title: orbitTitle(world.label, ws.party, world.address), screen: ORBIT_SCREEN, focus: world.address, ...air };
     return { scope: scene.system, title: scene.title, ...focus };
   };
   // Driving a read-only screen (PB3b): as the GM moves, the screen follows. Never while on the Switchboard itself.
@@ -883,6 +885,31 @@
   // address bar, a bookmark or a kept beat brings the whole landing back. Kept as text so a new pose (a few times a
   // second) never stirs the place; only a new site, hour or lander does.
   // A world's own screen (LR4): the planet or moon the table would be shown in orbit, and whether it has been sent.
+  // The world's air for the table's orbit globe (LR4b): read on the GM's kernel (a seat cannot read resolved systems)
+  // while the players are connected, and sent with the orbit; a send made before it is read goes again with it.
+  let orbitAir = $state.raw<{ key: string; air: Json | null } | null>(null);
+  $effect(() => {
+    const w = orbitWorld;
+    const s = session;
+    const sys = scene.system;
+    if (!w || !s || !share) return;
+    const key = `${sys}|${w.address}`;
+    if (untrack(() => orbitAir?.key) === key) return;
+    void (async () => {
+      const rs = await s.resolvedSystem(sys);
+      if (!rs.ok) return;
+      const surf = rs.result.surfaces.find((x) => x.address === w.address) as Parameters<typeof airFactsOf>[1];
+      const facts = airFactsOf(rs.result.facts[w.address], surf);
+      const req = facts ? airRequest(w.address, facts) : null;
+      if (facts && req) {
+        const ao = await s.readAirOptics([req.air]);
+        facts.optics = ao.ok && ao.airs[0] ? airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req) : null;
+      }
+      orbitAir = { key, air: facts ? (JSON.parse(JSON.stringify(facts)) as Json) : null };
+      const sh = share?.state.shown;
+      if (facts && share && sh && "scope" in sh && sh.screen === ORBIT_SCREEN && sh.focus === w.address && !sh.air && orbitWorld?.address === w.address) share.show(here());
+    })();
+  });
   const orbitWorld = $derived(railScale === "world" && ws.screen !== "surface" ? scene.subjects.find((x) => x.address === ws.selection && (x.kind === "planet" || x.kind === "moon")) : undefined);
   const orbitUnsent = $derived.by(() => {
     const sh = share?.state.shown;
