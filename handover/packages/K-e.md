@@ -47,6 +47,9 @@ stays a shortcut for water clouds only.
 - Kernel `read_bows_gives_rainbows_and_halos`: water off the sheet in red light gives a bow of 42.0° to 42.6°;
   `read_scattering` with `substance: "h2o"` gives g 0.85 ± 0.07.
 
+- MF9 part 2b follow-up: each aurora emission carries the light table's `name` (asked by the aurora drawing thread,
+  whose renderer may not import packs).
+
 ## Golden
 
 `contract.jsonl` changes on purpose:
