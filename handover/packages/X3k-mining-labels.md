@@ -35,7 +35,7 @@ Builds on X3j (resources on the books, `transfer`). Record-logic design 2.4 and 
   refused.
 
 Golden changed on purpose (`contract.jsonl`): one appended case, `mine` refused for a ship with no rate fact. The op
-list is masked since PR 454, so nothing else moves.
+list is masked since PR 454, so nothing else moves. (Since the golden split, PR 536, this case lives in `tests/contract/areas/traveller.json`, golden `tests/golden/areas/traveller.jsonl`.)
 
 ## Known gap
 

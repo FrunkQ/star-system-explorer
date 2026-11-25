@@ -46,7 +46,7 @@ SRD's numbers (Open Game Licence) and no World Builder's Handbook tables. Physic
 - an unknown program is refused.
 
 Golden changed on purpose (`contract.jsonl`): one appended case, `roll_profile` refused on a stack without the
-program. `traveller-codes.json` changes only by the pack hash.
+program. `traveller-codes.json` changes only by the pack hash. (Since the golden split, PR 536, this case lives in `tests/contract/areas/traveller.json`, golden `tests/golden/areas/traveller.jsonl`.)
 
 ## Next
 

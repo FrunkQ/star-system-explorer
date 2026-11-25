@@ -34,9 +34,9 @@ Only the owner thread edits this file. One row per package: update it in the sam
 
 ## Open now
 
-- **PR 400** (X3j, X3k, X3l, the RK12 Traveller mapping and WBH parts 1 and 2 together). It appends three lines to `tests/golden/contract.jsonl` (the `transfer`, `mine`
-  and `roll_profile` refusals) and merges in its turn in the golden lane. To land it: merge main, run
-  `SSE_BLESS=1 cargo test -q -p sse-kernel contract`, `scripts/check.sh`, push, merge on green.
+- **PR 400** (X3j, X3k, X3l, the RK12 Traveller mapping and WBH parts 1 and 2 together). Its contract cases live in the
+  traveller area (`tests/contract/areas/traveller.json`, golden `tests/golden/areas/traveller.jsonl`), so it moves no core
+  golden line and merges when green. Re-bless with `SSE_BLESS=1 CARGO_INCREMENTAL=0 cargo test -q --release -p sse-kernel contract`.
 
 ## Next packages, in order
 

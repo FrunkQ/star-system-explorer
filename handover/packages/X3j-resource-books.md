@@ -34,7 +34,7 @@ resource kind. This package adds the books on top.
 - Bad asks are refused in words: the same place twice, a negative amount, an unknown kind.
 
 Golden changed on purpose (`contract.jsonl`): one new contract case shows the refusal for a kind the stack does not
-declare. (The op list lines are masked since PR 454.) Every other line is unchanged.
+declare. (The op list lines are masked since PR 454.) Every other line is unchanged. (Since the golden split, PR 536, this case lives in `tests/contract/areas/traveller.json`, golden `tests/golden/areas/traveller.jsonl`.)
 
 ## Next (X3k)
 
