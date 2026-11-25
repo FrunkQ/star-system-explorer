@@ -189,6 +189,8 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     const now = performance.now();
     const step = rest.next(now);
     if (!step) {
+      // A timer can fire a hair early: still waiting, so ask again when the wait is really over.
+      if (rest.state === "waiting") return void (restTimer = setTimeout(restStep, Math.max(1, rest.dueIn(performance.now()))));
       if (rest.state === "sharp") restLayer?.show("sharp");
       tellRest();
       return;

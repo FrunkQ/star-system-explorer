@@ -564,8 +564,8 @@
         const resting = r !== null && tick !== drawnRestTick;
         drawnRestTick = tick;
         const step = resting ? r!.rest.next(now) : null;
-        // Sharp (or out of time): the mean on screen stays as it is.
-        if (resting && !step) return;
+        // Sharp (or out of time): the mean on screen stays as it is. Still waiting (a timer fired a hair early): ask again.
+        if (resting && !step) return void untrack(() => restLater(performance.now()));
         const q = r?.settings(step !== null) ?? null;
         const fin = q?.params["finish"] ?? {};
         const bodiesQ = q?.params["bodies"] ?? {};
