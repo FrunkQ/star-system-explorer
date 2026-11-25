@@ -14,7 +14,7 @@ SH1, SH2 and SH6 are built (PR 510, merged 25 Nov 04:35 UTC). All 13 recommendat
 | SH4 a person's flights; Find knows people and dates | queued; with the manifest thread | |
 | SH5 records as sifters; On this day | queued | |
 | SH6 In memory; the day of a loss | done 25 Nov, PR 510 | `packages/SH6.md` |
-| SH7 Names carried (real memorials) | next; `memorials.json` is on main (PR 506) | |
+| SH7 Names carried (real memorials) | part 1 done 25 Nov (read, orbits, In memory part); part 2 (chart layer, "tonight", naming dates) next | `packages/SH7.md` |
 | SH8 front door address and deep links | queued; chart room | |
 | SH9 tours, record sifters, the edge of space | queued; with the spaceflight pack thread | |
 
