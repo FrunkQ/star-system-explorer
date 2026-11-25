@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { anythingClip, clipAt, formsHere, freeOrbit, moonRecipes, say, type Clip, type FormsHere, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { anythingClip, clipAt, formsHere, freeOrbit, moonRecipes, say, worldKinds, type Clip, type FormsHere, type ViewSession } from "../../ui-contract/src/index.ts";
 
   let {
     session,
@@ -69,6 +69,18 @@
   }
   // A moon by hand: formation's own leftovers rules for this planet, as three fixed recipes until Ask K5 (ED7).
   const recipes = $derived(moon && host.planet ? moonRecipes({ name: host.label, ...host.planet }, orbits) : []);
+  // Kinds (ED6, editing design section 9): each world class's "make one" recipe from the class atlases on the stack.
+  // From the stack's atlases, or the base atlas the shell ships (as Names and classes offers it) when none is stacked.
+  const stacked = $derived(moon ? [] : worldKinds(session.stack().base));
+  let shipped = $state.raw<ReturnType<typeof worldKinds>>([]);
+  $effect(() => {
+    if (moon || stacked.length || shipped.length) return;
+    void fetch("packs/base-atlas.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => p && (shipped = worldKinds([p])))
+      .catch(() => {});
+  });
+  const kinds = $derived(stacked.length ? stacked : shipped);
   async function addRecipe(c: Clip, fallback: string) {
     adding = true;
     problem = await onadd(named(c, fallback), name.trim() || fallback);
@@ -113,6 +125,19 @@
   </ul>
 {:else}
   <p class="hint">Moons are not sampled from formation yet: add one of your own below.</p>
+{/if}
+
+{#if kinds.length}
+  <h3>Kinds</h3>
+  <p class="hint">A world of each kind the class atlas knows, with its example's mass and size, at the orbit above. The physics works out the rest there, and reads its kind off the results, so the label may change.</p>
+  <ul class="offers" data-kinds>
+    {#each kinds as k (k.class)}
+      <li data-kind={k.class}>
+        <span><b>{k.name}</b>, like {k.like}: {say(k.mass_kg, "mass", { class: "planet" }).text}. <small>{k.says}</small></span>
+        <button type="button" disabled={adding || !(a > 0)} onclick={() => add(named(k.clip, fallbackName), name.trim() || fallbackName)}>Add this</button>
+      </li>
+    {/each}
+  </ul>
 {/if}
 
 <h3>Something else</h3>

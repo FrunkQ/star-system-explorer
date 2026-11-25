@@ -4,6 +4,7 @@
 import type { Json } from "./json.ts";
 import type { SystemScene } from "./scene.ts";
 import type { ViewSession } from "./session.ts";
+import type { PackDoc } from "./physics.ts";
 import { AU_M, M_EARTH, M_SUN, R_EARTH_M, sceneFromFormation } from "./make.ts";
 import { copyClip, clipWords, type Clip } from "./clip.ts";
 
@@ -222,4 +223,73 @@ export function moonRecipes(
     );
   }
   return out;
+}
+
+/** A kind of world to add (ED6, editing design section 9): a class's "make one" recipe. */
+export interface WorldKind {
+  /** The atlas class it makes. */
+  class: string;
+  /** "Gas giant". */
+  name: string;
+  /** The class's representative world, whose inputs the recipe is ("Jupiter"). */
+  like: string;
+  says: string;
+  mass_kg: number;
+  radius_m: number;
+  clip: Clip;
+}
+
+/**
+ * The Kinds a world can be added as, from the class atlases on the stack (question 8, Alex yes): each base class of
+ * the physical scheme (the top level only: rocky, iron-rich, water-rich, sub-Neptune, ice giant, gas giant, brown
+ * dwarf) offers its first named world's mass and size. They go in as authored values (a kind is a starting point the
+ * physics then works from, not a claim the physics made it there); the class is read off the results as always, so
+ * the label can change once it is in place. Classes without a size in their example (small bodies) are left out.
+ */
+export function worldKinds(packs: readonly PackDoc[], name?: string): WorldKind[] {
+  const byId = new Map<string, WorldKind>();
+  for (const p of packs) {
+    const o = (p.provides as { other?: { classes?: unknown } } | undefined)?.other;
+    if (!o || !Array.isArray(o.classes)) continue;
+    for (const c of o.classes as {
+      id: string;
+      scheme?: string;
+      kind?: string;
+      parent?: string;
+      names?: { plain?: string; physics?: string };
+      learn?: { summary?: string };
+      examples?: { name: string; expect?: string; values?: Record<string, unknown> }[];
+    }[]) {
+      if (c.scheme !== "physical" || (c.kind ?? "base") !== "base" || c.parent || c.id.includes("/")) continue;
+      const ex = (c.examples ?? []).find((e) => e.expect !== "out" && typeof e.values?.["body.mass"] === "number" && typeof e.values?.["body.radius"] === "number");
+      if (!ex) continue;
+      const kindName = c.names?.plain ?? c.names?.physics ?? c.id;
+      const title = kindName.charAt(0).toUpperCase() + kindName.slice(1);
+      const mass = ex.values!["body.mass"] as number;
+      const radius = ex.values!["body.radius"] as number;
+      const n = name ?? `New ${kindName}`;
+      byId.set(c.id, {
+        class: c.id,
+        name: title,
+        like: ex.name,
+        says: c.learn?.summary ?? "",
+        mass_kg: mass,
+        radius_m: radius,
+        clip: {
+          sseClip: 2,
+          generation: "v4",
+          source: { site: "sse4", title: n, creditChain: [] },
+          packs: [],
+          root: "n0",
+          nodes: [{ id: "n0", kind: "planet", parent: null }],
+          events: [
+            { kind: "authored.set", node: "n0", field: "name", value: n },
+            { kind: "authored.set", node: "n0", field: "body.mass", value: mass },
+            { kind: "authored.set", node: "n0", field: "body.radius", value: radius },
+          ],
+        },
+      });
+    }
+  }
+  return [...byId.values()].sort((x, y) => x.mass_kg - y.mass_kg);
 }
