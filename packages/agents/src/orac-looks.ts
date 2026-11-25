@@ -13,6 +13,7 @@ import {
   checkStyle,
   checkSymbology,
   CHANNELS,
+  controlLines,
   LAYOUT_AREAS,
   type DataView,
   type ObserveSetup,
@@ -23,7 +24,7 @@ import {
 } from "../../ui-contract/src/index.ts";
 import type { Entry, OracTarget } from "./orac.ts";
 
-type AnyView = Pick<ViewModule<unknown, unknown>, "id" | "params"> & { label?: string; scene?: "system" | "player" };
+type AnyView = Pick<ViewModule<unknown, unknown>, "id" | "params" | "switchable"> & { label?: string; scene?: "system" | "player" };
 const obj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === "object" && !Array.isArray(x);
 const newId = (id: unknown, taken: readonly string[], what: string): string[] => {
   if (typeof id !== "string" || !id) return [`a ${what} needs an id`];
@@ -47,7 +48,12 @@ export function paramLines(v: AnyView): string {
 /** Views, styles and symbologies as catalogue entries. */
 export function lookEntries(o: { views: readonly AnyView[]; styles: readonly StyleDoc[]; symbologies: readonly SymbologyDoc[] }): Entry[] {
   return [
-    ...o.views.map((v) => ({ key: `view:${v.id}`, line: `${v.label ?? v.id}${v.scene === "player" ? " (player screens)" : ""}; ${v.params.length} settings`, full: `settings:\n${paramLines(v)}` })),
+    // AT13: a part's own controls are a column of the catalogue; a screen item's `controls` switches them.
+    ...o.views.map((v) => ({
+      key: `view:${v.id}`,
+      line: `${v.label ?? v.id}${v.scene === "player" ? " (player screens)" : ""}; ${v.params.length} settings${v.switchable?.length ? `, ${v.switchable.length} controls` : ""}`,
+      full: `settings:\n${paramLines(v)}${v.switchable?.length ? `\ncontrols (a screen item's "controls": "none", "all", or {"<id>": true|false}):\n${controlLines(v.switchable)}` : ""}`,
+    })),
     ...o.styles.map((s) => ({ key: `style:${s.id}`, line: `${s.name} for ${s.view}${s.description ? `: ${s.description}` : ""}`, full: JSON.stringify(s) })),
     ...o.symbologies.map((s) => ({ key: `symbology:${s.id}`, line: `${s.name}${s.description ? `: ${s.description}` : ""}`, full: JSON.stringify(s) })),
   ];
@@ -92,8 +98,8 @@ export function screenTarget(o: { views: () => readonly AnyView[]; taken: () => 
     kind: "screen",
     what: "A player screen: player views placed in the areas of one layout, with a theme, symbols and the data view players see it through. Use only player views from the catalogue (need view:<id> for their settings).",
     form: [
-      '{"schema": "sse.screen/1", "id": "mine.<short-name>", "label": "<name>", "description": "<one line>", "audience": "players", "layout": "<layout>", "theme": "<theme>", "symbology": "<symbology id>", "vocab": "plain" | "physics" | "story", "data_view": "<data view id, optional>", "items": [{"view": "<view id>", "area": "<area>", "params": {<settings>}, "style": "<style id, optional>"}]}',
-      `Layouts and their areas: ${Object.entries(LAYOUT_AREAS).map(([k, a]) => `${k} (${a.join(", ")})`).join("; ")}. Each area holds one item.`,
+      '{"schema": "sse.screen/1", "id": "mine.<short-name>", "label": "<name>", "description": "<one line>", "audience": "players", "layout": "<layout>", "theme": "<theme>", "symbology": "<symbology id>", "vocab": "plain" | "physics" | "story", "data_view": "<data view id, optional>", "items": [{"view": "<view id>", "area": "<area>", "params": {<settings>}, "style": "<style id, optional>", "controls": "none" | "all" | {"<control id>": true | false} (optional; control ids from the catalogue entry of the view)}]}',
+      `Layouts and their areas: ${Object.entries(LAYOUT_AREAS).map(([k, a]) => `${k} (${a.join(", ")})`).join("; ")}. Each area holds one item. An item with "controls": "none" is a picture (a wall screen, a stream): nothing on it can be pressed.`,
     ].join("\n"),
     async check(doc) {
       if (!obj(doc)) return { problems: ["a screen is one JSON object"] };

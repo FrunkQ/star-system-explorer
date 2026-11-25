@@ -1002,3 +1002,73 @@ fn sun_magnitudes_and_reddening() {
     // blackbody near B−V 0; the effective-wavelength stand-in reads 0.14.
     assert!(hb < 0.2 && hb < bv.value - 0.4, "10,000 K B−V {hb}");
 }
+
+/// MF9 part 2: every line names the element or substance that gives it off,
+/// by its id on the master data sheet, so its card can show "Light it gives
+/// off" and an invented gas can carry lines of its own.
+#[test]
+fn every_line_names_its_matter_on_the_sheet() {
+    let s = sse_reference::Reference::base();
+    let lines = &t().lines;
+    let named: Vec<&LineDef> = lines.iter().filter(|l| l.matter.is_some()).collect();
+    assert!(named.len() >= 24, "{}", named.len());
+    for l in named {
+        let id = l.matter.as_deref().unwrap();
+        assert!(
+            s.row("elements", id).is_some() || s.row("substances", id).is_some(),
+            "line {}: no sheet row {id}",
+            l.id
+        );
+    }
+    let o: Vec<&str> = lines
+        .iter()
+        .filter(|l| l.matter.as_deref() == Some("o"))
+        .map(|l| l.id.as_str())
+        .collect();
+    assert!(o.contains(&"oi-5577") && o.contains(&"oi-6300"), "{o:?}");
+}
+
+/// VP-L4: a water rainbow at 42° and 51°, a wider one in methane rain, and
+/// ice's 22° and 46° halos.
+#[test]
+fn rainbows_and_halos_follow_the_refractive_index() {
+    let w = crate::bows::bows("water", 1.333, "drop").unwrap();
+    assert!((w.primary_deg.unwrap() - 42.08).abs() < 0.05, "{w:?}");
+    assert!((w.secondary_deg.unwrap() - 50.89).abs() < 0.05, "{w:?}");
+    let ch4 = crate::bows::bows("methane", 1.29, "drop").unwrap();
+    assert!(ch4.primary_deg.unwrap() > w.primary_deg.unwrap() + 5.0);
+    let ice = crate::bows::bows("ice", 1.31, "crystal").unwrap();
+    assert!((ice.halo_60_deg.unwrap() - 21.84).abs() < 0.05, "{ice:?}");
+    assert!((ice.halo_90_deg.unwrap() - 45.7).abs() < 0.1, "{ice:?}");
+    assert!(crate::bows::bows("x", 1.3, "fog").is_err());
+}
+
+/// MF9 part 2b: a line's colour, and the aurora lines' parents on the sheet.
+#[test]
+fn aurora_lines_have_colours_and_sheet_parents() {
+    let tb = t();
+    let eye = tb.eye.as_ref().unwrap();
+    let g = crate::colour::colour_of_lines(eye, &[(5.577e-7, 1.0)]).unwrap();
+    assert_eq!(g.linear_srgb[1], 1.0, "{:?}", g.linear_srgb);
+    let r = crate::colour::colour_of_lines(eye, &[(6.300e-7, 1.0)]).unwrap();
+    assert_eq!(r.linear_srgb[0], 1.0, "{:?}", r.linear_srgb);
+    let uv = crate::colour::colour_of_lines(eye, &[(1.216e-7, 1.0)]).unwrap();
+    assert_eq!(uv.xyz, [0.0; 3]);
+    assert!(crate::colour::colour_of_lines(eye, &[(5.0e-7, -1.0)]).is_err());
+    let s = sse_reference::Reference::base();
+    let lit: Vec<&LineDef> = tb.lines.iter().filter(|l| l.aurora.is_some()).collect();
+    assert!(lit.len() >= 5);
+    for l in lit {
+        let a = l.aurora.as_ref().unwrap();
+        assert!(a.lifetime_s > 0.0 && a.quench_m3_s >= 0.0 && !a.source.is_empty());
+        for p in &a.from {
+            assert!(
+                s.row("elements", &p.matter).is_some() || s.row("substances", &p.matter).is_some(),
+                "line {}: no sheet row {}",
+                l.id,
+                p.matter
+            );
+            assert!(p.energy_share > 0.0 && p.energy_share < 1.0);
+        }
+    }
+}

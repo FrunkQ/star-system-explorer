@@ -4,12 +4,15 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { describeFact, fact, subjectName, wordsFor, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
+  import { controlOn, describeFact, fact, subjectName, wordsFor, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
 
   let { ctx, scene }: { ctx: PlayerContext; scene: PlayerScene } = $props();
   const columns = $derived(["name", ...((ctx.params.columns as string[]) ?? []).filter((c) => c !== "name")]);
   let sortBy = $state<string>(untrack(() => String(ctx.params.sort_by ?? "name")));
   let asc = $state(true);
+  // AT13: a layout may switch off sorting (the old `sortable` setting still does too) and picking by name.
+  const canSort = $derived(ctx.params.sortable !== false && controlOn(ctx.controls, "sort"));
+  const canPick = $derived(controlOn(ctx.controls, "select"));
 
   const rows = $derived.by(() => {
     const rs = scene.subjects
@@ -48,7 +51,7 @@
       <tr>
         {#each columns as c (c)}
           <th scope="col" aria-sort={sortBy === c ? (asc ? "ascending" : "descending") : "none"}>
-            {#if ctx.params.sortable !== false}
+            {#if canSort}
               <button type="button" onclick={() => sort(c)}>{c === "name" ? "Name" : wordsFor(ctx.vocab, c).label}{sortBy === c ? (asc ? " ▲" : " ▼") : ""}</button>
             {:else}{c === "name" ? "Name" : wordsFor(ctx.vocab, c).label}{/if}
           </th>
@@ -58,7 +61,7 @@
     <tbody>
       {#each rows.slice(0, Number(ctx.params.max_rows ?? 100)) as r (r.s.address)}
         <tr class:sel={ctx.selection() === r.s.address}>
-          <th scope="row"><button type="button" class="name" onclick={() => ctx.select(r.s.address)}>{subjectName(r.s)}</button></th>
+          <th scope="row">{#if canPick}<button type="button" class="name" onclick={() => ctx.select(r.s.address)}>{subjectName(r.s)}</button>{:else}{subjectName(r.s)}{/if}</th>
           {#each r.cells.slice(1) as c, i (columns[i + 1])}
             <td class:unknown={!c || c.state === "unknown"}>{c ? c.text : String(ctx.params.empty_text ?? "–")}</td>
           {/each}

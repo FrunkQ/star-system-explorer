@@ -1,6 +1,6 @@
 {
  "about": "Own number formatting per file (tests/ui/figures-ledger.test.ts). Goes down, never up.",
- "total": 315,
+ "total": 314,
  "files": {
   "packages/views/biosphere/src/Biosphere.svelte": 5,
   "packages/views/body-card/src/BodyCard.svelte": 1,
@@ -18,7 +18,6 @@
   "packages/views/flow/src/Flow.svelte": 1,
   "packages/views/flow/src/Power.svelte": 1,
   "packages/views/foam-map/src/FoamMap.svelte": 8,
-  "packages/views/foam-map/src/Web3D.svelte": 1,
   "packages/views/galaxy-3d/src/Galaxy3D.svelte": 2,
   "packages/views/galaxy-chart/src/GalaxyChart.svelte": 14,
   "packages/views/hex-map/src/grid.ts": 2,

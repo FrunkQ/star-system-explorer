@@ -986,6 +986,230 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.gas.van_der_waals_widening",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "ionisation_energy",
+     "letter": "I"
+    },
+    {
+     "port": "lower_level_energy",
+     "letter": "El"
+    },
+    {
+     "port": "line_wavelength",
+     "letter": "lambda0"
+    },
+    {
+     "port": "temperature",
+     "letter": "T"
+    },
+    {
+     "port": "particle_mass",
+     "letter": "ma"
+    },
+    {
+     "port": "perturber_mass",
+     "letter": "mp"
+    },
+    {
+     "port": "perturber_polarisability",
+     "letter": "ap"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "widening_per_density",
+     "letter": "Cw"
+    },
+    {
+     "port": "interaction_constant",
+     "letter": "C6"
+    }
+   ],
+   "constants": {
+    "e": "sheet/e",
+    "eps0": "sheet/eps0",
+    "a0": "sheet/a0",
+    "h": "sheet/h",
+    "c": "constants/c",
+    "Rinf": "sheet/R_inf",
+    "k": "constants/k_B"
+   },
+   "models": {
+    "lindholm": {
+     "value": 17.0,
+     "grade": "derived",
+     "source": "Gray, The Observation and Analysis of Stellar Photospheres, chapter 11: the van der Waals width γ6 = 17 v^(3/5) C6^(2/5) N (Lindholm 1945, Unsöld 1955), C6 in frequency units"
+    }
+   },
+   "checks": [
+    {
+     "port": "ionisation_energy",
+     "min": 0,
+     "finite": true,
+     "says": "ionisation energy must be zero or more, got {}"
+    },
+    {
+     "port": "lower_level_energy",
+     "min": 0,
+     "finite": true,
+     "says": "lower level energy must be zero or more, got {}"
+    },
+    {
+     "port": "perturber_polarisability",
+     "min": 0,
+     "finite": true,
+     "says": "polarisability must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "temperature",
+     "says": "gas temperature"
+    },
+    {
+     "port": "line_wavelength",
+     "says": "line wavelength"
+    },
+    {
+     "port": "particle_mass",
+     "says": "absorber mass"
+    },
+    {
+     "port": "perturber_mass",
+     "says": "perturber mass"
+    }
+   ],
+   "references": [
+    "Gray, D. F., The Observation and Analysis of Stellar Photospheres, 3rd edn, Cambridge University Press, chapter 11 (van der Waals broadening: Unsöld's ΔC6 from the hydrogen-like sizes of the two levels, and the width γ6 = 17 v^(3/5) C6^(2/5) N). doi:10.1017/CBO9781316036570",
+    "Unsöld, A. 1955, Physik der Sternatmosphären, 2nd edn, Springer: the interaction C6 = e² α ⟨Δr²⟩ / h with ⟨r²⟩ ≈ (5/2) n*⁴ a0² and n*² = Ry / (I − E). https://link.springer.com/book/10.1007/978-3-642-87452-5",
+    "Barklem, P. S., Piskunov, N. and O'Mara, B. J. 2000, A list of data for the broadening of metallic lines by neutral hydrogen collisions, Astron. Astrophys. Suppl. 142, 467: Unsöld's widths are often about two times too small; measured or computed widths take precedence. doi:10.1051/aas:2000167"
+   ],
+   "shown": "C6 = (e²/4πε₀) α_p a₀² (5/2) Ry² / h · [1/(I − E_u)² − 1/(I − E_l)²],  γ6/N = 17 v^(3/5) C6^(2/5)",
+   "equation": {
+    "name": "How much a crowd of neighbours widens a line (van der Waals)",
+    "formula": "Ry = h * c * Rinf\nEu = El + h * c / lambda0\ndu = I - Eu\ndl = I - El\nC6 = if du <= 0 or dl <= 0 then 0 else e * e / (4 * pi * eps0) * ap * a0 * a0 * (5/2) * Ry * Ry / h * (1 / (du * du) - 1 / (dl * dl))\nv = sqrt(8 * k * T / pi * (1 / ma + 1 / mp))\nc6 = max(C6, 0)\nCw = lindholm * (v * v * v * c6 * c6) ^ (1/5)",
+    "inputs": {
+     "I": {
+      "kind": "gas.ionisation_energy",
+      "unit": "J",
+      "name": "energy to tear the outer electron off the absorbing atom"
+     },
+     "El": {
+      "kind": "gas.lower_level_energy",
+      "unit": "J",
+      "name": "energy of the level the line absorbs from, above the ground state"
+     },
+     "lambda0": {
+      "kind": "gas.line_wavelength",
+      "unit": "m",
+      "name": "wavelength at the line's centre",
+      "valid": [
+       1e-08,
+       0.001
+      ]
+     },
+     "T": {
+      "kind": "gas.temperature",
+      "unit": "K",
+      "name": "temperature of the gas"
+     },
+     "ma": {
+      "kind": "gas.particle_mass",
+      "unit": "kg",
+      "name": "mass of one absorbing atom or molecule"
+     },
+     "mp": {
+      "kind": "gas.perturber_mass",
+      "unit": "kg",
+      "name": "mass of one neighbouring particle"
+     },
+     "ap": {
+      "kind": "gas.perturber_polarisability",
+      "unit": "m3",
+      "name": "how easily the neighbour's charge is pulled out of shape (polarisability volume)"
+     },
+     "e": {
+      "kind": "constant.e",
+      "unit": "C",
+      "name": "elementary charge"
+     },
+     "eps0": {
+      "kind": "constant.eps0",
+      "unit": "F m-1",
+      "name": "vacuum permittivity"
+     },
+     "a0": {
+      "kind": "constant.a0",
+      "unit": "m",
+      "name": "Bohr radius"
+     },
+     "h": {
+      "kind": "constant.h",
+      "unit": "J s",
+      "name": "Planck constant"
+     },
+     "c": {
+      "kind": "constant.c",
+      "unit": "m s-1",
+      "name": "speed of light"
+     },
+     "Rinf": {
+      "kind": "constant.R_inf",
+      "unit": "m-1",
+      "name": "Rydberg constant"
+     },
+     "k": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann constant"
+     },
+     "lindholm": {
+      "kind": "model.lindholm_coefficient",
+      "unit": "1",
+      "name": "number in the van der Waals width"
+     }
+    },
+    "outputs": {
+     "Cw": {
+      "kind": "gas.widening_per_density",
+      "unit": "m3 s-1",
+      "name": "damping added per perturbing particle per cubic metre, at the reference temperature"
+     },
+     "C6": {
+      "kind": "gas.interaction_constant",
+      "unit": "m6 s-1",
+      "name": "strength of the pull between the atom and a neighbour, falling as the sixth power of distance"
+     }
+    },
+    "source": {
+     "text": "Gray, D. F., The Observation and Analysis of Stellar Photospheres, 3rd edn",
+     "doi": "10.1017/CBO9781316036570",
+     "where": "chapter 11, van der Waals broadening"
+    },
+    "explain": {
+     "curious": "In a dense gas every atom is jostled by its neighbours, and each brush shifts its colour a little. The more crowded and the hotter the gas, the wider the line, which is why sodium paints broad dark wings across the light of dense, cool atmospheres.",
+     "science": "Unsöld's hydrogen-like estimate of the C6 interaction from the two levels' effective quantum numbers and the perturber's polarisability, and the Lindholm impact width γ6 = 17 v^(3/5) C6^(2/5) N at the mean relative speed."
+    },
+    "examples": [
+     {
+      "I": 8.233708609073828e-19,
+      "El": 0.0,
+      "lambda0": 5.88995e-07,
+      "T": 10000.0,
+      "ma": 3.8175410021560553e-26,
+      "mp": 6.646476989051294e-27,
+      "ap": 2.08e-31,
+      "Cw": 7.894075586385455e-15,
+      "C6": 6.641667953817183e-45
+     }
+    ]
+   }
   }
  ]
 }

@@ -11,11 +11,8 @@
   no globe.
 -->
 <script module lang="ts">
-  import type { ClimateSummary, SurfaceTile } from "../../../ui-contract/src/index.ts";
-  import type { AirFacts } from "../../../renderer/src/index.ts";
-  // Tiles take about a second to build; keep them per system and body for the page's life.
-  const cache = new Map<string, { tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null }>();
-  // The climate comes only when asked for (a quick survey, about half a second); kept the same way.
+  import type { ClimateSummary } from "../../../ui-contract/src/index.ts";
+  // The climate comes only when asked for (a quick survey, about half a second); kept per system and body.
   const climates = new Map<string, ClimateSummary>();
 </script>
 
@@ -24,13 +21,14 @@
   import { BODY_CONTROLS, GLOBE_LAT } from "./controls.ts";
   import { untrack } from "svelte";
   import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
-  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
   import ClimateWhy from "./ClimateWhy.svelte";
   import BodyTimeline from "./BodyTimeline.svelte";
   import BodyMag from "./BodyMag.svelte";
+  import { loadSurface, surfaceKept, type Surface } from "./surface.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -38,7 +36,7 @@
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
   const size = $derived(Math.round(Math.min(640, Math.max(160, Number(params.size_px ?? 320)))));
 
-  let got = $state<{ tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null } | null>(null);
+  let got = $state<Surface | null>(null);
   let loading = $state(false);
   let failed = $state<string | null>(null);
   let gen = 0;
@@ -49,38 +47,18 @@
     got = null;
     failed = null;
     if (!sub || sub.kind === "star") return;
-    const key = `${sys}|${sub.address}`;
-    const hit = cache.get(key);
+    const hit = surfaceKept(sys, sub.address);
     if (hit) {
       got = hit;
       return;
     }
     loading = true;
-    (async () => {
-      const r = await ctx.session.surfaceTiles(sys, sub.address);
+    void loadSurface(ctx, sys, sub.address).then((v) => {
       if (g !== gen) return;
-      if (!r.ok) {
-        loading = false;
-        failed = r.message;
-        return;
-      }
-      // The air the atmosphere pass draws: the kernel's surface pressure, temperature, gravity and gas mix.
-      const rs = await ctx.session.resolvedSystem(sys);
-      if (g !== gen) return;
-      const surf = rs.ok ? (rs.result.surfaces.find((x) => x.address === sub.address) as Parameters<typeof airFactsOf>[1]) : undefined;
-      const facts = rs.ok ? airFactsOf(rs.result.facts[sub.address], surf) : null;
-      // The optics themselves come from the kernel (light track, read_air_optics).
-      const req = facts ? airRequest(sub.address, facts) : null;
-      if (facts && req) {
-        const ao = await ctx.session.readAirOptics([req.air]);
-        if (g !== gen) return;
-        facts.optics = ao.ok && ao.airs[0] ? airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req) : null;
-      }
-      const v = { tiles: r.tiles, regime: r.regime, refused: r.refused.length, air: facts };
-      cache.set(key, v);
-      got = v;
       loading = false;
-    })();
+      if (typeof v === "string") failed = v;
+      else got = v;
+    });
   });
 
   // "Why?" for the climate (W7a): asked for, never fetched on a click of the world alone.
