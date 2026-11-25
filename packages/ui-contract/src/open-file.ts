@@ -2,10 +2,12 @@
 // open it. V3 named a wrong file ("this is a campaign, open it as one?"); SSE4 never asks which door to use.
 import { CAMPAIGN_SCHEMA, type CampaignSave } from "./campaign.ts";
 import { CLIP_VERSION } from "./clip.ts";
+import { POSTCARD_SCHEMA } from "./postcard.ts";
 
 export type FileKind =
   | "v4-campaign" // a campaign from Save campaign
   | "v4-clip" // bodies copied from a chart (Ctrl+C), saved as a file
+  | "v4-postcard" // a postcard (.ssepostcard.json): a place, a date and a camera, drawn live (track PC)
   | "v3-clip" // a clip from Star System Explorer 3
   | "v3-save" // a Star System Explorer 3 save: starmap.json, system.json or .sse.zip
   | "pack" // an sse.pack/1 document
@@ -48,6 +50,7 @@ export function sniffFile(name: string, text: string | null, bytes?: Uint8Array)
     const n = Array.isArray(doc.nodes) ? doc.nodes.length : 0;
     return { kind: "v4-clip", what: `${n === 1 ? "A body" : `${n} bodies`} copied from an SSE4 chart. It pastes into the system on the chart, on the Build desk.`, doc };
   }
+  if (doc.schema === POSTCARD_SCHEMA) return { kind: "v4-postcard", what: `A postcard${typeof doc.name === "string" ? `: ${doc.name}` : ""}. It opens as a visit, drawn live; nothing in this campaign changes.`, doc };
   if (doc.sseClip === 1) return { kind: "v3-clip", what: "A clip from Star System Explorer 3. V3 clips come in through the V3 importer, with the next part of paste.", doc };
   if (doc.format === "sse.pack/1") return { kind: "pack", what: `A pack: ${String(doc.title ?? doc.id ?? "untitled")}${doc.version ? ` ${String(doc.version)}` : ""}. Adding it shows every value it would change first.`, doc };
   if (doc.kind === "sse4-diagnostic") return { kind: "diagnostic", what: "A diagnostic file from Your data. Tars reads these; it opens nothing here.", doc };
