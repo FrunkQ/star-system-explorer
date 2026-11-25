@@ -28,6 +28,7 @@ pub mod saltation;
 pub mod settings;
 pub mod strengths;
 pub mod water;
+pub mod wind;
 
 pub use circulation::Circulation;
 pub use climate::{glance, orbit, Cache, Climate, Glance, Level};

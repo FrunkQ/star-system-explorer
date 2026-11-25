@@ -103,8 +103,18 @@ pub struct Climate {
     pub evap_m_yr: Vec<f64>,
     /// Annual condensation cloud cover, 0 to 1.
     pub cover: Vec<f64>,
-    /// Annual eastward wind near the ground, m/s (negative: from the east).
+    /// The thermal wind's near-ground share, m/s: the scale that steers
+    /// storms and carries heat round a band. Not the 10 m wind: that is
+    /// `wind10_m_s` with its spread `gust_m_s`.
     pub wind_m_s: Vec<f64>,
+    /// Annual mean eastward wind at 10 m, m/s (negative: from the east):
+    /// the circulation's prevailing wind.
+    #[serde(default)]
+    pub wind10_m_s: Vec<f64>,
+    /// Spread of each component of the 10 m wind about its mean (the
+    /// storms), m/s.
+    #[serde(default)]
+    pub gust_m_s: Vec<f64>,
     pub albedo: Vec<f64>,
     /// Each season's steady state at phase (k + ½) / n of the year.
     pub seasons: Vec<Season>,
@@ -224,7 +234,7 @@ pub fn orbit(cs: &ClimateSettings, c: &Conditions, epoch_myr: f64) -> Climate {
     if c.retrograde() {
         why.push("It spins backwards, so its winds and storms turn the other way.".into());
     }
-    Climate {
+    let mut out = Climate {
         key: key(c, Level::Orbit, epoch_myr),
         level: Level::Orbit,
         conditions: c.clone(),
@@ -237,6 +247,8 @@ pub fn orbit(cs: &ClimateSettings, c: &Conditions, epoch_myr: f64) -> Climate {
         evap_m_yr: annual.evap.iter().map(|x| x * to_m_yr).collect(),
         cover: annual.cover.clone(),
         wind_m_s: annual.wind_m_s.clone(),
+        wind10_m_s: vec![],
+        gust_m_s: vec![],
         albedo: annual.albedo.clone(),
         condensate: annual.condensate.clone(),
         seasons,
@@ -245,7 +257,9 @@ pub fn orbit(cs: &ClimateSettings, c: &Conditions, epoch_myr: f64) -> Climate {
         exchange,
         land,
         why,
-    }
+    };
+    (out.wind10_m_s, out.gust_m_s) = crate::wind::ten_metre(cs, &out);
+    out
 }
 
 impl Climate {
@@ -333,9 +347,27 @@ impl Climate {
         }
     }
 
-    /// Eastward wind near the ground at a latitude, m/s.
+    /// The thermal wind's near-ground share at a latitude, m/s.
     pub fn wind_at(&self, lat_deg: f64) -> f64 {
         self.lerp(&self.wind_m_s, lat_deg)
+    }
+
+    /// The 10 m wind at a latitude: mean eastward wind and the spread of
+    /// each component, m/s.
+    pub fn wind10_at(&self, lat_deg: f64) -> (f64, f64) {
+        if self.wind10_m_s.len() != self.lat_deg.len() {
+            return (0.0, 0.0);
+        }
+        (
+            self.lerp(&self.wind10_m_s, lat_deg),
+            self.lerp(&self.gust_m_s, lat_deg),
+        )
+    }
+
+    /// Mean wind speed at 10 m at a latitude, m/s.
+    pub fn speed10_at(&self, lat_deg: f64) -> f64 {
+        let (u, s) = self.wind10_at(lat_deg);
+        crate::wind::mean_speed(u, s)
     }
 
     /// Area-weighted mean of band values.

@@ -214,6 +214,11 @@ SURFACE = {
     "earth": (288.0, 1.014, "n2"),
     "mars": (214.0, 6.36e-3, "co2"),
     "pluto": (None, 13e-6, "n2"),
+    # The giants have no surface: NSSDCA's temperature at the 1 bar level.
+    "jupiter": (165.0, None, None),
+    "saturn": (134.0, None, None),
+    "uranus": (76.0, None, None),
+    "neptune": (72.0, None, None),
 }
 SURFACE_NOTES = {
     "mars": "average; NSSDCA prints ~214 K",
@@ -223,6 +228,10 @@ SURFACE_NOTES = {
     "earth_gas": "78.08% N2, 20.95% O2, dry air by volume",
     "mars_gas": "95.1% CO2, 2.59% N2, 1.94% Ar by volume",
     "pluto_gas": "99% N2, 0.5% CH4 by volume",
+    "jupiter": "temperature at the 1 bar level (no surface)",
+    "saturn": "temperature at the 1 bar level (no surface)",
+    "uranus": "temperature at the 1 bar level (no surface)",
+    "neptune": "temperature at the 1 bar level (no surface)",
 }
 BAR = 1e5
 

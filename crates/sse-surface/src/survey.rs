@@ -48,6 +48,11 @@ pub struct SurveyOptions {
     pub orbit_track: Option<sse_climate::forcing::OrbitTrack>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub moons: Vec<sse_climate::forcing::MoonPull>,
+    /// SOL5: the air's measured mix (volume fractions by lower-case
+    /// formula: `n2`, `co2`, ...), from the record's
+    /// `atmosphere.composition.*` facts; the default mix when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gases: Option<std::collections::BTreeMap<String, f64>>,
 }
 
 impl SurveyOptions {
@@ -56,6 +61,7 @@ impl SurveyOptions {
         sse_climate::Extra {
             rotation_hours,
             obliquity_deg: self.obliquity_deg,
+            gases: self.gases.clone(),
             ..Default::default()
         }
     }

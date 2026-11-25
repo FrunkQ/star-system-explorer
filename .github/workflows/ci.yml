@@ -151,6 +151,7 @@ jobs:
       - run: node tests/ui/tactile.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/your-systems.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/perf.e2e.mjs --screens ui-screens
+      - run: node tests/ui/enlarge.e2e.mjs
       - run: node tests/ui/ladder-gpu.e2e.mjs
       - run: node tests/ui/aurora.e2e.mjs --screens ui-screens
       - run: node tests/ui/composite.e2e.mjs --screens ui-screens
