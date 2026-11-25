@@ -71,6 +71,8 @@ export interface Workspace {
   /** The party's ship (party.ts): Voyages starts where it is, Land lands it. Kept with the campaign. */
   party?: import("./party.ts").PartyShip | null;
   setParty?(p: import("./party.ts").PartyShip | null): void;
+  /** "Could be…" suggestions the GM asked to stop, as "address#record" (ED10); kept with the campaign. */
+  could_quiet?: string[];
   /** The readings chosen by pressing a unit (figures.ts `withChoice`), per kind and scale class; kept with the campaign. */
   unit_choices?: import("./figures.ts").UnitChoices;
   /** Keep a reading for a kind and what it is about (null puts the scheme's back). */

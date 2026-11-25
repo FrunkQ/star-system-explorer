@@ -47,7 +47,8 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED13a part 2a a file: "Open a file" or drop a CSV on the system sheet's box; quoted cells, a byte-order mark and grouped thousands read | done | packages/ED13.md |
 | ED13a part 2b an ephemeris table (Horizons text); the measured-from, centred-on and true-on header | waits on kernel K17 | packages/ED13.md |
 | ED10 part 1 "Could be…": a line under a world's handles offers what it is not yet (`could_be` records in the handle sheet: a field of its own, locked to its star, turning freely; `couldBeNow`); pressing one works out the recipe on a scratch what-if (`recipeFor`: Reach it per named handle, smallest move first), each with "Do this" as one change | done | packages/ED10.md |
-| ED10 part 2 requirement profiles (Home to humans) as survivability bands, Pin it steps, "stop suggesting this", Curious-depth sentence; records in a pack; the GM-only "What does not add up" list | queued (profiles are ED10a with kernel K14) | packages/ED10.md |
+| ED10 part 2a "Stop suggesting this" per world, kept with the campaign (`could_quiet`); the Curious-depth sentence | done | packages/ED10.md |
+| ED10 part 2 rest: requirement profiles (Home to humans) as survivability bands, Pin it steps; records in a pack; the GM-only "What does not add up" list | queued (profiles are ED10a with kernel K14) | packages/ED10.md |
 | ED9 the Makeup box | waits on kernel K3 (a hand-made world's makeup reaching its physics; Sol's worlds carry no makeup facts) | |
 | ED11, ED10a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
