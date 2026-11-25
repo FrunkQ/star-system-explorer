@@ -212,3 +212,9 @@ How rows are counted: Proxima is counted unverified (its radius is verified, but
 | base-light `aurora` on `oi-5577` (CO2) | Knutsen, E. W. et al. 2025, Detection of visible-wavelength aurora on Mars, Sci. Adv. 11, eads1563. doi:10.1126/sciadv.ads1563 | green 557.7 nm on Mars, 101 ± 14 R | checked (visual polish citation check, section 15) | No measured yield; the CO2 yield is authored. |
 | Earth's upper air (sol-field.json) | US Standard Atmosphere 1976, NOAA-S/T 76-1562. https://ntrs.nasa.gov/citations/19770009539 | number density and mean molecular weight, 90 to 500 km | from memory | Values as tabulated; not re-fetched. |
 | `AuroraSettings` | Evans, D. S. 1974, J. Geophys. Res. 79, 2853. doi:10.1029/JA079i019p02853; Gustin, J. et al. 2004, Icarus 171, 336. doi:10.1016/j.icarus.2004.04.020 | auroral arc electrons of a few to about ten keV; Jupiter's main oval tens of keV | from memory | 8 keV and 50 keV are chosen within those ranges (F59). |
+
+## Air in True (track TA, visual polish VP-A)
+
+| Where | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| air-luts.ts, gpu-air-shell.ts (VP-A3) | Hillaire 2020, A Scalable and Production Ready Sky and Atmosphere Rendering Technique, Computer Graphics Forum 39(4), 13-22, doi 10.1111/cgf.14050 | transmittance table; multiple scattering as L2 / (1 - f_ms) with an isotropic phase, sampled over the sphere of directions (section 5.5) | verified (citation check of 24 Nov, `handover/design/SSE4-visual-polish-citation-check.md` item 2: checked, primary) | the second-order and f_ms integrals as in the paper; table sizes smaller than his PC settings (256 × 64 and 32 × 32) and said in the fudge register |

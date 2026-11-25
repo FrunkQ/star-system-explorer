@@ -100,9 +100,9 @@ export interface PlacedMark {
  * scale for both axes, so distances read true; a lone system sits in the middle. Returns the marks and the map units
  * per drawing unit (for a scale bar).
  */
-export function layoutSystems(list: readonly Pick<CampaignSystem, "system" | "position">[], size: number, margin = 40): { marks: PlacedMark[]; unitsPerPx: number } {
+export function layoutSystems(list: readonly Pick<CampaignSystem, "system" | "position">[], size: number, margin = 40): { marks: PlacedMark[]; unitsPerPx: number; centre: [number, number] } {
   const placed = list.filter((x): x is { system: string; position: MapPoint } => x.position !== null);
-  if (!placed.length) return { marks: [], unitsPerPx: 1 };
+  if (!placed.length) return { marks: [], unitsPerPx: 1, centre: [0, 0] };
   const xs = placed.map((p) => p.position.x);
   // A system above or below the plane is drawn lifted by its height (y up on the page), so both the foot of its
   // stalk and the system itself must fit.
@@ -116,6 +116,7 @@ export function layoutSystems(list: readonly Pick<CampaignSystem, "system" | "po
   return {
     marks: placed.map((p) => ({ system: p.system, px: size / 2 + (p.position.x - cx) * k, py: size / 2 - (p.position.y - cy) * k, pz: p.position.z * k })),
     unitsPerPx: span > 0 ? span / inner : 1,
+    centre: [cx, cy],
   };
 }
 
@@ -188,4 +189,22 @@ export function gridLines(size: number, step: number, mid = size / 2): number[] 
   const out: number[] = [];
   for (let v = mid - Math.floor(mid / step) * step; v <= size; v += step) out.push(v);
   return out;
+}
+
+/**
+ * A map layer's reach (OV3, a length such as 4 pc) in the campaign map's own units: parsecs or light years when the
+ * V3 map says which; null when the map's unit is unknown, and the caller says it reads the reach as map units.
+ */
+export function reachInMapUnits(reach: { value: number; unit: string }, mapUnit: string | null): number | null {
+  const pc: Record<string, number> = { pc: 1, kpc: 1000, ly: 1 / 3.26156 };
+  const from = pc[reach.unit];
+  const to = mapUnit ? pc[mapUnit] : undefined;
+  return from === undefined || to === undefined ? null : (reach.value * from) / to;
+}
+
+/** Where a held place sits on the campaign map: the position of the campaign system it lies in (null: not placed). */
+export function placeOnMap(place: string, list: readonly Pick<CampaignSystem, "system" | "position">[]): [number, number] | null {
+  const s = systemOf(place, list.map((x) => x.system));
+  const p = s ? list.find((x) => x.system === s)?.position : null;
+  return p ? [p.x, p.y] : null;
 }

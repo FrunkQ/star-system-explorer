@@ -333,6 +333,27 @@ impl Chronicle {
         ))
     }
 
+    /// The branch read as a main line: the prefix it was cut from, then its
+    /// own events, and no branches. For reads that take a whole chronicle
+    /// (a what-if's resolved system); nothing is committed.
+    pub fn branch_as_main(&self, branch: &ContentHash) -> Result<Chronicle, ChronicleError> {
+        let b = self
+            .branches
+            .get(branch)
+            .ok_or(ChronicleError::UnknownBranch(*branch))?;
+        let n = b.base as usize;
+        let mut c = Chronicle {
+            events: self.events[..n].to_vec(),
+            ids: self.events[..n].iter().map(|e| e.id).collect(),
+            heads: self.heads[..=n].to_vec(),
+            branches: BTreeMap::new(),
+        };
+        for e in &b.events {
+            c.append(e.clone())?;
+        }
+        Ok(c)
+    }
+
     pub fn branch_info(&self, branch: &ContentHash) -> Option<&Branch> {
         self.branches.get(branch)
     }
