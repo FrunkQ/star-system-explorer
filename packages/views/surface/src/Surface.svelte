@@ -21,7 +21,7 @@
 
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { constant, DEFAULT_VIEW, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { constant, DEFAULT_VIEW, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { airFactsOf, airFromOptics, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
@@ -312,9 +312,14 @@
   function skip() {
     toGround();
   }
-  /** Down: facing on along the way the lander came in (from the west), or where the GM is looking. */
+  /**
+   * Down: a few of its own heights west of the lander, facing it, so the ship that came down is in frame (LR6); or
+   * where the GM is standing.
+   */
+  const landerH = $derived(plan ? landerHeightOf(plan.lander.mass_kg) : 0);
   function toGround(pose?: LandingShow["pose"]) {
-    walk = pose ? { x: pose.x_m, y: pose.y_m, yaw: pose.yaw, pitch: pose.pitch } : { x: 0, y: 0, yaw: 0, pitch: -0.05 };
+    const back = Math.max(12, 3 * landerH);
+    walk = pose ? { x: pose.x_m, y: pose.y_m, yaw: pose.yaw, pitch: pose.pitch } : { x: -back, y: 0, yaw: 0, pitch: Math.atan2(landerH * 0.4 - eyeM, back) };
     phase = "down";
   }
   function takeOff() {
@@ -352,6 +357,16 @@
   let using = $state<"" | "gpu" | "canvas">("");
   let reason = $state("");
   let built = false;
+  // The lander drawn on the ground (LR6): what was last set, and for the page's marks whether its lamps are lit.
+  let landerSet = "";
+  let landerShown = $state<"" | "lit" | "dark">("");
+  /** A floodlamp's colour temperature (a warm white LED): a picture choice, fudge register "The lander on the ground". */
+  const LAMP_K = 4000;
+  // The lander's lamps (LR6): the GM's switch on the walk pad; lit only once the sun is near the horizon.
+  let lamps = $state(false);
+  let hullLight = 0;
+  /** The lit hull's brightness after the eye adapts to it: a mid grey (fudge register, "The lander on the ground"). */
+  const HULL_GREY = 0.35;
   $effect(() => {
     if (!canvas || using) return;
     if (String(params.tier ?? "auto") === "canvas") return void ((using = "canvas"), (reason = "canvas tier chosen"));
@@ -483,7 +498,7 @@
       phase: p,
       flight_s: flightS,
       ...(p === "flying" ? { fly_u: Math.round(flyU * 1000) / 1000 } : {}),
-      ...(p === "down" ? { pose: roundPose({ x_m: walk.x, y_m: walk.y, yaw: walk.yaw, pitch: walk.pitch, drone }) } : {}),
+      ...(p === "down" ? { pose: roundPose({ x_m: walk.x, y_m: walk.y, yaw: walk.yaw, pitch: walk.pitch, drone, lamps }) } : {}),
       sea: seaRead,
       hour_deg: Math.round(sunHour * 100) / 100,
       decl_deg: Math.round(sunDecl * 100) / 100,
@@ -524,6 +539,7 @@
       if (l.pose) {
         walk = { x: l.pose.x_m, y: l.pose.y_m, yaw: l.pose.yaw, pitch: l.pose.pitch };
         drone = l.pose.drone;
+        lamps = !!l.pose.lamps;
       }
       if (l.phase === "choose" && (phase === "flying" || phase === "down")) takeOff();
       // Keep pace with the GM's flight: a second or more apart, jump to where the GM is.
@@ -611,6 +627,18 @@
     const air = world.air;
     if (using === "gpu" && gpu) {
       buildMeshes();
+      // The lander where it touched down (LR6), on the ground there; its lamps lit once the sun is near the horizon.
+      const lights = lamps && sun[2] < 0.1;
+      const lk = phase === "down" && landerH > 0 ? `${landerH}|${lights}` : "";
+      if (lk !== landerSet) {
+        landerSet = lk;
+        const lamp = lights ? lampRadiance(landerH, world.host_lsun ?? 0, world.orbit_m ?? 0) : 0;
+        const c = linear(thermalColour(LAMP_K));
+        gpu.setLander(lk ? { at_m: [0, 0], ground_m: groundAt(0, 0).z, heading_deg: 0, height_m: landerH, lights: lamp > 0, lamp: [c[0] * lamp, c[1] * lamp, c[2] * lamp] } : null);
+        landerShown = lk ? (lamp > 0 ? "lit" : "dark") : "";
+        // A lit hull is the brightest large thing in view: the eye adapts to it (and the stars fade, as they do).
+        hullLight = lamp > 0 ? (LANDER_HULL_ALBEDO * lamp * LAMP_SPILL) / Math.PI : 0;
+      }
       gpu.draw({
         look,
         eye,
@@ -626,7 +654,7 @@
         radius_m: world.radius_m,
         sun_radius: world.sun_radius,
         // The eye adapts: a dark sky opens it up until the stars show (night-sky.ts).
-        exposure: (seenExposure = look === "true" ? adaptedExposure(6, { sun_z: sun[2], tau_green: air ? air.zenith_depth[1] : 0, radius_m: world.radius_m, scale_height_m: air?.scale_height_m ?? 8000 }) : 6),
+        exposure: (seenExposure = look === "true" ? Math.min(adaptedExposure(6, { sun_z: sun[2], tau_green: air ? air.zenith_depth[1] : 0, radius_m: world.radius_m, scale_height_m: air?.scale_height_m ?? 8000 }), hullLight > 0 ? HULL_GREY / hullLight : Infinity) : 6),
         ...(look === "true" && siteStars ? { stars: siteStars } : {}),
         ground: tok("--sse-ground"),
         ink: tok("--sse-ink"),
@@ -753,7 +781,7 @@
   {#if clock}<label>Local hours from now <input type="range" min="-12" max="12" step="0.25" bind:value={shift} data-hour /> <span data-local-time>{localTime}</span></label>{:else}<label>Time of day <input type="range" min="-100" max="100" step="1" bind:value={hour} data-hour /> <span data-local-time>{localTime}</span></label>{/if}
 {/snippet}
 
-<section class="surface" bind:this={host} data-surface data-watching={watching || undefined} data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""} data-stars={siteStars ? siteStars.dirs.length / 3 : 0} data-exposure={Math.round(seenExposure)}>
+<section class="surface" bind:this={host} data-surface data-watching={watching || undefined} data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""} data-stars={siteStars ? siteStars.dirs.length / 3 : 0} data-exposure={Math.round(seenExposure)} data-lander-drawn={landerShown || undefined}>
   {#if watching && !show}
     <p class="quiet" data-surface-waiting>Waiting for the game master to send a landing.</p>
   {:else if !subject || subject.kind === "star"}
@@ -846,6 +874,7 @@
           <button onpointerdown={() => press("ArrowDown", true)} onpointerup={() => press("ArrowDown", false)} onpointerleave={() => press("ArrowDown", false)} aria-label="Walk back">▼</button>
           <button onpointerdown={() => press("ArrowRight", true)} onpointerup={() => press("ArrowRight", false)} onpointerleave={() => press("ArrowRight", false)} aria-label="Turn right">▶</button>
           <label><input type="checkbox" bind:checked={drone} data-drone /> Drone</label>
+          <label title="The lander's floodlamps, lit once the sun is down"><input type="checkbox" bind:checked={lamps} data-lamps /> Lamps</label>
           {@render hourControls()}
           <button onclick={takeOff} data-take-off>Take off</button>
         </div>

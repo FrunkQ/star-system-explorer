@@ -5,8 +5,11 @@
 // the master data sheet, read by the caller; a haze's colour is the one the weather op sends. This file only stacks
 // the layers by the adding method (Bohren 1987), as weather.ts does on the Body globe.
 import { constant, sheetUnitFactor } from "../../ui-contract/src/index.ts";
-import type { SurfaceTile } from "../../ui-contract/src/index.ts";
+import type { Json, SurfaceTile } from "../../ui-contract/src/index.ts";
 import { trueSurface, type TrueTexture } from "./true-look.ts";
+import { readGroundOptics, withGround } from "./ground-optics.ts";
+import { airShapeOf, type AirShape } from "./air-luts.ts";
+import { airFactsOf, airFromOptics, airRequest } from "./atmosphere.ts";
 import { addLayers, CLOUD_G, HAZE_G, liveSystems, slabReflectance, stormAt, type WeatherCell, type WeatherMap, type WeatherSystem, type WeatherTile } from "./weather.ts";
 
 /** Linear RGB, 0..1. */
@@ -25,6 +28,16 @@ export interface AirLook {
   said: string[];
   /** The wind the picture is carried by (VP-A1), pixel for pixel; left out when the cells carry no wind. */
   flow?: AirFlow;
+  /** A world with ground: the ground alone (true-look.ts `trueSurface`'s own picture, with its faces), under its air. */
+  ground?: TrueTexture;
+  /**
+   * A world with ground: its clouds and haze alone (VP-A4), in the same layout. RGB is their own reflected light,
+   * premultiplied and sRGB-encoded as every TrueTexture is; alpha is their reflectance, so 1 - alpha reaches the
+   * ground. `tex` is the two laid together.
+   */
+  clouds?: TrueTexture;
+  /** The world's air in its own radius, from the kernel's optics (VP-A3), for the rim and terminator. */
+  air?: AirShape;
 }
 
 /**
@@ -119,7 +132,7 @@ const spacing = (n: number) => Math.sqrt((4 * Math.PI) / Math.max(1, n));
  * `equirect`). Each pixel blends the nearby cells with a Gaussian of half a cell, so the coarse tiles do not show
  * as blocks; each cell's own values are the kernel's.
  */
-function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, height: number, tint: Rgb | null, flow: AirFlow | null = null): TrueTexture {
+function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, height: number, tint: Rgb | null, flow: AirFlow | null = null, clouds: Uint8Array | null = null): TrueTexture {
   const data = new Uint8Array(width * height * 4);
   const sig = spacing(st.n) / 2;
   const inv = 1 / (2 * sig * sig);
@@ -179,6 +192,19 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
         if (!(r > 0)) continue;
         for (let ch = 0; ch < 3; ch++) lin[ch] = addLayers(r * (acc[k * 4 + 1 + ch]! / ws), lin[ch]!);
       }
+      if (clouds) {
+        // The air alone, over black: its own reflected light (premultiplied) and how much it covers.
+        const c: Rgb = [0, 0, 0];
+        for (let k = 0; k < st.slots; k++) {
+          const r = acc[k * 4]! / ws;
+          if (!(r > 0)) continue;
+          for (let ch = 0; ch < 3; ch++) c[ch] = addLayers(r * (acc[k * 4 + 1 + ch]! / ws), c[ch]!);
+        }
+        clouds[o] = toByte(c[0]);
+        clouds[o + 1] = toByte(c[1]);
+        clouds[o + 2] = toByte(c[2]);
+        clouds[o + 3] = Math.round(255 * Math.min(1, (c[0] + c[1] + c[2]) / 3));
+      }
       data[o] = toByte(lin[0]);
       data[o + 1] = toByte(lin[1]);
       data[o + 2] = toByte(lin[2]);
@@ -227,7 +253,9 @@ export function withAir(ground: TrueTexture, tiles: readonly WeatherTile[], colo
   if (!cells.length) return { tex: ground, said: [] };
   const st = stackOf(cells, colourOf);
   const g = (o: number): Rgb => [toLin(ground.data[o]!), toLin(ground.data[o + 1]!), toLin(ground.data[o + 2]!)];
-  return { tex: paint(st, g, ground.width, ground.height, tint), said: words(st, false) };
+  const c = new Uint8Array(ground.width * ground.height * 4);
+  const tex = paint(st, g, ground.width, ground.height, tint, null, c);
+  return { tex, said: words(st, false), ground, clouds: { width: ground.width, height: ground.height, data: c, mean: [0, 0, 0] } };
 }
 
 // ------------------------------------------------------------------ the picture carried by its winds (VP-A1)
@@ -439,6 +467,27 @@ export async function readAirTiles(k: AirReader, system: string, body: string, o
 export interface FaceReader extends AirReader {
   surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: unknown[] } | { ok: false; message: string }>;
   campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; message: string }>;
+  /** For the air's rim (VP-A3); a reader without them draws no air shell. */
+  resolvedSystem?(system: string): Promise<{ ok: true; result: { surfaces: { address: string }[]; facts: Record<string, Record<string, Json>> } } | { ok: false; message: string }>;
+  readAirOptics?(airs: Json[]): Promise<{ ok: true; airs: Json[] } | { ok: false; message: string }>;
+}
+
+/**
+ * A world's air in its own radius for the rim and terminator in True (VP-A3): its surface pressure, temperature,
+ * gravity and gases from `resolved_system`, its optics from `read_air_optics`, as the Body globe reads them. A string
+ * says why there is none (no air, or a reader without those doors).
+ */
+export async function readTrueAir(k: FaceReader, system: string, body: string): Promise<AirShape | string> {
+  if (!k.resolvedSystem || !k.readAirOptics) return "this view cannot read the air";
+  const rs = await k.resolvedSystem(system);
+  if (!rs.ok) return rs.message;
+  const surf = rs.result.surfaces.find((x) => x.address === body) as Parameters<typeof airFactsOf>[1];
+  const facts = airFactsOf(rs.result.facts[body], surf);
+  const req = facts ? airRequest(body, facts) : null;
+  if (!facts || !req) return "no air";
+  const ao = await k.readAirOptics([req.air]);
+  if (!ao.ok || !ao.airs[0]) return ao.ok ? "no optics" : ao.message;
+  return airShapeOf(airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req), facts.radius_m);
 }
 
 /**
@@ -448,14 +497,17 @@ export interface FaceReader extends AirReader {
  */
 export async function readTrueFace(k: FaceReader, system: string, body: string): Promise<AirLook | string> {
   const s = await k.surfaceTiles(system, body);
-  const ground = s.ok ? trueSurface(s.tiles) : null;
+  // Bare ground in its measured colour where the kernel weathers it (ground-optics.ts, VP3 part 5).
+  const ground = s.ok ? trueSurface(s.tiles.some((t) => t.maturity) ? withGround(s.tiles, await readGroundOptics(k)) : s.tiles) : null;
   const groundWhy = s.ok ? String((s.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : s.message;
   const now = await k.campaignNow();
   const at_s = now.ok && now.at_s !== undefined ? Number(now.at_s) : undefined;
   const air = await readAirTiles(k, system, body, { ...(at_s !== undefined ? { at_s, day: at_s / constant("day") } : {}) });
-  if (!air.ok) return ground ? { tex: ground, said: [`Its clouds are not shown: ${air.message}`] } : groundWhy;
+  const gas = ground ? await readTrueAir(k, system, body) : null;
+  const withGas = <T extends AirLook>(l: T): T => (gas && typeof gas !== "string" ? { ...l, air: gas } : l);
+  if (!air.ok) return ground ? withGas({ tex: ground, ground, said: [`Its clouds are not shown: ${air.message}`] }) : groundWhy;
   const colours = sheetColours(await readSheetSubstances(k));
-  if (ground) return withAir(ground, air.tiles, colours);
+  if (ground) return withGas(withAir(ground, air.tiles, colours));
   const giant = trueGiant(air.tiles, colours);
   if (!giant) return groundWhy;
   if (giant.flow) {

@@ -17,6 +17,7 @@ fn logs() -> BTreeMap<String, FlightLog> {
         .flat_map(|d| std::fs::read_dir(d).unwrap())
         .map(|e| e.unwrap().path())
         .filter(|p| p.extension().is_some_and(|x| x == "json"))
+        .filter(|p| p.file_name().is_some_and(|n| n != "index.json"))
         .collect();
     names.sort();
     let mut out = BTreeMap::new();
@@ -452,4 +453,278 @@ fn stations_and_crewed_flights_have_logs() {
         State::Landed { lon_deg, .. } => assert!((lon_deg + 106.4).abs() < 0.5, "White Sands"),
         s => panic!("STS-3 ends {s:?}"),
     }
+}
+
+/// RS9: everyone who has been to space (`crews.json`, from McDowell's lists by
+/// `scripts/spaceflight/build_crews.py`). Every leg aboard a craft with a log
+/// falls while that log has the craft flying, Apollo 11's crew are where they
+/// were on 20 July 1969, and the step count of people in space agrees with the legs.
+#[test]
+fn crews_ride_the_craft_their_logs_fly() {
+    let path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today/crews.json");
+    let crews: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    let all = logs();
+    let sys = sol();
+    let people = crews["people"].as_array().unwrap();
+    assert!(people.len() >= 780, "{} people", people.len());
+    let mut ids = std::collections::BTreeSet::new();
+    for p in people {
+        assert!(ids.insert(p["id"].as_str().unwrap()), "{} twice", p["id"]);
+    }
+    let legs = crews["aboard"].as_array().unwrap();
+    let mut on_log = 0;
+    let mut outside = Vec::new();
+    for l in legs {
+        assert!(
+            ids.contains(l["person"].as_str().unwrap()),
+            "{} has no person",
+            l["person"]
+        );
+        let from = l["from_s"].as_i64().unwrap();
+        let to = l["to_s"].as_i64().unwrap_or(from + 86_400);
+        assert!(to > from, "{l}");
+        if let Some(on) = l["on"].as_str() {
+            let log = all.get(on).unwrap_or_else(|| panic!("{on}: no log"));
+            on_log += 1;
+            let kind = log.at(from + (to - from) / 2, &sys).kind;
+            if kind == "before" || kind == "gone" || kind == "unlogged" {
+                outside.push(format!("{} on {on}: {kind}", l["person"]));
+            }
+        }
+    }
+    assert!(on_log >= 3_000, "{on_log} legs on a pack log");
+    // A log's dates come from GCAT, the legs from McDowell's crew lists: they should all agree.
+    assert!(
+        outside.len() <= 30,
+        "{} legs outside their craft's log: {:?}",
+        outside.len(),
+        &outside[..outside.len().min(30)]
+    );
+    // 20 July 1969, 20:17 UTC: Armstrong and Aldrin in Eagle on the Moon, Collins in Columbia.
+    let landing = 63_115_200_000 - 11_122 * 86_400 + 8 * 3_600 + 17 * 60 + 40;
+    let mut up: Vec<(&str, &str)> = legs
+        .iter()
+        .filter(|l| {
+            l["from_s"].as_i64().unwrap() <= landing
+                && l["to_s"].as_i64().is_none_or(|t| landing < t)
+        })
+        .map(|l| {
+            (
+                l["person"].as_str().unwrap(),
+                l["on"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    up.sort();
+    eprintln!("{} legs outside their craft's log", outside.len());
+    assert_eq!(
+        up,
+        vec![
+            ("AS-00030", "apollo-11-eagle"),
+            ("AS-00033", "apollo-11"),
+            ("AS-00036", "apollo-11-eagle")
+        ],
+        "who was in space as Eagle landed"
+    );
+    // The step list says how many were up at each change; it agrees with the legs and peaks at 20.
+    let steps = crews["in_space"].as_array().unwrap();
+    let mut peak = 0;
+    for s in steps.iter().step_by(37) {
+        let t = s[0].as_i64().unwrap();
+        let n = legs
+            .iter()
+            .filter(|l| {
+                l["reached_space"] != false
+                    && l["from_s"].as_i64().unwrap() <= t
+                    && l["to_s"].as_i64().is_none_or(|e| t < e)
+            })
+            .count() as i64;
+        assert_eq!(s[1].as_i64().unwrap(), n, "count at {t}");
+    }
+    for s in steps {
+        peak = peak.max(s[1].as_i64().unwrap());
+    }
+    assert_eq!(peak, 20, "most people in space at once");
+    // Those killed in flight: Soyuz 1, X-15 3-65, Soyuz 11, Challenger and Columbia.
+    let lost = people
+        .iter()
+        .filter(|p| p["died_in_flight"] == true)
+        .count();
+    assert_eq!(lost, 19, "died in flight");
+    // Short flights carry their peak height, so the pack's edge of space (100 km by default) can mark the flights
+    // that reached McDowell's 80 km but not 100: Michael Adams's X-15 flight 3-65-97 peaked at 81.07 km.
+    assert_eq!(crews["edge_of_space_km"], 100);
+    let peaks: Vec<f64> = legs.iter().filter_map(|l| l["peak_km"].as_f64()).collect();
+    assert!(
+        peaks.len() >= 120,
+        "{} short flights with a height",
+        peaks.len()
+    );
+    assert!(
+        peaks.iter().all(|p| (80.0..250.0).contains(p)),
+        "heights between 80 and 250 km"
+    );
+    assert!(
+        legs.iter()
+            .any(|l| l["craft"].as_str().is_some_and(|c| c.contains("3-65"))
+                && l["peak_km"].as_f64() == Some(81.07)),
+        "Adams, 81.07 km"
+    );
+}
+
+/// RS9 part 2: In memory (`in-memory.json`). Every loss has at least two
+/// sources and one sentence; everyone it names is a person whose death points
+/// back at it; no toll is smaller than the names given; and Challenger's crew,
+/// who never reached space, are not counted in space.
+#[test]
+fn in_memory_names_only_what_two_sources_give() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today");
+    let read = |f: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(dir.join(f)).unwrap()).unwrap()
+    };
+    let (mem, crews) = (read("in-memory.json"), read("crews.json"));
+    let people: BTreeMap<&str, &serde_json::Value> = crews["people"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|p| (p["id"].as_str().unwrap(), p))
+        .collect();
+    let losses = mem["losses"].as_array().unwrap();
+    assert!(losses.len() >= 17, "{} losses", losses.len());
+    let mut by_during = BTreeMap::new();
+    for l in losses {
+        let id = l["id"].as_str().unwrap();
+        assert!(
+            l["sources"].as_array().unwrap().len() >= 2,
+            "{id}: two sources"
+        );
+        assert!(
+            !l["sentence"].as_str().unwrap().is_empty(),
+            "{id}: a sentence"
+        );
+        let during = l["during"].as_str().unwrap();
+        assert!(
+            ["flight", "training", "ground_test", "ground_work"].contains(&during),
+            "{id}: {during}"
+        );
+        *by_during.entry(during.to_string()).or_insert(0) += 1;
+        let named =
+            l["people"].as_array().unwrap().len() + l["names"].as_array().map_or(0, |n| n.len());
+        let low = l["toll"]
+            .as_i64()
+            .or_else(|| l["toll"][0].as_i64())
+            .unwrap();
+        assert!(
+            low as usize >= named,
+            "{id}: toll {low} under {named} named"
+        );
+        assert!(
+            low as usize == named || l["unconfirmed"].is_string(),
+            "{id}: more dead than names needs words"
+        );
+        for p in l["people"].as_array().unwrap() {
+            let p = people[p.as_str().unwrap()];
+            assert_eq!(p["death"]["loss"], l["id"], "{}", p["id"]);
+            assert!(p["death"]["sources"].as_array().unwrap().len() >= 2);
+        }
+    }
+    assert_eq!(
+        by_during["flight"], 6,
+        "Soyuz 1, X-15, Soyuz 11, Challenger, Columbia, VSS Enterprise"
+    );
+    assert!(by_during["training"] >= 7 && by_during["ground_work"] >= 3);
+    // On 28 January 1986, a minute after launch, nobody was in space: Challenger never got there.
+    let t = losses
+        .iter()
+        .find(|l| l["id"] == "challenger-1986")
+        .unwrap()["at_s"]
+        .as_i64()
+        .unwrap();
+    let steps = crews["in_space"].as_array().unwrap();
+    let n = steps
+        .iter()
+        .take_while(|s| s[0].as_i64().unwrap() <= t - 30)
+        .last()
+        .unwrap()[1]
+        .as_i64()
+        .unwrap();
+    assert_eq!(n, 0, "in space as Challenger flew");
+}
+
+/// `logs/index.json` lists every log once, with its path, GCAT id and span, so
+/// a viewer can fetch only the logs it needs (written by build_crews.py).
+#[test]
+fn the_log_index_lists_every_log() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today/logs");
+    let index: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(dir.join("index.json")).unwrap()).unwrap();
+    let all = logs();
+    let rows = index["logs"].as_array().unwrap();
+    assert_eq!(rows.len(), all.len(), "one row per log");
+    for r in rows {
+        let id = r["construct"].as_str().unwrap();
+        let l = &all[id];
+        let text = std::fs::read_to_string(dir.join(r["path"].as_str().unwrap())).unwrap();
+        assert!(text.contains(id), "{id}: path");
+        assert_eq!(
+            r["from_s"].as_i64().unwrap(),
+            l.pieces[0].from_s,
+            "{id}: from"
+        );
+        assert_eq!(
+            r["to_s"].as_i64(),
+            l.pieces.last().unwrap().to_s,
+            "{id}: to"
+        );
+    }
+}
+
+#[test]
+fn memorials_are_real_with_two_sources() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today");
+    let read = |f: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(dir.join(f)).unwrap()).unwrap()
+    };
+    let (mem, crews) = (read("memorials.json"), read("crews.json"));
+    let dead: BTreeMap<&str, &serde_json::Value> = crews["people"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|p| p.get("death").is_some())
+        .map(|p| (p["id"].as_str().unwrap(), p))
+        .collect();
+    let list = mem["memorials"].as_array().unwrap();
+    assert!(list.len() >= 21, "{} memorials", list.len());
+    for m in list {
+        let id = m["id"].as_str().unwrap();
+        assert!(
+            m["sources"].as_array().unwrap().len() >= 2,
+            "{id}: two sources"
+        );
+        let people = m["people"].as_array().unwrap();
+        assert!(!people.is_empty(), "{id}: names someone");
+        for p in people {
+            assert!(
+                dead.contains_key(p.as_str().unwrap()),
+                "{id}: {p} is in memory"
+            );
+        }
+        assert_eq!(m["kind"], "named_small_body", "{id}");
+        let el = &m["where"]["elements"];
+        let (a_au, e) = (
+            el["a_m"].as_f64().unwrap() / 1.495_978_707e11,
+            el["e"].as_f64().unwrap(),
+        );
+        // Every one of these is a main-belt or near-Earth asteroid on a bound orbit.
+        assert!(
+            (1.0..3.5).contains(&a_au) && (0.0..1.0).contains(&e),
+            "{id}: a {a_au} au, e {e}"
+        );
+    }
+    let scobee = list.iter().find(|m| m["where"]["mpc"] == "3350").unwrap();
+    assert_eq!(scobee["name"], "3350 Scobee");
+    let a = scobee["where"]["elements"]["a_m"].as_f64().unwrap() / 1.495_978_707e11;
+    assert!((a - 2.311).abs() < 0.01, "3350 Scobee at {a} au");
 }
