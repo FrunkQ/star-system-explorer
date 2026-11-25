@@ -35,6 +35,19 @@ Khare's Table I was read from the text layer of the HITRAN aerosol archive's PDF
 | mixture `hematite` (Fe2O3, the ferric oxide the plumes thread asked for) | n,k at 13 wavelengths from 250 to 1000 nm; orientation not stated | Sokolik and Toon 1999, JGR 104(D8), 9423, read from the Waterloo NPSG files riHm.txt and ecHm.txt (1 nm steps, 212 to 1001 nm) |
 | mixtures `jsc-mars-1`, `mms-2`, `mgs-1` (Mars dust and soil simulants) | k at 15 wavelengths from 250 to 2000 nm; n is held at 1.5 (assumed, as in the paper) | Martikainen et al. 2023, ApJS 268, 47, Table 3 (irregular-grain shape GRS1). The note on each row also gives the airborne Martian dust of Wolff et al. 2009, read through Dabrowska et al. 2015 Table 1: k about 0.01 at 488 nm and 0.001 to 0.002 at 647 nm, darker than the simulants. |
 
+## Ground reflectance (25 Nov, for True's ground colour)
+
+Alex saw a brown Moon: base-surface typed a beige "regolith" colour. The sheet now holds measured reflectance in a new shape, `optical.reflectance = {kind table, lambda_nm, r, quantity "reflectance factor", i_deg 30, e_deg 0, maturity, maturity_index?, src, check}`. Readers interpolate linearly and hold the ends. The detail ladder thread samples it at 450, 550 and 650 nm, and draws R_fresh × factor^(maturity/255) from the proven core's space-weathering block.
+
+| Id | Sample | Maturity (Is/FeO) | Source |
+|---|---|---|---|
+| `lunar-soil-mature-highland` | Apollo 16 soil 62231, 415 to 1000 nm | mature (the paper's word) | Pieters 1999, Clementine calibration standard, Table 2 |
+| `lunar-soil-mature-mare` | Apollo 11 soil 10084, 400 to 1000 nm | 88 | LSCC spectra at RELAB (Taylor et al. 2001); Is/FeO via Wu et al. 2024 Table 1 |
+| `lunar-soil-submature-mare` | Apollo 17 soil 71501 | 44 | same |
+| `lunar-soil-immature-mare` | Apollo 12 soil 12030 | 20 | same |
+
+Still to come: an immature highland soil (the RELAB LSCC page also lists Apollo 16 files 61221 and 67461; their maturity was not found), and a reflectance row for each other cover material. The base-surface pack names which row each cover material reads.
+
 ## Waiting, same shape
 
 | Wanted | By | Lead | Blocker |

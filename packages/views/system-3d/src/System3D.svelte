@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
+  import { basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape } from "../../../renderer/src/index.ts";
   import { constant, SEEN_ELEVATION, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { rangeRingLines } from "./range-rings.ts";
@@ -35,6 +35,7 @@
     onturned,
     trueLook = false,
     surfaces = new Map(),
+    airs = new Map(),
     starColour = "",
     trueNote = "",
     realScale = false,
@@ -60,6 +61,8 @@
     trueLook?: boolean;
     /** True look: each world's surface by body id, as far as it has been read. */
     surfaces?: ReadonlyMap<string, TrueTexture>;
+    /** True look: each world's air, by body id (renderer true-air.ts `readTrueFace`): its clouds alone, drawn over its ground, and its air's rim (VP-A3, VP-A4). */
+    airs?: ReadonlyMap<string, { ground?: TrueTexture; clouds?: TrueTexture; air?: AirShape }>;
     /** True look: the star's colour (its surface temperature's, as a CSS colour). */
     starColour?: string;
     /** True look: what is still being read, said under the chart. */
@@ -466,7 +469,8 @@
             const emit = mag ? (isStar ? 0.35 : magShapes.has(b.id) ? 0.18 : 0.08) : trueBand === "infrared" ? thermalGrey(b.t_k ?? 0, starK) : trueBand === "xray" && !isStar ? 0 : undefined;
             // The body's face from the one door every True view uses (renderer true-body.ts): surface, rings, and
             // whatever looks other builders hook in there.
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(t ? { surface: t } : {}), ...(b.rings && emit === undefined ? { rings: b.rings } : {}), pole: poleOf(b.tilt_rad), ...(face ? { face } : {}) });
+            const a = airs.get(b.id);
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(b.rings && emit === undefined ? { rings: b.rings } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}) });
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}) };
           });
         gpu.draw({
