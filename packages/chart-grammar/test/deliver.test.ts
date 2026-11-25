@@ -54,4 +54,27 @@ test("a page follows the finger about its spine and turns past a third, or on a 
   assert.ok(turnCommits(turnDrag(-250, 600), 0), "past a third");
   assert.ok(!turnCommits(turnDrag(-60, 600), 0.1), "short and slow settles back");
   assert.ok(turnCommits(turnDrag(-60, 600), -1.2), "a flick turns");
+  assert.ok(!turnCommits(turnDrag(-250, 600), 1.2), "a flick back lays it down again");
+});
+
+test("the paper curls from its bottom outer corner, keeping its area, and is over at the end", async () => {
+  const { curlAt, polyArea, easeTurn } = await import("../src/page-turn.ts");
+  const W = 600;
+  const H = 800;
+  const flat = curlAt(0, W, H);
+  assert.equal(flat.flap.length, 0, "nothing lifted at the start");
+  assert.ok(Math.abs(polyArea(flat.keep) - W * H) < 1);
+  const early = curlAt(0.15, W, H, easeTurn(0.15));
+  assert.ok(early.flap.length > 2, "the corner has lifted");
+  // The bottom outer corner goes first: the top right is still flat.
+  const top = early.keep.some(([x, y]) => x > W - 1 && y < 1);
+  assert.ok(top, "the top outer corner still lies flat");
+  for (const u of [0.2, 0.5, 0.8]) {
+    const c = curlAt(u, W, H, easeTurn(u));
+    // Folding over a straight line keeps the paper's area: the flat part and the flap make the whole sheet.
+    const lifted = polyArea(c.flap);
+    assert.ok(Math.abs(polyArea(c.keep) + lifted - W * H) < 1, `area kept at ${u}`);
+  }
+  const over = curlAt(1, W, H, 1);
+  assert.equal(over.keep.length, 0, "nothing of the old page left flat at the end");
 });

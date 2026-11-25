@@ -98,12 +98,17 @@ export const DELIVERIES: Record<DeliveryKind, DeliveryInfo> = {
   static_burst: { kind: "static_burst", words: "Static burst", says: "A burst of static, and the picture underneath.", ms: 600, short_ms: 240, scales: ["screen"], exits: true, enters: true },
   dissolve_blocks: { kind: "dissolve_blocks", words: "Dissolve in blocks", says: "The picture appears block by block.", ms: 800, short_ms: 300, scales: ["screen"], exits: true, enters: true },
   slide: { kind: "slide", words: "Slide", says: "Parts ease up into place.", ms: 450, short_ms: 220, scales: ["screen", "parts"], exits: true, enters: true },
-  page_turn: { kind: "page_turn", words: "Page turn", says: "The sheet lifts from its outer edge and swings over with a moving shadow.", ms: 260, short_ms: 260, scales: ["screen"], exits: false, enters: true },
+  page_turn: { kind: "page_turn", words: "Page turn", says: "The paper curls over from its bottom outer corner, as if leafed by hand, showing its pale back and casting a soft shadow.", ms: 700, short_ms: 700, scales: ["screen"], exits: false, enters: true },
   iris: { kind: "iris", words: "Iris", says: "A circle opens from the middle.", ms: 700, short_ms: 260, scales: ["screen"], exits: true, enters: true },
 };
 
 /** Turn is never longer than this, so stepping through pages is never a wait (11A.4a rule 2). */
 export const TURN_MAX_MS = 400;
+/**
+ * Page turn alone may take longer (Alex, 25 Nov: "have the paper curl as you turn it - less mechanical - like you are
+ * leafing through it"; atlas design 14A note 5: about 0.7 s). It is still never a wait: a tap finishes it at once.
+ */
+export const PAGE_TURN_MAX_MS = 800;
 /** Under reduced motion every delivery is this plain fade (rule 3). */
 export const REDUCED_FADE_MS = 150;
 /** No delivery longer than this, whatever a look says. */
@@ -153,7 +158,7 @@ export function resolveDelivery(look: LookDelivery | undefined, moment: Moment, 
 function plan(d: Delivery, moment: Moment, exit: boolean, short: boolean, back = false): DeliveryPlan {
   const info = DELIVERIES[d.kind];
   let ms = clampMs(short ? (d.short_ms ?? info.short_ms) : (d.ms ?? info.ms));
-  if (moment === "turn") ms = Math.min(ms, TURN_MAX_MS);
+  if (moment === "turn") ms = Math.min(ms, d.kind === "page_turn" ? PAGE_TURN_MAX_MS : TURN_MAX_MS);
   const scale = d.scale && info.scales.includes(d.scale) ? d.scale : info.scales[0]!;
   const dir: Direction = d.direction ?? (d.kind === "wipe" || d.kind === "slide" ? (d.kind === "slide" ? "up" : "right") : "down");
   const out: DeliveryPlan = {

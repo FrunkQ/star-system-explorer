@@ -22,5 +22,6 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 ## AT15a screen delivery (from 24 Nov 20:19)
 | Package | State | Log |
 |---|---|---|
-| AT15a part 1: deliveries data, player (three scales), looks carry them, players' screen powers on, arrives and powers off | done (PR below) | packages/AT15a.md |
-| AT15a part 2: Turn on the Atlas page (atlas thread wires it), Leave, drag page turn, look card row, Orac | next | packages/AT15a.md |
+| AT15a part 1: deliveries data, player (three scales), looks carry them, players' screen powers on, arrives and powers off; drag page turn; Open in the Atlas | done (PR 483) | packages/AT15a.md |
+| AT15a part 1b: the paper curl (Alex 25 Nov 01:41), `curlTurn` and the curl carried by hand; Page turn up to 800 ms | done (PR after 483) | packages/AT15a.md |
+| AT15a part 2: Turn on the Atlas page (atlas thread wires it with `curlTurn`), Leave, look card row, Orac | next | packages/AT15a.md |

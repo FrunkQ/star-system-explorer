@@ -1,7 +1,7 @@
 // Screen delivery (atlas design 11A.4a, AT15a): the five moments, the short form, reduced motion, the checks.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DELIVERIES, DELIVERY_KINDS, MOMENTS, STARTER_DELIVERIES, TURN_MAX_MS, checkLookDelivery, planMs, resolveDelivery } from "../src/delivery.ts";
+import { DELIVERIES, DELIVERY_KINDS, MOMENTS, PAGE_TURN_MAX_MS, STARTER_DELIVERIES, TURN_MAX_MS, checkLookDelivery, planMs, resolveDelivery } from "../src/delivery.ts";
 
 test("Hauler warms up then builds up on power on, builds up on arrival, collapses to a dot on power off", () => {
   const h = STARTER_DELIVERIES.hauler;
@@ -48,6 +48,10 @@ test("a moment left out arrives by fade and leaves with nothing; a wrong-way del
 
 test("stepping back turns the page the other way", () => {
   assert.equal(resolveDelivery(STARTER_DELIVERIES.paper, "turn").kind, "page_turn");
+  // The paper curl takes about 0.7 s (Alex, 25 Nov); only Page turn may pass the 0.4 s Turn limit.
+  assert.equal(resolveDelivery(STARTER_DELIVERIES.paper, "turn").ms, 700);
+  assert.equal(resolveDelivery({ turn: { kind: "page_turn", short_ms: 3000 } }, "turn").ms, PAGE_TURN_MAX_MS);
+  assert.equal(resolveDelivery({ turn: { kind: "wipe", short_ms: 700 } }, "turn").ms, TURN_MAX_MS);
   const fwd = resolveDelivery({ turn: { kind: "wipe", direction: "right" } }, "turn");
   const back = resolveDelivery({ turn: { kind: "wipe", direction: "right" } }, "turn", { back: true });
   assert.equal(fwd.direction, "right");

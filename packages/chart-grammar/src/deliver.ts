@@ -180,6 +180,9 @@ export function playDelivery(node: HTMLElement, given: DeliveryPlan): Playing {
   let plan = given;
   if (reduced() && plan.kind !== "none") plan = { ...plan, kind: "fade", ms: Math.min(plan.ms, 150), scale: "screen", then: undefined };
   if (plan.kind === "none" || plan.ms <= 0 || typeof node.animate !== "function") return { finish() {}, done: Promise.resolve() };
+  // The paper curl itself is curlTurn (page-turn.ts), which needs the old page to peel; a page that just arrives with
+  // a Page turn plan gets the quick swing instead.
+  if (plan.kind === "page_turn") plan = { ...plan, ms: Math.min(plan.ms, 300) };
 
   const anims: Animation[] = [];
   const overlays: HTMLElement[] = [];
