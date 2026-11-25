@@ -36,7 +36,7 @@ draft mix from the Air box). Read-only; nothing is written or refused. Reply `ad
   `atmosphere.composition.<gas>` authored facts (lower case; a list summing past 1.5 is read as percent), so the
   advice reads an imported air as hand-set. V3's own atmosphere-reaction rules, if it has any, are **unchecked**:
   V3's source is only on Alex's PC.
-- Contract case appended (`tests/contract/requests.json`, Earth-like air on `u:rs4/sys:0/planet:9`).
+- Contract case in the climate area (`tests/contract/areas/climate.json`, golden `tests/golden/areas/climate.jsonl`; Earth-like air on `u:atmos/sys:0/planet:9`). It moved there from the core when the golden split closed `requests.json` (GS2).
 
 ## Checks (`crates/sse-kernel/src/atmos_tests.rs`)
 - Earth as catalogued: methane with oxygen is the clash (about 9 years); oxygen does not come from the rock; the
