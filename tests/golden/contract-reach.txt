@@ -170,9 +170,11 @@ G cannot_follow {"block":"sse.light.eye_lobe","why":"computed or fitted with the
 G cannot_follow {"block":"sse.light.halo","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.limb_temperature","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.magnetopause_radius","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.light.particle_albedo","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.rainbow","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.reflected_area","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.reflected_limb","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.light.slab_reflectance","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.srgb_encode","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.stellar_wind","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.magnetic.dynamo_density","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
@@ -195,6 +197,7 @@ G cannot_follow {"block":"sse.range.burst_fluence","why":"computed or fitted wit
 G cannot_follow {"block":"sse.range.hit_odds","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.range.impact_fluence","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.range.reading","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.shape.spin_flattening","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.shield.air_dose","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.shield.cutoff","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.shield.ground_share","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}

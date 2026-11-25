@@ -8,9 +8,27 @@
   `data-deliver-item`, and prose and figures are marked `data-deliver-text`.
 -->
 <script lang="ts">
-  import type { AtlasPage, Block } from "../../../ui-contract/src/index.ts";
+  import type { Snippet } from "svelte";
+  import type { AtlasPage, Block, FactRow } from "../../../ui-contract/src/index.ts";
 
-  let { page, onlink, footer = "", onturnaway }: { page: AtlasPage; onlink: (address: string) => void; footer?: string; onturnaway?: (id: string) => void } = $props();
+  let {
+    page,
+    onlink,
+    footer = "",
+    onturnaway,
+    onwhy,
+    whyOpen = null,
+    whyBody,
+  }: {
+    page: AtlasPage;
+    onlink: (address: string) => void;
+    footer?: string;
+    onturnaway?: (id: string) => void;
+    /** On screen, pressing a figure opens its Why (AT8); absent on paper. */
+    onwhy?: (field: string) => void;
+    whyOpen?: string | null;
+    whyBody?: Snippet<[FactRow]>;
+  } = $props();
 
   const title = $derived(page.blocks.find((b): b is Extract<Block, { type: "title" }> => b.type === "title"));
   const plates = $derived(page.blocks.filter((b): b is Extract<Block, { type: "plate" }> => b.type === "plate"));
@@ -77,12 +95,25 @@
                     <dd><span class="bar" role="img" aria-label="withheld from this document"></span></dd>
                   {:else if r.state === "gap"}
                     <dd class="gapwords">{r.text}</dd>
+                  {:else if onwhy && r.figure}
+                    <dd class="fig" data-deliver-text><button type="button" class="figbtn" aria-expanded={whyOpen === r.field} aria-label="{r.text}: why?" onclick={() => onwhy(r.field)}>{r.text}</button>{#if r.mark}<sup class="mark" aria-label="note {r.mark}">{r.mark}</sup>{/if}</dd>
                   {:else}
-                    <dd class="fig" data-deliver-text>{r.text}</dd>
+                    <dd class="fig" data-deliver-text>{r.text}{#if r.mark}<sup class="mark" aria-label="note {r.mark}">{r.mark}</sup>{/if}</dd>
                   {/if}
+                  {#if whyBody && whyOpen === r.field}<div class="whybox">{@render whyBody(r)}</div>{/if}
                 </div>
               {/each}
             </dl>
+            {#if b.source}<p class="source" data-atlas-source>{b.source}</p>{/if}
+          </section>
+        {:else if b.type === "sources"}
+          <section class="sources" data-deliver-item data-atlas-sources aria-label={b.title}>
+            <h2>{b.title}</h2>
+            <ol>
+              {#each b.notes as n (n.mark)}
+                <li value={n.mark}><b>{n.label}.</b> {n.source}.{#if n.reason} {n.reason}{/if}{#if n.cite} <cite>{n.cite}</cite>{/if}</li>
+              {/each}
+            </ol>
           </section>
         {:else if b.type === "table"}
           <section data-deliver-item aria-label={b.title}>
@@ -155,6 +186,58 @@
 </article>
 
 <style>
+  .figbtn {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent);
+    text-underline-offset: 3px;
+  }
+  .figbtn:hover,
+  .figbtn[aria-expanded="true"] {
+    text-decoration-style: solid;
+  }
+  .mark {
+    font-size: 0.7em;
+    margin-left: 2px;
+    color: var(--sse-ink-muted);
+  }
+  .whybox {
+    grid-column: 1 / -1;
+    margin: 6px 0 10px;
+  }
+  .whybox :global(.how) {
+    margin: 0 0 6px;
+  }
+  .whybox :global(.how .k) {
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .source {
+    margin: 6px 0 0;
+    font-size: 0.85em;
+    font-style: italic;
+    color: var(--sse-ink-muted);
+  }
+  .sources {
+    margin-top: 18px;
+    padding-top: 10px;
+    border-top: 1px solid var(--sse-rule);
+    font-size: 0.85em;
+  }
+  .sources ol {
+    margin: 0;
+    padding-left: 1.6em;
+  }
+  .sources li {
+    margin: 0 0 4px;
+  }
+  .sources cite {
+    color: var(--sse-ink-muted);
+  }
   .atlas-page {
     background: var(--sse-paper, var(--sse-ground-raised));
     color: var(--sse-ink);

@@ -54,10 +54,12 @@ export interface TrueBody {
   /** The world's mass, kg, and its moons: with both, its rings are cut where the moons' resonances and gaps fall (ring-structure.ts). */
   mass_kg?: number;
   moons?: readonly RingMoon[];
+  /** How much its spin flattens it (true-shape.ts `readTrueShape`, TA6). */
+  flatten?: number;
 }
 
 /** The GPU fields of a body's True face. */
-export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "face" | "mesh" | "clouds" | "air" | "glow" | "plumes">;
+export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "face" | "mesh" | "clouds" | "air" | "glow" | "plumes" | "flatten" | "pole">;
 
 /** A surface texture's mean colour, 0..1 (sRGB bytes over 255; a tint, not a measurement). */
 export function meanColour(t: TrueTexture): [number, number, number] {
@@ -115,6 +117,7 @@ export function trueLook(b: TrueBody): TrueLook {
       out.surface = { key: b.key, texture: flowFace(b.surface, f.flow, { radius_m: b.radius_m, dt_s: f.dt_s }), version: f.dt_s };
     else out.surface = { key: b.key, texture: b.surface };
   }
+  if (!b.star && b.flatten && b.flatten > 0) ((out.flatten = b.flatten), (out.pole = b.pole));
   if (!b.star && b.clouds) out.clouds = { key: `${b.key}|clouds`, texture: b.clouds };
   if (!b.star && b.air) {
     const key = `${b.key}|air|${b.air.beta.join(",")}|${b.air.scale_height}`;

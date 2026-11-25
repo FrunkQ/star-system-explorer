@@ -82,6 +82,22 @@ try {
     await panel.locator('[data-rollcall-step="event-on"]').click();
     await page.waitForFunction(() => document.querySelector("[data-rollcall-date]")?.textContent?.trim() !== "");
 
+    // Records and On this day (SH5): each record says how it was worked out and goes to its day; a year in On this
+    // day goes to that year's same day. No figure is pinned.
+    if (await panel.locator("[data-rollcall-records]").count()) {
+      await panel.locator("[data-rollcall-records] summary").click();
+      const most = panel.locator('[data-rollcall-record="most"]');
+      assert.match(await most.textContent(), /Most people in space at once.*people.*highest step/s);
+      await most.locator("button").click();
+      await page.waitForFunction(() => /in space, aboard/.test(document.querySelector("[data-rollcall-sentence]")?.textContent ?? ""));
+      await typeDate("20 July 1969");
+      await panel.locator("[data-rollcall-this-day] summary").click();
+      assert.match(await panel.locator("[data-rollcall-this-day] summary").textContent(), /On this day, 20 July/);
+      await shot(page, `desk-records-${engine}`);
+      await panel.locator("[data-rollcall-this-day] li button").first().click();
+      await page.waitForFunction(() => / July /.test(document.querySelector("[data-rollcall-date]")?.textContent ?? "") && document.querySelector("[data-rollcall-date]")?.textContent?.trim() !== "20 July 1969");
+    }
+
     // An empty day says so in words, with the last person down and the next up as links.
     await typeDate("1 January 1958");
     await panel.locator("[data-rollcall-empty]").waitFor();

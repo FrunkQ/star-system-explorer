@@ -43,6 +43,9 @@ import {
   meets,
   checkNoteSet,
   withVoice,
+  withSources,
+  firstSentence,
+  cardFieldsOf,
   type AtlasPage,
   type EditionDoc,
 } from "../src/atlas/index.ts";
@@ -536,4 +539,65 @@ test("quotes (PC7): someone's words with who said it and where; the base set is 
   // The hold screen's pick carries the speaker and source with the words.
   const hold = pickBanners(after, null, "holding", [SPACE_QUOTES], { vocab, depth: "curious" as const });
   assert.ok(hold.top?.by && hold.top.text);
+});
+
+// ---- AT8: every number keeps its Why (design section 8).
+test("How we know: endnotes mark each figure in reading order, the notes end the page, a seat's note is its own figure's", () => {
+  const p = page(after, TARN);
+  const asked: string[] = [];
+  const how = (a: string, field: string) => (asked.push(`${a}|${field}`), { source: "Orbital survey, given to the table", reason: "Mass comes from the moons' orbits.", cite: "Kepler 1619" });
+  const s = withSources(p, survey, how, { depth: "science" });
+  const rows = s.blocks.flatMap((b) => (b.type === "facts" ? b.rows : []));
+  const marked = rows.filter((r) => r.mark);
+  assert.ok(marked.length > 0, "the Survey atlas marks its figures");
+  assert.deepEqual(marked.map((r) => r.mark), marked.map((_, i) => i + 1), "marks run from 1 in reading order");
+  for (const r of rows) assert.equal(!!r.mark, r.state !== "gap" && !!r.figure, `${r.field}: every figure is marked and nothing else`);
+  const notes = s.blocks.find((b) => b.type === "sources");
+  assert.ok(notes && notes.type === "sources");
+  assert.equal(notes.title, "How we know");
+  assert.equal(notes.notes.length, marked.length, "every marked figure has a note");
+  assert.equal(notes.notes[0]!.cite, "Kepler 1619");
+  // Asked only of figures on the audience's own page: nothing the page does not already show.
+  for (const k of asked) assert.ok(marked.some((r) => k === `${TARN}|${r.field}`), `asked ${k}`);
+  // The same figures as before: marks add a note, never change a value.
+  assert.deepEqual(rows.map((r) => r.text), p.blocks.flatMap((b) => (b.type === "facts" ? b.rows.map((r) => r.text) : [])));
+  // Curious leaves the citation off; the reasoning stays.
+  const c = withSources(p, survey, how, { depth: "curious" }).blocks.find((b) => b.type === "sources");
+  assert.ok(c && c.type === "sources" && !c.notes[0]!.cite && c.notes[0]!.reason);
+  // Before the margin, which keeps the side column.
+  const withSide = withSources(withMargin(p, after, resolveEdition("sse.edition.guide"), SHIPPED_NOTE_SETS, opts), survey, how);
+  const order = withSide.blocks.map((b) => b.type);
+  if (order.includes("margin")) assert.ok(order.indexOf("sources") < order.indexOf("margin"));
+});
+
+test("How we know: Company prints a Source line under each facts section, the Guide prints none, and text and HTML carry them", () => {
+  const how = () => ({ source: "Bought chart" });
+  const company = resolveEdition("sse.edition.company");
+  const c = withSources(page(after, TARN, company), company, how);
+  const facts = c.blocks.filter((b) => b.type === "facts");
+  assert.ok(facts.length && facts.every((b) => b.type === "facts" && (b.source === "Source: Bought chart" || !b.rows.some((r) => r.figure))));
+  assert.ok(!c.blocks.some((b) => b.type === "sources"));
+  const guide = resolveEdition("sse.edition.guide");
+  const g = page(after, TARN, guide);
+  assert.equal(withSources(g, guide, how), g, "off adds nothing");
+  const s = withSources(page(after, TARN), survey, () => ({ source: "Orbital survey", reason: "Weighed by its moons." }));
+  const txt = pageText(s);
+  assert.match(txt, /HOW WE KNOW\n {2}\[1\] [^.]+\. Orbital survey\. Weighed by its moons\./);
+  assert.match(txt, /: [^\n]+ \[1\]\n/);
+  assert.match(pageText(s, { markdown: true }), /\[\^1\]: \*\*/);
+  const html = atlasHtml([s], { title: "t" });
+  assert.match(html, /<sup class="mark">1<\/sup>/);
+  assert.match(html, /<section class="sources"><h2>How we know<\/h2><ol><li value="1">/);
+  assert.match(pageText(c), /Source: Bought chart/);
+});
+
+test("firstSentence keeps one line of reasoning", () => {
+  assert.equal(firstSentence("Stars brighten slowly. The young Sun was faint."), "Stars brighten slowly.");
+  assert.equal(firstSentence("No full stop"), "No full stop");
+});
+
+test("every figure field has its card lines, itself first or the card's display name", () => {
+  for (const f of Object.keys(FIGURE_FIELDS)) assert.ok(cardFieldsOf(f).length >= 1, f);
+  assert.deepEqual(cardFieldsOf("orbit.period_s"), ["orbit.period_s", "year_d"]);
+  assert.deepEqual(cardFieldsOf("ocean.fraction"), ["ocean.fraction"]);
 });

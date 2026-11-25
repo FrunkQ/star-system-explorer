@@ -25,6 +25,25 @@ export const FIGURE_FIELDS: Readonly<Record<string, FieldFigure>> = {
   "interior.core_fraction": { kind: "share" },
 };
 
+/**
+ * The same figure on the GM's card (AT8): the system scene names its lines in display units ("year_d", "surface_k"),
+ * the player scene in SI. Where a figure's Why lives on the card, in the order to look. Not a conversion: the Atlas
+ * only reads which card line carries the figure's derivation and where its value came from.
+ */
+export const CARD_FIELDS: Readonly<Record<string, readonly string[]>> = {
+  mass_kg: ["mass_kg", "mass_earth", "mass_sun"],
+  radius_m: ["radius_m", "radius_earth", "radius_sun"],
+  luminosity_w: ["luminosity_w", "luminosity_sun"],
+  "orbit.semi_major_axis_m": ["orbit.semi_major_axis_m", "a_au"],
+  "orbit.period_s": ["orbit.period_s", "year_d"],
+  "surface.temp_mean_k": ["surface.temp_mean_k", "surface_k"],
+};
+
+/** The card lines that may carry a figure field, in order: the table's, else the field itself. */
+export function cardFieldsOf(field: string): readonly string[] {
+  return CARD_FIELDS[field] ?? [field];
+}
+
 /** Fields that are counts: said as a whole number, no unit. */
 export const COUNT_FIELDS: readonly string[] = ["settlements.count"];
 

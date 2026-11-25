@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { EVERYONE, BUILTIN_LOGOS, resolveDelivery, SHIPPED_NOTE_SETS, pickBanners, controlOn, withLetterhead, withMargin, withVoice, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { EVERYONE, BUILTIN_LOGOS, resolveDelivery, SHIPPED_NOTE_SETS, pickBanners, controlOn, withLetterhead, withMargin, withVoice, withSources, firstSentence, cardFieldsOf, showReference, type HowKnown, type FactRow, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
   import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
@@ -15,6 +15,7 @@
   import AtlasPrintView from "./AtlasPrintView.svelte";
   import AtlasDevice from "./AtlasDevice.svelte";
   import AtlasCover from "./AtlasCover.svelte";
+  import Explain from "../../body-card/src/Explain.svelte";
   import { curlTurn, pageTurn, playDelivery } from "../../../chart-grammar/src/index.ts";
   import { dateParts, dateWords, defaultCalendar, fromPackCalendar } from "../../../chart-grammar/src/calendar.ts";
 
@@ -98,8 +99,70 @@
     const p = book ? buildPage(book, a, edition, { vocab, depth: ws.depth }) : null;
     if (!p || !book) return null;
     const voiced = withVoice(p, book, edition, { vocab, depth: ws.depth });
-    return withMargin(withLetterhead(voiced, edition, letterhead), book, edition, noteSets, { vocab, depth: ws.depth, exclude: turnedAway, order });
+    const margined = withMargin(withLetterhead(voiced, edition, letterhead), book, edition, noteSets, { vocab, depth: ws.depth, exclude: turnedAway, order });
+    return withSources(margined, edition, howOf, { depth: ws.depth });
   };
+
+  // ---- Every number keeps its Why (AT8; design section 8). How a figure is known starts with the audience: for the
+  // GM, where the value came from; for the table, the rung it was given at (the kernel's `known_to`). The reasoning is
+  // the kernel's own explanation, its lens at the reader's depth and its first reference: the method, never an input,
+  // so a seat's note names only what its page already says.
+  const gmFact = (a: string, field: string) => {
+    const facts = scene.subjects.find((s) => s.address === a)?.facts ?? [];
+    for (const c of cardFieldsOf(field)) {
+      const f = facts.find((x) => x.field === c || x.kernel?.field === c);
+      if (f) return f;
+    }
+    return undefined;
+  };
+  let rungs = $state<Record<string, string>>({});
+  let reasons = $state<Record<string, { reason?: string; cite?: string } | null>>({});
+  const reasonKey = (a: string, field: string) => `${ws.depth}|${a}|${field}`;
+  const FROM: Record<string, string> = { authored: "Set by the GM", catalogued: "From a catalogue", derived: "Worked out from the physics", resolved: "Resolved for this universe", fixture: "From a sample" };
+  const givenTo = $derived(shownAudience === EVERYONE ? "the table" : audienceWords);
+  function howOf(a: string, field: string): HowKnown | undefined {
+    const f = gmFact(a, field);
+    const rung = rungs[`${shownAudience}|${a}`];
+    const source = shownAudience === "gm" ? (f?.why ? FROM.derived! : (FROM[f?.source ?? "resolved"] ?? FROM.resolved!)) : rung ? `${rung}, given to ${givenTo}` : `Given to ${givenTo}`;
+    const r = reasons[reasonKey(a, field)];
+    return { source, ...(r?.reason ? { reason: r.reason } : {}), ...(r?.cite ? { cite: r.cite } : {}) };
+  }
+  // Read what the notes need for some pages: each audience's rung once a page, each explanation once a figure.
+  function learn(want: readonly string[]) {
+    if (!book || edition.sources === "off") return;
+    const aud = shownAudience;
+    for (const a of want) {
+      const bare = buildPage(book, a, edition, { vocab, depth: ws.depth });
+      if (!bare) continue;
+      if (aud !== "gm" && !(`${aud}|${a}` in rungs)) {
+        rungs[`${aud}|${a}`] = "";
+        ctx.session.knownTo(a).then((r) => {
+          const mine = r.ok ? r.value.audiences.find((x) => x.audience === aud) : undefined;
+          if (mine?.rung_label) rungs[`${aud}|${a}`] = mine.rung_label;
+        }, () => {});
+      }
+      for (const b of bare.blocks) {
+        if (b.type !== "facts") continue;
+        for (const row of b.rows) {
+          const k = reasonKey(a, row.field);
+          const why = row.figure ? gmFact(a, row.field)?.why : undefined;
+          if (!why || k in reasons) continue;
+          reasons[k] = null;
+          const depth: "curious" | "science" | "engine" = ws.depth ?? "science";
+          ctx.session.explain(why, why.kind).then((r) => {
+            if (!r.ok) return;
+            const lens = r.explanation.lenses[depth] ?? r.explanation.lenses.science ?? r.explanation.lenses.curious;
+            const ref = r.explanation.references[0];
+            const cite = ref ? showReference(ref).text : undefined;
+            reasons[k] = { ...(lens ? { reason: firstSentence(lens) } : {}), ...(cite ? { cite } : {}) };
+          }, () => {});
+        }
+      }
+    }
+  }
+  // On screen, a figure opens its Why: how it is known, then (for the GM) the kernel's whole chain, as on a card.
+  let whyOpen = $state<string | null>(null);
+  const isGmSeat = $derived((ctx.session as { seat?: { authority?: string } }).seat?.authority === "gm");
   const notThisOne = (id: string) => (turnedAway = [...turnedAway, id]);
 
   // The cover (AT7): once each time an edition with a cover is opened; its key brings it back.
@@ -113,6 +176,16 @@
     tick().then(() => pageBox?.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true }));
   }
   const page = $derived(book && address ? dressed(address) : null);
+  $effect(() => {
+    void edition;
+    void ws.depth;
+    const a = address;
+    if (a && book) untrack(() => learn([a]));
+  });
+  $effect(() => {
+    void address;
+    whyOpen = null;
+  });
   // The part's own controls (AT13): a screen may switch each off; off means not drawn and not pressable.
   const on = (id: string) => controlOn((ctx as { controls?: Readonly<Record<string, boolean>> }).controls, id);
   // The one-liners at the top and bottom of a device's screen (SSE3's guide tips, Alex 25 Nov): by the page's use,
@@ -259,6 +332,19 @@
 
 </script>
 
+{#snippet whyBody(r: FactRow)}
+  {@const h = page ? howOf(page.address, r.field) : undefined}
+  {@const f = page ? gmFact(page.address, r.field) : undefined}
+  <div class="why" role="note" data-atlas-why={r.field}>
+    {#if h}<p class="how"><span class="k">How we know</span> {h.source}.{#if h.reason} {h.reason}{/if}{#if h.cite && ws.depth !== "curious"} <cite>{h.cite}</cite>{/if}</p>{/if}
+    {#if isGmSeat && f?.why}
+      <Explain session={ctx.session} depth={ws.depth} why={f.why} label={r.label} onclose={() => (whyOpen = null)} />
+    {:else}
+      <button type="button" class="link" onclick={() => (whyOpen = null)}>Close</button>
+    {/if}
+  </div>
+{/snippet}
+
 {#snippet stepper(where: string)}
   {#if on("step")}<div class="step {where}">
     <button type="button" disabled={!page?.prev} onclick={() => turn(page?.prev ?? null, -1)} aria-label="Previous page{page?.prev ? `: ${titleOf(page.prev)}` : ''}">‹ {titleOf(page?.prev ?? null) || "Back"}</button>
@@ -280,7 +366,7 @@
       </label>
     {/if}
     {#if on("print")}<button type="button" class="printnow" onclick={printThisPage} disabled={!page}>Print this page</button>
-    <button type="button" class="printmore" aria-haspopup="dialog" onclick={() => (viewOpen = true)} disabled={!page}>Print…</button>{/if}
+    <button type="button" class="printmore" aria-haspopup="dialog" onclick={() => (learn(lines.map((l) => l.address)), (viewOpen = true))} disabled={!page}>Print…</button>{/if}
     {#if on("contents")}<button type="button" class="fold" aria-expanded={folded} onclick={() => (folded = !folded)}>Contents</button>{/if}
   </div>
   {#if said}<p class="said" role="status">{said}</p>{/if}
@@ -308,7 +394,7 @@
               <AtlasCover cover={edition.cover} place={titleOf(lines[0]?.address ?? null)} onopen={openCover} />
             {:else}
               <div class="sheet" use:pageTurn={{ sheet: sheetTurns && on("step"), onstep: handTurn }} data-turn={sheetTurns ? "curl" : (delivery?.turn?.kind ?? "none")}>
-                <AtlasPage page={page!} onlink={on("links") ? go : () => {}} {footer} onturnaway={shownAudience === "gm" ? notThisOne : undefined} />
+                <AtlasPage page={page!} onlink={on("links") ? go : () => {}} {footer} onturnaway={shownAudience === "gm" ? notThisOne : undefined} onwhy={(f) => (whyOpen = whyOpen === f ? null : f)} {whyOpen} {whyBody} />
               </div>
             {/if}
           {/snippet}
@@ -560,5 +646,19 @@
     li button {
       transition: none;
     }
+  }
+  .why {
+    padding: 10px 12px;
+    border: 1px solid var(--sse-rule);
+    border-radius: 4px;
+    background: var(--sse-ground-raised, var(--sse-ground));
+  }
+  .why .link {
+    font: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--sse-accent);
+    cursor: pointer;
   }
 </style>
