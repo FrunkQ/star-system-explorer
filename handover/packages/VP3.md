@@ -67,6 +67,23 @@ True's ground was a typed palette (packs/base-surface `colours`, ui-contract `sa
   So those worlds come out an honest neutral grey until then, not tan.
 - **Look.** With every sample mature, the sample Sol's Moon goes from beige to a dark neutral grey (mature mare soil about 6 % reflective, highland about 13 %). Screens: `VP-screens/VP3-part5-moon-palette-vs-measured.png`.
 
+## Smooth coarse tiles (25 Nov, MATCH1)
+
+Basin discs had hard pixel edges in True. A coarse tile was laid into a finer face picture in nearest-neighbour blocks (`composeFaces`), and a coarser face was repeated up in blocks in the GPU atlas. Both now spread bilinearly between sample centres. A shore stays the nearest sample's, so there are no half-wet texels. Test: `texture-ladder.test.ts`, "spread smoothly", fails on the old code.
+
+Craters at globe scale are kernel facts down to the fact floor: they come with deeper tiles and are never invented. The sub-floor crater layer (`ground.craters`, the renderer's VP10) and ground roughness (this thread's) both wait on kernel facts (`crater_cover`, `roughness_m`, `grain_m`), so neither is drawn yet.
+
+## Natural outlines (Alex 25 Nov: "they look a bit bitmap"; "reuse on the timelapse")
+
+One shared, deterministic step in `ui-contract/src/globe.ts`. It never changes a fact: at every sample's centre the kernel's own cover shows.
+- `sampleNatural(globe, d)`: the four samples round a point are blended. Each kind (bare ground, ice, liquid) gets its share plus the edge noise, and the largest wins, so coasts and ice edges are smooth contours instead of steps.
+- `softenGround(tile)`: bare ground's colour is averaged over bare neighbours two cells each way (two box passes), laid on as `ground_rgb`. `withGround` runs it for every True and Body read.
+- `edgeNoise(d, cell_rad, seed)`, `naturalEdge(...)` and `naturalDirection(...)`: the pieces underneath, keyed only on direction and seed, never time. The surface time-lapse thread calls them in `renderer/src/timelapse.ts recolour` on its own cells, so frames don't shimmer.
+- Used by the Land map (`views/surface/Surface.svelte`) and True's small equirect pictures (`true-look.ts`).
+- Not yet: the canvas-tier Body globe, whose per-pixel loop is too hot for the noise per frame; it gets softened colour only.
+- Still blocky because the kernel's facts are blocky: the polar ice ends on the climate's latitude band, and some lakes are multi-cell rectangles.
+- Pictures: `VP-screens/VP3-natural-outlines-earth-close.png` and `-map.png`.
+
 ## Code
 
 - `packages/renderer/src/texture-ladder.ts`: `faceSize`, `levelFor`, `tilesFacing`, `faceDirection`, `directionFace`, `composeFaces` (with `radius_m` from the tiles' spacing, and the tiles it was made from), `withFiner`, `sampleFaces`, `reliefNormal`, `texelAngle`, `cubeBytes`, `BAKE_BUDGET`, `faceWords`.
