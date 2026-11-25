@@ -1,3 +1,5 @@
+import type { LandingTime, Place } from "./place.ts";
+
 // Getting down to a world and walking about (SL1; surfaces design 4.1, Alex 23 Nov 2026). The kernel's three
 // pieces, as plain data: the world's landmarks (its named landscape, `survey_surface`'s register), a descent
 // planned to any site (`plan_descent`: the site judged on the one height map, then NAV flies a lander down), and
@@ -258,4 +260,55 @@ export function landingSeaOf(data: unknown, t_s: number): LandingSea | null {
     ...(typeof sea.line === "string" ? { line: sea.line } : {}),
     ...opticsOf(sea),
   };
+}
+
+/** The quick hour a landing is at (Dawn 06:30, Midday 12:00, Dusk 17:30, Night 00:00 local), within half an hour; else null. */
+export function landingTimeOf(hour_deg: number): LandingTime | null {
+  const local = (((hour_deg / 15 + 12) % 24) + 24) % 24;
+  const at: [LandingTime, number][] = [["dawn", 6.5], ["midday", 12], ["dusk", 17.5], ["night", 0]];
+  return at.find(([, h]) => Math.min(Math.abs(local - h), 24 - Math.abs(local - h)) < 0.5)?.[0] ?? null;
+}
+
+/**
+ * The site part of the Land screen's own link (LR5b): where the GM is landing, at which quick hour, in which lander
+ * ("party" for the party's ship, else the stock lander's id), so the address bar, a bookmark or a kept beat brings the
+ * whole landing back. Null when the landing is not one.
+ */
+export function landingLinkSite(show: unknown): Place["site"] | null {
+  const s = landingShowOf(show);
+  if (!s) return null;
+  const time = landingTimeOf(s.hour_deg);
+  const lander = typeof s.lander === "string" ? s.lander : "ship" in s.lander ? "party" : null;
+  const r4 = (x: number) => Math.round(x * 1e4) / 1e4;
+  return { lat_deg: r4(s.site.lat_deg), lon_deg: r4(s.site.lon_deg), ...(time ? { time } : {}), ...(lander ? { lander } : {}) };
+}
+
+/** A landing as the table and the Playbook name it: "Mars, landing at Dribeque Planitia, midday". */
+export function landingTitle(show: unknown, world?: string | null): string {
+  const s = landingShowOf(show);
+  if (!s) return world ? `${world}, landing` : "Landing";
+  const time = landingTimeOf(s.hour_deg);
+  const deg = (x: number) => Math.round(Math.abs(x) * 10) / 10;
+  const where = s.site.label || `${deg(s.site.lat_deg)}° ${s.site.lat_deg >= 0 ? "N" : "S"}, ${deg(s.site.lon_deg)}° ${s.site.lon_deg >= 0 ? "E" : "W"}`;
+  return `${world || s.label}, landing at ${where}${time ? `, ${time}` : ""}`;
+}
+
+/** The players' "In orbit" screen (LR4): the world the GM's send names, turning below, on the seat's own kernel. */
+export const ORBIT_SCREEN = "players.orbit.screen.json";
+
+/** An orbit as the table and the Playbook name it: "Beowulf in orbit of Mars" when the party's ship is there, else "In orbit of Mars". */
+export function orbitTitle(world: string, party?: { name: string; at: string } | null, address?: string | null): string {
+  return party && address && party.at === address ? `${party.name} in orbit of ${world}` : `In orbit of ${world}`;
+}
+
+/**
+ * The world a seat may read the map of for what it is shown (LR4): a landing's world, or the world an "In orbit"
+ * send names, when that world is one the table already knows (in the seat's scene). Null: none.
+ */
+export function groundGrant(shown: { scope: string; screen?: string; focus?: string; landing?: unknown } | null | undefined, known: (address: string) => boolean): { system: string; body: string } | null {
+  if (!shown) return null;
+  const l = landingShowOf(shown.landing);
+  if (l) return { system: l.system, body: l.body };
+  if (shown.screen === ORBIT_SCREEN && shown.focus && known(shown.focus)) return { system: shown.scope, body: shown.focus };
+  return null;
 }
