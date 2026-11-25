@@ -1,3 +1,4 @@
+import { ATLAS_CONTROLS } from "./controls.ts";
 import { mount, unmount } from "svelte";
 import type { SystemScene, ViewModule, Vocab } from "../../../ui-contract/src/index.ts";
 
@@ -27,6 +28,7 @@ export function atlasView(host: AtlasHost): ViewModule {
     inputs: [{ event_kinds: ["authored.set", "observe.grant", "adopt.v3", "adopt.formation", "time.aged"] }],
     params: [],
     intents: [],
+    switchable: ATLAS_CONTROLS,
     mount(el, ctx, scene) {
       const props = $state({ ctx, scene: scene as SystemScene, host });
       const c = mount(Atlas, { target: el, props });

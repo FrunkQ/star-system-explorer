@@ -1,19 +1,18 @@
 // AT14: interface kits as data. The loader's checks are the same for a starter, a pack's kit and Orac's draft.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { atlasDocsOf, checkKit, checkPalette, contrastOf, controlsOn, resolveKit, SHIPPED_PALETTES, STARTER_KITS, type KitDoc, type PartInfo } from "../src/atlas/index.ts";
+import { atlasDocsOf, checkKit, checkPalette, contrastOf, partsOf, resolveKit, SHIPPED_PALETTES, STARTER_KITS, type KitDoc, type PartInfo } from "../src/atlas/index.ts";
 import { SHIPPED_EDITIONS } from "../src/atlas/index.ts";
 
-// The parts' controls as the design lists them (11A.4), until the parts declare their own (AT13).
+// The players' parts as they declare their controls (AT13; tests/ui/kit-parts.test.ts reads the real declarations).
 const PARTS: PartInfo[] = [
-  { id: "sse.view.atlas", controls: ["contents", "step", "edition", "print", "links"] },
-  { id: "sse.view.chart", controls: ["view_style", "seen_from", "scale", "hud", "band", "turn", "select", "menu"] },
-  { id: "sse.view.system-3d", controls: ["view_style", "seen_from", "scale", "hud", "band", "turn", "select", "menu"] },
-  { id: "sse.view.card", controls: ["open", "why", "depth"] },
-  { id: "sse.view.table", controls: ["sort", "filter"] },
+  { id: "sse.view.atlas", controls: ["contents", "step", "print", "links"] },
+  { id: "sse.view.chart", controls: ["select"] },
+  { id: "sse.view.system-3d", controls: ["turn"] },
+  { id: "sse.view.card", controls: ["open"] },
+  { id: "sse.view.table", controls: ["sort", "select"] },
   { id: "sse.view.readout", controls: [] },
   { id: "sse.view.text", controls: [] },
-  { id: "sse.view.flow-editor", controls: [], gm_only: true },
 ];
 const STACK = {
   parts: PARTS,
@@ -54,21 +53,18 @@ test("the loader refuses with sentences that say what to change", () => {
     needs: { tier: "gpu-high" },
     banners: { at: "middle", sets: ["sse.notes.nowhere"] },
     layouts: {
-      system: { arrangement: "report", items: [{ view: "sse.view.atlas", area: "c", controls: { edition: false, teleport: true } }, { view: "sse.view.flow-editor", area: "a" }] },
+      system: { arrangement: "four", items: [{ view: "sse.view.atlas", area: "c", controls: { step: false, teleport: true } }, { view: "sse.view.flow-editor", area: "1" }] },
       bridge: { arrangement: "one" },
     },
   };
   const said = checkKit(bad, STACK).join("\n");
-  for (const m of [/extends sse\.kit\.nowhere, which is not here/, /state a figure \("5 kg"\)/, /look "neon"/, /palette "no-such"/, /murky, ink on ground has a contrast of 1\.\d to 1/, /A Turn lasts at most 0\.4 s/, /"explode" is not in the toolkit/, /names a kit a weaker device falls back to/, /area "c", which report does not have/, /switches "teleport" on sse\.view\.atlas/, /the GM's alone/, /"bridge" is not a situation/, /banners sit at "middle"/, /note set "sse\.notes\.nowhere" is not in the pack stack/]) {
+  for (const m of [/extends sse\.kit\.nowhere, which is not here/, /state a figure \("5 kg"\)/, /look "neon"/, /palette "no-such"/, /murky, ink on ground has a contrast of 1\.\d to 1/, /A Turn lasts at most 0\.4 s/, /"explode" is not in the toolkit/, /names a kit a weaker device falls back to/, /area "c", which four does not have \(1, 2, 3, 4\)/, /switches "teleport" on sse\.view\.atlas/, /"sse\.view\.flow-editor", which is not a part on a player's screen/, /"bridge" is not a situation/, /banners sit at "middle"/, /note set "sse\.notes\.nowhere" is not in the pack stack/]) {
     assert.match(said, m);
   }
 });
 
-test("controls: none is a picture, all is every declared one, unstated take the default", () => {
-  const atlas = PARTS[0]!;
-  assert.deepEqual(controlsOn({ view: atlas.id, area: "a", controls: "none" }, atlas), []);
-  assert.deepEqual(controlsOn({ view: atlas.id, area: "a", controls: "all" }, atlas), atlas.controls);
-  assert.deepEqual(controlsOn({ view: atlas.id, area: "a", controls: { edition: false, contents: false } }, atlas), ["step", "print", "links"]);
+test("partsOf reads a view's switchable declarations; a contrast is a WCAG ratio", () => {
+  assert.deepEqual(partsOf([{ id: "v", switchable: [{ id: "sort", words: "Sort", kind: "button", default: true }] }, { id: "w" }]), [{ id: "v", controls: ["sort"] }, { id: "w", controls: [] }]);
   assert.ok((contrastOf("#000000", "#FFFFFF") ?? 0) > 20.9);
 });
 

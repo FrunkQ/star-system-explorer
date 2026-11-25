@@ -5,6 +5,8 @@
 // same way, and it returns plain sentences (empty: the kit loads).
 import { typedFigures } from "./loader.ts";
 import { sayNumber } from "../figures.ts";
+import { ARRANGEMENTS } from "../layouts.ts";
+import type { PartControl } from "../part-controls.ts";
 import { VIEW_STYLES, type ViewStyle } from "../view-controls.ts";
 import starters from "./kits/starters.json" with { type: "json" };
 
@@ -12,14 +14,6 @@ export const KIT_SCHEMA = "sse.kit/1";
 export const SITUATIONS = ["sector", "system", "world", "ship", "landing", "holding"] as const;
 export type Situation = (typeof SITUATIONS)[number];
 export const TIERS = ["text", "canvas", "gpu-basic", "gpu-high"] as const;
-/** The layout editor's arrangements and the areas each has (Playbook 7.4). */
-export const ARRANGEMENTS: Readonly<Record<string, readonly string[]>> = {
-  one: ["a"],
-  "picture-and-side": ["a", "b", "c", "d"],
-  "two-by-two": ["a", "b", "c", "d"],
-  report: ["a", "b"],
-  blank: [],
-};
 /** The five moments a screen arrives and leaves at (11A.4a). */
 export const MOMENTS = ["power_on", "arrive", "turn", "leave", "power_off"] as const;
 /** The deliveries in the toolkit (11A.4a); each look owns how they are drawn. */
@@ -85,6 +79,11 @@ export interface PartInfo {
   id: string;
   controls: readonly string[];
   gm_only?: boolean;
+}
+
+/** The parts a kit may use, read from the views' own declarations (`ViewModule.switchable`, AT13): the players' stack. */
+export function partsOf(views: readonly { id: string; switchable?: readonly PartControl[] }[]): PartInfo[] {
+  return views.map((v) => ({ id: v.id, controls: (v.switchable ?? []).map((c) => c.id) }));
 }
 
 export interface KitStack {
@@ -228,10 +227,10 @@ export function checkKit(doc: unknown, stack: KitStack = {}): string[] {
     if (!l) continue;
     if (l.extends && !(SITUATIONS as readonly string[]).includes(l.extends)) out.push(`The ${s} layout extends "${l.extends}", which is not a situation.`);
     if (l.arrangement && !(l.arrangement in ARRANGEMENTS)) out.push(`The ${s} layout's arrangement "${l.arrangement}" is not one of ${Object.keys(ARRANGEMENTS).join(", ")}.`);
-    const areas = l.arrangement ? ARRANGEMENTS[l.arrangement] ?? [] : null;
+    const areas: readonly string[] | null = l.arrangement ? (ARRANGEMENTS as Record<string, { areas: readonly string[] }>)[l.arrangement]?.areas ?? [] : null;
     for (const it of l.items ?? []) {
       const part = stack.parts?.find((p) => p.id === it.view);
-      if (stack.parts && !part) out.push(`The ${s} layout uses "${it.view}", which is not a part.`);
+      if (stack.parts && !part) out.push(`The ${s} layout uses "${it.view}", which is not a part on a player's screen.`);
       if (part?.gm_only) out.push(`The ${s} layout uses "${it.view}", which is the GM's alone and never a player's part.`);
       if (areas && !areas.includes(it.area)) out.push(`The ${s} layout puts ${it.view} in area "${it.area}", which ${l.arrangement} does not have (${areas.join(", ") || "none"}).`);
       if (part && it.controls && typeof it.controls === "object") {
@@ -241,12 +240,4 @@ export function checkKit(doc: unknown, stack: KitStack = {}): string[] {
     }
   }
   return out;
-}
-
-/** Which of a part's declared controls are on in a layout item: unstated ones take the part's default (on). */
-export function controlsOn(item: KitItem, part: PartInfo, defaults: Readonly<Record<string, boolean>> = {}): string[] {
-  if (item.controls === "none") return [];
-  if (item.controls === "all") return [...part.controls];
-  const set = item.controls ?? {};
-  return part.controls.filter((c) => set[c] ?? defaults[c] ?? true);
 }

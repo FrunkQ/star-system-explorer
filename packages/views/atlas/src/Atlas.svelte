@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { EVERYONE, BUILTIN_LOGOS, SHIPPED_NOTE_SETS, pickBanners, withLetterhead, withMargin, withVoice, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { EVERYONE, BUILTIN_LOGOS, SHIPPED_NOTE_SETS, pickBanners, controlOn, withLetterhead, withMargin, withVoice, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
   import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
@@ -109,6 +109,8 @@
     tick().then(() => pageBox?.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true }));
   }
   const page = $derived(book && address ? dressed(address) : null);
+  // The part's own controls (AT13): a screen may switch each off; off means not drawn and not pressable.
+  const on = (id: string) => controlOn((ctx as { controls?: Readonly<Record<string, boolean>> }).controls, id);
   // The one-liners at the top and bottom of a device's screen (SSE3's guide tips, Alex 25 Nov): by the page's use,
   // from the edition's own sets; the cover is a holding screen. Seeded by the edition, so they repeat like the page.
   const SITUATION_OF: Record<string, string> = { sector: "sector", system: "system", star: "system", world: "world", moon: "world", station: "world" };
@@ -214,6 +216,7 @@
       if (e.key === "ArrowRight" || e.key === "ArrowLeft") (e.preventDefault(), openCover());
       return;
     }
+    if (!on("step")) return;
     if (e.key === "ArrowRight" && page?.next) (e.preventDefault(), go(page.next));
     else if (e.key === "ArrowLeft" && page?.prev) (e.preventDefault(), go(page.prev));
   }
@@ -222,12 +225,12 @@
   let downX = 0;
   let downY = 0;
   function pdown(e: PointerEvent) {
-    if (e.pointerType !== "touch") return;
+    if (e.pointerType !== "touch" || !on("step")) return;
     downX = e.clientX;
     downY = e.clientY;
   }
   function pup(e: PointerEvent) {
-    if (e.pointerType !== "touch") return;
+    if (e.pointerType !== "touch" || !on("step")) return;
     const dx = e.clientX - downX;
     const dy = e.clientY - downY;
     if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) go(dx < 0 ? page?.next ?? null : page?.prev ?? null);
@@ -235,10 +238,10 @@
 </script>
 
 {#snippet stepper(where: string)}
-  <div class="step {where}">
+  {#if on("step")}<div class="step {where}">
     <button type="button" disabled={!page?.prev} onclick={() => go(page?.prev ?? null)} aria-label="Previous page{page?.prev ? `: ${titleOf(page.prev)}` : ''}">‹ {titleOf(page?.prev ?? null) || "Back"}</button>
     <button type="button" disabled={!page?.next} onclick={() => go(page?.next ?? null)} aria-label="Next page{page?.next ? `: ${titleOf(page.next)}` : ''}">{titleOf(page?.next ?? null) || "Next"} ›</button>
-  </div>
+  </div>{/if}
 {/snippet}
 
 <div class="atlas" bind:this={root} role="region" aria-label="Atlas">
@@ -254,7 +257,7 @@
         </select>
       </label>
     {/if}
-    <button type="button" class="printnow" onclick={() => print("page")} disabled={!page}>Print this page</button>
+    {#if on("print")}<button type="button" class="printnow" onclick={() => print("page")} disabled={!page}>Print this page</button>
     <span class="printwrap">
       <button type="button" class="printmore" aria-expanded={printOpen} aria-controls="atlas-print-panel" onclick={() => (printOpen = !printOpen)} disabled={!page}>Print…</button>
       {#if printOpen}
@@ -271,12 +274,13 @@
           </div>
         </div>
       {/if}
-    </span>
-    <button type="button" class="fold" aria-expanded={folded} onclick={() => (folded = !folded)}>Contents</button>
+    </span>{/if}
+    {#if on("contents")}<button type="button" class="fold" aria-expanded={folded} onclick={() => (folded = !folded)}>Contents</button>{/if}
   </div>
   {#if said}<p class="said" role="status">{said}</p>{/if}
   <div class="spread">
-    <nav class="contents" class:open={folded} aria-label="Contents">
+    {#if on("contents") || on("step")}<nav class="contents" class:open={folded} aria-label="Contents">
+      {#if on("contents")}
       <p class="book">{titleOf(lines[0]?.address ?? null)}</p>
       <ol>
         {#each lines as l (l.address)}
@@ -286,10 +290,10 @@
             </button>
           </li>
         {/each}
-      </ol>
+      </ol>{/if}
       {@render stepper("side")}
       <p class="note">{lines.length} {lines.length === 1 ? "page" : "pages"}, as known to {audienceWords}.</p>
-    </nav>
+    </nav>{/if}
     <div class="pagebox" bind:this={pageBox} onpointerdown={pdown} onpointerup={pup} role="presentation">
       {#if page}
         <div class="look" style={look} data-atlas-edition={edition.id} data-atlas-audience={book?.audience}>
@@ -299,7 +303,7 @@
             {:else}
               {#key page!.address}
                 <div class="sheet" class:wipe={edition.device?.change === "wipe"}>
-                  <AtlasPage page={page!} onlink={go} {footer} onturnaway={shownAudience === "gm" ? notThisOne : undefined} />
+                  <AtlasPage page={page!} onlink={on("links") ? go : () => {}} {footer} onturnaway={shownAudience === "gm" ? notThisOne : undefined} />
                 </div>
               {/key}
             {/if}

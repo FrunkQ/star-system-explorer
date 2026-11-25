@@ -176,37 +176,23 @@
      "items": [
       {
        "view": "sse.view.chart",
-       "area": "a",
+       "area": "1",
        "style": "wireframe",
        "controls": {
-        "select": true,
-        "menu": false,
-        "view_style": false,
-        "seen_from": false,
-        "scale": false,
-        "hud": false,
-        "band": false,
-        "turn": false
+        "select": true
        }
       }
      ]
     },
     "system": {
-     "arrangement": "picture-and-side",
+     "arrangement": "side",
      "items": [
       {
        "view": "sse.view.chart",
        "area": "a",
        "style": "wireframe",
        "controls": {
-        "select": true,
-        "menu": false,
-        "view_style": false,
-        "seen_from": false,
-        "scale": false,
-        "hud": false,
-        "band": false,
-        "turn": false
+        "select": true
        }
       },
       {
@@ -216,10 +202,9 @@
         "page": "selected"
        },
        "controls": {
+        "contents": false,
         "step": true,
         "print": true,
-        "contents": false,
-        "edition": false,
         "links": true
        }
       },
@@ -292,44 +277,28 @@
      "items": [
       {
        "view": "sse.view.system-3d",
-       "area": "a",
+       "area": "1",
        "controls": {
-        "view_style": true,
-        "seen_from": true,
-        "turn": true,
-        "select": true,
-        "hud": true,
-        "menu": false,
-        "scale": false,
-        "band": false
+        "turn": true
        }
       }
      ]
     },
     "system": {
-     "arrangement": "picture-and-side",
+     "arrangement": "side",
      "items": [
       {
        "view": "sse.view.system-3d",
        "area": "a",
        "controls": {
-        "view_style": true,
-        "seen_from": true,
-        "turn": true,
-        "select": true,
-        "hud": true,
-        "menu": false,
-        "scale": false,
-        "band": false
+        "turn": true
        }
       },
       {
        "view": "sse.view.card",
        "area": "b",
        "controls": {
-        "open": true,
-        "why": true,
-        "depth": false
+        "open": true
        }
       },
       {
@@ -339,10 +308,9 @@
         "page": "selected"
        },
        "controls": {
+        "contents": false,
         "step": true,
         "print": true,
-        "contents": false,
-        "edition": false,
         "links": true
        }
       }
@@ -417,35 +385,21 @@
      "items": [
       {
        "view": "sse.view.chart",
-       "area": "a",
+       "area": "1",
        "controls": {
-        "select": true,
-        "band": true,
-        "hud": true,
-        "menu": false,
-        "view_style": false,
-        "seen_from": false,
-        "scale": false,
-        "turn": false
+        "select": true
        }
       }
      ]
     },
     "system": {
-     "arrangement": "picture-and-side",
+     "arrangement": "side",
      "items": [
       {
        "view": "sse.view.chart",
        "area": "a",
        "controls": {
-        "select": true,
-        "band": true,
-        "hud": true,
-        "menu": false,
-        "view_style": false,
-        "seen_from": false,
-        "scale": false,
-        "turn": false
+        "select": true
        }
       },
       {
@@ -458,7 +412,7 @@
        "area": "c",
        "controls": {
         "sort": true,
-        "filter": false
+        "select": true
        }
       },
       {
@@ -468,10 +422,9 @@
         "page": "selected"
        },
        "controls": {
+        "contents": false,
         "step": true,
         "print": true,
-        "contents": false,
-        "edition": false,
         "links": true
        }
       }
@@ -536,7 +489,7 @@
      "items": [
       {
        "view": "sse.view.atlas",
-       "area": "a",
+       "area": "1",
        "params": {
         "page": "selected"
        },
@@ -544,22 +497,14 @@
         "contents": true,
         "step": true,
         "print": true,
-        "edition": false,
         "links": true
        }
       },
       {
        "view": "sse.view.chart",
-       "area": "b",
+       "area": "2",
        "controls": {
-        "select": true,
-        "menu": false,
-        "view_style": false,
-        "seen_from": false,
-        "scale": false,
-        "hud": false,
-        "band": false,
-        "turn": false
+        "select": true
        }
       }
      ]
