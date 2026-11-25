@@ -84,7 +84,7 @@ export interface Knob {
 export type DegradeStep = { says: string; tiers?: Tier[] } & ({ render_scale: number } | { set: { pass: string; param: string; value: Json } } | { drop: string } | { tier: Tier });
 
 /** The scenes recipes draw this release. */
-export const RECIPE_SCENES = ["body", "system"] as const;
+export const RECIPE_SCENES = ["body", "system", "land"] as const;
 export type RecipeScene = (typeof RECIPE_SCENES)[number];
 
 export interface RecipeDoc {
@@ -94,7 +94,7 @@ export interface RecipeDoc {
   /** Recipes of one family stand in for each other when a device cannot run the one asked for. */
   family: string;
   description: string;
-  /** The scene it draws ("body": one world's surface atlas; "system": a system in True, its worlds and star). */
+  /** The scene it draws ("body": one world's surface atlas; "system": a system in True, its worlds and star; "land": the ground round a site). */
   scene: RecipeScene;
   tiers: Tier[];
   passes: RecipePass[];

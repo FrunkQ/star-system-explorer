@@ -136,6 +136,22 @@ export const TRUE_BODIES: PassSpec = {
   },
 };
 
+export const TRUE_GROUND: PassSpec = {
+  id: "true-ground",
+  version: "1.0.0",
+  name: "Ground, sea and sky",
+  meaning: "The ground round a site and its sea, lit by the star through the air, under the sky's colour and the night's stars. Facts only: the kernel's ground, sea and air for that place. Its mesh detail is the detail ladder's, not this pass's.",
+  kind: "image",
+  inputs: ["site.ground", "site.sea", "body.air"],
+  tiers: ["still", "gpu-high", "gpu-basic"],
+  params: [],
+  cost: {
+    "gpu-basic": { fixed_ms: 1.5, per_mpix_ms: 2.5, load: { geometry: 0.4, fill: 0.6 } },
+    "gpu-high": { fixed_ms: 1.5, per_mpix_ms: 2.5, load: { geometry: 0.4, fill: 0.6 } },
+    still: { fixed_ms: 1.5, per_mpix_ms: 2.5, load: { geometry: 0.4, fill: 0.6 } },
+  },
+};
+
 export const TRUE_FINISH: PassSpec = {
   id: "true-finish",
   version: "1.0.0",
@@ -156,4 +172,4 @@ export const TRUE_FINISH: PassSpec = {
 };
 
 /** Every pass this release ships. */
-export const LIBRARY: readonly PassSpec[] = [RELIEF, GRATICULE, CONTOURS, ATMOSPHERE, NARRATION, TRUE_BODIES, TRUE_FINISH];
+export const LIBRARY: readonly PassSpec[] = [RELIEF, GRATICULE, CONTOURS, ATMOSPHERE, NARRATION, TRUE_BODIES, TRUE_GROUND, TRUE_FINISH];

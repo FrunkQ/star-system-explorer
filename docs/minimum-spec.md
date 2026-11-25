@@ -54,11 +54,11 @@ Each chunk is the sum of its engine scenarios' medians. In brackets, how many ti
 
 ## Drawing: the speed probe by device
 
-The probe's three scenes at one megapixel (fill, march, geometry), in ms and as a factor of the reference device, and the tier this speed earns for the standard True recipe at 1080p: the richest whose predicted frame is within 60% of its budget. Ultra also needs WebGPU with compute.
+The probe's three scenes at one megapixel (fill, march, geometry), in ms and as a factor of the reference device, and the tier this speed earns for the standard True recipe at 1080p: the richest whose predicted frame is within 60% of its budget. Ultra also needs WebGPU with compute. The last column is the standard frame drawn for real at each tier (a star, eight worlds, a belt and the shared finish), from which the pass costs are set.
 
-| Report | Graphics | Fill | March | Geometry | Placed at | Predicted frame by tier |
-|---|---|---|---|---|---|---|
-| AC-ProArt, Chrome 157 (drawing bench) | webgpu, readback, amd rdna-3 | 0.18 ms (0.45×) | 0.30 ms (0.25×) | 0.13 ms (0.27×) | High | Ultra no form; High 9.0 of 17 ms; Light 3.0 of 33 ms |
+| Report | Graphics | Fill | March | Geometry | Placed at | Predicted frame by tier | Drawn frame by tier |
+|---|---|---|---|---|---|---|---|
+| AC-ProArt, Chrome 157 (drawing bench) | webgpu, readback, amd rdna-3 | 0.18 ms (0.45×) | 0.30 ms (0.25×) | 0.13 ms (0.27×) | High | Ultra no form; High 9.0 of 17 ms; Light 3.0 of 33 ms | not drawn |
 
 ## Devices
 

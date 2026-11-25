@@ -37,6 +37,14 @@ test("the system True recipe checks against the pass library", () => {
   assert.deepEqual([h.glare_rungs, h.glare_scale, b.glare_rungs, b.glare_scale], [6, 0.5, 3, 0.25]);
 });
 
+test("the Land True recipe checks too, and walks down to half size", () => {
+  const LAND: RecipeDoc = JSON.parse(readFileSync(new URL("../src/recipes/land-true.json", import.meta.url), "utf8"));
+  assert.deepEqual(checkRecipe(LAND, LIBRARY).errors, []);
+  const floor = plan(LAND, LIBRARY, "gpu-high", 99);
+  assert.equal(floor.tier, "gpu-basic");
+  assert.equal(floor.render_scale, 0.5);
+});
+
 test("placed by speed: a quick WebGL2 device at High, a slow one at Light", async () => {
   const fast = new TrueRun({ recipe: SYSTEM_TRUE, library: LIBRARY, pixels: PIXELS, backend: "webgl2", source: "render.system", device: stub(0.5) });
   await fast.place();
