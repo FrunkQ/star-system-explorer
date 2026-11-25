@@ -482,15 +482,24 @@ export interface LeadingArmWords {
   /** Its strength now (0 to 1). */
   strength: number;
 }
-export function leadingArmWords(marks: readonly GalaxyMark[], t_gyr: number, strengthAt: (m: GalaxyMark, t: number) => number, showing = 0.02): LeadingArmWords | null {
-  const made = marks.filter((m) => m.kind === "leading_arm" && m.began_gyr <= t_gyr);
+/**
+ * The strength at which a leading arm counts as seen: the kernel's `LeadingArmParams.seen_strength` (GH3, its
+ * yardstick against Iye, Tadaki and Fukumoto 2019), not on the wire, so kept in step here.
+ */
+export const LEADING_ARM_SEEN = 0.25;
+
+export function leadingArmWords(marks: readonly GalaxyMark[], t_gyr: number, strengthAt: (m: GalaxyMark, t: number) => number, showing = LEADING_ARM_SEEN): LeadingArmWords | null {
+  // Only arms strong enough to be seen count: weaker ones stay in the history list with the other marks.
+  const made = marks.filter((m) => m.kind === "leading_arm" && m.began_gyr <= t_gyr && m.strength >= showing);
   if (!made.length) return null;
   const last = made.reduce((a, b) => (b.began_gyr > a.began_gyr ? b : a));
   const ago = t_gyr - last.began_gyr;
-  const when = ago < 0.001 ? "just now" : ago < 1 ? `${Math.round(ago * 1000)} Myr ago` : `${sayNumber(ago, 2, { decimals: 1 })} Gyr ago`;
-  const pass = typeof last.shape.r_kpc === "number" ? `a backwards pass ${sayNumber(last.shape.r_kpc, 2, { decimals: 0 })} kpc out` : "a backwards merger";
   const strength = strengthAt(last, t_gyr);
   const live = strength >= showing;
+  // Once wound back, the line stays for one fading time, then the history list alone keeps it.
+  if (!live && ago > (last.fades_gyr ?? 0.9) + Math.log(last.strength / showing) * (last.fades_gyr ?? 0.9)) return null;
+  const when = ago < 0.001 ? "just now" : ago < 1 ? `${Math.round(ago * 1000)} Myr ago` : `${sayNumber(ago, 2, { decimals: 1 })} Gyr ago`;
+  const pass = typeof last.shape.r_kpc === "number" ? `a backwards pass ${sayNumber(last.shape.r_kpc, 2, { decimals: 0 })} kpc out` : "a backwards merger";
   const line = `A leading arm, from ${pass} ${when}: ${live ? "it still winds against the spin" : "the rotation has wound it back into the trailing sense"}.`;
   return { made: made.length, line, live, strength };
 }

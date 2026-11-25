@@ -12,6 +12,7 @@
 -->
 <script lang="ts">
   import FillScreen from "./FillScreen.svelte";
+  import { controlSetOf, kitScreen, resolveKit, screenFor, situationOf } from "../../ui-contract/src/index.ts";
   import { sayNumber, checkPlayerScene, checkScreen, screenKey, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus, type Shown } from "../../ui-contract/src/index.ts";
@@ -49,10 +50,17 @@
   let checked = $state<{ ok: true; screen: CheckedScreen } | { ok: false; errors: string[] } | null>(null);
   // V10: a seat names the screens it opens; `?screen=` picks one, else the seat's first.
   let seatScreen: string | null = null;
+  // The interface kit the role wears (AT14): its layout for the situation when no layout was chosen for the role.
+  let seatKit = $state<string | undefined>(undefined);
+  const controlSet = $derived(seatKit ? controlSetOf((() => { try { return resolveKit(seatKit); } catch { return undefined; } })()) : undefined);
   async function loadScreen(): Promise<ScreenDoc> {
-    // What the GM sent names its own screen (a landing is watched on the Landing screen), else the link's, else the seat's.
+    // What the GM sent names its own screen (a landing is watched on the Landing screen), else the link's, else the
+    // seat's chosen layout, else its kit's layout for the situation, else the Bridge.
     const sent = shown && "scope" in shown ? shown.screen : undefined;
-    const asked = sent ?? new URLSearchParams(location.search).get("screen") ?? seatScreen;
+    const picked = screenFor({ sent, chosen: new URLSearchParams(location.search).get("screen") ?? seatScreen, kit: seatKit, shown, kitScreen });
+    // A kit layout whose parts this screen cannot draw yet falls back to the Bridge, rather than a screen of errors.
+    if (picked && typeof picked === "object" && picked.items.every((i) => PLAYER_STACK.some((v) => v.id === i.view))) return structuredClone(picked);
+    const asked = typeof picked === "string" ? picked : null;
     if (asked === "composed") {
       const raw = loadPref("composed-screen");
       if (!raw) throw new Error("No screen has been handed over from the composer on this device.");
@@ -243,6 +251,7 @@
         if (first) {
           first = false;
           seatScreen = seat.screens?.[0] ?? null;
+          seatKit = seat.kit;
           void useScreenWith([...replica.dataViews], "standard").catch((e) => (sceneErrors = [String(e)]));
         }
       };
@@ -266,6 +275,7 @@
           seatLabel = seat.label;
           mayAsk = seat.may_send.includes("set_value");
           seatScreen = seat.screens?.[0] ?? null;
+          seatKit = seat.kit;
           embedList = seat.embed_origins;
           brand = seat.brand ?? null;
           live = seat.live;
@@ -294,11 +304,14 @@
       // The role's layout (PB7 role card, PB13): a change of it, or of the made layout it names, reloads the screen.
       const layoutNow = () => {
         const asked = (shown && "scope" in shown ? shown.screen : undefined) ?? seatScreen;
-        return `${asked ?? ""}|${asked?.startsWith("mine.") ? JSON.stringify(replica.layouts.find((d) => (d as unknown as ScreenDoc).id === asked) ?? null) : ""}`;
+        // A kit's layout changes with the situation (AT14): a send from a system to a world swaps the screen.
+        const kitWay = seatKit ? `${seatKit}:${asked ? "" : situationOf(shown)}` : "";
+        return `${asked ?? ""}|${kitWay}|${asked?.startsWith("mine.") ? JSON.stringify(replica.layouts.find((d) => (d as unknown as ScreenDoc).id === asked) ?? null) : ""}`;
       };
       replica.onUpdate = () => {
         const mine = replica.seats().find((x) => x.id === seatId);
         if (!new URLSearchParams(location.search).get("screen")) seatScreen = mine ? (mine.screens?.[0] ?? null) : seatScreen;
+        if (mine && mine.kit !== seatKit) seatKit = mine.kit;
         if (JSON.stringify(mine?.live ?? null) !== JSON.stringify(live ?? null)) live = mine?.live;
         const ship = partyOf(replica.party());
         if (JSON.stringify(ship) !== JSON.stringify(party)) party = ship;
@@ -522,7 +535,7 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p><p class="alpha" data-alpha>An alpha preview of what is coming. To use Star System Explorer for real today, use <a href={V3_URL} target="_blank" rel="noopener">version 3 ›</a></p></main>
   {:else}
     {#key vocabId}
-      <main class="grid" use:deliver={arrival} out:deliverOut|global={powerOff()} class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} shown={shownNow} still={clean} {places} bind:selection /></main>
+      <main class="grid" use:deliver={arrival} out:deliverOut|global={powerOff()} class:read-only={readOnly} data-read-only={readOnly ? "" : undefined} inert={readOnly}><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} landing={landingNow} {ground} shown={shownNow} {controlSet} still={clean} {places} bind:selection /></main>
       {#if readOnly && !clean}<p class="steered" data-steered>The game master is steering this screen</p>{/if}
     {/key}
     {#if sayWords && sayHidden !== sayWords}

@@ -76,3 +76,21 @@ test("a box may hold a place: checked, and carried on its mount", async () => {
   if (ok.ok) assert.deepEqual(ok.screen.mounts[0]!.place, { scope: "u:k/sys:1", focus: "u:k/sys:1/body:2", title: "Tarn" });
   assert.equal(checkScreen(doc({ scope: "tarn" }), VIEWS).ok, false);
 });
+
+test("a kit's layout by situation (AT14): a send's own screen, then the role's chosen layout, then the kit's, then the Bridge", async () => {
+  const { situationOf, screenFor } = await import("../src/layouts.ts");
+  assert.equal(situationOf({ off: true }), "holding");
+  assert.equal(situationOf({ scope: "u:k/sys:1", landing: {} }), "landing");
+  assert.equal(situationOf({ scope: "u:k/sys:1", focus: "u:k/sys:1/body:2" }), "world");
+  assert.equal(situationOf({ scope: "u:k/sys:1" }), "system");
+  assert.equal(situationOf({ scope: "u:k/sys:1/body:2" }), "world");
+  assert.equal(situationOf({ scope: "u:k/cell:3" }), "sector");
+  assert.equal(situationOf(undefined), null);
+  const kitScreen = (k: string, s: string) => (s === "holding" ? null : ({ ...bridge, id: `${k}.${s}` }) as ScreenDoc);
+  const shown = { scope: "u:k/sys:1" };
+  assert.equal(screenFor({ sent: "players.land.screen.json", chosen: "mine.x", kit: "k", shown, kitScreen }), "players.land.screen.json");
+  assert.equal(screenFor({ chosen: "mine.x", kit: "k", shown, kitScreen }), "mine.x");
+  assert.equal((screenFor({ kit: "k", shown, kitScreen }) as ScreenDoc).id, "k.system");
+  assert.equal(screenFor({ kit: "k", shown: { off: true }, kitScreen }), null, "held: the kit has no holding layout, the Bridge");
+  assert.equal(screenFor({ shown, kitScreen }), null);
+});
