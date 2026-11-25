@@ -71,3 +71,10 @@ https://planet4589.org/space/gcat/ , released under the Creative Commons
 Attribution 4.0 licence (https://creativecommons.org/licenses/by/4.0/).
 The data is rearranged and filtered; no values are changed. That pack is
 published on Explorers and is not part of the SSE4 app.
+
+packages/ui-contract/src/atlas/logos.json holds the built-in letterhead logos
+carried over from SSE3. The Interspan, Kelido, Nexum, Terra and TSEC logos
+are courtesy of World Zero (https://worldzero.itch.io/), used under the
+Creative Commons Attribution 4.0 licence
+(https://creativecommons.org/licenses/by/4.0/); they are rescaled, not
+otherwise changed. The Star System Explorer logo is FrunkQ's own.

@@ -53,6 +53,7 @@ export { areaShares, areasFromHoldings, insideRings, itemArea, letterArea, neare
 export * from "./landing.ts";
 export * from "./map-controls.ts";
 export * from "./place-event.ts";
+export * from "./atlas/index.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
 export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
 export type { Hub, Wire, Manifest, Shown, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest, SealedManifest, ScreenHello } from "./p2p.ts";
