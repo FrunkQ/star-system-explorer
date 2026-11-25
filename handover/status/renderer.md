@@ -70,6 +70,8 @@ These left this file's owner on 24 Nov; each builder keeps its own status file a
 4. VP2's Exposure control in the other True views (the Body globe with the giant bands thread, Land) and the lift as one stated ratio in the finish (design 16.7).
 5. Vegetation on the day and night side (SSE3 render audit, item 9, `SSE4-v3-gaps.md`). City and construct lights are the aurorae and night lights thread's (24 Nov).
 6. Ship styles per nation or culture (SHIP14 stage 5).
+7. Emission lines in the nebula march (star-shells.ts), once the light thread's O4 part 1 and VP-L1 are on main: under a composite recipe (`sho`, `hoo`), each channel takes its line's `power_w`, weighted along the radius by its `zone {inner, outer}`, with density from each shell's `n_e_m3` and the line's colour from `line_colours[].rgb_linear`.
+8. The lander's lamps lighting the ground round it on Land (LR6, PR 519): point lights in the ground shader of gpu-surface.ts, from `LanderOnGround.lamps()` and the lamps' radiance.
 
 Moved to "Build names gallery and life board" (24 Nov, coordinator): SV3 (pencil and ink on the galaxy chart, foam map, body globe and constructs, following SystemChart and System3D's `pencil` prop) and OV4 (the Atlas look). VP4 and VP5 are "Build quality tiers and speed probe"; VP6 and VP3 "Build detail ladder and world textures".
 
