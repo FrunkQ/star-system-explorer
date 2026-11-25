@@ -1,0 +1,371 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.fog",
+ "about": "Fog of war from sensors (RK14, Atomic Rockets plan section 17): what a craft gives off, read from its power flow, and how far a contact could have gone since it was last seen.",
+ "atoms": [
+  {
+   "id": "sse.fog.radiator_area",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "heat_power",
+     "letter": "P"
+    },
+    {
+     "port": "radiator_temperature",
+     "letter": "T"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "radiator_area",
+     "letter": "A"
+    }
+   ],
+   "constants": {
+    "sigma": "constants/sigma_SB"
+   },
+   "models": {
+    "eps": {
+     "value": 0.9,
+     "grade": "assumed",
+     "source": "a typical radiator coating's emissivity, the value sse-light's radiators use"
+    }
+   },
+   "checks": [
+    {
+     "port": "heat_power",
+     "min": 0,
+     "finite": true,
+     "says": "heat to shed must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radiator_temperature",
+     "says": "radiator temperature"
+    }
+   ],
+   "references": [
+    "Stefan-Boltzmann law: a surface of emissivity ε at temperature T sheds ε σ T⁴ per square metre (Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, section 1.5). doi:10.1002/9783527618170"
+   ],
+   "shown": "A = P / (ε σ T⁴)",
+   "equation": {
+    "name": "How much radiator a craft needs to shed its heat",
+    "formula": "A = P / (eps * sigma * T * T * T * T)",
+    "inputs": {
+     "P": {
+      "kind": "fog.heat_power",
+      "unit": "W",
+      "name": "heat the craft must shed at this temperature"
+     },
+     "T": {
+      "kind": "fog.radiator_temperature",
+      "unit": "K",
+      "name": "temperature the heat leaves at"
+     },
+     "eps": {
+      "kind": "model.radiator_emissivity",
+      "unit": "1",
+      "name": "how well the radiator's surface glows (1 is a perfect black body)"
+     },
+     "sigma": {
+      "kind": "constant.sigma_SB",
+      "unit": "W m-2 K-4",
+      "name": "Stefan-Boltzmann constant"
+     }
+    },
+    "outputs": {
+     "A": {
+      "kind": "fog.radiator_area",
+      "unit": "m2",
+      "name": "glowing area that sheds it"
+     }
+    },
+    "source": {
+     "text": "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics",
+     "doi": "10.1002/9783527618170",
+     "where": "section 1.5"
+    },
+    "explain": {
+     "curious": "In space the only way to get rid of heat is to glow. Every watt a ship's reactor and engines waste must leave as infrared from its radiators, and that glow is what a telescope sees.",
+     "science": "Stefan-Boltzmann: the area of a grey emitter at T that radiates P."
+    },
+    "examples": [
+     {
+      "P": 1000000.0,
+      "T": 500.0,
+      "A": 313.520350935009
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.fog.plume_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "exhaust_speed",
+     "letter": "v"
+    },
+    {
+     "port": "particle_mass",
+     "letter": "mp"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "plume_temperature",
+     "letter": "T"
+    }
+   ],
+   "constants": {
+    "k": "constants/k_B"
+   },
+   "models": {
+    "gam": {
+     "value": 1.6666666666666667,
+     "grade": "derived",
+     "source": "the heat capacity ratio of a monatomic gas or plasma, 5/3"
+    }
+   },
+   "checks": [
+    {
+     "port": "exhaust_speed",
+     "min": 0,
+     "finite": true,
+     "says": "exhaust speed must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "particle_mass",
+     "says": "exhaust particle mass"
+    }
+   ],
+   "references": [
+    "Sutton, G. P. and Biblarz, O. 2017, Rocket Propulsion Elements, 9th edn, Wiley, chapter 3: an ideal nozzle turns the chamber's heat into exhaust speed, v² = 2 c_p T_c with c_p = γ k / ((γ − 1) m), so the chamber temperature behind an exhaust speed is T = (γ − 1) m v² / (2 γ k). https://www.wiley.com/en-us/Rocket+Propulsion+Elements%2C+9th+Edition-p-9781118753651"
+   ],
+   "shown": "T = (γ − 1) m v² / (2 γ k)",
+   "equation": {
+    "name": "How hot a drive's exhaust is, from how fast it leaves",
+    "formula": "T = (gam - 1) * mp * v * v / (2 * gam * k)",
+    "inputs": {
+     "v": {
+      "kind": "fog.exhaust_speed",
+      "unit": "m s-1",
+      "name": "speed the exhaust leaves at"
+     },
+     "mp": {
+      "kind": "fog.particle_mass",
+      "unit": "kg",
+      "name": "mass of one exhaust particle"
+     },
+     "gam": {
+      "kind": "model.heat_capacity_ratio",
+      "unit": "1",
+      "name": "heat capacity ratio of the exhaust gas"
+     },
+     "k": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann constant"
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "fog.plume_temperature",
+      "unit": "K",
+      "name": "temperature of the hot exhaust"
+     }
+    },
+    "source": {
+     "text": "Sutton, G. P. and Biblarz, O. 2017, Rocket Propulsion Elements, 9th edn",
+     "url": "https://www.wiley.com/en-us/Rocket+Propulsion+Elements%2C+9th+Edition-p-9781118753651",
+     "where": "chapter 3"
+    },
+    "explain": {
+     "curious": "Faster exhaust means hotter exhaust. A chemical rocket's flame glows white; a fusion torch's plasma is so hot it shines in X-rays and can be seen across a solar system.",
+     "science": "Ideal-nozzle energy balance: the chamber enthalpy c_p T becomes ½ v², with c_p = γ k/((γ−1) m)."
+    },
+    "examples": [
+     {
+      "v": 3000000.0,
+      "mp": 2e-27,
+      "T": 260746938.5774371
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.fog.plume_light",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "jet_power",
+     "letter": "Pj"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "plume_luminosity",
+     "letter": "L"
+    }
+   ],
+   "models": {
+    "share": {
+     "value": 0.01,
+     "grade": "assumed",
+     "source": "stand-in share of the jet's power radiated by the plume (fudge register F56)"
+    }
+   },
+   "checks": [
+    {
+     "port": "jet_power",
+     "min": 0,
+     "finite": true,
+     "says": "jet power must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "SSE4 Atomic Rockets plan section 17 (accepted 23 Nov 2026): what a craft gives off comes from its power flow; a drive plume is seen by the light it radiates, a share of the jet's power. The share is a stand-in until plume spectra are modelled (fudge register). https://github.com/FrunkQ/star-system-explorer/blob/main/handover/design/SSE4-atomic-rockets-plan.md"
+   ],
+   "shown": "L = f P_jet",
+   "equation": {
+    "name": "How much light a drive plume gives off",
+    "formula": "L = share * Pj",
+    "inputs": {
+     "Pj": {
+      "kind": "fog.jet_power",
+      "unit": "W",
+      "name": "power carried away in the exhaust"
+     },
+     "share": {
+      "kind": "model.plume_radiated_share",
+      "unit": "1",
+      "name": "share of the jet's power the plume radiates"
+     }
+    },
+    "outputs": {
+     "L": {
+      "kind": "fog.plume_luminosity",
+      "unit": "W",
+      "name": "light the plume gives off"
+     }
+    },
+    "source": {
+     "text": "SSE4 Atomic Rockets plan section 17",
+     "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/handover/design/SSE4-atomic-rockets-plan.md",
+     "where": "section 17.2, point 3"
+    },
+    "explain": {
+     "curious": "A burning drive is the brightest thing about a ship. Even a small share of its power, given off as light, can be seen from far away.",
+     "science": "Plume luminosity as a fixed share of jet power; a stand-in for radiative cooling of the exhaust."
+    },
+    "examples": [
+     {
+      "Pj": 1000000000.0,
+      "L": 10000000.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.fog.last_seen_ring",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "speed",
+     "letter": "v"
+    },
+    {
+     "port": "acceleration",
+     "letter": "a"
+    },
+    {
+     "port": "since",
+     "letter": "t"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "ring_radius",
+     "letter": "r"
+    }
+   ],
+   "checks": [
+    {
+     "port": "speed",
+     "min": 0,
+     "finite": true,
+     "says": "speed must be zero or more, got {}"
+    },
+    {
+     "port": "acceleration",
+     "min": 0,
+     "finite": true,
+     "says": "acceleration must be zero or more, got {}"
+    },
+    {
+     "port": "since",
+     "min": 0,
+     "finite": true,
+     "says": "time since last seen must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Computed (SSE4, plan section 17.1): a contact last seen moving at v, able to accelerate at a, may be anywhere within v t + ½ a t² of where it was after t seconds; the textbook distance under constant acceleration (Halliday, D., Resnick, R. and Walker, J. 2013, Fundamentals of Physics, 10th edn, Wiley, chapter 2). https://www.wiley.com/en-us/Fundamentals+of+Physics%2C+10th+Edition-p-9781118230718"
+   ],
+   "shown": "r = v t + ½ a t²",
+   "equation": {
+    "name": "How far a contact could have gone since it was last seen",
+    "formula": "r = v * t + a * t * t / 2",
+    "inputs": {
+     "v": {
+      "kind": "fog.speed",
+      "unit": "m s-1",
+      "name": "speed it was last seen moving at"
+     },
+     "a": {
+      "kind": "fog.acceleration",
+      "unit": "m s-2",
+      "name": "most its drive can accelerate it"
+     },
+     "t": {
+      "kind": "fog.since",
+      "unit": "s",
+      "name": "time since it was last seen"
+     }
+    },
+    "outputs": {
+     "r": {
+      "kind": "fog.ring_radius",
+      "unit": "m",
+      "name": "radius of the ring it could be anywhere inside"
+     }
+    },
+    "source": {
+     "text": "Halliday, D., Resnick, R. and Walker, J. 2013, Fundamentals of Physics, 10th edn",
+     "url": "https://www.wiley.com/en-us/Fundamentals+of+Physics%2C+10th+Edition-p-9781118230718",
+     "where": "chapter 2"
+    },
+    "explain": {
+     "curious": "Once you lose sight of a ship, all you know is where it was. The longer you wait, the bigger the circle it could be hiding in.",
+     "science": "Reach under constant acceleration from a known speed."
+    },
+    "examples": [
+     {
+      "v": 1000.0,
+      "a": 1.0,
+      "t": 3600.0,
+      "r": 10080000.0
+     }
+    ]
+   }
+  }
+ ]
+}

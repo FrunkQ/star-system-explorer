@@ -4,9 +4,12 @@ import type { ScreenDoc } from "../../../ui-contract/src/index.ts";
 import web from "./scale-web.gm.json";
 import cluster from "./scale-cluster.gm.json";
 import galaxy from "./scale-galaxy.gm.json";
+import systems from "./scale-systems.gm.json";
 
 export const PLACE_SCREENS: Record<string, ScreenDoc> = {
   web: web as unknown as ScreenDoc,
   cluster: cluster as unknown as ScreenDoc,
   galaxy: galaxy as unknown as ScreenDoc,
+  // A second instrument at the galaxy scale (not a scale of its own yet): the campaign's systems on one map.
+  systems: systems as unknown as ScreenDoc,
 };

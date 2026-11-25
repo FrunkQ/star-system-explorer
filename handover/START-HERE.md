@@ -4,7 +4,9 @@ Last updated: 24 Nov 2026 (handover to a new Claude account). Live site v4.stars
 
 ## New to this project? Read this section first
 
-On 25 Nov 2026 Alex (GitHub `FrunkQ`, the owner) moves SSE4 to a new Claude account. The old account's project chat,
+On 25 Nov 2026 Alex (GitHub `FrunkQ`, the owner) moves SSE4 to a new Claude account. The old account's
+window closes at **7 pm London time on 25 Nov 2026** (19:00 UTC; Alex, 01:31 UTC 25 Nov); work still open then
+is picked up from this repo. The old account's project chat,
 threads and project memory do not come with it. **Everything a new Claude needs is in this repo**, mainly in `handover/`.
 Read in this order:
 
@@ -61,7 +63,7 @@ leave the browser.
 
 ## Standing rulings of 24 Nov 2026 (afternoon and evening)
 
-- **CI test lines, add only** (Alex 18:07 UTC: "yes - if it makes your job easier - do it!"): a builder may add lines to `.github/workflows/ci.yml` so its new tests run automatically. Never remove, skip or loosen a check. Every other CI workflow or merge-check edit still needs Alex's own yes.
+- **CI test lines, add only** (Alex 18:07 UTC: "yes - if it makes your job easier - do it!"): a builder may add lines to `.github/workflows/ci.yml` so its new tests run automatically. Never remove, skip or loosen a check. Confirmed as a standing rule on 25 Nov 02:00 UTC (Alex: "in future yes to 'any thread may add its own test line to ci.yml, nothing else'"): a thread may add only its own test line, with no need to ask. Every other CI workflow or merge-check edit still needs Alex's own yes.
 - **Frozen physics for the golden** (Alex 18:07 UTC): the shared contract golden may run on a frozen copy of the base-physics pack, with the live pack's loading tested separately. The kernel thread builds this after the barycentre PR.
 - **Golden lane:** since PR 454 (kernel), adding an op no longer changes golden lines 1 and 41 of `tests/golden/contract.jsonl`: they are masked and checked against `ops()`. After merging main, a golden PR re-runs `SSE_BLESS=1 cargo test -p sse-kernel contract`, and only its own appended cases and real changes should show in the diff; an open golden PR that edited lines 1 or 41 takes main's side and reblesses. Golden-changing PRs still merge one at a time in order of readiness, each merged with main, regenerated and green; tell the kernel thread when one opens and merges. Next from the kernel: the frozen base-physics copy (Alex 18:07), then `class_sample`. Open item: eight request ops have no `ops()` cost row (`hold`, `holdings_in`, `links_in`, `set_link`, `set_tech`, `tech_of`, `tech_reading`, `who_holds`); owner being found.
 - **Data sheet UI copy:** after any change to the data sheet or `scripts/build-ui-reference.py`, merge main, run `python3 scripts/build-ui-reference.py`, then `--check`, before merging.
@@ -108,7 +110,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/landing.md` (arrives with PR 437) | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | V8, voyages, the flight log, travel panels, HW |
-| `status/galaxy.md` (arrives with PR 431) | Build galaxy charts and histories (split from travel) | U6, U8, V9, GH8, V3 gap 39 |
+| `status/galaxy.md` | Build galaxy charts and histories (split from travel) | U6, U8, V9 (not the 3D web cube), GH8, V3 gaps 17 and 39 |
 | `status/cosmic-web.md` | Build cosmic web view | the web cube in 3D and True, light from haloes (V9w follow-ups) |
 | `status/light.md` | Build light and nebulae | O, the light side of Y, MF6, MF7, MF9, ND2 |
 | `status/weather.md` | Build shared climate and weather | W, seas (colour, waves, whitecaps) |
@@ -133,6 +135,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
+| `status/postcards.md` | Build postcards and hold backdrops (design: "Design saved views and hold backdrops") | PC: postcards (a bookmark that can travel and is drawn live as a still, with the reasons on its back), grounds and quotes on hold screens. ACCEPTED by Alex 25 Nov 01:27 UTC; builder thread "Build postcards and hold backdrops" (Opus) owns PC1, PC3, PC4, PC6; PC is a code only |
 | `status/across-tracks.md` | each row names its owners | umbrella rows for MF, Y, GH, ND, TG, the converter module |
 
 Added after 18:15 UTC: "Verify every cited paper" (`status/citations.md`, arrives with PR 471; master citation list, daily Consensus batches), "Build quality tiers and speed probe" (`status/quality-tiers.md`, PR 470), "Build detail ladder and world textures" (`status/detail-ladder.md`, PR 467), "Build aurorae and night lights" (`status/aurora.md`, PR 469). Designs: "Design visual polish and flourishes" (accepted, note in `handover/design/`); the exotic objects note's section 15 adds pulsating stars (XO19) and clocks (XO20); outside models and the kernel as a module (track OM, PR 484) is banked, not accepted.
@@ -150,6 +153,10 @@ Each track keeps to its own crates and folders. Integration points are listed at
 https://v4.starsystemx.com: Cloudflare Worker `star-system-explorer` (Workers Builds, set up by Alex 18 Nov 2026).
 Build `npm run build` (scripts/build-site.sh, writes dist/), deploy `npx wrangler deploy` (wrangler.jsonc),
 production branch: switch to `main` in Cloudflare (was `claude/project-thread-h9y77o`); other branches get preview versions.
+There is no deploy workflow in GitHub Actions: `ci.yml` only tests (and never cancels runs on `main`). Cloudflare
+builds every merge to `main` (4 to 10 minutes each). When merges come faster than that, a waiting build can show as
+Skipped, but the next build on `main` contains it, so the site catches up. Alex checked on 25 Nov 01:36 UTC and found
+every build Ready; nothing needs changing in Cloudflare and no GitHub deploy workflow is wanted.
 The site is the GM shell (chart room) at `/`, the players page at `/players.html` and the cross-device check page at `/harness/`.
 
 ## How to resume

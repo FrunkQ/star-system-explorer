@@ -197,3 +197,13 @@ test("driving a read-only destination: it follows the GM without new undo steps;
   assert.equal(title(e, "bridge"), "The Solar System", "driving Everyone moves its top layer");
   assert.equal(drive(e, null).driving, undefined);
 });
+
+test("a clean output (PB8) is a screen like any other, marked Output; its link has no controls", async () => {
+  const { outputLink } = await import("../src/seats.ts");
+  const b = screenHello(emptyBoard({ scope: "k" }), "scr-out1", { name: "Output", role: "stream", output: true });
+  assert.deepEqual(b.screens["scr-out1"], { name: "Output", role: "stream", output: true });
+  assert.deepEqual(screenHello(b, "scr-x", { name: "Wall", role: "table" }).screens["scr-x"], { name: "Wall", role: "table" });
+  const join = "https://v4.example/players.html?join=abc&seat=stream";
+  assert.equal(outputLink(join), "https://v4.example/players.html?join=abc&seat=stream&clean=1&name=Output");
+  assert.equal(outputLink(join, true), "https://v4.example/players.html?join=abc&seat=stream&clean=1&name=Output&ground=none");
+});

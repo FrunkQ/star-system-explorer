@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
+  import FindHome from "./FindHome.svelte";
   import { announcePlace, cellHalo, cellId, foamCells, parseCellId, haloRadius, overdensityWords, projectHalo, sci, type CellHalo, type HaloCell, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -92,6 +93,12 @@
   function chart(h: CellHalo) {
     ctx.workspace.select(h.address);
     root?.dispatchEvent(new CustomEvent("sse:explore", { bubbles: true, detail: { section: "galaxy" } }));
+  }
+  // A home found in another cell: go there, low enough a floor that it shows, and pick it.
+  function go(f: import("../../../ui-contract/src/index.ts").HomeFit) {
+    if (Number(min) > f.halo.mass_msun) min = [...MINS].reverse().find((m) => Number(m) <= f.halo.mass_msun) ?? "1e10";
+    picked = f.halo.address;
+    idx = [...f.cell];
   }
   const PLACE_CHILDREN = 24;
   const nameOf = (a: string) => a.split("/").at(-1)?.replace("halo:", "Halo ") ?? a;
@@ -228,6 +235,7 @@
         {:else}
           <p class="hint">Pick a halo on the map.</p>
         {/if}
+        <FindHome session={ctx.session} from={idx} ongo={go} />
         <h4>How many, of each size</h4>
         <svg class="mf" viewBox="0 0 300 110" role="img" aria-label="Haloes per mass bin: expected and drawn" data-mass-function>
           {#each bins as b, i (b.log10_mass)}
