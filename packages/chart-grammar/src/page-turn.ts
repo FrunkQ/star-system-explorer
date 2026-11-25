@@ -135,28 +135,40 @@ const nextFrame = () => new Promise<void>((r) => (typeof requestAnimationFrame =
 const pts = (a: Pt[]) => a.map((q) => `${Math.round(q[0] * 10) / 10},${Math.round(q[1] * 10) / 10}`).join(" ");
 let uid = 0;
 
+/**
+ * Where a page stands inside the element the copies are laid in (which the turn makes positioned first, so this and
+ * the copies' containing block agree whatever the page's own offset parent is).
+ */
+function placeIn(host: HTMLElement, page: HTMLElement) {
+  const r = page.getBoundingClientRect();
+  const hr = host.getBoundingClientRect();
+  return { left: r.left - hr.left - host.clientLeft + host.scrollLeft, top: r.top - hr.top - host.clientTop + host.scrollTop, width: r.width, height: r.height };
+}
+
 /** A copy of the page laid exactly over it, for the turn to peel (or to hold the old page underneath going back). */
-function cover(node: HTMLElement, z: number): HTMLElement {
-  const c = node.cloneNode(true) as HTMLElement;
+function cover(host: HTMLElement, page: HTMLElement, z: number): HTMLElement {
+  const c = page.cloneNode(true) as HTMLElement;
   c.removeAttribute("id");
   c.removeAttribute("data-deliver-item");
   c.setAttribute("aria-hidden", "true");
   c.setAttribute("inert", "");
   c.dataset.pageCurl = "copy";
+  const at = placeIn(host, page);
   Object.assign(c.style, {
     position: "absolute",
-    left: `${node.offsetLeft}px`,
-    top: `${node.offsetTop}px`,
-    width: `${node.offsetWidth}px`,
-    height: `${node.offsetHeight}px`,
+    left: `${at.left}px`,
+    top: `${at.top}px`,
+    width: `${at.width}px`,
+    height: `${at.height}px`,
+    maxWidth: "none",
     margin: "0",
     zIndex: String(z),
     pointerEvents: "none",
-    transform: "",
+    transform: "none",
     boxSizing: "border-box",
   });
-  node.parentNode?.insertBefore(c, node.nextSibling);
-  c.scrollTop = node.scrollTop;
+  host.appendChild(c);
+  c.scrollTop = page.scrollTop;
   return c;
 }
 
@@ -165,27 +177,32 @@ function paperOf(node: HTMLElement): string {
   return bg && bg !== "transparent" && !/rgba\([^)]*,\s*0\)$/.test(bg) ? bg : "#f1ede3";
 }
 
-/** The drawing for one turn: copies of the page, and the folded flap over them. */
+/** The drawing for one turn: the folded flap over the top copy, sized and placed to that copy. */
 interface CurlStage {
   draw(u: number, eased?: number): void;
+  /** The top copy was replaced (the page coming back finished drawing late): follow the new one. */
+  retop(top: HTMLElement): void;
   remove(): void;
 }
 
-function stage(node: HTMLElement, top: HTMLElement): CurlStage {
-  const host = node.parentElement!;
-  const restoreHost = host.style.position;
-  if (getComputedStyle(host).position === "static") host.style.position = "relative";
-  const w = node.offsetWidth;
-  const h = node.offsetHeight;
+function stage(host: HTMLElement, first: HTMLElement): CurlStage {
+  let top = first;
+  let w = 0;
+  let h = 0;
   const id = `sse-curl-${++uid}`;
   const NS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(NS, "svg");
-  svg.setAttribute("width", String(w));
-  svg.setAttribute("height", String(h));
   svg.setAttribute("aria-hidden", "true");
   svg.dataset.pageCurl = "flap";
-  Object.assign(svg.style, { position: "absolute", left: `${node.offsetLeft}px`, top: `${node.offsetTop}px`, zIndex: String(Number(top.style.zIndex) + 1), overflow: "hidden", pointerEvents: "none" });
-  const paper = paperOf(node);
+  const fit = () => {
+    w = top.offsetWidth;
+    h = top.offsetHeight;
+    svg.setAttribute("width", String(w));
+    svg.setAttribute("height", String(h));
+    Object.assign(svg.style, { position: "absolute", left: top.style.left, top: top.style.top, zIndex: String(Number(top.style.zIndex) + 1), overflow: "hidden", pointerEvents: "none" });
+  };
+  fit();
+  const paper = paperOf(top);
   svg.innerHTML =
     `<defs><linearGradient id="${id}-l" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8f897c"/><stop offset=".07" stop-color="#d9d4c8"/><stop offset=".22" stop-color="#fffdf8"/><stop offset=".55" stop-color="${paper}"/><stop offset="1" stop-color="#d8d2c4"/></linearGradient>` +
     `<linearGradient id="${id}-d" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#000" stop-opacity=".34"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>` +
@@ -202,20 +219,27 @@ function stage(node: HTMLElement, top: HTMLElement): CurlStage {
     g.setAttribute("x2", String(l.x2));
     g.setAttribute("y2", String(l.y2));
   };
+  let last: [number, number | undefined] = [0, undefined];
+  const draw = (u: number, eased?: number) => {
+    last = [u, eased];
+    const c = curlAt(u, w, h, eased);
+    top.style.clipPath = c.keep.length ? `polygon(${c.keep.map((p) => `${Math.round(p[0] * 10) / 10}px ${Math.round(p[1] * 10) / 10}px`).join(",")})` : "polygon(0 0, 0 0, 0 0)";
+    fl.setAttribute("points", pts(c.flap));
+    sh.setAttribute("points", pts(c.shadow));
+    sd.setAttribute("points", pts(c.shade));
+    setLine(lg, c.light);
+    setLine(dg, c.dark);
+    svg.dataset.u = String(Math.round(u * 1000) / 1000);
+  };
   return {
-    draw(u, eased) {
-      const c = curlAt(u, w, h, eased);
-      top.style.clipPath = c.keep.length ? `polygon(${c.keep.map((p) => `${Math.round(p[0] * 10) / 10}px ${Math.round(p[1] * 10) / 10}px`).join(",")})` : "polygon(0 0, 0 0, 0 0)";
-      fl.setAttribute("points", pts(c.flap));
-      sh.setAttribute("points", pts(c.shadow));
-      sd.setAttribute("points", pts(c.shade));
-      setLine(lg, c.light);
-      setLine(dg, c.dark);
-      svg.dataset.u = String(Math.round(u * 1000) / 1000);
+    draw,
+    retop(t) {
+      top = t;
+      fit();
+      draw(...last);
     },
     remove() {
       svg.remove();
-      host.style.position = restoreHost;
     },
   };
 }
@@ -231,24 +255,63 @@ interface Session {
 }
 
 /**
+ * The page as it stands now: the same element, or, when the swap replaced it (a keyed block), the element that took its
+ * place among the host's children.
+ */
+function pageNow(host: HTMLElement, was: HTMLElement): HTMLElement {
+  if (was.isConnected && was.parentElement === host) return was;
+  const same = [...host.children].filter((c): c is HTMLElement => c instanceof HTMLElement && !c.dataset.pageCurl && c.tagName === was.tagName);
+  return same.find((c) => c.className === was.className) ?? same[0] ?? was;
+}
+
+/**
  * Begin a turn: cover the page with copies, then `swap` to the new page underneath. Forward, a copy of this page lies
  * on top and peels away from u 0 to 1, showing the new page. Back, a copy of this page lies underneath and a copy of the
- * page coming back lies on top, coming down from u 1 to 0.
+ * page coming back lies on top, coming down from u 1 to 0 (re-copied if that page is still drawing as the turn plays).
  */
 async function begin(node: HTMLElement, dir: 1 | -1, swap: () => unknown): Promise<Session> {
-  const under = dir === -1 ? cover(node, 3) : null;
+  const host = node.parentElement!;
+  // The copies are laid in the page's parent; make it their containing block before measuring anything.
+  const restoreHost = host.style.position;
+  if (getComputedStyle(host).position === "static") host.style.position = "relative";
+  const under = dir === -1 ? cover(host, node, 3) : null;
   let top: HTMLElement;
+  let page = node;
+  let watch: MutationObserver | null = null;
   if (dir === 1) {
-    top = cover(node, 4);
+    top = cover(host, node, 4);
     await swap();
     await nextFrame();
+    page = pageNow(host, node);
   } else {
     await swap();
     await nextFrame();
-    top = cover(node, 4);
+    page = pageNow(host, node);
+    top = cover(host, page, 4);
   }
-  const st = stage(node, top);
-  node.dataset.delivering = "page_turn";
+  const st = stage(host, top);
+  if (dir === -1 && typeof MutationObserver === "function") {
+    // The page coming back may still be filling in (a lazy figure, a late fetch): copy it again as it changes.
+    let queued = false;
+    // Only changes to the page itself count, not the copies and flap this turn lays down.
+    const ours = (n: Node | null) => !!(n instanceof Element ? n : n?.parentElement)?.closest("[data-page-curl]");
+    watch = new MutationObserver((records) => {
+      if (!records.some((r) => !ours(r.target) && (r.type !== "childList" || [...r.addedNodes, ...r.removedNodes].some((n) => !ours(n))))) return;
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        if (!watch) return;
+        page = pageNow(host, page);
+        const fresh = cover(host, page, 4);
+        top.remove();
+        top = fresh;
+        st.retop(fresh);
+      });
+    });
+    watch.observe(host, { subtree: true, childList: true, characterData: true });
+  }
+  page.dataset.delivering = "page_turn";
   let u = dir === 1 ? 0 : 1;
   let anim: { stop: () => void; to: 0 | 1 } | null = null;
   const draw = (x: number, eased?: number) => {
@@ -296,11 +359,14 @@ async function begin(node: HTMLElement, dir: 1 | -1, swap: () => unknown): Promi
       anim?.stop();
     },
     end() {
+      watch?.disconnect();
+      watch = null;
       anim?.stop();
       st.remove();
       top.remove();
       under?.remove();
-      if (node.dataset.delivering === "page_turn") delete node.dataset.delivering;
+      host.style.position = restoreHost;
+      for (const p of new Set([node, page])) if (p.dataset.delivering === "page_turn") delete p.dataset.delivering;
     },
   };
 }

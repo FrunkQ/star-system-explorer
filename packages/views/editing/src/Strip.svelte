@@ -404,14 +404,22 @@
   .problem {
     color: var(--sse-accent-ink);
   }
-  @media (max-width: 420px) {
+  @media (max-width: 600px) {
+    /* A thumb-sized mark on a phone: a little bigger to see, and a 44 px square to touch (the touch target
+       guidelines' least) that leaves the reference names readable. */
     .track {
       height: 52px;
     }
     .mark {
-      width: 22px;
-      height: 28px;
-      margin-left: -11px;
+      top: 1px;
+      width: 18px;
+      height: 26px;
+      margin-left: -9px;
+    }
+    .mark::before {
+      content: "";
+      position: absolute;
+      inset: -9px -13px;
     }
   }
   @media (prefers-reduced-motion: reduce) {

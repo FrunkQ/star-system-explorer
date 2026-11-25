@@ -70,3 +70,17 @@ test("the three moon recipes (ED7): formation's leftovers rules for one planet, 
   // No star figures: no Hill radius, so no captured body.
   assert.deepEqual(moonRecipes({ name: "Drift", mass_earth: 2, radius_earth: 1.2, a_au: null, star_mass_sun: null }).map((r) => r.id), ["impact"]);
 });
+
+test("Kinds to add (ED6): each top-level world class's example, smallest first, authored not impossible", async () => {
+  const { worldKinds } = await import("../src/index.ts");
+  const atlas = JSON.parse(readFileSync(new URL("../../../packs/base-atlas/pack.json", import.meta.url), "utf8"));
+  const k = worldKinds([atlas]);
+  const ids = k.map((x) => x.class);
+  for (const id of ["rocky", "iron-rich", "gas-giant", "ice-giant"]) assert.ok(ids.includes(id), id);
+  assert.ok(ids.every((id) => !id.includes("/") && !id.startsWith("small-body")), "top level, with a size");
+  assert.deepEqual([...k].sort((x, y) => x.mass_kg - y.mass_kg), k, "smallest first");
+  const gg = k.find((x) => x.class === "gas-giant")!;
+  assert.equal(gg.like, "Jupiter");
+  assert.ok(gg.clip.events.every((e) => !e.impossible));
+  assert.deepEqual(worldKinds([base]), [], "no atlas, no kinds");
+});

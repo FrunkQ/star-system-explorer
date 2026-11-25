@@ -518,7 +518,10 @@ impl NavSystem {
             .iter()
             .find(|b| b.address == address || b.name.eq_ignore_ascii_case(address))
     }
-    /// A body's position and velocity at universe time `t_s`.
+    /// A body's position and velocity from the star's centre at universe
+    /// time `t_s`. The two-body motion counts both masses (barycentre
+    /// always), as the kernel's `orbits_at` does, so the chart and NAV put a
+    /// world in the same place.
     pub fn at(&self, b: &NavBody, t_s: f64) -> (V3, V3) {
         let el = Elements {
             a_m: b.a_au * AU,
@@ -528,7 +531,7 @@ impl NavSystem {
             varpi_deg: b.varpi_deg,
             mean_longitude_deg: b.mean_longitude_deg,
         };
-        kepler::state(&el, self.mu(), t_s - self.t0_s)
+        kepler::state(&el, self.mu() + b.mu(), t_s - self.t0_s)
     }
 }
 
