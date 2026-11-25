@@ -12,7 +12,7 @@ export default {
     await d.click(page.getByRole("button", { name: "3D", exact: true }));
     const view = page.locator("[aria-roledescription='3D chart']");
     await view.waitFor();
-    await d.hold(2500);
+    await d.hold(2000);
     await d.glide({ x: 1100, y: 500 }, 600);
     await page.mouse.down();
     await d.glide({ x: 800, y: 420 }, 2500);
@@ -22,6 +22,6 @@ export default {
     const pin = view.locator(".pin").filter({ hasText: /^Vault/ }).first();
     await d.caption("Into a planet's own frame", "Click a world and the camera flies in: its moons orbit it, not the star.");
     await d.click((await pin.count()) ? pin : view.locator(".pin").nth(4));
-    await d.hold(3500);
+    await d.hold(2100);
   },
 };

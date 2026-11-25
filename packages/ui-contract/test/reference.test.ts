@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { showReference } from "../src/reference.ts";
 
 test("a reference with a DOI links to doi.org, a URL links as itself, otherwise plain text", () => {
-  assert.deepEqual(showReference({ text: "Dole 1970", doi: "10.1016/0019-1035(70)90036-9" }), { text: "Dole 1970", href: "https://doi.org/10.1016/0019-1035(70)90036-9" });
+  assert.deepEqual(showReference({ text: "Dole 1970", doi: "10.1016/0019-1035(70)90095-3" }), { text: "Dole 1970", href: "https://doi.org/10.1016/0019-1035(70)90095-3" });
   assert.equal(showReference({ text: "x", doi: "https://doi.org/10.1086/191003" }).href, "https://doi.org/10.1086/191003");
   assert.equal(showReference({ text: "x", doi: "doi:10.1086/191003" }).href, "https://doi.org/10.1086/191003");
   assert.equal(showReference({ text: "NASA fact sheet", url: "https://nssdc.gsfc.nasa.gov/planetary/factsheet/" }).href, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/");

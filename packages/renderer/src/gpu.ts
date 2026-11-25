@@ -53,6 +53,11 @@ export interface GpuItem {
    * the drawing's frame), in units of its radius from its centre, added as light at `brightness` 0..1.
    */
   plumes?: { points: Float32Array; brightness: number };
+  /**
+   * True look: the body's own shape instead of a sphere (small-body.ts `smallBodyMesh`: an asteroid's figure, two lobes
+   * of a contact binary), in units of `radius`, its long axis on x and spin axis on z. Keyed: built once.
+   */
+  mesh?: { key: string; positions: Float32Array; normals: Float32Array; index: Uint32Array };
 }
 
 /** True look: the star's light. `at` a camera-relative point (the star is in the frame), else `from` a direction. */
@@ -132,6 +137,18 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   // True look: a finer sphere with its poles on z, as the globe's (true-look.ts `equirect`).
   const globe = new SphereGeometry(1, 64, 32).rotateX(Math.PI / 2);
   const textures = new Map<string, DataTexture>();
+  const meshGeoms = new Map<string, BufferGeometry>();
+  const meshGeom = (mesh: NonNullable<GpuItem["mesh"]>) => {
+    let g = meshGeoms.get(mesh.key);
+    if (!g) {
+      g = new BufferGeometry();
+      g.setAttribute("position", new Float32BufferAttribute(mesh.positions, 3));
+      g.setAttribute("normal", new Float32BufferAttribute(mesh.normals, 3));
+      g.setIndex(Array.from(mesh.index));
+      meshGeoms.set(mesh.key, g);
+    }
+    return g;
+  };
   const versions = new Map<string, number>();
   const litMats = new Map<string, MeshStandardMaterial>();
   // VP3: a world with cube face pictures wears a bake sized to its disc on screen (texture-ladder.ts), with relief.
@@ -152,6 +169,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     bakedSize.set(it.surface.key, size);
     const b = baker.get(it.surface.key, c, size, c.radius_m);
     baker.trim(BAKE_BUDGET[ladderTier]);
+    b.setPatch(it.surface.texture.patch ?? null);
     return b.material;
   };
   const litMat = (it: GpuItem) => {
@@ -364,7 +382,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         const dist = Math.hypot(it.rel[0], it.rel[1], it.rel[2]);
         const disc_px = o.ortho ? (2 * it.radius * o.width) / o.ortho.width : dist > it.radius ? (it.radius / dist / Math.tan(o.fovY / 2)) * o.height : o.height;
         const surfaceMat = lit && it.surface?.texture.faces ? bakedMat(it, disc_px) : null;
-        const m = new Mesh(o.light || it.frame ? globe : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? (surfaceMat ?? litMat(it)) : mat(it.colour));
+        const m = new Mesh(it.mesh ? meshGeom(it.mesh) : o.light || it.frame ? globe : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? (surfaceMat ?? litMat(it)) : mat(it.colour));
         m.position.set(it.rel[0], it.rel[1], it.rel[2]);
         m.scale.setScalar(it.radius);
         if (it.frame) {
@@ -459,6 +477,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       globe.dispose();
       torus.dispose();
       textures.forEach((t) => t.dispose());
+      meshGeoms.forEach((g) => g.dispose());
       faces.forEach((e) => (e.tex.dispose(), e.mat.dispose()));
       litMats.forEach((m) => m.dispose());
       baker.dispose();

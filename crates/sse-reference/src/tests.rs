@@ -922,3 +922,241 @@ fn tholin_absorbs_blue_more_than_red() {
     assert!(at(440.0) > at(690.0) && at(690.0) > at(1000.0));
     assert!(n.iter().all(|&x| (1.5..1.8).contains(&x)));
 }
+
+#[test]
+fn mars_dust_simulants_are_on_the_sheet() {
+    // MP34: Martikainen et al. 2023 k for three Mars simulants, 250 to 2000 nm.
+    let r = Reference::base();
+    for id in ["jsc-mars-1", "mms-2", "mgs-1"] {
+        let t = r
+            .row("mixtures", id)
+            .and_then(|x| x.get("optical"))
+            .and_then(|o| o.get("refractive_index"))
+            .unwrap_or_else(|| panic!("{id}"));
+        let n = |k: &str| t.get(k).unwrap().as_array().unwrap().len();
+        assert!(n("lambda_nm") == 15 && n("n") == 15 && n("k") == 15, "{id}");
+    }
+}
+
+#[test]
+fn troilite_and_the_outer_ices_are_on_the_sheet() {
+    // MP34: troilite FeS n,k on two axes (Kranhold 2026); the visible real
+    // index of methane ice (1.32) and nitrogen ice (1.23).
+    let r = Reference::base();
+    let o = r
+        .row("mixtures", "troilite")
+        .and_then(|x| x.get("optical"))
+        .unwrap();
+    for k in ["refractive_index", "refractive_index_ez"] {
+        let t = o.get(k).unwrap();
+        let k_col = t.get("k").unwrap().as_array().unwrap();
+        assert!(k_col.iter().all(|x| x.as_f64().unwrap() > 1.0), "{k}");
+    }
+    let n = |id: &str| {
+        num(r
+            .row("substances", id)
+            .and_then(|x| x.get("optical"))
+            .and_then(|o| o.get("n_solid")))
+        .unwrap()
+    };
+    assert!((n("ch4") - 1.32).abs() < 1e-9 && (n("n2") - 1.23).abs() < 1e-9);
+}
+
+#[test]
+fn hematite_absorbs_blue_and_passes_red() {
+    // MP34: the red of rust is k falling tenfold from 450 to 700 nm (Sokolik and Toon 1999).
+    let r = Reference::base();
+    let t = r
+        .row("mixtures", "hematite")
+        .and_then(|x| x.get("optical"))
+        .and_then(|o| o.get("refractive_index"))
+        .unwrap();
+    let col = |c: &str| -> Vec<f64> {
+        t.get(c)
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect()
+    };
+    let (lam, k) = (col("lambda_nm"), col("k"));
+    let at = |nm: f64| k[lam.iter().position(|x| (*x - nm).abs() < 1e-9).unwrap()];
+    assert!(at(450.0) > 10.0 * at(700.0));
+}
+
+#[test]
+fn water_ice_is_clearest_in_the_blue() {
+    // MP34: Warren and Brandt 2008, ice Ih at 266 K; k rises from blue to red,
+    // which is why thick glacier ice looks blue.
+    let r = Reference::base();
+    let t = r
+        .row("substances", "h2o")
+        .and_then(|x| x.get("optical"))
+        .and_then(|o| o.get("refractive_index_solid"))
+        .unwrap();
+    let col = |c: &str| -> Vec<f64> {
+        t.get(c)
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_f64().unwrap())
+            .collect()
+    };
+    let (lam, k) = (col("lambda_nm"), col("k"));
+    let at = |nm: f64| k[lam.iter().position(|x| (*x - nm).abs() < 1e-9).unwrap()];
+    assert!(at(700.0) > 100.0 * at(450.0));
+}
+
+#[test]
+fn rock_minerals_order_by_darkness() {
+    // MP34: at 550 nm magnetite (k about 1) is black, limonite and basalt far clearer.
+    let r = Reference::base();
+    let k_near = |id: &str, nm: f64| {
+        let t = r
+            .row("mixtures", id)
+            .and_then(|x| x.get("optical"))
+            .and_then(|o| o.get("refractive_index"))
+            .unwrap();
+        let col = |c: &str| -> Vec<f64> {
+            t.get(c)
+                .unwrap()
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|x| x.as_f64().unwrap())
+                .collect()
+        };
+        let (lam, k) = (col("lambda_nm"), col("k"));
+        let mut best = 0;
+        for i in 0..lam.len() {
+            if (lam[i] - nm).abs() < (lam[best] - nm).abs() {
+                best = i;
+            }
+        }
+        k[best]
+    };
+    assert!(k_near("magnetite", 550.0) > 100.0 * k_near("limonite", 550.0));
+    assert!(k_near("limonite", 450.0) > 5.0 * k_near("limonite", 700.0));
+    assert!(k_near("basalt", 550.0) < 0.01);
+}
+
+#[test]
+fn water_scatters_blue_more_than_green() {
+    // W-sea2: Morel and Prieur 1977, pure-water scattering, and its law.
+    let r = Reference::base();
+    let t = r
+        .row("substances", "h2o")
+        .and_then(|x| x.get("optical"))
+        .and_then(|o| o.get("scattering_liquid"))
+        .unwrap();
+    let b: Vec<f64> = t
+        .get("b")
+        .and_then(|b| b.get("v"))
+        .and_then(|v| v.as_array())
+        .unwrap()
+        .iter()
+        .map(|x| x.as_f64().unwrap())
+        .collect();
+    assert!(b[0] > 2.0 * b[1]);
+    assert!((num(t.get("backscatter_share")).unwrap() - 0.5).abs() < 1e-12);
+    assert!(num(t.get("exponent")).unwrap() < -4.0);
+}
+
+#[test]
+fn helium_has_a_lambda_point_below_its_critical_point() {
+    // The helium-sea test: superfluid below the lambda point, no sea above the critical point.
+    let r = Reference::base();
+    let ph = r
+        .row("substances", "he")
+        .and_then(|x| x.get("phases"))
+        .unwrap();
+    let lam = num(ph.get("lambda_point_k")).unwrap();
+    let crit = num(ph.get("critical_point_k")).unwrap();
+    assert!(lam > 2.0 && lam < 2.3 && crit > 5.0 && crit < 5.5);
+    assert!(num(ph.get("critical_point_pa")).unwrap() > num(ph.get("lambda_point_pa")).unwrap());
+}
+
+#[test]
+fn every_light_line_names_matter_on_the_sheet() {
+    // base-light's lines and aurora sources carry `matter`, an element or
+    // substance id; a typo would leave a card's "Light it gives off" empty.
+    let s = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../packs/base-light/pack.json"
+    ))
+    .unwrap();
+    let light: J = serde_json::from_str(&s).unwrap();
+    let r = Reference::base();
+    let mut seen = 0;
+    fn walk(v: &J, out: &mut Vec<String>) {
+        match v {
+            J::Object(m) => {
+                for (k, x) in m {
+                    if k == "matter" {
+                        if let Some(id) = x.as_str() {
+                            out.push(id.to_string());
+                        }
+                    }
+                    walk(x, out);
+                }
+            }
+            J::Array(a) => a.iter().for_each(|x| walk(x, out)),
+            _ => {}
+        }
+    }
+    let mut ids = Vec::new();
+    walk(&light, &mut ids);
+    for id in &ids {
+        let known = r.row("elements", id).is_some() || r.row("substances", id).is_some();
+        assert!(
+            known,
+            "base-light names matter {id:?}, which is not on the sheet"
+        );
+        seen += 1;
+    }
+    assert!(seen > 10, "base-light should name its matter on every line");
+}
+
+#[test]
+fn fresh_moon_dust_is_brighter_than_mature() {
+    // Space weathering darkens lunar soil: immature 12030 against mature 10084
+    // (LSCC, Taylor et al. 2001); every row says its maturity.
+    let r = Reference::base();
+    let refl = |id: &str| {
+        r.row("mixtures", id)
+            .and_then(|x| x.get("optical"))
+            .and_then(|o| o.get("reflectance"))
+            .unwrap()
+            .clone()
+    };
+    let at = |t: &J, nm: f64| {
+        let lam = t.get("lambda_nm").unwrap().as_array().unwrap();
+        let i = lam
+            .iter()
+            .position(|x| (x.as_f64().unwrap() - nm).abs() < 1e-9)
+            .unwrap();
+        t.get("r").unwrap().as_array().unwrap()[i].as_f64().unwrap()
+    };
+    let (fresh, old) = (
+        refl("lunar-soil-immature-mare"),
+        refl("lunar-soil-mature-mare"),
+    );
+    assert!(at(&fresh, 550.0) > 2.0 * at(&old, 550.0));
+    assert!(
+        at(&old, 700.0) > at(&old, 450.0),
+        "mature soil is red-sloped"
+    );
+    for id in [
+        "lunar-soil-mature-highland",
+        "lunar-soil-mature-mare",
+        "lunar-soil-submature-mare",
+        "lunar-soil-immature-mare",
+    ] {
+        assert!(
+            refl(id).get("maturity").and_then(|m| m.as_str()).is_some(),
+            "{id}"
+        );
+    }
+}
