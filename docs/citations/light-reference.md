@@ -212,3 +212,10 @@ How rows are counted: Proxima is counted unverified (its radius is verified, but
 | base-light `aurora` on `oi-5577` (CO2) | Knutsen, E. W. et al. 2025, Detection of visible-wavelength aurora on Mars, Sci. Adv. 11, eads1563. doi:10.1126/sciadv.ads1563 | green 557.7 nm on Mars, 101 ± 14 R | checked (visual polish citation check, section 15) | No measured yield; the CO2 yield is authored. |
 | Earth's upper air (sol-field.json) | US Standard Atmosphere 1976, NOAA-S/T 76-1562. https://ntrs.nasa.gov/citations/19770009539 | number density and mean molecular weight, 90 to 500 km | from memory | Values as tabulated; not re-fetched. |
 | `AuroraSettings` | Evans, D. S. 1974, J. Geophys. Res. 79, 2853. doi:10.1029/JA079i019p02853; Gustin, J. et al. 2004, Icarus 171, 336. doi:10.1016/j.icarus.2004.04.020 | auroral arc electrons of a few to about ten keV; Jupiter's main oval tens of keV | from memory | 8 keV and 50 keV are chosen within those ranges (F59). |
+
+## K-e: phase tables per kind of particle (added 25 Nov 2026)
+
+| Where | Reference | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `sse.light.mie_scattering`, `sse_atoms::mie` | Bohren, C. F. and Huffman, D. R. 1983, Absorption and Scattering of Light by Small Particles, Wiley. doi:10.1002/9783527618156 | the Mie series: equations 4.53 (aₙ, bₙ), 4.61 and 4.62 (efficiencies, asymmetry), 4.74 (S₁, S₂); appendix A's method (downward logarithmic derivative) | textbook | Written fresh, not copied. Reproduces the book's own example (n 1.55, x 5.213: Q_ext = Q_sca = 3.1054), the Rayleigh limit at x = 0.01, and Q_ext → 2 at x = 2000. |
+| `sse_atoms::mie` term count | Wiscombe, W. J. 1980, Improved Mie scattering algorithms, Applied Optics 19, 1505. doi:10.1364/AO.19.001505 | x + 4 x^⅓ + 2 terms | textbook | As quoted. |

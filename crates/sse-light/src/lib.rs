@@ -25,6 +25,7 @@ pub mod gas;
 pub mod limb;
 pub mod observe;
 pub mod photometry;
+pub mod scatter;
 pub mod shift;
 pub mod table;
 

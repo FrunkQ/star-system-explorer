@@ -605,6 +605,13 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },
+    /// Phase tables per kind of particle (K-e): each of `items` is
+    /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n, k?,
+    /// medium_n?, spread?, angles_deg?}`, worked by Mie theory.
+    ReadScattering {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
     /// Fog of war from sensors (RK14, Atomic Rockets plan section 17), the
     /// sums: each seat gives `seat`, its instruments (`sensors`, or `fit`
     /// `{tech, hull_length_m}` for the free default set), optionally `own`
@@ -2267,6 +2274,7 @@ impl Request {
             Request::ReadLimb { .. } => "read_limb",
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
+            Request::ReadScattering { .. } => "read_scattering",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2489,6 +2497,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_bows",
             Cost::Trivial,
             "per item: one or two formula blocks",
+        ),
+        o(
+            "read_scattering",
+            Cost::Light,
+            "per item: the Mie series, about x + 4x^(1/3) terms for each angle and each of up to nine sizes",
         ),
         o(
             "fog_of_war",
@@ -3135,6 +3148,11 @@ pub enum Response {
     },
     /// `read_bows`: each of `items` is `sse_light::bows::Bows`.
     BowsRead {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// `read_scattering`: each of `items` is `sse_light::scatter::Scattering`.
+    ScatteringRead {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },

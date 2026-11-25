@@ -3507,5 +3507,13 @@
  {
   "op": "read_bows",
   "items": [{"id": "fog", "n": 1.333, "kind": "mist"}]
+ },
+ {
+  "op": "read_scattering",
+  "items": [{"id": "cloud", "radius_m": 1e-5, "wavelength_m": 5.5e-7, "n": 1.333, "spread": 0.3, "angles_deg": [0, 30, 90, 138, 180]}, {"id": "soot", "radius_m": 5e-8, "wavelength_m": 5.5e-7, "n": 1.75, "k": 0.44, "angles_deg": [0, 90, 180]}]
+ },
+ {
+  "op": "read_scattering",
+  "items": [{"id": "boulder", "radius_m": 1.0, "wavelength_m": 5.5e-7, "n": 1.5}]
  }
 ]

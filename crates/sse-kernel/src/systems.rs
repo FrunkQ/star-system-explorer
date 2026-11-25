@@ -449,6 +449,19 @@ pub(crate) fn read_bows(items: Vec<serde_json::Value>) -> Out {
     Ok(Response::BowsRead { items: out })
 }
 
+/// Phase tables per kind of particle (K-e), by Mie theory.
+pub(crate) fn read_scattering(items: Vec<serde_json::Value>) -> Out {
+    let mut out = vec![];
+    for (i, v) in items.into_iter().enumerate() {
+        let bad = |e: String| err("bad_particle", format!("item {i}: {e}"));
+        let p: sse_light::scatter::Particle =
+            serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let s = sse_light::scatter::scattering(&p).map_err(bad)?;
+        out.push(serde_json::to_value(s).expect("plain data"));
+    }
+    Ok(Response::ScatteringRead { items: out })
+}
+
 pub(crate) fn fog_of_war(seats: Vec<serde_json::Value>) -> Out {
     #[derive(serde::Deserialize)]
     struct FitAsk {

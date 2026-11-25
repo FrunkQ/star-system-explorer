@@ -19,6 +19,7 @@ pub mod layers;
 pub mod light;
 pub mod magnetic;
 pub mod matter;
+pub mod mie;
 pub mod nebula;
 pub mod orbit;
 pub mod planet;
@@ -46,6 +47,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(magnetic::atoms())
         .chain(nebula::atoms())
         .chain(extinction::atoms())
+        .chain(mie::atoms())
         .chain(aurora::atoms())
         .chain(belts::atoms())
         .chain(chem::atoms())
@@ -574,6 +576,11 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("light.limb_cosine", "cosine between the line of sight and straight out of a surface: 1 at a disc's centre, 0 at its edge"),
     ("light.seen_temperature", "temperature of the layer a disc's light comes from at one point"),
     ("light.refractive_index", "how strongly a liquid or crystal bends light"),
+    ("light.absorption_index", "the imaginary part of the refractive index: how strongly the material soaks up light inside it"),
+    ("particle.radius", "radius of one particle of a cloud, haze, dust or ring"),
+    ("particle.extinction_efficiency", "light a particle takes out of a beam, over its cross-section"),
+    ("particle.scattering_efficiency", "light a particle scatters, over its cross-section"),
+    ("particle.asymmetry", "mean cosine of the angle a particle scatters light through: 0 for even, near 1 for straight on"),
     ("light.bow_radius", "radius of a rainbow round the point opposite the sun, as an angle"),
     ("light.prism_angle", "angle between two faces of a crystal light passes through"),
     ("light.halo_radius", "radius of a halo round the sun or moon, as an angle"),

@@ -3840,6 +3840,20 @@
         "range": null
       },
       {
+        "description": "the imaginary part of the refractive index: how strongly the material soaks up light inside it",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.absorption_index",
+        "range": null
+      },
+      {
         "description": "radius of a rainbow round the point opposite the sun, as an angle",
         "dim": [
           0,
@@ -4834,6 +4848,62 @@
           0
         ],
         "id": "outflow.wind_speed",
+        "range": null
+      },
+      {
+        "description": "mean cosine of the angle a particle scatters light through: 0 for even, near 1 for straight on",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.asymmetry",
+        "range": null
+      },
+      {
+        "description": "light a particle takes out of a beam, over its cross-section",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.extinction_efficiency",
+        "range": null
+      },
+      {
+        "description": "radius of one particle of a cloud, haze, dust or ring",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.radius",
+        "range": null
+      },
+      {
+        "description": "light a particle scatters, over its cross-section",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.scattering_efficiency",
         "range": null
       },
       {

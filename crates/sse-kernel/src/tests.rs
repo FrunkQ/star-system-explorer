@@ -3594,6 +3594,36 @@ fn read_bows_gives_rainbows_and_halos() {
     assert!(r["items"][1]["halo_60_deg"].as_f64().unwrap() > 21.0, "{r}");
 }
 
+/// K-e: read_scattering gives a cloud droplet's forward-thrown phase table
+/// and refuses a particle too big for the series.
+#[test]
+fn read_scattering_gives_phase_tables() {
+    let mut k = crate::Kernel::new();
+    let r: serde_json::Value = serde_json::from_str(
+        &k.handle_json(
+            &serde_json::json!({"op": "read_scattering", "items": [
+            {"id": "cloud", "radius_m": 1e-5, "wavelength_m": 5.5e-7, "n": 1.333, "spread": 0.3}]})
+            .to_string(),
+        ),
+    )
+    .unwrap();
+    assert_eq!(r["type"], "scattering_read", "{r}");
+    let c = &r["items"][0];
+    let g = c["g"].as_f64().unwrap();
+    assert!((0.8..0.9).contains(&g), "{g}");
+    assert_eq!(c["phase"].as_array().unwrap().len(), 181);
+    assert!((c["single_scattering_albedo"].as_f64().unwrap() - 1.0).abs() < 1e-9);
+    let r: serde_json::Value = serde_json::from_str(
+        &k.handle_json(
+            &serde_json::json!({"op": "read_scattering", "items": [
+            {"id": "boulder", "radius_m": 1.0, "wavelength_m": 5.5e-7, "n": 1.5}]})
+            .to_string(),
+        ),
+    )
+    .unwrap();
+    assert_eq!(r["code"], "bad_particle", "{r}");
+}
+
 /// O3b: read_nebulae gives a giant's dusty shell and a young star's jets.
 #[test]
 fn read_nebulae_gives_dust_shells_and_jets() {
