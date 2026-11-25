@@ -110,7 +110,7 @@
 {#if shown || editing}
   <section class="picture" aria-label="Picture" data-picture={shown ?? "none"}>
     {#if options.length > 1}
-      <div class="pick" role="group" aria-label="Show">
+      <div class="pick" role="group" aria-label="Picture to show">
         {#each options as o (o.id)}
           <button type="button" class="chip" aria-pressed={shown === o.id} onclick={() => choose(o.id)} data-show={o.id} title={o.label}>
             {#if o.src}<img src={o.src} alt={o.label} />{:else}{o.label}{/if}

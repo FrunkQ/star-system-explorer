@@ -58,23 +58,48 @@ export interface ShownFlare {
  * flash and no more than three begin each second. Under reduced motion nothing flashes: no flare is shown (the words
  * give the rate instead).
  */
-export function shownFlares(s: LiveStar, t: number, clock: number, calm = false): ShownFlare[] {
-  if (calm || !s.flares.length) return [];
+/** One flashing event for the cap: when its rise starts, how big it is (the largest of a window wins), its rise and fall. */
+export interface FlashEvent {
+  start_s: number;
+  size: number;
+  rise_s: number;
+  decay_s: number;
+}
+
+/**
+ * The safety cap for anything that flashes, on any clock (stars' flares, aurora pulses, pulsars): `clock` is the
+ * event's seconds per screen second. Events are grouped by the third of a screen second their rise begins in and only
+ * the largest of each is kept; each kept one rises over at least a quarter of that and fades over at least all of it
+ * (linear rise, exponential fall, gone below a fiftieth). Returns the kept events' indices with their light now over
+ * their peak. Under reduced motion nothing flashes: an empty list.
+ */
+export function capFlashes(events: readonly FlashEvent[], t: number, clock: number, calm = false): { index: number; k: number }[] {
+  if (calm || !events.length) return [];
   const w = Math.max(1e-9, clock / FLASHES_PER_SECOND_MAX);
   const best = new Map<number, number>();
-  s.flares.forEach((f, i) => {
-    const win = Math.floor((f.at_s - f.rise_s) / w);
+  events.forEach((e, i) => {
+    const win = Math.floor(e.start_s / w);
     const was = best.get(win);
-    if (was === undefined || f.energy_j > s.flares[was]!.energy_j) best.set(win, i);
+    if (was === undefined || e.size > events[was]!.size) best.set(win, i);
   });
-  const out: ShownFlare[] = [];
+  const out: { index: number; k: number }[] = [];
   for (const i of best.values()) {
-    const f = s.flares[i]!;
-    const shown = { ...f, rise_s: Math.max(f.rise_s, 0.25 * w), decay_s: Math.max(f.decay_s, w) };
-    const k = flareProfile(shown, t);
-    if (k > 0) out.push({ flare: f, index: i, k });
+    const e = events[i]!;
+    const rise = Math.max(e.rise_s, 0.25 * w);
+    const k = flareProfile({ at_s: e.start_s + rise, rise_s: rise, decay_s: Math.max(e.decay_s, w), peak_w: 1, energy_j: 1 }, t);
+    if (k > 0) out.push({ index: i, k });
   }
   return out.sort((a, b) => a.index - b.index);
+}
+
+/** The flares to show at star time `t`, through the safety cap (`capFlashes`), largest by energy. */
+export function shownFlares(s: LiveStar, t: number, clock: number, calm = false): ShownFlare[] {
+  return capFlashes(
+    s.flares.map((f) => ({ start_s: f.at_s - f.rise_s, size: f.energy_j, rise_s: f.rise_s, decay_s: f.decay_s })),
+    t,
+    clock,
+    calm,
+  ).map(({ index, k }) => ({ flare: s.flares[index]!, index, k }));
 }
 
 /** The star's light now over its quiet light: one plus each shown flare's white light at its strength now. */

@@ -144,6 +144,18 @@ try {
     await styleBar.getByRole("button", { name: "Chart", exact: true }).click();
     assert.equal(await cmp2.locator("canvas[data-lineup-3d]").count(), 0, "Chart is the flat lineup again");
 
+    // True at Readable: the system's own star stands as a globe, and it is the living star of the system's True (SG4b).
+    await styleBar.getByRole("button", { name: "True", exact: true }).click();
+    await scaleBar.getByRole("button", { name: "Readable", exact: true }).click();
+    await cmp2.locator('canvas[data-lineup-3d="true"], [data-no-globes]').first().waitFor({ timeout: 10000 });
+    if (!(await cmp2.locator("[data-no-globes]").count())) {
+      await gm.waitForFunction(() => Number(document.querySelector("canvas[data-lineup-3d]")?.getAttribute("data-live-stars")) > 0, null, { timeout: 20000 });
+      await gm.waitForTimeout(1500);
+      await shot(gm, `globes-live-star-${name}`);
+    }
+    await scaleBar.getByRole("button", { name: "Real", exact: true }).click();
+    await styleBar.getByRole("button", { name: "Chart", exact: true }).click();
+
     // Phone.
     const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true })).newPage();
     phone.on("pageerror", (e) => errors.push(e.message));
