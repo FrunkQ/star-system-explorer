@@ -213,6 +213,7 @@ pub fn young_jet(seed: &Seed, p: &YoungStarInput, at_s: f64) -> Result<Option<De
         line: "ha".into(),
         power_w: ls,
         cause: "shocks in the jets".into(),
+        zone: None,
     });
     let why = vec![
         format!(

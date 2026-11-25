@@ -118,11 +118,13 @@ fn lines_land_in_their_band() {
         line: "ha".into(),
         power_w: 1e20,
         cause: "test".into(),
+        zone: None,
     });
     d.lines.push(LineEmission {
         line: "hi-21".into(),
         power_w: 1e10,
         cause: "test".into(),
+        zone: None,
     });
     let p = publish(&d, &t);
     let get = |id: &str| p.bands.iter().find(|b| b.band == id).unwrap().power_w;
@@ -235,6 +237,7 @@ pub fn golden_value() -> serde_json::Value {
         line: "oi-5577".into(),
         power_w: 1e9,
         cause: "golden".into(),
+        zone: None,
     });
     let out: Vec<_> = [sun, dust, bh, radio]
         .iter()
@@ -545,6 +548,7 @@ mod o7 {
             line: "ha".into(),
             power_w: 1e20,
             cause: "test".into(),
+            zone: None,
         });
         let s = Shift::doppler(0.15, 1.0, false);
         let p = publish_shifted(&d, &s, &t);
@@ -614,6 +618,7 @@ mod o7 {
             line: "ha".into(),
             power_w: 1.0,
             cause: "test".into(),
+            zone: None,
         });
         let p = publish_shifted(&d, &s, &t);
         assert_eq!(p.bands[3].power_w, 0.0);
@@ -787,6 +792,7 @@ mod o12 {
             line: "ha".into(),
             power_w: 1e27,
             cause: "recombination".into(),
+            zone: None,
         });
         let t = Target {
             address: "u:t/sys:0/nebula:0".into(),

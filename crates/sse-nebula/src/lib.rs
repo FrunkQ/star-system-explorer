@@ -13,6 +13,9 @@
 //! snowplough remnant). This crate puts them together at a date.
 #![forbid(unsafe_code)]
 
+pub mod forbidden;
+#[cfg(test)]
+mod forbidden_tests;
 pub mod outflow;
 #[cfg(test)]
 mod outflow_tests;
@@ -150,16 +153,18 @@ fn balmer(d: &mut LightDescription, recombinations: f64) {
         line: "ha".into(),
         power_w: ha,
         cause: "hydrogen recombination (case B)".into(),
+        zone: None,
     });
     d.lines.push(LineEmission {
         line: "hb".into(),
         power_w: ha / HA_OVER_HB,
         cause: "hydrogen recombination (case B)".into(),
+        zone: None,
     });
     d.references.push(reference(OF06));
 }
 
-const METALS_LATER: &str = "only hydrogen's recombination lines so far: oxygen, nitrogen, sulphur and helium lines (the teal cores and red edges) come from the line-strength grid in O4";
+const METALS_LATER: &str = "metal lines are [O III] and [S II] only so far, at a fixed electron temperature with each ion's layer from photon counting (fudge register F61): nitrogen, neon, helium and [O II] lines, and the heating and cooling that set the temperature, come later in O4";
 
 // ── Planetary nebulae ────────────────────────────────────────────────────
 
@@ -319,6 +324,13 @@ pub fn planetary_nebula(
     let recombinations = q.min(needed);
     let mut light = LightDescription::new(&p.address);
     balmer(&mut light, recombinations);
+    let metal_why = forbidden::add_forbidden_lines(
+        &mut light,
+        &[(p.core_teff_k, p.core_radius_m)],
+        n,
+        recombinations,
+        forbidden::Layout::Shell { radius_m: r },
+    )?;
     let mut why = vec![format!(
         "Shed by {} {:.0} years ago; the shell coasts out at {:.0} km/s and is now {:.2} pc across.",
         p.star,
@@ -360,6 +372,7 @@ pub fn planetary_nebula(
             });
         }
     }
+    why.extend(metal_why);
     if rings > 0 {
         why.push(format!(
             "{rings} faint rings outside it are earlier puffs of the giant's slow wind, {:.0} years apart: the shed layers.",
@@ -608,7 +621,15 @@ pub fn star_forming_glow(
     let r = nb::stromgren_radius(q, p.cloud_h_m3);
     let mut light = LightDescription::new(&p.address);
     balmer(&mut light, q);
-    let why = vec![
+    let lit: Vec<(f64, f64)> = live.iter().map(|s| (s.teff_k, s.radius_m)).collect();
+    let metal_why = forbidden::add_forbidden_lines(
+        &mut light,
+        &lit,
+        p.cloud_h_m3,
+        q,
+        forbidden::Layout::Sphere,
+    )?;
+    let mut why = vec![
         format!(
             "{} hot star{} in {} give {:.1e} ionising photons a second.",
             live.len(),
@@ -622,6 +643,7 @@ pub fn star_forming_glow(
             2.0 * r / PC_M
         ),
     ];
+    why.extend(metal_why);
     Ok(Some(Descriptor {
         address: p.address.clone(),
         kind: Kind::StarFormingGlow,

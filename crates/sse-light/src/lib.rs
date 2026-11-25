@@ -117,6 +117,19 @@ pub struct LineEmission {
     pub line: String,
     pub power_w: f64,
     pub cause: String,
+    /// Where in the glowing gas the line comes from (O4 part 1): absent for
+    /// light from the whole of it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub zone: Option<Zone>,
+}
+
+/// A layer of a nebula's glowing gas, as shares of the way through it: 0 at
+/// the side facing the lighting stars, 1 at its outer edge. For a filled
+/// sphere these are shares of its radius; for a shell, of its thickness.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Zone {
+    pub inner: f64,
+    pub outer: f64,
 }
 
 /// What an object gives off and reflects, as a spectrum.

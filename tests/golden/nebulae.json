@@ -152,6 +152,42 @@
           "cause": "hydrogen recombination (case B)",
           "line": "hb",
           "power_w": 7.729409226712838e+26
+        },
+        {
+          "cause": "electron knocks on O III ions",
+          "line": "oiii-4959",
+          "power_w": 2.4096593321387545e+27,
+          "zone": {
+            "inner": 0.5616014537830352,
+            "outer": 1.0
+          }
+        },
+        {
+          "cause": "electron knocks on O III ions",
+          "line": "oiii",
+          "power_w": 7.159775682108589e+27,
+          "zone": {
+            "inner": 0.5616014537830352,
+            "outer": 1.0
+          }
+        },
+        {
+          "cause": "electron knocks on S II ions",
+          "line": "sii",
+          "power_w": 6.260304417929828e+26,
+          "zone": {
+            "inner": 0.0,
+            "outer": 1.0
+          }
+        },
+        {
+          "cause": "electron knocks on S II ions",
+          "line": "sii-6731",
+          "power_w": 5.805306155978069e+26,
+          "zone": {
+            "inner": 0.0,
+            "outer": 1.0
+          }
         }
       ],
       "parts": [],
@@ -167,6 +203,52 @@
         {
           "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, University Science Books",
           "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/"
+        },
+        {
+          "text": "Which gas takes a nebula's ionising photons: hydrogen from 13.6 eV, helium from 24.6 eV, where its far larger cross-section wins despite being a tenth as common (Osterbrock and Ferland 2006, section 2.4). Edges from the NIST Atomic Spectra Database ionisation energies,",
+          "url": "https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html"
+        },
+        {
+          "text": "Storey, P. J., Sochi, T. and Badnell, N. R. 2014, Collision strengths for nebular [O III] optical and infrared lines, table 6 at 10,000 K: 0.24917, 0.75062 and 1.26198 from 3P0, 3P1 and 3P2 to 1D2, summed over the 3P term (weight 9); 1D2 lies 20273.27 cm-1 above 3P0 (table 5), 20065.5 above the term's weighted centre. https://arxiv.org/abs/1311.6517. The 5007 and 4959 lines share the 1D2 level's decays about three to one (Storey, N-level atoms notes, https://pages.astro.umd.edu/~jpha/N-level.pdf); the exact ratio from Storey and Zeippen 2000 (MNRAS 312, 813) is a stand-in until checked (fudge register F61). De-excitation not worked: 1D2's critical density is far above nebular densities. ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team),",
+          "url": "https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html"
+        },
+        {
+          "text": "Once- and twice-ionised sulphur balance where they are: S+ stripped by starlight with the cross-section fit of Verner, D. A. et al. 1996, ApJ 465, 487, table 1 row S II (doi:10.1086/177435), S2+ rejoined at 4.48e-12 cm3 s-1 at 10,000 K, the sum of the dielectronic 2.94e-12 and radiative 1.54e-12 of Badnell, N. R. et al. 2015, table 6 (https://arxiv.org/abs/1503.05905)."
+        },
+        {
+          "doi": "10.1051/0004-6361/202451865, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html",
+          "text": "[S II] 671.6 nm, 2D5/2 to 4S3/2. Effective collision strengths at 10,000 K and Einstein A from table B.5 of A&A 694, A133 (2025),",
+          "url": "https://doi.org/10.1051/0004-6361/202451865, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html"
+        },
+        {
+          "doi": "10.1051/0004-6361/202451865, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html",
+          "text": "[S II] 673.1 nm, 2D3/2 to 4S3/2. Effective collision strengths at 10,000 K and Einstein A from table B.5 of A&A 694, A133 (2025),",
+          "url": "https://doi.org/10.1051/0004-6361/202451865, a fit to Tayal, S. S. and Zatsarinny, O. 2010, ApJS 188, 32 (doi:10.1088/0067-0049/188/1/32). ionisation energies from the NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), https://physics.nist.gov/PhysRefData/ASD/ionEnergy.html"
+        },
+        {
+          "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, University Science Books, chapter 3: forbidden lines excited by electron collisions, q12 = (h²/((2π m_e)^3/2 (kT)^1/2)) (Υ/g1) e^(-hν/kT) and q21 = q12 (g1/g2) e^(hν/kT).",
+          "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/"
+        },
+        {
+          "text": "Storey, P. J., N-level atoms (lecture notes, University College London), equations 6, 11 and 15: q21 = β Υ21 / (g2 √T) with β = (2πħ⁴/k m_e³)^½ = 8.629e-6 in cgs units, and q12 = (g2/g1) q21 e^(-E12/kT).",
+          "url": "https://pages.astro.umd.edu/~jpha/N-level.pdf"
+        },
+        {
+          "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, chapter 2: each ion's zone is set by the photons able to make it, counted against the photons the nebula takes up (the Strömgren argument applied ion by ion).",
+          "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/"
+        },
+        {
+          "doi": "10.1086/177435",
+          "text": "Verner, D. A., Ferland, G. J., Korista, K. T. and Yakovlev, D. G. 1996, Atomic data for astrophysics. II. New analytic fits for photoionization cross sections of atoms and ions, ApJ 465, 487, equation 1 and table 1.",
+          "url": "https://doi.org/10.1086/177435"
+        },
+        {
+          "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, chapter 2: each ion's zone is set by the photons able to make it, counted against the photons the nebula takes up (the Strömgren argument applied ion by ion).",
+          "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/"
+        },
+        {
+          "text": "Badnell, N. R., Ferland, G. J., Gorczyca, T. W., Nikolić, D. and Wagle, G. A. 2015, Bootstrapping dielectronic recombination from second-row elements and the Orion Nebula, arXiv:1503.05905: S2+ to S+ at 10,000 K, dielectronic 2.94e-12 and radiative 1.54e-12 cm3 s-1 (table 6, level average).",
+          "url": "https://arxiv.org/abs/1503.05905"
         }
       ],
       "why": []
@@ -217,13 +299,14 @@
       }
     ],
     "stand_ins": [
-      "only hydrogen's recombination lines so far: oxygen, nitrogen, sulphur and helium lines (the teal cores and red edges) come from the line-strength grid in O4",
+      "metal lines are [O III] and [S II] only so far, at a fixed electron temperature with each ion's layer from photon counting (fudge register F61): nitrogen, neon, helium and [O II] lines, and the heating and cooling that set the temperature, come later in O4",
       "the white dwarf's ionising light is held at its birth temperature; its cooling (and the nebula dimming with it) comes when the remnant track gives the cooling curve",
       "the shell is uniform: no clumps or density gradient in the surroundings"
     ],
     "why": [
       "Shed by u:t/sys:0/star:0 4000 years ago; the shell coasts out at 19 km/s and is now 0.16 pc across.",
       "The white dwarf (100000 K) gives 1.6e46 ionising photons a second, fewer than the 4.2e46 recombinations the dense young shell would need: only its inner part glows.",
+      "Electrons at about 10000 K knock oxygen and sulphur ions into levels that shine only slowly: [O III] 495.9 nm, [O III] 500.7 nm, [S II] 671.6 nm, [S II] 673.1 nm. Each comes from the layer where the star's light keeps its ion, the harder-to-make ions nearest the star.",
       "2 faint rings outside it are earlier puffs of the giant's slow wind, 966 years apart: the shed layers.",
       "a close companion squeezes the outflow at the waist, so it blows out two lobes 3.6 times longer than wide."
     ]
