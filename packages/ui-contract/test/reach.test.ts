@@ -38,6 +38,11 @@ test("Reach it: move Mars until its surface is 260 K, on a scratch branch; the m
     const m = 6.417e23;
     const f = await reachIt(s, { system: sys, address: mars, field: "body.mass", at_yr: 4.5673e9, lo: m / 8, hi: m * 8, log: true, target: 0.5, read: resultFrom(mars, "core.dynamo_now"), within: 0, tries: 14, want: (g) => g === 1 });
     assert.ok(f.ok && f.got === 1 && f.value > m && f.value < 8 * m, JSON.stringify(f));
+    // Locked to its star: the furthest Mars from the Sun whose day the tides have stopped by now (ED5 part 2c).
+    const a = 1.5237 * AU;
+    const l = await reachIt(s, { system: sys, address: mars, field: "orbit.semi_major_axis", at_yr: 4.5673e9, lo: a / 8, hi: a * 8, log: true, target: 0.5, read: resultFrom(mars, "locked"), within: 0, tries: 14, want: (g) => g === 1 });
+    console.log(`Mars locks inside ${l.ok ? (l.value / AU).toFixed(3) : JSON.stringify(l)} AU`);
+    assert.ok(l.ok && l.got === 1 && l.value < a, JSON.stringify(l));
     assert.equal(await s.stateHash(), h0, "still nothing reaches the campaign");
   } finally {
     k.close?.();

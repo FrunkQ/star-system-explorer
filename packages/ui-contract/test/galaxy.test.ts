@@ -11,8 +11,10 @@ test("GH8: the leading arm in words, the latest made by the chart's time", () =>
   assert.equal(now.made, 2);
   assert.ok(now.live);
   assert.equal(now.line, "A leading arm, from a backwards pass 22 kpc out 300 Myr ago: it still winds against the spin.");
-  const early = leadingArmWords(marks, 10, fade)!;
+  const early = leadingArmWords(marks, 4.2, fade)!;
   assert.equal(early.made, 1, "one not yet made is not counted");
   assert.ok(!early.live);
-  assert.match(early.line, /^A leading arm, from a backwards merger 7\.0 Gyr ago: the rotation has wound it back/);
+  assert.match(early.line, /^A leading arm, from a backwards merger 1\.2 Gyr ago: the rotation has wound it back/);
+  assert.equal(leadingArmWords(marks, 10, fade), null, "long wound back: only the history list keeps it");
+  assert.equal(leadingArmWords([{ ...marks[1]!, strength: 0.1 }], 13.8, fade), null, "too weak ever to be seen");
 });

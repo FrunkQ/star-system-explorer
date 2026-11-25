@@ -378,17 +378,28 @@ fn g6_events_cross_patch_boundaries() {
         .iter()
         .filter(|h| sn(h.kind) && h.distance_pc <= s.cp.events.remnant_pc)
         .collect();
-    let l = e.local(
-        crate::envelope::Place {
-            r_kpc: r0 / 1000.0,
-            phi: 0.0,
-            z_pc: 0.0,
-            t_gyr: 13.25,
-        },
-        &s.cp.green,
-    );
+    // The rate averaged along the site's path through the window: the site
+    // turns with the disc and crosses arms, which turn at the pattern speed.
+    let steps = 100;
+    let rate = (0..steps)
+        .map(|i| {
+            let t = t0 + (t1 - t0) * (f64::from(i) + 0.5) / f64::from(steps);
+            let [x, y, _] = ev.from_grid(ev.site_at(&a.path, t), t);
+            let l = e.local(
+                crate::envelope::Place {
+                    r_kpc: m::hypot(x, y) / 1000.0,
+                    phi: m::atan2(y, x),
+                    z_pc: 0.0,
+                    t_gyr: t / 1000.0,
+                },
+                &s.cp.green,
+            );
+            l.cc_gyr_pc3 + l.ia_gyr_pc3
+        })
+        .sum::<f64>()
+        / f64::from(steps);
     let rp = s.cp.events.remnant_pc;
-    let lam = (l.cc_gyr_pc3 + l.ia_gyr_pc3) * 4.0 / 3.0 * m::PI * rp * rp * rp * 0.5;
+    let lam = rate * 4.0 / 3.0 * m::PI * rp * rp * rp * 0.5;
     println!(
         "within {rp} pc: {} (about {lam:.1} expected, mid-plane rates)",
         near.len()

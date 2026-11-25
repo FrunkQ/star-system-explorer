@@ -304,6 +304,7 @@ fn galaxy_chart_of(
         );
     }
     // Arm crests at `at` (where the envelope's arm term peaks), as (r, phi) polylines.
+    // Trailing: the crest falls back against the disc's turning (+phi) as r grows.
     let e = &cp.envelope;
     let rd = g.now.disc_kpc.max(0.1);
     let outer = d.rings.last().map(|r| r.outer_kpc).unwrap_or(rd * 8.0);
@@ -315,8 +316,7 @@ fn galaxy_chart_of(
                 .map(|i| {
                     // Log-spaced radii, so the tight inner windings stay smooth.
                     let r = rd * 0.5 * m::pow(outer / (rd * 0.5), f64::from(i) / 96.0);
-                    let phi = omega_p * at
-                        + m::ln(r / rd) / tan_pitch
+                    let phi = omega_p * at - m::ln(r / rd) / tan_pitch
                         + e.arm_phase0
                         + 2.0 * m::PI * f64::from(k) / f64::from(e.arms.max(1));
                     [r, phi]
