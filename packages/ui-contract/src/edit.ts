@@ -79,7 +79,7 @@ export const FIELDS = "fields";
 export async function commitFields(
   session: ViewSession,
   ws: Workspace,
-  change: { address: string; edits: { field: string; value: Json; before: Json }[]; display: string; before_display: string },
+  change: { address: string; edits: { field: string; value: Json; before: Json }[]; display: string; before_display: string; evidence?: "authored" | "catalogued"; source?: string },
 ): Promise<IntentResult> {
   const b = ws.branch;
   if (b) {
@@ -93,7 +93,7 @@ export async function commitFields(
     ws.revision += 1;
     return last;
   }
-  const r = await session.send({ kind: "set_values", edits: change.edits.map((e) => ({ address: change.address, field: e.field, value: e.value })), at_yr: ws.now_yr });
+  const r = await session.send({ kind: "set_values", edits: change.edits.map((e) => ({ address: change.address, field: e.field, value: e.value })), at_yr: ws.now_yr, ...(change.evidence ? { evidence: change.evidence } : {}), ...(change.source ? { source: change.source } : {}) });
   if (r.status === "applied") {
     const rec = (k: "before" | "value") => Object.fromEntries(change.edits.map((e) => [e.field, e[k]])) as Record<string, Json>;
     ws.noteApplied({ address: change.address, field: FIELDS, before: { value: rec("before"), display: change.before_display }, after: { value: rec("value"), display: change.display }, event_id: r.event_id });

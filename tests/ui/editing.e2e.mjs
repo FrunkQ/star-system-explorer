@@ -257,6 +257,27 @@ try {
       await gm.waitForFunction(() => /N₂ 2[67]/.test(document.querySelector('[data-mix-bar] [data-gas="n2"]')?.textContent ?? ""), null, { timeout: 20000 });
       await shot(gm, `air-box-${vp}`);
       await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
+
+      // ED13, "Type it all in": every input as a row; what it understood before anything is written; one change, marked
+      // catalogued with its source; one Undo.
+      await row.locator('[data-handle="sheet"]').click();
+      const sheet = gm.locator("[data-sheet]");
+      await sheet.locator('[data-sheet-row="orbit.shape"]').waitFor({ timeout: 10000 });
+      await sheet.locator('[data-sheet-entry="mass"]').fill("0.2 Earth masses");
+      await sheet.locator('[data-sheet-entry="orbit.shape"]').fill("0.05");
+      await sheet.locator('[data-sheet-entry="spin"]').fill("banana");
+      assert.match(await sheet.locator('[data-sheet-understood="mass"]').innerText(), /0\.107 M⊕ → 0\.2 M⊕/);
+      assert.equal(await sheet.locator('[data-sheet-problem="spin"]').count(), 1, "what it could not read");
+      await sheet.locator('[data-sheet-entry="spin"]').fill("");
+      await sheet.locator("[data-sheet-catalogued]").check();
+      await sheet.locator("[data-sheet-source]").fill("A paper's table");
+      const hashS = await hash();
+      await sheet.locator("[data-sheet-set]").click();
+      await gm.waitForFunction(() => /Typed in .*Mass 0\.2 M⊕/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await gm.waitForFunction(() => /0\.2 M⊕/.test(document.querySelector('[data-handle="mass"] .value')?.textContent ?? ""), null, { timeout: 20000 });
+      assert.notEqual(await hash(), hashS);
+      await shot(gm, `sheet-${vp}`);
+      await undoTo(['[data-handle="mass"] .value', "0\\.107"]);
       await row.locator('[data-handle="orbit"]').click();
 
       // Retrograde: the lean goes past 90 degrees, and the chip says so.

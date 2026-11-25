@@ -13,6 +13,7 @@
   import Box from "./Box.svelte";
   import Reach from "./Reach.svelte";
   import AirBox from "./AirBox.svelte";
+  import Sheet from "./Sheet.svelte";
 
   let { ctx, scene, subject }: { ctx: ViewContext; scene: SystemScene; subject: SceneSubject } = $props();
 
@@ -116,17 +117,17 @@
   }
 
   // The Air box's mix (ED8): several shares as one change, one Undo; the card then says what followed, as for a handle.
-  async function commitMix(edits: { field: string; value: number; before: number }[], display: string, before_display: string): Promise<string | null> {
+  async function commitMix(edits: { field: string; value: number; before: Json }[], display: string, before_display: string, label = "Air", source: string | null = null): Promise<string | null> {
     const system = scene.system;
     const before = resultsOf(surfaces, subject.address);
-    const r = await commitFields(ctx.session, ws, { address: subject.address, edits, display, before_display });
+    const r = await commitFields(ctx.session, ws, { address: subject.address, edits, display, before_display, ...(source ? { evidence: "catalogued" as const, source } : {}) });
     if (r.status !== "applied") return r.status === "pending" ? "Sent to the GM to approve." : r.status === "refused" ? r.reason : r.message;
     const again = await ctx.session.resolvedSystem(system, undefined, ws.branch?.id);
     if (again.ok) {
       facts = again.result.facts as Record<string, Record<string, Json>>;
       surfaces = (again.result as { surfaces?: unknown }).surfaces ?? null;
     }
-    followed = { handle: "air", change: { label: "Air", before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
+    followed = { handle: label === "Air" ? "air" : "sheet", change: { label, before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
     return null;
   }
 
@@ -184,11 +185,18 @@
         <span class="value">{#if fig}{fig.main.text}{#if fig.also}, {fig.also.text}{/if}{:else if waits}soon{:else}not set{/if}</span>
       </button>
     {/each}
+    {#if editable}
+      <button type="button" class="handle sheet-open" class:open={open === "sheet"} aria-expanded={open === "sheet"} data-handle="sheet" onclick={() => ((open = open === "sheet" ? null : "sheet"), (followed = null))}>
+        <span class="label">Every input</span><span class="value">Type it all in</span>
+      </button>
+    {/if}
   </div>
   <!-- On a phone the open strip docks across the full width above the time ruler, with the verdict over it (design
        section 15, "Phone"). -->
   <div class="dock" data-dock class:docked={open !== null || followed !== null}>
-  {#if open}
+  {#if open === "sheet"}
+    <Sheet {handles} facts={mine} {cls} {depth} {editable} apply={(edits, display, was, source) => commitMix(edits, display, was, "Typed in", source)} onclose={() => (open = null)} />
+  {:else if open}
     {@const h = handles.find((x) => x.id === open)!}
     {#if h.box}
       <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} {commit} {pause} onclose={() => (open = null)} />

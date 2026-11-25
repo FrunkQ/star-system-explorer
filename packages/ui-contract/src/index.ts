@@ -194,3 +194,5 @@ export { reachIt, resolveWith, resultFrom, surfaceKelvin } from "./reach.ts";
 export type { ReachAsk, Reached } from "./reach.ts";
 export { airMix, formulaOf, mixEdits, MIX_FIELD, retrade, substanceNames, TRACE } from "./air.ts";
 export type { MixGas } from "./air.ts";
+export { readSheet, sheetRows, spreadPaste } from "./sheet-entry.ts";
+export type { SheetRead, SheetRow } from "./sheet-entry.ts";
