@@ -17,6 +17,9 @@ absorption coefficient follows as alpha = 4 pi k / lambda.
   hematite       Fe2O3, 250 to 1000 nm (Sokolik and Toon 1999)
   basalt, limonite  260 to 2000 nm (Egan and Hilgeman 1979)
   magnetite      Fe3O4, 310 to 1230 nm (Schlegel et al. 1979)
+  lunar-soil-*   reflectance factor (i 30, e 0) of Apollo soils: mature highland
+                 62231 (Pieters 1999), mature, submature and immature mare
+                 10084, 71501, 12030 (LSCC, Taylor et al. 2001)
 
 The Table I values were read on 24 Nov 2026 from the text layer of the
 HITRAN aerosol archive's copy of the paper, which drops the minus sign of
@@ -82,6 +85,22 @@ MINERALS = [
     ("magnetite", MAGNETITE, "schlegel1979", ("magnetite (Fe3O4)", "black iron oxide", "lodestone"),
      "the black, magnetic iron oxide of black sands and lodestones; absorbs strongly at every colour",
      "single-crystal values; the files read run from 310 to 1230 nm"),
+]
+
+SOURCES["pieters1999-62231"] = ("Pieters, C. M. (about 1999; venue not printed on the copy read): the Moon as a spectral calibration standard enabled by lunar samples, the Clementine example; Table 2, reflectance of mature Apollo 16 soil 62231 at the Clementine UVVIS wavelengths, i = 30, e = 0, as used in the USGS Clementine mosaics. Read from the PDS Geosciences copy on 25 Nov 2026", None, "https://pds-geosciences.wustl.edu/Lunar/mk88-l-120cvf-3-rdr-120color-v1/mkls_0001/document/pieter99.pdf", "unverified")
+SOURCES["taylor2001-lscc"] = ("Taylor, L. A., Pieters, C. M., Morris, R. V., Keller, L. P. and McKay, D. S. 2001, Journal of Geophysical Research 106(E11), 27985: lunar mare soils, space weathering and the major effects of surface-correlated nanophase Fe. Lunar Soil Characterization Consortium reflectance-factor spectra (i = 30, e = 0, 300 to 2600 nm), bulk <45 micron column, read from RELAB's files nnnnnKdata.txt on 25 Nov 2026", None, "https://sites.brown.edu/relab/lscc/", "unverified")
+SOURCES["wu2024-ce5"] = ("Wu, Y. Z., Chai, Y. M., Lu, Y., Chen, X. J., Wang, W. W. and Jin, Q. 2024, Astronomy and Astrophysics 682, A112: visible and near-infrared spectral results of Chang'E-5 surficial and subsurface soils; Table 1 lists the Is/FeO maturity of the LSCC Apollo soils (<45 micron, from Taylor et al. 2001) and the classes immature < 30, submature 30 to 60, mature > 60 (Morris 1976, 1978)", "10.1051/0004-6361/202347577", None, "unverified")
+
+# Lunar soils, reflectance factor at i = 30, e = 0: (id, physics name, plain, sample, maturity, Is/FeO or None, src, rows nm -> r).
+LUNAR_SOILS = [
+    ("lunar-soil-mature-highland", "mature lunar highland soil (Apollo 16, 62231)", "Moon dust (highlands)", "62231", "mature", None, "pieters1999-62231",
+     [(414.9, 0.1077), (753.3, 0.1776), (898.8, 0.1893), (951.5, 0.1941), (1000.4, 0.2004)]),
+    ("lunar-soil-mature-mare", "mature lunar mare soil (Apollo 11, 10084)", "Moon dust (maria)", "10084", "mature", 88.0, "taylor2001-lscc",
+     [(400, 0.043507), (450, 0.048341), (500, 0.052659), (550, 0.057191), (600, 0.061273), (650, 0.065615), (700, 0.069243), (750, 0.072632), (900, 0.079021), (1000, 0.081303)]),
+    ("lunar-soil-submature-mare", "submature lunar mare soil (Apollo 17, 71501)", "Moon dust (young maria)", "71501", "submature", 44.0, "taylor2001-lscc",
+     [(400, 0.044713), (450, 0.050048), (500, 0.054586), (550, 0.059588), (600, 0.063925), (650, 0.068261), (700, 0.072944), (750, 0.076743), (900, 0.083770), (1000, 0.086709)]),
+    ("lunar-soil-immature-mare", "immature lunar mare soil (Apollo 12, 12030)", "fresh Moon dust", "12030", "immature", 20.0, "taylor2001-lscc",
+     [(400, 0.10514), (450, 0.11845), (500, 0.12714), (550, 0.13629), (600, 0.14455), (650, 0.15286), (700, 0.16113), (750, 0.16827), (900, 0.15721), (1000, 0.16071)]),
 ]
 
 # Martikainen et al. 2023 Table 3 (GRS1, n = 1.5): nm, k for JSC Mars-1, MMS-2, MGS-1, as printed.
@@ -207,6 +226,24 @@ def apply(mixtures):
             "note": "bulk crystal values as compiled by Sokolik and Toon 1999; orientation not stated; the files read stop at 1001 nm; alpha = 4 pi k / lambda",
         }},
     })
+    for mid, physics, plain, sample, maturity, is_feo, src, rows in LUNAR_SOILS:
+        lam = [float(r[0]) for r in rows]
+        assert lam == sorted(lam) and all(0.0 < r[1] < 1.0 for r in rows)
+        assert all(m["id"] != mid for m in mixtures)
+        refl = {
+            "kind": "table", "lambda_nm": lam, "r": [r[1] for r in rows],
+            "quantity": "reflectance factor", "i_deg": 30.0, "e_deg": 0.0, "maturity": maturity,
+            "src": src, "check": U,
+            "note": "laboratory spectrum of Apollo soil %s, relative to a Lambertian surface; space weathering (nanophase iron) darkens and reddens soil as it matures; interpolate linearly, hold the ends" % sample,
+        }
+        if is_feo is not None:
+            refl["maturity_index"] = {"v": is_feo, "unit": "1", "src": "wu2024-ce5", "check": U, "note": "Is/FeO of the <45 micron fraction (Taylor et al. 2001, via Wu et al. 2024 Table 1); immature < 30, submature 30 to 60, mature > 60"}
+        out.append({
+            "id": mid, "names": {"physics": physics, "plain": plain, "story": "regolith"},
+            "recipe": {}, "by": "mass",
+            "note": "the ground of an airless rocky world after long exposure to space: grey to the eye, a few to twenty per cent reflective, rising slowly towards the red",
+            "optical": {"reflectance": refl},
+        })
     for mid, rows, src, (physics, plain, story), note, tnote in MINERALS:
         lam = [float(r[0]) for r in rows]
         assert lam == sorted(lam) and len(set(lam)) == len(lam)

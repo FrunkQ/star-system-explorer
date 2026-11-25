@@ -232,7 +232,10 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
       ...(i.evidence ? { evidence: i.evidence } : {}),
       ...(i.source ? { source: i.source } : {}),
     };
-  if (i.kind === "withdraw" || i.kind === "restore") return { op: i.kind, address: i.address, at_s: yearsToSeconds(i.at_yr) };
+  // Undo of an add or a paste takes what went round it too; the kernel's own default (leave it round the host,
+  // Alex 24 Nov 2026) is for removing a body by hand, which the editing handles will ask for by name.
+  if (i.kind === "withdraw") return { op: "withdraw" as const, address: i.address, at_s: yearsToSeconds(i.at_yr), others: "take" as const };
+  if (i.kind === "restore") return { op: i.kind, address: i.address, at_s: yearsToSeconds(i.at_yr) };
   if (i.kind === "rename") return { op: "rename" as const, address: i.address, layer: i.layer, ...(i.text !== null ? { text: i.text.trim() } : {}), at_s: yearsToSeconds(i.at_yr) };
   if (i.kind === "set_naming")
     return { op: "set_naming" as const, address: i.address, layer: i.layer, ...(i.scheme !== null ? { scheme: i.scheme } : {}), ...(i.of_kind ? { kind: i.of_kind } : {}), ...(i.rename_fixed ? { rename_fixed: true } : {}), at_s: yearsToSeconds(i.at_yr) };

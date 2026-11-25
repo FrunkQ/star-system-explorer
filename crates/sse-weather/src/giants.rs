@@ -11,8 +11,10 @@
 //!   (Rhines arrest on the polar γ-plane f = 2Ω(1 − r²/2a²)).
 //! - **Polar regime**: Burger number Bu = (L_d / a)², L_d = N H / 2Ω.
 //!   Low Bu: a ring of cyclones; middle: one polar vortex; high Bu or weak
-//!   internal heat: a diffuse cap (Brueshaber, Sayanagi and Dowling 2019;
-//!   O'Neill, Emanuel and Flierl 2015).
+//!   internal heat: a diffuse cap, the paper's "large cyclonic polar vortex"
+//!   (Brueshaber, Sayanagi and Dowling 2019; O'Neill, Emanuel and Flierl 2015).
+//!   Brueshaber and Sayanagi 2021 find Bu alone does not separate the Saturn
+//!   and ice-giant regimes.
 //! - **Polygon jet**: a rule fitted to Saturn's hexagon. Sides
 //!   n = round(2π a cos φ_jet / (k L_d(φ_jet))), clamped to the pack's range.
 //! - **Storms**: great ovals and strings of ovals in zones (gas giants), dark

@@ -1,0 +1,190 @@
+{
+ "about": "Wikidata facts for scripts/spaceflight/in_memory.py (CC0), queried 25 Nov 2026 at https://query.wikidata.org/sparql",
+ "query": "SELECT ?x ?xLabel ?died ?date ?deaths WHERE { VALUES ?x { wd:Q104865 wd:Q110879 wd:Q1122204 wd:Q16662654 wd:Q18396768 wd:Q18420502 wd:Q194082 wd:Q211254 wd:Q216726 wd:Q219569 wd:Q229674 wd:Q232441 wd:Q237879 wd:Q25981 wd:Q315730 wd:Q318542 wd:Q320047 wd:Q334463 wd:Q345658 wd:Q345678 wd:Q346671 wd:Q3479773 wd:Q349365 wd:Q350317 wd:Q355433 wd:Q358525 wd:Q377174 wd:Q382013 wd:Q386074 wd:Q391517 wd:Q4572362 wd:Q49284 wd:Q538639 wd:Q580867 wd:Q621462 wd:Q634141 wd:Q648581 wd:Q704355 wd:Q707715 wd:Q709646 wd:Q7327 wd:Q8041409 wd:Q858145 wd:Q8826711 } OPTIONAL { ?x wdt:P570 ?died } OPTIONAL { ?x wdt:P585 ?date } OPTIONAL { ?x wdt:P1120 ?deaths } SERVICE wikibase:label { bd:serviceParam wikibase:language \"en\". } }",
+ "items": {
+  "Q7327": {
+   "label": "Yuri Gagarin",
+   "died": "1968-03-27T00:00:00Z"
+  },
+  "Q25981": {
+   "label": "Michael J. Smith",
+   "died": "1986-01-28T00:00:00Z"
+  },
+  "Q49284": {
+   "label": "Judith Resnik",
+   "died": "1986-01-28T00:00:00Z"
+  },
+  "Q104865": {
+   "label": "Vladimir Komarov",
+   "died": "1967-04-24T00:00:00Z"
+  },
+  "Q110879": {
+   "label": "Gus Grissom",
+   "died": "1967-01-27T00:00:00Z"
+  },
+  "Q194082": {
+   "label": "Apollo 1",
+   "date": "1967-01-27T00:00:00Z"
+  },
+  "Q211254": {
+   "label": "Soyuz 1"
+  },
+  "Q216726": {
+   "label": "Ed White",
+   "died": "1967-01-27T00:00:00Z"
+  },
+  "Q219569": {
+   "label": "Ilan Ramon",
+   "died": "2003-02-01T00:00:00Z"
+  },
+  "Q229674": {
+   "label": "Christa McAuliffe",
+   "died": "1986-01-28T00:00:00Z"
+  },
+  "Q232441": {
+   "label": "Laurel Clark",
+   "died": "2003-02-01T00:00:00Z"
+  },
+  "Q237879": {
+   "label": "Kalpana Chawla",
+   "died": "2003-02-01T00:00:00Z"
+  },
+  "Q315730": {
+   "label": "Ronald McNair",
+   "died": "1986-01-28T00:00:00Z"
+  },
+  "Q318542": {
+   "label": "Michael P. Anderson",
+   "died": "2003-02-01T00:00:00Z"
+  },
+  "Q320047": {
+   "label": "Dick Scobee",
+   "died": "1986-01-28T00:00:00Z"
+  },
+  "Q334463": {
+   "label": "William C. McCool",
+   "died": "2003-02-01T00:00:00Z"
+  },
+  "Q345658": {
+   "label": "Vladislav Volkov",
+   "died": "1971-06-30T00:00:00Z"
+  },
+  "Q345678": {
+   "label": "Roger Bruce Chaffee",
+   "died": "1967-01-27T00:00:00Z"
+  },
+  "Q346671": {
+   "label": "Rick Husband",
+   "died": "2003-02-01T00:00:00Z"
+  },
+  "Q349365": {
+   "label": "Ellison Onizuka",
+   "died": "1986-01-28T00:00:00Z"
+  },
+  "Q350317": {
+   "label": "David M. Brown",
+   "died": "2003-02-01T00:00:00Z"
+  },
+  "Q355433": {
+   "label": "Georgy Dobrovolsky",
+   "died": "1971-06-30T00:00:00Z"
+  },
+  "Q358525": {
+   "label": "Viktor Patsayev",
+   "died": "1971-06-30T00:00:00Z"
+  },
+  "Q377174": {
+   "label": "2003 Alcântara VLS accident",
+   "date": "2003-08-22T00:00:00Z",
+   "deaths": "21"
+  },
+  "Q382013": {
+   "label": "Gregory Jarvis",
+   "died": "1986-01-28T00:00:00Z"
+  },
+  "Q386074": {
+   "label": "Nedelin catastrophe",
+   "date": "1960-10-24T00:00:00Z",
+   "deaths": "78"
+  },
+  "Q391517": {
+   "label": "Robert Henry Lawrence",
+   "died": "1967-12-08T00:00:00Z"
+  },
+  "Q538639": {
+   "label": "Valentin Bondarenko",
+   "died": "1961-03-23T00:00:00Z"
+  },
+  "Q580867": {
+   "label": "Space Shuttle Columbia disaster",
+   "date": "2003-02-01T00:00:00Z",
+   "deaths": "7"
+  },
+  "Q621462": {
+   "label": "Elliot See",
+   "died": "1966-02-28T00:00:00Z"
+  },
+  "Q634141": {
+   "label": "Theodore Freeman",
+   "died": "1964-10-31T00:00:00Z"
+  },
+  "Q648581": {
+   "label": "Soyuz 11",
+   "deaths": "3"
+  },
+  "Q704355": {
+   "label": "Charles Bassett",
+   "died": "1966-02-28T00:00:00Z"
+  },
+  "Q707715": {
+   "label": "Mitrofan Nedelin",
+   "died": "1960-10-24T00:00:00Z"
+  },
+  "Q709646": {
+   "label": "Clifton Williams",
+   "died": "1967-10-05T00:00:00Z"
+  },
+  "Q858145": {
+   "label": "Space Shuttle Challenger disaster",
+   "date": "1986-01-28T00:00:00Z",
+   "deaths": "7"
+  },
+  "Q1122204": {
+   "label": "Michael James Adams",
+   "died": "1967-11-15T00:00:00Z"
+  },
+  "Q3479773": {
+   "label": "Sergei Vozovikov",
+   "died": "1993-07-11T00:00:00Z"
+  },
+  "Q4572362": {
+   "label": "1966 NASA T-38 crash",
+   "date": "1966-02-28T00:00:00Z",
+   "deaths": "2"
+  },
+  "Q8041409": {
+   "label": "X-15 Flight 3-65-97",
+   "date": "1967-11-15T00:00:00Z",
+   "deaths": "1"
+  },
+  "Q8826711": {
+   "label": "death of Yuri Gagarin",
+   "date": "1968-03-27T00:00:00Z",
+   "deaths": "2"
+  },
+  "Q16662654": {
+   "label": "1980 Plesetsk launch pad disaster",
+   "date": "1980-03-18T00:00:00Z",
+   "deaths": "48"
+  },
+  "Q18396768": {
+   "label": "2014 Virgin Galactic crash",
+   "date": "2014-10-31T00:00:00Z",
+   "deaths": "1"
+  },
+  "Q18420502": {
+   "label": "Michael Alsbury",
+   "died": "2014-10-31T00:00:00Z"
+  }
+ }
+}
