@@ -105,6 +105,13 @@ try {
       assert.ok((await mem.locator("[data-in-memory-part]").count()) >= 1, "parts");
       assert.ok((await mem.locator("[data-in-memory-sources] li").count()) >= 2 * (await mem.locator("[data-in-memory-loss]").count()), "two sources an entry");
       assert.equal(await mem.locator("[data-in-memory-correct]").getAttribute("target"), "_blank");
+      // Names carried (SH7), when the pack gives memorials: each row says who it is for and when it was named, or why
+      // that date is not given.
+      if (await mem.locator("[data-in-memory-carried]").count()) {
+        const rows = await mem.locator("[data-in-memory-carried-row]").allTextContents();
+        const once = /naming dates are not given/.test(await mem.locator("[data-in-memory-carried-lead]").textContent());
+        assert.ok(rows.length > 0 && rows.every((r) => /, for .+\./.test(r) && (once || /Named |naming date/.test(r))), "carried rows");
+      }
       await shot(page, `desk-in-memory-${engine}`);
       const first = mem.locator("[data-in-memory-loss]").first();
       const id = await first.getAttribute("data-in-memory-loss");
