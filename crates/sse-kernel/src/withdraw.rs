@@ -14,17 +14,27 @@ use std::collections::BTreeMap;
 
 pub const WITHDRAWN: &str = "withdrawn";
 
-/// Whether an address or any address above it is withdrawn in these facts.
+/// Whether an address, or what it belongs to, is withdrawn in these facts.
+/// A body that orbits something belongs to its `orbit.host` (a V3 moon sits
+/// beside its planet, and a moon handed to another body keeps its address);
+/// anything else belongs to the address above it. A ring stops after 64 steps.
 pub fn is_withdrawn(facts: &BTreeMap<Address, BTreeMap<String, Value>>, a: &Address) -> bool {
     let mut at = Some(a.clone());
+    let mut steps = 0;
     while let Some(x) = at {
-        if matches!(
-            facts.get(&x).and_then(|f| f.get(WITHDRAWN)),
-            Some(Value::Bool(true))
-        ) {
+        let row = facts.get(&x);
+        if matches!(row.and_then(|f| f.get(WITHDRAWN)), Some(Value::Bool(true))) {
             return true;
         }
-        at = x.parent();
+        steps += 1;
+        if steps > 64 {
+            return false;
+        }
+        at = match row.and_then(|f| f.get("orbit.host")) {
+            Some(Value::Text(h)) => h.parse::<Address>().ok().filter(|h| *h != x),
+            _ => None,
+        }
+        .or_else(|| x.parent());
     }
     false
 }

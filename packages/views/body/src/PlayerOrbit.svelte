@@ -4,7 +4,8 @@
   world it names, and this seat's own kernel reads that one world's six map tiles (granted for it alone, as for a
   landing; Players.svelte). Drawn on Body's globe path (renderer mountGlobe) with the true-colour recipe and the slow
   presentation spin; no cutaway, no controls. Players watch; nothing here asks the kernel for more than the map.
-  The world's air is not drawn yet: a player seat does not read resolved systems (status/landing.md, LR4).
+  The world's air comes with the send (LR4b): a player seat does not read resolved systems, so the GM's kernel reads
+  the air's facts and optics and they ride in what is shown (seat.ts `Shown.air`).
 -->
 <script module lang="ts">
   import type { SurfaceTile } from "../../../ui-contract/src/index.ts";
@@ -15,7 +16,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { subjectName, type Globe, type Json, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
-  import { LIBRARY, mountGlobe, type GlobeRun, type GlobeRunOptions } from "../../../renderer/src/index.ts";
+  import { LIBRARY, mountGlobe, type AirFacts, type GlobeRun, type GlobeRunOptions } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
 
   let { ctx, scene, params }: { ctx: PlayerContext; scene: PlayerScene; params: Record<string, Json> } = $props();
@@ -57,6 +58,12 @@
   const globe = $derived<Globe>(tiles ? [0, 1, 2, 3, 4, 5].map((f) => tiles!.find((t) => t.key.face === f && t.key.level === 0)) : []);
   const has = $derived(globe.some((t) => t));
 
+  // The air the GM's kernel read for this world, sent with the orbit; kept as text so a new send of the same air does not stir the globe.
+  const airText = $derived.by(() => {
+    const sh = ctx.shown?.();
+    return sh && "scope" in sh && sh.focus === address && sh.air ? JSON.stringify(sh.air) : "";
+  });
+  const air = $derived(airText ? (JSON.parse(airText) as AirFacts) : null);
   let w = $state(0);
   let h = $state(0);
   const size = $derived(Math.round(Math.min(640, Math.max(160, Math.min(w || 320, (h || 360) - 48) * 0.9))));
@@ -71,7 +78,7 @@
     spin: params.spin !== false,
     size_px: size,
     label: name,
-    air: null,
+    air,
   });
   let host = $state<HTMLElement | undefined>();
   let run: GlobeRun | null = null;
@@ -96,7 +103,7 @@
   });
 </script>
 
-<section class="orbit" data-orbit={address || undefined} data-orbit-drawn={has ? backend || "yes" : undefined} bind:clientWidth={w} bind:clientHeight={h} aria-label={name ? `In orbit of ${name}` : "In orbit"}>
+<section class="orbit" data-orbit={address || undefined} data-orbit-drawn={has ? backend || "yes" : undefined} data-orbit-air={air ? "yes" : undefined} bind:clientWidth={w} bind:clientHeight={h} aria-label={name ? `In orbit of ${name}` : "In orbit"}>
   {#if !subject}
     <p class="quiet">Waiting for the game master to name the world below.</p>
   {:else}

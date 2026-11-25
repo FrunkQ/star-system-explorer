@@ -20,6 +20,12 @@ export const SCALE_WORDS: Record<ViewScale, string> = { readable: "Readable", re
 /** HUD (Alex, 23 Nov 2026): one switch for the clutter over a True view (orbit lines, names, outlines). Off looks
  * like a photograph, on like a heads-up overview. Off by default. */
 export const HUD_WORDS: Record<"off" | "on", string> = { off: "Off", on: "On" };
+/** How True is exposed (visual polish design 16.7, Alex 24 Nov: "long exposure on by default"): a long exposure that
+ * lifts faint light (the sky's stars, aurorae) by one stated ratio beside the sunlit worlds, a composite that says so,
+ * or the eye's single exposure, where beside a sunlit world the stars fade as they really do. */
+export type ViewExposure = "long" | "eye";
+export const VIEW_EXPOSURES: readonly ViewExposure[] = ["long", "eye"];
+export const EXPOSURE_WORDS: Record<ViewExposure, string> = { long: "Long exposure", eye: "Eye" };
 
 /** Band (the instrument): what light, or field, the view is seen in. Visible by default. Mag replaces the picture with
  * the magnetic field (magnetic fields design, 22 Nov 2026). */
@@ -75,6 +81,8 @@ export interface ViewControlsSpec {
   /** What the view opens on each time it is opened, whatever the viewer last chose elsewhere (the size comparison
    * opens at Real, the point of the tool). The viewer can change it there; their own choice comes back when they leave. */
   opens?: { scale?: ViewScale };
+  /** Whether True here can draw the sky's stars at a long exposure (VP2). Left out: it cannot. */
+  long?: Can;
 }
 
 /** The viewer's choice, kept on the device. */
@@ -93,6 +101,8 @@ export interface ViewChoice {
   /** Counts the times a fixed "Seen from" was picked (re-picking the one shown counts too): each pick puts the camera
    * back at that framing, undoing free look, zoom and slide (Alex, 24 Nov). A view watches the number, not its value. */
   framed?: number;
+  /** How True is exposed; a long exposure when left out (where the view draws one). */
+  exposure?: ViewExposure;
 }
 export const DEFAULT_VIEW: ViewChoice = { style: "chart", seen: "tilted", scale: "readable" };
 
@@ -134,7 +144,7 @@ export function baseBand(choice: ViewChoice | undefined): ViewBand {
   return (layers.find((l) => l.band === "visible") ?? layers[0])?.band ?? "visible";
 }
 
-export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice, limits: BandLimits = {}): { styles: ViewOption<ViewStyle>[]; seen: ViewOption<SeenFrom>[]; scales: ViewOption<ViewScale>[]; huds: ViewOption<"off" | "on">[]; bands: ViewOption<BandPick>[]; shown: ShownView; layers: CompositeLayer[]; composite: boolean; drawable: ViewBand[]; maxLayers: number | undefined; turnable: boolean } {
+export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice, limits: BandLimits = {}): { styles: ViewOption<ViewStyle>[]; seen: ViewOption<SeenFrom>[]; scales: ViewOption<ViewScale>[]; huds: ViewOption<"off" | "on">[]; bands: ViewOption<BandPick>[]; exposures: ViewOption<ViewExposure>[]; shown: ShownView; layers: CompositeLayer[]; composite: boolean; drawable: ViewBand[]; maxLayers: number | undefined; turnable: boolean } {
   const style = shownStyle(spec, choice);
   const flat = !!spec.flat && style === "chart";
   const turnTo = flat && can(spec.styles["3d"]);
@@ -181,7 +191,11 @@ export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice, limits: 
   }
   const shownBand: ViewBand = composite ? (layers.find((l) => l.band === "visible") ?? layers[0]!).band : drawable.includes(wantBand as ViewBand) ? (wantBand as ViewBand) : "visible";
   if (!composite) layers = [{ band: shownBand, colour: shownBand === "visible" ? "natural" : LAYER_COLOURS[shownBand] }];
-  return { styles, seen, scales, huds, bands, shown: { style, seen: shownSeen, scale: shownScale, hud: shownHud, band: shownBand, framed: choice.framed ?? 0 }, layers, composite, drawable, maxLayers: limits.maxLayers ?? deviceMaxLayers(), turnable: !flat || turnTo };
+  // A long exposure is a True picture's choice; the diagrams draw their own stars or none.
+  const longWhy = style !== "true" ? "A long exposure is for True" : spec.long === true ? undefined : (spec.long ?? "True here does not draw the sky's stars yet");
+  const exposures: ViewOption<ViewExposure>[] = VIEW_EXPOSURES.map((e) => ({ value: e, label: EXPOSURE_WORDS[e], ...(e === "long" && longWhy ? { unavailable: longWhy } : {}) }));
+  const shownExposure: ViewExposure = choice.exposure !== "eye" && !longWhy ? "long" : "eye";
+  return { styles, seen, scales, huds, bands, exposures, shown: { style, seen: shownSeen, scale: shownScale, hud: shownHud, band: shownBand, framed: choice.framed ?? 0, exposure: shownExposure }, layers, composite, drawable, maxLayers: limits.maxLayers ?? deviceMaxLayers(), turnable: !flat || turnTo };
 }
 
 const NOT_TO_SCALE = "Not drawn to scale here yet";
@@ -225,6 +239,7 @@ export function readViewChoice(json: string | null): ViewChoice {
       ...(typeof v?.hud === "boolean" ? { hud: v.hud } : {}),
       ...((BAND_PICKS as readonly string[]).includes(String(v?.band)) ? { band: v!.band as BandPick } : {}),
       ...(readMix(v?.composite, VIEW_BANDS) ? { composite: readMix(v?.composite, VIEW_BANDS)! } : {}),
+      ...(v?.exposure === "eye" || v?.exposure === "long" ? { exposure: v.exposure as ViewExposure } : {}),
     };
   } catch {
     return { ...DEFAULT_VIEW };

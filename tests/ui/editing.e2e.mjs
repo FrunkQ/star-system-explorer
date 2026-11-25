@@ -7,7 +7,8 @@
 // ED12, the Orbit and Spin boxes at Science depth: the year and the stability verdict under the orbit; a year typed on
 // the size strip is the distance with that year; Retrograde mirrors the lean past 90 degrees; the place now is a ring
 // that catches at the far point; Locked sets the day to the year and the sun's day says so; each one change, one Undo.
-// ED7: on Explore, "Try changing it" opens an example what-if where the strip moves and the main line does not.
+// ED7: on Explore, "Try changing it" opens an example what-if where the strip moves and the main line does not; on
+// Build, Add a moon offers formation's own rules for the chosen planet.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -234,6 +235,21 @@ try {
       await sbox.locator('[data-chip="retrograde"]').click();
       await gm.locator("[data-followed]").waitFor({ timeout: 20000 });
       await gm.waitForFunction(() => /backwards/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await undoTo();
+
+      // ED7 part 2b: Add a moon offers formation's own rules for Mars (a rocky world: an impact moon and a captured
+      // body, no disc), each at its own orbit; adding one is one change, and one Undo takes it back.
+      await gm.getByRole("button", { name: "More", exact: true }).click();
+      await gm.locator("[data-more-add]").click();
+      const add = gm.locator("dialog[data-add]");
+      await add.locator("[data-moon-recipes]").waitFor({ timeout: 20000 });
+      assert.deepEqual(await add.locator("[data-moon-recipe]").evaluateAll((ls) => ls.map((l) => l.dataset.moonRecipe)), ["impact", "captured"]);
+      assert.match(await add.locator('[data-moon-recipe="impact"]').innerText(), /Canup 2004/);
+      await shot(gm, `add-moon-${vp}`);
+      const before = await gm.locator('.area-chart .body[aria-label*="moon of Mars" i]').count();
+      await add.locator('[data-moon-recipe="impact"] button').click();
+      await gm.waitForFunction(() => !document.querySelector("dialog[data-add]")?.open, null, { timeout: 20000 });
+      await gm.waitForFunction((n) => document.querySelectorAll('.area-chart .body[aria-label*="moon of Mars" i]').length > n, before, { timeout: 20000 });
       await undoTo();
       await depth(gm, "Curious");
     }

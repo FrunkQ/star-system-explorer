@@ -20,7 +20,7 @@ renderer.md (SL1, V10g, V10i, V10j, V10k), run-desk.md (RD1 reveal on arrival).
 | Party's ship picked (Ships and stations) | yes | header "Aboard Beowulf, at Earth" | works |
 | Voyage Earth to Mars, "Fly Beowulf there" | yes, At-world card with dangers | header follows to Mars | works |
 | Arrival reveal | RD1 slip (PR 421) | through set_known | in PR 421 |
-| Approach and orbit | At-world card (aerocapture, entry, powered landing); Send this view on the world's screen | "In orbit" screen: the world turning below on its own kernel (LR4) | works; no air on the player globe yet |
+| Approach and orbit | At-world card (aerocapture, entry, powered landing); Send this view on the world's screen | "In orbit" screen: the world turning below on its own kernel (LR4) | works; the world's air comes with the send (LR4b) |
 | Pick a site (Land here, landmark or anywhere) | yes, party's ship as lander | nothing until sent | works |
 | Send this view | yes | Landing screen, same site and verdict on own kernel | works (send race fixed in RD1) |
 | Descend | flown from the kernel's log | flies too, a few seconds behind | works (a torch ship flies down from orbit since LR1) |
@@ -35,11 +35,12 @@ renderer.md (SL1, V10g, V10i, V10j, V10k), run-desk.md (RD1 reveal on arrival).
 | LR1 a ship that can fly down flies down: `sse-nav` `plan_down` flies the entry and, for a lander whose thrust is over its weight, a powered descent from the entry interface, keeping the powered one only when it ends better (method `engines-from-orbit`, the reason first in `why`). The far trader at Mars now lands ("engines from orbit, 7 min 50 s"); stock landers keep their entries | here | done | packages/LR1.md; no golden change |
 | LR2 choosing the hour: the Land slider in the world's local hours with the local time beside it, and Dawn, Midday, Dusk, Night presses on the site card and the walk pad | here | done | packages/LR2.md |
 | LR3 the ground at night and in 3D: True at night is black with no stars, 3D is a flat grey slab (headless WebGL2) | renderer | done (PR 473) | |
-| LR4 approach and orbit for the table: Send this view on a world's own screen sends the "In orbit" screen (`players.orbit.screen.json`, `playerBody` in views/body), titled "Beowulf in orbit of Mars"; the seat reads that one known world's map (`groundGrant`) | here | done | packages/LR4.md; air and a ship marker not yet |
+| LR4 approach and orbit for the table: Send this view on a world's own screen sends the "In orbit" screen (`players.orbit.screen.json`, `playerBody` in views/body), titled "Beowulf in orbit of Mars"; the seat reads that one known world's map (`groundGrant`) | here | done | packages/LR4.md; air added in LR4b; a ship marker not yet |
 | LR5 a whole landing in its link: `~surface?site=lat,lon&time=midday&lander=party` (place.ts); Land applies hour and lander with the site, and a site link is followed even with Land open, so a bookmark or Playbook preset is a place link | here | done | packages/LR2.md |
 | LR5b the Land screen's own link and title: on Land the place (and so the address bar) carries the site, the quick hour and the lander as the GM picks them (`landingLinkSite`), and `here()`'s title names the landing ("Mars, landing at Dribeque Planitia, midday", `landingTitle`), so a kept beat or a copied link brings it back. Bookmarks (PB2b `Whereabouts`) do not carry the site yet: Run desk thread told | here | done | packages/LR2.md |
 | LR6 the lander on the ground: the stock lander (sized from its mass) stands where it touched down, in frame from where the walk starts; a Lamps switch lights it at night and the table follows (`renderer/src/surface-lander.ts`, agreed with the renderer) | here | done | packages/LR6.md; lamps light no ground yet, construct models not passed |
+| LR4b the world's air on the players' orbit globe: read on the GM's kernel and sent with the orbit (`Shown.air`, `PlayerContext.shown()`) | here | done | packages/LR4.md |
 | Gap 10, Mass on the Run desk card at Curious | Run desk thread (asking Alex) | open | |
 
 ## Next
-LR4b the world's air on the players' orbit globe (the GM sends the air facts with the orbit, as a landing sends `world`), then a ship marker in orbit; LR6b the construct's own model on the ground, and the lamps' pool of light (renderer).
+A ship marker in orbit; LR6b the construct's own model on the ground, and the lamps' pool of light (renderer).
