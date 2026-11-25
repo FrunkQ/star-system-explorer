@@ -66,9 +66,10 @@ These left this file's owner on 24 Nov; each builder keeps its own status file a
 
 1. The class gallery (V14i), once the kernel's `class_sample` is on main. Agreed with "Build names gallery and life board": the renderer thread edits `views/reference/src/Classes.svelte` only at the picture slots (each tile's `svg.icon`, the card's `data-picture` paragraph), keeps the chart mark as the fallback, and may update the NM6 part 4 row's picture note.
 2. PC2 postcards (design SSE4-postcards-design.md, accepted by Alex 25 Nov 01:27): a still of any True view from a stored pose (frame body, body-frame eye direction and distance, up, fov_deg, keep box, exposure {mode, ev}) through the one `gpu.draw` and the finish's accumulation; reason lines per pass from `trueLook` for the band showing (section 12A), with coverage from projected discs and a pixel pick on demand.
-3. VP2's Exposure control in the other True views (the Body globe with the giant bands thread, Land) and the lift as one stated ratio in the finish (design 16.7).
-4. Vegetation on the day and night side (SSE3 render audit, item 9, `SSE4-v3-gaps.md`). City and construct lights are the aurorae and night lights thread's (24 Nov).
-5. Ship styles per nation or culture (SHIP14 stage 5).
+3. MATCH1 test shots against famous pictures (Alex, 25 Nov), after PC2: eight references with links and credits, poses, and the view options the false-colour ones need (`handover/packages/MATCH1.md`).
+4. VP2's Exposure control in the other True views (the Body globe with the giant bands thread, Land) and the lift as one stated ratio in the finish (design 16.7).
+5. Vegetation on the day and night side (SSE3 render audit, item 9, `SSE4-v3-gaps.md`). City and construct lights are the aurorae and night lights thread's (24 Nov).
+6. Ship styles per nation or culture (SHIP14 stage 5).
 
 Moved to "Build names gallery and life board" (24 Nov, coordinator): SV3 (pencil and ink on the galaxy chart, foam map, body globe and constructs, following SystemChart and System3D's `pencil` prop) and OV4 (the Atlas look). VP4 and VP5 are "Build quality tiers and speed probe"; VP6 and VP3 "Build detail ladder and world textures".
 
