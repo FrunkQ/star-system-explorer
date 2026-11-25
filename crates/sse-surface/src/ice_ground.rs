@@ -78,7 +78,10 @@ pub fn ice_ground(
         ));
         false
     } else if b.pressure_bar >= AIR_STOPS_BAR {
-        why.push(format!("under its air ({:.3} bar) the ice's vapour stays in the air and comes down again", b.pressure_bar));
+        why.push(format!(
+            "under its air ({:.3} bar) the ice's vapour stays in the air and comes down again",
+            b.pressure_bar
+        ));
         true
     } else {
         let d_au = star_au
@@ -159,14 +162,14 @@ pub fn ground_optics() -> GroundOptics {
     static ONCE: std::sync::OnceLock<GroundOptics> = std::sync::OnceLock::new();
     *ONCE.get_or_init(|| {
         let sheet = sse_reference::Reference::base();
-        let mix = |id: &str| {
-            sheet
-                .row("mixtures", id)
-                .and_then(|r| table_at(r, 550.0))
-        };
-        let ice = sheet
-            .row("substances", "h2o")
-            .and_then(|r| r.get("optical")?.get("condensed_colour_rgb")?.get("v")?.get(1)?.as_f64());
+        let mix = |id: &str| sheet.row("mixtures", id).and_then(|r| table_at(r, 550.0));
+        let ice = sheet.row("substances", "h2o").and_then(|r| {
+            r.get("optical")?
+                .get("condensed_colour_rgb")?
+                .get("v")?
+                .get(1)?
+                .as_f64()
+        });
         let k = sse_atoms::weathering::MATURE_OVER_FRESH[1];
         GroundOptics {
             basalt: mix("lunar-soil-immature-mare").unwrap_or(0.14),

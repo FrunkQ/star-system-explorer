@@ -1546,8 +1546,32 @@ fn ice_ground_blocks_match_their_sums() {
         );
     }
     // The warm Moon loses kilometres; cold Callisto a few hundred metres at most.
-    assert!(ig::open_loss_m(76.0, 250.0, mw, 1.62, 2380.0, 1.0, 1.4e17, ri, ig::PHOTO_RATE_1AU) > 1e6);
-    assert!(ig::open_loss_m(2.0e-6, 130.0, mw, 1.24, 2440.0, 5.2, 1.4e17, ri, ig::PHOTO_RATE_1AU) < 1e3);
+    assert!(
+        ig::open_loss_m(
+            76.0,
+            250.0,
+            mw,
+            1.62,
+            2380.0,
+            1.0,
+            1.4e17,
+            ri,
+            ig::PHOTO_RATE_1AU
+        ) > 1e6
+    );
+    assert!(
+        ig::open_loss_m(
+            2.0e-6,
+            130.0,
+            mw,
+            1.24,
+            2440.0,
+            5.2,
+            1.4e17,
+            ri,
+            ig::PHOTO_RATE_1AU
+        ) < 1e3
+    );
     let _ = density_solid::H2O;
     for t in [1.4e17, 6.3e16, 1.9e15, 0.0] {
         let got = run("sse.surface.ice_dust_lag", &[t, 0.95, 0.0572]);

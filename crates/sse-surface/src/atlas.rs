@@ -528,7 +528,11 @@ impl Atlas {
 
     /// IG1: an ice world's bare ground, basin fill and debris are ice; an
     /// airless world's worn-down debris is regolith.
-    pub fn with_ice_ground(mut self, ice: Option<&crate::ice_ground::IceGround>, airless: bool) -> Self {
+    pub fn with_ice_ground(
+        mut self,
+        ice: Option<&crate::ice_ground::IceGround>,
+        airless: bool,
+    ) -> Self {
         self.ice_ground = ice.is_some_and(|x| x.ice);
         self.airless = airless;
         if self.ice_ground {

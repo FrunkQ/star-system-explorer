@@ -15,6 +15,7 @@ pub mod extinction;
 pub mod field;
 pub mod formulas;
 pub mod heat;
+pub mod ice_ground;
 pub mod inertia;
 pub mod layers;
 pub mod ledger;
@@ -31,7 +32,6 @@ pub mod star;
 #[cfg(test)]
 #[path = "test/mod.rs"]
 mod was;
-pub mod ice_ground;
 pub mod weathering;
 
 use sse_core::{Dimension, QuantityKind};
