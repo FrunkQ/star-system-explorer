@@ -6,6 +6,7 @@ import { bodyCard } from "../../views/body-card/src/index.ts";
 import { cutaway } from "../../views/cutaway/src/index.ts";
 import { body } from "../../views/body/src/index.ts";
 import { compare } from "../../views/compare/src/index.ts";
+import { POSTCARD_VIEWS } from "./postcards/screens.postcards.svelte.ts";
 import { biosphere } from "../../views/biosphere/src/index.ts";
 import { timeRuler } from "../../views/time-ruler/src/index.ts";
 import { flowEditor } from "../../views/flow-editor/src/index.ts";
@@ -21,4 +22,4 @@ import { GAME_VIEWS } from "./screens.game.ts";
 import { RENDER_VIEWS } from "./screens.renderer.ts";
 import { RUN_VIEWS } from "./run/screens.run.ts";
 
-export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles, reference, ...MORE_VIEWS, ...GAME_VIEWS, ...RENDER_VIEWS, ...RUN_VIEWS];
+export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles, reference, ...MORE_VIEWS, ...GAME_VIEWS, ...RENDER_VIEWS, ...RUN_VIEWS, ...POSTCARD_VIEWS];
