@@ -39,7 +39,7 @@
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
   import { readLiveStar, readTrueFace, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
   import { finerTiles, readFiner } from "../../body/src/finer-tiles.ts";
-  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
+  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -568,6 +568,15 @@
         {#each bandLabels as l (l.b.address)}
           <text class="band {l.b.kind}" class:sphere={isShell(l.b)} x={l.lx} y={l.ly} aria-hidden="true">{l.text}</text>
         {/each}
+        <!-- A press on a name chooses its body: the name's box is a quiet target under every world's own hit circle, so
+             a name that lands near another world never takes that world's press or drag (the names drawn on top take none). -->
+        <g class="name-hits" aria-hidden="true">
+          {#each all as s (s.address)}
+            {@const p = places.get(s.address)}
+            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the body's own mark is the keyboard's way in) -->
+            {#if p}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} data-name-hit={s.address} onclick={() => (measuring ? measurePick(s) : ctx.workspace.select(s.address))} />{/if}
+          {/each}
+        </g>
         {#each all as s, i (s.address)}
           {@const atCentre = s === centre}
           {@const [x, y] = atCentre ? [cx, cy] : pos(s)}
@@ -596,9 +605,8 @@
           >
             <circle class="hit" cx={x} cy={y} r={Math.max(22, m.size + 12)} />
             {#if pencilOn && !atCentre && !knows(s)}
-              <!-- Pencil (design 5): the mark of a body the table does not know is quiet, inside a thin dotted ring. -->
-              <g class="pencilled" data-pencil><Mark mark={m} cx={x} cy={y} {prefix} /></g>
-              <circle class="pencil-ring" cx={x} cy={y} r={markExtent(m) + 3} aria-hidden="true" />
+              <!-- Pencil (SV3, the shared pencil kit): the mark of a body the table does not know is quiet, inside a thin dotted ring. -->
+              <g data-pencil><Pencilled pen={penOf("gm_only")} cx={x} cy={y} r={markExtent(m)}><Mark mark={m} cx={x} cy={y} {prefix} /></Pencilled></g>
             {:else}
               <!-- The mark lifts a little under the pointer (dynamic minimalism): a body answers before it is pressed. -->
               <g class="lift" style="transform-origin: {x}px {y}px"><Mark mark={m} cx={x} cy={y} {prefix} /></g>
@@ -630,8 +638,7 @@
               <!-- Who knows (track SV, pencil and ink): a name the table does not know is drawn in pencil, quiet and dotted,
                    with no words; one they know is in ink, with how they know it ("long range") under it. -->
               {@const pencil = pencilOn && !atCentre && !view && !knows(s)}
-              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the body's own mark is the keyboard's way in) -->
-              <text class="name" class:selname={sel} class:pencil class:unknown={through && !knows(s)} x={p.x} y={p.y} text-anchor={p.anchor} data-label-side={p.side} data-label-for={s.address} aria-hidden="true" onclick={() => (measuring ? measurePick(s) : ctx.workspace.select(s.address))}>{label(s)}{#if pencil}<title>Not known to the table</title>{/if}</text>
+              <text class="name" class:selname={sel} class:pencil style={pencil ? penStyle(penOf("gm_only"), "name") : undefined} class:unknown={through && !knows(s)} x={p.x} y={p.y} text-anchor={p.anchor} data-label-side={p.side} data-label-for={s.address} aria-hidden="true">{label(s)}{#if pencil}<title>{PEN_WORDS.pencil}</title>{/if}</text>
               {#if on("known") && known && !atCentre && view && view !== usualView}
                 <text class="knownv" x={p.x} y={p.y + 13} text-anchor={p.anchor} aria-hidden="true">{view.replace(/-/g, " ")}</text>
               {/if}
@@ -859,8 +866,12 @@
   .peek span {
     color: var(--sse-panel-muted);
   }
-  .name {
+  .name-hits rect {
+    fill: transparent;
     cursor: pointer;
+  }
+  .name {
+    pointer-events: none;
     fill: var(--sse-ink);
     font-family: var(--sse-font-display);
     font-style: italic;
@@ -884,21 +895,6 @@
   .body.unknown,
   .name.unknown {
     opacity: 0.25;
-  }
-  .pencilled {
-    opacity: 0.4;
-  }
-  .pencil-ring {
-    fill: none;
-    stroke: var(--sse-ink-muted);
-    stroke-width: 0.8;
-    stroke-dasharray: 1.5 2.5;
-    pointer-events: none;
-  }
-  .name.pencil {
-    fill: var(--sse-ink-muted);
-    text-decoration: underline dotted;
-    text-underline-offset: 3px;
   }
   .knownv {
     font-family: var(--sse-font-body);
