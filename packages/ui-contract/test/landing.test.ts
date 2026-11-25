@@ -10,7 +10,7 @@ import { gmSeat, tableSeat } from "../src/seat.ts";
 import { sceneFromResolved } from "../src/make.ts";
 import { landingLinkSite, landingSeaOf, landingShowOf, landingTimeOf, landingTitle, landmarkOrder, landerHeightOf, lampRadiance, orbitTitle, groundGrant, ORBIT_SCREEN, roundPose, suggestLander } from "../src/landing.ts";
 import { nodeKernel } from "./node-kernel.ts";
-import { floorFromRefusal, levelFor, patchKeys, readPatch, groundHeightAt } from "../../renderer/src/index.ts";
+import { caveOpenings, floorFromRefusal, levelFor, patchKeys, readPatch, groundHeightAt } from "../../renderer/src/index.ts";
 
 const root = new URL("../../../", import.meta.url);
 const text = (p: string) => readFileSync(new URL(p, root), "utf8");
@@ -93,6 +93,44 @@ test("landmarks, descents and the ground round a site on the sample Earth and Mo
     assert.equal(asked(await player.surfaceTiles(sys, moon.address)), "not_gm", "never another world");
     player.grantLanding(null);
     assert.equal(asked(await player.surfaceTilesAt(sys, earth.address, keys)), "not_gm", "the grant ends with the landing");
+  } finally {
+    await k.close();
+  }
+});
+
+test("lava tube openings near a landing site on the sample Moon (TRUE6)", async () => {
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "k" }, packs);
+    const a = await s.adopt({ import_v3: text("tests/fixtures/v3/synthetic-sol.json") });
+    assert.ok(a.ok);
+    const sys = a.result.systems[0]!;
+    const r = await s.resolvedSystem(sys);
+    assert.ok(r.ok);
+    const moon = sceneFromResolved(r.result).subjects.find((b) => b.label === "Moon")!;
+    // The Moon's lava plains hold tube fields (the kernel's survey); land at each field's centre and look round.
+    const sv = JSON.parse(await k.client.callRaw(JSON.stringify({ op: "survey_surface", system: sys, body: moon.address, quick: true, limit: 1 }))) as { survey: { tubes: { dir: [number, number, number] }[] } };
+    assert.ok(sv.survey.tubes.length > 0, "the Moon has tube fields");
+    let found: { lat: number; lon: number; caves: unknown } | null = null;
+    let passages = 0;
+    for (const f of sv.survey.tubes.slice(0, 4)) {
+      const lat = (Math.asin(f.dir[2]) * 180) / Math.PI;
+      const lon = (Math.atan2(f.dir[1], f.dir[0]) * 180) / Math.PI;
+      const c = await s.surveyCaves({ system: sys, body: moon.address, lat_deg: lat, lon_deg: lon, radius_km: 25 });
+      assert.ok(c.ok, JSON.stringify(c).slice(0, 300));
+      passages += ((c.caves as { passages?: unknown[] }).passages ?? []).length;
+      if (!found && caveOpenings(c.caves).length) found = { lat, lon, caves: c.caves };
+    }
+    assert.ok(passages > 0, "some passages on the Moon's near ground");
+    assert.ok(found, "some fallen roof among them");
+    const o = caveOpenings(found.caves);
+    assert.ok(o.every((x) => x.width_m > 0 && x.depth_a_m > 0 && ["skylight", "pit chain", "rille"].includes(x.kind)), JSON.stringify(o[0]));
+    // The same world at every look: the same site gives the same openings.
+    const again = await s.surveyCaves({ system: sys, body: moon.address, lat_deg: found.lat, lon_deg: found.lon, radius_km: 25 });
+    assert.ok(again.ok);
+    assert.deepEqual(caveOpenings(again.caves), o);
+    const player = await Session.open(k.client, tableSeat(), { id: "kestrel", seed: "k" }, packs);
+    assert.equal((await player.surveyCaves({ system: sys, body: moon.address, lat_deg: 0, lon_deg: 0 })).ok, false);
   } finally {
     await k.close();
   }

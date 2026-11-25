@@ -50,6 +50,16 @@ export interface GpuItem {
    */
   frame?: [Vec3, Vec3, Vec3];
   /**
+   * True look: the world's own visible light by its heat (hot-glow.ts), linear sRGB in units of a white surface in
+   * its daylight; added over the lit globe as light, so a night side glows and a day side gains it.
+   */
+  glow?: [number, number, number];
+  /**
+   * True look: plume grains above the limb (plumes.ts `plumeGrains`, turned by true-body.ts to the world's pole in
+   * the drawing's frame), in units of its radius from its centre, added as light at `brightness` 0..1.
+   */
+  plumes?: { points: Float32Array; brightness: number };
+  /**
    * True look: the world's air as a shell round it, lit by the star (gpu-air-shell.ts, VP-A3): its shape in its own
    * radius and its look-up tables (air-luts.ts), keyed so they are uploaded once.
    */
@@ -411,6 +421,22 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     dotMats.set(key, m);
     return m;
   };
+  // Hot glow and plume grains: light added to what is behind, cached by colour in steps of 1/1024.
+  const addMats = new Map<string, MeshBasicMaterial | PointsMaterial>();
+  const glowMat = (c: [number, number, number]) => {
+    const q = c.map((v) => Math.round(Math.max(0, Math.min(1, v)) * 1024));
+    const k = `g|${q.join(",")}`;
+    let m = addMats.get(k) as MeshBasicMaterial | undefined;
+    if (!m) addMats.set(k, (m = new MeshBasicMaterial({ color: new Color(q[0]! / 1024, q[1]! / 1024, q[2]! / 1024), transparent: true, blending: AdditiveBlending, depthWrite: false })));
+    return m;
+  };
+  const plumeMat = (b: number) => {
+    const q = Math.round(Math.max(0, Math.min(1, b)) * 64);
+    const k = `p|${q}`;
+    let m = addMats.get(k) as PointsMaterial | undefined;
+    if (!m) addMats.set(k, (m = new PointsMaterial({ color: new Color().setScalar(1), size: 1.5, sizeAttenuation: false, transparent: true, opacity: q / 64, blending: AdditiveBlending, depthWrite: false })));
+    return m;
+  };
   const lineMat = (c: string, over = false) => {
     const key = `${c}|${over}`;
     return lineMats.get(key) ?? (lineMats.set(key, new LineBasicMaterial({ color: new Color(c), depthTest: !over })), lineMats.get(key)!);
@@ -465,6 +491,21 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
           m.quaternion.setFromRotationMatrix(turned.makeBasis(new Vector3(...x), new Vector3(...y), new Vector3(...z)));
         }
         scene.add(m);
+        // A hot world's own light: a second skin added over the globe (hot-glow.ts).
+        if (o.light && it.glow && Math.max(...it.glow) > 0) {
+          const gm = new Mesh(globe, glowMat(it.glow));
+          gm.scale.setScalar(1.0005);
+          m.add(gm);
+        }
+        // Plume grains over the limb, already turned to the world's pole (plumes.ts, true-body.ts).
+        if (o.light && it.plumes && it.plumes.brightness > 0 && it.plumes.points.length) {
+          const pg = new BufferGeometry();
+          pg.setAttribute("position", new Float32BufferAttribute(it.plumes.points, 3));
+          const pp = new Points(pg, plumeMat(it.plumes.brightness));
+          pp.position.copy(m.position);
+          pp.scale.setScalar(it.radius);
+          scene.add(pp);
+        }
         if (lit && it.clouds) {
           const cm = new Mesh(dist < 1.5 * it.radius ? fineGlobe : globe, cloudMat(it.clouds));
           cm.position.copy(m.position);
@@ -602,6 +643,7 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
       ringSets.forEach((e) => (e.geom.dispose(), e.tex.dispose(), e.mat.dispose()));
       lineMats.forEach((m) => m.dispose());
       dotMats.forEach((m) => m.dispose());
+      addMats.forEach((m) => m.dispose());
       finish?.dispose();
       starGeom.dispose();
       starMat.dispose();
