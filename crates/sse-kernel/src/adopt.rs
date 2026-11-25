@@ -133,17 +133,36 @@ fn refuse_existing(ch: &Chronicle, systems: &[Address]) -> Result<(), Response> 
     Ok(())
 }
 
+/// A system grown from a drawn star (`from_star`) may hold the star's own
+/// promotion record at its address, and nothing else.
+fn refuse_existing_but_the_star(ch: &Chronicle, system: &Address) -> Result<(), Response> {
+    let st = ch.state_at(UniverseTime::seconds(i64::MAX));
+    let ok = st
+        .facts
+        .iter()
+        .filter(|(a, _)| system.contains(a))
+        .all(|(a, f)| a == system && f.contains_key(crate::cosmos::STAR_DESCRIPTION));
+    if !ok {
+        return Err(err(
+            "already_adopted",
+            format!("{system} already has a system grown in this universe"),
+        ));
+    }
+    Ok(())
+}
+
 pub(crate) fn adopt(
     ch: &Chronicle,
     root: &Address,
     import_v3: Option<String>,
     formation: Option<FormationRequest>,
     occurred_at_s: Option<i64>,
+    from_star: Option<&str>,
 ) -> Result<Adoption, Response> {
     let at = UniverseTime::seconds(occurred_at_s.unwrap_or(0));
     match (import_v3, formation) {
         (Some(save), None) => adopt_v3(ch, root, &save, at),
-        (None, Some(req)) => adopt_formation(ch, root, req, at),
+        (None, Some(req)) => adopt_formation(ch, root, req, at, from_star.is_some()),
         _ => Err(err(
             "bad_request",
             "give one of import_v3 (a save's text) or formation (run_formation fields)",
@@ -603,6 +622,7 @@ fn adopt_formation(
     root: &Address,
     req: FormationRequest,
     at: UniverseTime,
+    from_star: bool,
 ) -> Result<Adoption, Response> {
     let mut req = req;
     let system: Address = match &req.system {
@@ -618,7 +638,11 @@ fn adopt_formation(
         ));
     }
     req.system = Some(system.to_string());
-    refuse_existing(ch, std::slice::from_ref(&system))?;
+    if from_star {
+        refuse_existing_but_the_star(ch, &system)?;
+    } else {
+        refuse_existing(ch, std::slice::from_ref(&system))?;
+    }
     let (_, run, pinned) = systems::form(req.clone().into())?;
     let set = run_facts(&run);
     let count = set.values().map(|r| r.len() as u32).sum();
@@ -819,6 +843,67 @@ pub(crate) fn spec_from_facts(facts: &Facts, system: &Address) -> Option<SystemS
 /// moons with a mass and a radius, temperatures in equilibrium with the star
 /// (albedo and greenhouse from the surface pack), deep envelopes for worlds
 /// above 10 Earth masses with a density under 2500 kg/m^3.
+const MAKEUP: [&str; 5] = [
+    "makeup.metal",
+    "makeup.rock",
+    "makeup.carbon",
+    "makeup.ice",
+    "makeup.gas",
+];
+
+/// A typed makeup's core share (metal against metal, rock and carbon) and
+/// water share (ice of the whole); `None` when no makeup is typed.
+fn makeup_shares(r: &BTreeMap<String, Value>) -> Option<(f64, f64)> {
+    let share = |k: &str| r.get(k).and_then(as_f64).filter(|x| *x >= 0.0);
+    if MAKEUP.iter().all(|k| share(k).is_none()) {
+        return None;
+    }
+    let v = |k: &str| share(k).unwrap_or(0.0);
+    let solid = v("makeup.metal") + v("makeup.rock") + v("makeup.carbon");
+    let total = solid + v("makeup.ice") + v("makeup.gas");
+    let cmf = if solid > 0.0 {
+        v("makeup.metal") / solid
+    } else {
+        0.32
+    };
+    let wf = if total > 0.0 {
+        v("makeup.ice") / total
+    } else {
+        0.0
+    };
+    Some((cmf.min(1.0), wf.min(1.0)))
+}
+
+/// K3 (editing design 15): the radius a solid world's mass and makeup give
+/// when none is set: the Zeng, Sasselov and Jacobsen rocky block
+/// (`sse.interior.rocky_radius`) with the core share read from the makeup's
+/// metal against its rock (Earth's 0.32 when no makeup is set), and a water
+/// or ice mantle adding half its mass share to the radius, as formation's
+/// stage 8 does (Zeng et al. 2019: half water by mass is about a quarter
+/// larger). Outside the block's 1 to 8 Earth masses it is an extrapolation,
+/// as in formation. A world mostly of gas gets none: no giant radius block
+/// is in the base pack yet.
+pub(crate) fn radius_from_makeup(mass: f64, r: &BTreeMap<String, Value>) -> Option<f64> {
+    let share = |k: &str| {
+        r.get(k)
+            .and_then(as_f64)
+            .filter(|x| *x >= 0.0)
+            .unwrap_or(0.0)
+    };
+    let total: f64 = MAKEUP.iter().map(|k| share(k)).sum();
+    if total > 0.0 && share("makeup.gas") / total > 0.5 {
+        return None;
+    }
+    let (cmf, wf) = makeup_shares(r).unwrap_or((0.32, 0.0));
+    let atoms = sse_atoms::atoms();
+    let a = atoms
+        .iter()
+        .find(|a| a.decl().id == "sse.interior.rocky_radius")?;
+    let p: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
+    let out = a.eval(&[mass, cmf.min(1.0)], &p).ok()?;
+    Some(out[0] * (1.0 + 0.5 * wf)).filter(|x| x.is_finite() && *x > 0.0)
+}
+
 fn bodies_from_facts(
     facts: &Facts,
     catalogued: &Facts,
@@ -847,11 +932,16 @@ fn bodies_from_facts(
         if r.get("body.engulfed") == Some(&Value::Bool(true)) {
             continue;
         }
-        let (Some(mass), Some(radius), Some(host)) = (
-            r.get("body.mass").and_then(as_f64),
-            r.get("body.radius").and_then(as_f64),
-            host_of(r),
-        ) else {
+        let (Some(mass), Some(host)) = (r.get("body.mass").and_then(as_f64), host_of(r)) else {
+            continue;
+        };
+        // K3: a hand-made world with no radius takes the one its mass and
+        // makeup give (`radius_from_makeup`), so it still has ground.
+        let Some(radius) = r
+            .get("body.radius")
+            .and_then(as_f64)
+            .or_else(|| radius_from_makeup(mass, r))
+        else {
             continue;
         };
         // Distance from the star: own orbit, or the host planet's for a moon.
@@ -938,8 +1028,9 @@ fn bodies_from_facts(
                 .unwrap_or_else(|| a.to_string()),
             mass_earth,
             radius_earth: radius / R_EARTH,
-            core_mass_fraction: 0.32,
-            water_fraction: 0.0,
+            // K3: a typed makeup sets the core and water shares inside.
+            core_mass_fraction: makeup_shares(r).map_or(0.32, |m| m.0),
+            water_fraction: makeup_shares(r).map_or(0.0, |m| m.1),
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
             pressure_bar: pressure_pa / 1e5,

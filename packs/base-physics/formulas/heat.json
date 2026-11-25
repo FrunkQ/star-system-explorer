@@ -570,7 +570,7 @@
     }
    ],
    "references": [
-    "Petrenko, V. F. and Whitworth, R. W. 1999, Physics of Ice, Oxford University Press (thermal conductivity of ice Ih, k = 651/T W/m). doi:10.1093/acprof:oso/9780198518945.001.0001",
+    "Petrenko, V. F. and Whitworth, R. W. 1999, Physics of Ice, Oxford University Press (thermal conductivity of ice Ih, k = 651/T W/m/K). doi:10.1093/acprof:oso/9780198518945.001.0001",
     "Ojakangas, G. W. and Stevenson, D. J. 1989, Icarus 81, 220: thermal state of an ice shell on Europa (conductive shell with conductivity falling as 1/T) https://ui.adsabs.harvard.edu/abs/1989Icar...81..220O"
    ],
    "shown": "q = (651 / d) ln(T_base / T_surface)",
@@ -678,7 +678,7 @@
     }
    ],
    "references": [
-    "Petrenko, V. F. and Whitworth, R. W. 1999, Physics of Ice, Oxford University Press (thermal conductivity of ice Ih, k = 651/T W/m). doi:10.1093/acprof:oso/9780198518945.001.0001",
+    "Petrenko, V. F. and Whitworth, R. W. 1999, Physics of Ice, Oxford University Press (thermal conductivity of ice Ih, k = 651/T W/m/K). doi:10.1093/acprof:oso/9780198518945.001.0001",
     "Ojakangas, G. W. and Stevenson, D. J. 1989, Icarus 81, 220: thermal state of an ice shell on Europa (conductive shell with conductivity falling as 1/T) https://ui.adsabs.harvard.edu/abs/1989Icar...81..220O"
    ],
    "shown": "d = (651 / q) ln(T_base / T_surface)",

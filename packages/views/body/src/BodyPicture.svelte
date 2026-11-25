@@ -20,7 +20,7 @@
   let gen = 0;
   $effect(() => {
     void address;
-    got = surfaceKept(scene.system, address) ?? null;
+    got = surfaceKept(ctx, scene.system, address) ?? null;
     failed = null;
     busy = false;
     gen++;

@@ -7,6 +7,7 @@ import {
   MESSAGE_MAX,
   POSTCARD_SCHEMA,
   checkPostcard,
+  clipAsSystem,
   clipThroughSeat,
   envelope,
   fixDate,
@@ -198,4 +199,37 @@ test("a reference shot keeps its Composite mix, its stretch and the famous pictu
   const bad = checkPostcard({ ...withRef, bookmark: { ...withRef.bookmark, view: { ...withRef.bookmark.view, mix: [{ band: "visible", line: "Ne V", weight: 1, colour: "#fff" }] } } });
   assert.ok(bad.ok && !bad.postcard.bookmark.view?.mix, "a bad mix is dropped, the postcard still opens");
   assert.equal(poseFrom({ ...pose, stretch: "log" }), null);
+});
+
+test("a visit lays a clip out as a system of its own, the star on the system's own address", () => {
+  const { edits, addressOf } = clipAsSystem(clip, "u:visit/sys:1", ["u:visit/sys:1/body:0"], 1.4e17);
+  assert.equal(addressOf.get("n0"), "u:visit/sys:1");
+  assert.equal(addressOf.get("n1"), "u:visit/sys:1/body:1", "a taken address is passed over");
+  assert.equal(addressOf.get("n2"), "u:visit/sys:1/body:1/body:0");
+  assert.ok(edits.some((e) => e.address === "u:visit/sys:1" && e.field === "name" && e.value === "Kestrel"));
+  assert.ok(edits.some((e) => e.address === "u:visit/sys:1" && e.field === "system.age" && e.value === 1.4e17));
+  assert.ok(edits.some((e) => e.address === "u:visit/sys:1/body:1/body:0" && e.field === "orbit.host" && e.value === "u:visit/sys:1/body:1"));
+  assert.ok(!edits.some((e) => e.address === "u:visit/sys:1" && e.field.startsWith("orbit.")), "the star orbits nothing");
+});
+
+test("a postcard's origin carries the world's own facts, never notes, and only at its own addresses", () => {
+  const b = fixDate(makeBookmark([], at, "Vault", "Body"), 4.6e9);
+  const origin = {
+    universe: { id: "kestrel", seed: "kestrel reach campaign" },
+    system: "u:kestrel/sys:1",
+    nodes: { n0: "u:kestrel/sys:1", n1: "u:kestrel/sys:1/body:3", n9: "u:kestrel/sys:1/body:9" },
+    facts: [
+      { address: "u:kestrel/sys:1/body:3", field: "body.surface_water_oceans", value: 1 },
+      { address: "u:kestrel/sys:1/body:3", field: "v3.gmNotes", value: "the vault holds the key" },
+      { address: "u:kestrel/sys:1/body:3", field: "v3.roleHint", value: "planet" },
+      { address: "u:elsewhere/sys:2", field: "body.mass", value: 1 },
+    ],
+  };
+  const r = checkPostcard(JSON.parse(JSON.stringify(envelope(b, { how: "clip", clip, packs: clip.packs, made_with: "4.0.0", about: "n1", age_s: 1.4e17, origin }))));
+  assert.ok(r.ok, r.ok ? "" : r.why);
+  const w = r.postcard.world;
+  assert.ok(w.how === "clip" && w.origin);
+  assert.equal(w.about, "n1");
+  assert.deepEqual(w.origin.nodes, { n0: "u:kestrel/sys:1", n1: "u:kestrel/sys:1/body:3" }, "only the clip's own nodes");
+  assert.deepEqual(w.origin.facts.map((f) => f.field), ["body.surface_water_oceans"], "no notes, no import bookkeeping, nothing from another system");
 });

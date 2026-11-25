@@ -134,7 +134,7 @@
           "alpha_fe": "high-alpha plateau with a knee about 1 Gyr after the first stars, from the delay of type Ia supernovae (Matteucci and Francois 1989)",
           "c_o": "solar C/O 0.55 (Asplund et al. 2009), rising with [Fe/H] (Nissen et al. 2014)",
           "mg_si": "solar Mg/Si 1.2 by number (Asplund et al. 2009); stellar spread from Adibekyan et al. 2015",
-          "cluster": "embedded cluster masses dN/dM proportional to M^-2 from 10 to 1e5 solar masses (Lada and Lada 2003), so per star proportional to M^-1",
+          "cluster": "embedded cluster masses dN/dM proportional to M^-2 from 10 to 1e5 solar masses (Lada and Lada 2003 measured it from 50 to 1000, with a drop below 50; the wider range is an extrapolation), so per star proportional to M^-1",
           "fuv": "birth-cluster far-ultraviolet field, median about 1000 G0 (Fatuzzo and Adams 2008)",
           "al26": "rough: most systems are born with less Al-26 than the Sun had (Gounelle 2015; Lichtenberg et al. 2016). Labelled rough",
           "sfr": "Milky Way star formation 1.65 solar masses per year (Licquia and Newman 2015)",

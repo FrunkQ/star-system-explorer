@@ -31,6 +31,10 @@ DWY06 = "Domingos, R. C., Winter, O. C. and Yokoyama, T. 2006, Stable satellites
 KOZAI = "Kozai, Y. 1962, Secular perturbations of asteroids with high inclination and eccentricity, AJ 67, 591. doi:10.1086/108790"
 LIDOV = "Lidov, M. L. 1962, The evolution of orbits of artificial satellites of planets under the action of gravitational perturbations of external bodies, Planet. Space Sci. 9, 719. doi:10.1016/0032-0633(62)90129-0"
 KEM98 = "Kiseleva, L. G., Eggleton, P. P. and Mikkola, S. 1998, Tidal friction in triple stars, MNRAS 300, 292: the Kozai cycle time. doi:10.1046/j.1365-8711.1998.01903.x"
+MD99 = "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press: section 8.7, the width of a mean motion resonance (eq. 8.76 and its large-eccentricity limit; Table 8.5 for the strengths alpha f_d). doi:10.1017/CBO9781139174817"
+DM81 = "Dermott, S. F. and Murray, C. D. 1981, The dynamics of tadpole and horseshoe orbits I. Theory, Icarus 48, 1: tadpoles within (8 mu / 3)^(1/2) of the shared orbit, horseshoes out to about the Hill scale. doi:10.1016/0019-1035(81)90147-0"
+WISDOM80 = "Wisdom, J. 1980, The resonance overlap criterion and the onset of stochastic behavior in the restricted three-body problem, AJ 85, 1122: first-order resonances overlap within 1.3 mu^(2/7) of a planet's orbit. doi:10.1086/112778"
+MW12 = "Mustill, A. J. and Wyatt, M. C. 2012, A general model of planetary chaotic zones, MNRAS 419, 3074: for stretched orbits the overlap zone is 1.8 (mu e)^(1/5). doi:10.1111/j.1365-2966.2011.19951.x"
 HW99 = "Holman, M. J. and Wiegert, P. A. 1999, Long-term stability of planets in binary systems, AJ 117, 621: eqs. 3 (around one star) and 4 (around both), fitted for 0.1 <= mu <= 0.9 and 0 <= e <= 0.8. doi:10.1086/300695"
 
 
@@ -561,6 +565,123 @@ def kozai_atom():
     }
 
 
+# ------------------------------------------------------------- resonance
+
+STRENGTH = 1.5
+OVERLAP = 1.3
+OVERLAP_E = 1.8
+
+
+def resonance(pin, pout, p, q, m1, m2, M, ecc, f=STRENGTH, c=OVERLAP, ce=OVERLAP_E):
+    k = p - q
+    ratio = pout / pin
+    offset = abs(ratio * q / p - 1)
+    mu = (m1 + m2) / M
+    da = (mu / 3) ** (1 / 3) if k < 0.5 else math.sqrt(16 / 3 * f * mu * ecc ** k)
+    width = 1.5 * da
+    sep = ratio ** (2 / 3) - 1
+    zone = max(c * mu ** (2 / 7), ce * (mu * ecc) ** (1 / 5))
+    held = offset < width and (k < 0.5 or sep >= zone)
+    return {"offset": offset, "width": width, "zone": zone, "verdict": 1 if held else 0}
+
+
+def resonance_atom():
+    yr = 3.2e7
+    exs = []
+    for args in [
+        # Neptune and Pluto: 3:2.
+        (164.8 * yr, 247.9 * yr, 3, 2, 1.0e26, 1.3e22, M_SUN, 0.25),
+        # Jupiter and a Trojan: one shared orbit.
+        (11.86 * yr, 11.90 * yr, 1, 1, M_JUP, 1.0e17, M_SUN, 0.1),
+        # Earth and Mars: near 2:1, but not in it.
+        (1.0 * yr, 1.881 * yr, 2, 1, M_EARTH, 6.4e23, M_SUN, 0.093),
+        # A stretched orbit 20% outside Jupiter's: inside 4:3's width, but
+        # the resonances overlap there and nothing is held.
+        (11.86 * yr, 15.47 * yr, 4, 3, M_JUP, 1.0e17, M_SUN, 0.25),
+    ]:
+        r = resonance(*args)
+        exs.append({"pin": args[0], "pout": args[1], "p": args[2], "q": args[3], "m1": args[4], "m2": args[5],
+                    "M": args[6], "ecc": args[7], "offset": r["offset"], "width": r["width"], "zone": r["zone"],
+                    "verdict": r["verdict"]})
+    return {
+        "id": "sse.stability.resonance",
+        "version": "1.0.0",
+        "cost": "trivial",
+        "inputs": [
+            {"port": "inner_period", "letter": "pin"},
+            {"port": "outer_period", "letter": "pout"},
+            {"port": "inner_turns", "letter": "p"},
+            {"port": "outer_turns", "letter": "q"},
+            {"port": "inner_mass", "letter": "m1"},
+            {"port": "outer_mass", "letter": "m2"},
+            {"port": "host_mass", "letter": "M"},
+            {"port": "eccentricity", "letter": "ecc"},
+        ],
+        "outputs": [
+            {"port": "offset", "letter": "offset"},
+            {"port": "width", "letter": "width"},
+            {"port": "chaotic_zone", "letter": "zone"},
+            {"port": "verdict", "letter": "verdict"},
+        ],
+        "models": {
+            "f": model(STRENGTH, "assumed", MD99),
+            "c": model(OVERLAP, "fitted", WISDOM80),
+            "ce": model(OVERLAP_E, "fitted", MW12),
+        },
+        "positive": [
+            {"port": "inner_period", "says": "inner period"},
+            {"port": "outer_period", "says": "outer period"},
+            {"port": "inner_turns", "says": "inner turns"},
+            {"port": "outer_turns", "says": "outer turns"},
+            {"port": "host_mass", "says": "host mass"},
+        ],
+        "checks": [{"port": "eccentricity", "min": 0.0, "below": 1.0, "says": "eccentricity {} is not an ellipse"}],
+        "references": [MD99, DM81, WISDOM80, MW12],
+        "shown": "|P₂/P₁ · q/p − 1| < (3/2) δa/a,  δa/a = (16/3 f μ e^(p−q))^½,  or (μ/3)^⅓ for a shared orbit",
+        "equation": {
+            "name": "Whether two neighbours sit inside a resonance",
+            "formula": "k = p - q\n"
+                       "ratio = pout / pin\n"
+                       "offset = abs(ratio * q / p - 1)\n"
+                       "mu = (m1 + m2) / M\n"
+                       "da = if k < 1 / 2 then cbrt(mu / 3) else sqrt(16 / 3 * f * mu * ecc ^ k)\n"
+                       "width = 3 / 2 * da\n"
+                       "sep = ratio ^ (2 / 3) - 1\n"
+                       "zone = max(c * mu ^ (2 / 7), ce * (mu * ecc) ^ (1 / 5))\n"
+                       "verdict = if offset >= width then 0 else if k < 1 / 2 then 1 else if sep < zone then 0 else 1",
+            "inputs": {
+                "pin": inp("orbit.period", "s", "the inner year"),
+                "pout": inp("orbit.period", "s", "the outer year"),
+                "p": inp("orbit.resonance_turns", "1", "turns the inner one makes in one cycle of the resonance"),
+                "q": inp("orbit.resonance_turns", "1", "turns the outer one makes in the same time"),
+                "m1": inp("body.mass", "kg", "mass of the inner world"),
+                "m2": inp("body.mass", "kg", "mass of the outer world"),
+                "M": inp("orbit.host_mass", "kg", "mass of what both circle"),
+                "ecc": inp("orbit.eccentricity", "1", "the more stretched of the two orbits", [0, 0.99]),
+                "f": inp("model.resonance_strength", "1", "strength of the resonance's pull (alpha f_d)"),
+                "c": inp("model.resonance_overlap", "1", "overlap zone of round orbits, per mu^(2/7)"),
+                "ce": inp("model.resonance_overlap_stretched", "1", "overlap zone of stretched orbits, per (mu e)^(1/5)"),
+            },
+            "outputs": {
+                "offset": inp("orbit.resonance_offset", "1", "how far the period ratio is from p:q, as a fraction"),
+                "width": inp("orbit.resonance_width", "1", "how far it may be and still be held, as a fraction"),
+                "zone": inp("orbit.chaotic_zone", "1", "orbit gap, as a fraction, inside which resonances overlap and hold nothing"),
+                "verdict": verdict("0 not in this resonance, 1 inside it: the resonance can keep them from meeting"),
+            },
+            "source": {
+                "text": "Murray and Dermott 1999: a p:q resonance of order k = p − q holds orbits within δa/a = (16/3 · f μ e^k)^½ of exact (the large-eccentricity limit of eq. 8.76; f is alpha f_d, 0.75 to 2 for the first-order resonances of Table 8.5). Dermott and Murray 1981: one shared orbit holds tadpoles and horseshoes out to about the Hill scale (μ/3)^⅓. Kepler's third law turns δa/a into 3/2 of that in the period ratio. Wisdom 1980 and Mustill and Wyatt 2012: closer than 1.3 μ^(2/7), or 1.8 (μ e)^(1/5) for stretched orbits, neighbouring resonances overlap and the motion is chaotic, so nothing is held there (a shared orbit excepted)",
+                "doi": "10.1017/CBO9781139174817",
+                "where": "Murray and Dermott 1999 section 8.7, eq. 8.76; Dermott and Murray 1981 section 4; Wisdom 1980 eq. 29; Mustill and Wyatt 2012 section 3",
+            },
+            "explain": {
+                "curious": "Two worlds whose years fit a simple ratio, like Pluto's three turns for every two of Neptune's, can be held apart by timing: whenever they line up, they are far apart. That is how Pluto crosses Neptune's orbit and never meets it.",
+                "science": "Pendulum width of a p:q mean motion resonance in the large-eccentricity limit, with f a typical alpha f_d. Being inside the width is necessary, not sufficient: the resonant angle must librate, which needs where each body is along its orbit, so the verdict says 'can', and stays worth watching. At very round orbits first-order widths tend to a floor of order μ^⅔ that this leaves out, so it can miss a resonance there, never invent one. Inside the overlap zone the resonances blur into chaos and hold nothing.",
+            },
+            "examples": exs,
+        },
+    }
+
+
 # --------------------------------------------------------------- binaries
 
 HW_S = {"s0": 0.464, "s1": -0.380, "s2": -0.631, "s3": 0.586, "s4": 0.150, "s5": -0.198}
@@ -715,7 +836,7 @@ def main():
         "format": "sse.formulas/1",
         "family": "sse.stability",
         "about": "Orbital stability checks (package ST1, ruling of 23 Nov): each check a visible formula block with its source, its fitted numbers as Model numbers, so the card's verdict shows its working.",
-        "atoms": [hill_atom(), amd_term_atom(), collision_step_atom(), amd_critical_atom(), moon_atom(), kozai_atom(), hw_s_atom(), hw_p_atom()],
+        "atoms": [hill_atom(), amd_term_atom(), collision_step_atom(), amd_critical_atom(), moon_atom(), kozai_atom(), hw_s_atom(), hw_p_atom(), resonance_atom()],
     }
     text = json.dumps(doc, indent=1, ensure_ascii=False) + "\n"
     old = open(OUT).read() if os.path.exists(OUT) else None

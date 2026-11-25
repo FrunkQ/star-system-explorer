@@ -31,6 +31,8 @@ export interface CampaignSave {
     campaign_epoch_yr?: number;
     /** Where the GM put each pack overlay (overlay.ts), by overlay id (older saves have none). */
     overlay_anchors?: Record<string, import("./overlay.ts").OverlayAnchor>;
+    /** "Could be…" suggestions stopped, as "address#record" (older saves have none). */
+    could_quiet?: string[];
     /** The readings chosen by pressing a unit, per kind and scale class (older saves have none). */
     unit_choices?: import("./figures.ts").UnitChoices;
     /** The party's ship (older saves have none). */
