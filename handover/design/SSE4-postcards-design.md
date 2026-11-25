@@ -48,7 +48,8 @@ Read with: `SSE4-playbook-and-switchboard-design.md` (bookmarks in 4A, holding i
   "stamp": "data:image/webp;base64,…" }                              // optional, small; checked like picture.ts
 ```
 
-- **`pose` also goes on the plain bookmark as an optional field.** Today a bookmark made in Free view does not come back to the same camera (`ViewChoice` has no pose). That is a gap in bookmarks, and fixing it there means a postcard is exactly "a bookmark with its pose, a date and a world", not a second thing.
+- **`pose` goes on the plain bookmark as an optional field**, beside `view` and `selected`. Today a bookmark made in Free view does not come back to the same camera (`ViewChoice` has no pose). That is a gap in bookmarks. `bookmarksFrom` reads it leniently: a malformed pose is dropped, never the bookmark.
+- **One store (agreed with the Run desk thread).** Inside a campaign there is no separate postcard object: a bookmark with a pose and a fixed date is a postcard, kept in `workspace.bookmarks`, and the existing `show: { bookmark }` source carries it (`showOf` carries the pose). `sse.postcard/1` is only the envelope a postcard travels in: the bookmark plus its world, credit and stamp.
 - **`keep` is how one postcard fits a wall TV and a phone.** The camera's direction is fixed; the field of view opens until the kept part fits the screen's shape. It also tells a quote where the quiet side of the picture is.
 - **Nothing about players** is in it: no role, no look, no knowledge. That stays the Switchboard's.
 - **Presentation only.** Never read by physics, never in the state hash.
@@ -87,7 +88,7 @@ Rules that keep this honest:
 ## 6. Making and keeping one
 
 - **One place to make it: the Bookmarks button.** "+ Bookmark where I am" stays. A bookmark's row gains **Make a postcard**. In True the existing "Take photograph" result gains **Keep as postcard** beside Save picture. No other entry.
-- **Kept with** the campaign (`workspace.postcards`), and on the device outside one. Exported with the campaign.
+- **Kept with** the campaign's bookmarks (one store, section 3), and on the device outside one. Exported with the campaign. The Bookmarks list marks the ones that are postcards with a small stamp.
 - **The wall.** A screen document `postcards` with its own `rail` entry (never a tab), under Look at every scale: this campaign's postcards, then each set from the packs, then Explorers. A row of stamps; press one and it opens from where it sat. The Bookmarks list's foot links to it.
 - **Framing help, small.** While "Make a postcard" is open the stage shows the `keep` box as four corner ticks that can be dragged, and a rule-of-thirds grid at HUD on. No filters, no depth of field, no lens flare: nothing is added that the physics did not put there (the eye's glare is physics and stays).
 
@@ -115,13 +116,13 @@ Extends section 6 of the Playbook design; the Run desk thread owns it.
 7. **Look.** Drawn through the role's look, with the same "look off for this picture" switch as a Play picture (Playbook 4.7). A green terminal showing a green postcard is right; a wall TV in the plain look gets the photograph.
 8. **Transmission cards** ("Incoming transmission…") take a ground by the same field in the same file.
 9. **OBS for free:** a Stream role on hold with Postcards in turn is a "back soon" screen.
-10. **Data:** `{ "hold": { "card": …, "ground": "none" | { "postcard": "id" } | { "set": "base" | "campaign" } } }`. A card in `sse.holding-cards/1` gains `kind: "quote"` and `by`.
+10. **Data (as the Run desk thread asked):** the ground sits on the held card (`HoldCard` in board.ts), not on the hold source: `ground: "none" | { bookmark: id } | { postcard: {…} } | { set: "base" | "campaign" }`. A hold already wins over every layer as a card on the wire, so a card with a ground reaches the screens with no new layering rule. A card in `sse.holding-cards/1` gains `kind: "quote"` and `by`; `by` is not part of a card's identity (cards are de-duplicated by kind plus words). `CardDeck`'s fallback becomes "any other kind, then Stand by".
 
-**The quotes.** One more note set in the Atlas margin format (`ui-contract/src/atlas/margin.ts`), each line with `uses: ["waiting"]`, its words, who said it, and where or when. SSE3's 90 are the source list. Which go in the base app is the rights question the Atlas thread already put to Alex; it is repeated as question 7 so one answer serves both.
+**The quotes.** One more note set in the Atlas margin format (`ui-contract/src/atlas/margin.ts`, arriving with PR 481), each line with `uses: ["waiting"]` and two new optional fields the Atlas thread adds: `by` (who said it) and `source` (a book, a mission, a year). The loader treats `source` as a citation, not a fact, so a year in it does not trip the figure check. The hold screen asks `pickBanners` with the situation "holding". SSE3's 90 are the source list. Which go in the base app is the rights question the Atlas thread already put to Alex; it is repeated as question 7 so one answer serves both.
 
 ## 9. The shipped set, and people's favourites
 
-- **The base set:** about 24, in the base presentation pack as `sse.postcards/1`, all travelling as addresses or as clips of the shipped systems (Solar System, Kestrel, the showcase worlds). Chosen with the trailer thread from its beauty-shot list, so a place worth filming is also a postcard, and the trailer rig can film from a postcard's pose. Spread on purpose across scales (surface, world, rings, star, system, galaxy, web) and bands (a few infrared and X-ray).
+- **The base set:** about 24, in the base presentation pack as `sse.postcards/1`, all travelling as addresses or as clips of the shipped systems (Solar System, Kestrel, the showcase worlds). Chosen with the trailer thread from its lists (project files `sse4/trailer/STORYBOARDS.md` section H, beauty shots H1 to H4, and `SHOTLIST.md`, the 25 Nov GPU takes; strongest so far: shot 26 the galaxy in True edge-on, shot 25 the Solar System in True, shot 06 a generated system's tilted orbits), so a place worth filming is also a postcard, and the trailer rig can film from a postcard's pose. Spread on purpose across scales (surface, world, rings, star, system, galaxy, web) and bands (a few infrared and X-ray).
 - **A check, not a golden:** a test opens every shipped postcard, resolves its world and confirms it draws on the canvas tier. A postcard that stops resolving fails the build with its name.
 - **Explorers, a Postcards shelf (needs Alex's own yes: it adds a kind and stores a small picture).** A postcard publishes like a clip: the site stores and serves the bytes as they are. The one new thing is the stamp, a picture made in the publisher's browser, which goes through the same moderation gate as every file. Captions and names are text under the existing report and takedown routes. The shelf shows stamps; opening one in SSE4 draws it live.
 - **"Send it in":** on a published postcard, "Offer for the shipped set". Alex picks; a chosen one joins the next release's base set with its credit.
@@ -131,7 +132,7 @@ Extends section 6 of the Playbook design; the Run desk thread owns it.
 
 | With | The seam |
 |---|---|
-| Run desk (owns bookmark.ts, board.ts, holding cards) | optional `pose` on `sse.bookmark/1`; `hold.ground`; the Quotes kind; "Make a postcard" on a bookmark row; a postcard as a `show` source for presets |
+| Run desk (owns bookmark.ts, board.ts, holding cards) | optional `pose` on `sse.bookmark/1`; `ground` on the held card; the Quotes kind; "Make a postcard" on a bookmark row; presets use the existing `show: { bookmark }` |
 | Renderer | `photograph` for every True view from a pose, at a given size and shape, refining; `exposure_ev` and `fov_deg` in the pose; the per-pass reason line; the closer camera in True uses the same pose shape |
 | Atlas | the quote set as a margin-note set with `uses: waiting`; the banner picker on hold screens |
 | Explorers | a `postcard` kind and shelf, stamp storage and moderation, "Offer for the shipped set" (all waiting on Alex) |
@@ -174,9 +175,13 @@ PC1, PC3 for the globe, and PC5 can start on main today. Only PC2 and PC8 wait o
 
 One general mechanism (bookmark, clip, still tier, holding cards, margin notes reused; nothing special-cased). Don't copy V3 (static images become live stills that explain themselves). GM streams only data. Honesty marks on the GM's view only. Sound off. Reduced motion honoured. No new tab. Tags never feed physics; nothing here feeds physics. Figures on the back go through `figures.ts`.
 
-## 14. Seam answers
+## 14. Seam answers (25 Nov 2026)
 
-None yet (asked 25 Nov 2026). The owner of this note adds each answer here.
+- **Run desk** ("Build Run desk playbook and players' side"): yes to all four, with changes now folded into sections 3, 6 and 8. Pose optional on the bookmark and read leniently; the ground on the held card, not the hold source; the Quotes kind with the `CardDeck` fallback and identity notes; one store, so no `show: { postcard }`. It will own PC5 once Alex accepts.
+- **Atlas** ("Build star atlas and editions"): a margin note has no speaker or source today; it adds `by` and `source` in PC7 and will own PC7. margin.ts reaches main with PR 481; `uses`, `pickBanners` (situation "holding") and the waiting lines follow in its next PR.
+- **Trailer** ("Capture footage for SSE4 trailers"): no separate stills list; the candidates are in the two files named in section 9. Happy for postcards to be picked from them and for the rig to film from a postcard's pose later.
+- **Renderer** ("Build photoreal renderer"): asked, no answer yet. PC2 and the pose's `exposure_ev` and `fov_deg` stay proposals until it answers.
+- **Explorers**: not asked; nothing there moves before Alex's yes to question 10.
 
 ## 15. Picking this up without the chat
 
