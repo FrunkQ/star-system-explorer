@@ -83,7 +83,12 @@ try {
     await desk.getByLabel(/Suggest a name for Tarn/).fill("Haven");
     await desk.getByRole("button", { name: "Ask the game master" }).click();
     await desk.waitForSelector("[data-own-request='waiting']");
-    const req = gm.getByRole("group", { name: "Players' requests" });
+    // PB7: the on-air chip counts it; the request waits on the role card of the role that asked.
+    await gm.locator("[data-chip-asking='1']").waitFor({ timeout: 15000 });
+    await gm.locator("[data-on-air]").first().click();
+    await gm.locator("[data-role-asks='table']").waitFor();
+    await gm.locator("[data-role-open='table']").click();
+    const req = gm.locator("[data-role-card='table'] [data-request]");
     await req.waitFor();
     assert.match(await req.innerText(), /name of Tarn → "Haven"/);
     assert.equal(await gmHash(), after, "a request alone changes nothing");
@@ -97,12 +102,17 @@ try {
     for (const p of [desk, phone]) await p.waitForFunction((h) => document.querySelector("footer[data-state-hash]")?.getAttribute("data-state-hash") === h, named, { timeout: 15000 });
 
     // V10: the GM adds a fog-of-war seat; its windows see only what it has discovered.
-    await gm.getByRole("button", { name: "More seats" }).click();
-    const panel = gm.getByRole("dialog", { name: "Seats" });
-    assert.match(await panel.locator("[data-seats='1']").innerText(), /Everyone sees: Long-range sensors/);
-    await panel.getByLabel("Name", { exact: true }).fill("Empire: Vesh");
-    await panel.getByRole("button", { name: "Add seat" }).click();
-    await panel.locator("[data-seats='2']").waitFor();
+    // PB7: roles are made on the Switchboard's role card.
+    await gm.locator("[data-role-card-close]").click();
+    await gm.locator("[data-add-role]").click();
+    const add = gm.locator("[data-role-card='new']");
+    assert.equal(await add.locator("[data-role-knows]").inputValue(), "fog", "fog of war is the first choice when the campaign has it");
+    await add.locator("[data-role-name]").fill("Empire: Vesh");
+    await add.locator("[data-role-add]").click();
+    await gm.locator("[data-role-open='empire-vesh']").click();
+    const panel = gm.locator("[data-role-card='empire-vesh']");
+    assert.match(await panel.locator("[data-role-knows]").innerText(), /fog of war/);
+    await panel.locator("summary").click();
     // Adding a fog-of-war seat chronicles its starting view (one event); the table's scene does not change.
     await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, named);
     const seated = await gmHash();
@@ -132,11 +142,14 @@ try {
     await shot(vesh1, "v10-vesh-window");
 
     // V10 part 2: a sealed seat runs no kernel and fetches no seed, packs or recorded facts; the GM sends finished scenes.
-    await panel.getByLabel("Name", { exact: true }).fill("Empire: Orun");
-    await panel.getByLabel(/Sealed: its screens/).check();
-    await panel.getByRole("button", { name: "Add seat" }).click();
-    await panel.locator("[data-seats='3']").waitFor();
-    const orunLink = await panel.locator("[data-seat-link='empire-orun']").getAttribute("href");
+    await gm.locator("[data-role-card-close]").click();
+    await gm.locator("[data-add-role]").click();
+    await add.locator("[data-role-name]").fill("Empire: Orun");
+    await add.locator("[data-role-sealed]").check();
+    await add.locator("[data-role-add]").click();
+    await gm.locator("[data-role-open='empire-orun']").click();
+    const orunCard = gm.locator("[data-role-card='empire-orun']");
+    const orunLink = await orunCard.locator("[data-seat-link='empire-orun']").getAttribute("href");
     assert.match(orunLink, /players\.html\?sealed=[a-z0-9]+&seat=empire-orun$/);
     assert.ok(!orunLink.includes(new URL(link).searchParams.get("join")), "a sealed seat's link does not name the shared room");
     orun = await context.newPage();
@@ -148,7 +161,8 @@ try {
     await orun.waitForSelector("footer[data-link='live'][data-sealed][data-audience='empire-orun']", { timeout: 30000 });
     assert.doesNotMatch(await shows(orun), /Haven|Vault/, "Orun starts knowing nothing");
     const orunScene0 = await orun.getAttribute("footer", "data-scene-hash");
-    await panel.getByLabel(/Vault known to Empire: Orun/).check();
+    await orunCard.locator("summary").click();
+    await orunCard.getByLabel(/Vault known to Empire: Orun/).check();
     await orun.waitForFunction((h) => document.querySelector("footer")?.getAttribute("data-scene-hash") !== h, orunScene0, { timeout: 15000 });
     await orun.waitForFunction(() => /Vault/.test(document.querySelector("main")?.innerText ?? ""), null, { timeout: 15000 });
     assert.doesNotMatch(await shows(orun), /Haven/, "only Orun's own discovery");
@@ -156,7 +170,7 @@ try {
     assert.deepEqual(leaks, [], "a sealed screen fetches no kernel, packs or recorded facts");
     await shot(orun, "v10-sealed-window");
     await shot(gm, "v10-gm-seats");
-    await panel.getByRole("button", { name: "Close" }).click();
+    await gm.locator("[data-role-card-close]").click();
 
     // Phone width: no sideways scroll.
     const pw = await phone.evaluate(() => document.scrollingElement.scrollWidth);

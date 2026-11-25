@@ -10,5 +10,7 @@ authors.workspace = true
 sse-core.workspace = true
 sse-atoms.workspace = true
 sse-flow.workspace = true
+sse-light = { path = "../sse-light" }
+sse-reference.workspace = true
 serde.workspace = true
 serde_json.workspace = true

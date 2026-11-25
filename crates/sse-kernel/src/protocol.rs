@@ -611,6 +611,35 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
+    /// Rainbows and halos (VP-L4): each of `items` is `{id, n, kind}` with
+    /// `kind` "drop" (rain of a liquid of refractive index `n`: its bows)
+    /// or "crystal" (ice-like crystals: their 22° and 46° style halos).
+    ReadBows {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// Fog of war from sensors (RK14, Atomic Rockets plan section 17), the
+    /// sums: each seat gives `seat`, its instruments (`sensors`, or `fit`
+    /// `{tech, hull_length_m}` for the free default set), optionally `own`
+    /// (its craft, for the "noticed out to here" ring) and `contacts`
+    /// (`sse_sense::fog::Contact`: a craft read from its power flow, its
+    /// distance, and when it was last seen). Each contact comes back
+    /// `ink`, `dotted` or `unseen`; writing the marks as `observe.grant`
+    /// events is the caller's.
+    FogOfWar {
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+    },
+    /// The limb law (ND2 part 2b): how each disc's brightness and colour
+    /// change from centre (`mu` 1) to edge (`mu` 0). A glowing disc gives
+    /// `teff_k` (Eddington-Barbier in a grey atmosphere: the layer seen,
+    /// its temperature, brightness per wavelength against the centre and
+    /// the colour to the eye); a lit disc gives `minnaert_k` (one, or one
+    /// per wavelength) and `mu0`, the sunlight's cosine.
+    ReadLimb {
+        #[ts(type = "unknown[]")]
+        discs: Vec<serde_json::Value>,
+    },
     /// Effect at range (RK12, Atomic Rockets plan section 13): each of
     /// `asks` is `sse_sense::reach::Ask`, a weapon (beam, burst or
     /// projectile), a target (its skin as a sheet material or a typed
@@ -766,6 +795,16 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         glows: Option<Vec<serde_json::Value>>,
+        /// Cool giants losing mass (`sse_nebula::outflow::GiantInput`): their
+        /// dusty shells (O3b).
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        giants: Option<Vec<serde_json::Value>>,
+        /// Young stars still accreting (`sse_nebula::outflow::YoungStarInput`):
+        /// their jets (O3b).
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        young: Option<Vec<serde_json::Value>>,
     },
     /// Bring a system into the open universe as facts: an SSE 3 save
     /// (`import_v3`, its text) or a formation run (`formation`, the same
@@ -2267,6 +2306,9 @@ impl Request {
             Request::ReadAirOptics { .. } => "read_air_optics",
             Request::LightThroughGas { .. } => "light_through_gas",
             Request::EffectAtRange { .. } => "effect_at_range",
+            Request::ReadLimb { .. } => "read_limb",
+            Request::FogOfWar { .. } => "fog_of_war",
+            Request::ReadBows { .. } => "read_bows",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2486,6 +2528,21 @@ pub fn ops() -> Vec<OpInfo> {
             "light_through_gas",
             Cost::Light,
             "per passage: a few formula blocks per wavelength per absorption feature, at the eye's 81 wavelengths and any asked for",
+        ),
+        o(
+            "read_bows",
+            Cost::Trivial,
+            "per item: one or two formula blocks",
+        ),
+        o(
+            "fog_of_war",
+            Cost::Light,
+            "per seat, contact and instrument: one light description and one detection",
+        ),
+        o(
+            "read_limb",
+            Cost::Trivial,
+            "per disc and point: one formula block and a Planck sum at the eye's 81 wavelengths",
         ),
         o(
             "effect_at_range",
@@ -3121,6 +3178,23 @@ pub enum Response {
     GasPassed {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
+    },
+    /// `read_bows`: each of `items` is `sse_light::bows::Bows`.
+    BowsRead {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// `fog_of_war`: each of `seats` is `{seat, sensors, noticed_to_m?,
+    /// marks}` with `sse_sense::fog::Mark`.
+    FogRead {
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+    },
+    /// `read_limb`: each of `discs` is `{ points, references }` with
+    /// `sse_light::limb::LimbPoint`.
+    LimbRead {
+        #[ts(type = "unknown[]")]
+        discs: Vec<serde_json::Value>,
     },
     /// `effect_at_range`: each of `effects` is `sse_sense::reach::Effect`.
     EffectsAtRange {

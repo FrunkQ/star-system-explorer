@@ -3246,7 +3246,18 @@ impl Kernel {
                 planetary,
                 remnants,
                 glows,
-            } => systems::read_nebulae(at_s, seed.as_deref(), deaths, planetary, remnants, glows)?,
+                giants,
+                young,
+            } => systems::read_nebulae(
+                at_s,
+                seed.as_deref(),
+                deaths,
+                planetary,
+                remnants,
+                glows,
+                giants,
+                young,
+            )?,
             Request::SurveyPlanets { survey } => systems::survey_planets(survey)?,
             Request::ReadSpectrum { targets, observer } => {
                 systems::read_spectrum(targets, observer)?
@@ -3258,6 +3269,9 @@ impl Kernel {
             Request::LightThroughGas { passages } => {
                 systems::light_through_gas(passages, &self.observe.reference)?
             }
+            Request::ReadLimb { discs } => systems::read_limb(discs)?,
+            Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
+            Request::ReadBows { items } => systems::read_bows(items)?,
             Request::EffectAtRange { asks } => {
                 systems::effect_at_range(asks, &self.observe.reference)?
             }
