@@ -40,7 +40,8 @@ renderer.md (SL1, V10g, V10i, V10j, V10k), run-desk.md (RD1 reveal on arrival).
 | LR5b the Land screen's own link and title: on Land the place (and so the address bar) carries the site, the quick hour and the lander as the GM picks them (`landingLinkSite`), and `here()`'s title names the landing ("Mars, landing at Dribeque Planitia, midday", `landingTitle`), so a kept beat or a copied link brings it back. Bookmarks (PB2b `Whereabouts`) do not carry the site yet: Run desk thread told | here | done | packages/LR2.md |
 | LR6 the lander on the ground: the stock lander (sized from its mass) stands where it touched down, in frame from where the walk starts; a Lamps switch lights it at night and the table follows (`renderer/src/surface-lander.ts`, agreed with the renderer) | here | done | packages/LR6.md; lamps light no ground yet, construct models not passed |
 | LR4b the world's air on the players' orbit globe: read on the GM's kernel and sent with the orbit (`Shown.air`, `PlayerContext.shown()`) | here | done | packages/LR4.md |
+| LR4c the party's ship in orbit on the table's globe: a named marker going round (`Shown.ship`), a presentation drift (fudge row) | here | done | packages/LR4.md |
 | Gap 10, Mass on the Run desk card at Curious | Run desk thread (asking Alex) | open | |
 
 ## Next
-A ship marker in orbit; LR6b the construct's own model on the ground, and the lamps' pool of light (renderer).
+LR6b the construct's own model on the ground, and the lamps' pool of light (renderer).

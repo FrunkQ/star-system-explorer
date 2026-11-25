@@ -159,7 +159,8 @@
     // A world's own screen (not Land): the table is shown it in orbit, turning below (LR4).
     const world = orbitWorld;
     const air = world && orbitAir?.key === `${scene.system}|${world.address}` && orbitAir.air ? { air: orbitAir.air } : {};
-    if (world) return { scope: scene.system, title: orbitTitle(world.label, ws.party, world.address), screen: ORBIT_SCREEN, focus: world.address, ...air };
+    const ship = world && ws.party && ws.party.at === world.address ? { ship: ws.party.name } : {};
+    if (world) return { scope: scene.system, title: orbitTitle(world.label, ws.party, world.address), screen: ORBIT_SCREEN, focus: world.address, ...air, ...ship };
     return { scope: scene.system, title: scene.title, ...focus };
   };
   // Driving a read-only screen (PB3b): as the GM moves, the screen follows. Never while on the Switchboard itself.
