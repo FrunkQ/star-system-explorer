@@ -11,6 +11,7 @@ export const SHIPPED_LAYOUTS: readonly { file: string; label: string }[] = [
   { file: "players.bridge-3d.screen.json", label: "Bridge in 3D" },
   { file: "players.survey.screen.json", label: "Tarn survey report" },
   { file: "players.land.screen.json", label: "Landing" },
+  { file: "players.orbit.screen.json", label: "In orbit (a world's own screen)" },
 ];
 
 /** The arrangements the editor offers, in words, each a screen layout with a fixed set of boxes. */

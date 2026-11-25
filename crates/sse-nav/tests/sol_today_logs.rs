@@ -727,4 +727,5 @@ fn memorials_are_real_with_two_sources() {
     assert_eq!(scobee["name"], "3350 Scobee");
     let a = scobee["where"]["elements"]["a_m"].as_f64().unwrap() / 1.495_978_707e11;
     assert!((a - 2.311).abs() < 0.01, "3350 Scobee at {a} au");
+    assert_eq!(scobee["h_mag"], 14.72);
 }

@@ -6,7 +6,7 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts" module>
-  import { withFiner, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
+  import { withFiner, TILE_SAMPLES, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
@@ -38,7 +38,7 @@
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
   import { readLiveStar, readTrueFace, starsBehind, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
-  import { finerTiles, readFiner } from "../../body/src/finer-tiles.ts";
+  import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -451,6 +451,41 @@
   // Close-up (Alex, 25 Nov): the ground under the 3D camera while it is low over a world in True; the detail ladder's
   // deep tiles (VP3 part 4) read it.
   let groundView = $state<GroundView | null>(null);
+  // VP3 part 4: once the camera has stayed low over the chosen world for DEEP_SETTLE_MS, the tiles under it are read
+  // at the screen's own scale (down to the kernel's fact floor) and laid over its ground as a patch. A newer view
+  // stops the read between requests; the last patch stays where it was read (it is the world's real ground).
+  const DEEP_SETTLE_MS = 600;
+  let deepGen = 0;
+  /** The level of the deep patch last laid, for the page's checks (data-deep-level). */
+  let deepLevel = $state<number | null>(null);
+  $effect(() => {
+    const below = groundView;
+    const sys = scene.system;
+    const sel = ctx.workspace.selection;
+    const my = ++deepGen;
+    if (!looksTrue || ctx.session.seat.authority !== "gm" || !below || below.body !== sel) return;
+    const radius_m = untrack(() => bodies3d.find((b) => b.id === below.body)?.radius_m);
+    if (!radius_m) return;
+    const timer = setTimeout(() => untrack(() => void (async () => {
+      const p = await readDeep(ctx.session, sys, below.body, { toward: below.toward, m_per_px: below.m_per_px }, radius_m, TILE_SAMPLES, () => my === deepGen);
+      if (!p || my !== deepGen) return;
+      deepLevel = p.level;
+      const key = `${sys}|${below.body}`;
+      const t = trueSurfaces.get(key);
+      if (t && typeof t !== "string") {
+        const next = { ...t, patch: p };
+        trueSurfaces.set(key, next);
+        surfaces = new Map(surfaces).set(below.body, next);
+      }
+      const a = trueAirs.get(key);
+      if (a?.ground) {
+        const next = { ...a, ground: { ...a.ground, patch: p } };
+        trueAirs.set(key, next);
+        airs = new Map(airs).set(below.body, next);
+      }
+    })()), DEEP_SETTLE_MS);
+    return () => clearTimeout(timer);
+  });
   // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.
   let liveStar = $state<LiveStar | null>(null);
   let liveStarWhy = $state("");
@@ -541,7 +576,7 @@
   const peeked = $derived(peek && peek.address !== ctx.workspace.selection && !drag && !measuring ? all.find((s) => s.address === peek!.address) : undefined);
 </script>
 
-<div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
+<div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined}>
   {#if dims === "3d"}
     {#snippet in3d(band: string, base: boolean)}
       <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
