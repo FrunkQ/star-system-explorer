@@ -10,7 +10,9 @@
   import { NamesHere } from "../../reference/src/index.ts";
   import { YOUR_SYSTEMS_CONTROLS } from "./controls.ts";
   import HomeCell from "./HomeCell.svelte";
-  import { DEFAULT_VIEW, gridLines, hudShows, systemRoutes, viewOptions, type RecordLink, layoutSystems, placeHash, readCampaignSystems, mapScaleBar, summaryWords, systemSummary, type CampaignSystem, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { AreaKey, Overlays, PEN_WORDS, Pencilled, penOf, penStyle, type Pen } from "../../../chart-grammar/src/index.ts";
+  import { AREA_REACH_DEFAULT, areasFromHoldings, assignSlots, overlaySpecsOf, placeOnMap, reachInMapUnits, type AreaItem, type Holding, type ViewOverlay } from "../../../ui-contract/src/index.ts";
+  import { DEFAULT_VIEW, gridLines, tableLandmarks, hudShows, systemRoutes, viewOptions, type RecordLink, layoutSystems, placeHash, readCampaignSystems, mapScaleBar, summaryWords, systemSummary, type CampaignSystem, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -56,6 +58,21 @@
     const mine = own && !rows.some((x) => x.system === own) && seen[own] ? [{ system: own, title: scene.fixture ? scene.title : "This campaign's own system", source: "campaign", position: null, unit: null, subjects: seen[own]!, summary: systemSummary(seen[own]!) }] : [];
     return [...mine, ...rows];
   });
+  // Pencil and ink (SV3): on the GM's Build and Run desks a system the table does not know is drawn in pencil (heard of:
+  // an outline), on the map and in the list. Players never see pencil; Explore draws everything in ink.
+  let pens = $state<Record<string, Pen>>({});
+  let pgen = 0;
+  $effect(() => {
+    const addrs = all.map((x) => x.system);
+    void ctx.workspace.revision;
+    const gmDesk = ctx.session.seat.authority === "gm" && (ctx.workspace.desk === "build" || ctx.workspace.desk === "run");
+    const g = ++pgen;
+    if (!gmDesk || !addrs.length) return void (pens = {});
+    void tableLandmarks(ctx.session, addrs).then((m) => {
+      if (g === pgen) pens = Object.fromEntries(addrs.map((a) => [a, penOf(m.get(a))]));
+    });
+  });
+  const penFor = (x: CampaignSystem): Pen => pens[x.system] ?? "ink";
   /** The campaign's own system opens as itself (an empty system in the link); the others by address. */
   const link = (x: CampaignSystem) => placeHash({ scale: "system", system: x.system === (ownSystem ?? "") ? "" : x.system });
   const S = 560;
@@ -67,6 +84,47 @@
   const placed = $derived(all.filter((x) => at.has(x.system)));
   const unplaced = $derived(all.filter((x) => !at.has(x.system)));
   const unit = $derived(placed.find((x) => x.unit)?.unit ?? null);
+  // Map layers (territory OV3 and OV4): a stacked pack's area layer, its holdings coloured out from each held system to
+  // the layer's reach on this map, nearest held system winning where reaches meet. Shown when a pack declares one.
+  const packs = $derived.by(() => {
+    void ctx.workspace.revision;
+    const st = ctx.session.stack();
+    return [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown[];
+  });
+  const areaLayers = $derived(overlaySpecsOf(packs).filter((o) => o.areas));
+  let layer = $state("");
+  let holdings = $state<Holding[]>([]);
+  let hgen = 0;
+  $effect(() => {
+    const id = layer;
+    const root = all[0]?.system.split("/")[0];
+    void ctx.workspace.revision;
+    const g = ++hgen;
+    if (!id || !root || !ctx.session.holdingsIn) return void (holdings = []);
+    ctx.session.holdingsIn({ bounds: root, layer: id }).then((r) => g === hgen && (holdings = r.ok ? r.holdings : []));
+  });
+  const layerSpec = $derived(areaLayers.find((o) => o.id === layer) ?? null);
+  const layerReach = $derived.by(() => {
+    const b = layerSpec?.areas?.fill?.between_stars;
+    return typeof b === "object" && b ? b.reach : AREA_REACH_DEFAULT;
+  });
+  const unitDerived = $derived(placed.find((x) => x.unit)?.unit ?? null);
+  const reachMap = $derived(reachInMapUnits(layerReach, unitDerived));
+  const mapAt = (p: readonly number[]) => ({ x: S / 2 + (p[0]! - laid.centre[0]) * (1 / laid.unitsPerPx), y: S / 2 - (p[1]! - laid.centre[1]) * (1 / laid.unitsPerPx) });
+  const areaItems = $derived.by<AreaItem[]>(() => {
+    if (!holdings.length || !placed.length) return [];
+    const reach = reachMap ?? layerReach.value;
+    const u = laid.unitsPerPx;
+    const bounds: [number, number, number, number] = [laid.centre[0] - (S / 2) * u, laid.centre[1] - (S / 2) * u, laid.centre[0] + (S / 2) * u, laid.centre[1] + (S / 2) * u];
+    const keys = [...new Set(holdings.map((h) => h.key))];
+    const where = (k: string) => holdings.filter((h) => h.key === k).map((h) => placeOnMap(h.place, all)).filter((p): p is [number, number] => !!p);
+    const touching: [string, string][] = [];
+    for (const a of keys) for (const b of keys) if (a < b && where(a).some((p) => where(b).some((q) => Math.hypot(p[0] - q[0], p[1] - q[1]) <= 2 * reach))) touching.push([a, b]);
+    const slots = assignSlots(keys.map((key) => ({ key })), touching);
+    return areasFromHoldings(holdings, { frame: "galaxy-plane-pc", bounds, positionOf: (p) => placeOnMap(p, all), reach, inkOf: (k) => ({ slot: slots.get(k) ?? 1 }), cells: 120 });
+  });
+  const areaOverlays = $derived<ViewOverlay[]>(areaItems.length ? [{ id: layer, label: layerSpec?.label ?? layer, pack: layerSpec?.pack ?? "", frame: "galaxy-plane-pc", layers: [{ kind: "areas", as: "fill", items: areaItems }] }] : []);
+  let lift = $state<string | null>(null);
   const unitWords = $derived(unit === "ly" ? "light years" : unit === "pc" ? "parsecs" : unit ? unit : "map units");
   // One of them: "1 light year", "1 map unit".
   const unitOne = $derived(unitWords.endsWith("s") ? unitWords.slice(0, -1) : unitWords);
@@ -158,6 +216,7 @@
           {#if hudShows(hud, "grid") && placed.length > 1}
             <g class="grid" data-grid>{#each grid as v (v)}<line x1={v} y1="8" x2={v} y2={S - 8} /><line x1="8" y1={v} x2={S - 8} y2={v} />{/each}</g>
           {/if}
+          {#if areaOverlays.length}<Overlays overlays={areaOverlays} at={mapAt} scale={1 / laid.unitsPerPx} {lift} />{/if}
           {#each routes as r (r.a + "|" + r.b)}
             {@const p = at.get(r.a)}
             {@const q = at.get(r.b)}
@@ -170,15 +229,17 @@
             {@const m = at.get(x.system)!}
             <a href={link(x)} class="sys" data-system={x.system} aria-label="{x.title}: {summaryWords(x.summary)}" onpointerenter={(e) => rest(e, x)} onpointerleave={() => leave(x)} onclick={(e) => drag?.moved && e.preventDefault()}>
               {#if Math.abs(m.pz) > 1}<line class="stalk" x1={m.px} y1={m.py} x2={m.px} y2={m.py - m.pz} />{/if}
-              <circle class="star" class:life={x.summary.life.length > 0} cx={m.px} cy={m.py - m.pz} r={size(x) / Math.sqrt(zoom)} />
-              {#if x.summary.stars > 1}<circle class="ring" cx={m.px} cy={m.py - m.pz} r={(size(x) + 4) / Math.sqrt(zoom)} />{/if}
-              {#if hudShows(hud, "labels")}<text class="name" x={m.px + (size(x) + 6) / Math.sqrt(zoom)} y={m.py - m.pz + 4 / Math.sqrt(zoom)} style="font-size: {18 / Math.sqrt(zoom)}px">{x.title}</text>{/if}
+              <Pencilled pen={penFor(x)} cx={m.px} cy={m.py - m.pz} r={(size(x) + (x.summary.stars > 1 ? 4 : 0)) / Math.sqrt(zoom)}>
+                <circle class="star" class:life={x.summary.life.length > 0} cx={m.px} cy={m.py - m.pz} r={size(x) / Math.sqrt(zoom)} />
+                {#if x.summary.stars > 1}<circle class="ring" cx={m.px} cy={m.py - m.pz} r={(size(x) + 4) / Math.sqrt(zoom)} />{/if}
+              </Pencilled>
+              {#if hudShows(hud, "labels")}<text class="name" x={m.px + (size(x) + 6) / Math.sqrt(zoom)} y={m.py - m.pz + 4 / Math.sqrt(zoom)} style="font-size: {18 / Math.sqrt(zoom)}px; {penStyle(penFor(x), 'name')}">{x.title}</text>{/if}
             </a>
           {/each}
         </svg>
         <figcaption class="hint">
           {#if placed.length > 1}<span class="bar" style="width: {(bar.px / S) * 100}%" data-scale-bar></span>
-          {bar.units} {bar.units === 1 ? unitOne : unitWords} · {/if}seen from above, x across, y up; a stalk drops to the map from a system above or below it. A ringed dot holds more than one star; a coloured one holds life. Wheel to zoom, drag to slide, double-click to put it back.
+          {bar.units} {bar.units === 1 ? unitOne : unitWords}{" · "}{/if}seen from above, x across, y up; a stalk drops to the map from a system above or below it. A ringed dot holds more than one star; a coloured one holds life. Wheel to zoom, drag to slide, double-click to put it back.
         </figcaption>
       </figure>
     {/if}
@@ -187,7 +248,7 @@
       {#snippet row(x: CampaignSystem)}
         <li>
           <a href={link(x)} data-system={x.system} onpointerenter={(e) => rest(e, x)} onpointerleave={() => leave(x)}>
-            <b>{x.title}</b>
+            <b style={penStyle(penFor(x), "name") || undefined} data-pen={penFor(x)}>{x.title}</b>{#if PEN_WORDS[penFor(x)]}<span class="pen-words"> · {PEN_WORDS[penFor(x)]}</span>{/if}
             <span class="sum">{x.subjects.length ? summaryWords(x.summary) : "Not counted yet: open it once and it says what it holds"}</span>
           </a>
           <button type="button" class="door" aria-expanded={naming === x.system} onclick={() => (naming = naming === x.system ? null : x.system)} data-names-door={x.system}>Names here {naming === x.system ? "‹" : "›"}</button>
@@ -205,6 +266,20 @@
         <ul data-unplaced={unplaced.length}>{#each unplaced as x (x.system)}{@render row(x)}{/each}</ul>
         <p class="hint">{placed.length ? "Their data gives no place among the others." : "None of them has a place of its own yet."} Placing systems in the galaxy's own stars comes with the campaign's galaxy (G7); until then a system sits where its V3 map put it, or here.</p>
       {/if}
+      {#if areaLayers.length && placed.length}
+        <div class="layers" data-map-layers={areaLayers.length}>
+          <label>Map layer
+            <select bind:value={layer} data-map-layer>
+              <option value="">none</option>
+              {#each areaLayers as o (o.id)}<option value={o.id}>{o.label}</option>{/each}
+            </select>
+          </label>
+          {#if layer}
+            <p class="hint" data-layer-said={areaItems.length}>{holdings.length ? `${new Set(holdings.map((h) => h.key)).size} holders here, coloured out ${reachMap !== null ? `${Math.round(reachMap * 100) / 100} ${unitWords}` : `${layerReach.value} map units (the map gives no unit; the layer says ${layerReach.value} ${layerReach.unit})`} from each held system.` : "Nothing held on this layer yet."}</p>
+            {#if areaItems.length}<AreaKey items={areaItems} bind:lift compact title="Key for {layerSpec?.label ?? layer}" />{/if}
+          {/if}
+        </div>
+      {/if}
       <HomeCell session={ctx.session} campaign={all.map((x) => x.system)} />
     </aside>
   </div>
@@ -212,7 +287,7 @@
   {#if peeked && peek}
     {#key peek.system}
       <div class="peek" style="left: {peek.x}px; top: {peek.y}px" aria-hidden="true" data-system-peek={peek.system}>
-        <b>{peeked.title}</b>
+        <b>{peeked.title}</b>{#if PEN_WORDS[penFor(peeked)]}<span class="where">{PEN_WORDS[penFor(peeked)]}</span>{/if}
         <span data-peek-summary>{summaryWords(peeked.summary)}</span>
         {#each peeked.summary.remarkable as r (r)}<span class="mark">{r}</span>{/each}
         {#if peeked.position}<span class="where">at {[peeked.position.x, peeked.position.y, peeked.position.z].map((v) => Math.round(v * 100) / 100).join(", ")} {unitWords}</span>{/if}
@@ -327,6 +402,15 @@
   .unplaced {
     flex: 1 1 260px;
     max-width: 420px;
+  }
+  .layers {
+    margin-top: 12px;
+    border-top: 1px solid var(--sse-rule);
+    padding-top: 8px;
+  }
+  .pen-words {
+    color: var(--sse-ink-muted);
+    font-size: 12px;
   }
   .unplaced h3 {
     margin: 0 0 6px;

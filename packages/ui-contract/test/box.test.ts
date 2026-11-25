@@ -92,3 +92,13 @@ test("the stability verdict names this world's worst check", () => {
   assert.deepEqual(stabilityFor(checks, "a"), { level: 1, word: "Watch", says: "they could, in time", check: "amd" });
   assert.equal(stabilityFor(checks, "c"), null);
 });
+
+test("the outer wall on a moon's orbit strip is the kernel's widest lasting moon orbit", async () => {
+  const { outerWall } = await import("../src/index.ts");
+  const checks = [
+    { check: "moon", around: "p", bodies: ["p/m"], level: 0, says: "inside the widest lasting moon orbit (708950 km): stays", results: { limit: 708949815.6, verdict: 0 } },
+    { check: "hill", bodies: ["p", "q"], level: 0, says: "lasts", results: { spacing: 26 } },
+  ];
+  assert.deepEqual(outerWall(checks, "p/m"), { at: 708949815.6, says: "the star pulls it away beyond" });
+  assert.equal(outerWall(checks, "p"), null);
+});
