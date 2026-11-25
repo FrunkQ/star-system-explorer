@@ -7,12 +7,14 @@
 //
 // The picture is face-on, in kpc: the 3D view lays it on the disc's plane (bent by the warp, galaxy-marks.ts) and
 // stacks it through the disc's thickness, with the bulge as a glow of its own.
-import type { GalaxyChart, GalaxyRing } from "../../ui-contract/src/index.ts";
+import { SHEET_BANDS, VIEW_BANDS, type GalaxyChart, type GalaxyRing, type ViewBand } from "../../ui-contract/src/index.ts";
 import { brightnessAt, scarsAt, type DiscScars } from "./galaxy-marks.ts";
 import { starRgb } from "./sky.ts";
 
-export type GalaxyBand = "visible" | "infrared" | "ultraviolet" | "xray" | "radio";
-export const GALAXY_BANDS: readonly GalaxyBand[] = ["visible", "infrared", "ultraviolet", "xray", "radio"];
+/** The view bands light is seen in (RK10: the sheet's view rows that some light row names; Mag is a field, not light). */
+export type GalaxyBand = Exclude<ViewBand, "mag">;
+const LIGHT_VIEWS = new Set(SHEET_BANDS.filter((b) => b.kind === "light").map((b) => SHEET_BANDS.find((v) => v.id === b.view)?.view_id));
+export const GALAXY_BANDS: readonly GalaxyBand[] = VIEW_BANDS.filter((b): b is GalaxyBand => LIGHT_VIEWS.has(b));
 
 /**
  * The light laws and stand-in shapes, each with its source. Surface densities in solar masses per square parsec

@@ -1,18 +1,21 @@
 <!--
   The cosmic web in 3D (V9w), for the foam map's 3D and True view styles. A cube of the kernel's web: every parcel
   of matter where the truncated Zel'dovich step has moved it. 3D draws the parcels as dots on the chart's ground,
-  coloured by the place they started in (voids faint, sheets, filaments, knots in the accent); True draws them as
-  light against black space, so crowded matter glows brighter by adding up. It turns slowly on its own (the depth
+  coloured by the place they started in (voids faint, sheets, filaments, knots in the accent). True shows what
+  shines: the galaxies in the cube (the kernel's haloes moved by the same step, each lit by its own stars and star
+  formation), so the web is traced by its galaxies as a survey sees it; until they arrive, the parcels glow as
+  stand-in light. HUD on in True adds the dark matter as a faint guide. It turns slowly on its own (the depth
   reads from the motion) until it is dragged. HUD on adds the cube's edges. A device without a GPU draws the dots
   turned on a canvas.
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, cubeEdges, SPACE_CSS, starCss, startGpu, webGlow, webParcels, WEB_KINDS, WEB_LIGHT_K, type Gpu, type GpuDots, type Vec3, type WebKind } from "../../../renderer/src/index.ts";
-  import { SEEN_ELEVATION, type SeenFrom, type WebCube } from "../../../ui-contract/src/index.ts";
+  import { basis, cubeEdges, SPACE_CSS, starCss, startGpu, webGlow, webLights, webParcels, WEB_DARK_GLOW, WEB_KINDS, WEB_LIGHT_K, type Gpu, type GpuDots, type Vec3, type WebKind } from "../../../renderer/src/index.ts";
+  import { SEEN_ELEVATION, sayNumber, type SeenFrom, type WebCube, type WebGalaxies } from "../../../ui-contract/src/index.ts";
 
   let {
     cube,
+    galaxies = null,
     look = "3d",
     seen = "tilted",
     hud = true,
@@ -22,6 +25,8 @@
     reframe = 0,
   }: {
     cube: WebCube;
+    /** The cube's galaxies (True's light), once they are read. */
+    galaxies?: WebGalaxies | null;
     look?: "3d" | "true";
     seen?: SeenFrom;
     hud?: boolean;
@@ -36,6 +41,8 @@
   const isTrue = $derived(look === "true");
   const parcels = $derived(webParcels(cube.volume, shrink));
   const half = $derived(cube.volume.extent / 2);
+  const lights = $derived(isTrue && galaxies ? webLights(galaxies.galaxies, cube.volume, shrink) : null);
+  const lit = $derived(lights ? lights.reduce((a, g) => a + g.points.length, 0) : 0);
 
   // Camera orbiting the cube's centre, distances in Mpc (comoving, so the camera stays put as Real shrinks it).
   let yaw = $state(-0.6);
@@ -103,6 +110,11 @@
   });
 
   const LIGHT = starCss(WEB_LIGHT_K);
+  const sciMass = (m: number) => {
+    const e = Math.floor(Math.log10(m));
+    const f = m / 10 ** e;
+    return `${Math.abs(f - 1) < 0.05 ? "" : `${f.toFixed(1)} × `}10${String(e).replace(/./g, (d) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[Number(d)]!)}`;
+  };
   const total = $derived(WEB_KINDS.reduce((a, k) => a + parcels[k].length, 0));
 
   $effect(() => {
@@ -118,7 +130,12 @@
     const hs = half * shrink;
     if (using === "gpu" && gpu) {
       const { f, u } = basis(eye, [0, 0, 0]);
-      const dots: GpuDots[] = isTrue
+      const dots: GpuDots[] = lights
+        ? [
+            ...(hud ? [{ points: WEB_KINDS.flatMap((k) => parcels[k].map(rel)), colour: colours.sheet, glow: WEB_DARK_GLOW, size: 1 }] : []),
+            ...lights.map((g) => ({ points: g.points.map(rel), colour: starCss(g.colour_k), glow: g.glow, size: g.size })),
+          ]
+        : isTrue
         ? [{ points: WEB_KINDS.flatMap((k) => parcels[k].map(rel)), colour: LIGHT, glow: webGlow(total), size: 1.5 }]
         : WEB_KINDS.map((k) => ({ points: parcels[k].map(rel), colour: colours[k], size: k === "knot" ? 2.5 : k === "filament" ? 1.5 : 1 }));
       gpu.draw({
@@ -152,7 +169,23 @@
         return [w / 2 + (k * (q[0] * r[0] + q[1] * r[1] + q[2] * r[2])) / d, h / 2 - (k * (q[0] * u[0] + q[1] * u[1] + q[2] * u[2])) / d] as const;
       };
       if (isTrue) g.globalCompositeOperation = "lighter";
-      for (const kind of WEB_KINDS) {
+      const spot = (p: Vec3, s: number) => {
+        const xy = put(p);
+        if (xy) g.fillRect(xy[0] - s / 2, xy[1] - s / 2, s, s);
+      };
+      if (lights) {
+        if (hud) {
+          g.fillStyle = colours.sheet;
+          g.globalAlpha = WEB_DARK_GLOW;
+          for (const kind of WEB_KINDS) for (const p of parcels[kind]) spot(p, 1);
+        }
+        for (const grp of lights) {
+          g.fillStyle = starCss(grp.colour_k);
+          g.globalAlpha = grp.glow;
+          for (const p of grp.points) spot(p, grp.size);
+        }
+      }
+      for (const kind of lights ? [] : WEB_KINDS) {
         g.fillStyle = isTrue ? LIGHT : colours[kind];
         g.globalAlpha = isTrue ? webGlow(total) : 1;
         const s = isTrue ? 1.5 : kind === "knot" ? 2.5 : kind === "filament" ? 1.5 : 1;
@@ -235,6 +268,7 @@
   data-tier={using}
   data-look={isTrue ? "true" : "3d"}
   data-parcels={total}
+  data-galaxies={lit}
   data-spinning={spinning ? "yes" : "no"}
 >
   <div class="stage" bind:clientWidth={w} bind:clientHeight={h}>
@@ -247,8 +281,8 @@
     </div>
   </div>
   <p class="note">
-    <span>Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}: {total.toLocaleString()} parcels of matter, each the same mass, moved from a grid {cube.volume.n} a side by the field smoothed over {cube.volume.smoothing_mpc.toFixed(0)} Mpc.</span>
-    {#if isTrue}<span>Light: every parcel shines alike, so brightness is where the matter crowds; one colour, old starlight at about {WEB_LIGHT_K.toLocaleString()} K (fudge register).</span>{:else}<span>Faint: voids. Grey: sheets. Ink: filaments. Accent: knots, where clusters grow.</span>{/if}
+    <span>Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}: {sayNumber(total, 3, { decimals: 0 })} parcels of matter, each the same mass, moved from a grid {cube.volume.n} a side by the field smoothed over {sayNumber(cube.volume.smoothing_mpc, 3, { decimals: 0 })} Mpc.</span>
+    {#if isTrue && lights}<span>Light: {sayNumber(lit, 3, { decimals: 0 })} galaxies, the haloes above {sciMass(galaxies?.galaxy_floor_msun ?? 0)} solar masses, each where its matter has been carried and shining by its own stars: old stars warm, young ones blue. The gas and dark matter between them are dark{hud ? " (HUD shows the dark matter faintly)" : ""}.</span>{:else if isTrue}<span>Lighting the galaxies… for now every parcel shines alike, one colour, old starlight at about {sayNumber(WEB_LIGHT_K, 3, { decimals: 0 })} K.</span>{:else}<span>Faint: voids. Grey: sheets. Ink: filaments. Accent: knots, where clusters grow.</span>{/if}
   </p>
 </div>
 

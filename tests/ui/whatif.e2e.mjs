@@ -40,7 +40,7 @@ try {
       const f = field(label);
       return (await f.locator("input").count()) ? f.locator("input").inputValue() : f.locator("output").innerText();
     };
-    await gm.locator(".area-chart [role=button]", { hasText: "Tarn" }).first().click();
+    await gm.locator(".area-chart").getByRole("button", { name: "Tarn" }).first().click();
     const h0 = await hash();
     const mass0 = await value("Mass");
     const grav0 = await value("Gravity");

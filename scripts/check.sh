@@ -21,6 +21,10 @@ python3 scripts/build-paper-spacecraft.py --check
 # MP22 closed: no typed constant or material number anywhere outside the sheet.
 python3 scripts/test-audit-matter.py >/dev/null
 python3 scripts/audit-matter.py --closed
+# Every cited paper is on the citation run-through's master list (add new ones with --add).
+# Warning only until Alex says the check may fail (and join CI).
+python3 scripts/test-citations.py >/dev/null
+python3 scripts/citations.py --check --warn
 # The importer must still build without formation (the converter module).
 cargo build -q -p sse-convert-wasm
 echo "all checks passed"

@@ -256,3 +256,16 @@ test("a subject's scale class", () => {
   assert.equal(subjectClass({ kind: "moon" }), "moon");
   assert.equal(subjectClass({ kind: "belt" }), "ring");
 });
+
+// ED1a part 2c: numbers with no unit, rounding for keys, and a story's figures without "about".
+import { roundTo, sayNumber } from "../src/figures.ts";
+import { sheetUnitFactor } from "../src/sheet.ts";
+
+test("a number with no unit is written by the engine too", () => {
+  assert.equal(sayNumber(0.0523, 2), "0.052");
+  assert.equal(sayNumber(-0.08, 2, { decimals: 2 }), "−0.08");
+  assert.equal(sayNumber(1234.5, 4), "1,235");
+  assert.equal(sayNumber(-0.001, 2, { decimals: 2 }), "0.00", "no minus on a rounded zero");
+  assert.equal(roundTo(1.23456789, 3), 1.23);
+  assert.equal(say(4.57e9 * sheetUnitFactor("yr"), "time", undefined, { depth: "curious", about: false }).text, "4.57 billion years");
+});

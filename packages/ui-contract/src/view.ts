@@ -12,7 +12,8 @@ import type { Json } from "./json.ts";
 import type { Lens } from "./lens.ts";
 import type { PlayerScene } from "./player-scene.ts";
 
-export type Tier = "still" | "gpu-high" | "gpu-basic" | "canvas" | "text";
+/** Drawing tiers, richest first after `still`. `gpu-ultra` (VP4): passes that hammer the GPU, reached only when the speed probe places the device there (renderer probe.ts). */
+export type Tier = "still" | "gpu-ultra" | "gpu-high" | "gpu-basic" | "canvas" | "text";
 
 export interface TopicQuery {
   addresses?: string[];
@@ -170,6 +171,8 @@ export interface ViewContext {
   describe?(address: string): void;
   /** The catalogued Solar System (packs/base-sol, read once by the shell), for reference worlds; null where it cannot be read. */
   solSheet?(): Promise<import("./sol.ts").SolSheet | null>;
+  /** Range rings to draw (RK12): who holds the weapon (a body's address), its name, and the rings from `rangeRings`. Absent or empty: none. A pack's weapons feed it; the chart draws it under the HUD (layer `range`). */
+  rangeRings?(): readonly { holder: string; label: string; rings: readonly import("./range-rings.ts").RangeRing[] }[];
 }
 
 /** What a shell offers views about style documents. Presentation only: kept on the device, never in the universe. */

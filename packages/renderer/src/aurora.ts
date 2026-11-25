@@ -9,7 +9,7 @@
 // This file is the plan: pure numbers, no GPU. gpu-aurora.ts draws it; the Body globe hands it in.
 import type { FieldReadJson, V3 } from "./field.ts";
 import { dipoleAxis, fieldFromRead } from "./field.ts";
-import { constant } from "../../ui-contract/src/index.ts";
+import { constant, say } from "../../ui-contract/src/index.ts";
 
 /** One line the air gives off in an aurora (MF9 part 2's shape, agreed with the light thread 24 Nov 2026). */
 export interface AuroraEmissionJson {
@@ -241,7 +241,7 @@ export function planAurora(read: (FieldReadJson & { aurora?: AuroraJson | null }
   if (!layers.length) note = `No aurora drawn yet: the kernel places ${a.diffuse ? "a diffuse glow" : `${a.ovals.length === 1 ? "an oval" : `${a.ovals.length} ovals`}`} here, but its colours wait on the air's own lines (MF9 part 2)${ox < OXYGEN_STAND_IN.min_share ? "; this air has no oxygen, so oxygen's green and red are not borrowed" : ""}.`;
   else {
     const hs = layers.map((l) => `${l.line} at about ${Math.round(l.height_m / 1000)} km`);
-    note = `Aurora: ${drivers.join(" and ")}, glowing in ${[...new Set(hs)].join(", ")}.${stand ? ` Stand-in: oxygen's two lines at Earth's heights scaled by this air's ${H ? (H / 1000).toFixed(1) : "?"} km scale height, until the kernel gives each line's height and power.` : ""}`;
+    note = `Aurora: ${drivers.join(" and ")}, glowing in ${[...new Set(hs)].join(", ")}.${stand ? ` Stand-in: oxygen's two lines at Earth's heights scaled by this air's ${H ? say(H, "length", undefined, { sig: 2 }).text : "unknown"} scale height, until the kernel gives each line's height and power.` : ""}`;
     if (waiting) note += ` ${waiting === 1 ? "One more glow waits" : `${waiting} more glows wait`} on the air's own lines.`;
     void lines;
   }
