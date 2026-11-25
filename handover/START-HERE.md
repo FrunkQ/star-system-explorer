@@ -4,7 +4,9 @@ Last updated: 24 Nov 2026 (handover to a new Claude account). Live site v4.stars
 
 ## New to this project? Read this section first
 
-On 25 Nov 2026 Alex (GitHub `FrunkQ`, the owner) moves SSE4 to a new Claude account. The old account's project chat,
+On 25 Nov 2026 Alex (GitHub `FrunkQ`, the owner) moves SSE4 to a new Claude account. The old account's
+window closes at **7 pm London time on 25 Nov 2026** (19:00 UTC; Alex, 01:31 UTC 25 Nov); work still open then
+is picked up from this repo. The old account's project chat,
 threads and project memory do not come with it. **Everything a new Claude needs is in this repo**, mainly in `handover/`.
 Read in this order:
 
@@ -151,6 +153,12 @@ Each track keeps to its own crates and folders. Integration points are listed at
 https://v4.starsystemx.com: Cloudflare Worker `star-system-explorer` (Workers Builds, set up by Alex 18 Nov 2026).
 Build `npm run build` (scripts/build-site.sh, writes dist/), deploy `npx wrangler deploy` (wrangler.jsonc),
 production branch: switch to `main` in Cloudflare (was `claude/project-thread-h9y77o`); other branches get preview versions.
+There is no deploy workflow in GitHub Actions: `ci.yml` only tests (and never cancels runs on `main`). On 25 Nov
+the live site fell behind `main` from about 00:39 UTC while merges came every few minutes. Any fix to deploy
+queueing is a Cloudflare dashboard setting (Workers & Pages, `star-system-explorer`, Settings, Build), or a new
+GitHub deploy workflow with a Cloudflare API token secret and Workers Builds switched off for `main`. Either needs
+Alex; he approved "a running deploy finishes instead of being cancelled" on 25 Nov 01:27 UTC. Each Cloudflare
+build installs Rust and compiles the wasm from scratch, so check for timeouts as well as cancellations.
 The site is the GM shell (chart room) at `/`, the players page at `/players.html` and the cross-device check page at `/harness/`.
 
 ## How to resume
