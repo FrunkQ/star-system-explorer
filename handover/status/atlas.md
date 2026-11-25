@@ -20,4 +20,4 @@ Nothing is built. Fills in V3 gap 24 (`design/SSE4-v3-gaps.md`).
 | AT11, AT16 Orac and Minerva | for "Build Orac, Minerva and Tars" | |
 | AT12 later pages and editions | later | |
 
-Open with Alex: whether the Weyland-Yutani logo is in the built-in set (design section 14A, note 2; left out until he says).
+Settled 25 Nov 2026: no Weyland-Yutani logo in the built-in set ("can wait for the game pack"); paper editions curl their pages from the corner (design section 14A, notes 2 and 5).
