@@ -82,3 +82,18 @@ and create more to fill out the punchlines."
   lines on the cover, the page's own on a page. An interface kit names them with `banners: {at, sets}` (the Guide
   starter: both, the Guide's set); wearing them on other screens comes with AT15 and the Run desk.
 - Screenshots: `sse4/handover-screens/AT7b-screens/`.
+
+## Topics, no repeats, and Earth (AT7c; atlas design 14A note 8, Alex 25 Nov 01:45)
+- Every margin line of the Guide has a `topic`, one of `NOTE_TOPICS` (20: water, air, heat, cold, gravity, time,
+  sun, moons, life, people, trade, law, ships, travel, danger, empty, giants, rocks, ice, unknown). The field is
+  `topic` because `about` already names the kind of page. Alex's 131 lines were sorted by topic; the thin topics
+  (ice, moons, giants, cold, heat, rocks, water) got 18 new lines, each behind a `when`, so every topic has 4 or more.
+- `pickNotes` ranks a page's fitting notes by a hash of the page's address, the edition id and the note id
+  (weighted, u^(1/w)), takes the best up to the limit, at most one of a topic. Given `order` (the Atlas passes its
+  contents), the pages before pick first and a note is used once in the book. The walk is cached per scene object.
+  No clock, no random: same world, same audience, same notes, on screen, in print and next session.
+- The condition language gains `word`: a text fact holding a whole word, any case. `guide.earth` is
+  `always: true` with `when: {fact: "name", word: "Earth"}`: "Mostly Harmless (updated!)" first, beyond the limit,
+  only in editions that use the Guide's notes.
+- Checks: `atlas.test.ts` "the Guide's jokes by topic" and "anything called Earth"; the loader refuses an unknown
+  topic, `always` without `when`, and a `word` that is not one word.

@@ -9,6 +9,8 @@ import {
   atlasDocsOf,
   obviousJoke,
   pickBanners,
+  pickNotes,
+  NOTE_TOPICS,
   SPACE_QUOTES,
   usesOf,
   buildPage,
@@ -387,6 +389,53 @@ test("margin notes: fit by what the audience knows, slots said by the figures do
   assert.ok(!JSON.stringify(again.blocks).includes(`"${first}"`));
   // The Survey atlas has no margin.
   assert.deepEqual(withMargin(page(after, TARN), after, survey, SHIPPED_NOTE_SETS, opts), page(after, TARN));
+});
+
+test("the Guide's jokes by topic (14A note 8): a dozen or two topics, one of a topic to a page, used once in a book, the same by the same world", () => {
+  const guide = resolveEdition("sse.edition.guide");
+  const margin = GUIDE_NOTES.notes.filter((n) => usesOf(n).includes("page") && !n.always);
+  for (const n of margin) assert.ok(n.topic, `${n.id} has a topic`);
+  const by = new Map<string, number>();
+  for (const n of margin) by.set(n.topic!, (by.get(n.topic!) ?? 0) + 1);
+  assert.ok(by.size >= 12 && by.size <= 24, `between 12 and 24 topics in use (${by.size})`);
+  assert.ok(NOTE_TOPICS.length <= 24);
+  for (const [t, k] of by) assert.ok(k >= 4, `the topic ${t} has several lines (${k})`);
+  // A whole book: every note once, no page with two of a topic, and the walk is the same every time.
+  const order = atlasContents(after).map((l) => l.address);
+  const wide = { ...guide, margin: { ...guide.margin!, max: 2 } };
+  const walk = (sc: PlayerScene) => order.map((a) => pickNotes(sc, page(sc, a, guide), wide, SHIPPED_NOTE_SETS, { ...opts, order }));
+  const book = walk(after);
+  const ids = book.flat().map((n) => n.id);
+  assert.equal(new Set(ids).size, ids.length, "no note twice in one book");
+  const topicOf = (id: string) => GUIDE_NOTES.notes.find((n) => n.id === id)!.topic;
+  for (const notes of book) assert.equal(new Set(notes.map((n) => topicOf(n.id))).size, notes.length, "one note of a topic to a page");
+  assert.deepEqual(walk(JSON.parse(JSON.stringify(after))), book, "the same world and audience give the same notes, every time");
+  // A page alone and a page in its book agree on what the page shows when it is the first page.
+  assert.deepEqual(pickNotes(after, page(after, order[0]!, guide), wide, SHIPPED_NOTE_SETS, opts), book[0]);
+});
+
+test("anything called Earth carries \"Mostly Harmless (updated!)\" first, beyond the limit; another word does not", () => {
+  const guide = resolveEdition("sse.edition.guide");
+  const named = (name: string): PlayerScene => ({ ...after, subjects: after.subjects.map((s) => (s.address === TARN ? { ...s, facts: [...s.facts.filter((f) => f.field !== "name"), { field: "name", value: name }] } : s)) });
+  for (const name of ["Earth", "earth", "New Earth", "Earth-2"]) {
+    const sc = named(name);
+    const notes = pickNotes(sc, page(sc, TARN, guide), guide, SHIPPED_NOTE_SETS, opts);
+    assert.equal(notes[0]!.text, "Mostly Harmless (updated!)", name);
+    assert.ok(notes.length >= 2 && notes.length <= guide.margin!.max + 1, `${name}: the Earth line is beyond the limit`);
+  }
+  for (const name of ["Earthwhile", "Tarn"]) {
+    const sc = named(name);
+    assert.ok(!pickNotes(sc, page(sc, TARN, guide), guide, SHIPPED_NOTE_SETS, opts).some((n) => n.id === "guide.earth"), name);
+  }
+  const survey2 = resolveEdition(DEFAULT_EDITION);
+  const sc = named("Earth");
+  assert.deepEqual(pickNotes(sc, page(sc, TARN, survey2), survey2, SHIPPED_NOTE_SETS, opts), [], "another edition does not get it unless it asks");
+  // The loader's refusals for the new fields.
+  const one = (n: object) => checkNoteSet({ schema: "sse.margin-notes/1", id: "t", name: "t", notes: [{ id: "a", about: "any", text: "Hello.", ...n }] });
+  assert.match(one({ topic: "biscuits" }).join(" "), /topic "biscuits"/);
+  assert.match(one({ always: true }).join(" "), /always shown but has no "when"/);
+  assert.match(one({ when: { fact: "name", word: "two words" } }).join(" "), /a word is letters and digits only/);
+  assert.deepEqual(one({ topic: "water", always: true, when: { fact: "name", word: "Earth" } }), []);
 });
 
 test("the note sets load: all of Alex's list is the Guide's, Douglas Adams lines included; the loader's refusals", () => {

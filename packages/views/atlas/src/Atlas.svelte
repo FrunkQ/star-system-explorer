@@ -57,6 +57,8 @@
   const shownAudience = $derived(book?.audience ?? audience);
   const audienceWords = $derived(shownAudience === "gm" ? "the GM" : audiences.find((a) => a.value === shownAudience)?.label ?? shownAudience);
   const lines = $derived<ContentsLine[]>(book ? atlasContents(book) : []);
+  // Reading order: margin notes are picked page by page in it, so a joke is used once in the book (14A note 8).
+  const order = $derived(lines.map((l) => l.address));
   // The page in front: the one asked for, else the selected object's, else the top of the book.
   let asked = $state<string | null>(null);
   const address = $derived.by(() => {
@@ -95,7 +97,7 @@
     const p = book ? buildPage(book, a, edition, { vocab, depth: ws.depth }) : null;
     if (!p || !book) return null;
     const voiced = withVoice(p, book, edition, { vocab, depth: ws.depth });
-    return withMargin(withLetterhead(voiced, edition, letterhead), book, edition, noteSets, { vocab, depth: ws.depth, exclude: turnedAway });
+    return withMargin(withLetterhead(voiced, edition, letterhead), book, edition, noteSets, { vocab, depth: ws.depth, exclude: turnedAway, order });
   };
   const notThisOne = (id: string) => (turnedAway = [...turnedAway, id]);
 
