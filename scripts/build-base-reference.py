@@ -61,6 +61,7 @@ SOURCES = {
     "karkoschka1994": ("Karkoschka, E. 1994, Icarus 111, 174: spectrophotometry of the Jovian planets and Titan at 300 to 1000 nm, the methane spectrum (absorption coefficients at the giants' temperatures, Table VIII); read as served by the MPI-Mainz UV/VIS Spectral Atlas (Keller-Rudek, H. et al. 2013, Earth Syst. Sci. Data 5, 365, doi:10.5194/essd-5-365-2013), every 5 nm of its 1 nm table: handover/packages/ND2-data/ch4-karkoschka1994.csv", "10.1006/icar.1994.1139", "https://uv-vis-spectral-atlas-mainz.org/uvvis/cross_sections/Alkanes+alkyl%20radicals/Alkanes/CH4_Karkoschka(1994)_125-128K_406-1000nm.txt", "verified"),
     "nist-handbook-na": ("NIST Handbook of Basic Atomic Spectroscopic Data (Sansonetti, J. E. and Martin, W. C. 2005, J. Phys. Chem. Ref. Data 34, 1559), sodium, strong lines of Na I: wavelengths (air, A) and transition probabilities Aki; oscillator strengths here are worked out from Aki and the levels' statistical weights", "10.1063/1.1800011", "https://physics.nist.gov/PhysRefData/Handbook/Tables/sodiumtable3.htm", "verified"),
     "nist-handbook-k": ("NIST Handbook of Basic Atomic Spectroscopic Data (Sansonetti, J. E. and Martin, W. C. 2005, J. Phys. Chem. Ref. Data 34, 1559), potassium, strong lines of K I: wavelengths (air, A) and transition probabilities Aki; oscillator strengths here are worked out from Aki and the levels' statistical weights", "10.1063/1.1800011", "https://physics.nist.gov/PhysRefData/Handbook/Tables/potassiumtable3.htm", "verified"),
+    "nist-cccbdb": ("NIST Computational Chemistry Comparison and Benchmark Database, Release 22 (May 2022), list of experimental static dipole polarizabilities (in cubic angstroms; most from Olney, Cann, Cooper and Brion 1997, Chem. Phys. 223, 59)", None, "https://cccbdb.nist.gov/pollistx.asp", "verified"),
     "fray2009": ("Fray, N. and Schmitt, B. 2009, Planet. Space Sci. 57, 2053: sublimation of ices of astrophysical interest, a bibliographic review (recommended fits ln P[bar] = A0 + sum A_i / T^i; water by Feistel and Wagner 2007). Coefficients read from Lisse et al. 2021's reproduction of the table (SOM Table 2); which fit covers which range checked against each ice's triple point", "10.1016/j.pss.2009.09.011", None, "verified"),
     "lisse2021": ("Lisse, C. M. et al. 2021, Icarus 356, 114072: on the origin and thermal stability of Arrokoth's and Pluto's ices; Supplementary Online Material Table 2 reproduces Fray and Schmitt 2009's sublimation fits", None, "https://ntrs.nasa.gov/api/citations/20210019502/downloads/Supplementary%20Online%20Material%2020210019502.pdf", "verified"),
     "ame2020": ("Wang, M., Huang, W. J., Kondev, F. G., Audi, G. and Naimi, S. 2021, Chinese Phys. C 45, 030003: the AME 2020 atomic mass evaluation (II), tables", "10.1088/1674-1137/abddaf", None, "unverified"),
@@ -555,6 +556,25 @@ KING_ONE = ("fudge-register", "authored")  # King factor 1: molecular depolarisa
 T = "thauer1977"
 NIST = "nist-webbook"
 
+# ND2 part 2a: what van der Waals widening reads. Polarisability volumes (Å³, NIST CCCBDB) of the
+# particles that crowd an atom; ionisation energies (eV, NIST Handbook) of the atoms whose lines widen.
+POLARISABILITY_A3 = {"h2": 0.787, "he": 0.208, "n2": 1.710, "ch4": 2.448, "ar": 1.664, "h2o": 1.501}
+IONISATION_EV = {"na": (5.139076, "nist-handbook-na", "41449.451 cm-1, Baugh et al. 1998"),
+                 "k": (4.3406633, "nist-handbook-k", "35009.8140 cm-1, Sugar and Corliss 1985")}
+
+
+def add_widening_figures(subs):
+    for row in subs:
+        sid = row["id"]
+        if sid in POLARISABILITY_A3:
+            row.setdefault("optical", {})["polarisability"] = val(POLARISABILITY_A3[sid] * 1e-30, "m3", "nist-cccbdb",
+                                                                  note=f"{POLARISABILITY_A3[sid]} cubic angstroms, static, experimental")
+        if sid in IONISATION_EV:
+            v, src, note = IONISATION_EV[sid]
+            row.setdefault("optical", {})["ionisation_energy"] = val(v, "eV", src, note=note)
+    return subs
+
+
 SUBSTANCES = [
     substance("h2o", {"h": 2, "o": 1}, "water", plain="water", story="water",
               phases={
@@ -941,7 +961,7 @@ def build():
                 "origin_legend": [{"id": k, "physics": v[0], "plain": v[1], "story": v[2]} for k, v in element_origins.SOURCE_NAMES.items()],
                 "elements": elements(),
                 "isotopes": ISOTOPES,
-                "substances": SUBSTANCES,
+                "substances": add_widening_figures(SUBSTANCES),
                 "mixtures": MIXTURES,
                 "reactions": nuclear_rows.reactions(ISOTOPES, {c[0]: c[2]["v"] for c in CONSTANTS}, val),
                 "bands": band_rows.rows(val),
