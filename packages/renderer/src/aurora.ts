@@ -18,7 +18,8 @@ import { constant, say } from "../../ui-contract/src/index.ts";
  * The light table's names are not in the client API yet.
  */
 export function lineName(em: { line: string; matter?: string; wavelength_m?: number; name?: string }): string {
-  if (em.name) return em.name;
+  // The light table's name, without its note in brackets: "[O I] 557.7 nm (green aurora, airglow)" -> "[O I] 557.7 nm".
+  if (em.name) return em.name.replace(/\s*\([^)]*\)\s*$/, "") || em.name;
   if (!em.matter || !em.wavelength_m) return em.line;
   const tenths = Math.round(em.wavelength_m * 1e10);
   // Sheet ids are lower case formulas; capitals read as one (O, N2, CO2) until the kernel names its lines.

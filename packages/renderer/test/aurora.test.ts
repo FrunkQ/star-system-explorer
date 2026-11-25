@@ -206,6 +206,6 @@ test("kernel lines in words: the kernel's name when given, else matter and wavel
   assert.equal(lineName({ line: "oi-5577", matter: "o", wavelength_m: 557.734e-9 }), "O 557.7 nm");
   assert.equal(lineName({ line: "oi-6300", matter: "o", wavelength_m: 630.03e-9 }), "O 630.0 nm");
   assert.equal(lineName({ line: "n2p", matter: "n2", wavelength_m: 391.44e-9 }), "N2 391.4 nm");
-  assert.equal(lineName({ line: "x", name: "[O I] 557.7 nm" }), "[O I] 557.7 nm");
+  assert.equal(lineName({ line: "x", name: "[O I] 557.7 nm (green aurora, airglow)" }), "[O I] 557.7 nm");
   assert.equal(lineName({ line: "unknown-line" }), "unknown-line");
 });
