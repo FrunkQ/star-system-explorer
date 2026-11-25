@@ -13,6 +13,7 @@
 {#if share.state.link}
   <button type="button" class="chip" class:bar data-on-air data-players={share.state.players} onclick={onswitchboard} title="Open the Switchboard: what every screen shows">
     {#if drv}<b data-chip-driving>You are driving {drvName}</b> ·{/if}
+    {#if share.state.waiting.length}<b class="asking" data-chip-asking={share.state.waiting.length}>{share.state.waiting.length} asking</b> ·{/if}
     On air · {share.state.players} {share.state.players === 1 ? "screen" : "screens"}{held ? ` · ${held} held` : ""} ·
     <span class="table-sees" data-table-sees={"off" in shown ? "off" : shown.scope}>{"off" in shown ? (shown.card ? `held: ${shown.card}` : "screens dark") : (shown.title ?? "the opening place")}</span>
   </button>
@@ -32,6 +33,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     transition: transform var(--sse-motion-quick, 120ms) var(--sse-ease, ease-out);
+  }
+  .asking {
+    color: var(--sse-accent);
   }
   .chip:hover {
     transform: translateY(-1px);

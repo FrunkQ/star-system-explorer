@@ -18,5 +18,7 @@ export const playerSystem3d: ViewModule<PlayerScene, PlayerContext> = {
   tiers: ["gpu-basic", "canvas"],
   inputs: [{ addresses: [], quantity_kinds: [] }],
   params: SYSTEM3D_PARAMS,
+  // AT13: one control, the whole stage. Off, the system turns for no one and is a picture (the screen makes it inert).
+  switchable: [{ id: "turn", words: "Turn, zoom and pick a world on the 3D stage", kind: "dial", default: true }],
   mount: (el, ctx, scene) => mountPlayer(PlayerSystem3D, el, ctx, scene),
 };

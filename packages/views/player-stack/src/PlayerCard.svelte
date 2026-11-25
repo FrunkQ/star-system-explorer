@@ -4,7 +4,7 @@
   add. Fields listed in `fields` come first, in that order.
 -->
 <script lang="ts">
-  import { describeFact, subjectName, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
+  import { controlOn, describeFact, subjectName, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
   import { childrenOf, focusOf } from "./pick.ts";
 
   let { ctx, scene }: { ctx: PlayerContext; scene: PlayerScene } = $props();
@@ -15,7 +15,12 @@
     const only = ctx.params.only_fields === true && order.length > 0;
     const facts = subject.facts.filter((f) => f.field !== "name" && (ctx.params.unknown !== false || f.placeholder === undefined) && (!only || order.includes(f.field)));
     const rank = (f: string) => (order.includes(f) ? order.indexOf(f) : order.length);
-    return [...facts].sort((a, b) => rank(a.field) - rank(b.field)).map((f) => ({ f, d: describeFact(ctx.vocab, f) }));
+    // Facts not given that read the same ("Air: not yet scanned" for each withheld gas) are said once.
+    const said = new Set<string>();
+    return [...facts]
+      .sort((a, b) => rank(a.field) - rank(b.field))
+      .map((f) => ({ f, d: describeFact(ctx.vocab, f) }))
+      .filter(({ d }) => d.state !== "unknown" || (!said.has(`${d.label}|${d.text}`) && (said.add(`${d.label}|${d.text}`), true)));
   });
   const moons = $derived(subject ? childrenOf(scene, subject.address) : []);
 </script>
@@ -38,7 +43,7 @@
       {/each}
     </dl>
     {#if moons.length && ctx.params.show_moons !== false}
-      <p class="moons">Moons: {#each moons as m, i (m.address)}{i ? ", " : ""}<button type="button" onclick={() => ctx.select(m.address)}>{subjectName(m)}</button>{/each}</p>
+      <p class="moons">Moons: {#each moons as m, i (m.address)}{i ? ", " : ""}{#if controlOn(ctx.controls, "open")}<button type="button" onclick={() => ctx.select(m.address)}>{subjectName(m)}</button>{:else}{subjectName(m)}{/if}{/each}</p>
     {/if}
   {:else}
     <p class="empty">Nothing in view.</p>
