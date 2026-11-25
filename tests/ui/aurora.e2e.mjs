@@ -51,7 +51,7 @@ try {
     assert.equal(await gm.locator("[data-aurora-stand-in]").count(), 0, "Earth draws the kernel's lines, not the stand-in");
     assert.doesNotMatch(note, /Stand-in/, note);
     assert.match(note, /wind-driven oval at 6\d° magnetic latitude/, note);
-    assert.match(note, /O 557\.7 nm at about 1\d\d km/, note);
+    assert.match(note, /O( I\])? 557\.7 nm at about 1\d\d km/, note);
     assert.match(note, /N2 391\.4 nm/, note);
     assert.match(note, /630\.0 nm at about 2\d\d km/, note);
     assert.match(note, /Long exposure: faint light is lifted/, note);
