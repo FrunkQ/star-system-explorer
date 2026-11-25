@@ -1,6 +1,6 @@
 // Roll call (track SH2) in a real browser, against the built shell (scripts/build-shell.sh first). The "Sol today"
-// folder is served from store-packs/sol-today as the front door's `?spaceflight=` folder would be on Explorers: Roll
-// call is on the rail, opens on a day with people up, takes a typed date, steps by day and by event, says an empty day
+// folder is served from store-packs/sol-today as the front door's `?spaceflight=` folder would be on Explorers: the
+// address opens the Solar System in Roll call, which is on the rail too, opens on a day with people up, takes a typed date, steps by day and by event, says an empty day
 // in words, and fits a phone. No figure from a book is pinned here: only that the page agrees with the look-up.
 // Usage: node tests/ui/rollcall.e2e.mjs [chromium firefox] [--screens DIR]   (SSE_SHOTS=<dir> for screenshots)
 import { spawn } from "node:child_process";
@@ -42,17 +42,14 @@ try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: shots ? 2 : 1 });
     page.on("pageerror", (e) => errors.push(e.message));
     await servePack(page);
-    await page.goto(`http://localhost:${port}/?spaceflight=/sol-today/#chart`);
+    await page.goto(`http://localhost:${port}/?spaceflight=/sol-today/`);
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
-    const startSkip = page.locator("[data-start-skip], .start [data-skip]").first();
-    if (await startSkip.isVisible().catch(() => false)) await startSkip.click();
 
-    // On the rail, under Travel, because the folder gives crews.
-    const entry = page.locator('.rail [data-go="rollcall"]').first();
-    await entry.waitFor();
-    await entry.click();
+    // The front door (SH8 part 1): the folder's address opens the Solar System in Roll call, no start sheet, no click.
+    // Roll call is on the rail under Travel as well.
     const panel = page.locator("[data-rollcall]");
-    await panel.waitFor();
+    await panel.waitFor({ timeout: 60000 });
+    await page.locator('.rail [data-go="rollcall"]').first().waitFor();
 
     // It opens on the pack's latest day, which has people up.
     const sentence = panel.locator("[data-rollcall-sentence]");

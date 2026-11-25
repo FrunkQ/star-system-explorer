@@ -15,7 +15,7 @@ SH1, SH2 and SH6 are built (PR 510, merged 25 Nov 04:35 UTC). All 13 recommendat
 | SH5 records as sifters; On this day | done 25 Nov as pure look-ups (most at once, last empty day, longest stay, most in all, On this day); as kernel sifters with SH9 | `packages/SH5.md` |
 | SH6 In memory; the day of a loss | done 25 Nov, PR 510 | `packages/SH6.md` |
 | SH7 Names carried (real memorials) | part 1 done 25 Nov (read, orbits, In memory part); part 2 (chart layer, "tonight", naming dates) next | `packages/SH7.md` |
-| SH8 front door address and deep links | queued; chart room | |
+| SH8 front door address and deep links | part 1 done 25 Nov: `?spaceflight=<folder>` opens Sol in Roll call (App edit agreed with the coordinator); short address, deep links and start sheet card open | `packages/SH8.md` |
 | SH9 tours, record sifters, the edge of space | queued; with the spaceflight pack thread | |
 
 Data from the spaceflight pack thread (design section 10), all on main with PR 506: deaths with `during` and two sources, people with no flight (training and ground deaths), `how: "lost"`, the people-in-space step list, the edge of space as a pack value, `memorials.json`. Open items for later packages are in the SH1-SH2 and SH6 logs (campaign flight logs via `session.flightLog`, "Also in flight" in pack mode, the front door opening Sol).
