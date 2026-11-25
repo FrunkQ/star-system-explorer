@@ -166,7 +166,7 @@
             "nebular": {
               "makes_ev": 35.12112,
               "strips_ev": 54.93554,
-              "collision_strength": 2.26177,
+              "upsilon": 2.26177,
               "lower_weight": 9,
               "upper_weight": 5,
               "share": 0.25,
@@ -184,7 +184,7 @@
             "nebular": {
               "makes_ev": 35.12112,
               "strips_ev": 54.93554,
-              "collision_strength": 2.26177,
+              "upsilon": 2.26177,
               "lower_weight": 9,
               "upper_weight": 5,
               "share": 0.75,
@@ -318,7 +318,7 @@
             "nebular": {
               "makes_ev": 10.36001,
               "strips_ev": 23.33788,
-              "collision_strength": 3.83,
+              "upsilon": 3.83,
               "lower_weight": 4,
               "upper_weight": 6,
               "rate_s": 0.0002019,
@@ -349,7 +349,7 @@
             "nebular": {
               "makes_ev": 10.36001,
               "strips_ev": 23.33788,
-              "collision_strength": 2.56,
+              "upsilon": 2.56,
               "lower_weight": 4,
               "upper_weight": 4,
               "rate_s": 0.000684,

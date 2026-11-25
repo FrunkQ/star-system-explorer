@@ -68,8 +68,8 @@ pub struct NebularLine {
     pub makes_ev: f64,
     /// Photon energy that strips it to the next ion up, eV.
     pub strips_ev: f64,
-    /// Effective collision strength from the lower term to the upper level.
-    pub collision_strength: f64,
+    /// Effective collision strength Υ from the lower term to the upper level.
+    pub upsilon: f64,
     pub lower_weight: f64,
     pub upper_weight: f64,
     /// Einstein A of the upper level's decay, s⁻¹; 0 when the line's upper

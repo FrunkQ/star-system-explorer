@@ -220,7 +220,7 @@ pub fn add_forbidden_lines(
                 } else {
                     def.at_m
                 },
-                nl.collision_strength,
+                nl.upsilon,
                 nl.lower_weight,
                 nl.upper_weight,
             ],
