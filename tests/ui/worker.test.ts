@@ -103,3 +103,15 @@ test("the client asks the Worker by name and keeps the attribution", async () =>
   const none = { fetch: async () => new Response("", { status: 404 }), cache: undefined };
   await assert.rejects(fetchSector((u: string) => worker.fetch(new Request(`https://v4.example${u}`), {}, {}, none), "Nowhere"), /no sector called Nowhere/);
 });
+
+test("the client fetches a sector's metadata for its routes, or goes on without it", async () => {
+  const { fetchMetadata, metadataPath } = await import("../../packages/ui-contract/src/sector-fetch.ts");
+  assert.equal(metadataPath("Spinward Marches"), "/tmap/metadata?sector=Spinward+Marches");
+  const xml = '<Sector><Routes><Route Start="0101" End="0202"/></Routes></Sector>';
+  const ok = { fetch: async () => new Response(xml, { status: 200 }), cache: undefined };
+  const via = (deps: unknown) => (u: string) => worker.fetch(new Request(`https://v4.example${u}`), {}, {}, deps);
+  assert.equal(await fetchMetadata(via(ok), "Deneb"), xml);
+  const none = { fetch: async () => new Response("", { status: 404 }), cache: undefined };
+  assert.equal(await fetchMetadata(via(none), "Nowhere"), null);
+  assert.equal(await fetchMetadata(async () => { throw new Error("offline"); }, "Deneb"), null);
+});

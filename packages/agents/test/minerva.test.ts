@@ -123,3 +123,18 @@ test("Describe hands her one subject, what it orbits, what orbits it and the sta
   assert.deepEqual(aboutOne(scene, "u:k/sys:1/body:4/body:0")!.subjects.map((x) => x.address), ["u:k/sys:1/body:0", "u:k/sys:1/body:4", "u:k/sys:1/body:4/body:0"]);
   assert.equal(aboutOne(scene, "u:k/sys:1/body:9"), null, "a subject they do not know is not described");
 });
+
+test("a Guide's note (AT11): one line, at most 200 characters, numbers only from the audience's facts; a long one goes back", async () => {
+  const long = "Tarn is wet. ".repeat(20).trim();
+  const p = await mockProvider({ replies: (m: { content: string }[]) => narrative(/this one is \d+/.test(m.at(-1)!.content) ? "Tarn: bring a towel, and then a second towel." : long) });
+  try {
+    const st: AgentsState = { ...emptyAgents(), providers: [{ id: "x", kind: "other", label: "X", base: p.base }], links: { describing: { provider: "x", model: "m" } } };
+    const r = await runMinerva({ bundle: { audience: "everyone", text: "- Tarn: a world; most of it is sea." }, notes: { length: "note", style: "The Guide" }, ask: asker(st, "describing") });
+    assert.equal(r.ok, true, r.message);
+    assert.match(r.rounds[0]!.problems[0]!, /a Guide's note is at most 200 characters on one line; this one is \d+/);
+    assert.equal(r.passed[0]!.value!.text, "Tarn: bring a towel, and then a second towel.");
+    assert.match(JSON.parse(p.seen[0].body).messages[1].content, /one or two sentences for the margin of the Guide, at most 200 characters on one line: opinion and wit, never a new fact/);
+  } finally {
+    await p.close();
+  }
+});

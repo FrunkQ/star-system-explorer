@@ -218,3 +218,21 @@ How rows are counted: Proxima is counted unverified (its radius is verified, but
 | Where | Reference | Relied on | Status | Checked |
 |---|---|---|---|---|
 | air-luts.ts, gpu-air-shell.ts (VP-A3) | Hillaire 2020, A Scalable and Production Ready Sky and Atmosphere Rendering Technique, Computer Graphics Forum 39(4), 13-22, doi 10.1111/cgf.14050 | transmittance table; multiple scattering as L2 / (1 - f_ms) with an isotropic phase, sampled over the sphere of directions (section 5.5) | verified (citation check of 24 Nov, `handover/design/SSE4-visual-polish-citation-check.md` item 2: checked, primary) | the second-order and f_ms integrals as in the paper; table sizes smaller than his PC settings (256 × 64 and 32 × 32) and said in the fudge register |
+| true-air.ts `addAbsorbing` (TA3a) | Goody, R. M. and Yung, Y. L. 1989, Atmospheric Radiation: Theoretical Basis, 2nd ed., Oxford University Press, section 6.3 (diffusivity factor after Elsasser 1942) | diffuse flux crosses a slab as if 1.66 times thicker | textbook, not read here (standard value) | applied each way through a thin absorbing haze; the aerosol colour as albedo is our stand-in (fudge register "Haze that absorbs") |
+
+## Particle light and body shape (track TA, TA2)
+
+Added 24 Nov 2026 with `sse.light.particle_albedo`, `sse.light.slab_reflectance` (`sse_light::haze`) and
+`sse.shape.spin_flattening`. Crossref and doi.org were not reachable from the build session, so DOIs are as
+remembered and checked only against the relations they are cited for; each needs a resolve check.
+
+| Where | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| light.json `sse.light.particle_albedo` | van de Hulst 1957, Light Scattering by Small Particles (Dover 1981), sections 11.22 and 11.23; doi 10.1063/1.3060205 | anomalous diffraction: Q_ext and Q_abs of an absorbing sphere from ρ = 2x(n - 1) and k | unverified (the DOI may be the Physics Today review of the book, not the book: resolve it) | relation against the textbook form; limits tested (Q_ext → 2 for a large clear sphere) |
+| light.json `sse.light.slab_reflectance` | Bohren 1987, Am. J. Phys. 55, 524, doi 10.1119/1.15109 | R = (1 - g)τ / (2 + (1 - g)τ) for a clear slab | verified (relation, already cited by weather.ts for the same use) | test holds the block to it |
+| light.json `sse.light.slab_reflectance` | Meador and Weaver 1980, J. Atmos. Sci. 37, 630, doi 10.1175/1520-0469(1980)037<0630:TSATRT>2.0.CO;2 | two-stream reflectance and transmission of an absorbing slab (Eddington-type coefficients) | unverified (DOI not resolved this pass) | conservative limit equals Bohren's; thick slab transmits nothing |
+| shape.json `sse.shape.spin_flattening` | Darwin-Radau relation as in Murray and Dermott 1999, Solar System Dynamics, eq. 4.48 and 4.49, doi 10.1017/CBO9781139174817 | f = (5/2) q / (1 + (25/4)(1 - (3/2) C)²) | textbook (equation numbers unverified) | flow tests: Jupiter, Saturn and Earth flattening within a few per cent of measured |
+
+Visual polish (VP-A5, VP-A2): the per-kind phase table from Mie theory (K-e) and the Rhines scale with the eddy speed
+are added here with the status `handover/design/SSE4-visual-polish-citation-check.md` gives, in the PR that first
+relies on each.

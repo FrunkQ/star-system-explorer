@@ -7,6 +7,7 @@
 import type { SceneSubject, SystemScene } from "./scene.ts";
 import { YEAR_S } from "./intent.ts";
 import { constant } from "./sheet.ts";
+import { sayNumber, drawn } from "./figures.ts";
 
 /** A ship as NAV reads it (sse-nav `Ship`), or a template id from the base-nav pack. */
 export interface NavShip {
@@ -296,23 +297,23 @@ export function difficultyPips(label: string): number {
 export function daysWords(d: number): string {
   if (!Number.isFinite(d)) return "never";
   if (d < 1) return `${Math.round(d * 24)} h`;
-  if (d < 60) return `${d < 10 ? d.toFixed(1) : Math.round(d)} days`;
+  if (d < 60) return `${d < 10 ? sayNumber(d, 0, { decimals: 1 }) : Math.round(d)} days`;
   if (d < 730) return `${Math.round(d)} days`;
-  return `${(d / 365.25).toFixed(1)} years`;
+  return `${sayNumber(d / 365.25, 0, { decimals: 1 })} years`;
 }
 
 export function dvWords(m_s: number): string {
-  return m_s >= 1e5 ? `${Math.round(m_s / 1000).toLocaleString("en-GB")} km/s` : `${(m_s / 1000).toFixed(m_s >= 1e4 ? 1 : 2)} km/s`;
+  return m_s >= 1e5 ? `${sayNumber(Math.round(m_s / 1000), 0, { decimals: 0 })} km/s` : `${sayNumber(m_s / 1000, 0, { decimals: m_s >= 1e4 ? 1 : 2 })} km/s`;
 }
 
 export function doseWords(msv: number): string {
-  return msv >= 1000 ? `${(msv / 1000).toFixed(1)} Sv` : `${msv < 10 ? msv.toFixed(1) : Math.round(msv)} mSv`;
+  return msv >= 1000 ? `${sayNumber(msv / 1000, 0, { decimals: 1 })} Sv` : `${msv < 10 ? sayNumber(msv, 0, { decimals: 1 }) : Math.round(msv)} mSv`;
 }
 
 export function delayWords(s: number): string {
   if (s < 60) return `${Math.round(s)} s`;
   if (s < 3600) return `${Math.round(s / 60)} min`;
-  return `${(s / 3600).toFixed(1)} h`;
+  return `${sayNumber(s / 3600, 0, { decimals: 1 })} h`;
 }
 
 /** A time on the campaign clock, as days from the scene's now ("in 3 days", "day +12"). */
@@ -351,7 +352,7 @@ export function routeFrame(w: number, h: number, nav: NavSystem | null, plan: Ro
 
 /** A course's track as an SVG path in the frame (y up on the chart). */
 export function trackPath(track: readonly [number, number, number][], f: RouteFrame): string {
-  return track.map((p, i) => `${i ? "L" : "M"}${(f.cx + p[0] * f.k).toFixed(1)} ${(f.cy - p[1] * f.k).toFixed(1)}`).join(" ");
+  return track.map((p, i) => `${i ? "L" : "M"}${drawn(f.cx + p[0] * f.k)} ${drawn(f.cy - p[1] * f.k)}`).join(" ");
 }
 
 /** A point of the track in pixels. */

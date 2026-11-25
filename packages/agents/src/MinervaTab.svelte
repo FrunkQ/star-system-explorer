@@ -20,7 +20,7 @@
     /** The kernel's sifter hits over what one audience is shown (never the GM's), or null when it cannot say. */
     sift?: (audience: string) => Promise<SiftResult | null>;
     /** Keep a passed narrative as a subject's description (V3 gap 23): a note in the record for that audience. Null when kept, else why not. */
-    keep?: (address: string, text: string, audience: string) => Promise<string | null>;
+    keep?: (address: string, text: string, audience: string, as?: "description" | "guide-note") => Promise<string | null>;
   }
 
   let { st, host, onrow, focus }: { st: AgentsState; host?: MinervaHost; onrow: (r: LedgerRow) => void; focus?: string | null } = $props();
@@ -69,7 +69,7 @@
   }
   async function keepIt(i: number, text: string, a: string) {
     if (!host?.keep || !focus) return;
-    const bad = await host.keep(focus, text, a);
+    const bad = await host.keep(focus, text, a, notes.length === "note" ? "guide-note" : "description");
     kept = { ...kept, [i]: bad ?? "kept" };
   }
 
@@ -101,7 +101,7 @@
       <label>For <select bind:value={audience} aria-label="Audience">{#each host.audiences() as a (a.id)}<option value={a.id}>{a.label}</option>{/each}</select></label>
       <label>What about <input bind:value={notes.seed} aria-label="What about" placeholder="the approach to Tarn" /></label>
       <label>Voice <input bind:value={notes.style} aria-label="Voice" placeholder="ship's log, guidebook, briefing" /></label>
-      <label>Length <select bind:value={notes.length} aria-label="Length"><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select></label>
+      <label>Length <select bind:value={notes.length} aria-label="Length"><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option><option value="note">A Guide's margin note</option></select></label>
       {#if bundle}
         <details><summary>The facts she will be given</summary><pre class="facts" data-facts>{bundle.text}</pre></details>
       {/if}
@@ -116,7 +116,8 @@
           <p class="meta">Narrative · for {host.audiences().find((a) => a.id === c.value!.audience)?.label ?? c.value!.audience} · every number checked against their facts</p>
           {#each c.value!.text.split(/\n\s*\n/) as para, j (j)}<p>{para}</p>{/each}
           {#if focus && host.keep}
-            {#if kept[i] === "kept"}<p class="meta" data-kept>Kept as its description, for {host.audiences().find((a) => a.id === c.value!.audience)?.label ?? c.value!.audience}.</p>
+            {#if kept[i] === "kept"}<p class="meta" data-kept>{notes.length === "note" ? "Kept as a Guide's note, known to the GM only until you reveal it with its eye." : `Kept as its description, for ${host.audiences().find((a) => a.id === c.value!.audience)?.label ?? c.value!.audience}.`}</p>
+            {:else if notes.length === "note"}<button type="button" data-keep-guide-note onclick={() => keepIt(i, c.value!.text, c.value!.audience)}>Keep as a Guide's note</button>{#if kept[i]}<span class="problem" role="alert">{kept[i]}</span>{/if}
             {:else}<button type="button" data-keep-description onclick={() => keepIt(i, c.value!.text, c.value!.audience)}>Keep as its description</button>{#if kept[i]}<span class="problem" role="alert">{kept[i]}</span>{/if}{/if}
           {/if}
         </article>

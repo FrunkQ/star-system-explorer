@@ -1,0 +1,9 @@
+Title: Webb captures detailed beauty of Ring Nebula (NIRCam and MIRI images)
+Credit: ESA/Webb, NASA, CSA, M. Barlow, N. Cox, R. Wesson
+Date: 
+Source: https://esawebb.org/images/weic2320a/
+Licence: CC BY 4.0 (ESA/Webb image use policy, https://esawebb.org/copyright/). Attribution required, exactly as the credit line.
+Picked for: Webb's infrared Ring Nebula: the same kind of object in infrared, for the Infrared band.
+
+About (from the source page):
+The NASA/ESA/CSA James Webb Space Telescope has observed the well-known Ring Nebula with unprecedented detail. Formed by a star throwing off its outer layers as it runs out of fuel, the Ring Nebula is an archetypal planetary nebula. Also known as M57 and NGC 6720, it is both relatively close to Earth at roughly 2,500 light-years away.

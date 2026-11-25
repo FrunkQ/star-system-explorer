@@ -2,7 +2,7 @@
 // own control specs so it can never drift from what the app offers. `node tests/ui/view-controls-page.ts --write`
 // rewrites the page; view-controls-page.test.ts fails when it is out of date.
 import { readFileSync, writeFileSync } from "node:fs";
-import { FOAM_CONTROLS, VOYAGE_CONTROLS, flatChart, viewOptions, SCALES, SEEN_FROM, SEEN_WORDS, SCALE_WORDS, VIEW_BANDS, VIEW_BAND_WORDS, VIEW_STYLES, VIEW_STYLE_WORDS, type ViewControlsSpec } from "../../packages/ui-contract/src/index.ts";
+import { BAND_PICKS, COMPOSITE, COMPOSITE_WORD, FOAM_CONTROLS, VOYAGE_CONTROLS, flatChart, viewOptions, SCALES, SEEN_FROM, SEEN_WORDS, SCALE_WORDS, VIEW_BANDS, VIEW_BAND_WORDS, VIEW_STYLES, VIEW_STYLE_WORDS, type ViewControlsSpec } from "../../packages/ui-contract/src/index.ts";
 import { BODY_CONTROLS } from "../../packages/views/body/src/controls.ts";
 import { COMPARE_CONTROLS } from "../../packages/views/compare/src/controls.ts";
 import { CUTAWAY_CONTROLS } from "../../packages/views/cutaway/src/controls.ts";
@@ -34,7 +34,7 @@ const MEANING = `## What each switch means, everywhere
 - **Seen from** sets where the camera sits in a view that turns: **Above**, **Tilted**, **Edge-on**, or **Free** (drag to turn, as you like). A view drawn flat is always seen from above.
 - **Scale** is **Readable** (sizes and distances squeezed so everything can be read at once) or **Real** (everything in true proportion, so small worlds become points and gaps become huge).
 - **HUD** lays names, orbit lines, rings and outlines over the picture. **Off** leaves a photograph; **On** is a heads-up display over it. A diagram always shows its labels, so HUD is only offered where a view can look like a photograph. Pack overlays (a hex grid, territory) draw only with HUD on.
-- **Band** is the light the place is seen in: **Visible**, **Infrared**, **Ultraviolet**, **X-ray**, **Radio**, or **Mag** (the magnetic field). A band other than Visible is mapped (it has no colour to see) and says how. A player's seat only gets the bands its ship's sensors carry.
+- **Band** is the light the place is seen in: **Visible**, **Infrared**, **Ultraviolet**, **X-ray**, **Radio**, or **Mag** (the magnetic field), and last **Composite**: several bands laid into one picture, as observatory press images are, chosen from a tick list with presets (each band scaled to its own brightest; the legend lists every layer and its colour). A band other than Visible is mapped (it has no colour to see) and says how. A player's seat only gets the bands its ship's sensors carry, in Composite too; a phone lays at most two bands at once.
 
 The rule (Alex, 23 Nov 2026): one set of controls, and similar levels of drawing at every scale, from the cosmic web to a lava tube. Where a switch is not offered yet, the app says why on the switch itself, and the same words are below.`;
 
@@ -58,14 +58,14 @@ export function viewControlsPage(): string {
     const seen = SEEN_FROM.filter((s) => !t.seen.find((x) => x.value === s)!.unavailable).map((s) => SEEN_WORDS[s]);
     const scales = SCALES.filter((s) => !t.scales.find((x) => x.value === s)!.unavailable).map((s) => SCALE_WORDS[s]);
     const hudIn = VIEW_STYLES.filter((s) => spec.hud?.[s] === true).map((s) => VIEW_STYLE_WORDS[s]);
-    const bands = VIEW_BANDS.map((b) => {
+    const bands = BAND_PICKS.map((b) => {
       const opt = t.bands.find((x) => x.value === b)!;
       return opt.unavailable ? note(opt.unavailable) : "✓";
     });
     return `| ${scale} | ${screen} | ${styles.join(" | ")} | ${seen.join(", ")} | ${scales.join(", ")} | ${hudIn.length ? hudIn.join(", ") : "always labelled"} | ${bands.join(" | ")} |`;
   });
-  const head = `| Scale | Screen | ${VIEW_STYLES.map((s) => VIEW_STYLE_WORDS[s]).join(" | ")} | Seen from | Scale | HUD in | ${VIEW_BANDS.map((b) => VIEW_BAND_WORDS[b]).join(" | ")} |`;
-  const rule = `|${" --- |".repeat(2 + VIEW_STYLES.length + 3 + VIEW_BANDS.length)}`;
+  const head = `| Scale | Screen | ${VIEW_STYLES.map((s) => VIEW_STYLE_WORDS[s]).join(" | ")} | Seen from | Scale | HUD in | ${BAND_PICKS.map((b) => (b === COMPOSITE ? COMPOSITE_WORD : VIEW_BAND_WORDS[b])).join(" | ")} |`;
+  const rule = `|${" --- |".repeat(2 + VIEW_STYLES.length + 3 + BAND_PICKS.length)}`;
   return [
     "# The view controls at every scale",
     "",

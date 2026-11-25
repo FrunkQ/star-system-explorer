@@ -123,6 +123,16 @@ Status key: verified / corrected-metadata / corrected-physics / unverified / tex
 | weather design:26 | Yang, Cowan and Abbot 2013, ApJL 771, L45 | substellar cloud shield | unverified (marked "existence checked") | Matches memory. |
 | weather design:50-52 | Brueshaber, Sayanagi and Dowling 2019; O'Neill, Emanuel and Flierl 2015; Adriani et al. 2018 Nature 555; Godfrey 1988 Icarus; Barbosa Aguiar et al. 2010 Icarus 206, 755 | polar regimes, cyclone counts 8+1 and 5+1, hexagon | unverified | From memory: Adriani 2018 is Nature 555, 216; Godfrey 1988 is Icarus 76, 335; Brueshaber 2019 is Icarus 323, 46; O'Neill 2015 is Nat. Geosci. 8, 523. None fetched. |
 
+## ATMOS. Advice on a world's air (`crates/sse-kernel/src/atmos.rs`, op `atmosphere_advice`)
+
+| Where | Reference as written (short) | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `AdviceParams.lifetimes` methane-oxidation | Prather, Holmes and Hsu 2012, doi:10.1029/2012GL051440 | methane lasts 9.1 ± 0.9 yr in today's air | verified (metadata, row in section E) | the same figure as box H's `ch4_life_oxic_yr` |
+| `AdviceParams.lifetimes` knallgas | Novelli et al. 1999, JGR 104, 30427, doi:10.1029/1999JD900788 | hydrogen lasts about 2 yr in today's air (soil uptake and OH) | unverified (memory) | Crossref not reachable from the build container on 24 Nov |
+| `AdviceParams.lifetimes` co-oxidation | Novelli, Masarie and Lang 1998, JGR 103, 19015, doi:10.1029/98JD01366 | carbon monoxide lasts about two months (OH) | unverified (memory) | as above; the two-month figure is textbook (Seinfeld and Pandis) |
+| `AdviceParams.escape_flux` | Hunten 1973, J. Atmos. Sci. 30, 1481, doi:10.1175/1520-0469(1973)030<1481:TEOLGF>2.0.CO;2; the 2.5e13 f of Catling and Kasting 2017 | diffusion-limited escape about 2.5e13 H2 molecules per cm² per s per unit mixing ratio on Earth | unverified (memory) | consistent with box H's corrected 6.7e15 mol a year per unit mixing ratio (2.5e13 × Earth's area × a year) |
+| `AdviceParams.carbon_per_hydrogen` | Hirschmann and Dasgupta 2009, Chemical Geology 262, 4, doi:10.1016/j.chemgeo.2009.02.008 | the bulk silicate Earth's C/H by mass 0.99 ± 0.42, used only when a world has no formation run | unverified (memory) | as above |
+
 ## Counts
 
 | | count |

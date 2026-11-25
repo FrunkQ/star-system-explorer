@@ -165,7 +165,11 @@
      "sunlight_swing",
      "stability"
     ]
-   }
+   },
+   "reach": [
+    "t_surface_now_k",
+    "locked"
+   ]
   },
   {
    "id": "mass",
@@ -195,6 +199,10 @@
    ],
    "desks": [
     "build"
+   ],
+   "reach": [
+    "gravity_m_s2",
+    "core.dynamo_now"
    ]
   },
   {
@@ -213,7 +221,7 @@
    "desks": [
     "build"
    ],
-   "waits": "the bulk bar and cutaway are ED9; hand-made worlds need kernel K3 for makeup to reach their physics"
+   "waits": "the cutaway and the heat and redox strips are ED9 part 2"
   },
   {
    "id": "liquids",
@@ -462,6 +470,44 @@
    "label": "Day",
    "yes": "locked to its star",
    "no": "turns freely"
+  }
+ ],
+ "could_be": [
+  {
+   "id": "field",
+   "label": "have a field of its own",
+   "test": {
+    "result": "core.dynamo_now",
+    "is": true
+   },
+   "by": [
+    "mass",
+    "orbit"
+   ]
+  },
+  {
+   "id": "locked",
+   "label": "be locked to its star",
+   "test": {
+    "result": "locked",
+    "is": true
+   },
+   "by": [
+    "orbit",
+    "mass"
+   ]
+  },
+  {
+   "id": "unlocked",
+   "label": "turn freely",
+   "test": {
+    "result": "locked",
+    "is": false
+   },
+   "by": [
+    "orbit",
+    "mass"
+   ]
   }
  ]
 }

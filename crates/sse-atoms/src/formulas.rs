@@ -64,6 +64,10 @@ pub const FILES: &[(&str, &str)] = &[
         include_str!("../../../packs/base-physics/formulas/interior.json"),
     ),
     (
+        "surface",
+        include_str!("../../../packs/base-physics/formulas/surface.json"),
+    ),
+    (
         "light",
         include_str!("../../../packs/base-physics/formulas/light.json"),
     ),
@@ -118,6 +122,10 @@ pub const FILES: &[(&str, &str)] = &[
     (
         "stability",
         include_str!("../../../packs/base-physics/formulas/stability.json"),
+    ),
+    (
+        "shape",
+        include_str!("../../../packs/base-physics/formulas/shape.json"),
     ),
 ];
 

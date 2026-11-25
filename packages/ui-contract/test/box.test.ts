@@ -102,3 +102,27 @@ test("the outer wall on a moon's orbit strip is the kernel's widest lasting moon
   assert.deepEqual(outerWall(checks, "p/m"), { at: 708949815.6, says: "the star pulls it away beyond" });
   assert.equal(outerWall(checks, "p"), null);
 });
+
+test("pairs (ED0): Pluto and Charon are a pair, Earth and the Moon are not, Jupiter and the Sun just are", async () => {
+  const { pairOf } = await import("../src/index.ts");
+  const AUm = 1.495978707e11;
+  const f = {
+    sun: { "body.mass": 1.989e30, "body.radius": 6.957e8, "body.kind": "star" },
+    earth: { "body.mass": 5.972e24, "body.radius": 6.371e6, "orbit.host": "sun", "orbit.semi_major_axis": AUm },
+    moon: { "body.mass": 7.342e22, "body.radius": 1.737e6, "orbit.host": "earth", "orbit.semi_major_axis": 3.844e8 },
+    jupiter: { "body.mass": 1.898e27, "body.radius": 6.991e7, "orbit.host": "sun", "orbit.semi_major_axis": 5.2 * AUm },
+    pluto: { "body.mass": 1.303e22, "body.radius": 1.188e6, "orbit.host": "sun", "orbit.semi_major_axis": 39.5 * AUm },
+    charon: { "body.mass": 1.586e21, "body.radius": 6.06e5, "orbit.host": "pluto", "orbit.semi_major_axis": 1.9596e7 },
+    nix: { "body.mass": 4.5e16, "body.radius": 2.5e4, "orbit.host": "pluto", "orbit.semi_major_axis": 4.87e7 },
+  };
+  const p = pairOf(f, "pluto")!;
+  assert.equal(p.secondary, "charon", "the heaviest satellite, not Nix");
+  assert.ok(p.outside && p.centre_m > 2e6 && p.centre_m < 2.2e6, `about 2,100 km from Pluto's centre: ${p.centre_m}`);
+  assert.deepEqual(pairOf(f, "charon"), p, "the same pair from either card");
+  assert.equal(pairOf(f, "nix"), null);
+  assert.equal(pairOf(f, "earth"), null, "the Earth-Moon centre is inside the Earth");
+  assert.equal(pairOf(f, "moon"), null);
+  const j = pairOf(f, "jupiter")!;
+  assert.equal(j.primary, "sun");
+  assert.ok(j.centre_m / 6.957e8 > 1 && j.centre_m / 6.957e8 < 1.1, "just outside the Sun");
+});

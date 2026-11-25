@@ -1,0 +1,27 @@
+{
+  "schema": "sse.render-recipe/1",
+  "id": "system-true",
+  "name": "System in True",
+  "family": "system-true",
+  "description": "A system as an eye in space would see it: each world in its own surface lit by its star, the star by its own light, rings and belts, then the shared finish (exposure, the eye's glare, tone mapping). The standard recipe that places a device for True views (VP4).",
+  "scene": "system",
+  "tiers": ["still", "gpu-high", "gpu-basic"],
+  "passes": [
+    { "id": "bodies", "pass": "true-bodies", "tiers": ["gpu-high", "gpu-basic"] },
+    { "id": "bodies-still", "pass": "true-bodies", "params": { "sphere_detail": 128 }, "tiers": ["still"] },
+    { "id": "finish", "pass": "true-finish", "params": { "glare_rungs": 6, "glare_scale": 0.5 }, "tiers": ["gpu-high"] },
+    { "id": "finish-basic", "pass": "true-finish", "params": { "glare_rungs": 3, "glare_scale": 0.25 }, "tiers": ["gpu-basic"] },
+    { "id": "finish-still", "pass": "true-finish", "params": { "glare_rungs": 6, "glare_scale": 1 }, "tiers": ["still"] }
+  ],
+  "degrade": [
+    { "render_scale": 0.85, "says": "Drawn at a little under full resolution." },
+    { "set": { "pass": "finish", "param": "glare_rungs", "value": 4 }, "tiers": ["gpu-high"], "says": "The glare reaches less far." },
+    { "tier": "gpu-basic", "tiers": ["gpu-high"], "says": "Dropped to Light." },
+    { "render_scale": 0.75, "says": "Drawn at three-quarter resolution, enlarged." },
+    { "set": { "pass": "finish-basic", "param": "glare_rungs", "value": 2 }, "tiers": ["gpu-basic"], "says": "The glare reaches less far." },
+    { "set": { "pass": "bodies", "param": "sphere_detail", "value": 32 }, "says": "Coarser globes." },
+    { "render_scale": 0.6, "says": "Drawn at three-fifths resolution, enlarged." },
+    { "render_scale": 0.5, "says": "Drawn at half resolution, enlarged." }
+  ],
+  "lift": "Stopping lets the view sharpen; a smaller window or a faster device lifts it while moving."
+}

@@ -56,3 +56,46 @@ export function exportName(map: SectorMap | null, ext: string): string {
   return `${name.replace(/[^A-Za-z0-9 _-]+/g, "").trim().replace(/\s+/g, "-") || "sector"}.${ext}`;
 }
 
+
+/** What a sector-wide roll did: worlds rolled, codes written, codes kept (already set), worlds refused. */
+export interface SectorRollTally {
+  worlds: number;
+  written: number;
+  kept: number;
+  refused: { body: string; message: string }[];
+}
+
+type RollAsk = { program: string; body: string; apply?: boolean; at_s?: number | bigint };
+type RollAnswer = { ok: true; result: { steps: { how: string }[] } } | { ok: false; code: string; message: string };
+
+/**
+ * WBH next: roll one program for every mapped world in one ask, writing each
+ * world's rolled codes as hand-set codes (the kernel's `roll_profile` with
+ * `apply`). Codes already set (by hand, or by an imported profile, bases
+ * included) are kept; only the unset ones roll. One world's refusal never stops the others.
+ */
+export async function rollEveryWorld(roll: (ask: RollAsk) => Promise<RollAnswer>, program: string, bodies: readonly string[], at_s: number | bigint): Promise<SectorRollTally> {
+  const tally: SectorRollTally = { worlds: 0, written: 0, kept: 0, refused: [] };
+  for (const body of bodies) {
+    const r = await roll({ program, body, apply: true, at_s });
+    if (!r.ok) {
+      tally.refused.push({ body, message: r.message });
+      continue;
+    }
+    tally.worlds++;
+    for (const s of r.result.steps) {
+      if (s.how === "rolled" || s.how === "zero") tally.written++;
+      else if (s.how === "kept") tally.kept++;
+    }
+  }
+  return tally;
+}
+
+/** The tally in words. */
+export function rollTallyWords(t: SectorRollTally): string {
+  const w = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
+  const parts = [`${w(t.worlds, "world")} rolled: ${w(t.written, "code")} written`];
+  if (t.kept) parts.push(`${w(t.kept, "code")} already set kept`);
+  if (t.refused.length) parts.push(`${w(t.refused.length, "world")} refused (${t.refused[0]!.message})`);
+  return `${parts.join("; ")}.${t.written ? " Each written code says how it was rolled; change any of them by hand." : ""}`;
+}

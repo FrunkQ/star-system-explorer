@@ -128,6 +128,20 @@
         "unit": "K",
         "src": "nssdca-mercury",
         "note": "average temperature"
+       },
+       "interior.core_mass_fraction": {
+        "v": 0.69,
+        "unit": "1",
+        "src": "hauck2013",
+        "note": "from a core radius of 2020 +/- 30 km",
+        "check": "unverified"
+       },
+       "body.moment_of_inertia_factor": {
+        "v": 0.346,
+        "unit": "1",
+        "src": "margot2012",
+        "note": "C = I/(M R^2)",
+        "check": "unverified"
        }
       }
      },
@@ -245,6 +259,13 @@
         "unit": "1",
         "src": "nssdca-venus",
         "note": "by volume, near the surface"
+       },
+       "body.moment_of_inertia_factor": {
+        "v": 0.337,
+        "unit": "1",
+        "src": "margot2021",
+        "note": "C = I/(M R^2)",
+        "check": "unverified"
        }
       }
      },
@@ -374,6 +395,20 @@
         "unit": "1",
         "src": "nssdca-earth",
         "note": "by volume, dry air; water is highly variable, typically about 1%"
+       },
+       "interior.core_mass_fraction": {
+        "v": 0.325,
+        "unit": "1",
+        "src": "mcdonough2003",
+        "note": "the core is 32.5% of Earth's mass",
+        "check": "unverified"
+       },
+       "body.moment_of_inertia_factor": {
+        "v": 0.3307,
+        "unit": "1",
+        "src": "yoder1995",
+        "note": "C = I/(M R^2)",
+        "check": "unverified"
        }
       }
      },
@@ -426,6 +461,20 @@
         "v": 0.12,
         "unit": "1",
         "src": "nssdca-moon"
+       },
+       "interior.core_mass_fraction": {
+        "v": 0.015,
+        "unit": "1",
+        "src": "weber2011",
+        "note": "from a core radius of about 330 km",
+        "check": "unverified"
+       },
+       "body.moment_of_inertia_factor": {
+        "v": 0.3932,
+        "unit": "1",
+        "src": "konopliv1998",
+        "note": "C = I/(M R^2)",
+        "check": "unverified"
        }
       },
       "note": "semi-major axis about Earth"
@@ -551,6 +600,20 @@
         "unit": "1",
         "src": "nssdca-mars",
         "note": "by volume, nitric oxide (100 ppm) and HDO (0.85 ppm) left out: not on the sheet"
+       },
+       "interior.core_mass_fraction": {
+        "v": 0.24,
+        "unit": "1",
+        "src": "staehler2021",
+        "note": "from a core radius of 1830 +/- 40 km and a core density near 6000 kg/m3",
+        "check": "unverified"
+       },
+       "body.moment_of_inertia_factor": {
+        "v": 0.3644,
+        "unit": "1",
+        "src": "konopliv2011",
+        "note": "C = I/(M R^2)",
+        "check": "unverified"
        }
       }
      },
@@ -603,6 +666,12 @@
         "v": 0.538,
         "unit": "1",
         "src": "nssdca-jupiter"
+       },
+       "planet.surface_temperature": {
+        "v": 165.0,
+        "unit": "K",
+        "src": "nssdca-jupiter",
+        "note": "temperature at the 1 bar level (no surface)"
        },
        "atmosphere.composition.h2": {
         "v": 0.898,
@@ -687,6 +756,12 @@
         "unit": "1",
         "src": "nssdca-saturn"
        },
+       "planet.surface_temperature": {
+        "v": 134.0,
+        "unit": "K",
+        "src": "nssdca-saturn",
+        "note": "temperature at the 1 bar level (no surface)"
+       },
        "atmosphere.composition.h2": {
         "v": 0.963,
         "unit": "1",
@@ -764,6 +839,12 @@
         "unit": "1",
         "src": "nssdca-uranus"
        },
+       "planet.surface_temperature": {
+        "v": 76.0,
+        "unit": "K",
+        "src": "nssdca-uranus",
+        "note": "temperature at the 1 bar level (no surface)"
+       },
        "atmosphere.composition.h2": {
         "v": 0.825,
         "unit": "1",
@@ -834,6 +915,12 @@
         "v": 0.442,
         "unit": "1",
         "src": "nssdca-neptune"
+       },
+       "planet.surface_temperature": {
+        "v": 72.0,
+        "unit": "K",
+        "src": "nssdca-neptune",
+        "note": "temperature at the 1 bar level (no surface)"
        },
        "atmosphere.composition.h2": {
         "v": 0.8,
@@ -2063,6 +2150,12 @@
       "doi": "10.1126/science.1226919"
      },
      {
+      "id": "hauck2013",
+      "text": "Hauck, S. A. et al. 2013, JGR Planets 118, 1204: the curious case of Mercury's internal structure (core radius 2020 +/- 30 km)",
+      "status": "unverified",
+      "doi": "10.1002/jgre.20091"
+     },
+     {
       "id": "hilton2006",
       "text": "Hilton, J. L. et al. 2006, Celest. Mech. Dyn. Astron. 94, 351: Report of the IAU Division I Working Group on Precession and the Ecliptic (obliquity at J2000, 84381.406 arcsec)",
       "status": "verified",
@@ -2087,10 +2180,40 @@
       "url": "https://arxiv.org/abs/2206.00010"
      },
      {
+      "id": "konopliv1998",
+      "text": "Konopliv, A. S. et al. 1998, Science 281, 1476: improved gravity field of the Moon from Lunar Prospector (C/MR^2 = 0.3932 +/- 0.0002)",
+      "status": "unverified",
+      "doi": "10.1126/science.281.5382.1476"
+     },
+     {
+      "id": "konopliv2011",
+      "text": "Konopliv, A. S. et al. 2011, Icarus 211, 401: Mars high resolution gravity fields from MRO, Mars seasonal gravity and other dynamical parameters (C/MR^2 = 0.3644 +/- 0.0005)",
+      "status": "unverified",
+      "doi": "10.1016/j.icarus.2010.10.004"
+     },
+     {
       "id": "li2016",
       "text": "Li, J.-Y. et al. 2016, ApJL 817, L22: surface albedo and spectral variability of Ceres (0.034 ± 0.001 for the Ceres average, Dawn FC clear filter)",
       "status": "verified",
       "doi": "10.3847/2041-8205/817/2/L22"
+     },
+     {
+      "id": "margot2012",
+      "text": "Margot, J.-L. et al. 2012, JGR Planets 117, E00L09: Mercury's moment of inertia from spin and gravity data (C/MR^2 = 0.346 +/- 0.014)",
+      "status": "unverified",
+      "doi": "10.1029/2012JE004161"
+     },
+     {
+      "id": "margot2021",
+      "text": "Margot, J.-L. et al. 2021, Nature Astronomy 5, 676: spin state and moment of inertia of Venus (C/MR^2 = 0.337 +/- 0.024)",
+      "status": "unverified",
+      "doi": "10.1038/s41550-021-01339-7"
+     },
+     {
+      "id": "mcdonough2003",
+      "text": "McDonough, W. F. 2003, Treatise on Geochemistry 2, 547: compositional model for the Earth's core (the core is 32.5% of Earth's mass)",
+      "status": "unverified",
+      "doi": "10.1016/B0-08-043751-6/02015-6"
      },
      {
       "id": "nssdca-asteroid",
@@ -2225,10 +2348,28 @@
       "doi": "10.1126/science.aaf4219"
      },
      {
+      "id": "staehler2021",
+      "text": "Staehler, S. C. et al. 2021, Science 373, 443: seismic detection of the martian core (radius 1830 +/- 40 km)",
+      "status": "unverified",
+      "doi": "10.1126/science.abi7730"
+     },
+     {
       "id": "trujillo2001",
       "text": "Trujillo, C. A., Jewitt, D. C. and Luu, J. X. 2001, AJ 122, 457: properties of the trans-Neptunian belt, statistics from the Canada-France-Hawaii Telescope survey (an outer edge to the classical belt at 50 AU)",
       "status": "verified",
       "doi": "10.1086/321117"
+     },
+     {
+      "id": "weber2011",
+      "text": "Weber, R. C. et al. 2011, Science 331, 309: seismic detection of the lunar core (radius about 330 km)",
+      "status": "unverified",
+      "doi": "10.1126/science.1199375"
+     },
+     {
+      "id": "yoder1995",
+      "text": "Yoder, C. F. 1995, Astrometric and geodetic properties of Earth and the Solar System, AGU Reference Shelf 1, 1 (Earth C/MR^2 = 0.3307)",
+      "status": "unverified",
+      "doi": "10.1029/RF001p0001"
      }
     ]
    }

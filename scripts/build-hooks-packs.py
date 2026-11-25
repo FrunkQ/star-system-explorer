@@ -225,3 +225,35 @@ write("packs/world-hooks/pack.json", pack(
     {"id": "hook", "label": "World hooks", "about": "A story prompt read off a world's facts: never set by hand, never an input to physics.",
      "applies_to": ["body"]},
     hook_tags, [{"id": f"{h}.v1", "tag": h, "applies_to": ["body"], "when": w} for h, _, w, _, _ in HOOKS]))
+
+# Resource labels (TG8 part 2, X3k): resource kinds with the `resource.*`
+# label a place carries while it holds enough. Read off held amounts
+# (natural - extracted + stock, X3j), so a mined-out rock loses its label by
+# itself. Thresholds are label choices, not physics: round numbers, said so.
+RESOURCES = [
+    ("metal", "Iron and nickel", "fe", "whole", {"min_per_kg": 0.4},
+     "resource.metal-rich", "metal-rich", "at least 40% iron by mass, as Mercury (Earth is about 32%): an iron world or the core of a broken one"),
+    ("water", "Water", "h2o", "surface", {"min_kg": 1.0e18},
+     "resource.water", "water", "at least 10^18 kg of water at the surface, a small sea's worth or a thick ice cap"),
+    ("hydrogen", "Hydrogen", "h", "envelope", {"min_kg": 1.0e20},
+     "resource.hydrogen", "hydrogen", "a hydrogen envelope to skim for fuel (at least 10^20 kg)"),
+    ("helium-3", "Helium-3", "he3", "envelope", {"min_kg": 1.0e12},
+     "resource.helium-3", "helium-3", "helium-3 in a giant's envelope, at the birth cloud's isotope share (at least a million tonnes)"),
+]
+resource_doc = {
+    "format": "sse.pack/1", "id": "sse.base-resources", "version": "0.1.0", "kind": ["universe"], "kernel_range": "^0.1",
+    "licence": "Apache-2.0",
+    "provides": {"other": {
+        "about": {"label": "Resources", "text": "What a world holds that a ship could take: kinds counted off its composition, kept on the books (mined out, stocked), and a label while enough is left."},
+        "resources": {"kinds": [{"id": i, "name": n, "matter": m, "reach": r, "label": {"tag": t, **th}, "about": a}
+                                for i, n, m, r, th, t, _, a in RESOURCES]},
+        "tags": {"about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.",
+                 "groups": [{"id": "resource", "label": "Resources", "about": "What a place holds that can be taken: read off held amounts, so it goes when mined out.", "applies_to": ["body"]}],
+                 "tags": [{"id": t, "label": l, "group": "resource", "about": a, "source": "derived", "tier": "surveyed"}
+                          for _, _, _, _, _, t, l, a in RESOURCES]},
+    }},
+}
+out = ROOT / "packs/base-resources/pack.json"
+out.parent.mkdir(parents=True, exist_ok=True)
+out.write_text(json.dumps(resource_doc, indent=1, ensure_ascii=False) + "\n")
+print(f"wrote {out}: {len(RESOURCES)} kinds")

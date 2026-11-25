@@ -6,7 +6,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import InMemory from "./InMemory.svelte";
-  import { lossesOn, dateOf, epochOf, formatDate, parseDate, rollCall, rollSentence, secondsToYears, stepEvent, yearsToSeconds, type RollCall as Roll, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { countSteps, onThisDay, rollRecords, sayNumber, lossesOn, dateOf, epochOf, formatDate, parseDate, rollCall, rollSentence, secondsToYears, stepEvent, yearsToSeconds, type RollCall as Roll, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { openCampaign, openPack, packFolder, type RollFeed } from "./feed.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene } = $props();
@@ -75,6 +75,17 @@
   // In memory (SH6): the page of names, opened from here; the day of a loss names it under the roster (design 8.4).
   let page = $state<"roll" | "memory">("roll");
   const losses = $derived(feed?.memory ? lossesOn(feed.memory, dayFrom, dayTo) : []);
+
+  // Records and On this day (SH5, design 4.3 and 4.6): questions over the same stays and count, each with its how.
+  const steps = $derived(feed ? (feed.steps ?? countSteps(feed.ix)) : []);
+  const records = $derived(feed ? rollRecords(feed.ix, steps, feed.calendar.day_s) : []);
+  const thisDay = $derived(feed?.span ? onThisDay(feed.ix, steps, feed.calendar, t, feed.span) : []);
+  const monthDay = $derived(feed && anchor ? ((d) => (d.month && d.mday !== undefined ? `${d.mday} ${d.month}` : ""))(dateOf(feed.calendar, t, anchor)) : "");
+  const people = (n: number) => `${sayNumber(n, 6)} ${n === 1 ? "person" : "people"}`;
+  const days = (s: number) => (feed ? `${sayNumber(Math.floor(s / feed.calendar.day_s), 6)} days` : "");
+  const recordWords = (r: (typeof records)[number]) => (r.unit === "people" ? (r.key === "empty" ? dateOfS(r.at_s) : people(r.n)) : `${days(r.n)}, ${r.person?.name ?? ""}`);
+  const yearWords = (y: (typeof thisDay)[number]) =>
+    [y.up ? `${people(y.up)} up` : "", y.went ? `${sayNumber(y.went, 6)} went up` : "", y.came ? `${sayNumber(y.came, 6)} came down` : ""].filter(Boolean).join(", ");
 
   let typing = $state(false);
   let typed = $state("");
@@ -173,6 +184,31 @@
       <ul class="also" data-rollcall-also>
         {#each also as a (a.key)}<li><b>{a.label}:</b> {a.count}</li>{/each}
       </ul>
+    {/if}
+
+    {#if records.length}
+      <details class="fold" data-rollcall-records>
+        <summary>Records</summary>
+        <ul>
+          {#each records as r (r.key)}
+            <li data-rollcall-record={r.key}>
+              <span class="rec-label">{r.label}</span>
+              <button class="link" onclick={() => go(r.at_s)}>{recordWords(r)}</button>
+              <span class="note">{r.how}</span>
+            </li>
+          {/each}
+        </ul>
+      </details>
+    {/if}
+    {#if thisDay.length && monthDay}
+      <details class="fold" data-rollcall-this-day>
+        <summary>On this day, {monthDay}</summary>
+        <ul class="years">
+          {#each thisDay as y (y.year)}
+            <li><button class="link" onclick={() => go(y.at_s)}>{y.year}</button> <span>{yearWords(y)}</span></li>
+          {/each}
+        </ul>
+      </details>
     {/if}
 
     {#if feed.memory}<p class="memory-door"><button class="link" onclick={() => (page = "memory")} data-rollcall-in-memory>In memory ›</button></p>{/if}
@@ -344,6 +380,35 @@
     margin: 12px 0 0 24px;
     line-height: 1.45;
     color: var(--sse-ink-muted);
+  }
+  .fold {
+    margin-top: 16px;
+    font-size: 0.9rem;
+  }
+  .fold summary {
+    cursor: pointer;
+    color: var(--sse-ink-muted);
+  }
+  .fold ul {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+  }
+  .fold li {
+    display: block;
+    margin: 0 0 8px;
+  }
+  .fold .rec-label {
+    display: block;
+    color: var(--sse-ink-muted);
+  }
+  .fold .note {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--sse-ink-muted);
+  }
+  .years li {
+    margin: 0 0 2px;
   }
   .memory-door {
     margin: 18px 0 0;

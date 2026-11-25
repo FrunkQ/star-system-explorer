@@ -64,6 +64,7 @@ fn glance(r: &sse_field::FieldRead, field: &str, dynamo_now: Option<bool>) -> se
 
 pub(crate) fn read_system(
     ch: &Chronicle,
+    seed: &sse_core::Seed,
     system: &Address,
     at_s: Option<i64>,
     run: Option<&SystemRun>,
@@ -109,7 +110,16 @@ pub(crate) fn read_system(
         // The surface envelope (as `resolved_system` builds it) gives the
         // gravity and, from MF1, whether a dynamo runs now and why.
         let envl = env.map(|b| sse_surface::envelope(&ss, b));
-        let (moment, field) = match fact("body.magnetic_moment") {
+        // MF2: the record's moment, else the ledger's from the core history.
+        let ledger = env
+            .zip(envl.as_ref())
+            .and_then(|(b, e)| sse_surface::core::field_facts(e, b))
+            .and_then(|ff| {
+                ff.iter()
+                    .find(|(k, _)| *k == "body.magnetic_moment")
+                    .map(|x| x.1)
+            });
+        let (moment, field) = match fact("body.magnetic_moment").or(ledger) {
             Some(m) if m > 0.0 => (m, "computed"),
             Some(_) => (0.0, "none"),
             None => (0.0, "unresolved"),
@@ -139,7 +149,14 @@ pub(crate) fn read_system(
                 .unwrap_or(0.0),
             free_space_dose_msv_day: None,
             orbits_m: vec![],
-            magnetic_tilt_deg: fact("field.tilt").unwrap_or(0.0),
+            // MF3: the record's tilt, else the drawn one resolved_system gives.
+            magnetic_tilt_deg: fact("field.tilt").unwrap_or_else(|| {
+                if moment > 0.0 {
+                    crate::adopt::drawn_tilt_deg(seed, &addr)
+                } else {
+                    0.0
+                }
+            }),
             plasma_source_kg_s: 0.0,
             pedersen_conductance_s: 0.0,
             moons: vec![],
@@ -155,13 +172,14 @@ pub(crate) fn read_system(
         let mut r = sse_field::read(&body, &set).map_err(|e| err("bad_field", e))?;
         if field == "unresolved" {
             r.stand_ins.push("no magnetic moment fact yet (MF2 has not resolved this world), so it is read as having no field of its own".into());
-            if let Some(c) = envl.as_ref().and_then(|e| e.core.as_ref()) {
-                r.why.push(format!(
-                    "Its core's own history (MF1) says the dynamo is {} now: {}",
-                    if c.dynamo_now { "running" } else { "off" },
-                    c.why_now
-                ));
-            }
+        }
+        // The core's history (MF1, with MF2's Make test) says why, field or none.
+        if let Some(c) = envl.as_ref().and_then(|e| e.core.as_ref()) {
+            r.why.push(format!(
+                "Its core's own history (MF1) says the dynamo is {} now: {}",
+                if c.dynamo_now { "running" } else { "off" },
+                c.why_now
+            ));
         }
         if air_missing {
             r.stand_ins.push("no air facts yet for this world, so it is read as airless (no ionopause, no air column over the ground)".into());

@@ -201,6 +201,9 @@ export function inFlight(log: RollLog, t: number): boolean {
 }
 
 /** Does a stay count as "in space" against the edge? `below` gives the words when it is listed but not counted. */
+/** Whether a stay counts as time in space against the source's edge (records and "On this day", SH5). */
+export const againstEdgeCounts = (s: RollStay, ix: RollIndex, edge_km: number | null = ix.source.edge_km): boolean => againstEdge(s, edge_km, ix.source.listed_from_km).counts;
+
 function againstEdge(s: RollStay, edge: number | null, listed: number | undefined): { counts: boolean; below?: string; unknown?: boolean } {
   if (s.reached_space === false) return { counts: false, below: s.reached_why ? `did not reach space: ${s.reached_why}` : "did not reach space" };
   if (!s.suborbital || edge === null) return { counts: true };

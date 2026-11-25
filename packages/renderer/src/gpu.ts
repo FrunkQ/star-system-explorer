@@ -9,6 +9,7 @@ import type { TrueTexture } from "./true-look.ts";
 import { ringLight } from "./rings.ts";
 import { startFinish, type Finish } from "./finish.ts";
 import type { AirLuts, AirShape } from "./air-luts.ts";
+import { flattenScale } from "./true-shape.ts";
 import { makeAirShell, type AirShell } from "./gpu-air-shell.ts";
 import { BAKE_BUDGET, faceSize } from "./texture-ladder.ts";
 import { createTextureBaker } from "./texture-ladder-gpu.ts";
@@ -50,6 +51,16 @@ export interface GpuItem {
    */
   frame?: [Vec3, Vec3, Vec3];
   /**
+   * True look: the world's own visible light by its heat (hot-glow.ts), linear sRGB in units of a white surface in
+   * its daylight; added over the lit globe as light, so a night side glows and a day side gains it.
+   */
+  glow?: [number, number, number];
+  /**
+   * True look: plume grains above the limb (plumes.ts `plumeGrains`, turned by true-body.ts to the world's pole in
+   * the drawing's frame), in units of its radius from its centre, added as light at `brightness` 0..1.
+   */
+  plumes?: { points: Float32Array; brightness: number };
+  /**
    * True look: the world's air as a shell round it, lit by the star (gpu-air-shell.ts, VP-A3): its shape in its own
    * radius and its look-up tables (air-luts.ts), keyed so they are uploaded once.
    */
@@ -64,6 +75,10 @@ export interface GpuItem {
    * of a contact binary), in units of `radius`, its long axis on x and spin axis on z. Keyed: built once.
    */
   mesh?: { key: string; positions: Float32Array; normals: Float32Array; index: Uint32Array };
+  /** True look: how much the world's spin flattens it (true-shape.ts, TA6), drawn along its pole, volume kept. */
+  flatten?: number;
+  /** The world's north pole in camera space, for `flatten` when no `frame` is given. */
+  pole?: Vec3;
 }
 
 /** True look: the star's light. `at` a camera-relative point (the star is in the frame), else `from` a direction. */
@@ -138,19 +153,45 @@ export const LONG_CLIP = 4;
 
 export interface Gpu {
   readonly backend: "webgpu" | "webgl2";
-  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number }; /** True: draw through the shared finish (finish.ts): high range, the eye's glare, exposure, AgX, dither. */ finish?: { exposure?: number; glare?: boolean }; /** True: the sky's stars behind everything (VP2, stars-behind.ts). */ stars?: GpuStars; /** Perspective near and far planes, display units (default 1e-3 and 1e4): a close-up brings the near plane down under its height. */ near?: number; far?: number }): void;
+  /**
+   * The GPU's own time for the last frames drawn, ms, when the view asked for timing and the device has timestamp
+   * queries (VP4: the governor's signal); null otherwise, and the view times its own work instead.
+   */
+  readonly gpuMs: number | null;
+  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean; /** Seen straight on, sizes kept whatever the distance (the size comparison): the view's width and height in display units round the forward axis. */ ortho?: { width: number; height: number; near: number; far: number }; /** True: draw through the shared finish (finish.ts): high range, the eye's glare, exposure, AgX, dither. */ finish?: { exposure?: number; glare?: boolean; /** The tier's glare knobs and render scale, and the running mean's frame index at rest (finish.ts FinishFrame). */ rungs?: number; glare_scale?: number; render_scale?: number; accumulate?: number }; /** True: segments round each globe (the recipe's `true-bodies` sphere_detail; default 64). */ sphere_detail?: number; /** Sharpen at rest: shift the picture by this much of a pixel (still.ts restJitter), x right and y up. */ jitter?: [number, number]; /** True: the sky's stars behind everything (VP2, stars-behind.ts). */ stars?: GpuStars; /** Perspective near and far planes, display units (default 1e-3 and 1e4): a close-up brings the near plane down under its height. */ near?: number; far?: number }): void;
   dispose(): void;
 }
 
-export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> {
+export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: boolean } = {}): Promise<Gpu | null> {
   let renderer: WebGPURenderer;
   try {
-    renderer = new WebGPURenderer({ canvas, antialias: true, alpha: false });
+    renderer = new WebGPURenderer({ canvas, antialias: true, alpha: false, trackTimestamp: !!opts.timing });
     await renderer.init();
   } catch {
     return null;
   }
   const backend = (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? "webgpu" : "webgl2";
+  // Frame timing: each frame's timestamp queries are read back after it (a frame late), so the pool never fills.
+  const timed = !!opts.timing && !!(renderer.backend as { trackTimestamp?: boolean }).trackTimestamp;
+  let gpuMs: number | null = null;
+  let resolving = false;
+  let unread = 0;
+  const resolveTiming = () => {
+    if (!timed) return;
+    unread++;
+    if (resolving) return;
+    resolving = true;
+    // The frames since the last read-back are read together: their mean is the frame's time.
+    const n = unread;
+    unread = 0;
+    renderer
+      .resolveTimestampsAsync("render")
+      .then((d) => {
+        if (typeof d === "number" && d > 0) gpuMs = d / n;
+      })
+      .catch(() => undefined)
+      .finally(() => (resolving = false));
+  };
   // The shared finish, made on first use (a view that never asks for it never builds its passes).
   let finish: Finish | null = null;
   const scene = new Scene();
@@ -166,7 +207,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   const turned = new Matrix4();
   const sphere = new SphereGeometry(1, 32, 16);
   // True look: a finer sphere with its poles on z, as the globe's (true-look.ts `equirect`).
-  const globe = new SphereGeometry(1, 64, 32).rotateX(Math.PI / 2);
+  let globe = new SphereGeometry(1, 64, 32).rotateX(Math.PI / 2);
+  let globeDetail = 64;
   // Close-up: a globe that fills the screen many times over shows its limb's facets at 64 segments, so it takes a finer one.
   const fineGlobe = new SphereGeometry(1, 512, 256).rotateX(Math.PI / 2);
   const textures = new Map<string, DataTexture>();
@@ -384,13 +426,38 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     dotMats.set(key, m);
     return m;
   };
+  // Hot glow and plume grains: light added to what is behind, cached by colour in steps of 1/1024.
+  const addMats = new Map<string, MeshBasicMaterial | PointsMaterial>();
+  const glowMat = (c: [number, number, number]) => {
+    const q = c.map((v) => Math.round(Math.max(0, Math.min(1, v)) * 1024));
+    const k = `g|${q.join(",")}`;
+    let m = addMats.get(k) as MeshBasicMaterial | undefined;
+    if (!m) addMats.set(k, (m = new MeshBasicMaterial({ color: new Color(q[0]! / 1024, q[1]! / 1024, q[2]! / 1024), transparent: true, blending: AdditiveBlending, depthWrite: false })));
+    return m;
+  };
+  const plumeMat = (b: number) => {
+    const q = Math.round(Math.max(0, Math.min(1, b)) * 64);
+    const k = `p|${q}`;
+    let m = addMats.get(k) as PointsMaterial | undefined;
+    if (!m) addMats.set(k, (m = new PointsMaterial({ color: new Color().setScalar(1), size: 1.5, sizeAttenuation: false, transparent: true, opacity: q / 64, blending: AdditiveBlending, depthWrite: false })));
+    return m;
+  };
   const lineMat = (c: string, over = false) => {
     const key = `${c}|${over}`;
     return lineMats.get(key) ?? (lineMats.set(key, new LineBasicMaterial({ color: new Color(c), depthTest: !over })), lineMats.get(key)!);
   };
   return {
     backend,
+    get gpuMs() {
+      return gpuMs;
+    },
     draw(o) {
+      const detail = Math.max(16, Math.min(256, Math.round(o.sphere_detail ?? 64)));
+      if (detail !== globeDetail) {
+        globe.dispose();
+        globe = new SphereGeometry(1, detail, Math.max(8, detail >> 1)).rotateX(Math.PI / 2);
+        globeDetail = detail;
+      }
       scene.clear();
       // Space is black in the true look: a physical choice, not a theme colour.
       scene.background = new Color((o.light && !o.light.ground) || o.space ? 0x000000 : o.ground);
@@ -427,13 +494,33 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         if (it.frame) {
           const [x, y, z] = it.frame;
           m.quaternion.setFromRotationMatrix(turned.makeBasis(new Vector3(...x), new Vector3(...y), new Vector3(...z)));
+        } else if (it.flatten && it.pole) m.quaternion.setFromUnitVectors(zAxis, new Vector3(...it.pole).normalize());
+        if (it.flatten) {
+          // The globe's poles are on its own z: shorter along it, wider round it, the volume kept.
+          const s = flattenScale(it.flatten);
+          m.scale.set(it.radius * s.equator, it.radius * s.equator, it.radius * s.pole);
         }
         scene.add(m);
+        // A hot world's own light: a second skin added over the globe (hot-glow.ts).
+        if (o.light && it.glow && Math.max(...it.glow) > 0) {
+          const gm = new Mesh(globe, glowMat(it.glow));
+          gm.scale.setScalar(1.0005);
+          m.add(gm);
+        }
+        // Plume grains over the limb, already turned to the world's pole (plumes.ts, true-body.ts).
+        if (o.light && it.plumes && it.plumes.brightness > 0 && it.plumes.points.length) {
+          const pg = new BufferGeometry();
+          pg.setAttribute("position", new Float32BufferAttribute(it.plumes.points, 3));
+          const pp = new Points(pg, plumeMat(it.plumes.brightness));
+          pp.position.copy(m.position);
+          pp.scale.setScalar(it.radius);
+          scene.add(pp);
+        }
         if (lit && it.clouds) {
           const cm = new Mesh(dist < 1.5 * it.radius ? fineGlobe : globe, cloudMat(it.clouds));
           cm.position.copy(m.position);
           cm.quaternion.copy(m.quaternion);
-          cm.scale.setScalar(it.radius * CLOUD_LIFT);
+          cm.scale.copy(m.scale).multiplyScalar(CLOUD_LIFT);
           cm.renderOrder = 1;
           scene.add(cm);
         }
@@ -497,7 +584,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         scene.add(new Points(g, dotMat(d)));
       }
       if (o.stars && !o.ortho) {
-        const pixel = o.fovY / Math.max(1, o.height);
+        // One drawn pixel's angle: drawn smaller than the view (the tier's render scale), each spans more sky.
+        const pixel = o.fovY / Math.max(1, o.height) / Math.max(0.25, Math.min(1, o.finish?.render_scale ?? 1));
         const k = (Math.PI / (pixel * pixel)) * (o.stars.gain ?? 1);
         const sig = `${o.stars.key}|${k}`;
         if (sig !== starSig) {
@@ -534,10 +622,14 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       cam.position.set(0, 0, 0);
       cam.up.set(o.up[0], o.up[1], o.up[2]);
       cam.lookAt(new Vector3(o.forward[0], o.forward[1], o.forward[2]));
+      // A sub-pixel shift of the projection for the running mean at rest; cleared otherwise.
+      if (o.jitter && (o.jitter[0] !== 0 || o.jitter[1] !== 0)) cam.setViewOffset(o.width, o.height, -o.jitter[0], o.jitter[1], o.width, o.height);
+      else cam.clearViewOffset();
       cam.updateProjectionMatrix();
       renderer.setSize(o.width, o.height, false);
-      if (o.finish) (finish ??= startFinish(renderer)).render(scene, cam, { exposure: o.finish.exposure ?? 1, pixel_deg: o.ortho ? 0 : (o.fovY * 180) / Math.PI / Math.max(1, o.height), glare: !o.ortho && o.finish.glare !== false });
+      if (o.finish) (finish ??= startFinish(renderer)).render(scene, cam, { exposure: o.finish.exposure ?? 1, pixel_deg: o.ortho ? 0 : (o.fovY * 180) / Math.PI / Math.max(1, o.height), glare: !o.ortho && o.finish.glare !== false, rungs: o.finish.rungs, glare_scale: o.finish.glare_scale, render_scale: o.finish.render_scale, accumulate: o.finish.accumulate });
       else renderer.render(scene, cam);
+      resolveTiming();
       scene.traverse((x) => (x instanceof Line || x instanceof Points) && x !== starPoints && x.geometry.dispose());
     },
     dispose() {
@@ -561,6 +653,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       ringSets.forEach((e) => (e.geom.dispose(), e.tex.dispose(), e.mat.dispose()));
       lineMats.forEach((m) => m.dispose());
       dotMats.forEach((m) => m.dispose());
+      addMats.forEach((m) => m.dispose());
       finish?.dispose();
       starGeom.dispose();
       starMat.dispose();

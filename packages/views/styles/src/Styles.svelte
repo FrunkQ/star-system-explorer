@@ -19,8 +19,10 @@
   const host = $derived(ctx.styles!);
   const editable = $derived(ctx.workspace.mode === "edit");
   const views = $derived(host.views());
+  // A GM view and a players' view may share an id (the Atlas): the pick is the view itself, keyed by scene and id.
+  const keyOf = (v: { id: string; scene?: string }) => `${v.scene === "player" ? "player" : "gm"}:${v.id}`;
   let viewId = $state(String(P.view));
-  const view = $derived(views.find((v) => v.id === viewId) ?? views[0]!);
+  const view = $derived(views.find((v) => keyOf(v) === viewId) ?? views.find((v) => v.id === viewId) ?? views[0]!);
   const isPlayer = $derived(view.scene === "player");
   const forView = $derived(host.registry().filter((d) => d.view === view.id));
   let styleId = $state<string | null>(null);
@@ -141,7 +143,7 @@
       <div class="k">{group}</div>
       <div class="vlist" role="radiogroup" aria-label="{group} views">
         {#each list as v (v.id)}
-          <button type="button" role="radio" class="vbtn" aria-checked={v.id === view.id} onclick={() => (viewId = v.id)}>
+          <button type="button" role="radio" class="vbtn" aria-checked={v === view} onclick={() => (viewId = keyOf(v))}>
             <span class="vname">{v.id.replace("sse.view.", "")}</span>
             <span class="muted">{v.params.length} settings · {v.params.filter((s) => s.promoted).length} promoted</span>
           </button>

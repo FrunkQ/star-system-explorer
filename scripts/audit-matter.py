@@ -74,6 +74,10 @@ FIXTURE_FILES = {
     os.path.join("packages", "shell", "src", "documents", "kestrel.scene.json"),
     # A sample SSE 3 save, in SSE 3's own format and with its own figures.
     os.path.join("packages", "shell", "src", "documents", "sample-sol.v3.json"),
+    # The base postcard set (PC6): each card carries the facts of the world it was
+    # taken of (the sample save above, imported), a record drawn as it was saved.
+    # Made by scripts/build-postcard-set.mjs. Alex yes 25 Nov 13:22.
+    os.path.join("packs", "base-presentation", "postcards.json"),
 }
 SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"), os.path.join("packs", "base-sol"), os.path.join("crates", "sse-core", "src", "sheet.rs"))
 
@@ -512,10 +516,10 @@ NOT_MATTER = [
     ("packs/base-nav/", r"/(top_density|parking_radii)$", "a navigation setting"),
     ("packs/base-life/", r"/decay_methane_(oxic|anoxic)$", "a model rate"),
     ("packs/base-climate/", r"/(delta_h|latent_scale_w_m2|frost_emissivity|lowest_frost_k|t_ice_k|"
-     r"super_rotation_critical|latent_share|ddf_ice_mm)$", "a climate model setting"),
+     r"super_rotation_critical|latent_share|ddf_ice_mm|reference_density_ratio)$", "a climate model setting"),
     ("packs/base-surface/", r"/(ice_dry_k|land_ice_k|shadow_ice_max_bar|ice_min_km2|impactor_density|"
-     r"ice_giant_mass_earth|wind_ice_m_s|cover/ice_albedo|cover/sea_ice_k)$", "a surface model setting"),
-    ("packs/base-weather/", r"/(equator_ice|equatorial_bands_ice|ice_giant_mass_earth|wind_ice_m_s|"
+     r"ice_giant_mass_earth|wind_ice_m_s|eddy_ice_m_s|cover/ice_albedo|cover/sea_ice_k)$", "a surface model setting"),
+    ("packs/base-weather/", r"/(equator_ice|equatorial_bands_ice|ice_giant_mass_earth|wind_ice_m_s|eddy_ice_m_s|"
      r"strength_u|strength_m_s)$", "a weather model setting"),
     ("packs/base-weather/", r"/impact/density_kg_m3$", "an assumed impactor, a model setting"),
     ("packs/base-ships/", r"/scoop/skim_density_kg_m3$", "the air a scoop skims, a designer setting"),

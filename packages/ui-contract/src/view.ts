@@ -71,6 +71,8 @@ export interface Workspace {
   /** The party's ship (party.ts): Voyages starts where it is, Land lands it. Kept with the campaign. */
   party?: import("./party.ts").PartyShip | null;
   setParty?(p: import("./party.ts").PartyShip | null): void;
+  /** "Could be…" suggestions the GM asked to stop, as "address#record" (ED10); kept with the campaign. */
+  could_quiet?: string[];
   /** The readings chosen by pressing a unit (figures.ts `withChoice`), per kind and scale class; kept with the campaign. */
   unit_choices?: import("./figures.ts").UnitChoices;
   /** Keep a reading for a kind and what it is about (null puts the scheme's back). */
@@ -114,6 +116,12 @@ export interface Workspace {
   bookmarks?: import("./bookmark.ts").Bookmark[];
   /** Bookmark where the GM is now, without adding it to the list (Keep on Live, Update from live). Set by the shell. */
   markHere?: () => import("./bookmark.ts").Bookmark;
+  /** The camera of the view in front (PC1), kept current by a view that has one (the globe, a True view); the shell
+   * puts it on a bookmark made here. Null or absent: the view has no camera of its own to keep. */
+  camera?: import("./pose.ts").Pose | null;
+  /** A camera to go to, set by the shell when a bookmark with a pose is opened. The view whose camera it is about
+   * takes it once and clears it. */
+  aim?: import("./pose.ts").Pose | null;
   /** The Playbook (PB3): the GM's presets in chapters, pages and sections, kept with the campaign. */
   playbook?: import("./playbook.ts").Playbook;
   /** Layouts the GM made (PB13): players' screen documents with `mine.` ids, kept with the campaign. */
@@ -140,6 +148,11 @@ export interface Workspace {
    * and the main line does not move until the GM keeps it.
    */
   branch?: WhatIf | null;
+  /**
+   * Add with the ghost first (ED4, editing design section 5): the body things are added round, while the chart's ghost
+   * follows the pointer (`a_au` null), and where it was dropped (`a_au` set) for Add here to take. Never saved.
+   */
+  adding?: { host: string; label: string; a_au: number | null } | null;
   /** The GM's lens (H8.6): which layers, card fields and tools show. Never changes data. */
   lens?: Lens;
   /** How much every card, number and why? says (top-level design 2.4). Presentation only; Science when absent. */
@@ -209,6 +222,11 @@ export interface PlayerContext {
   ground?: import("./landing.ts").LandingGround;
   /** Which of the part's own controls the screen has on (AT13); absent: every declared control is on. Read with `controlOn`. */
   controls?: Readonly<Record<string, boolean>>;
+  /**
+   * The control set of the interface kit the role wears (AT14, Atlas `controlSetOf`): parts that draw their controls
+   * in the kit's look read it (chart-grammar KitControl). Absent: the plain set, as before.
+   */
+  control_set?: import("./atlas/controlset.ts").ControlSet;
   /** What the GM sent this screen now (seat.ts `Shown`), or null. Read it in an effect: it changes. */
   shown?(): import("./seat.ts").Shown | null;
 }

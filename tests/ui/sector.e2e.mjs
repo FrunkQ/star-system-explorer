@@ -36,10 +36,21 @@ try {
   await desk.waitFor();
   await desk.locator("[data-import]").click();
   await desk.locator("[data-import-text]").fill(five);
+  await desk.locator("[data-import-metadata]").setInputFiles("tests/fixtures/sector/kestrel-reach.xml");
   await desk.locator("[data-preview]").click();
+  // The metadata's routes: two between the imported worlds, two left out (another sector, an empty hex).
+  const routes = await desk.locator("[data-preview-routes]").textContent();
+  assert.match(routes, /2 routes become links.*2 left out/, routes);
   await desk.locator("[data-apply]").click();
+  await desk.locator("[data-import-note]", { hasText: "2 routes as links" }).waitFor();
   const map = desk.locator("svg.hex-map");
   await map.locator("text.name").first().waitFor({ timeout: 30000 });
+  // WBH next: roll every world's unset codes in one ask. Imported worlds came with their profiles, so each keeps every code (bases too).
+  await desk.locator("[data-roll-all]").click();
+  await desk.locator("[data-roll-all-go]").click();
+  const rolledNote = await desk.locator("[data-roll-all-note]").textContent({ timeout: 30000 });
+  assert.match(rolledNote, /^4 worlds rolled: 0 codes written; 28 codes already set kept\.$/, rolledNote);
+  await desk.locator("[data-roll-all]").click();
   await desk.locator("[aria-label='hex 0912']").click();
   await desk.locator("aside.side").waitFor();
 
@@ -81,7 +92,7 @@ try {
   await page.waitForFunction(() => document.querySelector(".voy [data-leg=jump]") && /Jump-2, a pack rule/.test(document.querySelector(".voy .head")?.textContent ?? ""), null, { timeout: 60000 });
 
   assert.deepEqual(errors, []);
-  console.log(`PASS chromium: Traveller pack added, four worlds imported, HUD on ${JSON.stringify(on)}, off ${JSON.stringify(off)}; sector grid on the stars (${drawn} shapes), taken off again; the pack's courier flies a voyage`);
+  console.log(`PASS chromium: Traveller pack added, four worlds and two routes imported, ${rolledNote.split(':')[0]}, HUD on ${JSON.stringify(on)}, off ${JSON.stringify(off)}; sector grid on the stars (${drawn} shapes), taken off again; the pack's courier flies a voyage`);
   await browser.close();
 } finally {
   server.kill();

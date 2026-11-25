@@ -43,7 +43,7 @@
       10.0,
       300.0
      ],
-     "description": "thermal conductivity of the liquid alloy (Pozzo et al. 2012 give about 150; Konopkova et al. 2016 about 30; until MP21's iron rows)"
+     "description": "thermal conductivity of the liquid alloy (Pozzo et al. 2012 compute about 150; Konopkova et al. 2016 measured about 30 on solid iron, so only a hint for the liquid; until MP21's iron rows)"
     },
     {
      "param": "alpha",
@@ -258,6 +258,563 @@
       "Fc": 0.01,
       "mdot": 1e-09,
       "Fd": 0.01336
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.dynamo.flow_speed",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "power",
+     "letter": "q"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    },
+    {
+     "port": "expansivity",
+     "letter": "a"
+    },
+    {
+     "port": "density",
+     "letter": "rho"
+    },
+    {
+     "port": "specific_heat",
+     "letter": "cp"
+    },
+    {
+     "port": "spin_period",
+     "letter": "P"
+    },
+    {
+     "port": "depth",
+     "letter": "D"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "speed",
+     "letter": "u"
+    },
+    {
+     "port": "local_rossby",
+     "letter": "ro"
+    }
+   ],
+   "params": [
+    {
+     "param": "coefficient",
+     "letter": "c",
+     "default": 0.85,
+     "range": [
+      0.01,
+      10.0
+     ],
+     "description": "Ro = c Ra_Q*^b: the coefficient (Christensen and Aubert 2006)"
+    },
+    {
+     "param": "slope",
+     "letter": "b",
+     "default": 0.41,
+     "range": [
+      0.2,
+      0.6
+     ],
+     "description": "Ro = c Ra_Q*^b: the power (Christensen and Aubert 2006)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "spin_period",
+     "says": "spin period"
+    },
+    {
+     "port": "depth",
+     "says": "depth"
+    },
+    {
+     "port": "density",
+     "says": "density"
+    },
+    {
+     "port": "specific_heat",
+     "says": "specific heat"
+    }
+   ],
+   "references": [
+    "Christensen, U. R. and Aubert, J. 2006, Geophysical Journal International 166, 97: scaling properties of convection-driven dynamos in rotating spherical shells; Ro = c Ra_Q*^b with Ra_Q* = (α g q / ρ c_p) / (Ω³ D²), and dynamos need Rm above about 40 to 50. doi:10.1111/j.1365-246X.2006.03009.x"
+   ],
+   "shown": "u = c Ω D (α g q / (ρ c_p Ω³ D²))^b",
+   "equation": {
+    "name": "How fast a conducting layer stirs",
+    "formula": "f = g * a * q / (rho * cp)\nw = 2 * pi / P\nra = max(f, 0) / ((w * w * w) * (D * D))\nu = c * w * D * ra ^ b\nro = u / (w * D)",
+    "inputs": {
+     "q": {
+      "kind": "interior.dynamo_heat_flux",
+      "unit": "W m-2",
+      "name": "power stirring the layer, as a flux through its top"
+     },
+     "g": {
+      "kind": "layer.gravity",
+      "unit": "m s-2",
+      "name": "gravity in the layer"
+     },
+     "a": {
+      "kind": "layer.thermal_expansivity",
+      "unit": "K-1",
+      "name": "thermal expansivity of its matter"
+     },
+     "rho": {
+      "kind": "interior.dynamo_density",
+      "unit": "kg m-3",
+      "name": "density of its matter"
+     },
+     "cp": {
+      "kind": "layer.specific_heat",
+      "unit": "J kg-1 K-1",
+      "name": "specific heat of its matter"
+     },
+     "P": {
+      "kind": "body.rotation_period",
+      "unit": "s",
+      "name": "spin period"
+     },
+     "D": {
+      "kind": "interior.dynamo_shell_thickness",
+      "unit": "m",
+      "name": "depth of the stirred layer"
+     },
+     "c": {
+      "kind": "model.flow_speed_coefficient",
+      "unit": "1",
+      "name": "scaling coefficient"
+     },
+     "b": {
+      "kind": "model.flow_speed_power",
+      "unit": "1",
+      "name": "scaling power"
+     }
+    },
+    "outputs": {
+     "u": {
+      "kind": "interior.dynamo_flow_speed",
+      "unit": "m s-1",
+      "name": "typical speed of the stirring flow"
+     },
+     "ro": {
+      "kind": "interior.dynamo_local_rossby",
+      "unit": "1",
+      "name": "flow speed over spin speed across the layer"
+     }
+    },
+    "source": {
+     "text": "Christensen, U. R. and Aubert, J. 2006, GJI 166, 97",
+     "doi": "10.1111/j.1365-246X.2006.03009.x",
+     "where": "the Rossby number against the flux-based Rayleigh number, over their dynamo models"
+    },
+    "explain": {
+     "curious": "Heat and sinking material churn a planet's liquid core, and its spin twists the churning into columns. Earth's core flows at about a millimetre a second, slow as a snail but fast enough, over a core three thousand kilometres deep, to make a field.",
+     "science": "Christensen and Aubert's scaling for convection in rotating shells: the flow's Rossby number u/(ΩD) is c Ra_Q*^b, where Ra_Q* is the buoyancy flux α g q /(ρ c_p) over Ω³ D². The geometric factor of their definition (outer over inner radius) is left out, so a full sphere has a finite answer. No power, no flow."
+    },
+    "examples": [
+     {
+      "q": 0.02,
+      "g": 7.0,
+      "a": 1.25e-05,
+      "rho": 11000.0,
+      "cp": 840.0,
+      "P": 86164.0,
+      "D": 2260000.0,
+      "c": 0.85,
+      "b": 0.41,
+      "u": 0.000643312681682399,
+      "ro": 3.9035491979775265e-06
+     },
+     {
+      "q": 5.4,
+      "g": 23.0,
+      "a": 1e-05,
+      "rho": 1500.0,
+      "cp": 14000.0,
+      "P": 35730.0,
+      "D": 50000000.0,
+      "c": 0.85,
+      "b": 0.41,
+      "u": 0.009667845333913372,
+      "ro": 1.0995445682176874e-06
+     },
+     {
+      "q": 0.0,
+      "g": 7.0,
+      "a": 1.25e-05,
+      "rho": 11000.0,
+      "cp": 840.0,
+      "P": 86164.0,
+      "D": 2260000.0,
+      "c": 0.85,
+      "b": 0.41,
+      "u": 0.0,
+      "ro": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.dynamo.reynolds",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "speed",
+     "letter": "u"
+    },
+    {
+     "port": "depth",
+     "letter": "D"
+    },
+    {
+     "port": "conductivity",
+     "letter": "s"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "magnetic_reynolds",
+     "letter": "rm"
+    },
+    {
+     "port": "decay_time",
+     "letter": "tau"
+    }
+   ],
+   "constants": {
+    "mu": "sheet/mu0"
+   },
+   "positive": [
+    {
+     "port": "conductivity",
+     "says": "conductivity"
+    }
+   ],
+   "references": [
+    "Christensen, U. R. and Aubert, J. 2006, Geophysical Journal International 166, 97: scaling properties of convection-driven dynamos in rotating spherical shells; Ro = c Ra_Q*^b with Ra_Q* = (α g q / ρ c_p) / (Ω³ D²), and dynamos need Rm above about 40 to 50. doi:10.1111/j.1365-246X.2006.03009.x",
+    "Moffatt, H. K. 1978, Magnetic Field Generation in Electrically Conducting Fluids, Cambridge University Press: free decay of a field in a conducting sphere, τ = D² / (π² η)"
+   ],
+   "shown": "Rm = u D μ0 σ;  τ = D² μ0 σ / π²",
+   "equation": {
+    "name": "Whether stirring outruns the leak",
+    "formula": "eta = 1 / (mu * s)\nrm = u * D / eta\ntau = (D * D) / (pi * pi * eta)",
+    "inputs": {
+     "u": {
+      "kind": "interior.dynamo_flow_speed",
+      "unit": "m s-1",
+      "name": "speed of the stirring flow"
+     },
+     "D": {
+      "kind": "interior.dynamo_shell_thickness",
+      "unit": "m",
+      "name": "depth of the layer"
+     },
+     "s": {
+      "kind": "layer.electrical_conductivity",
+      "unit": "S m-1",
+      "name": "electrical conductivity of its matter"
+     },
+     "mu": {
+      "kind": "constant.mu0",
+      "unit": "N A-2",
+      "name": "magnetic constant"
+     }
+    },
+    "outputs": {
+     "rm": {
+      "kind": "interior.magnetic_reynolds",
+      "unit": "1",
+      "name": "magnetic Reynolds number"
+     },
+     "tau": {
+      "kind": "interior.magnetic_decay_time",
+      "unit": "s",
+      "name": "time an unstirred field takes to leak away"
+     }
+    },
+    "source": {
+     "text": "Christensen, U. R. and Aubert, J. 2006, GJI 166, 97",
+     "doi": "10.1111/j.1365-246X.2006.03009.x",
+     "where": "the magnetic Reynolds number Rm = uD/η; free decay τ = D²/(π²η) after Moffatt 1978"
+    },
+    "explain": {
+     "curious": "A field in a conductor slowly leaks away unless something keeps stretching it. Liquid iron leaks slowly enough that a millimetre-a-second flow wins; salty water leaks so fast that no ocean makes its own field.",
+     "science": "The magnetic diffusivity is η = 1/(μ0 σ), from the matter's own conductivity. Rm = uD/η compares stretching with leaking; τ = D²/(π² η) is how long a field lasts with no stirring at all (Keep): thousands of years for a dead planetary core, longer than the age of the universe for a star."
+    },
+    "examples": [
+     {
+      "u": 0.001,
+      "D": 2260000.0,
+      "s": 1000000.0,
+      "rm": 2839.999760407173,
+      "tau": 650319830226.6077
+     },
+     {
+      "u": 0.01,
+      "D": 50000000.0,
+      "s": 100000.0,
+      "rm": 62831.853106353396,
+      "tau": 31830988635886.12
+     },
+     {
+      "u": 0.001,
+      "D": 100000.0,
+      "s": 5.0,
+      "rm": 0.0006283185310635339,
+      "tau": 6366.197727177223
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.dynamo.onset",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "magnetic_reynolds",
+     "letter": "rm"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "strength",
+     "letter": "s"
+    }
+   ],
+   "params": [
+    {
+     "param": "from",
+     "letter": "lo",
+     "default": 40.0,
+     "range": [
+      1.0,
+      1000.0
+     ],
+     "description": "Rm below which no dynamo runs (Christensen and Aubert 2006: about 40 to 50)"
+    },
+    {
+     "param": "to",
+     "letter": "hi",
+     "default": 60.0,
+     "range": [
+      1.0,
+      1000.0
+     ],
+     "description": "Rm above which it runs fully"
+    }
+   ],
+   "references": [
+    "Christensen, U. R. and Aubert, J. 2006, Geophysical Journal International 166, 97: scaling properties of convection-driven dynamos in rotating spherical shells; Ro = c Ra_Q*^b with Ra_Q* = (α g q / ρ c_p) / (Ω³ D²), and dynamos need Rm above about 40 to 50. doi:10.1111/j.1365-246X.2006.03009.x"
+   ],
+   "shown": "s = clamp((Rm − from) / (to − from), 0, 1)",
+   "equation": {
+    "name": "Whether a dynamo runs",
+    "formula": "s = if hi <= lo then (if rm >= lo then 1 else 0) else clamp((rm - lo) / (hi - lo), 0, 1)",
+    "inputs": {
+     "rm": {
+      "kind": "interior.magnetic_reynolds",
+      "unit": "1",
+      "name": "magnetic Reynolds number"
+     },
+     "lo": {
+      "kind": "model.dynamo_onset_from",
+      "unit": "1",
+      "name": "Rm where the dynamo starts"
+     },
+     "hi": {
+      "kind": "model.dynamo_onset_to",
+      "unit": "1",
+      "name": "Rm where it runs fully"
+     }
+    },
+    "outputs": {
+     "s": {
+      "kind": "interior.dynamo_onset",
+      "unit": "1",
+      "name": "how far the dynamo runs, 0 to 1"
+     }
+    },
+    "source": {
+     "text": "Christensen, U. R. and Aubert, J. 2006, GJI 166, 97",
+     "doi": "10.1111/j.1365-246X.2006.03009.x",
+     "where": "no self-sustained dynamos below Rm of about 40"
+    },
+    "explain": {
+     "curious": "A dynamo either runs or it does not: below a certain stirring the field dies whatever you do, above it the field grows until it pushes back on the flow.",
+     "science": "Self-sustained dynamos in rotating shells need Rm above about 40 to 50. That is a real threshold (a bifurcation), so a narrow edge is honest; its width here is the spread across simulations."
+    },
+    "examples": [
+     {
+      "rm": 10.0,
+      "lo": 40.0,
+      "hi": 60.0,
+      "s": 0
+     },
+     {
+      "rm": 50.0,
+      "lo": 40.0,
+      "hi": 60.0,
+      "s": 0.5
+     },
+     {
+      "rm": 2800.0,
+      "lo": 40.0,
+      "hi": 60.0,
+      "s": 1
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.dynamo.rossby",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "spin_period",
+     "letter": "P"
+    },
+    {
+     "port": "depth",
+     "letter": "D"
+    },
+    {
+     "port": "speed",
+     "letter": "u"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "rossby",
+     "letter": "ro"
+    },
+    {
+     "port": "factor",
+     "letter": "f"
+    }
+   ],
+   "params": [
+    {
+     "param": "saturation",
+     "letter": "sat",
+     "default": 0.13,
+     "range": [
+      0.01,
+      1.0
+     ],
+     "description": "Rossby number below which the field is saturated (Reiners et al. 2022: about 0.13)"
+    },
+    {
+     "param": "slope",
+     "letter": "k",
+     "default": 1.26,
+     "range": [
+      0.5,
+      3.0
+     ],
+     "description": "how fast the field falls above it (Reiners et al. 2022: Ro^-1.26)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "depth",
+     "says": "depth"
+    }
+   ],
+   "references": [
+    "Reiners, A. et al. 2022, A&A 662, A41: magnetism, rotation and nonthermal emission in cool stars; the average field saturates below Rossby number about 0.13 and falls as Ro^-1.26 above it. doi:10.1051/0004-6361/202243251"
+   ],
+   "shown": "Ro = P u / D;  factor = 1 below saturation, (sat / Ro)^k above",
+   "equation": {
+    "name": "Whether spin is fast enough to organise the field",
+    "formula": "ro = P * u / D\nf = if ro <= sat then 1 else (sat / ro) ^ k",
+    "inputs": {
+     "P": {
+      "kind": "body.rotation_period",
+      "unit": "s",
+      "name": "spin period"
+     },
+     "D": {
+      "kind": "interior.dynamo_shell_thickness",
+      "unit": "m",
+      "name": "depth of the stirred layer"
+     },
+     "u": {
+      "kind": "interior.dynamo_flow_speed",
+      "unit": "m s-1",
+      "name": "speed of the stirring flow"
+     },
+     "sat": {
+      "kind": "model.rossby_saturation",
+      "unit": "1",
+      "name": "saturation Rossby number"
+     },
+     "k": {
+      "kind": "model.rossby_slope",
+      "unit": "1",
+      "name": "fall above saturation"
+     }
+    },
+    "outputs": {
+     "ro": {
+      "kind": "interior.dynamo_rossby",
+      "unit": "1",
+      "name": "spin period over stirring time"
+     },
+     "f": {
+      "kind": "interior.dynamo_rossby_factor",
+      "unit": "1",
+      "name": "factor on the field from spin"
+     }
+    },
+    "source": {
+     "text": "Reiners, A. et al. 2022, A&A 662, A41",
+     "doi": "10.1051/0004-6361/202243251",
+     "where": "average fields of 292 M dwarfs against Rossby number"
+    },
+    "explain": {
+     "curious": "Spin organises a dynamo. Every planet spins fast for its slow churning, even Venus, so spin never limits a planet's field; slowly spinning stars churn fast enough that their fields weaken as they spin down.",
+     "science": "The Rossby number is the spin period over the stirring time D/u. Below about 0.13 the field is saturated; above, it falls as Ro^-1.26 (Reiners et al. 2022). One curve, so planets and stars are the same calculation."
+    },
+    "examples": [
+     {
+      "P": 86164.0,
+      "D": 2260000.0,
+      "u": 0.001,
+      "sat": 0.13,
+      "k": 1.26,
+      "ro": 3.812566371681416e-05,
+      "f": 1.0
+     },
+     {
+      "P": 2200000.0,
+      "D": 200000000.0,
+      "u": 50.0,
+      "sat": 0.13,
+      "k": 1.26,
+      "ro": 0.55,
+      "f": 0.16244697746321837
+     },
+     {
+      "P": 2200000.0,
+      "D": 200000000.0,
+      "u": 1.0,
+      "sat": 0.13,
+      "k": 1.26,
+      "ro": 0.011,
+      "f": 1.0
      }
     ]
    }

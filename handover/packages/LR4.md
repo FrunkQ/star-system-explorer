@@ -27,3 +27,8 @@ the air facts, as a landing sends `world`), and a ship marker. No golden change.
   GM's. `data-orbit-air` marks it; `run-through.e2e` waits for it.
 - Also carried: the renderer's review of LR6, the hull and the ground now share one sun and sky term
   (`sunLightOn`, `skyLightOn` in gpu-surface.ts).
+
+## LR4c: the party's ship in orbit on the table's globe (25 Nov)
+- `here()` names the party's ship with the orbit (`Shown.ship`) when it is at the focus world; `PlayerOrbit` draws it
+  as a named marker going round on a tilted ring, passing behind the world on the far side (SVG over the globe, theme
+  tokens only). A presentation drift (fudge register, "The ship in orbit on the table"). `run-through.e2e` checks it.

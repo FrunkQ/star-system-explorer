@@ -20,6 +20,8 @@
     solarDay,
     stabilityFor,
     outerWall,
+    pairOf,
+    handleValue,
     trueAnomalyFrom,
     yearsToSeconds,
     type Depth,
@@ -28,12 +30,13 @@
     type OrbitPlaced,
     type SceneSubject,
     type StabilityCheck,
-    type StripDot,
+    type PartMark, type StripDot,
     type SystemScene,
     type ViewContext,
   } from "../../../ui-contract/src/index.ts";
   import Strip from "./Strip.svelte";
   import Ring from "./Ring.svelte";
+  import Reach from "./Reach.svelte";
 
   type How = { source: "computed" | "typed"; sig?: number };
   let {
@@ -48,7 +51,9 @@
     editable,
     reading,
     dots,
+    swept = [],
     commit,
+    pause,
     ontry,
     onclose,
   }: {
@@ -64,8 +69,12 @@
     editable: boolean;
     reading?: string;
     dots: StripDot[];
+    /** The sweep's marks on the box's own strip (ED2): where it stops lasting, where a result flips. */
+    swept?: PartMark[];
     /** One set_value of `h`'s field to `si`; `shown` is what the change is called (the place now, not the epoch's angle). */
-    commit: (h: Handle, si: number, how: How, shown?: string) => Promise<string | null>;
+    commit: (h: Handle, si: number, how: How, shown?: string, at?: string) => Promise<string | null>;
+    /** The held value's exact answer on a pause (the box's own strip). */
+    pause?: (h: Handle, si: number) => Promise<string | null>;
     ontry?: () => void;
     onclose: () => void;
   } = $props();
@@ -126,6 +135,30 @@
   // kernel's stability checks; dragging stops short of it, typing may pass.
   const wall = $derived(isOrbit && checks && !ws.branch ? outerWall(checks, subject.address) : null);
 
+  // A pair (ED0, design section 10A): two orbits, the centre hidden. On either member's card the box shows both: the
+  // lighter one's orbit as "Round each other", and the heavier one's as "Together round" its host. The centre is a
+  // line of words, never a thing to pick.
+  const pair = $derived(isOrbit ? pairOf(facts, subject.address) : null);
+  const labelOf = (a: string) => scene.subjects.find((x) => x.address === a)?.label ?? a;
+  const pairParts = $derived.by(() => {
+    if (!pair) return [];
+    const out: { id: string; at: string; name: string; value: number }[] = [];
+    const sep = facts[pair.secondary]?.["orbit.semi_major_axis"];
+    const out_a = facts[pair.primary]?.["orbit.semi_major_axis"];
+    const outer = facts[pair.primary]?.["orbit.host"];
+    if (subject.address === pair.primary && typeof sep === "number") out.push({ id: "pair.each", at: pair.secondary, name: `Round each other (with ${labelOf(pair.secondary)})`, value: sep });
+    if (subject.address === pair.secondary && typeof out_a === "number" && typeof outer === "string") out.push({ id: "pair.together", at: pair.primary, name: `Together round ${labelOf(outer)}`, value: out_a });
+    return out;
+  });
+  const pairHandle = (id: string, name: string): Handle => ({ ...handle, id: `${handle.id}.${id}`, names: { curious: name, science: name }, refs: [], box: undefined });
+  const pairSays = $derived.by(() => {
+    if (!pair) return null;
+    const [p, q] = [labelOf(pair.primary), labelOf(pair.secondary)];
+    const R = facts[pair.primary]?.["body.radius"];
+    const times = typeof R === "number" && R > 0 ? pair.centre_m / R : null;
+    return `${p} and ${q} go round a point between them ${said(pair.centre_m, "length", "orbit")} from ${p}'s centre${times !== null ? `, ${sayNumber(times, 2)} times its radius` : ""}: outside ${p}, so they are drawn as a pair.`;
+  });
+
   // Chips.
   const lean = $derived(handle.box?.parts.find((p) => p.part.field === "orbit.inclination"));
   const steps = $derived.by(() => {
@@ -140,6 +173,7 @@
   const rot = $derived(num("body.rotation_period"));
   const kernelSays = $derived(resultsOf(surfaces, subject.address));
   const lockRow = RESULTS.find((r) => r.key === "locked");
+
   let chipProblem = $state<string | null>(null);
   let chipSaid = $state<string | null>(null);
   async function chip(id: string, does: string) {
@@ -168,8 +202,9 @@
   const results = $derived.by(() => {
     const out: { key: string; label: string; text: string; tone?: "warn" }[] = [];
     const a = num("orbit.semi_major_axis");
-    // On a what-if the kernel's own results are the main line's until BC1 resolves a branch: only the orbit's geometry.
-    for (const k of box.results.filter((x) => !ws.branch || x === "closest" || x === "farthest" || x === "sunlight_swing")) {
+    // On a what-if: the orbit's geometry, and the surface's results from the branch's own resolve (BC1, the card
+    // reads it); the year and the verdict are main-line ops (orbits_at, orbit_stability) that do not read a branch.
+    for (const k of box.results.filter((x) => !ws.branch || x === "closest" || x === "farthest" || x === "sunlight_swing" || x === "locked")) {
       if (k === "year" && year !== null) out.push({ key: k, label: cls === "moon" ? "Month" : "Year", text: said(year, "time", "year") });
       else if ((k === "closest" || k === "farthest") && a !== null && e > 0) out.push({ key: k, label: k === "closest" ? "Closest" : "Farthest", text: said(orbitShape(a, e)[k], "length", "orbit") });
       else if (k === "sunlight_swing" && a !== null && e > 0 && cls !== "moon") out.push({ key: k, label: "Sunlight", text: `${say(orbitShape(a, e).swing, "share", { class: cls }, { depth }).text} more at the closest point` });
@@ -190,7 +225,15 @@
 </script>
 
 <div class="box" data-box={handle.id}>
-  <Strip {handle} {reading} value={num(handle.part.field)} {dots} {cls} {depth} {editable} {ontry} walls={wall ? [wall] : []} fromTime={fromYear} oncommit={(si, how) => commit(handle, si, how)} {onclose} />
+  <Strip {handle} {reading} value={num(handle.part.field)} {dots} {cls} {depth} {editable} {ontry} marks={swept} walls={wall ? [wall] : []} fromTime={fromYear} onpause={pause ? (si) => pause(handle, si) : undefined} oncommit={(si, how) => commit(handle, si, how)} {onclose} />
+  {#if pair}
+    <div class="pair" data-pair={`${pair.primary} ${pair.secondary}`}>
+      <p class="pair-says" data-pair-says>{pairSays}</p>
+      {#each pairParts as pp (pp.id)}
+        <Strip handle={pairHandle(pp.id, pp.name)} value={pp.value} dots={[]} cls={pp.id === "pair.each" ? "moon" : cls} {depth} {editable} oncommit={(si, how) => commit(pairHandle(pp.id, pp.name), si, how, undefined, pp.at)} />
+      {/each}
+    </div>
+  {/if}
   {#if box.parts.length || box.chips.length}
     <div class="parts">
       {#each box.parts as p (p.id)}
@@ -229,7 +272,10 @@
     {/if}
     {#if chipProblem || chipSaid}<p class="chip-said" class:problem={!!chipProblem} aria-live="polite" data-chip-said>{chipProblem ?? chipSaid}</p>{/if}
   {/if}
-  {#if ws.branch && box.results.length}<p class="chip-said" data-box-branch>The year, the verdict and the tides follow once it is kept.</p>{/if}
+  {#if handle.reach?.length && !ws.branch && editable && scene.system && num(handle.part.field) !== null}
+    <Reach {ctx} system={scene.system} address={subject.address} {handle} value={handleValue(handle, mine)!} results={kernelSays} {cls} {depth} {commit} />
+  {/if}
+  {#if ws.branch && box.results.length}<p class="chip-said" data-box-branch>The year and the verdict follow once it is kept.</p>{/if}
   {#if results.length}
     <dl class="results" data-box-results>
       {#each results as r (r.key)}
@@ -240,6 +286,15 @@
 </div>
 
 <style>
+  .pair {
+    padding: 4px 0 6px;
+    border-top: var(--sse-line) solid var(--sse-rule);
+  }
+  .pair-says {
+    margin: 6px 18px 2px;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+  }
   .box {
     min-width: 0;
     background: var(--sse-ground);

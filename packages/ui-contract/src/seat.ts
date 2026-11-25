@@ -22,14 +22,43 @@ export type Shown =
       steer?: "read";
       /** The focus world's air for the "In orbit" screen (LR4b, renderer `AirFacts` with its optics), as the GM's kernel read it; a seat cannot read resolved systems. Older players ignore it. */
       air?: Json;
+      /** The party's ship circling the focus world on the "In orbit" screen (LR4c), by its name; absent: none shown. */
+      ship?: string;
+      /** The bookmark's camera (PC1 `Pose`, PC5): a screen that can frame it does, so a sent postcard looks as it was kept. Older players ignore it. */
+      pose?: Json;
       /** Words over the picture (PB6, a Read aloud with "also show on screens"): a plain card the players read. Older players ignore it. */
       say?: string;
     }
   /**
    * Nothing of any place: screens off, or a held line (Switchboard, PB1). `card` is the holding card's words, chosen on
-   * the GM's machine ("Awaiting transmission", a joke); absent or empty, the screen is blank. Older screens draw blank.
+   * the GM's machine ("Awaiting transmission", a joke, a quote); absent or empty, the screen is blank. Older screens draw blank.
    */
-  | { off: true; card?: string };
+  | {
+      off: true;
+      card?: string;
+      /** Who said it, beneath a quote (PC5, postcards design 8.4). Older screens ignore it. */
+      by?: string;
+      /** A joke or a quote is its own words (12A point 5): nothing is added at the foot. Absent: blank, plain or typed words, which may carry a waiting line. */
+      kind?: "joke" | "quote";
+      /** The picture behind the card (PC5): a postcard, as the role may see it. Absent: no ground. Older screens ignore it. */
+      ground?: HeldGround;
+    };
+
+/** A held screen's ground on the wire (PC5): the postcard's picture as data, its name, and its caption. */
+export interface HeldGround {
+  /** Which postcard, so a screen can tell a new one (a fade) from the same one again. */
+  id: string;
+  name: string;
+  /** The postcard's kept picture (a data URL); every screen draws it the same. */
+  picture: string;
+  caption?: string;
+}
+
+/** May a waiting line from the Atlas banner picker go at the foot of this held screen (12A point 5)? Only under a
+ * blank or plain card (or typed words), never under a quote or a joke: one piece of words per held screen. */
+export function waitingLineFits(s: Shown | null | undefined): boolean {
+  return !!s && "off" in s && !s.kind;
+}
 
 export interface AutoApprove {
   intent: IntentKind;
@@ -56,6 +85,13 @@ export interface Seat {
   embed_origins?: string[];
   /** A faction's name and logo shown on this seat's screens (V3 gap 25). Presentation only. */
   brand?: SeatBrand;
+  /**
+   * The interface kit the role wears (AT14, atlas design 11A.4): a kit's id ("sse.kit.hauler", or a pack's own),
+   * read with the Atlas's `resolveKit`. Absent: today's screens. A layout chosen for the role (`screens`) still wins.
+   */
+  kit?: string;
+  /** The kit's palette the role's screens use: a palette id. Absent: the kit's first, its default. */
+  palette?: string;
   /**
    * Quick overrides (V3 gap 25): the GM's live switches for this seat's screens, set from the Seats panel and sent
    * at once ("hide labels" on a wall screen). Presentation only, never saved with the campaign: player view

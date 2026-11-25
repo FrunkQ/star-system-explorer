@@ -19,6 +19,7 @@
     walls = [],
     fromTime,
     ontry,
+    onpause,
     oncommit,
     onclose,
   }: {
@@ -39,6 +40,8 @@
     fromTime?: (si: number) => number | null;
     /** Read-only on Explore: "Try changing it" opens an example what-if where the strip moves (ED7). */
     ontry?: () => void;
+    /** On a pause while held (150 ms), the exact answer for the held value, as a line of words; null for none. */
+    onpause?: (si: number) => Promise<string | null>;
     /** One change; resolves to null when it was applied, or the reason it was not. */
     oncommit: (si: number, how: { source: "computed" | "typed"; sig?: number }) => Promise<string | null>;
     /** Absent in a box, where the box closes as one. */
@@ -64,6 +67,17 @@
   let track: HTMLDivElement | undefined = $state();
 
   const shown = $derived(pencil ?? (value === null ? null : Math.abs(value)));
+  // On a pause of 150 ms while held, one exact answer (editing design section 3, point 4): the kernel resolves the held
+  // value on a scratch branch. A later move makes an answer still on its way stale; letting go clears it.
+  let pauseSaid = $state<string | null>(null);
+  $effect(() => {
+    const v = pencil;
+    pauseSaid = null;
+    if (v === null || !onpause) return;
+    let live = true;
+    const t = setTimeout(() => void onpause(sign * v).then((x) => live && pencil === v && (pauseSaid = x)), 150);
+    return () => ((live = false), clearTimeout(t));
+  });
   const said = $derived(shown === null ? null : say(shown, handle.part.kind, about, { depth, reading: read, ...(held ? { hold: held } : {}), ...(typed && pencil === null ? { source: "typed" as const, sig: typed.sig } : {}) }));
   const markPos = $derived(shown === null ? null : stripPos(domain, shown));
   // Dots in order along the line; a name is written only where it does not run into the last one written.
@@ -73,6 +87,24 @@
     for (const d of out) if (d.pos - last >= 0.1) ((d.named = true), (last = d.pos));
     return out;
   });
+
+  // The marks' words in rows under the line, so close ones do not print over each other (a sweep's tipping points can
+  // sit side by side): each label takes the first row where it clears the one before by a few pixels.
+  let trackW = $state(320);
+  const labelled = $derived.by(() => {
+    const all = [...marks, ...walls].map((m) => ({ m, wall: walls.includes(m), p: stripPos(domain, m.at) })).sort((a, b) => a.p - b.p);
+    const ends: number[] = [];
+    return all.map((x) => {
+      const w = x.m.says.length * 5.6 + 4;
+      const x0 = x.p * trackW - (x.p < 0.1 ? 0 : x.p > 0.9 ? w : w / 2);
+      let row = ends.findIndex((e) => x0 > e + 6);
+      if (row < 0) row = ends.length;
+      ends[row] = x0 + w;
+      return { ...x, row };
+    });
+  });
+  const labelTop = $derived(placed.some((d) => d.named) ? 38 : 30);
+  const labelRows = $derived(labelled.reduce((n, x) => Math.max(n, x.row + 1), 0));
 
   function posAt(e: PointerEvent): number {
     const r = track!.getBoundingClientRect();
@@ -196,6 +228,8 @@
     class="track"
     class:live={editable}
     bind:this={track}
+    bind:clientWidth={trackW}
+    style:height={labelRows > 1 || (labelRows && labelTop > 30) ? `${labelTop + labelRows * 12 + 2}px` : undefined}
     onpointerdown={down}
     onpointermove={move}
     onpointerup={up}
@@ -211,11 +245,9 @@
       <span class="dot" class:here={d.from === "here"} style="left: {d.pos * 100}%" title={`${d.label}: ${d.text}`} data-dot={d.label}></span>
       {#if d.named}<span class="dot-label" class:here={d.from === "here"} style="left: {d.pos * 100}%">{d.label}</span>{/if}
     {/each}
-    {#each [...marks, ...walls] as m (m.says)}
-      {@const wall = walls.includes(m)}
-      {@const p = stripPos(domain, m.at)}
+    {#each labelled as { m, wall, p, row } (m.says)}
       <span class="tick" class:wall style="left: {p * 100}%" data-tick={m.says}></span>
-      <span class="tick-label" class:wall style="left: {p * 100}%; transform: translateX({p < 0.1 ? 0 : p > 0.9 ? -100 : -50}%)">{m.says}</span>
+      <span class="tick-label" class:wall style="left: {p * 100}%; top: {labelTop + row * 12}px; transform: translateX({p < 0.1 ? 0 : p > 0.9 ? -100 : -50}%)">{m.says}</span>
     {/each}
     {#if markPos !== null}
       <span
@@ -237,7 +269,7 @@
     {#if problem}<span class="problem">{problem}</span>
     {:else if !editable}Where this world sits among the reference worlds.{#if ontry}
         <button type="button" class="try" data-try onclick={ontry}>Try changing it</button>{:else} Change it on the Build desk.{/if}
-    {:else if pencil !== null}Let go, or press Enter, to set it. Esc puts it back.
+    {:else if pencil !== null}{#if pauseSaid}<span class="pause" data-strip-pause>Held here: {pauseSaid}.</span>{" "}{/if}Let go, or press Enter, to set it. Esc puts it back.
     {:else}Drag along the line, use the arrow keys (Shift for bigger steps), or press the figure to type a value in any unit.{/if}
   </p>
 </div>
@@ -277,6 +309,9 @@
   .figure:disabled {
     cursor: default;
     border-bottom-color: transparent;
+    color: var(--sse-ink);
+  }
+  .pause {
     color: var(--sse-ink);
   }
   .figure.pencil {

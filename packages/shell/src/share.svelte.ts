@@ -3,7 +3,7 @@
 // shares. A room is a random id; the players' link opens players.html with it.
 // The GM serves both at once: BroadcastChannel for other windows and screens
 // of this computer, and the site's relay (worker/index.js) for other devices.
-import { BoardHistory, CardDeck, boardWire, holdingCardsOn, driveTo, emptyBoard, hold, rejoin, release, screenHello, send as boardSend, type Board } from "../../ui-contract/src/index.ts";
+import { BoardHistory, CardDeck, GROUND_TURN_MS, campaignGrounds, groundCandidates, groundTurns, holdGround, pickGround, stampFor, type Bookmark, type GroundSet, type HoldCard, boardWire, holdingCardsOn, driveTo, emptyBoard, hold, rejoin, release, screenHello, send as boardSend, type Board } from "../../ui-contract/src/index.ts";
 import { GmHost, SealedHost, sealedLink, observeOf, addSeat, updateSeat, oneLayoutPerRole, type SeatChange, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type Json, type PlayerRequest, type SeatPlan, type Session, type Shown, type PackDoc, type HoldingCard } from "../../ui-contract/src/index.ts";
 
 declare const __SSE_APP__: string;
@@ -39,6 +39,8 @@ export interface Share {
   discover(audience: Audience, address: string, known: boolean, at_yr: number): Promise<string | null>;
   /** Join links of a seat: one per screen it opens. */
   links(seatId: string): { screen: string | null; href: string }[];
+  /** Where held screens' grounds come from (PC5): the campaign's bookmarks, and the postcard sets on the stack. */
+  setGrounds(src: { bookmarks: () => readonly Bookmark[]; sets?: () => readonly GroundSet[] }): void;
 }
 
 function roomId(): string {
@@ -74,13 +76,50 @@ export async function createShare(session: Session, opening: { universe: { id: s
       sealed.set(seat.id, { room, host: new SealedHost(session, host, hubFor(room, "gm"), { seat: $state.snapshot(seat) as typeof seat, scope: "scope" in st.shown ? st.shown.scope : opening.scope, app: APP_VERSION, clock_yr: clock, data_views: opening.views() }) });
     }
   }
+  // Grounds on held screens (PC5): which postcard each role's held screens show. A campaign postcard goes only to a
+  // role that knows the place it looks at; what a role knows is asked of the kernel once and kept until the board
+  // changes or the postcards turn. Postcards in turn move on every GROUND_TURN_MS while a held card has a set.
+  let groundSrc: { bookmarks: () => readonly Bookmark[]; sets?: () => readonly GroundSet[] } | null = null;
+  let turn = 0;
+  const knownAt = new Map<string, Set<string> | "asking">();
+  const audienceFor = (role: string) => (role === "" ? "everyone" : (st.plan.seats.find((x) => x.id === role)?.audience ?? "everyone"));
+  function knows(audience: string, scope: string, about: string): boolean | null {
+    if (audience === "all") return true;
+    const k = `${audience}|${scope}`;
+    const had = knownAt.get(k);
+    if (had === "asking") return null;
+    if (had) return had.has(about) || about === scope;
+    knownAt.set(k, "asking");
+    void session
+      .scene(scope, { audience })
+      .then((r) => knownAt.set(k, new Set(r.ok ? r.scene.subjects.map((x) => x.address) : [])))
+      .catch(() => knownAt.set(k, new Set()))
+      .then(() => push());
+    return null;
+  }
+  function groundFor(card: HoldCard, role: string) {
+    if (!groundSrc) return null;
+    const list = groundCandidates(holdGround(card), { campaign: campaignGrounds(groundSrc.bookmarks(), stampFor), sets: groundSrc.sets?.() ?? [] });
+    const audience = audienceFor(role);
+    return pickGround(list, turn, (scope, about) => knows(audience, scope, about));
+  }
+  const turning = () => {
+    const b = hist.board;
+    return [b.all, ...Object.values(b.lines).map((l) => l?.held)].some((c) => c !== undefined && groundTurns(holdGround(c)));
+  };
+  setInterval(() => {
+    if (!turning()) return;
+    turn += 1;
+    knownAt.clear();
+    push();
+  }, GROUND_TURN_MS);
   // The board goes out as the Shown players' screens already read: the table's, a seat's own when its role has a line
   // of its own, and each known screen's own. Sealed seats get theirs built on this machine (a held one gets nothing).
   function push() {
     const b = hist.board;
     const plan = $state.snapshot(st.plan) as SeatPlan;
     deck.settle(b);
-    const wire = boardWire(b, plan.seats.map((x) => x.id), (c) => deck.words(c));
+    const wire = boardWire(b, plan.seats.map((x) => x.id), (c) => deck.said(c), groundFor);
     const seats = plan.seats.map(({ shown: _old, ...rest }) => (b.lines[`role:${rest.id}`] || b.steer?.[`role:${rest.id}`] ? { ...rest, shown: wire.roles[rest.id]! } : rest));
     st.plan = { ...plan, seats };
     st.shown = wire.shown;
@@ -96,6 +135,7 @@ export async function createShare(session: Session, opening: { universe: { id: s
     push();
   };
   const act = (f: (b: Board) => Board) => {
+    knownAt.clear();
     hist.do(f(hist.board));
     push();
   };
@@ -195,6 +235,11 @@ export async function createShare(session: Session, opening: { universe: { id: s
     },
     async discover(audience, address, known, at_yr) {
       return failed(await session.send(discoverIntent(audience, address, known, observeOf(session.stack().base)?.setup.campaign.before ?? "long-range", at_yr)));
+    },
+    setGrounds(src) {
+      groundSrc = src;
+      knownAt.clear();
+      push();
     },
     links(seatId: string) {
       const seat = st.plan.seats.find((x) => x.id === seatId);

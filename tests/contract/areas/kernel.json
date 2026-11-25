@@ -1,0 +1,27 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics"]},
+ {"op": "open_universe", "id": "k13", "seed": "k13"},
+ {"op": "set_authored_batch", "occurred_at_s": 0, "edits": [{"address": "u:k13/sys:0/star:0", "field": "body.mass", "value": 1.9884e+30}, {"address": "u:k13/sys:0/body:3", "field": "body.mass", "value": 5.9722e+24}, {"address": "u:k13/sys:0/body:3", "field": "orbit.host", "value": "u:k13/sys:0/star:0"}, {"address": "u:k13/sys:0/body:3", "field": "orbit.semi_major_axis", "value": 149600000000.0}, {"address": "u:k13/sys:0/body:3", "field": "body.radius", "value": 6371000.0}, {"address": "u:k13/sys:0/body:3/body:0", "field": "body.mass", "value": 7.346e+22}, {"address": "u:k13/sys:0/body:3/body:0", "field": "orbit.host", "value": "u:k13/sys:0/body:3"}, {"address": "u:k13/sys:0/body:3/body:0", "field": "orbit.semi_major_axis", "value": 384400000.0}, {"address": "u:k13/sys:0/body:4", "field": "body.mass", "value": 6.4171e+23}, {"address": "u:k13/sys:0/body:4", "field": "orbit.host", "value": "u:k13/sys:0/star:0"}, {"address": "u:k13/sys:0/body:4", "field": "orbit.semi_major_axis", "value": 227940000000.0}]},
+ {"op": "set_authored", "edit": {"address": "u:k13/sys:0/body:3/body:0", "field": "orbit.host", "value": "u:k13/sys:0/body:3/body:0", "occurred_at_s": 10}},
+ {"op": "preview_tree", "system": "u:k13/sys:0", "at_s": 100, "edits": [{"op": "rehost", "address": "u:k13/sys:0/body:3/body:0", "to": "u:k13/sys:0/body:4", "keep": "tidy", "at_s": 100}]},
+ {"op": "rehost", "address": "u:k13/sys:0/body:3/body:0", "to": "u:k13/sys:0/star:0", "keep": "motion", "at_s": 1000000},
+ {"op": "withdraw", "address": "u:k13/sys:0/body:4", "at_s": 2000000, "others": "leave"},
+ {"op": "orbit_stability", "system": "u:k13/sys:0", "at_s": 3000000},
+ {"op": "branch", "label": "held"},
+ {"op": "resolved_system", "system": "u:k13/sys:0", "branch": "not-a-branch"},
+ {"op": "class_sample", "classes": ["heft/world", "heft/none"], "packs": [{"format": "sse.pack/1", "id": "campaign.tables", "version": "0.1.0", "kind": ["game-system"], "kernel_range": "^0.1", "licence": "Apache-2.0", "provides": {"other": {"axes": [["mass", {"field": "body.mass", "scale": "log", "span": [1e+20, 1e+32]}]], "schemes": [{"id": "heft", "question": "how heavy?"}], "classes": [{"id": "heft/world", "scheme": "heft", "kind": "base", "region": [{"axis": "mass", "core": [1e+20, 1e+28], "fringe": [1e+19, 2e+28]}], "examples": [{"name": "Edge", "values": {"body.mass": 2e+20, "body.radius": 3e+5}, "expect": "in"}, {"name": "Middle", "values": {"body.mass": 6e+24, "body.radius": 6.4e+6}, "expect": "in"}]}]}}}]},
+ {"op": "start_job", "job": {"kind": "sweep", "system": "u:k13/sys:0", "address": "u:k13/sys:0/body:3", "field": "orbit.semi_major_axis", "from": 1.0e11, "to": 2.0e11, "count": 3, "results": ["orbit.semi_major_axis"], "refine": 2}},
+ {"op": "step_job", "job": 1, "budget": 20},
+ {"op": "hold", "place": "u:k13/sys:0/body:3", "layer": "misc.claims", "key": "u:k13", "status": "holds", "audience": "everyone", "at_s": 0},
+ {"op": "who_holds", "place": "u:k13/sys:0/body:3", "layer": "misc.claims"},
+ {"op": "holdings_in", "bounds": "u:k13/sys:0", "layer": "misc.claims"},
+ {"op": "set_tech", "holder": "u:k13", "level": 4, "at_s": 0},
+ {"op": "tech_of", "holder": "u:k13"},
+ {"op": "tech_reading", "holder": "u:k13", "parts": [{"part": "structure", "needs": {}}]},
+ {"op": "expects", "system": "u:k13/sys:0", "address": "u:k13/sys:0/body:3", "fields": ["body.radius", "body.albedo"]},
+ {"op": "elements_in", "address": "u:k13/sys:0/body:3/body:0", "semi_major_axis_m": 3.844e8, "eccentricity": 0.0549, "inclination_rad": 0.0898, "ascending_node_rad": 2.18, "argument_of_periapsis_rad": 5.55, "measured_from": {"pole_lon_rad": 1.5707963267948966, "pole_lat_rad": 1.1616, "zero_lon_rad": 0.0}, "true_on_s": 0},
+ {"op": "orbit_stability", "system": "u:k15/sys:0", "bodies": [
+   {"address": "u:k15/sys:0/star:0", "facts": {"body.kind": "star", "body.mass": 1.98840987e30}},
+   {"address": "u:k15/sys:0/star:0/planet:7", "facts": {"body.kind": "planet", "orbit.host": "u:k15/sys:0/star:0", "body.mass": 1.024e26, "orbit.semi_major_axis": 4.4984e12, "orbit.eccentricity": 0.0086}},
+   {"address": "u:k15/sys:0/star:0/planet:8", "facts": {"body.kind": "planet", "orbit.host": "u:k15/sys:0/star:0", "body.mass": 1.303e22, "orbit.semi_major_axis": 5.9061e12, "orbit.eccentricity": 0.2488}}]}
+]
