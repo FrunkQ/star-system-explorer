@@ -89,6 +89,9 @@ export function addSeat(p: SeatPlan, o: { label: string; fog?: { starts_with: st
   return { ...p, audiences: audience ? [...p.audiences, audience] : p.audiences, seats: [...p.seats, seat] };
 }
 
+/** A kit's or palette's id: dotted words, as the Atlas's kits name them ("sse.kit.hauler"). */
+const KIT_ID = /^[a-z0-9][a-z0-9._-]{0,79}$/;
+
 /** What the role card changes on a seat (PB7). `null` takes a field away. Sealed is chosen when the role is made. */
 export interface SeatChange {
   label?: string;
@@ -99,6 +102,10 @@ export interface SeatChange {
   brand?: SeatBrand | null;
   /** The one layout (screen document) its screens open; null: the default player screen. */
   screen?: string | null;
+  /** The interface kit the role wears (AT14); null: none. Choosing another kit forgets the palette. */
+  kit?: string | null;
+  /** One of the kit's palettes; null: the kit's default. */
+  palette?: string | null;
 }
 
 /** Change a seat from its role card. Its own audience takes the new name too; the table keeps its id. */
@@ -120,6 +127,15 @@ export function updateSeat(p: SeatPlan, id: string, c: SeatChange): SeatPlan {
   if (c.brand !== undefined) {
     if (c.brand) n.brand = { ...c.brand };
     else delete n.brand;
+  }
+  if (c.kit !== undefined && c.kit !== (n.kit ?? null)) {
+    if (c.kit) n.kit = c.kit;
+    else delete n.kit;
+    delete n.palette;
+  }
+  if (c.palette !== undefined) {
+    if (c.palette) n.palette = c.palette;
+    else delete n.palette;
   }
   if (c.screen !== undefined) {
     if (c.screen) n.screens = [c.screen];
@@ -189,6 +205,9 @@ export function checkSeats(p: SeatPlan, ctx: { views?: string[]; screens?: strin
     for (const sc of s.screens ?? []) if (ctx.screens && !ctx.screens.includes(sc)) out.push(`seat ${s.label}: no screen ${sc}`);
     if (s.sealed && s.id === "table") out.push("the table cannot be sealed: it is the open link");
     if (s.brand) for (const b of checkBrand(s.brand)) out.push(`seat ${s.label}: ${b}`);
+    if (s.kit !== undefined && !KIT_ID.test(s.kit)) out.push(`seat ${s.label}: ${JSON.stringify(s.kit)} is not a kit id`);
+    if (s.palette !== undefined && !KIT_ID.test(s.palette)) out.push(`seat ${s.label}: ${JSON.stringify(s.palette)} is not a palette id`);
+    if (s.palette !== undefined && s.kit === undefined) out.push(`seat ${s.label}: a palette with no kit`);
     for (const o of s.embed_origins ?? []) {
       const r = embedOrigin(o);
       if (!r.ok) out.push(`seat ${s.label}: tabletop ${r.reason}`);

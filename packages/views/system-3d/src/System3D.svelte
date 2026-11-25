@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { closeMin, grazeLook, groundUnder, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
+  import { closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
   import { SYSTEM_TRUE } from "../../../renderer/src/recipes.ts";
   import { constant, SEEN_ELEVATION, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
@@ -50,6 +50,9 @@
     sky,
     long = false,
     onground,
+    oncamera,
+    aim = null,
+    onaimed,
     range = [],
   }: {
     bands?: Band3D[];
@@ -69,7 +72,7 @@
     /** True look: each world's plume facts by body id (the kernel's surface record, plumes.ts), when it has any. */
     plumes?: ReadonlyMap<string, PlumeFacts>;
     /** True look: each world's air, by body id (renderer true-air.ts `readTrueFace`): its clouds alone, drawn over its ground, and its air's rim (VP-A3, VP-A4). */
-    airs?: ReadonlyMap<string, { ground?: TrueTexture; clouds?: TrueTexture; air?: AirShape }>;
+    airs?: ReadonlyMap<string, { ground?: TrueTexture; clouds?: TrueTexture; air?: AirShape; flatten?: number }>;
     /** True look: the star's colour (its surface temperature's, as a CSS colour). */
     starColour?: string;
     /** True look: what is still being read, said under the chart. */
@@ -96,6 +99,12 @@
     long?: boolean;
     /** Close-up: the ground under the camera while it is near the world at the centre in True (null when it leaves). */
     onground?: (g: GroundView | null) => void;
+    /** PC2: the camera about the world at the centre (eye direction, radii out, field of view), for a bookmark or a
+     * postcard made here; null when the camera has slid off it or the centre is the star. */
+    oncamera?: (c: { about: string; dir: Vec3; radii: number; fov_deg: number } | null) => void;
+    /** A postcard's or bookmark's camera to go to, once the world it is about is at the centre; `onaimed` says it was taken. */
+    aim?: { about: string; dir: Vec3; radii: number } | null;
+    onaimed?: () => void;
     /** Range rings (RK12), drawn with the HUD round each holder (a body id) in this frame. */
     range?: readonly { holder: string; rings: readonly RangeRing[] }[];
   } = $props();
@@ -194,6 +203,39 @@
     groundAt = now;
     groundSent = k;
     onground(g);
+  });
+
+  // PC2: the camera kept for a bookmark or postcard made here, and a kept camera taken back (once its world is centred).
+  let cameraSent = "";
+  let aimedAt = $state("");
+  $effect(() => {
+    if (!oncamera) return;
+    const e = centreBody && pan[0] === 0 && pan[1] === 0 ? orbitEye({ yaw, pitch, dist }, centreR) : null;
+    const c = e && centreBody ? { about: centreBody.id, dir: e.dir, radii: e.radii, fov_deg: (FOV * 180) / Math.PI } : null;
+    const k = c ? `${c.about}|${c.dir.join(",")}|${c.radii}` : "";
+    if (k === cameraSent) return;
+    cameraSent = k;
+    oncamera(c);
+  });
+  $effect(() => {
+    const a = aim;
+    if (!a || !centreBody) return;
+    // Its world first comes to the centre (the frame it is drawn in), then the camera goes where it was.
+    if (a.about !== centreBody.id) {
+      if (byId(a.about)) untrack(() => ((flying += 1), (frame = a.about)));
+      return;
+    }
+    if (!(centreR > 0)) return;
+    untrack(() => {
+      flying += 1;
+      const o = orbitOf(a.dir, a.radii, centreR);
+      yaw = o.yaw;
+      pitch = o.pitch;
+      dist = Math.min(MAX, Math.max(MIN, o.dist));
+      pan = [0, 0];
+      aimedAt = a.about;
+      onaimed?.();
+    });
   });
 
   function enter(id: string) {
@@ -580,7 +622,7 @@
             const pf = visible ? plumes.get(b.id) : undefined;
             const toLight = lightOf(b);
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}) });
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}) };
           });
         // The controller's settings: moving, the placed tier's; on a sharpening frame, the still passes at full size.
@@ -634,6 +676,9 @@
           quality = `${st.tier}|${st.level}|${st.rest}|${st.rest_frames}`;
           untrack(() => restLater(performance.now()));
         }
+        // PC2: each True frame is offered to a still being taken (photograph-view.ts), in the same task as the draw so
+        // the canvas still holds it; how sharp it is goes with it.
+        untrack(() => host)?.dispatchEvent(new CustomEvent("sse-frame", { bubbles: true, detail: { canvas, rest: r ? r.status().rest : "sharp", backend: gpu.backend } }));
         return;
       }
       gpu.draw({
@@ -817,6 +862,7 @@
 <div
   class="s3d"
   bind:this={host}
+  data-aimed={aimedAt || undefined}
   bind:clientWidth={w}
   bind:clientHeight={h}
   role="application"

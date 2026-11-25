@@ -29,7 +29,7 @@
   import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
   import { listedTitle, namesInLayer, relabel, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
-  import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
+  import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, baseBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
   import type { OracHost } from "../../agents/src/OracTab.svelte";
   import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
@@ -44,6 +44,11 @@
   import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
   import { templateTarget, triggerEntries, triggerTarget } from "../../agents/src/orac-triggers.ts";
   import { placeEntries, revealTarget } from "../../agents/src/orac-known.ts";
+  import { atlasEntries, editionTarget, kitTarget, noteSetTarget, sessionAtlasHost } from "../../agents/src/orac-atlas.ts";
+  import guideVocab from "./documents/vocab.guide.json";
+  import { ATLAS_LOOKS } from "./atlas/screens.atlas.ts";
+  import { ATLAS_CONTROLS } from "../../views/atlas/src/controls.ts";
+  import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -69,6 +74,9 @@
   import symbolsDoc from "./documents/symbols.gm.json";
   import bodyDoc from "./documents/body.gm.json";
   import compareDoc from "./documents/compare.gm.json";
+  import { POSTCARD_SCREENS } from "./postcards/screens.postcards.svelte.ts";
+  import { visit, openOwn, GO_BOOKMARK_EVENT, PASTE_CLIP_EVENT } from "./postcards/visits.svelte.ts";
+  import { checkPostcard, looksLikePostcard, readPostcard, postcardBlocker, isPostcard, fixDate } from "../../ui-contract/src/index.ts";
   import lifeDoc from "./documents/life.gm.json";
   import stylesScreenDoc from "./documents/styles.gm.json";
   import routeDoc from "./documents/route.gm.json";
@@ -123,7 +131,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -228,7 +236,17 @@
     if (ws.screen !== "switchboard") lastInstrument = ws.screen;
   });
   const instrumentNow = () => (ws.screen === "switchboard" ? lastInstrument : ws.screen);
-  const whereabouts = (): Whereabouts => ({ scope: scene.system, now_yr: ws.now_yr, instrument: instrumentNow(), scale: railScale, ...(ws.view ? { view: ws.view } : {}), selected: ws.selection });
+  // The camera goes on the bookmark only while the view that keeps it is in front (PC1).
+  const cameraNow = () => (ws.camera && ws.screen !== "switchboard" ? ws.camera : instrumentNow() === lastCameraScreen ? lastCamera : null);
+  let lastCamera: Whereabouts["pose"] = null;
+  let lastCameraScreen = "";
+  $effect(() => {
+    if (ws.screen !== "switchboard") {
+      lastCamera = ws.camera ?? null;
+      lastCameraScreen = ws.screen;
+    }
+  });
+  const whereabouts = (): Whereabouts => ({ scope: scene.system, now_yr: ws.now_yr, instrument: instrumentNow(), scale: railScale, ...(ws.view ? { view: ws.view } : {}), selected: ws.selection, pose: cameraNow() });
   function markHere(): Bookmark {
     const words = SCREENS[instrumentNow()]?.label ?? instrumentNow();
     return makeBookmark(ws.bookmarks ?? [], whereabouts(), railScale === "world" || railScale === "system" ? (selName ?? scene.title) : scene.title, String(words));
@@ -240,7 +258,56 @@
     ws.screen = b.instrument;
     if (b.at_yr !== null) ws.now_yr = b.at_yr;
     if (b.view) setView({ ...b.view, framed: (ws.view?.framed ?? 0) + 1 });
+    ws.aim = b.pose ?? null;
   }
+  // Postcards (PC3, PC4): the wall's Go there and Keep this system, and a postcard opened from outside as a visit.
+  $effect(() => {
+    const go = (e: Event) => {
+      const r = checkPostcard({ schema: "sse.postcard/1", id: "go", name: "go", bookmark: (e as CustomEvent<unknown>).detail, world: { how: "here" } });
+      if (r.ok) goBookmark(r.postcard.bookmark);
+    };
+    const paste = (e: Event) => {
+      const t = (e as CustomEvent<unknown>).detail;
+      if (typeof t !== "string") return;
+      if (desk !== "build") chooseDesk("build");
+      pasteText(t);
+    };
+    window.addEventListener(GO_BOOKMARK_EVENT, go);
+    window.addEventListener(PASTE_CLIP_EVENT, paste);
+    return () => {
+      window.removeEventListener(GO_BOOKMARK_EVENT, go);
+      window.removeEventListener(PASTE_CLIP_EVENT, paste);
+    };
+  });
+  // "Make a postcard" on a Bookmarks row (PC5): the bookmark's date is fixed and the wall opens on it.
+  function makePostcard(b: Bookmark): string | null {
+    const why = postcardBlocker(b);
+    if (why) return why;
+    if (!isPostcard(b)) ws.bookmarks = (ws.bookmarks ?? []).map((x) => (x.id === b.id ? fixDate(x, ws.now_yr) : x));
+    openOwn(b.id);
+    ws.screen = "postcards";
+    return null;
+  }
+  function openPostcard(text: string): boolean {
+    const r = readPostcard(text);
+    if (!r.ok) {
+      clipNote = r.why;
+      return false;
+    }
+    visit(r.postcard);
+    ws.screen = "postcards";
+    return true;
+  }
+  // A postcard link (`#postcard=…`) opens as a visit once the session is up; the address bar then drops it.
+  const linkedPostcard = typeof location === "undefined" || !/[#&]postcard=/.test(location.hash) ? null : location.hash;
+  let postcardTaken = false;
+  $effect(() => {
+    if (!session || postcardTaken || !linkedPostcard) return;
+    postcardTaken = true;
+    untrack(() => {
+      if (openPostcard(linkedPostcard)) history.replaceState(history.state, "", location.pathname + location.search);
+    });
+  });
   let moreOpen = $state(false);
   // The performance readout (PF1): off by default, remembered per device.
   let perfOn = $state(loadPref("perf.readout") === "on");
@@ -309,6 +376,8 @@
       const reopened = await reopenKept(s);
       const packs = [...opened, ...s.stack().added, ...(s.stack().campaign ? [s.stack().campaign] : [])];
       share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.campaign_now_yr ?? ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
+      // Grounds on held screens (PC5): the campaign's postcards; the packs' sets join with PC6.
+      share.setGrounds({ bookmarks: () => ws.bookmarks ?? [] });
       // The player-facing facts the GM has recorded, entered when a fresh campaign opens (a reopened one has them).
       if (!reopened) {
         const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
@@ -489,6 +558,10 @@
     if (!o) return;
     const k = o.sniffed.kind;
     if (k === "v4-campaign") return reopenOffered();
+    if (k === "v4-postcard") {
+      campaignDialog?.close();
+      return void openPostcard(o.text);
+    }
     if (k === "v4-clip") {
       campaignDialog?.close();
       if (desk !== "build") chooseDesk("build");
@@ -681,7 +754,7 @@
   // Band (one set of controls, Alex 23 Nov): chosen in the view controls; the Light panel paints within it. A choice
   // kept before the Band switch takes its band from the light it kept.
   if (ws.view && !ws.view.band) ws.view = { ...ws.view, band: recipeBand(LIGHT_RECIPES.find((r) => r.id === lightId)) };
-  const band = $derived<ViewBand>(ws.view?.band ?? "visible");
+  const band = $derived<ViewBand>(baseBand(ws.view));
   const lastLight: Partial<Record<ViewBand, string>> = {};
   $effect(() => {
     const b = band;
@@ -1125,7 +1198,7 @@
     ws.screen = "system";
     showSystem(SOL);
   }
-  let startOpen = $state(typeof location !== "undefined" && !parsePlaceHash(location.hash) && loadPref("start") !== "skip");
+  let startOpen = $state(typeof location !== "undefined" && !parsePlaceHash(location.hash) && !/[#&]postcard=/.test(location.hash) && loadPref("start") !== "skip");
   const keptSave = readStored(`u:${base.universe.id}`).save;
   const carryOn = keptSave ? { title: keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
   /** A world for the world instruments when none is selected: the selected body's world, else the first planet. */
@@ -1180,6 +1253,7 @@
     const s = session;
     if (!s || !oracMay(s.seat)) return undefined;
     const places = () => scene.subjects.map((x) => ({ address: x.address, name: x.label }));
+    const atlasHost = sessionAtlasHost(s, ws, { looks: () => ATLAS_LOOKS.map((t) => t.id), vocabs: { plain: plainVocab as unknown as Vocab, guide: guideVocab as unknown as Vocab }, system: () => scene.system ?? null, parts: () => partsOf([...PLAYER_STACK, { id: "sse.view.atlas", switchable: ATLAS_CONTROLS }]) });
     const fields = () => Object.fromEntries(Object.entries(lensFields).filter(([k]) => k !== "*").map(([k, v]) => [k, v.map((f) => f.id)]));
     return {
       targets: () => [
@@ -1200,9 +1274,12 @@
         triggerTarget(s, ws),
         templateTarget(s, ws),
         revealTarget(s, ws, places),
+        editionTarget(atlasHost),
+        noteSetTarget(atlasHost),
+        kitTarget(atlasHost),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
-      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...placeEntries(places()), ...handbookEntries()],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...placeEntries(places()), ...atlasEntries(atlasHost), ...handbookEntries()],
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
@@ -1248,9 +1325,10 @@
         return r.ok ? r.result : null;
       },
       // A kept description is a narrative note in the record, for the audience it was written for (the GM sees every note).
-      keep: async (address, text, audience) => {
+      // A Guide's note (AT11) is the GM's own until revealed: written from the audience's facts, kept GM only, tagged for the Atlas's margin.
+      keep: async (address, text, audience, as = "description") => {
         if (!s.addNote) return "This session cannot write the record.";
-        const r = await s.addNote({ address, text, audience: audience === "everyone" ? "everyone" : [audience], tags: ["description"], narrative: true, at_s: yearsToSeconds(ws.now_yr) });
+        const r = await s.addNote({ address, text, audience: as === "guide-note" ? "gm" : audience === "everyone" ? "everyone" : [audience], tags: [as], narrative: true, at_s: yearsToSeconds(ws.now_yr) });
         return r.ok ? null : r.message;
       },
     };
@@ -1340,6 +1418,10 @@
     const t = e.target as HTMLElement;
     if (t.closest?.("input, textarea, select, dialog")) return;
     const text = e.clipboardData?.getData("text/plain") ?? "";
+    if (looksLikePostcard(text)) {
+      e.preventDefault();
+      return void openPostcard(text);
+    }
     const r = readClip(text);
     if (!r.ok && !r.v3 && desk !== "build") return;
     e.preventDefault();
@@ -1741,7 +1823,7 @@
         {cutBody}
         openKeys={() => openHelp("keys")}
       >
-        {#snippet extraTools()}<Bookmarks list={ws.bookmarks ?? []} scope={scene.system} mark={markHere} where={whereabouts} go={goBookmark} onchange={(next) => (ws.bookmarks = next)} />{/snippet}
+        {#snippet extraTools()}<Bookmarks list={ws.bookmarks ?? []} scope={scene.system} mark={markHere} where={whereabouts} go={goBookmark} onchange={(next) => (ws.bookmarks = next)} postcard={makePostcard} />{/snippet}
       </Stage>
       {/key}
     </div>
@@ -1869,6 +1951,8 @@
         {:else if offered}
           <p role="alert" data-offered-problem>{offered.name} cannot be opened here: {offered.problems.join("; ")}.</p>
         {/if}
+      {:else if given.sniffed.kind === "v4-postcard"}
+        <p class="row"><button type="button" data-open-postcard onclick={openOpened}>Open the postcard</button></p>
       {:else if given.sniffed.kind === "v4-clip"}
         <p class="row"><button type="button" onclick={openOpened}>Paste it on the chart</button></p>
       {:else if given.sniffed.kind === "v3-save"}

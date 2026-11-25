@@ -43,6 +43,12 @@ import {
   meets,
   checkNoteSet,
   withVoice,
+  withSources,
+  firstSentence,
+  cardFieldsOf,
+  withGmCopy,
+  tableKnows,
+  PENCIL_TEXT,
   type AtlasPage,
   type EditionDoc,
 } from "../src/atlas/index.ts";
@@ -536,4 +542,112 @@ test("quotes (PC7): someone's words with who said it and where; the base set is 
   // The hold screen's pick carries the speaker and source with the words.
   const hold = pickBanners(after, null, "holding", [SPACE_QUOTES], { vocab, depth: "curious" as const });
   assert.ok(hold.top?.by && hold.top.text);
+});
+
+// ---- AT8: every number keeps its Why (design section 8).
+test("How we know: endnotes mark each figure in reading order, the notes end the page, a seat's note is its own figure's", () => {
+  const p = page(after, TARN);
+  const asked: string[] = [];
+  const how = (a: string, field: string) => (asked.push(`${a}|${field}`), { source: "Orbital survey, given to the table", reason: "Mass comes from the moons' orbits.", cite: "Kepler 1619" });
+  const s = withSources(p, survey, how, { depth: "science" });
+  const rows = s.blocks.flatMap((b) => (b.type === "facts" ? b.rows : []));
+  const marked = rows.filter((r) => r.mark);
+  assert.ok(marked.length > 0, "the Survey atlas marks its figures");
+  assert.deepEqual(marked.map((r) => r.mark), marked.map((_, i) => i + 1), "marks run from 1 in reading order");
+  for (const r of rows) assert.equal(!!r.mark, r.state !== "gap" && !!r.figure, `${r.field}: every figure is marked and nothing else`);
+  const notes = s.blocks.find((b) => b.type === "sources");
+  assert.ok(notes && notes.type === "sources");
+  assert.equal(notes.title, "How we know");
+  assert.equal(notes.notes.length, marked.length, "every marked figure has a note");
+  assert.equal(notes.notes[0]!.cite, "Kepler 1619");
+  // Asked only of figures on the audience's own page: nothing the page does not already show.
+  for (const k of asked) assert.ok(marked.some((r) => k === `${TARN}|${r.field}`), `asked ${k}`);
+  // The same figures as before: marks add a note, never change a value.
+  assert.deepEqual(rows.map((r) => r.text), p.blocks.flatMap((b) => (b.type === "facts" ? b.rows.map((r) => r.text) : [])));
+  // Curious leaves the citation off; the reasoning stays.
+  const c = withSources(p, survey, how, { depth: "curious" }).blocks.find((b) => b.type === "sources");
+  assert.ok(c && c.type === "sources" && !c.notes[0]!.cite && c.notes[0]!.reason);
+  // Before the margin, which keeps the side column.
+  const withSide = withSources(withMargin(p, after, resolveEdition("sse.edition.guide"), SHIPPED_NOTE_SETS, opts), survey, how);
+  const order = withSide.blocks.map((b) => b.type);
+  if (order.includes("margin")) assert.ok(order.indexOf("sources") < order.indexOf("margin"));
+});
+
+test("How we know: Company prints a Source line under each facts section, the Guide prints none, and text and HTML carry them", () => {
+  const how = () => ({ source: "Bought chart" });
+  const company = resolveEdition("sse.edition.company");
+  const c = withSources(page(after, TARN, company), company, how);
+  const facts = c.blocks.filter((b) => b.type === "facts");
+  assert.ok(facts.length && facts.every((b) => b.type === "facts" && (b.source === "Source: Bought chart" || !b.rows.some((r) => r.figure))));
+  assert.ok(!c.blocks.some((b) => b.type === "sources"));
+  const guide = resolveEdition("sse.edition.guide");
+  const g = page(after, TARN, guide);
+  assert.equal(withSources(g, guide, how), g, "off adds nothing");
+  const s = withSources(page(after, TARN), survey, () => ({ source: "Orbital survey", reason: "Weighed by its moons." }));
+  const txt = pageText(s);
+  assert.match(txt, /HOW WE KNOW\n {2}\[1\] [^.]+\. Orbital survey\. Weighed by its moons\./);
+  assert.match(txt, /: [^\n]+ \[1\]\n/);
+  assert.match(pageText(s, { markdown: true }), /\[\^1\]: \*\*/);
+  const html = atlasHtml([s], { title: "t" });
+  assert.match(html, /<sup class="mark">1<\/sup>/);
+  assert.match(html, /<section class="sources"><h2>How we know<\/h2><ol><li value="1">/);
+  assert.match(pageText(c), /Source: Bought chart/);
+});
+
+test("firstSentence keeps one line of reasoning", () => {
+  assert.equal(firstSentence("Stars brighten slowly. The young Sun was faint."), "Stars brighten slowly.");
+  assert.equal(firstSentence("No full stop"), "No full stop");
+});
+
+test("every figure field has its card lines, itself first or the card's display name", () => {
+  for (const f of Object.keys(FIGURE_FIELDS)) assert.ok(cardFieldsOf(f).length >= 1, f);
+  assert.deepEqual(cardFieldsOf("orbit.period_s"), ["orbit.period_s", "year_d"]);
+  assert.deepEqual(cardFieldsOf("ocean.fraction"), ["ocean.fraction"]);
+});
+
+// ---- AT10: the GM's own copy (design section 5).
+test("the GM's copy: what the table has not been told is in pencil, and only on the GM's copy", () => {
+  const gm: PlayerScene = { ...after, audience: "gm" };
+  const p = buildPage(gm, TARN, survey, opts)!;
+  const c = withGmCopy(p, "gm", survey, { vocab, table: before });
+  const rows = c.blocks.flatMap((b) => (b.type === "facts" ? b.rows : []));
+  const tarnBefore = before.subjects.find((s) => s.address === TARN)!;
+  for (const r of rows) assert.equal(!!r.pencil, r.state !== "gap" && !tableKnows(before, TARN, r.field, vocab), `${r.field}: pencil exactly where the table has a gap`);
+  assert.ok(rows.some((r) => r.pencil), "the table knows less of Tarn before the survey");
+  assert.ok(rows.some((r) => !r.pencil), "and what it knows stays in ink");
+  assert.ok(tarnBefore);
+  assert.ok(c.blocks.some((b) => b.type === "note" && b.pencil), "the page says once what pencil means");
+  // Same words and figures: pencil only marks them.
+  assert.deepEqual(rows.map((r) => r.text), p.blocks.flatMap((b) => (b.type === "facts" ? b.rows.map((r) => r.text) : [])));
+  // The table told everything: nothing in pencil, nothing added.
+  assert.equal(withGmCopy(p, "gm", survey, { vocab, table: after }), p);
+  // Never on anyone else's copy, and nothing before the table's scene is read.
+  const t = page(after, TARN);
+  assert.equal(withGmCopy(t, "everyone", survey, { vocab, table: before, gmNotes: ["the cult hides here"] }), t);
+  assert.equal(withGmCopy(p, "gm", survey, { vocab, table: null }), p);
+});
+
+test("the GM's copy: a place the table does not know is pencilled whole; GM notes print in their section; text and HTML carry both", () => {
+  const gm: PlayerScene = { ...after, audience: "gm" };
+  const table: PlayerScene = { ...before, subjects: before.subjects.filter((s) => s.address !== TARN) };
+  const c = withGmCopy(buildPage(gm, TARN, survey, opts)!, "gm", survey, { vocab, table, gmNotes: ["The cult hides here.", "  "] });
+  const title = c.blocks.find((b) => b.type === "title");
+  assert.ok(title && title.type === "title" && title.pencil);
+  assert.ok(c.blocks.some((b) => b.type === "note" && /does not know this place/.test(b.text)));
+  const notes = c.blocks.find((b) => b.type === "gmnotes");
+  assert.ok(notes && notes.type === "gmnotes");
+  assert.deepEqual(notes.lines, ["The cult hides here."], "blank notes are dropped");
+  const txt = pageText(c);
+  assert.match(txt, /GM NOTES\n {2}The cult hides here\./);
+  assert.ok(txt.includes(PENCIL_TEXT));
+  const html = atlasHtml([c], { title: "t" });
+  assert.match(html, /<h1 class="pencil">Tarn<\/h1>/);
+  assert.match(html, /<dd class="pencil">/);
+  assert.match(html, /<section class="gmnotes"><h2>GM notes<\/h2><p>The cult hides here\.<\/p><\/section>/);
+  // The system page's table pencils the cells of a world the table has not been told.
+  const sys = withGmCopy(buildPage(gm, SYS, survey, opts)!, "gm", survey, { vocab, table });
+  const tab = sys.blocks.find((b) => b.type === "table");
+  assert.ok(tab && tab.type === "table");
+  assert.ok(tab.rows.find((r) => r.link === TARN)!.cells.every((x) => x.pencil), "Tarn's row is in pencil");
+  assert.ok(tab.rows.filter((r) => r.link !== TARN).every((r) => r.cells.every((x) => !x.pencil)), "the others are in ink");
 });

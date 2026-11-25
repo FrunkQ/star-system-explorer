@@ -14,6 +14,7 @@
   import Reach from "./Reach.svelte";
   import AirBox from "./AirBox.svelte";
   import Sheet from "./Sheet.svelte";
+  import CouldBe from "./CouldBe.svelte";
 
   let { ctx, scene, subject }: { ctx: ViewContext; scene: SystemScene; subject: SceneSubject } = $props();
 
@@ -201,6 +202,9 @@
       </button>
     {/if}
   </div>
+  {#if on === "world" && editable && !ws.branch && scene.system}
+    <CouldBe {ctx} system={scene.system} address={subject.address} facts={mine} results={resultsOf(surfaces, subject.address)} {cls} {depth} commit={(h, si, how, shown) => commit(h, si, how, shown)} />
+  {/if}
   <!-- On a phone the open strip docks across the full width above the time ruler, with the verdict over it (design
        section 15, "Phone"). -->
   <div class="dock" data-dock class:docked={open !== null || followed !== null}>

@@ -504,9 +504,10 @@ TL_DM = {
 SOCIAL = {
     "id": "traveller.social",
     "label": "Roll the social codes",
-    "about": "Starport, government, law, tech level and bases for a world the physics cannot decide, rolled from the universe's seed (the same on every device). GM only; a code set by hand is kept; every rolled code can be overruled.",
+    "about": "Starport, government, law, tech level and bases for a world the physics cannot decide, rolled from the universe's seed (the same on every device). GM only; a code already set (by hand, or by an imported profile, bases included) is kept; every rolled code can be overruled.",
     "sheet": "traveller.world",
     "source": CEPHEUS_WORLDS,
+    "decided_by": "provenance.code",
     "steps": [
         {"id": "government", "label": "Government", "dice": 2, "plus": -7, "add": ["population"], "zero_when": UNINHABITED, "min": 0, "max": 15},
         {"id": "law", "label": "Law level", "dice": 2, "plus": -7, "add": ["government"], "zero_when": [when("government", 0)], "min": 0, "max": 18},

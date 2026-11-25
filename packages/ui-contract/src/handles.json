@@ -167,7 +167,8 @@
     ]
    },
    "reach": [
-    "t_surface_now_k"
+    "t_surface_now_k",
+    "locked"
    ]
   },
   {
@@ -469,6 +470,44 @@
    "label": "Day",
    "yes": "locked to its star",
    "no": "turns freely"
+  }
+ ],
+ "could_be": [
+  {
+   "id": "field",
+   "label": "have a field of its own",
+   "test": {
+    "result": "core.dynamo_now",
+    "is": true
+   },
+   "by": [
+    "mass",
+    "orbit"
+   ]
+  },
+  {
+   "id": "locked",
+   "label": "be locked to its star",
+   "test": {
+    "result": "locked",
+    "is": true
+   },
+   "by": [
+    "orbit",
+    "mass"
+   ]
+  },
+  {
+   "id": "unlocked",
+   "label": "turn freely",
+   "test": {
+    "result": "locked",
+    "is": false
+   },
+   "by": [
+    "orbit",
+    "mass"
+   ]
   }
  ]
 }

@@ -14,7 +14,7 @@
       "name": "Working out a system",
       "meaning": "Resolving a system and its worlds from the packs and the chronicle: what every card, chart, edit and search reads. A click must not wait on it.",
       "budget_ms": 100,
-      "sources": ["derive", "explain", "draw", "scene", "atoms", "manifest", "pack_reports", "resolved_system", "systems", "read_world_stack", "classify_preview", "history", "state_hash", "branch_state_hash", "set_authored", "set_authored_batch", "withdraw", "rehost", "preview_tree", "restore", "branch", "branch_set", "commit", "discard", "adopt", "read_reach", "dressing", "adopt_dressing", "hold_dressing", "campaign_tags", "sift"],
+      "sources": ["derive", "explain", "draw", "scene", "atoms", "manifest", "pack_reports", "resolved_system", "systems", "read_world_stack", "classify_preview", "atmosphere_advice", "history", "state_hash", "branch_state_hash", "set_authored", "set_authored_batch", "withdraw", "rehost", "preview_tree", "restore", "branch", "branch_set", "commit", "discard", "adopt", "read_reach", "dressing", "adopt_dressing", "hold_dressing", "campaign_tags", "sift"],
       "bench": ["resolve", "sift", "observe", "suite", "classify", "place"]
     },
     {
@@ -43,9 +43,10 @@
     {
       "id": "light",
       "name": "Light, spectra and the sky",
-      "meaning": "Starlight, spectra, activity, air optics, nebulae, planet finding and the sky from a world.",
+      "meaning": "Starlight, spectra, activity, air optics, nebulae, planet finding, the sky from a world and light bent by gravity.",
       "budget_ms": 300,
-      "sources": ["read_light", "detect", "read_air_optics", "light_through_gas", "effect_at_range", "read_limb", "fog_of_war", "read_bows", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"]
+      "sources": ["read_light", "detect", "read_air_optics", "light_through_gas", "effect_at_range", "read_limb", "fog_of_war", "read_bows", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"],
+      "bench": ["gravity"]
     },
     {
       "id": "matter",

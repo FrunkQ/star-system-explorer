@@ -8,9 +8,27 @@
   `data-deliver-item`, and prose and figures are marked `data-deliver-text`.
 -->
 <script lang="ts">
-  import type { AtlasPage, Block } from "../../../ui-contract/src/index.ts";
+  import type { Snippet } from "svelte";
+  import type { AtlasPage, Block, FactRow } from "../../../ui-contract/src/index.ts";
 
-  let { page, onlink, footer = "", onturnaway }: { page: AtlasPage; onlink: (address: string) => void; footer?: string; onturnaway?: (id: string) => void } = $props();
+  let {
+    page,
+    onlink,
+    footer = "",
+    onturnaway,
+    onwhy,
+    whyOpen = null,
+    whyBody,
+  }: {
+    page: AtlasPage;
+    onlink: (address: string) => void;
+    footer?: string;
+    onturnaway?: (id: string) => void;
+    /** On screen, pressing a figure opens its Why (AT8); absent on paper. */
+    onwhy?: (field: string) => void;
+    whyOpen?: string | null;
+    whyBody?: Snippet<[FactRow]>;
+  } = $props();
 
   const title = $derived(page.blocks.find((b): b is Extract<Block, { type: "title" }> => b.type === "title"));
   const plates = $derived(page.blocks.filter((b): b is Extract<Block, { type: "plate" }> => b.type === "plate"));
@@ -49,7 +67,7 @@
   {#if title}
     <header class="head" data-deliver-item>
       <p class="sub">{title.subtitle}</p>
-      <h1 id="atlas-title-{page.number}" tabindex="-1">{title.text}</h1>
+      <h1 id="atlas-title-{page.number}" tabindex="-1" class:pencil={title.pencil} data-pencil={title.pencil ? "" : undefined}>{title.text}</h1>
       {#if title.verdict}
         <details class="verdict" data-verdict>
           <summary>{title.verdict.label ? `${title.verdict.label}: ` : ""}{title.verdict.text}</summary>
@@ -71,18 +89,31 @@
             <h2>{b.title}</h2>
             <dl class="facts">
               {#each b.rows as r (r.field)}
-                <div class="row" class:gap={r.state === "gap"}>
+                <div class="row" class:gap={r.state === "gap"} class:pencil={r.pencil} data-pencil={r.pencil ? "" : undefined} title={r.pencil ? "Not told to the table" : undefined}>
                   <dt>{r.label}</dt>
                   {#if r.state === "gap" && r.bar}
                     <dd><span class="bar" role="img" aria-label="withheld from this document"></span></dd>
                   {:else if r.state === "gap"}
                     <dd class="gapwords">{r.text}</dd>
+                  {:else if onwhy && r.figure}
+                    <dd class="fig" data-deliver-text><button type="button" class="figbtn" aria-expanded={whyOpen === r.field} aria-label="{r.text}: why?" onclick={() => onwhy(r.field)}>{r.text}</button>{#if r.mark}<sup class="mark" aria-label="note {r.mark}">{r.mark}</sup>{/if}</dd>
                   {:else}
-                    <dd class="fig" data-deliver-text>{r.text}</dd>
+                    <dd class="fig" data-deliver-text>{r.text}{#if r.mark}<sup class="mark" aria-label="note {r.mark}">{r.mark}</sup>{/if}</dd>
                   {/if}
+                  {#if whyBody && whyOpen === r.field}<div class="whybox">{@render whyBody(r)}</div>{/if}
                 </div>
               {/each}
             </dl>
+            {#if b.source}<p class="source" data-atlas-source>{b.source}</p>{/if}
+          </section>
+        {:else if b.type === "sources"}
+          <section class="sources" data-deliver-item data-atlas-sources aria-label={b.title}>
+            <h2>{b.title}</h2>
+            <ol>
+              {#each b.notes as n (n.mark)}
+                <li value={n.mark}><b>{n.label}.</b> {n.source}.{#if n.reason} {n.reason}{/if}{#if n.cite} <cite>{n.cite}</cite>{/if}</li>
+              {/each}
+            </ol>
           </section>
         {:else if b.type === "table"}
           <section data-deliver-item aria-label={b.title}>
@@ -95,7 +126,7 @@
                 {#each b.rows as r (r.link)}
                   <tr>
                     {#each r.cells as c, j (j)}
-                      <td class:gap={c.state === "gap"} class:fig={j > 0 && c.state !== "gap"}>
+                      <td class:gap={c.state === "gap"} class:fig={j > 0 && c.state !== "gap"} class:pencil={c.pencil} data-pencil={c.pencil ? "" : undefined}>
                         {#if j === 0}
                           <button type="button" class="link" onclick={() => onlink(r.link)}>{c.text}</button>
                         {:else if c.bar}
@@ -118,7 +149,12 @@
             {/each}
           </section>
         {:else if b.type === "note"}
-          <p class="note" data-deliver-item>{b.text}</p>
+          <p class="note" class:pencilnote={b.pencil} data-deliver-item>{b.text}</p>
+        {:else if b.type === "gmnotes"}
+          <section class="gmnotes" data-deliver-item data-atlas-gmnotes aria-label={b.title}>
+            <h2>{b.title}</h2>
+            {#each b.lines as l, j (j)}<p data-deliver-text>{l}</p>{/each}
+          </section>
         {:else if b.type === "rule"}
           <hr data-deliver-item />
         {/if}
@@ -155,6 +191,86 @@
 </article>
 
 <style>
+  .figbtn {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline dotted color-mix(in srgb, currentColor 45%, transparent);
+    text-underline-offset: 3px;
+  }
+  .figbtn:hover,
+  .figbtn[aria-expanded="true"] {
+    text-decoration-style: solid;
+  }
+  .mark {
+    font-size: 0.7em;
+    margin-left: 2px;
+    color: var(--sse-ink-muted);
+  }
+  .whybox {
+    grid-column: 1 / -1;
+    margin: 6px 0 10px;
+  }
+  .whybox :global(.how) {
+    margin: 0 0 6px;
+  }
+  .whybox :global(.how .k) {
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .source {
+    margin: 6px 0 0;
+    font-size: 0.85em;
+    font-style: italic;
+    color: var(--sse-ink-muted);
+  }
+  /* The GM's copy (AT10): what the table has not been told, in pencil as on the chart. It prints the same way. */
+  .pencil dd,
+  td.pencil,
+  h1.pencil {
+    color: var(--sse-ink-muted);
+  }
+  .pencil dd,
+  td.pencil,
+  h1.pencil,
+  .pencil .figbtn {
+    text-decoration: underline dotted;
+    text-decoration-color: var(--sse-ink-muted);
+    text-underline-offset: 3px;
+  }
+  .pencilnote {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+  }
+  .gmnotes {
+    margin-top: 18px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--sse-accent);
+    background: color-mix(in srgb, var(--sse-accent) 6%, transparent);
+  }
+  .gmnotes p {
+    margin: 0 0 6px;
+    white-space: pre-wrap;
+  }
+  .sources {
+    margin-top: 18px;
+    padding-top: 10px;
+    border-top: 1px solid var(--sse-rule);
+    font-size: 0.85em;
+  }
+  .sources ol {
+    margin: 0;
+    padding-left: 1.6em;
+  }
+  .sources li {
+    margin: 0 0 4px;
+  }
+  .sources cite {
+    color: var(--sse-ink-muted);
+  }
   .atlas-page {
     background: var(--sse-paper, var(--sse-ground-raised));
     color: var(--sse-ink);

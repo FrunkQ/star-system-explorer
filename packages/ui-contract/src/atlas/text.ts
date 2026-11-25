@@ -2,6 +2,10 @@
 // Markdown ("Copy as text", for a chat, a forum or a virtual tabletop) and pages as one self-contained HTML file
 // ("Save page"). Pure: the words and figures are the blocks' own, so a copy says exactly what the page says.
 import type { AtlasPage, Block } from "./page.ts";
+import type { SourceNote } from "./sources.ts";
+
+/** After a line in pencil on the GM's copy (AT10): the table has not been told it. */
+export const PENCIL_TEXT = " (pencil)";
 
 /** A fixed-length bar in text: the same length whatever is behind it. */
 export const TEXT_BAR = "█████████";
@@ -14,6 +18,12 @@ export interface TextOptions {
 }
 
 const gapText = (text: string, bar: boolean | undefined, md: boolean) => (bar ? TEXT_BAR : md ? `*${text}*` : text);
+
+/** One "How we know" note: its mark, the line, how it is known, then the reasoning and its citation. */
+function noteText(n: SourceNote, md: boolean): string {
+  const rest = [n.reason, n.cite ? `(${n.cite})` : ""].filter(Boolean).join(" ");
+  return md ? `[^${n.mark}]: **${n.label}.** ${n.source}.${rest ? ` ${rest}` : ""}` : `  [${n.mark}] ${n.label}. ${n.source}.${rest ? ` ${rest}` : ""}`;
+}
 
 function blockText(b: Block, md: boolean): string[] {
   switch (b.type) {
@@ -28,13 +38,13 @@ function blockText(b: Block, md: boolean): string[] {
     case "facts": {
       const head = md ? [`## ${b.title}`] : [b.title.toUpperCase()];
       const rows = b.rows.map((r) => {
-        const v = r.state === "gap" ? gapText(r.text, r.bar, md) : r.text;
+        const v = (r.state === "gap" ? gapText(r.text, r.bar, md) : r.text) + (r.pencil ? PENCIL_TEXT : "") + (r.mark ? (md ? ` [^${r.mark}]` : ` [${r.mark}]`) : "");
         return md ? `- **${r.label}:** ${v}` : `  ${r.label}: ${v}`;
       });
-      return [...head, ...rows, ""];
+      return [...head, ...rows, ...(b.source ? [md ? `*${b.source}*` : `  ${b.source}`] : []), ""];
     }
     case "table": {
-      const cell = (c: { text: string; state: string; bar?: boolean }) => (c.state === "gap" ? gapText(c.text || "—", c.bar, md) : c.text);
+      const cell = (c: { text: string; state: string; bar?: boolean; pencil?: boolean }) => (c.state === "gap" ? gapText(c.text || "—", c.bar, md) : c.text + (c.pencil ? PENCIL_TEXT : ""));
       if (md) {
         return [`## ${b.title}`, `| ${b.columns.join(" | ")} |`, `| ${b.columns.map(() => "---").join(" | ")} |`, ...b.rows.map((r) => `| ${r.cells.map(cell).join(" | ")} |`), ""];
       }
@@ -48,6 +58,10 @@ function blockText(b: Block, md: boolean): string[] {
       return [md ? `*${b.text}*` : b.text, ""];
     case "rule":
       return [md ? "---" : "----", ""];
+    case "sources":
+      return [md ? `## ${b.title}` : b.title.toUpperCase(), ...b.notes.map((n) => noteText(n, md)), ""];
+    case "gmnotes":
+      return [md ? `## ${b.title}` : b.title.toUpperCase(), ...b.lines.map((l) => (md ? l : `  ${l}`)), ""];
     case "margin":
       return [...b.notes.map((n) => (md ? `> **${b.signature}:** *${n.text}*` : `  ${b.signature}: "${n.text}"`)), ""];
     case "letterhead": {
@@ -71,16 +85,16 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 function blockHtml(b: Block): string {
   switch (b.type) {
     case "title":
-      return `<header><p class="sub">${esc(b.subtitle)}</p><h1>${esc(b.text)}</h1>${b.verdict ? `<p class="stamp verdict" title="${esc(b.verdict.why.join("; "))}">${esc(`${b.verdict.label ? `${b.verdict.label}: ` : ""}${b.verdict.text}`)}</p>` : ""}</header>`;
+      return `<header><p class="sub">${esc(b.subtitle)}</p><h1${b.pencil ? ' class="pencil"' : ""}>${esc(b.text)}</h1>${b.verdict ? `<p class="stamp verdict" title="${esc(b.verdict.why.join("; "))}">${esc(`${b.verdict.label ? `${b.verdict.label}: ` : ""}${b.verdict.text}`)}</p>` : ""}</header>`;
     case "prose":
       return `<p class="prose">${esc(b.text)}</p>`;
     case "facts":
       return `<section><h2>${esc(b.title)}</h2><dl>${b.rows
-        .map((r) => `<div><dt>${esc(r.label)}</dt><dd${r.state === "gap" ? ' class="gap"' : ""}>${r.state === "gap" && r.bar ? '<span class="bar"></span>' : esc(r.text)}</dd></div>`)
-        .join("")}</dl></section>`;
+        .map((r) => `<div><dt>${esc(r.label)}</dt><dd${r.state === "gap" ? ' class="gap"' : r.pencil ? ' class="pencil"' : ""}>${r.state === "gap" && r.bar ? '<span class="bar"></span>' : esc(r.text)}${r.mark ? `<sup class="mark">${r.mark}</sup>` : ""}</dd></div>`)
+        .join("")}</dl>${b.source ? `<p class="source">${esc(b.source)}</p>` : ""}</section>`;
     case "table":
       return `<section><h2>${esc(b.title)}</h2><table><thead><tr>${b.columns.map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${b.rows
-        .map((r) => `<tr>${r.cells.map((c) => `<td${c.state === "gap" ? ' class="gap"' : ""}>${c.bar ? '<span class="bar short"></span>' : esc(c.text)}</td>`).join("")}</tr>`)
+        .map((r) => `<tr>${r.cells.map((c) => `<td${c.state === "gap" ? ' class="gap"' : c.pencil ? ' class="pencil"' : ""}>${c.bar ? '<span class="bar short"></span>' : esc(c.text)}</td>`).join("")}</tr>`)
         .join("")}</tbody></table></section>`;
     case "plate":
       return `<p class="plate">${esc(b.title)}: ${esc(b.names.join(", "))}</p>`;
@@ -90,6 +104,12 @@ function blockHtml(b: Block): string {
       return `<p class="note">${esc(b.text)}</p>`;
     case "rule":
       return "<hr>";
+    case "gmnotes":
+      return `<section class="gmnotes"><h2>${esc(b.title)}</h2>${b.lines.map((l) => `<p>${esc(l)}</p>`).join("")}</section>`;
+    case "sources":
+      return `<section class="sources"><h2>${esc(b.title)}</h2><ol>${b.notes
+        .map((n) => `<li value="${n.mark}"><b>${esc(n.label)}.</b> ${esc(n.source)}.${n.reason ? ` ${esc(n.reason)}` : ""}${n.cite ? ` <cite>${esc(n.cite)}</cite>` : ""}</li>`)
+        .join("")}</ol></section>`;
     case "margin":
       return `<aside class="margin">${b.notes.map((n) => `<p><span class="sig">${esc(b.signature)}</span> ${esc(n.text)}</p>`).join("")}</aside>`;
     case "letterhead":
@@ -117,7 +137,7 @@ section{break-inside:avoid}dl{margin:0}dl div{display:grid;grid-template-columns
 dt{color:var(--sse-ink-muted,#555)}dd{margin:0;font-family:var(--sse-font-mono,monospace)}.gap{font-style:italic;font-family:inherit;color:var(--sse-ink-muted,#777)}
 .bar{display:inline-block;width:9em;height:.9em;background:var(--sse-ink,#111);vertical-align:middle}.bar.short{width:4em}
 table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:.3em .5em .3em 0;border-bottom:1px solid var(--sse-rule,#ddd)}tr{break-inside:avoid}
-blockquote{margin:.4em 0;padding-left:.8em;border-left:2px solid var(--sse-accent,#a33);font-style:italic}.note,.plate,footer{font-size:.85em;color:var(--sse-ink-muted,#555)}
+blockquote{margin:.4em 0;padding-left:.8em;border-left:2px solid var(--sse-accent,#a33);font-style:italic}.note,.plate,footer,.source,.sources{font-size:.85em;color:var(--sse-ink-muted,#555)}.source{font-style:italic;margin:.4em 0 0}.mark{font-size:.7em;margin-left:2px}.sources{border-top:1px solid var(--sse-rule,#ddd);margin-top:1.4em}.pencil{color:var(--sse-ink-muted,#666);text-decoration:underline dotted;text-underline-offset:3px}.gmnotes p{white-space:pre-wrap}
 .lh{display:flex;gap:1.2em;align-items:flex-start;border-bottom:2px solid var(--lh-accent,var(--sse-ink,#111));padding-bottom:.8em;margin-bottom:1.2em;position:relative}.lh img{max-height:5em;max-width:10em}.lh .mono{display:block;width:10em;height:5em;background:var(--lh-accent,var(--sse-ink,#111));-webkit-mask:var(--logo) left center/contain no-repeat;mask:var(--logo) left center/contain no-repeat luminance}.lh pre{margin:0;font-size:.6em;line-height:1.1}
 .lhname{font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:0}.lhmotto{font-style:italic;margin:0}.lhline{margin:0;font-family:var(--sse-font-mono,monospace);font-size:.8em}
 .verdict{position:static;display:inline-block;margin:.2em 0 1em}.stamp{position:absolute;right:0;top:0;margin:0;padding:.2em .6em;border:2px solid var(--lh-accent,var(--sse-accent,#a33));color:var(--lh-accent,var(--sse-accent,#a33));font-weight:700;letter-spacing:.1em;transform:rotate(-4deg)}

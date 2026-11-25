@@ -8,6 +8,7 @@
 // left out and says so.
 import type { SceneSubject } from "./scene.ts";
 import { constant, numberOf, sheetUnitFactor, type SheetRef } from "./sheet.ts";
+import { sayNumber } from "./figures.ts";
 
 export const R_EARTH_KM = constant("R_earth_mean") / 1000;
 export const R_JUPITER_KM = constant("R_jup_mean") / 1000;
@@ -279,7 +280,7 @@ export function layoutLineup(items: readonly CompareItem[], height: number, maxW
 
 /** "11.2 × Earth", "0.27 × Earth", "9.7 × Jupiter", "764 × Sun": the most telling yardstick for a radius. */
 export function sizeWords(km: number): string {
-  const f = (x: number) => (x >= 100 ? Math.round(x).toLocaleString("en-GB") : x >= 10 ? x.toFixed(1) : x >= 0.1 ? x.toFixed(2) : x.toPrecision(2));
+  const f = (x: number) => sayNumber(x >= 100 ? Math.round(x) : x, x >= 100 ? 0 : 2, x >= 100 ? { decimals: 0 } : x >= 10 ? { decimals: 1 } : x >= 0.1 ? { decimals: 2 } : {});
   if (km >= 0.5 * R_SUN_KM) return `${f(km / R_SUN_KM)} × Sun`;
   if (km >= 2.5 * R_EARTH_KM && km < 3 * R_JUPITER_KM) return `${f(km / R_JUPITER_KM)} × Jupiter`;
   if (km >= 3 * R_JUPITER_KM) return `${f(km / R_SUN_KM)} × Sun`;
@@ -296,6 +297,6 @@ export function scaleBar(kmPerPx: number, targetPx = 120): { km: number; px: num
 }
 
 export function formatKmLength(km: number): string {
-  if (km >= 1e6) return `${(km / 1e6).toLocaleString("en-GB", { maximumFractionDigits: 2 })} million km`;
-  return `${km.toLocaleString("en-GB", { maximumFractionDigits: km < 10 ? 1 : 0 })} km`;
+  if (km >= 1e6) return `${sayNumber(km / 1e6, 0, { upTo: 2 })} million km`;
+  return `${sayNumber(km, 0, { upTo: km < 10 ? 1 : 0 })} km`;
 }

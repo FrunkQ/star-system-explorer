@@ -71,8 +71,32 @@ try {
   assert.equal(await gm.evaluate(() => document.activeElement?.closest("[data-atlas-page]") !== null), true, "focus follows the page");
 
   // The Edition switch (the GM's own, for browsing) re-dresses the same page in place: words and look change, figures do not.
-  const figures = () => gm.locator(`${live} .fig`).allInnerTexts();
+  // A figure's own words, without its note mark (AT8: the Survey atlas marks figures, the Guide and Company do not).
+  const figText = (loc) => loc.evaluateAll((els) => els.map((e) => { const c = e.cloneNode(true); c.querySelectorAll("sup").forEach((x) => x.remove()); return c.textContent.trim(); }));
+  const figures = () => figText(gm.locator(`${live} .fig`));
   const surveyFigs = await figures();
+
+  // AT8: every number keeps its Why. The Survey atlas marks each figure and ends the page with "How we know", a note
+  // for every mark; pressing a figure opens its Why, starting with how it is known.
+  const marks = await gm.locator(`${live} sup.mark`).count();
+  assert.ok(marks > 0, "the Survey atlas marks its figures");
+  assert.equal(await gm.locator(`${live} [data-atlas-sources] li`).count(), marks, "every marked figure has a note");
+  assert.match(await gm.locator(`${live} [data-atlas-sources]`).innerText(), /How we know/i);
+  await gm.locator(`${live} .figbtn`).first().click();
+  const why = gm.locator(`${live} [data-atlas-why]`);
+  await why.waitFor({ timeout: 5000 });
+  assert.match(await why.innerText(), /How we know (Worked out from the physics|Set by the GM|Resolved for this universe|From a catalogue|From a sample)\./, "the GM's Why says where the value came from");
+  await shot(gm, "atlas-why-desk");
+  await gm.locator(`${live} .figbtn`).first().click();
+  assert.equal(await why.count(), 0, "a second press closes it");
+
+  // AT10: the GM's own copy. What the table has not been told is in pencil (dotted, quieter), with one line saying so.
+  await gm.locator(`${live} [data-pencil]`).first().waitFor({ timeout: 10000 });
+  assert.ok((await gm.locator(`${live} .row[data-pencil]`).count()) > 0, "the GM's copy pencils what the table has not been told");
+  assert.ok((await gm.locator(`${live} .row:not([data-pencil]) .fig`).count()) > 0, "and keeps in ink what the table knows");
+  assert.match(await gm.locator(`${live} .pencilnote`).innerText(), /In pencil/);
+  const pencilStyle = await gm.locator(`${live} .row[data-pencil] dd`).first().evaluate((e) => getComputedStyle(e).textDecorationStyle);
+  assert.equal(pencilStyle, "dotted", "pencil is a dotted underline");
   const edition = atlas.getByRole("group", { name: "Edition" });
   await edition.getByRole("button", { name: "The Guide" }).click();
   await gm.waitForFunction(() => document.querySelector("[data-atlas-edition]")?.getAttribute("data-atlas-edition") === "sse.edition.guide");
@@ -173,7 +197,10 @@ try {
     await gm.waitForFunction((x) => window.__prints.length === x, n);
     const kept = await gm.locator(".atlas-print[data-kept-print] [data-atlas-page] h1").allInnerTexts();
     assert.deepEqual(kept, ["Tarn"], `${name}: this page prints, and only it`);
-    const keptFigs = await gm.locator(".atlas-print[data-kept-print] [data-atlas-page] .fig").allInnerTexts();
+    const keptFigs = await figText(gm.locator(".atlas-print[data-kept-print] [data-atlas-page] .fig"));
+    if (id === "survey") assert.ok((await gm.locator(".atlas-print[data-kept-print] [data-atlas-sources] li").count()) > 0, "the printed Survey page carries How we know");
+    assert.ok((await gm.locator(".atlas-print[data-kept-print] [data-pencil]").count()) > 0, `${name}: the GM's printed copy keeps its pencil`);
+    if (id === "company") assert.ok((await gm.locator(".atlas-print[data-kept-print] [data-atlas-source]").count()) > 0, "the printed Company page has its Source lines");
     assert.deepEqual(keptFigs, surveyFigs, `${name}: the printed figures are the page's own`);
     await pdf(`atlas-tarn-${id}`);
   }
@@ -241,9 +268,14 @@ try {
   // Seen by the table: their own book, never larger than the GM's, with gaps said in plain words.
   await atlas.getByRole("group", { name: "Seen by" }).getByRole("button", { name: "Everyone" }).click();
   await gm.waitForFunction(() => document.querySelector("[data-atlas-audience]")?.getAttribute("data-atlas-audience") === "everyone", null, { timeout: 10000 });
+  assert.equal(await gm.locator("[data-atlas-page] [data-pencil], [data-atlas-page] .pencilnote").count(), 0, "pencil is never on the table's copy");
   const tablePages = await contents.locator("li").count();
   assert.ok(tablePages <= gmPages, "the table's book has no page the GM's lacks");
   assert.ok((await gm.locator("[data-atlas-page] .bar").count()) > 0, "the Company edition bars what the table has not learnt");
+  // AT8: where the table knows a figure, its Source line says how the table knows; it never says how the GM does.
+  const tableFigs = await gm.locator(`${live} .figbtn`).count();
+  assert.equal(await gm.locator(`${live} [data-atlas-source]`).count() > 0, tableFigs > 0, "a Source line exactly where the table has figures");
+  for (const t of await gm.locator(`${live} [data-atlas-source]`).allInnerTexts()) assert.match(t, /^Source: .*given to the table/i, "the table's Source line says how the table knows");
   await shot(gm, "atlas-table-company-desk");
   await edition.getByRole("button", { name: "Survey atlas" }).click();
   await shot(gm, "atlas-table-desk");
