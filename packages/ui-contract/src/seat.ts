@@ -20,6 +20,8 @@ export type Shown =
       focus?: string;
       /** Read only (PB3b): the GM steers this screen; it takes no input but sound. Absent: the player's (Theirs). */
       steer?: "read";
+      /** Words over the picture (PB6, a Read aloud with "also show on screens"): a plain card the players read. Older players ignore it. */
+      say?: string;
     }
   /**
    * Nothing of any place: screens off, or a held line (Switchboard, PB1). `card` is the holding card's words, chosen on

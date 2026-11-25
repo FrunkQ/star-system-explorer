@@ -29,25 +29,38 @@ try {
   const popup = context.waitForEvent("page", { timeout: 3000 }).catch(() => null);
   await gm.getByRole("button", { name: "Share with players" }).click();
   (await popup)?.close();
-  await gm.getByRole("button", { name: "More seats" }).click();
-  const panel = gm.getByRole("dialog", { name: "Seats" });
-  // A wildcard is refused at the form, with the reason.
-  await panel.getByLabel("Name", { exact: true }).fill("Wall");
-  await panel.getByLabel("Fog of war", { exact: false }).uncheck();
-  await panel.getByLabel("Tabletops it may sit inside").fill("https://*.example.com");
-  await panel.getByRole("button", { name: "Add seat" }).click();
-  assert.match(await panel.getByRole("alert").innerText(), /no wildcards/);
-  await panel.getByLabel("Tabletops it may sit inside").fill(tabletop);
-  await panel.getByRole("button", { name: "Add seat" }).click();
-  await panel.locator("[data-seat-embed='wall']").waitFor();
-  const wall = await panel.locator("[data-seat-embed='wall']").getAttribute("href");
+  // Roles are made on the Switchboard's role card (PB7). A wildcard is refused at the card, with the reason.
+  await gm.locator("[data-roles]").click();
+  await gm.locator("[data-switchboard]").waitFor();
+  const addRole = async (name, more) => {
+    if (!(await gm.locator("[data-role-card='new']").count())) await gm.locator("[data-add-role]").click();
+    const card = gm.locator("[data-role-card='new']");
+    await card.locator("[data-role-name]").fill(name);
+    await card.locator("[data-role-knows]").selectOption("own");
+    if (!(await card.locator("details").evaluate((d) => d.open))) await card.locator("summary").click();
+    await more(card);
+    await card.locator("[data-role-add]").click();
+    return card;
+  };
+  const first = await addRole("Wall", (c) => c.locator("[data-role-tabletops]").fill("https://*.example.com"));
+  assert.match(await first.getByRole("alert").innerText(), /no wildcards/);
+  await addRole("Wall", (c) => c.locator("[data-role-tabletops]").fill(tabletop));
+  const open = async (id) => {
+    await gm.locator(`[data-role-open='${id}']`).click();
+    const c = gm.locator(`[data-role-card='${id}']`);
+    await c.waitFor();
+    return c;
+  };
+  const wallCard = await open("wall");
+  const wall = await wallCard.locator("[data-seat-embed='wall']").getAttribute("href");
   assert.match(wall, /seat=wall&embed=1$/);
-  await panel.getByLabel("Name", { exact: true }).fill("Crew");
-  // V3 gap 25: a brand on the seat's screens.
-  await panel.getByLabel("Brand on its screens").fill("Vesh Navy");
-  await panel.getByRole("button", { name: "Add seat" }).click();
+  await wallCard.locator("[data-role-card-close]").click();
+  // V3 gap 25: a brand on the role's screens.
+  await addRole("Crew", (c) => c.locator("[data-role-brand]").fill("Vesh Navy"));
+  const panel = await open("crew");
   await panel.locator("[data-seat-link='crew']").waitFor();
   const crew = `${await panel.locator("[data-seat-link='crew']").getAttribute("href")}&embed=1`;
+  await panel.locator("summary").click();
 
   // The crew's own page (not framed) wears the brand.
   const crewPage = await context.newPage();

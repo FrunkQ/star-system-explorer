@@ -21,8 +21,10 @@ use sse_core::quantity::consts::{DAY, JULIAN_YEAR};
 use sse_flow::Reference;
 
 mod belts;
+pub mod glow;
 mod sol;
 pub use belts::{BeltDose, BeltGap, BeltSettings, BeltShell, Belts, ShieldData};
+pub use glow::{AirLevel, Emission, GasShare, Glow, UpperAir};
 pub use sol::{solar_system, MeasuredField, SolField, WindField};
 pub use sse_atoms::belts::Electron;
 
@@ -117,6 +119,13 @@ pub struct Body {
     /// gaps in the belts.
     #[serde(default)]
     pub moons: Vec<MoonOrbit>,
+    /// Time for one turn, s (0 if unknown): the spin-driven oval's power.
+    #[serde(default)]
+    pub spin_period_s: f64,
+    /// The high air where aurorae glow: its gases and density profile.
+    /// Without it an oval has a place and a power but no lines.
+    #[serde(default)]
+    pub upper_air: Option<UpperAir>,
     /// Outer edge of rings dense enough to absorb trapped particles, m (0: none).
     #[serde(default)]
     pub rings_outer_m: f64,
@@ -153,6 +162,8 @@ pub struct Settings {
     pub muon_share: f64,
     /// MF7 part 2: radiation belts.
     pub belts: BeltSettings,
+    /// MF9 part 2b: the energy of the electrons each driver rains in.
+    pub aurora: AuroraSettings,
     /// Electron mass, charge and ε₀, read from the master data sheet by the
     /// caller; without them no belts are computed.
     #[serde(skip)]
@@ -173,7 +184,27 @@ impl Default for Settings {
             lambda_mu_kg_m2: 6000.0,
             muon_share: 0.0045,
             belts: BeltSettings::default(),
+            aurora: AuroraSettings::default(),
             electron: None,
+        }
+    }
+}
+
+/// The falling electrons' energy, eV, for each driver of aurorae.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AuroraSettings {
+    /// A wind-driven arc: a few to about ten keV (Evans 1974).
+    pub wind_electron_ev: f64,
+    /// A giant's spin-driven main oval: tens of keV (Gustin et al. 2004).
+    pub spin_electron_ev: f64,
+}
+
+impl Default for AuroraSettings {
+    fn default() -> Self {
+        AuroraSettings {
+            wind_electron_ev: 8.0e3,
+            spin_electron_ev: 5.0e4,
         }
     }
 }
@@ -212,6 +243,13 @@ pub struct Oval {
     /// Nearest and furthest the oval comes to the spin equator, degrees of
     /// spin latitude (the magnetic axis is tilted).
     pub spin_latitude_range_deg: [f64; 2],
+    /// Magnetic latitudes of its equatorward and poleward edges, degrees.
+    pub edges_deg: [f64; 2],
+    /// Full width, degrees of latitude.
+    pub width_deg: f64,
+    /// Its power, lines, heights and colour (absent without a power).
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub glow: Option<Glow>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -227,6 +265,9 @@ pub struct Aurora {
     pub ovals: Vec<Oval>,
     pub footprints: Vec<Footprint>,
     pub diffuse: bool,
+    /// The diffuse glow's power, lines, heights and colour.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub diffuse_glow: Option<Glow>,
 }
 
 /// Cosmic-ray shielding: what the field turns aside and the air absorbs.
@@ -314,6 +355,10 @@ const FIELD_BLOCKS: &[&str] = &[
     "sse.belts.kp_limit",
     "sse.belts.electron_range",
     "sse.belts.radiation_yield",
+    "sse.glow.electron_range",
+    "sse.glow.wind_power",
+    "sse.glow.spin_power",
+    "sse.glow.line_survival",
 ];
 
 fn refs_of(ids: &[&str]) -> Vec<Reference> {
@@ -507,7 +552,15 @@ pub fn read(b: &Body, set: &Settings) -> Result<FieldRead, String> {
             "sse.shield.air_dose",
         ]);
     }
-    let aurora = aurora_of(b, set, &obstacle, inside, &mut why, &mut used);
+    let aurora = aurora_of(
+        b,
+        set,
+        &obstacle,
+        inside,
+        &mut why,
+        &mut stand_ins,
+        &mut used,
+    )?;
     let belts = belts::belts_of(
         b,
         set,
@@ -539,27 +592,104 @@ fn deg(rad: f64) -> f64 {
     rad * 180.0 / m::PI
 }
 
+/// The air base for an upper air with no profile: pressure, scale height
+/// and gravity, from the upper air itself or the body's air.
+fn glow_base(b: &Body) -> Option<(f64, f64, f64)> {
+    let u = b.upper_air.as_ref()?;
+    let p = u
+        .base_pressure_pa
+        .or(b.air.as_ref().map(|a| a.surface_pressure_pa))?;
+    let h = u
+        .scale_height_m
+        .or(b.air.as_ref().map(|a| a.scale_height_m))?;
+    let g = u.gravity_m_s2.unwrap_or(b.surface_gravity_m_s2);
+    Some((p, h, g))
+}
+
+/// The lines, heights and colour for `power` coming down at `ev`, said in
+/// `why`; none without an upper air.
+fn shine(
+    b: &Body,
+    power: f64,
+    ev: f64,
+    what: &str,
+    why: &mut Vec<String>,
+    stand_ins: &mut Vec<String>,
+) -> Result<Option<Glow>, String> {
+    let Some(air) = &b.upper_air else {
+        return Ok(None);
+    };
+    let g = glow::glow(power, ev, air, glow_base(b))?;
+    let mut lines: Vec<&Emission> = g.emissions.iter().collect();
+    lines.sort_by(|x, y| y.power_w.total_cmp(&x.power_w));
+    let said: Vec<String> = lines
+        .iter()
+        .filter(|e| e.colour != [0.0; 3])
+        .take(3)
+        .map(|e| {
+            format!(
+                "{} at {:.0} km ({:.2} % of the power)",
+                e.line,
+                e.peak_height_m / 1e3,
+                100.0 * e.share
+            )
+        })
+        .collect();
+    if said.is_empty() {
+        stand_ins.push(format!("{what}: none of the air's gases gives off a line the light table knows in the eye's range"));
+    } else {
+        why.push(format!(
+            "The {what} brings down {:.1e} W as {:.0} keV electrons, which stop {:.0} km up; it shines in {}{}.",
+            power,
+            ev / 1e3,
+            g.stops_at_m / 1e3,
+            said.join(", "),
+            g.colour
+                .as_ref()
+                .map(|c| format!(", {} to the eye", c.hex))
+                .unwrap_or_default()
+        ));
+    }
+    Ok(Some(g))
+}
+
 /// Ovals from each driver that lands inside the bubble, moon spots, or a
-/// diffuse glow.
+/// diffuse glow, with their power, lines and colours where the air is known.
 fn aurora_of(
     b: &Body,
     set: &Settings,
     obstacle: &Obstacle,
     inside: bool,
     why: &mut Vec<String>,
+    stand_ins: &mut Vec<String>,
     used: &mut Vec<&'static str>,
-) -> Option<Aurora> {
+) -> Result<Option<Aurora>, String> {
     let r = b.radius_m;
+    let ev = set.aurora.wind_electron_ev;
     if obstacle.kind != "field" {
         if b.air.is_some() && obstacle.kind == "air" {
             why.push(format!("Aurora: with no field holding the {} off, it lights the top of the air as a faint diffuse glow over the night side, not a ring.", if inside { "host field" } else { "wind" }));
-            return Some(Aurora {
+            let mut diffuse_glow = None;
+            if !inside && b.wind.ram() > 0.0 {
+                used.extend([
+                    "sse.glow.wind_power",
+                    "sse.glow.electron_range",
+                    "sse.glow.line_survival",
+                ]);
+                let p = glow::run(
+                    "sse.glow.wind_power",
+                    &[b.wind.density_kg_m3, b.wind.speed_m_s, obstacle.standoff_m],
+                )?[0];
+                diffuse_glow = shine(b, p, ev, "diffuse glow", why, stand_ins)?;
+            }
+            return Ok(Some(Aurora {
                 ovals: vec![],
                 footprints: vec![],
                 diffuse: true,
-            });
+                diffuse_glow,
+            }));
         }
-        return None;
+        return Ok(None);
     }
     used.push("sse.aurora.footprint");
     let tilt = b.magnetic_tilt_deg.abs();
@@ -568,6 +698,15 @@ fn aurora_of(
     let spin_range = |lat: f64| {
         let c = 90.0 - lat;
         [90.0 - (tilt + c), 90.0 - (tilt - c).abs()]
+    };
+    // The band of field lines an oval's currents run on: for the wind, the
+    // closed lines from half the nose's distance out to the nose; for the
+    // spin, a quarter either side of the corotation limit (F59).
+    let edges = |inner: f64, outer: f64| {
+        [
+            deg(au::footprint_latitude(inner, r)),
+            deg(au::footprint_latitude(outer, r)),
+        ]
     };
     let mut ovals = vec![];
     let nose = obstacle.standoff_m;
@@ -581,16 +720,43 @@ fn aurora_of(
         };
         range = Some([at(set.gust[1]), at(set.gust[0])]);
     }
+    let we = edges(0.5 * nose, nose);
+    why.push(match range {
+        Some([lo, hi]) => format!("Aurora: the {} drives an oval at {:.0}° magnetic latitude, where the field line through the bubble's nose comes down; it moves from {:.0}° in a quiet wind to {:.0}° in a gusty one.", if inside { "host's flow" } else { "wind" }, lat, hi, lo),
+        None => format!("Aurora: an oval at {:.0}° magnetic latitude, where the field line through the bubble's nose comes down.", lat),
+    });
+    let mut wind_glow = None;
+    if !inside && b.wind.ram() > 0.0 {
+        used.extend([
+            "sse.glow.wind_power",
+            "sse.glow.electron_range",
+            "sse.glow.line_survival",
+        ]);
+        let p = glow::run(
+            "sse.glow.wind_power",
+            &[b.wind.density_kg_m3, b.wind.speed_m_s, nose],
+        )?[0];
+        wind_glow = Some(match shine(b, p, ev, "wind's oval", why, stand_ins)? {
+            Some(g) => g,
+            None => Glow {
+                power_w: p,
+                power_by_hemisphere: [p / 2.0, p / 2.0],
+                electron_ev: ev,
+                stops_at_m: 0.0,
+                emissions: vec![],
+                colour: None,
+            },
+        });
+    }
     ovals.push(Oval {
         driver: "wind".into(),
         maps_to_m: nose,
         magnetic_latitude_deg: lat,
         latitude_range_deg: range,
         spin_latitude_range_deg: spin_range(lat),
-    });
-    why.push(match range {
-        Some([lo, hi]) => format!("Aurora: the {} drives an oval at {:.0}° magnetic latitude, where the field line through the bubble's nose comes down; it moves from {:.0}° in a quiet wind to {:.0}° in a gusty one.", if inside { "host's flow" } else { "wind" }, lat, hi, lo),
-        None => format!("Aurora: an oval at {:.0}° magnetic latitude, where the field line through the bubble's nose comes down.", lat),
+        edges_deg: we,
+        width_deg: we[1] - we[0],
+        glow: wind_glow,
     });
     if b.plasma_source_kg_s > 0.0 && b.pedersen_conductance_s > 0.0 {
         used.push("sse.aurora.hill_distance");
@@ -598,15 +764,52 @@ fn aurora_of(
         let h = au::hill_distance(b.pedersen_conductance_s, b_eq, r, b.plasma_source_kg_s);
         if h > r && h < nose {
             let l = deg(au::footprint_latitude(h, r));
+            why.push(format!("Its moons load {:.0} kg of gas a second; beyond {:.0} of its radii that gas lags the spinning field, and the currents that drag it round light a main oval at {:.0}°, inside the wind's.", b.plasma_source_kg_s, h / r, l));
+            let se = edges((0.8 * h).max(r), (1.25 * h).min(nose));
+            let mut spin_glow = None;
+            if b.spin_period_s > 0.0 {
+                used.extend([
+                    "sse.glow.spin_power",
+                    "sse.glow.electron_range",
+                    "sse.glow.line_survival",
+                ]);
+                let p = glow::run(
+                    "sse.glow.spin_power",
+                    &[b.plasma_source_kg_s, b.spin_period_s, h],
+                )?[0];
+                let sev = set.aurora.spin_electron_ev;
+                spin_glow = Some(
+                    match shine(b, p, sev, "spin's main oval", why, stand_ins)? {
+                        Some(g) => g,
+                        None => Glow {
+                            power_w: p,
+                            power_by_hemisphere: [p / 2.0, p / 2.0],
+                            electron_ev: sev,
+                            stops_at_m: 0.0,
+                            emissions: vec![],
+                            colour: None,
+                        },
+                    },
+                );
+            } else {
+                stand_ins.push(
+                    "no spin period, so the spin-driven oval has a place but no power".into(),
+                );
+            }
             ovals.push(Oval {
                 driver: "spin".into(),
                 maps_to_m: h,
                 magnetic_latitude_deg: l,
                 latitude_range_deg: None,
                 spin_latitude_range_deg: spin_range(l),
+                edges_deg: se,
+                width_deg: se[1] - se[0],
+                glow: spin_glow,
             });
-            why.push(format!("Its moons load {:.0} kg of gas a second; beyond {:.0} of its radii that gas lags the spinning field, and the currents that drag it round light a main oval at {:.0}°, inside the wind's.", b.plasma_source_kg_s, h / r, l));
         }
+    }
+    if b.upper_air.is_none() {
+        stand_ins.push("no upper air given (its gases and how it thins with height), so the ovals have a power but no lines, heights or colour".into());
     }
     if tilt > 0.0 {
         why.push(format!("Its magnetic axis is tilted {tilt:.0}° from its spin axis, so the ovals circle the magnetic poles, swinging between {:.0}° and {:.0}° of spin latitude.", ovals[0].spin_latitude_range_deg[0], ovals[0].spin_latitude_range_deg[1]));
@@ -622,11 +825,15 @@ fn aurora_of(
             });
         }
     }
-    Some(Aurora {
+    if !footprints.is_empty() {
+        stand_ins.push("moon spots have a place but no power or lead angle yet".into());
+    }
+    Ok(Some(Aurora {
         ovals,
         footprints,
         diffuse: false,
-    })
+        diffuse_glow: None,
+    }))
 }
 
 fn msv_yr(sv_s: f64) -> f64 {

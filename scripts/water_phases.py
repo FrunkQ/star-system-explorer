@@ -331,7 +331,8 @@ FORMS = [
      _ev("measured", [TC, T_HI], [PC, 1e12], "iapws1992-sat", note="above the critical point there is no phase change; the name changes by convention"), {}),
     ("h2o.ionic_fluid", ("ionic water", "water split into ions", "a hot fluid that conducts electricity, deep inside ice giants"), "ionic fluid", "stable",
      _ev("computed", [T_IONIC, T_HI], [P_IONIC, 1e12], "redmer2011", also=["mattsson2006"], note="a gradual crossover; the 2000 K, 20 GPa edge is recalled from these papers' figures and must be checked"),
-     {"sigma_elec": {"v": 1e4, "unit": "S m-1", "src": "redmer2011", "check": "unverified", "note": "order of magnitude, recalled"}}),
+     {"sigma_elec": {"v": 1.5e4, "unit": "S m-1", "src": "millot2018", "check": "unverified", "at_place": "70 to 180 GPa, below about 5000 K (reverberating shocks)",
+                    "note": "Millot et al. 2018 quote about 150 S/cm on reverberating shocks at 70 to 180 GPa, against about 30 S/cm (3000 S/m) on the single-shock Hugoniot above 30 GPa and 2000 K, which rises from 0.1 S/cm at 10 GPa; Yakushev 1998 gives 2000 S/m at 75 GPa. Mostly ionic: the electronic part is under 100 S/cm below 200 GPa and 5000 K"}}),
     ("h2o.ice_ih", ("ice Ih", "ordinary ice", "ice"), "solid", "stable",
      _ev("measured", [72.0, 273.16], [0.0, 212.9 * MPA], "iapws2011-meltsub", also=["chaplin-lsbu"]),
      {"density": _d(916.7, "chaplin-lsbu", at_k=273.15, at_pa=101325.0, note="LSBU phase diagram page, 0.9167 g/cm3")}),
@@ -503,7 +504,7 @@ def boundaries():
     add("h2o.ice_xx", "h2o.supercritical", {"form": "points", "points": [p for p in SI_MELT if p[0] <= T_IONIC] + [[T_IONIC, P_E]], "t_k": [T_A, T_IONIC]}, "computed", "cheng2021", also=["lin2005"])
     add("h2o.ice_xx", "h2o.ionic_fluid", {"form": "points", "points": [[T_IONIC, P_E], [T_D, P_BCC_FCC]], "t_k": [T_IONIC, T_D]}, "computed", "cheng2021")
     add("h2o.ice_xviii", "h2o.ionic_fluid", {"form": "points", "points": [[T_D, P_BCC_FCC]] + [p for p in SI_MELT if p[1] > P_BCC_FCC], "t_k": [T_D, SI_MELT[-1][0]]}, "computed", "cheng2021",
-        also=["millot2018"], check="unverified", note="3250 K at 100 GPa is Cheng et al.'s; 5000 K at 190 GPa is recalled from Millot et al. 2018 and must be checked; beyond 190 GPa extrapolated")
+        also=["millot2018"], check="unverified", note="3250 K at 100 GPa is Cheng et al.'s; 5000 K at 190 GPa is Millot et al. 2018's (abstract); beyond 190 GPa extrapolated")
     add("h2o.liquid", "h2o.supercritical", {"form": "isotherm", "t_k": TC, "p_pa": [PC, f_simon(TC)]}, "convention", "iapws1992-sat")
     add("h2o.supercritical", "h2o.vapour", {"form": "isobar", "p_pa": PC, "t_k": [TC, T_HI]}, "convention", "iapws1992-sat")
     add("h2o.ionic_fluid", "h2o.supercritical", {"form": "segments", "parts": [
@@ -649,7 +650,7 @@ SOURCES = {
     "wikipedia-ice-phases": ("Wikipedia, Phases of ice (read 22 Nov 2026): table of phases with formation conditions; used only where it agrees with the LSBU tables", None, "https://en.wikipedia.org/wiki/Phases_of_ice", "verified"),
     "salzmann2019": ("Salzmann, C. G. 2019, J. Chem. Phys. 150, 060901: advances in the experimental exploration of water's phase diagram (ices XVI and XVII, amorphous ices, hydrogen order)", "10.1063/1.5085163", None, "verified"),
     "millot2019": ("Millot, M., Coppari, F., Rygg, J. R., Correa Barrios, A., Hamel, S., Swift, D. C. and Eggert, J. H. 2019, Nature 569, 251: nanosecond X-ray diffraction of shock-compressed superionic water ice (fcc superionic ice XVIII at 100 to 400 GPa and 2000 to 3000 K; simulated ionic conductivity above 100 S/cm). Abstract read; body paywalled", "10.1038/s41586-019-1114-6", None, "verified"),
-    "millot2018": ("Millot, M. et al. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression. Not read; its melting point near 5000 K at 190 GPa is recalled", "10.1038/s41567-017-0017-4", None, "unverified"),
+    "millot2018": ("Millot, M., Hamel, S., Rygg, J. R., Celliers, P. M., Collins, G. W., Coppari, F., Fratanduono, D. E., Jeanloz, R., Swift, D. C. and Eggert, J. H. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression (ice melts near 5000 K at 190 GPa; conductivity about 30 S/cm on the Hugoniot and about 150 S/cm on reverberating shocks). Read from the OSTI copy (osti.gov 1542614) on 24 Nov 2026; volume and page not on that copy", "10.1038/s41567-017-0017-4", "https://www.osti.gov/biblio/1542614", "unverified"),
     "cheng2021": ("Cheng, B., Bethkenhagen, M., Pickard, C. J. and Hamel, S. 2021, arXiv:2103.09035 (Nature Physics 17, 1228): predicting the phase behaviors of superionic water at planetary conditions (bcc stable below about 75 GPa and 2500 K; superionic onset near 2000 K; melting 3250 K at 100 GPa). Text read; boundaries only in figures", None, "https://arxiv.org/abs/2103.09035", "verified"),
     "haldemann2020": ("Haldemann, J., Alibert, Y., Mordasini, C. and Benz, W. 2020, A&A 643, A105: AQUA, a collection of H2O equations of state for planetary models (the ice VI-VII fit, Eq. 22 and Table 2, read from arXiv 2009.10098)", None, "https://arxiv.org/abs/2009.10098", "verified"),
     "redmer2011": ("Redmer, R., Mattsson, T. R., Nettelmann, N. and French, M. 2011, Icarus 211, 798: the phase diagram of water and the magnetic fields of Uranus and Neptune. Not read; the ionic-fluid edge and conductivity are recalled from it", "10.1016/j.icarus.2010.08.008", None, "unverified"),

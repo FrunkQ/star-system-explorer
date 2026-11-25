@@ -24,7 +24,8 @@
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, readTrueFace, starCss, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
+  import { readLiveStar, readTrueFace, starCss, type FaceReader, type StarReader, type TrueTexture, withFiner } from "../../../renderer/src/index.ts";
+  import { finerTiles, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -354,6 +355,9 @@
           const f = await readTrueFace(ctx.session as unknown as FaceReader, sys, s.address);
           trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
           if (typeof f !== "string") trueSaid.set(key, f.said);
+          // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
+          const kept = trueSurfaces.get(key);
+          if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));
         }
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
@@ -362,6 +366,21 @@
         done++;
       }
       reading = { done, of: order.length, none, why: noneWhy };
+      // VP3 part 2: finer tiles for the chosen world only, four at a time, once it has been left chosen for a while
+      // (finer-tiles.ts); stops between requests when another world is chosen or True is left.
+      const chosen = order[0];
+      const ck = chosen && chosen.address === sel ? `${sys}|${chosen.address}` : "";
+      const base = ck ? trueSurfaces.get(ck) : undefined;
+      // Only a world whose True face is its ground alone (no clouds painted over it) wears the finer faces.
+      if (ck && base && typeof base !== "string" && base.faces && g === trueGen) {
+        void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
+          const now = trueSurfaces.get(ck);
+          if (!now || typeof now === "string") return;
+          const t = withFiner(now, fine);
+          trueSurfaces.set(ck, t);
+          surfaces = new Map(surfaces).set(chosen!.address, t);
+        });
+      }
     })());
   });
   // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.
@@ -377,7 +396,7 @@
     if (kept !== undefined) return void show(kept);
     let live = true;
     const num = (k: string) => Number(star?.facts.find((x) => x.field === k)?.value);
-    void readLiveStar(ctx.session as unknown as StarReader, sys, a, { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") }).then((r) => {
+    void readLiveStar(ctx.session as unknown as StarReader, sys, a, { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") }, "system").then((r) => {
       liveStars.set(key, r);
       if (live) show(r);
     });
