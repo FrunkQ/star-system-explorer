@@ -114,7 +114,7 @@ export { fresnel, MAX_TRAINS, readSeaOptics, SEA_STEPS, seaBody, seaWords } from
 export type { SeaOptics, WaveTrain } from "./sea.ts";
 export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunAt, sunDirection, sunTransmittance } from "./surface-sky.ts";
 export type { SurfaceFrame, SurfaceGpu, SurfaceMesh } from "./gpu-surface.ts";
-export type { LanderPose } from "./surface-lander.ts";
+export type { LanderPose, LanderShip } from "./surface-lander.ts";
 
 /** Draw the ground round a site on the GPU (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */
 export async function startSurface(canvas: HTMLCanvasElement) {

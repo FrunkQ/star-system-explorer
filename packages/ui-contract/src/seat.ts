@@ -22,6 +22,8 @@ export type Shown =
       steer?: "read";
       /** The focus world's air for the "In orbit" screen (LR4b, renderer `AirFacts` with its optics), as the GM's kernel read it; a seat cannot read resolved systems. Older players ignore it. */
       air?: Json;
+      /** The party's ship circling the focus world on the "In orbit" screen (LR4c), by its name; absent: none shown. */
+      ship?: string;
       /** Words over the picture (PB6, a Read aloud with "also show on screens"): a plain card the players read. Older players ignore it. */
       say?: string;
     }
