@@ -14,7 +14,11 @@ import { drawCanvas } from "./canvas.ts";
 import { lightDir, narrate, prepare, type Prepared } from "./surface.ts";
 import type { GlobeGpu } from "./gpu-globe.ts";
 import { air as airOf, type Air, type AirFacts } from "./atmosphere.ts";
-import { HeatWatch, loadProbe, loadQuality, place, probeKey, saveProbe, saveQuality, type Capabilities, type Placement, type ProbeResult, type QualityChoice } from "./probe.ts";
+import { place, type Placement, type ProbeResult } from "./probe.ts";
+import { deviceCaps, deviceSpeed, heat, quality, speedListeners, speedNow } from "./device.ts";
+import { REST_FRAMES, RestClock, RestLayer, type RestState } from "./still.ts";
+
+export { deviceReadout, measureAgain, quality, setQuality } from "./device.ts";
 import type { AirRender } from "./gpu-air.ts";
 import { exposeAurora, type AuroraExposure, type AuroraPlan } from "./aurora.ts";
 
@@ -72,6 +76,9 @@ export interface GlobeStatus {
   aurora_note: string;
   /** The last frame's own drawing time, ms (the rest of a frame interval is the page and the browser). */
   work_ms: number;
+  /** Sharpen at rest (VP5): moving, waiting to rest, sharpening, or sharp; and frames averaged so far. */
+  rest: RestState;
+  rest_frames: number;
 }
 
 export interface GlobeRun {
@@ -107,72 +114,6 @@ export interface GlobeRun {
 
 /** What this device can draw: probed once a page. */
 let gpuProbe: Promise<"webgpu" | "webgl2" | null> | null = null;
-
-/** The device's capabilities and measured speed (VP4 probe.ts): read once a page, the speed cached on the device. */
-let capsRead: Promise<Capabilities> | null = null;
-let speedProbe: Promise<ProbeResult | null> | null = null;
-const speedListeners = new Set<() => void>();
-/** The heat watch is the visit's, not one view's: a hot device stays lowered on every view. */
-const heat = new HeatWatch();
-let lastSpeed: ProbeResult | null = null;
-
-const storage = (): Storage | null => {
-  try {
-    return typeof localStorage !== "undefined" ? localStorage : null;
-  } catch {
-    return null;
-  }
-};
-
-async function deviceCaps(): Promise<Capabilities> {
-  capsRead ??= import("./probe-gpu.ts").then((m) => m.readCapabilities());
-  return capsRead;
-}
-
-/** The measured speed: the cached probe for this adapter and browser, else null while one is measured in the background. */
-async function deviceSpeed(caps: Capabilities): Promise<ProbeResult | null> {
-  const key = probeKey(caps, typeof navigator !== "undefined" ? navigator.userAgent : "");
-  const kept = loadProbe(storage(), key);
-  if (kept) return (lastSpeed = kept);
-  if (!speedProbe) {
-    speedProbe = import("./probe-gpu.ts")
-      .then((m) => m.measureProbe(caps))
-      .then((r) => {
-        if (r) (saveProbe(storage(), { ...r, key }), (lastSpeed = r));
-        for (const l of speedListeners) l();
-        return r;
-      })
-      .catch(() => null);
-  }
-  return null;
-}
-
-/** Forget the measured speed and measure again (More › Performance › Measure again). Resolves with the new result. */
-export async function measureAgain(): Promise<ProbeResult | null> {
-  const caps = await deviceCaps();
-  try {
-    storage()?.removeItem("sse4.render.probe");
-  } catch {
-    // Nothing kept.
-  }
-  speedProbe = null;
-  await deviceSpeed(caps);
-  return (await speedProbe) ?? null;
-}
-
-/** The quality choice (More › Performance): kept on the device, and every open view is placed again at once. */
-export function setQuality(q: QualityChoice): void {
-  saveQuality(storage(), q);
-  for (const l of speedListeners) l();
-}
-
-export const quality = (): QualityChoice => loadQuality(storage());
-
-/** The device's capabilities and its cached speed, for the performance readout. */
-export async function deviceReadout(): Promise<{ caps: Capabilities; probe: ProbeResult | null }> {
-  const caps = await deviceCaps();
-  return { caps, probe: loadProbe(storage(), probeKey(caps, typeof navigator !== "undefined" ? navigator.userAgent : "")) };
-}
 
 export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (s: GlobeStatus) => void): GlobeRun {
   let o = { ...opts };
@@ -227,6 +168,63 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     return `${o.aurora.plan.note}${d ? ` ${d.says}` : ""}${o.aurora.flux_w_m2 ? "" : d && pass.exposure === "eye" ? " The star's light here is taken as the Sun's at Earth." : ""}${cav}`;
   };
   let lastEmit = -1e9;
+  // Sharpen at rest (VP5): after half a second still, jittered frames of the recipe's still passes averaged over the globe.
+  const rest = new RestClock({ frames: 0 });
+  let restLayer: RestLayer | null = null;
+  let restTimer: ReturnType<typeof setTimeout> | null = null;
+  let restRaf = 0;
+  const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const stopRest = () => {
+    if (restTimer) (clearTimeout(restTimer), (restTimer = null));
+    if (restRaf) (cancelAnimationFrame(restRaf), (restRaf = 0));
+  };
+  let lastStatus: GlobeStatus | null = null;
+  const tellRest = () => {
+    if (lastStatus && (lastStatus.rest !== rest.state || lastStatus.rest_frames !== rest.frames)) onStatus((lastStatus = { ...lastStatus, rest: rest.state, rest_frames: rest.frames }));
+  };
+  function restStep() {
+    restTimer = null;
+    restRaf = 0;
+    if (disposed || o.spin || !canvas || !globe || !shown || switching) return;
+    const now = performance.now();
+    const step = rest.next(now);
+    if (!step) {
+      // A timer can fire a hair early: still waiting, so ask again when the wait is really over.
+      if (rest.state === "waiting") return void (restTimer = setTimeout(restStep, Math.max(1, rest.dueIn(performance.now()))));
+      if (rest.state === "sharp") restLayer?.show("sharp");
+      tellRest();
+      return;
+    }
+    const cur = current();
+    if (!cur) return;
+    const tier = cur.plan.tier;
+    const host0 = canvas.parentElement ?? host;
+    if (!restLayer) {
+      if (getComputedStyle(host0).position === "static") host0.style.position = "relative";
+      restLayer = new RestLayer(host0, { reduced });
+    }
+    restLayer.cover(canvas);
+    const t0 = performance.now();
+    const atm = (p: Plan) => p.passes.find((x) => x.pass === "atmosphere")?.params;
+    if (kind === "gpu" && gpu) {
+      // The still passes where the recipe has them (finer mesh, more air samples), at full size.
+      const sr = cur.doc.tiers.includes("still") ? plan(cur.doc, o.library, "still", 0, o.knobs) : { ...cur.plan, render_scale: 1 };
+      const a = atm(sr);
+      gpu.draw(shown, sr, lon, lat, full(), a && airPhys ? airRender(airPhys, Number(a.thickness ?? 1)) : null, step.jitter);
+      restLayer.add(canvas, step.k, canvas.width, canvas.height);
+    } else if (kind === "canvas") {
+      // One frame at twice the size, scaled down.
+      const big = document.createElement("canvas");
+      const a = atm(cur.plan);
+      drawCanvas(big, shown, { ...cur.plan, render_scale: 1 }, lon, lat, full() * 2, {}, a && airPhys ? airRender(airPhys, Number(a.thickness ?? 1)) : null);
+      restLayer.add(big, step.k, full(), full());
+    } else return;
+    perf.record("render.rest", performance.now() - t0, { detail: tier });
+    rest.done(performance.now(), performance.now() - t0);
+    if (rest.state === "sharp") restLayer.show("sharp");
+    tellRest();
+    restRaf = requestAnimationFrame(restStep);
+  }
   let switching = false;
 
   const recipe = (tier: Tier) => pickRecipe(o.registry, o.recipe, tier);
@@ -260,7 +258,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       }
       const caps = hasGpu ? await deviceCaps().catch(() => null) : null;
       const speed = caps && hasGpu ? await deviceSpeed({ ...caps, backend: gpuKind }) : null;
-      const placed: Placement = place({ caps: { backend: gpuKind, compute: gpuKind === "webgpu" && !!caps?.compute }, probe: speed, pixels: full() * full(), recipe: doc, library: o.library, choice: loadQuality(storage()), heat_ceiling: heat.ceiling });
+      const placed: Placement = place({ caps: { backend: gpuKind, compute: gpuKind === "webgpu" && !!caps?.compute }, probe: speed, pixels: full() * full(), recipe: doc, library: o.library, choice: quality(), heat_ceiling: heat.ceiling });
       startTier = placed.tier;
       tierNote = placed.note;
     } else if ((want === "gpu-basic" || want === "gpu-high" || want === "gpu-ultra") && !hasGpu) {
@@ -294,6 +292,9 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
 
   function ensureSurface(want: "gpu" | "canvas" | "text") {
     if (kind === want && (want === "text" || canvas)) return;
+    stopRest();
+    restLayer?.dispose();
+    restLayer = null;
     if (gpu) (gpu.dispose(), (gpu = null));
     canvas?.remove();
     canvas = null;
@@ -369,6 +370,13 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       drew = true;
     }
     const work = performance.now() - t0;
+    // Any frame drawn means the view changed: drop the sharpened picture at once and wait for rest again.
+    if (drew) {
+      stopRest();
+      restLayer?.hide();
+      rest.aim(o.spin ? 0 : REST_FRAMES[pl.tier], now);
+      if (!o.spin && rest.state === "waiting") restTimer = setTimeout(restStep, rest.dueIn(performance.now()));
+    }
     if (drew) {
       frames++;
       // The performance readout (PF1), when it is on: the globe's own drawing time, by tier, and each pass's share
@@ -387,7 +395,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
         const move = gov.sample(ms, (lv) => (ratio === null ? null : estimateMs(plan(cur.doc, o.library, startTier, lv, o.knobs), o.library, pixels) * ratio));
         if (move) dirty = true;
         // Three steps down inside a minute: a hot device. Lower the ceiling for the visit and place again.
-        if (move === "down" && o.tier === "auto" && heat.down(now, pl.tier)) ready = chooseTier().then(() => ((gov = null), (dirty = true), kick()));
+        if (move === "down" && o.tier === "auto" && heat.down(now, startTier)) ready = chooseTier().then(() => ((gov = null), (dirty = true), kick()));
       }
     }
     const c2 = current()!;
@@ -401,7 +409,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       const narr = c2.plan.passes.find((x) => x.kind === "text");
       const L = lightDir(Number(relief.sun_azimuth_deg ?? 315), Number(relief.sun_elevation_deg ?? 40));
       const narration = lapse ? narrateFrame(lapse, lapseLayer, lapseT, o.label) : `${narrate(prepared, o.label, lon, lat, String(narr?.params.detail ?? "full"), L)}${wx ? ` ${narrateWeather(wx, "")}` : ""}`;
-      onStatus({
+      onStatus((lastStatus = {
       tier: c2.plan.tier,
       backend: c2.plan.tier === "gpu-basic" || c2.plan.tier === "gpu-high" || c2.plan.tier === "gpu-ultra" ? (gpu?.backend ?? "none") : c2.plan.tier === "canvas" ? "canvas2d" : "none",
       recipe: c2.doc.id,
@@ -419,8 +427,10 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       lat,
       work_ms: work,
       air_note: airNote(),
+      rest: rest.state,
+      rest_frames: rest.frames,
       aurora_note: auroraNote(auPass, auNow),
-      });
+      }));
     }
     if (!drew && want !== "text") dirty = true;
     else if (drew) dirty = false;
@@ -517,14 +527,14 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       disposed = true;
       speedListeners.delete(onSpeed);
       if (raf) cancelAnimationFrame(raf);
+      stopRest();
+      restLayer?.dispose();
       gpu?.dispose();
       canvas?.remove();
     },
   };
 }
 
-/** The speed now, if it has been measured (the readout's estimated shares use it). */
-const speedNow = (): ProbeResult | null => lastSpeed;
 
 /** Each pass's share of a frame, from its declared cost (scaled by the probe's factors when measured). */
 export function passShares(pl: Plan, library: readonly PassSpec[], pixels: number, speed: Pick<ProbeResult, "factors"> | null): { pass: string; share: number }[] {

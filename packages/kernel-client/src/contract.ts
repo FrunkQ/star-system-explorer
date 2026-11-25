@@ -30,7 +30,16 @@ const UNKNOWN_FROM = "unknown variant `nonsense`, expected one of ";
 const UNKNOWN_TO = " at line ";
 const UNKNOWN_MASK = "every op, checked against ops()";
 
+// The reach report's per-block lists go to tests/golden/contract-reach.txt (checked natively), one block per line.
+const REACH = '{"type":"reach"';
+const REACH_FROM = '"follows":[';
+const REACH_MASK = '"lists":"one line per block in tests/golden/contract-reach.txt"';
+
 export function maskOps(line: string): string {
+  if (line.startsWith(REACH)) {
+    const s = line.indexOf(REACH_FROM);
+    if (s >= 0 && line.endsWith("]}")) return line.slice(0, s) + REACH_MASK + "}";
+  }
   if (line.startsWith(HELLO)) {
     const s = line.indexOf(OPS_FROM);
     const e = line.indexOf(OPS_TO);

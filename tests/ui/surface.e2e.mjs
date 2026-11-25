@@ -97,6 +97,9 @@ try {
     // Every look draws.
     await style(gm, "True");
     await gm.waitForSelector("[data-surface][data-look='true']");
+    // VP4 part 2b: True is placed on the land-true recipe (tier|level|rest|frames). This site has a moving sea, so the
+    // view never rests here (sharpening at rest is checked on the finish itself, enlarge.e2e).
+    await gm.waitForSelector("[data-surface] canvas[data-quality^='gpu-']", { timeout: 30000 });
     await gm.waitForTimeout(800);
     await shot(gm, "sl1-ground-true");
     await view(gm, "HUD", "On");
