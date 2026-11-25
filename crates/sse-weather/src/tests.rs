@@ -369,6 +369,11 @@ impl crate::formations::Terrain for Continent {
 #[test]
 fn marine_decks_sit_over_upwelling_coasts_and_flip_with_the_spin() {
     let b = block();
+    // The deck is a matter of the average cover: the day's pattern (W-synoptic) is
+    // switched off here by making every cell's edge infinitely soft.
+    let mut b = b;
+    b.formations.synoptic.edge_spread = 1.0e9;
+    let b = b;
     let deck = |c: &crate::conditions::Conditions, lon: f64| {
         let p = b.prepare(c, Date { day: 200.0 });
         let lat = p.circ.hadley_edge_deg - 8.0;
