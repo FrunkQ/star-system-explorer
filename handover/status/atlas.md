@@ -10,7 +10,7 @@ Nothing is built. Fills in V3 gap 24 (`design/SSE4-v3-gaps.md`).
 | AT1 the page model and the Survey atlas templates | next; needs nothing that is not on main | |
 | AT2 the Atlas view on screen | queued | |
 | AT3 editions as data and the Edition switch | queued | |
-| AT4 print under the view, page turn on paper editions, copy as text | queued | |
+| AT4 print under the view (the print view with a tick box per page and a black and white form), page curl on paper editions, copy as text | queued | |
 | AT6 letterhead, built-in logos, ASCII art, the Company edition | queued | |
 | AT7 margin notes and The Guide edition | queued; needs Alex's joke file copied in on his say-so (`C:\Development\star-system-explorer-v2\Mostly_harmless.txt`) | |
 | AT5 gaps and "Show as withheld"; AT8 Why on the Atlas | queued; full form waits on the kernel's SV1 and SV5 | |
