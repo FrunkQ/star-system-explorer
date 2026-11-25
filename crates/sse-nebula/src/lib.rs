@@ -59,6 +59,86 @@ pub struct Shell {
     pub speed_m_s: f64,
     pub thickness_m: f64,
     pub mass_kg: f64,
+    /// Free electrons per m³ in the glowing gas (O4, VP-L1): given where the
+    /// shell glows, absent for dust, rings and shocks that publish no light.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub n_e_m3: Option<f64>,
+}
+
+/// One line's colour to the eye (VP-L1): linear-light sRGB at unit
+/// luminance (Y = 1), negative channels clipped to zero and the luminance
+/// put back to one. Every pure line lies outside a screen's colours, so most
+/// are clipped.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct LineColour {
+    pub line: String,
+    pub rgb_linear: [f64; 3],
+    /// True when a channel was clipped: a screen cannot show the line's
+    /// colour, only the nearest it can.
+    pub clipped: bool,
+}
+
+/// The middle row of a 3×3 matrix's inverse: the weights that give
+/// luminance Y from linear sRGB, for the XYZ-to-sRGB matrix `a`.
+fn luminance_row(a: &[[f64; 3]; 3]) -> [f64; 3] {
+    let det = a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1])
+        - a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0])
+        + a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]);
+    [
+        (a[1][2] * a[2][0] - a[1][0] * a[2][2]) / det,
+        (a[0][0] * a[2][2] - a[0][2] * a[2][0]) / det,
+        (a[0][2] * a[1][0] - a[0][0] * a[1][2]) / det,
+    ]
+}
+
+/// The eye colour of every line in a light description that the eye sees,
+/// from the base light table's CIE observer.
+pub fn line_colours(light: &LightDescription) -> Result<Vec<LineColour>, String> {
+    let table = forbidden::light_table();
+    let eye = table.eye.as_ref().ok_or("the light table has no eye")?;
+    let mut out: Vec<LineColour> = Vec::new();
+    for l in &light.lines {
+        if out.iter().any(|c| c.line == l.line) {
+            continue;
+        }
+        let Some(def) = table.line(&l.line) else {
+            continue;
+        };
+        let nm = def.at_m * 1e9;
+        if nm < eye.from_nm || nm > eye.to_nm {
+            continue;
+        }
+        let xyz = sse_light::colour::response(eye, def.at_m)?;
+        if xyz[1] <= 0.0 || xyz[1].is_nan() {
+            continue;
+        }
+        let mut rgb = [0.0; 3];
+        for (k, row) in eye.xyz_to_linear_srgb.iter().enumerate() {
+            rgb[k] = (row[0] * xyz[0] + row[1] * xyz[1] + row[2] * xyz[2]) / xyz[1];
+        }
+        let clipped = rgb.iter().any(|v| *v < 0.0);
+        for v in &mut rgb {
+            *v = v.max(0.0);
+        }
+        // Back to unit luminance after clipping: Y of the clipped colour,
+        // through the inverse of the eye's own XYZ-to-sRGB matrix.
+        let y = luminance_row(&eye.xyz_to_linear_srgb)
+            .iter()
+            .zip(&rgb)
+            .map(|(a, b)| a * b)
+            .sum::<f64>();
+        if y > 0.0 {
+            for v in &mut rgb {
+                *v /= y;
+            }
+        }
+        out.push(LineColour {
+            line: l.line.clone(),
+            rgb_linear: rgb,
+            clipped,
+        });
+    }
+    Ok(out)
 }
 
 /// Two lobes along an axis (a unit vector in the system frame).
@@ -123,6 +203,9 @@ pub struct Descriptor {
     pub lighting: Vec<String>,
     /// Seed for decoration (wisps, knots); never a fact.
     pub decoration_seed: String,
+    /// Each seen line's colour to the eye, for the renderer and the chart.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub line_colours: Vec<LineColour>,
     pub light: LightDescription,
     pub why: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -355,6 +438,7 @@ pub fn planetary_nebula(
         speed_m_s: v,
         thickness_m: s.thickness * r,
         mass_kg: mass,
+        n_e_m3: Some(n * (1.0 + forbidden::per_hydrogen("he")?)),
     }];
     // Shed layers: earlier pulses of the slow giant wind, each a faint ring.
     let rings = d.below(2, s.max_rings + 1);
@@ -369,6 +453,7 @@ pub fn planetary_nebula(
                 speed_m_s: slow,
                 thickness_m: 0.05 * rk,
                 mass_kg: 0.0,
+                n_e_m3: None,
             });
         }
     }
@@ -422,6 +507,7 @@ pub fn planetary_nebula(
         ambient_h_m3: p.ambient_h_m3,
         lighting: vec![p.star.clone()],
         decoration_seed: decoration_seed(seed, &p.address)?,
+        line_colours: line_colours(&light)?,
         light,
         why,
         stand_ins: vec![
@@ -554,6 +640,7 @@ pub fn supernova_remnant(
             speed_m_s: v,
             thickness_m: 0.08 * r,
             mass_kg: swept + p.ejecta_kg,
+            n_e_m3: None,
         }],
         lobes: None,
         jet: None,
@@ -561,6 +648,7 @@ pub fn supernova_remnant(
         ambient_h_m3: p.ambient_h_m3,
         lighting,
         decoration_seed: decoration_seed(seed, &p.address)?,
+        line_colours: Vec::new(),
         light: LightDescription::new(&p.address),
         why,
         stand_ins: vec![
@@ -662,6 +750,7 @@ pub fn star_forming_glow(
             speed_m_s: 0.0,
             thickness_m: r,
             mass_kg: 4.0 / 3.0 * m::PI * r * r * r * nb::MU_H * nb::M_H * p.cloud_h_m3,
+            n_e_m3: Some(p.cloud_h_m3 * (1.0 + forbidden::per_hydrogen("he")?)),
         }],
         lobes: None,
         jet: None,
@@ -669,6 +758,7 @@ pub fn star_forming_glow(
         ambient_h_m3: p.cloud_h_m3,
         lighting: live.iter().map(|s| s.address.clone()).collect(),
         decoration_seed: decoration_seed(seed, &p.address)?,
+        line_colours: line_colours(&light)?,
         light,
         why,
         stand_ins: vec![

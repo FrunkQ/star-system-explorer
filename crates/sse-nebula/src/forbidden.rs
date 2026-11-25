@@ -41,6 +41,10 @@ fn run(id: &str, inputs: &[f64]) -> Result<Vec<f64>, String> {
         .map_err(|e| format!("{id}: {e}"))
 }
 
+pub(crate) fn light_table() -> &'static LightTable {
+    table()
+}
+
 fn table() -> &'static LightTable {
     static T: OnceLock<LightTable> = OnceLock::new();
     T.get_or_init(LightTable::base)

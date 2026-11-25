@@ -135,3 +135,30 @@ fn abundances_come_from_the_sheet() {
     assert!(o > 4e-4 && o < 8e-4, "{o}");
     assert!(per_hydrogen("unobtainium").is_err());
 }
+
+/// Every seen line has its eye colour at unit luminance (VP-L1): hydrogen
+/// alpha deep red and clipped, oxygen's 500.7 nm green-blue, and the shell
+/// carries its electron density.
+#[test]
+fn lines_carry_their_colours_and_shells_their_electrons() {
+    let d = glow(40_000.0, 10.0, 100.0);
+    let c = |id: &str| {
+        d.line_colours
+            .iter()
+            .find(|c| c.line == id)
+            .unwrap()
+            .clone()
+    };
+    let (ha, o3) = (c("ha"), c("oiii"));
+    eprintln!("ha {:?} oiii {:?}", ha, o3);
+    assert!(ha.rgb_linear[0] > ha.rgb_linear[1] && ha.rgb_linear[0] > ha.rgb_linear[2]);
+    assert!(o3.rgb_linear[1] > o3.rgb_linear[0]);
+    // Unit luminance: Rec. 709 weights of linear sRGB.
+    let y = |v: [f64; 3]| 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+    for col in &d.line_colours {
+        assert!((y(col.rgb_linear) - 1.0).abs() < 1e-3, "{col:?}");
+    }
+    assert!(c("sii").clipped, "a deep red line is beyond a screen");
+    let ne = d.shells[0].n_e_m3.unwrap();
+    assert!(ne > 1.05e8 && ne < 1.15e8, "{ne}");
+}

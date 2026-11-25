@@ -9,7 +9,9 @@ use sse_core::Seed;
 use sse_flow::Atom;
 use sse_light::{LightDescription, LineEmission, Part, Reference, SIGMA};
 
-use crate::{decoration_seed, Cause, Descriptor, Jet, Kind, Knot, Lobes, Shell, PC_M, YEAR_S};
+use crate::{
+    decoration_seed, line_colours, Cause, Descriptor, Jet, Kind, Knot, Lobes, Shell, PC_M, YEAR_S,
+};
 
 fn block(id: &str) -> &'static dyn Atom {
     sse_atoms::formulas::loaded()
@@ -147,6 +149,7 @@ pub fn dust_shell(seed: &Seed, p: &GiantInput, at_s: f64) -> Result<Option<Descr
             speed_m_s: v,
             thickness_m: outer - inner,
             mass_kg: mass,
+            n_e_m3: None,
         }],
         lobes: None,
         jet: None,
@@ -154,6 +157,7 @@ pub fn dust_shell(seed: &Seed, p: &GiantInput, at_s: f64) -> Result<Option<Descr
         ambient_h_m3: p.ambient_h_m3,
         lighting: vec![p.star.clone()],
         decoration_seed: decoration_seed(seed, &p.address)?,
+        line_colours: line_colours(&light)?,
         light,
         why,
         stand_ins: vec![
@@ -260,6 +264,7 @@ pub fn young_jet(seed: &Seed, p: &YoungStarInput, at_s: f64) -> Result<Option<De
         ambient_h_m3: p.ambient_h_m3,
         lighting: vec![],
         decoration_seed: decoration_seed(seed, &p.address)?,
+        line_colours: line_colours(&light)?,
         light,
         why,
         stand_ins: vec![
