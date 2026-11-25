@@ -79,7 +79,12 @@ range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelen
  * the ground's dose as a share of open space, belt extent, and
  * whether the field is measured, computed, none or unresolved).
  */
-system?: string, at_s?: bigint, } | { "op": "read_composition", system: string, body?: string, level?: string, at_s?: bigint, } | { "op": "read_inventory", system: string, body?: string, kinds?: Array<string>, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], 
+system?: string, at_s?: bigint, } | { "op": "read_composition", system: string, body?: string, level?: string, at_s?: bigint, } | { "op": "small_body", system: string, member?: string, cloud?: string, rank?: bigint, 
+/**
+ * SB4: distance from the star for an icy body's activity, AU
+ * (perihelion when left out).
+ */
+r_au?: number, } | { "op": "make_small_body", system: string, address: string, kind: string, diameter_km?: number, mass_kg?: number, a_au: number, e?: number, } | { "op": "read_inventory", system: string, body?: string, kinds?: Array<string>, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], 
 /**
  * Cool giants losing mass (`sse_nebula::outflow::GiantInput`): their
  * dusty shells (O3b).
