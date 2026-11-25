@@ -1,0 +1,9 @@
+{
+  "system": "Helix Nebula (NGC 7293)",
+  "view": "Nebula view, Composite",
+  "camera": "from Earth, 650 light years",
+  "needs": [
+    "emission-line bands",
+    "planetary nebula shells (light and nebulae thread)"
+  ]
+}

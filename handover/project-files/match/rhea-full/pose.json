@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Rhea",
+  "camera": "about 300,000 km, phase angle near 0",
+  "tests": "Visible: opposition brightening",
+  "needs": [
+    "the opposition surge in the surface's phase function"
+  ]
+}

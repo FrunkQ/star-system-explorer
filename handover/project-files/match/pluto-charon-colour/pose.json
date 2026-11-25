@@ -1,0 +1,12 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Composite (blue, red, near-infrared, stretched)",
+  "frame": "Pluto",
+  "camera": "New Horizons approach, about 250,000 km",
+  "date": "2015-07-14",
+  "needs": [
+    "tholin colour from the data sheet",
+    "Charon's red pole",
+    "a colour stretch"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "Land (Surface screen), True, Visible, Eye",
+  "frame": "Venus",
+  "camera": "on the ground at the Venera 13 site (7.5 S, 303 E), lens about 0.9 m up, looking down across the plain to the horizon",
+  "date": "1982-03-01",
+  "needs": ["Land's sky through a thick CO2 atmosphere with cloud (multiple scattering; single Rayleigh today)", "the ground's colour under orange light", "the ground's fine relief at metres"]
+}

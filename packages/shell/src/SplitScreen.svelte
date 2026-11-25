@@ -24,7 +24,9 @@
 <FillScreen />
 
 <style>
-  :global(html, body) {
+  /* Only while a split is on the page: the shell's one bundle carries this sheet to every players' screen too. */
+  :global(html:has(.split)),
+  :global(body:has(.split)) {
     margin: 0;
     height: 100%;
     background: #000;

@@ -1,7 +1,7 @@
 // Packing a campaign postcard for sending (design section 4 rule 1): the world goes as a clip of the bodies in frame
 // and what they orbit, through what the maker's seat can see. A GM's campaign that has been shared goes "as the table
 // sees it"; before that, as the GM sees it. Notes, secrets and Known-to records are never in a clip.
-import { clipThroughSeat, copyClip, envelope, primaryOf, subtree, within, type Bookmark, type Postcard, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+import { clipThroughSeat, copyClip, goesInOrigin, type PostcardOrigin, envelope, primaryOf, subtree, within, type Bookmark, type Postcard, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
 export async function packForSending(ctx: ViewContext, scene: SystemScene, b: Bookmark & { at_yr: number }, opts: { packs: readonly { id: string; version: string }[]; kernel: string; credit: readonly string[]; asTable: boolean }): Promise<Postcard | string> {
   if (b.scope !== scene.system) return "Open this postcard's system to send it.";
@@ -31,5 +31,30 @@ export async function packForSending(ctx: ViewContext, scene: SystemScene, b: Bo
     fact: (n, field) => !seen || field === "name" || !!seen.facts.get(addrOf.get(n.id) ?? "")?.has(field),
   });
   if (!clip) return "The table does not know this place, so there is nothing to send.";
-  return envelope(b, { how: "clip", clip, packs: clip.packs, made_with: opts.kernel }, { name: b.name, credit: opts.credit });
+  // The camera's body as a node of the clip, so a visit can find it wherever the clip is laid out.
+  // The star's age goes too: without it the worlds cannot be worked out again where the postcard is opened.
+  const rs = await ctx.session.resolvedSystem(scene.system);
+  const age = rs.ok ? rs.result.facts[scene.system]?.["system.age"] : undefined;
+  const node = [...addrOf].find(([id, a]) => a === about && clip.nodes.some((n) => n.id === id))?.[0];
+  // Where it was made, with every authored fact the bodies that go hold (and the system's own), so a visit opens the
+  // same world, ground and all. Only bodies the seat sees go (the clip is already through the seat); notes and words
+  // for the GM never do (goesInOrigin).
+  const nodes: Record<string, string> = {};
+  for (const n of clip.nodes) {
+    const a = addrOf.get(n.id);
+    if (a) nodes[n.id] = a;
+  }
+  const facts: PostcardOrigin["facts"] = [];
+  if (rs.ok) {
+    for (const a of [scene.system, ...Object.values(nodes)]) {
+      const ev = rs.result.evidence?.[a] ?? {};
+      for (const [field, value] of Object.entries(rs.result.facts[a] ?? {})) {
+        const e = ev[field]?.evidence ?? "";
+        if (!e.startsWith("authored") || !goesInOrigin(field) || value === undefined) continue;
+        facts.push({ address: a, field, value, ...(e === "authored-impossible" ? { impossible: true } : {}) });
+      }
+    }
+  }
+  const origin: PostcardOrigin = { universe: { id: ctx.session.universe.id, seed: ctx.session.universe.seed }, system: scene.system, nodes, facts };
+  return envelope(b, { how: "clip", clip, packs: clip.packs, made_with: opts.kernel, ...(node ? { about: node } : {}), ...(typeof age === "number" && age > 0 ? { age_s: age } : {}), ...(facts.length ? { origin } : {}) }, { name: b.name, credit: opts.credit });
 }

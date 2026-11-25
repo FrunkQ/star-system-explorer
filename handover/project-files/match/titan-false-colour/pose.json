@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Composite",
+  "frame": "Titan",
+  "camera": "about 50,000 km",
+  "tests": "Composite",
+  "needs": [
+    "Composite with infrared windows"
+  ]
+}

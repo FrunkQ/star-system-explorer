@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { importedSystems, noWorldsWhy, reportSummary, resolveParams, sceneFromFormation, sceneFromImport, worldWords, type FormationRan, type FormationRequest, type SystemScene, type V3Imported, type ViewContext, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { roundTo, importedSystems, noWorldsWhy, reportSummary, resolveParams, sceneFromFormation, sceneFromImport, worldWords, type FormationRan, type FormationRequest, type SystemScene, type V3Imported, type ViewContext, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { systemChart } from "../../views/system-chart/src/index.ts";
   import { bodyCard } from "../../views/body-card/src/index.ts";
   import FormationReplay from "../../views/system-chart/src/FormationReplay.svelte";
@@ -134,8 +134,8 @@
     handles.push(h);
     return { destroy: () => (handles.splice(handles.indexOf(h), 1), h.dispose()) };
   }
-  const fmt = (v: number) => (Math.abs(v) >= 1e5 || (Math.abs(v) < 1e-3 && v !== 0) ? v.toExponential(4) : String(Number(v.toPrecision(6))));
-  const pct = (v: number) => `${Number((v * 100).toPrecision(2))} %`;
+  const fmt = (v: number) => (Math.abs(v) >= 1e5 || (Math.abs(v) < 1e-3 && v !== 0) ? v.toExponential(4) : String(roundTo(v, 6)));
+  const pct = (v: number) => `${roundTo(v * 100, 2)} %`;
   const counts = (o: Record<string, number>) => Object.entries(o).map(([k, n]) => (n > 1 ? `${k} (${n})` : k));
 </script>
 

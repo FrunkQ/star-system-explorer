@@ -6,7 +6,8 @@
 // Nothing about players is in it (no role, look or knowledge). Presentation only: never read by physics, never in the
 // state hash.
 import { BOOKMARK_SCHEMA, bookmarksFrom, makeBookmark, type Bookmark, type Whereabouts } from "./bookmark.ts";
-import { readClip, type Clip, type ClipEvent, type ClipNode } from "./clip.ts";
+import { placeClip, readClip, type Clip, type ClipEvent, type ClipNode } from "./clip.ts";
+import type { Json } from "./json.ts";
 import { checkPicture } from "./picture.ts";
 import type { ViewChoice } from "./view-controls.ts";
 
@@ -85,9 +86,42 @@ export type PostcardWorld =
   /** A place in the generated universe: its address, the universe's root and the packs it was made under. */
   | { how: "address"; root: string; packs: PackNamed[]; made_with: string }
   /** An authored place: a clip of the bodies in frame and what they orbit, as authored facts. Never for the shop. */
-  | { how: "clip"; clip: Clip; packs: PackNamed[]; made_with: string }
+  | { how: "clip"; clip: Clip; packs: PackNamed[]; made_with: string; /** The clip node the camera is about (its pose names the maker's address, which means nothing elsewhere). */ about?: string; /** The age of the system's star, seconds: with it a visit can work the worlds out again. */ age_s?: number; /** Where it was made, so a visit can open the same world. */ origin?: PostcardOrigin }
   /** Kept inside its own campaign: the world is already there. */
   | { how: "here" };
+
+/** Where a clip postcard was made (PC4 part 2): the universe and the addresses its bodies had there, with every
+ * authored fact those bodies hold that shapes how they look (the clip keeps only the few a paste needs). A visit opens
+ * the same universe on a kernel of its own and lays these facts in at the same addresses, so the world is the same
+ * world, ground and all (design section 4 rule 4). Notes, secrets and Known-to records are never among them. */
+export interface PostcardOrigin {
+  universe: { id: string; seed: string };
+  system: string;
+  /** Clip node id to its address where it was made. */
+  nodes: Record<string, string>;
+  facts: { address: string; field: string; value: Json; impossible?: boolean }[];
+}
+
+/** Fields never sent with a postcard's origin, whatever they hold: notes and words for the GM, and who knows what. */
+export const ORIGIN_NEVER = /note|secret|known|description|gm/i;
+/** A field an authored edit may name (intent.ts): an origin fact that is not one (an import's own bookkeeping) stays home. */
+const EDITABLE_FIELD = /^[a-z][a-z0-9_.-]*$/;
+/** Whether an authored fact goes with a postcard's origin. */
+export const goesInOrigin = (field: string) => EDITABLE_FIELD.test(field) && !ORIGIN_NEVER.test(field);
+
+function originFrom(raw: unknown, nodes: readonly ClipNode[]): PostcardOrigin | undefined {
+  if (!isObj(raw) || !isObj(raw.universe) || typeof raw.universe.id !== "string" || typeof raw.universe.seed !== "string") return undefined;
+  if (typeof raw.system !== "string" || !raw.system || !isObj(raw.nodes) || !Array.isArray(raw.facts)) return undefined;
+  const ids = new Set(nodes.map((n) => n.id));
+  const map: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw.nodes)) if (ids.has(k) && typeof v === "string" && v.startsWith(raw.system)) map[k] = v;
+  const facts: PostcardOrigin["facts"] = [];
+  for (const f of raw.facts) {
+    if (!isObj(f) || typeof f.address !== "string" || !f.address.startsWith(raw.system) || typeof f.field !== "string" || !goesInOrigin(f.field) || f.value === undefined) continue;
+    facts.push({ address: f.address, field: f.field, value: f.value as Json, ...(f.impossible === true ? { impossible: true } : {}) });
+  }
+  return { universe: { id: raw.universe.id, seed: raw.universe.seed }, system: raw.system, nodes: map, facts };
+}
 
 /** Words on the back for one sending (12A point 8): plain text only, never published to the shop. */
 export interface PostcardMessage {
@@ -141,7 +175,10 @@ function worldFrom(raw: unknown): PostcardWorld | string {
   if (raw.how === "clip") {
     const c = readClip(JSON.stringify(raw.clip ?? null));
     if (!c.ok) return `its clip does not read: ${c.why}`;
-    return { how: "clip", clip: c.clip, packs, made_with };
+    const about = typeof raw.about === "string" && c.clip.nodes.some((n) => n.id === raw.about) ? raw.about : undefined;
+    const age_s = typeof raw.age_s === "number" && Number.isFinite(raw.age_s) && raw.age_s > 0 ? raw.age_s : undefined;
+    const origin = originFrom(raw.origin, c.clip.nodes);
+    return { how: "clip", clip: c.clip, packs, made_with, ...(about ? { about } : {}), ...(age_s ? { age_s } : {}), ...(origin ? { origin } : {}) };
   }
   return "it does not say how to get its world";
 }
@@ -294,7 +331,8 @@ export function goesWith(p: Postcard): { bodies: string[]; facts: number; words:
     const e = c.events.find((x) => x.node === n.id && x.field === "name");
     return typeof e?.value === "string" ? e.value : `an unnamed ${n.kind}`;
   });
-  const facts = c.events.length;
+  // The origin's facts are the bodies' own (the clip's few are among them); a postcard without one has the clip's alone.
+  const facts = w.origin ? new Set([...w.origin.facts.map((f) => `${f.address}|${f.field}`), ...c.events.map((e) => `${w.origin!.nodes[e.node] ?? e.node}|${e.field}`)]).size : c.events.length;
   return { bodies, facts, words: `${listWords(bodies)}: ${facts === 1 ? "one fact" : `${facts} facts`}, nothing else.` };
 }
 
@@ -407,4 +445,26 @@ export function readPostcard(text: string): PostcardRead {
 export function looksLikePostcard(text: string): boolean {
   const t = text.trim();
   return new RegExp(`(?:^|[#&])${POSTCARD_LINK_KEY}=`).test(t) || (t.startsWith("{") && t.includes(`"${POSTCARD_SCHEMA}"`));
+}
+
+/** A postcard's clip laid out as a system of its own (design section 4, "a small visiting universe of its own"): a
+ * clip whose root is a star becomes the system's star (its facts set on the system's own address, as a campaign's
+ * recorded facts are) with everything else round it; any other clip goes round the system's star as it is. `taken`
+ * holds the addresses the system already has; `age_s`, the star's age, lets the kernel work its worlds out again. The
+ * edits are authored facts; physics works the rest out again. */
+export function clipAsSystem(c: Clip, system: string, taken: Iterable<string>, age_s?: number): { edits: { address: string; field: string; value: Json; impossible: boolean }[]; addressOf: Map<string, string> } {
+  const root = c.nodes.find((n) => n.id === c.root);
+  if (root?.kind !== "star") {
+    const p = placeClip(c, { system, host: system, hostKind: "star", taken });
+    return { edits: p.edits, addressOf: new Map(c.nodes.map((n, i) => [n.id, p.placed[i]!.address])) };
+  }
+  const rest: Clip = { ...c, root: c.nodes.find((n) => n.parent === c.root)?.id ?? c.root, nodes: c.nodes.filter((n) => n.id !== c.root).map((n) => ({ ...n, parent: n.parent === c.root ? null : n.parent })), events: c.events.filter((e) => e.node !== c.root) };
+  const addressOf = new Map<string, string>([[c.root, system]]);
+  const edits = c.events.filter((e) => e.node === c.root && !e.field.startsWith("orbit.")).map((e) => ({ address: system, field: e.field, value: e.value as Json, impossible: e.impossible ?? false }));
+  if (age_s) edits.push({ address: system, field: "system.age", value: age_s, impossible: false });
+  if (!rest.nodes.length) return { edits, addressOf };
+  const p = placeClip(rest, { system, host: system, hostKind: "star", taken });
+  rest.nodes.forEach((n, i) => addressOf.set(n.id, p.placed[i]!.address));
+  edits.push(...p.edits);
+  return { edits, addressOf };
 }

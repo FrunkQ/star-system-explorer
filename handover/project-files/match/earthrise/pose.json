@@ -1,0 +1,13 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Moon",
+  "camera": "about 110 km over the Moon's eastern limb, looking along the horizon toward Earth",
+  "date": "1968-12-24T16:40Z",
+  "fov_deg": "about 15 (a 250 mm lens on 70 mm film)",
+  "needs": [
+    "CU1 close-up",
+    "the Moon's deep tiles (VP3 part 4)",
+    "Earth's clouds"
+  ]
+}

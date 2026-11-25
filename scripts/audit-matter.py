@@ -74,6 +74,10 @@ FIXTURE_FILES = {
     os.path.join("packages", "shell", "src", "documents", "kestrel.scene.json"),
     # A sample SSE 3 save, in SSE 3's own format and with its own figures.
     os.path.join("packages", "shell", "src", "documents", "sample-sol.v3.json"),
+    # The base postcard set (PC6): each card carries the facts of the world it was
+    # taken of (the sample save above, imported), a record drawn as it was saved.
+    # Made by scripts/build-postcard-set.mjs. Alex yes 25 Nov 13:22.
+    os.path.join("packs", "base-presentation", "postcards.json"),
 }
 SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"), os.path.join("packs", "base-sol"), os.path.join("crates", "sse-core", "src", "sheet.rs"))
 

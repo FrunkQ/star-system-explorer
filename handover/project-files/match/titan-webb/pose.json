@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Infrared band",
+  "frame": "Titan",
+  "camera": "from Earth's place",
+  "tests": "Infrared",
+  "needs": [
+    "clouds in Titan's air"
+  ]
+}
