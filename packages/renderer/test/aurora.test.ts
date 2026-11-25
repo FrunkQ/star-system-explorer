@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { exposeAurora, kiloRayleighRadiance, lineRgb, planAurora, type AuroraJson, type AuroraWorld } from "../src/aurora.ts";
+import { cieXyz, exposeAurora, kiloRayleighRadiance, lineRgb, planAurora, type AuroraJson, type AuroraWorld } from "../src/aurora.ts";
 import type { FieldReadJson } from "../src/field.ts";
 
 type Read = FieldReadJson & { aurora?: AuroraJson | null };
@@ -81,7 +81,9 @@ test("long exposure lifts all faint light by one ratio, so ratios between lines 
   const d = exposeAurora(p, 6.371e6, "long", 6, 1361)!;
   const lum = (x: [number, number, number]) => 0.2126 * x[0] + 0.7152 * x[1] + 0.0722 * x[2];
   const ratio = lum(d.layers[1]!.rgb) / lum(d.layers[0]!.rgb);
-  assert.ok(Math.abs(ratio - p.layers[1]!.radiance_w_m2_sr / p.layers[0]!.radiance_w_m2_sr) < 1e-9);
+  // Ratios as the eye weighs them: watts times the photopic curve at each line.
+  const seen = (i: number) => p.layers[i]!.radiance_w_m2_sr * cieXyz(p.layers[i]!.wavelength_m * 1e9)[1];
+  assert.ok(Math.abs(ratio - seen(1) / seen(0)) < 1e-9);
   assert.ok(d.lift > 1e6, `lift ${d.lift}`);
   assert.match(d.says, /Long exposure: faint light is lifted/);
 });
@@ -185,4 +187,25 @@ test("part 2b's shape: the oval sits between its edges, and an airy world with n
   assert.equal(d.layers.length, 1);
   assert.equal(d.layers[0]!.kind, "diffuse");
   assert.match(d.note, /diffuse glow/);
+});
+
+test("a near-UV line shows faint beside the green one with the same watts (eye-weighted brightness)", () => {
+  const r = structuredClone(W("earth-handed").read);
+  r.aurora!.ovals[0]!.width_deg = 8;
+  r.aurora!.ovals[0]!.emissions = [
+    { line: "oi-5577", matter: "o", wavelength_m: 557.7e-9, power_w: 1e10, peak_height_m: 110e3, thickness_m: 25e3, colour: { linear_srgb: [0.23, 1, 0] } },
+    { line: "n2p", matter: "n2", wavelength_m: 391.4e-9, power_w: 1e10, peak_height_m: 110e3, thickness_m: 25e3, colour: { linear_srgb: [0.3, 0, 1] } },
+  ];
+  const d = exposeAurora(planAurora(r, W("earth-handed").world), 6.371e6, "long", 6, 1361)!;
+  const lum = (x: [number, number, number]) => 0.2126 * x[0] + 0.7152 * x[1] + 0.0722 * x[2];
+  assert.ok(lum(d.layers[1]!.rgb) < 0.01 * lum(d.layers[0]!.rgb), "391.4 nm is near the edge of sight");
+});
+
+test("kernel lines in words: the kernel's name when given, else matter and wavelength", async () => {
+  const { lineName } = await import("../src/aurora.ts");
+  assert.equal(lineName({ line: "oi-5577", matter: "o", wavelength_m: 557.734e-9 }), "O 557.7 nm");
+  assert.equal(lineName({ line: "oi-6300", matter: "o", wavelength_m: 630.03e-9 }), "O 630.0 nm");
+  assert.equal(lineName({ line: "n2p", matter: "n2", wavelength_m: 391.44e-9 }), "N2 391.4 nm");
+  assert.equal(lineName({ line: "x", name: "[O I] 557.7 nm" }), "[O I] 557.7 nm");
+  assert.equal(lineName({ line: "unknown-line" }), "unknown-line");
 });

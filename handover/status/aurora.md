@@ -9,7 +9,7 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 - `emissions`: `{line, matter, wavelength_m, power_w, share, peak_height_m, thickness_m (full height range above half peak), colour {hex, linear_srgb}}`, colour a chromaticity with max channel 1 (as every kernel colour), brightness in `power_w`; and `colour`, all emissions blended;
 - footprints give `lead_deg` (the angle the spot runs ahead of its moon); the moon's longitude is taken from the system's positions;
 - the diffuse glow gets `peak_height_m` and colour too.
-`aurora.ts` reads all of these already (tested against the shape) and draws the kernel's lines the moment they arrive.
+`aurora.ts` reads all of these and, since PR 406 (MF9 part 2b) merged on 25 Nov, draws the kernel's own lines on Earth and the giants; brightness is weighed by the eye's photopic curve at each line.
 
 **Rule 5 (section 16.1):** a look is switched on by kernel numbers, never a name or class; it scales with them; it stays off where the physics says so; each package is proven on a Solar System body, a world outside it, and a world where it stays off. Aurora proving worlds: `tests/fixtures/aurora/proving-worlds.json`.
 

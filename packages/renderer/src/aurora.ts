@@ -12,7 +12,23 @@ import { dipoleAxis, fieldFromRead } from "./field.ts";
 import { constant, say } from "../../ui-contract/src/index.ts";
 
 /** One line the air gives off in an aurora (MF9 part 2's shape, agreed with the light thread 24 Nov 2026). */
+
+/**
+ * A kernel line as words: the kernel's own `name` when it gives one, otherwise its matter and wavelength ("O 557.7 nm").
+ * The light table's names are not in the client API yet.
+ */
+export function lineName(em: { line: string; matter?: string; wavelength_m?: number; name?: string }): string {
+  if (em.name) return em.name;
+  if (!em.matter || !em.wavelength_m) return em.line;
+  const tenths = Math.round(em.wavelength_m * 1e10);
+  // Sheet ids are lower case formulas; capitals read as one (O, N2, CO2) until the kernel names its lines.
+  const formula = em.matter.toUpperCase();
+  return `${formula} ${Math.floor(tenths / 10)}.${tenths % 10} nm`;
+}
+
 export interface AuroraEmissionJson {
+  /** The line in words, when the kernel gives it. */
+  name?: string;
   line: string;
   /** Element or substance id on the data sheet. */
   matter?: string;
@@ -210,7 +226,7 @@ export function planAurora(read: (FieldReadJson & { aurora?: AuroraJson | null }
     const rgb = em.colour?.linear_srgb ?? lineRgb(em.wavelength_m);
     // Power spread over the glowing area, sent equally into every direction: radiance looking straight down.
     const L = area > 0 ? em.power_w / (4 * Math.PI * area) : 0;
-    layers.push({ kind, driver, line: em.line, wavelength_m: em.wavelength_m, colatitude_rad: colat, width_rad: width, height_m: em.peak_height_m, thickness_m: em.thickness_m ?? (H ? 2 * H : em.peak_height_m * 0.2), rgb: [rgb[0], rgb[1], rgb[2]], radiance_w_m2_sr: L, grade: "kernel" });
+    layers.push({ kind, driver, line: lineName(em), wavelength_m: em.wavelength_m, colatitude_rad: colat, width_rad: width, height_m: em.peak_height_m, thickness_m: em.thickness_m ?? (H ? 2 * H : em.peak_height_m * 0.2), rgb: [rgb[0], rgb[1], rgb[2]], radiance_w_m2_sr: L, grade: "kernel" });
   };
   for (const o of a.ovals) {
     // Part 2b gives both edges: the oval's centre is half way between them, its width the gap.
@@ -292,15 +308,19 @@ export interface AuroraDraw {
  * ratio for the view, chosen so the brightest layer shows at `target` of the sunlit ground: ratios between faint
  * things stay true. Eye keeps the daylight exposure, and light below colour vision's limit goes grey.
  */
+/** A layer's radiance as the eye weighs it: watts times the photopic curve at its line (1 at 555 nm), so a near-UV line
+ * with as many watts as the green one shows faint, as it does to the eye and to a colour camera. */
+const seenRadiance = (l: AuroraLayer): number => l.radiance_w_m2_sr * cieXyz(l.wavelength_m * 1e9)[1];
+
 export function exposeAurora(plan: AuroraPlan, radius_m: number, mode: AuroraExposure, sun: number, flux_w_m2: number, target = 0.6): AuroraDraw | null {
   if (!plan.layers.length) return null;
   const toUnits = sun / Math.max(flux_w_m2, 1e-30);
   // The sunlit ground of albedo 0.3 seen face-on, in renderer units (gpu-globe's physical lighting: albedo × sun / π).
   const ground = (0.3 * sun) / Math.PI;
-  const peak = Math.max(...plan.layers.map((l) => l.radiance_w_m2_sr)) * toUnits;
+  const peak = Math.max(...plan.layers.map(seenRadiance)) * toUnits;
   const lift = mode === "long" && peak > 0 ? Math.max(1, (target * ground) / peak) : 1;
   const layers = plan.layers.map((l): AuroraDrawLayer => {
-    const rgb = lineColour(l, mode, l.radiance_w_m2_sr * toUnits * lift);
+    const rgb = lineColour(l, mode, seenRadiance(l) * toUnits * lift);
     return { colatitude_rad: l.colatitude_rad, width_rad: l.width_rad, diffuse: l.kind === "diffuse", radius: 1 + l.height_m / radius_m, thickness: Math.max(1e-5, l.thickness_m / radius_m), rgb };
   });
   const top = Math.max(...layers.map((l) => l.radius + l.thickness / 2));
@@ -373,12 +393,12 @@ export function auroraSky(plan: AuroraPlan, radius_m: number, site: { lat_deg: n
       const e = (el * Math.PI) / 180;
       const d = [Math.cos(e) * Math.sin(a), Math.cos(e) * Math.cos(a), Math.sin(e)];
       let sum = 0;
-      plan.layers.forEach((l, i) => (sum += l.radiance_w_m2_sr * skyGlowAlong(shells[i]!, axis, d, 2, radius_m)));
+      plan.layers.forEach((l, i) => (sum += seenRadiance(l) * skyGlowAlong(shells[i]!, axis, d, 2, radius_m)));
       peak = Math.max(peak, sum);
     }
   const seen = peak * per * Math.max(exposure, 1e-30);
   const lift = mode === "long" && seen > 0 ? Math.max(1, target / seen) : 1;
-  const layers = shells.map((sh, i) => ({ ...sh, rgb: lineColour(plan.layers[i]!, mode, plan.layers[i]!.radiance_w_m2_sr * per * lift) }));
+  const layers = shells.map((sh, i) => ({ ...sh, rgb: lineColour(plan.layers[i]!, mode, seenRadiance(plan.layers[i]!) * per * lift) }));
   const real = lift > 1 ? ` (×${lift.toExponential(1).replace("e+", "×10^")})` : "";
   const says = mode === "long" ? `Long exposure: faint light is lifted${real}, so the aurora shows in full colour.` : "Eye: the aurora at its true brightness, grey where it is too faint for colour vision.";
   return { axis, layers, says, lift };

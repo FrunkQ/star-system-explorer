@@ -42,12 +42,18 @@ try {
     await go(gm, "body");
     const hash0 = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
     await view(gm, "View style", "True");
-    await gm.waitForSelector("[data-aurora-stand-in]", { timeout: 30000 });
-    assert.match(await gm.locator("[data-aurora-stand-in]").innerText(), /stand-in: oxygen's green and red/);
+    // Earth's air has the kernel's own lines now (MF9 part 2b), so no stand-in is borrowed.
+    await gm.waitForSelector("[data-badge]", { timeout: 30000 });
     await gm.locator("[data-badge]").click();
+    await gm.waitForFunction(() => /^Aurora:/.test(document.querySelector("[data-aurora-note]")?.textContent ?? ""), null, { timeout: 30000 });
     const note = await gm.locator("[data-aurora-note]").innerText();
-    assert.match(note, /wind-driven oval at 7\d° magnetic latitude/, note);
-    assert.match(note, /O I 557\.7 nm at about 1\d\d km, O I 630\.0 nm at about 2\d\d km/, note);
+    if (process.env.AU_DEBUG) console.log(note);
+    assert.equal(await gm.locator("[data-aurora-stand-in]").count(), 0, "Earth draws the kernel's lines, not the stand-in");
+    assert.doesNotMatch(note, /Stand-in/, note);
+    assert.match(note, /wind-driven oval at 6\d° magnetic latitude/, note);
+    assert.match(note, /O 557\.7 nm at about 1\d\d km/, note);
+    assert.match(note, /N2 391\.4 nm/, note);
+    assert.match(note, /630\.0 nm at about 2\d\d km/, note);
     assert.match(note, /Long exposure: faint light is lifted/, note);
     await gm.locator("[data-badge]").click();
     await view(gm, "Seen from", "Above");
@@ -103,7 +109,7 @@ try {
       await gm.locator("[data-hour]").fill(String(darkest.at));
       await gm.waitForSelector("[data-aurora-sky]", { timeout: 20000 });
       const sky = await gm.locator("[data-aurora-sky]").innerText();
-      assert.match(sky, /wind-driven oval .* O I 557\.7 nm .* Long exposure: faint light is lifted/, sky);
+      assert.match(sky, /wind-driven oval .* 557\.7 nm .* Long exposure: faint light is lifted/, sky);
       // Look about: four headings, a quarter turn apart.
       await gm.locator("[data-ground]").focus();
       for (const k of [0, 1, 2, 3]) {

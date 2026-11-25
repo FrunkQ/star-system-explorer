@@ -15,3 +15,8 @@ Track VP-AU (visual polish design section 16). Owner: "Build aurorae and night l
 
 ## Caveats
 - Fudge row "Aurora from the ground" (temporary until VP1's finish meters it). No curtains (VP-AU6) or scattering of aurora light by the air.
+
+## Kernel lines (after PR 406, MF9 part 2b, merged 25 Nov)
+- Earth now draws the kernel's own lines (N2 391.4 nm and O 557.7 nm near 111 km, O 630.0 nm near 203 km, oval centred at 66° between `edges_deg`); the oxygen stand-in stays only for worlds the kernel gives no `upper_air`.
+- Brightness is weighed by the eye: each layer's watts times the CIE photopic curve at its line (`seenRadiance`), so the near-UV N2 line no longer washes the limb blue. Lift and ratios use the same weighting.
+- Lines in words: the kernel's `name` when given; otherwise matter and wavelength ("O 557.7 nm"). Asked the light thread to add the light table's name to each emission.
