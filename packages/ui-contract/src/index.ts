@@ -173,3 +173,5 @@ export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, R
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
 export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed } from "./handles.ts";
 export * from "./place-notes.ts";
+// Roll call (track SH): who was in flight on a day, aboard what and where, from flight logs and stays.
+export * from "./rollcall.ts";
