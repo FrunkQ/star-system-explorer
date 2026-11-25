@@ -74,6 +74,8 @@ try {
       assert.equal(await view.getAttribute("data-look"), tier === "gpu" ? "true" : "plain", "True draws on the GPU tier; a device without one keeps the plain look");
       // The living star (V10c): on the GPU tier the star is the kernel's, turning on its own clock.
       if (tier === "gpu") {
+        // VP4 part 2b: True is placed and governed by the system-true recipe (tier|level|rest|frames on the canvas).
+        await gm.waitForFunction(() => /^(gpu-high|gpu-basic|gpu-ultra)\|\d+\|/.test(document.querySelector("[aria-roledescription='3D chart'] canvas.gpu")?.getAttribute("data-quality") ?? ""), null, { timeout: 30000 });
         const live = view.locator("[data-star-live]");
         await live.waitFor({ timeout: 30000 });
         const turn0 = await live.getAttribute("data-star-turn");
@@ -85,7 +87,7 @@ try {
         // Bands through True (rule 12, one set of controls): X-ray draws the corona, Infrared each body's own heat.
         for (const [b, id] of [["X-ray", "xray"], ["Infrared", "infrared"]]) {
           await pick(gm, "Band", b);
-          await gm.waitForFunction((x) => document.querySelector("[aria-roledescription='3D chart'] [data-true-band]")?.getAttribute("data-true-band") === x, id);
+          await gm.waitForFunction((x) => document.querySelector("[aria-roledescription='3D chart'] [data-true-band]")?.getAttribute("data-true-band") === x, id, { timeout: 20000 });
         }
         await shot(gm, `v10d-gm-true-infrared-${mode}`);
         await pick(gm, "Band", "Visible");
@@ -104,6 +106,16 @@ try {
       // Every body takes a click (Alex, 24 Nov: only two did): the pointer picks the nearest body, so pins that overlap
       // at Real scale no longer hide the worlds beneath them. Checked on each pin clear of its neighbours by 6 px.
       // A click also flies in to the body's close-up (Alex, 24 Nov); "‹ Sun" comes back out before the next one.
+      // The camera's distance holds still for a few frames: the fly-in or fly-out has finished (a loaded runner takes
+      // longer than the tween's 620 ms, so the test waits on the camera, not on a clock).
+      const settled = () => gm.waitForFunction(() => {
+        const v = document.querySelector("[aria-roledescription='3D chart']");
+        const d = v?.getAttribute("data-dist");
+        const w = /** @type {any} */ (window);
+        if (w.__distWas !== d) { w.__distWas = d; w.__distSame = 0; return false; }
+        return ++w.__distSame >= 6;
+      }, null, { timeout: 20000, polling: 100 });
+      await settled();
       const pinsNow = () => view.locator(".pin").evaluateAll((ps) => ps.map((e) => { const r = e.getBoundingClientRect(); return { id: e.dataset.body, x: r.x + r.width / 2, y: r.y + r.height / 2 }; }));
       const ids = (await pinsNow()).map((q) => q.id);
       let clicked = 0;
@@ -112,18 +124,35 @@ try {
         const q = pinsAt.find((x) => x.id === id);
         if (!q || pinsAt.some((o) => o.id !== q.id && Math.hypot(o.x - q.x, o.y - q.y) < 6)) continue;
         await gm.mouse.click(q.x, q.y);
-        await gm.waitForTimeout(1100); // the fly-in to its close-up
-        await gm.waitForFunction((id) => document.querySelector("[aria-roledescription='3D chart'] .pin.sel")?.getAttribute("data-body") === id, q.id, { timeout: 5000 });
+        await gm.waitForFunction((id) => document.querySelector("[aria-roledescription='3D chart'] .pin.sel")?.getAttribute("data-body") === id, q.id, { timeout: 15000 });
+        await settled(); // the fly-in to its close-up
         clicked++;
         const back = view.locator(".crumb button, button").filter({ hasText: /^‹ / }).first();
         if (await back.isVisible().catch(() => false)) {
           if (clicked === 1) await shot(gm, `close-up-${mode}`);
           await back.click();
-          await gm.waitForTimeout(150);
+          await settled();
         }
       }
       assert.ok(clicked >= 3, `bodies clicked: ${clicked}`);
       await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();
+      // Close-up (Alex, 25 Nov): in True the camera comes down to a grazing orbit over a world (Readable draws it 0.55
+      // across), and the HUD's switch leaves the camera where it is.
+      if (tier === "gpu") {
+        await view.locator(`[data-body='${VAULT}']`).click();
+        await gm.waitForFunction((v) => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-frame") === v, VAULT);
+        await gm.waitForTimeout(1100);
+        const d0 = await view.getAttribute("data-dist");
+        await pick(gm, "HUD", "Off");
+        await gm.waitForFunction(() => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-hud") === "off");
+        assert.equal(await view.getAttribute("data-dist"), d0, "HUD off keeps the camera");
+        for (let i = 0; i < 45; i++) await view.getByRole("button", { name: "Zoom in" }).click();
+        const low = Number(await view.getAttribute("data-dist"));
+        assert.ok(low > 0.55 && low < 0.552, `down to a grazing orbit: ${low}`);
+        await shot(gm, `close-up-graze-${mode}`);
+        await pick(gm, "HUD", "On");
+        await view.locator(".crumb button, button").filter({ hasText: /^‹ / }).first().click();
+      }
       await gm.getByRole("button", { name: "3D", exact: true }).click();
       await gm.getByRole("group", { name: "View style" }).getByRole("button", { name: "Chart", exact: true }).click();
       // HUD on the flat chart too (one set of controls, Alex 23 Nov): off leaves the bodies and belts without the

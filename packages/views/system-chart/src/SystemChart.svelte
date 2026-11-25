@@ -6,13 +6,15 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts" module>
-  import { withFiner, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
+  import { withFiner, TILE_SAMPLES, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
+  /** Plume facts from the same reads (the world's surface record), by system and world. */
+  const truePlumes = new Map<string, import("../../../renderer/src/index.ts").PlumeFacts>();
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
   const trueSaid = new Map<string, string[]>();
   /** Its clouds alone, its ground under them, and its air (VP-A3, VP-A4), by system and world. */
-  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept };
+  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept; flatten?: number };
   const trueAirs = new Map<string, TrueAir>();
   /** Lays finer tiles (VP3 part 2) over the ground under a world's clouds; the new entry, or null when nothing changed. */
   function finerGround(key: string, fine: Parameters<typeof withFiner>[1]): TrueAir | null {
@@ -32,14 +34,14 @@
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { KM_PER_AU, gearing, nearestCatch, resonanceCatches, roundFigures, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, gearing, nearestCatch, resonanceCatches, roundFigures, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, formsHere, roundTo, sayNumber, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, readTrueFace, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
-  import { finerTiles, readFiner } from "../../body/src/finer-tiles.ts";
-  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
+  import { plumeFacts, readLiveStar, readTrueFace, readTrueShape, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type ShapeReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
+  import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
+  import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -223,6 +225,68 @@
     drag = { ...drag, rpx, lastD: d, caught: c?.says ?? null, ...(a !== drag.a_au ? { a_au: a, moved: true } : {}) };
   }
 
+  // ED4, Add with the ghost first (editing design section 5): while the shell is adding round the body at this chart's
+  // centre, a ghost and its orbit follow the pointer with the distance; a press drops it there (Add here opens with that
+  // orbit), Esc puts it away. Catches as the drag's: round figures, resonances with the worlds already there.
+  const adding = $derived.by(() => {
+    const a = ctx.workspace.adding;
+    return a && a.a_au === null && centre && a.host === centre.address ? a : null;
+  });
+  let ghostAt = $state<{ a_au: number; x: number; y: number; caught: string | null } | null>(null);
+  function moveGhost(e: PointerEvent) {
+    if (!adding) return void (ghostAt = null);
+    const box = svgEl!.getBoundingClientRect();
+    const [x, y] = [e.clientX - box.left, e.clientY - box.top];
+    const d = Math.hypot(x - cx, y - cy);
+    const raw = Math.min(limitAu, Math.max(scale.inner_au, distanceAt(d, scale)));
+    const neighbours = orbiting.filter((q) => q.orbit).map((q) => ({ label: q.label, a: q.orbit!.a_au }));
+    const c = e.altKey ? null : nearestCatch(d, [...roundFigures(raw, frame ? KM_PER_AU : 1, frame ? "km" : "AU"), ...resonanceCatches(raw, neighbours)], (v) => radius(v, scale));
+    ghostAt = { a_au: c ? c.at : round(raw), x, y, caught: c?.says ?? null };
+  }
+  // ED4 part 2a: while the ghost rests on an orbit round a star, one formation run round a star like this one says
+  // what forms there (the first of the runs Add here offers, so the two agree). Each orbit is asked once.
+  let formsAt = $state<{ key: string; words: string } | null>(null);
+  const formsSaid = new Map<string, string>();
+  const formsKey = (a_au: number) => `${scene.system} ${centre?.address} ${roundTo(a_au, 3)}`;
+  $effect(() => {
+    const g = ghostAt;
+    const c = centre;
+    const system = scene.system;
+    const m = c?.facts.find((f) => f.field === "mass_sun")?.value;
+    if (!adding || !g || !c || c.kind !== "star" || !system || typeof m !== "number") return;
+    const key = formsKey(g.a_au);
+    const said = formsSaid.get(key);
+    if (said !== undefined) return void (formsAt = { key, words: said });
+    const t = setTimeout(async () => {
+      const r = await formsHere(ctx.session, { system, star_mass_sun: m, a_au: g.a_au, tries: 1 });
+      if (!r.ok) return;
+      const f = r.found[0];
+      const words = f ? `forms a world of ${sayNumber(f.mass_earth, 2)} Earth masses here` : "no world forms here in one run";
+      formsSaid.set(key, words);
+      formsAt = { key, words };
+    }, 400);
+    return () => clearTimeout(t);
+  });
+  function dropGhost(e: PointerEvent) {
+    if (!adding) return;
+    e.stopPropagation();
+    e.preventDefault();
+    if (!ghostAt) moveGhost(e);
+    if (ghostAt) ctx.workspace.adding = { ...adding, a_au: ghostAt.a_au };
+    ghostAt = null;
+  }
+  $effect(() => {
+    if (!adding) return void (ghostAt = null);
+    const cancel = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      ctx.workspace.adding = null;
+    };
+    window.addEventListener("keydown", cancel, true);
+    return () => window.removeEventListener("keydown", cancel, true);
+  });
+
   // Esc while dragging puts the orbit back and writes nothing (editing design section 4).
   $effect(() => {
     if (!drag) return;
@@ -350,7 +414,8 @@
   // V6: the same frame in 3D (view only; edits stay on the 2D chart).
   // The standard view controls (rule 12) choose it: Chart is this flat log chart, 3D turns. A view without a shell's
   // choice (a screen document elsewhere) stays on Chart.
-  const shownView = $derived(viewOptions(SYSTEM_CHART_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  const viewed = $derived(viewOptions(SYSTEM_CHART_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW));
+  const shownView = $derived(viewed.shown);
   // Pencil (track SV): a body the table does not know is drawn in pencil on the GM's chart, on the Build and Run desks
   // whatever the lens, and wherever a lens carries the "What the table knows" layer; never through a player lens.
   const pencilOn = $derived(!!known && !through && hudShows(shownView.hud, "known") && (hasLayer(L, "known") || ctx.workspace.desk === "build" || ctx.workspace.desk === "run"));
@@ -358,7 +423,33 @@
   // True (V10a): each world's surface is read from its level-0 tiles (the Body globe's own, about 3 s a world in the
   // kernel), one at a time, the selected world first, and kept for this page. Only on the GM's seat, which reads tiles.
   const looksTrue = $derived(shownView.style === "true");
+  // True (VP2): the sky's stars from this system's place, read once per system and drawn behind everything; from the
+  // Sun's place, laid square on the system's frame, when the system has none yet (fudge register).
+  const SKY_LIMIT = 6.5;
+  const SQUARE = { to_galactic: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] as [[number, number, number], [number, number, number], [number, number, number]] };
+  let skyBehind = $state<{ key: string; dirs: Float32Array; share: Float32Array } | null>(null);
+  $effect(() => {
+    const sys = scene.system;
+    if (!looksTrue || skyBehind?.key === sys) return;
+    // The worlds' surfaces first: they share the kernel with the sky, and a world's face matters more than its stars.
+    if (ctx.session.seat.authority === "gm" && (!reading || reading.done < reading.of)) return;
+    untrack(() =>
+      void (async () => {
+        const ask = { limit_mag: SKY_LIMIT, band: "V", bands: ["B", "V"] };
+        let r = await ctx.session.skyFromHere({ ...ask, observer: sys });
+        if (!r.ok) r = await ctx.session.skyFromHere(ask);
+        const sky = r.ok ? (r.sky as { frame?: unknown; stars?: { dir: number[]; luminosity_lsun: number; distance_pc: number; teff_k?: number; components?: { teff_k: number }[] }[] }) : null;
+        if (!sky?.stars || scene.system !== sys) return;
+        const f = sky.frame as { to_galactic?: unknown } | null | undefined;
+        const frame = f && typeof f === "object" && Array.isArray(f.to_galactic) ? (f as typeof SQUARE) : SQUARE;
+        const stars = sky.stars.map((x) => ({ dir: [x.dir[0]!, x.dir[1]!, x.dir[2]!] as [number, number, number], luminosity_lsun: x.luminosity_lsun, distance_pc: x.distance_pc, teff_k: x.teff_k ?? x.components?.[0]?.teff_k ?? 5800 }));
+        skyBehind = { key: sys, ...starsBehind(stars, frame) };
+      })(),
+    );
+  });
   let surfaces = $state<Map<string, TrueTexture>>(new Map());
+  // Each world's plume facts from the same read (its surface record), for plumes above the limb.
+  let plumes = $state<Map<string, PlumeFacts>>(new Map());
   let airs = $state<Map<string, TrueAir>>(new Map());
   let reading = $state<{ done: number; of: number; none: number; why: string } | null>(null);
   let trueGen = 0;
@@ -380,17 +471,41 @@
         const key = `${sys}|${s.address}`;
         if (!trueSurfaces.has(key)) {
           reading = { done, of: order.length, none, why: noneWhy };
-          // Ground, then today's clouds and haze; a giant is its cloud decks (renderer true-air.ts).
-          const f = await readTrueFace(ctx.session as unknown as FaceReader, sys, s.address);
+          // Ground, then today's clouds and haze; a giant is its cloud decks (renderer true-air.ts). The surface record
+          // read on the way carries the world's plume facts (renderer plumes.ts).
+          let record: unknown = null;
+          const k = ctx.session as unknown as FaceReader;
+          // The session's own methods, bound to it (they use its private state), with its tile read noting the record.
+          const reader = new Proxy(k, {
+            get: (t, p) =>
+              p === "surfaceTiles"
+                ? async (a: string, b: string) => {
+                    const r = await ctx.session.surfaceTiles(a, b);
+                    if (r.ok) record = r.record ?? null;
+                    return r;
+                  }
+                : typeof (t as unknown as Record<string | symbol, unknown>)[p] === "function"
+                  ? ((t as unknown as Record<string | symbol, (...x: unknown[]) => unknown>)[p]!).bind(t)
+                  : (t as unknown as Record<string | symbol, unknown>)[p],
+          });
+          const f = await readTrueFace(reader, sys, s.address);
           trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
           if (typeof f !== "string") trueSaid.set(key, f.said);
+          const pf = plumeFacts(record);
+          if (pf) truePlumes.set(key, pf);
           // Its clouds alone over its ground, and its air's rim (VP-A3, VP-A4).
-          if (typeof f !== "string" && (f.clouds || f.air)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}) });
+          // And how much its spin flattens it (TA6).
+          const shape = await readTrueShape(ctx.session as unknown as ShapeReader, sys, s.address);
+          if (typeof shape !== "string") trueSaid.set(key, [...(trueSaid.get(key) ?? []), `${label(s)}: ${shape.said}.`]);
+          const flat = typeof shape === "string" ? {} : { flatten: shape.f };
+          if (typeof f !== "string" && (f.clouds || f.air || "flatten" in flat)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}), ...flat });
           // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
           const kept = trueSurfaces.get(key);
           if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));
           finerGround(key, finerTiles(key));
         }
+        const kp = truePlumes.get(key);
+        if (kp && g === trueGen) plumes = new Map(plumes).set(s.address, kp);
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
         if (t && typeof t !== "string") surfaces = new Map(surfaces).set(s.address, t);
@@ -409,6 +524,8 @@
       // its own cloud layer (VP-A4), which is what gpu.ts draws when the clouds are there.
       const under = ck ? trueAirs.get(ck)?.ground : undefined;
       if (ck && base && typeof base !== "string" && (base.faces || under?.faces) && g === trueGen) {
+        // Close-up: the ground under the camera is read first when the camera is over this world.
+        const below = untrack(() => groundView);
         void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
           const now = trueSurfaces.get(ck);
           if (!now || typeof now === "string") return;
@@ -417,9 +534,53 @@
           surfaces = new Map(surfaces).set(chosen!.address, t);
           const a = finerGround(ck, fine);
           if (a) airs = new Map(airs).set(chosen!.address, a);
-        });
+        }, below?.body === chosen!.address ? below.toward : undefined);
       }
     })());
+  });
+  // Close-up (Alex, 25 Nov): the ground under the 3D camera while it is low over a world in True; the detail ladder's
+  // deep tiles (VP3 part 4) read it.
+  let groundView = $state<GroundView | null>(null);
+  // VP3 part 4: once the camera has stayed low over the chosen world for DEEP_SETTLE_MS, the tiles under it are read
+  // at the screen's own scale (down to the kernel's fact floor) and laid over its ground as a patch. A newer view
+  // stops the read between requests; the last patch stays where it was read (it is the world's real ground).
+  const DEEP_SETTLE_MS = 600;
+  let deepGen = 0;
+  /** The level of the deep patch last laid, for the page's checks (data-deep-level). */
+  let deepLevel = $state<number | null>(null);
+  $effect(() => {
+    const below = groundView;
+    const sys = scene.system;
+    const sel = ctx.workspace.selection;
+    const my = ++deepGen;
+    if (!looksTrue || ctx.session.seat.authority !== "gm" || !below || below.body !== sel) return;
+    const radius_m = untrack(() => bodies3d.find((b) => b.id === below.body)?.radius_m);
+    if (!radius_m) return;
+    // Only a world whose ground True already wears (faces read from its tiles), as for the finer tiles: a world the
+    // kernel has no surface for is never asked again, so a close fly-in does not queue kernel work in front of the
+    // chart's own (a world with none answered each read with a refusal, and on a slow runner held the kernel).
+    const key0 = `${sys}|${below.body}`;
+    const worn = untrack(() => trueSurfaces.get(key0));
+    if (!worn || typeof worn === "string" || !(worn.faces || untrack(() => trueAirs.get(key0)?.ground?.faces))) return;
+    const timer = setTimeout(() => untrack(() => void (async () => {
+      const p = await readDeep(ctx.session, sys, below.body, { toward: below.toward, m_per_px: below.m_per_px }, radius_m, TILE_SAMPLES, () => my === deepGen);
+      if (!p || my !== deepGen) return;
+      deepLevel = p.level;
+      const key = `${sys}|${below.body}`;
+      const t = trueSurfaces.get(key);
+      if (t && typeof t !== "string") {
+        const next = { ...t, patch: p };
+        trueSurfaces.set(key, next);
+        surfaces = new Map(surfaces).set(below.body, next);
+      }
+      const a = trueAirs.get(key);
+      if (a?.ground) {
+        const next = { ...a, ground: { ...a.ground, patch: p } };
+        trueAirs.set(key, next);
+        airs = new Map(airs).set(below.body, next);
+      }
+    })()), DEEP_SETTLE_MS);
+    return () => clearTimeout(timer);
   });
   // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.
   let liveStar = $state<LiveStar | null>(null);
@@ -448,7 +609,7 @@
   $effect(() => {
     const sys = scene.system;
     const subjects = scene.subjects;
-    if (dims !== "3d" || shownView.band !== "mag" || !/\/sys:sol$/.test(sys)) return void (fields = new Map());
+    if (dims !== "3d" || !viewed.layers.some((l) => l.band === "mag") || !/\/sys:sol$/.test(sys)) return void (fields = new Map());
     let live = true;
     solFields ??= ctx.session.readField({ fixture: "solar-system" }).then((r) => (r.ok ? (r.bodies as unknown as FieldReadJson[]) : []));
     void solFields.then((read) => {
@@ -479,9 +640,12 @@
             ? `${reading.none} of ${reading.of} worlds are drawn plain, with no surface to show (the kernel: ${reading.why}).`
             : "",
   );
+  // The long exposure (the default, Alex 24 Nov) says its lift, so the picture never claims to be what an eye sees;
+  // at the eye's exposure the faint stars speak for themselves.
+  const skyNote = $derived(skyBehind && shownView.exposure === "long" ? "Long exposure: faint light is lifted, a composite." : "");
   // Each thing a face could not show, said once for the system (a colour the sheet lacks, a giant's dark deep air).
   const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
-  const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
+  const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : "", skyNote].filter(Boolean).join(" "));
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
@@ -508,9 +672,17 @@
   const peeked = $derived(peek && peek.address !== ctx.workspace.selection && !drag && !measuring ? all.find((s) => s.address === peek!.address) : undefined);
 </script>
 
-<div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
+<div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} />
+    {#snippet in3d(band: string, base: boolean)}
+      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
+    {/snippet}
+    {#if viewed.composite}
+      <!-- Composite (XO17): the system drawn once per band and laid into one picture. -->
+      <CompositeStack layers={viewed.layers} dark={looksTrue ? true : undefined}>{#snippet children(band, base)}{@render in3d(band, base)}{/snippet}</CompositeStack>
+    {:else}
+      {@render in3d(shownView.band, true)}
+    {/if}
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
@@ -521,10 +693,13 @@
         viewBox="0 0 {w} {h}"
         role="group"
         aria-label={framed ? `Chart of ${framed.label} and its moons` : `System chart of ${scene.title}`}
-        onpointermove={moveDrag}
+        onpointermove={(e) => (moveDrag(e), moveGhost(e))}
+        onpointerdowncapture={dropGhost}
+        onpointerleave={() => (ghostAt = null)}
         onpointerup={endDrag}
         onpointercancel={() => (drag = null)}
         class:dragging={drag !== null}
+        class:adding={adding !== null}
       >
         <HatchDefs {prefix} />
         {#if on("grid")}
@@ -568,6 +743,15 @@
         {#each bandLabels as l (l.b.address)}
           <text class="band {l.b.kind}" class:sphere={isShell(l.b)} x={l.lx} y={l.ly} aria-hidden="true">{l.text}</text>
         {/each}
+        <!-- A press on a name chooses its body: the name's box is a quiet target under every world's own hit circle, so
+             a name that lands near another world never takes that world's press or drag (the names drawn on top take none). -->
+        <g class="name-hits" aria-hidden="true">
+          {#each all as s (s.address)}
+            {@const p = places.get(s.address)}
+            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the body's own mark is the keyboard's way in) -->
+            {#if p}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} data-name-hit={s.address} onclick={() => (measuring ? measurePick(s) : ctx.workspace.select(s.address))} />{/if}
+          {/each}
+        </g>
         {#each all as s, i (s.address)}
           {@const atCentre = s === centre}
           {@const [x, y] = atCentre ? [cx, cy] : pos(s)}
@@ -596,9 +780,8 @@
           >
             <circle class="hit" cx={x} cy={y} r={Math.max(22, m.size + 12)} />
             {#if pencilOn && !atCentre && !knows(s)}
-              <!-- Pencil (design 5): the mark of a body the table does not know is quiet, inside a thin dotted ring. -->
-              <g class="pencilled" data-pencil><Mark mark={m} cx={x} cy={y} {prefix} /></g>
-              <circle class="pencil-ring" cx={x} cy={y} r={markExtent(m) + 3} aria-hidden="true" />
+              <!-- Pencil (SV3, the shared pencil kit): the mark of a body the table does not know is quiet, inside a thin dotted ring. -->
+              <g data-pencil><Pencilled pen={penOf("gm_only")} cx={x} cy={y} r={markExtent(m)}><Mark mark={m} cx={x} cy={y} {prefix} /></Pencilled></g>
             {:else}
               <!-- The mark lifts a little under the pointer (dynamic minimalism): a body answers before it is pressed. -->
               <g class="lift" style="transform-origin: {x}px {y}px"><Mark mark={m} cx={x} cy={y} {prefix} /></g>
@@ -615,6 +798,16 @@
             {/if}
           </g>
         {/each}
+        {#if adding && ghostAt}
+          {@const gr = radius(ghostAt.a_au, scale)}
+          {@const [gx, gy] = polar(cx, cy, gr, (Math.atan2(cy - ghostAt.y, ghostAt.x - cx) * 180) / Math.PI)}
+          <g class="add-ghost" data-add-ghost aria-hidden="true">
+            <Ink circle={{ cx, cy, r: gr }} tone="accent" weight="heavy" dash="dashed" />
+            <circle class="ghost-dot" cx={gx} cy={gy} r="6" />
+            <text class="dragv" data-add-readout x={gx + 14} y={gy + 20}>{dist(ghostAt.a_au)} round {centre?.label}{ghostAt.caught && !ghostAt.caught.startsWith("a round") ? ` · ${ghostAt.caught}` : ""}</text>
+            {#if formsAt && formsAt.key === formsKey(ghostAt.a_au)}<text class="dragv forms" data-add-forms x={gx + 14} y={gy + 36}>{formsAt.words}</text>{/if}
+          </g>
+        {/if}
         <!-- Names in their own layer, over every mark (chart-labels.ts places them); a press on a name chooses its body. -->
         <!-- Range rings (RK12), under the HUD like the grid: round each weapon's holder, bent by the chart's scale. -->
         {#if hudShows(shownView.hud, "range") && rangeSets.length}
@@ -630,8 +823,7 @@
               <!-- Who knows (track SV, pencil and ink): a name the table does not know is drawn in pencil, quiet and dotted,
                    with no words; one they know is in ink, with how they know it ("long range") under it. -->
               {@const pencil = pencilOn && !atCentre && !view && !knows(s)}
-              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the body's own mark is the keyboard's way in) -->
-              <text class="name" class:selname={sel} class:pencil class:unknown={through && !knows(s)} x={p.x} y={p.y} text-anchor={p.anchor} data-label-side={p.side} data-label-for={s.address} aria-hidden="true" onclick={() => (measuring ? measurePick(s) : ctx.workspace.select(s.address))}>{label(s)}{#if pencil}<title>Not known to the table</title>{/if}</text>
+              <text class="name" class:selname={sel} class:pencil style={pencil ? penStyle(penOf("gm_only"), "name") : undefined} class:unknown={through && !knows(s)} x={p.x} y={p.y} text-anchor={p.anchor} data-label-side={p.side} data-label-for={s.address} aria-hidden="true">{label(s)}{#if pencil}<title>{PEN_WORDS.pencil}</title>{/if}</text>
               {#if on("known") && known && !atCentre && view && view !== usualView}
                 <text class="knownv" x={p.x} y={p.y + 13} text-anchor={p.anchor} aria-hidden="true">{view.replace(/-/g, " ")}</text>
               {/if}
@@ -738,9 +930,22 @@
   .dragging {
     user-select: none;
   }
+  svg.adding {
+    cursor: crosshair;
+  }
+  .ghost-dot {
+    fill: none;
+    stroke: var(--sse-accent);
+    stroke-width: 2;
+    stroke-dasharray: 3 2;
+  }
   .ghost {
     opacity: 0.55;
     pointer-events: none;
+  }
+  .dragv.forms {
+    fill: var(--sse-ink-muted);
+    font-size: 11px;
   }
   .dragv {
     fill: var(--sse-accent-ink);
@@ -859,8 +1064,12 @@
   .peek span {
     color: var(--sse-panel-muted);
   }
-  .name {
+  .name-hits rect {
+    fill: transparent;
     cursor: pointer;
+  }
+  .name {
+    pointer-events: none;
     fill: var(--sse-ink);
     font-family: var(--sse-font-display);
     font-style: italic;
@@ -884,21 +1093,6 @@
   .body.unknown,
   .name.unknown {
     opacity: 0.25;
-  }
-  .pencilled {
-    opacity: 0.4;
-  }
-  .pencil-ring {
-    fill: none;
-    stroke: var(--sse-ink-muted);
-    stroke-width: 0.8;
-    stroke-dasharray: 1.5 2.5;
-    pointer-events: none;
-  }
-  .name.pencil {
-    fill: var(--sse-ink-muted);
-    text-decoration: underline dotted;
-    text-underline-offset: 3px;
   }
   .knownv {
     font-family: var(--sse-font-body);

@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { mapFields, stackProvides, type CodeReading, type SectorMap } from "../../packages/ui-contract/src/sector.ts";
 import { railOf, checkScreen } from "../../packages/ui-contract/src/screen.ts";
-import { blocksInUse, exportName, hexConfigOf, mapWorlds, openingBlock } from "../../packages/views/sector/src/desk.ts";
+import { blocksInUse, exportName, hexConfigOf, mapWorlds, openingBlock, rollEveryWorld, rollTallyWords } from "../../packages/views/sector/src/desk.ts";
 import { marksFor } from "../../packages/views/hex-map/src/glyphs.ts";
 import { sift } from "../../packages/views/hex-map/src/sift.ts";
 
@@ -92,4 +92,23 @@ test("a rail entry's needs must be a list of pack keys", () => {
   const r = checkScreen(bad, []);
   assert.equal(r.ok, false);
   assert.ok(!r.ok && r.errors.some((e) => e.includes("needs must be a list")), JSON.stringify(r));
+});
+
+test("a sector-wide roll writes the unset codes, keeps hand-set ones, and goes on past a refusal", async () => {
+  const asks: string[] = [];
+  const roll = async (a: { program: string; body: string; apply?: boolean }) => {
+    asks.push(`${a.program}:${a.body}:${a.apply}`);
+    if (a.body === "bad") return { ok: false as const, code: "unknown_body", message: "no such body" };
+    const steps = a.body === "imported" ? [{ how: "kept" }, { how: "kept" }, { how: "skipped" }] : [{ how: "rolled" }, { how: "zero" }, { how: "skipped" }];
+    return { ok: true as const, result: { steps } };
+  };
+  const t = await rollEveryWorld(roll, "traveller.social", ["fresh", "imported", "bad"], 0n);
+  assert.deepEqual(asks, ["traveller.social:fresh:true", "traveller.social:imported:true", "traveller.social:bad:true"]);
+  assert.equal(t.worlds, 2);
+  assert.equal(t.written, 2);
+  assert.equal(t.kept, 2);
+  assert.equal(t.refused.length, 1);
+  const words = rollTallyWords(t);
+  assert.match(words, /^2 worlds rolled: 2 codes written; 2 codes already set kept; 1 world refused \(no such body\)\. Each written code/);
+  assert.equal(rollTallyWords({ worlds: 1, written: 0, kept: 3, refused: [] }), "1 world rolled: 0 codes written; 3 codes already set kept.");
 });

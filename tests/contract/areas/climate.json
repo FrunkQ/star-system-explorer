@@ -1,0 +1,6 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics"]},
+ {"op": "weather", "want": "climate", "world": "Jupiter"},
+ {"op": "open_universe", "id": "atmos", "seed": "atmos"},
+ {"op": "atmosphere_advice", "body": "u:atmos/sys:0/planet:9", "facts": {"interior.core_mass_fraction": 0.325, "body.mass": 5.972e24, "body.radius": 6371000.0, "atmosphere.surface_pressure": 101400.0, "atmosphere.composition.n2": 0.7808, "atmosphere.composition.o2": 0.2095, "atmosphere.composition.ch4": 1.9e-6}}
+]

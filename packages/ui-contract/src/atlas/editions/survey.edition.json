@@ -1,0 +1,85 @@
+{
+  "schema": "sse.edition/1",
+  "id": "sse.edition.survey",
+  "name": "Survey atlas",
+  "description": "The traditional star guide: plain words, chart plates, a note on how each figure is known.",
+  "look": "paper",
+  "vocab": "plain",
+  "plates": "chart",
+  "gaps": "plain",
+  "sources": "endnotes",
+  "letterhead": { "use": "none" },
+  "voice": {
+    "gap": "not yet surveyed",
+    "gap_short": "—",
+    "labels": {
+      "section.summary": "Summary",
+      "section.overview": "Overview",
+      "section.star": "The star",
+      "section.light": "Light and activity",
+      "section.worlds": "Worlds in orbit",
+      "section.world": "The world",
+      "section.air": "Air and sea",
+      "section.hazards": "Surface and hazards",
+      "section.people": "People and places",
+      "section.moons": "Moons",
+      "section.systems": "Systems",
+      "section.story": "Heard said",
+      "section.plate": "Chart",
+      "column.name": "Name",
+      "column.size": "Size",
+      "column.orbit": "Orbit",
+      "column.star": "Star",
+      "column.mass": "Mass",
+      "prose.empty": "Little is known of it yet.",
+      "page.system": "System",
+      "page.sector": "Sector",
+      "page.star": "Star",
+      "page.world": "World",
+      "page.moon": "Moon",
+      "page.station": "Station",
+      "page.other": "Entry"
+    }
+  },
+  "templates": {
+    "sector": [
+      { "key": "section.summary", "block": "prose", "lines": ["name"] },
+      { "key": "section.systems", "block": "table", "table": { "columns": ["column.name", "column.star"], "lines": ["name", "spectral"] } }
+    ],
+    "system": [
+      { "key": "section.summary", "block": "prose", "lines": ["spectral", "luminosity_w"] },
+      { "key": "section.plate", "block": "plate" },
+      { "key": "section.star", "lines": ["spectral", "luminosity_w", "mass_kg"] },
+      { "key": "section.worlds", "block": "table", "table": { "columns": ["column.name", "column.size", "column.orbit"], "lines": ["name", "size_class", "orbit.semi_major_axis_m"] } },
+      { "key": "section.story", "block": "story" }
+    ],
+    "star": [
+      { "key": "section.summary", "block": "prose", "lines": ["spectral", "luminosity_w"] },
+      { "key": "section.star", "lines": ["spectral", "luminosity_w", "mass_kg"] },
+      { "key": "section.story", "block": "story" }
+    ],
+    "world": [
+      { "key": "section.summary", "block": "prose", "lines": ["class", "size_class", "colour", "orbit.semi_major_axis_m", "orbit.period_s", "atmosphere.composition", "ocean.fraction", "hazards"] },
+      { "key": "section.world", "lines": ["class", "size_class", "colour", "mass_kg", "orbit.semi_major_axis_m", "orbit.period_s", "interior.core_fraction"] },
+      { "key": "section.air", "lines": ["atmosphere.composition", "atmosphere.pressure_pa", "ocean.fraction", "surface.class", "surface.temp_mean_k"] },
+      { "key": "section.hazards", "lines": ["hazards", "resources"] },
+      { "key": "section.people", "lines": ["settlements.count"] },
+      { "key": "section.moons", "block": "table", "table": { "columns": ["column.name", "column.size", "column.mass"], "lines": ["name", "size_class", "mass_kg"] } },
+      { "key": "section.story", "block": "story" }
+    ],
+    "moon": [
+      { "key": "section.summary", "block": "prose", "lines": ["size_class", "colour", "orbit.semi_major_axis_m"] },
+      { "key": "section.world", "lines": ["size_class", "mass_kg", "orbit.semi_major_axis_m", "orbit.period_s"] },
+      { "key": "section.story", "block": "story" }
+    ],
+    "station": [
+      { "key": "section.summary", "block": "prose", "lines": ["class"] },
+      { "key": "section.world", "lines": ["class", "orbit.semi_major_axis_m"] },
+      { "key": "section.story", "block": "story" }
+    ],
+    "other": [
+      { "key": "section.summary", "block": "prose", "lines": ["class"] },
+      { "key": "section.story", "block": "story" }
+    ]
+  }
+}

@@ -10,11 +10,11 @@
 //! - **Polar jet**: one polar Rhines length from the pole, L = (U a² / 2Ω)^⅓
 //!   (Rhines arrest on the polar γ-plane f = 2Ω(1 − r²/2a²)).
 //! - **Polar regime**: Burger number Bu = (L_d / a)², L_d = N H / 2Ω.
-//!   Low Bu: a ring of cyclones; middle: one polar vortex; high Bu or weak
-//!   internal heat: a diffuse cap, the paper's "large cyclonic polar vortex"
-//!   (Brueshaber, Sayanagi and Dowling 2019; O'Neill, Emanuel and Flierl 2015).
-//!   Brueshaber and Sayanagi 2021 find Bu alone does not separate the Saturn
-//!   and ice-giant regimes.
+//!   Low Bu: a ring of cyclones; middle: one compact polar vortex; high Bu:
+//!   a large cyclonic polar vortex, drawn as a broad cap (Brueshaber,
+//!   Sayanagi and Dowling 2019). Weak internal heat also gives the broad
+//!   cap: moist convection drives the polar cyclone (O'Neill, Emanuel and
+//!   Flierl 2015), but the W/m² cut is ours.
 //! - **Polygon jet**: a rule fitted to Saturn's hexagon. Sides
 //!   n = round(2π a cos φ_jet / (k L_d(φ_jet))), clamped to the pack's range.
 //! - **Storms**: great ovals and strings of ovals in zones (gas giants), dark
@@ -30,6 +30,7 @@ use serde::{Deserialize, Serialize};
 use sse_core::draw::{Draws, Seed, Stream};
 use sse_core::math as m;
 use sse_surface::atlas::TileKey;
+use std::collections::BTreeMap;
 
 const G: f64 = sse_core::sheet::G;
 const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
@@ -48,8 +49,12 @@ pub const ALWAYS: f64 = f64::MIN;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Bands {
+    /// Jet speed scale, m/s: the bands' winds and the polar jet.
     pub wind_gas_m_s: f64,
     pub wind_ice_m_s: f64,
+    /// Local eddy speed the Rhines scale reads, m/s (not the jet speed).
+    pub eddy_gas_m_s: f64,
+    pub eddy_ice_m_s: f64,
     pub ice_giant_mass_earth: f64,
     /// Retrograde jets are this fraction of the prograde (S6: 0.5).
     pub retrograde_ratio: f64,
@@ -173,6 +178,47 @@ pub struct GiantClouds {
     /// Haze optical depth in a diffuse polar cap.
     pub cap_tau: f64,
     pub chemistry: Vec<Chemistry>,
+    /// Typical effective radius of each condensate's deck, µm (K-c); a
+    /// condensate not listed has no measured size held.
+    #[serde(default)]
+    pub particle_radius_um: BTreeMap<String, f64>,
+    /// The red chromophore layer above an ammonia deck (W10a).
+    #[serde(default)]
+    pub chromophore: Option<Chromophore>,
+    /// How the decks' heights are worked out (W-heights).
+    #[serde(default)]
+    pub heights: Option<DeckHeights>,
+    pub source: String,
+}
+
+/// A deck's base is where its vapour saturates on the giant's adiabat
+/// (W-heights): x p = p_sat(T(p)), with T = T₁ (p / 1 bar)^κ below the
+/// tropopause and isothermal above it.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct DeckHeights {
+    pub tropopause_bar: f64,
+    /// Deck thickness in pressure scale heights.
+    pub thickness_h: f64,
+    /// Base pressure of the low, middle and high deck where no vapour curve
+    /// or abundance is held, bar.
+    pub fallback_bar: [f64; 3],
+    pub source: String,
+}
+
+/// A thin layer of red chromophore just above the ammonia cloud top, thicker
+/// over belts than zones (Sromovsky et al. 2017).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Chromophore {
+    /// The deck it sits on.
+    pub above: String,
+    /// Optical depth at 1 µm over zones and over belts.
+    pub tau_zone_1um: f64,
+    pub tau_belt_1um: f64,
+    /// Effective radius over zones and belts, µm.
+    pub radius_zone_um: f64,
+    pub radius_belt_um: f64,
+    /// Linear sRGB stand-in until the sheet's chromophore row lands.
+    pub colour: [f64; 3],
     pub source: String,
 }
 
@@ -261,6 +307,9 @@ pub struct GiantLayout {
     pub mass_earth: f64,
     pub ice: bool,
     pub wind_scale_m_s: f64,
+    /// Local eddy speed the Rhines scale reads, m/s.
+    #[serde(default)]
+    pub eddy_m_s: f64,
     pub jets: u32,
     /// Band edges pole to pole (the S6 cloud deck's).
     pub band_edges_deg: Vec<f64>,
@@ -298,9 +347,10 @@ pub fn mass_earth(c: &Conditions) -> f64 {
     c.gravity_m_s2 * c.radius_m * c.radius_m / G / M_EARTH_KG
 }
 
-/// Jets from the Rhines scale, as the S6 cloud deck (the one count, W7a).
-pub fn jets(a: f64, omega: f64, u: f64) -> u32 {
-    sse_climate::circulation::giant_jets(a, omega, u)
+/// Jets from the Rhines scale and the eddy speed, as the S6 cloud deck (the
+/// one count, W7a).
+pub fn jets(a: f64, omega: f64, eddy: f64) -> u32 {
+    sse_climate::circulation::giant_jets(a, omega, eddy)
 }
 
 /// The S6 band edges, pole to pole: asin(−1 + 2i / 2J).
@@ -326,7 +376,8 @@ pub fn layout(gs: &GiantSettings, c: &Conditions) -> GiantLayout {
     let me = mass_earth(c);
     let ice = me > 0.0 && me < b.ice_giant_mass_earth;
     let u = if ice { b.wind_ice_m_s } else { b.wind_gas_m_s };
-    let nj = jets(a, omega, u);
+    let eddy = if ice { b.eddy_ice_m_s } else { b.eddy_gas_m_s };
+    let nj = jets(a, omega, eddy);
     let edges = band_edges(nj);
     let h = c.scale_height_m();
     let ld = deformation_m(gs, c, 90.0);
@@ -403,6 +454,7 @@ pub fn layout(gs: &GiantSettings, c: &Conditions) -> GiantLayout {
         mass_earth: me,
         ice,
         wind_scale_m_s: u,
+        eddy_m_s: eddy,
         jets: nj,
         band_edges_deg: edges,
         scale_height_km: h / 1000.0,
@@ -443,7 +495,7 @@ fn pole(
         (
             "diffuse-cap",
             format!(
-                "Rule: internal heat of {:.2} W/m² is below {:.2} W/m², too weak a convective forcing to spin up a polar cyclone, so the {name} pole is a broad, diffuse cap (O'Neill, Emanuel and Flierl 2015).",
+                "Rule: internal heat of {:.2} W/m² is below {:.2} W/m², too weak a convective forcing to spin up a compact polar cyclone, so the {name} pole is a broad cap. Moist convection drives polar cyclones (O'Neill, Emanuel and Flierl 2015); the W/m² cut is SSE4's own.",
                 c.internal_flux_w_m2, p.diffuse_internal_max_w_m2
             ),
         )
@@ -451,7 +503,7 @@ fn pole(
         (
             "diffuse-cap",
             format!(
-                "Rule: Burger number {bu:.2e} is at or above {:.1e}, ice-giant-like, so the {name} pole is a broad, diffuse cap (Brueshaber, Sayanagi and Dowling 2019).",
+                "Rule: Burger number {bu:.2e} is at or above {:.1e}, ice-giant-like, so the {name} pole holds one large cyclonic polar vortex, drawn as a broad cap (Brueshaber, Sayanagi and Dowling 2019; Bu alone does not cleanly split this from the Saturn regime, Brueshaber and Sayanagi 2021).",
                 p.diffuse_bu_min
             ),
         )
@@ -459,7 +511,7 @@ fn pole(
         (
             "cyclone-ring",
             format!(
-                "Rule: Burger number {bu:.2e} is at or below {:.2e} (a / L_d ≥ 40), so storms at the {name} pole stay small against the planet and gather as a ring of cyclones around a central one, as on Jupiter (Brueshaber, Sayanagi and Dowling 2019; O'Neill, Emanuel and Flierl 2015).",
+                "Rule: Burger number {bu:.2e} is at or below {:.2e} (a / L_d ≥ 40), so storms at the {name} pole stay small against the planet and gather as a ring of cyclones around a central one, as on Jupiter (Brueshaber, Sayanagi and Dowling 2019).",
                 p.ring_bu_max
             ),
         )
@@ -467,7 +519,7 @@ fn pole(
         (
             "single-vortex",
             format!(
-                "Rule: Burger number {bu:.2e} is at or above {:.2e} (a / L_d ≤ 30), so storms drifting to the {name} pole merge into one strong polar vortex, as on Saturn (Brueshaber, Sayanagi and Dowling 2019; O'Neill, Emanuel and Flierl 2015).",
+                "Rule: Burger number {bu:.2e} is at or above {:.2e} (a / L_d ≤ 30), so storms drifting to the {name} pole merge into one strong polar vortex, as on Saturn (Brueshaber, Sayanagi and Dowling 2019).",
                 p.single_bu_min
             ),
         )
@@ -477,7 +529,7 @@ fn pole(
         (
             if ring { "cyclone-ring" } else { "single-vortex" },
             format!(
-                "Rule with a draw: Burger number {bu:.2e} lies in the transition between a ring of cyclones and one polar vortex (a / L_d between 30 and 40, O'Neill, Emanuel and Flierl 2015); the {name} pole drew {}.",
+                "Rule with a draw: Burger number {bu:.2e} lies in the transition between a ring of cyclones and one polar vortex (a / L_d between 30 and 40, SSE4's split of Brueshaber, Sayanagi and Dowling's transitional regime); the {name} pole drew {}.",
                 if ring { "a ring" } else { "one vortex" }
             ),
         )
@@ -557,6 +609,154 @@ fn blend_jet(l: &GiantLayout, base: f64, dist_km: f64) -> f64 {
 pub fn zonal_wind(gs: &GiantSettings, l: &GiantLayout, a_m: f64, lat: f64) -> f64 {
     let dist = (lat.abs() - l.polar_jet_lat_deg).abs() / DEG * a_m / 1000.0;
     blend_jet(l, band_wind(gs, l, lat), dist)
+}
+
+/// The jets by latitude, for drawing the curls and drift (visual polish
+/// K-a): one entry per band, at its centre.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct JetProfile {
+    /// Band centres, south to north, degrees.
+    pub lat_deg: Vec<f64>,
+    /// Eastward wind at the band centre, m/s (+ eastward).
+    pub jet_speed_m_s: Vec<f64>,
+    /// Change in eastward wind from the band's south edge to its north
+    /// edge, m/s per band.
+    pub jet_shear_m_s: Vec<f64>,
+    /// Local eddy speed, m/s: one value per giant kind for now.
+    pub eddy_speed_m_s: Vec<f64>,
+    /// Rhines width of one jet, π sqrt(2U/β), U the eddy speed, m.
+    pub rhines_scale_m: Vec<f64>,
+    /// Deformation radius N H / f, m.
+    pub deformation_radius_m: Vec<f64>,
+    pub source: String,
+}
+
+pub fn jet_profile(gs: &GiantSettings, c: &Conditions, l: &GiantLayout) -> JetProfile {
+    let a = c.radius_m;
+    let omega = c.spin_rate();
+    let e = &l.band_edges_deg;
+    let mut p = JetProfile {
+        lat_deg: vec![],
+        jet_speed_m_s: vec![],
+        jet_shear_m_s: vec![],
+        eddy_speed_m_s: vec![],
+        rhines_scale_m: vec![],
+        deformation_radius_m: vec![],
+        source: "Band winds of the S6 layout; Rhines width pi sqrt(2U/beta) with U the eddy speed (Rhines 1975; Gastine et al. 2014: the factor of 2 is not settled); deformation radius N H / f.".into(),
+    };
+    for w in e.windows(2) {
+        let lat = 0.5 * (w[0] + w[1]);
+        p.lat_deg.push(lat);
+        p.jet_speed_m_s.push(zonal_wind(gs, l, a, lat));
+        p.jet_shear_m_s
+            .push(zonal_wind(gs, l, a, w[1]) - zonal_wind(gs, l, a, w[0]));
+        p.eddy_speed_m_s.push(l.eddy_m_s);
+        p.rhines_scale_m
+            .push(sse_climate::circulation::rhines_width_m(
+                a, omega, l.eddy_m_s, lat,
+            ));
+        p.deformation_radius_m.push(deformation_m(gs, c, lat));
+    }
+    p
+}
+
+/// The heat-capacity ratio κ = R / c_p of the gas mix: monatomic gases
+/// c_p = 5/2 R, diatomic 7/2 R, others 4 R (ideal gases near room
+/// temperature).
+fn kappa(c: &Conditions) -> f64 {
+    let (mut x, mut cp) = (0.0, 0.0);
+    for (g, f) in &c.gases {
+        let k = match g.as_str() {
+            "he" | "ne" | "ar" | "kr" | "xe" => 2.5,
+            "h2" | "n2" | "o2" | "co" => 3.5,
+            _ => 4.0,
+        };
+        x += f;
+        cp += f * k;
+    }
+    if cp > 0.0 {
+        x / cp
+    } else {
+        2.0 / 7.0
+    }
+}
+
+/// Base pressure of each deck, bar: where the deck's vapour first saturates
+/// going up the adiabat, else the pack's fallback (low, middle, high).
+pub fn deck_base_bar(
+    dh: &DeckHeights,
+    cs: &sse_climate::settings::ClimateSettings,
+    c: &Conditions,
+    decks: &[String; 3],
+) -> [f64; 3] {
+    let k = kappa(c);
+    let t1 = c.t_surface_k;
+    let t_at = |p_bar: f64| t1 * m::pow(p_bar.max(dh.tropopause_bar), k);
+    let mut out = dh.fallback_bar;
+    for (i, d) in decks.iter().enumerate() {
+        let name = d.trim_end_matches(" ice");
+        let Some(sub) = cs.substances.iter().find(|s| s.name == name) else {
+            continue;
+        };
+        let Some(x) = c.gases.get(&sub.gas).copied().filter(|x| *x > 0.0) else {
+            continue;
+        };
+        let sat = |p_bar: f64| x * p_bar * 1.0e5 >= sse_climate::ebm::p_sat(sub, t_at(p_bar));
+        // Up from 100 bar in steps of 1/50 of a scale height of pressure,
+        // then halve the bracket.
+        let (mut lo, mut hi) = (f64::NAN, f64::NAN);
+        let mut p = 100.0;
+        let mut prev_sat = sat(p);
+        while p > 1.0e-3 {
+            let q = p * m::exp(-0.02);
+            let now = sat(q);
+            if now && !prev_sat {
+                (lo, hi) = (q, p);
+                break;
+            }
+            prev_sat = now;
+            p = q;
+        }
+        if lo.is_nan() {
+            continue;
+        }
+        for _ in 0..40 {
+            let mid = m::sqrt(lo * hi);
+            if sat(mid) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        out[i] = m::sqrt(lo * hi);
+    }
+    // Keep the decks in order, low deepest: a deck below one that sits
+    // deeper than it goes half again deeper.
+    for k in (0..2).rev() {
+        if out[k] <= out[k + 1] {
+            out[k] = 1.5 * out[k + 1];
+        }
+    }
+    out
+}
+
+/// Each deck's base and top above the 1 bar level, m: z = H ln(1 bar / p).
+pub fn set_heights(
+    gs: &GiantSettings,
+    cs: &sse_climate::settings::ClimateSettings,
+    c: &Conditions,
+    l: &GiantLayout,
+    cell: &mut Cell,
+) {
+    let Some(dh) = &gs.clouds.heights else {
+        return;
+    };
+    let h = c.scale_height_m();
+    let p = deck_base_bar(dh, cs, c, &l.layers);
+    for (k, layer) in cell.layers.iter_mut().enumerate().take(3) {
+        layer.base_m = -h * m::ln(p[k]);
+        layer.top_m = layer.base_m + dh.thickness_h * h;
+    }
 }
 
 /// Longitude at `day` of something at `lat` that was at `lon0` on `born`,
@@ -995,6 +1195,9 @@ pub fn giant_cell(
         optical_depth: tau,
         wind_m_s: [0.0, 0.0],
         turbulence: 0.0,
+        particle_radius_um: cl.particle_radius_um.get(cond).copied().unwrap_or(0.0),
+        base_m: 0.0,
+        top_m: 0.0,
     };
     let mut ly = vec![
         deck(cl.low_cover, &l.layers[0], cl.low_tau),
@@ -1026,6 +1229,17 @@ pub fn giant_cell(
     let mut wind = [u, 0.0];
     let mut turb = 0.1 + 0.15 * (1.0 - w);
     let mut aerosols = vec![];
+    // The chromophore: more over belts (w 0) than zones (w 1).
+    if let Some(ch) = &cl.chromophore {
+        if l.layers[2] == ch.above {
+            aerosols.push(Aerosol {
+                kind: "chromophore".into(),
+                optical_depth: ch.tau_belt_1um + (ch.tau_zone_1um - ch.tau_belt_1um) * w,
+                colour: ch.colour,
+                particle_radius_um: ch.radius_belt_um + (ch.radius_zone_um - ch.radius_belt_um) * w,
+            });
+        }
+    }
     let mut precip = "none";
     for s in &p.systems {
         let dist = distance_km(a, lat, lon, s.lat_deg, s.lon_deg);
@@ -1087,6 +1301,7 @@ pub fn giant_cell(
                         kind: "haze".into(),
                         optical_depth: cl.cap_tau * cap,
                         colour: [0.85, 0.9, 0.95],
+                        particle_radius_um: 0.0,
                     });
                 }
             }
@@ -1125,6 +1340,7 @@ pub fn giant_cell(
         temp_offset_k: 0.0,
         lightning_km2_yr: 0.0,
         aerosols,
+        wind10_m_s: 0.0,
     }
 }
 

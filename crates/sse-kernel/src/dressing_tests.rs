@@ -33,7 +33,7 @@ fn campaign(dressing: serde_json::Value) -> crate::Kernel {
     load(
         &mut k,
         vec![
-            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-physics/pack.json"),
             pack("tests/fixtures/packs/tarn-observe.json"),
             dressing,
         ],
@@ -190,7 +190,7 @@ fn adopted_objects_stay_when_the_pack_goes_and_hold_offs_survive_a_reload() {
     load(
         &mut k,
         vec![
-            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-physics/pack.json"),
             pack("tests/fixtures/packs/tarn-observe.json"),
             dressing.clone(),
         ],
@@ -209,7 +209,7 @@ fn adopted_objects_stay_when_the_pack_goes_and_hold_offs_survive_a_reload() {
     load(
         &mut k,
         vec![
-            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-physics/pack.json"),
             pack("tests/fixtures/packs/tarn-observe.json"),
         ],
     );
@@ -240,7 +240,7 @@ fn a_bad_dressing_rule_is_refused_at_load() {
     let r = send(
         &mut k,
         serde_json::json!({"op": "load_stack",
-            "packs": [pack("tests/fixtures/packs/base-physics.json"),
+            "packs": [pack("packs/base-physics/pack.json"),
             pack("tests/fixtures/packs/tarn-observe.json"), p]}),
     );
     let text = r.to_string();

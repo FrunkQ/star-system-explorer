@@ -21,10 +21,25 @@ fn contract_lines() -> Vec<String> {
 /// are checked by `the_op_lists_are_every_op`.
 #[test]
 fn contract_matches_golden() {
-    let lines: Vec<String> = contract_lines()
+    let raw = contract_lines();
+    let lines: Vec<String> = raw.iter().map(|l| crate::contract::mask_ops(l)).collect();
+    let reach: Vec<String> = raw
         .iter()
-        .map(|l| crate::contract::mask_ops(l))
+        .filter(|l| l.starts_with(crate::contract::REACH))
+        .flat_map(|l| crate::contract::reach_entries(l))
         .collect();
+    let reach_path = root().join("tests/golden/contract-reach.txt");
+    let reach_text = reach.join("\n") + "\n";
+    if std::env::var("SSE_BLESS").is_ok() {
+        std::fs::write(&reach_path, &reach_text).unwrap();
+    }
+    let want = std::fs::read_to_string(&reach_path).expect("run with SSE_BLESS=1 once");
+    assert!(!reach.is_empty(), "the contract reads a reach report");
+    assert_eq!(
+        reach_text,
+        want.replace("\r\n", "\n"),
+        "tests/golden/contract-reach.txt"
+    );
     let path = root().join("tests/golden/contract.jsonl");
     let text = lines.join("\n") + "\n";
     if std::env::var("SSE_BLESS").is_ok() {
@@ -35,6 +50,85 @@ fn contract_matches_golden() {
         assert_eq!(a, b, "response {i} differs");
     }
     assert_eq!(lines.len(), golden.lines().count());
+}
+
+/// The core sequence (`tests/contract/requests.json`) is closed: it keeps the
+/// cases it had when the golden was split by area (25 Nov), so two PRs never
+/// both append to it. New cases go in an area file (`contract_areas_*`).
+pub const CORE_CASES: usize = 380;
+
+/// One request file per area in `tests/contract/areas/<area>.json`, run on a
+/// fresh kernel, with its own golden `tests/golden/areas/<area>.jsonl`. Areas
+/// never share state, so PRs in different areas never move each other's
+/// lines.
+fn area_files() -> Vec<(String, PathBuf)> {
+    let dir = root().join("tests/contract/areas");
+    let mut v: Vec<(String, PathBuf)> = std::fs::read_dir(&dir)
+        .map(|d| {
+            d.map(|e| e.unwrap().path())
+                .filter(|p| p.extension().is_some_and(|e| e == "json"))
+                .map(|p| (p.file_stem().unwrap().to_string_lossy().to_string(), p))
+                .collect()
+        })
+        .unwrap_or_default();
+    v.sort();
+    v
+}
+
+fn area_requests(p: &std::path::Path) -> serde_json::Value {
+    serde_json::from_str(&std::fs::read_to_string(p).unwrap()).unwrap()
+}
+
+#[test]
+fn the_core_sequence_is_closed() {
+    let reqs: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("tests/contract/requests.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        reqs.as_array().unwrap().len(),
+        CORE_CASES,
+        "tests/contract/requests.json is closed: put new cases in your area's file, \
+         tests/contract/areas/<area>.json (handover/START-HERE.md, golden lane)"
+    );
+}
+
+/// Each area's golden, blessed like the core one with SSE_BLESS=1.
+#[test]
+fn contract_areas_match_their_goldens() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let gdir = root().join("tests/golden/areas");
+    let bless = std::env::var("SSE_BLESS").is_ok();
+    let mut names = Vec::new();
+    for (name, p) in area_files() {
+        let reqs = area_requests(&p);
+        let lines: Vec<String> = crate::contract::run(&reqs, &packs)
+            .iter()
+            .map(|l| crate::contract::mask_ops(l))
+            .collect();
+        let path = gdir.join(format!("{name}.jsonl"));
+        if bless {
+            std::fs::create_dir_all(&gdir).unwrap();
+            std::fs::write(&path, lines.join("\n") + "\n").unwrap();
+        }
+        let golden = std::fs::read_to_string(&path)
+            .unwrap_or_else(|_| panic!("no golden for area {name}: run with SSE_BLESS=1"));
+        for (i, (a, b)) in lines.iter().zip(golden.lines()).enumerate() {
+            assert_eq!(a, b, "area {name}: response {i} differs");
+        }
+        assert_eq!(lines.len(), golden.lines().count(), "area {name}");
+        names.push(name);
+    }
+    if let Ok(d) = std::fs::read_dir(&gdir) {
+        for e in d {
+            let p = e.unwrap().path();
+            let stem = p.file_stem().unwrap().to_string_lossy().to_string();
+            assert!(
+                names.contains(&stem),
+                "tests/golden/areas/{stem}.jsonl has no request file: delete it"
+            );
+        }
+    }
 }
 
 /// What the golden masks: `hello` lists every op of `ops()` with its cost
@@ -99,9 +193,11 @@ fn every_op_is_covered_by_the_contract() {
         &std::fs::read_to_string(root().join("tests/contract/requests.json")).unwrap(),
     )
     .unwrap();
-    let used: std::collections::BTreeSet<String> = reqs
-        .as_array()
-        .unwrap()
+    let mut all: Vec<serde_json::Value> = reqs.as_array().unwrap().clone();
+    for (_, p) in area_files() {
+        all.extend(area_requests(&p).as_array().unwrap().iter().cloned());
+    }
+    let used: std::collections::BTreeSet<String> = all
         .iter()
         .map(|r| r["op"].as_str().unwrap().to_string())
         .collect();
@@ -284,18 +380,28 @@ fn stack_changes_are_chronicled_and_replay() {
     assert_eq!(a[8], a[6], "a rejected stack changes nothing");
 }
 
-/// The contract loads the real base-physics pack from a fixture copy (both
-/// runners read `tests/fixtures/packs/`). The copy must be the pack itself.
-/// After re-blessing the pack: `cp packs/base-physics/pack.json tests/fixtures/packs/base-physics.json`.
+/// The contract runs on a frozen copy of base-physics
+/// (`tests/fixtures/packs/base-physics.json`), so a physics change no longer
+/// moves the golden. The live pack is checked here instead: it loads as a
+/// stack, and every other kernel test runs on it.
 #[test]
-fn base_physics_fixture_is_the_real_pack() {
-    let real = std::fs::read_to_string(root().join("packs/base-physics/pack.json")).unwrap();
-    let copy =
-        std::fs::read_to_string(root().join("tests/fixtures/packs/base-physics.json")).unwrap();
-    assert!(
-        real == copy,
-        "tests/fixtures/packs/base-physics.json is stale: cp packs/base-physics/pack.json tests/fixtures/packs/base-physics.json"
+fn the_live_base_physics_pack_loads() {
+    let live: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-physics/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[live]}),
     );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"live","seed":"live"}),
+    );
+    let m = send(&mut k, serde_json::json!({"op":"manifest"}));
+    assert_eq!(m["manifest"]["packs"][0]["id"], "sse.base-physics", "{m}");
 }
 
 /// Tags in scenes also come from the stack's rule pack (K8), not only from
@@ -3853,4 +3959,93 @@ fn ship_readiness_follows_status_tags_through_visible_triggers() {
         !numeric_on_tag(&other["programs"]),
         "a program reads a tag as a number"
     );
+}
+
+/// RK12, the Traveller mapping: each ship weapon with figures, against the
+/// pack's standard target, is in range or marginal at the far edge of the
+/// game's optimum band and falls off beyond it; the beams draw a load and
+/// rings; the meson gun and sandcaster carry no figures and say why.
+#[test]
+fn the_traveller_weapons_reach_their_game_bands() {
+    let pack: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/traveller/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let w = &pack["provides"]["other"]["weapons"];
+    let target = w["standard_target"].clone();
+    let target = serde_json::json!({"skin": target["skin"], "radius_m": target["radius_m"],
+        "accel_m_s2": target["accel_m_s2"]});
+    let mut k = crate::Kernel::new();
+    let r = k.handle_json(
+        &serde_json::json!({"op": "load_stack", "packs": [
+            serde_json::from_str::<serde_json::Value>(
+                &std::fs::read_to_string(root().join("packs/base-physics/pack.json")).unwrap()).unwrap(),
+            pack.clone()]})
+        .to_string(),
+    );
+    assert!(r.contains("stack_loaded"), "{r}");
+    let mut seen = 0;
+    for kind in w["kinds"].as_array().unwrap() {
+        let id = kind["id"].as_str().unwrap();
+        if kind["weapon"].is_null() {
+            assert!(
+                !kind["about"].as_str().unwrap().is_empty(),
+                "{id} says why it has no figures"
+            );
+            continue;
+        }
+        let ask = |d: f64| serde_json::json!({"weapon": kind["weapon"], "target": target, "distance_m": d});
+        let Some(edge) = kind["game"]["optimum"]["to_m"].as_f64() else {
+            // Missiles have no band: read where they burst or strike, 30 m
+            // and 1 km off. A slug at its closing speed tears through at
+            // either; a kiloton burst must be within about 50 m to boil
+            // through 2 mm of aluminium, so a kilometre's near miss does not.
+            let r: serde_json::Value = serde_json::from_str(
+                &k.handle_json(
+                    &serde_json::json!({"op": "effect_at_range", "asks": [ask(30.0), ask(1.0e3)]})
+                        .to_string(),
+                ),
+            )
+            .unwrap();
+            let (near, far) = (&r["effects"][0], &r["effects"][1]);
+            assert_eq!(near["takes_from"], "sheet", "{id}: {r}");
+            assert_eq!(near["reading"], "in range", "{id}: {near}");
+            let burst = kind["weapon"]["kind"] == "burst";
+            assert_eq!(
+                far["reading"],
+                if burst { "out of range" } else { "in range" },
+                "{id}: {far}"
+            );
+            if burst {
+                let e = near["rings"]["enough_m"].as_f64().unwrap();
+                assert!(e > 30.0 && e < 100.0, "{id}: {e}");
+            }
+            seen += 1;
+            continue;
+        };
+        let r: serde_json::Value = serde_json::from_str(
+            &k.handle_json(
+                &serde_json::json!({"op": "effect_at_range", "asks": [ask(edge), ask(edge * 4.0)]})
+                    .to_string(),
+            ),
+        )
+        .unwrap();
+        assert_eq!(r["type"], "effects_at_range", "{id}: {r}");
+        let (at, past) = (&r["effects"][0], &r["effects"][1]);
+        assert_eq!(at["takes_from"], "sheet", "{id}: {at}");
+        assert_ne!(
+            at["reading"], "out of range",
+            "{id} at the edge of its band: {at}"
+        );
+        assert_ne!(
+            past["reading"], "in range",
+            "{id} four times past its band: {past}"
+        );
+        assert!(
+            at["load"]["electric_w"].as_f64().unwrap() > 0.0,
+            "{id}: {at}"
+        );
+        seen += 1;
+    }
+    assert_eq!(seen, 7);
 }

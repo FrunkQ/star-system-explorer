@@ -62,6 +62,7 @@ engines! {
     "surface-impacts" => sse_surface::scenario::impacts_golden(),
     "surface-regimes" => sse_surface::scenario::regimes_golden(),
     "surface-cover" => sse_surface::scenario::cover_golden(),
+    "gravity" => sse_gravity::scenario::golden(),
 }
 
 /// Run the engine golden scenarios (resolve, sift, observe, suite and the

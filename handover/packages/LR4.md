@@ -18,3 +18,17 @@ world's own screen and the table sees the world turning below.
 Not yet: the world's air on the player globe (a player seat does not read resolved systems; the GM would need to send
 the air facts, as a landing sends `world`), and a ship marker. No golden change.
 - surface.e2e: the morning hour is -5.5 local h (was -5.25), dark enough for the stars check after the sea drawing merged.
+
+## LR4b: the world's air on the orbit globe (25 Nov)
+- The GM's kernel reads the focus world's air (resolved facts, then `read_air_optics`) while players are connected,
+  and `here()` sends it with the orbit as `Shown.air` (seat.ts); a send made before it is read goes again with it.
+- `PlayerContext.shown()` (ui-contract view.ts, through ScreenRuntime from Players.svelte) gives a player view what
+  the GM sent; `PlayerOrbit` passes the air to `mountGlobe`, so the table's globe has the same atmosphere pass as the
+  GM's. `data-orbit-air` marks it; `run-through.e2e` waits for it.
+- Also carried: the renderer's review of LR6, the hull and the ground now share one sun and sky term
+  (`sunLightOn`, `skyLightOn` in gpu-surface.ts).
+
+## LR4c: the party's ship in orbit on the table's globe (25 Nov)
+- `here()` names the party's ship with the orbit (`Shown.ship`) when it is at the focus world; `PlayerOrbit` draws it
+  as a named marker going round on a tilted ring, passing behind the world on the far side (SVG over the globe, theme
+  tokens only). A presentation drift (fudge register, "The ship in orbit on the table"). `run-through.e2e` checks it.

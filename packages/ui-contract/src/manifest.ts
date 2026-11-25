@@ -6,6 +6,7 @@
 import type { Json } from "./json.ts";
 import { writerWords, type KeptChange, type RecordRead, type ShipLogEntry } from "./constructs.ts";
 import { YEAR_S } from "./intent.ts";
+import { sayNumber } from "./figures.ts";
 
 /** The kept kinds the manifest reads and writes. */
 export const ABOARD = {
@@ -325,7 +326,7 @@ export function fuelNow<S extends FuelShip>(ship: S, kept: (field: string) => un
 
 /** Tonnes in words, to a sensible precision. */
 export function tonnesWords(t: number): string {
-  return t >= 100 ? `${Math.round(t)} t` : t >= 10 ? `${t.toFixed(1)} t` : `${t.toFixed(2)} t`;
+  return t >= 100 ? `${Math.round(t)} t` : `${sayNumber(t, 0, { decimals: t >= 10 ? 1 : 2 })} t`;
 }
 
 /** A ship's full numbers from the kernel: a stock id or a pack ship resolved (ship_at_world with no worlds). */

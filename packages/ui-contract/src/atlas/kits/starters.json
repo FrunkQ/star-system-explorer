@@ -1,0 +1,446 @@
+{
+ "note": "The four starter interface kits and their palettes (atlas design 11A.3 and 11A.5). Part controls follow the design's list until the parts declare their own (AT13).",
+ "palettes": [
+  {
+   "id": "phosphor-green",
+   "name": "Green",
+   "tokens": {
+    "ground": "#040B05",
+    "ground-raised": "#08140A",
+    "ink": "#7CFF8F",
+    "ink-muted": "#4FC463",
+    "accent": "#7CFF8F",
+    "accent-ink": "#B6FFC0"
+   }
+  },
+  {
+   "id": "phosphor-amber",
+   "name": "Amber",
+   "tokens": {
+    "ground": "#0C0802",
+    "ground-raised": "#160F04",
+    "ink": "#FFB547",
+    "ink-muted": "#D18F2E",
+    "accent": "#FFB547",
+    "accent-ink": "#FFD08A"
+   }
+  },
+  {
+   "id": "phosphor-white",
+   "name": "White",
+   "tokens": {
+    "ground": "#08090B",
+    "ground-raised": "#101216",
+    "ink": "#E8ECF2",
+    "ink-muted": "#AEB6C2",
+    "accent": "#E8ECF2",
+    "accent-ink": "#FFFFFF"
+   }
+  },
+  {
+   "id": "glass-blue",
+   "name": "Blue",
+   "tokens": {
+    "ground": "#F4F7FB",
+    "ground-raised": "#FFFFFF",
+    "ink": "#14223A",
+    "ink-muted": "#4A5A72",
+    "accent": "#2563D9",
+    "accent-ink": "#1A4FB8"
+   }
+  },
+  {
+   "id": "glass-graphite",
+   "name": "Graphite",
+   "tokens": {
+    "ground": "#16181C",
+    "ground-raised": "#1F2228",
+    "ink": "#ECEFF4",
+    "ink-muted": "#A6AEBB",
+    "accent": "#7FB2FF",
+    "accent-ink": "#A9CBFF"
+   }
+  },
+  {
+   "id": "deck-amber-violet",
+   "name": "Amber and violet",
+   "tokens": {
+    "ground": "#0D0F14",
+    "ground-raised": "#161A22",
+    "ink": "#E8ECF2",
+    "ink-muted": "#A3ADBD",
+    "accent": "#F0A23B",
+    "accent-ink": "#F6B860"
+   }
+  },
+  {
+   "id": "deck-teal-blue",
+   "name": "Teal and blue",
+   "tokens": {
+    "ground": "#0A1014",
+    "ground-raised": "#121B22",
+    "ink": "#E6F1F4",
+    "ink-muted": "#9DB4BE",
+    "accent": "#3BB4A9",
+    "accent-ink": "#7FD8CF"
+   }
+  },
+  {
+   "id": "deck-red-alert",
+   "name": "Red alert",
+   "tokens": {
+    "ground": "#140A0A",
+    "ground-raised": "#1E1010",
+    "ink": "#F6E8E8",
+    "ink-muted": "#C8A3A3",
+    "accent": "#E2675A",
+    "accent-ink": "#FF9C90"
+   }
+  },
+  {
+   "id": "guide-night",
+   "name": "Night",
+   "tokens": {
+    "ground": "#0F1726",
+    "ground-raised": "#131D30",
+    "ink": "#EAF0F7",
+    "ink-muted": "#A9B8CC",
+    "accent": "#FFD45C",
+    "accent-ink": "#FFE08A"
+   }
+  },
+  {
+   "id": "guide-day",
+   "name": "Day",
+   "tokens": {
+    "ground": "#F4F1E6",
+    "ground-raised": "#FFFDF6",
+    "ink": "#1B2333",
+    "ink-muted": "#4E5870",
+    "accent": "#B8571B",
+    "accent-ink": "#9A4512"
+   }
+  }
+ ],
+ "kits": [
+  {
+   "schema": "sse.kit/1",
+   "id": "sse.kit.hauler",
+   "name": "Hauler",
+   "description": "Space trucker basic: a green screen, wireframe drawings, a text report and almost no controls.",
+   "look": "phosphor",
+   "palettes": [
+    "phosphor-green",
+    "phosphor-amber",
+    "phosphor-white"
+   ],
+   "view_style": "wireframe",
+   "vocab": "plain",
+   "atlas": {
+    "edition": "sse.edition.company",
+    "look": "phosphor"
+   },
+   "control_set": "hauler",
+   "delivery": "hauler",
+   "needs": {
+    "tier": "text"
+   },
+   "layouts": {
+    "sector": {
+     "arrangement": "one",
+     "items": [
+      {
+       "view": "sse.view.chart",
+       "area": "1",
+       "style": "wireframe",
+       "controls": {
+        "select": true
+       }
+      }
+     ]
+    },
+    "system": {
+     "arrangement": "side",
+     "items": [
+      {
+       "view": "sse.view.chart",
+       "area": "a",
+       "style": "wireframe",
+       "controls": {
+        "select": true
+       }
+      },
+      {
+       "view": "sse.view.atlas",
+       "area": "b",
+       "params": {
+        "page": "selected"
+       },
+       "controls": {
+        "contents": false,
+        "step": true,
+        "print": true,
+        "links": true
+       }
+      },
+      {
+       "view": "sse.view.text",
+       "area": "c",
+       "controls": "none"
+      }
+     ]
+    },
+    "world": {
+     "extends": "system"
+    },
+    "ship": {
+     "extends": "system"
+    },
+    "landing": {
+     "extends": "system"
+    },
+    "holding": {
+     "card": "Signal lost"
+    }
+   }
+  },
+  {
+   "schema": "sse.kit/1",
+   "id": "sse.kit.corporate",
+   "name": "Corporate",
+   "description": "Slick corporate: a full-screen 3D stage with floating cards and a few pills, in the company's colours.",
+   "look": "glass",
+   "palettes": [
+    "glass-blue",
+    "glass-graphite"
+   ],
+   "view_style": "true",
+   "vocab": "plain",
+   "atlas": {
+    "edition": "sse.edition.survey",
+    "look": "glass"
+   },
+   "control_set": "corporate",
+   "delivery": "corporate",
+   "needs": {
+    "tier": "gpu-basic",
+    "falls_back_to": "sse.kit.deck"
+   },
+   "layouts": {
+    "sector": {
+     "arrangement": "one",
+     "items": [
+      {
+       "view": "sse.view.system-3d",
+       "area": "1",
+       "controls": {
+        "turn": true
+       }
+      }
+     ]
+    },
+    "system": {
+     "arrangement": "side",
+     "items": [
+      {
+       "view": "sse.view.system-3d",
+       "area": "a",
+       "controls": {
+        "turn": true
+       }
+      },
+      {
+       "view": "sse.view.card",
+       "area": "b",
+       "controls": {
+        "open": true
+       }
+      },
+      {
+       "view": "sse.view.atlas",
+       "area": "c",
+       "params": {
+        "page": "selected"
+       },
+       "controls": {
+        "contents": false,
+        "step": true,
+        "print": true,
+        "links": true
+       }
+      }
+     ]
+    },
+    "world": {
+     "extends": "system"
+    },
+    "ship": {
+     "extends": "system"
+    },
+    "landing": {
+     "extends": "system"
+    },
+    "holding": {
+     "card": "Please stand by"
+    }
+   }
+  },
+  {
+   "schema": "sse.kit/1",
+   "id": "sse.kit.deck",
+   "name": "Deck",
+   "description": "A diagram lover's console: a schematic in the middle, a column of big buttons, gauges and readouts.",
+   "look": "deck",
+   "palettes": [
+    "deck-amber-violet",
+    "deck-teal-blue",
+    "deck-red-alert"
+   ],
+   "view_style": "chart",
+   "vocab": "plain",
+   "atlas": {
+    "edition": "sse.edition.survey",
+    "look": "deck"
+   },
+   "control_set": "deck",
+   "delivery": "deck",
+   "needs": {
+    "tier": "canvas",
+    "falls_back_to": "sse.kit.hauler"
+   },
+   "layouts": {
+    "sector": {
+     "arrangement": "one",
+     "items": [
+      {
+       "view": "sse.view.chart",
+       "area": "1",
+       "controls": {
+        "select": true
+       }
+      }
+     ]
+    },
+    "system": {
+     "arrangement": "side",
+     "items": [
+      {
+       "view": "sse.view.chart",
+       "area": "a",
+       "controls": {
+        "select": true
+       }
+      },
+      {
+       "view": "sse.view.readout",
+       "area": "b",
+       "controls": "none"
+      },
+      {
+       "view": "sse.view.table",
+       "area": "c",
+       "controls": {
+        "sort": true,
+        "select": true
+       }
+      },
+      {
+       "view": "sse.view.atlas",
+       "area": "d",
+       "params": {
+        "page": "selected"
+       },
+       "controls": {
+        "contents": false,
+        "step": true,
+        "print": true,
+        "links": true
+       }
+      }
+     ]
+    },
+    "world": {
+     "extends": "system"
+    },
+    "ship": {
+     "extends": "system"
+    },
+    "landing": {
+     "extends": "system"
+    },
+    "holding": {
+     "card": "Standby"
+    }
+   }
+  },
+  {
+   "schema": "sse.kit/1",
+   "id": "sse.kit.guide",
+   "name": "The Guide",
+   "description": "Its own special thing: the Atlas in the Guide edition as the screen, with the chart as its picture.",
+   "look": "guide-gadget",
+   "palettes": [
+    "guide-night",
+    "guide-day"
+   ],
+   "view_style": "chart",
+   "vocab": "guide",
+   "atlas": {
+    "edition": "sse.edition.guide"
+   },
+   "control_set": "guide",
+   "delivery": "guide",
+   "needs": {
+    "tier": "text"
+   },
+   "layouts": {
+    "sector": {
+     "arrangement": "report",
+     "items": [
+      {
+       "view": "sse.view.atlas",
+       "area": "1",
+       "params": {
+        "page": "selected"
+       },
+       "controls": {
+        "contents": true,
+        "step": true,
+        "print": true,
+        "links": true
+       }
+      },
+      {
+       "view": "sse.view.chart",
+       "area": "2",
+       "controls": {
+        "select": true
+       }
+      }
+     ]
+    },
+    "system": {
+     "extends": "sector"
+    },
+    "world": {
+     "extends": "sector"
+    },
+    "ship": {
+     "extends": "sector"
+    },
+    "landing": {
+     "extends": "sector"
+    },
+    "holding": {
+     "card": "DON'T PANIC"
+    }
+   },
+   "banners": {
+    "at": "both",
+    "sets": [
+     "sse.notes.guide"
+    ]
+   }
+  }
+ ]
+}

@@ -169,11 +169,24 @@ pub enum Request {
         source: Option<String>,
     },
     /// Withdraw a subject and everything under it from `at_s` on (Undo of
-    /// a paste): it drops out of scene, resolved_system and systems. Nothing
-    /// is deleted; the history keeps the event.
+    /// a paste, or removing a body): it drops out of scene, resolved_system
+    /// and systems. Nothing is deleted; the history keeps the event. What
+    /// went round it (K13, editing design 10A): `leave` them round its own
+    /// host (the default, Alex 24 Nov 2026), `take` them too ("remove them
+    /// too"), or `hand` them to `to`, keeping their motion (`keep`, default
+    /// `motion`) or a tidy orbit. One event, so one step.
     Withdraw {
         address: String,
         at_s: i64,
+        #[serde(default)]
+        #[ts(optional, type = "\"take\" | \"leave\" | \"hand\"")]
+        others: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        to: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "\"tidy\" | \"motion\"")]
+        keep: Option<crate::orbits::Keep>,
     },
     /// Bring a withdrawn subject back from `at_s` on (Redo), with every fact
     /// it had.
@@ -867,6 +880,12 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         tiles: Option<Vec<TileRequest>>,
+        /// A what-if branch (from `branch`) to resolve instead of the main
+        /// line: the line it was cut from plus its own edits. Nothing is
+        /// committed (editing design ED1: the exact answer on a pause).
+        #[serde(default)]
+        #[ts(optional)]
+        branch: Option<String>,
     },
     /// Preview a class atlas scheme over the open campaign (GM machine):
     /// label every body in `scope` (default the whole universe) at `at_s`
@@ -1314,6 +1333,37 @@ pub enum Request {
         reason: Option<String>,
         at_s: i64,
     },
+    /// The record (X3j, record-logic design 2.4): move `kg` of resource
+    /// `kind` from one address to another in one decision. The source loses
+    /// what the destination gains: its stock first, then its natural amount
+    /// (raising `resource.<kind>.extracted`); the destination's stock rises.
+    /// Refused when the source holds less. Nothing is made from nothing.
+    Transfer {
+        kind: String,
+        from: String,
+        to: String,
+        kg: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        at_s: i64,
+    },
+    /// The record (X3k): a ship mines `hours` of resource `kind` from a
+    /// body at its `mining.rate_kg_h` fact, capped by what the body holds,
+    /// by `transfer`. Refused when the ship has no rate or the body none left.
+    Mine {
+        ship: String,
+        body: String,
+        kind: String,
+        hours: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        at_s: i64,
+    },
     /// The record: an actor (empire, guild, noble, party, crew) at
     /// `<root>/actor:<id>` or under `parent`.
     AddActor {
@@ -1720,6 +1770,29 @@ pub enum Request {
         reason: Option<String>,
         at_s: i64,
     },
+    /// K13 (editing design 10A, R4): put `address`, with everything round
+    /// it, round `to` from `at_s`, keeping a tidy round orbit at its present
+    /// distance (`tidy`, the default) or its present position and motion
+    /// (`motion`; refused, by name, if that is not bound to `to`). Worked out
+    /// in the barycentre hierarchy; one authored edit, so one Undo.
+    Rehost {
+        address: String,
+        to: String,
+        #[serde(default)]
+        #[ts(optional, type = "\"tidy\" | \"motion\"")]
+        keep: Option<crate::orbits::Keep>,
+        at_s: i64,
+    },
+    /// K13 (editing design 10A, R1): the system's family tree before and
+    /// after `edits` (requests such as `set_authored_batch`, `rehost`,
+    /// `withdraw`), with each body's host, pair label and verdict, and the
+    /// bodies whose place or verdict changed. Nothing is written.
+    PreviewTree {
+        system: String,
+        at_s: i64,
+        #[ts(type = "unknown[]")]
+        edits: Vec<serde_json::Value>,
+    },
     /// RS4: split a construct at `at_s`. The named parts (`part.<id>.*`
     /// facts) and `mass_kg` more move to a new construct of the same kind
     /// beside it (`key`, else the next free number; `name`, else the old
@@ -1820,6 +1893,38 @@ pub enum Request {
         /// adopt it, and write the coded facts on the grown main world.
         #[serde(default)]
         grow: bool,
+        /// The sector's metadata XML (name, subsectors, routes). Its routes
+        /// between two imported worlds become links (`set_link`, kind the
+        /// route's type, source "import_sector"); routes reaching another
+        /// sector, or a hex with no world, are listed as left out.
+        #[serde(default)]
+        #[ts(optional)]
+        metadata: Option<String>,
+        /// Who knows the imported routes (as `set_link`'s `audience`;
+        /// absent: the GM only, until the GM tells the players).
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        route_audience: Option<serde_json::Value>,
+        /// The routes' "Known to" rung (as `set_link`'s `tier`).
+        #[serde(default)]
+        #[ts(optional)]
+        route_tier: Option<String>,
+        at_s: i64,
+    },
+    /// A pack's rolled profile (WBH part 2, `provides.other.rolls`) for one
+    /// world: each step's dice, drawn from the universe's seed (the same on
+    /// every device), read against the world's codes on the program's sheet.
+    /// A code set by hand is kept unless `reroll`. Without `apply` it is a
+    /// preview; with it the results become one authored event at `at_s`,
+    /// each code beside a `roll.<program>.<step>` fact saying how it was
+    /// rolled. GM machine only.
+    RollProfile {
+        program: String,
+        body: String,
+        #[serde(default)]
+        reroll: bool,
+        #[serde(default)]
+        apply: bool,
         at_s: i64,
     },
     /// Write a campaign's mapped systems (those with `map.hex`) at or under
@@ -2201,6 +2306,22 @@ pub enum Request {
         #[ts(optional)]
         pack: Option<String>,
     },
+    /// ATMOS: advice on a world's air (editing design 11A). What the rock
+    /// gives off from the mantle's redox ("the science expects"), how the
+    /// hand-set air differs from it, the pairs in it that do not go
+    /// together (E8) and how long they last, and one `set_authored_batch`
+    /// for "Suggest an atmosphere". Reads the body's facts at `at_s`
+    /// (absent: all of them); `facts` is laid over them (a draft mix).
+    /// Advice only: nothing is written or refused. Read-only.
+    AtmosphereAdvice {
+        body: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "Record<string, unknown>")]
+        facts: Option<serde_json::Value>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -2332,6 +2453,8 @@ impl Request {
             Request::ImportChronicle { .. } => "import_chronicle",
             Request::AddNote { .. } => "add_note",
             Request::SetKept { .. } => "set_kept",
+            Request::Transfer { .. } => "transfer",
+            Request::Mine { .. } => "mine",
             Request::AddActor { .. } => "add_actor",
             Request::Record { .. } => "record",
             Request::Hold { .. } => "hold",
@@ -2363,6 +2486,8 @@ impl Request {
             Request::Templates => "templates",
             Request::Create { .. } => "create",
             Request::Retire { .. } => "retire",
+            Request::Rehost { .. } => "rehost",
+            Request::PreviewTree { .. } => "preview_tree",
             Request::SplitConstruct { .. } => "split_construct",
             Request::JoinConstructs { .. } => "join_constructs",
             Request::Programs { .. } => "programs",
@@ -2372,6 +2497,7 @@ impl Request {
             Request::Codes { .. } => "codes",
             Request::ImportSector { .. } => "import_sector",
             Request::ExportSector { .. } => "export_sector",
+            Request::RollProfile { .. } => "roll_profile",
             Request::SectorMap { .. } => "sector_map",
             Request::HaloCell { .. } => "halo_cell",
             Request::MatterBudget { .. } => "matter_budget",
@@ -2393,6 +2519,7 @@ impl Request {
             Request::Rename { .. } => "rename",
             Request::FixNames { .. } => "fix_names",
             Request::PackReports { .. } => "pack_reports",
+            Request::AtmosphereAdvice { .. } => "atmosphere_advice",
         }
     }
 }
@@ -2684,6 +2811,8 @@ pub fn ops() -> Vec<OpInfo> {
         ),
         o("add_note", Cost::Light, "one event"),
         o("set_kept", Cost::Light, "one fold and one event"),
+        o("transfer", Cost::Light, "two reads of the natural amount at Survey, two kept changes"),
+        o("mine", Cost::Light, "one fact, then a transfer"),
         o("add_actor", Cost::Light, "one fold and one event"),
         o("record", Cost::Light, "linear in the record events"),
         o(
@@ -2727,6 +2856,8 @@ pub fn ops() -> Vec<OpInfo> {
         o("templates", Cost::Trivial, "read at load"),
         o("create", Cost::Light, "GM machine only; one universe event and one record event per kept value"),
         o("retire", Cost::Trivial, "GM machine only; one universe event"),
+        o("preview_tree", Cost::Light, "a copy of the universe, the edits, the orbits and stability checks twice"),
+        o("rehost", Cost::Light, "GM machine only; the system's orbits at one time, one universe event"),
         o("split_construct", Cost::Trivial, "GM machine only; one universe event"),
         o("join_constructs", Cost::Trivial, "GM machine only; one universe event"),
         o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
@@ -2746,6 +2877,11 @@ pub fn ops() -> Vec<OpInfo> {
             "import_sector",
             Cost::Light,
             "GM machine only; one code-sheet plan per world line; with grow, up to 6 pinned formation runs per world (heavy for a whole sector)",
+        ),
+        o(
+            "roll_profile",
+            Cost::Light,
+            "GM machine only; one code reading of one world, then a few dice",
         ),
         o(
             "export_sector",
@@ -2848,6 +2984,11 @@ pub fn ops() -> Vec<OpInfo> {
             "pack_reports",
             Cost::Trivial,
             "reads reports worked out when the stack loaded; read only",
+        ),
+        o(
+            "atmosphere_advice",
+            Cost::Light,
+            "two formula blocks and one equilibrium search (about 60 sweeps of 5 reactions); read only",
         ),
     ]
 }
@@ -3430,6 +3571,18 @@ pub enum Response {
         state_hash: String,
         record_hash: String,
     },
+    Transferred {
+        kind: String,
+        kg: f64,
+        /// Natural, extracted, stock and held kilograms after the move.
+        #[ts(type = "unknown")]
+        from: serde_json::Value,
+        #[ts(type = "unknown")]
+        to: serde_json::Value,
+        change_ids: Vec<String>,
+        state_hash: String,
+        record_hash: String,
+    },
     ActorAdded {
         address: String,
         state_hash: String,
@@ -3602,6 +3755,14 @@ pub enum Response {
     Retired {
         event_id: String,
         state_hash: String,
+    },
+    /// `preview_tree`: `before` and `after` trees and the addresses that changed.
+    TreePreviewed {
+        #[ts(type = "unknown")]
+        before: serde_json::Value,
+        #[ts(type = "unknown")]
+        after: serde_json::Value,
+        changed: Vec<String>,
     },
     /// `split_construct`: the new construct's address.
     ConstructSplit {
@@ -3787,6 +3948,27 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional)]
         state_hash: Option<String>,
+        /// The metadata's routes: each with its ends' systems and, once
+        /// applied, its link and event; or why it was left out.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        #[ts(optional, type = "unknown[]")]
+        routes: Vec<serde_json::Value>,
+        /// With `apply` and routes: the record's hash after the links.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        record_hash: Option<String>,
+    },
+    /// `roll_profile`: each step's result (`id`, `label`, `writes`, `symbol`,
+    /// `dice`, `total`, `how`, `why`), and with `apply` the event written.
+    ProfileRolled {
+        program: String,
+        body: String,
+        #[ts(type = "unknown[]")]
+        steps: Vec<serde_json::Value>,
+        events: Vec<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        state_hash: Option<String>,
     },
     /// `export_sector`: the file's text, the systems written, and those
     /// skipped (no main world found), by address.
@@ -3933,6 +4115,15 @@ pub enum Response {
         #[ts(type = "unknown")]
         description: serde_json::Value,
         state_hash: String,
+    },
+    /// `atmosphere_advice`: `{body, says, redox_iw, redox_from (formation,
+    /// core or unknown), expected (gas to share), pressure_pa, set,
+    /// set_pressure_pa, differs ([{gas, set, expected, why}]), clashes
+    /// ([{pair, sink, j_mol, time_s, why}]), available_j_mol, suggest
+    /// ({op, edits} or null), notes, blocks ([{block, inputs, results}])}`.
+    AtmosphereAdvised {
+        #[ts(type = "unknown")]
+        advice: serde_json::Value,
     },
 }
 

@@ -66,7 +66,12 @@ Tags (`key`, `value`, `ns`, `origin`, `override`, `secret`, `disclosure`): `orig
 `override` makes an A tag replace a physics one; `secret` and `disclosure` (hidden, anonymous, open) go to the default
 data view.
 
-Barycenter: `memberIds`, `orbit`, `coOrbital`, `circumbinary` are A; `effectiveMassKg` is D.
+Barycenter: `memberIds`, `orbit`, `coOrbital`, `circumbinary` are A; `effectiveMassKg` is D. The importer writes
+`memberIds` as the members' addresses (`v3.memberIds`). On `adopt` the kernel maps each barycentre onto the hierarchy
+(BC1, no barycentre objects; `rehome_barycentres` in `crates/sse-kernel/src/adopt.rs`): the heaviest member takes the
+pair's own orbit, each other member orbits it at the pair's separation with its own shape and phase, whatever orbited
+the barycentre orbits that member, and the `bary:N` rows are left out (their `v3.*` facts move to the heavy member as `v3.pair.<bary:N>.<name>`). The report's `barycentres_mapped` says what
+happened to each.
 
 Orbit: `hostId`, `elements` (Kepler `a_AU`, `e`, `i_deg`, `Omega_deg`, `omega_deg`, `M0_rad`), `t0`, `resonance`,
 `isRetrogradeOrbit`, `frame` are A; `hostMu`, `n_rad_per_s` are D; `seed`, `lastEditedT0` are X. A `coOrbital`

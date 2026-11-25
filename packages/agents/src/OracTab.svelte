@@ -95,6 +95,9 @@
     trigger: "Added to the campaign's triggers: it fires from now on.",
     template: "Added to the campaign's templates: objects can be made from it.",
     reveal: "Sent: who knows it has changed, and the change undoes as one.",
+    edition: "Kept in the campaign's own pack: choose it as a role's Atlas edition.",
+    note_set: "Kept in the campaign's own pack: name it in an edition's margin to show it.",
+    kit: "Kept in the campaign's own pack: choose it as a role's interface.",
     program: "Added to the campaign's programs. It runs once you attach it to an object whose template lists it.",
   };
   async function accept(i: number) {
@@ -112,7 +115,7 @@
 </script>
 
 <div role="tabpanel" aria-label="Orac">
-  <p>Orac drafts changes from a sentence: physics, lenses, styles, player screens, symbols, data views, programs (autopilots), object templates, triggers, reveals (who knows what, for many things at once), story sifters, boxes (blocks made of blocks), game tables as classes, missing gases and substances for the data sheet, and new physics blocks as issues. Hand it a paper (PDF or text) and it first answers with a plan in words: what the paper claims, what SSE has for it, what it would add and what is missing. SSE checks every draft and sends problems back to Orac, up to three times. Only drafts that pass can be accepted, and nothing changes until you accept.</p>
+  <p>Orac drafts changes from a sentence: physics, lenses, styles, player screens, symbols, data views, programs (autopilots), object templates, triggers, reveals (who knows what, for many things at once), whole player interfaces (kits), Atlas editions and margin notes, story sifters, boxes (blocks made of blocks), game tables as classes, missing gases and substances for the data sheet, and new physics blocks as issues. Hand it a paper (PDF or text) and it first answers with a plan in words: what the paper claims, what SSE has for it, what it would add and what is missing. SSE checks every draft and sends problems back to Orac, up to three times. Only drafts that pass can be accepted, and nothing changes until you accept.</p>
   {#if !host}
     <p class="hint" data-agent-off="orac">Orac works on the GM's chart room only.</p>
   {:else}

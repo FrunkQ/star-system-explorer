@@ -3508,12 +3508,5 @@
   "op": "read_bows",
   "items": [{"id": "fog", "n": 1.333, "kind": "mist"}]
  },
- {"op": "load_stack", "packs": ["$pack:base-physics"]},
- {"op": "open_universe", "id": "small", "seed": "small"},
- {"op": "adopt", "formation": {"seed": "kernel-form-9", "system": "u:small/sys:1", "star_pins": {"primary_mass": 1.0}}},
- {"op": "small_body", "system": "u:small/sys:1"},
- {"op": "small_body", "system": "u:small/sys:1", "cloud": "u:small/sys:1/cloud:0", "rank": 40},
- {"op": "small_body", "system": "u:small/sys:1", "member": "u:small/sys:1/cloud:0/obj:0"},
- {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-1", "kind": "contact-binary", "diameter_km": 1.0, "a_au": 1.5},
- {"op": "make_small_body", "system": "u:small/sys:1", "address": "u:small/sys:1/small:gm-2", "kind": "dragon", "diameter_km": 1.0, "a_au": 1.5}
+ {"op": "load_stack", "packs": ["$pack:base-physics"]}
 ]

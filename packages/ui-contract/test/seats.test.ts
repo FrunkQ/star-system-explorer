@@ -262,6 +262,17 @@ test("the role card (PB7): a role may share another's knowledge; changes keep th
   const d = p.seats.find((s) => s.id === "bridge")!;
   assert.deepEqual([d.may_send, d.auto_approve, d.brand, d.screens, d.embed_origins], [[], undefined, undefined, undefined, undefined]);
   assert.equal(updateSeat(p, "nobody", { label: "x" }), p);
+  // The interface a role wears (AT14): a kit and one of its palettes; another kit forgets the palette.
+  p = updateSeat(p, "bridge", { kit: "sse.kit.hauler", palette: "sse.palette.amber" });
+  assert.deepEqual([p.seats[1]!.kit, p.seats[1]!.palette], ["sse.kit.hauler", "sse.palette.amber"]);
+  assert.equal(updateSeat(p, "bridge", { kit: "sse.kit.hauler" }).seats[1]!.palette, "sse.palette.amber", "the same kit keeps its palette");
+  assert.equal(updateSeat(p, "bridge", { kit: "sse.kit.corporate" }).seats[1]!.palette, undefined);
+  const bare = updateSeat(p, "bridge", { kit: null }).seats[1]!;
+  assert.deepEqual([bare.kit, bare.palette], [undefined, undefined]);
+  const { checkSeats } = await import("../src/seats.ts");
+  assert.deepEqual(checkSeats(p).filter((e) => /kit|palette/.test(e)), []);
+  assert.equal(checkSeats({ ...p, seats: p.seats.map((x) => (x.id === "bridge" ? { ...x, kit: "Hauler Kit!" } : x)) }).filter((e) => /kit id/.test(e)).length, 1);
+  assert.equal(checkSeats({ ...p, seats: p.seats.map((x) => (x.id === "bridge" ? { ...x, kit: undefined } : x)) }).filter((e) => /palette with no kit/.test(e)).length, 1);
   // The letterhead's two brand fields (AT6): an accent colour and a motto, checked.
   const { checkBrand } = await import("../src/brand.ts");
   assert.deepEqual(checkBrand({ name: "Hauler Co", accent: "#c0392b", motto: "Moving cargo since 2240" }), []);

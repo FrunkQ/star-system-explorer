@@ -7,6 +7,7 @@
 import type { SurfaceTile } from "../../../ui-contract/src/index.ts";
 import { composePatch, patchFor, type GroundAsk, type PatchPicture, tilesFacing, type TileKey } from "../../../renderer/src/texture-ladder.ts";
 import { floorFromRefusal } from "../../../renderer/src/surface-patch.ts";
+import { readGroundOptics, withGround, type MatterReader } from "../../../renderer/src/ground-optics.ts";
 
 /** Tiles per request: about 0.8 s of kernel time on the sample Sol. */
 export const FINER_BATCH = 4;
@@ -29,8 +30,14 @@ export function finerTiles(key: string): SurfaceTile[] {
   return m ? [...m.values()] : [];
 }
 
-export interface FinerReader {
+export interface FinerReader extends Partial<MatterReader> {
   surfaceTilesAt(system: string, body: string, keys: readonly TileKey[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused?: readonly { why: string }[] } | { ok: false; code: string; message: string }>;
+}
+
+/** Tiles as read, with bare ground's measured colour laid on when the session can read the sheet (ground-optics.ts). */
+async function grounded(session: FinerReader, tiles: SurfaceTile[]): Promise<SurfaceTile[]> {
+  if (!session.readMatter || !tiles.some((t) => t.maturity)) return tiles;
+  return withGround(tiles, await readGroundOptics(session as MatterReader));
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -66,7 +73,7 @@ export async function readFiner(session: FinerReader, system: string, body: stri
       if (!wanted()) return read;
       const r = await session.surfaceTilesAt(system, body, todo.slice(i, i + FINER_BATCH));
       if (!r.ok) return read;
-      for (const t of r.tiles) m.set(tileKey(t.key), t);
+      for (const t of await grounded(session, r.tiles)) m.set(tileKey(t.key), t);
       read += r.tiles.length;
       if (r.tiles.length && wanted()) got(finerTiles(key));
       for (const k of todo.slice(i, i + FINER_BATCH)) if (!m.has(tileKey(k))) refused.add(`${key}|${tileKey(k)}`);
@@ -102,7 +109,7 @@ export async function readDeep(session: FinerReader, system: string, body: strin
       if (!wanted()) return null;
       const r = await session.surfaceTilesAt(system, body, todo.slice(i, i + FINER_BATCH));
       if (!r.ok) return null;
-      for (const t of r.tiles) m.set(tileKey(t.key), t);
+      for (const t of await grounded(session, r.tiles)) m.set(tileKey(t.key), t);
       for (const x of r.refused ?? []) floor ??= floorFromRefusal(x.why);
       if (floor !== null) break;
       for (const k of todo.slice(i, i + FINER_BATCH)) if (!m.has(tileKey(k))) refused.add(`${key}|${tileKey(k)}`);

@@ -36,7 +36,19 @@ Status: part 1 done 24 Nov 2026 (thread "Build planet and star editing"). Design
 - `tests/ui/figures-ledger.test.ts`: the editing grammar's check on figures. Each file's own number formatting (toFixed, toPrecision, toLocaleString, outside comments) in views, shell, chart grammar, ui-contract and renderer is counted against `tests/ui/figures-ledger.json`; figures.ts itself is exempt. A file may go down, never up, and a new file starts at none; when one goes down, lower its row (`WRITE_LEDGER=1 node --test tests/ui/figures-ledger.test.ts` rewrites the ledger from the code). 309 on 24 Nov.
 - Reference, Units page: "How figures are said", from `figureTable()`: each kind and what it is about, its readings in click order with their units, the chosen one marked; "Use the scheme's everywhere" clears the campaign's choices.
 
-## Next (part 2c)
+## Part 2c, first chunk (25 Nov): ui-contract and the chart grammar
+
+- The ledger fell from 293 to 221. Every word helper in ui-contract that wrote its own number (route, voyage, window,
+  measure, compare, galaxy, life, life-flow, manifest, make, depth, classes, picker, fate, add-here, matter) now says it
+  through `sayNumber` or `roundTo`; the output is the same text, except that thousands are grouped and a minus is a
+  true minus everywhere (and `galaxy.sci` no longer strips "100" to "1").
+- `sayNumber` takes `upTo` (at most that many decimals, trailing zeros dropped: "1.5 million km").
+- `drawn(x, decimals = 1)` in figures.ts is for drawing coordinates (SVG paths, CSS translate and percentages): plain
+  digits a browser reads, never a figure. The chart grammar's Overlays, TimeRuler and motion use it.
+- Left on purpose: `add-here.ts`'s seed string (`toPrecision(3)` names a generated world, so changing it would change
+  worlds), `derivation.sig` and `matter`'s fine-structure line (both written to keep trailing zeros).
+
+## Next (part 2c, rest)
 
 Bring the ledger down, biggest first: ui-contract/src/replay.ts (15), GalaxyChart (14), Surface (14), Body (10), BodyTimeline, StarDisc (9). Not every count is a figure (a CSS percentage, an id), but each is either moved onto `say` or given a small named helper outside the views. Player seats inheriting the GM's choices; planet radii as a rung for a moon's orbit (needs the parent's radius); local days and years (needs the world's calendar).
 

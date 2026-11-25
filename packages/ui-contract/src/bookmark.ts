@@ -3,6 +3,7 @@
 // A bookmark holds nothing about players: no role, no look, no knowledge. It is the top-level design's place mark, so
 // tours, presets and layouts all share it. Kept with the campaign; plain data, never read by physics.
 import type { ViewChoice } from "./view-controls.ts";
+import { poseFrom, type Pose } from "./pose.ts";
 
 export const BOOKMARK_SCHEMA = "sse.bookmark/1";
 
@@ -22,6 +23,9 @@ export interface Bookmark {
   view?: ViewChoice;
   /** What was selected, if anything. */
   selected: string | null;
+  /** The exact camera (PC1, postcards design section 3). Absent: the view's fixed "Seen from" framing is used. A
+   * bookmark with a pose and a fixed date is a postcard inside its own campaign. */
+  pose?: Pose;
 }
 
 /** Where the GM is now, as the shell knows it. */
@@ -32,6 +36,8 @@ export interface Whereabouts {
   scale?: string;
   view?: ViewChoice;
   selected: string | null;
+  /** The camera of the view in front, when it has one. */
+  pose?: Pose | null;
 }
 
 const ID = /^b(\d+)$/;
@@ -66,6 +72,7 @@ export function makeBookmark(list: readonly Bookmark[], at: Whereabouts, what: s
     ...(at.scale ? { scale: at.scale } : {}),
     ...(at.view ? { view: { ...at.view } } : {}),
     selected: at.selected,
+    ...(at.pose && poseFrom(at.pose) ? { pose: poseFrom(at.pose)! } : {}),
   };
 }
 
@@ -119,6 +126,9 @@ export function bookmarksFrom(raw: unknown): Bookmark[] {
       ...(o.view && typeof o.view === "object" ? { view: o.view as ViewChoice } : {}),
       selected: typeof o.selected === "string" ? o.selected : null,
     });
+    // A malformed camera is dropped, never the bookmark.
+    const pose = o.pose === undefined ? null : poseFrom(o.pose);
+    if (pose) out[out.length - 1]!.pose = pose;
   }
   return out;
 }

@@ -6,14 +6,14 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { SECTOR_FORMATS, fetchSector, placeHash, viewOptions, DEFAULT_VIEW, type Json, type SectorFormat, type SectorImported, type SectorMap, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { SECTOR_FORMATS, fetchMetadata, fetchSector, placeHash, viewOptions, DEFAULT_VIEW, type Json, type SectorFormat, type SectorImported, type SectorMap, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { opensFrom } from "../../../chart-grammar/src/index.ts";
   import HexMap from "../../hex-map/src/HexMap.svelte";
   import WorldCodes from "../../world-codes/src/WorldCodes.svelte";
   import { sift } from "../../hex-map/src/sift.ts";
   import { inputFromPacks, sheetOf, type CodesResponse, type WorldCodesInput } from "../../world-codes/src/sheet.ts";
   import { SECTOR_CONTROLS } from "./controls.ts";
-  import { blocksInUse, exportName, hexConfigOf, mapWorlds, openingBlock, sceneOf } from "./desk.ts";
+  import { blocksInUse, exportName, hexConfigOf, mapWorlds, openingBlock, rollEveryWorld, rollTallyWords, sceneOf } from "./desk.ts";
 
   let { ctx, params }: { ctx: ViewContext; params: Record<string, Json> } = $props();
   const session = untrack(() => ctx.session);
@@ -89,12 +89,19 @@
   let attribution = $state<string | null>(null);
   let preview = $state<SectorImported | null>(null);
   let grow = $state(false);
+  /** The sector's metadata XML (fetched with the sector, or chosen): its routes become links. */
+  let metadata = $state<string | null>(null);
+  let routesKnown = $state(false);
   let busy = $state<string | null>(null);
   let importNote = $state<string | null>(null);
 
   async function readFile(e: Event) {
     const f = (e.currentTarget as HTMLInputElement).files?.[0];
-    if (f) ((text = await f.text()), (preview = null), (attribution = null));
+    if (f) ((text = await f.text()), (preview = null), (attribution = null), (metadata = null));
+  }
+  async function readMetadata(e: Event) {
+    const f = (e.currentTarget as HTMLInputElement).files?.[0];
+    if (f) ((metadata = await f.text()), (preview = null));
   }
   async function fetchIt() {
     if (!fetchName.trim()) return;
@@ -103,6 +110,7 @@
       const got = await fetchSector((u) => fetch(new URL(u, document.baseURI)), fetchName.trim(), fetchSub.trim() || undefined);
       text = got.text;
       attribution = got.attribution;
+      metadata = await fetchMetadata((u) => fetch(new URL(u, document.baseURI)), fetchName.trim());
       preview = null;
       importNote = null;
     } catch (err) {
@@ -113,7 +121,7 @@
   async function previewIt() {
     if (!text.trim()) return;
     busy = "Reading…";
-    const r = await session.importSector?.({ text, at_s: atS });
+    const r = await session.importSector?.({ text, ...(metadata ? { metadata } : {}), at_s: atS });
     busy = null;
     if (!r) return;
     if (!r.ok) return void ((importNote = r.message), (preview = null));
@@ -123,11 +131,12 @@
   async function applyIt() {
     if (!preview) return;
     busy = grow ? "Growing each system and writing it as history… (this can take a while)" : "Writing the worlds as history…";
-    const r = await session.importSector?.({ text, at_s: atS, apply: true, grow });
+    const r = await session.importSector?.({ text, ...(metadata ? { metadata, route_audience: routesKnown ? "everyone" : "gm" } : {}), at_s: atS, apply: true, grow });
     busy = null;
     if (!r) return;
     if (!r.ok) return void (importNote = r.message);
-    importNote = `${r.result.summary}. Written as ${r.result.events.length} events in the history.`;
+    const linked = (r.result.routes ?? []).filter((x) => x.link).length;
+    importNote = `${r.result.summary}. Written as ${r.result.events.length} events in the history${linked ? `, and ${linked} route${linked === 1 ? "" : "s"} as links` : ""}.`;
     preview = null;
     blockChosen = false;
     ws.revision++;
@@ -153,6 +162,25 @@
   }
 
   const counts = (p: SectorImported) => p.import.summary;
+
+  // WBH next: roll a pack's program for every mapped world in one ask. Codes already set stay; only the unset roll.
+  type RollDef = { id: string; label?: string; about?: string; sheet: string };
+  const programs = $derived(packs.flatMap((p) => ((p as { provides?: { other?: { rolls?: RollDef[] } } })?.provides?.other?.rolls ?? [])));
+  let rollOpen = $state(false);
+  let rollBtn = $state<HTMLElement | null>(null);
+  let rollProgram = $state<string | undefined>(undefined);
+  let rollNote = $state<string | null>(null);
+  async function rollAll() {
+    const program = rollProgram ?? programs[0]?.id;
+    if (!program || !map || !session.rollProfile) return;
+    const bodies = [...new Set(map.worlds.map((w) => w.body))];
+    busy = `Rolling ${bodies.length} world${bodies.length === 1 ? "" : "s"}…`;
+    rollNote = null;
+    const t = await rollEveryWorld((a) => session.rollProfile!(a), program, bodies, atS);
+    busy = null;
+    rollNote = rollTallyWords(t);
+    if (t.written) ws.revision++;
+  }
 </script>
 
 <div class="desk" role="region" aria-label="Sector">
@@ -179,8 +207,11 @@
       {/if}
       <span class="grow"></span>
       {#if gm}
-        <button type="button" class="quiet-btn" bind:this={importBtn} aria-expanded={importOpen} onclick={() => ((importOpen = !importOpen), (exportOpen = false))} data-import>Import a sector…</button>
-        <button type="button" class="quiet-btn" bind:this={exportBtn} aria-expanded={exportOpen} disabled={!worlds.length} onclick={() => ((exportOpen = !exportOpen), (importOpen = false))} data-export>Export…</button>
+        <button type="button" class="quiet-btn" bind:this={importBtn} aria-expanded={importOpen} onclick={() => ((importOpen = !importOpen), (exportOpen = false), (rollOpen = false))} data-import>Import a sector…</button>
+        <button type="button" class="quiet-btn" bind:this={exportBtn} aria-expanded={exportOpen} disabled={!worlds.length} onclick={() => ((exportOpen = !exportOpen), (importOpen = false), (rollOpen = false))} data-export>Export…</button>
+        {#if programs.length && session.rollProfile}
+          <button type="button" class="quiet-btn" bind:this={rollBtn} aria-expanded={rollOpen} disabled={!worlds.length} onclick={() => ((rollOpen = !rollOpen), (importOpen = false), (exportOpen = false))} data-roll-all>Roll every world…</button>
+        {/if}
       {/if}
     </div>
 
@@ -190,6 +221,7 @@
         <textarea rows="6" bind:value={text} placeholder="Hex  Name  UWP …" spellcheck="false" data-import-text oninput={() => (preview = null)}></textarea>
         <div class="row">
           <label class="quiet-btn file">Choose a file <input type="file" accept=".tab,.sec,.txt,text/plain" onchange={readFile} /></label>
+          <label class="quiet-btn file" title="The sector's metadata file (XML): its routes become links">{metadata ? "Routes file chosen" : "Routes (XML)…"} <input type="file" accept=".xml,application/xml,text/xml" onchange={readMetadata} data-import-metadata /></label>
           <input type="text" bind:value={fetchName} placeholder="Sector name" aria-label="Sector name to fetch" />
           <input type="text" bind:value={fetchSub} placeholder="Subsector (A to P)" aria-label="Subsector" size="10" />
           <button type="button" class="quiet-btn" onclick={fetchIt} disabled={!fetchName.trim() || !!busy}>Fetch</button>
@@ -213,6 +245,16 @@
                 </li>
               {/each}
             </ul>
+            {#if preview.routes?.length}
+              {@const kept = preview.routes.filter((x) => !x.left_out)}
+              <p class="small" data-preview-routes><b>{kept.length}</b> route{kept.length === 1 ? "" : "s"} become{kept.length === 1 ? "s" : ""} links between worlds{preview.routes.length > kept.length ? `; ${preview.routes.length - kept.length} left out` : ""}.</p>
+              {#if preview.routes.length > kept.length}
+                <ul class="worlds">
+                  {#each preview.routes.filter((x) => x.left_out) as x}<li class="refused"><span class="mono">{x.start}–{x.end}</span><span class="muted"> · {x.left_out}</span></li>{/each}
+                </ul>
+              {/if}
+              <label class="tick"><input type="checkbox" bind:checked={routesKnown} data-routes-known /> The players know these routes (otherwise only you, until you tell them)</label>
+            {/if}
             <label class="tick"><input type="checkbox" bind:checked={grow} /> Grow each world's whole system first (its star, giants and belts to match the codes; slow for a whole sector)</label>
             <button type="button" class="go" onclick={applyIt} disabled={!!busy || !c.imported} data-apply>Write {c.imported} world{c.imported === 1 ? "" : "s"} as history</button>
           </div>
@@ -230,6 +272,22 @@
           <button type="button" class="go" onclick={exportIt} data-download>Download</button>
         </div>
         {#if exportNote}<p class="small" aria-live="polite" data-export-note>{exportNote}</p>{/if}
+      </section>
+    {/if}
+
+    {#if rollOpen}
+      <section class="pop" aria-label="Roll every world" use:opensFrom={() => rollBtn}>
+        <p class="small">Rolls the codes the physics cannot decide for every mapped world, from the universe's seed (the same dice on every machine). Codes already set, by hand or by an imported profile (bases included), stay as they are.</p>
+        <div class="row">
+          {#if programs.length > 1}
+            <select bind:value={rollProgram} aria-label="What to roll">
+              {#each programs as p, i}<option value={i === 0 ? undefined : p.id}>{p.label ?? p.id}</option>{/each}
+            </select>
+          {/if}
+          <button type="button" class="go" onclick={rollAll} disabled={!!busy} title={(programs.find((p) => p.id === (rollProgram ?? programs[0]?.id)) ?? programs[0])?.about} data-roll-all-go>Roll and write for {worlds.length} world{worlds.length === 1 ? "" : "s"}</button>
+        </div>
+        {#if busy}<p class="small" aria-live="polite">{busy}</p>{/if}
+        {#if rollNote}<p class="small" aria-live="polite" data-roll-all-note>{rollNote}</p>{/if}
       </section>
     {/if}
 

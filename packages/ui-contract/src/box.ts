@@ -6,6 +6,7 @@
 import type { Depth } from "./depth.ts";
 import type { BoxChip, BoxPart, Handle } from "./handles.ts";
 import type { StabilityCheck } from "./session.ts";
+import type { Json } from "./json.ts";
 
 const ORDER: Record<Depth, number> = { curious: 0, science: 1, engine: 2 };
 const TAU = 2 * Math.PI;
@@ -141,4 +142,58 @@ export function stabilityFor(checks: readonly StabilityCheck[], address: string)
   if (!mine.length) return null;
   const worst = mine.reduce((w, c) => (c.level > w.level ? c : w));
   return { level: worst.level, word: LEVEL[Math.min(3, Math.max(0, worst.level))]!, says: worst.says, check: worst.check };
+}
+
+/**
+ * The outer wall on an orbit's size strip, from the kernel's stability checks: the widest orbit that lasts round its
+ * host (a moon round its planet against the star's pull; a world round one star of a pair). Null when no check gives one.
+ */
+export function outerWall(checks: readonly StabilityCheck[], address: string): { at: number; says: string } | null {
+  const c = checks.find((x) => (x.check === "moon" || x.check === "binary_one_star") && x.bodies?.[0] === address && typeof x.results?.limit === "number");
+  if (!c) return null;
+  return { at: c.results!.limit!, says: c.check === "moon" ? "the star pulls it away beyond" : "the other star throws it out beyond" };
+}
+
+/** A pair (editing design section 10A): the two bodies, how far the hidden centre sits from the heavier one's centre. */
+export interface Pair {
+  /** The heavier side (Pluto) and the lighter (Charon), whose orbit is the pair's "round each other". */
+  primary: string;
+  secondary: string;
+  /** The centre's distance from the heavier one's centre, metres: a × m / (M + m). */
+  centre_m: number;
+  /** The centre lies outside the heavier one's surface: drawn and named as a pair (a double planet, a binary star). */
+  outside: boolean;
+}
+
+/**
+ * The pair a body belongs to, read off the kernel's facts (barycentre always, BC1): for a body, its heaviest
+ * satellite, when that pair's centre lies outside the body's surface; else, when it is itself such a satellite, its
+ * host. Every orbit is a pair underneath; this only says when the pair is worth showing as one (decision 2: a real
+ * boundary, the centre outside the heavier one, not a typed threshold). Null for a body in no such pair.
+ */
+export function pairOf(facts: Readonly<Record<string, Readonly<Record<string, Json>>>>, address: string): Pair | null {
+  const n = (a: string, f: string) => (typeof facts[a]?.[f] === "number" ? (facts[a]![f] as number) : null);
+  const pairWith = (host: string): Pair | null => {
+    const M = n(host, "body.mass");
+    const R = n(host, "body.radius");
+    if (M === null || R === null) return null;
+    let best: Pair | null = null;
+    let bestM = 0;
+    for (const [a, f] of Object.entries(facts)) {
+      if (f["orbit.host"] !== host || f["body.kind"] === "ring" || f["body.kind"] === "belt") continue;
+      const m = n(a, "body.mass");
+      const sma = n(a, "orbit.semi_major_axis");
+      if (m === null || sma === null || m <= bestM || m > M) continue;
+      const centre = (sma * m) / (M + m);
+      bestM = m;
+      best = { primary: host, secondary: a, centre_m: centre, outside: centre > R };
+    }
+    return best && best.outside ? best : null;
+  };
+  const mine = pairWith(address);
+  if (mine) return mine;
+  const host = facts[address]?.["orbit.host"];
+  if (typeof host !== "string") return null;
+  const p = pairWith(host);
+  return p && p.secondary === address ? p : null;
 }

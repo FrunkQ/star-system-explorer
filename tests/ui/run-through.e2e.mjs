@@ -10,7 +10,7 @@
 //  4. the party's ship is the lander; the GM picks a landmark and sets midday; the ship flies down on its drive (LR1);
 //     nothing reaches the table until it is sent;
 //  5. Send this view: the player's screen is the Landing screen, judging the same site the same way;
-//  6. Land: both fly; skip to the ground; the lander stands in frame, its lamps lit at night at the GM's switch (LR6),
+//  6. Land: both fly; skip to the ground; the lander (Beowulf's own model, LR6b) stands in frame, its lamps lit at night at the GM's switch (LR6),
 //     the GM walks and the player follows; take off;
 //  7. a whole landing (site, hour, lander) comes back from its link, as a bookmark or a Playbook preset fires it (LR5).
 import { spawn } from "node:child_process";
@@ -108,6 +108,11 @@ try {
   await gm.waitForFunction(() => /Beowulf in orbit of Mars/.test(document.querySelector("[data-table-sees]")?.textContent ?? ""), null, { timeout: 15000 });
   await pl.waitForSelector(`[data-orbit="${mars}"][data-orbit-drawn]`, { timeout: 60000 });
   assert.match(await pl.locator("[data-orbit-caption]").innerText(), /Mars, turning below/);
+  // LR4b: Mars's air, read on the GM's kernel, comes with the send and is drawn on the player's globe.
+  await pl.waitForSelector(`[data-orbit="${mars}"][data-orbit-air]`, { timeout: 30000 });
+  // LR4c: the party's ship goes round on the table's globe, named.
+  await pl.waitForSelector(`[data-orbit="${mars}"] [data-orbit-ship="Beowulf"]`, { timeout: 15000 });
+  assert.match(await pl.locator("[data-orbit-caption]").innerText(), /Beowulf in orbit/);
   await shot(pl, "rt-2b-player-orbit");
   await gm.evaluate((h) => (location.hash = h), landHref);
 
@@ -160,6 +165,12 @@ try {
   // LR6: the lander stands where it touched down, in frame from where the walk starts; at night its lamps are lit.
   await gm.waitForSelector("[data-surface][data-lander-drawn='dark']", { timeout: 15000 });
   await pl.waitForSelector("[data-surface][data-lander-drawn]", { timeout: 15000 });
+  // LR6b: it is Beowulf's own model, designed from its numbers, the same length on both screens.
+  await gm.waitForSelector("[data-surface][data-lander-ship]", { timeout: 15000 });
+  await pl.waitForSelector("[data-surface][data-lander-ship]", { timeout: 15000 });
+  const shipLen = Number(await gm.locator("[data-surface]").getAttribute("data-lander-ship"));
+  assert.ok(shipLen > 5 && shipLen < 2000, `Beowulf stands at its own length (${shipLen} m)`);
+  assert.equal(Number(await pl.locator("[data-surface]").getAttribute("data-lander-ship")), shipLen, "the table draws the same ship");
   await gm.getByRole("group", { name: "View style" }).getByRole("button", { name: "True", exact: true }).click();
   await gm.waitForSelector("[data-surface][data-look='true']");
   await gm.locator('[data-walk-pad] [data-time="night"]').click();

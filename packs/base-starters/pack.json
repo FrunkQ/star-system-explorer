@@ -1,0 +1,316 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-starters",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "alpha_centauri": {
+    "about": "Alpha Centauri as measured: A and B, a close pair on an 80-year orbit, and Proxima on a wide orbit round the pair, a nested pair. Built by scripts/build-base-starters.py; every value names its source. Proxima's planets are not entered yet.",
+    "bodies": [
+     {
+      "id": "alpha-cen-a",
+      "name": "Alpha Centauri A",
+      "kind": "star",
+      "host": null,
+      "values": {
+       "body.mass": {
+        "v": 2.1981762e+30,
+        "unit": "kg",
+        "src": "kervella2016",
+        "note": "1.1055 ± 0.0039 solar masses"
+       },
+       "body.radius": {
+        "v": 851100000.0,
+        "unit": "m",
+        "src": "kervella2017ab",
+        "note": "1.2234 ± 0.0053 solar radii"
+       },
+       "star.effective_temperature": {
+        "v": 5795.0,
+        "unit": "K",
+        "src": "kervella2017ab",
+        "note": "± 19 K"
+       },
+       "star.luminosity": {
+        "v": 5.821e+26,
+        "unit": "W",
+        "src": "kervella2017ab",
+        "note": "1.521 ± 0.015 solar luminosities"
+       }
+      }
+     },
+     {
+      "id": "alpha-cen-b",
+      "name": "Alpha Centauri B",
+      "kind": "star",
+      "host": "alpha-cen-a",
+      "values": {
+       "body.mass": {
+        "v": 1.86372732e+30,
+        "unit": "kg",
+        "src": "kervella2016",
+        "note": "0.9373 ± 0.0033 solar masses"
+       },
+       "body.radius": {
+        "v": 600600000.0,
+        "unit": "m",
+        "src": "kervella2017ab",
+        "note": "0.8632 ± 0.0037 solar radii"
+       },
+       "star.effective_temperature": {
+        "v": 5231.0,
+        "unit": "K",
+        "src": "kervella2017ab",
+        "note": "± 21 K"
+       },
+       "star.luminosity": {
+        "v": 1.925e+26,
+        "unit": "W",
+        "src": "kervella2017ab",
+        "note": "0.503 ± 0.007 solar luminosities"
+       },
+       "orbit.semi_major_axis": {
+        "v": 3522258310000.0,
+        "unit": "m",
+        "src": "kervella2016",
+        "note": "17.592 ± 0.013 arcsec at a parallax of 747.17 ± 0.61 mas (23.545 au); the period, 79.929 ± 0.013 yr, follows from it and the masses"
+       },
+       "orbit.eccentricity": {
+        "v": 0.5208,
+        "unit": "1",
+        "src": "kervella2016",
+        "note": "± 0.0011"
+       },
+       "orbit.inclination": {
+        "v": 79.32,
+        "unit": "deg",
+        "src": "kervella2016",
+        "note": "to the plane of the sky, ± 0.011"
+       },
+       "orbit.ascending_node": {
+        "v": 205.064,
+        "unit": "deg",
+        "src": "kervella2016",
+        "note": "± 0.033"
+       },
+       "orbit.argument_of_periapsis": {
+        "v": 232.006,
+        "unit": "deg",
+        "src": "kervella2016",
+        "note": "± 0.051; periastron 1955.604"
+       }
+      }
+     },
+     {
+      "id": "proxima",
+      "name": "Proxima Centauri",
+      "kind": "star",
+      "host": "alpha-cen-a",
+      "values": {
+       "body.mass": {
+        "v": 2.4278364e+29,
+        "unit": "kg",
+        "src": "kervella2017prox",
+        "note": "0.1221 ± 0.0022 solar masses"
+       },
+       "body.radius": {
+        "v": 107276940.0,
+        "unit": "m",
+        "src": "kervella2017prox",
+        "note": "0.1542 ± 0.0045 solar radii"
+       },
+       "orbit.semi_major_axis": {
+        "v": 1301501475000000.0,
+        "unit": "m",
+        "src": "kervella2017prox",
+        "note": "8.7 (+0.7, -0.4) thousand au, round the A and B pair; period 547 (+66, -40) thousand years"
+       },
+       "orbit.eccentricity": {
+        "v": 0.5,
+        "unit": "1",
+        "src": "kervella2017prox",
+        "note": "+0.08, -0.09"
+       },
+       "orbit.inclination": {
+        "v": 107.6,
+        "unit": "deg",
+        "src": "kervella2017prox",
+        "note": "to the plane of the sky, +1.8, -2.0"
+       },
+       "orbit.ascending_node": {
+        "v": 126.0,
+        "unit": "deg",
+        "src": "kervella2017prox",
+        "note": "± 5"
+       },
+       "orbit.argument_of_periapsis": {
+        "v": 72.3,
+        "unit": "deg",
+        "src": "kervella2017prox",
+        "note": "+8.7, -6.6; next periastron in 283 (+59, -41) thousand years"
+       }
+      }
+     }
+    ],
+    "regions": [],
+    "sources": [
+     {
+      "id": "kervella2016",
+      "text": "Kervella, P. et al. 2016, A&A 594, A107: Close stellar conjunctions of alpha Centauri A and B until 2050, Table 1 (K16 column: parallax, orbital elements and masses; read 24 Nov 2026)",
+      "status": "verified",
+      "doi": "10.1051/0004-6361/201629201"
+     },
+     {
+      "id": "kervella2017ab",
+      "text": "Kervella, P. et al. 2017, A&A 597, A137: The radii and limb darkenings of alpha Centauri A and B, Table 5 (radii, temperatures, luminosities; read 24 Nov 2026)",
+      "status": "verified",
+      "doi": "10.1051/0004-6361/201629505"
+     },
+     {
+      "id": "kervella2017prox",
+      "text": "Kervella, P., Thévenin, F. and Lovis, C. 2017, A&A 598, L7: Proxima's orbit around alpha Centauri, Table 3 (orbit) and Table 1 note c (mass and radius, from Mann et al. 2015; read 24 Nov 2026)",
+      "status": "verified",
+      "doi": "10.1051/0004-6361/201629930"
+     }
+    ]
+   },
+   "kepler_16": {
+    "about": "Kepler-16 as measured: a K dwarf and an M dwarf on a 41-day orbit, eclipsing, and a Saturn-mass world on a 229-day orbit round both. Built by scripts/build-base-starters.py; every value names its source.",
+    "bodies": [
+     {
+      "id": "kepler-16-a",
+      "name": "Kepler-16 A",
+      "kind": "star",
+      "host": null,
+      "values": {
+       "body.mass": {
+        "v": 1.37139948e+30,
+        "unit": "kg",
+        "src": "doyle2011",
+        "note": "0.6897 (+0.0035, -0.0034) solar masses"
+       },
+       "body.radius": {
+        "v": 451439730.0,
+        "unit": "m",
+        "src": "doyle2011",
+        "note": "0.6489 ± 0.0013 solar radii"
+       },
+       "star.effective_temperature": {
+        "v": 4450.0,
+        "unit": "K",
+        "src": "doyle2011",
+        "note": "± 150 K"
+       }
+      }
+     },
+     {
+      "id": "kepler-16-b-star",
+      "name": "Kepler-16 B",
+      "kind": "star",
+      "host": "kepler-16-a",
+      "values": {
+       "body.mass": {
+        "v": 4.0275042e+29,
+        "unit": "kg",
+        "src": "doyle2011-binary",
+        "note": "0.20255 solar masses"
+       },
+       "body.radius": {
+        "v": 157388211.0,
+        "unit": "m",
+        "src": "doyle2011-binary",
+        "note": "0.22623 solar radii"
+       },
+       "orbit.semi_major_axis": {
+        "v": 33556298380.0,
+        "unit": "m",
+        "src": "doyle2011-binary",
+        "note": "0.22431 au; period 41.07922 days"
+       },
+       "orbit.eccentricity": {
+        "v": 0.15944,
+        "unit": "1",
+        "src": "doyle2011-binary"
+       },
+       "orbit.inclination": {
+        "v": 90.3401,
+        "unit": "deg",
+        "src": "doyle2011-binary",
+        "note": "to the plane of the sky: the pair eclipses"
+       },
+       "orbit.argument_of_periapsis": {
+        "v": 263.464,
+        "unit": "deg",
+        "src": "doyle2011-binary"
+       }
+      }
+     },
+     {
+      "id": "kepler-16-b",
+      "name": "Kepler-16 b",
+      "kind": "planet",
+      "host": "kepler-16-a",
+      "values": {
+       "body.mass": {
+        "v": 6.3207729e+26,
+        "unit": "kg",
+        "src": "doyle2011",
+        "note": "0.333 ± 0.016 Jupiter masses"
+       },
+       "body.radius": {
+        "v": 53890669.6,
+        "unit": "m",
+        "src": "doyle2011",
+        "note": "0.7538 ± 0.0026 Jupiter radii (equatorial nominal)"
+       },
+       "orbit.semi_major_axis": {
+        "v": 105436579300.0,
+        "unit": "m",
+        "src": "doyle2011",
+        "note": "0.7048 ± 0.0011 au, round both stars; period 228.776 (+0.020, -0.037) days"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0069,
+        "unit": "1",
+        "src": "doyle2011",
+        "note": "+0.0010, -0.0015"
+       },
+       "orbit.inclination": {
+        "v": 90.0322,
+        "unit": "deg",
+        "src": "doyle2011",
+        "note": "to the plane of the sky, +0.0022, -0.0023; within 0.4 degrees of the pair's plane"
+       },
+       "orbit.argument_of_periapsis": {
+        "v": 318.0,
+        "unit": "deg",
+        "src": "doyle2011",
+        "note": "+10.0, -22.0"
+       }
+      }
+     }
+    ],
+    "regions": [],
+    "sources": [
+     {
+      "id": "doyle2011",
+      "text": "Doyle, L. R. et al. 2011, Science 333, 1602: Kepler-16: a transiting circumbinary planet, Table 1 (star A and planet b as the NASA Exoplanet Archive prints the Doyle 2011 set; read 24 Nov 2026)",
+      "status": "verified",
+      "doi": "10.1126/science.1210923"
+     },
+     {
+      "id": "doyle2011-binary",
+      "text": "Doyle, L. R. et al. 2011, Science 333, 1602, Table 1: star B and the binary's orbit. Not yet read at source: the archive does not print them and the paper's table was not reachable; star B's radius matches the value Wikipedia's Kepler-16 page prints",
+      "status": "unverified",
+      "doi": "10.1126/science.1210923"
+     }
+    ]
+   }
+  }
+ }
+}

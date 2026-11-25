@@ -173,6 +173,10 @@ pub(crate) fn resolve(
                     )
                 })?;
             let age = (b.age_gyr + w.shift_gyr).max(0.0);
+            // SOL5: the record's measured air, unless the caller gave a mix.
+            if opts.gases.is_none() {
+                opts.gases = crate::adopt::catalogued_gases(w.facts.get(&b.address));
+            }
             // W9 part 2: the orbit's wobble from its siblings (T1), unless
             // the caller gave one.
             if opts.orbit_track.is_none() {
@@ -333,7 +337,7 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
                     })
                 }),
                 // Tides and wind waves, from the formula blocks.
-                "sea": crate::sea::summary(cs, &body, k, &moons),
+                "sea": crate::sea::summary(r.reference, cs, &body, k, &moons),
                 // W8: the main gas's ice moving between ground and air.
                 "volatile": k.exchange.as_ref().map(|e| {
                     serde_json::json!({

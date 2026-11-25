@@ -25,6 +25,7 @@
     undo,
     copyBody,
     openAdd,
+    typeAdd,
     cutBody,
     openKeys,
     extraTools,
@@ -49,6 +50,8 @@
     undo: (back: boolean) => void;
     copyBody: () => void;
     openAdd: () => void;
+    /** While the Add ghost follows the pointer (ED4): open Add here to type a distance instead. */
+    typeAdd?: () => void;
     cutBody: () => void;
     openKeys: () => void;
     /** Tools another section adds after Redo (the Run desk's Bookmarks, PB2b), so the stage imports nothing of theirs. */
@@ -80,7 +83,9 @@
     <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={openKeys} />
   </nav>
   {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
-  {#if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
+  {#if ws.adding && ws.adding.a_au === null}
+    <p class="undo-note clip-note" role="status" data-add-note>Press on the chart where it should go round {ws.adding.label}; the ghost says how far out. Esc puts it away.{#if typeAdd} <button type="button" class="type-add" data-add-type onclick={typeAdd}>Type a distance</button>{/if}</p>
+  {:else if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
   <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if cardMount}<div use:view={cardMount} data-chart-overlay></div>{/if}</aside>
 </main>
 
@@ -173,6 +178,16 @@
     margin: 0;
     font-size: 13px;
     color: var(--sse-ink-muted);
+  }
+  .type-add {
+    margin-left: 6px;
+    padding: 0 4px;
+    border: 0;
+    border-bottom: var(--sse-line) dotted var(--sse-accent-ink);
+    background: none;
+    color: var(--sse-accent-ink);
+    font: inherit;
+    cursor: pointer;
   }
   .clip-note {
     top: 48px;

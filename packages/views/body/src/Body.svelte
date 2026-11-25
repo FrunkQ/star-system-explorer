@@ -17,12 +17,13 @@
 </script>
 
 <script lang="ts">
+  import { addBookmark, fixDate, globeOfPose, keepStamp, poseOfGlobe, R_EARTH_M, R_SUN_M, STAMP_SIDE, stampOf } from "../../../ui-contract/src/index.ts";
   import { globeStats, regimeWords, tableLandmarks, viewOptions, DEFAULT_VIEW, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { PEN_WORDS, penOf, type Pen } from "../../../chart-grammar/src/pencil.ts";
   import { BODY_CONTROLS, GLOBE_LAT } from "./controls.ts";
   import { untrack } from "svelte";
   import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
-  import { applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { loadAurora, type AuroraPlan, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
@@ -76,6 +77,32 @@
     });
   });
 
+  // Aurorae (VP-AU5): where they glow from the kernel's field read (read_field's aurora), what colours and how high
+  // from the air. The Solar System's own worlds read the measured fixture by name; any other adopted system is read
+  // world by world from its facts. Asked once per world, only when True is shown.
+  const auroraCache = new Map<string, { plan: AuroraPlan; radius_m: number } | null>();
+  let aurora = $state.raw<{ plan: AuroraPlan; radius_m: number } | null>(null);
+  $effect(() => {
+    const sub = subject;
+    const sys = scene.system;
+    const air = got?.air;
+    const isTrue = shownView.style === "true";
+    aurora = null;
+    if (!sub || sub.kind === "star" || !got || !isTrue) return;
+    const key = `${sys}|${sub.address}`;
+    if (auroraCache.has(key)) return void (aurora = auroraCache.get(key) ?? null);
+    let live = true;
+    void (async () => {
+      const v = await loadAurora(ctx.session, sys, sub, { radius_m: air?.radius_m ?? 0, scale_height_m: air?.optics?.scale_height_m, composition: air?.composition });
+      if (!live) return;
+      auroraCache.set(key, v);
+      aurora = v;
+    })();
+    return () => {
+      live = false;
+    };
+  });
+
   // "Why?" for the climate (W7a): asked for, never fetched on a click of the world alone.
   let climate = $state<ClimateSummary | null>(null);
   let climateOpen = $state(false);
@@ -119,13 +146,45 @@
   let lon = $state(0);
   let lat = $state(20);
   // The standard view controls (rule 12): the style picks the recipe, "seen from" the latitude looked down from.
-  const shownView = $derived(viewOptions(BODY_CONTROLS, ws.view ?? DEFAULT_VIEW).shown);
+  const viewed = $derived(viewOptions(BODY_CONTROLS, ws.view ?? DEFAULT_VIEW));
+  const shownView = $derived(viewed.shown);
+  // Composite (XO17): the globe draws Visible only, so a mix of Visible and Mag shows the globe with the field's cut
+  // beside it; Mag alone replaces the globe as before.
+  const magOn = $derived(viewed.layers.some((l) => l.band === "mag"));
+  const globeOn = $derived(viewed.layers.some((l) => l.band !== "mag"));
   const styleRecipe = $derived(shownView.style === "true" ? "true-colour" : String(params.recipe ?? "survey-relief"));
   // Picking a fixed "Seen from" frames the globe afresh, even the one already shown.
   $effect(() => {
     const s = shownView.seen;
     void shownView.framed;
     if (s !== "free") ((lat = GLOBE_LAT[s]), (lon = 0));
+  });
+  // PC1: the globe's camera, kept current for a bookmark or postcard made here; a bookmark's camera taken once.
+  const radiusM = $derived.by(() => {
+    if (got?.air?.radius_m) return got.air.radius_m;
+    const f = (k: string) => subject?.facts.find((x) => x.field === k)?.value;
+    const re = f("radius_earth");
+    const rs = f("radius_sun");
+    return typeof re === "number" && re > 0 ? re * R_EARTH_M : typeof rs === "number" && rs > 0 ? rs * R_SUN_M : null;
+  });
+  $effect(() => {
+    const a = ws.aim;
+    const addr = subject?.address;
+    if (!a || !addr || a.about !== addr) return;
+    untrack(() => {
+      const g = globeOfPose(a);
+      lon = ((g.lon % 360) + 360) % 360;
+      lat = g.lat;
+      ws.aim = null;
+    });
+  });
+  $effect(() => {
+    const addr = subject?.address;
+    const lo = lon;
+    const la = lat;
+    const r = radiusM;
+    untrack(() => (ws.camera = addr && r ? poseOfGlobe(addr, lo, la, r) : null));
+    return () => untrack(() => (ws.camera = null));
   });
   let host = $state<HTMLElement | undefined>();
   let run: GlobeRun | null = null;
@@ -190,6 +249,7 @@
     size_px: size,
     label: subject?.label ?? "",
     air: got?.air ?? null,
+    aurora,
   });
   // Time lapse (R6): the kernel's surface_frames for this world, played on the same globe. `lapse` is the API the
   // chart room's timeline (BodyTimeline) drives; it is reactive, so a scrubber follows changes made anywhere.
@@ -385,6 +445,19 @@
   // R3: take a photograph (the still tier, off screen), keep it on this device, save it as a PNG.
   let shooting = $state<string | null>(null);
   let shotNote = $state<string | null>(null);
+  // PC3: "Keep as postcard" beside the photograph just taken: a bookmark here with its camera and the date fixed, kept
+  // with the campaign's bookmarks (one store); its stamp is kept on this device.
+  let lastShot = $state<{ canvas: HTMLCanvasElement; address: string } | null>(null);
+  let keptAsPostcard = $state<string | null>(null);
+  function keepAsPostcard() {
+    const shot = lastShot;
+    if (!shot || !ws.markHere || !ws.camera) return;
+    const b = fixDate(ws.markHere(), ws.now_yr);
+    ws.bookmarks = addBookmark(ws.bookmarks ?? [], b);
+    const s = stampOf(shot.canvas, STAMP_SIDE);
+    if (s) keepStamp(b.scope, b.id, s);
+    keptAsPostcard = `Kept as the postcard "${b.name}". Postcards are on the rail under Look.`;
+  }
   let photos = $state<{ item: MediaItem; url: string }[]>([]);
   $effect(() => {
     const a = subject?.address;
@@ -407,13 +480,15 @@
     shotNote = null;
     try {
       const o = runOpts;
-      const shot = await photograph({ registry: o.registry, library: o.library, recipe: o.recipe, knobs: o.knobs, globe, air: o.air, label: s.label, lon, lat, size: 1024, frames: 16, onProgress: (d, n) => (shooting = `Refining ${d} of ${n}…`) });
+      const shot = await photograph({ registry: o.registry, library: o.library, recipe: o.recipe, knobs: o.knobs, globe, air: o.air, aurora: o.aurora, label: s.label, lon, lat, size: 1024, frames: 16, onProgress: (d, n) => (shooting = `Refining ${d} of ${n}…`) });
       const png = await new Promise<Blob>((res, rej) => shot.canvas.toBlob((b) => (b ? res(b) : rej(new Error("the browser would not encode the picture"))), "image/png"));
       const now = new Date();
       const caption = `${s.label}, centred on ${lat.toFixed(0)}° ${lon.toFixed(0)}°. ${shot.note} Made in ${(shot.ms / 1000).toFixed(1)} s.`;
       const item: MediaItem = { id: `${s.address}@${now.getTime()}`, title: `${s.label} ${stamp(now)}`, subject: s.address, caption, created: now.toISOString(), png, width: shot.canvas.width, height: shot.canvas.height };
       const where = await keepPhoto(item);
       photos = [{ item, url: URL.createObjectURL(png) }, ...photos];
+      lastShot = { canvas: shot.canvas, address: s.address };
+      keptAsPostcard = null;
       shotNote = `${caption} ${where === "device" ? "Kept on this device." : "This browser will not keep it after the page closes: save it."}`;
     } catch (e) {
       shotNote = `No photograph: ${e instanceof Error ? e.message : String(e)}`;
@@ -477,7 +552,7 @@
     <StarDisc {ctx} {scene} address={subject.address} label={subject.label} {size} />
   {:else}
     <div class="top">
-      <div class="globe" class:hidden={shownView.band === "mag"} class:pencil={pen === "pencil"} class:heard={pen === "heard"} style:width="{size}px" style:height="{size}px" data-pen={pen}>
+      <div class="globe" class:hidden={!globeOn} class:pencil={pen === "pencil"} class:heard={pen === "heard"} style:width="{size}px" style:height="{size}px" data-pen={pen}>
         {#if loading}
           <p class="note">Building the surface of {subject.label}… (about a second)</p>
         {:else if has}
@@ -517,8 +592,11 @@
           </p>
         {/if}
       </div>
+      {#if has && shownView.band !== "mag" && aurora?.plan.stand_in && gs?.plan.passes.some((x) => x.pass === "aurora")}
+        <p class="note" data-aurora-stand-in>Aurora colours are a stand-in: oxygen's green and red lines at heights scaled from Earth's, until the kernel gives this air's own lines.</p>
+      {/if}
       {#if pen !== "ink"}<p class="pennote" data-pen-note>In pencil: {PEN_WORDS[pen]}. The players' screens {pen === "pencil" ? "do not show" : "show only the name and place of"} {subject.label}.</p>{/if}
-      {#if has && shownView.band !== "mag"}
+      {#if has && globeOn}
         <!-- The time lapse's controls (U22): layer toggles, scrubber with event marks, Play, and the why card. -->
         <BodyTimeline {lapse} depth={ws.depth ?? "science"} label={subject.label} />
         <!-- Interim weather control; the chart room's controls replace it. A time lapse shows its own past, so this hides then. -->
@@ -528,7 +606,7 @@
         </div>{/if}
       {/if}
       <!-- The Mag layer (MF14b): the field's Chart cut, its words and a why for every part, when Band is Mag. -->
-      <BodyMag session={ctx.session} system={scene.system} name={subject.label} tier={gs?.tier ?? "gpu-basic"} depth={ws.depth ?? "science"} size={size} on={shownView.band === "mag"} />
+      <BodyMag session={ctx.session} system={scene.system} name={subject.label} tier={gs?.tier ?? "gpu-basic"} depth={ws.depth ?? "science"} size={size} on={magOn} />
       {#if stats}
         <dl class="facts" data-globe-stats>
           <dt>Drawn</dt>
@@ -540,6 +618,7 @@
               <div class="badge-detail" data-badge-detail>
                 <p>{gs.tier_note}</p>
                 {#if gs.plan.passes.some((x) => x.pass === "atmosphere")}<p data-air-note>{gs.air_note}</p>{/if}
+                {#if gs.plan.passes.some((x) => x.pass === "aurora")}<p data-aurora-note>{gs.aurora_note}</p>{/if}
                 {#each gs.badge.detail as line (line)}<p>{line}</p>{/each}
                 {#if gs.badge.reduced}<p>{gs.badge.lift}</p>{/if}
                 <p>Recipe {gs.recipe}, level {gs.level} of {gs.max}. {Number.isFinite(gs.ewma_ms) ? `Frames about ${Math.round(gs.ewma_ms)} ms; budget ${Math.round(gs.budget_ms)} ms.` : ""}</p>
@@ -595,6 +674,9 @@
           <dd data-photo>
             <button class="badge" data-take-photo disabled={!!shooting} onclick={takePhoto}>{shooting ?? "Take photograph"}</button>
             {#if shotNote}<p class="shot-note" data-photo-note>{shotNote}</p>{/if}
+            {#if lastShot && lastShot.address === subject?.address && ws.markHere && ws.camera}
+              {#if keptAsPostcard}<p class="shot-note" data-kept-postcard>{keptAsPostcard}</p>{:else}<button class="badge" data-keep-postcard onclick={keepAsPostcard}>Keep as postcard</button>{/if}
+            {/if}
             {#if photos.length}
               <ul class="photos" data-photos>
                 {#each photos.slice(0, 6) as p (p.item.id)}

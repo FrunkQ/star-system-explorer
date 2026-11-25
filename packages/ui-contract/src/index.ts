@@ -7,6 +7,8 @@ export { audienceOf, decide, gmSeat, tableSeat, sharedTableSeat, within } from "
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
 export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, updateSeat, oneLayoutPerRole, removeSeat, checkSeats, startIntents, discoverIntent, joinLink, outputLink, sealedLink, fogViews } from "./seats.ts";
 export type { Audience, SeatChange, SeatPlan } from "./seats.ts";
+export { SPLITS, isSplit, displayLink, partLinks, displaysFrom, displayMap, screenKey } from "./displays.ts";
+export type { Split, Display } from "./displays.ts";
 export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, PackCalendar, StabilityCheck } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
@@ -16,7 +18,7 @@ export { deriveScene, applyEdits, sig } from "./derivation.ts";
 export type { DerivationDoc, DerivationRule, InputBinding, OutputBinding } from "./derivation.ts";
 export { resolveParams } from "./view.ts";
 export type { StylesHost, ViewModule, ViewContext, PlayerContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace, AppliedEdit, WhatIf } from "./view.ts";
-export { commitEdit, factEdit, placeBodies, withdrawBodies, PRESENCE, undoEdit, redoEdit, openWhatIf, dropWhatIf, keepWhatIf, compareScenes } from "./edit.ts";
+export { commitEdit, commitFields, FIELDS, factEdit, placeBodies, withdrawBodies, PRESENCE, undoEdit, redoEdit, openWhatIf, dropWhatIf, keepWhatIf, compareScenes } from "./edit.ts";
 export type { Difference } from "./edit.ts";
 export { checkScreen, boundScene, LAYOUT_AREAS, RAIL_SCALES, RAIL_GROUPS, RAIL_GROUP_WORDS, RAIL_MAX, railOf, scalesOf } from "./screen.ts";
 export { resolveStyle, checkStyle, settingCost, settingsCost, promotedOf, settingsDiff, COSTS, TIER_RUNS_UP_TO } from "./style.ts";
@@ -40,6 +42,7 @@ export { showReference } from "./reference.ts";
 export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
+export * from "./composite.ts";
 export * from "./part-controls.ts";
 export * from "./layouts.ts";
 export * from "./picker.ts";
@@ -51,12 +54,18 @@ export { areaShares, areasFromHoldings, insideRings, itemArea, letterArea, neare
 export * from "./landing.ts";
 export * from "./map-controls.ts";
 export * from "./place-event.ts";
+export * from "./atlas/index.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
 export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
 export type { Hub, Wire, Manifest, Shown, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest, SealedManifest, ScreenHello } from "./p2p.ts";
 export { BoardHistory, emptyBoard, upgradeBoard, sourceOf, landing, send, lift, back, rejoin, hold, release, holdAll, releaseAll, screenHello, moveScreen, swapScreens, redirect, setSignal, resolve, signalOf, cardWords, boardWire, steerOf, setSteer, drive, driveTo } from "./board.ts";
 export { BOOKMARK_SCHEMA, addBookmark, bookmarkName, bookmarkReachable, bookmarksFrom, makeBookmark, moveBookmark, nextBookmarkId, removeBookmark, renameBookmark, updateBookmark } from "./bookmark.ts";
 export type { Bookmark, Whereabouts } from "./bookmark.ts";
+export { KEEP_ALL, POSE_FOV_MAX, POSE_FOV_MIN, checkPose, fovToFit, globeOfPose, poseFrom, poseOfGlobe } from "./pose.ts";
+export type { Pose, PoseExposure, Vec3 } from "./pose.ts";
+export { keepStamp, stampFor, stampOf } from "./postcard-stamps.ts";
+export { CAPTION_MAX, DEFAULT_MESSAGE, FROM_MAX, MESSAGE_EXPIRED, MESSAGE_MAX, NAME_MAX, POSTCARD_FILE_SUFFIX, POSTCARD_LINK_KEY, POSTCARD_MAX, POSTCARD_SCHEMA, POSTCARD_SITE, STAMP_SIDE, MIX_LINES, STILL_INSTRUMENTS, checkMessage, mixFrom, checkPostcard, clipThroughSeat, envelope, fixDate, forShop, goesWith, isPostcard, looksLikePostcard, makeMessage, packsNeeded, postcardBlocker, postcardFile, postcardHere, postcardId, postcardLink, postcardText, readPostcard, shopRefusal, withMessage } from "./postcard.ts";
+export type { MixEntry, PostcardReference, PostcardView, PackNamed, PackNeeded, PackState, Postcard, PostcardLink, PostcardMessage, PostcardRead, PostcardWorld, SeatSees } from "./postcard.ts";
 export { PLAYBOOK_SCHEMA, addChapter, addPage, addPreset, addSection, destOf, emptyPlaybook, findPage, findPreset, fire, isUp, movePreset, movePresetToPage, nextId, pages, playbookFrom, presetWords, presetsInView, reveals, revealsOf, removePart, removePreset, rename, sayOf, showOf, updatePreset, wordsOnly } from "./playbook.ts";
 export type { Chapter, Page, Playbook, Preset, Section, Step } from "./playbook.ts";
 export type { Board, BoardScreen, Dest, HoldCard, Line, SeatPort, Showing, TablePort } from "./board.ts";
@@ -68,9 +77,9 @@ export { LENS_SCHEMA, LAYERS, TOOLS, SHIPPED_LENSES, HONESTY_MARKS, playerLenses
 export type { Lens, LensCard, LayerId, ToolId, Density, LensPackMeta } from "./lens.ts";
 export { SOUND_SCENE_SCHEMA, SOUND_RECIPE_SCHEMA, SOUND_LABELS, SOUND_LAYERS, NODE_TYPES, hash32, draw, intoOctave, settle, dialled, bandFor, orbitScene, voicesFromSystem, voicesFromPlayers, score, scoreHash, checkRecipe, defaultSound, readSound, voiceLimit } from "./sound.ts";
 export type { SoundLabel, SoundLayer, SoundTier, SoundSource, ScoreNote, SoundScene, Voice, NodeType, RecipeNode, SoundRecipe, SoundSettings } from "./sound.ts";
-export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight, recipeBand, bandChoices, paintedBands, lightForBand } from "./light.ts";
+export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight, recipeBand, bandChoices, paintedBands, lightForBand, linearSrgb, xyz, cmf } from "./light.ts";
 export type { BandRecipe, Honesty, LightDescription, LitBody } from "./light.ts";
-export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy, sceneFromResolved, listedTitle, cloudShape, cloudSubjects, v3BeltShape } from "./make.ts";
+export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy, sceneFromResolved, listedTitle, cloudShape, cloudSubjects, v3BeltShape, R_EARTH_M, R_SUN_M } from "./make.ts";
 export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld, Adopted, SystemResolved, ListedSystem, LeftoverCloud } from "./make.ts";
 export { specFromScene, sceneAt, snapshotAt, fateEvents, subjectNames, fmtAge, KIND_WORDS, PHASE_WORDS, Z_SUN } from "./fate.ts";
 export type { SystemSpec, LookedAhead, FateEvent, FateSnapshot } from "./fate.ts";
@@ -94,7 +103,7 @@ export { termsOf, word } from "./words.ts";
 export { DEPTHS, CURIOUS_FACTS, headline, isDepth, roughly, curiousDisplay, curiousSentence } from "./depth.ts";
 export type { Depth } from "./depth.ts";
 export type { Terms } from "./words.ts";
-export { fetchSector, sectorPath } from "./sector-fetch.ts";
+export { fetchMetadata, fetchSector, metadataPath, sectorPath } from "./sector-fetch.ts";
 export type { SectorText } from "./sector-fetch.ts";
 export { SECTOR_FORMATS, mapFields, stackProvides } from "./sector.ts";
 export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateOf } from "./constructs.ts";
@@ -104,7 +113,7 @@ export { navShipOf, partyLander, voyageStart } from "./party.ts";
 export type { PartyShip } from "./party.ts";
 export { arrivalOffer, arrivalReveal } from "./arrival.ts";
 export type { ArrivalOffer } from "./arrival.ts";
-export type { CodeReading, CodesRead, MappedWorldRow, SectorMap, SectorFormat, SectorImportAsk, ImportedWorldRow, SectorImported, SectorExported } from "./sector.ts";
+export type { CodeReading, CodesRead, MappedWorldRow, SectorMap, SectorFormat, SectorImportAsk, ImportedWorldRow, SectorImported, SectorExported, ProfileRolled, RolledStep } from "./sector.ts";
 export { STOCK_SHIPS, packShips, shipChoices, shipToSend, packDriveWords, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
 export type { NavShip, ShipChoice, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
 export { verdictWords, chanceWords, worstDangers } from "./ship-at-world.ts";
@@ -139,8 +148,8 @@ export type { SheetBand, SheetConstant } from "./sheet.ts";
 export { sniffFile, sha256Hex, explorersUrl, fetchExplorers, creditWords, CONVERTER_URL } from "./open-file.ts";
 export type { FileKind, Sniffed, ExplorersListing, ExplorersFetched } from "./open-file.ts";
 // Add here (V3 gap 2): what this orbit would make, from formation runs, or anything, marked impossible.
-export { formsHere, anythingClip, clipAt, freeOrbit } from "./add-here.ts";
-export type { FormsHere } from "./add-here.ts";
+export { formsHere, anythingClip, clipAt, freeOrbit, moonRecipes, GIANT_MASS_EARTH, worldKinds } from "./add-here.ts";
+export type { FormsHere, MoonRecipe, WorldKind } from "./add-here.ts";
 // Find in Look up: an element, constant or unit by name, symbol or id.
 export { findInSheet } from "./reference-find.ts";
 export type { RefHit } from "./reference-find.ts";
@@ -164,7 +173,7 @@ export { PICTURES_FIELD, DESIGN_FIELD, SHOWN_FIELD, PICTURE_FIELDS, PICTURES_MAX
 export { DESKS, DESK_WORDS, ACTION_GROUPS, OBJECT_ACTIONS, actionById, appliesTo, menuFor, listWords, keyWords } from "./actions.ts";
 export type { Desk, ActionGroup, ActionTarget, ActionState, ActionDef, MenuItem, ObjectMenu, OtherDesk } from "./actions.ts";
 // One units engine (ED1a): every figure said and read back the same way.
-export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, factAbout, factUnit, sayFact, readFact, figureTable, sayNumber, roundTo, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
+export { say, sayText, readFigure, readingsFor, nextReading, waitingUnits, choiceKey, chosenReading, withChoice, significantFigures, factAbout, factUnit, sayFact, readFact, figureTable, sayNumber, roundTo, drawn, FIGURE_KINDS, SCALE_CLASSES, UNIT_FAMILIES } from "./figures.ts";
 export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOptions, UnitChoices, FactLike, FactUnit } from "./figures.ts";
 // The Flow view (RK13): any ledger's rows laid out in columns; the Power card is its first user.
 export { layoutFlow, flowRowColumns, HAIRLINE_SHARE } from "./flow.ts";
@@ -177,8 +186,23 @@ export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, R
 // Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
 export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed, BoxPart, BoxChip, HandleBox, PartMark } from "./handles.ts";
-export { atDepth, boxAt, partHandle, wrap, mirrorAngle, trueFromMean, meanFromTrueRad, trueAnomalyFrom, epochMeanFor, orbitShape, solarDay, resonances, stabilityFor } from "./box.ts";
-export type { Resonance } from "./box.ts";
+export { atDepth, boxAt, partHandle, wrap, mirrorAngle, trueFromMean, meanFromTrueRad, trueAnomalyFrom, epochMeanFor, orbitShape, solarDay, resonances, stabilityFor, outerWall, pairOf } from "./box.ts";
+export type { Resonance, Pair } from "./box.ts";
 export * from "./place-notes.ts";
+export * from "./delivery.ts";
 export { gearing, roundFigures, resonanceCatches, nearestCatch } from "./drag.ts";
 export type { Catch } from "./drag.ts";
+// Roll call (track SH): who was in flight on a day, aboard what and where, from flight logs and stays.
+export * from "./rollcall.ts";
+// In memory (track SH6): the names of those who died, from a pack's in-memory.json.
+export * from "./inmemory.ts";
+export * from "./namescarried.ts";
+export * from "./rollrecords.ts";
+export { reachIt, resolveWith, resultFrom, surfaceKelvin } from "./reach.ts";
+export type { ReachAsk, Reached } from "./reach.ts";
+export { airKindEdits, airKinds, airMix, formulaOf, gasesToAdd, gasNames, mixEdits, MIX_FIELD, retrade, substanceNames, TRACE } from "./air.ts";
+export type { AirKind, MixGas } from "./air.ts";
+export { readSheet, readTable, sheetRows, spreadPaste } from "./sheet-entry.ts";
+export type { SheetBody, SheetRead, SheetRow, TableRead } from "./sheet-entry.ts";
+export { COULD_BE, couldBeNow, recipeFor } from "./could-be.ts";
+export type { CouldBe, RecipeStep } from "./could-be.ts";

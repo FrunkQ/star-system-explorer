@@ -20,6 +20,10 @@ export type Shown =
       focus?: string;
       /** Read only (PB3b): the GM steers this screen; it takes no input but sound. Absent: the player's (Theirs). */
       steer?: "read";
+      /** The focus world's air for the "In orbit" screen (LR4b, renderer `AirFacts` with its optics), as the GM's kernel read it; a seat cannot read resolved systems. Older players ignore it. */
+      air?: Json;
+      /** The party's ship circling the focus world on the "In orbit" screen (LR4c), by its name; absent: none shown. */
+      ship?: string;
       /** Words over the picture (PB6, a Read aloud with "also show on screens"): a plain card the players read. Older players ignore it. */
       say?: string;
     }
@@ -54,6 +58,13 @@ export interface Seat {
   embed_origins?: string[];
   /** A faction's name and logo shown on this seat's screens (V3 gap 25). Presentation only. */
   brand?: SeatBrand;
+  /**
+   * The interface kit the role wears (AT14, atlas design 11A.4): a kit's id ("sse.kit.hauler", or a pack's own),
+   * read with the Atlas's `resolveKit`. Absent: today's screens. A layout chosen for the role (`screens`) still wins.
+   */
+  kit?: string;
+  /** The kit's palette the role's screens use: a palette id. Absent: the kit's first, its default. */
+  palette?: string;
   /**
    * Quick overrides (V3 gap 25): the GM's live switches for this seat's screens, set from the Seats panel and sent
    * at once ("hide labels" on a wall screen). Presentation only, never saved with the campaign: player view
