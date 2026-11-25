@@ -1,3 +1,4 @@
+import { sayNumber } from "./figures.ts";
 import { constant } from "./sheet.ts";
 import type { FlowRow } from "./flow.ts";
 
@@ -53,7 +54,7 @@ export function wattsText(w: number): string {
   const a = Math.abs(w);
   const [d, u] = a >= 1e9 ? [1e9, "GW"] : a >= 1e6 ? [1e6, "MW"] : a >= 1e3 ? [1e3, "kW"] : [1, "W"];
   const v = w / d;
-  return `${Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2)} ${u}`;
+  return `${Math.abs(v) >= 100 ? sayNumber(v, 3, { decimals: 0 }) : Math.abs(v) >= 10 ? sayNumber(v, 3, { decimals: 1 }) : sayNumber(v, 3, { decimals: 2 })} ${u}`;
 }
 
 /** One line on the ship's power as the voyage flies it. */
@@ -62,7 +63,7 @@ export function powerWords(p: PowerBooks): string {
   const made = `${wattsText(l.made_w)} made`;
   const spare = l.spare_w >= 0 ? `${wattsText(l.spare_w)} to spare` : `${wattsText(-l.spare_w)} short, so the electric drive throttles back`;
   const heat = Object.values(l.heat_by_k).reduce((a, b) => a + b, 0);
-  return `${made}, ${spare}; ${wattsText(heat)} of heat to shed; ${p.accel_g < 0.001 ? `${(p.accel_g * 1000).toFixed(3)} milli-g` : `${p.accel_g.toFixed(3)} g`} from its engines`;
+  return `${made}, ${spare}; ${wattsText(heat)} of heat to shed; ${p.accel_g < 0.001 ? `${sayNumber(p.accel_g * 1000, 3, { decimals: 3 })} milli-g` : `${sayNumber(p.accel_g, 3, { decimals: 3 })} g`} from its engines`;
 }
 
 /** What the books cannot account for, in words (none when they close). */
@@ -197,12 +198,12 @@ export interface PowerReading {
 /** Newtons in the unit a reader would use. */
 export function newtonsText(n: number): string {
   const a = Math.abs(n);
-  return a >= 1e6 ? `${(n / 1e6).toFixed(2)} MN` : a >= 1e3 ? `${(n / 1e3).toFixed(1)} kN` : a >= 1 ? `${n.toFixed(1)} N` : `${(n * 1e3).toFixed(1)} mN`;
+  return a >= 1e6 ? `${sayNumber(n / 1e6, 3, { decimals: 2 })} MN` : a >= 1e3 ? `${sayNumber(n / 1e3, 3, { decimals: 1 })} kN` : a >= 1 ? `${sayNumber(n, 3, { decimals: 1 })} N` : `${sayNumber(n * 1e3, 3, { decimals: 1 })} mN`;
 }
 
 /** Square metres in the unit a reader would use. */
 export function areaText(m2: number): string {
-  return m2 >= 1e6 ? `${(m2 / 1e6).toFixed(2)} km²` : m2 >= 100 ? `${Math.round(m2).toLocaleString("en-GB")} m²` : `${m2.toFixed(1)} m²`;
+  return m2 >= 1e6 ? `${sayNumber(m2 / 1e6, 3, { decimals: 2 })} km²` : m2 >= 100 ? `${sayNumber(m2, 3, { decimals: 0 })} m²` : `${sayNumber(m2, 3, { decimals: 1 })} m²`;
 }
 
 /** Panel area to shed `w` watts at `k` kelvin: A = W / (faces × ε × σ T⁴). */
@@ -226,7 +227,7 @@ export function powerReadings(p: PowerBooks, rule: RadiatorRule): PowerReading[]
   const jet = l.engines.reduce((a, e) => a + e.jet_w, 0);
   out.push(
     l.thrust_n > 0
-      ? { id: "thrust", label: "Thrust", value: newtonsText(l.thrust_n), words: `from a ${wattsText(jet)} jet: ${p.accel_g < 0.001 ? `${(p.accel_g * 1000).toFixed(3)} milli-g` : `${p.accel_g.toFixed(3)} g`} for this ship` }
+      ? { id: "thrust", label: "Thrust", value: newtonsText(l.thrust_n), words: `from a ${wattsText(jet)} jet: ${p.accel_g < 0.001 ? `${sayNumber(p.accel_g * 1000, 3, { decimals: 3 })} milli-g` : `${sayNumber(p.accel_g, 3, { decimals: 3 })} g`} for this ship` }
       : { id: "thrust", label: "Thrust", value: "none", words: "no engine is firing" },
   );
   out.push(

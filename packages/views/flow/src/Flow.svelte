@@ -5,14 +5,14 @@
   (ui-contract flow.ts) and decides no physics. Curious depth shows the names; Science adds each figure.
 -->
 <script lang="ts">
-  import { layoutFlow, type FlowBand, type FlowRow } from "../../../ui-contract/src/index.ts";
+  import { layoutFlow, sayNumber, type FlowBand, type FlowRow } from "../../../ui-contract/src/index.ts";
 
   let {
     rows,
     titles = [],
     column,
     rank,
-    amountWords = (v: number) => v.toPrecision(3),
+    amountWords = (v: number) => sayNumber(v, 3),
     figures = true,
     label = "Flow",
   }: {

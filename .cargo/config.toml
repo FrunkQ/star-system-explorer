@@ -1,3 +1,8 @@
 [env]
 # ts-rs writes generated TypeScript protocol types here during `cargo test`.
 TS_RS_EXPORT_DIR = { value = "packages/contracts/src/generated", relative = true }
+# Debug builds give `Kernel::dispatch` (one large match over every op) a
+# frame of hundreds of kB, and ops that call other ops nest it; the test
+# threads' 2 MB default overflowed (25 Nov). Release and the browser build
+# use a small fraction of that. Test threads get 16 MB.
+RUST_MIN_STACK = "16777216"
