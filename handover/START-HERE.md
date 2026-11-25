@@ -153,12 +153,10 @@ Each track keeps to its own crates and folders. Integration points are listed at
 https://v4.starsystemx.com: Cloudflare Worker `star-system-explorer` (Workers Builds, set up by Alex 18 Nov 2026).
 Build `npm run build` (scripts/build-site.sh, writes dist/), deploy `npx wrangler deploy` (wrangler.jsonc),
 production branch: switch to `main` in Cloudflare (was `claude/project-thread-h9y77o`); other branches get preview versions.
-There is no deploy workflow in GitHub Actions: `ci.yml` only tests (and never cancels runs on `main`). On 25 Nov
-the live site fell behind `main` from about 00:39 UTC while merges came every few minutes. Any fix to deploy
-queueing is a Cloudflare dashboard setting (Workers & Pages, `star-system-explorer`, Settings, Build), or a new
-GitHub deploy workflow with a Cloudflare API token secret and Workers Builds switched off for `main`. Either needs
-Alex; he approved "a running deploy finishes instead of being cancelled" on 25 Nov 01:27 UTC. Each Cloudflare
-build installs Rust and compiles the wasm from scratch, so check for timeouts as well as cancellations.
+There is no deploy workflow in GitHub Actions: `ci.yml` only tests (and never cancels runs on `main`). Cloudflare
+builds every merge to `main` (4 to 10 minutes each). When merges come faster than that, a waiting build can show as
+Skipped, but the next build on `main` contains it, so the site catches up. Alex checked on 25 Nov 01:36 UTC and found
+every build Ready; nothing needs changing in Cloudflare and no GitHub deploy workflow is wanted.
 The site is the GM shell (chart room) at `/`, the players page at `/players.html` and the cross-device check page at `/harness/`.
 
 ## How to resume
