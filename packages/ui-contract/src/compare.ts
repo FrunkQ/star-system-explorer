@@ -8,6 +8,7 @@
 // left out and says so.
 import type { SceneSubject } from "./scene.ts";
 import { constant, numberOf, sheetUnitFactor, type SheetRef } from "./sheet.ts";
+import { sayNumber } from "./figures.ts";
 
 export const R_EARTH_KM = constant("R_earth_mean") / 1000;
 export const R_JUPITER_KM = constant("R_jup_mean") / 1000;
@@ -191,6 +192,8 @@ export interface Lineup {
   /** Total width the lineup needs, px. */
   width: number;
   mode: "true" | "log";
+  /** The least width each item took: the asked slot, narrowed when the row would not otherwise fit (labels then stagger). */
+  slot: number;
 }
 
 /**
@@ -202,20 +205,35 @@ export interface Lineup {
  * not to scale. `slot` is the least width each item takes (room for its
  * label), so small bodies' labels never overprint.
  */
-export function layoutLineup(items: readonly CompareItem[], height: number, maxWidth: number, mode: "true" | "log" = "true", limbRatio = 5, slot = 0, withRings = false): Lineup {
+export function layoutLineup(items: readonly CompareItem[], height: number, maxWidth: number, mode: "true" | "log" = "true", limbRatio = 5, askedSlot = 0, withRings = false): Lineup {
   // Where rings are drawn, a ringed body takes the room of its rings, at the same scale as its globe.
   const reach = (i: CompareItem) => (withRings ? reachKm(i) / i.radius_km : 1);
-  const gap = 18;
   const minR = 1.5;
-  if (!items.length) return { placed: [], limb: null, km_per_px: 1, width: 0, mode };
+  if (!items.length) return { placed: [], limb: null, km_per_px: 1, width: 0, mode, slot: askedSlot };
+  // A crowded row narrows its gaps and slots (to half the slot room, the rest for the large bodies) before it would
+  // need a scroll: a whole system's lineup fits the view, its labels staggering in two rows.
+  const crowd = (n: number, room: number) => {
+    const g = n * (askedSlot + 18) + 18 > room ? Math.max(6, Math.min(18, room / (8 * (n + 1)))) : 18;
+    const s = Math.min(askedSlot, Math.max(28, (0.6 * (room - g * (n + 1))) / Math.max(1, n)));
+    return { gap: g, slot: s };
+  };
   if (mode === "log") {
+    const { gap, slot } = crowd(items.length, maxWidth);
     const lo = Math.min(...items.map((i) => i.radius_km));
     const hi = Math.max(...items.map((i) => i.radius_km));
     const span = Math.max(1e-9, Math.log10(hi) - Math.log10(lo));
-    // Radius from 4 px (smallest) to half the height (largest), less if the row would need more than twice the width.
+    // Radius from 4 px (smallest) to half the height (largest), less if the row would not fit the width.
     const raw = (km: number) => 4 + ((Math.log10(km) - Math.log10(lo)) / span) * (height / 2 - 4);
-    const need = items.reduce((s, i) => s + Math.max(2 * raw(i.radius_km) * reach(i), slot) + gap, gap);
-    const k = need > 1.25 * maxWidth ? Math.max(0.4, (1.25 * maxWidth) / need) : 1;
+    // Shrunk to fit the width: slots and gaps hold, so solve for the discs wider than their slot (a few passes).
+    const disc = (i: CompareItem, k: number) => 2 * Math.max(3, raw(i.radius_km) * k) * reach(i);
+    let k = 1;
+    for (let pass = 0; pass < 6; pass++) {
+      const need = items.reduce((s, i) => s + Math.max(disc(i, k), slot) + gap, gap);
+      if (need <= maxWidth) break;
+      const wide = items.filter((i) => disc(i, k) > slot).reduce((s, i) => s + disc(i, k), 0);
+      if (wide <= 0) break;
+      k = Math.max(0.15, k * Math.min(0.99, Math.max(0.15, (maxWidth - (need - wide)) / wide)));
+    }
     let x = gap;
     const placed = items.map((item) => {
       const r = Math.max(3, raw(item.radius_km) * k);
@@ -224,7 +242,7 @@ export function layoutLineup(items: readonly CompareItem[], height: number, maxW
       x += wd + gap;
       return p;
     });
-    return { placed, limb: null, km_per_px: NaN, width: x, mode };
+    return { placed, limb: null, km_per_px: NaN, width: x, mode, slot };
   }
   const sorted = [...items].sort((a, b) => b.radius_km - a.radius_km);
   const big = sorted[0]!;
@@ -233,6 +251,7 @@ export function layoutLineup(items: readonly CompareItem[], height: number, maxW
   const row = limbItem ? items.filter((i) => i !== limbItem) : [...items];
   const rowMax = Math.max(...row.map((i) => i.radius_km));
   const limbBand = limbItem ? Math.min(140, maxWidth * 0.18) : 0;
+  const { gap, slot } = crowd(row.length, maxWidth - limbBand);
   const sumD = row.reduce((s, i) => s + 2 * i.radius_km * reach(i), 0);
   const avail = Math.max(60, maxWidth - limbBand - gap * (row.length + 1));
   // Fit the row's width: small bodies take their slot whatever the scale, so solve for the rest.
@@ -256,12 +275,12 @@ export function layoutLineup(items: readonly CompareItem[], height: number, maxW
   });
   // The limb: its true radius at this scale, its centre left of the view so its edge shows in the band.
   const limb = limbItem ? { item: limbItem, x: limbBand - limbItem.radius_km / kmPerPx, r: limbItem.radius_km / kmPerPx, tiny: false } : null;
-  return { placed, limb, km_per_px: kmPerPx, width: x, mode };
+  return { placed, limb, km_per_px: kmPerPx, width: x, mode, slot };
 }
 
 /** "11.2 × Earth", "0.27 × Earth", "9.7 × Jupiter", "764 × Sun": the most telling yardstick for a radius. */
 export function sizeWords(km: number): string {
-  const f = (x: number) => (x >= 100 ? Math.round(x).toLocaleString("en-GB") : x >= 10 ? x.toFixed(1) : x >= 0.1 ? x.toFixed(2) : x.toPrecision(2));
+  const f = (x: number) => sayNumber(x >= 100 ? Math.round(x) : x, x >= 100 ? 0 : 2, x >= 100 ? { decimals: 0 } : x >= 10 ? { decimals: 1 } : x >= 0.1 ? { decimals: 2 } : {});
   if (km >= 0.5 * R_SUN_KM) return `${f(km / R_SUN_KM)} × Sun`;
   if (km >= 2.5 * R_EARTH_KM && km < 3 * R_JUPITER_KM) return `${f(km / R_JUPITER_KM)} × Jupiter`;
   if (km >= 3 * R_JUPITER_KM) return `${f(km / R_SUN_KM)} × Sun`;
@@ -278,6 +297,6 @@ export function scaleBar(kmPerPx: number, targetPx = 120): { km: number; px: num
 }
 
 export function formatKmLength(km: number): string {
-  if (km >= 1e6) return `${(km / 1e6).toLocaleString("en-GB", { maximumFractionDigits: 2 })} million km`;
-  return `${km.toLocaleString("en-GB", { maximumFractionDigits: km < 10 ? 1 : 0 })} km`;
+  if (km >= 1e6) return `${sayNumber(km / 1e6, 0, { upTo: 2 })} million km`;
+  return `${sayNumber(km, 0, { upTo: km < 10 ? 1 : 0 })} km`;
 }

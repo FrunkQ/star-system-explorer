@@ -4,6 +4,7 @@
 // quiet, with the reason, so the control never rearranges itself from one screen to the next. The choice belongs to
 // the viewer (any seat), is kept on their device, and later per panel. Presentation only: never in the campaign.
 import { SHEET_BANDS } from "./sheet.ts";
+import { DEFAULT_MIX, LAYER_COLOURS, deviceMaxLayers, fitMix, readMix, type CompositeLayer, type CompositeMix } from "./composite.ts";
 
 export const VIEW_STYLES = ["chart", "3d", "true", "wireframe"] as const;
 export type ViewStyle = (typeof VIEW_STYLES)[number];
@@ -19,11 +20,25 @@ export const SCALE_WORDS: Record<ViewScale, string> = { readable: "Readable", re
 /** HUD (Alex, 23 Nov 2026): one switch for the clutter over a True view (orbit lines, names, outlines). Off looks
  * like a photograph, on like a heads-up overview. Off by default. */
 export const HUD_WORDS: Record<"off" | "on", string> = { off: "Off", on: "On" };
+/** How True is exposed (visual polish design 16.7, Alex 24 Nov: "long exposure on by default"): a long exposure that
+ * lifts faint light (the sky's stars, aurorae) by one stated ratio beside the sunlit worlds, a composite that says so,
+ * or the eye's single exposure, where beside a sunlit world the stars fade as they really do. */
+export type ViewExposure = "long" | "eye";
+export const VIEW_EXPOSURES: readonly ViewExposure[] = ["long", "eye"];
+export const EXPOSURE_WORDS: Record<ViewExposure, string> = { long: "Long exposure", eye: "Eye" };
 
 /** Band (the instrument): what light, or field, the view is seen in. Visible by default. Mag replaces the picture with
  * the magnetic field (magnetic fields design, 22 Nov 2026). */
 export const VIEW_BANDS = ["visible", "infrared", "ultraviolet", "xray", "radio", "mag"] as const;
 export type ViewBand = (typeof VIEW_BANDS)[number];
+/** Composite (design 6A, XO17): the last entry of the band switch on every view, several bands in one picture. */
+export const COMPOSITE = "composite" as const;
+/** What the band switch can be set to: one band, or Composite (the mix is `ViewChoice.composite`). */
+export type BandPick = ViewBand | typeof COMPOSITE;
+export const BAND_PICKS: readonly BandPick[] = [...VIEW_BANDS, COMPOSITE];
+export const COMPOSITE_WORD = "Composite";
+export const WHY_COMPOSITE_NEEDS_TWO = "Composite needs two bands drawn here";
+export const WHY_COMPOSITE_NEXT = "Composite is coming to this view: it draws one band at a time for now";
 // The band switch's words come from the master sheet's Bands table (RK10): its view rows, by `view_id`. The ids stay
 // typed here so a missing row is a failed check (view-controls.test), never a blank button.
 const sheetView = (b: ViewBand) => SHEET_BANDS.find((x) => x.kind === "view" && x.view_id === b);
@@ -57,12 +72,17 @@ export interface ViewControlsSpec {
   scale?: Partial<Record<ViewScale, Can>>;
   /** Which bands it is seen in. Left out: Visible only, the others "not seen in this band here yet". */
   bands?: Partial<Record<ViewBand, Can>>;
+  /** In which styles it lays several bands into one picture (Composite, XO17). Left out: Composite is listed quiet
+   * with the reason, and the view shows one band. */
+  composite?: Partial<Record<ViewStyle, Can>>;
   /** Whether it can turn its HUD (orbit lines, names, outlines) off and on, per style. Left out: not in any style
    * (the option is listed quiet with the reason, and the view shows its labels). */
   hud?: Partial<Record<ViewStyle, Can>>;
   /** What the view opens on each time it is opened, whatever the viewer last chose elsewhere (the size comparison
    * opens at Real, the point of the tool). The viewer can change it there; their own choice comes back when they leave. */
   opens?: { scale?: ViewScale };
+  /** Whether True here can draw the sky's stars at a long exposure (VP2). Left out: it cannot. */
+  long?: Can;
 }
 
 /** The viewer's choice, kept on the device. */
@@ -73,11 +93,16 @@ export interface ViewChoice {
   scale?: ViewScale;
   /** HUD on or off. Left out: off in True (a photograph), on in the diagrams; once chosen it holds in every style. */
   hud?: boolean;
-  /** Visible when left out. */
-  band?: ViewBand;
+  /** Visible when left out. Composite lays the bands of `composite` into one picture. */
+  band?: BandPick;
+  /** The viewer's Composite mix, kept while another band is shown so Composite comes back as it was (one press for
+   * the common case). Left out: the Observatory preset. */
+  composite?: CompositeMix;
   /** Counts the times a fixed "Seen from" was picked (re-picking the one shown counts too): each pick puts the camera
    * back at that framing, undoing free look, zoom and slide (Alex, 24 Nov). A view watches the number, not its value. */
   framed?: number;
+  /** How True is exposed; a long exposure when left out (where the view draws one). */
+  exposure?: ViewExposure;
 }
 export const DEFAULT_VIEW: ViewChoice = { style: "chart", seen: "tilted", scale: "readable" };
 
@@ -98,7 +123,28 @@ export function shownStyle(spec: ViewControlsSpec, choice: ViewChoice): ViewStyl
 }
 
 /** What the control lists for this view and choice, and what is shown. Every option is always listed. */
-export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice): { styles: ViewOption<ViewStyle>[]; seen: ViewOption<SeenFrom>[]; scales: ViewOption<ViewScale>[]; huds: ViewOption<"off" | "on">[]; bands: ViewOption<ViewBand>[]; shown: Required<ViewChoice>; turnable: boolean } {
+/** What the band switch may offer this viewer: the bands their seat's sensors carry, and how many layers a
+ * Composite may hold on this device (a phone: PHONE_LAYERS). Left out: every band the view draws, no limit. */
+export interface BandLimits {
+  seat?: readonly ViewBand[];
+  maxLayers?: number;
+}
+export const WHY_NOT_SENSED = "Your sensors do not see this band";
+
+/** What a view shows: every choice settled, the band as one band (for Composite, the bottom layer that a view
+ * not yet drawing layers shows), plus the layers to draw (one for a single band). */
+export type ShownView = Required<Omit<ViewChoice, "band" | "composite">> & { band: ViewBand };
+
+/** The one band a choice comes down to where only one can be used (the light recipe that paints marks, a view not
+ * yet drawing layers): the band itself, or for Composite its Visible layer, else its bottom layer. */
+export function baseBand(choice: ViewChoice | undefined): ViewBand {
+  const b = choice?.band ?? "visible";
+  if (b !== COMPOSITE) return b;
+  const layers = (choice?.composite ?? DEFAULT_MIX).layers;
+  return (layers.find((l) => l.band === "visible") ?? layers[0])?.band ?? "visible";
+}
+
+export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice, limits: BandLimits = {}): { styles: ViewOption<ViewStyle>[]; seen: ViewOption<SeenFrom>[]; scales: ViewOption<ViewScale>[]; huds: ViewOption<"off" | "on">[]; bands: ViewOption<BandPick>[]; exposures: ViewOption<ViewExposure>[]; shown: ShownView; layers: CompositeLayer[]; composite: boolean; drawable: ViewBand[]; maxLayers: number | undefined; turnable: boolean } {
   const style = shownStyle(spec, choice);
   const flat = !!spec.flat && style === "chart";
   const turnTo = flat && can(spec.styles["3d"]);
@@ -124,14 +170,32 @@ export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice): { style
   const hudWhy = h === true ? undefined : (h ?? `${VIEW_STYLE_WORDS[style]} always shows its labels`);
   const huds: ViewOption<"off" | "on">[] = (["off", "on"] as const).map((v) => ({ value: v, label: HUD_WORDS[v], ...(hudWhy ? { unavailable: hudWhy } : {}) }));
   const shownHud = hudWhy ? true : (choice.hud ?? style !== "true");
-  const bands: ViewOption<ViewBand>[] = VIEW_BANDS.map((b) => {
+  const single: ViewOption<ViewBand>[] = VIEW_BANDS.map((b) => {
     const c = spec.bands ? spec.bands[b] : b === "visible" ? true : undefined;
-    const why = c === true ? undefined : (c ?? `${bandSaid(b)} is not drawn here yet`);
+    const drawn = c === true ? undefined : (c ?? `${bandSaid(b)} is not drawn here yet`);
+    // Visible is never taken away: it is what a seat with no instruments sees.
+    const why = drawn ?? (limits.seat && b !== "visible" && !limits.seat.includes(b) ? WHY_NOT_SENSED : undefined);
     return { value: b, label: VIEW_BAND_WORDS[b], ...(why ? { unavailable: why } : {}) };
   });
+  const drawable = single.filter((o) => !o.unavailable).map((o) => o.value);
+  const lays = spec.composite?.[style];
+  const compositeWhy = drawable.length < 2 ? WHY_COMPOSITE_NEEDS_TWO : lays === true ? undefined : (lays ?? WHY_COMPOSITE_NEXT);
+  const bands: ViewOption<BandPick>[] = [...single, { value: COMPOSITE, label: COMPOSITE_WORD, ...(compositeWhy ? { unavailable: compositeWhy } : {}) }];
   const wantBand = choice.band ?? "visible";
-  const shownBand: ViewBand = bands.find((o) => o.value === wantBand && !o.unavailable) ? wantBand : "visible";
-  return { styles, seen, scales, huds, bands, shown: { style, seen: shownSeen, scale: shownScale, hud: shownHud, band: shownBand, framed: choice.framed ?? 0 }, turnable: !flat || turnTo };
+  let layers: CompositeLayer[] = [];
+  let composite = false;
+  if (wantBand === COMPOSITE && !compositeWhy) {
+    const max = limits.maxLayers ?? deviceMaxLayers();
+    layers = fitMix(choice.composite ?? DEFAULT_MIX, { can: drawable, ...(max !== undefined ? { max } : {}) }).layers;
+    composite = layers.length > 0;
+  }
+  const shownBand: ViewBand = composite ? (layers.find((l) => l.band === "visible") ?? layers[0]!).band : drawable.includes(wantBand as ViewBand) ? (wantBand as ViewBand) : "visible";
+  if (!composite) layers = [{ band: shownBand, colour: shownBand === "visible" ? "natural" : LAYER_COLOURS[shownBand] }];
+  // A long exposure is a True picture's choice; the diagrams draw their own stars or none.
+  const longWhy = style !== "true" ? "A long exposure is for True" : spec.long === true ? undefined : (spec.long ?? "True here does not draw the sky's stars yet");
+  const exposures: ViewOption<ViewExposure>[] = VIEW_EXPOSURES.map((e) => ({ value: e, label: EXPOSURE_WORDS[e], ...(e === "long" && longWhy ? { unavailable: longWhy } : {}) }));
+  const shownExposure: ViewExposure = choice.exposure !== "eye" && !longWhy ? "long" : "eye";
+  return { styles, seen, scales, huds, bands, exposures, shown: { style, seen: shownSeen, scale: shownScale, hud: shownHud, band: shownBand, framed: choice.framed ?? 0, exposure: shownExposure }, layers, composite, drawable, maxLayers: limits.maxLayers ?? deviceMaxLayers(), turnable: !flat || turnTo };
 }
 
 const NOT_TO_SCALE = "Not drawn to scale here yet";
@@ -173,7 +237,9 @@ export function readViewChoice(json: string | null): ViewChoice {
       seen: (SEEN_FROM as readonly string[]).includes(String(v?.seen)) ? (v!.seen as SeenFrom) : DEFAULT_VIEW.seen,
       scale: (SCALES as readonly string[]).includes(String(v?.scale)) ? (v!.scale as ViewScale) : "readable",
       ...(typeof v?.hud === "boolean" ? { hud: v.hud } : {}),
-      ...((VIEW_BANDS as readonly string[]).includes(String(v?.band)) ? { band: v!.band as ViewBand } : {}),
+      ...((BAND_PICKS as readonly string[]).includes(String(v?.band)) ? { band: v!.band as BandPick } : {}),
+      ...(readMix(v?.composite, VIEW_BANDS) ? { composite: readMix(v?.composite, VIEW_BANDS)! } : {}),
+      ...(v?.exposure === "eye" || v?.exposure === "long" ? { exposure: v.exposure as ViewExposure } : {}),
     };
   } catch {
     return { ...DEFAULT_VIEW };
@@ -192,6 +258,6 @@ export function flatChart(why3d = "3D is not drawn here yet"): ViewControlsSpec 
 }
 
 /** The lens layers a diagram hides when HUD is off: the overlay of scale, survey, distances, orbit lines and names. */
-export const HUD_OVERLAY_LAYERS: readonly string[] = ["grid", "unsurveyed", "distances", "orbits", "labels"];
+export const HUD_OVERLAY_LAYERS: readonly string[] = ["grid", "unsurveyed", "distances", "orbits", "labels", "range"];
 /** Whether a lens layer is drawn under this HUD choice. */
 export const hudShows = (hud: boolean, layer: string): boolean => hud || !HUD_OVERLAY_LAYERS.includes(layer);

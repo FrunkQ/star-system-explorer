@@ -4,10 +4,69 @@
 // own line, moving and swapping screens, redirects, and the board's own undo history. It lives on the GM's machine
 // only and is never saved with the campaign (5.6). What reaches the wire is still `Shown`, worked out per role and per
 // screen by `resolve`, so players' screens read one value whatever made it.
-import type { Shown } from "./seat.ts";
+import type { HeldGround, Shown } from "./seat.ts";
+import type { HoldingCard } from "./holding.ts";
+import type { Json } from "./json.ts";
 
-/** A holding card (6.2): blank is "Screens off"; plain and joke draw from the pack's list; or words typed now. */
-export type HoldCard = "blank" | "plain" | "joke" | { text: string };
+/** The kinds of holding card (6.2, postcards design 8.1): blank is "Screens off"; plain, joke and quote draw from the pack's list. */
+export type HoldKind = "blank" | "plain" | "joke" | "quote";
+export const HOLD_KINDS: readonly HoldKind[] = ["blank", "plain", "joke", "quote"];
+/**
+ * What a held screen shows behind the card (postcards design 8.2 and 8.10, PC5): nothing (today), one postcard (a
+ * campaign bookmark that is a postcard, or a postcard from outside), or postcards in turn from a set ("base" is the
+ * universe's default set, "campaign" the campaign's own, else a set's id). It sits on the held card, not on the hold's
+ * source, so a hold still wins over every layer and nothing of what the screen showed travels.
+ */
+export type HoldGround = "none" | { bookmark: string } | { postcard: Json } | { set: string };
+/**
+ * A holding card: a kind, or words typed now ("Incoming transmission…", a transmission card); either may carry a
+ * ground. The plain kinds stay bare strings, so older boards and playbooks read as they did.
+ */
+export type HoldCard = HoldKind | { text: string; ground?: HoldGround } | { kind: HoldKind; ground: HoldGround };
+
+/** The card's kind, or null for typed words. */
+export function holdKind(c: HoldCard): HoldKind | null {
+  return typeof c === "string" ? c : "kind" in c ? c.kind : null;
+}
+/** The card's typed words, or null for a kind. */
+export function holdText(c: HoldCard): string | null {
+  return typeof c === "object" && "text" in c ? c.text : null;
+}
+/** The card's ground: "none" when it has none. */
+export function holdGround(c: HoldCard): HoldGround {
+  return typeof c === "object" && c.ground ? c.ground : "none";
+}
+/** The same card with another ground; "none" gives the bare card back. */
+export function withGround(c: HoldCard, g: HoldGround): HoldCard {
+  const text = holdText(c);
+  if (text !== null) return g === "none" ? { text } : { text, ground: clone(g) };
+  const kind = holdKind(c)!;
+  return g === "none" ? kind : { kind, ground: clone(g) };
+}
+/** Another kind or other words with this card's ground kept (the line card's kind choice leaves the ground alone). */
+export function withWords(c: HoldCard, next: HoldKind | { text: string }): HoldCard {
+  return withGround(next, holdGround(c));
+}
+/** A ground read from a save or a pack: null when it is not one. */
+export function holdGroundFrom(raw: unknown): HoldGround | null {
+  if (raw === "none") return "none";
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.bookmark === "string" && r.bookmark) return { bookmark: r.bookmark };
+  if (typeof r.set === "string" && r.set) return { set: r.set };
+  if (r.postcard && typeof r.postcard === "object" && !Array.isArray(r.postcard)) return { postcard: clone(r.postcard as Json) };
+  return null;
+}
+/** A holding card read from a save or a pack (a playbook's Hold step): null when it is not one. */
+export function holdCardFrom(raw: unknown): HoldCard | null {
+  if ((HOLD_KINDS as readonly unknown[]).includes(raw)) return raw as HoldKind;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  const g = r.ground === undefined ? "none" : (holdGroundFrom(r.ground) ?? "none");
+  if (typeof r.text === "string") return withGround({ text: r.text }, g);
+  if ((HOLD_KINDS as readonly unknown[]).includes(r.kind)) return withGround(r.kind as HoldKind, g);
+  return null;
+}
 
 /** Where a line goes: every role, one role, or one screen. */
 export type Dest = "everyone" | `role:${string}` | `screen:${string}`;
@@ -31,6 +90,8 @@ export interface BoardScreen {
   role: string;
   /** On the GM's own machine (a tab opened from here), so a camera may reach it later (section 10). */
   local?: boolean;
+  /** A clean output link (PB8, design 9): a screen like any other, marked "Output". */
+  output?: boolean;
 }
 
 export interface Board {
@@ -188,10 +249,10 @@ export function releaseAll(b: Board): Board {
 }
 
 /** A screen says hello (section 11): known screens keep the role the GM gave them; new ones get the role they asked for. */
-export function screenHello(b: Board, id: string, hello: { name: string; role: string; local?: boolean }): Board {
+export function screenHello(b: Board, id: string, hello: { name: string; role: string; local?: boolean; output?: boolean }): Board {
   const n = clone(b);
   const had = n.screens[id];
-  n.screens[id] = { name: hello.name || had?.name || "Screen", role: had?.role ?? hello.role, ...(hello.local ? { local: true } : {}) };
+  n.screens[id] = { name: hello.name || had?.name || "Screen", role: had?.role ?? hello.role, ...(hello.local ? { local: true } : {}), ...(hello.output ? { output: true } : {}) };
   return n;
 }
 
@@ -348,38 +409,59 @@ export class BoardHistory {
   }
 }
 
-/** The words a holding card shows, chosen on the GM's machine (PB5 brings the pack's list; until then, these). */
-export function cardWords(card: HoldCard, pick: (kind: "plain" | "joke") => string = defaultPick): string {
-  return card === "blank" ? "" : typeof card === "object" ? card.text : pick(card);
+/**
+ * The words a holding card shows, with no pack to hand: the shell passes a `CardDeck` (holding.ts) built from the
+ * stack's `sse.holding-cards/1` instead (PB5), so these fixed words are only the last resort.
+ */
+export function cardWords(card: HoldCard, pick: (kind: "plain" | "joke" | "quote") => string = () => "Stand by"): string {
+  const text = holdText(card);
+  if (text !== null) return text;
+  const kind = holdKind(card)!;
+  return kind === "blank" ? "" : pick(kind);
 }
-const PLAIN = ["Awaiting transmission", "Signal lost", "Stand by", "No carrier"];
-const JOKES = ["Hold on: tracking down the missing gold atoms. I think the black hole swallowed them.", "Awaiting transmission. Light is doing its best.", "Signal lost. It was last seen heading for the Oort cloud.", "Recalculating. Someone moved the barycentre."];
-let lastPick = "";
-function defaultPick(kind: "plain" | "joke"): string {
-  const list = kind === "plain" ? PLAIN : JOKES;
-  const choices = list.filter((x) => x !== lastPick);
-  return (lastPick = choices[Math.floor(Math.random() * choices.length)] ?? list[0]!);
+
+/** A held card's words as a deck gives them: the words, and who said them for a quote. */
+export interface HeldWords {
+  card: string;
+  by?: string;
 }
 
 /**
  * What goes on the wire for the board (the host state's `shown`, each seat's `shown` and each known screen's own): the
  * same `Shown` players' screens already read. A held destination gets `{off: true, card}` and nothing of its source.
- * `words` turns a card into its words once per change, so every screen of a role shows the same joke.
+ * `words` turns a card into its words once per change, so every screen of a role shows the same joke. `ground` gives
+ * a held card's picture for one role (PC5): the role's knowledge decides, so it is asked per role ("" is the table).
  */
-export function boardWire(b: Board, roles: readonly string[], words: (card: HoldCard) => string = (c) => cardWords(c)): { shown: Shown; roles: Record<string, Shown>; screens: Record<string, Shown> } {
-  const said = new Map<string, string>();
-  const wire = (r: Showing, read: boolean): Shown => {
+export function boardWire(
+  b: Board,
+  roles: readonly string[],
+  words: (card: HoldCard) => string | HeldWords = (c) => cardWords(c),
+  ground?: (card: HoldCard, role: string) => HeldGround | null,
+): { shown: Shown; roles: Record<string, Shown>; screens: Record<string, Shown> } {
+  const said = new Map<string, HeldWords>();
+  const grounds = new Map<string, HeldGround | null>();
+  const wire = (r: Showing, read: boolean, role: string): Shown => {
     if (!r.held) return read && "scope" in r.shown ? { ...r.shown, steer: "read" } : r.shown;
     const key = JSON.stringify(r.held);
-    if (!said.has(key)) said.set(key, words(r.held));
-    const card = said.get(key)!;
-    return card ? { off: true, card } : { off: true };
+    if (!said.has(key)) {
+      const w = words(r.held);
+      said.set(key, typeof w === "string" ? { card: w } : w);
+    }
+    const w = said.get(key)!;
+    const kind = holdKind(r.held);
+    let g: HeldGround | null = null;
+    if (ground && holdGround(r.held) !== "none") {
+      const gk = `${key}\u0000${role}`;
+      if (!grounds.has(gk)) grounds.set(gk, ground(r.held, role));
+      g = grounds.get(gk)!;
+    }
+    return { off: true, ...(w.card ? { card: w.card } : {}), ...(w.card && w.by ? { by: w.by } : {}), ...(w.card && (kind === "joke" || kind === "quote") ? { kind } : {}), ...(g ? { ground: g } : {}) };
   };
-  const table = wire(resolve(b, ""), steerOf(b, "") === "read");
+  const table = wire(resolve(b, ""), steerOf(b, "") === "read", "");
   const out: Record<string, Shown> = {};
-  for (const role of roles) out[role] = wire(resolve(b, role), steerOf(b, role) === "read");
+  for (const role of roles) out[role] = wire(resolve(b, role), steerOf(b, role) === "read", role);
   const screens: Record<string, Shown> = {};
-  for (const [id, s] of Object.entries(b.screens)) screens[id] = wire(resolve(b, s.role, id), steerOf(b, s.role, id) === "read");
+  for (const [id, s] of Object.entries(b.screens)) screens[id] = wire(resolve(b, s.role, id), steerOf(b, s.role, id) === "read", s.role);
   return { shown: table, roles: out, screens };
 }
 
@@ -400,6 +482,8 @@ export interface TablePort {
     can_redo: boolean;
     /** Players' requests waiting for the GM. */
     waiting: number;
+    /** The holding cards on the stack (PB5, holding.ts), for the line card's choices. */
+    cards?: readonly HoldingCard[];
   };
   act(f: (b: Board) => Board): void;
   undo(): void;
@@ -410,4 +494,27 @@ export interface TablePort {
   links(role: string): { screen: string | null; href: string }[];
   /** The live source: where the GM is now, as the table would be sent it. */
   live(): Shown;
+  /** The roles themselves, for the role card (PB7). Absent: the board can route but not change roles. */
+  seats?: SeatPort;
+}
+
+/** What the role card needs of the table (PB7): the seat plan and the ways to change it. */
+export interface SeatPort {
+  plan(): import("./seats.ts").SeatPlan;
+  /** Fog of war is on offer only when the campaign's data views have one that shows nothing. */
+  fog(): { starts_with: string; discovered_view: string } | null;
+  add(o: Parameters<typeof import("./seats.ts").addSeat>[1]): Promise<string | null>;
+  update(id: string, change: import("./seats.ts").SeatChange): void;
+  remove(id: string): void;
+  /** Quick overrides, live and never saved ("Hide labels"). */
+  setLive(id: string, live: Record<string, boolean>): void;
+  /** Mark a body discovered by a fog-of-war audience, or take it back. */
+  discover(audience: string, address: string, known: boolean): Promise<string | null>;
+  /** The addresses a fog-of-war audience has discovered, read from the kernel's scene for it. */
+  discovered(audience: string): Promise<string[]>;
+  /** The bodies a discovery can be marked on (the system in view). */
+  bodies(): readonly { address: string; label: string }[];
+  /** Players' requests waiting, by seat. */
+  requests(): readonly { id: string; from: string; seat: string; words: string }[];
+  answer(id: string, from: string, approve: boolean): Promise<void>;
 }

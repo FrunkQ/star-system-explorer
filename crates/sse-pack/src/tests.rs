@@ -310,10 +310,36 @@ fn the_catalogued_solar_system_pack_loads() {
         .map(|s| s["id"].as_str().unwrap())
         .collect();
     let bodies = sol["bodies"].as_array().unwrap();
-    assert_eq!(bodies.len(), 12);
+    assert_eq!(bodies.len(), 36);
     for b in bodies {
         for (_, v) in b["values"].as_object().unwrap() {
             assert!(srcs.contains(&v["src"].as_str().unwrap()), "{b}");
+        }
+    }
+}
+
+#[test]
+fn the_catalogued_starter_systems_load() {
+    // packs/base-starters (scripts/build-base-starters.py): Alpha Centauri
+    // and Kepler-16, each body naming a source its system carries.
+    let text = include_str!("../../../packs/base-starters/pack.json");
+    let m = PackManifest::from_json(text).unwrap();
+    assert_eq!(m.id, "sse.base-starters");
+    let doc: serde_json::Value = serde_json::from_str(text).unwrap();
+    for (key, n) in [("alpha_centauri", 3), ("kepler_16", 3)] {
+        let s = &doc["provides"]["other"][key];
+        let srcs: Vec<&str> = s["sources"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x["id"].as_str().unwrap())
+            .collect();
+        let bodies = s["bodies"].as_array().unwrap();
+        assert_eq!(bodies.len(), n, "{key}");
+        for b in bodies {
+            for (_, v) in b["values"].as_object().unwrap() {
+                assert!(srcs.contains(&v["src"].as_str().unwrap()), "{b}");
+            }
         }
     }
 }

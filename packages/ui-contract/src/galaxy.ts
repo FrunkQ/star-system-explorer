@@ -4,6 +4,8 @@
 // physics here: radii, abundances, rates, arm crests and green bands are the
 // kernel's own.
 
+import { sayNumber, drawn } from "./figures.ts";
+
 export interface GalaxyAsk {
   /** A named halo, or (with `cell`) one of that cell's catalogued haloes, `halo:N`. */
   halo?: string;
@@ -285,7 +287,7 @@ export function discFrame(w: number, h: number, chart: Pick<GalaxyChart, "rings"
 
 /** An arm crest as an SVG path in the frame (phi counter-clockwise from +x, y up). */
 export function armPath(arm: readonly [number, number][], f: DiscFrame): string {
-  return arm.map(([r, phi], i) => `${i ? "L" : "M"}${(f.cx + r * f.k * Math.cos(phi)).toFixed(1)} ${(f.cy - r * f.k * Math.sin(phi)).toFixed(1)}`).join(" ");
+  return arm.map(([r, phi], i) => `${i ? "L" : "M"}${drawn(f.cx + r * f.k * Math.cos(phi))} ${drawn(f.cy - r * f.k * Math.sin(phi))}`).join(" ");
 }
 
 /** The ring that holds radius r (the kernel's rings tile the disc). */
@@ -333,7 +335,7 @@ export function logCurve(points: readonly { t: number; v: number }[], ax: CurveA
   const hi = fix ? fix.hi : Math.ceil(Math.max(...ls));
   const lo = fix ? fix.lo : Math.max(Math.floor(Math.min(...ls)), hi - 3);
   const y = (l: number) => top + h - ((Math.max(lo, l) - lo) / Math.max(1e-9, hi - lo)) * h;
-  return { d: ok.map((p, i) => `${i ? "L" : "M"}${ax.x(p.t).toFixed(1)} ${y(Math.log10(p.v)).toFixed(1)}`).join(" "), lo, hi };
+  return { d: ok.map((p, i) => `${i ? "L" : "M"}${drawn(ax.x(p.t))} ${drawn(y(Math.log10(p.v)))}`).join(" "), lo, hi };
 }
 
 export function sci(x: number, digits = 2): string {
@@ -343,19 +345,19 @@ export function sci(x: number, digits = 2): string {
   if (a >= 1e4 || a < 1e-2) {
     const e = Math.floor(Math.log10(a));
     const m = x / 10 ** e;
-    return `${m.toFixed(digits - 1)} × 10^${e}`;
+    return `${sayNumber(m, 0, { decimals: digits - 1 })} × 10^${e}`;
   }
-  return x.toPrecision(digits + 1).replace(/\.?0+$/, "");
+  return sayNumber(x, digits + 1);
 }
 
 /** "1.6 × the Sun" from an [X/H] in dex. */
 export function timesSun(dex: number): string {
   const f = 10 ** dex;
-  return f >= 0.95 && f <= 1.05 ? "about the Sun's" : `${f < 10 ? f.toFixed(f < 1 ? 2 : 1) : Math.round(f)} × the Sun's`;
+  return f >= 0.95 && f <= 1.05 ? "about the Sun's" : `${f < 10 ? sayNumber(f, 0, { decimals: f < 1 ? 2 : 1 }) : sayNumber(Math.round(f), 0, { decimals: 0 })} × the Sun's`;
 }
 
 export function dex(x: number): string {
-  return `${x >= 0 ? "+" : "−"}${Math.abs(x).toFixed(2)} dex`;
+  return `${x >= 0 ? "+" : "−"}${sayNumber(Math.abs(x), 0, { decimals: 2 })} dex`;
 }
 
 /** Cosmic epochs placed on a Gyr axis (only those after `t0`). */
@@ -377,7 +379,7 @@ export function foamCells(s: WebSlice["slice"]): { i: number; j: number; shade: 
 
 /** An edit in words, for the inked-history list. */
 export function editWords(e: GalaxyEdit, mergers: readonly { index: number; t_gyr: number }[] = []): string {
-  const g = (t: number) => `${t.toFixed(1)} Gyr`;
+  const g = (t: number) => `${sayNumber(t, 0, { decimals: 1 })} Gyr`;
   switch (e.kind) {
     case "merger":
       return `${e.ratio >= 0.25 ? "Major" : "Minor"} merger at ${g(e.t_gyr)} (1 : ${Math.round(1 / e.ratio)})`;
@@ -460,4 +462,44 @@ export function overdensityWords(delta_l: number): string {
   const p = Math.round(Math.abs(delta_l) * 100);
   if (Math.abs(delta_l) < 0.15) return "about as dense as the universe on average";
   return delta_l > 0 ? `denser than average (linear overdensity +${p}%)` : `emptier than average (linear underdensity ${p}%)`;
+}
+
+/**
+ * GH8 (galaxy histories design 9.4, Alex 24 Nov 2026): the leading arm in words. Arms trail as a result of the disc's
+ * differential rotation; a leading arm is only ever the mark of a recent pass or merger on a backwards orbit, and it
+ * fades as the rotation winds it back. The chart names the latest one made by `t_gyr`: "A leading arm, from a
+ * backwards pass 300 Myr ago". `strengthAt` is the renderer's own fade (markStrengthAt), passed in so this stays
+ * pure; `showing` is the chart's floor for a mark still visible. Rarity is the kernel's (GH3 draws it from history;
+ * the yardstick, at most about 1 in 100 spirals, is a pack parameter), never decided here.
+ */
+export interface LeadingArmWords {
+  /** How many leading arms the history made by this time. */
+  made: number;
+  /** The latest, in a sentence. */
+  line: string;
+  /** Whether that one still shows at this time. */
+  live: boolean;
+  /** Its strength now (0 to 1). */
+  strength: number;
+}
+/**
+ * The strength at which a leading arm counts as seen: the kernel's `LeadingArmParams.seen_strength` (GH3, its
+ * yardstick against Iye, Tadaki and Fukumoto 2019), not on the wire, so kept in step here.
+ */
+export const LEADING_ARM_SEEN = 0.25;
+
+export function leadingArmWords(marks: readonly GalaxyMark[], t_gyr: number, strengthAt: (m: GalaxyMark, t: number) => number, showing = LEADING_ARM_SEEN): LeadingArmWords | null {
+  // Only arms strong enough to be seen count: weaker ones stay in the history list with the other marks.
+  const made = marks.filter((m) => m.kind === "leading_arm" && m.began_gyr <= t_gyr && m.strength >= showing);
+  if (!made.length) return null;
+  const last = made.reduce((a, b) => (b.began_gyr > a.began_gyr ? b : a));
+  const ago = t_gyr - last.began_gyr;
+  const strength = strengthAt(last, t_gyr);
+  const live = strength >= showing;
+  // Once wound back, the line stays for one fading time, then the history list alone keeps it.
+  if (!live && ago > (last.fades_gyr ?? 0.9) + Math.log(last.strength / showing) * (last.fades_gyr ?? 0.9)) return null;
+  const when = ago < 0.001 ? "just now" : ago < 1 ? `${Math.round(ago * 1000)} Myr ago` : `${sayNumber(ago, 2, { decimals: 1 })} Gyr ago`;
+  const pass = typeof last.shape.r_kpc === "number" ? `a backwards pass ${sayNumber(last.shape.r_kpc, 2, { decimals: 0 })} kpc out` : "a backwards merger";
+  const line = `A leading arm, from ${pass} ${when}: ${live ? "it still winds against the spin" : "the rotation has wound it back into the trailing sense"}.`;
+  return { made: made.length, line, live, strength };
 }

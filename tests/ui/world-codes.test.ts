@@ -11,6 +11,7 @@ import {
   lineRows,
   segmentRows,
   sheetOf,
+  sheetsOf,
   textList,
   textSheet,
   vocabularyOf,
@@ -162,4 +163,17 @@ test("a later pack's words win; the text tier says it all in sentences", () => {
   assert.ok(t.includes("Trade codes: Hi (teeming), Pr (pre-rich)."));
   assert.deepEqual(textSheet(input, "u:nowhere"), ["No reading for u:nowhere."]);
   assert.equal(textList(input)[0], "Earth: UWP A367975-9, PBG 814; Trade codes Hi Pr; Travel zone hints amber; Bases N; 1 hand-set digit differs from physics.");
+});
+
+test("the Traveller pack gives two sheets, and a value segment says it was read off the physics", () => {
+  const all = sheetsOf([traveller]);
+  assert.deepEqual(all.map((s) => s.id), ["traveller.world", "traveller.extended"]);
+  assert.equal(sheetOf([traveller])?.id, "traveller.world");
+  const ext = sheetOf([traveller], "traveller.extended")!;
+  const g = { id: "gravity", symbol: "1.0", value: 1, why: { kind: "value" as const, field: "body.surface_gravity", value: 9.80665, per: "g0" } };
+  assert.match(whySentence(g, ext), /body\.surface_gravity is 9\.807, over g0 from the data sheet\. Never rolled\./);
+  const d = { id: "diameter_km", symbol: "12740", value: 12742, why: { kind: "value" as const, field: "body.radius", value: 6371000 } };
+  assert.match(whySentence(d, ext), /times 0\.002/);
+  const none = { id: "oxygen", symbol: "?", value: null, why: { kind: "value" as const, field: "atmosphere.pp.o2" } };
+  assert.match(whySentence(none, ext), /does not have yet/);
 });

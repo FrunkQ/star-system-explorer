@@ -26,6 +26,10 @@ cp packs/base-ships/pack.json packages/shell/public/packs/base-ships.json
 cp packs/base-tech/pack.json packages/shell/public/packs/base-tech.json
 # The manifest and crew kinds (track MC): everything aboard a ship, on the base stack so any setting has it.
 cp packs/base-manifest/pack.json packages/shell/public/packs/base-manifest.json
+# The holding cards a held screen shows (PB5), read by the share; not on the stack, so no state hash changes.
+cp packs/base-presentation/pack.json packages/shell/public/packs/base-presentation.json
+# The base postcard set (PC6): one recorded world per card, kept beside the pack.
+cp packs/base-presentation/postcards.json packages/shell/public/packs/base-postcards.json
 cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/public/packs/kestrel-player-data.json
 mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json
@@ -36,12 +40,13 @@ cp packs/space-opera/pack.json packages/shell/public/packs/samples/space-opera.j
 cp packs/base-hooks/pack.json packages/shell/public/packs/samples/base-hooks.json
 cp packs/intrigue/pack.json packages/shell/public/packs/samples/intrigue.json
 cp packs/world-hooks/pack.json packages/shell/public/packs/samples/world-hooks.json
+cp packs/base-resources/pack.json packages/shell/public/packs/samples/base-resources.json
 rm -rf packages/shell/public/samples && mkdir -p packages/shell/public/samples
 # The sample save the Make a system dialog offers: the importer fixture with names that say "(sample)", so nobody takes it for the real Sol (Alex, 21 Nov).
 cp packages/shell/src/documents/sample-sol.v3.json packages/shell/public/samples/synthetic-sol.json
 rm -rf packages/shell/public/scenes
 # Documents the screens composer edits and previews (U5).
 rm -rf packages/shell/public/documents && mkdir -p packages/shell/public/documents
-cp packages/shell/src/documents/players.screen.json packages/shell/src/documents/players.survey.screen.json packages/shell/src/documents/players.bridge-3d.screen.json packages/shell/src/documents/players.land.screen.json packages/shell/src/documents/vocab.plain.json packages/shell/src/documents/orac.screen-request.json packages/shell/src/documents/reference-objects.json packages/shell/public/documents/
+cp packages/shell/src/documents/players.screen.json packages/shell/src/documents/players.survey.screen.json packages/shell/src/documents/players.bridge-3d.screen.json packages/shell/src/documents/players.land.screen.json packages/shell/src/documents/players.orbit.screen.json packages/shell/src/documents/vocab.plain.json packages/shell/src/documents/orac.screen-request.json packages/shell/src/documents/reference-objects.json packages/shell/public/documents/
 npx vite build --config packages/shell/vite.config.ts --logLevel warn
 echo "shell ready in packages/shell/dist/ (serve it over http, e.g. npm run shell)"

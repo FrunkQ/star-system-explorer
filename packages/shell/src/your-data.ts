@@ -3,6 +3,7 @@
 // copy, settings, agent keys) plus the renderer's media store in IndexedDB. Every call says what happened instead of
 // throwing: private windows and blocked storage are normal.
 import { CAMPAIGN_KEY, SET_ASIDE_KEY } from "./campaign-store.ts";
+import { roundTo } from "../../ui-contract/src/index.ts";
 
 const PREFIX = "sse4.";
 const MEDIA_DB = "sse-media";
@@ -83,7 +84,7 @@ export function bytesWords(n: number): string {
   let v = n / 1000;
   let u = 0;
   while (v >= 1000 && u < units.length - 1) (v /= 1000), u++;
-  return `${v >= 100 ? Math.round(v) : Number(v.toPrecision(2))} ${units[u]}`;
+  return `${v >= 100 ? Math.round(v) : roundTo(v, 2)} ${units[u]}`;
 }
 
 /** The campaign set aside after a failed open, as text, or null. */

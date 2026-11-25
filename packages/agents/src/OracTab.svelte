@@ -9,6 +9,8 @@
   import { asker, estimate, linked, type AgentsState, type ChatMessage, type LedgerRow } from "./agents.ts";
   import type { LoopResult, Round } from "./loop.ts";
   import { oracRequest, oracSystem, runOrac, type Entry, type OracTarget } from "./orac.ts";
+  import { draftFromPlanRequest, paperBlock, paperTokens, planPaper, planText, type Paper, type PaperPlan } from "./paper.ts";
+  import { browserInflate, pdfText } from "./pdf-text.ts";
 
   export interface OracHost {
     targets: () => OracTarget[];
@@ -25,20 +27,59 @@
   let rounds = $state<Round[]>([]);
   let result = $state<LoopResult<{ target: OracTarget; value: unknown }> | null>(null);
   let accepted = $state<Record<number, string>>({});
+  // ND4: a paper handed to Orac. Read here, sent as labelled data; Orac plans in words first.
+  let paper = $state.raw<Paper | null>(null);
+  let paperProblem = $state("");
+  let pasted = $state("");
+  let plan = $state.raw<LoopResult<PaperPlan> | null>(null);
+  async function takeFile(e: Event) {
+    const f = (e.currentTarget as HTMLInputElement).files?.[0];
+    (e.currentTarget as HTMLInputElement).value = "";
+    if (!f) return;
+    paperProblem = "";
+    plan = null;
+    if (/\.pdf$/i.test(f.name) || f.type === "application/pdf") {
+      const r = await pdfText(new Uint8Array(await f.arrayBuffer()), browserInflate);
+      if (r.ok) paper = { name: f.name, text: r.text, from: "pdf", pages: r.pages };
+      else ((paper = null), (paperProblem = r.message));
+    } else paper = { name: f.name, text: await f.text(), from: "text" };
+  }
+  function takePasted() {
+    if (!pasted.trim()) return;
+    paper = { name: "pasted text", text: pasted, from: "text" };
+    pasted = "";
+    plan = null;
+  }
 
-  const messages = $derived<ChatMessage[]>(host ? [{ role: "system", content: oracSystem(host.targets(), host.catalogue()) }, { role: "user", content: oracRequest(request, host.here()) }] : []);
+  const messages = $derived<ChatMessage[]>(host ? [{ role: "system", content: oracSystem(host.targets(), host.catalogue()) }, { role: "user", content: oracRequest(request, host.here()) + (paper ? `\n\n${paperBlock(paper)}` : "") }] : []);
   const est = $derived(estimate(st, "building", messages, 4000));
   const money = (x: number) => `$${x < 0.01 ? x.toFixed(4) : x.toFixed(2)}`;
 
   async function run(e: SubmitEvent) {
     e.preventDefault();
-    if (!host || !request.trim()) return;
+    if (!host || (!request.trim() && !paper)) return;
     running = true;
     rounds = [];
     result = null;
     accepted = {};
     const snap = JSON.parse(JSON.stringify(st)) as AgentsState;
-    result = await runOrac({ request, here: host.here(), targets: host.targets(), catalogue: host.catalogue(), ask: asker(snap, "building", { onRow: onrow }), onRound: (r) => (rounds = [...rounds, r]) });
+    const ask = asker(snap, "building", { onRow: onrow });
+    if (paper) {
+      plan = null;
+      plan = await planPaper({ paper, request, here: host.here(), targets: host.targets(), catalogue: host.catalogue(), ask, onRound: (r) => (rounds = [...rounds, r]) });
+    } else result = await runOrac({ request, here: host.here(), targets: host.targets(), catalogue: host.catalogue(), ask, onRound: (r) => (rounds = [...rounds, r]) });
+    running = false;
+  }
+  /** Step two for a paper: draft what the plan the GM has read says, with the paper as data. */
+  async function draftPlan() {
+    const p = plan?.passed[0]?.value;
+    if (!host || !paper || !p) return;
+    running = true;
+    rounds = [];
+    result = null;
+    accepted = {};
+    const snap = JSON.parse(JSON.stringify(st)) as AgentsState;
+    result = await runOrac({ request: draftFromPlanRequest(request, JSON.parse(JSON.stringify(p)), paper), here: host.here(), targets: host.targets(), catalogue: host.catalogue(), ask: asker(snap, "building", { onRow: onrow }), onRound: (r) => (rounds = [...rounds, r]) });
     running = false;
   }
   const DONE: Record<string, string> = {
@@ -53,6 +94,10 @@
     substance: "Added to your setting's data sheet: the editing screens offer it now.",
     trigger: "Added to the campaign's triggers: it fires from now on.",
     template: "Added to the campaign's templates: objects can be made from it.",
+    reveal: "Sent: who knows it has changed, and the change undoes as one.",
+    edition: "Kept in the campaign's own pack: choose it as a role's Atlas edition.",
+    note_set: "Kept in the campaign's own pack: name it in an edition's margin to show it.",
+    kit: "Kept in the campaign's own pack: choose it as a role's interface.",
     program: "Added to the campaign's programs. It runs once you attach it to an object whose template lists it.",
   };
   async function accept(i: number) {
@@ -70,15 +115,24 @@
 </script>
 
 <div role="tabpanel" aria-label="Orac">
-  <p>Orac drafts changes from a sentence: physics, lenses, styles, player screens, symbols, data views, programs (autopilots), object templates, triggers, story sifters, boxes (blocks made of blocks), game tables as classes, missing gases and substances for the data sheet, and new physics blocks as issues. SSE checks every draft and sends problems back to Orac, up to three times. Only drafts that pass can be accepted, and nothing changes until you accept.</p>
+  <p>Orac drafts changes from a sentence: physics, lenses, styles, player screens, symbols, data views, programs (autopilots), object templates, triggers, reveals (who knows what, for many things at once), whole player interfaces (kits), Atlas editions and margin notes, story sifters, boxes (blocks made of blocks), game tables as classes, missing gases and substances for the data sheet, and new physics blocks as issues. Hand it a paper (PDF or text) and it first answers with a plan in words: what the paper claims, what SSE has for it, what it would add and what is missing. SSE checks every draft and sends problems back to Orac, up to three times. Only drafts that pass can be accepted, and nothing changes until you accept.</p>
   {#if !host}
     <p class="hint" data-agent-off="orac">Orac works on the GM's chart room only.</p>
   {:else}
     {#if !linked(st, "building")}<p class="hint" data-agent-off="orac">No model is linked for Building. Link one under Link models; give it the strongest model you have.</p>{/if}
     <form class="ask" onsubmit={run}>
-      <label>Ask Orac <textarea bind:value={request} rows="3" aria-label="Ask Orac" placeholder="Tidally locked worlds should keep more heat on their day side."></textarea></label>
-      <p class="meta" data-orac-estimate={est.tokens_in}>First try: about {est.tokens_in} tokens in, up to {est.max_out} out{est.usd !== undefined ? `, up to ${money(est.usd)}` : ""}. Each fix sends the conversation again; up to four tries in all.{est.fits ? "" : " Too long for this model."}</p>
-      <button type="submit" class="primary" disabled={running || !linked(st, "building") || !request.trim()}>{running ? "Orac is drafting…" : "Draft"}</button>
+      <label>Ask Orac <textarea bind:value={request} rows="3" aria-label="Ask Orac" placeholder={paper ? "Bring this in." : "Tidally locked worlds should keep more heat on their day side."}></textarea></label>
+      <div class="paper" data-orac-paper={paper ? paper.from : "none"}>
+        {#if paper}
+          <p class="meta">Paper: {paper.name}{paper.pages ? `, ${paper.pages} ${paper.pages === 1 ? "page" : "pages"}` : ""}, about {paperTokens(paper)} tokens. Orac reads it as data and plans in words before drafting anything. <button type="button" class="link" onclick={() => ((paper = null), (plan = null))}>Remove</button></p>
+        {:else}
+          <label class="meta">Hand Orac a paper (PDF or text) <input type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown" onchange={takeFile} aria-label="Hand Orac a paper" /></label>
+          <details><summary class="meta">or paste its text</summary><textarea bind:value={pasted} rows="4" aria-label="Paste a paper's text"></textarea><button type="button" onclick={takePasted} disabled={!pasted.trim()}>Use this text</button></details>
+        {/if}
+        {#if paperProblem}<p class="hint" role="alert">{paperProblem}</p>{/if}
+      </div>
+      <p class="meta" data-orac-estimate={est.tokens_in}>First try: about {est.tokens_in} tokens in, up to {est.max_out} out{est.usd !== undefined ? `, up to ${money(est.usd)}` : ""}. Each fix sends the conversation again; up to four tries in all.{est.fits ? "" : " Too long for this model: nothing will be sent."}</p>
+      <button type="submit" class="primary" disabled={running || !linked(st, "building") || (!request.trim() && !paper)}>{running ? (paper && !result ? "Orac is reading…" : "Orac is drafting…") : paper ? "Read and plan" : "Draft"}</button>
     </form>
     {#if rounds.length}
       <ol class="rounds" aria-label="Orac's tries">
@@ -86,6 +140,20 @@
           <li>{#if r.lookup}Read the catalogue{r.lookup.need.length ? `: ${r.lookup.need.join(", ")}` : ""}{r.lookup.find ? ` (searched "${r.lookup.find}")` : ""}{:else if r.problems.length}Try {r.round}: SSE found {r.problems.length} {r.problems.length === 1 ? "problem" : "problems"}, sent back{:else}Try {r.round}: passed every check{/if}</li>
         {/each}
       </ol>
+    {/if}
+    {#if plan && !result}
+      {#if plan.passed[0]?.value}
+        <article class="cand" data-orac-plan="ok">
+          <h4>{plan.passed[0].made.title ?? "Orac's plan"} <span class="meta">· a plan in words · nothing drafted yet</span></h4>
+          {#if plan.note}<p>{plan.note}</p>{/if}
+          <pre class="plan">{planText(plan.passed[0].value)}</pre>
+          <p class="meta">{plan.calls} {plan.calls === 1 ? "call" : "calls"}, {plan.tokens_in} tokens in, {plan.tokens_out} out{plan.usd !== null ? `, ${money(plan.usd)}` : ""}.</p>
+          <button type="button" class="primary" onclick={draftPlan} disabled={running}>Draft it</button>
+        </article>
+      {:else}
+        <p role="status" data-orac-plan="not">{plan.message}</p>
+        {#each plan.failed as c, i (i)}<ul class="cand bad">{#each c.problems as p (p)}<li>{p}</li>{/each}</ul>{/each}
+      {/if}
     {/if}
     {#if result}
       <p role="status" data-orac-result={result.ok ? "ok" : "not"}>{result.message} {result.calls} {result.calls === 1 ? "call" : "calls"}, {result.tokens_in} tokens in, {result.tokens_out} out{result.usd !== null ? `, ${money(result.usd)}` : ", price not given by the provider"}.</p>
@@ -125,6 +193,15 @@
   }
   .cand.bad {
     border-style: dashed;
+  }
+  .plan {
+    white-space: pre-wrap;
+    font: inherit;
+    font-size: 13px;
+    margin: 4px 0 8px;
+  }
+  .paper details textarea {
+    width: 100%;
   }
   .cand h4 {
     margin: 0 0 4px;

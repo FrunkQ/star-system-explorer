@@ -2,18 +2,22 @@
 // pages and sections, kept with the campaign. No Next and no script (Alex, 24 Nov): any preset fires at any time, and
 // pressing it again while its picture is up takes it back. A preset names a role (or Everyone), never a screen, and
 // holds no knowledge: a Show step names a bookmark, and each screen draws it as its own role knows it.
-import { back, hold, lift, release, send, type Board, type Dest, type HoldCard } from "./board.ts";
+import { back, hold, holdCardFrom, lift, release, resolve, send, type Board, type Dest, type HoldCard } from "./board.ts";
+import { cardLabel } from "./holding.ts";
 import type { Bookmark } from "./bookmark.ts";
 import type { Shown } from "./seat.ts";
+import type { Json } from "./json.ts";
 
 export const PLAYBOOK_SCHEMA = "sse.playbook/1";
 
 /** One thing a preset does. Steps in one preset go together, at once (no conditions, no timers in 4.0). */
 export type Step =
-  | { show: { bookmark: string } }
+  /** `layout` (PB13): the layout the role's screens use for this send (a shipped file or a made `mine.` id); going back returns them to their own. */
+  | { show: { bookmark: string; layout?: string } }
   | { hold: { card: HoldCard } }
   /** Words for the GM to read; nothing goes to any screen (a card on screens comes with the Looks work). */
-  | { say: { text: string } }
+  /** Words for the GM to read; `on_screens` also puts them on the role's screens as a card over what they show (4.3, PB6). */
+  | { say: { text: string; on_screens?: true } }
   /**
    * Tell the role's audience about a thing (secrets design; design 4.2): the one step that changes what anyone knows.
    * It is not a send: every screen of the role redraws where it stands. It is never on the board's undo (the eye takes
@@ -187,10 +191,22 @@ export function destOf(p: Preset): Dest {
   return p.to === "everyone" ? "everyone" : `role:${p.to}`;
 }
 /** What a Show step sends: the bookmark's place under the preset's name. A missing bookmark sends nothing. */
-export function showOf(p: Preset, step: { show: { bookmark: string } }, bookmarks: readonly Bookmark[]): Shown | null {
+export function showOf(p: Preset, step: { show: { bookmark: string; layout?: string } }, bookmarks: readonly Bookmark[]): Shown | null {
   const b = bookmarks.find((x) => x.id === step.show.bookmark);
-  return b ? { scope: b.scope, title: p.title, ...(b.selected ? { focus: b.selected } : {}) } : null;
+  // The bookmark's camera goes with it (PC5), so a screen that can frame it shows the view as it was kept.
+  return b ? { scope: b.scope, title: p.title, ...(b.selected ? { focus: b.selected } : {}), ...(b.pose ? { pose: JSON.parse(JSON.stringify(b.pose)) as Json } : {}), ...(step.show.layout ? { screen: step.show.layout } : {}) } : null;
 }
+
+/** Only words for the GM: nothing goes to any screen, so its button marks it read (4.3). */
+export function wordsOnly(p: Preset): boolean {
+  return p.steps.every((s) => "say" in s && !s.say.on_screens);
+}
+/** The words a preset puts on screens (its Read aloud steps with "also show on screens"), or null. */
+export function sayOf(p: Preset): string | null {
+  const t = p.steps.flatMap((s) => ("say" in s && s.say.on_screens && s.say.text.trim() ? [s.say.text.trim()] : []));
+  return t.length ? t.join("\n\n") : null;
+}
+const sends = (p: Preset) => p.steps.some((s) => "show" in s) || sayOf(p) !== null;
 
 /**
  * Is the preset's picture up (5.4: its button is a switch while it is)? A Show is up while its destination's line, or
@@ -199,7 +215,7 @@ export function showOf(p: Preset, step: { show: { bookmark: string } }, bookmark
 export function isUp(b: Board, p: Preset, at: Dest = destOf(p)): boolean {
   const dest = at;
   const line = b.lines[dest];
-  if (p.steps.some((s) => "show" in s)) {
+  if (sends(p)) {
     if (dest === "everyone" && b.over.length) return (b.over_from ?? [])[b.over.length - 1] === p.id;
     return line?.from === p.id;
   }
@@ -214,15 +230,22 @@ export function isUp(b: Board, p: Preset, at: Dest = destOf(p)): boolean {
 export function fire(b: Board, p: Preset, bookmarks: readonly Bookmark[], roles: readonly string[] = [], at: Dest = destOf(p)): Board {
   const dest = at;
   if (isUp(b, p, dest)) {
-    if (p.steps.some((s) => "show" in s)) return dest === "everyone" && b.over.length ? lift(b) : back(b, dest);
+    if (sends(p)) return dest === "everyone" && b.over.length ? lift(b) : back(b, dest);
     return release(b, dest);
   }
   let n = b;
+  const say = sayOf(p);
+  let shown = false;
   for (const s of p.steps) {
     if ("show" in s) {
-      const shown = showOf(p, s, bookmarks);
-      if (shown) n = send(n, dest, shown, p.id);
+      const sh = showOf(p, s, bookmarks);
+      if (sh && "scope" in sh) (n = send(n, dest, say ? { ...sh, say } : sh, p.id)), (shown = true);
     } else if ("hold" in s) n = hold(n, dest, s.hold.card, roles);
+  }
+  // Words on screens with no picture of their own go over what the destination shows now (4.3).
+  if (say && !shown) {
+    const here = resolve(n, dest === "everyone" ? "" : dest.startsWith("role:") ? dest.slice(5) : (n.screens[dest.slice(7)]?.role ?? ""), dest.startsWith("screen:") ? dest.slice(7) : undefined).shown;
+    if ("scope" in here) n = send(n, dest, { ...here, say }, p.id);
   }
   return n;
 }
@@ -230,7 +253,7 @@ export function fire(b: Board, p: Preset, bookmarks: readonly Bookmark[], roles:
 /** What a preset does, in words, for its row and its title ("Show Tarn, the approach", "Hold: a joke", "Read aloud"). */
 export function presetWords(p: Preset, bookmarks: readonly Bookmark[]): string {
   return p.steps
-    .map((s) => ("show" in s ? `Show ${bookmarks.find((b) => b.id === s.show.bookmark)?.name ?? "a bookmark that has gone"}` : "reveal" in s ? `${s.reveal.landmark === "known" ? "Reveal" : "Hint at"} ${s.reveal.name ?? "a thing"}` : "hold" in s ? `Hold: ${s.hold.card === "blank" ? "dark" : s.hold.card === "plain" ? "awaiting transmission" : s.hold.card === "joke" ? "a joke" : s.hold.card.text}` : "Read aloud"))
+    .map((s) => ("show" in s ? `Show ${bookmarks.find((b) => b.id === s.show.bookmark)?.name ?? "a bookmark that has gone"}` : "reveal" in s ? `${s.reveal.landmark === "known" ? "Reveal" : "Hint at"} ${s.reveal.name ?? "a thing"}` : "hold" in s ? `Hold: ${cardLabel(s.hold.card)}` : s.say.on_screens ? "Read aloud, on screens" : "Read aloud"))
     .join(", ");
 }
 
@@ -242,13 +265,12 @@ export function playbookFrom(raw: unknown): Playbook {
   const arr = (x: unknown): Record<string, unknown>[] => (Array.isArray(x) ? x.filter((y) => y && typeof y === "object") : []);
   const step = (s: Record<string, unknown>): Step | null => {
     const v = (k: string) => s[k] as Record<string, unknown> | undefined;
-    if (v("show") && typeof v("show")!.bookmark === "string") return { show: { bookmark: v("show")!.bookmark as string } };
+    if (v("show") && typeof v("show")!.bookmark === "string") return { show: { bookmark: v("show")!.bookmark as string, ...(typeof v("show")!.layout === "string" && v("show")!.layout ? { layout: v("show")!.layout as string } : {}) } };
     if (v("hold")) {
-      const c = v("hold")!.card;
-      if (c === "blank" || c === "plain" || c === "joke") return { hold: { card: c } };
-      if (c && typeof c === "object" && typeof (c as { text?: unknown }).text === "string") return { hold: { card: { text: (c as { text: string }).text } } };
+      const c = holdCardFrom(v("hold")!.card);
+      if (c) return { hold: { card: c } };
     }
-    if (v("say") && typeof v("say")!.text === "string") return { say: { text: v("say")!.text as string } };
+    if (v("say") && typeof v("say")!.text === "string") return { say: { text: v("say")!.text as string, ...(v("say")!.on_screens === true ? { on_screens: true as const } : {}) } };
     const rv = v("reveal");
     if (rv && typeof rv.address === "string" && (rv.landmark === "known" || rv.landmark === "heard_of")) return { reveal: { address: rv.address, landmark: rv.landmark, ...(typeof rv.name === "string" ? { name: rv.name } : {}) } };
     return null;

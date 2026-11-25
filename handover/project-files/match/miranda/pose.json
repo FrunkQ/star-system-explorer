@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Miranda",
+  "camera": "about 30,000 km",
+  "date": "1986-01-24",
+  "needs": [
+    "relief on small moons"
+  ]
+}

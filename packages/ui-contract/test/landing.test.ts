@@ -8,9 +8,9 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
 import { sceneFromResolved } from "../src/make.ts";
-import { landingSeaOf, landingShowOf, landmarkOrder, roundPose, suggestLander } from "../src/landing.ts";
+import { landingLinkSite, landingSeaOf, landingShowOf, landingTimeOf, landingTitle, landmarkOrder, landerHeightOf, lampRadiance, orbitTitle, groundGrant, ORBIT_SCREEN, roundPose, suggestLander } from "../src/landing.ts";
 import { nodeKernel } from "./node-kernel.ts";
-import { floorFromRefusal, levelFor, patchKeys, readPatch, groundHeightAt } from "../../renderer/src/index.ts";
+import { caveOpenings, floorFromRefusal, levelFor, patchKeys, readPatch, groundHeightAt } from "../../renderer/src/index.ts";
 
 const root = new URL("../../../", import.meta.url);
 const text = (p: string) => readFileSync(new URL(p, root), "utf8");
@@ -98,6 +98,44 @@ test("landmarks, descents and the ground round a site on the sample Earth and Mo
   }
 });
 
+test("lava tube openings near a landing site on the sample Moon (TRUE6)", async () => {
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "k" }, packs);
+    const a = await s.adopt({ import_v3: text("tests/fixtures/v3/synthetic-sol.json") });
+    assert.ok(a.ok);
+    const sys = a.result.systems[0]!;
+    const r = await s.resolvedSystem(sys);
+    assert.ok(r.ok);
+    const moon = sceneFromResolved(r.result).subjects.find((b) => b.label === "Moon")!;
+    // The Moon's lava plains hold tube fields (the kernel's survey); land at each field's centre and look round.
+    const sv = JSON.parse(await k.client.callRaw(JSON.stringify({ op: "survey_surface", system: sys, body: moon.address, quick: true, limit: 1 }))) as { survey: { tubes: { dir: [number, number, number] }[] } };
+    assert.ok(sv.survey.tubes.length > 0, "the Moon has tube fields");
+    let found: { lat: number; lon: number; caves: unknown } | null = null;
+    let passages = 0;
+    for (const f of sv.survey.tubes.slice(0, 4)) {
+      const lat = (Math.asin(f.dir[2]) * 180) / Math.PI;
+      const lon = (Math.atan2(f.dir[1], f.dir[0]) * 180) / Math.PI;
+      const c = await s.surveyCaves({ system: sys, body: moon.address, lat_deg: lat, lon_deg: lon, radius_km: 25 });
+      assert.ok(c.ok, JSON.stringify(c).slice(0, 300));
+      passages += ((c.caves as { passages?: unknown[] }).passages ?? []).length;
+      if (!found && caveOpenings(c.caves).length) found = { lat, lon, caves: c.caves };
+    }
+    assert.ok(passages > 0, "some passages on the Moon's near ground");
+    assert.ok(found, "some fallen roof among them");
+    const o = caveOpenings(found.caves);
+    assert.ok(o.every((x) => x.width_m > 0 && x.depth_a_m > 0 && ["skylight", "pit chain", "rille"].includes(x.kind)), JSON.stringify(o[0]));
+    // The same world at every look: the same site gives the same openings.
+    const again = await s.surveyCaves({ system: sys, body: moon.address, lat_deg: found.lat, lon_deg: found.lon, radius_km: 25 });
+    assert.ok(again.ok);
+    assert.deepEqual(caveOpenings(again.caves), o);
+    const player = await Session.open(k.client, tableSeat(), { id: "kestrel", seed: "k" }, packs);
+    assert.equal((await player.surveyCaves({ system: sys, body: moon.address, lat_deg: 0, lon_deg: 0 })).ok, false);
+  } finally {
+    await k.close();
+  }
+});
+
 function near(a: number, b: number, tol: number) {
   assert.ok(Math.abs(a - b) <= tol, `${a} vs ${b}`);
 }
@@ -125,4 +163,45 @@ test("the sea at a site from the weather report, with the tide now", () => {
   assert.equal(landingSeaOf(data, 6.21 * 3600)!.tide_m < 0, true, "half a lunar tide on: lower");
   assert.equal(landingSeaOf({ sea: null }, 0), null);
   assert.equal(landingSeaOf({}, 0), null);
+});
+
+test("the Land screen's own link and title carry the landing (LR5b)", () => {
+  const show = {
+    system: "s", body: "s/planet:4", label: "Mars", site: { lat_deg: 20.43012, lon_deg: -108.71, label: "Dribeque Planitia" },
+    lander: { ship: "traveller.far_trader" }, phase: "choose", flight_s: 24, hour_deg: 0,
+    world: { radius_m: 3.39e6, star_k: 5772, sun_radius: 0.004 },
+  };
+  assert.deepEqual(landingLinkSite(show), { lat_deg: 20.4301, lon_deg: -108.71, time: "midday", lander: "party" });
+  assert.equal(landingTitle(show, "Mars"), "Mars, landing at Dribeque Planitia, midday");
+  assert.equal(landingTimeOf(-82.5), "dawn");
+  assert.equal(landingTimeOf(180), "night");
+  assert.equal(landingTimeOf(40), null, "14:40 is no quick hour");
+  const capsule = { ...show, lander: "capsule", hour_deg: 40, site: { lat_deg: -3, lon_deg: 12, label: "" } };
+  assert.deepEqual(landingLinkSite(capsule), { lat_deg: -3, lon_deg: 12, lander: "capsule" });
+  assert.equal(landingTitle(capsule, "Mars"), "Mars, landing at 3° S, 12° E");
+  assert.equal(landingLinkSite({ nope: 1 }), null);
+});
+
+test("LR4: an orbit is named for the party's ship, and a seat reads only a known world's map", () => {
+  assert.equal(orbitTitle("Mars", { name: "Beowulf", at: "u:k/sys:sol/body:4" }, "u:k/sys:sol/body:4"), "Beowulf in orbit of Mars");
+  assert.equal(orbitTitle("Mars", { name: "Beowulf", at: "u:k/sys:sol/body:3" }, "u:k/sys:sol/body:4"), "In orbit of Mars");
+  const mars = "u:k/sys:sol/body:4";
+  const shown = { scope: "u:k/sys:sol", screen: ORBIT_SCREEN, focus: mars };
+  assert.deepEqual(groundGrant(shown, (a) => a === mars), { system: "u:k/sys:sol", body: mars });
+  assert.equal(groundGrant(shown, () => false), null, "a world the table does not know is not read");
+  assert.equal(groundGrant({ scope: "u:k/sys:sol", focus: mars }, () => true), null, "a plain send of a world grants nothing");
+  assert.equal(groundGrant(null, () => true), null);
+});
+
+test("LR6: a lander's height from its mass, and its lamps against the star's light", () => {
+  assert.ok(Math.abs(landerHeightOf(15000) - 6.69) < 0.05, "a 15 t lander stands about 7 m");
+  assert.ok(Math.abs(landerHeightOf(840000) - 25.6) < 0.1, "a far trader about 25 m");
+  assert.equal(landerHeightOf(0), 0);
+  assert.equal(landerHeightOf(10), 2, "never smaller than a person can stand by");
+  const au = 1.495978707e11;
+  const atEarth = lampRadiance(25, 1, au);
+  const atMars = lampRadiance(25, 1, 1.524 * au);
+  assert.ok(atEarth > 0.01 && atEarth < 0.5, `faint against sunlight at Earth: ${atEarth}`);
+  assert.ok(Math.abs(atMars / atEarth - 1.524 * 1.524) < 1e-9, "brighter against a fainter sun");
+  assert.equal(lampRadiance(25, 0, au), 0);
 });

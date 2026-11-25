@@ -29,7 +29,7 @@ const BUDGET = {
   "ask why": 1,
   "change a world": 2, // the Build desk, then the value (typed)
   "see what followed": 1,
-  "add a world": { desktop: 3, phone: 4 }, // pick the star, Add here (in More on a phone), then one of what forms there
+  "add a world": { desktop: 4, phone: 5 }, // pick the star, Add here (in More on a phone), press where on the chart (the ghost, ED4), then one of what forms there
   "open the globe": 1,
   "its magnetic field": 2, // Band is folded with HUD into the Show chip (changed far less than style, seen from, scale)
   "cut it open": 1,
@@ -121,6 +121,13 @@ async function walk(browser, vp) {
       await tap(page.getByRole("button", { name: "More", exact: true }));
       await tap(page.locator("[data-more-add]"));
     } else await tap(page.getByRole("button", { name: "Add here" }));
+    // The ghost comes first (ED4): press on the chart where it should go, a little inside Mars.
+    await page.locator("[data-add-note]").waitFor({ timeout: 10000 });
+    const sb = await page.locator(".area-chart [role=button][aria-label^='Sun'] .hit").first().boundingBox();
+    const mb = await page.locator(".area-chart [role=button][aria-label^='Mars,'] .hit").first().boundingBox();
+    const [px, py] = [sb.x + sb.width / 2 + (mb.x - sb.x) * 0.85, sb.y + sb.height / 2 + (mb.y - sb.y) * 0.85];
+    if (phone) await page.touchscreen.tap(px, py);
+    else await page.mouse.click(px, py);
     const add = page.locator("dialog[data-add]");
     await add.locator("[data-forms-here] li, [data-forms-nothing]").first().waitFor({ timeout: 30000 });
     await tap(add.locator("[data-forms-here] li button").first());
@@ -180,7 +187,25 @@ async function walk(browser, vp) {
   await step("look up an element", async () => {
     await tap(rail("reference"));
     const find = page.locator("[data-ref-find]");
-    if (phone) await tap(find);
+    // The screen slides in; a person's tap on the box lands once it has settled (mid-slide it hit the page tabs).
+    if (phone) {
+      await find.scrollIntoViewIfNeeded();
+      await page.waitForFunction(
+        () =>
+          new Promise((done) => {
+            const box = () => document.querySelector("[data-ref-find]")?.getBoundingClientRect();
+            const a = box();
+            setTimeout(() => {
+              const b = box();
+              const top = b && document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+              done(!!a && !!b && a.x === b.x && a.y === b.y && !!top?.closest("[data-ref-find]") && document.getAnimations().length === 0);
+            }, 300);
+          }),
+        null,
+        { timeout: 8000, polling: 200 },
+      );
+      await tap(find);
+    }
     else await page.waitForFunction(() => document.activeElement?.hasAttribute("data-ref-find"), null, { timeout: 20000 });
     await page.keyboard.type("iron");
     await page.locator('[data-ref-hit="elements:fe"]').waitFor({ timeout: 20000 });

@@ -10,6 +10,7 @@ use crate::{Body, Climate as Source, SurfaceEnvelope, SurfaceSettings};
 use serde::{Deserialize, Serialize};
 use sse_climate::{Conditions, Extra};
 use sse_core::math as m;
+use std::collections::BTreeMap;
 
 const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
 const G: f64 = sse_core::sheet::G;
@@ -72,13 +73,33 @@ pub fn conditions(
         sse_core::sheet::S_SUN / (a_au * a_au)
     });
     let gases = x.gases.clone().unwrap_or_else(|| {
-        assumed.push("air of the default mix".into());
-        d.gases.clone()
+        if b.deep_envelope && !d.giant_gases.is_empty() {
+            assumed.push(format!(
+                "air of the protosolar mix ({})",
+                d.giant_gases_source
+            ));
+            d.giant_gases.clone()
+        } else {
+            assumed.push("air of the default mix".into());
+            d.gases.clone()
+        }
     });
     let t = env.t_surface_now_k;
-    let liquid = x.liquid.clone().or_else(|| {
-        (b.oceans > 0.0 && t > sse_core::sheet::T0C && t < 373.0).then(|| "water".to_string())
-    });
+    let liquid = x
+        .liquid
+        .clone()
+        .or_else(|| {
+            (b.oceans > 0.0 && t > sse_core::sheet::T0C && t < 373.0).then(|| "water".to_string())
+        })
+        .or_else(|| {
+            let l = liquid_by_phase(&s.climate, &gases, t, b.pressure_bar * 1e5)
+                .filter(|_| b.oceans > 0.0 && !b.deep_envelope)?;
+            assumed.push(format!(
+                "the sea is liquid {l}: the one gas of the air whose liquid is stable at {t:.2} K and {:.3} bar (master data sheet)",
+                b.pressure_bar
+            ));
+            Some(l)
+        });
     // Earth's 1 ocean covers 71 % of its surface; a fuller ocean drowns more.
     let ocean_fraction = x.ocean_fraction.unwrap_or(if liquid.is_some() {
         (0.71 * m::pow(b.oceans.max(0.0), 0.25)).min(1.0)
@@ -383,4 +404,32 @@ pub fn ice_ages(
         f.sample_yr,
     );
     fc::ice_age_model(cs, &w.climate, epoch_myr, spin, &track.source)
+}
+
+/// The sea's liquid picked by phase: of the air's gases other than water,
+/// the most abundant whose liquid is stable at `t_k` and `p_pa` (above its
+/// triple point (helium has none), below its critical point, and boiling no lower
+/// than the air's pressure), by the sheet's plain name.
+pub fn liquid_by_phase(
+    cs: &sse_climate::ClimateSettings,
+    gases: &BTreeMap<String, f64>,
+    t_k: f64,
+    p_pa: f64,
+) -> Option<String> {
+    let mut best: Option<(f64, &str)> = None;
+    for sub in &cs.substances {
+        let x = gases.get(&sub.gas).copied().unwrap_or(0.0);
+        if sub.gas == "h2o" || x <= 0.0 {
+            continue;
+        }
+        // A liquid-only substance (helium) stays liquid down to 0 K.
+        let lowest = if sub.liquid_only { 0.0 } else { sub.triple_k };
+        let stable = t_k >= lowest
+            && sub.critical_k.is_none_or(|c| t_k < c)
+            && sse_climate::ebm::p_sat(sub, t_k) <= p_pa;
+        if stable && best.is_none_or(|(bx, _)| x > bx) {
+            best = Some((x, sub.name.as_str()));
+        }
+    }
+    best.map(|(_, n)| n.to_string())
 }

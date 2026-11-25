@@ -26,7 +26,7 @@ fn load(k: &mut crate::Kernel, packs: Vec<serde_json::Value>) -> serde_json::Val
 #[test]
 fn an_undeclared_tag_is_refused_where_it_is_named() {
     let mut k = crate::Kernel::new();
-    let base = pack("tests/fixtures/packs/base-physics.json");
+    let base = pack("packs/base-physics/pack.json");
     let rules = pack("tests/fixtures/sift/rules-pack.json");
     let templates = pack("tests/fixtures/packs/rpg-templates.json");
     let triggers = pack("tests/fixtures/packs/rpg-rules.json");
@@ -114,10 +114,7 @@ fn a_freely_typed_tag_joins_the_campaign_and_exclusive_groups_hold() {
         {"id": "allegiance.blue", "label": "Blue"},
         {"id": "mood.calm", "label": "Calm"}
     ]}});
-    let r = load(
-        &mut k,
-        vec![pack("tests/fixtures/packs/base-physics.json"), extra],
-    );
+    let r = load(&mut k, vec![pack("packs/base-physics/pack.json"), extra]);
     assert_eq!(r["type"], "stack_loaded", "{r}");
     send(
         &mut k,
@@ -186,7 +183,7 @@ fn a_freely_typed_tag_joins_the_campaign_and_exclusive_groups_hold() {
 #[test]
 fn the_economy_names_are_reserved_and_declarations_must_agree() {
     let mut k = crate::Kernel::new();
-    let base = pack("tests/fixtures/packs/base-physics.json");
+    let base = pack("packs/base-physics/pack.json");
     let mut p = pack("tests/fixtures/packs/rpg-rules.json");
     p["id"] = "test.tag-reserve".into();
     p["provides"]["other"] = serde_json::json!({
@@ -234,7 +231,7 @@ fn the_economy_names_are_reserved_and_declarations_must_agree() {
 #[test]
 fn a_physics_flow_that_reads_a_tag_is_refused() {
     let mut k = crate::Kernel::new();
-    let base = pack("tests/fixtures/packs/base-physics.json");
+    let base = pack("packs/base-physics/pack.json");
     let toy = pack("tests/fixtures/packs/base-toy.json");
     assert_eq!(
         load(&mut k, vec![base.clone(), toy.clone()])["type"],
@@ -474,10 +471,7 @@ fn hidden_tags_give_one_marker_and_a_gm_only_tag_reaches_no_player() {
         }}
     });
     let mut k = crate::Kernel::new();
-    let r = load(
-        &mut k,
-        vec![pack("tests/fixtures/packs/base-physics.json"), observe],
-    );
+    let r = load(&mut k, vec![pack("packs/base-physics/pack.json"), observe]);
     assert_eq!(r["type"], "stack_loaded", "{r}");
     send(
         &mut k,

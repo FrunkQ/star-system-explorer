@@ -48,6 +48,15 @@ pub struct SurveyOptions {
     pub orbit_track: Option<sse_climate::forcing::OrbitTrack>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub moons: Vec<sse_climate::forcing::MoonPull>,
+    /// SOL5: the air's measured mix (volume fractions by lower-case
+    /// formula: `n2`, `co2`, ...), from the record's
+    /// `atmosphere.composition.*` facts; the default mix when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gases: Option<std::collections::BTreeMap<String, f64>>,
+    /// SW1: the world's distance from its star, AU (a moon's is its
+    /// planet's); from its own orbit or climate when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub star_distance_au: Option<f64>,
 }
 
 impl SurveyOptions {
@@ -56,6 +65,7 @@ impl SurveyOptions {
         sse_climate::Extra {
             rotation_hours,
             obliquity_deg: self.obliquity_deg,
+            gases: self.gases.clone(),
             ..Default::default()
         }
     }
@@ -77,6 +87,8 @@ pub struct Survey {
     pub climate: Option<WorldClimate>,
     /// The stages that ran, in order.
     pub stages: Vec<String>,
+    /// SW1: how its bare ground weathers (None for a giant).
+    pub weathering: Option<crate::weathering::Weathering>,
 }
 
 /// The day length the climate reads: given, else a locked world's orbital period.
@@ -155,6 +167,7 @@ fn chain(
             aerostat,
             climate: None,
             stages: vec!["envelope".into(), "cloud-deck".into()],
+            weathering: None,
         });
     }
     let h = crate::plates::history(s, &e, seed, epoch_gyr);
@@ -257,7 +270,8 @@ fn chain(
         settle: opts.settle.clone(),
     };
     let ly = layers(s, &e, seed, &atlas, &inp);
-    let atlas = atlas.with_layers(ly);
+    let weathering = crate::weathering::weathering(body, &e, opts.star_distance_au);
+    let atlas = atlas.with_layers(ly).with_weathering(weathering.clone());
     if !named {
         let stages = ["envelope", "plates", "wear", "impacts", "regime", "cover"];
         return Ok(Survey {
@@ -269,6 +283,7 @@ fn chain(
             aerostat,
             climate: Some(climate),
             stages: stages.iter().map(|x| x.to_string()).collect(),
+            weathering,
         });
     }
     let reg = register(
@@ -291,6 +306,7 @@ fn chain(
         aerostat,
         climate: Some(climate),
         stages: stages.iter().map(|x| x.to_string()).collect(),
+        weathering,
     })
 }
 

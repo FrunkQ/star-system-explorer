@@ -6,13 +6,19 @@ export type { Vec3, FrameNode, Tree, Camera, Pixel } from "./frames.ts";
 export type { Gpu, GpuDots, GpuGlow, GpuItem, GpuLight, GpuRing, GpuSheet } from "./gpu.ts";
 export { armField, cloudNoise, GALAXY_BANDS, GALAXY_LIGHT, GALAXY_LIGHT_REFS, galaxyFace, glowPicture, sheetWeights, surfaceAt } from "./galaxy-true.ts";
 export type { GalaxyBand, GalaxyPicture } from "./galaxy-true.ts";
-export { cubeEdges, galaxyLight, SPACE_CSS, webGlow, webLights, webParcels, WEB_DARK_GLOW, WEB_KINDS, WEB_LIGHT_K, WEB_LIGHT_SHOW } from "./web-cube.ts";
+export { cubeEdges, densityLevel, galaxyLight, mixCss, SPACE_CSS, webGlow, webLights, webParcelLevels, webParcels, WEB_DARK_GLOW, WEB_DENSITY_LEVELS, WEB_LEVEL_INK, WEB_LEVELS, WEB_KINDS, WEB_MARKS, webMarks, WEB_LIGHT_K, WEB_LIGHT_SHOW } from "./web-cube.ts";
 export type { WebCubeData, WebGalaxyData, WebKind, WebLightGroup } from "./web-cube.ts";
 // V10a: True in the system view, each world wrapped in its own surface.
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
 export type { TrueTexture } from "./true-look.ts";
 // R1 to R3, R6: air in True (clouds, hazes, giants from their cloud decks), true-air.ts.
-export { flowFace, gasAbove, gasTint, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
+export { flowFace, gasAbove, gasTint, readTrueAir, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
+// VP-A3: the air's look-up tables (Hillaire 2020) for its rim and terminator in True.
+export { airLuts, airShapeOf, AIR_LUT_REFS, type AirLuts, type AirShape } from "./air-luts.ts";
+// VP3 part 5: bare ground in its measured colour (data sheet reflectance rows, kernel SW1 maturity), ground-optics.ts.
+export { bandsOf, groundReflectance, readGroundOptics, reflectanceAt, withGround, GROUND_BANDS_NM, GROUND_ROWS, type GroundOptics, type MatterReader, type ReflectanceTable } from "./ground-optics.ts";
+// TA6: a world flattened by its spin (Darwin-Radau flow), true-shape.ts.
+export { flattenScale, readTrueShape, SHAPE_FLOW, type ShapeReader, type TrueShape } from "./true-shape.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
 export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
@@ -24,6 +30,9 @@ export { Governor, badge } from "./governor.ts";
 export type { Badge, GovernorOptions, GovernorMove } from "./governor.ts";
 export { LIBRARY } from "./passes.ts";
 export { mountGlobe, airRender, deviceReadout, measureAgain, passShares, quality, setQuality } from "./runtime.ts";
+// VP4 part 2b, VP5: one quality controller per True view (placement, governor, heat, sharpen at rest).
+export { TrueRun, type TrueSettings, type TrueStatus } from "./true-run.ts";
+export { REST_FRAMES, RestClock, restJitter, type RestState } from "./still.ts";
 // VP4: the speed probe and placement by measured speed.
 export { BENCH_PIXELS, drawingBench, factorsFrom, gpuTiersAllowed, HeatWatch, loadProbe, loadQuality, place, PLACE_MARGIN, PROBE_SCENES, probeKey, QUALITY_WORDS, tierWords, ULTRA_HEADROOM } from "./probe.ts";
 export type { Capabilities, DeviceFactors, DrawingBench, Placement, ProbeResult, ProbeScene, QualityChoice, TierPrediction } from "./probe.ts";
@@ -32,9 +41,9 @@ export type { Air, AirFacts } from "./atmosphere.ts";
 export type { GlobeRun, GlobeRunOptions, GlobeStatus } from "./runtime.ts";
 
 /** Start the GPU path (WebGPU, else WebGL2), or null when this device has neither. */
-export async function startGpu(canvas: HTMLCanvasElement) {
+export async function startGpu(canvas: HTMLCanvasElement, opts: { timing?: boolean } = {}) {
   const { createGpu } = await import("./gpu.ts");
-  return createGpu(canvas);
+  return createGpu(canvas, opts);
 }
 // R3: the still tier, "take photograph", and photographs kept on this device.
 export { photograph, halton } from "./photograph.ts";
@@ -48,13 +57,13 @@ export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edi
 // O10 convection: granules drawn where the disc resolves them.
 export { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, limbDarkening, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
 export type { Convection, FlarePatch, Granules, Spot, StarDraw } from "./star.ts";
-export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, turnAt } from "./live-star.ts";
+export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
 export type { Flare, GivenStar, LiveStar, StarReader } from "./live-star.ts";
 export { drawGlow, glarePsf, glareProfile, glowReach, GLARE_EYE, GLOW_REACH_DEG, GLOW_REFERENCES, narrateGlow } from "./star-glow.ts";
 export { CELL_DRIFT, CHURN_REFERENCES, churningGranules, granuleBlur, limbLumps, LUMP_SCALE_HEIGHTS, narrateLumps } from "./star-churn.ts";
-export { addEjections, EJECTION_SCALE, ejectionShare, ejectionShown, ejectionsAt, EVENT_REFERENCES, FLASHES_PER_SECOND_MAX, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares } from "./star-events.ts";
-export type { EjectionNow, ShownFlare } from "./star-events.ts";
-export { drawStarNow } from "./star-now.ts";
+export { addEjections, capFlashes, EJECTION_SCALE, ejectionShare, ejectionShown, ejectionsAt, EVENT_REFERENCES, FLASHES_PER_SECOND_MAX, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares } from "./star-events.ts";
+export type { EjectionNow, FlashEvent, ShownFlare } from "./star-events.ts";
+export { drawStarNow, FACE_STEPS, liveFace } from "./star-now.ts";
 export type { StarNow, StarNowAsk } from "./star-now.ts";
 // Time-lapse layers on the Body globe (surface_frames): read, bracket, colour, pick, narrate.
 export { bracket, cellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor, narrateFrame, pickAt, readFrames, recolour, seaLevelAt, valueAt } from "./timelapse.ts";
@@ -107,6 +116,7 @@ export { fresnel, MAX_TRAINS, readSeaOptics, SEA_STEPS, seaBody, seaWords } from
 export type { SeaOptics, WaveTrain } from "./sea.ts";
 export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunAt, sunDirection, sunTransmittance } from "./surface-sky.ts";
 export type { SurfaceFrame, SurfaceGpu, SurfaceMesh } from "./gpu-surface.ts";
+export type { LanderPose, LanderShip } from "./surface-lander.ts";
 
 /** Draw the ground round a site on the GPU (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */
 export async function startSurface(canvas: HTMLCanvasElement) {
@@ -116,9 +126,51 @@ export async function startSurface(canvas: HTMLCanvasElement) {
 // The size comparison's turning globes (3D, True, Wireframe).
 export { circleSteps, globeFrame, graticule, bodySeconds, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
 export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";
+export { byDensitySquared, density as shellDensity, drawShells, dustGlow10um, narrateShells, nebulaColour, SHELL_DECADES, SHELL_REFERENCES, wavelengthRgb } from "./star-shells.ts";
+export type { NebulaShape, ShellView } from "./star-shells.ts";
+export { baumbach, CORONA_DECADES, CORONA_REFERENCES, coronaShape, cycleActivity, drawCorona, narrateCorona } from "./star-corona.ts";
+export { DIFFERENTIAL_ROTATION, rateShare, spotsAt } from "./live-star.ts";
 // A body's face in True, one door for every view (true-body.ts).
 export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
 export type { TrueBody, TrueLook } from "./true-body.ts";
+// Hot things glow in Visible and plumes above the limb (third audit R10 to R12, track TRUE).
+export { drawnGlow, GLOW_FLOOR, hotGlow } from "./hot-glow.ts";
+export type { HotGlow } from "./hot-glow.ts";
+export { plumeBrightness, plumeFacts, plumeGrains, plumeNote } from "./plumes.ts";
+export type { PlumeFacts } from "./plumes.ts";
+// Lava tube openings cut into the ground at a landing site (third audit, TRUE6).
+export { caveCut, caveOpenings, nearestOpening, openingLine } from "./cave-mouths.ts";
+export type { CaveOpening } from "./cave-mouths.ts";
+// Surface stains hued from the data sheet's optics (TRUE4).
+export { grainAlbedo, indexTableOf, layerReflectance, mixAlbedo, seenColour, GRAIN_UM } from "./sheet-optics.ts";
+export type { GrainShare, IndexTable } from "./sheet-optics.ts";
+export { stainFacts, stainHue, stainNote, stainPrepared, STAIN_GRAIN_UM } from "./stain-look.ts";
+export type { StainFact, StainHue } from "./stain-look.ts";
+// Small bodies' own shapes in True (SB3, small-body.ts).
+export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
+export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";
 // The stars over a landing site and the eye's adaptation (night-sky.ts).
 export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";
 export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";
+// Aurorae (VP-AU5): the plan from read_field and the air, and its exposure.
+export { AURORA_REFERENCES, auroraSky, lineName, cieXyz, COLOUR_VISION_CD_M2, exposeAurora, loadAurora, skyGlowAlong, toSite, kiloRayleighRadiance, lineRgb, oxygenShare, OXYGEN_STAND_IN, planAurora, RAYLEIGH_PH_M2_S_SR } from "./aurora.ts";
+export type { AuroraDraw, AuroraDrawLayer, AuroraSession, AuroraSky, AuroraEmissionJson, AuroraExposure, AuroraJson, AuroraLayer, AuroraOvalJson, AuroraPlan, AuroraWorld } from "./aurora.ts";
+// Close-up: the camera down to a grazing orbit over a world in True, and the ground under it.
+export { CLOSE_FLOOR_M, CLOSE_FLOOR_SHARE, CLOSE_REACH, closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, type Orbit } from "./close-up.ts";
+// The shared finish (VP1) and the sky's stars behind True (VP2).
+export { startFinish, type Finish, type FinishFrame } from "./finish.ts";
+export { GLARE_FLOOR_DEG, glareLadder, glareShare, glareTotal, rungScale, type GlareRung } from "./finish-glare.ts";
+export { longGain, starsBehind, starTint, type SkyStar as BehindStar } from "./stars-behind.ts";
+export type { GpuStars } from "./gpu.ts";
+export { cutRings, ringMarks, RESONANCE_F, RING_VISCOSITY_M2_S, GAP_PER_ROOT_MU, EDGE_SLACK } from "./ring-structure.ts";
+export type { RingMark, RingMoon } from "./ring-structure.ts";
+// VP6: the detail ladder (rung table, bindings, seed and clock, HUD detail line). The GPU node is ladder-node.ts,
+// imported by GPU code directly so pages without 3D never load three.js.
+export { checkLayer, detailLine, profileShare, discScale, EDDY_EXPONENT, FLOW_REACH, LADDER_LAYERS, ladderAt, ladderLayer, ladderSeed, MAX_RUNGS, MAX_STRETCH, resolveLayer, RUNG_FADE, RUNG_MIN_PX, rungOrigin, rungs, sizeWords, TIER_RUNGS } from "./ladder.ts";
+export type { Bound, LadderFacts, LadderLayer, NoiseKind, NotDrawn, ResolvedLayer, Rung, ViewScale } from "./ladder.ts";
+export { cell, curl, NOISE_REFERENCES, NUM, PERIOD, ridged, simplex, SIMPLEX_SCALE, WRAP } from "./ladder-noise.ts";
+export type { Ops, V3 } from "./ladder-noise.ts";
+// VP3: the texture ladder (face sizes by screen, tiles to read, face pictures from any tile levels, relief normals).
+// The GPU bake is texture-ladder-gpu.ts, used by gpu.ts.
+export { BAKE_BUDGET, composeFaces, COMPOSE_MAX, cubeBytes, directionFace, FACE_CAP, FACE_MIN, faceDirection, faceSize, faceWords, levelFor as tileLevelFor, reliefNormal, sampleFaces, texelAngle, TILE_SAMPLES, tilesFacing, withFiner, composePatch, frameAt, patchDirection, patchFor, patchLevel, PATCH_N, PATCH_PX_PER_SAMPLE, PATCH_TILES, samplePatch, tilesNear } from "./texture-ladder.ts";
+export type { Composite, FacePicture, GroundAsk, PatchPicture, TileKey } from "./texture-ladder.ts";

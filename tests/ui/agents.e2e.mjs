@@ -44,7 +44,7 @@ try {
     await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     const h0 = await gm.locator("[data-state-hash]").getAttribute("data-state-hash");
-    await gm.locator(".area-chart [role=button]", { hasText: "Tarn" }).first().click();
+    await gm.locator(".area-chart").getByRole("button", { name: "Tarn" }).first().click();
 
     await gm.getByRole("button", { name: "Ask", exact: true }).click();
     const dlg = gm.getByRole("dialog", { name: "Agents" });

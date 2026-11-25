@@ -31,6 +31,8 @@ export interface CampaignSave {
     campaign_epoch_yr?: number;
     /** Where the GM put each pack overlay (overlay.ts), by overlay id (older saves have none). */
     overlay_anchors?: Record<string, import("./overlay.ts").OverlayAnchor>;
+    /** "Could be…" suggestions stopped, as "address#record" (older saves have none). */
+    could_quiet?: string[];
     /** The readings chosen by pressing a unit, per kind and scale class (older saves have none). */
     unit_choices?: import("./figures.ts").UnitChoices;
     /** The party's ship (older saves have none). */
@@ -39,6 +41,8 @@ export interface CampaignSave {
     bookmarks?: import("./bookmark.ts").Bookmark[];
     /** The Playbook, `sse.playbook/1` (older saves have none). */
     playbook?: import("./playbook.ts").Playbook;
+    /** Layouts the GM made, `sse.screen/1` with `mine.` ids (older saves have none). */
+    layouts?: import("./screen.ts").ScreenDoc[];
   };
   /**
    * The packs over the opening stack (Packs screen) and the campaign's own

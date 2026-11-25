@@ -432,6 +432,122 @@ pub(crate) fn read_air_optics(
 }
 
 /// Light through gas (ND2), with the colour to the eye before and after.
+pub(crate) fn read_bows(items: Vec<serde_json::Value>) -> Out {
+    #[derive(serde::Deserialize)]
+    struct In {
+        id: String,
+        n: f64,
+        kind: String,
+    }
+    let mut out = vec![];
+    for (i, v) in items.into_iter().enumerate() {
+        let bad = |e: String| err("bad_bow", format!("item {i}: {e}"));
+        let x: In = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let b = sse_light::bows::bows(&x.id, x.n, &x.kind).map_err(bad)?;
+        out.push(serde_json::to_value(b).expect("plain data"));
+    }
+    Ok(Response::BowsRead { items: out })
+}
+
+pub(crate) fn fog_of_war(seats: Vec<serde_json::Value>) -> Out {
+    #[derive(serde::Deserialize)]
+    struct FitAsk {
+        tech: String,
+        hull_length_m: f64,
+    }
+    #[derive(serde::Deserialize)]
+    struct Seat {
+        seat: String,
+        #[serde(default)]
+        sensors: Option<Vec<sse_sense::Sensor>>,
+        #[serde(default)]
+        fit: Option<FitAsk>,
+        #[serde(default)]
+        own: Option<sse_sense::fog::Craft>,
+        #[serde(default)]
+        contacts: Vec<sse_sense::fog::Contact>,
+    }
+    let model = sse_light::emit::Model::base();
+    let fits = sse_sense::fog::base_fits().map_err(|e| err("bad_light", e))?;
+    let mut out = vec![];
+    for (n, v) in seats.into_iter().enumerate() {
+        let bad = |e: String| err("bad_seat", format!("seat {n}: {e}"));
+        let s: Seat = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let sensors = match (s.sensors, s.fit) {
+            (Some(x), _) => x,
+            (None, Some(f)) => {
+                sse_sense::fog::default_fit(&fits, &f.tech, f.hull_length_m).map_err(bad)?
+            }
+            (None, None) => {
+                return Err(bad(
+                    "give sensors, or fit {tech, hull_length_m} for the default set".into(),
+                ))
+            }
+        };
+        let noticed = match &s.own {
+            Some(c) => Some(sse_sense::fog::noticed_to(c, &sensors, model).map_err(bad)?),
+            None => None,
+        };
+        let marks = s
+            .contacts
+            .iter()
+            .map(|c| sse_sense::fog::mark(c, &sensors, model))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(bad)?;
+        out.push(serde_json::json!({
+            "seat": s.seat,
+            "sensors": sensors,
+            "noticed_to_m": noticed,
+            "marks": marks,
+        }));
+    }
+    Ok(Response::FogRead { seats: out })
+}
+
+pub(crate) fn read_limb(discs: Vec<serde_json::Value>) -> Out {
+    #[derive(serde::Deserialize)]
+    struct In {
+        #[serde(default)]
+        teff_k: Option<f64>,
+        #[serde(default)]
+        minnaert_k: Option<Vec<f64>>,
+        #[serde(default)]
+        mu0: Option<f64>,
+        mus: Vec<f64>,
+        #[serde(default)]
+        wavelengths_m: Option<Vec<f64>>,
+    }
+    let table = &sse_light::emit::Model::base().table;
+    let eye = table
+        .eye
+        .as_ref()
+        .ok_or_else(|| err("bad_light", "the light table has no eye"))?;
+    let mut out = vec![];
+    for (n, v) in discs.into_iter().enumerate() {
+        let bad = |e: String| err("bad_disc", format!("disc {n}: {e}"));
+        let i: In = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let points = match (i.teff_k, i.minnaert_k) {
+            (Some(t), None) => {
+                let wl = i.wavelengths_m.unwrap_or_else(|| eye.wavelengths_m());
+                sse_light::limb::glowing(t, &i.mus, &wl, eye).map_err(bad)?
+            }
+            (None, Some(k)) => {
+                sse_light::limb::lit(&k, i.mu0.unwrap_or(1.0), &i.mus).map_err(bad)?
+            }
+            _ => {
+                return Err(bad(
+                    "give teff_k for a glowing disc or minnaert_k for a lit one".into(),
+                ))
+            }
+        };
+        out.push(serde_json::json!({
+            "points": points,
+            "references": sse_light::limb::references(),
+        }));
+    }
+    Ok(Response::LimbRead { discs: out })
+}
+
 pub(crate) fn effect_at_range(
     asks: Vec<serde_json::Value>,
     sheet: &sse_reference::Reference,
@@ -478,6 +594,13 @@ pub(crate) fn light_through_gas(
         t_k: Option<f64>,
         #[serde(default)]
         wavelengths_m: Option<Vec<f64>>,
+        /// TA2: layers of particles (haze, cloud) under the gas, bottom
+        /// first, over a floor of one reflectance; what they send back is
+        /// `reflected`.
+        #[serde(default)]
+        particles: Vec<sse_light::haze::Particles>,
+        #[serde(default)]
+        floor: f64,
     }
     let table = &sse_light::emit::Model::base().table;
     let eye = table
@@ -531,12 +654,18 @@ pub(crate) fn light_through_gas(
         };
         let colour_in = sse_light::colour::colour_of(eye, &seen_in).map_err(bad)?;
         let colour_out = sse_light::colour::colour_of(eye, &seen_out).map_err(bad)?;
-        out.push(serde_json::json!({
+        let mut o = serde_json::json!({
             "passed": passed,
             "colour_in": colour_in,
             "colour_out": colour_out,
             "colour_references": sse_light::colour::references(eye),
-        }));
+        });
+        if !i.particles.is_empty() {
+            let r = sse_light::haze::reflect(sheet, eye, &i.particles, i.floor, &seen_in)
+                .map_err(bad)?;
+            o["reflected"] = serde_json::to_value(r).map_err(|e| bad(e.to_string()))?;
+        }
+        out.push(o);
     }
     Ok(Response::GasPassed { passages: out })
 }
@@ -791,6 +920,7 @@ pub(crate) fn survey_planets(survey: serde_json::Value) -> Out {
 }
 
 /// Nebulae at a date (O3).
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn read_nebulae(
     at_s: f64,
     seed: Option<&str>,
@@ -798,6 +928,8 @@ pub(crate) fn read_nebulae(
     planetary: Option<Vec<serde_json::Value>>,
     remnants: Option<Vec<serde_json::Value>>,
     glows: Option<Vec<serde_json::Value>>,
+    giants: Option<Vec<serde_json::Value>>,
+    young: Option<Vec<serde_json::Value>>,
 ) -> Out {
     use sse_nebula::*;
     let seed = sse_core::Seed::from_text(seed.unwrap_or("sse4"));
@@ -828,6 +960,14 @@ pub(crate) fn read_nebulae(
     }
     for p in &gl {
         put(&p.address, star_forming_glow(&seed, p, at_s))?;
+    }
+    let gi: Vec<outflow::GiantInput> = parse_list("giant", giants)?;
+    for p in &gi {
+        put(&p.address, outflow::dust_shell(&seed, p, at_s))?;
+    }
+    let yo: Vec<outflow::YoungStarInput> = parse_list("young star", young)?;
+    for p in &yo {
+        put(&p.address, outflow::young_jet(&seed, p, at_s))?;
     }
     Ok(Response::NebulaeRead {
         at_s,

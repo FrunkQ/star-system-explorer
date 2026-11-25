@@ -33,6 +33,8 @@ fn body(address: &str, r: f64, mom: f64, d_au: f64) -> Body {
         plasma_source_kg_s: 0.0,
         pedersen_conductance_s: 0.0,
         moons: vec![],
+        spin_period_s: 0.0,
+        upper_air: None,
         rings_outer_m: 0.0,
     }
 }
@@ -88,7 +90,8 @@ fn own_field_noses() {
 }
 
 /// Bodies with air and no field: an induced boundary a few hundred km up
-/// (Venus ionopause 250 to 400 km, Brace and Kliore 1991; Mars 300 to 800 km);
+/// (Venus ionopause 200 to 300 km at solar minimum and 200 to over 1000 km at
+/// maximum, Brace and Kliore 1991 with Kliore and Luhmann 1991; Mars 300 to 800 km);
 /// the airless Moon is struck at its surface.
 #[test]
 fn air_and_bare_surfaces() {
@@ -498,4 +501,100 @@ fn solar_system_fixture() {
     let b0 = m::sqrt(u.field.g10_t * u.field.g10_t + u.field.g11_t * u.field.g11_t);
     assert!((b0 - 2.28e-5).abs() / 2.28e-5 < 0.05, "{b0}");
     assert!(!e.field.source.is_empty() && !e.field.polarity_source.is_empty());
+}
+
+/// MF9 part 2b and VP-L2: how aurorae shine. Earth's oval brings down tens
+/// of gigawatts a hemisphere (NOAA's hemispheric power, about 5 to 100 GW
+/// in quiet to stormy times); its lines sit at the measured heights
+/// (Kawamura et al. 2020, Whiter et al. 2023: green 100 to 115 km, red 150
+/// to 350 km, nitrogen 100 to 120 km) and the mix is green. Jupiter's main
+/// oval from Io's gas is of order 10¹⁴ W (Hill 2001) and glows in hydrogen's
+/// lines, pink-red like Saturn's (Dyudina et al. 2016).
+#[test]
+fn aurorae_shine_in_their_air_s_own_lines() {
+    let set = sheet();
+    let all = solar_system(&set, 1.672_621_923_69e-27).unwrap();
+    let e = all.iter().find(|b| b.read.address == "sol/earth").unwrap();
+    let a = e.read.aurora.as_ref().unwrap();
+    let o = &a.ovals[0];
+    assert!(
+        (4.0..=12.0).contains(&o.width_deg),
+        "{:?} {}",
+        o.edges_deg,
+        o.maps_to_m
+    );
+    let g = o.glow.as_ref().unwrap();
+    let hemi = g.power_by_hemisphere[0];
+    assert!((5e9..=1e11).contains(&hemi), "{hemi}");
+    let line = |id: &str| g.emissions.iter().find(|e| e.line == id).unwrap();
+    let km = |id: &str| line(id).peak_height_m / 1e3;
+    assert!(
+        (100.0..=115.0).contains(&km("oi-5577")),
+        "{}",
+        km("oi-5577")
+    );
+    assert!(
+        (150.0..=350.0).contains(&km("oi-6300")),
+        "{}",
+        km("oi-6300")
+    );
+    assert!((100.0..=120.0).contains(&km("n2p")), "{}", km("n2p"));
+    assert!(line("oi-6300").thickness_m > line("oi-5577").thickness_m);
+    assert_eq!(line("oi-5577").matter, "o");
+    let c = g.colour.as_ref().unwrap();
+    assert!(
+        c.linear_srgb[1] == 1.0 && c.linear_srgb[0] < 0.6,
+        "{:?}",
+        c.linear_srgb
+    );
+    assert!(
+        g.emissions.iter().all(|e| e.line != "ha"),
+        "no hydrogen in Earth's air"
+    );
+
+    // Jupiter's spin-driven oval with Io's tonne a second.
+    let mut j = body("jupiter", R_J, moment(4.17e-4, R_J), 5.2);
+    j.plasma_source_kg_s = 1000.0;
+    j.pedersen_conductance_s = 0.1;
+    j.spin_period_s = 35_730.0;
+    j.upper_air = Some(UpperAir {
+        gases: vec![
+            GasShare {
+                matter: "h2".into(),
+                share: 0.9,
+            },
+            GasShare {
+                matter: "he".into(),
+                share: 0.1,
+            },
+        ],
+        profile: vec![],
+        base_pressure_pa: Some(1e5),
+        scale_height_m: Some(27e3),
+        gravity_m_s2: Some(24.79),
+        source: String::new(),
+    });
+    let a = read(&j, &set).unwrap().aurora.unwrap();
+    let spin = a.ovals.iter().find(|o| o.driver == "spin").unwrap();
+    let g = spin.glow.as_ref().unwrap();
+    assert!((3e13..=3e14).contains(&g.power_w), "{}", g.power_w);
+    assert!(
+        spin.width_deg > 0.5 && spin.width_deg < 5.0,
+        "{}",
+        spin.width_deg
+    );
+    assert!(g.emissions.iter().any(|e| e.line == "ha"));
+    assert!(g.emissions.iter().all(|e| e.matter != "o"));
+    let c = g.colour.as_ref().unwrap();
+    assert!(c.linear_srgb[0] == 1.0, "{:?}", c.linear_srgb);
+    // Electrons tens of keV deep stop a few hundred km above the 1 bar level.
+    assert!((150e3..=500e3).contains(&g.stops_at_m), "{}", g.stops_at_m);
+
+    // No upper air: a power, but no lines.
+    let mut bare = body("earth", 6.371e6, 8.0e22, 1.0);
+    bare.upper_air = None;
+    let r = read(&bare, &set).unwrap();
+    let og = r.aurora.as_ref().unwrap().ovals[0].glow.as_ref().unwrap();
+    assert!(og.power_w > 0.0 && og.emissions.is_empty());
+    assert!(r.stand_ins.iter().any(|s| s.contains("no upper air")));
 }

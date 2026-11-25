@@ -25,6 +25,7 @@
     undo,
     copyBody,
     openAdd,
+    typeAdd,
     cutBody,
     openKeys,
     extraTools,
@@ -49,6 +50,8 @@
     undo: (back: boolean) => void;
     copyBody: () => void;
     openAdd: () => void;
+    /** While the Add ghost follows the pointer (ED4): open Add here to type a distance instead. */
+    typeAdd?: () => void;
     cutBody: () => void;
     openKeys: () => void;
     /** Tools another section adds after Redo (the Run desk's Bookmarks, PB2b), so the stage imports nothing of theirs. */
@@ -67,9 +70,9 @@
 
 <main class="stage" style:--viewbar-h={viewbarH ? `${viewbarH}px` : undefined} data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={cardMount ? undefined : ""} data-lens={lensId} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
   {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
-  {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH}><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
+  {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH} data-chart-overlay><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
   <div class="area-chart">{#if chartMount}{#key openings}<div class="fill" use:view={chartMount}></div>{/key}{/if}</div>
-  <nav class="tools" aria-label="Tools">
+  <nav class="tools" aria-label="Tools" data-chart-overlay>
     <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
     {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
     <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
@@ -80,8 +83,10 @@
     <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={openKeys} />
   </nav>
   {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
-  {#if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
-  <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if cardMount}<div use:view={cardMount}></div>{/if}</aside>
+  {#if ws.adding && ws.adding.a_au === null}
+    <p class="undo-note clip-note" role="status" data-add-note>Press on the chart where it should go round {ws.adding.label}; the ghost says how far out. Esc puts it away.{#if typeAdd} <button type="button" class="type-add" data-add-type onclick={typeAdd}>Type a distance</button>{/if}</p>
+  {:else if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
+  <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if cardMount}<div use:view={cardMount} data-chart-overlay></div>{/if}</aside>
 </main>
 
 <style>
@@ -173,6 +178,16 @@
     margin: 0;
     font-size: 13px;
     color: var(--sse-ink-muted);
+  }
+  .type-add {
+    margin-left: 6px;
+    padding: 0 4px;
+    border: 0;
+    border-bottom: var(--sse-line) dotted var(--sse-accent-ink);
+    background: none;
+    color: var(--sse-accent-ink);
+    font: inherit;
+    cursor: pointer;
   }
   .clip-note {
     top: 48px;

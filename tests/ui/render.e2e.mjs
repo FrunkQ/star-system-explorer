@@ -210,6 +210,10 @@ try {
       const px = await pixelsOf(gm, globe(gm));
       assert.ok(px.upper[2] > px.upper[0] + 20, `${got}: the lit ocean under air is blue: ${px.upper}`);
       await shot(gm, `render-true-colour-${got}-${name}`);
+      // VP5: still for half a second, the globe sharpens (jittered frames of the still passes averaged over it).
+      await gm.waitForSelector('[data-body] canvas[data-rest="sharp"]', { state: "attached", timeout: 20000 });
+      const sharp = await pixelsOf(gm, globe(gm));
+      assert.ok(sharp.upper[2] > sharp.upper[0] + 20, `${got}: sharpened at rest, still the same blue ocean: ${sharp.upper}`);
     }
     await drawOn(gm, "auto");
     await useRecipe(gm, "survey-relief");
@@ -312,6 +316,15 @@ try {
       const vis = await pixelsOf(gm, disc);
       assert.ok(vis.centre[0] > 200 && vis.centre[1] > 180, `the Sun's centre is bright and near white: ${vis.centre}`);
       await shot(gm, `render-star-visible-${name}`);
+      // VP-S3: hiding the disc shows the visible corona round a black disc, its shape from the cycle, said in words.
+      await gm.locator("[data-hide-disc]").click();
+      await gm.waitForFunction(() => document.querySelector("[data-corona-words]")?.getAttribute("data-corona-words") === "yes");
+      await gm.waitForTimeout(200);
+      const hid = await pixelsOf(gm, disc);
+      assert.ok(hid.centre[0] < 20 && hid.centre[1] < 20, `the disc is hidden: ${hid.centre}`);
+      assert.match(await gm.locator("[data-corona-words]").innerText(), /Baumbach/);
+      await shot(gm, `render-star-corona-${name}`);
+      await gm.locator("[data-hide-disc]").click();
       await gm.locator("[data-star]").getByRole("button", { name: "X-ray" }).click();
       await gm.waitForFunction(() => document.querySelector("[data-star] [data-band]")?.getAttribute("data-band") === "xray");
       await gm.waitForTimeout(200);

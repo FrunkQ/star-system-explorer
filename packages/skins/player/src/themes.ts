@@ -3,6 +3,7 @@
 // fonts, colours or logos. A theme is tokens, frame parts and a filter chain:
 // it restyles every view without the view knowing, and never changes data.
 import { CHART_ROOM, NIGHT_CHART, type ThemeDoc } from "../../chart-room/src/index.ts";
+import { STARTER_DELIVERIES } from "../../../ui-contract/src/index.ts";
 
 const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 
@@ -23,6 +24,7 @@ export const CHART: ThemeDoc = {
 export const PAPER: ThemeDoc = {
   schema: "sse.theme/1",
   id: "paper",
+  delivery: STARTER_DELIVERIES.paper,
   name: "Paper",
   description: "Black on white for printing, e-ink and handouts.",
   extends: "chart-room",
@@ -31,6 +33,15 @@ export const PAPER: ThemeDoc = {
   vocab: "plain",
   tokens: {
     ground: "#FFFFFF",
+    // One colour: every map slot is the ink, and the slot's pattern carries the answer (OV4).
+    "map-1": "#111111",
+    "map-2": "#111111",
+    "map-3": "#111111",
+    "map-4": "#111111",
+    "map-5": "#111111",
+    "map-6": "#111111",
+    "map-7": "#111111",
+    "map-8": "#111111",
     "ground-raised": "#FFFFFF",
     ink: "#111111",
     "ink-muted": "#555555",
@@ -79,6 +90,7 @@ export const PAPER: ThemeDoc = {
 export const DECK: ThemeDoc = {
   schema: "sse.theme/1",
   id: "deck",
+  delivery: STARTER_DELIVERIES.deck,
   name: "Deck panels",
   description: "Lit console panels with rounded caps, condensed capitals and amber readings.",
   extends: "chart-room",
@@ -88,6 +100,15 @@ export const DECK: ThemeDoc = {
   palette: ["#3BB4A9", "#F0A23B", "#E2675A", "#6FA8E8", "#C9D46B", "#D98BC0", "#E8ECF2"],
   tokens: {
     ground: "#0D0F14",
+    // A dark ground takes the Night chart's map palette (OV4).
+    "map-1": "#E39B41",
+    "map-2": "#57AEFF",
+    "map-3": "#6CC48A",
+    "map-4": "#EECF46",
+    "map-5": "#DB6FE4",
+    "map-6": "#4ED7D0",
+    "map-7": "#F47FAB",
+    "map-8": "#CCD186",
     "ground-raised": "#161A22",
     ink: "#E8ECF2",
     "ink-muted": "#A3ADBD",
@@ -149,6 +170,7 @@ export const DECK: ThemeDoc = {
 export const PHOSPHOR: ThemeDoc = {
   schema: "sse.theme/1",
   id: "phosphor",
+  delivery: STARTER_DELIVERIES.hauler,
   name: "Phosphor",
   description: "A green-screen terminal: one colour, scanlines and glow.",
   extends: "chart-room",
@@ -163,6 +185,15 @@ export const PHOSPHOR: ThemeDoc = {
   ],
   tokens: {
     ground: "#050A06",
+    // One colour: every map slot is the ink, and the slot's pattern carries the answer (OV4).
+    "map-1": "#5CFF8A",
+    "map-2": "#5CFF8A",
+    "map-3": "#5CFF8A",
+    "map-4": "#5CFF8A",
+    "map-5": "#5CFF8A",
+    "map-6": "#5CFF8A",
+    "map-7": "#5CFF8A",
+    "map-8": "#5CFF8A",
     "ground-raised": "#07100A",
     ink: "#5CFF8A",
     "ink-muted": "#2FBF5C",
@@ -219,6 +250,7 @@ export const PHOSPHOR: ThemeDoc = {
 export const GLASS: ThemeDoc = {
   schema: "sse.theme/1",
   id: "glass",
+  delivery: STARTER_DELIVERIES.corporate,
   name: "Clean glass",
   description: "Bright, quiet panels with soft depth and one blue.",
   extends: "chart-room",
@@ -276,6 +308,7 @@ export const GLASS: ThemeDoc = {
 export const GUIDE: ThemeDoc = {
   schema: "sse.theme/1",
   id: "guide",
+  delivery: STARTER_DELIVERIES.guide,
   name: "Field guide",
   description: "A friendly pocket guide: warm paper, round letters and chatty words.",
   extends: "chart-room",

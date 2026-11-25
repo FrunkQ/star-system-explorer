@@ -6,10 +6,22 @@
 #![allow(clippy::result_large_err)]
 
 mod adopt;
+#[cfg(test)]
+mod adopt_bary_tests;
+mod atmos;
+#[cfg(test)]
+mod atmos_tests;
+#[cfg(test)]
+mod bary_tests;
 mod caves;
+#[cfg(test)]
+mod class_sample_tests;
 mod clock;
 mod composition;
 pub mod contract;
+mod conventions;
+#[cfg(test)]
+mod conventions_tests;
 mod cosmos;
 mod descent;
 mod dressing;
@@ -21,6 +33,8 @@ mod flights;
 mod flights_tests;
 mod frame;
 mod frames;
+#[cfg(test)]
+mod from_star_tests;
 mod galaxies;
 mod glow;
 #[cfg(test)]
@@ -40,8 +54,12 @@ mod orbits;
 #[cfg(test)]
 mod power_books_tests;
 pub mod protocol;
+mod reference;
 mod sea;
 mod sky;
+mod small;
+#[cfg(test)]
+mod small_tests;
 #[cfg(test)]
 mod sol_tests;
 #[cfg(test)]
@@ -52,7 +70,12 @@ mod stability_tests;
 mod star_elements;
 #[cfg(test)]
 mod star_elements_tests;
+#[cfg(test)]
+mod starters_tests;
 mod survey;
+mod sweep;
+#[cfg(test)]
+mod sweep_tests;
 mod systems;
 mod tags;
 #[cfg(test)]
@@ -63,6 +86,7 @@ mod tech_tests;
 mod territory;
 #[cfg(test)]
 mod territory_tests;
+mod tree;
 mod trust;
 #[cfg(test)]
 mod trust_tests;
@@ -87,6 +111,7 @@ use std::collections::BTreeMap;
 
 pub const KERNEL_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(Clone)]
 struct Universe {
     root: Address,
     seed: Seed,
@@ -290,6 +315,15 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             inventory::Kinds::default()
         }
     };
+    // X3j: every resource kind keeps `extracted` and `stock` (record-logic
+    // design 2.4); a pack that keeps one itself keeps its own.
+    let mut record = record;
+    for k in inventory::kept_kinds(&resources) {
+        record
+            .kinds
+            .entry(k.id.clone())
+            .or_insert_with(|| ("sse.resources".into(), k));
+    }
     // RK9: the stack's engine designs (`provides.other.engines`, id to
     // design), later packs over earlier.
     let mut engines = BTreeMap::new();
@@ -314,6 +348,15 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         return Err(issues);
     }
     let calendar = orbits::load_calendar(ms)?;
+    // ATMOS: the stack's chemistry, when a pack provides one.
+    let chemistry = if ms
+        .iter()
+        .any(|p| p.provides.other.contains_key("life_chemistry"))
+    {
+        Some(sse_life::chemistry::ThermoTable::from_packs(ms).map_err(|e| vec![e])?)
+    } else {
+        None
+    };
     // TG1: every tag named anywhere in the stack is declared.
     let tags = tags::declarations(ms)?;
     let mut problems = tags::check(&tags::references(ms), &tags);
@@ -351,12 +394,89 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         tech,
         resources,
         engines,
+        chemistry,
     })
 }
 
 /// The stack's tag declarations plus the campaign's own (kept in the
 /// record at the universe root, TG1). A pack loaded later that declares a
 /// tag the campaign already had wins; the campaign's copy is ignored.
+/// K13: an `orbit.host` written by hand names a body that is there (now, or
+/// in the same edit), not the body itself, and no ring of hosts: so nothing
+/// is ever silently unplaced.
+fn hosts_ok(
+    facts: &BTreeMap<Address, BTreeMap<String, Value>>,
+    set: &BTreeMap<Address, BTreeMap<String, Value>>,
+) -> Result<(), String> {
+    let host_of = |a: &Address| -> Option<Address> {
+        let v = set
+            .get(a)
+            .and_then(|r| r.get("orbit.host"))
+            .or_else(|| facts.get(a).and_then(|r| r.get("orbit.host")))?;
+        match v {
+            Value::Text(t) => t.parse().ok(),
+            _ => None,
+        }
+    };
+    for (a, row) in set {
+        let Some(v) = row.get("orbit.host") else {
+            continue;
+        };
+        let Value::Text(t) = v else {
+            return Err(format!("{a} orbit.host: an address, not {v:?}"));
+        };
+        let h: Address = t
+            .parse()
+            .map_err(|e| format!("{a} orbit.host {t:?}: {e}"))?;
+        if &h == a {
+            return Err(format!("{a} cannot orbit itself"));
+        }
+        // A host need not carry facts: a generated system's bodies are there
+        // without any (a paste into one names them). It must be in the same
+        // system and not withdrawn; a host that resolves to nothing leaves
+        // the body unplaced with the reason named, never silently.
+        let sys_of = |x: &Address| {
+            let mut y = Some(x.clone());
+            while let Some(z) = y {
+                if z.last().kind() == "sys" {
+                    return Some(z);
+                }
+                y = z.parent();
+            }
+            None
+        };
+        if sys_of(&h) != sys_of(a) {
+            return Err(format!(
+                "{a} orbit.host: {h} is not in the same system; move it with its system, or pick a host there"
+            ));
+        }
+        let gone = |r: Option<&BTreeMap<String, Value>>| {
+            matches!(
+                r.and_then(|r| r.get(withdraw::WITHDRAWN)),
+                Some(Value::Bool(true))
+            )
+        };
+        if gone(set.get(&h)) || (!set.contains_key(&h) && gone(facts.get(&h))) {
+            return Err(format!("{a} orbit.host: {h} has been removed"));
+        }
+        let mut at = Some(h);
+        let mut steps = 0;
+        while let Some(x) = at {
+            if &x == a {
+                return Err(format!(
+                    "{a} orbit.host: its hosts would go round in a ring back to it"
+                ));
+            }
+            steps += 1;
+            if steps > 64 {
+                break;
+            }
+            at = host_of(&x);
+        }
+    }
+    Ok(())
+}
+
 fn campaign_tags(u: &Universe, stack: &tags::TagSet) -> Result<tags::TagSet, Response> {
     let mut set = stack.clone();
     let rec = u.record.state_at(UniverseTime::seconds(i64::MAX));
@@ -493,6 +613,8 @@ struct Job {
     total: u32,
     done: u32,
     hasher: Hasher,
+    /// A sweep's state (K1); `None` for the benchmark.
+    sweep: Option<sweep::Sweep>,
 }
 
 /// What the stack says about observation: data views and disclosure
@@ -533,6 +655,9 @@ struct Observe {
     resources: inventory::Kinds,
     /// Engine designs by id (`provides.other.engines`, RK9).
     engines: BTreeMap<String, sse_nav::power::EngineDef>,
+    /// The stack's gas and water chemistry (`provides.other.life_chemistry`,
+    /// E0), for `atmosphere_advice`; absent, the base life pack's.
+    chemistry: Option<sse_life::chemistry::ThermoTable>,
 }
 
 pub struct Kernel {
@@ -556,6 +681,8 @@ pub struct Kernel {
     /// ND6: each pack's sources, fudges and reproduction report, worked
     /// out when the stack loaded.
     reports: Vec<trust::PackReport>,
+    /// `reference_tiles`' private Solar System, kept until the stack loads again.
+    reference: Option<Universe>,
 }
 
 impl Default for Kernel {
@@ -590,6 +717,184 @@ fn record_err(e: sse_record::RecordError) -> Response {
         E::Chronicle(_) => "chronicle",
     };
     err(code, e.to_string())
+}
+
+/// A ship's mining rate, kg of a resource an hour (an authored fact on the
+/// ship or its template): what `mine` moves per hour, capped by what is there.
+const MINING_RATE: &str = "mining.rate_kg_h";
+
+/// The conserving move behind `transfer` and `mine` (X3j, record-logic
+/// design 2.4): the source gives its stock first, then its natural amount
+/// (raising its `extracted`); the destination's stock rises by as much.
+#[allow(clippy::too_many_arguments)]
+fn transfer(
+    u: &mut Universe,
+    reg: &sse_record::Registry,
+    sheet: &sse_reference::Reference,
+    kinds: &inventory::Kinds,
+    kind: &str,
+    a: &Address,
+    b: &Address,
+    kg: f64,
+    writer: Option<String>,
+    reason: Option<String>,
+    at_s: i64,
+) -> Result<Response, Response> {
+    let kind = kind.to_string();
+    let (a, b) = (a.clone(), b.clone());
+    if !(kg.is_finite() && kg > 0.0) {
+        return Err(err(
+            "bad_value",
+            "move a positive, finite number of kilograms",
+        ));
+    }
+    if !kinds.kinds.contains_key(&kind) {
+        return Err(err(
+            "unknown_resource",
+            format!("{kind:?} is not a resource kind of this stack (provides.other.resources)"),
+        ));
+    }
+    if a == b {
+        return Err(err(
+            "bad_address",
+            "a transfer goes from one place to another",
+        ));
+    }
+    let at = UniverseTime::seconds(at_s);
+    let state = u.record.state_at(at);
+    let natural = |u: &mut Universe, x: &Address| -> Result<f64, Response> {
+        natural_kg(u, x, &kind, at_s, sheet, kinds, &state)
+    };
+    let na = natural(u, &a)?;
+    let nb = natural(u, &b)?;
+    let ha = inventory::Held::at(&state, &a, &kind, na);
+    let hb = inventory::Held::at(&state, &b, &kind, nb);
+    let Some((extracted, stock)) = ha.take(kg) else {
+        return Err(err(
+            "not_enough",
+            format!(
+                "{a} holds {:.6e} kg of {kind}, less than {kg:.6e} kg",
+                ha.held_kg()
+            ),
+        ));
+    };
+    let writer = writer.unwrap_or_else(|| "transfer".into());
+    let reason = reason.or_else(|| Some(format!("{kg} kg of {kind}: {a} to {b}")));
+    let publisher = Publisher::new("gm", "transfer", "1");
+    let mut ids = vec![];
+    let mut set = |u: &mut Universe,
+                   address: &Address,
+                   kept: String,
+                   v: f64,
+                   old: f64|
+     -> Result<(), Response> {
+        if v == old {
+            return Ok(());
+        }
+        let id = sse_record::set_kept(
+            &mut u.record,
+            reg,
+            &sse_record::KeptSet {
+                address: address.clone(),
+                kind: kept,
+                value: Some(Value::Float(v)),
+                writer: writer.clone(),
+                reason: reason.clone(),
+                causes: vec![],
+            },
+            at,
+            &publisher,
+        )
+        .map_err(record_err)?;
+        ids.push(id.hex());
+        Ok(())
+    };
+    // Checked first, so the writes below cannot half-happen.
+    reg.check(
+        &inventory::stock_kind(&kind),
+        Some(&Value::Float(0.0)),
+        &writer,
+    )
+    .map_err(record_err)?;
+    set(
+        u,
+        &a,
+        inventory::extracted_kind(&kind),
+        extracted,
+        ha.extracted_kg,
+    )?;
+    set(u, &a, inventory::stock_kind(&kind), stock, ha.stock_kg)?;
+    set(
+        u,
+        &b,
+        inventory::stock_kind(&kind),
+        hb.stock_kg + kg,
+        hb.stock_kg,
+    )?;
+    let after = u.record.state_at(at);
+    Ok(Response::Transferred {
+        kind: kind.clone(),
+        kg,
+        from: inventory::Held::at(&after, &a, &kind, na).json(),
+        to: inventory::Held::at(&after, &b, &kind, nb).json(),
+        change_ids: ids,
+        state_hash: latest_hash(&u.chronicle),
+        record_hash: record_hash(u),
+    })
+}
+
+/// A place's natural amount of a resource kind: a world's, read off its
+/// composition at Survey (`read_inventory`); zero for anything else (a ship,
+/// a station, a settlement's store), which holds only stock.
+fn natural_kg(
+    u: &mut Universe,
+    a: &Address,
+    kind: &str,
+    at_s: i64,
+    sheet: &sse_reference::Reference,
+    kinds: &inventory::Kinds,
+    kept: &sse_chronicle::State,
+) -> Result<f64, Response> {
+    let text = a.to_string();
+    let Some(cut) = text.find("/sys:") else {
+        return Ok(0.0);
+    };
+    let rest = &text[cut + 1..];
+    let sys_end = rest.find('/').map_or(text.len(), |i| cut + 1 + i);
+    let system = &text[..sys_end];
+    if system.len() == text.len() || text[sys_end..].contains("/ship:") {
+        return Ok(0.0);
+    }
+    let sa: Address = system
+        .parse()
+        .map_err(|e| err("bad_address", format!("{e}")))?;
+    if !u.runs.contains_key(system) {
+        if let Some(req) = adopt::formation_request(&u.chronicle, &sa) {
+            let (_, run, _) = systems::form(req.into())?;
+            u.runs.insert(system.to_string(), run);
+        }
+    }
+    let r = inventory::read(
+        &u.chronicle,
+        &sa,
+        Some(&text),
+        Some(&[kind.to_string()]),
+        Some(at_s),
+        u.runs.get(system),
+        sheet,
+        kinds,
+        kept,
+    );
+    match r {
+        Ok(Response::InventoryRead { bodies }) => Ok(bodies
+            .first()
+            .and_then(|b| b["kinds"][0]["kg"].as_f64())
+            .unwrap_or(0.0)),
+        Ok(_) => Ok(0.0),
+        // Not a world with a mass and a radius: a construct or a place on one.
+        Err(Response::Error { code, .. }) if code == "unknown_body" => Ok(0.0),
+        Err(e) => Err(e),
+    }
 }
 
 fn in_universe(root: &Address, a: &str) -> Result<Address, Response> {
@@ -689,6 +994,116 @@ fn tech_holder(u: &Universe, holder: &str) -> Result<Address, Response> {
         ));
     }
     Ok(a)
+}
+
+/// A sector file's routes (X3l): each one between two imported worlds
+/// becomes a charted link between their systems when `apply` is given
+/// (audience and tier); the rest are listed with the reason they were left
+/// out. The link id is the hexes and the route's type, so importing again
+/// rewrites the same links.
+fn import_routes(
+    u: &mut Universe,
+    routes: &[sse_sector_io::Route],
+    worlds: &[sse_codes::import::ImportedWorld],
+    apply: Option<(&sse_record::Audience, Option<&str>)>,
+    at_s: i64,
+) -> Result<Vec<serde_json::Value>, Response> {
+    let system_at = |hex: &str| {
+        worlds
+            .iter()
+            .find(|w| w.hex == hex && w.refused.is_none())
+            .map(|w| w.system.clone())
+    };
+    let mut ids: Vec<String> = Vec::new();
+    let mut out = Vec::new();
+    for r in routes {
+        let mut row = serde_json::json!({"start": r.start, "end": r.end});
+        if let Some(k) = &r.kind {
+            row["kind"] = serde_json::Value::from(k.clone());
+        }
+        let ends = (system_at(&r.start), system_at(&r.end));
+        let left_out = if !r.inside() {
+            Some(
+                "it reaches into a neighbouring sector, which this import does not hold"
+                    .to_string(),
+            )
+        } else if r.start == r.end {
+            Some("both ends are the same hex".to_string())
+        } else {
+            match &ends {
+                (None, _) => Some(format!("no imported world at {}", r.start)),
+                (_, None) => Some(format!("no imported world at {}", r.end)),
+                _ => None,
+            }
+        };
+        if let Some(why) = left_out {
+            row["left_out"] = serde_json::Value::from(why);
+            out.push(row);
+            continue;
+        }
+        let (a, b) = (ends.0.expect("checked"), ends.1.expect("checked"));
+        row["a"] = serde_json::Value::from(a.clone());
+        row["b"] = serde_json::Value::from(b.clone());
+        if let Some((audience, tier)) = apply {
+            let word: String = r
+                .kind
+                .as_deref()
+                .unwrap_or("route")
+                .chars()
+                .map(|c| {
+                    if c.is_ascii_alphanumeric() {
+                        c.to_ascii_lowercase()
+                    } else {
+                        '_'
+                    }
+                })
+                .collect();
+            let mut id = format!("route-{}-{}-{word}", r.start, r.end);
+            let base = id.clone();
+            let mut n = 1;
+            while ids.contains(&id) {
+                n += 1;
+                id = format!("{base}-{n}");
+            }
+            ids.push(id.clone());
+            let name = match &r.kind {
+                Some(k) => format!("{k} route {} to {}", r.start, r.end),
+                None => format!("Route {} to {}", r.start, r.end),
+            };
+            let mut why = format!("from the sector file's routes ({} to {}", r.start, r.end);
+            if let Some(al) = &r.allegiance {
+                why.push_str(&format!(", allegiance {al}"));
+            }
+            why.push(')');
+            let d = sse_record::links::LinkDraft {
+                root: u.root.clone(),
+                id,
+                a: a.parse().expect("import addresses parse"),
+                b: b.parse().expect("import addresses parse"),
+                name,
+                kind: r.kind.clone().unwrap_or_else(|| "route".into()),
+                one_way: false,
+                nav: None,
+                tier: tier.map(str::to_string),
+                audience: audience.clone(),
+                writer: "gm".into(),
+                reason: Some(why),
+                source: Some("import_sector".into()),
+                withdraw: false,
+            };
+            let (link, ev) = sse_record::links::set_link(
+                &mut u.record,
+                &d,
+                UniverseTime::seconds(at_s),
+                &Publisher::new("gm", "import_sector", "1"),
+            )
+            .map_err(record_err)?;
+            row["link"] = serde_json::Value::from(link.to_string());
+            row["event_id"] = serde_json::Value::from(ev.hex());
+        }
+        out.push(row);
+    }
+    Ok(out)
 }
 
 fn record_hash(u: &Universe) -> String {
@@ -797,6 +1212,7 @@ impl Kernel {
             land: vec![],
             climates: sse_climate::Cache::new(8),
             reports: vec![],
+            reference: None,
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
@@ -881,6 +1297,10 @@ impl Kernel {
                 x
             }
         };
+        let mut x = x;
+        if x.gases.is_none() {
+            x.gases = adopt::catalogued_gases(w.facts.get(&b.address));
+        }
         let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &x);
         Ok((
             serde_json::to_value(&c).expect("plain data"),
@@ -1027,13 +1447,7 @@ impl Kernel {
             };
             // Sense: what the seat's audience has been shown, never the GM's truth.
             let root = self.universe()?.root.to_string();
-            let scene = match self.dispatch(Request::Scene {
-                audience: seat.audience.clone(),
-                scope: root,
-                data_view: None,
-                at_s,
-                observe: None,
-            })? {
+            let scene = match self.scene_op(seat.audience.clone(), root, None, at_s, None)? {
                 Response::Scene { scene, .. } => scene,
                 other => return Err(other),
             };
@@ -1730,6 +2144,25 @@ impl Kernel {
         })
     }
 
+    /// `from_star` (run_formation, adopt): promote the drawn star if need
+    /// be and give its birth, as JSON, and the galaxy's now plus campaign
+    /// time elapsed, Gyr.
+    fn star_birth(&mut self, address: &str) -> Result<(serde_json::Value, f64), Response> {
+        let description = match self.promote_star(address)? {
+            Response::StarPromoted { description, .. } => description,
+            other => return Err(other),
+        };
+        let s: sse_cosmos::stars::StarSystem = serde_json::from_value(description)
+            .map_err(|e| err("bad_record", format!("{address}: {e}")))?;
+        let u = self.universe()?;
+        let elapsed_gyr = clock::elapsed_myr(&u.chronicle) / 1000.0;
+        let (seed, root) = (u.seed, u.root.clone());
+        cosmos::with_stars(&seed, &root, None, |st, now| {
+            let b = serde_json::to_value(st.birth(&s)).expect("plain data");
+            Ok((b, now + elapsed_gyr))
+        })
+    }
+
     /// `promote_star` (Y7a): draw a fill star once and store it whole.
     fn promote_star(&mut self, address: &str) -> Result<Response, Response> {
         let lib = self.observe.names.clone();
@@ -1803,6 +2236,226 @@ impl Kernel {
     /// audience's scene.
     /// `classify_preview`: label the campaign's bodies with a candidate
     /// stack's atlas, loading and writing nothing.
+    /// `class_sample` (see the request). The sample's inputs are the class
+    /// example's facts whose field starts with one of `SAMPLE_INPUTS`.
+    fn class_sample(
+        &mut self,
+        packs: Vec<serde_json::Value>,
+        classes: Vec<String>,
+    ) -> Result<Response, Response> {
+        const SAMPLE_INPUTS: [&str; 10] = [
+            "body.kind",
+            "body.mass",
+            "body.radius",
+            "body.rotation_period",
+            "body.obliquity",
+            "makeup.",
+            "orbit.semi_major_axis",
+            "orbit.eccentricity",
+            "atmosphere.surface_pressure",
+            "atmosphere.main",
+        ];
+        use sse_core::{math as m, sheet as sh};
+        if classes.is_empty() || classes.len() > 128 {
+            return Err(err("bad_request", "classes: 1 to 128 class ids"));
+        }
+        let mut ms = Vec::new();
+        for (i, p) in packs.iter().enumerate() {
+            ms.push(
+                serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                    .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
+            );
+        }
+        let atlas = sse_sift::load(&ms)
+            .map_err(|es| err("bad_stack", es.join("; ")))?
+            .atlas;
+        let root = self.universe()?.root.clone();
+        let branch = match self.dispatch(Request::Branch {
+            label: "class samples".into(),
+        })? {
+            Response::BranchOpened { branch } => branch,
+            other => return Err(other),
+        };
+        let mut samples = vec![];
+        let mut refused = vec![];
+        for (n, id) in classes.iter().enumerate() {
+            let Some(class) = atlas.classes.iter().find(|c| &c.id == id) else {
+                refused.push(
+                    serde_json::json!({"class": id, "why": "no class with this id in the atlas"}),
+                );
+                continue;
+            };
+            let best = class
+                .examples
+                .iter()
+                .filter(|e| e.expect == sse_sift::classify::Expect::In)
+                .map(|e| {
+                    let s = sse_sift::Subject::new(e.values.clone());
+                    let fit = atlas.fit(id, &s).map_or(0.0, |f| f.fit);
+                    (fit, atlas.centrality(id, &s), e)
+                })
+                .fold(
+                    None::<(f64, f64, &sse_sift::classify::Example)>,
+                    |b, x| match b {
+                        Some(b) if (b.0, b.1) >= (x.0, x.1) => Some(b),
+                        _ => Some(x),
+                    },
+                );
+            let Some((_, _, ex)) = best else {
+                refused.push(serde_json::json!({"class": id, "why": "the class has no in example to sample"}));
+                continue;
+            };
+            let system = format!("{root}/sys:class-sample-{n}");
+            let star = format!("{system}/star:0");
+            let body = format!("{system}/body:0");
+            let mut edits: Vec<(String, String, serde_json::Value)> = vec![
+                (star.clone(), "name".into(), serde_json::json!("Sample sun")),
+                (star.clone(), "body.kind".into(), serde_json::json!("star")),
+                (
+                    star.clone(),
+                    "body.mass".into(),
+                    serde_json::json!(sh::M_SUN),
+                ),
+                (
+                    star.clone(),
+                    "body.radius".into(),
+                    serde_json::json!(sh::R_SUN),
+                ),
+                (
+                    star.clone(),
+                    "star.luminosity".into(),
+                    serde_json::json!(sh::L_SUN),
+                ),
+                (
+                    star.clone(),
+                    "star.effective_temperature".into(),
+                    serde_json::json!(sh::T_SUN),
+                ),
+                (
+                    body.clone(),
+                    "name".into(),
+                    serde_json::json!(format!("{} sample", ex.name)),
+                ),
+            ];
+            let num_of = |k: &str| match ex.values.get(k) {
+                Some(Value::Float(x)) => Some(*x),
+                Some(Value::Int(x)) => Some(*x as f64),
+                _ => None,
+            };
+            // The system's age: the example's, else the Sun's.
+            let age_s = num_of("system.age")
+                .filter(|a| *a > 0.0)
+                .unwrap_or(4.6e9 * sh::YR_JULIAN);
+            edits.push((
+                system.clone(),
+                "system.age".into(),
+                serde_json::json!(age_s),
+            ));
+            edits.push((body.clone(), "orbit.host".into(), serde_json::json!(star)));
+            // An example with no orbit sits where the star warms a fast
+            // rotating black body to the example's equilibrium temperature,
+            // L = 16 pi sigma a^2 T^4, else at 1 AU.
+            if num_of("orbit.semi_major_axis").is_none() {
+                let a_m = num_of("planet.equilibrium_temperature")
+                    .filter(|t| *t > 0.0)
+                    .map_or(sh::AU, |t| {
+                        m::sqrt(sh::L_SUN / (16.0 * m::PI * sh::SIGMA_SB * t * t * t * t))
+                    });
+                edits.push((
+                    body.clone(),
+                    "orbit.semi_major_axis".into(),
+                    serde_json::json!(a_m),
+                ));
+            }
+            for (f, v) in &ex.values {
+                if SAMPLE_INPUTS.iter().any(|p| f.starts_with(p)) {
+                    let j =
+                        serde_json::to_value(v).map_err(|e| err("bad_value", format!("{e}")))?;
+                    edits.push((body.clone(), f.clone(), j));
+                }
+            }
+            for (address, field, value) in edits {
+                self.dispatch(Request::BranchSet {
+                    branch: branch.clone(),
+                    edit: crate::protocol::AuthoredEdit {
+                        address,
+                        field,
+                        value,
+                        occurred_at_s: 0,
+                        impossible: false,
+                    },
+                })?;
+            }
+            let (facts, surfaces) =
+                match self.resolved_system_op(system.clone(), None, None, Some(branch.clone()))? {
+                    Response::SystemResolved {
+                        facts, surfaces, ..
+                    } => (facts, surfaces),
+                    other => return Err(other),
+                };
+            let surface = surfaces.iter().any(|s| s["address"] == body.as_str());
+            let f = &facts[&body];
+            let mut resolved = BTreeMap::new();
+            for (k, v) in f.as_object().into_iter().flatten() {
+                if let Ok(v) = json_to_value(v) {
+                    resolved.insert(k.clone(), v);
+                }
+            }
+            let on_world = atlas.fit(id, &sse_sift::Subject::new(resolved));
+            let fit = on_world.as_ref().map_or(0.0, |f| f.fit);
+            // What holds the sample's fit down: the axis, and whether the
+            // campaign has no value for it yet (a fact not published on
+            // the world) or one outside the class's bands.
+            let limiting = on_world
+                .and_then(|f| f.limiting)
+                .filter(|l| l.fit < 1.0)
+                .map(|l| {
+                    serde_json::json!({
+                        "axis": l.axis,
+                        "why": if l.value.is_none() { "not published on the world yet" } else { "outside the class's bands" },
+                    })
+                });
+            let example_fit = atlas
+                .fit(id, &sse_sift::Subject::new(ex.values.clone()))
+                .map_or(0.0, |f| f.fit);
+            let num = |k: &str| f[k].as_f64();
+            let rings = ex
+                .values
+                .get("rings")
+                .is_some_and(|v| *v == Value::Bool(true))
+                || ex
+                    .values
+                    .get("has_ring_child")
+                    .and_then(|v| match v {
+                        Value::Float(x) => Some(*x),
+                        Value::Int(x) => Some(*x as f64),
+                        _ => None,
+                    })
+                    .is_some_and(|x| x > 0.0);
+            samples.push(serde_json::json!({
+                "class": id,
+                "scheme": class.scheme,
+                "example": ex.name,
+                "system": system,
+                "body": body,
+                "radius_m": num("body.radius"),
+                "tilt_rad": num("body.obliquity"),
+                "day_s": num("body.rotation_period"),
+                "rings": rings,
+                "fit": fit,
+                "example_fit": example_fit,
+                "limiting": limiting,
+                "surface": surface,
+            }));
+        }
+        Ok(Response::ClassSampled {
+            branch,
+            atlas_hash: atlas.content_hash().hex(),
+            samples,
+            refused,
+        })
+    }
+
     fn classify_preview(
         &mut self,
         packs: Vec<serde_json::Value>,
@@ -1986,16 +2639,11 @@ impl Kernel {
             sse_sift::sift(&sifters, &w, &scope)
         } else {
             let audience = audience.clone().expect("not the GM");
-            let scene = match self.dispatch(Request::Scene {
-                audience: audience.clone(),
-                scope: scope.to_string(),
-                data_view: None,
-                at_s,
-                observe: None,
-            })? {
-                Response::Scene { scene, .. } => scene,
-                other => return Err(other),
-            };
+            let scene =
+                match self.scene_op(audience.clone(), scope.to_string(), None, at_s, None)? {
+                    Response::Scene { scene, .. } => scene,
+                    other => return Err(other),
+                };
             let scene: sse_observe::scene::Scene =
                 serde_json::from_value(scene).expect("scenes round-trip");
             let mut state = sse_chronicle::State::default();
@@ -2165,6 +2813,8 @@ impl Kernel {
             }
             set.entry(a).or_default().insert(e.field.clone(), v);
         }
+        let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        hosts_ok(&latest.facts, &set).map_err(|m| err("bad_host", m))?;
         let t = UniverseTime::seconds(occurred_at_s);
         let subject: Vec<Address> = set.keys().cloned().collect();
         let ev = Event::new(EventBody {
@@ -2237,6 +2887,130 @@ impl Kernel {
         })
     }
 
+    /// `withdraw` with `leave` or `hand`: what went round the body goes
+    /// round its host (or `to`) from `at_s`, in the same event as the
+    /// withdrawal.
+    fn withdraw_rehoming(
+        &mut self,
+        address: &str,
+        at_s: i64,
+        hand: bool,
+        to: Option<&str>,
+        keep: orbits::Keep,
+        by_default: bool,
+    ) -> Result<Response, Response> {
+        // Alex 24 Nov 2026: removing a body leaves what went round it round
+        // its host, moving as it was; "remove them too" is `take`. With no
+        // choice named, a subject that goes round nothing, or that nothing
+        // goes round, is simply withdrawn.
+        if by_default && to.is_some() {
+            return Err(err("bad_request", "to needs others: hand"));
+        }
+        let u = self.universe()?;
+        let a = in_universe(&u.root, address)?;
+        let mut st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+        withdraw::drop_withdrawn(&mut st.facts);
+        if by_default && !st.facts.contains_key(&a) {
+            return self.set_withdrawn(address, at_s, true);
+        }
+        let row = st.facts.get(&a).ok_or_else(|| {
+            err(
+                "unknown_address",
+                format!("{a} has no facts at that time: nothing to withdraw"),
+            )
+        })?;
+        let host_of = |r: &BTreeMap<String, Value>| match r.get("orbit.host") {
+            Some(Value::Text(t)) => t.parse::<Address>().ok(),
+            _ => None,
+        };
+        let new_host = match (hand, to) {
+            (true, Some(t)) => in_universe(&u.root, t)?,
+            (true, None) => return Err(err("bad_request", "hand needs to: the body that takes them")),
+            (false, _) if by_default && host_of(row).is_none() => {
+                return self.set_withdrawn(address, at_s, true);
+            }
+            (false, _) => host_of(row).ok_or_else(|| {
+                err(
+                    "rehost_refused",
+                    format!("{a} goes round nothing, so what goes round it has nowhere to be left: take them, or hand them to a body"),
+                )
+            })?,
+        };
+        let system = {
+            let mut x = Some(a.clone());
+            let mut found = None;
+            while let Some(y) = x {
+                if y.last().kind() == "sys" {
+                    found = Some(y.clone());
+                    break;
+                }
+                x = y.parent();
+            }
+            found.ok_or_else(|| err("bad_address", format!("{a} is not in a system")))?
+        };
+        let facts: BTreeMap<Address, BTreeMap<String, Value>> = st
+            .facts
+            .iter()
+            .filter(|(x, _)| system.contains(x))
+            .map(|(x, r)| (x.clone(), r.clone()))
+            .collect();
+        let kids: Vec<Address> = facts
+            .iter()
+            .filter(|(x, r)| {
+                *x != &a
+                    && match host_of(r) {
+                        Some(h) => h == a,
+                        None => {
+                            x.parent().as_ref() == Some(&a)
+                                && r.contains_key("orbit.semi_major_axis")
+                        }
+                    }
+            })
+            .map(|(x, _)| x.clone())
+            .collect();
+        if by_default && kids.is_empty() {
+            return self.set_withdrawn(address, at_s, true);
+        }
+        let mut set: BTreeMap<Address, BTreeMap<String, Value>> = BTreeMap::new();
+        for k in &kids {
+            let r = orbits::rehost(&facts, &system, k, &new_host, at_s, Some(&u.seed), keep)
+                .map_err(|m| err("rehost_refused", format!("{k}: {m}")))?;
+            set.insert(k.clone(), r);
+        }
+        set.entry(a.clone())
+            .or_default()
+            .insert(withdraw::WITHDRAWN.into(), Value::Bool(true));
+        let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        hosts_ok(&latest.facts, &set).map_err(|m| err("bad_host", m))?;
+        let t = UniverseTime::seconds(at_s);
+        let subject: Vec<Address> = set.keys().cloned().collect();
+        let ev = Event::new(EventBody {
+            kind: kinds::AUTHORED_SET.into(),
+            subject: subject.clone(),
+            occurred_at: t,
+            activated_at: t,
+            recognised_at: u.chronicle.next_stamp(),
+            causes: vec![],
+            payload: Payload {
+                set,
+                ..Default::default()
+            },
+            evidence: Evidence::Authored,
+            publisher: Publisher::new("gm", "withdraw", "1"),
+        })
+        .map_err(|e| err("bad_event", format!("{e}")))?;
+        let id = u
+            .chronicle
+            .append(ev)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        Ok(Response::Authored {
+            event_id: id.hex(),
+            affected: subject.iter().map(|x| x.to_string()).collect(),
+            state_hash: latest_hash(&u.chronicle),
+            declared_tag: None,
+        })
+    }
+
     fn flow_inputs(
         &self,
         flow: &Flow,
@@ -2264,6 +3038,179 @@ impl Kernel {
         Ok(out)
     }
 
+    /// `scene`, outside `dispatch`, for ops that read a scene as part of
+    /// their own work (see `resolved_system_op`).
+    pub(crate) fn scene_op(
+        &mut self,
+        audience: String,
+        scope: String,
+        data_view: Option<String>,
+        at_s: i64,
+        observe: Option<serde_json::Value>,
+    ) -> Result<Response, Response> {
+        let scope: Address = scope
+            .parse()
+            .map_err(|e| err("bad_address", format!("{e}")))?;
+        let draft = match observe {
+            None => None,
+            Some(v) => Some(
+                sse_observe::ObserveSetup::from_stack(&[("draft".into(), v)])
+                    .map_err(|e| err("bad_observe", e))?
+                    .ok_or_else(|| err("bad_observe", "the draft setup is empty"))?,
+            ),
+        };
+        let setup = draft
+            .as_ref()
+            .or(self.observe.setup.as_ref())
+            .ok_or_else(|| {
+                err(
+                    "no_data_views",
+                    "the pack stack defines no data views (provides.other.observe)",
+                )
+            })?;
+        let u = self
+            .universe
+            .as_ref()
+            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+        let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+        // Paste support: withdrawn subjects are not in the scene.
+        withdraw::drop_withdrawn(&mut state.facts);
+        // NM2: each subject's shown names, disclosed as `name.<layer>`.
+        names::inject(&mut state, &self.observe.names, &u.seed, &u.root);
+        // Authored tags out of the facts; rule tags from the stack.
+        // TG3: authored true forces a tag, authored false holds a
+        // rule's tag off; both come out of the facts.
+        let mut tags: BTreeMap<Address, std::collections::BTreeSet<String>> = BTreeMap::new();
+        let mut authored: BTreeMap<Address, BTreeMap<String, bool>> = BTreeMap::new();
+        for (a, f) in state.facts.iter_mut() {
+            let mine = sse_sift::authored_tags(f);
+            f.retain(|k, _| !k.starts_with(TAG_FIELD));
+            if !mine.is_empty() {
+                authored.insert(a.clone(), mine);
+            }
+        }
+        let none = BTreeMap::new();
+        for (a, f) in &state.facts {
+            let subject = sse_sift::Subject {
+                address: Some(a.clone()),
+                facts: f.clone(),
+                parent: a
+                    .parent()
+                    .and_then(|p| state.facts.get(&p).cloned())
+                    .unwrap_or_default(),
+                now_s: at_s,
+                ..Default::default()
+            };
+            for t in self
+                .observe
+                .rules
+                .apply_authored(
+                    &subject,
+                    &BTreeMap::new(),
+                    authored.get(a).unwrap_or(&none),
+                    Some(&u.seed),
+                )
+                .into_keys()
+            {
+                tags.entry(a.clone()).or_default().insert(t);
+            }
+        }
+        state.facts.retain(|_, f| !f.is_empty());
+        let fictional = self
+            .stack
+            .as_ref()
+            .map(|(s, _)| s.fictional_kinds.iter().cloned().collect())
+            .unwrap_or_default();
+        let views = setup.views_by_id();
+        let disclosure = with_record(&setup.disclosure, &self.observe.record);
+        let notes = sse_record::notes_at(u.record.events(), UniverseTime::seconds(at_s));
+        // Kept values and actors live in the record; the GM machine
+        // folds them in here and filters them like any fact.
+        for (a, f) in u.record.state_at(UniverseTime::seconds(at_s)).facts {
+            state.facts.entry(a).or_default().extend(f);
+        }
+        let inp = sse_observe::SceneInput {
+            state: &state,
+            chronicle: Some(&u.chronicle),
+            tags: &tags,
+            fictional: &fictional,
+            disclosure: &disclosure,
+            views: &views,
+            campaign: &setup.campaign,
+            notes: &notes,
+        };
+        let scene = sse_observe::build_scene_through(&inp, &audience, &scope, data_view.as_deref())
+            .map_err(|e| err("bad_data_view", e))?;
+        Ok(Response::Scene {
+            scene_hash: scene.hash().hex(),
+            scene: serde_json::to_value(&scene).expect("scenes are plain data"),
+        })
+    }
+
+    /// `resolved_system`, outside `dispatch`: ops that resolve a system as
+    /// part of their own work (class samples, sweeps) call this, so a debug
+    /// build does not stack two of `dispatch`'s large frames under a resolve.
+    pub(crate) fn resolved_system_op(
+        &mut self,
+        system: String,
+        at_s: Option<i64>,
+        tiles: Option<Vec<protocol::TileRequest>>,
+        branch: Option<String>,
+    ) -> Result<Response, Response> {
+        let a: Address = system
+            .parse()
+            .map_err(|e| err("bad_address", format!("{e}")))?;
+        let u = self.universe()?;
+        if !u.root.contains(&a) {
+            return Err(err(
+                "bad_address",
+                format!("{a} is not in universe {}", u.root),
+            ));
+        }
+        if !u.runs.contains_key(&system) {
+            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                let (_, run, _) = systems::form(req.into())?;
+                u.runs.insert(system.clone(), run);
+            }
+        }
+        let what_if = match &branch {
+            Some(b) => {
+                let id = u
+                    .branches
+                    .get(b)
+                    .ok_or_else(|| err("unknown_branch", b.clone()))?;
+                Some(
+                    u.chronicle
+                        .branch_as_main(id)
+                        .map_err(|e| err("chronicle", format!("{e}")))?,
+                )
+            }
+            None => None,
+        };
+        let r = adopt::resolved_system(
+            what_if.as_ref().unwrap_or(&u.chronicle),
+            &u.seed,
+            &a,
+            at_s,
+            tiles.as_deref().unwrap_or(&[]),
+            u.runs.get(&system),
+            &mut u.orbits,
+        )?;
+        Ok(Response::SystemResolved {
+            system,
+            source: r.source,
+            at_s: r.at_s,
+            facts: r.facts,
+            evidence: r.evidence,
+            spec: r.spec,
+            surfaces: r.surfaces,
+            tiles: r.tiles,
+            refused: r.refused,
+            clouds: r.clouds,
+            frame: frame::drawn(&u.seed, &a)?.json(),
+        })
+    }
+
     fn dispatch(&mut self, req: Request) -> Result<Response, Response> {
         Ok(match req {
             Request::Hello => Response::Hello {
@@ -2275,6 +3222,8 @@ impl Kernel {
                 tiers: tiers(),
             },
             Request::LoadStack { packs } => {
+                // The reference Solar System is read under the stack in force.
+                self.reference = None;
                 let mut ms = Vec::new();
                 for (i, p) in packs.iter().enumerate() {
                     ms.push(
@@ -2497,6 +3446,8 @@ impl Kernel {
                         declare = Some(tag.to_string());
                     }
                 }
+                let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                hosts_ok(&latest.facts, &e.body.payload.set).map_err(|m| err("bad_host", m))?;
                 let affected = e.body.subject.iter().map(|a| a.to_string()).collect();
                 let id = u
                     .chronicle
@@ -2522,7 +3473,29 @@ impl Kernel {
                 evidence,
                 source,
             } => self.set_authored_batch(&edits, occurred_at_s, evidence.as_deref(), source)?,
-            Request::Withdraw { address, at_s } => self.set_withdrawn(&address, at_s, true)?,
+            Request::Withdraw {
+                address,
+                at_s,
+                others,
+                to,
+                keep,
+            } => match others.as_deref().unwrap_or("default") {
+                "take" if to.is_none() => self.set_withdrawn(&address, at_s, true)?,
+                "leave" | "hand" | "default" => self.withdraw_rehoming(
+                    &address,
+                    at_s,
+                    others.as_deref() == Some("hand"),
+                    to.as_deref(),
+                    keep.unwrap_or(orbits::Keep::Motion),
+                    others.is_none(),
+                )?,
+                other => {
+                    return Err(err(
+                        "bad_request",
+                        format!("others: take, leave or hand (with to), not {other:?}"),
+                    ))
+                }
+            },
             Request::Restore { address, at_s } => self.set_withdrawn(&address, at_s, false)?,
             Request::CampaignTags => {
                 let stack_tags = self.observe.tags.clone();
@@ -2751,7 +3724,29 @@ impl Kernel {
                 Response::Discarded { branch }
             }
             Request::StartJob { job } => {
-                let JobSpec::Benchmark { units } = job;
+                let units = match job {
+                    JobSpec::Benchmark { units } => units,
+                    JobSpec::Sweep { .. } => {
+                        let s = sweep::Sweep::start(self, job)?;
+                        let id = self.next_job;
+                        self.next_job += 1;
+                        let total = s.total();
+                        self.jobs.insert(
+                            id,
+                            Job {
+                                total,
+                                done: 0,
+                                hasher: Hasher::new("sse.kernel.sweep.v1"),
+                                sweep: Some(s),
+                            },
+                        );
+                        return Ok(Response::JobStarted {
+                            job: id,
+                            total_units: total,
+                            cost: Cost::Heavy,
+                        });
+                    }
+                };
                 if units == 0 {
                     return Err(err("bad_job", "a job needs at least one unit"));
                 }
@@ -2763,6 +3758,7 @@ impl Kernel {
                         total: units,
                         done: 0,
                         hasher: Hasher::new("sse.kernel.benchmark.v1"),
+                        sweep: None,
                     },
                 );
                 let cost = if units <= 1_000 {
@@ -2778,6 +3774,40 @@ impl Kernel {
                     job: id,
                     total_units: units,
                     cost,
+                }
+            }
+            Request::StepJob { job, budget }
+                if self.jobs.get(&job).is_some_and(|j| j.sweep.is_some()) =>
+            {
+                let mut j = self.jobs.remove(&job).unwrap();
+                let mut s = j.sweep.take().unwrap();
+                let stepped = s.step(self, budget.max(1));
+                match stepped {
+                    Err(e) => {
+                        s.finish(self);
+                        return Err(e);
+                    }
+                    Ok(()) if s.done() => {
+                        let done = s.units_done();
+                        let result = s.finish(self);
+                        Response::JobDone {
+                            job,
+                            done_units: done,
+                            result,
+                        }
+                    }
+                    Ok(()) => {
+                        let (done, total) = (s.units_done(), s.total());
+                        j.done = done;
+                        j.total = total;
+                        j.sweep = Some(s);
+                        self.jobs.insert(job, j);
+                        Response::JobProgress {
+                            job,
+                            done_units: done,
+                            total_units: total,
+                        }
+                    }
                 }
             }
             Request::StepJob { job, budget } => {
@@ -2808,9 +3838,13 @@ impl Kernel {
                 }
             }
             Request::CancelJob { job } => {
-                self.jobs
+                let j = self
+                    .jobs
                     .remove(&job)
                     .ok_or_else(|| err("unknown_job", format!("no job {job}")))?;
+                if let Some(s) = j.sweep {
+                    s.finish(self);
+                }
                 Response::JobCancelled { job }
             }
             Request::Scene {
@@ -2819,107 +3853,7 @@ impl Kernel {
                 data_view,
                 at_s,
                 observe,
-            } => {
-                let scope: Address = scope
-                    .parse()
-                    .map_err(|e| err("bad_address", format!("{e}")))?;
-                let draft = match observe {
-                    None => None,
-                    Some(v) => Some(
-                        sse_observe::ObserveSetup::from_stack(&[("draft".into(), v)])
-                            .map_err(|e| err("bad_observe", e))?
-                            .ok_or_else(|| err("bad_observe", "the draft setup is empty"))?,
-                    ),
-                };
-                let setup = draft
-                    .as_ref()
-                    .or(self.observe.setup.as_ref())
-                    .ok_or_else(|| {
-                        err(
-                            "no_data_views",
-                            "the pack stack defines no data views (provides.other.observe)",
-                        )
-                    })?;
-                let u = self
-                    .universe
-                    .as_ref()
-                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
-                let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
-                // Paste support: withdrawn subjects are not in the scene.
-                withdraw::drop_withdrawn(&mut state.facts);
-                // NM2: each subject's shown names, disclosed as `name.<layer>`.
-                names::inject(&mut state, &self.observe.names, &u.seed, &u.root);
-                // Authored tags out of the facts; rule tags from the stack.
-                // TG3: authored true forces a tag, authored false holds a
-                // rule's tag off; both come out of the facts.
-                let mut tags: BTreeMap<Address, std::collections::BTreeSet<String>> =
-                    BTreeMap::new();
-                let mut authored: BTreeMap<Address, BTreeMap<String, bool>> = BTreeMap::new();
-                for (a, f) in state.facts.iter_mut() {
-                    let mine = sse_sift::authored_tags(f);
-                    f.retain(|k, _| !k.starts_with(TAG_FIELD));
-                    if !mine.is_empty() {
-                        authored.insert(a.clone(), mine);
-                    }
-                }
-                let none = BTreeMap::new();
-                for (a, f) in &state.facts {
-                    let subject = sse_sift::Subject {
-                        address: Some(a.clone()),
-                        facts: f.clone(),
-                        parent: a
-                            .parent()
-                            .and_then(|p| state.facts.get(&p).cloned())
-                            .unwrap_or_default(),
-                        now_s: at_s,
-                        ..Default::default()
-                    };
-                    for t in self
-                        .observe
-                        .rules
-                        .apply_authored(
-                            &subject,
-                            &BTreeMap::new(),
-                            authored.get(a).unwrap_or(&none),
-                            Some(&u.seed),
-                        )
-                        .into_keys()
-                    {
-                        tags.entry(a.clone()).or_default().insert(t);
-                    }
-                }
-                state.facts.retain(|_, f| !f.is_empty());
-                let fictional = self
-                    .stack
-                    .as_ref()
-                    .map(|(s, _)| s.fictional_kinds.iter().cloned().collect())
-                    .unwrap_or_default();
-                let views = setup.views_by_id();
-                let disclosure = with_record(&setup.disclosure, &self.observe.record);
-                let notes = sse_record::notes_at(u.record.events(), UniverseTime::seconds(at_s));
-                // Kept values and actors live in the record; the GM machine
-                // folds them in here and filters them like any fact.
-                for (a, f) in u.record.state_at(UniverseTime::seconds(at_s)).facts {
-                    state.facts.entry(a).or_default().extend(f);
-                }
-                let inp = sse_observe::SceneInput {
-                    state: &state,
-                    chronicle: Some(&u.chronicle),
-                    tags: &tags,
-                    fictional: &fictional,
-                    disclosure: &disclosure,
-                    views: &views,
-                    campaign: &setup.campaign,
-                    notes: &notes,
-                };
-                let scene =
-                    sse_observe::build_scene_through(&inp, &audience, &scope, data_view.as_deref())
-                        .map_err(|e| err("bad_data_view", e))?;
-                Response::Scene {
-                    scene_hash: scene.hash().hex(),
-                    scene: serde_json::to_value(&scene).expect("scenes are plain data"),
-                }
-            }
+            } => self.scene_op(audience, scope, data_view, at_s, observe)?,
             Request::ImportV3 {
                 save,
                 universe_id,
@@ -2935,17 +3869,33 @@ impl Kernel {
                 inherit_pins,
                 star_pins,
                 pins,
-            } => systems::run_formation(systems::FormArgs {
-                seed,
-                system,
-                block,
-                birth,
-                now_gyr,
-                envelope,
-                inherit_pins,
-                star_pins,
-                pins,
-            })?,
+                from_star,
+            } => {
+                let (system, birth, now_gyr) = match from_star {
+                    Some(a) => {
+                        if birth.is_some() || envelope.is_some() {
+                            return Err(err(
+                                "bad_request",
+                                "from_star gives the birth: not with birth or envelope",
+                            ));
+                        }
+                        let (b, now) = self.star_birth(&a)?;
+                        (Some(a), Some(b), now_gyr.or(Some(now)))
+                    }
+                    None => (system, birth, now_gyr),
+                };
+                systems::run_formation(systems::FormArgs {
+                    seed,
+                    system,
+                    block,
+                    birth,
+                    now_gyr,
+                    envelope,
+                    inherit_pins,
+                    star_pins,
+                    pins,
+                })?
+            }
             Request::ReadWorldStack {
                 body,
                 fixture,
@@ -3000,6 +3950,7 @@ impl Kernel {
                         block,
                         epoch_myr,
                         raisers,
+                        sheet: self.observe.reference.clone(),
                     },
                     &mut self.climates,
                 )?
@@ -3014,7 +3965,18 @@ impl Kernel {
                 planetary,
                 remnants,
                 glows,
-            } => systems::read_nebulae(at_s, seed.as_deref(), deaths, planetary, remnants, glows)?,
+                giants,
+                young,
+            } => systems::read_nebulae(
+                at_s,
+                seed.as_deref(),
+                deaths,
+                planetary,
+                remnants,
+                glows,
+                giants,
+                young,
+            )?,
             Request::SurveyPlanets { survey } => systems::survey_planets(survey)?,
             Request::ReadSpectrum { targets, observer } => {
                 systems::read_spectrum(targets, observer)?
@@ -3026,6 +3988,9 @@ impl Kernel {
             Request::LightThroughGas { passages } => {
                 systems::light_through_gas(passages, &self.observe.reference)?
             }
+            Request::ReadLimb { discs } => systems::read_limb(discs)?,
+            Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
+            Request::ReadBows { items } => systems::read_bows(items)?,
             Request::EffectAtRange { asks } => {
                 systems::effect_at_range(asks, &self.observe.reference)?
             }
@@ -3079,6 +4044,7 @@ impl Kernel {
                 }
                 fields::read_system(
                     &u.chronicle,
+                    &u.seed,
                     &a,
                     at_s,
                     u.runs.get(&system),
@@ -3120,6 +4086,59 @@ impl Kernel {
                     &self.observe.reference,
                 )?
             }
+            Request::SmallBody {
+                system,
+                member,
+                cloud,
+                rank,
+                r_au,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &system)?;
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                small::read(
+                    u.runs.get(&system),
+                    member.as_deref(),
+                    cloud.as_deref(),
+                    rank,
+                    r_au,
+                )?
+            }
+            Request::MakeSmallBody {
+                system,
+                address,
+                kind,
+                diameter_km,
+                mass_kg,
+                a_au,
+                e,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &system)?;
+                in_universe(&u.root, &address)?;
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                small::make(
+                    u.runs.get(&system),
+                    small::Make {
+                        address: &address,
+                        kind: &kind,
+                        diameter_km,
+                        mass_kg,
+                        a_au,
+                        e,
+                    },
+                )?
+            }
             Request::ReadInventory {
                 system,
                 body,
@@ -3154,6 +4173,8 @@ impl Kernel {
                     u.runs.get(&system),
                     &self.observe.reference,
                     &self.observe.resources,
+                    &u.record
+                        .state_at(UniverseTime::seconds(at_s.unwrap_or(i64::MAX))),
                 )?
             }
             Request::ReadPhotometry { stars, bands } => {
@@ -3161,11 +4182,34 @@ impl Kernel {
             }
             Request::Adopt {
                 import_v3,
-                formation,
+                mut formation,
                 occurred_at_s,
             } => {
+                let mut grown_from = None;
+                if let Some(f) = formation.as_mut() {
+                    if let Some(a) = f.from_star.clone() {
+                        if f.birth.is_some() || f.envelope.is_some() {
+                            return Err(err(
+                                "bad_request",
+                                "from_star gives the birth: not with birth or envelope",
+                            ));
+                        }
+                        let (b, now) = self.star_birth(&a)?;
+                        f.system = Some(a.clone());
+                        f.birth = Some(b);
+                        f.now_gyr = f.now_gyr.or(Some(now));
+                        grown_from = Some(a);
+                    }
+                }
                 let u = self.universe()?;
-                let a = adopt::adopt(&u.chronicle, &u.root, import_v3, formation, occurred_at_s)?;
+                let a = adopt::adopt(
+                    &u.chronicle,
+                    &u.root,
+                    import_v3,
+                    formation,
+                    occurred_at_s,
+                    grown_from.as_deref(),
+                )?;
                 let mut events = vec![];
                 for e in a.events {
                     events.push(
@@ -3189,50 +4233,13 @@ impl Kernel {
                         .hex(),
                 }
             }
+            Request::ReferenceTiles { body, tiles } => self.reference_tiles(&body, &tiles)?,
             Request::ResolvedSystem {
                 system,
                 at_s,
                 tiles,
-            } => {
-                let a: Address = system
-                    .parse()
-                    .map_err(|e| err("bad_address", format!("{e}")))?;
-                let u = self.universe()?;
-                if !u.root.contains(&a) {
-                    return Err(err(
-                        "bad_address",
-                        format!("{a} is not in universe {}", u.root),
-                    ));
-                }
-                if !u.runs.contains_key(&system) {
-                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
-                        let (_, run, _) = systems::form(req.into())?;
-                        u.runs.insert(system.clone(), run);
-                    }
-                }
-                let r = adopt::resolved_system(
-                    &u.chronicle,
-                    &u.seed,
-                    &a,
-                    at_s,
-                    tiles.as_deref().unwrap_or(&[]),
-                    u.runs.get(&system),
-                    &mut u.orbits,
-                )?;
-                Response::SystemResolved {
-                    system,
-                    source: r.source,
-                    at_s: r.at_s,
-                    facts: r.facts,
-                    evidence: r.evidence,
-                    spec: r.spec,
-                    surfaces: r.surfaces,
-                    tiles: r.tiles,
-                    refused: r.refused,
-                    clouds: r.clouds,
-                    frame: frame::drawn(&u.seed, &a)?.json(),
-                }
-            }
+                branch,
+            } => self.resolved_system_op(system, at_s, tiles, branch)?,
             Request::PlanRoute {
                 fixture,
                 nav,
@@ -3967,6 +4974,81 @@ impl Kernel {
                     record_hash: record_hash(u),
                 }
             }
+            Request::Transfer {
+                kind,
+                from,
+                to,
+                kg,
+                writer,
+                reason,
+                at_s,
+            } => {
+                let reg = self.observe.record.clone();
+                let sheet = self.observe.reference.clone();
+                let kinds = self.observe.resources.clone();
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let a = in_universe(&u.root, &from)?;
+                let b = in_universe(&u.root, &to)?;
+                transfer(
+                    u, &reg, &sheet, &kinds, &kind, &a, &b, kg, writer, reason, at_s,
+                )?
+            }
+            Request::Mine {
+                ship,
+                body,
+                kind,
+                hours,
+                writer,
+                at_s,
+            } => {
+                let reg = self.observe.record.clone();
+                let sheet = self.observe.reference.clone();
+                let kinds = self.observe.resources.clone();
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let s_a = in_universe(&u.root, &ship)?;
+                let b_a = in_universe(&u.root, &body)?;
+                if !(hours.is_finite() && hours > 0.0) {
+                    return Err(err(
+                        "bad_value",
+                        "mine for a positive, finite number of hours",
+                    ));
+                }
+                let st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                let rate = match st.get(&s_a, MINING_RATE) {
+                    Some(Value::Float(f)) if f.is_finite() && *f > 0.0 => *f,
+                    Some(Value::Int(i)) if *i > 0 => *i as f64,
+                    _ => {
+                        return Err(err(
+                            "no_mining_rate",
+                            format!("{s_a} has no {MINING_RATE} fact (kg an hour): it cannot mine"),
+                        ))
+                    }
+                };
+                let state = u.record.state_at(UniverseTime::seconds(at_s));
+                let natural = natural_kg(u, &b_a, &kind, at_s, &sheet, &kinds, &state)?;
+                let held = inventory::Held::at(&state, &b_a, &kind, natural).held_kg();
+                let kg = (rate * hours).min(held);
+                if kg <= 0.0 {
+                    return Err(err("not_enough", format!("{b_a} holds no {kind} to mine")));
+                }
+                let reason = Some(format!(
+                    "mined {kg} kg of {kind} in {hours} h at {rate} kg/h{}",
+                    if kg < rate * hours {
+                        ", all there was"
+                    } else {
+                        ""
+                    }
+                ));
+                transfer(
+                    u, &reg, &sheet, &kinds, &kind, &b_a, &s_a, kg, writer, reason, at_s,
+                )?
+            }
             Request::AddActor {
                 id,
                 parent,
@@ -4005,13 +5087,7 @@ impl Kernel {
                     ));
                 }
                 let root = self.universe()?.root.to_string();
-                let scene = match self.dispatch(Request::Scene {
-                    audience: audience.clone(),
-                    scope: root,
-                    data_view: None,
-                    at_s,
-                    observe: None,
-                })? {
+                let scene = match self.scene_op(audience.clone(), root, None, at_s, None)? {
                     Response::Scene { scene, .. } => scene,
                     other => return Err(other),
                 };
@@ -5171,6 +6247,144 @@ impl Kernel {
                     state_hash: latest_hash(&u.chronicle),
                 }
             }
+            Request::PreviewTree {
+                system,
+                at_s,
+                edits,
+            } => {
+                const EDIT_OPS: [&str; 5] = [
+                    "set_authored",
+                    "set_authored_batch",
+                    "rehost",
+                    "withdraw",
+                    "restore",
+                ];
+                let reqs: Vec<Request> = edits
+                    .iter()
+                    .enumerate()
+                    .map(|(i, e)| {
+                        let op = e["op"].as_str().unwrap_or("");
+                        if !EDIT_OPS.contains(&op) {
+                            return Err(err(
+                                "bad_request",
+                                format!(
+                                    "edit {i}: {op:?} is not an edit a tree can preview ({})",
+                                    EDIT_OPS.join(", ")
+                                ),
+                            ));
+                        }
+                        serde_json::from_value(e.clone())
+                            .map_err(|x| err("bad_request", format!("edit {i}: {x}")))
+                    })
+                    .collect::<Result<_, _>>()?;
+                let (root, seed) = {
+                    let u = self.universe()?;
+                    (u.root.clone(), u.seed)
+                };
+                let a = in_universe(&root, &system)?;
+                let read = |k: &mut Kernel| -> Result<serde_json::Value, Response> {
+                    let u = k.universe()?;
+                    let mut st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                    withdraw::drop_withdrawn(&mut st.facts);
+                    Ok(tree::tree(&st, &a, at_s, Some(&seed)))
+                };
+                let before = read(self)?;
+                let saved = self.universe.clone();
+                let mut failed = None;
+                for (i, r) in reqs.into_iter().enumerate() {
+                    if let Response::Error { code, message } = self.handle(r) {
+                        failed = Some(err(&code, format!("edit {i}: {message}")));
+                        break;
+                    }
+                }
+                let after = if failed.is_none() {
+                    read(self)
+                } else {
+                    Ok(serde_json::Value::Null)
+                };
+                self.universe = saved;
+                if let Some(e) = failed {
+                    return Err(e);
+                }
+                let after = after?;
+                Response::TreePreviewed {
+                    changed: tree::changed(&before, &after),
+                    before,
+                    after,
+                }
+            }
+            Request::Rehost {
+                address,
+                to,
+                keep,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let h = in_universe(&u.root, &to)?;
+                let system = a
+                    .segments()
+                    .iter()
+                    .position(|s| s.kind() == "sys")
+                    .and_then(|i| {
+                        let mut x = Some(a.clone());
+                        while let Some(y) = x.clone() {
+                            if y.segments().len() == i + 1 {
+                                return Some(y);
+                            }
+                            x = y.parent();
+                        }
+                        None
+                    })
+                    .ok_or_else(|| err("bad_address", format!("{a} is not in a system")))?;
+                let mut st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                withdraw::drop_withdrawn(&mut st.facts);
+                let facts: BTreeMap<Address, BTreeMap<String, Value>> = st
+                    .facts
+                    .iter()
+                    .filter(|(x, _)| system.contains(x))
+                    .map(|(x, r)| (x.clone(), r.clone()))
+                    .collect();
+                let row = orbits::rehost(
+                    &facts,
+                    &system,
+                    &a,
+                    &h,
+                    at_s,
+                    Some(&u.seed),
+                    keep.unwrap_or(orbits::Keep::Tidy),
+                )
+                .map_err(|m| err("rehost_refused", m))?;
+                let set: BTreeMap<Address, BTreeMap<String, Value>> = [(a.clone(), row)].into();
+                let latest = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                hosts_ok(&latest.facts, &set).map_err(|m| err("bad_host", m))?;
+                let t = UniverseTime::seconds(at_s);
+                let ev = Event::new(EventBody {
+                    kind: kinds::AUTHORED_SET.into(),
+                    subject: vec![a.clone()],
+                    occurred_at: t,
+                    activated_at: t,
+                    recognised_at: u.chronicle.next_stamp(),
+                    causes: vec![],
+                    payload: Payload {
+                        set,
+                        ..Default::default()
+                    },
+                    evidence: Evidence::Authored,
+                    publisher: Publisher::new("gm", "rehost", "1"),
+                })
+                .map_err(|e| err("bad_event", format!("{e}")))?;
+                let id = u
+                    .chronicle
+                    .append(ev)
+                    .map_err(|e| err("chronicle", format!("{e}")))?;
+                Response::Authored {
+                    event_id: id.hex(),
+                    affected: vec![a.to_string()],
+                    state_hash: latest_hash(&u.chronicle),
+                    declared_tag: None,
+                }
+            }
             Request::SplitConstruct {
                 address,
                 key,
@@ -5242,6 +6456,115 @@ impl Kernel {
                 scope,
                 at_s,
             } => self.classify_preview(packs, scheme, scope, at_s)?,
+            Request::ClassSample { packs, classes } => self.class_sample(packs, classes)?,
+            Request::ElementsIn {
+                address,
+                semi_major_axis_m,
+                eccentricity,
+                inclination_rad,
+                ascending_node_rad,
+                argument_of_periapsis_rad,
+                mean_anomaly_at_epoch_rad,
+                measured_from,
+                centred_on,
+                host,
+                mass_kg,
+                true_on_s,
+            } => {
+                let num = |v: &serde_json::Value, k: &str| v.get(k).and_then(|x| x.as_f64());
+                let frame = match &measured_from {
+                    None => None,
+                    Some(serde_json::Value::String(s)) if s == "system" => None,
+                    Some(v @ serde_json::Value::Object(_)) => {
+                        let (Some(lon), Some(lat)) =
+                            (num(v, "pole_lon_rad"), num(v, "pole_lat_rad"))
+                        else {
+                            return Err(err(
+                                "bad_request",
+                                "measured_from needs pole_lon_rad and pole_lat_rad",
+                            ));
+                        };
+                        Some(conventions::plane(
+                            lon,
+                            lat,
+                            num(v, "zero_lon_rad").unwrap_or(0.0),
+                        )?)
+                    }
+                    Some(other) => {
+                        return Err(err(
+                            "bad_request",
+                            format!("measured_from: \"system\" or a plane's pole, not {other}"),
+                        ))
+                    }
+                };
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let shared = match centred_on.as_deref().unwrap_or("parent") {
+                    "parent" => None,
+                    "shared" => {
+                        let st = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                        let row = st.facts.get(&a);
+                        let host = host
+                            .or_else(|| {
+                                row.and_then(|r| r.get("orbit.host"))
+                                    .and_then(|v| match v {
+                                        Value::Text(t) => Some(t.clone()),
+                                        _ => None,
+                                    })
+                            })
+                            .ok_or_else(|| err("bad_request", "centred on the shared centre needs the host (host, or orbit.host in the record)"))?;
+                        let h = in_universe(&u.root, &host)?;
+                        let mass_of =
+                            |x: &Address| match st.facts.get(x).and_then(|r| r.get("body.mass")) {
+                                Some(Value::Float(f)) => Some(*f),
+                                Some(Value::Int(i)) => Some(*i as f64),
+                                _ => None,
+                            };
+                        let hm = mass_of(&h).ok_or_else(|| {
+                            err("bad_request", format!("{h} has no mass in the record"))
+                        })?;
+                        let own = mass_kg.or_else(|| mass_of(&a)).ok_or_else(|| {
+                            err("bad_request", format!("{a} has no mass: give mass_kg"))
+                        })?;
+                        Some((hm, own))
+                    }
+                    other => {
+                        return Err(err(
+                            "bad_request",
+                            format!("centred_on: parent or shared, not {other:?}"),
+                        ))
+                    }
+                };
+                if semi_major_axis_m.is_nan()
+                    || semi_major_axis_m <= 0.0
+                    || !(0.0..1.0).contains(&eccentricity)
+                {
+                    return Err(err("bad_request", "an orbit needs a > 0 and 0 <= e < 1"));
+                }
+                Response::ElementsConverted {
+                    address: a.to_string(),
+                    elements: conventions::convert(
+                        &a.to_string(),
+                        conventions::Typed {
+                            a_m: semi_major_axis_m,
+                            e: eccentricity,
+                            i: inclination_rad,
+                            node: ascending_node_rad,
+                            peri: argument_of_periapsis_rad,
+                            mean_anomaly: mean_anomaly_at_epoch_rad,
+                        },
+                        frame,
+                        shared,
+                        true_on_s,
+                    ),
+                }
+            }
+            Request::Expects {
+                system,
+                address,
+                fields,
+                at_s,
+            } => sweep::expects(self, system, address, fields, at_s)?,
             Request::Programs { at_s } => {
                 let ps = self.observe.programs.clone();
                 let u = self.universe()?;
@@ -5496,9 +6819,10 @@ impl Kernel {
                                 format!("{a} is not in universe {}", u.root),
                             ));
                         }
-                        let st = u
+                        let mut st = u
                             .chronicle
                             .state_at(UniverseTime::seconds(at_s.unwrap_or(i64::MAX)));
+                        withdraw::drop_withdrawn(&mut st.facts);
                         st.facts
                             .iter()
                             .filter(|(x, _)| a.contains(x))
@@ -5652,12 +6976,24 @@ impl Kernel {
                 sheet,
                 apply,
                 grow,
+                metadata,
+                route_audience,
+                route_tier,
                 at_s,
             } => {
                 use sse_sector_io::Format;
                 if grow && !apply {
                     return Err(err("bad_request", "grow needs apply"));
                 }
+                let route_audience: sse_record::Audience = match route_audience {
+                    None => sse_record::Audience::gm(),
+                    Some(v) => serde_json::from_value(v).map_err(|e| {
+                        err(
+                            "bad_link",
+                            format!("route_audience: \"everyone\", \"gm\" or a list ({e})"),
+                        )
+                    })?,
+                };
                 let file = match format.as_deref() {
                     None => sse_sector_io::parse_any(&text),
                     Some("t5_tab") => sse_sector_io::parse_as(Format::T5Tab, &text),
@@ -5669,6 +7005,10 @@ impl Kernel {
                             format!("format {f:?}: use t5_tab, sec or uwp_lines"),
                         ))
                     }
+                };
+                let file = match &metadata {
+                    Some(m) => file.with_metadata(sse_sector_io::parse_sector_xml(m)),
+                    None => file,
                 };
                 let sheet = match &sheet {
                     Some(id) => self.codes.sheet(id).ok_or_else(|| {
@@ -5713,8 +7053,14 @@ impl Kernel {
                                 "pins": g.rerun.pins,
                             }))
                             .expect("a formation request");
-                            let a =
-                                adopt::adopt(&u.chronicle, &u.root, None, Some(req), Some(at_s))?;
+                            let a = adopt::adopt(
+                                &u.chronicle,
+                                &u.root,
+                                None,
+                                Some(req),
+                                Some(at_s),
+                                None,
+                            )?;
                             for e in a.events {
                                 events.push(
                                     u.chronicle
@@ -5776,9 +7122,148 @@ impl Kernel {
                         .hash()
                         .hex()
                 });
+                let routes = import_routes(
+                    u,
+                    &file.routes,
+                    &imp.worlds,
+                    apply.then_some((&route_audience, route_tier.as_deref())),
+                    at_s,
+                )?;
+                let record_hash = (apply && !file.routes.is_empty()).then(|| record_hash(u));
                 Response::SectorImport {
                     summary: imp.summary.sentence(),
                     import: serde_json::to_value(&imp).expect("imports are plain data"),
+                    events,
+                    state_hash,
+                    routes,
+                    record_hash,
+                }
+            }
+            Request::RollProfile {
+                program,
+                body,
+                reroll,
+                apply,
+                at_s,
+            } => {
+                let prog = self
+                    .codes
+                    .rolls
+                    .iter()
+                    .find(|r| r.id == program)
+                    .ok_or_else(|| {
+                        err(
+                            "unknown_program",
+                            format!(
+                                "no rolled profile {program:?} in the stack (provides.other.rolls)"
+                            ),
+                        )
+                    })?
+                    .clone();
+                let sheet = self
+                    .codes
+                    .sheet(&prog.sheet)
+                    .expect("checked at load")
+                    .clone();
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let body = in_universe(&u.root, &body)?;
+                let reading = codes_at(&self.codes, &sheet, u, &body, at_s)
+                    .into_iter()
+                    .find(|r| r["address"] == body.to_string())
+                    .ok_or_else(|| {
+                        err(
+                            "unknown_body",
+                            format!("{body} has no facts yet: adopt or import it first"),
+                        )
+                    })?;
+                let reading: sse_codes::Reading =
+                    serde_json::from_value(reading["reading"].clone())
+                        .expect("a reading round-trips");
+                let authored: BTreeMap<String, String> = sheet
+                    .segments
+                    .iter()
+                    .filter_map(|g| g.authored.clone().map(|f| (g.id.clone(), f)))
+                    .collect();
+                let decided = prog.decided_by.as_ref().and_then(|f| {
+                    let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                    state
+                        .facts
+                        .get(&body)
+                        .and_then(|m| m.get(f))
+                        .map(|v| match v {
+                            Value::Text(t) => format!("{f} {t}"),
+                            _ => f.clone(),
+                        })
+                });
+                let steps = sse_codes::roll::roll(
+                    &prog,
+                    &reading,
+                    &authored,
+                    decided.as_deref(),
+                    &u.seed,
+                    &body,
+                    reroll,
+                )
+                .map_err(|e| err("bad_roll", e))?;
+                let mut events = Vec::new();
+                if apply {
+                    let mut set: BTreeMap<String, Value> = BTreeMap::new();
+                    for s in steps
+                        .iter()
+                        .filter(|s| s.how == "rolled" || s.how == "zero")
+                    {
+                        let Some(f) = &s.writes else { continue };
+                        let v = match s.symbol.as_str() {
+                            "yes" => Value::Bool(true),
+                            "no" => Value::Bool(false),
+                            sym => Value::Text(sym.to_string()),
+                        };
+                        set.insert(f.clone(), v);
+                        set.insert(
+                            format!("roll.{}.{}", prog.id, s.id),
+                            Value::Text(s.why.clone()),
+                        );
+                    }
+                    if !set.is_empty() {
+                        let t = UniverseTime::seconds(at_s);
+                        let e = Event::new(EventBody {
+                            kind: kinds::AUTHORED_SET.into(),
+                            subject: vec![body.clone()],
+                            occurred_at: t,
+                            activated_at: t,
+                            recognised_at: u.chronicle.next_stamp(),
+                            causes: vec![],
+                            payload: Payload {
+                                set: BTreeMap::from([(body.clone(), set)]),
+                                ..Default::default()
+                            },
+                            evidence: Evidence::Authored,
+                            publisher: Publisher::new("gm", "roll_profile", "1"),
+                        })
+                        .map_err(|e| err("bad_event", format!("{e}")))?;
+                        let id = u
+                            .chronicle
+                            .append(e)
+                            .map_err(|e| err("chronicle", format!("{e}")))?;
+                        events.push(id.hex());
+                    }
+                }
+                let state_hash = apply.then(|| {
+                    u.chronicle
+                        .state_at(UniverseTime::seconds(i64::MAX))
+                        .hash()
+                        .hex()
+                });
+                Response::ProfileRolled {
+                    program: prog.id.clone(),
+                    body: body.to_string(),
+                    steps: steps
+                        .iter()
+                        .map(|s| serde_json::to_value(s).expect("plain data"))
+                        .collect(),
                     events,
                     state_hash,
                 }
@@ -6131,6 +7616,9 @@ impl Kernel {
                 parent.as_deref(),
                 &facts.unwrap_or_default(),
             )?,
+            Request::AtmosphereAdvice { body, at_s, facts } => {
+                self.atmosphere_advice(&body, at_s, facts.as_ref())?
+            }
             Request::PackReports { pack } => {
                 let reports: Vec<&trust::PackReport> = self
                     .reports

@@ -914,6 +914,645 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.light.limb_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "effective_temperature",
+     "letter": "Teff"
+    },
+    {
+     "port": "limb_cosine",
+     "letter": "mu"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "seen_temperature",
+     "letter": "T"
+    }
+   ],
+   "checks": [
+    {
+     "port": "limb_cosine",
+     "min": 0,
+     "max": 1,
+     "says": "the cosine toward the viewer must lie between 0 (the limb) and 1 (the centre), got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "effective_temperature",
+     "says": "effective temperature"
+    }
+   ],
+   "references": [
+    "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, section 1.8: a grey atmosphere in the Eddington approximation has T⁴ = (3/4) T_eff⁴ (τ + 2/3), and the light leaving at angle cos θ = μ comes from about optical depth μ (Eddington-Barbier). doi:10.1002/9783527618170"
+   ],
+   "shown": "T(μ) = T_eff (3/4 (μ + 2/3))^(1/4)",
+   "equation": {
+    "name": "How hot the layer you see is, from the centre of a disc to its edge",
+    "formula": "T = Teff * (3 / 4 * (mu + 2 / 3)) ^ (1/4)",
+    "inputs": {
+     "Teff": {
+      "kind": "body.effective_temperature",
+      "unit": "K",
+      "name": "temperature of the glowing surface as a whole (effective temperature)"
+     },
+     "mu": {
+      "kind": "light.limb_cosine",
+      "unit": "1",
+      "name": "cosine of the angle between the line of sight and straight out of the surface: 1 at the centre, 0 at the edge",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "light.seen_temperature",
+      "unit": "K",
+      "name": "temperature of the layer the light at that point comes from"
+     }
+    },
+    "source": {
+     "text": "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics",
+     "doi": "10.1002/9783527618170",
+     "where": "section 1.8"
+    },
+    "explain": {
+     "curious": "Look at a star's edge and you look in at a slant, so you see only its cooler upper layers. The edge is darker, and redder, than the middle.",
+     "science": "Eddington-Barbier: the emergent intensity at μ is about the source function at τ = μ; for a grey Eddington atmosphere that is the Planck function at T⁴ = (3/4) T_eff⁴ (μ + 2/3)."
+    },
+    "examples": [
+     {
+      "Teff": 6000.0,
+      "mu": 0.5,
+      "T": 5803.009260803007
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.reflected_limb",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "minnaert_k",
+     "letter": "k"
+    },
+    {
+     "port": "incidence_cosine",
+     "letter": "mu0"
+    },
+    {
+     "port": "limb_cosine",
+     "letter": "mu"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "brightness_share",
+     "letter": "b"
+    }
+   ],
+   "checks": [
+    {
+     "port": "minnaert_k",
+     "min": 0,
+     "max": 2,
+     "says": "Minnaert's k must lie between 0 and 2, got {}"
+    },
+    {
+     "port": "incidence_cosine",
+     "min": 0,
+     "max": 1,
+     "says": "the sunlight's cosine must lie between 0 and 1, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "limb_cosine",
+     "says": "cosine toward the viewer"
+    }
+   ],
+   "references": [
+    "Minnaert, M. 1941, The reciprocity principle in lunar photometry, Astrophys. J. 93, 403: reflected brightness goes as μ₀^k μ^(k−1), with k = 1 a Lambert surface. doi:10.1086/144279"
+   ],
+   "shown": "b = μ₀^k μ^(k−1)",
+   "equation": {
+    "name": "How bright a lit surface looks across its disc (Minnaert)",
+    "formula": "b = mu0 ^ k * mu ^ (k - 1)",
+    "inputs": {
+     "k": {
+      "kind": "light.minnaert_k",
+      "unit": "1",
+      "name": "Minnaert's k: 1 for a matt surface, less for a hazy or dusty one that stays bright to the edge",
+      "valid": [
+       0.0,
+       2.0
+      ]
+     },
+     "mu0": {
+      "kind": "light.incidence_cosine",
+      "unit": "1",
+      "name": "cosine of the angle the sunlight arrives at",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "mu": {
+      "kind": "light.limb_cosine",
+      "unit": "1",
+      "name": "cosine of the angle between the line of sight and straight out of the surface: 1 at the centre, 0 at the edge",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "b": {
+      "kind": "light.brightness_share",
+      "unit": "1",
+      "name": "brightness against a matt surface seen square on in full sun"
+     }
+    },
+    "source": {
+     "text": "Minnaert, M. 1941, Astrophys. J. 93, 403",
+     "doi": "10.1086/144279",
+     "where": "the reciprocity law"
+    },
+    "explain": {
+     "curious": "A matt ball fades toward its edge; a hazy one, like a giant planet, stays bright almost to the rim. One number, k, says which.",
+     "science": "Minnaert's empirical law I/F = (I/F)₀ μ₀^k μ^(k−1), which keeps reciprocity; k = 1 is Lambert."
+    },
+    "examples": [
+     {
+      "k": 0.7,
+      "mu0": 0.8,
+      "mu": 0.6,
+      "b": 0.9970515564324448
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.rainbow",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "refractive_index",
+     "letter": "n"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "primary_bow",
+     "letter": "b1"
+    },
+    {
+     "port": "secondary_bow",
+     "letter": "b2"
+    }
+   ],
+   "positive": [
+    {
+     "port": "refractive_index",
+     "says": "refractive index"
+    }
+   ],
+   "checks": [
+    {
+     "port": "refractive_index",
+     "min": 1.0001,
+     "max": 2.0,
+     "says": "a raindrop's refractive index must lie between 1 and 2 for a bow, got {}"
+    }
+   ],
+   "references": [
+    "Nussenzveig, H. M. 1977, The theory of the rainbow, Scientific American 236 (4), 116: Descartes' ray of minimum deviation after k internal reflections enters at cos² i = (n² − 1)/(k(k + 2)); the deviation is kπ + 2i − 2(k + 1)r, so water's primary bow is 42° and its secondary 51° from the antisolar point. doi:10.1038/scientificamerican0477-116"
+   ],
+   "shown": "cos² i = (n² − 1)/(k(k + 2)),  D = kπ + 2i − 2(k + 1) r,  bows at π − D₁ and D₂ − π",
+   "equation": {
+    "name": "How wide a rainbow is, from what is raining",
+    "formula": "c1 = sqrt((n * n - 1) / 3)\ni1 = atan2(sqrt(1 - c1 * c1), c1)\ns1 = sin(i1) / n\nr1 = atan2(s1, sqrt(1 - s1 * s1))\nb1 = pi - (pi + 2 * i1 - 4 * r1)\nc2 = sqrt((n * n - 1) / 8)\ni2 = atan2(sqrt(1 - c2 * c2), c2)\ns2 = sin(i2) / n\nr2 = atan2(s2, sqrt(1 - s2 * s2))\nb2 = 2 * pi + 2 * i2 - 6 * r2 - pi",
+    "inputs": {
+     "n": {
+      "kind": "light.refractive_index",
+      "unit": "1",
+      "name": "refractive index of the falling drops",
+      "valid": [
+       1.0001,
+       2.0
+      ]
+     }
+    },
+    "outputs": {
+     "b1": {
+      "kind": "light.bow_radius",
+      "unit": "1",
+      "name": "radius of the primary bow round the point opposite the sun, as an angle in radians"
+     },
+     "b2": {
+      "kind": "light.bow_radius",
+      "unit": "1",
+      "name": "radius of the secondary bow, as an angle in radians"
+     }
+    },
+    "source": {
+     "text": "Nussenzveig, H. M. 1977, The theory of the rainbow, Scientific American 236 (4), 116",
+     "doi": "10.1038/scientificamerican0477-116",
+     "where": "Descartes' ray"
+    },
+    "explain": {
+     "curious": "A rainbow is sunlight bent and bounced inside falling drops. How wide the bow is depends only on how strongly the liquid bends light, so rain of a different liquid makes a different-sized bow.",
+     "science": "Descartes' minimum-deviation ray after one and two internal reflections; the bows sit at the deviations' turning points."
+    },
+    "examples": [
+     {
+      "n": 1.333,
+      "b1": 0.7344015167929756,
+      "b2": 0.8882112819196539
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.halo",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "refractive_index",
+     "letter": "n"
+    },
+    {
+     "port": "prism_angle",
+     "letter": "A"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "halo_radius",
+     "letter": "D"
+    }
+   ],
+   "positive": [
+    {
+     "port": "refractive_index",
+     "says": "refractive index"
+    },
+    {
+     "port": "prism_angle",
+     "says": "prism angle"
+    }
+   ],
+   "references": [
+    "Tape, W. 1994, Atmospheric Halos, Antarctic Research Series 64, American Geophysical Union: light through two faces of an ice crystal meeting at A is deviated least by D = 2 asin(n sin(A/2)) − A; 60° faces give the 22° halo, 90° faces the 46°. doi:10.1029/AR064"
+   ],
+   "shown": "D = 2 asin(n sin(A/2)) − A",
+   "equation": {
+    "name": "How wide a halo round the sun or moon is, from the crystals in the air",
+    "formula": "x = n * sin(A / 2)\nD = 2 * atan2(x, sqrt(1 - x * x)) - A",
+    "inputs": {
+     "n": {
+      "kind": "light.refractive_index",
+      "unit": "1",
+      "name": "refractive index of the crystals",
+      "valid": [
+       1.0001,
+       2.0
+      ]
+     },
+     "A": {
+      "kind": "light.prism_angle",
+      "unit": "1",
+      "name": "angle between the two crystal faces the light passes through, in radians"
+     }
+    },
+    "outputs": {
+     "D": {
+      "kind": "light.halo_radius",
+      "unit": "1",
+      "name": "radius of the halo round the sun, as an angle in radians"
+     }
+    },
+    "source": {
+     "text": "Tape, W. 1994, Atmospheric Halos, American Geophysical Union",
+     "doi": "10.1029/AR064",
+     "where": "chapter 1"
+    },
+    "explain": {
+     "curious": "Thin high cloud made of ice crystals can put a ring round the sun. Each crystal is a tiny prism, and the ring sits where its light is bent least.",
+     "science": "Minimum deviation of a prism of apex angle A; hexagonal ice gives 60° and 90° prisms."
+    },
+    "examples": [
+     {
+      "n": 1.31,
+      "A": 1.0471975511965976,
+      "D": 0.38116768975603965
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.particle_albedo",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "radius",
+     "letter": "r"
+    },
+    {
+     "port": "wavelength",
+     "letter": "lam"
+    },
+    {
+     "port": "index_real",
+     "letter": "n"
+    },
+    {
+     "port": "index_imaginary",
+     "letter": "k"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "extinction_efficiency",
+     "letter": "Qe"
+    },
+    {
+     "port": "absorption_efficiency",
+     "letter": "Qa"
+    },
+    {
+     "port": "single_scattering_albedo",
+     "letter": "om"
+    }
+   ],
+   "models": {
+    "series_below": {
+     "value": 0.001,
+     "grade": "derived",
+     "source": "Below this absorption size the closed form loses digits to cancellation, so its series 2w/3 - w^2/4 is used (exact to w^3)"
+    },
+    "phase_floor": {
+     "value": 1e-09,
+     "grade": "derived",
+     "source": "Smallest phase shift kept, so a particle matching its surroundings (n = 1) scatters nothing instead of dividing by zero"
+    }
+   },
+   "checks": [
+    {
+     "port": "radius",
+     "min": 0,
+     "finite": true,
+     "says": "particle radius must be zero or more, got {}"
+    },
+    {
+     "port": "wavelength",
+     "min": 0,
+     "finite": true,
+     "says": "wavelength must be more than zero, got {}"
+    },
+    {
+     "port": "index_imaginary",
+     "min": 0,
+     "finite": true,
+     "says": "the imaginary refractive index must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "van de Hulst, H. C. 1957, Light Scattering by Small Particles, Wiley (Dover 1981), sections 11.22 and 11.23: anomalous diffraction, extinction for an absorbing sphere and absorption. doi:10.1063/1.3060205"
+   ],
+   "shown": "ρ = 2x(n−1), tan β = k/(n−1), Q_ext = 2 − 4e^(−ρ tan β)(cos β/ρ) sin(ρ−β) − 4e^(−ρ tan β)(cos β/ρ)² cos(ρ−2β) + 4(cos β/ρ)² cos 2β; Q_abs = 1 + 2e^(−w)/w + 2(e^(−w)−1)/w², w = 4xk; ω = 1 − Q_abs/Q_ext",
+   "equation": {
+    "name": "How much light a particle scatters rather than absorbs",
+    "formula": "x = 2 * pi * r / lam\nrho = max(2 * x * abs(n - 1), phase_floor)\nbeta = atan2(k, abs(n - 1))\nc = cos(beta) / rho\ne = exp(-rho * tan(beta))\nQe = 2 - 4 * e * c * sin(rho - beta) - 4 * e * c * c * cos(rho - 2 * beta) + 4 * c * c * cos(2 * beta)\nw = 4 * x * k\nQa = if w < series_below then 2 * w / 3 - w * w / 4 else 1 + 2 * exp(-w) / w + 2 * expm1(-w) / (w * w)\nom = if Qe <= 0 then 1 else clamp(1 - Qa / Qe, 0, 1)",
+    "inputs": {
+     "r": {
+      "kind": "particle.radius",
+      "unit": "m",
+      "name": "radius of one particle"
+     },
+     "lam": {
+      "kind": "particle.wavelength",
+      "unit": "m",
+      "name": "wavelength of the light"
+     },
+     "n": {
+      "kind": "particle.index_real",
+      "unit": "1",
+      "name": "refractive index of the particle's material (real part)",
+      "valid": [
+       0.5,
+       4.0
+      ]
+     },
+     "k": {
+      "kind": "particle.index_imaginary",
+      "unit": "1",
+      "name": "how strongly the material absorbs (imaginary part of the refractive index)",
+      "valid": [
+       0.0,
+       10.0
+      ]
+     },
+     "series_below": {
+      "kind": "model.series_switch",
+      "unit": "1",
+      "name": "absorption size below which the series is used"
+     },
+     "phase_floor": {
+      "kind": "model.phase_floor",
+      "unit": "1",
+      "name": "smallest phase shift kept"
+     }
+    },
+    "outputs": {
+     "Qe": {
+      "kind": "particle.extinction_efficiency",
+      "unit": "1",
+      "name": "light taken out of the beam, per particle's cross-section"
+     },
+     "Qa": {
+      "kind": "particle.absorption_efficiency",
+      "unit": "1",
+      "name": "light absorbed, per particle's cross-section"
+     },
+     "om": {
+      "kind": "particle.single_scattering_albedo",
+      "unit": "1",
+      "name": "share of the light taken out that is scattered, not absorbed",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "source": {
+     "text": "van de Hulst, H. C. 1957, Light Scattering by Small Particles",
+     "doi": "10.1063/1.3060205",
+     "where": "sections 11.22 (extinction, absorbing sphere) and 11.23 (absorption)"
+    },
+    "explain": {
+     "curious": "A haze particle either bounces light on or soaks it up. Tholin soaks up blue far more than red, so Titan's haze sends back orange.",
+     "science": "Anomalous diffraction for a sphere much larger than the wavelength with a refractive index near one: extinction from the phase lag through it, absorption from the path through it; the single-scattering albedo is one minus their ratio."
+    },
+    "examples": [
+     {
+      "r": 5e-07,
+      "lam": 5.5e-07,
+      "n": 1.65,
+      "k": 0.02,
+      "Qe": 1.6611298889836261,
+      "Qa": 0.25823650466978565,
+      "om": 0.844541654218389
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.slab_reflectance",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "optical_depth",
+     "letter": "tau"
+    },
+    {
+     "port": "single_scattering_albedo",
+     "letter": "om"
+    },
+    {
+     "port": "asymmetry",
+     "letter": "g"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "reflectance",
+     "letter": "R"
+    },
+    {
+     "port": "transmission",
+     "letter": "T"
+    }
+   ],
+   "models": {
+    "thin_below": {
+     "value": 1e-06,
+     "grade": "derived",
+     "source": "Below this the layer is taken as conservative (no absorption), where the closed form is 0/0; the conservative form is its limit"
+    }
+   },
+   "checks": [
+    {
+     "port": "optical_depth",
+     "min": 0,
+     "finite": true,
+     "says": "optical depth must be zero or more, got {}"
+    },
+    {
+     "port": "single_scattering_albedo",
+     "min": 0,
+     "max": 1,
+     "says": "single-scattering albedo must lie between 0 and 1, got {}"
+    },
+    {
+     "port": "asymmetry",
+     "min": -1,
+     "max": 1,
+     "says": "asymmetry must lie between -1 and 1, got {}"
+    }
+   ],
+   "references": [
+    "Bohren, C. F. 1987, Multiple scattering of light and some of its observable consequences, Am. J. Phys. 55, 524 (two-stream reflectance of a slab, R = (1 - g)τ / (2 + (1 - g)τ) when nothing is absorbed). doi:10.1119/1.15109",
+    "Meador, W. E. and Weaver, W. R. 1980, Two-stream approximations to radiative transfer in planetary atmospheres, J. Atmos. Sci. 37, 630 (the general solution for an absorbing slab). doi:10.1175/1520-0469(1980)037<0630:TSATRT>2.0.CO;2"
+   ],
+   "shown": "γ₁ = 1 − ω(1+g)/2, γ₂ = ω(1−g)/2, κ = √(γ₁² − γ₂²); R = γ₂ tanh κτ / (κ + γ₁ tanh κτ), T = κ sech κτ / (κ + γ₁ tanh κτ)",
+   "equation": {
+    "name": "Light a layer of cloud or haze sends back and lets through",
+    "formula": "g1 = 1 - om * (1 + g) / 2\ng2 = om * (1 - g) / 2\nkk = sqrt(max(g1 * g1 - g2 * g2, 0))\ne = exp(-2 * kk * tau)\nth = (1 - e) / (1 + e)\nsh = 2 * exp(-kk * tau) / (1 + e)\nR = if kk * tau < thin_below then g2 * tau / (1 + g1 * tau) else g2 * th / (kk + g1 * th)\nT = if kk * tau < thin_below then 1 / (1 + g1 * tau) else kk * sh / (kk + g1 * th)",
+    "inputs": {
+     "tau": {
+      "kind": "particle.optical_depth",
+      "unit": "1",
+      "name": "optical depth of the layer straight down"
+     },
+     "om": {
+      "kind": "particle.single_scattering_albedo",
+      "unit": "1",
+      "name": "share of the light taken out that is scattered, not absorbed",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "g": {
+      "kind": "particle.asymmetry",
+      "unit": "1",
+      "name": "how far forward the particles scatter (0 alike every way, 1 straight on)",
+      "valid": [
+       -1.0,
+       1.0
+      ]
+     },
+     "thin_below": {
+      "kind": "model.thin_switch",
+      "unit": "1",
+      "name": "absorption depth below which the layer is taken as not absorbing"
+     }
+    },
+    "outputs": {
+     "R": {
+      "kind": "slab.reflectance",
+      "unit": "1",
+      "name": "share of the light the layer sends back",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "T": {
+      "kind": "slab.transmission",
+      "unit": "1",
+      "name": "share of the light the layer lets through",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "source": {
+     "text": "Meador, W. E. and Weaver, W. R. 1980, J. Atmos. Sci. 37, 630, with Bohren 1987's coefficients",
+     "doi": "10.1175/1520-0469(1980)037<0630:TSATRT>2.0.CO;2",
+     "where": "the two-stream solution for a homogeneous layer"
+    },
+    "explain": {
+     "curious": "A thick cloud sends most light back and lets little through; one that also absorbs sends back less, and what it sends back takes on the colour it absorbs least.",
+     "science": "Two-stream radiative transfer for a homogeneous slab of scatterers with single-scattering albedo ω and asymmetry g, coefficients as in Bohren 1987 so a conservative slab matches weather.ts; diffuse reflectance and transmission, no floor."
+    },
+    "examples": [
+     {
+      "tau": 3.0,
+      "om": 0.9,
+      "g": 0.7,
+      "R": 0.22331134040966769,
+      "T": 0.5219326187492954
+     }
+    ]
+   }
   }
  ]
 }

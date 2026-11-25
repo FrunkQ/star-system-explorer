@@ -26,8 +26,10 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | MP29 the rest of the stable isotopes H to Ne (Be-9, B-10, B-11, O-17, F-19, Ne-20 to 22) with masses, so every Lodders 2021 share has a row | done (PR 419); masses from NIST's pages (AME2016), AME2020 itself unreachable | packages/MP29-light-isotopes.md |
 | MP30 electrical conductivity for MF2's field ledger: `earth-core-liquid` and liquid iron (Pozzo 2012), `giant-envelope` sigma profile along Jupiter's adiabat (French 2012), `seawater` with PSS-78 fits | done (PR 419); ionic water's 1e4 S/m still recalled | packages/MP30-conductivity.md |
 | MP31 units for the units engine (ED1a): 16 working units, 10 imperial units (group `imperial`), source NIST SP 811; reader knows `area` and `volume` | done (PR 419) | packages/MP31-units.md |
-| MP32 sea liquids: liquid water's absorption spectrum 380 to 2000 nm (Pope and Fry 1997, Hale and Querry 1973) and refractive index (Segelstein 1981); `saturated_liquid` tables (density, viscosity, surface tension, vapour pressure) for water, methane, ethane, ammonia, nitrogen, helium, CO2, argon, propane, each column citing its reference correlation, read through CoolProp; new rows `c2h6`, `c3h8` | done (this PR); liquid methane and ethane absorption still unsourced; ethane as a volatile (vapour fit, colour) next | packages/MP32-sea-liquids.md |
-| MP33 condensate optics, part 1: `titan-tholin` n,k 264 to 2422 nm (Khare 1984), shape `optical.refractive_index {lambda_nm, n, k}` for the giant-bands and plumes threads | part 1 done (this PR); h2so4, nh4sh, chromophore and the MP34 ices wait (list in the log) | packages/MP33-condensate-optics.md |
+| MP32 sea liquids: liquid water's absorption spectrum 380 to 2000 nm (Pope and Fry 1997, Hale and Querry 1973) and refractive index (Segelstein 1981); its scattering for the sea's deep colour (Morel and Prieur 1977, PR 475); `saturated_liquid` tables (density, viscosity, surface tension, vapour pressure) for water, methane, ethane, ammonia, nitrogen, helium, CO2, argon, propane, each column citing its reference correlation, read through CoolProp; new rows `c2h6`, `c3h8` | done (PR 461); liquid methane and ethane absorption still unsourced; ethane as a volatile (vapour fit, colour) next | packages/MP32-sea-liquids.md |
+| MP33 condensate optics, part 1: `titan-tholin` n,k 264 to 2422 nm (Khare 1984), shape `optical.refractive_index {lambda_nm, n, k}` for the giant-bands and plumes threads | part 1 done (PR 461); h2so4, nh4sh, chromophore and the MP34 ices wait (list in the log) | packages/MP33-condensate-optics.md |
+| MP34 surface materials, part 1: Mars dust simulants `jsc-mars-1`, `mms-2`, `mgs-1` with k from 250 to 2000 nm (Martikainen 2023); troilite FeS n,k on two axes (Kranhold 2026); visible `optical.n_solid` for CH4 ice (1.32) and N2 ice (1.23); hematite n,k 250 to 1000 nm (Sokolik and Toon 1999); water ice n,k 250 to 2000 nm (Warren and Brandt 2008); basalt, limonite, magnetite n,k (Egan and Hilgeman 1979; Schlegel 1979) | part 1 done (PR 475); SO2, sulphur, CO2 frost, CH4 and N2 ice k, lunar regolith next | packages/MP33-condensate-optics.md |
+| MP35 ground reflectance: `optical.reflectance` tables for lunar soils (mature highland 62231; mature, submature and immature mare 10084, 71501, 12030) to replace base-surface's typed regolith colour | part 1 done (PR 512); immature highland soil and the other cover materials next | packages/MP33-condensate-optics.md |
 
 
 ## Next, in order (as of 24 Nov 2026, for whoever picks this track up)
@@ -47,20 +49,22 @@ Only the owner thread edits this file. One row per package: update it in the sam
    - CO2 frost.
 3. **Still unsourced, and searched without luck so far:**
    - heats of combustion for the solid propellants (JPL TM 33-649, JPL 79-29 and Thiokol TWR-13009 searched);
-   - ionic water's conductivity: `h2o.ionic_fluid` still holds a recalled 1e4 S/m, because Knudson 2012 gives only reflectivity;
    - latent heats for Ti-6Al-4V and Al 6061;
-   - rhenium's heat of melting;
+   - rhenium's heat of melting (leads not yet read in full: Int. J. Thermophys. 7:1, TU Graz pulse heating, OSTI 6910033; Int. J. Thermophys. 13:3, Los Alamos, OSTI 5909672; their abstracts give no numbers);
    - the solar-metallicity end of the element `scatter_dex` (Bensby 2014 Table C.3 at CDS was not read).
    
    The Cayrel 2004 metal-poor scatter values are written down in packages/scatter-dex-notes.md and are still to be put on the rows.
 4. **Waiting on the readers of new rows.**
+   - base-light's `matter` ids (PR 406) are checked against the sheet by `every_light_line_names_matter_on_the_sheet` in sse-reference (PR 475). The chart room draws the card section "Light it gives off" from them.
    - Proven core reads MP30's conductivities for MF2, through these fields:
      - `earth-core-liquid.sigma_elec` and `sigma_elec_icb`;
      - `iron.sigma_elec_liquid`;
      - `giant-envelope.sigma_elec_profile` and `metallic_from`;
      - `seawater.sigma_elec`, `sigma_elec_25c` and the PSS-78 fits.
    - The editing thread strikes the MP31 units off its WAITING list in figures.test.ts. Imperial units are in group `imperial`.
-5. **Later:** p-B11 fusion (the B-11 mass is now on the sheet); OV12 naming at stage 5.
+5. **Helium rain for proven core (MF3 part 2).** `mixtures.giant-envelope.he_demix` `{columns [p_pa, t_k], y_he, src}`, from 50 GPa to 1 TPa at Y about 0.27. Use Schöttler and Redmer 2018 (PRL 120, 115703), with Lorenzen et al. as a second row. Every source read so far shows the curve only as a figure. The CC0 Zenodo archive of Tejada Arevalo et al. 2024 (doi 10.5281/zenodo.10659249) ships the curves, but this cloud's network refuses zenodo.org, so download it from a local machine.
+6. **Ground colour for every world (renderer MATCH1: Mercury, Mars, Io, Europa and Pluto all drawn one tan).** These need `optical.reflectance` rows in the MP35 shape for Mars bright dust (JSC Mars-1 or palagonite), sulphur (kernel id `sulfur`) and SO2 frost (id `so2`), and an immature highland soil. The plumes thread found no measured visible n,k for sulphur or SO2 and handed them back on 25 Nov. Read them as reflectance rows from the lab spectra the Io work uses (Trumbo et al. 2022, arXiv 2212.08783): SO2 frost at about 77 K from Hapke et al. 1981 (Icarus 47, 361), alpha-S8 at room temperature from Gradie et al. 1980 (Icarus 44, 373), and beta-S8 and quenched melt from Moses and Nash 1991 (Icarus 89, 277). Then the true-surface stain-look needs a reflectance path in stainHue (see handover/status/true-surface.md). RELAB's text spectra sit in a Google Drive folder linked from sites.brown.edu/relab/relab-spectral-database/, and the PDS spectral library search draws its results in JavaScript. Neither can be read from the cloud, so fetch them from a local machine or a browser. The LSCC Apollo 16 files 61221 and 67461 can be read, but their Is/FeO is still needed before they can be labelled immature. Until then, the detail ladder thread draws colour from n,k (water ice, tholin, hematite, limonite) through the light thread.
+7. **Later:** p-B11 fusion (the B-11 mass is now on the sheet); OV12 naming at stage 5.
 
 Working notes for this track:
 - After any change to the sheet, or to scripts/build-ui-reference.py, merge main and re-run `python3 scripts/build-base-reference.py`, `python3 scripts/build-ui-reference.py` and `python3 scripts/build-rust-reference.py` just before merging. CI's ui job checks the generated copy, and on 24 Nov PR 419 merged a stale one because PR 410 changed the script while 419's CI ran, which turned main red until PR 422 and PR 445.

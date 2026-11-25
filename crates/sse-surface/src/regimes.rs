@@ -81,10 +81,13 @@ fn half() -> f64 {
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct CloudSettings {
-    /// Zonal wind scale for the Rhines scale, m/s: gas giants and ice giants
-    /// (below `ice_giant_mass_earth`).
+    /// Zonal jet speed scale, m/s: gas giants and ice giants (below
+    /// `ice_giant_mass_earth`).
     pub wind_gas_m_s: f64,
     pub wind_ice_m_s: f64,
+    /// Local eddy speed the Rhines scale reads, m/s (not the jet speed).
+    pub eddy_gas_m_s: f64,
+    pub eddy_ice_m_s: f64,
     pub ice_giant_mass_earth: f64,
     pub storms_per_jet: f64,
     /// Cloud chemistry by temperature: (below K, zone albedo, belt albedo).
@@ -699,8 +702,9 @@ fn cloud_deck(
     let a = env.reference_radius_m;
     let ice = inputs.mass_earth > 0.0 && inputs.mass_earth < c.ice_giant_mass_earth;
     let u = if ice { c.wind_ice_m_s } else { c.wind_gas_m_s };
+    let eddy = if ice { c.eddy_ice_m_s } else { c.eddy_gas_m_s };
     // The one jet count and band layout (sse-climate, W7a).
-    let jets = sse_climate::circulation::giant_jets(a, omega, u);
+    let jets = sse_climate::circulation::giant_jets(a, omega, eddy);
     let nb = 2 * jets;
     let edges = sse_climate::circulation::giant_band_edges(jets);
     let winds: Vec<Jet> = (0..nb)

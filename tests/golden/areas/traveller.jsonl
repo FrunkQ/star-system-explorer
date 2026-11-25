@@ -1,0 +1,5 @@
+{"type":"stack_loaded","stack_hash":"7b87c7550089fc1cde6d14d03f8bda06bcd278e0957dce8585f96b6ebf63e49e","flows":["sse.base.body-magnetism","sse.base.body-shape","sse.base.moon-tides","sse.base.orbit-basics","sse.base.planet-bulk","sse.base.planet-climate","sse.base.planet-heat","sse.base.planetesimal-water","sse.base.star-main-sequence"],"publishers":27,"fictional_kinds":[]}
+{"type":"universe_opened","root":"u:matter","manifest_id":"f3991b8783693031f4f4c5e31cb487c59ce1c9bd99e3f79d58fa500915c64286"}
+{"type":"error","code":"unknown_resource","message":"\"iron\" is not a resource kind of this stack (provides.other.resources)"}
+{"type":"error","code":"unknown_program","message":"no rolled profile \"traveller.social\" in the stack (provides.other.rolls)"}
+{"type":"error","code":"no_mining_rate","message":"u:matter/sys:1/ship:0 has no mining.rate_kg_h fact (kg an hour): it cannot mine"}

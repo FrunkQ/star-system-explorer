@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Infrared band",
+  "frame": "Europa",
+  "camera": "from Earth's place (Webb at L2)",
+  "tests": "Infrared: surface ices' absorption bands",
+  "needs": [
+    "CO2 ice absorption in the Infrared band"
+  ]
+}

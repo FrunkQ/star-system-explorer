@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Phobos",
+  "camera": "6,800 km",
+  "tests": "Visible: a dark carbonaceous-like surface; an irregular figure",
+  "needs": [
+    "small-body figures (asteroids thread)"
+  ]
+}

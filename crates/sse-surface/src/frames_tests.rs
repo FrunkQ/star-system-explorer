@@ -184,6 +184,18 @@ fn ice_ages_and_the_land_of_then() {
     .expect("frames");
     let ice: Vec<_> = f.events.iter().filter(|e| e.kind == "ice-age").collect();
     assert!(!ice.is_empty(), "no ice-age onsets");
+    // Each onset names the cells where its ice starts, on the frame grid.
+    let n = f.frames.last().map(|x| x.elevation_m.len()).unwrap_or(0) as u32;
+    for e in &ice {
+        assert!(!e.cells.is_empty(), "{e:?}");
+        assert!(e.cells.iter().all(|c| *c < n), "{e:?}");
+        assert!(e.cells.windows(2).all(|w| w[0] < w[1]), "{e:?}");
+    }
+    assert!(f
+        .events
+        .iter()
+        .filter(|e| e.kind != "ice-age")
+        .all(|e| e.cells.is_empty()));
     for e in &ice {
         assert!(
             e.t_myr >= f.epoch_myr - span / 1.0e6 - 1e-9 && e.t_myr <= f.epoch_myr + 1e-9,

@@ -7,6 +7,8 @@ import type { Json } from "./json.ts";
 import type { SceneFact, SceneSubject, SystemScene } from "./scene.ts";
 import { YEAR_S } from "./intent.ts";
 import { constant } from "./sheet.ts";
+import { PICTURE_FIELDS } from "./picture.ts";
+import { roundTo, sayNumber } from "./figures.ts";
 
 // ── Kernel shapes (the parts the screens read; full types in packages/contracts) ──
 
@@ -116,7 +118,7 @@ export const AU_M = constant("au");
 /** The Sun's luminosity (IAU 2015 nominal), in watts. */
 export const L_SUN_W = constant("L_sun");
 
-const round = (v: number, d = 3) => Number(v.toPrecision(d));
+const round = (v: number, d = 3) => roundTo(v, d);
 
 /** One of F5's leftover clouds, as the formation run and `resolved_system` give it. */
 export interface LeftoverCloud {
@@ -180,7 +182,7 @@ export function cloudSubjects(clouds: readonly LeftoverCloud[], star: string | u
   return out;
 }
 
-const roughAu = (a: number) => (a >= 100 ? Math.round(a).toLocaleString("en-GB") : a.toPrecision(2));
+const roughAu = (a: number) => (a >= 100 ? sayNumber(a, 0, { decimals: 0 }) : sayNumber(a, 2));
 
 /**
  * A belt's band on the chart, in AU from its star: its inner and outer edges when the save gives them at orbital scale
@@ -516,6 +518,11 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         const day = num(a, "body.rotation_period");
         if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h", srcOf(a, "body.rotation_period"), at("body.rotation_period", 3600)));
         if (s) out.push(f("surface_k", "Surface", s.t_surface_now_k, "K", "derived"));
+      }
+      // The GM's own pictures and the one it opens on (views/pictures): carried for the card, never shown as facts.
+      for (const k of PICTURE_FIELDS) {
+        const v = facts[a]?.[k];
+        if (v !== undefined && v !== null) out.push({ field: k, label: k, value: v as Json, display: "", editable: false, source: "authored" });
       }
       const band = kind === "belt" && (!parent || parent === primary) ? beltBand(sma, num(a, "body.radius_inner"), num(a, "body.radius_outer")) : undefined;
       // A belt round a world, not the star, is its ring: edges from the world's centre, and what it is made of.

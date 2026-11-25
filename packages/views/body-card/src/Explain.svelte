@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import type { DeriveRef, Explanation, ViewSession } from "../../../ui-contract/src/index.ts";
+  import { roundTo } from "../../../ui-contract/src/index.ts";
   import { Lenses, References, Stamp } from "../../../chart-grammar/src/index.ts";
 
   let {
@@ -32,7 +33,7 @@
     session.explain(why, kind).then((r) => (result = r));
   });
 
-  const fmt = (v: number) => (Math.abs(v) >= 1e5 || (Math.abs(v) < 1e-3 && v !== 0) ? v.toExponential(3) : String(Number(v.toPrecision(4))));
+  const fmt = (v: number) => (Math.abs(v) >= 1e5 || (Math.abs(v) < 1e-3 && v !== 0) ? v.toExponential(3) : String(roundTo(v, 4)));
   const SI = ["m", "kg", "s", "A", "K", "mol", "cd"];
   const unit = (dim: number[]) =>
     dim

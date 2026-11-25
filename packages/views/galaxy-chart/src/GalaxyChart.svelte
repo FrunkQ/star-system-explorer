@@ -10,13 +10,15 @@
   import GalaxyScars from "./GalaxyScars.svelte";
   import GalaxyEdgeOn from "./GalaxyEdgeOn.svelte";
   import { Galaxy3D } from "../../galaxy-3d/src/index.ts";
+  import { CompositeStack } from "../../../chart-grammar/src/index.ts";
   import { GALAXY_CONTROLS } from "./controls.ts";
   import { markStrengthAt } from "../../../renderer/src/index.ts";
-  import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, DEFAULT_VIEW, dex, viewOptions, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { announcePlace, cellHalo, leadingArmWords, LEADING_ARM_SEEN, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, DEFAULT_VIEW, dex, viewOptions, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   // The one set of view controls (V9t): Chart is the face-on diagram below; 3D and True turn the disc (Galaxy3D).
-  const shownView = $derived(viewOptions(GALAXY_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  const viewed = $derived(viewOptions(GALAXY_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW));
+  const shownView = $derived(viewed.shown);
   const turned = $derived(shownView.style === "3d" || shownView.style === "true");
   const first = untrack(() => ({ halo: String(params.halo ?? "milky-way-like"), layer: String(params.layer ?? "metals") }));
   // A named halo, or a catalogued halo's address picked on the cluster map (V9).
@@ -171,12 +173,17 @@
     }
     return [...by.values()].map((k) => ({ ...k, culprits: k.by.size })).sort((a, b) => b.live - a.live || b.n - a.n || a.kind.localeCompare(b.kind));
   }
+  // GH8: the latest leading arm made by the chart's time, in words.
+  // When this galaxy's history made a leading arm strong enough to be seen (Gyr), for a test or a GM to scrub to.
+  const seenArms = $derived((chart?.assembly?.marks ?? []).filter((m) => m.kind === "leading_arm" && m.strength >= LEADING_ARM_SEEN).map((m) => Math.round(m.began_gyr * 100) / 100).join(" "));
+  const lead = $derived(chart?.assembly ? leadingArmWords(chart.assembly.marks, chart.at_gyr, markStrengthAt) : null);
   const MARK_WORDS: Record<string, string> = {
     warp: "Warped edge",
     ripples: "Ripples",
     tilt: "Tilted outer disc",
     thick_disc: "Thickened disc",
     driven_arms: "Driven arms",
+    leading_arm: "Leading arm (wound against the spin)",
     ring: "Collision ring",
     burst_knots: "Knots of new stars",
     lopsided: "Lopsided disc",
@@ -195,7 +202,7 @@
   ];
 </script>
 
-<div class="gal" data-galaxy={chart?.halo ?? ""} bind:this={root}>
+<div class="gal" data-galaxy={chart?.halo ?? ""} data-leading-seen={seenArms} bind:this={root}>
   <div class="bar">
     <label>Galaxy
       <select value={halo} onchange={(e) => chooseHalo(e.currentTarget.value as HaloKey)} data-halo>
@@ -240,7 +247,15 @@
     <div class="cols">
       <div class="disc">
         {#if turned}
-          <div class="frame3d"><Galaxy3D {chart} look={shownView.style === "true" ? "true" : "3d"} band={shownView.band} seen={shownView.seen} hud={shownView.hud} reframe={shownView.framed} onturned={() => ctx.workspace.turned?.()} /></div>
+          <div class="frame3d">
+            {#snippet turnedDisc(band: string, base: boolean)}<Galaxy3D chart={chart!} look={shownView.style === "true" ? "true" : "3d"} {band} seen={shownView.seen} hud={base && shownView.hud} reframe={shownView.framed} onturned={() => ctx.workspace.turned?.()} />{/snippet}
+            {#if viewed.composite}
+              <!-- Composite (XO17): the galaxy drawn once per band and laid into one picture. -->
+              <CompositeStack layers={viewed.layers} dark={shownView.style === "true" ? true : undefined}>{#snippet children(band, base)}{@render turnedDisc(band, base)}{/snippet}</CompositeStack>
+            {:else}
+              {@render turnedDisc(shownView.band, true)}
+            {/if}
+          </div>
         {:else}
         <svg viewBox="0 0 {W} {W}" role="img" aria-label="The galaxy face-on at {gyr(chart.at_gyr)}: {chart.rings.length} rings shaded by {LAYER_WORDS[layer].label.toLowerCase()}, {chart.arms.length} arms, the green band{green?.habitable ? ` from ${green.habitable[0].toFixed(1)} to ${green.habitable[1].toFixed(1)} kpc` : ' absent'}">
           {#each chart.rings as g, i (i)}
@@ -332,10 +347,17 @@
         <h4>Built from other galaxies</h4>
         <p class="hint">What {a.members} smaller galaxies brought by {gyr(chart.now_gyr)}: {a.merged} merged into this one and {a.torn_apart} were torn apart on the way in.</p>
         <div class="row" data-exsitu><span>Stars not born here</span><span class="v">{sci(a.exsitu_msun)} M☉{share > 0 ? ` · ${(share * 100).toFixed(share < 0.1 ? 1 : 0)}% of all stars` : ""}</span></div>
-        <div class="row" data-halo><span>Stellar halo (stars torn off passing galaxies)</span><span class="v" title="Stripped by tides as each satellite fell in, left as streams, shells or mixed remains (GH4)">{sci(a.stellar_halo_msun)} M☉</span></div>
+        <div class="row" data-stellar-halo><span>Stellar halo (stars torn off passing galaxies)</span><span class="v" title="Stripped by tides as each satellite fell in, left as streams, shells or mixed remains (GH4)">{sci(a.stellar_halo_msun)} M☉</span></div>
         {#if chart.now.z_gas > 0 && a.stellar_halo_z > 0}<div class="row"><span>Halo stars' metals, against the gas now</span><span class="v">{fewer(a.stellar_halo_z / chart.now.z_gas)}</span></div>{/if}
         <div class="row"><span>Thick disc (stars heated by the collisions)</span><span class="v">{sci(a.thick_disc_msun)} M☉</span></div>
         {#if a.biggest}<div class="row" data-biggest><span>Gave the most</span><span class="v" title={a.biggest}>{shortAddress(a.biggest)} · {(a.biggest_share * 100).toFixed(0)}% of the stars not born here</span></div>{/if}
+        {#if lead}
+          <!-- GH8: arms trail by the disc's own rotation; a leading arm is the mark of a backwards pass, and it fades. -->
+          <p class="lead-arm" class:faded={!lead.live} data-leading-arm={lead.live ? "showing" : "wound back"}>
+            {lead.line}{lead.made > 1 ? ` (${lead.made} in this galaxy's history so far.)` : ""}
+            <span class="hint">Rare: spirals trail, and no more than about 1 in 100 shows a leading arm (Iye, Tadaki and Fukumoto 2019).</span>
+          </p>
+        {/if}
         {#if a.marks.length}
           {@const kinds = markKinds(a.marks, chart.at_gyr)}
           <details data-mark-list>
@@ -743,5 +765,14 @@
   }
   .sw.sfr {
     border-top-color: var(--sse-accent);
+  }
+  .lead-arm {
+    margin: 6px 0;
+  }
+  .lead-arm.faded {
+    color: var(--sse-ink-muted);
+  }
+  .lead-arm .hint {
+    display: block;
   }
 </style>

@@ -15,7 +15,9 @@ pub mod extinction;
 pub mod field;
 pub mod formulas;
 pub mod heat;
+pub mod inertia;
 pub mod layers;
+pub mod ledger;
 pub mod light;
 pub mod magnetic;
 pub mod matter;
@@ -29,6 +31,7 @@ pub mod star;
 #[cfg(test)]
 #[path = "test/mod.rs"]
 mod was;
+pub mod weathering;
 
 use sse_core::{Dimension, QuantityKind};
 use sse_flow::AtomRegistry;
@@ -82,6 +85,7 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("orbit.angular_momentum_deficit", "angular momentum an orbit lacks against a flat circle of the same size (kg m2 s-1)"),
     ("orbit.ascending_node", "longitude of an orbit's ascending node, radians"),
     ("orbit.inclination", "tilt of an orbit against its host's reference plane, radians"),
+    ("orbit.chaotic_zone", "orbit gap, as a fraction, inside which neighbouring resonances overlap and the motion is chaotic"),
     ("orbit.binary_limit", "widest (round one star) or nearest (round both) lasting planet orbit in a binary"),
     ("orbit.hill_gap", "inner apoapsis to outer periapsis, in mutual Hill radii"),
     ("orbit.hill_spacing", "gap between two neighbouring orbits, in mutual Hill radii"),
@@ -90,6 +94,9 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("orbit.moon_limit", "widest orbit a moon keeps round its planet"),
     ("orbit.mutual_hill_radius", "radius of the gravity bubble two neighbours share"),
     ("orbit.mutual_inclination", "angle between two orbital planes, radians"),
+    ("orbit.resonance_offset", "how far two orbits' period ratio is from a whole-number ratio, as a fraction"),
+    ("orbit.resonance_turns", "turns one body makes in one cycle of a mean motion resonance"),
+    ("orbit.resonance_width", "how far a period ratio may be from a resonance and still be held, as a fraction"),
     ("orbit.relative_amd", "a system's angular momentum deficit against an outer planet's circular angular momentum"),
     ("orbit.stability_verdict", "a stability check's verdict as a number: 0 lasts, higher is worse (each block says what its numbers mean)"),
     (
@@ -416,6 +423,25 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("host.field_at_orbit", "the host planet's magnetic field strength at a moon's orbit"),
     ("host.plasma_pressure_at_orbit", "pressure of the host's trapped plasma flowing past a moon"),
     ("layer.electrical_conductivity", "electrical conductivity of a layer (salty ocean, magma, iron)"),
+    ("layer.gravity", "gravity inside a layer"),
+    ("layer.thermal_expansivity", "thermal expansivity of a layer's matter"),
+    ("layer.specific_heat", "specific heat of a layer's matter"),
+    ("interior.dynamo_shell_thickness", "depth of the stirred, conducting layer a dynamo runs in"),
+    ("interior.dynamo_flow_speed", "typical speed of the flow stirring a conducting layer"),
+    ("interior.dynamo_local_rossby", "a stirring flow's speed over the spin speed across its layer"),
+    ("interior.magnetic_reynolds", "magnetic Reynolds number of a stirred layer: stretching over leaking"),
+    ("interior.magnetic_decay_time", "time an unstirred field takes to leak out of a conducting layer"),
+    ("surface.exposure_age", "time bare ground has lain open to space since it was last renewed, by lava, ice or a crater's ejecta"),
+    ("surface.wind_flux_ratio", "the star's wind flux at the world against its flux at 1 AU (the inverse square of distance)"),
+    ("surface.wind_reaches_ground", "1 when the star's wind reaches the ground, 0 when a magnetic field holds it off"),
+    ("surface.maturity", "how weathered bare ground is, 0 fresh to 1 fully mature"),
+    ("surface.weathering_factor_650", "weathered over fresh reflectance of the same soil at 650 nm (red)"),
+    ("surface.weathering_factor_550", "weathered over fresh reflectance of the same soil at 550 nm (green)"),
+    ("surface.weathering_factor_450", "weathered over fresh reflectance of the same soil at 450 nm (blue)"),
+    ("body.moment_of_inertia_factor", "moment of inertia over mass times radius squared: 0.4 for a uniform ball, less as mass gathers in the middle"),
+    ("interior.dynamo_onset", "how far a dynamo runs, 0 to 1, from its magnetic Reynolds number"),
+    ("interior.dynamo_rossby", "spin period over a dynamo's stirring time"),
+    ("interior.dynamo_rossby_factor", "factor on a dynamo's field from its spin, 1 when saturated"),
     ("layer.thickness", "thickness of a layer"),
     ("layer.outer_radius", "radius of a layer's top"),
     ("field.change_period", "period with which the outside magnetic field seen by a body changes"),
@@ -427,6 +453,12 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("body.equatorial_surface_field", "magnetic field strength at the surface on the magnetic equator"),
     ("magnetosphere.plasma_source_rate", "mass of plasma added to a magnetosphere each second (by a moon's volcanoes or geysers)"),
     ("magnetosphere.corotation_limit", "distance beyond which trapped plasma stops turning with the planet (Hill distance)"),
+    ("aurora.electron_energy", "energy of the electrons raining into the air along the field lines"),
+    ("aurora.electron_range", "mass of air above each square metre that a falling electron gets through before it stops"),
+    ("aurora.power", "power coming down into the air as aurora, both hemispheres together"),
+    ("light.radiative_lifetime", "mean time an excited atom or molecule waits before giving off its light"),
+    ("light.quenching_rate_coefficient", "rate coefficient for a collision taking an excited atom's energy away before it shines"),
+    ("light.surviving_share", "share of excited atoms that give off their light rather than lose it in a collision"),
     // dust extinction (Y2)
     ("dust.extinction_ratio", "how much dust dims light at a wavelength, relative to the V band (A_λ / A_V)"),
     // cosmic-ray shielding and dose (MF7)
@@ -470,6 +502,10 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("gas.lower_level_energy", "energy of the level the line absorbs from, above the ground state"),
     ("gas.line_wavelength", "wavelength at the line's centre"),
     ("gas.temperature", "temperature of the gas"),
+    ("gas.ionisation_energy", "energy to tear the outer electron off an absorbing atom"),
+    ("gas.perturber_mass", "mass of one particle crowding an absorbing atom"),
+    ("gas.perturber_polarisability", "polarisability volume of a particle crowding an absorbing atom"),
+    ("gas.interaction_constant", "van der Waals C6: the pull between an atom and a neighbour, falling as the sixth power of distance"),
     ("gas.line_strength", "cross-section of one atom summed over the whole line (per hertz of width)"),
     ("gas.particle_mass", "mass of one absorbing atom or molecule"),
     ("gas.natural_damping", "natural damping rate of the line (from the levels' lifetimes)"),
@@ -498,6 +534,31 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("eye.lobe_width_blue_nm", "width of the lobe on its blue side, in nanometres"),
     ("eye.lobe_width_red_nm", "width of the lobe on its red side, in nanometres"),
     ("eye.lobe", "height of the lobe at this wavelength, 1 at its peak"),
+    ("body.luminosity", "power a body radiates in total"),
+    ("outflow.mass_loss_rate", "mass a star sheds into its wind each second"),
+    ("outflow.wind_speed", "speed of a star's dusty wind"),
+    ("outflow.condensation_radius", "distance from a star where its wind turns to dust"),
+    ("outflow.dust_depth", "optical depth of a star's dusty wind, looking out"),
+    ("outflow.dust_luminosity", "starlight the dust takes in and glows out again"),
+    ("outflow.dust_temperature", "temperature of a giant's new-made dust"),
+    ("outflow.accretion_rate", "mass falling onto a young star each second"),
+    ("outflow.launch_radius", "distance from a young star where its jet leaves the disc"),
+    ("outflow.jet_mass_rate", "mass a young star's jets carry away each second"),
+    ("outflow.jet_speed", "speed of a young star's jets"),
+    ("outflow.jet_power", "power carried by a young star's jets"),
+    ("outflow.shock_light", "light a jet's shocks give off"),
+    ("fog.heat_power", "heat a craft must shed at one temperature"),
+    ("fog.radiator_temperature", "temperature a craft's waste heat leaves at"),
+    ("fog.radiator_area", "glowing radiator area that sheds a craft's heat"),
+    ("fog.exhaust_speed", "speed a drive's exhaust leaves at"),
+    ("fog.particle_mass", "mass of one exhaust particle"),
+    ("fog.plume_temperature", "temperature of a drive's hot exhaust"),
+    ("fog.jet_power", "power carried away in a drive's exhaust"),
+    ("fog.plume_luminosity", "light a drive plume gives off"),
+    ("fog.speed", "speed a contact was last seen moving at"),
+    ("fog.acceleration", "most a contact's drive can accelerate it"),
+    ("fog.since", "time since a contact was last seen"),
+    ("fog.ring_radius", "radius of the ring a lost contact could be anywhere inside"),
     ("range.beam_power", "power in a beam as it leaves its mirror or lens"),
     ("range.wavelength", "wavelength of a beam"),
     ("range.aperture", "width of the mirror or lens that sends a beam"),
@@ -553,8 +614,33 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("range.ratio", "what arrives as a share of what is needed"),
     ("range.reading", "effect at range: 2 in range, 1 marginal, 0 out of range"),
     ("range.margin", "factor either way inside which an effect at range is marginal"),
+    ("light.limb_cosine", "cosine between the line of sight and straight out of a surface: 1 at a disc's centre, 0 at its edge"),
+    ("light.seen_temperature", "temperature of the layer a disc's light comes from at one point"),
+    ("light.refractive_index", "how strongly a liquid or crystal bends light"),
+    ("light.bow_radius", "radius of a rainbow round the point opposite the sun, as an angle"),
+    ("light.prism_angle", "angle between two faces of a crystal light passes through"),
+    ("light.halo_radius", "radius of a halo round the sun or moon, as an angle"),
+    ("light.minnaert_k", "Minnaert's k: how a lit surface's brightness falls toward its edge (1 is matt)"),
+    ("light.incidence_cosine", "cosine of the angle sunlight arrives at on a surface"),
+    ("light.brightness_share", "brightness of a lit surface against a matt one seen square on in full sun"),
     ("eye.linear_level", "light level of one screen colour, 0 to 1, in proportion to light"),
     ("eye.screen_level", "level sent to the screen, 0 to 1"),
+    ("particle.radius", "radius of one particle"),
+    ("particle.wavelength", "wavelength of the light"),
+    ("particle.index_real", "refractive index of the particle's material (real part)"),
+    ("particle.index_imaginary", "how strongly the material absorbs (imaginary part of the refractive index)"),
+    ("particle.extinction_efficiency", "light taken out of the beam, per particle's cross-section"),
+    ("particle.absorption_efficiency", "light absorbed, per particle's cross-section"),
+    ("particle.single_scattering_albedo", "share of the light taken out that is scattered, not absorbed"),
+    ("particle.optical_depth", "optical depth of a layer of particles straight down"),
+    ("particle.asymmetry", "how far forward the particles scatter (0 alike every way, 1 straight on)"),
+    ("slab.reflectance", "share of the light a layer sends back"),
+    ("slab.transmission", "share of the light a layer lets through"),
+    ("model.moment_of_inertia_factor", "moment of inertia over M R² (0.4 uniform, lower when mass sinks to the centre)"),
+    ("shape.flattening", "how much shorter the pole-to-pole radius is, as a share of the equator's"),
+    ("shape.equatorial_radius", "radius at the equator"),
+    ("shape.polar_radius", "radius at the poles"),
+    ("shape.spin_parameter", "spin's pull outward at the equator over gravity's pull in"),
 ];
 
 /// Quantity kinds for the base-physics pack, from the atoms' port kinds.
@@ -580,6 +666,10 @@ fn range_of(kind: &str, _dim: Dimension) -> Option<(f64, f64)> {
     match kind {
         "orbit.eccentricity" => Some((0.0, 1.0)),
         "planet.bond_albedo" => Some((0.0, 1.0)),
+        "particle.single_scattering_albedo" | "slab.reflectance" | "slab.transmission" => {
+            Some((0.0, 1.0))
+        }
+        "particle.asymmetry" => Some((-1.0, 1.0)),
         "interior.core_mass_fraction" => Some((0.0, 1.0)),
         "planetesimal.water_kept_fraction" => Some((0.0, 1.0)),
         _ => None,

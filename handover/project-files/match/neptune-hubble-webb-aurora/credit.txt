@@ -1,0 +1,9 @@
+Title: Neptune Auroras (Hubble and Webb Image)
+Credit: NASA, ESA, CSA, STScI, Heidi Hammel (AURA), Henrik Melin (Northumbria University), Leigh Fletcher (University of Leicester), Stefanie Milam (NASA-GSFC)
+Date: 
+Source: https://esawebb.org/images/weic2507a/
+Licence: CC BY 4.0 (ESA/Webb image use policy, https://esawebb.org/copyright/). Attribution required, exactly as the credit line.
+Picked for: Neptune's aurorae, Hubble and Webb combined.
+
+About (from the source page):
+At the left, an enhanced-color image of Neptune from the NASA/ESA Hubble Space Telescope . At the right, that image is combined with data from the NASA/ESA/CSA James Webb Space Telescope. The cyan splotches, which represent auroral activity, and white clouds, are data from Webb’s Near-Infrared Spectrograph (NIRSpec), overlaid on top of the full image of the planet from Hubble’s Wide Field Camera 3.

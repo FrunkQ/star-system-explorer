@@ -64,6 +64,10 @@ pub const FILES: &[(&str, &str)] = &[
         include_str!("../../../packs/base-physics/formulas/interior.json"),
     ),
     (
+        "surface",
+        include_str!("../../../packs/base-physics/formulas/surface.json"),
+    ),
+    (
         "light",
         include_str!("../../../packs/base-physics/formulas/light.json"),
     ),
@@ -100,12 +104,28 @@ pub const FILES: &[(&str, &str)] = &[
         include_str!("../../../packs/base-physics/formulas/range.json"),
     ),
     (
+        "fog",
+        include_str!("../../../packs/base-physics/formulas/fog.json"),
+    ),
+    (
+        "glow",
+        include_str!("../../../packs/base-physics/formulas/glow.json"),
+    ),
+    (
+        "outflow",
+        include_str!("../../../packs/base-physics/formulas/outflow.json"),
+    ),
+    (
         "composition",
         include_str!("../../../packs/base-physics/formulas/composition.json"),
     ),
     (
         "stability",
         include_str!("../../../packs/base-physics/formulas/stability.json"),
+    ),
+    (
+        "shape",
+        include_str!("../../../packs/base-physics/formulas/shape.json"),
     ),
     (
         "ship",

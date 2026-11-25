@@ -4,12 +4,14 @@
   derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import { CURIOUS_FACTS, HONESTY_MARKS, yearsToSeconds, namesOnStack, asPlayers, curiousDisplay, curiousSentence, sayFact, subjectClass, nextReading, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, eyesShow, fieldLandmark, hasException, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownTo as KnownRead, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
+  import { sayNumber, CURIOUS_FACTS, HONESTY_MARKS, PICTURE_FIELDS, yearsToSeconds, namesOnStack, asPlayers, curiousDisplay, curiousSentence, sayFact, subjectClass, nextReading, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, eyesShow, fieldLandmark, hasException, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownTo as KnownRead, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
   import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
   import { Card, CardField, KnownTo, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
   import Explain from "./Explain.svelte";
   import NameCard from "./NameCard.svelte";
+  import { Pictures } from "../../pictures/src/index.ts";
+  import BodyPicture from "../../body/src/BodyPicture.svelte";
   import Handles from "../../editing/src/Handles.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -19,13 +21,19 @@
   // The GM's lens (U9): which fields, in what order, how dense. A field it hides is untouched.
   const L = $derived(ws.lens);
   const rule = $derived(cardFor(L, subject?.kind ?? "*"));
-  const shown = $derived(subject ? cardFacts(rule, subject.facts.filter((f) => f.field !== "name" || ws.mode === "edit")) : []);
+  const shown = $derived(subject ? cardFacts(rule, subject.facts.filter((f) => (f.field !== "name" || ws.mode === "edit") && !PICTURE_FIELDS.includes(f.field))) : []);
   // Depth (top-level design 2.4): Curious leads with a sentence and four headline facts in words, one tap from the rest;
   // Science is every value; Engine adds addresses and who published each value. On the Build desk the card keeps every
   // field it can edit, in the units you type, whatever the depth.
   const depth = $derived(ws.depth ?? "science");
   const curious = $derived(depth === "curious" && ws.mode !== "edit");
   let allFacts = $state(false);
+  // Pictures (Alex, 24 Nov: "same as a ship"): a world's map and globe drawn from its surface, a star's disc, and the
+  // GM's own pictures; the GM adds them and the one last chosen is kept on the Build desk (views/pictures).
+  const drawnViews = $derived(
+    subject?.kind === "star" ? [{ id: "disc", label: "Visible" }, { id: "x-ray", label: "X-ray" }] : subject?.kind === "planet" || subject?.kind === "moon" ? [{ id: "globe", label: "Globe" }, { id: "map", label: "Map" }] : [],
+  );
+  const picturesEditing = $derived(ws.mode === "edit" && ctx.session.seat.authority === "gm");
   // Names (NM6): when a pack on the stack carries name schemes, "Names" opens every name the body has, by layer.
   const namesInPlay = $derived.by(() => {
     void ws.revision;
@@ -120,7 +128,7 @@
     const r = await commitEdit(ctx.session, ws, { address: subject.address, field: e.field, value: e.value, display: p.display, before: { value: e.before, display: shownOf(f) } });
     switch (r.status) {
       case "applied":
-        note = `Inked at ${(ws.now_yr / 1e9).toFixed(2)} Gyr as event ${r.event_id.slice(0, 8)}`;
+        note = `Inked at ${sayNumber(ws.now_yr / 1e9, 0, { decimals: 2 })} Gyr as event ${r.event_id.slice(0, 8)}`;
         return null;
       case "pending":
         return "Sent to the GM to approve.";
@@ -166,6 +174,11 @@
       {/if}
       {#if ctx.describe}<button type="button" class="names-open" data-describe onclick={() => ctx.describe?.(subject.address)} title="Minerva writes a description from what one audience knows of it">Describe ›</button>{/if}
       {#if sentence}<p class="sentence" data-depth="curious">{sentence}</p>{/if}
+      <Pictures {ctx} subject={subject} name={subject.label} editing={picturesEditing} views={drawnViews}>
+        {#snippet view(id)}
+          <BodyPicture {ctx} {scene} address={subject.address} label={subject.label} kind={subject.kind} show={id === "disc" || id === "x-ray" || id === "map" ? id : "globe"} />
+        {/snippet}
+      </Pictures>
       <!-- The handles (track ED): what you can set, one row; Build moves them, Explore shows them; Run has none. -->
       {#if ws.desk !== "run" && ctx.session.seat.authority === "gm"}<Handles {ctx} {scene} {subject} />{/if}
       {#if depth === "engine"}<p class="address" data-depth="engine" title="This body's address in the universe">{subject.address}</p>{/if}

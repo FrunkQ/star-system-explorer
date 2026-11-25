@@ -99,6 +99,8 @@ export interface AreaItem {
   divided?: { key: string; share: number }[];
   /** The place or holding it came from, for pointing and pressing (opens its card). */
   place?: string;
+  /** Not known to the table: drawn in pencil on the GM's map (SV3), never sent to a player's. */
+  pencil?: boolean;
 }
 
 /** A distance with its unit, as packs write them ("4 pc"). */

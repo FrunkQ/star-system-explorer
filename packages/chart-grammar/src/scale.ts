@@ -1,5 +1,6 @@
 // Chart geometry. A system chart is drawn on a log-radial scale so inner
 // and outer orbits are both readable; the scale is stated on the chart.
+import { roundTo } from "../../ui-contract/src/index.ts";
 
 export interface RadialScale {
   inner_au: number;
@@ -52,7 +53,7 @@ export function scaleRings(s: RadialScale, r_out: number, unit_au = 1, minGapPx 
   const out: { au: number; units: number; major: boolean }[] = [];
   for (let e = Math.floor(Math.log10(lo / unit_au)); e <= Math.ceil(Math.log10(hi / unit_au)); e++) {
     for (const m of minors ? [1, 2, 5] : [1]) {
-      const units = Number((m * Math.pow(10, e)).toPrecision(12));
+      const units = roundTo(m * Math.pow(10, e), 12);
       const au = units * unit_au;
       if (au >= lo * 0.999 && au <= hi) out.push({ au, units, major: m === 1 });
     }

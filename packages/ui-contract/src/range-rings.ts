@@ -1,3 +1,4 @@
+import { sayNumber } from "./figures.ts";
 // Range rings (RK12, Atomic Rockets plan section 13 and question 16): where a
 // weapon's reading against a target changes, drawn as rings round the one who
 // holds it, an overlay under the HUD like the grid. The kernel's
@@ -6,7 +7,6 @@
 // readings, the odds of a hit, and the distances where each changes. Nothing
 // here is fired and nothing is forbidden: a ring is a fact for the GM and dice.
 
-import { sayNumber } from "./figures.ts";
 
 /** What the weapon sends (sse_sense::reach::Weapon). */
 export type RangeWeapon =
@@ -70,7 +70,7 @@ export interface RangeRing {
 /** Metres in the unit a reader would use. */
 export function rangeText(m: number): string {
   const km = m / 1000;
-  return km >= 1e6 ? `${sayNumber(km / 1e6, 3, { decimals: 2 })} million km` : km >= 1000 ? `${sayNumber(km, 3, { decimals: 0 })} km` : km >= 1 ? `${sayNumber(km, 3, { decimals: km >= 100 ? 0 : 1 })} km` : `${sayNumber(m, 3, { decimals: 0 })} m`;
+  return km >= 1e6 ? `${sayNumber(km / 1e6, 3, { decimals: 2 })} million km` : km >= 1000 ? `${sayNumber(km, 3, { decimals: 0 })} km` : km >= 1 ? `${sayNumber(km, 3, { decimals: km >= 100 ? 0 : 1 })} km` : `${Math.round(m)} m`;
 }
 
 /**

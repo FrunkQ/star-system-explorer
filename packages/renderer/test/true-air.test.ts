@@ -2,7 +2,7 @@
 // rocky world's clouds and haze lie over its ground.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { flowFace, nameKey, sheetColours, trueGiant, withAir, type SheetSubstance } from "../src/true-air.ts";
+import { albedoOfColour, CHANNEL_NM, deepAirOf, deepReflectance, flowFace, nameKey, sheetColours, trueGiant, withAir, type SheetSubstance } from "../src/true-air.ts";
 import type { TrueTexture } from "../src/true-look.ts";
 import type { WeatherCell, WeatherTile } from "../src/weather.ts";
 
@@ -31,11 +31,17 @@ test("condensate names match the sheet's names, whatever the phase word or spell
   assert.equal(c("unobtainium"), null);
 });
 
-test("a giant's zones (thick high deck) are brighter than its belts, and its bands follow latitude", () => {
+/** The climate thread's red chromophore (W10a, Sromovsky et al. 2017): thin over zones, thicker over belts. */
+const chromophore = (tau: number): WeatherCell["aerosols"] => [{ kind: "chromophore", optical_depth: tau, colour: [0.55, 0.27, 0.13] }];
+
+test("a giant's zones are brighter than its belts, its belts redder by their chromophore, and its bands follow latitude", () => {
   // Zones between ±20° and poleward of 40°, a belt between: as the weather op's cells give them.
   const zone = (lat: number) => Math.abs(lat) < 20 || Math.abs(lat) > 40;
   const look = trueGiant(
-    tiles((lat) => [layer("water", 0.6, 10), layer("ammonium hydrosulphide", 0.8, 4), zone(lat) ? layer("ammonia ice", 0.95, 6) : layer("ammonia ice", 0.55, 1.5)]),
+    tiles(
+      (lat) => [layer("water", 0.6, 10), layer("ammonium hydrosulphide", 0.8, 4), zone(lat) ? layer("ammonia ice", 0.95, 6) : layer("ammonia ice", 0.55, 1.5)],
+      (lat) => chromophore(zone(lat) ? 0.06 : 0.6),
+    ),
     sheetColours(SHEET),
     64,
     32,
@@ -50,9 +56,11 @@ test("a giant's zones (thick high deck) are brighter than its belts, and its ban
   const rowAt = (lat: number) => Math.round(((lat + 90) / 180) * 32 - 0.5);
   assert.ok(lum(rowAt(0)) > lum(rowAt(30)) + 5, `zone ${lum(rowAt(0))} belt ${lum(rowAt(30))}`);
   assert.ok(Math.abs(lum(rowAt(30)) - lum(rowAt(-30))) < 2, "the bands mirror about the equator");
-  // Ammonia's sheet colour is warm: red at least blue on the zone.
+  // Ammonia's sheet colour is warm: red at least blue on the zone; the belt's chromophore takes its blue out.
   const o = (rowAt(0) * width + 10) * 4;
   assert.ok(data[o]! >= data[o + 2]!);
+  const b = (rowAt(30) * width + 10) * 4;
+  assert.ok(data[b]! > data[b + 2]! + 40, `belt brown: ${data[b]} ${data[b + 1]} ${data[b + 2]}`);
   // NH4SH has no colour on the sheet: said, and drawn white.
   assert.ok(look.said.some((s) => s.includes("ammonium hydrosulphide")), look.said.join(" "));
 });
@@ -65,6 +73,34 @@ test("a haze is laid over the ground in its own colour, and clear air leaves the
   const [r, g, b] = [hazy.tex.data[0]!, hazy.tex.data[1]!, hazy.tex.data[2]!];
   assert.ok(r > g && g > b, `orange haze: ${r} ${g} ${b}`);
   assert.equal(hazy.said.length, 0);
+});
+
+test("a giant's deep air below thin decks sends light back, not black; an absorbing haze takes its colour's complement out", () => {
+  const thin = trueGiant(tiles(() => [layer("ammonia ice", 0.3, 0.5)]), sheetColours(SHEET), 16, 8)!;
+  assert.ok(thin.tex.data[1]! > 200, `deep air bright: ${thin.tex.data[1]}`);
+  assert.ok(thin.said.some((s) => s.includes("gases are not known")), thin.said.join(" "));
+  // Over a grey ground, a thick orange haze leaves less blue than a white one of the same depth.
+  const ground = { width: 16, height: 8, data: new Uint8Array(16 * 8 * 4).fill(150), mean: [150, 150, 150] as [number, number, number] };
+  const hz = (colour: [number, number, number]) => withAir(ground, tiles(() => [layer("water", 0, 0)], () => [{ kind: "haze", optical_depth: 2, colour }]), sheetColours(SHEET)).tex.data;
+  const white = hz([1, 1, 1]);
+  const orange = hz([0.85, 0.55, 0.25]);
+  assert.ok(orange[2]! < white[2]! - 60, `blue taken out: ${orange[2]} vs ${white[2]}`);
+});
+
+test("a giant's deep air (TA4): Rayleigh scattering with methane eating the red is cyan; a thick layer's colour reads back as its albedo", () => {
+  // Hydrogen-like Rayleigh cross-sections (falling as the fourth power of wavelength) and a methane-like absorption
+  // that is strong in the red channel and weak elsewhere: the deep air comes out blue-green, brightest in the blue.
+  const nm = CHANNEL_NM.flat();
+  const ray = nm.map((l) => 1e-31 * (550 / l) ** 4);
+  const ch4 = nm.map((l) => (l >= 600 ? 3e-31 : 1e-34));
+  const deep = deepAirOf(ray, ch4);
+  assert.ok(deep[2] > deep[1] && deep[1] > deep[0] && deep[0] < 0.5, `cyan: ${deep}`);
+  assert.deepEqual(deepAirOf(ray, []), [1, 1, 1], "no absorber: all the light comes back");
+  const giant = trueGiant(tiles(() => [layer("ammonia ice", 0.3, 0.5)]), sheetColours(SHEET), 16, 8, null, deep)!;
+  assert.ok(giant.tex.data[2]! > giant.tex.data[0]! + 30, `blue over red: ${[...giant.tex.data.slice(0, 3)]}`);
+  assert.ok(giant.said.some((s) => s.includes("methane")), giant.said.join(" "));
+  // A colour is how a thick layer looks: its albedo's deep reflectance gives the colour back.
+  for (const c of [0.13, 0.27, 0.55, 0.95]) assert.ok(Math.abs(deepReflectance(albedoOfColour(c)) - c) < 1e-9, `${c}`);
 });
 
 test("a world with no weather cells keeps its ground; a giant with none has no face", () => {
@@ -83,7 +119,8 @@ function windy(u: (lat: number) => number, spot?: { lat: number; lon: number; r_
     for (let lon = -177.5; lon <= 177.5; lon += 5) {
       let we = u(lat);
       let wn = 0;
-      let tau = 6;
+      const tau = 6;
+      let dark = false;
       if (spot) {
         const dx = (lon - spot.lon) * Math.cos((lat * Math.PI) / 180);
         const dy = lat - spot.lat;
@@ -95,11 +132,11 @@ function windy(u: (lat: number) => number, spot?: { lat: number; lon: number; r_
           we += -vt * (dy / d);
           wn += vt * (dx / d);
         }
-        // A dark east half inside the spot, so turning shows.
-        if (r < 1 && dx > 0) tau = 0.3;
+        // A dark east half inside the spot (thick red chromophore over it), so turning shows.
+        if (r < 1 && dx > 0) dark = true;
       }
       const l = { ...layer("ammonia ice", 0.95, tau), wind_m_s: [we, wn] as [number, number] };
-      cells.push(cell(lat, lon, [l]));
+      cells.push(cell(lat, lon, [l], dark ? chromophore(1.5) : []));
     }
   return [{ key: { face: 0, level: 0, x: 0, y: 0 }, n: 0, cells }];
 }
@@ -187,4 +224,40 @@ test("the one True door carries a giant's face by its winds, and the size compar
   assert.equal(bodySeconds(9.9, SECONDS_PER_TURN, "same", 9.9), 9.9 * 3600);
   assert.equal(bodySeconds(24, SECONDS_PER_TURN, "true", 9.9), 9.9 * 3600);
   assert.equal(bodySeconds(undefined, 10, "true", 9.9), 0);
+});
+
+test("a world's clouds come alone beside its ground, and laid together they make the face", () => {
+  const ground = { width: 16, height: 8, data: new Uint8Array(16 * 8 * 4).fill(100), mean: [100, 100, 100] as [number, number, number] };
+  const clear = withAir(ground, tiles(() => [layer("water", 0, 0)]), sheetColours(SHEET));
+  assert.equal(clear.ground, ground, "the ground is the ground's own picture, faces and all");
+  assert.equal(clear.clouds!.data[3], 0, "clear air: the clouds cover nothing");
+  const cloudy = withAir(ground, tiles(() => [layer("water", 0.95, 40)]), sheetColours(SHEET));
+  const a = cloudy.clouds!.data[3]! / 255;
+  assert.ok(a > 0.6, `thick cloud covers most: ${a}`);
+  // Premultiplied: the clouds' own light plus what of the ground shows through is close to the face (the adding
+  // method lets a little more of the ground's light back out between the layers).
+  const lin = (v: number) => ((v / 255) <= 0.04045 ? v / 255 / 12.92 : Math.pow((v / 255 + 0.055) / 1.055, 2.4));
+  const over = lin(cloudy.clouds!.data[0]!) + (1 - a) * lin(100);
+  const face = lin(cloudy.tex.data[0]!);
+  assert.ok(Math.abs(over - face) < 0.05, `over ${over} face ${face}`);
+});
+
+test("a giant's surface tiles are its cloud deck's relief, so True draws its decks over its deep air, not a grey ground", async () => {
+  const { readTrueFace } = await import("../src/true-air.ts");
+  const deck = tiles(() => [layer("ammonia ice", 0.6, 2)], () => chromophore(0.6));
+  // Relief tiles at mid grey, as the kernel's cloud-deck regime gives them.
+  const relief = [{ key: { face: 0, level: 0, x: 0, y: 0 }, n: 2, samples: [] }];
+  const reader = (kind: string) => ({
+    surfaceTiles: async () => ({ ok: true as const, tiles: relief as never, refused: [], kind }),
+    campaignNow: async () => ({ ok: true as const }),
+    weather: async (q: { want: string }) => ({ ok: true as const, data: (q.want === "field" ? deck[0] : []) as never }),
+    readMatter: async () => ({ ok: true as const, value: { substances: [] } as never }),
+  });
+  const giant = await readTrueFace(reader("cloud-deck") as never, "s", "j");
+  assert.ok(typeof giant !== "string", String(giant));
+  assert.equal(giant.ground, undefined, "no ground under a giant's decks");
+  assert.equal(giant.decks, true, "marked as decks alone");
+  assert.ok(giant.said.some((s) => s.includes("deep air")), giant.said.join(" "));
+  // Brown from its chromophore: red over blue.
+  assert.ok(giant.tex.mean[0] > giant.tex.mean[2] + 20, `mean ${giant.tex.mean}`);
 });

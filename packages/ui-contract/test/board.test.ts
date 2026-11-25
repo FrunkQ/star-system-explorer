@@ -155,8 +155,9 @@ test("on the wire: a held role gets off with one card for all its screens; other
   let n = 0;
   const w = boardWire(b, ["table", "bridge", "telescope"], () => `joke ${++n}`);
   assert.deepEqual(w.shown, sol);
-  assert.deepEqual(w.roles.bridge, { off: true, card: "joke 1" });
-  assert.deepEqual(w.screens.k3f9, { off: true, card: "joke 1" }, "the same words on every screen of the role");
+  // A joke says it is one (PC5): it stands alone, so no waiting line is added under it.
+  assert.deepEqual(w.roles.bridge, { off: true, card: "joke 1", kind: "joke" });
+  assert.deepEqual(w.screens.k3f9, { off: true, card: "joke 1", kind: "joke" }, "the same words on every screen of the role");
   assert.deepEqual(w.roles.telescope, sol);
   assert.deepEqual(w.screens.w1, mars);
   assert.deepEqual(boardWire(holdAll(b, "blank"), ["table"]).roles.table, { off: true });
@@ -196,4 +197,14 @@ test("driving a read-only destination: it follows the GM without new undo steps;
   e = driveTo(e, sol);
   assert.equal(title(e, "bridge"), "The Solar System", "driving Everyone moves its top layer");
   assert.equal(drive(e, null).driving, undefined);
+});
+
+test("a clean output (PB8) is a screen like any other, marked Output; its link has no controls", async () => {
+  const { outputLink } = await import("../src/seats.ts");
+  const b = screenHello(emptyBoard({ scope: "k" }), "scr-out1", { name: "Output", role: "stream", output: true });
+  assert.deepEqual(b.screens["scr-out1"], { name: "Output", role: "stream", output: true });
+  assert.deepEqual(screenHello(b, "scr-x", { name: "Wall", role: "table" }).screens["scr-x"], { name: "Wall", role: "table" });
+  const join = "https://v4.example/players.html?join=abc&seat=stream";
+  assert.equal(outputLink(join), "https://v4.example/players.html?join=abc&seat=stream&clean=1&name=Output");
+  assert.equal(outputLink(join, true), "https://v4.example/players.html?join=abc&seat=stream&clean=1&name=Output&ground=none");
 });

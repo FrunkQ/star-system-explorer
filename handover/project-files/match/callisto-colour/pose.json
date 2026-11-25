@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Callisto",
+  "camera": "about 50,000 km",
+  "tests": "Visible: dark ice-rock regolith",
+  "needs": [
+    "multi-ring basin"
+  ]
+}

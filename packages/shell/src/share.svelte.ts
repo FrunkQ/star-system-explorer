@@ -3,14 +3,16 @@
 // shares. A room is a random id; the players' link opens players.html with it.
 // The GM serves both at once: BroadcastChannel for other windows and screens
 // of this computer, and the site's relay (worker/index.js) for other devices.
-import { BoardHistory, boardWire, driveTo, emptyBoard, hold, rejoin, release, screenHello, send as boardSend, type Board } from "../../ui-contract/src/index.ts";
-import { GmHost, SealedHost, sealedLink, observeOf, addSeat, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type Json, type PlayerRequest, type SeatPlan, type Session, type Shown } from "../../ui-contract/src/index.ts";
+import { BoardHistory, CardDeck, GROUND_TURN_MS, campaignGrounds, groundCandidates, groundTurns, holdGround, pickGround, stampFor, type Bookmark, type GroundSet, type HoldCard, boardWire, holdingCardsOn, driveTo, emptyBoard, hold, rejoin, release, screenHello, send as boardSend, type Board } from "../../ui-contract/src/index.ts";
+import { GmHost, SealedHost, sealedLink, observeOf, addSeat, updateSeat, oneLayoutPerRole, type SeatChange, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type Json, type PlayerRequest, type SeatPlan, type Session, type Shown, type PackDoc, type HoldingCard } from "../../ui-contract/src/index.ts";
 
 declare const __SSE_APP__: string;
 export const APP_VERSION: string = typeof __SSE_APP__ === "string" ? __SSE_APP__ : "dev";
 
 export interface Share {
   readonly host: GmHost;
+  /** The holding cards on the stack (PB5), for the line card's choices. */
+  readonly cards: readonly HoldingCard[];
   readonly state: HostState & { room: string | null; link: string | null; waiting: PlayerRequest[]; plan: SeatPlan; shown: Shown; board: Board; can_undo: boolean; can_redo: boolean };
   /** Change the Switchboard's board (PB1): `f` gets the board and returns the next; it goes on the board's undo history and out to every screen. */
   act(f: (b: Board) => Board): void;
@@ -29,12 +31,16 @@ export interface Share {
   /** V10: add a seat with its own audience; a fog-of-war audience's starting view is chronicled at once. */
   addSeat(o: Parameters<typeof addSeat>[1]): Promise<string | null>;
   removeSeat(id: string): void;
+  /** The role card (PB7): change a seat's name, layout, names, brand or tabletops; its screens get it at once. */
+  updateSeat(id: string, change: SeatChange): void;
   /** Quick overrides (V3 gap 25): set a seat's live switches now; they go to its screens at once and are never saved. */
   setLive(id: string, live: Record<string, boolean>): void;
   /** Mark a body (and what orbits it) discovered by an audience, or take it back. */
   discover(audience: Audience, address: string, known: boolean, at_yr: number): Promise<string | null>;
   /** Join links of a seat: one per screen it opens. */
   links(seatId: string): { screen: string | null; href: string }[];
+  /** Where held screens' grounds come from (PC5): the campaign's bookmarks, and the postcard sets on the stack. */
+  setGrounds(src: { bookmarks: () => readonly Bookmark[]; sets?: () => readonly GroundSet[] }): void;
 }
 
 function roomId(): string {
@@ -52,6 +58,13 @@ export async function createShare(session: Session, opening: { universe: { id: s
   const failed = (r: Awaited<ReturnType<Session["send"]>>) => (r.status === "applied" ? null : r.status === "refused" ? r.reason : r.status === "error" ? r.message : "not applied");
   host.onChange = (s) => Object.assign(st, s, { waiting: [...host.requests()] });
   let timer: ReturnType<typeof setInterval> | null = null;
+  // Holding cards (PB5): the base presentation pack's (served beside the shell by scripts/build-shell.sh; not on the
+  // stack, so no state hash changes), then any the stack's packs add or replace. The deck picks words once per hold.
+  const presentation = (await fetch(document.baseURI.replace(/[^/]*$/, "") + "packs/base-presentation.json")
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null)) as PackDoc | null;
+  const cards = holdingCardsOn([...(presentation ? [presentation] : []), ...session.stack().base]);
+  const deck = new CardDeck(cards);
   // V10 part 2: each sealed seat has its own room, served finished scenes only.
   const sealed = new Map<string, { host: SealedHost; room: string }>();
   let clock = opening.clock_yr;
@@ -63,12 +76,50 @@ export async function createShare(session: Session, opening: { universe: { id: s
       sealed.set(seat.id, { room, host: new SealedHost(session, host, hubFor(room, "gm"), { seat: $state.snapshot(seat) as typeof seat, scope: "scope" in st.shown ? st.shown.scope : opening.scope, app: APP_VERSION, clock_yr: clock, data_views: opening.views() }) });
     }
   }
+  // Grounds on held screens (PC5): which postcard each role's held screens show. A campaign postcard goes only to a
+  // role that knows the place it looks at; what a role knows is asked of the kernel once and kept until the board
+  // changes or the postcards turn. Postcards in turn move on every GROUND_TURN_MS while a held card has a set.
+  let groundSrc: { bookmarks: () => readonly Bookmark[]; sets?: () => readonly GroundSet[] } | null = null;
+  let turn = 0;
+  const knownAt = new Map<string, Set<string> | "asking">();
+  const audienceFor = (role: string) => (role === "" ? "everyone" : (st.plan.seats.find((x) => x.id === role)?.audience ?? "everyone"));
+  function knows(audience: string, scope: string, about: string): boolean | null {
+    if (audience === "all") return true;
+    const k = `${audience}|${scope}`;
+    const had = knownAt.get(k);
+    if (had === "asking") return null;
+    if (had) return had.has(about) || about === scope;
+    knownAt.set(k, "asking");
+    void session
+      .scene(scope, { audience })
+      .then((r) => knownAt.set(k, new Set(r.ok ? r.scene.subjects.map((x) => x.address) : [])))
+      .catch(() => knownAt.set(k, new Set()))
+      .then(() => push());
+    return null;
+  }
+  function groundFor(card: HoldCard, role: string) {
+    if (!groundSrc) return null;
+    const list = groundCandidates(holdGround(card), { campaign: campaignGrounds(groundSrc.bookmarks(), stampFor), sets: groundSrc.sets?.() ?? [] });
+    const audience = audienceFor(role);
+    return pickGround(list, turn, (scope, about) => knows(audience, scope, about));
+  }
+  const turning = () => {
+    const b = hist.board;
+    return [b.all, ...Object.values(b.lines).map((l) => l?.held)].some((c) => c !== undefined && groundTurns(holdGround(c)));
+  };
+  setInterval(() => {
+    if (!turning()) return;
+    turn += 1;
+    knownAt.clear();
+    push();
+  }, GROUND_TURN_MS);
   // The board goes out as the Shown players' screens already read: the table's, a seat's own when its role has a line
   // of its own, and each known screen's own. Sealed seats get theirs built on this machine (a held one gets nothing).
   function push() {
     const b = hist.board;
     const plan = $state.snapshot(st.plan) as SeatPlan;
-    const wire = boardWire(b, plan.seats.map((x) => x.id));
+    deck.settle(b);
+    const wire = boardWire(b, plan.seats.map((x) => x.id), (c) => deck.said(c), groundFor);
     const seats = plan.seats.map(({ shown: _old, ...rest }) => (b.lines[`role:${rest.id}`] || b.steer?.[`role:${rest.id}`] ? { ...rest, shown: wire.roles[rest.id]! } : rest));
     st.plan = { ...plan, seats };
     st.shown = wire.shown;
@@ -84,11 +135,13 @@ export async function createShare(session: Session, opening: { universe: { id: s
     push();
   };
   const act = (f: (b: Board) => Board) => {
+    knownAt.clear();
     hist.do(f(hist.board));
     push();
   };
   return {
     host,
+    cards,
     state: st,
     act,
     undo() {
@@ -147,7 +200,7 @@ export async function createShare(session: Session, opening: { universe: { id: s
       sealed.forEach((x) => x.host.setClock(yr));
     },
     async addSeat(o) {
-      const next = addSeat($state.snapshot(st.plan) as SeatPlan, o);
+      const next = oneLayoutPerRole(addSeat($state.snapshot(st.plan) as SeatPlan, o));
       const added = next.audiences.filter((a) => !st.plan.audiences.some((b) => b.id === a.id));
       for (const i of startIntents({ ...next, audiences: added }, root, opening.clock_yr)) {
         const bad = failed(await session.send(i));
@@ -168,6 +221,11 @@ export async function createShare(session: Session, opening: { universe: { id: s
       st.plan = { ...plan, seats };
       host.setState({ seats });
     },
+    updateSeat(id: string, change: SeatChange) {
+      const next = updateSeat($state.snapshot(st.plan) as SeatPlan, id, change);
+      st.plan = next;
+      host.setState({ seats: next.seats });
+    },
     removeSeat(id: string) {
       const next = removeSeat($state.snapshot(st.plan) as SeatPlan, id);
       sealed.get(id)?.host.close();
@@ -177,6 +235,11 @@ export async function createShare(session: Session, opening: { universe: { id: s
     },
     async discover(audience, address, known, at_yr) {
       return failed(await session.send(discoverIntent(audience, address, known, observeOf(session.stack().base)?.setup.campaign.before ?? "long-range", at_yr)));
+    },
+    setGrounds(src) {
+      groundSrc = src;
+      knownAt.clear();
+      push();
     },
     links(seatId: string) {
       const seat = st.plan.seats.find((x) => x.id === seatId);

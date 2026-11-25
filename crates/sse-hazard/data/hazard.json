@@ -1,0 +1,21 @@
+{
+  "about": "Hazard map settings (exotic objects design 3.8, package XO18). Where a hazard turns harsh and deadly, and the stated stock ship used when no ship is chosen. Policy figures, not physics: each says where it comes from, and a pack or the GM may change them.",
+  "dose": {
+    "harsh_sv": 0.05,
+    "harsh_src": "ICRP Publication 103 (2007), the most a radiation worker may take in any one year, 50 mSv: a day's stay (or one pass) giving that is harsh",
+    "deadly_sv": 1.0,
+    "deadly_src": "about 1 Sv brings on acute radiation sickness (IAEA, Diagnosis and Treatment of Radiation Injuries, Safety Reports Series 2, 1998): a day's stay (or one pass) giving that is deadly"
+  },
+  "margin": 0.75,
+  "margin_src": "chosen: a hull above three quarters of the temperature it can take, or a climb out needing more than three quarters of the fuel, reads harsh",
+  "stock_ship": {
+    "name": "stock ship",
+    "delta_v_m_s": 10000.0,
+    "shield_kg_m2": 100.0,
+    "skin": "aluminium",
+    "absorbed_over_emitted": 1.0,
+    "faces": "round",
+    "length_m": 50.0,
+    "src": "stated stand-in (design 3.8, open point 13): 10 km/s left in the tanks, a 10 g/cm² aluminium hull, as dark as it is bright in the heat"
+  }
+}

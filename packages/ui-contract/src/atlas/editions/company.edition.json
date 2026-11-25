@@ -1,0 +1,51 @@
+{
+  "schema": "sse.edition/1",
+  "id": "sse.edition.company",
+  "name": "Company",
+  "description": "Dry, corporate survey reports with numbered sections; lines above this document's clearance are barred.",
+  "look": "glass",
+  "plates": "wireframe",
+  "gaps": "bar",
+  "sources": "section",
+  "letterhead": {
+    "use": "brand",
+    "lines": [
+      "{brand.name}",
+      "SURVEY REPORT {doc.number}",
+      "ISSUED {date}",
+      "CLEARANCE: {audience}"
+    ],
+    "stamp": "COMPANY CONFIDENTIAL"
+  },
+  "voice": {
+    "gap": "",
+    "gap_short": "",
+    "labels": {
+      "section.summary": "1. Summary",
+      "section.overview": "1. Overview",
+      "section.star": "2. Primary",
+      "section.worlds": "3. Bodies in orbit",
+      "section.world": "2. General",
+      "section.air": "3. Atmosphere and hydrosphere",
+      "section.hazards": "4. Surface and hazards",
+      "section.people": "5. Settlement",
+      "section.moons": "6. Satellites",
+      "section.systems": "2. Systems",
+      "section.story": "7. Unconfirmed reports",
+      "section.plate": "Figure 1",
+      "line.mass_kg": "Mass",
+      "line.orbit.semi_major_axis_m": "Semi-major axis",
+      "line.orbit.period_s": "Orbital period",
+      "line.hazards": "Hazards",
+      "line.resources": "Resources",
+      "prose.empty": "No assessment on file.",
+      "page.system": "System report",
+      "page.world": "Body report",
+      "page.moon": "Satellite report",
+      "page.star": "Primary report",
+      "page.station": "Installation report",
+      "page.sector": "Sector report",
+      "brand.fallback": "Independent Survey Office"
+    }
+  }
+}

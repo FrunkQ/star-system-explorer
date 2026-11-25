@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Ganymede",
+  "camera": "about 1,000 km, close-up (CU1)",
+  "tests": "Visible: ice and dark material; CU1 close-up over a big moon",
+  "needs": [
+    "grooved terrain relief"
+  ],
+  "date": "2021-06-07"
+}

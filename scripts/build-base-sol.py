@@ -35,6 +35,13 @@ SOURCES = [
                  ("mars", "Mars"), ("jupiter", "Jupiter"), ("saturn", "Saturn"), ("uranus", "Uranus"),
                  ("neptune", "Neptune"), ("pluto", "Pluto"), ("asteroid", "Asteroid")]
 ] + [
+    {"id": "nssdca-%s" % n, "text": "Williams, D. R., NASA NSSDCA %s (read 24 Nov 2026)" % t,
+     "status": "verified", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/%s.html" % page}
+    for n, t, page in [("jovian-sats", "Jovian Satellite Fact Sheet", "joviansatfact"),
+                       ("saturnian-sats", "Saturnian Satellite Fact Sheet", "saturniansatfact"),
+                       ("neptunian-sats", "Neptunian Satellite Fact Sheet", "neptuniansatfact"),
+                       ("uranian-sats", "Uranian Satellite Fact Sheet", "uraniansatfact")]
+] + [
     {"id": "iau2015b3", "text": "Prša, A. et al. 2016, AJ 152, 41: Nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3",
      "status": "verified", "doi": "10.3847/0004-6256/152/2/41"},
     {"id": "hipparcos1997", "text": "ESA 1997, The Hipparcos and Tycho Catalogues, ESA SP-1200, vol. 1, sec. 1.5.3: the ICRS to galactic matrix A_G",
@@ -87,6 +94,77 @@ PLANETS = [
     ("Neptune", "neptune", "planet", "sun", 102.409, 24622, 4514.953, 0.0097, 16.11, 0.290, 0.442, 28.32),
     ("Pluto", "pluto", "dwarf_planet", "sun", 0.01303, 1188, 5869.656, 0.2444, -153.2928, 0.72, 0.52, 119.51),
 ]
+# The large moons and Charon (barycentre always: Pluto and Charon go round a
+# point outside Pluto, Alex 24 Nov 2026). name, id, host, mass (kg), radius
+# (km), a (km), e, inclination to the host's equator or orbit (deg; Triton's
+# is retrograde), geometric albedo, Bond albedo or None, source. All
+# synchronous: rotation equals the orbit, so none is kept here. Phobos and
+# Deimos are printed with the Mars sheet (mass 1e15 kg, axis radii: the radius
+# is the mean of the three), Charon with the Pluto sheet (mean distance).
+MOONS = [
+    ("Phobos", "phobos", "mars", 10.6e15, (13.0 + 11.4 + 9.1) / 3, 9378, 0.0151, 1.08, 0.07, None, "nssdca-mars"),
+    ("Deimos", "deimos", "mars", 2.4e15, (7.8 + 6.0 + 5.1) / 3, 23459, 0.0005, 1.79, 0.08, None, "nssdca-mars"),
+    ("Io", "io", "jupiter", 893.2e20, 1821.5, 421.8e3, 0.004, 0.04, 0.62, None, "nssdca-jovian-sats"),
+    ("Europa", "europa", "jupiter", 480.0e20, 1560.8, 671.1e3, 0.009, 0.47, 0.68, None, "nssdca-jovian-sats"),
+    ("Ganymede", "ganymede", "jupiter", 1481.9e20, 2631.2, 1070.4e3, 0.001, 0.18, 0.44, None, "nssdca-jovian-sats"),
+    ("Callisto", "callisto", "jupiter", 1075.9e20, 2410.3, 1882.7e3, 0.007, 0.19, 0.19, None, "nssdca-jovian-sats"),
+    # Saturn's other major moons and Uranus's five (read 24 Nov 2026; asked
+    # for so Enceladus's plumes and the icy moons show in True). Radii are
+    # the mean of the three printed axes where three are printed. Iapetus's
+    # albedo is printed two-toned (0.05 / 0.5), so none is kept here.
+    ("Mimas", "mimas", "saturn", 0.379e20, (208 + 197 + 191) / 3, 185.52e3, 0.0202, 1.53, 0.6, None, "nssdca-saturnian-sats"),
+    ("Enceladus", "enceladus", "saturn", 1.08e20, (257 + 251 + 248) / 3, 238.02e3, 0.0045, 0.00, 1.0, None, "nssdca-saturnian-sats"),
+    ("Tethys", "tethys", "saturn", 6.18e20, (538 + 528 + 526) / 3, 294.66e3, 0.0000, 1.86, 0.8, None, "nssdca-saturnian-sats"),
+    ("Dione", "dione", "saturn", 11.0e20, (563 + 561 + 560) / 3, 377.40e3, 0.0022, 0.02, 0.7, None, "nssdca-saturnian-sats"),
+    ("Rhea", "rhea", "saturn", 23.1e20, (765 + 763 + 762) / 3, 527.04e3, 0.0010, 0.35, 0.7, None, "nssdca-saturnian-sats"),
+    ("Iapetus", "iapetus", "saturn", 18.1e20, (746 + 746 + 712) / 3, 3560.85e3, 0.0283, 14.72, None, None, "nssdca-saturnian-sats"),
+    ("Miranda", "miranda", "uranus", 0.66e20, (240 + 234.2 + 232.9) / 3, 129.90e3, 0.0013, 4.34, 0.32, None, "nssdca-uranian-sats"),
+    ("Ariel", "ariel", "uranus", 12.9e20, (581.1 + 577.9 + 577.7) / 3, 190.90e3, 0.0012, 0.04, 0.39, None, "nssdca-uranian-sats"),
+    ("Umbriel", "umbriel", "uranus", 12.2e20, 584.7, 266.00e3, 0.0039, 0.13, 0.21, None, "nssdca-uranian-sats"),
+    ("Titania", "titania", "uranus", 34.2e20, 788.9, 436.30e3, 0.0011, 0.08, 0.27, None, "nssdca-uranian-sats"),
+    ("Oberon", "oberon", "uranus", 28.8e20, 761.4, 583.50e3, 0.0014, 0.07, 0.23, None, "nssdca-uranian-sats"),
+    ("Titan", "titan", "saturn", 1345.5e20, 2575, 1221.87e3, 0.0292, 0.33, 0.22, None, "nssdca-saturnian-sats"),
+    ("Triton", "triton", "neptune", 214e20, 1353.4, 354.76e3, 0.000016, 157.345, 0.72, None, "nssdca-neptunian-sats"),
+    ("Charon", "charon", "pluto", 1.586e21, 606, 19596, 0.0, 0.00005, 0.42, 0.25, "nssdca-pluto"),
+    # Round Pluto and Charon (the sheet's distances are barycentric, which
+    # the Jacobi hierarchy reads as round the pair: they lie outside Charon).
+    # No mass, eccentricity or lean is printed; the radius is half the mean
+    # diameter (the mean of three axes where three are printed).
+    ("Styx", "styx", "pluto", None, 10.5 / 2, 42413, None, None, 0.65, None, "nssdca-pluto"),
+    ("Nix", "nix", "pluto", None, (48.4 + 33.8 + 31.4) / 6, 48690, None, None, 0.56, None, "nssdca-pluto"),
+    ("Kerberos", "kerberos", "pluto", None, (19 + 10 + 9) / 6, 57750, None, None, 0.56, None, "nssdca-pluto"),
+    ("Hydra", "hydra", "pluto", None, (62.0 + 36.5 + 29.3) / 6, 64721, None, None, 0.83, None, "nssdca-pluto"),
+]
+MOON_NOTES = {
+    "phobos": "radius: the mean of the three axis radii printed; a is the mean distance from the centre of Mars",
+    "deimos": "radius: the mean of the three axis radii printed; a is the mean distance from the centre of Mars",
+    "triton": "retrograde orbit (inclination over 90 degrees)",
+    "charon": "a is the mean distance from Pluto; radius is equatorial; the pair goes round a point outside Pluto",
+    "styx": "a is barycentric (round Pluto and Charon); no mass printed",
+    "nix": "a is barycentric (round Pluto and Charon); no mass printed",
+    "kerberos": "a is barycentric (round Pluto and Charon); no mass printed",
+    "hydra": "a is barycentric (round Pluto and Charon); no mass printed",
+}
+
+
+def moon_row(name, pid, host, mass, r_km, a_km, e, inc, geo, bond, src):
+    values = {
+        "body.mass": val(mass, "kg", src),
+        "body.radius": val(round(r_km, 4) * 1e3, "m", src),
+        "orbit.semi_major_axis": val(a_km * 1e3, "m", src),
+        "orbit.eccentricity": val(e, "1", src),
+        "orbit.inclination": val(inc, "deg", src),
+        "body.albedo_geometric": val(geo, "1", src),
+    }
+    values = {k: v for k, v in values.items() if v["v"] is not None}
+    if bond is not None:
+        values["body.albedo"] = val(bond, "1", src, note="Bond albedo")
+    row = {"id": pid, "name": name, "kind": "moon", "host": host, "values": values}
+    if pid in MOON_NOTES:
+        row["note"] = MOON_NOTES[pid]
+    return row
+
+
 NOTES = {
     "jupiter": "rotation in System III (1965.0)",
     "saturn": "rotation in Saturnian System III",
@@ -117,6 +195,7 @@ def planet_row(name, pid, kind, host, m24, r_km, a6, e, rot_h, bond, geo, obl):
     row = {"id": pid, "name": name, "kind": kind, "host": host, "values": values}
     values.update(surface_facts(pid, src))
     values.update(composition_facts(pid, src))
+    values.update(interior_facts(pid))
     if pid in NOTES:
         row["note"] = NOTES[pid]
     return row
@@ -136,6 +215,11 @@ SURFACE = {
     "earth": (288.0, 1.014, "n2"),
     "mars": (214.0, 6.36e-3, "co2"),
     "pluto": (None, 13e-6, "n2"),
+    # The giants have no surface: NSSDCA's temperature at the 1 bar level.
+    "jupiter": (165.0, None, None),
+    "saturn": (134.0, None, None),
+    "uranus": (76.0, None, None),
+    "neptune": (72.0, None, None),
 }
 SURFACE_NOTES = {
     "mars": "average; NSSDCA prints ~214 K",
@@ -145,6 +229,10 @@ SURFACE_NOTES = {
     "earth_gas": "78.08% N2, 20.95% O2, dry air by volume",
     "mars_gas": "95.1% CO2, 2.59% N2, 1.94% Ar by volume",
     "pluto_gas": "99% N2, 0.5% CH4 by volume",
+    "jupiter": "temperature at the 1 bar level (no surface)",
+    "saturn": "temperature at the 1 bar level (no surface)",
+    "uranus": "temperature at the 1 bar level (no surface)",
+    "neptune": "temperature at the 1 bar level (no surface)",
 }
 BAR = 1e5
 
@@ -190,6 +278,41 @@ COMPOSITION = {
 }
 
 
+# Rocky worlds' measured interiors (proven core, 24 Nov 2026): the core's share
+# of the mass, and the moment of inertia factor C = I/(M R^2). Recalled from the
+# papers named, not yet re-read against them, so every value is marked
+# unverified. Venus has no measured core, so it has no core share here.
+INTERIOR = {
+    "mercury": ((0.69, "hauck2013", "from a core radius of 2020 +/- 30 km"), (0.346, "margot2012")),
+    "venus": (None, (0.337, "margot2021")),
+    "earth": ((0.325, "mcdonough2003", "the core is 32.5% of Earth's mass"), (0.3307, "yoder1995")),
+    "moon": ((0.015, "weber2011", "from a core radius of about 330 km"), (0.3932, "konopliv1998")),
+    "mars": ((0.24, "staehler2021", "from a core radius of 1830 +/- 40 km and a core density near 6000 kg/m3"), (0.3644, "konopliv2011")),
+}
+INTERIOR_SOURCES = [
+    {"id": "hauck2013", "text": "Hauck, S. A. et al. 2013, JGR Planets 118, 1204: the curious case of Mercury's internal structure (core radius 2020 +/- 30 km)", "status": "unverified", "doi": "10.1002/jgre.20091"},
+    {"id": "margot2012", "text": "Margot, J.-L. et al. 2012, JGR Planets 117, E00L09: Mercury's moment of inertia from spin and gravity data (C/MR^2 = 0.346 +/- 0.014)", "status": "unverified", "doi": "10.1029/2012JE004161"},
+    {"id": "margot2021", "text": "Margot, J.-L. et al. 2021, Nature Astronomy 5, 676: spin state and moment of inertia of Venus (C/MR^2 = 0.337 +/- 0.024)", "status": "unverified", "doi": "10.1038/s41550-021-01339-7"},
+    {"id": "mcdonough2003", "text": "McDonough, W. F. 2003, Treatise on Geochemistry 2, 547: compositional model for the Earth's core (the core is 32.5% of Earth's mass)", "status": "unverified", "doi": "10.1016/B0-08-043751-6/02015-6"},
+    {"id": "yoder1995", "text": "Yoder, C. F. 1995, Astrometric and geodetic properties of Earth and the Solar System, AGU Reference Shelf 1, 1 (Earth C/MR^2 = 0.3307)", "status": "unverified", "doi": "10.1029/RF001p0001"},
+    {"id": "weber2011", "text": "Weber, R. C. et al. 2011, Science 331, 309: seismic detection of the lunar core (radius about 330 km)", "status": "unverified", "doi": "10.1126/science.1199375"},
+    {"id": "konopliv1998", "text": "Konopliv, A. S. et al. 1998, Science 281, 1476: improved gravity field of the Moon from Lunar Prospector (C/MR^2 = 0.3932 +/- 0.0002)", "status": "unverified", "doi": "10.1126/science.281.5382.1476"},
+    {"id": "staehler2021", "text": "Staehler, S. C. et al. 2021, Science 373, 443: seismic detection of the martian core (radius 1830 +/- 40 km)", "status": "unverified", "doi": "10.1126/science.abi7730"},
+    {"id": "konopliv2011", "text": "Konopliv, A. S. et al. 2011, Icarus 211, 401: Mars high resolution gravity fields from MRO, Mars seasonal gravity and other dynamical parameters (C/MR^2 = 0.3644 +/- 0.0005)", "status": "unverified", "doi": "10.1016/j.icarus.2010.10.004"},
+]
+
+
+def interior_facts(pid):
+    if pid not in INTERIOR:
+        return {}
+    core, moi = INTERIOR[pid]
+    out = {}
+    if core is not None:
+        out["interior.core_mass_fraction"] = val(core[0], "1", core[1], note=core[2], check="unverified")
+    out["body.moment_of_inertia_factor"] = val(moi[0], "1", moi[1], note="C = I/(M R^2)", check="unverified")
+    return out
+
+
 def composition_facts(pid, src):
     if pid not in COMPOSITION:
         return {}
@@ -209,14 +332,14 @@ def build():
     }}
     sun["values"].update(sol_extra.SUN_AGE)
     sun["values"].update(sun_frame())
-    bodies = [sun] + [planet_row(*p) for p in PLANETS] + sol_extra.BODIES
-    sources = sorted(SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
+    bodies = [sun] + [planet_row(*p) for p in PLANETS] + [moon_row(*x) for x in MOONS] + sol_extra.BODIES
+    sources = sorted(SOURCES + INTERIOR_SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
     regions = sol_extra.regions({b["id"]: b for b in bodies})
     return {
         "format": "sse.pack/1", "id": "sse.base-sol", "version": "0.1.0", "kind": ["base-physics"],
         "kernel_range": "^0.1", "licence": "Apache-2.0",
         "provides": {"other": {"sol": {
-            "about": "The catalogued Solar System: the Sun, the planets, the Moon, Ceres and Pluto, and the belts and the Oort cloud, as measured. Built by scripts/build-base-sol.py; every value names its source. Body facts, not the master data sheet's reference objects.",
+            "about": "The catalogued Solar System: the Sun, the planets, the Moon and the large moons, Ceres, Pluto and Charon, and the belts and the Oort cloud, as measured. Built by scripts/build-base-sol.py; every value names its source. Body facts, not the master data sheet's reference objects.",
             "bodies": bodies, "regions": regions, "sources": sources,
         }}},
     }

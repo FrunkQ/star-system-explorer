@@ -18,7 +18,13 @@
 //! - **Binaries** (Holman and Wiegert 1999): round one star of a pair, or
 //!   round both.
 //!
-//! Resonance flags and a direct integration on request are later packages.
+//! - **Resonance** (K15; Murray and Dermott 1999, Dermott and Murray 1981):
+//!   neighbours whose years sit inside the width of a p:q resonance, up to
+//!   third order, or that share one orbit. A held pair's close or crossing
+//!   Hill verdict drops to worth watching, saying which resonance; being
+//!   inside the width is needed, not enough, so it is never "lasts".
+//!
+//! A direct integration on request is a later package.
 //! A body missing what a check needs is listed under `unchecked` with the
 //! missing facts named, never guessed.
 
@@ -38,7 +44,8 @@ pub const COLLISION_STEPS: usize = 16;
 /// One check's outcome.
 #[derive(Clone, Debug, PartialEq, serde::Serialize)]
 pub struct Check {
-    /// `hill`, `amd`, `moon`, `kozai`, `binary_one_star`, `binary_both_stars`.
+    /// `hill`, `amd`, `moon`, `kozai`, `binary_one_star`, `binary_both_stars`,
+    /// `resonance`.
     pub check: String,
     /// The formula block that did the work.
     pub block: String,
@@ -131,7 +138,10 @@ fn bodies(facts: &Facts, system: &Address) -> Vec<Body> {
             let f = |k: &str| row.get(k).and_then(num);
             Body {
                 address: a.clone(),
-                star: matches!(row.get("body.kind"), Some(Value::Text(t)) if t == "star"),
+                // A star by its kind, its temperature or a V3 save's role.
+                star: matches!(row.get("body.kind"), Some(Value::Text(t)) if t == "star")
+                    || row.contains_key("star.effective_temperature")
+                    || matches!(row.get("v3.roleHint"), Some(Value::Text(t)) if t == "star"),
                 host,
                 mass: f("body.mass").filter(|m| *m > 0.0),
                 a: f("orbit.semi_major_axis").filter(|x| *x > 0.0),
@@ -242,6 +252,24 @@ pub fn checks(facts: &Facts, system: &Address) -> (Vec<Check>, Vec<Unchecked>) {
             continue;
         };
         let worlds: Vec<&Body> = list.iter().copied().filter(|b| !b.star).collect();
+        // Barycentre always (Jacobi): each body goes round its host and
+        // everything further in, so the central mass is all of that.
+        let mut central: BTreeMap<&Address, f64> = BTreeMap::new();
+        let mut inside = mh;
+        for b in list {
+            central.insert(&b.address, inside);
+            inside += b.mass.unwrap_or(0.0);
+        }
+        let cm = |b: &Body| central.get(&b.address).copied().unwrap_or(mh);
+        // Neighbours are worlds with no star between them.
+        let mut runs: Vec<Vec<&Body>> = vec![vec![]];
+        for b in list {
+            if b.star {
+                runs.push(vec![]);
+            } else if let Some(r) = runs.last_mut() {
+                r.push(b);
+            }
+        }
         // Hill spacing and the deficit, neighbour by neighbour.
         let mut amd = Some(0.0);
         for w in &worlds {
@@ -253,7 +281,7 @@ pub fn checks(facts: &Facts, system: &Address) -> (Vec<Check>, Vec<Unchecked>) {
             }
             match run(
                 "sse.stability.amd_term",
-                &[w.a.unwrap_or(0.0), w.e, w.i, w.mass.unwrap_or(0.0), mh],
+                &[w.a.unwrap_or(0.0), w.e, w.i, w.mass.unwrap_or(0.0), cm(w)],
             ) {
                 Ok((_, o)) => amd = amd.map(|s| s + o["amd"]),
                 Err(e) => {
@@ -262,8 +290,9 @@ pub fn checks(facts: &Facts, system: &Address) -> (Vec<Check>, Vec<Unchecked>) {
                 }
             }
         }
-        for pair in worlds.windows(2) {
+        for pair in runs.iter().flat_map(|r| r.windows(2)) {
             let (p, q) = (pair[0], pair[1]);
+            let mh = cm(p);
             let m: Vec<String> = need(p, true, true)
                 .into_iter()
                 .chain(need(q, true, true))
@@ -278,7 +307,19 @@ pub fn checks(facts: &Facts, system: &Address) -> (Vec<Check>, Vec<Unchecked>) {
                 q.a.unwrap_or(0.0),
                 q.mass.unwrap_or(0.0),
             );
+            let held = held(p, q, mh);
             if a2 <= a1 {
+                if let Some((pp, qq, ins)) = &held {
+                    out.push(
+                        "resonance",
+                        "sse.stability.resonance",
+                        host,
+                        &[&p.address, &q.address],
+                        ins,
+                        resonance_says(*pp, *qq),
+                    );
+                    continue;
+                }
                 out.missing(
                     "hill",
                     &[&p.address, &q.address],
@@ -296,7 +337,10 @@ pub fn checks(facts: &Facts, system: &Address) -> (Vec<Check>, Vec<Unchecked>) {
                 &[a1, p.e, m1, a2, q.e, m2, mh],
                 |o| {
                     let (v, s, g) = (o["verdict"], r(o["spacing"], 1), r(o["closest_gap"], 1));
-                    if v >= 3.0 {
+                    if let (true, Some((pp, qq, _))) = (v >= 2.0, &held) {
+                        let what = if v >= 3.0 { "the orbits cross" } else { "under 2√3" };
+                        (1, format!("{s} shared gravity bubbles apart and {what}, but a {pp}:{qq} resonance can keep them from meeting"))
+                    } else if v >= 3.0 {
                         (3, format!("{s} shared gravity bubbles apart, and the orbits cross: they will meet"))
                     } else if v >= 2.0 {
                         (2, format!("{s} shared gravity bubbles apart: under 2√3, too close to last"))
@@ -307,6 +351,16 @@ pub fn checks(facts: &Facts, system: &Address) -> (Vec<Check>, Vec<Unchecked>) {
                     }
                 },
             );
+            if let Some((pp, qq, ins)) = &held {
+                out.push(
+                    "resonance",
+                    "sse.stability.resonance",
+                    host,
+                    &[&p.address, &q.address],
+                    ins,
+                    resonance_says(*pp, *qq),
+                );
+            }
             let Some(total) = amd else { continue };
             let mut e = 0.0;
             let mut ok = true;
@@ -476,6 +530,65 @@ pub fn checks(facts: &Facts, system: &Address) -> (Vec<Check>, Vec<Unchecked>) {
         }
     }
     (out.checks, out.unchecked)
+}
+
+/// Turns per cycle tried for a resonance: up to six outer turns and third
+/// order (p - q at most 3), each ratio in lowest terms.
+const MAX_OUTER_TURNS: u32 = 6;
+const MAX_ORDER: u32 = 3;
+
+fn gcd(a: u32, b: u32) -> u32 {
+    if b == 0 {
+        a
+    } else {
+        gcd(b, a % b)
+    }
+}
+
+/// The resonance two neighbours sit most deeply inside, if any: its turns
+/// (inner p, outer q) and the block's inputs. Both need a mass and an orbit.
+fn held(p: &Body, q: &Body, mh: f64) -> Option<(u32, u32, Vec<f64>)> {
+    let (a1, m1, a2, m2) = (p.a?, p.mass?, q.a?, q.mass?);
+    let pin = run("sse.orbit.period", &[a1, mh + m1]).ok()?.1["period"];
+    let pout = run("sse.orbit.period", &[a2, mh + m2]).ok()?.1["period"];
+    let ecc = p.e.max(q.e);
+    let mut best: Option<(f64, u32, u32, Vec<f64>)> = None;
+    for qq in 1..=MAX_OUTER_TURNS {
+        for pp in qq..=qq + MAX_ORDER {
+            if gcd(pp, qq) != 1 || (pp == qq && qq != 1) {
+                continue;
+            }
+            let ins = vec![pin, pout, f64::from(pp), f64::from(qq), m1, m2, mh, ecc];
+            let Ok((_, o)) = run("sse.stability.resonance", &ins) else {
+                continue;
+            };
+            if o["verdict"] < 1.0 {
+                continue;
+            }
+            let depth = o["offset"] / o["width"];
+            if best.as_ref().is_none_or(|b| depth < b.0) {
+                best = Some((depth, pp, qq, ins));
+            }
+        }
+    }
+    best.map(|(_, pp, qq, ins)| (pp, qq, ins))
+}
+
+fn resonance_says(pp: u32, qq: u32) -> impl Fn(&BTreeMap<String, f64>) -> (u8, String) {
+    move |o| {
+        if pp == qq {
+            return (
+                1,
+                "share one orbit: held as Trojans or on a horseshoe while each keeps its place"
+                    .into(),
+            );
+        }
+        let (off, w) = (r(o["offset"] * 100.0, 2), r(o["width"] * 100.0, 2));
+        (
+            1,
+            format!("{pp}:{qq} resonance, years within {off}% of it and it holds {w}%: timing can keep them from meeting, as Neptune keeps Pluto"),
+        )
+    }
 }
 
 fn hw_one(o: &BTreeMap<String, f64>) -> (u8, String) {

@@ -75,12 +75,15 @@ pub struct GalaxyParams {
     pub seed_black_hole: f64,
     /// Fraction of a burst's stars that feeds the black hole.
     pub black_hole_feed: f64,
-    /// Steady feeding: black hole growth per mass of stars formed (black holes
-    /// track their galaxies, Kormendy and Ho 2013).
+    /// Steady feeding: black hole growth per mass of stars formed. Holes
+    /// track bulges (Kormendy and Ho 2013); feeding them from all star
+    /// formation, disc as well, is our simplification.
     pub black_hole_steady: f64,
     /// Black holes brought in with ex-situ stars: the merging galaxies' holes
-    /// sink with their stars and coalesce, at this hole-to-stars ratio
-    /// (Kormendy and Ho 2013; Reines and Volonteri 2015). This is how the
+    /// sink with their stars and coalesce, at this hole-to-stars ratio: the
+    /// bulge ratio of Kormendy and Ho 2013 (Reines and Volonteri 2015 find
+    /// 2.5e-4 against total stellar mass, so it runs high for disc-rich
+    /// arrivals). This is how the
     /// biggest galaxies get billion-sun holes.
     #[serde(default = "exsitu_black_hole_default")]
     pub exsitu_black_hole: f64,

@@ -5,9 +5,10 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale, type Shown, landingLinkSite, landingTitle, orbitTitle, ORBIT_SCREEN } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { airFactsOf, airFromOptics, airRequest } from "../../renderer/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
@@ -28,7 +29,7 @@
   import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
   import { listedTitle, namesInLayer, relabel, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
-  import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
+  import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, baseBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
   import type { OracHost } from "../../agents/src/OracTab.svelte";
   import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
@@ -42,14 +43,20 @@
   import { blockEntries, boxTarget, tableTarget } from "../../agents/src/orac-blocks.ts";
   import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
   import { templateTarget, triggerEntries, triggerTarget } from "../../agents/src/orac-triggers.ts";
+  import { placeEntries, revealTarget } from "../../agents/src/orac-known.ts";
+  import { atlasEntries, editionTarget, kitTarget, noteSetTarget, sessionAtlasHost } from "../../agents/src/orac-atlas.ts";
+  import guideVocab from "./documents/vocab.guide.json";
+  import { ATLAS_LOOKS } from "./atlas/screens.atlas.ts";
+  import { ATLAS_CONTROLS } from "../../views/atlas/src/controls.ts";
+  import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
-  import { orbitScene, voicesFromSystem, bookmarksFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
+  import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
   import { EVERYONE, allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
-  import { actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
+  import { OBJECT_ACTIONS, actionById, keyWords, menuFor, type ActionTarget } from "../../ui-contract/src/index.ts";
   import ObjectMenu from "./ObjectMenu.svelte";
   import { watchObjectMenu } from "./object-menu.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
@@ -67,6 +74,10 @@
   import symbolsDoc from "./documents/symbols.gm.json";
   import bodyDoc from "./documents/body.gm.json";
   import compareDoc from "./documents/compare.gm.json";
+  import { POSTCARD_SCREENS } from "./postcards/screens.postcards.svelte.ts";
+  import { visit, openOwn, GO_BOOKMARK_EVENT, PASTE_CLIP_EVENT } from "./postcards/visits.svelte.ts";
+  import { loadSets, postcardSets } from "./postcards/sets.svelte.ts";
+  import { checkPostcard, looksLikePostcard, readPostcard, postcardBlocker, isPostcard, fixDate } from "../../ui-contract/src/index.ts";
   import lifeDoc from "./documents/life.gm.json";
   import stylesScreenDoc from "./documents/styles.gm.json";
   import routeDoc from "./documents/route.gm.json";
@@ -87,6 +98,8 @@
   import { GAME_SCREENS } from "./screens.game.ts";
   import { RENDER_SCREENS } from "./screens.renderer.ts";
   import { RUN_SCREENS } from "./run/screens.run.ts";
+  import { ATLAS_SCREENS } from "./atlas/screens.atlas.ts";
+  import { ROLLCALL_SCREENS } from "./rollcall/screens.rollcall.svelte.ts";
   import Bookmarks from "./run/Bookmarks.svelte";
   import OnAir from "./run/OnAir.svelte";
   import { tablePort } from "./run/table-port.ts";
@@ -119,7 +132,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -152,7 +165,13 @@
   const here = (): Shown => {
     landingAwaited = ws.screen === "surface" && !lastLanding;
     const focus = ws.selection ? { focus: ws.selection } : {};
-    return ws.screen === "surface" && lastLanding ? { scope: scene.system, title: `${selName ?? scene.title}, landing`, screen: LAND_SCREEN, landing: lastLanding, ...focus } : { scope: scene.system, title: scene.title, ...focus };
+    if (ws.screen === "surface" && lastLanding) return { scope: scene.system, title: landingTitle(lastLanding, selName), screen: LAND_SCREEN, landing: lastLanding, ...focus };
+    // A world's own screen (not Land): the table is shown it in orbit, turning below (LR4).
+    const world = orbitWorld;
+    const air = world && orbitAir?.key === `${scene.system}|${world.address}` && orbitAir.air ? { air: orbitAir.air } : {};
+    const ship = world && ws.party && ws.party.at === world.address ? { ship: ws.party.name } : {};
+    if (world) return { scope: scene.system, title: orbitTitle(world.label, ws.party, world.address), screen: ORBIT_SCREEN, focus: world.address, ...air, ...ship };
+    return { scope: scene.system, title: scene.title, ...focus };
   };
   // Driving a read-only screen (PB3b): as the GM moves, the screen follows. Never while on the Switchboard itself.
   $effect(() => {
@@ -218,7 +237,17 @@
     if (ws.screen !== "switchboard") lastInstrument = ws.screen;
   });
   const instrumentNow = () => (ws.screen === "switchboard" ? lastInstrument : ws.screen);
-  const whereabouts = (): Whereabouts => ({ scope: scene.system, now_yr: ws.now_yr, instrument: instrumentNow(), scale: railScale, ...(ws.view ? { view: ws.view } : {}), selected: ws.selection });
+  // The camera goes on the bookmark only while the view that keeps it is in front (PC1).
+  const cameraNow = () => (ws.camera && ws.screen !== "switchboard" ? ws.camera : instrumentNow() === lastCameraScreen ? lastCamera : null);
+  let lastCamera: Whereabouts["pose"] = null;
+  let lastCameraScreen = "";
+  $effect(() => {
+    if (ws.screen !== "switchboard") {
+      lastCamera = ws.camera ?? null;
+      lastCameraScreen = ws.screen;
+    }
+  });
+  const whereabouts = (): Whereabouts => ({ scope: scene.system, now_yr: ws.now_yr, instrument: instrumentNow(), scale: railScale, ...(ws.view ? { view: ws.view } : {}), selected: ws.selection, pose: cameraNow() });
   function markHere(): Bookmark {
     const words = SCREENS[instrumentNow()]?.label ?? instrumentNow();
     return makeBookmark(ws.bookmarks ?? [], whereabouts(), railScale === "world" || railScale === "system" ? (selName ?? scene.title) : scene.title, String(words));
@@ -230,7 +259,56 @@
     ws.screen = b.instrument;
     if (b.at_yr !== null) ws.now_yr = b.at_yr;
     if (b.view) setView({ ...b.view, framed: (ws.view?.framed ?? 0) + 1 });
+    ws.aim = b.pose ?? null;
   }
+  // Postcards (PC3, PC4): the wall's Go there and Keep this system, and a postcard opened from outside as a visit.
+  $effect(() => {
+    const go = (e: Event) => {
+      const r = checkPostcard({ schema: "sse.postcard/1", id: "go", name: "go", bookmark: (e as CustomEvent<unknown>).detail, world: { how: "here" } });
+      if (r.ok) goBookmark(r.postcard.bookmark);
+    };
+    const paste = (e: Event) => {
+      const t = (e as CustomEvent<unknown>).detail;
+      if (typeof t !== "string") return;
+      if (desk !== "build") chooseDesk("build");
+      pasteText(t);
+    };
+    window.addEventListener(GO_BOOKMARK_EVENT, go);
+    window.addEventListener(PASTE_CLIP_EVENT, paste);
+    return () => {
+      window.removeEventListener(GO_BOOKMARK_EVENT, go);
+      window.removeEventListener(PASTE_CLIP_EVENT, paste);
+    };
+  });
+  // "Make a postcard" on a Bookmarks row (PC5): the bookmark's date is fixed and the wall opens on it.
+  function makePostcard(b: Bookmark): string | null {
+    const why = postcardBlocker(b);
+    if (why) return why;
+    if (!isPostcard(b)) ws.bookmarks = (ws.bookmarks ?? []).map((x) => (x.id === b.id ? fixDate(x, ws.now_yr) : x));
+    openOwn(b.id);
+    ws.screen = "postcards";
+    return null;
+  }
+  function openPostcard(text: string): boolean {
+    const r = readPostcard(text);
+    if (!r.ok) {
+      clipNote = r.why;
+      return false;
+    }
+    visit(r.postcard);
+    ws.screen = "postcards";
+    return true;
+  }
+  // A postcard link (`#postcard=…`) opens as a visit once the session is up; the address bar then drops it.
+  const linkedPostcard = typeof location === "undefined" || !/[#&]postcard=/.test(location.hash) ? null : location.hash;
+  let postcardTaken = false;
+  $effect(() => {
+    if (!session || postcardTaken || !linkedPostcard) return;
+    postcardTaken = true;
+    untrack(() => {
+      if (openPostcard(linkedPostcard)) history.replaceState(history.state, "", location.pathname + location.search);
+    });
+  });
   let moreOpen = $state(false);
   // The performance readout (PF1): off by default, remembered per device.
   let perfOn = $state(loadPref("perf.readout") === "on");
@@ -274,9 +352,22 @@
     const p = ws.party ? ($state.snapshot(ws.party) as unknown as Json) : null;
     if (share) share.host.setState({ party: p });
   });
+  // The layouts the GM made (PB13) go to the players' screens, so a role or a send can name one.
+  $effect(() => {
+    const l = $state.snapshot(ws.layouts ?? []) as unknown as Json[];
+    if (share) share.host.setState({ layouts: l });
+  });
   // The table for the Switchboard (PB2): the share, with the live view as its first source.
   $effect(() => {
-    ws.table = share ? tablePort(share, () => here()) : undefined;
+    ws.table = share && session
+      ? tablePort(share, () => here(), {
+          session,
+          bodies: () => bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address),
+          scope: () => (factsDoc as unknown as AuthoredFacts).scope,
+          at_yr: () => (factsDoc as unknown as AuthoredFacts).at_yr,
+          onchange: () => (ws.revision++, ws.notePhysics()),
+        })
+      : undefined;
   });
   let opened: unknown[] = [];
   loadPacks()
@@ -286,6 +377,9 @@
       const reopened = await reopenKept(s);
       const packs = [...opened, ...s.stack().added, ...(s.stack().campaign ? [s.stack().campaign] : [])];
       share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.campaign_now_yr ?? ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
+      // Grounds on held screens (PC5): the campaign's postcards, and the postcard sets (PC6: the base set, then the stack's).
+      void loadSets(s.stack().base);
+      share.setGrounds({ bookmarks: () => ws.bookmarks ?? [], sets: () => postcardSets.list });
       // The player-facing facts the GM has recorded, entered when a fresh campaign opens (a reopened one has them).
       if (!reopened) {
         const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
@@ -359,9 +453,11 @@
     ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
     ws.overlay_anchors = save.workspace.overlay_anchors ?? {};
     ws.unit_choices = save.workspace.unit_choices ?? {};
+    ws.could_quiet = save.workspace.could_quiet ?? [];
     ws.party = save.workspace.party ?? null;
     ws.bookmarks = bookmarksFrom(save.workspace.bookmarks);
     ws.playbook = playbookFrom(save.workspace.playbook);
+    ws.layouts = layoutsFrom(save.workspace.layouts);
     savedAt = save.saved_at;
     const events = savedEvents(save);
     keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
@@ -380,7 +476,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, could_quiet: ws.could_quiet ?? [], party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook, layouts: ws.layouts ?? [] })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -396,6 +492,7 @@
     void ws.redo.length;
     void ws.bookmarks;
     void ws.playbook;
+    void ws.layouts;
     if (!session || !status.hash) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
@@ -464,6 +561,10 @@
     if (!o) return;
     const k = o.sniffed.kind;
     if (k === "v4-campaign") return reopenOffered();
+    if (k === "v4-postcard") {
+      campaignDialog?.close();
+      return void openPostcard(o.text);
+    }
     if (k === "v4-clip") {
       campaignDialog?.close();
       if (desk !== "build") chooseDesk("build");
@@ -656,7 +757,7 @@
   // Band (one set of controls, Alex 23 Nov): chosen in the view controls; the Light panel paints within it. A choice
   // kept before the Band switch takes its band from the light it kept.
   if (ws.view && !ws.view.band) ws.view = { ...ws.view, band: recipeBand(LIGHT_RECIPES.find((r) => r.id === lightId)) };
-  const band = $derived<ViewBand>(ws.view?.band ?? "visible");
+  const band = $derived<ViewBand>(baseBand(ws.view));
   const lastLight: Partial<Record<ViewBand, string>> = {};
   $effect(() => {
     const b = band;
@@ -858,10 +959,50 @@
   let notes = $state<Partial<Record<PlaceScale, PlaceNote>>>({});
   const UPPER: readonly PlaceScale[] = ["web", "cluster", "galaxy"];
   const noteId = (scale: RailScale) => (UPPER.includes(scale as PlaceScale) ? notes[scale as PlaceScale]?.id : undefined);
+  // On the Land screen the place carries the landing being chosen (LR5b): its site, quick hour and lander, so the
+  // address bar, a bookmark or a kept beat brings the whole landing back. Kept as text so a new pose (a few times a
+  // second) never stirs the place; only a new site, hour or lander does.
+  // A world's own screen (LR4): the planet or moon the table would be shown in orbit, and whether it has been sent.
+  // The world's air for the table's orbit globe (LR4b): read on the GM's kernel (a seat cannot read resolved systems)
+  // while the players are connected, and sent with the orbit; a send made before it is read goes again with it.
+  let orbitAir = $state.raw<{ key: string; air: Json | null } | null>(null);
+  $effect(() => {
+    const w = orbitWorld;
+    const s = session;
+    const sys = scene.system;
+    if (!w || !s || !share) return;
+    const key = `${sys}|${w.address}`;
+    if (untrack(() => orbitAir?.key) === key) return;
+    void (async () => {
+      const rs = await s.resolvedSystem(sys);
+      if (!rs.ok) return;
+      const surf = rs.result.surfaces.find((x) => x.address === w.address) as Parameters<typeof airFactsOf>[1];
+      const facts = airFactsOf(rs.result.facts[w.address], surf);
+      const req = facts ? airRequest(w.address, facts) : null;
+      if (facts && req) {
+        const ao = await s.readAirOptics([req.air]);
+        facts.optics = ao.ok && ao.airs[0] ? airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req) : null;
+      }
+      orbitAir = { key, air: facts ? (JSON.parse(JSON.stringify(facts)) as Json) : null };
+      const sh = share?.state.shown;
+      if (facts && share && sh && "scope" in sh && sh.screen === ORBIT_SCREEN && sh.focus === w.address && !sh.air && orbitWorld?.address === w.address) share.show(here());
+    })();
+  });
+  const orbitWorld = $derived(railScale === "world" && ws.screen !== "surface" ? scene.subjects.find((x) => x.address === ws.selection && (x.kind === "planet" || x.kind === "moon")) : undefined);
+  const orbitUnsent = $derived.by(() => {
+    const sh = share?.state.shown;
+    return !!orbitWorld && !!sh && "scope" in sh && sh.scope === scene.system && !(sh.screen === ORBIT_SCREEN && sh.focus === orbitWorld.address);
+  });
+  const landSite = $derived.by(() => {
+    if (railScale !== "world" || ws.screen !== "surface" || !lastLanding) return "";
+    const l = lastLanding as { body?: string };
+    const site = l.body === ws.selection ? landingLinkSite(lastLanding) : null;
+    return site ? JSON.stringify(site) : "";
+  });
   const place = $derived<Place | null>(
     railScale === "workshop"
       ? null
-      : { scale: railScale, system: viewing?.system ?? "", ...(railScale === "world" && ws.selection ? { world: ws.selection } : {}), ...(noteId(railScale) ? { id: noteId(railScale) } : {}), ...(ws.screen !== firstScreen(railScale) ? { screen: ws.screen } : {}) },
+      : { scale: railScale, system: viewing?.system ?? "", ...(railScale === "world" && ws.selection ? { world: ws.selection } : {}), ...(noteId(railScale) ? { id: noteId(railScale) } : {}), ...(ws.screen !== firstScreen(railScale) ? { screen: ws.screen } : {}), ...(landSite ? { site: JSON.parse(landSite) as Place["site"] } : {}) },
   );
   // A place to open a scale's view on (a link, a step, a child picked in Below), passed as its `place` param; a new one
   // mounts the view afresh. Without one, a scale's view opens on the place it last named.
@@ -939,7 +1080,7 @@
     }
     if (p.screen && SCREENS[p.screen] && scalesOf(SCREENS[p.screen]!).includes(p.scale)) ws.screen = p.screen;
     // A landing site in the link (Voyages' "Land here"): the Land screen picks it up once it has read the world.
-    if (p.site && p.world) ws.landing_site = { body: p.world, lat_deg: p.site.lat_deg, lon_deg: p.site.lon_deg };
+    if (p.site && p.world) ws.landing_site = { body: p.world, ...p.site };
   }
   /** Up one scale, from above the system (Esc); at a world, up to its system. */
   function upAStep() {
@@ -950,7 +1091,8 @@
   // The address bar's Back and Forward, and a pasted link, move through places.
   function fromHash() {
     const p = parsePlaceHash(location.hash);
-    if (p && session && !(place && samePlace(place, p) && (!p.screen || p.screen === ws.screen))) goPlace(p);
+    // A link with a landing site always goes (a bookmarked landing fired while the Land screen is already open).
+    if (p && session && !(place && samePlace(place, p) && (!p.screen || p.screen === ws.screen) && !p.site)) goPlace(p);
   }
   // A chart can send the GM to another scale (the galaxies nearby's "Chart this galaxy"): a bubbling "sse:explore" event
   // naming the section. Inside the Explore screen its own tabs answer it; on the place line it is a scale.
@@ -1059,7 +1201,7 @@
     ws.screen = "system";
     showSystem(SOL);
   }
-  let startOpen = $state(typeof location !== "undefined" && !parsePlaceHash(location.hash) && loadPref("start") !== "skip");
+  let startOpen = $state(typeof location !== "undefined" && !parsePlaceHash(location.hash) && !/[#&]postcard=/.test(location.hash) && loadPref("start") !== "skip");
   const keptSave = readStored(`u:${base.universe.id}`).save;
   const carryOn = keptSave ? { title: keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
   /** A world for the world instruments when none is selected: the selected body's world, else the first planet. */
@@ -1113,6 +1255,8 @@
   const oracHost = $derived.by((): OracHost | undefined => {
     const s = session;
     if (!s || !oracMay(s.seat)) return undefined;
+    const places = () => scene.subjects.map((x) => ({ address: x.address, name: x.label }));
+    const atlasHost = sessionAtlasHost(s, ws, { looks: () => ATLAS_LOOKS.map((t) => t.id), vocabs: { plain: plainVocab as unknown as Vocab, guide: guideVocab as unknown as Vocab }, system: () => scene.system ?? null, parts: () => partsOf([...PLAYER_STACK, { id: "sse.view.atlas", switchable: ATLAS_CONTROLS }]) });
     const fields = () => Object.fromEntries(Object.entries(lensFields).filter(([k]) => k !== "*").map(([k, v]) => [k, v.map((f) => f.id)]));
     return {
       targets: () => [
@@ -1132,9 +1276,13 @@
         substanceTarget(s, ws),
         triggerTarget(s, ws),
         templateTarget(s, ws),
+        revealTarget(s, ws, places),
+        editionTarget(atlasHost),
+        noteSetTarget(atlasHost),
+        kitTarget(atlasHost),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
-      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...handbookEntries()],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...placeEntries(places()), ...atlasEntries(atlasHost), ...handbookEntries()],
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
@@ -1180,9 +1328,10 @@
         return r.ok ? r.result : null;
       },
       // A kept description is a narrative note in the record, for the audience it was written for (the GM sees every note).
-      keep: async (address, text, audience) => {
+      // A Guide's note (AT11) is the GM's own until revealed: written from the audience's facts, kept GM only, tagged for the Atlas's margin.
+      keep: async (address, text, audience, as = "description") => {
         if (!s.addNote) return "This session cannot write the record.";
-        const r = await s.addNote({ address, text, audience: audience === "everyone" ? "everyone" : [audience], tags: ["description"], narrative: true, at_s: yearsToSeconds(ws.now_yr) });
+        const r = await s.addNote({ address, text, audience: as === "guide-note" ? "gm" : audience === "everyone" ? "everyone" : [audience], tags: [as], narrative: true, at_s: yearsToSeconds(ws.now_yr) });
         return r.ok ? null : r.message;
       },
     };
@@ -1272,6 +1421,10 @@
     const t = e.target as HTMLElement;
     if (t.closest?.("input, textarea, select, dialog")) return;
     const text = e.clipboardData?.getData("text/plain") ?? "";
+    if (looksLikePostcard(text)) {
+      e.preventDefault();
+      return void openPostcard(text);
+    }
     const r = readClip(text);
     if (!r.ok && !r.v3 && desk !== "build") return;
     e.preventDefault();
@@ -1319,16 +1472,51 @@
   let placing = $state(false);
   // Add here (V3 gap 2): one world or moon by hand, round the selected star or planet (else the primary).
   let addDialog: HTMLDialogElement | undefined = $state();
-  let addFor = $state<{ address: string; label: string; kind: string; mass_sun: number | null } | null>(null);
+  // The time ruler's height, for what docks above it on a phone (the handles' open strip, ED7).
+  let rulerH = $state(0);
+  let addFor = $state<{
+    address: string;
+    label: string;
+    kind: string;
+    mass_sun: number | null;
+    /** A planet's own figures and where it goes round its star, for the moon recipes. */
+    planet?: { mass_earth: number; radius_earth: number; a_au: number | null; star_mass_sun: number | null };
+  } | null>(null);
   const addOrbits = $derived(addFor ? scene.subjects.filter((x) => (addFor!.kind === "star" ? x.kind === "planet" : x.parent === addFor!.address) && x.orbit).map((x) => x.orbit!.a_au) : []);
   function openAdd() {
     const sel = scene.subjects.find((x) => x.address === ws.selection);
     const h = sel && (sel.kind === "star" || sel.kind === "planet") ? sel : primaryOf(scene);
     if (!h) return void (clipNote = "There is no star here to add round.");
     const m = h.facts.find((f) => f.field === "mass_sun")?.value;
-    addFor = { address: h.address, label: h.label, kind: h.kind, mass_sun: typeof m === "number" ? m : null };
+    const fact = (x: typeof h, field: string) => {
+      const v = x.facts.find((f) => f.field === field)?.value;
+      return typeof v === "number" ? v : null;
+    };
+    const star = scene.subjects.find((x) => x.address === h.parent && x.kind === "star") ?? primaryOf(scene);
+    const [me, re] = [fact(h, "mass_earth"), fact(h, "radius_earth")];
+    addFor = {
+      address: h.address,
+      label: h.label,
+      kind: h.kind,
+      mass_sun: typeof m === "number" ? m : null,
+      planet: h.kind === "planet" && me !== null && re !== null ? { mass_earth: me, radius_earth: re, a_au: h.orbit?.a_au ?? null, star_mass_sun: star ? fact(star, "mass_sun") : null } : undefined,
+    };
+    // ED4: round a star on the flat chart, the ghost comes first (editing design section 5): it follows the pointer
+    // with the distance, and a press opens Add here at that orbit. Round a planet, or in 3D, Add here opens at once.
+    const flat = ws.screen === "system" && ["chart", "wireframe"].includes(ws.view?.style ?? "chart");
+    if (h.kind === "star" && flat && h === primaryOf(scene)) ws.adding = { host: h.address, label: h.label, a_au: null };
+    else showAdd();
+  }
+  function showAdd() {
+    addShown = true;
     addDialog?.showModal();
   }
+  let addShown = $state(false);
+  // The ghost was dropped: Add here opens with that orbit.
+  $effect(() => {
+    const a = ws.adding;
+    if (a && a.a_au !== null) untrack(() => addFor && !addShown && showAdd());
+  });
   async function addClip(clip: Clip, words: string): Promise<string | null> {
     if (!session || !addFor) return "The chart is not ready.";
     const p = await placement(clip, { address: addFor.address, kind: addFor.kind });
@@ -1390,8 +1578,10 @@
       objMenu = { target: { address: sub.address, kind: sub.kind, label: sub.label }, at: { x: ask.x, y: ask.y }, from, kicker: `${sub.kind.replace(/_/g, " ")}${host ? ` · orbits ${host.label}` : ""}` };
     }),
   );
+  // An action whose screen is not in this build is left out (the Atlas arrives with its own screen).
+  const menuActions = OBJECT_ACTIONS.filter((a) => a.id !== "atlas" || "atlas" in SCREENS);
   const objMenuItems = $derived(
-    objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }) : null,
+    objMenu ? menuFor(objMenu.target, { desk, sharing: !!share?.state.link, canDescribe: !!minervaHost, canCut: !viewing && !baseAddrs.has(objMenu.target.address), branch: !!ws.branch }, menuActions) : null,
   );
   // More's edit group says what the object menu says: the same words and keys, from the one list.
   const moreWords = (id: string) => actionById(id)!.label({ address: ws.selection ?? "", kind: "", label: selName ?? "" });
@@ -1405,6 +1595,7 @@
     if (id === "add") return openAdd();
     if (id === "cut") return cutBody();
     if (id === "voyage") return go("voyages");
+    if (id === "atlas") return go("atlas");
     if (id === "land") return (toWorld(address), go("surface"));
     if (id === "link") {
       const url = `${location.origin}${location.pathname}${location.search}${placeHash({ scale: "world", system: viewing?.system ?? "", world: address })}`;
@@ -1510,7 +1701,7 @@
 <svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
-<div class="app" inert={startOpen} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
+<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   <header class="bar">
     <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
     <PlaceLine
@@ -1631,14 +1822,15 @@
         {undo}
         {copyBody}
         {openAdd}
+        typeAdd={() => showAdd()}
         {cutBody}
         openKeys={() => openHelp("keys")}
       >
-        {#snippet extraTools()}<Bookmarks list={ws.bookmarks ?? []} scope={scene.system} mark={markHere} where={whereabouts} go={goBookmark} onchange={(next) => (ws.bookmarks = next)} />{/snippet}
+        {#snippet extraTools()}<Bookmarks list={ws.bookmarks ?? []} scope={scene.system} mark={markHere} where={whereabouts} go={goBookmark} onchange={(next) => (ws.bookmarks = next)} postcard={makePostcard} />{/snippet}
       </Stage>
       {/key}
     </div>
-    <footer class="area-ruler" aria-label="Time">
+    <footer class="area-ruler" aria-label="Time" bind:offsetHeight={rulerH}>
       {#key ws.screen}<div class="ruler-view">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</div>{/key}
       <!-- What if and Look ahead live on the ruler (2.7): both are about time. Light and Sound sit with them, as modifiers of any instrument. -->
       <div class="ruler-side" aria-label="Time tools" role="group">
@@ -1676,10 +1868,9 @@
           system={scene.system}
           title={scene.title}
           subjects={scene.subjects}
-          seatBodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)}
-          scope={(factsDoc as unknown as AuthoredFacts).scope}
-          at_yr={(factsDoc as unknown as AuthoredFacts).at_yr}
           landingUnsent={ws.screen === "surface" && !!lastLanding}
+          {orbitUnsent}
+          focus={ws.selection ?? undefined}
           {here}
           onswitchboard={() => go("switchboard")}
           chip={desk !== "run"}
@@ -1763,6 +1954,8 @@
         {:else if offered}
           <p role="alert" data-offered-problem>{offered.name} cannot be opened here: {offered.problems.join("; ")}.</p>
         {/if}
+      {:else if given.sniffed.kind === "v4-postcard"}
+        <p class="row"><button type="button" data-open-postcard onclick={openOpened}>Open the postcard</button></p>
       {:else if given.sniffed.kind === "v4-clip"}
         <p class="row"><button type="button" onclick={openOpened}>Paste it on the chart</button></p>
       {:else if given.sniffed.kind === "v3-save"}
@@ -1790,8 +1983,8 @@
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
-<dialog bind:this={addDialog} class="help seats-dialog" aria-labelledby="add-title" data-add onclose={() => !addDialog?.open && (addFor = null)}>
-  {#if addFor && session}<AddHere {session} system={scene.system} host={addFor} orbits={addOrbits} packs={stackPacks()} onadd={addClip} />{/if}
+<dialog bind:this={addDialog} class="help seats-dialog" aria-labelledby="add-title" data-add onclose={() => !addDialog?.open && ((addFor = null), (addShown = false), (ws.adding = null))}>
+  {#if addFor && session && addShown}<AddHere {session} system={scene.system} host={addFor} orbits={addOrbits} at_au={ws.adding?.a_au ?? undefined} packs={stackPacks()} onadd={addClip} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 

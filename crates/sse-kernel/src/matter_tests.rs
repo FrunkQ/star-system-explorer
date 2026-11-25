@@ -15,7 +15,7 @@ fn load(k: &mut crate::Kernel, top: &str) -> serde_json::Value {
     send(
         k,
         serde_json::json!({"op": "load_stack", "packs": [
-            pack("tests/fixtures/packs/base-physics.json"), pack(top)]}),
+            pack("packs/base-physics/pack.json"), pack(top)]}),
     )
 }
 
@@ -211,7 +211,7 @@ fn the_base_sheet_loads_in_a_stack() {
     let r = send(
         &mut k,
         serde_json::json!({"op": "load_stack", "packs": [
-            pack("tests/fixtures/packs/base-physics.json"), sheet]}),
+            pack("packs/base-physics/pack.json"), sheet]}),
     );
     assert_eq!(r["type"], "stack_loaded", "{r}");
     let g = send(
@@ -231,7 +231,7 @@ fn phase_at_answers_through_the_kernel() {
     let r = send(
         &mut k,
         serde_json::json!({"op": "load_stack", "packs": [
-            pack("tests/fixtures/packs/base-physics.json"), sheet]}),
+            pack("packs/base-physics/pack.json"), sheet]}),
     );
     assert_eq!(r["type"], "stack_loaded", "{r}");
     let at = |k: &mut crate::Kernel, p: f64, t: f64| {
@@ -307,7 +307,7 @@ fn doubling_g_makes_the_sun_estimated_sixteen_times_brighter() {
 
 fn lookup_kernel(edit: bool) -> crate::Kernel {
     let mut packs = vec![
-        pack("tests/fixtures/packs/base-physics.json"),
+        pack("packs/base-physics/pack.json"),
         pack("packs/base-reference/pack.json"),
         pack("tests/fixtures/packs/lookup-flows.json"),
     ];
@@ -400,7 +400,7 @@ fn a_look_up_block_with_no_row_or_no_sheet_is_refused() {
     let r = send(
         &mut k,
         serde_json::json!({"op": "load_stack", "packs": [
-            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-physics/pack.json"),
             pack("packs/base-reference/pack.json"), flows]}),
     );
     assert_eq!(r["type"], "stack_rejected", "{r}");
@@ -408,7 +408,7 @@ fn a_look_up_block_with_no_row_or_no_sheet_is_refused() {
     let r = send(
         &mut k,
         serde_json::json!({"op": "load_stack", "packs": [
-            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-physics/pack.json"),
             pack("tests/fixtures/packs/lookup-flows.json")]}),
     );
     assert_eq!(r["type"], "stack_rejected", "{r}");
@@ -444,7 +444,7 @@ fn more_dark_matter_follows_through_the_cosmos_chain() {
     };
     let base = || {
         vec![
-            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-physics/pack.json"),
             pack("packs/base-reference/pack.json"),
         ]
     };
@@ -511,7 +511,7 @@ fn dark_matter_is_marked_theoretical_on_the_sheet() {
     let r = send(
         &mut k,
         serde_json::json!({"op": "load_stack", "packs": [
-            pack("tests/fixtures/packs/base-physics.json"), pack("packs/base-reference/pack.json")]}),
+            pack("packs/base-physics/pack.json"), pack("packs/base-reference/pack.json")]}),
     );
     assert_eq!(r["type"], "stack_loaded", "{r}");
     for id in [
@@ -603,7 +603,7 @@ fn a_drifting_g_changes_the_year_by_keplers_factor_at_each_date() {
 fn an_equation_follows_a_looked_up_constant() {
     let speed = |edit: bool| {
         let mut packs = vec![
-            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-physics/pack.json"),
             pack("packs/base-reference/pack.json"),
             pack("tests/fixtures/packs/equation-flows.json"),
         ];
@@ -643,7 +643,7 @@ fn an_equation_follows_a_looked_up_constant() {
     let r = send(
         &mut k,
         serde_json::json!({"op": "load_stack", "packs": [
-            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-physics/pack.json"),
             pack("packs/base-reference/pack.json"), p]}),
     );
     assert_eq!(r["type"], "stack_rejected", "{r}");

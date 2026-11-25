@@ -119,7 +119,7 @@
                 "value": 1.0
               }
             },
-            "name": "Jupiter: Juno's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)"
+            "name": "Jupiter: Cassini's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)"
           },
           {
             "expect": {
@@ -171,6 +171,154 @@
           {
             "from": "in.radius",
             "to": "dipole.radius"
+          }
+        ]
+      },
+      {
+        "format": "sse.flow/1",
+        "hook": "body.shape",
+        "id": "sse.base.body-shape",
+        "inputs": [
+          {
+            "kind": "body.mass",
+            "name": "mass"
+          },
+          {
+            "kind": "body.radius",
+            "name": "radius"
+          },
+          {
+            "kind": "body.rotation_period",
+            "name": "rotation_period"
+          },
+          {
+            "kind": "model.moment_of_inertia_factor",
+            "name": "inertia_factor"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.shape.spin_flattening",
+            "id": "spin"
+          }
+        ],
+        "publishes": [
+          {
+            "from": "spin.flattening",
+            "kind": "shape.flattening"
+          },
+          {
+            "from": "spin.equatorial_radius",
+            "kind": "shape.equatorial_radius"
+          },
+          {
+            "from": "spin.polar_radius",
+            "kind": "shape.polar_radius"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "shape.flattening": {
+                "tol": 0.005,
+                "unit": "one",
+                "value": 0.06487
+              }
+            },
+            "inputs": {
+              "inertia_factor": {
+                "unit": "one",
+                "value": 0.254
+              },
+              "mass": {
+                "unit": "m_jupiter",
+                "value": 1.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 69911.0
+              },
+              "rotation_period": {
+                "unit": "day",
+                "value": 0.41354
+              }
+            },
+            "name": "Jupiter (flattening 0.06487, NASA fact sheet; C 0.254)"
+          },
+          {
+            "expect": {
+              "shape.flattening": {
+                "tol": 0.008,
+                "unit": "one",
+                "value": 0.09796
+              }
+            },
+            "inputs": {
+              "inertia_factor": {
+                "unit": "one",
+                "value": 0.21
+              },
+              "mass": {
+                "unit": "kg",
+                "value": 5.6834e+26
+              },
+              "radius": {
+                "unit": "km",
+                "value": 58232.0
+              },
+              "rotation_period": {
+                "unit": "day",
+                "value": 0.44401
+              }
+            },
+            "name": "Saturn (flattening 0.09796, NASA fact sheet; C 0.210)"
+          },
+          {
+            "expect": {
+              "shape.flattening": {
+                "tol": 0.0002,
+                "unit": "one",
+                "value": 0.003353
+              }
+            },
+            "inputs": {
+              "inertia_factor": {
+                "unit": "one",
+                "value": 0.3307
+              },
+              "mass": {
+                "unit": "m_earth",
+                "value": 1.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 6371.0
+              },
+              "rotation_period": {
+                "unit": "day",
+                "value": 0.99727
+              }
+            },
+            "name": "Earth (flattening 0.003353; C 0.3307)"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.mass",
+            "to": "spin.mass"
+          },
+          {
+            "from": "in.radius",
+            "to": "spin.mean_radius"
+          },
+          {
+            "from": "in.rotation_period",
+            "to": "spin.rotation_period"
+          },
+          {
+            "from": "in.inertia_factor",
+            "to": "spin.inertia_factor"
           }
         ]
       },
@@ -910,7 +1058,7 @@
                 "value": 6371.0
               }
             },
-            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, McDonough and Sun 1995)"
+            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, our sum from McDonough and Sun 1995's abundances)"
           },
           {
             "expect": {
@@ -946,7 +1094,7 @@
                 "value": 3389.5
               }
             },
-            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (Frank et al. 2014 calibration)"
+            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (our reading of its youngest lavas; Frank et al. 2014 give the heating, not this date)"
           },
           {
             "expect": {
@@ -1281,7 +1429,7 @@
               "star.luminosity": {
                 "tol": 5.0,
                 "unit": "l_sun",
-                "value": 25.4
+                "value": 24.74
               },
               "star.radius": {
                 "tol": 0.3,
@@ -1299,7 +1447,7 @@
                 "value": 2.063
               }
             },
-            "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 25.4 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave"
+            "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 24.74 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave"
           }
         ],
         "version": "0.1.0",
@@ -1555,6 +1703,34 @@
         "range": null
       },
       {
+        "description": "energy of the electrons raining into the air along the field lines",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "aurora.electron_energy",
+        "range": null
+      },
+      {
+        "description": "mass of air above each square metre that a falling electron gets through before it stops",
+        "dim": [
+          -2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "aurora.electron_range",
+        "range": null
+      },
+      {
         "description": "distance at which a field line crosses the magnetic equator",
         "dim": [
           1,
@@ -1580,6 +1756,20 @@
           0
         ],
         "id": "aurora.magnetic_latitude",
+        "range": null
+      },
+      {
+        "description": "power coming down into the air as aurora, both hemispheres together",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "aurora.power",
         "range": null
       },
       {
@@ -1807,6 +1997,20 @@
         "range": null
       },
       {
+        "description": "power a body radiates in total",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.luminosity",
+        "range": null
+      },
+      {
         "description": "magnetic dipole moment of a body",
         "dim": [
           2,
@@ -1846,6 +2050,20 @@
           0
         ],
         "id": "body.mass",
+        "range": null
+      },
+      {
+        "description": "moment of inertia over mass times radius squared: 0.4 for a uniform ball, less as mass gathers in the middle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.moment_of_inertia_factor",
         "range": null
       },
       {
@@ -2591,6 +2809,174 @@
         "range": null
       },
       {
+        "description": "most a contact's drive can accelerate it",
+        "dim": [
+          1,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.acceleration",
+        "range": null
+      },
+      {
+        "description": "speed a drive's exhaust leaves at",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.exhaust_speed",
+        "range": null
+      },
+      {
+        "description": "heat a craft must shed at one temperature",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.heat_power",
+        "range": null
+      },
+      {
+        "description": "power carried away in a drive's exhaust",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.jet_power",
+        "range": null
+      },
+      {
+        "description": "mass of one exhaust particle",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.particle_mass",
+        "range": null
+      },
+      {
+        "description": "light a drive plume gives off",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.plume_luminosity",
+        "range": null
+      },
+      {
+        "description": "temperature of a drive's hot exhaust",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "fog.plume_temperature",
+        "range": null
+      },
+      {
+        "description": "glowing radiator area that sheds a craft's heat",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.radiator_area",
+        "range": null
+      },
+      {
+        "description": "temperature a craft's waste heat leaves at",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "fog.radiator_temperature",
+        "range": null
+      },
+      {
+        "description": "radius of the ring a lost contact could be anywhere inside",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.ring_radius",
+        "range": null
+      },
+      {
+        "description": "time since a contact was last seen",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.since",
+        "range": null
+      },
+      {
+        "description": "speed a contact was last seen moving at",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "fog.speed",
+        "range": null
+      },
+      {
         "description": "absorbing cross-section of one particle at this wavelength",
         "dim": [
           2,
@@ -2700,6 +3086,34 @@
           0
         ],
         "id": "gas.hydrogen_density",
+        "range": null
+      },
+      {
+        "description": "van der Waals C6: the pull between an atom and a neighbour, falling as the sixth power of distance",
+        "dim": [
+          6,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.interaction_constant",
+        "range": null
+      },
+      {
+        "description": "energy to tear the outer electron off an absorbing atom",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.ionisation_energy",
         "range": null
       },
       {
@@ -2910,6 +3324,34 @@
           0
         ],
         "id": "gas.perturber_density",
+        "range": null
+      },
+      {
+        "description": "mass of one particle crowding an absorbing atom",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.perturber_mass",
+        "range": null
+      },
+      {
+        "description": "polarisability volume of a particle crowding an absorbing atom",
+        "dim": [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.perturber_polarisability",
         "range": null
       },
       {
@@ -3238,6 +3680,20 @@
         "range": null
       },
       {
+        "description": "typical speed of the flow stirring a conducting layer",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_flow_speed",
+        "range": null
+      },
+      {
         "description": "power stirring the dynamo region, as a heat flux: convected heat plus compositional buoyancy",
         "dim": [
           0,
@@ -3252,6 +3708,34 @@
         "range": null
       },
       {
+        "description": "a stirring flow's speed over the spin speed across its layer",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_local_rossby",
+        "range": null
+      },
+      {
+        "description": "how far a dynamo runs, 0 to 1, from its magnetic Reynolds number",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_onset",
+        "range": null
+      },
+      {
         "description": "outer radius of the dynamo region (the core top, or about 0.85 R for a giant)",
         "dim": [
           1,
@@ -3263,6 +3747,48 @@
           0
         ],
         "id": "interior.dynamo_radius",
+        "range": null
+      },
+      {
+        "description": "spin period over a dynamo's stirring time",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_rossby",
+        "range": null
+      },
+      {
+        "description": "factor on a dynamo's field from its spin, 1 when saturated",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_rossby_factor",
+        "range": null
+      },
+      {
+        "description": "depth of the stirred, conducting layer a dynamo runs in",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_shell_thickness",
         "range": null
       },
       {
@@ -3291,6 +3817,34 @@
           0
         ],
         "id": "interior.light_element_flux",
+        "range": null
+      },
+      {
+        "description": "time an unstirred field takes to leak out of a conducting layer",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.magnetic_decay_time",
+        "range": null
+      },
+      {
+        "description": "magnetic Reynolds number of a stirred layer: stretching over leaking",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.magnetic_reynolds",
         "range": null
       },
       {
@@ -3504,6 +4058,20 @@
         "range": null
       },
       {
+        "description": "gravity inside a layer",
+        "dim": [
+          1,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.gravity",
+        "range": null
+      },
+      {
         "description": "radius of a layer's top",
         "dim": [
           1,
@@ -3529,6 +4097,34 @@
           0
         ],
         "id": "layer.pressure_increase",
+        "range": null
+      },
+      {
+        "description": "specific heat of a layer's matter",
+        "dim": [
+          2,
+          0,
+          -2,
+          0,
+          -1,
+          0,
+          0
+        ],
+        "id": "layer.specific_heat",
+        "range": null
+      },
+      {
+        "description": "thermal expansivity of a layer's matter",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          -1,
+          0,
+          0
+        ],
+        "id": "layer.thermal_expansivity",
         "range": null
       },
       {
@@ -3560,6 +4156,62 @@
         "range": null
       },
       {
+        "description": "radius of a rainbow round the point opposite the sun, as an angle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.bow_radius",
+        "range": null
+      },
+      {
+        "description": "brightness of a lit surface against a matt one seen square on in full sun",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.brightness_share",
+        "range": null
+      },
+      {
+        "description": "radius of a halo round the sun or moon, as an angle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.halo_radius",
+        "range": null
+      },
+      {
+        "description": "cosine of the angle sunlight arrives at on a surface",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.incidence_cosine",
+        "range": null
+      },
+      {
         "description": "photons per second able to ionise hydrogen (above 13.6 eV)",
         "dim": [
           0,
@@ -3571,6 +4223,76 @@
           0
         ],
         "id": "light.ionising_photon_rate",
+        "range": null
+      },
+      {
+        "description": "cosine between the line of sight and straight out of a surface: 1 at a disc's centre, 0 at its edge",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.limb_cosine",
+        "range": null
+      },
+      {
+        "description": "Minnaert's k: how a lit surface's brightness falls toward its edge (1 is matt)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.minnaert_k",
+        "range": null
+      },
+      {
+        "description": "angle between two faces of a crystal light passes through",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.prism_angle",
+        "range": null
+      },
+      {
+        "description": "rate coefficient for a collision taking an excited atom's energy away before it shines",
+        "dim": [
+          3,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.quenching_rate_coefficient",
+        "range": null
+      },
+      {
+        "description": "mean time an excited atom or molecule waits before giving off its light",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.radiative_lifetime",
         "range": null
       },
       {
@@ -3588,6 +4310,34 @@
         "range": null
       },
       {
+        "description": "how strongly a liquid or crystal bends light",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.refractive_index",
+        "range": null
+      },
+      {
+        "description": "temperature of the layer a disc's light comes from at one point",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "light.seen_temperature",
+        "range": null
+      },
+      {
         "description": "light arriving at this wavelength",
         "dim": [
           -1,
@@ -3599,6 +4349,20 @@
           0
         ],
         "id": "light.spectral_flux",
+        "range": null
+      },
+      {
+        "description": "share of excited atoms that give off their light rather than lose it in a collision",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.surviving_share",
         "range": null
       },
       {
@@ -3725,6 +4489,20 @@
           0
         ],
         "id": "matter.molar_mass_feo",
+        "range": null
+      },
+      {
+        "description": "moment of inertia over M R² (0.4 uniform, lower when mass sinks to the centre)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "model.moment_of_inertia_factor",
         "range": null
       },
       {
@@ -3935,6 +4713,20 @@
           0
         ],
         "id": "orbit.binary_limit",
+        "range": null
+      },
+      {
+        "description": "orbit gap, as a fraction, inside which neighbouring resonances overlap and the motion is chaotic",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.chaotic_zone",
         "range": null
       },
       {
@@ -4165,6 +4957,48 @@
         "range": null
       },
       {
+        "description": "how far two orbits' period ratio is from a whole-number ratio, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_offset",
+        "range": null
+      },
+      {
+        "description": "turns one body makes in one cycle of a mean motion resonance",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_turns",
+        "range": null
+      },
+      {
+        "description": "how far a period ratio may be from a resonance and still be held, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_width",
+        "range": null
+      },
+      {
         "description": "semi-major axis of an orbit",
         "dim": [
           1,
@@ -4218,6 +5052,306 @@
           0
         ],
         "id": "orbit.true_anomaly",
+        "range": null
+      },
+      {
+        "description": "mass falling onto a young star each second",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.accretion_rate",
+        "range": null
+      },
+      {
+        "description": "distance from a star where its wind turns to dust",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.condensation_radius",
+        "range": null
+      },
+      {
+        "description": "optical depth of a star's dusty wind, looking out",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.dust_depth",
+        "range": null
+      },
+      {
+        "description": "starlight the dust takes in and glows out again",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.dust_luminosity",
+        "range": null
+      },
+      {
+        "description": "temperature of a giant's new-made dust",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "outflow.dust_temperature",
+        "range": null
+      },
+      {
+        "description": "mass a young star's jets carry away each second",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.jet_mass_rate",
+        "range": null
+      },
+      {
+        "description": "power carried by a young star's jets",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.jet_power",
+        "range": null
+      },
+      {
+        "description": "speed of a young star's jets",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.jet_speed",
+        "range": null
+      },
+      {
+        "description": "distance from a young star where its jet leaves the disc",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.launch_radius",
+        "range": null
+      },
+      {
+        "description": "mass a star sheds into its wind each second",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.mass_loss_rate",
+        "range": null
+      },
+      {
+        "description": "light a jet's shocks give off",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.shock_light",
+        "range": null
+      },
+      {
+        "description": "speed of a star's dusty wind",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "outflow.wind_speed",
+        "range": null
+      },
+      {
+        "description": "light absorbed, per particle's cross-section",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.absorption_efficiency",
+        "range": null
+      },
+      {
+        "description": "how far forward the particles scatter (0 alike every way, 1 straight on)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.asymmetry",
+        "range": [
+          -1.0,
+          1.0
+        ]
+      },
+      {
+        "description": "light taken out of the beam, per particle's cross-section",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.extinction_efficiency",
+        "range": null
+      },
+      {
+        "description": "how strongly the material absorbs (imaginary part of the refractive index)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.index_imaginary",
+        "range": null
+      },
+      {
+        "description": "refractive index of the particle's material (real part)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.index_real",
+        "range": null
+      },
+      {
+        "description": "optical depth of a layer of particles straight down",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.optical_depth",
+        "range": null
+      },
+      {
+        "description": "radius of one particle",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.radius",
+        "range": null
+      },
+      {
+        "description": "share of the light taken out that is scattered, not absorbed",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.single_scattering_albedo",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "description": "wavelength of the light",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.wavelength",
         "range": null
       },
       {
@@ -4899,6 +6033,62 @@
         "range": null
       },
       {
+        "description": "radius at the equator",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shape.equatorial_radius",
+        "range": null
+      },
+      {
+        "description": "how much shorter the pole-to-pole radius is, as a share of the equator's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shape.flattening",
+        "range": null
+      },
+      {
+        "description": "radius at the poles",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shape.polar_radius",
+        "range": null
+      },
+      {
+        "description": "spin's pull outward at the equator over gravity's pull in",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shape.spin_parameter",
+        "range": null
+      },
+      {
         "description": "least momentum per charge a cosmic ray needs to arrive (Størmer cut-off)",
         "dim": [
           2,
@@ -5235,6 +6425,40 @@
         "range": null
       },
       {
+        "description": "share of the light a layer sends back",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "slab.reflectance",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "description": "share of the light a layer lets through",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "slab.transmission",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
         "description": "length of a star's spot and activity cycle",
         "dim": [
           0,
@@ -5428,6 +6652,104 @@
           0
         ],
         "id": "star.xray_luminosity",
+        "range": null
+      },
+      {
+        "description": "time bare ground has lain open to space since it was last renewed, by lava, ice or a crater's ejecta",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.exposure_age",
+        "range": null
+      },
+      {
+        "description": "how weathered bare ground is, 0 fresh to 1 fully mature",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.maturity",
+        "range": null
+      },
+      {
+        "description": "weathered over fresh reflectance of the same soil at 450 nm (blue)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.weathering_factor_450",
+        "range": null
+      },
+      {
+        "description": "weathered over fresh reflectance of the same soil at 550 nm (green)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.weathering_factor_550",
+        "range": null
+      },
+      {
+        "description": "weathered over fresh reflectance of the same soil at 650 nm (red)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.weathering_factor_650",
+        "range": null
+      },
+      {
+        "description": "the star's wind flux at the world against its flux at 1 AU (the inverse square of distance)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.wind_flux_ratio",
+        "range": null
+      },
+      {
+        "description": "1 when the star's wind reaches the ground, 0 when a magnetic field holds it off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.wind_reaches_ground",
         "range": null
       },
       {

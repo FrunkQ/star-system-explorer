@@ -9,6 +9,7 @@ cargo test --workspace -q
 python3 scripts/build-base-reference.py --check
 # The catalogued Solar System must match its sources and agree with the sheet.
 python3 scripts/build-base-sol.py --check
+python3 scripts/build-base-starters.py --check
 python3 scripts/build-base-names.py --check
 # The class atlas reads the sheet and base-sol (its builder is what the MP22 audit reads).
 python3 scripts/build-base-atlas.py --check
@@ -21,6 +22,10 @@ python3 scripts/build-paper-spacecraft.py --check
 # MP22 closed: no typed constant or material number anywhere outside the sheet.
 python3 scripts/test-audit-matter.py >/dev/null
 python3 scripts/audit-matter.py --closed
+# Every cited paper is on the citation run-through's master list (add new ones with --add).
+# Warning only until Alex says the check may fail (and join CI).
+python3 scripts/test-citations.py >/dev/null
+python3 scripts/citations.py --check --warn
 # The importer must still build without formation (the converter module).
 cargo build -q -p sse-convert-wasm
 echo "all checks passed"

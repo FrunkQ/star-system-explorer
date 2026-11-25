@@ -2,9 +2,11 @@
 // globe draws (surface.ts `prepare`), so a world looks the same from the system as close up. This turns a prepared
 // globe into a small equirectangular picture for a lit sphere. Nothing is invented: a world whose tiles are not read
 // yet, or that has none (a giant, until cloud colours come), is drawn plain and says so.
+import { stainPrepared, type StainHue } from "./stain-look.ts";
 import { planck, type Globe, type SurfaceTile } from "../../ui-contract/src/index.ts";
 import { starRgb } from "./sky.ts";
 import { fastFace, lookupFast, prepare, type Prepared } from "./surface.ts";
+import { composeFaces, type Composite, type PatchPicture } from "./texture-ladder.ts";
 
 export interface TrueTexture {
   width: number;
@@ -13,6 +15,10 @@ export interface TrueTexture {
   data: Uint8Array;
   /** The disc's mean colour (sRGB 0..255), for the canvas tier and the plain fallback. */
   mean: [number, number, number];
+  /** VP3: the same tiles as cube face pictures, for the GPU's texture ladder (gpu.ts bakes them by screen size). */
+  faces?: Composite;
+  /** VP3 part 4: the deep patch under a close camera, laid over the bake (texture-ladder.ts `composePatch`). */
+  patch?: PatchPicture;
 }
 
 /**
@@ -59,11 +65,12 @@ export function equirect(p: Prepared, width = 128, height = 64): TrueTexture {
 const lastFace = (p: Prepared) => (fastFace >= 0 ? p.faces[fastFace] : null);
 
 /** A world's level-0 tiles (kernel `resolved_system` tiles) as its true surface, or null when it has none. */
-export function trueSurface(tiles: readonly SurfaceTile[], width = 128, height = 64): TrueTexture | null {
+export function trueSurface(tiles: readonly SurfaceTile[], width = 128, height = 64, stains: readonly StainHue[] = []): TrueTexture | null {
   const globe: Globe = [0, 1, 2, 3, 4, 5].map((f) => tiles.find((t) => t.key.face === f && t.key.level === 0));
   if (!globe.some((t) => t)) return null;
-  // The true-colour recipe's ground colours (surface.ts: any colour but "height" reads the tiles' own).
-  return equirect(prepare(globe, "survey", 1), width, height);
+  // The true-colour recipe's ground colours (surface.ts: any colour but "height" reads the tiles' own), stained by
+  // what the kernel says coats the ground (stain-look.ts, TRUE4), on the flat picture and the GPU's face pictures alike.
+  return { ...equirect(stainPrepared(prepare(globe, "survey", 1), stains), width, height), faces: composeFaces(tiles, stains) };
 }
 
 /** A star's own colour as a CSS colour: its surface temperature's (sky.ts `starRgb`, linear) encoded to sRGB. */
