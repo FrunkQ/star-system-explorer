@@ -41,3 +41,43 @@ reason in that package's log.
 
 `tests/golden/contract.jsonl` line 318 now ends in the `lists` note instead of the three lists, and
 `tests/golden/contract-reach.txt` is new (202 lines). No other hash moved.
+
+## Part three: one golden per area (25 Nov)
+
+The coordinator's call, on Alex's agreement to split the golden by area: nine golden PRs were queued
+behind one another at about 80 minutes of CI each.
+
+- `tests/contract/areas/<area>.json` holds an area's cases. `contract::run` plays each on a fresh kernel
+  (natively in `contract_areas_match_their_goldens`, through a worker in
+  `packages/kernel-client/test/contract.test.ts`, and in the browser harness through `pkg/fixtures/areas.json`).
+  The golden is `tests/golden/areas/<area>.jsonl`. A golden with no request file fails.
+- `tests/contract/requests.json` is closed at 380 cases (`the_core_sequence_is_closed`).
+  `every_op_is_covered_by_the_contract` counts the areas too.
+- Moved out of the core to prove it: the small bodies cases (PR 459) into `small-bodies`, and the K13 cases into
+  `kernel`. Each area starts with the `load_stack` that preceded it. The moved responses are byte for byte the
+  core lines they replace. The one exception is `stack_loaded`, which in the core also reported adopting into
+  the universe already open; a fresh kernel has none.
+- The core golden changes only at line 318 (the reach report, part two) and loses its last 16 lines.
+
+Areas, one per owning thread (create the file the first time):
+
+| Area file | Threads |
+|---|---|
+| `kernel` | Build kernel resolve and rules |
+| `light` | Build light and nebulae; Build aurorae and night lights; Build star glow and flares |
+| `climate` | Build shared climate and weather (seas, weather) |
+| `giants` | Build giant bands, clouds and hazes |
+| `galaxy` | Build galaxy charts and histories; Build galaxy arm fix and atmosphere advice; Build cosmic web view |
+| `travel` | Build galaxy charts and travel screens (NAV, voyages, routes) |
+| `spaceflight` | Build real spaceflight history pack; Build Paper spacecraft pack |
+| `ships` | Build ship flow and power views; Build ship manifest and crew roster |
+| `exotic` | Build exotic stars and black holes |
+| `surface` | Build landing run-through; Build surface time-lapse; Build detail ladder and world textures |
+| `small-bodies` | Build asteroids and rings up close |
+| `names` | Build chart pencil and Atlas look; Build star atlas and editions; names gallery |
+| `matter` | Build the master matter data sheet |
+| `traveller` | Build Traveller pack |
+| `run-desk` | Build Run desk playbook and players' side |
+| `orac` | Build Orac, Minerva and Tars |
+| `editing` | Build planet and star editing |
+| `proven-core` | Build SSE4 proven core |

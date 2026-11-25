@@ -140,6 +140,16 @@ async function kernelCheck() {
   const client = new KernelClient(browserPort(worker), { jsUrl: new URL("./pkg/sse_wasm.js", import.meta.url).href });
   const got = await runContract(client, requests, packs);
   const bad = got.map((l, i) => (l === golden[i] ? -1 : i)).filter((i) => i >= 0);
+  // Contract areas: each on a fresh kernel in its own worker, as natively.
+  const areas = await get("./pkg/fixtures/areas.json");
+  for (const a of areas) {
+    const w = new Worker(new URL("./pkg/client/worker.js", import.meta.url), { type: "module" });
+    const c = new KernelClient(browserPort(w), { jsUrl: new URL("./pkg/sse_wasm.js", import.meta.url).href });
+    const g = await runContract(c, a.requests, packs);
+    g.forEach((l, i) => { if (l !== a.golden[i]) bad.push(`${a.name}:${i}`); });
+    if (g.length !== a.golden.length) bad.push(`${a.name}:length`);
+    w.terminate();
+  }
   const ok = bad.length === 0 && got.length === golden.length;
   const v = $("kverdict");
   v.textContent = ok

@@ -52,6 +52,85 @@ fn contract_matches_golden() {
     assert_eq!(lines.len(), golden.lines().count());
 }
 
+/// The core sequence (`tests/contract/requests.json`) is closed: it keeps the
+/// cases it had when the golden was split by area (25 Nov), so two PRs never
+/// both append to it. New cases go in an area file (`contract_areas_*`).
+pub const CORE_CASES: usize = 380;
+
+/// One request file per area in `tests/contract/areas/<area>.json`, run on a
+/// fresh kernel, with its own golden `tests/golden/areas/<area>.jsonl`. Areas
+/// never share state, so PRs in different areas never move each other's
+/// lines.
+fn area_files() -> Vec<(String, PathBuf)> {
+    let dir = root().join("tests/contract/areas");
+    let mut v: Vec<(String, PathBuf)> = std::fs::read_dir(&dir)
+        .map(|d| {
+            d.map(|e| e.unwrap().path())
+                .filter(|p| p.extension().is_some_and(|e| e == "json"))
+                .map(|p| (p.file_stem().unwrap().to_string_lossy().to_string(), p))
+                .collect()
+        })
+        .unwrap_or_default();
+    v.sort();
+    v
+}
+
+fn area_requests(p: &std::path::Path) -> serde_json::Value {
+    serde_json::from_str(&std::fs::read_to_string(p).unwrap()).unwrap()
+}
+
+#[test]
+fn the_core_sequence_is_closed() {
+    let reqs: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("tests/contract/requests.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        reqs.as_array().unwrap().len(),
+        CORE_CASES,
+        "tests/contract/requests.json is closed: put new cases in your area's file, \
+         tests/contract/areas/<area>.json (handover/START-HERE.md, golden lane)"
+    );
+}
+
+/// Each area's golden, blessed like the core one with SSE_BLESS=1.
+#[test]
+fn contract_areas_match_their_goldens() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let gdir = root().join("tests/golden/areas");
+    let bless = std::env::var("SSE_BLESS").is_ok();
+    let mut names = Vec::new();
+    for (name, p) in area_files() {
+        let reqs = area_requests(&p);
+        let lines: Vec<String> = crate::contract::run(&reqs, &packs)
+            .iter()
+            .map(|l| crate::contract::mask_ops(l))
+            .collect();
+        let path = gdir.join(format!("{name}.jsonl"));
+        if bless {
+            std::fs::create_dir_all(&gdir).unwrap();
+            std::fs::write(&path, lines.join("\n") + "\n").unwrap();
+        }
+        let golden = std::fs::read_to_string(&path)
+            .unwrap_or_else(|_| panic!("no golden for area {name}: run with SSE_BLESS=1"));
+        for (i, (a, b)) in lines.iter().zip(golden.lines()).enumerate() {
+            assert_eq!(a, b, "area {name}: response {i} differs");
+        }
+        assert_eq!(lines.len(), golden.lines().count(), "area {name}");
+        names.push(name);
+    }
+    if let Ok(d) = std::fs::read_dir(&gdir) {
+        for e in d {
+            let p = e.unwrap().path();
+            let stem = p.file_stem().unwrap().to_string_lossy().to_string();
+            assert!(
+                names.contains(&stem),
+                "tests/golden/areas/{stem}.jsonl has no request file: delete it"
+            );
+        }
+    }
+}
+
 /// What the golden masks: `hello` lists every op of `ops()` with its cost
 /// and edge, in order, and the unknown-op message names every request op.
 #[test]
@@ -114,9 +193,11 @@ fn every_op_is_covered_by_the_contract() {
         &std::fs::read_to_string(root().join("tests/contract/requests.json")).unwrap(),
     )
     .unwrap();
-    let used: std::collections::BTreeSet<String> = reqs
-        .as_array()
-        .unwrap()
+    let mut all: Vec<serde_json::Value> = reqs.as_array().unwrap().clone();
+    for (_, p) in area_files() {
+        all.extend(area_requests(&p).as_array().unwrap().iter().cloned());
+    }
+    let used: std::collections::BTreeSet<String> = all
         .iter()
         .map(|r| r["op"].as_str().unwrap().to_string())
         .collect();
