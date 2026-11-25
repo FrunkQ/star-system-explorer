@@ -150,7 +150,23 @@ try {
         const low = Number(await view.getAttribute("data-dist"));
         assert.ok(low > 0.55 && low < 0.552, `down to a grazing orbit: ${low}`);
         await shot(gm, `close-up-graze-${mode}`);
+        // PC2: the close-up's camera goes on a bookmark, and the bookmark brings the same camera back.
+        const keptAt = Number(await view.getAttribute("data-dist"));
+        await gm.getByRole("button", { name: "Bookmarks" }).click();
+        const marks = gm.locator("[data-bookmarks-list]");
+        await marks.locator("[data-bookmark-add]").click();
+        await marks.locator("[data-bookmark-name]").press("Enter");
+        await gm.keyboard.press("Escape");
         await pick(gm, "HUD", "On");
+        await view.locator(".crumb button, button").filter({ hasText: /^‹ / }).first().click();
+        await settled();
+        assert.ok(Number(await view.getAttribute("data-dist")) > 1, "out of the close-up");
+        await gm.getByRole("button", { name: "Bookmarks" }).click();
+        await marks.locator("[data-bookmark-go]").last().click();
+        await gm.waitForFunction((d) => Math.abs(Number(document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-dist")) - d) < 1e-3, keptAt, { timeout: 15000 });
+        await shot(gm, `pc2-bookmark-camera-${mode}`);
+        await gm.keyboard.press("Escape");
+        await pick(gm, "HUD", "On"); // the bookmark brought back its view too, made with the HUD off
         await view.locator(".crumb button, button").filter({ hasText: /^‹ / }).first().click();
       }
       await gm.getByRole("button", { name: "3D", exact: true }).click();

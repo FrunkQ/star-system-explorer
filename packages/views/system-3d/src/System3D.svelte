@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { closeMin, grazeLook, groundUnder, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
+  import { closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
   import { SYSTEM_TRUE } from "../../../renderer/src/recipes.ts";
   import { constant, SEEN_ELEVATION, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
@@ -50,6 +50,9 @@
     sky,
     long = false,
     onground,
+    oncamera,
+    aim = null,
+    onaimed,
     range = [],
   }: {
     bands?: Band3D[];
@@ -96,6 +99,12 @@
     long?: boolean;
     /** Close-up: the ground under the camera while it is near the world at the centre in True (null when it leaves). */
     onground?: (g: GroundView | null) => void;
+    /** PC2: the camera about the world at the centre (eye direction, radii out, field of view), for a bookmark or a
+     * postcard made here; null when the camera has slid off it or the centre is the star. */
+    oncamera?: (c: { about: string; dir: Vec3; radii: number; fov_deg: number } | null) => void;
+    /** A postcard's or bookmark's camera to go to, once the world it is about is at the centre; `onaimed` says it was taken. */
+    aim?: { about: string; dir: Vec3; radii: number } | null;
+    onaimed?: () => void;
     /** Range rings (RK12), drawn with the HUD round each holder (a body id) in this frame. */
     range?: readonly { holder: string; rings: readonly RangeRing[] }[];
   } = $props();
@@ -194,6 +203,37 @@
     groundAt = now;
     groundSent = k;
     onground(g);
+  });
+
+  // PC2: the camera kept for a bookmark or postcard made here, and a kept camera taken back (once its world is centred).
+  let cameraSent = "";
+  $effect(() => {
+    if (!oncamera) return;
+    const e = centreBody && pan[0] === 0 && pan[1] === 0 ? orbitEye({ yaw, pitch, dist }, centreR) : null;
+    const c = e && centreBody ? { about: centreBody.id, dir: e.dir, radii: e.radii, fov_deg: (FOV * 180) / Math.PI } : null;
+    const k = c ? `${c.about}|${c.dir.join(",")}|${c.radii}` : "";
+    if (k === cameraSent) return;
+    cameraSent = k;
+    oncamera(c);
+  });
+  $effect(() => {
+    const a = aim;
+    if (!a || !centreBody) return;
+    // Its world first comes to the centre (the frame it is drawn in), then the camera goes where it was.
+    if (a.about !== centreBody.id) {
+      if (byId(a.about)) untrack(() => ((flying += 1), (frame = a.about)));
+      return;
+    }
+    if (!(centreR > 0)) return;
+    untrack(() => {
+      flying += 1;
+      const o = orbitOf(a.dir, a.radii, centreR);
+      yaw = o.yaw;
+      pitch = o.pitch;
+      dist = Math.min(MAX, Math.max(MIN, o.dist));
+      pan = [0, 0];
+      onaimed?.();
+    });
   });
 
   function enter(id: string) {
