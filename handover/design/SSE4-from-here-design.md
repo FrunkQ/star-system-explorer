@@ -204,7 +204,15 @@ The sound design note (18 Nov) section 4 already sets the physics and the stage 
 - **Never sound alone** (sound design principle 5): the chart shows the clip's spectrum at home and here, the words say the speed, the delay and how far a shout carries, and captions are available. All of that works with sound switched off, which is the default.
 - It follows the sounding line live. Going down through Jupiter the same spoken line gets faster, brighter and louder.
 
-**The clips** (shipped, a few seconds each, recorded for the project or public domain): a spoken line, a sung phrase, a flute, a guitar, a hand clap, a dropped spanner. Or your own file or microphone, processed on the device and never sent anywhere.
+**The clips** (shipped, a few seconds each): a spoken line, a sung phrase, a flute, a guitar, a hand clap, a dropped spanner. Or your own file or microphone, processed on the device and never sent anywhere.
+
+**Where the shipped clips come from (Alex, 25 Nov 2026 12:10 UTC: agreed).** No film, television or game clips, however short and however credited: a clip carries the script, the recording and the performance, and "a few seconds with a credit" is not a rule that exists. Three sources only:
+
+1. **Recorded fresh for the project**: the plain spoken line, the sung phrase, the instruments and the knocks. These are the clean test clips, recorded close and dry so the filter has the whole range to work on.
+2. **Public-domain science fiction text, read fresh.** Alex's pick is the opening of H. G. Wells's *The War of the Worlds* ("No one would have believed in the last years of the nineteenth century..."). The novel's text is out of copyright in the UK. The 1938 radio play's script and recording, and the later musical version, are not ours to use, so the line is a new reading of Wells's own words, not a clip of either. Check each text's status before recording.
+3. **Real spaceflight audio**, credited to NASA with no suggestion of endorsement. Alex's caution stands: most of the famous lines came down a narrow radio link and are already thin and distorted, so the filter has little left to take away. So prefer recordings made in the cabin (onboard tapes, station and shuttle cabin audio) where they exist, and label every such clip with how it was recorded ("over the radio, 1969"). The chart shows the clip's own range, so the user sees why a radio clip changes less than a fresh one. The real Mars microphone recordings are offered as themselves ("recorded there"), played without the filter, as the check on it.
+
+Anyone who wants a film line at their own table can load it through "Your own…"; it stays on their device.
 
 **Refinements to the 18 Nov physics**
 
