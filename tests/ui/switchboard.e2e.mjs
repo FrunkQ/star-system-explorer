@@ -77,6 +77,18 @@ try {
   assert.equal(await gm.locator(`[data-line="screen:${wallId}"].held`).count(), 1, "the line is drawn broken");
   await shot(gm, "switchboard-held");
   await shot(wall, "switchboard-wall-held");
+  // The line card (PB5): a plain card from the base presentation pack; then a particular joke; then words typed now.
+  assert.ok(["Awaiting transmission", "Signal lost", "Stand by", "No carrier"].includes(await wall.locator("[data-held]").getAttribute("data-held")));
+  const cardSel = gm.locator(`[data-card="screen:${wallId}"]`);
+  assert.equal(await cardSel.locator("optgroup[label='Jokes'] option").count(), 24);
+  await cardSel.selectOption({ label: "Tuning. This frequency is mostly hydrogen." });
+  await wall.locator("[data-held='Tuning. This frequency is mostly hydrogen.']").waitFor({ timeout: 10000 });
+  await shot(wall, "holding-joke");
+  await cardSel.selectOption("own");
+  await gm.locator(`[data-card-words="screen:${wallId}"]`).fill("Back after the break");
+  await gm.locator(`[data-card-words="screen:${wallId}"]`).press("Enter");
+  await wall.locator("[data-held='Back after the break']").waitFor({ timeout: 10000 });
+  await shot(gm, "holding-own-words");
   await gm.locator(`[data-hold="screen:${wallId}"]`).click();
   await wall.locator("[data-screens-off]").waitFor({ state: "detached", timeout: 10000 });
 
@@ -104,6 +116,77 @@ try {
   await shot(gm, "switchboard-layer");
   await gm.locator("[data-lift]").click();
   assert.equal(await gm.locator("[data-lift]").count(), 0);
+
+  // Layouts (PB13): the table's layout on its heading; a new one made in the editor goes to its screens at once, and a
+  // box with its control off is a picture there (AT13). Choosing the Bridge again puts it back.
+  // A bookmark to put on a box (Keep on Live makes one).
+  await gm.locator("[data-keep-live]").click();
+  await gm.locator('[data-role-layout-chip="table"]').click();
+  await gm.locator('[data-layout-picker="table"] [data-layout-new]').click();
+  const ed = gm.locator("[data-layout-editor]");
+  await ed.waitFor();
+  await ed.locator("[data-layout-name]").fill("Wall chart");
+  await ed.locator("[data-layout-arrangement]").selectOption("report");
+  await ed.locator("[data-box-new-part]").selectOption("sse.view.chart");
+  await ed.locator("[data-box-add]").click();
+  await ed.locator("[data-box-new-part]").selectOption("sse.view.table");
+  await ed.locator("[data-box-add]").click();
+  await ed.locator('[data-layout-box="0"] [data-box-control="select"]').uncheck();
+  // A picture box with the GM's own file (PB13 part 2b), kept in the layout as data; a web page box, not usable.
+  await ed.locator("[data-box-new-part]").selectOption("sse.view.picture");
+  await ed.locator("[data-box-add]").click();
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  await ed.locator('[data-layout-box="2"] [data-box-file]').setInputFiles({ name: "map.png", mimeType: "image/png", buffer: png });
+  await ed.locator('[data-layout-box="2"] [data-box-own]').waitFor();
+  await ed.locator('[data-layout-box="2"] [data-box-caption]').fill("The old survey map");
+  await ed.locator('[data-layout-box="2"] [data-box-caption]').blur();
+  await ed.locator("[data-box-new-part]").selectOption("sse.view.link");
+  await ed.locator("[data-box-add]").click();
+  await ed.locator('[data-layout-box="3"] [data-box-address]').fill("http://localhost:1/none");
+  await ed.locator('[data-layout-box="3"] [data-box-address]').blur();
+  // The table box always shows the kept place (PB13 part 2), whatever is sent.
+  await ed.locator('[data-layout-box="1"] [data-box-holds]').selectOption({ index: 1 });
+  // The arrows reorder: the table first, then back.
+  await ed.locator('[data-layout-box="1"] [data-box-up]').click();
+  assert.equal(await ed.locator('[data-layout-box="0"]').getAttribute("data-box-part"), "sse.view.table");
+  await ed.locator('[data-layout-box="0"] [data-box-down]').click();
+  await ed.locator("[data-layout-preview] .screen").waitFor({ timeout: 15000 });
+  await shot(gm, "layout-editor");
+  await ed.locator("[data-layout-save]").click();
+  assert.match(await gm.locator('[data-role-layout-chip="table"]').innerText(), /Wall chart/);
+  for (const p of [wall, mira]) await p.locator('[data-screen-id="mine.wall-chart"]').waitFor({ timeout: 15000 });
+  assert.equal(await wall.locator('[data-screen-id="mine.wall-chart"] [data-view="sse.view.chart"][data-picture][inert]').count(), 1, "the chart's one control is off: a picture");
+  assert.equal(await wall.locator('[data-view="sse.view.table"][data-picture]').count(), 0, "the table keeps its controls");
+  await wall.locator('[data-view="sse.view.table"][data-placed] [data-place-title]').waitFor({ timeout: 15000 });
+  await wall.locator('[data-view="sse.view.table"][data-placed] table').waitFor({ timeout: 15000 });
+  await wall.locator('[data-view="sse.view.picture"] [data-picture-src="own"] img').waitFor({ timeout: 15000 });
+  assert.match(await wall.locator('[data-view="sse.view.picture"] figcaption').innerText(), /old survey map/);
+  assert.equal(await wall.locator('[data-view="sse.view.link"][data-picture][inert]').count(), 1, "a web page box is only looked at unless Use is on");
+  await shot(wall, "layout-on-wall");
+  await gm.locator('[data-role-layout-chip="table"]').click();
+  await gm.locator('[data-layout-picker="table"] [data-layout-choose="bridge"]').click();
+  for (const p of [wall, mira]) await p.locator('[data-screen-id="sse.screen.players.bridge"]').waitFor({ timeout: 15000 });
+
+  // The clean output (PB8): the role offers it; opened, it is a screen marked Output, with no controls, at 16:9.
+  assert.equal(await gm.locator('[data-output-link="table"]').count(), 1);
+  const out = await context.newPage();
+  await out.setViewportSize({ width: 1600, height: 1000 });
+  out.on("pageerror", (e) => errors.push(`output: ${e.message}`));
+  await out.goto(`${link}&clean=1&ground=none&name=Stream`);
+  await out.waitForSelector("[data-clean] footer[data-link='live'][data-state-hash]:not([data-state-hash=''])", { state: "attached", timeout: 30000 });
+  assert.equal(await out.locator("header.bar, section.ask, .soundbar").count(), 0, "no controls on the output");
+  const size = await out.locator("[data-clean]").evaluate((e) => [e.clientWidth, e.clientHeight]);
+  assert.ok(Math.abs(size[0] / size[1] - 16 / 9) < 0.01, `16:9, got ${size}`);
+  assert.equal(await out.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgba(0, 0, 0, 0)", "clear ground");
+  // Every part on the output is a picture (AT13 rule 6): inert, so not one control is reached by keyboard either.
+  const parts = await out.locator("[data-clean] section.area").count();
+  assert.ok(parts > 0 && (await out.locator("[data-clean] section.area[data-picture][inert]").count()) === parts, "every part a picture");
+  for (let i = 0; i < 6; i++) await out.keyboard.press("Tab");
+  assert.equal(await out.evaluate(() => !!document.activeElement?.closest("section.area")), false, "nothing on the output takes the keyboard");
+  await box("Stream").locator("[data-output-screen]").waitFor({ timeout: 15000 });
+  await shot(out, "clean-output");
+  await shot(gm, "switchboard-output");
+  await out.close();
 
   // On a phone the board is one column, without the drawn lines.
   await gm.setViewportSize({ width: 390, height: 844 });

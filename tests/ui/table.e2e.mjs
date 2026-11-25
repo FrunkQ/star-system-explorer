@@ -78,34 +78,36 @@ try {
   await pl.waitForFunction(() => /Sun/.test(document.body.textContent ?? ""), null, { timeout: 20000 });
   void title;
 
-  // Seat rows (Looks 4D, first cut): one seat can be blanked, or sent its own view, while the table carries on.
-  await gm.getByRole("button", { name: "More seats" }).click();
-  const seats = gm.locator("dialog[aria-label=Seats]");
-  await seats.locator("input[placeholder^='Empire']").fill("Sensors");
-  const fog = seats.getByLabel(/Fog of war/);
-  if (await fog.isEnabled()) await fog.uncheck();
-  await seats.getByRole("button", { name: "Add seat" }).click();
-  const row = seats.locator("li[data-seat]", { hasText: "Sensors" });
-  await row.waitFor();
-  const seatId = await row.getAttribute("data-seat");
-  assert.match(await row.locator("[data-seat-sees]").innerText(), /Sees: The Solar System \(with the table\)/);
+  // A role of its own (PB7: the role card on the Switchboard replaced the Seats dialog): it can be held, or sent its
+  // own view, while the table carries on.
+  await gm.locator("[data-add-role]").click();
+  const card = gm.locator("[data-role-card='new']");
+  await card.locator("[data-role-name]").fill("Sensors");
+  await card.locator("[data-role-knows]").selectOption("own");
+  await card.locator("[data-role-add]").click();
+  await card.waitFor({ state: "detached" });
+  const head = gm.locator("[data-role-id='sensors'] .rhead");
+  await head.waitFor();
+  assert.match(await head.locator("[data-dest-shows]").innerText(), /with Everyone/);
+  await gm.locator("[data-role-open='sensors']").click();
+  const sc = gm.locator("[data-role-card='sensors']");
+  assert.match(await sc.locator("[data-role-knows]").innerText(), /its own knowledge/);
   const sp = await context.newPage();
   sp.on("pageerror", (e) => errors.push(`sensors: ${e.message}`));
-  await sp.goto(await row.locator("[data-seat-link]").first().getAttribute("href"));
+  await sp.goto(await sc.locator("[data-seat-link]").first().getAttribute("href"));
   await sp.waitForSelector("footer[data-link='live'][data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
   await sp.waitForFunction(() => /Sun/.test(document.body.textContent ?? ""), null, { timeout: 20000 });
-  await row.locator(`[data-seat-off='${seatId}']`).click();
+  await shot(gm, "table-role-card");
+  await gm.locator("[data-role-card-close]").click();
+  await gm.locator("[data-hold='role:sensors']").click();
   await sp.locator("[data-screens-off]").waitFor({ timeout: 10000 });
-  assert.match(await row.locator("[data-seat-sees]").innerText(), /Sees: nothing \(screens off\)/);
   await pl.waitForTimeout(1000);
   assert.equal(await pl.locator("main[data-screens-off]").count(), 0, "the table carries on");
-  await shot(gm, "table-seat-rows");
-  await row.locator(`[data-seat-rejoin='${seatId}']`).click();
+  await gm.locator("[data-hold='role:sensors']").click();
   await sp.locator("[data-screens-off]").waitFor({ state: "detached", timeout: 10000 });
-  // A send for everyone puts every seat back with the table.
-  await row.locator(`[data-seat-off='${seatId}']`).click();
+  // A send for everyone puts every role back with the table.
+  await gm.locator("[data-hold='role:sensors']").click();
   await sp.locator("[data-screens-off]").waitFor({ timeout: 10000 });
-  await seats.getByRole("button", { name: "Close" }).click();
   await gm.locator("[data-hold-all]").click();
   await gm.locator("[data-send-view]").click();
   await sp.locator("[data-screens-off]").waitFor({ state: "detached", timeout: 10000 });
