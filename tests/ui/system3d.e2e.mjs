@@ -87,7 +87,7 @@ try {
         // Bands through True (rule 12, one set of controls): X-ray draws the corona, Infrared each body's own heat.
         for (const [b, id] of [["X-ray", "xray"], ["Infrared", "infrared"]]) {
           await pick(gm, "Band", b);
-          await gm.waitForFunction((x) => document.querySelector("[aria-roledescription='3D chart'] [data-true-band]")?.getAttribute("data-true-band") === x, id);
+          await gm.waitForFunction((x) => document.querySelector("[aria-roledescription='3D chart'] [data-true-band]")?.getAttribute("data-true-band") === x, id, { timeout: 20000 });
         }
         await shot(gm, `v10d-gm-true-infrared-${mode}`);
         await pick(gm, "Band", "Visible");
@@ -106,6 +106,16 @@ try {
       // Every body takes a click (Alex, 24 Nov: only two did): the pointer picks the nearest body, so pins that overlap
       // at Real scale no longer hide the worlds beneath them. Checked on each pin clear of its neighbours by 6 px.
       // A click also flies in to the body's close-up (Alex, 24 Nov); "‹ Sun" comes back out before the next one.
+      // The camera's distance holds still for a few frames: the fly-in or fly-out has finished (a loaded runner takes
+      // longer than the tween's 620 ms, so the test waits on the camera, not on a clock).
+      const settled = () => gm.waitForFunction(() => {
+        const v = document.querySelector("[aria-roledescription='3D chart']");
+        const d = v?.getAttribute("data-dist");
+        const w = /** @type {any} */ (window);
+        if (w.__distWas !== d) { w.__distWas = d; w.__distSame = 0; return false; }
+        return ++w.__distSame >= 6;
+      }, null, { timeout: 20000, polling: 100 });
+      await settled();
       const pinsNow = () => view.locator(".pin").evaluateAll((ps) => ps.map((e) => { const r = e.getBoundingClientRect(); return { id: e.dataset.body, x: r.x + r.width / 2, y: r.y + r.height / 2 }; }));
       const ids = (await pinsNow()).map((q) => q.id);
       let clicked = 0;
@@ -114,14 +124,14 @@ try {
         const q = pinsAt.find((x) => x.id === id);
         if (!q || pinsAt.some((o) => o.id !== q.id && Math.hypot(o.x - q.x, o.y - q.y) < 6)) continue;
         await gm.mouse.click(q.x, q.y);
-        await gm.waitForTimeout(1100); // the fly-in to its close-up
-        await gm.waitForFunction((id) => document.querySelector("[aria-roledescription='3D chart'] .pin.sel")?.getAttribute("data-body") === id, q.id, { timeout: 5000 });
+        await gm.waitForFunction((id) => document.querySelector("[aria-roledescription='3D chart'] .pin.sel")?.getAttribute("data-body") === id, q.id, { timeout: 15000 });
+        await settled(); // the fly-in to its close-up
         clicked++;
         const back = view.locator(".crumb button, button").filter({ hasText: /^‹ / }).first();
         if (await back.isVisible().catch(() => false)) {
           if (clicked === 1) await shot(gm, `close-up-${mode}`);
           await back.click();
-          await gm.waitForTimeout(150);
+          await settled();
         }
       }
       assert.ok(clicked >= 3, `bodies clicked: ${clicked}`);

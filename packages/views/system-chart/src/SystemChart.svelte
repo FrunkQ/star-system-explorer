@@ -9,6 +9,8 @@
   import { withFiner, TILE_SAMPLES, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
+  /** Plume facts from the same reads (the world's surface record), by system and world. */
+  const truePlumes = new Map<string, import("../../../renderer/src/index.ts").PlumeFacts>();
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
   const trueSaid = new Map<string, string[]>();
   /** Its clouds alone, its ground under them, and its air (VP-A3, VP-A4), by system and world. */
@@ -37,7 +39,7 @@
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, readTrueFace, starsBehind, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
+  import { plumeFacts, readLiveStar, readTrueFace, starsBehind, starCss, type AirShape, type FaceReader, type PlumeFacts, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, CompositeStack, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -384,6 +386,8 @@
     );
   });
   let surfaces = $state<Map<string, TrueTexture>>(new Map());
+  // Each world's plume facts from the same read (its surface record), for plumes above the limb.
+  let plumes = $state<Map<string, PlumeFacts>>(new Map());
   let airs = $state<Map<string, TrueAir>>(new Map());
   let reading = $state<{ done: number; of: number; none: number; why: string } | null>(null);
   let trueGen = 0;
@@ -405,10 +409,28 @@
         const key = `${sys}|${s.address}`;
         if (!trueSurfaces.has(key)) {
           reading = { done, of: order.length, none, why: noneWhy };
-          // Ground, then today's clouds and haze; a giant is its cloud decks (renderer true-air.ts).
-          const f = await readTrueFace(ctx.session as unknown as FaceReader, sys, s.address);
+          // Ground, then today's clouds and haze; a giant is its cloud decks (renderer true-air.ts). The surface record
+          // read on the way carries the world's plume facts (renderer plumes.ts).
+          let record: unknown = null;
+          const k = ctx.session as unknown as FaceReader;
+          // The session's own methods, bound to it (they use its private state), with its tile read noting the record.
+          const reader = new Proxy(k, {
+            get: (t, p) =>
+              p === "surfaceTiles"
+                ? async (a: string, b: string) => {
+                    const r = await ctx.session.surfaceTiles(a, b);
+                    if (r.ok) record = r.record ?? null;
+                    return r;
+                  }
+                : typeof (t as unknown as Record<string | symbol, unknown>)[p] === "function"
+                  ? ((t as unknown as Record<string | symbol, (...x: unknown[]) => unknown>)[p]!).bind(t)
+                  : (t as unknown as Record<string | symbol, unknown>)[p],
+          });
+          const f = await readTrueFace(reader, sys, s.address);
           trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
           if (typeof f !== "string") trueSaid.set(key, f.said);
+          const pf = plumeFacts(record);
+          if (pf) truePlumes.set(key, pf);
           // Its clouds alone over its ground, and its air's rim (VP-A3, VP-A4).
           if (typeof f !== "string" && (f.clouds || f.air)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}) });
           // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
@@ -416,6 +438,8 @@
           if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));
           finerGround(key, finerTiles(key));
         }
+        const kp = truePlumes.get(key);
+        if (kp && g === trueGen) plumes = new Map(plumes).set(s.address, kp);
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
         if (t && typeof t !== "string") surfaces = new Map(surfaces).set(s.address, t);
@@ -579,7 +603,7 @@
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined}>
   {#if dims === "3d"}
     {#snippet in3d(band: string, base: boolean)}
-      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
+      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
     {/snippet}
     {#if viewed.composite}
       <!-- Composite (XO17): the system drawn once per band and laid into one picture. -->
