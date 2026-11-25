@@ -131,6 +131,19 @@ export { DIFFERENTIAL_ROTATION, rateShare, spotsAt } from "./live-star.ts";
 // A body's face in True, one door for every view (true-body.ts).
 export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
 export type { TrueBody, TrueLook } from "./true-body.ts";
+// Hot things glow in Visible and plumes above the limb (third audit R10 to R12, track TRUE).
+export { drawnGlow, GLOW_FLOOR, hotGlow } from "./hot-glow.ts";
+export type { HotGlow } from "./hot-glow.ts";
+export { plumeBrightness, plumeFacts, plumeGrains, plumeNote } from "./plumes.ts";
+export type { PlumeFacts } from "./plumes.ts";
+// Lava tube openings cut into the ground at a landing site (third audit, TRUE6).
+export { caveCut, caveOpenings, nearestOpening, openingLine } from "./cave-mouths.ts";
+export type { CaveOpening } from "./cave-mouths.ts";
+// Surface stains hued from the data sheet's optics (TRUE4).
+export { grainAlbedo, indexTableOf, layerReflectance, mixAlbedo, seenColour, GRAIN_UM } from "./sheet-optics.ts";
+export type { GrainShare, IndexTable } from "./sheet-optics.ts";
+export { stainFacts, stainHue, stainNote, stainPrepared, STAIN_GRAIN_UM } from "./stain-look.ts";
+export type { StainFact, StainHue } from "./stain-look.ts";
 // Small bodies' own shapes in True (SB3, small-body.ts).
 export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
 export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";

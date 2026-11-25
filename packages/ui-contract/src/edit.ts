@@ -49,7 +49,9 @@ async function reverse(session: ViewSession, ws: Workspace, from: "undo" | "redo
   if (!e) return null;
   // A paste or a cut is kept as the presence of its top bodies: taking it back withdraws them, or brings them back.
   const r =
-    e.field === PRESENCE
+    e.field === FIELDS
+      ? await session.send({ kind: "set_values", edits: Object.entries(e.before.value as Record<string, Json>).map(([field, value]) => ({ address: e.address, field, value })), at_yr: ws.now_yr })
+      : e.field === PRESENCE
       ? await sendAll(session, (e.before.value as string[] | null) ? (e.before.value as string[]).map((a) => ({ kind: "restore" as const, address: a, at_yr: ws.now_yr })) : (e.after.value as string[]).map((a) => ({ kind: "withdraw" as const, address: a, at_yr: ws.now_yr })))
       : await session.send({ kind: "set_value", address: e.address, field: e.field, value: e.before.value, at_yr: ws.now_yr });
   if (r.status === "applied") {
@@ -66,6 +68,38 @@ async function reverse(session: ViewSession, ws: Workspace, from: "undo" | "redo
  * address is the first of them.
  */
 export const PRESENCE = "presence";
+
+/**
+ * The undo stack's field for several fields of one body set as one change (the Air box's mix): before and after hold
+ * `{field: value}` records.
+ */
+export const FIELDS = "fields";
+
+/** Several fields of one body as one change: one authored event (set_values), one Undo. On a what-if, one edit each. */
+export async function commitFields(
+  session: ViewSession,
+  ws: Workspace,
+  change: { address: string; edits: { field: string; value: Json; before: Json }[]; display: string; before_display: string; evidence?: "authored" | "catalogued"; source?: string },
+): Promise<IntentResult> {
+  const b = ws.branch;
+  if (b) {
+    let last: IntentResult = { status: "refused", reason: "nothing to send" };
+    for (const e of change.edits) {
+      last = await session.branchSend(b.id, { kind: "set_value", address: change.address, field: e.field, value: e.value, at_yr: ws.now_yr });
+      if (last.status !== "applied") return last;
+      b.edits.push({ address: change.address, field: e.field, before: { value: e.before, display: "" }, after: { value: e.value, display: change.display }, event_id: last.event_id });
+      b.applied[`${change.address}#${e.field}`] = { value: e.value, display: change.display, event_id: last.event_id };
+    }
+    ws.revision += 1;
+    return last;
+  }
+  const r = await session.send({ kind: "set_values", edits: change.edits.map((e) => ({ address: change.address, field: e.field, value: e.value })), at_yr: ws.now_yr, ...(change.evidence ? { evidence: change.evidence } : {}), ...(change.source ? { source: change.source } : {}) });
+  if (r.status === "applied") {
+    const rec = (k: "before" | "value") => Object.fromEntries(change.edits.map((e) => [e.field, e[k]])) as Record<string, Json>;
+    ws.noteApplied({ address: change.address, field: FIELDS, before: { value: rec("before"), display: change.before_display }, after: { value: rec("value"), display: change.display }, event_id: r.event_id });
+  }
+  return r;
+}
 
 async function sendAll(session: ViewSession, intents: Intent[]): Promise<IntentResult> {
   let last: IntentResult = { status: "refused", reason: "nothing to send" };

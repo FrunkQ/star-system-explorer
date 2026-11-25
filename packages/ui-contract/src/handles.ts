@@ -41,6 +41,8 @@ export interface Handle {
   waits?: string;
   /** What the handle opens (design section 11F): its own strip first, then these. */
   box?: HandleBox;
+  /** Results this handle can Reach (design section 8): keys of the sheet's results ("t_surface_now_k"). */
+  reach?: string[];
 }
 
 /** A labelled place on a strip or a ring, in SI. */
