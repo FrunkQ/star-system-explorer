@@ -52,7 +52,7 @@ try {
   assert.match(await chip.innerText(), /^HUD on · Visible/);
   await chip.click();
   const band = vc.getByRole("group", { name: "Band" });
-  assert.deepEqual(await band.locator("button").allInnerTexts(), ["Visible", "Infrared", "Ultraviolet", "X-ray", "Radio", "Mag"]);
+  assert.deepEqual(await band.locator("button").allInnerTexts(), ["Visible", "Infrared", "Ultraviolet", "X-ray", "Radio", "Mag", "Composite"]);
   assert.equal(await vc.getAttribute("data-band"), "visible");
   assert.equal(await vc.getByRole("group", { name: "HUD" }).count(), 1);
   await shot(gm, "rule12-show-open");

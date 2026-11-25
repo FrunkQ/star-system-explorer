@@ -42,6 +42,7 @@ export { showReference } from "./reference.ts";
 export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
+export * from "./composite.ts";
 export * from "./part-controls.ts";
 export * from "./layouts.ts";
 export * from "./picker.ts";
