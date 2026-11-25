@@ -49,7 +49,8 @@ For the renderer's close-up package (True down to a grazing orbit). The renderer
   - Gaps keep alpha 0. It takes about 0.26 s for 9 tiles of 256.
 - **Drawing.** The bake's material (`texture-ladder-gpu.ts` `patchNodes`, `Baked.setPatch`) lays the patch over the cube where it was read, eased in over its outer seventh. `TrueTexture.patch` carries it, and `gpu.ts` hands it to the bake each frame (additive, in `bakedMat`).
   - The material mixes in the patch only where its weight is above zero. Off the patch's side of the globe its read is NaN, and NaN times zero is still NaN: the first build blacked out every True world. `ladder-gpu.e2e.mjs` now draws the lit baked globe with no patch and fails on any black or NaN pixel.
-- **Next:** SystemChart reads `groundView` (when the renderer's close-up lands), calls `readDeep` once the camera has settled, and sets `patch` on the world's True face. After that comes the detail ladder's ground roughness below the fact floor.
+- **Wired (25 Nov, after the renderer's PR 488):** SystemChart watches `groundView`. Once the camera has stayed low over the chosen world for 600 ms (`DEEP_SETTLE_MS`), it calls `readDeep` and lays the patch on the world's True face, and on the ground under its clouds when it has a cloud layer. A newer view stops the read between requests. The chart says the level laid in `data-deep-level`. Checked by hand on the sample Sol's Earth: at 3 km over the sea the patch is read at level 9 (76 m, the fact floor). Kestrel's worlds have no surface tiles, so the system3d e2e cannot check it there.
+- **Next:** the detail ladder's ground roughness below the fact floor.
 
 ## Part 5: bare ground in its measured colour (Alex 25 Nov, "the moon is very brown")
 
