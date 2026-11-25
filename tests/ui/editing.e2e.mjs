@@ -260,6 +260,12 @@ try {
       await gm.locator('[data-recipe="field"] [data-do="mass"]').click();
       await gm.waitForFunction(() => /to have a field of its own/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
       await undoTo();
+      // ED10 part 2: "Stop suggesting this" takes one suggestion off this world's line, kept with the campaign; the rest stay.
+      const hashQ = await hash();
+      await gm.locator('[data-could-be] [data-could="locked"]').click();
+      await gm.locator('[data-could-quiet="locked"]').click();
+      await gm.waitForFunction(() => !document.querySelector('[data-could-be] [data-could="locked"]') && !!document.querySelector('[data-could-be] [data-could="field"]'), null, { timeout: 10000 });
+      assert.equal(await hash(), hashQ, "stopping a suggestion writes nothing to the universe");
 
       // ED8 part 1, the Air box: Mars's air as one mix bar (carbon dioxide most of it), traces as chips in ppm. Setting
       // carbon dioxide to half trades it against the rest, which keep their proportions: one change, one Undo.
