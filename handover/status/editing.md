@@ -19,7 +19,8 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED1 part 3b the held value's exact answer on a pause: 150 ms still while dragging or stepping, the kernel resolves the held value on a scratch branch (`resolveWith` in reach.ts: a what-if's own edits, then the held value; discarded) and the strip says "Held here: Surface about 264 K, …"; nothing is written | done | packages/ED1.md |
 | ED1 part 3c Titan on the Air strip's moon dots; walk step "Change a world" | queued | packages/ED1.md |
 | ED2 part 1 the sweep behind the strip (kernel K1): Orbit and Mass strips mark where the world stops lasting and where a yes-or-no result flips (Mars turns freely from about 0.55 AU); `Session.sweep`, `sweep.ts` | done | packages/ED2.md |
-| ED2 part 2 classes on the marks, pencil figures from the steps, what followed across the range; Reach it and Could be on the sweep | next | packages/ED2.md |
+| ED2 part 2a class marks on the Mass strip from the class atlas ("no longer rocky from here"); the sweep at the campaign's now | done | packages/ED2.md |
+| ED2 part 2b pencil figures from the steps, what followed across the range; Reach it and Could be on the sweep | next | packages/ED2.md |
 | ED3 part 1 the chart drag: a ghost and its orbit line follow the pointer while the world stays put; the readout is the units engine's (`dist` in SystemChart says the orbit in the campaign's chosen reading); Esc cancels and writes nothing; the strip's Esc no longer clears the selection | done | packages/ED3.md |
 | ED3 part 2a geared drag (further from the line slower, Shift a tenth) and light magnetism to round figures and resonances, named as it catches, Alt off (`ui-contract/src/drag.ts`) | done | packages/ED3.md |
 | ED3 part 2b: the readout adds the year, the surface's quick look and the ST1 verdict; the "Where things can orbit" layer during a drag; tipping-point catches; the far-point and lean grips | queued (year, quick look and tipping points want kernel K1's sweep) | |
@@ -50,7 +51,8 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED10 part 1 "Could be…": a line under a world's handles offers what it is not yet (`could_be` records in the handle sheet: a field of its own, locked to its star, turning freely; `couldBeNow`); pressing one works out the recipe on a scratch what-if (`recipeFor`: Reach it per named handle, smallest move first), each with "Do this" as one change | done | packages/ED10.md |
 | ED10 part 2a "Stop suggesting this" per world, kept with the campaign (`could_quiet`); the Curious-depth sentence | done | packages/ED10.md |
 | ED10 part 2 rest: requirement profiles (Home to humans) as survivability bands, Pin it steps; records in a pack; the GM-only "What does not add up" list | queued (profiles are ED10a with kernel K14) | packages/ED10.md |
-| ED9 the Makeup box | waits on kernel K3 (a hand-made world's makeup reaching its physics; Sol's worlds carry no makeup facts) | |
+| ED9 part 1 the Makeup box: bulk bar of `makeup.*` shares (one part's strip trades it against the rest), Kinds for makeup from the class atlas's examples, the radius the science expects (kernel K2) in pencil with "Set the radius to it" | done | packages/ED9.md |
+| ED9 part 2 the cutaway wedge (layers as results), dragging the joins with tipping points from a sweep, heat and redox strips at Science depth | next (the cutaway needs kernel K9 for layers per sweep sample) | packages/ED9.md |
 | ED11, ED10a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 
