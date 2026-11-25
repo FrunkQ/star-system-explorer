@@ -183,6 +183,12 @@
     const p = m ? markPattern(m) : null;
     return p ? `url(#cmp-${p})` : null;
   }
+  // A star's figures as the scene holds them (the same three the system's True sends with a fixture's star).
+  const starGiven = (i: CompareItem) => {
+    const f = scene.subjects.find((s) => s.address === i.key)?.facts ?? [];
+    const num = (k: string) => Number(f.find((x) => x.field === k)?.value);
+    return { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") };
+  };
   const selectable = (i: CompareItem) => scene.subjects.some((s) => s.address === i.key);
   function pick(i: CompareItem) {
     if (dragged) return void (dragged = false);
@@ -261,7 +267,7 @@
       <p class="note empty">Nothing to compare. Add bodies from this system, the campaign or the reference objects.</p>
     {:else}
       <div class="frame" class:globes={look} class:space={look === "true"} class:free={look && shownView.seen === "free"} onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} role="presentation">
-      {#if look}<Lineup3D {ctx} system={scene.system} placed={lineup.placed} width={svgW} height={H} {base} {look} view={globeView} {pace} colour={fill} own={selectable} onfail={() => (noGpu = true)} />{/if}
+      {#if look}<Lineup3D {ctx} system={scene.system} placed={lineup.placed} width={svgW} height={H} {base} {look} view={globeView} {pace} colour={fill} own={selectable} given={starGiven} onfail={() => (noGpu = true)} />{/if}
       <svg width={svgW} height={H} role="img" aria-label={`Size comparison${mode === "log" ? ", not to scale (log)" : ""}: ${summary}`}>
         <HatchDefs prefix="cmp" />
         {#if lineup.limb}
