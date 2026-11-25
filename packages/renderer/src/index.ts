@@ -13,6 +13,8 @@ export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurf
 export type { TrueTexture } from "./true-look.ts";
 // R1 to R3, R6: air in True (clouds, hazes, giants from their cloud decks), true-air.ts.
 export { flowFace, gasAbove, gasTint, readTrueFace, sheetColours, trueGiant, withAir, AIR_REFS, type AirFlow, type AirLook, type FaceReader, type FlowStorm } from "./true-air.ts";
+// VP3 part 5: bare ground in its measured colour (data sheet reflectance rows, kernel SW1 maturity), ground-optics.ts.
+export { bandsOf, groundReflectance, readGroundOptics, reflectanceAt, withGround, GROUND_BANDS_NM, GROUND_ROWS, type GroundOptics, type MatterReader, type ReflectanceTable } from "./ground-optics.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
 export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";

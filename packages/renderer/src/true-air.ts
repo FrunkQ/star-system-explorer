@@ -7,6 +7,7 @@
 import { constant, sheetUnitFactor } from "../../ui-contract/src/index.ts";
 import type { SurfaceTile } from "../../ui-contract/src/index.ts";
 import { trueSurface, type TrueTexture } from "./true-look.ts";
+import { readGroundOptics, withGround } from "./ground-optics.ts";
 import { addLayers, CLOUD_G, HAZE_G, liveSystems, slabReflectance, stormAt, type WeatherCell, type WeatherMap, type WeatherSystem, type WeatherTile } from "./weather.ts";
 
 /** Linear RGB, 0..1. */
@@ -448,7 +449,8 @@ export interface FaceReader extends AirReader {
  */
 export async function readTrueFace(k: FaceReader, system: string, body: string): Promise<AirLook | string> {
   const s = await k.surfaceTiles(system, body);
-  const ground = s.ok ? trueSurface(s.tiles) : null;
+  // Bare ground in its measured colour where the kernel weathers it (ground-optics.ts, VP3 part 5).
+  const ground = s.ok ? trueSurface(s.tiles.some((t) => t.maturity) ? withGround(s.tiles, await readGroundOptics(k)) : s.tiles) : null;
   const groundWhy = s.ok ? String((s.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : s.message;
   const now = await k.campaignNow();
   const at_s = now.ok && now.at_s !== undefined ? Number(now.at_s) : undefined;
