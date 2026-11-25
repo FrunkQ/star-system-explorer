@@ -3,6 +3,8 @@
 //! lives here, with its source, so Orac and a GM can see and change it.
 
 use serde::{Deserialize, Serialize};
+use sse_core::math as m;
+use sse_core::sheet::R_GAS;
 use std::collections::BTreeMap;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -44,6 +46,76 @@ pub struct Substance {
     /// [`crate::ebm::p_sat`] below the triple point).
     #[serde(default)]
     pub phases: serde_json::Map<String, serde_json::Value>,
+    /// Critical temperature, K, when the sheet holds one: no liquid above it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub critical_k: Option<f64>,
+    /// A liquid with no triple point at its own vapour pressure (helium):
+    /// `triple_k`/`triple_pa` hold its lowest liquid point (the lambda
+    /// point) and the vapour curve is the sheet's saturated-liquid table.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub liquid_only: bool,
+}
+
+/// The sheet's saturated-liquid curve, (T K, p Pa) rows in rising T.
+pub fn saturated_curve(
+    phases: &serde_json::Map<String, serde_json::Value>,
+) -> Option<Vec<(f64, f64)>> {
+    let t = phases.get("saturated_liquid")?;
+    let cols: Vec<&str> = t
+        .get("columns")?
+        .as_array()?
+        .iter()
+        .filter_map(|x| x.as_str())
+        .collect();
+    let it = cols.iter().position(|c| *c == "t_k")?;
+    let ip = cols.iter().position(|c| *c == "p_pa")?;
+    let rows: Vec<(f64, f64)> = t
+        .get("rows")?
+        .as_array()?
+        .iter()
+        .filter_map(|r| {
+            let r = r.as_array()?;
+            Some((r.get(it)?.as_f64()?, r.get(ip)?.as_f64()?))
+        })
+        .filter(|(t, p)| *t > 0.0 && *p > 0.0)
+        .collect();
+    (rows.len() >= 2).then_some(rows)
+}
+
+/// A table's first row's value in `col` (the coldest, for the liquid's
+/// density at its lowest point).
+fn first_in_column(
+    phases: &serde_json::Map<String, serde_json::Value>,
+    table: &str,
+    col: &str,
+) -> Option<f64> {
+    let t = phases.get(table)?;
+    let i = t
+        .get("columns")?
+        .as_array()?
+        .iter()
+        .position(|c| c.as_str() == Some(col))?;
+    t.get("rows")?
+        .as_array()?
+        .first()?
+        .as_array()?
+        .get(i)?
+        .as_f64()
+}
+
+/// Vapour pressure over the liquid from the saturated-liquid curve, Pa:
+/// ln p linear in 1/T between rows, the end segments carried on beyond.
+pub fn curve_pa(curve: &[(f64, f64)], t_k: f64) -> f64 {
+    let n = curve.len();
+    let i = curve
+        .iter()
+        .position(|(t, _)| *t > t_k)
+        .unwrap_or(n)
+        .clamp(1, n - 1);
+    let (t0, p0) = curve[i - 1];
+    let (t1, p1) = curve[i];
+    let slope = (m::ln(p1) - m::ln(p0)) / (1.0 / t1 - 1.0 / t0);
+    p0 * m::exp(slope * (1.0 / t_k.max(1e-6) - 1.0 / t0))
 }
 
 /// The 10 m wind (`crate::wind`): the circulation's prevailing wind as its
@@ -148,14 +220,60 @@ pub fn volatile_species(stack: &[sse_pack::PackManifest]) -> Result<Vec<Substanc
         let Some(ph) = row.get("phases").and_then(|v| v.as_object()) else {
             continue;
         };
+        let Some(mk) = r.molar_mass_kg_mol(id) else {
+            continue;
+        };
+        let critical_k = num(ph.get("critical_point_k"));
+        // A liquid with no triple point (helium): its lowest liquid point
+        // and its saturated-liquid curve stand in.
+        if ph.get("triple_point_k").is_none() {
+            let (Some(tk), Some(tp), Some(curve)) = (
+                num(ph.get("lambda_point_k")),
+                num(ph.get("lambda_point_pa")),
+                saturated_curve(ph),
+            ) else {
+                continue;
+            };
+            let (t0, p0) = curve[0];
+            let (t1, p1) = curve[curve.len() - 1];
+            let latent = R_GAS * m::ln(p1 / p0) / (1.0 / t0 - 1.0 / t1) / mk;
+            let dens = first_in_column(ph, "saturated_liquid", "density")
+                .ok_or_else(|| format!("substance {id}: a liquid needs its density"))?;
+            let name = row
+                .get("names")
+                .and_then(|n| n.get("plain"))
+                .and_then(|v| v.as_str())
+                .unwrap_or(id)
+                .to_string();
+            let src = ph
+                .get("lambda_point_k")
+                .and_then(|v| v.get("src"))
+                .and_then(|v| v.as_str())
+                .unwrap_or("sheet");
+            out.push(Substance {
+                gas: id.clone(),
+                name,
+                triple_k: tk,
+                triple_pa: tp,
+                latent_j_kg: latent,
+                molar_kg: mk,
+                condensed_kg_m3: dens,
+                // A clear liquid's droplets scatter white (docs/fudges.md).
+                colour: [1.0, 1.0, 1.0],
+                source: format!(
+                    "master data sheet, substance {id} ({src}; saturated-liquid curve)"
+                ),
+                phases: ph.clone(),
+                critical_k,
+                liquid_only: true,
+            });
+            continue;
+        }
         let (Some(tk), Some(tp), Some(_)) = (
             num(ph.get("triple_point_k")),
             num(ph.get("triple_point_pa")),
             ph.get("vapour_pressure"),
         ) else {
-            continue;
-        };
-        let Some(mk) = r.molar_mass_kg_mol(id) else {
             continue;
         };
         let latent = num(ph.get("latent_vaporisation"))
@@ -198,6 +316,8 @@ pub fn volatile_species(stack: &[sse_pack::PackManifest]) -> Result<Vec<Substanc
             colour,
             source: format!("master data sheet, substance {id} ({})", srcs.join(", ")),
             phases: ph.clone(),
+            critical_k,
+            liquid_only: false,
         });
     }
     Ok(out)
