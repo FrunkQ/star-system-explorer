@@ -25,5 +25,9 @@ const paperCss = (look: string, saveInkLook?: string): string => {
   return t?.mode === "dark" ? lookCss(saveInkLook && ATLAS_LOOKS.some((x) => x.id === saveInkLook) ? saveInkLook : PAPER.id) : lookCss(look);
 };
 
-export const ATLAS_VIEWS: readonly ViewModule[] = [atlasView({ vocabs: { plain: plain as unknown as Vocab, guide: guide as unknown as Vocab }, lookCss, paperCss })];
+/** Black and white (atlas design 14A note 7): toner on white, one ink, no tints. The paper look's fonts, every colour black. */
+const TONER = { ink: "#000", "ink-muted": "#000", ground: "#fff", "ground-raised": "#fff", rule: "#000", line: "#000", accent: "#000", "on-ink": "#fff", focus: "#000" };
+const tonerCss = (): string => lookCss(PAPER.id) + Object.entries(TONER).map(([k, v]) => ` --sse-${k}: ${v};`).join("");
+
+export const ATLAS_VIEWS: readonly ViewModule[] = [atlasView({ vocabs: { plain: plain as unknown as Vocab, guide: guide as unknown as Vocab }, lookCss, paperCss, tonerCss })];
 export const ATLAS_SCREENS: readonly { value: string; label: string; doc: ScreenDoc }[] = [{ value: "atlas", label: "Atlas", doc: atlasDoc as unknown as ScreenDoc }];

@@ -7,7 +7,7 @@
   import type { AtlasPage as Page } from "../../../ui-contract/src/index.ts";
   import AtlasPage from "./AtlasPage.svelte";
 
-  let { pages, look, footer, paper }: { pages: Page[]; look: string; footer: string; paper: "A4" | "Letter" } = $props();
+  let { pages, look, footer, paper, bw = false }: { pages: Page[]; look: string; footer: string; paper: "A4" | "Letter"; bw?: boolean } = $props();
 
   // Move to the end of <body>, so print can hide everything else by one rule.
   function portal(node: HTMLElement) {
@@ -25,7 +25,7 @@
   {@html `<style data-atlas-page-size>${pageCss}</style>`}
 </svelte:head>
 
-<div class="atlas-print" use:portal style={look} data-atlas-print={pages.length}>
+<div class="atlas-print" class:ink-bw={bw} use:portal style={look} data-atlas-print={pages.length} data-atlas-ink={bw ? "bw" : "shown"}>
   {#each pages as p (p.address)}
     <div class="sheet">
       <AtlasPage page={p} onlink={() => {}} {footer} />

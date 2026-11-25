@@ -169,34 +169,62 @@ try {
     await pdf(`atlas-tarn-${id}`);
   }
   assert.equal(await gm.locator(".atlas-print:not([data-kept-print])").count(), 0, "the print pages go once printing is over");
-  // Print…: the whole atlas on Letter.
+  // Print… (14A note 7): the print view shows every page as a small sheet with a tick box, all ticked; quick picks,
+  // a running count, Ink and Paper. The whole atlas on Letter, then black and white, then one chapter.
   await atlas.getByRole("button", { name: "Print…" }).click();
-  const panel = atlas.getByRole("group", { name: "Print" });
-  await panel.getByRole("group", { name: "What to print" }).getByRole("button", { name: "Whole atlas" }).click();
-  await panel.getByRole("group", { name: "Paper" }).getByRole("button", { name: "Letter" }).click();
-  await atlas.getByRole("button", { name: "Print…" }).scrollIntoViewIfNeeded();
-  await shot(gm, "atlas-print-panel-desk");
-  await panel.getByRole("button", { name: "Print", exact: true }).click();
+  const view = gm.getByRole("dialog", { name: "Print" });
+  await view.waitFor();
+  const ticks = view.getByRole("checkbox");
+  assert.equal(await ticks.count(), gmPages, "the print view shows every page of the book");
+  const count = view.locator("[data-print-count]");
+  assert.match(await count.innerText(), new RegExp(`^${gmPages} of ${gmPages} pages, \\d+ sheets?$`), "the count says pages and sheets");
+  await view.getByRole("group", { name: "Paper" }).getByRole("button", { name: "Letter" }).click();
+  await shot(gm, "atlas-print-view-desk");
+  await view.getByRole("button", { name: "Print", exact: true }).click();
   await gm.waitForFunction(() => window.__prints.length === 4);
   const whole = (await prints())[3];
   assert.equal(whole.pages, gmPages, "the whole atlas prints every page in the book");
   assert.match(whole.size, /size: letter/);
   await pdf("atlas-whole-company");
+  // None, then two pages by hand; black and white redraws the sheets and prints in one ink.
+  await atlas.getByRole("button", { name: "Print…" }).click();
+  await view.getByRole("button", { name: "None" }).click();
+  assert.match(await count.innerText(), new RegExp(`^0 of ${gmPages} pages, 0 sheets$`));
+  assert.ok(await view.getByRole("button", { name: "Print", exact: true }).isDisabled(), "nothing ticked, nothing to print");
+  await ticks.nth(0).check();
+  await ticks.nth(1).check();
+  assert.match(await count.innerText(), new RegExp(`^2 of ${gmPages} pages, \\d+ sheets?$`));
+  await view.getByRole("group", { name: "Ink" }).getByRole("button", { name: "Black and white" }).click();
+  assert.ok((await view.locator(".ink-bw").count()) === gmPages, "the thumbnails redraw in black and white");
+  await shot(gm, "atlas-print-view-bw-desk");
+  await view.getByRole("button", { name: "Print", exact: true }).click();
+  await gm.waitForFunction(() => window.__prints.length === 5);
+  assert.equal((await prints())[4].pages, 2, "only the ticked pages print");
+  assert.equal(await gm.locator(".atlas-print[data-kept-print]").getAttribute("data-atlas-ink"), "bw", "black and white prints in one ink");
+  await pdf("atlas-two-company-bw");
+  // Only the page I was on.
+  await atlas.getByRole("button", { name: "Print…" }).click();
+  await view.getByRole("button", { name: "Only the page I was on" }).click();
+  assert.match(await count.innerText(), new RegExp(`^1 of ${gmPages} pages, \\d+ sheets?$`));
+  await view.getByRole("group", { name: "Ink" }).getByRole("button", { name: "As shown" }).click();
+  await view.getByRole("button", { name: "Close" }).click();
+  await view.waitFor({ state: "detached" });
   // When printing cannot start, the Atlas says so in a sentence.
   await gm.evaluate(() => (window.print = () => {}));
   await atlas.getByRole("button", { name: "Print this page" }).click();
   await atlas.getByRole("status").filter({ hasText: "Printing did not start" }).waitFor();
-  // Copy as text and Save page carry the same words and figures.
+  // Copy as text and Save as a web page carry the same words and figures.
   await atlas.getByRole("button", { name: "Print…" }).click();
-  await panel.getByRole("group", { name: "What to print" }).getByRole("button", { name: "This page" }).click();
-  await panel.getByRole("button", { name: "Copy as Markdown" }).click();
+  await view.getByRole("button", { name: "Only the page I was on" }).click();
+  await view.getByRole("button", { name: "Copy as Markdown" }).click();
   await atlas.getByRole("status").filter({ hasText: "Copied as Markdown" }).waitFor();
   const md = await gm.evaluate(() => navigator.clipboard.readText());
   assert.match(md, /^# Tarn$/m);
   assert.match(md, /COMPANY CONFIDENTIAL/, "the copy carries the letterhead");
   for (const f of surveyFigs) assert.ok(md.includes(f), `the copy says ${f}`);
   await atlas.getByRole("button", { name: "Print…" }).click();
-  const [download] = await Promise.all([gm.waitForEvent("download"), panel.getByRole("button", { name: "Save page" }).click()]);
+  await view.getByRole("button", { name: "Only the page I was on" }).click();
+  const [download] = await Promise.all([gm.waitForEvent("download"), view.getByRole("button", { name: "Save as a web page" }).click()]);
   assert.match(download.suggestedFilename(), /^Company - Tarn\.html$/);
   if (pdfs) await download.saveAs(`${pdfs}/atlas-tarn-company.html`);
   await gm.evaluate(() => document.querySelectorAll("[data-kept-print]").forEach((n) => n.remove()));

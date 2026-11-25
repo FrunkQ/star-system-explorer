@@ -12,6 +12,7 @@
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
   import AtlasPrint from "./AtlasPrint.svelte";
+  import AtlasPrintView from "./AtlasPrintView.svelte";
   import AtlasDevice from "./AtlasDevice.svelte";
   import AtlasCover from "./AtlasCover.svelte";
   import { dateParts, dateWords, defaultCalendar, fromPackCalendar } from "../../../chart-grammar/src/calendar.ts";
@@ -122,27 +123,27 @@
     return { top: mode === "bottom" ? undefined : b.top?.text, bottom: mode === "top" ? undefined : b.bottom?.text };
   });
 
-  // ---- Print under the view (AT4): this page, this chapter or the whole Atlas, in the edition showing, in place.
-  let printOpen = $state(false);
-  let scope = $state<"page" | "chapter" | "atlas">("page");
+  // ---- Print under the view (AT4; 14A note 7): "Print this page" prints at once; "Print…" opens the print view of
+  // every page as a small sheet with a tick box, Ink (as shown, or black and white) and Paper.
+  let viewOpen = $state(false);
+  let ink = $state<"shown" | "bw">("shown");
   // Letter where the device's language says North America; A4 everywhere else. Changeable.
   let paper = $state<"A4" | "Letter">(typeof navigator !== "undefined" && /^(en-US|en-CA|es-MX|fr-CA)$/i.test(navigator.language) ? "Letter" : "A4");
-  let saveInk = $state(true);
-  let printing = $state<{ pages: import("../../../ui-contract/src/index.ts").AtlasPage[]; look: string } | null>(null);
+  let printing = $state<{ pages: import("../../../ui-contract/src/index.ts").AtlasPage[]; look: string; bw: boolean } | null>(null);
   let said = $state<string | null>(null);
+  // A dark look prints its paper form when ink is saved; black and white is the toner form on a white ground.
+  const dark = $derived(host.paperCss(edition.look, edition.print.save_ink_look) !== look);
+  const bwLook = $derived(host.tonerCss?.() ?? host.paperCss(edition.look, edition.print.save_ink_look));
+  const chapterNow = $derived(book && address ? chapterOf(lines, address).map((l) => l.address) : []);
 
-  function pagesFor(which: "page" | "chapter" | "atlas") {
-    if (!book || !address) return [];
-    const want = which === "page" ? [address] : which === "chapter" ? chapterOf(lines, address).map((l) => l.address) : lines.map((l) => l.address);
-    return want.map(dressed).filter((p) => p !== null);
-  }
+  const pagesAt = (want: readonly string[]) => (book ? want.map(dressed).filter((p) => p !== null) : []);
 
-  async function print(which: "page" | "chapter" | "atlas") {
+  async function print(want: readonly string[], how: "shown" | "bw" = ink) {
     said = null;
-    printOpen = false;
-    const pages = pagesFor(which);
+    viewOpen = false;
+    const pages = pagesAt(want);
     if (!pages.length) return void (said = "There is no page to print yet.");
-    printing = { pages, look: saveInk ? host.paperCss(edition.look, edition.print.save_ink_look) : look };
+    printing = { pages, look: how === "bw" ? bwLook : look, bw: how === "bw" };
     await tick();
     let started = false;
     const mark = () => (started = true);
@@ -154,28 +155,30 @@
       said = `Printing could not start: ${(e as Error).message}. Try your browser's own Print, or Copy as text.`;
     }
     window.removeEventListener("beforeprint", mark);
-    if (!started && !said) said = "Printing did not start. This browser may block printing here; try your browser's own Print, or Save page.";
+    if (!started && !said) said = "Printing did not start. This browser may block printing here; try your browser's own Print, or Save as a web page.";
     printing = null;
   }
+  // The one-press shortcut: this page, as shown on screen for a light edition, its paper form for a dark one.
+  const printThisPage = () => address && print([address], dark ? "bw" : "shown");
 
-  async function copyText(markdown: boolean) {
+  async function copyText(want: readonly string[], markdown: boolean) {
     said = null;
-    printOpen = false;
-    const text = pagesFor(scope).map((p) => pageText(p, { markdown, footer })).join(markdown ? "\n---\n\n" : "\n\n");
+    viewOpen = false;
+    const text = pagesAt(want).map((p) => pageText(p, { markdown, footer })).join(markdown ? "\n---\n\n" : "\n\n");
     try {
       await navigator.clipboard.writeText(text);
       said = markdown ? "Copied as Markdown." : "Copied as text.";
     } catch {
-      said = "The browser would not let the Atlas copy. Use Save page instead.";
+      said = "The browser would not let the Atlas copy. Use Save as a web page instead.";
     }
   }
 
-  function savePage() {
+  function savePage(want: readonly string[]) {
     said = null;
-    printOpen = false;
-    const pages = pagesFor(scope);
+    viewOpen = false;
+    const pages = pagesAt(want);
     if (!pages.length) return;
-    const html = atlasHtml(pages, { title: `${edition.name}: ${pages[0]!.title}`, tokens: saveInk ? host.paperCss(edition.look, edition.print.save_ink_look) : look, footer });
+    const html = atlasHtml(pages, { title: `${edition.name}: ${pages[0]!.title}`, tokens: ink === "bw" ? bwLook : look, footer });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
     a.download = `${edition.name} - ${pages[0]!.title}.html`.replace(/[\\/:*?"<>|]/g, "-");
@@ -183,6 +186,7 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     said = "Saved as one page you can open anywhere.";
   }
+
 
   let folded = $state(false);
   let pageBox = $state<HTMLElement | null>(null);
@@ -257,24 +261,8 @@
         </select>
       </label>
     {/if}
-    {#if on("print")}<button type="button" class="printnow" onclick={() => print("page")} disabled={!page}>Print this page</button>
-    <span class="printwrap">
-      <button type="button" class="printmore" aria-expanded={printOpen} aria-controls="atlas-print-panel" onclick={() => (printOpen = !printOpen)} disabled={!page}>Print…</button>
-      {#if printOpen}
-        <div class="panel" id="atlas-print-panel" role="group" aria-label="Print">
-          <Segmented label="What to print" options={[{ value: "page", label: "This page" }, { value: "chapter", label: "This chapter" }, { value: "atlas", label: "Whole atlas" }]} value={scope} onchange={(v) => (scope = v)} />
-          <Segmented label="Paper" options={[{ value: "A4", label: "A4" }, { value: "Letter", label: "Letter" }]} value={paper} onchange={(v) => (paper = v)} />
-          <label class="ink"><input type="checkbox" bind:checked={saveInk} /> Save ink</label>
-          <button type="button" class="printnow" onclick={() => print(scope)}>Print</button>
-          <p class="others">Or, as {edition.name} words:</p>
-          <div class="row2">
-            <button type="button" onclick={() => copyText(false)}>Copy as text</button>
-            <button type="button" onclick={() => copyText(true)}>Copy as Markdown</button>
-            <button type="button" onclick={savePage}>Save page</button>
-          </div>
-        </div>
-      {/if}
-    </span>{/if}
+    {#if on("print")}<button type="button" class="printnow" onclick={printThisPage} disabled={!page}>Print this page</button>
+    <button type="button" class="printmore" aria-haspopup="dialog" onclick={() => (viewOpen = true)} disabled={!page}>Print…</button>{/if}
     {#if on("contents")}<button type="button" class="fold" aria-expanded={folded} onclick={() => (folded = !folded)}>Contents</button>{/if}
   </div>
   {#if said}<p class="said" role="status">{said}</p>{/if}
@@ -316,7 +304,7 @@
               onback={() => ((covered = false), go(page?.prev ?? null))}
               oncover={() => (covered = true)}
               onnext={() => ((covered = false), go(page?.next ?? null))}
-              onprint={() => print("page")}
+              onprint={printThisPage}
               canBack={!!page.prev}
               canNext={!!page.next}
               bannerTop={banners.top}
@@ -339,7 +327,27 @@
   </div>
 </div>
 
-{#if printing}<AtlasPrint pages={printing.pages} look={printing.look} {footer} {paper} />{/if}
+{#if printing}<AtlasPrint pages={printing.pages} look={printing.look} bw={printing.bw} {footer} {paper} />{/if}
+{#if viewOpen && book}
+  <AtlasPrintView
+    {lines}
+    pageOf={dressed}
+    current={address}
+    chapter={chapterNow}
+    title={titleOf(lines[0]?.address ?? null)}
+    subtitle="{edition.name}, as known to {audienceWords}, {date}"
+    {look}
+    {bwLook}
+    {dark}
+    {footer}
+    bind:paper
+    bind:ink
+    onprint={(want) => print(want)}
+    oncopy={copyText}
+    onsave={savePage}
+    onclose={() => (viewOpen = false)}
+  />
+{/if}
 
 <style>
   .atlas {
@@ -395,12 +403,8 @@
       clip-path: inset(0 0 0 0);
     }
   }
-  .printwrap {
-    position: relative;
-  }
   .printnow,
-  .printmore,
-  .row2 button {
+  .printmore {
     font: inherit;
     padding: 6px 12px;
     border-radius: var(--sse-radius);
@@ -415,57 +419,13 @@
     color: var(--sse-on-ink);
   }
   .printnow:not(:disabled):active,
-  .printmore:not(:disabled):active,
-  .row2 button:active {
+  .printmore:not(:disabled):active {
     transform: translateY(1px);
   }
   .printnow:focus-visible,
-  .printmore:focus-visible,
-  .row2 button:focus-visible {
+  .printmore:focus-visible {
     outline: 2px solid var(--sse-focus, var(--sse-accent));
     outline-offset: 2px;
-  }
-  .panel {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 6px);
-    z-index: 5;
-    display: grid;
-    gap: 10px;
-    width: max-content;
-    max-width: min(92vw, 380px);
-    padding: 14px;
-    background: var(--sse-ground-raised);
-    border: 1px solid var(--sse-line);
-    border-radius: var(--sse-radius);
-    box-shadow: var(--sse-card-shadow);
-    transform-origin: top right;
-    justify-items: start;
-    animation: open var(--sse-motion-quick, 120ms) var(--sse-ease, ease-out);
-  }
-  .panel > .printnow {
-    justify-self: stretch;
-  }
-  @keyframes open {
-    from {
-      opacity: 0;
-      transform: translateY(-4px) scale(0.98);
-    }
-  }
-  .ink {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
-  .others {
-    margin: 4px 0 0;
-    font-size: 13px;
-    color: var(--sse-ink-muted);
-  }
-  .row2 {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
   }
   .said {
     margin: 0;
@@ -595,7 +555,6 @@
     li button {
       transition: none;
     }
-    .panel,
     .sheet.wipe {
       animation: none;
     }

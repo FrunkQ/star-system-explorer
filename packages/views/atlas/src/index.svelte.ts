@@ -8,6 +8,8 @@ export interface AtlasHost {
   lookCss(look: string): string;
   /** The look's paper form for "Save ink": a dark look gives way to a light one (the edition's `save_ink_look`, else paper). */
   paperCss(look: string, saveInkLook?: string): string;
+  /** Black and white (14A note 7): the toner form's tokens, white ground and black ink. Absent, the paper form is used. */
+  tonerCss?(): string;
   /** The brand whose paper an audience's copy is on (the role's, AT9); absent, the Atlas draws the placeholder. */
   /** Margin note sets from the pack stack, beside the shipped ones. */
   noteSets?: readonly import("../../../ui-contract/src/index.ts").NoteSet[];

@@ -494,4 +494,34 @@
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
+  /*
+    Black and white (atlas design 14A note 7): a true toner-friendly form under any ancestor marked .ink-bw, not a
+    grey copy of the colours. The shell's toner tokens give the white ground and black ink (the view names no
+    colour); no tints or filled panels; bars stay solid; stamps are outlined boxes; logos and plates in one ink. Hatching where colour carried meaning comes with the plates'
+    own one-ink drawing; until then a plate prints in grey line.
+  */
+  :global(.ink-bw) .atlas-page,
+  :global(.ink-bw) .atlas-page :global(*) {
+    color: var(--sse-ink) !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border-color: var(--sse-ink) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  :global(.ink-bw) .atlas-page {
+    background: var(--sse-ground-raised, var(--sse-ground)) !important;
+  }
+  :global(.ink-bw) .bar,
+  :global(.ink-bw) .mono {
+    background-color: var(--sse-ink) !important;
+  }
+  :global(.ink-bw) .stamp,
+  :global(.ink-bw) .verdict summary {
+    border: 2px solid var(--sse-ink) !important;
+  }
+  :global(.ink-bw) img,
+  :global(.ink-bw) svg {
+    filter: grayscale(1) contrast(1.6);
+  }
 </style>
