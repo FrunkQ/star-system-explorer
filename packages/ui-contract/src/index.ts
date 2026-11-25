@@ -197,3 +197,5 @@ export { airKindEdits, airKinds, airMix, formulaOf, gasesToAdd, gasNames, mixEdi
 export type { AirKind, MixGas } from "./air.ts";
 export { readSheet, readTable, sheetRows, spreadPaste } from "./sheet-entry.ts";
 export type { SheetBody, SheetRead, SheetRow, TableRead } from "./sheet-entry.ts";
+export { COULD_BE, couldBeNow, recipeFor } from "./could-be.ts";
+export type { CouldBe, RecipeStep } from "./could-be.ts";
