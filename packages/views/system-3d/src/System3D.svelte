@@ -15,7 +15,7 @@
   looks like a photograph. Scale Real: distances and sizes in proportion.
 -->
 <script lang="ts">
-  import { onDestroy, untrack } from "svelte";
+  import { onDestroy, tick, untrack } from "svelte";
   import { closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape, type PlumeFacts, plumeNote, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
   import { SYSTEM_TRUE } from "../../../renderer/src/recipes.ts";
   import { constant, SEEN_ELEVATION, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
@@ -270,6 +270,18 @@
   }
   // A world with no moons fills more of the view in True, where its face is the point (about 60% of the height).
   const closeDist = (id: string) => (hasChildren(bodies, id) ? 26 : isTrue && !realScale ? 2.2 : 9);
+  // Arriving at a world in True, the camera turns to three-quarter light: this far round from its star (about 50°),
+  // as a globe is lit to be photographed, so its craters and ranges cast shadows near the terminator. Seen from the
+  // star's side (full phase) the same relief shows no shadow at all and a world reads flat (Alex, 25 Nov).
+  const LIT_TURN = 0.9;
+  async function litTurn(id: string) {
+    if (!isTrue || hasChildren(bodies, id)) return;
+    await tick();
+    const b = byId(id);
+    if (!b || centreId !== id) return;
+    const l = lightOf(b);
+    if (Math.hypot(l[0], l[1]) > 0) yaw = Math.atan2(l[1], l[0]) + LIT_TURN;
+  }
   async function flyTo(id: string) {
     onselect(id);
     if (id === centreId) return;
@@ -277,6 +289,7 @@
     if (!node || reducedMotion() || typeof requestAnimationFrame !== "function") {
       enter(id);
       dist = closeDist(id);
+      await litTurn(id);
       return;
     }
     const near = Math.max(MIN, Math.min(3, dist / 6));
@@ -284,6 +297,7 @@
     frame = id;
     pan = [0, 0];
     dist = 2.5;
+    await litTurn(id);
     await tweenCam({ pan: [0, 0], dist: closeDist(id) }, 620, easeOut);
   }
   function leave() {

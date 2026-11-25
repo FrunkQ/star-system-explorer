@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Infrared band, Long exposure",
+  "frame": "Enceladus",
+  "camera": "from Earth's place",
+  "tests": "Infrared: water vapour emission",
+  "needs": [
+    "the plume's water torus"
+  ]
+}

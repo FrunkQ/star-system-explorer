@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Composite",
+  "frame": "Neptune",
+  "camera": "from Earth's place",
+  "tests": "Composite: visible and infrared",
+  "needs": [
+    "ice-giant aurorae"
+  ]
+}

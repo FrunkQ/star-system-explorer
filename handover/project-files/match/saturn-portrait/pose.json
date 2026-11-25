@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Saturn",
+  "camera": "about 6 million km, above the lit side of the rings",
+  "date": "2004-10-06",
+  "needs": [
+    "shadows between rings and planet"
+  ]
+}

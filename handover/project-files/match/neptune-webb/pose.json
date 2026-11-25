@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Infrared band",
+  "frame": "Neptune",
+  "camera": "from Earth's place",
+  "date": "2022-07-12",
+  "needs": [
+    "methane absorption in the Infrared band (light track's methane fix)"
+  ]
+}
