@@ -104,7 +104,7 @@ take its state from its branch, its PR above and its `handover/status/` file.
 - **Saved keys**: none in the environment. Deploy credentials live in Cloudflare (Workers Builds, project `star-system-explorer`). Agent keys are bring-your-own in the app.
 - **Scheduled tasks** (project):
   - "SSE4 trailer: daily re-shoot" (cron `23 21 * * *`, switched off 25 Nov 02:07). Its prompt is in `handover/memory/` and `project-files/trailer/`.
-  - "Final project-files top-up to PC" (one-shot, delayed by the billing lapse). It copies project files changed since 21:10 UTC 24 Nov to `C:\Development\sse4-project-files\` as `sse4-project-files-final-partNN.zip`. If those zips are missing on the PC, the top-up did not run.
+  - "Final project-files top-up to PC" (one-shot): ran at 22:52 UTC 25 Nov. 821 files changed since 21:10 UTC 24 Nov went to `C:\Development\sse4-project-files\` as `sse4-project-files-final-part01..17.zip`. One file was too big for the copy and is only in project files: `sse4/match/pillars-of-creation/ref.jpg` (27 MB, a NASA/ESA reference photo, re-downloadable).
 - **Deploy**: Cloudflare Workers Builds deploys every merge to `main` (START-HERE, Deployment).
 - **Project files** (`/mnt/project-files`): `converter/`, `explorers/`, `traveller/`, `sse4/` (design notes, citations batches, `match/` photo poses, `*-screens/` screenshots), `handover-export/` zips. Copies are on Alex's PC at `C:\Development\sse4-project-files\`: the 17:14 UTC 24 Nov snapshot, the late top-up to 21:10, and the final top-up if it ran.
 - **Device**: Alex's PC AC-ProArt, approved folder `C:\Development`.
