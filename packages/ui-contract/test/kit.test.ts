@@ -20,6 +20,7 @@ const STACK = {
   looks: ["chart", "paper", "deck", "phosphor", "glass", "guide", "guide-gadget"],
   editions: SHIPPED_EDITIONS.map((e) => e.id),
   vocabs: ["plain", "guide"],
+  noteSets: ["sse.notes.guide"],
 };
 
 test("the four starters load, with every palette readable", () => {
@@ -51,13 +52,14 @@ test("the loader refuses with sentences that say what to change", () => {
     palettes: ["no-such", { id: "murky", name: "Murky", tokens: { ground: "#333333", ink: "#444444", "ink-muted": "#555555", accent: "#666666", "accent-ink": "#777777" } }],
     delivery: { turn: { use: "type-on", seconds: 1.5 }, arrive: { use: "explode" } },
     needs: { tier: "gpu-high" },
+    banners: { at: "middle", sets: ["sse.notes.nowhere"] },
     layouts: {
       system: { arrangement: "report", items: [{ view: "sse.view.atlas", area: "c", controls: { edition: false, teleport: true } }, { view: "sse.view.flow-editor", area: "a" }] },
       bridge: { arrangement: "one" },
     },
   };
   const said = checkKit(bad, STACK).join("\n");
-  for (const m of [/extends sse\.kit\.nowhere, which is not here/, /state a figure \("5 kg"\)/, /look "neon"/, /palette "no-such"/, /murky, ink on ground has a contrast of 1\.\d to 1/, /A Turn lasts at most 0\.4 s/, /"explode" is not in the toolkit/, /names a kit a weaker device falls back to/, /area "c", which report does not have/, /switches "teleport" on sse\.view\.atlas/, /the GM's alone/, /"bridge" is not a situation/]) {
+  for (const m of [/extends sse\.kit\.nowhere, which is not here/, /state a figure \("5 kg"\)/, /look "neon"/, /palette "no-such"/, /murky, ink on ground has a contrast of 1\.\d to 1/, /A Turn lasts at most 0\.4 s/, /"explode" is not in the toolkit/, /names a kit a weaker device falls back to/, /area "c", which report does not have/, /switches "teleport" on sse\.view\.atlas/, /the GM's alone/, /"bridge" is not a situation/, /banners sit at "middle"/, /note set "sse\.notes\.nowhere" is not in the pack stack/]) {
     assert.match(said, m);
   }
 });

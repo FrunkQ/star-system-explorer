@@ -74,10 +74,16 @@ try {
   assert.match(await cover.innerText(), /The Guide to the Kestrel system/);
   assert.doesNotMatch(await cover.innerText(), /Megadodo/, "the base Guide's cover names no publisher");
   assert.equal(await gm.evaluate(() => document.activeElement?.hasAttribute("data-atlas-cover")), true, "the cover takes focus, so Enter opens it");
+  // One-liners at the top and bottom of the gadget's screen (Alex, 25 Nov): on the cover, waiting lines.
+  const banner = (at) => gm.locator(`[data-atlas-banner="${at}"]`).innerText();
+  const coverLines = [await banner("top"), await banner("bottom")];
+  assert.notEqual(coverLines[0], coverLines[1], "two different lines");
   await shot(gm, "atlas-guide-cover-desk");
   await gm.keyboard.press("Enter");
   await gm.locator("[data-atlas-page]").waitFor();
   assert.equal(await title(gm), "Tarn", "the same page");
+  const pageLines = [await banner("top"), await banner("bottom")];
+  assert.notDeepEqual(pageLines, coverLines, "a world's lines, not the waiting screen's");
   // Margin notes: at most two, signed, the same ones each time, and the line saying they are opinions.
   const notes = gm.locator("[data-margin-note]");
   const noteIds = await notes.evaluateAll((ns) => ns.map((n) => n.getAttribute("data-margin-note")));

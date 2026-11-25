@@ -2,12 +2,16 @@
  "schema": "sse.margin-notes/1",
  "id": "sse.notes.guide",
  "name": "The Guide's margin notes",
- "note": "Alex's own list from SSE3 (Mostly_harmless.txt), each given an 'about' and a 'when' (atlas design 6.4), plus new notes with slots that react to the real world. The lines with Douglas Adams' names and phrases are in the separate unofficial fan pack (store-packs/guide-fan-notes); five lines that type a figure about the subject are held for Alex (handover/packages/AT7.md).",
+ "note": "Alex's own list from SSE3 (Mostly_harmless.txt), each given an 'about' and a 'when' (atlas design 6.4), plus new notes with slots that react to the real world. The lines with Douglas Adams' names and phrases are in the separate unofficial fan pack (store-packs/guide-fan-notes); the lines that type a figure have numbers that plainly cannot be true (over 100% together), so the rest can be relied on (Alex, 25 Nov). Every line says what it is for in `uses`: the Atlas margin (page) or the one-liners at the top and bottom of a screen (arrival, travel, danger, settled, empty, waiting, ship), chosen by the screen's situation.",
  "notes": [
   {
    "id": "guide.alex.002",
    "about": "world",
-   "text": "Avoid unless you have a profound interest in plastic cutlery."
+   "text": "Avoid unless you have a profound interest in plastic cutlery.",
+   "uses": [
+    "page",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.004",
@@ -17,42 +21,86 @@
   {
    "id": "guide.alex.006",
    "about": "world",
-   "text": "Harmless, provided you stay away from the poetry readings."
+   "text": "Harmless, provided you stay away from the poetry readings.",
+   "uses": [
+    "page",
+    "arrival"
+   ]
+  },
+  {
+   "id": "guide.alex.007",
+   "about": "world",
+   "text": "The local ecosystem is 90% water, 8% carbon, and 12% misplaced optimism."
   },
   {
    "id": "guide.alex.008",
    "about": "world",
-   "text": "Mostly notable for the sheer volume of tea that remains unmade."
+   "text": "Mostly notable for the sheer volume of tea that remains unmade.",
+   "uses": [
+    "page",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.012",
    "about": "world",
-   "text": "The toilets here are temporarily out of order due to an unexpected localized spatial anomaly."
+   "text": "The toilets here are temporarily out of order due to an unexpected localized spatial anomaly.",
+   "uses": [
+    "page",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.014",
    "about": "world",
-   "text": "The local pub serves an excellent pint of bitter, though the locals have a worrying habit of panicking when the sky turns purple."
+   "text": "The local pub serves an excellent pint of bitter, though the locals have a worrying habit of panicking when the sky turns purple.",
+   "uses": [
+    "page",
+    "arrival",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.015",
    "about": "world",
-   "text": "Warning: The local currency is entirely based on triangles. Nobody knows why."
+   "text": "Warning: The local currency is entirely based on triangles. Nobody knows why.",
+   "uses": [
+    "page",
+    "arrival",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.020",
    "about": "system",
-   "text": "A highly dangerous sector where logic and physics have agreed to a temporary separation."
+   "text": "A highly dangerous sector where logic and physics have agreed to a temporary separation.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.022",
    "about": "star",
-   "text": "The local gravity is so intense that even the light has given up trying to escape and is currently just milling around."
+   "text": "The local gravity is so intense that even the light has given up trying to escape and is currently just milling around.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.024",
    "about": "system",
-   "text": "This region of space is entirely populated by lost ballpoint pens and socks."
+   "text": "This region of space is entirely populated by lost ballpoint pens and socks.",
+   "uses": [
+    "page",
+    "empty"
+   ]
+  },
+  {
+   "id": "guide.alex.028",
+   "about": "ship",
+   "text": "The propulsion system is operating at 99% efficiency and 11% utter confusion."
   },
   {
    "id": "guide.alex.030",
@@ -72,7 +120,12 @@
   {
    "id": "guide.alex.034",
    "about": "any",
-   "text": "If you find yourself falling into a black hole, the Guide recommends trying not to."
+   "text": "If you find yourself falling into a black hole, the Guide recommends trying not to.",
+   "uses": [
+    "page",
+    "danger",
+    "travel"
+   ]
   },
   {
    "id": "guide.alex.035",
@@ -81,7 +134,11 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.036",
@@ -90,7 +147,11 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.037",
@@ -99,12 +160,20 @@
    "when": {
     "fact": "atmosphere.pressure_pa",
     "at_least": 50000
-   }
+   },
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.039",
    "about": "system",
-   "text": "A popular tourist destination for people who enjoy being bored in five different dimensions."
+   "text": "A popular tourist destination for people who enjoy being bored in five different dimensions.",
+   "uses": [
+    "page",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.040",
@@ -113,27 +182,47 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.041",
    "about": "any",
-   "text": "This entry has been deleted by order of the Galactic Council. Move along."
+   "text": "This entry has been deleted by order of the Galactic Council. Move along.",
+   "uses": [
+    "page",
+    "waiting"
+   ]
   },
   {
    "id": "guide.alex.042",
    "about": "system",
-   "text": "The coordinates for this system are lost. It is probably somewhere behind the sofa."
+   "text": "The coordinates for this system are lost. It is probably somewhere behind the sofa.",
+   "uses": [
+    "page",
+    "empty"
+   ]
   },
   {
    "id": "guide.alex.043",
    "about": "system",
-   "text": "Warning: The local physics engine is running an older patch version."
+   "text": "Warning: The local physics engine is running an older patch version.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.046",
    "about": "world",
-   "text": "This planet is legally classified as a \"Minor Inconvenience.\""
+   "text": "This planet is legally classified as a \"Minor Inconvenience.\"",
+   "uses": [
+    "page",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.047",
@@ -142,52 +231,95 @@
    "when": {
     "fact": "atmosphere.pressure_pa",
     "at_least": 10000
-   }
+   },
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.048",
    "about": "any",
-   "text": "If you are reading this, your ship is likely already upside down."
+   "text": "If you are reading this, your ship is likely already upside down.",
+   "uses": [
+    "page",
+    "danger",
+    "travel"
+   ]
   },
   {
    "id": "guide.alex.049",
    "about": "world",
-   "text": "The Guide describes this area as \"Best avoided on a Tuesday.\""
+   "text": "The Guide describes this area as \"Best avoided on a Tuesday.\"",
+   "uses": [
+    "page",
+    "danger",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.050",
    "about": "any",
-   "text": "sdrawkcab snur yllanoisacco ereh emiT"
+   "text": "sdrawkcab snur yllanoisacco ereh emiT",
+   "uses": [
+    "page",
+    "travel",
+    "waiting"
+   ]
   },
   {
    "id": "guide.alex.058",
    "about": "world",
-   "text": "Time here is purely a subjective concept, usually experienced about twenty minutes after it actually happens."
+   "text": "Time here is purely a subjective concept, usually experienced about twenty minutes after it actually happens.",
+   "uses": [
+    "page",
+    "waiting"
+   ]
   },
   {
    "id": "guide.alex.059",
    "about": "system",
-   "text": "A region of space where gravity is merely a polite suggestion."
+   "text": "A region of space where gravity is merely a polite suggestion.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.060",
    "about": "system",
-   "text": "The local physics engine has a known memory leak. Do not drop heavy objects."
+   "text": "The local physics engine has a known memory leak. Do not drop heavy objects.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.061",
    "about": "system",
-   "text": "A system where tomorrow happened yesterday, which made scheduling lunch incredibly awkward."
+   "text": "A system where tomorrow happened yesterday, which made scheduling lunch incredibly awkward.",
+   "uses": [
+    "page",
+    "travel"
+   ]
   },
   {
    "id": "guide.alex.062",
    "about": "system",
-   "text": "The dimensions in this sector are currently tangled. Please wipe your feet before entering the third one."
+   "text": "The dimensions in this sector are currently tangled. Please wipe your feet before entering the third one.",
+   "uses": [
+    "page",
+    "travel"
+   ]
   },
   {
    "id": "guide.alex.063",
    "about": "system",
-   "text": "Local space is warped so severely that you can see the back of your own head if you look hard enough."
+   "text": "Local space is warped so severely that you can see the back of your own head if you look hard enough.",
+   "uses": [
+    "page",
+    "travel"
+   ]
   },
   {
    "id": "guide.alex.064",
@@ -197,7 +329,11 @@
   {
    "id": "guide.alex.065",
    "about": "system",
-   "text": "An area of space so quiet you can hear the universe thinking. It mostly thinks about soup."
+   "text": "An area of space so quiet you can hear the universe thinking. It mostly thinks about soup.",
+   "uses": [
+    "page",
+    "empty"
+   ]
   },
   {
    "id": "guide.alex.066",
@@ -207,7 +343,12 @@
   {
    "id": "guide.alex.067",
    "about": "world",
-   "text": "This planet is currently closed for restructuring. Please try again in another epoch."
+   "text": "This planet is currently closed for restructuring. Please try again in another epoch.",
+   "uses": [
+    "page",
+    "empty",
+    "waiting"
+   ]
   },
   {
    "id": "guide.alex.068",
@@ -216,12 +357,20 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.070",
    "about": "system",
-   "text": "This sector is property of the Galactic Tax Fleet. If you see them, pretend you are a cloud of space dust."
+   "text": "This sector is property of the Galactic Tax Fleet. If you see them, pretend you are a cloud of space dust.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.071",
@@ -230,7 +379,11 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.072",
@@ -244,12 +397,20 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.074",
    "about": "world",
-   "text": "This entry is classified. If you can read this, please report to the nearest airlock for immediate re-education."
+   "text": "This entry is classified. If you can read this, please report to the nearest airlock for immediate re-education.",
+   "uses": [
+    "page",
+    "waiting"
+   ]
   },
   {
    "id": "guide.alex.076",
@@ -293,7 +454,11 @@
    "when": {
     "fact": "atmosphere.pressure_pa",
     "at_least": 50000
-   }
+   },
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.085",
@@ -302,7 +467,11 @@
    "when": {
     "fact": "atmosphere.pressure_pa",
     "at_least": 50000
-   }
+   },
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.086",
@@ -311,7 +480,11 @@
    "when": {
     "fact": "ocean.fraction",
     "at_least": 0.01
-   }
+   },
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.087",
@@ -346,7 +519,11 @@
    "when": {
     "fact": "atmosphere.pressure_pa",
     "at_least": 50000
-   }
+   },
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.090",
@@ -355,22 +532,39 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.091",
    "about": "world",
-   "text": "A lovely tourist trap, where the traps are physical, hidden, and spiked."
+   "text": "A lovely tourist trap, where the traps are physical, hidden, and spiked.",
+   "uses": [
+    "page",
+    "danger",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.092",
    "about": "world",
-   "text": "The universe is expanding. This planet is doing its best to stay exactly where it is."
+   "text": "The universe is expanding. This planet is doing its best to stay exactly where it is.",
+   "uses": [
+    "page",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.093",
    "about": "world",
-   "text": "Nothing to see here. Literally. The planet was stolen last Tuesday."
+   "text": "Nothing to see here. Literally. The planet was stolen last Tuesday.",
+   "uses": [
+    "page",
+    "empty"
+   ]
   },
   {
    "id": "guide.alex.094",
@@ -380,7 +574,20 @@
   {
    "id": "guide.alex.095",
    "about": "system",
-   "text": "A system where everything is exactly as it seems, which the Guide notes is deeply suspicious."
+   "text": "A system where everything is exactly as it seems, which the Guide notes is deeply suspicious.",
+   "uses": [
+    "page",
+    "arrival"
+   ]
+  },
+  {
+   "id": "guide.alex.096",
+   "about": "world",
+   "when": {
+    "fact": "atmosphere.pressure_pa",
+    "at_least": 10000
+   },
+   "text": "The local atmosphere is 12% oxygen, 78% nitrogen, and 20% pure spite."
   },
   {
    "id": "guide.alex.097",
@@ -389,7 +596,11 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.098",
@@ -408,12 +619,20 @@
    "when": {
     "fact": "mass_kg",
     "at_most": 6e+23
-   }
+   },
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.102",
    "about": "system",
-   "text": "This system is primarily used as a storage locker by a superior race who forgot the combination."
+   "text": "This system is primarily used as a storage locker by a superior race who forgot the combination.",
+   "uses": [
+    "page",
+    "empty"
+   ]
   },
   {
    "id": "guide.alex.103",
@@ -422,12 +641,20 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.104",
    "about": "any",
-   "text": "Do not look directly at the local nebula. It gets self-conscious."
+   "text": "Do not look directly at the local nebula. It gets self-conscious.",
+   "uses": [
+    "page",
+    "travel"
+   ]
   },
   {
    "id": "guide.alex.105",
@@ -441,27 +668,48 @@
   {
    "id": "guide.alex.106",
    "about": "system",
-   "text": "This system has been rated \"Mostly Disappointing\" by three independent travel journals."
+   "text": "This system has been rated \"Mostly Disappointing\" by three independent travel journals.",
+   "uses": [
+    "page",
+    "arrival",
+    "empty"
+   ]
   },
   {
    "id": "guide.alex.107",
    "about": "world",
-   "text": "If you find yourself enjoying your stay here, please consult a medical professional immediately."
+   "text": "If you find yourself enjoying your stay here, please consult a medical professional immediately.",
+   "uses": [
+    "page",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.109",
    "about": "system",
-   "text": "Warning: This system is legally classified as a \"Minor Inconvenience.\" Proceed at your own boredom."
+   "text": "Warning: This system is legally classified as a \"Minor Inconvenience.\" Proceed at your own boredom.",
+   "uses": [
+    "page",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.111",
    "about": "world",
-   "text": "Warning: This planet was stolen last Tuesday. If you see it, please contact the Galactic Insurance Bureau."
+   "text": "Warning: This planet was stolen last Tuesday. If you see it, please contact the Galactic Insurance Bureau.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.112",
    "about": "system",
-   "text": "Warning: This system is currently experiencing a localized shortage of causality. Effects may occasionally precede their causes."
+   "text": "Warning: This system is currently experiencing a localized shortage of causality. Effects may occasionally precede their causes.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.113",
@@ -470,42 +718,83 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.114",
    "about": "system",
-   "text": "Warning: This sector is exclusively zoned for the storage of unread terms and conditions. Proceeding constitutes full agreement."
+   "text": "Warning: This sector is exclusively zoned for the storage of unread terms and conditions. Proceeding constitutes full agreement.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.115",
    "about": "star",
-   "text": "Warning: The local star is suffering from an acute mid-life crisis and has dyed its corona a garish shade of hot pink."
+   "text": "Warning: The local star is suffering from an acute mid-life crisis and has dyed its corona a garish shade of hot pink.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.116",
    "about": "system",
-   "text": "Warning: All planetary bodies in this system are legally registered as active participants in an ongoing, multi-million-year game of hide-and-seek. Do not point at them."
+   "text": "Warning: All planetary bodies in this system are legally registered as active participants in an ongoing, multi-million-year game of hide-and-seek. Do not point at them.",
+   "uses": [
+    "page",
+    "danger"
+   ]
+  },
+  {
+   "id": "guide.alex.117",
+   "about": "system",
+   "text": "Warning: The local civilization recently discovered the concept of marketing. The third planet is currently offering 120% off all gravity until Friday.",
+   "uses": [
+    "page",
+    "arrival"
+   ]
   },
   {
    "id": "guide.alex.118",
    "about": "system",
-   "text": "Warning: This system is an designated historical preserve for obsolete mathematical equations. Do not attempt to divide by fractions while in orbit."
+   "text": "Warning: This system is an designated historical preserve for obsolete mathematical equations. Do not attempt to divide by fractions while in orbit.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.119",
    "about": "system",
-   "text": "Warning: The local planetary alignment relies entirely on mutual peer pressure. Avoid making sudden, judgmental movements."
+   "text": "Warning: The local planetary alignment relies entirely on mutual peer pressure. Avoid making sudden, judgmental movements.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.120",
    "about": "system",
-   "text": "Warning: This sector is haunted by the ghosts of navigation computers that died of sheer boredom. Keep your AI on a tight digital leash."
+   "text": "Warning: This sector is haunted by the ghosts of navigation computers that died of sheer boredom. Keep your AI on a tight digital leash.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.121",
    "about": "system",
-   "text": "Warning: The second planet is entirely populated by furniture that migrated from an upscale department store in the Orion Nebula. They do not appreciate being sat on."
+   "text": "Warning: The second planet is entirely populated by furniture that migrated from an upscale department store in the Orion Nebula. They do not appreciate being sat on.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.122",
@@ -514,17 +803,29 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.124",
    "about": "system",
-   "text": "Warning: The local asteroid belt is currently on strike demanding better orbital trajectories. Watch out for picketing space rocks."
+   "text": "Warning: The local asteroid belt is currently on strike demanding better orbital trajectories. Watch out for picketing space rocks.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.125",
    "about": "system",
-   "text": "Warning: This system operates under a strict \"no-paradox\" policy. Anyone caught inventing their own grandfather will be fined heavily."
+   "text": "Warning: This system operates under a strict \"no-paradox\" policy. Anyone caught inventing their own grandfather will be fined heavily.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.126",
@@ -533,17 +834,29 @@
    "when": {
     "fact": "atmosphere.pressure_pa",
     "at_least": 10000
-   }
+   },
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.128",
    "about": "star",
-   "text": "Warning: The local sun operates on a strict gig-economy model. If the tip jar isn't filled by midnight, it drops to a low-power standby mode."
+   "text": "Warning: The local sun operates on a strict gig-economy model. If the tip jar isn't filled by midnight, it drops to a low-power standby mode.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.129",
    "about": "system",
-   "text": "Warning: This system is the final resting place for the galaxy’s missing left socks. The static electricity alone is enough to fry your shields."
+   "text": "Warning: This system is the final resting place for the galaxy’s missing left socks. The static electricity alone is enough to fry your shields.",
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.alex.130",
@@ -552,12 +865,21 @@
    "when": {
     "fact": "settlements.count",
     "at_least": 1
-   }
+   },
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.alex.131",
    "about": "system",
-   "text": "Warning: This sector is mathematically proven not to exist. If you can see it, please contact your nearest philosophy department for immediate assistance."
+   "text": "Warning: This sector is mathematically proven not to exist. If you can see it, please contact your nearest philosophy department for immediate assistance.",
+   "uses": [
+    "page",
+    "danger",
+    "empty"
+   ]
   },
   {
    "id": "guide.new.sea-market",
@@ -567,7 +889,10 @@
     "at_least": 0.7
    },
    "text": "With {ocean.fraction} of it under water, the local property market is best described as \"liquid\".",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page"
+   ]
   },
   {
    "id": "guide.new.sea-argument",
@@ -580,7 +905,10 @@
     ]
    },
    "text": "{ocean.fraction} sea and the rest land: the locals argue endlessly about which is the interesting part.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page"
+   ]
   },
   {
    "id": "guide.new.short-year",
@@ -590,7 +918,10 @@
     "at_most": 9500000.0
    },
    "text": "A year here lasts {orbit.period_s}. Birthdays come round alarmingly often; budget for cake.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page"
+   ]
   },
   {
    "id": "guide.new.long-year",
@@ -600,7 +931,10 @@
     "at_least": 320000000.0
    },
    "text": "A year here lasts {orbit.period_s}, so the locals have a birthday roughly once per career.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page"
+   ]
   },
   {
    "id": "guide.new.cold",
@@ -610,7 +944,11 @@
     "at_most": 230
    },
    "text": "At around {surface.temp_mean_k}, pack a coat. Then another coat. Then wear both.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.new.hot",
@@ -620,7 +958,11 @@
     "at_least": 400
    },
    "text": "Mean temperature {surface.temp_mean_k}. The Guide recommends visiting in the shade, or not at all.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.new.heavy-air",
@@ -630,7 +972,11 @@
     "at_least": 5000000.0
    },
    "text": "The air presses down at {atmosphere.pressure_pa}. Visitors report feeling flattered, then flattened.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.new.thin-air",
@@ -640,7 +986,11 @@
     "at_most": 1000
    },
    "text": "With an atmosphere of {atmosphere.pressure_pa}, holding your breath is less a skill than a lifestyle.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page",
+    "danger"
+   ]
   },
   {
    "id": "guide.new.bright-star",
@@ -650,7 +1000,10 @@
     "at_least": 3.8e+27
    },
    "text": "This star puts out {luminosity_w}. Sunglasses are not so much advised as assumed.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page"
+   ]
   },
   {
    "id": "guide.new.dim-star",
@@ -660,7 +1013,10 @@
     "at_most": 3.8e+25
    },
    "text": "Shining at {luminosity_w}, the local sun is less a blaze than a night light left on for the planets.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page"
+   ]
   },
   {
    "id": "guide.new.giant",
@@ -670,7 +1026,10 @@
     "at_least": 1.9e+26
    },
    "text": "Weighing in at {mass_kg}, this world has no surface to speak of, and speaks of little else.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page"
+   ]
   },
   {
    "id": "guide.new.pebble-moon",
@@ -680,7 +1039,10 @@
     "at_most": 1e+20
    },
    "text": "At {mass_kg}, this moon is less a moon than an ambitious rock.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page"
+   ]
   },
   {
    "id": "guide.new.towns",
@@ -690,7 +1052,11 @@
     "at_least": 1
    },
    "text": "Settlements: {settlements.count}. The Guide has visited none of them and reviewed all of them.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page",
+    "settled"
+   ]
   },
   {
    "id": "guide.new.big-core",
@@ -700,7 +1066,10 @@
     "at_least": 0.5
    },
    "text": "Its core is {interior.core_fraction} of the planet. The rest is mostly packaging.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page"
+   ]
   },
   {
    "id": "guide.new.close-orbit",
@@ -710,7 +1079,400 @@
     "at_most": 15000000000.0
    },
    "text": "Orbiting {orbit.semi_major_axis_m} from its star, this world has a very close working relationship with the sun.",
-   "weight": 2
+   "weight": 2,
+   "uses": [
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.hold-important",
+   "about": "any",
+   "text": "Please hold. Your universe is important to us.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-loading",
+   "about": "any",
+   "text": "Loading the cosmos. The cosmos is in no hurry.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-thinking",
+   "about": "any",
+   "text": "The Guide is thinking. It has been thinking since the Big Bang, so bear with it.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-warming",
+   "about": "any",
+   "text": "Warming up the stars. Some of them are slow starters.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-expands",
+   "about": "any",
+   "text": "While you wait, the universe expands slightly. No action is required.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-light",
+   "about": "any",
+   "text": "This pause has been brought to you by the speed of light.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-telescope",
+   "about": "any",
+   "text": "Please do not adjust your telescope. The delay is at our end.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-comet",
+   "about": "any",
+   "text": "Somewhere a comet is also waiting. It has better patience.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-reality",
+   "about": "any",
+   "text": "Hold tight. The Game Master is rearranging a small part of reality.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-atoms",
+   "about": "any",
+   "text": "The next scene is being assembled from fresh, locally sourced atoms.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-tea",
+   "about": "any",
+   "text": "Now would be an excellent time to put the kettle on.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.hold-dice",
+   "about": "any",
+   "text": "Somewhere behind a screen, dice are being consulted. Try not to look worried.",
+   "uses": [
+    "waiting"
+   ]
+  },
+  {
+   "id": "guide.line.travel-there-yet",
+   "about": "any",
+   "text": "Are we there yet? Space is big. No.",
+   "uses": [
+    "travel"
+   ]
+  },
+  {
+   "id": "guide.line.travel-nothing-to-hit",
+   "about": "any",
+   "text": "The good news: there is nothing to hit for a very long way. The bad news: the same.",
+   "uses": [
+    "travel",
+    "empty"
+   ]
+  },
+  {
+   "id": "guide.line.travel-fuel",
+   "about": "ship",
+   "text": "Fuel is physics, not optimism. Check the gauge, then check it again.",
+   "uses": [
+    "travel",
+    "ship"
+   ]
+  },
+  {
+   "id": "guide.line.travel-route",
+   "about": "any",
+   "text": "The shortest route between two stars is rarely the one the pilot chose.",
+   "uses": [
+    "travel"
+   ]
+  },
+  {
+   "id": "guide.line.travel-directions",
+   "about": "any",
+   "text": "In space no one can hear you ask for directions, which may be why no one does.",
+   "uses": [
+    "travel"
+   ]
+  },
+  {
+   "id": "guide.line.travel-coasting",
+   "about": "ship",
+   "text": "The ship is now coasting. So, in a sense, is the crew.",
+   "uses": [
+    "travel",
+    "ship"
+   ]
+  },
+  {
+   "id": "guide.line.travel-window",
+   "about": "any",
+   "text": "Sightseeing tip: the view from the left window is the same as the right one, only darker.",
+   "uses": [
+    "travel"
+   ]
+  },
+  {
+   "id": "guide.line.travel-moving",
+   "about": "any",
+   "text": "Navigation reminder: everything is moving, including the place you are going.",
+   "uses": [
+    "travel"
+   ]
+  },
+  {
+   "id": "guide.line.arrive-hands",
+   "about": "any",
+   "text": "Welcome! Please keep your hands inside the gravity well at all times.",
+   "uses": [
+    "arrival"
+   ]
+  },
+  {
+   "id": "guide.line.arrive-local-time",
+   "about": "any",
+   "text": "Arriving visitors are reminded that local time is whatever the locals say it is.",
+   "uses": [
+    "arrival"
+   ]
+  },
+  {
+   "id": "guide.line.arrive-no-responsibility",
+   "about": "system",
+   "text": "Welcome to the system. The Guide accepts no responsibility for anything in it.",
+   "uses": [
+    "arrival",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.arrive-impressions",
+   "about": "world",
+   "text": "First impressions matter. This place is still working on its second one.",
+   "uses": [
+    "arrival",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.arrive-limbs",
+   "about": "any",
+   "text": "Now arriving. Please collect all limbs and personal belongings.",
+   "uses": [
+    "arrival"
+   ]
+  },
+  {
+   "id": "guide.line.arrive-tourist-office",
+   "about": "world",
+   "text": "The tourist office is closed, but the view is open all hours.",
+   "uses": [
+    "arrival",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.empty-sandwich",
+   "about": "system",
+   "text": "Nothing here. The Guide checked twice, then had a sandwich.",
+   "uses": [
+    "empty",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.empty-echoes",
+   "about": "any",
+   "text": "This stretch of space is so empty it echoes.",
+   "uses": [
+    "empty"
+   ]
+  },
+  {
+   "id": "guide.line.empty-vacant",
+   "about": "system",
+   "text": "Remarkably vacant. Ideal for people who find planets a bit crowded.",
+   "uses": [
+    "empty",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.empty-dragons",
+   "about": "any",
+   "text": "Here there be nothing. The mapmakers ran out of dragons.",
+   "uses": [
+    "empty"
+   ]
+  },
+  {
+   "id": "guide.line.danger-warranty",
+   "about": "world",
+   "when": {
+    "fact": "surface.temp_mean_k",
+    "at_least": 500
+   },
+   "text": "The surface is hot enough to melt the Guide's warranty.",
+   "uses": [
+    "danger",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.danger-frozen-jokes",
+   "about": "world",
+   "when": {
+    "fact": "surface.temp_mean_k",
+    "at_most": 150
+   },
+   "text": "Cold enough that even the jokes freeze. Wrap up.",
+   "uses": [
+    "danger",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.danger-own-air",
+   "about": "world",
+   "when": {
+    "fact": "atmosphere.pressure_pa",
+    "at_most": 100
+   },
+   "text": "There is almost no air here. Bring your own, and do not lend it to anyone.",
+   "uses": [
+    "danger",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.danger-read-first",
+   "about": "world",
+   "when": {
+    "fact": "hazards",
+    "present": true
+   },
+   "text": "Hazards are listed. The Guide suggests reading them before, rather than during.",
+   "uses": [
+    "danger",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.danger-exit",
+   "about": "any",
+   "text": "Before landing, please locate the nearest exit. Then the nearest planet that is not this one.",
+   "uses": [
+    "danger"
+   ]
+  },
+  {
+   "id": "guide.line.danger-lean",
+   "about": "world",
+   "when": {
+    "fact": "atmosphere.pressure_pa",
+    "at_least": 2000000
+   },
+   "text": "The air here is thick enough to lean on. Do not lean on it.",
+   "uses": [
+    "danger",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.settled-friendly",
+   "about": "world",
+   "when": {
+    "fact": "settlements.count",
+    "at_least": 1
+   },
+   "text": "Locals are friendly, in the sense that they have not yet decided otherwise.",
+   "uses": [
+    "settled",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.settled-sign",
+   "about": "world",
+   "when": {
+    "fact": "settlements.count",
+    "at_least": 1
+   },
+   "text": "There is a town here. It has a sign. The sign says \"Turn back\", but in a welcoming font.",
+   "uses": [
+    "settled",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.settled-used-to-be",
+   "about": "world",
+   "when": {
+    "fact": "settlements.count",
+    "at_least": 1
+   },
+   "text": "Settled, civilised and fully stocked with people who will tell you how things used to be.",
+   "uses": [
+    "settled",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.settled-customs",
+   "about": "world",
+   "when": {
+    "fact": "settlements.count",
+    "at_least": 1
+   },
+   "text": "The customs officers are thorough. Declare everything, including opinions.",
+   "uses": [
+    "settled",
+    "arrival",
+    "page"
+   ]
+  },
+  {
+   "id": "guide.line.ship-coffee",
+   "about": "ship",
+   "text": "The coffee machine is the most reliable system aboard. Plan accordingly.",
+   "uses": [
+    "ship"
+   ]
+  },
+  {
+   "id": "guide.line.ship-airlock",
+   "about": "ship",
+   "text": "Remember: the airlock is a door, not a suggestion box.",
+   "uses": [
+    "ship"
+   ]
   }
  ]
 }

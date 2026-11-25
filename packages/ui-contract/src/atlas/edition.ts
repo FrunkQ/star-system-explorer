@@ -92,6 +92,8 @@ export interface EditionDevice {
   keys?: boolean;
   /** How a page changes on the screen: a stepped wipe (cheap electronics), or a plain change. */
   change?: "wipe" | "plain";
+  /** One-liners in strips at the top and bottom of the screen, from the edition's margin sets by the page's use. */
+  banners?: "top" | "bottom" | "both";
 }
 
 /** An edition with its `extends` chain applied: every field the page builder reads is present. */

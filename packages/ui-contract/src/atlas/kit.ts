@@ -76,6 +76,8 @@ export interface KitDoc {
   delivery?: Partial<Record<(typeof MOMENTS)[number], KitDelivery>>;
   needs?: { tier: (typeof TIERS)[number]; falls_back_to?: string };
   layouts?: Partial<Record<Situation, KitLayout>>;
+  /** One-liners at the top and bottom of the role's screens (SSE3's guide tips), from these note sets by situation. */
+  banners?: { at: "top" | "bottom" | "both"; sets: string[] };
 }
 
 /** A part as the stack knows it: its declared controls (AT13), and whether it is the GM's alone. */
@@ -92,6 +94,7 @@ export interface KitStack {
   palettes?: readonly Palette[];
   editions?: readonly string[];
   vocabs?: readonly string[];
+  noteSets?: readonly string[];
 }
 
 /** The shipped palettes: the starters' swatches (11A.3), each passing the contrast check (a test holds this). */
@@ -209,6 +212,11 @@ export function checkKit(doc: unknown, stack: KitStack = {}): string[] {
     if (dl?.then && !(DELIVERIES as readonly string[]).includes(dl.then)) out.push(`The ${m} delivery goes on to "${dl.then}", which is not in the toolkit.`);
     if (dl?.seconds !== undefined && !(dl.seconds >= 0 && dl.seconds <= 4)) out.push(`The ${m} delivery lasts ${dl.seconds} s; keep a delivery between 0 and 4 seconds.`);
     if (m === "turn" && dl?.seconds !== undefined && dl.seconds > TURN_MAX_SECONDS) out.push(`A Turn lasts at most ${TURN_MAX_SECONDS} s, so stepping a book never becomes a wait.`);
+  }
+  if (d.banners !== undefined) {
+    if (!["top", "bottom", "both"].includes(d.banners?.at)) out.push(`The banners sit at "${String(d.banners?.at)}"; use top, bottom or both.`);
+    if (!Array.isArray(d.banners?.sets) || !d.banners.sets.length) out.push("The banners name no note sets to draw their lines from.");
+    else for (const set of d.banners.sets) if (stack.noteSets && !stack.noteSets.includes(set)) out.push(`The note set "${set}" is not in the pack stack.`);
   }
   if (d.needs) {
     if (!(TIERS as readonly string[]).includes(d.needs.tier)) out.push(`The tier "${d.needs.tier}" is not one of ${TIERS.join(", ")}.`);

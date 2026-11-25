@@ -7,6 +7,9 @@ import type { PlayerScene, Vocab } from "../src/player-scene.ts";
 import { checkBrand } from "../src/brand.ts";
 import {
   atlasDocsOf,
+  obviousJoke,
+  pickBanners,
+  usesOf,
   buildPage,
   chapterOf,
   checkEditionShape,
@@ -395,7 +398,11 @@ test("the note sets load: Alex's list (no Douglas Adams names in the base set), 
   const borrowed = /Zaphod|Vogon|Beeblebrox|Sirius Cybernetics|Improbability|Gargle Blaster|Ford Prefect|Megadodo|Eccentrica|petunias|\b42\b|forgot your towel|Bugblatter|Nutri-Matic|Genuine People|bypass/i;
   for (const n of GUIDE_NOTES.notes) assert.ok(!borrowed.test(n.text), `${n.id} is in the base set`);
   const alex = GUIDE_NOTES.notes.filter((n) => n.id.startsWith("guide.alex.")).length + fan.notes.length;
-  assert.equal(alex, 131 - 5, "every line of Alex's list is in one set or held for him (five type a figure)");
+  assert.equal(alex, 131, "every line of Alex's list is in one set");
+  for (const [id, set] of [["guide.alex.007", GUIDE_NOTES], ["guide.alex.096", GUIDE_NOTES], ["fan.alex.083", fan]] as const) {
+    const n = set.notes.find((x) => x.id === id)!;
+    assert.ok(n, id);
+  }
   const ed = fanPack.editions[0]!;
   assert.deepEqual(checkEdition(ed, { ...STACK, noteSets: ["sse.notes.guide", "fan.notes.guide-classic"] }), []);
   assert.equal(resolveEdition(ed.id, [ed]).cover?.publisher, "Megadodo Publications");
@@ -431,4 +438,46 @@ test("the Guide's verdict and subtitle phrase are read off what the audience kno
   // The Survey atlas has no voice tables; switching edition still changes no figure (the test render passes).
   assert.deepEqual(withVoice(page(after, TARN), after, survey, opts), page(after, TARN));
   assert.match(pageText(p), /\[ Verdict: /);
+});
+
+test("a typed figure passes only as a plain joke: percentages over 100% together or alone", () => {
+  assert.equal(obviousJoke(["90%", "8%", "12%"]), true);
+  assert.equal(obviousJoke(["120%"]), true);
+  assert.equal(obviousJoke(["90%", "8%", "2%"]), false, "adds up to 100%: could be read as fact");
+  assert.equal(obviousJoke(["42%"]), false);
+  assert.equal(obviousJoke(["5 kg", "200%"]), false, "a figure with a unit is never a joke");
+  assert.equal(obviousJoke([]), false);
+  const set = (text: string) => ({ schema: "sse.margin-notes/1", id: "x", name: "X", notes: [{ id: "a", about: "world", text }] });
+  assert.deepEqual(checkNoteSet(set("The sea is 70% water, 40% soup.")), []);
+  assert.match(checkNoteSet(set("The sea is 70% water, 30% soup.")).join(), /states a figure \("70%"\)/);
+});
+
+test("one-liners for the top and bottom of a screen: by use case, by the scene's facts, never the same line twice", () => {
+  const sets = [GUIDE_NOTES];
+  for (const n of GUIDE_NOTES.notes) assert.ok(usesOf(n).length, n.id);
+  const uses = new Set(GUIDE_NOTES.notes.flatMap((n) => usesOf(n)));
+  for (const u of ["page", "arrival", "travel", "danger", "settled", "empty", "waiting", "ship"]) {
+    assert.ok(GUIDE_NOTES.notes.filter((n) => usesOf(n).includes(u as never)).length >= 6, `at least six lines for ${u}`);
+    assert.ok(uses.has(u as never));
+  }
+  const opts = { vocab, depth: "curious" as const };
+  const hold = pickBanners(after, null, "holding", sets, opts);
+  assert.ok(hold.top && hold.bottom && hold.top.id !== hold.bottom.id);
+  for (const b of [hold.top!, hold.bottom!]) {
+    const n = GUIDE_NOTES.notes.find((x) => x.id === b.id)!;
+    assert.ok(usesOf(n).includes("waiting") && !n.when, `${b.id} is a waiting line that needs no fact`);
+  }
+  assert.deepEqual(pickBanners(after, null, "holding", sets, opts), hold, "seeded: the same screen gives the same lines");
+  assert.notDeepEqual(pickBanners(after, null, "holding", sets, { ...opts, seed: "next scene" }), hold);
+  const world = pickBanners(after, TARN, "world", sets, opts);
+  assert.ok(world.top && world.bottom);
+  const s = after.subjects.find((x) => x.address === TARN)!;
+  for (const b of [world.top!, world.bottom!]) {
+    const n = GUIDE_NOTES.notes.find((x) => x.id === b.id)!;
+    assert.ok(usesOf(n).some((u) => ["arrival", "danger", "settled", "empty"].includes(u)), b.id);
+    assert.ok(!n.when || meets(s, n.when), `${b.id} fits what the audience knows`);
+  }
+  const ex = pickBanners(after, TARN, "world", sets, { ...opts, exclude: [world.top!.id] });
+  assert.ok(ex.top?.id !== world.top!.id && ex.bottom?.id !== world.top!.id);
+  assert.deepEqual(pickBanners(after, TARN, "nowhere", sets, opts), {});
 });

@@ -579,6 +579,12 @@
     "holding": {
      "card": "DON'T PANIC"
     }
+   },
+   "banners": {
+    "at": "both",
+    "sets": [
+     "sse.notes.guide"
+    ]
    }
   }
  ]

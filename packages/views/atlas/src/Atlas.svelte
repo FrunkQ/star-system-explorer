@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { EVERYONE, BUILTIN_LOGOS, SHIPPED_NOTE_SETS, withLetterhead, withMargin, withVoice, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { EVERYONE, BUILTIN_LOGOS, SHIPPED_NOTE_SETS, pickBanners, withLetterhead, withMargin, withVoice, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
   import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
@@ -109,6 +109,16 @@
     tick().then(() => pageBox?.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true }));
   }
   const page = $derived(book && address ? dressed(address) : null);
+  // The one-liners at the top and bottom of a device's screen (SSE3's guide tips, Alex 25 Nov): by the page's use,
+  // from the edition's own sets; the cover is a holding screen. Seeded by the edition, so they repeat like the page.
+  const SITUATION_OF: Record<string, string> = { sector: "sector", system: "system", star: "system", world: "world", moon: "world", station: "world" };
+  const banners = $derived.by(() => {
+    const mode = edition.device?.banners;
+    if (!mode || !book || !edition.margin) return {};
+    const sets = noteSets.filter((x) => edition.margin!.sets.includes(x.id));
+    const b = covered || !page ? pickBanners(book, null, "holding", sets, { vocab, depth: ws.depth, seed: edition.id }) : pickBanners(book, page.address, SITUATION_OF[page.kind] ?? "system", sets, { vocab, depth: ws.depth, seed: edition.id, exclude: turnedAway });
+    return { top: mode === "bottom" ? undefined : b.top?.text, bottom: mode === "top" ? undefined : b.bottom?.text };
+  });
 
   // ---- Print under the view (AT4): this page, this chapter or the whole Atlas, in the edition showing, in place.
   let printOpen = $state(false);
@@ -305,6 +315,8 @@
               onprint={() => print("page")}
               canBack={!!page.prev}
               canNext={!!page.next}
+              bannerTop={banners.top}
+              bannerBottom={banners.bottom}
               children={screen}
             />
           {:else}

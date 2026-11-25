@@ -93,6 +93,8 @@ export function checkEdition(doc: unknown, stack: EditionStack = {}): string[] {
   if (d.look && stack.looks && !stack.looks.includes(d.look)) out.push(`The look "${d.look}" is not in the pack stack (there are ${stack.looks.join(", ")}).`);
   if (d.vocab && stack.vocabs && !stack.vocabs.includes(d.vocab)) out.push(`The vocabulary "${d.vocab}" is not in the pack stack (there are ${stack.vocabs.join(", ")}).`);
   for (const set of d.margin?.sets ?? []) if (stack.noteSets && !stack.noteSets.includes(set)) out.push(`The margin note set "${set}" is not in the pack stack.`);
+  if (d.device?.banners !== undefined && !["top", "bottom", "both"].includes(d.device.banners)) out.push(`The device's banners are "${String(d.device.banners)}"; use top, bottom or both.`);
+  if (d.device?.banners && !d.margin?.sets?.length) out.push("The device shows banners but the edition names no margin note sets to draw them from.");
   // 5. sizes.
   if (d.description.length > EDITION_LIMITS.description) out.push(`The description is ${d.description.length} characters; keep it to ${EDITION_LIMITS.description}, one line people choose by.`);
   for (const [k, v] of Object.entries(d.voice?.labels ?? {})) if (v.length > EDITION_LIMITS.label) out.push(`The label ${k} is ${v.length} characters; keep labels to ${EDITION_LIMITS.label}.`);

@@ -53,7 +53,8 @@
     "label": "The Guide · Model 2",
     "status": "Batt ▮▮▯ · made cheaply, with love",
     "keys": true,
-    "change": "wipe"
+    "change": "wipe",
+    "banners": "both"
   },
   "verdict": {
     "label": "Verdict",

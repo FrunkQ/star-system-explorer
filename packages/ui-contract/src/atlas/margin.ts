@@ -15,6 +15,21 @@ export const MARGIN_SCHEMA = "sse.margin-notes/1";
 /** Where a note may sit: a kind of page, ships (later pages), or anywhere. */
 export const NOTE_ABOUT: readonly string[] = [...PAGE_KINDS, "ship", "any"];
 export const NOTE_MAX_LENGTH = 200;
+/**
+ * What a line is for (Alex, 25 Nov: "categorised by use case ... tag sensitive to match the scene"). `page` is the
+ * Atlas margin; the rest are the one-liners a kit shows at the top and bottom of a screen, chosen by the situation.
+ */
+export const NOTE_USES = ["page", "arrival", "travel", "danger", "settled", "empty", "waiting", "ship"] as const;
+export type NoteUse = (typeof NOTE_USES)[number];
+/** The uses a screen's banners draw on in each situation of an interface kit. */
+export const SITUATION_USES: Readonly<Record<string, readonly NoteUse[]>> = {
+  sector: ["travel", "empty"],
+  system: ["arrival", "danger", "settled", "empty"],
+  world: ["arrival", "danger", "settled", "empty"],
+  ship: ["ship", "travel"],
+  landing: ["danger", "arrival"],
+  holding: ["waiting"],
+};
 
 /** The small condition language (design 6.2): a fact at least, at most, between, equal to, present; a tag; all; any. Numbers are SI. */
 export type NoteCondition =
@@ -31,6 +46,24 @@ export interface MarginNote {
   text: string;
   /** How keen it is to be picked (default 1). */
   weight?: number;
+  /** What it is for (`NOTE_USES`); left out, a ship line is for ships and travel and any other is for the page. */
+  uses?: NoteUse[];
+}
+
+/** A note's uses, with the default for one that does not say. */
+export function usesOf(n: MarginNote): readonly NoteUse[] {
+  return n.uses ?? (n.about === "ship" ? ["ship", "travel"] : ["page"]);
+}
+
+/**
+ * True when a text's typed figures are plainly a joke: all percentages, and together (or alone) over 100%. Alex,
+ * 25 Nov: "have them as the proportion that adds up over 100% - then you know you can rely on what's left".
+ */
+export function obviousJoke(figures: readonly string[]): boolean {
+  if (!figures.length) return false;
+  const pcts = figures.map((f) => (/^\s*[\d.]+\s*%$/.test(f) ? Number(f.replace("%", "")) : NaN));
+  if (pcts.some((x) => !Number.isFinite(x))) return false;
+  return pcts.reduce((a, x) => a + x, 0) > 100 || pcts.some((x) => x > 100);
 }
 
 export interface NoteSet {
@@ -129,15 +162,21 @@ export function pickNotes(scene: PlayerScene, page: AtlasPage, ed: Edition, sets
     if (!want.has(set.id)) continue;
     for (const n of set.notes) {
       if (n.about !== "any" && n.about !== page.kind) continue;
+      if (!usesOf(n).includes("page")) continue;
       if (opts.exclude?.includes(n.id)) continue;
       if (n.when && !meets(s, n.when)) continue;
       const text = fillNote(n, s, opts);
       if (text !== null) fitting.push({ id: n.id, text, weight: n.weight ?? 1 });
     }
   }
-  const next = rng(seedOf(`${page.address}|${ed.id}`));
+  return weighted(fitting, seedOf(`${page.address}|${ed.id}`), ed.margin.max);
+}
+
+/** Up to `max` of the fitting lines, picked by weight from the seed, never the same one twice. */
+function weighted(fitting: { id: string; text: string; weight: number }[], seed: number, max: number): { id: string; text: string }[] {
+  const next = rng(seed);
   const out: { id: string; text: string }[] = [];
-  while (out.length < ed.margin.max && fitting.length) {
+  while (out.length < max && fitting.length) {
     const total = fitting.reduce((a, n) => a + n.weight, 0);
     let r = next() * total;
     let i = 0;
@@ -146,6 +185,40 @@ export function pickNotes(scene: PlayerScene, page: AtlasPage, ed: Edition, sets
     out.push({ id: hit!.id, text: hit!.text });
   }
   return out;
+}
+
+export interface BannerOptions extends MarginOptions {
+  /** Mixed into the seed so a screen's lines change when its owner wants (a new day, a new scene); never the clock. */
+  seed?: string;
+}
+
+/**
+ * The one-liners for the top and bottom of a screen (SSE3's guide tips, by use case): lines whose use fits the
+ * situation, whose kind fits the subject (or "any"), and whose condition the audience's facts and tags meet. With no
+ * subject (a holding screen) only lines that need no fact can show. Two different lines, seeded and repeatable.
+ */
+export function pickBanners(scene: PlayerScene, address: string | null, situation: string, sets: readonly NoteSet[], opts: BannerOptions): { top?: { id: string; text: string }; bottom?: { id: string; text: string } } {
+  const uses = SITUATION_USES[situation] ?? [];
+  const s = address === null ? undefined : scene.subjects.find((x) => x.address === address);
+  const kind = s ? String(fact(s, "kind")?.value ?? "") : "";
+  const fitting: { id: string; text: string; weight: number }[] = [];
+  for (const set of sets) {
+    for (const n of set.notes) {
+      if (!usesOf(n).some((u) => uses.includes(u))) continue;
+      if (opts.exclude?.includes(n.id)) continue;
+      if (n.about !== "any" && n.about !== situation && !(s && n.about === kind) && !(situation === "ship" && n.about === "ship")) continue;
+      if (!s) {
+        if (n.when || /\{[^}]+\}/.test(n.text)) continue;
+        fitting.push({ id: n.id, text: n.text, weight: n.weight ?? 1 });
+        continue;
+      }
+      if (n.when && !meets(s, n.when)) continue;
+      const text = fillNote(n, s, opts);
+      if (text !== null) fitting.push({ id: n.id, text, weight: n.weight ?? 1 });
+    }
+  }
+  const [top, bottom] = weighted(fitting, seedOf(`${situation}|${address ?? ""}|${opts.seed ?? ""}`), 2);
+  return { ...(top ? { top } : {}), ...(bottom ? { bottom } : {}) };
 }
 
 /** The page with its margin notes (and the one line saying they are opinions); unchanged when none fit. */
@@ -186,7 +259,9 @@ export function checkNoteSet(doc: unknown): string[] {
     }
     if (n.text.length > NOTE_MAX_LENGTH) out.push(`${at} is ${n.text.length} characters; keep it under ${NOTE_MAX_LENGTH} so it fits a margin.`);
     if (n.weight !== undefined && !(typeof n.weight === "number" && n.weight > 0)) out.push(`${at} has a weight that is not a positive number.`);
-    for (const f of typedFigures(n.text.replace(SLOT, ""))) out.push(`${at} states a figure ("${f}"). Put the fact in a slot, such as {ocean.fraction}, so it is the audience's own value.`);
+    if (n.uses !== undefined && (!Array.isArray(n.uses) || !n.uses.length || n.uses.some((u) => !(NOTE_USES as readonly string[]).includes(u)))) out.push(`${at} has uses that are not a list of ${NOTE_USES.join(", ")}.`);
+    const typed = typedFigures(n.text.replace(SLOT, ""));
+    if (!obviousJoke(typed)) for (const f of typed) out.push(`${at} states a figure ("${f}"). Put the fact in a slot, such as {ocean.fraction}, so it is the audience's own value. (Percentages that plainly cannot be true, over 100% together, may stay as a joke.)`);
     const reads = conditionFields(n.when);
     for (const f of reads) if (!isCatalogued(f)) out.push(`${at} tests "${f}", which is not a fact the Atlas knows.`);
     for (const m of n.text.matchAll(SLOT)) {

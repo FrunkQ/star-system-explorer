@@ -18,6 +18,8 @@
     onprint,
     canBack,
     canNext,
+    bannerTop,
+    bannerBottom,
     children,
   }: {
     device: EditionDevice;
@@ -29,6 +31,8 @@
     onprint: () => void;
     canBack: boolean;
     canNext: boolean;
+    bannerTop?: string;
+    bannerBottom?: string;
     children: Snippet;
   } = $props();
 </script>
@@ -40,7 +44,9 @@
   </p>
   <div class="screen">
     <div class="rule" aria-hidden="true"></div>
+    {#if bannerTop}<p class="banner" data-atlas-banner="top">{bannerTop}</p>{/if}
     {@render children()}
+    {#if bannerBottom}<p class="banner bottom" data-atlas-banner="bottom">{bannerBottom}</p>{/if}
   </div>
   {#if device.keys}
     <div class="keys" role="group" aria-label="Keys">
@@ -56,6 +62,18 @@
 </div>
 
 <style>
+  /* A one-liner strip: the case's own small capitals on a hairline, never louder than the page. */
+  .banner {
+    margin: 0;
+    padding: 6px 14px;
+    font: italic 500 12.5px/1.4 var(--sse-font-body);
+    color: var(--sse-margin-ink, var(--sse-ink-muted));
+    border-bottom: 1px dashed var(--sse-rule, currentColor);
+  }
+  .banner.bottom {
+    border-bottom: 0;
+    border-top: 1px dashed var(--sse-rule, currentColor);
+  }
   .case {
     background: var(--sse-case-ground, transparent);
     border: 1px solid var(--sse-case-edge, transparent);
