@@ -386,7 +386,7 @@
    "references": [
     "Atri, D., Hariharan, B. and Grießmeier, J.-M. 2013, Galactic cosmic ray-induced radiation dose on terrestrial exoplanets, Astrobiology 13, 910: the air column, not the field, is the main shield for a world with thick air. doi:10.1089/ast.2013.1052",
     "Clem, J. M. and Dorman, L. I. 2000, Neutron monitor response functions, Space Sci. Rev. 93, 335: ground count rate against cut-off follows N(R_c) = N₀ (1 − exp(−α R_c^−k)); attenuation in air about 140 g/cm² (barometric coefficient about 0.7 % per hPa). doi:10.1023/A:1026508915269",
-    "Zeitlin, C. et al. 2013, Measurements of energetic particle radiation in transit to Mars on the Mars Science Laboratory, Science 340, 1080: 1.84 mSv per day in interplanetary space near 1 AU. doi:10.1126/science.1235989",
+    "Zeitlin, C. et al. 2013, Measurements of energetic particle radiation in transit to Mars on the Mars Science Laboratory, Science 340, 1080: 1.84 mSv per day measured inside the spacecraft, behind its shielding, on the cruise to Mars. doi:10.1126/science.1235989",
     "UNSCEAR 2008, Sources and effects of ionizing radiation, Annex B: cosmic rays at sea level give about 0.39 mSv a year (0.28 directly ionising, mostly muons, and 0.11 from neutrons). https://www.unscear.org/unscear/en/publications/2008_1.html"
    ],
    "shown": "D = D₀ s [(1 − f_μ) w (w S_space + (1 − w) S_ground) + f_μ e^(−X/λ_μ) S_ground],  w = e^(−X/λ_n)",

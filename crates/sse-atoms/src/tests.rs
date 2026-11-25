@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 141,
+        n, 142,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -430,10 +430,10 @@ fn brine_freezing_points() {
 #[test]
 fn ice_shell_conduction() {
     // Europa-like: 100 K surface, base at 270 K, 0.05 W/m² gives about 13 km,
-    // inside the 10 to 30 km range of conductive models (Ojakangas and Stevenson 1989).
+    // inside the 25 km bound of Ojakangas and Stevenson 1989's conductive shell.
     let d = run("sse.heat.ice_shell_thickness", &[0.05, 100.0, 270.0])[0];
     close(d, 651.0 / 0.05 * m::ln(2.7), 1e-12, "formula");
-    assert!(d > 1e4 && d < 3e4);
+    assert!(d > 1e4 && d < 2.5e4);
     let q = run("sse.heat.ice_shell_heat_flow", &[d, 100.0, 270.0])[0];
     close(q, 0.05, 1e-12, "round trip");
 }
