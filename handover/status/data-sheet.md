@@ -54,6 +54,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
    
    The Cayrel 2004 metal-poor scatter values are written down in packages/scatter-dex-notes.md and are still to be put on the rows.
 4. **Waiting on the readers of new rows.**
+   - base-light's `matter` ids (PR 406) are checked against the sheet by `every_light_line_names_matter_on_the_sheet` in sse-reference (PR 475). The chart room draws the card section "Light it gives off" from them.
    - Proven core reads MP30's conductivities for MF2, through these fields:
      - `earth-core-liquid.sigma_elec` and `sigma_elec_icb`;
      - `iron.sigma_elec_liquid`;

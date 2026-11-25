@@ -1077,3 +1077,44 @@ fn helium_has_a_lambda_point_below_its_critical_point() {
     assert!(lam > 2.0 && lam < 2.3 && crit > 5.0 && crit < 5.5);
     assert!(num(ph.get("critical_point_pa")).unwrap() > num(ph.get("lambda_point_pa")).unwrap());
 }
+
+#[test]
+fn every_light_line_names_matter_on_the_sheet() {
+    // base-light's lines and aurora sources carry `matter`, an element or
+    // substance id; a typo would leave a card's "Light it gives off" empty.
+    let s = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../packs/base-light/pack.json"
+    ))
+    .unwrap();
+    let light: J = serde_json::from_str(&s).unwrap();
+    let r = Reference::base();
+    let mut seen = 0;
+    fn walk(v: &J, out: &mut Vec<String>) {
+        match v {
+            J::Object(m) => {
+                for (k, x) in m {
+                    if k == "matter" {
+                        if let Some(id) = x.as_str() {
+                            out.push(id.to_string());
+                        }
+                    }
+                    walk(x, out);
+                }
+            }
+            J::Array(a) => a.iter().for_each(|x| walk(x, out)),
+            _ => {}
+        }
+    }
+    let mut ids = Vec::new();
+    walk(&light, &mut ids);
+    for id in &ids {
+        let known = r.row("elements", id).is_some() || r.row("substances", id).is_some();
+        assert!(
+            known,
+            "base-light names matter {id:?}, which is not on the sheet"
+        );
+        seen += 1;
+    }
+    assert!(seen > 10, "base-light should name its matter on every line");
+}
