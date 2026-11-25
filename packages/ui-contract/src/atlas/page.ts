@@ -20,6 +20,8 @@ export interface FactRow {
   bar?: boolean;
   /** For a figure: the SI value(s) and what the figures door was asked, so the view can open its Why. */
   figure?: Extract<FactShown, { figure?: unknown }>["figure"];
+  /** Its number in "How we know" (AT8, an edition with endnotes). */
+  mark?: number;
 }
 
 export interface TableCell {
@@ -46,12 +48,14 @@ export type Block =
       verdict?: import("./voice.ts").VoiceSaid;
     }
   | { type: "prose"; key: string; title: string; text: string }
-  | { type: "facts"; key: string; title: string; rows: FactRow[] }
+  | { type: "facts"; key: string; title: string; rows: FactRow[]; /** "Source: …" under the section (AT8, `sources: section`). */ source?: string }
   | { type: "table"; key: string; title: string; columns: string[]; rows: TableRow[] }
   | { type: "plate"; key: string; title: string; style: PlateStyle; subject: string; addresses: string[]; names: string[] }
   | { type: "story"; key: string; title: string; lines: { label: string; text: string }[] }
   | { type: "note"; text: string }
   | { type: "rule" }
+  /** "How we know" (AT8, `sources: endnotes`): a note for each marked figure on the page. */
+  | { type: "sources"; title: string; notes: import("./sources.ts").SourceNote[] }
   /** The edition's margin notes for this page (opinions, never facts), headed by its signature. */
   | { type: "margin"; signature: string; notes: { id: string; text: string }[] }
   | {
