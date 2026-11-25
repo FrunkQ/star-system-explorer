@@ -26,6 +26,9 @@ export interface Pose {
   /** Field of view from the top of the kept box to its bottom, degrees. */
   fov_deg: number;
   exposure: PoseExposure;
+  /** A colour stretch for pictures with very bright and very faint parts (asinh, the press-image standard). Absent:
+   * linear. The finish applies it with a composite honesty mark (renderer thread, 25 Nov). */
+  stretch?: "linear" | "asinh";
   /** The part of the frame that must stay in view on any screen shape, as [left, top, right, bottom] fractions. */
   keep: [number, number, number, number];
 }
@@ -62,6 +65,7 @@ export function checkPose(raw: unknown): string | null {
   if (!Array.isArray(k) || k.length !== 4 || !k.every(finite)) return "the camera's kept box is not four numbers";
   const [l, t, r, b] = k as number[];
   if (l! < 0 || t! < 0 || r! > 1 || b! > 1 || r! <= l! || b! <= t!) return "the camera's kept box is outside the frame";
+  if (o.stretch !== undefined && o.stretch !== "linear" && o.stretch !== "asinh") return "the camera's stretch is not linear or asinh";
   return null;
 }
 
@@ -82,6 +86,7 @@ export function poseFrom(raw: unknown): Pose | null {
     fov_deg: o.fov_deg,
     exposure: { mode: o.exposure.mode, ev: o.exposure.ev },
     keep: [o.keep[0], o.keep[1], o.keep[2], o.keep[3]],
+    ...(o.stretch === "asinh" ? { stretch: "asinh" as const } : {}),
   };
 }
 

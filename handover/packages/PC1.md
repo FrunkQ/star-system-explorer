@@ -26,6 +26,14 @@ and 12A (Alex's rulings, which win). Golden-neutral: nothing here reaches the ke
   Update from live keep it; opening a bookmark sets `aim`. `views/body/src/Body.svelte`: the globe keeps
   `ws.camera` as `poseOfGlobe(...)` and takes an `aim` about its world once.
 
+## Reference shots (agreed with the renderer thread, 25 Nov, for its MATCH1 and the base set)
+- `pose.stretch?: "linear" | "asinh"` (the finish applies it with a composite honesty mark); `exposure.mode` stays
+  long or eye until VP4 meters ("matched" comes then).
+- `bookmark.view.mix` on a postcard (`PostcardView`, `MixEntry`: band, optional emission `line` H-alpha, O III or
+  S II, weight, colour), read leniently by `mixFrom`. Kept off the shared `ViewChoice` until a view draws Composite.
+- `reference?: { title, credit, licence, url?, taken_at? }` on the envelope: the famous picture a shot is compared
+  against; the picture itself never travels.
+
 ## Choices made here
 - Packs on a postcard are `{ id, version }` as on a clip, not the note's `range: "^4.0"`: one form for both, and
   `missingPacks`' rule (another version is named, not refused) carries over as `other-version`.

@@ -186,3 +186,16 @@ test("nothing about players travels", () => {
   const text = postcardText(p);
   for (const k of ["role", "look", "known_to", "notes", "audience"]) assert.ok(!text.includes(`"${k}"`), k);
 });
+
+test("a reference shot keeps its Composite mix, its stretch and the famous picture it is compared against", () => {
+  const p = postcardHere([], { ...at, pose: { ...pose, stretch: "asinh" }, view: { style: "true", seen: "free", mix: [{ band: "visible", line: "H-alpha", weight: 1, colour: "#ff8800" }, { band: "visible", line: "O III", weight: 0.8, colour: "#0088ff" }] } }, "Pillars", "Body", address);
+  const withRef = { ...p, reference: { title: "Pillars of Creation", credit: "NASA, ESA, Hubble", licence: "public domain", url: "https://example.org/pillars", taken_at: "1995-04-01" } };
+  const r = readPostcard(postcardText(withRef as Postcard));
+  assert.ok(r.ok);
+  assert.equal(r.postcard.bookmark.pose?.stretch, "asinh");
+  assert.deepEqual(r.postcard.bookmark.view?.mix?.map((m) => m.line), ["H-alpha", "O III"]);
+  assert.equal(r.postcard.reference?.taken_at, "1995-04-01");
+  const bad = checkPostcard({ ...withRef, bookmark: { ...withRef.bookmark, view: { ...withRef.bookmark.view, mix: [{ band: "visible", line: "Ne V", weight: 1, colour: "#fff" }] } } });
+  assert.ok(bad.ok && !bad.postcard.bookmark.view?.mix, "a bad mix is dropped, the postcard still opens");
+  assert.equal(poseFrom({ ...pose, stretch: "log" }), null);
+});

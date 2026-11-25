@@ -8,6 +8,7 @@
 import { BOOKMARK_SCHEMA, bookmarksFrom, makeBookmark, type Bookmark, type Whereabouts } from "./bookmark.ts";
 import { readClip, type Clip, type ClipEvent, type ClipNode } from "./clip.ts";
 import { checkPicture } from "./picture.ts";
+import type { ViewChoice } from "./view-controls.ts";
 
 export const POSTCARD_SCHEMA = "sse.postcard/1";
 /** The kept picture's longer side (design section 2: "about 640 px wide"). */
@@ -37,6 +38,48 @@ export interface PackNamed {
   version: string;
 }
 
+/** One part of a Composite look: a band, or an emission line in it (the Hubble palette), its weight and the colour it
+ * is drawn in. Lines arrive with the light and nebulae thread; the names are fixed here so a shot stores what it is. */
+export const MIX_LINES = ["H-alpha", "O III", "S II"] as const;
+export interface MixEntry {
+  band: string;
+  line?: (typeof MIX_LINES)[number];
+  weight: number;
+  colour: string;
+}
+
+/** A Composite mix read leniently: null when it is not one (the view keeps going without it). */
+export function mixFrom(raw: unknown): MixEntry[] | null {
+  if (!Array.isArray(raw) || !raw.length || raw.length > 8) return null;
+  const out: MixEntry[] = [];
+  for (const e of raw) {
+    if (!isObj(e) || typeof e.band !== "string" || !e.band || typeof e.weight !== "number" || !Number.isFinite(e.weight) || e.weight < 0 || typeof e.colour !== "string" || !/^#[0-9a-f]{6}$/i.test(e.colour)) return null;
+    if (e.line !== undefined && !(MIX_LINES as readonly unknown[]).includes(e.line)) return null;
+    out.push({ band: e.band, ...(e.line ? { line: e.line as MixEntry["line"] } : {}), weight: e.weight, colour: e.colour });
+  }
+  return out;
+}
+
+/** How a postcard is looked at: the view choice, and a Composite look kept as its mix (12A point 7). */
+export type PostcardView = ViewChoice & { mix?: MixEntry[] };
+
+/** The famous picture a reference shot is compared against (renderer check MATCH1). Presentation only; the picture
+ * itself never travels. `taken_at` (ISO date) lets the pose's date be checked against it. */
+export interface PostcardReference {
+  title: string;
+  credit: string;
+  licence: string;
+  url?: string;
+  taken_at?: string;
+}
+
+function referenceFrom(raw: unknown): PostcardReference | null {
+  if (!isObj(raw) || typeof raw.title !== "string" || typeof raw.credit !== "string" || typeof raw.licence !== "string") return null;
+  const url = typeof raw.url === "string" && /^https:\/\//.test(raw.url) ? raw.url : undefined;
+  const taken_at = typeof raw.taken_at === "string" && /^\d{4}(-\d{2}(-\d{2})?)?$/.test(raw.taken_at) ? raw.taken_at : undefined;
+  return { title: plain(raw.title).slice(0, NAME_MAX), credit: plain(raw.credit).slice(0, NAME_MAX), licence: plain(raw.licence).slice(0, NAME_MAX), ...(url ? { url } : {}), ...(taken_at ? { taken_at } : {}) };
+}
+
 /** How to get the world (design section 4). */
 export type PostcardWorld =
   /** A place in the generated universe: its address, the universe's root and the packs it was made under. */
@@ -59,7 +102,7 @@ export interface Postcard {
   /** The maker's words, optional. */
   caption?: string;
   /** The bookmark, with a fixed date and an instrument that can draw a still. Its pose, when present, is the camera. */
-  bookmark: Bookmark & { at_yr: number };
+  bookmark: Bookmark & { at_yr: number; view?: PostcardView };
   world: PostcardWorld;
   /** Who made it, oldest first, as a clip's creditChain. */
   credit: string[];
@@ -67,6 +110,8 @@ export interface Postcard {
   stamp?: string;
   /** This sending's message, when it has one. */
   message?: PostcardMessage;
+  /** A reference shot: the famous picture it is compared against. */
+  reference?: PostcardReference;
 }
 
 const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === "object" && !Array.isArray(x);
@@ -137,6 +182,15 @@ export function checkPostcard(raw: unknown): PostcardRead {
   const caption = typeof raw.caption === "string" ? plain(raw.caption).slice(0, CAPTION_MAX) : "";
   const stamp = typeof raw.stamp === "string" && checkPicture(raw.stamp) === null ? raw.stamp : undefined;
   const message = raw.message !== undefined && checkMessage(raw.message) === null ? makeMessage((raw.message as PostcardMessage).text, (raw.message as PostcardMessage).from) : undefined;
+  if (b.view && isObj(raw.bookmark) && isObj(raw.bookmark.view) && raw.bookmark.view.mix !== undefined) {
+    const mix = mixFrom(raw.bookmark.view.mix);
+    if (mix) b.view = { ...b.view, mix } as PostcardView;
+    else {
+      const { mix: _m, ...v } = b.view as PostcardView;
+      b.view = v;
+    }
+  }
+  const reference = raw.reference !== undefined ? referenceFrom(raw.reference) : null;
   return {
     ok: true,
     postcard: {
@@ -149,6 +203,7 @@ export function checkPostcard(raw: unknown): PostcardRead {
       credit,
       ...(stamp ? { stamp } : {}),
       ...(message ? { message } : {}),
+      ...(reference ? { reference } : {}),
     },
   };
 }
