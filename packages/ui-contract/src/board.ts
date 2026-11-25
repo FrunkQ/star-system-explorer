@@ -5,6 +5,7 @@
 // only and is never saved with the campaign (5.6). What reaches the wire is still `Shown`, worked out per role and per
 // screen by `resolve`, so players' screens read one value whatever made it.
 import type { Shown } from "./seat.ts";
+import type { HoldingCard } from "./holding.ts";
 
 /** A holding card (6.2): blank is "Screens off"; plain and joke draw from the pack's list; or words typed now. */
 export type HoldCard = "blank" | "plain" | "joke" | { text: string };
@@ -31,6 +32,8 @@ export interface BoardScreen {
   role: string;
   /** On the GM's own machine (a tab opened from here), so a camera may reach it later (section 10). */
   local?: boolean;
+  /** A clean output link (PB8, design 9): a screen like any other, marked "Output". */
+  output?: boolean;
 }
 
 export interface Board {
@@ -188,10 +191,10 @@ export function releaseAll(b: Board): Board {
 }
 
 /** A screen says hello (section 11): known screens keep the role the GM gave them; new ones get the role they asked for. */
-export function screenHello(b: Board, id: string, hello: { name: string; role: string; local?: boolean }): Board {
+export function screenHello(b: Board, id: string, hello: { name: string; role: string; local?: boolean; output?: boolean }): Board {
   const n = clone(b);
   const had = n.screens[id];
-  n.screens[id] = { name: hello.name || had?.name || "Screen", role: had?.role ?? hello.role, ...(hello.local ? { local: true } : {}) };
+  n.screens[id] = { name: hello.name || had?.name || "Screen", role: had?.role ?? hello.role, ...(hello.local ? { local: true } : {}), ...(hello.output ? { output: true } : {}) };
   return n;
 }
 
@@ -348,17 +351,12 @@ export class BoardHistory {
   }
 }
 
-/** The words a holding card shows, chosen on the GM's machine (PB5 brings the pack's list; until then, these). */
-export function cardWords(card: HoldCard, pick: (kind: "plain" | "joke") => string = defaultPick): string {
+/**
+ * The words a holding card shows, with no pack to hand: the shell passes a `CardDeck` (holding.ts) built from the
+ * stack's `sse.holding-cards/1` instead (PB5), so these fixed words are only the last resort.
+ */
+export function cardWords(card: HoldCard, pick: (kind: "plain" | "joke") => string = () => "Stand by"): string {
   return card === "blank" ? "" : typeof card === "object" ? card.text : pick(card);
-}
-const PLAIN = ["Awaiting transmission", "Signal lost", "Stand by", "No carrier"];
-const JOKES = ["Hold on: tracking down the missing gold atoms. I think the black hole swallowed them.", "Awaiting transmission. Light is doing its best.", "Signal lost. It was last seen heading for the Oort cloud.", "Recalculating. Someone moved the barycentre."];
-let lastPick = "";
-function defaultPick(kind: "plain" | "joke"): string {
-  const list = kind === "plain" ? PLAIN : JOKES;
-  const choices = list.filter((x) => x !== lastPick);
-  return (lastPick = choices[Math.floor(Math.random() * choices.length)] ?? list[0]!);
 }
 
 /**
@@ -400,6 +398,8 @@ export interface TablePort {
     can_redo: boolean;
     /** Players' requests waiting for the GM. */
     waiting: number;
+    /** The holding cards on the stack (PB5, holding.ts), for the line card's choices. */
+    cards?: readonly HoldingCard[];
   };
   act(f: (b: Board) => Board): void;
   undo(): void;
@@ -410,4 +410,27 @@ export interface TablePort {
   links(role: string): { screen: string | null; href: string }[];
   /** The live source: where the GM is now, as the table would be sent it. */
   live(): Shown;
+  /** The roles themselves, for the role card (PB7). Absent: the board can route but not change roles. */
+  seats?: SeatPort;
+}
+
+/** What the role card needs of the table (PB7): the seat plan and the ways to change it. */
+export interface SeatPort {
+  plan(): import("./seats.ts").SeatPlan;
+  /** Fog of war is on offer only when the campaign's data views have one that shows nothing. */
+  fog(): { starts_with: string; discovered_view: string } | null;
+  add(o: Parameters<typeof import("./seats.ts").addSeat>[1]): Promise<string | null>;
+  update(id: string, change: import("./seats.ts").SeatChange): void;
+  remove(id: string): void;
+  /** Quick overrides, live and never saved ("Hide labels"). */
+  setLive(id: string, live: Record<string, boolean>): void;
+  /** Mark a body discovered by a fog-of-war audience, or take it back. */
+  discover(audience: string, address: string, known: boolean): Promise<string | null>;
+  /** The addresses a fog-of-war audience has discovered, read from the kernel's scene for it. */
+  discovered(audience: string): Promise<string[]>;
+  /** The bodies a discovery can be marked on (the system in view). */
+  bodies(): readonly { address: string; label: string }[];
+  /** Players' requests waiting, by seat. */
+  requests(): readonly { id: string; from: string; seat: string; words: string }[];
+  answer(id: string, from: string, approve: boolean): Promise<void>;
 }

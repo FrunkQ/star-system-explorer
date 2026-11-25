@@ -13,7 +13,10 @@
 //!   G2), so a cube read early in time has fewer and smaller haloes;
 //! - its galaxy: G3 on the median halo of its mass today, once per half dex
 //!   (as the DM3 ledger does), read at the cube's time as shares of the halo's
-//!   mass then: stars, star formation and whether it has quenched. Each
+//!   mass then: stars, star formation and whether it has quenched, read
+//!   ahead or behind by how much earlier or later the halo gathered half its
+//!   mass than the median (assembly bias: void galaxies younger and bluer,
+//!   Hearin and Watson 2013). Each
 //!   halo's own full G3 history is what the galaxy chart draws; using the
 //!   median for its mass is in the fudge register ("web light: median
 //!   galaxies").
@@ -68,6 +71,8 @@ pub struct MedianGalaxies {
     step: f64,
     /// Per row: (t Gyr, stars / halo, sfr / halo per year, quenched).
     rows: Vec<Vec<(f64, f64, f64, bool)>>,
+    /// Per row: when the median halo had half its mass, Gyr.
+    half: Vec<f64>,
 }
 
 impl MedianGalaxies {
@@ -75,10 +80,12 @@ impl MedianGalaxies {
         let step = 0.5;
         let lm0 = m::log10(lo);
         let n = m::ceil((m::log10(hi) - lm0) / step) as u32 + 1;
+        let mut half = vec![];
         let rows = (0..n)
             .map(|k| {
                 let mh = m::pow(10.0, lm0 + step * f64::from(k));
                 let h = hs.median(mh, &format!("web-light-{k}"));
+                half.push(hs.cosmo.time_of_scale(1.0 / (1.0 + h.z_half)));
                 let g = galaxy::evolve(hs.cosmo, gp, &h);
                 g.history
                     .iter()
@@ -90,7 +97,22 @@ impl MedianGalaxies {
                     .collect()
             })
             .collect();
-        MedianGalaxies { lm0, step, rows }
+        MedianGalaxies {
+            lm0,
+            step,
+            rows,
+            half,
+        }
+    }
+
+    /// When the median halo of `m0` today had half its mass, Gyr (linear in
+    /// log mass between rows).
+    pub fn half_mass_gyr(&self, m0: f64) -> f64 {
+        let x = ((m::log10(m0.max(1.0)) - self.lm0) / self.step).max(0.0);
+        let i = (x as usize).min(self.half.len() - 1);
+        let j = (i + 1).min(self.half.len() - 1);
+        let f = (x - i as f64).clamp(0.0, 1.0);
+        self.half[i] + (self.half[j] - self.half[i]) * f
     }
 
     /// One row at time t: shares linear in time between its states (none
@@ -174,7 +196,15 @@ pub fn cube_galaxies(
                         continue;
                     }
                     let p = web.displaced(&mut cache, h.position, t, d);
-                    let (stars, sfr, quenched) = median.at(h.mass, t_gyr);
+                    // Assembly bias: a halo that gathered half its mass
+                    // earlier than the median for its mass (dense places, G2's
+                    // formation shift) holds a galaxy further along, one that
+                    // gathered it later (voids) a younger one, so its galaxy
+                    // is read that much later or earlier on the median's
+                    // history (age matching, Hearin and Watson 2013).
+                    let own_half = c.time_of_scale(1.0 / (1.0 + h.z_half));
+                    let ahead = median.half_mass_gyr(h.mass) - own_half;
+                    let (stars, sfr, quenched) = median.at(h.mass, (t_gyr + ahead).max(0.0));
                     out.push(WebGalaxy {
                         position: p,
                         halo_msun: mh,

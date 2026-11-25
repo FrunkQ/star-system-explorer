@@ -1,0 +1,434 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.glow",
+ "about": "How aurorae shine (MF9 part 2b): the power that comes down from the star's wind or the planet's spin, how deep the electrons reach, and which lines get out before collisions put them out.",
+ "atoms": [
+  {
+   "id": "sse.glow.electron_range",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "electron_energy",
+     "letter": "E"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "electron_range",
+     "letter": "Rm"
+    }
+   ],
+   "constants": {
+    "e": "sheet/e"
+   },
+   "models": {
+    "a": {
+     "value": 4.3e-07,
+     "grade": "measured",
+     "source": "Rees 1989 section 3.3, the fit's constant, g cm⁻²"
+    },
+    "b": {
+     "value": 5.36e-06,
+     "grade": "measured",
+     "source": "Rees 1989 section 3.3, the fit's scale, g cm⁻² keV⁻¹·⁶⁷"
+    },
+    "p": {
+     "value": 1.67,
+     "grade": "measured",
+     "source": "Rees 1989 section 3.3, the fit's power of energy"
+    },
+    "kev": {
+     "value": 1000.0,
+     "grade": "derived",
+     "source": "electronvolts in a kiloelectronvolt, the fit's unit of energy"
+    },
+    "volt": {
+     "value": 1.0,
+     "grade": "derived",
+     "source": "one volt: an electronvolt is the elementary charge across one volt"
+    },
+    "gcm2": {
+     "value": 10.0,
+     "grade": "derived",
+     "source": "kg m⁻² in one g cm⁻², the fit's unit of mass column"
+    }
+   },
+   "checks": [
+    {
+     "port": "electron_energy",
+     "min": 0,
+     "finite": true,
+     "says": "electron energy must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Rees, M. H. 1989, Physics and Chemistry of the Upper Atmosphere, Cambridge University Press, section 3.3: the range of an electron in air, R = 4.30e-7 + 5.36e-6 E^1.67 g cm⁻² with E in keV, a fit to measured ranges from about 0.2 to 50 keV. https://doi.org/10.1017/CBO9780511573118"
+   ],
+   "shown": "R = a + b E^1.67 (E in keV, R in g cm⁻²)",
+   "equation": {
+    "name": "How much air a falling electron gets through",
+    "formula": "x = E / (kev * e * volt)\nRm = gcm2 * (a + b * x ^ p)",
+    "inputs": {
+     "E": {
+      "kind": "aurora.electron_energy",
+      "unit": "eV",
+      "name": "energy of the electrons raining into the air"
+     },
+     "a": {
+      "kind": "model.range_constant",
+      "unit": "1",
+      "name": "the fit's constant (g cm⁻²)"
+     },
+     "b": {
+      "kind": "model.range_scale",
+      "unit": "1",
+      "name": "the fit's scale (g cm⁻² per keV to the power p)"
+     },
+     "p": {
+      "kind": "model.range_power",
+      "unit": "1",
+      "name": "the fit's power of energy"
+     },
+     "kev": {
+      "kind": "model.ev_per_kev",
+      "unit": "1",
+      "name": "electronvolts in a kiloelectronvolt"
+     },
+     "volt": {
+      "kind": "model.one_volt",
+      "unit": "V",
+      "name": "one volt"
+     },
+     "e": {
+      "kind": "constant.e",
+      "unit": "C",
+      "name": "elementary charge"
+     },
+     "gcm2": {
+      "kind": "model.column_unit",
+      "unit": "kg m-2",
+      "name": "kg per square metre in one g per square centimetre"
+     }
+    },
+    "outputs": {
+     "Rm": {
+      "kind": "aurora.electron_range",
+      "unit": "kg m-2",
+      "name": "mass of air above each square metre the electrons get through before they stop"
+     }
+    },
+    "source": {
+     "text": "Rees, M. H. 1989, Physics and Chemistry of the Upper Atmosphere",
+     "doi": "10.1017/CBO9780511573118",
+     "where": "section 3.3"
+    },
+    "explain": {
+     "curious": "Faster electrons dig deeper into the air before they stop. Where they stop is where the aurora glows, so harder electrons make a lower aurora.",
+     "science": "Range-energy relation for electrons in air, as a mass column; the deposition ends where the column above equals the range."
+    },
+    "examples": [
+     {
+      "E": 5000.0,
+      "Rm": 0.0007921520999646991
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.glow.wind_power",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "wind_density",
+     "letter": "rho"
+    },
+    {
+     "port": "wind_speed",
+     "letter": "v"
+    },
+    {
+     "port": "standoff",
+     "letter": "Rs"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "aurora_power",
+     "letter": "P"
+    }
+   ],
+   "models": {
+    "share": {
+     "value": 0.01,
+     "grade": "assumed",
+     "source": "share of the wind's power on the bubble's cross-section that comes down as aurora (fudge register F59)"
+    }
+   },
+   "checks": [
+    {
+     "port": "wind_density",
+     "min": 0,
+     "finite": true,
+     "says": "wind density must be zero or more, got {}"
+    },
+    {
+     "port": "wind_speed",
+     "min": 0,
+     "finite": true,
+     "says": "wind speed must be zero or more, got {}"
+    },
+    {
+     "port": "standoff",
+     "min": 0,
+     "finite": true,
+     "says": "stand-off distance must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Akasofu, S.-I. 1981, Energy coupling between the solar wind and the magnetosphere, Space Sci. Rev. 28, 121: only a few per cent of the wind's power on the magnetosphere's cross-section gets in; the share that comes down as aurora is a stand-in (fudge register F59). doi:10.1007/BF00218810"
+   ],
+   "shown": "P = f · ½ ρ v³ · π R_s²",
+   "equation": {
+    "name": "How much of the star's wind lights the aurora",
+    "formula": "P = share * rho * v * v * v * pi * Rs * Rs / 2",
+    "inputs": {
+     "rho": {
+      "kind": "wind.density",
+      "unit": "kg m-3",
+      "name": "mass density of the star's wind here"
+     },
+     "v": {
+      "kind": "wind.speed",
+      "unit": "m s-1",
+      "name": "speed of the star's wind"
+     },
+     "Rs": {
+      "kind": "body.magnetopause_radius",
+      "unit": "m",
+      "name": "distance from the centre to the bubble's nose"
+     },
+     "share": {
+      "kind": "model.aurora_wind_share",
+      "unit": "1",
+      "name": "share of the wind's power that comes down as aurora"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "aurora.power",
+      "unit": "W",
+      "name": "power coming down into the air as aurora, both hemispheres"
+     }
+    },
+    "source": {
+     "text": "Akasofu, S.-I. 1981, Energy coupling between the solar wind and the magnetosphere",
+     "doi": "10.1007/BF00218810",
+     "where": "section 3"
+    },
+    "explain": {
+     "curious": "The star's wind blows on the planet's magnetic bubble like wind on a sail. A small share of its power leaks in and rains down near the poles as the aurora.",
+     "science": "The wind's kinetic power through the magnetosphere's cross-section, times a coupling share."
+    },
+    "examples": [
+     {
+      "rho": 8e-21,
+      "v": 450000.0,
+      "Rs": 60000000.0,
+      "P": 41223978800.405266
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.glow.spin_power",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "plasma_source_rate",
+     "letter": "Md"
+    },
+    {
+     "port": "rotation_period",
+     "letter": "Prot"
+    },
+    {
+     "port": "corotation_limit",
+     "letter": "rH"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "aurora_power",
+     "letter": "P"
+    }
+   ],
+   "checks": [
+    {
+     "port": "plasma_source_rate",
+     "min": 0,
+     "finite": true,
+     "says": "plasma source rate must be zero or more, got {}"
+    },
+    {
+     "port": "corotation_limit",
+     "min": 0,
+     "finite": true,
+     "says": "corotation limit must be zero or more, got {}"
+    }
+   ],
+   "positive": [
+    {
+     "port": "rotation_period",
+     "says": "rotation period"
+    }
+   ],
+   "references": [
+    "Hill, T. W. 2001, The Jovian auroral oval, J. Geophys. Res. 106, 8101: the main oval is powered by spinning up plasma loaded at Ṁ out to the corotation limit, about Ṁ (Ω ρ_H)², of order 10¹⁴ W for Jupiter. doi:10.1029/2000JA000302"
+   ],
+   "shown": "P = Ṁ (Ω ρ_H)²",
+   "equation": {
+    "name": "How much of a giant's spin lights its main aurora",
+    "formula": "w = 2 * pi / Prot\nP = Md * (w * rH) * (w * rH)",
+    "inputs": {
+     "Md": {
+      "kind": "magnetosphere.plasma_source_rate",
+      "unit": "kg s-1",
+      "name": "plasma its moons add each second"
+     },
+     "Prot": {
+      "kind": "body.rotation_period",
+      "unit": "s",
+      "name": "time for one turn"
+     },
+     "rH": {
+      "kind": "magnetosphere.corotation_limit",
+      "unit": "m",
+      "name": "where the plasma stops keeping up with the spin"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "aurora.power",
+      "unit": "W",
+      "name": "power coming down into the air as aurora, both hemispheres"
+     }
+    },
+    "source": {
+     "text": "Hill, T. W. 2001, The Jovian auroral oval",
+     "doi": "10.1029/2000JA000302",
+     "where": "section 2"
+    },
+    "explain": {
+     "curious": "A giant planet's field drags gas from its moons round with it. Spinning that gas up takes power from the planet's own spin, and the currents that carry it light the main aurora.",
+     "science": "Power to bring plasma loaded at Ṁ up to corotation speed at the Hill distance."
+    },
+    "examples": [
+     {
+      "Md": 1000.0,
+      "Prot": 36000.0,
+      "rH": 2000000000.0,
+      "P": 121846967914683.45
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.glow.line_survival",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "lifetime",
+     "letter": "tau"
+    },
+    {
+     "port": "quenching",
+     "letter": "k"
+    },
+    {
+     "port": "number_density",
+     "letter": "n"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "surviving_share",
+     "letter": "s"
+    }
+   ],
+   "checks": [
+    {
+     "port": "lifetime",
+     "min": 0,
+     "finite": true,
+     "says": "lifetime must be zero or more, got {}"
+    },
+    {
+     "port": "quenching",
+     "min": 0,
+     "finite": true,
+     "says": "quenching rate coefficient must be zero or more, got {}"
+    },
+    {
+     "port": "number_density",
+     "min": 0,
+     "finite": true,
+     "says": "number density must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Kalogerakis, K. S. et al. 2009, Ann. Geophys. 27, 2183: whether a long-lived line is seen depends on its radiative lifetime against how often the excited atom is knocked out of its state by collisions, which sets the red oxygen line's height. doi:10.5194/angeo-27-2183-2009",
+    "Kawamura, S. et al. 2020, Earth Planets Space 72: radiative lifetimes of the green (0.7 s) and red (about 110 s) oxygen lines and their heights. doi:10.1186/s40623-020-01229-8"
+   ],
+   "shown": "s = 1 / (1 + τ k n)",
+   "equation": {
+    "name": "How much of a line's light gets out before collisions put it out",
+    "formula": "s = 1 / (1 + tau * k * n)",
+    "inputs": {
+     "tau": {
+      "kind": "light.radiative_lifetime",
+      "unit": "s",
+      "name": "how long the excited atom waits before it gives off its light"
+     },
+     "k": {
+      "kind": "light.quenching_rate_coefficient",
+      "unit": "m3 s-1",
+      "name": "how readily a collision takes the energy away"
+     },
+     "n": {
+      "kind": "atmosphere.number_density",
+      "unit": "m-3",
+      "name": "molecules per cubic metre of air"
+     }
+    },
+    "outputs": {
+     "s": {
+      "kind": "light.surviving_share",
+      "unit": "1",
+      "name": "share of excited atoms that shine rather than being knocked out"
+     }
+    },
+    "source": {
+     "text": "Kalogerakis, K. S. et al. 2009, Ann. Geophys. 27, 2183",
+     "doi": "10.5194/angeo-27-2183-2009",
+     "where": "introduction"
+    },
+    "explain": {
+     "curious": "Oxygen's red light takes almost two minutes to come out. Low down, the air is so thick that a collision steals the energy first, so the red aurora only shines high up where the air is thin.",
+     "science": "Radiative decay against collisional quenching: the share that radiates is A / (A + k n) with A = 1/τ."
+    },
+    "examples": [
+     {
+      "tau": 110.0,
+      "k": 2e-17,
+      "n": 500000000000000.0,
+      "s": 0.47619047619047616
+     }
+    ]
+   }
+  }
+ ]
+}

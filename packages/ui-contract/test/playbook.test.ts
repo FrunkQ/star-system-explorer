@@ -106,3 +106,24 @@ test("a Reveal step: words, read back, never on the board", async () => {
   const pb = addPreset(emptyPlaybook(), "s1", { title: p.title, to: p.to, steps: p.steps }).pb;
   assert.deepEqual(playbookFrom(JSON.parse(JSON.stringify(pb))), pb);
 });
+
+test("Read aloud on screens (PB6): words over what the role shows, or with the preset's picture; pressed again they go", async () => {
+  const { sayOf, wordsOnly } = await import("../src/playbook.ts");
+  const quiet: Preset = { id: "k6", title: "The beacon", to: "bridge", steps: [{ say: { text: "It repeats." } }] };
+  const loud: Preset = { id: "k7", title: "The beacon", to: "bridge", steps: [{ say: { text: " It repeats every ninety seconds. ", on_screens: true } }] };
+  assert.ok(wordsOnly(quiet) && !wordsOnly(loud));
+  assert.equal(sayOf(loud), "It repeats every ninety seconds.");
+  assert.equal(presetWords(loud, bm), "Read aloud, on screens");
+  let b = send(emptyBoard({ scope: "k", title: "Kestrel" }), "role:bridge", { scope: "k", title: "Bridge view" });
+  b = fire(b, loud, bm);
+  const r = resolve(b, "bridge").shown;
+  assert.deepEqual(r, { scope: "k", title: "Bridge view", say: "It repeats every ninety seconds." }, "the place stays; the words go over it");
+  assert.ok(isUp(b, loud));
+  b = fire(b, loud, bm);
+  assert.deepEqual(resolve(b, "bridge").shown, { scope: "k", title: "Bridge view" });
+  // With a Show step, the words ride on the bookmark's picture.
+  const both: Preset = { id: "k8", title: "Tarn IV", to: "everyone", steps: [{ show: { bookmark: "b1" } }, { say: { text: "Look.", on_screens: true } }] };
+  const e = fire(emptyBoard({ scope: "k" }), both, bm);
+  assert.equal("say" in resolve(e, "bridge").shown ? (resolve(e, "bridge").shown as { say?: string }).say : null, "Look.");
+  assert.deepEqual(playbookFrom(JSON.parse(JSON.stringify(addPreset(emptyPlaybook(), "s1", loud).pb))).chapters[0]!.pages[0]!.sections[0]!.presets[0]!.steps, loud.steps);
+});

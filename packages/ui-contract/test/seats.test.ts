@@ -240,3 +240,42 @@ test("a sealed seat's device receives no seed and no unfiltered fact", async () 
     await gk.close();
   }
 });
+
+test("the role card (PB7): a role may share another's knowledge; changes keep the seat's id; one layout per role", async () => {
+  const { addSeat, defaultPlan, oneLayoutPerRole, updateSeat } = await import("../src/seats.ts");
+  let p = addSeat(defaultPlan(), { label: "Bridge" });
+  p = addSeat(p, { label: "Telescope", audience: "bridge" });
+  assert.deepEqual(
+    p.audiences.map((a) => a.id),
+    ["everyone", "bridge"],
+    "no audience of its own",
+  );
+  assert.equal(p.seats.find((s) => s.id === "telescope")!.audience, "bridge");
+  p = updateSeat(p, "bridge", { label: "Command", names: true, autoNames: ["u:k"], brand: { name: "Vesh Navy" }, screen: "players.survey.screen.json", embedOrigins: ["https://vtt.example"] });
+  const c = p.seats.find((s) => s.id === "bridge")!;
+  assert.equal(c.label, "Command");
+  assert.equal(p.audiences.find((a) => a.id === "bridge")!.label, "Command", "its own audience is renamed with it");
+  assert.deepEqual(c.may_send, ["set_value"]);
+  assert.deepEqual(c.auto_approve, [{ intent: "set_value", scope: ["u:k"], fields: ["name"] }]);
+  assert.deepEqual([c.brand, c.screens, c.embed_origins], [{ name: "Vesh Navy" }, ["players.survey.screen.json"], ["https://vtt.example"]]);
+  p = updateSeat(p, "bridge", { names: false, brand: null, screen: null, embedOrigins: [] });
+  const d = p.seats.find((s) => s.id === "bridge")!;
+  assert.deepEqual([d.may_send, d.auto_approve, d.brand, d.screens, d.embed_origins], [[], undefined, undefined, undefined, undefined]);
+  assert.equal(updateSeat(p, "nobody", { label: "x" }), p);
+  // The letterhead's two brand fields (AT6): an accent colour and a motto, checked.
+  const { checkBrand } = await import("../src/brand.ts");
+  assert.deepEqual(checkBrand({ name: "Hauler Co", accent: "#c0392b", motto: "Moving cargo since 2240" }), []);
+  assert.equal(checkBrand({ name: "Hauler Co", accent: "red", motto: "x".repeat(61) }).length, 2);
+  // A seat with two screens becomes two roles sharing its audience.
+  const two = addSeat(defaultPlan(), { label: "Vesh", screens: ["players.screen.json", "players.survey.screen.json"] });
+  const one = oneLayoutPerRole(two);
+  assert.deepEqual(
+    one.seats.map((s) => [s.id, s.label, s.audience, s.screens]),
+    [
+      ["table", "Table", "everyone", undefined],
+      ["vesh", "Vesh", "vesh", ["players.screen.json"]],
+      ["vesh-survey", "Vesh: survey", "vesh", ["players.survey.screen.json"]],
+    ],
+  );
+  assert.equal(oneLayoutPerRole(one), one);
+});

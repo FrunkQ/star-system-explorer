@@ -56,7 +56,8 @@
       cube = r;
     });
   });
-  // True lights the cube by its galaxies (V9w light from haloes), asked for apart so the parcels show first. A bigger
+  // True lights the cube by its galaxies and 3D marks the big ones (V9w light from haloes), asked for apart so the
+  // parcels show first. A bigger
   // cube keeps to the brighter galaxies, as a survey of a bigger volume does: the smallest halo drawn grows with the
   // volume, so the count stays near the same.
   const galaxyFloor = (e: string) => 1e11 * Math.max(1, (Number(e) / 100) ** 3);
@@ -74,7 +75,9 @@
   }
   let ggen = 0;
   $effect(() => {
-    if (shownView.style !== "true" || !cube) return;
+    // Not while playing: each step's galaxies take seconds, so Play runs on the parcels and the galaxies come when
+    // it stops.
+    if (!turned || !cube || playing) return;
     const e = extent;
     const s = step;
     const g = ++ggen;
@@ -117,7 +120,6 @@
     while (playing && step < STEPS.length - 1) {
       // Grow the next frame before showing it, then hold it briefly.
       await (turned ? cubeAt(extent, step + 1) : slice(extent, step + 1));
-      if (shownView.style === "true") await galaxiesAt(extent, step + 1);
       if (!playing) break;
       step += 1;
       await new Promise((r) => setTimeout(r, 450));
