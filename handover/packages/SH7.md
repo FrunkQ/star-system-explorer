@@ -27,7 +27,8 @@ Earth memorials as text). Data: `store-packs/sol-today/memorials.json` (RS9 part
   has no layer seam yet: agree one with the chart room ("Make the SSE4 test drive work end to end") rather than editing
   `chart/`.
 - "Tonight" in the Sky view: needs Earth's place on the date and a constellation table (IAU boundaries, sourced), and an
-  H magnitude per body for "too faint for the eye"; ask the pack thread for H with its source.
-- Naming dates: the pack thread to read each from the Minor Planet Center / WGSBN citation (two sources), so a name
-  appears on its day. Until then every name shows always, with the pack's reason.
+  H magnitude per body for "too faint for the eye": the pack now has `h_mag` and `h_why` per memorial (PR 529, H 11.9
+  to 15.9, so every one is far too faint for the eye).
+- Naming dates: the pack thread could not reach the Minor Planet Center citations as a second source on 25 Nov, so
+  `since_s` stays null. Until it is filled, every name shows always, with the pack's reason.
 - Hadley at Survey and Site (the Fallen Astronaut and plaque) waits on the pack's `object_left` rows and site levels.

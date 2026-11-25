@@ -21,8 +21,8 @@
 
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { constant, DEFAULT_VIEW, LAMP_DISC, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, shipRecordOf, designOf, factOf, DESIGN_FIELD, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun, designShip, shipMesh, readPropellants, type DesignRules, type DesignOverrides, type DesignShip, type LanderShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
+  import { constant, DEFAULT_VIEW, LAMP_DISC, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, shipRecordOf, designOf, factOf, DESIGN_FIELD, sampleNatural, sampleColour, softenGround, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { airFactsOf, airFromOptics, caveCut, caveOpenings, nearestOpening, openingLine, type CaveOpening, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun, designShip, shipMesh, readPropellants, readGroundOptics, withGround, type MatterReader, type DesignRules, type DesignOverrides, type DesignShip, type LanderShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
   import { LAND_TRUE } from "../../../renderer/src/recipes.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
@@ -75,8 +75,12 @@
       if (g !== gen) return;
       if (!t.ok) return void (failed = t.message);
       if (!t.tiles.length) return void (failed = `${sub.label} has no surface the kernel has built`);
-      globes.set(key, t.tiles);
-      tiles = t.tiles;
+      // Bare ground in its measured colour from the data sheet, softened (natural outlines), as True and the Body globe draw it.
+      const r = reads as Partial<MatterReader>;
+      const laid = r.readMatter ? withGround(t.tiles, await readGroundOptics(r as MatterReader)) : t.tiles.map((x) => softenGround(x));
+      if (g !== gen) return;
+      globes.set(key, laid);
+      tiles = laid;
       // A seat takes the world as the GM's reads found it; it never reads the world's record (nor its landmarks).
       if (watching) return void (world = fw ? (JSON.parse(fw) as World) : null);
       const rs = await ctx!.session.resolvedSystem(sys);
@@ -184,6 +188,7 @@
     const t = tiles;
     const c = mapCanvas;
     if (!t || !c) return;
+    // Natural outlines: ground colour already softened where the tiles were read; edges by sampleNatural below.
     const globe = [0, 1, 2, 3, 4, 5].map((f) => t.find((x) => x.key.face === f && x.key.level === 0));
     c.width = MAP_W;
     c.height = MAP_H;
@@ -193,7 +198,8 @@
       const lat = ((90 - (180 * (y + 0.5)) / MAP_H) * Math.PI) / 180;
       for (let x = 0; x < MAP_W; x++) {
         const lon = ((-180 + (360 * (x + 0.5)) / MAP_W) * Math.PI) / 180;
-        const s = sampleAt(globe, [Math.cos(lat) * Math.cos(lon), Math.cos(lat) * Math.sin(lon), Math.sin(lat)]);
+        // Natural outlines (ui-contract globe.ts): coasts and ice edges between the kernel's cells, never moving a fact.
+        const s = sampleNatural(globe, [Math.cos(lat) * Math.cos(lon), Math.cos(lat) * Math.sin(lon), Math.sin(lat)]);
         const k = (y * MAP_W + x) * 4;
         if (!s) continue;
         const col = sampleColour(s.tile, s.i);

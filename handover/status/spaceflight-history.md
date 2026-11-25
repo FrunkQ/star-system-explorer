@@ -10,12 +10,12 @@ SH1, SH2 and SH6 are built (PR 510, merged 25 Nov 04:35 UTC). All 13 recommendat
 | Design note and mockup | done 25 Nov, accepted | |
 | SH1 `rollCall(campaign, t)` | done 25 Nov, PR 510 | `packages/SH1-SH2.md` |
 | SH2 Roll call screen and rail entry | done 25 Nov, PR 510; front door so far is `?spaceflight=<folder>` only | `packages/SH1-SH2.md` |
-| SH3 the count strip on the ruler | queued; with the chart room | |
-| SH4 a person's flights; Find knows people and dates | queued; with the manifest thread | |
+| SH3 the count strip on the ruler | done 25 Nov as a strip in the Roll call panel; along the ruler is an open seam (fixed ruler row height in App) | `packages/SH3.md` |
+| SH4 a person's flights; Find knows people and dates | open seam, held for the new account (coordinator 25 Nov): needs the manifest person card and Find, whose builder threads are done; `rollcall.ts` already has every stay by person (`ix.flights`) | |
 | SH5 records as sifters; On this day | done 25 Nov as pure look-ups (most at once, last empty day, longest stay, most in all, On this day); as kernel sifters with SH9 | `packages/SH5.md` |
 | SH6 In memory; the day of a loss | done 25 Nov, PR 510 | `packages/SH6.md` |
-| SH7 Names carried (real memorials) | part 1 done 25 Nov (read, orbits, In memory part); part 2 (chart layer, "tonight", naming dates) next | `packages/SH7.md` |
-| SH8 front door address and deep links | queued; chart room | |
+| SH7 Names carried (real memorials) | part 1 done 25 Nov (read, orbits, In memory part); part 2 is an open seam held for the new account (coordinator 25 Nov): chart/ has no overlay layer to add marks to; `orbitAt` and `h_mag` (PR 529) are ready; naming dates wait on the pack thread | `packages/SH7.md` |
+| SH8 front door address and deep links | part 1 done 25 Nov: `?spaceflight=<folder>` opens Sol in Roll call (App edit agreed with the coordinator); short address, deep links and start sheet card open | `packages/SH8.md` |
 | SH9 tours, record sifters, the edge of space | queued; with the spaceflight pack thread | |
 
 Data from the spaceflight pack thread (design section 10), all on main with PR 506: deaths with `during` and two sources, people with no flight (training and ground deaths), `how: "lost"`, the people-in-space step list, the edge of space as a pack value, `memorials.json`. Open items for later packages are in the SH1-SH2 and SH6 logs (campaign flight logs via `session.flightLog`, "Also in flight" in pack mode, the front door opening Sol).
