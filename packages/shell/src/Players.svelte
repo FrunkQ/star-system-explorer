@@ -36,7 +36,7 @@
   import PerfReadout from "./PerfReadout.svelte";
   import { perf } from "../../ui-contract/src/index.ts";
   import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
-  import { landingShowOf, type LandingGround, type PartyShip } from "../../ui-contract/src/index.ts";
+  import { groundGrant, landingShowOf, type LandingGround, type PartyShip } from "../../ui-contract/src/index.ts";
   import { DEFAULT_JOIN, joinLine, joinWordsOf, type JoinWords, type SeatBrand } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
@@ -133,7 +133,10 @@
   $effect(() => {
     const w = watching;
     if (!sessionReady || !session) return;
-    session.grantLanding?.(w ? { system: w.system, body: w.body } : null);
+    // A landing's world, or the world an "In orbit" send names when the table knows it (LR4): that one map, no more.
+    const sh = shown && "scope" in shown ? shown : null;
+    const known = new Set((scene?.subjects ?? []).map((x) => x.address));
+    session.grantLanding?.(w ? { system: w.system, body: w.body } : groundGrant(sh, (a) => known.has(a)));
   });
   const landingNow = () => watching;
   const ground: LandingGround | undefined = isSealed

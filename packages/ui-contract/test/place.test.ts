@@ -76,3 +76,12 @@ test("a landing site rides in the link after its screen (Voyages' Land here)", (
   assert.equal(parsePlaceHash("#chart/world/s/w~surface")?.screen, "surface");
   assert.equal(placeHash({ scale: "world", system: "s", world: "w", site: { lat_deg: 1, lon_deg: 2 } }), "#chart/world/s/w", "a site needs its screen");
 });
+
+test("a whole landing rides in the link: its hour and its lander too (LR5, a bookmark or a Playbook preset)", () => {
+  const p: Place = { scale: "world", system: "s", world: "w", screen: "surface", site: { lat_deg: 20.43, lon_deg: -108.71, time: "midday", lander: "party" } };
+  const h = placeHash(p);
+  assert.equal(h, "#chart/world/s/w~surface?site=20.43,-108.71&time=midday&lander=party");
+  assert.deepEqual(parsePlaceHash(h), p);
+  assert.deepEqual(parsePlaceHash("#chart/world/s/w~surface?site=1,2&lander=capsule")?.site, { lat_deg: 1, lon_deg: 2, lander: "capsule" });
+  assert.deepEqual(parsePlaceHash("#chart/world/s/w~surface?site=1,2&time=teatime&lander=%3Cx%3E")?.site, { lat_deg: 1, lon_deg: 2 }, "an unknown hour or a strange lander is dropped");
+});
