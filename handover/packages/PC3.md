@@ -1,4 +1,4 @@
-# PC3 and PC4 part 1: the card, the wall, Keep as postcard, and the visit
+# PC3 and PC4: the card, the wall, Keep as postcard, and the visit
 
 Thread "Build postcards and hold backdrops", 25 Nov 2026. Design `design/SSE4-postcards-design.md` sections 4 to 7
 and 12A. Built on PC1 (`packages/PC1.md`). Golden-neutral.
@@ -37,8 +37,31 @@ and 12A. Built on PC1 (`packages/PC1.md`). Golden-neutral.
 - `tests/ui/postcards.e2e.mjs` runs in CI after render.e2e (one line added to `ci.yml` with Alex's own yes, 25 Nov
   01:51: "yes you can test postcards - we need them for testing").
 
+## PC4 part 2: the visit drawn live (25 Nov)
+A postcard sent from a campaign, opened in someone else's browser, now draws its front live, and it is the sender's
+picture: the same world from the same camera (design section 4 rule 4).
+- `shell/src/postcards/visiting.ts`: a visiting kernel, started on the first visit that needs one (one per universe
+  visited, for the page's life), on the GM seat of its own. The campaign's kernel is never written to.
+- What Send now packs with a clip (`world.origin`, ui-contract `PostcardOrigin`): the universe (id and seed), the
+  system, the address each clip node had, and every authored fact those bodies and the system hold that an edit may
+  name, through `goesInOrigin` (never notes, descriptions, anything "gm", secrets or Known-to; an import's own
+  bookkeeping fields stay home). Also `world.about` (the clip node the camera is about) and `world.age_s` (the star's
+  age). Only bodies the seat sees go: the clip is already through the seat.
+- The visit opens that universe on the visiting kernel and sets the origin's facts at the same addresses, as authored
+  facts at time 0, so the kernel makes the same ground. First try without them drew a bare rock: the clip's few fields
+  (name, orbit, mass, radius, day) leave out water and air.
+- A postcard with no origin (none are made now) falls back to `clipAsSystem`: the clip laid into a fresh system of
+  the visiting universe, its star on the system's own address; it needs `age_s`, and says so plainly without it.
+- `views/body/src/surface.ts` keeps surfaces per kernel as well as per address (`surfaceKept(ctx, system, address)`),
+  since a visit reads the same addresses on another kernel.
+- The e2e pastes the file Send saved into a fresh browser and checks the front is drawn and matches the sender's
+  (24 by 24 grey thumbnails, mean difference under 0.03).
+
 ## Not yet
-- A visit of an address place not open here draws only its stamp: resolving another universe's system for a visit
-  needs a visiting session (PC4 part 2). A clip visit is kept with Keep this system (the paste).
+- An address postcard (an untouched generated place) still draws only its stamp: nothing makes one yet, and its
+  `root` is the kernel's root, not the seed a visit would open. Give it the universe's id and seed when Send learns
+  to make one (a place in a generated system not adopted into the campaign).
+- A visit of a postcard made in System 3D waits for PC2 part 2 (photographView); its pose is in the system view's
+  drawing frame, not the globe's (renderer thread, 25 Nov).
 - "Make a postcard" on a bookmark row is the Run desk's Bookmarks list (asked; `postcardBlocker` and `fixDate` are
   there for it). Band switch on the front waits for other bands on the globe. Pass-by-pass reasons wait for PC2.

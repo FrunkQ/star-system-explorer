@@ -3,4 +3,13 @@
 /**
  * `adopt`'s formation request: the `run_formation` fields.
  */
-export type FormationRequest = { seed: string, system?: string, block?: string, birth?: unknown, now_gyr?: number, envelope?: unknown, inherit_pins?: unknown, star_pins?: unknown, pins?: unknown, };
+export type FormationRequest = { seed: string, 
+/**
+ * A drawn star of the campaign's galaxy (its system address, as
+ * `star_cell` lists it) to grow this system from: the kernel promotes
+ * it if it is not yet, the system's address becomes the star's, and
+ * the formation inherits the star's birth (`Stars::birth`: population,
+ * mass, age, metals) with `now_gyr` the galaxy's now plus campaign time
+ * elapsed, unless given. Not with `birth` or `envelope`.
+ */
+from_star?: string, system?: string, block?: string, birth?: unknown, now_gyr?: number, envelope?: unknown, inherit_pins?: unknown, star_pins?: unknown, pins?: unknown, };

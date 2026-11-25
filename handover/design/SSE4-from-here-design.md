@@ -1,6 +1,6 @@
 # SSE4 "From here": standing inside a world, seeing and hearing it
 
-Written 25 Nov 2026 by the design thread "Design views and sounds from inside worlds" (Fable, design only) at Alex's request. **PROPOSED, not yet accepted.** Track code **FH** (a code only, never shown in the product). Mockups: project files `sse4/handover-screens/FH-screens/` (13 screens and `from-here-mockup.html`). Status row: `handover/status/from-here.md`.
+Written 25 Nov 2026 by the design thread "Design views and sounds from inside worlds" (Fable, design only) at Alex's request. **ACCEPTED by Alex 25 Nov 2026 12:15 UTC** ("otherwise yup to your questions": yes to all 14, with the three steers in section 17A, which wins where the rest differs). Track code **FH** (a code only, never shown in the product). Mockups: project files `sse4/handover-screens/FH-screens/` (13 screens and `from-here-mockup.html`). Status row: `handover/status/from-here.md`.
 
 Read with: `SSE4-surfaces-and-rendering.md` 4.1 (land anywhere, walk about), `SSE4-sound-design.md` section 4 (the atmosphere filter), `SSE4-visual-polish-design.md` 16.7 (the Exposure control), `SSE4-postcards-design.md` (a view that travels), `handover/interface-style.md` rule 12 (one set of view controls).
 
@@ -130,7 +130,8 @@ A vertical ladder at the right of the standing view, opened and closed with the 
 
 - It draws the column to scale in pressure (log) for deep air, or height for a thin one, whichever the column makes readable.
 - Hatched bands are cloud and haze decks, at their true tops and bases.
-- A handle marks the station. Drag it, or use ▲ ▼, and the view, the aids and the sound all follow live. On a world with ground the handle rests at the bottom by default ("You · ground") and can be lifted into the air: the same control gives the view from a balloon over Titan or from above Venus's clouds.
+- A handle marks the station. Drag it, or use ▲ ▼, and the view, the aids and the sound all follow live.
+- **You see yourself go down; the view never jumps** (Alex, 25 Nov: "we will see ourselves get lower rather than jump"). Dragging the handle moves the eye through every level between, at the speed of the drag. Pressing a named level, or ▲ ▼, flies the eye there as a sinking camera: the deck comes up, the view whites out inside it, the base opens below, the light and colour change all the way, the markers and the sound follow. The speed is a readable one, not the true one (a real descent takes hours), it is marked as sped up, it can be skipped, and under reduced motion it is a plain fade. When a ship of the campaign is the thing descending, the same camera follows the kernel's planned descent. On a world with ground the handle rests at the bottom by default ("You · ground") and can be lifted into the air: the same control gives the view from a balloon over Titan or from above Venus's clouds.
 - **Named levels** are read off the column and carry a "Why?":
 
 | Level | Read from | Jupiter (sample), estimate |
@@ -204,7 +205,17 @@ The sound design note (18 Nov) section 4 already sets the physics and the stage 
 - **Never sound alone** (sound design principle 5): the chart shows the clip's spectrum at home and here, the words say the speed, the delay and how far a shout carries, and captions are available. All of that works with sound switched off, which is the default.
 - It follows the sounding line live. Going down through Jupiter the same spoken line gets faster, brighter and louder.
 
-**The clips** (shipped, a few seconds each, recorded for the project or public domain): a spoken line, a sung phrase, a flute, a guitar, a hand clap, a dropped spanner. Or your own file or microphone, processed on the device and never sent anywhere.
+**The clips** (shipped, a few seconds each): a spoken line, a sung phrase, a flute, a guitar, a hand clap, a dropped spanner. Or your own file or microphone, processed on the device and never sent anywhere.
+
+**Where the shipped clips come from (Alex, 25 Nov 2026 12:10 UTC: agreed).** No film, television or game clips, however short and however credited: a clip carries the script, the recording and the performance, and "a few seconds with a credit" is not a rule that exists. Three sources only:
+
+1. **Recorded fresh for the project**: the plain spoken line, the sung phrase, the instruments and the knocks. These are the clean test clips, recorded close and dry so the filter has the whole range to work on.
+2. **Public-domain science fiction text, read fresh.** Alex's pick is the opening of H. G. Wells's *The War of the Worlds* ("No one would have believed in the last years of the nineteenth century..."). The novel's text is out of copyright in the UK. The 1938 radio play's script and recording, and the later musical version, are not ours to use, so the line is a new reading of Wells's own words, not a clip of either. Check each text's status before recording.
+3. **Real spaceflight audio**, credited to NASA with no suggestion of endorsement. Alex's caution stands: most of the famous lines came down a narrow radio link and are already thin and distorted, so the filter has little left to take away. So prefer recordings made in the cabin (onboard tapes, station and shuttle cabin audio) where they exist, and label every such clip with how it was recorded ("over the radio, 1969"). The chart shows the clip's own range, so the user sees why a radio clip changes less than a fresh one. The real Mars microphone recordings are offered as themselves ("recorded there"), played without the filter, as the check on it.
+
+Anyone who wants a film line at their own table can load it through "Your own…"; it stays on their device.
+
+**"Your own…" lists the campaign's sounds** (Alex, 25 Nov: "Any audio uploaded to the presentation/routing layer should be available under Your own"). Every sound already loaded for the Playbook and Switchboard (a pack's sounds, the GM's own files; Playbook note 4.7) appears there by name, beside "Choose a file" and "Microphone". One store of sounds, not two. A sound played "as heard here" to the table goes out through the Switchboard under its usual rules (a pack asset by name; a GM's own short file once).
 
 **Refinements to the 18 Nov physics**
 
@@ -221,7 +232,7 @@ The sound design note (18 Nov) section 4 already sets the physics and the stage 
 
 Everything below is on the existing standing view and uses the shared controls (mockups 01 to 11, phone-1).
 
-- **View controls row**: View style, Scale, **Exposure** (Long exposure, Eye, As lit), then **Aids**, then the folded "HUD on · Visible" chip. Aids is one segmented set of four toggles. On a phone it is a row of its own. A view that cannot do an aid leaves it in place, quiet, with the reason (interface rule 12). Aids, like the other view choices, are the viewer's own, kept on their device.
+- **View controls row**: View style, Scale, **Exposure** (Long exposure, Eye, As lit), then the folded chip. **Aids fold under the HUD chip** (Alex, 25 Nov: "the aids line at the top works fine - fold under hud"): the chip opens HUD, Band and the four aid toggles, and its words say what is on ("HUD on · Visible · Card, Markers"). **Every aid is off until switched on**: the uninterrupted view is the default ("uninterrupted view is better"). The choice is a HUD option of the standing view at planet level and is **remembered** on the viewer's device, so a GM who uses the card sometimes finds it as they left it. A view that cannot do an aid leaves it in place, quiet, with the reason (interface rule 12). The mockups show the aids as their own row beside Exposure; the fold is the ruling.
 - **Light meter** (top left): one line in words ("About 1/20 of Earth's noon"), a scale with six things everyone knows (starlight, full Moon, dusk, office, overcast, Earth noon) and a mark for here, one sentence on what the light is like, and one on what the chosen exposure is doing. Science adds lux. Engine opens the spectrum.
 - **Sounding line** (right): section 6.
 - **Card and markers**: in the scene. Their words are HUD lines, so HUD off gives a clean photograph with the objects still in it.
@@ -268,12 +279,12 @@ Proposed. Names are today's threads on the old account; after the handover the s
 | FH5 | The eye: `sse.eye.*` blocks (brightness, colour, night vision), the observer row, patch-pair distances | Build light and nebulae (`light.md`) | none |
 | FH6 | Sheet rows: the card's substances with reflectance by wavelength (DS-FH1), gas relaxation rows for sound (DS-FH2), the standard lamp (DS-FH3) | Build the master matter data sheet (`data-sheet.md`) | none |
 | FH7 | Sound in a gas: `sse.sound.*` blocks, reach of a shout; folded into `read_from_here` | Build light and nebulae, or the kernel thread (question 9) | FH6 |
-| FH8 | The standing view takes a station at any height: camera afloat, the fog term by colour, sun as it is, Exposure gains As lit, Eye from FH5 with settling | Build photoreal renderer (`renderer.md`) | FH3, FH5; `finish.ts` (VP1) |
+| FH8 | The standing view takes a station at any height: camera afloat and the flown descent between levels, the fog term by colour, sun as it is, Exposure gains As lit, Eye from FH5 with settling | Build photoreal renderer (`renderer.md`) | FH3, FH5; `finish.ts` (VP1) |
 | FH9 | Decks from inside: volumes, shafts, towers, the thick-air sky, glow | Build giant bands, clouds and hazes (`true-air.md`), with the detail ladder thread | FH8; TA5, VP-A3 |
 | FH10 | Range markers: the post, buoy and floater as catalogue constructs, the floater sizing block, placing them, fading them from FH4, the labels | Build photoreal renderer (`renderer.md`); the sizing block with the kernel thread | FH4, FH8 |
 | FH11 | The colour card and glove: the object, lighting, the home corners, ties and the line of words, the Lamp | Build photoreal renderer (`renderer.md`) | FH5, FH6, FH8 |
-| FH12 | The controls: Aids in the shared view controls contract, the light meter, the sounding line, Go down on the rail for worlds with no ground, depth levels, first-visit hint | Make the SSE4 test drive work end to end (`chart-room.md`), with Build landing run-through | FH3; can start on fixtures |
-| FH13 | Listen: the panel, clips, Coming from a marker, the three listeners, the chart, captions; this is sound stage N4 delivered through FH | Make the SSE4 test drive work end to end (`chart-room.md`, owner of N1 and `packages/sound`) | FH7 |
+| FH12 | The controls: Aids as toggles under the HUD chip in the shared view controls contract, off by default and remembered, the light meter, the sounding line, Go down on the rail for worlds with no ground, depth levels, first-visit hint | Make the SSE4 test drive work end to end (`chart-room.md`), with Build landing run-through | FH3; can start on fixtures |
+| FH13 | Listen: the panel, clips, "Your own…" listing the Playbook's sounds, Coming from a marker, the three listeners, the chart, captions; this is sound stage N4 delivered through FH | Make the SSE4 test drive work end to end (`chart-room.md`, owner of N1 and `packages/sound`) | FH7 |
 | FH14 | Players and the table: aids on the players' page through the data view, a Playbook preset that plays a clip "as heard here" | Build Run desk playbook and players' side (`run-desk.md`) | FH12, FH13 |
 | FH15 | Postcards: pose fields for station, exposure and aids; the back's reason lines | Build postcards and hold backdrops (`postcards.md`) | PC1, FH8 |
 | FH16 | Orac knows the aids and the blocks; "show me what red looks like on this world" works | Build Orac, Minerva and Tars (`agents.md`) | FH12 |
@@ -333,7 +344,7 @@ The Consensus connector was not available in this design session, so **every ent
 - Bass, Sutherland, Zuckerwar et al. (1995), atmospheric absorption of sound; ISO 9613-1; Petculescu and Lueptow (2007); Bass and Chambers (2001); Maurice et al. (2022); Leighton and Petculescu (2009). The last four are already listed in the sound note.
 - Draper (1847), the temperature at which hot bodies begin to show light.
 
-## 17. Questions for Alex (each with a recommendation)
+## 17. Questions, all answered yes (25 Nov 2026 12:15 UTC; see 17A)
 
 1. **Aids on the standing view, no new screen**: Range markers, Colour card, Light meter, Listen as four switches beside Exposure. Recommend yes (it is what you asked for on 25 Nov).
 2. **Exposure gains a third stop, "As lit"**, beside Long exposure (still the default) and Eye. Recommend yes.
@@ -350,9 +361,19 @@ The Consensus connector was not available in this design session, so **every ent
 13. **Release**: FH1 to FH13 and FH15 for 4.0 in the three slices of section 12; players and Playbook (FH14) and Orac (FH16) as their threads reach them; under a sea and other eyes later. Recommend yes.
 14. **A builder thread**: open "Build views and sounds from inside worlds" (Opus) on the new account to own FH8, FH10, FH11 and the join-up, with the other packages going to the threads named. Recommend yes, since the renderer thread already carries a long queue.
 
+## 17A. Alex's rulings, 25 Nov 2026
+
+12:15 UTC, in his words: "aids should be toggleable. uninterrupted view is better... but it would effectively be a HUD option enabled at planet level (and remembered) - so the GM will use it sometimes - the aids line at the top works fine - fold under hud. Will we get transitions as we drop lower - we will see ourselves get lower rather than jump? Any audio uploaded to the presentation/routing layer should be available under Your own..." and then "otherwise yup to your questions".
+
+- **Yes to all 14 questions**, so each recommendation in section 17 is a ruling.
+- **Aids**: off by default, folded under the HUD chip, remembered (section 10). This refines question 1.
+- **Going down is seen, not jumped** (section 6).
+- **"Your own…" lists the sounds loaded for the Playbook and Switchboard** (section 9).
+- Earlier the same day, 12:10 UTC: the clip ruling (section 9, "Where the shipped clips come from").
+
 ## 18. Picking this up without the chat
 
-- This note and `handover/status/from-here.md` are the whole brief. Nothing is built.
+- This note and `handover/status/from-here.md` are the whole brief. The design is accepted; nothing is built. Section 17A wins where the rest differs.
 - The mockups are in project files `sse4/handover-screens/FH-screens/` (on Alex's PC under `C:\Development\sse4-project-files\` once copied). `from-here-mockup.html` opens in a browser; the address takes `#scene=venus|mars|titan|moon|dwarf|j05|j4|j20|j200|j1000`, `&expo=eye|lit|long`, `&card=0`, `&marks=0`, `&meter=0`, `&listen=1`, `&lamp=1`, `&theme=dark`, `&phone=1`, `&depth=science`, or `#sheet=1`.
 - SSE3's version is public at `FrunkQ/star-system-generator`, files named in section 2. Read its comments for the reasoning; do not port its code.
 - The existing code this builds on: `packages/renderer/src/gpu-surface.ts`, `surface-sky.ts`, `surface-patch.ts` (the standing view), `atmosphere.ts` and `crates/sse-light/src/air.rs`, `gas.rs` (air optics and light through gas), `crates/sse-weather/src/hooks.rs` (the column and sound cues), `packages/sound/` (the N1 engine).

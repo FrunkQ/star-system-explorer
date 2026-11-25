@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Real scale, Visible, Long exposure",
+  "frame": "Sun",
+  "camera": "Voyager 1, about 40 AU out, 32 degrees above the ecliptic, looking back past the Sun at Earth",
+  "date": "1990-02-14",
+  "needs": [
+    "lens effects (off by grade) to match the streak"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "system": "Ring Nebula (M57)",
+  "view": "Nebula view, Infrared band and Composite",
+  "camera": "from Earth, 2,600 light years",
+  "needs": [
+    "infrared emission of dust and molecular hydrogen in nebulae"
+  ]
+}

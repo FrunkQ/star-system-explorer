@@ -5,6 +5,7 @@ import type { FormationRequest } from "./FormationRequest";
 import type { HoldPoint } from "./HoldPoint";
 import type { InputSpec } from "./InputSpec";
 import type { JobSpec } from "./JobSpec";
+import type { ReferenceTile } from "./ReferenceTile";
 import type { SkyCone } from "./SkyCone";
 import type { SurfaceTile } from "./SurfaceTile";
 import type { TileRequest } from "./TileRequest";
@@ -54,7 +55,16 @@ block?: string, birth?: unknown, now_gyr?: number, envelope?: unknown, inherit_p
 /**
  * F9 `Pins`: worlds to honour, candidate histories to search.
  */
-pins?: unknown, } | { "op": "read_world_stack", body?: string, 
+pins?: unknown, 
+/**
+ * A drawn star of the campaign's galaxy (its system address, as
+ * `star_cell` lists it) to grow this system from: the kernel promotes
+ * it if it is not yet, the system's address becomes the star's, and
+ * the formation inherits the star's birth (`Stars::birth`: population,
+ * mass, age, metals) with `now_gyr` the galaxy's now plus campaign time
+ * elapsed, unless given. Not with `birth` or `envelope`.
+ */
+from_star?: string, } | { "op": "read_world_stack", body?: string, 
 /**
  * `earth`, `europa`, `mars`, `tarn`, `titan` or `venus`.
  */
@@ -100,7 +110,7 @@ young?: unknown[], } | { "op": "adopt", import_v3?: string, formation?: Formatio
  * line: the line it was cut from plus its own edits. Nothing is
  * committed (editing design ED1: the exact answer on a pause).
  */
-branch?: string, } | { "op": "classify_preview", packs: unknown[], scheme: string, scope?: string, at_s?: number, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "ship_at_world", fixture?: string, nav?: unknown, system?: string, at_s?: number, ship: unknown, worlds: Array<string>, v_inf_m_s?: number, } | { "op": "jump_map", fixture?: string, nav?: unknown, system?: string, at_s?: number, rule: unknown, end?: boolean, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, 
+branch?: string, } | { "op": "reference_tiles", body: string, tiles: Array<ReferenceTile>, } | { "op": "classify_preview", packs: unknown[], scheme: string, scope?: string, at_s?: number, } | { "op": "elements_in", address: string, semi_major_axis_m: number, eccentricity: number, inclination_rad: number, ascending_node_rad: number, argument_of_periapsis_rad: number, mean_anomaly_at_epoch_rad?: number, measured_from?: unknown, centred_on?: string, host?: string, mass_kg?: number, true_on_s?: number, } | { "op": "expects", system: string, address: string, fields: Array<string>, at_s?: number, } | { "op": "class_sample", packs: unknown[], classes: Array<string>, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "ship_at_world", fixture?: string, nav?: unknown, system?: string, at_s?: number, ship: unknown, worlds: Array<string>, v_inf_m_s?: number, } | { "op": "jump_map", fixture?: string, nav?: unknown, system?: string, at_s?: number, rule: unknown, end?: boolean, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, 
 /**
  * The system an inline `nav` is, so the view's `frame` can be
  * keyed (needs an open universe); the Sol fixture's is measured.

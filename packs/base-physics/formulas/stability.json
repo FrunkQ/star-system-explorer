@@ -1594,6 +1594,271 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.stability.resonance",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "inner_period",
+     "letter": "pin"
+    },
+    {
+     "port": "outer_period",
+     "letter": "pout"
+    },
+    {
+     "port": "inner_turns",
+     "letter": "p"
+    },
+    {
+     "port": "outer_turns",
+     "letter": "q"
+    },
+    {
+     "port": "inner_mass",
+     "letter": "m1"
+    },
+    {
+     "port": "outer_mass",
+     "letter": "m2"
+    },
+    {
+     "port": "host_mass",
+     "letter": "M"
+    },
+    {
+     "port": "eccentricity",
+     "letter": "ecc"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "offset",
+     "letter": "offset"
+    },
+    {
+     "port": "width",
+     "letter": "width"
+    },
+    {
+     "port": "chaotic_zone",
+     "letter": "zone"
+    },
+    {
+     "port": "verdict",
+     "letter": "verdict"
+    }
+   ],
+   "models": {
+    "f": {
+     "value": 1.5,
+     "grade": "assumed",
+     "source": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press: section 8.7, the width of a mean motion resonance (eq. 8.76 and its large-eccentricity limit; Table 8.5 for the strengths alpha f_d). doi:10.1017/CBO9781139174817"
+    },
+    "c": {
+     "value": 1.3,
+     "grade": "fitted",
+     "source": "Wisdom, J. 1980, The resonance overlap criterion and the onset of stochastic behavior in the restricted three-body problem, AJ 85, 1122: first-order resonances overlap within 1.3 mu^(2/7) of a planet's orbit. doi:10.1086/112778"
+    },
+    "ce": {
+     "value": 1.8,
+     "grade": "fitted",
+     "source": "Mustill, A. J. and Wyatt, M. C. 2012, A general model of planetary chaotic zones, MNRAS 419, 3074: for stretched orbits the overlap zone is 1.8 (mu e)^(1/5). doi:10.1111/j.1365-2966.2011.19951.x"
+    }
+   },
+   "positive": [
+    {
+     "port": "inner_period",
+     "says": "inner period"
+    },
+    {
+     "port": "outer_period",
+     "says": "outer period"
+    },
+    {
+     "port": "inner_turns",
+     "says": "inner turns"
+    },
+    {
+     "port": "outer_turns",
+     "says": "outer turns"
+    },
+    {
+     "port": "host_mass",
+     "says": "host mass"
+    }
+   ],
+   "checks": [
+    {
+     "port": "eccentricity",
+     "min": 0.0,
+     "below": 1.0,
+     "says": "eccentricity {} is not an ellipse"
+    }
+   ],
+   "references": [
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press: section 8.7, the width of a mean motion resonance (eq. 8.76 and its large-eccentricity limit; Table 8.5 for the strengths alpha f_d). doi:10.1017/CBO9781139174817",
+    "Dermott, S. F. and Murray, C. D. 1981, The dynamics of tadpole and horseshoe orbits I. Theory, Icarus 48, 1: tadpoles within (8 mu / 3)^(1/2) of the shared orbit, horseshoes out to about the Hill scale. doi:10.1016/0019-1035(81)90147-0",
+    "Wisdom, J. 1980, The resonance overlap criterion and the onset of stochastic behavior in the restricted three-body problem, AJ 85, 1122: first-order resonances overlap within 1.3 mu^(2/7) of a planet's orbit. doi:10.1086/112778",
+    "Mustill, A. J. and Wyatt, M. C. 2012, A general model of planetary chaotic zones, MNRAS 419, 3074: for stretched orbits the overlap zone is 1.8 (mu e)^(1/5). doi:10.1111/j.1365-2966.2011.19951.x"
+   ],
+   "shown": "|P₂/P₁ · q/p − 1| < (3/2) δa/a,  δa/a = (16/3 f μ e^(p−q))^½,  or (μ/3)^⅓ for a shared orbit",
+   "equation": {
+    "name": "Whether two neighbours sit inside a resonance",
+    "formula": "k = p - q\nratio = pout / pin\noffset = abs(ratio * q / p - 1)\nmu = (m1 + m2) / M\nda = if k < 1 / 2 then cbrt(mu / 3) else sqrt(16 / 3 * f * mu * ecc ^ k)\nwidth = 3 / 2 * da\nsep = ratio ^ (2 / 3) - 1\nzone = max(c * mu ^ (2 / 7), ce * (mu * ecc) ^ (1 / 5))\nverdict = if offset >= width then 0 else if k < 1 / 2 then 1 else if sep < zone then 0 else 1",
+    "inputs": {
+     "pin": {
+      "kind": "orbit.period",
+      "unit": "s",
+      "name": "the inner year"
+     },
+     "pout": {
+      "kind": "orbit.period",
+      "unit": "s",
+      "name": "the outer year"
+     },
+     "p": {
+      "kind": "orbit.resonance_turns",
+      "unit": "1",
+      "name": "turns the inner one makes in one cycle of the resonance"
+     },
+     "q": {
+      "kind": "orbit.resonance_turns",
+      "unit": "1",
+      "name": "turns the outer one makes in the same time"
+     },
+     "m1": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the inner world"
+     },
+     "m2": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the outer world"
+     },
+     "M": {
+      "kind": "orbit.host_mass",
+      "unit": "kg",
+      "name": "mass of what both circle"
+     },
+     "ecc": {
+      "kind": "orbit.eccentricity",
+      "unit": "1",
+      "name": "the more stretched of the two orbits",
+      "valid": [
+       0,
+       0.99
+      ]
+     },
+     "f": {
+      "kind": "model.resonance_strength",
+      "unit": "1",
+      "name": "strength of the resonance's pull (alpha f_d)"
+     },
+     "c": {
+      "kind": "model.resonance_overlap",
+      "unit": "1",
+      "name": "overlap zone of round orbits, per mu^(2/7)"
+     },
+     "ce": {
+      "kind": "model.resonance_overlap_stretched",
+      "unit": "1",
+      "name": "overlap zone of stretched orbits, per (mu e)^(1/5)"
+     }
+    },
+    "outputs": {
+     "offset": {
+      "kind": "orbit.resonance_offset",
+      "unit": "1",
+      "name": "how far the period ratio is from p:q, as a fraction"
+     },
+     "width": {
+      "kind": "orbit.resonance_width",
+      "unit": "1",
+      "name": "how far it may be and still be held, as a fraction"
+     },
+     "zone": {
+      "kind": "orbit.chaotic_zone",
+      "unit": "1",
+      "name": "orbit gap, as a fraction, inside which resonances overlap and hold nothing"
+     },
+     "verdict": {
+      "kind": "orbit.stability_verdict",
+      "unit": "1",
+      "name": "0 not in this resonance, 1 inside it: the resonance can keep them from meeting"
+     }
+    },
+    "source": {
+     "text": "Murray and Dermott 1999: a p:q resonance of order k = p − q holds orbits within δa/a = (16/3 · f μ e^k)^½ of exact (the large-eccentricity limit of eq. 8.76; f is alpha f_d, 0.75 to 2 for the first-order resonances of Table 8.5). Dermott and Murray 1981: one shared orbit holds tadpoles and horseshoes out to about the Hill scale (μ/3)^⅓. Kepler's third law turns δa/a into 3/2 of that in the period ratio. Wisdom 1980 and Mustill and Wyatt 2012: closer than 1.3 μ^(2/7), or 1.8 (μ e)^(1/5) for stretched orbits, neighbouring resonances overlap and the motion is chaotic, so nothing is held there (a shared orbit excepted)",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "Murray and Dermott 1999 section 8.7, eq. 8.76; Dermott and Murray 1981 section 4; Wisdom 1980 eq. 29; Mustill and Wyatt 2012 section 3"
+    },
+    "explain": {
+     "curious": "Two worlds whose years fit a simple ratio, like Pluto's three turns for every two of Neptune's, can be held apart by timing: whenever they line up, they are far apart. That is how Pluto crosses Neptune's orbit and never meets it.",
+     "science": "Pendulum width of a p:q mean motion resonance in the large-eccentricity limit, with f a typical alpha f_d. Being inside the width is necessary, not sufficient: the resonant angle must librate, which needs where each body is along its orbit, so the verdict says 'can', and stays worth watching. At very round orbits first-order widths tend to a floor of order μ^⅔ that this leaves out, so it can miss a resonance there, never invent one. Inside the overlap zone the resonances blur into chaos and hold nothing."
+    },
+    "examples": [
+     {
+      "pin": 5273600000.0,
+      "pout": 7932800000.0,
+      "p": 3,
+      "q": 2,
+      "m1": 1e+26,
+      "m2": 1.3e+22,
+      "M": 2e+30,
+      "ecc": 0.25,
+      "offset": 0.0028317152103560783,
+      "width": 0.015000974968314559,
+      "zone": 0.1882200128050883,
+      "verdict": 1
+     },
+     {
+      "pin": 379520000.0,
+      "pout": 380800000.0,
+      "p": 1,
+      "q": 1,
+      "m1": 1.9e+27,
+      "m2": 1e+17,
+      "M": 2e+30,
+      "ecc": 0.1,
+      "offset": 0.003372681281618828,
+      "width": 0.10224106764330046,
+      "zone": 0.2823691367794612,
+      "verdict": 1
+     },
+     {
+      "pin": 32000000.0,
+      "pout": 60192000.0,
+      "p": 2,
+      "q": 1,
+      "m1": 6e+24,
+      "m2": 6.4e+23,
+      "M": 2e+30,
+      "ecc": 0.093,
+      "offset": 0.0595,
+      "width": 0.002357473223601914,
+      "zone": 0.08978353725421853,
+      "verdict": 0
+     },
+     {
+      "pin": 379520000.0,
+      "pout": 495040000.0,
+      "p": 4,
+      "q": 3,
+      "m1": 1.9e+27,
+      "m2": 1e+17,
+      "M": 2e+30,
+      "ecc": 0.25,
+      "offset": 0.021711635750421454,
+      "width": 0.06538348415483072,
+      "zone": 0.3391604695880557,
+      "verdict": 0
+     }
+    ]
+   }
   }
  ]
 }

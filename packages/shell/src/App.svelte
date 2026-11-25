@@ -76,6 +76,7 @@
   import compareDoc from "./documents/compare.gm.json";
   import { POSTCARD_SCREENS } from "./postcards/screens.postcards.svelte.ts";
   import { visit, openOwn, GO_BOOKMARK_EVENT, PASTE_CLIP_EVENT } from "./postcards/visits.svelte.ts";
+  import { loadSets, postcardSets } from "./postcards/sets.svelte.ts";
   import { checkPostcard, looksLikePostcard, readPostcard, postcardBlocker, isPostcard, fixDate } from "../../ui-contract/src/index.ts";
   import lifeDoc from "./documents/life.gm.json";
   import stylesScreenDoc from "./documents/styles.gm.json";
@@ -376,8 +377,9 @@
       const reopened = await reopenKept(s);
       const packs = [...opened, ...s.stack().added, ...(s.stack().campaign ? [s.stack().campaign] : [])];
       share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.campaign_now_yr ?? ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
-      // Grounds on held screens (PC5): the campaign's postcards; the packs' sets join with PC6.
-      share.setGrounds({ bookmarks: () => ws.bookmarks ?? [] });
+      // Grounds on held screens (PC5): the campaign's postcards, and the postcard sets (PC6: the base set, then the stack's).
+      void loadSets(s.stack().base);
+      share.setGrounds({ bookmarks: () => ws.bookmarks ?? [], sets: () => postcardSets.list });
       // The player-facing facts the GM has recorded, entered when a fresh campaign opens (a reopened one has them).
       if (!reopened) {
         const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
@@ -451,6 +453,7 @@
     ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
     ws.overlay_anchors = save.workspace.overlay_anchors ?? {};
     ws.unit_choices = save.workspace.unit_choices ?? {};
+    ws.could_quiet = save.workspace.could_quiet ?? [];
     ws.party = save.workspace.party ?? null;
     ws.bookmarks = bookmarksFrom(save.workspace.bookmarks);
     ws.playbook = playbookFrom(save.workspace.playbook);
@@ -473,7 +476,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook, layouts: ws.layouts ?? [] })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, unit_choices: ws.unit_choices ?? {}, could_quiet: ws.could_quiet ?? [], party: ws.party ?? null, bookmarks: ws.bookmarks ?? [], playbook: ws.playbook, layouts: ws.layouts ?? [] })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });

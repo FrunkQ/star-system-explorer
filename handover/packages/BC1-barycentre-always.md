@@ -59,7 +59,7 @@ What follows from the one rule, with no special cases:
 - `tests/golden/classify.json`: the base-atlas pack hash, and the two event hashes that carry it, change with the atlas rebuild. Every class is the same.
 
 ## Next
-- **V3 barycentre nodes:** members that orbit a massless `bary:N` are unplaced today. On import they should become the primary's companion orbit.
+- Done (PR 463, 25 Nov, galaxy arm fix thread): V3 `bary:N` nodes go onto the hierarchy on adopt (`rehome_barycentres` in adopt.rs, log `BC1-v3-barycentres.md`); the heaviest member stands for the pair and companions orbit it.
 - **Approximations:** rehost's inner set uses the body's present distance. Withdraw with `leave` counts the withdrawn body's mass in the inner barycentre for the instant of the move.
 - **Starters:** read Kepler-16's Table 1 at source and mark it verified. Add Proxima's planets.
 - **NAV moons:** NAV still knows only the star's worlds.

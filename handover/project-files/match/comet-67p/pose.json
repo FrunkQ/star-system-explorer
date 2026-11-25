@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "67P/Churyumov-Gerasimenko",
+  "camera": "about 100 km",
+  "tests": "Visible: albedo 0.06, the darkest kind of surface",
+  "needs": [
+    "comet nuclei (exotic or small bodies)",
+    "jets near perihelion"
+  ]
+}

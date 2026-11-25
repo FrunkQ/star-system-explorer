@@ -1,0 +1,8 @@
+{
+  "system": "Eagle Nebula (M16)",
+  "view": "Nebula view, Composite with emission lines",
+  "camera": "from Earth, 7,000 light years",
+  "needs": [
+    "emission-line bands (light and nebulae thread)"
+  ]
+}

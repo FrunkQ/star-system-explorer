@@ -40,7 +40,7 @@
       }
     },
     {
-      "name": "Jupiter: Juno's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)",
+      "name": "Jupiter: Cassini's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)",
       "inputs": {
         "dynamo_density": { "value": 1960.0, "unit": "kg_m3" },
         "dynamo_heat_flux": { "value": 10.36, "unit": "w_m2" },

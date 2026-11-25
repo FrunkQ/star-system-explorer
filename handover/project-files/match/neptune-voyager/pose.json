@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Neptune",
+  "camera": "about 7 million km",
+  "tests": "Visible: deep blue, dark storms",
+  "needs": [
+    "dark spots (giant bands thread)"
+  ],
+  "date": "1989-08"
+}

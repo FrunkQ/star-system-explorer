@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Europa",
+  "camera": "about 70,000 km, full phase",
+  "date": "1997-1998 (mosaic)",
+  "needs": [
+    "lineae from the surface model"
+  ]
+}

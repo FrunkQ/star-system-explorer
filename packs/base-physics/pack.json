@@ -119,7 +119,7 @@
                 "value": 1.0
               }
             },
-            "name": "Jupiter: Juno's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)"
+            "name": "Jupiter: Cassini's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)"
           },
           {
             "expect": {
@@ -1058,7 +1058,7 @@
                 "value": 6371.0
               }
             },
-            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, McDonough and Sun 1995)"
+            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, our sum from McDonough and Sun 1995's abundances)"
           },
           {
             "expect": {
@@ -1094,7 +1094,7 @@
                 "value": 3389.5
               }
             },
-            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (Frank et al. 2014 calibration)"
+            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (our reading of its youngest lavas; Frank et al. 2014 give the heating, not this date)"
           },
           {
             "expect": {
@@ -1429,7 +1429,7 @@
               "star.luminosity": {
                 "tol": 5.0,
                 "unit": "l_sun",
-                "value": 25.4
+                "value": 24.74
               },
               "star.radius": {
                 "tol": 0.3,
@@ -1447,7 +1447,7 @@
                 "value": 2.063
               }
             },
-            "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 25.4 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave"
+            "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 24.74 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave"
           }
         ],
         "version": "0.1.0",
@@ -2050,6 +2050,20 @@
           0
         ],
         "id": "body.mass",
+        "range": null
+      },
+      {
+        "description": "moment of inertia over mass times radius squared: 0.4 for a uniform ball, less as mass gathers in the middle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.moment_of_inertia_factor",
         "range": null
       },
       {
@@ -3666,6 +3680,20 @@
         "range": null
       },
       {
+        "description": "typical speed of the flow stirring a conducting layer",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_flow_speed",
+        "range": null
+      },
+      {
         "description": "power stirring the dynamo region, as a heat flux: convected heat plus compositional buoyancy",
         "dim": [
           0,
@@ -3680,6 +3708,34 @@
         "range": null
       },
       {
+        "description": "a stirring flow's speed over the spin speed across its layer",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_local_rossby",
+        "range": null
+      },
+      {
+        "description": "how far a dynamo runs, 0 to 1, from its magnetic Reynolds number",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_onset",
+        "range": null
+      },
+      {
         "description": "outer radius of the dynamo region (the core top, or about 0.85 R for a giant)",
         "dim": [
           1,
@@ -3691,6 +3747,48 @@
           0
         ],
         "id": "interior.dynamo_radius",
+        "range": null
+      },
+      {
+        "description": "spin period over a dynamo's stirring time",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_rossby",
+        "range": null
+      },
+      {
+        "description": "factor on a dynamo's field from its spin, 1 when saturated",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_rossby_factor",
+        "range": null
+      },
+      {
+        "description": "depth of the stirred, conducting layer a dynamo runs in",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_shell_thickness",
         "range": null
       },
       {
@@ -3719,6 +3817,34 @@
           0
         ],
         "id": "interior.light_element_flux",
+        "range": null
+      },
+      {
+        "description": "time an unstirred field takes to leak out of a conducting layer",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.magnetic_decay_time",
+        "range": null
+      },
+      {
+        "description": "magnetic Reynolds number of a stirred layer: stretching over leaking",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.magnetic_reynolds",
         "range": null
       },
       {
@@ -3932,6 +4058,20 @@
         "range": null
       },
       {
+        "description": "gravity inside a layer",
+        "dim": [
+          1,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.gravity",
+        "range": null
+      },
+      {
         "description": "radius of a layer's top",
         "dim": [
           1,
@@ -3957,6 +4097,34 @@
           0
         ],
         "id": "layer.pressure_increase",
+        "range": null
+      },
+      {
+        "description": "specific heat of a layer's matter",
+        "dim": [
+          2,
+          0,
+          -2,
+          0,
+          -1,
+          0,
+          0
+        ],
+        "id": "layer.specific_heat",
+        "range": null
+      },
+      {
+        "description": "thermal expansivity of a layer's matter",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          -1,
+          0,
+          0
+        ],
+        "id": "layer.thermal_expansivity",
         "range": null
       },
       {
@@ -4548,6 +4716,20 @@
         "range": null
       },
       {
+        "description": "orbit gap, as a fraction, inside which neighbouring resonances overlap and the motion is chaotic",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.chaotic_zone",
+        "range": null
+      },
+      {
         "description": "eccentric anomaly in radians",
         "dim": [
           0,
@@ -4772,6 +4954,48 @@
           0
         ],
         "id": "orbit.relative_amd",
+        "range": null
+      },
+      {
+        "description": "how far two orbits' period ratio is from a whole-number ratio, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_offset",
+        "range": null
+      },
+      {
+        "description": "turns one body makes in one cycle of a mean motion resonance",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_turns",
+        "range": null
+      },
+      {
+        "description": "how far a period ratio may be from a resonance and still be held, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_width",
         "range": null
       },
       {
@@ -6204,6 +6428,104 @@
           0
         ],
         "id": "star.xray_luminosity",
+        "range": null
+      },
+      {
+        "description": "time bare ground has lain open to space since it was last renewed, by lava, ice or a crater's ejecta",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.exposure_age",
+        "range": null
+      },
+      {
+        "description": "how weathered bare ground is, 0 fresh to 1 fully mature",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.maturity",
+        "range": null
+      },
+      {
+        "description": "weathered over fresh reflectance of the same soil at 450 nm (blue)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.weathering_factor_450",
+        "range": null
+      },
+      {
+        "description": "weathered over fresh reflectance of the same soil at 550 nm (green)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.weathering_factor_550",
+        "range": null
+      },
+      {
+        "description": "weathered over fresh reflectance of the same soil at 650 nm (red)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.weathering_factor_650",
+        "range": null
+      },
+      {
+        "description": "the star's wind flux at the world against its flux at 1 AU (the inverse square of distance)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.wind_flux_ratio",
+        "range": null
+      },
+      {
+        "description": "1 when the star's wind reaches the ground, 0 when a magnetic field holds it off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "surface.wind_reaches_ground",
         "range": null
       },
       {

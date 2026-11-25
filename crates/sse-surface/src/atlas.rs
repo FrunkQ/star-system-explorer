@@ -144,6 +144,12 @@ pub struct Tile {
     /// S7: colour from material and cover, 0xRRGGBB.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub colour: Vec<u32>,
+    /// SW1: how weathered bare ground is, 0 fresh to 255 fully mature (0
+    /// off bare ground). Empty where nothing weathers (air, or no ground).
+    /// Reflectance is fresh × `mature_factor_rgb`^(maturity/255); `albedo`
+    /// and `colour` already carry it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub maturity: Vec<u8>,
     /// Layers a later stage fills.
     pub pending: Vec<String>,
     pub hash: String,
@@ -183,6 +189,7 @@ pub struct Atlas {
     impacts: Option<Box<ImpactLayer>>,
     regime_layer: Option<Box<crate::regimes::RegimeSurface>>,
     layers: Option<Box<crate::cover::Layers>>,
+    weathering: Option<crate::weathering::Weathering>,
 }
 
 /// S4's craters, plains and shields on an atlas.
@@ -386,6 +393,7 @@ impl Atlas {
             impacts: None,
             regime_layer: None,
             layers: None,
+            weathering: None,
         }
     }
 
@@ -509,6 +517,12 @@ impl Atlas {
         field: crate::impacts::CraterField,
     ) -> Self {
         self.impacts = Some(Box::new(ImpactLayer { features, field }));
+        self
+    }
+
+    /// SW1: weather bare ground by its exposure age.
+    pub fn with_weathering(mut self, w: Option<crate::weathering::Weathering>) -> Self {
+        self.weathering = w.filter(|x| x.active);
         self
     }
 
@@ -1145,6 +1159,7 @@ impl Atlas {
         let mut deposit: Vec<u8> = vec![];
         let mut structure: Vec<u8> = vec![];
         let mut colour: Vec<u32> = vec![];
+        let mut maturity: Vec<u8> = vec![];
         let style = self.model.style.as_str();
         let dist = |a: [f64; 3], b: [f64; 3]| {
             let d = [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -1254,6 +1269,33 @@ impl Atlas {
                     structure.push(sl.structure);
                     colour.push(sl.colour);
                 }
+                if let Some(wx) = &self.weathering {
+                    // SW1: bare ground matures with the time it has lain
+                    // open, the younger of its surface age and the youngest
+                    // crater whose ejecta cover it.
+                    let bare = COVERS[*cover.last().expect("pushed") as usize] == "none"
+                        && MATERIALS[*material.last().expect("pushed") as usize] != "ice";
+                    let mt = if bare {
+                        let open = feats
+                            .youngest_crater_at(dirs[c], rk)
+                            .map(|t| (self.epoch_myr as f64 - t).max(0.0))
+                            .map_or(*age.last().expect("pushed") as f64, |x| {
+                                x.min(*age.last().expect("pushed") as f64)
+                            });
+                        wx.maturity(open)
+                    } else {
+                        0.0
+                    };
+                    let f = wx.factors(mt);
+                    al *= f[1];
+                    if let Some(cl) = colour.last_mut() {
+                        let ch = |x: u32, k: f64| m::round(x as f64 * k).clamp(0.0, 255.0) as u32;
+                        *cl = (ch((*cl >> 16) & 255, f[0]) << 16)
+                            | (ch((*cl >> 8) & 255, f[1]) << 8)
+                            | ch(*cl & 255, f[2]);
+                    }
+                    maturity.push(m::round(mt * 255.0) as u8);
+                }
                 albedo.push(m::round(al.clamp(0.0, 1.0) * 1000.0) as u16);
             }
         }
@@ -1313,6 +1355,7 @@ impl Atlas {
             deposit,
             structure,
             colour,
+            maturity,
             hash,
         }
     }
@@ -1346,6 +1389,20 @@ impl TileFeatures {
             h += crate::impacts::shield_height(s, d, radius_km);
         }
         h
+    }
+
+    /// SW1: when the youngest crater whose bowl or continuous ejecta (out to
+    /// 2.2 crater radii) covers the point formed, Myr since the world formed.
+    fn youngest_crater_at(&self, d: [f64; 3], radius_km: f64) -> Option<f64> {
+        self.craters
+            .iter()
+            .zip(&self.reach)
+            .filter(|(c, reach)| {
+                let cd = crate::sketch::dot(c.dir, d);
+                cd >= **reach && m::acos(cd.clamp(-1.0, 1.0)) * radius_km < 1.1 * c.d_km
+            })
+            .map(|(c, _)| c.formed_myr)
+            .fold(None, |a: Option<f64>, t| Some(a.map_or(t, |x| x.max(t))))
     }
 
     /// When the newest plains unit covering the point erupted, Myr since the

@@ -6,6 +6,7 @@
   import { keepStamp, stampFor } from "../../../ui-contract/src/index.ts";
   import { visits, GO_BOOKMARK_EVENT, PASTE_CLIP_EVENT } from "./visits.svelte.ts";
   import { packForSending } from "./pack.ts";
+  import { loadSets, postcardSets } from "./sets.svelte.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene } = $props();
   const ws = $derived(ctx.workspace);
@@ -24,6 +25,13 @@
   });
   const opened = $derived.by((): { card: Postcard; visiting: boolean } | null => {
     if (!openId) return null;
+    if (openId.startsWith("set:")) {
+      for (const set of postcardSets.list) {
+        const c = set.cards.find((x) => `set:${set.id}:${x.id}` === openId);
+        if (c) return { card: c, visiting: true };
+      }
+      return null;
+    }
     if (openId.startsWith("visit:")) {
       const v = visits.list.find((x) => `visit:${x.id}` === openId);
       return v ? { card: v, visiting: true } : null;
@@ -33,6 +41,11 @@
   });
   let stamps = $state<Record<string, string>>({});
   const stampOf = (c: Postcard, visiting: boolean) => (visiting ? (c.stamp ?? null) : (stamps[c.id] ?? stampFor(scene.system, c.id)));
+
+  // The sets from packs (PC6): the base set, then any the stack carries.
+  $effect(() => {
+    void loadSets(ctx.session.stack().base);
+  });
 
   let kernel = $state("");
   $effect(() => {
@@ -98,6 +111,14 @@
         {/each}
       </ul>
     {/if}
+    {#each postcardSets.list.filter((x) => x.cards.length) as set (set.id)}
+      <h3>{set.title}</h3>
+      <ul class="row" data-postcard-row={`set:${set.id}`}>
+        {#each set.cards as c (c.id)}
+          <li><button type="button" class="tile" data-postcard-tile={c.id} onclick={() => (openId = `set:${set.id}:${c.id}`)}>{#if c.stamp}<img src={c.stamp} alt="" />{:else}<span class="blank"></span>{/if}<span class="name">{c.name}</span></button></li>
+        {/each}
+      </ul>
+    {/each}
     <p class="quiet">Paste a postcard, open a postcard link or a .ssepostcard.json file, and it opens here as a visit: read-only, never changing this campaign.</p>
   {/if}
 </section>

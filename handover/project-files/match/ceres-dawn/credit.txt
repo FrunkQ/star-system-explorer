@@ -1,0 +1,15 @@
+Title: VIR Image of Ceres, May 2015
+Credit: NASA / NASA/JPL-Caltech/UCLA/ASI/INAF
+Date: 2015:06:10 13:19:51
+Source: https://images.nasa.gov/details/PIA19571
+Licence: NASA media: generally not subject to copyright in the United States (NASA Images and Media Usage Guidelines, https://www.nasa.gov/nasa-brand-center/images-and-media/). Credit NASA; do not imply endorsement.
+Picked for: Ceres from Dawn (VIR): the dwarf planet's dark surface and bright Occator spots.
+
+About (from the source page):
+Images from Dawn's visible and infrared mapping spectrometer (VIR) show a portion of Ceres' cratered northern hemisphere, taken on May 16, 2015. From top to bottom, the views include a black-and-white image, a true-color view and a temperature image. The true-color view contains reddish dots that are image artifacts, which are not part of Ceres' surface.
+
+These images were taken at a distance of 4,500 miles (7,300 kilometers) from Ceres. They have a resolution of 1.1 miles (1.8 kilometers) per pixel.
+
+The temperature image is derived from data in the infrared light range. The lightest areas are the hottest and the darkest are the coolest.
+
+http://photojournal.jpl.nasa.gov/catalog/PIA19571
