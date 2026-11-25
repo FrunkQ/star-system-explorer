@@ -1,5 +1,6 @@
 import { mount, unmount } from "svelte";
-import { flatChart, type ViewModule } from "../../../ui-contract/src/index.ts";
+import { type ViewModule } from "../../../ui-contract/src/index.ts";
+import { CLUSTER_CONTROLS } from "./controls.ts";
 import ClusterMap from "./ClusterMap.svelte";
 
 /**
@@ -8,12 +9,17 @@ import ClusterMap from "./ClusterMap.svelte";
  * the kernel's `halo_cell` (G2) on the cosmic web through the cell, with the
  * mass function they came from. Pick a galaxy to read its history; "Chart
  * this galaxy" opens it in the galaxy chart. Read only.
+ *
+ * In 3D (grand zoom GZ5 part 1) it is "Galaxies nearby" centred on our own
+ * galaxy: every galaxy the kernel's sky knows within the group or the
+ * neighbourhood at its real place, drawn by its own facts.
  */
+
 export const clusterMap: ViewModule = {
   id: "sse.view.cluster-map",
   version: "0.1.0",
   tiers: ["text", "canvas"],
-  controls: flatChart("3D cells come with the galaxy charts' Free view"),
+  controls: CLUSTER_CONTROLS,
   inputs: [{ event_kinds: [] }],
   params: [
     { name: "min_mass", type: "enum", default: "1e10", options: ["1e10", "1e11", "1e12"], meaning: "Smallest halo shown, solar masses.", promoted: true, group: "content" },
