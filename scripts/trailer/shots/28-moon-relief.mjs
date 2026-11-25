@@ -35,8 +35,9 @@ export default {
     await flyTo("Earth", "Moon");
     await d.hold(2000);
     await flyTo("Moon");
-    await d.hold(1500);
-    await pick(page, d, "HUD", "Off");
+    // 25 Nov GPU take: the surface arrives about 3 s after the fly-in, and HUD Off pulled the
+    // camera back to a small dot, so the HUD stays as it is and the shot waits for the surface.
+    await d.hold(3500);
     await d.caption("The Moon", "Craters and highlands at true scale, lit by the Sun: relief drawn from the kernel's own surface.");
     await d.hold(4800);
     await d.caption(null);
