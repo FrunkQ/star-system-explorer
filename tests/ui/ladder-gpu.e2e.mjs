@@ -44,6 +44,11 @@ try {
     const bakeOk = colourErr <= 0.03 && normalErr <= 0.02 && tiltMax > 0.003;
     console.log(`${bakeOk ? "ok" : "FAIL"} ${label} texture bake: colour within ${colourErr.toFixed(4)}, normal within ${normalErr.toFixed(4)} (largest true tilt ${(tiltMax * 180 / Math.PI).toFixed(2)}°)`);
     if (!bakeOk) failed = true;
+    // VP3 part 4: the deep patch read at texel centres. Colour 0..1 sRGB bytes; the normal is stored as half floats.
+    const p = out.patch;
+    const patchOk = p.texels > 2000 && p.colourErr <= 0.004 && p.weightErr <= 0.004 && p.normalErr <= 0.004 && p.tiltMax > 0.01;
+    console.log(`${patchOk ? "ok" : "FAIL"} ${label} deep patch: ${p.texels} texels, colour within ${p.colourErr.toFixed(4)}, weight within ${p.weightErr.toFixed(4)}, normal within ${p.normalErr.toFixed(4)} (largest true tilt ${(p.tiltMax * 180 / Math.PI).toFixed(2)}°)`);
+    if (!patchOk) failed = true;
   }
 } finally {
   server.kill();

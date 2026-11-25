@@ -15,7 +15,7 @@ Nothing is invented: both cubes come only from the kernel's tiles. Worlds withou
 
 ## Part 2: finer tiles for the chosen world
 
-The chart reads level-0 tiles (32 samples a face). Finer tiles cost the kernel about 0.2 s each (sample Sol in Node: Earth's 24 level-1 tiles took 5 s, its 96 level-2 tiles 20 s; the Moon's about twice that). The chart room agreed to the edit in its `SystemChart.svelte` (24 Nov, through the coordinator), with conditions that are all kept:
+The chart reads level-0 tiles (256 samples a face: `tile_samples` on the sample Sol; an earlier note here said 32, which was wrong). Finer tiles cost the kernel about 0.2 s each (sample Sol in Node: Earth's 24 level-1 tiles took 5 s, its 96 level-2 tiles 20 s; the Moon's about twice that). The chart room agreed to the edit in its `SystemChart.svelte` (24 Nov, through the coordinator), with conditions that are all kept:
 
 - `packages/views/body/src/finer-tiles.ts` `readFiner` asks for **4 tiles a request** (about 0.8 s) and checks `wanted()` before each one. Choosing another world or leaving True stops it (the chart's effect generation changes).
 - It starts only after the world has stayed chosen for **1.2 s**, which is longer than the 1 s camera fly, and **pauses 1.5 s** before level 2.
@@ -24,6 +24,21 @@ The chart reads level-0 tiles (32 samples a face). Finer tiles cost the kernel a
 - After the merge with main (TA1, PR 444), System True reads faces through `readTrueFace` (true-air.ts), which paints clouds and haze over the ground. A face with clouds painted over it no longer carries `faces`, so it keeps the flat picture and shows no relief; airless and clear worlds (the Moon, Mercury) wear the bake. **Next:** draw the clouds as their own shell over the baked ground, so cloudy worlds get relief too (with the air thread).
 
 In the shell (sample Sol, WebGL2, cloud container), with the Moon chosen and zoomed in, the face 3 s after choosing already has part of level 1. At 28 s level 2 is in: finer craters and smoother edges between materials (screens below). `walk.e2e` and `perf.e2e` pass inside their budgets, and both open True.
+
+## Part 4: the deep patch under a close camera (building blocks)
+
+For the renderer's close-up package (True down to a grazing orbit). The renderer hands `GroundView { body, toward, m_per_px }` (renderer `close-up.ts`, System3D's `onground`); this part turns it into ground at the screen's own scale.
+
+- **Level.** `patchLevel(m_per_px, radius, samples, floor)` is the coarsest level with a sample every 2 screen pixels (`PATCH_PX_PER_SAMPLE`), never past the kernel's fact floor. The sample Sol's tiles have 256 samples (level 0 is 39 km a sample on Earth, 10.6 km on the Moon). The fact floor is level 9 on Earth (76 m) and level 7 on the Moon (166 m).
+- **Tiles.** `tilesNear(toward, level)` finds the 9 tiles (`PATCH_TILES`) nearest the point by looking round it on the sphere, so a patch that runs over a cube edge takes the neighbouring face's tiles. It never walks a whole level. `patchFor` combines the two, and below level 3 nothing is read, because the globe's faces already do.
+- **Reading.** `readDeep(session, system, body, ask, radius, samples, wanted)` (in `views/body/src/finer-tiles.ts`) reads 4 tiles per request and keeps them for the page. A refusal that names the fact floor is kept for the world, and the read drops to that floor. It returns the patch picture.
+  - Kernel cost is about 0.3 s a tile at any level (Earth and the Moon, Node), so a patch takes about 3 s.
+- **Picture.** `composePatch(tiles, centre, radius)` lays the tiles into a 512 × 512 gnomonic square about the centre, a tile and a half each way.
+  - Colour and heights are bilinear across tile edges.
+  - Normals come from the true slope between neighbouring texels, one-sided where a neighbour was not read, and are kept in floats (a byte a component bands gentle slopes).
+  - Gaps keep alpha 0. It takes about 0.26 s for 9 tiles of 256.
+- **Drawing.** The bake's material (`texture-ladder-gpu.ts` `patchNodes`, `Baked.setPatch`) lays the patch over the cube where it was read, eased in over its outer seventh. `TrueTexture.patch` carries it, and `gpu.ts` hands it to the bake each frame (additive, in `bakedMat`).
+- **Next:** SystemChart reads `groundView` (when the renderer's close-up lands), calls `readDeep` once the camera has settled, and sets `patch` on the world's True face. After that comes the detail ladder's ground roughness below the fact floor.
 
 ## Code
 
@@ -35,6 +50,8 @@ In the shell (sample Sol, WebGL2, cloud container), with the Moon chosen and zoo
 - `packages/views/system-chart/src/SystemChart.svelte` (True surface reader only): finer tiles laid over with `withFiner`, `readFiner` for the chosen world.
 
 ## Checks
+
+- Part 4: `texture-ladder.test.ts` (level from metres a pixel at the fact floor, tiles round a point and over a cube edge, the patch picture's colour, gaps and true tilt); `tests/ui/finer-tiles.test.ts` (readDeep drops to the floor a refusal names, keeps tiles and floor, nothing read from far off); `tests/ui/ladder-gpu.e2e.mjs` reads the patch on WebGL2 and WebGPU at texel centres against `samplePatch` (colour within 0.0002, weight within 0.0005, normal within 0.0004).
 
 - `packages/renderer/test/texture-ladder.test.ts` (8 tests): finer tiles laid over a kept face once, never doubled, a painted face left alone; face sizes and levels; the cube map is the kernel's (round trip and agreement with ui-contract's `faceOf`); tiles facing the viewer; deeper tiles laid over coarser ones; sampling continuous across cube edges; the normal tilts by the true angle (tan 0.05 ramp), flat ground and seas point straight up; HUD words.
 - `tests/ui/ladder-gpu.e2e.mjs`: a made-up world baked at 128 and read back along a 64 × 32 grid of directions, compared with the processor. WebGL2 and WebGPU: colour within 0.017 (linear), normal within 0.0025 (true tilts up to 0.63°).

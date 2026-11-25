@@ -13,8 +13,8 @@
 //   sphere), so craters and ranges catch the light near the terminator where the sun grazes them.
 import { say, SURFACE_COVERS as COVERS, sampleColour, type SurfaceTile, type Tier } from "../../ui-contract/src/index.ts";
 
-/** The kernel's samples along a tile's edge (atlas settings `tile_samples`; the survey uses 32). */
-export const TILE_SAMPLES = 32;
+/** The kernel's samples along a tile's edge (atlas settings `tile_samples`: 256 on the sample Sol; read `tile.samples` where a tile is at hand). */
+export const TILE_SAMPLES = 256;
 /** The smallest face baked. */
 export const FACE_MIN = 64;
 /** The largest face each tier bakes (design 8.5: B to 512, H to 2048, at rest to 4096). */
@@ -295,12 +295,8 @@ export function patchLevel(m_per_px: number, radius_m: number, samples = TILE_SA
  * over a cube edge takes the neighbour face's tiles), never by walking a whole level.
  */
 export function tilesNear(toward: readonly number[], level: number, max = PATCH_TILES): TileKey[] {
-  const l = Math.hypot(toward[0]!, toward[1]!, toward[2]!) || 1;
-  const t: V3 = [toward[0]! / l, toward[1]! / l, toward[2]! / l];
-  // A frame on the sphere at t, and one tile's angular span at this level.
-  const a: V3 = Math.abs(t[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
-  const e = norm([a[1] * t[2] - a[2] * t[1], a[2] * t[0] - a[0] * t[2], a[0] * t[1] - a[1] * t[0]]);
-  const nn: V3 = [t[1] * e[2] - t[2] * e[1], t[2] * e[0] - t[0] * e[2], t[0] * e[1] - t[1] * e[0]];
+  const { t, e, n: nn } = frameAt(toward);
+  // One tile's angular span at this level.
   const span = Math.PI / 2 / (1 << level);
   const found = new Map<string, { k: TileKey; d: number }>();
   const N = 6;
@@ -328,6 +324,201 @@ export function tilesNear(toward: readonly number[], level: number, max = PATCH_
 export function patchFor(g: GroundAsk, radius_m: number, samples = TILE_SAMPLES, floor_level = 30): { level: number; keys: TileKey[] } {
   const level = patchLevel(g.m_per_px, radius_m, samples, floor_level);
   return level <= 2 ? { level, keys: [] } : { level, keys: tilesNear(g.toward, level) };
+}
+
+/** A frame on the sphere at a direction: the point, a sideways direction and a third at right angles to both. */
+export function frameAt(toward: readonly number[]): { t: V3; e: V3; n: V3 } {
+  const t = norm([toward[0]!, toward[1]!, toward[2]!]);
+  const a: V3 = Math.abs(t[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+  const e = norm([a[1] * t[2] - a[2] * t[1], a[2] * t[0] - a[0] * t[2], a[0] * t[1] - a[1] * t[0]]);
+  const n: V3 = [t[1] * e[2] - t[2] * e[1], t[2] * e[0] - t[0] * e[2], t[0] * e[1] - t[1] * e[0]];
+  return { t, e, n };
+}
+
+/** Texels along the deep patch's edge. */
+export const PATCH_N = 512;
+
+/**
+ * The deep patch as a picture (VP3 part 4): a square on the sphere about `centre`, laid out gnomonically (texel (i, j)
+ * looks along centre + a·east + b·north with a, b from -half to +half, row 0 at b = -half), read from tiles of one
+ * level. `rgba` is the sRGB colour with alpha 255 where a tile was read and 0 where none was; `normal` is the relief
+ * normal in the body's frame, xyz a texel (seas flat), from the true slopes between neighbouring texels; kept in
+ * floats because a byte a component would band gentle slopes (its steps are about half a degree).
+ */
+export interface PatchPicture {
+  n: number;
+  rgba: Uint8Array;
+  normal: Float32Array;
+  centre: V3;
+  east: V3;
+  north: V3;
+  half: number;
+  level: number;
+  signature: string;
+}
+
+/** The direction a patch texel looks along (a, b in the gnomonic plane, -half to +half). */
+export function patchDirection(p: Pick<PatchPicture, "centre" | "east" | "north">, a: number, b: number): V3 {
+  return norm([p.centre[0] + a * p.east[0] + b * p.north[0], p.centre[1] + a * p.east[1] + b * p.north[1], p.centre[2] + a * p.east[2] + b * p.north[2]]);
+}
+
+/** A reader of one level's tiles at any direction: bilinear across tile edges on a face, null where a tile is missing. */
+function levelReader(tiles: readonly SurfaceTile[], level: number) {
+  const n = 1 << level;
+  const byKey = new Map<number, SurfaceTile>();
+  let S = 0;
+  for (const t of tiles) if (t.key.level === level) (byKey.set((t.key.face * n + t.key.y) * n + t.key.x, t), (S = t.samples));
+  // Each tile's samples unpacked once, on first touch: r, g, b, height (seas 0), wet.
+  const unpacked = new Map<number, Float32Array>();
+  const unpack = (id: number, t: SurfaceTile) => {
+    const a = new Float32Array(S * S * 5);
+    for (let k = 0; k < S * S; k++) {
+      const c = sampleColour(t, k, 1);
+      const cov = COVERS[t.cover[k]!] ?? "none";
+      const wet = cov !== "none" && cov !== "ice";
+      a.set([c[0], c[1], c[2], wet ? 0 : t.elevation_dm[k]! / 10, wet ? 1 : 0], k * 5);
+    }
+    unpacked.set(id, a);
+    return a;
+  };
+  const N = n * S;
+  const sample = (face: number, gx: number, gy: number): number => {
+    const ix = Math.min(N - 1, Math.max(0, gx));
+    const iy = Math.min(N - 1, Math.max(0, gy));
+    const id = (face * n + Math.floor(iy / S)) * n + Math.floor(ix / S);
+    let a = unpacked.get(id);
+    if (!a) {
+      const t = byKey.get(id);
+      if (!t) return -1;
+      a = unpack(id, t);
+    }
+    cur = a;
+    return ((iy % S) * S + (ix % S)) * 5;
+  };
+  let cur: Float32Array = new Float32Array(0);
+  return (d: readonly number[]) => {
+    if (!S) return null;
+    const f = directionFace(d);
+    const gx = ((f.u + 1) / 2) * n * S - 0.5;
+    const gy = ((f.v + 1) / 2) * n * S - 0.5;
+    const x0 = Math.floor(gx);
+    const y0 = Math.floor(gy);
+    const fx = gx - x0;
+    const fy = gy - y0;
+    const o00 = sample(f.face, x0, y0);
+    const a00 = cur;
+    const o10 = sample(f.face, x0 + 1, y0);
+    const a10 = cur;
+    const o01 = sample(f.face, x0, y0 + 1);
+    const a01 = cur;
+    const o11 = sample(f.face, x0 + 1, y0 + 1);
+    const a11 = cur;
+    if (o00 < 0 || o10 < 0 || o01 < 0 || o11 < 0) return null;
+    const mix = (k: number) => (a00[o00 + k]! * (1 - fx) + a10[o10 + k]! * fx) * (1 - fy) + (a01[o01 + k]! * (1 - fx) + a11[o11 + k]! * fx) * fy;
+    return { rgb: [mix(0), mix(1), mix(2)] as V3, h: mix(3), wet: a00[o00 + 4]! + a10[o10 + 4]! + a01[o01 + 4]! + a11[o11 + 4]! === 4 };
+  };
+}
+
+/**
+ * The deep patch from its tiles (all one level, the deepest given is used), about `centre`, `n` texels a side. It
+ * spans the tiles read round the centre (a tile and a half each way at that level); texels no tile covers keep
+ * alpha 0, so the globe's own faces show there. Null with no tiles.
+ */
+export function composePatch(tiles: readonly SurfaceTile[], centre: readonly number[], radius_m: number, n = PATCH_N): PatchPicture | null {
+  if (!tiles.length) return null;
+  const level = Math.max(...tiles.map((t) => t.key.level));
+  const read = levelReader(tiles, level);
+  const { t, e, n: nn } = frameAt(centre);
+  const half = Math.tan((1.5 * Math.PI) / 2 / (1 << level));
+  const frame = { centre: t, east: e, north: nn };
+  const step = (2 * half) / n;
+  // Heights on a grid one texel wider each way, for the slopes at the patch's edge.
+  const W = n + 2;
+  const hs = new Float64Array(W * W).fill(NaN);
+  const rgba = new Uint8Array(n * n * 4);
+  const normal = new Float32Array(n * n * 3);
+  const wetAt = new Uint8Array(n * n);
+  const dirs = new Float64Array(W * W * 3);
+  for (let j = -1; j <= n; j++) {
+    for (let i = -1; i <= n; i++) {
+      const d = patchDirection(frame, -half + (i + 0.5) * step, -half + (j + 0.5) * step);
+      dirs.set(d, ((j + 1) * W + (i + 1)) * 3);
+      const r = read(d);
+      if (!r) continue;
+      hs[(j + 1) * W + (i + 1)] = r.h;
+      if (i < 0 || j < 0 || i >= n || j >= n) continue;
+      const o = (j * n + i) * 4;
+      rgba[o] = Math.round(r.rgb[0]);
+      rgba[o + 1] = Math.round(r.rgb[1]);
+      rgba[o + 2] = Math.round(r.rgb[2]);
+      rgba[o + 3] = 255;
+      wetAt[j * n + i] = r.wet ? 1 : 0;
+    }
+  }
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const o = (j * n + i) * 4;
+      const at = (di: number, dj: number) => ((j + 1 + dj) * W + (i + 1 + di)) * 3;
+      const c = at(0, 0);
+      let o0 = dirs[c]!;
+      let o1 = dirs[c + 1]!;
+      let o2 = dirs[c + 2]!;
+      const h = (di: number, dj: number) => hs[(j + 1 + dj) * W + (i + 1 + di)]!;
+      if (rgba[o + 3] && !wetAt[j * n + i]) {
+        const pa = at(1, 0);
+        const ma = at(-1, 0);
+        const pb = at(0, 1);
+        const mb = at(0, -1);
+        const ta0 = dirs[pa]! - dirs[ma]!;
+        const ta1 = dirs[pa + 1]! - dirs[ma + 1]!;
+        const ta2 = dirs[pa + 2]! - dirs[ma + 2]!;
+        const tb0 = dirs[pb]! - dirs[mb]!;
+        const tb1 = dirs[pb + 1]! - dirs[mb + 1]!;
+        const tb2 = dirs[pb + 2]! - dirs[mb + 2]!;
+        const la = Math.hypot(ta0, ta1, ta2);
+        const lb = Math.hypot(tb0, tb1, tb2);
+        // One-sided at the edge of what was read.
+        const ga = slope(h(1, 0), h(0, 0), h(-1, 0), la * radius_m) / la;
+        const gb = slope(h(0, 1), h(0, 0), h(0, -1), lb * radius_m) / lb;
+        o0 -= ta0 * ga + tb0 * gb;
+        o1 -= ta1 * ga + tb1 * gb;
+        o2 -= ta2 * ga + tb2 * gb;
+        const l = Math.hypot(o0, o1, o2);
+        o0 /= l;
+        o1 /= l;
+        o2 /= l;
+      }
+      const out: V3 = [o0, o1, o2];
+      const q = (j * n + i) * 3;
+      normal[q] = out[0];
+      normal[q + 1] = out[1];
+      normal[q + 2] = out[2];
+    }
+  }
+  const signature = tiles.filter((x) => x.key.level === level).map((x) => `${x.key.face}/${x.key.x}/${x.key.y}:${x.hash}`).sort().join("|") + `@${t.map((x) => Math.round(x * 1e6)).join(",")}`;
+  return { n, rgba, normal, ...frame, half, level, signature };
+}
+
+/** Slope across a texel either side (a span `l` metres), one-sided where a neighbour was not read. */
+function slope(p: number, c: number, m: number, l: number): number {
+  if (Number.isFinite(p) && Number.isFinite(m)) return (p - m) / l;
+  if (Number.isFinite(p)) return (2 * (p - c)) / l;
+  if (Number.isFinite(m)) return (2 * (c - m)) / l;
+  return 0;
+}
+
+/** The processor twin of the GPU's patch read: the texel a direction falls on (nearest), or null outside it. */
+export function samplePatch(p: PatchPicture, d: readonly number[]): { rgba: [number, number, number, number]; normal: V3 } | null {
+  const k = p.centre[0] * d[0]! + p.centre[1] * d[1]! + p.centre[2] * d[2]!;
+  if (k <= 0) return null;
+  const a = (p.east[0] * d[0]! + p.east[1] * d[1]! + p.east[2] * d[2]!) / k;
+  const b = (p.north[0] * d[0]! + p.north[1] * d[1]! + p.north[2] * d[2]!) / k;
+  const i = Math.floor(((a / p.half + 1) / 2) * p.n);
+  const j = Math.floor(((b / p.half + 1) / 2) * p.n);
+  if (i < 0 || j < 0 || i >= p.n || j >= p.n) return null;
+  const o = (j * p.n + i) * 4;
+  const q = (j * p.n + i) * 3;
+  return { rgba: [p.rgba[o]!, p.rgba[o + 1]!, p.rgba[o + 2]!, p.rgba[o + 3]!], normal: [p.normal[q]!, p.normal[q + 1]!, p.normal[q + 2]!] };
 }
 
 function norm(v: V3): V3 {
