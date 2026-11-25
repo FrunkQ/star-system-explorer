@@ -8,7 +8,8 @@
   Values are the kernel's facts for the body (resolved_system), never the card's display strings.
 -->
 <script lang="ts">
-  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, scaleClass, whatFollowed, type Followed, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, scaleClass, stripDomain, sweepAsk, sweepMarks, whatFollowed, type Followed, type PartMark, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { untrack } from "svelte";
   import Strip from "./Strip.svelte";
   import Box from "./Box.svelte";
   import Reach from "./Reach.svelte";
@@ -101,6 +102,42 @@
     }
     return [...refs.filter((r) => !here.some((x) => x.label === r.label)), ...here];
   }
+
+  // The sweep behind the strip (ED2, kernel K1): when a world's Orbit or Mass strip opens on the Build desk, the
+  // kernel runs that input over the strip's range on a scratch branch it throws away, and the strip marks where the
+  // world stops lasting and where a yes-or-no result it can reach flips ("turns freely from here"). Nothing is
+  // written; it runs again only when the value moves.
+  let swept = $state.raw<{ key: string; marks: PartMark[]; why?: string } | null>(null);
+  let sweeping = $state<{ key: string; done: number; total: number } | null>(null);
+  let sweepRunning = $state<string | null>(null);
+  const SWEPT = ["orbit", "mass"];
+  $effect(() => {
+    const id = open;
+    const sys = scene.system;
+    const sweep = ctx.session.sweep?.bind(ctx.session);
+    if (!id || !SWEPT.includes(id) || on !== "world" || !editable || ws.branch || !sys || scene.fixture || !sweep) return;
+    const h = handles.find((x) => x.id === id);
+    const v = h ? handleValue(h, mine) : null;
+    if (!h || v === null || !(v > 0)) return;
+    const key = `${subject.address}|${h.id}|${v}`;
+    // One sweep per value at a time: the kernel names its scratch branch after the body and field, so a second
+    // sweep of the same started before the first ends would share (and lose) its branch.
+    if (swept?.key === key || sweepRunning) return;
+    const d = stripDomain(h, v, untrack(() => dotsFor(h.id)));
+    sweepRunning = key;
+    sweeping = { key, done: 0, total: 0 };
+    void sweep(sweepAsk(h, { system: sys, address: subject.address }, d.lo, d.hi, 12), (done, total) => {
+      sweeping = { key, done, total };
+    }).then((r) => {
+      sweepRunning = null;
+      sweeping = null;
+      swept = r.ok ? { key, marks: sweepMarks(h, r.result) } : { key, marks: [], why: r.message };
+    });
+  });
+  const sweptFor = (h: Handle) => {
+    const v = handleValue(h, mine);
+    return swept && swept.key === `${subject.address}|${h.id}|${v}` ? swept.marks : [];
+  };
 
   // The held value's exact answer on a pause (design section 3, point 4): a scratch branch holds a what-if's own edits
   // and the held value, the kernel resolves it (BC1), and the branch goes. What would follow, in the card's own words.
@@ -213,9 +250,9 @@
   {:else if open}
     {@const h = handles.find((x) => x.id === open)!}
     {#if h.box}
-      <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} {commit} {pause} onclose={() => (open = null)} />
+      <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} swept={sweptFor(h)} {commit} {pause} onclose={() => (open = null)} />
     {:else}
-      <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
+      <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} marks={sweptFor(h)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
       {#if h.id === "air" && h.on === "world"}
         <AirBox {ctx} handle={h} facts={mine} {cls} {depth} {editable} {sol} {commitMix} />
       {/if}
@@ -223,6 +260,8 @@
         <Reach {ctx} system={scene.system} address={subject.address} handle={h} value={handleValue(h, mine)!} results={resultsOf(surfaces, subject.address)} {cls} {depth} {commit} />
       {/if}
     {/if}
+    {#if sweeping && sweeping.key.endsWith(`|${open}|${handleValue(h, mine)}`)}<p class="sweeping" role="status" data-sweeping>Running {h.names[depth === "curious" ? "curious" : "science"].toLowerCase()} across the strip{sweeping.total ? ` (${sweeping.done} of ${sweeping.total})` : ""}…</p>{/if}
+    {#if swept?.why && swept.key.endsWith(`|${open}|${handleValue(h, mine)}`)}<p class="sweeping" role="status" data-sweep-why>The strip's marks could not be worked out: {swept.why}</p>{/if}
     {#if tryProblem}<p class="try-problem" role="status">{tryProblem}</p>{/if}
   {/if}
   {#if followed}
@@ -315,6 +354,11 @@
   }
   .handle:disabled .value {
     border-bottom-color: transparent;
+  }
+  .sweeping {
+    margin: 2px 18px;
+    font-size: 11px;
+    color: var(--sse-ink-muted);
   }
   .try-problem {
     margin: 0;
