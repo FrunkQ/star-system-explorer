@@ -151,9 +151,23 @@
   let w = $state(700);
   const narrow = $derived(w < 560);
   const H = $derived(narrow ? 220 : 300);
-  const labelH = 64;
+  const labelH = 78;
   const base = $derived(H - labelH);
   const lineup = $derived(layoutLineup(order, base - 16, Math.max(280, w - 8), mode, Number(params.limb_ratio ?? 5), narrow ? 64 : 76, globes));
+  // Each label (its name and size line) takes the first of three rows where it clears the label before it; a crowded
+  // row of small bodies staggers instead of overprinting.
+  const labelRows = $derived.by(() => {
+    const ends = [-Infinity, -Infinity, -Infinity];
+    return lineup.placed.map((p) => {
+      const half = Math.max(p.item.label.length * 7, (p.tiny ? 13 : sizeWords(p.item.radius_km).length) * 6) / 2 + 4;
+      // Kept inside the view at either end.
+      const x = Math.min(Math.max(lineup.width, w - 8) - half, Math.max(half, p.x));
+      const free = ends.findIndex((e) => e <= x - half);
+      const row = free >= 0 ? free : ends.indexOf(Math.min(...ends));
+      ends[row] = x + half;
+      return { row, x };
+    });
+  });
   const svgW = $derived(Math.max(w - 8, lineup.width));
   const vis = $derived(Math.min(svgW, Math.max(280, w - 8)));
   const bar = $derived(mode === "true" && Number.isFinite(lineup.km_per_px) ? scaleBar(lineup.km_per_px, narrow ? 80 : 120) : null);
@@ -260,7 +274,8 @@
         {/if}
         <line class="baseline" x1="0" x2={svgW} y1={base} y2={base} />
         {#each lineup.placed as p, n (p.item.key)}
-          {@const row = p.item.label.length * 7 > Math.max(2 * p.r, narrow ? 64 : 76) + 16 && n % 2 === 1 ? 1 : 0}
+          {@const row = labelRows[n]?.row ?? 0}
+          {@const lx = labelRows[n]?.x ?? p.x}
           <g
             class="disc"
             data-item={p.item.key}
@@ -276,8 +291,8 @@
             {#if pattern(p.item) && p.r > 4 && !look}<circle cx={p.x} cy={base - p.r} r={p.r} fill={pattern(p.item)} />{/if}
             {#if p.tiny}<circle class="tinyring" cx={p.x} cy={base - p.r} r={p.r + 5} />{/if}
             {#if ws.selection === p.item.key}<circle class="sel" cx={p.x} cy={base - p.r} r={p.r + (p.tiny ? 9 : 4)} />{/if}
-            <text class="lab" x={p.x} y={base + 16 + row * 22} text-anchor="middle">{p.item.label}</text>
-            <text class="lab sub" x={p.x} y={base + 28 + row * 22} text-anchor="middle">{p.tiny ? "under a pixel" : sizeWords(p.item.radius_km)}</text>
+            <text class="lab" x={lx} y={base + 16 + row * 22} text-anchor="middle">{p.item.label}</text>
+            <text class="lab sub" x={lx} y={base + 28 + row * 22} text-anchor="middle">{p.tiny ? "under a pixel" : sizeWords(p.item.radius_km)}</text>
           </g>
         {/each}
         {#if bar}
@@ -413,6 +428,19 @@
     stroke: var(--sse-ground);
     stroke-width: 3px;
     stroke-linejoin: round;
+  }
+  /* True: the labels sit over black space, so they are light on a dark halo (the chart's ground halo read as hatching). */
+  .space text {
+    fill: white;
+    stroke: black;
+  }
+  .space text.sub {
+    fill: silver;
+  }
+  /* The limb is a star's bright edge: its words go dark on it. */
+  .space text.limb-label {
+    fill: black;
+    stroke: none;
   }
   .space .baseline {
     stroke: var(--sse-ink-muted);
