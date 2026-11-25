@@ -176,7 +176,7 @@ For travel between places that means:
 
 The Run desk's version is the default look of a stop on a journey: what section 5.5 calls "the real screen, held" is the Run desk's plain level.
 
-What every display looks like on each of the three desks is wider than this track. It is its own design task (asked of the coordinator 25 Nov as a separate thread); this table is this track's input to it.
+What every display looks like on each of the three desks is wider than this track. It is its own design task, the thread "Design each display in three modes" (opened by the coordinator 25 Nov 12:46 UTC); this table is this track's input to it, and the seam (what Run shows at each stop, how a short zoom steps between levels) is agreed with that thread by message.
 
 ### 5.10 Reduced motion, small screens, no GPU
 

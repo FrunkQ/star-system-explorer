@@ -34,5 +34,5 @@ Nothing is built. GZ is a code only, never shown in the product.
 
 ## Next
 - Builders to be opened by the coordinator (asked 25 Nov 12:50 UTC): the kernel thread takes GZ0's kernel checks, GZ12, GZ13, GZ2, GZ15, GZ14 in its lane; "Build galaxy charts and histories" takes GZ5 to GZ7; a new "Build travel between places" (Opus) takes GZ1, GZ3, GZ4, GZ8, GZ9, GZ11, GZ16.
-- A separate design task, what every display looks like on the Explore, Build and Run desks (Alex's ask), was asked of the coordinator; the note's 5.9 is this track's input.
+- A separate design task, what every display looks like on the Explore, Build and Run desks (Alex's ask), is the thread "Design each display in three modes" (opened 25 Nov 12:46 UTC); the note's 5.9 is this track's input, and the seam was sent to that thread by message.
 - GZ0's first jobs, not verified by the design thread: whether the web cube and the halo cell put a galaxy in the same place; which place each consumer (life history, the sky, the events op) passes for a campaign system today; what the reads marked "to measure" in the note's section 10 cost.
