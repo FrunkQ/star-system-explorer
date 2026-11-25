@@ -159,12 +159,21 @@ pub(crate) fn liquid(
     let id = liquid_id(cs, name);
     let ph = sheet.row("substances", &id)?.get("phases")?;
     let t = ph.get("saturated_liquid")?;
-    let cols: Vec<&str> = t.get("columns")?.as_array()?.iter().filter_map(|x| x.as_str()).collect();
+    let cols: Vec<&str> = t
+        .get("columns")?
+        .as_array()?
+        .iter()
+        .filter_map(|x| x.as_str())
+        .collect();
     let rows: Vec<Vec<f64>> = t
         .get("rows")?
         .as_array()?
         .iter()
-        .map(|r| r.as_array().map(|r| r.iter().filter_map(|x| x.as_f64()).collect()).unwrap_or_default())
+        .map(|r| {
+            r.as_array()
+                .map(|r| r.iter().filter_map(|x| x.as_f64()).collect())
+                .unwrap_or_default()
+        })
         .collect();
     let at = |name: &str| -> Option<f64> {
         let c = cols.iter().position(|x| *x == name)?;
@@ -231,22 +240,28 @@ pub(crate) fn trains(h: f64, t: f64, dir_deg: f64, g: f64, s: f64) -> Vec<serde_
     let wp = 2.0 * m::PI / t;
     let alpha = 5.0 * m::pow(wp, 4.0) * (h / 4.0) * (h / 4.0) / (g * g);
     let step = m::sqrt(1.4);
-    [(1.0, 0.0), (1.4, 15.0), (2.0, -15.0), (2.8, 30.0), (4.0, -30.0)]
-        .iter()
-        .map(|(f, fan)| {
-            let w = wp * f;
-            let sw = alpha * g * g / m::pow(w, 5.0) * m::exp(-1.25 * m::pow(wp / w, 4.0));
-            let dw = w * (step - 1.0 / step);
-            let k = wavenumber(w, g, s);
-            let d = m::fmod(dir_deg + fan + 360.0, 360.0);
-            serde_json::json!({
-                "wavelength_m": 2.0 * m::PI / k,
-                "amplitude_m": m::sqrt(2.0 * sw * dw),
-                "period_s": 2.0 * m::PI / w,
-                "dir_deg": d,
-            })
+    [
+        (1.0, 0.0),
+        (1.4, 15.0),
+        (2.0, -15.0),
+        (2.8, 30.0),
+        (4.0, -30.0),
+    ]
+    .iter()
+    .map(|(f, fan)| {
+        let w = wp * f;
+        let sw = alpha * g * g / m::pow(w, 5.0) * m::exp(-1.25 * m::pow(wp / w, 4.0));
+        let dw = w * (step - 1.0 / step);
+        let k = wavenumber(w, g, s);
+        let d = m::fmod(dir_deg + fan + 360.0, 360.0);
+        serde_json::json!({
+            "wavelength_m": 2.0 * m::PI / k,
+            "amplitude_m": m::sqrt(2.0 * sw * dw),
+            "period_s": 2.0 * m::PI / w,
+            "dir_deg": d,
         })
-        .collect()
+    })
+    .collect()
 }
 
 /// The liquid's numbers for the card and the drawing: density, viscosity,
@@ -290,7 +305,12 @@ pub(crate) const BANDS_NM: [f64; 3] = [650.0, 550.0, 450.0];
 /// A sheet table `{lambda_nm: [...], <key>: [...] or {v: [...]}}` read at
 /// `nm`, linear between rows, held at the ends.
 fn table_at(t: &serde_json::Value, key: &str, nm: f64) -> Option<f64> {
-    let xs: Vec<f64> = t.get("lambda_nm")?.as_array()?.iter().filter_map(|x| x.as_f64()).collect();
+    let xs: Vec<f64> = t
+        .get("lambda_nm")?
+        .as_array()?
+        .iter()
+        .filter_map(|x| x.as_f64())
+        .collect();
     let col = t.get(key)?;
     let col = col.get("v").unwrap_or(col);
     let ys: Vec<f64> = col.as_array()?.iter().filter_map(|x| x.as_f64()).collect();
@@ -347,12 +367,29 @@ pub(crate) fn optics(
     // law beyond it (from the nearest row).
     let scat = |nm: f64| -> Option<f64> {
         let t = opt.get("scattering_liquid")?;
-        let xs: Vec<f64> = t.get("lambda_nm")?.as_array()?.iter().filter_map(|x| x.as_f64()).collect();
+        let xs: Vec<f64> = t
+            .get("lambda_nm")?
+            .as_array()?
+            .iter()
+            .filter_map(|x| x.as_f64())
+            .collect();
         let (lo, hi) = (*xs.first()?, *xs.last()?);
-        let ex = t.get("exponent").and_then(|v| v.get("v").unwrap_or(v).as_f64());
-        let end = if nm < lo { lo } else if nm > hi { hi } else { nm };
+        let ex = t
+            .get("exponent")
+            .and_then(|v| v.get("v").unwrap_or(v).as_f64());
+        let end = if nm < lo {
+            lo
+        } else if nm > hi {
+            hi
+        } else {
+            nm
+        };
         let b = table_at(t, "b", end)?;
-        Some(if end == nm { b } else { b * m::pow(nm / end, ex?) })
+        Some(if end == nm {
+            b
+        } else {
+            b * m::pow(nm / end, ex?)
+        })
     };
     let back = BANDS_NM
         .iter()
@@ -627,7 +664,10 @@ mod liquid_tests {
         let l0 = t[0]["wavelength_m"].as_f64().unwrap();
         // Deep water: λ = g T² / 2π ≈ 76 m.
         assert!((70.0..80.0).contains(&l0), "{l0}");
-        let a: Vec<f64> = t.iter().map(|x| x["amplitude_m"].as_f64().unwrap()).collect();
+        let a: Vec<f64> = t
+            .iter()
+            .map(|x| x["amplitude_m"].as_f64().unwrap())
+            .collect();
         assert!(a[0] > a[2] && a[2] > a[4], "{a:?}");
         // Sum of squares of amplitudes over the sampled bands stays below
         // m₀ × 2 = 2 (H_s/4)².

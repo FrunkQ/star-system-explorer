@@ -141,7 +141,15 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
             let cs = &block.settings.climate;
             let core = climates.orbit(cs, &c, a.epoch_myr);
             let body = a.raisers.as_ref().map(|(b, m)| (b, m.as_slice()));
-            if let Some(sea) = crate::sea::site(&a.sheet, cs, core, a.lat, r.wind_km_h, r.wind_from_deg, body) {
+            if let Some(sea) = crate::sea::site(
+                &a.sheet,
+                cs,
+                core,
+                a.lat,
+                r.wind_km_h,
+                r.wind_from_deg,
+                body,
+            ) {
                 out["sea"] = sea;
             }
             out
