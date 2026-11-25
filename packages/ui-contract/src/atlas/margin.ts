@@ -10,11 +10,14 @@ import { editionWord, PAGE_KINDS, type Edition } from "./edition.ts";
 import { typedFigures } from "./loader.ts";
 import type { AtlasPage } from "./page.ts";
 import guideNotes from "./notes/guide.notes.json" with { type: "json" };
+import spaceQuotes from "./notes/space.quotes.json" with { type: "json" };
 
 export const MARGIN_SCHEMA = "sse.margin-notes/1";
 /** Where a note may sit: a kind of page, ships (later pages), or anywhere. */
 export const NOTE_ABOUT: readonly string[] = [...PAGE_KINDS, "ship", "any"];
 export const NOTE_MAX_LENGTH = 200;
+/** A quotation may run longer than a margin note: it is shown alone, on a held screen (postcards design 12A). */
+export const QUOTE_MAX_LENGTH = 320;
 /**
  * What a line is for (Alex, 25 Nov: "categorised by use case ... tag sensitive to match the scene"). `page` is the
  * Atlas margin; the rest are the one-liners a kit shows at the top and bottom of a screen, chosen by the situation.
@@ -48,6 +51,10 @@ export interface MarginNote {
   weight?: number;
   /** What it is for (`NOTE_USES`); left out, a ship line is for ships and travel and any other is for the page. */
   uses?: NoteUse[];
+  /** A quotation's speaker (PC7). A line with `by` is someone's words, shown with their name, never the Atlas's claim. */
+  by?: string;
+  /** Where or when it was said: a book, a mission, a year. A citation, not a fact, so figures in it are fine. */
+  source?: string;
 }
 
 /** A note's uses, with the default for one that does not say. */
@@ -75,7 +82,18 @@ export interface NoteSet {
 
 /** The note sets shipped with the base Atlas: the Guide's (Alex's own list and the slotted notes). */
 export const GUIDE_NOTES = guideNotes as unknown as NoteSet;
-export const SHIPPED_NOTE_SETS: readonly NoteSet[] = [GUIDE_NOTES];
+/** Real scientists' and astronauts' words for held screens, with their names (PC7; Alex, 25 Nov, postcards question 7). */
+export const SPACE_QUOTES = spaceQuotes as unknown as NoteSet;
+export const SHIPPED_NOTE_SETS: readonly NoteSet[] = [GUIDE_NOTES, SPACE_QUOTES];
+
+/** A line picked for a screen: its words, and for a quotation who said it and where. */
+export interface PickedLine {
+  id: string;
+  text: string;
+  by?: string;
+  source?: string;
+}
+const said = (n: MarginNote, text: string, weight = n.weight ?? 1) => ({ id: n.id, text, weight, ...(n.by ? { by: n.by } : {}), ...(n.source ? { source: n.source } : {}) });
 
 const known = (s: PlayerSubject, field: string) => {
   const f = fact(s, field);
@@ -173,16 +191,17 @@ export function pickNotes(scene: PlayerScene, page: AtlasPage, ed: Edition, sets
 }
 
 /** Up to `max` of the fitting lines, picked by weight from the seed, never the same one twice. */
-function weighted(fitting: { id: string; text: string; weight: number }[], seed: number, max: number): { id: string; text: string }[] {
+function weighted(fitting: (PickedLine & { weight: number })[], seed: number, max: number): PickedLine[] {
   const next = rng(seed);
-  const out: { id: string; text: string }[] = [];
+  const out: PickedLine[] = [];
   while (out.length < max && fitting.length) {
     const total = fitting.reduce((a, n) => a + n.weight, 0);
     let r = next() * total;
     let i = 0;
     while (i < fitting.length - 1 && r >= fitting[i]!.weight) r -= fitting[i++]!.weight;
     const [hit] = fitting.splice(i, 1);
-    out.push({ id: hit!.id, text: hit!.text });
+    const { weight: _w, ...line } = hit!;
+    out.push(line);
   }
   return out;
 }
@@ -197,11 +216,11 @@ export interface BannerOptions extends MarginOptions {
  * situation, whose kind fits the subject (or "any"), and whose condition the audience's facts and tags meet. With no
  * subject (a holding screen) only lines that need no fact can show. Two different lines, seeded and repeatable.
  */
-export function pickBanners(scene: PlayerScene, address: string | null, situation: string, sets: readonly NoteSet[], opts: BannerOptions): { top?: { id: string; text: string }; bottom?: { id: string; text: string } } {
+export function pickBanners(scene: PlayerScene, address: string | null, situation: string, sets: readonly NoteSet[], opts: BannerOptions): { top?: PickedLine; bottom?: PickedLine } {
   const uses = SITUATION_USES[situation] ?? [];
   const s = address === null ? undefined : scene.subjects.find((x) => x.address === address);
   const kind = s ? String(fact(s, "kind")?.value ?? "") : "";
-  const fitting: { id: string; text: string; weight: number }[] = [];
+  const fitting: (PickedLine & { weight: number })[] = [];
   for (const set of sets) {
     for (const n of set.notes) {
       if (!usesOf(n).some((u) => uses.includes(u))) continue;
@@ -209,12 +228,12 @@ export function pickBanners(scene: PlayerScene, address: string | null, situatio
       if (n.about !== "any" && n.about !== situation && !(s && n.about === kind) && !(situation === "ship" && n.about === "ship")) continue;
       if (!s) {
         if (n.when || /\{[^}]+\}/.test(n.text)) continue;
-        fitting.push({ id: n.id, text: n.text, weight: n.weight ?? 1 });
+        fitting.push(said(n, n.text));
         continue;
       }
       if (n.when && !meets(s, n.when)) continue;
       const text = fillNote(n, s, opts);
-      if (text !== null) fitting.push({ id: n.id, text, weight: n.weight ?? 1 });
+      if (text !== null) fitting.push(said(n, text));
     }
   }
   const [top, bottom] = weighted(fitting, seedOf(`${situation}|${address ?? ""}|${opts.seed ?? ""}`), 2);
@@ -257,11 +276,17 @@ export function checkNoteSet(doc: unknown): string[] {
       out.push(`${at} has no words.`);
       continue;
     }
-    if (n.text.length > NOTE_MAX_LENGTH) out.push(`${at} is ${n.text.length} characters; keep it under ${NOTE_MAX_LENGTH} so it fits a margin.`);
+    const quote = n.by !== undefined;
+    if (quote && (typeof n.by !== "string" || !n.by.trim() || n.by.length > 80)) out.push(`${at} has a speaker ("by") that is not a name of up to 80 characters.`);
+    if (n.source !== undefined && (typeof n.source !== "string" || !n.source.trim() || n.source.length > 120)) out.push(`${at} has a source that is not a citation of up to 120 characters.`);
+    if (n.source !== undefined && !quote) out.push(`${at} has a source but no speaker; a source belongs to a quotation ("by").`);
+    if (quote && /\{[^}]+\}/.test(n.text)) out.push(`${at} is a quotation with a slot; someone's words are shown as they said them.`);
+    const max = quote ? QUOTE_MAX_LENGTH : NOTE_MAX_LENGTH;
+    if (n.text.length > max) out.push(`${at} is ${n.text.length} characters; keep it under ${max} so it fits ${quote ? "a held screen" : "a margin"}.`);
     if (n.weight !== undefined && !(typeof n.weight === "number" && n.weight > 0)) out.push(`${at} has a weight that is not a positive number.`);
     if (n.uses !== undefined && (!Array.isArray(n.uses) || !n.uses.length || n.uses.some((u) => !(NOTE_USES as readonly string[]).includes(u)))) out.push(`${at} has uses that are not a list of ${NOTE_USES.join(", ")}.`);
     const typed = typedFigures(n.text.replace(SLOT, ""));
-    if (!obviousJoke(typed)) for (const f of typed) out.push(`${at} states a figure ("${f}"). Put the fact in a slot, such as {ocean.fraction}, so it is the audience's own value. (Percentages that plainly cannot be true, over 100% together, may stay as a joke.)`);
+    if (!quote && !obviousJoke(typed)) for (const f of typed) out.push(`${at} states a figure ("${f}"). Put the fact in a slot, such as {ocean.fraction}, so it is the audience's own value. (Percentages that plainly cannot be true, over 100% together, may stay as a joke.)`);
     const reads = conditionFields(n.when);
     for (const f of reads) if (!isCatalogued(f)) out.push(`${at} tests "${f}", which is not a fact the Atlas knows.`);
     for (const m of n.text.matchAll(SLOT)) {

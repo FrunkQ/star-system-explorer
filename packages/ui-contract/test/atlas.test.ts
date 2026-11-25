@@ -9,6 +9,7 @@ import {
   atlasDocsOf,
   obviousJoke,
   pickBanners,
+  SPACE_QUOTES,
   usesOf,
   buildPage,
   chapterOf,
@@ -469,4 +470,21 @@ test("one-liners for the top and bottom of a screen: by use case, by the scene's
   const ex = pickBanners(after, TARN, "world", sets, { ...opts, exclude: [world.top!.id] });
   assert.ok(ex.top?.id !== world.top!.id && ex.bottom?.id !== world.top!.id);
   assert.deepEqual(pickBanners(after, TARN, "nowhere", sets, opts), {});
+});
+
+test("quotes (PC7): someone's words with who said it and where; the base set is scientists and astronauts", () => {
+  assert.deepEqual(checkNoteSet(SPACE_QUOTES), []);
+  for (const n of SPACE_QUOTES.notes) assert.ok(n.by && usesOf(n).includes("waiting"), n.id);
+  const fan = atlasDocsOf([json("store-packs/space-quotes-fan/pack.json")]);
+  assert.deepEqual(fan.refused, []);
+  assert.deepEqual(checkNoteSet(fan.note_sets[0]), []);
+  assert.equal(SPACE_QUOTES.notes.length + fan.note_sets[0]!.notes.length, 72, "every one of SSE3's 72 quotes is in one set or the other");
+  // A source is a citation: a year in it is fine. A quote shows as said: no slot. A source needs a speaker.
+  const set = (n: object) => ({ schema: "sse.margin-notes/1", id: "q", name: "Q", notes: [{ id: "a", about: "any", uses: ["waiting"], ...n }] });
+  assert.deepEqual(checkNoteSet(set({ text: "Ten minutes to splashdown.", by: "Someone", source: "Apollo 8, 1968" })), []);
+  assert.match(checkNoteSet(set({ text: "It is {ocean.fraction} wet.", by: "Someone" })).join(), /quotation with a slot/);
+  assert.match(checkNoteSet(set({ text: "A line.", source: "1968" })).join(), /source but no speaker/);
+  // The hold screen's pick carries the speaker and source with the words.
+  const hold = pickBanners(after, null, "holding", [SPACE_QUOTES], { vocab, depth: "curious" as const });
+  assert.ok(hold.top?.by && hold.top.text);
 });

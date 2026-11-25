@@ -30,6 +30,7 @@ it is in the public SSE3 repo FrunkQ/star-system-generator (`src/lib/catalogue/g
 | AT10 the GM's copy: pencil and ink on the page and in print | not started | |
 | AT14 `sse.kit/1`, its loader and checks, palettes with a contrast check, the four starters as documents | done for the document and checks; "Interface" on the role card and swatches are the Run desk thread's (AT13) | packages/AT14.md |
 | AT15 wearing a kit: the four starters on screen | not started; needs AT13 (parts declare controls) and AT15a | |
+| PC7 (postcards track, owned here) the quote set: `by` and `source` on a margin line, 21 scientists' and astronauts' quotes in the base app, 51 others in `store-packs/space-quotes-fan` | done | packages/PC7.md |
 | AT9, AT13 (Run desk), AT11, AT16 (Orac), AT15a (look transitions thread) | other threads | |
 
 Seams agreed by message: the look transitions thread ("Build look transitions for screens", AT15a) builds
