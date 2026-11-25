@@ -134,6 +134,13 @@ export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";
 // The stars over a landing site and the eye's adaptation (night-sky.ts).
 export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";
 export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";
+// Close-up: the camera down to a grazing orbit over a world in True, and the ground under it.
+export { CLOSE_FLOOR_M, CLOSE_FLOOR_SHARE, CLOSE_REACH, closeMin, grazeLook, groundUnder, zoomNear, type GroundView } from "./close-up.ts";
+// The shared finish (VP1) and the sky's stars behind True (VP2).
+export { startFinish, type Finish, type FinishFrame } from "./finish.ts";
+export { GLARE_FLOOR_DEG, glareLadder, glareShare, glareTotal, rungScale, type GlareRung } from "./finish-glare.ts";
+export { longGain, starsBehind, starTint, type SkyStar as BehindStar } from "./stars-behind.ts";
+export type { GpuStars } from "./gpu.ts";
 export { cutRings, ringMarks, RESONANCE_F, RING_VISCOSITY_M2_S, GAP_PER_ROOT_MU, EDGE_SLACK } from "./ring-structure.ts";
 export type { RingMark, RingMoon } from "./ring-structure.ts";
 // VP6: the detail ladder (rung table, bindings, seed and clock, HUD detail line). The GPU node is ladder-node.ts,
