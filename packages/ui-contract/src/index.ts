@@ -87,7 +87,7 @@ export { specFromScene, sceneAt, snapshotAt, fateEvents, subjectNames, fmtAge, K
 export type { SystemSpec, LookedAhead, FateEvent, FateSnapshot } from "./fate.ts";
 export { checkWorldStack, formatKm, kindPhrase, ladder, regionCounts, cutRadius } from "./world.ts";
 export type { WorldStack, WorldShell, WorldRegion, WorldFeature, LadderLine, WorldStackRead } from "./world.ts";
-export { direction as cubeDirection, faceOf, sampleAt, sampleColour, globeStats, viewToWorld, MATERIALS as SURFACE_MATERIALS, COVERS as SURFACE_COVERS } from "./globe.ts";
+export { direction as cubeDirection, faceOf, sampleAt, sampleColour, globeStats, viewToWorld, MATERIALS as SURFACE_MATERIALS, COVERS as SURFACE_COVERS, edgeNoise, naturalDirection, naturalEdge, sampleNatural, globeCellAngle, NATURAL_WARP, softenGround, SOFT_GROUND_CELLS } from "./globe.ts";
 export type { SurfaceTile, Globe } from "./globe.ts";
 export { R_EARTH_KM, R_JUPITER_KM, R_SUN_KM, checkReferences, itemFromReference, itemFromSubject, radiusKm, reachKm, starColour, layoutLineup, sizeWords, scaleBar, formatKmLength } from "./compare.ts";
 export type { ReferenceObject, ReferenceDoc, CompareItem, Placed, Lineup, SolDoc } from "./compare.ts";

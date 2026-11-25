@@ -154,32 +154,53 @@ export function composeFaces(tiles: readonly SurfaceTile[], stains: readonly Sta
       const scale = n / (ts * (1 << t.key.level));
       const x0 = t.key.x * ts * scale;
       const y0 = t.key.y * ts * scale;
-      const span = Math.max(1, Math.round(scale));
-      for (let j = 0; j < ts; j++) {
-        for (let i = 0; i < ts; i++) {
-          const k = j * ts + i;
-          let c: readonly [number, number, number] = sampleColour(t, k, 1);
-          if (ground.length && t.cover[k] === 0) {
-            const one = new Uint8Array(c);
-            stainTexel(one, 0, ground);
-            c = [one[0]!, one[1]!, one[2]!];
-          }
-          const h = t.elevation_dm[k]! / 10;
-          const wet = (COVERS[t.cover[k]!] ?? "none") !== "none" && COVERS[t.cover[k]!] !== "ice" ? 1 : 0;
-          for (let b = 0; b < span; b++) {
-            const row = Math.round(y0 + j * scale) + b;
-            if (row >= n) break;
-            for (let a = 0; a < span; a++) {
-              const col = Math.round(x0 + i * scale) + a;
-              if (col >= n) break;
-              const o = row * n + col;
-              rgb[o * 3] = c[0];
-              rgb[o * 3 + 1] = c[1];
-              rgb[o * 3 + 2] = c[2];
-              height_m[o] = wet ? 0 : h;
-              liquid[o] = wet;
-            }
-          }
+      // Each sample's colour (stained) and height first; a coarse tile is then spread over its texels bilinearly
+      // between sample centres, not in blocks, so a level-0 tile under finer ones has no stair-stepped edges
+      // (MATCH1, 25 Nov: hard pixel edges on basin discs).
+      const tc = new Uint8Array(ts * ts * 3);
+      const th = new Float32Array(ts * ts);
+      const tw = new Uint8Array(ts * ts);
+      for (let k = 0; k < ts * ts; k++) {
+        let c: readonly [number, number, number] = sampleColour(t, k, 1);
+        if (ground.length && t.cover[k] === 0) {
+          const one = new Uint8Array(c);
+          stainTexel(one, 0, ground);
+          c = [one[0]!, one[1]!, one[2]!];
+        }
+        tc[k * 3] = c[0];
+        tc[k * 3 + 1] = c[1];
+        tc[k * 3 + 2] = c[2];
+        const wet = (COVERS[t.cover[k]!] ?? "none") !== "none" && COVERS[t.cover[k]!] !== "ice" ? 1 : 0;
+        tw[k] = wet;
+        th[k] = wet ? 0 : t.elevation_dm[k]! / 10;
+      }
+      const c0 = Math.round(x0);
+      const r0 = Math.round(y0);
+      const c1 = Math.min(n, Math.round(x0 + ts * scale));
+      const r1 = Math.min(n, Math.round(y0 + ts * scale));
+      for (let row = r0; row < r1; row++) {
+        const y = Math.min(ts - 1, Math.max(0, (row + 0.5 - y0) / scale - 0.5));
+        const j = Math.max(0, Math.min(ts - 2, Math.floor(y)));
+        const fy = ts > 1 ? y - j : 0;
+        for (let col = c0; col < c1; col++) {
+          const x = Math.min(ts - 1, Math.max(0, (col + 0.5 - x0) / scale - 0.5));
+          const i = Math.max(0, Math.min(ts - 2, Math.floor(x)));
+          const fx = ts > 1 ? x - i : 0;
+          const i1 = Math.min(ts - 1, i + 1);
+          const j1 = Math.min(ts - 1, j + 1);
+          const a = j * ts + i;
+          const b = j * ts + i1;
+          const cc = j1 * ts + i;
+          const d = j1 * ts + i1;
+          const w00 = (1 - fx) * (1 - fy);
+          const w10 = fx * (1 - fy);
+          const w01 = (1 - fx) * fy;
+          const w11 = fx * fy;
+          const o = row * n + col;
+          for (let ch = 0; ch < 3; ch++) rgb[o * 3 + ch] = Math.round(tc[a * 3 + ch]! * w00 + tc[b * 3 + ch]! * w10 + tc[cc * 3 + ch]! * w01 + tc[d * 3 + ch]! * w11);
+          height_m[o] = th[a]! * w00 + th[b]! * w10 + th[cc]! * w01 + th[d]! * w11;
+          // Sea or not is the nearest sample's (a shore is not half wet).
+          liquid[o] = tw[(fy < 0.5 ? j : j1) * ts + (fx < 0.5 ? i : i1)]!;
         }
       }
     }
