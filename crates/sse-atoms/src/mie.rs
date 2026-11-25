@@ -74,6 +74,7 @@ pub struct Mie {
 
 /// The Mie series for a sphere of size parameter `x` and relative
 /// refractive index `n + i k`, with the phase function at `angles_rad`.
+#[allow(clippy::needless_range_loop)] // the series walks several arrays by one index
 pub fn mie(x: f64, n: f64, k: f64, angles_rad: &[f64]) -> Result<Mie, String> {
     if !(x > 0.0 && x.is_finite()) {
         return Err(format!("size parameter must be positive, got {x}"));

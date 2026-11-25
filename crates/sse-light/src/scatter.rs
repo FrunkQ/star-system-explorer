@@ -17,11 +17,20 @@ pub struct Particle {
     /// Radius, m (the middle of the spread).
     pub radius_m: f64,
     pub wavelength_m: f64,
-    /// Refractive index, real part, relative to vacuum.
+    /// Refractive index, real part, relative to vacuum. Left out (0), it
+    /// is read from the sheet for `substance` in `phase`.
+    #[serde(default)]
     pub n: f64,
     /// Imaginary part (absorption), 0 for clear.
     #[serde(default)]
     pub k: f64,
+    /// The particle's substance on the master data sheet ("h2o"), read
+    /// when `n` is left out.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub substance: Option<String>,
+    /// "liquid" (default) or "solid".
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub phase: Option<String>,
     /// Refractive index of what the particles float in (1 for a thin gas).
     #[serde(default = "one")]
     pub medium_n: f64,
@@ -79,8 +88,22 @@ pub fn scattering(p: &Particle) -> Result<Scattering, String> {
         return Err("angles must be 0 to 180 degrees".into());
     }
     let rad: Vec<f64> = angles.iter().map(|a| a * m::PI / 180.0).collect();
+    let (n, k) = if p.n > 0.0 {
+        (p.n, p.k)
+    } else {
+        let s = p
+            .substance
+            .as_deref()
+            .ok_or("give n (and k), or a substance on the sheet")?;
+        sheet_index(
+            &sse_reference::Reference::base(),
+            s,
+            p.phase.as_deref().unwrap_or("liquid"),
+            p.wavelength_m,
+        )?
+    };
     let k_wave = 2.0 * m::PI * p.medium_n / p.wavelength_m;
-    let (nr, ki) = (p.n / p.medium_n, p.k / p.medium_n);
+    let (nr, ki) = (n / p.medium_n, k / p.medium_n);
     // Radii and weights by number across the log-normal spread.
     let pts: Vec<(f64, f64)> = if p.spread > 0.0 {
         (0..SPREAD_POINTS)
@@ -132,4 +155,51 @@ pub fn scattering(p: &Particle) -> Result<Scattering, String> {
         phase,
         references: sse_atoms::decl_of("sse.light.mie_scattering").references,
     })
+}
+
+/// A substance's refractive index n + ik at a wavelength from its master
+/// data sheet table (`optical.refractive_index_liquid` or `_solid`, kind
+/// "table" with `lambda_nm`, `n`, `k`), linear between rows and held at the
+/// ends. Errors name what the sheet lacks.
+pub fn sheet_index(
+    sheet: &sse_reference::Reference,
+    substance: &str,
+    phase: &str,
+    wavelength_m: f64,
+) -> Result<(f64, f64), String> {
+    let key = match phase {
+        "liquid" => "refractive_index_liquid",
+        "solid" => "refractive_index_solid",
+        other => return Err(format!("phase must be liquid or solid, got {other}")),
+    };
+    let t = sheet
+        .row("substances", substance)
+        .and_then(|r| r.get("optical"))
+        .and_then(|o| o.get(key))
+        .ok_or_else(|| format!("the sheet has no {key} for {substance}: give n (and k) instead"))?;
+    let col = |c: &str| -> Result<Vec<f64>, String> {
+        t.get(c)
+            .and_then(|v| v.as_array())
+            .map(|a| a.iter().filter_map(|x| x.as_f64()).collect())
+            .ok_or_else(|| format!("{substance} {key}: no {c} column"))
+    };
+    let (l, n, k) = (col("lambda_nm")?, col("n")?, col("k")?);
+    if l.is_empty() || l.len() != n.len() || l.len() != k.len() {
+        return Err(format!("{substance} {key}: columns differ in length"));
+    }
+    let nm = wavelength_m * 1e9;
+    if nm <= l[0] {
+        return Ok((n[0], k[0]));
+    }
+    for i in 1..l.len() {
+        if nm <= l[i] {
+            let f = (nm - l[i - 1]) / (l[i] - l[i - 1]);
+            return Ok((
+                n[i - 1] + f * (n[i] - n[i - 1]),
+                k[i - 1] + f * (k[i] - k[i - 1]),
+            ));
+        }
+    }
+    let e = l.len() - 1;
+    Ok((n[e], k[e]))
 }

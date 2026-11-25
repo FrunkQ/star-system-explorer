@@ -3592,6 +3592,17 @@ fn read_bows_gives_rainbows_and_halos() {
         "{r}"
     );
     assert!(r["items"][1]["halo_60_deg"].as_f64().unwrap() > 21.0, "{r}");
+    // Water's index read off the sheet in red light: a slightly smaller bow.
+    let r: serde_json::Value = serde_json::from_str(
+        &k.handle_json(
+            &serde_json::json!({"op": "read_bows", "items": [
+            {"id": "red", "substance": "h2o", "wavelength_m": 6.5e-7, "kind": "drop"}]})
+            .to_string(),
+        ),
+    )
+    .unwrap();
+    let red = r["items"][0]["primary_deg"].as_f64().unwrap();
+    assert!(red > 42.0 && red < 42.6, "{r}");
 }
 
 /// K-e: read_scattering gives a cloud droplet's forward-thrown phase table
@@ -3612,6 +3623,19 @@ fn read_scattering_gives_phase_tables() {
     let g = c["g"].as_f64().unwrap();
     assert!((0.8..0.9).contains(&g), "{g}");
     assert_eq!(c["phase"].as_array().unwrap().len(), 181);
+    // The same droplet with water's n and k read off the sheet.
+    let w: serde_json::Value = serde_json::from_str(
+        &k.handle_json(
+            &serde_json::json!({"op": "read_scattering", "items": [
+            {"id": "sheet", "radius_m": 1e-5, "wavelength_m": 5.5e-7, "substance": "h2o"}]})
+            .to_string(),
+        ),
+    )
+    .unwrap();
+    assert!(
+        (w["items"][0]["g"].as_f64().unwrap() - 0.85).abs() < 0.07,
+        "{w}"
+    );
     assert!((c["single_scattering_albedo"].as_f64().unwrap() - 1.0).abs() < 1e-9);
     let r: serde_json::Value = serde_json::from_str(
         &k.handle_json(

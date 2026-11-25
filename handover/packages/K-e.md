@@ -25,6 +25,10 @@ stays a shortcut for water clouds only.
   - `angles_deg` with `phase`, normalised to a mean of 1 over the sphere.
   
   `spread` is ln σ_g of a log-normal size spread, which smooths the series' ripples.
+- `scatter::sheet_index(sheet, substance, "liquid"|"solid", wavelength)`: n and k from the sheet's
+  `optical.refractive_index_liquid` / `_solid` tables (water liquid from Segelstein 1981 is on main; ice Ih from
+  Warren and Brandt 2008 lands with the data sheet's PR 475). `Particle` may give `substance` and `phase`
+  instead of `n`, `k`; `read_bows` items may give `substance` and `wavelength_m` instead of `n` (VP-L4 part 2a).
 - Op `read_scattering {items: [Particle]}` returns `scattering_read`. Errors come back as `bad_particle`. It is
   in perf chunk light.
 
@@ -40,6 +44,9 @@ stays a shortcut for water clouds only.
 - Kernel `read_scattering_gives_phase_tables`: a 10 µm cloud droplet with spread 0.3 gives g 0.8 to 0.9 and an
   albedo of 1, and a 1 m boulder is refused.
 
+- Kernel `read_bows_gives_rainbows_and_halos`: water off the sheet in red light gives a bow of 42.0° to 42.6°;
+  `read_scattering` with `substance: "h2o"` gives g 0.85 ± 0.07.
+
 ## Golden
 
 `contract.jsonl` changes on purpose:
@@ -51,6 +58,6 @@ square root of age. No number changes.
 
 ## Next
 
-- The sheet's n and k per wavelength for water, ice, methane, sulphuric acid, tholin haze and dust (data sheet
-  thread), so callers pass a substance id rather than numbers.
+- The sheet's n and k for methane (no clean source yet: Khare's table is OCR-damaged), sulphuric acid, tholin
+  haze and dust (data sheet thread); then those substances work by id too.
 - Fog bows and glories from these tables (VP-L4 part 2) and the giants thread's haze reading the table.

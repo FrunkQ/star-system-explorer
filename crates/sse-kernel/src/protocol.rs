@@ -598,7 +598,8 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
-    /// Rainbows and halos (VP-L4): each of `items` is `{id, n, kind}` with
+    /// Rainbows and halos (VP-L4): each of `items` is `{id, n | substance
+    /// (+ wavelength_m), kind}` with
     /// `kind` "drop" (rain of a liquid of refractive index `n`: its bows)
     /// or "crystal" (ice-like crystals: their 22° and 46° style halos).
     ReadBows {
@@ -606,8 +607,9 @@ pub enum Request {
         items: Vec<serde_json::Value>,
     },
     /// Phase tables per kind of particle (K-e): each of `items` is
-    /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n, k?,
-    /// medium_n?, spread?, angles_deg?}`, worked by Mie theory.
+    /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n and k
+    /// | substance (+ phase), medium_n?, spread?, angles_deg?}`, worked by
+    /// Mie theory.
     ReadScattering {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
