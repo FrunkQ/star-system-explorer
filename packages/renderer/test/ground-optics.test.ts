@@ -2,6 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { forgetGroundOptics, groundReflectance, readGroundOptics, reflectanceAt, withGround, GROUND_ROWS } from "../src/ground-optics.ts";
 import { sampleColour, SURFACE_MATERIALS, type SurfaceTile } from "../../ui-contract/src/index.ts";
+import { readFileSync } from "node:fs";
+import { Session } from "../../ui-contract/src/session.ts";
+import { gmSeat } from "../../ui-contract/src/seat.ts";
+import { nodeKernel } from "../../ui-contract/test/node-kernel.ts";
 
 // The sheet's rows as MP35 writes them (Apollo 12030 fresh, 10084 mature; LSCC, Taylor et al. 2001).
 const LAM = [400, 450, 500, 550, 600, 650, 700];
@@ -55,4 +59,20 @@ test("only bare ground on a weathered tile takes the measured colour; the rest k
   assert.ok(fresh[1] > mature[1] + 30, `fresh ${fresh} brighter than mature ${mature}`);
   // A sea sample is not ground.
   assert.deepEqual(sampleColour(airless!, 2), sampleColour(tile(), 2));
+});
+
+test("the rows ground-rows.json names are on the kernel's data sheet, read through readMatter", async () => {
+  const k = nodeKernel();
+  try {
+    const pack = (p: string) => JSON.parse(readFileSync(new URL(`../../../${p}`, import.meta.url), "utf8"));
+    const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "k" }, [pack("packs/base-physics/pack.json"), pack("packs/base-reference/pack.json")]);
+    forgetGroundOptics();
+    const o = await readGroundOptics(s);
+    for (const [material, ids] of Object.entries(GROUND_ROWS)) for (const which of ["fresh", "mature"] as const) if (ids[which]) assert.ok(o[material]?.[which], `${material} ${which} (${ids[which]}) read from the sheet`);
+    // Apollo 11 soil 10084 at 550 nm (LSCC).
+    assert.ok(Math.abs(o.basalt!.mature![1] - 0.057191) < 1e-6);
+  } finally {
+    forgetGroundOptics();
+    await k.close();
+  }
 });
