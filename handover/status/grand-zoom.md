@@ -32,6 +32,8 @@ Nothing is built. GZ is a code only, never shown in the product.
 | GZ17 the gazetteer: places and names worked out once at the defined time and kept with the campaign; placeholders fill in when looked at | accepted, not started | kernel, Run desk, names |
 | GZ16 the Motion layer: one arrow mark with a key, the Motion switch, system level first | accepted, not started | "Build travel between places" and each view's owner |
 
+**Split with "Build galaxy charts and histories"** (Alex 25 Nov 12:47 UTC saw overlap): this track is design only; that thread builds and owns the Galaxies nearby and Your systems screens (GZ5, GZ6, GZ7 and the screen halves of GZ12, GZ13). The note's section 13A lists where every package lands and what is reused (ClusterMap, FindHome, HomeCell, Your systems, and its "Grow a system here" on `from_star`).
+
 ## Next
 - Builders to be opened by the coordinator (asked 25 Nov 12:50 UTC): the kernel thread takes GZ0's kernel checks, GZ12, GZ13, GZ2, GZ15, GZ14 in its lane; "Build galaxy charts and histories" takes GZ5 to GZ7; a new "Build travel between places" (Opus) takes GZ1, GZ3, GZ4, GZ8, GZ9, GZ11, GZ16.
 - A separate design task, what every display looks like on the Explore, Build and Run desks (Alex's ask), is the thread "Design each display in three modes" (opened 25 Nov 12:46 UTC); the note's 5.9 is this track's input, and the seam was sent to that thread by message.

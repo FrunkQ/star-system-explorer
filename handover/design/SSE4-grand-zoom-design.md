@@ -433,6 +433,22 @@ The contract (GZ1) and the lower journey port (GZ3) touch nothing in stage A and
 
 GZ12 to GZ15 are kernel work that changes goldens, so they queue in the coordinator's lane order, first in line by Alex's ruling.
 
+### 13A. Where each package lands, and what it reuses
+
+Alex, 25 Nov 12:47 UTC: "the grand zoom and Build galaxy charts and histories - may be doing similar things - or designing at least." The split, so nothing is designed or built twice: **this note is design only and its thread writes no feature code. "Build galaxy charts and histories" is the builder that owns the Galaxies nearby and Your systems screens**, and what it has built is extended, not redrawn.
+
+| Folder and owner | Packages landing there | Already built there, to reuse |
+|---|---|---|
+| `views/cluster-map`, `views/galaxy-chart` (Your systems, HomeCell), `views/galaxy-3d` use, `ui-contract/galaxy.ts`, `home-finder.ts`, `your-systems.ts`: **"Build galaxy charts and histories"** | GZ5, GZ6 (Galaxies nearby in 3D and True), GZ7 (Local stars), the screen halves of GZ12 ("Make this home") and GZ13 ("Find it a place", moving a system), the reading side of GZ17 on these screens | `ClusterMap` (kept as the Chart style and its catalogue), `FindHome` and the cited Milky Way wish (becomes the kernel's home wish in GZ12), `cellHalo`, `projectHalo`, `haloRadius`; Your systems' map, height stalks, routes, pencil and ink, map layers; `HomeCell` on `star_cell` (becomes the Local stars rung's Chart style); `systemSummary`; **"Grow a system here" on `from_star`** (built on its branch, held on two kernel bugs), which is GZ13's generated case, finished rather than redesigned |
+| `crates/sse-kernel` (`cosmos.rs`, `galaxies.rs`), `crates/sse-cosmos`: **the kernel thread** ("Build kernel resolve and rules") or its hand-off thread | GZ0's kernel checks, GZ12, GZ13, GZ2, GZ14, GZ15, the kernel read of GZ17 | `halo_cell`, `galaxies_seen`, `satellites_seen`, `star_cell`, `from_star`, `reconstruct_origin`, the web's tidal tensor and displacement |
+| `views/foam-map/Web3D.svelte`, `renderer/web-cube.ts`: **"Build cosmic web view"** | the web's part of GZ8 (centred on home, its journey port), the web's arrows in GZ16 | the cube in 3D and True, light from haloes |
+| `renderer/` galaxy and sprite files: **the renderer thread** | the type pictures of GZ5, the dive of GZ7, ports for the globe and the ground in GZ3 | `galaxy-true.ts`, `galaxy-marks.ts`, `close-up.ts`, the night sky |
+| `views/voyage`, travel panels: **"Build galaxy charts and travel screens"** | nothing new; its star map (`Stars.svelte`) and the Local stars rung read the same `star_cell`, and its flight arrows adopt the Motion mark of GZ16 when it exists | the voyages star map |
+| `shell/src/run`, postcards: **Run desk and postcards threads** | GZ10, the campaign store of GZ17 | bookmarks, presets, the Switchboard, postcards |
+| new: `ui-contract/approach.ts`, the journey player in the shell, the arrow mark in `chart-grammar`: **"Build travel between places"** (to open) | GZ1, GZ3, GZ4, GZ8, GZ9, GZ11, GZ16 | `flyTo` in System 3D, `delivery.ts`, `place.ts` |
+
+Section 7 is therefore a brief for the galaxy charts thread, not a second design of its screen: where its own notes or its accepted galaxy chart mockup already settle a point, they stand, and that thread says so by message.
+
 A cave's inside is not here. Interior sites are parked to about 4.2, so in 4.0 the grand zoom ends at the tube's mouth, looking in.
 
 ## 14. Questions for Alex
