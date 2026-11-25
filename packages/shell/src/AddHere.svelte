@@ -13,6 +13,7 @@
     system,
     host,
     orbits,
+    at_au,
     packs,
     onadd,
   }: {
@@ -27,12 +28,14 @@
     };
     /** Orbits already round the host, in AU. */
     orbits: number[];
+    /** Where the Add ghost was dropped on the chart (ED4), in AU; otherwise the first free orbit. */
+    at_au?: number;
     packs: { id: string; version: string }[];
     onadd: (clip: Clip, words: string) => Promise<string | null>;
   } = $props();
 
   const moon = $derived(host.kind !== "star");
-  let a = $state(untrack(() => (host.kind === "star" ? freeOrbit(orbits) : freeOrbit(orbits, 0.003))));
+  let a = $state(untrack(() => at_au ?? (host.kind === "star" ? freeOrbit(orbits) : freeOrbit(orbits, 0.003))));
   let name = $state("");
   let found = $state<FormsHere[] | null>(null);
   let runs = $state(0);

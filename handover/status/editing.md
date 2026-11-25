@@ -33,7 +33,9 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED5 part 1 Reach it on the Orbit box: "Surface about X K. Reach [ K ] by moving the orbit" (`reachIt` in `ui-contract/src/reach.ts`: bisection on a scratch what-if the kernel resolves with BC1, discarded after; the answer set as one change, one Undo; when no orbit in an eighth to eight times the size gets there, it says how close it can come) | done | packages/ED5.md |
 | ED5 part 2a Reach it from the handle sheet (`reach` on a handle lists the results it can reach; `Reach.svelte` under the strip or box): Orbit reaches the surface's temperature, Mass the surface gravity ("Gravity 0.38 g. Reach [1 g] by changing Mass"); typed in any unit of the result's kind | done | packages/ED5.md |
 | ED5 part 2b Pin it with the honesty mark; Reach it for a year and for locked; from a what-if; the kernel's sweep (K1) in place of the search | queued (Pin it wants the mark's write; part of it waits on K1) | packages/ED5.md |
-| ED4, ED8 to ED11, ED13, ED10a, ED13a | queued, in the design's order | |
+| ED4 part 1 Add with the ghost first: round the system's star on the flat chart, Add (tool, A, More) puts a ghost and its orbit under the pointer with the distance ("1 AU round Sun", catching round figures and resonances); a press opens Add here at that orbit; Esc puts it away; "Type a distance" opens Add here at once (`ws.adding`, SystemChart `moveGhost`/`dropGhost`) | done | packages/ED4.md |
+| ED4 part 2 the live panel beside the ghost (What forms here, Kinds, the verdict) instead of the dialog; round a planet in its close-up; Paste and Duplicate as the ghost; drop on a parent; the family tree (R1) | queued | packages/ED4.md |
+| ED8 to ED11, ED13, ED10a, ED13a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 
 ## Decisions and agreements that live only in threads (written down 24 Nov for the handover)

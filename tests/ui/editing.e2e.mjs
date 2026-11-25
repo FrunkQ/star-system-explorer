@@ -296,7 +296,32 @@ try {
       await gm.locator('.area-chart .body[aria-label^="Sun"]').first().locator(".hit").click();
       await gm.getByRole("button", { name: "More", exact: true }).click();
       await gm.locator("[data-more-add]").click();
+      // ED4: the ghost comes first. It follows the pointer with the distance round the Sun; Esc puts it away and
+      // writes nothing; a press opens Add here at that orbit.
+      await gm.locator("[data-add-note]").waitFor({ timeout: 10000 });
+      const sunAt = await gm.locator('.area-chart .body[aria-label^="Sun"] .hit').first().boundingBox();
+      const earthAt = await gm.locator('.area-chart .body[aria-label^="Earth,"] .hit').first().boundingBox();
+      const [sx0, sy0] = [sunAt.x + sunAt.width / 2, sunAt.y + sunAt.height / 2];
+      const [ex0, ey0] = [earthAt.x + earthAt.width / 2, earthAt.y + earthAt.height / 2];
+      await gm.mouse.move(sx0 + (ex0 - sx0) * 0.5, sy0 + (ey0 - sy0) * 0.5);
+      await gm.mouse.move(ex0, ey0, { steps: 4 });
+      await gm.locator("[data-add-ghost]").waitFor({ timeout: 5000 });
+      assert.match(await gm.locator("[data-add-readout]").textContent(), /AU round Sun/);
+      await shot(gm, `add-ghost-${vp}`);
+      const hashG = await hash();
+      await gm.keyboard.press("Escape");
+      await gm.waitForFunction(() => !document.querySelector("[data-add-note]") && !document.querySelector("[data-add-ghost]"), null, { timeout: 5000 });
+      assert.equal(await hash(), hashG, "Esc puts the ghost away and writes nothing");
+      await gm.getByRole("button", { name: "More", exact: true }).click();
+      await gm.locator("[data-more-add]").click();
+      await gm.locator("[data-add-note]").waitFor({ timeout: 10000 });
+      await gm.mouse.move(ex0 - 3, ey0, { steps: 2 });
+      await gm.mouse.move(ex0, ey0, { steps: 2 });
+      await gm.mouse.down();
+      await gm.mouse.up();
       await add.locator("[data-kinds]").waitFor({ timeout: 20000 });
+      const at = Number(await add.locator("[data-add-orbit]").inputValue());
+      assert.ok(at > 0.8 && at < 1.25, `Add here opens at the ghost's orbit, near Earth's: ${at} AU`);
       const kinds = await add.locator("[data-kind]").evaluateAll((ls) => ls.map((l) => l.dataset.kind));
       for (const k of ["rocky", "gas-giant", "ice-giant"]) assert.ok(kinds.includes(k), `${k} is a kind: ${kinds}`);
       assert.match(await add.locator('[data-kind="gas-giant"]').innerText(), /like Jupiter/);

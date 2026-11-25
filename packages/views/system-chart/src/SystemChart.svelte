@@ -223,6 +223,44 @@
     drag = { ...drag, rpx, lastD: d, caught: c?.says ?? null, ...(a !== drag.a_au ? { a_au: a, moved: true } : {}) };
   }
 
+  // ED4, Add with the ghost first (editing design section 5): while the shell is adding round the body at this chart's
+  // centre, a ghost and its orbit follow the pointer with the distance; a press drops it there (Add here opens with that
+  // orbit), Esc puts it away. Catches as the drag's: round figures, resonances with the worlds already there.
+  const adding = $derived.by(() => {
+    const a = ctx.workspace.adding;
+    return a && a.a_au === null && centre && a.host === centre.address ? a : null;
+  });
+  let ghostAt = $state<{ a_au: number; x: number; y: number; caught: string | null } | null>(null);
+  function moveGhost(e: PointerEvent) {
+    if (!adding) return void (ghostAt = null);
+    const box = svgEl!.getBoundingClientRect();
+    const [x, y] = [e.clientX - box.left, e.clientY - box.top];
+    const d = Math.hypot(x - cx, y - cy);
+    const raw = Math.min(limitAu, Math.max(scale.inner_au, distanceAt(d, scale)));
+    const neighbours = orbiting.filter((q) => q.orbit).map((q) => ({ label: q.label, a: q.orbit!.a_au }));
+    const c = e.altKey ? null : nearestCatch(d, [...roundFigures(raw, frame ? KM_PER_AU : 1, frame ? "km" : "AU"), ...resonanceCatches(raw, neighbours)], (v) => radius(v, scale));
+    ghostAt = { a_au: c ? c.at : round(raw), x, y, caught: c?.says ?? null };
+  }
+  function dropGhost(e: PointerEvent) {
+    if (!adding) return;
+    e.stopPropagation();
+    e.preventDefault();
+    if (!ghostAt) moveGhost(e);
+    if (ghostAt) ctx.workspace.adding = { ...adding, a_au: ghostAt.a_au };
+    ghostAt = null;
+  }
+  $effect(() => {
+    if (!adding) return void (ghostAt = null);
+    const cancel = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      ctx.workspace.adding = null;
+    };
+    window.addEventListener("keydown", cancel, true);
+    return () => window.removeEventListener("keydown", cancel, true);
+  });
+
   // Esc while dragging puts the orbit back and writes nothing (editing design section 4).
   $effect(() => {
     if (!drag) return;
@@ -588,10 +626,13 @@
         viewBox="0 0 {w} {h}"
         role="group"
         aria-label={framed ? `Chart of ${framed.label} and its moons` : `System chart of ${scene.title}`}
-        onpointermove={moveDrag}
+        onpointermove={(e) => (moveDrag(e), moveGhost(e))}
+        onpointerdowncapture={dropGhost}
+        onpointerleave={() => (ghostAt = null)}
         onpointerup={endDrag}
         onpointercancel={() => (drag = null)}
         class:dragging={drag !== null}
+        class:adding={adding !== null}
       >
         <HatchDefs {prefix} />
         {#if on("grid")}
@@ -690,6 +731,15 @@
             {/if}
           </g>
         {/each}
+        {#if adding && ghostAt}
+          {@const gr = radius(ghostAt.a_au, scale)}
+          {@const [gx, gy] = polar(cx, cy, gr, (Math.atan2(cy - ghostAt.y, ghostAt.x - cx) * 180) / Math.PI)}
+          <g class="add-ghost" data-add-ghost aria-hidden="true">
+            <Ink circle={{ cx, cy, r: gr }} tone="accent" weight="heavy" dash="dashed" />
+            <circle class="ghost-dot" cx={gx} cy={gy} r="6" />
+            <text class="dragv" data-add-readout x={gx + 14} y={gy + 20}>{dist(ghostAt.a_au)} round {centre?.label}{ghostAt.caught && !ghostAt.caught.startsWith("a round") ? ` · ${ghostAt.caught}` : ""}</text>
+          </g>
+        {/if}
         <!-- Names in their own layer, over every mark (chart-labels.ts places them); a press on a name chooses its body. -->
         <!-- Range rings (RK12), under the HUD like the grid: round each weapon's holder, bent by the chart's scale. -->
         {#if hudShows(shownView.hud, "range") && rangeSets.length}
@@ -811,6 +861,15 @@
   }
   .dragging {
     user-select: none;
+  }
+  svg.adding {
+    cursor: crosshair;
+  }
+  .ghost-dot {
+    fill: none;
+    stroke: var(--sse-accent);
+    stroke-width: 2;
+    stroke-dasharray: 3 2;
   }
   .ghost {
     opacity: 0.55;
