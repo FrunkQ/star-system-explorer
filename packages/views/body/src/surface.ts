@@ -35,7 +35,7 @@ export function loadSurface(ctx: ViewContext, system: string, address: string): 
     }
     const kind = (r as { kind?: unknown }).kind;
     // Bare ground in its measured colour where the kernel weathers it (renderer ground-optics.ts, VP3 part 5).
-    const tiles = r.tiles.some((t) => t.maturity) ? withGround(r.tiles, await readGroundOptics(ctx.session)) : r.tiles;
+    const tiles = withGround(r.tiles, await readGroundOptics(ctx.session));
     const v: Surface = { tiles, regime: r.regime, refused: r.refused.length, air: facts, ...(typeof kind === "string" ? { kind } : {}) };
     cache.set(key, v);
     return v;

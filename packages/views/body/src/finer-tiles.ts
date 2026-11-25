@@ -36,7 +36,7 @@ export interface FinerReader extends Partial<MatterReader> {
 
 /** Tiles as read, with bare ground's measured colour laid on when the session can read the sheet (ground-optics.ts). */
 async function grounded(session: FinerReader, tiles: SurfaceTile[]): Promise<SurfaceTile[]> {
-  if (!session.readMatter || !tiles.some((t) => t.maturity)) return tiles;
+  if (!session.readMatter) return tiles;
   return withGround(tiles, await readGroundOptics(session as MatterReader));
 }
 
