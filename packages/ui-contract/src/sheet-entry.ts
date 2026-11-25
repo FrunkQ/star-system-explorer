@@ -81,3 +81,68 @@ export function readSheet(rows: readonly SheetRow[], typed: Record<string, strin
   }
   return out;
 }
+
+/** A body the system sheet can write: its address, name, own facts and scale class. */
+export interface SheetBody {
+  address: string;
+  label: string;
+  facts: Record<string, Json>;
+  cls: string;
+}
+
+export interface TableRead {
+  edits: { address: string; field: string; value: number; before: Json }[];
+  understood: { body: string; label: string; before: string; after: string }[];
+  problems: { where: string; why: string }[];
+  /** The table's columns and the input each was matched to (null: not matched, left out). */
+  columns: { heading: string; row: string | null }[];
+}
+
+const cellsOf = (line: string) => line.split(/\t|;|,(?=\s*\S)|\s{2,}/).map((c) => c.trim());
+
+/**
+ * The system sheet (ED13a, design 10B F1): a pasted table for the whole system, a row per body and a column per
+ * input. The first line names the columns ("Name, Orbit (AU), Mass, Day"): each is matched to an input by either
+ * depth's name, its field or its id, and a unit in brackets is the unit of that column's bare numbers. The first
+ * column names the body. Rows naming no body here, and columns naming no input, are said and left out.
+ */
+export function readTable(text: string, rowsFor: (b: SheetBody) => readonly SheetRow[], bodies: readonly SheetBody[], depth: Depth): TableRead {
+  const out: TableRead = { edits: [], understood: [], problems: [], columns: [] };
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length);
+  if (!lines.length) return out;
+  if (lines.length < 2) return (out.problems.push({ where: "the table", why: "it needs a line of column names, then a line per body" }), out);
+  const heads = cellsOf(lines[0]!);
+  const unitOf = (h: string) => /[([]\s*([^)\]]+)\s*[)\]]/.exec(h)?.[1]?.trim() ?? null;
+  const bare = (h: string) => h.replace(/[([][^)\]]*[)\]]/g, "").trim().toLowerCase();
+  const sample = bodies[0] ? rowsFor(bodies[0]) : [];
+  for (const [i, h] of heads.entries()) {
+    if (i === 0) continue;
+    const r = sample.find((x) => x.aliases.includes(bare(h)));
+    out.columns.push({ heading: h, row: r?.id ?? null });
+    if (!r) out.problems.push({ where: `column "${h}"`, why: "names no input here; left out" });
+  }
+  const byName = (n: string) => bodies.find((b) => b.label.toLowerCase() === n.trim().toLowerCase());
+  for (const line of lines.slice(1)) {
+    const cells = cellsOf(line);
+    const body = byName(cells[0] ?? "");
+    if (!body) {
+      out.problems.push({ where: `"${cells[0]}"`, why: "no body of that name in this system; left out" });
+      continue;
+    }
+    const rows = rowsFor(body);
+    const typed: Record<string, string> = {};
+    for (const [i, h] of heads.entries()) {
+      if (i === 0) continue;
+      const id = out.columns[i - 1]?.row;
+      const v = cells[i]?.trim();
+      if (!id || !v || v === "-" || v === "—") continue;
+      const u = unitOf(h);
+      typed[id] = u && /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v) ? `${v} ${u}` : v;
+    }
+    const r = readSheet(rows, typed, body.facts, body.cls, depth);
+    for (const e of r.edits) out.edits.push({ address: body.address, field: e.field, value: e.value, before: e.before });
+    for (const u of r.understood) out.understood.push({ body: body.label, label: u.label, before: u.before, after: u.after });
+    for (const p of r.problems) out.problems.push({ where: `${body.label}, ${p.label}`, why: p.why });
+  }
+  return out;
+}

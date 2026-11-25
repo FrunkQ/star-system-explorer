@@ -77,7 +77,10 @@ test("with nothing linked, every job says so and nothing is sent", async () => {
 test("no peer-to-peer, share, players' or session code imports the agents", () => {
   const root = new URL("../../../", import.meta.url);
   const files = [
-    ...readdirSync(new URL("packages/ui-contract/src/", root)).map((f) => `packages/ui-contract/src/${f}`),
+    // Every file under ui-contract/src, its folders too (the Atlas has ui-contract/src/atlas/).
+    ...readdirSync(new URL("packages/ui-contract/src/", root), { recursive: true, withFileTypes: true })
+      .filter((d) => d.isFile())
+      .map((d) => `${d.parentPath.slice(d.parentPath.indexOf("packages/ui-contract/src"))}/${d.name}`),
     "packages/shell/src/share.svelte.ts",
     "packages/shell/src/Players.svelte",
     "packages/shell/src/players.ts",

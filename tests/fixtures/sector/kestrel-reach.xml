@@ -10,4 +10,11 @@
     <Subsector Index="F">Lanternfall</Subsector>
     <Subsector Index="K">Siltmoor &amp; Vey</Subsector>
   </Subsectors>
+  <Routes>
+    <Route Start="0912" End="1013" Type="Trade" Style="Dashed"/>
+    <Route Start="1013" End="1114" Type="Courier" Allegiance="Kv" Color="#c0a040"/>
+    <Route Start="1619" End="0102" EndOffsetX="1" Type="Trade"/>
+    <Route Start="0912" End="2525"/>
+    <Route Start="09x2" End="1013"/>
+  </Routes>
 </Sector>

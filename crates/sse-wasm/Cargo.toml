@@ -24,5 +24,7 @@ sse-formation = { path = "../sse-formation" }
 sse-cosmos = { path = "../sse-cosmos" }
 sse-surface = { path = "../sse-surface" }
 sse-nav = { path = "../sse-nav" }
+# XO1: the bend table, checked the same bits in the browser.
+sse-gravity = { path = "../sse-gravity" }
 serde_json.workspace = true
 wasm-bindgen = "=0.2.130"

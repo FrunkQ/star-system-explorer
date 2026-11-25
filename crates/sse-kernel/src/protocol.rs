@@ -1333,6 +1333,37 @@ pub enum Request {
         reason: Option<String>,
         at_s: i64,
     },
+    /// The record (X3j, record-logic design 2.4): move `kg` of resource
+    /// `kind` from one address to another in one decision. The source loses
+    /// what the destination gains: its stock first, then its natural amount
+    /// (raising `resource.<kind>.extracted`); the destination's stock rises.
+    /// Refused when the source holds less. Nothing is made from nothing.
+    Transfer {
+        kind: String,
+        from: String,
+        to: String,
+        kg: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        at_s: i64,
+    },
+    /// The record (X3k): a ship mines `hours` of resource `kind` from a
+    /// body at its `mining.rate_kg_h` fact, capped by what the body holds,
+    /// by `transfer`. Refused when the ship has no rate or the body none left.
+    Mine {
+        ship: String,
+        body: String,
+        kind: String,
+        hours: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        at_s: i64,
+    },
     /// The record: an actor (empire, guild, noble, party, crew) at
     /// `<root>/actor:<id>` or under `parent`.
     AddActor {
@@ -1862,6 +1893,38 @@ pub enum Request {
         /// adopt it, and write the coded facts on the grown main world.
         #[serde(default)]
         grow: bool,
+        /// The sector's metadata XML (name, subsectors, routes). Its routes
+        /// between two imported worlds become links (`set_link`, kind the
+        /// route's type, source "import_sector"); routes reaching another
+        /// sector, or a hex with no world, are listed as left out.
+        #[serde(default)]
+        #[ts(optional)]
+        metadata: Option<String>,
+        /// Who knows the imported routes (as `set_link`'s `audience`;
+        /// absent: the GM only, until the GM tells the players).
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        route_audience: Option<serde_json::Value>,
+        /// The routes' "Known to" rung (as `set_link`'s `tier`).
+        #[serde(default)]
+        #[ts(optional)]
+        route_tier: Option<String>,
+        at_s: i64,
+    },
+    /// A pack's rolled profile (WBH part 2, `provides.other.rolls`) for one
+    /// world: each step's dice, drawn from the universe's seed (the same on
+    /// every device), read against the world's codes on the program's sheet.
+    /// A code set by hand is kept unless `reroll`. Without `apply` it is a
+    /// preview; with it the results become one authored event at `at_s`,
+    /// each code beside a `roll.<program>.<step>` fact saying how it was
+    /// rolled. GM machine only.
+    RollProfile {
+        program: String,
+        body: String,
+        #[serde(default)]
+        reroll: bool,
+        #[serde(default)]
+        apply: bool,
         at_s: i64,
     },
     /// Write a campaign's mapped systems (those with `map.hex`) at or under
@@ -2390,6 +2453,8 @@ impl Request {
             Request::ImportChronicle { .. } => "import_chronicle",
             Request::AddNote { .. } => "add_note",
             Request::SetKept { .. } => "set_kept",
+            Request::Transfer { .. } => "transfer",
+            Request::Mine { .. } => "mine",
             Request::AddActor { .. } => "add_actor",
             Request::Record { .. } => "record",
             Request::Hold { .. } => "hold",
@@ -2432,6 +2497,7 @@ impl Request {
             Request::Codes { .. } => "codes",
             Request::ImportSector { .. } => "import_sector",
             Request::ExportSector { .. } => "export_sector",
+            Request::RollProfile { .. } => "roll_profile",
             Request::SectorMap { .. } => "sector_map",
             Request::HaloCell { .. } => "halo_cell",
             Request::MatterBudget { .. } => "matter_budget",
@@ -2745,6 +2811,8 @@ pub fn ops() -> Vec<OpInfo> {
         ),
         o("add_note", Cost::Light, "one event"),
         o("set_kept", Cost::Light, "one fold and one event"),
+        o("transfer", Cost::Light, "two reads of the natural amount at Survey, two kept changes"),
+        o("mine", Cost::Light, "one fact, then a transfer"),
         o("add_actor", Cost::Light, "one fold and one event"),
         o("record", Cost::Light, "linear in the record events"),
         o(
@@ -2809,6 +2877,11 @@ pub fn ops() -> Vec<OpInfo> {
             "import_sector",
             Cost::Light,
             "GM machine only; one code-sheet plan per world line; with grow, up to 6 pinned formation runs per world (heavy for a whole sector)",
+        ),
+        o(
+            "roll_profile",
+            Cost::Light,
+            "GM machine only; one code reading of one world, then a few dice",
         ),
         o(
             "export_sector",
@@ -3498,6 +3571,18 @@ pub enum Response {
         state_hash: String,
         record_hash: String,
     },
+    Transferred {
+        kind: String,
+        kg: f64,
+        /// Natural, extracted, stock and held kilograms after the move.
+        #[ts(type = "unknown")]
+        from: serde_json::Value,
+        #[ts(type = "unknown")]
+        to: serde_json::Value,
+        change_ids: Vec<String>,
+        state_hash: String,
+        record_hash: String,
+    },
     ActorAdded {
         address: String,
         state_hash: String,
@@ -3859,6 +3944,27 @@ pub enum Response {
         #[ts(type = "unknown")]
         import: serde_json::Value,
         summary: String,
+        events: Vec<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        state_hash: Option<String>,
+        /// The metadata's routes: each with its ends' systems and, once
+        /// applied, its link and event; or why it was left out.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        #[ts(optional, type = "unknown[]")]
+        routes: Vec<serde_json::Value>,
+        /// With `apply` and routes: the record's hash after the links.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        record_hash: Option<String>,
+    },
+    /// `roll_profile`: each step's result (`id`, `label`, `writes`, `symbol`,
+    /// `dice`, `total`, `how`, `why`), and with `apply` the event written.
+    ProfileRolled {
+        program: String,
+        body: String,
+        #[ts(type = "unknown[]")]
+        steps: Vec<serde_json::Value>,
         events: Vec<String>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional)]

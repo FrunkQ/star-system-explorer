@@ -310,3 +310,213 @@ fn traveller_ports_and_bases_are_dressing_candidates_from_the_codes() {
             .starts_with("society.starport")
             || w["field"].as_str().unwrap().starts_with("traveller.bases."))));
 }
+
+/// Sector routes as links (X3l): a metadata file's routes between two
+/// imported worlds become charted links, known to the GM until told; the
+/// rest are listed with the reason. Importing again rewrites the same links.
+#[test]
+fn sector_routes_become_links_known_to_the_gm() {
+    let mut k = crate::Kernel::new();
+    let r = load(
+        &mut k,
+        vec![
+            pack("packs/base-physics/pack.json"),
+            pack("packs/base-atlas/pack.json"),
+            pack("packs/base-time/pack.json"),
+            pack("packs/traveller/pack.json"),
+        ],
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "kestrel", "seed": "k"}),
+    );
+    let text =
+        std::fs::read_to_string(root().join("tests/fixtures/sector/lanternfall.tab")).unwrap();
+    let meta =
+        std::fs::read_to_string(root().join("tests/fixtures/sector/kestrel-reach.xml")).unwrap();
+    let ask = |apply: bool| {
+        serde_json::json!({"op": "import_sector", "text": text, "metadata": meta,
+            "apply": apply, "at_s": 0})
+    };
+    let links = |k: &mut crate::Kernel, audience: &str| -> Vec<serde_json::Value> {
+        let r = send(
+            k,
+            serde_json::json!({"op": "links_in", "audience": audience}),
+        );
+        assert_eq!(r["type"], "links_listed", "{r}");
+        r["links"].as_array().unwrap().clone()
+    };
+
+    let r = send(&mut k, ask(false));
+    assert_eq!(r["type"], "sector_import", "{r}");
+    let routes = r["routes"].as_array().unwrap();
+    assert_eq!(routes.len(), 4, "{r}");
+    assert_eq!(routes[0]["a"], "u:kestrel/sys:0912");
+    assert_eq!(routes[0]["b"], "u:kestrel/sys:1013");
+    assert!(routes[0].get("link").is_none(), "a preview writes nothing");
+    assert!(routes[2]["left_out"]
+        .as_str()
+        .unwrap()
+        .contains("neighbouring sector"));
+    assert!(routes[3]["left_out"].as_str().unwrap().contains("2525"));
+    assert!(r.get("record_hash").is_none());
+    assert!(links(&mut k, "gm").is_empty());
+
+    let r = send(&mut k, ask(true));
+    assert_eq!(
+        r["routes"][0]["link"],
+        "u:kestrel/link:route-0912-1013-trade"
+    );
+    assert_eq!(
+        r["routes"][1]["link"],
+        "u:kestrel/link:route-1013-1114-courier"
+    );
+    assert!(r["record_hash"].is_string());
+    let gm = links(&mut k, "gm");
+    assert_eq!(gm.len(), 2, "{gm:?}");
+    let trade = gm.iter().find(|l| l["kind"] == "Trade").unwrap();
+    assert_eq!(trade["source"], "import_sector", "{trade}");
+    assert_eq!(trade["name"], "Trade route 0912 to 1013");
+    assert!(
+        links(&mut k, "players").is_empty(),
+        "the players do not know them yet"
+    );
+
+    // Again, told to everyone: the same two links, now known to the players.
+    let mut again = ask(true);
+    again["route_audience"] = serde_json::json!("everyone");
+    let r = send(&mut k, again);
+    assert_eq!(r["type"], "sector_import", "{r}");
+    assert_eq!(links(&mut k, "gm").len(), 2);
+    assert_eq!(links(&mut k, "players").len(), 2);
+
+    let mut bad = ask(false);
+    bad["route_audience"] = serde_json::json!(7);
+    assert_eq!(send(&mut k, bad)["code"], "bad_link");
+}
+
+/// WBH part 2: the Traveller social codes as a rolled profile. The dice come
+/// from the universe's seed (the same twice), the steps read each other in
+/// order, applying writes authored codes that read back on the sheet with a
+/// note of how they were rolled, a hand-set code is kept, and an uninhabited
+/// world gets government, law and tech level 0 without a roll.
+#[test]
+fn traveller_social_codes_roll_from_the_seed() {
+    let mut k = crate::Kernel::new();
+    let r = load(
+        &mut k,
+        vec![
+            pack("packs/base-physics/pack.json"),
+            pack("packs/base-atlas/pack.json"),
+            pack("packs/base-time/pack.json"),
+            pack("packs/traveller/pack.json"),
+        ],
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "wbh", "seed": "w"}),
+    );
+    let (busy, empty) = ("u:wbh/sys:0/body:3", "u:wbh/sys:0/body:4");
+    for (a, f, v) in [
+        (busy, "name", serde_json::json!("Ashgrove")),
+        (busy, "traveller.code.population", serde_json::json!("8")),
+        (empty, "name", serde_json::json!("Cinder")),
+        (empty, "traveller.code.population", serde_json::json!("0")),
+    ] {
+        let r = send(
+            &mut k,
+            serde_json::json!({"op": "set_authored", "edit": {
+                "address": a, "field": f, "value": v, "occurred_at_s": 0}}),
+        );
+        assert_eq!(r["type"], "authored", "{r}");
+    }
+    let ask = |body: &str, apply: bool| {
+        serde_json::json!({"op": "roll_profile", "program": "traveller.social", "body": body,
+            "apply": apply, "at_s": 0})
+    };
+    let step = |r: &serde_json::Value, id: &str| -> serde_json::Value {
+        r["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|s| s["id"] == id)
+            .unwrap()
+            .clone()
+    };
+    let a = send(&mut k, ask(busy, false));
+    assert_eq!(a["type"], "profile_rolled", "{a}");
+    let b = send(&mut k, ask(busy, false));
+    assert_eq!(a["steps"], b["steps"], "the same dice from the same seed");
+    let gov = step(&a, "government");
+    assert_eq!(gov["how"], "rolled", "{gov}");
+    let dice: i64 = gov["dice"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| d.as_i64().unwrap())
+        .sum();
+    assert_eq!(gov["total"], (dice - 7 + 8).clamp(0, 15), "{gov}");
+    assert!(
+        gov["why"].as_str().unwrap().contains("+ population 8"),
+        "{gov}"
+    );
+    let law = step(&a, "law");
+    assert!(
+        law["why"]
+            .as_str()
+            .unwrap()
+            .contains(&format!("+ government {}", gov["total"])),
+        "{law}"
+    );
+    let port = step(&a, "starport")["symbol"].as_str().unwrap().to_string();
+    assert!(
+        ["A", "B", "C", "D", "E", "X"].contains(&port.as_str()),
+        "{port}"
+    );
+    assert!(a.get("state_hash").is_none());
+
+    // Written: the codes read back as authored, with how they were rolled.
+    let w = send(&mut k, ask(busy, true));
+    assert_eq!(w["events"].as_array().unwrap().len(), 1, "{w}");
+    let c = send(
+        &mut k,
+        serde_json::json!({"op": "codes", "scope": busy, "at_s": 0}),
+    );
+    let reading = &c["readings"][0]["reading"];
+    let seg = reading["segments"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["id"] == "government")
+        .unwrap();
+    assert_eq!(seg["symbol"], gov["symbol"], "{seg}");
+    assert_eq!(seg["why"]["kind"], "authored", "{seg}");
+    // Again: every code is now set, so each is kept.
+    let again = send(&mut k, ask(busy, false));
+    assert_eq!(step(&again, "government")["how"], "kept", "{again}");
+    let re = send(
+        &mut k,
+        serde_json::json!({"op": "roll_profile", "program": "traveller.social", "body": busy,
+            "reroll": true, "at_s": 0}),
+    );
+    assert_eq!(step(&re, "government")["how"], "rolled", "{re}");
+
+    // Uninhabited: 0 without a roll.
+    let e = send(&mut k, ask(empty, false));
+    for id in ["government", "law", "tech"] {
+        let s = step(&e, id);
+        assert_eq!(
+            (s["how"].as_str(), s["symbol"].as_str()),
+            (Some("zero"), Some("0")),
+            "{id}: {s}"
+        );
+    }
+
+    let bad = send(
+        &mut k,
+        serde_json::json!({"op": "roll_profile", "program": "nope", "body": busy, "at_s": 0}),
+    );
+    assert_eq!(bad["code"], "unknown_program", "{bad}");
+}

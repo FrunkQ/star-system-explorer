@@ -1,0 +1,16 @@
+[package]
+name = "sse-hazard"
+description = "SSE4 hazard map (track XO, XO18): how close a ship can go round anything dangerous, and which hazard stops it"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-atoms.workspace = true
+sse-flow.workspace = true
+sse-reference.workspace = true
+sse-field = { path = "../sse-field" }
+serde.workspace = true
+serde_json.workspace = true

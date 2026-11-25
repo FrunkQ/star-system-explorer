@@ -18,7 +18,20 @@
 - e2e (`tests/ui/editing.e2e.mjs`, desk): Mars's bar and chips; typing 50% for CO₂ gives N₂ 27% and Ar 20% (proportions
   kept), then one Undo. Screen: project files `sse4/handover-screens/ED8-screens/air-box-desk.png`.
 
-## Part 2 (queued)
+## Part 2a (25 Nov): Kinds for air, Add a gas
+
+- `airKinds(sol)`: every body of `packs/base-sol` with a measured surface pressure and mix gives a kind, "Like Venus",
+  "Like Earth", "Like Mars" or "Like Pluto", thickest first, with its source. None of the figures are typed. The pack
+  has no Titan air, so there is no Titan-like kind until base-sol carries one. `airKindEdits` sets the pressure and
+  the kind's gases, and sets any gas the body has that the kind lacks to nothing. It is one change.
+- `gasNames(packs, also)`: what "Add a gas" offers. It takes the sheet's substances that are not ions and have phase
+  data placing them in an air (a triple point, critical point, vapour pressure or saturated liquid), and leaves out
+  anything boiling above 300 K, which drops rocket fuels and peroxide. It adds the gases any catalogued air holds. A
+  gas joins at 1,000 ppm (`retrade`) and its strip opens.
+- e2e: "Like Earth" on Mars gives N₂ 78% and "Like Earth" in What followed, then Undo. Adding methane gives a CH₄ chip
+  at 1,000 ppm, then Undo.
+
+## Part 2b (queued)
 
 - Add a gas in three groups (what the rock gives off, what it can hold, what escapes, with the time it takes).
 - Drag a join of the bar to trade two neighbours; tipping points on a gas's strip (fires burn, toxic, freezes out).

@@ -25,3 +25,40 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | Example packs 4.1: the Traveller standard ships (12 starships, 6 small craft) as templates and as pack ships the voyage planner flies and the designer draws (`nav_ships`, `packShips`); Mongoose's notice word for word (`provides.other.notice`, shown on Packs); the World hooks tag set (`sse.world-hooks`, 13 prompts) | done (Traveller pack track); pack ships in the voyage pickers (travel thread), tidal lock hooks | packages/X3g-standard-ships.md |
 | A game system's difficulty numbers beside SSE4's words: `provides.other.difficulty` (dice, ladder, typical operator, words, skills), ui-contract `gameDifficulty` from odds or words; Traveller's ladder and skills from the Cepheus Engine SRD | done (Traveller pack track); shown on the At world card and route console (travel thread) next | packages/X3h-difficulty.md |
 | Traveller sensors as instruments (RK11 pack share): each of the twelve kinds carries an sse-sense instrument (method, band, aperture, noise) so `detect` computes its reach; V3 ranges kept as authored | done; triggers asking `detect` (kernel lane), fits per tech level (FT8) next | packages/X3i-sensor-instruments.md |
+| Resources on the books (TG11 kept half): `resource.<kind>.extracted` and `.stock` kept on any address, held = natural - extracted + stock in `read_inventory`, new op `transfer` that conserves | done | packages/X3j-resource-books.md |
+| Mining and resource labels (TG11 mining step, TG8 part 2): `resource.*` labels read off held kg, so a mined-out rock loses its label; base pack `sse.base-resources` (metal, water, hydrogen, helium-3); new op `mine` at a ship's `mining.rate_kg_h` | done; a refinery's named effects, a computed drill rate next | packages/X3k-mining-labels.md |
+| X3l, sector routes as links: `sse-sector-io` reads the metadata's `<Routes>`; `import_sector` takes `metadata`, `route_audience`, `route_tier` and writes each route between two imported worlds as a link (source `import_sector`, GM only by default); the Sector map fetches or takes the XML and says which routes were left out | done; cross-sector routes, routes drawn on the hex map next | packages/X3l-sector-routes.md |
+| RK12, the Traveller mapping: nine ship weapons in `provides.other.weapons`, each with the game's tech level, optimum band and damage (Cepheus Engine SRD) beside an sse-sense weapon; a standard target; fudge F60 | done; rings on the chart (renderer, chart room), RK16 pack side next | packages/RK12-traveller-weapons.md |
+| WBH part 1, the extended world profile: `sse-codes` `value` segments (a fact, scaled, over a sheet constant, to significant figures); code sheet `traveller.extended` (twelve physical lines, none rolled) as the swappable block; a "Read as" sheet picker on World codes; credits for the Cepheus SRD and TravellerSystemGenerator | done | packages/WBH1-extended-profile.md |
+| WBH part 2, the social codes rolled: `sse-codes::roll` (a pack's dice procedure as data, seeded per world and step, hand-set codes kept); kernel op `roll_profile` (preview, or authored codes with how each was rolled); Traveller `traveller.social` from the Cepheus SRD (government, law, starport, tech level, bases); a roll button on World codes | done; a whole sector in one ask next | packages/WBH2-social-rolls.md |
+
+## Open now
+
+- **PR 400** (X3j, X3k, X3l, the RK12 Traveller mapping and WBH parts 1 and 2 together). Its contract cases live in the
+  traveller area (`tests/contract/areas/traveller.json`, golden `tests/golden/areas/traveller.jsonl`), so it moves no core
+  golden line and merges when green. Re-bless with `SSE_BLESS=1 CARGO_INCREMENTAL=0 cargo test -q --release -p sse-kernel contract`.
+
+## Next packages, in order
+
+1. **RK16 pack side:** stealth and countermeasure gear onto the counters list. Design questions go to the Atomic Rockets track.
+2. **MP16 counted measures.** "2 jumps" and a "Jump-2" drive rating (never "J2"). The default count is ceil(route pc / rating), and the GM's count overrules it. This needs the kernel's counted-measure declarations, and links carry `counted` in `nav` (imported routes could carry it too).
+3. **WBH next:** roll a whole sector's unset worlds in one ask; more social lines once there are OGL or our own numbers.
+4. **Resources, next steps:** a refinery's named making and consuming effects; a computed drill rate; catalogue Sol compositions (Mercury reads 23% iron like every catalogue body; inventory thread).
+5. **Smaller items:**
+   - Triggers that ask `detect` for the pair instead of reading `range_m` (kernel lane).
+   - Fits per tech level, and the Traveller TL table as a tech ladder (FT8, after FT1 and FT2).
+   - SV7: the pack names its own "Known to" rungs.
+   - Switch `shipLog` to `crewAboard` (PR 318).
+   - Gap 25 rest: hide orbit lines, sealed seats.
+   - Gap 18 rest: imported worlds tied to the stars under their hexes.
+   - Tidal-lock hooks once a lock fact exists.
+   - OV10 pack half: allegiance and travel zones as hex map layers; routes drawn on the hex map.
+
+## Alex's rulings for this track (23 and 24 Nov)
+
+- Never the TAS logo or other trademarked art. Ship no copyrighted rules text, and bundle no official setting data.
+- The Traveller pack data alone is CC BY-NC 4.0 (`packs/traveller/LICENCE.md`, which quotes Mongoose's fair use notice word for word); the repo stays Apache-2.0. Alex emails Mongoose (sales@mongoosepublishing.com) himself.
+- Traveller is the 4.0 showcase. Other game packs (Mothership game side, Eclipse Phase, 2300AD) wait for 4.2.
+- SSE4 never rolls dice or decides. A game pack may show its own difficulty ladder beside SSE4's words: odds through the system's dice first, then the word table; GM screens only; the skill shown when the pack knows the game's skills (X3h).
+- Sensors must "just work", and stay tweakable by those who care (X3i).
+- The World Builder's Handbook way of making worlds is wanted. It ships as one "big block" a GM can grab and change (see next package 5).
