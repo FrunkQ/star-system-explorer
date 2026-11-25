@@ -14049,7 +14049,7 @@
        "also": [
         "richardson2014"
        ],
-       "note": "normal deuterium at its normal boiling point, from CoolProp's saturated-liquid fit to Richardson et al. 2014 (fit good to 0.17%)"
+       "note": "normal deuterium at its normal boiling point, computed by CoolProp from Richardson et al. 2014, whose equation of state is good to about 3% for saturated liquid density (the 0.17% is only CoolProp's ancillary fit to that equation)"
       }
      }
     },
