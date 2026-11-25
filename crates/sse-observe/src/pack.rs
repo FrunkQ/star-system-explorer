@@ -122,7 +122,7 @@ mod merge_tests {
     /// body already granted "rumour" still reads (Run desk thread, 24 Nov).
     #[test]
     fn a_game_pack_adds_views_without_dropping_the_campaigns() {
-        let base = observe("packages/shell/public/packs/kestrel-player-data.json");
+        let base = observe("packages/shell/src/documents/kestrel.player-data.pack.json");
         let trav = observe("packs/traveller/pack.json");
         assert!(
             base.is_object() && trav.is_object(),
