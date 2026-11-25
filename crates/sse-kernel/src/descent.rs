@@ -7,7 +7,7 @@ use crate::err;
 use crate::protocol::Response;
 use crate::survey::{surveyed, Cache, From};
 use sse_core::math as m;
-use sse_nav::descent::{descend, hazards, level, EntryState, Hazard, Lander, World};
+use sse_nav::descent::{hazards, level, plan_down, EntryState, Hazard, Lander, World};
 use sse_surface::site::{site, SiteLimits};
 
 /// Gas constant, J/(mol K).
@@ -126,7 +126,7 @@ pub(crate) fn plan_descent(a: Ask, cache: &mut Cache) -> Result<serde_json::Valu
             }
         }
     };
-    let out = descend(&d.run, &w, &lander, &entry);
+    let out = plan_down(&d.run, &w, &lander, &entry);
     let landed = matches!(out.outcome.result.as_str(), "landed");
     let verdict = match (landed, rep.ok) {
         (true, true) => "landed",

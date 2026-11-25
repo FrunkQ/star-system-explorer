@@ -74,6 +74,29 @@ try {
     await clu.locator("[data-min]").selectOption("1e11");
     await gm.waitForFunction((k) => document.querySelectorAll(".clu [data-halo-dot]").length < k, n, { timeout: 30000 });
 
+    // Find a home: first like the Milky Way (whatever the nearby cells hold), then a wider wish that must find some;
+    // going to one moves the map to its cell and picks it.
+    await clu.locator(".find summary").click();
+    await clu.locator("[data-find-search]").click();
+    await clu.locator("[data-find-said]").waitFor({ timeout: 120000 });
+    const mw = await clu.locator("[data-find-said]").innerText();
+    await clu.locator("[data-wish='neighbour']").selectOption("any");
+    await clu.locator("[data-wish='quiet_gyr']").fill("0");
+    await clu.locator("[data-find-search]").click();
+    await gm.waitForFunction(() => Number(document.querySelector(".clu [data-find-home]")?.getAttribute("data-find-home")) >= 1 && document.querySelector(".clu [data-find-said]"), null, { timeout: 120000 });
+    const home = await clu.locator("[data-find-go]").first().getAttribute("data-find-go");
+    assert.match(await clu.locator(".fits li").first().innerText(), /a halo of .* suns/);
+    await shot(gm, "v9-find-home");
+    await clu.locator("[data-find-go]").first().click();
+    const homeCell = /cell:(-?\d+)\.(-?\d+)\.(-?\d+)\//.exec(home).slice(1, 4).join(".");
+    await gm.waitForFunction((c) => document.querySelector(".clu")?.getAttribute("data-cell") === c, homeCell, { timeout: 30000 });
+    await gm.waitForFunction((k) => document.querySelector(".clu [data-halo-ledger]")?.getAttribute("data-halo-ledger") === k, home.split("halo:").pop(), { timeout: 30000 });
+    if (homeCell !== "0.0.0") {
+      for (const [axis, v] of homeCell.split(".").map((x, i) => [i, Number(x)]))
+        for (let k = 0; k < Math.abs(v); k++) await clu.locator(`[data-move='${"xyz"[axis]}${v > 0 ? "-" : "+"}']`).click();
+      await gm.waitForFunction(() => document.querySelector(".clu")?.getAttribute("data-cell") === "0.0.0", null, { timeout: 30000 });
+    }
+
     // Chart this galaxy: the galaxy chart opens on that very halo.
     const key = await clu.locator("[data-halo-ledger]").getAttribute("data-halo-ledger");
     await clu.locator("[data-chart-galaxy]").click();
@@ -102,7 +125,7 @@ try {
 
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`${name}: cluster map from halo_cell: haloes over the web, biggest picked, ledger, mass function, neighbour cell, floor, chart this galaxy, night chart, phone`);
+    console.log(`${name}: cluster map from halo_cell: haloes over the web, biggest picked, ledger, mass function, neighbour cell, floor, find a home (${mw}), chart this galaxy, night chart, phone`);
   }
 } finally {
   server.kill();

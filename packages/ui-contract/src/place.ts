@@ -30,11 +30,19 @@ export interface Place {
   screen?: string;
   /** Above a system: which one at that scale, in the scale view's own id ("cell:0.0.0", a halo address, "web:200"). */
   id?: string;
-  /** A site on the world to land at (the Land screen; Voyages' "Land here"): `~surface?site=lat,lon` in the link. */
-  site?: { lat_deg: number; lon_deg: number };
+  /**
+   * A site on the world to land at (the Land screen; Voyages' "Land here"): `~surface?site=lat,lon` in the link, with
+   * the hour (`&time=dawn|midday|dusk|night`, on the world's own clock) and the lander (`&lander=party` or a stock id)
+   * when they were chosen, so a bookmark or a Playbook preset brings back the whole landing (LR5).
+   */
+  site?: { lat_deg: number; lon_deg: number; time?: LandingTime; lander?: string };
   /** Its name, or a world's name, when the place was visited, for the Recent list (not part of the link). */
   label?: string;
 }
+
+/** The hours a landing can be set at with one press (the Land screen's Dawn, Midday, Dusk and Night). */
+export type LandingTime = "dawn" | "midday" | "dusk" | "night";
+export const LANDING_TIMES: readonly LandingTime[] = ["dawn", "midday", "dusk", "night"];
 
 /** One step of the line. `current` is the scale in view; `below` marks a step under it that the GM came from. */
 export interface PlaceStep {
@@ -98,7 +106,8 @@ export function placeHash(p: Place): string {
     if (p.system || third) parts.push(encodeURIComponent(p.system));
     if (third) parts.push(encodeURIComponent(third));
   }
-  const site = p.screen && p.site ? `?site=${+p.site.lat_deg.toFixed(4)},${+p.site.lon_deg.toFixed(4)}` : "";
+  const s = p.site;
+  const site = p.screen && s ? `?site=${+s.lat_deg.toFixed(4)},${+s.lon_deg.toFixed(4)}${s.time ? `&time=${s.time}` : ""}${s.lander ? `&lander=${encodeURIComponent(s.lander)}` : ""}` : "";
   return `#${parts.join("/")}${p.screen ? `~${encodeURIComponent(p.screen)}${site}` : ""}`;
 }
 
@@ -124,7 +133,7 @@ export function parsePlaceHash(hash: string): Place | null {
     const id = dec(m[3]);
     if (id) p.id = id;
   }
-  // The screen, then its own settings after "?" (only `site=lat,lon` for now; others are ignored).
+  // The screen, then its own settings after "?" (`site=lat,lon`, with `time` and `lander`; others are ignored).
   const [scr, query] = (m[4] ?? "").split("?", 2) as [string, string | undefined];
   const screen = dec(scr);
   if (screen) p.screen = screen;
@@ -132,7 +141,13 @@ export function parsePlaceHash(hash: string): Place | null {
   if (at && screen) {
     const lat = Number(at[1]);
     const lon = Number(at[2]);
-    if (Math.abs(lat) <= 90 && Math.abs(lon) <= 360) p.site = { lat_deg: lat, lon_deg: lon > 180 ? lon - 360 : lon };
+    if (Math.abs(lat) <= 90 && Math.abs(lon) <= 360) {
+      p.site = { lat_deg: lat, lon_deg: lon > 180 ? lon - 360 : lon };
+      const time = /(?:^|&)time=([a-z]+)(?:&|$)/.exec(query ?? "")?.[1];
+      if (time && (LANDING_TIMES as readonly string[]).includes(time)) p.site.time = time as LandingTime;
+      const lander = dec(/(?:^|&)lander=([^&]+)/.exec(query ?? "")?.[1]);
+      if (/^[\w.-]{1,64}$/.test(lander)) p.site.lander = lander;
+    }
   }
   return p;
 }
