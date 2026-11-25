@@ -9,6 +9,8 @@
 import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Points, Scene, SphereGeometry, SRGBColorSpace, Vector3, Vector4 } from "three";
 import { startFinish, type Finish } from "./finish.ts";
 import { MeshBasicNodeMaterial, PointsNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
+import { makeAuroraSky, type AuroraSkyGpu } from "./gpu-aurora-sky.ts";
+import type { AuroraSky } from "./aurora.ts";
 import { fresnelNode } from "./sea-node.ts";
 import { createLander, type LanderPose } from "./surface-lander.ts";
 import { frothToDraw, MAX_TRAINS, trainsToDraw, type SeaOptics, type TrainDraw } from "./sea.ts";
@@ -75,6 +77,8 @@ export interface SurfaceFrame {
    * the drawing size, and at rest the running mean's frame index and the sub-pixel shift (VP4 part 2b, VP5).
    */
   quality?: { rungs?: number; glare_scale?: number; render_scale?: number; accumulate?: number; jitter?: [number, number] };
+  /** True look: the aurora over the site (aurora.ts `auroraSky`, VP-AU7), drawn by gpu-aurora-sky.ts. */
+  aurora?: AuroraSky | null;
 }
 
 /**
@@ -183,6 +187,10 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     return select(muS.lessThan(-0.2), vec3(0, 0, 0), L);
   };
   const sunT = () => select(uSun.z.lessThan(-0.1), vec3(0, 0, 0), exp(uTauEye.mul(airMass(uSun.z)).negate()));
+  /** The sun's light on a surface of normal n, through the air. */
+  const sunLightOn = (n: Node<"vec3">) => uSunRgb.mul(sunT()).mul(max(dot(n, uSun), float(0)));
+  /** The sky's light on a surface of normal n (half of what the beam lost on the way down; surface-sky.ts skyIrradiance). */
+  const skyLightOn = (n: Node<"vec3">) => uSunRgb.mul(max(uSun.z, float(0))).mul(float(1).sub(sunT())).mul(0.5).mul(n.z.mul(0.5).add(0.5));
 
   // The sky: a dome round the eye.
   const skyMat = new MeshBasicNodeMaterial({ side: BackSide, depthWrite: false });
@@ -220,16 +228,14 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   stars.visible = false;
   scene.add(stars);
   let starKey = "";
+  let auroraSky: AuroraSkyGpu | null = null;
 
   // The ground, true look: albedo lit by the sun through the air and by the sky, seen through the air.
   const trueNode = Fn(() => {
     const alb = attribute("albedo", "vec3");
     const n = normalize(normalWorld);
-    const ndl = max(dot(n, uSun), float(0));
-    const muS = uSun.z;
-    const sunLight = uSunRgb.mul(sunT()).mul(ndl);
-    // The sky's light on the ground (half of what the beam lost on the way down; surface-sky.ts skyIrradiance).
-    const skyLight = uSunRgb.mul(max(muS, float(0))).mul(float(1).sub(sunT())).mul(0.5).mul(n.z.mul(0.5).add(0.5));
+    const sunLight = sunLightOn(n);
+    const skyLight = skyLightOn(n);
     const land = alb.mul(sunLight.add(skyLight)).div(Math.PI);
     // The sea: wave slopes on the water's normal, the sky mirrored in it by Fresnel's law and the sun's glint.
     const wet = attribute("wet", "float");
@@ -373,9 +379,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
     lit: (alb) =>
       Fn(() => {
         const n = normalize(normalWorld);
-        const sunLight = uSunRgb.mul(sunT()).mul(max(dot(n, uSun), float(0)));
-        const skyLight = uSunRgb.mul(max(uSun.z, float(0))).mul(float(1).sub(sunT())).mul(0.5).mul(n.z.mul(0.5).add(0.5));
-        return vec4(alb.mul(sunLight.add(skyLight)).div(Math.PI).mul(uExp), 1);
+        return vec4(alb.mul(sunLightOn(n).add(skyLightOn(n))).div(Math.PI).mul(uExp), 1);
       })(),
     glow: (radiance) => vec4(radiance.mul(uExp), 1),
     ink: vec4(vec3(uInk), 1),
@@ -482,6 +486,12 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         starGeom.computeBoundingSphere();
       }
       stars.visible = isTrue && !!f.stars;
+      // The aurora (VP-AU7): shells seen from inside, over the site, in the sky's units.
+      if (isTrue && f.aurora && !auroraSky) {
+        auroraSky = makeAuroraSky();
+        scene.add(auroraSky.mesh);
+      }
+      auroraSky?.set(isTrue ? (f.aurora ?? null) : null, { eye: 1 + Math.max(0, f.eye[2]) / Math.max(1, f.radius_m), sun: f.sun, tauEye: [f.tau[0] * thin, f.tau[1] * thin, f.tau[2] * thin], k: f.radius_m / Math.max(1, f.scale_height_m), exposure: f.exposure });
       const pxAngle = f.fovY / Math.max(1, f.height);
       // Drawn smaller than the view (the tier's render scale), each pixel spans more sky: a star's light spreads over it.
       const rs = isTrue ? Math.max(0.25, Math.min(1, f.quality?.render_scale ?? 1)) : 1;
@@ -507,6 +517,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       lander.dispose();
       dome.geometry.dispose();
       starGeom.dispose();
+      auroraSky?.dispose();
       starMat.dispose();
       for (const m of allMats()) m.dispose();
       renderer.dispose();

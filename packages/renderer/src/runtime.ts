@@ -2,7 +2,7 @@
 // recipe, draws it, measures every frame, lets the governor walk the degrade
 // order, and reports what it did so the view can show the quality badge.
 // Presentation only: nothing here reaches the kernel or the state hash.
-import { cubeDirection, perf, type Globe, type Tier } from "../../ui-contract/src/index.ts";
+import { constant, cubeDirection, perf, type Globe, type Tier } from "../../ui-contract/src/index.ts";
 import { iceAges, iceAgeWords, layersFor, narrateFrame, pickAt, recolour, type LayerSpec, type TimeLapse } from "./timelapse.ts";
 import { narrateWeather, weatherAt, withWeather, type WeatherMap } from "./weather.ts";
 import { withFace } from "./globe-face.ts";
@@ -20,6 +20,10 @@ import { REST_FRAMES, RestClock, RestLayer, type RestState } from "./still.ts";
 
 export { deviceReadout, measureAgain, quality, setQuality } from "./device.ts";
 import type { AirRender } from "./gpu-air.ts";
+import { exposeAurora, type AuroraExposure, type AuroraPlan } from "./aurora.ts";
+
+/** The Sun's light at 1 au, W/m² (Kopp and Lean 2011), when a world's own is not handed in. */
+const SOLAR_FLUX_1AU = constant("S_sun");
 
 /** The air in render units (globe radius 1): coefficients × radius, scale height ÷ radius, shell to 10 scale heights. */
 export function airRender(a: { air: Air; radius_m: number }, thickness = 1): AirRender {
@@ -44,6 +48,8 @@ export interface GlobeRunOptions {
   label: string;
   /** The world's air facts (absent or null: no air, and the atmosphere pass draws nothing). */
   air?: AirFacts | null;
+  /** The world's aurora (aurora.ts `planAurora` from read_field), its radius, and the star's light at it in W/m² (for Eye). */
+  aurora?: { plan: AuroraPlan; radius_m: number; flux_w_m2?: number } | null;
 }
 
 export interface GlobeStatus {
@@ -66,6 +72,8 @@ export interface GlobeStatus {
   lat: number;
   /** The air in words (where it came from and what it does), or why there is none. */
   air_note: string;
+  /** The aurora in words (what glows where, the exposure), or why none is drawn. */
+  aurora_note: string;
   /** The last frame's own drawing time, ms (the rest of a frame interval is the page and the browser). */
   work_ms: number;
   /** Sharpen at rest (VP5): moving, waiting to rest, sharpening, or sharp; and frames averaged so far. */
@@ -152,6 +160,12 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     const mix = Object.entries(f.composition).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([g, x]) => `${g} ${Math.round(x * 100)}%`).join(", ");
     const th = Number(current()?.plan.passes.find((x) => x.pass === "atmosphere")?.params.thickness ?? 1);
     return `Air from the kernel: ${(f.pressure_pa / 100).toFixed(0)} hPa at ${Math.round(f.temperature_k)} K, ${mix}; scale height ${(a.scale_height_m / 1000).toFixed(1)} km; blue light's path straight up scatters ${Math.round((1 - Math.exp(-a.zenith_depth[2])) * 100)}% (Rayleigh, single scattering).${a.unknown_gases.length ? ` Left out (no data): ${a.unknown_gases.join(", ")}.` : ""}${th > 1 ? ` Drawn ${th}× thicker than true.` : ""}`;
+  };
+  const auroraNote = (pass: Record<string, unknown> | undefined, d: ReturnType<typeof exposeAurora>) => {
+    if (!o.aurora) return "No aurora drawn: the kernel has not read this world's field.";
+    if (!pass) return `${o.aurora.plan.note} Drawn in True on the GPU only.`;
+    const cav = o.aurora.plan.caveats.length ? ` Not yet: ${o.aurora.plan.caveats.join("; ")}.` : "";
+    return `${o.aurora.plan.note}${d ? ` ${d.says}` : ""}${o.aurora.flux_w_m2 ? "" : d && pass.exposure === "eye" ? " The star's light here is taken as the Sun's at Earth." : ""}${cav}`;
   };
   let lastEmit = -1e9;
   // Sharpen at rest (VP5): after half a second still, jittered frames of the recipe's still passes averaged over the globe.
@@ -339,6 +353,8 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     const want = pl.tier === "gpu-basic" || pl.tier === "gpu-high" || pl.tier === "gpu-ultra" ? "gpu" : pl.tier === "canvas" ? "canvas" : "text";
     const atm = pl.passes.find((x) => x.pass === "atmosphere")?.params;
     const airNow = atm && airPhys ? airRender(airPhys, Number(atm.thickness ?? 1)) : null;
+    const auPass = pl.passes.find((x) => x.pass === "aurora")?.params;
+    const auNow = auPass && o.aurora ? exposeAurora(o.aurora.plan, o.aurora.radius_m, (auPass.exposure === "eye" ? "eye" : "long") as AuroraExposure, Number(atm?.sun ?? 6), o.aurora.flux_w_m2 ?? SOLAR_FLUX_1AU, Number(auPass.lift_target ?? 0.6)) : null;
     ensureSurface(want);
     const t0 = performance.now();
     let drew = false;
@@ -348,7 +364,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       drew = true;
     } else if (want === "gpu" && gpu && canvas && !switching) {
       if (canvas.style.width !== `${o.size_px}px`) canvas.style.width = canvas.style.height = `${o.size_px}px`;
-      gpu.draw(drawn, pl, lon, lat, full(), airNow);
+      gpu.draw(drawn, pl, lon, lat, full(), airNow, undefined, auNow);
       drew = true;
     }
     const work = performance.now() - t0;
@@ -411,6 +427,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       air_note: airNote(),
       rest: rest.state,
       rest_frames: rest.frames,
+      aurora_note: auroraNote(auPass, auNow),
       }));
     }
     if (!drew && want !== "text") dirty = true;
