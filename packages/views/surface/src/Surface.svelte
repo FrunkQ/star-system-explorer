@@ -21,8 +21,8 @@
 
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
-  import { constant, DEFAULT_VIEW, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
+  import { constant, DEFAULT_VIEW, LAMP_DISC, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, shipRecordOf, designOf, factOf, DESIGN_FIELD, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { airFactsOf, airFromOptics, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, designShip, shipMesh, readPropellants, type Air, type Patch, type SurfaceGpu, type DesignRules, type DesignOverrides, type DesignShip, type LanderShip, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params, follow }: { ctx?: ViewContext; scene?: SystemScene; params: Record<string, Json>; follow?: PlayerContext } = $props();
@@ -312,11 +312,69 @@
   function skip() {
     toGround();
   }
+  // The party's ship's own model on the ground (LR6b): the GM reads its numbers (the kernel's ship record, as Ships
+  // and stations does), how its fuels are stored and the design kept with the construct (its style, remix and
+  // overrides), and sends them with the landing; every screen designs it from the base-ships pack and stands it on its
+  // tail where it came down. A stock lander keeps the stock shape.
+  let ownModel = $state<{ ship: Json; store: Json; style: string; seed?: number; overrides?: Json } | null>(null);
+  let mgen = 0;
+  $effect(() => {
+    const ph = landerPick === "party" ? partyHere : null;
+    if (watching) return;
+    const g = ++mgen;
+    ownModel = null;
+    if (!ph || !ctx) return;
+    const session = ctx.session;
+    const sys = untrack(() => system);
+    void shipRecordOf(session, ph.nav).then(async (r) => {
+      if (g !== mgen || !r.ok) return;
+      // The design kept with the construct, from the GM's own scene (where its facts are).
+      const sc = await session.scene(sys).catch(() => null);
+      const c = sc?.ok ? sc.scene.subjects.find((x) => x.address === ph.ship) : undefined;
+      const recipe = c ? designOf(factOf(c, DESIGN_FIELD)) : null;
+      const store = await readPropellants(session, (r.ship as { fuels?: string[] }).fuels ?? []).catch(() => ({}));
+      if (g !== mgen) return;
+      ownModel = JSON.parse(JSON.stringify({ ship: r.ship, store, style: recipe?.style ?? "", seed: recipe?.seed ?? 1, ...(recipe?.overrides ? { overrides: recipe.overrides } : {}) })) as typeof ownModel;
+    });
+  });
+  const modelText = $derived(JSON.stringify((watching ? show?.ship_model : ownModel) ?? null));
+  type ShipsPack = { rules: DesignRules; styles: Record<string, ShipStyle> };
+  const SHIPS_PACK = "packs/base-ships.json";
+  let shipsPack = $state.raw<ShipsPack | null>(null);
+  $effect(() => {
+    if (modelText === "null" || shipsPack) return;
+    // The shell serves the pack beside the page (scripts/build-shell.sh), as the ship views read it.
+    void fetch(new URL(SHIPS_PACK, document.baseURI))
+      .then((r) => r.json())
+      .then((p: { provides: { other: { ship_design: DesignRules; ship_styles: Record<string, ShipStyle> } } }) => (shipsPack = { rules: p.provides.other.ship_design, styles: p.provides.other.ship_styles }))
+      .catch(() => undefined);
+  });
+  const landerShip = $derived.by<LanderShip | null>(() => {
+    const m = JSON.parse(modelText) as { ship: DesignShip; store: Propellants; style: string; seed?: number; overrides?: DesignOverrides } | null;
+    const pk = shipsPack;
+    if (!m || !pk) return null;
+    const id = m.style && pk.styles[m.style] ? m.style : Object.keys(pk.styles)[0];
+    const style = id ? pk.styles[id] : undefined;
+    if (!id || !style) return null;
+    try {
+      const mesh = shipMesh(designShip(m.ship, m.store, pk.rules, id, style, m.seed ?? 1, m.overrides ?? {}), { segments: 16, panel_m: style.skin?.panel_m ?? 2 });
+      // On the ground the drive is off and its radiators are stowed (fudge register, "The lander on the ground").
+      const { radiators: _stowed, ...surfaces } = mesh.surfaces;
+      void _stowed;
+      const albedo: LanderShip["albedo"] = {};
+      for (const [k, v] of Object.entries(style.skin?.surfaces ?? {})) albedo[k as keyof LanderShip["albedo"]] = v.albedo as [number, number, number];
+      return { mesh: { ...mesh, surfaces }, albedo };
+    } catch {
+      return null;
+    }
+  });
+  /** The ship's own length, stern to bow, when it is drawn; else the stock shape's height from the lander's mass. */
+  const shipLength = $derived(landerShip ? landerShip.mesh.bounds[1][0] - landerShip.mesh.bounds[0][0] : 0);
   /**
    * Down: a few of its own heights west of the lander, facing it, so the ship that came down is in frame (LR6); or
    * where the GM is standing.
    */
-  const landerH = $derived(plan ? landerHeightOf(plan.lander.mass_kg) : 0);
+  const landerH = $derived(plan ? (shipLength > 0 ? shipLength : landerHeightOf(plan.lander.mass_kg)) : 0);
   function toGround(pose?: LandingShow["pose"]) {
     const back = Math.max(12, 3 * landerH);
     walk = pose ? { x: pose.x_m, y: pose.y_m, yaw: pose.yaw, pitch: pose.pitch } : { x: -back, y: 0, yaw: 0, pitch: Math.atan2(landerH * 0.4 - eyeM, back) };
@@ -504,6 +562,7 @@
       decl_deg: Math.round(sunDecl * 100) / 100,
       look,
       world: { ...world, air: world.air ? { ...world.air, unknown_gases: [...world.air.unknown_gases] } : null },
+      ...(ownModel ? { ship_model: ownModel } : {}),
     };
   }
   function publish(now: number, force = false) {
@@ -523,7 +582,7 @@
   // The choosing moments (a site, a lander, landing, taking off) go at once; the pose goes from the frame loop.
   $effect(() => {
     if (watching) return;
-    void [site, landerKey, phase, world, sunHour, sunDecl, drone, look, seaRead];
+    void [site, landerKey, phase, world, sunHour, sunDecl, drone, look, seaRead, ownModel];
     untrack(() => publish(performance.now(), true));
   });
 
@@ -629,15 +688,17 @@
       buildMeshes();
       // The lander where it touched down (LR6), on the ground there; its lamps lit once the sun is near the horizon.
       const lights = lamps && sun[2] < 0.1;
-      const lk = phase === "down" && landerH > 0 ? `${landerH}|${lights}` : "";
+      const lk = phase === "down" && landerH > 0 ? `${landerH}|${lights}|${landerShip ? modelText : ""}` : "";
       if (lk !== landerSet) {
         landerSet = lk;
-        const lamp = lights ? lampRadiance(landerH, world.host_lsun ?? 0, world.orbit_m ?? 0) : 0;
+        // The lamps are sized for the lander's mass (landerHeightOf), on the stock shape or the ship's own model alike.
+        const lampH = plan ? landerHeightOf(plan.lander.mass_kg) : landerH;
+        const lamp = lights ? lampRadiance(lampH, world.host_lsun ?? 0, world.orbit_m ?? 0) : 0;
         const c = linear(thermalColour(LAMP_K));
-        gpu.setLander(lk ? { at_m: [0, 0], ground_m: groundAt(0, 0).z, heading_deg: 0, height_m: landerH, lights: lamp > 0, lamp: [c[0] * lamp, c[1] * lamp, c[2] * lamp] } : null);
+        gpu.setLander(lk ? { at_m: [0, 0], ground_m: groundAt(0, 0).z, heading_deg: 0, height_m: landerH, ship: landerShip, lamp_m: LAMP_DISC * lampH, lights: lamp > 0, lamp: [c[0] * lamp, c[1] * lamp, c[2] * lamp] } : null);
         landerShown = lk ? (lamp > 0 ? "lit" : "dark") : "";
         // A lit hull is the brightest large thing in view: the eye adapts to it (and the stars fade, as they do).
-        hullLight = lamp > 0 ? (LANDER_HULL_ALBEDO * lamp * LAMP_SPILL) / Math.PI : 0;
+        hullLight = lamp > 0 ? (LANDER_HULL_ALBEDO * lamp * LAMP_SPILL * Math.min(1, (lampH / landerH) ** 2)) / Math.PI : 0;
       }
       gpu.draw({
         look,
@@ -781,7 +842,7 @@
   {#if clock}<label>Local hours from now <input type="range" min="-12" max="12" step="0.25" bind:value={shift} data-hour /> <span data-local-time>{localTime}</span></label>{:else}<label>Time of day <input type="range" min="-100" max="100" step="1" bind:value={hour} data-hour /> <span data-local-time>{localTime}</span></label>{/if}
 {/snippet}
 
-<section class="surface" bind:this={host} data-surface data-watching={watching || undefined} data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""} data-stars={siteStars ? siteStars.dirs.length / 3 : 0} data-exposure={Math.round(seenExposure)} data-lander-drawn={landerShown || undefined}>
+<section class="surface" bind:this={host} data-surface data-watching={watching || undefined} data-phase={phase} data-look={look} data-hud={hud ? "on" : "off"} data-tier={using} data-site={site ? `${site.lat.toFixed(2)},${site.lon.toFixed(2)}` : ""} data-verdict={plan?.verdict ?? ""} data-walk={phase === "down" ? `${eyeNow[0].toFixed(1)},${eyeNow[1].toFixed(1)}` : ""} data-floor-m={near ? near.spacing_m.toFixed(0) : ""} data-stars={siteStars ? siteStars.dirs.length / 3 : 0} data-exposure={Math.round(seenExposure)} data-lander-drawn={landerShown || undefined} data-lander-ship={landerShown && landerShip ? Math.round(shipLength) : undefined}>
   {#if watching && !show}
     <p class="quiet" data-surface-waiting>Waiting for the game master to send a landing.</p>
   {:else if !subject || subject.kind === "star"}

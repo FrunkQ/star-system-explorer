@@ -10,7 +10,7 @@
 //  4. the party's ship is the lander; the GM picks a landmark and sets midday; the ship flies down on its drive (LR1);
 //     nothing reaches the table until it is sent;
 //  5. Send this view: the player's screen is the Landing screen, judging the same site the same way;
-//  6. Land: both fly; skip to the ground; the lander stands in frame, its lamps lit at night at the GM's switch (LR6),
+//  6. Land: both fly; skip to the ground; the lander (Beowulf's own model, LR6b) stands in frame, its lamps lit at night at the GM's switch (LR6),
 //     the GM walks and the player follows; take off;
 //  7. a whole landing (site, hour, lander) comes back from its link, as a bookmark or a Playbook preset fires it (LR5).
 import { spawn } from "node:child_process";
@@ -165,6 +165,12 @@ try {
   // LR6: the lander stands where it touched down, in frame from where the walk starts; at night its lamps are lit.
   await gm.waitForSelector("[data-surface][data-lander-drawn='dark']", { timeout: 15000 });
   await pl.waitForSelector("[data-surface][data-lander-drawn]", { timeout: 15000 });
+  // LR6b: it is Beowulf's own model, designed from its numbers, the same length on both screens.
+  await gm.waitForSelector("[data-surface][data-lander-ship]", { timeout: 15000 });
+  await pl.waitForSelector("[data-surface][data-lander-ship]", { timeout: 15000 });
+  const shipLen = Number(await gm.locator("[data-surface]").getAttribute("data-lander-ship"));
+  assert.ok(shipLen > 5 && shipLen < 2000, `Beowulf stands at its own length (${shipLen} m)`);
+  assert.equal(Number(await pl.locator("[data-surface]").getAttribute("data-lander-ship")), shipLen, "the table draws the same ship");
   await gm.getByRole("group", { name: "View style" }).getByRole("button", { name: "True", exact: true }).click();
   await gm.waitForSelector("[data-surface][data-look='true']");
   await gm.locator('[data-walk-pad] [data-time="night"]').click();
