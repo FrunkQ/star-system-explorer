@@ -92,7 +92,8 @@ after" (P138) is a person in memory, with their Minor Planet Center number (P573
 record per number). 21 bodies: 1772 Gagarin, 1789 Dobrovolsky, 1790 Volkov, 1791 Patsayev, 1836 Komarov, 2161
 Grissom, 3350 to 3356 for Challenger's seven, 8032 Michaeladams, 51823 to 51829 for Columbia's seven. Elements are
 the Horizons osculating set at its solution epoch, heliocentric ecliptic J2000; `since_s` is null until the MPC
-citations are read. Run it after build_crews.py (it reads the people's Wikidata ids from crews.json).
+citations are read. `h_mag` is Horizons' absolute magnitude H, given only where a Wikidata P1457 value agrees within
+0.5 (all 21 do; H 11.9 to 15.9). Run it after build_crews.py (it reads the people's Wikidata ids from crews.json).
 
 Held for a second source: 23 lunar craters and Columbia's five hills on Mars (Wikidata gives coordinates; the IAU
 Gazetteer at planetarynames.wr.usgs.gov was unreachable from the build container), the Fallen Astronaut and its
