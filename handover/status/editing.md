@@ -16,8 +16,14 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED1 part 3 exact figures on a pause through `resolved_system {branch}`; Titan on the Air strip; walk step "Change a world" | waits on kernel BC1 | |
 | ED2 the sweep behind the strip: tipping points, pencil figures, "what followed" | queued (K1) | |
 | ED3 part 1 the chart drag: a ghost and its orbit line follow the pointer while the world stays put; the readout is the units engine's (`dist` in SystemChart says the orbit in the campaign's chosen reading); Esc cancels and writes nothing; the strip's Esc no longer clears the selection | done | packages/ED3.md |
-| ED3 part 2: the readout adds the year, the surface's quick look and the ST1 stability verdict; the "Where things can orbit" layer during a drag; geared drag and Shift finer; magnetism (tipping points, round figures, resonances; Alt off); the far-point and lean grips | queued (year and quick look want kernel K1's sweep) | |
-| ED4 to ED13, ED10a, ED13a | queued, in the design's order | |
+| ED3 part 2a geared drag (further from the line slower, Shift a tenth) and light magnetism to round figures and resonances, named as it catches, Alt off (`ui-contract/src/drag.ts`) | done | packages/ED3.md |
+| ED3 part 2b: the readout adds the year, the surface's quick look and the ST1 verdict; the "Where things can orbit" layer during a drag; tipping-point catches; the far-point and lean grips | queued (year, quick look and tipping points want kernel K1's sweep) | |
+| ED12 part 1 the Orbit and Spin boxes in full (`box` in the handle sheet; `Box.svelte`, `Ring.svelte`, `box.ts`): shape, where it is now, lean, the two small rings, tilt; Retrograde, Locked, In step with; the year, closest and farthest, sunlight swing, the ST1 verdict, the sun's day, tides; a typed year on the size | done | packages/ED12.md |
+| ED7 part 1 "Try changing it" on Explore: an example what-if where the strip moves; handles move on any what-if | done | packages/ED12.md |
+| ED12 part 2 season phase and oblateness (K12); gravity at equator and poles; the ring's catches against neighbours and the held value's year and verdict (BC1) | waits on kernel K12 and BC1 | |
+| ED7 part 2a a moon's (and a binary world's) Orbit strip ends at the kernel's widest lasting orbit (`outerWall`) | done | packages/ED12.md |
+| ED7 part 2b the Roche wall (wants a kernel block); Add a moon's three recipes (disc, impact, captured) until K5; the phone dock | queued | |
+| ED4 to ED6, ED8 to ED11, ED13, ED10a, ED13a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 
 ## Decisions and agreements that live only in threads (written down 24 Nov for the handover)
@@ -27,3 +33,5 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 - Units the sheet lacked: added by the data sheet thread in PR 419 (MP31, 24 Nov), including an `imperial` group (last in click order, never a default). `WAITING` in `packages/ui-contract/test/figures.test.ts` is now empty and "23d 26m" reads; `generated/reference-constants.json` was regenerated in PR 427.
 - "Can't find it?" in the Air and Liquids boxes (ED8): the agents thread's hook (PR 412, merged): shell `askOrac(request)` in App.svelte, or an action `{"dialog": "ask", "orac": "<request>"}`; show it only when `linked(loadAgents(localStorage), "building")` (packages/agents/src/agents.ts), otherwise link the data sheet editor. Wording: "Add the gas <name> to the data sheet for <world>". Details in handover/packages/A2.md part 5.
 - Titan is not yet in packs/base-sol (BC1 adds it): add "titan" to the Air handle's `moon_refs` once it is.
+- Small bodies for Add (ED4, ED6): the asteroids thread's kernel op merged in PR 459 with a changed shape: `make_small_body {system, address, kind (asteroid, comet-nucleus, contact-binary, binary-pair), diameter_km or mass_kg, a_au, e?}`, made out of the system's nearest belt or cloud; the answer is `small_body_is {body}` with `made_from`, and icy bodies carry `activity` (coma and tails). Recipes stay in `packs/base-small-bodies` at `provides.other.small_bodies.recipes` `{id, label, kernel_kind, inputs [{id, default, unit (km or au), kind}], citation}`.
+- The figures ledger (`tests/ui/figures-ledger.json`): only a file going up fails; a row above the code is a note. When two pull requests merging side by side push a file up, its owner may raise the row with `WRITE_LEDGER=1` and give the reason in the pull request (PR 490).
