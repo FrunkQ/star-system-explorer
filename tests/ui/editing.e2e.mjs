@@ -8,7 +8,7 @@
 // the size strip is the distance with that year; Retrograde mirrors the lean past 90 degrees; the place now is a ring
 // that catches at the far point; Locked sets the day to the year and the sun's day says so; each one change, one Undo.
 // ED7: on Explore, "Try changing it" opens an example what-if where the strip moves and the main line does not; on
-// Build, Add a moon offers formation's own rules for the chosen planet, and Add round a star offers Kinds; on a phone the open strip docks above the ruler.
+// Build, Add a moon offers formation's own rules for the chosen planet, and Add round a star offers Kinds; Pluto's Orbit box shows its pair with Charon; on a phone the open strip docks above the ruler.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -273,6 +273,22 @@ try {
       assert.match(await add.locator('[data-kind="gas-giant"]').innerText(), /like Jupiter/);
       await shot(gm, `add-kinds-${vp}`);
       await add.getByRole("button", { name: "Close" }).click();
+
+      // ED0 pairs: Pluto's Orbit box says where the hidden centre is (outside Pluto) and shows the pair's two orbits;
+      // "Round each other" writes Charon's orbit, one change, one Undo.
+      await gm.locator('.area-chart .body[aria-label^="Pluto,"]').first().locator(".hit").click();
+      await gm.waitForFunction(() => /AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? "") && document.querySelector("section[aria-label='Pluto']"), null, { timeout: 20000 });
+      if (!(await gm.locator('[data-box="orbit"]').isVisible())) await row.locator('[data-handle="orbit"]').click();
+      const says = gm.locator("[data-pair-says]");
+      await says.waitFor({ timeout: 20000 });
+      assert.match(await says.innerText(), /Pluto and Charon go round a point between them .* outside Pluto/);
+      const each = gm.locator('[data-strip="orbit.pair.each"]');
+      await each.locator("[data-strip-figure]").click();
+      await each.locator("[data-strip-entry]").fill("25000 km");
+      await each.locator("[data-strip-entry]").press("Enter");
+      await gm.waitForFunction(() => /Round each other/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, `pair-pluto-${vp}`);
+      await undoTo();
       await depth(gm, "Curious");
     }
 

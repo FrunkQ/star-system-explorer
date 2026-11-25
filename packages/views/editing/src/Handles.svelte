@@ -98,13 +98,14 @@
     return [...refs.filter((r) => !here.some((x) => x.label === r.label)), ...here];
   }
 
-  async function commit(h: Handle, si: number, how: { source: "computed" | "typed"; sig?: number }, shown?: string): Promise<string | null> {
+  async function commit(h: Handle, si: number, how: { source: "computed" | "typed"; sig?: number }, shown?: string, at?: string): Promise<string | null> {
     const id = h.id.split(".")[0]!;
-    // Held now: the card rereads its scene after the change, and the subject is a new object by then.
-    const address = subject.address;
+    // Held now: the card rereads its scene after the change, and the subject is a new object by then. A pair's part
+    // writes to the other member (`at`: "round each other" is the lighter one's orbit); what followed is still this body's.
+    const address = at ?? subject.address;
     const system = scene.system;
-    const before = resultsOf(surfaces, address);
-    const old = handleValue(h, mine);
+    const before = resultsOf(surfaces, subject.address);
+    const old = handleValue(h, seen[address] ?? {});
     // A signed value's sign is said in words (a day of −24 h spins backwards); a box part may name the change itself.
     const words = (v: number, t: string) => (h.part.signed && v < 0 ? `${t} backwards` : t);
     const sayIt = (v: number, extra = {}) => words(v, say(Math.abs(v), h.part.kind, aboutFor(h, cls), { depth, reading: pick(h) ?? h.part.reading, ...extra }).text);
@@ -123,7 +124,7 @@
       surfaces = (again.result as { surfaces?: unknown }).surfaces ?? null;
     }
     const change = { label: depth === "curious" ? h.names.curious : h.names.science, before: shown !== undefined ? "" : old === null ? "not set" : sayIt(old), after: display };
-    followed = { handle: id, change, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, address), cls, { depth }) : null };
+    followed = { handle: id, change, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
     return null;
   }
 </script>
