@@ -195,6 +195,16 @@ try {
   assert.ok(diff < 0.03, `the visit draws the sender's picture (mean difference ${diff.toFixed(3)})`);
   await guest.locator("[data-postcard-turn]").click();
   assert.match(await guest.locator("[data-postcard-visiting]").innerText(), /Visiting: a postcard/);
+  // The base set (PC6) is on every wall, from the base presentation pack; its postcards draw live like any visit.
+  await guest.getByRole("button", { name: "All postcards" }).click();
+  const baseSet = guest.locator('[data-postcard-row="set:sse.base"] [data-postcard-tile]');
+  assert.ok((await baseSet.count()) >= 3, "the base set is on the wall");
+  assert.equal(await baseSet.locator("img").count(), await baseSet.count(), "every postcard of the set has its stamp");
+  await baseSet.first().click();
+  await guest.waitForSelector("[data-postcard-drawn], [data-postcard-why]", { state: "attached", timeout: 90000 });
+  const setWhy = await guest.locator("[data-postcard-why]").allInnerTexts();
+  assert.deepEqual(setWhy, [], `a base set postcard draws: ${setWhy.join(" ")}`);
+  await shot(guest, "desk-7-base-set");
   await elsewhere.close();
 
   // On a phone the card fits.
