@@ -55,14 +55,23 @@ try {
   assert.equal(await contents.locator('[aria-current="page"]').innerText().then((t) => t.split("\n")[0]), "Tarn");
   assert.match(await atlas.locator("[data-atlas-page]").innerText(), /\d AU/, "an orbit is said with its unit");
   await shot(gm, "atlas-tarn-gm-desk");
+  // The Survey atlas is paper: a step curls the page (AT15a, 14A note 5). The old page peels over the new one as an
+  // inert copy, and the copy goes when the turn ends.
+  const live = "[data-atlas-page]:not([inert]):not([inert] *)";
+  const settled = () => gm.waitForFunction(() => !document.querySelector("[data-atlas-page][inert], [inert] [data-atlas-page]"), null, { timeout: 5000 });
+  assert.equal(await gm.locator(".sheet[data-turn]").getAttribute("data-turn"), "curl", "a paper edition turns by curling");
   await gm.keyboard.press("ArrowRight");
-  await gm.waitForFunction(() => document.querySelector("[data-atlas-page] h1")?.textContent !== "Tarn");
+  await gm.waitForFunction(() => document.querySelector("[data-atlas-page][inert], [inert] [data-atlas-page]"), null, { timeout: 2000 });
+  await shot(gm, "atlas-page-curl-desk");
+  await settled();
+  assert.notEqual(await gm.locator(`${live} h1`).innerText(), "Tarn");
   await gm.keyboard.press("ArrowLeft");
-  await gm.waitForFunction(() => document.querySelector("[data-atlas-page] h1")?.textContent === "Tarn");
+  await settled();
+  assert.equal(await gm.locator(`${live} h1`).innerText(), "Tarn");
   assert.equal(await gm.evaluate(() => document.activeElement?.closest("[data-atlas-page]") !== null), true, "focus follows the page");
 
   // The Edition switch (the GM's own, for browsing) re-dresses the same page in place: words and look change, figures do not.
-  const figures = () => gm.locator("[data-atlas-page] .fig").allInnerTexts();
+  const figures = () => gm.locator(`${live} .fig`).allInnerTexts();
   const surveyFigs = await figures();
   const edition = atlas.getByRole("group", { name: "Edition" });
   await edition.getByRole("button", { name: "The Guide" }).click();

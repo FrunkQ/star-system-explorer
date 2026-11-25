@@ -3,6 +3,7 @@
 // keys. It lives with the Atlas until the interface kits (AT14, AT15) move the looks into skins/player. The case and
 // key tokens are general: any look may give an edition with a `device` a case.
 import type { ThemeDoc } from "../../../skins/chart-room/src/index.ts";
+import { STARTER_DELIVERIES } from "../../../ui-contract/src/index.ts";
 
 export const GUIDE_GADGET: ThemeDoc = {
   schema: "sse.theme/1",
@@ -14,6 +15,8 @@ export const GUIDE_GADGET: ThemeDoc = {
   supports: { colours: "full", patterns: true, shapes: true },
   vocab: "guide",
   filters: [{ kind: "scanlines", strength: 0.12, spacing: 3 }],
+  // Cheap electronics, not paper: pages redraw in bands (AT15a).
+  delivery: STARTER_DELIVERIES.guide,
   palette: ["#FFD45C", "#F2545B", "#FF9F43", "#4FB3FF", "#A66CFF", "#4CE38A", "#5FD0C0"],
   tokens: {
     ground: "#0F1726",

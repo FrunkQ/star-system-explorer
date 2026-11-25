@@ -36,9 +36,12 @@ Track AT (atlas design section 9, 14A note 1: "print UNDER these"). Built 24 Nov
   a dark one.
 
 ## Not yet
-- The page turn for paper editions (14A note 5; the curl itself is built by the look transitions thread) goes through the look transitions thread's `resolveDelivery` and
-  `playDelivery` (PR 483). It is not on main yet; the call is one line in `Atlas.svelte` on `article[data-atlas-page]`
-  when the page changes, and the Guide (not paper) gets its stepped wipe in AT7.
+- Done 25 Nov: the page turn (14A note 5) through AT15a. `host.lookDelivery(look)` gives the edition's look's
+  deliveries; `resolveDelivery(…, "turn", {back})` picks the plan. Paper (`page_turn`) steps through `curlTurn` on
+  `article[data-atlas-page]`, so the old page peels over the new one; other looks step and `playDelivery` (the Guide
+  gadget now carries `STARTER_DELIVERIES.guide`, a stepped wipe, in place of the Atlas's own wipe CSS). A drag on the
+  page is AT15a's `use:pageTurn` (with `sheet` on paper, the curl follows the finger); the Atlas's own swipe code is
+  gone. The e2e checks the curl's copy appears and goes; screenshot `AT4b-screens/atlas-page-curl-desk.png`.
 - Running head and letterhead on sheets come with AT6 (`print.running_head`, `print.footer` and letterhead slots).
 
 ## Checks

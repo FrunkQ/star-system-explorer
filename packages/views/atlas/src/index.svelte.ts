@@ -10,6 +10,8 @@ export interface AtlasHost {
   paperCss(look: string, saveInkLook?: string): string;
   /** Black and white (14A note 7): the toner form's tokens, white ground and black ink. Absent, the paper form is used. */
   tonerCss?(): string;
+  /** How a look turns a page (AT15a): paper curls, the Guide redraws in bands. Absent, the page just changes. */
+  lookDelivery?(look: string): import("../../../ui-contract/src/index.ts").LookDelivery | undefined;
   /** The brand whose paper an audience's copy is on (the role's, AT9); absent, the Atlas draws the placeholder. */
   /** Margin note sets from the pack stack, beside the shipped ones. */
   noteSets?: readonly import("../../../ui-contract/src/index.ts").NoteSet[];

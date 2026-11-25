@@ -1,13 +1,13 @@
 <!--
   The Atlas (track AT, AT2; atlas design section 4): a book of the place, read a page at a time. Contents down the
   left (built from the audience's own knowledge: a world they have not found has no line), the page, and step by
-  previous and next, the arrow keys or a swipe. Seen by (GM only) is the existing "See as" under its Atlas name: the
+  previous and next, the arrow keys or a swipe; a paper edition curls its pages (AT15a), the Guide redraws in bands. Seen by (GM only) is the existing "See as" under its Atlas name: the
   page is built from that audience's scene, so it can only hold what they know. On a narrow box the contents fold into
   a "Contents" button.
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { EVERYONE, BUILTIN_LOGOS, SHIPPED_NOTE_SETS, pickBanners, controlOn, withLetterhead, withMargin, withVoice, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { EVERYONE, BUILTIN_LOGOS, resolveDelivery, SHIPPED_NOTE_SETS, pickBanners, controlOn, withLetterhead, withMargin, withVoice, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
   import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
@@ -15,6 +15,7 @@
   import AtlasPrintView from "./AtlasPrintView.svelte";
   import AtlasDevice from "./AtlasDevice.svelte";
   import AtlasCover from "./AtlasCover.svelte";
+  import { curlTurn, pageTurn, playDelivery } from "../../../chart-grammar/src/index.ts";
   import { dateParts, dateWords, defaultCalendar, fromPackCalendar } from "../../../chart-grammar/src/calendar.ts";
 
   let { ctx, scene, host }: { ctx: ViewContext; scene: SystemScene; host: AtlasHost } = $props();
@@ -201,6 +202,35 @@
     return () => el.removeEventListener("keydown", onkey);
   });
 
+  // ---- Turning a page (AT15a; 14A note 5): the edition's look says how. Paper curls from the bottom outer corner,
+  // the old page peeling over the new one; the Guide redraws in bands; a look with no delivery just changes.
+  const delivery = $derived(host.lookDelivery?.(edition.look));
+  const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sheetTurns = $derived(resolveDelivery(delivery, "turn").kind === "page_turn");
+  let turning = false;
+  const articleNow = () => pageBox?.querySelector<HTMLElement>("article[data-atlas-page]") ?? null;
+  function turn(a: string | null, dir: 1 | -1) {
+    if (!a) return;
+    const art = articleNow();
+    if (!art || turning || covered) return go(a);
+    const plan = resolveDelivery(delivery, "turn", { back: dir < 0, reducedMotion: reducedMotion() });
+    if (plan.kind === "page_turn") {
+      turning = true;
+      curlTurn(art, dir, () => (go(a), tick()), { ms: plan.ms }).done.finally(() => (turning = false));
+    } else {
+      go(a);
+      if (plan.kind !== "none") tick().then(() => articleNow() && playDelivery(articleNow()!, plan));
+    }
+  }
+  // A drag by hand on a paper page carries the curl; it steps as the drag becomes a turn, and steps back if let go short.
+  // On other looks a swipe (finger, pen or mouse) steps when let go, with the look's Turn; vertical drags still scroll.
+  function handTurn(dir: 1 | -1) {
+    if (!on("step") || covered) return;
+    const to = dir > 0 ? (page?.next ?? null) : (page?.prev ?? null);
+    if (sheetTurns) go(to);
+    else turn(to, dir);
+  }
+
   function go(a: string | null) {
     if (!a) return;
     asked = a;
@@ -223,30 +253,16 @@
       return;
     }
     if (!on("step")) return;
-    if (e.key === "ArrowRight" && page?.next) (e.preventDefault(), go(page.next));
-    else if (e.key === "ArrowLeft" && page?.prev) (e.preventDefault(), go(page.prev));
+    if (e.key === "ArrowRight" && page?.next) (e.preventDefault(), turn(page.next, 1));
+    else if (e.key === "ArrowLeft" && page?.prev) (e.preventDefault(), turn(page.prev, -1));
   }
 
-  // A swipe on touch steps the book; a vertical drag still scrolls.
-  let downX = 0;
-  let downY = 0;
-  function pdown(e: PointerEvent) {
-    if (e.pointerType !== "touch" || !on("step")) return;
-    downX = e.clientX;
-    downY = e.clientY;
-  }
-  function pup(e: PointerEvent) {
-    if (e.pointerType !== "touch" || !on("step")) return;
-    const dx = e.clientX - downX;
-    const dy = e.clientY - downY;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) go(dx < 0 ? page?.next ?? null : page?.prev ?? null);
-  }
 </script>
 
 {#snippet stepper(where: string)}
   {#if on("step")}<div class="step {where}">
-    <button type="button" disabled={!page?.prev} onclick={() => go(page?.prev ?? null)} aria-label="Previous page{page?.prev ? `: ${titleOf(page.prev)}` : ''}">‹ {titleOf(page?.prev ?? null) || "Back"}</button>
-    <button type="button" disabled={!page?.next} onclick={() => go(page?.next ?? null)} aria-label="Next page{page?.next ? `: ${titleOf(page.next)}` : ''}">{titleOf(page?.next ?? null) || "Next"} ›</button>
+    <button type="button" disabled={!page?.prev} onclick={() => turn(page?.prev ?? null, -1)} aria-label="Previous page{page?.prev ? `: ${titleOf(page.prev)}` : ''}">‹ {titleOf(page?.prev ?? null) || "Back"}</button>
+    <button type="button" disabled={!page?.next} onclick={() => turn(page?.next ?? null, 1)} aria-label="Next page{page?.next ? `: ${titleOf(page.next)}` : ''}">{titleOf(page?.next ?? null) || "Next"} ›</button>
   </div>{/if}
 {/snippet}
 
@@ -284,18 +300,16 @@
       {@render stepper("side")}
       <p class="note">{lines.length} {lines.length === 1 ? "page" : "pages"}, as known to {audienceWords}.</p>
     </nav>{/if}
-    <div class="pagebox" bind:this={pageBox} onpointerdown={pdown} onpointerup={pup} role="presentation">
+    <div class="pagebox" bind:this={pageBox} role="presentation">
       {#if page}
         <div class="look" style={look} data-atlas-edition={edition.id} data-atlas-audience={book?.audience}>
           {#snippet screen()}
             {#if covered && edition.cover}
               <AtlasCover cover={edition.cover} place={titleOf(lines[0]?.address ?? null)} onopen={openCover} />
             {:else}
-              {#key page!.address}
-                <div class="sheet" class:wipe={edition.device?.change === "wipe"}>
-                  <AtlasPage page={page!} onlink={on("links") ? go : () => {}} {footer} onturnaway={shownAudience === "gm" ? notThisOne : undefined} />
-                </div>
-              {/key}
+              <div class="sheet" use:pageTurn={{ sheet: sheetTurns && on("step"), onstep: handTurn }} data-turn={sheetTurns ? "curl" : (delivery?.turn?.kind ?? "none")}>
+                <AtlasPage page={page!} onlink={on("links") ? go : () => {}} {footer} onturnaway={shownAudience === "gm" ? notThisOne : undefined} />
+              </div>
             {/if}
           {/snippet}
           {#if edition.device}
@@ -303,9 +317,9 @@
               device={edition.device}
               coverKey={edition.cover?.big ?? "Cover"}
               onhome={() => ((covered = false), go(lines[0]?.address ?? null))}
-              onback={() => ((covered = false), go(page?.prev ?? null))}
+              onback={() => ((covered = false), turn(page?.prev ?? null, -1))}
               oncover={() => (covered = true)}
-              onnext={() => ((covered = false), go(page?.next ?? null))}
+              onnext={() => ((covered = false), turn(page?.next ?? null, 1))}
               onprint={printThisPage}
               canBack={!!page.prev}
               canNext={!!page.next}
@@ -393,17 +407,6 @@
     border: 1px solid var(--sse-line);
     border-radius: var(--sse-radius);
     padding: 4px 6px;
-  }
-  .sheet.wipe {
-    animation: wipe 260ms steps(7, end);
-  }
-  @keyframes wipe {
-    from {
-      clip-path: inset(0 0 100% 0);
-    }
-    to {
-      clip-path: inset(0 0 0 0);
-    }
   }
   .printnow,
   .printmore {
@@ -556,9 +559,6 @@
   @media (prefers-reduced-motion: reduce) {
     li button {
       transition: none;
-    }
-    .sheet.wipe {
-      animation: none;
     }
   }
 </style>
