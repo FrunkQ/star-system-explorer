@@ -27,6 +27,8 @@ export interface AirLook {
   said: string[];
   /** The wind the picture is carried by (VP-A1), pixel for pixel; left out when the cells carry no wind. */
   flow?: AirFlow;
+  /** True for a world with no ground, whose face is its cloud decks alone (a giant: `trueGiant`). */
+  decks?: boolean;
   /** A world with ground: the ground alone (true-look.ts `trueSurface`'s own picture, with its faces), under its air. */
   ground?: TrueTexture;
   /**
@@ -76,13 +78,38 @@ interface Stack {
   wind: Float32Array;
   /** Whether any cell has a wind. */
   windy: boolean;
+  /** n × 3: the haze's absorption optical depth per channel, its depth times (1 - its colour) summed over aerosols. */
+  absorb: Float32Array;
 }
+
+/**
+ * Diffusivity factor: diffuse light crosses a thin layer as if it were this many times thicker (the two-stream mean
+ * of 1/μ over a hemisphere; Elsasser 1942, as used by Goody and Yung 1989, section 6.3).
+ */
+const DIFFUSIVITY = 1.66;
+
+/**
+ * A layer that scatters (reflectance r) and absorbs (absorption depth a) over what is below it (reflectance below),
+ * by the adding method: light crossing it both ways loses exp(-D a) each way.
+ */
+function addAbsorbing(r: number, a: number, below: number): number {
+  const t = Math.max(0, 1 - r) * Math.exp(-DIFFUSIVITY * Math.max(0, a));
+  return r + (t * t * below) / Math.max(1e-9, 1 - r * below);
+}
+
+/**
+ * What a giant's deep air sends back from below its decks. Without its gases' absorption (methane, TA4 after the light
+ * thread's PR 406), a deep air of conservative Rayleigh scatterers over thick deeper decks returns all the light that
+ * reaches it; its colour then comes only from what absorbs above it (the chromophore, VP-A3 follow-up).
+ */
+const DEEP_AIR: Rgb = [1, 1, 1];
 
 function stackOf(cells: readonly WeatherCell[], colourOf: ColourOf): Stack {
   const slots = Math.max(1, ...cells.map((c) => c.layers.length)) + 1;
   const vals = new Float32Array(cells.length * slots * 4);
   const dirs = new Float32Array(cells.length * 3);
   const wind = new Float32Array(cells.length * 2);
+  const absorb = new Float32Array(cells.length * 3);
   let windy = false;
   const white = new Set<string>();
   const kept = new Map<string, Rgb | null>();
@@ -114,20 +141,24 @@ function stackOf(cells: readonly WeatherCell[], colourOf: ColourOf): Stack {
     for (const x of c.aerosols ?? []) {
       const t = Math.max(0, x.optical_depth);
       tau += t;
-      for (let ch = 0; ch < 3; ch++) rgb[ch]! += t * (x.colour[ch] ?? 1);
+      for (let ch = 0; ch < 3; ch++) {
+        rgb[ch]! += t * (x.colour[ch] ?? 1);
+        // An aerosol's colour read as the share of light it scatters rather than absorbs (its single-scattering
+        // albedo per channel), so a red chromophore or an orange haze takes the blue out of the light below it.
+        absorb[i * 3 + ch]! += t * Math.max(0, 1 - (x.colour[ch] ?? 1));
+      }
     }
     const o = (i * slots + slots - 1) * 4;
     vals.set([slabReflectance(tau, HAZE_G), ...(tau > 0 ? rgb.map((v) => v / tau) : [1, 1, 1])], o);
   });
-  return { n: cells.length, dirs, vals, slots, white: [...white].sort(), wind, windy };
+  return { n: cells.length, dirs, vals, slots, white: [...white].sort(), wind, windy, absorb };
 }
 
 /** The cells' spacing on the unit sphere: the mean nearest-neighbour angle, estimated from the count (radians). */
 const spacing = (n: number) => Math.sqrt((4 * Math.PI) / Math.max(1, n));
 
 /**
- * Lay the air over a ground (linear RGB per pixel, or null for a giant's deep atmosphere, which sends back almost
- * none of the light that gets below its decks) and return the picture in the TrueTexture layout (true-look.ts
+ * Lay the air over a ground (linear RGB per pixel, or null for a giant's deep atmosphere, DEEP_AIR) and return the picture in the TrueTexture layout (true-look.ts
  * `equirect`). Each pixel blends the nearby cells with a Gaussian of half a cell, so the coarse tiles do not show
  * as blocks; each cell's own values are the kernel's.
  */
@@ -138,6 +169,7 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
   // Chord-squared cut-off at three sigma.
   const cut = 9 * sig * sig;
   const acc = new Float32Array(st.slots * 4);
+  const ab = [0, 0, 0];
   let mr = 0;
   let mg = 0;
   let mb = 0;
@@ -152,6 +184,7 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
       const x = -Math.cos(2 * Math.PI * u) * s;
       const y = -Math.sin(2 * Math.PI * u) * s;
       acc.fill(0);
+      ab[0] = ab[1] = ab[2] = 0;
       let we = 0;
       let wn = 0;
       let ws = 0;
@@ -170,6 +203,7 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
         wn += g * st.wind[p * 2 + 1]!;
         const base = p * st.slots * 4;
         for (let q = 0; q < st.slots * 4; q++) acc[q]! += g * st.vals[base + q]!;
+        for (let ch = 0; ch < 3; ch++) ab[ch]! += g * st.absorb[p * 3 + ch]!;
       }
       if (ws <= 0 && best >= 0) {
         ws = 1;
@@ -177,17 +211,23 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
         wn = st.wind[best * 2 + 1]!;
         const base = best * st.slots * 4;
         for (let q = 0; q < st.slots * 4; q++) acc[q] = st.vals[base + q]!;
+        for (let ch = 0; ch < 3; ch++) ab[ch] = st.absorb[best * 3 + ch]!;
       }
       const o = (j * width + i) * 4;
       if (flow) {
         flow.east[j * width + i] = we / ws;
         flow.north[j * width + i] = wn / ws;
       }
-      const lin: Rgb = ground ? ground(o) : [0, 0, 0];
+      const lin: Rgb = ground ? ground(o) : [...DEEP_AIR];
+      const hazeAt = st.slots - 1;
       // Bottom up: each layer goes on top of what is stacked so far; then the gas above the decks, then the haze.
       for (let k = 0; k < st.slots; k++) {
         if (k === st.slots - 1 && tint) for (let ch = 0; ch < 3; ch++) lin[ch]! *= tint[ch]!;
         const r = acc[k * 4]! / ws;
+        if (k === hazeAt) {
+          for (let ch = 0; ch < 3; ch++) lin[ch] = addAbsorbing(r * (acc[k * 4 + 1 + ch]! / ws), ab[ch]! / ws, lin[ch]!);
+          continue;
+        }
         if (!(r > 0)) continue;
         for (let ch = 0; ch < 3; ch++) lin[ch] = addLayers(r * (acc[k * 4 + 1 + ch]! / ws), lin[ch]!);
       }
@@ -196,6 +236,12 @@ function paint(st: Stack, ground: ((o: number) => Rgb) | null, width: number, he
         const c: Rgb = [0, 0, 0];
         for (let k = 0; k < st.slots; k++) {
           const r = acc[k * 4]! / ws;
+          if (k === hazeAt) {
+            // The decks' light below the haze loses its absorption both ways; the ground's is dimmed in the shader by
+            // the layer's alpha alone (one alpha, so the haze's colour on the ground is not carried: docs/fudges.md).
+            for (let ch = 0; ch < 3; ch++) c[ch] = addAbsorbing(r * (acc[k * 4 + 1 + ch]! / ws), ab[ch]! / ws, c[ch]!);
+            continue;
+          }
           if (!(r > 0)) continue;
           for (let ch = 0; ch < 3; ch++) c[ch] = addLayers(r * (acc[k * 4 + 1 + ch]! / ws), c[ch]!);
         }
@@ -229,7 +275,7 @@ const newFlow = (st: Stack, width: number, height: number): AirFlow | null =>
 function words(st: Stack, giant: boolean): string[] {
   const said: string[] = [];
   if (st.white.length) said.push(`${st.white.join(", ")} ${st.white.length > 1 ? "are" : "is"} drawn white: the data sheet has no colour for ${st.white.length > 1 ? "them" : "it"} yet.`);
-  if (giant) said.push("Below its decks a giant is drawn dark: the deep air's own scattering and absorption are not added yet.");
+  if (giant) said.push("Below its decks a giant's deep air sends back all the light that reaches it: its gases' absorption (methane) is not added yet.");
   return said;
 }
 
@@ -243,7 +289,7 @@ export function trueGiant(tiles: readonly WeatherTile[], colourOf: ColourOf, wid
   const st = stackOf(cells, colourOf);
   const flow = newFlow(st, width, height);
   const tex = paint(st, null, width, height, tint, flow);
-  return flow ? { tex, said: words(st, true), flow } : { tex, said: words(st, true) };
+  return flow ? { tex, said: words(st, true), flow, decks: true } : { tex, said: words(st, true), decks: true };
 }
 
 /** A world's True surface with its clouds and haze laid over it, at the surface's own size. */
@@ -464,7 +510,7 @@ export async function readAirTiles(k: AirReader, system: string, body: string, o
 
 /** The kernel doors a True face needs (a ViewSession has them all). */
 export interface FaceReader extends AirReader {
-  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: unknown[] } | { ok: false; message: string }>;
+  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: unknown[]; kind?: string } | { ok: false; message: string }>;
   campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; message: string }>;
   /** For the air's rim (VP-A3); a reader without them draws no air shell. */
   resolvedSystem?(system: string): Promise<{ ok: true; result: { surfaces: { address: string }[]; facts: Record<string, Record<string, Json>> } } | { ok: false; message: string }>;
@@ -496,7 +542,9 @@ export async function readTrueAir(k: FaceReader, system: string, body: string): 
  */
 export async function readTrueFace(k: FaceReader, system: string, body: string): Promise<AirLook | string> {
   const s = await k.surfaceTiles(system, body);
-  const ground = s.ok ? trueSurface(s.tiles) : null;
+  // A giant's tiles are its cloud deck's relief, not a ground: its face is its decks alone (trueGiant).
+  const giantDeck = s.ok && s.kind === "cloud-deck";
+  const ground = s.ok && !giantDeck ? trueSurface(s.tiles) : null;
   const groundWhy = s.ok ? String((s.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : s.message;
   const now = await k.campaignNow();
   const at_s = now.ok && now.at_s !== undefined ? Number(now.at_s) : undefined;
