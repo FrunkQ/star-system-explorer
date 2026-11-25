@@ -35,7 +35,9 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED5 part 2b Pin it with the honesty mark; Reach it for a year and for locked; from a what-if; the kernel's sweep (K1) in place of the search | queued (Pin it wants the mark's write; part of it waits on K1) | packages/ED5.md |
 | ED4 part 1 Add with the ghost first: round the system's star on the flat chart, Add (tool, A, More) puts a ghost and its orbit under the pointer with the distance ("1 AU round Sun", catching round figures and resonances); a press opens Add here at that orbit; Esc puts it away; "Type a distance" opens Add here at once (`ws.adding`, SystemChart `moveGhost`/`dropGhost`) | done | packages/ED4.md |
 | ED4 part 2 the live panel beside the ghost (What forms here, Kinds, the verdict) instead of the dialog; round a planet in its close-up; Paste and Duplicate as the ghost; drop on a parent; the family tree (R1) | queued | packages/ED4.md |
-| ED8 to ED11, ED13, ED10a, ED13a | queued, in the design's order | |
+| ED8 part 1 the Air box: under the amount strip, one mix bar by volume (`atmosphere.composition.<gas>`), traces as chips in ppm, each gas's own log strip; setting a share trades it against the rest, which keep their proportions (`retrade` in `ui-contract/src/air.ts`), as one change and one Undo (`commitFields`, set_values); names from the data sheet's substances; the honest note that the mix does not change the climate yet | done | packages/ED8.md |
+| ED8 part 2 Add a gas (expected, allowed, escapes), dragging the bar's joins, the gas strips' tipping points, Kinds for air and "Reset to what the science expects"; the Liquids box | queued (the climate following the mix waits on kernel K7; liquids beyond water on K8) | packages/ED8.md |
+| ED9 to ED11, ED13, ED10a, ED13a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 
 ## Decisions and agreements that live only in threads (written down 24 Nov for the handover)

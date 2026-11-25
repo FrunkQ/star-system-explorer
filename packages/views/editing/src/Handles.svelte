@@ -8,10 +8,11 @@
   Values are the kernel's facts for the body (resolved_system), never the card's display strings.
 -->
 <script lang="ts">
-  import { aboutFor, chosenReading, commitEdit, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, scaleClass, whatFollowed, type Followed, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { aboutFor, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, scaleClass, whatFollowed, type Followed, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import Strip from "./Strip.svelte";
   import Box from "./Box.svelte";
   import Reach from "./Reach.svelte";
+  import AirBox from "./AirBox.svelte";
 
   let { ctx, scene, subject }: { ctx: ViewContext; scene: SystemScene; subject: SceneSubject } = $props();
 
@@ -114,6 +115,21 @@
     return rows.length ? rows.slice(0, 3).map((f) => `${f.label} ${f.after}`).join(", ") : "nothing else this card watches would move";
   }
 
+  // The Air box's mix (ED8): several shares as one change, one Undo; the card then says what followed, as for a handle.
+  async function commitMix(edits: { field: string; value: number; before: number }[], display: string, before_display: string): Promise<string | null> {
+    const system = scene.system;
+    const before = resultsOf(surfaces, subject.address);
+    const r = await commitFields(ctx.session, ws, { address: subject.address, edits, display, before_display });
+    if (r.status !== "applied") return r.status === "pending" ? "Sent to the GM to approve." : r.status === "refused" ? r.reason : r.message;
+    const again = await ctx.session.resolvedSystem(system, undefined, ws.branch?.id);
+    if (again.ok) {
+      facts = again.result.facts as Record<string, Record<string, Json>>;
+      surfaces = (again.result as { surfaces?: unknown }).surfaces ?? null;
+    }
+    followed = { handle: "air", change: { label: "Air", before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
+    return null;
+  }
+
   async function commit(h: Handle, si: number, how: { source: "computed" | "typed"; sig?: number }, shown?: string, at?: string): Promise<string | null> {
     const id = h.id.split(".")[0]!;
     // Held now: the card rereads its scene after the change, and the subject is a new object by then. A pair's part
@@ -178,6 +194,9 @@
       <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} {commit} {pause} onclose={() => (open = null)} />
     {:else}
       <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
+      {#if h.id === "air" && h.on === "world"}
+        <AirBox {ctx} handle={h} facts={mine} {cls} {depth} {editable} {commitMix} />
+      {/if}
       {#if h.reach?.length && editable && !ws.branch && scene.system && handleValue(h, mine) !== null}
         <Reach {ctx} system={scene.system} address={subject.address} handle={h} value={handleValue(h, mine)!} results={resultsOf(surfaces, subject.address)} {cls} {depth} {commit} />
       {/if}

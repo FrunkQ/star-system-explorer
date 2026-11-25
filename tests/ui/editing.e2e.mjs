@@ -239,6 +239,24 @@ try {
       });
       await shot(gm, `reach-gravity-${vp}`);
       await undoTo();
+
+      // ED8 part 1, the Air box: Mars's air as one mix bar (carbon dioxide most of it), traces as chips in ppm. Setting
+      // carbon dioxide to half trades it against the rest, which keep their proportions: one change, one Undo.
+      await row.locator('[data-handle="air"]').click();
+      const air = gm.locator("[data-air-box]");
+      await air.locator('[data-mix-bar] [data-gas="co2"]').waitFor({ timeout: 20000 });
+      assert.ok((await air.locator(".traces [data-gas]").count()) >= 3, "traces as chips");
+      assert.match(await air.locator('.traces [data-gas="xe"]').innerText(), /ppm|ppb/);
+      await air.locator('[data-mix-bar] [data-gas="co2"]').click();
+      await air.locator('[data-strip="air.co2"] [data-strip-figure]').click();
+      await air.locator('[data-strip="air.co2"] [data-strip-entry]').fill("50%");
+      await air.locator('[data-strip="air.co2"] [data-strip-entry]').press("Enter");
+      await gm.waitForFunction(() => /Air .*CO₂ 95.*→.*carbon dioxide 50/i.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nfollowed: ${await gm.locator("[data-followed]").allInnerTexts()}\nair: ${await air.innerText()}`);
+      });
+      await gm.waitForFunction(() => /N₂ 2[67]/.test(document.querySelector('[data-mix-bar] [data-gas="n2"]')?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, `air-box-${vp}`);
+      await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
       await row.locator('[data-handle="orbit"]').click();
 
       // Retrograde: the lean goes past 90 degrees, and the chip says so.
