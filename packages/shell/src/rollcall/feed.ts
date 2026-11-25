@@ -4,7 +4,7 @@
 // - otherwise the open campaign: its people (manifest entries) and its constructs' flight logs, read from the kernel.
 // The logs of the day's craft are fetched as they are needed; a pack's `logs/index.json` says where each one is (RS9
 // part 2); without it the feed looks in the pack's three log folders and cannot follow a docking by catalogue id.
-import { GREGORIAN, PERSON, entryFrom, indexRoll, logFrom, sourceFromCrews, sourceFromManifest, yearsToSeconds, type Calendar, type Json, type RecordRead, type RollIndex, type RollLog, type ViewContext } from "../../../ui-contract/src/index.ts";
+import { GREGORIAN, PERSON, inMemory, type InMemory, entryFrom, indexRoll, logFrom, sourceFromCrews, sourceFromManifest, yearsToSeconds, type Calendar, type Json, type RecordRead, type RollIndex, type RollLog, type ViewContext } from "../../../ui-contract/src/index.ts";
 
 export interface RollFeed {
   ix: RollIndex;
@@ -14,6 +14,8 @@ export interface RollFeed {
   credit?: string;
   /** Fetch the logs these constructs need (and what they dock to); resolves with the index rebuilt when any arrived. */
   need(ids: readonly string[]): Promise<RollIndex | null>;
+  /** In memory (SH6): the pack's names of those who died, when it gives them. */
+  memory?: InMemory;
   /** The pack's own count steps, when it ships them. */
   steps?: [number, number][];
   /** True when every log is at hand, so "also in flight" can be counted honestly. */
@@ -47,6 +49,8 @@ async function getJson(url: string): Promise<Json | null> {
 /** Open a "Sol today" folder. Null with the reason when it cannot be read. */
 export async function openPack(base: string): Promise<RollFeed | { why: string }> {
   const [crews, pack, index] = await Promise.all([getJson(`${base}crews.json`), getJson(`${base}pack.json`), getJson(`${base}logs/index.json`)]);
+  const memFile = (pack as { provides?: { other?: { in_memory?: unknown } } } | null)?.provides?.other?.in_memory;
+  const memDoc = typeof memFile === "string" && !memFile.includes("..") ? await getJson(`${base}${memFile}`) : null;
   if (!crews) return { why: `No crews could be read from ${base}.` };
   const cal = (pack as { provides?: { other?: { calendar?: Calendar } } } | null)?.provides?.other?.calendar;
   if (!cal) return { why: "This copy of the pack gives no calendar, so its days cannot be written. A newer copy of Sol today has one." };
@@ -92,6 +96,7 @@ export async function openPack(base: string): Promise<RollFeed | { why: string }
     allLogs: false,
     ...(source.credit ? { credit: source.credit } : {}),
     ...(steps ? { steps } : {}),
+    ...(memDoc && crews ? { memory: inMemory(memDoc, crews) } : {}),
     span: { from_s: Math.min(...starts), to_s: Math.max(...ends) },
     async need(ids) {
       const before = logs.size;

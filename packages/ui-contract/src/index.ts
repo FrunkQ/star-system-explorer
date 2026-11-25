@@ -175,3 +175,5 @@ export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed } f
 export * from "./place-notes.ts";
 // Roll call (track SH): who was in flight on a day, aboard what and where, from flight logs and stays.
 export * from "./rollcall.ts";
+// In memory (track SH6): the names of those who died, from a pack's in-memory.json.
+export * from "./inmemory.ts";

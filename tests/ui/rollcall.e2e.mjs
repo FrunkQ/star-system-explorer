@@ -95,6 +95,28 @@ try {
     await panel.getByRole("alert").waitFor();
     await panel.locator("[data-rollcall-type]").press("Escape");
 
+    // In memory (SH6), when the pack gives it: the first line, the parts, the sources; a date goes to that day in Roll
+    // call, which names the loss under its roster; back again. No name or figure is pinned here.
+    if (await panel.locator("[data-rollcall-in-memory]").count()) {
+      await panel.locator("[data-rollcall-in-memory]").click();
+      const mem = panel.locator("[data-in-memory]");
+      await mem.waitFor();
+      assert.match(await mem.locator("[data-in-memory-line]").textContent(), /died flying to space, preparing to, or working to send others\. These are their names\.$/);
+      assert.ok((await mem.locator("[data-in-memory-part]").count()) >= 1, "parts");
+      assert.ok((await mem.locator("[data-in-memory-sources] li").count()) >= 2 * (await mem.locator("[data-in-memory-loss]").count()), "two sources an entry");
+      assert.equal(await mem.locator("[data-in-memory-correct]").getAttribute("target"), "_blank");
+      await shot(page, `desk-in-memory-${engine}`);
+      const first = mem.locator("[data-in-memory-loss]").first();
+      const id = await first.getAttribute("data-in-memory-loss");
+      await first.locator("button.day").click();
+      await panel.locator(`[data-rollcall-loss="${id}"]`).waitFor();
+      await shot(page, `desk-day-of-a-loss-${engine}`);
+      await panel.locator(`[data-rollcall-loss="${id}"] button`).click();
+      await mem.waitFor();
+      await mem.locator("[data-in-memory-back]").click();
+      await panel.locator("[data-rollcall-date]").waitFor();
+    }
+
     // Phone width: one column, nothing wider than the screen.
     await page.setViewportSize({ width: 390, height: 844 });
     await typeDate("20 July 1969").catch(() => {});

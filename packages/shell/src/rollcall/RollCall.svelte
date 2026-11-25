@@ -5,7 +5,8 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { dateOf, epochOf, formatDate, parseDate, rollCall, rollSentence, secondsToYears, stepEvent, yearsToSeconds, type RollCall as Roll, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import InMemory from "./InMemory.svelte";
+  import { lossesOn, dateOf, epochOf, formatDate, parseDate, rollCall, rollSentence, secondsToYears, stepEvent, yearsToSeconds, type RollCall as Roll, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { openCampaign, openPack, packFolder, type RollFeed } from "./feed.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene } = $props();
@@ -71,6 +72,10 @@
   const day = (n: number) => feed && go(t + n * feed.calendar.day_s);
   const event = (dir: 1 | -1) => feed && go(stepEvent(feed.ix, dir > 0 ? Math.max(t, dayFrom) : Math.min(t, dayFrom), dir));
 
+  // In memory (SH6): the page of names, opened from here; the day of a loss names it under the roster (design 8.4).
+  let page = $state<"roll" | "memory">("roll");
+  const losses = $derived(feed?.memory ? lossesOn(feed.memory, dayFrom, dayTo) : []);
+
   let typing = $state(false);
   let typed = $state("");
   let typedWrong = $state(false);
@@ -94,11 +99,13 @@
 </script>
 
 <section class="rollcall" data-rollcall aria-label="Roll call">
-  <p class="eyebrow">Roll call · days in {feed?.calendar.name.startsWith("Gregorian") ? "UTC" : (feed?.calendar.name ?? "the campaign's calendar")}</p>
+  {#if page === "roll"}<p class="eyebrow">Roll call · days in {feed?.calendar.name.startsWith("Gregorian") ? "UTC" : (feed?.calendar.name ?? "the campaign's calendar")}</p>{/if}
   {#if problem}
     <p class="words" data-rollcall-problem>{problem}</p>
   {:else if !feed}
     <p class="words muted">Reading who flew…</p>
+  {:else if page === "memory" && feed.memory}
+    <InMemory memory={feed.memory} calendar={feed.calendar} onback={() => (page = "roll")} onday={(s) => ((page = "roll"), go(s))} />
   {:else}
     {#if typing}
       <form class="typing" onsubmit={(e) => (e.preventDefault(), takeTyped())}>
@@ -157,6 +164,10 @@
       {/each}
     {/each}
 
+    {#each losses as l (l.id)}
+      <p class="loss" data-rollcall-loss={l.id}>{l.sentence} <button class="link" onclick={() => (page = "memory")}>In memory</button></p>
+    {/each}
+
     {#if also.length}
       <h3 class="eyebrow place">Also in flight, nobody aboard</h3>
       <ul class="also" data-rollcall-also>
@@ -164,6 +175,7 @@
       </ul>
     {/if}
 
+    {#if feed.memory}<p class="memory-door"><button class="link" onclick={() => (page = "memory")} data-rollcall-in-memory>In memory ›</button></p>{/if}
     <p class="foot muted" data-rollcall-credit>
       From {feed.from}.{#if feed.credit}{" "}{feed.credit}.{/if}
       {#if feed.calendar.name.startsWith("Gregorian")}Days are read on the pack's clock, about a minute from UTC.{/if}
@@ -327,6 +339,14 @@
   }
   .muted {
     color: var(--sse-ink-muted);
+  }
+  .loss {
+    margin: 12px 0 0 24px;
+    line-height: 1.45;
+    color: var(--sse-ink-muted);
+  }
+  .memory-door {
+    margin: 18px 0 0;
   }
   .foot {
     margin-top: 22px;
