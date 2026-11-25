@@ -453,3 +453,101 @@ fn stations_and_crewed_flights_have_logs() {
         s => panic!("STS-3 ends {s:?}"),
     }
 }
+
+/// RS9: everyone who has been to space (`crews.json`, from McDowell's lists by
+/// `scripts/spaceflight/build_crews.py`). Every leg aboard a craft with a log
+/// falls while that log has the craft flying, Apollo 11's crew are where they
+/// were on 20 July 1969, and the step count of people in space agrees with the legs.
+#[test]
+fn crews_ride_the_craft_their_logs_fly() {
+    let path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today/crews.json");
+    let crews: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    let all = logs();
+    let sys = sol();
+    let people = crews["people"].as_array().unwrap();
+    assert!(people.len() >= 780, "{} people", people.len());
+    let mut ids = std::collections::BTreeSet::new();
+    for p in people {
+        assert!(ids.insert(p["id"].as_str().unwrap()), "{} twice", p["id"]);
+    }
+    let legs = crews["aboard"].as_array().unwrap();
+    let mut on_log = 0;
+    let mut outside = Vec::new();
+    for l in legs {
+        assert!(
+            ids.contains(l["person"].as_str().unwrap()),
+            "{} has no person",
+            l["person"]
+        );
+        let from = l["from_s"].as_i64().unwrap();
+        let to = l["to_s"].as_i64().unwrap_or(from + 86_400);
+        assert!(to > from, "{l}");
+        if let Some(on) = l["on"].as_str() {
+            let log = all.get(on).unwrap_or_else(|| panic!("{on}: no log"));
+            on_log += 1;
+            let kind = log.at(from + (to - from) / 2, &sys).kind;
+            if kind == "before" || kind == "gone" || kind == "unlogged" {
+                outside.push(format!("{} on {on}: {kind}", l["person"]));
+            }
+        }
+    }
+    assert!(on_log >= 3_000, "{on_log} legs on a pack log");
+    // A log's dates come from GCAT, the legs from McDowell's crew lists: they should all agree.
+    assert!(
+        outside.len() <= 30,
+        "{} legs outside their craft's log: {:?}",
+        outside.len(),
+        &outside[..outside.len().min(30)]
+    );
+    // 20 July 1969, 20:17 UTC: Armstrong and Aldrin in Eagle on the Moon, Collins in Columbia.
+    let landing = 63_115_200_000 - 11_122 * 86_400 + 8 * 3_600 + 17 * 60 + 40;
+    let mut up: Vec<(&str, &str)> = legs
+        .iter()
+        .filter(|l| {
+            l["from_s"].as_i64().unwrap() <= landing
+                && l["to_s"].as_i64().is_none_or(|t| landing < t)
+        })
+        .map(|l| {
+            (
+                l["person"].as_str().unwrap(),
+                l["on"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    up.sort();
+    eprintln!("{} legs outside their craft's log", outside.len());
+    assert_eq!(
+        up,
+        vec![
+            ("AS-00030", "apollo-11-eagle"),
+            ("AS-00033", "apollo-11"),
+            ("AS-00036", "apollo-11-eagle")
+        ],
+        "who was in space as Eagle landed"
+    );
+    // The step list says how many were up at each change; it agrees with the legs and peaks at 20.
+    let steps = crews["in_space"].as_array().unwrap();
+    let mut peak = 0;
+    for s in steps.iter().step_by(37) {
+        let t = s[0].as_i64().unwrap();
+        let n = legs
+            .iter()
+            .filter(|l| {
+                l["from_s"].as_i64().unwrap() <= t && l["to_s"].as_i64().is_none_or(|e| t < e)
+            })
+            .count() as i64;
+        assert_eq!(s[1].as_i64().unwrap(), n, "count at {t}");
+    }
+    for s in steps {
+        peak = peak.max(s[1].as_i64().unwrap());
+    }
+    assert_eq!(peak, 20, "most people in space at once");
+    // Those killed in flight: Soyuz 1, X-15 3-65, Soyuz 11, Challenger and Columbia.
+    let lost = people
+        .iter()
+        .filter(|p| p["died_in_flight"] == true)
+        .count();
+    assert_eq!(lost, 19, "died in flight");
+}

@@ -19,6 +19,7 @@
         "Catalogue data from GCAT: General Catalog of Artificial Space Objects, Jonathan C. McDowell, https://planet4589.org/space/gcat/ , CC BY 4.0. Rearranged and filtered; values unchanged.",
         "Trajectories from JPL Horizons, NASA/JPL-Caltech, https://ssd.jpl.nasa.gov/horizons/ .",
         "Craft figures from the NASA NSSDCA Master Catalog, https://nssdc.gsfc.nasa.gov/nmc/ (US government work).",
+        "Crews and who was where from Jonathan C. McDowell's human spaceflight lists, https://planet4589.org/space/astro/ (CC BY 4.0).",
         "Mission times from NASA SP-4029 (Apollo by the Numbers), NASA press kits, the 45th Space Wing and Spaceflight101; each flight log names its sources."
       ],
       "files": {
@@ -26,7 +27,8 @@
         "stations": "stations.json",
         "parts": "parts.json",
         "craft": "craft.json",
-        "logs": "logs/"
+        "logs": "logs/",
+        "crews": "crews.json"
       }
     }
   }
