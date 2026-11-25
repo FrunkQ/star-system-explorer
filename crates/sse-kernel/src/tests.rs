@@ -1749,6 +1749,19 @@ fn plan_descent_lands_the_partys_own_ship() {
     assert_eq!(r2["descent"], r["descent"]);
     let r = send(&mut k, ask(serde_json::json!({"ship": "no-such-ship"})));
     assert_eq!(r["code"], "unknown_ship", "{r}");
+    // LR1: a torch ship with a bare hull (a Traveller far trader) at Mars is
+    // flown down on its engines from orbit, not through the air to burn up.
+    let trader = serde_json::json!({"name": "Far trader", "accel_g": 1.0, "sustained": true,
+        "exhaust_km_s": 3000.0, "dry_t": 800.0, "wet_t": 840.0});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "plan_descent", "fixture": "Mars", "quick": true,
+            "lander": {"ship": trader}, "lat_deg": 20.4, "lon_deg": -108.7}),
+    );
+    assert_eq!(r["type"], "descent_planned", "{r}");
+    let o = &r["descent"]["descent"]["outcome"];
+    assert_eq!(o["result"], "landed", "{o}");
+    assert_eq!(o["method"], "engines-from-orbit", "{o}");
 }
 
 /// J3: a stack with boxes loads (box golden cases run, flows are compiled

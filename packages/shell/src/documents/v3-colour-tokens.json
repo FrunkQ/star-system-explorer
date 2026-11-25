@@ -48,7 +48,28 @@
     "planet/eyeball",
     "planet/hot-eyeball",
     "planet/cold-eyeball",
-    "planet/mesoplanet"
+    "planet/mesoplanet",
+    "small-body",
+    "small-body/carbonaceous",
+    "small-body/icy",
+    "small-body/metallic",
+    "small-body/stony",
+    "iron-rich",
+    "rocky",
+    "water-rich",
+    "surface/airless",
+    "surface/molten",
+    "surface/hot-greenhouse",
+    "surface/hot-desert",
+    "surface/temperate-desert",
+    "surface/temperate-ocean",
+    "surface/ocean-covered",
+    "surface/cold-desert",
+    "surface/ice-open-equator",
+    "surface/frozen",
+    "surface/ice-shell-ocean",
+    "surface/hydrocarbon-lakes",
+    "surface/hycean"
    ]
   },
   "--body-gas-giant": {
@@ -67,7 +88,14 @@
     "planet/alkali-metal-clouds-gas-giant",
     "planet/silicate-clouds-gas-giant",
     "planet/helium",
-    "planet/sub-brown-dwarf"
+    "planet/sub-brown-dwarf",
+    "gas-giant",
+    "gas-giant/ammonia-clouds",
+    "gas-giant/water-clouds",
+    "gas-giant/cloudless",
+    "gas-giant/alkali-clouds",
+    "gas-giant/silicate-clouds",
+    "gas-giant/ultra-hot"
    ]
   },
   "--body-ice-giant": {
@@ -75,14 +103,17 @@
    "classes": [
     "planet/sub-neptune",
     "planet/ice-giant",
-    "planet/super-neptune"
+    "planet/super-neptune",
+    "sub-neptune",
+    "ice-giant"
    ]
   },
   "--body-brown-dwarf": {
    "group": "brownDwarf",
    "classes": [
     "planet/brown-dwarf",
-    "planet/ultra-cool-dwarf"
+    "planet/ultra-cool-dwarf",
+    "brown-dwarf"
    ]
   },
   "--body-biosphere": {

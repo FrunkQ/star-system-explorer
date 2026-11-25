@@ -44,3 +44,19 @@ test("every theme's element origins stay apart for every colour vision", () => {
       }
   }
 });
+
+test("every theme's map palette (OV4) stays apart for every colour vision and stands off the ground", () => {
+  const SLOTS = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `map-${n}`);
+  for (const t of ALL_THEMES) {
+    if (t.supports.colours !== "full") continue;
+    const r = resolveTheme(t.id, ALL_THEMES);
+    for (const s of SLOTS) assert.match(String(r[s]), /^#[0-9A-Fa-f]{6}$/, `${t.id}: ${s}`);
+    for (let i = 0; i < SLOTS.length; i++) {
+      assert.ok(contrast(String(r[SLOTS[i]!]), String(r.ground)) >= 3, `${t.id}: ${SLOTS[i]} is under 3:1 on its ground`);
+      for (let j = i + 1; j < SLOTS.length; j++) {
+        const d = leastApart(String(r[SLOTS[i]!]), String(r[SLOTS[j]!]));
+        assert.ok(d.delta >= 10, `${t.id}: ${SLOTS[i]} and ${SLOTS[j]} are ΔE ${d.delta.toFixed(1)} apart for ${d.vision}`);
+      }
+    }
+  }
+});

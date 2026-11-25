@@ -56,6 +56,14 @@ try {
     await story.locator("[data-hit='story.danger-at-home'] [data-pick]").click();
     await story.locator("[data-hit='story.danger-at-home'] button.link").click();
     assert.match(await story.locator("[data-brief-text]").innerText(), /Story hook: Danger where people live, at Tarn/);
+    // On the GM's machine Minerva takes the hit's subject: the agents open on it (keys stay in the browser; nothing is sent here).
+    const minerva = story.locator("[data-hit='story.danger-at-home'] [data-minerva]");
+    assert.equal(await minerva.count(), 1, "Tell it with Minerva on the GM machine");
+    {
+      await minerva.click();
+      await gm.waitForFunction(() => document.querySelector("dialog[aria-label='Agents']")?.open === true, null, { timeout: 5000 });
+      await gm.keyboard.press("Escape");
+    }
 
     await more(gm, "Night chart");
     await gm.waitForTimeout(300);
