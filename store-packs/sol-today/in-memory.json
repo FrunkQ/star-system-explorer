@@ -1,0 +1,483 @@
+{
+ "about": "In memory: those who died on a flight, preparing to fly, or in ground work and tests, each with at least two sources and one plain sentence of fact. Written by scripts/spaceflight/build_crews.py (scripts/spaceflight/in_memory.py). No name is guessed: where the sources give a number of dead but not every name, 'unconfirmed' says so.",
+ "losses": [
+  {
+   "id": "nedelin-1960",
+   "at_s": 61878556836,
+   "date": "1960-10-24",
+   "where": "Baikonur Cosmodrome",
+   "during": "ground_work",
+   "sentence": "An uncrewed R-16 rocket exploded on its launch pad.",
+   "on": null,
+   "people": [],
+   "names": [
+    {
+     "name": "Mitrofan Nedelin",
+     "sources": [
+      {
+       "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+       "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+      },
+      {
+       "text": "Wikidata Q707715",
+       "url": "https://www.wikidata.org/wiki/Q707715"
+      }
+     ]
+    }
+   ],
+   "unconfirmed": "and the others killed, whose names these sources do not give",
+   "toll": [
+    78,
+    121
+   ],
+   "toll_why": "Wikidata gives 78; the Wikipedia list gives Marshal Nedelin and about 120 others",
+   "sources": [
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q386074",
+     "url": "https://www.wikidata.org/wiki/Q386074"
+    }
+   ]
+  },
+  {
+   "id": "bondarenko-1961",
+   "at_s": 61891516836,
+   "date": "1961-03-23",
+   "where": "Moscow, in a low-pressure chamber",
+   "during": "training",
+   "sentence": "A fire started in the oxygen-rich chamber during a fifteen-day endurance test; Valentin Bondarenko died in hospital sixteen hours later.",
+   "on": null,
+   "people": [
+    "TR-bondarenko"
+   ],
+   "unconfirmed": null,
+   "toll": 1,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    }
+   ]
+  },
+  {
+   "id": "freeman-1964",
+   "at_s": 62005392038,
+   "date": "1964-10-31",
+   "where": "on approach to Ellington Air Force Base, Texas",
+   "during": "training",
+   "sentence": "A goose struck his T-38 jet on a landing approach, both engines stopped, and he ejected too close to the ground for his parachute to open.",
+   "on": null,
+   "people": [
+    "TR-freeman"
+   ],
+   "unconfirmed": null,
+   "toll": 1,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    }
+   ],
+   "note": "McDowell's trainee list gives 21 October 1964; Wikidata and the Wikipedia list give 31 October."
+  },
+  {
+   "id": "t38-1966",
+   "at_s": 62047296039,
+   "date": "1966-02-28",
+   "where": "Lambert Field, St. Louis",
+   "during": "training",
+   "sentence": "Their T-38 jet crashed into the McDonnell Aircraft building while landing in bad weather; they were the prime crew of Gemini 9, on their way to simulator training.",
+   "on": null,
+   "people": [
+    "TR-see",
+    "TR-bassett"
+   ],
+   "unconfirmed": null,
+   "toll": 2,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q4572362",
+     "url": "https://www.wikidata.org/wiki/Q4572362"
+    }
+   ]
+  },
+  {
+   "id": "apollo-1-1967",
+   "at_s": 62076067239,
+   "date": "1967-01-27",
+   "where": "Launch Complex 34, Cape Canaveral",
+   "during": "ground_test",
+   "sentence": "A fire in the command module's pure oxygen atmosphere during a launch rehearsal test killed the crew of Apollo 1.",
+   "on": null,
+   "people": [
+    "AS-00003",
+    "AS-00023",
+    "TR-chaffee"
+   ],
+   "unconfirmed": null,
+   "toll": 3,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q194082",
+     "url": "https://www.wikidata.org/wiki/Q194082"
+    }
+   ]
+  },
+  {
+   "id": "soyuz-1-1967",
+   "at_s": 62083553011,
+   "date": "1967-04-24",
+   "where": "near Karabutak, Orenburg",
+   "during": "flight",
+   "sentence": "The parachute did not open properly after reentry and the capsule struck the ground.",
+   "on": "soyuz-1",
+   "people": [
+    "AS-00016"
+   ],
+   "unconfirmed": null,
+   "toll": 1,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q211254",
+     "url": "https://www.wikidata.org/wiki/Q211254"
+    }
+   ]
+  },
+  {
+   "id": "williams-1967",
+   "at_s": 62097753639,
+   "date": "1967-10-05",
+   "where": "north of Tallahassee, Florida",
+   "during": "training",
+   "sentence": "The aileron controls of his T-38 jet failed on a solo flight, and he ejected too low.",
+   "on": null,
+   "people": [
+    "TR-williams"
+   ],
+   "unconfirmed": null,
+   "toll": 1,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    }
+   ]
+  },
+  {
+   "id": "x-15-3-65-97",
+   "at_s": 62101319737,
+   "date": "1967-11-15",
+   "where": "over the Mojave Desert, California",
+   "during": "flight",
+   "sentence": "The X-15 broke up during its return from a flight above 80 km after electrical and control problems.",
+   "on": null,
+   "people": [
+    "AS-00038"
+   ],
+   "unconfirmed": null,
+   "toll": 1,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q8041409",
+     "url": "https://www.wikidata.org/wiki/Q8041409"
+    }
+   ]
+  },
+  {
+   "id": "lawrence-1967",
+   "at_s": 62103283239,
+   "date": "1967-12-08",
+   "where": "Edwards Air Force Base, California",
+   "during": "training",
+   "sentence": "His F-104 crashed during steep-descent landing practice; his parachute did not fully open.",
+   "on": null,
+   "people": [
+    "TR-lawrence"
+   ],
+   "unconfirmed": null,
+   "toll": 1,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    }
+   ]
+  },
+  {
+   "id": "gagarin-1968",
+   "at_s": 62112787240,
+   "date": "1968-03-27",
+   "where": "near Novosyolovo, Vladimir Oblast",
+   "during": "training",
+   "sentence": "His two-seat jet crashed on a training flight.",
+   "on": null,
+   "people": [
+    "AS-00001"
+   ],
+   "unconfirmed": "and the instructor flying with him",
+   "toll": 2,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q8826711",
+     "url": "https://www.wikidata.org/wiki/Q8826711"
+    }
+   ]
+  },
+  {
+   "id": "soyuz-11-1971",
+   "at_s": 62215557453,
+   "date": "1971-06-30",
+   "where": "returning from Salyut 1, above Kazakhstan",
+   "during": "flight",
+   "sentence": "A valve opened as the modules separated and the cabin lost its air before reentry.",
+   "on": "soyuz-11",
+   "people": [
+    "AS-00060",
+    "AS-00051",
+    "AS-00061"
+   ],
+   "unconfirmed": null,
+   "toll": 3,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q648581",
+     "url": "https://www.wikidata.org/wiki/Q648581"
+    }
+   ]
+  },
+  {
+   "id": "plesetsk-1980",
+   "at_s": 62490700850,
+   "date": "1980-03-18",
+   "where": "Plesetsk Cosmodrome",
+   "during": "ground_work",
+   "sentence": "A Vostok-2M rocket exploded while it was being fuelled.",
+   "on": null,
+   "people": [],
+   "names": [],
+   "unconfirmed": "those killed, whose names these sources do not give",
+   "toll": 48,
+   "sources": [
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q16662654",
+     "url": "https://www.wikidata.org/wiki/Q16662654"
+    }
+   ]
+  },
+  {
+   "id": "challenger-1986",
+   "at_s": 62675786620,
+   "date": "1986-01-28",
+   "where": "off Cape Canaveral, Florida",
+   "during": "flight",
+   "sentence": "A seal in a solid rocket booster failed in the cold, and the Shuttle broke apart 73 seconds after launch.",
+   "on": null,
+   "people": [
+    "AS-00146",
+    "AF-00001",
+    "AS-00164",
+    "AS-00154",
+    "AS-00140",
+    "AF-00002",
+    "AF-00003"
+   ],
+   "unconfirmed": null,
+   "toll": 7,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q858145",
+     "url": "https://www.wikidata.org/wiki/Q858145"
+    }
+   ]
+  },
+  {
+   "id": "vozovikov-1993",
+   "at_s": 62910864059,
+   "date": "1993-07-11",
+   "where": "the Black Sea, near Anapa",
+   "during": "training",
+   "sentence": "He drowned during water recovery training.",
+   "on": null,
+   "people": [
+    "TR-vozovikov"
+   ],
+   "unconfirmed": null,
+   "toll": 1,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    }
+   ]
+  },
+  {
+   "id": "columbia-2003",
+   "at_s": 63212580133,
+   "date": "2003-02-01",
+   "where": "over Texas and Louisiana, during reentry",
+   "during": "flight",
+   "sentence": "Foam struck the wing at launch; on reentry hot gas entered the damaged wing and the Shuttle broke apart.",
+   "on": "columbia-sts-107",
+   "people": [
+    "AS-00393",
+    "AS-00434",
+    "AS-00378",
+    "AS-00373",
+    "AS-00435",
+    "AS-00436",
+    "AS-00437"
+   ],
+   "unconfirmed": null,
+   "toll": 7,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q580867",
+     "url": "https://www.wikidata.org/wiki/Q580867"
+    }
+   ]
+  },
+  {
+   "id": "alcantara-2003",
+   "at_s": 63230025663,
+   "date": "2003-08-22",
+   "where": "Alcântara Launch Center, Brazil",
+   "during": "ground_work",
+   "sentence": "An uncrewed VLS-1 rocket exploded during launch preparations.",
+   "on": null,
+   "people": [],
+   "names": [],
+   "unconfirmed": "those killed, whose names these sources do not give",
+   "toll": 21,
+   "sources": [
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q377174",
+     "url": "https://www.wikidata.org/wiki/Q377174"
+    }
+   ]
+  },
+  {
+   "id": "vss-enterprise-2014",
+   "at_s": 63583228866,
+   "date": "2014-10-31",
+   "where": "over the Mojave Desert, California",
+   "during": "flight",
+   "sentence": "The feathering system of SpaceShipTwo VSS Enterprise deployed early during a powered test flight; the pilot, Peter Siebold, survived with serious injuries.",
+   "on": null,
+   "people": [
+    "TR-alsbury"
+   ],
+   "unconfirmed": null,
+   "toll": 1,
+   "sources": [
+    {
+     "text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+     "url": "https://planet4589.org/space/astro/web/index.html"
+    },
+    {
+     "text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+     "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+    },
+    {
+     "text": "Wikidata Q18396768",
+     "url": "https://www.wikidata.org/wiki/Q18396768"
+    }
+   ],
+   "note": "A test flight in the atmosphere, not above 80 km; the Wikipedia list files it under training and testing."
+  }
+ ]
+}
