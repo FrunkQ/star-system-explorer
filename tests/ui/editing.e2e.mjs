@@ -8,7 +8,7 @@
 // the size strip is the distance with that year; Retrograde mirrors the lean past 90 degrees; the place now is a ring
 // that catches at the far point; Locked sets the day to the year and the sun's day says so; each one change, one Undo.
 // ED7: on Explore, "Try changing it" opens an example what-if where the strip moves and the main line does not; on
-// Build, Add a moon offers formation's own rules for the chosen planet; on a phone the open strip docks above the ruler.
+// Build, Add a moon offers formation's own rules for the chosen planet, and Add round a star offers Kinds; on a phone the open strip docks above the ruler.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -258,6 +258,17 @@ try {
       await gm.waitForFunction(() => !document.querySelector("dialog[data-add]")?.open, null, { timeout: 20000 });
       await gm.waitForFunction((n) => document.querySelectorAll('.area-chart .body[aria-label*="moon of Mars" i]').length > n, before, { timeout: 20000 });
       await undoTo();
+
+      // ED6 Kinds: round the Sun, Add offers a world of each kind the class atlas knows, smallest first.
+      await gm.locator('.area-chart .body[aria-label^="Sun"]').first().locator(".hit").click();
+      await gm.getByRole("button", { name: "More", exact: true }).click();
+      await gm.locator("[data-more-add]").click();
+      await add.locator("[data-kinds]").waitFor({ timeout: 20000 });
+      const kinds = await add.locator("[data-kind]").evaluateAll((ls) => ls.map((l) => l.dataset.kind));
+      for (const k of ["rocky", "gas-giant", "ice-giant"]) assert.ok(kinds.includes(k), `${k} is a kind: ${kinds}`);
+      assert.match(await add.locator('[data-kind="gas-giant"]').innerText(), /like Jupiter/);
+      await shot(gm, `add-kinds-${vp}`);
+      await add.getByRole("button", { name: "Close" }).click();
       await depth(gm, "Curious");
     }
 
