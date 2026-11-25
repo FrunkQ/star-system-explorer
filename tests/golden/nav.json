@@ -11,18 +11,18 @@
         {
           "days": "199.8498",
           "difficulty": "hard",
-          "dv_m_s": "6136.531",
+          "dv_m_s": "6136.534",
           "id": "lambert-fuel"
         },
         {
           "days": "180.7829",
           "difficulty": "hard",
-          "dv_m_s": "6367.587",
+          "dv_m_s": "6367.568",
           "id": "lambert-fast"
         }
       ],
       "case": "chemical",
-      "plan": "c5993353531a5d0f898a26cc6364dceb06f9a2aed6b14917beecde194550b987",
+      "plan": "9bbb10fe7acac5423e134ac441ac0c6995a22cfa6eb76f77615dac6e48bfb81f",
       "refused": 0,
       "ways_out": []
     },
@@ -49,19 +49,19 @@
         {
           "days": "94.5002",
           "difficulty": "very hard",
-          "dv_m_s": "59294.294",
+          "dv_m_s": "59294.318",
           "id": "lambert-fast"
         },
         {
           "days": "119.1524",
           "difficulty": "moderate",
-          "dv_m_s": "8702.594",
+          "dv_m_s": "8702.616",
           "id": "lambert-balanced"
         },
         {
           "days": "199.8498",
           "difficulty": "moderate",
-          "dv_m_s": "6136.531",
+          "dv_m_s": "6136.534",
           "id": "lambert-fuel"
         },
         {
@@ -72,14 +72,14 @@
         }
       ],
       "case": "torch",
-      "plan": "36c4ffd62a79cb21326810c60588ca052fc4081852886c8710a0e2cc88077ce8",
+      "plan": "4288d067e291211f0e0cceef49a392592e9e3baa6e2b57424099b5b743f5a3d1",
       "refused": 0,
       "ways_out": []
     },
     {
       "candidates": [],
       "case": "drift",
-      "plan": "fbf94e0ba83d61b6c65e6a0fbdfbdf856386f7030623240eb85d5190b71f4509",
+      "plan": "7ba213dc35f5e7e0fa4ac1d1107f9f5034edd151746ee450593d7f21e6706dde",
       "refused": 0,
       "ways_out": [
         {
@@ -107,49 +107,49 @@
           "label": "Keep drifting"
         },
         {
-          "dv_m_s": "34803.924",
+          "dv_m_s": "34803.927",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Mars"
         },
         {
-          "dv_m_s": "35909.569",
+          "dv_m_s": "35909.565",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Mercury"
         },
         {
-          "dv_m_s": "34106.560",
+          "dv_m_s": "34106.513",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Venus"
         },
         {
-          "dv_m_s": "29696.351",
+          "dv_m_s": "29696.353",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Earth"
         },
         {
-          "dv_m_s": "55608.414",
+          "dv_m_s": "55609.283",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Jupiter"
         },
         {
-          "dv_m_s": "50566.636",
+          "dv_m_s": "50566.883",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Saturn"
         },
         {
-          "dv_m_s": "40778.102",
+          "dv_m_s": "40778.150",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Uranus"
         },
         {
-          "dv_m_s": "41032.348",
+          "dv_m_s": "41032.385",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Neptune"
