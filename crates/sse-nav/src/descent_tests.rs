@@ -1,4 +1,4 @@
-use crate::descent::{descend, EntryState, World};
+use crate::descent::{descend, plan_down, EntryState, World};
 use crate::scenario::settings;
 use sse_core::math as m;
 
@@ -128,4 +128,52 @@ fn airless_worlds_land_on_engines() {
     let e = lm.engine.as_ref().unwrap();
     let dv = e.isp_s * crate::G0 * m::ln(lm.mass_kg / (lm.mass_kg - o.propellant_used_kg));
     assert!(dv > v_orb && dv < 1.5 * v_orb, "{dv} against {v_orb}");
+}
+
+/// LR1 (landing run-through): a ship with a torch drive and a bare hull (a
+/// Traveller far trader: 1 g, 3000 km/s exhaust, a hull good for 1 W/cm²)
+/// burns up if it enters Mars's air at orbital speed, so plan_down flies it
+/// down on its engines from the top of the air instead, as ship_at_world's
+/// powered landing reckons. A capsule that enters well keeps its entry, and a
+/// lander too weak to hover keeps its honest verdict.
+#[test]
+fn a_torch_ship_flies_down_from_orbit() {
+    let s = settings();
+    let d = &s.descent;
+    let air = iso(0.020, 210.0, 0.044, 1.29, 3.71);
+    let w = world("Mars", 3389.5, 3.71, &air, d.sutton_graves["CO2"]);
+    let e = EntryState {
+        altitude_m: 150_000.0,
+        speed_m_s: 3460.0,
+        flight_path_deg: -2.0,
+    };
+    let mass = 840_000.0;
+    let mut ship = d.landers["mars-lander"].clone();
+    ship.name = "Far trader".into();
+    ship.mass_kg = mass;
+    ship.chute = None;
+    ship.heat_limit_w_cm2 = 1.0;
+    ship.touchdown_m_s = 1.0;
+    ship.jettison_kg = 0.0;
+    ship.lift_to_drag = 0.0;
+    ship.engine = Some(crate::descent::Engine {
+        thrust_n: 1.0 * crate::G0 * mass,
+        isp_s: 3.0e6 / crate::G0,
+        propellant_kg: 40_000.0,
+    });
+    let entry = descend(&d.run, &w, &ship, &e);
+    assert_eq!(entry.outcome.result, "burned-up", "{:?}", entry.outcome);
+    let out = plan_down(&d.run, &w, &ship, &e);
+    let o = &out.outcome;
+    assert_eq!(o.result, "landed", "{o:?}");
+    assert_eq!(o.method, "engines-from-orbit");
+    assert!(o.peak_heat_w_cm2 <= 1.0, "{}", o.peak_heat_w_cm2);
+    assert!(o.why[0].contains("burned up"), "{:?}", o.why);
+    // A lander that enters well keeps the entry.
+    let ml = plan_down(&d.run, &w, &d.landers["mars-lander"], &e);
+    assert_eq!(ml, descend(&d.run, &w, &d.landers["mars-lander"], &e));
+    // Under its weight the drive cannot hold it up: the entry stands.
+    let mut weak = ship.clone();
+    weak.engine.as_mut().unwrap().thrust_n = 0.3 * crate::G0 * mass;
+    assert_eq!(plan_down(&d.run, &w, &weak, &e).outcome.result, "burned-up");
 }

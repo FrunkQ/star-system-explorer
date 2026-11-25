@@ -107,7 +107,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
 | `status/navigation.md` | Build object selector and menus | NV (selector part 2, object menu, find by tag, notes) |
 | `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, `shell/src/run/`, Bookmarks, Playbook and Switchboard (RD, PB) |
-| `status/landing.md` (arrives with PR 437) | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
+| `status/landing.md` | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | V8, voyages, the flight log, travel panels, HW |
 | `status/galaxy.md` | Build galaxy charts and histories (split from travel) | U6, U8, V9 (not the 3D web cube), GH8, V3 gaps 17 and 39 |
