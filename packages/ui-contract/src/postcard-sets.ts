@@ -17,6 +17,11 @@ export interface PostcardSet {
   cards: Postcard[];
 }
 
+/** A set kept as a file of its own beside a pack (the base set is): read as that pack carrying it. */
+export function setPack(pack: string, set: unknown): PackDoc {
+  return { id: pack, version: "0", provides: { other: { postcard_sets: [set] } } } as unknown as PackDoc;
+}
+
 /** The postcard sets on a stack of packs, in order, and what was wrong with any (one line each). */
 export function postcardSetsOn(packs: readonly PackDoc[]): { sets: PostcardSet[]; problems: string[] } {
   const sets: PostcardSet[] = [];

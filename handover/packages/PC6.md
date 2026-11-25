@@ -6,7 +6,8 @@ Design: `design/SSE4-postcards-design.md` sections 7 and 12A point 6 (a universe
 - **`sse.postcards/1`** (ui-contract `postcard-sets.ts`): a pack's `provides.other.postcard_sets` is a list of sets
   `{ schema, id, title, cards: Postcard[] }`. `postcardSetsOn(packs)` reads them in stack order. A later pack's set
   with the same id replaces the earlier one. Bad cards are dropped with one line each.
-- **The base set** is `sse.base` ("From the base set") in `packs/base-presentation/pack.json`. That pack is served
+- **The base set** is `sse.base` ("From the base set") in `packs/base-presentation/postcards.json`, a set file beside the base
+  presentation pack (served as `packs/base-postcards.json`). It is served
   beside the shell and is not on the stack, so there are no state hash or golden changes. It has three cards so far,
   all of the sample save's Earth and Moon in True. Each card is a clip with its origin, so it draws live where it is
   opened, and each carries a 640 px stamp, so a held screen can show it without drawing.

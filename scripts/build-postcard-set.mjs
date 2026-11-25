@@ -1,15 +1,16 @@
 // The base postcard set (PC6, SSE4-postcards-design.md section 7): made in the built shell exactly as a GM makes
-// one (a camera on a view, Take photograph, Keep as postcard, Send, Save file), then written into the base
-// presentation pack as `sse.postcards/1`. Each card travels as a clip with its origin, so it draws live where it is
+// one (a camera on a view, Take photograph, Keep as postcard, Send, Save file), then written beside the base
+// presentation pack as one `sse.postcards/1` set. Each card travels as a clip with its origin, so it draws live where it is
 // opened, and carries its stamp so a held screen can show it without drawing.
 // Usage: scripts/build-shell.sh first, then node scripts/build-postcard-set.mjs [--check].
-// --check rebuilds nothing: it reads the pack's set and says whether every card reads and has a stamp.
+// --check rebuilds nothing: it reads the set and says whether every card reads and has a stamp.
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { go, more } from "../tests/ui/nav.mjs";
 
-const PACK = "packs/base-presentation/pack.json";
+// Beside the base presentation pack, not in it: one set document.
+const FILE = "packs/base-presentation/postcards.json";
 const SET = { schema: "sse.postcards/1", id: "sse.base", title: "From the base set" };
 
 // The places, in order. Each picks a world on the system chart (a moon inside its planet's chart), turns its globe (key presses on the globe: arrows
@@ -21,10 +22,12 @@ const PLACES = [
   { world: "Moon", inside: "Earth", keys: ["Shift+ArrowLeft", "ArrowDown"], name: "Moon (sample)", caption: "The sample Moon: airless, cratered ground under a low sun." },
 ];
 
-const pack = JSON.parse(readFileSync(PACK, "utf8"));
 if (process.argv.includes("--check")) {
-  const sets = pack.provides?.other?.postcard_sets ?? [];
-  const set = sets.find((s) => s.id === SET.id);
+  let set = null;
+  try {
+    set = JSON.parse(readFileSync(FILE, "utf8"));
+  } catch {}
+  if (set?.id !== SET.id) set = null;
   const bad = !set ? ["no base set"] : set.cards.filter((c) => !/^data:image\//.test(c.stamp ?? "") || c.world?.how !== "clip" || !c.world.origin).map((c) => c.name);
   console.log(bad.length ? `base set: missing or incomplete: ${bad.join(", ")}` : `base set: ${set.cards.length} postcards, each with a stamp and its origin`);
   process.exit(bad.length ? 1 : 0);
@@ -109,10 +112,8 @@ try {
     console.log(`made ${card.name} (${Math.round(JSON.stringify(card).length / 1024)} KB)`);
   }
   await browser.close();
-  const other = (pack.provides.other ??= {});
-  other.postcard_sets = [...(other.postcard_sets ?? []).filter((s) => s.id !== SET.id), { ...SET, cards }];
-  writeFileSync(PACK, `${JSON.stringify(pack, null, 1)}\n`);
-  console.log(`wrote ${cards.length} postcards to ${PACK}`);
+  writeFileSync(FILE, `${JSON.stringify({ ...SET, cards }, null, 1)}\n`);
+  console.log(`wrote ${cards.length} postcards to ${FILE}`);
 } finally {
   server.kill();
 }

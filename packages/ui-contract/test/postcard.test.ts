@@ -28,7 +28,7 @@ import {
   type Postcard,
 } from "../src/postcard.ts";
 import type { Clip } from "../src/clip.ts";
-import { postcardSetsOn } from "../src/postcard-sets.ts";
+import { postcardSetsOn, setPack } from "../src/postcard-sets.ts";
 import { readFileSync } from "node:fs";
 
 const pose: Pose = poseOfGlobe("u:sol/mars", 30, 20, 3.39e6);
@@ -249,9 +249,9 @@ test("postcard sets read from packs; a later pack's set of the same id replaces 
   assert.equal(r.problems.length, 3, r.problems.join("; "));
 });
 
-test("the base set in the base presentation pack reads, every card with its stamp and origin", () => {
-  const doc = JSON.parse(readFileSync(new URL("../../../packs/base-presentation/pack.json", import.meta.url), "utf8"));
-  const r = postcardSetsOn([doc]);
+test("the base set beside the base presentation pack reads, every card with its stamp and origin", () => {
+  const raw = JSON.parse(readFileSync(new URL("../../../packs/base-presentation/postcards.json", import.meta.url), "utf8"));
+  const r = postcardSetsOn([setPack("sse.base-presentation", raw)]);
   assert.deepEqual(r.problems, []);
   const set = r.sets.find((s) => s.id === "sse.base");
   assert.ok(set && set.cards.length >= 3);
