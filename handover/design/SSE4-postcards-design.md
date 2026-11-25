@@ -1,6 +1,6 @@
 # SSE4: postcards and hold backdrops (track PC)
 
-Status: **PROPOSED, 25 Nov 2026; the idea and the name are welcomed by Alex (01:08 UTC: "postcards - amazing idea"), with three rulings in section 12A, which wins where it differs from the rest. Not yet accepted in full: questions 2 to 9, 11 and 12 of section 12 are still open, and no builder starts until he answers them.** Design and mockup only. PC is a code only and is never shown in the product.
+Status: **PROPOSED, 25 Nov 2026; the idea and the name are welcomed by Alex (01:08 UTC: "postcards - amazing idea"), with three rulings in section 12A, which wins where it differs from the rest. Not yet accepted in full: questions 2 to 7, 9, 11 and 12 of section 12 and new questions 13 and 14 are still open, and no builder starts until he answers them.** Design and mockup only. PC is a code only and is never shown in the product.
 
 Mockup, clickable: project files `sse4/handover-screens/PC-screens/postcards-mockup.html`, with desktop and phone screenshots beside it and its source in `PC-screens/source/`. The pictures in the mockup are painted stand-ins, not SSE4 output; each says so.
 
@@ -153,7 +153,7 @@ Extends section 6 of the Playbook design; the Run desk thread owns it.
 | **PC5** | Grounds on holding and transmission cards; the Quotes kind; the line card's Ground row | Run desk | PB5, PC1 |
 | **PC6** | The base set of about 24 and its check | new thread with trailer | PC2, PC3 |
 | **PC7** | The quote set | Atlas | question 7 |
-| **PC8** | Explorers: kind, shelf, stamp, offer | Explorers | Alex's yes |
+| **PC8** | Explorers: kind, shelf with an always-free selection, stamp, offer; the link page with its preview picture; private sends with a message; the Discord webhook | Explorers | Alex's yes |
 | later | a postcard on the start sheet; a poster-size picture through the Atlas print path; a "living postcard" that lets time run slowly; press a spot for its reason | | |
 
 PC1, PC3 for the globe, and PC5 can start on main today. Only PC2 and PC8 wait on anyone.
@@ -184,6 +184,15 @@ His words: "postcards - amazing idea - always a selection free in the shop - it 
 
 5. **A quote stands alone** (01:10 UTC: "Quote does not need a joke below as well"). A held screen carries one piece of words. Over a Quote card there is no waiting line or joke at the foot: only the quote, who said it, and the quiet labels (the role, the place). The Atlas banner picker's waiting line is used only with Blank and Plain cards, and a Joke card is its own words with nothing added. This replaces section 8 point 4's "top and bottom lines" for quotes and jokes.
 6. **A universe has a default set** (01:10 UTC: "a universe will have a default set"). A universe pack carries its own `sse.postcards/1` set (and may carry its own quote set). In a campaign in that universe, "Postcards in turn" and the wall open on that universe's set first, so a setting's hold screens show its own places with no setting up. The base app's set of about 24 is the default set of the base universe, and the fallback for a universe pack that brings none. The GM can still choose another set or the campaign's own.
+
+7. **Every band, and Composite** (01:15 UTC: "i love the way you can pick IR - a wavelength - and even better when we have others and composite views too"). The front's band switch is the standard Band control: every band the view can draw (Visible, Infrared, Ultraviolet, X-ray, Radio, Mag), then Composite, with the unavailable ones quiet and saying why, as everywhere. A postcard is kept in one band (or one Composite mix, stored as the mix), and whoever opens it may look in any other. The reasons on the back are the reasons for the band showing.
+8. **Send to anyone, with a personal message** (01:15: "being able to send to anyone with a personal message would be cool"). Send gains "Write on the back": a short message and who it is from, shown on the right-hand side of the back, where a postcard's message goes. The message belongs to that sending, not to the postcard: it travels in the link or file, is never published to the shop, and is plain text only (no links made live, no markup).
+9. **A postcard link works for someone without SSE4, and takes them there** (01:15: "if one is sent to someone without SSE it can take them there - a great tool to build interest"). The link opens a page that needs nothing installed: the stamp at once, the message, the caption, and "See it live", which opens SSE4 in the browser on that postcard as a visit (the alpha notice and the way to V3 for real use stay as they are on the opening page). Where the device cannot draw True the stamp stays, with the reason. This is why the stamp is kept (question 8 is in effect answered yes).
+10. **The Discord sharing channel** (01:15: "We can have them come through the sharing channel on the discord too"). A postcard link pasted into Discord unfurls as a picture card: the page carries the stamp as its preview picture, with the name and caption. Posting newly published shop postcards into the channel automatically is a webhook on the Explorers side, part of PC8 and needing Alex to supply the channel's webhook address as a secret.
+
+Two things follow for the builder. A link that shows a stamp and a message needs somewhere to keep them, since a web address cannot hold a picture: a shop postcard already has its page; a private send stores a small sealed copy (stamp, message, the postcard data) on Explorers behind an unguessable address, with a lifetime (question 14). And a private send is the first user-written text and picture that is not moderated before someone sees it, so it carries a Report link and is never listed or searchable.
+
+14. **New question: private sends kept on Explorers behind an unguessable link, for how long?** Recommend: one year from the last time it was opened, then removed; the sender can remove it at once from "Sent" on the wall. Needs your own yes with PC8, since it stores user content.
 
 What this changes above: section 4's "clip" case and section 7's file with a clip are **not for the shop**. Whether a clip-carrying postcard is still allowed directly between friends (copy, file) is new question 13. Section 9's moderation gets simpler: the only new thing the site stores is the stamp.
 
