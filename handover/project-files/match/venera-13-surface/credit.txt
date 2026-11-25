@@ -1,0 +1,7 @@
+Title: Venera 13 surface panorama (1 March 1982)
+Credit: Soviet Academy of Sciences / IKI (Venera 13 lander); widely used colour reprocessing by Don P. Mitchell
+Source: Don P. Mitchell's Venera catalogue, http://mentallandscape.com/C_CatalogVenus.htm (reprocessed panoramas); original data from the Soviet Venera programme (IKI RAN)
+Licence: NOT copied here. The original Soviet images are of uncertain rights today (Roscosmos/IKI); Don Mitchell's reprocessings are his own work and carry his own terms. Link only: ask him (or IKI) before showing it outside the team, and never put it in the repo. For a comparison still, show the link and our side, or get permission first.
+Picked for: the only pictures from Venus's surface: an orange-lit, flat basalt plain under thick cloud. The colour test for light through Venus's deep air (sunlight reddened by the CO2 and clouds) on the ground.
+
+ref.jpg: none, on purpose (see Licence). Open the source link to compare.

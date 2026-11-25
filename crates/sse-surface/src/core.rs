@@ -115,6 +115,12 @@ pub struct CoreSettings {
     /// Field strength law (Christensen 2010): c and f_ohm.
     pub field_c: f64,
     pub field_f_ohm: f64,
+    /// MF2: electrical conductivity of the liquid alloy, S/m. A stand-in
+    /// (Pozzo et al. 2012 give about 1.5e6) until the sheet's liquid iron
+    /// row lands and Look up reads it.
+    pub sigma_core: f64,
+    /// Spin for a world that publishes none, hours (the climate's default).
+    pub spin_hours_default: f64,
 }
 
 impl Default for CoreSettings {
@@ -157,6 +163,8 @@ impl Default for CoreSettings {
             step_myr: 20.0,
             field_c: 0.63,
             field_f_ohm: 0.9,
+            sigma_core: crate::giant_field::core_sigma().unwrap_or(1.0e6),
+            spin_hours_default: 24.0,
         }
     }
 }
@@ -177,6 +185,12 @@ pub struct CoreStep {
     pub q_adiabat_w_m2: f64,
     pub q_dynamo_w_m2: f64,
     pub inner_core_km: f64,
+    /// MF2, the field ledger's Make test: the stirring flow's speed (m/s),
+    /// the magnetic Reynolds number of the liquid shell, and how far the
+    /// dynamo runs (0 to 1).
+    pub flow_m_s: f64,
+    pub rm: f64,
+    pub onset: f64,
     /// rms field inside the core, μT (0: no dynamo).
     pub field_ut: f64,
 }
@@ -202,7 +216,13 @@ pub struct CoreHistory {
     pub why_now: String,
 }
 
+use sse_atoms::ledger as lg;
 pub use sse_atoms::magnetic::{adiabatic_flux, compositional_flux};
+
+/// The magnetic Reynolds number at which the ledger's dynamo starts.
+pub fn onset_from() -> f64 {
+    lg::ONSET_LO
+}
 
 /// A power in terawatts, to two figures.
 fn tw(w: f64) -> String {
@@ -272,6 +292,21 @@ pub fn core_history(
         return None;
     }
     let g_n = sse_core::constants::g();
+    // The spin the dynamo turns with: the orbit's period when locked, else
+    // the body's own, else the climate's default.
+    let spin_s = if env.locked {
+        b.orbit
+            .as_ref()
+            .filter(|o| o.a_au > 0.0 && o.host_msun > 0.0)
+            .map(|o| {
+                let a = o.a_au * sse_core::sheet::AU;
+                2.0 * m::PI * m::sqrt(a * a * a / (o.host_msun * sse_core::sheet::GM_SUN))
+            })
+    } else {
+        None
+    }
+    .or_else(|| b.spin_hours.map(|h| h.abs() * 3600.0).filter(|x| *x > 0.0))
+    .unwrap_or(s.spin_hours_default * 3600.0);
     let mass = b.mass_earth * M_EARTH;
     let r = b.radius_earth * R_EARTH;
     let cmf = b.core_mass_fraction.clamp(0.0, 0.95);
@@ -455,9 +490,34 @@ pub fn core_history(
         let q_dyn = q_cmb - q_ad + q_ic + q_mg;
         // A core frozen through has no liquid left to stir.
         let frozen = ric >= rc * 0.999;
-        let on = q_dyn > 0.0 && !frozen;
+        // MF2, the ledger's Make test on the liquid shell: the flow the
+        // power drives, whether it outruns the leak (Rm), and the spin's
+        // factor (1 for every planet).
+        let shell = (rc - ric).max(0.0);
+        let (flow, rm, onset, spin_factor) = if q_dyn > 0.0 && !frozen && shell > 0.0 {
+            let (u, _) = lg::flow_speed(
+                q_dyn,
+                g_c,
+                s.alpha_core,
+                rho_c,
+                s.cp_core,
+                spin_s,
+                shell,
+                lg::FLOW_C,
+                lg::FLOW_B,
+            );
+            let (rm, _) = lg::reynolds(u, shell, s.sigma_core, sse_core::sheet::MU0);
+            let (_, f) = lg::rossby(spin_s, shell, u, lg::ROSSBY_SAT, lg::ROSSBY_SLOPE);
+            (u, rm, lg::onset(rm, lg::ONSET_LO, lg::ONSET_HI), f)
+        } else {
+            (0.0, 0.0, 0.0, 0.0)
+        };
+        let on = onset > 0.0;
         let field = if on {
-            sse_atoms::magnetic::dynamo_field_rms(rho_c, q_dyn, s.field_c, s.field_f_ohm) * 1e6
+            sse_atoms::magnetic::dynamo_field_rms(rho_c, q_dyn, s.field_c, s.field_f_ohm)
+                * 1e6
+                * onset
+                * spin_factor
         } else {
             0.0
         };
@@ -478,6 +538,8 @@ pub fn core_history(
             let (out, cond, light) = (tw(qc), tw(q_ad * a_c), tw((q_ic + q_mg) * a_c));
             let reason = if frozen {
                 "the core has frozen through, leaving no liquid iron to stir".to_string()
+            } else if !on && q_dyn > 0.0 {
+                format!("the liquid iron still stirs, but at {:.2} mm/s its field leaks away faster than it is stretched (magnetic Reynolds number {rm:.0}, a dynamo needs about {:.0})", flow * 1e3, lg::ONSET_LO)
             } else if on && q_cmb > q_ad {
                 let extra = if q_ic + q_mg > 0.0 {
                     format!(", and light elements add the buoyancy of {light} more")
@@ -501,13 +563,20 @@ pub fn core_history(
         }
         why_now = if on {
             format!(
-                "A dynamo runs: {} leaves the core against {} conducted along its adiabat, field about {:.0} μT inside the core.",
+                "A dynamo runs: {} leaves the core against {} conducted along its adiabat, stirring the liquid at {:.2} mm/s (magnetic Reynolds number {rm:.0}), field about {:.0} μT inside the core.",
                 tw(qc),
                 tw(q_ad * a_c),
+                flow * 1e3,
                 field
             )
         } else if frozen {
             "No dynamo: the core has frozen through.".into()
+        } else if q_dyn > 0.0 {
+            format!(
+                "No dynamo: the core stirs at {:.2} mm/s, too slowly to outrun the field's leak (magnetic Reynolds number {rm:.0}, below about {:.0}).",
+                flow * 1e3,
+                lg::ONSET_LO
+            )
         } else {
             format!(
                 "No dynamo: the core is not cooling fast enough ({} leaves it, conduction alone carries {}).",
@@ -525,6 +594,9 @@ pub fn core_history(
             q_adiabat_w_m2: q_ad,
             q_dynamo_w_m2: q_dyn.max(0.0),
             inner_core_km: ric / 1000.0,
+            flow_m_s: flow,
+            rm,
+            onset,
             field_ut: field,
         });
         ric_prev = ric;
@@ -551,4 +623,39 @@ pub fn core_history(
         steps,
         events,
     })
+}
+
+/// MF2: the field facts a world publishes now, from its core history's last
+/// step (the ledger's answer at the world's age): the rms field inside the
+/// dynamo, the equatorial dipole at the surface and the dipole moment (the
+/// `sse.magnetic.surface_dipole` sum, its dipole ratio until MF3's shape),
+/// the dynamo's outer radius, the stirring flow, Rm and onset. SI units.
+/// None for a world without an iron core history.
+pub fn field_facts(env: &SurfaceEnvelope, b: &Body) -> Option<Vec<(&'static str, f64)>> {
+    if b.deep_envelope {
+        return crate::giant_field::field_facts(b);
+    }
+    let c = env.core.as_ref()?;
+    let now = c.steps.last()?;
+    let rms_t = now.field_ut * 1e-6;
+    let rc = c.core_radius_km * 1000.0;
+    let r = b.radius_earth * R_EARTH;
+    let (b_eq, moment) = if rms_t > 0.0 && r > 0.0 {
+        sse_atoms::magnetic::surface_dipole(rms_t, rc, r, sse_atoms::magnetic::DIPOLE_RATIO)
+    } else {
+        (0.0, 0.0)
+    };
+    Some(vec![
+        ("magnetic.dynamo_field", rms_t),
+        ("body.surface_magnetic_field", b_eq),
+        ("body.magnetic_moment", moment),
+        ("interior.dynamo_radius", rc),
+        (
+            "interior.dynamo_shell_thickness",
+            rc - now.inner_core_km * 1000.0,
+        ),
+        ("interior.dynamo_flow_speed", now.flow_m_s),
+        ("interior.magnetic_reynolds", now.rm),
+        ("interior.dynamo_onset", now.onset),
+    ])
 }

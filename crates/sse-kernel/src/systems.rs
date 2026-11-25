@@ -594,6 +594,13 @@ pub(crate) fn light_through_gas(
         t_k: Option<f64>,
         #[serde(default)]
         wavelengths_m: Option<Vec<f64>>,
+        /// TA2: layers of particles (haze, cloud) under the gas, bottom
+        /// first, over a floor of one reflectance; what they send back is
+        /// `reflected`.
+        #[serde(default)]
+        particles: Vec<sse_light::haze::Particles>,
+        #[serde(default)]
+        floor: f64,
     }
     let table = &sse_light::emit::Model::base().table;
     let eye = table
@@ -647,12 +654,18 @@ pub(crate) fn light_through_gas(
         };
         let colour_in = sse_light::colour::colour_of(eye, &seen_in).map_err(bad)?;
         let colour_out = sse_light::colour::colour_of(eye, &seen_out).map_err(bad)?;
-        out.push(serde_json::json!({
+        let mut o = serde_json::json!({
             "passed": passed,
             "colour_in": colour_in,
             "colour_out": colour_out,
             "colour_references": sse_light::colour::references(eye),
-        }));
+        });
+        if !i.particles.is_empty() {
+            let r = sse_light::haze::reflect(sheet, eye, &i.particles, i.floor, &seen_in)
+                .map_err(bad)?;
+            o["reflected"] = serde_json::to_value(r).map_err(|e| bad(e.to_string()))?;
+        }
+        out.push(o);
     }
     Ok(Response::GasPassed { passages: out })
 }

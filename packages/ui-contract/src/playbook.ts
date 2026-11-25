@@ -2,9 +2,11 @@
 // pages and sections, kept with the campaign. No Next and no script (Alex, 24 Nov): any preset fires at any time, and
 // pressing it again while its picture is up takes it back. A preset names a role (or Everyone), never a screen, and
 // holds no knowledge: a Show step names a bookmark, and each screen draws it as its own role knows it.
-import { back, hold, lift, release, resolve, send, type Board, type Dest, type HoldCard } from "./board.ts";
+import { back, hold, holdCardFrom, lift, release, resolve, send, type Board, type Dest, type HoldCard } from "./board.ts";
+import { cardLabel } from "./holding.ts";
 import type { Bookmark } from "./bookmark.ts";
 import type { Shown } from "./seat.ts";
+import type { Json } from "./json.ts";
 
 export const PLAYBOOK_SCHEMA = "sse.playbook/1";
 
@@ -191,7 +193,8 @@ export function destOf(p: Preset): Dest {
 /** What a Show step sends: the bookmark's place under the preset's name. A missing bookmark sends nothing. */
 export function showOf(p: Preset, step: { show: { bookmark: string; layout?: string } }, bookmarks: readonly Bookmark[]): Shown | null {
   const b = bookmarks.find((x) => x.id === step.show.bookmark);
-  return b ? { scope: b.scope, title: p.title, ...(b.selected ? { focus: b.selected } : {}), ...(step.show.layout ? { screen: step.show.layout } : {}) } : null;
+  // The bookmark's camera goes with it (PC5), so a screen that can frame it shows the view as it was kept.
+  return b ? { scope: b.scope, title: p.title, ...(b.selected ? { focus: b.selected } : {}), ...(b.pose ? { pose: JSON.parse(JSON.stringify(b.pose)) as Json } : {}), ...(step.show.layout ? { screen: step.show.layout } : {}) } : null;
 }
 
 /** Only words for the GM: nothing goes to any screen, so its button marks it read (4.3). */
@@ -250,7 +253,7 @@ export function fire(b: Board, p: Preset, bookmarks: readonly Bookmark[], roles:
 /** What a preset does, in words, for its row and its title ("Show Tarn, the approach", "Hold: a joke", "Read aloud"). */
 export function presetWords(p: Preset, bookmarks: readonly Bookmark[]): string {
   return p.steps
-    .map((s) => ("show" in s ? `Show ${bookmarks.find((b) => b.id === s.show.bookmark)?.name ?? "a bookmark that has gone"}` : "reveal" in s ? `${s.reveal.landmark === "known" ? "Reveal" : "Hint at"} ${s.reveal.name ?? "a thing"}` : "hold" in s ? `Hold: ${s.hold.card === "blank" ? "dark" : s.hold.card === "plain" ? "awaiting transmission" : s.hold.card === "joke" ? "a joke" : s.hold.card.text}` : s.say.on_screens ? "Read aloud, on screens" : "Read aloud"))
+    .map((s) => ("show" in s ? `Show ${bookmarks.find((b) => b.id === s.show.bookmark)?.name ?? "a bookmark that has gone"}` : "reveal" in s ? `${s.reveal.landmark === "known" ? "Reveal" : "Hint at"} ${s.reveal.name ?? "a thing"}` : "hold" in s ? `Hold: ${cardLabel(s.hold.card)}` : s.say.on_screens ? "Read aloud, on screens" : "Read aloud"))
     .join(", ");
 }
 
@@ -264,9 +267,8 @@ export function playbookFrom(raw: unknown): Playbook {
     const v = (k: string) => s[k] as Record<string, unknown> | undefined;
     if (v("show") && typeof v("show")!.bookmark === "string") return { show: { bookmark: v("show")!.bookmark as string, ...(typeof v("show")!.layout === "string" && v("show")!.layout ? { layout: v("show")!.layout as string } : {}) } };
     if (v("hold")) {
-      const c = v("hold")!.card;
-      if (c === "blank" || c === "plain" || c === "joke") return { hold: { card: c } };
-      if (c && typeof c === "object" && typeof (c as { text?: unknown }).text === "string") return { hold: { card: { text: (c as { text: string }).text } } };
+      const c = holdCardFrom(v("hold")!.card);
+      if (c) return { hold: { card: c } };
     }
     if (v("say") && typeof v("say")!.text === "string") return { say: { text: v("say")!.text as string, ...(v("say")!.on_screens === true ? { on_screens: true as const } : {}) } };
     const rv = v("reveal");

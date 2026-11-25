@@ -17,6 +17,7 @@
 </script>
 
 <script lang="ts">
+  import { addBookmark, fixDate, globeOfPose, keepStamp, poseOfGlobe, R_EARTH_M, R_SUN_M, STAMP_SIDE, stampOf } from "../../../ui-contract/src/index.ts";
   import { globeStats, regimeWords, tableLandmarks, viewOptions, DEFAULT_VIEW, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { PEN_WORDS, penOf, type Pen } from "../../../chart-grammar/src/pencil.ts";
   import { BODY_CONTROLS, GLOBE_LAT } from "./controls.ts";
@@ -62,7 +63,7 @@
     got = null;
     failed = null;
     if (!sub || sub.kind === "star") return;
-    const hit = surfaceKept(sys, sub.address);
+    const hit = surfaceKept(ctx, sys, sub.address);
     if (hit) {
       got = hit;
       return;
@@ -143,6 +144,8 @@
   const pending = $derived([...new Set(globe.flatMap((t) => t?.pending ?? []))]);
 
   let lon = $state(0);
+  /** The last turn this view sent the globe runtime (not reactive). */
+  let sentLon = Number.NaN;
   let lat = $state(20);
   // The standard view controls (rule 12): the style picks the recipe, "seen from" the latitude looked down from.
   const viewed = $derived(viewOptions(BODY_CONTROLS, ws.view ?? DEFAULT_VIEW));
@@ -157,6 +160,33 @@
     const s = shownView.seen;
     void shownView.framed;
     if (s !== "free") ((lat = GLOBE_LAT[s]), (lon = 0));
+  });
+  // PC1: the globe's camera, kept current for a bookmark or postcard made here; a bookmark's camera taken once.
+  const radiusM = $derived.by(() => {
+    if (got?.air?.radius_m) return got.air.radius_m;
+    const f = (k: string) => subject?.facts.find((x) => x.field === k)?.value;
+    const re = f("radius_earth");
+    const rs = f("radius_sun");
+    return typeof re === "number" && re > 0 ? re * R_EARTH_M : typeof rs === "number" && rs > 0 ? rs * R_SUN_M : null;
+  });
+  $effect(() => {
+    const a = ws.aim;
+    const addr = subject?.address;
+    if (!a || !addr || a.about !== addr) return;
+    untrack(() => {
+      const g = globeOfPose(a);
+      lon = ((g.lon % 360) + 360) % 360;
+      lat = g.lat;
+      ws.aim = null;
+    });
+  });
+  $effect(() => {
+    const addr = subject?.address;
+    const lo = lon;
+    const la = lat;
+    const r = radiusM;
+    untrack(() => (ws.camera = addr && r ? poseOfGlobe(addr, lo, la, r) : null));
+    return () => untrack(() => (ws.camera = null));
   });
   let host = $state<HTMLElement | undefined>();
   let run: GlobeRun | null = null;
@@ -387,7 +417,9 @@
     if (!h) return;
     const r = mountGlobe(h, untrack(() => runOpts), (st) => {
       gs = st;
-      if (st.lon !== lon) lon = st.lon;
+      // Only a turn the runtime made itself (its spin) comes back: a late echo of a turn this view sent must not undo
+      // a newer one not yet sent (two quick key presses lost the second).
+      if (st.lon !== lon && st.lon !== sentLon) lon = st.lon;
     });
     run = r;
     untrack(() => attachLapse());
@@ -412,11 +444,25 @@
     const la = lat;
     const st = untrack(() => gs);
     if (st && st.lon === lo && st.lat === la) return;
+    sentLon = lo;
     untrack(() => run)?.setView(lo, la);
   });
   // R3: take a photograph (the still tier, off screen), keep it on this device, save it as a PNG.
   let shooting = $state<string | null>(null);
   let shotNote = $state<string | null>(null);
+  // PC3: "Keep as postcard" beside the photograph just taken: a bookmark here with its camera and the date fixed, kept
+  // with the campaign's bookmarks (one store); its stamp is kept on this device.
+  let lastShot = $state<{ canvas: HTMLCanvasElement; address: string } | null>(null);
+  let keptAsPostcard = $state<string | null>(null);
+  function keepAsPostcard() {
+    const shot = lastShot;
+    if (!shot || !ws.markHere || !ws.camera) return;
+    const b = fixDate(ws.markHere(), ws.now_yr);
+    ws.bookmarks = addBookmark(ws.bookmarks ?? [], b);
+    const s = stampOf(shot.canvas, STAMP_SIDE);
+    if (s) keepStamp(b.scope, b.id, s);
+    keptAsPostcard = `Kept as the postcard "${b.name}". Postcards are on the rail under Look.`;
+  }
   let photos = $state<{ item: MediaItem; url: string }[]>([]);
   $effect(() => {
     const a = subject?.address;
@@ -446,6 +492,8 @@
       const item: MediaItem = { id: `${s.address}@${now.getTime()}`, title: `${s.label} ${stamp(now)}`, subject: s.address, caption, created: now.toISOString(), png, width: shot.canvas.width, height: shot.canvas.height };
       const where = await keepPhoto(item);
       photos = [{ item, url: URL.createObjectURL(png) }, ...photos];
+      lastShot = { canvas: shot.canvas, address: s.address };
+      keptAsPostcard = null;
       shotNote = `${caption} ${where === "device" ? "Kept on this device." : "This browser will not keep it after the page closes: save it."}`;
     } catch (e) {
       shotNote = `No photograph: ${e instanceof Error ? e.message : String(e)}`;
@@ -631,6 +679,9 @@
           <dd data-photo>
             <button class="badge" data-take-photo disabled={!!shooting} onclick={takePhoto}>{shooting ?? "Take photograph"}</button>
             {#if shotNote}<p class="shot-note" data-photo-note>{shotNote}</p>{/if}
+            {#if lastShot && lastShot.address === subject?.address && ws.markHere && ws.camera}
+              {#if keptAsPostcard}<p class="shot-note" data-kept-postcard>{keptAsPostcard}</p>{:else}<button class="badge" data-keep-postcard onclick={keepAsPostcard}>Keep as postcard</button>{/if}
+            {/if}
             {#if photos.length}
               <ul class="photos" data-photos>
                 {#each photos.slice(0, 6) as p (p.item.id)}

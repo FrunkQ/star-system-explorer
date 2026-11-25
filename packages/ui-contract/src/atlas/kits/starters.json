@@ -140,6 +140,7 @@
     "edition": "sse.edition.company",
     "look": "phosphor"
    },
+   "control_set": "hauler",
    "delivery": "hauler",
    "needs": {
     "tier": "text"
@@ -219,6 +220,7 @@
     "edition": "sse.edition.survey",
     "look": "glass"
    },
+   "control_set": "corporate",
    "delivery": "corporate",
    "needs": {
     "tier": "gpu-basic",
@@ -300,6 +302,7 @@
     "edition": "sse.edition.survey",
     "look": "deck"
    },
+   "control_set": "deck",
    "delivery": "deck",
    "needs": {
     "tier": "canvas",
@@ -385,6 +388,7 @@
    "atlas": {
     "edition": "sse.edition.guide"
    },
+   "control_set": "guide",
    "delivery": "guide",
    "needs": {
     "tier": "text"

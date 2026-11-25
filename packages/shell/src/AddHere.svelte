@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { anythingClip, clipAt, formsHere, freeOrbit, moonRecipes, say, worldKinds, type Clip, type FormsHere, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { roundTo, anythingClip, clipAt, formsHere, freeOrbit, moonRecipes, say, worldKinds, type Clip, type FormsHere, type ViewSession } from "../../ui-contract/src/index.ts";
 
   let {
     session,
@@ -89,7 +89,7 @@
     problem = await onadd(named(c, fallback), name.trim() || fallback);
     adding = false;
   }
-  const fmt = (x: number) => Number(x.toPrecision(x < 0.1 ? 1 : 2));
+  const fmt = (x: number) => roundTo(x, x < 0.1 ? 1 : 2);
   const fallbackName = $derived(moon ? `New moon of ${host.label}` : "New world");
 </script>
 

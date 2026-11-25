@@ -12,7 +12,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { checkReferences, formatKmLength, itemFromReference, itemFromSubject, layoutLineup, listedTitle, sceneFromResolved, scaleBar, sizeWords, starColour, subjectOf, viewOptions, DEFAULT_VIEW, SEEN_ELEVATION, type CompareItem, type Json, type ReferenceDoc, type SceneSubject, type SolDoc, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { sayNumber, checkReferences, formatKmLength, itemFromReference, itemFromSubject, layoutLineup, listedTitle, sceneFromResolved, scaleBar, sizeWords, starColour, subjectOf, viewOptions, DEFAULT_VIEW, SEEN_ELEVATION, type CompareItem, type Json, type ReferenceDoc, type SceneSubject, type SolDoc, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { HatchDefs, markPattern } from "../../../chart-grammar/src/index.ts";
   import { lineups } from "./lineup.svelte.ts";
   import { COMPARE_CONTROLS } from "./controls.ts";
@@ -199,12 +199,12 @@
     const sel = items.find((x) => x.key === ws.selection);
     if (!sel || sel.key === i.key) return "";
     const k = i.radius_km / sel.radius_km;
-    return `${k >= 10 ? Math.round(k).toLocaleString("en-GB") : k >= 1 ? k.toFixed(1) : k.toFixed(2)} × ${sel.label}`;
+    return `${sayNumber(k, 0, { decimals: k >= 10 ? 0 : k >= 1 ? 1 : 2 })} × ${sel.label}`;
   };
-  const tidy = (km: number) => `${km.toLocaleString("en-GB", { maximumFractionDigits: km < 100 ? 1 : 0 })} km`;
+  const tidy = (km: number) => `${sayNumber(km, 0, { upTo: km < 100 ? 1 : 0 })} km`;
   const quickest = $derived(order.reduce<CompareItem | null>((q, i) => (i.day_h && (!q || Math.abs(i.day_h) < Math.abs(q.day_h!)) ? i : q), null));
   const stillOnes = $derived(order.filter((i) => !i.day_h).length);
-  const hours = (h: number) => (h >= 48 ? `${(h / 24).toLocaleString("en-GB", { maximumFractionDigits: 1 })} days` : `${h.toLocaleString("en-GB", { maximumFractionDigits: h < 10 ? 1 : 0 })} hours`);
+  const hours = (h: number) => (h >= 48 ? `${sayNumber(h / 24, 0, { upTo: 1 })} days` : `${sayNumber(h, 0, { upTo: h < 10 ? 1 : 0 })} hours`);
   const summary = $derived(order.map((i) => `${i.label} ${tidy(i.radius_km)}`).join(", "));
 </script>
 

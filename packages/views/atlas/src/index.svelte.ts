@@ -47,3 +47,36 @@ export function atlasView(host: AtlasHost): ViewModule {
     },
   };
 }
+
+import PlayerAtlas from "./PlayerAtlas.svelte";
+import type { PlayerContext, PlayerScene } from "../../../ui-contract/src/index.ts";
+
+/**
+ * The Atlas on a players' screen (AT15 part 2): the book of what the table was sent, in the edition the layout names
+ * (`edition`), its page following the screen's selection (`page: "selected"`). It needs no host: the look is the
+ * screen's, the words are the screen's vocabulary.
+ */
+export const playerAtlas: ViewModule<PlayerScene, PlayerContext> = {
+  id: "sse.view.atlas",
+  version: "0.1.0",
+  scene: "player",
+  tiers: ["text"],
+  inputs: [{ addresses: [], quantity_kinds: [] }],
+  params: [
+    { name: "edition", type: "string", default: "sse.edition.survey", group: "look", meaning: "The Atlas edition the page is dressed in (a kit names it)." },
+    { name: "page", type: "enum", options: ["selected", "contents"], default: "selected", group: "content", meaning: "Which page shows: the selected thing's, or the top of the book." },
+  ],
+  switchable: ATLAS_CONTROLS,
+  mount(el, ctx, scene) {
+    const props = $state({ ctx, scene });
+    const c = mount(PlayerAtlas, { target: el, props });
+    return {
+      update(s) {
+        props.scene = s;
+      },
+      dispose() {
+        void unmount(c);
+      },
+    };
+  },
+};

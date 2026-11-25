@@ -1,0 +1,53 @@
+{
+  "schema": "sse.screen/1",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "id": "sse.workspace.gm.postcards",
+  "label": "Postcards",
+  "items": [
+    {
+      "view": "sse.view.postcards",
+      "area": "chart"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "web",
+      "group": "look",
+      "label": "Postcards",
+      "order": 9,
+      "hint": "Your postcards and ones sent to you: places drawn live, with why they look that way"
+    },
+    {
+      "scale": "cluster",
+      "group": "look",
+      "label": "Postcards",
+      "order": 9,
+      "hint": "Your postcards and ones sent to you: places drawn live, with why they look that way"
+    },
+    {
+      "scale": "galaxy",
+      "group": "look",
+      "label": "Postcards",
+      "order": 9,
+      "hint": "Your postcards and ones sent to you: places drawn live, with why they look that way"
+    },
+    {
+      "scale": "system",
+      "group": "look",
+      "label": "Postcards",
+      "order": 9,
+      "hint": "Your postcards and ones sent to you: places drawn live, with why they look that way"
+    },
+    {
+      "scale": "world",
+      "group": "look",
+      "label": "Postcards",
+      "order": 9,
+      "hint": "Your postcards and ones sent to you: places drawn live, with why they look that way"
+    }
+  ]
+}

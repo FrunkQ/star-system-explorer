@@ -21,6 +21,7 @@ pub mod core;
 pub mod cover;
 pub mod detail;
 pub mod frames;
+pub mod giant_field;
 pub mod impacts;
 pub mod named;
 pub mod plates;
@@ -33,6 +34,7 @@ pub mod stains;
 pub mod survey;
 pub mod tubes;
 pub mod wear;
+pub mod weathering;
 
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
@@ -198,8 +200,15 @@ pub const QUANTITIES: [&str; 16] = [
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 #[serde(tag = "from", rename_all = "kebab-case")]
 pub enum Climate {
-    /// A measured or authored value (fixtures, moons of giants).
-    Fixed { t_surface_k: f64 },
+    /// A measured or authored value (fixtures, moons of giants). With
+    /// `then`, the value is today's and earlier dates follow the host star's
+    /// light: T = T_now (L / L_now)^(1/4), the air's warming held at today's
+    /// share (the faint young Sun shows as the paradox it is).
+    Fixed {
+        t_surface_k: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        then: Option<Anchor>,
+    },
     /// Equilibrium temperature under the ageing host star, plus greenhouse.
     Star {
         life: Box<LifeLine>,
@@ -214,6 +223,17 @@ pub enum Climate {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         others: Vec<OtherLight>,
     },
+}
+
+/// The host star a measured temperature was measured under.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Anchor {
+    pub life: Box<LifeLine>,
+    pub z: f64,
+    /// Myr after the star's birth that the world formed.
+    pub formed_myr: f64,
+    /// The star's age when the temperature was measured, Myr.
+    pub measured_myr: f64,
 }
 
 /// Another body's light on a world.
@@ -457,7 +477,26 @@ struct Ctx<'a> {
 impl Ctx<'_> {
     fn t_surface(&self, t_gyr: f64) -> f64 {
         match &self.b.climate {
-            Climate::Fixed { t_surface_k } => *t_surface_k,
+            Climate::Fixed {
+                t_surface_k,
+                then: None,
+            } => *t_surface_k,
+            Climate::Fixed {
+                t_surface_k,
+                then: Some(an),
+            } => {
+                let fits = self.fits.as_ref().expect("fits for an anchored climate");
+                let l = an
+                    .life
+                    .state_at(fits, an.formed_myr + t_gyr * 1000.0)
+                    .luminosity;
+                let l_now = an.life.state_at(fits, an.measured_myr).luminosity;
+                if l_now > 0.0 {
+                    t_surface_k * m::pow((l / l_now).max(0.0), 0.25)
+                } else {
+                    *t_surface_k
+                }
+            }
             Climate::Star {
                 life,
                 a_au,
@@ -596,7 +635,8 @@ pub fn shell_activity(t_surface_k: f64, q_w_m2: f64) -> f64 {
 pub fn envelope(s: &SurfaceSettings, b: &Body) -> SurfaceEnvelope {
     let fits = match &b.climate {
         Climate::Star { z, .. } => Some(Fits::new(*z)),
-        Climate::Fixed { .. } => None,
+        Climate::Fixed { then: Some(an), .. } => Some(Fits::new(an.z)),
+        Climate::Fixed { then: None, .. } => None,
     };
     let tidal = match (&b.tidal_w_m2, &b.orbit) {
         (Some(x), _) => *x,

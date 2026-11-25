@@ -13,7 +13,7 @@
   import { sift } from "../../hex-map/src/sift.ts";
   import { inputFromPacks, sheetOf, type CodesResponse, type WorldCodesInput } from "../../world-codes/src/sheet.ts";
   import { SECTOR_CONTROLS } from "./controls.ts";
-  import { blocksInUse, exportName, hexConfigOf, mapWorlds, openingBlock, sceneOf } from "./desk.ts";
+  import { blocksInUse, exportName, hexConfigOf, mapWorlds, openingBlock, rollEveryWorld, rollTallyWords, sceneOf } from "./desk.ts";
 
   let { ctx, params }: { ctx: ViewContext; params: Record<string, Json> } = $props();
   const session = untrack(() => ctx.session);
@@ -162,6 +162,25 @@
   }
 
   const counts = (p: SectorImported) => p.import.summary;
+
+  // WBH next: roll a pack's program for every mapped world in one ask. Codes already set stay; only the unset roll.
+  type RollDef = { id: string; label?: string; about?: string; sheet: string };
+  const programs = $derived(packs.flatMap((p) => ((p as { provides?: { other?: { rolls?: RollDef[] } } })?.provides?.other?.rolls ?? [])));
+  let rollOpen = $state(false);
+  let rollBtn = $state<HTMLElement | null>(null);
+  let rollProgram = $state<string | undefined>(undefined);
+  let rollNote = $state<string | null>(null);
+  async function rollAll() {
+    const program = rollProgram ?? programs[0]?.id;
+    if (!program || !map || !session.rollProfile) return;
+    const bodies = [...new Set(map.worlds.map((w) => w.body))];
+    busy = `Rolling ${bodies.length} world${bodies.length === 1 ? "" : "s"}…`;
+    rollNote = null;
+    const t = await rollEveryWorld((a) => session.rollProfile!(a), program, bodies, atS);
+    busy = null;
+    rollNote = rollTallyWords(t);
+    if (t.written) ws.revision++;
+  }
 </script>
 
 <div class="desk" role="region" aria-label="Sector">
@@ -188,8 +207,11 @@
       {/if}
       <span class="grow"></span>
       {#if gm}
-        <button type="button" class="quiet-btn" bind:this={importBtn} aria-expanded={importOpen} onclick={() => ((importOpen = !importOpen), (exportOpen = false))} data-import>Import a sector…</button>
-        <button type="button" class="quiet-btn" bind:this={exportBtn} aria-expanded={exportOpen} disabled={!worlds.length} onclick={() => ((exportOpen = !exportOpen), (importOpen = false))} data-export>Export…</button>
+        <button type="button" class="quiet-btn" bind:this={importBtn} aria-expanded={importOpen} onclick={() => ((importOpen = !importOpen), (exportOpen = false), (rollOpen = false))} data-import>Import a sector…</button>
+        <button type="button" class="quiet-btn" bind:this={exportBtn} aria-expanded={exportOpen} disabled={!worlds.length} onclick={() => ((exportOpen = !exportOpen), (importOpen = false), (rollOpen = false))} data-export>Export…</button>
+        {#if programs.length && session.rollProfile}
+          <button type="button" class="quiet-btn" bind:this={rollBtn} aria-expanded={rollOpen} disabled={!worlds.length} onclick={() => ((rollOpen = !rollOpen), (importOpen = false), (exportOpen = false))} data-roll-all>Roll every world…</button>
+        {/if}
       {/if}
     </div>
 
@@ -250,6 +272,22 @@
           <button type="button" class="go" onclick={exportIt} data-download>Download</button>
         </div>
         {#if exportNote}<p class="small" aria-live="polite" data-export-note>{exportNote}</p>{/if}
+      </section>
+    {/if}
+
+    {#if rollOpen}
+      <section class="pop" aria-label="Roll every world" use:opensFrom={() => rollBtn}>
+        <p class="small">Rolls the codes the physics cannot decide for every mapped world, from the universe's seed (the same dice on every machine). Codes already set, by hand or by an imported profile (bases included), stay as they are.</p>
+        <div class="row">
+          {#if programs.length > 1}
+            <select bind:value={rollProgram} aria-label="What to roll">
+              {#each programs as p, i}<option value={i === 0 ? undefined : p.id}>{p.label ?? p.id}</option>{/each}
+            </select>
+          {/if}
+          <button type="button" class="go" onclick={rollAll} disabled={!!busy} title={(programs.find((p) => p.id === (rollProgram ?? programs[0]?.id)) ?? programs[0])?.about} data-roll-all-go>Roll and write for {worlds.length} world{worlds.length === 1 ? "" : "s"}</button>
+        </div>
+        {#if busy}<p class="small" aria-live="polite">{busy}</p>{/if}
+        {#if rollNote}<p class="small" aria-live="polite" data-roll-all-note>{rollNote}</p>{/if}
       </section>
     {/if}
 

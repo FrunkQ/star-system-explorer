@@ -2,6 +2,7 @@
 // from the kernel's `read_matter`, so a pack's or a campaign's edit shows the moment it is loaded. Nothing here is
 // typed: values, units, sources, marks and group wording are the sheet's. This module only words and lays them out.
 import type { Json } from "./json.ts";
+import { roundTo, drawn } from "./figures.ts";
 
 /** A value on the sheet: the number in its unit, with its source and how it was checked. */
 export interface SheetValue {
@@ -139,7 +140,7 @@ export function formatValue(v: number, full = true): string {
   if (v === 0) return "0";
   const a = Math.abs(v);
   if (Number.isInteger(v) && a < 1e12 && (full || a < 1e5)) return group3(String(v));
-  if (a >= 1e-3 && a < 1e5) return group3(full ? String(v) : String(Number(v.toPrecision(4))));
+  if (a >= 1e-3 && a < 1e5) return group3(full ? String(v) : String(roundTo(v, 4)));
   const [m, e] = (full ? v.toExponential() : v.toExponential(3)).split("e");
   const mant = full ? m! : String(Number(m));
   return `${group3(mant)} × 10${sup(String(Number(e)))}`;
@@ -363,7 +364,7 @@ export function originGradient(parts: readonly { kind: OriginKind; share: number
   for (const p of parts) {
     const c = `var(${originToken(p.kind.id)}, var(--sse-ink-faint))`;
     const to = at + (p.share / total) * 100;
-    stops.push(`${c} ${at.toFixed(2)}%`, `${c} ${to.toFixed(2)}%`);
+    stops.push(`${c} ${drawn(at, 2)}%`, `${c} ${drawn(to, 2)}%`);
     at = to;
   }
   return stops.length ? `linear-gradient(90deg, ${stops.join(", ")})` : "var(--sse-ink-faint)";

@@ -1,0 +1,4 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics"]},
+ {"op": "light_through_gas", "passages": [{"address": "ta2-deck", "t_k": 5772.0, "layers": [], "particles": [{"material": "nh3", "radius_m": 1e-06, "optical_depth": 6.0, "at_nm": 550.0, "asymmetry": 0.85}], "floor": 0.1}]}
+]

@@ -231,11 +231,14 @@ test("the Solar System's Earth: the kernel's ice ages read into their own window
     assert.ok(ia.to_myr - ia.from_myr < 10, `the ice-age window is recent: ${ia.to_myr - ia.from_myr} Myr`);
     assert.ok(ia.events.every((e) => e.t_myr >= ia.from_myr && e.t_myr <= ia.to_myr));
     const last = ia.events[ia.events.length - 1]!;
-    assert.match(narrateFrame(tl, "ice", last.t_myr, "Earth"), /thousand years ago.*Ice age \d+ of \d+/);
+    // The newest ice age may have begun "today" (the frame at the epoch) or some thousand years ago.
+    const told = narrateFrame(tl, "ice", last.t_myr, "Earth");
+    assert.match(told, /Ice age \d+ of \d+/);
+    assert.match(told, /thousand years ago|begun today/);
     assert.ok(tl.frames.every((f) => !f.dry && f.why.length), "Earth has a sea in every frame, and a line for each");
     // Each frame's climate reads that frame's own land (PR 394): the first frame is an ocean world, and its climate
-    // differs from today's. The catalogued Earth's temperature is a fixed value, so the young Sun's dimming is not in
-    // these frames; the kernel says so, and the temperature layer carries the line.
+    // differs from today's. The catalogued Earth's measured temperature is today's, and its history follows the Sun's
+    // light (SF1 part 3): the faint young Sun makes the first frame colder, and the temperature layer is not pending.
     const landShare = (f: (typeof tl.frames)[number]) => f.fields.elevation_m!.filter((z) => z >= f.sea_level_m).length / tl.cells;
     const mean = (f: (typeof tl.frames)[number]) => f.fields.temp_k!.reduce((a, b) => a + b, 0) / tl.cells;
     const first = tl.frames[0]!;
@@ -243,7 +246,8 @@ test("the Solar System's Earth: the kernel's ice ages read into their own window
     assert.ok(landShare(first) < 0.05 && landShare(now) > 0.15, `land ${landShare(first)} then, ${landShare(now)} now`);
     assert.ok(Math.abs(mean(first) - mean(now)) > 1, `an ocean world's climate is its own: ${mean(first)} K then, ${mean(now)} K now`);
     const temp = layersFor(tl).find((l) => l.spec.id === "temperature")!;
-    assert.ok(temp.pending.some((n) => /fixed value/.test(n)), temp.pending.join("; "));
+    assert.ok(!temp.pending.some((n) => /fixed value/.test(n)), temp.pending.join("; "));
+    assert.ok(mean(first) < mean(now) - 5, `the faint young Sun: ${mean(first)} K then, ${mean(now)} K now`);
   } finally {
     await k.close();
   }

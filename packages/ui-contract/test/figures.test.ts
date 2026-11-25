@@ -258,7 +258,7 @@ test("a subject's scale class", () => {
 });
 
 // ED1a part 2c: numbers with no unit, rounding for keys, and a story's figures without "about".
-import { roundTo, sayNumber } from "../src/figures.ts";
+import { drawn, roundTo, sayNumber } from "../src/figures.ts";
 import { sheetUnitFactor } from "../src/sheet.ts";
 
 test("a number with no unit is written by the engine too", () => {
@@ -266,6 +266,14 @@ test("a number with no unit is written by the engine too", () => {
   assert.equal(sayNumber(-0.08, 2, { decimals: 2 }), "−0.08");
   assert.equal(sayNumber(1234.5, 4), "1,235");
   assert.equal(sayNumber(-0.001, 2, { decimals: 2 }), "0.00", "no minus on a rounded zero");
+  assert.equal(sayNumber(1.5, 0, { upTo: 2 }), "1.5", "upTo drops trailing zeros");
+  assert.equal(sayNumber(1234.567, 0, { upTo: 1 }), "1,234.6");
+  assert.equal(sayNumber(3, 0, { upTo: 2 }), "3");
   assert.equal(roundTo(1.23456789, 3), 1.23);
   assert.equal(say(4.57e9 * sheetUnitFactor("yr"), "time", undefined, { depth: "curious", about: false }).text, "4.57 billion years");
+});
+
+test("a drawing coordinate is plain digits for the browser, never grouped", () => {
+  assert.equal(drawn(1234.56), "1234.6");
+  assert.equal(drawn(-2.345, 2), "-2.35");
 });

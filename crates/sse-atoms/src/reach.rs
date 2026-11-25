@@ -129,7 +129,7 @@ pub const STAGES: &[(&str, Option<Reach>)] = &[
         "sse.cosmos.subhaloes",
         Some(Reach::Estimated {
             reads: &["Omega_m", "sigma8"],
-            law: "sub-halo counts and sinking times fitted in our universe, used unchanged (Giocoli et al. 2008; Boylan-Kolchin et al. 2008)",
+            law: "sub-halo counts and sinking times fitted in our universe, used unchanged (Giocoli et al. 2008; Boylan-Kolchin, Ma and Quataert 2008, MNRAS 383, 93, doi:10.1111/j.1365-2966.2007.12530.x)",
         }),
     ),
     // Tuned to the observed galaxy population: winds, depletion times, the

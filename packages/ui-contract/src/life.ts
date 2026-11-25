@@ -6,6 +6,7 @@
 // laid out by feeding level, and what a scan would show at each tier. Nothing
 // here computes biology; every number is the kernel's.
 import type { Json } from "./json.ts";
+import { sayNumber, drawn } from "./figures.ts";
 
 export type Lens3 = { physics: string; ecology: string; history: string };
 
@@ -155,7 +156,7 @@ export function productionPath(v: LifeView, axis: TimeAxis, top: number, height:
   const hi = Math.ceil(Math.log10(Math.max(...live)));
   const span = Math.max(1, hi - lo);
   const y = (g: number) => (g > 0 ? top + height - ((Math.log10(g) - lo) / span) * height : top + height);
-  const d = v.timeline.map((p, i) => `${i ? "L" : "M"}${axis.x(p.at_myr).toFixed(1)} ${y(p.production_gc_yr).toFixed(1)}`).join(" ");
+  const d = v.timeline.map((p, i) => `${i ? "L" : "M"}${drawn(axis.x(p.at_myr))} ${drawn(y(p.production_gc_yr))}`).join(" ");
   return { d, lo, hi };
 }
 
@@ -225,7 +226,7 @@ export function scanTiers(s: LifeSignatures): { tier: "afar" | "scanned" | "surv
   if (s.colour) afar.push(`${s.colour} where life covers the land${s.seasonal ? ", changing with the seasons" : ""}`);
   else afar.push("no colour that marks life");
   const scanned: string[] = [];
-  scanned.push(`oxygen ${s.o2 >= 0.01 ? pct(s.o2) : s.o2 > 0 ? "a trace" : "none"}, methane ${s.ch4_ppm >= 0.1 ? `${s.ch4_ppm.toPrecision(3)} ppm` : s.ch4_ppm > 0 ? "a trace" : "none"}`);
+  scanned.push(`oxygen ${s.o2 >= 0.01 ? pct(s.o2) : s.o2 > 0 ? "a trace" : "none"}, methane ${s.ch4_ppm >= 0.1 ? `${sayNumber(s.ch4_ppm, 3)} ppm` : s.ch4_ppm > 0 ? "a trace" : "none"}`);
   if (s.edge_nm) scanned.push(`a red edge near ${Math.round(s.edge_nm)} nm`);
   for (const g of s.signals) scanned.push(g.why);
   scanned.push(s.candidate ? `verdict offered: life candidate, confidence ${confidenceWords(s.confidence)}` : `no candidate (confidence ${confidenceWords(s.confidence)})`);
@@ -234,7 +235,7 @@ export function scanTiers(s: LifeSignatures): { tier: "afar" | "scanned" | "surv
   surveyed.push(s.summary ?? "no biosphere found");
   if (s.guild_cards.length) surveyed.push(s.guild_cards.join(", "));
   if (s.hazard) surveyed.push(`to visitors: ${s.hazard}`);
-  const past = s.traces.length ? s.traces.map((t) => `${words(t.kind)}: ${t.class} (from ${words(t.from_event)}, ${Math.round(t.at_myr).toLocaleString("en-GB")} Myr)`) : ["no record in the rocks"];
+  const past = s.traces.length ? s.traces.map((t) => `${words(t.kind)}: ${t.class} (from ${words(t.from_event)}, ${sayNumber(Math.round(t.at_myr), 0, { decimals: 0 })} Myr)`) : ["no record in the rocks"];
   return [
     { tier: "afar", label: "From afar", lines: afar },
     { tier: "scanned", label: "Scanned", lines: scanned },
@@ -249,7 +250,7 @@ export function carbonWords(g: number): string {
   const e = Math.floor(Math.log10(g));
   const m = g / 10 ** e;
   const sup = String(e).replace(/[-0-9]/g, (c) => "⁻⁰¹²³⁴⁵⁶⁷⁸⁹"["-0123456789".indexOf(c)]!);
-  return `${m.toFixed(1)} × 10${sup} g C/yr`;
+  return `${sayNumber(m, 0, { decimals: 1 })} × 10${sup} g C/yr`;
 }
 
 /** A confidence as a whole percentage, rounded down so 0.995 never reads as certain. */

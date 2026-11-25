@@ -80,6 +80,11 @@ pub struct Program {
     pub steps: Vec<Step>,
     #[serde(default)]
     pub source: String,
+    /// A fact whose presence means the world came with its whole profile (an
+    /// imported list's `provenance.code`): then every step keeps what the
+    /// world has, bases included, unless rolled again on purpose.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub decided_by: Option<String>,
 }
 
 /// One step's result.
@@ -138,11 +143,14 @@ fn stream_of(program: &str) -> Stream {
 
 /// Run `program` over one world's `reading` (through `program.sheet`).
 /// `authored` maps each segment id to the fact holding its authored code.
-/// With `reroll`, authored codes are rolled again too.
+/// `decided` is the world's `program.decided_by` fact, in words, when it has
+/// one. A code already decided (set by hand, or the whole profile came with
+/// the world) is kept; with `reroll`, every code is rolled again.
 pub fn roll(
     program: &Program,
     reading: &Reading,
     authored: &BTreeMap<String, String>,
+    decided: Option<&str>,
     seed: &Seed,
     address: &Address,
     reroll: bool,
@@ -173,9 +181,12 @@ pub fn roll(
             how: String::new(),
             why: String::new(),
         };
-        if is_authored && !reroll {
+        if !reroll && (is_authored || decided.is_some()) {
             row.how = "kept".into();
-            row.why = format!("kept: set by hand as {}", row.symbol);
+            row.why = match decided.filter(|_| !is_authored) {
+                Some(d) => format!("kept: the world came with its profile ({d})"),
+                None => format!("kept: set by hand as {}", row.symbol),
+            };
             out.push(row);
             continue;
         }

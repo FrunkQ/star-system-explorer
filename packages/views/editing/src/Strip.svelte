@@ -88,6 +88,24 @@
     return out;
   });
 
+  // The marks' words in rows under the line, so close ones do not print over each other (a sweep's tipping points can
+  // sit side by side): each label takes the first row where it clears the one before by a few pixels.
+  let trackW = $state(320);
+  const labelled = $derived.by(() => {
+    const all = [...marks, ...walls].map((m) => ({ m, wall: walls.includes(m), p: stripPos(domain, m.at) })).sort((a, b) => a.p - b.p);
+    const ends: number[] = [];
+    return all.map((x) => {
+      const w = x.m.says.length * 5.6 + 4;
+      const x0 = x.p * trackW - (x.p < 0.1 ? 0 : x.p > 0.9 ? w : w / 2);
+      let row = ends.findIndex((e) => x0 > e + 6);
+      if (row < 0) row = ends.length;
+      ends[row] = x0 + w;
+      return { ...x, row };
+    });
+  });
+  const labelTop = $derived(placed.some((d) => d.named) ? 38 : 30);
+  const labelRows = $derived(labelled.reduce((n, x) => Math.max(n, x.row + 1), 0));
+
   function posAt(e: PointerEvent): number {
     const r = track!.getBoundingClientRect();
     return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
@@ -210,6 +228,8 @@
     class="track"
     class:live={editable}
     bind:this={track}
+    bind:clientWidth={trackW}
+    style:height={labelRows > 1 || (labelRows && labelTop > 30) ? `${labelTop + labelRows * 12 + 2}px` : undefined}
     onpointerdown={down}
     onpointermove={move}
     onpointerup={up}
@@ -225,11 +245,9 @@
       <span class="dot" class:here={d.from === "here"} style="left: {d.pos * 100}%" title={`${d.label}: ${d.text}`} data-dot={d.label}></span>
       {#if d.named}<span class="dot-label" class:here={d.from === "here"} style="left: {d.pos * 100}%">{d.label}</span>{/if}
     {/each}
-    {#each [...marks, ...walls] as m (m.says)}
-      {@const wall = walls.includes(m)}
-      {@const p = stripPos(domain, m.at)}
+    {#each labelled as { m, wall, p, row } (m.says)}
       <span class="tick" class:wall style="left: {p * 100}%" data-tick={m.says}></span>
-      <span class="tick-label" class:wall style="left: {p * 100}%; transform: translateX({p < 0.1 ? 0 : p > 0.9 ? -100 : -50}%)">{m.says}</span>
+      <span class="tick-label" class:wall style="left: {p * 100}%; top: {labelTop + row * 12}px; transform: translateX({p < 0.1 ? 0 : p > 0.9 ? -100 : -50}%)">{m.says}</span>
     {/each}
     {#if markPos !== null}
       <span

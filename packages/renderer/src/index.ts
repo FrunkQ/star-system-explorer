@@ -17,6 +17,8 @@ export { flowFace, gasAbove, gasTint, readTrueAir, readTrueFace, sheetColours, t
 export { airLuts, airShapeOf, AIR_LUT_REFS, type AirLuts, type AirShape } from "./air-luts.ts";
 // VP3 part 5: bare ground in its measured colour (data sheet reflectance rows, kernel SW1 maturity), ground-optics.ts.
 export { bandsOf, groundReflectance, readGroundOptics, reflectanceAt, withGround, GROUND_BANDS_NM, GROUND_ROWS, type GroundOptics, type MatterReader, type ReflectanceTable } from "./ground-optics.ts";
+// TA6: a world flattened by its spin (Darwin-Radau flow), true-shape.ts.
+export { flattenScale, readTrueShape, SHAPE_FLOW, type ShapeReader, type TrueShape } from "./true-shape.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
 export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
@@ -154,7 +156,7 @@ export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";
 export { AURORA_REFERENCES, auroraSky, lineName, cieXyz, COLOUR_VISION_CD_M2, exposeAurora, loadAurora, skyGlowAlong, toSite, kiloRayleighRadiance, lineRgb, oxygenShare, OXYGEN_STAND_IN, planAurora, RAYLEIGH_PH_M2_S_SR } from "./aurora.ts";
 export type { AuroraDraw, AuroraDrawLayer, AuroraSession, AuroraSky, AuroraEmissionJson, AuroraExposure, AuroraJson, AuroraLayer, AuroraOvalJson, AuroraPlan, AuroraWorld } from "./aurora.ts";
 // Close-up: the camera down to a grazing orbit over a world in True, and the ground under it.
-export { CLOSE_FLOOR_M, CLOSE_FLOOR_SHARE, CLOSE_REACH, closeMin, grazeLook, groundUnder, zoomNear, type GroundView } from "./close-up.ts";
+export { CLOSE_FLOOR_M, CLOSE_FLOOR_SHARE, CLOSE_REACH, closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, type Orbit } from "./close-up.ts";
 // The shared finish (VP1) and the sky's stars behind True (VP2).
 export { startFinish, type Finish, type FinishFrame } from "./finish.ts";
 export { GLARE_FLOOR_DEG, glareLadder, glareShare, glareTotal, rungScale, type GlareRung } from "./finish-glare.ts";
