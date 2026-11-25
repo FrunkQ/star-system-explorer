@@ -110,7 +110,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/landing.md` (arrives with PR 437) | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
 | `status/galaxy-and-travel.md` | Build galaxy charts and travel screens | V8, voyages, the flight log, travel panels, HW |
-| `status/galaxy.md` (arrives with PR 431) | Build galaxy charts and histories (split from travel) | U6, U8, V9, GH8, V3 gap 39 |
+| `status/galaxy.md` | Build galaxy charts and histories (split from travel) | U6, U8, V9 (not the 3D web cube), GH8, V3 gaps 17 and 39 |
 | `status/cosmic-web.md` | Build cosmic web view | the web cube in 3D and True, light from haloes (V9w follow-ups) |
 | `status/light.md` | Build light and nebulae | O, the light side of Y, MF6, MF7, MF9, ND2 |
 | `status/weather.md` | Build shared climate and weather | W, seas (colour, waves, whitecaps) |
