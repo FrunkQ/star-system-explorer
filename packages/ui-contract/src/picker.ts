@@ -11,6 +11,7 @@
 //  - Order is the order of the place itself (distance from the star; a moon right after its planet), never A to Z.
 //  - A loop in the data (A in B, B in A) still lists its items at the top rather than an empty list.
 import type { SceneSubject } from "./scene.ts";
+import { roundTo } from "./figures.ts";
 
 export interface PickItem {
   id: string;
@@ -213,7 +214,7 @@ export function subjectItems(subjects: readonly SceneSubject[]): PickItem[] {
 
 function auWords(au: number): string {
   if (!(au > 0)) return "";
-  const v = au >= 100 ? Math.round(au) : au >= 10 ? Number(au.toFixed(0)) : Number(au.toPrecision(2));
+  const v = au >= 100 ? Math.round(au) : au >= 10 ? Math.round(au) : roundTo(au, 2);
   return `${v.toLocaleString("en-GB")} AU`;
 }
 

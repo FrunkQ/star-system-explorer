@@ -45,6 +45,17 @@
     busy = false;
     if (!problem) table = "";
   }
+  // A spreadsheet's saved CSV, or any table as text, opened or dropped: its text goes in the box to read and check
+  // first, as a paste does; nothing is set until "Set".
+  let fileName = $state<string | null>(null);
+  async function openFile(f: File | undefined | null) {
+    if (!f) return;
+    if (f.size > 2_000_000) return void (problem = `${f.name} is too big for a table of bodies.`);
+    if (!/\.(csv|tsv|txt|tab)$/i.test(f.name) && !/^text\//.test(f.type)) return void (problem = `${f.name}: save the sheet as CSV first (a .csv or .tsv file).`);
+    problem = null;
+    fileName = f.name;
+    table = await f.text();
+  }
 
   const rows = $derived(sheetRows(handles, depth));
   let typed = $state<Record<string, string>>({});
@@ -88,7 +99,23 @@
   {/if}
   {#if whole}
     <p class="hint">Paste a table: a first line naming the columns ("Name, Orbit (AU), Mass, Day"), then a line per body, named as on the chart. A unit in brackets is the unit of that column's bare numbers.</p>
-    <textarea rows="6" bind:value={table} disabled={!editable} aria-label="A table for every body here" data-sheet-table placeholder={"Name\tOrbit (AU)\tMass\nMars\t1.524\t0.107 M⊕"}></textarea>
+    <textarea
+      rows="6"
+      bind:value={table}
+      disabled={!editable}
+      aria-label="A table for every body here"
+      data-sheet-table
+      placeholder={"Name\tOrbit (AU)\tMass\nMars\t1.524\t0.107 M⊕"}
+      ondragover={(e) => e.preventDefault()}
+      ondrop={(e) => {
+        e.preventDefault();
+        void openFile(e.dataTransfer?.files[0]);
+      }}
+    ></textarea>
+    <p class="file">
+      <label class="pick"><input type="file" accept=".csv,.tsv,.txt,.tab,text/csv,text/tab-separated-values,text/plain" disabled={!editable} onchange={(e) => void openFile(e.currentTarget.files?.[0])} data-sheet-file /> Open a file</label>
+      <span>{fileName ? `From ${fileName}` : "or drop a spreadsheet saved as CSV on the box"}</span>
+    </p>
     {#if tread && (tread.understood.length || tread.problems.length)}
       <div class="read" aria-live="polite" data-sheet-read>
         {#if tread.columns.length}<p class="cols">Columns: {tread.columns.map((c) => `${c.heading} → ${c.row ? (rows.find((r) => r.id === c.row)?.label ?? c.row) : "left out"}`).join(" · ")}</p>{/if}
@@ -218,6 +245,29 @@
   }
   .cols {
     color: var(--sse-ink-muted);
+  }
+  .file {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 4px 0;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+  }
+  .pick {
+    padding: 2px 8px;
+    border: var(--sse-line) solid var(--sse-ink-muted);
+    color: var(--sse-ink);
+    cursor: pointer;
+  }
+  .pick input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  .pick:focus-within {
+    outline: 2px solid var(--sse-accent);
   }
   .read {
     margin: 6px 0;

@@ -311,6 +311,12 @@ try {
       // numbers), bodies by name; one change across them all, one Undo.
       if (!(await sheet.isVisible())) await row.locator('[data-handle="sheet"]').click();
       await sheet.locator("[data-sheet-whole]").click();
+      // A spreadsheet saved as CSV (quoted cells, a byte-order mark) opens into the box to check first.
+      await sheet.locator("[data-sheet-file]").setInputFiles({ name: "worlds.csv", mimeType: "text/csv", buffer: Buffer.from('\uFEFF"Name","Orbit (AU)"\r\n"Mars","1.7"\r\n') });
+      await sheet.locator('[data-table-understood="Mars"]').waitFor({ timeout: 5000 });
+      assert.match(await sheet.locator('[data-table-understood="Mars"]').innerText(), /1\.7 AU/);
+      assert.match(await sheet.locator("[data-sheet-table]").inputValue(), /"Mars","1\.7"/);
+      await shot(gm, `sheet-file-${vp}`);
       await sheet.locator("[data-sheet-table]").fill("Name\tOrbit (AU)\tMass\nMars\t1.6\t\nEarth\t\t1.1 M⊕\nVulcan\t0.1\t");
       await sheet.locator('[data-table-understood="Mars"]').waitFor({ timeout: 5000 });
       assert.match(await sheet.locator('[data-table-understood="Earth"]').innerText(), /1\.1 M⊕/);
@@ -389,8 +395,11 @@ try {
       await gm.mouse.move(ex0, ey0, { steps: 4 });
       await gm.locator("[data-add-ghost]").waitFor({ timeout: 5000 });
       assert.match(await gm.locator("[data-add-readout]").textContent(), /AU round Sun/);
-      await shot(gm, `add-ghost-${vp}`);
+      // Resting there, one formation run says what forms at that orbit (ED4 part 2a); nothing is written.
       const hashG = await hash();
+      await gm.locator("[data-add-forms]").waitFor({ timeout: 15000 });
+      assert.match(await gm.locator("[data-add-forms]").textContent(), /forms a world of [\d.]+ Earth masses here|no world forms here/);
+      await shot(gm, `add-ghost-${vp}`);
       await gm.keyboard.press("Escape");
       await gm.waitForFunction(() => !document.querySelector("[data-add-note]") && !document.querySelector("[data-add-ghost]"), null, { timeout: 5000 });
       assert.equal(await hash(), hashG, "Esc puts the ghost away and writes nothing");

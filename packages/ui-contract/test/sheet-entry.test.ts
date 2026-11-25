@@ -47,3 +47,13 @@ test("the system sheet: a pasted table, columns matched by name with a bracketed
   assert.ok(r.problems.some((p) => /Colour/.test(p.where)));
   assert.ok(r.problems.some((p) => /Vulcan/.test(p.where)));
 });
+
+test("the system sheet reads a spreadsheet's saved CSV: a byte-order mark, quoted cells, doubled quotes", async () => {
+  const { readTable } = await import("../src/sheet-entry.ts");
+  const bodies = [{ address: "a/mars", label: "Mars \"B\"", facts: mars, cls: "planet" }];
+  const t = '﻿"Name","Orbit (AU)","Mass (kg)"\r\n"Mars ""B""","1.6","642,000,000,000,000,000,000,000"\r\n';
+  const r = readTable(t, () => rows, bodies, "science");
+  assert.deepEqual(r.columns.map((c) => c.row), ["orbit", "mass"]);
+  assert.equal(r.edits.length, 2, JSON.stringify(r.problems));
+  assert.ok(Math.abs(r.edits[1]!.value - 6.42e23) / 6.42e23 < 1e-9);
+});
