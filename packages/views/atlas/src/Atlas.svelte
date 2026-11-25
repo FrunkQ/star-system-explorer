@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { EVERYONE, BUILTIN_LOGOS, resolveDelivery, SHIPPED_NOTE_SETS, pickBanners, controlOn, withLetterhead, withMargin, withVoice, withSources, firstSentence, cardFieldsOf, showReference, type HowKnown, type FactRow, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
+  import { EVERYONE, BUILTIN_LOGOS, resolveDelivery, SHIPPED_NOTE_SETS, pickBanners, controlOn, withLetterhead, withMargin, withVoice, withSources, withGmCopy, placeNoteOf, firstSentence, cardFieldsOf, showReference, type HowKnown, type FactRow, atlasHtml, chapterOf, pageText, buildPage, atlasContents, resolveEdition, DEFAULT_EDITION, SHIPPED_EDITIONS, type ContentsLine, type PlayerScene, type ViewContext, type SystemScene } from "../../../ui-contract/src/index.ts";
   import type { AtlasHost } from "./index.svelte.ts";
   import Segmented from "../../../chart-grammar/src/Segmented.svelte";
   import AtlasPage from "./AtlasPage.svelte";
@@ -55,6 +55,35 @@
     });
   });
 
+  // The GM's copy (AT10): the table's own scene beside the GM's, so what the table has not been told is drawn in
+  // pencil (the same bytes the table is sent; nothing guessed), and the GM's notes at each place.
+  let tableBook = $state<PlayerScene | null>(null);
+  let tgen = 0;
+  $effect(() => {
+    void ws.revision;
+    const sys = scene.system;
+    const at = ws.now_yr;
+    const g = ++tgen;
+    if (audience !== "gm") return void (tableBook = null);
+    ctx.session.scene(sys, { audience: EVERYONE, at_yr: at }).then((r) => {
+      if (g === tgen) tableBook = r.ok ? r.scene : null;
+    });
+  });
+  let gmNotes = $state<Record<string, string[]>>({});
+  function readGmNotes(want: readonly string[]) {
+    if (audience !== "gm" || !ctx.session.record) return;
+    const rev = ws.revision;
+    for (const a of want) {
+      const k = `${rev}|${a}`;
+      if (k in gmNotes) continue;
+      gmNotes[k] = [];
+      ctx.session.record(a).then((r) => {
+        const n = r.ok ? placeNoteOf(r.record.notes, "gm-notes") : null;
+        if (n?.text.trim()) gmNotes[k] = [n.text];
+      }, () => {});
+    }
+  }
+
   // Words for the audience of the book on screen (the one read, not the one just asked for).
   const shownAudience = $derived(book?.audience ?? audience);
   const audienceWords = $derived(shownAudience === "gm" ? "the GM" : audiences.find((a) => a.value === shownAudience)?.label ?? shownAudience);
@@ -100,7 +129,8 @@
     if (!p || !book) return null;
     const voiced = withVoice(p, book, edition, { vocab, depth: ws.depth });
     const margined = withMargin(withLetterhead(voiced, edition, letterhead), book, edition, noteSets, { vocab, depth: ws.depth, exclude: turnedAway, order });
-    return withSources(margined, edition, howOf, { depth: ws.depth });
+    const gmCopy = withGmCopy(margined, book.audience, edition, { vocab, table: tableBook, gmNotes: gmNotes[`${ws.revision}|${a}`] ?? [] });
+    return withSources(gmCopy, edition, howOf, { depth: ws.depth });
   };
 
   // ---- Every number keeps its Why (AT8; design section 8). How a figure is known starts with the audience: for the
@@ -180,7 +210,7 @@
     void edition;
     void ws.depth;
     const a = address;
-    if (a && book) untrack(() => learn([a]));
+    if (a && book) untrack(() => (learn([a]), readGmNotes([a])));
   });
   $effect(() => {
     void address;
@@ -366,7 +396,7 @@
       </label>
     {/if}
     {#if on("print")}<button type="button" class="printnow" onclick={printThisPage} disabled={!page}>Print this page</button>
-    <button type="button" class="printmore" aria-haspopup="dialog" onclick={() => (learn(lines.map((l) => l.address)), (viewOpen = true))} disabled={!page}>Print…</button>{/if}
+    <button type="button" class="printmore" aria-haspopup="dialog" onclick={() => (learn(lines.map((l) => l.address)), readGmNotes(lines.map((l) => l.address)), (viewOpen = true))} disabled={!page}>Print…</button>{/if}
     {#if on("contents")}<button type="button" class="fold" aria-expanded={folded} onclick={() => (folded = !folded)}>Contents</button>{/if}
   </div>
   {#if said}<p class="said" role="status">{said}</p>{/if}
