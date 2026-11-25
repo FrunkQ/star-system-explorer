@@ -280,7 +280,7 @@
           {/if}
         </div>
       {/if}
-      <HomeCell session={ctx.session} campaign={all.map((x) => x.system)} />
+      <HomeCell session={ctx.session} campaign={all.map((x) => x.system)} cangrow={ctx.session.seat.authority === "gm"} ongrown={(system, title, note, hash) => (ctx.adopted ? ctx.adopted([{ system, title }], note, hash) : ctx.workspace.revision++)} />
     </aside>
   </div>
 
