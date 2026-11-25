@@ -132,6 +132,11 @@ try {
     await gm.mouse.down();
     await gm.mouse.move(box.x + box.width * 0.7, box.y + 15, { steps: 5 });
     assert.ok(await strip.locator(".figure.pencil").count(), "the figure is in pencil while dragging");
+    // ED1 part 3b: held still, the exact answer for the held value comes back from a scratch branch; nothing is written.
+    await strip.locator("[data-strip-pause]").waitFor({ timeout: 20000 });
+    assert.match(await strip.locator("[data-strip-pause]").innerText(), /Held here: .*(K|°C|nothing else)/);
+    assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash1, "a held value writes nothing");
+    await shot(gm, `held-${vp}`);
     await gm.mouse.up();
     await followed.waitFor({ timeout: 20000 });
     await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hash1);

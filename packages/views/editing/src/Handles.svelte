@@ -8,7 +8,7 @@
   Values are the kernel's facts for the body (resolved_system), never the card's display strings.
 -->
 <script lang="ts">
-  import { aboutFor, chosenReading, commitEdit, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resultsOf, say, scaleClass, whatFollowed, type Followed, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { aboutFor, chosenReading, commitEdit, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, scaleClass, whatFollowed, type Followed, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import Strip from "./Strip.svelte";
   import Box from "./Box.svelte";
 
@@ -98,6 +98,21 @@
     return [...refs.filter((r) => !here.some((x) => x.label === r.label)), ...here];
   }
 
+  // The held value's exact answer on a pause (design section 3, point 4): a scratch branch holds a what-if's own edits
+  // and the held value, the kernel resolves it (BC1), and the branch goes. What would follow, in the card's own words.
+  async function pause(h: Handle, si: number, at?: string): Promise<string | null> {
+    const system = scene.system;
+    if (!system) return null;
+    const edits = Object.entries(ws.branch?.applied ?? {}).map(([k, v]) => {
+      const i = k.lastIndexOf("#");
+      return { address: k.slice(0, i), field: k.slice(i + 1), value: v.value as Json };
+    });
+    const r = await resolveWith(ctx.session, { system, at_yr: ws.now_yr, edits: [...edits, { address: at ?? subject.address, field: h.part.field, value: fieldValue(h, si) as Json }] });
+    if (!r.ok) return null;
+    const rows = whatFollowed(resultsOf(surfaces, subject.address), resultsOf((r.result as { surfaces?: unknown }).surfaces ?? null, subject.address), cls, { depth });
+    return rows.length ? rows.slice(0, 3).map((f) => `${f.label} ${f.after}`).join(", ") : "nothing else this card watches would move";
+  }
+
   async function commit(h: Handle, si: number, how: { source: "computed" | "typed"; sig?: number }, shown?: string, at?: string): Promise<string | null> {
     const id = h.id.split(".")[0]!;
     // Held now: the card rereads its scene after the change, and the subject is a new object by then. A pair's part
@@ -159,9 +174,9 @@
   {#if open}
     {@const h = handles.find((x) => x.id === open)!}
     {#if h.box}
-      <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} {commit} onclose={() => (open = null)} />
+      <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} {commit} {pause} onclose={() => (open = null)} />
     {:else}
-      <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
+      <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
     {/if}
     {#if tryProblem}<p class="try-problem" role="status">{tryProblem}</p>{/if}
   {/if}

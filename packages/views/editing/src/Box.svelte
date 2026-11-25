@@ -52,6 +52,7 @@
     reading,
     dots,
     commit,
+    pause,
     ontry,
     onclose,
   }: {
@@ -69,6 +70,8 @@
     dots: StripDot[];
     /** One set_value of `h`'s field to `si`; `shown` is what the change is called (the place now, not the epoch's angle). */
     commit: (h: Handle, si: number, how: How, shown?: string, at?: string) => Promise<string | null>;
+    /** The held value's exact answer on a pause (the box's own strip). */
+    pause?: (h: Handle, si: number) => Promise<string | null>;
     ontry?: () => void;
     onclose: () => void;
   } = $props();
@@ -245,7 +248,7 @@
 </script>
 
 <div class="box" data-box={handle.id}>
-  <Strip {handle} {reading} value={num(handle.part.field)} {dots} {cls} {depth} {editable} {ontry} walls={wall ? [wall] : []} fromTime={fromYear} oncommit={(si, how) => commit(handle, si, how)} {onclose} />
+  <Strip {handle} {reading} value={num(handle.part.field)} {dots} {cls} {depth} {editable} {ontry} walls={wall ? [wall] : []} fromTime={fromYear} onpause={pause ? (si) => pause(handle, si) : undefined} oncommit={(si, how) => commit(handle, si, how)} {onclose} />
   {#if pair}
     <div class="pair" data-pair={`${pair.primary} ${pair.secondary}`}>
       <p class="pair-says" data-pair-says>{pairSays}</p>

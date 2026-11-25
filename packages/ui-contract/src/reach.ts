@@ -6,6 +6,7 @@
 // (K1) will replace the search with one call; the answer is the same.
 import type { SystemResolved } from "./make.ts";
 import type { ViewSession } from "./session.ts";
+import type { Json } from "./json.ts";
 
 export interface ReachAsk {
   system: string;
@@ -68,6 +69,26 @@ export async function reachIt(session: ViewSession, ask: ReachAsk): Promise<Reac
     return { ok: true, ...best, tries };
   } finally {
     await session.discardBranch(branch);
+  }
+}
+
+/**
+ * The exact answer for a value not yet set (editing design section 3, "on a pause, one exact answer"): a scratch branch
+ * gets `edits` in order (a what-if's own edits first, then the held value), the kernel resolves that line (BC1), and the
+ * branch is thrown away. Nothing reaches the campaign.
+ */
+export async function resolveWith(session: ViewSession, ask: { system: string; at_yr: number; edits: { address: string; field: string; value: Json }[] }): Promise<{ ok: true; result: SystemResolved } | { ok: false; why: string }> {
+  const opened = await session.openBranch("Held value (scratch)");
+  if (!opened.ok) return { ok: false, why: opened.message };
+  try {
+    for (const e of ask.edits) {
+      const r = await session.branchSend(opened.branch, { kind: "set_value", address: e.address, field: e.field, value: e.value, at_yr: ask.at_yr });
+      if (r.status !== "applied") return { ok: false, why: r.status === "refused" ? r.reason : r.status === "error" ? r.message : "not applied" };
+    }
+    const res = await session.resolvedSystem(ask.system, undefined, opened.branch);
+    return res.ok ? { ok: true, result: res.result } : { ok: false, why: "the kernel could not resolve it" };
+  } finally {
+    await session.discardBranch(opened.branch);
   }
 }
 

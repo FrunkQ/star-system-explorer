@@ -29,3 +29,14 @@ Checks: `tests/ui/editing.e2e.mjs` (desk and phone: the six handles with Mars's 
 ## Part 3b (still to do)
 
 The strip's exact answer on a pause (the held value resolved on a scratch branch); Titan on the Air strip's moon dots; the walk step "Change a world".
+
+## Part 3b (25 Nov): the held value's exact answer on a pause
+
+- `Strip.svelte` takes `onpause(si)`: after 150 ms with the pencil still, it asks once; a later move makes an answer on
+  its way stale; the line shows "Held here: …" before "Let go". `Handles.svelte` `pause(h, si)` calls `resolveWith`
+  (`ui-contract/src/reach.ts`): a scratch branch gets the what-if's own edits (if any) and the held value, the kernel
+  resolves it (BC1), the branch is discarded. The words are `whatFollowed` rows (first three). The Orbit box's own strip
+  gets the same through Box's `pause` prop.
+- e2e (`editing.e2e.mjs`, desk and phone): a drag held still shows the line and the state hash does not move.
+  Screen: project files `sse4/handover-screens/ED1-screens/held-desk.png`.
+- Left: Titan on the Air strip's moon dots, the walk step "Change a world" (part 3c).
