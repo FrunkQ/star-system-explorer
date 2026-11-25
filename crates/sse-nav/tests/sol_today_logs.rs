@@ -535,7 +535,9 @@ fn crews_ride_the_craft_their_logs_fly() {
         let n = legs
             .iter()
             .filter(|l| {
-                l["from_s"].as_i64().unwrap() <= t && l["to_s"].as_i64().is_none_or(|e| t < e)
+                l["reached_space"] != false
+                    && l["from_s"].as_i64().unwrap() <= t
+                    && l["to_s"].as_i64().is_none_or(|e| t < e)
             })
             .count() as i64;
         assert_eq!(s[1].as_i64().unwrap(), n, "count at {t}");
@@ -569,4 +571,83 @@ fn crews_ride_the_craft_their_logs_fly() {
                 && l["peak_km"].as_f64() == Some(81.07)),
         "Adams, 81.07 km"
     );
+}
+
+/// RS9 part 2: In memory (`in-memory.json`). Every loss has at least two
+/// sources and one sentence; everyone it names is a person whose death points
+/// back at it; no toll is smaller than the names given; and Challenger's crew,
+/// who never reached space, are not counted in space.
+#[test]
+fn in_memory_names_only_what_two_sources_give() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../store-packs/sol-today");
+    let read = |f: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(dir.join(f)).unwrap()).unwrap()
+    };
+    let (mem, crews) = (read("in-memory.json"), read("crews.json"));
+    let people: BTreeMap<&str, &serde_json::Value> = crews["people"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|p| (p["id"].as_str().unwrap(), p))
+        .collect();
+    let losses = mem["losses"].as_array().unwrap();
+    assert!(losses.len() >= 17, "{} losses", losses.len());
+    let mut by_during = BTreeMap::new();
+    for l in losses {
+        let id = l["id"].as_str().unwrap();
+        assert!(
+            l["sources"].as_array().unwrap().len() >= 2,
+            "{id}: two sources"
+        );
+        assert!(
+            !l["sentence"].as_str().unwrap().is_empty(),
+            "{id}: a sentence"
+        );
+        let during = l["during"].as_str().unwrap();
+        assert!(
+            ["flight", "training", "ground_test", "ground_work"].contains(&during),
+            "{id}: {during}"
+        );
+        *by_during.entry(during.to_string()).or_insert(0) += 1;
+        let named =
+            l["people"].as_array().unwrap().len() + l["names"].as_array().map_or(0, |n| n.len());
+        let low = l["toll"]
+            .as_i64()
+            .or_else(|| l["toll"][0].as_i64())
+            .unwrap();
+        assert!(
+            low as usize >= named,
+            "{id}: toll {low} under {named} named"
+        );
+        assert!(
+            low as usize == named || l["unconfirmed"].is_string(),
+            "{id}: more dead than names needs words"
+        );
+        for p in l["people"].as_array().unwrap() {
+            let p = people[p.as_str().unwrap()];
+            assert_eq!(p["death"]["loss"], l["id"], "{}", p["id"]);
+            assert!(p["death"]["sources"].as_array().unwrap().len() >= 2);
+        }
+    }
+    assert_eq!(
+        by_during["flight"], 6,
+        "Soyuz 1, X-15, Soyuz 11, Challenger, Columbia, VSS Enterprise"
+    );
+    assert!(by_during["training"] >= 7 && by_during["ground_work"] >= 3);
+    // On 28 January 1986, a minute after launch, nobody was in space: Challenger never got there.
+    let t = losses
+        .iter()
+        .find(|l| l["id"] == "challenger-1986")
+        .unwrap()["at_s"]
+        .as_i64()
+        .unwrap();
+    let steps = crews["in_space"].as_array().unwrap();
+    let n = steps
+        .iter()
+        .take_while(|s| s[0].as_i64().unwrap() <= t - 30)
+        .last()
+        .unwrap()[1]
+        .as_i64()
+        .unwrap();
+    assert_eq!(n, 0, "in space as Challenger flew");
 }

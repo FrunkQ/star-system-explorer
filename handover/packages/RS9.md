@@ -44,6 +44,31 @@ count agrees with the legs and peaks at 20, and 19 died in flight. No golden cha
   Prospector, Celestis flights) and named features and small bodies, with their sources.
 - The legs as `aboard.on` changes on manifest `person` actors, agreed with the manifest thread.
 
+## Part 2 (25 Nov 2026): In memory
+
+`scripts/spaceflight/in_memory.py`, called by build_crews.py, writes `store-packs/sol-today/in-memory.json` and puts a
+`death` on each person it names. Losses: 6 on flights (Soyuz 1, X-15 3-65-97, Soyuz 11, Challenger, Columbia, VSS
+Enterprise), 8 preparing to fly (Bondarenko, Freeman, See and Bassett, Apollo 1, Williams, Lawrence, Gagarin,
+Vozovikov) and 3 in ground work (Nedelin 1960, toll 78 to 121 as the sources differ; Plesetsk 1980, 48; Alcântara
+2003, 21). Every loss has McDowell's list or the Wikipedia list's row (read 25 Nov 2026) and the event's or each
+person's Wikidata item; the script stops if a Wikidata date of death or toll disagrees. Those McDowell lists only
+as trainees join crews.json as people with no legs (ids TR-...). Where the toll is larger than the names the
+sources give, `unconfirmed` says so in words (Gagarin's instructor is not named in these sources). Sentences are
+plain facts in our own words from the Wikipedia rows.
+
+Also: Challenger's last-flight legs carry `reached_space: false` and are left out of `in_space`; `name` drops
+McDowell's "*" marker (his form stays in `name_mcdowell`); pack.json gains the calendar the roll call writes dates
+with (Gregorian, days counted on TT).
+
+Waiting for a second source, so not in yet: Xichang 1996 (Long March 3B and Intelsat 708, 6 to 100), the STS-1
+nitrogen deaths of 19 March 1981 (John Bjornstad, Forrest Cole, Nick Mullon in the Wikipedia row), the Scaled
+Composites test explosion of 26 July 2007 (3), the R-9 silo fire at Baikonur of 24 October 1963 (7). A note on
+Freeman: McDowell's trainee list gives 21 October 1964; Wikidata and the Wikipedia list give 31 October, which is
+used.
+
+The test `in_memory_names_only_what_two_sources_give` checks two sources and a sentence per loss, each named person's
+death points back, no toll under the names given, and nobody in space as Challenger flew.
+
 ### Part 2 shapes, agreed with "Build roll call and In memory" (track SH, 25 Nov 01:23)
 
 - A person's `death`: { at_s, date (the record's calendar date, text), where, `on` (log id when on a craft), during

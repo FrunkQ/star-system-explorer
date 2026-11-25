@@ -29,6 +29,71 @@
         "craft": "craft.json",
         "logs": "logs/",
         "crews": "crews.json"
+      },
+      "calendar": {
+        "name": "Gregorian (UTC days, read on TT)",
+        "epoch_s": 63115156800,
+        "epoch_year": 2000,
+        "day_s": 86400,
+        "year_days": 365,
+        "leap": {
+          "every": 4,
+          "except_every": 100,
+          "but_every": 400
+        },
+        "months": [
+          {
+            "name": "January",
+            "days": 31
+          },
+          {
+            "name": "February",
+            "days": 28
+          },
+          {
+            "name": "March",
+            "days": 31
+          },
+          {
+            "name": "April",
+            "days": 30
+          },
+          {
+            "name": "May",
+            "days": 31
+          },
+          {
+            "name": "June",
+            "days": 30
+          },
+          {
+            "name": "July",
+            "days": 31
+          },
+          {
+            "name": "August",
+            "days": 31
+          },
+          {
+            "name": "September",
+            "days": 30
+          },
+          {
+            "name": "October",
+            "days": 31
+          },
+          {
+            "name": "November",
+            "days": 30
+          },
+          {
+            "name": "December",
+            "days": 31
+          }
+        ],
+        "leap_month": 1,
+        "format": "{mday} {month} {year}",
+        "about": "Days start at midnight UTC on J2000's day, counted on the universe clock (TT); TT runs about a minute ahead of UTC since 1972 (64.2 s in 2000), so a time within that minute of midnight may read as the next day. Years before 2000 count back with the same leap rule (proleptic Gregorian)."
       }
     }
   }

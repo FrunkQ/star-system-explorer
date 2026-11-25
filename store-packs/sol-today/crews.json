@@ -8,19 +8,43 @@
 {
 "id": "AS-00001",
 "name": "Gagarin, Yuriy Alekseevich",
+"name_mcdowell": "Gagarin, Yuriy Alekseevich",
 "short": "Gagarin, Yu.A.",
 "being": "human",
 "citizen": "RU",
 "sources": {
-"mcdowell": "AS-00001"
+"mcdowell": "AS-00001",
+"wikidata": "Q7327"
 },
 "born": "1934 Mar  9",
 "died": "1968 Mar 27",
-"died_in_flight": false
+"died_in_flight": false,
+"death": {
+"at_s": 62112787240,
+"date": "1968-03-27",
+"where": "near Novosyolovo, Vladimir Oblast",
+"during": "training",
+"loss": "gagarin-1968",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q7327",
+"url": "https://www.wikidata.org/wiki/Q7327"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 },
 {
 "id": "AS-00002",
 "name": "Shepard, Alan Bartlett, Jr",
+"name_mcdowell": "Shepard, Alan Bartlett, Jr",
 "short": "Shepard, A.B.",
 "being": "human",
 "citizen": "US",
@@ -34,19 +58,43 @@
 {
 "id": "AS-00003",
 "name": "Grissom, Virgil Ivan 'Gus'",
+"name_mcdowell": "Grissom, Virgil Ivan 'Gus'",
 "short": "Grissom, V.I.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00003"
+"mcdowell": "AS-00003",
+"wikidata": "Q110879"
 },
 "born": "1926 Apr 23",
 "died": "1967 Jan 27",
-"died_in_flight": false
+"died_in_flight": false,
+"death": {
+"at_s": 62076067239,
+"date": "1967-01-27",
+"where": "Launch Complex 34, Cape Canaveral",
+"during": "ground_test",
+"loss": "apollo-1-1967",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q110879",
+"url": "https://www.wikidata.org/wiki/Q110879"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 },
 {
 "id": "AS-00004",
 "name": "Titov, German Stepanovich",
+"name_mcdowell": "Titov, German Stepanovich",
 "short": "Titov, G.S.",
 "being": "human",
 "citizen": "RU",
@@ -60,6 +108,7 @@
 {
 "id": "AS-00005",
 "name": "Glenn, John Herschel, Jr",
+"name_mcdowell": "Glenn, John Herschel, Jr",
 "short": "Glenn, J.H.",
 "being": "human",
 "citizen": "US",
@@ -72,7 +121,8 @@
 },
 {
 "id": "AS-00006",
-"name": "Carpenter, Malcolm *Scott",
+"name": "Carpenter, Malcolm Scott",
+"name_mcdowell": "Carpenter, Malcolm *Scott",
 "short": "Carpenter, M.S.",
 "being": "human",
 "citizen": "US",
@@ -86,6 +136,7 @@
 {
 "id": "AS-00007",
 "name": "White, Robert Michael",
+"name_mcdowell": "White, Robert Michael",
 "short": "White, R.M.",
 "being": "human",
 "citizen": "US",
@@ -99,6 +150,7 @@
 {
 "id": "AS-00008",
 "name": "Nikolaev, Andriyan Grigorevich",
+"name_mcdowell": "Nikolaev, Andriyan Grigorevich",
 "short": "Nikolaev, A.G.",
 "being": "human",
 "citizen": "RU",
@@ -112,6 +164,7 @@
 {
 "id": "AS-00009",
 "name": "Popovich, Pavel Romanovich",
+"name_mcdowell": "Popovich, Pavel Romanovich",
 "short": "Popovich, P.R.",
 "being": "human",
 "citizen": "RU",
@@ -125,6 +178,7 @@
 {
 "id": "AS-00010",
 "name": "Schirra, Walter Marty, Jr",
+"name_mcdowell": "Schirra, Walter Marty, Jr",
 "short": "Schirra, W.M.",
 "being": "human",
 "citizen": "US",
@@ -138,6 +192,7 @@
 {
 "id": "AS-00011",
 "name": "Walker, Joseph Albert",
+"name_mcdowell": "Walker, Joseph Albert",
 "short": "Walker, J.A.",
 "being": "human",
 "citizen": "US",
@@ -150,7 +205,8 @@
 },
 {
 "id": "AS-00012",
-"name": "Cooper, Leroy *Gordon, Jr",
+"name": "Cooper, Leroy Gordon, Jr",
+"name_mcdowell": "Cooper, Leroy *Gordon, Jr",
 "short": "Cooper, L.G.",
 "being": "human",
 "citizen": "US",
@@ -164,6 +220,7 @@
 {
 "id": "AS-00013",
 "name": "Bykovskiy, Valeriy Fyodorovich",
+"name_mcdowell": "Bykovskiy, Valeriy Fyodorovich",
 "short": "Bykovskiy, V.F.",
 "being": "human",
 "citizen": "RU",
@@ -177,6 +234,7 @@
 {
 "id": "AS-00014",
 "name": "Tereshkova, Valentina Vladimirovna",
+"name_mcdowell": "Tereshkova, Valentina Vladimirovna",
 "short": "Tereshkova, V.V.",
 "being": "human",
 "citizen": "RU",
@@ -190,6 +248,7 @@
 {
 "id": "AS-00015",
 "name": "Rushworth, Robert Aitken",
+"name_mcdowell": "Rushworth, Robert Aitken",
 "short": "Rushworth, R.A.",
 "being": "human",
 "citizen": "US",
@@ -203,19 +262,44 @@
 {
 "id": "AS-00016",
 "name": "Komarov, Vladimir Mikhailovich",
+"name_mcdowell": "Komarov, Vladimir Mikhailovich",
 "short": "Komarov, V.M.",
 "being": "human",
 "citizen": "RU",
 "sources": {
-"mcdowell": "AS-00016"
+"mcdowell": "AS-00016",
+"wikidata": "Q104865"
 },
 "born": "1927 Mar 16",
 "died": "1967 Apr 24",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62083553011,
+"date": "1967-04-24",
+"where": "near Karabutak, Orenburg",
+"during": "flight",
+"loss": "soyuz-1-1967",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q104865",
+"url": "https://www.wikidata.org/wiki/Q104865"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "soyuz-1"
+}
 },
 {
 "id": "AS-00017",
 "name": "Feoktistov, Konstantin Petrovich",
+"name_mcdowell": "Feoktistov, Konstantin Petrovich",
 "short": "Feoktistov, K.F.",
 "being": "human",
 "citizen": "RU",
@@ -229,6 +313,7 @@
 {
 "id": "AS-00018",
 "name": "Yegorov, Boris Borisovich",
+"name_mcdowell": "Yegorov, Boris Borisovich",
 "short": "Yegorov, B.B.",
 "being": "human",
 "citizen": "RU",
@@ -242,6 +327,7 @@
 {
 "id": "AS-00019",
 "name": "Belyaev, Pavel Ivanovich",
+"name_mcdowell": "Belyaev, Pavel Ivanovich",
 "short": "Belyaev, P.I.",
 "being": "human",
 "citizen": "RU",
@@ -255,6 +341,7 @@
 {
 "id": "AS-00020",
 "name": "Leonov, Aleksei Arkhipovich",
+"name_mcdowell": "Leonov, Aleksei Arkhipovich",
 "short": "Leonov, A.A.",
 "being": "human",
 "citizen": "RU",
@@ -268,6 +355,7 @@
 {
 "id": "AS-00021",
 "name": "Young, John Watts",
+"name_mcdowell": "Young, John Watts",
 "short": "Young, J.W.",
 "being": "human",
 "citizen": "US",
@@ -281,6 +369,7 @@
 {
 "id": "AS-00022",
 "name": "McDivitt, James Alton",
+"name_mcdowell": "McDivitt, James Alton",
 "short": "McDivitt, J.A.",
 "being": "human",
 "citizen": "US",
@@ -294,19 +383,43 @@
 {
 "id": "AS-00023",
 "name": "White, Edward Higgins, II",
+"name_mcdowell": "White, Edward Higgins, II",
 "short": "White, E.H.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00023"
+"mcdowell": "AS-00023",
+"wikidata": "Q216726"
 },
 "born": "1930 Nov 14",
 "died": "1967 Jan 27",
-"died_in_flight": false
+"died_in_flight": false,
+"death": {
+"at_s": 62076067239,
+"date": "1967-01-27",
+"where": "Launch Complex 34, Cape Canaveral",
+"during": "ground_test",
+"loss": "apollo-1-1967",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q216726",
+"url": "https://www.wikidata.org/wiki/Q216726"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 },
 {
 "id": "AS-00024",
 "name": "Engle, Joe Henry",
+"name_mcdowell": "Engle, Joe Henry",
 "short": "Engle, J.H.",
 "being": "human",
 "citizen": "US",
@@ -320,6 +433,7 @@
 {
 "id": "AS-00025",
 "name": "Conrad, Charles 'Pete' Jr",
+"name_mcdowell": "Conrad, Charles 'Pete' Jr",
 "short": "Conrad, C.",
 "being": "human",
 "citizen": "US",
@@ -333,6 +447,7 @@
 {
 "id": "AS-00026",
 "name": "McKay, John Barron",
+"name_mcdowell": "McKay, John Barron",
 "short": "McKay, J.B.",
 "being": "human",
 "citizen": "US",
@@ -346,6 +461,7 @@
 {
 "id": "AS-00027",
 "name": "Borman, Frederick 'Frank', II",
+"name_mcdowell": "Borman, Frederick 'Frank', II",
 "short": "Borman, F.F.",
 "being": "human",
 "citizen": "US",
@@ -359,6 +475,7 @@
 {
 "id": "AS-00028",
 "name": "Lovell, James Arthur, Jr",
+"name_mcdowell": "Lovell, James Arthur, Jr",
 "short": "Lovell, J.A.",
 "being": "human",
 "citizen": "US",
@@ -372,6 +489,7 @@
 {
 "id": "AS-00029",
 "name": "Stafford, Thomas Patten",
+"name_mcdowell": "Stafford, Thomas Patten",
 "short": "Stafford, T.O.",
 "being": "human",
 "citizen": "US",
@@ -385,6 +503,7 @@
 {
 "id": "AS-00030",
 "name": "Armstrong, Neil Alden",
+"name_mcdowell": "Armstrong, Neil Alden",
 "short": "Armstrong, N.A.",
 "being": "human",
 "citizen": "US",
@@ -398,6 +517,7 @@
 {
 "id": "AS-00031",
 "name": "Scott, David Randolph",
+"name_mcdowell": "Scott, David Randolph",
 "short": "Scott, D.R.",
 "being": "human",
 "citizen": "US",
@@ -411,6 +531,7 @@
 {
 "id": "AS-00032",
 "name": "Cernan, Eugene Andrew 'Gene'",
+"name_mcdowell": "Cernan, Eugene Andrew 'Gene'",
 "short": "Cernan, E.A.",
 "being": "human",
 "citizen": "US",
@@ -424,6 +545,7 @@
 {
 "id": "AS-00033",
 "name": "Collins, Michael",
+"name_mcdowell": "Collins, Michael",
 "short": "Collins, M.",
 "being": "human",
 "citizen": "US",
@@ -437,6 +559,7 @@
 {
 "id": "AS-00034",
 "name": "Gordon, Richard Francis, Jr",
+"name_mcdowell": "Gordon, Richard Francis, Jr",
 "short": "Gordon, R.F.",
 "being": "human",
 "citizen": "US",
@@ -450,6 +573,7 @@
 {
 "id": "AS-00035",
 "name": "Dana, William Harvey",
+"name_mcdowell": "Dana, William Harvey",
 "short": "Dana, W.H.",
 "being": "human",
 "citizen": "US",
@@ -463,6 +587,7 @@
 {
 "id": "AS-00036",
 "name": "Aldrin, Edwin 'Buzz' Eugene, Jr",
+"name_mcdowell": "Aldrin, Edwin 'Buzz' Eugene, Jr",
 "short": "Aldrin, E.E.",
 "being": "human",
 "citizen": "US",
@@ -476,6 +601,7 @@
 {
 "id": "AS-00037",
 "name": "Knight, William Joseph 'Pete'",
+"name_mcdowell": "Knight, William Joseph 'Pete'",
 "short": "Knight, W.J.",
 "being": "human",
 "citizen": "US",
@@ -489,19 +615,43 @@
 {
 "id": "AS-00038",
 "name": "Adams, Michael James",
+"name_mcdowell": "Adams, Michael James",
 "short": "Adams, M.J.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00038"
+"mcdowell": "AS-00038",
+"wikidata": "Q1122204"
 },
 "born": "1930 May  5",
 "died": "1967 Nov 15",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62101319737,
+"date": "1967-11-15",
+"where": "over the Mojave Desert, California",
+"during": "flight",
+"loss": "x-15-3-65-97",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q1122204",
+"url": "https://www.wikidata.org/wiki/Q1122204"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 },
 {
 "id": "AS-00039",
 "name": "Eisele, Donn Fulton",
+"name_mcdowell": "Eisele, Donn Fulton",
 "short": "Eisele, D.F.",
 "being": "human",
 "citizen": "US",
@@ -514,7 +664,8 @@
 },
 {
 "id": "AS-00040",
-"name": "Cunningham, Ronald *Walter",
+"name": "Cunningham, Ronald Walter",
+"name_mcdowell": "Cunningham, Ronald *Walter",
 "short": "Cunningham, R.W.",
 "being": "human",
 "citizen": "US",
@@ -528,6 +679,7 @@
 {
 "id": "AS-00041",
 "name": "Beregovoy, Georgiy Timofeevich",
+"name_mcdowell": "Beregovoy, Georgiy Timofeevich",
 "short": "Beregovoy, G.T.",
 "being": "human",
 "citizen": "RU",
@@ -541,6 +693,7 @@
 {
 "id": "AS-00042",
 "name": "Anders, William Alison",
+"name_mcdowell": "Anders, William Alison",
 "short": "Anders, W.A.",
 "being": "human",
 "citizen": "US",
@@ -554,6 +707,7 @@
 {
 "id": "AS-00043",
 "name": "Shatalov, Vladimir Aleksandrovich",
+"name_mcdowell": "Shatalov, Vladimir Aleksandrovich",
 "short": "Shatalov, V.A.",
 "being": "human",
 "citizen": "RU",
@@ -567,6 +721,7 @@
 {
 "id": "AS-00044",
 "name": "Volynov, Boris Valentinovich",
+"name_mcdowell": "Volynov, Boris Valentinovich",
 "short": "Volynov, B.V.",
 "being": "human",
 "citizen": "RU",
@@ -580,6 +735,7 @@
 {
 "id": "AS-00045",
 "name": "Yeliseev, Aleksei Stanislavovich",
+"name_mcdowell": "Yeliseev, Aleksei Stanislavovich",
 "short": "Yeliseev, A.S.",
 "being": "human",
 "citizen": "RU",
@@ -593,6 +749,7 @@
 {
 "id": "AS-00046",
 "name": "Khrunov, Yevgeniy Vasil'evich",
+"name_mcdowell": "Khrunov, Yevgeniy Vasil'evich",
 "short": "Khrunov, Ye.V.",
 "being": "human",
 "citizen": "RU",
@@ -606,6 +763,7 @@
 {
 "id": "AS-00047",
 "name": "Schweickart, Russell Louis 'Rusty'",
+"name_mcdowell": "Schweickart, Russell Louis 'Rusty'",
 "short": "Schweickart, R.L.",
 "being": "human",
 "citizen": "US",
@@ -619,6 +777,7 @@
 {
 "id": "AS-00048",
 "name": "Shonin, Georgiy Stepanovich",
+"name_mcdowell": "Shonin, Georgiy Stepanovich",
 "short": "Shonin, G.S.",
 "being": "human",
 "citizen": "RU",
@@ -632,6 +791,7 @@
 {
 "id": "AS-00049",
 "name": "Kubasov, Valeriy Nikolaevich",
+"name_mcdowell": "Kubasov, Valeriy Nikolaevich",
 "short": "Kubasov, V.N.",
 "being": "human",
 "citizen": "RU",
@@ -645,6 +805,7 @@
 {
 "id": "AS-00050",
 "name": "Filipchenko, Anatoli Vasilevich",
+"name_mcdowell": "Filipchenko, Anatoli Vasilevich",
 "short": "Filipchenko, A.V.",
 "being": "human",
 "citizen": "RU",
@@ -658,19 +819,44 @@
 {
 "id": "AS-00051",
 "name": "Volkov, Vladislav Nikolaevich 'Vadim'",
+"name_mcdowell": "Volkov, Vladislav Nikolaevich 'Vadim'",
 "short": "Volkov, V.N.",
 "being": "human",
 "citizen": "RU",
 "sources": {
-"mcdowell": "AS-00051"
+"mcdowell": "AS-00051",
+"wikidata": "Q345658"
 },
 "born": "1935 Nov 23",
 "died": "1971 Jun 30",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62215557453,
+"date": "1971-06-30",
+"where": "returning from Salyut 1, above Kazakhstan",
+"during": "flight",
+"loss": "soyuz-11-1971",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q345658",
+"url": "https://www.wikidata.org/wiki/Q345658"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "soyuz-11"
+}
 },
 {
 "id": "AS-00052",
 "name": "Gorbatko, Viktor Vasilevich",
+"name_mcdowell": "Gorbatko, Viktor Vasilevich",
 "short": "Gorbatko, V.V.",
 "being": "human",
 "citizen": "RU",
@@ -684,6 +870,7 @@
 {
 "id": "AS-00053",
 "name": "Bean, Alan Lavern",
+"name_mcdowell": "Bean, Alan Lavern",
 "short": "Bean, A.L.",
 "being": "human",
 "citizen": "US",
@@ -697,6 +884,7 @@
 {
 "id": "AS-00054",
 "name": "Swigert, John Leonard 'Jack', Jr",
+"name_mcdowell": "Swigert, John Leonard 'Jack', Jr",
 "short": "Swigert, J.L.",
 "being": "human",
 "citizen": "US",
@@ -710,6 +898,7 @@
 {
 "id": "AS-00055",
 "name": "Haise, Fred Wallace, Jr",
+"name_mcdowell": "Haise, Fred Wallace, Jr",
 "short": "Haise, F.W.",
 "being": "human",
 "citizen": "US",
@@ -723,6 +912,7 @@
 {
 "id": "AS-00056",
 "name": "Sevastyanov, Vitaliy Ivanovich",
+"name_mcdowell": "Sevastyanov, Vitaliy Ivanovich",
 "short": "Sevastyanov, V.I.",
 "being": "human",
 "citizen": "RU",
@@ -736,6 +926,7 @@
 {
 "id": "AS-00057",
 "name": "Roosa, Stuart Allen",
+"name_mcdowell": "Roosa, Stuart Allen",
 "short": "Roosa, S.A.",
 "being": "human",
 "citizen": "US",
@@ -749,6 +940,7 @@
 {
 "id": "AS-00058",
 "name": "Mitchell, Edgar Dean",
+"name_mcdowell": "Mitchell, Edgar Dean",
 "short": "Mitchell, E.D.",
 "being": "human",
 "citizen": "US",
@@ -762,6 +954,7 @@
 {
 "id": "AS-00059",
 "name": "Rukavishnikov, Nikolai Nikolaevich",
+"name_mcdowell": "Rukavishnikov, Nikolai Nikolaevich",
 "short": "Rukavishnikov, N.N.",
 "being": "human",
 "citizen": "RU",
@@ -775,32 +968,81 @@
 {
 "id": "AS-00060",
 "name": "Dobrovol'skiy, Georgiy Timofeevich",
+"name_mcdowell": "Dobrovol'skiy, Georgiy Timofeevich",
 "short": "Dobrovol'skiy, G.T.",
 "being": "human",
 "citizen": "UA",
 "sources": {
-"mcdowell": "AS-00060"
+"mcdowell": "AS-00060",
+"wikidata": "Q355433"
 },
 "born": "1928 Jun  1",
 "died": "1971 Jun 30",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62215557453,
+"date": "1971-06-30",
+"where": "returning from Salyut 1, above Kazakhstan",
+"during": "flight",
+"loss": "soyuz-11-1971",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q355433",
+"url": "https://www.wikidata.org/wiki/Q355433"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "soyuz-11"
+}
 },
 {
 "id": "AS-00061",
 "name": "Patsaev, Viktor Ivanovich",
+"name_mcdowell": "Patsaev, Viktor Ivanovich",
 "short": "Patsaev, V.I.",
 "being": "human",
 "citizen": "RU",
 "sources": {
-"mcdowell": "AS-00061"
+"mcdowell": "AS-00061",
+"wikidata": "Q358525"
 },
 "born": "1933 Jun 19",
 "died": "1971 Jun 30",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62215557453,
+"date": "1971-06-30",
+"where": "returning from Salyut 1, above Kazakhstan",
+"during": "flight",
+"loss": "soyuz-11-1971",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q358525",
+"url": "https://www.wikidata.org/wiki/Q358525"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "soyuz-11"
+}
 },
 {
 "id": "AS-00062",
 "name": "Worden, Alfred Merrill",
+"name_mcdowell": "Worden, Alfred Merrill",
 "short": "Worden, A.M.",
 "being": "human",
 "citizen": "US",
@@ -814,6 +1056,7 @@
 {
 "id": "AS-00063",
 "name": "Irwin, James Benson",
+"name_mcdowell": "Irwin, James Benson",
 "short": "Irwin, J.B.",
 "being": "human",
 "citizen": "US",
@@ -826,7 +1069,8 @@
 },
 {
 "id": "AS-00064",
-"name": "Mattingly, Thomas *Kenneth 'T.K.', II",
+"name": "Mattingly, Thomas Kenneth 'T.K.', II",
+"name_mcdowell": "Mattingly, Thomas *Kenneth 'T.K.', II",
 "short": "Mattingly, T.K.",
 "being": "human",
 "citizen": "US",
@@ -840,6 +1084,7 @@
 {
 "id": "AS-00065",
 "name": "Duke, Charles Moss, Jr",
+"name_mcdowell": "Duke, Charles Moss, Jr",
 "short": "Duke, C.M.",
 "being": "human",
 "citizen": "US",
@@ -853,6 +1098,7 @@
 {
 "id": "AS-00066",
 "name": "Evans, Ronald Ellwin",
+"name_mcdowell": "Evans, Ronald Ellwin",
 "short": "Evans, R.E.",
 "being": "human",
 "citizen": "US",
@@ -866,6 +1112,7 @@
 {
 "id": "AS-00067",
 "name": "Schmitt, Harrison Hagan 'Jack'",
+"name_mcdowell": "Schmitt, Harrison Hagan 'Jack'",
 "short": "Schmitt, H.H.",
 "being": "human",
 "citizen": "US",
@@ -879,6 +1126,7 @@
 {
 "id": "AS-00068",
 "name": "Kerwin, Joseph Peter",
+"name_mcdowell": "Kerwin, Joseph Peter",
 "short": "Kerwin, J.P.",
 "being": "human",
 "citizen": "US",
@@ -892,6 +1140,7 @@
 {
 "id": "AS-00069",
 "name": "Weitz, Paul Joseph",
+"name_mcdowell": "Weitz, Paul Joseph",
 "short": "Weitz, P.J.",
 "being": "human",
 "citizen": "US",
@@ -905,6 +1154,7 @@
 {
 "id": "AS-00070",
 "name": "Garriott, Owen Kay, Jr",
+"name_mcdowell": "Garriott, Owen Kay, Jr",
 "short": "Garriott, O.K.",
 "being": "human",
 "citizen": "US",
@@ -918,6 +1168,7 @@
 {
 "id": "AS-00071",
 "name": "Lousma, Jack Robert",
+"name_mcdowell": "Lousma, Jack Robert",
 "short": "Lousma, J.R.",
 "being": "human",
 "citizen": "US",
@@ -931,6 +1182,7 @@
 {
 "id": "AS-00072",
 "name": "Lazarev, Vasiliy Grigor'evich",
+"name_mcdowell": "Lazarev, Vasiliy Grigor'evich",
 "short": "Lazarev, V.G.",
 "being": "human",
 "citizen": "RU",
@@ -944,6 +1196,7 @@
 {
 "id": "AS-00073",
 "name": "Makarov, Oleg Grigor'evich",
+"name_mcdowell": "Makarov, Oleg Grigor'evich",
 "short": "Makarov, O.G.",
 "being": "human",
 "citizen": "RU",
@@ -957,6 +1210,7 @@
 {
 "id": "AS-00074",
 "name": "Carr, Gerald Paul",
+"name_mcdowell": "Carr, Gerald Paul",
 "short": "Carr, G.P.",
 "being": "human",
 "citizen": "US",
@@ -970,6 +1224,7 @@
 {
 "id": "AS-00075",
 "name": "Gibson, Edward George",
+"name_mcdowell": "Gibson, Edward George",
 "short": "Gibson, E.G.",
 "being": "human",
 "citizen": "US",
@@ -983,6 +1238,7 @@
 {
 "id": "AS-00076",
 "name": "Pogue, William Reid",
+"name_mcdowell": "Pogue, William Reid",
 "short": "Pogue, W.R.",
 "being": "human",
 "citizen": "US",
@@ -996,6 +1252,7 @@
 {
 "id": "AS-00077",
 "name": "Klimuk, Pyotr Ilich",
+"name_mcdowell": "Klimuk, Pyotr Ilich",
 "short": "Klimuk, P.I.",
 "being": "human",
 "citizen": "RU",
@@ -1009,6 +1266,7 @@
 {
 "id": "AS-00078",
 "name": "Lebedev, Valentin Vitalevich",
+"name_mcdowell": "Lebedev, Valentin Vitalevich",
 "short": "Lebedev, V.V.",
 "being": "human",
 "citizen": "RU",
@@ -1022,6 +1280,7 @@
 {
 "id": "AS-00079",
 "name": "Artyukhin, Yuri Petrovich",
+"name_mcdowell": "Artyukhin, Yuri Petrovich",
 "short": "Artyukhin, Yu.P.",
 "being": "human",
 "citizen": "RU",
@@ -1035,6 +1294,7 @@
 {
 "id": "AS-00080",
 "name": "Sarafanov, Gennadiy Vasilevich",
+"name_mcdowell": "Sarafanov, Gennadiy Vasilevich",
 "short": "Sarafanov, G.V.",
 "being": "human",
 "citizen": "RU",
@@ -1048,6 +1308,7 @@
 {
 "id": "AS-00081",
 "name": "Dyomin, Lev Stepanovich",
+"name_mcdowell": "Dyomin, Lev Stepanovich",
 "short": "Dyomin, L.S.",
 "being": "human",
 "citizen": "RU",
@@ -1061,6 +1322,7 @@
 {
 "id": "AS-00082",
 "name": "Gubarev, Aleksey Aleksandrovich",
+"name_mcdowell": "Gubarev, Aleksey Aleksandrovich",
 "short": "Gubarev, A.A.",
 "being": "human",
 "citizen": "RU",
@@ -1074,6 +1336,7 @@
 {
 "id": "AS-00083",
 "name": "Grechko, Georgiy Mikhailovich",
+"name_mcdowell": "Grechko, Georgiy Mikhailovich",
 "short": "Grechko, G.M.",
 "being": "human",
 "citizen": "RU",
@@ -1087,6 +1350,7 @@
 {
 "id": "AS-00084",
 "name": "Brand, Vance DeVoe",
+"name_mcdowell": "Brand, Vance DeVoe",
 "short": "Brand, V.D.",
 "being": "human",
 "citizen": "US",
@@ -1100,6 +1364,7 @@
 {
 "id": "AS-00085",
 "name": "Slayton, Donald Kent 'Deke'",
+"name_mcdowell": "Slayton, Donald Kent 'Deke'",
 "short": "Slayton, D.K.",
 "being": "human",
 "citizen": "US",
@@ -1113,6 +1378,7 @@
 {
 "id": "AS-00086",
 "name": "Zholobov, Vitaliy Mikhailovich",
+"name_mcdowell": "Zholobov, Vitaliy Mikhailovich",
 "short": "Zholobov, V.M.",
 "being": "human",
 "citizen": "UA",
@@ -1126,6 +1392,7 @@
 {
 "id": "AS-00087",
 "name": "Aksyonov, Vladimir Viktorovich",
+"name_mcdowell": "Aksyonov, Vladimir Viktorovich",
 "short": "Aksyonov, V.V.",
 "being": "human",
 "citizen": "RU",
@@ -1139,6 +1406,7 @@
 {
 "id": "AS-00088",
 "name": "Zudov, Vyacheslav Dmitrievich",
+"name_mcdowell": "Zudov, Vyacheslav Dmitrievich",
 "short": "Zudov, V.D.",
 "being": "human",
 "citizen": "RU",
@@ -1152,6 +1420,7 @@
 {
 "id": "AS-00089",
 "name": "Rozhdestvenskiy, Valeriy Ilich",
+"name_mcdowell": "Rozhdestvenskiy, Valeriy Ilich",
 "short": "Rozhdestvenskiy, V.I.",
 "being": "human",
 "citizen": "RU",
@@ -1165,6 +1434,7 @@
 {
 "id": "AS-00090",
 "name": "Glazkov, Yuriy Nikolaevich",
+"name_mcdowell": "Glazkov, Yuriy Nikolaevich",
 "short": "Glazkov, Yu.N.",
 "being": "human",
 "citizen": "RU",
@@ -1178,6 +1448,7 @@
 {
 "id": "AS-00091",
 "name": "Kovalyonok, Vladimir Vasilevich",
+"name_mcdowell": "Kovalyonok, Vladimir Vasilevich",
 "short": "Kovalyonok, V.V.",
 "being": "human",
 "citizen": "RU",
@@ -1191,6 +1462,7 @@
 {
 "id": "AS-00092",
 "name": "Ryumin, Valeriy Viktorovich",
+"name_mcdowell": "Ryumin, Valeriy Viktorovich",
 "short": "Ryumin, V.V.",
 "being": "human",
 "citizen": "RU",
@@ -1204,6 +1476,7 @@
 {
 "id": "AS-00093",
 "name": "Romanenko, Yuriy Viktorovich",
+"name_mcdowell": "Romanenko, Yuriy Viktorovich",
 "short": "Romanenko, Yu.V.",
 "being": "human",
 "citizen": "RU",
@@ -1217,6 +1490,7 @@
 {
 "id": "AS-00094",
 "name": "Dzhanibekov, Vladimir Aleksandrovich",
+"name_mcdowell": "Dzhanibekov, Vladimir Aleksandrovich",
 "short": "Dzhanibekov, V.A.",
 "being": "human",
 "citizen": "RU",
@@ -1230,6 +1504,7 @@
 {
 "id": "AS-00095",
 "name": "Remek, Vladimir",
+"name_mcdowell": "Remek, Vladimir",
 "short": "Remek, V.",
 "being": "human",
 "citizen": "CSSR",
@@ -1243,6 +1518,7 @@
 {
 "id": "AS-00096",
 "name": "Ivanchenkov, Aleksandr Sergeevich",
+"name_mcdowell": "Ivanchenkov, Aleksandr Sergeevich",
 "short": "Ivanchenkov, A.S.",
 "being": "human",
 "citizen": "RU",
@@ -1256,6 +1532,7 @@
 {
 "id": "AS-00097",
 "name": "Hermaszewski, Miroslaw",
+"name_mcdowell": "Hermaszewski, Miroslaw",
 "short": "Hermaszewski, M.",
 "being": "human",
 "citizen": "PL",
@@ -1269,6 +1546,7 @@
 {
 "id": "AS-00098",
 "name": "Jahn, Sigmund Werner Paul",
+"name_mcdowell": "Jahn, Sigmund Werner Paul",
 "short": "Jahn, S.",
 "being": "human",
 "citizen": "DD",
@@ -1282,6 +1560,7 @@
 {
 "id": "AS-00099",
 "name": "Lyakhov, Vladimir Afanas'evich",
+"name_mcdowell": "Lyakhov, Vladimir Afanas'evich",
 "short": "Lyakhov, V.A.",
 "being": "human",
 "citizen": "RU",
@@ -1295,6 +1574,7 @@
 {
 "id": "AS-00100",
 "name": "Ivanov, Georgi Ivanov",
+"name_mcdowell": "Ivanov, Georgi Ivanov",
 "short": "Ivanov, G.I.",
 "being": "human",
 "citizen": "BG",
@@ -1308,6 +1588,7 @@
 {
 "id": "AS-00101",
 "name": "Popov, Leonid Ivanovich",
+"name_mcdowell": "Popov, Leonid Ivanovich",
 "short": "Popov, L.I.",
 "being": "human",
 "citizen": "RU",
@@ -1321,6 +1602,7 @@
 {
 "id": "AS-00102",
 "name": "Farkas Bertalan",
+"name_mcdowell": "Farkas Bertalan",
 "short": "Farkas B.",
 "being": "human",
 "citizen": "HU",
@@ -1334,6 +1616,7 @@
 {
 "id": "AS-00103",
 "name": "Malyshev, Yuriy Vasilevich",
+"name_mcdowell": "Malyshev, Yuriy Vasilevich",
 "short": "Malyshev, Yu.V.",
 "being": "human",
 "citizen": "RU",
@@ -1347,6 +1630,7 @@
 {
 "id": "AS-00104",
 "name": "Pham Tuan",
+"name_mcdowell": "Pham Tuan",
 "short": "Pham T.",
 "being": "human",
 "citizen": "VN",
@@ -1360,6 +1644,7 @@
 {
 "id": "AS-00105",
 "name": "Tamayo Mendez, Arnaldo",
+"name_mcdowell": "Tamayo Mendez, Arnaldo",
 "short": "Tamayo Mendez, A.",
 "being": "human",
 "citizen": "CU",
@@ -1373,6 +1658,7 @@
 {
 "id": "AS-00106",
 "name": "Kizim, Leonid Denisovich",
+"name_mcdowell": "Kizim, Leonid Denisovich",
 "short": "Kizim, L.D.",
 "being": "human",
 "citizen": "RU",
@@ -1386,6 +1672,7 @@
 {
 "id": "AS-00107",
 "name": "Strekalov, Gennadiy Mikhailovich",
+"name_mcdowell": "Strekalov, Gennadiy Mikhailovich",
 "short": "Strekalov, G.M.",
 "being": "human",
 "citizen": "RU",
@@ -1399,6 +1686,7 @@
 {
 "id": "AS-00108",
 "name": "Savinykh, Viktor Petrovich",
+"name_mcdowell": "Savinykh, Viktor Petrovich",
 "short": "Savinykh, V.P.",
 "being": "human",
 "citizen": "RU",
@@ -1412,6 +1700,7 @@
 {
 "id": "AS-00109",
 "name": "Gurragcha, Jugderdemidiyn",
+"name_mcdowell": "Gurragcha, Jugderdemidiyn",
 "short": "Gurragcha, J.",
 "being": "human",
 "citizen": "MN",
@@ -1425,6 +1714,7 @@
 {
 "id": "AS-00110",
 "name": "Crippen, Robert 'Crip' Laurel",
+"name_mcdowell": "Crippen, Robert 'Crip' Laurel",
 "short": "Crippen, R.L.",
 "being": "human",
 "citizen": "US",
@@ -1438,6 +1728,7 @@
 {
 "id": "AS-00111",
 "name": "Prunariu, Dumitru Dorin",
+"name_mcdowell": "Prunariu, Dumitru Dorin",
 "short": "Prunariu, D.D.",
 "being": "human",
 "citizen": "RO",
@@ -1451,6 +1742,7 @@
 {
 "id": "AS-00112",
 "name": "Truly, Richard Harrison",
+"name_mcdowell": "Truly, Richard Harrison",
 "short": "Truly, R.H.",
 "being": "human",
 "citizen": "US",
@@ -1463,7 +1755,8 @@
 },
 {
 "id": "AS-00113",
-"name": "Fullerton, Charles *Gordon",
+"name": "Fullerton, Charles Gordon",
+"name_mcdowell": "Fullerton, Charles *Gordon",
 "short": "Fullerton, C.G.",
 "being": "human",
 "citizen": "US",
@@ -1477,6 +1770,7 @@
 {
 "id": "AS-00114",
 "name": "Berezovoy, Anatoliy Nikolaevich",
+"name_mcdowell": "Berezovoy, Anatoliy Nikolaevich",
 "short": "Berezovoy, A.N.",
 "being": "human",
 "citizen": "RU",
@@ -1490,6 +1784,7 @@
 {
 "id": "AS-00115",
 "name": "Chretien, Jean-Loup Jacques Marie",
+"name_mcdowell": "Chretien, Jean-Loup Jacques Marie",
 "short": "Chretien, J-L.",
 "being": "human",
 "citizen": "F",
@@ -1503,6 +1798,7 @@
 {
 "id": "AS-00116",
 "name": "Hartsfield, Henry Warren 'Hank'",
+"name_mcdowell": "Hartsfield, Henry Warren 'Hank'",
 "short": "Hartsfield, H.W.",
 "being": "human",
 "citizen": "US",
@@ -1516,6 +1812,7 @@
 {
 "id": "AS-00117",
 "name": "Serebrov, Aleksandr Aleksandrovich",
+"name_mcdowell": "Serebrov, Aleksandr Aleksandrovich",
 "short": "Serebrov, A.A.",
 "being": "human",
 "citizen": "RU",
@@ -1529,6 +1826,7 @@
 {
 "id": "AS-00118",
 "name": "Savitskaya, Svetlana Evgen'evna",
+"name_mcdowell": "Savitskaya, Svetlana Evgen'evna",
 "short": "Savitskaya, S.E.",
 "being": "human",
 "citizen": "RU",
@@ -1542,6 +1840,7 @@
 {
 "id": "AS-00119",
 "name": "Overmyer,  Robert Franklyn",
+"name_mcdowell": "Overmyer,  Robert Franklyn",
 "short": "Overmyer, R.F.",
 "being": "human",
 "citizen": "US",
@@ -1555,6 +1854,7 @@
 {
 "id": "AS-00120",
 "name": "Allen, Joseph Percival, IV",
+"name_mcdowell": "Allen, Joseph Percival, IV",
 "short": "Allen, J.P.",
 "being": "human",
 "citizen": "US",
@@ -1568,6 +1868,7 @@
 {
 "id": "AS-00121",
 "name": "Lenoir, William Benjamin",
+"name_mcdowell": "Lenoir, William Benjamin",
 "short": "Lenoir, W.B.",
 "being": "human",
 "citizen": "US",
@@ -1581,6 +1882,7 @@
 {
 "id": "AS-00122",
 "name": "Bobko, Karol Joseph 'Bo'",
+"name_mcdowell": "Bobko, Karol Joseph 'Bo'",
 "short": "Bobko, K.J.",
 "being": "human",
 "citizen": "US",
@@ -1593,7 +1895,8 @@
 },
 {
 "id": "AS-00123",
-"name": "Musgrave, Franklin *Story",
+"name": "Musgrave, Franklin Story",
+"name_mcdowell": "Musgrave, Franklin *Story",
 "short": "Musgrave, F.S.",
 "being": "human",
 "citizen": "US",
@@ -1607,6 +1910,7 @@
 {
 "id": "AS-00124",
 "name": "Peterson, Donald Herod",
+"name_mcdowell": "Peterson, Donald Herod",
 "short": "Peterson, D.H.",
 "being": "human",
 "citizen": "US",
@@ -1620,6 +1924,7 @@
 {
 "id": "AS-00125",
 "name": "Titov, Vladimir Georgevich",
+"name_mcdowell": "Titov, Vladimir Georgevich",
 "short": "Titov, V.G.",
 "being": "human",
 "citizen": "RU",
@@ -1633,6 +1938,7 @@
 {
 "id": "AS-00126",
 "name": "Hauck, Frederick Hamilton 'Rick'",
+"name_mcdowell": "Hauck, Frederick Hamilton 'Rick'",
 "short": "Hauck, F.H.",
 "being": "human",
 "citizen": "US",
@@ -1646,6 +1952,7 @@
 {
 "id": "AS-00127",
 "name": "Fabian, John McCreary",
+"name_mcdowell": "Fabian, John McCreary",
 "short": "Fabian, J.M.",
 "being": "human",
 "citizen": "US",
@@ -1659,6 +1966,7 @@
 {
 "id": "AS-00128",
 "name": "Ride, Sally Kristen",
+"name_mcdowell": "Ride, Sally Kristen",
 "short": "Ride, S.K.",
 "being": "human",
 "citizen": "US",
@@ -1672,6 +1980,7 @@
 {
 "id": "AS-00129",
 "name": "Thagard, Norman Earl",
+"name_mcdowell": "Thagard, Norman Earl",
 "short": "Thagard, N.E.",
 "being": "human",
 "citizen": "US",
@@ -1685,6 +1994,7 @@
 {
 "id": "AS-00130",
 "name": "Aleksandrov, Aleksandr Pavlovich",
+"name_mcdowell": "Aleksandrov, Aleksandr Pavlovich",
 "short": "Aleksandrov, A.P.",
 "being": "human",
 "citizen": "RU",
@@ -1698,6 +2008,7 @@
 {
 "id": "AS-00131",
 "name": "Brandenstein, Daniel Charles",
+"name_mcdowell": "Brandenstein, Daniel Charles",
 "short": "Brandenstein, D.C.",
 "being": "human",
 "citizen": "US",
@@ -1711,6 +2022,7 @@
 {
 "id": "AS-00132",
 "name": "Bluford, Guion 'Guy' Stewart, Jr",
+"name_mcdowell": "Bluford, Guion 'Guy' Stewart, Jr",
 "short": "Bluford, G.S.",
 "being": "human",
 "citizen": "US",
@@ -1724,6 +2036,7 @@
 {
 "id": "AS-00133",
 "name": "Gardner, Dale Allen",
+"name_mcdowell": "Gardner, Dale Allen",
 "short": "Gardner, D.A.",
 "being": "human",
 "citizen": "US",
@@ -1737,6 +2050,7 @@
 {
 "id": "AS-00134",
 "name": "Thornton, William Edgar",
+"name_mcdowell": "Thornton, William Edgar",
 "short": "Thornton, W.E.",
 "being": "human",
 "citizen": "US",
@@ -1750,6 +2064,7 @@
 {
 "id": "AS-00135",
 "name": "Shaw, Brewster Hopkinson, Jr",
+"name_mcdowell": "Shaw, Brewster Hopkinson, Jr",
 "short": "Shaw, B.H.",
 "being": "human",
 "citizen": "US",
@@ -1763,6 +2078,7 @@
 {
 "id": "AS-00136",
 "name": "Parker, Robert Allan Ridley",
+"name_mcdowell": "Parker, Robert Allan Ridley",
 "short": "Parker, R.A.R.",
 "being": "human",
 "citizen": "US",
@@ -1776,6 +2092,7 @@
 {
 "id": "AS-00137",
 "name": "Merbold, Ulf Dietrich",
+"name_mcdowell": "Merbold, Ulf Dietrich",
 "short": "Merbold, U.D.",
 "being": "human",
 "citizen": "D",
@@ -1789,6 +2106,7 @@
 {
 "id": "AS-00138",
 "name": "Lichtenberg, Byron Kurt",
+"name_mcdowell": "Lichtenberg, Byron Kurt",
 "short": "Lichtenberg, B.K.",
 "being": "human",
 "citizen": "US",
@@ -1802,6 +2120,7 @@
 {
 "id": "AS-00139",
 "name": "Gibson, Robert Lee 'Hoot'",
+"name_mcdowell": "Gibson, Robert Lee 'Hoot'",
 "short": "Gibson, R.L.",
 "being": "human",
 "citizen": "US",
@@ -1815,19 +2134,43 @@
 {
 "id": "AS-00140",
 "name": "McNair, Ronald Erwin",
+"name_mcdowell": "McNair, Ronald Erwin",
 "short": "McNair, R.E.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00140"
+"mcdowell": "AS-00140",
+"wikidata": "Q315730"
 },
 "born": "1950 Oct 21",
 "died": "1986 Jan 28",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62675786620,
+"date": "1986-01-28",
+"where": "off Cape Canaveral, Florida",
+"during": "flight",
+"loss": "challenger-1986",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q315730",
+"url": "https://www.wikidata.org/wiki/Q315730"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 },
 {
 "id": "AS-00141",
 "name": "Stewart, Robert Lee",
+"name_mcdowell": "Stewart, Robert Lee",
 "short": "Stewart, R.L.",
 "being": "human",
 "citizen": "US",
@@ -1841,6 +2184,7 @@
 {
 "id": "AS-00142",
 "name": "McCandless, Bruce, II",
+"name_mcdowell": "McCandless, Bruce, II",
 "short": "McCandless, B.",
 "being": "human",
 "citizen": "US",
@@ -1854,6 +2198,7 @@
 {
 "id": "AS-00143",
 "name": "Solov'yov, Vladimir Alekseevich",
+"name_mcdowell": "Solov'yov, Vladimir Alekseevich",
 "short": "Solov'yov, V.A.",
 "being": "human",
 "citizen": "RU",
@@ -1867,6 +2212,7 @@
 {
 "id": "AS-00144",
 "name": "At'kov, Oleg Yur'evich",
+"name_mcdowell": "At'kov, Oleg Yur'evich",
 "short": "At'kov, O.Yu.",
 "being": "human",
 "citizen": "RU",
@@ -1880,6 +2226,7 @@
 {
 "id": "AS-00145",
 "name": "Sharma, Rakesh",
+"name_mcdowell": "Sharma, Rakesh",
 "short": "Sharma, R.",
 "being": "human",
 "citizen": "IN",
@@ -1892,20 +2239,44 @@
 },
 {
 "id": "AS-00146",
-"name": "Scobee, Francis *Richard 'Dick'",
+"name": "Scobee, Francis Richard 'Dick'",
+"name_mcdowell": "Scobee, Francis *Richard 'Dick'",
 "short": "Scobee, F.R.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00146"
+"mcdowell": "AS-00146",
+"wikidata": "Q320047"
 },
 "born": "1939 May 19",
 "died": "1986 Jan 28",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62675786620,
+"date": "1986-01-28",
+"where": "off Cape Canaveral, Florida",
+"during": "flight",
+"loss": "challenger-1986",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q320047",
+"url": "https://www.wikidata.org/wiki/Q320047"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 },
 {
 "id": "AS-00147",
 "name": "Hart, Terry Jonathan",
+"name_mcdowell": "Hart, Terry Jonathan",
 "short": "Hart, T.J.",
 "being": "human",
 "citizen": "US",
@@ -1919,6 +2290,7 @@
 {
 "id": "AS-00148",
 "name": "Van Hoften, James Douglas Adrianus 'Ox'",
+"name_mcdowell": "Van Hoften, James Douglas Adrianus 'Ox'",
 "short": "Van Hoften, J.D.A.",
 "being": "human",
 "citizen": "US",
@@ -1932,6 +2304,7 @@
 {
 "id": "AS-00149",
 "name": "Nelson, George Driver 'Pinky'",
+"name_mcdowell": "Nelson, George Driver 'Pinky'",
 "short": "Nelson, G.D.",
 "being": "human",
 "citizen": "US",
@@ -1945,6 +2318,7 @@
 {
 "id": "AS-00150",
 "name": "Volk, Igor Petrovich",
+"name_mcdowell": "Volk, Igor Petrovich",
 "short": "Volk, I.P.",
 "being": "human",
 "citizen": "RU",
@@ -1958,6 +2332,7 @@
 {
 "id": "AS-00151",
 "name": "Coats, Michael Loyd",
+"name_mcdowell": "Coats, Michael Loyd",
 "short": "Coats, M.L.",
 "being": "human",
 "citizen": "US",
@@ -1970,7 +2345,8 @@
 },
 {
 "id": "AS-00152",
-"name": "Mullane, Richard *Michael",
+"name": "Mullane, Richard Michael",
+"name_mcdowell": "Mullane, Richard *Michael",
 "short": "Mullane, R.M.",
 "being": "human",
 "citizen": "US",
@@ -1984,6 +2360,7 @@
 {
 "id": "AS-00153",
 "name": "Hawley, Steven Alan",
+"name_mcdowell": "Hawley, Steven Alan",
 "short": "Hawley, S.A.",
 "being": "human",
 "citizen": "US",
@@ -1997,19 +2374,43 @@
 {
 "id": "AS-00154",
 "name": "Resnik, Judith Arlene",
+"name_mcdowell": "Resnik, Judith Arlene",
 "short": "Resnik, J.A.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00154"
+"mcdowell": "AS-00154",
+"wikidata": "Q49284"
 },
 "born": "1949 Apr  5",
 "died": "1986 Jan 28",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62675786620,
+"date": "1986-01-28",
+"where": "off Cape Canaveral, Florida",
+"during": "flight",
+"loss": "challenger-1986",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q49284",
+"url": "https://www.wikidata.org/wiki/Q49284"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 },
 {
 "id": "AS-00155",
 "name": "Walker, Charles David",
+"name_mcdowell": "Walker, Charles David",
 "short": "Walker, C.D.",
 "being": "human",
 "citizen": "US",
@@ -2023,6 +2424,7 @@
 {
 "id": "AS-00156",
 "name": "McBride, Jon Andrew",
+"name_mcdowell": "McBride, Jon Andrew",
 "short": "McBride, J.A.",
 "being": "human",
 "citizen": "US",
@@ -2036,6 +2438,7 @@
 {
 "id": "AS-00157",
 "name": "Sullivan, Kathryn Dwyer",
+"name_mcdowell": "Sullivan, Kathryn Dwyer",
 "short": "Sullivan, K.D.",
 "being": "human",
 "citizen": "US",
@@ -2049,6 +2452,7 @@
 {
 "id": "AS-00158",
 "name": "Leestma, David Cornell",
+"name_mcdowell": "Leestma, David Cornell",
 "short": "Leestma, D.C.",
 "being": "human",
 "citizen": "US",
@@ -2061,7 +2465,8 @@
 },
 {
 "id": "AS-00159",
-"name": "Garneau, Joseph Jean-Pierre *Marc",
+"name": "Garneau, Joseph Jean-Pierre Marc",
+"name_mcdowell": "Garneau, Joseph Jean-Pierre *Marc",
 "short": "Garneau, M.",
 "being": "human",
 "citizen": "CA",
@@ -2075,6 +2480,7 @@
 {
 "id": "AS-00160",
 "name": "Scully-Power, Paul Desmond",
+"name_mcdowell": "Scully-Power, Paul Desmond",
 "short": "Scully-Power, P.D.",
 "being": "human",
 "citizen": "US",
@@ -2088,6 +2494,7 @@
 {
 "id": "AS-00161",
 "name": "Walker, David Mathieson",
+"name_mcdowell": "Walker, David Mathieson",
 "short": "Walker, D.M.",
 "being": "human",
 "citizen": "US",
@@ -2101,6 +2508,7 @@
 {
 "id": "AS-00162",
 "name": "Fisher (Tingle), Anna Lee",
+"name_mcdowell": "Fisher (Tingle), Anna Lee",
 "short": "Fisher, A.L.",
 "being": "human",
 "citizen": "US",
@@ -2114,6 +2522,7 @@
 {
 "id": "AS-00163",
 "name": "Shriver, Loren James",
+"name_mcdowell": "Shriver, Loren James",
 "short": "Shriver, L.J.",
 "being": "human",
 "citizen": "US",
@@ -2127,19 +2536,43 @@
 {
 "id": "AS-00164",
 "name": "Onizuka, Ellison Shoji",
+"name_mcdowell": "Onizuka, Ellison Shoji",
 "short": "Onizuka, E.S.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00164"
+"mcdowell": "AS-00164",
+"wikidata": "Q349365"
 },
 "born": "1946 Jun 24",
 "died": "1986 Jan 28",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62675786620,
+"date": "1986-01-28",
+"where": "off Cape Canaveral, Florida",
+"during": "flight",
+"loss": "challenger-1986",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q349365",
+"url": "https://www.wikidata.org/wiki/Q349365"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 },
 {
 "id": "AS-00165",
 "name": "Buchli, James Frederick",
+"name_mcdowell": "Buchli, James Frederick",
 "short": "Buchli, J.F.",
 "being": "human",
 "citizen": "US",
@@ -2153,6 +2586,7 @@
 {
 "id": "AS-00166",
 "name": "Payton, Gary Eugene",
+"name_mcdowell": "Payton, Gary Eugene",
 "short": "Payton, G.E.",
 "being": "human",
 "citizen": "US",
@@ -2166,6 +2600,7 @@
 {
 "id": "AS-00167",
 "name": "Williams, Donald Edward",
+"name_mcdowell": "Williams, Donald Edward",
 "short": "Williams, D.E.",
 "being": "human",
 "citizen": "US",
@@ -2178,7 +2613,8 @@
 },
 {
 "id": "AS-00168",
-"name": "Seddon, Margaret *Rhea",
+"name": "Seddon, Margaret Rhea",
+"name_mcdowell": "Seddon, Margaret *Rhea",
 "short": "Seddon, M.R.",
 "being": "human",
 "citizen": "US",
@@ -2191,7 +2627,8 @@
 },
 {
 "id": "AS-00169",
-"name": "Griggs, Stanley *David",
+"name": "Griggs, Stanley David",
+"name_mcdowell": "Griggs, Stanley *David",
 "short": "Griggs, S.D.",
 "being": "human",
 "citizen": "US",
@@ -2205,6 +2642,7 @@
 {
 "id": "AS-00170",
 "name": "Hoffman, Jeffrey Alan",
+"name_mcdowell": "Hoffman, Jeffrey Alan",
 "short": "Hoffman, J.A.",
 "being": "human",
 "citizen": "US",
@@ -2217,7 +2655,8 @@
 },
 {
 "id": "AS-00171",
-"name": "Garn, Edwin *Jacob 'Jake'",
+"name": "Garn, Edwin Jacob 'Jake'",
+"name_mcdowell": "Garn, Edwin *Jacob 'Jake'",
 "short": "Garn, E.J.",
 "being": "human",
 "citizen": "US",
@@ -2231,6 +2670,7 @@
 {
 "id": "AS-00172",
 "name": "Gregory, Frederick Drew",
+"name_mcdowell": "Gregory, Frederick Drew",
 "short": "Gregory, F.D.",
 "being": "human",
 "citizen": "US",
@@ -2244,6 +2684,7 @@
 {
 "id": "AS-00173",
 "name": "Lind, Don Leslie",
+"name_mcdowell": "Lind, Don Leslie",
 "short": "Lind, D.L.",
 "being": "human",
 "citizen": "US",
@@ -2257,6 +2698,7 @@
 {
 "id": "AS-00174",
 "name": "Wang, Taylor Gun-Jin",
+"name_mcdowell": "Wang, Taylor Gun-Jin",
 "short": "Wang, T.G-J.",
 "being": "human",
 "citizen": "US",
@@ -2270,6 +2712,7 @@
 {
 "id": "AS-00175",
 "name": "Van den Berg, Lodewijk",
+"name_mcdowell": "Van den Berg, Lodewijk",
 "short": "Van den Berg, L.",
 "being": "human",
 "citizen": "US",
@@ -2283,6 +2726,7 @@
 {
 "id": "AS-00176",
 "name": "Creighton, John Oliver",
+"name_mcdowell": "Creighton, John Oliver",
 "short": "Creighton, J.O.",
 "being": "human",
 "citizen": "US",
@@ -2296,6 +2740,7 @@
 {
 "id": "AS-00177",
 "name": "Nagel, Steven Ray",
+"name_mcdowell": "Nagel, Steven Ray",
 "short": "Nagel, S.R.",
 "being": "human",
 "citizen": "US",
@@ -2308,7 +2753,8 @@
 },
 {
 "id": "AS-00178",
-"name": "Lucid (Wells), Matilda *Shannon",
+"name": "Lucid (Wells), Matilda Shannon",
+"name_mcdowell": "Lucid (Wells), Matilda *Shannon",
 "short": "Lucid, M.S.",
 "being": "human",
 "citizen": "US",
@@ -2322,6 +2768,7 @@
 {
 "id": "AS-00179",
 "name": "Al-Saud,Sultan ibn Salman ibn Abdulaziz",
+"name_mcdowell": "Al-Saud,Sultan ibn Salman ibn Abdulaziz",
 "short": "Al-Saud, S.",
 "being": "human",
 "citizen": "SA",
@@ -2335,6 +2782,7 @@
 {
 "id": "AS-00180",
 "name": "Baudry, Patrick Pierre Roger",
+"name_mcdowell": "Baudry, Patrick Pierre Roger",
 "short": "Baudry, P.",
 "being": "human",
 "citizen": "F",
@@ -2348,6 +2796,7 @@
 {
 "id": "AS-00181",
 "name": "Bridges, Roy Dunbard, Jr",
+"name_mcdowell": "Bridges, Roy Dunbard, Jr",
 "short": "Bridges, R.D.",
 "being": "human",
 "citizen": "US",
@@ -2361,6 +2810,7 @@
 {
 "id": "AS-00182",
 "name": "Henize, Karl Gordon",
+"name_mcdowell": "Henize, Karl Gordon",
 "short": "Henize, K.G.",
 "being": "human",
 "citizen": "US",
@@ -2374,6 +2824,7 @@
 {
 "id": "AS-00183",
 "name": "England, Anthony Wayne",
+"name_mcdowell": "England, Anthony Wayne",
 "short": "England, A.W.",
 "being": "human",
 "citizen": "US",
@@ -2387,6 +2838,7 @@
 {
 "id": "AS-00184",
 "name": "Acton, Loren Wilbur",
+"name_mcdowell": "Acton, Loren Wilbur",
 "short": "Acton, L.W.",
 "being": "human",
 "citizen": "US",
@@ -2400,6 +2852,7 @@
 {
 "id": "AS-00185",
 "name": "Bartoe, John-David Francis",
+"name_mcdowell": "Bartoe, John-David Francis",
 "short": "Bartoe, J-D.F.",
 "being": "human",
 "citizen": "US",
@@ -2413,6 +2866,7 @@
 {
 "id": "AS-00186",
 "name": "Covey, Richard Oswalt",
+"name_mcdowell": "Covey, Richard Oswalt",
 "short": "Covey, R.O.",
 "being": "human",
 "citizen": "US",
@@ -2426,6 +2880,7 @@
 {
 "id": "AS-00187",
 "name": "Lounge, John Michael",
+"name_mcdowell": "Lounge, John Michael",
 "short": "Lounge, J.M.",
 "being": "human",
 "citizen": "US",
@@ -2439,6 +2894,7 @@
 {
 "id": "AS-00188",
 "name": "Fisher, William Frederick",
+"name_mcdowell": "Fisher, William Frederick",
 "short": "Fisher, W.F.",
 "being": "human",
 "citizen": "US",
@@ -2452,6 +2908,7 @@
 {
 "id": "AS-00189",
 "name": "Vasyutin, Vladimir Vladimirovich",
+"name_mcdowell": "Vasyutin, Vladimir Vladimirovich",
 "short": "Vasyutin, V.V.",
 "being": "human",
 "citizen": "RU",
@@ -2465,6 +2922,7 @@
 {
 "id": "AS-00190",
 "name": "Volkov, Aleksandr Aleksandrovich",
+"name_mcdowell": "Volkov, Aleksandr Aleksandrovich",
 "short": "Volkov, A.A.",
 "being": "human",
 "citizen": "RU",
@@ -2478,6 +2936,7 @@
 {
 "id": "AS-00191",
 "name": "Grabe, Ronald John",
+"name_mcdowell": "Grabe, Ronald John",
 "short": "Grabe, R.J.",
 "being": "human",
 "citizen": "US",
@@ -2491,6 +2950,7 @@
 {
 "id": "AS-00192",
 "name": "Hilmers, David Carl",
+"name_mcdowell": "Hilmers, David Carl",
 "short": "Hilmers, D.C.",
 "being": "human",
 "citizen": "US",
@@ -2504,6 +2964,7 @@
 {
 "id": "AS-00193",
 "name": "Pailes, William Arthur",
+"name_mcdowell": "Pailes, William Arthur",
 "short": "Pailes, W.A.",
 "being": "human",
 "citizen": "US",
@@ -2517,6 +2978,7 @@
 {
 "id": "AS-00194",
 "name": "Dunbar, Bonnie Jeanne",
+"name_mcdowell": "Dunbar, Bonnie Jeanne",
 "short": "Dunbar, B.J.",
 "being": "human",
 "citizen": "US",
@@ -2530,6 +2992,7 @@
 {
 "id": "AS-00195",
 "name": "Furrer, Reinhard Alfred",
+"name_mcdowell": "Furrer, Reinhard Alfred",
 "short": "Furrer, R.A.",
 "being": "human",
 "citizen": "D",
@@ -2543,6 +3006,7 @@
 {
 "id": "AS-00196",
 "name": "Messerschmid, Ernst Willi",
+"name_mcdowell": "Messerschmid, Ernst Willi",
 "short": "Messerschmid, E.W.",
 "being": "human",
 "citizen": "D",
@@ -2556,6 +3020,7 @@
 {
 "id": "AS-00197",
 "name": "Ockels, Wubbo Johannes",
+"name_mcdowell": "Ockels, Wubbo Johannes",
 "short": "Ockels, W.J.",
 "being": "human",
 "citizen": "NL",
@@ -2569,6 +3034,7 @@
 {
 "id": "AS-00198",
 "name": "O'Connor, Bryan Daniel",
+"name_mcdowell": "O'Connor, Bryan Daniel",
 "short": "O'Connor, B.D.",
 "being": "human",
 "citizen": "US",
@@ -2582,6 +3048,7 @@
 {
 "id": "AS-00199",
 "name": "Ross, Jerry Lynn",
+"name_mcdowell": "Ross, Jerry Lynn",
 "short": "Ross, J.L.",
 "being": "human",
 "citizen": "US",
@@ -2595,6 +3062,7 @@
 {
 "id": "AS-00200",
 "name": "Cleave, Mary Louise",
+"name_mcdowell": "Cleave, Mary Louise",
 "short": "Cleave, M.L.",
 "being": "human",
 "citizen": "US",
@@ -2608,6 +3076,7 @@
 {
 "id": "AS-00201",
 "name": "Spring, Sherwood Clark",
+"name_mcdowell": "Spring, Sherwood Clark",
 "short": "Spring, S.C.",
 "being": "human",
 "citizen": "US",
@@ -2621,6 +3090,7 @@
 {
 "id": "AS-00202",
 "name": "Neri Vela, Rodolfo",
+"name_mcdowell": "Neri Vela, Rodolfo",
 "short": "Neri Vela, R.",
 "being": "human",
 "citizen": "MX",
@@ -2634,6 +3104,7 @@
 {
 "id": "AS-00203",
 "name": "Bolden, Charles Frank, Jr",
+"name_mcdowell": "Bolden, Charles Frank, Jr",
 "short": "Bolden, C.F.",
 "being": "human",
 "citizen": "US",
@@ -2647,6 +3118,7 @@
 {
 "id": "AS-00204",
 "name": "Chang-Diaz, Franklin Ramon",
+"name_mcdowell": "Chang-Diaz, Franklin Ramon",
 "short": "Chang-Diaz, F.R.",
 "being": "human",
 "citizen": "US",
@@ -2660,6 +3132,7 @@
 {
 "id": "AS-00205",
 "name": "Cenker, Robert Jospeh",
+"name_mcdowell": "Cenker, Robert Jospeh",
 "short": "Cenker, R.J.",
 "being": "human",
 "citizen": "US",
@@ -2672,7 +3145,8 @@
 },
 {
 "id": "AS-00206",
-"name": "Nelson, Clarence *William 'Bill', Jr",
+"name": "Nelson, Clarence William 'Bill', Jr",
+"name_mcdowell": "Nelson, Clarence *William 'Bill', Jr",
 "short": "Nelson, C.W.",
 "being": "human",
 "citizen": "US",
@@ -2686,6 +3160,7 @@
 {
 "id": "AS-00207",
 "name": "Laveykin, Aleksandr Ivanovich",
+"name_mcdowell": "Laveykin, Aleksandr Ivanovich",
 "short": "Laveykin, A.I.",
 "being": "human",
 "citizen": "RU",
@@ -2699,6 +3174,7 @@
 {
 "id": "AS-00208",
 "name": "Viktorenko, Aleksandr Stepanovich",
+"name_mcdowell": "Viktorenko, Aleksandr Stepanovich",
 "short": "Viktorenko, A.S.",
 "being": "human",
 "citizen": "RU",
@@ -2712,6 +3188,7 @@
 {
 "id": "AS-00209",
 "name": "Faris, Muhammed Ahmed",
+"name_mcdowell": "Faris, Muhammed Ahmed",
 "short": "Faris, M.",
 "being": "human",
 "citizen": "SY",
@@ -2725,6 +3202,7 @@
 {
 "id": "AS-00210",
 "name": "Manarov, Musa Khiramanovich",
+"name_mcdowell": "Manarov, Musa Khiramanovich",
 "short": "Manarov, M.Kh.",
 "being": "human",
 "citizen": "RU",
@@ -2738,6 +3216,7 @@
 {
 "id": "AS-00211",
 "name": "Levchenko, Anatoliy Semenovich",
+"name_mcdowell": "Levchenko, Anatoliy Semenovich",
 "short": "Levchenko, A.S.",
 "being": "human",
 "citizen": "RU",
@@ -2751,6 +3230,7 @@
 {
 "id": "AS-00212",
 "name": "Solov'yov, Anatoliy Yakovlevich",
+"name_mcdowell": "Solov'yov, Anatoliy Yakovlevich",
 "short": "Solov'yov, A.Ya.",
 "being": "human",
 "citizen": "RU",
@@ -2764,6 +3244,7 @@
 {
 "id": "AS-00213",
 "name": "Alexandrov, Alexander Panayotov",
+"name_mcdowell": "Alexandrov, Alexander Panayotov",
 "short": "Alexandrov, A.P.",
 "being": "human",
 "citizen": "BG",
@@ -2777,6 +3258,7 @@
 {
 "id": "AS-00214",
 "name": "Polyakov, Valeriy Vladimirovich",
+"name_mcdowell": "Polyakov, Valeriy Vladimirovich",
 "short": "Polyakov, V.V.",
 "being": "human",
 "citizen": "RU",
@@ -2790,6 +3272,7 @@
 {
 "id": "AS-00215",
 "name": "Momand (Mohmand), Abdol Ahad",
+"name_mcdowell": "Momand (Mohmand), Abdol Ahad",
 "short": "Mohmand, A.A.",
 "being": "human",
 "citizen": "AF",
@@ -2803,6 +3286,7 @@
 {
 "id": "AS-00216",
 "name": "Krikalyov, Sergey Konstantinovich",
+"name_mcdowell": "Krikalyov, Sergey Konstantinovich",
 "short": "Krikalyov, S.K.",
 "being": "human",
 "citizen": "RU",
@@ -2816,6 +3300,7 @@
 {
 "id": "AS-00217",
 "name": "Gardner, Guy Spence",
+"name_mcdowell": "Gardner, Guy Spence",
 "short": "Gardner, G.S.",
 "being": "human",
 "citizen": "US",
@@ -2829,6 +3314,7 @@
 {
 "id": "AS-00218",
 "name": "Shepherd, William McMichael",
+"name_mcdowell": "Shepherd, William McMichael",
 "short": "Shepherd, W.M.",
 "being": "human",
 "citizen": "US",
@@ -2842,6 +3328,7 @@
 {
 "id": "AS-00219",
 "name": "Blaha, John Elmer",
+"name_mcdowell": "Blaha, John Elmer",
 "short": "Blaha, J.E.",
 "being": "human",
 "citizen": "US",
@@ -2855,6 +3342,7 @@
 {
 "id": "AS-00220",
 "name": "Springer, Robert Clyde",
+"name_mcdowell": "Springer, Robert Clyde",
 "short": "Springer, R.C.",
 "being": "human",
 "citizen": "US",
@@ -2868,6 +3356,7 @@
 {
 "id": "AS-00221",
 "name": "Bagian, James Philip",
+"name_mcdowell": "Bagian, James Philip",
 "short": "Bagian, J.P.",
 "being": "human",
 "citizen": "US",
@@ -2881,6 +3370,7 @@
 {
 "id": "AS-00222",
 "name": "Lee, Mark Charles",
+"name_mcdowell": "Lee, Mark Charles",
 "short": "Lee, M.C.",
 "being": "human",
 "citizen": "US",
@@ -2894,6 +3384,7 @@
 {
 "id": "AS-00223",
 "name": "Richards, Richard Noel",
+"name_mcdowell": "Richards, Richard Noel",
 "short": "Richards, R.N.",
 "being": "human",
 "citizen": "US",
@@ -2907,6 +3398,7 @@
 {
 "id": "AS-00224",
 "name": "Adamson, James Craig",
+"name_mcdowell": "Adamson, James Craig",
 "short": "Adamson, J.C.",
 "being": "human",
 "citizen": "US",
@@ -2920,6 +3412,7 @@
 {
 "id": "AS-00225",
 "name": "Brown, Mark Neil",
+"name_mcdowell": "Brown, Mark Neil",
 "short": "Brown, M.N.",
 "being": "human",
 "citizen": "US",
@@ -2933,6 +3426,7 @@
 {
 "id": "AS-00226",
 "name": "McCulley, Michael James",
+"name_mcdowell": "McCulley, Michael James",
 "short": "McCulley, M.J.",
 "being": "human",
 "citizen": "US",
@@ -2946,6 +3440,7 @@
 {
 "id": "AS-00227",
 "name": "Baker (Shulman), Ellen Louise",
+"name_mcdowell": "Baker (Shulman), Ellen Louise",
 "short": "Baker, E.L.",
 "being": "human",
 "citizen": "US",
@@ -2959,6 +3454,7 @@
 {
 "id": "AS-00228",
 "name": "Carter, Manley Lanier 'Sonny', Jr",
+"name_mcdowell": "Carter, Manley Lanier 'Sonny', Jr",
 "short": "Carter, M.L.",
 "being": "human",
 "citizen": "US",
@@ -2972,6 +3468,7 @@
 {
 "id": "AS-00229",
 "name": "Thornton (Cordell), Kathryn",
+"name_mcdowell": "Thornton (Cordell), Kathryn",
 "short": "Thornton, K.",
 "being": "human",
 "citizen": "US",
@@ -2985,6 +3482,7 @@
 {
 "id": "AS-00230",
 "name": "Wetherbee, James Donald",
+"name_mcdowell": "Wetherbee, James Donald",
 "short": "Wetherbee, J.D.",
 "being": "human",
 "citizen": "US",
@@ -2998,6 +3496,7 @@
 {
 "id": "AS-00231",
 "name": "Ivins, Marsha Sue",
+"name_mcdowell": "Ivins, Marsha Sue",
 "short": "Ivins, M.S.",
 "being": "human",
 "citizen": "US",
@@ -3010,7 +3509,8 @@
 },
 {
 "id": "AS-00232",
-"name": "Low, George *David",
+"name": "Low, George David",
+"name_mcdowell": "Low, George *David",
 "short": "Low, G.D.",
 "being": "human",
 "citizen": "US",
@@ -3024,6 +3524,7 @@
 {
 "id": "AS-00233",
 "name": "Balandin, Aleksandr Nikolaevich",
+"name_mcdowell": "Balandin, Aleksandr Nikolaevich",
 "short": "Balandin, A.N.",
 "being": "human",
 "citizen": "RU",
@@ -3037,6 +3538,7 @@
 {
 "id": "AS-00234",
 "name": "Casper, John Howard",
+"name_mcdowell": "Casper, John Howard",
 "short": "Casper, J.H.",
 "being": "human",
 "citizen": "US",
@@ -3050,6 +3552,7 @@
 {
 "id": "AS-00235",
 "name": "Thuot, Pierre Joseph",
+"name_mcdowell": "Thuot, Pierre Joseph",
 "short": "Thuot, P.J.",
 "being": "human",
 "citizen": "US",
@@ -3063,6 +3566,7 @@
 {
 "id": "AS-00236",
 "name": "Manakov, Gennadiy Mikhailovich",
+"name_mcdowell": "Manakov, Gennadiy Mikhailovich",
 "short": "Manakov, G.M.",
 "being": "human",
 "citizen": "RU",
@@ -3076,6 +3580,7 @@
 {
 "id": "AS-00237",
 "name": "Cabana, Robert Donald",
+"name_mcdowell": "Cabana, Robert Donald",
 "short": "Cabana, R.D.",
 "being": "human",
 "citizen": "US",
@@ -3089,6 +3594,7 @@
 {
 "id": "AS-00238",
 "name": "Melnick, Bruce Edward",
+"name_mcdowell": "Melnick, Bruce Edward",
 "short": "Melnick, B.E.",
 "being": "human",
 "citizen": "US",
@@ -3102,6 +3608,7 @@
 {
 "id": "AS-00239",
 "name": "Akers, Thomas Dale",
+"name_mcdowell": "Akers, Thomas Dale",
 "short": "Akers, T.D.",
 "being": "human",
 "citizen": "US",
@@ -3115,6 +3622,7 @@
 {
 "id": "AS-00240",
 "name": "Culbertson, Frank Lee, Jr",
+"name_mcdowell": "Culbertson, Frank Lee, Jr",
 "short": "Culbertson, F.L.",
 "being": "human",
 "citizen": "US",
@@ -3128,6 +3636,7 @@
 {
 "id": "AS-00241",
 "name": "Meade, Carl Joseph",
+"name_mcdowell": "Meade, Carl Joseph",
 "short": "Meade, C.J.",
 "being": "human",
 "citizen": "US",
@@ -3141,6 +3650,7 @@
 {
 "id": "AS-00242",
 "name": "Gemar, Charles Donald 'Sam'",
+"name_mcdowell": "Gemar, Charles Donald 'Sam'",
 "short": "Gemar, C.D.",
 "being": "human",
 "citizen": "US",
@@ -3154,6 +3664,7 @@
 {
 "id": "AS-00243",
 "name": "Durrance, Samuel Thornton",
+"name_mcdowell": "Durrance, Samuel Thornton",
 "short": "Durrance, S.T.",
 "being": "human",
 "citizen": "US",
@@ -3167,6 +3678,7 @@
 {
 "id": "AS-00244",
 "name": "Parise, Ronald Anthony",
+"name_mcdowell": "Parise, Ronald Anthony",
 "short": "Parise, R.A.",
 "being": "human",
 "citizen": "US",
@@ -3180,6 +3692,7 @@
 {
 "id": "AS-00245",
 "name": "Afanas'ev, Viktor Mikhailovich",
+"name_mcdowell": "Afanas'ev, Viktor Mikhailovich",
 "short": "Afanas'ev, V.M.",
 "being": "human",
 "citizen": "RU",
@@ -3193,6 +3706,7 @@
 {
 "id": "AS-00246",
 "name": "Akiyama Toyohiro",
+"name_mcdowell": "Akiyama Toyohiro",
 "short": "Akiyama T.",
 "being": "human",
 "citizen": "J",
@@ -3206,6 +3720,7 @@
 {
 "id": "AS-00247",
 "name": "Cameron, Kenneth Donald",
+"name_mcdowell": "Cameron, Kenneth Donald",
 "short": "Cameron, K.D.",
 "being": "human",
 "citizen": "US",
@@ -3219,6 +3734,7 @@
 {
 "id": "AS-00248",
 "name": "Godwin, Linda Maxine",
+"name_mcdowell": "Godwin, Linda Maxine",
 "short": "Godwin, L.M.",
 "being": "human",
 "citizen": "US",
@@ -3232,6 +3748,7 @@
 {
 "id": "AS-00249",
 "name": "Apt, Jerome 'Jay', III",
+"name_mcdowell": "Apt, Jerome 'Jay', III",
 "short": "Apt, J.",
 "being": "human",
 "citizen": "US",
@@ -3244,7 +3761,8 @@
 },
 {
 "id": "AS-00250",
-"name": "Hammond, Lloyd *Blaine, Jr",
+"name": "Hammond, Lloyd Blaine, Jr",
+"name_mcdowell": "Hammond, Lloyd *Blaine, Jr",
 "short": "Hammond, L.B.",
 "being": "human",
 "citizen": "US",
@@ -3258,6 +3776,7 @@
 {
 "id": "AS-00251",
 "name": "Harbaugh, Gregory Jordan",
+"name_mcdowell": "Harbaugh, Gregory Jordan",
 "short": "Harbaugh, G.J.",
 "being": "human",
 "citizen": "US",
@@ -3271,6 +3790,7 @@
 {
 "id": "AS-00252",
 "name": "McMonagle, Donald Ray",
+"name_mcdowell": "McMonagle, Donald Ray",
 "short": "McMonagle, D.R.",
 "being": "human",
 "citizen": "US",
@@ -3283,7 +3803,8 @@
 },
 {
 "id": "AS-00253",
-"name": "Veach, Charles *Lacy",
+"name": "Veach, Charles Lacy",
+"name_mcdowell": "Veach, Charles *Lacy",
 "short": "Veach, C.L.",
 "being": "human",
 "citizen": "US",
@@ -3297,6 +3818,7 @@
 {
 "id": "AS-00254",
 "name": "Hieb, Richard James",
+"name_mcdowell": "Hieb, Richard James",
 "short": "Hieb, R.J.",
 "being": "human",
 "citizen": "US",
@@ -3310,6 +3832,7 @@
 {
 "id": "AS-00255",
 "name": "Artsebarskiy, Anatoliy Pavlovich",
+"name_mcdowell": "Artsebarskiy, Anatoliy Pavlovich",
 "short": "Artsebarskiy, A.P.",
 "being": "human",
 "citizen": "UA",
@@ -3323,6 +3846,7 @@
 {
 "id": "AS-00256",
 "name": "Sharman, Helen Patricia",
+"name_mcdowell": "Sharman, Helen Patricia",
 "short": "Sharman, H.P.",
 "being": "human",
 "citizen": "UK",
@@ -3336,6 +3860,7 @@
 {
 "id": "AS-00257",
 "name": "Gutierrez, Sidney McNeill",
+"name_mcdowell": "Gutierrez, Sidney McNeill",
 "short": "Gutierrez, S.M.",
 "being": "human",
 "citizen": "US",
@@ -3349,6 +3874,7 @@
 {
 "id": "AS-00258",
 "name": "Jernigan, Tamara Elizabeth",
+"name_mcdowell": "Jernigan, Tamara Elizabeth",
 "short": "Jernigan, T.E.",
 "being": "human",
 "citizen": "US",
@@ -3362,6 +3888,7 @@
 {
 "id": "AS-00259",
 "name": "Gaffney, Francis Andrew 'Drew'",
+"name_mcdowell": "Gaffney, Francis Andrew 'Drew'",
 "short": "Gaffney, F.A.",
 "being": "human",
 "citizen": "US",
@@ -3375,6 +3902,7 @@
 {
 "id": "AS-00260",
 "name": "Hughes-Fulford, Millie Elizabeth Wiley",
+"name_mcdowell": "Hughes-Fulford, Millie Elizabeth Wiley",
 "short": "Hughes-Fulford, M.E.",
 "being": "human",
 "citizen": "US",
@@ -3388,6 +3916,7 @@
 {
 "id": "AS-00261",
 "name": "Baker, Michael Allen",
+"name_mcdowell": "Baker, Michael Allen",
 "short": "Baker, M.A.",
 "being": "human",
 "citizen": "US",
@@ -3401,6 +3930,7 @@
 {
 "id": "AS-00262",
 "name": "Reightler, Kenneth Stanley, Jr",
+"name_mcdowell": "Reightler, Kenneth Stanley, Jr",
 "short": "Reightler, K.S.",
 "being": "human",
 "citizen": "US",
@@ -3414,6 +3944,7 @@
 {
 "id": "AS-00263",
 "name": "Aubakirov, Tokhtar Ongarb'evich",
+"name_mcdowell": "Aubakirov, Tokhtar Ongarb'evich",
 "short": "Aubakirov, T.O.",
 "being": "human",
 "citizen": "KZ",
@@ -3427,6 +3958,7 @@
 {
 "id": "AS-00264",
 "name": "Viehbock, Franz Artur",
+"name_mcdowell": "Viehbock, Franz Artur",
 "short": "Viehbock, F.A.",
 "being": "human",
 "citizen": "AT",
@@ -3439,7 +3971,8 @@
 },
 {
 "id": "AS-00265",
-"name": "Henricks, Terence *Thomas 'Tom'",
+"name": "Henricks, Terence Thomas 'Tom'",
+"name_mcdowell": "Henricks, Terence *Thomas 'Tom'",
 "short": "Henricks, T.T.",
 "being": "human",
 "citizen": "US",
@@ -3453,6 +3986,7 @@
 {
 "id": "AS-00266",
 "name": "Voss, James Shelton",
+"name_mcdowell": "Voss, James Shelton",
 "short": "Voss, J.S.",
 "being": "human",
 "citizen": "US",
@@ -3466,6 +4000,7 @@
 {
 "id": "AS-00267",
 "name": "Runco, Mario, Jr",
+"name_mcdowell": "Runco, Mario, Jr",
 "short": "Runco, M.",
 "being": "human",
 "citizen": "US",
@@ -3479,6 +4014,7 @@
 {
 "id": "AS-00268",
 "name": "Hennen, Thomas John",
+"name_mcdowell": "Hennen, Thomas John",
 "short": "Hennen, T.J.",
 "being": "human",
 "citizen": "US",
@@ -3492,6 +4028,7 @@
 {
 "id": "AS-00269",
 "name": "Oswald, Stephen Scot",
+"name_mcdowell": "Oswald, Stephen Scot",
 "short": "Oswald, S.S.",
 "being": "human",
 "citizen": "US",
@@ -3505,6 +4042,7 @@
 {
 "id": "AS-00270",
 "name": "Readdy, William Francis",
+"name_mcdowell": "Readdy, William Francis",
 "short": "Readdy, W.F.",
 "being": "human",
 "citizen": "US",
@@ -3518,6 +4056,7 @@
 {
 "id": "AS-00271",
 "name": "Bondar, Roberta Lynn",
+"name_mcdowell": "Bondar, Roberta Lynn",
 "short": "Bondar, R.L.",
 "being": "human",
 "citizen": "CA",
@@ -3531,6 +4070,7 @@
 {
 "id": "AS-00272",
 "name": "Kaleri, Aleksandr Yurievich",
+"name_mcdowell": "Kaleri, Aleksandr Yurievich",
 "short": "Kaleri, A.Yu.",
 "being": "human",
 "citizen": "RU",
@@ -3544,6 +4084,7 @@
 {
 "id": "AS-00273",
 "name": "Flade, Klaus-Dietrich",
+"name_mcdowell": "Flade, Klaus-Dietrich",
 "short": "Flade, K-D.",
 "being": "human",
 "citizen": "D",
@@ -3557,6 +4098,7 @@
 {
 "id": "AS-00274",
 "name": "Duffy, Brian",
+"name_mcdowell": "Duffy, Brian",
 "short": "Duffy, B.",
 "being": "human",
 "citizen": "US",
@@ -3569,7 +4111,8 @@
 },
 {
 "id": "AS-00275",
-"name": "Foale, Colin *Michael",
+"name": "Foale, Colin Michael",
+"name_mcdowell": "Foale, Colin *Michael",
 "short": "Foale, C.M.",
 "being": "human",
 "citizen": "US",
@@ -3583,6 +4126,7 @@
 {
 "id": "AS-00276",
 "name": "Frimout, Dirk Dries David Damiaan",
+"name_mcdowell": "Frimout, Dirk Dries David Damiaan",
 "short": "Frimout, D.",
 "being": "human",
 "citizen": "B",
@@ -3596,6 +4140,7 @@
 {
 "id": "AS-00277",
 "name": "Chilton, Kevin Patrick",
+"name_mcdowell": "Chilton, Kevin Patrick",
 "short": "Chilton, K.P.",
 "being": "human",
 "citizen": "US",
@@ -3609,6 +4154,7 @@
 {
 "id": "AS-00278",
 "name": "Bowersox, Kenneth Dwane",
+"name_mcdowell": "Bowersox, Kenneth Dwane",
 "short": "Bowersox, K.D.",
 "being": "human",
 "citizen": "US",
@@ -3622,6 +4168,7 @@
 {
 "id": "AS-00279",
 "name": "DeLucas, Lawrence James",
+"name_mcdowell": "DeLucas, Lawrence James",
 "short": "DeLucas, L.J.",
 "being": "human",
 "citizen": "US",
@@ -3635,6 +4182,7 @@
 {
 "id": "AS-00280",
 "name": "Trinh, Eugene Huu-Chau",
+"name_mcdowell": "Trinh, Eugene Huu-Chau",
 "short": "Trinh, E.H-C.",
 "being": "human",
 "citizen": "US",
@@ -3648,6 +4196,7 @@
 {
 "id": "AS-00281",
 "name": "Avdeev, Sergei Vasil'evich",
+"name_mcdowell": "Avdeev, Sergei Vasil'evich",
 "short": "Avdeev, S.V.",
 "being": "human",
 "citizen": "RU",
@@ -3661,6 +4210,7 @@
 {
 "id": "AS-00282",
 "name": "Tognini, Michel Ange-Charles",
+"name_mcdowell": "Tognini, Michel Ange-Charles",
 "short": "Tognini, M.A.C.",
 "being": "human",
 "citizen": "F",
@@ -3674,6 +4224,7 @@
 {
 "id": "AS-00283",
 "name": "Allen, Andrew Michael",
+"name_mcdowell": "Allen, Andrew Michael",
 "short": "Allen, A.M.",
 "being": "human",
 "citizen": "US",
@@ -3687,6 +4238,7 @@
 {
 "id": "AS-00284",
 "name": "Nicollier, Claude",
+"name_mcdowell": "Nicollier, Claude",
 "short": "Nicollier, C.",
 "being": "human",
 "citizen": "CH",
@@ -3700,6 +4252,7 @@
 {
 "id": "AS-00285",
 "name": "Malerba, Franco",
+"name_mcdowell": "Malerba, Franco",
 "short": "Malerba, F.",
 "being": "human",
 "citizen": "I",
@@ -3713,6 +4266,7 @@
 {
 "id": "AS-00286",
 "name": "Brown, Curtis Lee, Jr",
+"name_mcdowell": "Brown, Curtis Lee, Jr",
 "short": "Brown, C.L.",
 "being": "human",
 "citizen": "US",
@@ -3725,7 +4279,8 @@
 },
 {
 "id": "AS-00287",
-"name": "Davis, Nancy *Jan (Smotherman)",
+"name": "Davis, Nancy Jan (Smotherman)",
+"name_mcdowell": "Davis, Nancy *Jan (Smotherman)",
 "short": "Davis, N.J.",
 "being": "human",
 "citizen": "US",
@@ -3739,6 +4294,7 @@
 {
 "id": "AS-00288",
 "name": "Jemison, Mae Carol",
+"name_mcdowell": "Jemison, Mae Carol",
 "short": "Jemison, M.C.",
 "being": "human",
 "citizen": "US",
@@ -3752,6 +4308,7 @@
 {
 "id": "AS-00289",
 "name": "Mohri, Mamoru 'Mark'",
+"name_mcdowell": "Mohri, Mamoru 'Mark'",
 "short": "Mohri, M.",
 "being": "human",
 "citizen": "J",
@@ -3765,6 +4322,7 @@
 {
 "id": "AS-00290",
 "name": "MacLean, Steven Glenwood",
+"name_mcdowell": "MacLean, Steven Glenwood",
 "short": "MacLean, S.G.",
 "being": "human",
 "citizen": "CA",
@@ -3777,7 +4335,8 @@
 },
 {
 "id": "AS-00291",
-"name": "Clifford, Michael *Richard Uram",
+"name": "Clifford, Michael Richard Uram",
+"name_mcdowell": "Clifford, Michael *Richard Uram",
 "short": "Clifford, M.R.",
 "being": "human",
 "citizen": "US",
@@ -3791,6 +4350,7 @@
 {
 "id": "AS-00292",
 "name": "Helms, Susan Jane",
+"name_mcdowell": "Helms, Susan Jane",
 "short": "Helms, S.J.",
 "being": "human",
 "citizen": "US",
@@ -3804,6 +4364,7 @@
 {
 "id": "AS-00293",
 "name": "Poleshchuk, Aleksandr Fyodorovich",
+"name_mcdowell": "Poleshchuk, Aleksandr Fyodorovich",
 "short": "Poleshchuk, A.F.",
 "being": "human",
 "citizen": "RU",
@@ -3817,6 +4378,7 @@
 {
 "id": "AS-00294",
 "name": "Cockrell, Kenneth Dale 'Taco'",
+"name_mcdowell": "Cockrell, Kenneth Dale 'Taco'",
 "short": "Cockrell, K.D.",
 "being": "human",
 "citizen": "US",
@@ -3830,6 +4392,7 @@
 {
 "id": "AS-00295",
 "name": "Ochoa, Ellen Lauri",
+"name_mcdowell": "Ochoa, Ellen Lauri",
 "short": "Ochoa, E.L.",
 "being": "human",
 "citizen": "US",
@@ -3843,6 +4406,7 @@
 {
 "id": "AS-00296",
 "name": "Precourt, Charles Joseph",
+"name_mcdowell": "Precourt, Charles Joseph",
 "short": "Precourt, C.J.",
 "being": "human",
 "citizen": "US",
@@ -3856,6 +4420,7 @@
 {
 "id": "AS-00297",
 "name": "Harris, Bernard Anthony, Jr",
+"name_mcdowell": "Harris, Bernard Anthony, Jr",
 "short": "Harris, B.J.",
 "being": "human",
 "citizen": "US",
@@ -3869,6 +4434,7 @@
 {
 "id": "AS-00298",
 "name": "Walter, Ulrich Hans",
+"name_mcdowell": "Walter, Ulrich Hans",
 "short": "Walter, U.",
 "being": "human",
 "citizen": "D",
@@ -3882,6 +4448,7 @@
 {
 "id": "AS-00299",
 "name": "Schlegel, Hans-Wilhelm",
+"name_mcdowell": "Schlegel, Hans-Wilhelm",
 "short": "Schlegel, H-W.",
 "being": "human",
 "citizen": "D",
@@ -3895,6 +4462,7 @@
 {
 "id": "AS-00300",
 "name": "Currie, Nancy Jane (Decker Sherlock)",
+"name_mcdowell": "Currie, Nancy Jane (Decker Sherlock)",
 "short": "Currie, N.J.",
 "being": "human",
 "citizen": "US",
@@ -3907,7 +4475,8 @@
 },
 {
 "id": "AS-00301",
-"name": "Wisoff, Peter *Jeffrey Kelsay 'Jeff'",
+"name": "Wisoff, Peter Jeffrey Kelsay 'Jeff'",
+"name_mcdowell": "Wisoff, Peter *Jeffrey Kelsay 'Jeff'",
 "short": "Wisoff, P.J.K.",
 "being": "human",
 "citizen": "US",
@@ -3921,6 +4490,7 @@
 {
 "id": "AS-00302",
 "name": "Voss, Janice Elaine",
+"name_mcdowell": "Voss, Janice Elaine",
 "short": "Voss, J.E.",
 "being": "human",
 "citizen": "US",
@@ -3934,6 +4504,7 @@
 {
 "id": "AS-00303",
 "name": "Tsibliev, Vasiliy Vasilevich",
+"name_mcdowell": "Tsibliev, Vasiliy Vasilevich",
 "short": "Tsibliev, V.V.",
 "being": "human",
 "citizen": "RU",
@@ -3947,6 +4518,7 @@
 {
 "id": "AS-00304",
 "name": "Haignere, Jean-Pierre",
+"name_mcdowell": "Haignere, Jean-Pierre",
 "short": "Haignere, J-P.",
 "being": "human",
 "citizen": "F",
@@ -3960,6 +4532,7 @@
 {
 "id": "AS-00305",
 "name": "Newman, James Hansen",
+"name_mcdowell": "Newman, James Hansen",
 "short": "Newman, J.H.",
 "being": "human",
 "citizen": "US",
@@ -3973,6 +4546,7 @@
 {
 "id": "AS-00306",
 "name": "Bursch, Daniel Wheeler",
+"name_mcdowell": "Bursch, Daniel Wheeler",
 "short": "Bursch, D.W.",
 "being": "human",
 "citizen": "US",
@@ -3986,6 +4560,7 @@
 {
 "id": "AS-00307",
 "name": "Walz, Carl Erwin",
+"name_mcdowell": "Walz, Carl Erwin",
 "short": "Walz, C.E.",
 "being": "human",
 "citizen": "US",
@@ -3999,6 +4574,7 @@
 {
 "id": "AS-00308",
 "name": "Searfoss, Richard Alan",
+"name_mcdowell": "Searfoss, Richard Alan",
 "short": "Searfoss, R.A.",
 "being": "human",
 "citizen": "US",
@@ -4012,6 +4588,7 @@
 {
 "id": "AS-00309",
 "name": "McArthur, William Surles 'Bill', Jr",
+"name_mcdowell": "McArthur, William Surles 'Bill', Jr",
 "short": "McArthur, W.S.",
 "being": "human",
 "citizen": "US",
@@ -4025,6 +4602,7 @@
 {
 "id": "AS-00310",
 "name": "Wolf, David Alexander",
+"name_mcdowell": "Wolf, David Alexander",
 "short": "Wolf, D.A.",
 "being": "human",
 "citizen": "US",
@@ -4038,6 +4616,7 @@
 {
 "id": "AS-00311",
 "name": "Fettman, Martin Joseph",
+"name_mcdowell": "Fettman, Martin Joseph",
 "short": "Fettman, M.J.",
 "being": "human",
 "citizen": "US",
@@ -4051,6 +4630,7 @@
 {
 "id": "AS-00312",
 "name": "Usachyov, Yuriy Vladimirovich",
+"name_mcdowell": "Usachyov, Yuriy Vladimirovich",
 "short": "Usachyov, Yu.V.",
 "being": "human",
 "citizen": "RU",
@@ -4064,6 +4644,7 @@
 {
 "id": "AS-00313",
 "name": "Sega, Ronald Michael",
+"name_mcdowell": "Sega, Ronald Michael",
 "short": "Sega, R.M.",
 "being": "human",
 "citizen": "US",
@@ -4077,6 +4658,7 @@
 {
 "id": "AS-00314",
 "name": "Jones, Thomas David",
+"name_mcdowell": "Jones, Thomas David",
 "short": "Jones, T.D.",
 "being": "human",
 "citizen": "US",
@@ -4090,6 +4672,7 @@
 {
 "id": "AS-00315",
 "name": "Malenchenko, Yuriy Ivanovich",
+"name_mcdowell": "Malenchenko, Yuriy Ivanovich",
 "short": "Malenchenko, Yu.I.",
 "being": "human",
 "citizen": "RU",
@@ -4103,6 +4686,7 @@
 {
 "id": "AS-00316",
 "name": "Musabaev, Talgat Amangel'dievich",
+"name_mcdowell": "Musabaev, Talgat Amangel'dievich",
 "short": "Musabaev, T.A.",
 "being": "human",
 "citizen": "KZ",
@@ -4116,6 +4700,7 @@
 {
 "id": "AS-00317",
 "name": "Halsell, James Donald, Jr",
+"name_mcdowell": "Halsell, James Donald, Jr",
 "short": "Halsell, J.D.",
 "being": "human",
 "citizen": "US",
@@ -4129,6 +4714,7 @@
 {
 "id": "AS-00318",
 "name": "Chiao, Leroy",
+"name_mcdowell": "Chiao, Leroy",
 "short": "Chiao, L.",
 "being": "human",
 "citizen": "US",
@@ -4142,6 +4728,7 @@
 {
 "id": "AS-00319",
 "name": "Thomas, Donald Alan",
+"name_mcdowell": "Thomas, Donald Alan",
 "short": "Thomas, D.A.",
 "being": "human",
 "citizen": "US",
@@ -4155,6 +4742,7 @@
 {
 "id": "AS-00320",
 "name": "Mukai (Naito) Chiaki",
+"name_mcdowell": "Mukai (Naito) Chiaki",
 "short": "Mukai C.",
 "being": "human",
 "citizen": "J",
@@ -4168,6 +4756,7 @@
 {
 "id": "AS-00321",
 "name": "Linenger, Jerry Michael",
+"name_mcdowell": "Linenger, Jerry Michael",
 "short": "Linenger, J.M.",
 "being": "human",
 "citizen": "US",
@@ -4181,6 +4770,7 @@
 {
 "id": "AS-00322",
 "name": "Wilcutt, Terrence Wade",
+"name_mcdowell": "Wilcutt, Terrence Wade",
 "short": "Wilcutt, T.W.",
 "being": "human",
 "citizen": "US",
@@ -4194,6 +4784,7 @@
 {
 "id": "AS-00323",
 "name": "Smith, Steven Lee",
+"name_mcdowell": "Smith, Steven Lee",
 "short": "Smith, S.L.",
 "being": "human",
 "citizen": "US",
@@ -4207,6 +4798,7 @@
 {
 "id": "AS-00324",
 "name": "Kondakova, Yelena Vladimirovna",
+"name_mcdowell": "Kondakova, Yelena Vladimirovna",
 "short": "Kondakova, Ye.V.",
 "being": "human",
 "citizen": "RU",
@@ -4220,6 +4812,7 @@
 {
 "id": "AS-00325",
 "name": "Tanner, Joseph Richard",
+"name_mcdowell": "Tanner, Joseph Richard",
 "short": "Tanner, J.R.",
 "being": "human",
 "citizen": "US",
@@ -4233,6 +4826,7 @@
 {
 "id": "AS-00326",
 "name": "Clervoy, Jean-Francois Andre",
+"name_mcdowell": "Clervoy, Jean-Francois Andre",
 "short": "Clervoy, J.F.",
 "being": "human",
 "citizen": "F",
@@ -4246,6 +4840,7 @@
 {
 "id": "AS-00327",
 "name": "Parazynski, Scott Edward",
+"name_mcdowell": "Parazynski, Scott Edward",
 "short": "Parazynski, S.E.",
 "being": "human",
 "citizen": "US",
@@ -4259,6 +4854,7 @@
 {
 "id": "AS-00328",
 "name": "Collins, Eileen Marie",
+"name_mcdowell": "Collins, Eileen Marie",
 "short": "Collins, E.M.",
 "being": "human",
 "citizen": "US",
@@ -4272,6 +4868,7 @@
 {
 "id": "AS-00329",
 "name": "Gregory, William George",
+"name_mcdowell": "Gregory, William George",
 "short": "Gregory, W.G.",
 "being": "human",
 "citizen": "US",
@@ -4285,6 +4882,7 @@
 {
 "id": "AS-00330",
 "name": "Grunsfeld, John Mace",
+"name_mcdowell": "Grunsfeld, John Mace",
 "short": "Grunsfeld, J.M.",
 "being": "human",
 "citizen": "US",
@@ -4298,6 +4896,7 @@
 {
 "id": "AS-00331",
 "name": "Lawrence, Wendy Barrien",
+"name_mcdowell": "Lawrence, Wendy Barrien",
 "short": "Lawrence, W.B.",
 "being": "human",
 "citizen": "US",
@@ -4311,6 +4910,7 @@
 {
 "id": "AS-00332",
 "name": "Dezhurov, Vladimir Nikolaevich",
+"name_mcdowell": "Dezhurov, Vladimir Nikolaevich",
 "short": "Dezhurov, V.N.",
 "being": "human",
 "citizen": "RU",
@@ -4324,6 +4924,7 @@
 {
 "id": "AS-00333",
 "name": "Budarin, Nikolai Nikolaevich",
+"name_mcdowell": "Budarin, Nikolai Nikolaevich",
 "short": "Budarin, N.N.",
 "being": "human",
 "citizen": "RU",
@@ -4337,6 +4938,7 @@
 {
 "id": "AS-00334",
 "name": "Kregel, Kevin Richard",
+"name_mcdowell": "Kregel, Kevin Richard",
 "short": "Kregel, K.R.",
 "being": "human",
 "citizen": "US",
@@ -4350,6 +4952,7 @@
 {
 "id": "AS-00335",
 "name": "Weber, Mary Ellen",
+"name_mcdowell": "Weber, Mary Ellen",
 "short": "Weber, M.E.",
 "being": "human",
 "citizen": "US",
@@ -4363,6 +4966,7 @@
 {
 "id": "AS-00336",
 "name": "Gidzenko, Yuriy Pavlovich",
+"name_mcdowell": "Gidzenko, Yuriy Pavlovich",
 "short": "Gidzenko, Yu.P.",
 "being": "human",
 "citizen": "RU",
@@ -4376,6 +4980,7 @@
 {
 "id": "AS-00337",
 "name": "Reiter, Thomas Arthur",
+"name_mcdowell": "Reiter, Thomas Arthur",
 "short": "Reiter, T.A.",
 "being": "human",
 "citizen": "D",
@@ -4389,6 +4994,7 @@
 {
 "id": "AS-00338",
 "name": "Gernhardt, Michael Landon",
+"name_mcdowell": "Gernhardt, Michael Landon",
 "short": "Gernhardt, M.L.",
 "being": "human",
 "citizen": "US",
@@ -4402,6 +5008,7 @@
 {
 "id": "AS-00339",
 "name": "Rominger, Kent Vernon",
+"name_mcdowell": "Rominger, Kent Vernon",
 "short": "Rominger, K.V.",
 "being": "human",
 "citizen": "US",
@@ -4415,6 +5022,7 @@
 {
 "id": "AS-00340",
 "name": "Coleman, Catherine Grace 'Cady'",
+"name_mcdowell": "Coleman, Catherine Grace 'Cady'",
 "short": "Coleman, C.G.",
 "being": "human",
 "citizen": "US",
@@ -4428,6 +5036,7 @@
 {
 "id": "AS-00341",
 "name": "Lopez-Alegria, Michael Eladio",
+"name_mcdowell": "Lopez-Alegria, Michael Eladio",
 "short": "Lopez-Alegria, M.E.",
 "being": "human",
 "citizen": "US",
@@ -4441,6 +5050,7 @@
 {
 "id": "AS-00342",
 "name": "Leslie, Fred Weldon",
+"name_mcdowell": "Leslie, Fred Weldon",
 "short": "Leslie, F.W.",
 "being": "human",
 "citizen": "US",
@@ -4454,6 +5064,7 @@
 {
 "id": "AS-00343",
 "name": "Sacco, Albert, Jr",
+"name_mcdowell": "Sacco, Albert, Jr",
 "short": "Sacco, A.",
 "being": "human",
 "citizen": "US",
@@ -4467,6 +5078,7 @@
 {
 "id": "AS-00344",
 "name": "Hadfield, Chris Austin",
+"name_mcdowell": "Hadfield, Chris Austin",
 "short": "Hadfield, C.A.",
 "being": "human",
 "citizen": "CA",
@@ -4480,6 +5092,7 @@
 {
 "id": "AS-00345",
 "name": "Jett, Brent Ward, Jr",
+"name_mcdowell": "Jett, Brent Ward, Jr",
 "short": "Jett, B.W.",
 "being": "human",
 "citizen": "US",
@@ -4493,6 +5106,7 @@
 {
 "id": "AS-00346",
 "name": "Scott, Winston Elliott",
+"name_mcdowell": "Scott, Winston Elliott",
 "short": "Scott, W.E.",
 "being": "human",
 "citizen": "US",
@@ -4506,6 +5120,7 @@
 {
 "id": "AS-00347",
 "name": "Wakata Koichi",
+"name_mcdowell": "Wakata Koichi",
 "short": "Wakata K.",
 "being": "human",
 "citizen": "J",
@@ -4519,6 +5134,7 @@
 {
 "id": "AS-00348",
 "name": "Barry, Daniel Thomas",
+"name_mcdowell": "Barry, Daniel Thomas",
 "short": "Barry, D.T.",
 "being": "human",
 "citizen": "US",
@@ -4532,6 +5148,7 @@
 {
 "id": "AS-00349",
 "name": "Onufrienko, Yuriy Ivanovich",
+"name_mcdowell": "Onufrienko, Yuriy Ivanovich",
 "short": "Onufrienko, Yu.I.",
 "being": "human",
 "citizen": "RU",
@@ -4545,6 +5162,7 @@
 {
 "id": "AS-00350",
 "name": "Horowitz, Scott Jay",
+"name_mcdowell": "Horowitz, Scott Jay",
 "short": "Horowitz, S.J.",
 "being": "human",
 "citizen": "US",
@@ -4558,6 +5176,7 @@
 {
 "id": "AS-00351",
 "name": "Cheli, Maurizio",
+"name_mcdowell": "Cheli, Maurizio",
 "short": "Cheli, M.",
 "being": "human",
 "citizen": "I",
@@ -4571,6 +5190,7 @@
 {
 "id": "AS-00352",
 "name": "Guidoni, Umberto",
+"name_mcdowell": "Guidoni, Umberto",
 "short": "Guidoni, U.",
 "being": "human",
 "citizen": "I",
@@ -4584,6 +5204,7 @@
 {
 "id": "AS-00353",
 "name": "Thomas, Andrew Sydney Withiel",
+"name_mcdowell": "Thomas, Andrew Sydney Withiel",
 "short": "Thomas, A.S.W.",
 "being": "human",
 "citizen": "US",
@@ -4597,6 +5218,7 @@
 {
 "id": "AS-00354",
 "name": "Linnehan, Richard Michael",
+"name_mcdowell": "Linnehan, Richard Michael",
 "short": "Linnehan, R.M.",
 "being": "human",
 "citizen": "US",
@@ -4610,6 +5232,7 @@
 {
 "id": "AS-00355",
 "name": "Brady, Charles Eldon, Jr",
+"name_mcdowell": "Brady, Charles Eldon, Jr",
 "short": "Brady, C.E.",
 "being": "human",
 "citizen": "US",
@@ -4623,6 +5246,7 @@
 {
 "id": "AS-00356",
 "name": "Favier, Jean-Jacques",
+"name_mcdowell": "Favier, Jean-Jacques",
 "short": "Favier, J.J.",
 "being": "human",
 "citizen": "F",
@@ -4636,6 +5260,7 @@
 {
 "id": "AS-00357",
 "name": "Thirsk, Robert Brent",
+"name_mcdowell": "Thirsk, Robert Brent",
 "short": "Thirsk, R.B.",
 "being": "human",
 "citizen": "CA",
@@ -4649,6 +5274,7 @@
 {
 "id": "AS-00358",
 "name": "Korzun, Valeriy Grigor'evich",
+"name_mcdowell": "Korzun, Valeriy Grigor'evich",
 "short": "Korzun, V.G.",
 "being": "human",
 "citizen": "RU",
@@ -4662,6 +5288,7 @@
 {
 "id": "AS-00359",
 "name": "Haignere (Andre-Deshays), Claudie",
+"name_mcdowell": "Haignere (Andre-Deshays), Claudie",
 "short": "Haignere, C.",
 "being": "human",
 "citizen": "F",
@@ -4675,6 +5302,7 @@
 {
 "id": "AS-00360",
 "name": "Lazutkin, Aleksandr Ivanovich",
+"name_mcdowell": "Lazutkin, Aleksandr Ivanovich",
 "short": "Lazutkin, A.I.",
 "being": "human",
 "citizen": "RU",
@@ -4688,6 +5316,7 @@
 {
 "id": "AS-00361",
 "name": "Ewald, Reinhold",
+"name_mcdowell": "Ewald, Reinhold",
 "short": "Ewald, R.",
 "being": "human",
 "citizen": "D",
@@ -4701,6 +5330,7 @@
 {
 "id": "AS-00362",
 "name": "Kilrain (Still), Susan Leigh",
+"name_mcdowell": "Kilrain (Still), Susan Leigh",
 "short": "Kilrain, S.L.",
 "being": "human",
 "citizen": "US",
@@ -4714,6 +5344,7 @@
 {
 "id": "AS-00363",
 "name": "Crouch, Roger Keith",
+"name_mcdowell": "Crouch, Roger Keith",
 "short": "Crouch, R.K.",
 "being": "human",
 "citizen": "US",
@@ -4727,6 +5358,7 @@
 {
 "id": "AS-00364",
 "name": "Linteris, Gregory Thomas",
+"name_mcdowell": "Linteris, Gregory Thomas",
 "short": "Linteris, G.T.",
 "being": "human",
 "citizen": "US",
@@ -4740,6 +5372,7 @@
 {
 "id": "AS-00365",
 "name": "Noriega, Carlos Ismael",
+"name_mcdowell": "Noriega, Carlos Ismael",
 "short": "Noriega, C.I.",
 "being": "human",
 "citizen": "US",
@@ -4753,6 +5386,7 @@
 {
 "id": "AS-00366",
 "name": "Lu, Edward Tsang",
+"name_mcdowell": "Lu, Edward Tsang",
 "short": "Lu, E.T.",
 "being": "human",
 "citizen": "US",
@@ -4766,6 +5400,7 @@
 {
 "id": "AS-00367",
 "name": "Vinogradov, Pavel Vladimirovich",
+"name_mcdowell": "Vinogradov, Pavel Vladimirovich",
 "short": "Vinogradov, P.V.",
 "being": "human",
 "citizen": "RU",
@@ -4779,6 +5414,7 @@
 {
 "id": "AS-00368",
 "name": "Curbeam, Robert Lee",
+"name_mcdowell": "Curbeam, Robert Lee",
 "short": "Curbeam, R.L.",
 "being": "human",
 "citizen": "US",
@@ -4792,6 +5428,7 @@
 {
 "id": "AS-00369",
 "name": "Robinson, Stephen Kern",
+"name_mcdowell": "Robinson, Stephen Kern",
 "short": "Robinson, S.K.",
 "being": "human",
 "citizen": "US",
@@ -4805,6 +5442,7 @@
 {
 "id": "AS-00370",
 "name": "Tryggvason, Bjarni Valdimar",
+"name_mcdowell": "Tryggvason, Bjarni Valdimar",
 "short": "Tryggvason, B.V.",
 "being": "human",
 "citizen": "CA",
@@ -4818,6 +5456,7 @@
 {
 "id": "AS-00371",
 "name": "Bloomfield, Michael John",
+"name_mcdowell": "Bloomfield, Michael John",
 "short": "Bloomfield, M.J.",
 "being": "human",
 "citizen": "US",
@@ -4831,6 +5470,7 @@
 {
 "id": "AS-00372",
 "name": "Lindsey, Steven Wayne",
+"name_mcdowell": "Lindsey, Steven Wayne",
 "short": "Lindsey, S.W.",
 "being": "human",
 "citizen": "US",
@@ -4844,19 +5484,44 @@
 {
 "id": "AS-00373",
 "name": "Chawla, Kalpana",
+"name_mcdowell": "Chawla, Kalpana",
 "short": "Chawla, K.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00373"
+"mcdowell": "AS-00373",
+"wikidata": "Q237879"
 },
 "born": "1961 Jul  1",
 "died": "2003 Feb  1",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 63212580133,
+"date": "2003-02-01",
+"where": "over Texas and Louisiana, during reentry",
+"during": "flight",
+"loss": "columbia-2003",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q237879",
+"url": "https://www.wikidata.org/wiki/Q237879"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "columbia-sts-107"
+}
 },
 {
 "id": "AS-00374",
 "name": "Doi Takao",
+"name_mcdowell": "Doi Takao",
 "short": "Doi, T.",
 "being": "human",
 "citizen": "J",
@@ -4870,6 +5535,7 @@
 {
 "id": "AS-00375",
 "name": "Kadenyuk, Leonid Konstantinovich",
+"name_mcdowell": "Kadenyuk, Leonid Konstantinovich",
 "short": "Kadenyuk, L.K.",
 "being": "human",
 "citizen": "UA",
@@ -4883,6 +5549,7 @@
 {
 "id": "AS-00376",
 "name": "Edwards, Joe Frank, Jr.",
+"name_mcdowell": "Edwards, Joe Frank, Jr.",
 "short": "Edwards, J.F.",
 "being": "human",
 "citizen": "US",
@@ -4896,6 +5563,7 @@
 {
 "id": "AS-00377",
 "name": "Reilly, James Francis, II",
+"name_mcdowell": "Reilly, James Francis, II",
 "short": "Reilly, J.F.",
 "being": "human",
 "citizen": "US",
@@ -4909,19 +5577,44 @@
 {
 "id": "AS-00378",
 "name": "Anderson, Michael Phillip",
+"name_mcdowell": "Anderson, Michael Phillip",
 "short": "Anderson, M.P.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00378"
+"mcdowell": "AS-00378",
+"wikidata": "Q318542"
 },
 "born": "1959 Dec 25",
 "died": "2003 Feb  1",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 63212580133,
+"date": "2003-02-01",
+"where": "over Texas and Louisiana, during reentry",
+"during": "flight",
+"loss": "columbia-2003",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q318542",
+"url": "https://www.wikidata.org/wiki/Q318542"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "columbia-sts-107"
+}
 },
 {
 "id": "AS-00379",
 "name": "Sharipov, Salizhan Shakirovich",
+"name_mcdowell": "Sharipov, Salizhan Shakirovich",
 "short": "Sharipov, S.S.",
 "being": "human",
 "citizen": "RU",
@@ -4935,6 +5628,7 @@
 {
 "id": "AS-00380",
 "name": "Eyharts, Leopold",
+"name_mcdowell": "Eyharts, Leopold",
 "short": "Eyharts, L.",
 "being": "human",
 "citizen": "F",
@@ -4948,6 +5642,7 @@
 {
 "id": "AS-00381",
 "name": "Altman, Scott Douglas",
+"name_mcdowell": "Altman, Scott Douglas",
 "short": "Altman, S.D.",
 "being": "human",
 "citizen": "US",
@@ -4961,6 +5656,7 @@
 {
 "id": "AS-00382",
 "name": "Hire, Kathryn Patricia 'Kay'",
+"name_mcdowell": "Hire, Kathryn Patricia 'Kay'",
 "short": "Hire, K.P.",
 "being": "human",
 "citizen": "US",
@@ -4974,6 +5670,7 @@
 {
 "id": "AS-00383",
 "name": "Williams, Dafydd Rhys",
+"name_mcdowell": "Williams, Dafydd Rhys",
 "short": "Williams, D.R.",
 "being": "human",
 "citizen": "CA",
@@ -4987,6 +5684,7 @@
 {
 "id": "AS-00384",
 "name": "Buckey, Jay Clark, Jr",
+"name_mcdowell": "Buckey, Jay Clark, Jr",
 "short": "Buckey, J.C.",
 "being": "human",
 "citizen": "US",
@@ -5000,6 +5698,7 @@
 {
 "id": "AS-00385",
 "name": "Pawelczyk, James Anthony",
+"name_mcdowell": "Pawelczyk, James Anthony",
 "short": "Pawelczyk, J.A.",
 "being": "human",
 "citizen": "US",
@@ -5013,6 +5712,7 @@
 {
 "id": "AS-00386",
 "name": "Gorie, Dominic Lee Pudwill",
+"name_mcdowell": "Gorie, Dominic Lee Pudwill",
 "short": "Gorie, D.L.",
 "being": "human",
 "citizen": "US",
@@ -5026,6 +5726,7 @@
 {
 "id": "AS-00387",
 "name": "Kavandi (Sellers), Janet Lynn",
+"name_mcdowell": "Kavandi (Sellers), Janet Lynn",
 "short": "Kavandi, J.L.",
 "being": "human",
 "citizen": "US",
@@ -5039,6 +5740,7 @@
 {
 "id": "AS-00388",
 "name": "Padalka, Gennadiy Ivanovich",
+"name_mcdowell": "Padalka, Gennadiy Ivanovich",
 "short": "Padalka, G.I.",
 "being": "human",
 "citizen": "RU",
@@ -5052,6 +5754,7 @@
 {
 "id": "AS-00389",
 "name": "Baturin, Yuriy Mikhailovich",
+"name_mcdowell": "Baturin, Yuriy Mikhailovich",
 "short": "Baturin, Yu.",
 "being": "human",
 "citizen": "RU",
@@ -5065,6 +5768,7 @@
 {
 "id": "AS-00390",
 "name": "Duque Duque, Pedro Francisco",
+"name_mcdowell": "Duque Duque, Pedro Francisco",
 "short": "Duque, P.F.",
 "being": "human",
 "citizen": "E",
@@ -5078,6 +5782,7 @@
 {
 "id": "AS-00391",
 "name": "Sturckow, Frederick Wilford 'C.J.'",
+"name_mcdowell": "Sturckow, Frederick Wilford 'C.J.'",
 "short": "Sturckow, F.W.",
 "being": "human",
 "citizen": "US",
@@ -5091,6 +5796,7 @@
 {
 "id": "AS-00392",
 "name": "Bella, Ivan",
+"name_mcdowell": "Bella, Ivan",
 "short": "Bella, I.",
 "being": "human",
 "citizen": "SK",
@@ -5104,19 +5810,44 @@
 {
 "id": "AS-00393",
 "name": "Husband, Rick Douglas",
+"name_mcdowell": "Husband, Rick Douglas",
 "short": "Husband, R.D.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00393"
+"mcdowell": "AS-00393",
+"wikidata": "Q346671"
 },
 "born": "1957 Jul 12",
 "died": "2003 Feb  1",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 63212580133,
+"date": "2003-02-01",
+"where": "over Texas and Louisiana, during reentry",
+"during": "flight",
+"loss": "columbia-2003",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q346671",
+"url": "https://www.wikidata.org/wiki/Q346671"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "columbia-sts-107"
+}
 },
 {
 "id": "AS-00394",
 "name": "Payette, Julie",
+"name_mcdowell": "Payette, Julie",
 "short": "Payette, J.",
 "being": "human",
 "citizen": "CA",
@@ -5130,6 +5861,7 @@
 {
 "id": "AS-00395",
 "name": "Tokarev, Valeriy Ivanovich",
+"name_mcdowell": "Tokarev, Valeriy Ivanovich",
 "short": "Tokarev, V.I.",
 "being": "human",
 "citizen": "RU",
@@ -5143,6 +5875,7 @@
 {
 "id": "AS-00396",
 "name": "Ashby, Jeffrey Shears",
+"name_mcdowell": "Ashby, Jeffrey Shears",
 "short": "Ashby, J.S.",
 "being": "human",
 "citizen": "US",
@@ -5156,6 +5889,7 @@
 {
 "id": "AS-00397",
 "name": "Kelly, Scott Joseph",
+"name_mcdowell": "Kelly, Scott Joseph",
 "short": "Kelly, S.J.",
 "being": "human",
 "citizen": "US",
@@ -5169,6 +5903,7 @@
 {
 "id": "AS-00398",
 "name": "Thiele, Gerhard Paul Julius",
+"name_mcdowell": "Thiele, Gerhard Paul Julius",
 "short": "Thiele, G.P.J.",
 "being": "human",
 "citizen": "D",
@@ -5182,6 +5917,7 @@
 {
 "id": "AS-00399",
 "name": "Zalyotin, Sergey Viktorovich",
+"name_mcdowell": "Zalyotin, Sergey Viktorovich",
 "short": "Zalyotin, S.V.",
 "being": "human",
 "citizen": "RU",
@@ -5195,6 +5931,7 @@
 {
 "id": "AS-00400",
 "name": "Williams, Jeffrey Nels",
+"name_mcdowell": "Williams, Jeffrey Nels",
 "short": "Williams, J.N.",
 "being": "human",
 "citizen": "US",
@@ -5208,6 +5945,7 @@
 {
 "id": "AS-00401",
 "name": "Mastracchio, Richard Alan",
+"name_mcdowell": "Mastracchio, Richard Alan",
 "short": "Mastracchio, R.A.",
 "being": "human",
 "citizen": "US",
@@ -5221,6 +5959,7 @@
 {
 "id": "AS-00402",
 "name": "Burbank, Daniel Christopher",
+"name_mcdowell": "Burbank, Daniel Christopher",
 "short": "Burbank, D.C.",
 "being": "human",
 "citizen": "US",
@@ -5234,6 +5973,7 @@
 {
 "id": "AS-00403",
 "name": "Morukov, Boris Vladimirovich",
+"name_mcdowell": "Morukov, Boris Vladimirovich",
 "short": "Morukov, B.V.",
 "being": "human",
 "citizen": "RU",
@@ -5247,6 +5987,7 @@
 {
 "id": "AS-00404",
 "name": "Melroy, Pamela Ann",
+"name_mcdowell": "Melroy, Pamela Ann",
 "short": "Melroy, P.A.",
 "being": "human",
 "citizen": "US",
@@ -5260,6 +6001,7 @@
 {
 "id": "AS-00405",
 "name": "Polansky, Mark Lewis",
+"name_mcdowell": "Polansky, Mark Lewis",
 "short": "Polansky, M.L.",
 "being": "human",
 "citizen": "US",
@@ -5273,6 +6015,7 @@
 {
 "id": "AS-00406",
 "name": "Kelly, James McNeal 'Vegas'",
+"name_mcdowell": "Kelly, James McNeal 'Vegas'",
 "short": "Kelly, J.M.",
 "being": "human",
 "citizen": "US",
@@ -5286,6 +6029,7 @@
 {
 "id": "AS-00407",
 "name": "Richards, Paul William",
+"name_mcdowell": "Richards, Paul William",
 "short": "Richards, P.W.",
 "being": "human",
 "citizen": "US",
@@ -5299,6 +6043,7 @@
 {
 "id": "AS-00408",
 "name": "Phillips, John Lynch",
+"name_mcdowell": "Phillips, John Lynch",
 "short": "Phillips, J.L.",
 "being": "human",
 "citizen": "US",
@@ -5312,6 +6057,7 @@
 {
 "id": "AS-00409",
 "name": "Lonchakov, Yuriy Valentinovich",
+"name_mcdowell": "Lonchakov, Yuriy Valentinovich",
 "short": "Lonchakov, Yu.V.",
 "being": "human",
 "citizen": "RU",
@@ -5325,6 +6071,7 @@
 {
 "id": "AS-00410",
 "name": "Tito, Dennis",
+"name_mcdowell": "Tito, Dennis",
 "short": "Tito, D.",
 "being": "human",
 "citizen": "US",
@@ -5338,6 +6085,7 @@
 {
 "id": "AS-00411",
 "name": "Hobaugh, Charles Owen",
+"name_mcdowell": "Hobaugh, Charles Owen",
 "short": "Hobaugh, C.O.",
 "being": "human",
 "citizen": "US",
@@ -5351,6 +6099,7 @@
 {
 "id": "AS-00412",
 "name": "Forrester, Patrick Graham",
+"name_mcdowell": "Forrester, Patrick Graham",
 "short": "Forrester, P.G.",
 "being": "human",
 "citizen": "US",
@@ -5364,6 +6113,7 @@
 {
 "id": "AS-00413",
 "name": "Tyurin, Mikhail Vladislavovich",
+"name_mcdowell": "Tyurin, Mikhail Vladislavovich",
 "short": "Tyurin, M.V.",
 "being": "human",
 "citizen": "RU",
@@ -5377,6 +6127,7 @@
 {
 "id": "AS-00414",
 "name": "Kozeev, Konstantin Mironovich",
+"name_mcdowell": "Kozeev, Konstantin Mironovich",
 "short": "Kozeev, K.M.",
 "being": "human",
 "citizen": "RU",
@@ -5390,6 +6141,7 @@
 {
 "id": "AS-00415",
 "name": "Kelly, Mark Edward",
+"name_mcdowell": "Kelly, Mark Edward",
 "short": "Kelly, M.E.",
 "being": "human",
 "citizen": "US",
@@ -5403,6 +6155,7 @@
 {
 "id": "AS-00416",
 "name": "Tani, Daniel Michio",
+"name_mcdowell": "Tani, Daniel Michio",
 "short": "Tani, D.M.",
 "being": "human",
 "citizen": "US",
@@ -5416,6 +6169,7 @@
 {
 "id": "AS-00417",
 "name": "Carey, Duane Gene",
+"name_mcdowell": "Carey, Duane Gene",
 "short": "Carey, D.G.",
 "being": "human",
 "citizen": "US",
@@ -5429,6 +6183,7 @@
 {
 "id": "AS-00418",
 "name": "Massimino, Michael James",
+"name_mcdowell": "Massimino, Michael James",
 "short": "Massimino, M.J.",
 "being": "human",
 "citizen": "US",
@@ -5442,6 +6197,7 @@
 {
 "id": "AS-00419",
 "name": "Frick, Stephen Nathaniel",
+"name_mcdowell": "Frick, Stephen Nathaniel",
 "short": "Frick, S.N.",
 "being": "human",
 "citizen": "US",
@@ -5455,6 +6211,7 @@
 {
 "id": "AS-00420",
 "name": "Walheim, Rex Joseph",
+"name_mcdowell": "Walheim, Rex Joseph",
 "short": "Walheim, R.J.",
 "being": "human",
 "citizen": "US",
@@ -5468,6 +6225,7 @@
 {
 "id": "AS-00421",
 "name": "Morin, Lee Miller Emile",
+"name_mcdowell": "Morin, Lee Miller Emile",
 "short": "Morin, L.",
 "being": "human",
 "citizen": "US",
@@ -5481,6 +6239,7 @@
 {
 "id": "AS-00422",
 "name": "Vittori, Roberto",
+"name_mcdowell": "Vittori, Roberto",
 "short": "Vittori, R.",
 "being": "human",
 "citizen": "I",
@@ -5494,6 +6253,7 @@
 {
 "id": "AS-00423",
 "name": "Shuttleworth, Mark Richard",
+"name_mcdowell": "Shuttleworth, Mark Richard",
 "short": "Shuttleworth, M.R.",
 "being": "human",
 "citizen": "ZA",
@@ -5507,6 +6267,7 @@
 {
 "id": "AS-00424",
 "name": "Lockhart, Paul Scott",
+"name_mcdowell": "Lockhart, Paul Scott",
 "short": "Lockhart, P.S.",
 "being": "human",
 "citizen": "US",
@@ -5520,6 +6281,7 @@
 {
 "id": "AS-00425",
 "name": "Perrin, Phillipe",
+"name_mcdowell": "Perrin, Phillipe",
 "short": "Perrin, P.",
 "being": "human",
 "citizen": "F",
@@ -5533,6 +6295,7 @@
 {
 "id": "AS-00426",
 "name": "Whitson, Peggy Annette",
+"name_mcdowell": "Whitson, Peggy Annette",
 "short": "Whitson, P.A.",
 "being": "human",
 "citizen": "US",
@@ -5546,6 +6309,7 @@
 {
 "id": "AS-00427",
 "name": "Treshchyov, Sergey Yevgenievich",
+"name_mcdowell": "Treshchyov, Sergey Yevgenievich",
 "short": "Treshchyov, S.Ye.",
 "being": "human",
 "citizen": "RU",
@@ -5559,6 +6323,7 @@
 {
 "id": "AS-00428",
 "name": "Magnus (Hall), Sandra Hall",
+"name_mcdowell": "Magnus (Hall), Sandra Hall",
 "short": "Magnus, S.H.",
 "being": "human",
 "citizen": "US",
@@ -5572,6 +6337,7 @@
 {
 "id": "AS-00429",
 "name": "Sellers, Piers John",
+"name_mcdowell": "Sellers, Piers John",
 "short": "Sellers, P.J.",
 "being": "human",
 "citizen": "US",
@@ -5585,6 +6351,7 @@
 {
 "id": "AS-00430",
 "name": "Yurchikhin, Fyodor Nikolaevich",
+"name_mcdowell": "Yurchikhin, Fyodor Nikolaevich",
 "short": "Yurchikhin, F.N.",
 "being": "human",
 "citizen": "RU",
@@ -5598,6 +6365,7 @@
 {
 "id": "AS-00431",
 "name": "De Winne, Frank",
+"name_mcdowell": "De Winne, Frank",
 "short": "De Winne, F.",
 "being": "human",
 "citizen": "B",
@@ -5611,6 +6379,7 @@
 {
 "id": "AS-00432",
 "name": "Herrington, John Bennett",
+"name_mcdowell": "Herrington, John Bennett",
 "short": "Herrington, J.B.",
 "being": "human",
 "citizen": "US",
@@ -5624,6 +6393,7 @@
 {
 "id": "AS-00433",
 "name": "Pettit, Donald Roy",
+"name_mcdowell": "Pettit, Donald Roy",
 "short": "Pettit, D.R.",
 "being": "human",
 "citizen": "US",
@@ -5637,58 +6407,155 @@
 {
 "id": "AS-00434",
 "name": "McCool, William Cameron",
+"name_mcdowell": "McCool, William Cameron",
 "short": "McCool, W.C.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00434"
+"mcdowell": "AS-00434",
+"wikidata": "Q334463"
 },
 "born": "1961 Sep 23",
 "died": "2003 Feb  1",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 63212580133,
+"date": "2003-02-01",
+"where": "over Texas and Louisiana, during reentry",
+"during": "flight",
+"loss": "columbia-2003",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q334463",
+"url": "https://www.wikidata.org/wiki/Q334463"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "columbia-sts-107"
+}
 },
 {
 "id": "AS-00435",
 "name": "Brown, David McDowell",
+"name_mcdowell": "Brown, David McDowell",
 "short": "Brown, D.M.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00435"
+"mcdowell": "AS-00435",
+"wikidata": "Q350317"
 },
 "born": "1956 Apr 16",
 "died": "2003 Feb  1",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 63212580133,
+"date": "2003-02-01",
+"where": "over Texas and Louisiana, during reentry",
+"during": "flight",
+"loss": "columbia-2003",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q350317",
+"url": "https://www.wikidata.org/wiki/Q350317"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "columbia-sts-107"
+}
 },
 {
 "id": "AS-00436",
 "name": "Clark (Salton), Laurel Blair",
+"name_mcdowell": "Clark (Salton), Laurel Blair",
 "short": "Clark, L.B.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AS-00436"
+"mcdowell": "AS-00436",
+"wikidata": "Q232441"
 },
 "born": "1961 Mar 10",
 "died": "2003 Feb  1",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 63212580133,
+"date": "2003-02-01",
+"where": "over Texas and Louisiana, during reentry",
+"during": "flight",
+"loss": "columbia-2003",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q232441",
+"url": "https://www.wikidata.org/wiki/Q232441"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "columbia-sts-107"
+}
 },
 {
 "id": "AS-00437",
 "name": "Ramon (Wolferman), Ilan",
+"name_mcdowell": "Ramon (Wolferman), Ilan",
 "short": "Ramon, I.",
 "being": "human",
 "citizen": "IL",
 "sources": {
-"mcdowell": "AS-00437"
+"mcdowell": "AS-00437",
+"wikidata": "Q219569"
 },
 "born": "1954 Jun 20",
 "died": "2003 Feb  1",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 63212580133,
+"date": "2003-02-01",
+"where": "over Texas and Louisiana, during reentry",
+"during": "flight",
+"loss": "columbia-2003",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q219569",
+"url": "https://www.wikidata.org/wiki/Q219569"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+],
+"on": "columbia-sts-107"
+}
 },
 {
 "id": "AS-00438",
 "name": "Yang Liwei",
+"name_mcdowell": "Yang Liwei",
 "short": "Yang L.",
 "being": "human",
 "citizen": "CN",
@@ -5701,7 +6568,8 @@
 },
 {
 "id": "AS-00439",
-"name": "Fincke, Edward *Michael",
+"name": "Fincke, Edward Michael",
+"name_mcdowell": "Fincke, Edward *Michael",
 "short": "Fincke, E.M.",
 "being": "human",
 "citizen": "US",
@@ -5715,6 +6583,7 @@
 {
 "id": "AS-00440",
 "name": "Kuipers, Andre",
+"name_mcdowell": "Kuipers, Andre",
 "short": "Kuipers, A.",
 "being": "human",
 "citizen": "NL",
@@ -5728,6 +6597,7 @@
 {
 "id": "AS-00441",
 "name": "Melvill, Michael Winston",
+"name_mcdowell": "Melvill, Michael Winston",
 "short": "Melvill, M.W.",
 "being": "human",
 "citizen": "US",
@@ -5740,7 +6610,8 @@
 },
 {
 "id": "AS-00442",
-"name": "Binnie, William *Brian",
+"name": "Binnie, William Brian",
+"name_mcdowell": "Binnie, William *Brian",
 "short": "Binnie, B.",
 "being": "human",
 "citizen": "US",
@@ -5754,6 +6625,7 @@
 {
 "id": "AS-00443",
 "name": "Shargin, Yuriy Georgievich",
+"name_mcdowell": "Shargin, Yuriy Georgievich",
 "short": "Shargin, Yu.G.",
 "being": "human",
 "citizen": "RU",
@@ -5767,6 +6639,7 @@
 {
 "id": "AS-00444",
 "name": "Noguchi Soichi",
+"name_mcdowell": "Noguchi Soichi",
 "short": "Noguchi S.",
 "being": "human",
 "citizen": "J",
@@ -5780,6 +6653,7 @@
 {
 "id": "AS-00445",
 "name": "Camarda, Charles Joseph",
+"name_mcdowell": "Camarda, Charles Joseph",
 "short": "Camarda, C.J.",
 "being": "human",
 "citizen": "US",
@@ -5793,6 +6667,7 @@
 {
 "id": "AS-00446",
 "name": "Olsen, Gregory Hammond",
+"name_mcdowell": "Olsen, Gregory Hammond",
 "short": "Olsen, G.H.",
 "being": "human",
 "citizen": "US",
@@ -5806,6 +6681,7 @@
 {
 "id": "AS-00447",
 "name": "Fei Junlong",
+"name_mcdowell": "Fei Junlong",
 "short": "Fei J.",
 "being": "human",
 "citizen": "CN",
@@ -5819,6 +6695,7 @@
 {
 "id": "AS-00448",
 "name": "Nie Haisheng",
+"name_mcdowell": "Nie Haisheng",
 "short": "Nie H.",
 "being": "human",
 "citizen": "CN",
@@ -5832,6 +6709,7 @@
 {
 "id": "AS-00449",
 "name": "Pontes, Marcos Cesar",
+"name_mcdowell": "Pontes, Marcos Cesar",
 "short": "Pontes, M.C.",
 "being": "human",
 "citizen": "BR",
@@ -5845,6 +6723,7 @@
 {
 "id": "AS-00450",
 "name": "Fossum, Michael Edward",
+"name_mcdowell": "Fossum, Michael Edward",
 "short": "Fossum, M.E.",
 "being": "human",
 "citizen": "US",
@@ -5858,6 +6737,7 @@
 {
 "id": "AS-00451",
 "name": "Nowak (Caputo), Lisa Marie",
+"name_mcdowell": "Nowak (Caputo), Lisa Marie",
 "short": "Nowak, L.M.",
 "being": "human",
 "citizen": "US",
@@ -5871,6 +6751,7 @@
 {
 "id": "AS-00452",
 "name": "Wilson, Stephanie Diana",
+"name_mcdowell": "Wilson, Stephanie Diana",
 "short": "Wilson, S.D.",
 "being": "human",
 "citizen": "US",
@@ -5884,6 +6765,7 @@
 {
 "id": "AS-00453",
 "name": "Ferguson, Christopher John",
+"name_mcdowell": "Ferguson, Christopher John",
 "short": "Ferguson, C.J.",
 "being": "human",
 "citizen": "US",
@@ -5897,6 +6779,7 @@
 {
 "id": "AS-00454",
 "name": "Stefanyshyn-Piper, Heidemarie Martha",
+"name_mcdowell": "Stefanyshyn-Piper, Heidemarie Martha",
 "short": "Stefanyshyn-Piper, H.M.",
 "being": "human",
 "citizen": "US",
@@ -5910,6 +6793,7 @@
 {
 "id": "AS-00455",
 "name": "Ansari (Raishiyan), Anousheh",
+"name_mcdowell": "Ansari (Raishiyan), Anousheh",
 "short": "Ansari, A.",
 "being": "human",
 "citizen": "US",
@@ -5923,6 +6807,7 @@
 {
 "id": "AS-00456",
 "name": "Oefelein, William Anthony",
+"name_mcdowell": "Oefelein, William Anthony",
 "short": "Oefelein, W.A.",
 "being": "human",
 "citizen": "US",
@@ -5936,6 +6821,7 @@
 {
 "id": "AS-00457",
 "name": "Patrick, Nicholas James MacDonald",
+"name_mcdowell": "Patrick, Nicholas James MacDonald",
 "short": "Patrick, N.J.M.",
 "being": "human",
 "citizen": "US",
@@ -5948,7 +6834,8 @@
 },
 {
 "id": "AS-00458",
-"name": "Fuglesang, Arne *Christer",
+"name": "Fuglesang, Arne Christer",
+"name_mcdowell": "Fuglesang, Arne *Christer",
 "short": "Fuglesang, A.C.",
 "being": "human",
 "citizen": "S",
@@ -5962,6 +6849,7 @@
 {
 "id": "AS-00459",
 "name": "Higginbotham, Joan Elizabeth Miller",
+"name_mcdowell": "Higginbotham, Joan Elizabeth Miller",
 "short": "Higginbotham, J.E.",
 "being": "human",
 "citizen": "US",
@@ -5975,6 +6863,7 @@
 {
 "id": "AS-00460",
 "name": "Williams, Sunita Lyn (Pandya Krishna)",
+"name_mcdowell": "Williams, Sunita Lyn (Pandya Krishna)",
 "short": "Williams, S.L.",
 "being": "human",
 "citizen": "US",
@@ -5988,6 +6877,7 @@
 {
 "id": "AS-00461",
 "name": "Kotov, Oleg Val'erevich",
+"name_mcdowell": "Kotov, Oleg Val'erevich",
 "short": "Kotov, O.V.",
 "being": "human",
 "citizen": "RU",
@@ -6001,6 +6891,7 @@
 {
 "id": "AS-00462",
 "name": "Simonyi Karoly (Charles)",
+"name_mcdowell": "Simonyi Karoly (Charles)",
 "short": "Simonyi K.",
 "being": "human",
 "citizen": "US",
@@ -6014,6 +6905,7 @@
 {
 "id": "AS-00463",
 "name": "Archambault, Lee Joseph",
+"name_mcdowell": "Archambault, Lee Joseph",
 "short": "Archambault, L.J.",
 "being": "human",
 "citizen": "US",
@@ -6027,6 +6919,7 @@
 {
 "id": "AS-00464",
 "name": "Swanson, Steven Ray",
+"name_mcdowell": "Swanson, Steven Ray",
 "short": "Swanson, S.R.",
 "being": "human",
 "citizen": "US",
@@ -6040,6 +6933,7 @@
 {
 "id": "AS-00465",
 "name": "Olivas, John Daniel",
+"name_mcdowell": "Olivas, John Daniel",
 "short": "Olivas, J.D.",
 "being": "human",
 "citizen": "US",
@@ -6053,6 +6947,7 @@
 {
 "id": "AS-00466",
 "name": "Anderson, Clayton Conrad",
+"name_mcdowell": "Anderson, Clayton Conrad",
 "short": "Anderson, C.C.",
 "being": "human",
 "citizen": "US",
@@ -6066,6 +6961,7 @@
 {
 "id": "AS-00467",
 "name": "Caldwell Dyson, Tracy Ellen",
+"name_mcdowell": "Caldwell Dyson, Tracy Ellen",
 "short": "Caldwell Dyson, T.E.",
 "being": "human",
 "citizen": "US",
@@ -6079,6 +6975,7 @@
 {
 "id": "AS-00468",
 "name": "Morgan, Barbara Radding",
+"name_mcdowell": "Morgan, Barbara Radding",
 "short": "Morgan, B.R.",
 "being": "human",
 "citizen": "US",
@@ -6091,7 +6988,8 @@
 },
 {
 "id": "AS-00469",
-"name": "Drew, B. *Alvin, Jr",
+"name": "Drew, B. Alvin, Jr",
+"name_mcdowell": "Drew, B. *Alvin, Jr",
 "short": "Drew, B.A.",
 "being": "human",
 "citizen": "US",
@@ -6105,6 +7003,7 @@
 {
 "id": "AS-00470",
 "name": "Shukor al Masrie, Muszaphar",
+"name_mcdowell": "Shukor al Masrie, Muszaphar",
 "short": "Shukor. M.S.",
 "being": "human",
 "citizen": "MY",
@@ -6118,6 +7017,7 @@
 {
 "id": "AS-00471",
 "name": "Zamka, George David",
+"name_mcdowell": "Zamka, George David",
 "short": "Zamka, G.D.",
 "being": "human",
 "citizen": "US",
@@ -6131,6 +7031,7 @@
 {
 "id": "AS-00472",
 "name": "Wheelock, Douglas Harry",
+"name_mcdowell": "Wheelock, Douglas Harry",
 "short": "Wheelock, D.H.",
 "being": "human",
 "citizen": "US",
@@ -6144,6 +7045,7 @@
 {
 "id": "AS-00473",
 "name": "Nespoli, Paolo Angelo",
+"name_mcdowell": "Nespoli, Paolo Angelo",
 "short": "Nespoli, P.A.",
 "being": "human",
 "citizen": "I",
@@ -6157,6 +7059,7 @@
 {
 "id": "AS-00474",
 "name": "Poindexter, Alan Goodwin",
+"name_mcdowell": "Poindexter, Alan Goodwin",
 "short": "Poindexter, A.G.",
 "being": "human",
 "citizen": "US",
@@ -6170,6 +7073,7 @@
 {
 "id": "AS-00475",
 "name": "Melvin, Leland Devon 'Lee'",
+"name_mcdowell": "Melvin, Leland Devon 'Lee'",
 "short": "Melvin, L.D.",
 "being": "human",
 "citizen": "US",
@@ -6183,6 +7087,7 @@
 {
 "id": "AS-00476",
 "name": "Love, Stanley Glen",
+"name_mcdowell": "Love, Stanley Glen",
 "short": "Love, S.G.",
 "being": "human",
 "citizen": "US",
@@ -6196,6 +7101,7 @@
 {
 "id": "AS-00477",
 "name": "Johnson, Gregory Harold",
+"name_mcdowell": "Johnson, Gregory Harold",
 "short": "Johnson, G.H.",
 "being": "human",
 "citizen": "US",
@@ -6209,6 +7115,7 @@
 {
 "id": "AS-00478",
 "name": "Behnken, Robert Louis",
+"name_mcdowell": "Behnken, Robert Louis",
 "short": "Behnken, R.L.",
 "being": "human",
 "citizen": "US",
@@ -6222,6 +7129,7 @@
 {
 "id": "AS-00479",
 "name": "Foreman, Michael James",
+"name_mcdowell": "Foreman, Michael James",
 "short": "Foreman, M.J.",
 "being": "human",
 "citizen": "US",
@@ -6235,6 +7143,7 @@
 {
 "id": "AS-00480",
 "name": "Reisman, Garrett Erin",
+"name_mcdowell": "Reisman, Garrett Erin",
 "short": "Reisman, G.E.",
 "being": "human",
 "citizen": "US",
@@ -6248,6 +7157,7 @@
 {
 "id": "AS-00481",
 "name": "Volkov, Sergey Aleksandrovich",
+"name_mcdowell": "Volkov, Sergey Aleksandrovich",
 "short": "Volkov, S.A.",
 "being": "human",
 "citizen": "RU",
@@ -6261,6 +7171,7 @@
 {
 "id": "AS-00482",
 "name": "Kononenko, Oleg Dmitrievich",
+"name_mcdowell": "Kononenko, Oleg Dmitrievich",
 "short": "Kononenko, O.D.",
 "being": "human",
 "citizen": "RU",
@@ -6274,6 +7185,7 @@
 {
 "id": "AS-00483",
 "name": "Yi So-yeon",
+"name_mcdowell": "Yi So-yeon",
 "short": "Yi S.",
 "being": "human",
 "citizen": "KR",
@@ -6287,6 +7199,7 @@
 {
 "id": "AS-00484",
 "name": "Ham, Kenneth Todd",
+"name_mcdowell": "Ham, Kenneth Todd",
 "short": "Ham, K.T.",
 "being": "human",
 "citizen": "US",
@@ -6300,6 +7213,7 @@
 {
 "id": "AS-00485",
 "name": "Nyberg, Karen Lujean",
+"name_mcdowell": "Nyberg, Karen Lujean",
 "short": "Nyberg, K.L.",
 "being": "human",
 "citizen": "US",
@@ -6313,6 +7227,7 @@
 {
 "id": "AS-00486",
 "name": "Garan, Ronald John, Jr.",
+"name_mcdowell": "Garan, Ronald John, Jr.",
 "short": "Garan, R.J.",
 "being": "human",
 "citizen": "US",
@@ -6326,6 +7241,7 @@
 {
 "id": "AS-00487",
 "name": "Hoshide Akihiko",
+"name_mcdowell": "Hoshide Akihiko",
 "short": "Hoshide A.",
 "being": "human",
 "citizen": "J",
@@ -6339,6 +7255,7 @@
 {
 "id": "AS-00488",
 "name": "Chamitoff, Gregory Errol",
+"name_mcdowell": "Chamitoff, Gregory Errol",
 "short": "Chamitoff, G.E.",
 "being": "human",
 "citizen": "US",
@@ -6352,6 +7269,7 @@
 {
 "id": "AS-00489",
 "name": "Zhai Zhigang",
+"name_mcdowell": "Zhai Zhigang",
 "short": "Zhai Z.",
 "being": "human",
 "citizen": "CN",
@@ -6365,6 +7283,7 @@
 {
 "id": "AS-00490",
 "name": "Liu Boming",
+"name_mcdowell": "Liu Boming",
 "short": "Liu B.",
 "being": "human",
 "citizen": "CN",
@@ -6378,6 +7297,7 @@
 {
 "id": "AS-00491",
 "name": "Jing Haipeng",
+"name_mcdowell": "Jing Haipeng",
 "short": "Jing H.",
 "being": "human",
 "citizen": "CN",
@@ -6391,6 +7311,7 @@
 {
 "id": "AS-00492",
 "name": "Garriott, Richard Allen",
+"name_mcdowell": "Garriott, Richard Allen",
 "short": "Garriott, R.A.",
 "being": "human",
 "citizen": "US",
@@ -6404,6 +7325,7 @@
 {
 "id": "AS-00493",
 "name": "Boe, Eric A.",
+"name_mcdowell": "Boe, Eric A.",
 "short": "Boe, E.A..",
 "being": "human",
 "citizen": "US",
@@ -6417,6 +7339,7 @@
 {
 "id": "AS-00494",
 "name": "Bowen, Stephen G.",
+"name_mcdowell": "Bowen, Stephen G.",
 "short": "Bowen, S.G.",
 "being": "human",
 "citizen": "US",
@@ -6430,6 +7353,7 @@
 {
 "id": "AS-00495",
 "name": "Kimbrough, Robert Shane",
+"name_mcdowell": "Kimbrough, Robert Shane",
 "short": "Kimbrough, R.S.",
 "being": "human",
 "citizen": "US",
@@ -6443,6 +7367,7 @@
 {
 "id": "AS-00496",
 "name": "Antonelli, Dominic Anthony 'Tony'",
+"name_mcdowell": "Antonelli, Dominic Anthony 'Tony'",
 "short": "Antonelli, D.A.",
 "being": "human",
 "citizen": "US",
@@ -6456,6 +7381,7 @@
 {
 "id": "AS-00497",
 "name": "Acaba, Joseph M.",
+"name_mcdowell": "Acaba, Joseph M.",
 "short": "Acaba, J.M.",
 "being": "human",
 "citizen": "US",
@@ -6469,6 +7395,7 @@
 {
 "id": "AS-00498",
 "name": "Arnold, Richard R., II",
+"name_mcdowell": "Arnold, Richard R., II",
 "short": "Arnold, R.R.",
 "being": "human",
 "citizen": "US",
@@ -6482,6 +7409,7 @@
 {
 "id": "AS-00499",
 "name": "Barratt, Michael Reed",
+"name_mcdowell": "Barratt, Michael Reed",
 "short": "Barratt, M.R.",
 "being": "human",
 "citizen": "US",
@@ -6495,6 +7423,7 @@
 {
 "id": "AS-00500",
 "name": "Johnson, Gregory Carl",
+"name_mcdowell": "Johnson, Gregory Carl",
 "short": "Johnson, G.C.",
 "being": "human",
 "citizen": "US",
@@ -6508,6 +7437,7 @@
 {
 "id": "AS-00501",
 "name": "Good, Michael T.",
+"name_mcdowell": "Good, Michael T.",
 "short": "Good, M.T.",
 "being": "human",
 "citizen": "US",
@@ -6520,7 +7450,8 @@
 },
 {
 "id": "AS-00502",
-"name": "McArthur, Katherine *Megan",
+"name": "McArthur, Katherine Megan",
+"name_mcdowell": "McArthur, Katherine *Megan",
 "short": "McArthur, K.M.",
 "being": "human",
 "citizen": "US",
@@ -6534,6 +7465,7 @@
 {
 "id": "AS-00503",
 "name": "Feustel, Andrew Jay 'Drew'",
+"name_mcdowell": "Feustel, Andrew Jay 'Drew'",
 "short": "Feustel, A.J.",
 "being": "human",
 "citizen": "US",
@@ -6547,6 +7479,7 @@
 {
 "id": "AS-00504",
 "name": "Romanenko, Roman Yurievich",
+"name_mcdowell": "Romanenko, Roman Yurievich",
 "short": "Romanenko, R.Yu.",
 "being": "human",
 "citizen": "RU",
@@ -6560,6 +7493,7 @@
 {
 "id": "AS-00505",
 "name": "Hurley, Douglas G.",
+"name_mcdowell": "Hurley, Douglas G.",
 "short": "Hurley, D.G.",
 "being": "human",
 "citizen": "US",
@@ -6573,6 +7507,7 @@
 {
 "id": "AS-00506",
 "name": "Cassidy, Christopher J.",
+"name_mcdowell": "Cassidy, Christopher J.",
 "short": "Cassidy, C.J.",
 "being": "human",
 "citizen": "US",
@@ -6586,6 +7521,7 @@
 {
 "id": "AS-00507",
 "name": "Marshburn, Thomas H.",
+"name_mcdowell": "Marshburn, Thomas H.",
 "short": "Marshburn, T.H.",
 "being": "human",
 "citizen": "US",
@@ -6599,6 +7535,7 @@
 {
 "id": "AS-00508",
 "name": "Kopra, Timothy Lennart",
+"name_mcdowell": "Kopra, Timothy Lennart",
 "short": "Kopra, T.L.",
 "being": "human",
 "citizen": "US",
@@ -6612,6 +7549,7 @@
 {
 "id": "AS-00509",
 "name": "Ford, Kevin Anthony",
+"name_mcdowell": "Ford, Kevin Anthony",
 "short": "Ford, K.A.",
 "being": "human",
 "citizen": "US",
@@ -6625,6 +7563,7 @@
 {
 "id": "AS-00510",
 "name": "Hernandez, Jose Moreno",
+"name_mcdowell": "Hernandez, Jose Moreno",
 "short": "Hernandez, J.M.",
 "being": "human",
 "citizen": "US",
@@ -6638,6 +7577,7 @@
 {
 "id": "AS-00511",
 "name": "Stott, Nicole Passonno",
+"name_mcdowell": "Stott, Nicole Passonno",
 "short": "Stott, N.P.",
 "being": "human",
 "citizen": "US",
@@ -6651,6 +7591,7 @@
 {
 "id": "AS-00512",
 "name": "Suraev, Maksim Viktorovich",
+"name_mcdowell": "Suraev, Maksim Viktorovich",
 "short": "Suraev, M.V.",
 "being": "human",
 "citizen": "RU",
@@ -6664,6 +7605,7 @@
 {
 "id": "AS-00513",
 "name": "Laliberte, Guy",
+"name_mcdowell": "Laliberte, Guy",
 "short": "Laliberte, G.",
 "being": "human",
 "citizen": "CA",
@@ -6677,6 +7619,7 @@
 {
 "id": "AS-00514",
 "name": "Wilmore, Barry E. 'Butch'",
+"name_mcdowell": "Wilmore, Barry E. 'Butch'",
 "short": "Wilmore, B.E.",
 "being": "human",
 "citizen": "US",
@@ -6690,6 +7633,7 @@
 {
 "id": "AS-00515",
 "name": "Satcher, Robert L., Jr.",
+"name_mcdowell": "Satcher, Robert L., Jr.",
 "short": "Satcher, R.L.",
 "being": "human",
 "citizen": "US",
@@ -6703,6 +7647,7 @@
 {
 "id": "AS-00516",
 "name": "Bresnik, Randolph J.",
+"name_mcdowell": "Bresnik, Randolph J.",
 "short": "Bresnik, R.J.",
 "being": "human",
 "citizen": "US",
@@ -6716,6 +7661,7 @@
 {
 "id": "AS-00517",
 "name": "Creamer, Timothy John",
+"name_mcdowell": "Creamer, Timothy John",
 "short": "Creamer, T.J.",
 "being": "human",
 "citizen": "US",
@@ -6729,6 +7675,7 @@
 {
 "id": "AS-00518",
 "name": "Virts, Terry W., Jr.",
+"name_mcdowell": "Virts, Terry W., Jr.",
 "short": "Virts, T.W.",
 "being": "human",
 "citizen": "US",
@@ -6742,6 +7689,7 @@
 {
 "id": "AS-00519",
 "name": "Skvortsov, Aleksandr Aleksandrovich ml.",
+"name_mcdowell": "Skvortsov, Aleksandr Aleksandrovich ml.",
 "short": "Skvortsov, A.A. (ml.)",
 "being": "human",
 "citizen": "RU",
@@ -6755,6 +7703,7 @@
 {
 "id": "AS-00520",
 "name": "Kornienko, Mikhail Borisovich",
+"name_mcdowell": "Kornienko, Mikhail Borisovich",
 "short": "Kornienko, M.B.",
 "being": "human",
 "citizen": "RU",
@@ -6768,6 +7717,7 @@
 {
 "id": "AS-00521",
 "name": "Dutton, James P., Jr.",
+"name_mcdowell": "Dutton, James P., Jr.",
 "short": "Dutton, J.P.",
 "being": "human",
 "citizen": "US",
@@ -6781,6 +7731,7 @@
 {
 "id": "AS-00522",
 "name": "Metcalf-Lindenburger, Dorothy M.",
+"name_mcdowell": "Metcalf-Lindenburger, Dorothy M.",
 "short": "Metcalf-Lindenburger, D.M.",
 "being": "human",
 "citizen": "US",
@@ -6794,6 +7745,7 @@
 {
 "id": "AS-00523",
 "name": "Yamazaki (Sumino), Naoko",
+"name_mcdowell": "Yamazaki (Sumino), Naoko",
 "short": "Yamazaki, N.",
 "being": "human",
 "citizen": "J",
@@ -6807,6 +7759,7 @@
 {
 "id": "AS-00524",
 "name": "Walker, Shannon Baker",
+"name_mcdowell": "Walker, Shannon Baker",
 "short": "Walker, S.B.",
 "being": "human",
 "citizen": "US",
@@ -6820,6 +7773,7 @@
 {
 "id": "AS-00525",
 "name": "Skripochka, Oleg Ivanovich",
+"name_mcdowell": "Skripochka, Oleg Ivanovich",
 "short": "Skripochka, O.I.",
 "being": "human",
 "citizen": "RU",
@@ -6833,6 +7787,7 @@
 {
 "id": "AS-00526",
 "name": "Kondrat'ev, Dmitriy Yur'evich",
+"name_mcdowell": "Kondrat'ev, Dmitriy Yur'evich",
 "short": "Kondrat'ev, D.Yu.",
 "being": "human",
 "citizen": "RU",
@@ -6846,6 +7801,7 @@
 {
 "id": "AS-00527",
 "name": "Samokutyaev, Aleksandr Mikhaiovich",
+"name_mcdowell": "Samokutyaev, Aleksandr Mikhaiovich",
 "short": "Samokutyaev, A.M.",
 "being": "human",
 "citizen": "RU",
@@ -6859,6 +7815,7 @@
 {
 "id": "AS-00528",
 "name": "Borisenko, Andrey Ivanovich",
+"name_mcdowell": "Borisenko, Andrey Ivanovich",
 "short": "Borisenko, A.I.",
 "being": "human",
 "citizen": "RU",
@@ -6872,6 +7829,7 @@
 {
 "id": "AS-00529",
 "name": "Furukawa Satoshi",
+"name_mcdowell": "Furukawa Satoshi",
 "short": "Furukawa, S.",
 "being": "human",
 "citizen": "J",
@@ -6885,6 +7843,7 @@
 {
 "id": "AS-00530",
 "name": "Shkaplerov, Anton Nikolaevich",
+"name_mcdowell": "Shkaplerov, Anton Nikolaevich",
 "short": "Shkaplerov, A.N.",
 "being": "human",
 "citizen": "RU",
@@ -6898,6 +7857,7 @@
 {
 "id": "AS-00531",
 "name": "Ivanishin, Anatoliy Alekseevich",
+"name_mcdowell": "Ivanishin, Anatoliy Alekseevich",
 "short": "Ivanishin, A.A.",
 "being": "human",
 "citizen": "RU",
@@ -6911,6 +7871,7 @@
 {
 "id": "AS-00532",
 "name": "Revin, Sergei Nikolaevich",
+"name_mcdowell": "Revin, Sergei Nikolaevich",
 "short": "Revin, S.N.",
 "being": "human",
 "citizen": "RU",
@@ -6924,6 +7885,7 @@
 {
 "id": "AS-00533",
 "name": "Liu Wang",
+"name_mcdowell": "Liu Wang",
 "short": "Liu W.",
 "being": "human",
 "citizen": "CN",
@@ -6937,6 +7899,7 @@
 {
 "id": "AS-00534",
 "name": "Liu Yang",
+"name_mcdowell": "Liu Yang",
 "short": "Liu Y.",
 "being": "human",
 "citizen": "CN",
@@ -6950,6 +7913,7 @@
 {
 "id": "AS-00535",
 "name": "Novitskiy, Oleg Viktorovich",
+"name_mcdowell": "Novitskiy, Oleg Viktorovich",
 "short": "Novitskiy, O.V.",
 "being": "human",
 "citizen": "BY",
@@ -6963,6 +7927,7 @@
 {
 "id": "AS-00536",
 "name": "Tarelkin, Yevgeniy Igorevich",
+"name_mcdowell": "Tarelkin, Yevgeniy Igorevich",
 "short": "Tarelkin, Ye.I.",
 "being": "human",
 "citizen": "RU",
@@ -6976,6 +7941,7 @@
 {
 "id": "AS-00537",
 "name": "Misurkin, Aleksandr Aleksandrovich",
+"name_mcdowell": "Misurkin, Aleksandr Aleksandrovich",
 "short": "Misurkin, A.A.",
 "being": "human",
 "citizen": "RU",
@@ -6989,6 +7955,7 @@
 {
 "id": "AS-00538",
 "name": "Parmitano, Luca Salvo",
+"name_mcdowell": "Parmitano, Luca Salvo",
 "short": "Parmitano, L.S.",
 "being": "human",
 "citizen": "I",
@@ -7002,6 +7969,7 @@
 {
 "id": "AS-00539",
 "name": "Zhang Xiaoguan",
+"name_mcdowell": "Zhang Xiaoguan",
 "short": "Zhang X.",
 "being": "human",
 "citizen": "CN",
@@ -7015,6 +7983,7 @@
 {
 "id": "AS-00540",
 "name": "Wang Yaping",
+"name_mcdowell": "Wang Yaping",
 "short": "Wang Y.",
 "being": "human",
 "citizen": "CN",
@@ -7028,6 +7997,7 @@
 {
 "id": "AS-00541",
 "name": "Ryazanskiy, Sergey Nikolaevich",
+"name_mcdowell": "Ryazanskiy, Sergey Nikolaevich",
 "short": "Ryazanskiy, S.N.",
 "being": "human",
 "citizen": "RU",
@@ -7041,6 +8011,7 @@
 {
 "id": "AS-00542",
 "name": "Hopkins, Michael Scott",
+"name_mcdowell": "Hopkins, Michael Scott",
 "short": "Hopkins, M.S.",
 "being": "human",
 "citizen": "US",
@@ -7054,6 +8025,7 @@
 {
 "id": "AS-00543",
 "name": "Artem'ev, Oleg Germanovich",
+"name_mcdowell": "Artem'ev, Oleg Germanovich",
 "short": "Artem'ev, O.G.",
 "being": "human",
 "citizen": "RU",
@@ -7066,7 +8038,8 @@
 },
 {
 "id": "AS-00544",
-"name": "Wiseman, Gregory *Reid",
+"name": "Wiseman, Gregory Reid",
+"name_mcdowell": "Wiseman, Gregory *Reid",
 "short": "Wiseman, G.R.",
 "being": "human",
 "citizen": "US",
@@ -7080,6 +8053,7 @@
 {
 "id": "AS-00545",
 "name": "Gerst, Alexander",
+"name_mcdowell": "Gerst, Alexander",
 "short": "Gerst, A.",
 "being": "human",
 "citizen": "D",
@@ -7093,6 +8067,7 @@
 {
 "id": "AS-00546",
 "name": "Serova, Elena Olegovna (Kuznetsova)",
+"name_mcdowell": "Serova, Elena Olegovna (Kuznetsova)",
 "short": "Serova, E.O.",
 "being": "human",
 "citizen": "RU",
@@ -7106,6 +8081,7 @@
 {
 "id": "AS-00547",
 "name": "Cristoforetti, Samantha",
+"name_mcdowell": "Cristoforetti, Samantha",
 "short": "Cristoforetti, S.",
 "being": "human",
 "citizen": "I",
@@ -7119,6 +8095,7 @@
 {
 "id": "AS-00548",
 "name": "Yui Kimiya",
+"name_mcdowell": "Yui Kimiya",
 "short": "Yui K.",
 "being": "human",
 "citizen": "J",
@@ -7132,6 +8109,7 @@
 {
 "id": "AS-00549",
 "name": "Lindgren, Kjell Norwood",
+"name_mcdowell": "Lindgren, Kjell Norwood",
 "short": "Lindgren, K.N.",
 "being": "human",
 "citizen": "US",
@@ -7145,6 +8123,7 @@
 {
 "id": "AS-00550",
 "name": "Mogensen, Andreas Enevold",
+"name_mcdowell": "Mogensen, Andreas Enevold",
 "short": "Mogensen, A.E.",
 "being": "human",
 "citizen": "DK",
@@ -7158,6 +8137,7 @@
 {
 "id": "AS-00551",
 "name": "Aimbetov, Aydin Akanovich",
+"name_mcdowell": "Aimbetov, Aydin Akanovich",
 "short": "Aimbetov, A.A.",
 "being": "human",
 "citizen": "KZ",
@@ -7171,6 +8151,7 @@
 {
 "id": "AS-00552",
 "name": "Peake, Timothy Nigel, Maj. Br.Army",
+"name_mcdowell": "Peake, Timothy Nigel, Maj. Br.Army",
 "short": "Peake, T.N.",
 "being": "human",
 "citizen": "UK",
@@ -7184,6 +8165,7 @@
 {
 "id": "AS-00553",
 "name": "Ovchinin, Aleksey Nikolaevich",
+"name_mcdowell": "Ovchinin, Aleksey Nikolaevich",
 "short": "Ovchinin, A.N.",
 "being": "human",
 "citizen": "RU",
@@ -7197,6 +8179,7 @@
 {
 "id": "AS-00554",
 "name": "Onishi Takuya",
+"name_mcdowell": "Onishi Takuya",
 "short": "Onishi T.",
 "being": "human",
 "citizen": "J",
@@ -7210,6 +8193,7 @@
 {
 "id": "AS-00555",
 "name": "Rubins, Kathleen Hallisey (Kate)",
+"name_mcdowell": "Rubins, Kathleen Hallisey (Kate)",
 "short": "Rubins, K.H.",
 "being": "human",
 "citizen": "US",
@@ -7223,6 +8207,7 @@
 {
 "id": "AS-00556",
 "name": "Chen Dong",
+"name_mcdowell": "Chen Dong",
 "short": "Chen D.",
 "being": "human",
 "citizen": "CN",
@@ -7236,6 +8221,7 @@
 {
 "id": "AS-00557",
 "name": "Ryzhikov, Sergey Nikolaevich",
+"name_mcdowell": "Ryzhikov, Sergey Nikolaevich",
 "short": "Ryzhikov, S.N.",
 "being": "human",
 "citizen": "RU",
@@ -7249,6 +8235,7 @@
 {
 "id": "AS-00558",
 "name": "Pesquet, Thomas Gautier",
+"name_mcdowell": "Pesquet, Thomas Gautier",
 "short": "Pesquet, T.",
 "being": "human",
 "citizen": "F",
@@ -7262,6 +8249,7 @@
 {
 "id": "AS-00559",
 "name": "Fischer, Jack David",
+"name_mcdowell": "Fischer, Jack David",
 "short": "Fischer, J.D.",
 "being": "human",
 "citizen": "US",
@@ -7275,6 +8263,7 @@
 {
 "id": "AS-00560",
 "name": "Vande Hei, Mark Thomas",
+"name_mcdowell": "Vande Hei, Mark Thomas",
 "short": "Vande Hei, M.T.",
 "being": "human",
 "citizen": "US",
@@ -7288,6 +8277,7 @@
 {
 "id": "AS-00561",
 "name": "Tingle, Scott David",
+"name_mcdowell": "Tingle, Scott David",
 "short": "Tingle, S.D.",
 "being": "human",
 "citizen": "US",
@@ -7301,6 +8291,7 @@
 {
 "id": "AS-00562",
 "name": "Kanai Norishige",
+"name_mcdowell": "Kanai Norishige",
 "short": "Kanai N.",
 "being": "human",
 "citizen": "J",
@@ -7314,6 +8305,7 @@
 {
 "id": "AS-00563",
 "name": "Prokop'ev, Sergey Valer'evich",
+"name_mcdowell": "Prokop'ev, Sergey Valer'evich",
 "short": "Prokop'ev, S.V.",
 "being": "human",
 "citizen": "RU",
@@ -7327,6 +8319,7 @@
 {
 "id": "AS-00564",
 "name": "Aunon-Chancellor, Serena Maria",
+"name_mcdowell": "Aunon-Chancellor, Serena Maria",
 "short": "Aunon-Chancellor, S.M.",
 "being": "human",
 "citizen": "US",
@@ -7340,6 +8333,7 @@
 {
 "id": "AS-00565",
 "name": "Hague, Tyler Nicklaus 'Nick'",
+"name_mcdowell": "Hague, Tyler Nicklaus 'Nick'",
 "short": "Hague, T.Nk.",
 "being": "human",
 "citizen": "US",
@@ -7353,6 +8347,7 @@
 {
 "id": "AS-00566",
 "name": "Saint-Jacques, David",
+"name_mcdowell": "Saint-Jacques, David",
 "short": "Saint-Jacques, D.",
 "being": "human",
 "citizen": "CA",
@@ -7366,6 +8361,7 @@
 {
 "id": "AS-00567",
 "name": "McClain, Anne Charlotte",
+"name_mcdowell": "McClain, Anne Charlotte",
 "short": "McClain, A.C.",
 "being": "human",
 "citizen": "US",
@@ -7379,6 +8375,7 @@
 {
 "id": "AS-00568",
 "name": "Stucky, Mark P",
+"name_mcdowell": "Stucky, Mark P",
 "short": "Stucky, M.P.",
 "being": "human",
 "citizen": "US",
@@ -7392,6 +8389,7 @@
 {
 "id": "AS-00569",
 "name": "Mackay, David William Donald",
+"name_mcdowell": "Mackay, David William Donald",
 "short": "Mackay, D.W.D.",
 "being": "human",
 "citizen": "UK",
@@ -7405,6 +8403,7 @@
 {
 "id": "AS-00570",
 "name": "Masucci, Michael J. 'Sooch'",
+"name_mcdowell": "Masucci, Michael J. 'Sooch'",
 "short": "Masucci, M.J.",
 "being": "human",
 "citizen": "US",
@@ -7417,7 +8416,8 @@
 },
 {
 "id": "AS-00571",
-"name": "Moses, Nathalie *Beth (Stubbings)",
+"name": "Moses, Nathalie Beth (Stubbings)",
+"name_mcdowell": "Moses, Nathalie *Beth (Stubbings)",
 "short": "Moses, N.B.",
 "being": "human",
 "citizen": "US",
@@ -7431,6 +8431,7 @@
 {
 "id": "AS-00572",
 "name": "Koch (Hammock), Christina M.",
+"name_mcdowell": "Koch (Hammock), Christina M.",
 "short": "Koch, C.M.",
 "being": "human",
 "citizen": "US",
@@ -7444,6 +8445,7 @@
 {
 "id": "AS-00573",
 "name": "Morgan, Andrew Richard",
+"name_mcdowell": "Morgan, Andrew Richard",
 "short": "Morgan, A.R.",
 "being": "human",
 "citizen": "US",
@@ -7457,6 +8459,7 @@
 {
 "id": "AS-00574",
 "name": "Meir, Jessica Ulrika",
+"name_mcdowell": "Meir, Jessica Ulrika",
 "short": "Meir, J.U.",
 "being": "human",
 "citizen": "US",
@@ -7470,6 +8473,7 @@
 {
 "id": "AS-00575",
 "name": "Al Mansouri, Hazza Ali Abdan Khalfan",
+"name_mcdowell": "Al Mansouri, Hazza Ali Abdan Khalfan",
 "short": "Al-Mansouri, H.",
 "being": "human",
 "citizen": "UAE",
@@ -7483,6 +8487,7 @@
 {
 "id": "AS-00576",
 "name": "Vagner, Ivan Viktorovich",
+"name_mcdowell": "Vagner, Ivan Viktorovich",
 "short": "Vagner, I.V.",
 "being": "human",
 "citizen": "RU",
@@ -7496,6 +8501,7 @@
 {
 "id": "AS-00577",
 "name": "Kud'-Sverchkov, Sergei Vladimirovich",
+"name_mcdowell": "Kud'-Sverchkov, Sergei Vladimirovich",
 "short": "Kud'-Sverchkov, S.V.",
 "being": "human",
 "citizen": "RU",
@@ -7509,6 +8515,7 @@
 {
 "id": "AS-00578",
 "name": "Glover, Victor Jerome",
+"name_mcdowell": "Glover, Victor Jerome",
 "short": "Glover, V.J.",
 "being": "human",
 "citizen": "US",
@@ -7522,6 +8529,7 @@
 {
 "id": "AS-00579",
 "name": "Dubrov, Petr Valer'evich",
+"name_mcdowell": "Dubrov, Petr Valer'evich",
 "short": "Dubrov, P.V.",
 "being": "human",
 "citizen": "RU",
@@ -7535,6 +8543,7 @@
 {
 "id": "AS-00580",
 "name": "Tang Hongbo",
+"name_mcdowell": "Tang Hongbo",
 "short": "Tang H.",
 "being": "human",
 "citizen": "CN",
@@ -7548,6 +8557,7 @@
 {
 "id": "AS-00581",
 "name": "Branson, Richard Charles Nicholas",
+"name_mcdowell": "Branson, Richard Charles Nicholas",
 "short": "Branson, R.",
 "being": "human",
 "citizen": "UK",
@@ -7561,6 +8571,7 @@
 {
 "id": "AS-00582",
 "name": "Bennett, Colin",
+"name_mcdowell": "Bennett, Colin",
 "short": "Bennett, C.",
 "being": "human",
 "citizen": "UK",
@@ -7574,6 +8585,7 @@
 {
 "id": "AS-00583",
 "name": "Bandla, Sirisha",
+"name_mcdowell": "Bandla, Sirisha",
 "short": "Bandla, S.",
 "being": "human",
 "citizen": "US",
@@ -7587,6 +8599,7 @@
 {
 "id": "AS-00584",
 "name": "Bezos (Jorgenson), Jeffrey Preston",
+"name_mcdowell": "Bezos (Jorgenson), Jeffrey Preston",
 "short": "Bezos, J.P.",
 "being": "human",
 "citizen": "US",
@@ -7600,6 +8613,7 @@
 {
 "id": "AS-00585",
 "name": "Bezos, Mark Salvador",
+"name_mcdowell": "Bezos, Mark Salvador",
 "short": "Bezos, M.S.",
 "being": "human",
 "citizen": "US",
@@ -7613,6 +8627,7 @@
 {
 "id": "AS-00586",
 "name": "Funk, Mary Wallace 'Wally'",
+"name_mcdowell": "Funk, Mary Wallace 'Wally'",
 "short": "Funk, M.W.",
 "being": "human",
 "citizen": "US",
@@ -7626,6 +8641,7 @@
 {
 "id": "AS-00587",
 "name": "Daemen, Oliver",
+"name_mcdowell": "Daemen, Oliver",
 "short": "Daemen, O.",
 "being": "human",
 "citizen": "NL",
@@ -7639,6 +8655,7 @@
 {
 "id": "AS-00588",
 "name": "Isaacman, Jared",
+"name_mcdowell": "Isaacman, Jared",
 "short": "Isaacman, J.",
 "being": "human",
 "citizen": "US",
@@ -7652,6 +8669,7 @@
 {
 "id": "AS-00589",
 "name": "Proctor, Sian Hayley",
+"name_mcdowell": "Proctor, Sian Hayley",
 "short": "Proctor, S.H.",
 "being": "human",
 "citizen": "US",
@@ -7665,6 +8683,7 @@
 {
 "id": "AS-00590",
 "name": "Sembroski, Christopher",
+"name_mcdowell": "Sembroski, Christopher",
 "short": "Sembroski, C.",
 "being": "human",
 "citizen": "US",
@@ -7678,6 +8697,7 @@
 {
 "id": "AS-00591",
 "name": "Arceneaux, Hayley",
+"name_mcdowell": "Arceneaux, Hayley",
 "short": "Arceneaux, H.",
 "being": "human",
 "citizen": "US",
@@ -7691,6 +8711,7 @@
 {
 "id": "AS-00592",
 "name": "Shipenko, Aleksey 'Klim' Pavlovich",
+"name_mcdowell": "Shipenko, Aleksey 'Klim' Pavlovich",
 "short": "Shipenko, A.P.",
 "being": "human",
 "citizen": "RU",
@@ -7704,6 +8725,7 @@
 {
 "id": "AS-00593",
 "name": "Peresil'd, Yuliya Sergeevna",
+"name_mcdowell": "Peresil'd, Yuliya Sergeevna",
 "short": "Peresil'd, Yu.S.",
 "being": "human",
 "citizen": "RU",
@@ -7717,6 +8739,7 @@
 {
 "id": "AS-00594",
 "name": "Boshuizen, Christopher R.",
+"name_mcdowell": "Boshuizen, Christopher R.",
 "short": "Boshuizen, C.",
 "being": "human",
 "citizen": "AU",
@@ -7730,6 +8753,7 @@
 {
 "id": "AS-00595",
 "name": "de Vries, Glen",
+"name_mcdowell": "de Vries, Glen",
 "short": "de Vries, G.",
 "being": "human",
 "citizen": "US",
@@ -7743,6 +8767,7 @@
 {
 "id": "AS-00596",
 "name": "Powers, Audrey K.",
+"name_mcdowell": "Powers, Audrey K.",
 "short": "Powers, A.",
 "being": "human",
 "citizen": "US",
@@ -7756,6 +8781,7 @@
 {
 "id": "AS-00597",
 "name": "Shatner, William",
+"name_mcdowell": "Shatner, William",
 "short": "Shatner, W.",
 "being": "human",
 "citizen": "CA",
@@ -7769,6 +8795,7 @@
 {
 "id": "AS-00598",
 "name": "Ye Guangfu",
+"name_mcdowell": "Ye Guangfu",
 "short": "Ye G.",
 "being": "human",
 "citizen": "CN",
@@ -7782,6 +8809,7 @@
 {
 "id": "AS-00599",
 "name": "Chari, Raja Jon Vurputoor",
+"name_mcdowell": "Chari, Raja Jon Vurputoor",
 "short": "Chari, R.",
 "being": "human",
 "citizen": "US",
@@ -7795,6 +8823,7 @@
 {
 "id": "AS-00600",
 "name": "Maurer, Matthias",
+"name_mcdowell": "Maurer, Matthias",
 "short": "Maurer, M.",
 "being": "human",
 "citizen": "D",
@@ -7808,6 +8837,7 @@
 {
 "id": "AS-00601",
 "name": "Barron (Sax), Kayla Jane",
+"name_mcdowell": "Barron (Sax), Kayla Jane",
 "short": "Barron, K.J.",
 "being": "human",
 "citizen": "US",
@@ -7821,6 +8851,7 @@
 {
 "id": "AS-00602",
 "name": "Maezawa Yusaku",
+"name_mcdowell": "Maezawa Yusaku",
 "short": "Maezawa Y.",
 "being": "human",
 "citizen": "J",
@@ -7834,6 +8865,7 @@
 {
 "id": "AS-00603",
 "name": "Hirano Yozo",
+"name_mcdowell": "Hirano Yozo",
 "short": "Hirano Y.",
 "being": "human",
 "citizen": "J",
@@ -7847,6 +8879,7 @@
 {
 "id": "AS-00604",
 "name": "Strahan, Michael T.",
+"name_mcdowell": "Strahan, Michael T.",
 "short": "Strahan, M.T.",
 "being": "human",
 "citizen": "US",
@@ -7860,6 +8893,7 @@
 {
 "id": "AS-00605",
 "name": "Shepard-Churchley, Laura",
+"name_mcdowell": "Shepard-Churchley, Laura",
 "short": "Shepard-Churchley, L.",
 "being": "human",
 "citizen": "US",
@@ -7873,6 +8907,7 @@
 {
 "id": "AS-00606",
 "name": "Taylor, Dylan",
+"name_mcdowell": "Taylor, Dylan",
 "short": "Taylor, D.",
 "being": "human",
 "citizen": "US",
@@ -7886,6 +8921,7 @@
 {
 "id": "AS-00607",
 "name": "Bess, Lane",
+"name_mcdowell": "Bess, Lane",
 "short": "Bess, L.",
 "being": "human",
 "citizen": "US",
@@ -7899,6 +8935,7 @@
 {
 "id": "AS-00608",
 "name": "Bess, Cameron",
+"name_mcdowell": "Bess, Cameron",
 "short": "Bess, C.",
 "being": "human",
 "citizen": "US",
@@ -7912,6 +8949,7 @@
 {
 "id": "AS-00609",
 "name": "Dick, Evan Lewis",
+"name_mcdowell": "Dick, Evan Lewis",
 "short": "Dick, E.L.",
 "being": "human",
 "citizen": "US",
@@ -7925,6 +8963,7 @@
 {
 "id": "AS-00610",
 "name": "Matveev, Denis Vladimirovich",
+"name_mcdowell": "Matveev, Denis Vladimirovich",
 "short": "Matveev, D.V.",
 "being": "human",
 "citizen": "RU",
@@ -7938,6 +8977,7 @@
 {
 "id": "AS-00611",
 "name": "Korsakov, Sergey Vladimirovich",
+"name_mcdowell": "Korsakov, Sergey Vladimirovich",
 "short": "Korsakov S.V.",
 "being": "human",
 "citizen": "RU",
@@ -7951,6 +8991,7 @@
 {
 "id": "AS-00612",
 "name": "Allen, Martin 'Marty' Gordon",
+"name_mcdowell": "Allen, Martin 'Marty' Gordon",
 "short": "Allen, M.G.",
 "being": "human",
 "citizen": "US",
@@ -7964,6 +9005,7 @@
 {
 "id": "AS-00613",
 "name": "Hagle, Sharon (Langford)",
+"name_mcdowell": "Hagle, Sharon (Langford)",
 "short": "Hagle, S.L.",
 "being": "human",
 "citizen": "US",
@@ -7977,6 +9019,7 @@
 {
 "id": "AS-00614",
 "name": "Hagle, Marc Lee",
+"name_mcdowell": "Hagle, Marc Lee",
 "short": "Hagle, M.L.",
 "being": "human",
 "citizen": "US",
@@ -7990,6 +9033,7 @@
 {
 "id": "AS-00615",
 "name": "Lai, Gary",
+"name_mcdowell": "Lai, Gary",
 "short": "Lai, G.",
 "being": "human",
 "citizen": "US",
@@ -8003,6 +9047,7 @@
 {
 "id": "AS-00616",
 "name": "Kitchen, James 'Jim'",
+"name_mcdowell": "Kitchen, James 'Jim'",
 "short": "Kitchen, J.",
 "being": "human",
 "citizen": "US",
@@ -8016,6 +9061,7 @@
 {
 "id": "AS-00617",
 "name": "Nield, George Cooke",
+"name_mcdowell": "Nield, George Cooke",
 "short": "Nield, G.",
 "being": "human",
 "citizen": "US",
@@ -8029,6 +9075,7 @@
 {
 "id": "AS-00618",
 "name": "Connor, Larry",
+"name_mcdowell": "Connor, Larry",
 "short": "Connor, L.",
 "being": "human",
 "citizen": "US",
@@ -8042,6 +9089,7 @@
 {
 "id": "AS-00619",
 "name": "Stibbe, Eytan Meir",
+"name_mcdowell": "Stibbe, Eytan Meir",
 "short": "Stibbe, E.M.",
 "being": "human",
 "citizen": "IL",
@@ -8055,6 +9103,7 @@
 {
 "id": "AS-00620",
 "name": "Pathy, Mark L.",
+"name_mcdowell": "Pathy, Mark L.",
 "short": "Pathy, M.L.",
 "being": "human",
 "citizen": "CA",
@@ -8068,6 +9117,7 @@
 {
 "id": "AS-00621",
 "name": "Hines, Robert Thomas, Jr",
+"name_mcdowell": "Hines, Robert Thomas, Jr",
 "short": "Hines, R.T.",
 "being": "human",
 "citizen": "US",
@@ -8081,6 +9131,7 @@
 {
 "id": "AS-00622",
 "name": "Watkins, Jessica Andrea",
+"name_mcdowell": "Watkins, Jessica Andrea",
 "short": "Watkins, J.A.",
 "being": "human",
 "citizen": "US",
@@ -8094,6 +9145,7 @@
 {
 "id": "AS-00623",
 "name": "Correa Hespanha, Victor",
+"name_mcdowell": "Correa Hespanha, Victor",
 "short": "Correa Hespanha, V.",
 "being": "human",
 "citizen": "BR",
@@ -8106,7 +9158,8 @@
 },
 {
 "id": "AS-00624",
-"name": "Harding, George *Hamish Livingston",
+"name": "Harding, George Hamish Livingston",
+"name_mcdowell": "Harding, George *Hamish Livingston",
 "short": "Harding, H",
 "being": "human",
 "citizen": "UK",
@@ -8120,6 +9173,7 @@
 {
 "id": "AS-00625",
 "name": "Vescovo, Victor",
+"name_mcdowell": "Vescovo, Victor",
 "short": "Vescovo, V.",
 "being": "human",
 "citizen": "US",
@@ -8133,6 +9187,7 @@
 {
 "id": "AS-00626",
 "name": "Echazarreta, Katya",
+"name_mcdowell": "Echazarreta, Katya",
 "short": "Echazaretta, K.",
 "being": "human",
 "citizen": "MX",
@@ -8146,6 +9201,7 @@
 {
 "id": "AS-00627",
 "name": "Robinson, Jaison",
+"name_mcdowell": "Robinson, Jaison",
 "short": "Robinson, J.",
 "being": "human",
 "citizen": "US",
@@ -8159,6 +9215,7 @@
 {
 "id": "AS-00628",
 "name": "Cai Xuzhe",
+"name_mcdowell": "Cai Xuzhe",
 "short": "Cai X.",
 "being": "human",
 "citizen": "CN",
@@ -8172,6 +9229,7 @@
 {
 "id": "AS-00629",
 "name": "Sabry, Sara",
+"name_mcdowell": "Sabry, Sara",
 "short": "Sabry, S.",
 "being": "human",
 "citizen": "EG",
@@ -8185,6 +9243,7 @@
 {
 "id": "AS-00630",
 "name": "Ferreira, Mario Nuno dos Santos",
+"name_mcdowell": "Ferreira, Mario Nuno dos Santos",
 "short": "Ferreira, M.N.d.",
 "being": "human",
 "citizen": "PT",
@@ -8198,6 +9257,7 @@
 {
 "id": "AS-00631",
 "name": "Kelly, Clinton Wayne, III",
+"name_mcdowell": "Kelly, Clinton Wayne, III",
 "short": "Kelly, C.W.",
 "being": "human",
 "citizen": "US",
@@ -8210,7 +9270,8 @@
 },
 {
 "id": "AS-00632",
-"name": "Cotton, John *Coby",
+"name": "Cotton, John Coby",
+"name_mcdowell": "Cotton, John *Coby",
 "short": "Cotton, J.C.",
 "being": "human",
 "citizen": "US",
@@ -8224,6 +9285,7 @@
 {
 "id": "AS-00633",
 "name": "Young, Steve Alan",
+"name_mcdowell": "Young, Steve Alan",
 "short": "Young, S.A.",
 "being": "human",
 "citizen": "US",
@@ -8237,6 +9299,7 @@
 {
 "id": "AS-00634",
 "name": "O'Brien, Vanessa Audi Rhys",
+"name_mcdowell": "O'Brien, Vanessa Audi Rhys",
 "short": "O'Brien, V.A.R.",
 "being": "human",
 "citizen": "US",
@@ -8250,6 +9313,7 @@
 {
 "id": "AS-00635",
 "name": "Petelin Dmitriy Aleksandrovich",
+"name_mcdowell": "Petelin Dmitriy Aleksandrovich",
 "short": "Petelin D.A.",
 "being": "human",
 "citizen": "RU",
@@ -8263,6 +9327,7 @@
 {
 "id": "AS-00636",
 "name": "Rubio, Francisco Carlos 'Frank'",
+"name_mcdowell": "Rubio, Francisco Carlos 'Frank'",
 "short": "Rubio, F.",
 "being": "human",
 "citizen": "US",
@@ -8276,6 +9341,7 @@
 {
 "id": "AS-00637",
 "name": "Mann, Nicole Victoria Aunapu",
+"name_mcdowell": "Mann, Nicole Victoria Aunapu",
 "short": "Mann, N.V.A.",
 "being": "human",
 "citizen": "US",
@@ -8289,6 +9355,7 @@
 {
 "id": "AS-00638",
 "name": "Cassada, Josh Aaron",
+"name_mcdowell": "Cassada, Josh Aaron",
 "short": "Cassada, J.A.",
 "being": "human",
 "citizen": "US",
@@ -8302,6 +9369,7 @@
 {
 "id": "AS-00639",
 "name": "Kikina, Anna Yurevna",
+"name_mcdowell": "Kikina, Anna Yurevna",
 "short": "Kikina, A.Yu.",
 "being": "human",
 "citizen": "RU",
@@ -8315,6 +9383,7 @@
 {
 "id": "AS-00640",
 "name": "Deng Qingming",
+"name_mcdowell": "Deng Qingming",
 "short": "Deng Q.",
 "being": "human",
 "citizen": "CN",
@@ -8328,6 +9397,7 @@
 {
 "id": "AS-00641",
 "name": "Zhang Lu",
+"name_mcdowell": "Zhang Lu",
 "short": "Zhang L.",
 "being": "human",
 "citizen": "CN",
@@ -8341,6 +9411,7 @@
 {
 "id": "AS-00642",
 "name": "Hoburg, Warren Woodrow 'Woody'",
+"name_mcdowell": "Hoburg, Warren Woodrow 'Woody'",
 "short": "Hoburg, W.W.",
 "being": "human",
 "citizen": "US",
@@ -8354,6 +9425,7 @@
 {
 "id": "AS-00643",
 "name": "Al Neyadi, Sultan",
+"name_mcdowell": "Al Neyadi, Sultan",
 "short": "Al-Neyadi, S.",
 "being": "human",
 "citizen": "UAE",
@@ -8367,6 +9439,7 @@
 {
 "id": "AS-00644",
 "name": "Fedyaev, Andrey Valer'evich",
+"name_mcdowell": "Fedyaev, Andrey Valer'evich",
 "short": "Fedyaev A.V.",
 "being": "human",
 "citizen": "RU",
@@ -8380,6 +9453,7 @@
 {
 "id": "AS-00645",
 "name": "Shoffner, John P.",
+"name_mcdowell": "Shoffner, John P.",
 "short": "Shoffner, J.",
 "being": "human",
 "citizen": "US",
@@ -8393,6 +9467,7 @@
 {
 "id": "AS-00646",
 "name": "Al-Qarni, Ali",
+"name_mcdowell": "Al-Qarni, Ali",
 "short": "Al-Qarni, A.",
 "being": "human",
 "citizen": "SA",
@@ -8406,6 +9481,7 @@
 {
 "id": "AS-00647",
 "name": "Barnawi, Rayyanah",
+"name_mcdowell": "Barnawi, Rayyanah",
 "short": "Barnawi, R.",
 "being": "human",
 "citizen": "SA",
@@ -8419,6 +9495,7 @@
 {
 "id": "AS-00648",
 "name": "Mays, Luke",
+"name_mcdowell": "Mays, Luke",
 "short": "Mays, L.",
 "being": "human",
 "citizen": "US",
@@ -8432,6 +9509,7 @@
 {
 "id": "AS-00649",
 "name": "Huie, Christopher",
+"name_mcdowell": "Huie, Christopher",
 "short": "Huie, C.",
 "being": "human",
 "citizen": "US",
@@ -8445,6 +9523,7 @@
 {
 "id": "AS-00650",
 "name": "Gilbert, Jamila",
+"name_mcdowell": "Gilbert, Jamila",
 "short": "Gilbert, J",
 "being": "human",
 "citizen": "US",
@@ -8458,6 +9537,7 @@
 {
 "id": "AS-00651",
 "name": "Zhu Yangzhu",
+"name_mcdowell": "Zhu Yangzhu",
 "short": "Zhu Y.",
 "being": "human",
 "citizen": "CN",
@@ -8471,6 +9551,7 @@
 {
 "id": "AS-00652",
 "name": "Gui Haichao",
+"name_mcdowell": "Gui Haichao",
 "short": "Gui H.",
 "being": "human",
 "citizen": "CN",
@@ -8484,6 +9565,7 @@
 {
 "id": "AS-00653",
 "name": "Pecile, Nicola",
+"name_mcdowell": "Pecile, Nicola",
 "short": "Pecile, N.",
 "being": "human",
 "citizen": "US",
@@ -8497,6 +9579,7 @@
 {
 "id": "AS-00654",
 "name": "Villadei, Walter",
+"name_mcdowell": "Villadei, Walter",
 "short": "Villadei, W.",
 "being": "human",
 "citizen": "I",
@@ -8510,6 +9593,7 @@
 {
 "id": "AS-00655",
 "name": "Landolfi, Angelo",
+"name_mcdowell": "Landolfi, Angelo",
 "short": "Landolfi, A.",
 "being": "human",
 "citizen": "I",
@@ -8523,6 +9607,7 @@
 {
 "id": "AS-00656",
 "name": "Carlucci, Pantaleone",
+"name_mcdowell": "Carlucci, Pantaleone",
 "short": "Carlucci, P.",
 "being": "human",
 "citizen": "I",
@@ -8536,6 +9621,7 @@
 {
 "id": "AS-00657",
 "name": "Latimer, Kelly",
+"name_mcdowell": "Latimer, Kelly",
 "short": "Latimer, K.",
 "being": "human",
 "citizen": "US",
@@ -8549,6 +9635,7 @@
 {
 "id": "AS-00658",
 "name": "Goodwin, Jon Stuart",
+"name_mcdowell": "Goodwin, Jon Stuart",
 "short": "Goodwin, J.",
 "being": "human",
 "citizen": "UK",
@@ -8562,6 +9649,7 @@
 {
 "id": "AS-00659",
 "name": "Schahaff, Keisha (Ali)",
+"name_mcdowell": "Schahaff, Keisha (Ali)",
 "short": "Schahaff, K.",
 "being": "human",
 "citizen": "AG",
@@ -8575,6 +9663,7 @@
 {
 "id": "AS-00660",
 "name": "Mayers, Anastatia",
+"name_mcdowell": "Mayers, Anastatia",
 "short": "Mayers, A.",
 "being": "human",
 "citizen": "AG",
@@ -8588,6 +9677,7 @@
 {
 "id": "AS-00661",
 "name": "Moghbeli, Jasmin",
+"name_mcdowell": "Moghbeli, Jasmin",
 "short": "Moghbeli, J.",
 "being": "human",
 "citizen": "US",
@@ -8601,6 +9691,7 @@
 {
 "id": "AS-00662",
 "name": "Borisov, Konstantin Sergeevich",
+"name_mcdowell": "Borisov, Konstantin Sergeevich",
 "short": "Borisov, K.S.",
 "being": "human",
 "citizen": "RU",
@@ -8614,6 +9705,7 @@
 {
 "id": "AS-00663",
 "name": "Baxter, Kenneth",
+"name_mcdowell": "Baxter, Kenneth",
 "short": "Baxter, K.",
 "being": "human",
 "citizen": "US",
@@ -8627,6 +9719,7 @@
 {
 "id": "AS-00664",
 "name": "Nash, Timothy",
+"name_mcdowell": "Nash, Timothy",
 "short": "Nash, T.",
 "being": "human",
 "citizen": "UK",
@@ -8640,6 +9733,7 @@
 {
 "id": "AS-00665",
 "name": "Reynard, Adrian John",
+"name_mcdowell": "Reynard, Adrian John",
 "short": "Reynard, A.J.",
 "being": "human",
 "citizen": "UK",
@@ -8653,6 +9747,7 @@
 {
 "id": "AS-00666",
 "name": "Chub, Nikolai Aleksandrovich",
+"name_mcdowell": "Chub, Nikolai Aleksandrovich",
 "short": "Chub, N.A.",
 "being": "human",
 "citizen": "RU",
@@ -8666,6 +9761,7 @@
 {
 "id": "AS-00667",
 "name": "O'Hara, Loral Ashley",
+"name_mcdowell": "O'Hara, Loral Ashley",
 "short": "O'Hara, L.A.",
 "being": "human",
 "citizen": "US",
@@ -8679,6 +9775,7 @@
 {
 "id": "AS-00668",
 "name": "Rosano, Ronald",
+"name_mcdowell": "Rosano, Ronald",
 "short": "Rosano, R.",
 "being": "human",
 "citizen": "US",
@@ -8692,6 +9789,7 @@
 {
 "id": "AS-00669",
 "name": "Beattie, Trevor",
+"name_mcdowell": "Beattie, Trevor",
 "short": "Beattie, T.",
 "being": "human",
 "citizen": "UK",
@@ -8705,6 +9803,7 @@
 {
 "id": "AS-00670",
 "name": "Salim, Namira",
+"name_mcdowell": "Salim, Namira",
 "short": "Salim, N.",
 "being": "human",
 "citizen": "PK",
@@ -8718,6 +9817,7 @@
 {
 "id": "AS-00671",
 "name": "Tang Shengjie",
+"name_mcdowell": "Tang Shengjie",
 "short": "Tang S.",
 "being": "human",
 "citizen": "CN",
@@ -8731,6 +9831,7 @@
 {
 "id": "AS-00672",
 "name": "Jiang Xinlin",
+"name_mcdowell": "Jiang Xinlin",
 "short": "Jiang X.",
 "being": "human",
 "citizen": "CN",
@@ -8743,7 +9844,8 @@
 },
 {
 "id": "AS-00673",
-"name": "Stern, Sol *Alan",
+"name": "Stern, Sol Alan",
+"name_mcdowell": "Stern, Sol *Alan",
 "short": "Stern, S.A.",
 "being": "human",
 "citizen": "US",
@@ -8757,6 +9859,7 @@
 {
 "id": "AS-00674",
 "name": "Gerardi, Kellie",
+"name_mcdowell": "Gerardi, Kellie",
 "short": "Gerardi, K.",
 "being": "human",
 "citizen": "US",
@@ -8770,6 +9873,7 @@
 {
 "id": "AS-00675",
 "name": "Maisonrouge, Ketty Pucci-Sisti",
+"name_mcdowell": "Maisonrouge, Ketty Pucci-Sisti",
 "short": "Maisonrouge, K.P.",
 "being": "human",
 "citizen": "US",
@@ -8783,6 +9887,7 @@
 {
 "id": "AS-00676",
 "name": "Gezeravci, Alper",
+"name_mcdowell": "Gezeravci, Alper",
 "short": "Gezeravci, A.",
 "being": "human",
 "citizen": "TR",
@@ -8795,7 +9900,8 @@
 },
 {
 "id": "AS-00677",
-"name": "Wandt, Hans *Marcus",
+"name": "Wandt, Hans Marcus",
+"name_mcdowell": "Wandt, Hans *Marcus",
 "short": "Wandt, M.",
 "being": "human",
 "citizen": "S",
@@ -8809,6 +9915,7 @@
 {
 "id": "AS-00678",
 "name": "Borozdina, Lina Yur'evna",
+"name_mcdowell": "Borozdina, Lina Yur'evna",
 "short": "Borozdina-Birch, L.",
 "being": "human",
 "citizen": "US",
@@ -8822,6 +9929,7 @@
 {
 "id": "AS-00679",
 "name": "Vaughn, Robert C. 'Robie'",
+"name_mcdowell": "Vaughn, Robert C. 'Robie'",
 "short": "Vaughn, R.C.",
 "being": "human",
 "citizen": "US",
@@ -8835,6 +9943,7 @@
 {
 "id": "AS-00680",
 "name": "Haider, Franz",
+"name_mcdowell": "Haider, Franz",
 "short": "Haider, F.",
 "being": "human",
 "citizen": "AT",
@@ -8848,6 +9957,7 @@
 {
 "id": "AS-00681",
 "name": "Kornswiet, Neil Bruce",
+"name_mcdowell": "Kornswiet, Neil Bruce",
 "short": "Kornswiet, N.B.",
 "being": "human",
 "citizen": "US",
@@ -8861,6 +9971,7 @@
 {
 "id": "AS-00682",
 "name": "Dominick, Matthew Stuart",
+"name_mcdowell": "Dominick, Matthew Stuart",
 "short": "Dominick, M.S.",
 "being": "human",
 "citizen": "US",
@@ -8874,6 +9985,7 @@
 {
 "id": "AS-00683",
 "name": "Epps, Jeanette Jo",
+"name_mcdowell": "Epps, Jeanette Jo",
 "short": "Epps, J.J.",
 "being": "human",
 "citizen": "US",
@@ -8887,6 +9999,7 @@
 {
 "id": "AS-00684",
 "name": "Grebyonkin, Aleksandr Sergeevich",
+"name_mcdowell": "Grebyonkin, Aleksandr Sergeevich",
 "short": "Grebyonkin, A.S.",
 "being": "human",
 "citizen": "RU",
@@ -8900,6 +10013,7 @@
 {
 "id": "AS-00685",
 "name": "Vasilevskaya, Marina Vital'evna",
+"name_mcdowell": "Vasilevskaya, Marina Vital'evna",
 "short": "Vasilevskaya, M.V.",
 "being": "human",
 "citizen": "BY",
@@ -8913,6 +10027,7 @@
 {
 "id": "AS-00686",
 "name": "Li Guangsu",
+"name_mcdowell": "Li Guangsu",
 "short": "Li G.",
 "being": "human",
 "citizen": "CN",
@@ -8926,6 +10041,7 @@
 {
 "id": "AS-00687",
 "name": "Li Cong",
+"name_mcdowell": "Li Cong",
 "short": "Li C.",
 "being": "human",
 "citizen": "CN",
@@ -8939,6 +10055,7 @@
 {
 "id": "AS-00688",
 "name": "Hess, Kenneth Lafferty",
+"name_mcdowell": "Hess, Kenneth Lafferty",
 "short": "Hess, K.L.",
 "being": "human",
 "citizen": "US",
@@ -8952,6 +10069,7 @@
 {
 "id": "AS-00689",
 "name": "Schaller, Carol Ann",
+"name_mcdowell": "Schaller, Carol Ann",
 "short": "Schaller, A",
 "being": "human",
 "citizen": "US",
@@ -8965,6 +10083,7 @@
 {
 "id": "AS-00690",
 "name": "Chiron, Sylvain Philibert Eugene",
+"name_mcdowell": "Chiron, Sylvain Philibert Eugene",
 "short": "Chiron, S.P.E.",
 "being": "human",
 "citizen": "F",
@@ -8978,6 +10097,7 @@
 {
 "id": "AS-00691",
 "name": "Dwight, Edward Joseph, Jr.",
+"name_mcdowell": "Dwight, Edward Joseph, Jr.",
 "short": "Dwight, E.J.",
 "being": "human",
 "citizen": "US",
@@ -8991,6 +10111,7 @@
 {
 "id": "AS-00692",
 "name": "Thotakura, Gopichand 'Gopi'",
+"name_mcdowell": "Thotakura, Gopichand 'Gopi'",
 "short": "Thotakura, G.",
 "being": "human",
 "citizen": "IN",
@@ -9004,6 +10125,7 @@
 {
 "id": "AS-00693",
 "name": "Angel, Mason",
+"name_mcdowell": "Angel, Mason",
 "short": "Angel, M.",
 "being": "human",
 "citizen": "US",
@@ -9017,6 +10139,7 @@
 {
 "id": "AS-00694",
 "name": "Janjua, Jameel Jawaid",
+"name_mcdowell": "Janjua, Jameel Jawaid",
 "short": "Janjua, J.",
 "being": "human",
 "citizen": "CA",
@@ -9030,6 +10153,7 @@
 {
 "id": "AS-00695",
 "name": "Atasever, Tuva Cihangir",
+"name_mcdowell": "Atasever, Tuva Cihangir",
 "short": "Atasaver, T.C.",
 "being": "human",
 "citizen": "TR",
@@ -9043,6 +10167,7 @@
 {
 "id": "AS-00696",
 "name": "Sadhwani, Anand 'Andy' Harish",
+"name_mcdowell": "Sadhwani, Anand 'Andy' Harish",
 "short": "Sadhwani, A.H.",
 "being": "human",
 "citizen": "US",
@@ -9056,6 +10181,7 @@
 {
 "id": "AS-00697",
 "name": "Pergament, Irving Izchak",
+"name_mcdowell": "Pergament, Irving Izchak",
 "short": "Pergament, I.I.",
 "being": "human",
 "citizen": "US",
@@ -9069,6 +10195,7 @@
 {
 "id": "AS-00698",
 "name": "Manenti, Giorgio",
+"name_mcdowell": "Manenti, Giorgio",
 "short": "Manenti, G.",
 "being": "human",
 "citizen": "I",
@@ -9082,6 +10209,7 @@
 {
 "id": "AS-00699",
 "name": "Rabin, Ephraim",
+"name_mcdowell": "Rabin, Ephraim",
 "short": "Rabin, E.",
 "being": "human",
 "citizen": "US?",
@@ -9095,6 +10223,7 @@
 {
 "id": "AS-00700",
 "name": "Elrick, Nicolina",
+"name_mcdowell": "Elrick, Nicolina",
 "short": "Elrick, N.",
 "being": "human",
 "citizen": "UK",
@@ -9108,6 +10237,7 @@
 {
 "id": "AS-00701",
 "name": "Grin, Eugene",
+"name_mcdowell": "Grin, Eugene",
 "short": "Grin, E.",
 "being": "human",
 "citizen": "US",
@@ -9121,6 +10251,7 @@
 {
 "id": "AS-00702",
 "name": "Ferl, Robert Joseph",
+"name_mcdowell": "Ferl, Robert Joseph",
 "short": "Ferl, R.",
 "being": "human",
 "citizen": "US",
@@ -9134,6 +10265,7 @@
 {
 "id": "AS-00703",
 "name": "Kitchen, Karsen",
+"name_mcdowell": "Kitchen, Karsen",
 "short": "Kitchen, K.",
 "being": "human",
 "citizen": "US",
@@ -9147,6 +10279,7 @@
 {
 "id": "AS-00704",
 "name": "Jahangir, Eiman",
+"name_mcdowell": "Jahangir, Eiman",
 "short": "Jahangir, E.",
 "being": "human",
 "citizen": "US",
@@ -9160,6 +10293,7 @@
 {
 "id": "AS-00705",
 "name": "Poteet, Scott",
+"name_mcdowell": "Poteet, Scott",
 "short": "Poteet, S.",
 "being": "human",
 "citizen": "US",
@@ -9173,6 +10307,7 @@
 {
 "id": "AS-00706",
 "name": "Menon (Wilhelm), Anna",
+"name_mcdowell": "Menon (Wilhelm), Anna",
 "short": "Menon, A.W.",
 "being": "human",
 "citizen": "US",
@@ -9186,6 +10321,7 @@
 {
 "id": "AS-00707",
 "name": "Gillis (Levine), Sarah",
+"name_mcdowell": "Gillis (Levine), Sarah",
 "short": "Gillis, S.",
 "being": "human",
 "citizen": "US",
@@ -9199,6 +10335,7 @@
 {
 "id": "AS-00708",
 "name": "Gorbunov, Aleksandr Vladimirovich",
+"name_mcdowell": "Gorbunov, Aleksandr Vladimirovich",
 "short": "Gorbunov, A.V.",
 "being": "human",
 "citizen": "RU",
@@ -9212,6 +10349,7 @@
 {
 "id": "AS-00709",
 "name": "Song Lingdong",
+"name_mcdowell": "Song Lingdong",
 "short": "Song L.",
 "being": "human",
 "citizen": "CN",
@@ -9225,6 +10363,7 @@
 {
 "id": "AS-00710",
 "name": "Wang Haoze",
+"name_mcdowell": "Wang Haoze",
 "short": "Wang H.",
 "being": "human",
 "citizen": "CN",
@@ -9238,6 +10377,7 @@
 {
 "id": "AS-00711",
 "name": "Litteral, Austin Gerald",
+"name_mcdowell": "Litteral, Austin Gerald",
 "short": "Litteral, A.G.",
 "being": "human",
 "citizen": "US",
@@ -9251,6 +10391,7 @@
 {
 "id": "AS-00712",
 "name": "Wolfond, Henry 'Hank'",
+"name_mcdowell": "Wolfond, Henry 'Hank'",
 "short": "Wolfond, H.",
 "being": "human",
 "citizen": "CA",
@@ -9264,6 +10405,7 @@
 {
 "id": "AS-00713",
 "name": "Russell, James D. 'J.D.'",
+"name_mcdowell": "Russell, James D. 'J.D.'",
 "short": "Russell, J.D.",
 "being": "human",
 "citizen": "US",
@@ -9277,6 +10419,7 @@
 {
 "id": "AS-00714",
 "name": "Calandrelli, Emily Dawn",
+"name_mcdowell": "Calandrelli, Emily Dawn",
 "short": "Calandrelli, E.D.",
 "being": "human",
 "citizen": "US",
@@ -9290,6 +10433,7 @@
 {
 "id": "AS-00715",
 "name": "Calleja, Jesus",
+"name_mcdowell": "Calleja, Jesus",
 "short": "Calleja, J.",
 "being": "human",
 "citizen": "E",
@@ -9303,6 +10447,7 @@
 {
 "id": "AS-00716",
 "name": "Shah, Tushar",
+"name_mcdowell": "Shah, Tushar",
 "short": "Shah, T.",
 "being": "human",
 "citizen": "US",
@@ -9316,6 +10461,7 @@
 {
 "id": "AS-00717",
 "name": "Scott, Richard T.",
+"name_mcdowell": "Scott, Richard T.",
 "short": "Scott, R.",
 "being": "human",
 "citizen": "US",
@@ -9329,6 +10475,7 @@
 {
 "id": "AS-00718",
 "name": "Hyde, Elaine Chia",
+"name_mcdowell": "Hyde, Elaine Chia",
 "short": "Hyde, E.C.",
 "being": "human",
 "citizen": "AU",
@@ -9342,6 +10489,7 @@
 {
 "id": "AS-00719",
 "name": "Wilson, Russell Ty",
+"name_mcdowell": "Wilson, Russell Ty",
 "short": "Wilson, R.",
 "being": "human",
 "citizen": "AU",
@@ -9355,6 +10503,7 @@
 {
 "id": "AS-00720",
 "name": "Ayers (Stilwell), Nicole",
+"name_mcdowell": "Ayers (Stilwell), Nicole",
 "short": "Ayers, N.",
 "being": "human",
 "citizen": "US",
@@ -9368,6 +10517,7 @@
 {
 "id": "AS-00721",
 "name": "Peskov, Kirill Aleksandrovich",
+"name_mcdowell": "Peskov, Kirill Aleksandrovich",
 "short": "Peskov, K.A.",
 "being": "human",
 "citizen": "RU",
@@ -9381,6 +10531,7 @@
 {
 "id": "AS-00722",
 "name": "Wang Chun",
+"name_mcdowell": "Wang Chun",
 "short": "Wang C.",
 "being": "human",
 "citizen": "MT",
@@ -9394,6 +10545,7 @@
 {
 "id": "AS-00723",
 "name": "Mikkelsen, Jannicke",
+"name_mcdowell": "Mikkelsen, Jannicke",
 "short": "Mikkelsen, J",
 "being": "human",
 "citizen": "N",
@@ -9407,6 +10559,7 @@
 {
 "id": "AS-00724",
 "name": "Rogge, Rabea Patricia",
+"name_mcdowell": "Rogge, Rabea Patricia",
 "short": "Rogge, R.P.",
 "being": "human",
 "citizen": "D",
@@ -9420,6 +10573,7 @@
 {
 "id": "AS-00725",
 "name": "Philips, Eric Louis",
+"name_mcdowell": "Philips, Eric Louis",
 "short": "Philips, E.L.",
 "being": "human",
 "citizen": "AU",
@@ -9433,6 +10587,7 @@
 {
 "id": "AS-00726",
 "name": "Zubritskiy, Aleksey Vital'evich",
+"name_mcdowell": "Zubritskiy, Aleksey Vital'evich",
 "short": "Zubritskiy, A.V.",
 "being": "human",
 "citizen": "RU",
@@ -9446,6 +10601,7 @@
 {
 "id": "AS-00727",
 "name": "Kim, Jonathan Yong 'Jonny'",
+"name_mcdowell": "Kim, Jonathan Yong 'Jonny'",
 "short": "Kim, J.Y.",
 "being": "human",
 "citizen": "US",
@@ -9459,6 +10615,7 @@
 {
 "id": "AS-00728",
 "name": "Sanchez, Lauren Wendy",
+"name_mcdowell": "Sanchez, Lauren Wendy",
 "short": "Sanchez, L.W.",
 "being": "human",
 "citizen": "US",
@@ -9472,6 +10629,7 @@
 {
 "id": "AS-00729",
 "name": "Hudson, Katheryn Elizabeth 'Katy Perry'",
+"name_mcdowell": "Hudson, Katheryn Elizabeth 'Katy Perry'",
 "short": "Hudson, K.",
 "being": "human",
 "citizen": "US",
@@ -9485,6 +10643,7 @@
 {
 "id": "AS-00730",
 "name": "Nguyen, Amanda Ngoc",
+"name_mcdowell": "Nguyen, Amanda Ngoc",
 "short": "Nguyen A.",
 "being": "human",
 "citizen": "US",
@@ -9498,6 +10657,7 @@
 {
 "id": "AS-00731",
 "name": "Bowe, Aisha",
+"name_mcdowell": "Bowe, Aisha",
 "short": "Bowe, A.",
 "being": "human",
 "citizen": "US",
@@ -9511,6 +10671,7 @@
 {
 "id": "AS-00732",
 "name": "King, Gayle",
+"name_mcdowell": "King, Gayle",
 "short": "King, G",
 "being": "human",
 "citizen": "US",
@@ -9524,6 +10685,7 @@
 {
 "id": "AS-00733",
 "name": "Flynn, Kerianne",
+"name_mcdowell": "Flynn, Kerianne",
 "short": "Flynn, K",
 "being": "human",
 "citizen": "US",
@@ -9537,6 +10699,7 @@
 {
 "id": "AS-00734",
 "name": "Chen Zhongrui",
+"name_mcdowell": "Chen Zhongrui",
 "short": "Chen Z.",
 "being": "human",
 "citizen": "CN",
@@ -9550,6 +10713,7 @@
 {
 "id": "AS-00735",
 "name": "Wang Jie",
+"name_mcdowell": "Wang Jie",
 "short": "Wang J.",
 "being": "human",
 "citizen": "CN",
@@ -9563,6 +10727,7 @@
 {
 "id": "AS-00736",
 "name": "Green, Gretchen Elizabeth",
+"name_mcdowell": "Green, Gretchen Elizabeth",
 "short": "Green, G.E.",
 "being": "human",
 "citizen": "US",
@@ -9576,6 +10741,7 @@
 {
 "id": "AS-00737",
 "name": "Jeris, Paul M.",
+"name_mcdowell": "Jeris, Paul M.",
 "short": "Jeris, P.M.",
 "being": "human",
 "citizen": "US",
@@ -9589,6 +10755,7 @@
 {
 "id": "AS-00738",
 "name": "Williams, Jesse",
+"name_mcdowell": "Williams, Jesse",
 "short": "Williams, J",
 "being": "human",
 "citizen": "CA",
@@ -9602,6 +10769,7 @@
 {
 "id": "AS-00739",
 "name": "Aleman Healy, Jaime Eduardo",
+"name_mcdowell": "Aleman Healy, Jaime Eduardo",
 "short": "Aleman Healy, J.E.",
 "being": "human",
 "citizen": "PAR",
@@ -9615,6 +10783,7 @@
 {
 "id": "AS-00740",
 "name": "Medina Jorge, Aymette",
+"name_mcdowell": "Medina Jorge, Aymette",
 "short": "Medina Jorge, A.",
 "being": "human",
 "citizen": "US",
@@ -9628,6 +10797,7 @@
 {
 "id": "AS-00741",
 "name": "Rocket (Stephens), Mark",
+"name_mcdowell": "Rocket (Stephens), Mark",
 "short": "Rocket, M.",
 "being": "human",
 "citizen": "NZ",
@@ -9641,6 +10811,7 @@
 {
 "id": "AS-00742",
 "name": "Shukla, Shubanshu",
+"name_mcdowell": "Shukla, Shubanshu",
 "short": "Shukla, S.",
 "being": "human",
 "citizen": "IN",
@@ -9654,6 +10825,7 @@
 {
 "id": "AS-00743",
 "name": "Uznanski-Wisniewski, Slawosz",
+"name_mcdowell": "Uznanski-Wisniewski, Slawosz",
 "short": "Uznanski, S.",
 "being": "human",
 "citizen": "PL",
@@ -9667,6 +10839,7 @@
 {
 "id": "AS-00744",
 "name": "Kapu Tibor",
+"name_mcdowell": "Kapu Tibor",
 "short": "Kapu T.",
 "being": "human",
 "citizen": "HU",
@@ -9680,6 +10853,7 @@
 {
 "id": "AS-00745",
 "name": "Sitkin, James Mitchel",
+"name_mcdowell": "Sitkin, James Mitchel",
 "short": "Sitkin, J.",
 "being": "human",
 "citizen": "US",
@@ -9693,6 +10867,7 @@
 {
 "id": "AS-00746",
 "name": "Larson, Leland",
+"name_mcdowell": "Larson, Leland",
 "short": "Larson, L.",
 "being": "human",
 "citizen": "US",
@@ -9706,6 +10881,7 @@
 {
 "id": "AS-00747",
 "name": "Salis, Owolabi Mekunnu",
+"name_mcdowell": "Salis, Owolabi Mekunnu",
 "short": "Salis, O.",
 "being": "human",
 "citizen": "NG",
@@ -9719,6 +10895,7 @@
 {
 "id": "AS-00748",
 "name": "Rescigno, Frederick Xavier, Jr.",
+"name_mcdowell": "Rescigno, Frederick Xavier, Jr.",
 "short": "Rescigno, F.",
 "being": "human",
 "citizen": "US",
@@ -9732,6 +10909,7 @@
 {
 "id": "AS-00749",
 "name": "Kuehner, Alexandra 'Allie'",
+"name_mcdowell": "Kuehner, Alexandra 'Allie'",
 "short": "Kuehner, A.",
 "being": "human",
 "citizen": "US",
@@ -9745,6 +10923,7 @@
 {
 "id": "AS-00750",
 "name": "Kuehner, Carl R., III",
+"name_mcdowell": "Kuehner, Carl R., III",
 "short": "Kuehner, C.",
 "being": "human",
 "citizen": "US",
@@ -9758,6 +10937,7 @@
 {
 "id": "AS-00751",
 "name": "Cardman, Zena Maria",
+"name_mcdowell": "Cardman, Zena Maria",
 "short": "Cardman, Z.M.",
 "being": "human",
 "citizen": "US",
@@ -9771,6 +10951,7 @@
 {
 "id": "AS-00752",
 "name": "Platonov, Oleg Vladimirovich",
+"name_mcdowell": "Platonov, Oleg Vladimirovich",
 "short": "Platonov, O.V.",
 "being": "human",
 "citizen": "RU",
@@ -9784,6 +10965,7 @@
 {
 "id": "AS-00753",
 "name": "Pitchford, Lionel",
+"name_mcdowell": "Pitchford, Lionel",
 "short": "Pitchford, L.",
 "being": "human",
 "citizen": "UK",
@@ -9797,6 +10979,7 @@
 {
 "id": "AS-00754",
 "name": "Erdem, Gokhan",
+"name_mcdowell": "Erdem, Gokhan",
 "short": "Erdem, G",
 "being": "human",
 "citizen": "TR",
@@ -9810,6 +10993,7 @@
 {
 "id": "AS-00755",
 "name": "Sun Yuchen (Justin)",
+"name_mcdowell": "Sun Yuchen (Justin)",
 "short": "Sun. J.",
 "being": "human",
 "citizen": "KN",
@@ -9823,6 +11007,7 @@
 {
 "id": "AS-00756",
 "name": "Bahal, Arvinder Singh",
+"name_mcdowell": "Bahal, Arvinder Singh",
 "short": "Bajal, A.S.",
 "being": "human",
 "citizen": "US",
@@ -9836,6 +11021,7 @@
 {
 "id": "AS-00757",
 "name": "Martorell, Deborah",
+"name_mcdowell": "Martorell, Deborah",
 "short": "Martorell, D",
 "being": "human",
 "citizen": "US",
@@ -9849,6 +11035,7 @@
 {
 "id": "AS-00758",
 "name": "Newman, Aaron Charles",
+"name_mcdowell": "Newman, Aaron Charles",
 "short": "Newman, A.C.",
 "being": "human",
 "citizen": "US",
@@ -9862,6 +11049,7 @@
 {
 "id": "AS-00759",
 "name": "Lewis, William H.",
+"name_mcdowell": "Lewis, William H.",
 "short": "Lewis, W.H.",
 "being": "human",
 "citizen": "US",
@@ -9875,6 +11063,7 @@
 {
 "id": "AS-00760",
 "name": "Ostrovsky, Vitalii",
+"name_mcdowell": "Ostrovsky, Vitalii",
 "short": "Ostrovsky, V.",
 "being": "human",
 "citizen": "UA",
@@ -9888,6 +11077,7 @@
 {
 "id": "AS-00761",
 "name": "Karagussova, Danna Sergeevna",
+"name_mcdowell": "Karagussova, Danna Sergeevna",
 "short": "Karagussova, D.",
 "being": "human",
 "citizen": "KZ",
@@ -9901,6 +11091,7 @@
 {
 "id": "AS-00762",
 "name": "Elgin, Jeffrey Cornell",
+"name_mcdowell": "Elgin, Jeffrey Cornell",
 "short": "Elgin, J.C.",
 "being": "human",
 "citizen": "US",
@@ -9914,6 +11105,7 @@
 {
 "id": "AS-00763",
 "name": "Wu Fei",
+"name_mcdowell": "Wu Fei",
 "short": "Wu F.",
 "being": "human",
 "citizen": "CN",
@@ -9927,6 +11119,7 @@
 {
 "id": "AS-00764",
 "name": "Zhang Hongzhang",
+"name_mcdowell": "Zhang Hongzhang",
 "short": "Zhang H.",
 "being": "human",
 "citizen": "CN",
@@ -9940,6 +11133,7 @@
 {
 "id": "AS-00765",
 "name": "Mikaev, Sergey Nikolaevich",
+"name_mcdowell": "Mikaev, Sergey Nikolaevich",
 "short": "Mikaev, S.N.",
 "being": "human",
 "citizen": "RU",
@@ -9953,6 +11147,7 @@
 {
 "id": "AS-00766",
 "name": "Williams, Christopher Leigh",
+"name_mcdowell": "Williams, Christopher Leigh",
 "short": "Williams, C.L.",
 "being": "human",
 "citizen": "US",
@@ -9966,6 +11161,7 @@
 {
 "id": "AS-00767",
 "name": "Milch, Neal Bruce",
+"name_mcdowell": "Milch, Neal Bruce",
 "short": "Milch, N.B.",
 "being": "human",
 "citizen": "US",
@@ -9979,6 +11175,7 @@
 {
 "id": "AS-00768",
 "name": "Benthaus, Michael 'Michi'",
+"name_mcdowell": "Benthaus, Michael 'Michi'",
 "short": "Benthaus, M",
 "being": "human",
 "citizen": "D",
@@ -9992,6 +11189,7 @@
 {
 "id": "AS-00769",
 "name": "Koenigsmann, Hans-Jorg",
+"name_mcdowell": "Koenigsmann, Hans-Jorg",
 "short": "Koenigsmann, H-J",
 "being": "human",
 "citizen": "D",
@@ -10005,6 +11203,7 @@
 {
 "id": "AS-00770",
 "name": "Pourolis, Adonis",
+"name_mcdowell": "Pourolis, Adonis",
 "short": "Pouroulis, A.",
 "being": "human",
 "citizen": "CY",
@@ -10018,6 +11217,7 @@
 {
 "id": "AS-00771",
 "name": "Stansell, Jason Curtis",
+"name_mcdowell": "Stansell, Jason Curtis",
 "short": "Stansell, J.C.",
 "being": "human",
 "citizen": "US",
@@ -10031,6 +11231,7 @@
 {
 "id": "AS-00772",
 "name": "Hyde, Joseph Bernard",
+"name_mcdowell": "Hyde, Joseph Bernard",
 "short": "Hyde, J.B.",
 "being": "human",
 "citizen": "US",
@@ -10044,6 +11245,7 @@
 {
 "id": "AS-00773",
 "name": "Hendren, James Paul",
+"name_mcdowell": "Hendren, James Paul",
 "short": "Hendren, J.P.",
 "being": "human",
 "citizen": "US",
@@ -10057,6 +11259,7 @@
 {
 "id": "AS-00774",
 "name": "Drexler, Timothy",
+"name_mcdowell": "Drexler, Timothy",
 "short": "Drexler, T.",
 "being": "human",
 "citizen": "US",
@@ -10070,6 +11273,7 @@
 {
 "id": "AS-00775",
 "name": "Edwards, Linda Jean",
+"name_mcdowell": "Edwards, Linda Jean",
 "short": "Edwards, L.J.",
 "being": "human",
 "citizen": "US",
@@ -10083,6 +11287,7 @@
 {
 "id": "AS-00776",
 "name": "Gutierrez Pascual, Alberto",
+"name_mcdowell": "Gutierrez Pascual, Alberto",
 "short": "Gutierrez, A.",
 "being": "human",
 "citizen": "E",
@@ -10096,6 +11301,7 @@
 {
 "id": "AS-00777",
 "name": "Fernandez, Alain",
+"name_mcdowell": "Fernandez, Alain",
 "short": "Fernandez, A.",
 "being": "human",
 "citizen": "CH",
@@ -10109,6 +11315,7 @@
 {
 "id": "AS-00778",
 "name": "Stiles, Laura A.",
+"name_mcdowell": "Stiles, Laura A.",
 "short": "Stiles, L",
 "being": "human",
 "citizen": "US",
@@ -10122,6 +11329,7 @@
 {
 "id": "AS-00779",
 "name": "Hathaway, Jack Stewart",
+"name_mcdowell": "Hathaway, Jack Stewart",
 "short": "Hathaway, J.",
 "being": "human",
 "citizen": "US",
@@ -10135,6 +11343,7 @@
 {
 "id": "AS-00780",
 "name": "Adenot, Sophie",
+"name_mcdowell": "Adenot, Sophie",
 "short": "Adenot, S.",
 "being": "human",
 "citizen": "F",
@@ -10148,6 +11357,7 @@
 {
 "id": "AS-00781",
 "name": "Hansen, Jeremy Roger",
+"name_mcdowell": "Hansen, Jeremy Roger",
 "short": "Hansen, J.",
 "being": "human",
 "citizen": "CA",
@@ -10161,6 +11371,7 @@
 {
 "id": "AS-00782",
 "name": "Zhang Zhiyuan",
+"name_mcdowell": "Zhang Zhiyuan",
 "short": "Zhang Z.",
 "being": "human",
 "citizen": "CN",
@@ -10174,6 +11385,7 @@
 {
 "id": "AS-00783",
 "name": "Lai Ka-ying",
+"name_mcdowell": "Lai Ka-ying",
 "short": "Lai K.",
 "being": "human",
 "citizen": "CN",
@@ -10187,6 +11399,7 @@
 {
 "id": "AS-00784",
 "name": "Menon, Anil Madhavan Samoilenko",
+"name_mcdowell": "Menon, Anil Madhavan Samoilenko",
 "short": "Menon, A.",
 "being": "human",
 "citizen": "US",
@@ -10200,6 +11413,7 @@
 {
 "id": "AS-00785",
 "name": "Delaney, Luke Daniel",
+"name_mcdowell": "Delaney, Luke Daniel",
 "short": "Delaney, L.",
 "being": "human",
 "citizen": "US",
@@ -10213,6 +11427,7 @@
 {
 "id": "AS-00786",
 "name": "Kutryk, Joshua Peter",
+"name_mcdowell": "Kutryk, Joshua Peter",
 "short": "Kutryk, J.",
 "being": "human",
 "citizen": "CA",
@@ -10226,6 +11441,7 @@
 {
 "id": "AS-00787",
 "name": "Teteryatnikov, Sergey Aleksandrovich",
+"name_mcdowell": "Teteryatnikov, Sergey Aleksandrovich",
 "short": "Teteryatnikov, S.A.",
 "being": "human",
 "citizen": "RU",
@@ -10239,6 +11455,7 @@
 {
 "id": "AA-00001",
 "name": "Ham (No. 65)",
+"name_mcdowell": "Ham (No. 65)",
 "short": "Ham",
 "being": "human",
 "citizen": "(US)",
@@ -10252,6 +11469,7 @@
 {
 "id": "AA-00002",
 "name": "Enos (No. 81)",
+"name_mcdowell": "Enos (No. 81)",
 "short": "Enos",
 "being": "human",
 "citizen": "(US)",
@@ -10265,41 +11483,425 @@
 {
 "id": "AF-00001",
 "name": "Smith, Michael John",
+"name_mcdowell": "Smith, Michael John",
 "short": "Smith, M.J.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AF-00001"
+"mcdowell": "AF-00001",
+"wikidata": "Q25981"
 },
 "born": "1945 Apr 30",
 "died": "1986 Jan 28",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62675786620,
+"date": "1986-01-28",
+"where": "off Cape Canaveral, Florida",
+"during": "flight",
+"loss": "challenger-1986",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q25981",
+"url": "https://www.wikidata.org/wiki/Q25981"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 },
 {
 "id": "AF-00002",
-"name": "McAuliffe (Corrigan), Sharon *Christa",
+"name": "McAuliffe (Corrigan), Sharon Christa",
+"name_mcdowell": "McAuliffe (Corrigan), Sharon *Christa",
 "short": "McAuliffe, S.C.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AF-00002"
+"mcdowell": "AF-00002",
+"wikidata": "Q229674"
 },
 "born": "1948 Sep  2",
 "died": "1986 Jan 28",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62675786620,
+"date": "1986-01-28",
+"where": "off Cape Canaveral, Florida",
+"during": "flight",
+"loss": "challenger-1986",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q229674",
+"url": "https://www.wikidata.org/wiki/Q229674"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 },
 {
 "id": "AF-00003",
 "name": "Jarvis, Gregory Bruce",
+"name_mcdowell": "Jarvis, Gregory Bruce",
 "short": "Jarvis, G.B.",
 "being": "human",
 "citizen": "US",
 "sources": {
-"mcdowell": "AF-00003"
+"mcdowell": "AF-00003",
+"wikidata": "Q382013"
 },
 "born": "1944 Aug 24",
 "died": "1986 Jan 28",
-"died_in_flight": true
+"died_in_flight": true,
+"death": {
+"at_s": 62675786620,
+"date": "1986-01-28",
+"where": "off Cape Canaveral, Florida",
+"during": "flight",
+"loss": "challenger-1986",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q382013",
+"url": "https://www.wikidata.org/wiki/Q382013"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
+},
+{
+"id": "TR-bondarenko",
+"name": "Bondarenko,Valentin Vasilevich 'Jr'",
+"short": "Bondarenko,V.V.",
+"being": "human",
+"citizen": "RU",
+"sources": {
+"mcdowell": "trainee list",
+"wikidata": "Q538639"
+},
+"born": "1937 Feb 16",
+"died": "1961 Mar 23",
+"died_in_flight": false,
+"death": {
+"at_s": 61891516836,
+"date": "1961-03-23",
+"where": "Moscow, in a low-pressure chamber",
+"during": "training",
+"loss": "bondarenko-1961",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q538639",
+"url": "https://www.wikidata.org/wiki/Q538639"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
+},
+{
+"id": "TR-freeman",
+"name": "Freeman, Theodore Cordy",
+"short": "Freeman, T.C.",
+"being": "human",
+"citizen": "US",
+"sources": {
+"mcdowell": "trainee list",
+"wikidata": "Q634141"
+},
+"born": "1930 Feb 18",
+"died": "1964 Oct 21",
+"died_in_flight": false,
+"death": {
+"at_s": 62005392038,
+"date": "1964-10-31",
+"where": "on approach to Ellington Air Force Base, Texas",
+"during": "training",
+"loss": "freeman-1964",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q634141",
+"url": "https://www.wikidata.org/wiki/Q634141"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
+},
+{
+"id": "TR-see",
+"name": "See, Elliott McKay, Jr",
+"short": "See, E.M.",
+"being": "human",
+"citizen": "US",
+"sources": {
+"mcdowell": "trainee list",
+"wikidata": "Q621462"
+},
+"born": "1927 Jul 23",
+"died": "1966 Feb 28",
+"died_in_flight": false,
+"death": {
+"at_s": 62047296039,
+"date": "1966-02-28",
+"where": "Lambert Field, St. Louis",
+"during": "training",
+"loss": "t38-1966",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q621462",
+"url": "https://www.wikidata.org/wiki/Q621462"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
+},
+{
+"id": "TR-bassett",
+"name": "Bassett, Charles Arthur,II",
+"short": "Bassett, C.A.",
+"being": "human",
+"citizen": "US",
+"sources": {
+"mcdowell": "trainee list",
+"wikidata": "Q704355"
+},
+"born": "1931 Dec 30",
+"died": "1966 Feb 28",
+"died_in_flight": false,
+"death": {
+"at_s": 62047296039,
+"date": "1966-02-28",
+"where": "Lambert Field, St. Louis",
+"during": "training",
+"loss": "t38-1966",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q704355",
+"url": "https://www.wikidata.org/wiki/Q704355"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
+},
+{
+"id": "TR-chaffee",
+"name": "Chaffee, Roger Bruce",
+"short": "Chaffee, R.B.",
+"being": "human",
+"citizen": "US",
+"sources": {
+"mcdowell": "trainee list",
+"wikidata": "Q345678"
+},
+"born": "1935 Feb 15",
+"died": "1967 Jan 27",
+"died_in_flight": false,
+"death": {
+"at_s": 62076067239,
+"date": "1967-01-27",
+"where": "Launch Complex 34, Cape Canaveral",
+"during": "ground_test",
+"loss": "apollo-1-1967",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q345678",
+"url": "https://www.wikidata.org/wiki/Q345678"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
+},
+{
+"id": "TR-williams",
+"name": "Williams, Clifton Curtis, Jr",
+"short": "Williams, C.C.",
+"being": "human",
+"citizen": "US",
+"sources": {
+"mcdowell": "trainee list",
+"wikidata": "Q709646"
+},
+"born": "1932 Sep 26",
+"died": "1967 Oct  5",
+"died_in_flight": false,
+"death": {
+"at_s": 62097753639,
+"date": "1967-10-05",
+"where": "north of Tallahassee, Florida",
+"during": "training",
+"loss": "williams-1967",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q709646",
+"url": "https://www.wikidata.org/wiki/Q709646"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
+},
+{
+"id": "TR-lawrence",
+"name": "Lawrence, Robert Henry, Jr",
+"short": "Lawrence, R.H.",
+"being": "human",
+"citizen": "US",
+"sources": {
+"mcdowell": "trainee list",
+"wikidata": "Q391517"
+},
+"born": "1935 Oct  2",
+"died": "1967 Dec  8",
+"died_in_flight": false,
+"death": {
+"at_s": 62103283239,
+"date": "1967-12-08",
+"where": "Edwards Air Force Base, California",
+"during": "training",
+"loss": "lawrence-1967",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q391517",
+"url": "https://www.wikidata.org/wiki/Q391517"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
+},
+{
+"id": "TR-vozovikov",
+"name": "Vozovikov, Sergey Yurievich",
+"short": "Vozovikov, S.Yu.",
+"being": "human",
+"citizen": "RU",
+"sources": {
+"mcdowell": "trainee list",
+"wikidata": "Q3479773"
+},
+"born": "1958 Apr 17",
+"died": "1993 Jul 11",
+"died_in_flight": false,
+"death": {
+"at_s": 62910864059,
+"date": "1993-07-11",
+"where": "the Black Sea, near Anapa",
+"during": "training",
+"loss": "vozovikov-1993",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q3479773",
+"url": "https://www.wikidata.org/wiki/Q3479773"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
+},
+{
+"id": "TR-alsbury",
+"name": "Alsbury, Michael Tyner",
+"short": "Alsbury, M.T.",
+"being": "human",
+"citizen": "US",
+"sources": {
+"mcdowell": "trainee list",
+"wikidata": "Q18420502"
+},
+"born": "1975 Mar 19",
+"died": "2014 Oct 31",
+"died_in_flight": false,
+"death": {
+"at_s": 63583228866,
+"date": "2014-10-31",
+"where": "over the Mojave Desert, California",
+"during": "flight",
+"loss": "vss-enterprise-2014",
+"sources": [
+{
+"text": "J. C. McDowell, Jonathan's Space Report human spaceflight lists",
+"url": "https://planet4589.org/space/astro/web/index.html"
+},
+{
+"text": "Wikidata Q18420502",
+"url": "https://www.wikidata.org/wiki/Q18420502"
+},
+{
+"text": "Wikipedia, List of spaceflight-related accidents and incidents (read 25 Nov 2026)",
+"url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents"
+}
+]
+}
 }
 ],
 "aboard": [
@@ -17209,6 +18811,8 @@
 "ride": "STS51L/PLT",
 "src": "mcdowell",
 "mark": "recorded",
+"reached_space": false,
+"reached_why": "Challenger broke up 73 seconds after launch, below 80 km",
 "suborbital": false
 },
 {
@@ -17221,6 +18825,8 @@
 "ride": "STS51L/PS1",
 "src": "mcdowell",
 "mark": "recorded",
+"reached_space": false,
+"reached_why": "Challenger broke up 73 seconds after launch, below 80 km",
 "suborbital": false
 },
 {
@@ -17233,6 +18839,8 @@
 "ride": "STS51L/PS2",
 "src": "mcdowell",
 "mark": "recorded",
+"reached_space": false,
+"reached_why": "Challenger broke up 73 seconds after launch, below 80 km",
 "suborbital": false
 },
 {
@@ -17245,6 +18853,8 @@
 "ride": "STS51L/MS3",
 "src": "mcdowell",
 "mark": "recorded",
+"reached_space": false,
+"reached_why": "Challenger broke up 73 seconds after launch, below 80 km",
 "suborbital": false
 },
 {
@@ -17257,6 +18867,8 @@
 "ride": "STS51L/CDR",
 "src": "mcdowell",
 "mark": "recorded",
+"reached_space": false,
+"reached_why": "Challenger broke up 73 seconds after launch, below 80 km",
 "suborbital": false
 },
 {
@@ -17269,6 +18881,8 @@
 "ride": "STS51L/MS2",
 "src": "mcdowell",
 "mark": "recorded",
+"reached_space": false,
+"reached_why": "Challenger broke up 73 seconds after launch, below 80 km",
 "suborbital": false
 },
 {
@@ -17281,6 +18895,8 @@
 "ride": "STS51L/MS1",
 "src": "mcdowell",
 "mark": "recorded",
+"reached_space": false,
+"reached_why": "Challenger broke up 73 seconds after launch, below 80 km",
 "suborbital": false
 },
 {
@@ -51483,14 +53099,6 @@
 ],
 [
 62674912785,
-0
-],
-[
-62675786334,
-7
-],
-[
-62675786620,
 0
 ],
 [

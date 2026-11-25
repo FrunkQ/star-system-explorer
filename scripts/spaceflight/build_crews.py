@@ -136,7 +136,7 @@ def target(event):
 people, index = [], {}
 for r in table("astro.tsv"):
     born, died = gdate(r["Born"]), gdate(r["Died"])
-    p = {"id": r["No"], "name": r["Name"], "short": r["ShortName"], "being": "human", "citizen": r["Citizen"],
+    p = {"id": r["No"], "name": r["Name"].replace("*", ""), "name_mcdowell": r["Name"], "short": r["ShortName"], "being": "human", "citizen": r["Citizen"],
          "sources": {"mcdowell": r["No"]},
          "born": r["Born"] or None, "died": r["Died"] if r["Died"] and not r["Died"].startswith("-") else None,
          "died_in_flight": False}
@@ -204,6 +204,13 @@ if os.path.exists(SUB):
 
 # How many were in space, as steps through time (each change in the count), for drawing along the time ruler.
 # The legs with no pack log are mostly the suborbital hops (X-15, New Shepard, SpaceShipTwo), flagged per leg.
+# Flights that never reached space: McDowell lists their crews (AF- numbers for those who never flew again) but they
+# do not count as in space. Challenger's last flight broke up 73 s after launch (in_memory.py, challenger-1986).
+NEVER_REACHED = {"Challenger (STS 51-L)": "Challenger broke up 73 seconds after launch, below 80 km"}
+for leg in aboard:
+    if leg["craft"] in NEVER_REACHED:
+        leg["reached_space"] = False
+        leg["reached_why"] = NEVER_REACHED[leg["craft"]]
 for leg in aboard:
     leg["suborbital"] = leg["on"] is None and bool(re.match(
         r"(X-15|New Shepard|Spaceship|Unity|Galactic|Mercury MR|Freedom Seven|Liberty Bell|\[Soyuz|Soyuz MS-10$)",
@@ -216,7 +223,7 @@ for leg in aboard:
         if peak and not peak[1]:
             leg["peak_why"] = "McDowell marks this height uncertain"
 changes = {}
-for leg in aboard:
+for leg in [x for x in aboard if x.get("reached_space", True)]:
     changes[leg["from_s"]] = changes.get(leg["from_s"], 0) + 1
     if leg["to_s"] is not None:
         changes[leg["to_s"]] = changes.get(leg["to_s"], 0) - 1
@@ -232,11 +239,17 @@ out = {"about": ("Everyone who has been above 80 km, and each leg of their fligh
        "credit": "Jonathan C. McDowell, Jonathan's Space Report human spaceflight lists, planet4589.org, CC BY 4.0",
        "updated": UPDATED, "listed_from_km": 80, "edge_of_space_km": 100,
        "people": people, "aboard": aboard, "in_space": steps}
+# In memory (RS9 part 2): deaths on the people, losses in in-memory.json.
+import in_memory
+losses, problems = in_memory.build(people, aboard, PACK, gdate, LOGS, SRC)
+if problems:
+    raise SystemExit("in memory: " + "; ".join(problems))
 with open(os.path.join(PACK, "crews.json"), "w", encoding="utf-8") as fh:
     json.dump(out, fh, ensure_ascii=False, indent=0)
     fh.write("\n")
 n_on = sum(1 for x in aboard if x["on"])
-print(len(PEAKS), "suborbital heights;", sum(1 for x in aboard if x.get("peak_km")), "legs with one,",
+print(len(losses), "losses in memory,", sum(1 for p in people if p.get("death")), "people with a death;",
+      len(PEAKS), "suborbital heights;", sum(1 for x in aboard if x.get("peak_km")), "legs with one,",
       sum(1 for x in aboard if x.get("peak_km") and x["peak_km"] < 100), "of them below 100 km")
 print(len(people), "people,", len(aboard), "legs,", n_on, "on a pack log;",
       sum(p["died_in_flight"] for p in people), "died in flight")
