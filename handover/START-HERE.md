@@ -51,7 +51,7 @@ leave the browser.
 | Rulings during the build | `handover/decisions.md`, plus the "Standing rulings" in `handover/memory/MEMORY.md` |
 | Track status | `handover/status/<track>.md` (table below) |
 | Package logs and evidence | `handover/packages/<PKG>.md` |
-| Fudge register / citations | `docs/fudges.md` / `docs/citations.md` |
+| Fudge register / citations | `docs/fudges.md` / `docs/citations.md`; the Consensus run-through of every cited paper and its master list `handover/citations/` (README there) |
 | Interface style, top-level UI | `handover/interface-style.md`, `handover/design/SSE4-top-level-ui-and-onboarding.md` |
 | Old project memory | `handover/memory/` |
 | Screenshots, mockups, trailer clips | Not in the repo. Alex's PC: `C:\Development\sse4-project-files\` (13 zips of the old project files `sse4/`, 24 Nov snapshot) |
@@ -128,6 +128,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/manifest.md` | Build ship manifest and crew roster | MC |
 | `status/atomic-rockets.md` | Build ship flow and power views | RK13 Flow view and Power card, RK12 rings, RK10, RK3 ship sizing |
 | `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
+| `status/citations.md` | Verify every cited paper | CR: the Consensus check of every cited paper, the master list in `handover/citations/` and its check |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
