@@ -273,7 +273,7 @@ export interface ViewSession {
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
   /** The kernel `weather` op: a fixture `world`, or a `body` of an adopted `system` at `at_s`; `want` picks climate, systems, field (a cube-sphere `tile`), report, column or sound, at `day` (days since the campaign epoch). */
   /** Y2: the stars seen from a place at a time down to a limiting magnitude (kernel `sky_from_here`); read only. */
-  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
+  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
   /** Y3: the light of every star the sky draw leaves out, as a HEALPix map per band (kernel `sky_glow`); read only. */
   skyGlow(ask: Omit<SkyAsk, "observer"> & { nside?: number }): Promise<{ ok: true; glow: Json } | { ok: false; code: string; message: string }>;
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
@@ -808,7 +808,7 @@ export class Session implements ViewSession {
     return { ok: true, frames: f.frames, label: f.label, source: f.source };
   }
 
-  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
+  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "sky_from_here", ...ask } as Json);
     return r.type === "sky" ? { ok: true, sky: (r as unknown as { sky: Json }).sky } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }

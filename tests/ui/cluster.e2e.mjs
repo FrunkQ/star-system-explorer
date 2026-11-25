@@ -108,6 +108,32 @@ try {
     await go(gm, "cluster");
     await gm.waitForFunction((k) => document.querySelector(".clu [data-halo-ledger]")?.getAttribute("data-halo-ledger") === k, key, { timeout: 30000 });
 
+    // Galaxies nearby in 3D (GZ5 part 1): centred on our galaxy, from the kernel's sky; two reaches, a card, Real.
+    const vgroup = (g, b) => gm.getByRole("group", { name: g }).getByRole("button", { name: b, exact: true });
+    await vgroup("View style", "3D").click();
+    await gm.waitForFunction(() => Number(document.querySelector(".clu [data-nearby]")?.getAttribute("data-nearby")) > 0, null, { timeout: 120000 });
+    const inGroup = Number(await clu.locator("[data-nearby]").getAttribute("data-nearby"));
+    assert.equal(await clu.locator("[data-home-galaxy]").count(), 1, "our galaxy is at the middle");
+    await shot(gm, "gz5-nearby-group");
+    await clu.locator("[data-reach='neighbourhood']").click();
+    await gm.waitForFunction((n) => Number(document.querySelector(".clu [data-nearby]")?.getAttribute("data-nearby")) > n, inGroup, { timeout: 30000 });
+    const inHood = Number(await clu.locator("[data-nearby]").getAttribute("data-nearby"));
+    const morphs = await clu.locator("[data-galaxy]").evaluateAll((gs) => [...new Set(gs.map((g) => g.getAttribute("data-morphology")))]);
+    assert.ok(morphs.length >= 2, `several kinds of galaxy: ${morphs.join()}`);
+    await shot(gm, "gz5-nearby-neighbourhood");
+    await clu.locator("[data-galaxy]").last().click({ force: true });
+    await gm.waitForFunction(() => !!document.querySelector(".clu [data-galaxy-card]")?.getAttribute("data-galaxy-card"), null, { timeout: 10000 });
+    assert.match(await clu.locator("[data-galaxy-card]").innerText(), /light takes .* to reach us/);
+    await vgroup("Seen from", "Edge-on").click();
+    await vgroup("Scale", "Real").click();
+    await gm.waitForFunction(() => document.querySelector(".clu [data-nearby-scale]")?.getAttribute("data-nearby-scale") === "real", null, { timeout: 10000 });
+    await shot(gm, "gz5-nearby-edge-real");
+    await vgroup("Scale", "Readable").click();
+    await vgroup("Seen from", "Tilted").click();
+    await vgroup("View style", "Chart").click();
+    await clu.locator("[data-halo-dot]").first().waitFor({ timeout: 30000 });
+    const nearbyNote = `galaxies nearby: ${inGroup} in the group, ${inHood} in the neighbourhood (${morphs.join(", ")})`;
+
     await more(gm, "Night chart");
     await gm.waitForTimeout(400);
     await shot(gm, "v9-cluster-night");
@@ -125,7 +151,7 @@ try {
 
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`${name}: cluster map from halo_cell: haloes over the web, biggest picked, ledger, mass function, neighbour cell, floor, find a home (${mw}), chart this galaxy, night chart, phone`);
+    console.log(`${name}: cluster map from halo_cell: haloes over the web, biggest picked, ledger, mass function, neighbour cell, floor, find a home (${mw}), chart this galaxy, ${nearbyNote}, night chart, phone`);
   }
 } finally {
   server.kill();
