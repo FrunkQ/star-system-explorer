@@ -1,6 +1,6 @@
 # SSE4: the grand zoom, and travelling between places (track GZ)
 
-Status: **PROPOSED 25 Nov 2026, not yet accepted.** Eighteen questions for Alex in section 14 (13 to 18 added the same day after his follow-up, which is quoted in section 6), each with a recommendation. Design and mockup only; nothing here is built by this note. Packages for builders are in section 13. GZ is a code only, never shown in the product.
+Status: **ACCEPTED by Alex, 25 Nov 2026 12:45 UTC** ("All your suggestions are good - see no real issues apart from discussion above - so yes to all... once you have manipulated them based on above"). His changes are in section 14A, which wins where it differs from the rest: the tie-up of the levels and the Local Group come first, the gazetteer of worked-out places is kept with the campaign, and the Run desk gets the plain, clean form of this zoom. Design and mockup only; nothing here is built by this note. Packages are in section 13, in the new order. GZ is a code only, never shown in the product.
 
 Mockup, clickable: project files `sse4/handover-screens/GZ-screens/grand-zoom-mockup.html` (also published privately to Alex as the artifact https://claude.ai/artifact/662RbMkMjyz2CZSEm5CKAb), with 17 desktop and phone screenshots beside it: the seven stops, two seams, a pressed galaxy, and the proposed Galaxies nearby view at both reaches and both scales. The pictures in the mockup are painted stand-ins, not SSE4 output; the mockup says so.
 
@@ -162,7 +162,23 @@ The place line, the picker and "Chart this galaxy" all change level by swapping 
 - Pressing the preset again while it plays takes it back, as with every preset.
 - **OBS and trailers**: the clean output link plays the same journey with no chrome. Words none, HUD never, pace slow, read everything first: that is storyboard C in one take.
 
-### 5.9 Reduced motion, small screens, no GPU
+### 5.9 The three desks
+
+Alex, 25 Nov 12:45 UTC: "Explore I see as a 'messing about' and exploring... what ifs. Edit is getting games set up and worldbuilding. Play is about keeping interfaces clean to support the GM at play time (and it will be the most visually arresting) - being able to use portions of this zoom to step up and down the hierarchy would be truly lovely - feel as if you are spanning the universe with a few clicks." And: "in Play the UI is a lot cleaner. Just visual controls rather than aging the universe or additional editing stuff." (His Explore, Edit and Play are the desks the product calls Explore, Build and Run.)
+
+For travel between places that means:
+
+| Desk | What a level shows | Travel |
+|---|---|---|
+| **Explore** | The level with its time controls and what-ifs: the ruler, Play on the clock, branches | The short form on every step; "Zoom in from" with all its options |
+| **Build** | The level with its editing tools: add, move, make this home, find it a place, the gazetteer's names editable | The short form on every step; stops are where things are placed |
+| **Run** | **The level plain.** The picture, the place line, the shared view controls (View style, Seen from, Scale, HUD with Motion, Band) and nothing else: no ruler for deep time, no editing, no ledgers. Everything above the system comes from the gazetteer, so nothing waits | **Stepping up and down the place line is the main way to move**, each step the short zoom, a held press on a step the long form with a stop. One press spans a level; a few span the universe. Firing the same at the table is a preset |
+
+The Run desk's version is the default look of a stop on a journey: what section 5.5 calls "the real screen, held" is the Run desk's plain level.
+
+What every display looks like on each of the three desks is wider than this track. It is its own design task, the thread "Design each display in three modes" (opened by the coordinator 25 Nov 12:46 UTC); this table is this track's input to it, and the seam (what Run shows at each stop, how a short zoom steps between levels) is agreed with that thread by message. **Its note, `SSE4-three-modes-design.md` section 4 (the level tables), is the authority on what a desk shows**; where it and this table differ, it wins. Agreed with it on 25 Nov 12:49 UTC, none changing the mechanism: Run still carries what the Playbook put there (the on-air chip, Send, Bookmarks, a card on a press); Run has a small campaign clock at System, World and Site and a date that does not move above them; on Explore "Make this home" and "Find it a place" are a try in pencil on a what-if and are kept only on Build; and, if Alex agrees to view choices remembered per desk, a journey's `style` defaults to the desk's remembered style.
+
+### 5.10 Reduced motion, small screens, no GPU
 
 - `prefers-reduced-motion`: no zoom. Each rung arrives with the plain fade and holds. "One smooth zoom" becomes a sequence of held rungs of about two seconds each.
 - A device with no GPU, or one the speed probe places too low for True, travels in **Chart** style: the flat charts (web slice, galaxies nearby, galaxy chart, system chart, the world's map) zoom and cross-fade the same way. The mechanism is the same; only the port's answers differ.
@@ -187,11 +203,12 @@ He is right in the main, and the first draft of this note put it too strongly. R
 
 So a system grown from a drawn star is a point in a cell, the cell a point in a ring of a galaxy, and its starting ingredients are that ring's gas at its birth.
 
-### 6.2 The three gaps
+### 6.2 The gaps: three, and a fourth found on 25 Nov
 
 1. **Our galaxy is not one of the web's galaxies** (section 4, item 3). The chain is whole from the galaxy down and whole from the web down to any catalogued galaxy; ours is the one galaxy that is not in the catalogue.
 2. **Systems not grown from a drawn star have no cell** (item 4): the shipped sample, V3 imports, hand-built systems.
 3. **The screens do not pass the place along**: the web view opens on the origin, Galaxies nearby on cell 0.0.0, and "Grow a system here" on a drawn star is not yet wired to `from_star`.
+4. **A galaxy is in two places** (found by reading the code with the galaxy charts thread, 25 Nov 12:49 UTC; the size is not measured). `halo_cell` and `galaxies_seen` use a halo's starting point, never moved (`sse-kernel/galaxies.rs`, the `h.position` lines), so the cluster map and the sky agree with each other. The web cube moves each halo by the Zel'dovich step at the cube's time (`sse-cosmos/web_light.rs`, `web.displaced`). So between the web and the levels below it a galaxy jumps by its own displacement, which can be several Mpc.
 
 ### 6.3 The tie-up, each part computed once
 
@@ -201,8 +218,34 @@ So a system grown from a drawn star is a point in a cell, the cell a point in a 
 4. **The screens centre on the chain.** The web cube opens centred on home's cell, Galaxies nearby on home, the galaxy chart on the home halo with the system's place marked, Local stars on the system's cell.
 5. **A galaxy's tilt from the web's tides.** Today each galaxy's tilt is a keyed isotropic draw. The web already computes the tidal tensor at any point. Tidal torque theory and the surveys agree on the trend: the spins of small haloes lie along their filament and those of massive haloes across it. The shortcut: draw the spin axis about the tensor's axes with a mass-dependent preference, as a cited editable block. It costs three eigenvectors per halo, once. It is also a small correct touch a clever user can test: discs along a thread tend to line up. (The citations for the trend are from memory and go through the citation check before the block is written.)
 6. **Every galaxy's drift from the web's own displacement.** In the Zel'dovich step the kernel already takes, a parcel's velocity is its displacement times the growth rate and the expansion rate: one multiplication. That gives every halo a peculiar velocity, retires F37's "Hubble flow alone, so the nearest galaxies all recede", lets a near neighbour be blueshifted in the sky as Andromeda is, and feeds the Motion arrows at the two top levels.
+7. **One place for each halo.** The displaced position at the asked time is the halo's place, and every level reads it: `halo_cell`, `galaxies_seen`, the web cube and `place_chain` return the same point (the starting point stays in the answer as a second field, for the catalogue's keys). It is the same displacement as point 6, so it is one package with it (GZ15), it is computed once per halo and time and kept in the gazetteer, and it moves the sky's golden on purpose. "Find a home" then ranks by the displaced places with no change to its screen.
 
-### 6.4 What stays a shortcut (each in the register)
+### 6.4 The gazetteer: worked out once, kept, ready to roll
+
+Alex, 25 Nov 12:45 UTC: "Most of the heavyweight processing is during the creation and sliding the time slider ... for stuff worked out, we can have placeholders in the database ready to roll, because we do need to name nearby galaxies even if we don't know what they look like (i.e. we cache the positions of everything at the current defined time... and at those timescales only 'human time' matters and that is all 'in system' and easily calced on the fly."
+
+So the chain's upper levels are **worked out when a universe is made or its date is set, and kept with the campaign** as a gazetteer:
+
+- **What it holds**, at the campaign's defined time: the home halo and the web cell it sits in; every catalogued galaxy of the neighbourhood (12 Mpc) with its address, name, place, drift and halo mass; home's satellites with their places; the home galaxy's place for each campaign system, and the stars of each system's own cell and its neighbours with their names, places and motions. A row is a **placeholder**: a name and a place are always there; type, look and history fill in when that thing is first looked at, and then stay.
+- **Names come at once.** A galaxy is named by the naming track's scheme when its row is made, so "Varrow" exists on the map, in the picker and in a caption before anyone has charted it.
+- **When it is redone.** Above the system nothing moves in human time: over a thousand years a galaxy drifts a few light-months and a nearby star a fraction of a light-year. So the gazetteer is good for the whole of a campaign's play. It is redone only when the GM moves the universe's date by deep time (the time slider on the Explore and Build desks), in the kernel's worker, with progress. Inside a system everything is worked out on the fly from the orbits, as now.
+- **What it is not.** It is a cache of the kernel's own answers, keyed by the universe's seed, pack stack and date, never a second source of truth: thrown away, it comes back identical. A GM's authored change (a renamed galaxy, a moved system) is a fact in the record, not a cache row.
+- **What it buys.** The Run desk never waits for the web or a galaxy; a journey's read-ahead (section 10) is a lookup above the system; the picker and Find can search galaxies and stars by name; the players' screens receive the rows they are allowed to know as data.
+
+### 6.5 Each level drives the one below
+
+Alex, 25 Nov 12:45 UTC: "that system has to be in a star system group, has to be in a galaxy, has to be in a galaxy group, has to be in a filament or node... each *should* drive the physics of the one below - so how have we managed to get this far without that link? It is concerning. (eg passing star and supernova and life impact etc... needs to know where we are to work)."
+
+The physics does run downward today, and from a place:
+
+- Supernovae, kilonovae, gamma-ray bursts, nucleus episodes, close passes by other stars and spiral-arm crossings are drawn **per cell of the galaxy and per bin of time** from the galaxy's own rates there (`sse-cosmos/events.rs`, G6). An event belongs to its cell, so two neighbouring systems see the same supernova at the same place, each after its own light-travel time. The life track reads that history.
+- The rates are the ring's, the ring is the galaxy's, the galaxy is fed by its halo's tree, and the halo sits on the web's density.
+
+How it got this far with a gap: the kernel was built from the top down (web, haloes, galaxies, rings, stars) and the app from a system up (the sample system, V3 imports, the chart room). The two met at "the campaign's galaxy", which was given a stand-in so both could go on, and at "the system's place", which defaults to the Sun's radius. Both stand-ins were written in the fudge register at the time (F37 and its neighbours) with "until G7" beside them. So a system that was not grown from a drawn star does get passing stars and supernovae, but those of the Sun's radius of a median galaxy, not of a place of its own. That is the real cost of the gap, and it is what GZ12 and GZ13 remove. From then on the rule is stated and tested: **no system without a star slot, no star slot without a cell, no cell without a galaxy, no galaxy without a halo in the web.** A test fails if any op falls back to a stand-in place.
+
+One thing to confirm in GZ0 rather than assume: exactly which place each consumer (life history, the sky, the events op) passes for a campaign system today. This note read the events model and the defaults, not every caller.
+
+### 6.6 What stays a shortcut (each in the register)
 
 - The home galaxy is the best fit in a few dozen cells, not a constrained realisation of the real Local Group. The Milky Way pack replaces it with pins.
 - An authored system's slot is the best-fitting drawn star, not a derivation of that system from the galaxy.
@@ -245,7 +288,7 @@ The tilt needs one care. The kernel draws each galaxy's tilt and turn as seen fr
 ### 7.4 Our own satellites, and theirs
 
 - **Home's satellites** come from `satellites_seen`: the survivors as dwarfs at their places on their orbits; those torn apart as streams and shells (counted today, to be drawn faintly as arcs along their orbits under HUD); those that merged listed in the card as history.
-- **Play** on the universe clock, at this level, runs the satellites along their stored orbits: a dwarf spiralling in, stripping, and joining the disc. It is the galaxy's battle-worn history seen from outside, and every frame of it is the kernel's own orbit.
+- **Play** on the universe clock, at this level (on the Explore and Build desks; the Run desk has no clock above the system, section 5.9), runs the satellites along their stored orbits: a dwarf spiralling in, stripping, and joining the disc. It is the galaxy's battle-worn history seen from outside, and every frame of it is the kernel's own orbit.
 - **The big neighbours' satellites** are not walked today (the sky looks only at ours). The same walk can run for the two or three biggest in the background. Until it has, a big neighbour is drawn without companions and its card says "satellites not worked out yet".
 - **Faint dwarfs below the catalogue's floor** (10¹⁰ suns of halo) are counted, not placed. They stay a number in the caption ("and about sixty smaller ones"), never invented dots.
 
@@ -360,11 +403,17 @@ Each goes in `docs/fudges.md` in the pull request that builds it. None changes a
 
 ## 13. Packages (proposed)
 
-Order matters: GZ1 to GZ3 give a true zoom from system to site with nothing fudged above it. The Local Group rebuild (GZ5, GZ6) is worth having with or without the journey and can run beside them.
+**Order, as Alex ruled on 25 Nov 12:45 UTC ("we need to sort local group before this is feasible. Also we need to tie everything together - probably the ideal time to do it"):**
+
+1. **Stage A, the tie-up:** GZ0, then GZ12 (home in the web), GZ13 (a star slot for every system), GZ2 (`place_chain`), GZ17 (the gazetteer), then GZ15 and GZ14.
+2. **Stage B, the Local Group:** GZ5 and GZ6, beside stage A from the moment GZ12 names the home halo; GZ7 (Local stars).
+3. **Stage C, travel:** GZ1, GZ3, GZ4 (the short form, which is the Run desk's stepping), GZ16 (Motion), GZ8, GZ9, GZ10, GZ11.
+
+The contract (GZ1) and the lower journey port (GZ3) touch nothing in stage A and may start beside it if a builder is free; the whole grand zoom (GZ8) waits for stages A and B.
 
 | Package | What | Owner (proposed) | Needs |
 |---|---|---|---|
-| **GZ0** | Checks and timings, no feature: cold cost of every read in section 10 on desktop, the phone stand-in and a real phone; whether a halo is at the same place in the web cube and the cell; that the orientation chain is the sky's; what one neighbour's full chart and satellite walk cost | a new thread "Build travel between places" | nothing |
+| **GZ0** | Checks and timings, no feature: cold cost of every read in section 10 on desktop, the phone stand-in and a real phone; how far a halo's place in the web cube is from its place in the cell (they differ, 6.2 point 4: measure the size); that the orientation chain is the sky's; what one neighbour's full chart and satellite walk cost | a new thread "Build travel between places" | nothing |
 | **GZ1** | The contract: `ui-contract/src/approach.ts` (`sse.approach/1`, defaults, its link form), the two new rungs on `PLACE_SCALES`, the pure plan (`journeyPlan`) and camera (`journeyAt`), with tests. No view code | same | GZ0 |
 | **GZ2** | Kernel read `place_chain` with honesty marks; its own golden area | kernel thread | GZ0 |
 | **GZ3** | The journey port on System 3D, the globe and the Land ground; the player in the shell (two stages, the seam, the place line as progress, Go on, Back up, Esc, reduced motion). Delivers "Zoom in from System" to a site, with and without stops | "Build travel between places", with the chart room and renderer threads for their files | GZ1, GZ2 |
@@ -379,10 +428,28 @@ Order matters: GZ1 to GZ3 give a true zoom from system to site with nothing fudg
 | **GZ12** | Home in the web (6.3 point 1): the kernel chooses the home halo from the catalogue when a universe opens and stores it; every default-galaxy op reads it; "Make this home" on Find a home; F37 and the two stand-ins retired. Core golden changes on purpose | kernel thread ("Build kernel resolve and rules"), core lane; "Build galaxy charts and histories" for the button | GZ0 |
 | **GZ13** | A star slot for every system (6.3 point 2): at adoption and import, by map position or best fit; the pin claims its count; "unusual for its birthplace" advice; move it on Your systems; "Grow a system here" wired to `from_star` | kernel thread or its hand-off thread ("Build galaxy arm fix and atmosphere advice"); "Build galaxy charts and histories" for Your systems | GZ12 |
 | **GZ14** | Tilt from the web's tides (6.3 point 5): eigenvectors of the tidal tensor, the spin block with its citations checked first, the sky and Galaxies nearby reading one axis. Moves the sky's golden on purpose | kernel thread, citations thread | GZ12 |
-| **GZ15** | Drift from the web's displacement (6.3 point 6): a velocity per halo, redshift with peculiar motion in `galaxies_seen`, velocities in `place_chain`. Moves the sky's golden on purpose | kernel thread | GZ2 |
+| **GZ15** | Drift and one place per halo, from the web's displacement (6.3 points 6 and 7): `halo_cell`, `galaxies_seen` and the web cube report the same displaced position; a velocity per halo, redshift with peculiar motion in `galaxies_seen`, velocities in `place_chain`. Moves the sky's golden on purpose | kernel thread | GZ2 |
 | **GZ16** | The Motion layer (section 8A): the arrow mark and its key in the chart grammar, the Motion switch in the shared view controls, System 3D and the system chart first (their numbers exist today), then each level as its velocities arrive | "Build travel between places" for the mark and switch; each view's owner for its level | GZ1; GZ15 for the top two levels |
 
-GZ12 to GZ15 are kernel work that changes goldens, so they queue in the coordinator's lane order. None of them blocks GZ1 to GZ11: the journey reads `place_chain`, and `place_chain` gives the stand-ins with their marks until the real places land.
+| **GZ17** | The gazetteer (6.4): rows worked out at universe creation and when the date is set, kept with the campaign (home, the neighbourhood's galaxies with names, places and drift, home's satellites, each system's cell and its neighbours' stars); placeholders that fill in when looked at; redone in the worker on a deep-time change; the picker and Find read it; players get the rows they may know | kernel thread for the read, the Run desk thread for the campaign store and the players' side, the names thread for galaxy names | GZ12, GZ13, GZ2 |
+
+GZ12 to GZ15 are kernel work that changes goldens, so they queue in the coordinator's lane order, first in line by Alex's ruling.
+
+### 13A. Where each package lands, and what it reuses
+
+Alex, 25 Nov 12:47 UTC: "the grand zoom and Build galaxy charts and histories - may be doing similar things - or designing at least." The split, so nothing is designed or built twice: **this note is design only and its thread writes no feature code. "Build galaxy charts and histories" is the builder that owns the Galaxies nearby and Your systems screens**, and what it has built is extended, not redrawn.
+
+| Folder and owner | Packages landing there | Already built there, to reuse |
+|---|---|---|
+| `views/cluster-map`, `views/galaxy-chart` (Your systems, HomeCell), `views/galaxy-3d` use, `ui-contract/galaxy.ts`, `home-finder.ts`, `your-systems.ts`: **"Build galaxy charts and histories"** | GZ5, GZ6 (Galaxies nearby in 3D and True), GZ7 (Local stars), the screen halves of GZ12 ("Make this home") and GZ13 ("Find it a place", moving a system), the reading side of GZ17 on these screens | `ClusterMap` (kept as the Chart style and its catalogue), `FindHome` and the cited Milky Way wish (becomes the kernel's home wish in GZ12), `cellHalo`, `projectHalo`, `haloRadius`; Your systems' map, height stalks, routes, pencil and ink, map layers; `HomeCell` on `star_cell` (becomes the Local stars rung's Chart style); `systemSummary`; **"Grow a system here" on `from_star`** (built on its branch, held on two kernel bugs), which is GZ13's generated case, finished rather than redesigned. Your systems keeps its list of systems with no place, beside the map, for anything still unplaced; it never invents a place |
+| `crates/sse-kernel` (`cosmos.rs`, `galaxies.rs`), `crates/sse-cosmos`: **the kernel thread** ("Build kernel resolve and rules") or its hand-off thread | GZ0's kernel checks, GZ12, GZ13, GZ2, GZ14, GZ15, the kernel read of GZ17 | `halo_cell`, `galaxies_seen`, `satellites_seen`, `star_cell`, `from_star`, `reconstruct_origin`, the web's tidal tensor and displacement |
+| `views/foam-map/Web3D.svelte`, `renderer/web-cube.ts`: **"Build cosmic web view"** | the web's part of GZ8 (centred on home, its journey port), the web's arrows in GZ16 | the cube in 3D and True, light from haloes |
+| `renderer/` galaxy and sprite files: **the renderer thread** | the type pictures of GZ5, the dive of GZ7, ports for the globe and the ground in GZ3 | `galaxy-true.ts`, `galaxy-marks.ts`, `close-up.ts`, the night sky |
+| `views/voyage`, travel panels: **"Build galaxy charts and travel screens"** | nothing new; its star map (`Stars.svelte`) and the Local stars rung read the same `star_cell`, and its flight arrows adopt the Motion mark of GZ16 when it exists | the voyages star map |
+| `shell/src/run`, postcards: **Run desk and postcards threads** | GZ10, the campaign store of GZ17 | bookmarks, presets, the Switchboard, postcards |
+| new: `ui-contract/approach.ts`, the journey player in the shell, the arrow mark in `chart-grammar`: **"Build travel between places"** (to open) | GZ1, GZ3, GZ4, GZ8, GZ9, GZ11, GZ16 | `flyTo` in System 3D, `delivery.ts`, `place.ts` |
+
+Section 7 is therefore a brief for the galaxy charts thread, not a second design of its screen: where its own notes or its accepted galaxy chart mockup already settle a point, they stand, and that thread says so by message.
 
 A cave's inside is not here. Interior sites are parked to about 4.2, so in 4.0 the grand zoom ends at the tube's mouth, looking in.
 
@@ -410,9 +477,20 @@ Added after Alex's follow-up of 12:22 UTC (sections 6 and 8A):
 17. **The Motion layer as section 8A has it:** Off, Velocity, Velocity and pull; one arrow mark with a stated key and the speed written; "relative to" always said and changeable; the system level first. *Recommend yes.*
 18. **Players' arrows from what their sensors can measure** (line-of-sight speed at once, the rest by watching). *Recommend later,* with the sensors work, not in the first package.
 
+## 14A. Alex's rulings, 25 Nov 2026 12:45 UTC
+
+"All your suggestions are good - see no real issues apart from discussion above - so yes to all... once you have manipulated them based on above." So questions 1 to 5 and 7 to 18 are yes, with these changes, which win where they differ:
+
+1. **The Local Group first.** "Looks like we need to sort local group before this is feasible." Section 7 (GZ5, GZ6) moves ahead of the journey.
+2. **Tie everything together now.** "Probably the ideal time to do it." Questions 13 and 14 are not "as the kernel's lane allows": GZ12 and GZ13 lead. The rule of section 6.5 (no system without a star slot, and so on up) is a standing rule from here.
+3. **Each level drives the one below.** Already how the events and chemistry work (6.5); the stand-ins that hid it go.
+4. **A gazetteer kept with the campaign** (6.4, GZ17): places and names worked out once at the defined time, placeholders for what has not been looked at, only in-system motion worked out on the fly.
+5. **Three desks.** Explore is messing about and what-ifs, Build ("Edit") is setting games up and worldbuilding, Run ("Play") is clean, visual controls only, and the most visually arresting; on Run, stepping up and down the hierarchy by this zoom is the way to move (5.9). A separate design task sets out every display on each desk.
+6. Question 6 stays replaced by 13. Question 12 (release): unchanged, all of it for 4.0, now in the order of section 13. Question 18 (players' arrows by sensor): later, as recommended.
+
 ## 15. Picking this up without the chat
 
-- State of the track: `handover/status/grand-zoom.md`. Nothing is built. The first package is GZ0 and needs no answer from Alex.
+- State of the track: `handover/status/grand-zoom.md`. Nothing is built. Accepted; start with stage A of section 13 (GZ0, then GZ12).
 - The claims in section 3 were read from main at 69d7dca (25 Nov 2026). Check a file name before relying on it.
-- Two things were not verified and are GZ0's first jobs: whether the web cube and the halo cell put a galaxy in the same place, and what the reads in section 10 marked "to measure" really cost.
+- Not verified, GZ0's first jobs: how big the jump of 6.2 point 4 is (the two places differ by the code; nobody has measured by how much), and what the reads in section 10 marked "to measure" really cost.
 - The mockup shows the mechanism in two dimensions with painted pictures. It is there for pace, the seam and the stop's layout, not for how any level will look.
