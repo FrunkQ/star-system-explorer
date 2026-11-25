@@ -38,7 +38,7 @@ test("a V3 save imports as a preview scene; the open universe does not move", as
     assert.ok(scene.subjects.find((x) => x.label === "Moon")!.stamps.includes("impossible"));
     const sum = reportSummary(r.result.report);
     assert.equal(sum.outside.length, 1);
-    assert.match(sum.line, /1 system, 3 bodies, 1 constructs, 85 facts/);
+    assert.match(sum.line, /1 system, 3 bodies, 1 constructs, 87 facts/);
     // The Sun's temperature from the save gives it light.
     assert.ok(!describeLight(litFromSystem(scene)).missing.includes("Sun"));
     const bad = await s.importV3("not json");

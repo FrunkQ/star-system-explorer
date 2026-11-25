@@ -297,6 +297,19 @@ fn hydrosphere_and_pressure_become_facts() {
         .as_f64()
         .unwrap();
     assert!((p - 101_300.0).abs() < 1.0, "{p}");
+    // ATMOS: the air's make-up as hand-set shares, lower case.
+    let n2 = fact(&im, e, "atmosphere.composition.n2")
+        .value
+        .as_f64()
+        .unwrap();
+    let o2 = fact(&im, e, "atmosphere.composition.o2")
+        .value
+        .as_f64()
+        .unwrap();
+    assert!(
+        (n2 - 0.78).abs() < 1e-12 && (o2 - 0.21).abs() < 1e-12,
+        "{n2} {o2}"
+    );
     // The raw V3 object stays too.
     assert!(fact(&im, e, "v3.hydrosphere").value.is_object());
     // A dry Moon gets no water facts.
