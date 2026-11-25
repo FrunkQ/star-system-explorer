@@ -12,7 +12,7 @@ SH1, SH2 and SH6 are built (PR 510, merged 25 Nov 04:35 UTC). All 13 recommendat
 | SH2 Roll call screen and rail entry | done 25 Nov, PR 510; front door so far is `?spaceflight=<folder>` only | `packages/SH1-SH2.md` |
 | SH3 the count strip on the ruler | queued; with the chart room | |
 | SH4 a person's flights; Find knows people and dates | queued; with the manifest thread | |
-| SH5 records as sifters; On this day | queued | |
+| SH5 records as sifters; On this day | done 25 Nov as pure look-ups (most at once, last empty day, longest stay, most in all, On this day); as kernel sifters with SH9 | `packages/SH5.md` |
 | SH6 In memory; the day of a loss | done 25 Nov, PR 510 | `packages/SH6.md` |
 | SH7 Names carried (real memorials) | part 1 done 25 Nov (read, orbits, In memory part); part 2 (chart layer, "tonight", naming dates) next | `packages/SH7.md` |
 | SH8 front door address and deep links | queued; chart room | |
