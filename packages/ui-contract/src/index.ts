@@ -192,6 +192,7 @@ export * from "./rollcall.ts";
 // In memory (track SH6): the names of those who died, from a pack's in-memory.json.
 export * from "./inmemory.ts";
 export * from "./namescarried.ts";
+export * from "./rollrecords.ts";
 export { reachIt, resolveWith, resultFrom, surfaceKelvin } from "./reach.ts";
 export type { ReachAsk, Reached } from "./reach.ts";
 export { airKindEdits, airKinds, airMix, formulaOf, gasesToAdd, gasNames, mixEdits, MIX_FIELD, retrade, substanceNames, TRACE } from "./air.ts";
