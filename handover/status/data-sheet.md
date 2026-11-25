@@ -60,7 +60,8 @@ Only the owner thread edits this file. One row per package: update it in the sam
      - `giant-envelope.sigma_elec_profile` and `metallic_from`;
      - `seawater.sigma_elec`, `sigma_elec_25c` and the PSS-78 fits.
    - The editing thread strikes the MP31 units off its WAITING list in figures.test.ts. Imperial units are in group `imperial`.
-5. **Later:** p-B11 fusion (the B-11 mass is now on the sheet); OV12 naming at stage 5.
+5. **Helium rain for proven core (MF3 part 2).** `mixtures.giant-envelope.he_demix` `{columns [p_pa, t_k], y_he, src}`, from 50 GPa to 1 TPa at Y about 0.27. Use Schöttler and Redmer 2018 (PRL 120, 115703), with Lorenzen et al. as a second row. Every source read so far shows the curve only as a figure. The CC0 Zenodo archive of Tejada Arevalo et al. 2024 (doi 10.5281/zenodo.10659249) ships the curves, but this cloud's network refuses zenodo.org, so download it from a local machine.
+6. **Later:** p-B11 fusion (the B-11 mass is now on the sheet); OV12 naming at stage 5.
 
 Working notes for this track:
 - After any change to the sheet, or to scripts/build-ui-reference.py, merge main and re-run `python3 scripts/build-base-reference.py`, `python3 scripts/build-ui-reference.py` and `python3 scripts/build-rust-reference.py` just before merging. CI's ui job checks the generated copy, and on 24 Nov PR 419 merged a stale one because PR 410 changed the script while 419's CI ran, which turned main red until PR 422 and PR 445.
