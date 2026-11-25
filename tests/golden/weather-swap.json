@@ -6,8 +6,8 @@
   },
   "swap": [
     "Weather block sse.weather.rules 1 (rule) -> sse.weather.zonal-ebm 1 (simulated).",
-    "Earth: cloud 0.64 -> 0.64 (+0.00, within tolerance of ±0.10).",
-    "Earth: rain 0.860 -> 0.860 m/yr (+0 %, within tolerance of ±25 %).",
+    "Earth: cloud 0.63 -> 0.63 (+0.00, within tolerance of ±0.10).",
+    "Earth: rain 0.843 -> 0.843 m/yr (+0 %, within tolerance of ±25 %).",
     "Locked temperate world: cloud 0.22 -> 0.22 (+0.00, within tolerance of ±0.10).",
     "Locked temperate world: rain 0.118 -> 0.118 m/yr (+0 %, within tolerance of ±25 %).",
     "Mars: cloud 0.04 -> 0.04 (+0.00, within tolerance of ±0.10).",
@@ -24,14 +24,14 @@
   ],
   "worlds": [
     {
-      "climate": "162e261b269d16b59a620fc8fd14e1770642f13b9514560e644fadbd3600db99",
+      "climate": "9bd78b6415d1a2aa6fad1346410f60a8f0ce82923e946e8047a3b07f52cbc075",
       "cloud": [
-        0.6385091838867833,
-        0.6385091838867833
+        0.633583014406886,
+        0.633583014406886
       ],
       "precip_m_yr": [
-        0.8595919313689212,
-        0.8595919313689212
+        0.8429075308951534,
+        0.8429075308951534
       ],
       "within": true,
       "world": "Earth"
@@ -76,27 +76,27 @@
       "world": "Titan"
     },
     {
-      "climate": "b55b99b6507c0e2035fe9473bc8d1f1f13dd286dcaf4f26d72b63d5276d7e412",
+      "climate": "24a1f7797a2e726b926b89439e8ea7fe3f5641d720eaef15df02f6a4cb9540da",
       "cloud": [
-        0.22156303551173692,
-        0.22156303551173692
+        0.22156303551175702,
+        0.22156303551175702
       ],
       "precip_m_yr": [
-        0.11822190773453492,
-        0.11822190773453492
+        0.11822190773454536,
+        0.11822190773454536
       ],
       "within": true,
       "world": "Locked temperate world"
     },
     {
-      "climate": "8524f1d9944f5ed2df7d45826daa830c753aef647faa4fd31e61e52453027c8e",
+      "climate": "d969211882224049ba6ec3aad54d5a06a319313b84e080d1961731c83aa28fac",
       "cloud": [
-        0.6668767978076889,
-        0.6668767978076889
+        0.6673347118154055,
+        0.6673347118154055
       ],
       "precip_m_yr": [
-        0.827673877366911,
-        0.827673877366911
+        0.824109958447656,
+        0.824109958447656
       ],
       "within": true,
       "world": "Fast-spinning Earth"

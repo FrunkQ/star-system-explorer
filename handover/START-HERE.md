@@ -111,7 +111,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/kernel-handoffs.md` (arrives with PR 463) | Build galaxy arm fix and atmosphere advice (split from the kernel thread) | the galaxy arm sign fix (golden), atmosphere advice ("the science expects", "Suggest an atmosphere") |
 | `status/proven-core.md` | Build SSE4 proven core | P, F, S, SF, B, T3, S5, the source side of MF (MF1 to MF3, MF10), MP19, MP20, ND1 |
 | `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
-| `status/navigation.md` | Build object selector and menus | NV (selector part 2, object menu, find by tag, notes) |
+| `status/navigation.md` | Build object selector and menus (now "Build look transitions for screens") | NV (selector part 2, object menu, find by tag, notes); AT15a screen delivery (how a screen arrives and leaves) |
 | `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, `shell/src/run/`, Bookmarks, Playbook and Switchboard (RD, PB) |
 | `status/landing.md` | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
@@ -125,6 +125,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/quality-tiers.md` | Build quality tiers and speed probe (split from the renderer) | VP4, VP5: the `gpu-ultra` tier, the speed probe and placement by measured speed, heat watch, Quality choice, drawing bench rows; recipes and the governor on every True view; sharpen at rest |
 | `status/detail-ladder.md` | Build detail ladder and world textures (split from the renderer) | VP6 the detail ladder, VP3 texture ladder and relief normals |
 | `status/star-look.md` | Build star glow and flares | SG (glow past the edge, churn, lumpy giants, flares, ejections) |
+| `status/aurora.md` | Build aurorae and night lights | the drawing side of VP-AU (aurora shells, curtains, ground view, bands, airglow drawn), VP12 (city lights, lightning), construct and drive lights; facts stay with the light thread (MF9 part 2) |
 | `status/exotic-objects.md` | Build exotic stars and black holes (design: "Design exotic stars and black holes") | XO (light bending, discs, pulsars, stripped stars, Composite band, Hazard map, pulsating stars, ship clocks); XO is a code only, never shown in the product |
 | `status/true-air.md` | Build giant bands, clouds and hazes | TA, third V3 audit R1 to R8, R2b part 2 |
 | `status/true-surface.md` | Build plumes, frosts and hot glow (was "... and small bodies") | third V3 audit items 4, 5, 6, 10: plumes, coloured frosts, hot glow, small bodies and comets, lava tube openings |

@@ -557,3 +557,35 @@ fn giants_are_mostly_envelope() {
         "helium-3 {he3:.3e} against {want:.3e}"
     );
 }
+
+/// The giants carry their measured 1 bar temperatures, so Saturn's top deck
+/// is ammonia ice (and takes the chromophore), not the ice giants' methane.
+#[test]
+fn saturns_top_deck_is_ammonia_from_its_one_bar_temperature() {
+    let mut k = open_sol(&[]);
+    let s = world(&mut k, "Saturn");
+    assert_eq!(s["t_surface_now_k"], 134.0, "{s:.300}");
+    let addr = s["address"].as_str().unwrap().to_string();
+    let w = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"field","system":SOL,"body":addr}),
+    );
+    let text = w.to_string();
+    let c = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"climate","system":SOL,"body":s["address"]}),
+    );
+    // Its own catalogued air, hydrogen and helium, not the default mix.
+    let gases = &c["data"]["core"]["conditions"]["gases"];
+    assert_eq!(gases["h2"], 0.963, "{gases}");
+    assert!(gases.get("n2").is_none(), "{gases}");
+    assert!(text.contains("ammonia ice"), "{text:.600}");
+    assert!(text.contains("chromophore"), "{text:.600}");
+    assert!(!text.contains("methane ice"), "{text:.600}");
+    let u = world(&mut k, "Uranus");
+    let w = send(
+        &mut k,
+        serde_json::json!({"op":"weather","want":"field","system":SOL,"body":u["address"]}),
+    );
+    assert!(w.to_string().contains("methane ice"), "{w:.600}");
+}

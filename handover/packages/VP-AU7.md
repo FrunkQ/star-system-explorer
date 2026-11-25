@@ -1,0 +1,22 @@
+# VP-AU7: aurora seen from the ground
+
+Track VP-AU (visual polish design section 16). Owner: "Build aurorae and night lights".
+
+## Done
+- `aurora.ts`: `toSite` (globe frame to site east, north, up), `skyGlowAlong` (one shell met by one sight line: ring value times slant path, path capped at the tangent chord), `auroraSky` (each layer's colour and lift for a site; long exposure normalised on the brightest point of the sky, sampled every 6° of elevation and 15° of azimuth, to 0.35 of white after the site's metered exposure; Eye keeps true brightness and greys below colour vision).
+- `gpu-aurora-sky.ts`: a back-side dome drawn additively after the sky; the shader meets up to four shells from the eye, applies ring, path, night side and the air's own transmission along the airmass, above the horizon only.
+- Seams: optional `aurora` in `gpu-surface.ts` `SurfaceFrame`; `Surface.svelte` loads the plan with `loadAurora` once the world loads and passes `auroraSky` in True; the note sits in the ground note (`data-aurora-sky`).
+- Same switch-on as AU5 (rule 5): drawn only where the kernel places an oval and the air can glow; nothing on Mars or airless worlds.
+
+## Proof
+- Unit (`packages/renderer/test/aurora.test.ts`): under the oval the zenith is the brightest; 8° equatorward the arc sits low toward the pole and overhead and the equator side are dark; nothing from the tropics; red peaks higher in the sky than green.
+- E2E (`tests/ui/aurora.e2e.mjs`, desk): Earth, land at 64° N 10° E, True, darkest hour, the sky note names the wind-driven oval and the long exposure; four headings screenshotted to `sse4/handover-screens/VP-AU7-screens/`.
+- Checks: ui:check clean, ui:test 613 pass.
+
+## Caveats
+- Fudge row "Aurora from the ground" (temporary until VP1's finish meters it). No curtains (VP-AU6) or scattering of aurora light by the air.
+
+## Kernel lines (after PR 406, MF9 part 2b, merged 25 Nov)
+- Earth now draws the kernel's own lines (N2 391.4 nm and O 557.7 nm near 111 km, O 630.0 nm near 203 km, oval centred at 66° between `edges_deg`); the oxygen stand-in stays only for worlds the kernel gives no `upper_air`.
+- Brightness is weighed by the eye: each layer's watts times the CIE photopic curve at its line (`seenRadiance`), so the near-UV N2 line no longer washes the limb blue. Lift and ratios use the same weighting.
+- Lines in words: the kernel's `name` when given; otherwise matter and wavelength ("O 557.7 nm"). Asked the light thread to add the light table's name to each emission.

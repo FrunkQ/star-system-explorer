@@ -39,6 +39,22 @@ try {
 
     const over = await boxes(page, "[data-chart-overlay]");
     const worlds = await boxes(page, ".area-chart .body .lift");
+    // A press at any world's centre lands on a world, never on a name drawn near it (a drag starts there).
+    const stolen = await page.locator(".area-chart .body").evaluateAll((gs) => gs.flatMap((g) => {
+      const c = g.querySelector("circle.hit")?.getBoundingClientRect();
+      if (!c || !c.width) return [];
+      const at = document.elementFromPoint(c.left + c.width / 2, c.top + c.height / 2);
+      // Two close worlds may share a press (their hit circles overlap); a name never takes one.
+      return at && at.closest(".body") ? [] : [g.getAttribute("aria-label")];
+    }));
+    assert.deepEqual(stolen, [], `${vp}: a world's centre answers to a world, not a name`);
+    // A press on a name still chooses its body.
+    const named = page.locator(".area-chart [data-name-hit]").first();
+    const nameFor = await named.getAttribute("data-name-hit");
+    if (vp === "desktop") {
+      await named.click({ position: { x: 2, y: 2 } });
+      await page.waitForFunction((a) => document.querySelector(`.area-chart .body[data-address="${a}"]`)?.getAttribute("aria-pressed") === "true", nameFor, { timeout: 3000 });
+    }
     for (const n of [...names, ...(await boxes(page, ".area-chart text.dist"))])
       for (const o of over) assert.ok(!hit(n, o, 1), `${vp}: "${n.t}" lies under an overlay`);
     for (const wb of worlds) for (const o of over) if (vp === "phone") assert.ok(!hit(wb, o, 1), `${vp}: a world lies under the key or the zoom`);

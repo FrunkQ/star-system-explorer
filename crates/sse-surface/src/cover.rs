@@ -282,7 +282,9 @@ impl Air {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ClimateModel {
     pub world: WorldClimate,
-    /// Liquid at the surface: "water", "hydrocarbon" or none.
+    /// Liquid at the surface by the data sheet's plain name ("water",
+    /// "methane", "helium"...) or none: the one climate's liquid when it
+    /// names one, else water above 200 K and methane below.
     pub liquid: Option<String>,
     /// The world holds water at all (oceans or ice).
     pub water: bool,
@@ -641,10 +643,14 @@ pub fn layers(
         }
     }
     let any_liquid = liq.iter().any(|x| *x);
+    // The liquid is the one climate's (it picks it by phase); the old
+    // temperature split stands in only when the climate names none.
     let liquid_kind = if !any_liquid || !solid {
         None
+    } else if let Some(l) = &inp.climate.climate.conditions.liquid {
+        Some(l.clone())
     } else if env.t_surface_now_k < 200.0 {
-        Some("hydrocarbon".to_string())
+        Some("methane".to_string())
     } else {
         Some("water".to_string())
     };
@@ -1044,8 +1050,9 @@ fn reshape(
         } => {
             let t = env.t_surface_now_k;
             let p = ly.air.pressure_bar;
-            let hydrocarbon = ly.climate.liquid.as_deref() == Some("hydrocarbon");
-            let cover = if hydrocarbon {
+            // Any liquid but water floods as the non-water liquid cover.
+            let other_liquid = ly.climate.liquid.as_deref().is_some_and(|l| l != "water");
+            let cover = if other_liquid {
                 3
             } else if p * 1e5 < sse_core::sheet::triple_point_pa::H2O {
                 impossible = Some(format!(

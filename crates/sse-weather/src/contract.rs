@@ -46,6 +46,10 @@ pub struct Aerosol {
     pub optical_depth: f64,
     /// Linear sRGB, 0 to 1.
     pub colour: [f64; 3],
+    /// Typical particle radius, µm (an aggregate's equal-volume radius);
+    /// absent where no measured size is held (visual polish K-c).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub particle_radius_um: f64,
 }
 
 /// One height layer of one cell.
@@ -65,6 +69,16 @@ pub struct Layer {
     pub wind_m_s: [f64; 2],
     /// Turbulence, 0 (smooth) to 1 (severe).
     pub turbulence: f64,
+    /// Typical cloud particle effective radius, µm; absent where no
+    /// measured size is held (visual polish K-c).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub particle_radius_um: f64,
+    /// The layer's base and top above the reference surface (the ground, or
+    /// a giant's 1 bar level; below it is negative), m (W-heights).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub base_m: f64,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub top_m: f64,
 }
 
 /// One coarse cell on the surface atlas's cube sphere.
@@ -83,6 +97,15 @@ pub struct Cell {
     /// Lightning flashes per km² per year.
     pub lightning_km2_yr: f64,
     pub aerosols: Vec<Aerosol>,
+    /// Mean wind speed 10 m above the ground or sea, m/s, over the band's
+    /// storms and calms (the climate's 10 m wind, W-wind10); what a glint's
+    /// slope spread reads (Cox and Munk 1954). Absent with no surface.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub wind10_m_s: f64,
+}
+
+fn is_zero(x: &f64) -> bool {
+    *x == 0.0
 }
 
 /// The field over one atlas tile at one date: `n` × `n` cells in row order.

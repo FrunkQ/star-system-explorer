@@ -16,11 +16,11 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape } from "../../../renderer/src/index.ts";
+  import { closeMin, grazeLook, groundUnder, zoomNear, type GroundView, longGain, basis, trueLook as trueFace, BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltParticles, drawStarNow, GLOW_REACH_DEG, poleOf, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuGlow, type GpuLight, type StarNow, type LiveStar, type TrueTexture, type Vec3, type AirShape } from "../../../renderer/src/index.ts";
   import { constant, SEEN_ELEVATION, type RangeRing, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../../chart-grammar/src/motion.ts";
   import { rangeRingLines } from "./range-rings.ts";
-  import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
+  import { bandLines, hasChildren, layout, layoutReal, moonsOf, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
     bodies,
@@ -45,6 +45,9 @@
     fields = new Map(),
     pencil,
     reframe = 0,
+    sky,
+    long = false,
+    onground,
     range = [],
   }: {
     bands?: Band3D[];
@@ -83,6 +86,12 @@
     pencil?: (id: string) => boolean;
     /** Bumped each time a fixed "Seen from" is picked: the camera goes back to that framing (turn, zoom and slide). */
     reframe?: number;
+    /** True: the sky's stars from this system (stars-behind.ts), drawn behind everything (VP2). */
+    sky?: { key: string; dirs: Float32Array; share: Float32Array };
+    /** True: a long exposure that lifts the stars (a composite; the note says so). */
+    long?: boolean;
+    /** Close-up: the ground under the camera while it is near the world at the centre in True (null when it leaves). */
+    onground?: (g: GroundView | null) => void;
     /** Range rings (RK12), drawn with the HUD round each holder (a body id) in this frame. */
     range?: readonly { holder: string; rings: readonly RangeRing[] }[];
   } = $props();
@@ -126,9 +135,14 @@
   let pan = $state<[number, number]>([0, 0]);
   // "Seen from" (rule 12): picking a fixed view frames it afresh (height, turn, zoom and slide), even when it is the
   // one already shown; Free keeps what the hands did.
+  // Only a real change of either reframes: the props are read again whenever the view choice changes at all (HUD,
+  // band, exposure), and those must leave the camera where it is.
+  let framedAs = "";
   $effect(() => {
     const s = seen;
-    void reframe;
+    const key = `${s}|${reframe ?? 0}`;
+    if (key === framedAs) return;
+    framedAs = key;
     if (s === "free") return;
     pitch = SEEN_ELEVATION[s];
     yaw = -0.6;
@@ -142,18 +156,40 @@
     if (lastScale !== null && r !== lastScale) ((dist = 26), (pan = [0, 0]));
     lastScale = r;
   });
-  // Real scale lets the camera come much closer: the worlds are small.
-  const MIN = $derived(realScale ? 0.3 : 4);
+  // Real scale lets the camera come much closer: the worlds are small. True lets it come down to a grazing orbit over
+  // the world at the centre (close-up, Alex 25 Nov): a few km over its ground (renderer close-up.ts).
+  const centreBody = $derived(lay?.centre);
+  const centreR = $derived(!centreBody || centreBody.parent === null ? 0 : realScale ? (lay ? lay.dist(centreBody.radius_m ?? 0) : 0) : 0.55);
+  const closeUp = $derived(isTrue && centreR > 0 && pan[0] === 0 && pan[1] === 0);
+  const MIN = $derived(closeUp ? closeMin(centreR, centreBody?.radius_m) : realScale ? 0.3 : 4);
   const MAX = 60;
   let w = $state(0);
   let h = $state(0);
+  const FOV = (45 * Math.PI) / 180;
+  const eyeAt = $derived<Vec3>([pan[0] + dist * Math.cos(pitch) * Math.cos(yaw), pan[1] + dist * Math.cos(pitch) * Math.sin(yaw), dist * Math.sin(pitch)]);
   const cam = $derived<Camera>({
     frame: centreId,
-    eye: [pan[0] + dist * Math.cos(pitch) * Math.cos(yaw), pan[1] + dist * Math.cos(pitch) * Math.sin(yaw), dist * Math.sin(pitch)],
-    look: [pan[0], pan[1], 0],
-    fovY: (45 * Math.PI) / 180,
+    eye: eyeAt,
+    // Near the world the view tips toward its horizon; from three radii out it looks at the centre.
+    look: closeUp ? grazeLook(eyeAt, [0, 0, 0], centreR, FOV) : [pan[0], pan[1], 0],
+    fovY: FOV,
     width: Math.max(1, w),
     height: Math.max(1, h),
+  });
+  // The near plane comes down under the camera's height, so the ground is never clipped.
+  const nearPlane = $derived(closeUp ? Math.min(1e-3, Math.max(1e-9, (dist - centreR) * 0.2)) : 1e-3);
+  // The ground under the camera, for the detail ladder's deep tiles (VP3 part 4), at most five times a second.
+  let groundAt = 0;
+  let groundSent: string | null = null;
+  $effect(() => {
+    if (!onground) return;
+    const g = closeUp && centreBody ? groundUnder(centreBody.id, cam.eye, [0, 0, 0], centreR, centreBody.radius_m, cam.fovY, cam.height) : null;
+    const now = performance.now();
+    const k = g ? `${g.body}|${g.toward.join(",")}|${g.m_per_px}` : "";
+    if (k === groundSent || (g && groundSent && now - groundAt < 200)) return;
+    groundAt = now;
+    groundSent = k;
+    onground(g);
   });
 
   function enter(id: string) {
@@ -186,7 +222,8 @@
       requestAnimationFrame(step);
     });
   }
-  const closeDist = (id: string) => (hasChildren(bodies, id) ? 26 : 9);
+  // A world with no moons fills more of the view in True, where its face is the point (about 60% of the height).
+  const closeDist = (id: string) => (hasChildren(bodies, id) ? 26 : isTrue && !realScale ? 2.2 : 9);
   async function flyTo(id: string) {
     onselect(id);
     if (id === centreId) return;
@@ -211,7 +248,8 @@
   }
   // Rule 4: zoom past what the frame carries hands over to the chosen body's frame, or back up.
   function zoomBy(f: number) {
-    const next = dist * f;
+    // Near a world in True a step scales the height over its ground, so the last kilometres take as many steps as the first.
+    const next = closeUp ? zoomNear(dist, centreR, f) : dist * f;
     const sel = byId(selection);
     if (next < MIN && sel && sel.id !== centreId && hasChildren(bodies, sel.id)) return enter(sel.id);
     if (next > MAX && centreId !== root) return leave();
@@ -304,7 +342,12 @@
   function lightFor(): GpuLight {
     const c = lay!.centre;
     if (c.parent === null) return { at: relOf(c.id) };
-    const a = (c.phase_deg * Math.PI) / 180;
+    // The star lies opposite the world that circles it, whatever frame inside that world's family is shown: a moon is
+    // lit from where its planet's star is, not from its own place round the planet (the Moon was lit from behind the
+    // camera, evenly, with no day and night).
+    let top = c;
+    for (let up = byId(top.parent); up && up.parent !== null; up = byId(up.parent)) top = up;
+    const a = (top.phase_deg * Math.PI) / 180;
     return { from: [-Math.cos(a), -Math.sin(a), 0.15] };
   }
 
@@ -470,7 +513,7 @@
             // The body's face from the one door every True view uses (renderer true-body.ts): surface, rings, and
             // whatever looks other builders hook in there.
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(b.rings && emit === undefined ? { rings: b.rings } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}) });
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}) };
           });
         gpu.draw({
@@ -486,6 +529,11 @@
           height: h,
           ground,
           light: lightFor(),
+          // The shared finish (VP1). While the star draws its own glow (SG1's sprite) the eye's glare stays off, so
+          // the star is not glared twice; the glow moves onto the finish when the star is drawn at its real brightness.
+          finish: { glare: halo === null },
+          near: nearPlane,
+          ...(sky && trueBand === "visible" && !mag ? { stars: { ...sky, gain: long ? longGain(sky.share, cam.fovY / h) : 1 } } : {}),
         });
         return;
       }
@@ -691,6 +739,7 @@
   data-look={isTrue && using === "gpu" ? "true" : "plain"}
   data-scale={realScale ? "real" : "readable"}
   data-hud={overlay ? "on" : "off"}
+  data-dist={Math.round(dist * 1000) / 1000}
   class:true-look={isTrue && using === "gpu"}
 >
   <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true"></canvas>
@@ -700,7 +749,7 @@
       <button
         type="button"
         class="pin"
-        class:sel={b.id === selection}
+        class:sel={b.id === selection && overlay}
         class:locate={realScale && overlay}
         style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, radiusPx(b, p.depth))}px"
         aria-pressed={b.id === selection}

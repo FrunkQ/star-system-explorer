@@ -10,7 +10,7 @@
   `still` makes every part a picture (a clean output for a stream, PB8).
 -->
 <script lang="ts">
-  import { boundScene, withLive, type CheckedScreen, type Mark, type PlayerContext, type PlayerScene, type PlayerSubject, type Vocab, type ViewHandle, type LandingGround, type LandingShow } from "../../../ui-contract/src/index.ts";
+  import { boundScene, withLive, type CheckedScreen, type Mark, type PlayerContext, type PlayerScene, type PlayerSubject, type Vocab, type ViewHandle, type LandingGround, type LandingShow, type Shown } from "../../../ui-contract/src/index.ts";
 
   let {
     screen,
@@ -22,9 +22,10 @@
     live,
     landing,
     ground,
+    shown,
     still = false,
     places = {},
-  }: { still?: boolean; places?: Record<string, PlayerScene>; screen: CheckedScreen; scene: PlayerScene; vocab: Vocab; mark?: (s: PlayerSubject) => Mark; selection?: string | null; compact?: boolean; live?: Record<string, boolean>; landing?: () => LandingShow | null; ground?: LandingGround } = $props();
+  }: { still?: boolean; places?: Record<string, PlayerScene>; screen: CheckedScreen; scene: PlayerScene; vocab: Vocab; mark?: (s: PlayerSubject) => Mark; selection?: string | null; compact?: boolean; live?: Record<string, boolean>; landing?: () => LandingShow | null; ground?: LandingGround; shown?: () => Shown | null } = $props();
 
   const handles: { h: ViewHandle<PlayerScene>; m: CheckedScreen["mounts"][number] }[] = [];
   // A box that holds a place (PB13 part 2) draws that place's scene; the rest draw what was sent.
@@ -40,7 +41,7 @@
   function view(node: HTMLElement, m: CheckedScreen["mounts"][number]) {
     // A placed box is about its own thing (the bookmark's selection), not the screen's shared selection.
     const own = m.place;
-    const ctx: PlayerContext = { params: withLive(m.params, m.module.params ?? [], live), vocab, selection: own ? () => own.focus ?? null : () => selection, select: own ? () => {} : (a) => (selection = a), ...(mark ? { mark } : {}), ...(landing ? { landing: () => landing() } : {}), ...(ground ? { ground } : {}), controls: still ? Object.fromEntries(Object.keys(m.controls).map((k) => [k, false])) : m.controls };
+    const ctx: PlayerContext = { params: withLive(m.params, m.module.params ?? [], live), vocab, selection: own ? () => own.focus ?? null : () => selection, select: own ? () => {} : (a) => (selection = a), ...(mark ? { mark } : {}), ...(landing ? { landing: () => landing() } : {}), ...(ground ? { ground } : {}), ...(shown ? { shown: () => shown() } : {}), controls: still ? Object.fromEntries(Object.keys(m.controls).map((k) => [k, false])) : m.controls };
     const h = m.module.mount(node, ctx, boundScene(sceneFor(m)!, m.bind)) as ViewHandle<PlayerScene>;
     const entry = { h, m };
     handles.push(entry);
