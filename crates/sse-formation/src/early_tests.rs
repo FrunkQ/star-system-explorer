@@ -107,7 +107,7 @@ fn early_life_is_deterministic() {
 fn base_stack() -> sse_pack::ResolvedStack {
     let path = concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/../../tests/fixtures/packs/base-physics.json"
+        "/../../packs/base-physics/pack.json"
     );
     let pack = sse_pack::PackManifest::from_json(&std::fs::read_to_string(path).unwrap()).unwrap();
     sse_pack::resolve(&[pack], "0.1.0").unwrap()
