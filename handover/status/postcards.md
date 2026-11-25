@@ -3,7 +3,7 @@
 Owner thread: "Design saved views and hold backdrops" (Fable, design only, 25 Nov 2026) for the note. Builder thread: "Build postcards and hold backdrops" (Opus, opened 25 Nov 01:28 UTC), owning PC1, PC3, PC4 and PC6; from here on that thread edits this file.
 Design: `design/SSE4-postcards-design.md`, **ACCEPTED by Alex 25 Nov 2026 01:27 UTC** ("yes to all... they look great and are a great promo tool"). Read its sections 1, 3 and 12A first; 12A (his rulings in his own words) wins where it differs. Mockup in project files at `sse4/handover-screens/PC-screens/`.
 
-PC1, PC3 and PC4 part 1 are built (logs `packages/PC1.md`, `packages/PC3.md`). PC is a code only, never shown in the product. For 4.0.
+PC1, PC3 and PC4 part 1 are built and on main (PR 509, merged 25 Nov 10:21 UTC; logs `packages/PC1.md`, `packages/PC3.md`). The postcards browser test runs in CI (`tests/ui/postcards.e2e.mjs`, Alex's yes). PC is a code only, never shown in the product. For 4.0.
 
 | Package | State | Log |
 |---|---|---|
