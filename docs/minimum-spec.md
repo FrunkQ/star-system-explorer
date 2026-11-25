@@ -41,21 +41,30 @@ From app reports: a device meets a chunk's minimum spec when the chunk's 95th pe
 
 Each chunk is the sum of its engine scenarios' medians. In brackets, how many times slower than the fastest device listed. These are test workloads, so they have no budget; they show how machines compare, and a chunk's app timings on one device can be scaled by its bench ratio to estimate another.
 
-| Chunk | AC-ProArt, Chrome 157 | cloud runner, Chromium 157.0.8103.78, CPU slowed 4× | cloud runner, Chromium 157.0.8103.78 | cloud runner, Node | Pixel 11 Pro, Chrome 157 |
-|---|---|---|---|---|---|
-| Working out a system | 43.9 ms (1.0×) | 449 ms (10.2×) | 90.7 ms (2.1×) | 96.4 ms (2.2×) | 129 ms (2.9×) |
-| Making and ageing a system | 992 ms (1.0×) | 8.4 s (8.4×) | 2.2 s (2.2×) | 2.1 s (2.1×) | 2.0 s (2.0×) |
-| Surfaces, caves and descents | 1.3 s (1.0×) | 12 s (9.1×) | 2.8 s (2.2×) | 3.0 s (2.4×) | 3.1 s (2.5×) |
-| Life | 110 ms (1.0×) | 1.0 s (9.4×) | 237 ms (2.2×) | 252 ms (2.3×) | 316 ms (2.9×) |
-| Galaxy and cosmic web | 1.5 s (1.0×) | 14 s (9.1×) | 3.0 s (1.9×) | 3.2 s (2.1×) | 2.8 s (1.8×) |
-| Orbits, routes and voyages | 3.0 s (1.0×) | 26 s (8.6×) | 6.4 s (2.1×) | 6.2 s (2.0×) | 6.2 s (2.0×) ‡ |
+| Chunk | AC-ProArt, Chrome 157 (drawing bench) | AC-ProArt, Chrome 157 | cloud runner, Chromium 157.0.8103.78, CPU slowed 4× | cloud runner, Chromium 157.0.8103.78 | cloud runner, Node | Pixel 11 Pro, Chrome 157 |
+|---|---|---|---|---|---|---|
+| Working out a system | 50.8 ms (1.2×) | 43.9 ms (1.0×) | 449 ms (10.2×) | 90.7 ms (2.1×) | 96.4 ms (2.2×) | 129 ms (2.9×) |
+| Making and ageing a system | 894 ms (1.0×) | 992 ms (1.1×) | 8.4 s (9.4×) | 2.2 s (2.4×) | 2.1 s (2.3×) | 2.0 s (2.2×) |
+| Surfaces, caves and descents | 1.5 s (1.2×) | 1.3 s (1.0×) | 12 s (9.1×) | 2.8 s (2.2×) | 3.0 s (2.4×) | 3.1 s (2.5×) |
+| Life | 152 ms (1.4×) | 110 ms (1.0×) | 1.0 s (9.4×) | 237 ms (2.2×) | 252 ms (2.3×) | 316 ms (2.9×) |
+| Galaxy and cosmic web | 1.9 s (1.2×) | 1.5 s (1.0×) | 14 s (9.1×) | 3.0 s (1.9×) | 3.2 s (2.1×) | 2.8 s (1.8×) |
+| Orbits, routes and voyages | 2.4 s (1.0×) | 3.0 s (1.3×) | 26 s (10.9×) | 6.4 s (2.7×) | 6.2 s (2.6×) | 6.2 s (2.6×) ‡ |
 
 ‡ One run of a scenario took over twice its median, the mark of a pause on the device (screen dimmed, another app); the median is still used.
+
+## Drawing: the speed probe by device
+
+The probe's three scenes at one megapixel (fill, march, geometry), in ms and as a factor of the reference device, and the tier this speed earns for the standard True recipe at 1080p: the richest whose predicted frame is within 60% of its budget. Ultra also needs WebGPU with compute.
+
+| Report | Graphics | Fill | March | Geometry | Placed at | Predicted frame by tier |
+|---|---|---|---|---|---|---|
+| AC-ProArt, Chrome 157 (drawing bench) | webgpu, readback, amd rdna-3 | 0.18 ms (0.45×) | 0.30 ms (0.25×) | 0.13 ms (0.27×) | High | Ultra no form; High 9.0 of 17 ms; Light 3.0 of 33 ms |
 
 ## Devices
 
 | Report | Source | Day | Device | Class | Speed (units/s) |
 |---|---|---|---|---|---|
+| AC-ProArt, Chrome 157 (drawing bench) (`docs/perf-reports/ac-proart/bench-chrome-2026-11-25.json`) | bench | 2026-11-25 | 24 cores; 32 GB; amd rdna-3; Mozilla/5.0 AppleWebKit/537.36 Chrome/157.0.0.0 Safari/537.36 | capable, webgpu | 2,702,703 |
 | AC-ProArt, Chrome 157 (`docs/perf-reports/ac-proart/bench-chrome.json`) | bench | 2026-11-22 | 24 cores; 32 GB; amd rdna-3; Mozilla/5.0 AppleWebKit/537.36 Chrome/157.0.0.0 Safari/537.36 | capable, webgpu | 4,000,000 |
 | cloud runner, Chromium (`docs/perf-reports/cloud-runner/app-chromium.json`) | app | 2026-11-23 | 4 cores; 16 GB; ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver); Mozilla/5.0 AppleWebKit/537.36 HeadlessChrome/157.0.8103.78 Safari/537.36 | standard, webgl2 | 1,265,823 |
 | cloud runner, Chromium 157.0.8103.78, CPU slowed 4× (`docs/perf-reports/cloud-runner/bench-chromium-cpu4.json`) | bench | 2026-11-22 | 4 cores; 16 GB; ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver); Mozilla/5.0 AppleWebKit/537.36 HeadlessChrome/157.0.8103.78 Safari/537.36; CPU slowed 4× on the page's thread only: the kernel's speed and tier come from a worker, which Chromium does not slow | capable, webgl2 | 2,000,000 |
