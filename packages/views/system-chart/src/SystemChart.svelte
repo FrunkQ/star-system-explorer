@@ -465,6 +465,12 @@
     if (!looksTrue || ctx.session.seat.authority !== "gm" || !below || below.body !== sel) return;
     const radius_m = untrack(() => bodies3d.find((b) => b.id === below.body)?.radius_m);
     if (!radius_m) return;
+    // Only a world whose ground True already wears (faces read from its tiles), as for the finer tiles: a world the
+    // kernel has no surface for is never asked again, so a close fly-in does not queue kernel work in front of the
+    // chart's own (a world with none answered each read with a refusal, and on a slow runner held the kernel).
+    const key0 = `${sys}|${below.body}`;
+    const worn = untrack(() => trueSurfaces.get(key0));
+    if (!worn || typeof worn === "string" || !(worn.faces || untrack(() => trueAirs.get(key0)?.ground?.faces))) return;
     const timer = setTimeout(() => untrack(() => void (async () => {
       const p = await readDeep(ctx.session, sys, below.body, { toward: below.toward, m_per_px: below.m_per_px }, radius_m, TILE_SAMPLES, () => my === deepGen);
       if (!p || my !== deepGen) return;
