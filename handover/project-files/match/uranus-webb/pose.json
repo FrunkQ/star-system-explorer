@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Infrared band",
+  "frame": "Uranus",
+  "camera": "from Earth's place",
+  "tests": "Infrared: the rings bright, methane dark",
+  "needs": [
+    "the polar cap and rings in infrared"
+  ]
+}

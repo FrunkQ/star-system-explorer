@@ -1,0 +1,9 @@
+Title: Global view of Venus from Magellan, Pioneer, and Venera data
+Credit: NASA / JSC
+Date: 1991-10-29T00:00:00Z
+Source: https://images.nasa.gov/details/S91-50688
+Licence: NASA media: generally not subject to copyright in the United States (NASA Images and Media Usage Guidelines, https://www.nasa.gov/nasa-brand-center/images-and-media/). Credit NASA; do not imply endorsement.
+Picked for: Venus's surface by radar (Magellan, Pioneer Venus and Venera data): a false-colour radar map, the colour standing for Venera's orange light at the ground. Tests the surface without clouds.
+
+About (from the source page):
+This global view of Venus, centered at 270 degrees east longitude, is a compilation of data from several sources. Magellan synthetic aperature radar mosaics from the first cycle of Magellan mapping are mapped onto a computer-simulated globe to create the image. Data gaps are filled with Pioneer-Venus orbiter data, or a constant mid-range value. Simulated color is used to enhance small-scale structure. The simulated hues are based on color images recorded by the Soviet Venera 13 and 14 spacecraft. The image was produced at the Jet Propulsion Laboratory (JPL) Multimission Image Processing Laboratory and is a single frame from a video released at the JPL news conference, 10-29-91. View provided by JPL with alternate number P-39225 MGN81.

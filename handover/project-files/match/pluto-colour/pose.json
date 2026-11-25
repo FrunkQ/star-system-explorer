@@ -1,0 +1,13 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Composite (blue, red, near-infrared, stretched)",
+  "frame": "Pluto",
+  "camera": "about 35,000 km",
+  "date": "2015-07-14",
+  "needs": [
+    "tholin colour from the data sheet (Look up block; no typed copies)",
+    "a colour stretch (asinh) to match the enhanced version",
+    "Composite with near-infrared"
+  ],
+  "tests": "Tholins: the reddish-brown organic haze fallout on Pluto's surface (Cthulhu's dark red, the paler pinks) beside Sputnik Planitia's nitrogen ice. The enhanced colour exaggerates the differences; the natural colour is a muted tan-pink."
+}

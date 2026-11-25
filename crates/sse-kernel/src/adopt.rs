@@ -923,6 +923,17 @@ fn bodies_from_facts(
     let host_of = |r: &BTreeMap<String, Value>| -> Option<Address> {
         r.get("orbit.host").and_then(as_text)?.parse().ok()
     };
+    // Today's temperatures are anchored to the host star's life line, so a
+    // world's history follows the star's light (the faint young Sun).
+    let fits = sse_formation::hurley::Fits::new(spec.z);
+    let anchor = sse_formation::lifeline::LifeLine::new(&fits, spec.star_mass)
+        .ok()
+        .map(|life| sse_surface::Anchor {
+            life: Box::new(life),
+            z: spec.z,
+            formed_myr: 0.0,
+            measured_myr: spec.age_myr,
+        });
     let mut out = vec![];
     let system: Address = spec.system.parse().expect("spec system address");
     for (a, r) in facts.iter().filter(|(a, _)| system.contains(a)) {
@@ -1028,8 +1039,13 @@ fn bodies_from_facts(
                 .unwrap_or_else(|| a.to_string()),
             mass_earth,
             radius_earth: radius / R_EARTH,
-            // K3: a typed makeup sets the core and water shares inside.
-            core_mass_fraction: makeup_shares(r).map_or(0.32, |m| m.0),
+            // A measured core share (catalogued or typed) wins; else K3's typed
+            // makeup sets the core and water shares inside; else Earth's.
+            core_mass_fraction: r
+                .get("interior.core_mass_fraction")
+                .and_then(as_f64)
+                .filter(|x| (0.0..=1.0).contains(x))
+                .unwrap_or_else(|| makeup_shares(r).map_or(0.32, |m| m.0)),
             water_fraction: makeup_shares(r).map_or(0.0, |m| m.1),
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
@@ -1039,7 +1055,10 @@ fn bodies_from_facts(
             r_process_rel: 1.0,
             age_gyr: spec.age_myr / 1000.0,
             magma_end_myr: 0.0,
-            climate: sse_surface::Climate::Fixed { t_surface_k },
+            climate: sse_surface::Climate::Fixed {
+                t_surface_k,
+                then: anchor.clone(),
+            },
             tidal_w_m2: None,
             orbit: Some(sse_surface::Orbit {
                 a_au: a_own / AU,
@@ -1329,6 +1348,24 @@ pub(crate) fn catalogued_gases(
     (!gases.is_empty()).then_some(gases)
 }
 
+/// SW1: a world's distance from its star, AU: its own orbit when it goes
+/// round a star, else its host planet's (a moon), walking up the addresses.
+pub(crate) fn star_distance_au(bodies: &[sse_surface::Body], b: &sse_surface::Body) -> Option<f64> {
+    let mut cur = b;
+    for _ in 0..4 {
+        if let Some(o) = cur
+            .orbit
+            .as_ref()
+            .filter(|o| o.host_msun >= sse_surface::weathering::STAR_MSUN)
+        {
+            return Some(o.a_au);
+        }
+        let up = cur.address.parent()?;
+        cur = bodies.iter().find(|x| x.address == up)?;
+    }
+    None
+}
+
 /// Orbit atlases kept so that reopening a world reuses its plate run.
 pub const ORBIT_CACHE_SIZE: usize = 8;
 
@@ -1336,6 +1373,34 @@ pub const ORBIT_CACHE_SIZE: usize = 8;
 pub(crate) type OrbitCache = Vec<(String, sse_surface::atlas::Atlas)>;
 
 /// The Orbit atlas of one world from the cache, or worked out and kept.
+/// The Orbit atlas cache's key: the world, seed and epoch, and the survey
+/// options that change it (SOL5's measured air, SW1's star distance).
+fn orbit_cache_key(
+    env: &sse_surface::SurfaceEnvelope,
+    seed: &Seed,
+    epoch_gyr: f64,
+    opts: &sse_surface::survey::SurveyOptions,
+) -> String {
+    format!(
+        "{}/{}",
+        sse_surface::detail::orbit_key(env, seed, epoch_gyr),
+        serde_json::to_string(&(&opts.gases, opts.star_distance_au)).expect("plain data")
+    )
+}
+
+/// The survey options a world's Orbit atlas is built with, from its record.
+fn orbit_opts(
+    facts: &Facts,
+    bodies: &[sse_surface::Body],
+    b: &sse_surface::Body,
+) -> sse_surface::survey::SurveyOptions {
+    sse_surface::survey::SurveyOptions {
+        gases: catalogued_gases(facts.get(&b.address)),
+        star_distance_au: star_distance_au(bodies, b),
+        ..Default::default()
+    }
+}
+
 fn orbit_atlas<'c>(
     cache: &'c mut OrbitCache,
     s: &sse_surface::SurfaceSettings,
@@ -1343,15 +1408,16 @@ fn orbit_atlas<'c>(
     env: &sse_surface::SurfaceEnvelope,
     seed: &Seed,
     epoch_gyr: f64,
+    opts: &sse_surface::survey::SurveyOptions,
 ) -> Result<&'c sse_surface::atlas::Atlas, String> {
-    let key = sse_surface::detail::orbit_key(env, seed, epoch_gyr);
+    let key = orbit_cache_key(env, seed, epoch_gyr, opts);
     match cache.iter().position(|(k, _)| *k == key) {
         Some(i) => {
             let hit = cache.remove(i);
             cache.push(hit);
         }
         None => {
-            let a = sse_surface::detail::orbit_atlas(s, body, seed, epoch_gyr)?;
+            let a = sse_surface::detail::orbit_atlas_with(s, body, seed, epoch_gyr, opts)?;
             if cache.len() >= ORBIT_CACHE_SIZE {
                 cache.remove(0);
             }
@@ -1382,7 +1448,7 @@ pub(crate) fn resolved_system(
         source,
         spec,
         bodies,
-        facts,
+        mut facts,
         at_s,
         shift_gyr,
     } = worlds_at(ch, system, at_s, run, &s)?;
@@ -1390,6 +1456,44 @@ pub(crate) fn resolved_system(
         .iter()
         .map(|b| sse_surface::envelope(&s, b))
         .collect();
+    // MF2: every world with an iron core publishes its field facts from the
+    // ledger, unless the record already holds them.
+    for (b, e) in bodies.iter().zip(&envelopes) {
+        if let Some(ff) = sse_surface::core::field_facts(e, b) {
+            let row = facts.entry(b.address.clone()).or_default();
+            for (k, v) in ff {
+                row.entry(k.to_string()).or_insert(f(v));
+            }
+        }
+    }
+    // MF3 part 1: a magnetised world's dipole tilt. Nothing predicts it, so
+    // it is drawn from the body's address (Rayleigh, spread of the dipolar
+    // planets' measured tilts), and said to be.
+    for b in &bodies {
+        let row = facts.entry(b.address.clone()).or_default();
+        let on = row
+            .get("body.magnetic_moment")
+            .and_then(as_f64)
+            .is_some_and(|x| x > 0.0);
+        if on && !row.contains_key("field.tilt") {
+            row.insert(
+                "field.tilt".to_string(),
+                f(drawn_tilt_deg(seed, &b.address)),
+            );
+            row.insert("field.tilt_grade".to_string(), t("drawn"));
+        }
+    }
+    // Every world's moment of inertia factor (for flattening and
+    // precession), unless the record holds a measured one.
+    for (b, e) in bodies.iter().zip(&envelopes) {
+        if let Some(c) = inertia_factor(b, e) {
+            facts
+                .entry(b.address.clone())
+                .or_default()
+                .entry("body.moment_of_inertia_factor".to_string())
+                .or_insert(f(c));
+        }
+    }
     let mut out_tiles = vec![];
     let mut refused = vec![];
     for tr in tiles {
@@ -1404,7 +1508,16 @@ pub(crate) fn resolved_system(
             (Some(key), Some((b, env))) => {
                 // Orbit detail (S16): the coarse plate run, the same world a
                 // survey later refines; reused while it is in the cache.
-                let atlas = orbit_atlas(orbits, &s, b, env, seed, (b.age_gyr + shift_gyr).max(0.0));
+                let opts = orbit_opts(&facts, &bodies, b);
+                let atlas = orbit_atlas(
+                    orbits,
+                    &s,
+                    b,
+                    env,
+                    seed,
+                    (b.age_gyr + shift_gyr).max(0.0),
+                    &opts,
+                );
                 match atlas.map(|a| a.tile(key, sse_surface::SurveyState::Surveyed)) {
                     Ok(Ok(tile)) => {
                         out_tiles.push(serde_json::to_value(&tile).expect("plain data"));
@@ -1439,7 +1552,8 @@ pub(crate) fn resolved_system(
         facts: serde_json::Value::Object(facts_json),
         spec: spec.map(|x| serde_json::to_value(x).expect("plain data")),
         // Each world's surface record, with its vapour plumes when it has
-        // any (third audit R10: drawn above the limb in True).
+        // any (third audit R10: drawn above the limb in True), and how its
+        // bare ground weathers (SW1) where something from space reaches it.
         surfaces: bodies
             .iter()
             .zip(&envelopes)
@@ -1448,9 +1562,20 @@ pub(crate) fn resolved_system(
                 if let Some(p) = sse_surface::plumes::plumes(b, e, seed) {
                     v["plumes"] = serde_json::to_value(p).expect("plain data");
                 }
+                if let Some(w) =
+                    sse_surface::weathering::weathering(b, e, star_distance_au(&bodies, b))
+                        .filter(|w| w.active)
+                {
+                    v["weathering"] = serde_json::to_value(w).expect("plain data");
+                }
                 // What stains its ground (TRUE4), when its tiles were read: from
                 // the surveyed atlas's one climate, already in the cache.
-                let key = sse_surface::detail::orbit_key(e, seed, (b.age_gyr + shift_gyr).max(0.0));
+                let key = orbit_cache_key(
+                    e,
+                    seed,
+                    (b.age_gyr + shift_gyr).max(0.0),
+                    &orbit_opts(&facts, &bodies, b),
+                );
                 if let Some((_, a)) = orbits.iter().find(|(k, _)| *k == key) {
                     let st = sse_surface::stains::stains_of(b, e, a);
                     if !st.is_empty() {
@@ -1648,4 +1773,40 @@ pub(crate) fn unhex(s: &str) -> Option<Vec<u8>> {
         .chunks(2)
         .map(|p| Some(v(p[0])? << 4 | v(p[1])?))
         .collect()
+}
+
+/// A world's moment of inertia factor C = I/(M R²): a giant as an n = 1
+/// polytrope less its heavy-element core (`sse.interior.inertia_giant`, its
+/// heavy share from the mass-metallicity relation at the default star), a
+/// world with an iron core as core and mantle (`sse.interior.inertia_two_layer`).
+pub(crate) fn inertia_factor(
+    b: &sse_surface::Body,
+    e: &sse_surface::SurfaceEnvelope,
+) -> Option<f64> {
+    use sse_atoms::{inertia as ia, matter as mt};
+    if b.deep_envelope {
+        let z = mt::heavy_element_share(
+            DEFAULT_Z,
+            b.mass_earth * sse_core::sheet::M_EARTH,
+            sse_core::sheet::M_JUP,
+            mt::GIANT_METAL_COEFFICIENT,
+            mt::GIANT_METAL_SLOPE,
+        );
+        return Some(ia::giant(z, ia::CORE_SHARE));
+    }
+    let c = e.core.as_ref()?;
+    let r = b.radius_earth * R_EARTH;
+    (r > 0.0).then(|| ia::two_layer(b.core_mass_fraction, c.core_radius_km * 1000.0, r))
+}
+
+/// Spread of the dipolar planets' dipole tilts, degrees (Earth 9.4,
+/// Jupiter 9.6, Ganymede 4; Stevenson 2003, Earth Planet. Sci. Lett. 208, 1).
+pub(crate) const TILT_SPREAD_DEG: f64 = 10.0;
+
+/// A keyed Rayleigh draw of a dipole's tilt from the spin axis, degrees.
+pub(crate) fn drawn_tilt_deg(seed: &Seed, address: &Address) -> f64 {
+    let stream = sse_core::draw::Stream::new("mf3.tilt.v1").expect("stream name");
+    let d = sse_core::draw::Draws::new(*seed, address.clone(), stream);
+    let u = d.unit(0).clamp(0.0, 1.0 - f64::EPSILON);
+    (TILT_SPREAD_DEG * m::sqrt(-2.0 * m::ln(1.0 - u))).min(90.0)
 }

@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Enceladus",
+  "camera": "about 30,000 km",
+  "tests": "Visible: the brightest body in the Solar System",
+  "needs": [
+    "albedo near 1 (fresh snow from the plumes)",
+    "plumes (plumes thread)"
+  ]
+}

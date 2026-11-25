@@ -79,3 +79,11 @@ Goldens: `contract.jsonl`, re-blessed on purpose for the Mars frames case, whose
 - Worn elevation per frame: wear each frame's window, or carry S3 through the whole history.
 - Oceans and air over time (atmosphere history), and sea ice.
 - base64 f32 arrays (`_b64` names) if JSON size bites at the Survey level.
+
+## Part 3: a catalogued climate keeps its history (asked by "Build surface time-lapse", 24 Nov)
+
+`Climate::Fixed` gains `then: Option<Anchor>`. A measured temperature is today's, and earlier dates follow the host star's life line: T = T_now (L/L_now)^¼. The air's warming is held at today's share, so the faint young Sun shows as the paradox it is, not hidden.
+
+Catalogued and imported worlds are anchored to their system's star, using the life line for the star's mass and metal share. Earth's time-lapse now starts colder and warms. Frames no longer list "temperature history" as pending for these worlds.
+
+Check: `sol_tests::catalogued_earth_feels_the_faint_young_sun`.

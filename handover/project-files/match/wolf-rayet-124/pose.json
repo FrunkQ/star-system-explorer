@@ -1,0 +1,9 @@
+{
+  "system": "WR 124",
+  "view": "Star view, Infrared band",
+  "camera": "from Earth, 15,000 light years",
+  "tests": "Infrared: dust shells round a Wolf-Rayet star",
+  "needs": [
+    "Wolf-Rayet shells (exotic stars thread)"
+  ]
+}

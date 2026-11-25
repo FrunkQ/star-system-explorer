@@ -1,0 +1,9 @@
+Title: Jupiter’s atmosphere around the Great Red Spot (NIRCam and NIRSpec)
+Credit: ESA/Webb, NASA & CSA, Jupiter ERS Team, J. Schmidt, H. Melin, M. Zamani (ESA/Webb)
+Date: 
+Source: https://esawebb.org/images/weic2419a/
+Licence: CC BY 4.0 (ESA/Webb image use policy, https://esawebb.org/copyright/). Attribution required, exactly as the credit line.
+Picked for: Webb's infrared Jupiter round the Great Red Spot: haze altitudes in false colour.
+
+About (from the source page):
+New observations of the Great Red Spot on Jupiter have revealed that the planet’s atmosphere above and around the infamous storm is surprisingly interesting and active. This graphic shows the region observed by Webb — first its location on a NIRCam image of the whole planet (left), and the region itself (right), imaged by Webb’s Near-InfraRed Spectrograph (NIRSpec).

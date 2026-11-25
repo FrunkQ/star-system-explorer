@@ -1,0 +1,9 @@
+Title: Neptune Close-Up (NIRCam Image)
+Credit: NASA, ESA, CSA, and STScI
+Date: 
+Source: https://esawebb.org/images/weic2214a/
+Licence: CC BY 4.0 (ESA/Webb image use policy, https://esawebb.org/copyright/). Attribution required, exactly as the credit line.
+Picked for: Neptune in near-infrared: the planet dark (methane absorbs), rings and high clouds bright. A strong Infrared band test.
+
+About (from the source page):
+Webb’s Near-Infrared Camera (NIRCam) image of Neptune, taken on 12 July 2022, brings the planet’s rings into full focus for the first time in more than three decades.

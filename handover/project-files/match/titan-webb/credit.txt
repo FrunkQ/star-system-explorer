@@ -1,0 +1,9 @@
+Title: Titan (Webb image - 11 July 2023)
+Credit: NASA, ESA, CSA, STScI, Keck Observatory
+Date: 
+Source: https://esawebb.org/images/weic2511a/
+Licence: CC BY 4.0 (ESA/Webb image use policy, https://esawebb.org/copyright/). Attribution required, exactly as the credit line.
+Picked for: Webb's Titan (2023): clouds and the haze in infrared.
+
+About (from the source page):
+These infrared-light images of Titan were taken by the NASA/ESA/CSA James Webb Space Telescope on 11 July 2023. They show methane clouds appearing at different altitudes in Titan’s northern hemisphere.

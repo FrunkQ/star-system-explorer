@@ -97,3 +97,61 @@ fn every_change_has_a_dated_reason() {
         assert!(c.steps.windows(2).all(|p| p[1].t_gyr > p[0].t_gyr), "{w}");
     }
 }
+
+#[test]
+fn the_ledger_makes_earths_field_by_outrunning_the_leak() {
+    // MF2: Earth's core flows at about a millimetre a second (0.1 to 1 mm/s
+    // from secular variation) with a magnetic Reynolds number in the
+    // hundreds to thousands, well past onset; every running step has Rm
+    // past the threshold and every dead one an onset of zero.
+    let e = core_of("Earth");
+    let now = e.steps.last().expect("steps");
+    assert!(
+        (5e-5..5e-3).contains(&now.flow_m_s),
+        "flow {} m/s",
+        now.flow_m_s
+    );
+    assert!((100.0..2e4).contains(&now.rm), "Rm {}", now.rm);
+    assert_eq!(now.onset, 1.0);
+    for w in ["Earth", "Mars", "Venus", "Moon", "Mercury"] {
+        for st in &core_of(w).steps {
+            assert_eq!(st.field_ut > 0.0, st.onset > 0.0, "{w} at {} Gyr", st.t_gyr);
+            if st.onset > 0.0 {
+                assert!(st.rm >= crate::core::onset_from(), "{w}: Rm {}", st.rm);
+            }
+        }
+    }
+}
+
+#[test]
+fn rocky_worlds_publish_their_field_facts() {
+    // MF2: the ledger's facts now. Earth's dipole moment within a factor of
+    // 3 of the measured 7.7e22 A m² (IGRF-13; the dipole ratio is still the
+    // F-S29 stand-in until MF3); Mars, Venus and the Moon publish zero.
+    let s = settings();
+    let fx = fixtures();
+    let facts = |name: &str| {
+        let b = fx
+            .iter()
+            .find(|f| f.body.label == name)
+            .expect("fixture")
+            .body
+            .clone();
+        let e = crate::envelope(&s, &b);
+        crate::core::field_facts(&e, &b).expect("an iron core")
+    };
+    let get = |ff: &[(&str, f64)], k: &str| ff.iter().find(|x| x.0 == k).expect(k).1;
+    let earth = facts("Earth");
+    let m = get(&earth, "body.magnetic_moment");
+    eprintln!(
+        "Earth moment {m:.3e} A m2, surface {:.1} uT",
+        get(&earth, "body.surface_magnetic_field") * 1e6
+    );
+    assert!(
+        (7.7e22 / 3.0..7.7e22 * 3.0).contains(&m),
+        "Earth moment {m:e}"
+    );
+    for w in ["Mars", "Venus", "Moon"] {
+        assert_eq!(get(&facts(w), "body.magnetic_moment"), 0.0, "{w}");
+    }
+}
