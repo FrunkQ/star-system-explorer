@@ -212,18 +212,20 @@ And the better thing is the same picture made true: fourteen rocks between Mars 
 
 ## 10. What the pack must hold (seam with the spaceflight pack thread)
 
-Asked of "Build real spaceflight history pack" on 25 Nov 01:10 UTC; it is building RS9 from McDowell's astronaut tables (planet4589 `astro`, `rides`, `segments`, `evas`), with born and died dates. Its files stay its own. Anything not confirmed by that thread when this note merges is marked "asked".
+Agreed by message with "Build real spaceflight history pack" on 25 Nov; it is building RS9 from McDowell's astronaut tables (planet4589 `astro`, `rides`, `segments`, `evas`), with born and died dates. Its files stay its own.
 
-| # | Data | Shape | State |
+| # | Data | Shape | State (pack thread's answer, 25 Nov 01:09 UTC) |
 |---|---|---|---|
-| 1 | People | Manifest persons: id, name as credited, kind of being, who they flew for (text), sources (McDowell id, Wikidata id). Flight facts only for the living | RS9, being built |
-| 2 | Moves | Dated `aboard.on` changes with `mark` and `src`. A Moon walker stays aboard the lander; the lander is on the surface | RS9, being built |
-| 3 | Deaths | On the person: a dated fact with `where`, `during` (`flight`, `training`, `ground_test`, `ground_work`), one sentence, two sources. The instant in UTC and the date the record itself uses (a landing at night in Kazakhstan is two calendar days). People with no flight (training and ground deaths) are persons too | asked |
-| 4 | Loss on a log | An ordinary dated event and a `gone` state with `how: "lost"` beside today's `reentered` and `impacted`. No special case in the reader | asked |
-| 5 | The count | A step list of (instant, people in space), computed by the build script from 2, checked by a test against the look-up | asked |
-| 6 | The edge of space | One pack value with its source (100 km), not baked into 2 or 5 beyond a recorded peak height per short flight | asked |
-| 7 | Carried names | `memorials.json`: kind (object left, named feature, named small body, remains carried), where (craft and site, or body and coordinates, or orbit elements from JPL), since-date, the people named, source (NASA mission report, USGS Gazetteer of Planetary Nomenclature, the Minor Planet Center's citation) | asked; the pack thread offered the cargo ones |
+| 1 | People | Manifest persons: id, name as credited, kind of being, who they flew for (text), sources (McDowell id, Wikidata id). Flight facts only for the living | Built in RS9 part 1: `store-packs/sol-today/crews.json` (id, name, short name, `being`, citizenship, `sources.mcdowell`), written by `scripts/spaceflight/build_crews.py`. Wikidata ids to come. McDowell lists primates only, so Laika and other animals need GCAT's payload notes |
+| 2 | Moves | Dated `aboard.on` changes with `mark` and `src`. A Moon walker stays aboard the lander; the lander is on the surface | Built as legs (person, `from_s`, `to_s`, craft, `on` = the log's construct id, role, mark, src). Turning legs into `aboard.on` actor changes needs the manifest thread |
+| 3 | Deaths | On the person: a dated fact with `where`, `during` (`flight`, `training`, `ground_test`, `ground_work`), one sentence, two sources. The instant in UTC and the date the record itself uses (a landing at night in Kazakhstan is two calendar days). People with no flight (training and ground deaths) are persons too | `died_in_flight` is set for those killed in flight. Training and ground deaths, the `during` field and second sources are RS9 part 2 |
+| 4 | Loss on a log | An ordinary dated event and a `gone` state with `how: "lost"` beside today's `reentered` and `impacted`. No special case in the reader | RS9 part 2 |
+| 5 | The count | A step list of (instant, people in space), computed by the build script from 2, checked by a test against the look-up | Built: `in_space`, a list of `[t, count]` steps, checked against the legs by a test |
+| 6 | The edge of space | One pack value with its source (100 km), not baked into 2 or 5 beyond a recorded peak height per short flight | The file says `edge_of_space_km` 80 (McDowell's line) and each leg has a `suborbital` flag. Peak heights per short flight come in part 2, so a 100 km value can mark the 80 km flights. Which line is the default is question 11 |
+| 7 | Carried names | `memorials.json`: kind (object left, named feature, named small body, remains carried), where (craft and site, or body and coordinates, or orbit elements from JPL), since-date, the people named, source (NASA mission report, USGS Gazetteer of Planetary Nomenclature, the Minor Planet Center's citation) | asked; the pack thread offered the cargo ones (Hadley, Shoemaker, Tombaugh, the Celestis flights) |
 | 8 | Tours and record sifters | Plain data in the pack | this track writes them |
+
+The pack thread's log for this is `handover/packages/RS9.md` (arrives with its PR). It found none of the asks awkward.
 
 Sources of record, in order of trust for this track: mission reports and agency histories; McDowell's GCAT and astronaut tables (CC BY 4.0, credited); the USGS Gazetteer and the Minor Planet Center for names; Wikidata as a cross-check, never alone.
 
@@ -268,7 +270,7 @@ SH1 and SH2 need only what is on main plus RS9. Nothing here changes a golden ha
 8. **The Fallen Astronaut is drawn as a plain marker with the plaque's names as text, not a model of the sculpture.** The sculpture is a living artist's work (Paul Van Hoeydonck) and its image has a history of dispute. Recommended: yes, marker and text only.
 9. **People in the real pack carry flight facts only:** no portraits, no biography, nothing private; year of birth and death only for those who have died. Recommended: yes.
 10. **Earth's own memorials are text with sources for now,** sites on the globe later. Recommended: yes.
-11. **The edge of space is one editable pack value, 100 km by default, with 80 km flights marked.** Recommended: yes.
+11. **The edge of space is one editable pack value, 100 km by default, with 80 km flights marked.** The pack's source (McDowell) uses 80 km, so the other honest choice is 80 km by default with the 100 km line as the option. Recommended: 100 km, the line most people know.
 12. **Release:** Roll call, the count, In memory and Names carried are 4.0 work that follows RS9; kits that restyle it, and Earth memorial sites, are later. Recommended: yes.
 13. **Who builds it:** a new Opus thread "Build roll call and In memory" owning `shell/src/rollcall/`, taking SH1 to SH8. Recommended: yes.
 
