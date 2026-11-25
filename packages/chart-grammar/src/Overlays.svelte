@@ -10,7 +10,7 @@
      (SV3): no tint, a dotted edge, its name quiet. With `onpick`, pointing at an area inks its edge (and calls
      `onpoint`), and pressing it calls `onpick`; `lift` quietens every answer but one (the key's pointing). -->
 <script lang="ts">
-  import { hexCorners, letterArea, mapSlotToken, MAP_PATTERNS, type AreaItem, type OverlayInk, type ViewOverlay } from "../../ui-contract/src/index.ts";
+  import { drawn, hexCorners, letterArea, mapSlotToken, MAP_PATTERNS, type AreaItem, type OverlayInk, type ViewOverlay } from "../../ui-contract/src/index.ts";
 
   let {
     overlays,
@@ -75,8 +75,8 @@
   // A plain ink is a class; a map palette slot (OV2) is the theme's slot colour, plain ink where a theme has none yet.
   const inkClass = (k: OverlayInk) => (typeof k === "string" ? k : "slot");
   const inkColour = (k: OverlayInk) => (typeof k === "string" ? undefined : `var(${mapSlotToken(k.slot)}, var(--sse-ink))`);
-  const ring = (ps: readonly [number, number][]) => ps.map((p) => at(p)).map((q, i) => `${i ? "L" : "M"}${q.x.toFixed(1)},${q.y.toFixed(1)}`).join("") + "Z";
-  const pts = (ps: readonly [number, number][]) => ps.map((p) => at(p)).map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(" ");
+  const ring = (ps: readonly [number, number][]) => ps.map((p) => at(p)).map((q, i) => `${i ? "L" : "M"}${drawn(q.x)},${drawn(q.y)}`).join("") + "Z";
+  const pts = (ps: readonly [number, number][]) => ps.map((p) => at(p)).map((q) => `${drawn(q.x)},${drawn(q.y)}`).join(" ");
 </script>
 
 <g class="overlays" class:pickable={!!onpick} data-overlays={overlays.length} aria-hidden="true">

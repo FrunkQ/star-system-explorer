@@ -4,7 +4,7 @@
 // physics here: radii, abundances, rates, arm crests and green bands are the
 // kernel's own.
 
-import { sayNumber } from "./figures.ts";
+import { sayNumber, drawn } from "./figures.ts";
 
 export interface GalaxyAsk {
   /** A named halo, or (with `cell`) one of that cell's catalogued haloes, `halo:N`. */
@@ -287,7 +287,7 @@ export function discFrame(w: number, h: number, chart: Pick<GalaxyChart, "rings"
 
 /** An arm crest as an SVG path in the frame (phi counter-clockwise from +x, y up). */
 export function armPath(arm: readonly [number, number][], f: DiscFrame): string {
-  return arm.map(([r, phi], i) => `${i ? "L" : "M"}${(f.cx + r * f.k * Math.cos(phi)).toFixed(1)} ${(f.cy - r * f.k * Math.sin(phi)).toFixed(1)}`).join(" ");
+  return arm.map(([r, phi], i) => `${i ? "L" : "M"}${drawn(f.cx + r * f.k * Math.cos(phi))} ${drawn(f.cy - r * f.k * Math.sin(phi))}`).join(" ");
 }
 
 /** The ring that holds radius r (the kernel's rings tile the disc). */
@@ -335,7 +335,7 @@ export function logCurve(points: readonly { t: number; v: number }[], ax: CurveA
   const hi = fix ? fix.hi : Math.ceil(Math.max(...ls));
   const lo = fix ? fix.lo : Math.max(Math.floor(Math.min(...ls)), hi - 3);
   const y = (l: number) => top + h - ((Math.max(lo, l) - lo) / Math.max(1e-9, hi - lo)) * h;
-  return { d: ok.map((p, i) => `${i ? "L" : "M"}${ax.x(p.t).toFixed(1)} ${y(Math.log10(p.v)).toFixed(1)}`).join(" "), lo, hi };
+  return { d: ok.map((p, i) => `${i ? "L" : "M"}${drawn(ax.x(p.t))} ${drawn(y(Math.log10(p.v)))}`).join(" "), lo, hi };
 }
 
 export function sci(x: number, digits = 2): string {
@@ -345,19 +345,19 @@ export function sci(x: number, digits = 2): string {
   if (a >= 1e4 || a < 1e-2) {
     const e = Math.floor(Math.log10(a));
     const m = x / 10 ** e;
-    return `${m.toFixed(digits - 1)} × 10^${e}`;
+    return `${sayNumber(m, 0, { decimals: digits - 1 })} × 10^${e}`;
   }
-  return x.toPrecision(digits + 1).replace(/\.?0+$/, "");
+  return sayNumber(x, digits + 1);
 }
 
 /** "1.6 × the Sun" from an [X/H] in dex. */
 export function timesSun(dex: number): string {
   const f = 10 ** dex;
-  return f >= 0.95 && f <= 1.05 ? "about the Sun's" : `${f < 10 ? f.toFixed(f < 1 ? 2 : 1) : Math.round(f)} × the Sun's`;
+  return f >= 0.95 && f <= 1.05 ? "about the Sun's" : `${f < 10 ? sayNumber(f, 0, { decimals: f < 1 ? 2 : 1 }) : sayNumber(Math.round(f), 0, { decimals: 0 })} × the Sun's`;
 }
 
 export function dex(x: number): string {
-  return `${x >= 0 ? "+" : "−"}${Math.abs(x).toFixed(2)} dex`;
+  return `${x >= 0 ? "+" : "−"}${sayNumber(Math.abs(x), 0, { decimals: 2 })} dex`;
 }
 
 /** Cosmic epochs placed on a Gyr axis (only those after `t0`). */
@@ -379,7 +379,7 @@ export function foamCells(s: WebSlice["slice"]): { i: number; j: number; shade: 
 
 /** An edit in words, for the inked-history list. */
 export function editWords(e: GalaxyEdit, mergers: readonly { index: number; t_gyr: number }[] = []): string {
-  const g = (t: number) => `${t.toFixed(1)} Gyr`;
+  const g = (t: number) => `${sayNumber(t, 0, { decimals: 1 })} Gyr`;
   switch (e.kind) {
     case "merger":
       return `${e.ratio >= 0.25 ? "Major" : "Minor"} merger at ${g(e.t_gyr)} (1 : ${Math.round(1 / e.ratio)})`;
