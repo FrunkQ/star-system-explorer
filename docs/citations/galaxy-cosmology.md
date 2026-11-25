@@ -106,6 +106,7 @@ Status key: verified / corrected-metadata / corrected-physics / unverified / tex
 | web_light.rs (V9w) | Coles, Melott and Shandarin 1993, MNRAS 260, 765, doi:10.1093/mnras/260.4.765: truncated Zel'dovich | haloes moved by the same smoothed step as the cube's parcels | unverified (as for web.rs) | the cube's own step is reused, nothing new is tuned |
 | web_light.rs (V9w) | Behroozi et al. 2019, MNRAS 488, 3143, doi:10.1093/mnras/stz1182: M*/Mh near 0.005 at 10¹¹ M☉ | the 10¹¹ M☉ floor holds a galaxy of about 10^8.7 M☉ of stars | unverified (same read-off as g3_tests.rs:59) | |
 | web-cube.ts (V9w) | Bell and de Jong 2001, ApJ 550, 212; Leitherer et al. 1999, ApJS 123, 3 | a galaxy's light from its stars and star formation, through `GALAXY_LIGHT` (galaxy-true.ts) | see light-reference.md (the True galaxy's rows) | no new numbers |
+| web_light.rs (V9w3) | Hearin and Watson 2013, MNRAS 435, 1313, doi:10.1093/mnras/stt1374: age matching | a galaxy read ahead or behind on the median history by its halo's half-mass time | unverified | the idea only; no number from the paper |
 | fudges.md web light row | Hoyle et al. 2005, ApJ 620, 618, doi:10.1086/427176: void galaxies fainter and bluer | named as the next step, not used | unverified | |
 
 ## Counts

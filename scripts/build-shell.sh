@@ -26,6 +26,8 @@ cp packs/base-ships/pack.json packages/shell/public/packs/base-ships.json
 cp packs/base-tech/pack.json packages/shell/public/packs/base-tech.json
 # The manifest and crew kinds (track MC): everything aboard a ship, on the base stack so any setting has it.
 cp packs/base-manifest/pack.json packages/shell/public/packs/base-manifest.json
+# The holding cards a held screen shows (PB5), read by the share; not on the stack, so no state hash changes.
+cp packs/base-presentation/pack.json packages/shell/public/packs/base-presentation.json
 cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/public/packs/kestrel-player-data.json
 mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json

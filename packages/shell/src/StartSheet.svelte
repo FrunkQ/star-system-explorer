@@ -10,7 +10,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { fade } from "svelte/transition";
-  import { V3_URL } from "./alpha.ts";
+  import { MADE_LINE, SUPPORT_LINKS, V3_URL } from "./alpha.ts";
   import { opensKey, pickLine, shownLines, type StartLine, type StartLinesDoc, type StartOpens } from "../../ui-contract/src/index.ts";
   import { reducedMotion } from "../../chart-grammar/src/index.ts";
   import { loadPref, savePref } from "./prefs.ts";
@@ -143,6 +143,9 @@
       <label><input type="checkbox" checked={skip} onchange={(e) => setSkip((e.currentTarget as HTMLInputElement).checked)} /> Open straight to the chart next time</label>
       <button type="button" class="linkbtn" data-door="chart" onclick={() => open({ door: "chart" })}>Go to the chart ›</button>
     </footer>
+    <p class="made" data-made>
+      © 2026 FrunkQ · Apache-2.0 · {MADE_LINE}{#each SUPPORT_LINKS as l (l.label)}{" · "}<a href={l.href} target="_blank" rel="noopener" data-support={l.label}>{l.label}</a>{/each}
+    </p>
   </div>
 </section>
 
@@ -212,6 +215,17 @@
     border: var(--sse-line, 1px) solid var(--sse-accent);
     color: var(--sse-accent);
     border-radius: 2px;
+  }
+  .made {
+    margin: 0;
+    max-width: 72ch;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--sse-ink-muted);
+  }
+  .made a {
+    color: var(--sse-accent);
+    text-underline-offset: 3px;
   }
   .alpha {
     margin-top: -12px;
