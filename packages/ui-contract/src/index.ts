@@ -183,3 +183,7 @@ export * from "./place-notes.ts";
 export * from "./delivery.ts";
 export { gearing, roundFigures, resonanceCatches, nearestCatch } from "./drag.ts";
 export type { Catch } from "./drag.ts";
+// Roll call (track SH): who was in flight on a day, aboard what and where, from flight logs and stays.
+export * from "./rollcall.ts";
+// In memory (track SH6): the names of those who died, from a pack's in-memory.json.
+export * from "./inmemory.ts";

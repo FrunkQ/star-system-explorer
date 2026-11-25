@@ -908,6 +908,13 @@ listed here. Imported codes always win over these (they are kept as authored and
 | redox.rs `redox_iw` (F-redox, `sse.interior.redox_iw`) | The magma ocean's surface sits one fixed shift (2.7 log units, set so Earth lands at Sossi et al. 2020's IW+0.5) above its core-formation ΔIW for every world; bulk iron is Earth's 32% of rock and metal; FeO and iron mix ideally | Armstrong et al. 2019's self-oxidation grows with magma ocean depth (pressure); bulk iron follows the star's Fe/Mg/Si | Scale the shift with the magma ocean's base pressure; read bulk iron from MP6's composition | Stand-in (F-redox) |
 | redox.rs `outgassed_mix` (F-redox, `sse.atmosphere.outgassed_mix`) | The outgassed H and C are split at one temperature (2000 K), methane in one step from the methane-free mix, under the weight of the gas counted as water and CO2 | Real magma oceans set their air over a cooling range; methane grows as the air cools and quenches | Equilibrate along the cooling path to a quench temperature (Gaillard et al. 2022) | Stand-in (F-redox) |
 
+## Roll call (track SH, `ui-contract/rollcall.ts`, `shell/src/rollcall/`)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `shell/src/rollcall/feed.ts` days of the "Sol today" pack | A day is read on the universe clock (TT), whose midnight runs about 34 s (1961) to 69 s (since 2017) ahead of UTC midnight, so a launch or landing in the last minute of a UTC day can show on the next day | The pack's times are TT seconds and the pack's calendar counts days on them; the screen says "about a minute from UTC" | A leap-second table (TAI minus UTC, with its source) as pack data, applied when a day is written | stand-in (SH2) |
+| `ui-contract/rollcall.ts` `rollCall` placing a craft | A craft is placed at the clock's moment within the day; where its log has no piece then (the climb before its first orbit, a lander before it undocks) it is placed at the middle of its part of the day, then the day's end, then its start | Pack logs start at orbit insertion or undocking; the ascent and the docked stretch are not pieces yet | Ascent pieces (RS5) and docked pieces for landers, so every moment of a stay has a piece | stand-in (SH1) |
+
 ## Power books (track RK, RK9)
 
 | Where | Instead of the physics | Why | Real physics to replace it | Status |
