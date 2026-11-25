@@ -90,6 +90,10 @@ pub struct Report {
     /// Addresses carrying V3 overrides or anomalies (authored-impossible).
     pub honesty_marks: Vec<String>,
     pub warnings: Vec<String>,
+    /// How each V3 barycentre was mapped onto the hierarchy when the save was
+    /// adopted (the kernel's `adopt` fills it; BC1: no barycentre objects).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub barycentres_mapped: Vec<String>,
     /// Hash of the chronicle state the import produces.
     pub state_hash: String,
 }
@@ -269,6 +273,7 @@ impl Importer {
                 unclassified: BTreeMap::new(),
                 honesty_marks: vec![],
                 warnings: vec![],
+                barycentres_mapped: vec![],
                 state_hash: String::new(),
             },
         }
@@ -475,6 +480,26 @@ impl Importer {
                     }
                 }
                 "orbit" => self.orbit(a, n, v, ids, by_id),
+                // A barycentre's members as addresses, so the kernel can map
+                // the pair onto the hierarchy on adoption.
+                "memberIds" => {
+                    let xs: Vec<Json> = v
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|m| match m.as_str().map(|id| (id, ids.get(id))) {
+                            Some((_, Some(ma))) => Some(Json::from(ma.to_string())),
+                            Some((id, None)) => {
+                                self.report
+                                    .warnings
+                                    .push(format!("{a}: member {id:?} not found"));
+                                None
+                            }
+                            None => None,
+                        })
+                        .collect();
+                    self.set(a, "v3.memberIds", Json::from(xs), Evidence::Authored);
+                }
                 "tags" => self.tags(a, v),
                 _ => match body_class(k) {
                     Class::Structural => {}

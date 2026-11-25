@@ -6,6 +6,8 @@
 #![allow(clippy::result_large_err)]
 
 mod adopt;
+#[cfg(test)]
+mod adopt_bary_tests;
 mod atmos;
 #[cfg(test)]
 mod atmos_tests;
