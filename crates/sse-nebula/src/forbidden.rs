@@ -14,7 +14,7 @@ use std::sync::OnceLock;
 
 /// Temperature of the free electrons in every glowing nebula, K: held at the
 /// value photoionised gas settles near rather than worked from its heating
-/// and cooling (fudge register F61).
+/// and cooling (fudge register F64).
 pub const ELECTRON_T_K: f64 = 1.0e4;
 
 /// How the glowing gas is laid out round the lighting stars.

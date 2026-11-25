@@ -6,13 +6,14 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { anythingClip, clipAt, formsHere, freeOrbit, moonRecipes, say, worldKinds, type Clip, type FormsHere, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { roundTo, anythingClip, clipAt, formsHere, freeOrbit, moonRecipes, say, worldKinds, type Clip, type FormsHere, type ViewSession } from "../../ui-contract/src/index.ts";
 
   let {
     session,
     system,
     host,
     orbits,
+    at_au,
     packs,
     onadd,
   }: {
@@ -27,12 +28,14 @@
     };
     /** Orbits already round the host, in AU. */
     orbits: number[];
+    /** Where the Add ghost was dropped on the chart (ED4), in AU; otherwise the first free orbit. */
+    at_au?: number;
     packs: { id: string; version: string }[];
     onadd: (clip: Clip, words: string) => Promise<string | null>;
   } = $props();
 
   const moon = $derived(host.kind !== "star");
-  let a = $state(untrack(() => (host.kind === "star" ? freeOrbit(orbits) : freeOrbit(orbits, 0.003))));
+  let a = $state(untrack(() => at_au ?? (host.kind === "star" ? freeOrbit(orbits) : freeOrbit(orbits, 0.003))));
   let name = $state("");
   let found = $state<FormsHere[] | null>(null);
   let runs = $state(0);
@@ -86,7 +89,7 @@
     problem = await onadd(named(c, fallback), name.trim() || fallback);
     adding = false;
   }
-  const fmt = (x: number) => Number(x.toPrecision(x < 0.1 ? 1 : 2));
+  const fmt = (x: number) => roundTo(x, x < 0.1 ? 1 : 2);
   const fallbackName = $derived(moon ? `New moon of ${host.label}` : "New world");
 </script>
 

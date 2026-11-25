@@ -247,7 +247,7 @@ fn balmer(d: &mut LightDescription, recombinations: f64) {
     d.references.push(reference(OF06));
 }
 
-const METALS_LATER: &str = "metal lines are [O III] and [S II] only so far, at a fixed electron temperature with each ion's layer from photon counting (fudge register F61): nitrogen, neon, helium and [O II] lines, and the heating and cooling that set the temperature, come later in O4";
+const METALS_LATER: &str = "metal lines are [O III] and [S II] only so far, at a fixed electron temperature with each ion's layer from photon counting (fudge register F64): nitrogen, neon, helium and [O II] lines, and the heating and cooling that set the temperature, come later in O4";
 
 // ── Planetary nebulae ────────────────────────────────────────────────────
 

@@ -113,7 +113,14 @@ try {
       // Look about: four headings, a quarter turn apart.
       await gm.locator("[data-ground]").focus();
       for (const k of [0, 1, 2, 3]) {
-        if (screens) (mkdirSync(screens, { recursive: true }), await gm.waitForTimeout(800), await gm.locator("[data-ground]").screenshot({ path: `${screens}/ground-night-${k}.png` }));
+        // A page screenshot clipped to the ground: the ground view redraws every frame, so a locator screenshot
+        // can wait forever for it to hold still.
+        if (screens) {
+          mkdirSync(screens, { recursive: true });
+          await gm.waitForTimeout(800);
+          const box = await gm.locator("[data-ground]").boundingBox();
+          await gm.screenshot({ path: `${screens}/ground-night-${k}.png`, clip: box ?? undefined, animations: "disabled" });
+        }
         await gm.keyboard.down("ArrowLeft");
         await gm.waitForTimeout(1120);
         await gm.keyboard.up("ArrowLeft");

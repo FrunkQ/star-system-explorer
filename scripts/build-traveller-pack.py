@@ -437,6 +437,98 @@ SHEET = {
     "rules": RULES,
 }
 
+# The extended world profile (Alex 23 Nov: the World Builder's Handbook way,
+# as one "big block"), part 1: the physical profile, every figure read off the
+# world's own physics and never rolled. One code sheet a GM can grab, swap or
+# edit: each line is a fact, its scale and its figures (sse-codes `value`
+# segments; `per` names a constant on the master data sheet). The idea of a
+# fuller physical profile beside the UWP follows Roy Martin's
+# TravellerSystemGenerator (GPL-3.0, credited in sources; no code or tables
+# used). WBH tables stay out (Mongoose copyright). The social layer is part 2.
+def val(id_, label, field, times=1.0, per=None, digits=3):
+    src = {"from": "value", "field": field, "times": times, "digits": digits}
+    if per:
+        src["per"] = per
+    return {"id": id_, "label": label, "source": src}
+EXTENDED = {
+    "id": "traveller.extended",
+    "label": "Extended world profile",
+    "about": "The physical profile behind the UWP, read off the world's own physics (never rolled): size, density, gravity, air, surface and orbit. One block: swap it or edit a line.",
+    "segments": [
+        val("diameter_km", "Diameter (km)", "body.radius", times=2.0e-3, digits=4),
+        val("mass", "Mass (Earth masses)", "body.mass", per="M_earth"),
+        val("density", "Density (g/cm³)", "body.bulk_density", times=1.0e-3),
+        val("gravity", "Surface gravity (g)", "body.surface_gravity", per="g0", digits=2),
+        val("escape", "Escape velocity (km/s)", "body.escape_velocity", times=1.0e-3),
+        val("pressure", "Surface pressure (atm)", "atmosphere.surface_pressure", per="atm"),
+        val("oxygen", "Oxygen partial pressure (bar)", "atmosphere.pp.o2", digits=2),
+        val("liquid", "Surface liquid (%)", "surface.liquid_fraction", times=100.0, digits=2),
+        val("temperature", "Mean surface temperature (K)", "planet.surface_temperature"),
+        val("distance", "Distance from its star (au)", "orbit.semi_major_axis", per="au"),
+        val("eccentricity", "Eccentricity", "orbit.eccentricity", digits=2),
+        val("year", "Year (Earth years)", "orbit.period", per="yr_julian"),
+    ],
+    "layouts": {
+        "size": "{diameter_km} km across, {mass} Earth masses, {density} g/cm³, {gravity} g, escape {escape} km/s",
+        "air": "{pressure} atm at the surface, oxygen {oxygen} bar",
+        "surface": "{liquid}% liquid, {temperature} K",
+        "orbit": "{distance} au, eccentricity {eccentricity}, a year of {year} Earth years",
+    },
+    "fact_prefix": U,
+}
+
+# WBH part 2: the social layer as a rolled profile (sse-codes `roll`), for
+# what the physics cannot decide. GM only, seeded from the universe (the same
+# dice on every device), written as authored codes marked as rolled, which the
+# GM overrules like any hand-set code. A code already set by hand (imported
+# from a sector file, typed) is kept. The physical digits (size, atmosphere,
+# hydrographics) are never rolled: they are read off the physics, and
+# population comes from the world's settlements. The numbers are the Cepheus
+# Engine SRD's world creation (Samardan Press, Open Game Licence; chapter 12,
+# read 24 Nov): starport, government and law 2D6-7 plus population or
+# government, tech level 1D6 with its modifier table and floors, bases by the
+# port. Its pirate base is written as this pack's corsair base (C).
+CEPHEUS_WORLDS = "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 12 Worlds. https://www.orffenspace.com/cepheus-srd/book3/worlds.html"
+def when(seg, *syms):
+    return {"segment": seg, "in": [str(x) for x in syms]}
+HEXD = "0123456789ABCDEFG"
+UNINHABITED = [when("population", 0)]
+TL_DM = {
+    "starport": {"A": 6, "B": 4, "C": 2, "X": -4},
+    "size": {"0": 2, "1": 2, "2": 1, "3": 1, "4": 1},
+    "atmosphere": {**{s: 1 for s in "0123"}, **{s: 1 for s in "ABCDEF"}},
+    "hydrographics": {"0": 1, "9": 1, "A": 2},
+    "population": {**{s: 1 for s in "12345"}, "9": 1, "A": 2, "B": 3, "C": 4},
+    "government": {"0": 1, "5": 1, "7": 2, "D": -2, "E": -2},
+}
+SOCIAL = {
+    "id": "traveller.social",
+    "label": "Roll the social codes",
+    "about": "Starport, government, law, tech level and bases for a world the physics cannot decide, rolled from the universe's seed (the same on every device). GM only; a code already set (by hand, or by an imported profile, bases included) is kept; every rolled code can be overruled.",
+    "sheet": "traveller.world",
+    "source": CEPHEUS_WORLDS,
+    "decided_by": "provenance.code",
+    "steps": [
+        {"id": "government", "label": "Government", "dice": 2, "plus": -7, "add": ["population"], "zero_when": UNINHABITED, "min": 0, "max": 15},
+        {"id": "law", "label": "Law level", "dice": 2, "plus": -7, "add": ["government"], "zero_when": [when("government", 0)], "min": 0, "max": 18},
+        {"id": "starport", "label": "Starport", "dice": 2, "plus": -7, "add": ["population"],
+         "table": [[2, "X"], [3, "E"], [5, "D"], [7, "C"], [9, "B"], [11, "A"]]},
+        {"id": "tech", "label": "Tech level", "dice": 1, "dm": TL_DM, "zero_when": UNINHABITED, "min": 0,
+         "floors": [
+             {"when": [when("hydrographics", 0, "A"), when("population", 6, 7, 8, 9, "A", "B", "C")], "min": 4},
+             {"when": [when("atmosphere", 4, 7, 9)], "min": 5},
+             {"when": [when("atmosphere", 0, 1, 2, 3, "A", "B", "C")], "min": 7},
+             {"when": [when("atmosphere", "D", "E"), when("hydrographics", "A")], "min": 7},
+         ]},
+        {"id": "naval", "label": "Naval base", "writes": "traveller.bases.N", "dice": 2, "target": 8,
+         "only_when": [when("starport", "A", "B")]},
+        {"id": "scout", "label": "Scout base", "writes": "traveller.bases.S", "dice": 2, "target": 7,
+         "only_when": [when("starport", "A", "B", "C", "D")], "dm": {"starport": {"C": -1, "B": -2, "A": -3}}},
+        {"id": "corsair", "label": "Corsair base", "writes": "traveller.bases.C", "dice": 2, "target": 12,
+         "only_when": [when("starport", "B", "C", "D", "E", "X"), when("naval", "no")]},
+    ],
+}
+
 # The hex map (a core view) as this pack configures it: one hex a parsec,
 # subsectors 8 by 10, sectors 4 by 4 subsectors, four-digit labels.
 HEX_MAP = {
@@ -623,6 +715,63 @@ SENSORS = [
     sensor("visual_cam", "visual inspection camera", 50, ["construct"], "visual id, hull markings, damage", None),
     sensor("datalink", "datalink", 0.5, ["construct"], "everything it shares", None),
 ]
+# RK12 (Atomic Rockets plan section 13, question 16): the ship weapons as
+# "effect at range". Each kind keeps the game's own line beside the physics:
+# tech level, optimum range band and damage dice, from the Cepheus Engine
+# System Reference Document (Samardan Press, Open Game Licence; chapter 8
+# turret and bay tables, read 24 Nov). The `weapon` is sse-sense's Weapon,
+# read by the kernel's `effect_at_range` against a target: what arrives, what
+# the skin can take, in range, marginal or out of range, the odds from light
+# lag, and rings. Nothing is fired and nothing is rolled. The figures are game
+# defaults (fudge register F60), set so that against the standard target
+# below each beam is in range or marginal at the far edge of its game band.
+# A weapon the physics cannot reach (the meson gun) says so and carries none.
+CEPHEUS_SRD = "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 8 armament tables. https://www.orffenspace.com/cepheus-srd/book2/ship-design-and-construction.html"
+def band_of(id_):
+    i = [b["id"] for b in RANGE_BANDS].index(id_)
+    return {"band": id_, "from_m": RANGE_BANDS[i - 1]["range_m"] if i else 0.0, "to_m": RANGE_BANDS[i]["range_m"]}
+def weapon(id_, label, mount, tl, optimum, damage, w, about):
+    game = {"tl": tl, "optimum": band_of(optimum) if optimum else None, "damage": damage, "source": CEPHEUS_SRD}
+    return {"id": id_, "label": label, "mount": mount, "game": game, "weapon": w, "about": about}
+def laser(power_w, dwell_s, aperture_m, wavelength_m=1.06 * UM, efficiency=0.3):
+    return {"kind": "beam", "beam_power_w": power_w, "wavelength_m": wavelength_m, "aperture_m": aperture_m,
+            "dwell_s": dwell_s, "efficiency": efficiency, "reject_k": 600.0}
+WEAPONS = {
+    "about": "Ship weapons as effect at range: the game's tech level, optimum band and damage beside what the physics says arrives. Nothing is fired.",
+    # A small armed hull as the shooter sees it: 2 mm of aluminium over the
+    # side it shows, 15 m across, able to pull 2 g to spoil an aim.
+    "standard_target": {"label": "a small armed hull (2 mm aluminium, 15 m, 2 g)",
+                        "skin": {"material": "aluminium", "thickness_m": 0.002}, "radius_m": 15.0, "accel_m_s2": 19.6},
+    "kinds": [
+        weapon("pulse_laser", "pulse laser", "turret", 7, "short", "2D6",
+               laser(5.0e8, 0.1, 2.0, wavelength_m=0.35 * UM), "short, hard ultraviolet pulses: a lot of energy on a spot, but the spot grows with distance"),
+        weapon("beam_laser", "beam laser", "turret", None, "medium", None,
+               laser(5.0e7, 10.0, 3.0, wavelength_m=0.35 * UM),
+               "a steady beam held on the spot; the SRD gives no stat line, so the band is the one its prose puts above the pulse laser"),
+        weapon("particle_beam", "particle beam", "turret", 8, "long", "3D6 + radiation",
+               {"kind": "beam", "beam_power_w": 2.0e8, "wavelength_m": 1.0e-12, "aperture_m": 0.5, "jitter_rad": 1.0e-7,
+                "dwell_s": 10.0, "efficiency": 0.2, "reject_k": 800.0},
+               "a neutral particle beam: its spread is its divergence, not diffraction"),
+        weapon("particle_bay", "particle beam bay", "bay", 8, "long", "6D6 + radiation",
+               {"kind": "beam", "beam_power_w": 1.0e9, "wavelength_m": 1.0e-12, "aperture_m": 1.0, "jitter_rad": 1.0e-7,
+                "dwell_s": 10.0, "efficiency": 0.2, "reject_k": 800.0},
+               "the bay's larger accelerator: five times the energy, so it is still in range at the far edge of long"),
+        weapon("fusion_bay", "fusion gun bay", "bay", 12, "medium", "5D6",
+               {"kind": "beam", "beam_power_w": 5.0e9, "wavelength_m": 1.0e-12, "aperture_m": 1.0, "jitter_rad": 1.0e-6,
+                "dwell_s": 6.0, "efficiency": 0.5, "reject_k": 1200.0},
+               "a plasma bolt: it spreads ten times faster than a particle beam, so its reach is shorter"),
+        weapon("meson_bay", "meson gun bay", "bay", 11, "long", "5D6 + radiation", None,
+               "fictional physics (mesons that decay inside the target): no figures to compute, so the game's band stands alone"),
+        weapon("nuclear_missile", "nuclear missile", "turret", 6, None, "2D6 + radiation",
+               {"kind": "burst", "yield_j": 4.184e12, "xray_share": 0.7},
+               "a kiloton warhead read where it bursts: in vacuum it must burst within about 50 m of a small hull to boil through; how it gets there is the missile's flight (NAV)"),
+        weapon("standard_missile", "standard missile", "turret", 6, None, "1D6",
+               {"kind": "projectile", "mass_kg": 50.0, "muzzle_m_s": 3000.0, "face_m2": 0.05},
+               "a kinetic and fragment hit at its closing speed; how it gets there is the missile's flight (NAV)"),
+        weapon("sandcaster", "sandcaster", "turret", 7, "close", "special", None,
+               "a defence, not a weapon at range: no figures"),
+    ],
+}
 def ladder_to(top):
     return LADDER[: LADDER.index(top) + 1]
 TRIGGERS = {"rules": [
@@ -1009,17 +1158,23 @@ pack = {
     "provides": {"units": UNITS, "other": {
         "about": ABOUT,
         "notice": {"text": NOTICE, "source": NOTICE_SOURCE},
+        "credits": [
+            {"text": "Cepheus Engine System Reference Document (Samardan Press), Open Game Licence: task difficulty, skills, ship weapon lines.", "url": "https://www.orffenspace.com/cepheus-srd/"},
+            {"text": "Roy Martin, TravellerSystemGenerator (GPL-3.0): the idea of an extended world profile beside the UWP; ideas only, no code or tables.", "url": "https://github.com/rtrm/TravellerSystemGenerator"},
+        ],
         "difficulty": DIFFICULTY,
         "schemes": SCHEMES,
         "axes": [[k, v] for k, v in sorted(AXES.items())],
         "classes": CLASSES,
-        "code_sheets": [SHEET],
+        "code_sheets": [SHEET, EXTENDED],
+        "rolls": [SOCIAL],
         "views": {"sse.view.hex-map": HEX_MAP},
         # V3 gap 18 (overlay.ts): the sector grid laid over the stars, where the GM puts it, under the HUD.
         "overlays": [{"id": "traveller.sector-grid", "label": "Sector grid", "frame": "galaxy-plane-pc", "grid": "sse.view.hex-map"}],
         "calendar": IMPERIAL,
         "gas_mixes": GAS_MIXES,
         "sensors": {"range_bands": RANGE_BANDS, "kinds": SENSORS, "ladder": LADDER},
+        "weapons": WEAPONS,
         "observe": OBSERVE,
         "triggers": TRIGGERS,
         "templates": {"templates": TEMPLATES},

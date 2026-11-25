@@ -80,7 +80,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             ],
             outputs: vec![conv.clone()],
             params: vec![
-                param("k", dims::CONDUCTIVITY, 130.0, (10.0, 300.0), "thermal conductivity of the liquid alloy (Pozzo et al. 2012 give about 150; Konopkova et al. 2016 about 30; until MP21's iron rows)"),
+                param("k", dims::CONDUCTIVITY, 130.0, (10.0, 300.0), "thermal conductivity of the liquid alloy (Pozzo et al. 2012 compute about 150; Konopkova et al. 2016 measured about 30 on solid iron, so only a hint for the liquid; until MP21's iron rows)"),
                 param("alpha", dims::PER_KELVIN, 1.25e-5, (1e-6, 1e-4), "thermal expansivity of the liquid alloy"),
                 param("cp", dims::SPECIFIC_HEAT, 840.0, (300.0, 2000.0), "specific heat of the liquid alloy"),
             ],

@@ -11,7 +11,8 @@
 //!   (written there (1+z)^β exp(−γ z), so alpha = β and beta = −γ),
 //!   with alpha and beta from the cosmology by Correa et al. 2015 (paper I,
 //!   MNRAS 450, 1514, doi:10.1093/mnras/stv689; eqs. 14, 15 and 20 to 23 with B2), shifted earlier in denser cells and scattered per halo;
-//! - spin: lognormal, median 0.035, sigma ln = 0.5 (Bullock et al. 2001);
+//! - spin: lognormal, median 0.035, sigma ln = 0.5 (Bullock et al. 2001's
+//!   modified spin lambda prime; their classical lambda has median 0.042);
 //! - major mergers (ratio above 1:4): a keyed Poisson process in redshift with
 //!   the Fakhouri, Ma and Boylan-Kolchin 2010 rate (eq. 1), each a dated
 //!   chronicle event with its ratio and an orbit sketch;

@@ -96,7 +96,41 @@ pub struct SectorFile {
     /// Subsector letter 'A'..'P' to its name.
     pub subsectors: BTreeMap<char, String>,
     pub worlds: Vec<WorldLine>,
+    /// Routes drawn between hexes (trade, courier and jump lanes), from the
+    /// metadata file. Pictures on a map, not physics: an import turns them
+    /// into links.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub routes: Vec<Route>,
     pub warnings: Vec<Warning>,
+}
+
+/// One route in a sector's metadata: `<Route Start="0101" End="0203"
+/// EndOffsetX="1" Type="Trade" Allegiance="..." Style="Dashed" Color="..."/>`.
+/// An offset names a neighbouring sector (x right, y down), 0 for this one.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Route {
+    pub start: String,
+    pub end: String,
+    #[serde(default)]
+    pub start_offset: (i32, i32),
+    #[serde(default)]
+    pub end_offset: (i32, i32),
+    /// The route's type as the file names it ("Trade", "Xboat"...).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub allegiance: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub style: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub colour: Option<String>,
+}
+
+impl Route {
+    /// Both ends in this sector.
+    pub fn inside(&self) -> bool {
+        self.start_offset == (0, 0) && self.end_offset == (0, 0)
+    }
 }
 
 impl SectorFile {
@@ -111,6 +145,7 @@ impl SectorFile {
             self.abbreviation = meta.abbreviation;
         }
         self.subsectors.extend(meta.subsectors);
+        self.routes.extend(meta.routes);
         self.warnings.extend(meta.warnings);
         self
     }
@@ -133,6 +168,17 @@ impl SectorFile {
                 .worlds
                 .iter()
                 .filter(|w| w.subsector() == Some(letter))
+                .cloned()
+                .collect(),
+            routes: self
+                .routes
+                .iter()
+                .filter(|r| {
+                    r.inside()
+                        && [&r.start, &r.end]
+                            .iter()
+                            .all(|h| hex_to_xy(h).map(|(x, y)| subsector_of(x, y)) == Some(letter))
+                })
                 .cloned()
                 .collect(),
             warnings: self.warnings.clone(),

@@ -84,6 +84,7 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("orbit.angular_momentum_deficit", "angular momentum an orbit lacks against a flat circle of the same size (kg m2 s-1)"),
     ("orbit.ascending_node", "longitude of an orbit's ascending node, radians"),
     ("orbit.inclination", "tilt of an orbit against its host's reference plane, radians"),
+    ("orbit.chaotic_zone", "orbit gap, as a fraction, inside which neighbouring resonances overlap and the motion is chaotic"),
     ("orbit.binary_limit", "widest (round one star) or nearest (round both) lasting planet orbit in a binary"),
     ("orbit.hill_gap", "inner apoapsis to outer periapsis, in mutual Hill radii"),
     ("orbit.hill_spacing", "gap between two neighbouring orbits, in mutual Hill radii"),
@@ -92,6 +93,9 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("orbit.moon_limit", "widest orbit a moon keeps round its planet"),
     ("orbit.mutual_hill_radius", "radius of the gravity bubble two neighbours share"),
     ("orbit.mutual_inclination", "angle between two orbital planes, radians"),
+    ("orbit.resonance_offset", "how far two orbits' period ratio is from a whole-number ratio, as a fraction"),
+    ("orbit.resonance_turns", "turns one body makes in one cycle of a mean motion resonance"),
+    ("orbit.resonance_width", "how far a period ratio may be from a resonance and still be held, as a fraction"),
     ("orbit.relative_amd", "a system's angular momentum deficit against an outer planet's circular angular momentum"),
     ("orbit.stability_verdict", "a stability check's verdict as a number: 0 lasts, higher is worse (each block says what its numbers mean)"),
     (
@@ -604,10 +608,7 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("light.seen_temperature", "temperature of the layer a disc's light comes from at one point"),
     ("light.refractive_index", "how strongly a liquid or crystal bends light"),
     ("light.absorption_index", "the imaginary part of the refractive index: how strongly the material soaks up light inside it"),
-    ("particle.radius", "radius of one particle of a cloud, haze, dust or ring"),
-    ("particle.extinction_efficiency", "light a particle takes out of a beam, over its cross-section"),
     ("particle.scattering_efficiency", "light a particle scatters, over its cross-section"),
-    ("particle.asymmetry", "mean cosine of the angle a particle scatters light through: 0 for even, near 1 for straight on"),
     ("light.bow_radius", "radius of a rainbow round the point opposite the sun, as an angle"),
     ("light.prism_angle", "angle between two faces of a crystal light passes through"),
     ("light.halo_radius", "radius of a halo round the sun or moon, as an angle"),
@@ -616,6 +617,22 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("light.brightness_share", "brightness of a lit surface against a matt one seen square on in full sun"),
     ("eye.linear_level", "light level of one screen colour, 0 to 1, in proportion to light"),
     ("eye.screen_level", "level sent to the screen, 0 to 1"),
+    ("particle.radius", "radius of one particle"),
+    ("particle.wavelength", "wavelength of the light"),
+    ("particle.index_real", "refractive index of the particle's material (real part)"),
+    ("particle.index_imaginary", "how strongly the material absorbs (imaginary part of the refractive index)"),
+    ("particle.extinction_efficiency", "light taken out of the beam, per particle's cross-section"),
+    ("particle.absorption_efficiency", "light absorbed, per particle's cross-section"),
+    ("particle.single_scattering_albedo", "share of the light taken out that is scattered, not absorbed"),
+    ("particle.optical_depth", "optical depth of a layer of particles straight down"),
+    ("particle.asymmetry", "how far forward the particles scatter (0 alike every way, 1 straight on)"),
+    ("slab.reflectance", "share of the light a layer sends back"),
+    ("slab.transmission", "share of the light a layer lets through"),
+    ("model.moment_of_inertia_factor", "moment of inertia over M R² (0.4 uniform, lower when mass sinks to the centre)"),
+    ("shape.flattening", "how much shorter the pole-to-pole radius is, as a share of the equator's"),
+    ("shape.equatorial_radius", "radius at the equator"),
+    ("shape.polar_radius", "radius at the poles"),
+    ("shape.spin_parameter", "spin's pull outward at the equator over gravity's pull in"),
 ];
 
 /// Quantity kinds for the base-physics pack, from the atoms' port kinds.
@@ -641,6 +658,10 @@ fn range_of(kind: &str, _dim: Dimension) -> Option<(f64, f64)> {
     match kind {
         "orbit.eccentricity" => Some((0.0, 1.0)),
         "planet.bond_albedo" => Some((0.0, 1.0)),
+        "particle.single_scattering_albedo" | "slab.reflectance" | "slab.transmission" => {
+            Some((0.0, 1.0))
+        }
+        "particle.asymmetry" => Some((-1.0, 1.0)),
         "interior.core_mass_fraction" => Some((0.0, 1.0)),
         "planetesimal.water_kept_fraction" => Some((0.0, 1.0)),
         _ => None,

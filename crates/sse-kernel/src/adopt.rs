@@ -133,17 +133,36 @@ fn refuse_existing(ch: &Chronicle, systems: &[Address]) -> Result<(), Response> 
     Ok(())
 }
 
+/// A system grown from a drawn star (`from_star`) may hold the star's own
+/// promotion record at its address, and nothing else.
+fn refuse_existing_but_the_star(ch: &Chronicle, system: &Address) -> Result<(), Response> {
+    let st = ch.state_at(UniverseTime::seconds(i64::MAX));
+    let ok = st
+        .facts
+        .iter()
+        .filter(|(a, _)| system.contains(a))
+        .all(|(a, f)| a == system && f.contains_key(crate::cosmos::STAR_DESCRIPTION));
+    if !ok {
+        return Err(err(
+            "already_adopted",
+            format!("{system} already has a system grown in this universe"),
+        ));
+    }
+    Ok(())
+}
+
 pub(crate) fn adopt(
     ch: &Chronicle,
     root: &Address,
     import_v3: Option<String>,
     formation: Option<FormationRequest>,
     occurred_at_s: Option<i64>,
+    from_star: Option<&str>,
 ) -> Result<Adoption, Response> {
     let at = UniverseTime::seconds(occurred_at_s.unwrap_or(0));
     match (import_v3, formation) {
         (Some(save), None) => adopt_v3(ch, root, &save, at),
-        (None, Some(req)) => adopt_formation(ch, root, req, at),
+        (None, Some(req)) => adopt_formation(ch, root, req, at, from_star.is_some()),
         _ => Err(err(
             "bad_request",
             "give one of import_v3 (a save's text) or formation (run_formation fields)",
@@ -157,8 +176,10 @@ fn adopt_v3(
     save: &str,
     at: UniverseTime,
 ) -> Result<Adoption, Response> {
-    let im = sse_import_v3::import_json(save, &universe_key(root)?)
+    let mut im = sse_import_v3::import_json(save, &universe_key(root)?)
         .map_err(|e| err("import_failed", e.0))?;
+    let said = rehome_barycentres(&mut im.facts);
+    im.report.barycentres_mapped = said;
     let systems: Vec<Address> = im
         .facts
         .keys()
@@ -223,6 +244,275 @@ fn adopt_v3(
         facts: count,
         run: None,
     })
+}
+
+type V3Facts = BTreeMap<Address, BTreeMap<String, sse_import_v3::Fact>>;
+
+fn is_bary(a: &Address) -> bool {
+    a.last().kind() == "bary"
+}
+
+fn text_of(row: Option<&BTreeMap<String, sse_import_v3::Fact>>, k: &str) -> Option<String> {
+    row?.get(k)?.value.as_str().map(str::to_owned)
+}
+
+/// The members of a V3 barycentre: its `v3.memberIds` (addresses, as the
+/// importer resolves them) that are in the save, in V3's order.
+fn bary_members(facts: &V3Facts, b: &Address) -> Vec<Address> {
+    let listed: Vec<Address> = facts
+        .get(b)
+        .and_then(|r| r.get("v3.memberIds"))
+        .and_then(|f| f.value.as_array())
+        .map(|xs| {
+            xs.iter()
+                .filter_map(|x| x.as_str()?.parse::<Address>().ok())
+                .filter(|a| a != b && facts.contains_key(a))
+                .collect()
+        })
+        .unwrap_or_default();
+    listed
+}
+
+/// A node's mass: its own `body.mass`, or for a barycentre its members' sum.
+fn node_mass(facts: &V3Facts, a: &Address, depth: u32) -> f64 {
+    if depth > 16 {
+        return 0.0;
+    }
+    if is_bary(a) {
+        return bary_members(facts, a)
+            .iter()
+            .map(|x| node_mass(facts, x, depth + 1))
+            .sum();
+    }
+    facts
+        .get(a)
+        .and_then(|r| r.get("body.mass"))
+        .and_then(|f| f.value.as_f64())
+        .filter(|x| x.is_finite() && *x > 0.0)
+        .unwrap_or(0.0)
+}
+
+/// The heaviest member of a barycentre (the first listed on a tie).
+fn heaviest(facts: &V3Facts, members: &[Address]) -> Option<Address> {
+    let mut best: Option<(&Address, f64)> = None;
+    for x in members {
+        let mx = node_mass(facts, x, 0);
+        if best.is_none_or(|(_, mb)| mx > mb) {
+            best = Some((x, mx));
+        }
+    }
+    best.map(|(x, _)| x.clone())
+}
+
+/// The body that stands for a node: a body itself, or the body at the bottom
+/// of a barycentre's heaviest members.
+fn anchor(facts: &V3Facts, a: &Address) -> Option<Address> {
+    let mut at = a.clone();
+    for _ in 0..16 {
+        if !is_bary(&at) {
+            return Some(at);
+        }
+        at = heaviest(facts, &bary_members(facts, &at))?;
+    }
+    None
+}
+
+fn orbit_keys(row: &BTreeMap<String, sse_import_v3::Fact>) -> Vec<String> {
+    row.keys()
+        .filter(|k| k.starts_with("orbit."))
+        .cloned()
+        .collect()
+}
+
+/// V3 barycentre nodes onto the hierarchy (BC1: a barycentre always, no
+/// barycentre objects). In a V3 save the members of a pair orbit a massless
+/// `bary:N`, each at its own distance from it. SSE4 keeps only each body's
+/// host and works the barycentre out (`orbits_at`), so on import:
+/// - the heaviest member (its anchor body, for a nested pair) takes the pair's
+///   own orbit round its host, or orbits nothing when the pair is the root;
+/// - each other member orbits that body, at the pair's separation (its own
+///   distance plus the heavy member's, or scaled by the masses when that is
+///   not given), keeping its own shape, angles and phase;
+/// - anything else that orbited the barycentre (a planet round both stars)
+///   orbits the heavy body with its elements unchanged: the hierarchy counts
+///   both stars for a world outside the companion;
+/// - the barycentre's row is left out; its `v3.*` facts go to that body as
+///   `v3.pair.<bary:N>.<name>`.
+///
+/// Returns one line per barycentre for the import report.
+pub(crate) fn rehome_barycentres(facts: &mut V3Facts) -> Vec<String> {
+    use sse_import_v3::Fact;
+    let barys: Vec<Address> = facts.keys().filter(|a| is_bary(a)).cloned().collect();
+    if barys.is_empty() {
+        return vec![];
+    }
+    let member_of: BTreeMap<Address, Address> = barys
+        .iter()
+        .flat_map(|b| {
+            bary_members(facts, b)
+                .into_iter()
+                .map(move |x| (x, b.clone()))
+        })
+        .collect();
+    let mut said = vec![];
+    // Writes are worked out from the save as read, then applied together, so
+    // the order barycentres are visited in never matters.
+    let mut writes: Vec<(Address, BTreeMap<String, Fact>, String)> = vec![];
+    let mut mapped: BTreeMap<Address, Address> = BTreeMap::new();
+    for b in &barys {
+        let members = bary_members(facts, b);
+        let (Some(heavy), Some(primary)) = (heaviest(facts, &members), anchor(facts, b)) else {
+            said.push(format!(
+                "{b}: no members in the save; what orbited it is left unplaced"
+            ));
+            continue;
+        };
+        mapped.insert(b.clone(), primary.clone());
+        let host_of = |x: &Address| -> Option<String> {
+            let h: Address = text_of(facts.get(x), "orbit.host")?.parse().ok()?;
+            Some(match is_bary(&h) {
+                true => anchor(facts, &h)?.to_string(),
+                false => h.to_string(),
+            })
+        };
+        // The heavy side carries the pair's own orbit, unless the pair is a
+        // member of a wider pair, which places it.
+        if !member_of.contains_key(b) {
+            let mut row: BTreeMap<String, Fact> = BTreeMap::new();
+            if let Some(src) = facts.get(b) {
+                for k in orbit_keys(src) {
+                    row.insert(k.clone(), src[&k].clone());
+                }
+            }
+            let parent = text_of(facts.get(b), "parent");
+            match host_of(b) {
+                Some(h) => {
+                    row.insert(
+                        "orbit.host".into(),
+                        Fact {
+                            value: h.clone().into(),
+                            evidence: Evidence::Authored,
+                        },
+                    );
+                    row.insert(
+                        "parent".into(),
+                        Fact {
+                            value: h.into(),
+                            evidence: Evidence::Authored,
+                        },
+                    );
+                }
+                None => {
+                    if let Some(p) = parent.and_then(|p| p.parse::<Address>().ok()) {
+                        let p = if is_bary(&p) {
+                            anchor(facts, &p)
+                        } else {
+                            Some(p)
+                        };
+                        if let Some(p) = p {
+                            row.insert(
+                                "parent".into(),
+                                Fact {
+                                    value: p.to_string().into(),
+                                    evidence: Evidence::Authored,
+                                },
+                            );
+                        }
+                    }
+                }
+            }
+            writes.push((primary.clone(), row, "heavy".into()));
+        }
+        let m_heavy = node_mass(facts, &heavy, 0);
+        let a_heavy = facts
+            .get(&heavy)
+            .and_then(|r| r.get("orbit.semi_major_axis"))
+            .and_then(|f| f.value.as_f64());
+        let mut names = vec![primary.to_string()];
+        for x in members.iter().filter(|x| **x != heavy) {
+            let Some(target) = anchor(facts, x) else {
+                continue;
+            };
+            let Some(src) = facts.get(x) else { continue };
+            let mut row: BTreeMap<String, Fact> = BTreeMap::new();
+            for k in orbit_keys(src) {
+                row.insert(k.clone(), src[&k].clone());
+            }
+            let m_x = node_mass(facts, x, 0);
+            if let Some(a_x) = src
+                .get("orbit.semi_major_axis")
+                .and_then(|f| f.value.as_f64())
+            {
+                let sep = match a_heavy {
+                    Some(ah) => a_x + ah,
+                    None if m_heavy > 0.0 => a_x * (m_heavy + m_x) / m_heavy,
+                    None => a_x,
+                };
+                row.insert(
+                    "orbit.semi_major_axis".into(),
+                    Fact {
+                        value: sep.into(),
+                        evidence: src["orbit.semi_major_axis"].evidence,
+                    },
+                );
+            }
+            for k in ["orbit.host", "parent"] {
+                row.insert(
+                    k.into(),
+                    Fact {
+                        value: primary.to_string().into(),
+                        evidence: Evidence::Authored,
+                    },
+                );
+            }
+            names.push(target.to_string());
+            writes.push((target, row, "companion".into()));
+        }
+        said.push(format!(
+            "{b}: the pair {} now orbit {primary} (its heaviest member); the barycentre is worked out, not kept",
+            names.join(" and ")
+        ));
+    }
+    // Everything else that named a barycentre as host or parent names its body.
+    let written: Vec<Address> = writes.iter().map(|(a, _, _)| a.clone()).collect();
+    for (a, row) in facts.iter_mut() {
+        if is_bary(a) || written.contains(a) {
+            continue;
+        }
+        for k in ["orbit.host", "parent"] {
+            let to = row
+                .get(k)
+                .and_then(|f| f.value.as_str())
+                .and_then(|s| s.parse::<Address>().ok())
+                .and_then(|h| mapped.get(&h).cloned());
+            if let (Some(to), Some(f)) = (to, row.get_mut(k)) {
+                f.value = to.to_string().into();
+            }
+        }
+    }
+    for (a, row, _) in writes {
+        let r = facts.entry(a).or_default();
+        for k in orbit_keys(r) {
+            r.remove(&k);
+        }
+        r.remove("parent");
+        r.extend(row);
+    }
+    // The pair's own hand-set V3 facts (its name, a Lagrange point it rides)
+    // go with the body that stands for it, so nothing authored is lost.
+    for (b, primary) in &mapped {
+        let Some(row) = facts.remove(b) else { continue };
+        let seg = format!("{}:{}", b.last().kind(), b.last().key());
+        let kept: Vec<(String, Fact)> = row
+            .into_iter()
+            .filter_map(|(k, f)| {
+                let rest = k.strip_prefix("v3.")?;
+                Some((format!("v3.pair.{seg}.{rest}"), f))
+            })
+            .collect();
+        facts.entry(primary.clone()).or_default().extend(kept);
+    }
+    said
 }
 
 /// Facts of a formation run, in the importer's field names. Orbit angles are
@@ -332,6 +622,7 @@ fn adopt_formation(
     root: &Address,
     req: FormationRequest,
     at: UniverseTime,
+    from_star: bool,
 ) -> Result<Adoption, Response> {
     let mut req = req;
     let system: Address = match &req.system {
@@ -347,7 +638,11 @@ fn adopt_formation(
         ));
     }
     req.system = Some(system.to_string());
-    refuse_existing(ch, std::slice::from_ref(&system))?;
+    if from_star {
+        refuse_existing_but_the_star(ch, &system)?;
+    } else {
+        refuse_existing(ch, std::slice::from_ref(&system))?;
+    }
     let (_, run, pinned) = systems::form(req.clone().into())?;
     let set = run_facts(&run);
     let count = set.values().map(|r| r.len() as u32).sum();
@@ -548,6 +843,67 @@ pub(crate) fn spec_from_facts(facts: &Facts, system: &Address) -> Option<SystemS
 /// moons with a mass and a radius, temperatures in equilibrium with the star
 /// (albedo and greenhouse from the surface pack), deep envelopes for worlds
 /// above 10 Earth masses with a density under 2500 kg/m^3.
+const MAKEUP: [&str; 5] = [
+    "makeup.metal",
+    "makeup.rock",
+    "makeup.carbon",
+    "makeup.ice",
+    "makeup.gas",
+];
+
+/// A typed makeup's core share (metal against metal, rock and carbon) and
+/// water share (ice of the whole); `None` when no makeup is typed.
+fn makeup_shares(r: &BTreeMap<String, Value>) -> Option<(f64, f64)> {
+    let share = |k: &str| r.get(k).and_then(as_f64).filter(|x| *x >= 0.0);
+    if MAKEUP.iter().all(|k| share(k).is_none()) {
+        return None;
+    }
+    let v = |k: &str| share(k).unwrap_or(0.0);
+    let solid = v("makeup.metal") + v("makeup.rock") + v("makeup.carbon");
+    let total = solid + v("makeup.ice") + v("makeup.gas");
+    let cmf = if solid > 0.0 {
+        v("makeup.metal") / solid
+    } else {
+        0.32
+    };
+    let wf = if total > 0.0 {
+        v("makeup.ice") / total
+    } else {
+        0.0
+    };
+    Some((cmf.min(1.0), wf.min(1.0)))
+}
+
+/// K3 (editing design 15): the radius a solid world's mass and makeup give
+/// when none is set: the Zeng, Sasselov and Jacobsen rocky block
+/// (`sse.interior.rocky_radius`) with the core share read from the makeup's
+/// metal against its rock (Earth's 0.32 when no makeup is set), and a water
+/// or ice mantle adding half its mass share to the radius, as formation's
+/// stage 8 does (Zeng et al. 2019: half water by mass is about a quarter
+/// larger). Outside the block's 1 to 8 Earth masses it is an extrapolation,
+/// as in formation. A world mostly of gas gets none: no giant radius block
+/// is in the base pack yet.
+pub(crate) fn radius_from_makeup(mass: f64, r: &BTreeMap<String, Value>) -> Option<f64> {
+    let share = |k: &str| {
+        r.get(k)
+            .and_then(as_f64)
+            .filter(|x| *x >= 0.0)
+            .unwrap_or(0.0)
+    };
+    let total: f64 = MAKEUP.iter().map(|k| share(k)).sum();
+    if total > 0.0 && share("makeup.gas") / total > 0.5 {
+        return None;
+    }
+    let (cmf, wf) = makeup_shares(r).unwrap_or((0.32, 0.0));
+    let atoms = sse_atoms::atoms();
+    let a = atoms
+        .iter()
+        .find(|a| a.decl().id == "sse.interior.rocky_radius")?;
+    let p: Vec<f64> = a.decl().params.iter().map(|p| p.default).collect();
+    let out = a.eval(&[mass, cmf.min(1.0)], &p).ok()?;
+    Some(out[0] * (1.0 + 0.5 * wf)).filter(|x| x.is_finite() && *x > 0.0)
+}
+
 fn bodies_from_facts(
     facts: &Facts,
     catalogued: &Facts,
@@ -576,11 +932,16 @@ fn bodies_from_facts(
         if r.get("body.engulfed") == Some(&Value::Bool(true)) {
             continue;
         }
-        let (Some(mass), Some(radius), Some(host)) = (
-            r.get("body.mass").and_then(as_f64),
-            r.get("body.radius").and_then(as_f64),
-            host_of(r),
-        ) else {
+        let (Some(mass), Some(host)) = (r.get("body.mass").and_then(as_f64), host_of(r)) else {
+            continue;
+        };
+        // K3: a hand-made world with no radius takes the one its mass and
+        // makeup give (`radius_from_makeup`), so it still has ground.
+        let Some(radius) = r
+            .get("body.radius")
+            .and_then(as_f64)
+            .or_else(|| radius_from_makeup(mass, r))
+        else {
             continue;
         };
         // Distance from the star: own orbit, or the host planet's for a moon.
@@ -667,8 +1028,9 @@ fn bodies_from_facts(
                 .unwrap_or_else(|| a.to_string()),
             mass_earth,
             radius_earth: radius / R_EARTH,
-            core_mass_fraction: 0.32,
-            water_fraction: 0.0,
+            // K3: a typed makeup sets the core and water shares inside.
+            core_mass_fraction: makeup_shares(r).map_or(0.32, |m| m.0),
+            water_fraction: makeup_shares(r).map_or(0.0, |m| m.1),
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
             pressure_bar: pressure_pa / 1e5,
@@ -1085,6 +1447,15 @@ pub(crate) fn resolved_system(
                 let mut v = serde_json::to_value(e).expect("plain data");
                 if let Some(p) = sse_surface::plumes::plumes(b, e, seed) {
                     v["plumes"] = serde_json::to_value(p).expect("plain data");
+                }
+                // What stains its ground (TRUE4), when its tiles were read: from
+                // the surveyed atlas's one climate, already in the cache.
+                let key = sse_surface::detail::orbit_key(e, seed, (b.age_gyr + shift_gyr).max(0.0));
+                if let Some((_, a)) = orbits.iter().find(|(k, _)| *k == key) {
+                    let st = sse_surface::stains::stains_of(b, e, a);
+                    if !st.is_empty() {
+                        v["stains"] = serde_json::to_value(st).expect("plain data");
+                    }
                 }
                 v
             })

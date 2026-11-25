@@ -51,7 +51,8 @@ export type Why =
   | { kind: "authored"; field: string; physics: string | null }
   | { kind: "leading"; field: string; value: number; exponent: number }
   | { kind: "counted"; tag: string; members: string[] }
-  | { kind: "no-system"; tag: string };
+  | { kind: "no-system"; tag: string }
+  | { kind: "value"; field: string; value?: number; per?: string };
 
 export interface SegmentReading {
   id: string;
@@ -96,7 +97,7 @@ export interface SheetSymbol {
 export interface SheetSegment {
   id: string;
   label?: string;
-  source: { from: "classify"; scheme: string; symbols: SheetSymbol[] } | { from: "leading"; field: string; segment: string } | { from: "count"; tag: string; max: number };
+  source: { from: "classify"; scheme: string; symbols: SheetSymbol[] } | { from: "leading"; field: string; segment: string } | { from: "count"; tag: string; max: number } | { from: "value"; field: string; times?: number; per?: string; digits?: number };
   authored?: string;
 }
 
@@ -153,6 +154,21 @@ export function sheetOf(packs: readonly unknown[], id?: string): CodeSheetDef | 
     }
   }
   return found;
+}
+
+/** Every code sheet in the stack, in stack order (a later pack's sheet with the same id replaces the earlier one). */
+export function sheetsOf(packs: readonly unknown[]): CodeSheetDef[] {
+  const out: CodeSheetDef[] = [];
+  for (const p of packs) {
+    const sheets = other(p).code_sheets;
+    if (!Array.isArray(sheets)) continue;
+    for (const s of sheets as CodeSheetDef[]) {
+      const i = out.findIndex((x) => x.id === s.id);
+      if (i >= 0) out[i] = s;
+      else out.push(s);
+    }
+  }
+  return out;
 }
 
 /** Every pack's vocabulary tables merged in stack order (later packs win per entry). */
@@ -269,6 +285,11 @@ export function whySentence(seg: SegmentReading, sheet?: CodeSheetDef, classes?:
     }
     case "no-system":
       return `No system: ${w.tag} is counted over the whole system, and this body was read without it.`;
+    case "value": {
+      if (w.value === undefined) return `Read off ${w.field}, which this world does not have yet (?).`;
+      const times = def?.source.from === "value" && def.source.times !== undefined && def.source.times !== 1 ? ` times ${trimNumber(def.source.times)}` : "";
+      return `Read off the physics: ${w.field} is ${trimNumber(w.value)}${times}${w.per ? `, over ${w.per} from the data sheet` : ""}. Never rolled.`;
+    }
   }
 }
 

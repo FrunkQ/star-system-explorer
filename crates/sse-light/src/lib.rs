@@ -22,6 +22,7 @@ pub mod bows;
 pub mod colour;
 pub mod emit;
 pub mod gas;
+pub mod haze;
 pub mod limb;
 pub mod observe;
 pub mod photometry;
@@ -32,6 +33,8 @@ pub mod table;
 
 #[cfg(test)]
 mod gas_tests;
+#[cfg(test)]
+mod haze_tests;
 #[cfg(test)]
 mod limb_tests;
 #[cfg(test)]

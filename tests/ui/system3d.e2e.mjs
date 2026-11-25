@@ -87,7 +87,7 @@ try {
         // Bands through True (rule 12, one set of controls): X-ray draws the corona, Infrared each body's own heat.
         for (const [b, id] of [["X-ray", "xray"], ["Infrared", "infrared"]]) {
           await pick(gm, "Band", b);
-          await gm.waitForFunction((x) => document.querySelector("[aria-roledescription='3D chart'] [data-true-band]")?.getAttribute("data-true-band") === x, id);
+          await gm.waitForFunction((x) => document.querySelector("[aria-roledescription='3D chart'] [data-true-band]")?.getAttribute("data-true-band") === x, id, { timeout: 20000 });
         }
         await shot(gm, `v10d-gm-true-infrared-${mode}`);
         await pick(gm, "Band", "Visible");
@@ -106,6 +106,16 @@ try {
       // Every body takes a click (Alex, 24 Nov: only two did): the pointer picks the nearest body, so pins that overlap
       // at Real scale no longer hide the worlds beneath them. Checked on each pin clear of its neighbours by 6 px.
       // A click also flies in to the body's close-up (Alex, 24 Nov); "‹ Sun" comes back out before the next one.
+      // The camera's distance holds still for a few frames: the fly-in or fly-out has finished (a loaded runner takes
+      // longer than the tween's 620 ms, so the test waits on the camera, not on a clock).
+      const settled = () => gm.waitForFunction(() => {
+        const v = document.querySelector("[aria-roledescription='3D chart']");
+        const d = v?.getAttribute("data-dist");
+        const w = /** @type {any} */ (window);
+        if (w.__distWas !== d) { w.__distWas = d; w.__distSame = 0; return false; }
+        return ++w.__distSame >= 6;
+      }, null, { timeout: 20000, polling: 100 });
+      await settled();
       const pinsNow = () => view.locator(".pin").evaluateAll((ps) => ps.map((e) => { const r = e.getBoundingClientRect(); return { id: e.dataset.body, x: r.x + r.width / 2, y: r.y + r.height / 2 }; }));
       const ids = (await pinsNow()).map((q) => q.id);
       let clicked = 0;
@@ -114,14 +124,14 @@ try {
         const q = pinsAt.find((x) => x.id === id);
         if (!q || pinsAt.some((o) => o.id !== q.id && Math.hypot(o.x - q.x, o.y - q.y) < 6)) continue;
         await gm.mouse.click(q.x, q.y);
-        await gm.waitForTimeout(1100); // the fly-in to its close-up
-        await gm.waitForFunction((id) => document.querySelector("[aria-roledescription='3D chart'] .pin.sel")?.getAttribute("data-body") === id, q.id, { timeout: 5000 });
+        await gm.waitForFunction((id) => document.querySelector("[aria-roledescription='3D chart'] .pin.sel")?.getAttribute("data-body") === id, q.id, { timeout: 15000 });
+        await settled(); // the fly-in to its close-up
         clicked++;
         const back = view.locator(".crumb button, button").filter({ hasText: /^‹ / }).first();
         if (await back.isVisible().catch(() => false)) {
           if (clicked === 1) await shot(gm, `close-up-${mode}`);
           await back.click();
-          await gm.waitForTimeout(150);
+          await settled();
         }
       }
       assert.ok(clicked >= 3, `bodies clicked: ${clicked}`);
@@ -140,7 +150,23 @@ try {
         const low = Number(await view.getAttribute("data-dist"));
         assert.ok(low > 0.55 && low < 0.552, `down to a grazing orbit: ${low}`);
         await shot(gm, `close-up-graze-${mode}`);
+        // PC2: the close-up's camera goes on a bookmark, and the bookmark brings the same camera back.
+        const keptAt = Number(await view.getAttribute("data-dist"));
+        await gm.getByRole("button", { name: "Bookmarks" }).click();
+        const marks = gm.locator("[data-bookmarks-list]");
+        await marks.locator("[data-bookmark-add]").click();
+        await marks.locator("[data-bookmark-name]").press("Enter");
+        await gm.keyboard.press("Escape");
         await pick(gm, "HUD", "On");
+        await view.locator(".crumb button, button").filter({ hasText: /^‹ / }).first().click();
+        await settled();
+        assert.ok(Number(await view.getAttribute("data-dist")) > 1, "out of the close-up");
+        await gm.getByRole("button", { name: "Bookmarks" }).click();
+        await marks.locator("[data-bookmark-go]").last().click();
+        await gm.waitForFunction((d) => Math.abs(Number(document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-dist")) - d) < 1e-3, keptAt, { timeout: 15000 });
+        await shot(gm, `pc2-bookmark-camera-${mode}`);
+        await gm.keyboard.press("Escape");
+        await pick(gm, "HUD", "On"); // the bookmark brought back its view too, made with the HUD off
         await view.locator(".crumb button, button").filter({ hasText: /^‹ / }).first().click();
       }
       await gm.getByRole("button", { name: "3D", exact: true }).click();
@@ -171,6 +197,28 @@ try {
       const pnote = await pv.locator(".note").innerText();
       assert.match(pnote, /spread for display/);
       await shot(pl, `v6-players-3d-${mode}`);
+      // PC2 part 2: a postcard of the system view draws its front live, in True from its camera (off screen, the
+      // same view), and says how it was made on its back.
+      if (mode === "gpu" && name === "chromium") {
+        const card = { schema: "sse.postcard/1", id: "pc-vault", name: "Vault up close",
+          bookmark: { schema: "sse.bookmark/1", id: "b-vault", name: "Vault up close", scope: "u:kestrel/sys:1", at_yr: 4.6e9, instrument: "system", view: { style: "true", seen: "free" }, selected: VAULT,
+            pose: { about: VAULT, eye_dir: [0.6, -0.5, 0.62], eye_m: 2.4e8, up: [0, 0, 1], fov_deg: 45, exposure: { mode: "long", ev: 0 }, keep: [0, 0, 1, 1] } },
+          world: { how: "address", root: "u:kestrel", packs: [], made_with: "0.1.0" }, credit: ["Test"] };
+        const b64 = Buffer.from(JSON.stringify(card)).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        const pc = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+        pc.on("pageerror", (e) => errors.push(`postcard: ${e.message}`));
+        await pc.goto(`${base}#postcard=${b64}`);
+        await pc.locator("[data-postcard-drawn]").waitFor({ timeout: 90000 });
+        const lit = await pc.locator("[data-postcard-drawn]").evaluate((c) => {
+          const g = c.getContext("2d");
+          return [...g.getImageData(c.width / 2, c.height / 2, 1, 1).data];
+        });
+        assert.ok(lit[0] + lit[1] + lit[2] > 60, `Vault fills the middle of the front: ${lit}`);
+        await shot(pc, "pc2-postcard-front");
+        await pc.locator("[data-postcard-turn]").first().click();
+        assert.match(await pc.locator("[data-postcard-back]").innerText(), /The system view in True from the postcard's camera/);
+        await pc.close();
+      }
       assert.deepEqual(errors, []);
       console.log(`V6 ${name} ${mode}: GM tier ${tier} (${note.replace(/\s+/g, " ").match(/Drawn with [^.]*/)?.[0]}); players tier ${ptier}; Vault frame handover and back`);
       await browser.close();

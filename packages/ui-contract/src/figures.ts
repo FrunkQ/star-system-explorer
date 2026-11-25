@@ -296,18 +296,27 @@ function exponential(x: number, sig: number, keepZeros: boolean): string {
 
 /**
  * A number with no unit (an eccentricity, a count, a metallicity) as screens write it: `sig` significant figures, or
- * a fixed number of `decimals` where a field's convention is decimals ([Fe/H] −0.08), thousands grouped, a true minus.
+ * a fixed number of `decimals` where a field's convention is decimals ([Fe/H] −0.08), or at most `upTo` decimals with
+ * trailing zeros dropped ("1.5 million km"); thousands grouped, a true minus.
  * Every screen writes such a number through here, so the figures ledger stays honest.
  */
-export function sayNumber(x: number, sig = 3, opts: { decimals?: number } = {}): string {
+export function sayNumber(x: number, sig = 3, opts: { decimals?: number; upTo?: number } = {}): string {
   if (!Number.isFinite(x)) return String(x);
-  if (opts.decimals !== undefined) {
-    const t = Math.abs(x).toFixed(opts.decimals);
-    const [i, f] = t.split(".");
+  const places = opts.decimals ?? opts.upTo;
+  if (places !== undefined) {
+    const t = Math.abs(x).toFixed(places);
+    const [i, raw] = t.split(".");
+    const f = opts.decimals === undefined ? raw?.replace(/0+$/, "") : raw;
     return `${x < 0 && Number(t) !== 0 ? "−" : ""}${group(i!)}${f ? `.${f}` : ""}`;
   }
   return plain(x, Math.max(1, sig), false);
 }
+
+/**
+ * A drawing coordinate (an SVG path's x and y, a CSS translate): plain digits, a hyphen minus and no grouping, because
+ * a browser reads it, not a person. It is never shown as a figure; a figure goes through `say` or `sayNumber`.
+ */
+export const drawn = (x: number, decimals = 1): string => x.toFixed(decimals);
 
 /** A value rounded to `sig` significant figures, as a number (for keys and de-duplication, not for showing). */
 export const roundTo = (x: number, sig: number): number => (Number.isFinite(x) && x !== 0 ? Number(x.toPrecision(sig)) : x);

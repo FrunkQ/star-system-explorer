@@ -36,6 +36,7 @@ reference as written, what is relied on, status, what was checked.
 | Magnetic fields (track MF) | [citations/magnetic-fields.md](citations/magnetic-fields.md) | 108 | 2 | none yet (design references; DOIs checked in MF0) |
 | Light, reference objects and design files | [citations/light-reference.md](citations/light-reference.md) | 108 | 18 | planet disc brightness factor, Sizes tab star radii and temperatures |
 | Real spaceflight (track RS) | [citations/spaceflight.md](citations/spaceflight.md) | 3 of 5 | 0 | none (test data for the flight log) |
+| Exotic objects (track XO) | [citations/exotic-objects.md](citations/exotic-objects.md) | 12 | 1 | none (XO1: gravity blocks and the bend table; XO18: hazard map lines and the Sun check) |
 
 Counts are table rows in each area file after the first pass (19 Nov 2026). About a third of rows are still
 unverified, mostly because sources could not be fetched in that pass; they say so and nothing was guessed.
@@ -103,6 +104,7 @@ Checked by two research passes on 19 Nov (raw results `handover/packages/W-citat
 | sse-climate forcing.rs (W9 part 2) | Huybers 2006, Science 313, 508, doi 10.1126/science.1125249 | summer energy J = Σ over days with insolation ≥ 275 W/m², at 65° N; early Pleistocene cycles at 40 kyr follow obliquity | verified (paper; SOM not read) | DOI from memory, to check |
 | sse-kernel ice_ages.rs (W9 part 2) | Laplace-Lagrange secular theory (Murray and Dermott 1999, sections 7.2 to 7.4), via T1's `sse-time::secular` | e, ϖ, I, Ω through time | as T1 | |
 | fixtures | NASA Planetary Fact Sheets, https://nssdc.gsfc.nasa.gov/planetary/factsheet/ | planet values | unverified (typed, not fetched) | |
+| sse-kernel sea.rs `trains` damping (W-helium) | Lamb, H. 1932, Hydrodynamics, 6th ed., Cambridge University Press, art. 348, https://archive.org/details/hydrodynamics0000lamb | the amplitude of a free surface wave decays as exp(−2 ν k² t) | textbook (from memory, not checked against the page) | |
 | `packs/base-sol` giants' `planet.surface_temperature` (W-giant-air) | NASA Planetary Fact Sheets (Jupiter, Saturn, Uranus, Neptune), https://nssdc.gsfc.nasa.gov/planetary/factsheet/ | temperature at 1 bar: 165, 134, 76 and 72 K | unverified (from memory, matches the weather fixtures; fetch to confirm) | |
 | `packs/base-climate` `defaults.giant_gases` (W-giant-air) | Asplund, M., Grevesse, N., Sauval, A. J. and Scott, P. 2009, ARA&A 47, 481, doi 10.1146/annurev.astro.46.060407.145222 | protosolar He/H 0.0954 and C, N, O (log ε 8.47, 7.87, 8.73) by number, turned into a volume mix with hydrogen as H2 | unverified (table 5 values from memory) | |
 

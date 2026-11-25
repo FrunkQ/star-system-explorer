@@ -34,7 +34,7 @@ world from the kernel's air, so an eclipsed moon turns copper round an Earth and
 
 The renderer's eclipse shadow (section 5.8's moon-on-planet and planet-on-moon formula) tints its umbra with
 `colour.linear_srgb` when `lit`, scaled by the share of the star's disc hidden. Brightness inside the shadow is not
-given yet: see F62.
+given yet: see F65.
 
 ## Next
 

@@ -119,7 +119,7 @@
                 "value": 1.0
               }
             },
-            "name": "Jupiter: Juno's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)"
+            "name": "Jupiter: Cassini's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)"
           },
           {
             "expect": {
@@ -171,6 +171,154 @@
           {
             "from": "in.radius",
             "to": "dipole.radius"
+          }
+        ]
+      },
+      {
+        "format": "sse.flow/1",
+        "hook": "body.shape",
+        "id": "sse.base.body-shape",
+        "inputs": [
+          {
+            "kind": "body.mass",
+            "name": "mass"
+          },
+          {
+            "kind": "body.radius",
+            "name": "radius"
+          },
+          {
+            "kind": "body.rotation_period",
+            "name": "rotation_period"
+          },
+          {
+            "kind": "model.moment_of_inertia_factor",
+            "name": "inertia_factor"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.shape.spin_flattening",
+            "id": "spin"
+          }
+        ],
+        "publishes": [
+          {
+            "from": "spin.flattening",
+            "kind": "shape.flattening"
+          },
+          {
+            "from": "spin.equatorial_radius",
+            "kind": "shape.equatorial_radius"
+          },
+          {
+            "from": "spin.polar_radius",
+            "kind": "shape.polar_radius"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "shape.flattening": {
+                "tol": 0.005,
+                "unit": "one",
+                "value": 0.06487
+              }
+            },
+            "inputs": {
+              "inertia_factor": {
+                "unit": "one",
+                "value": 0.254
+              },
+              "mass": {
+                "unit": "m_jupiter",
+                "value": 1.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 69911.0
+              },
+              "rotation_period": {
+                "unit": "day",
+                "value": 0.41354
+              }
+            },
+            "name": "Jupiter (flattening 0.06487, NASA fact sheet; C 0.254)"
+          },
+          {
+            "expect": {
+              "shape.flattening": {
+                "tol": 0.008,
+                "unit": "one",
+                "value": 0.09796
+              }
+            },
+            "inputs": {
+              "inertia_factor": {
+                "unit": "one",
+                "value": 0.21
+              },
+              "mass": {
+                "unit": "kg",
+                "value": 5.6834e+26
+              },
+              "radius": {
+                "unit": "km",
+                "value": 58232.0
+              },
+              "rotation_period": {
+                "unit": "day",
+                "value": 0.44401
+              }
+            },
+            "name": "Saturn (flattening 0.09796, NASA fact sheet; C 0.210)"
+          },
+          {
+            "expect": {
+              "shape.flattening": {
+                "tol": 0.0002,
+                "unit": "one",
+                "value": 0.003353
+              }
+            },
+            "inputs": {
+              "inertia_factor": {
+                "unit": "one",
+                "value": 0.3307
+              },
+              "mass": {
+                "unit": "m_earth",
+                "value": 1.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 6371.0
+              },
+              "rotation_period": {
+                "unit": "day",
+                "value": 0.99727
+              }
+            },
+            "name": "Earth (flattening 0.003353; C 0.3307)"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.mass",
+            "to": "spin.mass"
+          },
+          {
+            "from": "in.radius",
+            "to": "spin.mean_radius"
+          },
+          {
+            "from": "in.rotation_period",
+            "to": "spin.rotation_period"
+          },
+          {
+            "from": "in.inertia_factor",
+            "to": "spin.inertia_factor"
           }
         ]
       },
@@ -910,7 +1058,7 @@
                 "value": 6371.0
               }
             },
-            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, McDonough and Sun 1995)"
+            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, our sum from McDonough and Sun 1995's abundances)"
           },
           {
             "expect": {
@@ -946,7 +1094,7 @@
                 "value": 3389.5
               }
             },
-            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (Frank et al. 2014 calibration)"
+            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (our reading of its youngest lavas; Frank et al. 2014 give the heating, not this date)"
           },
           {
             "expect": {
@@ -1281,7 +1429,7 @@
               "star.luminosity": {
                 "tol": 5.0,
                 "unit": "l_sun",
-                "value": 25.4
+                "value": 24.74
               },
               "star.radius": {
                 "tol": 0.3,
@@ -1299,7 +1447,7 @@
                 "value": 2.063
               }
             },
-            "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 25.4 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave"
+            "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 24.74 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave"
           }
         ],
         "version": "0.1.0",
@@ -4428,6 +4576,20 @@
         "range": null
       },
       {
+        "description": "moment of inertia over M R² (0.4 uniform, lower when mass sinks to the centre)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "model.moment_of_inertia_factor",
+        "range": null
+      },
+      {
         "description": "time since the nebula's cause (a star's death, an explosion, a cluster's birth)",
         "dim": [
           0,
@@ -4764,6 +4926,20 @@
         "range": null
       },
       {
+        "description": "orbit gap, as a fraction, inside which neighbouring resonances overlap and the motion is chaotic",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.chaotic_zone",
+        "range": null
+      },
+      {
         "description": "eccentric anomaly in radians",
         "dim": [
           0,
@@ -4991,6 +5167,48 @@
         "range": null
       },
       {
+        "description": "how far two orbits' period ratio is from a whole-number ratio, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_offset",
+        "range": null
+      },
+      {
+        "description": "turns one body makes in one cycle of a mean motion resonance",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_turns",
+        "range": null
+      },
+      {
+        "description": "how far a period ratio may be from a resonance and still be held, as a fraction",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.resonance_width",
+        "range": null
+      },
+      {
         "description": "semi-major axis of an orbit",
         "dim": [
           1,
@@ -5215,7 +5433,21 @@
         "range": null
       },
       {
-        "description": "mean cosine of the angle a particle scatters light through: 0 for even, near 1 for straight on",
+        "description": "light absorbed, per particle's cross-section",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.absorption_efficiency",
+        "range": null
+      },
+      {
+        "description": "how far forward the particles scatter (0 alike every way, 1 straight on)",
         "dim": [
           0,
           0,
@@ -5226,10 +5458,13 @@
           0
         ],
         "id": "particle.asymmetry",
-        "range": null
+        "range": [
+          -1.0,
+          1.0
+        ]
       },
       {
-        "description": "light a particle takes out of a beam, over its cross-section",
+        "description": "light taken out of the beam, per particle's cross-section",
         "dim": [
           0,
           0,
@@ -5243,7 +5478,49 @@
         "range": null
       },
       {
-        "description": "radius of one particle of a cloud, haze, dust or ring",
+        "description": "how strongly the material absorbs (imaginary part of the refractive index)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.index_imaginary",
+        "range": null
+      },
+      {
+        "description": "refractive index of the particle's material (real part)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.index_real",
+        "range": null
+      },
+      {
+        "description": "optical depth of a layer of particles straight down",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.optical_depth",
+        "range": null
+      },
+      {
+        "description": "radius of one particle",
         "dim": [
           1,
           0,
@@ -5268,6 +5545,37 @@
           0
         ],
         "id": "particle.scattering_efficiency",
+        "range": null
+      },
+      {
+        "description": "share of the light taken out that is scattered, not absorbed",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.single_scattering_albedo",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "description": "wavelength of the light",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "particle.wavelength",
         "range": null
       },
       {
@@ -5963,6 +6271,62 @@
         "range": null
       },
       {
+        "description": "radius at the equator",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shape.equatorial_radius",
+        "range": null
+      },
+      {
+        "description": "how much shorter the pole-to-pole radius is, as a share of the equator's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shape.flattening",
+        "range": null
+      },
+      {
+        "description": "radius at the poles",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shape.polar_radius",
+        "range": null
+      },
+      {
+        "description": "spin's pull outward at the equator over gravity's pull in",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shape.spin_parameter",
+        "range": null
+      },
+      {
         "description": "least momentum per charge a cosmic ray needs to arrive (Størmer cut-off)",
         "dim": [
           2,
@@ -6073,6 +6437,40 @@
         ],
         "id": "shield.space_share",
         "range": null
+      },
+      {
+        "description": "share of the light a layer sends back",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "slab.reflectance",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "description": "share of the light a layer lets through",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "slab.transmission",
+        "range": [
+          0.0,
+          1.0
+        ]
       },
       {
         "description": "length of a star's spot and activity cycle",

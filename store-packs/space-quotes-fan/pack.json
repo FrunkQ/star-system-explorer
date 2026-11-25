@@ -1,0 +1,493 @@
+{
+  "format": "sse.pack/1",
+  "id": "fan.space-quotes",
+  "version": "0.1.0",
+  "kind": [
+    "presentation"
+  ],
+  "kernel_range": "^0.1",
+  "licence": "Unofficial fan pack: short quotations from films, songs, games and books, each credited, for held screens. Not affiliated with or endorsed by any rights holder.",
+  "provides": {
+    "other": {
+      "about": {
+        "label": "Space quotes from films, songs, games and books (unofficial)",
+        "text": "Lines from films, songs, games and fiction about space, each with who said it, for held screens. Free, unofficial and kept out of the base app (postcards design, question 7, accepted by Alex 25 Nov 2026).",
+        "fictional": true,
+        "note": "Track PC, package PC7. From SSE3's space-quotes.txt. Published on Explorers, not built into SSE4."
+      },
+      "atlas": {
+        "note_sets": [
+          {
+            "schema": "sse.margin-notes/1",
+            "id": "fan.quotes.space",
+            "name": "Space quotes: films, songs, games and books",
+            "notes": [
+              {
+                "id": "fan.quote.bradbury-impossibility",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "We are an impossibility in an impossible universe.",
+                "by": "Ray Bradbury"
+              },
+              {
+                "id": "fan.quote.van-gogh-dream",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "I know nothing with any certainty, but the sight of the stars makes me dream.",
+                "by": "Vincent van Gogh"
+              },
+              {
+                "id": "fan.quote.blade-runner-tears",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "I've seen things you people wouldn't believe. Attack ships on fire off the shoulder of Orion...",
+                "by": "Blade Runner"
+              },
+              {
+                "id": "fan.quote.2001-stars",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "My God, it's full of stars!",
+                "by": "2001: A Space Odyssey"
+              },
+              {
+                "id": "fan.quote.contact-poet",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "They should have sent a poet.",
+                "by": "Contact"
+              },
+              {
+                "id": "fan.quote.interstellar-impossible",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "We've always defined ourselves by the ability to overcome the impossible.",
+                "by": "Interstellar"
+              },
+              {
+                "id": "fan.quote.apollo-13-problem",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Houston, we have a problem.",
+                "by": "Apollo 13"
+              },
+              {
+                "id": "fan.quote.alien-scream",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "In space, no one can hear you scream.",
+                "by": "Alien"
+              },
+              {
+                "id": "fan.quote.khan-many",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "The needs of the many outweigh the needs of the few.",
+                "by": "Star Trek II: The Wrath of Khan"
+              },
+              {
+                "id": "fan.quote.trek-2009-disease",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Space is disease and danger wrapped in darkness and silence.",
+                "by": "Star Trek (2009)"
+              },
+              {
+                "id": "fan.quote.interstellar-gentle",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Do not go gentle into that good night... Rage, rage against the dying of the light.",
+                "by": "Interstellar"
+              },
+              {
+                "id": "fan.quote.2001-dave",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "I'm sorry, Dave. I'm afraid I can't do that.",
+                "by": "2001: A Space Odyssey"
+              },
+              {
+                "id": "fan.quote.empire-odds",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Never tell me the odds!",
+                "by": "Star Wars: The Empire Strikes Back"
+              },
+              {
+                "id": "fan.quote.toy-story-infinity",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "To infinity and beyond!",
+                "by": "Toy Story"
+              },
+              {
+                "id": "fan.quote.groot",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "I am Groot.",
+                "by": "Guardians of the Galaxy"
+              },
+              {
+                "id": "fan.quote.spaceballs-schwartz",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "May the Schwartz be with you.",
+                "by": "Spaceballs"
+              },
+              {
+                "id": "fan.quote.et-home",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "E.T. phone home.",
+                "by": "E.T. the Extra-Terrestrial"
+              },
+              {
+                "id": "fan.quote.adams-big",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Space is big. You just won't believe how vastly, hugely, mind-bogglingly big it is.",
+                "by": "Douglas Adams"
+              },
+              {
+                "id": "fan.quote.adams-bad-move",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "In the beginning the Universe was created. This has made a lot of people very angry and been widely regarded as a bad move.",
+                "by": "Douglas Adams"
+              },
+              {
+                "id": "fan.quote.einstein-infinite",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Two things are infinite: the universe and human stupidity; and I'm not sure about the universe.",
+                "by": "Albert Einstein",
+                "source": "attributed"
+              },
+              {
+                "id": "fan.quote.python-revolving",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Just remember that you're standing on a planet that's evolving, and revolving at nine hundred miles an hour...",
+                "by": "Monty Python"
+              },
+              {
+                "id": "fan.quote.watterson-contact",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "The surest sign that intelligent life exists elsewhere in the universe is that it has never tried to contact us.",
+                "by": "Bill Watterson"
+              },
+              {
+                "id": "fan.quote.clarke-too-intelligent",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "I'm sure the universe is full of intelligent life. It's just been too intelligent to come here.",
+                "by": "Arthur C. Clarke"
+              },
+              {
+                "id": "fan.quote.adams-theory",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "There is a theory which states that if ever anyone discovers exactly what the Universe is for and why it is here, it will instantly disappear and be replaced by something even more bizarre and inexplicable.",
+                "by": "Douglas Adams"
+              },
+              {
+                "id": "fan.quote.vonnegut-biggest",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "The universe is a big place, perhaps the biggest.",
+                "by": "Kurt Vonnegut"
+              },
+              {
+                "id": "fan.quote.de-vries-safe",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "The universe is like a safe to which there is a combination. But the combination is locked up in the safe.",
+                "by": "Peter De Vries"
+              },
+              {
+                "id": "fan.quote.bowie-major-tom",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Ground Control to Major Tom, commencing countdown, engines on.",
+                "by": "David Bowie"
+              },
+              {
+                "id": "fan.quote.beatles-universe",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Words are flowing out like endless rain into a paper cup, they slither wildly as they slip away across the universe.",
+                "by": "The Beatles"
+              },
+              {
+                "id": "fan.quote.elton-touchdown",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "And I think it's gonna be a long, long time 'till touchdown brings me round again to find I'm not the man they think I am at home.",
+                "by": "Elton John"
+              },
+              {
+                "id": "fan.quote.sinatra-moon",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Fly me to the moon, let me play among the stars, let me see what spring is like on Jupiter and Mars.",
+                "by": "Frank Sinatra"
+              },
+              {
+                "id": "fan.quote.moby-stars",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "We are all made of stars.",
+                "by": "Moby"
+              },
+              {
+                "id": "fan.quote.queen-shooting-star",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "I'm a shooting star leaping through the sky, like a tiger defying the laws of gravity.",
+                "by": "Queen"
+              },
+              {
+                "id": "fan.quote.soundgarden-sun",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Black hole sun, won't you come, and wash away the rain.",
+                "by": "Soundgarden"
+              },
+              {
+                "id": "fan.quote.incubus-earth",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Meet me in outer space, we could spend the night, watch the earth come up.",
+                "by": "Incubus"
+              },
+              {
+                "id": "fan.quote.carpenters-occupants",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Calling occupants of interplanetary craft, the most extraordinary craft.",
+                "by": "The Carpenters"
+              },
+              {
+                "id": "fan.quote.coldplay-sky",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Cause you're a sky, 'cause you're a sky full of stars.",
+                "by": "Coldplay"
+              },
+              {
+                "id": "fan.quote.clarke-magic",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Any sufficiently advanced technology is indistinguishable from magic.",
+                "by": "Arthur C. Clarke"
+              },
+              {
+                "id": "fan.quote.herbert-fear",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "I must not fear. Fear is the mind-killer. Fear is the little-death that brings total obliteration.",
+                "by": "Frank Herbert",
+                "source": "Dune"
+              },
+              {
+                "id": "fan.quote.asimov-violence",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Violence is the last refuge of the incompetent.",
+                "by": "Isaac Asimov",
+                "source": "Foundation"
+              },
+              {
+                "id": "fan.quote.asimov-wisdom",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "The saddest aspect of life right now is that science gathers knowledge faster than society gathers wisdom.",
+                "by": "Isaac Asimov"
+              },
+              {
+                "id": "fan.quote.heinlein-history",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "A generation which ignores history has no past—and no future.",
+                "by": "Robert A. Heinlein"
+              },
+              {
+                "id": "fan.quote.clarke-limits",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "The only way of discovering the limits of the possible is to venture a little way past them into the impossible.",
+                "by": "Arthur C. Clarke"
+              },
+              {
+                "id": "fan.quote.lovecraft-island",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "We live on a placid island of ignorance in the midst of black seas of infinity, and it was not meant that we should voyage far.",
+                "by": "H. P. Lovecraft"
+              },
+              {
+                "id": "fan.quote.le-guin-journey",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "It is good to have an end to journey toward; but it is the journey that matters, in the end.",
+                "by": "Ursula K. Le Guin"
+              },
+              {
+                "id": "fan.quote.mass-effect-ashes",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Stand in the ashes of a trillion dead souls and ask the ghosts if honor matters. The silence is your answer.",
+                "by": "Mass Effect 3"
+              },
+              {
+                "id": "fan.quote.portal-why-not",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Science isn't about why, it's about why not!",
+                "by": "Portal 2"
+              },
+              {
+                "id": "fan.quote.outer-wilds-universe",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "As a child, I considered such unknowns sinister. Now, though, I understand they bear no ill will. The universe is, and we are.",
+                "by": "Outer Wilds"
+              },
+              {
+                "id": "fan.quote.half-life-right-man",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "The right man in the wrong place can make all the difference in the world.",
+                "by": "Half-Life 2"
+              },
+              {
+                "id": "fan.quote.doom-mars",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "You can't just shoot a hole into the surface of Mars!",
+                "by": "DOOM Eternal"
+              },
+              {
+                "id": "fan.quote.halo-wake-me",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Wake me... when you need me.",
+                "by": "Halo 3"
+              },
+              {
+                "id": "fan.quote.titanfall-protocol",
+                "about": "any",
+                "uses": [
+                  "waiting"
+                ],
+                "text": "Protocol 3: Protect the Pilot.",
+                "by": "Titanfall 2"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
