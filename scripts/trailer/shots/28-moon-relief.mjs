@@ -24,13 +24,13 @@ export default {
     await d.hold(1500);
     await d.caption("Earth, then its Moon", "Click a world and the camera flies in.");
     await d.click(pin(page, "Earth"));
-    await d.hold(2500);
+    await d.hold(2000);
     await d.click(pin(page, "Moon"));
     await d.hold(1500);
     await pick(page, d, "HUD", "Off");
     await d.caption("The Moon", "Craters and highlands at true scale, lit by the Sun: relief drawn from the kernel's own surface.");
-    await d.hold(8000);
+    await d.hold(4800);
     await d.caption(null);
-    await d.hold(4000);
+    await d.hold(2400);
   },
 };
