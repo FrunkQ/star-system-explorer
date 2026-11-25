@@ -220,7 +220,7 @@
     });
   }
   // A world with no moons fills more of the view in True, where its face is the point (about 60% of the height).
-  const closeDist = (id: string) => (hasChildren(bodies, id) ? 26 : isTrue ? 2.2 : 9);
+  const closeDist = (id: string) => (hasChildren(bodies, id) ? 26 : isTrue && !realScale ? 2.2 : 9);
   async function flyTo(id: string) {
     onselect(id);
     if (id === centreId) return;
