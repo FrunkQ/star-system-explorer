@@ -91,6 +91,10 @@ try {
       await strip.locator("[data-strip-entry]").press("Enter");
       await gm.waitForFunction(() => /(^|about )1 AU$/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
       assert.match(await gm.locator("[data-followed]").innerText(), /EXAMPLE · change anything only/);
+      // ED1 part 3: the branch's own resolve (BC1) says what followed there: Mars at 1 AU warms.
+      await gm.locator('[data-followed-row="Surface"]').waitFor({ timeout: 20000 });
+      const [k0, k1] = (await gm.locator('[data-followed-row="Surface"]').innerText()).match(/\d+(?= K)/g).map(Number);
+      assert.ok(k1 > k0 + 20, `Mars at 1 AU is warmer on the example: ${k0} K to ${k1} K`);
       assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), main, "the main line does not move");
       await shot(gm, `explore-example-${vp}`);
       await gm.locator(".whatif button", { hasText: "Throw away" }).click();
@@ -113,7 +117,7 @@ try {
     assert.match(await followed.innerText(), /(Orbit|How far out)\s+(about )?1\.52 AU → 1 AU/);
     assert.match(await followed.locator('[data-followed-row="Surface"]').innerText(), /K → (about )?\d+ K/);
     await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hash0);
-    assert.match(await row.locator('[data-handle="orbit"] .value').innerText(), /(^|about )1 AU$/);
+    await gm.waitForFunction(() => /(^|about )1 AU$/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
     await shot(gm, `build-followed-${vp}`);
     await gm.keyboard.press("Control+z");
     await gm.waitForFunction(() => /1\.52 AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });

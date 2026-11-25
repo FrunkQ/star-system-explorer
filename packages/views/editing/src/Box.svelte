@@ -168,8 +168,9 @@
   const results = $derived.by(() => {
     const out: { key: string; label: string; text: string; tone?: "warn" }[] = [];
     const a = num("orbit.semi_major_axis");
-    // On a what-if the kernel's own results are the main line's until BC1 resolves a branch: only the orbit's geometry.
-    for (const k of box.results.filter((x) => !ws.branch || x === "closest" || x === "farthest" || x === "sunlight_swing")) {
+    // On a what-if: the orbit's geometry, and the surface's results from the branch's own resolve (BC1, the card
+    // reads it); the year and the verdict are main-line ops (orbits_at, orbit_stability) that do not read a branch.
+    for (const k of box.results.filter((x) => !ws.branch || x === "closest" || x === "farthest" || x === "sunlight_swing" || x === "locked")) {
       if (k === "year" && year !== null) out.push({ key: k, label: cls === "moon" ? "Month" : "Year", text: said(year, "time", "year") });
       else if ((k === "closest" || k === "farthest") && a !== null && e > 0) out.push({ key: k, label: k === "closest" ? "Closest" : "Farthest", text: said(orbitShape(a, e)[k], "length", "orbit") });
       else if (k === "sunlight_swing" && a !== null && e > 0 && cls !== "moon") out.push({ key: k, label: "Sunlight", text: `${say(orbitShape(a, e).swing, "share", { class: cls }, { depth }).text} more at the closest point` });
@@ -229,7 +230,7 @@
     {/if}
     {#if chipProblem || chipSaid}<p class="chip-said" class:problem={!!chipProblem} aria-live="polite" data-chip-said>{chipProblem ?? chipSaid}</p>{/if}
   {/if}
-  {#if ws.branch && box.results.length}<p class="chip-said" data-box-branch>The year, the verdict and the tides follow once it is kept.</p>{/if}
+  {#if ws.branch && box.results.length}<p class="chip-said" data-box-branch>The year and the verdict follow once it is kept.</p>{/if}
   {#if results.length}
     <dl class="results" data-box-results>
       {#each results as r (r.key)}

@@ -27,19 +27,24 @@
   // The kernel's facts and results for every body of this system, reread after each change.
   let facts = $state.raw<Record<string, Record<string, Json>>>({});
   let surfaces = $state.raw<unknown>(null);
+  // On a what-if, the branch's own line (kernel BC1): the exact figures and results there, nothing committed (ED1 part 3).
+  const branchId = $derived(ws.branch?.id);
   $effect(() => {
     const sys = scene.system;
     void ws.revision;
+    const b = branchId;
+    void (b ? ws.branch?.edits.length : 0);
     if (!sys || scene.fixture) return;
     let live = true;
-    void ctx.session.resolvedSystem(sys).then((r) => {
+    void ctx.session.resolvedSystem(sys, undefined, b).then((r) => {
       if (!live || !r.ok) return;
       facts = r.result.facts as Record<string, Record<string, Json>>;
       surfaces = (r.result as { surfaces?: unknown }).surfaces ?? null;
     });
     return () => (live = false);
   });
-  // On a what-if, its own values over the main line's (the kernel's branch resolve comes with BC1).
+  // On a what-if, its own values over the line read (until the branch's own resolve has come back, and for a kernel
+  // without BC1).
   const seen = $derived.by(() => {
     const b = ws.branch;
     if (!b) return facts;
@@ -112,13 +117,13 @@
       before: { value: old === null ? null : fieldValue(h, old), display: old === null ? "not set" : sayIt(old) },
     });
     if (r.status !== "applied") return r.status === "pending" ? "Sent to the GM to approve." : r.status === "refused" ? r.reason : r.message;
-    const again = await ctx.session.resolvedSystem(system);
+    const again = await ctx.session.resolvedSystem(system, undefined, ws.branch?.id);
     if (again.ok) {
       facts = again.result.facts as Record<string, Record<string, Json>>;
       surfaces = (again.result as { surfaces?: unknown }).surfaces ?? null;
     }
     const change = { label: depth === "curious" ? h.names.curious : h.names.science, before: shown !== undefined ? "" : old === null ? "not set" : sayIt(old), after: display };
-    followed = { handle: id, change, rest: ws.branch ? null : whatFollowed(before, resultsOf(surfaces, address), cls, { depth }) };
+    followed = { handle: id, change, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, address), cls, { depth }) : null };
     return null;
   }
 </script>
@@ -161,9 +166,9 @@
   {/if}
   {#if followed}
     <div class="followed" data-followed aria-live="polite">
-      <p class="what"><strong>{followed.change.label}</strong> {followed.change.before ? `${followed.change.before} → ` : ""}{followed.change.after}. <span class="undo">{followed.rest ? "Undo takes it back." : `On ${ws.branch?.label ?? "the what-if"} only: Keep it or Throw away under the time ruler.`}</span></p>
+      <p class="what"><strong>{followed.change.label}</strong> {followed.change.before ? `${followed.change.before} → ` : ""}{followed.change.after}. <span class="undo">{!ws.branch ? "Undo takes it back." : `On ${ws.branch.label} only: Keep it or Throw away under the time ruler.`}</span></p>
       {#if !followed.rest}
-        <p class="sub">What followed shows once it is kept.</p>
+        <p class="sub">What followed could not be worked out on {ws.branch?.label ?? "the what-if"}; it shows once it is kept.</p>
       {:else if followed.rest.length}
         <p class="sub">What followed</p>
         <ul>
