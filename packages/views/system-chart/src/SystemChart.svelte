@@ -19,7 +19,7 @@
 
 <script lang="ts">
   import { untrack } from "svelte";
-  import { KM_PER_AU, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, gearing, nearestCatch, resonanceCatches, roundFigures, chosenReading, sayText, sheetUnitFactor, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, placeLabels, textWidth, DEFAULT_VIEW, type Box, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
@@ -159,7 +159,9 @@
 
   // Dragging a body along its radius moves its orbit; the edit is an intent
   // sent when the drag ends. The scale is frozen during the drag.
-  let drag = $state<{ address: string; a_au: number; moved: boolean; scale: typeof scale } | null>(null);
+  // ED3 part 2: the drag is geared (the further the pointer from the line, the less a move counts; Shift a tenth) and
+  // lightly magnetic (round figures, resonances with the neighbours; named as it catches; Alt runs free).
+  let drag = $state<{ address: string; a_au: number; moved: boolean; scale: typeof scale; lastD: number; rpx: number; caught: string | null } | null>(null);
   let problem = $state<string | null>(null);
   const editable = (s: SceneSubject) => ctx.workspace.mode === "edit" && hasTool(L, "drag") && !!s.orbit && !!s.facts.find((f) => f.field === "a_au" && f.editable);
   // The world stays put while dragging; a ghost and its orbit line follow the pointer (editing design section 4).
@@ -184,15 +186,28 @@
   function startDrag(e: PointerEvent, s: SceneSubject) {
     if (!editable(s) || e.button !== 0) return;
     svgEl!.setPointerCapture(e.pointerId);
-    drag = { address: s.address, a_au: s.orbit!.a_au, moved: false, scale };
+    const box = svgEl!.getBoundingClientRect();
+    drag = { address: s.address, a_au: s.orbit!.a_au, moved: false, scale, lastD: Math.hypot(e.clientX - box.left - cx, e.clientY - box.top - cy), rpx: radius(s.orbit!.a_au, scale), caught: null };
   }
 
   function moveDrag(e: PointerEvent) {
     if (!drag) return;
     const box = svgEl!.getBoundingClientRect();
-    const d = Math.hypot(e.clientX - box.left - cx, e.clientY - box.top - cy);
-    const a = round(Math.min(limitAu, Math.max(drag.scale.inner_au, distanceAt(d, drag.scale))));
-    if (a !== drag.a_au) drag = { ...drag, a_au: a, moved: true };
+    const [x, y] = [e.clientX - box.left - cx, e.clientY - box.top - cy];
+    const d = Math.hypot(x, y);
+    const s = scene.subjects.find((q) => q.address === drag!.address);
+    if (!s?.orbit) return;
+    // Off the line: the pointer's distance from the radius through the world.
+    const [ux, uy] = polar(0, 0, 1, s.orbit.phase_deg);
+    const off = Math.abs(x * uy - y * ux);
+    const lo = radius(drag.scale.inner_au, drag.scale);
+    const hi = radius(limitAu, drag.scale);
+    const rpx = Math.min(hi, Math.max(lo, drag.rpx + (d - drag.lastD) * gearing(off, e.shiftKey)));
+    const raw = Math.min(limitAu, Math.max(drag.scale.inner_au, distanceAt(rpx, drag.scale)));
+    const neighbours = scene.subjects.filter((q) => q.address !== s.address && q.orbit && q.parent === s.parent).map((q) => ({ label: q.label, a: q.orbit!.a_au }));
+    const c = e.altKey ? null : nearestCatch(rpx, [...roundFigures(raw, frame ? KM_PER_AU : 1, frame ? "km" : "AU"), ...resonanceCatches(raw, neighbours)], (v) => radius(v, drag!.scale));
+    const a = c ? c.at : round(raw);
+    drag = { ...drag, rpx, lastD: d, caught: c?.says ?? null, ...(a !== drag.a_au ? { a_au: a, moved: true } : {}) };
   }
 
   // Esc while dragging puts the orbit back and writes nothing (editing design section 4).
@@ -582,7 +597,7 @@
             {#if drag?.address === s.address}
               {@const [gx, gy] = polar(cx, cy, rr(drag.a_au), s.orbit!.phase_deg)}
               <g class="ghost" data-ghost aria-hidden="true"><Mark mark={m} cx={gx} cy={gy} {prefix} /></g>
-              <text class="dragv" data-drag-readout x={gx + m.size + 9} y={gy + m.size + 16}>{dist(drag.a_au)}</text>
+              <text class="dragv" data-drag-readout data-caught={drag.caught ?? undefined} x={gx + m.size + 9} y={gy + m.size + 16}>{dist(drag.a_au)}{drag.caught && !drag.caught.startsWith("a round") ? ` · ${drag.caught}` : ""}</text>
             {/if}
           </g>
         {/each}
@@ -648,7 +663,7 @@
           <button type="button" onclick={() => openFrame(canOpen)}>Moons of {canOpen.label} ›</button>
         </div>
       {/if}
-      <p id="chart-drag-hint" class="sr">Drag along the radius, or press Page Up or Page Down, to move the orbit.</p>
+      <p id="chart-drag-hint" class="sr">Drag along the radius, or press Page Up or Page Down, to move the orbit. Further from the line it moves more slowly, Shift slower still; it catches at round figures and at resonances with its neighbours, and Alt lets it run free.</p>
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
       <div class="legend" class:short={narrow} data-chart-overlay>
         {#if authoredImport}<span class="authored-import" data-authored-import><Stamp kind="authored" title="Every name and value here was written in a V3 save, not modelled by SSE4's physics. A body called Earth is the save's Earth, not the real one." /><span class="words">As written in a V3 save, not modelled</span></span>{/if}

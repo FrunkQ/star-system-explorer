@@ -27,16 +27,16 @@ export default {
     await d.caption("3D", "The lineup stands up, each world turning on its own axis.");
     await pick(page, d, "View style", "3D");
     await cmp.locator('canvas[data-lineup-3d="3d"], [data-no-globes]').first().waitFor({ timeout: 15000 });
-    await d.hold(3500);
+    await d.hold(2100);
     await d.caption("True", "Each world in its own colours and light.");
     await pick(page, d, "View style", "True");
-    await d.hold(5000);
+    await d.hold(3000);
     await d.caption("Wireframe", "The same globes as lines.");
     await pick(page, d, "View style", "Wireframe");
-    await d.hold(3500);
+    await d.hold(2100);
     await pick(page, d, "View style", "True");
     await d.caption("True pace", "Every world turning at its real rate, relative to the quickest.");
     await d.click(cmp.getByRole("button", { name: "True pace" }));
-    await d.hold(5000);
+    await d.hold(3000);
   },
 };

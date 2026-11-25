@@ -11,7 +11,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import LifeFlow from "./LifeFlow.svelte";
-  import { LIFE_EXAMPLES, MARKED_KINDS, carbonWords, epochBands, foodWeb, lifeWords, productionPath, scanTiers, timeAxis, type Json, type LifeEpoch, type LifeView, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { LIFE_EXAMPLES, MARKED_KINDS, askWhatIf, carbonWords, epochBands, foodWeb, lifeWords, productionPath, scanTiers, timeAxis, type Json, type LifeEpoch, type LifeView, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -56,6 +56,14 @@
       source = { kind: "example", fixture: ex };
       view = r.view;
     })();
+  });
+
+  // A what-if on the board: the same world re-run under other dial values, read only.
+  const whatIf = $derived.by(() => {
+    const src = source;
+    if (!src) return undefined;
+    const by = src.kind === "body" ? { body: src.address } : { fixture: src.fixture };
+    return (dials: Record<string, number>) => askWhatIf(ctx.session, by, dials);
   });
 
   const name = $derived(source?.kind === "body" ? source.label : (LIFE_EXAMPLES.find((e) => source?.kind === "example" && e.fixture === source.fixture)?.label ?? ""));
@@ -158,7 +166,7 @@
     </div>
 
     {#if shape === "board"}
-      <LifeFlow {view} {lens} {dialWords} />
+      <LifeFlow {view} {lens} {dialWords} ask={whatIf} />
     {:else}
     <section aria-labelledby="tl-h">
       <h3 id="tl-h">Life on {name}, {axis ? myr(axis.to) : ""}: epochs named after the fact</h3>

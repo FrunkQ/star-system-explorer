@@ -5,6 +5,9 @@
 import { cubeDirection, perf, type Globe, type Tier } from "../../ui-contract/src/index.ts";
 import { iceAges, iceAgeWords, layersFor, narrateFrame, pickAt, recolour, type LayerSpec, type TimeLapse } from "./timelapse.ts";
 import { narrateWeather, weatherAt, withWeather, type WeatherMap } from "./weather.ts";
+import { withFace } from "./globe-face.ts";
+import { flowFace, type AirFlow } from "./true-air.ts";
+import type { TrueTexture } from "./true-look.ts";
 import { badge, Governor, type Badge } from "./governor.ts";
 import { DEFAULT_BUDGET_MS, estimateMs, maxLevel, pickRecipe, plan, TIER_ORDER, type PassSpec, type Plan, type RecipeDoc } from "./recipe.ts";
 import { drawCanvas } from "./canvas.ts";
@@ -79,6 +82,12 @@ export interface GlobeRun {
   pick(lon_deg: number, lat_deg: number): ReturnType<typeof pickAt> | null;
   /** Today's weather over the globe (the kernel's weather op, read): null takes it off. A time lapse shows its own past instead. */
   setWeather(w: WeatherMap | null): void;
+  /**
+   * The world's True face (true-air.ts `readTrueFace`) worn in place of the tiles' colours, for a world with no
+   * ground to show (a giant's cloud decks), carried by its winds `dt_s` after it was read when a flow comes with it.
+   * Null goes back to the tiles. A time lapse shows its own past instead; the face replaces the weather layer.
+   */
+  setFace(f: { tex: TrueTexture; flow?: AirFlow; radius_m?: number; dt_s?: number } | null): void;
   /** The weather at a point: the cell's layers and rain, and a storm over it (radius sizes the storms). */
   weatherAt(lon_deg: number, lat_deg: number, radius_km: number): ReturnType<typeof weatherAt>;
   setView(lon: number, lat: number): void;
@@ -166,6 +175,8 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
   let lapseLayer = "land";
   let lapseT = 0;
   let wx: WeatherMap | null = null;
+  let face: { tex: TrueTexture; flow?: AirFlow; radius_m?: number; dt_s?: number } | null = null;
+  let faceN = 0;
   let shown: Prepared | null = null;
   let shownKey = "";
   let lon = 0;
@@ -314,6 +325,13 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     if (lapse) {
       const k = `${preparedKey}|${lapseLayer}|${lapseT}`;
       if (!shown || shownKey !== k || shown.globe !== globe) ((shown = recolour(prepared, lapse, lapseLayer, lapseT, cubeDirection)), (shownKey = k));
+    } else if (face) {
+      const k = `${preparedKey}|face|${faceN}|${face.dt_s ?? 0}`;
+      if (!shown || shownKey !== k || shown.globe !== globe) {
+        const f = face;
+        const tex = f.flow && f.dt_s && f.radius_m && f.radius_m > 0 ? flowFace(f.tex, f.flow, { radius_m: f.radius_m, dt_s: f.dt_s }) : f.tex;
+        ((shown = withFace(prepared, tex, cubeDirection)), (shownKey = k));
+      }
     } else if (wx) {
       const k = `${preparedKey}|weather|${wx.day}`;
       if (!shown || shownKey !== k || shown.globe !== globe) ((shown = withWeather(prepared, wx, cubeDirection)), (shownKey = k));
@@ -444,6 +462,13 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     },
     setWeather(w) {
       wx = w;
+      shown = null;
+      dirty = true;
+      kick();
+    },
+    setFace(f) {
+      if (f?.tex !== face?.tex) faceN++;
+      face = f;
       shown = null;
       dirty = true;
       kick();
