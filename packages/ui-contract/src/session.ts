@@ -194,6 +194,12 @@ export interface ViewSession {
   /** Bodies on their orbits at given times (kernel `orbits_at`, U11 part 2): relative to each host, up to 64 times. `bodies` places a scene the kernel does not hold. */
   orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }>;
   /**
+   * K1, the sweep (ED2): one field of a body run over a range on a what-if branch the kernel throws away, step by step
+   * (`start_job` then `step_job`); per step the value, the asked results and the stability verdict, and where the
+   * verdict or class changes, the tipping point narrowed. Nothing is written. GM only.
+   */
+  sweep?(ask: import("./sweep.ts").SweepAsk, onprogress?: (done: number, total: number) => void): Promise<{ ok: true; result: import("./sweep.ts").Swept } | { ok: false; code: string; message: string }>;
+  /**
    * Whether the orbits at or under a system last (kernel `orbit_stability`, ST1): the worst verdict, and every check
    * with its block, its numbers and what it says. `bodies` lays facts over the kernel's (a held value not yet written).
    */
@@ -1013,6 +1019,23 @@ export class Session implements ViewSession {
   async orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "orbits_at", system, at_s: [...at_s], ...(bodies ? { bodies } : {}) });
     return r.type === "orbits_placed" ? { ok: true, bodies: (r as unknown as { bodies: OrbitPlaced[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async sweep(ask: import("./sweep.ts").SweepAsk, onprogress?: (done: number, total: number) => void): Promise<{ ok: true; result: import("./sweep.ts").Swept } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master sweeps a world's inputs" };
+    const no = (r: Raw) => ({ ok: false as const, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) });
+    const started = await this.#call({ op: "start_job", job: { kind: "sweep", ...JSON.parse(JSON.stringify(ask)) } });
+    if (started.type !== "job_started") return no(started);
+    const job = Number(started.job);
+    // A few resolves a step, so other asks (a strip's pause, a scene) get in between.
+    for (let i = 0; i < 400; i++) {
+      const r = await this.#call({ op: "step_job", job, budget: 2 });
+      if (r.type === "job_done") return { ok: true, result: r.result as unknown as import("./sweep.ts").Swept };
+      if (r.type !== "job_progress") return no(r);
+      onprogress?.(Number(r.done_units), Number(r.total_units));
+    }
+    await this.#call({ op: "cancel_job", job });
+    return { ok: false, code: "too_long", message: "the sweep ran past its steps and was stopped" };
   }
 
   async orbitStability(system: string, opts: { bodies?: { address: string; facts: Record<string, number | string> }[]; at_s?: bigint } = {}): Promise<{ ok: true; verdict: string; checks: StabilityCheck[] } | { ok: false; code: string; message: string }> {

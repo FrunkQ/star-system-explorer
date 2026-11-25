@@ -206,6 +206,14 @@ try {
       assert.match(await obox.locator('[data-result="year"]').innerText(), /68\d (d|days)|1\.88 (years|yr)/);
       assert.match(await obox.locator('[data-result="stability"]').innerText(), /Lasts|Watch/);
       assert.match(await obox.locator('[data-strip="orbit.shape"] [data-strip-figure]').innerText(), /^0\.09/);
+      // ED2, the sweep behind the strip (kernel K1): Mars's orbit run across the strip on a scratch branch marks where
+      // its day locks and where it stops lasting; nothing is written.
+      const hashSw = await hash();
+      await obox.locator('[data-strip="orbit"] [data-tick="turns freely from here"]').waitFor({ state: "attached", timeout: 90000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nticks: ${await obox.locator("[data-tick]").evaluateAll((t) => t.map((x) => x.getAttribute("data-tick")))}; ${await gm.locator("[data-sweeping], [data-sweep-why]").allInnerTexts()}`);
+      });
+      assert.ok((await obox.locator('[data-strip="orbit"] [data-tick]').count()) >= 2, "more than one mark from the sweep");
+      assert.equal(await hash(), hashSw, "the sweep writes nothing");
       await shot(gm, `orbit-box-${vp}`);
 
       // A year typed on the size: one Earth year puts Mars at 1 AU.
