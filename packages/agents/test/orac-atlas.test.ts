@@ -109,6 +109,10 @@ test("note sets: a figure must be a slot its condition tests; a good set is kept
   assert.ok(typed.problems.some((p) => /states a figure/.test(p)), typed.problems.join("; "));
   const unread = await t.check({ ...set, notes: [{ id: "x", about: "world", text: "Waters cover {ocean.fraction} of it." }] }, made);
   assert.ok(unread.problems.some((p) => /"when" does not test/.test(p)), unread.problems.join("; "));
+  const quote = await t.check({ ...set, notes: [{ id: "q", about: "world", topic: "water", when: { fact: "name", word: "Tarn" }, text: "Water, water, every where, nor any drop to drink.", by: "Samuel Taylor Coleridge", source: "The Rime of the Ancient Mariner (1798)" }] } as NoteSet, made);
+  assert.deepEqual(quote.problems, []);
+  const loose = await t.check({ ...set, notes: [{ ...set.notes[0]!, topic: "sea", source: "nowhere" }] } as unknown as NoteSet, made);
+  assert.ok(loose.problems.length >= 2, loose.problems.join("; "));
   await t.accept(good.value!);
   // An edition may now show the campaign's own set.
   assert.deepEqual((await editionTarget(h).check({ schema: "sse.edition/1", id: "mine.church-guide", name: "Church guide", description: "The Guide with the Church's notes.", extends: "sse.edition.guide", margin: { sets: ["mine.church"] } }, made)).problems, []);

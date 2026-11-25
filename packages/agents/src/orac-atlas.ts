@@ -13,6 +13,7 @@ import {
   ARRANGEMENTS,
   DELIVERIES,
   MOMENTS,
+  NOTE_TOPICS,
   SHIPPED_EDITIONS,
   SHIPPED_NOTE_SETS,
   SHIPPED_PALETTES,
@@ -107,8 +108,9 @@ export function noteSetTarget(host: AtlasHost): OracTarget<NoteSet> {
     kind: "note_set",
     what: "A set of margin notes for an edition (the Guide's jokes, a company's warnings, a GM's asides): opinion, not fact. Each note says what kind of page it is about and when it fits, read only from what the audience knows; a number in a note is a {field} slot the page fills, never typed. Read the shipped set first (need notes:sse.notes.guide).",
     form: [
-      '{"schema": "sse.margin-notes/1", "id": "mine.<lower-case-id>", "name": "<name>", "notes": [{"id": "<lower-case-id>", "about": "world" | "moon" | "star" | "system" | "sector" | "station" | "ship" | "other" | "any", "when": {"fact": "<field>", "at_least": <SI number>} | {"fact": "<field>", "present": true} | {"tag": "<tag>"} | {"all": [...]} | {"any": [...]}, "text": "<words, with {field} for a figure>", "weight": <n>}]}',
+      '{"schema": "sse.margin-notes/1", "id": "mine.<lower-case-id>", "name": "<name>", "notes": [{"id": "<lower-case-id>", "about": "world" | "moon" | "star" | "system" | "sector" | "station" | "ship" | "other" | "any", "when": {"fact": "<field>", "at_least": <SI number>} | {"fact": "<field>", "present": true} | {"fact": "<field>", "word": "<a whole word, any case>"} | {"tag": "<tag>"} | {"all": [...]} | {"any": [...]}, "text": "<words, with {field} for a figure>", "topic": "<topic>", "always": true, "by": "<who said it>", "source": "<where>", "weight": <n>}]}',
       "Numbers in when are SI (kelvin, pascals, metres). Notes are at most 200 characters. Add the set to an edition's margin.sets to show it.",
+      `Topics (a page takes one note per topic): ${NOTE_TOPICS.join(", ")}. "always" needs a "when" and puts the note first. "by" makes the line a quotation (up to 320 characters, no {slots}); "source" only with "by". topic, always, by, source and weight are optional.`,
     ].join("\n"),
     async check(doc) {
       if (!obj(doc)) return { problems: ["a note set is one JSON object"] };
