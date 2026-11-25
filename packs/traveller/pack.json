@@ -7921,9 +7921,10 @@
     {
      "id": "traveller.social",
      "label": "Roll the social codes",
-     "about": "Starport, government, law, tech level and bases for a world the physics cannot decide, rolled from the universe's seed (the same on every device). GM only; a code set by hand is kept; every rolled code can be overruled.",
+     "about": "Starport, government, law, tech level and bases for a world the physics cannot decide, rolled from the universe's seed (the same on every device). GM only; a code already set (by hand, or by an imported profile, bases included) is kept; every rolled code can be overruled.",
      "sheet": "traveller.world",
      "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence), chapter 12 Worlds. https://www.orffenspace.com/cepheus-srd/book3/worlds.html",
+     "decided_by": "provenance.code",
      "steps": [
       {
        "id": "government",

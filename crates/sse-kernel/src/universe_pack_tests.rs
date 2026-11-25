@@ -514,6 +514,42 @@ fn traveller_social_codes_roll_from_the_seed() {
         );
     }
 
+    // A world that came with its profile (an imported list's line) keeps every
+    // code, bases included, unless rolled again on purpose.
+    let listed = "u:wbh/sys:0/body:5";
+    for (f, v) in [
+        ("name", serde_json::json!("Lantern")),
+        ("traveller.code.population", serde_json::json!("6")),
+        ("provenance.code", serde_json::json!("C566600-7")),
+    ] {
+        let r = send(
+            &mut k,
+            serde_json::json!({"op": "set_authored", "edit": {
+                "address": listed, "field": f, "value": v, "occurred_at_s": 0}}),
+        );
+        assert_eq!(r["type"], "authored", "{r}");
+    }
+    let l = send(&mut k, ask(listed, true));
+    let steps = l["steps"].as_array().unwrap();
+    assert!(steps.iter().all(|s| s["how"] == "kept"), "{l}");
+    assert!(
+        step(&l, "naval")["why"]
+            .as_str()
+            .unwrap()
+            .contains("came with its profile (provenance.code C566600-7)"),
+        "{l}"
+    );
+    assert!(
+        l["events"].as_array().unwrap().is_empty(),
+        "nothing written: {l}"
+    );
+    let lr = send(
+        &mut k,
+        serde_json::json!({"op": "roll_profile", "program": "traveller.social", "body": listed,
+            "reroll": true, "at_s": 0}),
+    );
+    assert_eq!(step(&lr, "government")["how"], "rolled", "{lr}");
+
     let bad = send(
         &mut k,
         serde_json::json!({"op": "roll_profile", "program": "nope", "body": busy, "at_s": 0}),

@@ -6680,9 +6680,27 @@ impl Kernel {
                     .iter()
                     .filter_map(|g| g.authored.clone().map(|f| (g.id.clone(), f)))
                     .collect();
-                let steps =
-                    sse_codes::roll::roll(&prog, &reading, &authored, &u.seed, &body, reroll)
-                        .map_err(|e| err("bad_roll", e))?;
+                let decided = prog.decided_by.as_ref().and_then(|f| {
+                    let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                    state
+                        .facts
+                        .get(&body)
+                        .and_then(|m| m.get(f))
+                        .map(|v| match v {
+                            Value::Text(t) => format!("{f} {t}"),
+                            _ => f.clone(),
+                        })
+                });
+                let steps = sse_codes::roll::roll(
+                    &prog,
+                    &reading,
+                    &authored,
+                    decided.as_deref(),
+                    &u.seed,
+                    &body,
+                    reroll,
+                )
+                .map_err(|e| err("bad_roll", e))?;
                 let mut events = Vec::new();
                 if apply {
                     let mut set: BTreeMap<String, Value> = BTreeMap::new();
