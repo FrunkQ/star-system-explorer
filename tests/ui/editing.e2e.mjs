@@ -219,12 +219,14 @@ try {
 
       // ED5 Reach it: ask for a 260 K surface; the box finds the orbit on a scratch what-if and sets it as one change.
       await obox.locator('[data-reach="t_surface_now_k"]').waitFor({ timeout: 20000 });
-      await obox.locator("[data-reach-ask]").fill("260 K");
-      await obox.locator("[data-reach-go]").click();
+      await obox.locator('[data-reach="t_surface_now_k"] [data-reach-ask]').fill("260 K");
+      await obox.locator('[data-reach="t_surface_now_k"] [data-reach-go]').click();
       await gm.waitForFunction(() => /surface (about )?2(59|60|61)/.test(document.querySelector("[data-reach-said]")?.textContent ?? ""), null, { timeout: 60000 }).catch(async (e) => {
         throw new Error(`${e.message}\nbox says: ${await obox.innerText()}`);
       });
       assert.match(await gm.locator('[data-handle="orbit"] .value').innerText(), /1\.[0-4]\d? AU/, "Mars moves in to warm");
+      // ED5 part 2c: the orbit also reaches "locked to its star" (a yes-or-no result), offered beside the surface.
+      assert.match(await obox.locator('[data-reach="locked"]').innerText(), /turns freely/);
       await shot(gm, `reach-it-${vp}`);
       await undoTo(marsAt);
 

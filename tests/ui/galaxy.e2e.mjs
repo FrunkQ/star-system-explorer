@@ -72,6 +72,17 @@ try {
     const before = await gal.locator("[data-ring]").getAttribute("data-ring");
     await gal.locator("[data-ring-pick]").selectOption("3");
     await gm.waitForFunction((b) => document.querySelector(".gal [data-ring]")?.getAttribute("data-ring") !== b, before);
+    // GH8: at now the line shows only if an arm is still seen; scrubbed to just after a seen one, it winds against the spin.
+    const seen = (await gal.getAttribute("data-leading-seen")).split(" ").filter(Boolean).map(Number);
+    if (seen.length) {
+      await gal.locator("[data-time]").fill(String(Math.ceil((seen.at(-1) + 0.05) * 10) / 10));
+      await gal.locator("[data-time]").dispatchEvent("change");
+      await gal.locator("[data-leading-arm='showing']").waitFor({ timeout: 30000 });
+      assert.match(await gal.locator("[data-leading-arm]").innerText(), /^A leading arm, from a backwards (pass|merger) .* ago: it still winds against the spin\./);
+      if (screens) await gal.locator("[data-assembly]").screenshot({ path: `${screens}/gh8-leading-arm.png` });
+    }
+
+    const seenArmsNote = seen.length ? `leading arm at ${seen.at(-1)} Gyr, ` : "no seen leading arm, ";
     // A layer and an earlier time.
     await gal.locator("[data-layer=supernovae]").click();
     await gal.locator("[data-time]").fill("6");
@@ -121,7 +132,7 @@ try {
 
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`${name}: galaxy chart from galaxy_chart: rings, arms, green band, curves, ledger, layers, time, dwarf, inked history, night chart, phone`);
+    console.log(`${name}: galaxy chart from galaxy_chart: rings, arms, green band, curves, ledger, ${seenArmsNote}layers, time, dwarf, inked history, night chart, phone`);
   }
 } finally {
   server.kill();

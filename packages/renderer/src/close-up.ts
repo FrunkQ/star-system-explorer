@@ -76,3 +76,27 @@ export function groundUnder(body: string, eye: Vec3, centre: Vec3, r: number, ra
   const height_m = ((d - r) / r) * radius_m;
   return { body, toward: norm(v), m_per_px: (height_m * 2 * Math.tan(fovY / 2)) / Math.max(1, height_px), height_m };
 }
+
+/** The orbit camera of a view about the world at its centre: turned `yaw` about the pole, raised `pitch`, at `dist`. */
+export interface Orbit {
+  yaw: number;
+  pitch: number;
+  dist: number;
+}
+
+/**
+ * The orbit camera as a postcard's camera keeps it (PC2): the eye as a unit direction from the world's centre and a
+ * distance in the world's radii (`r` its drawn radius). The view's up is the frame's pole, and where it looks follows
+ * from these (`grazeLook`), so nothing more is needed to draw the same picture again.
+ */
+export function orbitEye(o: Orbit, r: number): { dir: Vec3; radii: number } | null {
+  if (!(r > 0) || !(o.dist > 0)) return null;
+  const c = Math.cos(o.pitch);
+  return { dir: [c * Math.cos(o.yaw), c * Math.sin(o.yaw), Math.sin(o.pitch)], radii: o.dist / r };
+}
+
+/** The orbit camera that puts the eye at `dir` (from the centre), `radii` world radii out (the inverse of orbitEye). */
+export function orbitOf(dir: Vec3, radii: number, r: number): Orbit {
+  const d = norm(dir);
+  return { yaw: Math.atan2(d[1], d[0]), pitch: Math.asin(Math.max(-1, Math.min(1, d[2]))), dist: radii * r };
+}

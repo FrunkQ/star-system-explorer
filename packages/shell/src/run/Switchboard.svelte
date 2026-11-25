@@ -11,7 +11,8 @@
   import RoleCard from "./RoleCard.svelte";
   import LayoutPicker from "./LayoutPicker.svelte";
   import OnThisComputer from "./OnThisComputer.svelte";
-  import { SHIPPED_LAYOUTS, cardLabel, outputLink, addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
+  import GroundPick from "./GroundPick.svelte";
+  import { SHIPPED_LAYOUTS, cardLabel, outputLink, addBookmark, addPreset, makeBookmark, back, drive, setSteer, steerOf, emptyPlaybook, findPage, findPreset, fire, hold, holdAll, lift, moveScreen, presetsInView, rejoin, release, releaseAll, resolve, send, swapScreens, type Board, type Dest, type HoldCard, type HoldKind, holdKind, holdText, withWords, type Playbook as PlaybookDoc, type Preset, type Shown, type TablePort, type ViewSession, type Workspace, revealsOf, yearsToSeconds } from "../../../ui-contract/src/index.ts";
   import Playbook from "./Playbook.svelte";
   import PresetMonitor from "./PresetMonitor.svelte";
   import { justSent, noteFired, noteSent, type JustSent } from "./fired.svelte.ts";
@@ -141,7 +142,7 @@
   }
   function chooseCard(dest: Dest, c: HoldCard) {
     // A click holds with the kind used last (6.2); a particular card or typed words are for this moment only.
-    if (typeof c === "string") lastCard = c;
+    if (holdText(c) === null) lastCard = c;
     act((b) => hold(b, dest, c));
   }
   // The role card (PB7): undefined closed, null adding a role, else the role open.
@@ -164,17 +165,19 @@
   const cards = $derived(st.cards ?? []);
   let ownWords = $state<Dest | null>(null);
   function cardValue(c: HoldCard): string {
-    if (typeof c === "string") return c;
-    const i = cards.findIndex((x) => x.words === c.text);
+    const text = holdText(c);
+    if (text === null) return holdKind(c)!;
+    const i = cards.findIndex((x) => x.words === text);
     return i >= 0 ? `card:${i}` : "own";
   }
-  function pickCard(dest: Dest, v: string) {
+  // A new kind or words keep the card's ground (PC5): the Ground row changes only the ground.
+  function pickCard(dest: Dest, held: HoldCard, v: string) {
     if (v === "own") return void (ownWords = dest);
     ownWords = null;
     if (v.startsWith("card:")) {
       const c = cards[Number(v.slice(5))];
-      if (c) chooseCard(dest, { text: c.words });
-    } else chooseCard(dest, v as HoldCard);
+      if (c) chooseCard(dest, withWords(held, { text: c.words }));
+    } else chooseCard(dest, withWords(held, v as HoldKind));
   }
 
   // Dragging: a source's dot onto a destination; a screen onto a role (move) or another screen (swap). Every drag has
@@ -296,12 +299,13 @@
 
 {#snippet cardCtl(dest: Dest, label: string, held: HoldCard)}
   {@const v = ownWords === dest ? "own" : cardValue(held)}
-  <select aria-label="Holding card for {label}" data-card={dest} onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} onchange={(e) => pickCard(dest, (e.currentTarget as HTMLSelectElement).value)} value={v}>
+  <select aria-label="Holding card for {label}" data-card={dest} onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} onchange={(e) => pickCard(dest, held, (e.currentTarget as HTMLSelectElement).value)} value={v}>
     <option value="plain">Plain ({cards.filter((c) => c.kind === "plain").length})</option>
     <option value="joke">A joke ({cards.filter((c) => c.kind === "joke").length})</option>
+    <option value="quote">A quote ({cards.filter((c) => c.kind === "quote").length})</option>
     <option value="blank">Dark</option>
     <option value="own">My own words…</option>
-    {#each [["plain", "Plain cards"], ["joke", "Jokes"]] as [kind, head] (kind)}
+    {#each [["plain", "Plain cards"], ["joke", "Jokes"], ["quote", "Quotes"]] as [kind, head] (kind)}
       <optgroup label={head}>
         {#each cards as c, i (i)}{#if c.kind === kind}<option value={`card:${i}`}>{c.words}</option>{/if}{/each}
       </optgroup>
@@ -309,8 +313,9 @@
   </select>
   {#if v === "own"}
     <!-- svelte-ignore a11y_autofocus -->
-    <input class="own" aria-label="Words for {label}'s screens" data-card-words={dest} placeholder="Stand by" value={typeof held === "object" ? held.text : ""} autofocus onclick={(e) => e.stopPropagation()} onkeydown={(e) => (e.stopPropagation(), e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur())} onchange={(e) => { const t = (e.currentTarget as HTMLInputElement).value.trim(); if (t) chooseCard(dest, { text: t }); }} />
+    <input class="own" aria-label="Words for {label}'s screens" data-card-words={dest} placeholder="Stand by" value={holdText(held) ?? ""} autofocus onclick={(e) => e.stopPropagation()} onkeydown={(e) => (e.stopPropagation(), e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur())} onchange={(e) => { const t = (e.currentTarget as HTMLInputElement).value.trim(); if (t) chooseCard(dest, withWords(held, { text: t })); }} />
   {/if}
+  <GroundPick card={held} {bookmarks} {label} onpick={(c) => chooseCard(dest, c)} />
 {/snippet}
 
 {#snippet steerCtl(dest: Dest, mode: "theirs" | "read")}
@@ -734,6 +739,7 @@
   }
   .acts {
     display: inline-flex;
+    flex-wrap: wrap;
     gap: 6px;
     align-items: center;
   }

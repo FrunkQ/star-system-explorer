@@ -4,6 +4,8 @@
 // them: an arrangement, the boxes on it (each a part showing whatever is sent, with its own controls on or off, AT13),
 // a look and a name. A new layout is the editor on a blank copy.
 import type { ScreenDoc, ScreenItem } from "./screen.ts";
+import type { Shown } from "./seat.ts";
+import type { Situation } from "./atlas/kit.ts";
 
 /** The layouts that ship beside the shell: a seat's `screens[0]` names one by file ("" is the Bridge). */
 export const SHIPPED_LAYOUTS: readonly { file: string; label: string }[] = [
@@ -117,4 +119,28 @@ export function layoutsFrom(j: unknown): ScreenDoc[] {
 export function keepLayout(list: readonly ScreenDoc[], doc: ScreenDoc): ScreenDoc[] {
   const i = list.findIndex((d) => d.id === doc.id);
   return i < 0 ? [...list, doc] : list.map((d, k) => (k === i ? doc : d));
+}
+
+/**
+ * The situation a send puts a role's screens in (AT14 wiring, atlas design 11A.4), for a kit's layouts: screens off or
+ * held is "holding"; a landing is "landing"; a send about one thing in a system (a world's own screen, a bookmark's
+ * focus) is "world"; a system is "system"; anything wider is "sector".
+ */
+export function situationOf(shown: Shown | null | undefined): Situation | null {
+  if (!shown) return null;
+  if ("off" in shown) return "holding";
+  if (shown.landing) return "landing";
+  if (shown.focus && shown.focus !== shown.scope) return "world";
+  return /\/sys:[^/]+$/.test(shown.scope) ? "system" : /\/sys:/.test(shown.scope) ? "world" : "sector";
+}
+
+/**
+ * Which screen a role's screen opens (AT14 wiring, agreed with the Atlas): a send that names its own screen wins, then
+ * a layout chosen for the role (`screens[0]`), then the kit's layout for the situation, then the Bridge (null).
+ */
+export function screenFor(o: { sent?: string; chosen?: string | null; kit?: string; shown?: Shown | null; kitScreen: (kit: string, s: Situation) => ScreenDoc | null }): string | ScreenDoc | null {
+  if (o.sent) return o.sent;
+  if (o.chosen) return o.chosen;
+  const s = situationOf(o.shown);
+  return o.kit && s ? o.kitScreen(o.kit, s) : null;
 }

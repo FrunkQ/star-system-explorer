@@ -156,7 +156,7 @@ export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";
 export { AURORA_REFERENCES, auroraSky, lineName, cieXyz, COLOUR_VISION_CD_M2, exposeAurora, loadAurora, skyGlowAlong, toSite, kiloRayleighRadiance, lineRgb, oxygenShare, OXYGEN_STAND_IN, planAurora, RAYLEIGH_PH_M2_S_SR } from "./aurora.ts";
 export type { AuroraDraw, AuroraDrawLayer, AuroraSession, AuroraSky, AuroraEmissionJson, AuroraExposure, AuroraJson, AuroraLayer, AuroraOvalJson, AuroraPlan, AuroraWorld } from "./aurora.ts";
 // Close-up: the camera down to a grazing orbit over a world in True, and the ground under it.
-export { CLOSE_FLOOR_M, CLOSE_FLOOR_SHARE, CLOSE_REACH, closeMin, grazeLook, groundUnder, zoomNear, type GroundView } from "./close-up.ts";
+export { CLOSE_FLOOR_M, CLOSE_FLOOR_SHARE, CLOSE_REACH, closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear, type GroundView, type Orbit } from "./close-up.ts";
 // The shared finish (VP1) and the sky's stars behind True (VP2).
 export { startFinish, type Finish, type FinishFrame } from "./finish.ts";
 export { GLARE_FLOOR_DEG, glareLadder, glareShare, glareTotal, rungScale, type GlareRung } from "./finish-glare.ts";

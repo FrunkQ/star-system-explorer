@@ -2,7 +2,7 @@
 // ground under it for the detail ladder.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { CLOSE_FLOOR_M, CLOSE_REACH, closeMin, grazeLook, groundUnder, zoomNear } from "../src/close-up.ts";
+import { CLOSE_FLOOR_M, CLOSE_REACH, closeMin, grazeLook, groundUnder, orbitEye, orbitOf, zoomNear } from "../src/close-up.ts";
 
 test("the camera comes down to a few km over a big world, a small share of the radius over a small one", () => {
   const earth = 6.371e6;
@@ -43,4 +43,14 @@ test("the ground under the camera: its direction, height and metres per pixel; n
   assert.ok(Math.abs(g.m_per_px - (17374 * 2 * Math.tan(Math.PI / 8)) / 1000) < 1e-9);
   assert.equal(groundUnder("moon", [0, 0, CLOSE_REACH + 0.1], [0, 0, 0], 1, 1.7e6, 1, 100), null);
   assert.equal(groundUnder("x", [0, 0, 1.5], [0, 0, 0], 1, undefined, 1, 100), null);
+});
+
+test("the orbit camera goes to a postcard's camera and back", () => {
+  const o = { yaw: -0.6, pitch: 0.55, dist: 2.2 };
+  const e = orbitEye(o, 0.55)!;
+  assert.ok(Math.abs(Math.hypot(...e.dir) - 1) < 1e-12);
+  assert.ok(Math.abs(e.radii - 4) < 1e-12);
+  const back = orbitOf(e.dir, e.radii, 0.55);
+  for (const k of ["yaw", "pitch", "dist"] as const) assert.ok(Math.abs(back[k] - o[k]) < 1e-12, k);
+  assert.equal(orbitEye(o, 0), null);
 });

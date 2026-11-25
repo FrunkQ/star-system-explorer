@@ -383,7 +383,7 @@
   const distLabels = $derived(
     (on("distances") ? decades : [])
       .filter((g) => cy - r(g.au) > 12)
-      .map((g) => ({ g, y: cy - r(g.au) - 4, text: frame ? km(g.au) : `${g.units.toLocaleString("en-GB")} AU` }))
+      .map((g) => ({ g, y: cy - r(g.au) - 4, text: frame ? km(g.au) : `${sayNumber(g.units, 0, { upTo: 3 })} AU` }))
       .filter((d) => !under({ x: cx + 2, y: d.y - 10, w: d.text.length * 6.6 + 4, h: 12 })),
   );
   const named = $derived(all.filter((s) => showLabel(s) && (s.orbit || s === centre) && !(s === centre && !frame)));
@@ -647,6 +647,21 @@
   const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
   const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : "", skyNote].filter(Boolean).join(" "));
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
+  // PC2: the 3D camera about the world at the centre, kept on the workspace for a bookmark or postcard made here (the
+  // pose's distance in metres from the world's radius); a bookmark's camera handed to the 3D view once its world is centred.
+  function keepCamera(c: { about: string; dir: [number, number, number]; radii: number; fov_deg: number } | null) {
+    const r = c ? untrack(() => bodies3d.find((b) => b.id === c.about)?.radius_m) : null;
+    ctx.workspace.camera = c && r ? { about: c.about, eye_dir: c.dir, eye_m: c.radii * r, up: [0, 0, 1], fov_deg: c.fov_deg, exposure: { mode: shownView.exposure === "eye" ? "eye" : "long", ev: 0 }, keep: [0, 0, 1, 1] } : null;
+  }
+  const aim3d = $derived.by(() => {
+    const a = ctx.workspace.aim;
+    const r = a ? bodies3d.find((b) => b.id === a.about)?.radius_m : null;
+    return a && r ? { about: a.about, dir: a.eye_dir, radii: a.eye_m / r } : null;
+  });
+  $effect(() => {
+    if (dims !== "3d") untrack(() => (ctx.workspace.camera = null));
+    return () => untrack(() => (ctx.workspace.camera = null));
+  });
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
   let measuring = $state(false);
@@ -672,10 +687,10 @@
   const peeked = $derived(peek && peek.address !== ctx.workspace.selection && !drag && !measuring ? all.find((s) => s.address === peek!.address) : undefined);
 </script>
 
-<div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined}>
+<div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined} data-true-read={reading ? `${reading.done}/${reading.of}` : undefined}>
   {#if dims === "3d"}
     {#snippet in3d(band: string, base: boolean)}
-      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
+      <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {plumes} {starColour} {trueNote} star={liveStar} {band} {fields} realScale={shownView.scale === "real"} hud={base && shownView.hud} reframe={shownView.framed} pencil={base && pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} oncamera={keepCamera} aim={aim3d} onaimed={() => (ctx.workspace.aim = null)} />
     {/snippet}
     {#if viewed.composite}
       <!-- Composite (XO17): the system drawn once per band and laid into one picture. -->
@@ -875,7 +890,7 @@
         {#if authoredImport}<span class="authored-import" data-authored-import><Stamp kind="authored" title="Every name and value here was written in a V3 save, not modelled by SSE4's physics. A body called Earth is the save's Earth, not the real one." /><span class="words">As written in a V3 save, not modelled</span></span>{/if}
         {#if catalogued}<span class="authored-import" data-catalogued><Stamp kind="catalogued" title="Every value here is a measurement from a catalogue, with its source on the card's why?." /><span class="words">As measured, each value with its source</span></span>{/if}
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
-        <span data-scale-note>{narrow ? `Log scale${frame ? ", km" : ""}` : on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${g.units.toLocaleString("en-GB")} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
+        <span data-scale-note>{narrow ? `Log scale${frame ? ", km" : ""}` : on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${sayNumber(g.units, 0, { upTo: 3 })} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
         {#if on("known") && known && usualView && !through}<span class="usual-known" data-usual-known={usualView}>The table knows these at {usualView.replace(/-/g, " ")}; dotted names, not at all</span>{/if}
         {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}
         {#if key?.entries.length && on("key")}

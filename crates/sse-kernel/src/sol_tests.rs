@@ -306,8 +306,8 @@ fn orbit_totals_are_survey_reservoirs_summed() {
 }
 
 /// A small world barely melted, so it barely separated: Ceres keeps its
-/// metal through its rock (Park et al. 2016 find Ceres only partly
-/// differentiated, rock from volatiles; they say nothing of metal sinking).
+/// metal through its rock. Park et al. 2016 find it only partly separated,
+/// rock from volatiles (ice and salts); its metal is our own reading.
 #[test]
 fn small_worlds_barely_separate() {
     let mut k = open_sol(&[]);

@@ -82,7 +82,7 @@ at_s?: number, facts: unknown, evidence: unknown, spec?: unknown, surfaces: unkn
  * zero_l_deg, zero_b_deg, node_l_deg, to_galactic (3x3 rows),
  * evidence ("drawn"), source, model}`.
  */
-frame: unknown, } | { "type": "reference_tiles", body: string, address: string, tiles: unknown[], refused: unknown[], regime_label?: string, } | { "type": "classify_previewed", scheme: string, atlas_hash: string, at_s?: number, bodies: unknown[], unclassified: number, failing_examples: Array<string>, } | { "type": "codes", sheet: string, readings: unknown[], } | { "type": "sector_import", import: unknown, summary: string, events: Array<string>, state_hash?: string, 
+frame: unknown, } | { "type": "reference_tiles", body: string, address: string, tiles: unknown[], refused: unknown[], regime_label?: string, } | { "type": "classify_previewed", scheme: string, atlas_hash: string, at_s?: number, bodies: unknown[], unclassified: number, failing_examples: Array<string>, } | { "type": "elements_converted", address: string, elements: unknown, } | { "type": "expected", address: string, fields: unknown[], } | { "type": "class_sampled", branch: string, atlas_hash: string, samples: unknown[], refused: unknown[], } | { "type": "codes", sheet: string, readings: unknown[], } | { "type": "sector_import", import: unknown, summary: string, events: Array<string>, state_hash?: string, 
 /**
  * The metadata's routes: each with its ends' systems and, once
  * applied, its link and event; or why it was left out.

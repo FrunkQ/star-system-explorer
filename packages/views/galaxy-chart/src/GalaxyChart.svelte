@@ -13,7 +13,7 @@
   import { CompositeStack } from "../../../chart-grammar/src/index.ts";
   import { GALAXY_CONTROLS } from "./controls.ts";
   import { markStrengthAt } from "../../../renderer/src/index.ts";
-  import { announcePlace, cellHalo, leadingArmWords, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, DEFAULT_VIEW, dex, viewOptions, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { announcePlace, cellHalo, leadingArmWords, LEADING_ARM_SEEN, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, DEFAULT_VIEW, dex, viewOptions, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   // The one set of view controls (V9t): Chart is the face-on diagram below; 3D and True turn the disc (Galaxy3D).
@@ -174,6 +174,8 @@
     return [...by.values()].map((k) => ({ ...k, culprits: k.by.size })).sort((a, b) => b.live - a.live || b.n - a.n || a.kind.localeCompare(b.kind));
   }
   // GH8: the latest leading arm made by the chart's time, in words.
+  // When this galaxy's history made a leading arm strong enough to be seen (Gyr), for a test or a GM to scrub to.
+  const seenArms = $derived((chart?.assembly?.marks ?? []).filter((m) => m.kind === "leading_arm" && m.strength >= LEADING_ARM_SEEN).map((m) => Math.round(m.began_gyr * 100) / 100).join(" "));
   const lead = $derived(chart?.assembly ? leadingArmWords(chart.assembly.marks, chart.at_gyr, markStrengthAt) : null);
   const MARK_WORDS: Record<string, string> = {
     warp: "Warped edge",
@@ -200,7 +202,7 @@
   ];
 </script>
 
-<div class="gal" data-galaxy={chart?.halo ?? ""} bind:this={root}>
+<div class="gal" data-galaxy={chart?.halo ?? ""} data-leading-seen={seenArms} bind:this={root}>
   <div class="bar">
     <label>Galaxy
       <select value={halo} onchange={(e) => chooseHalo(e.currentTarget.value as HaloKey)} data-halo>

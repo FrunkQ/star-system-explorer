@@ -167,7 +167,8 @@
     ]
    },
    "reach": [
-    "t_surface_now_k"
+    "t_surface_now_k",
+    "locked"
    ]
   },
   {
