@@ -7,7 +7,7 @@ export { audienceOf, decide, gmSeat, tableSeat, sharedTableSeat, within } from "
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
 export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, updateSeat, oneLayoutPerRole, removeSeat, checkSeats, startIntents, discoverIntent, joinLink, outputLink, sealedLink, fogViews } from "./seats.ts";
 export type { Audience, SeatChange, SeatPlan } from "./seats.ts";
-export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, PackCalendar } from "./session.ts";
+export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, PackCalendar, StabilityCheck } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
 export type { Preview } from "./physics-edit.ts";
@@ -176,7 +176,11 @@ export { RANGE_RING_LAYER, rangeRings, rangeText, ringPoints } from "./range-rin
 export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, RangeTarget, RangeWeapon } from "./range-rings.ts";
 // Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
-export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed } from "./handles.ts";
+export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed, BoxPart, BoxChip, HandleBox, PartMark } from "./handles.ts";
+export { atDepth, boxAt, partHandle, wrap, mirrorAngle, trueFromMean, meanFromTrueRad, trueAnomalyFrom, epochMeanFor, orbitShape, solarDay, resonances, stabilityFor } from "./box.ts";
+export type { Resonance } from "./box.ts";
 export * from "./place-notes.ts";
 export { SPLITS, isSplit, displayLink, partLinks, displaysFrom, displayMap, screenKey } from "./displays.ts";
 export type { Split, Display } from "./displays.ts";
+export { gearing, roundFigures, resonanceCatches, nearestCatch } from "./drag.ts";
+export type { Catch } from "./drag.ts";
