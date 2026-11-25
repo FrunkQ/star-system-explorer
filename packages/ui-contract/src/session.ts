@@ -268,6 +268,8 @@ export interface ViewSession {
   resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
   readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
+  /** Light through layers of gas and particles (kernel `light_through_gas`, light track ND2): colour in and out per passage. Read only; any seat. */
+  lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }>;
   /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
   /** Time-lapse keyframes of a world's surface (surface_frames): a fixture, or a body of an adopted system. Read only. */
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
@@ -799,6 +801,11 @@ export class Session implements ViewSession {
   async readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_air_optics", airs, ...(wavelengths_m ? { wavelengths_m } : {}) });
     return r.type === "air_optics_read" ? { ok: true, airs: (r as unknown as { airs: Json[] }).airs } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "light_through_gas", passages });
+    return r.type === "gas_passed" ? { ok: true, passages: (r as unknown as { passages: Json[] }).passages } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }> {
