@@ -10,9 +10,11 @@ const pending = new Map<string, Promise<Surface | string>>();
 // Kept per kernel as well: a postcard's visit (shell postcards/visiting.ts) reads the same addresses on a kernel of its own.
 const kernels = new WeakMap<object, number>();
 let kernelCount = 0;
-const keyOf = (session: object, system: string, address: string) => {
-  let n = kernels.get(session);
-  if (n === undefined) kernels.set(session, (n = ++kernelCount));
+// Keyed by the session's universe record, one frozen object per kernel's session however views are handed it.
+const keyOf = (session: Pick<ViewContext["session"], "universe">, system: string, address: string) => {
+  const u = session.universe ?? kernels;
+  let n = kernels.get(u);
+  if (n === undefined) kernels.set(u, (n = ++kernelCount));
   return `${n}|${system}|${address}`;
 };
 
