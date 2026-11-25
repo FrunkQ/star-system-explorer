@@ -2151,11 +2151,12 @@ impl Kernel {
         let s: sse_cosmos::stars::StarSystem = serde_json::from_value(description)
             .map_err(|e| err("bad_record", format!("{address}: {e}")))?;
         let u = self.universe()?;
-        let elapsed_gyr = clock::elapsed_myr(&u.chronicle) / 1000.0;
+        let elapsed_myr = clock::elapsed_myr(&u.chronicle);
         let (seed, root) = (u.seed, u.root.clone());
-        cosmos::with_stars(&seed, &root, None, |st, now| {
+        // `with_stars` gives the galaxy's now in Myr; the birth reads Gyr.
+        cosmos::with_stars(&seed, &root, None, |st, now_myr| {
             let b = serde_json::to_value(st.birth(&s)).expect("plain data");
-            Ok((b, now + elapsed_gyr))
+            Ok((b, (now_myr + elapsed_myr) / 1000.0))
         })
     }
 
@@ -2301,7 +2302,11 @@ impl Kernel {
                 refused.push(serde_json::json!({"class": id, "why": "the class has no in example to sample"}));
                 continue;
             };
-            let system = format!("{root}/sys:class-sample-{n}");
+            // The branch and class in the address: a surface cache keyed by
+            // address never hands one call's world to another (renderer
+            // thread, 25 Nov).
+            let key = sse_core::ContentHash::of_bytes(format!("{branch}/{id}").as_bytes()).hex();
+            let system = format!("{root}/sys:class-sample-{n}-{}", &key[..8]);
             let star = format!("{system}/star:0");
             let body = format!("{system}/body:0");
             let mut edits: Vec<(String, String, serde_json::Value)> = vec![
@@ -3985,6 +3990,17 @@ impl Kernel {
             Request::ReadLimb { discs } => systems::read_limb(discs)?,
             Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
             Request::ReadBows { items } => systems::read_bows(items)?,
+            Request::DescribeStar {
+                mass_msun,
+                age_yr,
+                feh,
+            } => {
+                let d = sse_formation::describe::describe(mass_msun, age_yr, feh.unwrap_or(0.0))
+                    .map_err(|e| err("bad_star", e.0))?;
+                Response::StarDescribed {
+                    star: serde_json::to_value(d).expect("plain data"),
+                }
+            }
             Request::EffectAtRange { asks } => {
                 systems::effect_at_range(asks, &self.observe.reference)?
             }

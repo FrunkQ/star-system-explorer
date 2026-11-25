@@ -71,6 +71,13 @@ fn a_drawn_star_grows_a_system_with_its_own_birth() {
         "{}",
         rs.to_string().chars().take(300).collect::<String>()
     );
+    // The systems list finds it at its depth (galaxy charts thread, 25 Nov).
+    let list = ask(&mut k, serde_json::json!({"op":"systems"}));
+    assert!(
+        list.to_string().contains(&format!("\"system\":\"{star}\"")),
+        "{star} not in {}",
+        list.to_string().chars().take(400).collect::<String>()
+    );
     // Twice is refused: the system is grown.
     let again = ask(
         &mut k,
@@ -83,4 +90,42 @@ fn a_drawn_star_grows_a_system_with_its_own_birth() {
         serde_json::json!({"op":"run_formation","seed":"x","from_star":star,"envelope":{}}),
     );
     assert_eq!(both["code"], "bad_request", "{both}");
+}
+
+/// The galaxy's now is in Myr and a birth reads Gyr: a grown star's age
+/// must be its drawn age, not thousands of Gyr (galaxy charts thread, 25 Nov:
+/// the core history then ran to millions of steps and wasm ran out of memory).
+#[test]
+fn a_grown_system_is_as_old_as_its_star() {
+    let mut k = crate::Kernel::new();
+    ask(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"kestrel","seed":"kestrel"}),
+    );
+    let cell = ask(&mut k, serde_json::json!({"op":"star_cell"}));
+    let last = cell["cell"]["systems"]
+        .as_array()
+        .unwrap()
+        .last()
+        .unwrap()
+        .clone();
+    let addr = last["address"].as_str().unwrap().to_string();
+    let drawn_age = last["state"]["age_gyr"].as_f64().unwrap();
+    let run = ask(
+        &mut k,
+        serde_json::json!({"op":"run_formation","seed":addr,"from_star":addr}),
+    );
+    let t = run.to_string();
+    assert!(t.len() < 20_000_000, "run is {} bytes", t.len());
+    let at = t.find("\"age_gyr\":").expect("an age");
+    let age: f64 = t[at + 10..]
+        .split(|c| c == ',' || c == '}')
+        .next()
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!(
+        (age - drawn_age).abs() < 0.1,
+        "{age} vs the drawn {drawn_age}"
+    );
 }

@@ -6,6 +6,7 @@
 
 pub mod accrete;
 pub mod body;
+pub mod describe;
 pub mod disc;
 pub mod early;
 pub mod growth;
@@ -27,6 +28,8 @@ pub use lifeline::{LifeLine, Phase, StarState};
 
 #[cfg(test)]
 mod accrete_tests;
+#[cfg(test)]
+mod describe_tests;
 #[cfg(test)]
 mod early_tests;
 #[cfg(test)]
