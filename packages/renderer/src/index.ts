@@ -6,7 +6,7 @@ export type { Vec3, FrameNode, Tree, Camera, Pixel } from "./frames.ts";
 export type { Gpu, GpuDots, GpuGlow, GpuItem, GpuLight, GpuRing, GpuSheet } from "./gpu.ts";
 export { armField, cloudNoise, GALAXY_BANDS, GALAXY_LIGHT, GALAXY_LIGHT_REFS, galaxyFace, glowPicture, sheetWeights, surfaceAt } from "./galaxy-true.ts";
 export type { GalaxyBand, GalaxyPicture } from "./galaxy-true.ts";
-export { cubeEdges, galaxyLight, SPACE_CSS, webGlow, webLights, webParcels, WEB_DARK_GLOW, WEB_KINDS, WEB_LIGHT_K, WEB_LIGHT_SHOW } from "./web-cube.ts";
+export { cubeEdges, densityLevel, galaxyLight, mixCss, SPACE_CSS, webGlow, webLights, webParcelLevels, webParcels, WEB_DARK_GLOW, WEB_DENSITY_LEVELS, WEB_LEVEL_INK, WEB_LEVELS, WEB_KINDS, WEB_MARKS, webMarks, WEB_LIGHT_K, WEB_LIGHT_SHOW } from "./web-cube.ts";
 export type { WebCubeData, WebGalaxyData, WebKind, WebLightGroup } from "./web-cube.ts";
 // V10a: True in the system view, each world wrapped in its own surface.
 export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
@@ -48,13 +48,13 @@ export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edi
 // O10 convection: granules drawn where the disc resolves them.
 export { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, limbDarkening, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
 export type { Convection, FlarePatch, Granules, Spot, StarDraw } from "./star.ts";
-export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, turnAt } from "./live-star.ts";
+export { cycleOf, drawLiveStar, flarePlace, flareProfile, flaresAt, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, targetsFromFacts, turnAt, type ActivityTarget } from "./live-star.ts";
 export type { Flare, GivenStar, LiveStar, StarReader } from "./live-star.ts";
 export { drawGlow, glarePsf, glareProfile, glowReach, GLARE_EYE, GLOW_REACH_DEG, GLOW_REFERENCES, narrateGlow } from "./star-glow.ts";
 export { CELL_DRIFT, CHURN_REFERENCES, churningGranules, granuleBlur, limbLumps, LUMP_SCALE_HEIGHTS, narrateLumps } from "./star-churn.ts";
-export { addEjections, EJECTION_SCALE, ejectionShare, ejectionShown, ejectionsAt, EVENT_REFERENCES, FLASHES_PER_SECOND_MAX, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares } from "./star-events.ts";
-export type { EjectionNow, ShownFlare } from "./star-events.ts";
-export { drawStarNow } from "./star-now.ts";
+export { addEjections, capFlashes, EJECTION_SCALE, ejectionShare, ejectionShown, ejectionsAt, EVENT_REFERENCES, FLASHES_PER_SECOND_MAX, flareBoost, flareWhiteLight, narrateEvents, patchContrast, patchRadiusDeg, shownFlares } from "./star-events.ts";
+export type { EjectionNow, FlashEvent, ShownFlare } from "./star-events.ts";
+export { drawStarNow, FACE_STEPS, liveFace } from "./star-now.ts";
 export type { StarNow, StarNowAsk } from "./star-now.ts";
 // Time-lapse layers on the Body globe (surface_frames): read, bracket, colour, pick, narrate.
 export { bracket, cellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor, narrateFrame, pickAt, readFrames, recolour, seaLevelAt, valueAt } from "./timelapse.ts";
@@ -116,12 +116,21 @@ export async function startSurface(canvas: HTMLCanvasElement) {
 // The size comparison's turning globes (3D, True, Wireframe).
 export { circleSteps, globeFrame, graticule, bodySeconds, hoursPerSecond, nearSide, ringEdge, SECONDS_PER_TURN, spinAt } from "./lineup-3d.ts";
 export type { Frame as GlobeFrame, GlobeLine, LineupView } from "./lineup-3d.ts";
+export { byDensitySquared, density as shellDensity, drawShells, dustGlow10um, narrateShells, nebulaColour, SHELL_DECADES, SHELL_REFERENCES, wavelengthRgb } from "./star-shells.ts";
+export type { NebulaShape, ShellView } from "./star-shells.ts";
+export { baumbach, CORONA_DECADES, CORONA_REFERENCES, coronaShape, cycleActivity, drawCorona, narrateCorona } from "./star-corona.ts";
+export { DIFFERENTIAL_ROTATION, rateShare, spotsAt } from "./live-star.ts";
 // A body's face in True, one door for every view (true-body.ts).
 export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
 export type { TrueBody, TrueLook } from "./true-body.ts";
+// Small bodies' own shapes in True (SB3, small-body.ts).
+export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
+export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";
 // The stars over a landing site and the eye's adaptation (night-sky.ts).
 export { ADAPT_RANGE, adaptedExposure, starsOverSite } from "./night-sky.ts";
 export type { SiteSkyFrame, SiteSkyStar, SiteStar } from "./night-sky.ts";
+export { cutRings, ringMarks, RESONANCE_F, RING_VISCOSITY_M2_S, GAP_PER_ROOT_MU, EDGE_SLACK } from "./ring-structure.ts";
+export type { RingMark, RingMoon } from "./ring-structure.ts";
 // VP6: the detail ladder (rung table, bindings, seed and clock, HUD detail line). The GPU node is ladder-node.ts,
 // imported by GPU code directly so pages without 3D never load three.js.
 export { checkLayer, detailLine, profileShare, discScale, EDDY_EXPONENT, FLOW_REACH, LADDER_LAYERS, ladderAt, ladderLayer, ladderSeed, MAX_RUNGS, MAX_STRETCH, resolveLayer, RUNG_FADE, RUNG_MIN_PX, rungOrigin, rungs, sizeWords, TIER_RUNGS } from "./ladder.ts";
@@ -130,5 +139,5 @@ export { cell, curl, NOISE_REFERENCES, NUM, PERIOD, ridged, simplex, SIMPLEX_SCA
 export type { Ops, V3 } from "./ladder-noise.ts";
 // VP3: the texture ladder (face sizes by screen, tiles to read, face pictures from any tile levels, relief normals).
 // The GPU bake is texture-ladder-gpu.ts, used by gpu.ts.
-export { BAKE_BUDGET, composeFaces, COMPOSE_MAX, cubeBytes, directionFace, FACE_CAP, FACE_MIN, faceDirection, faceSize, faceWords, levelFor as tileLevelFor, reliefNormal, sampleFaces, texelAngle, TILE_SAMPLES, tilesFacing, withFiner } from "./texture-ladder.ts";
-export type { Composite, FacePicture, TileKey } from "./texture-ladder.ts";
+export { BAKE_BUDGET, composeFaces, COMPOSE_MAX, cubeBytes, directionFace, FACE_CAP, FACE_MIN, faceDirection, faceSize, faceWords, levelFor as tileLevelFor, reliefNormal, sampleFaces, texelAngle, TILE_SAMPLES, tilesFacing, withFiner, composePatch, frameAt, patchDirection, patchFor, patchLevel, PATCH_N, PATCH_PX_PER_SAMPLE, PATCH_TILES, samplePatch, tilesNear } from "./texture-ladder.ts";
+export type { Composite, FacePicture, GroundAsk, PatchPicture, TileKey } from "./texture-ladder.ts";

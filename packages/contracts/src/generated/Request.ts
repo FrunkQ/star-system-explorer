@@ -72,14 +72,29 @@ block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[],
  * The setting's range bands (a measure, RK11): each detection's
  * distance and range are labelled with them.
  */
-range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "light_through_gas", passages: unknown[], } | { "op": "effect_at_range", asks: unknown[], } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, } | { "op": "read_field", bodies: unknown[], fixture?: string, 
+range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "light_through_gas", passages: unknown[], } | { "op": "read_bows", items: unknown[], } | { "op": "fog_of_war", seats: unknown[], } | { "op": "read_limb", discs: unknown[], } | { "op": "effect_at_range", asks: unknown[], } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, } | { "op": "read_field", bodies: unknown[], fixture?: string, 
 /**
  * An adopted system: every planet read from its facts, each with a
  * `glance` (what holds off the wind, bubble size, shielded or not,
  * the ground's dose as a share of open space, belt extent, and
  * whether the field is measured, computed, none or unresolved).
  */
-system?: string, at_s?: bigint, } | { "op": "read_composition", system: string, body?: string, level?: string, at_s?: bigint, } | { "op": "read_inventory", system: string, body?: string, kinds?: Array<string>, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "classify_preview", packs: unknown[], scheme: string, scope?: string, at_s?: number, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "ship_at_world", fixture?: string, nav?: unknown, system?: string, at_s?: number, ship: unknown, worlds: Array<string>, v_inf_m_s?: number, } | { "op": "jump_map", fixture?: string, nav?: unknown, system?: string, at_s?: number, rule: unknown, end?: boolean, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, 
+system?: string, at_s?: bigint, } | { "op": "read_composition", system: string, body?: string, level?: string, at_s?: bigint, } | { "op": "small_body", system: string, member?: string, cloud?: string, rank?: bigint, 
+/**
+ * SB4: distance from the star for an icy body's activity, AU
+ * (perihelion when left out).
+ */
+r_au?: number, } | { "op": "make_small_body", system: string, address: string, kind: string, diameter_km?: number, mass_kg?: number, a_au: number, e?: number, } | { "op": "read_inventory", system: string, body?: string, kinds?: Array<string>, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], 
+/**
+ * Cool giants losing mass (`sse_nebula::outflow::GiantInput`): their
+ * dusty shells (O3b).
+ */
+giants?: unknown[], 
+/**
+ * Young stars still accreting (`sse_nebula::outflow::YoungStarInput`):
+ * their jets (O3b).
+ */
+young?: unknown[], } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "classify_preview", packs: unknown[], scheme: string, scope?: string, at_s?: number, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "ship_at_world", fixture?: string, nav?: unknown, system?: string, at_s?: number, ship: unknown, worlds: Array<string>, v_inf_m_s?: number, } | { "op": "jump_map", fixture?: string, nav?: unknown, system?: string, at_s?: number, rule: unknown, end?: boolean, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, 
 /**
  * The system an inline `nav` is, so the view's `frame` can be
  * keyed (needs an open universe); the Sol fixture's is measured.

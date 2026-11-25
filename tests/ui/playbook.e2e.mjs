@@ -2,7 +2,7 @@
 // Usage: node tests/ui/playbook.e2e.mjs [--screens <dir>]
 // The GM bookmarks Vault, goes on air, and on the Switchboard adds the bookmark to the page as a preset. Selecting it
 // shows it in the monitor and sends nothing; its fire button sends it, and the players' screen turns to Vault. Pressed
-// again it takes it back. A Read aloud preset shows its words large in the monitor and sends nothing. Keep on Live
+// again it takes it back. A Read aloud preset shows its words large in the monitor and sends nothing; with "also show on screens" they go on a card over the players' picture. Keep on Live
 // makes a preset from where the GM is. Key 1 fires the first preset. A folded section hides its presets. The Playbook
 // is kept with the campaign: it is all still there after a reload.
 import { spawn } from "node:child_process";
@@ -106,6 +106,19 @@ try {
   await monitor.locator("[data-monitor-done]").click();
   assert.match(await monitor.locator("[data-monitor-say]").innerText(), /ninety seconds/);
   await shot(gm, "playbook-read-aloud");
+  // "Also show on screens" (PB6): the words go on a card over what the players' screen shows; again, they go.
+  await pl.waitForTimeout(500);
+  assert.equal(await pl.locator("[data-say]").count(), 0, "a plain Read aloud sends nothing");
+  await monitor.locator("[data-monitor-edit]").click();
+  await monitor.locator("[data-edit-on-screens]").check();
+  await monitor.locator("[data-monitor-done]").click();
+  assert.equal(await monitor.locator("[data-monitor-fire]").innerText(), "Fire");
+  await monitor.locator("[data-monitor-fire]").click();
+  await pl.locator("[data-say]").waitFor({ timeout: 15000 });
+  assert.match(await pl.locator("[data-say] p").innerText(), /ninety seconds/);
+  await shot(pl, "read-aloud-on-screens");
+  await monitor.locator("[data-monitor-fire]").click();
+  await pl.locator("[data-say]").waitFor({ state: "detached", timeout: 15000 });
   await monitor.locator("[data-monitor-close]").click();
   await monitor.waitFor({ state: "detached" });
 

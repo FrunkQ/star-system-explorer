@@ -42,6 +42,9 @@ mod power_books_tests;
 pub mod protocol;
 mod sea;
 mod sky;
+mod small;
+#[cfg(test)]
+mod small_tests;
 #[cfg(test)]
 mod sol_tests;
 #[cfg(test)]
@@ -3019,7 +3022,18 @@ impl Kernel {
                 planetary,
                 remnants,
                 glows,
-            } => systems::read_nebulae(at_s, seed.as_deref(), deaths, planetary, remnants, glows)?,
+                giants,
+                young,
+            } => systems::read_nebulae(
+                at_s,
+                seed.as_deref(),
+                deaths,
+                planetary,
+                remnants,
+                glows,
+                giants,
+                young,
+            )?,
             Request::SurveyPlanets { survey } => systems::survey_planets(survey)?,
             Request::ReadSpectrum { targets, observer } => {
                 systems::read_spectrum(targets, observer)?
@@ -3031,6 +3045,9 @@ impl Kernel {
             Request::LightThroughGas { passages } => {
                 systems::light_through_gas(passages, &self.observe.reference)?
             }
+            Request::ReadLimb { discs } => systems::read_limb(discs)?,
+            Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
+            Request::ReadBows { items } => systems::read_bows(items)?,
             Request::EffectAtRange { asks } => {
                 systems::effect_at_range(asks, &self.observe.reference)?
             }
@@ -3123,6 +3140,59 @@ impl Kernel {
                     at_s,
                     u.runs.get(&system),
                     &self.observe.reference,
+                )?
+            }
+            Request::SmallBody {
+                system,
+                member,
+                cloud,
+                rank,
+                r_au,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &system)?;
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                small::read(
+                    u.runs.get(&system),
+                    member.as_deref(),
+                    cloud.as_deref(),
+                    rank,
+                    r_au,
+                )?
+            }
+            Request::MakeSmallBody {
+                system,
+                address,
+                kind,
+                diameter_km,
+                mass_kg,
+                a_au,
+                e,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &system)?;
+                in_universe(&u.root, &address)?;
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                small::make(
+                    u.runs.get(&system),
+                    small::Make {
+                        address: &address,
+                        kind: &kind,
+                        diameter_km,
+                        mass_kg,
+                        a_au,
+                        e,
+                    },
                 )?
             }
             Request::ReadInventory {

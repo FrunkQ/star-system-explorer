@@ -396,7 +396,7 @@
     if (kept !== undefined) return void show(kept);
     let live = true;
     const num = (k: string) => Number(star?.facts.find((x) => x.field === k)?.value);
-    void readLiveStar(ctx.session as unknown as StarReader, sys, a, { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") }).then((r) => {
+    void readLiveStar(ctx.session as unknown as StarReader, sys, a, { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") }, "system").then((r) => {
       liveStars.set(key, r);
       if (live) show(r);
     });

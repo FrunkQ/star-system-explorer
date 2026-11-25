@@ -44,42 +44,72 @@
             "name": "Iron K-alpha 6.4 keV",
             "species": "Fe",
             "at_m": 1.9373e-10,
-            "medium": "vacuum"
+            "medium": "vacuum",
+            "matter": "fe"
           },
           {
             "id": "lya",
             "name": "Lyman-alpha 121.6 nm",
             "species": "H I",
             "at_m": 1.21567e-07,
-            "medium": "vacuum"
+            "medium": "vacuum",
+            "matter": "h",
+            "aurora": {
+              "lifetime_s": 1.6e-09,
+              "from": [
+                {
+                  "matter": "h2",
+                  "yield": 0.02
+                },
+                {
+                  "matter": "h",
+                  "yield": 0.1
+                }
+              ],
+              "source": "Giants' ultraviolet aurorae are H2 bands and Lyman-alpha (Ingersoll et al. 1998, Icarus 135, 251, doi:10.1006/icar.1998.5971); yields authored (fudge register F59)."
+            }
           },
           {
             "id": "oii",
             "name": "[O II] 372.7 nm (doublet)",
             "species": "O II",
             "at_m": 3.7274e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "o"
           },
           {
             "id": "n2p",
             "name": "N2+ 391.4 nm (aurora)",
             "species": "N2+",
             "at_m": 3.9144e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "n2",
+            "aurora": {
+              "lifetime_s": 6.6e-08,
+              "from": [
+                {
+                  "matter": "n2",
+                  "yield": 0.0046
+                }
+              ],
+              "source": "N2+ first negative, prompt (about 1e-8 s; Whiter et al. 2023, doi:10.5194/angeo-41-1-2023); 391.4 nm is about 3.3 times 427.8 nm in photons, from Earth yields per energy: about 1 kR of 557.7 nm and 200 R of 427.8 nm per erg cm⁻² s⁻¹ of electrons (Rees and Luckey 1974, J. Geophys. Res. 79, 5181, doi:10.1029/JA079i034p05181), divided by oxygen's or nitrogen's share of the air near 110 km"
+            }
           },
           {
             "id": "ca-k",
             "name": "Calcium K 393.4 nm (Fraunhofer K)",
             "species": "Ca II",
             "at_m": 3.93366e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "ca"
           },
           {
             "id": "ca-h",
             "name": "Calcium H 396.8 nm (Fraunhofer H)",
             "species": "Ca II",
             "at_m": 3.96847e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "ca"
           },
           {
             "id": "ch-g",
@@ -93,112 +123,186 @@
             "name": "H-gamma 434.0 nm",
             "species": "H I",
             "at_m": 4.34047e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "h"
           },
           {
             "id": "heii",
             "name": "He II 468.6 nm",
             "species": "He II",
             "at_m": 4.68568e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "he"
           },
           {
             "id": "hb",
             "name": "H-beta 486.1 nm",
             "species": "H I",
             "at_m": 4.86133e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "h",
+            "aurora": {
+              "lifetime_s": 1e-08,
+              "from": [
+                {
+                  "matter": "h2",
+                  "yield": 0.00015
+                },
+                {
+                  "matter": "h",
+                  "yield": 0.0015
+                }
+              ],
+              "source": "Balmer series with H-alpha (Dyudina et al. 2016, doi:10.1016/j.icarus.2015.05.022); yields authored, about a quarter of H-alpha's (fudge register F59)."
+            }
           },
           {
             "id": "oiii-4959",
             "name": "[O III] 495.9 nm",
             "species": "O III",
             "at_m": 4.95891e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "o"
           },
           {
             "id": "oiii",
             "name": "[O III] 500.7 nm",
             "species": "O III",
             "at_m": 5.00684e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "o"
           },
           {
             "id": "mg-b",
             "name": "Magnesium b 517.3 nm (Fraunhofer b)",
             "species": "Mg I",
             "at_m": 5.17268e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "mg"
           },
           {
             "id": "fe-e",
             "name": "Iron E 527.0 nm (Fraunhofer E)",
             "species": "Fe I",
             "at_m": 5.27039e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "fe"
           },
           {
             "id": "oi-5577",
             "name": "[O I] 557.7 nm (green aurora, airglow)",
             "species": "O I",
             "at_m": 5.57734e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "o",
+            "aurora": {
+              "lifetime_s": 0.74,
+              "quench_m3_s": 4e-20,
+              "from": [
+                {
+                  "matter": "o",
+                  "yield": 0.033
+                },
+                {
+                  "matter": "co2",
+                  "yield": 0.005
+                }
+              ],
+              "source": "Kawamura et al. 2020, Earth Planets Space 72, doi:10.1186/s40623-020-01229-8 (lifetime 0.7 s, 100 to 115 km); Earth yields per energy: about 1 kR of 557.7 nm and 200 R of 427.8 nm per erg cm⁻² s⁻¹ of electrons (Rees and Luckey 1974, J. Geophys. Res. 79, 5181, doi:10.1029/JA079i034p05181), divided by oxygen's or nitrogen's share of the air near 110 km; quenching mainly by O2, effective against the whole air, set so the line is not put out at its measured height; the carbon dioxide yield is authored (Mars's green aurora, Knutsen et al. 2025, doi:10.1126/sciadv.ads1563, has no measured yield). Fudge register F59."
+            }
           },
           {
             "id": "hei",
             "name": "He I 587.6 nm",
             "species": "He I",
             "at_m": 5.87562e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "he"
           },
           {
             "id": "na-d",
             "name": "Sodium D 589.3 nm (doublet; sodium lamps)",
             "species": "Na I",
             "at_m": 5.8929e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "na"
           },
           {
             "id": "oi-6300",
             "name": "[O I] 630.0 nm (red aurora)",
             "species": "O I",
             "at_m": 6.3003e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "o",
+            "aurora": {
+              "lifetime_s": 110.0,
+              "quench_m3_s": 2e-17,
+              "from": [
+                {
+                  "matter": "o",
+                  "yield": 0.15
+                },
+                {
+                  "matter": "co2",
+                  "yield": 0.02
+                }
+              ],
+              "source": "Lifetime about 110 s (Kawamura et al. 2020, doi:10.1186/s40623-020-01229-8; Kalogerakis et al. 2009, doi:10.5194/angeo-27-2183-2009); quenching by N2, about 2e-11 cm³ s⁻¹ (Streit et al. 1976, J. Chem. Phys. 65, 4761, doi:10.1063/1.432930); yields authored (fudge register F59)."
+            }
           },
           {
             "id": "nii-6548",
             "name": "[N II] 654.8 nm",
             "species": "N II",
             "at_m": 6.54805e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "n"
           },
           {
             "id": "ha",
             "name": "H-alpha 656.3 nm",
             "species": "H I",
             "at_m": 6.56281e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "h",
+            "aurora": {
+              "lifetime_s": 1e-08,
+              "from": [
+                {
+                  "matter": "h2",
+                  "yield": 0.0006
+                },
+                {
+                  "matter": "h",
+                  "yield": 0.006
+                }
+              ],
+              "source": "Saturn's aurora shows a strong H-alpha line (Dyudina et al. 2016, Icarus 263, 32, doi:10.1016/j.icarus.2015.05.022); prompt; yields authored, no measured visible yield (fudge register F59)."
+            }
           },
           {
             "id": "nii",
             "name": "[N II] 658.4 nm",
             "species": "N II",
             "at_m": 6.58345e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "n"
           },
           {
             "id": "sii",
             "name": "[S II] 671.6 nm",
             "species": "S II",
             "at_m": 6.71644e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "s"
           },
           {
             "id": "sii-6731",
             "name": "[S II] 673.1 nm",
             "species": "S II",
             "at_m": 6.73082e-07,
-            "medium": "air"
+            "medium": "air",
+            "matter": "s"
           },
           {
             "id": "tio-7054",
@@ -212,14 +316,16 @@
             "name": "Carbon monoxide J=1-0 2.6 mm (115.27 GHz)",
             "species": "CO",
             "at_m": 0.002600757,
-            "medium": "vacuum"
+            "medium": "vacuum",
+            "matter": "co"
           },
           {
             "id": "hi-21",
             "name": "Neutral hydrogen 21 cm (1420.41 MHz)",
             "species": "H I",
             "at_m": 0.21106114,
-            "medium": "vacuum"
+            "medium": "vacuum",
+            "matter": "h"
           }
         ],
         "grid": {
@@ -626,6 +732,92 @@
             "IEC 61966-2-1:1999, Default RGB colour space, sRGB, section 5.2 (XYZ to linear sRGB, D65) https://webstore.iec.ch/publication/6169"
           ]
         }
+      },
+      "sensing": {
+        "about": "Default sensor fits (RK14, Atomic Rockets plan section 17.2 point 2): every craft gets a passive set for free, by tech and size, so fog of war works with no setup. A fit is a list of instruments whose aperture grows with the hull (a share of its length, between a floor and a cap). Authored stand-ins, modelled on flown instruments; a pack or the GM fits better ones.",
+        "default_fits": [
+          {
+            "tech": "today",
+            "note": "Instruments of the kind flown now: a visible camera (Rosetta OSIRIS-class), a cooled mid-infrared telescope (WISE-class), a soft X-ray monitor and a radio receiver. The two telescopes look out through the zodiacal light at 1 au.",
+            "sources": [
+              "Wright, E. L. et al. 2010, The Wide-field Infrared Survey Explorer (WISE), AJ 140, 1868. doi:10.1088/0004-6256/140/6/1868",
+              "Keller, H. U. et al. 2007, OSIRIS, the scientific camera system onboard Rosetta, Space Sci. Rev. 128, 433. doi:10.1007/s11214-006-9128-4",
+              "Leinert, C. et al. 1998, The 1997 reference of diffuse night sky brightness, A&AS 127, 1: the zodiacal light near the ecliptic at 1 au, about 23 V mag per square arcsecond (5e-7 W m-2 sr-1 over 400 to 900 nm) and in the mid infrared the glow of 280 K dust of optical depth about 1e-7 (8e-6 W m-2 sr-1 over 3 to 25 um). doi:10.1051/aas:1998105"
+            ],
+            "instruments": [
+              {
+                "aperture_share": 0.01,
+                "aperture_min_m": 0.1,
+                "aperture_max_m": 1.0,
+                "sensor": {
+                  "name": "visible camera",
+                  "kind": "photon",
+                  "from_m": 4e-07,
+                  "to_m": 9e-07,
+                  "aperture_m": 0.1,
+                  "efficiency": 0.5,
+                  "dark_photons_s": 1.0,
+                  "threshold_snr": 5.0,
+                  "stare_s": 60.0,
+                  "method": "image",
+                  "background_w_m2_sr": 5e-07
+                }
+              },
+              {
+                "aperture_share": 0.01,
+                "aperture_min_m": 0.1,
+                "aperture_max_m": 0.4,
+                "sensor": {
+                  "name": "infrared telescope",
+                  "kind": "photon",
+                  "from_m": 3e-06,
+                  "to_m": 2.5e-05,
+                  "aperture_m": 0.1,
+                  "efficiency": 0.5,
+                  "dark_photons_s": 10.0,
+                  "threshold_snr": 5.0,
+                  "stare_s": 60.0,
+                  "method": "image",
+                  "background_w_m2_sr": 8e-06
+                }
+              },
+              {
+                "aperture_share": 0.0,
+                "aperture_min_m": 0.1,
+                "aperture_max_m": 0.1,
+                "sensor": {
+                  "name": "X-ray monitor",
+                  "kind": "photon",
+                  "from_m": 1e-10,
+                  "to_m": 1e-08,
+                  "aperture_m": 0.1,
+                  "efficiency": 0.3,
+                  "dark_photons_s": 0.1,
+                  "threshold_snr": 5.0,
+                  "stare_s": 60.0,
+                  "method": "image"
+                }
+              },
+              {
+                "aperture_share": 0.05,
+                "aperture_min_m": 0.5,
+                "aperture_max_m": 5.0,
+                "sensor": {
+                  "name": "radio receiver",
+                  "kind": "radio",
+                  "from_m": 0.01,
+                  "to_m": 0.3,
+                  "aperture_m": 0.5,
+                  "efficiency": 0.6,
+                  "system_temperature_k": 50.0,
+                  "threshold_snr": 5.0,
+                  "stare_s": 60.0,
+                  "method": "image"
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     "units": [

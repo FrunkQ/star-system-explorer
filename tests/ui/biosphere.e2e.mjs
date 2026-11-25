@@ -82,7 +82,17 @@ try {
     const stage = bio.locator("[data-stage-card=innovations]");
     await stage.waitFor();
     assert.ok(Number(await stage.locator("[data-stage-events]").getAttribute("data-stage-events")) >= 5, "its dated inventions");
-    assert.equal(await stage.locator("input[data-dial=oxygenic]").isDisabled(), true, "dials are read only until the kernel takes them");
+    // The knobs: a what-if when the kernel's life_view takes dials, read only (and saying so) when it does not yet.
+    const live = stage.locator("[data-dials-live]:not([data-dials-live=asking])");
+    await live.waitFor();
+    if ((await live.getAttribute("data-dials-live")) === "true") {
+      await stage.locator("input[data-dial=oxygenic]").fill("2.5");
+      await bio.locator("[data-whatif]").waitFor();
+      assert.match(await bio.locator("[data-whatif]").innerText(), /nothing in the campaign changes/);
+      await shot(gm, "u7-board-whatif");
+      await bio.locator("[data-whatif-back]").click();
+      await bio.locator("[data-whatif]").waitFor({ state: "detached" });
+    } else assert.equal(await stage.locator("input[data-dial=oxygenic]").isDisabled(), true, "dials are read only until the kernel takes them");
     await bio.locator("g[data-stage=origin]").press("Enter");
     await bio.locator("[data-stage-card=origin] input[data-dial=origin]").waitFor();
     await shot(gm, "u7-board");
