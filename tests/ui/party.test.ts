@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { IN_SYSTEM_SHIPS, labelLanes } from "../../packages/ui-contract/src/voyage.ts";
 import { shipChoices } from "../../packages/ui-contract/src/route.ts";
-import { navShipOf, partyLander, voyageStart, voyageLogEntries, voyageFuelWrites, type PartyShip } from "../../packages/ui-contract/src/party.ts";
+import { navShipOf, partyLander, voyageStart, voyageLogEntries, voyageFuelWrites, travelPens, type PartyShip } from "../../packages/ui-contract/src/party.ts";
 import { FUEL_FIELDS, fuelGauges, fuelNow, shipRecordOf, type FuelShip } from "../../packages/ui-contract/src/manifest.ts";
 import { Session } from "../../packages/ui-contract/src/session.ts";
 import { gmSeat, tableSeat } from "../../packages/ui-contract/src/seat.ts";
@@ -142,4 +142,24 @@ test("the party ship flies on what is in its tanks, and the voyage draws them do
   } finally {
     await k.close();
   }
+});
+
+test("travel pens: each place's landmark for the table, and the links the table is not shown", async () => {
+  const known = (address: string, landmark: string) => ({ address, at_s: 0, audiences: [{ audience: "everyone", label: "Everyone", rung: "r", rung_label: "R", landmark, top: false, exceptions: [], cover: [] }] });
+  const session = {
+    async knownTo(a: string) {
+      if (a === "x/lost") return { ok: false as const, code: "bad_address", message: "no" };
+      return { ok: true as const, value: known(a, a === "x/ember" ? "gm_only" : a === "x/tarn" ? "heard_of" : "known") as never };
+    },
+    async linksIn(ask: { audience?: string } = {}) {
+      return { ok: true as const, links: ask.audience === "everyone" ? [{ id: "lane" }] : [{ id: "lane" }, { id: "secret-gate" }] };
+    },
+  };
+  const r = await travelPens(session, ["x/ember", "x/tarn", "x/home", "x/lost", "x/ember"], true);
+  assert.equal(r.places.get("x/ember"), "gm_only");
+  assert.equal(r.places.get("x/tarn"), "heard_of");
+  assert.equal(r.places.get("x/home"), "known");
+  assert.equal(r.places.has("x/lost"), false, "a place the kernel cannot answer for is left to ink");
+  assert.deepEqual([...r.unknownLinks], ["secret-gate"]);
+  assert.equal((await travelPens(session, ["x/home"])).unknownLinks.size, 0, "links are asked only when wanted");
 });

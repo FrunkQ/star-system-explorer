@@ -6,8 +6,9 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { SECTOR_FORMATS, fetchMetadata, fetchSector, placeHash, viewOptions, DEFAULT_VIEW, type Json, type SectorFormat, type SectorImported, type SectorMap, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { opensFrom } from "../../../chart-grammar/src/index.ts";
+  import { SECTOR_FORMATS, fetchMetadata, fetchSector, travelPens, placeHash, viewOptions, DEFAULT_VIEW, type Json, type SectorFormat, type SectorImported, type SectorMap, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { opensFrom, penOf } from "../../../chart-grammar/src/index.ts";
+  import { blockHexes, label as hexLabel } from "../../hex-map/src/grid.ts";
   import HexMap from "../../hex-map/src/HexMap.svelte";
   import WorldCodes from "../../world-codes/src/WorldCodes.svelte";
   import { sift } from "../../hex-map/src/sift.ts";
@@ -63,7 +64,30 @@
     const s = config?.sifters?.find((x) => x.id === sifter);
     return s ? new Set(sift(s, worlds)) : null;
   });
-  const scene = $derived(config ? sceneOf(config, sifted ? worlds.filter((w) => sifted.has(w.hex)) : worlds, { ...(block !== undefined ? { block } : {}), ...(selected ? { selected, range: reach } : {}), title: map?.worlds[0]?.sector || "Sector" }) : null);
+  // Pencil and ink (SV3): on the GM's Build and Run desks a world the table does not know is drawn in pencil. Only the
+  // shown block's worlds are asked about.
+  let pens = $state.raw<Record<string, "ink" | "heard" | "pencil">>({});
+  let pensGen = 0;
+  $effect(() => {
+    void ws.revision;
+    const gmDesk = gm && (ws.desk === "build" || ws.desk === "run");
+    const shown = config && block !== undefined ? new Set(blockHexes(config.grid, block).map((h) => hexLabel(config.grid, h))) : null;
+    const asked = worlds.filter((w) => w.address && (!shown || shown.has(w.hex)));
+    const g = ++pensGen;
+    if (!gmDesk || !asked.length) return void (pens = {});
+    untrack(() =>
+      void travelPens(session, asked.map((w) => w.address!)).then((r) => {
+        if (g !== pensGen) return;
+        const out: Record<string, "ink" | "heard" | "pencil"> = {};
+        for (const w of asked) {
+          const l = r.places.get(w.address!);
+          if (l && l !== "known") out[w.hex] = penOf(l);
+        }
+        pens = out;
+      }),
+    );
+  });
+  const scene = $derived(config ? { ...sceneOf(config, sifted ? worlds.filter((w) => sifted.has(w.hex)) : worlds, { ...(block !== undefined ? { block } : {}), ...(selected ? { selected, range: reach } : {}), title: map?.worlds[0]?.sector || "Sector" }), pens } : null);
   const row = $derived(map?.worlds.find((w) => w.hex === selected) ?? null);
 
   // The picked world's sheet, read for its own body with the system as context.

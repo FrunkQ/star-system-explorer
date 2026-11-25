@@ -18,4 +18,6 @@ export interface HexScene {
   block?: number;
   /** Words for the title line. */
   title?: string;
+  /** Pencil and ink (SV3), by hex: a world the table does not know ("pencil") or has only heard of ("heard"); absent is ink. The GM's chart only. */
+  pens?: Record<string, "ink" | "heard" | "pencil">;
 }

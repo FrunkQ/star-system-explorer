@@ -2,6 +2,7 @@
   import type { HexScene } from "./scene.ts";
   import { blockHexes, centre, corners, extent, label, parse, within } from "./grid.ts";
   import { marksFor, SPOTS } from "./glyphs.ts";
+  import { Pencilled, penStyle } from "../../../chart-grammar/src/index.ts";
 
   // `hud` (the shared view controls' HUD, V10a): off leaves the grid and each world's own mark; hex numbers, names, zones, bases, ports and the reach are the HUD.
   let { scene, params, onpick, hud = true }: { scene: HexScene; params: Record<string, unknown>; onpick?: (hex: string) => void; hud?: boolean } = $props();
@@ -58,6 +59,8 @@
         <polygon points={corners(p, size)} role="button" tabindex="-1" aria-label="hex {l}" onclick={() => onpick?.(l)} onkeydown={(e) => { if (e.key === "Enter") onpick?.(l); }} />
         {#if hud}<text class="num" x={p.x} y={p.y - size * 0.62}>{l}</text>{/if}
         {#if w}
+          {@const pen = scene.pens?.[l] ?? "ink"}
+          <Pencilled {pen} cx={p.x} cy={p.y} r={size * 0.45}>
           {#each marksFor(w, scene.config.glyphs).filter((m) => hud || (m.text === undefined && plain(m.mark))) as m}
             {@const [dx, dy] = SPOTS[m.at] ?? [0, 0]}
             {#if m.at === "ring"}
@@ -68,7 +71,8 @@
               <use class="mark tone-{m.tone}" href="#hm-{m.mark}" x={p.x + dx * size} y={p.y + dy * size} />
             {/if}
           {/each}
-          {#if hud}<text class="name" x={p.x} y={p.y + size * 0.78}>{String(w.fields[scene.config.glyphs.label_field] ?? w.name)}</text>{/if}
+          </Pencilled>
+          {#if hud}<text class="name" x={p.x} y={p.y + size * 0.78} style={penStyle(pen, "name") || undefined}>{String(w.fields[scene.config.glyphs.label_field] ?? w.name)}</text>{/if}
         {/if}
       </g>
     {/each}

@@ -4,6 +4,7 @@
 // as the lander, flown on its own numbers (plan_descent `{ship}`). Kept with
 // the campaign save. Where it is will move to the construct's flight log in
 // the record; until then `at` is the table's own note of it.
+import { tableLandmarks, type Landmark as KnownLandmark } from "./known.ts";
 import type { Json } from "./json.ts";
 import { constant } from "./sheet.ts";
 import { FUEL_FIELDS, fuelNow, shipRecordOf, tonnesWords, type FuelShip } from "./manifest.ts";
@@ -137,4 +138,27 @@ export function voyageFuelWrites(
 export function tanksWords(writes: readonly { kind: string; value: number }[]): string | null {
   if (!writes.length) return null;
   return `Tanks now: ${writes.map((w) => `${w.kind === FUEL_FIELDS.jump ? "jump fuel" : "reaction mass"} ${tonnesWords(w.value)}`).join(", ")}.`;
+}
+
+/**
+ * Pencil and ink on the travel screens (SV3): what the table knows of the places and links a voyage shows, for the
+ * GM's chart. `places` holds each place's landmark (a place the kernel cannot answer for is left out: drawn in ink).
+ * `unknownLinks` holds the ids of links the GM's record holds that the table ("everyone") is not shown. Players never
+ * ask: their screens show only what they know.
+ */
+export async function travelPens(
+  session: Parameters<typeof tableLandmarks>[0] & { linksIn?(ask?: { audience?: string }): Promise<{ ok: true; links: { id: string }[] } | { ok: false; code: string; message: string }> },
+  places: readonly string[],
+  withLinks = false,
+): Promise<{ places: Map<string, KnownLandmark>; unknownLinks: Set<string> }> {
+  const marks = await tableLandmarks(session, places);
+  const unknownLinks = new Set<string>();
+  if (withLinks && session.linksIn) {
+    const [all, table] = await Promise.all([session.linksIn(), session.linksIn({ audience: "everyone" })]);
+    if (all.ok && table.ok) {
+      const seen = new Set(table.links.map((l) => l.id));
+      for (const l of all.links) if (!seen.has(l.id)) unknownLinks.add(l.id);
+    }
+  }
+  return { places: marks, unknownLinks };
 }

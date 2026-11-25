@@ -68,6 +68,8 @@ export interface VoyageLeg {
   refuel?: string;
   jump_fuel_left_t: number;
   propellant_left_t: number;
+  /** The record's link (HW1) the leg runs along or through, by id. */
+  link?: string;
   words: string;
 }
 

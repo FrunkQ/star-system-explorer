@@ -10,8 +10,8 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { Overlays } from "../../../chart-grammar/src/index.ts";
-  import { MINIMISE_WORDS, VOYAGE_CONTROLS, DEFAULT_VIEW, overlaysFor, overlaySpecsOf, viewOptions, VOYAGE_SHIPS, shipChoices, shipToSend, agesWords, systemShort, voyageFrame, voyageSpan, powerWords, nowhereWords, withPartyChoice, partyShipNow, systemOfPlace, voyageLogEntries, voyageFuelWrites, tanksWords, fuelGauges, FUEL_FIELDS, PARTY_CHOICE, YEAR_S, type FuelShip, type NavShip, type Json, type Minimise, type StarCell, type SystemScene, type ViewContext, type VoyagePlan } from "../../../ui-contract/src/index.ts";
+  import { Overlays, Pencilled, penOf, penStyle, type Pen } from "../../../chart-grammar/src/index.ts";
+  import { MINIMISE_WORDS, VOYAGE_CONTROLS, DEFAULT_VIEW, overlaysFor, overlaySpecsOf, viewOptions, VOYAGE_SHIPS, shipChoices, shipToSend, agesWords, systemShort, voyageFrame, voyageSpan, powerWords, nowhereWords, withPartyChoice, partyShipNow, travelPens, systemOfPlace, voyageLogEntries, voyageFuelWrites, tanksWords, fuelGauges, FUEL_FIELDS, PARTY_CHOICE, YEAR_S, type FuelShip, type NavShip, type Json, type Minimise, type StarCell, type SystemScene, type ViewContext, type VoyagePlan } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   // The party's ship (landing run-through): picked first when the campaign has one; it flies from the system it is in.
@@ -118,6 +118,29 @@
   const H = 400;
   const frame = $derived(voyageFrame(W, H, stars.map((s) => s.xyz_pc)));
   const posOf = (a: string) => stars.find((s) => s.address === a)?.xyz_pc;
+  // Pencil and ink (SV3): on the GM's Build and Run desks a star the table does not know, and a leg that reaches one or
+  // runs along a link the table is not shown, are drawn in pencil. Only the voyage's own stars are asked about.
+  let pens = $state.raw<Map<string, Pen>>(new Map());
+  let hiddenLinks = $state.raw<Set<string>>(new Set());
+  let pensGen = 0;
+  $effect(() => {
+    const addrs = [...new Set([from, picked, ...(v?.legs ?? []).flatMap((l) => [l.from, l.to])].filter((a) => !!a))];
+    void ctx.workspace.revision;
+    const gmDesk = gm && (ctx.workspace.desk === "build" || ctx.workspace.desk === "run");
+    const g = ++pensGen;
+    if (!gmDesk || !addrs.length) return void ((pens = new Map()), (hiddenLinks = new Set()));
+    const withLinks = (v?.legs ?? []).some((l) => !!l.link);
+    untrack(() =>
+      void travelPens(ctx.session, addrs, withLinks).then((r) => {
+        if (g !== pensGen) return;
+        pens = new Map([...r.places].map(([a, l]) => [a, penOf(l)]));
+        hiddenLinks = r.unknownLinks;
+      }),
+    );
+  });
+  const penAt = (a: string): Pen => pens.get(a) ?? "ink";
+  const legPen = (l: { from: string; to: string; link?: string }): Pen =>
+    penAt(l.from) === "pencil" || penAt(l.to) === "pencil" || (l.link && hiddenLinks.has(l.link)) ? "pencil" : penAt(l.from) === "heard" || penAt(l.to) === "heard" ? "heard" : "ink";
   const legs = $derived(
     (v?.legs ?? []).flatMap((l) => {
       const a = posOf(l.from);
@@ -237,13 +260,14 @@
       {#if overlays.length}<Overlays {overlays} at={frame.at} scale={frame.scale} />{/if}
       {#if trail.length > 1}<polyline class="trail" points={trail.map((p) => `${p.x},${p.y}`).join(" ")} />{/if}
       {#each legs as g, i (i)}
-        <line class="leg" class:jump={g.l.means === "jump"} class:gamble={g.l.gamble} x1={g.a.x} y1={g.a.y} x2={g.b.x} y2={g.b.y} />
+        <line class="leg" class:jump={g.l.means === "jump"} class:gamble={g.l.gamble} x1={g.a.x} y1={g.a.y} x2={g.b.x} y2={g.b.y} data-pen={legPen(g.l)} style={penStyle(legPen(g.l), "line") || undefined} />
       {/each}
       {#each stars as s (s.address)}
         {@const p = frame.at(s.xyz_pc)}
+        {@const r = s.address === from || (v && s.address === v.to) ? 4 : 2.4}
         <g class="star" class:home={s.address === home} class:here={s.address === from} class:dest={v && s.address === v.to} class:seen={visited.includes(s.address)} class:picked={s.address === picked}>
           {#if s.fuel.length}<circle class="fuel" cx={p.x} cy={p.y} r="6" />{/if}
-          <circle class="dot" cx={p.x} cy={p.y} r={s.address === from || (v && s.address === v.to) ? 4 : 2.4} />
+          <Pencilled pen={penAt(s.address)} cx={p.x} cy={p.y} {r}><circle class="dot" cx={p.x} cy={p.y} {r} /></Pencilled>
           <circle class="hit" role="button" tabindex="-1" aria-label={name(s.address)} data-star={s.address} cx={p.x} cy={p.y} r="8" onclick={() => pick(s.address)} onkeydown={(e) => e.key === "Enter" && pick(s.address)} />
         </g>
       {/each}
@@ -287,8 +311,8 @@
         <h4>Legs</h4>
         <ol class="legs">
           {#each v.legs as l, i (i)}
-            <li data-leg={l.means}>
-              <span>{l.words}.</span>
+            <li data-leg={l.means} data-pen={legPen(l)}>
+              <span style={penStyle(legPen(l), "name") || undefined}>{l.words}.</span>
               <span class="muted"> Left on arrival: {l.means === "jump" ? `${l.jump_fuel_left_t.toFixed(0)} t of jump fuel` : `${l.propellant_left_t.toFixed(0)} t of propellant`}.</span>
             </li>
           {/each}

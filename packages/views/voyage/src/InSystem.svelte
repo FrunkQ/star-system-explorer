@@ -9,8 +9,9 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, voyageLogEntries, voyageFuelWrites, tanksWords, withPartyChoice, partyShipNow, FUEL_FIELDS, fuelGauges, type FuelShip, type NavShip, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, labelLanes, placeHash, voyageStart, voyageLogEntries, voyageFuelWrites, tanksWords, withPartyChoice, partyShipNow, travelPens, FUEL_FIELDS, fuelGauges, type FuelShip, type NavShip, shipChoices, shipToSend, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
   import AtWorld from "./AtWorld.svelte";
+  import { Pencilled, penOf, penStyle, type Pen } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   // The party's ship (landing run-through): picked first when the campaign has one; it flies from where it is.
@@ -129,6 +130,24 @@
   const v = $derived(plan?.voyage ?? null);
   // The ship's power books (RK9): on the GM's seat only, beside the honesty marks.
   const places = $derived(plan?.places ?? []);
+  // Pencil and ink (SV3): on the GM's Build and Run desks a world the table does not know is drawn in pencil, and so
+  // are the legs that reach it. Players never see pencil: their screens hold only what they know.
+  let pens = $state.raw<Map<string, Pen>>(new Map());
+  let pensGen = 0;
+  $effect(() => {
+    const addrs = places.map((p) => p.address);
+    void ctx.workspace.revision;
+    const gmDesk = gm && (ctx.workspace.desk === "build" || ctx.workspace.desk === "run");
+    const g = ++pensGen;
+    if (!gmDesk || !addrs.length) return void (pens = new Map());
+    untrack(() =>
+      void travelPens(ctx.session, addrs).then((r) => {
+        if (g === pensGen) pens = new Map([...r.places].map(([a, l]) => [a, penOf(l)]));
+      }),
+    );
+  });
+  const penAt = (a: string): Pen => pens.get(a) ?? "ink";
+  const legPen = (from: string, to: string): Pen => (penAt(from) === "pencil" || penAt(to) === "pencil" ? "pencil" : penAt(from) === "heard" || penAt(to) === "heard" ? "heard" : "ink");
   const W = 640;
   const H = 232;
   const AXIS_Y = 160;
@@ -255,13 +274,14 @@
     {#each places.filter((p) => p.belt) as p (p.address)}
       <rect class="belt" x={x(p.a_au) - 10} y={AXIS_Y - 6} width="20" height="12" rx="6" />
     {/each}
-    {#each arcs as a (a.i)}<path class="arc" d={a.d} />{/each}
+    {#each arcs as a (a.i)}<path class="arc" d={a.d} data-pen={legPen(a.l.from, a.l.to)} style={penStyle(legPen(a.l.from, a.l.to), "line") || undefined} />{/each}
     {#each places as p, i (p.address)}
       {@const px = x(p.a_au)}
+      {@const r = p.address === from || (v && p.address === v.to) ? 5 : 3}
       <g class="place" class:here={p.address === from} class:dest={v && p.address === v.to} class:seen={visited.includes(p.address)}>
         {#if p.fuel.length}<circle class="fuel" cx={px} cy={AXIS_Y} r="8" />{/if}
-        <circle class="dot" cx={px} cy={AXIS_Y} r={p.address === from || (v && p.address === v.to) ? 5 : 3} />
-        {#if lanes[i] !== null && lanes[i] !== undefined}<text x={px} y={AXIS_Y + 22 + lanes[i]! * 13} text-anchor="middle" data-label-lane={lanes[i]}>{p.name}</text>{/if}
+        <Pencilled pen={penAt(p.address)} cx={px} cy={AXIS_Y} {r}><circle class="dot" cx={px} cy={AXIS_Y} {r} /></Pencilled>
+        {#if lanes[i] !== null && lanes[i] !== undefined}<text x={px} y={AXIS_Y + 22 + lanes[i]! * 13} text-anchor="middle" data-label-lane={lanes[i]} style={penStyle(penAt(p.address), "name") || undefined}>{p.name}</text>{/if}
         <title>{p.name}</title>
         <circle class="hit" role="button" tabindex="-1" aria-label={p.name} data-place={p.address} cx={px} cy={AXIS_Y} r="12" onclick={() => pick(p.address)} onkeydown={(e) => e.key === "Enter" && pick(p.address)} />
       </g>
