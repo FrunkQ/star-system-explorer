@@ -17,20 +17,26 @@ import { runOrac } from "../src/orac.ts";
 import { ATLAS_PACK, atlasEntries, atlasPackKeep, editionTarget, kitTarget, noteSetTarget, type AtlasDocs, type AtlasHost, type AtlasKind } from "../src/orac-atlas.ts";
 // @ts-expect-error plain JS test helper
 import { mockProvider } from "./mock-provider.mjs";
+import { partsOf } from "../../ui-contract/src/atlas/index.ts";
+import { ATLAS_CONTROLS } from "../../views/atlas/src/controls.ts";
+import { CARD_CONTROLS, CHART_CONTROLS, TABLE_CONTROLS } from "../../views/player-stack/src/schemas.ts";
 
 const root = new URL("../../../", import.meta.url);
 const json = (p: string) => JSON.parse(readFileSync(new URL(p, root), "utf8"));
 const before: PlayerScene = json("tests/fixtures/observe/tarn-before.json");
 const after: PlayerScene = json("tests/fixtures/observe/tarn-after.json");
 const VOCABS: Record<string, Vocab> = { plain: json("packages/shell/src/documents/vocab.plain.json"), guide: json("packages/shell/src/documents/vocab.guide.json") };
+// The parts as they declare their controls (AT13, as in tests/ui/kit-parts.test.ts), plus a GM-only part to prove it is refused.
 const PARTS: PartInfo[] = [
-  { id: "sse.view.atlas", controls: ["contents", "step", "edition", "print", "links"] },
-  { id: "sse.view.chart", controls: ["view_style", "seen_from", "scale", "hud", "band", "turn", "select", "menu"] },
-  { id: "sse.view.system-3d", controls: ["view_style", "seen_from", "scale", "hud", "band", "turn", "select", "menu"] },
-  { id: "sse.view.card", controls: ["open", "why", "depth"] },
-  { id: "sse.view.table", controls: ["sort", "filter"] },
-  { id: "sse.view.readout", controls: [] },
-  { id: "sse.view.text", controls: [] },
+  ...partsOf([
+    { id: "sse.view.atlas", switchable: ATLAS_CONTROLS },
+    { id: "sse.view.chart", switchable: CHART_CONTROLS },
+    { id: "sse.view.card", switchable: CARD_CONTROLS },
+    { id: "sse.view.table", switchable: TABLE_CONTROLS },
+    { id: "sse.view.system-3d", switchable: [{ id: "turn", words: "Turn", kind: "dial", default: true }] },
+    { id: "sse.view.text" },
+    { id: "sse.view.readout" },
+  ]),
   { id: "sse.view.flow-editor", controls: [], gm_only: true },
 ];
 const made = { kind: "", doc: null };
@@ -63,12 +69,14 @@ test("kits: Hauler but amber passes every check; refusals in the loader's words;
   assert.match((await t.check({ ...amber, id: "Hauler Amber" }, made)).problems[0]!, /for example "mine\.hauler-amber"/);
   const muddy = await t.check({ ...amber, palettes: [{ id: "mine.mud", name: "Mud", tokens: { ground: "#333333", ink: "#444444", "ink-muted": "#444444", accent: "#555555", "accent-ink": "#444444" } }] }, made);
   assert.ok(muddy.problems.some((p) => /contrast|4\.5/.test(p)), muddy.problems.join("; "));
-  const flow = await t.check({ ...amber, layouts: { system: { arrangement: "picture-and-side", items: [{ view: "sse.view.flow-editor", area: "a" }] } } }, made);
+  const flow = await t.check({ ...amber, layouts: { system: { arrangement: "side", items: [{ view: "sse.view.flow-editor", area: "a" }] } } }, made);
   assert.ok(flow.problems.some((p) => /GM's alone/.test(p)), flow.problems.join("; "));
   const fig = await t.check({ ...amber, description: "Hauler at 0.7 bar" }, made);
   assert.ok(fig.problems.some((p) => /may not state a fact/.test(p)), fig.problems.join("; "));
-  const noPrint = await t.check({ ...amber, id: "mine.wall", name: "Wall screen", description: "Hauler without the print button.", palettes: undefined, layouts: { world: { arrangement: "picture-and-side", items: [{ view: "sse.view.atlas", area: "b", controls: { print: false, shout: true } }] } } } as unknown as KitDoc, made);
+  const noPrint = await t.check({ ...amber, id: "mine.wall", name: "Wall screen", description: "Hauler without the print button.", palettes: undefined, layouts: { world: { arrangement: "side", items: [{ view: "sse.view.atlas", area: "b", controls: { print: false, shout: true } }] } } } as unknown as KitDoc, made);
   assert.ok(noPrint.problems.some((p) => /switches "shout" on sse\.view\.atlas, which does not declare it/.test(p)), noPrint.problems.join("; "));
+  assert.deepEqual((await t.check({ ...amber, banners: { at: "top", sets: ["sse.notes.guide"] } }, made)).problems, []);
+  assert.ok((await t.check({ ...amber, banners: { at: "top", sets: ["mine.nope"] } }, made)).problems.some((p) => /"mine\.nope" is not in the pack stack/.test(p)));
   assert.equal(await t.accept(good.value!), null);
   assert.equal(h.kept.kits[0]!.id, "mine.hauler-amber");
 });

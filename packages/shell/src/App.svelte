@@ -47,6 +47,8 @@
   import { atlasEntries, editionTarget, kitTarget, noteSetTarget, sessionAtlasHost } from "../../agents/src/orac-atlas.ts";
   import guideVocab from "./documents/vocab.guide.json";
   import { ATLAS_LOOKS } from "./atlas/screens.atlas.ts";
+  import { ATLAS_CONTROLS } from "../../views/atlas/src/controls.ts";
+  import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -1182,7 +1184,7 @@
     const s = session;
     if (!s || !oracMay(s.seat)) return undefined;
     const places = () => scene.subjects.map((x) => ({ address: x.address, name: x.label }));
-    const atlasHost = sessionAtlasHost(s, ws, { looks: () => ATLAS_LOOKS.map((t) => t.id), vocabs: { plain: plainVocab as unknown as Vocab, guide: guideVocab as unknown as Vocab }, system: () => scene.system ?? null });
+    const atlasHost = sessionAtlasHost(s, ws, { looks: () => ATLAS_LOOKS.map((t) => t.id), vocabs: { plain: plainVocab as unknown as Vocab, guide: guideVocab as unknown as Vocab }, system: () => scene.system ?? null, parts: () => partsOf([...PLAYER_STACK, { id: "sse.view.atlas", switchable: ATLAS_CONTROLS }]) });
     const fields = () => Object.fromEntries(Object.entries(lensFields).filter(([k]) => k !== "*").map(([k, v]) => [k, v.map((f) => f.id)]));
     return {
       targets: () => [

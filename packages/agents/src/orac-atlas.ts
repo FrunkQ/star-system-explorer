@@ -131,8 +131,8 @@ export function kitTarget(host: AtlasHost): OracTarget<KitDoc> {
     kind: "kit",
     what: "An interface kit: everything a role's screens need, chosen once (parts and where they sit, which controls are on, a look and palette, a view style, an Atlas edition, how screens arrive and leave, the device tier). Make a new one by extending a starter (Hauler, Corporate, Deck, The Guide) and stating only what differs. A kit cannot state a fact or widen what a role knows. Read the starter first (need kit:<id>), the parts and their controls (need parts) and the guide (need guide:interfaces).",
     form: [
-      '{"schema": "sse.kit/1", "id": "mine.<lower-case-id>", "name": "<name>", "description": "<one line>", "extends": "<kit id>", "look": "<look>", "palettes": ["<palette id>"] | [{"id": "mine.<id>", "name": "<name>", "tokens": {"ground": "#rrggbb", "ink": "#rrggbb", "ink-muted": "#rrggbb", "accent": "#rrggbb", "accent-ink": "#rrggbb"}}], "view_style": "<view style>", "atlas": {"edition": "<edition id>"}, "delivery": {"<moment>": {"use": "<delivery>", "seconds": <s>}}, "needs": {"tier": "<tier>", "falls_back_to": "<kit id>"}, "layouts": {"<situation>": {"arrangement": "<arrangement>", "items": [{"view": "<part>", "area": "<area>", "controls": "none" | "all" | {"<control>": true | false}}]}}}',
-      `Situations: ${SITUATIONS.join(", ")}. Moments: ${MOMENTS.join(", ")}. Deliveries: ${DELIVERIES.join(", ")}. Tiers: ${TIERS.join(", ")}. View styles: ${VIEW_STYLES.join(", ")}. Arrangements and their areas: ${Object.entries(ARRANGEMENTS).map(([k, v]) => `${k} (${v.join(", ") || "one area"})`).join("; ")}.`,
+      '{"schema": "sse.kit/1", "id": "mine.<lower-case-id>", "name": "<name>", "description": "<one line>", "extends": "<kit id>", "look": "<look>", "palettes": ["<palette id>"] | [{"id": "mine.<id>", "name": "<name>", "tokens": {"ground": "#rrggbb", "ink": "#rrggbb", "ink-muted": "#rrggbb", "accent": "#rrggbb", "accent-ink": "#rrggbb"}}], "view_style": "<view style>", "atlas": {"edition": "<edition id>"}, "delivery": {"<moment>": {"use": "<delivery>", "seconds": <s>}}, "needs": {"tier": "<tier>", "falls_back_to": "<kit id>"}, "banners": {"at": "top" | "bottom" | "both", "sets": ["<note set id>"]}, "layouts": {"<situation>": {"arrangement": "<arrangement>", "items": [{"view": "<part>", "area": "<area>", "controls": "none" | "all" | {"<control>": true | false}}]}}}',
+      `Situations: ${SITUATIONS.join(", ")}. Moments: ${MOMENTS.join(", ")}. Deliveries: ${DELIVERIES.join(", ")}. Tiers: ${TIERS.join(", ")}. View styles: ${VIEW_STYLES.join(", ")}. Arrangements and their areas: ${Object.entries(ARRANGEMENTS).map(([k, v]) => `${k} (${v.areas.join(", ") || "no areas"})`).join("; ")}.`,
       "A palette needs 4.5 to 1 contrast for ink, muted ink and accent ink on its ground. Switch only the controls you want different from the part's default.",
     ].join("\n"),
     async check(doc) {
@@ -141,7 +141,7 @@ export function kitTarget(host: AtlasHost): OracTarget<KitDoc> {
       const ids = idProblems(d.id, STARTER_KITS, "kit");
       if (ids.length) return { problems: ids };
       const docs = host.docs();
-      const problems = checkKit(d, { kits: docs.kits, parts: host.parts(), looks: host.looks(), editions: [...SHIPPED_EDITIONS, ...docs.editions].map((e) => e.id), vocabs: Object.keys(host.vocabs()), palettes: docs.kits.flatMap((k) => (k.palettes ?? []).filter((p): p is Palette => typeof p === "object")) });
+      const problems = checkKit(d, { kits: docs.kits, parts: host.parts(), looks: host.looks(), editions: [...SHIPPED_EDITIONS, ...docs.editions].map((e) => e.id), vocabs: Object.keys(host.vocabs()), noteSets: [...SHIPPED_NOTE_SETS, ...docs.note_sets].map((s) => s.id), palettes: docs.kits.flatMap((k) => (k.palettes ?? []).filter((p): p is Palette => typeof p === "object")) });
       return problems.length ? { problems } : { problems: [], value: d };
     },
     summary: (d) => {
@@ -183,23 +183,8 @@ export function atlasEntries(host: Pick<AtlasHost, "docs" | "parts" | "looks">):
   ];
 }
 
-/**
- * The parts a kit may place and their controls, as the atlas design lists them (11A.4), until each part declares its
- * own (AT13, the Run desk thread); then the shell passes the declared ones instead.
- */
-export const DESIGN_PARTS: readonly PartInfo[] = [
-  { id: "sse.view.atlas", controls: ["contents", "step", "edition", "print", "links"] },
-  { id: "sse.view.chart", controls: ["view_style", "seen_from", "scale", "hud", "band", "turn", "select", "menu"] },
-  { id: "sse.view.system-3d", controls: ["view_style", "seen_from", "scale", "hud", "band", "turn", "select", "menu"] },
-  { id: "sse.view.card", controls: ["open", "why", "depth"] },
-  { id: "sse.view.table", controls: ["sort", "filter"] },
-  { id: "sse.view.readout", controls: [] },
-  { id: "sse.view.text", controls: [] },
-  { id: "sse.view.flow-editor", controls: [], gm_only: true },
-];
-
 /** The host for the GM's chart room: documents from the pack stack, scenes for the test render read from the kernel. */
-export function sessionAtlasHost(session: ViewSession, ws: Workspace, o: { looks: () => readonly string[]; vocabs: Readonly<Record<string, Vocab>>; system: () => string | null; parts?: () => readonly PartInfo[] }): AtlasHost {
+export function sessionAtlasHost(session: ViewSession, ws: Workspace, o: { looks: () => readonly string[]; vocabs: Readonly<Record<string, Vocab>>; system: () => string | null; parts: () => readonly PartInfo[] }): AtlasHost {
   return {
     docs: () => {
       const s = session.stack();
@@ -208,7 +193,7 @@ export function sessionAtlasHost(session: ViewSession, ws: Workspace, o: { looks
     },
     looks: o.looks,
     vocabs: () => o.vocabs,
-    parts: o.parts ?? (() => DESIGN_PARTS),
+    parts: o.parts,
     async scenes() {
       const sys = o.system();
       if (!sys) return [];
