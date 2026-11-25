@@ -1,0 +1,9 @@
+{
+  "system": "Crab Nebula (M1)",
+  "view": "Exotic object, Composite",
+  "camera": "from Earth, 6,500 light years",
+  "needs": [
+    "emission-line bands",
+    "the pulsar wind nebula's synchrotron light (exotic objects thread)"
+  ]
+}

@@ -43,12 +43,13 @@ async function grounded(session: FinerReader, tiles: SurfaceTile[]): Promise<Sur
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Read the finer levels for one world, nearest the `toward` direction first (body frame; the whole globe is read in
+ * Read the finer levels for one world, nearest the `toward` direction first (body frame, or a function giving it as each
+ * level starts; the whole globe is read in
  * the end), FINER_BATCH tiles a request. `wanted()` is asked before each request and after each wait; once it says
  * no, the reader stops and keeps what it has (a later call carries on from there). `got` is called with all finer
  * tiles kept after each request that brought new ones. Returns how many tiles it read.
  */
-export async function readFiner(session: FinerReader, system: string, body: string, wanted: () => boolean, got: (tiles: SurfaceTile[]) => void, toward: readonly number[] = [1, 0, 0]): Promise<number> {
+export async function readFiner(session: FinerReader, system: string, body: string, wanted: () => boolean, got: (tiles: SurfaceTile[]) => void, toward: readonly number[] | (() => readonly number[] | undefined) = [1, 0, 0]): Promise<number> {
   const key = `${system}|${body}`;
   let m = kept.get(key);
   if (!m) kept.set(key, (m = new Map()));
@@ -57,7 +58,9 @@ export async function readFiner(session: FinerReader, system: string, body: stri
   for (const level of FINER_LEVELS) {
     if (!wanted()) return read;
     const have = (k: TileKey) => m!.has(tileKey(k)) || refused.has(`${key}|${tileKey(k)}`);
-    const todo = tilesFacing(toward, level, Infinity).filter((k) => !have(k));
+    // A function is asked as each level starts: where the camera looks once it has settled (the system view's).
+    const dir = (typeof toward === "function" ? toward() : toward) ?? [1, 0, 0];
+    const todo = tilesFacing(dir, level, Infinity).filter((k) => !have(k));
     // tilesFacing leaves out the far side; read it last so the whole globe is fine in the end.
     const n = 1 << level;
     for (let face = 0; face < 6; face++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {

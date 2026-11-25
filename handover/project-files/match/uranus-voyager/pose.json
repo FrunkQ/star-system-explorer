@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Uranus",
+  "camera": "about 9 million km",
+  "tests": "Visible: methane's red absorption",
+  "needs": [
+    "methane absorption giving the cyan"
+  ],
+  "date": "1986-01"
+}

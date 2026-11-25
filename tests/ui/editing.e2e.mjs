@@ -302,6 +302,43 @@ try {
       await gm.waitForFunction(() => /1,000 ppm|0\.1%/.test(document.querySelector('[data-air-box] [data-gas="ch4"]')?.textContent ?? ""), null, { timeout: 20000 });
       await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
 
+      // ED9 part 1, the Makeup box: Mars has no makeup set (the physics takes Earth's); "Like Mercury" from the class atlas
+      // sets the five shares as one change, the radius the science expects for it is said in pencil, and a part's own strip
+      // trades it against the rest. Each is one Undo.
+      await row.locator('[data-handle="makeup"]').click();
+      const mk = gm.locator("[data-makeup-box]");
+      await mk.waitFor({ timeout: 10000 });
+      await mk.locator('[data-makeup-radius]').waitFor({ timeout: 20000 });
+      assert.match(await mk.locator("[data-makeup-radius]").innerText(), /expects a radius of/);
+      await mk.locator('[data-makeup-kind="iron-rich:Mercury"]').click();
+      await gm.waitForFunction(() => /Makeup .*Like Mercury/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nfollowed: ${await gm.locator("[data-followed]").allInnerTexts()}\nbox: ${await mk.innerText()}`);
+      });
+      await gm.waitForFunction(() => /metal 70/.test(document.querySelector('[data-makeup-bar] [data-part="metal"]')?.textContent ?? ""), null, { timeout: 20000 });
+      assert.match(await row.locator('[data-handle="makeup"] .value').innerText(), /metal 70/);
+      await mk.locator("[data-makeup-use-radius]").waitFor({ timeout: 20000 });
+      await shot(gm, `makeup-box-${vp}`);
+      await undoTo(['[data-makeup-box]', "No makeup is set"]);
+      // ED2 part 2: with its makeup set (like Venus, a rocky world), the Mass strip's sweep labels each step with the class
+      // atlas, so the strip marks where the world's class changes (past about ten Earth masses it is no longer rocky).
+      await mk.locator('[data-makeup-kind="rocky:Venus"]').click();
+      await gm.waitForFunction(() => /metal 32/.test(document.querySelector('[data-makeup-bar] [data-part="metal"]')?.textContent ?? ""), null, { timeout: 20000 });
+      await row.locator('[data-handle="mass"]').click();
+      await gm.locator('[data-strip="mass"] [data-tick*="rocky"]').first().waitFor({ state: "attached", timeout: 90000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nticks: ${await gm.locator("[data-tick]").evaluateAll((t) => t.map((x) => x.getAttribute("data-tick")))}; ${await gm.locator("[data-sweeping], [data-sweep-why]").allInnerTexts()}`);
+      });
+      await shot(gm, `mass-class-marks-${vp}`);
+      await row.locator('[data-handle="makeup"]').click();
+      await undoTo(['[data-makeup-box]', "No makeup is set"]);
+      await mk.locator('[data-part-chip="ice"]').click();
+      await mk.locator('[data-strip="makeup.ice"] [data-strip-figure]').click();
+      await mk.locator('[data-strip="makeup.ice"] [data-strip-entry]').fill("40%");
+      await mk.locator('[data-strip="makeup.ice"] [data-strip-entry]').press("Enter");
+      await gm.waitForFunction(() => /ices 40/.test(document.querySelector('[data-makeup-bar] [data-part="ice"]')?.textContent ?? ""), null, { timeout: 20000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nbox: ${await mk.innerText()}`);
+      });
+      await undoTo(['[data-makeup-box]', "No makeup is set"]);
+
       // ED13, "Type it all in": every input as a row; what it understood before anything is written; one change, marked
       // catalogued with its source; one Undo.
       await row.locator('[data-handle="sheet"]').click();

@@ -1,0 +1,12 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Eye",
+  "frame": "Saturn",
+  "camera": "about 1.1 million km, high north",
+  "tests": "Visible: seasonal colours of the haze",
+  "needs": [
+    "the north polar hexagon (giant bands thread)",
+    "seasonal haze colour"
+  ],
+  "date": "2016-04-25"
+}

@@ -1,0 +1,8 @@
+{
+  "system": "M87",
+  "view": "Galaxy view, Infrared band",
+  "camera": "from Earth, 53 million light years",
+  "needs": [
+    "galaxy-scale black hole jets (exotic objects thread)"
+  ]
+}
