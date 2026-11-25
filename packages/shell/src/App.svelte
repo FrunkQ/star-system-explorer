@@ -29,7 +29,7 @@
   import { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "../../ui-contract/src/index.ts";
   import { listedTitle, namesInLayer, relabel, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
-  import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
+  import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, baseBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
   import type { OracHost } from "../../agents/src/OracTab.svelte";
   import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
@@ -44,6 +44,11 @@
   import { handbookEntries, sheetEntries, substanceTarget } from "../../agents/src/orac-sheet.ts";
   import { templateTarget, triggerEntries, triggerTarget } from "../../agents/src/orac-triggers.ts";
   import { placeEntries, revealTarget } from "../../agents/src/orac-known.ts";
+  import { atlasEntries, editionTarget, kitTarget, noteSetTarget, sessionAtlasHost } from "../../agents/src/orac-atlas.ts";
+  import guideVocab from "./documents/vocab.guide.json";
+  import { ATLAS_LOOKS } from "./atlas/screens.atlas.ts";
+  import { ATLAS_CONTROLS } from "../../views/atlas/src/controls.ts";
+  import { partsOf } from "../../ui-contract/src/index.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem, bookmarksFrom, layoutsFrom, makeBookmark, playbookFrom, type Bookmark, type Whereabouts } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -163,7 +168,8 @@
     // A world's own screen (not Land): the table is shown it in orbit, turning below (LR4).
     const world = orbitWorld;
     const air = world && orbitAir?.key === `${scene.system}|${world.address}` && orbitAir.air ? { air: orbitAir.air } : {};
-    if (world) return { scope: scene.system, title: orbitTitle(world.label, ws.party, world.address), screen: ORBIT_SCREEN, focus: world.address, ...air };
+    const ship = world && ws.party && ws.party.at === world.address ? { ship: ws.party.name } : {};
+    if (world) return { scope: scene.system, title: orbitTitle(world.label, ws.party, world.address), screen: ORBIT_SCREEN, focus: world.address, ...air, ...ship };
     return { scope: scene.system, title: scene.title, ...focus };
   };
   // Driving a read-only screen (PB3b): as the GM moves, the screen follows. Never while on the Switchboard itself.
@@ -737,7 +743,7 @@
   // Band (one set of controls, Alex 23 Nov): chosen in the view controls; the Light panel paints within it. A choice
   // kept before the Band switch takes its band from the light it kept.
   if (ws.view && !ws.view.band) ws.view = { ...ws.view, band: recipeBand(LIGHT_RECIPES.find((r) => r.id === lightId)) };
-  const band = $derived<ViewBand>(ws.view?.band ?? "visible");
+  const band = $derived<ViewBand>(baseBand(ws.view));
   const lastLight: Partial<Record<ViewBand, string>> = {};
   $effect(() => {
     const b = band;
@@ -1236,6 +1242,7 @@
     const s = session;
     if (!s || !oracMay(s.seat)) return undefined;
     const places = () => scene.subjects.map((x) => ({ address: x.address, name: x.label }));
+    const atlasHost = sessionAtlasHost(s, ws, { looks: () => ATLAS_LOOKS.map((t) => t.id), vocabs: { plain: plainVocab as unknown as Vocab, guide: guideVocab as unknown as Vocab }, system: () => scene.system ?? null, parts: () => partsOf([...PLAYER_STACK, { id: "sse.view.atlas", switchable: ATLAS_CONTROLS }]) });
     const fields = () => Object.fromEntries(Object.entries(lensFields).filter(([k]) => k !== "*").map(([k, v]) => [k, v.map((f) => f.id)]));
     return {
       targets: () => [
@@ -1256,9 +1263,12 @@
         triggerTarget(s, ws),
         templateTarget(s, ws),
         revealTarget(s, ws, places),
+        editionTarget(atlasHost),
+        noteSetTarget(atlasHost),
+        kitTarget(atlasHost),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
-      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...placeEntries(places()), ...handbookEntries()],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS), ...blockEntries(s), ...sheetEntries(s), ...triggerEntries(s), ...placeEntries(places()), ...atlasEntries(atlasHost), ...handbookEntries()],
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
@@ -1304,9 +1314,10 @@
         return r.ok ? r.result : null;
       },
       // A kept description is a narrative note in the record, for the audience it was written for (the GM sees every note).
-      keep: async (address, text, audience) => {
+      // A Guide's note (AT11) is the GM's own until revealed: written from the audience's facts, kept GM only, tagged for the Atlas's margin.
+      keep: async (address, text, audience, as = "description") => {
         if (!s.addNote) return "This session cannot write the record.";
-        const r = await s.addNote({ address, text, audience: audience === "everyone" ? "everyone" : [audience], tags: ["description"], narrative: true, at_s: yearsToSeconds(ws.now_yr) });
+        const r = await s.addNote({ address, text, audience: as === "guide-note" ? "gm" : audience === "everyone" ? "everyone" : [audience], tags: [as], narrative: true, at_s: yearsToSeconds(ws.now_yr) });
         return r.ok ? null : r.message;
       },
     };

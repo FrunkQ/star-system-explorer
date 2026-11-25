@@ -27,7 +27,19 @@
   times the value now; `resultFrom(address, key)` in reach.ts reads the result. The Box's inline form from part 1 is gone.
 - e2e: Mars to 9.81 m/s² by mass lands at 0.282 Earth masses ("gravity 1 g"), then Undo.
 
-## Part 2b (queued)
+## Part 2b (25 Nov): yes-or-no results
+
+- A handle's `reach` may list a yes-or-no result. The world's Mass lists `core.dynamo_now`, which the results sheet
+  calls "a field of its own" or "no field of its own". `Reach.svelte` shows a button such as "Give it a field of its
+  own by changing Mass".
+- `reachIt` takes `want(got)`. The result is read as 1 or 0 (`resultFrom` follows dotted keys into the surface entry
+  and turns booleans into numbers), the target is 0.5, and the bisection ends on the bracket end that gives the
+  wanted answer, so it is the nearest value that does. When an end of the range has no result (no core in a world that
+  small), that end draws in toward the middle, up to four times.
+- Checked against the kernel: Mars keeps a dynamo today from about 0.165 Earth masses (0.107 now). Test in
+  `reach.test.ts`, and an e2e step on the Mass strip, then Undo. Screen: `ED5-screens/reach-field-desk.png`.
+
+## Part 2c (queued)
 
 - Pin it: force a result, carrying the honesty mark (GM view only).
 - Reach it on other results: gravity by mass, "make the year 365 days" (already a typed year on the size strip),

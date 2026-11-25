@@ -200,7 +200,8 @@
     "build"
    ],
    "reach": [
-    "gravity_m_s2"
+    "gravity_m_s2",
+    "core.dynamo_now"
    ]
   },
   {

@@ -38,6 +38,7 @@ cp packs/space-opera/pack.json packages/shell/public/packs/samples/space-opera.j
 cp packs/base-hooks/pack.json packages/shell/public/packs/samples/base-hooks.json
 cp packs/intrigue/pack.json packages/shell/public/packs/samples/intrigue.json
 cp packs/world-hooks/pack.json packages/shell/public/packs/samples/world-hooks.json
+cp packs/base-resources/pack.json packages/shell/public/packs/samples/base-resources.json
 rm -rf packages/shell/public/samples && mkdir -p packages/shell/public/samples
 # The sample save the Make a system dialog offers: the importer fixture with names that say "(sample)", so nobody takes it for the real Sol (Alex, 21 Nov).
 cp packages/shell/src/documents/sample-sol.v3.json packages/shell/public/samples/synthetic-sol.json

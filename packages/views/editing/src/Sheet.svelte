@@ -6,7 +6,7 @@
   one change, one Undo, optionally marked catalogued with its source (the evidence kind the kernel keeps for Sol).
 -->
 <script lang="ts">
-  import { aboutFor, handleValue, readSheet, say, sheetRows, spreadPaste, type Depth, type FigureKind, type Handle, type Json } from "../../../ui-contract/src/index.ts";
+  import { aboutFor, handleValue, readSheet, readTable, say, sheetRows, spreadPaste, type Depth, type FigureKind, type Handle, type Json, type SheetBody, type SheetRow } from "../../../ui-contract/src/index.ts";
 
   let {
     handles,
@@ -15,6 +15,9 @@
     depth,
     editable,
     apply,
+    bodies = [],
+    rowsFor,
+    applyTable,
     onclose,
   }: {
     handles: readonly Handle[];
@@ -23,8 +26,25 @@
     depth: Depth;
     editable: boolean;
     apply: (edits: { field: string; value: number; before: Json }[], display: string, before_display: string, catalogued: string | null) => Promise<string | null>;
+    /** The system sheet (ED13a): every body here, its rows, and one change across them all. */
+    bodies?: readonly SheetBody[];
+    rowsFor?: (b: SheetBody) => readonly SheetRow[];
+    applyTable?: (edits: { address: string; field: string; value: number; before: Json }[], display: string, before_display: string, catalogued: string | null) => Promise<string | null>;
     onclose: () => void;
   } = $props();
+  let whole = $state(false);
+  let table = $state("");
+  const tread = $derived(whole && rowsFor ? readTable(table, rowsFor, bodies, depth) : null);
+  async function setTable() {
+    if (!tread?.edits.length || !applyTable || busy) return;
+    if (catalogued && !source.trim()) return void (problem = "Say where the figures come from, or untick Catalogued.");
+    busy = true;
+    const n = new Set(tread.edits.map((e) => e.address)).size;
+    const words = (k: "before" | "after") => tread.understood.slice(0, 6).map((u) => `${u.body} ${u.label} ${u[k]}`).join(", ") + (tread.understood.length > 6 ? ", …" : "");
+    problem = await applyTable(tread.edits, `${tread.edits.length} figures for ${n} bodies (${words("after")})`, words("before"), catalogued ? source.trim() : null);
+    busy = false;
+    if (!problem) table = "";
+  }
 
   const rows = $derived(sheetRows(handles, depth));
   let typed = $state<Record<string, string>>({});
@@ -60,6 +80,23 @@
     <h4>Type it all in</h4>
     <button type="button" class="x" aria-label="Close the sheet" onclick={onclose}>×</button>
   </div>
+  {#if applyTable && rowsFor && bodies.length > 1}
+    <div class="which" role="group" aria-label="Which sheet">
+      <button type="button" aria-pressed={!whole} class:on={!whole} onclick={() => (whole = false)} data-sheet-one>This body</button>
+      <button type="button" aria-pressed={whole} class:on={whole} onclick={() => (whole = true)} data-sheet-whole>Every body here</button>
+    </div>
+  {/if}
+  {#if whole}
+    <p class="hint">Paste a table: a first line naming the columns ("Name, Orbit (AU), Mass, Day"), then a line per body, named as on the chart. A unit in brackets is the unit of that column's bare numbers.</p>
+    <textarea rows="6" bind:value={table} disabled={!editable} aria-label="A table for every body here" data-sheet-table placeholder={"Name\tOrbit (AU)\tMass\nMars\t1.524\t0.107 M⊕"}></textarea>
+    {#if tread && (tread.understood.length || tread.problems.length)}
+      <div class="read" aria-live="polite" data-sheet-read>
+        {#if tread.columns.length}<p class="cols">Columns: {tread.columns.map((c) => `${c.heading} → ${c.row ? (rows.find((r) => r.id === c.row)?.label ?? c.row) : "left out"}`).join(" · ")}</p>{/if}
+        {#each tread.understood as u, i (i)}<p data-table-understood={u.body}><b>{u.body}</b> {u.label} {u.before} → {u.after}</p>{/each}
+        {#each tread.problems as p, i (i)}<p class="problem" data-table-problem>{p.where}: {p.why}</p>{/each}
+      </div>
+    {/if}
+  {:else}
   <p class="hint">Any unit of the kind. Paste a column, or rows naming each input then its value, into the first box it fills.</p>
   <table>
     <tbody>
@@ -78,10 +115,15 @@
       {#each read.problems as p (p.row)}<p class="problem" data-sheet-problem={p.row}><b>{p.label}</b>: {p.why}</p>{/each}
     </div>
   {/if}
+  {/if}
   <div class="foot">
     <label><input type="checkbox" bind:checked={catalogued} disabled={!editable} data-sheet-catalogued /> Catalogued, from</label>
     <input class="source" placeholder="NASA fact sheet, 2024" bind:value={source} disabled={!editable || !catalogued} data-sheet-source />
-    <button type="button" class="go" disabled={!editable || busy || !read.edits.length} onclick={set} data-sheet-set>{read.edits.length ? `Set ${read.edits.length} as one change` : "Set them"}</button>
+    {#if whole}
+      <button type="button" class="go" disabled={!editable || busy || !tread?.edits.length} onclick={setTable} data-sheet-set>{tread?.edits.length ? `Set ${tread.edits.length} as one change` : "Set them"}</button>
+    {:else}
+      <button type="button" class="go" disabled={!editable || busy || !read.edits.length} onclick={set} data-sheet-set>{read.edits.length ? `Set ${read.edits.length} as one change` : "Set them"}</button>
+    {/if}
   </div>
   {#if problem}<p class="problem" role="status">{problem}</p>{/if}
 </div>
@@ -144,6 +186,38 @@
     font: inherit;
     font-family: var(--sse-font-mono);
     box-sizing: border-box;
+  }
+  .which {
+    display: flex;
+    gap: 4px;
+    margin: 4px 0;
+  }
+  .which button {
+    min-height: 28px;
+    padding: 2px 10px;
+    border: var(--sse-line) solid var(--sse-ink-muted);
+    background: var(--sse-ground-raised);
+    color: var(--sse-ink);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .which button.on {
+    border-color: var(--sse-accent);
+    color: var(--sse-accent-ink);
+  }
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 6px;
+    border: var(--sse-line) solid var(--sse-ink-muted);
+    background: var(--sse-ground-raised);
+    color: var(--sse-ink);
+    font-family: var(--sse-font-mono);
+    font-size: 12px;
+  }
+  .cols {
+    color: var(--sse-ink-muted);
   }
   .read {
     margin: 6px 0;

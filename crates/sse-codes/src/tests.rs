@@ -403,3 +403,47 @@ fn golden() {
         "golden traveller-codes changed"
     );
 }
+
+/// The extended world profile (WBH way, part 1): every figure read off the
+/// world's own facts, none rolled; a missing fact reads as unknown.
+#[test]
+fn the_extended_profile_reads_off_the_physics() {
+    let c = codes();
+    let sheet = c.sheet("traveller.extended").unwrap();
+    c.check(sheet).unwrap();
+    let r = c.read(sheet, &body("Earth"), None);
+    assert_eq!(
+        r.line("size"),
+        Some("12740 km across, 1.00 Earth masses, 5.51 g/cm³, 1.0 g, escape 11.2 km/s"),
+        "{r:?}"
+    );
+    assert_eq!(
+        r.line("air"),
+        Some("1.00 atm at the surface, oxygen 0.21 bar")
+    );
+    assert_eq!(r.line("surface"), Some("71% liquid, 288 K"));
+    assert_eq!(r.segment("year").unwrap().symbol, "1.00");
+    let mut bare = body("Earth");
+    bare.facts.remove("atmosphere.pp.o2");
+    let r = c.read(sheet, &bare, None);
+    assert_eq!(r.segment("oxygen").unwrap().symbol, UNKNOWN);
+    // A sheet dividing by a constant the sheet does not have is refused.
+    let mut bad = sheet.clone();
+    if let Source::Value { per, .. } = &mut bad.segments[1].source {
+        *per = Some("smoots".into());
+    }
+    assert!(c.check(&bad).unwrap_err().contains("smoots"));
+}
+
+#[test]
+fn significant_figures_read_plainly() {
+    use crate::sig_figures;
+    assert_eq!(sig_figures(12742.0, 4), "12740");
+    assert_eq!(sig_figures(0.0052345, 3), "0.00523");
+    assert_eq!(sig_figures(9.80665 / 9.80665, 2), "1.0");
+    assert_eq!(sig_figures(0.0, 3), "0");
+    assert_eq!(sig_figures(3.2e12, 2), "3.2e12");
+    assert_eq!(sig_figures(-1.5, 2), "-1.5");
+    assert_eq!(sig_figures(0.99997, 3), "1.00");
+    assert_eq!(sig_figures(99.96, 3), "100");
+}

@@ -8,7 +8,7 @@
   Values are the kernel's facts for the body (resolved_system), never the card's display strings.
 -->
 <script lang="ts">
-  import { aboutFor, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, scaleClass, whatFollowed, type Followed, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { aboutFor, sheetRows, chosenReading, commitEdit, commitFields, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, scaleClass, whatFollowed, type Followed, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import Strip from "./Strip.svelte";
   import Box from "./Box.svelte";
   import Reach from "./Reach.svelte";
@@ -116,8 +116,18 @@
     return rows.length ? rows.slice(0, 3).map((f) => `${f.label} ${f.after}`).join(", ") : "nothing else this card watches would move";
   }
 
+  // The system sheet's bodies (ED13a): every world and star here with the kernel's facts for it.
+  const sheetBodies = $derived(
+    scene.subjects
+      .filter((s) => handleSubject(s.kind) !== null)
+      .map((s) => {
+        const f = seen[s.address] ?? {};
+        return { address: s.address, label: s.label, facts: f, cls: scaleClass(s.kind, typeof f["body.mass"] === "number" ? (f["body.mass"] as number) : undefined) };
+      }),
+  );
+
   // The Air box's mix (ED8): several shares as one change, one Undo; the card then says what followed, as for a handle.
-  async function commitMix(edits: { field: string; value: number; before: Json }[], display: string, before_display: string, label = "Air", source: string | null = null): Promise<string | null> {
+  async function commitMix(edits: { address?: string; field: string; value: number; before: Json }[], display: string, before_display: string, label = "Air", source: string | null = null): Promise<string | null> {
     const system = scene.system;
     const before = resultsOf(surfaces, subject.address);
     const r = await commitFields(ctx.session, ws, { address: subject.address, edits, display, before_display, ...(source ? { evidence: "catalogued" as const, source } : {}) });
@@ -195,7 +205,7 @@
        section 15, "Phone"). -->
   <div class="dock" data-dock class:docked={open !== null || followed !== null}>
   {#if open === "sheet"}
-    <Sheet {handles} facts={mine} {cls} {depth} {editable} apply={(edits, display, was, source) => commitMix(edits, display, was, "Typed in", source)} onclose={() => (open = null)} />
+    <Sheet {handles} facts={mine} {cls} {depth} {editable} apply={(edits, display, was, source) => commitMix(edits, display, was, "Typed in", source)} bodies={sheetBodies} rowsFor={(b) => sheetRows(handlesFor(handleSubject(scene.subjects.find((x) => x.address === b.address)?.kind ?? "") ?? "world"), depth)} applyTable={(edits, display, was, source) => commitMix(edits, display, was, "Typed in for the system", source)} onclose={() => (open = null)} />
   {:else if open}
     {@const h = handles.find((x) => x.id === open)!}
     {#if h.box}
@@ -203,7 +213,7 @@
     {:else}
       <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
       {#if h.id === "air" && h.on === "world"}
-        <AirBox {ctx} handle={h} facts={mine} {cls} {depth} {editable} {commitMix} />
+        <AirBox {ctx} handle={h} facts={mine} {cls} {depth} {editable} {sol} {commitMix} />
       {/if}
       {#if h.reach?.length && editable && !ws.branch && scene.system && handleValue(h, mine) !== null}
         <Reach {ctx} system={scene.system} address={subject.address} handle={h} value={handleValue(h, mine)!} results={resultsOf(surfaces, subject.address)} {cls} {depth} {commit} />
