@@ -9,9 +9,11 @@ Thread "Build Run desk playbook and players' side", 25 Nov 2026. Atlas and repor
 - `SeatChange.kit` and `.palette` (`null` takes one away). Choosing another kit forgets the palette. `checkSeats` checks both are ids, and that no palette is set without a kit.
 - The role card: "Interface" (Plain, or a starter kit: Hauler, Corporate, Deck, The Guide), and under it the kit's palettes as swatches drawn in their own ground, ink and accent. The old "Look and sensors" line now says only Sensors.
 
-## Agreed with the Atlas thread (next part)
+## Part 2: kits on players' screens (agreed with the Atlas thread)
 - On a players' screen, a layout chosen for the role on the Switchboard (`screens[0]`) wins. Otherwise the kit's layout for the situation applies (`kitScreen(seat.kit, situation)`, PR 549), and failing both, the Bridge.
 - Each part gets the kit's control set as `ctx.control_set` (`controlSetOf(kit)`), beside `ctx.controls`. Absent means the plain set.
+- Built: ui-contract `layouts.ts` `situationOf(shown)` (held: holding; a landing; a send about one thing: world; a system; wider: sector) and `screenFor` (a send's own screen, then the role's chosen layout, then `kitScreen(kit, situation)`, then the Bridge). The players' page follows `seat.kit` as it changes, reloads when the situation changes the kit's layout, and passes `controlSet` through ScreenRuntime to every part. A kit layout naming a part this screen cannot draw yet (the players' Atlas part, AT15 part 2) falls back to the Bridge instead of a screen of errors. The palette on players' screens is AT15 part 2's.
+- Tests: layouts.test.ts (situations and precedence).
 
 ## Checks
 - `packages/ui-contract/test/seats.test.ts`: kit and palette set, kept, forgotten on another kit, removed; checkSeats lines. `ui:check`, `ui:test`.
