@@ -1,12 +1,13 @@
 //! Sector metadata XML: `<Sector Abbreviation="..."><Name>..</Name>
-//! <Subsectors><Subsector Index="A">..</Subsector></Subsectors></Sector>`.
+//! <Subsectors><Subsector Index="A">..</Subsector></Subsectors>
+//! <Routes><Route Start="0101" End="0203" .../></Routes></Sector>`.
 //!
 //! A small reader for just what that needs: elements, attributes, text,
 //! entities, comments, CDATA and processing instructions. It never fails;
 //! anything malformed becomes a warning and the reader carries on.
 
 use crate::token::strip_bom;
-use crate::{subsector_letter, SectorFile};
+use crate::{subsector_letter, Route, SectorFile};
 
 #[derive(Debug, Default)]
 struct Element {
@@ -324,6 +325,61 @@ pub fn parse_sector_xml(text: &str) -> SectorFile {
             }
         }
     }
+    if let Some(routes) = sector.child("Routes") {
+        for r in routes
+            .elems()
+            .filter(|e| e.name.eq_ignore_ascii_case("route"))
+        {
+            let hex = |k: &str| r.attr(k).map(crate::token::collapse).unwrap_or_default();
+            let (start, end) = (hex("Start"), hex("End"));
+            if !crate::token::is_hex(&start) || !crate::token::is_hex(&end) {
+                out.warn(
+                    1,
+                    format!("route {start:?} to {end:?}: each end is a four-digit hex; ignored"),
+                    "",
+                );
+                continue;
+            }
+            let offset = |k: &str, out: &mut SectorFile| -> i32 {
+                match r.attr(k).map(str::trim) {
+                    None | Some("") => 0,
+                    Some(v) => v.parse().unwrap_or_else(|_| {
+                        out.warn(
+                            1,
+                            format!(
+                                "route {start} to {end}: {k} {v:?} is not a whole number; 0 used"
+                            ),
+                            "",
+                        );
+                        0
+                    }),
+                }
+            };
+            let start_offset = (
+                offset("StartOffsetX", &mut out),
+                offset("StartOffsetY", &mut out),
+            );
+            let end_offset = (
+                offset("EndOffsetX", &mut out),
+                offset("EndOffsetY", &mut out),
+            );
+            let word = |k: &str| {
+                r.attr(k)
+                    .map(crate::token::collapse)
+                    .filter(|s| !s.is_empty())
+            };
+            out.routes.push(Route {
+                start,
+                end,
+                start_offset,
+                end_offset,
+                kind: word("Type"),
+                allegiance: word("Allegiance"),
+                style: word("Style"),
+                colour: word("Color"),
+            });
+        }
+    }
     out
 }
 
@@ -362,6 +418,37 @@ pub fn write_sector_xml(file: &SectorFile) -> String {
             ));
         }
         out.push_str("  </Subsectors>\n");
+    }
+    if !file.routes.is_empty() {
+        out.push_str("  <Routes>\n");
+        for r in &file.routes {
+            out.push_str(&format!(
+                "    <Route Start=\"{}\" End=\"{}\"",
+                r.start, r.end
+            ));
+            for (k, v) in [
+                ("StartOffsetX", r.start_offset.0),
+                ("StartOffsetY", r.start_offset.1),
+                ("EndOffsetX", r.end_offset.0),
+                ("EndOffsetY", r.end_offset.1),
+            ] {
+                if v != 0 {
+                    out.push_str(&format!(" {k}=\"{v}\""));
+                }
+            }
+            for (k, v) in [
+                ("Type", &r.kind),
+                ("Allegiance", &r.allegiance),
+                ("Style", &r.style),
+                ("Color", &r.colour),
+            ] {
+                if let Some(v) = v {
+                    out.push_str(&format!(" {k}=\"{}\"", escape(v)));
+                }
+            }
+            out.push_str("/>\n");
+        }
+        out.push_str("  </Routes>\n");
     }
     out.push_str("</Sector>\n");
     out

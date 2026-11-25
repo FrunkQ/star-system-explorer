@@ -1,0 +1,210 @@
+{
+ "schema": "sse.margin-notes/1",
+ "id": "sse.quotes.space",
+ "name": "Space quotes",
+ "note": "Real scientists' and astronauts' words for held screens, each with who said it (PC7, postcards design; Alex accepted 25 Nov: scientists and astronauts in the base app, film, song, game and fiction quotes in the free fan pack). From SSE3's space-quotes.txt. A source is given only where it is sure; a quote known only by attribution says so.",
+ "notes": [
+  {
+   "id": "sse.quote.sagan-star-stuff",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "The cosmos is within us. We are made of star-stuff. We are a way for the universe to know itself.",
+   "by": "Carl Sagan",
+   "source": "Cosmos (1980)"
+  },
+  {
+   "id": "sse.quote.hawking-look-up",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "Look up at the stars and not down at your feet.",
+   "by": "Stephen Hawking"
+  },
+  {
+   "id": "sse.quote.tyson-no-obligation",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "The universe is under no obligation to make sense to you.",
+   "by": "Neil deGrasse Tyson"
+  },
+  {
+   "id": "sse.quote.sagan-incredible",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "Somewhere, something incredible is waiting to be known.",
+   "by": "Carl Sagan",
+   "source": "attributed"
+  },
+  {
+   "id": "sse.quote.tsiolkovsky-cradle",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "The Earth is the cradle of humanity, but mankind cannot stay in the cradle forever.",
+   "by": "Konstantin Tsiolkovsky",
+   "source": "letter, 1911"
+  },
+  {
+   "id": "sse.quote.hawking-terrestrial",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "To confine our attention to terrestrial matters would be to limit the human spirit.",
+   "by": "Stephen Hawking"
+  },
+  {
+   "id": "sse.quote.hubble-five-senses",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "Equipped with his five senses, man explores the universe around him and calls the adventure Science.",
+   "by": "Edwin Hubble",
+   "source": "The Nature of Science (1954)"
+  },
+  {
+   "id": "sse.quote.sagan-indifferent",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "The universe seems neither benign nor hostile, merely indifferent.",
+   "by": "Carl Sagan"
+  },
+  {
+   "id": "sse.quote.hubble-horizons",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "The history of astronomy is a history of receding horizons.",
+   "by": "Edwin Hubble",
+   "source": "The Realm of the Nebulae (1936)"
+  },
+  {
+   "id": "sse.quote.sagan-vastness",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "For small creatures such as we the vastness is bearable only through love.",
+   "by": "Carl Sagan",
+   "source": "Contact (1985)"
+  },
+  {
+   "id": "sse.quote.tyson-little-universe",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "There are as many atoms in a single molecule of your DNA as there are stars in the typical galaxy. We are, each of us, a little universe.",
+   "by": "Neil deGrasse Tyson"
+  },
+  {
+   "id": "sse.quote.hawking-columbus",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "If aliens visit us, the outcome would be much as when Columbus landed in America, which didn't turn out well for the Native Americans.",
+   "by": "Stephen Hawking"
+  },
+  {
+   "id": "sse.quote.armstrong-small-step",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "That's one small step for man, one giant leap for mankind.",
+   "by": "Neil Armstrong",
+   "source": "Apollo 11, 1969"
+  },
+  {
+   "id": "sse.quote.gagarin-earth",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "I see Earth! It is so beautiful.",
+   "by": "Yuri Gagarin",
+   "source": "Vostok 1, 1961"
+  },
+  {
+   "id": "sse.quote.aldrin-desolation",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "Magnificent desolation.",
+   "by": "Buzz Aldrin",
+   "source": "Apollo 11, 1969"
+  },
+  {
+   "id": "sse.quote.ride-brighter",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "The stars don't look bigger, but they do look brighter.",
+   "by": "Sally Ride"
+  },
+  {
+   "id": "sse.quote.collins-alone",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "I am alone now, truly alone, and absolutely isolated from any known life. I am it.",
+   "by": "Michael Collins",
+   "source": "Carrying the Fire (1974)"
+  },
+  {
+   "id": "sse.quote.shepard-cried",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "If somebody'd said before the flight, 'Are you going to get carried away looking at the earth from the moon?' I would have said, 'No, no way.' But yet when I first looked back at the earth, standing on the moon, I cried.",
+   "by": "Alan Shepard",
+   "source": "Apollo 14, 1971"
+  },
+  {
+   "id": "sse.quote.armstrong-pea",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "It suddenly struck me that that tiny pea, pretty and blue, was the Earth. I put up my thumb and shut one eye, and my thumb blotted out the planet Earth. I didn't feel like a giant. I felt very, very small.",
+   "by": "Neil Armstrong"
+  },
+  {
+   "id": "sse.quote.armstrong-eagle",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "Houston, Tranquility Base here. The Eagle has landed.",
+   "by": "Neil Armstrong",
+   "source": "Apollo 11, 1969"
+  },
+  {
+   "id": "sse.quote.apollo-plaque",
+   "about": "any",
+   "uses": [
+    "waiting"
+   ],
+   "text": "Here men from the planet Earth first set foot upon the Moon... We came in peace for all mankind.",
+   "by": "The Apollo 11 plaque",
+   "source": "left on the Moon, July 1969"
+  }
+ ]
+}

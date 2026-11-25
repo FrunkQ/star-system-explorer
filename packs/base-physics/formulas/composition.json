@@ -690,7 +690,7 @@
       0.0,
       20000.0
      ],
-     "description": "depth the ore is counted to, m: an SSE4 choice; Kesler and Wilkinson 2008's 1.7e11 t is for all depths, so counting it within 3.3 km overstates ore near the surface (fudge F61)"
+     "description": "depth the ore is counted to, m: an SSE4 choice; Kesler and Wilkinson 2008's 1.7e11 t is for all depths, so counting it within 3.3 km overstates ore near the surface (fudge F62)"
     },
     {
      "param": "density",

@@ -9,7 +9,7 @@
 //!   above about 16.5 km/s, T_vir 1e4 K) by z = 10 may host a direct-collapse
 //!   seed of about 1e5 Msun, the middle of the 1e4 to 1e6 Msun range of
 //!   direct-collapse models (Lodato and Natarajan 2006; Latif and Ferrara
-//!   2016; Bromm and Loeb 2003's own runs give 1e6 or more; fudge F60);
+//!   2016; Bromm and Loeb 2003's own runs give 1e6 or more; fudge F61);
 //!   otherwise the seed is a Population III remnant of about 100 Msun, and
 //!   the module says how long Eddington-limited growth takes to reach the
 //!   reservoir's starting mass. A keyed draw decides, with the chance as pack data.

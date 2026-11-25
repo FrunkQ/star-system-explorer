@@ -110,7 +110,7 @@
           const key = `${system}|${i.key}`;
           if (!kept.has(key)) {
             // Ground, then today's clouds and haze; a giant is its cloud decks, with the winds that carry them (true-air.ts).
-            const f = await readTrueFace(ctx.session as unknown as FaceReader, system, i.key);
+            const f = await readTrueFace(ctx.session as unknown as FaceReader, system, i.key, { storms: true });
             kept.set(key, typeof f === "string" ? "none" : f.tex);
             if (typeof f !== "string" && f.flow) flows.set(key, f.flow);
           }

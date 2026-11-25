@@ -46,7 +46,7 @@ Rides the PR after golden split part two (`GS2-golden-split-part-two.md`).
 ## Citation corrections (Alex's Consensus runs, 25 Nov)
 
 Claims fixed to match the papers (corrections-01, 02-05 and 06-09 in project files `sse4/citations/`):
-nucleus seed mass (now the 1e4 to 1e6 range, fudge F60) and the hot-flow threshold as alpha squared with
+nucleus seed mass (now the 1e4 to 1e6 range, fudge F61) and the hot-flow threshold as alpha squared with
 alpha as pack data (`disc_alpha`, 0.1); L ∝ ṁ² credited to Narayan and Yi 1995; Antonucci "much, not all";
 Kormendy and Ho (holes track bulges) and Reines and Volonteri (2.5e-4) in galaxy.rs and the pack; Bullock's
 spin is λ′; Tegmark's 1e6 is baryonic; Lada and Lada measured 50 to 1000 M☉; Skumanich's inverse square
@@ -55,7 +55,7 @@ Jupiter's 7.5 W/m²; Zeitlin's dose inside the spacecraft; ice conductivity in W
 Ojakangas's 25 km bound (the test's bound with it); Venus ionopause heights; McDonough and Sun's 20 TW as our
 sum; Mars's volcanism date as our reading; Park's Ceres (rock from volatiles); Sirius A at 24.74 L☉ (Bond et
 al. 2017; the flow case's expected value moved with it); Kesler and Wilkinson's tonnage at all depths
-(fudge F61). The Petit, Laskar and Boué DOI was already right.
+(fudge F62). The Petit, Laskar and Boué DOI was already right.
 
 ## Goldens
 

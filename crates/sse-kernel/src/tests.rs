@@ -3960,3 +3960,92 @@ fn ship_readiness_follows_status_tags_through_visible_triggers() {
         "a program reads a tag as a number"
     );
 }
+
+/// RK12, the Traveller mapping: each ship weapon with figures, against the
+/// pack's standard target, is in range or marginal at the far edge of the
+/// game's optimum band and falls off beyond it; the beams draw a load and
+/// rings; the meson gun and sandcaster carry no figures and say why.
+#[test]
+fn the_traveller_weapons_reach_their_game_bands() {
+    let pack: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/traveller/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let w = &pack["provides"]["other"]["weapons"];
+    let target = w["standard_target"].clone();
+    let target = serde_json::json!({"skin": target["skin"], "radius_m": target["radius_m"],
+        "accel_m_s2": target["accel_m_s2"]});
+    let mut k = crate::Kernel::new();
+    let r = k.handle_json(
+        &serde_json::json!({"op": "load_stack", "packs": [
+            serde_json::from_str::<serde_json::Value>(
+                &std::fs::read_to_string(root().join("packs/base-physics/pack.json")).unwrap()).unwrap(),
+            pack.clone()]})
+        .to_string(),
+    );
+    assert!(r.contains("stack_loaded"), "{r}");
+    let mut seen = 0;
+    for kind in w["kinds"].as_array().unwrap() {
+        let id = kind["id"].as_str().unwrap();
+        if kind["weapon"].is_null() {
+            assert!(
+                !kind["about"].as_str().unwrap().is_empty(),
+                "{id} says why it has no figures"
+            );
+            continue;
+        }
+        let ask = |d: f64| serde_json::json!({"weapon": kind["weapon"], "target": target, "distance_m": d});
+        let Some(edge) = kind["game"]["optimum"]["to_m"].as_f64() else {
+            // Missiles have no band: read where they burst or strike, 30 m
+            // and 1 km off. A slug at its closing speed tears through at
+            // either; a kiloton burst must be within about 50 m to boil
+            // through 2 mm of aluminium, so a kilometre's near miss does not.
+            let r: serde_json::Value = serde_json::from_str(
+                &k.handle_json(
+                    &serde_json::json!({"op": "effect_at_range", "asks": [ask(30.0), ask(1.0e3)]})
+                        .to_string(),
+                ),
+            )
+            .unwrap();
+            let (near, far) = (&r["effects"][0], &r["effects"][1]);
+            assert_eq!(near["takes_from"], "sheet", "{id}: {r}");
+            assert_eq!(near["reading"], "in range", "{id}: {near}");
+            let burst = kind["weapon"]["kind"] == "burst";
+            assert_eq!(
+                far["reading"],
+                if burst { "out of range" } else { "in range" },
+                "{id}: {far}"
+            );
+            if burst {
+                let e = near["rings"]["enough_m"].as_f64().unwrap();
+                assert!(e > 30.0 && e < 100.0, "{id}: {e}");
+            }
+            seen += 1;
+            continue;
+        };
+        let r: serde_json::Value = serde_json::from_str(
+            &k.handle_json(
+                &serde_json::json!({"op": "effect_at_range", "asks": [ask(edge), ask(edge * 4.0)]})
+                    .to_string(),
+            ),
+        )
+        .unwrap();
+        assert_eq!(r["type"], "effects_at_range", "{id}: {r}");
+        let (at, past) = (&r["effects"][0], &r["effects"][1]);
+        assert_eq!(at["takes_from"], "sheet", "{id}: {at}");
+        assert_ne!(
+            at["reading"], "out of range",
+            "{id} at the edge of its band: {at}"
+        );
+        assert_ne!(
+            past["reading"], "in range",
+            "{id} four times past its band: {past}"
+        );
+        assert!(
+            at["load"]["electric_w"].as_f64().unwrap() > 0.0,
+            "{id}: {at}"
+        );
+        seen += 1;
+    }
+    assert_eq!(seen, 7);
+}

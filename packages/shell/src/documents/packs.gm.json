@@ -19,7 +19,8 @@
           "packs/samples/space-opera.json",
           "packs/samples/base-hooks.json",
           "packs/samples/intrigue.json",
-          "packs/samples/world-hooks.json"
+          "packs/samples/world-hooks.json",
+          "packs/samples/base-resources.json"
         ],
         "sample_labels": [
           "Try the sample pack",
@@ -28,7 +29,8 @@
           "Add the Meridian Reach setting",
           "Add access labels",
           "Add story hooks (intrigue)",
-          "Add world hooks"
+          "Add world hooks",
+          "Add resource labels"
         ]
       }
     },

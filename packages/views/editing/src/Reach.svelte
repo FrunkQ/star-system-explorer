@@ -35,6 +35,24 @@
 
   const ws = $derived(ctx.workspace);
   const name = $derived(depth === "curious" ? handle.names.curious : handle.names.science);
+  // Yes-or-no results it can reach ("a field of its own"): a press finds the nearest value that gives the other answer.
+  const flips = $derived((handle.reach ?? []).map((k) => RESULTS.find((r) => r.key === k)).filter((r): r is NonNullable<typeof r> => !!r && !!r.yes && !!r.no && typeof results[r.key] === "boolean"));
+  async function flip(key: string, yes: string, no: string) {
+    said = null;
+    const now = results[key] === true;
+    const [lo, hi] = [Math.abs(value) / 8, Math.abs(value) * 8];
+    busy = true;
+    try {
+      const r = await reachIt(ctx.session, { system, address, field: handle.part.field, at_yr: ws.now_yr, lo: fieldValue(handle, lo), hi: fieldValue(handle, hi), log: true, target: 0.5, read: resultFrom(address, key), within: 0, tries: 14, want: (g) => (g === 1) !== now });
+      const goal = now ? no : yes;
+      if (!r.ok) return void (said = { key, text: `No ${name.toLowerCase()} from ${sayValue(lo)} to ${sayValue(hi)} gives it ${goal}.`, problem: true });
+      const si = toSI(r.value);
+      const problem = await commit(handle, si, { source: "computed" }, `${sayValue(si)}, the nearest that gives it ${goal}`);
+      said = problem ? { key, text: problem, problem: true } : { key, text: `${name} set to ${sayValue(si)}, the nearest that gives it ${goal}.` };
+    } finally {
+      busy = false;
+    }
+  }
   const rows = $derived((handle.reach ?? []).map((k) => RESULTS.find((r) => r.key === k)).filter((r): r is NonNullable<typeof r> => !!r && !!r.kind && typeof results[r.key] === "number"));
   const sayIt = (si: number, kind: string, reading?: string) => say(si, kind as FigureKind, { class: cls }, { depth, ...(reading ? { reading } : {}) }).text;
   const sayValue = (si: number) => say(Math.abs(si), handle.part.kind as FigureKind, aboutFor(handle, cls), { depth }).text;
@@ -67,6 +85,14 @@
   const toSI = (v: number) => handleValue(handle, { [handle.part.field]: v }) ?? v;
 </script>
 
+{#each flips as r (r.key)}
+  {@const now = results[r.key] === true}
+  <div class="reach" data-reach={r.key}>
+    <span>{r.label}: {now ? r.yes : r.no}.</span>
+    <button type="button" class="go" data-reach-go disabled={busy} onclick={() => flip(r.key, r.yes!, r.no!)}>{busy ? "Finding…" : `Give it ${now ? r.no : r.yes} by changing ${name}`}</button>
+  </div>
+  {#if said?.key === r.key}<p class="said" class:problem={said.problem} aria-live="polite" data-reach-said>{said.text}</p>{/if}
+{/each}
 {#each rows as r (r.key)}
   <form class="reach" data-reach={r.key} onsubmit={(ev) => (ev.preventDefault(), reach(r.key, r.kind!, r.label))}>
     <span>{r.label} {sayIt(results[r.key] as number, r.kind!, r.reading)}. Reach</span>

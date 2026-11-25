@@ -32,3 +32,18 @@ test("what it understood, in the body's units, and what it could not read", () =
   assert.equal(r.problems.length, 1);
   assert.equal(r.problems[0]!.row, "spin");
 });
+
+test("the system sheet: a pasted table, columns matched by name with a bracketed unit, bodies by name", async () => {
+  const { readTable } = await import("../src/sheet-entry.ts");
+  const bodies = [
+    { address: "a/mars", label: "Mars", facts: mars, cls: "planet" },
+    { address: "a/earth", label: "Earth", facts: { "body.mass": 5.972e24 }, cls: "planet" },
+  ];
+  const t = "Name\tOrbit (AU)\tMass\tColour\nMars\t1.6\t0.2 M⊕\tred\nEarth\t1\t-\nVulcan\t0.1\t";
+  const r = readTable(t, () => rows, bodies, "science");
+  assert.deepEqual(r.columns.map((c) => c.row), ["orbit", "mass", null]);
+  assert.deepEqual(r.edits.map((e) => `${e.address} ${e.field}`), ["a/mars orbit.semi_major_axis", "a/mars body.mass", "a/earth orbit.semi_major_axis"]);
+  assert.ok(Math.abs(r.edits[2]!.value - constant("au")) < 1);
+  assert.ok(r.problems.some((p) => /Colour/.test(p.where)));
+  assert.ok(r.problems.some((p) => /Vulcan/.test(p.where)));
+});

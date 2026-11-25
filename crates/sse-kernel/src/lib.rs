@@ -309,6 +309,15 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             inventory::Kinds::default()
         }
     };
+    // X3j: every resource kind keeps `extracted` and `stock` (record-logic
+    // design 2.4); a pack that keeps one itself keeps its own.
+    let mut record = record;
+    for k in inventory::kept_kinds(&resources) {
+        record
+            .kinds
+            .entry(k.id.clone())
+            .or_insert_with(|| ("sse.resources".into(), k));
+    }
     // RK9: the stack's engine designs (`provides.other.engines`, id to
     // design), later packs over earlier.
     let mut engines = BTreeMap::new();
@@ -689,6 +698,184 @@ fn record_err(e: sse_record::RecordError) -> Response {
     err(code, e.to_string())
 }
 
+/// A ship's mining rate, kg of a resource an hour (an authored fact on the
+/// ship or its template): what `mine` moves per hour, capped by what is there.
+const MINING_RATE: &str = "mining.rate_kg_h";
+
+/// The conserving move behind `transfer` and `mine` (X3j, record-logic
+/// design 2.4): the source gives its stock first, then its natural amount
+/// (raising its `extracted`); the destination's stock rises by as much.
+#[allow(clippy::too_many_arguments)]
+fn transfer(
+    u: &mut Universe,
+    reg: &sse_record::Registry,
+    sheet: &sse_reference::Reference,
+    kinds: &inventory::Kinds,
+    kind: &str,
+    a: &Address,
+    b: &Address,
+    kg: f64,
+    writer: Option<String>,
+    reason: Option<String>,
+    at_s: i64,
+) -> Result<Response, Response> {
+    let kind = kind.to_string();
+    let (a, b) = (a.clone(), b.clone());
+    if !(kg.is_finite() && kg > 0.0) {
+        return Err(err(
+            "bad_value",
+            "move a positive, finite number of kilograms",
+        ));
+    }
+    if !kinds.kinds.contains_key(&kind) {
+        return Err(err(
+            "unknown_resource",
+            format!("{kind:?} is not a resource kind of this stack (provides.other.resources)"),
+        ));
+    }
+    if a == b {
+        return Err(err(
+            "bad_address",
+            "a transfer goes from one place to another",
+        ));
+    }
+    let at = UniverseTime::seconds(at_s);
+    let state = u.record.state_at(at);
+    let natural = |u: &mut Universe, x: &Address| -> Result<f64, Response> {
+        natural_kg(u, x, &kind, at_s, sheet, kinds, &state)
+    };
+    let na = natural(u, &a)?;
+    let nb = natural(u, &b)?;
+    let ha = inventory::Held::at(&state, &a, &kind, na);
+    let hb = inventory::Held::at(&state, &b, &kind, nb);
+    let Some((extracted, stock)) = ha.take(kg) else {
+        return Err(err(
+            "not_enough",
+            format!(
+                "{a} holds {:.6e} kg of {kind}, less than {kg:.6e} kg",
+                ha.held_kg()
+            ),
+        ));
+    };
+    let writer = writer.unwrap_or_else(|| "transfer".into());
+    let reason = reason.or_else(|| Some(format!("{kg} kg of {kind}: {a} to {b}")));
+    let publisher = Publisher::new("gm", "transfer", "1");
+    let mut ids = vec![];
+    let mut set = |u: &mut Universe,
+                   address: &Address,
+                   kept: String,
+                   v: f64,
+                   old: f64|
+     -> Result<(), Response> {
+        if v == old {
+            return Ok(());
+        }
+        let id = sse_record::set_kept(
+            &mut u.record,
+            reg,
+            &sse_record::KeptSet {
+                address: address.clone(),
+                kind: kept,
+                value: Some(Value::Float(v)),
+                writer: writer.clone(),
+                reason: reason.clone(),
+                causes: vec![],
+            },
+            at,
+            &publisher,
+        )
+        .map_err(record_err)?;
+        ids.push(id.hex());
+        Ok(())
+    };
+    // Checked first, so the writes below cannot half-happen.
+    reg.check(
+        &inventory::stock_kind(&kind),
+        Some(&Value::Float(0.0)),
+        &writer,
+    )
+    .map_err(record_err)?;
+    set(
+        u,
+        &a,
+        inventory::extracted_kind(&kind),
+        extracted,
+        ha.extracted_kg,
+    )?;
+    set(u, &a, inventory::stock_kind(&kind), stock, ha.stock_kg)?;
+    set(
+        u,
+        &b,
+        inventory::stock_kind(&kind),
+        hb.stock_kg + kg,
+        hb.stock_kg,
+    )?;
+    let after = u.record.state_at(at);
+    Ok(Response::Transferred {
+        kind: kind.clone(),
+        kg,
+        from: inventory::Held::at(&after, &a, &kind, na).json(),
+        to: inventory::Held::at(&after, &b, &kind, nb).json(),
+        change_ids: ids,
+        state_hash: latest_hash(&u.chronicle),
+        record_hash: record_hash(u),
+    })
+}
+
+/// A place's natural amount of a resource kind: a world's, read off its
+/// composition at Survey (`read_inventory`); zero for anything else (a ship,
+/// a station, a settlement's store), which holds only stock.
+fn natural_kg(
+    u: &mut Universe,
+    a: &Address,
+    kind: &str,
+    at_s: i64,
+    sheet: &sse_reference::Reference,
+    kinds: &inventory::Kinds,
+    kept: &sse_chronicle::State,
+) -> Result<f64, Response> {
+    let text = a.to_string();
+    let Some(cut) = text.find("/sys:") else {
+        return Ok(0.0);
+    };
+    let rest = &text[cut + 1..];
+    let sys_end = rest.find('/').map_or(text.len(), |i| cut + 1 + i);
+    let system = &text[..sys_end];
+    if system.len() == text.len() || text[sys_end..].contains("/ship:") {
+        return Ok(0.0);
+    }
+    let sa: Address = system
+        .parse()
+        .map_err(|e| err("bad_address", format!("{e}")))?;
+    if !u.runs.contains_key(system) {
+        if let Some(req) = adopt::formation_request(&u.chronicle, &sa) {
+            let (_, run, _) = systems::form(req.into())?;
+            u.runs.insert(system.to_string(), run);
+        }
+    }
+    let r = inventory::read(
+        &u.chronicle,
+        &sa,
+        Some(&text),
+        Some(&[kind.to_string()]),
+        Some(at_s),
+        u.runs.get(system),
+        sheet,
+        kinds,
+        kept,
+    );
+    match r {
+        Ok(Response::InventoryRead { bodies }) => Ok(bodies
+            .first()
+            .and_then(|b| b["kinds"][0]["kg"].as_f64())
+            .unwrap_or(0.0)),
+        Ok(_) => Ok(0.0),
+        // Not a world with a mass and a radius: a construct or a place on one.
+        Err(Response::Error { code, .. }) if code == "unknown_body" => Ok(0.0),
+        Err(e) => Err(e),
+    }
+}
+
 fn in_universe(root: &Address, a: &str) -> Result<Address, Response> {
     let a: Address = a.parse().map_err(|e| err("bad_address", format!("{e}")))?;
     if !root.contains(&a) {
@@ -786,6 +973,116 @@ fn tech_holder(u: &Universe, holder: &str) -> Result<Address, Response> {
         ));
     }
     Ok(a)
+}
+
+/// A sector file's routes (X3l): each one between two imported worlds
+/// becomes a charted link between their systems when `apply` is given
+/// (audience and tier); the rest are listed with the reason they were left
+/// out. The link id is the hexes and the route's type, so importing again
+/// rewrites the same links.
+fn import_routes(
+    u: &mut Universe,
+    routes: &[sse_sector_io::Route],
+    worlds: &[sse_codes::import::ImportedWorld],
+    apply: Option<(&sse_record::Audience, Option<&str>)>,
+    at_s: i64,
+) -> Result<Vec<serde_json::Value>, Response> {
+    let system_at = |hex: &str| {
+        worlds
+            .iter()
+            .find(|w| w.hex == hex && w.refused.is_none())
+            .map(|w| w.system.clone())
+    };
+    let mut ids: Vec<String> = Vec::new();
+    let mut out = Vec::new();
+    for r in routes {
+        let mut row = serde_json::json!({"start": r.start, "end": r.end});
+        if let Some(k) = &r.kind {
+            row["kind"] = serde_json::Value::from(k.clone());
+        }
+        let ends = (system_at(&r.start), system_at(&r.end));
+        let left_out = if !r.inside() {
+            Some(
+                "it reaches into a neighbouring sector, which this import does not hold"
+                    .to_string(),
+            )
+        } else if r.start == r.end {
+            Some("both ends are the same hex".to_string())
+        } else {
+            match &ends {
+                (None, _) => Some(format!("no imported world at {}", r.start)),
+                (_, None) => Some(format!("no imported world at {}", r.end)),
+                _ => None,
+            }
+        };
+        if let Some(why) = left_out {
+            row["left_out"] = serde_json::Value::from(why);
+            out.push(row);
+            continue;
+        }
+        let (a, b) = (ends.0.expect("checked"), ends.1.expect("checked"));
+        row["a"] = serde_json::Value::from(a.clone());
+        row["b"] = serde_json::Value::from(b.clone());
+        if let Some((audience, tier)) = apply {
+            let word: String = r
+                .kind
+                .as_deref()
+                .unwrap_or("route")
+                .chars()
+                .map(|c| {
+                    if c.is_ascii_alphanumeric() {
+                        c.to_ascii_lowercase()
+                    } else {
+                        '_'
+                    }
+                })
+                .collect();
+            let mut id = format!("route-{}-{}-{word}", r.start, r.end);
+            let base = id.clone();
+            let mut n = 1;
+            while ids.contains(&id) {
+                n += 1;
+                id = format!("{base}-{n}");
+            }
+            ids.push(id.clone());
+            let name = match &r.kind {
+                Some(k) => format!("{k} route {} to {}", r.start, r.end),
+                None => format!("Route {} to {}", r.start, r.end),
+            };
+            let mut why = format!("from the sector file's routes ({} to {}", r.start, r.end);
+            if let Some(al) = &r.allegiance {
+                why.push_str(&format!(", allegiance {al}"));
+            }
+            why.push(')');
+            let d = sse_record::links::LinkDraft {
+                root: u.root.clone(),
+                id,
+                a: a.parse().expect("import addresses parse"),
+                b: b.parse().expect("import addresses parse"),
+                name,
+                kind: r.kind.clone().unwrap_or_else(|| "route".into()),
+                one_way: false,
+                nav: None,
+                tier: tier.map(str::to_string),
+                audience: audience.clone(),
+                writer: "gm".into(),
+                reason: Some(why),
+                source: Some("import_sector".into()),
+                withdraw: false,
+            };
+            let (link, ev) = sse_record::links::set_link(
+                &mut u.record,
+                &d,
+                UniverseTime::seconds(at_s),
+                &Publisher::new("gm", "import_sector", "1"),
+            )
+            .map_err(record_err)?;
+            row["link"] = serde_json::Value::from(link.to_string());
+            row["event_id"] = serde_json::Value::from(ev.hex());
+        }
+        out.push(row);
+    }
+    Ok(out)
 }
 
 fn record_hash(u: &Universe) -> String {
@@ -3851,6 +4148,8 @@ impl Kernel {
                     u.runs.get(&system),
                     &self.observe.reference,
                     &self.observe.resources,
+                    &u.record
+                        .state_at(UniverseTime::seconds(at_s.unwrap_or(i64::MAX))),
                 )?
             }
             Request::ReadPhotometry { stars, bands } => {
@@ -4648,6 +4947,81 @@ impl Kernel {
                     state_hash: latest_hash(&u.chronicle),
                     record_hash: record_hash(u),
                 }
+            }
+            Request::Transfer {
+                kind,
+                from,
+                to,
+                kg,
+                writer,
+                reason,
+                at_s,
+            } => {
+                let reg = self.observe.record.clone();
+                let sheet = self.observe.reference.clone();
+                let kinds = self.observe.resources.clone();
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let a = in_universe(&u.root, &from)?;
+                let b = in_universe(&u.root, &to)?;
+                transfer(
+                    u, &reg, &sheet, &kinds, &kind, &a, &b, kg, writer, reason, at_s,
+                )?
+            }
+            Request::Mine {
+                ship,
+                body,
+                kind,
+                hours,
+                writer,
+                at_s,
+            } => {
+                let reg = self.observe.record.clone();
+                let sheet = self.observe.reference.clone();
+                let kinds = self.observe.resources.clone();
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let s_a = in_universe(&u.root, &ship)?;
+                let b_a = in_universe(&u.root, &body)?;
+                if !(hours.is_finite() && hours > 0.0) {
+                    return Err(err(
+                        "bad_value",
+                        "mine for a positive, finite number of hours",
+                    ));
+                }
+                let st = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                let rate = match st.get(&s_a, MINING_RATE) {
+                    Some(Value::Float(f)) if f.is_finite() && *f > 0.0 => *f,
+                    Some(Value::Int(i)) if *i > 0 => *i as f64,
+                    _ => {
+                        return Err(err(
+                            "no_mining_rate",
+                            format!("{s_a} has no {MINING_RATE} fact (kg an hour): it cannot mine"),
+                        ))
+                    }
+                };
+                let state = u.record.state_at(UniverseTime::seconds(at_s));
+                let natural = natural_kg(u, &b_a, &kind, at_s, &sheet, &kinds, &state)?;
+                let held = inventory::Held::at(&state, &b_a, &kind, natural).held_kg();
+                let kg = (rate * hours).min(held);
+                if kg <= 0.0 {
+                    return Err(err("not_enough", format!("{b_a} holds no {kind} to mine")));
+                }
+                let reason = Some(format!(
+                    "mined {kg} kg of {kind} in {hours} h at {rate} kg/h{}",
+                    if kg < rate * hours {
+                        ", all there was"
+                    } else {
+                        ""
+                    }
+                ));
+                transfer(
+                    u, &reg, &sheet, &kinds, &kind, &b_a, &s_a, kg, writer, reason, at_s,
+                )?
             }
             Request::AddActor {
                 id,
@@ -6572,12 +6946,24 @@ impl Kernel {
                 sheet,
                 apply,
                 grow,
+                metadata,
+                route_audience,
+                route_tier,
                 at_s,
             } => {
                 use sse_sector_io::Format;
                 if grow && !apply {
                     return Err(err("bad_request", "grow needs apply"));
                 }
+                let route_audience: sse_record::Audience = match route_audience {
+                    None => sse_record::Audience::gm(),
+                    Some(v) => serde_json::from_value(v).map_err(|e| {
+                        err(
+                            "bad_link",
+                            format!("route_audience: \"everyone\", \"gm\" or a list ({e})"),
+                        )
+                    })?,
+                };
                 let file = match format.as_deref() {
                     None => sse_sector_io::parse_any(&text),
                     Some("t5_tab") => sse_sector_io::parse_as(Format::T5Tab, &text),
@@ -6589,6 +6975,10 @@ impl Kernel {
                             format!("format {f:?}: use t5_tab, sec or uwp_lines"),
                         ))
                     }
+                };
+                let file = match &metadata {
+                    Some(m) => file.with_metadata(sse_sector_io::parse_sector_xml(m)),
+                    None => file,
                 };
                 let sheet = match &sheet {
                     Some(id) => self.codes.sheet(id).ok_or_else(|| {
@@ -6702,9 +7092,130 @@ impl Kernel {
                         .hash()
                         .hex()
                 });
+                let routes = import_routes(
+                    u,
+                    &file.routes,
+                    &imp.worlds,
+                    apply.then_some((&route_audience, route_tier.as_deref())),
+                    at_s,
+                )?;
+                let record_hash = (apply && !file.routes.is_empty()).then(|| record_hash(u));
                 Response::SectorImport {
                     summary: imp.summary.sentence(),
                     import: serde_json::to_value(&imp).expect("imports are plain data"),
+                    events,
+                    state_hash,
+                    routes,
+                    record_hash,
+                }
+            }
+            Request::RollProfile {
+                program,
+                body,
+                reroll,
+                apply,
+                at_s,
+            } => {
+                let prog = self
+                    .codes
+                    .rolls
+                    .iter()
+                    .find(|r| r.id == program)
+                    .ok_or_else(|| {
+                        err(
+                            "unknown_program",
+                            format!(
+                                "no rolled profile {program:?} in the stack (provides.other.rolls)"
+                            ),
+                        )
+                    })?
+                    .clone();
+                let sheet = self
+                    .codes
+                    .sheet(&prog.sheet)
+                    .expect("checked at load")
+                    .clone();
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let body = in_universe(&u.root, &body)?;
+                let reading = codes_at(&self.codes, &sheet, u, &body, at_s)
+                    .into_iter()
+                    .find(|r| r["address"] == body.to_string())
+                    .ok_or_else(|| {
+                        err(
+                            "unknown_body",
+                            format!("{body} has no facts yet: adopt or import it first"),
+                        )
+                    })?;
+                let reading: sse_codes::Reading =
+                    serde_json::from_value(reading["reading"].clone())
+                        .expect("a reading round-trips");
+                let authored: BTreeMap<String, String> = sheet
+                    .segments
+                    .iter()
+                    .filter_map(|g| g.authored.clone().map(|f| (g.id.clone(), f)))
+                    .collect();
+                let steps =
+                    sse_codes::roll::roll(&prog, &reading, &authored, &u.seed, &body, reroll)
+                        .map_err(|e| err("bad_roll", e))?;
+                let mut events = Vec::new();
+                if apply {
+                    let mut set: BTreeMap<String, Value> = BTreeMap::new();
+                    for s in steps
+                        .iter()
+                        .filter(|s| s.how == "rolled" || s.how == "zero")
+                    {
+                        let Some(f) = &s.writes else { continue };
+                        let v = match s.symbol.as_str() {
+                            "yes" => Value::Bool(true),
+                            "no" => Value::Bool(false),
+                            sym => Value::Text(sym.to_string()),
+                        };
+                        set.insert(f.clone(), v);
+                        set.insert(
+                            format!("roll.{}.{}", prog.id, s.id),
+                            Value::Text(s.why.clone()),
+                        );
+                    }
+                    if !set.is_empty() {
+                        let t = UniverseTime::seconds(at_s);
+                        let e = Event::new(EventBody {
+                            kind: kinds::AUTHORED_SET.into(),
+                            subject: vec![body.clone()],
+                            occurred_at: t,
+                            activated_at: t,
+                            recognised_at: u.chronicle.next_stamp(),
+                            causes: vec![],
+                            payload: Payload {
+                                set: BTreeMap::from([(body.clone(), set)]),
+                                ..Default::default()
+                            },
+                            evidence: Evidence::Authored,
+                            publisher: Publisher::new("gm", "roll_profile", "1"),
+                        })
+                        .map_err(|e| err("bad_event", format!("{e}")))?;
+                        let id = u
+                            .chronicle
+                            .append(e)
+                            .map_err(|e| err("chronicle", format!("{e}")))?;
+                        events.push(id.hex());
+                    }
+                }
+                let state_hash = apply.then(|| {
+                    u.chronicle
+                        .state_at(UniverseTime::seconds(i64::MAX))
+                        .hash()
+                        .hex()
+                });
+                Response::ProfileRolled {
+                    program: prog.id.clone(),
+                    body: body.to_string(),
+                    steps: steps
+                        .iter()
+                        .map(|s| serde_json::to_value(s).expect("plain data"))
+                        .collect(),
                     events,
                     state_hash,
                 }

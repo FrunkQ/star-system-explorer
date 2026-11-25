@@ -166,7 +166,7 @@ export interface ViewSession {
   /** A body's world stack (P4) with the kernel's ladder and physics notes, by body address or fixture name. */
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
   /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. */
-  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json } | { ok: false; code: string; message: string }>;
+  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json; kind?: string } | { ok: false; code: string; message: string }>;
   /** Tiles of a world at any level (S1, through resolved_system; at most 24 a call), with the kernel's refusals; GM only. The ground round a landing site (SL1). */
   surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }>;
   /** A world's landmarks (SL1): its named landscape from a quick survey (`survey_surface`'s register, the same world the globe shows); GM only. */
@@ -252,6 +252,8 @@ export interface ViewSession {
   /** The hex map's worlds (X3c, kernel `sector_map`): each mapped system's main world with its reading, by hex. Read only; GM only. */
   sectorMap?(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorMap } | { ok: false; code: string; message: string }>;
   /** Read a sector file (X3c, kernel `import_sector`): a preview without `apply`; with it, every world written as history (and with `grow`, its whole system grown first). GM only. */
+  /** Roll a pack's profile for one world (WBH part 2, kernel `roll_profile`): a preview, or with `apply` written as authored codes. GM only. */
+  rollProfile?(ask: { program: string; body: string; reroll?: boolean; apply?: boolean; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").ProfileRolled } | { ok: false; code: string; message: string }>;
   importSector?(ask: import("./sector.ts").SectorImportAsk): Promise<{ ok: true; result: import("./sector.ts").SectorImported } | { ok: false; code: string; message: string }>;
   /** Write the mapped systems as a sector file (X3c, kernel `export_sector`). Read only; GM only. */
   exportSector?(ask: { scope: string; format: import("./sector.ts").SectorFormat; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorExported } | { ok: false; code: string; message: string }>;
@@ -699,15 +701,16 @@ export class Session implements ViewSession {
     return this.seat.authority === "gm" || (this.#landing !== null && this.#landing.system === system && this.#landing.body === body);
   }
 
-  async surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json } | { ok: false; code: string; message: string }> {
+  async surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json; kind?: string } | { ok: false; code: string; message: string }> {
     if (!this.#mayLand(system, body)) return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
     const tiles = [0, 1, 2, 3, 4, 5].map((face) => ({ body, face, level: 0, x: 0, y: 0 }));
     const r = await this.#call({ op: "resolved_system", system, tiles });
     if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
-    const x = r as unknown as { tiles?: SurfaceTile[]; refused?: Json[]; surfaces?: { address: string; regime_label?: string }[] };
+    const x = r as unknown as { tiles?: SurfaceTile[]; refused?: Json[]; surfaces?: { address: string; regime_label?: string; kind?: string }[] };
     const record = x.surfaces?.find((s2) => s2.address === body);
-    // The world's whole surface record rides along (its plumes, for True: renderer plumes.ts).
-    return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: record?.regime_label, ...(record ? { record: record as unknown as Json } : {}) };
+    // The world's whole surface record rides along (its plumes, for True: renderer plumes.ts). Its `kind` is the outermost
+    // layer (solid, ice-shell, ocean, lava, cloud-deck, small-body): a cloud deck has no ground to draw.
+    return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: record?.regime_label, ...(record ? { record: record as unknown as Json } : {}), ...(record?.kind ? { kind: record.kind } : {}) };
   }
 
   async surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }> {
@@ -950,8 +953,14 @@ export class Session implements ViewSession {
 
   async importSector(ask: import("./sector.ts").SectorImportAsk): Promise<{ ok: true; result: import("./sector.ts").SectorImported } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "sectors are imported on the game master's machine" };
-    const r = await this.#call({ op: "import_sector", text: ask.text, ...(ask.format ? { format: ask.format } : {}), ...(ask.sheet ? { sheet: ask.sheet } : {}), apply: !!ask.apply, grow: !!ask.grow, at_s: ask.at_s ?? 0 });
+    const r = await this.#call({ op: "import_sector", text: ask.text, ...(ask.format ? { format: ask.format } : {}), ...(ask.sheet ? { sheet: ask.sheet } : {}), apply: !!ask.apply, grow: !!ask.grow, ...(ask.metadata ? { metadata: ask.metadata } : {}), ...(ask.route_audience ? { route_audience: ask.route_audience } : {}), ...(ask.route_tier ? { route_tier: ask.route_tier } : {}), at_s: ask.at_s ?? 0 });
     return r.type === "sector_import" ? { ok: true, result: r as unknown as import("./sector.ts").SectorImported } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async rollProfile(ask: { program: string; body: string; reroll?: boolean; apply?: boolean; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").ProfileRolled } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "profiles are rolled on the game master's machine" };
+    const r = await this.#call({ op: "roll_profile", program: ask.program, body: ask.body, reroll: !!ask.reroll, apply: !!ask.apply, at_s: ask.at_s ?? 0 });
+    return r.type === "profile_rolled" ? { ok: true, result: r as unknown as import("./sector.ts").ProfileRolled } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async exportSector(ask: { scope: string; format: import("./sector.ts").SectorFormat; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorExported } | { ok: false; code: string; message: string }> {
