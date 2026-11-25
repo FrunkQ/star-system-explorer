@@ -4102,6 +4102,7 @@ fn the_traveller_weapons_reach_their_game_bands() {
         seen += 1;
     }
     assert_eq!(seen, 7);
+}
 
 #[test]
 fn read_shadow_light_colours_an_eclipse() {
