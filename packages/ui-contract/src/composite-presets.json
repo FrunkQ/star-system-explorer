@@ -1,0 +1,9 @@
+{
+  "about": "Composite band presets (exotic objects design 6A, XO17): presentation data, not physics. Each preset is a list of layers, a band id from the sheet's Bands table and the colour it is laid in. Visible keeps its natural colours. A pack or Orac adds more with withCompositePresets(). The starting colours follow observatory habit: X-ray violet, ultraviolet blue, infrared red, radio orange.",
+  "colours": { "infrared": "#ff4a3d", "ultraviolet": "#4f7dff", "xray": "#b36bff", "radio": "#ff9a1f", "mag": "#38d6c4" },
+  "presets": [
+    { "id": "observatory", "name": "Observatory", "layers": ["xray", "visible", "infrared", "radio"], "why": "As observatory press pictures are made: hot gas, starlight, warm dust and radio in one frame" },
+    { "id": "hot-and-cold", "name": "Hot and cold", "layers": ["xray", "infrared"], "why": "The hottest and the coolest things in view at once" },
+    { "id": "radio-over-visible", "name": "Radio over visible", "layers": ["visible", "radio"], "why": "Jets, lobes and belts glowing over what the eye sees" }
+  ]
+}

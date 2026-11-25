@@ -3,6 +3,7 @@
 // its own; each snapshot comes back as a scene the chart can draw. The main
 // line does not move until the GM keeps the branch.
 import { primaryOf, type SceneFact, type SceneEvent, type SystemScene } from "./scene.ts";
+import { roundTo } from "./figures.ts";
 
 export interface PlanetSpec {
   name: string;
@@ -124,7 +125,7 @@ export function specFromScene(scene: SystemScene): { spec: SystemSpec; assumed: 
   };
 }
 
-const sig = (v: number, d = 3) => Number(v.toPrecision(d));
+const sig = (v: number, d = 3) => roundTo(v, d);
 function fact(field: string, label: string, value: number, unit: string): SceneFact {
   const v = sig(value);
   return { field, label, value: v, unit, display: `${v} ${unit}`, editable: false, source: "derived" };

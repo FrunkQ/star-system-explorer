@@ -31,7 +31,7 @@ pub const CAMPAIGN_FIELD: &str = "campaign.tag_decl.";
 pub const CAMPAIGN_KIND: &str = "tag.declared";
 
 /// Content blocks that may name tags, and what a reference there is called.
-const READERS: [(&str, &str); 10] = [
+const READERS: [(&str, &str); 11] = [
     ("rules", "rule"),
     ("dressing", "dressing rule"),
     ("sifters", "sifter"),
@@ -42,6 +42,7 @@ const READERS: [(&str, &str); 10] = [
     ("code_sheets", "code sheet"),
     ("lenses", "lens"),
     ("intents", "intent"),
+    ("resources", "resource kind"),
 ];
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

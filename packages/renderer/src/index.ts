@@ -17,6 +17,8 @@ export { flowFace, gasAbove, gasTint, readTrueAir, readTrueFace, sheetColours, t
 export { airLuts, airShapeOf, AIR_LUT_REFS, type AirLuts, type AirShape } from "./air-luts.ts";
 // VP3 part 5: bare ground in its measured colour (data sheet reflectance rows, kernel SW1 maturity), ground-optics.ts.
 export { bandsOf, groundReflectance, readGroundOptics, reflectanceAt, withGround, GROUND_BANDS_NM, GROUND_ROWS, type GroundOptics, type MatterReader, type ReflectanceTable } from "./ground-optics.ts";
+// TA6: a world flattened by its spin (Darwin-Radau flow), true-shape.ts.
+export { flattenScale, readTrueShape, SHAPE_FLOW, type ShapeReader, type TrueShape } from "./true-shape.ts";
 // V10f: rings and belts in True, from the universe's ring and belt data.
 export { BELT_DUST, BELT_SECONDS_PER_SECOND, beltAt, beltHaze, beltParticles, poleOf, RING_FALLBACK, ringProfile } from "./rings.ts";
 export type { BeltParticle } from "./rings.ts";
@@ -114,7 +116,7 @@ export { fresnel, MAX_TRAINS, readSeaOptics, SEA_STEPS, seaBody, seaWords } from
 export type { SeaOptics, WaveTrain } from "./sea.ts";
 export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunAt, sunDirection, sunTransmittance } from "./surface-sky.ts";
 export type { SurfaceFrame, SurfaceGpu, SurfaceMesh } from "./gpu-surface.ts";
-export type { LanderPose } from "./surface-lander.ts";
+export type { LanderPose, LanderShip } from "./surface-lander.ts";
 
 /** Draw the ground round a site on the GPU (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */
 export async function startSurface(canvas: HTMLCanvasElement) {
@@ -131,6 +133,19 @@ export { DIFFERENTIAL_ROTATION, rateShare, spotsAt } from "./live-star.ts";
 // A body's face in True, one door for every view (true-body.ts).
 export { meanColour, ringsAssumed, trueLook } from "./true-body.ts";
 export type { TrueBody, TrueLook } from "./true-body.ts";
+// Hot things glow in Visible and plumes above the limb (third audit R10 to R12, track TRUE).
+export { drawnGlow, GLOW_FLOOR, hotGlow } from "./hot-glow.ts";
+export type { HotGlow } from "./hot-glow.ts";
+export { plumeBrightness, plumeFacts, plumeGrains, plumeNote } from "./plumes.ts";
+export type { PlumeFacts } from "./plumes.ts";
+// Lava tube openings cut into the ground at a landing site (third audit, TRUE6).
+export { caveCut, caveOpenings, nearestOpening, openingLine } from "./cave-mouths.ts";
+export type { CaveOpening } from "./cave-mouths.ts";
+// Surface stains hued from the data sheet's optics (TRUE4).
+export { grainAlbedo, indexTableOf, layerReflectance, mixAlbedo, seenColour, GRAIN_UM } from "./sheet-optics.ts";
+export type { GrainShare, IndexTable } from "./sheet-optics.ts";
+export { stainFacts, stainHue, stainNote, stainPrepared, STAIN_GRAIN_UM } from "./stain-look.ts";
+export type { StainFact, StainHue } from "./stain-look.ts";
 // Small bodies' own shapes in True (SB3, small-body.ts).
 export { figureRadius, meanRadius, smallBodyColour, smallBodyMesh } from "./small-body.ts";
 export type { SmallFigure, SmallLobe, SmallMesh } from "./small-body.ts";

@@ -1,0 +1,36 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.atlas",
+  "label": "Atlas",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "plain",
+  "items": [
+    {
+      "view": "sse.view.atlas",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "system",
+      "group": "understand",
+      "label": "Atlas",
+      "order": 5,
+      "hint": "The system as a book, page by page, as one audience knows it"
+    },
+    {
+      "scale": "world",
+      "group": "understand",
+      "label": "Atlas",
+      "order": 5,
+      "hint": "This world's page in the Atlas, as one audience knows it"
+    }
+  ]
+}

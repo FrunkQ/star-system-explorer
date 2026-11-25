@@ -8,6 +8,8 @@ import type { Vec3 } from "./frames.ts";
 import { ringProfile, type RingBand } from "./rings.ts";
 import { cutRings, ringMarks, type RingMoon } from "./ring-structure.ts";
 import type { TrueTexture } from "./true-look.ts";
+import { drawnGlow, hotGlow } from "./hot-glow.ts";
+import { plumeBrightness, plumeGrains, type PlumeFacts } from "./plumes.ts";
 import { flowFace, type AirFlow } from "./true-air.ts";
 import { airLuts, type AirLuts, type AirShape } from "./air-luts.ts";
 
@@ -29,6 +31,13 @@ export interface TrueBody {
   /** A star's living face for this moment (star-now.ts `liveFace` or `drawStarNow`): churning cells, spots, flares. */
   face?: GpuItem["face"];
   /**
+   * Its own heat (hot-glow.ts): its temperature and its star's (temperature, radius, distance). A world at or over
+   * the Draper point glows by Planck against its own daylight.
+   */
+  heat?: { t_k: number; star?: { t_k: number; r_m: number; d_m: number } | null };
+  /** Its plumes from the kernel's surface record (plumes.ts), with the light's and the eye's directions from it. */
+  plumes?: { facts: PlumeFacts; toLight: Vec3; toEye: Vec3 };
+  /**
    * The winds its face is carried by (a giant's, from `readTrueFace`), and how long after the face was read the
    * drawing is, in the body's own seconds: the bands slide at their jets' speeds and the storms turn (VP-A1).
    */
@@ -45,10 +54,12 @@ export interface TrueBody {
   /** The world's mass, kg, and its moons: with both, its rings are cut where the moons' resonances and gaps fall (ring-structure.ts). */
   mass_kg?: number;
   moons?: readonly RingMoon[];
+  /** How much its spin flattens it (true-shape.ts `readTrueShape`, TA6). */
+  flatten?: number;
 }
 
 /** The GPU fields of a body's True face. */
-export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "face" | "mesh" | "clouds" | "air">;
+export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "face" | "mesh" | "clouds" | "air" | "glow" | "plumes" | "flatten" | "pole">;
 
 /** A surface texture's mean colour, 0..1 (sRGB bytes over 255; a tint, not a measurement). */
 export function meanColour(t: TrueTexture): [number, number, number] {
@@ -106,6 +117,7 @@ export function trueLook(b: TrueBody): TrueLook {
       out.surface = { key: b.key, texture: flowFace(b.surface, f.flow, { radius_m: b.radius_m, dt_s: f.dt_s }), version: f.dt_s };
     else out.surface = { key: b.key, texture: b.surface };
   }
+  if (!b.star && b.flatten && b.flatten > 0) ((out.flatten = b.flatten), (out.pole = b.pole));
   if (!b.star && b.clouds) out.clouds = { key: `${b.key}|clouds`, texture: b.clouds };
   if (!b.star && b.air) {
     const key = `${b.key}|air|${b.air.beta.join(",")}|${b.air.scale_height}`;
@@ -114,9 +126,52 @@ export function trueLook(b: TrueBody): TrueLook {
   }
   const r = b.star ? null : ringsOf(b);
   if (r) out.rings = { key: r.key, inner: r.inner, outer: r.outer, normal: b.pole, width: r.width, data: r.data };
+  if (!b.star && b.heat) {
+    const g = drawnGlow(hotGlow(b.heat.t_k, b.heat.star));
+    if (g) out.glow = g.rgb;
+  }
+  if (!b.star && b.plumes && b.radius_m) {
+    const p = b.plumes;
+    const unit = (v: Vec3) => {
+      const l = Math.hypot(v[0], v[1], v[2]) || 1;
+      return [v[0] / l, v[1] / l, v[2] / l] as Vec3;
+    };
+    // The light travels from the star to the plume, then to the eye: back-lit when the star is behind the plume.
+    const l = unit(p.toLight);
+    const e = unit(p.toEye);
+    const cosPhase = -(l[0] * e[0] + l[1] * e[1] + l[2] * e[2]);
+    const brightness = plumeBrightness(p.facts, cosPhase);
+    if (brightness > 0) out.plumes = { points: turnToPole(plumeKept(b.key, p.facts, b.radius_m), b.pole), brightness };
+  }
   if (b.figure && !b.star) {
     out.mesh = smallBodyMesh(b.figure, b.key);
     if (!b.surface) out.colour = smallBodyColour(b.figure);
+  }
+  return out;
+}
+
+// A plume's grains are made once per body and its facts (they are a drawing's, deterministic).
+const grains = new Map<string, Float32Array>();
+function plumeKept(key: string, f: PlumeFacts, radius_m: number): Float32Array {
+  const k = `${key}|${JSON.stringify(f)}|${radius_m}`;
+  let g = grains.get(k);
+  if (!g) grains.set(k, (g = plumeGrains(f, radius_m)));
+  return g;
+}
+
+/** Points in the body's own frame (+z its pole) turned so +z lies along `pole` in the drawing's frame. */
+function turnToPole(pts: Float32Array, pole: Vec3): Float32Array {
+  const l = Math.hypot(pole[0], pole[1], pole[2]) || 1;
+  const z: Vec3 = [pole[0] / l, pole[1] / l, pole[2] / l];
+  const a: Vec3 = Math.abs(z[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
+  const xr: Vec3 = [a[1] * z[2] - a[2] * z[1], a[2] * z[0] - a[0] * z[2], a[0] * z[1] - a[1] * z[0]];
+  const xl = Math.hypot(xr[0], xr[1], xr[2]) || 1;
+  const x: Vec3 = [xr[0] / xl, xr[1] / xl, xr[2] / xl];
+  const y: Vec3 = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+  const out = new Float32Array(pts.length);
+  for (let i = 0; i < pts.length; i += 3) {
+    const [u, v, w] = [pts[i]!, pts[i + 1]!, pts[i + 2]!];
+    for (let k = 0; k < 3; k++) out[i + k] = u * x[k]! + v * y[k]! + w * z[k]!;
   }
   return out;
 }

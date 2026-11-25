@@ -157,8 +157,10 @@ fn adopt_v3(
     save: &str,
     at: UniverseTime,
 ) -> Result<Adoption, Response> {
-    let im = sse_import_v3::import_json(save, &universe_key(root)?)
+    let mut im = sse_import_v3::import_json(save, &universe_key(root)?)
         .map_err(|e| err("import_failed", e.0))?;
+    let said = rehome_barycentres(&mut im.facts);
+    im.report.barycentres_mapped = said;
     let systems: Vec<Address> = im
         .facts
         .keys()
@@ -223,6 +225,275 @@ fn adopt_v3(
         facts: count,
         run: None,
     })
+}
+
+type V3Facts = BTreeMap<Address, BTreeMap<String, sse_import_v3::Fact>>;
+
+fn is_bary(a: &Address) -> bool {
+    a.last().kind() == "bary"
+}
+
+fn text_of(row: Option<&BTreeMap<String, sse_import_v3::Fact>>, k: &str) -> Option<String> {
+    row?.get(k)?.value.as_str().map(str::to_owned)
+}
+
+/// The members of a V3 barycentre: its `v3.memberIds` (addresses, as the
+/// importer resolves them) that are in the save, in V3's order.
+fn bary_members(facts: &V3Facts, b: &Address) -> Vec<Address> {
+    let listed: Vec<Address> = facts
+        .get(b)
+        .and_then(|r| r.get("v3.memberIds"))
+        .and_then(|f| f.value.as_array())
+        .map(|xs| {
+            xs.iter()
+                .filter_map(|x| x.as_str()?.parse::<Address>().ok())
+                .filter(|a| a != b && facts.contains_key(a))
+                .collect()
+        })
+        .unwrap_or_default();
+    listed
+}
+
+/// A node's mass: its own `body.mass`, or for a barycentre its members' sum.
+fn node_mass(facts: &V3Facts, a: &Address, depth: u32) -> f64 {
+    if depth > 16 {
+        return 0.0;
+    }
+    if is_bary(a) {
+        return bary_members(facts, a)
+            .iter()
+            .map(|x| node_mass(facts, x, depth + 1))
+            .sum();
+    }
+    facts
+        .get(a)
+        .and_then(|r| r.get("body.mass"))
+        .and_then(|f| f.value.as_f64())
+        .filter(|x| x.is_finite() && *x > 0.0)
+        .unwrap_or(0.0)
+}
+
+/// The heaviest member of a barycentre (the first listed on a tie).
+fn heaviest(facts: &V3Facts, members: &[Address]) -> Option<Address> {
+    let mut best: Option<(&Address, f64)> = None;
+    for x in members {
+        let mx = node_mass(facts, x, 0);
+        if best.is_none_or(|(_, mb)| mx > mb) {
+            best = Some((x, mx));
+        }
+    }
+    best.map(|(x, _)| x.clone())
+}
+
+/// The body that stands for a node: a body itself, or the body at the bottom
+/// of a barycentre's heaviest members.
+fn anchor(facts: &V3Facts, a: &Address) -> Option<Address> {
+    let mut at = a.clone();
+    for _ in 0..16 {
+        if !is_bary(&at) {
+            return Some(at);
+        }
+        at = heaviest(facts, &bary_members(facts, &at))?;
+    }
+    None
+}
+
+fn orbit_keys(row: &BTreeMap<String, sse_import_v3::Fact>) -> Vec<String> {
+    row.keys()
+        .filter(|k| k.starts_with("orbit."))
+        .cloned()
+        .collect()
+}
+
+/// V3 barycentre nodes onto the hierarchy (BC1: a barycentre always, no
+/// barycentre objects). In a V3 save the members of a pair orbit a massless
+/// `bary:N`, each at its own distance from it. SSE4 keeps only each body's
+/// host and works the barycentre out (`orbits_at`), so on import:
+/// - the heaviest member (its anchor body, for a nested pair) takes the pair's
+///   own orbit round its host, or orbits nothing when the pair is the root;
+/// - each other member orbits that body, at the pair's separation (its own
+///   distance plus the heavy member's, or scaled by the masses when that is
+///   not given), keeping its own shape, angles and phase;
+/// - anything else that orbited the barycentre (a planet round both stars)
+///   orbits the heavy body with its elements unchanged: the hierarchy counts
+///   both stars for a world outside the companion;
+/// - the barycentre's row is left out; its `v3.*` facts go to that body as
+///   `v3.pair.<bary:N>.<name>`.
+///
+/// Returns one line per barycentre for the import report.
+pub(crate) fn rehome_barycentres(facts: &mut V3Facts) -> Vec<String> {
+    use sse_import_v3::Fact;
+    let barys: Vec<Address> = facts.keys().filter(|a| is_bary(a)).cloned().collect();
+    if barys.is_empty() {
+        return vec![];
+    }
+    let member_of: BTreeMap<Address, Address> = barys
+        .iter()
+        .flat_map(|b| {
+            bary_members(facts, b)
+                .into_iter()
+                .map(move |x| (x, b.clone()))
+        })
+        .collect();
+    let mut said = vec![];
+    // Writes are worked out from the save as read, then applied together, so
+    // the order barycentres are visited in never matters.
+    let mut writes: Vec<(Address, BTreeMap<String, Fact>, String)> = vec![];
+    let mut mapped: BTreeMap<Address, Address> = BTreeMap::new();
+    for b in &barys {
+        let members = bary_members(facts, b);
+        let (Some(heavy), Some(primary)) = (heaviest(facts, &members), anchor(facts, b)) else {
+            said.push(format!(
+                "{b}: no members in the save; what orbited it is left unplaced"
+            ));
+            continue;
+        };
+        mapped.insert(b.clone(), primary.clone());
+        let host_of = |x: &Address| -> Option<String> {
+            let h: Address = text_of(facts.get(x), "orbit.host")?.parse().ok()?;
+            Some(match is_bary(&h) {
+                true => anchor(facts, &h)?.to_string(),
+                false => h.to_string(),
+            })
+        };
+        // The heavy side carries the pair's own orbit, unless the pair is a
+        // member of a wider pair, which places it.
+        if !member_of.contains_key(b) {
+            let mut row: BTreeMap<String, Fact> = BTreeMap::new();
+            if let Some(src) = facts.get(b) {
+                for k in orbit_keys(src) {
+                    row.insert(k.clone(), src[&k].clone());
+                }
+            }
+            let parent = text_of(facts.get(b), "parent");
+            match host_of(b) {
+                Some(h) => {
+                    row.insert(
+                        "orbit.host".into(),
+                        Fact {
+                            value: h.clone().into(),
+                            evidence: Evidence::Authored,
+                        },
+                    );
+                    row.insert(
+                        "parent".into(),
+                        Fact {
+                            value: h.into(),
+                            evidence: Evidence::Authored,
+                        },
+                    );
+                }
+                None => {
+                    if let Some(p) = parent.and_then(|p| p.parse::<Address>().ok()) {
+                        let p = if is_bary(&p) {
+                            anchor(facts, &p)
+                        } else {
+                            Some(p)
+                        };
+                        if let Some(p) = p {
+                            row.insert(
+                                "parent".into(),
+                                Fact {
+                                    value: p.to_string().into(),
+                                    evidence: Evidence::Authored,
+                                },
+                            );
+                        }
+                    }
+                }
+            }
+            writes.push((primary.clone(), row, "heavy".into()));
+        }
+        let m_heavy = node_mass(facts, &heavy, 0);
+        let a_heavy = facts
+            .get(&heavy)
+            .and_then(|r| r.get("orbit.semi_major_axis"))
+            .and_then(|f| f.value.as_f64());
+        let mut names = vec![primary.to_string()];
+        for x in members.iter().filter(|x| **x != heavy) {
+            let Some(target) = anchor(facts, x) else {
+                continue;
+            };
+            let Some(src) = facts.get(x) else { continue };
+            let mut row: BTreeMap<String, Fact> = BTreeMap::new();
+            for k in orbit_keys(src) {
+                row.insert(k.clone(), src[&k].clone());
+            }
+            let m_x = node_mass(facts, x, 0);
+            if let Some(a_x) = src
+                .get("orbit.semi_major_axis")
+                .and_then(|f| f.value.as_f64())
+            {
+                let sep = match a_heavy {
+                    Some(ah) => a_x + ah,
+                    None if m_heavy > 0.0 => a_x * (m_heavy + m_x) / m_heavy,
+                    None => a_x,
+                };
+                row.insert(
+                    "orbit.semi_major_axis".into(),
+                    Fact {
+                        value: sep.into(),
+                        evidence: src["orbit.semi_major_axis"].evidence,
+                    },
+                );
+            }
+            for k in ["orbit.host", "parent"] {
+                row.insert(
+                    k.into(),
+                    Fact {
+                        value: primary.to_string().into(),
+                        evidence: Evidence::Authored,
+                    },
+                );
+            }
+            names.push(target.to_string());
+            writes.push((target, row, "companion".into()));
+        }
+        said.push(format!(
+            "{b}: the pair {} now orbit {primary} (its heaviest member); the barycentre is worked out, not kept",
+            names.join(" and ")
+        ));
+    }
+    // Everything else that named a barycentre as host or parent names its body.
+    let written: Vec<Address> = writes.iter().map(|(a, _, _)| a.clone()).collect();
+    for (a, row) in facts.iter_mut() {
+        if is_bary(a) || written.contains(a) {
+            continue;
+        }
+        for k in ["orbit.host", "parent"] {
+            let to = row
+                .get(k)
+                .and_then(|f| f.value.as_str())
+                .and_then(|s| s.parse::<Address>().ok())
+                .and_then(|h| mapped.get(&h).cloned());
+            if let (Some(to), Some(f)) = (to, row.get_mut(k)) {
+                f.value = to.to_string().into();
+            }
+        }
+    }
+    for (a, row, _) in writes {
+        let r = facts.entry(a).or_default();
+        for k in orbit_keys(r) {
+            r.remove(&k);
+        }
+        r.remove("parent");
+        r.extend(row);
+    }
+    // The pair's own hand-set V3 facts (its name, a Lagrange point it rides)
+    // go with the body that stands for it, so nothing authored is lost.
+    for (b, primary) in &mapped {
+        let Some(row) = facts.remove(b) else { continue };
+        let seg = format!("{}:{}", b.last().kind(), b.last().key());
+        let kept: Vec<(String, Fact)> = row
+            .into_iter()
+            .filter_map(|(k, f)| {
+                let rest = k.strip_prefix("v3.")?;
+                Some((format!("v3.pair.{seg}.{rest}"), f))
+            })
+            .collect();
+        facts.entry(primary.clone()).or_default().extend(kept);
+    }
+    said
 }
 
 /// Facts of a formation run, in the importer's field names. Orbit angles are
@@ -1011,6 +1282,34 @@ pub const ORBIT_CACHE_SIZE: usize = 8;
 pub(crate) type OrbitCache = Vec<(String, sse_surface::atlas::Atlas)>;
 
 /// The Orbit atlas of one world from the cache, or worked out and kept.
+/// The Orbit atlas cache's key: the world, seed and epoch, and the survey
+/// options that change it (SOL5's measured air, SW1's star distance).
+fn orbit_cache_key(
+    env: &sse_surface::SurfaceEnvelope,
+    seed: &Seed,
+    epoch_gyr: f64,
+    opts: &sse_surface::survey::SurveyOptions,
+) -> String {
+    format!(
+        "{}/{}",
+        sse_surface::detail::orbit_key(env, seed, epoch_gyr),
+        serde_json::to_string(&(&opts.gases, opts.star_distance_au)).expect("plain data")
+    )
+}
+
+/// The survey options a world's Orbit atlas is built with, from its record.
+fn orbit_opts(
+    facts: &Facts,
+    bodies: &[sse_surface::Body],
+    b: &sse_surface::Body,
+) -> sse_surface::survey::SurveyOptions {
+    sse_surface::survey::SurveyOptions {
+        gases: catalogued_gases(facts.get(&b.address)),
+        star_distance_au: star_distance_au(bodies, b),
+        ..Default::default()
+    }
+}
+
 fn orbit_atlas<'c>(
     cache: &'c mut OrbitCache,
     s: &sse_surface::SurfaceSettings,
@@ -1020,11 +1319,7 @@ fn orbit_atlas<'c>(
     epoch_gyr: f64,
     opts: &sse_surface::survey::SurveyOptions,
 ) -> Result<&'c sse_surface::atlas::Atlas, String> {
-    let key = format!(
-        "{}/{}",
-        sse_surface::detail::orbit_key(env, seed, epoch_gyr),
-        serde_json::to_string(&(&opts.gases, opts.star_distance_au)).expect("plain data")
-    );
+    let key = orbit_cache_key(env, seed, epoch_gyr, opts);
     match cache.iter().position(|(k, _)| *k == key) {
         Some(i) => {
             let hit = cache.remove(i);
@@ -1122,11 +1417,7 @@ pub(crate) fn resolved_system(
             (Some(key), Some((b, env))) => {
                 // Orbit detail (S16): the coarse plate run, the same world a
                 // survey later refines; reused while it is in the cache.
-                let opts = sse_surface::survey::SurveyOptions {
-                    gases: catalogued_gases(facts.get(&b.address)),
-                    star_distance_au: star_distance_au(&bodies, b),
-                    ..Default::default()
-                };
+                let opts = orbit_opts(&facts, &bodies, b);
                 let atlas = orbit_atlas(
                     orbits,
                     &s,
@@ -1185,6 +1476,20 @@ pub(crate) fn resolved_system(
                         .filter(|w| w.active)
                 {
                     v["weathering"] = serde_json::to_value(w).expect("plain data");
+                }
+                // What stains its ground (TRUE4), when its tiles were read: from
+                // the surveyed atlas's one climate, already in the cache.
+                let key = orbit_cache_key(
+                    e,
+                    seed,
+                    (b.age_gyr + shift_gyr).max(0.0),
+                    &orbit_opts(&facts, &bodies, b),
+                );
+                if let Some((_, a)) = orbits.iter().find(|(k, _)| *k == key) {
+                    let st = sse_surface::stains::stains_of(b, e, a);
+                    if !st.is_empty() {
+                        v["stains"] = serde_json::to_value(st).expect("plain data");
+                    }
                 }
                 v
             })

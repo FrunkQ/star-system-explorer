@@ -13,7 +13,7 @@
 <script lang="ts">
   import { fraction, keyStep, labelRows, type RulerEvent } from "./ruler.ts";
   import { motionMs } from "./motion.ts";
-  import { constant } from "../../ui-contract/src/index.ts";
+  import { constant, drawn } from "../../ui-contract/src/index.ts";
   import { around, between, calendarTicks, defaultCalendar, spanWords, steps, timeWords, zoom, type Calendar, type RulerWindow } from "./calendar.ts";
 
   let {
@@ -82,7 +82,7 @@
   let track: HTMLDivElement | undefined = $state();
   const compact = $derived(width > 0 && width < 520);
   const tk = $derived(calendarTicks(w.from, w.to, cal, compact ? 4 : 8));
-  const pct = (yr: number) => `${(fraction(yr, w.from, w.to) * 100).toFixed(3)}%`;
+  const pct = (yr: number) => `${drawn(fraction(yr, w.from, w.to) * 100, 3)}%`;
   const inView = (yr: number) => yr >= w.from && yr <= w.to;
 
   const shown = $derived(events.filter((e) => inView(e.at_yr)));

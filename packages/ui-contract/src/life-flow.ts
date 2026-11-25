@@ -4,6 +4,7 @@
 // dials it leans on. Nothing here computes biology: every number and reason is the kernel's, sorted into the stage
 // that made it. Life comes from energy gradients, so the flow starts from where energy is, not from a class.
 import { carbonWords, confidenceWords, words, type LifeEvent, type LifeView } from "./life.ts";
+import { sayNumber } from "./figures.ts";
 
 export type StageId = "habitats" | "budget" | "origin" | "opportunity" | "innovations" | "catastrophes" | "ecosystem" | "traits" | "fluxes" | "signatures" | "hooks";
 
@@ -58,7 +59,7 @@ const habitatOf = (subject: string): string | null => {
   const m = /habitat:@?([^/]+)$/.exec(subject);
   return m ? m[1]!.replace(/[-_]/g, " ") : null;
 };
-const myr = (m: number) => (m >= 1000 ? `${Number((m / 1000).toFixed(2))} Gyr` : `${Math.round(m)} Myr`);
+const myr = (m: number) => (m >= 1000 ? `${sayNumber(Math.round(m / 10) / 100, 6)} Gyr` : `${Math.round(m)} Myr`);
 
 /** The board's stages for one world's `life_view`. */
 export function lifeFlow(v: LifeView): FlowStage[] {
@@ -112,8 +113,8 @@ export function lifeFlow(v: LifeView): FlowStage[] {
       live: !!origin || alive || ever,
     },
     opportunity: {
-      headline: now ? `${Math.round(now.opportunity).toLocaleString("en-GB")} Earth-Myr` : "no history kept",
-      lines: now ? [`Opportunity so far: ${Math.round(now.opportunity).toLocaleString("en-GB")} Earth-Myr of living since the origin.`, `Diversity now: ${now.diversity.toFixed(1)} on the kernel's scale.`] : ["This world's view keeps no timeline."],
+      headline: now ? `${sayNumber(Math.round(now.opportunity), 0, { decimals: 0 })} Earth-Myr` : "no history kept",
+      lines: now ? [`Opportunity so far: ${sayNumber(Math.round(now.opportunity), 0, { decimals: 0 })} Earth-Myr of living since the origin.`, `Diversity now: ${sayNumber(now.diversity, 0, { decimals: 1 })} on the kernel's scale.`] : ["This world's view keeps no timeline."],
       events: [],
       dials: dialsOf("opportunity"),
       live: !!now && now.opportunity > 0,
@@ -143,14 +144,14 @@ export function lifeFlow(v: LifeView): FlowStage[] {
       headline: typeof t.producer_colour === "string" ? `${t.producer_colour} producers` : typeof t.solvent === "string" ? `in ${t.solvent}` : "none read",
       lines: Object.entries(t)
         .filter(([, x]) => x !== null && x !== undefined && (typeof x !== "object" || Array.isArray(x)))
-        .map(([k, x]) => `${words(k)}: ${Array.isArray(x) ? x.join(", ") : typeof x === "number" ? Number(x.toPrecision(3)) : String(x)}`),
+        .map(([k, x]) => `${words(k)}: ${Array.isArray(x) ? x.join(", ") : typeof x === "number" ? sayNumber(x, 3) : String(x)}`),
       events: [],
       dials: dialsOf("traits"),
       live: v.traits !== null && Object.keys(t).length > 0,
     },
     fluxes: {
-      headline: `O₂ ${Number((sig.o2 * 100).toPrecision(2))}%, CH₄ ${Number(sig.ch4_ppm.toPrecision(2))} ppm`,
-      lines: [`Oxygen in the air: ${Number((sig.o2 * 100).toPrecision(3))}%.`, `Methane: ${Number(sig.ch4_ppm.toPrecision(3))} ppm.`, ...(sig.traces.length ? [`Traces in the rocks: ${sig.traces.map((x) => `${words(x.kind)} (${Math.round(x.surviving * 100)}% surviving)`).join(", ")}.`] : [])],
+      headline: `O₂ ${sayNumber(sig.o2 * 100, 2)}%, CH₄ ${sayNumber(sig.ch4_ppm, 2)} ppm`,
+      lines: [`Oxygen in the air: ${sayNumber(sig.o2 * 100, 3)}%.`, `Methane: ${sayNumber(sig.ch4_ppm, 3)} ppm.`, ...(sig.traces.length ? [`Traces in the rocks: ${sig.traces.map((x) => `${words(x.kind)} (${Math.round(x.surviving * 100)}% surviving)`).join(", ")}.`] : [])],
       events: [],
       dials: dialsOf("fluxes"),
       live: alive || ever,

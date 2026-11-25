@@ -1,5 +1,5 @@
 /target
-node_modules/
+node_modules
 /tests/harness/pkg/
 /packages/*/dist/
 /packages/kernel-client/wasm/

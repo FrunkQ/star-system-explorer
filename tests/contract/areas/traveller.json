@@ -1,0 +1,7 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics"]},
+ {"op": "open_universe", "id": "matter", "seed": "matter"},
+ {"op": "transfer", "kind": "iron", "from": "u:matter/sys:1/body:0", "to": "u:matter/sys:1/ship:0", "kg": 1000.0, "at_s": 0},
+ {"op": "roll_profile", "program": "traveller.social", "body": "u:matter/sys:1/body:0", "at_s": 0},
+ {"op": "mine", "ship": "u:matter/sys:1/ship:0", "body": "u:matter/sys:1/body:0", "kind": "fe", "hours": 1.0, "at_s": 0}
+]

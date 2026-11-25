@@ -233,7 +233,17 @@ fn wavenumber(omega: f64, g: f64, s: f64) -> f64 {
 /// the Pierson-Moskowitz spectrum S(ω) = α g² ω⁻⁵ exp(−5/4 (ω_p/ω)⁴), α
 /// set so that H_s = 4 sqrt(m₀), sampled at ω_p × 1, 1.4, 2, 2.8 and 4,
 /// each with ω² = g k + (σ/ρ) k³ and fanned ±15° and ±30° about the wind.
-pub(crate) fn trains(h: f64, t: f64, dir_deg: f64, g: f64, s: f64) -> Vec<serde_json::Value> {
+/// `nu` is the liquid's kinematic viscosity (m²/s; 0 when unknown): each
+/// train's amplitude decays by e in `damping_s` = 1 / (2 ν k²) once the wind
+/// stops (Lamb 1932, art. 348).
+pub(crate) fn trains(
+    h: f64,
+    t: f64,
+    dir_deg: f64,
+    g: f64,
+    s: f64,
+    nu: f64,
+) -> Vec<serde_json::Value> {
     if h <= 0.0 || t <= 0.0 {
         return vec![];
     }
@@ -254,12 +264,16 @@ pub(crate) fn trains(h: f64, t: f64, dir_deg: f64, g: f64, s: f64) -> Vec<serde_
         let dw = w * (step - 1.0 / step);
         let k = wavenumber(w, g, s);
         let d = m::fmod(dir_deg + fan + 360.0, 360.0);
-        serde_json::json!({
+        let mut o = serde_json::json!({
             "wavelength_m": 2.0 * m::PI / k,
             "amplitude_m": m::sqrt(2.0 * sw * dw),
             "period_s": 2.0 * m::PI / w,
             "dir_deg": d,
-        })
+        });
+        if nu > 0.0 {
+            o["damping_s"] = serde_json::json!(1.0 / (2.0 * nu * k * k));
+        }
+        o
     })
     .collect()
 }
@@ -450,6 +464,7 @@ pub(crate) fn summary(
     let liq = liquid(sheet, cs, name, c.t_surface_k);
     let rho_l = liq.as_ref().map_or(cl.liquid_kg_m3, |l| l.rho);
     let s_cap = liq.as_ref().map_or(0.0, |l| l.sigma / l.rho);
+    let nu = liq.as_ref().map_or(0.0, |l| l.mu / l.rho);
     let drive = drive(cs, cl, rho_l);
     // Waves in each band with sea, from the band's year-round wind.
     let mut bands = vec![];
@@ -489,7 +504,7 @@ pub(crate) fn summary(
         let dir = if u >= 0.0 { 0.0 } else { 180.0 };
         bands.push(serde_json::json!({
             "wave_m": h, "period_s": t, "fetch_km": fetch / 1000.0, "wind_m_s": speed,
-            "trains": trains(h, t, dir, g, s_cap),
+            "trains": trains(h, t, dir, g, s_cap, nu),
             "whitecap_fraction": froth,
             "streak_dir_deg": dir,
         }));
@@ -572,7 +587,14 @@ pub(crate) fn site(
     merge(&mut o, optics(sheet, cs, name));
     if let Some(l) = &liq {
         merge(&mut o, liquid_json(l, name, c.gravity_m_s2));
-        o["trains"] = serde_json::json!(trains(h, t, dir, c.gravity_m_s2, l.sigma / l.rho));
+        o["trains"] = serde_json::json!(trains(
+            h,
+            t,
+            dir,
+            c.gravity_m_s2,
+            l.sigma / l.rho,
+            l.mu / l.rho
+        ));
     }
     o["drive"] = serde_json::json!(drive);
     o["whitecap_fraction"] = serde_json::json!(whitecap(cs, u * drive));
@@ -659,7 +681,7 @@ mod liquid_tests {
     #[test]
     fn trains_follow_the_dispersion_and_the_spectrum() {
         // Earth: 2 m sea, 7 s period, toward the east.
-        let t = trains(2.0, 7.0, 0.0, 9.81, 0.072 / 1000.0);
+        let t = trains(2.0, 7.0, 0.0, 9.81, 0.072 / 1000.0, 1.0e-6);
         assert_eq!(t.len(), 5);
         let l0 = t[0]["wavelength_m"].as_f64().unwrap();
         // Deep water: λ = g T² / 2π ≈ 76 m.
@@ -682,5 +704,67 @@ mod liquid_tests {
         // 10 m/s: 5e-5 × 5.53³ ≈ 0.85 %.
         let w = whitecap(cs, 10.0);
         assert!((0.007..0.010).contains(&w), "{w}");
+    }
+}
+
+#[cfg(test)]
+mod helium_tests {
+    use super::*;
+
+    /// Alex's test world: a rogue planet in a void, no star, warmed only by
+    /// its own faint heat to under 2 K, under a thin helium air. Nothing
+    /// here is special to helium: the sheet's curve and properties do it.
+    #[test]
+    fn a_rogue_planet_holds_a_superfluid_helium_sea() {
+        let sheet = sse_reference::Reference::base();
+        let s = sse_surface::scenario::settings();
+        let cs = &s.climate;
+        let mut b = sse_surface::scenario::fixtures()
+            .into_iter()
+            .find(|f| f.body.label == "Earth")
+            .unwrap()
+            .body;
+        b.label = "Rogue".into();
+        b.orbit = None;
+        b.oceans = 1.0;
+        b.pressure_bar = 0.02;
+        // σT⁴ at 1.8 K is about 6e-7 W/m².
+        let t_k = 1.8;
+        b.climate = sse_surface::Climate::Fixed {
+            t_surface_k: t_k,
+            then: None,
+        };
+        let env = sse_surface::envelope(&s, &b);
+        let x = sse_climate::Extra {
+            flux_w_m2: Some(0.0),
+            internal_flux_w_m2: Some(5.670374419e-8 * t_k * t_k * t_k * t_k),
+            gases: Some(std::collections::BTreeMap::from([("he".to_string(), 1.0)])),
+            rotation_hours: Some(20.0),
+            ..Default::default()
+        };
+        let (c, assumed) = sse_surface::climate::conditions(&s, &b, &env, &x);
+        assert_eq!(c.liquid.as_deref(), Some("helium"), "{assumed:?}");
+        let cl = sse_climate::climate::orbit(cs, &c, 0.0);
+        let sea = summary(&sheet, cs, &b, &cl, &[]).expect("a sea card");
+        let text = sea.to_string();
+        assert_eq!(sea["liquid"], "helium", "{text:.800}");
+        assert_eq!(sea["superfluid"], true, "{text:.800}");
+        // Helium's ripples: σ/ρ about 2e-6 m³/s², a centimetre-scale cut-off.
+        let cut = sea["ripple_cutoff_m"].as_f64().expect("cut-off");
+        assert!(cut > 0.002 && cut < 0.03, "{cut}");
+        // Waves under its own wind, band by band.
+        let banded = sea["waves"]["bands"]
+            .as_array()
+            .expect("bands")
+            .iter()
+            .filter(|b| b["trains"].as_array().is_some_and(|t| !t.is_empty()))
+            .count();
+        assert!(banded > 0, "{text:.1500}");
+        // Helium's tiny viscosity: a 1 m wave rings for days, about 40
+        // times water's (ν 2.4e-8 against 1.0e-6 m²/s).
+        let he = trains(0.1, 2.0, 0.0, 9.81, 2.86e-4 / 146.0, 3.576e-6 / 146.0);
+        let h2o = trains(0.1, 2.0, 0.0, 9.81, 7.2e-5, 1.0e-6);
+        let r = he[0]["damping_s"].as_f64().unwrap() / h2o[0]["damping_s"].as_f64().unwrap();
+        assert!((30.0..50.0).contains(&r), "{r}");
     }
 }

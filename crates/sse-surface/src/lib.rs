@@ -30,6 +30,7 @@ pub mod regimes;
 pub mod scenario;
 pub mod site;
 pub mod sketch;
+pub mod stains;
 pub mod survey;
 pub mod tubes;
 pub mod wear;

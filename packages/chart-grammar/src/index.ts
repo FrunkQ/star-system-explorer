@@ -5,6 +5,7 @@ export { default as Ink } from "./Ink.svelte";
 export { default as HatchDefs } from "./HatchDefs.svelte";
 export { default as Hatch } from "./Hatch.svelte";
 export { default as Mark } from "./Mark.svelte";
+export { default as CompositeStack } from "./CompositeStack.svelte";
 export { default as Stamp } from "./Stamp.svelte";
 export { default as Card } from "./Card.svelte";
 export { default as CardField } from "./CardField.svelte";
