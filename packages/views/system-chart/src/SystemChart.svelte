@@ -524,8 +524,10 @@
       // its own cloud layer (VP-A4), which is what gpu.ts draws when the clouds are there.
       const under = ck ? trueAirs.get(ck)?.ground : undefined;
       if (ck && base && typeof base !== "string" && (base.faces || under?.faces) && g === trueGen) {
-        // Close-up: the ground under the camera is read first when the camera is over this world.
+        // Close-up: the ground under the camera is read first when the camera is over this world; from further out,
+        // the side the camera sees (so the face in view sharpens first, not the far side).
         const below = untrack(() => groundView);
+        const facing = (a: string) => untrack(() => (ctx.workspace.camera?.about === a ? ([...ctx.workspace.camera.eye_dir] as [number, number, number]) : undefined));
         void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
           const now = trueSurfaces.get(ck);
           if (!now || typeof now === "string") return;
@@ -534,7 +536,7 @@
           surfaces = new Map(surfaces).set(chosen!.address, t);
           const a = finerGround(ck, fine);
           if (a) airs = new Map(airs).set(chosen!.address, a);
-        }, below?.body === chosen!.address ? below.toward : undefined);
+        }, below?.body === chosen!.address ? below.toward : () => facing(chosen!.address));
       }
     })());
   });

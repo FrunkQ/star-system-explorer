@@ -1,0 +1,11 @@
+Title: Solar System Portrait - Earth as Pale Blue Dot
+Credit: NASA / NASA/JPL
+Date: 1996:09:12 17:34:52
+Source: https://images.nasa.gov/details/PIA00452
+Licence: NASA media: generally not subject to copyright in the United States (NASA Images and Media Usage Guidelines, https://www.nasa.gov/nasa-brand-center/images-and-media/). Credit NASA; do not imply endorsement.
+Picked for: Earth as a pixel from 6 billion km: tests Real scale's point of light and the finish's glare. The streak in the real picture is scattered sunlight in the camera.
+
+About (from the source page):
+This narrow-angle color image of the Earth, dubbed Pale Blue Dot, is a part of the first ever 'portrait' of the solar system taken by NASA’s Voyager 1. The spacecraft acquired a total of 60 frames for a mosaic of the solar system from a distance of more than 4 billion miles from Earth and about 32 degrees above the ecliptic. From Voyager's great distance Earth is a mere point of light, less than the size of a picture element even in the narrow-angle camera. Earth was a crescent only 0.12 pixel in size. Coincidentally, Earth lies right in the center of one of the scattered light rays resulting from taking the image so close to the sun. This blown-up image of the Earth was taken through three color filters -- violet, blue and green -- and recombined to produce the color image. The background features in the image are artifacts resulting from the magnification.
+
+http://photojournal.jpl.nasa

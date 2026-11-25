@@ -1,0 +1,11 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, Infrared band (with Visible for the orange haze)",
+  "frame": "Titan",
+  "camera": "about 100,000 km",
+  "tests": "Infrared windows vs Visible: the haze opaque in one, clear in the other",
+  "needs": [
+    "Titan's haze opacity by band",
+    "the surface under it (methane seas)"
+  ]
+}

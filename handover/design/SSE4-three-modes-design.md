@@ -1,12 +1,12 @@
 # SSE4: every display on the three desks (track TM)
 
-Status: **PROPOSED 25 Nov 2026, not yet accepted.** Fifteen questions for Alex in section 13, each with a recommendation. Design and mockup only; nothing here is built by this note. Packages for builders are in section 12. TM is a code only, never shown in the product.
+Status: **ACCEPTED by Alex 25 Nov 2026 13:30 UTC** ("All looks good. We are using those functions better now.. it will help with future UI decisions"): yes to all fifteen questions of section 13, so each recommendation there is a ruling (section 13A). Proposed the same day. Design and mockup only; nothing here is built by this note. Packages for builders are in section 12. TM is a code only, never shown in the product.
 
 Mockup, clickable: project files `sse4/handover-screens/TM-screens/three-modes-mockup.html`, with screenshots beside it (the System, World and Galaxies nearby levels on each desk, and the Run desk on a phone). The pictures in the mockup are painted stand-ins, not SSE4 output; the mockup says so.
 
 Alex's brief, in his words (25 Nov 2026 12:45 UTC, in the grand zoom thread): "Edit explore mode will have the time options and let you change things but the play would be a plainer view and kinda show this zoom as it is at each layer. So in Play the UI is a lot cleaner. Just visual controls rather than aging the universe or additional editing stuff. We need a design task to clearly outline what each display looks like under the 3 modes. Explore I see as a 'messing about' and exploring... what ifs. Edit is getting games set up and worldbuilding. Play is about keeping interfaces clean to support the GM at play time (and it will be the most visually arresting) - being able to use portions of this zoom to step up and down the hierarchy would be truly lovely - feel as if you are spanning the universe with a few clicks."
 
-**Words.** Alex says Explore, Edit, Play. The product, the code and every accepted note say **Explore, Build, Run** (top-level design 2.3, his yes of 21 Nov). This note uses Explore, Build, Run and calls them desks; "mode" is his word for the same thing. Which names stand is question 1.
+**Words.** Alex says Explore, Edit, Play. The product, the code and every accepted note say **Explore, Build, Run** (top-level design 2.3, his yes of 21 Nov). This note uses Explore, Build, Run and calls them desks; "mode" is his word for the same thing. Question 1 asked which names stand; his yes keeps **Explore, Build, Run**.
 
 Read with: `SSE4-top-level-ui-and-onboarding.md` (the four controls in section 2, time in section 12), `SSE4-grand-zoom-design.md` (5.5 a stop, 5.6 the short form, 5.9 the three desks, 6.4 the gazetteer, 8A Motion), `SSE4-editing-design.md` (section 13), `SSE4-playbook-and-switchboard-design.md` (3.5, 4A, 5.3), `SSE4-secrets-and-visibility-design.md` (section 4), `SSE4-from-here-design.md` (section 10), `SSE4-atlas-and-reports-design.md` (11A.4, controls that switch), `interface-style.md`.
 
@@ -265,7 +265,7 @@ Nothing here touches the kernel. Explore's try is the what-if branch that exists
 - **A new GM screen gives itself a rail entry, never a tab:** unchanged; the entry gains `desks`.
 - **Changed by this note, each a question:** "Explore: nothing can be changed by accident" becomes "nothing can be *kept* by accident" (question 3); "Explore and Run may change manifest, crew and fuel" becomes Run and Build (question 5); "a capable PC still starts on Chart" stays for Explore and Build and changes for Run (question 10).
 
-## 12. Packages (proposed)
+## 12. Packages
 
 Each leaves the app usable. TM1 and TM2 are rearrangement; nothing new is drawn until TM4.
 
@@ -301,9 +301,19 @@ Ships: the manifest change of question 5 is one line of TM8 for "Build ship mani
 14. **The Playbook's presets stay off the chart on Run.** One Send button and the on-air chip, as you ruled on 24 Nov; the Switchboard in its own window is the answer for a second monitor. *Recommend yes (no change).*
 15. **For 4.0, in the order of section 12,** by a new builder thread "Build the three desks" on Opus, with TM4, TM5 and TM8 taken by the threads that own those files. *Recommend yes.*
 
+## 13A. Alex's ruling, 25 Nov 2026 13:30 UTC
+
+In his words: "All looks good. We are using those functions better now.. it will help with future UI decisions."
+
+- **Yes to all 15**, so each recommendation in section 13 is a ruling. He gave no changes.
+- **The names stay Explore, Build, Run** (question 1).
+- **Three earlier rulings change, as section 11 lists:** Explore tries at once, so nothing can be *kept* by accident (question 3); manifest, crew and fuel are kept on Run and Build and are a try on Explore (question 5); the Run desk starts on True with HUD off on a capable device, while Explore and Build still start on Chart (question 10).
+- **For future interface decisions** (his remark): a new screen or control says which desks it shows on, by the `desks` field of section 10, and is placed by the three answers of section 1. A design note for a new screen gives its Explore, Build and Run rows.
+- **Builders may start.** "Build the three desks" (Opus) opens with TM1.
+
 ## 14. Picking this up without the chat
 
-- State of the track: `handover/status/three-desks.md`. Nothing is built. No builder starts before Alex's answers; TM1 is the first package.
+- State of the track: `handover/status/three-desks.md`. Nothing is built. The note is accepted (section 13A); TM1 is the first package.
 - Section 2 was read from main at 40901c2 (25 Nov 2026). Check a file name before relying on it.
 - The level rows marked with a grand zoom section describe views that track will build; this note only says what each desk shows of them. Where the two notes differ on what a desk shows, this one wins (agreed with that thread); on how travel works, that one wins.
 - The mockup shows the frame and what comes and goes per desk on painted pictures. It is there for the layout of the Run desk and the three-way comparison, not for how any level will look.

@@ -1,0 +1,10 @@
+{
+  "system": "The Solar System (catalogued)",
+  "view": "System chart, True, Visible, Long exposure",
+  "frame": "Saturn",
+  "camera": "in the shadow, about 2.2 million km",
+  "date": "2006-09-15",
+  "needs": [
+    "ring phase function"
+  ]
+}
