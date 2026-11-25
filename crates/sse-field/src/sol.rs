@@ -168,6 +168,12 @@ pub fn solar_system(set: &Settings, proton_mass_kg: f64) -> Result<Vec<SolField>
             plasma_source_kg_s: num(ex, &["plasma_source_kg_s"]).unwrap_or(0.0),
             pedersen_conductance_s: 0.0,
             moons,
+            spin_period_s: num(ex, &["spin_period_s"]).unwrap_or(0.0),
+            upper_air: ex
+                .get("upper_air")
+                .map(|v| serde_json::from_value(v.clone()))
+                .transpose()
+                .map_err(|e| format!("sol-field upper air for {id}: {e}"))?,
             rings_outer_m: num(ex, &["rings_outer_m"]).unwrap_or(0.0),
         };
         let read = read(&body, set)?;

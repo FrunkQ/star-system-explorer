@@ -27,7 +27,8 @@
  },
  "bodies": {
   "mercury": {
-   "polarity": -1
+   "polarity": -1,
+   "spin_period_s": 5067360.0
   },
   "earth": {
    "polarity": -1,
@@ -39,7 +40,77 @@
    "air_src": "NASA NSSDCA Earth Fact Sheet: surface pressure 1014 mb, scale height 8.5 km, mean surface gravity 9.80 m/s². https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html",
    "moons_from_base_sol": [
     "moon"
-   ]
+   ],
+   "upper_air": {
+    "gases": [
+     {
+      "matter": "n2",
+      "share": 0.76
+     },
+     {
+      "matter": "o2",
+      "share": 0.12
+     },
+     {
+      "matter": "o",
+      "share": 0.12
+     }
+    ],
+    "profile": [
+     {
+      "height_m": 90000.0,
+      "number_density_m3": 7.116e+19,
+      "mean_mass_u": 28.91
+     },
+     {
+      "height_m": 100000.0,
+      "number_density_m3": 1.189e+19,
+      "mean_mass_u": 28.4
+     },
+     {
+      "height_m": 110000.0,
+      "number_density_m3": 2.144e+18,
+      "mean_mass_u": 27.27
+     },
+     {
+      "height_m": 120000.0,
+      "number_density_m3": 5.107e+17,
+      "mean_mass_u": 26.2
+     },
+     {
+      "height_m": 150000.0,
+      "number_density_m3": 5.186e+16,
+      "mean_mass_u": 24.1
+     },
+     {
+      "height_m": 200000.0,
+      "number_density_m3": 7182000000000000.0,
+      "mean_mass_u": 21.3
+     },
+     {
+      "height_m": 250000.0,
+      "number_density_m3": 2137000000000000.0,
+      "mean_mass_u": 19.19
+     },
+     {
+      "height_m": 300000.0,
+      "number_density_m3": 650900000000000.0,
+      "mean_mass_u": 17.73
+     },
+     {
+      "height_m": 400000.0,
+      "number_density_m3": 105600000000000.0,
+      "mean_mass_u": 15.98
+     },
+     {
+      "height_m": 500000.0,
+      "number_density_m3": 21920000000000.0,
+      "mean_mass_u": 14.33
+     }
+    ],
+    "source": "US Standard Atmosphere 1976 (NOAA-S/T 76-1562), tables of total number density and mean molecular weight, read at 90 to 500 km (values as tabulated; check: unverified). https://ntrs.nasa.gov/citations/19770009539; shares near 120 km from the same tables (N2 about three quarters, O2 and O about an eighth each)"
+   },
+   "spin_period_s": 86164.1
   },
   "jupiter": {
    "polarity": 1,
@@ -67,7 +138,24 @@
      "radius_m": 2410300.0
     }
    ],
-   "moons_src": "NASA NSSDCA Jovian Satellite Fact Sheet (updated 6 Dec 2023): semi-major axis and radius. https://nssdc.gsfc.nasa.gov/planetary/factsheet/joviansatfact.html"
+   "moons_src": "NASA NSSDCA Jovian Satellite Fact Sheet (updated 6 Dec 2023): semi-major axis and radius. https://nssdc.gsfc.nasa.gov/planetary/factsheet/joviansatfact.html",
+   "spin_period_s": 35730.0,
+   "upper_air": {
+    "gases": [
+     {
+      "matter": "h2",
+      "share": 0.898
+     },
+     {
+      "matter": "he",
+      "share": 0.102
+     }
+    ],
+    "base_pressure_pa": 100000.0,
+    "scale_height_m": 27000.0,
+    "gravity_m_s2": 24.79,
+    "source": "NASA NSSDCA planetary fact sheets: sidereal rotation period, 1 bar gravity, scale height and the atmosphere's makeup by volume. https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+   }
   },
   "saturn": {
    "polarity": 1,
@@ -105,13 +193,73 @@
      "radius_m": 2575000.0
     }
    ],
-   "moons_src": "NASA NSSDCA Saturnian Satellite Fact Sheet (updated 22 Jul 2025): semi-major axis; radius worked out as the mean of the three printed axes (Titan as printed). https://nssdc.gsfc.nasa.gov/planetary/factsheet/saturniansatfact.html"
+   "moons_src": "NASA NSSDCA Saturnian Satellite Fact Sheet (updated 22 Jul 2025): semi-major axis; radius worked out as the mean of the three printed axes (Titan as printed). https://nssdc.gsfc.nasa.gov/planetary/factsheet/saturniansatfact.html",
+   "spin_period_s": 38362.0,
+   "upper_air": {
+    "gases": [
+     {
+      "matter": "h2",
+      "share": 0.963
+     },
+     {
+      "matter": "he",
+      "share": 0.0325
+     }
+    ],
+    "base_pressure_pa": 100000.0,
+    "scale_height_m": 59500.0,
+    "gravity_m_s2": 10.44,
+    "source": "NASA NSSDCA planetary fact sheets: sidereal rotation period, 1 bar gravity, scale height and the atmosphere's makeup by volume. https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+   }
   },
   "uranus": {
-   "polarity": 1
+   "polarity": 1,
+   "spin_period_s": 62064.0,
+   "upper_air": {
+    "gases": [
+     {
+      "matter": "h2",
+      "share": 0.825
+     },
+     {
+      "matter": "he",
+      "share": 0.152
+     },
+     {
+      "matter": "ch4",
+      "share": 0.023
+     }
+    ],
+    "base_pressure_pa": 100000.0,
+    "scale_height_m": 27700.0,
+    "gravity_m_s2": 8.87,
+    "source": "NASA NSSDCA planetary fact sheets: sidereal rotation period, 1 bar gravity, scale height and the atmosphere's makeup by volume. https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+   }
   },
   "neptune": {
-   "polarity": 1
+   "polarity": 1,
+   "spin_period_s": 57996.0,
+   "upper_air": {
+    "gases": [
+     {
+      "matter": "h2",
+      "share": 0.8
+     },
+     {
+      "matter": "he",
+      "share": 0.19
+     },
+     {
+      "matter": "ch4",
+      "share": 0.015
+     }
+    ],
+    "base_pressure_pa": 100000.0,
+    "scale_height_m": 19700.0,
+    "gravity_m_s2": 11.15,
+    "source": "NASA NSSDCA planetary fact sheets: sidereal rotation period, 1 bar gravity, scale height and the atmosphere's makeup by volume. https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+   }
   }
- }
+ },
+ "spin_src": "NASA NSSDCA planetary fact sheets: sidereal rotation period, 1 bar gravity, scale height and the atmosphere's makeup by volume. https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
 }

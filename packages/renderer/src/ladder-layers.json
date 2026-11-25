@@ -1,0 +1,91 @@
+{
+  "about": "Starter declarations for the detail ladder (VP6; SSE4-visual-polish-design.md section 6). Each layer's owner thread adjusts its own and passes the named facts for the body it draws (ladder.ts LadderFacts). Sizes in metres, speeds in metres per second. hurst and a plain-number stretch are shape numbers, registered in docs/fudges.md; largest, amplitude and speed are always kernel values, and a layer whose value is missing is not drawn.",
+  "layers": [
+    {
+      "id": "giant.curls",
+      "name": "Curls at band edges",
+      "owner": "Build giant bands, clouds and hazes (VP-A2)",
+      "kind": "curl",
+      "largest": { "fact": "rhines_scale_m" },
+      "hurst": 0.3333,
+      "stretch": { "fact": "rhines_scale_m", "over": "deformation_radius_m" },
+      "along": "jets",
+      "amplitude": { "fact": "jet_shear_m_s", "over": "jet_speed_m_s" },
+      "speed": { "fact": "eddy_speed_m_s" },
+      "from": "the wind's figures",
+      "fudge": "Detail ladder: giant's curls"
+    },
+    {
+      "id": "cloud.puffs",
+      "name": "Cloud puffs",
+      "owner": "Build giant bands, clouds and hazes (VP-A4)",
+      "kind": "cell",
+      "largest": { "fact": "cloud_cell_m" },
+      "floor": { "fact": "weather_cell_m" },
+      "hurst": 0.5,
+      "along": "wind",
+      "amplitude": { "fact": "convective_strength" },
+      "speed": { "fact": "wind_m_s" },
+      "from": "the cloud kind and the wind",
+      "fudge": "Detail ladder: cloud puffs"
+    },
+    {
+      "id": "ground.roughness",
+      "name": "Ground roughness",
+      "owner": "Build photoreal renderer (VP10) and this thread (VP3 globe faces)",
+      "kind": "ridged",
+      "largest": { "fact": "fact_floor_m" },
+      "floor": { "fact": "fact_floor_m" },
+      "smallest": { "fact": "grain_m" },
+      "hurst": 0.8,
+      "along": "downslope",
+      "amplitude": { "fact": "roughness_m" },
+      "speed": "none",
+      "from": "the ground's material and age",
+      "fudge": "Detail ladder: ground roughness"
+    },
+    {
+      "id": "ground.craters",
+      "name": "Small craters",
+      "owner": "Build photoreal renderer (VP10)",
+      "kind": "cell",
+      "largest": { "fact": "fact_floor_m" },
+      "floor": { "fact": "fact_floor_m" },
+      "hurst": 0,
+      "along": "none",
+      "amplitude": { "fact": "crater_cover" },
+      "speed": "none",
+      "from": "the surface's age",
+      "fudge": "Detail ladder: small craters"
+    },
+    {
+      "id": "ice.cracks",
+      "name": "Ice cracks",
+      "owner": "Build plumes, frosts and small bodies (VP-P4)",
+      "kind": "ridged",
+      "largest": { "fact": "shell_thickness_m" },
+      "floor": { "fact": "fact_floor_m" },
+      "hurst": 0.5,
+      "along": "stress",
+      "amplitude": { "fact": "tidal_strain" },
+      "speed": "none",
+      "from": "the ice shell and its tides",
+      "fudge": "Detail ladder: ice cracks"
+    },
+    {
+      "id": "ring.fine",
+      "name": "Ring fine structure",
+      "owner": "Build asteroids and rings up close (VP-R3)",
+      "kind": "flow",
+      "largest": { "fact": "profile_spacing_m" },
+      "floor": { "fact": "profile_spacing_m" },
+      "hurst": 0.5,
+      "stretch": { "fact": "ring_radius_m", "over": "profile_spacing_m" },
+      "along": "ring",
+      "amplitude": { "fact": "opacity_contrast" },
+      "speed": { "fact": "kepler_shear_m_s" },
+      "from": "the ring's profile",
+      "fudge": "Detail ladder: ring fine structure"
+    }
+  ]
+}
