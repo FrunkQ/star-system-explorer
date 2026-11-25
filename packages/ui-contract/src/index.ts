@@ -41,6 +41,7 @@ export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
 export * from "./picker.ts";
+export * from "./chart-labels.ts";
 export * from "./overlay.ts";
 export { areaShares, areasFromHoldings, insideRings, itemArea, letterArea, nearestWithin, parsecs, ringArea, traceRings, type AreasAsk } from "./areas.ts";
 export * from "./landing.ts";
