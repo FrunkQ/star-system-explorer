@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { composeFaces, directionFace, faceDirection, faceSize, faceWords, levelFor, reliefNormal, sampleFaces, texelAngle, tilesFacing, TILE_SAMPLES, withFiner } from "../src/texture-ladder.ts";
+import { composeFaces, directionFace, faceDirection, faceSize, faceWords, levelFor, reliefNormal, sampleFaces, texelAngle, tilesFacing, TILE_SAMPLES, withFiner, patchLevel, tilesNear, patchFor, PATCH_TILES } from "../src/texture-ladder.ts";
 import { faceOf, type SurfaceTile } from "../../ui-contract/src/index.ts";
 
 /** A tile filled from a height function of direction (metres), sea below `sea`. */
@@ -27,10 +27,11 @@ test("face size: one texel to a screen pixel, a power of two inside the tier's r
   assert.equal(faceSize(5000, "gpu-high"), 2048);
   assert.equal(faceSize(5000, "still"), 4096);
   assert.equal(faceSize(500, "canvas"), 0);
-  assert.equal(levelFor(32), 0);
-  assert.equal(levelFor(64), 1);
-  assert.equal(levelFor(512), 4);
-  assert.equal(levelFor(500, TILE_SAMPLES), 4);
+  assert.equal(levelFor(32, 32), 0);
+  assert.equal(levelFor(64, 32), 1);
+  assert.equal(levelFor(512, 32), 4);
+  assert.equal(levelFor(512), 1);
+  assert.equal(levelFor(1000, TILE_SAMPLES), 2);
 });
 
 test("the cube map is the kernel's: faceDirection and directionFace invert each other and agree with ui-contract", () => {
@@ -115,4 +116,52 @@ test("finer tiles laid over a kept surface: recomposed once, never doubled; a pa
   assert.equal(withFiner(t, fine), t);
   const painted = { width: 1 };
   assert.equal(withFiner(painted, fine), painted);
+});
+
+test("the deep patch: its level from metres a pixel, its tiles round the point, over a cube edge too", () => {
+  const R = 6.371e6;
+  // Level 0 spacing on Earth is about 39 km (256 samples); at 100 m a pixel a sample every 200 m is level 8 (153 m).
+  assert.equal(patchLevel(100, R), 8);
+  assert.equal(patchLevel(100, R, TILE_SAMPLES, 7), 7);
+  assert.equal(patchLevel(100, R, 32), 11);
+  assert.equal(patchLevel(1e6, R), 0);
+  assert.equal(patchFor({ toward: [1, 0, 0], m_per_px: 5e4 }, R).keys.length, 0);
+  const mid = tilesNear([1, 0.0001, 0.0001], 8);
+  assert.equal(mid.length, PATCH_TILES);
+  assert.deepEqual(mid[0], { face: 0, level: 8, x: 128, y: 128 });
+  assert.ok(mid.every((k) => k.face === 0 && Math.abs(k.x - 128) <= 2 && Math.abs(k.y - 128) <= 2));
+  // On the edge between face 0 (+x) and face 2 (+y): both faces' tiles.
+  const edge = tilesNear([1, 1, 0.001], 6);
+  assert.ok(edge.some((k) => k.face === 0) && edge.some((k) => k.face === 2));
+  const p = patchFor({ toward: [0, 0, 1], m_per_px: 100 }, R);
+  assert.equal(p.level, 8);
+  assert.equal(p.keys[0]!.face, 4);
+});
+
+test("the deep patch picture: the tiles' colour and heights about the centre, relief by the true slope, gaps left clear", async () => {
+  const { composePatch, samplePatch, patchDirection } = await import("../src/texture-ladder.ts");
+  const R = 1e6;
+  const L = 5;
+  const toward = faceDirection(0, 0.01, -0.02);
+  // A ramp rising 0.05 m a metre eastward along the patch frame, on the tiles round the point.
+  const keys = tilesNear(toward, L, 9);
+  const probe = composePatch([tile(0, L, keys[0]!.x, keys[0]!.y, () => 0, 16)], toward, R, 64)!;
+  const east = probe.east;
+  const h = (d: number[]) => 0.05 * R * (d[0]! * east[0] + d[1]! * east[1] + d[2]! * east[2]);
+  const tiles = keys.map((k) => tile(k.face, k.level, k.x, k.y, h, 16));
+  const p = composePatch(tiles, toward, R, 64)!;
+  assert.equal(p.level, L);
+  const mid = samplePatch(p, toward)!;
+  assert.equal(mid.rgba[3], 255);
+  // The normal leans west by atan(0.05) against the ramp.
+  const tilt = Math.acos(mid.normal[0] * toward[0] + mid.normal[1] * toward[1] + mid.normal[2] * toward[2]);
+  assert.ok(Math.abs(tilt - Math.atan(0.05)) < 0.002, `tilt ${tilt}`);
+  assert.ok(mid.normal[0] * east[0] + mid.normal[1] * east[1] + mid.normal[2] * east[2] < 0);
+  // Outside the patch nothing; with one tile only, the far corners are gaps.
+  assert.equal(samplePatch(p, [-toward[0], -toward[1], -toward[2]]), null);
+  const one = composePatch(tiles.slice(0, 1), toward, R, 64)!;
+  const corner = patchDirection(one, -one.half * 0.95, -one.half * 0.95);
+  const far = patchDirection(one, one.half * 0.95, one.half * 0.95);
+  assert.ok(samplePatch(one, corner)!.rgba[3] === 0 || samplePatch(one, far)!.rgba[3] === 0);
+  assert.equal(composePatch([], toward, R), null);
 });

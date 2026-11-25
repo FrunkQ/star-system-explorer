@@ -9,7 +9,7 @@
   import type { Globe, SystemScene, ViewContext } from "../../../ui-contract/src/index.ts";
   import { LIBRARY, mountGlobe, trueSurface, type GlobeRun } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
-  import { loadSurface, surfaceKept, type Surface } from "./surface.ts";
+  import { decksKept, isDecks, loadDecks, loadSurface, surfaceKept, type Decks, type Surface } from "./surface.ts";
   import StarDisc from "./StarDisc.svelte";
 
   let { ctx, scene, address, label, kind, show, size = 220 }: { ctx: ViewContext; scene: SystemScene; address: string; label: string; kind: string; show: "map" | "globe" | "disc" | "x-ray"; size?: number } = $props();
@@ -38,11 +38,26 @@
   const globe = $derived<Globe>(got ? [0, 1, 2, 3, 4, 5].map((f) => got!.tiles.find((t) => t.key.face === f && t.key.level === 0)) : []);
   const has = $derived(globe.some((t) => t));
 
+  // A giant shows its cloud decks, the same True face as the system chart (VP3 part 3), not its tiles' grey.
+  let decks = $state<Decks | null>(null);
+  $effect(() => {
+    const s = got;
+    const sys = scene.system;
+    const a = address;
+    decks = null;
+    if (!s || !isDecks(s)) return;
+    const kept = decksKept(sys, a);
+    if (kept !== undefined) return void (decks = kept);
+    void loadDecks(ctx, sys, a).then((v) => {
+      if (address === a && scene.system === sys) decks = v;
+    });
+  });
+
   // The flat map: the true-colour ground, equirectangular, north up (the texture's row 0 is the south pole).
   let mapCanvas = $state<HTMLCanvasElement | undefined>();
   $effect(() => {
     const c = mapCanvas;
-    const tex = got && show === "map" ? trueSurface(got.tiles, 256, 128) : null;
+    const tex = got && show === "map" ? (decks?.tex ?? trueSurface(got.tiles, 256, 128)) : null;
     if (!c || !tex) return;
     c.width = tex.width;
     c.height = tex.height;
@@ -61,11 +76,17 @@
     if (!h || !has) return;
     const r = mountGlobe(h, { registry: SHIPPED_RECIPES, library: LIBRARY, recipe: "true-colour", tier: "auto", knobs: { relief: 0.5, detail: 0.5 }, budget_ms: 33.3, governor: true, spin: false, size_px: size, label, air: untrack(() => got?.air ?? null) }, () => {});
     r.setGlobe(untrack(() => globe));
+    const d0 = untrack(() => decks);
+    if (d0) r.setFace({ tex: d0.tex, ...(d0.flow ? { flow: d0.flow } : {}) });
     run = r;
     return () => {
       r.dispose();
       run = null;
     };
+  });
+  $effect(() => {
+    const d = decks;
+    untrack(() => run)?.setFace(d ? { tex: d.tex, ...(d.flow ? { flow: d.flow } : {}) } : null);
   });
   $effect(() => {
     const lo = lon;

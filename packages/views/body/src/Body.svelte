@@ -18,7 +18,8 @@
 
 <script lang="ts">
   import { addBookmark, fixDate, globeOfPose, keepStamp, poseOfGlobe, R_EARTH_M, R_SUN_M, STAMP_SIDE, stampOf } from "../../../ui-contract/src/index.ts";
-  import { globeStats, regimeWords, viewOptions, DEFAULT_VIEW, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { globeStats, regimeWords, tableLandmarks, viewOptions, DEFAULT_VIEW, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { PEN_WORDS, penOf, type Pen } from "../../../chart-grammar/src/pencil.ts";
   import { BODY_CONTROLS, GLOBE_LAT } from "./controls.ts";
   import { untrack } from "svelte";
   import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
@@ -29,13 +30,27 @@
   import ClimateWhy from "./ClimateWhy.svelte";
   import BodyTimeline from "./BodyTimeline.svelte";
   import BodyMag from "./BodyMag.svelte";
-  import { loadSurface, surfaceKept, type Surface } from "./surface.ts";
+  import { decksKept, isDecks, loadDecks, loadSurface, surfaceKept, type Decks, type Surface } from "./surface.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
   const ws = $derived(ctx.workspace);
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
   const size = $derived(Math.round(Math.min(640, Math.max(160, Number(params.size_px ?? 320)))));
+
+  // Pencil and ink (SV3): on the GM's Build and Run desks a world the table does not know is drawn in pencil, its globe
+  // inside a dotted ring (heard of: a thin solid one), as on the charts. Players never see pencil.
+  let pen = $state<Pen>("ink");
+  $effect(() => {
+    const a = subject?.address;
+    void ws.revision;
+    const gmDesk = ctx.session.seat.authority === "gm" && (ws.desk === "build" || ws.desk === "run");
+    pen = "ink";
+    if (!a || !gmDesk) return;
+    void tableLandmarks(ctx.session, [a]).then((m) => {
+      if (subject?.address === a) pen = penOf(m.get(a));
+    });
+  });
 
   let got = $state<Surface | null>(null);
   let loading = $state(false);
@@ -342,6 +357,26 @@
     if (untrack(() => wxKey) && key !== untrack(() => wxKey)) untrack(() => weather.hide());
   });
 
+  // A giant wears its cloud decks, the same True face as the system chart (VP3 part 3), not its tiles' grey.
+  let decks = $state<Decks | null>(null);
+  const faceOf = (d: Decks | null) => (d ? { tex: d.tex, ...(d.flow ? { flow: d.flow } : {}) } : null);
+  $effect(() => {
+    const sub = subject;
+    const sys = scene.system;
+    const s = got;
+    decks = null;
+    if (!sub || !s || !isDecks(s)) return;
+    const kept = decksKept(sys, sub.address);
+    if (kept !== undefined) return void (decks = kept);
+    void loadDecks(ctx, sys, sub.address).then((v) => {
+      if (subject?.address === sub.address && scene.system === sys) decks = v;
+    });
+  });
+  $effect(() => {
+    const d = decks;
+    untrack(() => run)?.setFace(faceOf(d));
+  });
+
   // One runtime per globe element; settings and turns are passed to it.
   $effect(() => {
     const h = host;
@@ -353,6 +388,7 @@
     run = r;
     untrack(() => attachLapse());
     if (wxData) r.setWeather(wxData);
+    if (decks) r.setFace(faceOf(decks));
     return () => {
       r.dispose();
       run = null;
@@ -484,7 +520,7 @@
     <StarDisc {ctx} {scene} address={subject.address} label={subject.label} {size} />
   {:else}
     <div class="top">
-      <div class="globe" class:hidden={shownView.band === "mag"} style:width="{size}px" style:height="{size}px">
+      <div class="globe" class:hidden={shownView.band === "mag"} class:pencil={pen === "pencil"} class:heard={pen === "heard"} style:width="{size}px" style:height="{size}px" data-pen={pen}>
         {#if loading}
           <p class="note">Building the surface of {subject.label}… (about a second)</p>
         {:else if has}
@@ -524,6 +560,7 @@
           </p>
         {/if}
       </div>
+      {#if pen !== "ink"}<p class="pennote" data-pen-note>In pencil: {PEN_WORDS[pen]}. The players' screens {pen === "pencil" ? "do not show" : "show only the name and place of"} {subject.label}.</p>{/if}
       {#if has && shownView.band !== "mag"}
         <!-- The time lapse's controls (U22): layer toggles, scrubber with event marks, Play, and the why card. -->
         <BodyTimeline {lapse} depth={ws.depth ?? "science"} label={subject.label} />
@@ -685,6 +722,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 50%;
+  }
+  /* Pencil (SV3): the shared look, a dotted ring for not known, a thin solid one for heard of. */
+  .globe.pencil {
+    outline: 1px dotted var(--sse-ink-muted);
+    outline-offset: 4px;
+  }
+  .globe.heard {
+    outline: 1px solid var(--sse-ink-muted);
+    outline-offset: 4px;
+  }
+  .pennote {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    font-style: italic;
+    color: var(--sse-ink-muted);
   }
   .surface {
     max-width: 100%;

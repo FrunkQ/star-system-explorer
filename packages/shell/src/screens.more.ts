@@ -4,7 +4,7 @@
 // so the two tracks never edit the same lines.
 import type { ScreenDoc, ViewModule } from "../../ui-contract/src/index.ts";
 import { route } from "../../views/route/src/index.ts";
-import { galaxyChart } from "../../views/galaxy-chart/src/index.ts";
+import { galaxyChart, yourSystems } from "../../views/galaxy-chart/src/index.ts";
 import { explore } from "../../views/explore/src/index.ts";
 import { foamMap } from "../../views/foam-map/src/index.ts";
 import { clusterMap } from "../../views/cluster-map/src/index.ts";
@@ -16,7 +16,7 @@ import voyagesDoc from "./documents/voyages.gm.json";
 import "./screens.more.css";
 
 /** GM view modules from this track (the sections are registered too, so other screens and Orac can use them alone). */
-export const MORE_VIEWS: readonly ViewModule[] = [explore, route, windowView, galaxyChart, clusterMap, foamMap, storyFinder, voyageView];
+export const MORE_VIEWS: readonly ViewModule[] = [explore, route, windowView, galaxyChart, yourSystems, clusterMap, foamMap, storyFinder, voyageView];
 
 /** Screens: "Out to the galaxy" on the rail (the galaxy, the galaxies nearby, the cosmic web); its sections switch inside it. Voyages (in a system and between stars), Route, Sky from here and Stories are rail screens of their own (shell documents). */
 export const MORE_SCREENS: readonly { value: string; label: string; doc: ScreenDoc }[] = [
