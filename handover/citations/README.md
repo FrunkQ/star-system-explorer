@@ -53,8 +53,31 @@ When a pack, the kernel, the UI or the worker cites a paper that is not on the l
 warning (`python3 scripts/citations.py --check --warn`). Fix: `python3 scripts/citations.py --add`, then commit
 `handover/citations/master.jsonl`. `--add` only adds the new papers as unchecked and touches no other line, so two
 pull requests rarely conflict; if they do, take both sides (lines are independent and sorted by key). The run-through
-thread also adds any it finds each day. Making the check fail, in check.sh and as a CI job, waits on Alex's yes (CI
-edits are his call; a new failing check turns main red for every open PR until each adds its papers).
+thread also adds any it finds each day.
+
+### Switching the check to fail (Alex's yes, 25 Nov 2026 01:27 UTC: "1-3 yes!", for "after the 25th")
+
+Do this on the new account, on 26 Nov 2026 or later, in one pull request, never while the dev window is open:
+
+1. Merge main, then run `python3 scripts/citations.py --add` so that main's own citations are all on the list, and
+   confirm `python3 scripts/citations.py --check` passes (no `--warn`).
+2. In `scripts/check.sh`, change `python3 scripts/citations.py --check --warn` to `python3 scripts/citations.py --check`
+   and remove the "Warning only" comment line above it.
+3. In `.github/workflows/ci.yml`, add this job just above `rust:` (it has no `needs`, so it runs on every pull request,
+   docs-only and UI-only ones too):
+
+   ```yaml
+     # Every paper a pack or the code cites is on the citation run-through's master list (handover/citations/).
+     citations:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - run: python3 scripts/test-citations.py
+         - run: python3 scripts/citations.py --check
+   ```
+4. Tell every builder thread before it merges: "a new citation needs `python3 scripts/citations.py --add` and the
+   commit of `handover/citations/master.jsonl`, or CI fails".
+5. Update this section and `handover/status/citations.md` to say the check now fails.
 
 Keep adding your row to `docs/citations.md` with what you checked, as before: that register is the builders' own
 record and this list reads its statuses into `earlier`.
