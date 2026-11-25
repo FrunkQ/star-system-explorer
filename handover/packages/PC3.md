@@ -34,9 +34,8 @@ and 12A. Built on PC1 (`packages/PC1.md`). Golden-neutral.
 - `npm run ui:check`, `npm run ui:test`, `audit-matter.py --closed`; e2e `postcards` (new, in `ui:e2e`), `bookmarks`,
   `globe`, `body-pictures`, `shell`, `render` in chromium. Screenshots in project files
   `sse4/handover-screens/PC-screens/build/`.
-- `tests/ui/postcards.e2e.mjs` is not yet a line in `.github/workflows/ci.yml`: adding it was stopped by a session
-  permission check, so it needs Alex's own yes (one line after render.e2e: `node tests/ui/postcards.e2e.mjs --screens
-  ui-screens/postcards`).
+- `tests/ui/postcards.e2e.mjs` runs in CI after render.e2e (one line added to `ci.yml` with Alex's own yes, 25 Nov
+  01:51: "yes you can test postcards - we need them for testing").
 
 ## Not yet
 - A visit of an address place not open here draws only its stamp: resolving another universe's system for a visit
