@@ -9,7 +9,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go, more } from "./nav.mjs";
+import { desk, go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 import { ALL_THEMES } from "../../packages/skins/player/src/index.ts";
 
@@ -94,6 +94,36 @@ try {
     await sym.getByRole("button", { name: "Back to the shipped symbols" }).click();
     assert.equal(await sym.getByRole("radio", { name: /^Diagrammatic/ }).getAttribute("aria-checked"), "true");
 
+    // Map colours (OV4): the theme's eight map colours and a sample sector in the Atlas look, drawn from holdings by
+    // the reach rule, with its key; pointing names the holder, the key lifts one territory; the GM's secret in pencil.
+    const map = sym.locator("[data-map-colours]");
+    await map.scrollIntoViewIfNeeded();
+    assert.equal(await map.locator("[data-map-slot]").count(), 8, "eight map colours");
+    const sample = map.locator("[data-map-sample]");
+    assert.ok(Number(await sample.getAttribute("data-map-sample")) >= 5, "powers, a claim and an influence drawn");
+    assert.ok((await sample.locator("[data-area-band]").count()) >= 9, "the Atlas look's band along the inside of each border");
+    assert.ok((await sample.locator("[data-area-hatch]").count()) >= 1, "a claim is hatched");
+    assert.ok((await sample.locator("[data-area-label]").count()) >= 2, "names lettered along the land");
+    const stroke = (k) => sample.locator(`.areaset[data-status=holds][data-area=${k}] path.area`).evaluate((e) => getComputedStyle(e).stroke);
+    assert.notEqual(await stroke("crown"), await stroke("league"), "neighbours never share a colour");
+    assert.notEqual(await stroke("league"), await stroke("vesh"), "neighbours never share a colour");
+    assert.equal(await sample.locator("[data-pencil]").count(), 0, "Explore shows no pencil");
+    await sample.locator(".areaset[data-area=vesh] .hit").hover();
+    assert.match(await map.locator("[data-map-point]").innerText(), /Vesh Compact holds this/);
+    await map.locator("[data-area-row=crown]").hover();
+    await sample.locator(".areaset.quiet").first().waitFor();
+    assert.equal(await sample.locator(".areaset.lifted[data-area=crown]").count() >= 1, true, "the key lifts Meridian Crown");
+    await shot(page, "map-colours-desk");
+    await desk(page, "Build");
+    await sample.locator(".areaset[data-pencil]").first().waitFor();
+    assert.match(await map.locator("[data-area-row=watch]").getAttribute("aria-label"), /not known to the table/);
+    await more(page, "Night chart");
+    await map.scrollIntoViewIfNeeded();
+    await shot(page, "map-colours-night");
+    await more(page, "Night chart");
+    await desk(page, "Explore");
+    assert.equal(await page.getAttribute("[data-state-hash]", "data-state-hash"), hash, "map colours never change the state hash");
+
     // Phone width: no sideways scroll.
     const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
     phone.on("pageerror", (e) => errors.push(e.message));
@@ -102,6 +132,8 @@ try {
     await go(phone, "symbols");
     const pw = await phone.evaluate(() => document.scrollingElement.scrollWidth);
     assert.ok(pw <= 390, `phone scrolls sideways (${pw}px)`);
+    await phone.locator("[data-map-colours]").scrollIntoViewIfNeeded();
+    await shot(phone, "map-colours-phone");
 
     // The players' chart: the same symbols under the player's theme.
     const players = await browser.newPage({ viewport: { width: 1440, height: 1000 } });

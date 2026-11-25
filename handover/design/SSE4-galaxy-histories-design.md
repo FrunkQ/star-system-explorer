@@ -28,7 +28,7 @@ Chapters: Gaia data changed everything; what we thought before; the disc started
 | Belokurov, The Conversation, 10 Jun 2026 (doi:10.64628/AB.vujjdh5vc) | Stars not born here ("migrants") have plunging orbits and dwarf-galaxy chemistry. The largest ancient remnant is Gaia-Sausage-Enceladus, 8 to 11 Gyr ago. That collision splashed old disc stars into the halo, brought star clusters, and tilted the disc against the dark halo, which is itself stretched and still leaning. Nothing big since, which is unusual. The Large Magellanic Cloud is now pulling the galaxy about, and will merge |
 | Xiang and Rix 2022, Nature (doi:10.1038/s41586-022-04496-5), MPG summary | 250,000 dated stars. The thick disc began forming 13 Gyr ago, 0.8 Gyr after the Big Bang. A burst of star formation 11 Gyr ago goes with the Gaia-Enceladus merger. The thin disc from about 8 Gyr ago. Stars born at one time share one metal content, so the gas was well mixed |
 | Sestito et al. 2026, MNRAS 548, stag563 (doi:10.1093/mnras/stag563) | 20 very metal-poor stars within 2 kpc of the Sun, all orbiting in the plane, 11 forwards and 9 backwards, with dwarf-galaxy chemistry. Read as one small galaxy swallowed very early, tentatively named Loki. The authors say several events may have contributed |
-| Oprea et al. 2026, MNRAS (doi:10.1093/mnras/stag319), RAS summary | The hot gas halo is up to 12% warmer in the south. The Large Magellanic Cloud pulls the disc towards it at about 40 km/s, squeezing the gas on that side. The difference grew in the last 100 Myr |
+| Oprea et al. 2026, MNRAS (doi:10.1093/mnras/stag319), RAS summary | The hot gas halo is on average 12% warmer in the south (observed). In the paper's simulation the Magellanic Clouds pull the disc towards them at up to about 40 km/s, squeezing the gas on that side. The difference grew in the last 100 Myr |
 
 What this tells the design: a galaxy history is a short list of dated collisions, each leaving stars with their own orbits and chemistry, a changed disc, a changed dark halo and changed gas. That is the record in section 6.
 
@@ -203,7 +203,7 @@ Proposed: one list. The **major mergers are pins** that claim their share of the
 
 ### 7.2 Each progenitor's own galaxy
 
-Already built: Y4 part 2 grows each satellite's galaxy with G3 on a halo that had its mass at infall. That run gives stars, gas, metals, a star formation history and an **age to metallicity track**. The track is what makes one swallowed galaxy's stars and clusters tell apart from another's. It is also how the real family tree was worked out (Kruijssen et al. 2020, doi:10.1093/mnras/staa2452; Aguado-Agelet et al. 2026, arXiv:2608.27611).
+Already built: Y4 part 2 grows each satellite's galaxy with G3 on a halo that had its mass at infall. That run gives stars, gas, metals, a star formation history and an **age to metallicity track**. The track is what makes one swallowed galaxy's stars and clusters tell apart from another's. It is also how the real family tree was worked out (Kruijssen et al. 2020, doi:10.1093/mnras/staa2452; Aguado-Agelet et al. 2026 (A&A, doi:10.1051/0004-6361/202661469; the arXiv id 2608.27611 unconfirmed), arXiv:2608.27611).
 
 Cost is about 2 ms a galaxy (Y4 log). For the unseen thousands, the Sketch rung gives an envelope instead (stellar mass from halo mass with its scatter, metals from stellar mass; Kirby et al. 2013, doi:10.1088/0004-637X/779/2/102), shown as "about", and looking fixes it once.
 
