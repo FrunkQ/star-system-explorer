@@ -250,6 +250,14 @@ try {
       await gm.waitForFunction(() => /a field of its own/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
       await shot(gm, `reach-field-${vp}`);
       await undoTo();
+      // ED10 part 1, "Could be…": the card's line offers what Mars is not yet; the recipe is worked out on a scratch copy,
+      // the smallest move first, and "Do this" is one change.
+      await gm.locator('[data-could-be] [data-could="field"]').click();
+      await gm.locator('[data-recipe="field"] [data-step="mass"]').waitFor({ timeout: 90000 });
+      await shot(gm, `could-be-${vp}`);
+      await gm.locator('[data-recipe="field"] [data-do="mass"]').click();
+      await gm.waitForFunction(() => /to have a field of its own/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await undoTo();
 
       // ED8 part 1, the Air box: Mars's air as one mix bar (carbon dioxide most of it), traces as chips in ppm. Setting
       // carbon dioxide to half trades it against the rest, which keep their proportions: one change, one Undo.
