@@ -3,7 +3,7 @@
 //! the scene each audience would be sent, so what the GM is told a seat
 //! knows is exactly what reaches that seat.
 
-use crate::protocol::{Request, Response};
+use crate::protocol::Response;
 use crate::{err, latest_hash, Kernel};
 use sse_chronicle::{Publisher, UniverseTime};
 use sse_core::{Address, ContentHash};
@@ -88,13 +88,7 @@ impl Kernel {
         scope: &Address,
         at_s: i64,
     ) -> Result<Scene, Response> {
-        match self.dispatch(Request::Scene {
-            audience: audience.into(),
-            scope: scope.to_string(),
-            data_view: None,
-            at_s,
-            observe: None,
-        })? {
+        match self.scene_op(audience.into(), scope.to_string(), None, at_s, None)? {
             Response::Scene { scene, .. } => {
                 Ok(serde_json::from_value(scene).expect("scenes round-trip"))
             }

@@ -1112,13 +1112,7 @@ impl Kernel {
             };
             // Sense: what the seat's audience has been shown, never the GM's truth.
             let root = self.universe()?.root.to_string();
-            let scene = match self.dispatch(Request::Scene {
-                audience: seat.audience.clone(),
-                scope: root,
-                data_view: None,
-                at_s,
-                observe: None,
-            })? {
+            let scene = match self.scene_op(seat.audience.clone(), root, None, at_s, None)? {
                 Response::Scene { scene, .. } => scene,
                 other => return Err(other),
             };
@@ -2071,16 +2065,11 @@ impl Kernel {
             sse_sift::sift(&sifters, &w, &scope)
         } else {
             let audience = audience.clone().expect("not the GM");
-            let scene = match self.dispatch(Request::Scene {
-                audience: audience.clone(),
-                scope: scope.to_string(),
-                data_view: None,
-                at_s,
-                observe: None,
-            })? {
-                Response::Scene { scene, .. } => scene,
-                other => return Err(other),
-            };
+            let scene =
+                match self.scene_op(audience.clone(), scope.to_string(), None, at_s, None)? {
+                    Response::Scene { scene, .. } => scene,
+                    other => return Err(other),
+                };
             let scene: sse_observe::scene::Scene =
                 serde_json::from_value(scene).expect("scenes round-trip");
             let mut state = sse_chronicle::State::default();
@@ -2473,6 +2462,115 @@ impl Kernel {
             out.insert(fi.name.clone(), InputValue { q, source });
         }
         Ok(out)
+    }
+
+    /// `scene`, outside `dispatch`, for ops that read a scene as part of
+    /// their own work (see `resolved_system_op`).
+    pub(crate) fn scene_op(
+        &mut self,
+        audience: String,
+        scope: String,
+        data_view: Option<String>,
+        at_s: i64,
+        observe: Option<serde_json::Value>,
+    ) -> Result<Response, Response> {
+        let scope: Address = scope
+            .parse()
+            .map_err(|e| err("bad_address", format!("{e}")))?;
+        let draft = match observe {
+            None => None,
+            Some(v) => Some(
+                sse_observe::ObserveSetup::from_stack(&[("draft".into(), v)])
+                    .map_err(|e| err("bad_observe", e))?
+                    .ok_or_else(|| err("bad_observe", "the draft setup is empty"))?,
+            ),
+        };
+        let setup = draft
+            .as_ref()
+            .or(self.observe.setup.as_ref())
+            .ok_or_else(|| {
+                err(
+                    "no_data_views",
+                    "the pack stack defines no data views (provides.other.observe)",
+                )
+            })?;
+        let u = self
+            .universe
+            .as_ref()
+            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+        let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+        // Paste support: withdrawn subjects are not in the scene.
+        withdraw::drop_withdrawn(&mut state.facts);
+        // NM2: each subject's shown names, disclosed as `name.<layer>`.
+        names::inject(&mut state, &self.observe.names, &u.seed, &u.root);
+        // Authored tags out of the facts; rule tags from the stack.
+        // TG3: authored true forces a tag, authored false holds a
+        // rule's tag off; both come out of the facts.
+        let mut tags: BTreeMap<Address, std::collections::BTreeSet<String>> = BTreeMap::new();
+        let mut authored: BTreeMap<Address, BTreeMap<String, bool>> = BTreeMap::new();
+        for (a, f) in state.facts.iter_mut() {
+            let mine = sse_sift::authored_tags(f);
+            f.retain(|k, _| !k.starts_with(TAG_FIELD));
+            if !mine.is_empty() {
+                authored.insert(a.clone(), mine);
+            }
+        }
+        let none = BTreeMap::new();
+        for (a, f) in &state.facts {
+            let subject = sse_sift::Subject {
+                address: Some(a.clone()),
+                facts: f.clone(),
+                parent: a
+                    .parent()
+                    .and_then(|p| state.facts.get(&p).cloned())
+                    .unwrap_or_default(),
+                now_s: at_s,
+                ..Default::default()
+            };
+            for t in self
+                .observe
+                .rules
+                .apply_authored(
+                    &subject,
+                    &BTreeMap::new(),
+                    authored.get(a).unwrap_or(&none),
+                    Some(&u.seed),
+                )
+                .into_keys()
+            {
+                tags.entry(a.clone()).or_default().insert(t);
+            }
+        }
+        state.facts.retain(|_, f| !f.is_empty());
+        let fictional = self
+            .stack
+            .as_ref()
+            .map(|(s, _)| s.fictional_kinds.iter().cloned().collect())
+            .unwrap_or_default();
+        let views = setup.views_by_id();
+        let disclosure = with_record(&setup.disclosure, &self.observe.record);
+        let notes = sse_record::notes_at(u.record.events(), UniverseTime::seconds(at_s));
+        // Kept values and actors live in the record; the GM machine
+        // folds them in here and filters them like any fact.
+        for (a, f) in u.record.state_at(UniverseTime::seconds(at_s)).facts {
+            state.facts.entry(a).or_default().extend(f);
+        }
+        let inp = sse_observe::SceneInput {
+            state: &state,
+            chronicle: Some(&u.chronicle),
+            tags: &tags,
+            fictional: &fictional,
+            disclosure: &disclosure,
+            views: &views,
+            campaign: &setup.campaign,
+            notes: &notes,
+        };
+        let scene = sse_observe::build_scene_through(&inp, &audience, &scope, data_view.as_deref())
+            .map_err(|e| err("bad_data_view", e))?;
+        Ok(Response::Scene {
+            scene_hash: scene.hash().hex(),
+            scene: serde_json::to_value(&scene).expect("scenes are plain data"),
+        })
     }
 
     fn dispatch(&mut self, req: Request) -> Result<Response, Response> {
@@ -3054,107 +3152,7 @@ impl Kernel {
                 data_view,
                 at_s,
                 observe,
-            } => {
-                let scope: Address = scope
-                    .parse()
-                    .map_err(|e| err("bad_address", format!("{e}")))?;
-                let draft = match observe {
-                    None => None,
-                    Some(v) => Some(
-                        sse_observe::ObserveSetup::from_stack(&[("draft".into(), v)])
-                            .map_err(|e| err("bad_observe", e))?
-                            .ok_or_else(|| err("bad_observe", "the draft setup is empty"))?,
-                    ),
-                };
-                let setup = draft
-                    .as_ref()
-                    .or(self.observe.setup.as_ref())
-                    .ok_or_else(|| {
-                        err(
-                            "no_data_views",
-                            "the pack stack defines no data views (provides.other.observe)",
-                        )
-                    })?;
-                let u = self
-                    .universe
-                    .as_ref()
-                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
-                let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
-                // Paste support: withdrawn subjects are not in the scene.
-                withdraw::drop_withdrawn(&mut state.facts);
-                // NM2: each subject's shown names, disclosed as `name.<layer>`.
-                names::inject(&mut state, &self.observe.names, &u.seed, &u.root);
-                // Authored tags out of the facts; rule tags from the stack.
-                // TG3: authored true forces a tag, authored false holds a
-                // rule's tag off; both come out of the facts.
-                let mut tags: BTreeMap<Address, std::collections::BTreeSet<String>> =
-                    BTreeMap::new();
-                let mut authored: BTreeMap<Address, BTreeMap<String, bool>> = BTreeMap::new();
-                for (a, f) in state.facts.iter_mut() {
-                    let mine = sse_sift::authored_tags(f);
-                    f.retain(|k, _| !k.starts_with(TAG_FIELD));
-                    if !mine.is_empty() {
-                        authored.insert(a.clone(), mine);
-                    }
-                }
-                let none = BTreeMap::new();
-                for (a, f) in &state.facts {
-                    let subject = sse_sift::Subject {
-                        address: Some(a.clone()),
-                        facts: f.clone(),
-                        parent: a
-                            .parent()
-                            .and_then(|p| state.facts.get(&p).cloned())
-                            .unwrap_or_default(),
-                        now_s: at_s,
-                        ..Default::default()
-                    };
-                    for t in self
-                        .observe
-                        .rules
-                        .apply_authored(
-                            &subject,
-                            &BTreeMap::new(),
-                            authored.get(a).unwrap_or(&none),
-                            Some(&u.seed),
-                        )
-                        .into_keys()
-                    {
-                        tags.entry(a.clone()).or_default().insert(t);
-                    }
-                }
-                state.facts.retain(|_, f| !f.is_empty());
-                let fictional = self
-                    .stack
-                    .as_ref()
-                    .map(|(s, _)| s.fictional_kinds.iter().cloned().collect())
-                    .unwrap_or_default();
-                let views = setup.views_by_id();
-                let disclosure = with_record(&setup.disclosure, &self.observe.record);
-                let notes = sse_record::notes_at(u.record.events(), UniverseTime::seconds(at_s));
-                // Kept values and actors live in the record; the GM machine
-                // folds them in here and filters them like any fact.
-                for (a, f) in u.record.state_at(UniverseTime::seconds(at_s)).facts {
-                    state.facts.entry(a).or_default().extend(f);
-                }
-                let inp = sse_observe::SceneInput {
-                    state: &state,
-                    chronicle: Some(&u.chronicle),
-                    tags: &tags,
-                    fictional: &fictional,
-                    disclosure: &disclosure,
-                    views: &views,
-                    campaign: &setup.campaign,
-                    notes: &notes,
-                };
-                let scene =
-                    sse_observe::build_scene_through(&inp, &audience, &scope, data_view.as_deref())
-                        .map_err(|e| err("bad_data_view", e))?;
-                Response::Scene {
-                    scene_hash: scene.hash().hex(),
-                    scene: serde_json::to_value(&scene).expect("scenes are plain data"),
-                }
-            }
+            } => self.scene_op(audience, scope, data_view, at_s, observe)?,
             Request::ImportV3 {
                 save,
                 universe_id,
@@ -4322,13 +4320,7 @@ impl Kernel {
                     ));
                 }
                 let root = self.universe()?.root.to_string();
-                let scene = match self.dispatch(Request::Scene {
-                    audience: audience.clone(),
-                    scope: root,
-                    data_view: None,
-                    at_s,
-                    observe: None,
-                })? {
+                let scene = match self.scene_op(audience.clone(), root, None, at_s, None)? {
                     Response::Scene { scene, .. } => scene,
                     other => return Err(other),
                 };
