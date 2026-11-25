@@ -62,7 +62,8 @@ function benchSection(version) {
     const drawRows = d.scenes_ms && Object.keys(d.scenes_ms).length
       ? `<tr><td><strong>Drawing (${d.backend}, ${d.method}${d.steady ? "" : ", unsteady"}): placed at ${words[d.earned] ?? d.earned}</strong></td><td class="n"></td></tr>` +
         Object.entries(d.scenes_ms).map(([k, v]) => `<tr><td class="muted">&nbsp;&nbsp;probe ${k} (${d.factors[k].toFixed(2)}× reference)</td><td class="n">${v.toFixed(2)} ms</td></tr>`).join("") +
-        d.predictions.map((p) => `<tr><td class="muted">&nbsp;&nbsp;standard True at 1080p, ${words[p.tier] ?? p.tier} (budget ${Math.round(p.budget_ms)} ms)</td><td class="n">${p.ms === null ? "no form" : `${p.ms.toFixed(1)} ms ${p.fits ? "fits" : "too slow"}`}</td></tr>`).join("")
+        d.predictions.map((p) => `<tr><td class="muted">&nbsp;&nbsp;standard True at 1080p, ${words[p.tier] ?? p.tier} (budget ${Math.round(p.budget_ms)} ms)</td><td class="n">${p.ms === null ? "no form" : `${p.ms.toFixed(1)} ms ${p.fits ? "fits" : "too slow"}`}</td></tr>`).join("") +
+        (d.standard ?? []).map((f) => `<tr><td class="muted">&nbsp;&nbsp;standard True at 1080p, ${words[f.tier] ?? f.tier}, drawn (${f.method})</td><td class="n">${f.ms.toFixed(1)} ms</td></tr>`).join("")
       : `<tr><td><strong>Drawing</strong></td><td class="n">${d.error ? "could not draw" : "no GPU"}</td></tr>`;
     $("benchnote").textContent = "Done.";
     $("benchtable").innerHTML = rep.chunks

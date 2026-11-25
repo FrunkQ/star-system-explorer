@@ -22,7 +22,8 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { constant, DEFAULT_VIEW, LAMP_SPILL, LANDER_HULL_ALBEDO, landerHeightOf, lampRadiance, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, readSeaOptics, seaWords, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu, LIBRARY, TrueRun } from "../../../renderer/src/index.ts";
+  import { LAND_TRUE } from "../../../renderer/src/recipes.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params, follow }: { ctx?: ViewContext; scene?: SystemScene; params: Record<string, Json>; follow?: PlayerContext } = $props();
@@ -384,6 +385,29 @@
     cancelAnimationFrame(raf);
     gpu?.dispose();
   });
+
+  // Quality in True (VP4 part 2b, VP5): placed by the device's measured speed on the land-true recipe, stepped down on
+  // slow frames, and sharpened while the view holds still (no moving sea, nobody walking): jittered frames averaged in
+  // the finish. Once sharp the picture is left on screen and nothing is drawn until something changes.
+  let run: TrueRun | null = null;
+  let quality = $state("");
+  let heldKey = "";
+  let lastDrawn = -1;
+  const landPixels = () => {
+    const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
+    return Math.max(1, Math.round(w * h * dpr * dpr));
+  };
+  $effect(() => {
+    if (!gpu) return;
+    const r = new TrueRun({ recipe: LAND_TRUE, library: LIBRARY, pixels: untrack(landPixels), backend: gpu.backend, source: "render.land" });
+    run = r;
+    void r.place();
+    return () => (r.dispose(), (run = null));
+  });
+  $effect(() => {
+    const px = landPixels();
+    untrack(() => run?.update({ pixels: px }));
+  });
   function buildMeshes() {
     if (!gpu || !near || !far || built) return;
     built = true;
@@ -648,7 +672,19 @@
         // A lit hull is the brightest large thing in view: the eye adapts to it (and the stars fade, as they do).
         hullLight = lamp > 0 ? (LANDER_HULL_ALBEDO * lamp * LAMP_SPILL) / Math.PI : 0;
       }
+      // What the picture depends on: while it is the same, the view rests and sharpens; any change draws it moving.
+      const r = look === "true" ? run : null;
+      const key = r ? [look, w, h, ...eye.map((x) => Math.round(x * 1e3)), ...fwd.map((x) => Math.round(x * 1e5)), ...sun.map((x) => Math.round(x * 1e5)), seaNow ? now : 0, landerSet, siteStars?.key ?? "", lamps].join("|") : "";
+      const still = r !== null && key === heldKey;
+      heldKey = key;
+      const step = still ? r!.rest.next(now) : null;
+      // Sharp: the averaged picture stays on screen.
+      if (still && !step) return;
+      const q = r?.settings(step !== null) ?? null;
+      const fin = q?.params["finish"] ?? {};
+      const t0 = performance.now();
       gpu.draw({
+        ...(q ? { quality: { ...(typeof fin["glare_rungs"] === "number" ? { rungs: fin["glare_rungs"] } : {}), ...(typeof fin["glare_scale"] === "number" ? { glare_scale: fin["glare_scale"] } : {}), render_scale: q.render_scale, ...(step ? { accumulate: step.k, jitter: step.jitter } : {}) } } : {}),
         look,
         eye,
         forward: fwd,
@@ -671,6 +707,18 @@
         contour_m: contourFor(eye[2] - siteZ),
         ...(seaNow ? { sea: { wave_m: seaNow.wave_m, period_s: seaNow.period_s, dir_rad: seaNow.wind_m_s < 0 ? Math.PI : 0, gravity_m_s2: world.gravity_m_s2 ?? plan?.gravity_m_s2 ?? 9.8, tide_m: seaNow.tide_m, time_s: now / 1000, ...(seaOptics ? { optics: seaOptics.optics } : {}) } } : {}),
       });
+      if (r) {
+        const work = performance.now() - t0;
+        if (step) r.rest.done(performance.now(), work);
+        else {
+          // Frames running on: the time between them; a lone frame: its own work.
+          const ms = lastDrawn >= 0 && now - lastDrawn < 250 ? Math.max(work, now - lastDrawn) : work;
+          r.frame(ms, now);
+        }
+        lastDrawn = now;
+        const st = r.status();
+        quality = `${st.tier}|${st.level}|${st.rest}|${st.rest_frames}`;
+      } else if (quality) quality = "";
     } else if (using === "canvas" && line) drawLines(line, eye, fwd);
   }
   $effect(() => {
@@ -865,7 +913,7 @@
   {#if tiles}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
     <div class="stage" class:hidden={!(phase === "flying" || phase === "down")} bind:clientWidth={w} bind:clientHeight={h} role="application" aria-label={watching ? `The ground at ${site ? fmtLat(site.lat) : ""}, as the game master sees it` : `The ground at ${site ? fmtLat(site.lat) : ""}: drag to look about, arrow keys or W A S D to walk`} tabindex="0" onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} onkeydown={keyDown} onkeyup={keyUp} data-ground>
-      <canvas bind:this={canvas} class:hidden={using === "canvas"}></canvas>
+      <canvas bind:this={canvas} class:hidden={using === "canvas"} data-quality={quality || undefined}></canvas>
       <canvas bind:this={line} class:hidden={using !== "canvas"}></canvas>
       {#if hud}
         <div class="hud" data-surface-hud>
