@@ -173,3 +173,5 @@ export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, R
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
 export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed } from "./handles.ts";
 export * from "./place-notes.ts";
+export { SPLITS, isSplit, displayLink, partLinks, displaysFrom, displayMap, screenKey } from "./displays.ts";
+export type { Split, Display } from "./displays.ts";
