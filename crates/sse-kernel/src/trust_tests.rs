@@ -17,7 +17,7 @@ fn load(packs: Vec<Value>) -> (crate::Kernel, Value) {
     (k, r)
 }
 fn base() -> Value {
-    pack("tests/fixtures/packs/base-physics.json")
+    pack("packs/base-physics/pack.json")
 }
 
 /// A small pack in the shape a paper's pack takes: a flow with a fitted

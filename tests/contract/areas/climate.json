@@ -1,0 +1,4 @@
+[
+ {"op": "load_stack", "packs": ["$pack:base-physics"]},
+ {"op": "weather", "want": "climate", "world": "Jupiter"}
+]

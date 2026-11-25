@@ -353,6 +353,59 @@ fn mountains_bank_cloud_windward_and_dry_the_lee() {
     assert!(w.layers[0].cloud_cover > l.layers[0].cloud_cover);
 }
 
+/// One continent from 0° to 40° east, sea elsewhere.
+struct Continent;
+impl crate::formations::Terrain for Continent {
+    fn ground(&self, d: [f64; 3]) -> (f64, bool) {
+        let (_, lon) = crate::rules::lat_lon(d);
+        let land = (0.0..40.0).contains(&lon);
+        (if land { 200.0 } else { -3000.0 }, !land)
+    }
+}
+
+/// W7c: marine decks sit over the cold water off a coast lying to the
+/// spin's east (eastern-boundary upwelling), not off the far shore; on a
+/// backward-spinning world they swap sides.
+#[test]
+fn marine_decks_sit_over_upwelling_coasts_and_flip_with_the_spin() {
+    let b = block();
+    let deck = |c: &crate::conditions::Conditions, lon: f64| {
+        let p = b.prepare(c, Date { day: 200.0 });
+        let lat = p.circ.hadley_edge_deg - 8.0;
+        let cell = b.cell_at(c, &p, Date { day: 200.0 }, &[], Some(&Continent), lat, lon);
+        (cell.layers[0].cloud_cover, cell.temp_offset_k)
+    };
+    let e = fixture("Earth");
+    // Off the west coast of the continent (land to the east): deck, cold.
+    let (west_deck, west_t) = deck(&e, -2.0);
+    // Off its east coast (land to the west): neither.
+    let (east_deck, east_t) = deck(&e, 42.0);
+    // Mid-ocean, far from any coast: neither.
+    let (open_deck, _) = deck(&e, -150.0);
+    assert!(
+        west_deck > east_deck + 0.15 && west_deck > open_deck + 0.15,
+        "{west_deck} {east_deck} {open_deck}"
+    );
+    assert!(west_t < east_t - 1.0, "{west_t} {east_t}");
+    // The far shore's western boundary current runs warm, poleward of the
+    // upwelling.
+    let p = b.prepare(&e, Date { day: 200.0 });
+    let lat = p.circ.hadley_edge_deg + 5.0;
+    let at = |lon: f64| {
+        b.cell_at(&e, &p, Date { day: 200.0 }, &[], Some(&Continent), lat, lon)
+            .temp_offset_k
+    };
+    assert!(at(41.0) > at(-120.0) + 1.0, "{} {}", at(41.0), at(-120.0));
+    let mut r = e.clone();
+    r.rotation_hours = -r.rotation_hours.abs();
+    let (rw, _) = deck(&r, -2.0);
+    let (re, _) = deck(&r, 42.0);
+    assert!(
+        re > rw + 0.15,
+        "a backward spin moves the upwelling: {rw} {re}"
+    );
+}
+
 #[test]
 fn locked_worlds_cloud_the_day_side() {
     let b = block();
@@ -505,4 +558,17 @@ fn venus_descent_meets_acid_cloud() {
         "{:#?}",
         c.levels
     );
+}
+
+#[test]
+fn field_layers_carry_the_column_heights() {
+    let b = block();
+    let e = fixture("Earth");
+    let p = b.prepare(&e, Date { day: 100.0 });
+    let cell = b.zonal_cell(&e, &p, 30.0, 0.0);
+    let h = e.scale_height_m();
+    assert_eq!(cell.layers[0].base_m, 0.0);
+    assert!((cell.layers[0].top_m - 0.24 * h).abs() < 1.0);
+    assert!((cell.layers[1].base_m - cell.layers[0].top_m).abs() < 1e-9);
+    assert!(cell.layers[2].top_m > cell.layers[2].base_m);
 }
