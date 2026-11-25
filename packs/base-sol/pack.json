@@ -604,6 +604,12 @@
         "unit": "1",
         "src": "nssdca-jupiter"
        },
+       "planet.surface_temperature": {
+        "v": 165.0,
+        "unit": "K",
+        "src": "nssdca-jupiter",
+        "note": "temperature at the 1 bar level (no surface)"
+       },
        "atmosphere.composition.h2": {
         "v": 0.898,
         "unit": "1",
@@ -687,6 +693,12 @@
         "unit": "1",
         "src": "nssdca-saturn"
        },
+       "planet.surface_temperature": {
+        "v": 134.0,
+        "unit": "K",
+        "src": "nssdca-saturn",
+        "note": "temperature at the 1 bar level (no surface)"
+       },
        "atmosphere.composition.h2": {
         "v": 0.963,
         "unit": "1",
@@ -764,6 +776,12 @@
         "unit": "1",
         "src": "nssdca-uranus"
        },
+       "planet.surface_temperature": {
+        "v": 76.0,
+        "unit": "K",
+        "src": "nssdca-uranus",
+        "note": "temperature at the 1 bar level (no surface)"
+       },
        "atmosphere.composition.h2": {
         "v": 0.825,
         "unit": "1",
@@ -834,6 +852,12 @@
         "v": 0.442,
         "unit": "1",
         "src": "nssdca-neptune"
+       },
+       "planet.surface_temperature": {
+        "v": 72.0,
+        "unit": "K",
+        "src": "nssdca-neptune",
+        "note": "temperature at the 1 bar level (no surface)"
        },
        "atmosphere.composition.h2": {
         "v": 0.8,

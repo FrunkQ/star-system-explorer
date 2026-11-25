@@ -10,9 +10,11 @@
 //! - **Polar jet**: one polar Rhines length from the pole, L = (U a² / 2Ω)^⅓
 //!   (Rhines arrest on the polar γ-plane f = 2Ω(1 − r²/2a²)).
 //! - **Polar regime**: Burger number Bu = (L_d / a)², L_d = N H / 2Ω.
-//!   Low Bu: a ring of cyclones; middle: one polar vortex; high Bu or weak
-//!   internal heat: a diffuse cap (Brueshaber, Sayanagi and Dowling 2019;
-//!   O'Neill, Emanuel and Flierl 2015).
+//!   Low Bu: a ring of cyclones; middle: one compact polar vortex; high Bu:
+//!   a large cyclonic polar vortex, drawn as a broad cap (Brueshaber,
+//!   Sayanagi and Dowling 2019). Weak internal heat also gives the broad
+//!   cap: moist convection drives the polar cyclone (O'Neill, Emanuel and
+//!   Flierl 2015), but the W/m² cut is ours.
 //! - **Polygon jet**: a rule fitted to Saturn's hexagon. Sides
 //!   n = round(2π a cos φ_jet / (k L_d(φ_jet))), clamped to the pack's range.
 //! - **Storms**: great ovals and strings of ovals in zones (gas giants), dark
@@ -493,7 +495,7 @@ fn pole(
         (
             "diffuse-cap",
             format!(
-                "Rule: internal heat of {:.2} W/m² is below {:.2} W/m², too weak a convective forcing to spin up a polar cyclone, so the {name} pole is a broad, diffuse cap (O'Neill, Emanuel and Flierl 2015).",
+                "Rule: internal heat of {:.2} W/m² is below {:.2} W/m², too weak a convective forcing to spin up a compact polar cyclone, so the {name} pole is a broad cap. Moist convection drives polar cyclones (O'Neill, Emanuel and Flierl 2015); the W/m² cut is SSE4's own.",
                 c.internal_flux_w_m2, p.diffuse_internal_max_w_m2
             ),
         )
@@ -501,7 +503,7 @@ fn pole(
         (
             "diffuse-cap",
             format!(
-                "Rule: Burger number {bu:.2e} is at or above {:.1e}, ice-giant-like, so the {name} pole is a broad, diffuse cap (Brueshaber, Sayanagi and Dowling 2019).",
+                "Rule: Burger number {bu:.2e} is at or above {:.1e}, ice-giant-like, so the {name} pole holds one large cyclonic polar vortex, drawn as a broad cap (Brueshaber, Sayanagi and Dowling 2019; Bu alone does not cleanly split this from the Saturn regime, Brueshaber and Sayanagi 2021).",
                 p.diffuse_bu_min
             ),
         )
@@ -509,7 +511,7 @@ fn pole(
         (
             "cyclone-ring",
             format!(
-                "Rule: Burger number {bu:.2e} is at or below {:.2e} (a / L_d ≥ 40), so storms at the {name} pole stay small against the planet and gather as a ring of cyclones around a central one, as on Jupiter (Brueshaber, Sayanagi and Dowling 2019; O'Neill, Emanuel and Flierl 2015).",
+                "Rule: Burger number {bu:.2e} is at or below {:.2e} (a / L_d ≥ 40), so storms at the {name} pole stay small against the planet and gather as a ring of cyclones around a central one, as on Jupiter (Brueshaber, Sayanagi and Dowling 2019).",
                 p.ring_bu_max
             ),
         )
@@ -517,7 +519,7 @@ fn pole(
         (
             "single-vortex",
             format!(
-                "Rule: Burger number {bu:.2e} is at or above {:.2e} (a / L_d ≤ 30), so storms drifting to the {name} pole merge into one strong polar vortex, as on Saturn (Brueshaber, Sayanagi and Dowling 2019; O'Neill, Emanuel and Flierl 2015).",
+                "Rule: Burger number {bu:.2e} is at or above {:.2e} (a / L_d ≤ 30), so storms drifting to the {name} pole merge into one strong polar vortex, as on Saturn (Brueshaber, Sayanagi and Dowling 2019).",
                 p.single_bu_min
             ),
         )
@@ -527,7 +529,7 @@ fn pole(
         (
             if ring { "cyclone-ring" } else { "single-vortex" },
             format!(
-                "Rule with a draw: Burger number {bu:.2e} lies in the transition between a ring of cyclones and one polar vortex (a / L_d between 30 and 40, O'Neill, Emanuel and Flierl 2015); the {name} pole drew {}.",
+                "Rule with a draw: Burger number {bu:.2e} lies in the transition between a ring of cyclones and one polar vortex (a / L_d between 30 and 40, SSE4's split of Brueshaber, Sayanagi and Dowling's transitional regime); the {name} pole drew {}.",
                 if ring { "a ring" } else { "one vortex" }
             ),
         )

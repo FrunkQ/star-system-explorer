@@ -122,7 +122,7 @@
          "min": 0.5
         }
        },
-       "because": "One face to the star: rising air and a permanent cloud shield under the star, clearer night side (Yang, Cowan and Abbot 2013; Showman and Polvani 2011)."
+       "because": "One face to the star: rising air and a permanent cloud shield under the star, clearer night side (Yang, Cowan and Abbot 2013); the day-night heating drives standing waves and an eastward equatorial jet (Showman and Polvani 2011)."
       },
       {
        "regime": "thin-air",
@@ -176,7 +176,15 @@
       "ar": 0.0093,
       "co2": 0.0004,
       "h2o": 0.0
-     }
+     },
+     "giant_gases": {
+      "h2": 0.8384,
+      "he": 0.1601,
+      "h2o": 0.0009,
+      "ch4": 0.000495,
+      "nh3": 0.000124
+     },
+     "giant_gases_source": "Asplund et al. 2009, protosolar He, C, N and O by number with hydrogen as H2"
     },
     "references": [
      {

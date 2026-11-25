@@ -881,6 +881,10 @@ impl Kernel {
                 x
             }
         };
+        let mut x = x;
+        if x.gases.is_none() {
+            x.gases = adopt::catalogued_gases(w.facts.get(&b.address));
+        }
         let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &x);
         Ok((
             serde_json::to_value(&c).expect("plain data"),

@@ -209,6 +209,12 @@ pub struct Defaults {
     pub rotation_hours: f64,
     pub obliquity_deg: f64,
     pub gases: BTreeMap<String, f64>,
+    /// The air of a world with a deep hydrogen envelope and no measured
+    /// mix: the protosolar mix by volume (empty: `gases` stands in).
+    #[serde(default)]
+    pub giant_gases: BTreeMap<String, f64>,
+    #[serde(default)]
+    pub giant_gases_source: String,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

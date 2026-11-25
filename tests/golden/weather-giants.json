@@ -5,7 +5,7 @@
       "burger": 0.00021533280476185743,
       "field": "745b6f5c5394ec5fde0a007db7968d2d087a85de379846e78e013c23dd0583fd",
       "jets": 13,
-      "layout": "f2acc3068d71ff833921356eb87a09e69d67bf4d218c7275dd7dfa90e968e88c",
+      "layout": "9d15b830d95ce1a033c4ee24e258a3f39e132d77bf51ae28283e1d61564f2716",
       "polar_jet_lat_deg": 79.5308296932358,
       "poles": [
         {
@@ -22,7 +22,7 @@
         }
       ],
       "polygon_waves": 15.090251367112309,
-      "systems": "45793afb74c40ed7596d025f90ce593fc3ee12050b7963bd7d323a9ddeb278ea",
+      "systems": "e02487efb5b203b9497ca4373ab6c63c3e89419c66cc7a26d8a04d264b2a0ba9",
       "systems_day_1000": 18,
       "systems_day_9000": 18,
       "world": "Jupiter"
@@ -32,7 +32,7 @@
       "burger": 0.0015999632001138205,
       "field": "be91efda74ba40b5cb5425c67a4e19b450639936bb3602c7e2d7cf010058643f",
       "jets": 12,
-      "layout": "3d02cc96c28e8c80ad03211f372ee63f3065c863e1293829ddc04401905f985f",
+      "layout": "68be1eaa60a3a19b7d1999af86095725c7c3acac98d0374e95013f69f9178a32",
       "polar_jet_lat_deg": 78.60638781653509,
       "poles": [
         {
@@ -49,7 +49,7 @@
         }
       ],
       "polygon_waves": 5.999922657465071,
-      "systems": "476202b4f4a865fc8dde77cd0f0c7df96c700ba66f331bbbe50c5c9638b55f80",
+      "systems": "a3813bc0b0b324940ad1049d2bd27bc538fcbf69b5c3e120f1ffa3a0a3641ca2",
       "systems_day_1000": 12,
       "systems_day_9000": 8,
       "world": "Saturn"
@@ -59,7 +59,7 @@
       "burger": 0.006048625445322366,
       "field": "ec38467687391e3868c07de48eb3ad49c2004be63a98e0a1fcef2dc553cec9a2",
       "jets": 3,
-      "layout": "9948ffcc800829f6b40de839f24ab3de4990a76544a0dd9f2273718fa50dc83a",
+      "layout": "0eefa9872550482faaff59f069232e8051a4c07d684dca9231ceb5760eed91f4",
       "polar_jet_lat_deg": 65.53051872750527,
       "poles": [
         {
@@ -76,7 +76,7 @@
         }
       ],
       "polygon_waves": 6.007459016365993,
-      "systems": "8f5364624bb0bf5d6830d84c61ae5f59211cb19130d7cdb13b3c5b3884c848d7",
+      "systems": "44ffeaf715a732d3d84126c817966703c20dcd71dad87f8c714e7114fc69a023",
       "systems_day_1000": 2,
       "systems_day_9000": 2,
       "world": "Uranus"
@@ -86,7 +86,7 @@
       "burger": 0.0032565349591163026,
       "field": "89b401ad146a3d291b8769be770ae147120f253055ab8b7146e77c96cde5c39b",
       "jets": 3,
-      "layout": "c9fc9a6f2b6cda7b60d3db75d2af226ce32be0363386d2856fc04aa4d5118f29",
+      "layout": "0f9fa6d156dac3d29812a6af5d570a6689d97daab7f32c6c8e7417c95d35db71",
       "polar_jet_lat_deg": 65.83996386060205,
       "poles": [
         {
@@ -103,7 +103,7 @@
         }
       ],
       "polygon_waves": 8.109792553105695,
-      "systems": "d9ecf3aebe2fa03dbfc0c5b63be837e776e4fcd757592d39135b2f0c5de50665",
+      "systems": "10732b128bdafb575734b02e564befaa87b708d95bf77fed851915d8bc308bbf",
       "systems_day_1000": 2,
       "systems_day_9000": 3,
       "world": "Neptune"
