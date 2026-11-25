@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
 import { sceneFromResolved } from "../src/make.ts";
-import { landingLinkSite, landingSeaOf, landingShowOf, landingTimeOf, landingTitle, landmarkOrder, orbitTitle, groundGrant, ORBIT_SCREEN, roundPose, suggestLander } from "../src/landing.ts";
+import { landingLinkSite, landingSeaOf, landingShowOf, landingTimeOf, landingTitle, landmarkOrder, landerHeightOf, lampRadiance, orbitTitle, groundGrant, ORBIT_SCREEN, roundPose, suggestLander } from "../src/landing.ts";
 import { nodeKernel } from "./node-kernel.ts";
 import { floorFromRefusal, levelFor, patchKeys, readPatch, groundHeightAt } from "../../renderer/src/index.ts";
 
@@ -153,4 +153,17 @@ test("LR4: an orbit is named for the party's ship, and a seat reads only a known
   assert.equal(groundGrant(shown, () => false), null, "a world the table does not know is not read");
   assert.equal(groundGrant({ scope: "u:k/sys:sol", focus: mars }, () => true), null, "a plain send of a world grants nothing");
   assert.equal(groundGrant(null, () => true), null);
+});
+
+test("LR6: a lander's height from its mass, and its lamps against the star's light", () => {
+  assert.ok(Math.abs(landerHeightOf(15000) - 6.69) < 0.05, "a 15 t lander stands about 7 m");
+  assert.ok(Math.abs(landerHeightOf(840000) - 25.6) < 0.1, "a far trader about 25 m");
+  assert.equal(landerHeightOf(0), 0);
+  assert.equal(landerHeightOf(10), 2, "never smaller than a person can stand by");
+  const au = 1.495978707e11;
+  const atEarth = lampRadiance(25, 1, au);
+  const atMars = lampRadiance(25, 1, 1.524 * au);
+  assert.ok(atEarth > 0.01 && atEarth < 0.5, `faint against sunlight at Earth: ${atEarth}`);
+  assert.ok(Math.abs(atMars / atEarth - 1.524 * 1.524) < 1e-9, "brighter against a fainter sun");
+  assert.equal(lampRadiance(25, 0, au), 0);
 });

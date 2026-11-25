@@ -105,7 +105,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/kernel-handoffs.md` (arrives with PR 463) | Build galaxy arm fix and atmosphere advice (split from the kernel thread) | the galaxy arm sign fix (golden), atmosphere advice ("the science expects", "Suggest an atmosphere") |
 | `status/proven-core.md` | Build SSE4 proven core | P, F, S, SF, B, T3, S5, the source side of MF (MF1 to MF3, MF10), MP19, MP20, ND1 |
 | `status/chart-room.md` | Make the SSE4 test drive work end to end (was "Rebuild the chart room's top level") | U (not U6, U8), V (not V8, V9), N, the screen side of MP10, MF14b, ND5, ND7 |
-| `status/navigation.md` | Build object selector and menus | NV (selector part 2, object menu, find by tag, notes) |
+| `status/navigation.md` | Build object selector and menus (now "Build look transitions for screens") | NV (selector part 2, object menu, find by tag, notes); AT15a screen delivery (how a screen arrives and leaves) |
 | `status/run-desk.md` | Build Run desk playbook and players' side | the players' page, `shell/src/run/`, Bookmarks, Playbook and Switchboard (RD, PB) |
 | `status/landing.md` | Build landing run-through (from the chart room) | LR: the landing run-through milestone, the whole journey as one browser check |
 | `status/editing.md` | Build planet and star editing | ED (handles, strips, chart dragging, the units engine, pairs, the Solar System built through the UI) |
@@ -134,6 +134,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/citations.md` | Verify every cited paper | CR: the Consensus check of every cited paper, the master list in `handover/citations/` and its check |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
+| `status/spaceflight-history.md` | none yet: to be opened as "Build roll call and In memory" (design: "Design spaceflight history view and memorial") | SH: Roll call (who was in space on any day), the count on the ruler, In memory, the real memorials where they are; accepted 25 Nov; SH is a code only, never shown in the product |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
 | `status/postcards.md` | Build postcards and hold backdrops (design: "Design saved views and hold backdrops") | PC: postcards (a bookmark that can travel and is drawn live as a still, with the reasons on its back), grounds and quotes on hold screens. ACCEPTED by Alex 25 Nov 01:27 UTC; builder thread "Build postcards and hold backdrops" (Opus) owns PC1, PC3, PC4, PC6; PC is a code only |

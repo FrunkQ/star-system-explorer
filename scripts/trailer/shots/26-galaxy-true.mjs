@@ -20,13 +20,13 @@ export default {
     await d.hold(2000);
     await d.caption("3D", "The disc as a diagram you can turn.");
     await pick(page, d, "View style", "3D");
-    await d.hold(3500);
+    await d.hold(2100);
     await d.caption("True", "Arms, bar and bulge in light: old stars by mass, young stars where gas is forming them.");
     await pick(page, d, "View style", "True");
-    await d.hold(4500);
+    await d.hold(2700);
     await d.caption("Edge-on", "Seen side on, the disc keeps the warp its mergers left.");
     await pick(page, d, "Seen from", "Edge-on");
-    await d.hold(4000);
+    await d.hold(2400);
     await pick(page, d, "Seen from", "Above");
     await d.hold(2000);
   },
