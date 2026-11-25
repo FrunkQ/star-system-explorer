@@ -148,7 +148,13 @@ try {
       await gm.mouse.down();
       for (let k = 1; k <= 6; k++) await gm.mouse.move(mx + ((mx - sx) * 0.3 * k) / 6, my + ((my - sy) * 0.3 * k) / 6);
       await gm.locator("[data-ghost]").waitFor({ timeout: 5000 });
-      assert.match(await gm.locator("[data-drag-readout]").textContent(), /AU$/);
+      assert.match(await gm.locator("[data-drag-readout]").textContent(), /AU( · \d+:\d+ with \S+)?$/);
+      // ED3 part 2: Alt runs free of the catches; the figure is the drag's own.
+      await gm.keyboard.down("Alt");
+      await gm.mouse.move(mx + (mx - sx) * 0.33, my + (my - sy) * 0.33);
+      await gm.waitForTimeout(100);
+      assert.equal(await gm.locator("[data-drag-readout]").getAttribute("data-caught"), null, "Alt: no catch");
+      await gm.keyboard.up("Alt");
       const still = await hit.boundingBox();
       assert.ok(Math.abs(still.x - mb.x) < 1 && Math.abs(still.y - mb.y) < 1, `the world stays put while the ghost moves: ${JSON.stringify([mb, still])}`);
       await shot(gm, `chart-drag-${vp}`);

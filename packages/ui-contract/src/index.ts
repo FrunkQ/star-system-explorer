@@ -170,3 +170,5 @@ export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed, Bo
 export { atDepth, boxAt, partHandle, wrap, mirrorAngle, trueFromMean, meanFromTrueRad, trueAnomalyFrom, epochMeanFor, orbitShape, solarDay, resonances, stabilityFor } from "./box.ts";
 export type { Resonance } from "./box.ts";
 export * from "./place-notes.ts";
+export { gearing, roundFigures, resonanceCatches, nearestCatch } from "./drag.ts";
+export type { Catch } from "./drag.ts";
