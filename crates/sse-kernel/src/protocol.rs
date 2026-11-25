@@ -614,6 +614,15 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },
+    /// The colour of light inside a world's shadow (VP-L3): each of `items`
+    /// is `sse_light::shadow::ShadowAsk` `{id, air {address, gases
+    /// [{gas, fraction}], surface_pressure_pa, surface_temperature_k,
+    /// gravity_m_s2}, radius_m, distance_m, star {teff_k, radius_m,
+    /// distance_m}}`: starlight bent through the limb into the shadow.
+    ReadShadowLight {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
     /// Fog of war from sensors (RK14, Atomic Rockets plan section 17), the
     /// sums: each seat gives `seat`, its instruments (`sensors`, or `fit`
     /// `{tech, hull_length_m}` for the free default set), optionally `own`
@@ -2277,6 +2286,7 @@ impl Request {
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
             Request::ReadScattering { .. } => "read_scattering",
+            Request::ReadShadowLight { .. } => "read_shadow_light",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
@@ -2504,6 +2514,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_scattering",
             Cost::Light,
             "per item: the Mie series, about x + 4x^(1/3) terms for each angle and each of up to nine sizes",
+        ),
+        o(
+            "read_shadow_light",
+            Cost::Light,
+            "per item: up to 128 grazing heights, each a gas passage on the eye's wavelengths",
         ),
         o(
             "fog_of_war",
@@ -3155,6 +3170,11 @@ pub enum Response {
     },
     /// `read_scattering`: each of `items` is `sse_light::scatter::Scattering`.
     ScatteringRead {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// `read_shadow_light`: each of `items` is `sse_light::shadow::ShadowLight`.
+    ShadowLightRead {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },

@@ -1078,3 +1078,102 @@ fn aurora_lines_have_colours_and_sheet_parents() {
         }
     }
 }
+
+mod shadow_light {
+    use crate::air::{Air, Share};
+    use crate::shadow::*;
+    use crate::table::LightTable;
+
+    fn sun() -> Star {
+        Star {
+            teff_k: 5772.0,
+            radius_m: 6.957e8,
+            distance_m: 1.496e11,
+        }
+    }
+
+    fn air(gases: &[(&str, f64)], p: f64, t: f64, g: f64) -> Air {
+        Air {
+            address: "u:t/sys:0/planet:0".into(),
+            gases: gases
+                .iter()
+                .map(|(gas, f)| Share {
+                    gas: (*gas).into(),
+                    fraction: *f,
+                })
+                .collect(),
+            surface_pressure_pa: p,
+            surface_temperature_k: t,
+            gravity_m_s2: g,
+        }
+    }
+
+    fn read(a: Air, radius_m: f64, distance_m: f64) -> ShadowLight {
+        shadow_light(
+            &ShadowAsk {
+                id: "x".into(),
+                air: a,
+                radius_m,
+                distance_m,
+                star: sun(),
+            },
+            &LightTable::base(),
+            &sse_reference::Reference::base(),
+        )
+        .unwrap()
+    }
+
+    /// An eclipsed Moon turns copper: sunlight skims Earth's air a few km up,
+    /// bent about a degree, and comes out red (Link 1969).
+    #[test]
+    fn the_moon_in_earths_shadow_is_copper() {
+        let earth = air(
+            &[
+                ("n2", 0.7808),
+                ("o2", 0.2095),
+                ("ar", 0.0093),
+                ("co2", 0.0004),
+            ],
+            101_325.0,
+            288.0,
+            9.81,
+        );
+        let s = read(earth, 6.371e6, 3.844e8);
+        eprintln!(
+            "{:?} {:?} {:?} {:?}",
+            s.colour.as_ref().map(|c| &c.hex),
+            s.heights_m,
+            s.transmission_550,
+            s.why
+        );
+        assert!(s.lit);
+        let c = s.colour.unwrap().linear_srgb;
+        assert!(
+            c[0] > c[1] && c[1] > c[2],
+            "red over green over blue: {c:?}"
+        );
+        let [lo, hi] = s.heights_m.unwrap();
+        assert!(lo < 20e3 && hi > lo, "{lo} {hi}");
+    }
+
+    #[test]
+    fn an_airless_worlds_shadow_stays_black() {
+        let s = read(air(&[], 0.0, 250.0, 1.62), 1.737e6, 1e8);
+        assert!(!s.lit && s.colour.is_none());
+        assert!(s.why[0].contains("No air"));
+    }
+
+    /// Mars's thin air bends light far too little to reach Phobos's orbit.
+    #[test]
+    fn mars_is_too_thin_to_light_phobos() {
+        let mars = air(
+            &[("co2", 0.95), ("n2", 0.03), ("ar", 0.02)],
+            610.0,
+            210.0,
+            3.71,
+        );
+        let s = read(mars, 3.39e6, 9.376e6);
+        eprintln!("{:?}", s.why);
+        assert!(!s.lit);
+    }
+}

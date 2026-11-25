@@ -483,6 +483,30 @@ pub(crate) fn read_scattering(items: Vec<serde_json::Value>) -> Out {
     Ok(Response::ScatteringRead { items: out })
 }
 
+/// The colour of light inside a world's shadow (VP-L3).
+pub(crate) fn read_shadow_light(
+    items: Vec<serde_json::Value>,
+    sheet: &sse_reference::Reference,
+) -> Out {
+    let base;
+    let sheet = if sheet.row("constants", "c").is_some() {
+        sheet
+    } else {
+        base = sse_reference::Reference::base();
+        &base
+    };
+    let table = sse_light::table::LightTable::base();
+    let mut out = vec![];
+    for (i, v) in items.into_iter().enumerate() {
+        let bad = |e: String| err("bad_shadow", format!("item {i}: {e}"));
+        let a: sse_light::shadow::ShadowAsk =
+            serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let s = sse_light::shadow::shadow_light(&a, &table, sheet).map_err(bad)?;
+        out.push(serde_json::to_value(s).expect("plain data"));
+    }
+    Ok(Response::ShadowLightRead { items: out })
+}
+
 pub(crate) fn fog_of_war(seats: Vec<serde_json::Value>) -> Out {
     #[derive(serde::Deserialize)]
     struct FitAsk {

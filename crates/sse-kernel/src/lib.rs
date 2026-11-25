@@ -3041,6 +3041,9 @@ impl Kernel {
             Request::FogOfWar { seats } => systems::fog_of_war(seats)?,
             Request::ReadBows { items } => systems::read_bows(items)?,
             Request::ReadScattering { items } => systems::read_scattering(items)?,
+            Request::ReadShadowLight { items } => {
+                systems::read_shadow_light(items, &self.observe.reference)?
+            }
             Request::EffectAtRange { asks } => {
                 systems::effect_at_range(asks, &self.observe.reference)?
             }

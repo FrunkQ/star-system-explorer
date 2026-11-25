@@ -26,6 +26,7 @@ pub mod limb;
 pub mod observe;
 pub mod photometry;
 pub mod scatter;
+pub mod shadow;
 pub mod shift;
 pub mod table;
 

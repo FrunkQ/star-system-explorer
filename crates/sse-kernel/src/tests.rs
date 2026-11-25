@@ -3895,3 +3895,20 @@ fn ship_readiness_follows_status_tags_through_visible_triggers() {
         "a program reads a tag as a number"
     );
 }
+
+#[test]
+fn read_shadow_light_colours_an_eclipse() {
+    let mut k = crate::Kernel::new();
+    let ask = serde_json::json!({"op": "read_shadow_light", "items": [{"id": "earth-moon",
+        "air": {"address": "u:sol/sys:0/planet:2", "gases": [{"gas": "n2", "fraction": 0.7808}, {"gas": "o2", "fraction": 0.2095}, {"gas": "ar", "fraction": 0.0093}, {"gas": "co2", "fraction": 0.0004}],
+            "surface_pressure_pa": 101325, "surface_temperature_k": 288, "gravity_m_s2": 9.81},
+        "radius_m": 6.371e6, "distance_m": 3.844e8,
+        "star": {"teff_k": 5772, "radius_m": 6.957e8, "distance_m": 1.496e11}}]});
+    let r: serde_json::Value = serde_json::from_str(&k.handle_json(&ask.to_string())).unwrap();
+    assert_eq!(r["type"], "shadow_light_read", "{r}");
+    let c = &r["items"][0]["colour"]["linear_srgb"];
+    assert!(c[0].as_f64().unwrap() > c[2].as_f64().unwrap(), "{r}");
+    let bad = serde_json::json!({"op": "read_shadow_light", "items": [{"id": "x"}]});
+    let e: serde_json::Value = serde_json::from_str(&k.handle_json(&bad.to_string())).unwrap();
+    assert_eq!(e["code"], "bad_shadow", "{e}");
+}
