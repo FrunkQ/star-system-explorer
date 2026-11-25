@@ -93,6 +93,15 @@ try {
     assert.match(await ys.locator("[data-home-star]").innerText(), /M☉ .* \[Fe\/H\]/, "a home star says its mass and metals");
     await shot(gm, "your-systems-home-cell");
 
+    // Pencil and ink (SV3): on the Build desk each system is drawn by what the table knows of it.
+    await gm.getByRole("button", { name: "Build", exact: true }).first().click();
+    await gm.waitForTimeout(800);
+    assert.equal(await ys.locator("svg [data-pen]").count(), await ys.locator("svg a.sys").count(), "every placed system has a pen");
+    const pensSeen = await ys.locator("[data-placed] b[data-pen], [data-unplaced] b[data-pen]").evaluateAll((bs) => bs.map((b) => b.getAttribute("data-pen")));
+    assert.ok(pensSeen.every((p) => ["ink", "heard", "pencil"].includes(p)), pensSeen.join());
+    await shot(gm, "your-systems-build-pens");
+    await gm.getByRole("button", { name: "Explore", exact: true }).first().click();
+
     // Press a listed system: it opens.
     const grown = ys.locator("[data-unplaced] a", { hasText: "first light" });
     const target = await grown.getAttribute("data-system");
@@ -111,7 +120,7 @@ try {
     await shot(gm, "your-systems-phone", true);
 
     assert.deepEqual(errors, [], "no page errors");
-    console.log(`your-systems e2e ${name}: ok (${words})`);
+    console.log(`your-systems e2e ${name}: ok (${words}; pens ${pensSeen.join(" ")})`);
     await browser.close();
   }
 } finally {
