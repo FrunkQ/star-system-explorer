@@ -252,8 +252,75 @@ pub struct Descent {
     pub telemetry: Vec<Telemetry>,
 }
 
-/// Fly the descent.
+/// Fly the descent: an entry through the air, the engines lit once the air
+/// has done most of the braking.
 pub fn descend(s: &DescentSettings, w: &World, v: &Lander, entry: &EntryState) -> Descent {
+    fly(s, w, v, entry, false)
+}
+
+/// How good a descent's ending is, best first: landed, then a hard landing,
+/// then the rest (a crash, out of fuel, burned up, still descending).
+fn rank(o: &DescentOutcome) -> u8 {
+    match o.result.as_str() {
+        "landed" => 0,
+        "hard-landing" => 1,
+        "crash" | "out-of-fuel" => 2,
+        _ => 3,
+    }
+}
+
+/// The landing hazards a descent raises at danger level.
+fn dangers(v: &Lander, o: &DescentOutcome) -> usize {
+    hazards(v, o).iter().filter(|h| h.level == "danger").count()
+}
+
+/// Plan the way down as a crew would choose it (landing run-through LR1). The
+/// entry is flown first. A lander whose engine can hold it up here (thrust over
+/// its weight at the ground) is also flown down on its engines from the entry
+/// interface, braking from orbital speed before the air is thick, the way
+/// ship_at_world's "powered landing from orbit" reckons it. The powered way is
+/// taken only when it ends better (a better result, or as good with fewer
+/// dangers), so a lander that enters well keeps its entry, and one that truly
+/// cannot get down keeps its honest verdict. The choice and its reason are in
+/// the outcome's `why`; the method reads `engines-from-orbit`.
+pub fn plan_down(s: &DescentSettings, w: &World, v: &Lander, entry: &EntryState) -> Descent {
+    let first = fly(s, w, v, entry, false);
+    let Some(e) = v.engine.as_ref() else {
+        return first;
+    };
+    if e.thrust_n <= v.mass_kg * w.gravity_m_s2 || e.propellant_kg <= 0.0 {
+        return first;
+    }
+    let mut powered = fly(s, w, v, entry, true);
+    let better = (rank(&powered.outcome), dangers(v, &powered.outcome))
+        < (rank(&first.outcome), dangers(v, &first.outcome));
+    if !better {
+        return first;
+    }
+    powered.outcome.method = "engines-from-orbit".into();
+    powered.outcome.why.insert(
+        0,
+        format!(
+            "flown down on its engines from {:.0} km, braking before the air thickens: an entry through the air would end {} ({:.0} W/cm² against {:.0}, touchdown {:.0} m/s)",
+            entry.altitude_m / 1000.0,
+            first.outcome.result.replace('-', " "),
+            first.outcome.peak_heat_w_cm2,
+            v.heat_limit_w_cm2,
+            first.outcome.touchdown_m_s
+        ),
+    );
+    powered
+}
+
+/// Fly one descent. `from_orbit`: the engines may light at the entry interface,
+/// not only once the air has done most of the braking.
+fn fly(
+    s: &DescentSettings,
+    w: &World,
+    v: &Lander,
+    entry: &EntryState,
+    from_orbit: bool,
+) -> Descent {
     let r0 = w.radius_m;
     let g_at = |h: f64| w.gravity_m_s2 * (r0 / (r0 + h)) * (r0 / (r0 + h));
     let mut h = entry.altitude_m;
@@ -367,7 +434,7 @@ pub fn descend(s: &DescentSettings, w: &World, v: &Lander, entry: &EntryState) -
                 // Under a parachute the canopy kills the sideways speed, so
                 // the engines wait for the vertical stopping distance.
                 let chuted = v.chute.is_some() && air_at_ground;
-                let ready = !air_at_ground || (drag_peaked && drag_now < a_max);
+                let ready = from_orbit || !air_at_ground || (drag_peaked && drag_now < a_max);
                 let due = if chuted { z <= stop_v } else { z <= stop };
                 if ready && due && speed > 0.5 * v.touchdown_m_s {
                     burning = true;

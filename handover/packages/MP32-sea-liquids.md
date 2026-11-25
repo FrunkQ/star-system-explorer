@@ -28,6 +28,10 @@ The builder checks that Segelstein's k agrees with Hale and Querry's alpha throu
 
 The values were read from the Oregon Medical Laser Center's copies of the authors' tables and are unverified.
 
+### Scattering (added 24 Nov for W-sea2)
+
+`optical.scattering_liquid` on `h2o`: `{kind table, lambda_nm [450, 550], b {v [0.0035, 0.0015], unit m-1}, exponent -4.3, backscatter_share 0.5, seawater_factor 1.3}`, all from Morel and Prieur 1977 (Limnol. Oceanogr. 22, 709), as read by the climate and weather thread from a scan; unverified. The 650 nm entry of Table 1 was unreadable, so readers use the exponent beyond 550 nm. The sea's deep colour is R = 0.33 b_b / (a + b_b) with `absorption_liquid`.
+
 ## Part 2 rows (on each substance's `phases` block)
 
 `saturated_liquid` is a table of the liquid along its boiling curve. It runs from just above the triple point to 0.95 of the critical temperature, in nine rows.
@@ -73,11 +77,15 @@ Ethane and propane are new substance rows, with:
 
 They have no vapour-pressure fit yet, so the climate does not treat them as volatiles. Adding Fray and Schmitt 2009's ethane fit, a condensed colour and the latent heat makes ethane a Titan volatile, and that may change golden hashes.
 
+### Helium (added 24 Nov for the helium-sea test)
+
+On `he.phases`: `lambda_point_k` 2.1768 K at `lambda_point_pa` 5039.33 Pa, `critical_point_k` 5.1953 K and `critical_point_pa` 228322.8 Pa, read from CoolProp 8.1.0 (the Ortiz-Vega et al. 2023 equation of state, NIST IR 8474, whose lower limit is the lambda line). Helium has no triple point at its own vapour pressure, so it has no `triple_point_k`; its `saturated_liquid` p_pa column is its vapour curve, and the row's note says so. Climate's volatile list does not pick helium up, so no golden moved.
+
 ## Still waiting
 
 - **Liquid methane and ethane absorption.** No readable table was found:
   - Ramaprasad et al. 1978 (Icarus 35, 400) gives band strengths for ten liquid methane bands from 0.62 to 1.94 µm, but has no free text.
-  - Grundy et al. 2002 (Icarus 155, 486) includes a liquid methane spectrum at 93 K; its data files were not reachable.
+  - Grundy et al. 2002 (Icarus 155, 486) includes a liquid methane spectrum at 93 K. It is on SSHADE as SPECTRUM_BS_20130114_001 (experiment DOI 10.26302/SSHADE/EXPERIMENT_BS_20130114_001): absorption coefficient in cm-1 from 2380 to 14350 cm-1, which is 0.70 to 4.2 µm, so it has no visible part. Its export zip disallows robots, so download it from a local machine.
   - Adams et al. 2012 (GRL 39, L04309) gives reflectances only.
 - **Ethane as a volatile.** Ethane needs its vapour-pressure fit, colour and latent heat, which go through the golden lane.
 - **Liquid methane refractive index.** Khare et al. (about 1989, NTRS 19910007878) gives n of about 1.28 at 110 K in an OCR-degraded table. It is not used until a clean copy is read.

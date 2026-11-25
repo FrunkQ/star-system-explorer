@@ -5,7 +5,7 @@
 import { planck, type Globe, type SurfaceTile } from "../../ui-contract/src/index.ts";
 import { starRgb } from "./sky.ts";
 import { fastFace, lookupFast, prepare, type Prepared } from "./surface.ts";
-import { composeFaces, type Composite } from "./texture-ladder.ts";
+import { composeFaces, type Composite, type PatchPicture } from "./texture-ladder.ts";
 
 export interface TrueTexture {
   width: number;
@@ -16,6 +16,8 @@ export interface TrueTexture {
   mean: [number, number, number];
   /** VP3: the same tiles as cube face pictures, for the GPU's texture ladder (gpu.ts bakes them by screen size). */
   faces?: Composite;
+  /** VP3 part 4: the deep patch under a close camera, laid over the bake (texture-ladder.ts `composePatch`). */
+  patch?: PatchPicture;
 }
 
 /**

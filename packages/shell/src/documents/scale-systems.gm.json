@@ -1,0 +1,26 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.your-systems",
+  "label": "Your systems",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "description": "Every system in the campaign on one map, where its own data puts it; rest on one to see what it holds, press it to open it (V3 gaps 17 and 39).",
+  "items": [
+    {
+      "view": "sse.view.your-systems",
+      "area": "chart"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "galaxy",
+      "group": "look",
+      "label": "Your systems",
+      "order": 2,
+      "hint": "The campaign's systems on one map: what each holds, at a glance"
+    }
+  ]
+}
