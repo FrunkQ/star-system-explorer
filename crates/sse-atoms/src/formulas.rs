@@ -72,6 +72,10 @@ pub const FILES: &[(&str, &str)] = &[
         include_str!("../../../packs/base-physics/formulas/interior.json"),
     ),
     (
+        "surface",
+        include_str!("../../../packs/base-physics/formulas/surface.json"),
+    ),
+    (
         "light",
         include_str!("../../../packs/base-physics/formulas/light.json"),
     ),

@@ -167,6 +167,8 @@ export interface ViewSession {
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
   /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. */
   surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json; kind?: string } | { ok: false; code: string; message: string }>;
+  /** A catalogued Solar System body's six level-0 tiles by its base-sol id (`mars`, `moon`, ...), with no campaign: for the size comparison and other reference views. Any seat may read it: these are public facts. */
+  referenceTiles(body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }>;
   /** Tiles of a world at any level (S1, through resolved_system; at most 24 a call), with the kernel's refusals; GM only. The ground round a landing site (SL1). */
   surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }>;
   /** A world's landmarks (SL1): its named landscape from a quick survey (`survey_surface`'s register, the same world the globe shows); GM only. */
@@ -191,6 +193,12 @@ export interface ViewSession {
   lifeView(by: { body?: string; fixture?: string; dials?: Record<string, number> }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }>;
   /** Bodies on their orbits at given times (kernel `orbits_at`, U11 part 2): relative to each host, up to 64 times. `bodies` places a scene the kernel does not hold. */
   orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }>;
+  /**
+   * K1, the sweep (ED2): one field of a body run over a range on a what-if branch the kernel throws away, step by step
+   * (`start_job` then `step_job`); per step the value, the asked results and the stability verdict, and where the
+   * verdict or class changes, the tipping point narrowed. Nothing is written. GM only.
+   */
+  sweep?(ask: import("./sweep.ts").SweepAsk, onprogress?: (done: number, total: number) => void): Promise<{ ok: true; result: import("./sweep.ts").Swept } | { ok: false; code: string; message: string }>;
   /**
    * Whether the orbits at or under a system last (kernel `orbit_stability`, ST1): the worst verdict, and every check
    * with its block, its numbers and what it says. `bodies` lays facts over the kernel's (a held value not yet written).
@@ -268,6 +276,8 @@ export interface ViewSession {
   resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
   readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
+  /** Light through layers of gas and particles (kernel `light_through_gas`, light track ND2): colour in and out per passage. Read only; any seat. */
+  lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }>;
   /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
   /** Time-lapse keyframes of a world's surface (surface_frames): a fixture, or a body of an adopted system. Read only. */
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
@@ -713,6 +723,14 @@ export class Session implements ViewSession {
     return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: record?.regime_label, ...(record ? { record: record as unknown as Json } : {}), ...(record?.kind ? { kind: record.kind } : {}) };
   }
 
+  async referenceTiles(body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }> {
+    const tiles = [0, 1, 2, 3, 4, 5].map((face) => ({ face, level: 0, x: 0, y: 0 }));
+    const r = await this.#call({ op: "reference_tiles", body, tiles });
+    if (r.type !== "reference_tiles") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const x = r as unknown as { tiles?: SurfaceTile[]; refused?: Json[]; regime_label?: string };
+    return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: x.regime_label };
+  }
+
   async surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }> {
     if (!this.#mayLand(system, body)) return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
     const r = await this.#call({ op: "resolved_system", system, tiles: keys.map((k) => ({ body, face: k.face, level: k.level, x: k.x, y: k.y })) });
@@ -799,6 +817,11 @@ export class Session implements ViewSession {
   async readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_air_optics", airs, ...(wavelengths_m ? { wavelengths_m } : {}) });
     return r.type === "air_optics_read" ? { ok: true, airs: (r as unknown as { airs: Json[] }).airs } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "light_through_gas", passages });
+    return r.type === "gas_passed" ? { ok: true, passages: (r as unknown as { passages: Json[] }).passages } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }> {
@@ -996,6 +1019,23 @@ export class Session implements ViewSession {
   async orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "orbits_at", system, at_s: [...at_s], ...(bodies ? { bodies } : {}) });
     return r.type === "orbits_placed" ? { ok: true, bodies: (r as unknown as { bodies: OrbitPlaced[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async sweep(ask: import("./sweep.ts").SweepAsk, onprogress?: (done: number, total: number) => void): Promise<{ ok: true; result: import("./sweep.ts").Swept } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master sweeps a world's inputs" };
+    const no = (r: Raw) => ({ ok: false as const, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) });
+    const started = await this.#call({ op: "start_job", job: { kind: "sweep", ...JSON.parse(JSON.stringify(ask)) } });
+    if (started.type !== "job_started") return no(started);
+    const job = Number(started.job);
+    // A few resolves a step, so other asks (a strip's pause, a scene) get in between.
+    for (let i = 0; i < 400; i++) {
+      const r = await this.#call({ op: "step_job", job, budget: 2 });
+      if (r.type === "job_done") return { ok: true, result: r.result as unknown as import("./sweep.ts").Swept };
+      if (r.type !== "job_progress") return no(r);
+      onprogress?.(Number(r.done_units), Number(r.total_units));
+    }
+    await this.#call({ op: "cancel_job", job });
+    return { ok: false, code: "too_long", message: "the sweep ran past its steps and was stopped" };
   }
 
   async orbitStability(system: string, opts: { bodies?: { address: string; facts: Record<string, number | string> }[]; at_s?: bigint } = {}): Promise<{ ok: true; verdict: string; checks: StabilityCheck[] } | { ok: false; code: string; message: string }> {

@@ -54,6 +54,7 @@ mod orbits;
 #[cfg(test)]
 mod power_books_tests;
 pub mod protocol;
+mod reference;
 mod sea;
 mod sky;
 mod small;
@@ -680,6 +681,8 @@ pub struct Kernel {
     /// ND6: each pack's sources, fudges and reproduction report, worked
     /// out when the stack loaded.
     reports: Vec<trust::PackReport>,
+    /// `reference_tiles`' private Solar System, kept until the stack loads again.
+    reference: Option<Universe>,
 }
 
 impl Default for Kernel {
@@ -1209,6 +1212,7 @@ impl Kernel {
             land: vec![],
             climates: sse_climate::Cache::new(8),
             reports: vec![],
+            reference: None,
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
@@ -3218,6 +3222,8 @@ impl Kernel {
                 tiers: tiers(),
             },
             Request::LoadStack { packs } => {
+                // The reference Solar System is read under the stack in force.
+                self.reference = None;
                 let mut ms = Vec::new();
                 for (i, p) in packs.iter().enumerate() {
                     ms.push(
@@ -4042,6 +4048,7 @@ impl Kernel {
                 }
                 fields::read_system(
                     &u.chronicle,
+                    &u.seed,
                     &a,
                     at_s,
                     u.runs.get(&system),
@@ -4230,6 +4237,7 @@ impl Kernel {
                         .hex(),
                 }
             }
+            Request::ReferenceTiles { body, tiles } => self.reference_tiles(&body, &tiles)?,
             Request::ResolvedSystem {
                 system,
                 at_s,

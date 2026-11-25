@@ -87,6 +87,10 @@ pub struct FrameEvent {
     pub radius_km: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diameter_km: Option<f64>,
+    /// For an ice age: the frame grid's cells (indexes) where ice starts to
+    /// grow at that onset, so its spread can be drawn at its date.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cells: Vec<u32>,
     pub why: Vec<String>,
 }
 
@@ -208,7 +212,7 @@ pub fn surface_frames(
         "oceans over time (held at today's volume)".to_string(),
         "sea ice".to_string(),
     ];
-    if matches!(body.climate, Climate::Fixed { .. }) {
+    if matches!(body.climate, Climate::Fixed { then: None, .. }) {
         pending.push("temperature history (this world's climate is a fixed value)".into());
     }
     if track_before.is_none() {
@@ -385,6 +389,7 @@ pub fn surface_frames(
             plates: ev.plates.clone(),
             radius_km: None,
             diameter_km: None,
+            cells: vec![],
             why: vec![],
         })
         .collect();
@@ -401,6 +406,7 @@ pub fn surface_frames(
             plates: vec![],
             radius_km: Some(sh.radius_km),
             diameter_km: None,
+            cells: vec![],
             why: vec![sh.cause.clone()],
         });
     }
@@ -413,6 +419,7 @@ pub fn surface_frames(
             plates: vec![],
             radius_km: Some(p.radius_km),
             diameter_km: None,
+            cells: vec![],
             why: vec![],
         });
     }
@@ -421,7 +428,7 @@ pub fn surface_frames(
     if let (Some(track), Some((wc, elev, b_t))) = (track_before, &last) {
         let model = crate::climate::ice_ages(&s, b_t, wc, track, &opts.moons, epoch_myr);
         let start_myr = epoch_myr - track.span_yr() / 1.0e6;
-        let mut by_date: std::collections::BTreeMap<u64, usize> = Default::default();
+        let mut by_date: std::collections::BTreeMap<u64, Vec<u32>> = Default::default();
         let mut land = 0usize;
         for (i, d) in grid.dirs.iter().enumerate() {
             if elev[i] <= 0.0 && frames.last().is_some_and(|f| f.sea_level_m.is_some()) {
@@ -436,12 +443,12 @@ pub fn surface_frames(
                 lat,
                 elev[i].max(0.0),
             ) {
-                *by_date.entry(t_yr.to_bits()).or_default() += 1;
+                by_date.entry(t_yr.to_bits()).or_default().push(i as u32);
             }
         }
         let least = (land as f64 * ICE_AGE_LEAST_LAND).ceil().max(1.0) as usize;
         for (bits, cells) in by_date {
-            if cells < least {
+            if cells.len() < least {
                 continue;
             }
             let t_yr = f64::from_bits(bits);
@@ -450,12 +457,13 @@ pub fn surface_frames(
                 kind: "ice-age".into(),
                 text: format!(
                     "An ice age begins: ice starts to grow on {:.1}% of the land.",
-                    100.0 * cells as f64 / land.max(1) as f64
+                    100.0 * cells.len() as f64 / land.max(1) as f64
                 ),
                 dir: None,
                 plates: vec![],
                 radius_km: None,
                 diameter_km: None,
+                cells,
                 why: vec![format!(
                     "The orbit's swing over the last {:.0} kyr ({}) lowers the summer sunlight until snow outlasts the summer there (Milankovitch; W9 part 2).",
                     track.span_yr() / 1000.0,
@@ -478,6 +486,7 @@ pub fn surface_frames(
             plates: vec![],
             radius_km: None,
             diameter_km: Some(c.d_km),
+            cells: vec![],
             why: vec![],
         });
     }

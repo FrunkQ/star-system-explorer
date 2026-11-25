@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { forgetGroundOptics, groundReflectance, readGroundOptics, reflectanceAt, withGround, GROUND_ROWS } from "../src/ground-optics.ts";
+import { forgetGroundOptics, groundReflectance, readGroundOptics, reflectanceAt, rowBands, withGround, GROUND_ROWS } from "../src/ground-optics.ts";
 import { sampleColour, SURFACE_MATERIALS, type SurfaceTile } from "../../ui-contract/src/index.ts";
 import { readFileSync } from "node:fs";
 import { Session } from "../../ui-contract/src/session.ts";
@@ -16,7 +16,7 @@ const ROWS: Record<string, number[]> = {
 const sheet = {
   async readMatter(ask: { table?: string; id?: string }) {
     const r = ROWS[ask.id ?? ""];
-    if (ask.table !== "mixtures" || !r) return { ok: false as const, message: "no row" };
+    if (!r) return { ok: false as const, message: "no row" };
     return { ok: true as const, value: { row: { id: ask.id, optical: { reflectance: { lambda_nm: LAM, r } } } } };
   },
 };
@@ -44,13 +44,14 @@ test("weathering darkens and reddens: fresh soil at 0, the mature row at 1, betw
   assert.equal(groundReflectance(o, "granite", 1), null);
 });
 
-test("only bare ground on a weathered tile takes the measured colour; the rest keeps the palette", async () => {
+test("bare ground takes the measured colour on every world, drawn mature without a weathering age; the sea keeps its own", async () => {
   forgetGroundOptics();
   const o = await readGroundOptics(sheet);
   const basalt = SURFACE_MATERIALS.indexOf("basalt");
   const tile = (maturity?: number[]): SurfaceTile => ({ address: "x", key: { face: 0, level: 0, x: 0, y: 0 }, samples: 2, spacing_m: 1, epoch_myr: 0, elevation_dm: [0, 0, 0, 0], material: [basalt, basalt, basalt, basalt], cover: [0, 0, 1, 0], albedo: [300, 300, 300, 300], slope_ddeg: [], surface_age_myr: [], pending: [], hash: "h", ...(maturity ? { maturity } : {}) });
   const [airy, airless] = withGround([tile(), tile([255, 0, 255, 255])], o);
-  assert.equal(airy!.ground_rgb, undefined, "no maturity (air): unchanged");
+  // No weathering age from the kernel yet: drawn fully mature (fudge register), never the typed palette.
+  assert.deepEqual(sampleColour(airy!, 0), sampleColour(airless!, 0), "no maturity: drawn mature");
   const mature = sampleColour(airless!, 0);
   const fresh = sampleColour(airless!, 1);
   // Mature mare soil is about 6 % reflective: dark grey, a touch warm, nowhere near the palette's 158, 148, 132 beige.
@@ -75,4 +76,14 @@ test("the rows ground-rows.json names are on the kernel's data sheet, read throu
     forgetGroundOptics();
     await k.close();
   }
+});
+
+test("a row with only a refractive index is drawn as a thick layer of its grains: clean water ice is near white", () => {
+  // Water ice's k is near 1e-9 in the visible (Warren and Brandt 2008): the layer sends back nearly all the light.
+  const ice = rowBands({ optical: { refractive_index_solid: { lambda_nm: [400, 700], n: [1.32, 1.31], k: [1e-9, 1e-8] } } })!;
+  for (const v of ice) assert.ok(v > 0.8 && v <= 1, `ice ${ice}`);
+  // A strongly absorbing grain is dark.
+  const dark = rowBands({ optical: { refractive_index: { lambda_nm: [400, 700], n: [1.7, 1.7], k: [0.01, 0.01] } } })!;
+  for (const v of dark) assert.ok(v < 0.2, `dark ${dark}`);
+  assert.equal(rowBands({ optical: {} }), null);
 });
