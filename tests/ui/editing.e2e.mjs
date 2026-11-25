@@ -257,6 +257,15 @@ try {
       await gm.waitForFunction(() => /N₂ 2[67]/.test(document.querySelector('[data-mix-bar] [data-gas="n2"]')?.textContent ?? ""), null, { timeout: 20000 });
       await shot(gm, `air-box-${vp}`);
       await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
+      // ED8 part 2a: Kinds for air from the catalogued worlds (Earth's own pressure and mix on Mars), and Add a gas.
+      await air.locator('[data-air-kind="earth"]').click();
+      await gm.waitForFunction(() => /Like Earth/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await gm.waitForFunction(() => /N₂ 78/.test(document.querySelector('[data-mix-bar] [data-gas="n2"]')?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, `air-kind-${vp}`);
+      await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
+      await air.locator("[data-add-gas]").selectOption("ch4");
+      await gm.waitForFunction(() => /1,000 ppm|0\.1%/.test(document.querySelector('[data-air-box] [data-gas="ch4"]')?.textContent ?? ""), null, { timeout: 20000 });
+      await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
 
       // ED13, "Type it all in": every input as a row; what it understood before anything is written; one change, marked
       // catalogued with its source; one Undo.

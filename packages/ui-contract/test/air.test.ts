@@ -40,3 +40,28 @@ test("names from the data sheet, formulas written out", () => {
   assert.equal(formulaOf("ar"), "Ar");
   assert.equal(formulaOf("ch4"), "CH₄");
 });
+
+test("Kinds for air come from the catalogued Solar System: Venus, Earth, Mars, Pluto, thickest first", async () => {
+  const { readSol } = await import("../src/sol.ts");
+  const { airKinds, airKindEdits, gasesToAdd } = await import("../src/air.ts");
+  const sol = readSol(JSON.parse(readFileSync(new URL("../../../packs/base-sol/pack.json", import.meta.url), "utf8")));
+  const k = airKinds(sol);
+  assert.deepEqual(k.map((x) => x.id), ["venus", "earth", "mars", "pluto"]);
+  assert.equal(k[1]!.label, "Like Earth");
+  assert.equal(k[1]!.pressure_pa, 101400);
+  // Mars's air on Earth: the pressure, Mars's gases, and Earth's methane and hydrogen (not in Mars's list) to nothing.
+  const e = airKindEdits({ ...earth, "atmosphere.composition.ch4": 1.94e-6 }, k[2]!);
+  assert.equal(e[0]!.field, "atmosphere.surface_pressure");
+  assert.equal(e.find((x) => x.field === "atmosphere.composition.ch4")!.value, 0);
+  assert.ok(e.find((x) => x.field === "atmosphere.composition.xe"));
+  const names = new Map([["co2", "carbon dioxide"], ["nh3", "ammonia"]]);
+  assert.deepEqual(gasesToAdd(names, airMix(earth)).map((g) => g.gas), ["nh3"]);
+});
+
+test("Add a gas offers what can be in an air, not ions, rock or rocket fuel", async () => {
+  const { gasNames } = await import("../src/air.ts");
+  const ref = JSON.parse(readFileSync(new URL("../../../packs/base-reference/pack.json", import.meta.url), "utf8"));
+  const g = gasNames([ref], ["so2", "ne"]);
+  for (const x of ["co2", "ch4", "nh3", "n2", "o2", "ar", "he", "xe", "so2", "ne"]) assert.ok(g.has(x), x);
+  for (const x of ["h+", "sio2", "glucose", "mmh", "n2h4", "h2o2"]) assert.ok(!g.has(x), x);
+});

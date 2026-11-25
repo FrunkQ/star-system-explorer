@@ -213,7 +213,7 @@
     {:else}
       <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
       {#if h.id === "air" && h.on === "world"}
-        <AirBox {ctx} handle={h} facts={mine} {cls} {depth} {editable} {commitMix} />
+        <AirBox {ctx} handle={h} facts={mine} {cls} {depth} {editable} {sol} {commitMix} />
       {/if}
       {#if h.reach?.length && editable && !ws.branch && scene.system && handleValue(h, mine) !== null}
         <Reach {ctx} system={scene.system} address={subject.address} handle={h} value={handleValue(h, mine)!} results={resultsOf(surfaces, subject.address)} {cls} {depth} {commit} />
