@@ -239,6 +239,17 @@ try {
       });
       await shot(gm, `reach-gravity-${vp}`);
       await undoTo();
+      // A yes-or-no result: the lightest Mars that keeps a field of its own today.
+      const dyn = gm.locator('[data-reach="core.dynamo_now"]');
+      await dyn.waitFor({ timeout: 20000 });
+      assert.match(await dyn.innerText(), /no field of its own/);
+      await dyn.locator("[data-reach-go]").click();
+      await gm.waitForFunction(() => /nearest that gives it a field of its own/.test(document.querySelector("[data-reach-said]")?.textContent ?? ""), null, { timeout: 90000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nreach says: ${await gm.locator("[data-reach-said]").allInnerTexts()}`);
+      });
+      await gm.waitForFunction(() => /a field of its own/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, `reach-field-${vp}`);
+      await undoTo();
 
       // ED8 part 1, the Air box: Mars's air as one mix bar (carbon dioxide most of it), traces as chips in ppm. Setting
       // carbon dioxide to half trades it against the rest, which keep their proportions: one change, one Undo.
@@ -256,6 +267,15 @@ try {
       });
       await gm.waitForFunction(() => /N₂ 2[67]/.test(document.querySelector('[data-mix-bar] [data-gas="n2"]')?.textContent ?? ""), null, { timeout: 20000 });
       await shot(gm, `air-box-${vp}`);
+      await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
+      // ED8 part 2a: Kinds for air from the catalogued worlds (Earth's own pressure and mix on Mars), and Add a gas.
+      await air.locator('[data-air-kind="earth"]').click();
+      await gm.waitForFunction(() => /Like Earth/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await gm.waitForFunction(() => /N₂ 78/.test(document.querySelector('[data-mix-bar] [data-gas="n2"]')?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, `air-kind-${vp}`);
+      await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
+      await air.locator("[data-add-gas]").selectOption("ch4");
+      await gm.waitForFunction(() => /1,000 ppm|0\.1%/.test(document.querySelector('[data-air-box] [data-gas="ch4"]')?.textContent ?? ""), null, { timeout: 20000 });
       await undoTo(['[data-mix-bar] [data-gas="co2"]', "CO₂ 95"]);
 
       // ED13, "Type it all in": every input as a row; what it understood before anything is written; one change, marked
@@ -278,6 +298,21 @@ try {
       assert.notEqual(await hash(), hashS);
       await shot(gm, `sheet-${vp}`);
       await undoTo(['[data-handle="mass"] .value', "0\\.107"]);
+
+      // ED13a, the system sheet: a pasted table for every body here, columns by name (a bracketed unit for bare
+      // numbers), bodies by name; one change across them all, one Undo.
+      if (!(await sheet.isVisible())) await row.locator('[data-handle="sheet"]').click();
+      await sheet.locator("[data-sheet-whole]").click();
+      await sheet.locator("[data-sheet-table]").fill("Name\tOrbit (AU)\tMass\nMars\t1.6\t\nEarth\t\t1.1 M⊕\nVulcan\t0.1\t");
+      await sheet.locator('[data-table-understood="Mars"]').waitFor({ timeout: 5000 });
+      assert.match(await sheet.locator('[data-table-understood="Earth"]').innerText(), /1\.1 M⊕/);
+      assert.ok(/Vulcan/.test(await sheet.locator("[data-table-problem]").allInnerTexts().then((t) => t.join(" "))), "a body not here is said");
+      await sheet.locator("[data-sheet-catalogued]").uncheck();
+      await sheet.locator("[data-sheet-set]").click();
+      await gm.waitForFunction(() => /Typed in for the system .*2 figures for 2 bodies/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await gm.waitForFunction(() => /1\.6 AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, `system-sheet-${vp}`);
+      await undoTo(marsAt);
       await row.locator('[data-handle="orbit"]').click();
 
       // Retrograde: the lean goes past 90 degrees, and the chip says so.
