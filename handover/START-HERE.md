@@ -133,6 +133,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/paper-spacecraft.md` | Build Paper spacecraft pack | RK6 (plan: Atomic Rockets plan section 6) |
 | `status/citations.md` | Verify every cited paper | CR: the Consensus check of every cited paper, the master list in `handover/citations/` and its check |
 | `status/spaceflight.md` | Build real spaceflight history pack | RS |
+| `status/spaceflight-history.md` | none yet: to be opened as "Build roll call and In memory" (design: "Design spaceflight history view and memorial") | SH: Roll call (who was in space on any day), the count on the ruler, In memory, the real memorials where they are; accepted 25 Nov; SH is a code only, never shown in the product |
 | `status/performance.md` | no live owner (thread finished) | PF |
 | `status/atlas.md` | none yet: to be opened as "Build star atlas and editions" (design: "Design star atlas and reports") | AT: the Atlas view, editions, print, margin notes, letterhead and ASCII art, interface kits and the four starters; AT is a code only, never shown in the product |
 | `status/postcards.md` | Build postcards and hold backdrops (design: "Design saved views and hold backdrops") | PC: postcards (a bookmark that can travel and is drawn live as a still, with the reasons on its back), grounds and quotes on hold screens. ACCEPTED by Alex 25 Nov 01:27 UTC; builder thread "Build postcards and hold backdrops" (Opus) owns PC1, PC3, PC4, PC6; PC is a code only |
