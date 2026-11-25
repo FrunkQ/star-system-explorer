@@ -86,16 +86,18 @@ if (drawn.length) {
   const words = { "gpu-ultra": "Ultra", "gpu-high": "High", "gpu-basic": "Light", canvas: "2D canvas", text: "Words only" };
   out.push("## Drawing: the speed probe by device");
   out.push("");
-  out.push("The probe's three scenes at one megapixel (fill, march, geometry), in ms and as a factor of the reference device, and the tier this speed earns for the standard True recipe at 1080p: the richest whose predicted frame is within 60% of its budget. Ultra also needs WebGPU with compute.");
+  out.push("The probe's three scenes at one megapixel (fill, march, geometry), in ms and as a factor of the reference device, and the tier this speed earns for the standard True recipe at 1080p: the richest whose predicted frame is within 60% of its budget. Ultra also needs WebGPU with compute. The last column is the standard frame drawn for real at each tier (a star, eight worlds, a belt and the shared finish), from which the pass costs are set.");
   out.push("");
-  out.push("| Report | Graphics | Fill | March | Geometry | Placed at | Predicted frame by tier |");
-  out.push("|---|---|---|---|---|---|---|");
+  out.push("| Report | Graphics | Fill | March | Geometry | Placed at | Predicted frame by tier | Drawn frame by tier |");
+  out.push("|---|---|---|---|---|---|---|---|");
   for (const r of drawn) {
     const d = r.drawing;
     const sc = (k) => (d.scenes_ms?.[k] === undefined ? "" : `${d.scenes_ms[k].toFixed(2)} ms (${d.factors[k].toFixed(2)}×)`);
     const pred = (d.predictions ?? []).map((p) => `${words[p.tier] ?? p.tier} ${p.ms === null ? "no form" : `${p.ms.toFixed(1)} of ${Math.round(p.budget_ms)} ms`}`).join("; ");
     const gfx = [d.backend, d.method && d.method !== "none" ? d.method : null, d.steady === false ? "unsteady" : null, d.adapter].filter(Boolean).join(", ").replace(/\|/g, "/");
-    out.push(`| ${name(r)} | ${gfx} | ${sc("fill")} | ${sc("march")} | ${sc("geometry")} | ${words[d.earned] ?? d.earned ?? (d.error ? "could not draw" : "")} | ${pred} |`);
+    // The standard frame drawn for real (bench reports from 25 Nov on); older reports have none.
+    const drew = (d.standard ?? []).map((f) => `${words[f.tier] ?? f.tier} ${f.ms.toFixed(1)} ms`).join("; ");
+    out.push(`| ${name(r)} | ${gfx} | ${sc("fill")} | ${sc("march")} | ${sc("geometry")} | ${words[d.earned] ?? d.earned ?? (d.error ? "could not draw" : "")} | ${pred} | ${drew || "not drawn"} |`);
   }
   out.push("");
 }

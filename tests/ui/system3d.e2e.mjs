@@ -74,6 +74,8 @@ try {
       assert.equal(await view.getAttribute("data-look"), tier === "gpu" ? "true" : "plain", "True draws on the GPU tier; a device without one keeps the plain look");
       // The living star (V10c): on the GPU tier the star is the kernel's, turning on its own clock.
       if (tier === "gpu") {
+        // VP4 part 2b: True is placed and governed by the system-true recipe (tier|level|rest|frames on the canvas).
+        await gm.waitForFunction(() => /^(gpu-high|gpu-basic|gpu-ultra)\|\d+\|/.test(document.querySelector("[aria-roledescription='3D chart'] canvas.gpu")?.getAttribute("data-quality") ?? ""), null, { timeout: 30000 });
         const live = view.locator("[data-star-live]");
         await live.waitFor({ timeout: 30000 });
         const turn0 = await live.getAttribute("data-star-turn");
