@@ -24,6 +24,11 @@ export interface ReachAsk {
   /** How near counts as there, as a share of the target (default a thousandth), and the most tries (default 24). */
   within?: number;
   tries?: number;
+  /**
+   * For a yes-or-no result (read as 1 or 0, target 0.5): which side is wanted. The search then ends on the nearest
+   * value that gives it, rather than on the nearer figure.
+   */
+  want?: (got: number) => boolean;
 }
 
 export type Reached =
@@ -52,6 +57,11 @@ export async function reachIt(session: ViewSession, ask: ReachAsk): Promise<Reac
   try {
     let [a, b] = [ask.lo, ask.hi];
     let [fa, fb] = [await at(a), await at(b)];
+    // An end where the result does not exist (no core in so small a world) draws in toward the middle, a few times.
+    for (let k = 0; k < 4 && (fa === null || fb === null); k++) {
+      if (fa === null) fa = await at((a = mid(a, mid(a, b))));
+      if (fb === null) fb = await at((b = mid(mid(a, b), b)));
+    }
     if (fa === null || fb === null) return { ok: false, why: "the kernel could not work the result out at the ends of the range", tries };
     if ((fa - ask.target) * (fb - ask.target) > 0) {
       const closest = Math.abs(fa - ask.target) < Math.abs(fb - ask.target) ? { value: a, got: fa } : { value: b, got: fb };
@@ -65,6 +75,7 @@ export async function reachIt(session: ViewSession, ask: ReachAsk): Promise<Reac
       if ((fa - ask.target) * (fm - ask.target) <= 0) [b, fb] = [m, fm];
       else [a, fa] = [m, fm];
     }
+    if (ask.want) return ask.want(fa) ? { ok: true, value: a, got: fa, tries } : { ok: true, value: b, got: fb, tries };
     const best = Math.abs(fa - ask.target) < Math.abs(fb - ask.target) ? { value: a, got: fa } : { value: b, got: fb };
     return { ok: true, ...best, tries };
   } finally {
@@ -96,8 +107,9 @@ export async function resolveWith(session: ViewSession, ask: { system: string; a
 export const resultFrom =
   (address: string, key: string) =>
   (r: SystemResolved): number | null => {
-    const v = (r.surfaces.find((s) => s.address === address) as Record<string, unknown> | undefined)?.[key];
-    return typeof v === "number" ? v : null;
+    let v: unknown = r.surfaces.find((s) => s.address === address);
+    for (const part of key.split(".")) v = v && typeof v === "object" ? (v as Record<string, unknown>)[part] : undefined;
+    return typeof v === "number" ? v : typeof v === "boolean" ? (v ? 1 : 0) : null;
   };
 
 /** The surface's temperature now for one body, from a resolve (the kernel's `t_surface_now_k`). */

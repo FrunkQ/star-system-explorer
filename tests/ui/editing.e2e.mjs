@@ -239,6 +239,17 @@ try {
       });
       await shot(gm, `reach-gravity-${vp}`);
       await undoTo();
+      // A yes-or-no result: the lightest Mars that keeps a field of its own today.
+      const dyn = gm.locator('[data-reach="core.dynamo_now"]');
+      await dyn.waitFor({ timeout: 20000 });
+      assert.match(await dyn.innerText(), /no field of its own/);
+      await dyn.locator("[data-reach-go]").click();
+      await gm.waitForFunction(() => /nearest that gives it a field of its own/.test(document.querySelector("[data-reach-said]")?.textContent ?? ""), null, { timeout: 90000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nreach says: ${await gm.locator("[data-reach-said]").allInnerTexts()}`);
+      });
+      await gm.waitForFunction(() => /a field of its own/.test(document.querySelector("[data-followed]")?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, `reach-field-${vp}`);
+      await undoTo();
 
       // ED8 part 1, the Air box: Mars's air as one mix bar (carbon dioxide most of it), traces as chips in ppm. Setting
       // carbon dioxide to half trades it against the rest, which keep their proportions: one change, one Undo.
