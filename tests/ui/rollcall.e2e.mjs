@@ -50,6 +50,7 @@ try {
     const panel = page.locator("[data-rollcall]");
     await panel.waitFor({ timeout: 60000 });
     await page.locator('.rail [data-go="rollcall"]').first().waitFor();
+    await page.getByText("The Solar System").first().waitFor({ timeout: 60000 });
 
     // It opens on the pack's latest day, which has people up.
     const sentence = panel.locator("[data-rollcall-sentence]");
@@ -61,7 +62,9 @@ try {
       await panel.locator("[data-rollcall-date]").click();
       await panel.locator("[data-rollcall-type]").fill(text);
       await panel.locator("[data-rollcall-type]").press("Enter");
-      await page.waitForFunction((t) => document.querySelector("[data-rollcall-date]")?.textContent?.trim() === t, text);
+      await page.waitForFunction((t) => document.querySelector("[data-rollcall-date]")?.textContent?.trim() === t, text, { timeout: 30000 }).catch(async (e) => {
+        throw new Error(`typed "${text}", the title says "${await panel.locator("[data-rollcall-date], [data-rollcall-type]").first().evaluate((el) => el.textContent || el.value)}"; alert: ${await panel.getByRole("alert").textContent().catch(() => "none")}`, { cause: e });
+      });
     };
     await typeDate("20 July 1969");
     await page.waitForFunction(() => document.querySelectorAll("[data-rollcall-person]").length > 0 && !!document.querySelector("[data-rollcall-place]"));

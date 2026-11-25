@@ -3,6 +3,12 @@
   space that day grouped by place, craft and person. A look-up over flight logs and stays (ui-contract rollcall.ts); it
   writes nothing. Restraint (design 8.1, standing): names as the record gives them, plain words, no decoration.
 -->
+<script lang="ts" module>
+  // Once per page: a panel mounted again (the system in view changing under it, as the front door opens Sol) must not
+  // move a day the GM has already chosen.
+  let opened = false;
+</script>
+
 <script lang="ts">
   import { untrack } from "svelte";
   import InMemory from "./InMemory.svelte";
@@ -15,7 +21,6 @@
   let feed = $state<RollFeed | null>(null);
   let problem = $state<string | null>(null);
   let revision = $state(0);
-  let opened = false;
 
   $effect(() => {
     const sys = scene.system;
