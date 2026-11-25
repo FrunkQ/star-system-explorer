@@ -37,6 +37,7 @@ use std::collections::{BTreeMap, BTreeSet};
 pub mod import;
 pub mod mix;
 pub mod plan;
+pub mod roll;
 
 #[cfg(test)]
 mod import_tests;
@@ -87,6 +88,51 @@ pub enum Source {
     /// Bodies in the same system (the world itself included) that carry
     /// `tag` from the stack's rules, capped at `max`.
     Count { tag: String, max: i64 },
+    /// A fact read as a number (an extended profile's line: diameter in km,
+    /// gravity in g): `field` times `times`, over the sheet constant `per`
+    /// (an id of `sse_core::sheet::ALL`, such as `g0`, `atm` or `day`), shown
+    /// to `digits` significant figures. Read only: never a pin for planning.
+    Value {
+        field: String,
+        #[serde(default = "one")]
+        times: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        per: Option<String>,
+        #[serde(default = "three")]
+        digits: u32,
+    },
+}
+
+fn one() -> f64 {
+    1.0
+}
+fn three() -> u32 {
+    3
+}
+
+/// `x` to `digits` significant figures, plainly: no exponent between a
+/// millionth and a billion, whole numbers without a point.
+pub fn sig_figures(x: f64, digits: u32) -> String {
+    if x == 0.0 || !x.is_finite() {
+        return if x == 0.0 { "0".into() } else { UNKNOWN.into() };
+    }
+    let digits = digits.clamp(1, 12) as i32;
+    let mut mag = sse_core::math::floor(sse_core::math::log10(x.abs())) as i32;
+    let round_at = |mag: i32| {
+        let step = sse_core::math::pow(10.0, f64::from(mag - digits + 1));
+        sse_core::math::round(x / step) * step
+    };
+    let mut rounded = round_at(mag);
+    // 0.99997 to three figures is 1.00, a power of ten up.
+    if rounded.abs() >= sse_core::math::pow(10.0, f64::from(mag + 1)) {
+        mag += 1;
+        rounded = round_at(mag);
+    }
+    if !(-6..9).contains(&mag) {
+        return format!("{:.*e}", (digits - 1) as usize, x);
+    }
+    let decimals = (digits - 1 - mag).max(0) as usize;
+    format!("{rounded:.decimals$}")
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -177,6 +223,15 @@ pub enum Why {
     NoSystem {
         tag: String,
     },
+    /// A fact read as a number; `value` is the fact before scaling, absent
+    /// when the world does not have it (the symbol is then the unknown mark).
+    Value {
+        field: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        value: Option<f64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        per: Option<String>,
+    },
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -239,6 +294,8 @@ pub struct Codes {
     pub sift: SiftContent,
     /// Gas mixes from every pack (`provides.other.gas_mixes`), in stack order.
     pub mixes: Vec<mix::GasMix>,
+    /// Rolled profiles from every pack (`provides.other.rolls`), in stack order.
+    pub rolls: Vec<roll::Program>,
 }
 
 impl Codes {
@@ -279,11 +336,64 @@ impl Codes {
                 Err(e) => errs.push(format!("{}: gas_mixes: {e}", p.id)),
             }
         }
+        let mut rolls: Vec<roll::Program> = Vec::new();
+        for p in stack {
+            let Some(v) = p.provides.other.get("rolls") else {
+                continue;
+            };
+            match serde_json::to_value(v).and_then(serde_json::from_value::<Vec<roll::Program>>) {
+                Ok(rs) => {
+                    for r in rs {
+                        if rolls.iter().any(|o| o.id == r.id) {
+                            errs.push(format!(
+                                "{}: rolled profile {} is already defined",
+                                p.id, r.id
+                            ));
+                        }
+                        rolls.push(r);
+                    }
+                }
+                Err(e) => errs.push(format!("{}: rolls: {e}", p.id)),
+            }
+        }
         let out = Codes {
             sheets,
             sift,
             mixes,
+            rolls,
         };
+        for r in &out.rolls {
+            match out.sheet(&r.sheet) {
+                None => errs.push(format!(
+                    "rolled profile {}: no code sheet {}",
+                    r.id, r.sheet
+                )),
+                Some(sh) => {
+                    for st in &r.steps {
+                        let segs = st
+                            .add
+                            .iter()
+                            .chain(st.dm.keys())
+                            .chain(st.zero_when.iter().chain(&st.only_when).map(|c| &c.segment))
+                            .chain(
+                                st.floors
+                                    .iter()
+                                    .flat_map(|f| f.when.iter().map(|c| &c.segment)),
+                            );
+                        for g in segs {
+                            let earlier = r
+                                .steps
+                                .iter()
+                                .take_while(|x| x.id != st.id)
+                                .any(|x| &x.id == g);
+                            if !earlier && !sh.segments.iter().any(|x| &x.id == g) {
+                                errs.push(format!("rolled profile {}: step {} reads {g}, which is not a segment of {}", r.id, st.id, r.sheet));
+                            }
+                        }
+                    }
+                }
+            }
+        }
         for s in &out.sheets {
             if let Err(e) = out.check(s) {
                 errs.push(e);
@@ -362,6 +472,22 @@ impl Codes {
                 Source::Count { tag, .. } => {
                     if !s.rules.iter().any(|r| &r.tag == tag) {
                         return Err(format!("code sheet {}: no rule sets the tag {tag}", s.id));
+                    }
+                }
+                Source::Value { per, times, .. } => {
+                    if let Some(p) = per {
+                        if sheet_constant(p).is_none() {
+                            return Err(format!(
+                                "code sheet {}: {} divides by {p}, which is not a constant on the sheet",
+                                s.id, g.id
+                            ));
+                        }
+                    }
+                    if !times.is_finite() || *times == 0.0 {
+                        return Err(format!(
+                            "code sheet {}: {} times must be a number other than 0",
+                            s.id, g.id
+                        ));
                     }
                 }
             }
@@ -531,6 +657,37 @@ impl Codes {
                     ),
                 }
             }
+            Source::Value {
+                field,
+                times,
+                per,
+                digits,
+            } => {
+                let div = per.as_deref().and_then(sheet_constant).unwrap_or(1.0);
+                match subj.num(field) {
+                    Some(x) => {
+                        let v = x * times / div;
+                        (
+                            sig_figures(v, *digits),
+                            Some(v),
+                            Why::Value {
+                                field: field.clone(),
+                                value: Some(x),
+                                per: per.clone(),
+                            },
+                        )
+                    }
+                    None => (
+                        UNKNOWN.into(),
+                        None,
+                        Why::Value {
+                            field: field.clone(),
+                            value: None,
+                            per: per.clone(),
+                        },
+                    ),
+                }
+            }
             Source::Count { tag, max } => match system {
                 None => (UNKNOWN.into(), None, Why::NoSystem { tag: tag.clone() }),
                 Some(sys) => {
@@ -598,6 +755,14 @@ pub fn leading(x: f64, exp: i64) -> i64 {
         n /= 10;
     }
     (n as i64).clamp(1, 9)
+}
+
+/// A constant on the master data sheet by its id (`g0`, `atm`, `day`...).
+fn sheet_constant(id: &str) -> Option<f64> {
+    sse_core::sheet::ALL
+        .iter()
+        .find(|(k, _)| *k == id)
+        .map(|(_, v)| *v)
 }
 
 fn symbol_value(g: &Segment, symbol: &str) -> Option<f64> {

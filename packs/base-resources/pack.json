@@ -1,0 +1,113 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-resources",
+ "version": "0.1.0",
+ "kind": [
+  "universe"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": {
+    "label": "Resources",
+    "text": "What a world holds that a ship could take: kinds counted off its composition, kept on the books (mined out, stocked), and a label while enough is left."
+   },
+   "resources": {
+    "kinds": [
+     {
+      "id": "metal",
+      "name": "Iron and nickel",
+      "matter": "fe",
+      "reach": "whole",
+      "label": {
+       "tag": "resource.metal-rich",
+       "min_per_kg": 0.4
+      },
+      "about": "at least 40% iron by mass, as Mercury (Earth is about 32%): an iron world or the core of a broken one"
+     },
+     {
+      "id": "water",
+      "name": "Water",
+      "matter": "h2o",
+      "reach": "surface",
+      "label": {
+       "tag": "resource.water",
+       "min_kg": 1e+18
+      },
+      "about": "at least 10^18 kg of water at the surface, a small sea's worth or a thick ice cap"
+     },
+     {
+      "id": "hydrogen",
+      "name": "Hydrogen",
+      "matter": "h",
+      "reach": "envelope",
+      "label": {
+       "tag": "resource.hydrogen",
+       "min_kg": 1e+20
+      },
+      "about": "a hydrogen envelope to skim for fuel (at least 10^20 kg)"
+     },
+     {
+      "id": "helium-3",
+      "name": "Helium-3",
+      "matter": "he3",
+      "reach": "envelope",
+      "label": {
+       "tag": "resource.helium-3",
+       "min_kg": 1000000000000.0
+      },
+      "about": "helium-3 in a giant's envelope, at the birth cloud's isotope share (at least a million tonnes)"
+     }
+    ]
+   },
+   "tags": {
+    "about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.",
+    "groups": [
+     {
+      "id": "resource",
+      "label": "Resources",
+      "about": "What a place holds that can be taken: read off held amounts, so it goes when mined out.",
+      "applies_to": [
+       "body"
+      ]
+     }
+    ],
+    "tags": [
+     {
+      "id": "resource.metal-rich",
+      "label": "metal-rich",
+      "group": "resource",
+      "about": "at least 40% iron by mass, as Mercury (Earth is about 32%): an iron world or the core of a broken one",
+      "source": "derived",
+      "tier": "surveyed"
+     },
+     {
+      "id": "resource.water",
+      "label": "water",
+      "group": "resource",
+      "about": "at least 10^18 kg of water at the surface, a small sea's worth or a thick ice cap",
+      "source": "derived",
+      "tier": "surveyed"
+     },
+     {
+      "id": "resource.hydrogen",
+      "label": "hydrogen",
+      "group": "resource",
+      "about": "a hydrogen envelope to skim for fuel (at least 10^20 kg)",
+      "source": "derived",
+      "tier": "surveyed"
+     },
+     {
+      "id": "resource.helium-3",
+      "label": "helium-3",
+      "group": "resource",
+      "about": "helium-3 in a giant's envelope, at the birth cloud's isotope share (at least a million tonnes)",
+      "source": "derived",
+      "tier": "surveyed"
+     }
+    ]
+   }
+  }
+ }
+}
