@@ -4,11 +4,12 @@
   the panel's own fade, never a backdrop or a joke. The page is the same whatever date is in view.
 -->
 <script lang="ts">
-  import { correctionUrl, inMemoryLine, recordDate, sayNumber, type Calendar, type InMemory } from "../../../ui-contract/src/index.ts";
+  import { carriedLine, sharedSinceWhy, correctionUrl, inMemoryLine, recordDate, sayNumber, sinceWords, type Calendar, type CarriedName, type InMemory } from "../../../ui-contract/src/index.ts";
 
-  let { memory, calendar, onday, onback }: { memory: InMemory; calendar: Calendar; onday: (at_s: number) => void; onback: () => void } = $props();
+  let { memory, carried = [], calendar, onday, onback }: { memory: InMemory; carried?: CarriedName[]; calendar: Calendar; onday: (at_s: number) => void; onback: () => void } = $props();
   const line = $derived(inMemoryLine(memory, (n) => sayNumber(n, 6)));
   const date = (d: string) => recordDate(d, calendar.months);
+  const carriedWhy = $derived(sharedSinceWhy(carried));
   const all = $derived(memory.parts.flatMap((p) => p.losses));
   const tollWords = (t: [number, number], why?: string) => `The sources give between ${sayNumber(t[0], 6)} and ${sayNumber(t[1], 6)} dead${why ? `: ${why}` : ""}.`;
 </script>
@@ -41,12 +42,29 @@
     </ul>
   {/if}
 
+  {#if carried.length}
+    <!-- Names carried (SH7, design 8.5): the real memorials in space, as text; the same whatever date is in view. -->
+    <h3 data-in-memory-carried>Names carried</h3>
+    <p class="aside lead" data-in-memory-carried-lead>Minor planets named for them, on their real orbits.{#if carriedWhy}{" "}Their naming dates are not given here yet: {carriedWhy}.{/if}</p>
+    <ul class="carried">
+      {#each carried as c (c.id)}
+        <li data-in-memory-carried-row={c.id}>{carriedLine(c)}{#if !carriedWhy} <span class="since">{sinceWords(c, date)}</span>{/if}</li>
+      {/each}
+    </ul>
+  {/if}
+
   <details class="sources" data-in-memory-sources>
     <summary>Sources</summary>
     {#each all as l, i (l.id + i)}
       <p class="src-head">{date(l.date)}, {l.where}</p>
       <ul>
         {#each l.sources as s, j (j)}<li>{#if s.url}<a href={s.url} target="_blank" rel="noopener noreferrer">{s.text}</a>{:else}{s.text}{/if}</li>{/each}
+      </ul>
+    {/each}
+    {#each carried as c (c.id)}
+      <p class="src-head">{c.name}</p>
+      <ul>
+        {#each c.sources as s, j (j)}<li>{#if s.url}<a href={s.url} target="_blank" rel="noopener noreferrer">{s.text}</a>{:else}{s.text}{/if}</li>{/each}
       </ul>
     {/each}
   </details>
@@ -124,8 +142,20 @@
     font-size: 0.85rem;
     color: var(--sse-ink-muted);
   }
-  .earth {
+  .earth,
+  .carried {
     padding-left: 18px;
+  }
+  .carried li {
+    margin: 4px 0;
+    line-height: 1.45;
+  }
+  .lead {
+    margin-left: 0;
+  }
+  .since {
+    color: var(--sse-ink-muted);
+    font-size: 0.85rem;
   }
   .sources {
     margin-top: 22px;
