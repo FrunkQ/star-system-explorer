@@ -6,7 +6,7 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts" module>
-  import { withFiner, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
+  import { withFiner, TILE_SAMPLES, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
@@ -37,9 +37,9 @@
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, readTrueFace, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
-  import { finerTiles, readFiner } from "../../body/src/finer-tiles.ts";
-  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
+  import { readLiveStar, readTrueFace, starsBehind, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
+  import { finerTiles, readDeep, readFiner } from "../../body/src/finer-tiles.ts";
+  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Pencilled, PEN_WORDS, penOf, penStyle, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -358,6 +358,30 @@
   // True (V10a): each world's surface is read from its level-0 tiles (the Body globe's own, about 3 s a world in the
   // kernel), one at a time, the selected world first, and kept for this page. Only on the GM's seat, which reads tiles.
   const looksTrue = $derived(shownView.style === "true");
+  // True (VP2): the sky's stars from this system's place, read once per system and drawn behind everything; from the
+  // Sun's place, laid square on the system's frame, when the system has none yet (fudge register).
+  const SKY_LIMIT = 6.5;
+  const SQUARE = { to_galactic: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] as [[number, number, number], [number, number, number], [number, number, number]] };
+  let skyBehind = $state<{ key: string; dirs: Float32Array; share: Float32Array } | null>(null);
+  $effect(() => {
+    const sys = scene.system;
+    if (!looksTrue || skyBehind?.key === sys) return;
+    // The worlds' surfaces first: they share the kernel with the sky, and a world's face matters more than its stars.
+    if (ctx.session.seat.authority === "gm" && (!reading || reading.done < reading.of)) return;
+    untrack(() =>
+      void (async () => {
+        const ask = { limit_mag: SKY_LIMIT, band: "V", bands: ["B", "V"] };
+        let r = await ctx.session.skyFromHere({ ...ask, observer: sys });
+        if (!r.ok) r = await ctx.session.skyFromHere(ask);
+        const sky = r.ok ? (r.sky as { frame?: unknown; stars?: { dir: number[]; luminosity_lsun: number; distance_pc: number; teff_k?: number; components?: { teff_k: number }[] }[] }) : null;
+        if (!sky?.stars || scene.system !== sys) return;
+        const f = sky.frame as { to_galactic?: unknown } | null | undefined;
+        const frame = f && typeof f === "object" && Array.isArray(f.to_galactic) ? (f as typeof SQUARE) : SQUARE;
+        const stars = sky.stars.map((x) => ({ dir: [x.dir[0]!, x.dir[1]!, x.dir[2]!] as [number, number, number], luminosity_lsun: x.luminosity_lsun, distance_pc: x.distance_pc, teff_k: x.teff_k ?? x.components?.[0]?.teff_k ?? 5800 }));
+        skyBehind = { key: sys, ...starsBehind(stars, frame) };
+      })(),
+    );
+  });
   let surfaces = $state<Map<string, TrueTexture>>(new Map());
   let airs = $state<Map<string, TrueAir>>(new Map());
   let reading = $state<{ done: number; of: number; none: number; why: string } | null>(null);
@@ -409,6 +433,8 @@
       // its own cloud layer (VP-A4), which is what gpu.ts draws when the clouds are there.
       const under = ck ? trueAirs.get(ck)?.ground : undefined;
       if (ck && base && typeof base !== "string" && (base.faces || under?.faces) && g === trueGen) {
+        // Close-up: the ground under the camera is read first when the camera is over this world.
+        const below = untrack(() => groundView);
         void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
           const now = trueSurfaces.get(ck);
           if (!now || typeof now === "string") return;
@@ -417,9 +443,47 @@
           surfaces = new Map(surfaces).set(chosen!.address, t);
           const a = finerGround(ck, fine);
           if (a) airs = new Map(airs).set(chosen!.address, a);
-        });
+        }, below?.body === chosen!.address ? below.toward : undefined);
       }
     })());
+  });
+  // Close-up (Alex, 25 Nov): the ground under the 3D camera while it is low over a world in True; the detail ladder's
+  // deep tiles (VP3 part 4) read it.
+  let groundView = $state<GroundView | null>(null);
+  // VP3 part 4: once the camera has stayed low over the chosen world for DEEP_SETTLE_MS, the tiles under it are read
+  // at the screen's own scale (down to the kernel's fact floor) and laid over its ground as a patch. A newer view
+  // stops the read between requests; the last patch stays where it was read (it is the world's real ground).
+  const DEEP_SETTLE_MS = 600;
+  let deepGen = 0;
+  /** The level of the deep patch last laid, for the page's checks (data-deep-level). */
+  let deepLevel = $state<number | null>(null);
+  $effect(() => {
+    const below = groundView;
+    const sys = scene.system;
+    const sel = ctx.workspace.selection;
+    const my = ++deepGen;
+    if (!looksTrue || ctx.session.seat.authority !== "gm" || !below || below.body !== sel) return;
+    const radius_m = untrack(() => bodies3d.find((b) => b.id === below.body)?.radius_m);
+    if (!radius_m) return;
+    const timer = setTimeout(() => untrack(() => void (async () => {
+      const p = await readDeep(ctx.session, sys, below.body, { toward: below.toward, m_per_px: below.m_per_px }, radius_m, TILE_SAMPLES, () => my === deepGen);
+      if (!p || my !== deepGen) return;
+      deepLevel = p.level;
+      const key = `${sys}|${below.body}`;
+      const t = trueSurfaces.get(key);
+      if (t && typeof t !== "string") {
+        const next = { ...t, patch: p };
+        trueSurfaces.set(key, next);
+        surfaces = new Map(surfaces).set(below.body, next);
+      }
+      const a = trueAirs.get(key);
+      if (a?.ground) {
+        const next = { ...a, ground: { ...a.ground, patch: p } };
+        trueAirs.set(key, next);
+        airs = new Map(airs).set(below.body, next);
+      }
+    })()), DEEP_SETTLE_MS);
+    return () => clearTimeout(timer);
   });
   // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.
   let liveStar = $state<LiveStar | null>(null);
@@ -479,9 +543,12 @@
             ? `${reading.none} of ${reading.of} worlds are drawn plain, with no surface to show (the kernel: ${reading.why}).`
             : "",
   );
+  // The long exposure (the default, Alex 24 Nov) says its lift, so the picture never claims to be what an eye sees;
+  // at the eye's exposure the faint stars speak for themselves.
+  const skyNote = $derived(skyBehind && shownView.exposure === "long" ? "Long exposure: faint light is lifted, a composite." : "");
   // Each thing a face could not show, said once for the system (a colour the sheet lacks, a giant's dark deep air).
   const airNote = $derived(reading && reading.done >= reading.of ? [...new Set([...trueSaid].filter(([k]) => k.startsWith(`${scene.system}|`)).flatMap(([, v]) => v))].join(" ") : "");
-  const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
+  const trueNote = $derived([surfaceNote, airNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : "", skyNote].filter(Boolean).join(" "));
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
@@ -508,9 +575,9 @@
   const peeked = $derived(peek && peek.address !== ctx.workspace.selection && !drag && !measuring ? all.find((s) => s.address === peek!.address) : undefined);
 </script>
 
-<div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
+<div class="chart" bind:clientWidth={w} bind:clientHeight={h} data-deep-level={deepLevel ?? undefined}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
@@ -568,6 +635,15 @@
         {#each bandLabels as l (l.b.address)}
           <text class="band {l.b.kind}" class:sphere={isShell(l.b)} x={l.lx} y={l.ly} aria-hidden="true">{l.text}</text>
         {/each}
+        <!-- A press on a name chooses its body: the name's box is a quiet target under every world's own hit circle, so
+             a name that lands near another world never takes that world's press or drag (the names drawn on top take none). -->
+        <g class="name-hits" aria-hidden="true">
+          {#each all as s (s.address)}
+            {@const p = places.get(s.address)}
+            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the body's own mark is the keyboard's way in) -->
+            {#if p}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} data-name-hit={s.address} onclick={() => (measuring ? measurePick(s) : ctx.workspace.select(s.address))} />{/if}
+          {/each}
+        </g>
         {#each all as s, i (s.address)}
           {@const atCentre = s === centre}
           {@const [x, y] = atCentre ? [cx, cy] : pos(s)}
@@ -596,9 +672,8 @@
           >
             <circle class="hit" cx={x} cy={y} r={Math.max(22, m.size + 12)} />
             {#if pencilOn && !atCentre && !knows(s)}
-              <!-- Pencil (design 5): the mark of a body the table does not know is quiet, inside a thin dotted ring. -->
-              <g class="pencilled" data-pencil><Mark mark={m} cx={x} cy={y} {prefix} /></g>
-              <circle class="pencil-ring" cx={x} cy={y} r={markExtent(m) + 3} aria-hidden="true" />
+              <!-- Pencil (SV3, the shared pencil kit): the mark of a body the table does not know is quiet, inside a thin dotted ring. -->
+              <g data-pencil><Pencilled pen={penOf("gm_only")} cx={x} cy={y} r={markExtent(m)}><Mark mark={m} cx={x} cy={y} {prefix} /></Pencilled></g>
             {:else}
               <!-- The mark lifts a little under the pointer (dynamic minimalism): a body answers before it is pressed. -->
               <g class="lift" style="transform-origin: {x}px {y}px"><Mark mark={m} cx={x} cy={y} {prefix} /></g>
@@ -630,8 +705,7 @@
               <!-- Who knows (track SV, pencil and ink): a name the table does not know is drawn in pencil, quiet and dotted,
                    with no words; one they know is in ink, with how they know it ("long range") under it. -->
               {@const pencil = pencilOn && !atCentre && !view && !knows(s)}
-              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the body's own mark is the keyboard's way in) -->
-              <text class="name" class:selname={sel} class:pencil class:unknown={through && !knows(s)} x={p.x} y={p.y} text-anchor={p.anchor} data-label-side={p.side} data-label-for={s.address} aria-hidden="true" onclick={() => (measuring ? measurePick(s) : ctx.workspace.select(s.address))}>{label(s)}{#if pencil}<title>Not known to the table</title>{/if}</text>
+              <text class="name" class:selname={sel} class:pencil style={pencil ? penStyle(penOf("gm_only"), "name") : undefined} class:unknown={through && !knows(s)} x={p.x} y={p.y} text-anchor={p.anchor} data-label-side={p.side} data-label-for={s.address} aria-hidden="true">{label(s)}{#if pencil}<title>{PEN_WORDS.pencil}</title>{/if}</text>
               {#if on("known") && known && !atCentre && view && view !== usualView}
                 <text class="knownv" x={p.x} y={p.y + 13} text-anchor={p.anchor} aria-hidden="true">{view.replace(/-/g, " ")}</text>
               {/if}
@@ -859,8 +933,12 @@
   .peek span {
     color: var(--sse-panel-muted);
   }
-  .name {
+  .name-hits rect {
+    fill: transparent;
     cursor: pointer;
+  }
+  .name {
+    pointer-events: none;
     fill: var(--sse-ink);
     font-family: var(--sse-font-display);
     font-style: italic;
@@ -884,21 +962,6 @@
   .body.unknown,
   .name.unknown {
     opacity: 0.25;
-  }
-  .pencilled {
-    opacity: 0.4;
-  }
-  .pencil-ring {
-    fill: none;
-    stroke: var(--sse-ink-muted);
-    stroke-width: 0.8;
-    stroke-dasharray: 1.5 2.5;
-    pointer-events: none;
-  }
-  .name.pencil {
-    fill: var(--sse-ink-muted);
-    text-decoration: underline dotted;
-    text-underline-offset: 3px;
   }
   .knownv {
     font-family: var(--sse-font-body);

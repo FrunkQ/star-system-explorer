@@ -1,0 +1,37 @@
+{
+  "schema": "sse.screen/1",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "id": "sse.workspace.gm.rollcall",
+  "label": "Roll call",
+  "items": [
+    {
+      "view": "sse.view.system-chart",
+      "area": "chart",
+      "params": {
+        "labels": "all",
+        "unsurveyed_hatch": true
+      }
+    },
+    {
+      "view": "sse.view.roll-call",
+      "area": "card"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "system",
+      "group": "travel",
+      "label": "Roll call",
+      "order": 4,
+      "hint": "Who was in space on any day, aboard what, and where"
+    }
+  ]
+}

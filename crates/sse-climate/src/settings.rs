@@ -46,12 +46,40 @@ pub struct Substance {
     pub phases: serde_json::Map<String, serde_json::Value>,
 }
 
+/// The 10 m wind (`crate::wind`): the circulation's prevailing wind as its
+/// mean, storms as its spread.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Wind10Settings {
+    /// Spread of each 10 m wind component as a share of the eddy wind,
+    /// where eddies carry all the heat (in air as dense as Earth's).
+    pub gust_share: f64,
+    pub source: String,
+}
+
 /// Tides and wind waves read for a world's card and a landing site.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct SeaSettings {
     /// Longest stretch of open water one wind blows over, m: a storm's
     /// size, whatever the width of the sea.
     pub storm_fetch_m: f64,
+    /// Earth's air over water, ρ_air / ρ_water, against which another
+    /// liquid's waves are driven (W-sea3); 0 turns the scaling off.
+    #[serde(default)]
+    pub reference_density_ratio: f64,
+    /// Whitecaps and foam (W-sea4).
+    #[serde(default)]
+    pub whitecaps: Option<Whitecaps>,
+    pub source: String,
+}
+
+/// The share of the sea under whitecaps, W = c (U − U₀)³ above the onset
+/// wind U₀, and the foam's effective reflectance (W-sea4).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Whitecaps {
+    pub coefficient: f64,
+    pub onset_m_s: f64,
+    pub exponent: f64,
+    pub foam_albedo: f64,
     pub source: String,
 }
 
@@ -181,6 +209,12 @@ pub struct Defaults {
     pub rotation_hours: f64,
     pub obliquity_deg: f64,
     pub gases: BTreeMap<String, f64>,
+    /// The air of a world with a deep hydrogen envelope and no measured
+    /// mix: the protosolar mix by volume (empty: `gases` stands in).
+    #[serde(default)]
+    pub giant_gases: BTreeMap<String, f64>,
+    #[serde(default)]
+    pub giant_gases_source: String,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -506,6 +540,7 @@ pub struct ClimateSettings {
     pub heat_capacity: HeatCapacity,
     pub land_sea: LandSeaSettings,
     pub sea: SeaSettings,
+    pub wind10: Wind10Settings,
     pub moisture: Moisture,
     pub cloud: Cloud,
     /// Thermal wind depth in scale heights, and the share of it felt near the ground.

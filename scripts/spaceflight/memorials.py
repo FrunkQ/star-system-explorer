@@ -50,9 +50,20 @@ def fetch():
         m = re.search(r"JPL/HORIZONS\s+(.+?)\s{2,}", text)
         b["horizons_name"] = m.group(1).strip() if m else None
         b["horizons_soln"] = (re.search(r"Soln\.date:\s*(\S+)", text) or [None, None])[1]
-        for k in ("EPOCH", "EC", "QR", "OM", "W", "IN", "A", "MA"):
+        for k in ("EPOCH", "EC", "QR", "OM", "W", "IN", "A", "MA", "H", "G", "RAD", "ALBEDO"):
             m = re.search(r"\b%s=\s*([-\d.E+]+)" % k, text)
             b[k] = float(m.group(1)) if m else None
+    # Absolute magnitude H, second source: Wikidata P1457 (it keeps several published values; one must agree).
+    qh = "SELECT ?x ?h WHERE { VALUES ?x { %s } ?x wdt:P1457 ?h . }" % " ".join(
+        "wd:" + b["wikidata"] for b in bodies.values())
+    for r in json.loads(get("https://query.wikidata.org/sparql?" + urllib.parse.urlencode({"query": qh}),
+                            "application/sparql-results+json"))["results"]["bindings"]:
+        qid = r["x"]["value"].rsplit("/", 1)[-1]
+        for b in bodies.values():
+            if b["wikidata"] == qid:
+                b.setdefault("wikidata_h", []).append(float(r["h"]["value"]))
+    for b in bodies.values():
+        b["wikidata_h"] = sorted(set(b.get("wikidata_h", [])))
     with open(SRC_FILE, "w", encoding="utf-8") as fh:
         json.dump({"about": "Sources for scripts/spaceflight/memorials.py, queried 25 Nov 2026: Wikidata (CC0) at "
                             "https://query.wikidata.org/sparql, and JPL Horizons small-body records (OBJ_DATA) at "
@@ -71,9 +82,14 @@ def build():
         if not who or b["A"] is None:
             raise SystemExit("%s: no person or no orbit" % num)
         name = b["horizons_name"].split("(")[0].strip()
+        # H only when Wikidata holds a value within 0.5 mag of Horizons' (two sources); Horizons' is the one given.
+        h_ok = b["H"] is not None and any(abs(b["H"] - w) <= 0.5 for w in b.get("wikidata_h", []))
         out.append({
             "id": "minor-planet-" + num, "kind": "named_small_body", "name": name,
             "people": [p["id"] for p in who], "names_text": "; ".join(p["name"] for p in who),
+            "h_mag": b["H"] if h_ok else None,
+            "h_why": ("absolute magnitude H from JPL Horizons (slope G %s); Wikidata P1457 lists %s" % (
+                b["G"], ", ".join("%g" % w for w in b.get("wikidata_h", [])))) if h_ok else "no two sources agree",
             "since_s": None, "since_date": None,
             "since_why": "the naming date is in the Minor Planet Center's citation, not yet read here",
             "where": {"mpc": num, "elements": {

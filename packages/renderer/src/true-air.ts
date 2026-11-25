@@ -7,6 +7,7 @@
 import { constant, sheetUnitFactor } from "../../ui-contract/src/index.ts";
 import type { Json, SurfaceTile } from "../../ui-contract/src/index.ts";
 import { trueSurface, type TrueTexture } from "./true-look.ts";
+import { readGroundOptics, withGround } from "./ground-optics.ts";
 import { airShapeOf, type AirShape } from "./air-luts.ts";
 import { airFactsOf, airFromOptics, airRequest } from "./atmosphere.ts";
 import { addLayers, CLOUD_G, HAZE_G, liveSystems, slabReflectance, stormAt, type WeatherCell, type WeatherMap, type WeatherSystem, type WeatherTile } from "./weather.ts";
@@ -544,7 +545,9 @@ export async function readTrueFace(k: FaceReader, system: string, body: string):
   const s = await k.surfaceTiles(system, body);
   // A giant's tiles are its cloud deck's relief, not a ground: its face is its decks alone (trueGiant).
   const giantDeck = s.ok && s.kind === "cloud-deck";
-  const ground = s.ok && !giantDeck ? trueSurface(s.tiles) : null;
+  // Bare ground in its measured colour where the kernel weathers it (ground-optics.ts, VP3 part 5).
+  const ground =
+    s.ok && !giantDeck ? trueSurface(s.tiles.some((t) => t.maturity) ? withGround(s.tiles, await readGroundOptics(k)) : s.tiles) : null;
   const groundWhy = s.ok ? String((s.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : s.message;
   const now = await k.campaignNow();
   const at_s = now.ok && now.at_s !== undefined ? Number(now.at_s) : undefined;
