@@ -116,6 +116,8 @@ export interface Workspace {
   markHere?: () => import("./bookmark.ts").Bookmark;
   /** The Playbook (PB3): the GM's presets in chapters, pages and sections, kept with the campaign. */
   playbook?: import("./playbook.ts").Playbook;
+  /** Layouts the GM made (PB13): players' screen documents with `mine.` ids, kept with the campaign. */
+  layouts?: import("./screen.ts").ScreenDoc[];
   /** The table, for the Switchboard (PB2): the board, roles and screens, and the ways to change what they show. */
   table?: import("./board.ts").TablePort;
   /** A site a link asked to land at (`~surface?site=lat,lon`): the Land screen takes it once its world is read, then clears it. */
@@ -205,6 +207,8 @@ export interface PlayerContext {
   landing?(): import("./landing.ts").LandingShow | null;
   /** This seat's own reads of that landing's world (granted for it alone). Absent on a sealed seat, which has no kernel. */
   ground?: import("./landing.ts").LandingGround;
+  /** Which of the part's own controls the screen has on (AT13); absent: every declared control is on. Read with `controlOn`. */
+  controls?: Readonly<Record<string, boolean>>;
 }
 
 export interface ViewHandle<S = SystemScene> {
@@ -230,6 +234,8 @@ export interface ViewModule<S = SystemScene, C = ViewContext> {
   box?: "fill" | "content";
   /** The standard view controls (interface style rule 12): what it draws in each view style and from where. Absent: not a diagram, no controls. */
   controls?: import("./view-controls.ts").ViewControlsSpec;
+  /** The part's own presses a layout can switch on or off (AT13): sort, select, step... Absent: it draws none. */
+  switchable?: readonly import("./part-controls.ts").PartControl[];
   mount(el: HTMLElement, ctx: C, scene: S): ViewHandle<S>;
 }
 

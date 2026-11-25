@@ -24,6 +24,8 @@ export interface TrueBody {
   rings?: readonly RingBand[];
   /** Its north pole in the drawing's frame: its rings lie in its equator. */
   pole: Vec3;
+  /** A star's living face for this moment (star-now.ts `liveFace` or `drawStarNow`): churning cells, spots, flares. */
+  face?: GpuItem["face"];
   /**
    * The winds its face is carried by (a giant's, from `readTrueFace`), and how long after the face was read the
    * drawing is, in the body's own seconds: the bands slide at their jets' speeds and the storms turn (VP-A1).
@@ -36,7 +38,7 @@ export interface TrueBody {
 }
 
 /** The GPU fields of a body's True face. */
-export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "clouds" | "air">;
+export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "clouds" | "air" | "face">;
 
 /** A surface texture's mean colour, 0..1 (sRGB bytes over 255; a tint, not a measurement). */
 export function meanColour(t: TrueTexture): [number, number, number] {
@@ -78,6 +80,7 @@ export function ringsAssumed(b: TrueBody): boolean {
 export function trueLook(b: TrueBody): TrueLook {
   const out: TrueLook = { colour: b.colour };
   if (b.star) out.shines = true;
+  if (b.star && b.face) out.face = b.face;
   if (b.surface) {
     const f = b.flow;
     // Carried by its winds: a new picture each time asked, uploaded into the same texture by its version.
