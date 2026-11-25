@@ -18,6 +18,7 @@ export function createWorkspace(now_yr: number): Workspace {
     bench: null,
     requests: [],
     branch: null,
+    adding: null,
     select(address: string | null) {
       ws.selection = address;
     },

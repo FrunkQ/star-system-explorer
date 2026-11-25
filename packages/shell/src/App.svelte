@@ -1414,8 +1414,22 @@
       mass_sun: typeof m === "number" ? m : null,
       planet: h.kind === "planet" && me !== null && re !== null ? { mass_earth: me, radius_earth: re, a_au: h.orbit?.a_au ?? null, star_mass_sun: star ? fact(star, "mass_sun") : null } : undefined,
     };
+    // ED4: round a star on the flat chart, the ghost comes first (editing design section 5): it follows the pointer
+    // with the distance, and a press opens Add here at that orbit. Round a planet, or in 3D, Add here opens at once.
+    const flat = ws.screen === "system" && ["chart", "wireframe"].includes(ws.view?.style ?? "chart");
+    if (h.kind === "star" && flat && h === primaryOf(scene)) ws.adding = { host: h.address, label: h.label, a_au: null };
+    else showAdd();
+  }
+  function showAdd() {
+    addShown = true;
     addDialog?.showModal();
   }
+  let addShown = $state(false);
+  // The ghost was dropped: Add here opens with that orbit.
+  $effect(() => {
+    const a = ws.adding;
+    if (a && a.a_au !== null) untrack(() => addFor && !addShown && showAdd());
+  });
   async function addClip(clip: Clip, words: string): Promise<string | null> {
     if (!session || !addFor) return "The chart is not ready.";
     const p = await placement(clip, { address: addFor.address, kind: addFor.kind });
@@ -1721,6 +1735,7 @@
         {undo}
         {copyBody}
         {openAdd}
+        typeAdd={() => showAdd()}
         {cutBody}
         openKeys={() => openHelp("keys")}
       >
@@ -1879,8 +1894,8 @@
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
-<dialog bind:this={addDialog} class="help seats-dialog" aria-labelledby="add-title" data-add onclose={() => !addDialog?.open && (addFor = null)}>
-  {#if addFor && session}<AddHere {session} system={scene.system} host={addFor} orbits={addOrbits} packs={stackPacks()} onadd={addClip} />{/if}
+<dialog bind:this={addDialog} class="help seats-dialog" aria-labelledby="add-title" data-add onclose={() => !addDialog?.open && ((addFor = null), (addShown = false), (ws.adding = null))}>
+  {#if addFor && session && addShown}<AddHere {session} system={scene.system} host={addFor} orbits={addOrbits} at_au={ws.adding?.a_au ?? undefined} packs={stackPacks()} onadd={addClip} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
