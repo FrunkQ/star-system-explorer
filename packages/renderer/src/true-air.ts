@@ -539,9 +539,10 @@ export async function readTrueAir(k: FaceReader, system: string, body: string): 
 /**
  * A world's True face, read from the kernel once: its ground from the level-0 tiles (true-look.ts), today's clouds
  * and haze laid over it; a world with no ground (a giant) is its cloud decks alone. A string says why there is none.
- * The system view and the size comparison both read faces through here, so a world looks the same in each.
+ * The system view and the size comparison both read faces through here, so a world looks the same in each; `storms`
+ * also reads a giant's storms for a view that carries its bands (the size comparison).
  */
-export async function readTrueFace(k: FaceReader, system: string, body: string): Promise<AirLook | string> {
+export async function readTrueFace(k: FaceReader, system: string, body: string, opts: { storms?: boolean } = {}): Promise<AirLook | string> {
   const s = await k.surfaceTiles(system, body);
   // A giant's tiles are its cloud deck's relief, not a ground: its face is its decks alone (trueGiant).
   const giantDeck = s.ok && s.kind === "cloud-deck";
@@ -559,7 +560,8 @@ export async function readTrueFace(k: FaceReader, system: string, body: string):
   if (ground) return withGas(withAir(ground, air.tiles, colours));
   const giant = trueGiant(air.tiles, colours);
   if (!giant) return groundWhy;
-  if (giant.flow) {
+  // Only a view that carries the bands asks for the storms (the size comparison); the rest skip the kernel call.
+  if (giant.flow && opts.storms) {
     // The storms, so each is carried as one piece as the bands slide (VP-A1).
     const day = at_s !== undefined ? at_s / constant("day") : 0;
     const sy = await k.weather({ want: "systems", system, body, ...(at_s !== undefined ? { at_s } : {}), day });
