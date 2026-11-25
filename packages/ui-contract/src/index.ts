@@ -70,7 +70,7 @@ export { LENS_SCHEMA, LAYERS, TOOLS, SHIPPED_LENSES, HONESTY_MARKS, playerLenses
 export type { Lens, LensCard, LayerId, ToolId, Density, LensPackMeta } from "./lens.ts";
 export { SOUND_SCENE_SCHEMA, SOUND_RECIPE_SCHEMA, SOUND_LABELS, SOUND_LAYERS, NODE_TYPES, hash32, draw, intoOctave, settle, dialled, bandFor, orbitScene, voicesFromSystem, voicesFromPlayers, score, scoreHash, checkRecipe, defaultSound, readSound, voiceLimit } from "./sound.ts";
 export type { SoundLabel, SoundLayer, SoundTier, SoundSource, ScoreNote, SoundScene, Voice, NodeType, RecipeNode, SoundRecipe, SoundSettings } from "./sound.ts";
-export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight, recipeBand, bandChoices, paintedBands, lightForBand } from "./light.ts";
+export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight, recipeBand, bandChoices, paintedBands, lightForBand, linearSrgb, xyz, cmf } from "./light.ts";
 export type { BandRecipe, Honesty, LightDescription, LitBody } from "./light.ts";
 export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy, sceneFromResolved, listedTitle, cloudShape, cloudSubjects, v3BeltShape } from "./make.ts";
 export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld, Adopted, SystemResolved, ListedSystem, LeftoverCloud } from "./make.ts";
@@ -179,8 +179,8 @@ export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, R
 // Handles and strips (ED1): the true inputs of a world and a star, and the strip each opens on.
 export { HANDLES, RESULTS, handlesFor, handleSubject, scaleClass, subjectClass, aboutFor, handleValue, fieldValue, handleFigure, stripDomain, stripPos, stripValue, stretchTo, stripStep, referenceDots, resultsOf, whatFollowed } from "./handles.ts";
 export type { Handle, HandlePart, StripDot, StripDomain, ResultRow, Followed, BoxPart, BoxChip, HandleBox, PartMark } from "./handles.ts";
-export { atDepth, boxAt, partHandle, wrap, mirrorAngle, trueFromMean, meanFromTrueRad, trueAnomalyFrom, epochMeanFor, orbitShape, solarDay, resonances, stabilityFor, outerWall } from "./box.ts";
-export type { Resonance } from "./box.ts";
+export { atDepth, boxAt, partHandle, wrap, mirrorAngle, trueFromMean, meanFromTrueRad, trueAnomalyFrom, epochMeanFor, orbitShape, solarDay, resonances, stabilityFor, outerWall, pairOf } from "./box.ts";
+export type { Resonance, Pair } from "./box.ts";
 export * from "./place-notes.ts";
 export * from "./delivery.ts";
 export { gearing, roundFigures, resonanceCatches, nearestCatch } from "./drag.ts";

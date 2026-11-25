@@ -138,6 +138,7 @@ export async function measureProbe(caps: Capabilities, o: ProbeOptions = {}): Pr
   ];
 
   let method: ProbeResult["method"] = caps.timestamps ? "timestamp" : "readback";
+  let misses = 0;
   // Closing a frame: WebGL2 reads one pixel synchronously (three's own read-back waits on animation frames, which
   // would round every time to the display's frame); WebGPU maps a one-pixel read-back.
   const gl = backend === "webgl2" ? ((renderer.backend as { gl?: WebGL2RenderingContext }).gl ?? null) : null;
@@ -153,8 +154,10 @@ export async function measureProbe(caps: Capabilities, o: ProbeOptions = {}): Pr
     for (let i = 0; i < k; i++) renderer.render(s.scene, s.camera);
     if (method === "timestamp") {
       const d = await renderer.resolveTimestampsAsync("render").catch(() => undefined);
-      if (typeof d === "number" && d > 0) return d;
-      method = "readback";
+      if (typeof d === "number" && d > 0) return ((misses = 0), d);
+      // Timestamps can come back empty for the first frames while the queries settle: give them a few frames (the
+      // warm-up frames are not kept) before closing frames by read-back instead.
+      if (++misses >= 4) method = "readback";
     }
     await close();
     return performance.now() - t0;

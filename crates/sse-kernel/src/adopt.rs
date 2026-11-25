@@ -1086,6 +1086,15 @@ pub(crate) fn resolved_system(
                 if let Some(p) = sse_surface::plumes::plumes(b, e, seed) {
                     v["plumes"] = serde_json::to_value(p).expect("plain data");
                 }
+                // What stains its ground (TRUE4), when its tiles were read: from
+                // the surveyed atlas's one climate, already in the cache.
+                let key = sse_surface::detail::orbit_key(e, seed, (b.age_gyr + shift_gyr).max(0.0));
+                if let Some((_, a)) = orbits.iter().find(|(k, _)| *k == key) {
+                    let st = sse_surface::stains::stains_of(b, e, a);
+                    if !st.is_empty() {
+                        v["stains"] = serde_json::to_value(st).expect("plain data");
+                    }
+                }
                 v
             })
             .collect(),

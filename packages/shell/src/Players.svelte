@@ -149,6 +149,7 @@
         surfaceTiles: (system, body) => session!.surfaceTiles(system, body),
         surfaceTilesAt: (system, body, keys) => session!.surfaceTilesAt(system, body, keys),
         planDescent: (ask) => session!.planDescent(ask),
+        surveyCaves: (ask) => session!.surveyCaves(ask),
       };
   // Inside a virtual tabletop (V3 gap 26): `?embed=1`, and only for a tabletop the GM listed on this seat.
   const asksEmbed = embedAsked(location.search);

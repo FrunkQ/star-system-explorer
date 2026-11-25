@@ -4,6 +4,7 @@
 // storms and the polar cyclones are all the weather block's, cell by cell; each layer's colour is its condensate's on
 // the master data sheet, read by the caller; a haze's colour is the one the weather op sends. This file only stacks
 // the layers by the adding method (Bohren 1987), as weather.ts does on the Body globe.
+import { stainFacts, stainHue, type StainHue } from "./stain-look.ts";
 import { constant, sheetUnitFactor } from "../../ui-contract/src/index.ts";
 import type { Json, SurfaceTile } from "../../ui-contract/src/index.ts";
 import { trueSurface, type TrueTexture } from "./true-look.ts";
@@ -511,7 +512,7 @@ export async function readAirTiles(k: AirReader, system: string, body: string, o
 
 /** The kernel doors a True face needs (a ViewSession has them all). */
 export interface FaceReader extends AirReader {
-  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: unknown[]; kind?: string } | { ok: false; message: string }>;
+  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: unknown[]; record?: unknown; kind?: string } | { ok: false; message: string }>;
   campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; message: string }>;
   /** For the air's rim (VP-A3); a reader without them draws no air shell. */
   resolvedSystem?(system: string): Promise<{ ok: true; result: { surfaces: { address: string }[]; facts: Record<string, Record<string, Json>> } } | { ok: false; message: string }>;
@@ -546,9 +547,16 @@ export async function readTrueFace(k: FaceReader, system: string, body: string, 
   const s = await k.surfaceTiles(system, body);
   // A giant's tiles are its cloud deck's relief, not a ground: its face is its decks alone (trueGiant).
   const giantDeck = s.ok && s.kind === "cloud-deck";
-  // Bare ground in its measured colour where the kernel weathers it (ground-optics.ts, VP3 part 5).
+  // What stains its ground (TRUE4): the kernel's stains, each hued by its sheet row's optics.
+  const stains: StainHue[] = [];
+  for (const f of s.ok && !giantDeck ? stainFacts(s.record) : []) {
+    const r = await k.readMatter({ id: f.material_id });
+    const h = r.ok ? stainHue(f, (r.value as { row?: unknown }).row) : null;
+    if (h) stains.push(h);
+  }
+  // Bare ground in its measured colour where the kernel weathers it (ground-optics.ts, VP3 part 5), then stained.
   const ground =
-    s.ok && !giantDeck ? trueSurface(s.tiles.some((t) => t.maturity) ? withGround(s.tiles, await readGroundOptics(k)) : s.tiles) : null;
+    s.ok && !giantDeck ? trueSurface(s.tiles.some((t) => t.maturity) ? withGround(s.tiles, await readGroundOptics(k)) : s.tiles, 128, 64, stains) : null;
   const groundWhy = s.ok ? String((s.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : s.message;
   const now = await k.campaignNow();
   const at_s = now.ok && now.at_s !== undefined ? Number(now.at_s) : undefined;
