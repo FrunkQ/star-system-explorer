@@ -100,7 +100,7 @@ try {
       await view(gm, "View style", "True");
       await gm.waitForSelector("[data-surface][data-look='true']");
       let darkest = { at: 0, exposure: 0 };
-      for (let h = -180; h <= 180; h += 30) {
+      for (let h = -12; h <= 12; h += 2) {
         await gm.locator("[data-hour]").fill(String(h));
         await gm.waitForTimeout(150);
         const e = Number(await gm.locator("[data-surface]").getAttribute("data-exposure"));
