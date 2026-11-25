@@ -8,7 +8,6 @@ import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
 import { ringLight } from "./rings.ts";
 import type { AirLuts, AirShape } from "./air-luts.ts";
-import { flattenScale } from "./true-shape.ts";
 import { makeAirShell, type AirShell } from "./gpu-air-shell.ts";
 import { BAKE_BUDGET, faceSize } from "./texture-ladder.ts";
 import { createTextureBaker } from "./texture-ladder-gpu.ts";
@@ -64,10 +63,6 @@ export interface GpuItem {
    * of a contact binary), in units of `radius`, its long axis on x and spin axis on z. Keyed: built once.
    */
   mesh?: { key: string; positions: Float32Array; normals: Float32Array; index: Uint32Array };
-  /** True look: how much the world's spin flattens it (true-shape.ts, TA6), drawn along its pole, volume kept. */
-  flatten?: number;
-  /** The world's north pole in camera space, for `flatten` when no `frame` is given. */
-  pole?: Vec3;
 }
 
 /** True look: the star's light. `at` a camera-relative point (the star is in the frame), else `from` a direction. */
@@ -404,18 +399,13 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         if (it.frame) {
           const [x, y, z] = it.frame;
           m.quaternion.setFromRotationMatrix(turned.makeBasis(new Vector3(...x), new Vector3(...y), new Vector3(...z)));
-        } else if (it.flatten && it.pole) m.quaternion.setFromUnitVectors(zAxis, new Vector3(...it.pole).normalize());
-        if (it.flatten) {
-          // The globe's poles are on its own z: shorter along it, wider round it, the volume kept.
-          const s = flattenScale(it.flatten);
-          m.scale.set(it.radius * s.equator, it.radius * s.equator, it.radius * s.pole);
         }
         scene.add(m);
         if (lit && it.clouds) {
           const cm = new Mesh(globe, cloudMat(it.clouds));
           cm.position.copy(m.position);
           cm.quaternion.copy(m.quaternion);
-          cm.scale.copy(m.scale).multiplyScalar(CLOUD_LIFT);
+          cm.scale.setScalar(it.radius * CLOUD_LIFT);
           cm.renderOrder = 1;
           scene.add(cm);
         }
