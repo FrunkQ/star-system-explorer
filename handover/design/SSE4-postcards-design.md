@@ -1,6 +1,6 @@
 # SSE4: postcards and hold backdrops (track PC)
 
-Status: **PROPOSED, 25 Nov 2026; the idea and the name are welcomed by Alex (01:08 UTC: "postcards - amazing idea"), with three rulings in section 12A, which wins where it differs from the rest. Not yet accepted in full: questions 2 to 7, 9, 11 and 12 of section 12 and new questions 13 and 14 are still open, and no builder starts until he answers them.** Design and mockup only. PC is a code only and is never shown in the product.
+Status: **PROPOSED, 25 Nov 2026; the idea and the name are welcomed by Alex (01:08 UTC: "postcards - amazing idea"), with three rulings in section 12A, which wins where it differs from the rest. Not yet accepted in full: questions 2 to 7, 9, 11 and 12 of section 12 and new question 13 are still open, and no builder starts until he answers them.** Design and mockup only. PC is a code only and is never shown in the product.
 
 Mockup, clickable: project files `sse4/handover-screens/PC-screens/postcards-mockup.html`, with desktop and phone screenshots beside it and its source in `PC-screens/source/`. The pictures in the mockup are painted stand-ins, not SSE4 output; each says so.
 
@@ -192,7 +192,7 @@ His words: "postcards - amazing idea - always a selection free in the shop - it 
 
 Two things follow for the builder. A link that shows a stamp and a message needs somewhere to keep them, since a web address cannot hold a picture: a shop postcard already has its page; a private send stores a small sealed copy (stamp, message, the postcard data) on Explorers behind an unguessable address, with a lifetime (question 14). And a private send is the first user-written text and picture that is not moderated before someone sees it, so it carries a Report link and is never listed or searchable.
 
-14. **New question: private sends kept on Explorers behind an unguessable link, for how long?** Recommend: one year from the last time it was opened, then removed; the sender can remove it at once from "Sent" on the wall. Needs your own yes with PC8, since it stores user content.
+14. **Answered by Alex, 01:26 UTC:** "let the user decide when it times out - max 1 year. the postcard will still work - just not with their message". So Send offers how long the message lasts (a day, a week, a month, a year; never longer than a year), and the sender can remove it sooner from "Sent" on the wall. **The postcard itself never expires**: the link carries the postcard's own data (its address, date, camera and packs), and only the message and the stamp for that sending are kept on Explorers, sealed, behind the link's unguessable key. After the time is up the same link still opens the postcard, drawn live, with the back's message side blank and the page's preview picture gone. The storage itself still needs Alex's own yes when PC8 is built, as any Explorers storage does.
 
 What this changes above: section 4's "clip" case and section 7's file with a clip are **not for the shop**. Whether a clip-carrying postcard is still allowed directly between friends (copy, file) is new question 13. Section 9's moderation gets simpler: the only new thing the site stores is the stamp.
 
