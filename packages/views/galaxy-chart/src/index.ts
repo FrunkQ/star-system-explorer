@@ -1,1 +1,1 @@
-export { galaxyChart } from "./index.svelte.ts";
+export { galaxyChart, yourSystems } from "./index.svelte.ts";
