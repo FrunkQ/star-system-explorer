@@ -896,6 +896,7 @@ for _k, _v in optical_rows.SOURCES.items():
     SOURCES[_k] = _v
 for _m in optical_rows.apply(MIXTURES):
     MIXTURES.append(_m)
+optical_rows.apply_ices(SUBSTANCES, val)
 
 
 def elements():

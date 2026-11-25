@@ -109,6 +109,7 @@
           </ul>
           <div class="acts">
             <button type="button" onclick={() => ctx.workspace.select(h.subject)} data-pick>Pick on the chart</button>
+            {#if ctx.describe}<button type="button" onclick={() => ctx.describe?.(h.subject)} data-minerva title="Minerva tells it from what the audience you choose knows; secrets stay with you">Tell it with Minerva</button>{/if}
             <button type="button" onclick={() => copy(h, i)} data-brief>Copy a brief for a storyteller</button>
             <button type="button" class="link" onclick={() => (open = open === i ? null : i)}>{open === i ? "Hide" : "Show"} the brief</button>
             {#if copied === `${i}`}<span class="hint" role="status">Copied.</span>{/if}
@@ -137,7 +138,7 @@
       <h4>How much it matters</h4>
       <p class="hint">The mean of four parts, each 0 to 100: how long it lasts (up to 10 billion years), how far it reaches (up to 10,000 places), how hard it is to undo, and how rare it is (when the sifter asks).</p>
       <h4>Not yet</h4>
-      <p class="hint">Sending a hit to Minerva waits for the agents; until then the brief copies as text. Sifters over events (impacts, flares, inked history) come as the campaign records them.</p>
+      <p class="hint">{ctx.describe ? "Tell it with Minerva hands the hit's subject to the storyteller, who writes only from what the chosen audience knows; the brief copies as text for any other storyteller." : "Minerva is not set up on this machine, so the brief copies as text for a storyteller."} Sifters over events (impacts, flares, inked history) come as the campaign records them.</p>
     </aside>
   </div>
 </div>
