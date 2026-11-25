@@ -72,8 +72,16 @@ pub fn conditions(
         sse_core::sheet::S_SUN / (a_au * a_au)
     });
     let gases = x.gases.clone().unwrap_or_else(|| {
-        assumed.push("air of the default mix".into());
-        d.gases.clone()
+        if b.deep_envelope && !d.giant_gases.is_empty() {
+            assumed.push(format!(
+                "air of the protosolar mix ({})",
+                d.giant_gases_source
+            ));
+            d.giant_gases.clone()
+        } else {
+            assumed.push("air of the default mix".into());
+            d.gases.clone()
+        }
     });
     let t = env.t_surface_now_k;
     let liquid = x.liquid.clone().or_else(|| {

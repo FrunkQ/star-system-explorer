@@ -165,8 +165,8 @@ fn climate_follows_air_rotation_and_height() {
     assert_eq!(titan.world.climate.circulation.cells, 1);
     assert_eq!(
         titan.liquid.as_deref(),
-        Some("hydrocarbon"),
-        "Titan's seas are hydrocarbon"
+        Some("methane"),
+        "Titan's seas are methane, by the sheet's name"
     );
     // Rain from the energy balance: wetter at the equator than at 30°, and
     // nearly nothing at the poles.
