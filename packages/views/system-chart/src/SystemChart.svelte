@@ -6,7 +6,7 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts" module>
-  import type { AirShape as AirKept, FieldReadJson, LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
+  import { withFiner, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
@@ -14,6 +14,16 @@
   /** Its clouds alone, its ground under them, and its air (VP-A3, VP-A4), by system and world. */
   type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept };
   const trueAirs = new Map<string, TrueAir>();
+  /** Lays finer tiles (VP3 part 2) over the ground under a world's clouds; the new entry, or null when nothing changed. */
+  function finerGround(key: string, fine: Parameters<typeof withFiner>[1]): TrueAir | null {
+    const a = trueAirs.get(key);
+    if (!a?.ground?.faces || !fine.length) return null;
+    const ground = withFiner(a.ground, fine);
+    if (ground === a.ground) return null;
+    const next = { ...a, ground };
+    trueAirs.set(key, next);
+    return next;
+  }
   /** Stars read for True's living star, by system and star (a string: why there is none). */
   const liveStars = new Map<string, LiveStar | string>();
   /** read_field's Solar System fixture, read once for the page (Mag, V10e). */
@@ -28,6 +38,7 @@
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
   import { readLiveStar, readTrueFace, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
+  import { finerTiles, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -360,16 +371,39 @@
           if (typeof f !== "string") trueSaid.set(key, f.said);
           // Its clouds alone over its ground, and its air's rim (VP-A3, VP-A4).
           if (typeof f !== "string" && (f.clouds || f.air)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}) });
+          // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
+          const kept = trueSurfaces.get(key);
+          if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));
+          finerGround(key, finerTiles(key));
         }
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
         if (t && typeof t !== "string") surfaces = new Map(surfaces).set(s.address, t);
+        else (none++, (noneWhy = String(t)));
         const a = trueAirs.get(key);
         if (a && airs.get(s.address) !== a) airs = new Map(airs).set(s.address, a);
-        else (none++, (noneWhy = String(t)));
         done++;
       }
       reading = { done, of: order.length, none, why: noneWhy };
+      // VP3 part 2: finer tiles for the chosen world only, four at a time, once it has been left chosen for a while
+      // (finer-tiles.ts); stops between requests when another world is chosen or True is left.
+      const chosen = order[0];
+      const ck = chosen && chosen.address === sel ? `${sys}|${chosen.address}` : "";
+      const base = ck ? trueSurfaces.get(ck) : undefined;
+      // A world wears the finer faces on its ground: its True face when that is the ground alone, or the ground under
+      // its own cloud layer (VP-A4), which is what gpu.ts draws when the clouds are there.
+      const under = ck ? trueAirs.get(ck)?.ground : undefined;
+      if (ck && base && typeof base !== "string" && (base.faces || under?.faces) && g === trueGen) {
+        void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
+          const now = trueSurfaces.get(ck);
+          if (!now || typeof now === "string") return;
+          const t = withFiner(now, fine);
+          trueSurfaces.set(ck, t);
+          surfaces = new Map(surfaces).set(chosen!.address, t);
+          const a = finerGround(ck, fine);
+          if (a) airs = new Map(airs).set(chosen!.address, a);
+        });
+      }
     })());
   });
   // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.

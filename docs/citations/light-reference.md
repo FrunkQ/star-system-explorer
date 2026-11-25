@@ -146,6 +146,20 @@ Status key: **verified** (source read, number matches) / **corrected-metadata** 
 | `packages/renderer`, `packages/sound/src`, `packages/views/*`, `chart-grammar/References.svelte` | No physics constants with sources. The sound engine has only synthesis settings. | – |
 | `packages/shell/src/documents/*.json` other than RO and light.recipes | No references (derivations.base.json maps flows to facts). | – |
 
+## Detail ladder (VP6, `packages/renderer/src/ladder-noise.ts` `NOISE_REFERENCES`)
+
+Checked 24 Nov 2026 through Crossref and the URLs named.
+
+| Where | Reference as written (short) | Relied on | Status | What was checked |
+|---|---|---|---|---|
+| `ladder-noise.ts` `simplex`, `permute` | McEwan, Sheets, Richardson and Gustavson 2012, J. Graphics Tools 16(2) 85-94; doi 10.1080/2151237X.2012.649621 | branch-free simplex corner ranking; a permutation polynomial mod 289 as a hash | corrected-metadata (author order; the hash's exact form unverified) | Crossref: title, volume, pages and DOI match; authors are McEwan, Sheets, Richardson, Gustavson. No abstract; whether the paper gives (34x² + x) mod 289 was not read. The code uses (34x² + 10x) mod 289 and its exactness in float32 is checked by the GPU test. |
+| `simplex` | Gustavson 2005, "Simplex noise demystified" (weber.itn.liu.se) | the 3D simplex lattice: skew 1/3, unskew 1/6, radial kernels | unverified | Page refused automated fetch (robots). The method is reproduced and tested in `ladder.test.ts` (gradient, periodicity). |
+| `simplex` (turning gradients) | Perlin and Neyret 2001, "Flow noise", SIGGRAPH Technical Sketches (www-evasion.imag.fr/Publications/2001/PN01/) | gradients turned over time give swirling detail | unverified (existence via a citing paper) | Page refused automated fetch. Bridson et al. 2007 cites it with this URL ("SIGGRAPH Technical Sketches and Applications 187"). |
+| `curl` | Bridson, Hourihan and Nordenstam 2007, ACM TOG 26(3) 46; doi 10.1145/1276377.1276435 | the curl of a noise potential has no divergence | verified (metadata); the property is tested | Crossref: title, volume, issue, article 46 match; Crossref spells the second author "Houriham". |
+| `cell` | Worley 1996, SIGGRAPH 96 291-294; doi 10.1145/237170.237267 | F1 and F2 distances to feature points | verified (metadata) | Crossref: title, author, pages match. |
+| `ladder.ts` `FLOW_REACH`, `ladder-node.ts` flow | Vlachos 2010, "Water flow in Portal 2", SIGGRAPH Advances in Real-Time Rendering | two-phase flow maps | verified (existence) | advances.realtimerendering.com/s2010: the syllabus lists the talk by Alex Vlachos (Valve). |
+| `ladder.ts` `EDDY_EXPONENT` | Kolmogorov 1941 (inertial range, velocity ∝ size^(1/3)) | eddy speed by size | textbook | Standard result; used as a stand-in (fudge register). |
+
 ## Counts
 
 | Section | Rows | verified | corrected-metadata | corrected-physics | unverified | textbook |

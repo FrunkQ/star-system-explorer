@@ -9,6 +9,8 @@ import type { TrueTexture } from "./true-look.ts";
 import { ringLight } from "./rings.ts";
 import type { AirLuts, AirShape } from "./air-luts.ts";
 import { makeAirShell, type AirShell } from "./gpu-air-shell.ts";
+import { BAKE_BUDGET, faceSize } from "./texture-ladder.ts";
+import { createTextureBaker } from "./texture-ladder-gpu.ts";
 
 /** Clouds are drawn this far out (over the radius) until the weather op gives their height: a hair, so they do not fight the ground. */
 const CLOUD_LIFT = 1.002;
@@ -159,6 +161,26 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   };
   const versions = new Map<string, number>();
   const litMats = new Map<string, MeshStandardMaterial>();
+  // VP3: a world with cube face pictures wears a bake sized to its disc on screen (texture-ladder.ts), with relief.
+  const baker = createTextureBaker(renderer);
+  const bakedSize = new Map<string, number>();
+  const ladderTier = backend === "webgpu" ? "gpu-high" : "gpu-basic";
+  const bakedMat = (it: GpuItem, disc_px: number) => {
+    const c = it.surface?.texture.faces;
+    if (!c || !c.radius_m || !it.surface) return null;
+    const finest = Math.max(...c.faces.map((f) => f?.n ?? 0));
+    if (!finest) return null;
+    // No finer than four texels a tile sample (beyond that the bake adds nothing the sampler does not).
+    const want = Math.min(faceSize(disc_px, ladderTier), Math.max(64, 4 * finest));
+    if (want <= 0) return null;
+    // Keep a bake within a factor of two of what is wanted, so a world drifting on screen is not baked again.
+    const had = bakedSize.get(it.surface.key);
+    const size = had && had >= want / 2 && had <= want * 2 ? had : want;
+    bakedSize.set(it.surface.key, size);
+    const b = baker.get(it.surface.key, c, size, c.radius_m);
+    baker.trim(BAKE_BUDGET[ladderTier]);
+    return b.material;
+  };
   const litMat = (it: GpuItem) => {
     const key = it.surface?.key ?? `plain:${it.colour}`;
     const hit = litMats.get(key);
@@ -349,7 +371,11 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
           continue;
         }
         const lit = !!o.light && !it.shines && it.emit === undefined;
-        const m = new Mesh(o.light || it.frame ? globe : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? litMat(it) : mat(it.colour));
+        // On screen: the disc's width in pixels (perspective; the ortho view's from its width).
+        const dist = Math.hypot(it.rel[0], it.rel[1], it.rel[2]);
+        const disc_px = o.ortho ? (2 * it.radius * o.width) / o.ortho.width : dist > it.radius ? (it.radius / dist / Math.tan(o.fovY / 2)) * o.height : o.height;
+        const surfaceMat = lit && it.surface?.texture.faces ? bakedMat(it, disc_px) : null;
+        const m = new Mesh(o.light || it.frame ? globe : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? (surfaceMat ?? litMat(it)) : mat(it.colour));
         m.position.set(it.rel[0], it.rel[1], it.rel[2]);
         m.scale.setScalar(it.radius);
         if (it.frame) {
@@ -453,6 +479,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       cloudMats.forEach((m) => m.dispose());
       faces.forEach((e) => (e.tex.dispose(), e.mat.dispose()));
       litMats.forEach((m) => m.dispose());
+      baker.dispose();
       mats.forEach((m) => m.dispose());
       greys.forEach((m) => m.dispose());
       pics.forEach((e) => e.tex.dispose());
