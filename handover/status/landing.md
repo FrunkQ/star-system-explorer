@@ -24,7 +24,7 @@ renderer.md (SL1, V10g, V10i, V10j, V10k), run-desk.md (RD1 reveal on arrival).
 | Pick a site (Land here, landmark or anywhere) | yes, party's ship as lander | nothing until sent | works |
 | Send this view | yes | Landing screen, same site and verdict on own kernel | works (send race fixed in RD1) |
 | Descend | flown from the kernel's log | flies too, a few seconds behind | works (a torch ship flies down from orbit since LR1) |
-| Land, look about, walk | yes, hour by Dawn/Midday/Dusk/Night (LR2) | follows the GM's pose | works (night and 3D ground fixed by the renderer, LR3) |
+| Land, look about, walk | yes, hour by Dawn/Midday/Dusk/Night (LR2); the lander in frame, lamps at night (LR6) | follows the GM's pose and lamps | works (night and 3D ground fixed by the renderer, LR3) |
 | Take off | yes | back to the site | works |
 
 ## Gaps and packages
@@ -38,7 +38,8 @@ renderer.md (SL1, V10g, V10i, V10j, V10k), run-desk.md (RD1 reveal on arrival).
 | LR4 approach and orbit for the table: Send this view on a world's own screen sends the "In orbit" screen (`players.orbit.screen.json`, `playerBody` in views/body), titled "Beowulf in orbit of Mars"; the seat reads that one known world's map (`groundGrant`) | here | done | packages/LR4.md; air and a ship marker not yet |
 | LR5 a whole landing in its link: `~surface?site=lat,lon&time=midday&lander=party` (place.ts); Land applies hour and lander with the site, and a site link is followed even with Land open, so a bookmark or Playbook preset is a place link | here | done | packages/LR2.md |
 | LR5b the Land screen's own link and title: on Land the place (and so the address bar) carries the site, the quick hour and the lander as the GM picks them (`landingLinkSite`), and `here()`'s title names the landing ("Mars, landing at Dribeque Planitia, midday", `landingTitle`), so a kept beat or a copied link brings it back. Bookmarks (PB2b `Whereabouts`) do not carry the site yet: Run desk thread told | here | done | packages/LR2.md |
+| LR6 the lander on the ground: the stock lander (sized from its mass) stands where it touched down, in frame from where the walk starts; a Lamps switch lights it at night and the table follows (`renderer/src/surface-lander.ts`, agreed with the renderer) | here | done | packages/LR6.md; lamps light no ground yet, construct models not passed |
 | Gap 10, Mass on the Run desk card at Curious | Run desk thread (asking Alex) | open | |
 
 ## Next
-LR4b the world's air on the players' orbit globe (the GM sends the air facts with the orbit, as a landing sends `world`), then a ship marker in orbit.
+LR4b the world's air on the players' orbit globe (the GM sends the air facts with the orbit, as a landing sends `world`), then a ship marker in orbit; LR6b the construct's own model on the ground, and the lamps' pool of light (renderer).
