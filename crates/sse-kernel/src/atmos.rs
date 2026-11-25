@@ -42,17 +42,19 @@ pub struct AdviceParams {
     pub differs_dex: f64,
     /// Shares below this count as none.
     pub trace: f64,
-    /// Without a formation ledger: carbon per hydrogen by mass in what a
+    /// Without a formation ledger: hydrogen per carbon by mass in what a
     /// mantle holds, the bulk silicate Earth's (Hirschmann and Dasgupta
-    /// 2009, Chemical Geology 262, 4: C/H 0.99 ± 0.42, doi:10.1016/j.chemgeo.2009.02.008).
-    pub carbon_per_hydrogen: f64,
+    /// 2009, Chemical Geology 262, 4: "(H/C)BSE is 0.99±0.42",
+    /// doi:10.1016/j.chemgeo.2009.02.008).
+    pub hydrogen_per_carbon: f64,
     /// How long a pair lasts in Earth's sunlit air, by reaction, years,
     /// with the source. A reaction not listed has no quick sink without
     /// life or a catalyst.
     pub lifetimes: BTreeMap<String, (f64, String)>,
     /// Diffusion-limited hydrogen escape on Earth, H2 molecules per cm² per
-    /// second per unit mixing ratio (Hunten 1973, doi:10.1175/1520-0469(1973)030<1481:TEOLGF>2.0.CO;2;
-    /// the 2.5e13 of Catling and Kasting 2017), scaled by gravity over
+    /// second per unit mixing ratio (the limit is Hunten 1973,
+    /// doi:10.1175/1520-0469(1973)030<1481:TEOLGF>2.0.CO;2; the 2.5e13 is
+    /// Hunten and Strobel 1974 as given in Catling and Kasting 2017, eq. 5.57), scaled by gravity over
     /// standard gravity (the sheet's g0); the column is the air's own weight
     /// over its mean molar mass (the sheet's molar masses).
     pub escape_flux: f64,
@@ -66,7 +68,7 @@ impl Default for AdviceParams {
         AdviceParams {
             differs_dex: 1.0,
             trace: 1.0e-9,
-            carbon_per_hydrogen: 0.99,
+            hydrogen_per_carbon: 0.99,
             escape_flux: 2.5e13,
             escape_keep_s: 1.0e8 * crate::clock::JULIAN_YEAR_S,
             lifetimes: [
@@ -254,7 +256,7 @@ pub fn advise(
                 "How much hydrogen and carbon came out is not known (no formation run): the mix uses the bulk silicate Earth's carbon per hydrogen, and the expected pressure is left open.".into(),
             );
             // One mole of hydrogen as H2, carbon by the mantle's ratio.
-            let c = p.carbon_per_hydrogen * (2.0 * aw::H / 1000.0) / (aw::C / 1000.0);
+            let c = (2.0 * aw::H / 1000.0) / (aw::C / 1000.0) / p.hydrogen_per_carbon;
             (1.0, c, None)
         }
     };

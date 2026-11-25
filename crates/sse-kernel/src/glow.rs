@@ -162,14 +162,14 @@ mod tests {
         let plane_out = mag_at(g, "V", 90.0, 3.0);
         let centre = mag_at(g, "V", 0.0, -6.0);
         let anti = mag_at(g, "V", 180.0, -6.0);
-        // With the arms trailing (24 Nov) the Sun sits between the two arms
-        // of the fixed pattern, so the near disc's young stars are thin and
-        // the plane reads about 0.8 magnitudes brighter than the pole; the
-        // measured sky has 2 to 3 (Leinert et al. 1998), helped by the Local
-        // Arm the two-arm pattern lacks (docs/fudges.md, envelope.rs arms).
-        // Loosened from 1.0 on 24 Nov (PR 463, log packages/GH3-leading-arm.md):
-        // restore 1.0 when the Local Arm lands (recommended to Alex).
-        assert!(plane_out < pole - 0.5, "plane {plane_out} pole {pole}");
+        // The home galaxy's arms are measured (Reid et al. 2019), the Local
+        // Arm among them, so the Sun sits in an arm's young stars and the
+        // plane reads well brighter than the pole (measured sky 2 to 3
+        // magnitudes, Leinert et al. 1998; here about 0.96, up from 0.8). The
+        // margin was 0.5 while the generic two-arm wave put the Sun between
+        // arms (PR 463); 0.9 now, short of the measured sky because the far
+        // side of the disc beyond the parallaxes is left smooth.
+        assert!(plane_out < pole - 0.9, "plane {plane_out} pole {pole}");
         assert!(centre < anti, "centre {centre} anticentre {anti}");
         // Dust: along the midplane V sees only the near disc, so the centre
         // is barely brighter than the anticentre; Ks sees through to the

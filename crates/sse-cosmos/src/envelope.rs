@@ -68,6 +68,150 @@ pub struct EnvelopeParams {
     /// Active-nucleus dose: black hole mass gained in the last `agn_window_gyr`, per 1e6
     /// solar masses, times (1 kpc / R)^2.
     pub agn_window_gyr: f64,
+    /// Arms placed from measurement (`MeasuredArms`), in place of the
+    /// generic log-spiral wave when a galaxy has them (the home galaxy, from
+    /// Reid et al. 2019). Empty for every other galaxy.
+    #[serde(default, skip_serializing_if = "MeasuredArms::is_empty")]
+    pub measured: MeasuredArms,
+}
+
+/// One measured arm, in the frame of the paper that measured it: a log
+/// spiral with a kink, ln(R/R_kink) = -(beta - beta_kink) tan(psi), with
+/// psi_before for beta < beta_kink and psi_after beyond; beta is the
+/// galactocentric azimuth from the home's direction, increasing with the
+/// disc's turning; the arm is seen over `beta_deg` and has a Gaussian 1-sigma
+/// width `width_kpc` at R_kink, growing `width_slope` (kpc per kpc) outward.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct MeasuredArm {
+    pub name: String,
+    pub beta_deg: [f64; 2],
+    pub beta_kink_deg: f64,
+    pub r_kink_kpc: f64,
+    pub psi_before_deg: f64,
+    pub psi_after_deg: f64,
+    pub width_kpc: f64,
+}
+
+/// A galaxy's measured arms (`provides.other.cosmology.envelope.measured`).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
+pub struct MeasuredArms {
+    pub arms: Vec<MeasuredArm>,
+    /// The home's galactocentric radius the measurement assumed (kpc): radii
+    /// are scaled by the galaxy's own home radius over this, so the arms keep
+    /// their place against the home.
+    pub r0_kpc: f64,
+    /// Width growth outward, kpc per kpc of radius.
+    pub width_slope: f64,
+    /// How far past the measured azimuths an arm runs on, fading as a
+    /// Gaussian of this 1-sigma (degrees): arms do not stop where the
+    /// parallaxes stop (fudge register).
+    pub run_on_deg: f64,
+    /// The galactic azimuth (radians) of beta = 0 at the galaxy's present:
+    /// the home's own azimuth then. Not pack data: the kernel sets it from
+    /// the star grid's turning when it builds the home galaxy's envelope.
+    #[serde(default, skip_serializing)]
+    pub frame_phi_rad: f64,
+    /// The arms' sum averaged round each ring, as (radius, mean) in the
+    /// measurement's kpc: worked out once by `prepare` (not pack data).
+    #[serde(default, skip)]
+    pub ring_means: Vec<[f64; 2]>,
+}
+
+impl MeasuredArms {
+    pub fn is_empty(&self) -> bool {
+        self.arms.is_empty()
+    }
+
+    /// Work out each ring's average of the arms' sum once (120 radii, log
+    /// spaced from 0.3 to 40 kpc), so a read of the boost is a lookup.
+    pub fn prepare(&mut self) {
+        if self.arms.is_empty() {
+            return;
+        }
+        let n = 120;
+        let (lo, hi) = (0.3_f64, 40.0_f64);
+        self.ring_means = (0..n)
+            .map(|i| {
+                let r = lo * m::pow(hi / lo, f64::from(i) / f64::from(n - 1));
+                [r, self.ring_mean(r)]
+            })
+            .collect();
+    }
+
+    /// The arms' sum at radius r and azimuth beta (measurement frame).
+    pub fn sum_at(&self, r: f64, beta0: f64) -> f64 {
+        let mut s = 0.0;
+        for a in &self.arms {
+            // The azimuth and its turns either way (an arm can wind past a
+            // full turn only for tiny pitches).
+            for turn in [-1.0, 0.0, 1.0] {
+                let beta = beta0 + turn * 2.0 * m::PI;
+                let reach = self.reach(a, beta);
+                if reach < 1e-6 {
+                    continue;
+                }
+                let (ra, psi) = arm_radius(a, beta);
+                let w = (a.width_kpc + self.width_slope * (ra - a.r_kink_kpc)).max(0.02);
+                let d = (r - ra) * m::cos(psi);
+                s += reach * m::exp(-0.5 * (d / w) * (d / w));
+            }
+        }
+        s
+    }
+
+    /// The sum averaged round the ring at r (360 azimuths, finer than the
+    /// narrowest arm's width over its radius here).
+    fn ring_mean(&self, r: f64) -> f64 {
+        let n = 360;
+        (0..n)
+            .map(|i| self.sum_at(r, -m::PI + 2.0 * m::PI * f64::from(i) / f64::from(n)))
+            .sum::<f64>()
+            / f64::from(n)
+    }
+
+    /// The ring mean at r: from the prepared table, or worked out now.
+    pub fn mean_at(&self, r: f64) -> f64 {
+        let t = &self.ring_means;
+        if t.len() < 2 {
+            return self.ring_mean(r);
+        }
+        if r <= t[0][0] {
+            return t[0][1];
+        }
+        if r >= t[t.len() - 1][0] {
+            return t[t.len() - 1][1];
+        }
+        let i = t.partition_point(|x| x[0] < r).max(1);
+        let (a, b) = (t[i - 1], t[i]);
+        a[1] + (b[1] - a[1]) * (r - a[0]) / (b[0] - a[0])
+    }
+
+    /// How much of an arm is there at azimuth beta: 1 over its measured
+    /// azimuths, fading as a Gaussian beyond them.
+    fn reach(&self, a: &MeasuredArm, beta: f64) -> f64 {
+        let deg = beta * 180.0 / m::PI;
+        let past = if deg < a.beta_deg[0] {
+            a.beta_deg[0] - deg
+        } else if deg > a.beta_deg[1] {
+            deg - a.beta_deg[1]
+        } else {
+            0.0
+        };
+        let s = self.run_on_deg.max(1e-9);
+        m::exp(-0.5 * (past / s) * (past / s))
+    }
+}
+
+/// One arm's radius (measurement kpc) and pitch at azimuth beta (radians).
+fn arm_radius(a: &MeasuredArm, beta: f64) -> (f64, f64) {
+    let bk = a.beta_kink_deg * m::PI / 180.0;
+    let psi = if beta < bk {
+        a.psi_before_deg
+    } else {
+        a.psi_after_deg
+    } * m::PI
+        / 180.0;
+    (a.r_kink_kpc * m::exp(-(beta - bk) * m::tan(psi)), psi)
 }
 
 impl Default for EnvelopeParams {
@@ -92,6 +236,7 @@ impl Default for EnvelopeParams {
             grb_per_msun: 1.6e-7,
             grb_z_crit: 0.3,
             agn_window_gyr: 1.0,
+            measured: MeasuredArms::default(),
         }
     }
 }
@@ -265,11 +410,16 @@ impl GalaxyEnvelope<'_> {
         )
     }
 
-    /// 1 + A cos(m (phi - phi_arm)): a trailing log spiral, rotating at the pattern speed.
-    /// The disc turns towards +phi (stars' `omega` > 0), so a trailing arm's
-    /// crest falls back in phi as r grows: phi_arm = w_p t - ln(r/r_d)/tan(pitch).
+    /// The arm boost at a place. Generic galaxies: 1 + A cos(m (phi - phi_arm)),
+    /// a trailing log spiral rotating at the pattern speed. The disc turns
+    /// towards +phi (stars' `omega` > 0), so a trailing arm's crest falls back
+    /// in phi as r grows: phi_arm = w_p t - ln(r/r_d)/tan(pitch). A galaxy
+    /// with measured arms uses them instead (`measured_arm`).
     pub fn arm(&self, p: &Place) -> f64 {
         let e = &self.params;
+        if !e.measured.is_empty() {
+            return self.measured_arm(p);
+        }
         let rd = self.galaxy.now.disc_kpc.max(0.1);
         let tan_pitch = m::tan(e.pitch_deg * m::PI / 180.0);
         let omega_p = e.pattern_kms_kpc * 1.0227; // radians per Gyr
@@ -277,6 +427,102 @@ impl GalaxyEnvelope<'_> {
             * (p.phi - omega_p * p.t_gyr + m::ln(p.r_kpc.max(0.01) / rd) / tan_pitch
                 - e.arm_phase0);
         1.0 + e.arm_contrast * m::cos(phase)
+    }
+
+    /// Where a place sits across the arms, from -1 (mid-interarm) to 1 (on a
+    /// crest): the generic wave's cos(phase), or for measured arms 2 S - 1
+    /// with S the arms' summed Gaussians (at most 1), so "in an arm" reads the
+    /// same way for both.
+    pub fn arm_cos(&self, p: &Place) -> f64 {
+        let e = &self.params;
+        if e.measured.is_empty() {
+            let a = e.arm_contrast.max(1.0e-9);
+            return (self.arm(p) - 1.0) / a;
+        }
+        let r = p.r_kpc.max(0.01) * self.measured_scale();
+        let beta0 = self.measured_beta(p.phi, p.t_gyr);
+        2.0 * e.measured.sum_at(r, beta0).min(1.0) - 1.0
+    }
+
+    /// Measured radius scale: the measurement's kpc per the galaxy's kpc.
+    fn measured_scale(&self) -> f64 {
+        let r0 = self.params.measured.r0_kpc;
+        if r0 > 0.0 {
+            r0 / self.sun_radius_kpc()
+        } else {
+            1.0
+        }
+    }
+
+    /// beta of a galactic azimuth at a time: arms keep their shape and turn
+    /// at the pattern speed about the present.
+    fn measured_beta(&self, phi: f64, t_gyr: f64) -> f64 {
+        let e = &self.params;
+        let omega_p = e.pattern_kms_kpc * 1.0227;
+        let b = phi - e.measured.frame_phi_rad - omega_p * (t_gyr - self.galaxy.now.t_gyr);
+        // Into [-pi, pi): the arms' azimuths are given within half a turn of
+        // the home, and `sum_at` looks a turn either way.
+        b - 2.0 * m::PI * m::floor((b + m::PI) / (2.0 * m::PI))
+    }
+
+    /// The measured arms' boost: (1 + B S) / (1 + B <S>), where S sums each
+    /// arm's Gaussian across its width at the place and <S> is its average
+    /// round the ring at that radius, so a ring's total is kept and only its
+    /// share between arm and interarm changes. B is set so that arm over
+    /// interarm is the generic wave's (1 + A) / (1 - A): the same contrast.
+    fn measured_arm(&self, p: &Place) -> f64 {
+        let e = &self.params;
+        let ms = &e.measured;
+        let r = p.r_kpc.max(0.01) * self.measured_scale();
+        let beta0 = self.measured_beta(p.phi, p.t_gyr);
+        let a_c = e.arm_contrast.clamp(0.0, 0.95);
+        let b = (1.0 + a_c) / (1.0 - a_c) - 1.0;
+        (1.0 + b * ms.sum_at(r, beta0)) / (1.0 + b * ms.mean_at(r))
+    }
+
+    /// Arm crests at a time as (r kpc, phi radians) polylines, one per arm:
+    /// the generic wave's arms, or the measured arms over their azimuths and
+    /// run-on (what the galaxy chart draws).
+    pub fn arm_crests(&self, t_gyr: f64, outer_kpc: f64) -> Vec<(String, Vec<[f64; 2]>)> {
+        let e = &self.params;
+        let omega_p = e.pattern_kms_kpc * 1.0227;
+        if e.measured.is_empty() {
+            let rd = self.galaxy.now.disc_kpc.max(0.1);
+            let tan_pitch = m::tan(e.pitch_deg * m::PI / 180.0);
+            return (0..e.arms)
+                .map(|k| {
+                    let line = (0..=96)
+                        .map(|i| {
+                            // Log-spaced radii, so the tight inner windings stay smooth.
+                            let r = rd * 0.5 * m::pow(outer_kpc / (rd * 0.5), f64::from(i) / 96.0);
+                            let phi = omega_p * t_gyr - m::ln(r / rd) / tan_pitch
+                                + e.arm_phase0
+                                + 2.0 * m::PI * f64::from(k) / f64::from(e.arms.max(1));
+                            [r, phi]
+                        })
+                        .collect();
+                    (format!("arm {}", k + 1), line)
+                })
+                .collect();
+        }
+        let ms = &e.measured;
+        let k = self.measured_scale();
+        let rot = ms.frame_phi_rad + omega_p * (t_gyr - self.galaxy.now.t_gyr);
+        ms.arms
+            .iter()
+            .map(|a| {
+                let (b0, b1) = (a.beta_deg[0] - ms.run_on_deg, a.beta_deg[1] + ms.run_on_deg);
+                let line = (0..=96)
+                    .map(|i| {
+                        let deg = b0 + (b1 - b0) * f64::from(i) / 96.0;
+                        let beta = deg * m::PI / 180.0;
+                        let (ra, _) = arm_radius(a, beta);
+                        [ra / k, rot + beta]
+                    })
+                    .collect();
+                (a.name.clone(), line)
+            })
+            .collect()
     }
 
     /// Lognormal texture from keyed value noise on a lattice (trilinear, so smooth across patches).

@@ -272,7 +272,11 @@ fn a_galaxy_feeds_the_patch_machinery() {
 fn pack_settings_are_the_defaults_and_golden_holds() {
     let cp = crate::scenario::CosmologyPack::from_packs(&[crate::scenario::base_cosmology_pack()])
         .unwrap();
-    assert_eq!(cp.envelope, EnvelopeParams::default());
+    // The pack's settings are the defaults, plus the home galaxy's measured arms.
+    let mut generic = cp.envelope.clone();
+    generic.measured = Default::default();
+    assert_eq!(generic, EnvelopeParams::default());
+    assert_eq!(cp.envelope.measured.arms.len(), 7);
     assert_eq!(cp.green, GreenParams::default());
     crate::golden::check("envelope.json", &crate::scenario::envelope_golden());
 }
@@ -317,4 +321,87 @@ fn arms_trail_the_disc_turning() {
         (outer - (inner - 0.3)).abs() < 0.02,
         "crest at {inner} inside, {outer} outside: the arm should fall back by 0.3 rad"
     );
+}
+
+fn measured_env<'a>(g: &'a Galaxy, d: &'a Disc) -> GalaxyEnvelope<'a> {
+    let cp = crate::scenario::CosmologyPack::from_packs(&[crate::scenario::base_cosmology_pack()])
+        .unwrap();
+    let mut e = env(g, d);
+    e.params = cp.envelope;
+    e.params.measured.frame_phi_rad = 0.7;
+    e.params.measured.prepare();
+    e
+}
+
+/// The home galaxy's arms are measured (Reid et al. 2019, ApJ 885, 131,
+/// Table 2): each arm's crest passes through its kink at R_kink (scaled to the
+/// galaxy's own Sun radius) and beta_kink from the home's direction, and the
+/// Sun now sits in the Local Arm.
+#[test]
+fn the_home_galaxy_has_its_measured_arms() {
+    use sse_core::math as m;
+    let (c, w) = world();
+    let (g, d) = milky_way_like(&c, &w);
+    let e = measured_env(&g, &d);
+    let now = g.now.t_gyr;
+    let k = e.params.measured.r0_kpc / e.sun_radius_kpc();
+    let at = |r: f64, phi: f64, t: f64| {
+        e.arm(&Place {
+            r_kpc: r,
+            phi,
+            z_pc: 0.0,
+            t_gyr: t,
+        })
+    };
+    for a in &e.params.measured.arms {
+        let r = a.r_kink_kpc / k;
+        let phi = 0.7 + a.beta_kink_deg * m::PI / 180.0;
+        // On the crest the boost is a local peak along the ring.
+        let here = at(r, phi, now);
+        let dphi = 3.0 * a.width_kpc / k / r;
+        assert!(
+            here > at(r, phi + dphi, now) && here > at(r, phi - dphi, now),
+            "{}: {here} not a crest",
+            a.name
+        );
+        assert!(here > 1.0, "{}: {here}", a.name);
+    }
+    // The Sun (beta 0 at its radius) is inside the Local Arm's width.
+    let sun = at(e.sun_radius_kpc(), 0.7, now);
+    assert!(sun > 1.5, "the Sun's arm boost {sun}");
+    // The pattern turns: 100 Myr on, the same place has moved off the arm's
+    // crest by the pattern speed (the arms keep their shape).
+    let omega_p = e.params.pattern_kms_kpc * 1.0227;
+    let later = at(e.sun_radius_kpc(), 0.7 + omega_p * 0.1, now + 0.1);
+    assert!((later - sun).abs() < 1e-9, "{later} {sun}");
+    // The crests the chart draws pass through the kinks too.
+    let crests = e.arm_crests(now, 20.0);
+    assert_eq!(crests.len(), 7);
+    assert!(crests.iter().any(|(n, _)| n == "Local"));
+}
+
+/// The measured arms move a ring's gas between arm and interarm but keep its
+/// total: the boost averages to about 1 round every ring.
+#[test]
+fn measured_arms_keep_each_rings_total() {
+    use sse_core::math as m;
+    let (c, w) = world();
+    let (g, d) = milky_way_like(&c, &w);
+    let e = measured_env(&g, &d);
+    let now = g.now.t_gyr;
+    for r in [3.0, 4.5, 6.0, 8.2, 10.0, 13.0] {
+        let n = 2880;
+        let mean: f64 = (0..n)
+            .map(|i| {
+                e.arm(&Place {
+                    r_kpc: r,
+                    phi: 2.0 * m::PI * f64::from(i) / f64::from(n),
+                    z_pc: 0.0,
+                    t_gyr: now,
+                })
+            })
+            .sum::<f64>()
+            / f64::from(n);
+        assert!((mean - 1.0).abs() < 0.12, "ring {r} kpc averages {mean}");
+    }
 }

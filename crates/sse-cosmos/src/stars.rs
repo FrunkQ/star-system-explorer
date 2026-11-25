@@ -278,6 +278,12 @@ pub struct Stars<'a> {
     pub galaxy: Address,
 }
 
+/// The star grid's turn at a time (radians): the home, fixed in the grid at
+/// (R_home, 0, 0), sits at this galactic azimuth.
+pub fn grid_angle(params: &StarParams, t_myr: f64) -> f64 {
+    params.cell_rotation_kms_kpc * KMS_PC_MYR / 1000.0 * t_myr
+}
+
 const KMS_PC_MYR: f64 = 1e3 * 1e6 * sse_core::sheet::YR_JULIAN / sse_core::sheet::PC;
 const G_PC3: f64 = sse_core::sheet::GM_SUN
     * (1e6 * sse_core::sheet::YR_JULIAN)
@@ -440,7 +446,7 @@ impl StarParams {
 impl<'a> Stars<'a> {
     /// Rotation angle of the cell grid at a time (Myr).
     fn grid_angle(&self, t_myr: f64) -> f64 {
-        self.params.cell_rotation_kms_kpc * KMS_PC_MYR / 1000.0 * t_myr
+        grid_angle(&self.params, t_myr)
     }
     /// The cell holding a galactic position at a time (co-rotating grid).
     pub fn cell_at(&self, xyz: [f64; 3], t_myr: f64) -> [i64; 3] {

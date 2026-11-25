@@ -53,3 +53,11 @@ draft mix from the Air box). Read-only; nothing is written or refused. Reply `ad
   carbonate cycle, photochemistry under the world's own star). "Kept by life" chips (F7) when the life sockets fill.
 - A pack override for `AdviceParams` (defaults only today).
 - The Air box itself is the editing thread's (ED); it calls this op.
+
+## Papers checked (25 Nov, with the Local Arm PR)
+
+The four unchecked sources were checked against their abstracts. Novelli 1999 (hydrogen lasts about 2 years) and
+Novelli 1998 (CO lasts about 2 months) hold. Hunten 1973 gives the diffusion limit but no number; the 2.5e13
+constant is Hunten and Strobel 1974, as given in Catling and Kasting 2017 eq. 5.57, and the comments now say so.
+Hirschmann and Dasgupta 2009 report H/C (0.99 ± 0.42), not C/H. The field is renamed `hydrogen_per_carbon` and
+inverted in the one place it is used, which moves the no-formation-run carbon by 1%.

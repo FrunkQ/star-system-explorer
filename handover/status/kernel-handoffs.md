@@ -6,7 +6,8 @@ work and the editing K-list). Only the owner thread edits this file. Index: `han
 
 | Package | State | Log |
 |---|---|---|
-| GH arm sign fix: arms trail (envelope arm phase and galaxy chart crests) | done 25 Nov, PR 463; the glow test's plane-over-pole margin is 0.5 mag until a Local Arm lands (then back to 1.0) | packages/GH3-leading-arm.md |
+| GH arm sign fix: arms trail (envelope arm phase and galaxy chart crests) | done 25 Nov, PR 463; the glow test's plane-over-pole margin is 0.5 mag until a Local Arm lands (0.9 with the Local Arm: the plane is now 0.96 mag over the pole) | packages/GH3-leading-arm.md |
 | GH3 leading arm: a dated `leading_arm` mark from a small backwards pass or meal; rarity check (1 in 100, Iye et al. 2019) | done 25 Nov, PR 463 | packages/GH3-leading-arm.md |
 | ATMOS `atmosphere_advice`: the science expects (redox sets the outgassed mix), differs, clashes (E8) with lifetimes, hydrogen escape, one suggested batch; V3 air imported as hand-set | done 25 Nov, PR 463 | packages/ATMOS.md |
 | V3 `bary:N` nodes onto the hierarchy on import (`adopt.rs`): the heaviest member stands for the pair, companions orbit it at the separation, no barycentre rows kept | done 25 Nov, PR 463 | packages/BC1-v3-barycentres.md |
+| GH Local Arm: the home galaxy's arms from measured positions (Reid et al. 2019), one general measured-arms list in the envelope; chart `arm_names` | built 25 Nov, PR pending (core lane, after light) | packages/GH-local-arm.md |

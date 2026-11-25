@@ -145,6 +145,25 @@ pub(crate) struct GalaxyAsk<'a> {
     pub edits: &'a [sse_cosmos::galaxy::Edit],
 }
 
+/// The envelope settings for one galaxy: the pack's, with the measured arms
+/// kept only for the home galaxy (given its star grid, which fixes the home's
+/// azimuth now) and dropped for every other.
+fn envelope_params(
+    cp: &CosmologyPack,
+    home_stars: Option<&sse_cosmos::stars::StarParams>,
+    now_gyr: f64,
+) -> sse_cosmos::envelope::EnvelopeParams {
+    let mut e = cp.envelope.clone();
+    match home_stars {
+        Some(sp) => {
+            e.measured.frame_phi_rad = sse_cosmos::stars::grid_angle(sp, now_gyr * 1000.0);
+            e.measured.prepare();
+        }
+        None => e.measured = Default::default(),
+    }
+    e
+}
+
 /// One galaxy: its history curves, its rings now (abundances, deaths, rates),
 /// its green band through time, the cosmic epochs, and the conditions at one
 /// place when asked.
@@ -232,10 +251,11 @@ fn galaxy_chart_of(
         .parse()
         .map_err(|e| err("bad_address", format!("{e:?}")))?;
     let d = rings::evolve(g, &cp.galaxy, &cp.rings, *a.seed, &addr);
+    let home = h.address.ends_with("/halo:milky-way-like");
     let env = GalaxyEnvelope {
         galaxy: g,
         disc: &d,
-        params: cp.envelope.clone(),
+        params: envelope_params(cp, home.then_some(&cp.stars), g.now.t_gyr),
         seed: *a.seed,
         address: addr.clone(),
         remains: Default::default(),
@@ -303,27 +323,13 @@ fn galaxy_chart_of(
             serde_json::json!({ "t_gyr": t, "habitable": band(false), "complex": band(true) }),
         );
     }
-    // Arm crests at `at` (where the envelope's arm term peaks), as (r, phi) polylines.
-    // Trailing: the crest falls back against the disc's turning (+phi) as r grows.
-    let e = &cp.envelope;
-    let rd = g.now.disc_kpc.max(0.1);
-    let outer = d.rings.last().map(|r| r.outer_kpc).unwrap_or(rd * 8.0);
-    let tan_pitch = m::tan(e.pitch_deg * m::PI / 180.0);
-    let omega_p = e.pattern_kms_kpc * 1.0227;
-    let arms: Vec<Vec<[f64; 2]>> = (0..e.arms)
-        .map(|k| {
-            (0..=96)
-                .map(|i| {
-                    // Log-spaced radii, so the tight inner windings stay smooth.
-                    let r = rd * 0.5 * m::pow(outer / (rd * 0.5), f64::from(i) / 96.0);
-                    let phi = omega_p * at - m::ln(r / rd) / tan_pitch
-                        + e.arm_phase0
-                        + 2.0 * m::PI * f64::from(k) / f64::from(e.arms.max(1));
-                    [r, phi]
-                })
-                .collect()
-        })
-        .collect();
+    // Arm crests at `at` (where the envelope's arm term peaks), as (r, phi) polylines:
+    // the generic wave's, or the home galaxy's measured arms.
+    let outer = d.rings.last().map(|r| r.outer_kpc).unwrap_or(g.now.disc_kpc.max(0.1) * 8.0);
+    let crests = env.arm_crests(at, outer);
+    let (e, rd) = (&cp.envelope, g.now.disc_kpc.max(0.1));
+    let arm_names: Vec<&str> = crests.iter().map(|(n, _)| n.as_str()).collect();
+    let arms: Vec<&Vec<[f64; 2]>> = crests.iter().map(|(_, l)| l).collect();
     let place = a.place_kpc.map(|r| {
         let l = env.local(
             Place {
@@ -353,6 +359,7 @@ fn galaxy_chart_of(
         "sun_radius_kpc": sun_r,
         "disc_kpc": rd,
         "arms": arms,
+        "arm_names": arm_names,
         "arm_contrast": e.arm_contrast,
         "rings": ring_rows,
         "core_collapse_per_century": d.core_collapse_rate() * 100.0,
@@ -718,7 +725,7 @@ pub(crate) fn reconstruct_origin(
     let env = GalaxyEnvelope {
         galaxy: g,
         disc: &d,
-        params: cp.envelope.clone(),
+        params: envelope_params(&cp, Some(&cp.stars), g.now.t_gyr),
         seed: *seed,
         address: addr,
         remains: Default::default(),
@@ -802,10 +809,11 @@ pub(crate) fn with_world<R>(
         .parse()
         .map_err(|e| err("bad_address", format!("{e:?}")))?;
     let d = rings::evolve(g, &cp.galaxy, &cp.rings, *seed, &addr);
+    let star_params = params.unwrap_or_else(|| cp.stars.clone());
     let env = GalaxyEnvelope {
         galaxy: g,
         disc: &d,
-        params: cp.envelope.clone(),
+        params: envelope_params(&cp, Some(&star_params), g.now.t_gyr),
         seed: *seed,
         address: addr.clone(),
         remains: Default::default(),
@@ -813,7 +821,7 @@ pub(crate) fn with_world<R>(
     let st = sse_cosmos::stars::Stars {
         env: &env,
         green: cp.green.clone(),
-        params: params.unwrap_or_else(|| cp.stars.clone()),
+        params: star_params,
         seed: *seed,
         galaxy: addr,
     };

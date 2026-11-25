@@ -2,14 +2,14 @@
   "after": {
     "black_hole": 38382367.9650494,
     "bulge_fraction": 0.4446458439081774,
-    "exposure_digest": "5a7036478bcb0452e28eb9a1ca07341f8adc677a1f551f6777dac8fdc67a5e4f",
+    "exposure_digest": "3cf5ad9fd07bed5a5c07606ad4fce681e1051114f50f2be4cdf94fadca642c14",
     "galaxy_digest": "338fafeb8fa504605625ecc08ed2e9298bd50dc16063775296934ca42674eb13",
-    "harmful": 3,
+    "harmful": 4,
     "hits": {
       "active_nucleus": 1,
       "arm_entry": 1,
       "arm_exit": 1,
-      "core_collapse": 189,
+      "core_collapse": 170,
       "encounter": 198,
       "gamma_ray_burst": 3,
       "merger": 1,
@@ -23,13 +23,13 @@
   "before": {
     "black_hole": 26840822.148292452,
     "bulge_fraction": 0.09043211351088024,
-    "exposure_digest": "10c3d5509c6e352f4942302bf45ef04fce2d60cb253af159af8b97babdd5184a",
+    "exposure_digest": "2dde65ef1906d37ec7467dc0f5b11d08e5485b3a89a902d9d205f19a4e0c29c6",
     "galaxy_digest": "196218ae5e3d046d7d71ab2a903b1ac7cebff18841a52bc8b7ec28487cbb7cd3",
-    "harmful": 3,
+    "harmful": 4,
     "hits": {
       "arm_entry": 1,
       "arm_exit": 1,
-      "core_collapse": 206,
+      "core_collapse": 192,
       "encounter": 199,
       "gamma_ray_burst": 3,
       "type_ia": 13
@@ -65,7 +65,7 @@
       "max_change": 0.7415830596683969
     }
   ],
-  "chronicle_head": "92fab119da0396d92e1179e5af37e350caf3246afc40fadf6ad7d578856c7a9d",
+  "chronicle_head": "19cf5f90f5f650062e4f628251a64da97f6a80e04ea964593ef49fd728e9df48",
   "edit_from_gyr": 9.0,
   "edits": [
     {

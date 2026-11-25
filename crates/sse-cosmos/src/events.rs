@@ -704,11 +704,8 @@ impl Events<'_> {
     /// When the site's path enters and leaves spiral arms.
     pub fn arm_crossings(&self, s: &SitePath, from_myr: f64, to_myr: f64) -> Vec<Hit> {
         let step = self.params.arm_step_myr;
-        let e = &self.env.params;
-        let inside = |t: f64| {
-            let a = self.env.arm(&self.place(self.site_at(s, t), t));
-            (a - 1.0) / e.arm_contrast.max(1.0e-9) > self.params.arm_cos
-        };
+        let inside =
+            |t: f64| self.env.arm_cos(&self.place(self.site_at(s, t), t)) > self.params.arm_cos;
         let mut out = vec![];
         let k0 = m::floor(from_myr / step) as i64;
         let k1 = m::ceil(to_myr / step) as i64;
