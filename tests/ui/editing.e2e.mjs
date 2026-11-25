@@ -218,15 +218,28 @@ try {
       await undoTo(marsAt);
 
       // ED5 Reach it: ask for a 260 K surface; the box finds the orbit on a scratch what-if and sets it as one change.
-      await obox.locator("[data-reach]").waitFor({ timeout: 20000 });
+      await obox.locator('[data-reach="t_surface_now_k"]').waitFor({ timeout: 20000 });
       await obox.locator("[data-reach-ask]").fill("260 K");
       await obox.locator("[data-reach-go]").click();
-      await gm.waitForFunction(() => /surface is about 2(59|60|61)/.test(document.querySelector("[data-reach-said]")?.textContent ?? ""), null, { timeout: 60000 }).catch(async (e) => {
+      await gm.waitForFunction(() => /surface (about )?2(59|60|61)/.test(document.querySelector("[data-reach-said]")?.textContent ?? ""), null, { timeout: 60000 }).catch(async (e) => {
         throw new Error(`${e.message}\nbox says: ${await obox.innerText()}`);
       });
       assert.match(await gm.locator('[data-handle="orbit"] .value').innerText(), /1\.[0-4]\d? AU/, "Mars moves in to warm");
       await shot(gm, `reach-it-${vp}`);
       await undoTo(marsAt);
+
+      // ED5 part 2: the same on the Mass strip: a surface gravity of 1 g by changing the mass.
+      await row.locator('[data-handle="mass"]').click();
+      const mreach = gm.locator('[data-reach="gravity_m_s2"]');
+      await mreach.waitFor({ timeout: 20000 });
+      await mreach.locator("[data-reach-ask]").fill("9.81 m/s²");
+      await mreach.locator("[data-reach-go]").click();
+      await gm.waitForFunction(() => /gravity .*(9\.(79|8\d)|1(\.00)? g|0\.99\d* g)/.test(document.querySelector("[data-reach-said]")?.textContent ?? ""), null, { timeout: 60000 }).catch(async (e) => {
+        throw new Error(`${e.message}\nreach says: ${await gm.locator("[data-reach-said]").allInnerTexts()}`);
+      });
+      await shot(gm, `reach-gravity-${vp}`);
+      await undoTo();
+      await row.locator('[data-handle="orbit"]').click();
 
       // Retrograde: the lean goes past 90 degrees, and the chip says so.
       await obox.locator('[data-chip="retrograde"]').click();

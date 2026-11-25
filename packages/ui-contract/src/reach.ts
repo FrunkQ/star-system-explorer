@@ -92,8 +92,13 @@ export async function resolveWith(session: ViewSession, ask: { system: string; a
   }
 }
 
+/** One of a body's results from a resolve, by the results sheet's key ("gravity_m_s2"); null when not a number. */
+export const resultFrom =
+  (address: string, key: string) =>
+  (r: SystemResolved): number | null => {
+    const v = (r.surfaces.find((s) => s.address === address) as Record<string, unknown> | undefined)?.[key];
+    return typeof v === "number" ? v : null;
+  };
+
 /** The surface's temperature now for one body, from a resolve (the kernel's `t_surface_now_k`). */
-export const surfaceKelvin =
-  (address: string) =>
-  (r: SystemResolved): number | null =>
-    r.surfaces.find((s) => s.address === address)?.t_surface_now_k ?? null;
+export const surfaceKelvin = (address: string) => resultFrom(address, "t_surface_now_k");

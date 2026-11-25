@@ -31,7 +31,8 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED6 part 1 Kinds in Add round a star: each top-level world class's example from the atlas (`worldKinds`) | done | packages/ED6.md |
 | ED6 part 2 the star chooser with Kinds chips; changing a star with worlds; a companion star | queued (star recipes need a pack; the branch view needs BC1) | packages/ED6.md |
 | ED5 part 1 Reach it on the Orbit box: "Surface about X K. Reach [ K ] by moving the orbit" (`reachIt` in `ui-contract/src/reach.ts`: bisection on a scratch what-if the kernel resolves with BC1, discarded after; the answer set as one change, one Undo; when no orbit in an eighth to eight times the size gets there, it says how close it can come) | done | packages/ED5.md |
-| ED5 part 2 Pin it with the honesty mark; Reach it on other results (gravity by mass, a year, locked) and from a what-if; the kernel's sweep (K1) in place of the search | queued (Pin it wants the mark's write; part of it waits on K1) | packages/ED5.md |
+| ED5 part 2a Reach it from the handle sheet (`reach` on a handle lists the results it can reach; `Reach.svelte` under the strip or box): Orbit reaches the surface's temperature, Mass the surface gravity ("Gravity 0.38 g. Reach [1 g] by changing Mass"); typed in any unit of the result's kind | done | packages/ED5.md |
+| ED5 part 2b Pin it with the honesty mark; Reach it for a year and for locked; from a what-if; the kernel's sweep (K1) in place of the search | queued (Pin it wants the mark's write; part of it waits on K1) | packages/ED5.md |
 | ED4, ED8 to ED11, ED13, ED10a, ED13a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 

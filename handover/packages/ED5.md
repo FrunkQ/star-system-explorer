@@ -17,7 +17,17 @@
   state hash unchanged; 5000 K is out of reach and names the near end). `tests/ui/editing.e2e.mjs` desk: Mars, 260 K,
   lands near 1.03 AU, Undo takes it back. Screens: project files `sse4/handover-screens/ED5-screens/`.
 
-## Part 2 (queued)
+## Part 2a (25 Nov): Reach it from the handle sheet
+
+- A handle lists the results it can reach (`reach` in `ui-contract/src/handles.json`, keys of the sheet's `results`):
+  the world's Orbit reaches `t_surface_now_k`, its Mass reaches `gravity_m_s2`. A pack's handle reaches the same way.
+- `packages/views/editing/src/Reach.svelte` draws one line per result under the strip (Handles) or in the box (Box):
+  "Gravity 0.38 g. Reach [ ] by changing Mass". The figure typed is read by `readFigure` in any unit of the result's
+  kind ("1 g", "9.81 m/s²", "15 °C"). The search runs in the kernel field's units (`fieldValue`) from an eighth to eight
+  times the value now; `resultFrom(address, key)` in reach.ts reads the result. The Box's inline form from part 1 is gone.
+- e2e: Mars to 9.81 m/s² by mass lands at 0.282 Earth masses ("gravity 1 g"), then Undo.
+
+## Part 2b (queued)
 
 - Pin it: force a result, carrying the honesty mark (GM view only).
 - Reach it on other results: gravity by mass, "make the year 365 days" (already a typed year on the size strip),

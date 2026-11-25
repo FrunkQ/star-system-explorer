@@ -11,6 +11,7 @@
   import { aboutFor, chosenReading, commitEdit, openWhatIf, fieldValue, handleFigure, handlesFor, handleSubject, handleValue, referenceDots, resolveWith, resultsOf, say, scaleClass, whatFollowed, type Followed, type Handle, type Json, type SceneSubject, type SolSheet, type StripDot, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import Strip from "./Strip.svelte";
   import Box from "./Box.svelte";
+  import Reach from "./Reach.svelte";
 
   let { ctx, scene, subject }: { ctx: ViewContext; scene: SystemScene; subject: SceneSubject } = $props();
 
@@ -177,6 +178,9 @@
       <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} reading={pick(h)} dots={dotsFor(h.id)} {commit} {pause} onclose={() => (open = null)} />
     {:else}
       <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} {cls} {depth} {editable} ontry={canTry ? tryIt : undefined} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
+      {#if h.reach?.length && editable && !ws.branch && scene.system && handleValue(h, mine) !== null}
+        <Reach {ctx} system={scene.system} address={subject.address} handle={h} value={handleValue(h, mine)!} results={resultsOf(surfaces, subject.address)} {cls} {depth} {commit} />
+      {/if}
     {/if}
     {#if tryProblem}<p class="try-problem" role="status">{tryProblem}</p>{/if}
   {/if}
