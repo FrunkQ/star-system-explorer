@@ -4,7 +4,7 @@
   derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import { CURIOUS_FACTS, HONESTY_MARKS, PICTURE_FIELDS, yearsToSeconds, namesOnStack, asPlayers, curiousDisplay, curiousSentence, sayFact, subjectClass, nextReading, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, eyesShow, fieldLandmark, hasException, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownTo as KnownRead, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
+  import { sayNumber, CURIOUS_FACTS, HONESTY_MARKS, PICTURE_FIELDS, yearsToSeconds, namesOnStack, asPlayers, curiousDisplay, curiousSentence, sayFact, subjectClass, nextReading, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, eyesShow, fieldLandmark, hasException, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownTo as KnownRead, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
   import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
   import { Card, CardField, KnownTo, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
@@ -128,7 +128,7 @@
     const r = await commitEdit(ctx.session, ws, { address: subject.address, field: e.field, value: e.value, display: p.display, before: { value: e.before, display: shownOf(f) } });
     switch (r.status) {
       case "applied":
-        note = `Inked at ${(ws.now_yr / 1e9).toFixed(2)} Gyr as event ${r.event_id.slice(0, 8)}`;
+        note = `Inked at ${sayNumber(ws.now_yr / 1e9, 0, { decimals: 2 })} Gyr as event ${r.event_id.slice(0, 8)}`;
         return null;
       case "pending":
         return "Sent to the GM to approve.";

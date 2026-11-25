@@ -12,7 +12,7 @@
 -->
 <script lang="ts">
   import FillScreen from "./FillScreen.svelte";
-  import { checkPlayerScene, checkScreen, screenKey, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { sayNumber, checkPlayerScene, checkScreen, screenKey, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus, type Shown } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
@@ -443,7 +443,7 @@
     const last = a.split("/").pop() ?? a;
     return last.charAt(0).toUpperCase() + last.slice(1).replace(/[-_]/g, " ");
   }
-  const dayWords = (d: number) => (d < 2 ? `${Math.round(d * 24)} hours` : d < 400 ? `${Math.round(d)} days` : `${(d / 365.25).toFixed(1)} years`);
+  const dayWords = (d: number) => (d < 2 ? `${Math.round(d * 24)} hours` : d < 400 ? `${Math.round(d)} days` : `${sayNumber(d / 365.25, 0, { decimals: 1 })} years`);
   const star = $derived(scene ? scene.subjects.find((s) => s.address === scene!.scope) : undefined);
 
   // The tabletop bridge: tell the allowed tabletop the view is ready and what is in focus; take its "focus this" asks for subjects this seat already sees.
