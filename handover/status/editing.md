@@ -22,7 +22,8 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 | ED7 part 1 "Try changing it" on Explore: an example what-if where the strip moves; handles move on any what-if | done | packages/ED12.md |
 | ED12 part 2 season phase and oblateness (K12); gravity at equator and poles; the ring's catches against neighbours and the held value's year and verdict (BC1) | waits on kernel K12 and BC1 | |
 | ED7 part 2a a moon's (and a binary world's) Orbit strip ends at the kernel's widest lasting orbit (`outerWall`) | done | packages/ED12.md |
-| ED7 part 2b the Roche wall (wants a kernel block); Add a moon's three recipes (disc, impact, captured) until K5; the phone dock | queued | |
+| ED7 part 2b Add a moon's three recipes (disc, impact, captured) from formation's F5 rules until K5 (`moonRecipes`) | done | packages/ED12.md |
+| ED7 part 2c the Roche wall (wants a kernel block); the phone dock | queued | |
 | ED4 to ED6, ED8 to ED11, ED13, ED10a, ED13a | queued, in the design's order | |
 | ED0b the Solar System experiment for real, against `packs/base-sol`, log in project files | after ED1 to ED13 | |
 

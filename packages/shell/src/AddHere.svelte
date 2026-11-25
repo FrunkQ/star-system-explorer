@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { anythingClip, clipAt, formsHere, freeOrbit, type Clip, type FormsHere, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { anythingClip, clipAt, formsHere, freeOrbit, moonRecipes, say, type Clip, type FormsHere, type ViewSession } from "../../ui-contract/src/index.ts";
 
   let {
     session,
@@ -18,7 +18,13 @@
   }: {
     session: ViewSession;
     system: string;
-    host: { address: string; label: string; kind: string; mass_sun: number | null };
+    host: {
+      address: string;
+      label: string;
+      kind: string;
+      mass_sun: number | null;
+      planet?: { mass_earth: number; radius_earth: number; a_au: number | null; star_mass_sun: number | null };
+    };
     /** Orbits already round the host, in AU. */
     orbits: number[];
     packs: { id: string; version: string }[];
@@ -61,6 +67,13 @@
     problem = await onadd(clipAt(c, a), words);
     adding = false;
   }
+  // A moon by hand: formation's own leftovers rules for this planet, as three fixed recipes until Ask K5 (ED7).
+  const recipes = $derived(moon && host.planet ? moonRecipes({ name: host.label, ...host.planet }, orbits) : []);
+  async function addRecipe(c: Clip, fallback: string) {
+    adding = true;
+    problem = await onadd(named(c, fallback), name.trim() || fallback);
+    adding = false;
+  }
   const fmt = (x: number) => Number(x.toPrecision(x < 0.1 ? 1 : 2));
   const fallbackName = $derived(moon ? `New moon of ${host.label}` : "New world");
 </script>
@@ -87,6 +100,17 @@
       </ul>
     {:else}<p class="hint" data-forms-nothing>None of {runs} formation runs made a world near {fmt(a)} AU. Try another orbit, or add something of your own below.</p>{/if}
   {/if}
+{:else if recipes.length}
+  <h3>How moons form</h3>
+  <p class="hint">The rules formation uses for every generated system, put to {host.label}: each goes in at its own orbit, and the physics works out the rest.</p>
+  <ul class="offers" data-moon-recipes>
+    {#each recipes as r (r.id)}
+      <li data-moon-recipe={r.id}>
+        <span><b>{r.title}</b>, {say(r.mass_kg, "mass", { class: "moon" }).text} at {say(r.a_m, "length", { class: "moon" }).text} from it. <small>{r.says} ({r.cite})</small></span>
+        <button type="button" disabled={adding} onclick={() => addRecipe(r.clip, `${r.title.replace(/^An? /, "").replace(/^./, (x) => x.toUpperCase())} of ${host.label}`)}>Add this</button>
+      </li>
+    {/each}
+  </ul>
 {:else}
   <p class="hint">Moons are not sampled from formation yet: add one of your own below.</p>
 {/if}
