@@ -169,11 +169,24 @@ pub enum Request {
         source: Option<String>,
     },
     /// Withdraw a subject and everything under it from `at_s` on (Undo of
-    /// a paste): it drops out of scene, resolved_system and systems. Nothing
-    /// is deleted; the history keeps the event.
+    /// a paste, or removing a body): it drops out of scene, resolved_system
+    /// and systems. Nothing is deleted; the history keeps the event. What
+    /// went round it (K13, editing design 10A): `leave` them round its own
+    /// host (the default, Alex 24 Nov 2026), `take` them too ("remove them
+    /// too"), or `hand` them to `to`, keeping their motion (`keep`, default
+    /// `motion`) or a tidy orbit. One event, so one step.
     Withdraw {
         address: String,
         at_s: i64,
+        #[serde(default)]
+        #[ts(optional, type = "\"take\" | \"leave\" | \"hand\"")]
+        others: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        to: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "\"tidy\" | \"motion\"")]
+        keep: Option<crate::orbits::Keep>,
     },
     /// Bring a withdrawn subject back from `at_s` on (Redo), with every fact
     /// it had.
@@ -867,6 +880,12 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         tiles: Option<Vec<TileRequest>>,
+        /// A what-if branch (from `branch`) to resolve instead of the main
+        /// line: the line it was cut from plus its own edits. Nothing is
+        /// committed (editing design ED1: the exact answer on a pause).
+        #[serde(default)]
+        #[ts(optional)]
+        branch: Option<String>,
     },
     /// Preview a class atlas scheme over the open campaign (GM machine):
     /// label every body in `scope` (default the whole universe) at `at_s`
@@ -1720,6 +1739,29 @@ pub enum Request {
         reason: Option<String>,
         at_s: i64,
     },
+    /// K13 (editing design 10A, R4): put `address`, with everything round
+    /// it, round `to` from `at_s`, keeping a tidy round orbit at its present
+    /// distance (`tidy`, the default) or its present position and motion
+    /// (`motion`; refused, by name, if that is not bound to `to`). Worked out
+    /// in the barycentre hierarchy; one authored edit, so one Undo.
+    Rehost {
+        address: String,
+        to: String,
+        #[serde(default)]
+        #[ts(optional, type = "\"tidy\" | \"motion\"")]
+        keep: Option<crate::orbits::Keep>,
+        at_s: i64,
+    },
+    /// K13 (editing design 10A, R1): the system's family tree before and
+    /// after `edits` (requests such as `set_authored_batch`, `rehost`,
+    /// `withdraw`), with each body's host, pair label and verdict, and the
+    /// bodies whose place or verdict changed. Nothing is written.
+    PreviewTree {
+        system: String,
+        at_s: i64,
+        #[ts(type = "unknown[]")]
+        edits: Vec<serde_json::Value>,
+    },
     /// RS4: split a construct at `at_s`. The named parts (`part.<id>.*`
     /// facts) and `mass_kg` more move to a new construct of the same kind
     /// beside it (`key`, else the next free number; `name`, else the old
@@ -2363,6 +2405,8 @@ impl Request {
             Request::Templates => "templates",
             Request::Create { .. } => "create",
             Request::Retire { .. } => "retire",
+            Request::Rehost { .. } => "rehost",
+            Request::PreviewTree { .. } => "preview_tree",
             Request::SplitConstruct { .. } => "split_construct",
             Request::JoinConstructs { .. } => "join_constructs",
             Request::Programs { .. } => "programs",
@@ -2727,6 +2771,8 @@ pub fn ops() -> Vec<OpInfo> {
         o("templates", Cost::Trivial, "read at load"),
         o("create", Cost::Light, "GM machine only; one universe event and one record event per kept value"),
         o("retire", Cost::Trivial, "GM machine only; one universe event"),
+        o("preview_tree", Cost::Light, "a copy of the universe, the edits, the orbits and stability checks twice"),
+        o("rehost", Cost::Light, "GM machine only; the system's orbits at one time, one universe event"),
         o("split_construct", Cost::Trivial, "GM machine only; one universe event"),
         o("join_constructs", Cost::Trivial, "GM machine only; one universe event"),
         o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
@@ -3602,6 +3648,14 @@ pub enum Response {
     Retired {
         event_id: String,
         state_hash: String,
+    },
+    /// `preview_tree`: `before` and `after` trees and the addresses that changed.
+    TreePreviewed {
+        #[ts(type = "unknown")]
+        before: serde_json::Value,
+        #[ts(type = "unknown")]
+        after: serde_json::Value,
+        changed: Vec<String>,
     },
     /// `split_construct`: the new construct's address.
     ConstructSplit {
