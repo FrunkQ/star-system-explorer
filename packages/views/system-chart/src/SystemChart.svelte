@@ -6,11 +6,24 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts" module>
-  import type { FieldReadJson, LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
+  import { withFiner, type AirShape as AirKept, type FieldReadJson, type LiveStar, type TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
   /** What a world's True face could not show as it is (renderer true-air.ts), by system and world. */
   const trueSaid = new Map<string, string[]>();
+  /** Its clouds alone, its ground under them, and its air (VP-A3, VP-A4), by system and world. */
+  type TrueAir = { ground?: Kept; clouds?: Kept; air?: AirKept };
+  const trueAirs = new Map<string, TrueAir>();
+  /** Lays finer tiles (VP3 part 2) over the ground under a world's clouds; the new entry, or null when nothing changed. */
+  function finerGround(key: string, fine: Parameters<typeof withFiner>[1]): TrueAir | null {
+    const a = trueAirs.get(key);
+    if (!a?.ground?.faces || !fine.length) return null;
+    const ground = withFiner(a.ground, fine);
+    if (ground === a.ground) return null;
+    const next = { ...a, ground };
+    trueAirs.set(key, next);
+    return next;
+  }
   /** Stars read for True's living star, by system and star (a string: why there is none). */
   const liveStars = new Map<string, LiveStar | string>();
   /** read_field's Solar System fixture, read once for the page (Mag, V10e). */
@@ -24,7 +37,7 @@
   import RangeRings from "./RangeRings.svelte";
   import { chartProject, holderAt } from "./range-place.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { readLiveStar, readTrueFace, starsBehind, starCss, type FaceReader, type StarReader, type TrueTexture, type GroundView, withFiner } from "../../../renderer/src/index.ts";
+  import { readLiveStar, readTrueFace, starsBehind, starCss, type AirShape, type FaceReader, type StarReader, type TrueTexture, type GroundView } from "../../../renderer/src/index.ts";
   import { finerTiles, readFiner } from "../../body/src/finer-tiles.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -370,6 +383,7 @@
     );
   });
   let surfaces = $state<Map<string, TrueTexture>>(new Map());
+  let airs = $state<Map<string, TrueAir>>(new Map());
   let reading = $state<{ done: number; of: number; none: number; why: string } | null>(null);
   let trueGen = 0;
   $effect(() => {
@@ -394,14 +408,19 @@
           const f = await readTrueFace(ctx.session as unknown as FaceReader, sys, s.address);
           trueSurfaces.set(key, typeof f === "string" ? f : f.tex);
           if (typeof f !== "string") trueSaid.set(key, f.said);
+          // Its clouds alone over its ground, and its air's rim (VP-A3, VP-A4).
+          if (typeof f !== "string" && (f.clouds || f.air)) trueAirs.set(key, { ...(f.ground ? { ground: f.ground } : {}), ...(f.clouds ? { clouds: f.clouds } : {}), ...(f.air ? { air: f.air } : {}) });
           // Finer tiles already read on this page (VP3 part 2) are laid over the ground at once.
           const kept = trueSurfaces.get(key);
           if (kept && typeof kept !== "string") trueSurfaces.set(key, withFiner(kept, finerTiles(key)));
+          finerGround(key, finerTiles(key));
         }
         if (g !== trueGen) return;
         const t = trueSurfaces.get(key);
         if (t && typeof t !== "string") surfaces = new Map(surfaces).set(s.address, t);
         else (none++, (noneWhy = String(t)));
+        const a = trueAirs.get(key);
+        if (a && airs.get(s.address) !== a) airs = new Map(airs).set(s.address, a);
         done++;
       }
       reading = { done, of: order.length, none, why: noneWhy };
@@ -410,17 +429,21 @@
       const chosen = order[0];
       const ck = chosen && chosen.address === sel ? `${sys}|${chosen.address}` : "";
       const base = ck ? trueSurfaces.get(ck) : undefined;
-      // Only a world whose True face is its ground alone (no clouds painted over it) wears the finer faces.
-      if (ck && base && typeof base !== "string" && base.faces && g === trueGen) {
+      // A world wears the finer faces on its ground: its True face when that is the ground alone, or the ground under
+      // its own cloud layer (VP-A4), which is what gpu.ts draws when the clouds are there.
+      const under = ck ? trueAirs.get(ck)?.ground : undefined;
+      if (ck && base && typeof base !== "string" && (base.faces || under?.faces) && g === trueGen) {
         // Close-up: the ground under the camera is read first when the camera is over this world.
-        const under = untrack(() => groundView);
+        const below = untrack(() => groundView);
         void readFiner(ctx.session, sys, chosen!.address, () => g === trueGen, (fine) => {
           const now = trueSurfaces.get(ck);
           if (!now || typeof now === "string") return;
           const t = withFiner(now, fine);
           trueSurfaces.set(ck, t);
           surfaces = new Map(surfaces).set(chosen!.address, t);
-        }, under?.body === chosen!.address ? under.toward : undefined);
+          const a = finerGround(ck, fine);
+          if (a) airs = new Map(airs).set(chosen!.address, a);
+        }, below?.body === chosen!.address ? below.toward : undefined);
       }
     })());
   });
@@ -519,7 +542,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {airs} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} reframe={shownView.framed} pencil={pencilOn ? pencilled : undefined} range={ctx.rangeRings?.() ?? []} sky={skyBehind ?? undefined} long={shownView.exposure === "long"} onground={(g) => (groundView = g)} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}

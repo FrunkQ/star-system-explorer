@@ -2,14 +2,19 @@
 // device has no WebGPU). It is handed camera-relative positions only, already
 // narrowed from f64 (frames.ts), and draws with the camera at the origin, so
 // no large number ever reaches the GPU (rendering rule 3).
-import { AdditiveBlending, AmbientLight, BufferGeometry, DoubleSide, Quaternion, RingGeometry, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
+import { AdditiveBlending, AmbientLight, CustomBlending, OneFactor, OneMinusSrcAlphaFactor, BufferGeometry, DoubleSide, Quaternion, RingGeometry, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
 import { WebGPURenderer } from "three/webgpu";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
 import { ringLight } from "./rings.ts";
 import { startFinish, type Finish } from "./finish.ts";
+import type { AirLuts, AirShape } from "./air-luts.ts";
+import { makeAirShell, type AirShell } from "./gpu-air-shell.ts";
 import { BAKE_BUDGET, faceSize } from "./texture-ladder.ts";
 import { createTextureBaker } from "./texture-ladder-gpu.ts";
+
+/** Clouds are drawn this far out (over the radius) until the weather op gives their height: a hair, so they do not fight the ground. */
+const CLOUD_LIFT = 1.002;
 
 export interface GpuItem {
   id: string;
@@ -44,6 +49,16 @@ export interface GpuItem {
    * surface or a graticule turns with it (the size comparison's spinning globes). Left out: pole on z, unturned.
    */
   frame?: [Vec3, Vec3, Vec3];
+  /**
+   * True look: the world's air as a shell round it, lit by the star (gpu-air-shell.ts, VP-A3): its shape in its own
+   * radius and its look-up tables (air-luts.ts), keyed so they are uploaded once.
+   */
+  air?: { key: string; shape: AirShape; luts: AirLuts };
+  /**
+   * True look: the world's clouds and haze alone (true-air.ts `AirLook.clouds`: premultiplied colour, alpha their
+   * reflectance), drawn lit over the surface a hair above it until the weather op gives each deck's height (VP-A4).
+   */
+  clouds?: { key: string; texture: TrueTexture };
   /**
    * True look: the body's own shape instead of a sphere (small-body.ts `smallBodyMesh`: an asteroid's figure, two lobes
    * of a contact binary), in units of `radius`, its long axis on x and spin axis on z. Keyed: built once.
@@ -155,6 +170,28 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   // Close-up: a globe that fills the screen many times over shows its limb's facets at 64 segments, so it takes a finer one.
   const fineGlobe = new SphereGeometry(1, 512, 256).rotateX(Math.PI / 2);
   const textures = new Map<string, DataTexture>();
+  const shells = new Map<string, AirShell>();
+  // Clouds over a surface: lit like the ground, premultiplied, so the ground shows through where they are thin.
+  const cloudMats = new Map<string, MeshStandardMaterial>();
+  const cloudMat = (c: NonNullable<GpuItem["clouds"]>) => {
+    const hit = cloudMats.get(c.key);
+    if (hit) return hit;
+    const map = new DataTexture(c.texture.data.slice(), c.texture.width, c.texture.height, RGBAFormat);
+    map.colorSpace = SRGBColorSpace;
+    map.magFilter = LinearFilter;
+    map.minFilter = LinearFilter;
+    map.needsUpdate = true;
+    textures.set(c.key, map);
+    const m = new MeshStandardMaterial({ color: 0xffffff, map, roughness: 1, metalness: 0, transparent: true, depthWrite: false });
+    // The texture is premultiplied already: add its light, dim what is behind by its alpha.
+    m.blending = CustomBlending;
+    m.blendSrc = OneFactor;
+    m.blendDst = OneMinusSrcAlphaFactor;
+    m.blendSrcAlpha = OneFactor;
+    m.blendDstAlpha = OneMinusSrcAlphaFactor;
+    cloudMats.set(c.key, m);
+    return m;
+  };
   const meshGeoms = new Map<string, BufferGeometry>();
   const meshGeom = (mesh: NonNullable<GpuItem["mesh"]>) => {
     let g = meshGeoms.get(mesh.key);
@@ -392,6 +429,26 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
           m.quaternion.setFromRotationMatrix(turned.makeBasis(new Vector3(...x), new Vector3(...y), new Vector3(...z)));
         }
         scene.add(m);
+        if (lit && it.clouds) {
+          const cm = new Mesh(dist < 1.5 * it.radius ? fineGlobe : globe, cloudMat(it.clouds));
+          cm.position.copy(m.position);
+          cm.quaternion.copy(m.quaternion);
+          cm.scale.setScalar(it.radius * CLOUD_LIFT);
+          cm.renderOrder = 1;
+          scene.add(cm);
+        }
+        if (o.light && it.air && !it.shines && it.emit === undefined) {
+          let sh = shells.get(it.air.key);
+          if (!sh) shells.set(it.air.key, (sh = makeAirShell(it.air.shape, it.air.luts)));
+          const toStar: Vec3 = o.light.at ? [o.light.at[0] - it.rel[0], o.light.at[1] - it.rel[1], o.light.at[2] - it.rel[2]] : (o.light.from ?? [0, 0, 1]);
+          // The point light's strength (3), as the lit globe gets.
+          sh.set(it.rel, it.radius, toStar, 3);
+          const am = new Mesh(dist < 1.5 * it.radius ? fineGlobe : globe, sh.material);
+          am.position.copy(m.position);
+          am.scale.setScalar(it.radius * sh.top);
+          am.renderOrder = 1;
+          scene.add(am);
+        }
         if (o.light && it.rings) {
           const rs = ringSet(it.rings);
           const n = it.rings.normal;
@@ -489,6 +546,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       fineGlobe.dispose();
       torus.dispose();
       textures.forEach((t) => t.dispose());
+      shells.forEach((x) => x.dispose());
+      cloudMats.forEach((m) => m.dispose());
       meshGeoms.forEach((g) => g.dispose());
       faces.forEach((e) => (e.tex.dispose(), e.mat.dispose()));
       litMats.forEach((m) => m.dispose());
