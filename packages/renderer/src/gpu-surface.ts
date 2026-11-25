@@ -8,6 +8,8 @@
 // chart's colours with contour lines), "wireframe" (the mesh's edges on the chart's ground).
 import { ACESFilmicToneMapping, AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Points, Scene, SphereGeometry, SRGBColorSpace, Vector3 } from "three";
 import { MeshBasicNodeMaterial, PointsNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
+import { makeAuroraSky, type AuroraSkyGpu } from "./gpu-aurora-sky.ts";
+import type { AuroraSky } from "./aurora.ts";
 import { Fn, abs, attribute, cos, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionLocal, positionWorld, pow, select, smoothstep, sqrt, uniform, vec2, vec3, vec4 } from "three/tsl";
 
 export interface SurfaceMesh {
@@ -62,6 +64,8 @@ export interface SurfaceFrame {
    * unit directions in the site's frame, and each star's light as a share of the home star's, times its colour.
    */
   stars?: { key: string; dirs: Float32Array; light: Float32Array };
+  /** True look: the aurora over the site (aurora.ts `auroraSky`, VP-AU7), drawn by gpu-aurora-sky.ts. */
+  aurora?: AuroraSky | null;
 }
 
 /**
@@ -177,6 +181,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
   stars.visible = false;
   scene.add(stars);
   let starKey = "";
+  let auroraSky: AuroraSkyGpu | null = null;
 
   // The ground, true look: albedo lit by the sun through the air and by the sky, seen through the air.
   const trueNode = Fn(() => {
@@ -378,6 +383,12 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
         starGeom.computeBoundingSphere();
       }
       stars.visible = isTrue && !!f.stars;
+      // The aurora (VP-AU7): shells seen from inside, over the site, in the sky's units.
+      if (isTrue && f.aurora && !auroraSky) {
+        auroraSky = makeAuroraSky();
+        scene.add(auroraSky.mesh);
+      }
+      auroraSky?.set(isTrue ? (f.aurora ?? null) : null, { eye: 1 + Math.max(0, f.eye[2]) / Math.max(1, f.radius_m), sun: f.sun, tauEye: [f.tau[0] * thin, f.tau[1] * thin, f.tau[2] * thin], k: f.radius_m / Math.max(1, f.scale_height_m), exposure: f.exposure });
       const pxAngle = f.fovY / Math.max(1, f.height);
       uStarScale.value = 1 / (pxAngle * pxAngle);
       stars.position.set(0, 0, 0);
@@ -395,6 +406,7 @@ export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<Surfa
       dropAll();
       dome.geometry.dispose();
       starGeom.dispose();
+      auroraSky?.dispose();
       starMat.dispose();
       for (const m of allMats()) m.dispose();
       renderer.dispose();

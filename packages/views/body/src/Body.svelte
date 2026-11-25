@@ -24,7 +24,7 @@
   import { BODY_CONTROLS, GLOBE_LAT } from "./controls.ts";
   import { untrack } from "svelte";
   import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
-  import { airFactsOf, airFromOptics, airRequest, planAurora, type AuroraJson, type AuroraPlan, type FieldReadJson, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, airRequest, loadAurora, type AuroraPlan, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
@@ -99,17 +99,8 @@
     if (auroraCache.has(key)) return void (aurora = auroraCache.get(key) ?? null);
     let live = true;
     void (async () => {
-      const sol = /\/sys:sol$/.test(sys);
-      const r = await ctx.session.readField(sol ? { fixture: "solar-system" } : { system: sys });
+      const v = await loadAurora(ctx.session, sys, sub, { radius_m: air?.radius_m ?? 0, scale_height_m: air?.optics?.scale_height_m, composition: air?.composition });
       if (!live) return;
-      const bodies = r.ok ? (r.bodies as unknown as (FieldReadJson & { aurora?: AuroraJson | null })[]) : [];
-      const read = sol ? bodies.find((b) => b.name === sub.label) : bodies.find((b) => b.address === sub.address);
-      // A generated world's tilt is its MF3 fact (the Solar System fixture carries its own in the field block).
-      const rs = sol ? null : await ctx.session.resolvedSystem(sys);
-      if (!live) return;
-      const tilt = rs?.ok ? rs.result.facts[sub.address]?.["field.tilt"] : undefined;
-      const radius = air?.radius_m ?? (read?.field?.reference_radius_m ?? 0);
-      const v = read && radius > 0 ? { plan: planAurora(read, { radius_m: radius, scale_height_m: air?.optics?.scale_height_m, composition: air?.composition, ...(typeof tilt === "number" ? { tilt_deg: tilt } : {}) }), radius_m: radius } : null;
       auroraCache.set(key, v);
       aurora = v;
     })();

@@ -105,3 +105,84 @@ test("units: a kilorayleigh of oxygen green", () => {
   const b = lineRgb(427.8e-9);
   assert.ok(b[2] === 1 && b[1] < 0.2, "nitrogen's 427.8 nm is blue");
 });
+
+// VP-AU7: the same shells seen from the ground.
+import { auroraSky, skyGlowAlong, toSite } from "../src/aurora.ts";
+
+const dirAt = (az_deg: number, el_deg: number): [number, number, number] => {
+  const a = (az_deg * Math.PI) / 180;
+  const e = (el_deg * Math.PI) / 180;
+  return [Math.cos(e) * Math.sin(a), Math.cos(e) * Math.cos(a), Math.sin(e)];
+};
+
+test("from the ground: overhead under the oval, low over the poleward horizon from south of it, nothing from the tropics", () => {
+  // Earth's own numbers, but an untilted field so magnetic and spin latitude agree.
+  const w = { ...W("earth-handed").world, tilt_deg: 0 };
+  const p = planAurora(W("earth-handed").read, w);
+  const R = w.radius_m;
+  const ovalLat = 90 - (p.layers[0]!.colatitude_rad * 180) / Math.PI;
+  const at = (lat: number) => auroraSky(p, R, { lat_deg: lat, lon_deg: 0 }, "long", 1361, 1)!;
+  const green = (lat: number, az: number, el: number) => {
+    const a = at(lat);
+    return skyGlowAlong(a.layers[0]!, a.axis, dirAt(az, el), 2, R);
+  };
+  // Under the oval the zenith glows at the ring's peak (path 1).
+  assert.ok(Math.abs(green(ovalLat, 0, 90) - 1) < 1e-3, `zenith ${green(ovalLat, 0, 90)}`);
+  // Eight degrees south of it: overhead is dark, but low in the north it glows, brighter than the zenith of the
+  // site under it (the long path through the layer near the horizon).
+  const south = ovalLat - 8;
+  assert.ok(green(south, 0, 90) < 0.01, "dark overhead");
+  const best = Math.max(...[2, 5, 10, 15, 20, 30].map((el) => green(south, 0, el)));
+  assert.ok(best > 1, `an arc low in the north: ${best}`);
+  assert.ok(green(south, 180, 10) < 1e-3, "nothing to the south");
+  // From the tropics the oval is far below the horizon.
+  assert.ok(Math.max(...[2, 10, 45, 90].map((el) => green(10, 0, el))) < 1e-6, "nothing from the tropics");
+});
+
+test("from the ground: red stands higher in the sky than green over the same oval", () => {
+  const w = { ...W("earth-handed").world, tilt_deg: 0 };
+  const p = planAurora(W("earth-handed").read, w);
+  const R = w.radius_m;
+  const lat = 90 - (p.layers[0]!.colatitude_rad * 180) / Math.PI - 6;
+  const a = auroraSky(p, R, { lat_deg: lat, lon_deg: 0 }, "long", 1361, 1)!;
+  const peakEl = (k: number) => {
+    let bestEl = 0;
+    let best = -1;
+    for (let el = 1; el < 90; el += 0.5) {
+      const v = skyGlowAlong(a.layers[k]!, a.axis, dirAt(0, el), 2, R);
+      if (v > best) (best = v), (bestEl = el);
+    }
+    return bestEl;
+  };
+  assert.ok(peakEl(1) > peakEl(0), `red at ${peakEl(1)}°, green at ${peakEl(0)}°`);
+});
+
+test("toSite turns the globe's frame onto a site's east, north and up", () => {
+  const up = toSite([1, 0, 0], 0, 0);
+  assert.deepEqual(up.map((x) => Math.round(x * 1e9) / 1e9), [0, 0, 1]);
+  const pole = toSite([0, 0, 1], 0, 0);
+  assert.deepEqual(pole.map((x) => Math.round(x * 1e9) / 1e9), [0, 1, 0], "the spin pole is due north on the horizon at the equator");
+});
+
+test("part 2b's shape: the oval sits between its edges, and an airy world with no field glows from diffuse_glow", () => {
+  const r = structuredClone(W("earth-handed").read);
+  const o = r.aurora!.ovals[0]!;
+  o.edges_deg = [62, 70.8];
+  o.width_deg = 8.8;
+  o.emissions = [
+    { line: "O I 557.7 nm", matter: "O", wavelength_m: 557.7e-9, power_w: 3e10, share: 0.6, peak_height_m: 110e3, thickness_m: 25e3, colour: { hex: "#85FF00", linear_srgb: [0.23, 1, 0] } },
+    { line: "N2+ 427.8 nm", matter: "N2", wavelength_m: 427.8e-9, power_w: 1e10, share: 0.2, peak_height_m: 110e3, thickness_m: 25e3, colour: { linear_srgb: [0.1, 0, 1] } },
+  ];
+  const p = planAurora(r, W("earth-handed").world);
+  const mine = p.layers.filter((l) => l.grade === "kernel");
+  assert.equal(mine.length, 2);
+  assert.ok(Math.abs(90 - (mine[0]!.colatitude_rad * 180) / Math.PI - 66.4) < 1e-9, "centre half way between the edges");
+  assert.ok(Math.abs((mine[0]!.width_rad * 180) / Math.PI - 8.8) < 1e-9);
+
+  const g = structuredClone(W("tipped-giant").read);
+  g.aurora = { ovals: [], footprints: [], diffuse: true, diffuse_glow: { power_w: 1e9, emissions: [{ line: "CO2+ UV doublet", matter: "CO2", wavelength_m: 289e-9, power_w: 1e9, peak_height_m: 130e3, thickness_m: 40e3 }] } };
+  const d = planAurora(g, W("tipped-giant").world);
+  assert.equal(d.layers.length, 1);
+  assert.equal(d.layers[0]!.kind, "diffuse");
+  assert.match(d.note, /diffuse glow/);
+});

@@ -22,7 +22,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { constant, DEFAULT_VIEW, DESCENT_VERDICT_WORDS, LANDER_WORDS, landingSeaOf, landmarkOrder, partyLander, roundPose, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type LandingGround, type LandingSea, type LandingShow, type LandingWorld, type PlayerContext, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, sunAt, adaptedExposure, starsOverSite, auroraSky, loadAurora, type AuroraPlan, type SiteSkyFrame, type SiteSkyStar, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params, follow }: { ctx?: ViewContext; scene?: SystemScene; params: Record<string, Json>; follow?: PlayerContext } = $props();
@@ -139,6 +139,11 @@
         ...(orbitA > 0 ? { orbit_m: orbitA } : {}),
       };
       landerPick = untrack(() => partyHere) ? "party" : suggestLander(world.pressure_bar, world.t_k);
+      // The aurora over the site (VP-AU7): the same plan as the Body globe's, from read_field and this air.
+      auroraPlan = null;
+      void loadAurora(ctx!.session, sys, sub, { radius_m: radius, scale_height_m: air?.scale_height_m, composition: af?.composition }).then((v) => {
+        if (g === gen) auroraPlan = v?.plan ?? null;
+      });
       const lm: Landmark[] = marks.get(key) ?? (await ctx!.session.surfaceLandmarks(sys, sub.address).then((r) => (r.ok ? r.landmarks : [])));
       if (g !== gen) return;
       marks.set(key, lm);
@@ -425,6 +430,10 @@
   });
   // The exposure last drawn at, for the page's marks (tests read the eye opening up at night).
   let seenExposure = $state(6);
+  // The aurora's plan for this world (aurora.ts), and its words as last drawn. Long exposure, the default in every True
+  // view (Alex, 24 Nov), until VP1's shared Exposure control carries the choice here.
+  let auroraPlan = $state.raw<AuroraPlan | null>(null);
+  let auroraSays = $state("");
   const wrapDeg = (d: number) => ((((d + 180) % 360) + 360) % 360) - 180;
   const sunHour = $derived(watching ? (show?.hour_deg ?? hour) : clock ? wrapDeg(clock.hour_deg + shift) : hour);
   const sunDecl = $derived(watching ? (show?.decl_deg ?? 0) : (clock?.declination_deg ?? 0));
@@ -594,6 +603,7 @@
         // The eye adapts: a dark sky opens it up until the stars show (night-sky.ts).
         exposure: (seenExposure = look === "true" ? adaptedExposure(6, { sun_z: sun[2], tau_green: air ? air.zenith_depth[1] : 0, radius_m: world.radius_m, scale_height_m: air?.scale_height_m ?? 8000 }) : 6),
         ...(look === "true" && siteStars ? { stars: siteStars } : {}),
+        ...(look === "true" && auroraPlan?.layers.length && world.host_lsun && world.orbit_m ? { aurora: skyAurora(auroraPlan, world.host_lsun, world.orbit_m) } : {}),
         ground: tok("--sse-ground"),
         ink: tok("--sse-ink"),
         contour_m: contourFor(eye[2] - siteZ),
@@ -608,6 +618,14 @@
       raf = requestAnimationFrame(frame);
     }
   });
+  /** The aurora for this frame: its plan at the site, lifted for the view's exposure, and its words kept for the note. */
+  function skyAurora(p: AuroraPlan, host_lsun: number, orbit_m: number) {
+    const flux = (host_lsun * constant("L_sun")) / (4 * Math.PI * orbit_m * orbit_m);
+    const a = auroraSky(p, world!.radius_m, { lat_deg: site!.lat, lon_deg: site!.lon }, "long", flux, seenExposure);
+    const words = a ? `${p.note} ${a.says}` : "";
+    if (words !== auroraSays) auroraSays = words;
+    return a;
+  }
   const contourFor = (alt: number) => (alt > 20000 ? 500 : alt > 3000 ? 100 : alt > 300 ? 20 : 10);
 
   /** No GPU: the ground ahead as lines of its profile (the line-terrain style), nearest drawn last. */
@@ -813,6 +831,7 @@
     <p class="note quiet" data-ground-note>
       The ground is the kernel's to {near ? Math.round(near.spacing_m) : "?"} m (its fact floor here); finer than that within {fmtM(DETAIL_HALF)} of the site it is decoration sized to the site's roughness. You can walk {fmtM(WALK_HALF)} from where you landed; further means taking off.
       {#if world && !world.air}No air: the sky is black and nothing dims the far ground.{:else}Sky from single scattering in the kernel's air optics.{/if}
+      {#if look === "true" && auroraSays}<span data-aurora-sky>{auroraSays}</span>{/if}
       {#if seaNow}{seaNow.line ?? ""}{seaNow.line ? "." : ""} The sea is drawn as a few wave trains of that height and period round the wind; the tide stands {Math.abs(seaNow.tide_m).toFixed(2)} m {seaNow.tide_m >= 0 ? "above" : "below"} mean sea level.{/if}
       {#if watching}The sun stands where the game master's clock puts it, local time {localTime}.{:else if clock}The sun stands where {subject?.label}'s spin and its place on its orbit put it at the time in view: local time {localTime}{clock.solar_day_s === Infinity ? " (it keeps one face to its star)" : ""}, declination {sunDecl.toFixed(1)}°{shift ? `, moved ${Math.round(shift / 15)} h by hand` : ""}.{:else}The world's spin is not on record, so the hour is chosen by hand and the sun stands as at an equinox.{/if} Drawn on {reason}.
     </p>

@@ -9,6 +9,7 @@
 // This file is the plan: pure numbers, no GPU. gpu-aurora.ts draws it; the Body globe hands it in.
 import type { FieldReadJson, V3 } from "./field.ts";
 import { dipoleAxis, fieldFromRead } from "./field.ts";
+import { constant } from "../../ui-contract/src/index.ts";
 
 /** One line the air gives off in an aurora (MF9 part 2's shape, agreed with the light thread 24 Nov 2026). */
 export interface AuroraEmissionJson {
@@ -38,6 +39,8 @@ export interface AuroraOvalJson {
   power_by_hemisphere?: [number, number];
   /** Part 2: full width, equatorward to poleward edge, degrees. */
   width_deg?: number;
+  /** Part 2b: magnetic latitude of the equatorward and poleward edges, degrees. */
+  edges_deg?: [number, number];
   emissions?: AuroraEmissionJson[];
   colour?: { hex?: string; linear_srgb: [number, number, number] };
 }
@@ -56,6 +59,8 @@ export interface AuroraJson {
   diffuse: boolean;
   /** Part 2: the diffuse glow's own lines (an airy world with no field). */
   diffuse_emissions?: AuroraEmissionJson[];
+  /** Part 2b's name for it: the glow with its own power, lines and colour. */
+  diffuse_glow?: { power_w?: number; emissions?: AuroraEmissionJson[] } | null;
 }
 
 /** One glowing shell: a line of one driver, at its height, over its place. */
@@ -101,8 +106,8 @@ export interface AuroraWorld {
   tilt_deg?: number;
 }
 
-const PLANCK = 6.62607015e-34;
-const C = 299792458;
+const PLANCK = constant("h");
+const C = constant("c");
 /** One rayleigh is 10¹⁰ photons per second per square metre of column, into 4π (Hunten, Roach and Chamberlain 1956). */
 export const RAYLEIGH_PH_M2_S_SR = 1e10 / (4 * Math.PI);
 
@@ -208,9 +213,12 @@ export function planAurora(read: (FieldReadJson & { aurora?: AuroraJson | null }
     layers.push({ kind, driver, line: em.line, wavelength_m: em.wavelength_m, colatitude_rad: colat, width_rad: width, height_m: em.peak_height_m, thickness_m: em.thickness_m ?? (H ? 2 * H : em.peak_height_m * 0.2), rgb: [rgb[0], rgb[1], rgb[2]], radiance_w_m2_sr: L, grade: "kernel" });
   };
   for (const o of a.ovals) {
-    const colat = ((90 - Math.abs(o.magnetic_latitude_deg)) * Math.PI) / 180;
+    // Part 2b gives both edges: the oval's centre is half way between them, its width the gap.
+    const e = o.edges_deg;
+    const lat = e ? (Math.abs(e[0]) + Math.abs(e[1])) / 2 : Math.abs(o.magnetic_latitude_deg);
+    const colat = ((90 - lat) * Math.PI) / 180;
     if (o.emissions?.length) {
-      const width = (((o.width_deg ?? OXYGEN_STAND_IN.width_deg) * Math.PI) / 180);
+      const width = (((o.width_deg ?? (e ? Math.abs(Math.abs(e[1]) - Math.abs(e[0])) : OXYGEN_STAND_IN.width_deg)) * Math.PI) / 180);
       const area = 2 * bandArea(R, colat, width);
       for (const em of o.emissions) fromKernel("oval", o.driver, colat, width, area, em);
     } else if (ox >= OXYGEN_STAND_IN.min_share && H) {
@@ -222,7 +230,8 @@ export function planAurora(read: (FieldReadJson & { aurora?: AuroraJson | null }
     } else waiting++;
   }
   if (a.diffuse) {
-    if (a.diffuse_emissions?.length) for (const em of a.diffuse_emissions) fromKernel("diffuse", "diffuse", 0, Math.PI, 4 * Math.PI * R * R, em);
+    const glow = a.diffuse_glow?.emissions?.length ? a.diffuse_glow.emissions : a.diffuse_emissions;
+    if (glow?.length) for (const em of glow) fromKernel("diffuse", "diffuse", 0, Math.PI, 4 * Math.PI * R * R, em);
     else waiting++;
   }
   if (a.footprints.length) caveats.push(`${a.footprints.length === 1 ? "one moon's spot is" : `${a.footprints.length} moons' spots are`} not drawn yet: each needs its moon's place in the sky`);
@@ -291,24 +300,111 @@ export function exposeAurora(plan: AuroraPlan, radius_m: number, mode: AuroraExp
   const peak = Math.max(...plan.layers.map((l) => l.radiance_w_m2_sr)) * toUnits;
   const lift = mode === "long" && peak > 0 ? Math.max(1, (target * ground) / peak) : 1;
   const layers = plan.layers.map((l): AuroraDrawLayer => {
-    let rgb = l.rgb;
-    if (mode === "eye") {
-      // Luminance of the line face-on, cd/m², from the CIE photopic curve at its wavelength.
-      const lum = KM * cieXyz(l.wavelength_m * 1e9)[1] * l.radiance_w_m2_sr;
-      const [lo, hi] = COLOUR_VISION_CD_M2;
-      const t = Math.max(0, Math.min(1, Math.log10(Math.max(lum, 1e-30) / lo) / Math.log10(hi / lo)));
-      const y = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
-      rgb = [y + (rgb[0] - y) * t, y + (rgb[1] - y) * t, y + (rgb[2] - y) * t];
-    }
-    // Chromaticity × brightness: scale so the colour's luminance carries the radiance.
-    const y = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2] || 1;
-    const v = (l.radiance_w_m2_sr * toUnits * lift) / y;
-    return { colatitude_rad: l.colatitude_rad, width_rad: l.width_rad, diffuse: l.kind === "diffuse", radius: 1 + l.height_m / radius_m, thickness: Math.max(1e-5, l.thickness_m / radius_m), rgb: [rgb[0] * v, rgb[1] * v, rgb[2] * v] };
+    const rgb = lineColour(l, mode, l.radiance_w_m2_sr * toUnits * lift);
+    return { colatitude_rad: l.colatitude_rad, width_rad: l.width_rad, diffuse: l.kind === "diffuse", radius: 1 + l.height_m / radius_m, thickness: Math.max(1e-5, l.thickness_m / radius_m), rgb };
   });
   const top = Math.max(...layers.map((l) => l.radius + l.thickness / 2));
   const real = lift > 1 ? ` (×${lift.toExponential(1).replace("e+", "×10^")})` : "";
   const says = mode === "long" ? `Long exposure: faint light is lifted${real}, so the aurora shows in full colour; Eye shows it as an eye would.` : "Eye: one exposure for the sunlit world; the aurora is at its true brightness, grey where it is too faint for colour vision.";
   return { axis: plan.axis, layers, top, says, lift };
+}
+
+/**
+ * A line's colour at a brightness: its chromaticity (greyed under Eye where the line is below colour vision's limit)
+ * scaled so the colour's luminance carries `value`.
+ */
+function lineColour(l: AuroraLayer, mode: AuroraExposure, value: number): [number, number, number] {
+  let rgb = l.rgb;
+  if (mode === "eye") {
+    // Luminance of the line face-on, cd/m², from the CIE photopic curve at its wavelength.
+    const lum = KM * cieXyz(l.wavelength_m * 1e9)[1] * l.radiance_w_m2_sr;
+    const [lo, hi] = COLOUR_VISION_CD_M2;
+    const t = Math.max(0, Math.min(1, Math.log10(Math.max(lum, 1e-30) / lo) / Math.log10(hi / lo)));
+    const y = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+    rgb = [y + (rgb[0] - y) * t, y + (rgb[1] - y) * t, y + (rgb[2] - y) * t];
+  }
+  const y = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2] || 1;
+  const v = value / y;
+  return [rgb[0] * v, rgb[1] * v, rgb[2] * v];
+}
+
+/** The aurora seen from a site on the ground (VP-AU7): the same shells, in the site's frame. */
+export interface AuroraSky {
+  /** The magnetic axis in the site's frame (x east, y north, z up). */
+  axis: [number, number, number];
+  /** Shells in globe radii (the ground is 1); light per unit of the star's light at the top of the air, lifted. */
+  layers: AuroraDrawLayer[];
+  /** The exposure line for the HUD. */
+  says: string;
+  lift: number;
+}
+
+/**
+ * A direction in the globe's frame (z the spin pole, x at longitude 0) turned into a site's frame (x east, y north, z
+ * up) at a latitude and longitude, degrees.
+ */
+export function toSite(v: readonly number[], lat_deg: number, lon_deg: number): [number, number, number] {
+  const la = (lat_deg * Math.PI) / 180;
+  const lo = (lon_deg * Math.PI) / 180;
+  const up = [Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la)];
+  const east = [-Math.sin(lo), Math.cos(lo), 0];
+  const north = [-Math.sin(la) * Math.cos(lo), -Math.sin(la) * Math.sin(lo), Math.cos(la)];
+  const d = (a: number[]) => a[0]! * v[0]! + a[1]! * v[1]! + a[2]! * v[2]!;
+  return [d(east), d(north), d(up)];
+}
+
+/**
+ * The plan for the ground view at a site, under one exposure. Light is per unit of the star's light at the top of the
+ * air (the Land screen's units: its sky is drawn that way), so `flux_w_m2` is the star's light at this world.
+ * Long exposure lifts all lines by one ratio so the brightest part of the sky from here shows at `target` after the
+ * view's own `exposure`; Eye keeps it as it is (TEMPORARY until VP1's finish, as for the globe).
+ */
+export function auroraSky(plan: AuroraPlan, radius_m: number, site: { lat_deg: number; lon_deg: number }, mode: AuroraExposure, flux_w_m2: number, exposure: number, target = 0.35): AuroraSky | null {
+  if (!plan.layers.length) return null;
+  const per = 1 / Math.max(flux_w_m2, 1e-30);
+  const axis = toSite(plan.axis, site.lat_deg, site.lon_deg);
+  const shells = plan.layers.map((l): AuroraDrawLayer => ({ colatitude_rad: l.colatitude_rad, width_rad: l.width_rad, diffuse: l.kind === "diffuse", radius: 1 + l.height_m / radius_m, thickness: Math.max(1e-6, l.thickness_m / radius_m), rgb: [1, 1, 1] }));
+  // The brightest the sky gets from here, where it is above the horizon: each line's face-on light times its path at
+  // a coarse grid of directions (the path grows toward the horizon, as all-sky cameras record: the van Rhijn effect).
+  let peak = 0;
+  for (let el = 3; el <= 90; el += 6)
+    for (let az = 0; az < 360; az += 15) {
+      const a = (az * Math.PI) / 180;
+      const e = (el * Math.PI) / 180;
+      const d = [Math.cos(e) * Math.sin(a), Math.cos(e) * Math.cos(a), Math.sin(e)];
+      let sum = 0;
+      plan.layers.forEach((l, i) => (sum += l.radiance_w_m2_sr * skyGlowAlong(shells[i]!, axis, d, 2, radius_m)));
+      peak = Math.max(peak, sum);
+    }
+  const seen = peak * per * Math.max(exposure, 1e-30);
+  const lift = mode === "long" && seen > 0 ? Math.max(1, target / seen) : 1;
+  const layers = shells.map((sh, i) => ({ ...sh, rgb: lineColour(plan.layers[i]!, mode, plan.layers[i]!.radiance_w_m2_sr * per * lift) }));
+  const real = lift > 1 ? ` (×${lift.toExponential(1).replace("e+", "×10^")})` : "";
+  const says = mode === "long" ? `Long exposure: faint light is lifted${real}, so the aurora shows in full colour.` : "Eye: the aurora at its true brightness, grey where it is too faint for colour vision.";
+  return { axis, layers, says, lift };
+}
+
+/**
+ * Where an aurora layer stands in the sky from a site, for words and tests: the light along a direction (site frame)
+ * relative to the layer's face-on light, by the same geometry the shader runs. The eye sits `eye_m` above a ground
+ * of `radius_m`; the ray meets the shell once on its way out, at a point whose magnetic colatitude sets the ring's
+ * share, and the path through the layer is the thickness over the cosine there, capped at the tangent chord.
+ */
+export function skyGlowAlong(layer: AuroraDrawLayer, axis: readonly number[], dir: readonly number[], eye_m: number, radius_m: number): number {
+  const p0 = 1 + eye_m / radius_m;
+  const b = p0 * dir[2]!;
+  const c = p0 * p0 - layer.radius * layer.radius;
+  const s = -b + Math.sqrt(Math.max(0, b * b - c));
+  const q = [s * dir[0]!, s * dir[1]!, p0 + s * dir[2]!];
+  const n = Math.hypot(q[0]!, q[1]!, q[2]!) || 1;
+  const nq = q.map((x) => x / n);
+  const cosn = Math.abs(nq[0]! * dir[0]! + nq[1]! * dir[1]! + nq[2]! * dir[2]!);
+  const path = Math.min(1 / Math.max(cosn, 1e-4), 2 * Math.sqrt((2 * layer.radius) / layer.thickness));
+  const m = Math.abs(nq[0]! * axis[0]! + nq[1]! * axis[1]! + nq[2]! * axis[2]!);
+  const colat = Math.acos(Math.min(1, m));
+  const sigma = layer.width_rad / 2.3548;
+  const ring = layer.diffuse ? 1 : Math.exp(-0.5 * ((colat - layer.colatitude_rad) / sigma) ** 2);
+  return ring * path;
 }
 
 export const AURORA_REFERENCES = [
@@ -319,3 +415,31 @@ export const AURORA_REFERENCES = [
   { text: "Wyman, C., Sloan, P.-P., Shirley, P. (2013). Simple analytic approximations to the CIE XYZ color matching functions. Journal of Computer Graphics Techniques 2(2), 1-11.", url: "https://jcgt.org/published/0002/02/01/" },
   { text: "CIE 191:2010. Recommended system for mesopic photometry based on visual performance.", url: "https://cie.co.at/publications/recommended-system-mesopic-photometry-based-visual-performance" },
 ];
+
+/** What `loadAurora` asks of the session: the field read and (for a generated world's tilt) the resolved facts. */
+export interface AuroraSession {
+  readField(ask: { fixture?: string; system?: string }): Promise<{ ok: true; bodies: unknown[] } | { ok: false; code: string; message: string }>;
+  resolvedSystem(system: string): Promise<{ ok: true; result: { facts: Record<string, Record<string, unknown>> } } | { ok: false; [k: string]: unknown }>;
+}
+
+/**
+ * One world's aurora plan, read once: the Solar System's own worlds from read_field's measured fixture (matched by
+ * name inside the campaign's Solar System), any other adopted system world by world from its facts, with its MF3
+ * `field.tilt`. Null when the kernel has no read for it. Shared by the Body globe and the Land screen.
+ */
+export async function loadAurora(session: AuroraSession, system: string, body: { address: string; label: string }, world: Omit<AuroraWorld, "tilt_deg">): Promise<{ plan: AuroraPlan; radius_m: number } | null> {
+  const sol = /\/sys:sol$/.test(system);
+  const r = await session.readField(sol ? { fixture: "solar-system" } : { system });
+  const bodies = r.ok ? (r.bodies as (FieldReadJson & { aurora?: AuroraJson | null })[]) : [];
+  const read = sol ? bodies.find((b) => b.name === body.label) : bodies.find((b) => b.address === body.address);
+  if (!read) return null;
+  let tilt: number | undefined;
+  if (!sol) {
+    const rs = await session.resolvedSystem(system);
+    const t = rs.ok ? (rs as { result: { facts: Record<string, Record<string, unknown>> } }).result.facts[body.address]?.["field.tilt"] : undefined;
+    if (typeof t === "number") tilt = t;
+  }
+  const radius = world.radius_m > 0 ? world.radius_m : (read.field?.reference_radius_m ?? 0);
+  if (!(radius > 0)) return null;
+  return { plan: planAurora(read, { ...world, radius_m: radius, ...(tilt !== undefined ? { tilt_deg: tilt } : {}) }), radius_m: radius };
+}

@@ -13,14 +13,14 @@ Only the owner thread edits this file. Logs are in `handover/packages/`. Index a
 
 **Rule 5 (section 16.1):** a look is switched on by kernel numbers, never a name or class; it scales with them; it stays off where the physics says so; each package is proven on a Solar System body, a world outside it, and a world where it stays off. Aurora proving worlds: `tests/fixtures/aurora/proving-worlds.json`.
 
-Files: `packages/renderer/src/aurora.ts`, `gpu-aurora.ts`, their test `packages/renderer/test/aurora.test.ts`, the `aurora` pass in `passes.ts` and the true-colour recipe's `aurora` entry. Small additive hooks, agreed as seams: an optional last argument `aurora` to `gpu-globe.ts` `draw`, `aurora` in `runtime.ts` `GlobeRunOptions` and `aurora_note` in its status, `aurora` in `photograph.ts` options, and the aurora read in `packages/views/body/src/Body.svelte` (renderer and chart room threads told). `gpu.ts` untouched.
+Files: `packages/renderer/src/aurora.ts`, `gpu-aurora.ts`, `gpu-aurora-sky.ts`, their test `packages/renderer/test/aurora.test.ts`, the `aurora` pass in `passes.ts` and the true-colour recipe's `aurora` entry. Small additive hooks, agreed as seams: an optional last argument `aurora` to `gpu-globe.ts` `draw`, `aurora` in `runtime.ts` `GlobeRunOptions` and `aurora_note` in its status, `aurora` in `photograph.ts` options, the aurora read in `packages/views/body/src/Body.svelte`, and for the ground view an optional `aurora` in `gpu-surface.ts` `SurfaceFrame` and the aurora read in `packages/views/surface/src/Surface.svelte` (renderer and chart room threads told). `gpu.ts` untouched.
 
 | Package | State | Log |
 |---|---|---|
-| VP-AU5 part 1, glowing shells on the Body globe: each line of each oval a thin shell at its own height round the magnetic poles, limb-stacked, drowned by daylight; long exposure by default (one stated lift, ratios kept), Eye true brightness and grey below colour vision; oxygen stand-in only where the air holds oxygen, marked on screen | in review (PR to come) | packages/VP-AU5.md |
+| VP-AU5 part 1, glowing shells on the Body globe: each line of each oval a thin shell at its own height round the magnetic poles, limb-stacked, drowned by daylight; long exposure by default (one stated lift, ratios kept), Eye true brightness and grey below colour vision; oxygen stand-in only where the air holds oxygen, marked on screen | in review (PR 469) | packages/VP-AU5.md |
 | VP-AU5 part 2: moon spots and tails from the system's moon positions and `lead_deg`; shells on system True (V10a) and System 3D worlds; the Exposure control moves to the shared view controls when VP1 lands | next | |
 | VP-AU6 curtains through the detail ladder (VP6), pulsing under the three-flashes cap | queued (needs VP6) | |
-| VP-AU7 aurora from the ground on the Land screen | queued (after AU5) | |
+| VP-AU7 aurora from the ground on the Land screen: each line a shell met by the sight line, ring times slant path, dimmed by the air below, arcs low toward the pole from mid latitudes, overhead under the oval; long exposure lift on the brightest point of the sky | in review (PR 469) | packages/VP-AU7.md |
 | VP-AU8 ribbons along field lines; volumes | queued (needs VP4) | |
 | VP-AU9 other bands (UV, IR, X-ray) through the Band control | queued (needs part 2) | |
 | Storm aurora drawn on the date an ejection arrives (VP-AU3 facts) | queued (needs part 2) | |

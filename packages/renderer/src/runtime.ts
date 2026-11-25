@@ -2,7 +2,7 @@
 // recipe, draws it, measures every frame, lets the governor walk the degrade
 // order, and reports what it did so the view can show the quality badge.
 // Presentation only: nothing here reaches the kernel or the state hash.
-import { cubeDirection, perf, type Globe, type Tier } from "../../ui-contract/src/index.ts";
+import { constant, cubeDirection, perf, type Globe, type Tier } from "../../ui-contract/src/index.ts";
 import { iceAges, iceAgeWords, layersFor, narrateFrame, pickAt, recolour, type LayerSpec, type TimeLapse } from "./timelapse.ts";
 import { narrateWeather, weatherAt, withWeather, type WeatherMap } from "./weather.ts";
 import { badge, Governor, type Badge } from "./governor.ts";
@@ -15,7 +15,7 @@ import type { AirRender } from "./gpu-air.ts";
 import { exposeAurora, type AuroraExposure, type AuroraPlan } from "./aurora.ts";
 
 /** The Sun's light at 1 au, W/m² (Kopp and Lean 2011), when a world's own is not handed in. */
-const SOLAR_FLUX_1AU = 1361;
+const SOLAR_FLUX_1AU = constant("S_sun");
 
 /** The air in render units (globe radius 1): coefficients × radius, scale height ÷ radius, shell to 10 scale heights. */
 export function airRender(a: { air: Air; radius_m: number }, thickness = 1): AirRender {

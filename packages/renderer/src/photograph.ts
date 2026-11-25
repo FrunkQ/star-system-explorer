@@ -6,6 +6,7 @@
 // the canvas tier drawn at twice the size and scaled down. Presentation
 // only: a photograph never touches the kernel or the state hash.
 import type { Globe, Tier } from "../../ui-contract/src/index.ts";
+import { constant } from "../../ui-contract/src/index.ts";
 import { pickRecipe, plan, type PassSpec, type RecipeDoc } from "./recipe.ts";
 import { prepare } from "./surface.ts";
 import { drawCanvas } from "./canvas.ts";
@@ -78,7 +79,7 @@ export async function photograph(o: PhotoOptions): Promise<Photo> {
         const atm = pl.passes.find((x) => x.pass === "atmosphere")?.params;
         const air = atm && airPhys ? airRender(airPhys, Number(atm.thickness ?? 1)) : null;
         const auPass = pl.passes.find((x) => x.pass === "aurora")?.params;
-        const aurora = auPass && o.aurora ? exposeAurora(o.aurora.plan, o.aurora.radius_m, auPass.exposure === "eye" ? "eye" : "long", Number(atm?.sun ?? 6), o.aurora.flux_w_m2 ?? 1361, Number(auPass.lift_target ?? 0.6)) : null;
+        const aurora = auPass && o.aurora ? exposeAurora(o.aurora.plan, o.aurora.radius_m, auPass.exposure === "eye" ? "eye" : "long", Number(atm?.sun ?? 6), o.aurora.flux_w_m2 ?? constant("S_sun"), Number(auPass.lift_target ?? 0.6)) : null;
         const most = Math.max(1, Math.min(64, Math.round(o.frames)));
         const budget = o.budget_ms ?? 6000;
         let n = 0;

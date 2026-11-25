@@ -3,8 +3,8 @@
 // Open the Solar System, pick Earth, open its Body screen in True: the aurora pass is in the plan, the kernel's oval
 // is named in the badge's words with oxygen's two lines at their heights, the stand-in line shows under the globe,
 // and the HUD line says the long exposure lifts faint light (Alex, 24 Nov: Long exposure is the default). Seen from
-// above and edge-on, both drawn. Mars (no field facts in the fixture, thin CO2 air) draws none and says why; the
-// Moon draws none. Nothing is written.
+// above and edge-on, both drawn. Mars (no field facts in the fixture, thin CO2 air) draws none and says why. From the ground on Earth near the oval at night (desk), the Land screen names the same oval and
+// lines and the long exposure. Nothing is written.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -71,6 +71,49 @@ try {
     await shot(gm, `mars-off-${vp}`);
 
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash0, "nothing written");
+    // From the ground (VP-AU7), desk only: land on Earth near the oval, at night, in True.
+    if (vp === "desk") {
+      await view(gm, "View style", "Chart");
+      await go(gm, "system");
+      await pick("Earth");
+      await go(gm, "surface");
+      const map = gm.locator("[data-site-map]");
+      await map.waitFor({ timeout: 30000 });
+      const box = await map.boundingBox();
+      await map.click({ position: { x: ((10 + 180) / 360) * box.width, y: ((90 - 64) / 180) * box.height } });
+      await gm.waitForFunction(() => document.querySelector("[data-surface]")?.getAttribute("data-site")?.startsWith("6"), null, { timeout: 15000 });
+      await gm.waitForSelector("[data-surface]:not([data-verdict=''])", { timeout: 15000 });
+      // Land: the ground may still be loading for the site, so press again until the descent (or the ground) starts.
+      const off = () => gm.evaluate(() => ["flying", "down"].includes(document.querySelector("[data-surface]")?.getAttribute("data-phase") ?? ""));
+      for (let i = 0; i < 6 && !(await off()); i++) {
+        if (await gm.locator("[data-land]:not([disabled])").count()) await gm.locator("[data-land]").click();
+        await gm.waitForFunction(() => ["flying", "down"].includes(document.querySelector("[data-surface]")?.getAttribute("data-phase") ?? ""), null, { timeout: 10000 }).catch(() => {});
+      }
+      if ((await gm.locator("[data-surface]").getAttribute("data-phase")) === "flying") await gm.locator("[data-skip]").click();
+      await gm.waitForSelector("[data-surface][data-phase='down']", { timeout: 30000 });
+      await view(gm, "View style", "True");
+      await gm.waitForSelector("[data-surface][data-look='true']");
+      let darkest = { at: 0, exposure: 0 };
+      for (let h = -180; h <= 180; h += 30) {
+        await gm.locator("[data-hour]").fill(String(h));
+        await gm.waitForTimeout(150);
+        const e = Number(await gm.locator("[data-surface]").getAttribute("data-exposure"));
+        if (e > darkest.exposure) darkest = { at: h, exposure: e };
+      }
+      await gm.locator("[data-hour]").fill(String(darkest.at));
+      await gm.waitForSelector("[data-aurora-sky]", { timeout: 20000 });
+      const sky = await gm.locator("[data-aurora-sky]").innerText();
+      assert.match(sky, /wind-driven oval .* O I 557\.7 nm .* Long exposure: faint light is lifted/, sky);
+      // Look about: four headings, a quarter turn apart.
+      await gm.locator("[data-ground]").focus();
+      for (const k of [0, 1, 2, 3]) {
+        if (screens) (mkdirSync(screens, { recursive: true }), await gm.waitForTimeout(800), await gm.locator("[data-ground]").screenshot({ path: `${screens}/ground-night-${k}.png` }));
+        await gm.keyboard.down("ArrowLeft");
+        await gm.waitForTimeout(1120);
+        await gm.keyboard.up("ArrowLeft");
+      }
+    }
+
     if (vp === "phone") {
       const over = await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       assert.ok(over <= 0, `phone overflows by ${over} px`);
