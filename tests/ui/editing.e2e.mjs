@@ -8,7 +8,7 @@
 // the size strip is the distance with that year; Retrograde mirrors the lean past 90 degrees; the place now is a ring
 // that catches at the far point; Locked sets the day to the year and the sun's day says so; each one change, one Undo.
 // ED7: on Explore, "Try changing it" opens an example what-if where the strip moves and the main line does not; on
-// Build, Add a moon offers formation's own rules for the chosen planet.
+// Build, Add a moon offers formation's own rules for the chosen planet; on a phone the open strip docks above the ruler.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -54,6 +54,13 @@ try {
     assert.ok(await strip.locator("[data-strip-figure]").isDisabled(), "read-only on Explore");
     for (const n of ["Earth", "Jupiter"]) assert.equal(await strip.locator(`[data-dot="${n}"]`).count(), 1, `${n} is a reference dot`);
     await shot(gm, `explore-orbit-${vp}`);
+    if (vp === "phone") {
+      // ED7 phone dock: the open strip docks above the time ruler, and the mark is where the thumb can reach it.
+      const [dock, ruler, mark] = await gm.evaluate(() => [document.querySelector("[data-dock]"), document.querySelector('footer[aria-label="Time"]'), document.querySelector('[data-strip="orbit"] .mark')].map((e) => e?.getBoundingClientRect().toJSON()));
+      assert.ok(dock && ruler && mark, "dock, ruler and mark");
+      assert.ok(dock.bottom <= ruler.top + 1, `the dock sits above the ruler (${dock.bottom} against ${ruler.top})`);
+      assert.ok(mark.top >= dock.top && mark.bottom <= dock.bottom, "the mark is in view in the dock");
+    }
 
     // Press a unit (ED1a): the card's Orbit steps to the next reading and the handle follows, for every planet; round
     // the readings it comes back to AU.

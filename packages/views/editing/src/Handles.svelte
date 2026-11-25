@@ -147,6 +147,9 @@
       </button>
     {/each}
   </div>
+  <!-- On a phone the open strip docks across the full width above the time ruler, with the verdict over it (design
+       section 15, "Phone"). -->
+  <div class="dock" data-dock class:docked={open !== null || followed !== null}>
   {#if open}
     {@const h = handles.find((x) => x.id === open)!}
     {#if h.box}
@@ -171,9 +174,31 @@
       {/if}
     </div>
   {/if}
+  </div>
 {/if}
 
 <style>
+  .dock {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  @media (max-width: 600px) {
+    .dock.docked {
+      position: sticky;
+      /* Above the time ruler, which is sticky at the foot of a phone's page (the shell gives its height). */
+      bottom: var(--sse-ruler-h, 0px);
+      z-index: 3;
+      max-height: max(160px, min(50vh, calc(100vh - var(--sse-ruler-h, 0px) - 96px)));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: var(--sse-ground-raised);
+      border-top: var(--sse-line) solid var(--sse-rule);
+    }
+    .dock .followed {
+      order: -1;
+    }
+  }
   .handles {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

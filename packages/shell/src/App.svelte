@@ -1358,6 +1358,8 @@
   let placing = $state(false);
   // Add here (V3 gap 2): one world or moon by hand, round the selected star or planet (else the primary).
   let addDialog: HTMLDialogElement | undefined = $state();
+  // The time ruler's height, for what docks above it on a phone (the handles' open strip, ED7).
+  let rulerH = $state(0);
   let addFor = $state<{
     address: string;
     label: string;
@@ -1571,7 +1573,7 @@
 <svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
-<div class="app" inert={startOpen} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
+<div class="app" inert={startOpen} style="--sse-ruler-h: {rulerH}px" data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   <header class="bar">
     <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
     <PlaceLine
@@ -1699,7 +1701,7 @@
       </Stage>
       {/key}
     </div>
-    <footer class="area-ruler" aria-label="Time">
+    <footer class="area-ruler" aria-label="Time" bind:offsetHeight={rulerH}>
       {#key ws.screen}<div class="ruler-view">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</div>{/key}
       <!-- What if and Look ahead live on the ruler (2.7): both are about time. Light and Sound sit with them, as modifiers of any instrument. -->
       <div class="ruler-side" aria-label="Time tools" role="group">
