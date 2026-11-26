@@ -218,9 +218,10 @@ pub(crate) fn galaxies_seen(
             .then_with(|| a.1["address"].as_str().cmp(&b.1["address"].as_str()))
     });
     let mut walk = serde_json::json!({"cells": cells, "haloes": haloes, "reach_mpc": reach, "home_mpc": home, "satellites": sat_walk});
-    if ask.paths {
+    // The edge needs the sheet's Sun (no stack, no sheet: left out).
+    if let (true, Some(m_sun)) = (ask.paths, sse_physics::constant("M_sun")) {
         let host_msun = walk["satellites"]["host_mass_msun"].as_f64().unwrap_or(0.0);
-        walk["group_edge"] = group_edge(host_msun, &out, t_obs_gyr)?;
+        walk["group_edge"] = group_edge(host_msun, m_sun, &out, t_obs_gyr)?;
     }
     Ok((out, walk))
 }
@@ -235,20 +236,25 @@ pub(crate) const ZERO_VELOCITY_BLOCK: &str = "sse.gravity.zero_velocity_radius";
 /// are inside home's halo already, so are not counted twice.
 fn group_edge(
     home_halo_msun: f64,
+    m_sun: f64,
     seen: &[(f64, serde_json::Value)],
     t_gyr: f64,
 ) -> Result<serde_json::Value, Response> {
     use sse_flow::Atom as _;
-    let block = sse_atoms::formulas::loaded()
+    // Through the physics in force (ER1): the block from its library, read
+    // once here, and the Sun's mass from the sheet in force (`m_sun`). The
+    // block has no settings, so none are shipped defaults.
+    let physics = sse_physics::now().ok_or_else(|| err("eval", "no physics in force"))?;
+    let block = physics
+        .blocks()
         .iter()
         .find(|a| a.decl().id == ZERO_VELOCITY_BLOCK)
         .ok_or_else(|| err("eval", format!("{ZERO_VELOCITY_BLOCK} is not loaded")))?;
-    let params: Vec<f64> = block.decl().params.iter().map(|p| p.default).collect();
     let t_s = t_gyr * 1.0e9 * sse_core::quantity::consts::JULIAN_YEAR;
     let radius_mpc = |msun: f64| -> Result<f64, Response> {
-        let kg = msun.max(0.0) * sse_core::sheet::M_SUN;
+        let kg = msun.max(0.0) * m_sun;
         let r = block
-            .eval(&[kg, t_s], &params)
+            .eval(&[kg, t_s], &[])
             .map_err(|x| err("eval", format!("{ZERO_VELOCITY_BLOCK}: {}", x.0)))?;
         Ok(r.first().copied().unwrap_or(0.0) / MPC_M)
     };
