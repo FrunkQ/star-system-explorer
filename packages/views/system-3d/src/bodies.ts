@@ -31,6 +31,8 @@ export interface Body3D {
   small?: SmallSample;
   /** RW16a: a scene body below the round size, drawn as its own lump (kernel `small_shape`, ui-contract small-shape.ts). */
   figure?: SmallShape;
+  /** Where the kernel places it from its parent's centre (metres, the system's frame), when placed by date: shadows in True. */
+  r_m?: [number, number, number];
 }
 
 /** A resolved belt member as a body round the star, where its orbit puts it now (True only). */
@@ -52,7 +54,7 @@ export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => M
     .filter((s) => s === star || s.orbit)
     .map((s) => {
       const rings = scene.subjects.filter((r) => r.ring && r.parent === s.address).map((r) => ({ name: r.label, ...r.ring! }));
-      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...massOf(s) };
+      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, ...(s.orbit?.r_m ? { r_m: s.orbit.r_m } : {}), mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...massOf(s) };
     });
 }
 
@@ -226,3 +228,34 @@ export function layoutReal(bodies: readonly Body3D[], centreId: string): FrameLa
 }
 
 export const hasChildren = (bodies: readonly Body3D[], id: string) => bodies.some((b) => b.parent === id && b.a_m !== null);
+
+/**
+ * Every body where it really is, for shadows in True (renderer eclipse.ts): its parent's place plus its own, the
+ * kernel's three-dimensional place by date where the scene has it, else its distance and phase in its parent's plane.
+ * A body with no radius, no distance or a phase spread for display (a players' scene) is left out: a shadow drawn from
+ * a made-up place would tell a lie. The star sits at the origin.
+ */
+export function placedBodies(bodies: readonly Body3D[]): Map<string, { id: string; at_m: [number, number, number]; radius_m: number }> {
+  const byId = new Map(bodies.map((b) => [b.id, b]));
+  const at = new Map<string, [number, number, number] | null>();
+  const place = (b: Body3D, depth = 0): [number, number, number] | null => {
+    if (at.has(b.id)) return at.get(b.id)!;
+    let p: [number, number, number] | null = null;
+    if (b.parent === null) p = [0, 0, 0];
+    else if (depth < 16 && b.phase_known) {
+      const up = byId.get(b.parent);
+      const base = up ? place(up, depth + 1) : null;
+      const t = (b.phase_deg * Math.PI) / 180;
+      const own: [number, number, number] | null = b.r_m ?? (b.a_m !== null ? [b.a_m * Math.cos(t), b.a_m * Math.sin(t), 0] : null);
+      p = base && own ? [base[0] + own[0], base[1] + own[1], base[2] + own[2]] : null;
+    }
+    at.set(b.id, p);
+    return p;
+  };
+  const out = new Map<string, { id: string; at_m: [number, number, number]; radius_m: number }>();
+  for (const b of bodies) {
+    const p = place(b);
+    if (p && b.radius_m && b.radius_m > 0) out.set(b.id, { id: b.id, at_m: p, radius_m: b.radius_m });
+  }
+  return out;
+}

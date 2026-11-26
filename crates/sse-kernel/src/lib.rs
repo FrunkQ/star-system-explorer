@@ -13,6 +13,7 @@ mod atmos;
 mod atmos_tests;
 #[cfg(test)]
 mod bary_tests;
+mod catalogue;
 mod caves;
 #[cfg(test)]
 mod class_sample_tests;
@@ -7718,6 +7719,19 @@ impl Kernel {
             Request::AtmosphereAdvice { body, at_s, facts } => {
                 self.atmosphere_advice(&body, at_s, facts.as_ref())?
             }
+            Request::ReadCatalogue {
+                text,
+                packed_b64,
+                min_size,
+                rank,
+                limit,
+            } => catalogue::read(
+                text.as_deref(),
+                packed_b64.as_deref(),
+                min_size,
+                rank,
+                limit,
+            )?,
             Request::PackReports { pack } => {
                 let reports: Vec<&trust::PackReport> = self
                     .reports

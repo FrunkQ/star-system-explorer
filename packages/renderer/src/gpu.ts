@@ -2,8 +2,9 @@
 // device has no WebGPU). It is handed camera-relative positions only, already
 // narrowed from f64 (frames.ts), and draws with the camera at the origin, so
 // no large number ever reaches the GPU (rendering rule 3).
-import { AdditiveBlending, AmbientLight, CustomBlending, OneFactor, OneMinusSrcAlphaFactor, BufferGeometry, DoubleSide, Quaternion, RingGeometry, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
-import { WebGPURenderer } from "three/webgpu";
+import { AdditiveBlending, AmbientLight, CustomBlending, OneFactor, OneMinusSrcAlphaFactor, BufferGeometry, DoubleSide, Quaternion, RingGeometry, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Matrix4, Mesh, MeshBasicMaterial, OrthographicCamera, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
+import { MeshBasicNodeMaterial, MeshStandardNodeMaterial, WebGPURenderer } from "three/webgpu";
+import { cubeTexture, normalize, positionLocal, texture as textureNode, uv as uvNode, vec3, vec4 } from "three/tsl";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
 import { ringLight } from "./rings.ts";
@@ -13,6 +14,8 @@ import { flattenScale } from "./true-shape.ts";
 import { makeAirShell, type AirShell } from "./gpu-air-shell.ts";
 import { BAKE_BUDGET, faceSize } from "./texture-ladder.ts";
 import { createTextureBaker } from "./texture-ladder-gpu.ts";
+import { makeShade, type ShadeState } from "./gpu-shade.ts";
+import type { Shade } from "./eclipse.ts";
 
 /** Clouds are drawn this far out (over the radius) until the weather op gives their height: a hair, so they do not fight the ground. */
 const CLOUD_LIFT = 1.002;
@@ -79,6 +82,13 @@ export interface GpuItem {
   flatten?: number;
   /** The world's north pole in camera space, for `flatten` when no `frame` is given. */
   pole?: Vec3;
+  /**
+   * True look: the bodies that may shadow this world, where they really are, in its drawn radii (eclipse.ts
+   * `shadeFor`), and its star's angular radius. Its rings' shadow and its own on its rings need nothing more.
+   */
+  shade?: Shade;
+  /** True look: the sun's glint off its liquid ground, spread by this wind (m/s; a stand-in when left out) at this index. */
+  glint?: { wind_m_s?: number; index?: number };
 }
 
 /** True look: the star's light. `at` a camera-relative point (the star is in the frame), else `from` a direction. */
@@ -214,8 +224,8 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
   const textures = new Map<string, DataTexture>();
   const shells = new Map<string, AirShell>();
   // Clouds over a surface: lit like the ground, premultiplied, so the ground shows through where they are thin.
-  const cloudMats = new Map<string, MeshStandardMaterial>();
-  const cloudMat = (c: NonNullable<GpuItem["clouds"]>) => {
+  const cloudMats = new Map<string, MeshStandardNodeMaterial>();
+  const cloudMat = (c: NonNullable<GpuItem["clouds"]>, id: string) => {
     const hit = cloudMats.get(c.key);
     if (hit) return hit;
     const map = new DataTexture(c.texture.data.slice(), c.texture.width, c.texture.height, RGBAFormat);
@@ -224,7 +234,9 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     map.minFilter = LinearFilter;
     map.needsUpdate = true;
     textures.set(c.key, map);
-    const m = new MeshStandardMaterial({ color: 0xffffff, map, roughness: 1, metalness: 0, transparent: true, depthWrite: false });
+    const m = new MeshStandardNodeMaterial({ color: 0xffffff, map, roughness: 1, metalness: 0, transparent: true, depthWrite: false });
+    // Clouds lie in the same shadows as the ground under them.
+    shadeOf(id).wear(m);
     // The texture is premultiplied already: add its light, dim what is behind by its alpha.
     m.blending = CustomBlending;
     m.blendSrc = OneFactor;
@@ -248,7 +260,11 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     return g;
   };
   const versions = new Map<string, number>();
-  const litMats = new Map<string, MeshStandardMaterial>();
+  // Each world's shadow uniforms (gpu-shade.ts), shared by its surface, cloud and ring materials; set every frame.
+  const shades = new Map<string, ShadeState>();
+  const shadeOf = (id: string) => shades.get(id) ?? (shades.set(id, makeShade()), shades.get(id)!);
+  const worn = new WeakSet<object>();
+  const litMats = new Map<string, MeshStandardNodeMaterial>();
   // VP3: a world with cube face pictures wears a bake sized to its disc on screen (texture-ladder.ts), with relief.
   const baker = createTextureBaker(renderer);
   const bakedSize = new Map<string, number>();
@@ -268,10 +284,16 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     const b = baker.get(it.surface.key, c, size, c.radius_m);
     baker.trim(BAKE_BUDGET[ladderTier]);
     b.setPatch(it.surface.texture.patch ?? null);
+    // Shadows and the glint (gpu-shade.ts): the bake's colour cube carries where the ground is liquid in its alpha.
+    if (!worn.has(b.material)) {
+      worn.add(b.material);
+      shadeOf(it.id).wear(b.material, cubeTexture(b.colour.texture, normalize(positionLocal)).w);
+    }
     return b.material;
   };
   const litMat = (it: GpuItem) => {
-    const key = it.surface?.key ?? `plain:${it.colour}`;
+    // One material per world: its shadows are its own.
+    const key = it.surface?.key ?? `plain:${it.colour}:${it.id}`;
     const hit = litMats.get(key);
     if (hit) {
       const map = textures.get(key);
@@ -294,7 +316,8 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
       textures.set(key, map);
       versions.set(key, it.surface.version ?? 0);
     }
-    const m = new MeshStandardMaterial({ color: map ? 0xffffff : new Color(it.colour), map, roughness: 1, metalness: 0 });
+    const m = new MeshStandardNodeMaterial({ color: map ? 0xffffff : new Color(it.colour), map, roughness: 1, metalness: 0 });
+    shadeOf(it.id).wear(m);
     litMats.set(key, m);
     return m;
   };
@@ -388,9 +411,9 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
   };
   const torus = new TorusGeometry(1.8, 0.08, 6, 48);
   // A world's rings: an annulus in units of its radius, its texture's u running from the inner edge out.
-  const ringSets = new Map<string, { geom: RingGeometry; tex: DataTexture; mat: MeshBasicMaterial }>();
+  const ringSets = new Map<string, { geom: RingGeometry; tex: DataTexture; mat: MeshBasicNodeMaterial }>();
   const zAxis = new Vector3(0, 0, 1);
-  const ringSet = (r: NonNullable<GpuItem["rings"]>) => {
+  const ringSet = (r: NonNullable<GpuItem["rings"]>, id: string) => {
     const hit = ringSets.get(r.key);
     if (hit) return hit;
     const geom = new RingGeometry(r.inner, r.outer, 256, 1);
@@ -404,7 +427,10 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
     tex.minFilter = LinearFilter;
     tex.needsUpdate = true;
     // Lit by hand (ringLight in rings.ts), not by the scene's lights: a ring is a layer of particles, not a surface.
-    const mat = new MeshBasicMaterial({ map: tex, transparent: true, side: DoubleSide, depthWrite: false });
+    // The world's shadow lies across it (gpu-shade.ts), soft at its edge by the star's disc.
+    const mat = new MeshBasicNodeMaterial({ transparent: true, side: DoubleSide, depthWrite: false });
+    const t = textureNode(tex, uvNode());
+    mat.colorNode = vec4(t.xyz.mul(vec3(shadeOf(id).ringLight())), t.w);
     const e = { geom, tex, mat };
     ringSets.set(r.key, e);
     return e;
@@ -488,6 +514,11 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
         // On screen: the disc's width in pixels (perspective; the ortho view's from its width).
         const dist = Math.hypot(it.rel[0], it.rel[1], it.rel[2]);
         const disc_px = o.ortho ? (2 * it.radius * o.width) / o.ortho.width : dist > it.radius ? (it.radius / dist / Math.tan(o.fovY / 2)) * o.height : o.height;
+        const toStarOf = (): Vec3 => (o.light!.at ? [o.light!.at[0] - it.rel[0], o.light!.at[1] - it.rel[1], o.light!.at[2] - it.rel[2]] : (o.light!.from ?? [0, 0, 1]));
+        if (lit) {
+          const rs = it.rings ? ringSet(it.rings, it.id) : null;
+          shadeOf(it.id).set({ rel: it.rel, radius: it.radius, toStar: toStarOf(), ...(it.shade ? { shade: it.shade } : {}), rings: rs && it.rings ? { normal: it.rings.normal, inner: it.rings.inner, outer: it.rings.outer, tex: rs.tex } : null, glint: it.glint ?? null });
+        }
         const surfaceMat = lit && it.surface?.texture.faces ? bakedMat(it, disc_px) : null;
         const m = new Mesh(it.mesh ? meshGeom(it.mesh) : o.light || it.frame ? (dist < 1.5 * it.radius ? fineGlobe : globe) : sphere, it.emit !== undefined ? greyMat(it.emit) : lit ? (surfaceMat ?? litMat(it)) : mat(it.colour));
         m.position.set(it.rel[0], it.rel[1], it.rel[2]);
@@ -518,7 +549,7 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
           scene.add(pp);
         }
         if (lit && it.clouds) {
-          const cm = new Mesh(dist < 1.5 * it.radius ? fineGlobe : globe, cloudMat(it.clouds));
+          const cm = new Mesh(dist < 1.5 * it.radius ? fineGlobe : globe, cloudMat(it.clouds, it.id));
           cm.position.copy(m.position);
           cm.quaternion.copy(m.quaternion);
           cm.scale.copy(m.scale).multiplyScalar(CLOUD_LIFT);
@@ -538,12 +569,12 @@ export async function createGpu(canvas: HTMLCanvasElement, opts: { timing?: bool
           scene.add(am);
         }
         if (o.light && it.rings) {
-          const rs = ringSet(it.rings);
+          const rs = ringSet(it.rings, it.id);
           const n = it.rings.normal;
           const toLight: Vec3 = o.light.at ? [o.light.at[0] - it.rel[0], o.light.at[1] - it.rel[1], o.light.at[2] - it.rel[2]] : (o.light.from ?? [0, 0, 1]);
           const toEye: Vec3 = [-it.rel[0], -it.rel[1], -it.rel[2]];
           // The point light's strength (3) over π, as a lit world's diffuse surface gets.
-          rs.mat.color.setScalar((3 / Math.PI) * ringLight(n, toLight, toEye));
+          shadeOf(it.id).uRingScale.value = (3 / Math.PI) * ringLight(n, toLight, toEye);
           const rm = new Mesh(rs.geom, rs.mat);
           rm.position.copy(m.position);
           rm.scale.setScalar(it.radius);
