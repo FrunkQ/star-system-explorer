@@ -46,7 +46,7 @@ test("shows(): left out means every desk; a list means those desks only", () => 
   assert.deepEqual(checkDesks(["run", "play", "run"], "x"), ["x: unknown desk play", "x: a desk is listed twice"]);
 });
 
-test("the shell's parts say what each shows today: nothing moves in TM1", () => {
+test("the shell's parts say which desks each is on now", () => {
   const ids = SHELL_PARTS.map((p) => p.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const p of SHELL_PARTS) {
@@ -54,10 +54,22 @@ test("the shell's parts say what each shows today: nothing moves in TM1", () => 
     assert.deepEqual(checkDesks(p.desks, p.id), []);
     for (const c of p.controls ?? []) assert.deepEqual(checkDesks(c.desks, `${p.id}.${c.id}`), []);
   }
-  // Every part is on every desk today but the eyes (Build and Run, the SV ruling), and the stage's edit tools are Build's.
-  assert.deepEqual(SHELL_PARTS.filter((p) => p.desks).map((p) => p.id), ["eyes"]);
+  // The eyes are Build's and Run's (the SV ruling); the depth dial and the Workshop door are off Run (TM2b) and the rail
+  // folds there (TM2c, design 3.1).
+  assert.deepEqual(SHELL_PARTS.filter((p) => p.desks).map((p) => [p.id, p.desks]), [
+    ["depth", ["explore", "build"]],
+    ["rail-open", ["explore", "build"]],
+    ["workshop-door", ["explore", "build"]],
+    ["eyes", ["build", "run"]],
+  ]);
+  // The stage's edit tools are Build's; Select and Keyboard shortcuts are off Run; the ruler is on every desk until TM3.
   assert.deepEqual(DESKS.filter((d) => partShows("tools", d, "cut")), ["build"]);
-  assert.ok(DESKS.every((d) => partShows("tools", d, "select") && partShows("ruler", d)));
+  assert.deepEqual(DESKS.filter((d) => partShows("tools", d, "select")), ["explore", "build"]);
+  assert.deepEqual(DESKS.filter((d) => partShows("tools", d, "keys")), ["explore", "build"]);
+  assert.ok(DESKS.every((d) => partShows("ruler", d)));
+  // On Run the status line says whether the campaign is kept, without the seat or the engine's numbers.
+  assert.deepEqual(["seat", "kept", "engine"].map((c) => partShows("status-line", "run", c)), [false, true, false]);
+  assert.ok(["seat", "kept", "engine"].every((c) => partShows("status-line", "explore", c) && partShows("status-line", "build", c)));
   assert.throws(() => shellPart("clock"), /no shell part clock/);
   assert.throws(() => partShows("tools", "run", "measure"), /no control measure/);
   // The eyes read their desks from the part, as they did by name.
@@ -67,7 +79,7 @@ test("the shell's parts say what each shows today: nothing moves in TM1", () => 
 });
 
 test("a part's control line names its desks when it is not on all three", () => {
-  assert.equal(controlLines(shellPart("tools").controls!.filter((c) => c.id === "select" || c.id === "copy")), "- select (button, on by default): Select\n- copy (button, on by default, on Build only): Copy");
+  assert.equal(controlLines(shellPart("tools").controls!.filter((c) => c.id === "select" || c.id === "copy")), "- select (button, on by default, on Explore and Build only): Select\n- copy (button, on by default, on Build only): Copy");
 });
 
 const screens: Record<string, Pick<ScreenDoc, "rail">> = {
