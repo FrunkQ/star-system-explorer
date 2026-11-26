@@ -34,6 +34,92 @@ pub struct LineDef {
     /// no falling electron excites.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub aurora: Option<AuroraLine>,
+    /// How the line shines in a nebula's glowing gas (O4 part 1): absent for
+    /// a line electron knocks in a nebula do not make.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub nebular: Option<NebularLine>,
+}
+
+/// The gases that take up ionising photons, each from its ionisation edge
+/// upwards until the next gas's edge.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PhotonTakers {
+    pub list: Vec<PhotonTaker>,
+    #[serde(default)]
+    pub source: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PhotonTaker {
+    /// Element id on the master data sheet.
+    pub matter: String,
+    /// Its ionisation edge, eV.
+    pub from_ev: f64,
+    #[serde(default)]
+    pub note: String,
+}
+
+/// A forbidden line excited by electron collisions in ionised gas: which ion
+/// gives it (the photon energies that make and strip that ion), the atomic
+/// data for the knock, and the share of the upper level's decays it takes.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct NebularLine {
+    /// Photon energy that makes this ion from the one below, eV.
+    pub makes_ev: f64,
+    /// Photon energy that strips it to the next ion up, eV.
+    pub strips_ev: f64,
+    /// Effective collision strength Υ from the lower term to the upper level.
+    pub upsilon: f64,
+    pub lower_weight: f64,
+    pub upper_weight: f64,
+    /// Einstein A of the upper level's decay, s⁻¹; 0 when the line's upper
+    /// level is not knocked down before it shines at the densities modelled
+    /// (no de-excitation worked).
+    #[serde(default)]
+    pub rate_s: f64,
+    /// Energy of the upper level above the lower term, cm⁻¹, when the line
+    /// does not end on the term's centre (its excitation energy); 0 to use
+    /// the line's own wavelength.
+    #[serde(default)]
+    pub upper_cm: f64,
+    /// Share of the upper level's decays that give this line.
+    #[serde(default = "one")]
+    pub share: f64,
+    /// For an ion that the starlight cannot use up (sulphur's photons are
+    /// taken by hydrogen), its share against the next ion up from the local
+    /// balance of stripping and rejoining, in place of photon counting.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub balance: Option<IonBalance>,
+    #[serde(default)]
+    pub source: String,
+}
+
+/// The data for an ion's local balance with the next ion up.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct IonBalance {
+    /// Verner et al. 1996 fit to the ion's photoionisation cross-section.
+    pub fit: CrossSectionFit,
+    /// Rate coefficient for the next ion up catching an electron back, m³/s.
+    pub recombination_m3_s: f64,
+    #[serde(default)]
+    pub source: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct CrossSectionFit {
+    pub e0_ev: f64,
+    pub sigma0_m2: f64,
+    pub ya: f64,
+    pub p: f64,
+    pub yw: f64,
+    pub y0: f64,
+    pub y1: f64,
+    /// The fit holds up to the next inner-shell edge, eV.
+    pub max_ev: f64,
+}
+
+fn one() -> f64 {
+    1.0
 }
 
 /// A line's part in aurorae: how long its upper state lives, how readily a
@@ -203,6 +289,10 @@ pub struct LightTable {
     pub bands: Vec<Band>,
     pub visible_slices: Vec<Band>,
     pub lines: Vec<LineDef>,
+    /// Which gas takes a nebula's ionising photons in each range of photon
+    /// energy (O4 part 1).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub photon_takers: Option<PhotonTakers>,
     pub grid: Grid,
     pub steps_per_decade: usize,
     pub disc_rings: usize,

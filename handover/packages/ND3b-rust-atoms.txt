@@ -17,3 +17,4 @@ sse.planet.radius_from_mass	a broken power law over a table of mass ranges
 sse.star.ms_luminosity	a piecewise fit over a table of mass ranges, with the homology factors for changed constants
 sse.star.ms_luminosity_at_age	has a parameter and refuses ages outside the main sequence in its own words
 sse.star.ms_radius	a piecewise fit over mass ranges, with the homology factor for changed constants
+sse.light.mie_scattering	the Mie series is a sum of hundreds to thousands of terms with complex recurrences (K-e), which a formula cannot write

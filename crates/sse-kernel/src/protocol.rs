@@ -654,10 +654,28 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         passages: Vec<serde_json::Value>,
     },
-    /// Rainbows and halos (VP-L4): each of `items` is `{id, n, kind}` with
+    /// Rainbows and halos (VP-L4): each of `items` is `{id, n | substance
+    /// (+ wavelength_m), kind}` with
     /// `kind` "drop" (rain of a liquid of refractive index `n`: its bows)
     /// or "crystal" (ice-like crystals: their 22° and 46° style halos).
     ReadBows {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// Phase tables per kind of particle (K-e): each of `items` is
+    /// `sse_light::scatter::Particle` `{id, radius_m, wavelength_m, n and k
+    /// | substance (+ phase), medium_n?, spread?, angles_deg?}`, worked by
+    /// Mie theory.
+    ReadScattering {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// The colour of light inside a world's shadow (VP-L3): each of `items`
+    /// is `sse_light::shadow::ShadowAsk` `{id, air {address, gases
+    /// [{gas, fraction}], surface_pressure_pa, surface_temperature_k,
+    /// gravity_m_s2}, radius_m, distance_m, star {teff_k, radius_m,
+    /// distance_m}}`: starlight bent through the limb into the shadow.
+    ReadShadowLight {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },
@@ -2604,6 +2622,8 @@ impl Request {
             Request::FogOfWar { .. } => "fog_of_war",
             Request::ReadBows { .. } => "read_bows",
             Request::HazardMap { .. } => "hazard_map",
+            Request::ReadScattering { .. } => "read_scattering",
+            Request::ReadShadowLight { .. } => "read_shadow_light",
             Request::DescribeStar { .. } => "describe_star",
             Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
@@ -2837,6 +2857,16 @@ pub fn ops() -> Vec<OpInfo> {
             "read_bows",
             Cost::Trivial,
             "per item: one or two formula blocks",
+        ),
+        o(
+            "read_scattering",
+            Cost::Light,
+            "per item: the Mie series, about x + 4x^(1/3) terms for each angle and each of up to nine sizes",
+        ),
+        o(
+            "read_shadow_light",
+            Cost::Light,
+            "per item: up to 128 grazing heights, each a gas passage on the eye's wavelengths",
         ),
         o(
             "describe_star",
@@ -3550,6 +3580,16 @@ pub enum Response {
     },
     /// `read_bows`: each of `items` is `sse_light::bows::Bows`.
     BowsRead {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// `read_scattering`: each of `items` is `sse_light::scatter::Scattering`.
+    ScatteringRead {
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+    },
+    /// `read_shadow_light`: each of `items` is `sse_light::shadow::ShadowLight`.
+    ShadowLightRead {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
     },

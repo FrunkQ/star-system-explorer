@@ -111,7 +111,7 @@ export { fetchMetadata, fetchSector, metadataPath, sectorPath } from "./sector-f
 export type { SectorText } from "./sector-fetch.ts";
 export { SECTOR_FORMATS, mapFields, stackProvides } from "./sector.ts";
 export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateOf } from "./constructs.ts";
-export { shipLog, writerWords } from "./constructs.ts";
+export { flightLines, LOG_RANK, shipLog, writerWords } from "./constructs.ts";
 export type { ConstructTemplate, Created, KeptChange, ShipLogEntry, RecordRead } from "./constructs.ts";
 export { navShipOf, partyLander, voyageStart, voyageLogEntries, voyageFuelWrites, tanksWords, systemOfPlace, withPartyChoice, partyShipNow, PARTY_CHOICE } from "./party.ts";
 export type { PartyShip, FlightEntryAsk } from "./party.ts";
@@ -165,8 +165,8 @@ export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedA
 export type { EmbedMode, EmbedOut } from "./embed.ts";
 export { BRAND_LOGO_MAX, BRAND_MOTTO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
 export type { JoinWords, SeatBrand } from "./brand.ts";
-export { FUEL_FIELDS, MANIFEST_WORDS, fuelGauges, fuelNow, tonnesWords, shipRecordOf, aboardLog, type FuelTank, type FuelGauge, type FuelShip, ABOARD, PERSON, CARGO, STATES, STATE_WORDS, STORES, entryFrom, aboard, crewAboard, living, ageNow, lifeSupportFrom, storeOf, massKg, lifeSupport, entryId, startingValues } from "./manifest.ts";
-export type { AboardEntry, AboardState, LifeSupport, LifeSupportPack, LifeSupportRate, Store, StoreDays } from "./manifest.ts";
+export { FUEL_FIELDS, MANIFEST_WORDS, fuelGauges, fuelNow, tonnesWords, shipRecordOf, aboardLog, type FuelTank, type FuelGauge, type FuelShip, ABOARD, PERSON, CARGO, STATES, STATE_WORDS, STORES, entryFrom, aboard, crewAboard, living, ageNow, lifeSupportFrom, storeOf, massKg, lifeSupport, entryId, startingValues, seenAboard } from "./manifest.ts";
+export type { AboardEntry, AboardState, LifeSupport, LifeSupportPack, LifeSupportRate, Store, StoreDays, SeenEntry } from "./manifest.ts";
 export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableLandmarks, tableOf, fieldLandmark, hasException, lineChange, pressedLandmark, knownOverall, knownChangedWords, eyesShow, secrecyRelevant, holdReveal } from "./known.ts";
 export type { Landmark as KnownLandmark, KnownTo, KnownAudience, KnownException, KnownScope, KnownChange, Held } from "./known.ts";
 export { difficultyLadderOf, chanceToMeet, stepTarget, gameDifficulty } from "./difficulty.ts";

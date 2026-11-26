@@ -1629,7 +1629,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, solSheet: solSheetForViews, ...(minervaHost ? { describe } : {}) }, shown);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, solSheet: solSheetForViews, adopted: (sys, note, hash) => adopted([...sys], note, hash), ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
     return {
       destroy: () => {

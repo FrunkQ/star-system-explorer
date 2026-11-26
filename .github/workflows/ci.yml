@@ -160,5 +160,7 @@ jobs:
       - run: node tests/ui/aurora.e2e.mjs --screens ui-screens
       - run: node tests/ui/composite.e2e.mjs --screens ui-screens
       - run: node tests/ui/hazard.e2e.mjs --screens ui-screens
+      # Ship manifest and crew (track MC): aboard, life support, Known to, pictures, fuel and the ship's log.
+      - run: SSE_SHOTS=ui-screens/manifest node tests/ui/manifest.e2e.mjs
       - uses: actions/upload-artifact@v4
         with: { name: ui-screens, path: ui-screens }
