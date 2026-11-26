@@ -22,6 +22,14 @@ python3 scripts/build-paper-spacecraft.py --check
 # MP22 closed: no typed constant or material number anywhere outside the sheet.
 python3 scripts/test-audit-matter.py >/dev/null
 python3 scripts/audit-matter.py --closed
+# ER: the side-door ledger (edits-reach design 4 and 12) may only shrink. Convert a
+# site to the physics in force, then run `python3 scripts/audit-side-doors.py --shrink`.
+python3 scripts/test-audit-side-doors.py >/dev/null
+if git rev-parse -q --verify origin/main >/dev/null; then
+  python3 scripts/audit-side-doors.py --check --base origin/main
+else
+  python3 scripts/audit-side-doors.py --check
+fi
 # Every cited paper is on the citation run-through's master list (add new ones with --add).
 # Warning only until Alex says the check may fail (and join CI).
 python3 scripts/test-citations.py >/dev/null

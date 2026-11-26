@@ -1,0 +1,16 @@
+# RB3: the Profile part (ring and belt editing)
+
+Design: `design/SSE4-ring-and-belt-editing-design.md` sections 4.2, 5.1, 6, 7 and 9 (accepted by Alex 26 Nov 2026, question 4: the Profile joins the editing grammar). Status: `status/ring-and-belt-editing.md`.
+
+## RB3a (26 Nov 2026, thread "Build the ring profile editor")
+
+Built against a fixture, since the kernel op `ring_structure` (thread "Give planetary rings real structure") was not merged yet. Nothing is mounted in the app: the host (Handles' "Structure" chip, RB2 and RB4) mounts it once RB1 gives a body its ring answer.
+
+- `packages/ui-contract/src/profile.ts`: the kernel answer's types in the shape that thread gave on 26 Nov (marks at `r_m` with `half_width_m` and `m`; `profile {lo_m, hi_m, tau[], zone[]}` with −1 in a gap; zone `rgb` linear 0..1; `cause {kind, sculptor?, m?}` with m first order m:(m−1), so Mimas 2:1 is m = 2). `sculptor` is matched by the ask's id or by name (the kernel answers with names for now; asked to switch to ids). Functions: `profileSpans`, `causeTag` ("Mimas 2:1", "cleared by Pan", "as generated", "measured", "drawn by you"), `markWords`, `edgesHeld`, `joins`, `moveJoin`, `setShare`, `setDensity`, `authoredZones` (the ask's authored shape for RB1), `srgb`, `lightThrough`.
+- The rule that keeps the sum: moving a join keeps both zones' density, so only the edge moves on screen; the strip's gained or lost mass is given back by every zone in proportion. A height (share or density) trades against the rest, which keep their proportions (the air mix's rule). Optical depth follows density for the same grains and is said with "about" until the kernel answers (RB1).
+- `packages/views/editing/src/Profile.svelte`: zones as spans on a log density scale, joins dragged sideways, zones up or down, arrow keys (Shift finer), Enter keeps, Esc puts back; the selected zone's edges (where they are joins) and share typed in any unit through `readFigure`; the verdict line ("B ring · 78.6% of the ring · optical depth about 1.8 · Mimas 2:1", Curious says how much light gets through); the sculptors' marks with a thin line to each sculptor on the same axis, farther ones named at the end; the kernel's fine profile as a strip under the axis; Reset and Why?. A drag writes nothing; a kept shape goes to `oncommit` as authored zones. Desks: the host passes `editable` (Explore try, Build keep, Run not shown).
+- The editing grammar: `packages/ui-contract/src/grammar.ts` lists the fifteen parts and which component in views/editing is each; `tests/ui/editing-grammar.test.ts` fails a component that is no part, and a handle whose `scale` opens no part. Seen red with a stray `Slider.svelte`. `HandlePart.scale` gains `"profile"`; the sheet skips it as it does a bar.
+- Tests: `packages/ui-contract/test/profile.test.ts` against `test/fixtures/ring-structure.json` (Saturn-shaped stand-in: base-sol's edges, invented densities, not kernel output).
+- Screenshots (fixture page, not committed): project files `sse4/handover-screens/RB3a-screens/`.
+
+Next (RB3b, with RB1): mount it under the Structure chip on a ring's card, write authored zones through `commitFields`, the kernel's exact answer on a pause, split a zone and name it, "Let physics decide" per zone.

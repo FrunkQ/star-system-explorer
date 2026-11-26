@@ -14,7 +14,7 @@ export interface HandlePart {
   field: string;
   kind: string;
   what?: string;
-  scale: "log" | "linear" | "bar" | "ring";
+  scale: "log" | "linear" | "bar" | "ring" | "profile";
   /** A strip's fixed ends in SI (a shape from round to 0.99, a lean from 0 to 180 degrees); absent, the ends follow the dots. */
   range?: [number, number];
   /** The reading figures are said in unless the campaign chose another ("fraction" for a shape, said as 0.0167). */
