@@ -1,8 +1,7 @@
 // The black hole view's small rules (XO4): which sky sits behind each of the kernel's holes, how each band's layer is
 // scaled, and the words. Presentation only; every physical number comes from the kernel's `read_light_paths`.
 import { constant, sayNumber, type SeenFrom } from "../../../ui-contract/src/index.ts";
-import { BANDS, linearSrgb, xyz } from "../../../ui-contract/src/index.ts";
-import { bandRadiance } from "../../../ui-contract/src/light.ts";
+import { BANDS, bandRadiance, linearSrgb, xyz } from "../../../ui-contract/src/index.ts";
 import { rgbOf } from "../../../renderer/src/composite.ts";
 import { PICTURE_BANDS, SHEET_BANDS_OF, type BandBrightest, type LightPathsRead, type PictureBand } from "../../../renderer/src/light-path.ts";
 import type { HoleLayer } from "../../../renderer/src/gpu-light-path.ts";
@@ -75,18 +74,23 @@ export function whiteLog(): number {
  * until its brightest point is drawn as bright as white paper in sunlight); every other band is mapped to its own
  * brightest, times the disc's share of that band's light.
  */
-export function layersFor(list: readonly { band: string; colour: string }[], bright: BandBrightest | null, shares: Record<PictureBand, number> | null): HoleLayer[] {
+/** Visible's own colours, as Composite names them; and the plain white a single mapped band is drawn in (its brightness alone). */
+export const NATURAL = "natural";
+export const GREY: [number, number, number] = [1, 1, 1];
+export const isNatural = (l: { colour: unknown }) => l.colour === NATURAL;
+
+export function layersFor(list: readonly { band: string; colour: string | [number, number, number] }[], bright: BandBrightest | null, shares: Record<PictureBand, number> | null): HoleLayer[] {
   const white = whiteLog();
   const out: HoleLayer[] = [];
   for (const l of list) {
     const band = l.band as PictureBand;
     if (!PICTURE_BANDS.includes(band)) continue;
-    if (l.colour === "natural") {
+    if (isNatural(l)) {
       out.push({ band, colour: "natural", top: Math.max(bright?.rgbTop ?? white, white) });
       continue;
     }
     const share = shares?.[band] ?? 1;
-    out.push({ band, colour: rgbOf(l.colour), top: (bright?.log[band] ?? 0) - Math.log10(Math.max(share, 1e-12)) });
+    out.push({ band, colour: Array.isArray(l.colour) ? l.colour : rgbOf(l.colour), top: (bright?.log[band] ?? 0) - Math.log10(Math.max(share, 1e-12)) });
   }
   return out;
 }

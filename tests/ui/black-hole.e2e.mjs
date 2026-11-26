@@ -25,10 +25,13 @@ const shot = async (page, n) => {
   if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png` }));
 };
 
-/** The canvas as the user sees it: the luminance up the middle column (from the centre to the top), and the mean of each half. */
+/** The picture as drawn (the chip and HUD over it set aside): the luminance up the middle column (from the centre to the top), and the mean of each half. */
 const frameOf = async (page) => {
   const cv = page.locator("[data-hole-canvas]");
+  const over = (v) => page.evaluate((vis) => document.querySelectorAll("[data-hole-chip], .frame .hud").forEach((e) => (e.style.visibility = vis)), v);
+  await over("hidden");
   const b64 = (await cv.screenshot()).toString("base64");
+  await over("");
   return page.evaluate(async (b) => {
     const img = new Image();
     img.src = `data:image/png;base64,${b}`;
@@ -137,8 +140,8 @@ try {
       await pickBand("Composite");
       await gm.waitForSelector('[data-hole-canvas][data-drawn*="+"]', { timeout: 150000 });
       await shot(gm, "black-hole-3-stellar-composite-desk");
-      await pickBand("Visible");
     }
+    await pickBand("Visible");
 
     // The quasar: ultraviolet is its peak; the starved centre is nearly dark in visible light.
     await gm.locator('[data-hole-pick="fixture/quasar"]').click();

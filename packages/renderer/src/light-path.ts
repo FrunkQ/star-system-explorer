@@ -17,8 +17,7 @@
 // against, and the CPU trace that sets the exposure and each band's brightest.
 //
 // Units: lengths in gravitational radii (r_g = GM / c²) unless named otherwise; angles in radians.
-import { BANDS, constant, linearSrgb, xyz, type LightDescription } from "../../ui-contract/src/index.ts";
-import { bandRadiance } from "../../ui-contract/src/light.ts";
+import { BANDS, bandRadiance, constant, linearSrgb, xyz, type LightDescription } from "../../ui-contract/src/index.ts";
 
 /** The bend table's layout (sse_gravity::bend). The kernel's `table` reference carries the same numbers. */
 export const ROWS = 256;

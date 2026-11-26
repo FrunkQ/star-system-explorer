@@ -14,7 +14,7 @@
   import { galactic, holeSky, type HoleSkyStar } from "../../../renderer/src/hole-sky.ts";
   import type { HoleLayer, HolePicture, HoleSky } from "../../../renderer/src/gpu-light-path.ts";
   import { BLACK_HOLE_CONTROLS } from "./controls.ts";
-  import { BACKDROPS, bandShares, layersFor, sci, SEEN_TILT_DEG, tiltWords, whiteLog } from "./picture.ts";
+  import { BACKDROPS, bandShares, GREY, isNatural, layersFor, sci, SEEN_TILT_DEG, tiltWords, whiteLog } from "./picture.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene } = $props();
 
@@ -74,8 +74,8 @@
   // Each band's brightest at this tilt (the CPU trace of the same rays), and the disc's share of each band's light.
   const bright = $derived(table && disc ? brightest(table, disc, view.tilt, turning) : null);
   const shares = $derived(hole ? bandShares(hole) : null);
-  const layers = $derived<HoleLayer[]>(layersFor(pickedBand === COMPOSITE ? opts.layers : [{ band: shown.band, colour: shown.band === "visible" ? "natural" : shown.band === "radio" ? LAYER_COLOURS.radio : "#ffffff" }], bright, shares));
-  const mapped = $derived(layers.some((l) => l.colour !== "natural"));
+  const layers = $derived<HoleLayer[]>(layersFor(pickedBand === COMPOSITE ? opts.layers : [{ band: shown.band, colour: shown.band === "visible" ? "natural" : shown.band === "radio" ? LAYER_COLOURS.radio : GREY }], bright, shares));
+  const mapped = $derived(layers.some((l) => !isNatural(l)));
 
   // The sky behind: the kernel's sky from this system's place (the Sun's when it has none), to the same depth as the
   // system's True (VP2). Read once; rays near the shadow are turned by tens of degrees, so the whole sky matters, and the
@@ -139,7 +139,7 @@
   // The stars' light as the picture's: at a long exposure lifted until the brightest few fill their texel (VP2's rule,
   // a composite); for the eye, as bright as they really are against the disc's exposure (beside a fed disc, nothing).
   const skyGainFor = () => {
-    const nat = layers.find((l) => l.colour === "natural");
+    const nat = layers.find(isNatural);
     if (!sky || !nat) return 0;
     return long ? sky.gain : 10 ** (whiteLog() - nat.top);
   };
@@ -238,11 +238,11 @@
         <p class="nogpu">This device has no GPU for True; the words below say what the picture would show.</p>
       {/if}
       <div class="chip" data-hole-chip>
-        {#if mapped}<span>mapped: {layers.map((l) => (l.colour === "natural" ? "visible actual" : bandWord[l.band])).join(" · ")}</span>{/if}
-        {#if layers.some((l) => l.colour === "natural") && dimmed !== null}
+        {#if mapped}<span>mapped: {layers.map((l) => (isNatural(l) ? "visible actual" : bandWord[l.band])).join(" · ")}</span>{/if}
+        {#if layers.some(isNatural) && dimmed !== null}
           <span data-hole-dimmed>{dimmed >= 1 ? `dimmed ${sci(dimmed)} times the Sun's surface brightness` : "not dimmed"}</span>
         {/if}
-        {#if sky && layers.some((l) => l.colour === "natural")}<span>{long ? "stars at a long exposure" : disc ? "stars as the eye sees them: too faint beside the disc" : "stars as the eye sees them"}</span>{/if}
+        {#if sky && layers.some(isNatural)}<span>{long ? "stars at a long exposure" : disc ? "stars as the eye sees them: too faint beside the disc" : "stars as the eye sees them"}</span>{/if}
         {#if orders === 1}<span>thin ring dropped to hold the frame rate</span>{/if}
         {#if (hole.spin?.a ?? 0) > 0}<span>bending drawn for no spin</span>{/if}
       </div>
@@ -300,21 +300,21 @@
     font: inherit;
     font-size: 0.85rem;
     padding: 0.25rem 0.6rem;
-    border: 1px solid var(--sse-rule, #888);
+    border: 1px solid var(--sse-rule);
     border-radius: 999px;
     background: transparent;
     color: inherit;
     cursor: pointer;
   }
   .pick button.on {
-    background: var(--sse-ink, #222);
-    color: var(--sse-paper, #fff);
+    background: var(--sse-ink);
+    color: var(--sse-ground);
   }
   .frame {
     position: relative;
     flex: 1 1 60%;
     min-height: 260px;
-    background: #000;
+    background: var(--sse-chart-ground);
     border-radius: 4px;
     overflow: hidden;
   }
@@ -334,14 +334,15 @@
   }
   .hud .ring {
     fill: none;
-    stroke: rgba(255, 255, 255, 0.55);
+    stroke: var(--sse-accent);
+    opacity: 0.7;
     stroke-dasharray: 3 4;
   }
   .hud .tick {
-    stroke: rgba(255, 255, 255, 0.7);
+    stroke: var(--sse-accent);
   }
   .hud text {
-    fill: rgba(255, 255, 255, 0.85);
+    fill: var(--sse-accent);
     font-size: 11px;
   }
   .chip {
@@ -354,15 +355,16 @@
     font-size: 0.75rem;
   }
   .chip span {
-    background: rgba(0, 0, 0, 0.6);
-    color: #eee;
+    background: var(--sse-ground-raised);
+    color: var(--sse-ink);
+    opacity: 0.9;
     padding: 0.1rem 0.45rem;
     border-radius: 999px;
   }
   .nogpu {
     position: absolute;
     inset: auto 1rem 50% 1rem;
-    color: #ddd;
+    color: var(--sse-ink-muted);
     text-align: center;
   }
   .words p {
@@ -372,6 +374,6 @@
     opacity: 0.75;
   }
   .problem {
-    color: var(--sse-warn, #b00);
+    color: var(--sse-alert);
   }
 </style>
