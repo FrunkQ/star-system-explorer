@@ -8,6 +8,10 @@
 # with `since` (or `angle_since` for a phase). When a change removes a use,
 # lower its line in the same change, and delete a line that reaches 0.
 # TP2 and TP3 (the anchors and the clock) are expected to empty most of it.
+#
+# 26 Nov: App.svelte 62 -> 67 once, by hand: the Run desk clock work
+# (TM3a) added five uses while TP1 was in review, before the ledger existed
+# on main. This is the ledger catching up, not a licence to raise a line.
 1 crates/sse-cosmos/src/patch.rs
 1 crates/sse-formation/src/leftovers.rs
 2 crates/sse-kernel/src/lib.rs
@@ -28,7 +32,7 @@
 3 packages/agents/test/orac-sheet.test.ts
 3 packages/agents/test/orac-triggers.test.ts
 2 packages/agents/test/orac.test.ts
-62 packages/shell/src/App.svelte
+67 packages/shell/src/App.svelte
 3 packages/shell/src/LookAhead.svelte
 2 packages/shell/src/MakeSystem.svelte
 1 packages/shell/src/Players.svelte
