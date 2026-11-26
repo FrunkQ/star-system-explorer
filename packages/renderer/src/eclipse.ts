@@ -10,6 +10,10 @@
 // an airless world). Rings let light through by e^(−τ/μ₀) along the slant path (the same τ the ring's picture is drawn
 // from, rings.ts), so a ringed world wears its rings' shadow across its face and its shadow lies across the rings.
 import type { Vec3 } from "./frames.ts";
+import { constant } from "../../ui-contract/src/index.ts";
+
+/** Light's speed (m/s), from the sheet. */
+const C = constant("c");
 
 /** A body between a world and its star, in the world's own radii, in the drawing's frame, centred on the world. */
 export interface Caster {
@@ -103,6 +107,20 @@ export interface Placed {
   radius_m: number;
   /** Its umbra's light per channel (`umbraLight`), when its air bends any into its shadow. */
   umbra?: [number, number, number];
+  /** Its velocity in the same frame (m/s), when known: a caster is read where it was when the light passed it. */
+  v_m_s?: readonly [number, number, number];
+}
+
+/**
+ * Where a caster stood when the starlight now reaching the world went past it: its place now, less its velocity times
+ * the light's time from it to the world (about 1.3 s, 40 km, for the Moon over Earth: without it, eclipses run some
+ * 37 s late). A caster without a known velocity stays where it is.
+ */
+export function seenFrom(c: Placed, world: Placed): readonly [number, number, number] {
+  const v = c.v_m_s;
+  if (!v) return c.at_m;
+  const tau = len(sub(c.at_m, world.at_m)) / C;
+  return [c.at_m[0] - v[0] * tau, c.at_m[1] - v[1] * tau, c.at_m[2] - v[2] * tau];
 }
 
 /** A rotation taking direction `a` onto direction `b` by the shortest turn (Rodrigues); returned as a function. */
@@ -145,7 +163,7 @@ export function shadeFor(world: Placed, others: readonly Placed[], star: Placed,
   const found: { c: Placed; off: Vec3; reach: number }[] = [];
   for (const c of others) {
     if (c.id === world.id || c.id === star.id || !(c.radius_m > 0)) continue;
-    const off = sub(c.at_m, world.at_m);
+    const off = sub(seenFrom(c, world), world.at_m);
     const d_c = len(off);
     if (!(d_c > world.radius_m + c.radius_m) || d_c >= d_s) continue;
     const a_c = Math.asin(Math.min(1, c.radius_m / d_c));
@@ -194,19 +212,19 @@ export function umbraLight(r: ShadowLightRead): [number, number, number] | null 
 }
 
 /**
- * Cox and Munk (1954): the slopes of a wind-ruffled sea are spread with a variance σ² = 0.003 + 5.12·10⁻³ W, W the
- * wind (m/s) 12.5 m over the water. The sun's glint from orbit is the share of those facets tipped to mirror it.
+ * The glint's two numbers where the kernel has not answered for a world (fudge register): its answer for water under
+ * a 7 m/s wind (`sse.light.sea_glint`, Cox and Munk 1954), the waves' mean square slope and water's reflectance
+ * straight back. The law itself is the kernel's; the view only draws it.
  */
-export function slopeVariance(wind_m_s: number): number {
-  return 0.003 + 5.12e-3 * Math.max(0, wind_m_s);
-}
+export const GLINT_FALLBACK = { slope_variance: 0.03884, normal_reflectance: 0.0204 } as const;
 
 /**
  * The glint's reflectance (a BRDF, per steradian) for light from `l` seen toward `v` (unit vectors from the sea, `n` its
  * level): F(θ) · p(tan β) / (4 μ₀ μ cos⁴β), p the Gaussian slope density e^(−tan²β/σ²)/(πσ²), β the tilt of the
- * facet that mirrors l into v, F Fresnel's at the liquid's index (Schlick's form, F₀ from the index).
+ * facet that mirrors l into v, F Fresnel's in Schlick's form from F₀, the liquid's reflectance straight back (both σ² and
+ * F₀ are the kernel's, `sse.light.sea_glint`).
  */
-export function glintBrdf(n: readonly number[], l: readonly number[], v: readonly number[], sigma2: number, index = 1.333): number {
+export function glintBrdf(n: readonly number[], l: readonly number[], v: readonly number[], sigma2: number, f0: number = GLINT_FALLBACK.normal_reflectance): number {
   const mu0 = dot(n, l);
   const mu = dot(n, v);
   if (!(mu0 > 0 && mu > 0)) return 0;
@@ -214,7 +232,6 @@ export function glintBrdf(n: readonly number[], l: readonly number[], v: readonl
   const cb = Math.max(1e-6, dot(n, h));
   const tan2 = (1 - cb * cb) / (cb * cb);
   const p = Math.exp(-tan2 / sigma2) / (Math.PI * sigma2);
-  const f0 = ((index - 1) / (index + 1)) ** 2;
   const f = f0 + (1 - f0) * Math.pow(1 - Math.max(0, dot(v, h)), 5);
   return (f * p) / (4 * mu0 * mu * cb * cb * cb * cb);
 }

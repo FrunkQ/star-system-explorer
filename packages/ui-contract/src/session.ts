@@ -28,7 +28,7 @@ export interface SkyAsk {
 
 /** One ask of the kernel `weather` op (presentation reads; nothing is recorded). */
 export interface WeatherAsk {
-  want: "climate" | "systems" | "field" | "report" | "column" | "sound";
+  want: "climate" | "systems" | "field" | "report" | "glint" | "column" | "sound";
   world?: string;
   system?: string;
   body?: string;
