@@ -258,6 +258,22 @@ fn main() {
     for line in story(&mut ro, &walk) {
         println!("{line}");
     }
+    // The same, among craters of the last billion years, on any solid world.
+    let mut young: Option<Crater> = None;
+    for (_, cl) in &recent {
+        for c in cl {
+            let core_like = sys.reservoirs[c.band.res].classes[c.band.class].name == "core";
+            if core_like && young.as_ref().is_none_or(|y| c.d_km > y.d_km) {
+                young = Some(c.clone());
+            }
+        }
+    }
+    if let Some(y) = &young {
+        println!("\n### The largest core-fragment crater of the last billion years, on any solid world\n");
+        for line in story(&mut ro, y) {
+            println!("{line}");
+        }
+    }
     // A crater from a passing star, anywhere a solid world was hit.
     let mut pass_cr: Option<Crater> = None;
     let mut pass_count = 0;
