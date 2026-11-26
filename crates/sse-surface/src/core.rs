@@ -105,8 +105,9 @@ pub struct CoreSettings {
     /// Mantle potential temperature above which melting vents the excess heat
     /// as volcanism under moving plates (a cap standing in for a melt model).
     pub t_mantle_max_k: f64,
-    /// The mantle's solidus, T = a P² + b P + c in °C with P in GPa, for dry
-    /// peridotite (Hirschmann 2000, fit valid 0 to 10 GPa). Under a lid that
+    /// The mantle's solidus, T = a P² + b P + c in K with P in GPa, for dry
+    /// peridotite (Hirschmann 2000's °C fit, valid 0 to 10 GPa, with c
+    /// moved to kelvin: 1120.661 °C = 1393.811 K). Under a lid that
     /// does not move, a mantle hotter than this at the lid's base melts, and
     /// the melt carries the excess heat up through the lid as volcanism (a
     /// heat pipe, Moore and Webb 2013), so the mantle cannot warm past it.
@@ -166,7 +167,7 @@ impl Default for CoreSettings {
             mantle_liquidus_c: 1.9,
             mg_floor_k: 3000.0,
             t_mantle_max_k: 2200.0,
-            mantle_solidus_c: [-5.104, 132.899, 1120.661],
+            mantle_solidus_c: [-5.104, 132.899, 1393.811],
             mantle_solidus_p_max_gpa: 10.0,
             iron_rho0: 8268.0,
             iron_k0_gpa: 163.4,
@@ -434,7 +435,7 @@ pub fn core_history(
     let solidus = |p_pa: f64| {
         let p = (p_pa / 1e9).clamp(0.0, s.mantle_solidus_p_max_gpa);
         let [a, b, c] = s.mantle_solidus_c;
-        a * p * p + b * p + c + sse_core::sheet::T0C
+        a * p * p + b * p + c
     };
     // Heat out of the mantle's top, W/m², for a mantle at `t_u`: moving
     // plates, or a stagnant lid (Solomatov and Moresi 2000).
