@@ -72,3 +72,6 @@ light (2.6e-4 of it): ...". Core golden is untouched.
 - For the light thread: the colour sum in `shadow.rs` weights each height by the dilution φ as well as selecting
   the band of heights whose image covers the middle; for an extended star the band selection alone may be the right
   weighting (that is how `share` is summed). The colour was left as it was.
+- Next (EC2, asked by the coordinator's audit 26 Nov): the glint law into a kernel block, and the liquid's refractive
+  index read from the data sheet through Look up, in place of the renderer's typed 1.333 and its Cox and Munk sums.
+  Both are fudge rows until then.
