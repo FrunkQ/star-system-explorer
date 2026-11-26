@@ -71,4 +71,10 @@ runs at in the same words (`rateWords`). Not changed here, to stay out of an ope
 - `tests/ui/system3d.e2e.mjs`: the star stands still while the clock is stopped and the note says so; Play turns it
   and the note says "a day a second".
 - `tests/ui/compare.e2e.mjs`: the pace button is On the clock, and with the clock stopped it says the globes stand still.
-- `npm run ui:check` clean; `npm run ui:test`.
+- `npm run ui:check` clean; `npm run ui:test` 1,090 of 1,090.
+- Browser runs on Chromium here: compare, time, walk, shell and globe pass. system3d passes every step this package
+  touches (the star still while stopped, turning on Play, the note's words) and then fails at the close-up clicks
+  (line 141, the note intercepts "‹ Kestrel"); main fails at the same line in this container, so it is not this change.
+- Looked at in the browser: stopped, Vault's pin holds; at a day a second it moves a little every tenth of a second;
+  in True at a month a second the belts turn with the inner edge ahead and the note reads "Everything moves on the
+  campaign's clock, 30 days a second." Screens in project files `sse4/handover-screens/CLK1-screens/`.

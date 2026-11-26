@@ -109,7 +109,8 @@ export function rateWords(rate: number): string {
     const whole = Math.abs(n - Math.round(n)) < 0.01 * n;
     // Weeks only when whole: thirty days a second reads better than 4.3 weeks.
     if (n < 0.999 || (name === "week" && !whole)) continue;
-    const said = whole ? Math.round(n) : Math.round(n * 10) / 10;
+    // Whole numbers from ten up, as the ruler says them ("30 days a second" for a calendar month).
+    const said = whole || n >= 10 ? Math.round(n) : Math.round(n * 10) / 10;
     return said === 1 ? `${name === "hour" ? "an" : "a"} ${name} a second` : `${said} ${name}s a second`;
   }
   return `${Math.round(rate * 10) / 10} seconds a second`;
@@ -120,7 +121,7 @@ export function rateWords(rate: number): string {
  * Empty `fast` gives the rate alone.
  */
 export function motionWords(c: PictureClock, fast: readonly string[]): string {
-  if (!(c.rate > 0)) return "The clock is stopped, so the picture is still: press play on the ruler (or Run on the clock) and everything moves at its own speed.";
+  if (!(c.rate > 0)) return "The clock is stopped, so the picture is still; play moves everything at its own speed.";
   const head = `Everything moves on the campaign's clock, ${rateWords(c.rate)}.`;
   if (!fast.length) return head;
   const list = fast.length === 1 ? fast[0]! : `${fast.slice(0, -1).join(", ")} and ${fast[fast.length - 1]}`;

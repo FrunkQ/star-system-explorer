@@ -606,7 +606,8 @@
     const inner = beltMembers.filter(({ b }) => b.gm && tooFast(2 * Math.PI * Math.sqrt(b.a_in_m ** 3 / b.gm), span)).map(({ b }) => `the ${b.name}`);
     return [...out, ...(isTrue && centreId === root ? inner : [])];
   });
-  const motionNote = $derived(clock ? motionWords(clock, fastNames) : "");
+  // Said while the clock runs, and in True while it is stopped (where a still star could look broken).
+  const motionNote = $derived(clock && (clock.rate > 0 || (isTrue && using === "gpu")) ? motionWords(clock, fastNames) : "");
   const ringed = $derived(shown.filter((b) => b.rings?.length).map((b) => b.name));
   const ringsAssumed = $derived(shown.some((b) => b.rings?.some((r) => r.tau === null || r.albedo === null)));
   const ringNote = $derived(
