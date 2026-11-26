@@ -7,6 +7,7 @@
   Presentation only: every step and every tick of Run ▸ is handed to `onstep` with the new campaign time.
 -->
 <script lang="ts">
+  import { untrack } from "svelte";
   import { motionMs } from "./motion.ts";
   import { dateWords, defaultCalendar, spanWords, steps, type Calendar } from "./calendar.ts";
 
@@ -15,6 +16,7 @@
     calendar,
     moving = true,
     onstep,
+    onrate,
   }: {
     /** The campaign's now, in years. */
     campaignNow: number;
@@ -22,6 +24,8 @@
     /** False above the system: the date only. */
     moving?: boolean;
     onstep?: (yr: number) => void;
+    /** How fast time passes while Run ▸ runs, campaign seconds per real second (0 when stopped): the picture's clock (CLK1) runs at it. */
+    onrate?: (s_per_s: number) => void;
   } = $props();
 
   const cal = $derived(calendar ?? defaultCalendar(campaignNow));
@@ -42,17 +46,21 @@
   // Human time flows a few times a second: smooth enough for a turning world, gentle on the kernel. Reduced motion
   // still lets the clock run (it is a clock, not an animation); it just ticks once a second.
   let clockEl: HTMLElement | undefined = $state();
+  // The picture's clock (CLK1) runs at Run ▸'s rate, and stops with it, so the worlds move smoothly between ticks.
+  $effect(() => {
+    const r = running && moving ? rate.hours * 3600 : 0;
+    untrack(() => onrate?.(r));
+  });
+  $effect(() => () => untrack(() => onrate?.(0)));
   $effect(() => {
     if (!running || !moving) return;
     const every = motionMs(clockEl ?? null) > 0 ? 250 : 1000;
-    let last = performance.now();
-    let at = campaignNow;
-    const id = setInterval(() => {
-      const t = performance.now();
-      at += ((t - last) / 1000) * rate.hours * hourYr;
-      last = t;
-      onstep?.(at);
-    }, every);
+    const first = performance.now();
+    const from = untrack(() => campaignNow);
+    const per_ms = (rate.hours * hourYr) / 1000;
+    // The date is the start plus the time run, worked out afresh at each tick: adding a quarter second at a time to
+    // a year near a star's age is lost to rounding (a year there resolves about 30 s), so real time never moved on.
+    const id = setInterval(() => onstep?.(from + (performance.now() - first) * per_ms), every);
     return () => clearInterval(id);
   });
   $effect(() => {

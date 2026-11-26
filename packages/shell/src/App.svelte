@@ -1877,7 +1877,7 @@
         {#key ws.screen}<div class="ruler-view">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</div>{/key}
       {:else}
         <!-- The Run desk's clock in the ruler's place (three desks design 7.3): the campaign's now in human time. Above the system nothing moves in human time, so it shows the date only. -->
-        <div class="ruler-view"><CampaignClock campaignNow={ws.campaign_now_yr ?? ws.now_yr} calendar={clockCalendar} moving={railScale === "system" || railScale === "world"} onstep={stepCampaign} /></div>
+        <div class="ruler-view"><CampaignClock campaignNow={ws.campaign_now_yr ?? ws.now_yr} calendar={clockCalendar} moving={railScale === "system" || railScale === "world"} onstep={stepCampaign} onrate={(r) => ws.setRate?.(r)} /></div>
       {/if}
       <!-- What if and Look ahead live on the ruler (2.7): both are about time. Light and Sound sit with them, as modifiers of any instrument. On Run only Sound stays, beside the clock; a what-if left open elsewhere still shows, so it can be kept or thrown away. -->
       <div class="ruler-side" aria-label="Time tools" role="group">

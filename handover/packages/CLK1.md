@@ -26,8 +26,10 @@ advancing time fast animates a sun, planets whizz round and asteroids/belts circ
 - **Who sets it.** The ruler's Play calls `onrate` with its step a second (and 0 on Pause); the workspace's `setRate`
   re-anchors without a jump. An App effect makes the clock follow `now_yr` however it moves (steps, drags, bookmarks,
   saves). While running, a ruler tick that agrees with the clock keeps the anchor (`followTime`), so the picture is
-  not knocked about by the ruler's ten-a-second rounding. The Run desk's clock (PR 648, TM3a) should call
-  `ws.setRate` the same way once it is on main.
+  not knocked about by the ruler's ten-a-second rounding. The Run desk's clock (`CampaignClock.svelte`, TM3a) sets
+  it the same way through its `onrate` (Run ▸ at its rate, 0 when stopped); its tick also now works the date out
+  from where Run started, as the ruler does (adding a quarter second at a time to a year near a star's age was lost
+  to rounding, so real time never moved on).
 - **The ruler's play was also fixed**: it added each frame's step to a year near a star's age, losing up to half of
   it to rounding at an hour a second. It now works the time out afresh each frame from where play started.
 - **Rates come from the physics**, never the clock: the star's `rotation_period_s`, cell lifetimes and flare times from
@@ -70,7 +72,7 @@ removes that; `followTime` then takes seconds instead of years.
   The window should be read again as the clock leaves it.
 - A time exposure for motions faster than the pictures (each fast body drawn as the arc it sweeps in one picture).
 - The flat chart and the players' screens still move at the kernel's ten answers a second.
-- The ruler has no real-time step (its smallest is an hour a second); the Run desk's clock (PR 648) has real time.
+- The ruler has no real-time step (its smallest is an hour a second); the Run desk's clock has real time. At real time the date itself still moves in about 30 s steps (a year near a star's age); the picture runs smoothly between them. TP1 (dates as integers) fixes the date.
 - The star's time is its age plus clock seconds in one float (about 30 s resolution near 4.6 Gyr): fine for spin and
   flares, but at real time the Sun's ten-minute cells step in 30 s jumps. Passing the cells the clock seconds alone
   would fix it (star-now.ts, which PR 641 also edits).
