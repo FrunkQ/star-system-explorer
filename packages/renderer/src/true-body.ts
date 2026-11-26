@@ -56,10 +56,22 @@ export interface TrueBody {
   moons?: readonly RingMoon[];
   /** How much its spin flattens it (true-shape.ts `readTrueShape`, TA6). */
   flatten?: number;
+  /** Its seas' surface wind (m/s) and the liquid's refractive index, for the sun's glint, when the view has them. */
+  sea?: { wind_m_s?: number; index?: number };
 }
 
 /** The GPU fields of a body's True face. */
-export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "face" | "mesh" | "clouds" | "air" | "glow" | "plumes" | "flatten" | "pole">;
+export type TrueLook = Pick<GpuItem, "colour" | "shines" | "surface" | "rings" | "face" | "mesh" | "clouds" | "air" | "glow" | "plumes" | "flatten" | "pole" | "glint">;
+
+// Whether a surface has any liquid ground, worked out once per picture.
+const wetSeen = new WeakMap<object, boolean>();
+function hasLiquid(t: TrueTexture): boolean {
+  const c = t.faces;
+  if (!c) return false;
+  let w = wetSeen.get(c);
+  if (w === undefined) wetSeen.set(c, (w = c.faces.some((f) => !!f && f.liquid.some((x) => x > 0))));
+  return w;
+}
 
 /** A surface texture's mean colour, 0..1 (sRGB bytes over 255; a tint, not a measurement). */
 export function meanColour(t: TrueTexture): [number, number, number] {
@@ -117,6 +129,8 @@ export function trueLook(b: TrueBody): TrueLook {
       out.surface = { key: b.key, texture: flowFace(b.surface, f.flow, { radius_m: b.radius_m, dt_s: f.dt_s }), version: f.dt_s };
     else out.surface = { key: b.key, texture: b.surface };
   }
+  // Liquid ground glints in its star's light (gpu-shade.ts): drawn on the face pictures, which carry where it is wet.
+  if (!b.star && b.surface && hasLiquid(b.surface)) out.glint = { ...(b.sea?.wind_m_s !== undefined ? { wind_m_s: b.sea.wind_m_s } : {}), ...(b.sea?.index !== undefined ? { index: b.sea.index } : {}) };
   if (!b.star && b.flatten && b.flatten > 0) ((out.flatten = b.flatten), (out.pole = b.pole));
   if (!b.star && b.clouds) out.clouds = { key: `${b.key}|clouds`, texture: b.clouds };
   if (!b.star && b.air) {
