@@ -19,15 +19,15 @@ The rule (Alex, 23 Nov 2026): one set of controls, and similar levels of drawing
 | Scale | Screen | Chart | 3D | True | Wireframe | Seen from | Scale | HUD in | Visible | Infrared | Ultraviolet | X-ray | Radio | Mag | Composite |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Cosmic web | Cosmic web (foam) | ✓ | ✓ | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable, Real | 3D, True | ✓ | —2 | —3 | —4 | —5 | —6 | —7 |
-| Galaxies nearby | Galaxies nearby | ✓ | ✓ | —8 | —1 | Above, Tilted, Edge-on | Readable, Real | 3D | ✓ | —2 | —3 | —4 | —5 | —6 | —7 |
-| Galaxy | Galaxy chart | ✓ | ✓ | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable | 3D, True | ✓ | ✓ | ✓ | ✓ | ✓ | —9 | ✓ |
-| Local stars | Sector map | ✓ | —10 | —8 | —1 | Above | Readable | Chart | ✓ | —2 | —3 | —4 | —5 | —6 | —7 |
-| Between stars | Voyages | ✓ | —11 | —8 | —1 | Above | Readable, Real | always labelled | ✓ | —2 | —3 | —4 | —5 | —6 | —7 |
+| Galaxies nearby | Galaxies nearby | ✓ | ✓ | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable, Real | 3D, True | ✓ | —2 | —3 | —4 | —5 | —6 | —7 |
+| Galaxy | Galaxy chart | ✓ | ✓ | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable | 3D, True | ✓ | ✓ | ✓ | ✓ | ✓ | —8 | ✓ |
+| Local stars | Sector map | ✓ | —9 | —10 | —1 | Above | Readable | Chart | ✓ | —2 | —3 | —4 | —5 | —6 | —7 |
+| Between stars | Voyages | ✓ | —11 | —10 | —1 | Above | Readable, Real | always labelled | ✓ | —2 | —3 | —4 | —5 | —6 | —7 |
 | System | System chart | ✓ | ✓ | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable, Real | Chart, 3D, True | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Sky from a world | Window | ✓ | —12 | —8 | —1 | Above | Readable | Chart | ✓ | ✓ | —3 | —4 | —5 | —6 | —13 |
+| Sky from a world | Window | ✓ | —12 | —10 | —1 | Above | Readable | Chart | ✓ | ✓ | —3 | —4 | —5 | —6 | —13 |
 | World | Body (globe) | ✓ | —14 | ✓ | —1 | Above, Tilted, Edge-on, Free | Readable, Real | Chart, True | ✓ | —15 | —15 | —15 | —15 | ✓ | ✓ |
 | On the ground | Land (surface) | ✓ | ✓ | ✓ | ✓ | Free | Real | 3D, True, Wireframe | ✓ | —16 | —16 | —16 | —16 | —17 | —7 |
-| Inside a world | Cutaway | ✓ | —18 | —8 | —1 | Above | Readable, Real | Chart | ✓ | —2 | —3 | —4 | —5 | —6 | —7 |
+| Inside a world | Cutaway | ✓ | —18 | —10 | —1 | Above | Readable, Real | Chart | ✓ | —2 | —3 | —4 | —5 | —6 | —7 |
 | Side by side | Size comparison | ✓ | ✓ | ✓ | ✓ | Above, Tilted, Edge-on, Free | Readable, Real | always labelled | ✓ | —2 | —3 | —4 | —5 | —6 | —7 |
 | Down a lava tube | Caves | not built yet: the kernel's lava tubes (survey_caves) drawn underground come after the walk |
 
@@ -40,9 +40,9 @@ The rule (Alex, 23 Nov 2026): one set of controls, and similar levels of drawing
 5. Radio is not drawn here yet.
 6. Mag (magnetic field) is not drawn here yet.
 7. Composite needs two bands drawn here.
-8. True is coming: the photoreal views are held for now.
-9. The galaxy's magnetic field is not drawn yet.
-10. The sector map is a flat hex grid.
+8. The galaxy's magnetic field is not drawn yet.
+9. The sector map is a flat hex grid.
+10. True is coming: the photoreal views are held for now.
 11. Voyages are charted flat for now.
 12. The sky is drawn as a flat map for now.
 13. Composite is coming to this view: it draws one band at a time for now.
