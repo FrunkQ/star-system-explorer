@@ -49,6 +49,10 @@ pub struct Observables {
     pub erosion_gyr: Option<f64>,
     /// The world's age now, Myr.
     pub age_myr: f64,
+    /// Hydrogen dominates the air: methane there is what the gas makes by
+    /// itself (a giant's air), not a sign of anything.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub reducing_air: bool,
 }
 
 /// Settings (`provides.other.life_signatures`).
@@ -245,7 +249,7 @@ pub fn signatures(
                 "oxygen without methane: photosynthesis is the likely source, though photolysis can make some".into()
             },
         });
-    } else if see_ch4 {
+    } else if see_ch4 && !obs.reducing_air {
         signals.push(Signal {
             id: "ch4".into(),
             value: ch4,

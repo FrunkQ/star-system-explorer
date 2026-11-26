@@ -51,7 +51,7 @@ fn t(s: &str) -> Value {
 fn deg(x: f64) -> f64 {
     x * (m::PI / 180.0)
 }
-fn as_f64(v: &Value) -> Option<f64> {
+pub(crate) fn as_f64(v: &Value) -> Option<f64> {
     match v {
         Value::Float(x) => Some(*x),
         Value::Int(i) => Some(*i as f64),
@@ -1758,18 +1758,8 @@ pub(crate) fn systems_of(ch: &Chronicle, root: &Address) -> Vec<serde_json::Valu
 /// `export_chronicle` document format.
 pub const EXPORT_FORMAT: &str = "sse.chronicle-export/1";
 
-/// L1d's life view for a fixture world (bodies come later).
-pub(crate) fn life_view(
-    body: Option<&str>,
-    fixture: Option<&str>,
-) -> Result<(String, serde_json::Value), Response> {
-    if let Some(b) = body {
-        return Err(err(
-            "no_habitats",
-            format!("{b}: adopted systems do not carry habitat graphs yet; use a fixture"),
-        ));
-    }
-    let name = fixture.ok_or_else(|| err("bad_request", "give a fixture or a body"))?;
+/// L1d's life view for a fixture world (a body of the chart: `life::body_life`).
+pub(crate) fn life_view(name: &str) -> Result<(String, serde_json::Value), Response> {
     let cases = sse_life::scenario::signature_cases();
     let names: Vec<String> = cases.iter().map(|c| c.0.clone()).collect();
     let (n, b, h, o) = cases.into_iter().find(|c| c.0 == name).ok_or_else(|| {

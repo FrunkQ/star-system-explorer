@@ -443,6 +443,7 @@ pub fn observables(name: &str) -> crate::signatures::Observables {
         recycling_gyr: Some(0.8),
         erosion_gyr: None,
         age_myr: 4570.0,
+        reducing_air: false,
     };
     match name {
         "earth-archean" => Observables {

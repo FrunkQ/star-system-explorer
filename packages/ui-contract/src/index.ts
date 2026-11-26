@@ -143,6 +143,8 @@ export type { ReplayBody, ReplayCloud, ReplayEvent, ReplayFrame, ReplayModel, Re
 export { chartAu, chartTime, chartXY, formationChart, inheritedRows, massWidth, stageAt, workedAt } from "./formation-chart.ts";
 export type { ChartBelt, ChartEvent, ChartLine, ChartStage, ChartTrack, FormationChart, InheritedRow, TrackSeg } from "./formation-chart.ts";
 export { formationOf } from "./formation-record.ts";
+export { howWorkedOut, storyFor, worldStory } from "./formation-story.ts";
+export type { MaterialShare, StoryLine, SureRow, WorldStory } from "./formation-story.ts";
 export type { FormationRecordRead, FormationSource } from "./formation-record.ts";
 export { copyClip, readClip, placeClip, clipWords, missingPacks, subtree, CLIP_VERSION } from "./clip.ts";
 export type { Clip, ClipNode, ClipEvent, ClipSource, ClipRead, Copied, PlacedBody } from "./clip.ts";

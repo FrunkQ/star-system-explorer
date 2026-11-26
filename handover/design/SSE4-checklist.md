@@ -59,7 +59,7 @@ Also done for this stage: colour-blind check on every theme, the Help door with 
 - ⬜ Reference finished: Substances and the phase diagram, Calendars, editing.
 - ⬜ Field ledger and field history (MF2, MF3): a world's field switching on and dying on the time ruler.
 - ⬜ Ice zones in the cutaway (MP19, MP19b).
-- ⬜ The Life screen reading the chart's own worlds (it still shows example worlds).
+- ✅ The Life screen reading the chart's own worlds (L3, 26 Nov: today's state held through the history).
 - ⬜ V3 gaps for this stage: where things can orbit (Hill spheres, L points), grow with a star you choose and four dials, pin a value or class with a reason, change a unit by clicking it, next eclipse, one mix editor for any gas mix, the eye and GM notes on every card, a "Your systems" map.
 - ⬜ The campaign's "now" kept in the intent log.
 
@@ -218,7 +218,7 @@ Alex, 23 Nov: "Now we can manually set and record stuff; 4.1 brings in systems t
 | Energy gradients and chemistries as data, the shared catalogue format with Evolution Lab | New biology starts from what a world offers | ✅ E0, E1; ⬜ E7 further chemistries (ammonia water, hydrocarbon, sulphuric acid) |
 | Functional traits under selection, and a **kept lineage tree** with trait values | Appearance is derived from traits and lineage, so nothing in 4.0 is redone | 🔶 E5 cut to what E6 needs; check the lineage tree is stored, not only used |
 | Soil, cover and biomes from climate | The ground a richer biology lives on | 🔶 E4, E6 part 1; ⬜ E6 part 2 |
-| Life on the chart's own worlds | Without habitats on adopted worlds, nothing runs on real campaigns | ⬜ stage 2 |
+| Life on the chart's own worlds | Without habitats on adopted worlds, nothing runs on real campaigns | ✅ L3 (history over time next) |
 | Exporter to Evolution Lab and a socket for one simulated window with a fidelity contract | Lab mechanisms are proven there, then promoted | ⬜ E9 (waits on the Lab's own two sessions) |
 | The capability graph reaching tool use and language | The bridge from biology to a civilisation | ✅ L1b (built; stays as it is, no more work in 4.0, ruled 23 Nov) |
 | Capability on a civilisation as plain dated data, inherited down the tree | A 4.1 tech tree writes the same dated advances a GM writes by hand today, so nothing is redone | ⬜ FT2 (kernel), lighter: set by hand or by a pack, no hooks for growth in 4.0 |
