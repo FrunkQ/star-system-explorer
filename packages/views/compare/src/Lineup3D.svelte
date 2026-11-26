@@ -111,7 +111,8 @@
           const key = `${system}|${i.key}`;
           if (!kept.has(key)) {
             // Ground, then today's clouds and haze; a giant is its cloud decks, with the winds that carry them (true-air.ts).
-            const f = await readTrueFace(ctx.session as unknown as FaceReader, system, i.key, { storms: true });
+            // The lineup carries every giant by its winds each frame (flowFace), so its finer face is kept at 256 across.
+            const f = await readTrueFace(ctx.session as unknown as FaceReader, system, i.key, { storms: true, detail_px: 256 });
             kept.set(key, typeof f === "string" ? "none" : f.tex);
             if (typeof f !== "string" && f.flow) flows.set(key, f.flow);
             // How much its spin flattens it (TA6): Jupiter and Saturn side by side show it plainly.

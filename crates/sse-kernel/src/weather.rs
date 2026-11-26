@@ -21,6 +21,7 @@ pub(crate) struct Ask {
     pub n: Option<u32>,
     pub lat: f64,
     pub lon: f64,
+    pub half_km: Option<f64>,
     pub pins: Vec<serde_json::Value>,
     pub sources: Option<serde_json::Value>,
     pub block: Option<serde_json::Value>,
@@ -133,6 +134,17 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
             let n = a.n.unwrap_or(16).clamp(1, 64);
             to_json(&chosen.field(&c, date, key, n, &pins))
         }
+        "patch" => {
+            rule_only("patch")?;
+            let half = a.half_km.filter(|h| *h > 0.0).ok_or_else(|| {
+                err(
+                    "bad_patch",
+                    "a patch needs `half_km` > 0 round `lat`, `lon`",
+                )
+            })?;
+            let n = a.n.unwrap_or(16).clamp(1, 64);
+            to_json(&block.patch(&c, date, a.lat, a.lon, half, n, &pins))
+        }
         "report" => {
             rule_only("report")?;
             let r = block.report(&c, date, a.lat, a.lon, &pins, None);
@@ -169,7 +181,9 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
         other => {
             return Err(err(
                 "bad_want",
-                format!("weather want {other}: climate, systems, field, report, column or sound"),
+                format!(
+                    "weather want {other}: climate, systems, field, patch, report, column or sound"
+                ),
             ))
         }
     };
