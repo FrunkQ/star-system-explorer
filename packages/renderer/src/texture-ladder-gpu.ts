@@ -3,7 +3,7 @@
 // texel reads the kernel face its direction falls on (bilinear inside that face), and its normal is tilted by the
 // true slope between points one texel either side, which may lie on a neighbouring face: no seams at cube edges.
 // One shader source for WebGPU and WebGL2. Baked once per world and tile read, kept in a small LRU.
-import { BackSide, ClampToEdgeWrapping, CubeCamera, DataTexture, DataUtils, FloatType, HalfFloatType, LinearFilter, LinearMipmapLinearFilter, Mesh, NearestFilter, NoColorSpace, RedFormat, RGBAFormat, Scene, SphereGeometry, UnsignedByteType, Vector3 } from "three";
+import { BackSide, NoBlending, ClampToEdgeWrapping, CubeCamera, DataTexture, DataUtils, FloatType, HalfFloatType, LinearFilter, LinearMipmapLinearFilter, Mesh, NearestFilter, NoColorSpace, RedFormat, RGBAFormat, Scene, SphereGeometry, UnsignedByteType, Vector3 } from "three";
 import { CubeRenderTarget, MeshBasicNodeMaterial, MeshStandardNodeMaterial, type WebGPURenderer } from "three/webgpu";
 import { abs, atan, clamp, cross, cubeTexture, dot, float, floor, Fn, int, ivec2, length, max, min, mix, normalize, positionLocal, positionWorld, select, smoothstep, sRGBTransferEOTF, texture, textureLoad, transformNormalToView, uniform, vec2, vec3, vec4 } from "three/tsl";
 import { cubeBytes, texelAngle, type Composite, type PatchPicture } from "./texture-ladder.ts";
@@ -118,15 +118,16 @@ function atlas(c: Composite): { m: number; rgb: Uint8Array; h: Float32Array; pre
     for (let y = 0; y < m; y++) {
       for (let x = 0; x < m; x++) {
         const o = (oy + y) * W + ox + x;
+        // Alpha: liquid ground (the sea's glint, gpu-shade.ts), 255 wet, 0 dry.
         if (!f) {
-          rgb.set([128, 128, 128, 255], o * 4);
+          rgb.set([128, 128, 128, 0], o * 4);
           continue;
         }
         if (f.n === m) {
           rgb[o * 4] = f.rgb[o0(f, x, y) * 3]!;
           rgb[o * 4 + 1] = f.rgb[o0(f, x, y) * 3 + 1]!;
           rgb[o * 4 + 2] = f.rgb[o0(f, x, y) * 3 + 2]!;
-          rgb[o * 4 + 3] = 255;
+          rgb[o * 4 + 3] = f.liquid[o0(f, x, y)] ? 255 : 0;
           h[o] = f.height_m[o0(f, x, y)]!;
           continue;
         }
@@ -142,7 +143,7 @@ function atlas(c: Composite): { m: number; rgb: Uint8Array; h: Float32Array; pre
         const j1 = Math.min(f.n - 1, j + 1);
         const k = [j * f.n + i, j * f.n + i1, j1 * f.n + i, j1 * f.n + i1];
         for (let ch = 0; ch < 3; ch++) rgb[o * 4 + ch] = Math.round(w[0]! * f.rgb[k[0]! * 3 + ch]! + w[1]! * f.rgb[k[1]! * 3 + ch]! + w[2]! * f.rgb[k[2]! * 3 + ch]! + w[3]! * f.rgb[k[3]! * 3 + ch]!);
-        rgb[o * 4 + 3] = 255;
+        rgb[o * 4 + 3] = Math.round(255 * (w[0]! * (f.liquid[k[0]!] ? 1 : 0) + w[1]! * (f.liquid[k[1]!] ? 1 : 0) + w[2]! * (f.liquid[k[2]!] ? 1 : 0) + w[3]! * (f.liquid[k[3]!] ? 1 : 0)));
         h[o] = w[0]! * f.height_m[k[0]!]! + w[1]! * f.height_m[k[1]!]! + w[2]! * f.height_m[k[2]!]! + w[3]! * f.height_m[k[3]!]!;
       }
     }
@@ -151,10 +152,11 @@ function atlas(c: Composite): { m: number; rgb: Uint8Array; h: Float32Array; pre
 }
 
 /**
- * The bake shader's surface read at a direction: vec4(sRGB colour 0..1, height m). Face by the largest axis, cube
+ * The bake shader's surface read at a direction: vec4(sRGB colour 0..1, height m), or with `wet` vec4(sRGB colour, the
+ * share of liquid ground). Face by the largest axis, cube
  * coordinates by the equiangular map (as the kernel's atlas), then bilinear within that face's cell of the atlas.
  */
-function surfaceRead(rgbTex: N, hTex: N, uM: N) {
+function surfaceRead(rgbTex: N, hTex: N, uM: N, wet = false) {
   return Fn(([d]: [N]) => {
     const ax = abs(d.x);
     const ay = abs(d.y);
@@ -180,7 +182,7 @@ function surfaceRead(rgbTex: N, hTex: N, uM: N) {
     const fx = x.sub(i0);
     const fy = y.sub(j0);
     const at = (i: N, j: N) => ivec2(int(cx.mul(uM).add(i)), int(cy.mul(uM).add(j)));
-    const tap = (i: N, j: N) => vec4(textureLoad(rgbTex, at(i, j)).xyz, textureLoad(hTex, at(i, j)).x);
+    const tap = (i: N, j: N) => (wet ? textureLoad(rgbTex, at(i, j)) : vec4(textureLoad(rgbTex, at(i, j)).xyz, textureLoad(hTex, at(i, j)).x));
     const a = mix(tap(i0, j0), tap(i1, j0), fx);
     const b = mix(tap(i0, j1), tap(i1, j1), fx);
     return mix(a, b, fy);
@@ -216,8 +218,10 @@ export function createTextureBaker(renderer: WebGPURenderer): TextureBaker {
     const uM = uniform(a.m);
     const read = surfaceRead(rgbTex, hTex, uM);
     const dir = normalize(positionWorld);
-    const colourMat = new MeshBasicNodeMaterial({ side: BackSide });
-    colourMat.colorNode = vec4(read(dir).xyz, 1);
+    const wetRead = surfaceRead(rgbTex, hTex, uM, true);
+    // The colour cube's alpha is where the ground is liquid (the glint, gpu-shade.ts): written as it is, not blended.
+    const colourMat = new MeshBasicNodeMaterial({ side: BackSide, blending: NoBlending });
+    colourMat.colorNode = wetRead(dir);
     const step = texelAngle(size);
     const uStep = uniform(step);
     const uSpan = uniform(2 * step * radius_m);
