@@ -613,7 +613,8 @@ pub enum Request {
     /// design section 11) from the physics in force: `table` is its id
     /// (`"sse.light.disc"`), `subject` what it is baked for, and `tier` the
     /// renderer's quality tier, which picks its size. Kept by id, subject,
-    /// size and physics hash. An unknown id lists the known ones.
+    /// size and physics hash. An unknown id lists the known ones. With
+    /// `values: false` the numbers are left out (the hash still names them).
     Bake {
         table: String,
         #[serde(default)]
@@ -622,6 +623,9 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         tier: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        values: Option<bool>,
     },
     /// Light near a mass (XO2, XO3; exotic objects design 3.5): for each body
     /// and its far viewer, which bender applies, the sizes from the gravity

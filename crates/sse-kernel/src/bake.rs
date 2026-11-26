@@ -18,7 +18,7 @@ use std::sync::Arc;
 /// lists them.
 pub const TABLES: &[(&str, &str)] = &[(
     sse_light::disc_table::ID,
-    "a thin disc round a compact mass: shift and the ring's T⁴ against radius and the ray's angular momentum over radius (subject: mass_kg or gravitational_radius_m, rate_kg_s, inner_m, outer_m)",
+    "a thin disc round a compact mass: shift and the ring's T⁴ against radius and the ray's angular momentum over radius (subject: mass_kg or gravitational_radius_m, and rate_kg_s, inner_m and outer_m, or read_light_paths' feed)",
 )];
 
 /// Tables kept, newest last; the oldest is dropped past this many.
@@ -34,6 +34,7 @@ pub struct Cache {
     kept: Vec<(Key, Arc<Table>)>,
 }
 
+#[cfg(test)]
 impl Cache {
     pub fn len(&self) -> usize {
         self.kept.len()
@@ -66,7 +67,16 @@ pub fn bake(
     id: &str,
     subject: Option<serde_json::Value>,
     tier: Option<String>,
+    with_values: bool,
 ) -> Out {
+    let out = |t: &Table, kept: bool, tier: &Option<String>| {
+        let mut v = serde_json::to_value(t).expect("plain data");
+        v["tier"] = tier.clone().map_or(serde_json::Value::Null, Into::into);
+        if !with_values {
+            v["values"] = serde_json::Value::Null;
+        }
+        Response::Baked { table: v, kept }
+    };
     let subject = subject.unwrap_or(serde_json::Value::Null);
     let size = Size::of_tier(tier.as_deref());
     let hash = physics.hash().hex();
@@ -74,23 +84,15 @@ pub fn bake(
     // canonical.
     let key: Key = (id.to_string(), subject.to_string(), size, hash.clone());
     if let Some((_, t)) = cache.kept.iter().find(|(k, _)| *k == key) {
-        let mut v = serde_json::to_value(&**t).expect("plain data");
-        v["tier"] = tier.map_or(serde_json::Value::Null, Into::into);
-        return Ok(Response::Baked {
-            table: v,
-            kept: true,
-        });
+        return Ok(out(t, true, &tier));
     }
     let baked = produce(id, &subject, size, physics).map_err(|e| err("bad_table", e))?;
-    let table =
-        Table::seal(id, subject, size, tier, hash, baked).map_err(|e| err("bad_table", e))?;
+    let table = Table::seal(id, subject, size, tier.clone(), hash, baked)
+        .map_err(|e| err("bad_table", e))?;
     let table = Arc::new(table);
     cache.kept.push((key, table.clone()));
     if cache.kept.len() > KEPT {
         cache.kept.remove(0);
     }
-    Ok(Response::Baked {
-        table: serde_json::to_value(&*table).expect("plain data"),
-        kept: false,
-    })
+    Ok(out(&table, false, &tier))
 }

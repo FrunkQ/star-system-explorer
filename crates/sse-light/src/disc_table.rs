@@ -40,8 +40,9 @@ pub const ID: &str = "sse.light.disc";
 pub const SHIFT_BLOCK: &str = "sse.light.disc_shift";
 const RG_BLOCK: &str = "sse.gravity.gravitational_radius";
 
-/// What the table is baked for: one thin disc round a compact mass, as
-/// `read_light_paths` describes it (`feed.disc` and the thin flow's rate).
+/// What the table is baked for: one thin disc round a compact mass. Either
+/// the numbers, or `feed` as `read_light_paths` gives it (the disc's edges,
+/// and the rate the thin and thick flows carry, `Feed::disc_rate_kg_s`).
 #[derive(Clone, Debug, Deserialize)]
 pub struct DiscSubject {
     /// The mass, kg; or give `gravitational_radius_m` instead.
@@ -49,10 +50,28 @@ pub struct DiscSubject {
     pub mass_kg: Option<f64>,
     #[serde(default)]
     pub gravitational_radius_m: Option<f64>,
-    /// The rate the thin disc carries, kg/s.
-    pub rate_kg_s: f64,
-    pub inner_m: f64,
-    pub outer_m: f64,
+    /// The rate the disc carries, kg/s.
+    #[serde(default)]
+    pub rate_kg_s: Option<f64>,
+    #[serde(default)]
+    pub inner_m: Option<f64>,
+    #[serde(default)]
+    pub outer_m: Option<f64>,
+    #[serde(default)]
+    pub feed: Option<crate::feed::Feed>,
+}
+
+impl DiscSubject {
+    fn disc(&self) -> Result<(f64, f64, f64), String> {
+        let f = self.feed.as_ref();
+        let rate = self.rate_kg_s.or(f.map(|f| f.disc_rate_kg_s()));
+        let inner = self.inner_m.or(f.map(|f| f.disc.inner_m));
+        let outer = self.outer_m.or(f.map(|f| f.disc.outer_m));
+        match (rate, inner, outer) {
+            (Some(r), Some(i), Some(o)) => Ok((r, i, o)),
+            _ => Err("a disc subject needs rate_kg_s, inner_m and outer_m, or a feed".into()),
+        }
+    }
 }
 
 fn block(blocks: &[FormulaAtom], id: &str) -> Result<FormulaAtom, String> {
@@ -101,7 +120,8 @@ pub fn bake(
     blocks: &[FormulaAtom],
 ) -> Result<Baked, String> {
     let s: DiscSubject = serde_json::from_value(subject.clone())
-        .map_err(|e| format!("a disc subject is {{mass_kg or gravitational_radius_m, rate_kg_s, inner_m, outer_m}}: {e}"))?;
+        .map_err(|e| format!("a disc subject is {{mass_kg or gravitational_radius_m, and rate_kg_s, inner_m, outer_m or a feed}}: {e}"))?;
+    let (rate_kg_s, inner_m, outer_m) = s.disc()?;
     let shift = Arc::new(block(blocks, SHIFT_BLOCK)?);
     let rg_block = block(blocks, RG_BLOCK)?;
     let rg = match (s.gravitational_radius_m, s.mass_kg) {
@@ -109,7 +129,7 @@ pub fn bake(
         (None, Some(mass)) => run(&rg_block, &[mass])?,
         (None, None) => return Err("a disc subject needs mass_kg or gravitational_radius_m".into()),
     };
-    if !(rg > 0.0 && s.rate_kg_s >= 0.0 && s.inner_m > 0.0 && s.outer_m > s.inner_m) {
+    if !(rg > 0.0 && rate_kg_s >= 0.0 && inner_m > 0.0 && outer_m > inner_m) {
         return Err(
             "a disc needs a mass, a rate of zero or more, and an outer edge beyond its inner edge"
                 .into(),
@@ -123,7 +143,7 @@ pub fn bake(
             rg / per_kg
         }
     };
-    let (r_in, r_out) = (s.inner_m / rg, s.outer_m / rg);
+    let (r_in, r_out) = (inner_m / rg, outer_m / rg);
     let q_max = 1.0 / m::sqrt(1.0 - 2.0 / r_in);
     if !q_max.is_finite() {
         return Err(format!(
@@ -165,7 +185,7 @@ pub fn bake(
             "the fourth power of the ring's own temperature (Shakura and Sunyaev); the point is seen glowing at shift × t4^¼",
         ),
     ];
-    let (rate, r_in_m) = (s.rate_kg_s, s.inner_m);
+    let (rate, r_in_m) = (rate_kg_s, inner_m);
     let sh = shift.clone();
     let exact = move |x: &[f64]| -> Result<Vec<f64>, String> {
         let (r, q) = (x[0], x[1]);

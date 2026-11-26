@@ -178,3 +178,19 @@ fn a_disc_inside_the_horizon_s_double_is_refused() {
     let s = serde_json::json!({"gravitational_radius_m": 1.0, "rate_kg_s": 1.0, "inner_m": 1.5, "outer_m": 10.0});
     assert!(disc_table::bake(&s, Size::Small, blocks()).is_err());
 }
+
+/// The picture asks with the hole's feed as `read_light_paths` gives it; the
+/// kernel takes the disc's edges and rate from it, the same table as the
+/// numbers give.
+#[test]
+fn a_feed_gives_the_same_table_as_its_numbers() {
+    let lp = &fixtures()[0];
+    let by_feed = serde_json::json!({
+        "gravitational_radius_m": lp.gravitational_radius_m,
+        "feed": serde_json::to_value(lp.feed.as_ref().unwrap()).unwrap(),
+    });
+    assert_eq!(
+        seal(by_feed, Size::Small, blocks()).hash,
+        seal(subject(lp), Size::Small, blocks()).hash
+    );
+}

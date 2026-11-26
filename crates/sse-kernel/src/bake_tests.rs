@@ -127,3 +127,16 @@ fn an_unknown_table_or_a_bad_subject_says_what_is_baked() {
     );
     assert_eq!(r["code"], "bad_table", "{r}");
 }
+
+#[test]
+fn values_false_leaves_the_numbers_out() {
+    let mut k = kernel(&BASE);
+    let subject = disc(&mut k);
+    let r = call(
+        &mut k,
+        json!({"op": "bake", "table": "sse.light.disc", "subject": subject, "values": false}),
+    );
+    assert_eq!(r["type"], "baked", "{r}");
+    assert!(r["table"]["values"].is_null(), "numbers left out");
+    assert_eq!(r["table"]["hash"].as_str().unwrap().len(), 64);
+}

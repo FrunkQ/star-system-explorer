@@ -180,13 +180,15 @@ pub enum Size {
 }
 
 impl Size {
-    /// The renderer's tiers (`ui-contract` `Tier`): `still` and `gpu-ultra`
-    /// take the large size, `gpu-high` the medium, and everything else
-    /// (`gpu-basic`, `canvas`, `text`, a phone) the small. Unnamed: medium.
+    /// The renderer's drawing tiers (`ui-contract` `Tier`) and the device's
+    /// measured tier (`basic`, `standard`, `capable`): `still`, `gpu-ultra`
+    /// and `capable` take the large size, `gpu-high` and `standard` the
+    /// medium, and everything else (`gpu-basic`, `canvas`, `text`, `basic`,
+    /// a phone) the small. Unnamed: medium.
     pub fn of_tier(tier: Option<&str>) -> Self {
         match tier {
-            Some("still" | "gpu-ultra" | "large") => Size::Large,
-            Some("gpu-high" | "medium") | None => Size::Medium,
+            Some("still" | "gpu-ultra" | "capable" | "large") => Size::Large,
+            Some("gpu-high" | "standard" | "medium") | None => Size::Medium,
             Some(_) => Size::Small,
         }
     }
@@ -217,6 +219,9 @@ pub struct Sampling {
     /// Every channel within its bound.
     pub within: bool,
 }
+
+/// A table's exact function: one value per channel at a point.
+pub type Exact = dyn Fn(&[f64]) -> Result<Vec<f64>, String>;
 
 /// A block or sheet row a table read.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -266,7 +271,7 @@ pub struct Baked {
     /// The exact answer at a point (one coordinate per axis), one value per
     /// channel. The table's nodes are filled from it and its probes checked
     /// against it, so the two can never be different functions.
-    pub exact: Box<dyn Fn(&[f64]) -> Result<Vec<f64>, String>>,
+    pub exact: Box<Exact>,
     pub bound: Vec<f64>,
     pub floor: Vec<f64>,
     pub reads: Vec<Read>,
@@ -409,7 +414,7 @@ impl Table {
 /// test asserts `within`; the bake op publishes the numbers.
 pub fn check_sampling(
     t: &Table,
-    exact: &dyn Fn(&[f64]) -> Result<Vec<f64>, String>,
+    exact: &Exact,
     bound: &[f64],
     floor: &[f64],
 ) -> Result<Sampling, String> {

@@ -3,14 +3,14 @@
   hole fed by a companion, a quasar, the Milky Way's starved centre) drawn by the renderer's light-path stage: the
   shadow, the thin bright ring, the far side of the disc bent up over the top, the side turning towards the viewer
   brighter and bluer, the stars behind pushed out and smeared into rings. Every number is the kernel's
-  (`read_light_paths`: the bend table, the disc's edges and feed, the shift block); the picture repeats them per pixel
+  (`read_light_paths`: the bend table, the disc's edges and feed; `bake`: the disc's shift and glow as a table); the picture reads them per pixel
   and the note says how far it was dimmed. Seen from tips the disc; drag turns it freely, the wheel narrows the lens.
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { COMPOSITE, DEFAULT_VIEW, LAYER_COLOURS, sayNumber, viewOptions, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { COMPOSITE, DEFAULT_VIEW, LAYER_COLOURS, sayNumber, viewOptions, type Json, type SystemScene, type Table, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { Card } from "../../../chart-grammar/src/index.ts";
-  import { B_CRIT, PICTURE_BANDS, brightest, discOf, marksOf, type BendTable, type HoleView, type LightPathsRead, type PictureBand } from "../../../renderer/src/light-path.ts";
+  import { B_CRIT, PICTURE_BANDS, brightest, discOf, discSubject, marksOf, type BendTable, type HoleView, type LightPathsRead, type PictureBand } from "../../../renderer/src/light-path.ts";
   import { galactic, holeSky, type HoleSkyStar } from "../../../renderer/src/hole-sky.ts";
   import type { HoleLayer, HolePicture, HoleSky } from "../../../renderer/src/gpu-light-path.ts";
   import { BLACK_HOLE_CONTROLS } from "./controls.ts";
@@ -30,7 +30,20 @@
   let problem = $state("");
   let which = $state(0);
   const hole = $derived(paths[which] ?? null);
-  const disc = $derived(hole ? discOf(hole) : null);
+  // The disc's shift and glow, baked by the kernel from the physics in force (ER11a, table `sse.light.disc`), sized
+  // by this device's tier; the picture only samples it.
+  let baked = $state.raw<{ address: string; table: Table } | null>(null);
+  const disc = $derived(hole && baked && baked.address === hole.address ? discOf(baked.table) : null);
+  $effect(() => {
+    const h = hole;
+    const subject = h ? discSubject(h) : null;
+    if (!h || !subject) return;
+    const tier = untrack(() => ctx.styles?.tier());
+    void ctx.session.bake({ table: "sse.light.disc", subject: subject as unknown as Json, ...(tier ? { tier } : {}) }).then((r) => {
+      if (!r.ok) return void (problem = r.message);
+      baked = { address: h.address, table: r.table };
+    });
+  });
 
   $effect(() => {
     untrack(() =>
@@ -152,6 +165,8 @@
   $effect(() => {
     const p = pic;
     if (!p || !table || !hole) return;
+    // A fed hole waits for its disc table (baked by the kernel), so no frame is drawn without its disc.
+    if (hole.feed && !disc) return;
     const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
     const frame = { table, disc, view, layers, sky: sky?.sky ?? null, skyGain: skyGainFor(), orders, width: Math.round(cw * dpr), height: Math.round(ch * dpr) };
     const said = `${hole.address}|${Math.round(view.tilt * 1e4)}|${layers.map((l) => l.band).join("+")}|${sky ? "sky" : "nosky"}`;

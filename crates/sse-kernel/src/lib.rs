@@ -4002,7 +4002,15 @@ impl Kernel {
                 table,
                 subject,
                 tier,
-            } => bake::bake(&mut self.baked, &self.physics, &table, subject, tier)?,
+                values,
+            } => bake::bake(
+                &mut self.baked,
+                &self.physics,
+                &table,
+                subject,
+                tier,
+                values.unwrap_or(true),
+            )?,
             Request::ReadNebulae {
                 at_s,
                 seed,

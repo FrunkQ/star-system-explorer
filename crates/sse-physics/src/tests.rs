@@ -222,6 +222,9 @@ mod table_tests {
         assert_eq!(Size::of_tier(None), Size::Medium);
         assert_eq!(Size::of_tier(Some("gpu-ultra")), Size::Large);
         assert_eq!(Size::of_tier(Some("still")), Size::Large);
+        assert_eq!(Size::of_tier(Some("basic")), Size::Small);
+        assert_eq!(Size::of_tier(Some("standard")), Size::Medium);
+        assert_eq!(Size::of_tier(Some("capable")), Size::Large);
     }
 
     #[test]
