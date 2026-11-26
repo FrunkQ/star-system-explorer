@@ -1,0 +1,255 @@
+{
+  "header": {
+    "format": "sse.catalogue/1",
+    "id": "test-belt",
+    "title": "Test belt (invented values)",
+    "version": "1",
+    "level": "small_body",
+    "frame": {
+      "kind": "orbit",
+      "plane": "ecliptic_j2000",
+      "primary": "Sun"
+    },
+    "anchor": {
+      "name": "Sun"
+    },
+    "epoch": {
+      "kind": "jd",
+      "jd": 2461000.5,
+      "scale": "tdb"
+    },
+    "size": {
+      "column": "diameter_km",
+      "quantity": "diameter",
+      "unit": "km"
+    },
+    "columns": [
+      {
+        "name": "id",
+        "type": "str",
+        "role": "id"
+      },
+      {
+        "name": "name",
+        "type": "str",
+        "role": "value",
+        "grade": "convention",
+        "source": "author"
+      },
+      {
+        "name": "diameter_km",
+        "type": "f32",
+        "role": "value",
+        "unit": "km",
+        "grade_column": "diameter_grade",
+        "source_column": "diameter_source"
+      },
+      {
+        "name": "diameter_grade",
+        "type": "u8",
+        "role": "meta"
+      },
+      {
+        "name": "diameter_source",
+        "type": "u8",
+        "role": "meta"
+      },
+      {
+        "name": "a_au",
+        "type": "f64",
+        "role": "value",
+        "unit": "au",
+        "grade": "measured",
+        "source": "author"
+      },
+      {
+        "name": "e",
+        "type": "f32",
+        "role": "value",
+        "grade": "measured",
+        "source": "author"
+      },
+      {
+        "name": "i_deg",
+        "type": "f32",
+        "role": "value",
+        "unit": "deg",
+        "grade": "measured",
+        "source": "author"
+      },
+      {
+        "name": "node_deg",
+        "type": "f32",
+        "role": "value",
+        "unit": "deg",
+        "grade": "measured",
+        "source": "author"
+      },
+      {
+        "name": "peri_deg",
+        "type": "f32",
+        "role": "value",
+        "unit": "deg",
+        "grade": "measured",
+        "source": "author"
+      },
+      {
+        "name": "mean_anomaly_deg",
+        "type": "f32",
+        "role": "value",
+        "unit": "deg",
+        "grade": "measured",
+        "source": "author"
+      },
+      {
+        "name": "flags",
+        "type": "u8",
+        "role": "meta"
+      }
+    ],
+    "sources": [
+      {
+        "id": "author",
+        "name": "Test author",
+        "version": "1",
+        "kind": "authored",
+        "licence": "CC0-1.0",
+        "credit": "Invented for the sse-catalogue tests."
+      },
+      {
+        "id": "survey",
+        "name": "Test survey",
+        "version": "2",
+        "kind": "downloaded",
+        "licence": "test only",
+        "credit": "Sizes from the Test survey (a stand-in credit for tests)."
+      }
+    ],
+    "completeness": {
+      "size_edges": [
+        100.0,
+        10.0
+      ],
+      "distance_edges_pc": [],
+      "fraction": [
+        [
+          1.0
+        ],
+        [
+          0.5
+        ]
+      ],
+      "grade": "estimated",
+      "source": "author"
+    },
+    "steps": [
+      {
+        "size": 300.0,
+        "label": "big"
+      },
+      {
+        "size": 30.0,
+        "label": "middling"
+      }
+    ]
+  },
+  "rows": [
+    {
+      "a_au": 2.77,
+      "diameter_grade": "measured",
+      "diameter_km": 900.0,
+      "diameter_source": "survey",
+      "e": 0.07999999821186066,
+      "flags": 1,
+      "i_deg": 10.600000381469727,
+      "id": "t1",
+      "mean_anomaly_deg": 5.0,
+      "name": "First",
+      "node_deg": 80.30000305175781,
+      "peri_deg": 73.5999984741211
+    },
+    {
+      "a_au": 2.36,
+      "diameter_grade": "estimated",
+      "diameter_km": 500.0,
+      "diameter_source": "author",
+      "e": 0.09000000357627869,
+      "i_deg": 7.099999904632568,
+      "id": "t2",
+      "mean_anomaly_deg": 20.0,
+      "node_deg": 103.80000305175781,
+      "peri_deg": 151.1999969482422
+    },
+    {
+      "a_au": 2.5,
+      "diameter_grade": "measured",
+      "diameter_km": 300.0,
+      "diameter_source": "survey",
+      "e": 0.20000000298023224,
+      "i_deg": 3.0,
+      "id": "t3",
+      "mean_anomaly_deg": 30.0,
+      "node_deg": 10.0,
+      "peri_deg": 20.0
+    },
+    {
+      "a_au": 3.1,
+      "diameter_grade": "estimated",
+      "diameter_km": 120.0,
+      "diameter_source": "author",
+      "e": 0.10000000149011612,
+      "i_deg": 1.0,
+      "id": "t4",
+      "node_deg": 1.0,
+      "peri_deg": 2.0
+    },
+    {
+      "a_au": 2.2,
+      "diameter_grade": "estimated",
+      "diameter_km": 30.0,
+      "diameter_source": "author",
+      "e": 0.15000000596046448,
+      "i_deg": 5.0,
+      "id": "t5",
+      "mean_anomaly_deg": 70.0,
+      "node_deg": 50.0,
+      "peri_deg": 60.0
+    },
+    {
+      "a_au": 2.9,
+      "diameter_grade": "estimated",
+      "diameter_km": 12.0,
+      "diameter_source": "author",
+      "e": 0.05000000074505806,
+      "i_deg": 2.0,
+      "id": "t6",
+      "mean_anomaly_deg": 7.0,
+      "node_deg": 5.0,
+      "peri_deg": 6.0
+    },
+    {
+      "a_au": 2.8,
+      "diameter_grade": "estimated",
+      "diameter_km": 12.0,
+      "diameter_source": "author",
+      "e": 0.05999999865889549,
+      "i_deg": 2.5,
+      "id": "t7",
+      "mean_anomaly_deg": 7.5,
+      "node_deg": 5.5,
+      "peri_deg": 6.5
+    },
+    {
+      "a_au": 2.6,
+      "diameter_grade": "estimated",
+      "diameter_km": 4.0,
+      "diameter_source": "author",
+      "e": 0.07000000029802322,
+      "i_deg": 3.5,
+      "id": "t8",
+      "mean_anomaly_deg": 10.0,
+      "node_deg": 8.0,
+      "peri_deg": 9.0
+    }
+  ]
+}

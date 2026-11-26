@@ -623,6 +623,17 @@ pub mod latent_fusion {
     pub const H2O: f64 = 333550.0;
 }
 
+/// Lifetime of a gas molecule in a quiet Sun's light at 1 au, s, by substance
+/// (the sheet's `photochemistry.lifetime_1au`; it scales as the distance squared).
+pub mod photo_lifetime_1au {
+    /// h2o (huebner1992).
+    pub const H2O: f64 = 83000.0;
+    /// co2 (huebner1992).
+    pub const CO2: f64 = 500000.0;
+    /// co (huebner1992).
+    pub const CO: f64 = 1300000.0;
+}
+
 /// Thermal conductivity fits of the solid, by substance (the sheet's `thermal.conductivity_solid`):
 /// the coefficients, in the order the fit names them.
 pub mod conductivity_solid {

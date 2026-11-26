@@ -138,7 +138,7 @@ export interface ShellPart extends OnDesks {
 
 /**
  * The shell's parts and the desks each shows on, as the shell draws them now. TM2a gave the rail entries their desks;
- * TM2b took the depth dial, the Workshop door, Select, Keyboard shortcuts, the seat and the engine line off Run. The rest
+ * TM2b took the depth dial, the Workshop door, Select, Keyboard shortcuts, the seat and the engine line off Run; TM2c folded the rail on Run. The rest
  * are on every desk until their part of TM2 or TM3 (the clock joins with TM3). Form changes on one desk (the place line
  * as a stepper, the folded rail) are the shell's, not a field here.
  */
@@ -152,6 +152,9 @@ export const SHELL_PARTS: readonly ShellPart[] = [
   { id: "ask", words: "Ask: Orac and Minerva" },
   { id: "more", words: "More: campaign, Workshop, help and the rest" },
   { id: "rail", words: "The instrument rail" },
+  // On Run the rail folds to one button at the head of the view controls that names the instrument in view, and opens
+  // the rail as a list in words (design 3.1, question 6); the picture gets the width. A phone keeps its chips (TM9).
+  { id: "rail-open", words: "The rail open beside the picture (on Run, folded to one button at the head of the view controls)", desks: ["explore", "build"] },
   // The Workshop changes the tool, not the universe: on Run its door is in More only (design section 5).
   { id: "workshop-door", words: "The Workshop door at the foot of the rail (on Run, in More)", desks: ["explore", "build"] },
   { id: "view-controls", words: "View style, Seen from, Scale, HUD and Band" },

@@ -31,14 +31,32 @@ package GZ5 in section 13 (Stage B, after the kernel tie-up, before the zoom).
   big neighbour, `bound`, `approach_gyr`), one cell at a time in the background, cached; `boundPairs` keeps one line
   per pair with both on view. The e2e finds 24 pairs in the neighbourhood of the default universe.
 
+## Part 2 (26 Nov 2026): True with type pictures, Free
+- **True** (the View style control; was held): space in black, each galaxy in its own light. A galaxy a few pixels
+  across or more is its **type picture**, made by rule in the new `renderer/src/galaxy-types.ts` from the kernel's
+  facts (type, half-light radius, axis ratio and position angle as seen from home, B-V colour, star formation as
+  blue knots by the True galaxy's own young-light share; Sersic bulge and disc, log-spiral arms, a bar, keyed
+  lumps; fudge GZ-F14). Smaller ones are glowing points in their colour. Brightness on the page by absolute V.
+  **Our own galaxy is its real face** from the kernel's galaxy chart (`galaxyFace`, the same picture Galaxy 3D's
+  True draws), laid in our disc's plane and turned with the view. HUD is off by default in True and brings back the
+  plane, stalks, names, rings, pairs and the edge. A chip says what is drawn and that it is visible light only.
+- **Free** (Seen from): drag the map to turn it about our disc's axis and tip it from above to edge-on
+  (`turnOf`, `projectNearby` with a turn; starts at the Tilted view). Works in 3D and True.
+- Tests: `renderer/test/galaxy-types.test.ts` (b_n absolute values, half an elliptical's light inside R_e by
+  integration, tilt and turn, knots only where stars form, keyed patterns, colour); `galaxies-nearby.test.ts` (Free
+  matches the fixed views at their turns). E2e: True in the group with type pictures and our real face, Free
+  dragged. Screens: project files `sse4/handover-screens/GZ5-screens/` (part 2 names start `gz5-nearby-true`).
+- `docs/view-controls.md` regenerated (True and Free now offered here).
+
 ## Honest limits
 - Shapes are drawn as seen from home (the sky's tilt), not from an axis in space (GZ14 gives one).
 - One place per halo is not yet true: the web cube moves haloes by the Zel'dovich step, `galaxies_seen` does not
   (grand zoom gap 4, GZ15).
 - ~~The sky is read at the present day~~ Corrected 26 Nov (GZ6 part 1): the kernel reads the sky at the campaign's date by default; the chip now says so.
 - Galaxy names are catalogue labels ("Halo 2, cell 0.-1.1") until the naming track gives galaxies a scheme.
-- Space is an inverted panel (ink ground) so the theme tokens hold; True will draw it in light.
+- In 3D, space is an inverted panel (ink ground) so the theme tokens hold; True draws it black.
+- The shell's Free hint mentions sliding and zooming; this view turns and tips only (zoom is the reach buttons).
+- Bands: True draws visible light only; the kernel's per-band magnitudes are not used yet.
 
 ## Next
-Part 2: True with the renderer's type pictures and Free; the sky at campaign time; the group's edge. Then GZ6: home's satellites on their orbits with Play, streams under HUD, the biggest
-neighbours' real charts read in the background.
+GZ6 part 3: the biggest neighbours' real faces read in the background in place of their type pictures ("Histories read: 2 of 3"), the web's threads behind. Bands in True.
