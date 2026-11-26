@@ -41,16 +41,17 @@ test("names from the data sheet, formulas written out", () => {
   assert.equal(formulaOf("ch4"), "CH₄");
 });
 
-test("Kinds for air come from the catalogued Solar System: Venus, Earth, Mars, Pluto, thickest first", async () => {
+test("Kinds for air come from the catalogued Solar System: Venus, Titan, Earth, Mars, Pluto, thickest first", async () => {
   const { readSol } = await import("../src/sol.ts");
   const { airKinds, airKindEdits, gasesToAdd } = await import("../src/air.ts");
   const sol = readSol(JSON.parse(readFileSync(new URL("../../../packs/base-sol/pack.json", import.meta.url), "utf8")));
   const k = airKinds(sol);
-  assert.deepEqual(k.map((x) => x.id), ["venus", "earth", "mars", "pluto"]);
-  assert.equal(k[1]!.label, "Like Earth");
-  assert.equal(k[1]!.pressure_pa, 101400);
+  // Titan's air is catalogued from Huygens (IG2), 1467 hPa, so it sits between Venus and Earth.
+  assert.deepEqual(k.map((x) => x.id), ["venus", "titan", "earth", "mars", "pluto"]);
+  assert.equal(k[2]!.label, "Like Earth");
+  assert.equal(k[2]!.pressure_pa, 101400);
   // Mars's air on Earth: the pressure, Mars's gases, and Earth's methane and hydrogen (not in Mars's list) to nothing.
-  const e = airKindEdits({ ...earth, "atmosphere.composition.ch4": 1.94e-6 }, k[2]!);
+  const e = airKindEdits({ ...earth, "atmosphere.composition.ch4": 1.94e-6 }, k[3]!);
   assert.equal(e[0]!.field, "atmosphere.surface_pressure");
   assert.equal(e.find((x) => x.field === "atmosphere.composition.ch4")!.value, 0);
   assert.ok(e.find((x) => x.field === "atmosphere.composition.xe"));
