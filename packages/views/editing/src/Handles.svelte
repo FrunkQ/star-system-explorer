@@ -18,6 +18,7 @@
   import MakeupBox from "./MakeupBox.svelte";
   import Sheet from "./Sheet.svelte";
   import CouldBe from "./CouldBe.svelte";
+  import StarChooser from "./StarChooser.svelte";
 
   let { ctx, scene, subject }: { ctx: ViewContext; scene: SystemScene; subject: SceneSubject } = $props();
 
@@ -209,7 +210,7 @@
       facts = again.result.facts as Record<string, Record<string, Json>>;
       surfaces = (again.result as { surfaces?: unknown }).surfaces ?? null;
     }
-    followed = { handle: label === "Air" ? "air" : label === "Makeup" || label === "Radius" ? "makeup" : "sheet", change: { label, before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
+    followed = { handle: label === "Air" ? "air" : label === "Makeup" || label === "Radius" ? "makeup" : label === "Star" ? "mass" : "sheet", change: { label, before: before_display, after: display }, rest: again.ok ? whatFollowed(before, resultsOf(surfaces, subject.address), cls, { depth }) : null };
     return null;
   }
 
@@ -288,7 +289,9 @@
     {#if h.box}
       <Box {ctx} {scene} {subject} handle={h} facts={seen} {surfaces} {cls} {depth} {editable} reading={pick(h)} dots={dotsFor(h.id)} swept={sweptFor(h)} {commit} {pause} onclose={() => (open = null)} />
     {:else}
-      {#if h.id === "makeup"}
+      {#if h.id === "mass" && on === "star"}
+        <StarChooser {ctx} facts={mine} systemFacts={seen[scene.system ?? ""] ?? {}} now_yr={ws.now_yr} {depth} {editable} {trying} commitMix={(edits, display, was, label) => commitMix(edits, display, was, label)} />
+      {:else if h.id === "makeup"}
         <MakeupBox {ctx} {atlas} at_s={yearsToSeconds(ws.now_yr)} handle={h} system={scene.system} address={subject.address} facts={mine} {cls} {depth} {editable} onbranch={!!ws.branch} {commitMix} />
       {:else}
       <Strip handle={h} reading={pick(h)} value={handleValue(h, mine)} dots={dotsFor(h.id)} marks={sweptFor(h)} {cls} {depth} {editable} {trying} onpause={(si) => pause(h, si)} oncommit={(si, how) => commit(h, si, how)} onclose={() => (open = null)} />
