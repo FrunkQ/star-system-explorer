@@ -191,7 +191,12 @@ galaxies?: boolean,
 /**
  * The stars (default true); false gives galaxies only.
  */
-stars?: boolean, } | { "op": "sky_glow", position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, nside?: bigint, } | { "op": "plan_voyage", from: string, to?: string, home?: string, ship: unknown, minimise?: string, visited?: Array<string>, known_fuel?: { [key in string]: Array<string> }, sensed_fuel?: { [key in string]: number }, surveyed?: Array<string>, gambles?: boolean, 
+stars?: boolean, 
+/**
+ * GZ6: with the galaxies, every one of home's satellites' paths
+ * since infall, in `galaxy_walk.satellites.paths` (default false).
+ */
+satellite_paths?: boolean, } | { "op": "sky_glow", position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, nside?: bigint, } | { "op": "plan_voyage", from: string, to?: string, home?: string, ship: unknown, minimise?: string, visited?: Array<string>, known_fuel?: { [key in string]: Array<string> }, sensed_fuel?: { [key in string]: number }, surveyed?: Array<string>, gambles?: boolean, 
 /**
  * In-system voyages (part 3b): give one of a NAV `fixture`, an
  * inline `nav` system or an adopted `system` (read at `at_s`, with

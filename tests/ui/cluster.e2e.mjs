@@ -115,6 +115,37 @@ try {
     const inGroup = Number(await clu.locator("[data-nearby]").getAttribute("data-nearby"));
     assert.equal(await clu.locator("[data-home-galaxy]").count(), 1, "our galaxy is at the middle");
     await shot(gm, "gz5-nearby-group");
+    // GZ6: the group's edge under HUD (the zero-velocity sphere), then our own satellites on their orbits with Play.
+    const edgeMpc = Number(await clu.locator("[data-group-edge]").getAttribute("data-group-edge"));
+    assert.ok(edgeMpc > 0.5 && edgeMpc < 3, `the group's edge is about a megaparsec out (${edgeMpc} Mpc)`);
+    await clu.locator("[data-reach='satellites']").click();
+    await clu.locator("[data-play-satellites]").waitFor({ timeout: 10000 });
+    const streamsNow = await clu.locator("[data-stream]").count();
+    assert.ok(streamsNow > 0, "torn-apart satellites drawn as streams under HUD");
+    await shot(gm, "gz6-satellites-now");
+    await clu.locator("[data-play-satellites]").click();
+    await gm.waitForFunction(() => document.querySelectorAll(".clu [data-ghost]").length > 0, null, { timeout: 10000 });
+    await gm.waitForTimeout(1500);
+    await clu.locator("[data-play-satellites]").click();
+    const paused = await clu.locator("[data-nearby-play]").getAttribute("data-nearby-play");
+    assert.notEqual(paused, "now", "paused in the past");
+    assert.match(await clu.locator("[data-nearby-said]").innerText(), /Gyr after the Big Bang: \d+ satellites on their orbits/);
+    // Scrub to the middle of the history: some have fallen in, some are yet to.
+    await clu.locator(".play input[type=range]").evaluate((el) => {
+      el.value = String((Number(el.min) + Number(el.max)) / 2);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const midGhosts = await clu.locator("[data-ghost]").count();
+    assert.ok(midGhosts > 0, "satellites on their orbits halfway through");
+    await shot(gm, "gz6-satellites-play");
+    // To the end: the campaign's date again, the sky's own satellites back.
+    await clu.locator(".play input[type=range]").evaluate((el) => {
+      el.value = el.max;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await gm.waitForFunction(() => document.querySelector(".clu [data-nearby-play]")?.getAttribute("data-nearby-play") === "now", null, { timeout: 5000 });
+    assert.equal(await clu.locator("[data-ghost]").count(), 0);
+    await clu.locator("[data-reach='group']").click();
     await clu.locator("[data-reach='neighbourhood']").click();
     await gm.waitForFunction((n) => Number(document.querySelector(".clu [data-nearby]")?.getAttribute("data-nearby")) > n, inGroup, { timeout: 30000 });
     const inHood = Number(await clu.locator("[data-nearby]").getAttribute("data-nearby"));
@@ -135,7 +166,7 @@ try {
     await vgroup("Seen from", "Tilted").click();
     await vgroup("View style", "Chart").click();
     await clu.locator("[data-halo-dot]").first().waitFor({ timeout: 30000 });
-    const nearbyNote = `galaxies nearby: ${inGroup} in the group, ${inHood} in the neighbourhood (${morphs.join(", ")}), ${pairsSeen} bound pairs`;
+    const nearbyNote = `galaxies nearby: ${inGroup} in the group, ${inHood} in the neighbourhood (${morphs.join(", ")}), ${pairsSeen} bound pairs, the group's edge at ${edgeMpc} Mpc, ${streamsNow} streams, Play with ${midGhosts} satellites halfway`;
 
     await more(gm, "Night chart");
     await gm.waitForTimeout(400);
