@@ -9,7 +9,7 @@ export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, update
 export type { Audience, SeatChange, SeatPlan } from "./seats.ts";
 export { SPLITS, isSplit, displayLink, partLinks, displaysFrom, displayMap, screenKey } from "./displays.ts";
 export type { Split, Display } from "./displays.ts";
-export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, PackCalendar, StabilityCheck } from "./session.ts";
+export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, ClassifyAsk, ClassifyPreview, ClassSample, ClassSampled, PackCalendar, StabilityCheck } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
 export type { Preview } from "./physics-edit.ts";
@@ -183,7 +183,7 @@ export type { About, FigureKind, FigureRead, Reading, Rung, RungRef, Said, SayOp
 export { layoutFlow, flowRowColumns, HAIRLINE_SHARE } from "./flow.ts";
 export type { FlowRow, FlowNode, FlowBand, FlowLayout, FlowOptions } from "./flow.ts";
 export { POWER_COLUMNS, NOWHERE, JET, FUEL_NODE, RADIATORS, heatTemperatures, radiatorNode, powerFlowRows, powerColumn, powerRank, powerReadings, radiatorArea, newtonsText, areaText, VISIBLE_AT_M } from "./power.ts";
-export type { RadiatorRule, PowerReading } from "./power.ts";
+export type { RadiatorRule, PowerReading, PowerRadiator } from "./power.ts";
 // Range rings (RK12): effect at range as rings round the one who holds the weapon, a HUD overlay.
 export { RANGE_RING_LAYER, rangeRings, rangeText, ringPoints } from "./range-rings.ts";
 export type { RangeAsk, RangeEffect, RangeRing, RangeRingKind, RangeRingsRead, RangeTarget, RangeWeapon } from "./range-rings.ts";

@@ -165,8 +165,8 @@ export interface ViewSession {
   adopt(source: { import_v3: string } | { formation: FormationRequest }, occurred_at_s?: number): Promise<{ ok: true; result: Adopted } | { ok: false; code: string; message: string }>;
   /** A body's world stack (P4) with the kernel's ladder and physics notes, by body address or fixture name. */
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
-  /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. */
-  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json; kind?: string } | { ok: false; code: string; message: string }>;
+  /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. With `branch`, the world as that what-if holds it (a class sample's). */
+  surfaceTiles(system: string, body: string, branch?: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json; kind?: string } | { ok: false; code: string; message: string }>;
   /** A catalogued Solar System body's six level-0 tiles by its base-sol id (`mars`, `moon`, ...), with no campaign: for the size comparison and other reference views. Any seat may read it: these are public facts. */
   referenceTiles(body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }>;
   /** Tiles of a world at any level (S1, through resolved_system; at most 24 a call), with the kernel's refusals; GM only. The ground round a landing site (SL1). */
@@ -232,6 +232,12 @@ export interface ViewSession {
    * Which body lands in which class of `scheme` under a candidate stack (kernel `classify_preview`), without loading it.
    * Read only; GM only. Used to preview a drafted game table.
    */
+  /**
+   * A mid-band sample world for each class asked (kernel `class_sample`, V14i), hand-set on a what-if branch the kernel
+   * opens, for the class gallery's pictures. `extra` are atlases shown but not on the stack. Nothing is committed; drop
+   * the branch with `discardBranch` when done. GM only.
+   */
+  classSample?(classes: readonly string[], extra?: readonly PackDoc[]): Promise<{ ok: true; result: ClassSampled } | { ok: false; code: string; message: string }>;
   classifyPreview?(ask: ClassifyAsk): Promise<{ ok: true; result: ClassifyPreview } | { ok: false; code: string; message: string }>;
   /** The story finder (U8, kernel `sift`): sifters over the campaign, hits with evidence. GM only. */
   sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }>;
@@ -245,7 +251,7 @@ export interface ViewSession {
   /** Effect at range (RK12, kernel `effect_at_range`): each ask's reading and the distances where it changes. */
   effectAtRange(asks: import("./range-rings.ts").RangeAsk[]): Promise<{ ok: true; effects: import("./range-rings.ts").RangeEffect[] } | { ok: false; code: string; message: string }>;
   /** A ship's power books (RK9 kernel `ship_power`), for the Power card (RK13). */
-  shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }>;
+  shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint; radiator?: import("./power.ts").RadiatorRule }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }>;
   planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan | import("./voyage.ts").SystemVoyagePlan } | { ok: false; code: string; message: string }>;
   /** The stacked packs' templates for ships, stations, sites and the like (kernel `templates`, J7). Read only. */
   templates?(): Promise<{ ok: true; templates: import("./constructs.ts").ConstructTemplate[] } | { ok: false; code: string; message: string }>;
@@ -364,6 +370,34 @@ export interface ClassifyAsk {
   candidate?: StackCandidate;
   scope?: string;
   at_s?: number;
+}
+
+/** One class's sample world (kernel `class_sample`): mid-band for its class, on the answer's what-if branch. */
+export interface ClassSample {
+  class: string;
+  scheme: string;
+  /** The atlas example it was made from. */
+  example: string;
+  system: string;
+  body: string;
+  radius_m: number | null;
+  tilt_rad: number | null;
+  day_s: number | null;
+  rings?: unknown;
+  /** The class's fit on the sample as the campaign reads it, 0 to 1. */
+  fit: number;
+  example_fit?: number;
+  /** Null at a full fit: the axis that holds it back and why. */
+  limiting?: { axis: string; why: string } | null;
+  /** False when the world has no ground to draw yet. */
+  surface: boolean;
+}
+
+export interface ClassSampled {
+  branch: string;
+  atlas_hash: string;
+  samples: ClassSample[];
+  refused: { class: string; why: string }[];
 }
 
 export interface ClassifyPreview {
@@ -732,10 +766,10 @@ export class Session implements ViewSession {
     return this.seat.authority === "gm" || (this.#landing !== null && this.#landing.system === system && this.#landing.body === body);
   }
 
-  async surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json; kind?: string } | { ok: false; code: string; message: string }> {
-    if (!this.#mayLand(system, body)) return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
+  async surfaceTiles(system: string, body: string, branch?: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string; record?: Json; kind?: string } | { ok: false; code: string; message: string }> {
+    if (branch !== undefined ? this.seat.authority !== "gm" : !this.#mayLand(system, body)) return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
     const tiles = [0, 1, 2, 3, 4, 5].map((face) => ({ body, face, level: 0, x: 0, y: 0 }));
-    const r = await this.#call({ op: "resolved_system", system, tiles });
+    const r = await this.#call({ op: "resolved_system", system, tiles, ...(branch !== undefined ? { branch } : {}) });
     if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const x = r as unknown as { tiles?: SurfaceTile[]; refused?: Json[]; surfaces?: { address: string; regime_label?: string; kind?: string }[] };
     const record = x.surfaces?.find((s2) => s2.address === body);
@@ -839,6 +873,14 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the story finder reads the whole campaign, so it runs on the game master's machine" };
     const r = await this.#call({ op: "sift", ...ask });
     return r.type === "sifted" ? { ok: true, result: r as unknown as import("./story.ts").SiftResult } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async classSample(classes: readonly string[], extra: readonly PackDoc[] = []): Promise<{ ok: true; result: ClassSampled } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "a class's sample world is made on a what-if branch, on the game master's machine" };
+    const stack = this.#packs();
+    const packs = [...stack, ...extra.filter((p) => !stack.some((q) => q.id === p.id))];
+    const r = await this.#call({ op: "class_sample", packs, classes: [...classes] });
+    return r.type === "class_sampled" ? { ok: true, result: r as unknown as ClassSampled } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async classifyPreview(ask: ClassifyAsk): Promise<{ ok: true; result: ClassifyPreview } | { ok: false; code: string; message: string }> {
@@ -950,7 +992,7 @@ export class Session implements ViewSession {
   }
 
   /** A ship's power books (RK9 kernel `ship_power`): what it makes, what takes it, where it ends up. A ship is an id or a record; `flux_w_m2` is the starlight where it is. */
-  async shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }> {
+  async shipPower(ask: { ship: string | Json; flux_w_m2?: number; at_s?: bigint; radiator?: import("./power.ts").RadiatorRule }): Promise<{ ok: true; power: import("./power.ts").PowerBooks } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "ship_power", ...ask } as unknown as Json);
     return r.type === "ship_power_is" ? { ok: true, power: (r as unknown as { power: import("./power.ts").PowerBooks }).power } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }

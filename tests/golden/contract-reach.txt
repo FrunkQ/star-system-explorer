@@ -216,6 +216,11 @@ G cannot_follow {"block":"sse.shield.air_dose","why":"computed or fitted with th
 G cannot_follow {"block":"sse.shield.cutoff","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.shield.ground_share","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.shield.space_share","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.ship.crew_volume","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.ship.jet_power","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.ship.radiator_area","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.ship.stowed_volume","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.ship.waste_heat","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.stability.amd_collision_step","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.stability.amd_critical","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.stability.amd_term","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}

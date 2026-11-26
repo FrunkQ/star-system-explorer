@@ -81,6 +81,8 @@ test("the Power card: three columns, broken books from Nowhere on the GM's seat 
     const r = await s.shipPower({ ship: hall });
     assert.ok(r.ok, JSON.stringify(r));
     const p: PowerBooks = r.power;
+    // The kernel names each heat row's temperature.
+    assert.ok(p.ledger.flows.filter((f) => f.kind === "heat").every((f) => typeof f.reject_k === "number"));
     const gmRows = powerFlowRows(p, { gm: true, ship: hall });
     const col = powerColumn(gmRows);
     assert.equal(col("plant"), 0);
@@ -104,6 +106,13 @@ test("the Power card: three columns, broken books from Nowhere on the GM's seat 
     const rank = powerRank(p);
     assert.ok(rank(NOWHERE) < rank("plant"));
     assert.ok(rank(JET) < rank(radiatorNode(900)) && rank(radiatorNode(900)) < rank(radiatorNode(300)));
+    // Asked with the panel rule, the kernel sizes each temperature's radiators through its block, and the card shows that figure.
+    const sized = await s.shipPower({ ship: hall, radiator: rule });
+    assert.ok(sized.ok && sized.power.radiators?.length === 2, JSON.stringify(sized));
+    const hot = sized.power.radiators!.find((x) => x.reject_k === 900)!;
+    assert.equal(hot.block, "sse.ship.radiator_area");
+    assert.ok(Math.abs(hot.area_m2 - radiatorArea(hot.heat_w, 900, rule)) < 1e-9 * hot.area_m2);
+    assert.equal(powerReadings(sized.power, rule).find((x) => x.label === "Hot radiators")?.block, "sse.ship.radiator_area");
     const read = powerReadings(p, rule);
     assert.deepEqual(read.map((x) => x.label), ["Thrust", "Power to spare", "Hot radiators", "Cool radiators", "How visible"]);
     assert.match(read[0]!.value, /530\.0 N/);
@@ -124,4 +133,11 @@ test("the Power card: three columns, broken books from Nowhere on the GM's seat 
   } finally {
     await k.close();
   }
+});
+
+test("the card's radiator sum is the named Equation sse.ship.radiator_area (RK3), checked on its worked example", () => {
+  const f = JSON.parse(readFileSync(new URL("packs/base-physics/formulas/ship.json", root), "utf8")) as { atoms: { id: string; equation: { examples: Record<string, number>[] } }[] };
+  const ex = f.atoms.find((a) => a.id === "sse.ship.radiator_area")!.equation.examples[0]!;
+  const a = radiatorArea(ex.Q!, ex.T!, { emissivity: ex.e!, two_sided: ex.n === 2 });
+  assert.ok(Math.abs(a / ex.A! - 1) < 1e-9, `${a} against ${ex.A}`);
 });

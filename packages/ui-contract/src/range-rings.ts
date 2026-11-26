@@ -7,6 +7,7 @@ import { sayNumber } from "./figures.ts";
 // readings, the odds of a hit, and the distances where each changes. Nothing
 // here is fired and nothing is forbidden: a ring is a fact for the GM and dice.
 
+
 /** What the weapon sends (sse_sense::reach::Weapon). */
 export type RangeWeapon =
   | { kind: "beam"; beam_power_w: number; wavelength_m: number; aperture_m: number; spread?: number; jitter_rad?: number; dwell_s?: number; efficiency?: number; reject_k?: number }
