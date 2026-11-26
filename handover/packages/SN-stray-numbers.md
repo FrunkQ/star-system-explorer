@@ -55,3 +55,12 @@ numbers to where they belong. Values are kept as they were unless a part below s
   land life to 4555 Myr, after the timeline's last point, so `catalogued_earth_grows_land_life_and_its_own_oxygen`
   failed. The cause is the low heat flow, so the switch stays (fudge L3-vents) and the test was not changed.
 - Goldens: none move.
+
+## SN4: tholin and the zonal clouds (PRs 591, 585)
+
+- `stains.rs`: the tholin switch (none below CH4 over CO2 plus O2 of 0.1) is a graded yield r^4/(r^4 + 0.1^4),
+  `haze_yield`; half at the old threshold, 1 with no oxidant, so Pluto and Triton keep their stains. Steepness 4
+  authored (fudge row updated).
+- `sse-weather/rules.rs`: the zonal cloud drawing's numbers (optical depth 2 + 18 x rain share, towers from 0.45 over
+  0.3, the cover and depth shares, 1.5 wind rise per layer, thin air's 0.3) move to base-weather `weather.clouds`
+  with a source note; written so every value computes bit for bit as before. Fudge W-clouds.
