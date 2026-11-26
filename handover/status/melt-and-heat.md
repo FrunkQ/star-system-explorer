@@ -18,7 +18,7 @@ Honest state, 26 Nov 2026:
 | Alex's answers to questions 1 to 4 | waiting |
 | Coordinator's answers to C1 to C7 | waiting |
 | Read the sources at source and correct the sheet rows | from 1 Dec 2026, citations thread (C7) |
-| HF6 the orbit side (host's tide, resonance partners, eccentricity that dies away): its own design | proposed, question 3; after HF4c.1 |
+| HF6 the orbit side (host's tide, resonance partners, eccentricity that dies away): its own design | written as a proposal 26 Nov at the coordinator's word: `design/SSE4-tidal-orbits-design.md`, state in `status/tidal-orbits.md` |
 | HF4d ice shells: a short note from its builder | after HF4c.2 |
 
 Packages (owner: the heat flow thread; states live in `status/heat-flow.md`): HF4b.0 numbers and blocks, HF4b.1 the lid, HF4b.2 melt, HF4c.1 tides read the state, HF4c.2 layers, then HF2, HF5, HF4d. Core golden lane: HF4b.1, HF4b.2, HF4c.1, one turn each.
