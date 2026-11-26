@@ -42,7 +42,7 @@ test("the disc table, baked by the kernel, gives the kernel's traced points thei
       const t: Table = b.table;
       assert.equal(t.format, "sse.table/1");
       assert.ok(t.sampling.within, JSON.stringify(t.sampling));
-      const [gc, tc] = [channelOf(t, "shift"), channelOf(t, "t4")];
+      const [gc, tc] = [channelOf(t, "redshift"), channelOf(t, "t4")];
       // Nodes read back exactly.
       const node = [nodeAt(t.axes[0]!, 5), nodeAt(t.axes[1]!, 3)];
       const v = sampleTable(t, node);
@@ -55,7 +55,7 @@ test("the disc table, baked by the kernel, gives the kernel's traced points thei
       const img = p.image;
       for (const spot of [img.brightest, img.approaching, img.receding]) {
         const q = (spot.impact_rg * Math.sin(img.tilt_rad) * Math.sin(spot.image_angle_rad)) / spot.r_rg;
-        const [g, t4] = [sampleTable(t, [spot.r_rg, q])[gc]!, sampleTable(t, [spot.r_rg, q])[tc]!];
+        const [g, t4] = [1 / sampleTable(t, [spot.r_rg, q])[gc]!, sampleTable(t, [spot.r_rg, q])[tc]!];
         const te = Math.sqrt(Math.sqrt(t4));
         assert.ok(Math.abs(g - spot.shift) / spot.shift < t.sampling.bound[gc]!, `${p.address}: shift ${g} against traced ${spot.shift}`);
         assert.ok(Math.abs(te - spot.t_emitted_k) / spot.t_emitted_k < t.sampling.bound[tc]!, `${p.address}: T ${te} against traced ${spot.t_emitted_k}`);

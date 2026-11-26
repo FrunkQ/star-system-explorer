@@ -6,7 +6,7 @@
 // 2. the disc: at the crossing angles φ₀ = π/2 + atan(cos α tan i) and φ₀ + π, the table's u = r_g / r; the first
 //    crossing inside the disc's edges is what shows (order 0 the direct image and the arch, order 1 the thin ring),
 //    a ray that escapes or is swallowed before a crossing shows no disc;
-// 3. there: the shift g and the ring's T⁴, one bilinear read of the disc table the kernel baked (`sse.light.disc`,
+// 3. there: 1 + z (the inverse of the shift g) and the ring's T⁴, one bilinear read of the disc table the kernel baked (`sse.light.disc`,
 //    from the block in force `sse.light.disc_shift` and `sse_light::disc_temperature`; ER11a) at r and
 //    b sin i sin α / r, and the seen temperature gT, whose colour or band brightness is one read of the band table
 //    (Planck through the sheet's bands and the eye's CIE curves, light-path.ts `bandTable`);
@@ -90,7 +90,7 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
   tableTex.magFilter = tableTex.minFilter = NearestFilter;
   let tableHash = "";
   // The disc table the kernel baked (sse.table/1): RGBA texels, r across (log), b sin i sin α / r down (even); the
-  // shift and the ring's T⁴ in the channels the table names. Read at four texels and mixed, as the kernel samples it.
+  // 1 + z (the inverse of the shift) and the ring's T⁴ in the channels the table names. Read at four texels and mixed, as the kernel samples it.
   const discTex = new DataTexture(new Float32Array(16), 2, 2, RGBAFormat, FloatType);
   discTex.magFilter = discTex.minFilter = NearestFilter;
   let discHash = "";
@@ -116,7 +116,7 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
   const uDisc = uniform(new Vector3(6, 1000, 0)); // r_in, r_out, has disc
   const uDiscAxes = uniform(new Vector4(0, 1, -1, 1)); // ln r first and last node, b sin i sin α / r first and last
   const uDiscN = uniform(new Vector2(1, 1)); // nodes along each
-  const uDiscCh = uniform(new Vector2(0, 1)); // which texel channel holds the shift, which T⁴
+  const uDiscCh = uniform(new Vector2(0, 1)); // which texel channel holds 1 + z, which T⁴
   const uOrders = uniform(2);
   const uSkyGain = uniform(0);
   const uPatchHalf = uniform(0.05);
@@ -223,8 +223,9 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
     }
     If(onDisc.greaterThan(0.5), () => {
       const r = rHit;
-      const [gRead, t4Read] = discAt(r, b.mul(sin(uTilt)).mul(sin(alpha)).div(r));
-      const g = max(gRead, 0);
+      const [zRead, t4Read] = discAt(r, b.mul(sin(uTilt)).mul(sin(alpha)).div(r));
+      // The table holds 1 + z (it is what reads linearly); 0 where no light arrives.
+      const g = select(zRead.greaterThan(0), float(1).div(zRead), float(0));
       const t4 = max(t4Read, 0);
       // log10(g T): T = t4^(1/4).
       const logT = max(t4, 1e-30).log2().mul(0.25 / LOG2_10).add(max(g, 1e-30).log2().div(LOG2_10));
@@ -279,7 +280,7 @@ export async function startHolePicture(canvas: HTMLCanvasElement): Promise<HoleP
       discTex.needsUpdate = true;
       uDiscAxes.value.set(Math.log(ax.from), Math.log(ax.to), ay.from, ay.to);
       uDiscN.value.set(ax.n, ay.n);
-      uDiscCh.value.set(channelOf(dt, "shift"), channelOf(dt, "t4"));
+      uDiscCh.value.set(channelOf(dt, "redshift"), channelOf(dt, "t4"));
       discHash = dt.hash;
     }
     if (f.table.hash !== tableHash) {

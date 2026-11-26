@@ -14,8 +14,11 @@
 //!
 //! Two channels:
 //!
-//! - `shift`: seen over emitted frequency, from the block in force
-//!   `sse.light.disc_shift` (Luminet 1979) at (r, λ). The block is
+//! - `redshift`: emitted over seen frequency, 1 + z = 1/g, from the block
+//!   in force `sse.light.disc_shift` (Luminet 1979) at (r, λ). The inverse
+//!   is tabled because it is what varies gently: for Luminet's law it is
+//!   linear in λ, so a linear read across λ is exact there, while g itself
+//!   curves (a table of g read 30 times less accurately at the same size). The block is
 //!   evaluated with b = |λ|, i = π/2 and α = ±π/2, which gives the same
 //!   b sin i sin α; the bake checks at probe points that the block in force
 //!   depends on its inputs only through r and λ, and says so when it does not.
@@ -25,7 +28,7 @@
 //!   linear read follows, while T⁴ rises linearly there.
 //!
 //! The renderer reads both at (r, λ/r) and sees the point glowing at
-//! g · (t4)^¼.
+//! (t4)^¼ / redshift.
 
 use crate::m;
 use serde::Deserialize;
@@ -100,17 +103,19 @@ fn version(a: &FormulaAtom) -> String {
 
 /// Nodes along each axis, by size.
 pub fn nodes(size: Size) -> (usize, usize) {
-    (size.pick(384, 1024, 2048), size.pick(17, 33, 65))
+    (size.pick(384, 1024, 2048), size.pick(9, 17, 33))
 }
 
-/// What the table promises, per channel (shift, t4), by size: the worst
+/// What the table promises, per channel (redshift, t4), by size: the worst
 /// error of a linear read between nodes, relative to the exact value (for
 /// t4, relative to a tenth of the hottest where the disc is dimmer than
 /// that: T⁴ rises from zero at the inner edge). Measured on the three
-/// fixture discs, 26 Nov 2026: shift 0.34 %, 0.09 %, 0.02 %; t4 4.8 %,
-/// 0.9 %, 0.22 % (a quarter of that in T).
+/// fixture discs, 26 Nov 2026: redshift 0.016 %, 0.0023 %, 0.0006 %; t4
+/// 4.8 %, 0.9 %, 0.22 % (a quarter of that in T, and those worst points sit
+/// in the dim inner rim; at each disc's brightest point T is within 0.007 %
+/// on the medium table).
 pub fn bounds(size: Size) -> [f64; 2] {
-    size.pick([5e-3, 6e-2], [1.5e-3, 1.2e-2], [4e-4, 3e-3])
+    size.pick([2e-4, 6e-2], [3e-5, 1.2e-2], [8e-6, 3e-3])
 }
 
 /// Bake the disc table from the blocks in force.
@@ -173,16 +178,16 @@ pub fn bake(
     ];
     let channels = vec![
         Channel::new(
-            "shift",
+            "redshift",
             "1",
             SHIFT_BLOCK,
-            "seen frequency over emitted frequency (Luminet 1979); 0 where no light arrives",
+            "emitted frequency over seen frequency, 1 + z, the inverse of the block's shift g (Luminet 1979); 0 where no light arrives",
         ),
         Channel::new(
             "t4",
             "K4",
             "sse_light::disc_temperature",
-            "the fourth power of the ring's own temperature (Shakura and Sunyaev); the point is seen glowing at shift × t4^¼",
+            "the fourth power of the ring's own temperature (Shakura and Sunyaev); the point is seen glowing at t4^¼ / redshift",
         ),
     ];
     let (rate, r_in_m) = (rate_kg_s, inner_m);
@@ -197,7 +202,7 @@ pub fn bake(
         };
         let g = run(&sh, &[1.0, r, lambda.abs(), m::PI / 2.0, side])?;
         let t = crate::disc_temperature(mass_kg, rate, r_in_m, r * rg);
-        Ok(vec![g, (t * t) * (t * t)])
+        Ok(vec![if g > 0.0 { 1.0 / g } else { 0.0 }, (t * t) * (t * t)])
     };
     // The indexing holds only for a block that reads b, i and α through
     // b sin i sin α: check that at a few probe points with other angles.
@@ -210,7 +215,8 @@ pub fn bake(
         let b = r * 0.7;
         let direct = run(&shift, &[1.0, r, b, tilt, alpha])?;
         let lambda = b * m::sin(tilt) * m::sin(alpha);
-        let via = exact(&[r, lambda / r])?[0];
+        let z = exact(&[r, lambda / r])?[0];
+        let via = if z > 0.0 { 1.0 / z } else { 0.0 };
         let e = (direct - via).abs() / direct.abs().max(1e-12);
         indexing = indexing.max(e);
     }
@@ -254,7 +260,7 @@ pub fn bake(
             format!(
                 "The disc from {r_in:.3} to {r_out:.1} gravitational radii (r_g = {rg:.4e} m), fed at {rate:.4e} kg/s."
             ),
-            "Read it at r and b sin i sin α / r; the point glows at shift × t4^¼.".into(),
+            "Read it at r and b sin i sin α / r; the point glows at t4^¼ / redshift.".into(),
         ],
         stand_ins,
     })

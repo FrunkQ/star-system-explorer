@@ -63,17 +63,17 @@ fn the_table_gives_the_traced_points_their_shift_and_temperature() {
             continue;
         };
         let t = seal(subject(&lp), Size::Medium, blocks());
-        let (g, t4) = (t.channel("shift").unwrap(), t.channel("t4").unwrap());
+        let (z, t4) = (t.channel("redshift").unwrap(), t.channel("t4").unwrap());
         let bound = disc_table::bounds(Size::Medium);
         for s in [&img.brightest, &img.approaching, &img.receding] {
             let q = s.impact_rg * m::sin(img.tilt_rad) * m::sin(s.image_angle_rad) / s.r_rg;
             let v = t.sample(&[s.r_rg, q]);
             let te = m::sqrt(m::sqrt(v[t4]));
             assert!(
-                (v[g] - s.shift).abs() / s.shift < bound[0],
+                (1.0 / v[z] - s.shift).abs() / s.shift < bound[0],
                 "{}: shift {} against traced {}",
                 lp.address,
-                v[g],
+                1.0 / v[z],
                 s.shift
             );
             assert!(
@@ -131,7 +131,7 @@ fn editing_the_shift_block_changes_the_table() {
     let mine = edited("/ sqrt(1 - 3 / x)", "/ 1", 1.0);
     let changed = seal(subject(lp), Size::Small, &mine);
     assert_ne!(base.hash, changed.hash);
-    let g = base.channel("shift").unwrap();
+    let z = base.channel("redshift").unwrap();
     let t4 = base.channel("t4").unwrap();
     // At the inner edge, face on (λ = 0): Luminet's g is √(1 − 3/x); the
     // edited block's is 1.
@@ -139,10 +139,10 @@ fn editing_the_shift_block_changes_the_table() {
     let before = base.sample(&[r, 0.0]);
     let after = changed.sample(&[r, 0.0]);
     assert!(
-        (before[g] - m::sqrt(1.0 - 3.0 / r)).abs() < 1e-6,
+        (1.0 / before[z] - m::sqrt(1.0 - 3.0 / r)).abs() < 1e-6,
         "{before:?}"
     );
-    assert!((after[g] - 1.0).abs() < 1e-6, "{after:?}");
+    assert!((1.0 / after[z] - 1.0).abs() < 1e-6, "{after:?}");
     assert_eq!(before[t4], after[t4]);
     assert_eq!(
         changed

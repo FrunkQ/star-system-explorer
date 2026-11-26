@@ -167,7 +167,7 @@ export function landing(t: BendTable, b: number, alpha: number, tilt: number, rI
 export interface Disc {
   rIn: number;
   rOut: number;
-  /** The kernel's `sse.light.disc` table (`bake`): shift and the ring's T⁴ against r and b sin i sin α / r. */
+  /** The kernel's `sse.light.disc` table (`bake`): 1 + z (the inverse of the shift) and the ring's T⁴ against r and b sin i sin α / r. */
   table: Table;
 }
 
@@ -189,7 +189,8 @@ export function discOf(table: Table | null): Disc | null {
 export function discAt(disc: Disc, r: number, b: number, tilt: number, alpha: number): { g: number; t_emitted_k: number } {
   const v = sampleTable(disc.table, [r, (b * Math.sin(tilt) * Math.sin(alpha)) / r]);
   const t4 = v[channelOf(disc.table, "t4")]!;
-  return { g: v[channelOf(disc.table, "shift")]!, t_emitted_k: t4 > 0 ? Math.sqrt(Math.sqrt(t4)) : 0 };
+  const z = v[channelOf(disc.table, "redshift")]!;
+  return { g: z > 0 ? 1 / z : 0, t_emitted_k: t4 > 0 ? Math.sqrt(Math.sqrt(t4)) : 0 };
 }
 
 /** What one ray shows. */

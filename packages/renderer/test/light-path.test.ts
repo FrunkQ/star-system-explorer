@@ -86,7 +86,7 @@ test("the picture repeats the kernel: its rays land where the kernel's traced po
     assert.equal(table.flat.length, 256 * 260);
     for (const p of paths) {
       assert.equal(p.table.hash, table.hash, "the table handed over is the one the answer names");
-      const baked = await s.bake({ table: "sse.light.disc", subject: discSubject(p) as unknown as Json });
+      const baked = await s.bake({ table: "sse.light.disc", subject: discSubject(p) as unknown as Json, tier: "gpu-high" });
       assert.ok(baked.ok, JSON.stringify(baked));
       assert.ok(baked.table.sampling.within, JSON.stringify(baked.table.sampling));
       discs.push(baked.table);
@@ -113,10 +113,9 @@ test("the picture repeats the kernel: its rays land where the kernel's traced po
       // The dimming note: the kernel's figure at its viewer's tilt. The kernel integrates the visible band by Simpson's
       // rule at 64 steps a decade, ui-contract's bandRadiance by 48 trapezoids; they agree to 0.02% for the fed holes,
       // and to 0.6% for the starved one, whose 800 K disc puts the visible band deep in Planck's tail. The seen
-      // temperature is now read off the baked table, within its stated bound; in that tail
-      // the visible light goes as about the 30th power of temperature, so the starved hole is held to 2% (it reads 1.1%).
+      // temperature is read off the desk tier's baked table (gpu-high), which keeps the starved hole within the same 1%.
       const br = brightest(table, disc, img.tilt_rad)!;
-      assert.ok(Math.abs(br.times_sun_surface / img.exposure.times_sun_surface - 1) < (img.brightest.t_seen_k > 1e4 ? 0.001 : 0.02), `${p.address}: dimmed ${br.times_sun_surface} against the kernel's ${img.exposure.times_sun_surface}`);
+      assert.ok(Math.abs(br.times_sun_surface / img.exposure.times_sun_surface - 1) < (img.brightest.t_seen_k > 1e4 ? 0.001 : 0.01), `${p.address}: dimmed ${br.times_sun_surface} against the kernel's ${img.exposure.times_sun_surface}`);
       // Geometry the frame is measured against: the shadow's edge at √27, the far side's inner edge above it.
       const view = { distance: 2000, tilt: img.tilt_rad, half: 16, turning: 1 as const };
       const m = marksOf(table, disc, view);
