@@ -23,7 +23,7 @@ Yes, in three steps of rising reach.
 
 1. **Now, on what exists.** A system's formation already records its shattered worlds, bared cores, giant impacts, moon-making collisions, captured and lost bodies, and the kernel already lists bared cores as notables with a reason. A first list can be built from those records alone.
 2. **With belts by class and the roster (stage 5).** The list gains traced things: which crater came from which body, what it was made of, what loosened it.
-3. **With the rule for where elements go (question 12).** Only then can the list honestly say "platinum". A core fragment is rich in platinum and gold because those metals followed the iron down when its parent melted. Until that rule is in, the line reads "a large metal deposit from an old planetary core", which is true and still a good hook.
+3. **With the rule for where elements go (question 12).** For a deposit on a world the rule is already built (MP6, MP8a), so the list can say "platinum" there today. For belt members and for what an impact delivers it still has to be applied. A core fragment is rich in platinum and gold because those metals followed the iron down when its parent melted. Until then, for those, the line reads "a large metal deposit from an old planetary core", which is true and still a good hook.
 
 The list is ranked by rarity, using the measure the query engine already has, and each line links to the thing and to its "why". It is the same list at every level: a galaxy's might hold a recent merger, a stream of torn-apart stars, a young cluster about to lose its first star to a supernova. On the Run desk it shows only what the players have been granted.
 
@@ -220,7 +220,7 @@ Your feeling that it grew by goodwill is half right. The architecture was writte
 Each stage is a few work packages, one at a time, checks green before the next. Alex's additions fold in as follows: clumps with stage 3 (clusters) and stage 5 (families), notables and gravel-as-a-sum with stage 5, the settled-state rule as a check in stage 1 and a rule for every later stage, and the GM's list of interesting things with stage 7. None needs the app taken down.
 
 1. **Measure, change nothing.** Add the closure and indifference tests in a report-only form and a ledger read-out for each join, and record how far off each one is today. No golden moves. This tells us how big the star-field change in stage 3 really is, which nobody has measured.
-2. **Finish the tie-up of places** already ruled on 25 Nov: home from the web's catalogue (GZ12) and a star slot for every system (GZ13). Core golden, already queued. Let the Local Arm thread's metals fix land in the same window.
+2. **Finish the tie-up of places** already ruled on 25 Nov: home from the web's catalogue (GZ12) and a star slot for every system (GZ13). Core golden, already queued. The chemistry retune follows GZ12, so it is checked on the galaxy people will have (the coordinator's order, 26 Nov); the Local Arm fix lands after the retune.
 3. **Tie mass through the middle.** Ring to stars by mass, star to system as a named birth claim, the two missing recipe items. This is the big golden move: every unlooked star changes.
 4. **Wire events to systems,** with massive stars as their own supernovae and close passes from the field.
 5. **Belts by class, the draining sketch and the roster.** Craters become arrivals. The crater's "why" becomes a traced chain.
@@ -368,7 +368,7 @@ Alex, 2:45 PM: "we are not slavish to absolute accuracy for this type of thing, 
 
 ## 12. Where the spec stands: solid, unproven, and too far
 
-The chain of mass and six element groups from the web to a named crater is possible for generated systems, on code that mostly exists. Four parts are unproven, and five things the spec could be read as promising are fudges too far that I would not promise. One gap matters most for your ore deposit.
+The chain of mass and six element groups from the web to a named crater is possible for generated systems, on code that mostly exists. Four parts are unproven, and five things the spec could be read as promising are fudges too far that I would not promise. The gap I first reported for your ore deposit is mostly closed already; see the correction below.
 
 ### Solid: built or a short step from built
 
@@ -402,13 +402,13 @@ The chain of mass and six element groups from the web to a named crater is possi
 | Supernova bubbles carved into the gas along every line of sight | The sky's dust is summed through thousands of cells | Dents within a few hundred parsecs of where you stand; the far sky keeps the smooth value. Registered |
 | Exact closure at the very top, and for slow supernovae | A web cell holds hundreds of haloes; slow supernovae go off billions of years and many kiloparsecs from birth | Statistical there, exact from the ring down |
 
-### The gap that matters most: where an element ends up
+### Where an element ends up: mostly built (corrected 26 Nov, 3:05 PM)
 
 This one is mine, and it bears directly on "a metal asteroid leaves a massive ore deposit".
 
-The six groups say how an element was **made**. They do not say where it **goes** when a world melts and separates. Gold and platinum follow iron into a core. Uranium and potassium stay in the rock. Water and carbon leave with the volatiles. So "how much gold is in this system" is a sound read of the ledger, but "how much gold is in this asteroid" depends on which layer of which parent it came from. The data for this was collected on 23 Nov (data sheet package MP24, "where each element goes": condensation temperatures, and Earth's core, mantle and crust concentrations). Its own log marks every value as an unverified reproduction, and the rules that would use it (MP6 to MP8) are not built. I found no code that reads it.
+The six groups say how an element was **made**. They do not say where it **goes** when a world melts and separates. Gold and platinum follow iron into a core. Uranium and potassium stay in the rock. Water and carbon leave with the volatiles. So "how much gold is in this system" is a sound read of the ledger, but "how much gold is in this asteroid" depends on which layer of which parent it came from. Correction: I first wrote that the rule for this was not built. That was wrong, and the build-order planning pass caught it. For worlds it is built and merged: a body's elements by core, mantle, crust, sea and air, with gold over 90% in the core (package MP6); a star's own element ratios (MP7); what deposits hold, drawn from the crust so the books close (MP8a); and a resource inventory read off it (MP8b). The data behind it (MP24) is still marked in its own log as unverified reproductions.
 
-Without it, the ore deposit is a fudge too far: the crater would know a metal body hit, and not what the metal holds. With it, the prize is large. A core fragment is rich in gold and platinum for a physical reason, a crust is poor in them, and a prospector's map follows from the history. It needs that table verified against its sources and one rule applied wherever a body separates into layers. It adds no new ledger.
+What is left is narrower: the same rule is not yet applied to a belt member that is a piece of a broken world, nor to what an impact delivers to a site. Until it is, a crater would know a metal body hit and not what the metal holds. A core fragment is rich in gold and platinum for a physical reason, a crust is poor in them, and a prospector's map follows from the history. It needs the table verified against its sources and the existing rule reused for belt classes and impacts. It adds no new ledger.
 
 ### Weak spots in the plan itself
 
@@ -420,7 +420,7 @@ Without it, the ore deposit is a fudge too far: the crater would know a metal bo
 
 ### Three more questions
 
-12. **Verify the table of where elements go (MP24), and build the rule that uses it?** Recommend yes, as a data sheet package ahead of stage 5. It is what makes deposits real.
+12. **Verify the table of where elements go (MP24), and apply the existing rule (MP6, MP8a) to belt members and impacts?** Recommend yes, as a data sheet package ahead of stage 5. It is what makes deposits real.
 13. **Trace only listed craters, and treat the rest as a sum?** Recommend yes.
 14. **Give imported systems a reconstructed history, so the trick works on V3 systems?** Recommend yes, after stage 5, once we know how much of the fitting exists.
 

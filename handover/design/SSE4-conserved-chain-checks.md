@@ -55,6 +55,7 @@ Tier B rows are printed by the same test run. A row moves to tier A when its sou
 - **Likely cause of the level.** The iron yields (`yield_fe_cc` 0.7, `ia_fe` 540, `ia_per_mass` 2e-3) set the level everywhere. A1 and A2 together pin them: A2 alone, at 0.2 dex, let the level drift.
 - **The bar.** The Local Arm thread's bar sweep already cut the inner excess from +0.84 to +0.46. Mixing along a bar flattens a gradient inside the bar's reach; whether the sweep mixes metals as well as moving gas is worth checking.
 - **A10 is the downstream check.** If A1 to A6 pass and A10 still fails, the fault is in the dust rule or the geometry, not the chemistry. Dust rising in strict step with metals above solar is itself uncertain (B10).
+- **Order.** The retune runs after GZ12 (home chosen from the web's catalogue), so it is checked on the galaxy a campaign will really have, not on the median stand-in. The radii here are in scale lengths, so the table carries over unchanged.
 - **Golden.** This moves the envelope, sky, glow and galaxy chart lines in the core golden. One move, with the Local Arm PR, in the core lane.
 - Each new assertion is first run against today's code and seen to fail (A1, A4, A5, A10 should; A3 should pass).
 
