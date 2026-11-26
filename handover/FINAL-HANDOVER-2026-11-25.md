@@ -12,7 +12,7 @@ Checks are as read at 22:50 UTC. "Green" means every CI job passed or was skippe
 |---|---|---|---|---|
 | 589 | claude/project-thread-ftsszw | Natural outlines and smooth tile edges (VP3, detail ladder) | green at df402ff; one more commit (Land map in measured colour) re-running at 45c55d3 | merge when green |
 | 588 | claude/project-thread-r28d1d | Light track: Mie scattering, forbidden lines, line colours, light in a world's shadow | **ui job red** | fix the ui failure, then merge |
-| 585 | claude/project-thread-iyae31 | W-synoptic: a day's clouds instead of the season's average (climate) | green, but core golden lines move | merge main, re-bless, merge in the core slot |
+| 585 | claude/project-thread-iyae31 | W-synoptic: a day's clouds instead of the season's average (climate) | **merged** 26 Nov (eb4ad5c0) | renderer: raise AIR_N in `true-air.ts` from 24 to 48 for worlds with ground (64 at close-up), checking the cost on the speed probe; re-shoot Earth beside the Blue Marble |
 | 584 | claude/project-thread-uz7sb8 | Editing: the Makeup box, class marks on the Mass strip | **merged** 22:49 (02a0e8a6) | done |
 | 581 | claude/project-thread-z535je | GZ5 parts 1 and 1b: Galaxies nearby in 3D | no check runs on head | merge main into it so CI runs |
 | 580 | claude/project-thread-rn77dw | PC6 part 1: postcard sets, base set's first cards, the script | **merged** 22:49 (02a6dcdf) | done |
