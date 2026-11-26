@@ -37,6 +37,7 @@ Real catalogues design section 6A.1 (accepted by Alex 26 Nov 2026 18:08 UTC). Al
 - Phobos comes out 14 x 13 x 11 km against the real 13.5 x 11 x 9.
 
 ## Next
+- RW16b (held, see the RW16 row in `status/real-catalogues.md`): the round size from strength against self-gravity instead of the linear blend; waits on tidal heat for moons.
 - Place a design: "Add to this system" from the designer, as a body of kind asteroid or comet with its pins kept as its recipe (with the editing track: the Add list and `Clip`), and the same designer opening any existing member to adjust it as a deed.
 - Measured shapes for catalogued bodies (axes, two-lobe models) and light-curve bounds (6A.1 "Catalogued bodies too"): waits on the catalogue format (RW thread "Build the catalogue format and reader").
 - Land and the canvas globe; the size comparison and the gallery handed figures.
