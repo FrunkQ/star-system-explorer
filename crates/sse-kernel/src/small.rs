@@ -198,7 +198,7 @@ fn made_json(m: &Member, template: Option<&Cloud>, host: &Host, s: &Settings) ->
                 // A designed field's ice is all water.
                 let shares = [1.0, 0.0, 0.0];
                 let r = m.orbit.a_au * (1.0 - m.orbit.e);
-                let a = sse_small::activity(m, &shares, r, host, &s.comet);
+                let a = sse_small::activity(m, &shares, r, host, s);
                 j["activity"] = serde_json::to_value(a).expect("plain");
             }
             j
