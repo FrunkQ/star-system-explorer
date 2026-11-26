@@ -3691,6 +3691,34 @@
         "range": null
       },
       {
+        "description": "age of the universe when a group's edge is found (s)",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "group.age",
+        "range": null
+      },
+      {
+        "description": "radius round a group inside which galaxies have stopped moving apart and fall together (m)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "group.zero_velocity_radius",
+        "range": null
+      },
+      {
         "description": "the host planet's magnetic field strength at a moon's orbit",
         "dim": [
           0,

@@ -93,7 +93,7 @@ export { checkWorldStack, formatKm, kindPhrase, ladder, regionCounts, cutRadius 
 export type { WorldStack, WorldShell, WorldRegion, WorldFeature, LadderLine, WorldStackRead } from "./world.ts";
 export { direction as cubeDirection, faceOf, sampleAt, sampleColour, globeStats, viewToWorld, MATERIALS as SURFACE_MATERIALS, COVERS as SURFACE_COVERS, edgeNoise, naturalDirection, naturalEdge, sampleNatural, globeCellAngle, NATURAL_WARP, softenGround, SOFT_GROUND_CELLS } from "./globe.ts";
 export type { SurfaceTile, Globe } from "./globe.ts";
-export { R_EARTH_KM, R_JUPITER_KM, R_SUN_KM, checkReferences, itemFromReference, itemFromSubject, radiusKm, reachKm, starColour, layoutLineup, sizeWords, scaleBar, formatKmLength } from "./compare.ts";
+export { R_EARTH_KM, R_JUPITER_KM, R_SUN_KM, checkReferences, itemFromReference, itemFromSubject, radiusKm, reachKm, starColour, tempFromBV, layoutLineup, sizeWords, scaleBar, formatKmLength } from "./compare.ts";
 export type { ReferenceObject, ReferenceDoc, CompareItem, Placed, Lineup, SolDoc } from "./compare.ts";
 export { separation, distanceWords, lightWords, C_KM_S } from "./measure.ts";
 export type { Separation } from "./measure.ts";
@@ -218,7 +218,7 @@ export { readSheet, readTable, sheetRows, spreadPaste } from "./sheet-entry.ts";
 export type { SheetBody, SheetRead, SheetRow, TableRead } from "./sheet-entry.ts";
 export { COULD_BE, couldBeNow, recipeFor } from "./could-be.ts";
 export type { CouldBe, RecipeStep } from "./could-be.ts";
-export { FREE_START, NEARBY_REACHES, REAL_FACES, STREAM_ARC_GYR, biggestNeighbours, turnOf, boundPairs, firstInfall, groupEdge, meetWords, pathAt, satelliteStateWords, streamArc, zeroVelocityRadius, galaxyColour, galaxyDistanceWords, galaxyTypeWords, haloR200, lightTravelWords, nearbyAt, nearbyRadius, nearbyScaleBar, projectNearby, readNearby, readableFactor, withinReach } from "./galaxies-nearby.ts";
+export { FREE_START, NEARBY_REACHES, REAL_FACES, STREAM_ARC_GYR, biggestNeighbours, turnOf, boundPairs, firstInfall, meetWords, pathAt, satelliteStateWords, streamArc, galaxyColour, galaxyDistanceWords, galaxyTypeWords, haloR200, lightTravelWords, nearbyAt, nearbyRadius, nearbyScaleBar, projectNearby, readNearby, readableFactor, withinReach, type GroupEdge } from "./galaxies-nearby.ts";
 export type { BoundPair, NearGalaxy, NearbyRead, NearbyReach, NearbySeen, NearbyTurn, SatellitePath } from "./galaxies-nearby.ts";
 export { atlasPacks, classNamesIn, sweepAsk, sweepMarks } from "./sweep.ts";
 export { MAKEUP_FIELD, MAKEUP_PARTS, makeupEdits, makeupKinds, makeupOf, PART_WORDS, retradeMakeup } from "./makeup.ts";
