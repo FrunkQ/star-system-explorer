@@ -13,6 +13,7 @@ sse-reference.workspace = true
 sse-formation.workspace = true
 sse-climate.workspace = true
 sse-atoms.workspace = true
+sse-flow.workspace = true
 sse-physics.workspace = true
 serde.workspace = true
 serde_json.workspace = true

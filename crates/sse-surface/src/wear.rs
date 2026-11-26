@@ -42,7 +42,12 @@ pub struct WearSettings {
     pub glacial_factor: f64,
     /// A world wet only in the past rains at least this warm while wet, K.
     pub wet_floor_k: f64,
-    pub diffusion_m2_yr: f64,
+    /// The grid's cells are kilometres across, so slopes relax at an
+    /// effective rate this many times the ground's own creep (creep.rs): the
+    /// unresolved hillslopes, slides and infill of each cell. Set so wet
+    /// ground under 1 bar gives the 10 m²/yr the wear was calibrated with;
+    /// airless ground relaxes about 10,000 times slower (docs/fudges.md).
+    pub grid_factor: f64,
     pub river_area_cells: f64,
     /// Dunes where Lancaster's mobility (W9 `sse.wind.saltation`) is at least this.
     pub dune_activity: f64,
@@ -676,9 +681,17 @@ pub fn wear(
             }
             last_q = q;
         }
-        // Slopes relax, wet or dry (effective coarse-grid diffusivity).
+        // Slopes relax by the creep of this epoch's ground: airless regolith,
+        // wind under air, soil while wet (creep.rs, the rate crater fading
+        // reads), scaled to the grid's coarse cells.
+        let kappa_m2_yr = crate::creep::diffusivity(
+            &s.creep,
+            if wet { 1.0 } else { 0.0 },
+            water.pressure_bar.max(0.0) * 1.0e5,
+        ) * crate::creep::YR_S
+            * w.grid_factor;
         let lens: Vec<f64> = edges.iter().map(|&(a, b)| dist(a, b)).collect();
-        relax_slopes(&mut h, &edges, &lens, w.diffusion_m2_yr, dt, &mut |dh| {
+        relax_slopes(&mut h, &edges, &lens, kappa_m2_yr, dt, &mut |dh| {
             for c in 0..nc {
                 // Creep strips the cover where slopes lower and lays it
                 // where they fill.
