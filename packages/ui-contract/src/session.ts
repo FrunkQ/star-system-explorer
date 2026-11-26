@@ -28,7 +28,7 @@ export interface SkyAsk {
 
 /** One ask of the kernel `weather` op (presentation reads; nothing is recorded). */
 export interface WeatherAsk {
-  want: "climate" | "systems" | "field" | "report" | "column" | "sound";
+  want: "climate" | "systems" | "field" | "report" | "glint" | "column" | "sound";
   world?: string;
   system?: string;
   body?: string;
@@ -298,6 +298,8 @@ export interface ViewSession {
   readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
   /** Light through layers of gas and particles (kernel `light_through_gas`, light track ND2): colour in and out per passage. Read only; any seat. */
   lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }>;
+  /** The light inside a world's shadow (kernel `read_shadow_light`, VP-L3): starlight bent through its air, its colour and brightness. Read only; any seat. */
+  readShadowLight(items: Json[]): Promise<{ ok: true; items: Json[] } | { ok: false; code: string; message: string }>;
   /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
   /** Time-lapse keyframes of a world's surface (surface_frames): a fixture, or a body of an adopted system. Read only. */
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
@@ -911,6 +913,11 @@ export class Session implements ViewSession {
   async readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_air_optics", airs, ...(wavelengths_m ? { wavelengths_m } : {}) });
     return r.type === "air_optics_read" ? { ok: true, airs: (r as unknown as { airs: Json[] }).airs } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readShadowLight(items: Json[]): Promise<{ ok: true; items: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_shadow_light", items });
+    return r.type === "shadow_light_read" ? { ok: true, items: (r as unknown as { items: Json[] }).items } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async lightThroughGas(passages: Json[]): Promise<{ ok: true; passages: Json[] } | { ok: false; code: string; message: string }> {

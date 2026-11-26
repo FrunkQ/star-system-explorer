@@ -84,23 +84,25 @@ atoms.append({"id":"sse.surface.ice_share_from_density","version":"1.0.0","cost"
    "science":"Rock and ice are mixed by volume at their low-pressure densities. Self-compression is left out, which is fair for moons and dwarf planets but makes the bigger icy moons come out somewhat drier than they are (Ganymede about 0.3 against about 0.45 from its moment of inertia)."},
   "examples":ex}})
 R=8.31446261815324
-def loss(p,T,M,g,ve,d,t,ri=RHO_I,k=1.2e-5):
+# Water's lifetime in sunlight at 1 au, from the data sheet (scripts/photo_rows.py).
+TAU_H2O=next(x for x in json.load(open('packs/base-reference/pack.json'))["provides"]["reference"]["substances"] if x["id"]=="h2o")["photochemistry"]["lifetime_1au"]["v"]
+def loss(p,T,M,g,ve,d,t,ri=RHO_I,tau=TAU_H2O):
     if p<=0 or T<=0 or g<=0 or ri<=0: return 0.0
     flux=p*math.sqrt(M/(2*math.pi*R*T)); v2=2*R*T/M; hop=2*math.sqrt(v2)/g
-    rate=k/(d*d) if d>0 else 0.0
+    rate=1/(tau*d*d) if d>0 and tau>0 else 0.0
     ph=1-math.exp(-hop*rate); lam=ve*ve/v2; j=(1+lam)*math.exp(-lam)
     return flux*min(ph+j,1.0)*max(t,0)/ri
 AU=1.495978707e11
-ex=[dict(p=p,T=T,M=0.018,g=g,ve=ve,d=d*1.5e11,t=1.4e17,ri=RHO_I,k=1.2e-5,L=loss(p,T,0.018,g,ve,d*1.5e11/AU,1.4e17)) for (p,T,g,ve,d) in [(76.0,250.0,1.62,2380.0,1.0),(2.0e-6,130.0,1.24,2440.0,5.2),(1.0e-12,100.0,1.31,2025.0,5.2)]]
+ex=[dict(p=p,T=T,M=0.018,g=g,ve=ve,d=d*1.5e11,t=1.4e17,ri=RHO_I,tau=TAU_H2O,L=loss(p,T,0.018,g,ve,d*1.5e11/AU,1.4e17)) for (p,T,g,ve,d) in [(76.0,250.0,1.62,2380.0,1.0),(2.0e-6,130.0,1.24,2440.0,5.2),(1.0e-12,100.0,1.31,2025.0,5.2)]]
 atoms.append({"id":"sse.surface.open_ice_loss","version":"1.0.0","cost":"trivial",
- "inputs":[inp("vapour_pressure","p"),inp("temperature","T"),inp("molar_mass","M"),inp("gravity","g"),inp("escape_speed","ve"),inp("star_distance","d"),inp("age","t"),inp("ice_density","ri")],
+ "inputs":[inp("vapour_pressure","p"),inp("temperature","T"),inp("molar_mass","M"),inp("gravity","g"),inp("escape_speed","ve"),inp("star_distance","d"),inp("age","t"),inp("ice_density","ri"),inp("photo_lifetime","tau")],
  "outputs":[inp("ice_lost","L")],
- "params":[par("photo_rate_1au","k",1.2e-5,[1.0e-6,1.0e-4],"rate at which starlight breaks up a water molecule at 1 AU, per second (Huebner et al. 1992, quiet Sun)")],
+ "params":[],
  "constants":{"R":"sheet/R_gas","au":"sheet/au"},
  "references":[FS09,HUEBNER92,WATSON61],
- "shown":"L = p √(M/2πRT) (1 − e^(−t_hop k (au/d)²) + (1+λ)e^(−λ)) t / ρ",
+ "shown":"L = p √(M/2πRT) (1 − e^(−t_hop (au/d)²/τ) + (1+λ)e^(−λ)) t / ρ",
  "equation":{"name":"How much open ice an airless world loses",
-  "formula":"flux = p * sqrt(M / (2 * pi * R * T))\nv2 = 2 * R * T / M\nhop = 2 * sqrt(v2) / g\nrate = if d > 0 then k * (au / d) * (au / d) else 0\nlam = ve * ve / v2\nshare = min(1 - exp(-hop * rate) + (1 + lam) * exp(-lam), 1)\nL = if p <= 0 or T <= 0 or g <= 0 or ri <= 0 then 0 else flux * share * max(t, 0) / ri",
+  "formula":"flux = p * sqrt(M / (2 * pi * R * T))\nv2 = 2 * R * T / M\nhop = 2 * sqrt(v2) / g\nrate = if d > 0 and tau > 0 then (au / d) * (au / d) / tau else 0\nlam = ve * ve / v2\nshare = min(1 - exp(-hop * rate) + (1 + lam) * exp(-lam), 1)\nL = if p <= 0 or T <= 0 or g <= 0 or ri <= 0 then 0 else flux * share * max(t, 0) / ri",
   "inputs":{"p":{"kind":"material.vapour_pressure","unit":"Pa","name":"the ice's vapour pressure at the ground's temperature (Look up)"},
    "T":{"kind":"planet.surface_temperature","unit":"K","name":"ground temperature"},
    "M":{"kind":"material.molar_mass","unit":"kg mol-1","name":"molar mass of the ice"},
@@ -109,13 +111,13 @@ atoms.append({"id":"sse.surface.open_ice_loss","version":"1.0.0","cost":"trivial
    "d":{"kind":"orbit.star_distance","unit":"m","name":"distance from the star"},
    "t":{"kind":"body.age","unit":"s","name":"time the ice has lain open"},
    "ri":{"kind":"material.ice_density","unit":"kg m-3","name":"ice's density"},
-   "k":{"kind":"model.photo_rate_1au","unit":"s-1","name":"photolysis rate at 1 AU"},
+   "tau":{"kind":"material.photo_lifetime_1au","unit":"s","name":"how long a water molecule lasts in sunlight at 1 AU (Look up)"},
    "R":{"kind":"constant.R_gas","unit":"J mol-1 K-1","name":"molar gas constant"},
    "au":{"kind":"constant.au","unit":"m","name":"astronomical unit"}},
   "outputs":{"L":{"kind":"surface.ice_lost","unit":"m","name":"depth of open ice lost"}},
   "source":{"text":"Watson, K., Murray, B. C. and Brown, H. 1961, J. Geophys. Res. 66, 3033","doi":"10.1029/JZ066i009p03033","where":"why ice cannot lie open on the warm Moon"},
   "explain":{"curious":"Ice left out on an airless world slowly turns straight to vapour. Most of the vapour hops and lands again, but some is broken up by sunlight in flight or flies off into space. Near the Sun the Moon would lose a kilometres-thick ice sheet in a blink of geological time; at Jupiter, where ice is far colder, almost nothing is lost, so its moons keep icy ground.",
-   "science":"Sublimation flux from the Hertz-Knudsen relation with a sticking coefficient of 1 and the vapour pressure from Fray and Schmitt's fits. Molecules move on ballistic hops of about 2v/g with v the most probable speed; per hop a share 1 − e^(−t_hop J) is photolysed (J the photo rate, falling as 1/d²) and a share (1 + λ)e^(−λ) escapes, λ = v_esc²/v² (Jeans). The rest lands again, so the net loss is the flux times that share. Sputtering and cold-trapping are left out."},
+   "science":"Sublimation flux from the Hertz-Knudsen relation with a sticking coefficient of 1 and the vapour pressure from Fray and Schmitt's fits. Molecules move on ballistic hops of about 2v/g with v the most probable speed; per hop a share 1 − e^(−t_hop J) is photolysed (J the photo rate, one over the molecule's lifetime in sunlight read from the data sheet, falling as 1/d²) and a share (1 + λ)e^(−λ) escapes, λ = v_esc²/v² (Jeans). The rest lands again, so the net loss is the flux times that share. Sputtering and cold-trapping are left out."},
   "examples":ex}})
 MOORE99="Moore, J. M. et al. 1999, Icarus 140, 294: mass movement and landform degradation on the icy Galilean satellites; sublimation leaves a dark lag of rock and dust over Callisto's ice, which shows bright in fresh craters. doi:10.1006/icar.1999.6132"
 SPENCER87="Spencer, J. R. 1987, Icarus 69, 297: thermal segregation of water ice on the Galilean satellites; sublimed ice leaves a dark lag on the warm ground and frosts the cold. doi:10.1016/0019-1035(87)90107-8"

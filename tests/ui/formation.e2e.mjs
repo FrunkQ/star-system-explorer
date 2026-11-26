@@ -4,7 +4,8 @@
 // body, the condensation lines, the gas disc and the upheaval; the Inherited panel has its rows. A stage button moves
 // the time slice and the time ruler with it; the slice's handle takes the arrow keys. Pressing a world's track selects
 // it, and its story shows (where its material came from, its events, how sure); a lost body has a story too. "Watch
-// it form" plays the replay over the page. "How this was worked out" says what each part rests on. Kestrel Reach (written fact by fact) says it has no formation history and how to get one. Reading the history
+// it form" plays the replay over the page. The star's end (F10c) is worked out after the chart is up and is a press
+// away, past now, without moving the campaign's date. "How this was worked out" says what each part rests on. Kestrel Reach (written fact by fact) says it has no formation history and how to get one. Reading the history
 // never changes the state hash.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -77,6 +78,23 @@ try {
     await gm.locator("[data-how-panel] summary").click();
     assert.equal(await gm.locator("[data-how]:visible").count(), 5, "how this was worked out, a press away, five rows");
     assert.equal(await gm.locator("[data-how='not yet']").count(), 1, "passing stars are honestly not yet");
+    // F10c: the star's end, worked out after the chart is up: a close-up of the end, or words for a star that outlives it.
+    await gm.waitForSelector("[data-fate], [data-fate-note]", { timeout: 90000 });
+    const ends = await gm.locator("[data-fate]").count();
+    if (ends) {
+      assert.ok((await gm.locator("[data-fate-star]").count()) === 1, "the star swelling");
+      assert.match(await gm.locator("[data-fate-words]").innerText(), /white dwarf|neutron star|black hole/);
+      assert.equal(await gm.locator("[data-star-end]").count(), 1, "the end marked on the main chart");
+      await gm.locator("[data-fate]").scrollIntoViewIfNeeded();
+      await shot(gm, `formation-end-${name}`);
+      await gm.locator(".stages").scrollIntoViewIfNeeded();
+      // The star's end is a press away; the slice goes past now but the campaign's date stays.
+      const ruler = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
+      await gm.locator("[data-stage='end']").click();
+      await gm.waitForFunction(() => document.querySelector("[data-stage='end']")?.getAttribute("aria-current") === "step");
+      assert.match(await gm.locator("[data-slice-words]").innerText(), /looking ahead/);
+      assert.equal(await hash(), ruler, "looking at the end writes nothing");
+    } else assert.match(await gm.locator("[data-fate-note]").innerText(), /trillion years/);
     await shot(gm, `formation-now-${name}`);
     // Watch it form: the replay of the same record, over the page; Escape closes it.
     await gm.locator("[data-watch-form]").click();
