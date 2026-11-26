@@ -225,5 +225,7 @@ export { MAKEUP_FIELD, MAKEUP_PARTS, makeupEdits, makeupKinds, makeupOf, PART_WO
 export type { MakeupKind, MakeupPart } from "./makeup.ts";
 export type { SweepAsk, Swept, SweepStep, SweepTip } from "./sweep.ts";
 export { STAR_FAMILY_WORDS, starClassWords } from "./star-class.ts";
+export * from "./approach.ts";
+export * from "./journey.ts";
 export { STAR_KINDS, letterOf, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
 export type { StarDescription, StarClass, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
