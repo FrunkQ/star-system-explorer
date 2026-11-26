@@ -121,3 +121,38 @@ fn index_tables_are_checked_and_read_between_rows() {
     bad.k[1] = -1.0;
     assert!(bad.check().is_err());
 }
+
+/// Venus's cloud droplets from the sheet's measured acid (MP36, the
+/// `sulfuric-acid-75` row and its source): sulphuric acid barely absorbs
+/// visible light, so a thick deck of 1.05 um droplets (the renderer's
+/// cloud-rows.json) is white. Venus's
+/// pale yellow comes from its unknown ultraviolet absorber, which the sheet
+/// does not hold yet, not from the droplets.
+#[test]
+fn venus_acid_droplets_from_the_sheet_make_a_white_deck() {
+    let sheet = sse_reference::Reference::base();
+    let r = crate::haze::reflect(
+        &sheet,
+        &eye(),
+        &[Particles {
+            material: "sulfuric-acid-75".into(),
+            radius_m: 1.05e-6,
+            optical_depth: 1.0e4,
+            at_nm: 550.0,
+            asymmetry: 0.85,
+        }],
+        0.0,
+        &light(),
+    )
+    .unwrap();
+    let [red, green, blue] = r.reflectance_rgb;
+    for c in [red, green, blue] {
+        assert!(c > 0.99, "{:?}", r.reflectance_rgb);
+    }
+    assert!((red - blue).abs() < 0.005, "{:?}", r.reflectance_rgb);
+    assert!(
+        r.references.iter().any(|s| s == "palmer-williams1975"),
+        "{:?}",
+        r.references
+    );
+}
