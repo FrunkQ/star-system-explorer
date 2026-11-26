@@ -175,3 +175,26 @@ test("the group's edge: Sandage's zero-velocity radius of the mass inside it", a
   assert.ok(Math.abs(e.radius_mpc - zeroVelocityRadius(2.6e12, 13.8)) < 1e-12);
   assert.equal(groupEdge(home, [], 13.8).radius_mpc, r0);
 });
+
+test("Free turning: starts as Tilted, a quarter turn of yaw swings x into y, a full tip is Edge-on", async () => {
+  const { turnOf, FREE_START } = await import("../src/galaxies-nearby.ts");
+  const p: [number, number, number] = [1, 0.5, 0.3];
+  assert.deepEqual(projectNearby(p, "free", 500, 2), projectNearby(p, "tilted", 500, 2));
+  assert.deepEqual(projectNearby(p, "free", 500, 2, 24, { yaw_deg: 0, tilt_deg: 90 }), projectNearby(p, "edge", 500, 2));
+  assert.deepEqual(projectNearby(p, "free", 500, 2, 24, { yaw_deg: 0, tilt_deg: 0 }), projectNearby(p, "above", 500, 2));
+  const q = projectNearby([1, 0, 0], "free", 500, 2, 24, { yaw_deg: 90, tilt_deg: 0 });
+  assert.ok(Math.abs(q.x - 250) < 1e-9 && q.y < 250, "a galaxy on +x is up the page after a quarter turn");
+  assert.deepEqual(turnOf("free", { yaw_deg: 10, tilt_deg: 140 }), { yaw_deg: 10, tilt_deg: 90 }, "never tipped past edge-on");
+  assert.deepEqual(turnOf("above"), { yaw_deg: 0, tilt_deg: 0 });
+  assert.equal(FREE_START.tilt_deg, 60);
+});
+
+test("the biggest neighbours whose real charts are read: biggest in stars within the reach, never our satellites", async () => {
+  const { biggestNeighbours, REAL_FACES } = await import("../src/galaxies-nearby.ts");
+  const r = readNearby(withPaths)!;
+  assert.deepEqual(r.home_mpc, null, "no home place given in this fixture");
+  assert.deepEqual(readNearby({ ...(sky as object), galaxy_walk: { home_mpc: [4, 4, 4], satellites: {} } } as unknown as Json)!.home_mpc, [4, 4, 4]);
+  assert.deepEqual(biggestNeighbours(r.galaxies, 12).map((g) => g.address), ["u:k/cell:0.0.-1/halo:1"]);
+  assert.deepEqual(biggestNeighbours(r.galaxies, 1.5), [], "the only galaxy in the group is our satellite");
+  assert.equal(REAL_FACES, 3);
+});

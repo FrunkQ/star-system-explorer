@@ -56,6 +56,7 @@ sheet is filled, and each sheet row records that check.
 | wallace-hobbs2006 | Wallace, J. M. and Hobbs, P. V. 2006, Atmospheric Science, 2nd edition. doi:10.1016/C2009-0-00034-8 | dry air c_p 1004 J/kg/K | unverified | textbook figure; DOI from memory |
 | nssdca-venus, -mars | NASA NSSDCA Venus and Mars fact sheets | atmosphere recipes by volume | unverified | fact sheet figures from memory; Mars CO2 taken as 95.25% so the recipe sums to one |
 | niemann2005 | Niemann, H. B. et al. 2005, Nature 438, 779. doi:10.1038/nature04122 | Titan's near-surface methane 5.65% | unverified | from memory |
+| huebner1992 | Huebner, W. F., Keady, J. J. and Lyon, S. P. 1992, Astrophys. Space Sci. 195, 1: solar photo rates for planetary atmospheres and atmospheric pollutants. doi:10.1007/BF00644558 | `photochemistry.lifetime_1au` of h2o (8.3e4 s), co2 (5.0e5 s), co (1.3e6 s), quiet Sun at 1 au; read by the ice ground block and the comets | unverified | recalled survey values at two figures, as the ice ground (rate 1.2e-5 per second) and small-bodies pack had them; the paper's tables not read (Consensus closed until 1 Dec 2026) |
 
 ## A3. Where each element was made (origin shares and stories)
 
