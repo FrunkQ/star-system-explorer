@@ -19,3 +19,22 @@ numbers to where they belong. Values are kept as they were unless a part below s
   second (+0.4 %). Both were the same two-figure fact; the sheet keeps one, the lifetime as the comet pack had it.
 - **Golden:** one core contract line moves (`system_resolved` for Kestrel sys 40): four ice grounds' `lost_km` grow
   by 0.4 % and the `why` text's metres with them. Nothing else changes.
+
+## SN2: nebular and comet ion lines on the sheet
+
+- Sheet: four ion rows with `optical.emission`, beside sodium's and potassium's lines (`scripts/emission_rows.py`):
+  `o+2` ([O III] 495.9 and 500.7 nm), `s+` ([S II] 671.6 and 673.1 nm) with every nebular number PR 588 typed into
+  `packs/base-light` (collision strengths, weights, Einstein A, decay shares, ion energies, the S II balance fit),
+  moved unchanged; `co+` (about 426 nm) and `h2o+` (about 615 nm), the comet ion tails' colours (Brandt and Chapman
+  2004, unverified). Sources split into sheet source rows (storey2014, sii-aa2025, verner1996, badnell2015,
+  nist-asd-ion, storey-nlevel, brandt-chapman2004), all unverified.
+- Light pack: those four lines keep id, name, species and matter and gain `sheet` (the row); `at_m` and `nebular`
+  come from the sheet (sse-light `line_from_sheet`; the nanometres read to metres exactly as written, so no
+  wavelength moves by a bit).
+- Renderer: `comet.ts` reads the tail's line from `sheetLine` (ui-contract, generated `lines` from the sheet) and has
+  no typed wavelengths; `sheetLine` throws on a missing line.
+- Not moved: the light pack's `photon_takers` edges (hydrogen's and helium's ionisation energies) and the other
+  lines' wavelengths (no atomic data with them). Left for a later pass.
+- **Golden:** no number changes. The nebulae golden and three core contract lines (two `light_read`, one
+  `nebulae_read`) change in their reference text only (each now the sheet source's text and note, with its own DOI
+  or link, where the old text had mangled the S II DOI into a URL), and `light_read` lines gain `sheet`.

@@ -44,6 +44,7 @@ import liquid_rows  # noqa: E402
 import optical_rows  # noqa: E402
 import band_rows  # noqa: E402
 import photo_rows  # noqa: E402
+import emission_rows  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -906,6 +907,11 @@ for _k, _v in photo_rows.SOURCES.items():
     assert _k not in SOURCES, _k
     SOURCES[_k] = _v
 photo_rows.apply(SUBSTANCES, val)
+# Lines ions give off: nebular forbidden lines and comet ion tails (scripts/emission_rows.py).
+for _k, _v in emission_rows.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+emission_rows.apply(SUBSTANCES)
 
 
 def elements():

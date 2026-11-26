@@ -511,6 +511,14 @@ pub mod molar_mass {
     pub const C2H6: f64 = 0.03007;
     /// c3h8.
     pub const C3H8: f64 = 0.044097000000000004;
+    /// o+2.
+    pub const O_2: f64 = 0.015999;
+    /// s+.
+    pub const S_: f64 = 0.032060000000000005;
+    /// co+.
+    pub const CO_: f64 = 0.028009999999999997;
+    /// h2o+.
+    pub const H2O_: f64 = 0.018015;
 }
 
 /// Triple point temperature, K, by substance (the sheet's `phases.triple_point_k`).
