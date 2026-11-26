@@ -59,6 +59,8 @@ mod names_tests;
 mod nav;
 mod orbits;
 #[cfg(test)]
+mod physics_tests;
+#[cfg(test)]
 mod power_books_tests;
 pub mod protocol;
 mod reference;
@@ -669,8 +671,11 @@ struct Observe {
 
 pub struct Kernel {
     atoms: sse_flow::AtomRegistry,
-    stack: Option<(ResolvedStack, BTreeMap<String, Flow>)>,
+    stack: Option<(ResolvedStack, std::sync::Arc<BTreeMap<String, Flow>>)>,
     observe: Observe,
+    /// ER1: the physics in force, built when the stack loads and put in
+    /// force for every call (`sse_physics::with`).
+    physics: std::sync::Arc<sse_physics::Physics>,
     /// Game-system code sheets from the stack (sse-codes).
     codes: sse_codes::Codes,
     universe: Option<Universe>,
@@ -1212,6 +1217,7 @@ impl Kernel {
         Kernel {
             atoms: kernel_atoms(),
             stack: None,
+            physics: std::sync::Arc::new(sse_physics::Physics::bare(Observe::default().reference)),
             observe: Observe::default(),
             codes: sse_codes::Codes::default(),
             universe: None,
@@ -1326,20 +1332,23 @@ impl Kernel {
         serde_json::to_string(&resp).expect("responses serialise")
     }
 
+    /// ER1: the physics in force (the last stack loaded, or none yet).
+    pub fn physics(&self) -> &std::sync::Arc<sse_physics::Physics> {
+        &self.physics
+    }
+
     pub fn handle(&mut self, req: Request) -> Response {
-        // MP1c: the stack's constants are in force for the whole call; DM6:
-        // read at the call's date when any constant has a history.
+        // ER1: the physics in force for the whole call, with its two views:
+        // the stack's constants (MP1c; DM6: read at the call's date when any
+        // constant has a history) and its sheet for the Look up block (MP17a).
+        let physics = self.physics.clone();
         let c = match self.dated(&req) {
-            Some(t) => self.observe.reference.handle_on(t),
-            None => self.observe.reference.handle(),
+            Some(t) => physics.sheet().handle_on(t),
+            None => physics.constants(),
         };
-        // MP17a: and its sheet, for the Look up block.
-        let sheet = sheet_of(&self.observe.reference);
-        sse_core::constants::with(c, || {
-            sse_flow::sheet::with(sheet, || match self.dispatch(req) {
-                Ok(r) => r,
-                Err(r) => r,
-            })
+        sse_physics::with(&physics, c, || match self.dispatch(req) {
+            Ok(r) => r,
+            Err(r) => r,
         })
     }
 
@@ -3395,6 +3404,13 @@ impl Kernel {
                             fictional_kinds: stack.fictional_kinds.iter().cloned().collect(),
                             adopted,
                         };
+                        let flows = std::sync::Arc::new(flows);
+                        self.physics = std::sync::Arc::new(sse_physics::Physics::build(
+                            &ms,
+                            Some(&stack),
+                            observe.reference.clone(),
+                            flows.clone(),
+                        ));
                         self.stack = Some((stack, flows));
                         self.reports = reports;
                         self.observe = observe;
