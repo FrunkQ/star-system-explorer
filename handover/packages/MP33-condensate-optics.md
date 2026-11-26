@@ -74,3 +74,25 @@ Read in Claude's built-in browser on the owner's PC, because the cloud's network
 - **Beta-S8, quenched red sulphur, S4.** Moses and Nash 1991 and Meyer et al. 1972 are paywalled. Trumbo 2022 gives no data location for them.
 - **`jupiter-chromophore`.** Carlson et al. 2016 (INAF open copy) and Sromovsky et al. 2017 (arXiv 1706.02779) show k only in figures (Carlson Fig. 3A, Sromovsky Fig. 6B). n = 1.4 is assumed in both. Neither paper names a data file.
 - **`nh4sh`.** ARIA and HITRAN have no NH4SH and no ammonia ice. The only n values found so far are model assumptions (Sato 2013: 1.85).
+
+## MP37: water ice ground, fine and coarse (26 Nov 2026)
+
+Asked by the Europa and Titan package (PR 628) and earlier by IG1: `ground_optics` took ice's colour from water's authored `condensed_colour_rgb` (0.95 at 550 nm). Read in Claude's built-in browser on the owner's PC. Every number was copied from a data file that was opened. Rows are `unverified` until the citation check reads the paper.
+
+| Id | What | Source |
+|---|---|---|
+| mixture `water-ice-fine` | `optical.reflectance`, reflectance factor (i 0, e 30) of pure spherical ice grains of about 70 µm at 100 K, 450 to 1000 nm every 50 nm. 0.982 at 550 nm. | Stephan et al. 2021, Minerals 11, 1328 (doi 10.3390/min11121328, CC BY). Data: SSHADE/CSS EXPERIMENT_OP_20201223_001, spectrum SPECTRUM_OP_20201223_301, read from `/plot/SPECTRUM_OP_20201223_301/1.micron.json.gz`. SHINE gonio radiometer, Spectralon calibration, vacuum, behind sapphire windows. |
+| mixture `water-ice-coarse` | The same for irregular grains of about 680 µm crushed from a slowly frozen slab. 0.814 at 550 nm. | Same experiment, spectrum SPECTRUM_OP_20201223_304. |
+
+The kernel's `ground_optics` (sse-surface `ice_ground.rs`) now reads `water-ice-fine` at 550 nm through the sheet's Look up, so ice ground goes from 0.95 to 0.982. Grain size is not modelled, so open ice is taken as fine fresh grains; the coarse row is on the sheet for a later grain-growth block. Fudge register row "sse-surface ice_ground.rs `ground_optics` (IG1)" updated.
+
+What this means for Europa: measured ice is brighter than the authored 0.95, not darker, so the ice colour does not explain Europa's tiles coming out above its measured geometric albedo of 0.68. Only coarse grains (0.81) would bring it down, and nothing yet says Europa's ice is coarse. The rest of the gap is the non-ice matter, the reflectance factor being used as an albedo, and the grain size.
+
+The renderer's `ground-rows.json` still draws ice from `h2o`'s n,k (Warren and Brandt 2008, as a Hapke grain layer). Pointing it at `water-ice-fine` is the renderer thread's choice.
+
+### Not sourced, searched 26 Nov
+
+- **USGS splib05a H2O-Ice GDS136** (frost grown on a 77 K cold finger, `ASCII/L/h2o_ice_gds136.9212.asc`): every row below 859 nm is printed as deleted, so it gives no visible colour. Its other ice files are melting snow. splib07a is on ScienceBase behind a bot check, and the old crustal.usgs.gov speclab pages redirect to usgs.gov.
+- **400 nm.** Stephan 2021's files start at 450 nm, and the 450 nm point is noisy (in the 70 µm sample it ranges from 0.94 to 1.05 across the eight temperatures). The table holds its first value below 450 nm.
+- **Few-micron frost.** The Bern SCITEAS spectra of 4.5 µm and 67 µm spherical ice (SSHADE EXPERIMENT_OP_20171130_001) are valid only from 700 nm, and their reflectance factor goes above 1 at their geometry, so they were not used.
+- **The JPL ECOSTRESS library** (frost and snow samples) did not load from the owner's PC.

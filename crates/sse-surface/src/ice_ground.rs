@@ -118,8 +118,10 @@ pub fn ice_ground(
 /// Fresh reflectance at 550 nm of the bare ground materials whose optics the
 /// master data sheet carries, read with its Look up: basalt from immature
 /// mare soil, regolith from mature highland soil over SW1's mature-over-fresh
-/// factor, ice from water's condensed colour, and the dark lag on old ice
-/// from mature mare soil.
+/// factor, ice from fine-grained water ice (MP37, Stephan et al. 2021: open
+/// ice is taken as fresh fine grains, since grain growth is not modelled; the
+/// sheet's `water-ice-coarse` is the sintered end), and the dark lag on old
+/// ice from mature mare soil.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct GroundOptics {
     pub basalt: f64,
@@ -163,19 +165,29 @@ pub fn ground_optics() -> GroundOptics {
     *ONCE.get_or_init(|| {
         let sheet = sse_reference::Reference::base();
         let mix = |id: &str| sheet.row("mixtures", id).and_then(|r| table_at(r, 550.0));
-        let ice = sheet.row("substances", "h2o").and_then(|r| {
-            r.get("optical")?
-                .get("condensed_colour_rgb")?
-                .get("v")?
-                .get(1)?
-                .as_f64()
-        });
         let k = sse_atoms::weathering::MATURE_OVER_FRESH[1];
         GroundOptics {
             basalt: mix("lunar-soil-immature-mare").unwrap_or(0.14),
             regolith: mix("lunar-soil-mature-highland").map_or(0.25, |x| x / k),
-            ice: ice.unwrap_or(0.95),
+            ice: mix("water-ice-fine").unwrap_or(0.98),
             dust: mix("lunar-soil-mature-mare").unwrap_or(0.057),
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn ice_ground_reads_the_sheets_measured_ice() {
+        // MP37: ice's reflectance comes from the sheet's measured fine-grained
+        // ice at 550 nm (0.982, Stephan et al. 2021), no longer from water's
+        // authored condensed colour (0.95).
+        let sheet = sse_reference::Reference::base();
+        let row = sheet
+            .row("mixtures", "water-ice-fine")
+            .expect("on the sheet");
+        let go = super::ground_optics();
+        assert_eq!(super::table_at(row, 550.0), Some(go.ice));
+        assert!(go.ice > 0.95 && go.ice < 1.0, "{}", go.ice);
+    }
 }

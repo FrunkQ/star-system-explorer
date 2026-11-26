@@ -900,6 +900,9 @@ for _m in optical_rows.apply(MIXTURES):
 for _m in optical_rows.sulphur_rows(MIXTURES):
     MIXTURES.append(_m)
 optical_rows.apply_ices(SUBSTANCES, val)
+# MP37: water ice ground, fine and coarse grains (scripts/optical_rows.py, ice_rows).
+for _m in optical_rows.ice_rows(MIXTURES):
+    MIXTURES.append(_m)
 
 
 def elements():
