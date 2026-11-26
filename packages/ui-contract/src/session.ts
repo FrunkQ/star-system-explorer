@@ -65,7 +65,7 @@ import type { LookedAhead, SystemSpec } from "./fate.ts";
 
 export type IntentResult =
   /** For a stack change the kernel chronicles a `stack.adopt` event; `view` is the data view a scan_toggle left in force. */
-  | { status: "applied"; event_id: string; state_hash: string; affected: string[]; view?: string | null }
+  | { status: "applied"; event_id: string; state_hash: string; affected: string[]; view?: string | null; reply?: Record<string, Json> }
   | { status: "pending"; intent: Intent }
   | { status: "refused"; reason: string }
   | { status: "error"; code: string; message: string };
@@ -221,6 +221,10 @@ export interface ViewSession {
   /** Candidate courses (V8, kernel `plan_route`, T3): from an inline system any seat may ask about; an adopted `system` is GM only. Writes nothing. */
   planRoute(ask: import("./route.ts").RouteAsk): Promise<{ ok: true; plan: import("./route.ts").RoutePlan } | { ok: false; code: string; message: string }>;
   /** What a ship can do at each of some worlds (kernel `ship_at_world`): aerocapture, entry, landing, take-off, with dangers, margins and rough chances; nothing rolled. An adopted `system` is GM only. Writes nothing. */
+  /** V8 flight log: write one entry of a construct's log on the record (GM only). */
+  logFlight(ask: { construct: string; at_s: number } & ({ piece: Json } | { event: Json } | { name?: string; about?: string } | { withdraw: string })): Promise<{ ok: true; event_id: string; seeded: string[]; notes: string[] } | { ok: false; code: string; message: string }>;
+  /** V8 flight log: a construct's log as written, and with `where_at` and a system, where the craft was then (GM only). */
+  flightLog(ask: { construct: string; at_s?: number; where_at?: number; fixture?: string; nav?: unknown; system?: string }): Promise<{ ok: true; log: Json; entries: Json[]; at?: Json } | { ok: false; code: string; message: string }>;
   shipAtWorld(ask: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: import("./ship-at-world.ts").ShipAtWorldReport } | { ok: false; code: string; message: string }>;
   /** One galaxy grown from the universe's seed (U6, kernel `galaxy_chart`, G1 to G4). Read only; GM only. */
   galaxyChart(ask: import("./galaxy.ts").GalaxyAsk): Promise<{ ok: true; chart: import("./galaxy.ts").GalaxyChart } | { ok: false; code: string; message: string }>;
@@ -285,7 +289,7 @@ export interface ViewSession {
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
   /** The kernel `weather` op: a fixture `world`, or a `body` of an adopted `system` at `at_s`; `want` picks climate, systems, field (a cube-sphere `tile`), report, column or sound, at `day` (days since the campaign epoch). */
   /** Y2: the stars seen from a place at a time down to a limiting magnitude (kernel `sky_from_here`); read only. */
-  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
+  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
   /** Y3: the light of every star the sky draw leaves out, as a HEALPix map per band (kernel `sky_glow`); read only. */
   skyGlow(ask: Omit<SkyAsk, "observer"> & { nside?: number }): Promise<{ ok: true; glow: Json } | { ok: false; code: string; message: string }>;
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
@@ -570,10 +574,18 @@ export class Session implements ViewSession {
     return this.#apply(intent);
   }
 
-  async #apply(intent: Intent): Promise<IntentResult> {
-    const r = await this.#applyRaw(intent);
-    if (r.status === "applied") for (const l of [...this.#listeners]) l(intent, r);
-    return r;
+  // Intents apply one at a time, in the order they were sent: each one's state hash is the state after it, so two
+  // sent together (a flight log entry and a tank level) must not interleave, or the players' copy replays them in a
+  // different order from the one the hashes were taken in and falls out of step.
+  #applying: Promise<unknown> = Promise.resolve();
+  #apply(intent: Intent): Promise<IntentResult> {
+    const run = this.#applying.then(async () => {
+      const r = await this.#applyRaw(intent);
+      if (r.status === "applied") for (const l of [...this.#listeners]) l(intent, r);
+      return r;
+    });
+    this.#applying = run.catch(() => undefined);
+    return run;
   }
 
   async #applyRaw(intent: Intent): Promise<IntentResult> {
@@ -599,6 +611,10 @@ export class Session implements ViewSession {
     }
     if (r.type === "authored")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
+    if (intent.kind === "record" && r.type !== "error") {
+      const address = String((intent.ask as { construct?: string; address?: string }).construct ?? (intent.ask as { address?: string }).address ?? "");
+      return { status: "applied", event_id: String(r.event_id ?? r.change_id ?? ""), state_hash: String(r.state_hash ?? (await this.stateHash())), affected: address ? [address] : [], reply: r as Record<string, Json> };
+    }
     if ((intent.kind === "set_known" || intent.kind === "undo_known") && (r.type === "known_set" || r.type === "known_undone"))
       return { status: "applied", event_id: String(r.undo ?? r.event_id ?? ""), state_hash: String(r.state_hash ?? (await this.stateHash())), affected: intent.kind === "set_known" ? [intent.address] : [] };
     if (r.type === "error") return { status: "error", code: String(r.code), message: String(r.message) };
@@ -796,6 +812,20 @@ export class Session implements ViewSession {
     return r.type === "route_planned" ? { ok: true, plan: (r as unknown as { plan: import("./route.ts").RoutePlan }).plan } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  async logFlight(ask: { construct: string; at_s: number } & ({ piece: Json } | { event: Json } | { name?: string; about?: string } | { withdraw: string })): Promise<{ ok: true; event_id: string; seeded: string[]; notes: string[] } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "flight logs are written on the game master's machine" };
+    const w = await this.#record("log_flight", { ...ask, at_s: Math.round(ask.at_s) });
+    if (!w.ok) return w;
+    const r = w.reply;
+    return r.type === "flight_logged" ? { ok: true, event_id: String(r.event_id), seeded: (r.seeded as string[]) ?? [], notes: (r.notes as string[]) ?? [] } : { ok: false, code: "unexpected", message: JSON.stringify(r) };
+  }
+
+  async flightLog(ask: { construct: string; at_s?: number; where_at?: number; fixture?: string; nav?: unknown; system?: string }): Promise<{ ok: true; log: Json; entries: Json[]; at?: Json } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "flight logs are read on the game master's machine" };
+    const r = await this.#call({ op: "flight_log", ...ask } as Json);
+    return r.type === "flight_log_is" ? { ok: true, log: r.log as Json, entries: (r.entries as Json[]) ?? [], ...(r.at !== undefined ? { at: r.at as Json } : {}) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async shipAtWorld(ask: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: import("./ship-at-world.ts").ShipAtWorldReport } | { ok: false; code: string; message: string }> {
     if (ask.system !== undefined && this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master judges a ship against a system's full record" };
     const r = await this.#call({ op: "ship_at_world", ...ask });
@@ -833,7 +863,7 @@ export class Session implements ViewSession {
     return { ok: true, frames: f.frames, label: f.label, source: f.source };
   }
 
-  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
+  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number; galaxies?: boolean; stars?: boolean }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "sky_from_here", ...ask } as Json);
     return r.type === "sky" ? { ok: true, sky: (r as unknown as { sky: Json }).sky } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
@@ -928,34 +958,43 @@ export class Session implements ViewSession {
     return r.type === "templates_listed" ? { ok: true, templates: (r as unknown as { templates: import("./constructs.ts").ConstructTemplate[] }).templates } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  /** A record write as a `record` intent (it travels to players' screens): the kernel's reply, or why not. */
+  async #record(op: import("./intent.ts").RecordOp, ask: Record<string, unknown>): Promise<{ ok: true; reply: Record<string, Json> } | { ok: false; code: string; message: string }> {
+    const plain = Object.fromEntries(Object.entries(ask).map(([k, v]) => [k, typeof v === "bigint" ? Number(v) : v])) as Json;
+    const res = await this.send({ kind: "record", op, ask: plain });
+    if (res.status === "applied") return { ok: true, reply: res.reply ?? {} };
+    return { ok: false, code: res.status === "error" ? res.code : res.status, message: res.status === "error" ? res.message : res.status === "refused" ? res.reason : "waiting for the game master" };
+  }
+
   async createFrom(ask: { template: string; under: string; key?: string; name?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./constructs.ts").Created } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "ships and stations are made on the game master's machine" };
-    const r = await this.#call({ op: "create", template: ask.template, under: ask.under, ...(ask.key ? { key: ask.key } : {}), ...(ask.name ? { name: ask.name } : {}), at_s: ask.at_s ?? 0 });
-    return r.type === "created" ? { ok: true, result: r as unknown as import("./constructs.ts").Created } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const w = await this.#record("create", { template: ask.template, under: ask.under, ...(ask.key ? { key: ask.key } : {}), ...(ask.name ? { name: ask.name } : {}), at_s: ask.at_s ?? 0 });
+    return !w.ok ? w : w.reply.type === "created" ? { ok: true, result: w.reply as unknown as import("./constructs.ts").Created } : { ok: false, code: "unexpected", message: JSON.stringify(w.reply) };
   }
 
   async retire(address: string, reason?: string, at_s?: number | bigint): Promise<{ ok: true; event_id: string } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master takes things out of play" };
-    const r = await this.#call({ op: "retire", address, ...(reason ? { reason } : {}), at_s: at_s ?? 0 });
-    return r.type === "retired" ? { ok: true, event_id: String(r.event_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const w = await this.#record("retire", { address, ...(reason ? { reason } : {}), at_s: at_s ?? 0 });
+    return !w.ok ? w : w.reply.type === "retired" ? { ok: true, event_id: String(w.reply.event_id) } : { ok: false, code: "unexpected", message: JSON.stringify(w.reply) };
   }
 
   async addNote(n: { address: string; text: string; audience: "everyone" | "gm" | string[]; tags?: string[]; narrative?: boolean; supersedes?: string; at_s?: number | bigint }): Promise<{ ok: true; note_id: string } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the game master writes the record; seats ask" };
-    const r = await this.#call({ op: "add_note", address: n.address, text: n.text, audience: n.audience, ...(n.tags?.length ? { tags: n.tags } : {}), ...(n.narrative ? { narrative: true } : {}), ...(n.supersedes ? { supersedes: n.supersedes } : {}), at_s: n.at_s ?? 0 });
-    return r.type === "note_added" ? { ok: true, note_id: String(r.note_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const w = await this.#record("add_note", { address: n.address, text: n.text, audience: n.audience, ...(n.tags?.length ? { tags: n.tags } : {}), ...(n.narrative ? { narrative: true } : {}), ...(n.supersedes ? { supersedes: n.supersedes } : {}), at_s: n.at_s ?? 0 });
+    return !w.ok ? w : w.reply.type === "note_added" ? { ok: true, note_id: String(w.reply.note_id) } : { ok: false, code: "unexpected", message: JSON.stringify(w.reply) };
   }
 
   async addActor(a: { id: string; name: string; kind: string; parent?: string; at_s?: number | bigint }): Promise<{ ok: true; address: string } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the game master writes the record; seats ask" };
-    const r = await this.#call({ op: "add_actor", id: a.id, name: a.name, kind: a.kind, ...(a.parent ? { parent: a.parent } : {}), at_s: a.at_s ?? 0 });
-    return r.type === "actor_added" ? { ok: true, address: String(r.address) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const w = await this.#record("add_actor", { id: a.id, name: a.name, kind: a.kind, ...(a.parent ? { parent: a.parent } : {}), at_s: a.at_s ?? 0 });
+    return !w.ok ? w : w.reply.type === "actor_added" ? { ok: true, address: String(w.reply.address) } : { ok: false, code: "unexpected", message: JSON.stringify(w.reply) };
   }
 
   async setKept(k: { address: string; kind: string; value: Json | null; reason?: string; at_s?: number | bigint }): Promise<{ ok: true; change_id: string } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the game master writes the record; seats ask" };
-    const r = await this.#call({ op: "set_kept", address: k.address, kind: k.kind, value: k.value, ...(k.reason ? { reason: k.reason } : {}), at_s: k.at_s ?? 0 });
-    return r.type === "kept_set" ? { ok: true, change_id: String(r.change_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const w = await this.#record("set_kept", { address: k.address, kind: k.kind, value: k.value, ...(k.reason ? { reason: k.reason } : {}), at_s: k.at_s ?? 0 });
+    if (!w.ok) return w;
+    return w.reply.type === "kept_set" ? { ok: true, change_id: String(w.reply.change_id) } : { ok: false, code: "unexpected", message: JSON.stringify(w.reply) };
   }
 
   async record(address: string, at_s?: number | bigint): Promise<{ ok: true; record: import("./constructs.ts").RecordRead } | { ok: false; code: string; message: string }> {

@@ -3,9 +3,16 @@
   space that day grouped by place, craft and person. A look-up over flight logs and stays (ui-contract rollcall.ts); it
   writes nothing. Restraint (design 8.1, standing): names as the record gives them, plain words, no decoration.
 -->
+<script lang="ts" module>
+  // Once per page: a panel mounted again (the system in view changing under it, as the front door opens Sol) must not
+  // move a day the GM has already chosen.
+  let opened = false;
+</script>
+
 <script lang="ts">
   import { untrack } from "svelte";
   import InMemory from "./InMemory.svelte";
+  import CountStrip from "./CountStrip.svelte";
   import { countSteps, onThisDay, rollRecords, sayNumber, lossesOn, dateOf, epochOf, formatDate, parseDate, rollCall, rollSentence, secondsToYears, stepEvent, yearsToSeconds, type RollCall as Roll, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { openCampaign, openPack, packFolder, type RollFeed } from "./feed.ts";
 
@@ -15,7 +22,6 @@
   let feed = $state<RollFeed | null>(null);
   let problem = $state<string | null>(null);
   let revision = $state(0);
-  let opened = false;
 
   $effect(() => {
     const sys = scene.system;
@@ -75,6 +81,8 @@
   // In memory (SH6): the page of names, opened from here; the day of a loss names it under the roster (design 8.4).
   let page = $state<"roll" | "memory">("roll");
   const losses = $derived(feed?.memory ? lossesOn(feed.memory, dayFrom, dayTo) : []);
+  // Every day of a loss, for the count's hollow marks (SH3, design 4.5).
+  const lossTimes = $derived(feed?.memory ? [...new Set(feed.memory.parts.flatMap((p) => p.losses.map((l) => l.at_s)))] : []);
 
   // Records and On this day (SH5, design 4.3 and 4.6): questions over the same stays and count, each with its how.
   const steps = $derived(feed ? (feed.steps ?? countSteps(feed.ix)) : []);
@@ -128,6 +136,9 @@
       <h2><button class="date" onclick={startTyping} title="Type a date" data-rollcall-date>{title}</button></h2>
     {/if}
     <p class="sentence" data-rollcall-sentence>{sentence}</p>
+    {#if feed.span && steps.length}
+      <CountStrip {steps} from_s={Math.min(feed.span.from_s, ...lossTimes)} to_s={feed.span.to_s} at_s={t} losses={lossTimes} dateText={dateOfS} ongo={go} />
+    {/if}
 
     <div class="steps" role="group" aria-label="Move through time">
       <button onclick={() => event(-1)} data-rollcall-step="event-back">‹ Event</button>

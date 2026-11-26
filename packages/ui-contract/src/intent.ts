@@ -35,6 +35,13 @@ export type Intent =
    */
   | { kind: "adopt"; source: { import_v3: string } | { formation: Json }; occurred_at_s?: number }
   /**
+   * A write to the record that is not a field: a flight log entry, a kept value (fuel, readiness), a construct made
+   * from a template or taken out of play, a person or cargo added, a note. An intent so it
+   * travels to players' screens like every other change: written straight to the kernel, the players' copy fell out of
+   * step with the GM's at the next change and stopped following (party run-through, 24 Nov). GM only.
+   */
+  | { kind: "record"; op: RecordOp; ask: Json }
+  /**
    * Grant an audience a data view of one subject and everything under it
    * (K9 grant, chronicled as observe.grant: "Vesh learned Tarn"). `view`
    * null takes the grant back, so the subject falls back to its parent, its
@@ -77,8 +84,11 @@ export type Intent =
   | { kind: "set_known"; address: string; audience: string; landmark: import("./known.ts").Landmark | null; field?: string; scope: import("./known.ts").KnownScope; from_yr?: number; at_yr: number; at_s?: string };
 
 export type IntentKind = Intent["kind"];
+/** The record writes the `record` intent carries (each a kernel op). */
+export const RECORD_OPS = ["log_flight", "set_kept", "create", "retire", "add_actor", "add_note"] as const;
+export type RecordOp = (typeof RECORD_OPS)[number];
 
-export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant", "set_values", "withdraw", "restore", "rename", "set_naming", "set_known", "undo_known", "adopt"];
+export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant", "set_values", "withdraw", "restore", "rename", "set_naming", "set_known", "undo_known", "adopt", "record"];
 
 /** Machine-readable description of an intent a view may send (H8.1 `intents`). */
 export interface IntentSchema {
@@ -116,6 +126,11 @@ export function secondsToYears(s: number | bigint): number {
 
 /** Why an intent is malformed, or null when it is well formed. */
 export function checkIntent(i: Intent): string | null {
+  if (i.kind === "record") {
+    if (!(RECORD_OPS as readonly string[]).includes(i.op)) return `record writes are ${RECORD_OPS.join(" or ")}`;
+    if (!i.ask || typeof i.ask !== "object" || Array.isArray(i.ask) || "op" in (i.ask as object)) return "a record write's ask is an object without its own op";
+    return null;
+  }
   if (i.kind === "adopt") {
     const src = i.source as Record<string, unknown> | null;
     if (!src || typeof src !== "object") return "adopt needs a source";
@@ -224,6 +239,7 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
   if (i.kind === "rename") return { op: "rename" as const, address: i.address, layer: i.layer, ...(i.text !== null ? { text: i.text.trim() } : {}), at_s: yearsToSeconds(i.at_yr) };
   if (i.kind === "set_naming")
     return { op: "set_naming" as const, address: i.address, layer: i.layer, ...(i.scheme !== null ? { scheme: i.scheme } : {}), ...(i.of_kind ? { kind: i.of_kind } : {}), ...(i.rename_fixed ? { rename_fixed: true } : {}), at_s: yearsToSeconds(i.at_yr) };
+  if (i.kind === "record") return { op: i.op, ...(i.ask as Record<string, Json>) };
   if (i.kind === "adopt") return { op: "adopt" as const, ...(i.source as Record<string, Json>), ...(i.occurred_at_s !== undefined ? { occurred_at_s: i.occurred_at_s } : {}) };
   if (i.kind === "undo_known") return { op: "undo_known" as const, undo: i.undo, at_s: i.at_s !== undefined ? BigInt(i.at_s) : yearsToSeconds(i.at_yr) };
   if (i.kind === "set_known")

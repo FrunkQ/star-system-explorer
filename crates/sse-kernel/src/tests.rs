@@ -4120,3 +4120,20 @@ fn read_shadow_light_colours_an_eclipse() {
     let e: serde_json::Value = serde_json::from_str(&k.handle_json(&bad.to_string())).unwrap();
     assert_eq!(e["code"], "bad_shadow", "{e}");
 }
+
+#[test]
+fn describe_star_reads_one_star_from_the_formation_life_line() {
+    let mut k = crate::Kernel::new();
+    let r: serde_json::Value = serde_json::from_str(&k.handle_json(
+        &serde_json::json!({"op": "describe_star", "mass_msun": 1.0, "age_yr": 4.57e9}).to_string(),
+    ))
+    .unwrap();
+    assert_eq!(r["type"], "star_described", "{r}");
+    assert_eq!(r["star"]["now"]["phase"], "main-sequence");
+    assert_eq!(r["star"]["remnant"]["phase"], "white-dwarf");
+    let bad: serde_json::Value = serde_json::from_str(&k.handle_json(
+        &serde_json::json!({"op": "describe_star", "mass_msun": 0.001, "age_yr": 1.0}).to_string(),
+    ))
+    .unwrap();
+    assert_eq!(bad["code"], "bad_star", "{bad}");
+}

@@ -11,23 +11,47 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { Overlays } from "../../../chart-grammar/src/index.ts";
-  import { MINIMISE_WORDS, VOYAGE_CONTROLS, DEFAULT_VIEW, overlaysFor, overlaySpecsOf, viewOptions, VOYAGE_SHIPS, shipChoices, shipToSend, agesWords, systemShort, voyageFrame, voyageSpan, powerWords, nowhereWords, type Json, type Minimise, type StarCell, type SystemScene, type ViewContext, type VoyagePlan } from "../../../ui-contract/src/index.ts";
+  import { MINIMISE_WORDS, VOYAGE_CONTROLS, DEFAULT_VIEW, overlaysFor, overlaySpecsOf, viewOptions, VOYAGE_SHIPS, shipChoices, shipToSend, agesWords, systemShort, voyageFrame, voyageSpan, powerWords, nowhereWords, withPartyChoice, partyShipNow, systemOfPlace, voyageLogEntries, voyageFuelWrites, tanksWords, fuelGauges, FUEL_FIELDS, PARTY_CHOICE, YEAR_S, type FuelShip, type NavShip, type Json, type Minimise, type StarCell, type SystemScene, type ViewContext, type VoyagePlan } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
-  const first = untrack(() => ({ ship: String(params.ship ?? "jump-courier"), minimise: String(params.minimise ?? "home_time"), gambles: params.gambles === true }));
+  // The party's ship (landing run-through): picked first when the campaign has one; it flies from the system it is in.
+  const party = $derived(ctx.workspace.party ?? null);
+  const first = untrack(() => ({ ship: ctx.workspace.party ? PARTY_CHOICE : String(params.ship ?? "jump-courier"), minimise: String(params.minimise ?? "home_time"), gambles: params.gambles === true }));
 
   let ship = $state(first.ship);
   // Ships the stacked packs list (the Traveller pack's standard ships) beside the stock ones; a pack ship goes whole.
   const choices = $derived.by(() => {
     void ctx.workspace.revision;
     const st = ctx.session.stack();
-    return shipChoices(VOYAGE_SHIPS, [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof shipChoices>[1]);
+    return withPartyChoice(shipChoices(VOYAGE_SHIPS, [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof shipChoices>[1]), party);
   });
   $effect(() => {
     if (!choices.some((c) => c.id === ship)) ship = "jump-courier";
   });
   const shipInfo = $derived(choices.find((c) => c.id === ship) ?? choices.find((c) => c.id === "jump-courier") ?? choices[0]);
-  const sending = $derived(shipInfo ? shipToSend(shipInfo) : ship);
+  const flyingParty = $derived(shipInfo?.id === PARTY_CHOICE && !!party);
+  const gm = $derived(ctx.session.seat.authority === "gm");
+  // The party's ship flies with what is in its tanks now (fuel gauges): read on the GM's seat, full on a player's.
+  let tanksShip = $state.raw<FuelShip | null>(null);
+  let tanksGen = 0;
+  async function readTanks() {
+    const p = party;
+    const g = ++tanksGen;
+    if (!p || !gm || !ctx.session.record) return void (tanksShip = null);
+    const now = await partyShipNow(ctx.session, p);
+    if (g === tanksGen) tanksShip = now;
+  }
+  $effect(() => {
+    void party?.ship;
+    void party?.nav;
+    void gm;
+    untrack(() => void readTanks());
+  });
+  const sending = $derived(flyingParty && party ? ((tanksShip as unknown as NavShip | null) ?? party.nav) : shipInfo ? shipToSend(shipInfo) : ship);
+  const nowS = () => {
+    const c = (ctx.workspace as { campaign_now_yr?: number }).campaign_now_yr;
+    return typeof c === "number" && Number.isFinite(c) ? c * Number(YEAR_S) : 0;
+  };
   let minimise = $state<Minimise>((MINIMISE_WORDS.some((m) => m.id === first.minimise) ? first.minimise : "home_time") as Minimise);
   let gambles = $state(first.gambles);
   let mode = $state<"explore" | "to">("explore");
@@ -58,7 +82,11 @@
     const byMid = [...r.cell.systems].sort((a, b) => d(a.xyz_pc) - d(b.xyz_pc));
     const start = byMid.find((s) => near(s.xyz_pc)) ?? byMid[0];
     if (!start) return void (failed = "this cell holds no stars");
-    home = from = start.address;
+    // The party's ship starts where it is, when that is a star of this cell.
+    const at = untrack(() => (ctx.workspace.party ? systemOfPlace(ctx.workspace.party.at) : null));
+    const partyStar = at ? r.cell.systems.find((s) => s.address === at) : undefined;
+    home = from = (partyStar ?? start).address;
+    if (partyStar) return void ((visited = [partyStar.address]), (knownFuel = { [partyStar.address]: ["port"] }));
     visited = [start.address];
     knownFuel = { [start.address]: ["port"] };
   });
@@ -79,8 +107,7 @@
   });
 
   const v = $derived(plan?.voyage ?? null);
-  // The ship's power books (RK9): on the GM's seat only, beside the honesty marks.
-  const gm = $derived(ctx.session.seat.authority === "gm");
+  // The ship's power books (RK9): on the GM's seat only, beside the honesty marks (gm above).
   const stars = $derived.by(() => {
     const out = new Map<string, { address: string; xyz_pc: readonly number[]; fuel: string[]; odds?: number }>();
     if (!plan) for (const s of cell?.systems ?? []) out.set(s.address, { address: s.address, xyz_pc: s.xyz_pc, fuel: knownFuel[s.address] ?? [] });
@@ -106,8 +133,41 @@
     picked = a;
     if (mode === "to" && a !== from) to = a;
   }
+  // Flying the party's ship: it is there now, the flight goes in its flight log and the tanks are drawn down.
+  let arrived = $state<string | null>(null);
+  let logged = $state<string | null>(null);
+  let drawn = $state<string | null>(null);
+  async function flyParty(voyage: NonNullable<typeof v>) {
+    const p = party;
+    if (!p || !ctx.workspace.setParty) return;
+    const at_s = nowS();
+    const c = (ctx.workspace as { campaign_now_yr?: number }).campaign_now_yr;
+    ctx.workspace.setParty({ ...$state.snapshot(p), at: voyage.to, voyage: { from: voyage.from, to: voyage.to, days: voyage.home_days, ...(typeof c === "number" ? { depart_yr: c } : {}) } } as typeof p);
+    arrived = voyage.to;
+    logged = drawn = null;
+    let n = 0;
+    for (const e of voyageLogEntries({ voyage }, [], at_s)) {
+      const r = await ctx.session.logFlight({ construct: p.ship, at_s, ...e });
+      if (!r.ok) {
+        logged = `Not written to the flight log: ${r.message}`;
+        break;
+      }
+      n++;
+    }
+    if (!logged) logged = `${n} entr${n === 1 ? "y" : "ies"} written to ${p.name}'s flight log.`;
+    if (tanksShip && ctx.session.setKept) {
+      const writes = voyageFuelWrites(voyage, fuelGauges(tanksShip, () => undefined).map((g) => g.tank), name(voyage.to));
+      for (const w of writes) {
+        const r = await ctx.session.setKept({ address: p.ship, ...w, at_s });
+        if (!r.ok) return void (drawn = `Tanks not updated: ${r.message}`);
+      }
+      drawn = tanksWords(writes);
+      await readTanks();
+    }
+  }
   function nextStop() {
     if (!v) return;
+    if (flyingParty) void flyParty($state.snapshot(v) as NonNullable<typeof v>);
     const stops = v.legs.map((l) => l.to);
     visited = [...visited, ...stops.filter((s) => !visited.includes(s))];
     // A refuel stop the plan used is now known for certain.
@@ -196,6 +256,9 @@
     <div class="ledger" data-voyage-ledger>
       {#if failed}<p class="warn" data-failed>{failed}</p>{/if}
       {#if busy && !plan}<p class="muted">Charting…</p>{/if}
+      {#if arrived && arrived === from}<p data-arrived>{party?.name} is at {name(arrived)}.</p>{/if}
+      {#if logged && arrived === from}<p class="muted" data-logged>{logged}</p>{/if}
+      {#if drawn && arrived === from}<p class="muted" data-drawn>{drawn}</p>{/if}
       {#if plan && !v}
         <h3>No voyage</h3>
         {#each plan.refusals as r, i (i)}<p class="warn" data-refusal>{r}</p>{/each}
@@ -230,7 +293,7 @@
             </li>
           {/each}
         </ol>
-        <button type="button" class="go" data-next onclick={nextStop}>{mode === "explore" ? "Next stop: go there" : "Arrive there"}</button>
+        <button type="button" class="go" data-next onclick={nextStop}>{flyingParty ? `Fly ${party?.name} there` : mode === "explore" ? "Next stop: go there" : "Arrive there"}</button>
         {#if visited.length > 1}<button type="button" class="quiet-btn" data-restart onclick={restart}>Back to the start</button>{/if}
       {/if}
       {#if pickedStar}
