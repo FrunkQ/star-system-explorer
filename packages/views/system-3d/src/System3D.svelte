@@ -73,7 +73,7 @@
     /** True look: each world's plume facts by body id (the kernel's surface record, plumes.ts), when it has any. */
     plumes?: ReadonlyMap<string, PlumeFacts>;
     /** True look: each world's air, by body id (renderer true-air.ts `readTrueFace`): its clouds alone, drawn over its ground, and its air's rim (VP-A3, VP-A4). */
-    airs?: ReadonlyMap<string, { ground?: TrueTexture; clouds?: TrueTexture; air?: AirShape; flatten?: number }>;
+    airs?: ReadonlyMap<string, { ground?: TrueTexture; clouds?: TrueTexture; air?: AirShape; flatten?: number; sea?: { slope_variance: number; normal_reflectance: number } }>;
     /** True look: the light each body's air bends into its shadow on another (renderer eclipse-read.ts `readUmbras`), by `umbraKey(caster, receiver)`; none, a black umbra. */
     umbras?: ReadonlyMap<string, [number, number, number]>;
     /** True look: the star's colour (its surface temperature's, as a CSS colour). */
@@ -225,12 +225,13 @@
     if (!a || !centreBody) return;
     // Its world first comes to the centre (the frame it is drawn in), then the camera goes where it was.
     if (a.about !== centreBody.id) {
-      if (byId(a.about)) untrack(() => ((flying += 1), (frame = a.about)));
+      if (byId(a.about)) untrack(() => ((flying += 1), (tweening = false), (frame = a.about)));
       return;
     }
     if (!(centreR > 0)) return;
     untrack(() => {
       flying += 1;
+      tweening = false;
       const o = orbitOf(a.dir, a.radii, centreR);
       yaw = o.yaw;
       pitch = o.pitch;
@@ -242,6 +243,8 @@
   });
 
   function enter(id: string) {
+    flying += 1; // a fly-in still under way stops here, or it would drag the camera on in the new frame
+    tweening = false;
     frame = id;
     dist = 26;
     onselect(id);
@@ -251,6 +254,10 @@
   // to the body's own while the eye is close, and the camera eases back out to show it with its moons. Two short
   // moves that read as one; no motion when the person asks for less.
   let flying = 0;
+  // Whether a fly-in is under way, from the first move to the last, said on the chart (data-flying) so a test can wait
+  // for it to finish rather than guess from the camera holding still.
+  let tweening = $state(false);
+  let flights = 0;
   const easeIn = (u: number) => u * u * u;
   const easeOut = (u: number) => 1 - (1 - u) ** 3;
   function tweenCam(to: { pan: [number, number]; dist: number }, ms: number, ease: (u: number) => number): Promise<boolean> {
@@ -295,15 +302,27 @@
       await litTurn(id);
       return;
     }
-    const near = Math.max(MIN, Math.min(3, dist / 6));
-    if (!(await tweenCam({ pan: [node.local[0], node.local[1]], dist: near }, 380, easeIn))) return;
-    frame = id;
-    pan = [0, 0];
-    dist = 2.5;
-    await litTurn(id);
-    await tweenCam({ pan: [0, 0], dist: closeDist(id) }, 620, easeOut);
+    const flight = ++flights;
+    tweening = true;
+    try {
+      const near = Math.max(MIN, Math.min(3, dist / 6));
+      if (!(await tweenCam({ pan: [node.local[0], node.local[1]], dist: near }, 380, easeIn))) return;
+      frame = id;
+      pan = [0, 0];
+      dist = 2.5;
+      const at = flying;
+      await litTurn(id);
+      if (at !== flying) return; // stopped (‹ back, a zoom across frames) while it turned to the light
+      await tweenCam({ pan: [0, 0], dist: closeDist(id) }, 620, easeOut);
+    } finally {
+      if (flight === flights) tweening = false;
+    }
   }
   function leave() {
+    // Coming back out stops a fly-in still under way: left running, it carried on setting the camera after the frame
+    // changed, so a quick "‹ back" (or a slow device) left the view part-way into a close-up of the frame just left.
+    flying += 1;
+    tweening = false;
     const back = centreId;
     frame = byId(centreId)?.parent && byId(centreId)!.parent !== root ? byId(centreId)!.parent : null;
     dist = 26;
@@ -703,7 +722,7 @@
             const pf = visible ? plumes.get(b.id) : undefined;
             const toLight = lightOf(b);
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(a?.sea ? { sea: a.sea } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
             const shade = emit === undefined && !isStar ? shadeOf(b) : null;
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}), ...(shade ? { shade } : {}) };
           });
@@ -967,6 +986,7 @@
   data-scale={realScale ? "real" : "readable"}
   data-hud={overlay ? "on" : "off"}
   data-dist={Math.round(dist * 1000) / 1000}
+  data-flying={tweening ? "yes" : undefined}
   class:true-look={isTrue && using === "gpu"}
 >
   <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true" data-quality={quality || undefined}></canvas>
