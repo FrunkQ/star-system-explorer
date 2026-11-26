@@ -16,6 +16,7 @@ Scope (Alex, 23 Nov): the manifest and crew are general, game-neutral tools now;
 | MC6 (PR 455, merged 24 Nov): the Log says what each Build change changed ("Changed: Jump drive 2 → 3; Design changed"): kernel `history` takes `changes: true` and gives each event's fact changes at that address (pictures named, not sent); `shipLog` words them from → to | done | packages/MC6-log-refits.md |
 | MC7: the Log reads the ship's flights from its flight log (travel V8): one line per voyage ("Flew Earth to Mars (108 days) · planned"), and launches, burns, flybys, landings, splits, joins, refuels, loads; `flightLines`, `LOG_RANK`; `tests/ui/manifest.e2e.mjs` added to CI's ui job | merged in the MC7 and MC8 PR (see the package log) | packages/MC7-log-flights.md |
 | MC8: a players' card for the party's ship (`PartyShipCard`, opened from the players' header line): picture, crew and manifest the table knows, tanks; read from the seat's own scene (`seenAboard`); read only | merged in the MC7 and MC8 PR (see the package log) | packages/MC8-party-ship-card.md |
+| MC9: life support read as two headings, **Air** and **Supplies**, each as days left (a heading lasts as long as its first store to run out); oxygen, water and food kept beneath them at Science and Engine; headings are pack data (`life_support.headings`) | done (this PR) | packages/MC9-air-and-supplies.md |
 
 ## Alex's rulings for this track (so they live in the repo, not only in the thread)
 
@@ -28,7 +29,7 @@ Scope (Alex, 23 Nov): the manifest and crew are general, game-neutral tools now;
 
 ## Open questions for Alex (each with the track's recommendation; built on the recommendation meanwhile)
 
-1. The six crew questions of 23 Nov (aboard is one kind of thing for people and cargo; kinds of being never assumed human; own age that stops in cold sleep; life support from the stores aboard; damage only through readiness; players learn of entries through Known to): no answer yet; all built as recommended.
+1. Answered 26 Nov: the six crew questions of 23 Nov are all good as built. Alex added: V3 had a single "days supply"; SSE4 should have "air" and "supplies" as the two main ones. Built as MC9.
 2. Should players see a ship's pictures once the ship is shown to them? Recommended yes, through the same Known to eye. Built that way for the party's ship (MC8).
 
 ## Next

@@ -1,13 +1,13 @@
 // The handles row and the strip (ED1, editing design sections 1 to 3), in a real browser against the built shell
 // (scripts/build-shell.sh first). Usage: node tests/ui/editing.e2e.mjs [--screens <dir>]
 // Open the Solar System, pick Mars. On Explore its card shows the six handles with the kernel's figures, and the
-// Orbit strip opens read-only with the reference worlds. On Build, typing "1 AU" in the strip is one change: the
+// Orbit strip opens with the reference worlds, live as a try. On Build, typing "1 AU" in the strip is one change: the
 // handle says 1 AU, the card lists what followed (Mars warms), the state hash moves, and Undo puts it back. Dragging
 // the mark and letting go is one change too; Esc while dragging writes nothing. On a phone nothing runs off the side.
 // ED12, the Orbit and Spin boxes at Science depth: the year and the stability verdict under the orbit; a year typed on
 // the size strip is the distance with that year; Retrograde mirrors the lean past 90 degrees; the place now is a ring
 // that catches at the far point; Locked sets the day to the year and the sun's day says so; each one change, one Undo.
-// ED7: on Explore, "Try changing it" opens an example what-if where the strip moves and the main line does not; on
+// TM4: on Explore the strip is live as a try: the first change opens a what-if by itself and the main line does not move; on
 // Build, Add a moon offers formation's own rules for the chosen planet, and Add round a star offers Kinds; Pluto's Orbit box shows its pair with Charon; on a phone the open strip docks above the ruler.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -41,7 +41,7 @@ try {
     await mars.waitFor({ timeout: 30000 });
     await mars.locator(".hit").click();
 
-    // Explore: the row with the kernel's figures, the strip read-only.
+    // Explore: the row with the kernel's figures, the strip live as a try.
     const row = gm.locator('[data-handles="world"]');
     await row.waitFor({ timeout: 20000 });
     assert.deepEqual(await row.locator("[data-handle]").evaluateAll((bs) => bs.map((b) => b.dataset.handle)), ["orbit", "mass", "makeup", "liquids", "air", "spin"]);
@@ -51,7 +51,9 @@ try {
     await row.locator('[data-handle="orbit"]').click();
     const strip = gm.locator('[data-strip="orbit"]');
     await strip.waitFor();
-    assert.ok(await strip.locator("[data-strip-figure]").isDisabled(), "read-only on Explore");
+    assert.ok(!(await strip.locator("[data-strip-figure]").isDisabled()), "live on Explore, as a try");
+    assert.equal(await strip.locator("[data-strip-trying]").count(), 1, "the strip says a change is a try");
+    assert.equal(await gm.locator(".whatif b").count(), 0, "no what-if before the first change");
     for (const n of ["Earth", "Jupiter"]) assert.equal(await strip.locator(`[data-dot="${n}"]`).count(), 1, `${n} is a reference dot`);
     await shot(gm, `explore-orbit-${vp}`);
     if (vp === "phone") {
@@ -78,19 +80,17 @@ try {
       assert.equal(await cardOrbit.locator("[data-unit]").innerText(), "AU", "round the readings and back");
     }
 
-    // ED7: on Explore the strip is read-only, with "Try changing it": an example what-if where it moves; the main line
-    // does not; Throw away puts the world back.
+    // TM4: on Explore the first change opens a what-if by itself; the main line does not move; Throw away puts the
+    // world back.
     {
       if (!(await strip.isVisible())) await row.locator('[data-handle="orbit"]').click();
       const main = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
-      await strip.locator("[data-try]").click();
-      await gm.waitForFunction(() => /EXAMPLE/.test(document.querySelector(".whatif b")?.textContent ?? ""), null, { timeout: 20000 });
-      assert.ok(!(await strip.locator("[data-strip-figure]").isDisabled()), "the example moves");
       await strip.locator("[data-strip-figure]").click();
       await strip.locator("[data-strip-entry]").fill("1 AU");
       await strip.locator("[data-strip-entry]").press("Enter");
+      await gm.waitForFunction(() => /Trying it/.test(document.querySelector(".whatif b")?.textContent ?? ""), null, { timeout: 20000 });
       await gm.waitForFunction(() => /(^|about )1 AU$/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
-      assert.match(await gm.locator("[data-followed]").innerText(), /EXAMPLE · change anything only/);
+      assert.match(await gm.locator("[data-followed]").innerText(), /Trying it only/);
       // ED1 part 3: the branch's own resolve (BC1) says what followed there: Mars at 1 AU warms.
       await gm.locator('[data-followed-row="Surface"]').waitFor({ timeout: 20000 });
       const [k0, k1] = (await gm.locator('[data-followed-row="Surface"]').innerText()).match(/\d+(?= K)/g).map(Number);
@@ -99,7 +99,8 @@ try {
       await shot(gm, `explore-example-${vp}`);
       await gm.locator(".whatif button", { hasText: "Throw away" }).click();
       await gm.waitForFunction(() => /1\.52 AU/.test(document.querySelector('[data-handle="orbit"] .value')?.textContent ?? ""), null, { timeout: 20000 });
-      assert.equal(await strip.locator("[data-try]").count(), 1, "read-only again, with Try changing it");
+      assert.equal(await gm.locator(".whatif b").count(), 0, "thrown away: no what-if open");
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), main, "the main line is as it was");
     }
 
     // Build: type "1 AU", one change, what followed, Undo.

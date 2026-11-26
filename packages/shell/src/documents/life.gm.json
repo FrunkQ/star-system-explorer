@@ -26,6 +26,7 @@
       "scale": "world",
       "group": "world",
       "label": "Life",
+      "desks": ["explore", "build"],
       "order": 1,
       "hint": "Its living world through time: food web, air and signatures"
     }

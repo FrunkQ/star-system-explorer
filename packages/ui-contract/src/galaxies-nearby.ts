@@ -41,10 +41,36 @@ export interface NearbyRead {
   /** Satellites counted but not drawn: torn into streams or shells, and merged into home. */
   remains: number;
   merged: number;
+  /** GZ6: every one of home's satellites' paths since infall (asked with `satellite_paths`), empty if not asked. */
+  paths: SatellitePath[];
+  /** Our galaxy's centre from the observer, Mpc (the observer sits in its disc, about 8 kpc out). */
+  centre_mpc: [number, number, number];
+  /** The time the sky was read at, Gyr after the Big Bang (the campaign's date). */
+  t_gyr: number;
 }
 
-/** The two reaches (design 7.2): the group, about 1.5 Mpc, and the neighbourhood, the catalogue's own 12 Mpc. */
+/** GZ6: one of home's satellites from infall to now, as the kernel followed it in our galaxy's growing pull. */
+export interface SatellitePath {
+  address: string;
+  /** What became of it: it survives, it was torn apart (a stream, shell or mixed remains), or it reached our centre. */
+  fate: "survives" | "torn apart" | "merged";
+  labels: string[];
+  infall_gyr: number;
+  merged_gyr: number | null;
+  disrupted_gyr: number | null;
+  infall_halo_mass_msun: number;
+  infall_stars_msun: number;
+  /** Times (Gyr) and places (Mpc from the observer, the same frame as each galaxy's `dir`), oldest first. */
+  t: number[];
+  at: [number, number, number][];
+}
+
+/**
+ * The reaches (design 7.2): the group, about 1.5 Mpc, and the neighbourhood, the catalogue's own 12 Mpc; and (GZ6)
+ * our own satellites, 0.4 Mpc, out past our halo's edge, where their orbits and Play can be read.
+ */
 export const NEARBY_REACHES = [
+  { id: "satellites", label: "Our satellites", mpc: 0.4 },
   { id: "group", label: "The group", mpc: 1.5 },
   { id: "neighbourhood", label: "The neighbourhood", mpc: 12 },
 ] as const;
@@ -88,6 +114,25 @@ export function readNearby(sky: Json): NearbyRead | null {
     });
   }
   const r200 = num(sats.r200_kpc);
+  const paths: SatellitePath[] = [];
+  for (const p of Array.isArray(sats.paths) ? (sats.paths as Record<string, unknown>[]) : []) {
+    const pts = Array.isArray(p.path) ? (p.path as unknown[]).filter((x): x is number[] => Array.isArray(x) && x.length === 4 && x.every((v) => typeof v === "number")) : [];
+    const fate = p.fate === "merged" || p.fate === "torn apart" ? p.fate : "survives";
+    if (typeof p.address !== "string" || !pts.length) continue;
+    paths.push({
+      address: p.address,
+      fate,
+      labels: Array.isArray(p.labels) ? (p.labels as unknown[]).filter((x): x is string => typeof x === "string") : [],
+      infall_gyr: num(p.infall_gyr) ?? pts[0]![0]!,
+      merged_gyr: num(p.merged_gyr),
+      disrupted_gyr: num(p.disrupted_gyr),
+      infall_halo_mass_msun: num(p.infall_halo_mass_msun) ?? 0,
+      infall_stars_msun: num(p.infall_stars_msun) ?? 0,
+      t: pts.map((x) => x[0]!),
+      at: pts.map((x) => [x[1]! / 1000, x[2]! / 1000, x[3]! / 1000]),
+    });
+  }
+  const c = vec(sats.centre_kpc);
   return {
     galaxies,
     home: typeof s!.galaxy === "string" ? s!.galaxy : "",
@@ -96,7 +141,88 @@ export function readNearby(sky: Json): NearbyRead | null {
     reach_mpc: num(walk.reach_mpc) ?? 12,
     remains,
     merged: num(sats.merged) ?? 0,
+    paths,
+    centre_mpc: c ? [c[0] / 1000, c[1] / 1000, c[2] / 1000] : [0, 0, 0],
+    t_gyr: (num(s!.t_myr) ?? 13800) / 1000,
   };
+}
+
+/**
+ * Where a satellite was at a time (Mpc from the observer), read along its kernel path: straight between the
+ * kernel's own points, 0.1 Gyr apart at pack defaults (a satellite moves about 25 kpc in that time; the drawing is a
+ * fraction of a pixel to a few pixels off the true curve). Null before it fell in and after it reached our centre.
+ */
+export function pathAt(p: Pick<SatellitePath, "t" | "at" | "merged_gyr">, t_gyr: number): [number, number, number] | null {
+  const n = p.t.length;
+  if (!n || t_gyr < p.t[0]!) return null;
+  if (p.merged_gyr !== null && t_gyr >= p.merged_gyr) return null;
+  if (t_gyr >= p.t[n - 1]!) return p.at[n - 1]!;
+  let i = 0;
+  while (p.t[i + 1]! <= t_gyr) i++;
+  const f = (t_gyr - p.t[i]!) / (p.t[i + 1]! - p.t[i]!);
+  const a = p.at[i]!;
+  const b = p.at[i + 1]!;
+  return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+}
+
+/** How long a stream's arc is drawn behind the place its stars have reached: their own path over the last stretch (fudge GZ-F12). */
+export const STREAM_ARC_GYR = 1.5;
+
+/**
+ * A torn-apart satellite's stream at a time: the stretch of its own path behind where its stars have got to, from
+ * when it was torn apart (or half a Gyr before, while it was being stripped) and no longer than `STREAM_ARC_GYR`.
+ * Null while it is still whole, or before its path begins. Stripped stars keep to the orbit they left on, spreading
+ * ahead and behind (Johnston 1998); one arc along the orbit is the drawing of that (fudge GZ-F12).
+ */
+export function streamArc(p: Pick<SatellitePath, "t" | "at" | "merged_gyr" | "disrupted_gyr">, t_gyr: number): [number, number, number][] | null {
+  if (p.disrupted_gyr === null || t_gyr < p.disrupted_gyr) return null;
+  const from = Math.max(p.disrupted_gyr - 0.5, t_gyr - STREAM_ARC_GYR);
+  const pts: [number, number, number][] = [];
+  for (let i = 0; i < p.t.length; i++) if (p.t[i]! >= from && p.t[i]! <= t_gyr) pts.push(p.at[i]!);
+  const end = pathAt(p, t_gyr);
+  if (end) pts.push(end);
+  return pts.length >= 2 ? pts : null;
+}
+
+/** What a satellite is at a time, in words, for Play's caption and the card. */
+export function satelliteStateWords(p: Pick<SatellitePath, "fate" | "infall_gyr" | "merged_gyr" | "disrupted_gyr" | "labels">, t_gyr: number): string {
+  if (t_gyr < p.infall_gyr) return "not yet fallen in";
+  if (p.merged_gyr !== null && t_gyr >= p.merged_gyr) return "merged into our galaxy";
+  if (p.disrupted_gyr !== null && t_gyr >= p.disrupted_gyr) return p.labels.includes("shell") ? "torn apart, its stars in shells" : p.labels.includes("mixed remains") ? "torn apart, its stars mixed into our halo" : "torn apart, its stars in a stream";
+  return "a satellite on its orbit";
+}
+
+/** The first infall among the paths: where Play starts. */
+export const firstInfall = (ps: readonly Pick<SatellitePath, "infall_gyr">[]): number | null => (ps.length ? Math.min(...ps.map((p) => p.infall_gyr)) : null);
+
+/** G in Mpc^3 per solar mass per Gyr^2 (4.30091e-9 Mpc (km/s)^2 per solar mass; 1 km/s = 1.022712e-3 Mpc/Gyr). */
+const G_MPC_GYR = 4.30091e-9 * 1.022712e-3 * 1.022712e-3;
+
+/**
+ * The zero-velocity radius of a mass at a time: the sphere inside which matter has stopped moving apart with the
+ * expansion and fallen back. Sandage 1986 (ApJ 307, 1, doi:10.1086/164387), the timing argument for a pressureless sphere with no
+ * dark energy: R0^3 = 8 G M t^2 / pi^2. Dark energy would widen it by some per cent (fudge GZ-F13).
+ */
+export function zeroVelocityRadius(mass_msun: number, t_gyr: number): number {
+  return Math.cbrt((8 * G_MPC_GYR * Math.max(0, mass_msun) * t_gyr * t_gyr) / (Math.PI * Math.PI));
+}
+
+/**
+ * The edge of our group (design 7.2): the zero-velocity sphere around home of the mass inside it, found by
+ * widening it until it holds what it needs (home's halo, then every catalogued halo inside, which widens it again;
+ * the radius only grows, so it settles in a few steps). Satellites are already inside home's halo, so not counted twice.
+ */
+export function groupEdge(home_halo_msun: number, gs: readonly Pick<NearGalaxy, "halo_mass_msun" | "distance_mpc" | "satellite">[], t_gyr: number): { radius_mpc: number; mass_msun: number; members: number } {
+  const others = gs.filter((g) => !g.satellite).sort((a, b) => a.distance_mpc - b.distance_mpc);
+  let mass = home_halo_msun;
+  let r = zeroVelocityRadius(mass, t_gyr);
+  let n = 0;
+  while (n < others.length && others[n]!.distance_mpc <= r) {
+    mass += others[n]!.halo_mass_msun;
+    n++;
+    r = zeroVelocityRadius(mass, t_gyr);
+  }
+  return { radius_mpc: r, mass_msun: mass, members: n };
 }
 
 /** A galaxy's place relative to home, Mpc, in the galactic frame (x to our centre, z out of our disc). */
@@ -140,8 +266,11 @@ export function nearbyRadius(g: Pick<NearGalaxy, "half_light_kpc">, size: number
   return Math.max(r, 1.1);
 }
 
-/** The Readable factor for a reach, a round number so the chip can say it: big enough that a disc in the group shows its shape. */
-export const readableFactor = (reach_mpc: number): number => (reach_mpc <= 2 ? 8 : 20);
+/**
+ * The Readable factor for a reach, a round number so the chip can say it: big enough that a disc in the group shows
+ * its shape; at our satellites' reach only 2, so our own disc does not cover the satellites' orbits.
+ */
+export const readableFactor = (reach_mpc: number): number => (reach_mpc <= 0.5 ? 2 : reach_mpc <= 2 ? 8 : 20);
 
 /** A dark halo's r200 from its mass, scaled from home's own (r200 grows as the cube root of mass at one epoch). */
 export function haloR200(mass_msun: number, home: { r200_mpc: number; mass_msun: number }): number {

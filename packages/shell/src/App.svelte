@@ -98,6 +98,7 @@
   import { GAME_SCREENS } from "./screens.game.ts";
   import { RENDER_SCREENS } from "./screens.renderer.ts";
   import { EXOTIC_SCREENS } from "./screens.exotic.ts";
+  import { FORMATION_SCREENS } from "./screens.formation.ts";
   import { RUN_SCREENS } from "./run/screens.run.ts";
   import { ATLAS_SCREENS } from "./atlas/screens.atlas.ts";
   import { ROLLCALL_SCREENS } from "./rollcall/screens.rollcall.svelte.ts";
@@ -134,7 +135,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(EXOTIC_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RUN_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ATLAS_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(ROLLCALL_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(POSTCARD_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(EXOTIC_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(FORMATION_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -193,7 +194,6 @@
     const packs = st ? [...st.base, ...(st.campaign ? [st.campaign] : [])] : [];
     return (need: string) => stackProvides(packs, need);
   });
-  const rail = $derived(railOf(SCREENS, railScale, stackHas));
   // A screen opened from elsewhere (a why?'s "Open the flow", a key) takes the rail to a scale that lists it.
   $effect(() => {
     const on = scalesOf(SCREENS[ws.screen] ?? {});
@@ -671,6 +671,9 @@
   $effect(() => {
     ws.desk = desk;
   });
+  // The rail at the scale in view, for this desk (TM2, three desks design section 5): an entry not listed on the desk
+  // in front is left off; Find and the desk switch still reach it.
+  const rail = $derived(railOf(SCREENS, railScale, stackHas, desk));
   $effect(() => {
     ws.players_online = share?.state.players ?? 0;
     ws.sendLanding = (show) => {
