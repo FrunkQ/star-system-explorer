@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { clockAt, followTime, motionWords, phaseAt, pictureSpan, rateWords, stoppedAt, tooFast, turnOf, withRate, YEAR_SECONDS } from "../src/picture-clock.ts";
+import { clockAt, followTime, motionWords, phaseAt, pictureSpan, rateWords, stoppedAt, tooFast, cycleAt, withRate, YEAR_SECONDS } from "../src/picture-clock.ts";
 
 const EPOCH = 4.6e9;
 const DAY = 86_400;
@@ -48,8 +48,8 @@ test("an orbit runs on at its mean motion from the kernel's phase", () => {
   // Backwards in time, and with no period, it stays sensible.
   assert.ok(Math.abs(phaseAt(10, 0, P, -P / 36) - 0) < 1e-9);
   assert.equal(phaseAt(42, 0, undefined, 1e9), 42);
-  assert.ok(Math.abs(turnOf(10, 25) - 0.5) < 1e-12);
-  assert.ok(Math.abs(turnOf(10, -2.5) - 0.75) < 1e-12);
+  assert.ok(Math.abs(cycleAt(10, 25) - 0.5) < 1e-12);
+  assert.ok(Math.abs(cycleAt(10, -2.5) - 0.75) < 1e-12);
 });
 
 test("a motion faster than the pictures is named, never slowed", () => {

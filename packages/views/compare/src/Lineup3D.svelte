@@ -19,7 +19,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { bodySeconds, globeFrame, graticule, liveFace, nearSide, readLiveStar, readTrueFace, readTrueShape, ringEdge, spinAt, startGpu, trueLook, type AirFlow, type FaceReader, type ShapeReader, type Gpu, type GpuItem, type GpuRing, type LineupView, type StarReader, type Vec3 } from "../../../renderer/src/index.ts";
-  import { clockAt, reachKm, turnOf, type CompareItem, type Placed, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { clockAt, cycleAt, reachKm, type CompareItem, type Placed, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let {
     ctx,
@@ -181,7 +181,7 @@
   });
   // Each globe's turn: on the clock its own day (hours, the sign its way round) at the clock's time; at the same pace
   // one turn in SECONDS_PER_TURN of watching.
-  const turnAngle = (day_h: number | undefined) => (pace === "clock" ? (day_h && Number.isFinite(day_h) ? Math.sign(day_h) * 2 * Math.PI * turnOf(Math.abs(day_h) * 3600, clockT) : 0) : spinAt(day_h, t, "same", 24));
+  const turnAngle = (day_h: number | undefined) => (pace === "clock" ? (day_h && Number.isFinite(day_h) ? Math.sign(day_h) * 2 * Math.PI * cycleAt(Math.abs(day_h) * 3600, clockT) : 0) : spinAt(day_h, t, "same", 24));
   const bodyDt = (day_h: number | undefined) => (pace === "clock" ? clockT - (readAt ?? clockT) : bodySeconds(day_h, t, "same", 24));
   const starRate = $derived(clock?.rate ?? 0);
   // A star's face ten pictures a second.

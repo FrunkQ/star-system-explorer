@@ -3,7 +3,7 @@
 // with μ the cosine between the line of sight and the ring's normal; what the ring stops it scatters back, so a
 // thick ring is bright and a thin one a veil. The profile here is one row of pixels from the inner edge to the
 // outer: colour from the albedo, cover (alpha) from τ seen face on. The draw does not yet thicken it with the slant
-// (1/μ), nor cast the world's shadow on it; both are in the fudge register. A ring with no τ or albedo on record is
+// (1/μ) (fudge register); the world's shadow on it, and its shadow on the world, are gpu-shade.ts's (EC1). A ring with no τ or albedo on record is
 // drawn at the fallbacks below, also in the register.
 // Belts round the star are a haze of points, one per draw slot, never the real count (also in the register).
 

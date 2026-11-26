@@ -52,7 +52,19 @@ no campaign clock to follow. Its own per-star clock is said in its caption, whic
 the coordinator asked for. Recommendation for Alex: keep it, and once 641 is on main let its caption show the rate it
 runs at in the same words (`rateWords`). Not changed here, to stay out of an open PR.
 
+## Fit with the time pipeline (track TP, PR 651)
+
+The time scales design (`design/SSE4-time-scales-design.md`, section 9) makes this clock the drawing code's view of
+its one session clock (`view_s` and `rate`). Kept to its rules: the clock holds no absolute time and no `_yr` field,
+only seconds since the campaign's epoch and the anchor's wall time. Its one remaining weakness is upstream: the time in
+view arrives as `now_yr`, a double that resolves about 30 s near a star's age, so each re-anchor (a step, a drag) can
+land up to 30 s off; between anchors it is exact. TP1 (dates as integers in the kernel and bigint seconds on screen)
+removes that; `followTime` then takes seconds instead of years.
+
 ## Not done (follow-ups)
+
+- Shadows and eclipses (EC1, `orbit.r_m`) still move at the kernel's ten answers a second; the worlds' drawn phases
+  run on smoothly between them, so at high rates a shadow can lag its world by a tenth of a second of play.
 
 - Flares are read for the campaign's first year (`readLiveStar`'s window): later dates show a star with no flares.
   The window should be read again as the clock leaves it.

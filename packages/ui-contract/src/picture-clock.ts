@@ -15,9 +15,7 @@ const YR_S = Number(YEAR_S);
 export const YEAR_SECONDS = YR_S;
 
 export interface PictureClock {
-  /** The campaign's epoch, years: the zero of `at_s`. */
-  epoch_yr: number;
-  /** Clock seconds since the epoch at the wall time `wall_ms`. */
+  /** Clock seconds since the campaign's epoch (`campaign_epoch_yr`, its zero; no absolute time is kept here) at the wall time `wall_ms`. */
   at_s: number;
   /** The wall time of the anchor, milliseconds (performance.now's). */
   wall_ms: number;
@@ -27,17 +25,12 @@ export interface PictureClock {
 
 /** A stopped clock at a time in years. */
 export function stoppedAt(now_yr: number, epoch_yr: number, wall_ms = 0): PictureClock {
-  return { epoch_yr, at_s: (now_yr - epoch_yr) * YR_S, wall_ms, rate: 0 };
+  return { at_s: (now_yr - epoch_yr) * YR_S, wall_ms, rate: 0 };
 }
 
 /** The clock's time at a wall time, seconds since the epoch. */
 export function clockAt(c: PictureClock, wall_ms: number): number {
   return c.at_s + (c.rate * (wall_ms - c.wall_ms)) / 1000;
-}
-
-/** Years from a clock time, for anything that reads years (the scene, the ruler). */
-export function clockYears(c: PictureClock, t_s: number): number {
-  return c.epoch_yr + t_s / YR_S;
 }
 
 /**
@@ -47,17 +40,18 @@ export function clockYears(c: PictureClock, t_s: number): number {
  */
 export function followTime(c: PictureClock, now_yr: number, epoch_yr: number, wall_ms: number): PictureClock {
   const at_s = (now_yr - epoch_yr) * YR_S;
-  if (c.rate === 0 || epoch_yr !== c.epoch_yr) return { epoch_yr, at_s, wall_ms, rate: c.rate };
+  // A moved epoch (a campaign shifted to another system's present) is a jump like any other.
+  if (c.rate === 0) return { at_s, wall_ms, rate: c.rate };
   const drift = Math.abs(clockAt(c, wall_ms) - at_s);
   // The ruler sends ten times a second and rounds the time to its float: half a second of clock time is the most a
   // tick can honestly lag, and anything a 64-bit year cannot resolve (about 30 s at a star's age) is rounding too.
   const slack_s = Math.max(c.rate * 0.5, Math.abs(now_yr) * Number.EPSILON * 4 * YR_S);
-  return drift <= slack_s ? c : { epoch_yr, at_s, wall_ms, rate: c.rate };
+  return drift <= slack_s ? c : { at_s, wall_ms, rate: c.rate };
 }
 
 /** Start, stop or change the rate, from the time the clock shows now (so nothing jumps). */
 export function withRate(c: PictureClock, rate: number, wall_ms: number): PictureClock {
-  return { epoch_yr: c.epoch_yr, at_s: clockAt(c, wall_ms), wall_ms, rate: Math.max(0, rate) };
+  return { at_s: clockAt(c, wall_ms), wall_ms, rate: Math.max(0, rate) };
 }
 
 /** Clock seconds one picture stands for, at `pictures_per_s` pictures a second (0 while stopped). */
@@ -75,7 +69,7 @@ export function tooFast(period_s: number, span_s: number): boolean {
 }
 
 /** A turn of `period_s` at clock time `t_s`, 0 to 1 (0 for no period). */
-export function turnOf(period_s: number, t_s: number): number {
+export function cycleAt(period_s: number, t_s: number): number {
   if (!Number.isFinite(period_s) || period_s === 0) return 0;
   const f = (t_s / period_s) % 1;
   return f < 0 ? f + 1 : f;
