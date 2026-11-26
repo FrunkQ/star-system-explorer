@@ -2,7 +2,7 @@
 
 Status: **PROPOSED, 26 Nov 2026. Not yet accepted by Alex.** Started at the coordinator's word as a proposal, ahead of Alex's answer to question 3 of `SSE4-melt-and-heat-design.md`. Design only; nothing here is built. Four questions for Alex are in section 10, routine choices for the coordinator in section 11. HF is a code only, never shown in the product.
 
-Read with: `SSE4-melt-and-heat-design.md` (sections 4.4 and 4.5, which this note completes), `SSE4-time-scales-design.md` (sections 6 to 8), `SSE4-system-formation-design.md` (package F7, "long life: slow orbital change, tides", which this note is the moons' part of), `SSE4-ring-and-belt-editing-design.md` ("more ring mass = destroy a moon"), `crates/sse-formation/src/leftovers.rs` (how moons are made), `crates/sse-surface/src/lib.rs` (`tidal_flux`, `lock_time_gyr`, `TidalSpan`).
+Read with: `SSE4-melt-and-heat-design.md` (sections 4.4 and 4.5, which this note completes), `SSE4-time-scales-design.md` (sections 6 to 8; PR 651, proposed), the measured-motion work of RW17 part 1 (PR 649; section 4.2 here says how the two live together), `SSE4-system-formation-design.md` (package F7, "long life: slow orbital change, tides", which this note is the moons' part of), `SSE4-ring-and-belt-editing-design.md` ("more ring mass = destroy a moon"), `crates/sse-formation/src/leftovers.rs` (how moons are made), `crates/sse-surface/src/lib.rs` (`tidal_flux`, `lock_time_gyr`, `TidalSpan`).
 
 **On sources.** The paper search is out until 1 Dec 2026. Every paper figure is from memory and **unverified** (section 12). The two central formulas (sections 3.2 and 3.4) are derived here from conservation of energy and angular momentum, so they do not rest on a paper; the hand checks in section 5 use measured numbers quoted from memory.
 
@@ -154,6 +154,40 @@ The backward sum fills `Body.tidal_history` with worked-out spans where today on
 
 **Marks**, each with a `why` from its numbers: caught in step; passed through a resonance (heat pulse); a set breaks; a moon crosses the Roche limit and becomes a ring; a moon is lost past the edge of the host's hold; the host's day reaches a round length; a moon's orbit rounds off ("the tides stopped").
 
+
+### 4.1 One leg or many: the same answer
+
+The time design's finding 4 is that ageing a system in two legs differs today from ageing it in one. The moon march must not add a second case. It meets that design's march rule point by point, and each point is a build rule for HF6.3:
+
+1. **Fixed anchor.** A generated system's anchor is its birth. A real or authored one's is the date its orbit was measured at (the pack's epoch: J2000 for Sol). Neither is the date asked from or to, and never the campaign's "now". An edit to a moon or its host writes a checkpoint in the chronicle, and the march restarts from that.
+2. **The grid belongs to the subject.** Grid dates are counted from the system's birth in both directions, so a real system's backward sum and a generated system's forward sum land on the same kind of grid. The anchor date is one extra kept point on it.
+3. **The whole state is kept at every point:** each moon's distance, eccentricity and the angle it has turned through since the anchor, which sets are in step, the host's spin, and the date. A capture or a passage found by bisection is kept as a point of its own, holding the state just after it.
+4. **A read between points is a stated rule:** the closed forms of 3.1 and 3.2 from the kept point next nearer the anchor. Nothing is ever stepped from the date asked from to the date asked to.
+5. **A window with the thermal line** (where the two times are comparable) runs from kept point to kept point on a step set by the state alone.
+6. **A real system's future is read from the same table as its past.** The reconstructed past is never marched forward again to reach today, so today is always the measured orbit, exactly.
+
+With these, a read at a date and a walk there in any number of legs give the same bits. That is HF6.3's first red-first test, sharing the time design's two-legs harness (its package TP5).
+
+One ask of the time design: its march rule names two anchors, birth or a checkpoint. A measured orbit's own date is a third, used here and already by any real body. *Recommend the time design names it (choice D6).*
+
+### 4.2 Living with measured motion
+
+"Make eclipses happen on time" (RW17 part 1, PR 649, open at the time of writing; read from its description, package log and tables, not its whole diff) gives a catalogued body a **motion model**: inside the model's span the body is where a published series says, and outside it a plain orbit fitted at the span's edge takes over. Sol's planets name VSOP87A and the Moon ELP/MPP02, both spanning about 4,000 years either side of J2000. Each placed time says `measured` or `plausible`.
+
+The two answer different questions on different spans of time. The motion model says where a body is, to seconds, over thousands of years. The moon march says how an orbit's size and shape change over millions and billions of years. The rule that keeps them apart:
+
+- **Inside a motion model's span, the series is the whole answer and the march moves nothing.** The Moon's measured drift is already inside ELP/MPP02 (its slow-down is a term of the series), and Earth's slowing spin is already in that work's Delta T. Adding the march's drift on top would count the tide twice. Over the whole span the Moon moves out about 150 m, far below anything the march resolves, so nothing is lost.
+- **Inside the span the march is still published, beside the measurement, as a check:** "measured 3.8 cm a year; worked out 3.7". The measurement is the fact. The same holds for the length of the day.
+- **Outside the span, the edge fit stays the base and the march scales it.** A body with a motion model takes its plain orbit from the fit at the span's edge, exactly as PR 649 does. The march then supplies only ratios: distance and eccentricity are the fitted values times the march's value at the date over its value at the edge, and the angle along the orbit advances by the march's kept angle since the edge. At the edge every ratio is 1, so the handover PR 649 already makes is unchanged to the bit, and where there is no march (a body with no host tide worth the name) the behaviour is PR 649's own.
+- **The march's anchor for such a body is the series' mean orbit at J2000,** not the edge fit. Only ratios cross from the march to the placed orbit, so the two never have to agree on a value, only on a shape.
+- **Which way Earth faces** follows the same split: PR 649's measured rotation inside its span; outside it, the host's day from the march, joined at the edge.
+- **Labels.** A time placed outside the span stays `plausible`, with its source now naming the tide march. No third word is added (choice D7).
+- **Bodies with no motion model** (every generated moon; Jupiter's and Saturn's moons, which PR 649 leaves on plain orbits) take the march's line directly, anchored at their plain orbit. If a later package gives them a series, the rule above applies with no change here. Finding which moons are in step reads period ratios within a tolerance, so it does not need the series.
+
+By package: HF6.1 and HF6.2 do not touch where anything is placed, so they cannot meet the slot at all. HF6.3 is the first to change `orbits_at`, and only outside a span. It needs PR 649 on main first, and three absolute tests seen red: every eclipse test of PR 649 passes unchanged; the placed position across a span's edge jumps by no more than it does on PR 649 alone; a date outside the span read in one leg equals the same date reached in two.
+
+A further check this opens, to be read at source after 1 Dec: the tide's share of the lengthening day (about 2.3 ms a century, from memory, **unverified**) against the march's own figure for Earth.
+
 ---
 
 ## 5. Hand checks
@@ -186,6 +220,7 @@ Measured inputs from memory, unverified. None was adjusted.
 - **Locking.** `lock_time_gyr` reads the body's own response in place of one Q for all.
 - **"What is interesting here".** A heated moon and why; a moon about to become a ring; a resonance that broke; a day that was once six hours long.
 - **Players and GMs** see the same orbits as now at the campaign's date. Nothing on screen moves faster.
+- **Measured motion (RW17).** Untouched inside a motion model's span; outside it the edge fit is scaled by the march (section 4.2).
 
 ---
 
@@ -227,11 +262,11 @@ Owner: proposed as its own builder thread ("Build moon orbits and tides"), since
 |---|---|---|---|---|
 | **HF6.1** the balance for real moons | The blocks of section 7 except the march; resonant sets read off period ratios; the balance published beside the measured heat for Io, Europa, Ganymede, Enceladus, Dione; the Moon's drift and its rounding time as facts. Nothing reads them for physics yet | the melt design's HF4c.1 for Im k2 (or the shared constant until then) | area only | S |
 | **HF6.2** lone moons round off | 3.2 applied: a moon with no partner has its eccentricity and heat decayed to its age. Sol's lone moons barely move (their measured `e` is the fact); fixtures with authored heat do not move | HF6.1 | core, one slot | S |
-| **HF6.3** the moon march | The Big Block of section 4 for real systems, run backward: reconstructed distances, capture dates, `tidal_history` spans, the host's day as a line, the marks | HF6.2; TP1 for dates | core, one slot | M |
+| **HF6.3** the moon march | The Big Block of section 4 for real systems, run backward: reconstructed distances, capture dates, `tidal_history` spans, the host's day as a line, the marks | HF6.2; TP1 for dates; TP5's two-legs harness; PR 649 on main (section 4.2) | core, one slot | M |
 | **HF6.4** generated moons | The march run forward from formation: captures, heated sets, moons lost to rings; formation's moon eccentricities become birth values; generated moons handed to the surface code | HF6.3; Alex's yes to question 1 | **core, one slot; changes generated systems** | M |
 | **HF6.5** planets in step | 3.7, after the sources are read | HF6.2; 1 Dec | core | M |
 
-Red-first tests: a lone moon's heat falls to nothing over many rounding times (fails today); energy and angular momentum of host plus moons conserved over a march to 1 part in 10⁶ (the absolute check); the march read at a date equals stepped there in two legs; the Moon's drift within a tenth of 3.8 cm/yr; the three-moon sum of section 5 reproduced.
+Red-first tests: a lone moon's heat falls to nothing over many rounding times (fails today); energy and angular momentum of host plus moons conserved over a march to 1 part in 10⁶ (the absolute check); the march read at a date equals stepped there in two legs, to the bit (section 4.1); PR 649's eclipse tests unchanged and no added jump at a span's edge (section 4.2); the Moon's drift within a tenth of 3.8 cm/yr; the three-moon sum of section 5 reproduced.
 
 ---
 
@@ -263,6 +298,8 @@ Red-first tests: a lone moon's heat falls to nothing over many rounding times (f
 - **D3** F7's moon part is taken to be this; the formation design's F7 row gains a pointer. *Recommend yes.*
 - **D4** The moon-distance chart (the march's view) goes with the thermal-line chart of the melt design's C6. *Recommend yes.*
 - **D5** The citations thread reads section 12 on 1 Dec with the melt design's list. *Recommend yes.*
+- **D6** The time design's march rule names a third fixed anchor, a measured orbit's own date (section 4.1). An ask of that design's owner. *Recommend yes.*
+- **D7** A time placed outside a motion model's span stays `plausible`, its source naming the tide march; no third word beside `measured` and `plausible` (section 4.2). *Recommend yes.*
 
 ---
 
