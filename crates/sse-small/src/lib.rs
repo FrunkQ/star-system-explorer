@@ -26,7 +26,7 @@ mod member;
 pub mod settings;
 pub mod takes;
 
-pub use comet::{activity, ice_shares, onset_au, Activity, Volatile};
+pub use comet::{activity, ice_shares, keeps_surface_ice, onset_au, Activity, Volatile};
 pub use figure::{jacobi_axes, maclaurin_c_over_a, Q_BIFURCATION, Q_JACOBI_END, Q_MACLAURIN_MAX};
 pub use member::{
     designed_field, made_field, makeup_for_density, mass_for_diameter, mass_for_makeup,

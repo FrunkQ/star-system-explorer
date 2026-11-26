@@ -8,8 +8,14 @@
 //! and CO far out without any of those distances being typed anywhere.
 //! Coma size, dust tail and ion tail are drawn from the numbers (fudge
 //! SB-comet-coma). Nothing here is stored.
+//!
+//! Only ice still at the surface can wake. A member that has sat where its
+//! surface is warmer than the pack's `ice.survives_below_k` for the system's
+//! age has lost its surface ice (the same rule its type label reads), so it
+//! has no activity however much ice its bulk makeup holds. A GM-made comet
+//! nucleus is a fresh arrival and keeps its ice.
 
-use crate::settings::{CometSettings, VolatileSettings};
+use crate::settings::{CometSettings, Settings, VolatileSettings};
 use crate::{Host, Member};
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
@@ -49,7 +55,8 @@ pub struct Activity {
     pub coma_km: f64,
     /// How far radiation pressure has carried the tail's dust, km.
     pub dust_tail_km: f64,
-    /// Solar wind speed x the dominant gas's lifetime, km.
+    /// How far the solar wind has carried the tail's ions over the same
+    /// tail age as the dust, km.
     pub ion_tail_km: f64,
 }
 
@@ -138,18 +145,32 @@ pub fn onset_au(
     m::exp(0.5 * (lo + hi))
 }
 
+/// Whether a member still has ice at its surface: it formed (or has sat
+/// for the system's age) where its blackbody temperature, read at the
+/// distance it spends its time at, is below `ice.survives_below_k`; or it
+/// is a GM-made comet nucleus, a fresh arrival.
+pub fn keeps_surface_ice(member: &Member, s: &Settings) -> bool {
+    member.makeup.ice > 0.0
+        && (member.kind == "made-comet" || member.temperature_k < s.ice.survives_below_k)
+}
+
 /// A member's activity at `r_au` from its star; `shares` from [`ice_shares`].
 pub fn activity(
     member: &Member,
     shares: &[f64],
     r_au: f64,
     host: &Host,
-    s: &CometSettings,
+    settings: &Settings,
 ) -> Activity {
+    let s = &settings.comet;
     let r_au = r_au.max(1e-3);
     let radius_m = member.diameter_km * 500.0;
     let surface = 4.0 * std::f64::consts::PI * radius_m * radius_m;
-    let icy = member.makeup.ice;
+    let icy = if keeps_surface_ice(member, settings) {
+        member.makeup.ice
+    } else {
+        0.0
+    };
     let absorbed = absorbed_w_m2(member.albedo, r_au, host, s, s.insolation_share);
     let onset_sun = s.onset_insolation_share;
     let mut vols: Vec<Volatile> = vec![];
@@ -200,7 +221,7 @@ pub fn activity(
         .iter()
         .filter(|v| v.onset_au >= r_au)
         .max_by(|a, b| a.production_per_s.total_cmp(&b.production_per_s));
-    let (dominant, coma_km, ion_tail_km) = match lead.and_then(|l| {
+    let (dominant, coma_km) = match lead.and_then(|l| {
         s.volatiles
             .iter()
             .find(|v| v.id == l.id)
@@ -208,15 +229,25 @@ pub fn activity(
     }) {
         Some((id, life_s)) => {
             let speed = s.outflow_km_s_at_1au / m::sqrt(r_au);
-            (Some(id), speed * life_s, s.solar_wind_km_s * life_s)
+            (Some(id), speed * life_s)
         }
-        None => (None, 0.0, 0.0),
+        None => (None, 0.0),
     };
+    // Both tails are what the star has carried off in the last tail age:
+    // the dust by radiation pressure, the ions by the solar wind. The gas's
+    // lifetime only says where in the coma its molecules become ions; it is
+    // not how long an ion travels down the tail (see engine note in
+    // handover/packages/SB4b.md).
+    let tail_s = s.tail_age_days * s.day_s;
     let dust_kg_s = if active { gas * s.dust_to_gas } else { 0.0 };
     let dust_tail_km = if active {
         let g = s.gm_sun * host.mass_msun / (r_au * s.au_m * r_au * s.au_m);
-        let t = s.tail_age_days * s.day_s;
-        0.5 * s.dust_beta * g * t * t / 1000.0
+        0.5 * s.dust_beta * g * tail_s * tail_s / 1000.0
+    } else {
+        0.0
+    };
+    let ion_tail_km = if dominant.is_some() {
+        s.solar_wind_km_s * tail_s
     } else {
         0.0
     };

@@ -49,7 +49,7 @@ fn nucleus() -> (Member, Vec<f64>, Settings) {
 #[test]
 fn ices_wake_in_order_of_their_vapour_curves() {
     let (m, shares, s) = nucleus();
-    let a = activity(&m, &shares, 1.0, &sun(), &s.comet);
+    let a = activity(&m, &shares, 1.0, &sun(), &s);
     let onset = |id: &str| a.volatiles.iter().find(|v| v.id == id).unwrap().onset_au;
     let (w, c2, c) = (onset("h2o"), onset("co2"), onset("co"));
     // Observed: water drives activity inside about 3 AU, CO2 out to about 10 to 13, CO beyond.
@@ -61,14 +61,14 @@ fn ices_wake_in_order_of_their_vapour_curves() {
 #[test]
 fn water_flux_and_a_67p_like_production_are_the_right_size() {
     let (m, shares, s) = nucleus();
-    let a = activity(&m, &shares, 1.0, &sun(), &s.comet);
+    let a = activity(&m, &shares, 1.0, &sun(), &s);
     let w = a.volatiles.iter().find(|v| v.id == "h2o").unwrap();
     // Molecules per square metre per second from free sublimation at 1 AU,
     // averaged over a fast-turning nucleus: 1e16 to 1e18 per cm^2.
     let per_m2 = w.flux_kg_m2_s / s.comet.volatiles[0].molar_kg_mol * s.comet.n_a;
     assert!((1e20..1e22).contains(&per_m2), "{per_m2:e} per m^2 s");
     // 67P near perihelion (1.24 AU): Rosetta saw of order 1e28 water molecules a second.
-    let p = activity(&m, &shares, 1.24, &sun(), &s.comet);
+    let p = activity(&m, &shares, 1.24, &sun(), &s);
     let q = p
         .volatiles
         .iter()
@@ -83,7 +83,7 @@ fn water_flux_and_a_67p_like_production_are_the_right_size() {
 #[test]
 fn coma_and_tails_grow_near_the_star_and_vanish_far_out() {
     let (m, shares, s) = nucleus();
-    let near = activity(&m, &shares, 1.0, &sun(), &s.comet);
+    let near = activity(&m, &shares, 1.0, &sun(), &s);
     assert!(
         (1e4..1e6).contains(&near.coma_km),
         "coma {} km",
@@ -97,7 +97,7 @@ fn coma_and_tails_grow_near_the_star_and_vanish_far_out() {
     assert!(near.ion_tail_km > near.coma_km);
     assert!(near.dust_kg_s > 0.0);
     // Far past CO's onset nothing stirs.
-    let far = activity(&m, &shares, 500.0, &sun(), &s.comet);
+    let far = activity(&m, &shares, 500.0, &sun(), &s);
     assert!(!far.active && far.dust_tail_km == 0.0 && far.dominant.is_none());
 }
 
@@ -106,6 +106,48 @@ fn a_rocky_body_has_no_activity() {
     let s = Settings::default();
     let mut m = nucleus().0;
     m.makeup = Makeup::from_array([0.2, 0.8, 0.0, 0.0]);
-    let a = activity(&m, &[1.0, 0.0, 0.0], 1.0, &sun(), &s.comet);
+    let a = activity(&m, &[1.0, 0.0, 0.0], 1.0, &sun(), &s);
     assert!(a.volatiles.is_empty() && !a.active);
+}
+
+#[test]
+fn an_ion_tail_reaches_a_few_au_at_most_and_does_not_grow_outward() {
+    // Real ion tails run to about 1e8 km, the longest seen a few AU
+    // (unverified: recalled, paper search was out). The old rule (wind speed
+    // x the neutral gas's lifetime) gave 55 to 81 AU at 6 to 8 AU.
+    let (m, shares, s) = nucleus();
+    let au_km = s.comet.au_m / 1000.0;
+    let mut last = f64::INFINITY;
+    for r in [0.5, 1.0, 3.0, 7.0, 12.0] {
+        let a = activity(&m, &shares, r, &sun(), &s);
+        assert!(a.active, "active at {r} AU");
+        let ion_au = a.ion_tail_km / au_km;
+        assert!(
+            ion_au > 0.1 && ion_au < 5.0,
+            "ion tail {ion_au} AU at {r} AU"
+        );
+        assert!(a.ion_tail_km <= last, "ion tail grows outward at {r} AU");
+        last = a.ion_tail_km;
+    }
+}
+
+#[test]
+fn a_warm_member_with_ice_in_its_bulk_has_no_activity() {
+    // A belt member a tenth of an AU from a Sun has lost its surface ice
+    // over the system's age, however much its bulk makeup holds.
+    let (mut m, shares, s) = nucleus();
+    m.kind = "asteroid-belt".into();
+    m.makeup = Makeup::from_array([0.1, 0.8, 0.05, 0.05]);
+    m.temperature_k = 880.0;
+    let a = activity(&m, &shares, 0.1, &sun(), &s);
+    assert!(!a.active && a.volatiles.is_empty(), "{a:?}");
+    assert_eq!(a.gas_kg_s, 0.0);
+    assert_eq!(a.ion_tail_km, 0.0);
+    // The same member out where its surface stays cold keeps its ice.
+    m.temperature_k = 40.0;
+    assert!(activity(&m, &shares, 1.0, &sun(), &s).active);
+    // A GM-made nucleus is a fresh arrival and wakes even on a warm orbit.
+    let (mut made, _, _) = nucleus();
+    made.temperature_k = 300.0;
+    assert!(activity(&made, &shares, 1.0, &sun(), &s).active);
 }

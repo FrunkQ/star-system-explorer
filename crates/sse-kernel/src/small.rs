@@ -62,7 +62,7 @@ fn member_json(
     if m.makeup.ice > 0.0 {
         let r = r_au.or(star).unwrap_or(m.orbit.a_au * (1.0 - m.orbit.e));
         let shares = sse_small::ice_shares(cloud, &s.comet);
-        let a = sse_small::activity(m, &shares, r, host, &s.comet);
+        let a = sse_small::activity(m, &shares, r, host, s);
         j["activity"] = serde_json::to_value(a).expect("plain");
     }
     j

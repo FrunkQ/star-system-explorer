@@ -64,6 +64,7 @@
   import { Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
   import PlaceLine from "./nav/PlaceLine.svelte";
   import Rail from "./nav/Rail.svelte";
+  import RailMenu from "./nav/RailMenu.svelte";
   import Stage from "./chart/Stage.svelte";
   import workspaceDoc from "./documents/workspace.gm.json";
   import physicsDoc from "./documents/physics.gm.json";
@@ -675,6 +676,9 @@
   // The rail at the scale in view, for this desk (TM2, three desks design section 5): an entry not listed on the desk
   // in front is left off; Find and the desk switch still reach it.
   const rail = $derived(railOf(SCREENS, railScale, stackHas, desk));
+  // On Run the rail folds to one button naming the instrument in view (design 3.1, question 6).
+  const railFolded = $derived(!partShows("rail-open", desk));
+  const railLabel = $derived(rail.flatMap((g) => g.lines).find((l) => l.screen === ws.screen)?.label ?? SCREENS[ws.screen]?.label ?? "Instruments");
   $effect(() => {
     ws.players_online = share?.state.players ?? 0;
     ws.sendLanding = (show) => {
@@ -1800,8 +1804,9 @@
   {:else if !session}
     <main class="problem" aria-busy="true"><p>Opening the chart…</p></main>
   {:else}
-    <div class="middle">
-      <!-- How (2.2): every way of looking at the place in view, in words, built from the screens' own rail entries. -->
+    <!-- How (2.2): every way of looking at the place in view, in words, built from the screens' own rail entries. On the
+         Run desk the same rail is folded into one button at the head of the view controls (three desks design 3.1). -->
+    {#snippet railNav(inMenu: boolean)}
       <Rail
         {railScale}
         {rail}
@@ -1816,7 +1821,12 @@
         toGalaxy={() => toScale("galaxy")}
         {toWorkshop}
         workshopDoor={partShows("workshop-door", desk)}
+        folded={railFolded && !inMenu}
+        {inMenu}
       />
+    {/snippet}
+    <div class="middle" data-rail-folded={railFolded ? "" : undefined}>
+      {@render railNav(false)}
       {#key ws.screen}
       <Stage
         {ws}
@@ -1840,6 +1850,7 @@
         {cutBody}
         openKeys={() => openHelp("keys")}
       >
+        {#snippet viewLead()}{#if railFolded}<RailMenu label={railLabel}>{#snippet children()}{@render railNav(true)}{/snippet}</RailMenu>{/if}{/snippet}
         {#snippet extraTools()}<Bookmarks list={ws.bookmarks ?? []} scope={scene.system} mark={markHere} where={whereabouts} go={goBookmark} onchange={(next) => (ws.bookmarks = next)} postcard={makePostcard} />{/snippet}
       </Stage>
       {/key}
@@ -2155,6 +2166,10 @@
     display: grid;
     grid-template-columns: 172px minmax(0, 1fr);
     min-height: 0;
+  }
+  /* The Run desk's rail is folded into the view controls: the picture gets the width. */
+  .middle[data-rail-folded] {
+    grid-template-columns: minmax(0, 1fr);
   }
   /* When the bar is full the kicker gives way first, then the place's name ends in "…"; nothing overlaps. */
   .kicker {
