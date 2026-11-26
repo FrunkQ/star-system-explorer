@@ -222,5 +222,6 @@ export { atlasPacks, classNamesIn, sweepAsk, sweepMarks } from "./sweep.ts";
 export { MAKEUP_FIELD, MAKEUP_PARTS, makeupEdits, makeupKinds, makeupOf, PART_WORDS, retradeMakeup } from "./makeup.ts";
 export type { MakeupKind, MakeupPart } from "./makeup.ts";
 export type { SweepAsk, Swept, SweepStep, SweepTip } from "./sweep.ts";
-export { STAR_KINDS, spectralLetter, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
-export type { StarDescription, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
+export { STAR_FAMILY_WORDS, starClassWords } from "./star-class.ts";
+export { STAR_KINDS, letterOf, massSteps, readMassStrip, kindMass, starEdits, birthMass, systemAgeYr, massPos, massAt } from "./star-chooser.ts";
+export type { StarDescription, StarClass, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
