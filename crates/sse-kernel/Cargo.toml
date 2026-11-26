@@ -40,6 +40,7 @@ sse-hazard = { path = "../sse-hazard" }
 sse-codes = { path = "../sse-codes" }
 sse-names = { path = "../sse-names" }
 sse-sector-io = { path = "../sse-sector-io" }
+sse-catalogue = { path = "../sse-catalogue" }
 serde.workspace = true
 serde_json.workspace = true
 ts-rs = { version = "=12.0.1", features = ["serde-json-impl"] }
