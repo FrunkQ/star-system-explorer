@@ -212,6 +212,8 @@ export interface ViewSession {
   setCampaignNow(at_s: bigint): Promise<{ ok: true; state_hash: string } | { ok: false; code: string; message: string }>;
   /** The top pack's calendar (kernel `calendar`), if any pack gives one. */
   calendar(): Promise<{ ok: true; calendar?: PackCalendar } | { ok: false; code: string; message: string }>;
+  /** How a system in the open universe was made (kernel `formation_record`, F10): a grown system's run, re-run from its kept request. GM only. */
+  formationRecord?(system: string): Promise<{ ok: true; result: import("./formation-record.ts").FormationRecordRead } | { ok: false; code: string; message: string }>;
   /** Every system in the open universe that has facts (kernel `systems`): adopted ones and authored ones. */
   listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
   /** The links between places the record holds (kernel `links_in`, HW1): gates, lanes, routes; the GM sees all. Read only. */
@@ -1188,6 +1190,12 @@ export class Session implements ViewSession {
   async listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "systems" });
     return r.type === "systems_listed" ? { ok: true, systems: (r as unknown as { systems: ListedSystem[] }).systems } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async formationRecord(system: string): Promise<{ ok: true; result: import("./formation-record.ts").FormationRecordRead } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads how a system was made" };
+    const r = await this.#call({ op: "formation_record", system } as never);
+    return r.type === "formation_record" ? { ok: true, result: r as unknown as import("./formation-record.ts").FormationRecordRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async resolvedSystem(system: string, at_s?: number, branch?: string): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {

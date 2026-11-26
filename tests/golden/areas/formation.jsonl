@@ -1,0 +1,6 @@
+{"type":"stack_loaded","stack_hash":"17f98154b9064ab97ac07de26037aa2ba9632a99afdc078a948124160a0796f9","flows":["sse.base.body-magnetism","sse.base.body-shape","sse.base.moon-tides","sse.base.orbit-basics","sse.base.planet-bulk","sse.base.planet-climate","sse.base.planet-heat","sse.base.planetesimal-water","sse.base.star-main-sequence"],"publishers":27,"fictional_kinds":[]}
+{"type":"universe_opened","root":"u:form","manifest_id":"92fadc250787152141c348cdafebec50440172f64a93daa2b9ef270c0f79bfae"}
+{"type":"authored","event_id":"9cd27a7a6222cfdff1105a6de861c9c5e92513cdb8f2553daaad2a3640418220","affected":["u:form/sys:0/star:0"],"state_hash":"2965e26fcfb7ee2c162e6a858ac0a83c78d57489114fc1d7d17ede8d5afdd1e8"}
+{"type":"formation_record","system":"u:form/sys:0","source":"facts","why":"this system was written fact by fact, not grown, so it has no formation history"}
+{"type":"error","code":"unknown_system","message":"u:form/sys:9 holds nothing in this universe"}
+{"type":"error","code":"bad_address","message":"u:elsewhere/sys:0 is not a system in universe u:form"}
