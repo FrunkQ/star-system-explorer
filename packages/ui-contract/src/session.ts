@@ -240,6 +240,12 @@ export interface ViewSession {
    * the branch with `discardBranch` when done. GM only.
    */
   classSample?(classes: readonly string[], extra?: readonly PackDoc[]): Promise<{ ok: true; result: ClassSampled } | { ok: false; code: string; message: string }>;
+  /**
+   * One star read off the life line formation draws (kernel `describe_star`, K18): mass, age from birth and [Fe/H] in;
+   * the phase now with its temperature, luminosity and radius, each phase's ages, the remnant and the mass walls. Read
+   * only, no system, no events; the star chooser (ED6) reads its strips from it.
+   */
+  describeStar?(mass_msun: number, age_yr: number, feh?: number): Promise<{ ok: true; star: import("./star-chooser.ts").StarDescription } | { ok: false; code: string; message: string }>;
   classifyPreview?(ask: ClassifyAsk): Promise<{ ok: true; result: ClassifyPreview } | { ok: false; code: string; message: string }>;
   /** The story finder (U8, kernel `sift`): sifters over the campaign, hits with evidence. GM only. */
   sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }>;
@@ -879,6 +885,11 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the story finder reads the whole campaign, so it runs on the game master's machine" };
     const r = await this.#call({ op: "sift", ...ask });
     return r.type === "sifted" ? { ok: true, result: r as unknown as import("./story.ts").SiftResult } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async describeStar(mass_msun: number, age_yr: number, feh?: number): Promise<{ ok: true; star: import("./star-chooser.ts").StarDescription } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "describe_star", mass_msun, age_yr, ...(feh !== undefined ? { feh } : {}) });
+    return r.type === "star_described" ? { ok: true, star: r.star as import("./star-chooser.ts").StarDescription } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async classSample(classes: readonly string[], extra: readonly PackDoc[] = []): Promise<{ ok: true; result: ClassSampled } | { ok: false; code: string; message: string }> {
