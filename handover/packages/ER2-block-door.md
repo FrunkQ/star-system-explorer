@@ -21,11 +21,11 @@ Track ER (edits that reach everything). Design: `handover/design/SSE4-edits-reac
 - **Kernel.** `load_stack` works out the library in force before compiling flows, compiles flows and runs their test cases against it, builds the physics (`Physics::build_with`), then puts it in force for the rest of the load (codes, adopting a universe) before keeping it. `Kernel.atoms` is the library in force, so the block list the interface reads shows the settings in force.
 - **Physics hash.** Covers the block edits (left out of the hash input when there are none, so an unedited stack keeps its physics hash).
 
-## The call sites (ledger kind `block`: 35 lines in 23 files, now 1 in 1)
+## The call sites (ledger kind `block`: 35 lines in 23 files, now none)
 
 Converted to the door: `sse-codes` plan, `sse-field` glow, `sse-formation` pipeline (the planet-heat flow, now kept with `memo`), `sse-hazard`, `sse-import-v3` (3), `sse-kernel` adopt, atmos, composition, fields, nav, sea, stability, the kernel's own registry, `sse-light` colour, emit (the light model, now kept with `memo`; `Model::base()` returns an `Arc`), shadow, `sse-nebula` forbidden (2), outflow, `sse-place` model, `sse-sense` fog, reach, `sse-world`.
 
-Left on the ledger, on purpose: `crates/sse-flow/src/flow.rs` line 313, the flow compiler taking each block's setting defaults from the registry it is handed. Every registry handed to it outside tests is now the library in force, so it reads the settings in force; the scan matches it only by its text. It goes when the audit learns to tell that line from a side door (ER1b's owner, or ER13).
+One exact exception in `scripts/audit-side-doors.py` (`BLOCK_EXCEPTIONS`, path plus the line's code, with its reason, agreed with the ER1 thread): `crates/sse-flow/src/flow.rs`, where the flow compiler takes each block's setting defaults from the registry it is handed. Every registry handed to it outside tests is now the library in force, so it reads the settings in force; it is not a side door.
 
 Not in ER2: a block's formula from the stack (ER3), base flows from the stack rather than the shipped copy (ER3; formation's planet-heat flow and the light model still read the shipped flow, now compiled against the blocks in force), the light model's base-light pack read (ER6), the sheet (ER4, ER5).
 
