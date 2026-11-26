@@ -710,6 +710,7 @@ dependencies = [
  "sse-nebula",
  "sse-observe",
  "sse-pack",
+ "sse-physics",
  "sse-record",
  "sse-reference",
  "sse-sector-io",
@@ -824,6 +825,20 @@ dependencies = [
  "serde_json",
  "sse-core",
  "sse-flow",
+]
+
+[[package]]
+name = "sse-physics"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-flow",
+ "sse-formula",
+ "sse-pack",
+ "sse-reference",
 ]
 
 [[package]]
