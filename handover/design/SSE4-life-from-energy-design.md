@@ -1,6 +1,6 @@
 # SSE4: life's spread, population and pace from the energy it can get (track LE)
 
-Status: **SHAPED BY ALEX 26 Nov 2026 23:50 UTC** (section 0): 4.0 builds a broad-brush baseline, the detail and all tech go in the 4.1 bucket. Question 5 of section 10 is still open. Design only; nothing here is built by this note. Packages for builders are in section 9; the 4.1 bucket is section 9A. LE is a code only, never shown in the product.
+Status: **SHAPED BY ALEX 26 Nov 2026 23:50 UTC** (section 0): 4.0 builds a broad-brush baseline, the detail and all tech go in the 4.1 bucket. Question 5 answered 23:54: two maintenance values in 4.0. Design only; nothing here is built by this note. Packages for builders are in section 9; the 4.1 bucket is section 9A. LE is a code only, never shown in the product.
 
 Read with: `SSE4-life-design.md` (boxes B, C, D, E), `SSE4-evolution-design.md` (sections 3 and 5, the gradient catalogue and opportunity times prize), `status/names-and-life.md` (L3), `status/kernel.md` (E1, E2, E4 to E6 built as opt-in), the Energy flow view (memory `sse4-heat-flow-view`, PR 670, track HV).
 
@@ -29,6 +29,7 @@ What changes, as read by this thread:
 - **No headcount query in 4.0.** A single "how many people" figure is wrong because it depends on what they eat, and tech changes the world. Instead the life system **shares the captured energy out among the kinds of life by what each eats** (trees and other producers, insects, grazers, predators, decomposers), and reports each kind's share. People are one more kind with a diet, added in 4.1 with tech. Sections 5.3 and 5.4 move to the 4.1 bucket; question 2 (ceiling or likely) goes with them.
 - **Energy is above all a speed control.** The surplus sets how fast life spreads, how fast it evolves and how fast it recovers, all in one place. Section 1 point 6 and section 7 are read that way: one "speed" read-out per world, which 4.1 refines.
 - **4.0 is the baseline, broad brush.** Keep-alive, the energy ledger, the shares by kind of life, spread in the deep-time history and recovery clocked by pace go in now, with simple cited tables where the detail is not worth it yet. The fine models (two-regime pace, spread on the campaign clock, transfer between worlds, xenobiology per chemistry, people and tech) go in the 4.1 bucket (section 9A), with the seams the baseline leaves for each.
+- **Question 5, 23:54:** "Absolutely and we can do this in V4.0 I hope - no reason why not as we have all the machanisms in place... if some rock thing develops intelligence over 5 billion years... fine I guess... we will stop advancing them until 4.1". So LE1 carries both maintenance values (starved and laboratory) and the "alive, barely" middle of section 4. A slow, starved biosphere may reach minds if its opportunity adds up over billions of years; in 4.0 the history stops there (minds emerge, as box K's sketch already does) and nothing advances them further until 4.1's culture and tech.
 - **Question 4** (replace the 0.25 pace power) is detail, so it moves to 4.1; the baseline keeps 0.25, already cited and to be entered in the fudge register. **Question 6** (outside power) is tech, so 4.1. **Question 3** is answered by the split above.
 
 ---
@@ -218,7 +219,7 @@ All kernel work is in `sse-life`, `packs/base-life` and the reference pack, with
 
 | Id | Delivers | Needs | Verified by |
 |---|---|---|---|
-| **LE1** | Keep-alive test in the shared `finish` step (both models), maintenance in one shared cited block, standing biomass capped by power over maintenance | none | A habitat with supply below maintenance is closed with its reason in both models; Earth's totals stay inside L1a's ranges; Europa closed or open with its numbers; test seen red with the cap removed |
+| **LE1** | Keep-alive test in the shared `finish` step (both models), starved and laboratory maintenance in one shared cited block (section 4), the "alive, barely" flag, standing biomass capped by power over maintenance | none | A habitat with supply below maintenance is closed with its reason in both models; Earth's totals stay inside L1a's ranges; Europa reads "alive, barely" or closed with its numbers; test seen red with the cap removed |
 | **LE2** | The energy ledger per habitat and world on `life_view`: arriving (with the Petela factor), offered, captured, keep-alive, surplus, and a sixth line **brought in**, always zero in 4.0 (tech's seam) | LE1; climate light at the habitat for "arriving" (HV's ask), shown as not published until it lands | Lines sum to the world; captured ≤ offered ≤ arriving on 10,000 random worlds; Earth captured about 130 TW within a factor of three |
 | **LE3** | **Where the energy goes**: each guild's power by its diet (a list of what it eats: a gradient, or other guilds, with Lindeman's 10 percent per step), its share of the world's captured power, and rough numbers in broad size classes (cells, insect-sized, animal-sized, tree-sized) by energy equivalence and Kleiber | LE1 | Shares sum to captured power on every world; Damuth's mammal densities within a factor of ten; a gap, never a zero, where production is unknown |
 | **LE4** | **The speed read-out**: fill time per habitat from Fisher's front (r from metabolic theory capped by the surplus; mixing by medium from a short cited table), and one world line "life here moves and changes at about N times Earth's pace" from opportunity | LE1 | Section 6.1 orders of magnitude; r falls to zero smoothly at the keep-alive line; Earth reads 1 |
@@ -240,15 +241,13 @@ Every good idea that is detail or tech, kept here so the baseline is built to ta
 | **LE8** transfer between worlds | Rocks thrown between planets carry life (box C) | The same form, with ejecta exchange as the link rate |
 | **LE9** people and tech | A people guild with a diet; "how many could this world feed, eating what, with what tech"; ceilings and likely figures (old sections 5.3, 5.4, questions 1, 2, 6); outside power (fusion farms, mirrors); tech changing the planet, and its impact beyond the planet | LE2's "brought in" line; LE3's diet lists; box H's fluxes, which already take any source |
 | **LE10** xenobiology in depth | Per-chemistry maintenance, growth and size rules; finer size spectra; body plans | Maintenance and the metabolic constants are one shared block per chemistry (LE1), not code |
-| **LE11** two maintenance values | Starved and laboratory, with an "alive, barely" middle (question 5) | LE1 reads its maintenance from one block that can hold both |
+| **LE11** advancing minds | Culture and tech growing from a biosphere that has reached minds (any biosphere, however slow) | In 4.0 the history stops at "minds emerge" with its date and cause |
 
 ---
 
 ## 10. Questions for Alex
 
-Answered 26 Nov 23:50 (section 0): 1, 2, 3, 4 and 6. Still open:
-
-5. **Two maintenance values (starved and laboratory), giving an "alive, barely" middle?** Recommend: 4.0 uses the one value the gradient model already has (laboratory, Tijhuis et al. 1993), and the starved value comes with 4.1's xenobiology (LE11). In 4.0 some deep-crust and Europa-type habitats will read closed when the deep biosphere suggests they could be barely alive; the reason given will say so.
+All answered on 26 Nov 2026 (section 0): 1 to 4 and 6 at 23:50, 5 at 23:54. None open.
 
 ---
 
