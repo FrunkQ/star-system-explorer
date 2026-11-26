@@ -198,6 +198,8 @@ fn the_studies_voyages_fly_in_sol() {
             "paper.discovery-ii-saturn" => Some((1.0, 1.3)),
             // DRA 5.0: SSE4 193 days on a Lambert arc, the study 180.
             "paper.dra5-ntr" => Some((0.9, 1.2)),
+            // HOPE NEP and the fission fragment ship stop at the Main Belt
+            // for fuel, and belt legs do not spiral yet: no band (RK6.md, part 3).
             _ => None,
         };
         if let Some((lo, hi)) = band {
