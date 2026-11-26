@@ -17,9 +17,6 @@
 2 crates/sse-kernel/src/lib.rs
 1 crates/sse-kernel/src/nav.rs
 1 crates/sse-logic/src/blocks.rs
-2 crates/sse-nav/src/flightlog.rs
-2 crates/sse-nav/src/flightlog_tests.rs
-3 crates/sse-nav/tests/sol_today_logs.rs
 2 crates/sse-sense/src/fog.rs
 1 crates/sse-sift/src/sifter.rs
 1 crates/sse-suite/src/scenario.rs

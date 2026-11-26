@@ -1,5 +1,10 @@
 use crate::*;
 
+/// A date from seconds as a double (tests only; dates are whole seconds).
+fn d(x: f64) -> Instant {
+    Instant::from_seconds_f64(x).unwrap()
+}
+
 fn seed() -> Seed {
     Seed::from_text("activity-tests")
 }
@@ -57,7 +62,7 @@ fn the_sun() {
     assert_eq!(c.branch, "inactive");
     // The inactive branch gives 6.1 years; the source itself says the Sun is an outlier.
     assert!((c.period_s / JULIAN_YEAR - 6.1).abs() < 0.3);
-    let mo = moment(&a, sun().age_s, &s);
+    let mo = moment(&a, d(sun().age_s), &s);
     let mean_rate = act::flare_rate_above(a.xray_w, 1e25, act::FLARE_K, 2.0) * JULIAN_YEAR;
     assert!(mean_rate > 0.1 && mean_rate < 10.0, "{mean_rate}");
     assert!(mo.flares_per_year_above_1e27_j > 2e-3 && mo.flares_per_year_above_1e27_j < 2e-2);
@@ -85,7 +90,7 @@ fn young_red_dwarf_is_saturated() {
     assert_eq!(a.regime, "saturated");
     assert!((m::log10(a.xray_fraction) + 3.13).abs() < 1e-9);
     assert!(a.cycle.is_none());
-    let per_year = moment(&a, 0.0, &s).flares_per_year_above_1e25_j;
+    let per_year = moment(&a, Instant::ORIGIN, &s).flares_per_year_above_1e25_j;
     assert!(per_year > 5.0, "{per_year}");
 }
 
@@ -133,7 +138,7 @@ fn conditions_decide() {
 fn flare_energies_follow_the_power_law() {
     let s = Settings::default();
     let a = activity(&seed(), &ev_lac(), &s).unwrap();
-    let f = flares(&seed(), &a, 0.0, 10.0 * JULIAN_YEAR, 1e24, &[], &s).unwrap();
+    let f = flares(&seed(), &a, d(0.0), d(10.0 * JULIAN_YEAR), 1e24, &[], &s).unwrap();
     let count = |lo: f64, hi: f64| {
         f.flares
             .iter()
@@ -168,18 +173,18 @@ fn flare_energies_follow_the_power_law() {
 fn flares_are_keyed_not_streamed() {
     let s = Settings::default();
     let a = activity(&seed(), &ev_lac(), &s).unwrap();
-    let key = |f: &Flares, lo: f64, hi: f64, e: f64| -> Vec<(u64, u64)> {
+    let key = |f: &Flares, lo: f64, hi: f64, e: f64| -> Vec<(Instant, u64)> {
         f.flares
             .iter()
             .filter(|x| x.at_s >= lo && x.at_s <= hi && x.energy_j >= e)
-            .map(|x| (x.at_s.to_bits(), x.energy_j.to_bits()))
+            .map(|x| (x.at, x.energy_j.to_bits()))
             .collect()
     };
     let y = JULIAN_YEAR;
-    let long = flares(&seed(), &a, 0.0, 2.0 * y, 1e24, &[], &s).unwrap();
-    let short = flares(&seed(), &a, 0.5 * y, y, 1e24, &[], &s).unwrap();
+    let long = flares(&seed(), &a, d(0.0), d(2.0 * y), 1e24, &[], &s).unwrap();
+    let short = flares(&seed(), &a, d(0.5 * y), d(y), 1e24, &[], &s).unwrap();
     assert_eq!(key(&long, 0.5 * y, y, 1e24), key(&short, 0.5 * y, y, 1e24));
-    let big = flares(&seed(), &a, 0.0, 2.0 * y, 3e25, &[], &s).unwrap();
+    let big = flares(&seed(), &a, d(0.0), d(2.0 * y), 3e25, &[], &s).unwrap();
     assert_eq!(
         key(&long, 0.0, 2.0 * y, 3e25),
         key(&big, 0.0, 2.0 * y, 3e25)
@@ -187,12 +192,51 @@ fn flares_are_keyed_not_streamed() {
     assert!(!big.flares.is_empty());
 }
 
+/// TP1b: at a star's age a flare's date still falls on any second (before,
+/// the date was a double, a multiple of 32 s at 4.6 Gyr), and moving the
+/// window's start by seconds keeps the same flares.
+#[test]
+fn flares_keep_their_seconds_at_a_stars_age() {
+    let s = Settings::default();
+    let a = activity(&seed(), &ev_lac(), &s).unwrap();
+    let age = Instant::seconds(4_610_000_000 * sse_core::time::YEAR_S);
+    let to = age.checked_add_seconds(sse_core::time::YEAR_S).unwrap();
+    let f = flares(&seed(), &a, age, to, 3e24, &[], &s).unwrap();
+    assert!(f.flares.len() > 10, "{}", f.flares.len());
+    let off_grid = f.flares.iter().filter(|x| x.at.s % 32 != 0).count();
+    assert!(
+        off_grid > f.flares.len() / 2,
+        "{off_grid} of {}",
+        f.flares.len()
+    );
+    assert!(f.flares.iter().all(|x| x.at >= age && x.at <= to));
+    let later = age.checked_add_seconds(7).unwrap();
+    let g = flares(&seed(), &a, later, to, 3e24, &[], &s).unwrap();
+    let dates = |f: &Flares| -> Vec<Instant> {
+        f.flares
+            .iter()
+            .map(|x| x.at)
+            .filter(|t| *t >= later)
+            .collect()
+    };
+    assert_eq!(dates(&f), dates(&g));
+}
+
 /// Ejections hit or miss by geometry, and light gives warning before the particles.
 #[test]
 fn ejections_hit_or_miss_by_geometry() {
     let s = Settings::default();
     let a = activity(&seed(), &sun(), &s).unwrap();
-    let f = flares(&seed(), &a, 0.0, 100.0 * JULIAN_YEAR, 3e25, &[earth()], &s).unwrap();
+    let f = flares(
+        &seed(),
+        &a,
+        d(0.0),
+        d(100.0 * JULIAN_YEAR),
+        3e25,
+        &[earth()],
+        &s,
+    )
+    .unwrap();
     let ej: Vec<&Ejection> = f
         .flares
         .iter()
@@ -205,7 +249,7 @@ fn ejections_hit_or_miss_by_geometry() {
     for fl in &f.flares {
         if let Some(e) = &fl.ejection {
             for h in &e.hits {
-                let there = earth().direction(h.arrives_s);
+                let there = earth().direction(h.arrives);
                 assert!(dot(e.direction, there) >= m::cos(e.half_width_rad));
                 let days = h.warning_s / DAY;
                 assert!(days > 0.3 && days < 5.0, "{days}");
@@ -224,7 +268,7 @@ fn golden() {
         period_s: Some(5.0 * DAY),
         phase_rad: 1.0,
     };
-    let f = flares(&seed(), &a, 0.0, 30.0 * DAY, 3e24, &[tg], &s).unwrap();
+    let f = flares(&seed(), &a, d(0.0), d(30.0 * DAY), 3e24, &[tg], &s).unwrap();
     let text = serde_json::to_string_pretty(&(a, f)).unwrap() + "\n";
     let path = concat!(
         env!("CARGO_MANIFEST_DIR"),
