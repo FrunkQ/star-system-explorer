@@ -1154,12 +1154,17 @@ mod shadow_light {
         );
         let [lo, hi] = s.heights_m.unwrap();
         assert!(lo < 20e3 && hi > lo, "{lo} {hi}");
+        // Clear air only (no clouds or haze, which dim a real eclipse several
+        // times more): Link's clear-air umbra is some 7 to 9 magnitudes under
+        // the full Moon, a few parts in ten thousand to a few in a thousand.
+        let share = s.share.unwrap();
+        assert!(share > 1e-4 && share < 1e-2, "share {share}");
     }
 
     #[test]
     fn an_airless_worlds_shadow_stays_black() {
         let s = read(air(&[], 0.0, 250.0, 1.62), 1.737e6, 1e8);
-        assert!(!s.lit && s.colour.is_none());
+        assert!(!s.lit && s.colour.is_none() && s.share.is_none());
         assert!(s.why[0].contains("No air"));
     }
 
