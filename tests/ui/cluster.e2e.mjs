@@ -51,7 +51,7 @@ try {
       const p = await gm.evaluate(() => window.__places.at(-1));
       assert.equal(p.scale, "cluster");
       assert.equal(p.id, "cell:0.0.0");
-      assert.equal(p.name, "Cell 0 · 0 · 0");
+      assert.equal(p.name, "Milky Way neighbourhood");
       assert.ok(p.children.length >= 5 && p.children.length <= 24, `galaxies below (${p.children.length})`);
       assert.match(p.children[0].id, /cell:0\.0\.0\/halo:\d+$/);
       assert.equal(p.children[0].name, `Halo ${top}`, "the biggest first");

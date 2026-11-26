@@ -11,7 +11,7 @@
   import FindHome from "./FindHome.svelte";
   import Nearby from "./Nearby.svelte";
   import { CLUSTER_CONTROLS } from "./controls.ts";
-  import { DEFAULT_VIEW, viewOptions, announcePlace, cellHalo, cellId, foamCells, parseCellId, haloRadius, overdensityWords, projectHalo, sci, type CellHalo, type HaloCell, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
+  import { DEFAULT_VIEW, viewOptions, announcePlace, cellHalo, cellId, cellName, foamCells, parseCellId, haloRadius, overdensityWords, projectHalo, sci, type CellHalo, type HaloCell, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ min: String(params.min_mass ?? "1e10"), web: params.web !== false }));
@@ -85,6 +85,8 @@
   });
   const one = $derived<CellHalo | null>(cell?.haloes.find((h) => h.address === picked) ?? null);
   const biggest = $derived(cell?.haloes[0] ?? null);
+  // Named after the most important galaxy in it (Alex, 26 Nov): ours at home, else the biggest halo's.
+  const placeName = $derived(cellName(idx as [number, number, number], cell && cell.index.every((v, i) => v === idx[i]) ? biggest?.address : null));
   function pick(h: CellHalo) {
     picked = h.address;
   }
@@ -93,7 +95,7 @@
   $effect(() => {
     const c = cell;
     if (!c || !root) return;
-    announcePlace(root, { scale: "cluster", id: cellId(c.index), name: `Cell ${c.index.join(" · ")}`, children: c.haloes.slice(0, PLACE_CHILDREN).map((h) => ({ id: h.address, name: nameOf(h.address) })) });
+    announcePlace(root, { scale: "cluster", id: cellId(c.index), name: cellName(c.index, c.haloes[0]?.address), children: c.haloes.slice(0, PLACE_CHILDREN).map((h) => ({ id: h.address, name: nameOf(h.address) })) });
   });
   function chart(h: CellHalo) {
     ctx.workspace.select(h.address);
@@ -170,7 +172,7 @@
     <Nearby session={ctx.session} look={shown.style === "true" ? "true" : "3d"} seen={nearbySeen} scale={shown.scale === "real" ? "real" : "readable"} hud={shown.hud} onchart={(a) => { ctx.workspace.select(a); root?.dispatchEvent(new CustomEvent("sse:explore", { bubbles: true, detail: { section: "galaxy" } })); }} />
   {:else}
   <div class="bar">
-    <span class="lbl">Cell {idx.join(" · ")}</span>
+    <span class="lbl" title="Cell {idx.join(' · ')}" data-cell-name>{placeName}</span>
     <div class="seg" role="group" aria-label="Go to a neighbouring cell">
       <button type="button" onclick={() => move(0, -1)} data-move="x-" aria-label="West, minus x">← x</button>
       <button type="button" onclick={() => move(0, 1)} data-move="x+" aria-label="East, plus x">x →</button>
