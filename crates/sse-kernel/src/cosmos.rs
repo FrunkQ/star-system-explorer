@@ -869,12 +869,15 @@ pub(crate) struct OriginAt {
     pub r_now_kpc: Option<f64>,
     pub phi_now_deg: Option<f64>,
     pub keep_feh: Option<f64>,
+    /// GZ13: the system's star slot, whose place now gives the radius and
+    /// azimuth when none is stored.
+    pub slot: Option<sse_cosmos::stars::StarSystem>,
 }
 
 /// One plausible past for a star made older or younger, in the campaign's
 /// home galaxy (GZ12: one of the web's own, as the galaxy chart's default).
-/// A star with no galactic place is still put at the Sun's radius until it
-/// has a star slot (GZ13; fudge register).
+/// A star is put where its star slot is now (GZ13); one with no slot
+/// (a system given whole by the client) at the Sun's radius.
 pub(crate) fn reconstruct_origin(
     seed: &Seed,
     root: &Address,
@@ -907,11 +910,19 @@ pub(crate) fn reconstruct_origin(
         address: addr,
         remains: Default::default(),
     };
+    let now_gyr = g.now.t_gyr + a.elapsed_gyr;
+    let at = a
+        .slot
+        .as_ref()
+        .map(|s| crate::slot::polar(s.orbit.xyz(now_gyr * 1000.0)));
     let ask = sse_cosmos::origin::OriginAsk {
-        now_gyr: g.now.t_gyr + a.elapsed_gyr,
+        now_gyr,
         age_gyr: a.age_gyr,
-        r_now_kpc: a.r_now_kpc.unwrap_or_else(|| env.sun_radius_kpc()),
-        phi_now_deg: a.phi_now_deg.unwrap_or(0.0),
+        r_now_kpc: a
+            .r_now_kpc
+            .or(at.map(|p| p.0))
+            .unwrap_or_else(|| env.sun_radius_kpc()),
+        phi_now_deg: a.phi_now_deg.or(at.map(|p| p.1)).unwrap_or(0.0),
         keep_feh: a.keep_feh,
     };
     Ok(sse_cosmos::origin::reconstruct(&env, &cp.origin, &ask))

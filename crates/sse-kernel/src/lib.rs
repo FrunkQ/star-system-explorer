@@ -65,6 +65,9 @@ pub mod protocol;
 mod reference;
 mod sea;
 mod sky;
+mod slot;
+#[cfg(test)]
+mod slot_tests;
 mod small;
 #[cfg(test)]
 mod small_tests;
@@ -1671,6 +1674,7 @@ impl Kernel {
                     r_now_kpc: place("system.galactic_r_kpc"),
                     phi_now_deg: place("system.galactic_phi_deg"),
                     keep_feh: keep.then_some(feh_before),
+                    slot: slot::slot_of(&all, a).and_then(|(s, _)| slot::pinned(&all, &s)),
                 },
             )?)
         };
@@ -2218,6 +2222,398 @@ impl Kernel {
                 .state_at(UniverseTime::seconds(i64::MAX))
                 .hash()
                 .hex(),
+        })
+    }
+
+    /// GZ13: give systems their star slots. `chosen` is the GM's star for
+    /// one system ("Move it"); with none, each system with no slot yet is
+    /// given one as at adoption. With `pending` (an adoption event not yet
+    /// appended), the systems are read with its facts and their slots are
+    /// written into it, so an adoption stays one event; otherwise each slot
+    /// is written as its own events. Returns each slot (short form) and the
+    /// events written. A system no slot can be found for is answered with
+    /// `star: null` and why, never refused.
+    fn place_systems(
+        &mut self,
+        systems: &[Address],
+        chosen: Option<&str>,
+        again: bool,
+        mut pending: Option<&mut Vec<Event>>,
+    ) -> Result<(Vec<serde_json::Value>, Vec<String>), Response> {
+        let u = self.universe()?;
+        let elapsed_myr = clock::elapsed_myr(&u.chronicle);
+        let mut state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        for e in pending.iter().flat_map(|v| v.iter()) {
+            for (a, f) in &e.body.payload.set {
+                state
+                    .facts
+                    .entry(a.clone())
+                    .or_default()
+                    .extend(f.iter().map(|(k, v)| (k.clone(), v.clone())));
+            }
+        }
+        let (seed, root, home) = (u.seed, u.root.clone(), u.home());
+        let chosen: Option<Address> = match chosen {
+            Some(c) => Some(in_universe(&root, c)?),
+            None => None,
+        };
+        struct Plan {
+            system: Address,
+            old: Option<Address>,
+            drawn: sse_cosmos::stars::StarSystem,
+            laid: sse_cosmos::stars::StarSystem,
+            over: Vec<String>,
+            by: String,
+            fits: bool,
+            why: Vec<String>,
+            distance_pc: f64,
+        }
+        let mut pins = cosmos::star_pins(&state)?;
+        let mut out = vec![];
+        let plans: Vec<Result<Plan, (Address, String)>> = cosmos::with_world(
+            &seed,
+            &root,
+            home.as_deref(),
+            None,
+            |st, w, now_myr| {
+                let t = now_myr + elapsed_myr;
+                let mut plans = vec![];
+                for sys in systems {
+                    let old = slot::slot_of(&state, sys);
+                    if chosen.is_none() && !again && old.is_some() {
+                        continue;
+                    }
+                    if old.as_ref().is_some_and(|(_, by)| by == "drawn") {
+                        return Err(err(
+                            "grown_from_star",
+                            format!("{sys} was grown from its star: its slot is its own address"),
+                        ));
+                    }
+                    let old = old.map(|(a, _)| a);
+                    if again {
+                        // Looking again: its own star is free to be found.
+                        pins.retain(|p| Some(&p.address) != old.as_ref());
+                    }
+                    let a = slot::authored(&state, sys);
+                    let found = match &chosen {
+                        Some(c) => {
+                            let d = st
+                                .draw_one(c)
+                                .map_err(|e| err("bad_address", e))?
+                                .ok_or_else(|| err("not_found", format!("no star drawn at {c}")))?;
+                            if old.as_ref() != Some(c) && pins.iter().any(|p| p.address == *c) {
+                                return Err(err(
+                                    "taken",
+                                    format!("{c} is already pinned: a looked-at star or another system's slot"),
+                                ));
+                            }
+                            let xyz = st.at(&d, t).xyz_pc;
+                            let sun = sse_cosmos::slot::suns_place(st, t);
+                            let dd = [xyz[0] - sun[0], xyz[1] - sun[1], xyz[2] - sun[2]];
+                            Ok(sse_cosmos::slot::Found {
+                                star: d,
+                                fits: true,
+                                by: "gm".into(),
+                                cells_read: 1,
+                                distance_pc: sse_core::math::sqrt(
+                                    dd[0] * dd[0] + dd[1] * dd[1] + dd[2] * dd[2],
+                                ),
+                                start_cell: st.cell_at(xyz, t),
+                                why: vec!["the GM's choice".into()],
+                            })
+                        }
+                        None => sse_cosmos::slot::find(
+                            st,
+                            t,
+                            slot::map_pc(&state, &root, sys),
+                            &pins,
+                            &a.wanted,
+                            &w.cp.slot,
+                        ),
+                    };
+                    match found {
+                        Ok(f) => {
+                            let (laid, over) = slot::lay_over(&f.star, &a, t / 1000.0);
+                            pins.retain(|p| Some(&p.address) != old.as_ref());
+                            pins.push(laid.clone());
+                            plans.push(Ok(Plan {
+                                system: sys.clone(),
+                                old,
+                                drawn: f.star,
+                                laid,
+                                over,
+                                by: f.by,
+                                fits: f.fits,
+                                why: f.why,
+                                distance_pc: f.distance_pc,
+                            }));
+                        }
+                        Err(e) => plans.push(Err((sys.clone(), e))),
+                    }
+                }
+                Ok(plans)
+            },
+        )?;
+        let mut ids = vec![];
+        let publisher = || Publisher::new("sse.base-cosmology", "slot", "1");
+        for p in plans {
+            let p = match p {
+                Ok(p) => p,
+                Err((sys, why)) => {
+                    out.push(
+                        serde_json::json!({"system": sys.to_string(), "star": null, "why": [why]}),
+                    );
+                    continue;
+                }
+            };
+            let u = self.universe()?;
+            // Each event is stamped when it is made, so each is appended
+            // before the next is made; into a pending adoption, the facts
+            // join its own.
+            let mut put = |a: &Address,
+                           f: BTreeMap<String, Value>,
+                           ev: Evidence,
+                           kind: &str|
+             -> Result<(), Response> {
+                if let Some(e) = pending.as_deref_mut().and_then(|v| v.last_mut()) {
+                    e.body.payload.set.entry(a.clone()).or_default().extend(f);
+                    if !e.body.subject.contains(a) {
+                        e.body.subject.push(a.clone());
+                    }
+                    return Ok(());
+                }
+                let e = clock::timeless_set(&u.chronicle, a, f, ev, vec![], kind, publisher())
+                    .map_err(|e| err("bad_event", e))?;
+                ids.push(
+                    u.chronicle
+                        .append(e)
+                        .map_err(|e| err("chronicle", format!("{e}")))?
+                        .hex(),
+                );
+                Ok(())
+            };
+            if let Some(old) = p.old.as_ref().filter(|o| **o != p.laid.address) {
+                put(
+                    old,
+                    slot::unpin_facts(),
+                    Evidence::Authored,
+                    cosmos::STAR_PIN_KIND,
+                )?;
+            }
+            put(
+                &p.laid.address,
+                slot::pin_facts(&p.laid, &p.drawn, &p.system, &p.over),
+                Evidence::Authored,
+                cosmos::STAR_PIN_KIND,
+            )?;
+            let mut f = BTreeMap::new();
+            f.insert(
+                slot::STAR_SLOT.to_string(),
+                Value::Text(p.laid.address.to_string()),
+            );
+            f.insert(slot::STAR_SLOT_BY.to_string(), Value::Text(p.by.clone()));
+            f.insert(slot::STAR_SLOT_FITS.to_string(), Value::Bool(p.fits));
+            put(
+                &p.system,
+                f,
+                if p.by == "gm" {
+                    Evidence::Authored
+                } else {
+                    Evidence::Resolved
+                },
+                slot::SLOT_KIND,
+            )?;
+            out.push(serde_json::json!({
+                "system": p.system.to_string(),
+                "star": p.laid.address.to_string(),
+                "by": p.by,
+                "fits": p.fits,
+                "distance_pc": p.distance_pc,
+                "authored_over": p.over,
+                "why": p.why,
+            }));
+        }
+        if let Some(e) = pending.and_then(|v| v.last_mut()) {
+            *e = Event::new(e.body.clone()).map_err(|x| err("bad_event", format!("{x:?}")))?;
+        }
+        Ok((out, ids))
+    }
+
+    /// `star_slot` (GZ13): a system's slot, where it is now and what of it
+    /// is authored, with advice where the authored star is unusual there.
+    fn star_slot(&mut self, system: &str) -> Result<serde_json::Value, Response> {
+        let u = self.universe()?;
+        let sys = in_universe(&u.root, system)?;
+        let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        if !state.facts.contains_key(&sys) {
+            return Err(err(
+                "not_found",
+                format!("{sys} is not a system of this universe"),
+            ));
+        }
+        let Some((star, by)) = slot::slot_of(&state, &sys) else {
+            return Ok(serde_json::json!({
+                "system": sys.to_string(),
+                "star": null,
+                "why": ["no star slot yet: an authored or imported system is given one when it is adopted"],
+            }));
+        };
+        let pin = slot::pinned(&state, &star).ok_or_else(|| {
+            err(
+                "bad_record",
+                format!("{star}: the slot's star is not pinned"),
+            )
+        })?;
+        let elapsed_myr = clock::elapsed_myr(&u.chronicle);
+        let (seed, root, home) = (u.seed, u.root.clone(), u.home());
+        let (place, now_gyr) =
+            cosmos::with_stars(&seed, &root, home.as_deref(), None, |st, now_myr| {
+                let t = now_myr + elapsed_myr;
+                let xyz = st.at(&pin, t).xyz_pc;
+                let in_home = star.to_string().starts_with(&format!("{}/", st.galaxy));
+                Ok((
+                    serde_json::json!({
+                        "galaxy": st.galaxy.to_string(),
+                        "in_home": in_home,
+                        "cell": st.cell_at(xyz, t),
+                        "xyz_pc": xyz,
+                    }),
+                    t / 1000.0,
+                ))
+            })?;
+        let (r, phi) = slot::polar(
+            serde_json::from_value::<[f64; 3]>(place["xyz_pc"].clone()).expect("three numbers"),
+        );
+        let origin = cosmos::reconstruct_origin(
+            &seed,
+            &root,
+            home.as_deref(),
+            cosmos::OriginAt {
+                age_gyr: now_gyr - pin.birth_gyr,
+                elapsed_gyr: elapsed_myr / 1000.0,
+                r_now_kpc: Some(r),
+                phi_now_deg: Some(phi),
+                keep_feh: Some(pin.feh),
+                slot: None,
+            },
+        )?;
+        let drawn: Option<serde_json::Value> = match state.get(&star, slot::DRAWN) {
+            Some(Value::Text(t)) => serde_json::from_str(t).ok(),
+            _ => None,
+        };
+        let over: Vec<String> = match state.get(&star, slot::AUTHORED_OVER) {
+            Some(Value::Array(a)) => a
+                .iter()
+                .filter_map(|v| match v {
+                    Value::Text(t) => Some(t.clone()),
+                    _ => None,
+                })
+                .collect(),
+            _ => vec![],
+        };
+        let fits = match state.get(&sys, slot::STAR_SLOT_FITS) {
+            Some(Value::Bool(b)) => *b,
+            _ => true,
+        };
+        let advice = origin
+            .unusual
+            .clone()
+            .or_else(|| origin.impossible.clone())
+            .map(|w| format!("unusual for its birthplace: {w}"));
+        Ok(serde_json::json!({
+            "system": sys.to_string(),
+            "star": star.to_string(),
+            "by": by,
+            "fits": fits,
+            "galaxy": place["galaxy"],
+            "in_home": place["in_home"],
+            "cell": place["cell"],
+            "xyz_pc": place["xyz_pc"],
+            "r_kpc": r,
+            "phi_deg": phi,
+            "authored_over": over,
+            "drawn": drawn,
+            "origin": {
+                "feh_gas": origin.feh_gas,
+                "feh": origin.feh,
+                "birth_r_kpc": origin.birth_r_kpc,
+                "unusual": origin.unusual,
+                "impossible": origin.impossible,
+            },
+            "advice": advice,
+            "model": [
+                "slot: a drawn star of the home galaxy, by the system's V3 map position from the Sun's place, else the nearest drawn star to the Sun's place within the pack's tolerances of the system's own star (mass, age, companions); the authored star is laid over it and pinned, so it claims its share of the cell (grand zoom design 6.3 point 2, fudge register F37c)",
+                "advice: the reconstructed-origin check at the slot's place with the star's [Fe/H] kept; advice only, never a refusal",
+            ],
+        }))
+    }
+
+    /// `site_history` (GZ13 with GZ0's finding): the event layer along the
+    /// slot star's own path.
+    fn site_history(
+        &mut self,
+        system: &str,
+        from_myr: Option<f64>,
+        to_myr: Option<f64>,
+    ) -> Result<serde_json::Value, Response> {
+        let u = self.universe()?;
+        let sys = in_universe(&u.root, system)?;
+        let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        let (star, _) = slot::slot_of(&state, &sys).ok_or_else(|| {
+            err(
+                "no_slot",
+                format!("{sys} has no star slot: it is given one when it is adopted"),
+            )
+        })?;
+        let pin = slot::pinned(&state, &star).ok_or_else(|| {
+            err(
+                "bad_record",
+                format!("{star}: the slot's star is not pinned"),
+            )
+        })?;
+        let elapsed_myr = clock::elapsed_myr(&u.chronicle);
+        let (seed, root, home) = (u.seed, u.root.clone(), u.home());
+        cosmos::with_world(&seed, &root, home.as_deref(), None, |st, w, now_myr| {
+            let now = now_myr + elapsed_myr;
+            let from = from_myr.unwrap_or(pin.birth_gyr * 1000.0).max(0.0);
+            let to = to_myr.unwrap_or(now);
+            if !(from.is_finite() && to.is_finite() && from < to) {
+                return Err(err("bad_request", "the window must run forwards"));
+            }
+            let ev = sse_cosmos::events::Events {
+                env: st.env,
+                halo: w.host,
+                edits: &[],
+                green: w.cp.green.clone(),
+                stars: st.params.clone(),
+                params: w.cp.events.clone(),
+                seed,
+            };
+            let site = sse_cosmos::events::EventSite {
+                address: star.clone(),
+                path: sse_cosmos::events::SitePath::Orbit(pin.orbit.clone()),
+            };
+            let x = ev
+                .exposure(&site, from, to)
+                .map_err(|e| err("bad_request", e))?;
+            let mut counts: BTreeMap<String, usize> = BTreeMap::new();
+            for h in &x.hits {
+                *counts.entry(adopt::json_name(&h.kind)).or_insert(0) += 1;
+            }
+            Ok(serde_json::json!({
+                "system": sys.to_string(),
+                "star": star.to_string(),
+                "from_myr": from,
+                "to_myr": to,
+                "now_myr": now,
+                "counts": counts,
+                "harmful": x.hits.iter().filter(|h| h.harmful).count(),
+                "showers": x.hits.iter().filter(|h| h.shower).count(),
+                "hits": x.hits,
+                "model": [
+                    "G6's event layer on the slot star's own orbit: supernovae, kilonovae and gamma-ray bursts from every cell the path comes within reach of, per time bin, from the galaxy's rates there; nucleus episodes, mergers and starbursts of the galaxy; close passes and spiral-arm crossings (sse-cosmos events.rs)",
+                ],
+            }))
         })
     }
 
@@ -4301,8 +4697,24 @@ impl Kernel {
                     occurred_at_s,
                     grown_from.as_deref(),
                 )?;
+                let root = u.root.clone();
+                let mut adoption = a.events;
+                // GZ13: every adopted system not grown from a drawn star is
+                // given a star slot now, in the adoption's own event.
+                let place: Vec<Address> = a
+                    .systems
+                    .iter()
+                    .filter(|s| grown_from.as_deref() != Some(s.as_str()))
+                    .filter_map(|s| in_universe(&root, s).ok())
+                    .collect();
+                let (places, _) = if adoption.is_empty() {
+                    (vec![], vec![])
+                } else {
+                    self.place_systems(&place, None, false, Some(&mut adoption))?
+                };
+                let u = self.universe()?;
                 let mut events = vec![];
-                for e in a.events {
+                for e in adoption {
                     events.push(
                         u.chronicle
                             .append(e)
@@ -4313,10 +4725,12 @@ impl Kernel {
                 if let Some((sys, run)) = a.run {
                     u.runs.insert(sys, run);
                 }
+                let u = self.universe()?;
                 Response::Adopted {
                     events,
                     systems: a.systems,
                     facts: a.facts,
+                    places,
                     state_hash: u
                         .chronicle
                         .state_at(UniverseTime::seconds(i64::MAX))
@@ -7463,6 +7877,32 @@ impl Kernel {
                 Response::HomeGalaxy { home }
             }
             Request::SetHome { halo } => self.set_home(halo)?,
+            Request::StarSlot { system } => Response::StarSlot {
+                slot: self.star_slot(&system)?,
+            },
+            Request::SetStarSlot { system, star } => {
+                let a = in_universe(&self.universe()?.root, &system)?;
+                let again = star.is_none();
+                let (_, events) = self.place_systems(&[a], star.as_deref(), again, None)?;
+                let slot = self.star_slot(&system)?;
+                Response::StarSlotSet {
+                    slot,
+                    events,
+                    state_hash: self
+                        .universe()?
+                        .chronicle
+                        .state_at(UniverseTime::seconds(i64::MAX))
+                        .hash()
+                        .hex(),
+                }
+            }
+            Request::SiteHistory {
+                system,
+                from_myr,
+                to_myr,
+            } => Response::SiteHistory {
+                history: self.site_history(&system, from_myr, to_myr)?,
+            },
             Request::HaloCell {
                 cell,
                 min_mass_msun,

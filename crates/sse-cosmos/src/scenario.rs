@@ -90,6 +90,9 @@ pub struct CosmologyPack {
     /// GZ12: what the universe's home galaxy should be like.
     #[serde(default)]
     pub home: crate::home::HomeWish,
+    /// GZ13: how an authored system's star slot is looked for.
+    #[serde(default)]
+    pub slot: crate::slot::SlotParams,
 }
 
 /// The pack fields that moved to the sheet, with the sheet's id for each.
