@@ -436,17 +436,75 @@ pub(crate) fn read_bows(items: Vec<serde_json::Value>) -> Out {
     #[derive(serde::Deserialize)]
     struct In {
         id: String,
-        n: f64,
+        #[serde(default)]
+        n: Option<f64>,
         kind: String,
+        /// Or a substance on the sheet and the colour to read it at.
+        #[serde(default)]
+        substance: Option<String>,
+        #[serde(default)]
+        wavelength_m: Option<f64>,
     }
+    let sheet = sse_reference::Reference::base();
     let mut out = vec![];
     for (i, v) in items.into_iter().enumerate() {
         let bad = |e: String| err("bad_bow", format!("item {i}: {e}"));
         let x: In = serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
-        let b = sse_light::bows::bows(&x.id, x.n, &x.kind).map_err(bad)?;
+        let n = match (x.n, &x.substance) {
+            (Some(n), _) => n,
+            (None, Some(s)) => {
+                let phase = if x.kind == "crystal" {
+                    "solid"
+                } else {
+                    "liquid"
+                };
+                sse_light::scatter::sheet_index(&sheet, s, phase, x.wavelength_m.unwrap_or(5.5e-7))
+                    .map_err(bad)?
+                    .0
+            }
+            (None, None) => return Err(bad("give n, or a substance on the sheet".into())),
+        };
+        let b = sse_light::bows::bows(&x.id, n, &x.kind).map_err(bad)?;
         out.push(serde_json::to_value(b).expect("plain data"));
     }
     Ok(Response::BowsRead { items: out })
+}
+
+/// Phase tables per kind of particle (K-e), by Mie theory.
+pub(crate) fn read_scattering(items: Vec<serde_json::Value>) -> Out {
+    let mut out = vec![];
+    for (i, v) in items.into_iter().enumerate() {
+        let bad = |e: String| err("bad_particle", format!("item {i}: {e}"));
+        let p: sse_light::scatter::Particle =
+            serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let s = sse_light::scatter::scattering(&p).map_err(bad)?;
+        out.push(serde_json::to_value(s).expect("plain data"));
+    }
+    Ok(Response::ScatteringRead { items: out })
+}
+
+/// The colour of light inside a world's shadow (VP-L3).
+pub(crate) fn read_shadow_light(
+    items: Vec<serde_json::Value>,
+    sheet: &sse_reference::Reference,
+) -> Out {
+    let base;
+    let sheet = if sheet.row("constants", "c").is_some() {
+        sheet
+    } else {
+        base = sse_reference::Reference::base();
+        &base
+    };
+    let table = sse_light::table::LightTable::base();
+    let mut out = vec![];
+    for (i, v) in items.into_iter().enumerate() {
+        let bad = |e: String| err("bad_shadow", format!("item {i}: {e}"));
+        let a: sse_light::shadow::ShadowAsk =
+            serde_json::from_value(v).map_err(|e| bad(e.to_string()))?;
+        let s = sse_light::shadow::shadow_light(&a, &table, sheet).map_err(bad)?;
+        out.push(serde_json::to_value(s).expect("plain data"));
+    }
+    Ok(Response::ShadowLightRead { items: out })
 }
 
 pub(crate) fn fog_of_war(seats: Vec<serde_json::Value>) -> Out {

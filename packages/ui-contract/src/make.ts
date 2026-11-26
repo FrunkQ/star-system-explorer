@@ -53,6 +53,8 @@ export interface V3Imported {
 export interface FormationRequest {
   seed: string;
   system?: string;
+  /** A drawn star of the campaign's galaxy (its `star_cell` address) to grow from: the system takes that address and the star's own birth. */
+  from_star?: string;
   block?: "modern" | "classic" | "classic-corrected";
   now_gyr?: number;
   star_pins?: { primary_mass?: number };

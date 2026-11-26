@@ -178,6 +178,15 @@ impl RuleBlock {
             return cell;
         }
         let mut cell = self.zonal_cell(c, p, lat, lon);
+        crate::synoptic::scatter(
+            &self.formations,
+            &self.settings,
+            c,
+            p,
+            date,
+            systems,
+            &mut cell,
+        );
         formations::imprint(
             &self.formations,
             &self.settings,
@@ -308,22 +317,45 @@ impl RuleBlock {
             let deck = circulation::deck_cover(s, c);
             let cover = at(&sea.cover).clamp(0.0, 1.0);
             let tau = 2.0 + 18.0 * rel;
-            // Rising air: deep towers; sinking air: low cloud only.
-            if rel > 0.6 && p.climate.precip_mean_m_yr > 0.0 {
-                layers[0] = layer(cover * 0.6, "cumulus", &cd.substance, tau * 0.3, &layers[0]);
-                layers[1] = layer(cover * 0.5, "cumulonimbus", &cd.substance, tau, &layers[1]);
-                layers[2] = layer(cover * 0.5, "cirrus", &cd.substance, 1.0, &layers[2]);
-            } else if p.circ.regime == "thin-air" {
+            // Rising air: deep towers; sinking air: low cloud only. The towers grow in
+            // over a span of rising, so a belt's edge is a gradient, not a seam.
+            let deep = if p.climate.precip_mean_m_yr > 0.0 && p.circ.regime != "thin-air" {
+                ((rel - 0.45) / 0.3).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            if p.circ.regime == "thin-air" {
                 layers[1] = layer(cover, "cirrus", &cd.substance, 0.3, &layers[1]);
             } else {
+                let low_kind = if deep > 0.5 {
+                    "cumulus"
+                } else {
+                    "stratocumulus"
+                };
+                let low_tau = tau * (0.3 * deep + 0.4 * (1.0 - deep));
                 layers[0] = layer(
-                    cover * 0.8,
-                    "stratocumulus",
+                    cover * (0.6 * deep + 0.8 * (1.0 - deep)),
+                    low_kind,
                     &cd.substance,
-                    tau * 0.4,
+                    low_tau,
                     &layers[0],
                 );
-                layers[2] = layer(cover * 0.3, "cirrus", &cd.substance, 0.5, &layers[2]);
+                if deep > 0.0 {
+                    layers[1] = layer(
+                        cover * 0.5 * deep,
+                        "cumulonimbus",
+                        &cd.substance,
+                        tau,
+                        &layers[1],
+                    );
+                }
+                layers[2] = layer(
+                    cover * (0.5 * deep + 0.3 * (1.0 - deep)),
+                    "cirrus",
+                    &cd.substance,
+                    0.5 + 0.5 * deep,
+                    &layers[2],
+                );
             }
             if deck > 0.0 {
                 let pr = s

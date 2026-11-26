@@ -93,6 +93,20 @@ try {
     assert.match(await ys.locator("[data-home-star]").innerText(), /M☉ .* \[Fe\/H\]/, "a home star says its mass and metals");
     await shot(gm, "your-systems-home-cell");
 
+    // Grow a system here: press a drawn star, grow it; it joins the campaign at the star's own address.
+    const star = ys.locator("[data-home-cell] circle.st:not(.ours)").last();
+    const starAt = await star.getAttribute("data-star");
+    await star.click({ force: true });
+    await ys.locator(`[data-home-grow='${starAt}']`).click();
+    await ys.locator(`[data-home-grown='${starAt}']`).waitFor({ timeout: 60000 });
+    assert.equal(await ys.locator(`[data-home-cell] circle.st.ours[data-star='${starAt}']`).count(), 1, "the grown star is filled as a campaign system");
+    await shot(gm, "your-systems-grown-here");
+    // Open it: the system grown from the star is on the chart. (Listing it waits on the kernel's `systems` reaching deep addresses.)
+    await ys.locator(`[data-home-grown='${starAt}'] a`).click();
+    await gm.waitForFunction((t) => (document.querySelector("[aria-label='System on the chart']")?.getAttribute("data-viewing") ?? "") === t, starAt, { timeout: 30000 });
+    await gm.evaluate(() => (location.hash = "#chart/galaxy~systems"));
+    await ys.locator("[data-home-cell]").waitFor({ timeout: 30000 });
+
     // Pencil and ink (SV3): on the Build desk each system is drawn by what the table knows of it.
     await gm.getByRole("button", { name: "Build", exact: true }).first().click();
     await gm.waitForTimeout(800);

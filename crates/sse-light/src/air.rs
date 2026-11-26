@@ -66,6 +66,22 @@ fn king(g: &GasDef, lambda_m: f64) -> f64 {
     g.king[0] + g.king[1] * s2 + g.king[2] * s2 * s2
 }
 
+/// Mean n − 1 of the mix at λ, at Loschmidt density (scale by the number
+/// density over `sse_atoms::air::N_LOSCHMIDT` for any other).
+pub fn refractivity_of(air: &Air, lambda_m: f64, table: &LightTable) -> Result<f64, String> {
+    let gases = table.gases.as_ref().ok_or("the light table has no gases")?;
+    let mut s = 0.0;
+    for sh in &air.gases {
+        let g = gases
+            .list
+            .iter()
+            .find(|g| g.id == sh.gas)
+            .ok_or_else(|| format!("unknown gas {}", sh.gas))?;
+        s += sh.fraction * refractivity(g, lambda_m);
+    }
+    Ok(s)
+}
+
 /// Mean Rayleigh cross-section per molecule of the mix at λ.
 pub fn cross_section(air: &Air, lambda_m: f64, table: &LightTable) -> Result<f64, String> {
     let gases = table.gases.as_ref().ok_or("the light table has no gases")?;

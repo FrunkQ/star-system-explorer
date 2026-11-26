@@ -401,6 +401,7 @@ pub fn describe(
                 line: "na-d".into(),
                 power_w: l.power_w,
                 cause: "sodium lamps".into(),
+                zone: None,
             }),
             LampKind::White => {
                 d.parts.push(Part::PowerLaw {
