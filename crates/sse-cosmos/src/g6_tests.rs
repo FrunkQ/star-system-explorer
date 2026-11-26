@@ -550,4 +550,3 @@ fn g6_pack_holds_the_defaults() {
     let cp = CosmologyPack::from_packs(&[base_cosmology_pack()]).unwrap();
     assert_eq!(cp.events, crate::events::EventParams::default());
 }
-

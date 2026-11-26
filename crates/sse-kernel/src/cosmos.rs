@@ -325,7 +325,11 @@ fn galaxy_chart_of(
     }
     // Arm crests at `at` (where the envelope's arm term peaks), as (r, phi) polylines:
     // the generic wave's, or the home galaxy's measured arms.
-    let outer = d.rings.last().map(|r| r.outer_kpc).unwrap_or(g.now.disc_kpc.max(0.1) * 8.0);
+    let outer = d
+        .rings
+        .last()
+        .map(|r| r.outer_kpc)
+        .unwrap_or(g.now.disc_kpc.max(0.1) * 8.0);
     let crests = env.arm_crests(at, outer);
     let (e, rd) = (&cp.envelope, g.now.disc_kpc.max(0.1));
     let arm_names: Vec<&str> = crests.iter().map(|(n, _)| n.as_str()).collect();
