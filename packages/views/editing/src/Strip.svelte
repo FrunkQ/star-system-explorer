@@ -15,10 +15,10 @@
     cls,
     depth,
     editable,
+    trying = false,
     marks = [],
     walls = [],
     fromTime,
-    ontry,
     onpause,
     oncommit,
     onclose,
@@ -32,14 +32,14 @@
     cls: string;
     depth: Depth;
     editable: boolean;
+    /** On Explore, before the first change: a change here is a try that opens a what-if by itself (TM4). */
+    trying?: boolean;
     /** Labelled places along the line ("past 90 is backwards"). */
     marks?: PartMark[];
     /** Real limits at the line's end ("leaves the system" at a shape of 1): typing may pass one, dragging stops short. */
     walls?: PartMark[];
     /** A typed time turned into this value (a year into an orbit's size), or null where it cannot be. */
     fromTime?: (si: number) => number | null;
-    /** Read-only on Explore: "Try changing it" opens an example what-if where the strip moves (ED7). */
-    ontry?: () => void;
     /** On a pause while held (150 ms), the exact answer for the held value, as a line of words; null for none. */
     onpause?: (si: number) => Promise<string | null>;
     /** One change; resolves to null when it was applied, or the reason it was not. */
@@ -267,10 +267,10 @@
   </div>
   <p class="verdict" aria-live="polite">
     {#if problem}<span class="problem">{problem}</span>
-    {:else if !editable}Where this world sits among the reference worlds.{#if ontry}
-        <button type="button" class="try" data-try onclick={ontry}>Try changing it</button>{:else} Change it on the Build desk.{/if}
+    {:else if !editable}Where this world sits among the reference worlds.
     {:else if pencil !== null}{#if pauseSaid}<span class="pause" data-strip-pause>Held here: {pauseSaid}.</span>{" "}{/if}Let go, or press Enter, to set it. Esc puts it back.
-    {:else}Drag along the line, use the arrow keys (Shift for bigger steps), or press the figure to type a value in any unit.{/if}
+    {:else}Drag along the line, use the arrow keys (Shift for bigger steps), or press the figure to type a value in any unit.{#if trying}
+        <span data-strip-trying>A try: it opens a what-if, and nothing is kept unless you press Keep it.</span>{/if}{/if}
   </p>
 </div>
 
@@ -426,15 +426,6 @@
     font-size: 12px;
     line-height: 1.4;
     color: var(--sse-ink-muted);
-  }
-  .try {
-    margin-left: 4px;
-    padding: 2px 8px;
-    border: var(--sse-line) solid var(--sse-accent);
-    background: var(--sse-ground-raised);
-    color: var(--sse-accent-ink);
-    font: inherit;
-    cursor: pointer;
   }
   .problem {
     color: var(--sse-accent-ink);
