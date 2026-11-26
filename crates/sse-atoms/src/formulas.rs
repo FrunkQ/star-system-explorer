@@ -143,6 +143,10 @@ pub const FILES: &[(&str, &str)] = &[
         "ship",
         include_str!("../../../packs/base-physics/formulas/ship.json"),
     ),
+    (
+        "feed",
+        include_str!("../../../packs/base-physics/formulas/feed.json"),
+    ),
 ];
 
 /// Read every formula file once: parsed, unit-checked and its worked

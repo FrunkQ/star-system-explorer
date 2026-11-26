@@ -20,17 +20,22 @@
 pub mod air;
 pub mod bows;
 pub mod colour;
+pub mod disc_image;
 pub mod emit;
+pub mod feed;
 pub mod gas;
 pub mod haze;
 pub mod limb;
 pub mod observe;
+pub mod paths;
 pub mod photometry;
 pub mod scatter;
 pub mod shadow;
 pub mod shift;
 pub mod table;
 
+#[cfg(test)]
+mod disc_tests;
 #[cfg(test)]
 mod gas_tests;
 #[cfg(test)]
@@ -111,6 +116,14 @@ pub enum Part {
         accretion_kg_s: f64,
         r_inner_m: f64,
         r_outer_m: f64,
+        cause: String,
+    },
+    /// Glowing pieces, each a blackbody at its own temperature:
+    /// `[temperature K, area m²]`, `L_λ = Σ area · π B_λ(T)`. A traced disc
+    /// as one viewer sees it (XO3) publishes as this, its areas already
+    /// carrying the viewer's isotropic-equivalent factor.
+    Thermals {
+        pieces: Vec<[f64; 2]>,
         cause: String,
     },
 }
@@ -253,6 +266,10 @@ pub fn part_at(p: &Part, lambda_m: f64, table: &LightTable) -> f64 {
             .iter()
             .map(|(t, a)| a * m::PI * planck(lambda_m, *t))
             .sum(),
+        Part::Thermals { pieces, .. } => pieces
+            .iter()
+            .map(|[t, a]| a * m::PI * planck(lambda_m, *t))
+            .sum(),
     }
 }
 
@@ -263,7 +280,7 @@ pub fn spectral_luminosity(d: &LightDescription, lambda_m: f64, table: &LightTab
 
 /// Simpson's rule in ln λ over [a, b] for a smooth function of λ, with a fixed
 /// number of intervals per decade (pack `steps_per_decade`, even, at least 8).
-fn integrate(f: impl Fn(f64) -> f64, a: f64, b: f64, per_decade: usize) -> f64 {
+pub(crate) fn integrate(f: impl Fn(f64) -> f64, a: f64, b: f64, per_decade: usize) -> f64 {
     if b <= a {
         return 0.0;
     }

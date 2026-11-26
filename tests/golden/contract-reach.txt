@@ -122,6 +122,12 @@ G cannot_follow {"block":"sse.dynamo.flow_speed","why":"computed or fitted with 
 G cannot_follow {"block":"sse.dynamo.onset","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.dynamo.reynolds","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.dynamo.rossby","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.feed.capture_from_surroundings","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.feed.disc_outer_edge","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.feed.eddington","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.feed.efficiency","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.feed.flow_strengths","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.feed.inner_edge","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.field.ionopause_altitude","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.field.shue_flaring","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.field.standoff_in_field","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
@@ -170,6 +176,7 @@ G cannot_follow {"block":"sse.interior.redox_iw","why":"computed or fitted with 
 G cannot_follow {"block":"sse.interior.rocky_radius","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.auroral_radio_power","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.cyclotron_frequency","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
+G cannot_follow {"block":"sse.light.disc_shift","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.dust_extinction","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.effective_temperature","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}
 G cannot_follow {"block":"sse.light.eye_lobe","why":"computed or fitted with the real constants: keeps the real-universe result, not following your change"}

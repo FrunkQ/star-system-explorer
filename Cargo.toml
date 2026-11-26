@@ -72,3 +72,11 @@ opt-level = 2
 
 [profile.dev.package.sha2]
 opt-level = 2
+
+# The disc trace (XO3) runs a formula block and a bend-table read for each of
+# about a hundred thousand rays, and the bend table is two million RK4 steps.
+[profile.dev.package.sse-gravity]
+opt-level = 2
+
+[profile.dev.package.sse-formula]
+opt-level = 2
