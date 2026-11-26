@@ -203,6 +203,13 @@ This keeps the accepted list of catalogues (night sky 8.3). Three ways for data 
 
 Alex's 20 light year example is about 6 pc. The whole 10 pc sample is a few hundred systems **[about 340 systems and 540 objects, from memory, unverified]**, a download of tens of kilobytes. A 100 pc import is about 330,000 objects and a few megabytes.
 
+**Credits travel with the data and are shown (Alex, 26 Nov 18:01 UTC).** "make sure the actual credits are shipped in packs as clear readable and show at initial import." So:
+
+- A catalogue's terms part (section 3.1) holds the provider's own credit text, word for word, with the catalogue's name, version, licence and link. It is plain readable text in the pack, not a code or a reference to look up. The Traveller pack already carries Mongoose's notice this way (`provides.other.notice`, shown on the Packs screen) and the `sol-today` pack carries GCAT's credit line; this is the same field.
+- Any pack, system, campaign or postcard that holds downloaded values carries the credits of every catalogue those values came from. An export copies them; nothing strips them.
+- **The credits are shown at the first import**, in the preview, in full and before Apply, and again whenever a pack that holds them is first loaded on a device. After that they stay one press away: on the Packs screen, and on the card of any object with catalogued values, beside its source.
+- A catalogue with no credit text is refused by the reader. RW1 collects each provider's exact wording at its source; no credit is written from memory.
+
 **Terms, as far as they are known.** Gaia data is CC BY-NC 3.0 IGO (read at ESA's page on 21 Nov by the night sky thread). CNS5 and AT-HYG are built partly from Gaia and are treated as non-commercial until read at source. JPL and NASA data is not copyrighted **[unverified at source]**; the Minor Planet Center's terms need reading. RW1 reads every one at its source before any data is bundled, and nothing ships on my memory of a licence.
 
 **Versions.** Each catalogue's version is pinned in the campaign, as the handoff ruled. Moving to a newer release is a deliberate act with a "what changed" list.
@@ -440,7 +447,7 @@ Each is sized for one agent. "Now" means nothing blocks it. The star half waits 
 | Package | What | Needs | Owner (proposed) |
 |---|---|---|---|
 | **RW0** | This note, the status file, the row in START-HERE | | this thread (done with this PR) |
-| **RW1** | Read every catalogue's terms, size and count at its source (through the browser on Alex's PC; papers after 1 Dec). Replace every **[unverified]** in this note. A terms table in `docs/citations.md` | now | citations thread |
+| **RW1** | Read every catalogue's terms, size, count and exact credit wording at its source (through the browser on Alex's PC; papers after 1 Dec). Replace every **[unverified]** in this note. A terms table in `docs/citations.md` | now | citations thread |
 | **RW2** | Measure, merge nothing: the real size lists and counts per stop; points a phone and AC-ProArt can draw moving; the cost of a pin and of a table row; a 50 pc tracked set. Output: the set points and ceilings | now; Alex's PC for the GPU | quality tiers, with small bodies |
 | **RW3** | The catalogue format `sse.catalogue/1` and its reader crate: entries in size order with a range index, frame, anchor, date, completeness, grades, terms. "Never invent." Contract types. Tests: a prefix read never touches the rest of the file | now | kernel |
 | **RW3b** | The estimating flows as blocks in a pack (section 6.3): star mass, small-body size, albedo and mass, completeness, thinning, the round test. Cited, each with its view; nothing estimated in importer code | RW3 | data sheet, with the kernel |
@@ -490,7 +497,8 @@ Not answers to the numbered questions, which are still open. Both are taken as r
 - **Reuse the backfill machinery; it is the default.** "we have the mechanism to 'backfill' detail on a probable star system for a star of a particular age/type. So just reuse that machinery."
 - **Block chains.** "These all should be block chains in the physics."
 - **Gaia, 17:58 UTC.** "What ruling? Gaia data can be added to any pack - to any star system - someone can decide to just 'play around Polaris' and never bother with the galaxy view." The "Gaia only in an optional pack" line is withdrawn (section 5.3). Where the night sky note's Q3, the naming note or the paid packs note say otherwise, this wins; and sold packs are settled by the next line.
-- **Selling, 18:00 UTC.** "just easier to ban selling packs with downloaded data. say 'you can use this' - you can give it away but you cannot 'sell it' as it contains..." A pack holding downloaded catalogue data is free only; the shop refuses a price and says why (section 5.3). This applies to every downloaded catalogue, not only Gaia.
+- **Selling, 18:00 UTC.** "just easier to ban selling packs with downloaded data. say 'you can use this' - you can give it away but you cannot 'sell it' as it contains..." A pack holding downloaded catalogue data is free only; the shop refuses a price and says why (section 5.3). This applies to every downloaded catalogue, not only Gaia. 18:00:35: "and we can refuse at store level because of that".
+- **Credits, 18:01 UTC.** "make sure the actual credits are shipped in packs as clear readable and show at initial import." Section 5.3.
 
 ---
 
