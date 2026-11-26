@@ -2,7 +2,7 @@
 
 Track CC. Written 26 Nov 2026 by the design thread, after the CC1 measurements (main at d726d46, home galaxy seed g3; report https://claude.ai/artifact/LtTgFC1uNKb7A2YcMEGtBm). Read with `SSE4-conserved-chain-design.md` (the accepted note) and `SSE4-conserved-chain-checks.md` (the check set).
 
-State: **draft for the builders. One ruling is owed by Alex (section 4) and one part waits on the CC4 roster prototype (section 6).** Nothing here changes code. Each section is the spec its package reads before it starts.
+State: **draft for the builders. One ruling is owed by Alex (section 4).** The roster part (section 6A) is written from the CC4 prototype's report. Nothing here changes code. Each section is the spec its package reads before it starts.
 
 The working rule holds throughout (Alex, 26 Nov): plausible, repeatable and explained, not exact. Where the measurements showed a join already closes to a few percent, this note says "leave it" and registers the tolerance instead of building machinery.
 
@@ -47,7 +47,7 @@ Stars are born in groups, and the groups are where the interest is: a system's s
 
 **Deaths are stars.** A core-collapse supernova is the death of a drawn massive star, with the star's own key, date and place. The ring's supernova rate is no longer a second, independent number; it is what the one mass function says the cluster's stars will do, so both ends of the flow are the same event. Two root fixes make the counts agree:
 - Companions get life lines. A massive secondary explodes like any other massive star.
-- Young stars get a scale height that depends on their age, so massive stars sit in the thin gas layer where their deaths are booked. The Local Arm thread is building age-dependent heights; CC6 takes that work and does not build a second version.
+- Young stars get a scale height that depends on their age, so massive stars sit in the thin gas layer where their deaths are booked. Age-dependent heights are being written up as their own package in `handover/packages/` by the Local Arm thread (after its bulge PR). CC6 points at that package and does not build a second version.
 
 **What a system reads from its cluster.** Al-26 at birth is the yield of the cluster's massive siblings that died before the system's disc closed, diluted over the cluster's gas. Mg/Si is the ring's alpha-group value for that place and date with the data sheet's star-to-star scatter. Both replace the fixed 1.0 and the stand-in median.
 
@@ -95,7 +95,25 @@ The belt's metal share came out at a mean of 0.93 across resolved members, range
 - **Families only from events.** A family exists only where formation recorded a break-up. Its members' mass sums to the parent's, and the parent's layers go to members by the element rule already built for worlds (MP6): core pieces are metal-rich notables, mantle pieces stony. A bared core is one notable with a traced origin. This is where "Planet X has a massive platinum deposit after an old planetary core collided" comes from, and it needs no new physics, only the reuse of MP6 on pieces and on what an impact delivers to a site (CC9).
 - **Gravel is a sum.** Members below the listing size are an amount by group and never individuals, unless a deed pins one.
 
-**The roster** (which member of a size band left in which time bin, read from either end) is specified after the CC4 prototype reports its cost. Fallback already agreed: only notables and the largest members have fates.
+## 6A. The roster (from the CC4 prototype)
+
+The prototype (thread "Prototype the crater roster", branch `claude/project-thread-h51rzm` under `scratch/`, not for merging) proved the roster on belts of up to 10 billion named bodies. A crater reads back to its impactor, origin, cause and travel time in about 2.5 microseconds in wasm, the same in any order and at any date, bit for bit native and wasm. So the fallback is not needed for fates. The cost is in the mass books.
+
+- **Names and fates for every body down to 1 km.** The roster is the seeded, invertible link between "the j-th departure of a size band in a time bin" and a member. Both ends read the same key.
+- **Mass books in three tiers.** Exact, body by body, for about the largest 100,000 in each class (64 ms). Below that, exact counts at an average mass per size band. Gravel as one total by group. This is the registered tolerance of the belt join.
+- **A deed leaves a hole.** A mined or moved body's slot stays empty and nothing moves up to replace it, so one deed removes one crater and changes nothing else. Saves cost about 100 bytes for the universe, 70 per deed and 275 per body looked at.
+- **Listed craters are chosen by survival.** Picking the largest arrivals over a world's whole life fills the list with ancient scars. The surface's own erasure picks what is listed today; the roster supplies who made each.
+- **The largest arrivals are giant impacts**, and belong to formation's violent phase, not the crater list. The roster hands them over above a size set by the target.
+- **A world gets an arrivals line.** Each world's books gain a line for mass delivered by impacts, by group. This is where an impact-delivered ore deposit lives, and what "What is interesting here" reads.
+- **A bared core is many bodies.** Formation shatters a core into dozens of iron bodies of similar size, and some fall into the star. "The bared core" is a family of notables with fates, of which the survivors are the interest.
+- **Passing stars: real but rare.** In the prototype's system they sent 94 bodies of 1 km or more into solid worlds over its life and none made a crater list. The traced "why" should say so honestly when it applies and never be promised as common. A metal body from the comet cloud needs a metal class there, which follows from families (scattered core pieces), not from a new draw.
+
+**Three decisions for the kernel owner before CC8, each with a decision record:**
+1. The kernel mass unit rounds a 10 km asteroid to zero. Small bodies need a finer unit or a scaled one per reservoir; the books must still close in integers.
+2. The prototype used a faster random scheme because the kernel's keyed draws are too slow at this count. Adopting it changes `draw_algorithm`; it must stay keyed, order-free and identical native and wasm.
+3. The size above which an arrival is a giant impact.
+
+**Tests,** as the prototype ran them: order independence and slider stability, both seen red when broken on purpose; one deed changes exactly one crater.
 
 **Tests.**
 - Closure: expected member sum equals the belt's share by group within 2% over many seeds; every family sums to its parent exactly.
