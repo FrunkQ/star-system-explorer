@@ -75,7 +75,7 @@
     /** True look: each world's plume facts by body id (the kernel's surface record, plumes.ts), when it has any. */
     plumes?: ReadonlyMap<string, PlumeFacts>;
     /** True look: each world's air, by body id (renderer true-air.ts `readTrueFace`): its clouds alone, drawn over its ground, and its air's rim (VP-A3, VP-A4). */
-    airs?: ReadonlyMap<string, { ground?: TrueTexture; clouds?: TrueTexture; air?: AirShape; flatten?: number }>;
+    airs?: ReadonlyMap<string, { ground?: TrueTexture; clouds?: TrueTexture; air?: AirShape; flatten?: number; sea?: { slope_variance: number; normal_reflectance: number } }>;
     /** True look: the light each body's air bends into its shadow on another (renderer eclipse-read.ts `readUmbras`), by `umbraKey(caster, receiver)`; none, a black umbra. */
     umbras?: ReadonlyMap<string, [number, number, number]>;
     /** True look: the star's colour (its surface temperature's, as a CSS colour). */
@@ -719,7 +719,7 @@
             const pf = visible ? plumes.get(b.id) : undefined;
             const toLight = lightOf(b);
             const a = airs.get(b.id);
-            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
+            const look = trueFace({ key: b.id, star: isStar, colour: isStar ? starColour || colour(b) : faint, ...(b.radius_m ? { radius_m: b.radius_m } : {}), ...(a?.ground && a.clouds ? { surface: a.ground, clouds: a.clouds } : t ? { surface: t } : {}), ...(a?.air && emit === undefined ? { air: a.air } : {}), ...(a?.flatten ? { flatten: a.flatten } : {}), ...(a?.sea ? { sea: a.sea } : {}), ...(b.rings && emit === undefined ? { rings: b.rings, ...(b.mass_kg ? { mass_kg: b.mass_kg, moons: moonsOf(bodies, b.id) } : {}) } : {}), pole: poleOf(b.tilt_rad) , ...(face ? { face } : {}), ...(visible && b.t_k ? { heat: { t_k: b.t_k, star: daylightOf(b) } } : {}), ...(pf && b.radius_m ? { plumes: { facts: pf, toLight, toEye: neg(relOf(b.id)) } } : {}), ...(b.small ? { figure: b.small.figure } : {}) });
             const shade = emit === undefined && !isStar ? shadeOf(b) : null;
             return { id: b.id, rel: relOf(b.id), radius, ring: b.mark?.ring ?? false, selected: b.id === selection, ...look, ...(emit !== undefined ? { emit } : {}), ...(shade ? { shade } : {}) };
           });

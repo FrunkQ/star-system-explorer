@@ -538,6 +538,86 @@ pub(crate) fn summary(
     Some(o)
 }
 
+/// The sun's glint off a world's seas seen from orbit (EC2): the waves'
+/// mean square slope from the year's 10 m winds over each band of sea,
+/// weighted by its share of sea and its area, and the liquid's reflectance
+/// straight back, both from `sse.light.sea_glint` (Cox and Munk 1954;
+/// Fresnel at normal incidence) with the liquid's refractive index looked
+/// up on the data sheet. The wind is the one that raises the waves, scaled
+/// by this world's air-to-liquid density as the waves are. None without a
+/// sea; a liquid the sheet has no index for is named, not guessed.
+pub(crate) fn glint(
+    sheet: &sse_reference::Reference,
+    cs: &ClimateSettings,
+    cl: &Climate,
+) -> Option<serde_json::Value> {
+    let c = &cl.conditions;
+    if !c.solid_surface || c.liquid.is_none() || c.ocean_fraction <= 0.0 {
+        return None;
+    }
+    let name = c.liquid.as_deref().unwrap_or("");
+    let liq = liquid(sheet, cs, name, c.t_surface_k);
+    let rho_l = liq.as_ref().map_or(cl.liquid_kg_m3, |l| l.rho);
+    let drive = drive(cs, cl, rho_l);
+    // This universe's sheet first; the base sheet where it holds no row
+    // for the liquid (as the bows read it).
+    let mut o = optics(sheet, cs, name);
+    if o.get("refractive_index").is_none() {
+        o = optics(&sse_reference::Reference::base(), cs, name);
+    }
+    let index = o.get("refractive_index").and_then(|v| v.as_f64());
+    let mut out = serde_json::json!({
+        "liquid": c.liquid,
+        "liquid_id": o.get("liquid_id"),
+        "block": "sse.light.sea_glint",
+        "index_from": "sse.reference look-up (substances.<liquid>.optical.refractive_index_liquid, 550 nm)",
+    });
+    let Some(n) = index else {
+        out["missing"] = serde_json::json!(["refractive index"]);
+        out["why"] = serde_json::json!([format!(
+            "The data sheet has no refractive index for liquid {name}, so its glint is not worked out."
+        )]);
+        return Some(out);
+    };
+    let k = cl.lat_deg.len();
+    let (mut wsum, mut ssum, mut usum) = (0.0, 0.0, 0.0);
+    for j in 0..k {
+        let lat = cl.lat_deg[j];
+        let sea = if cl.land.len() == k {
+            1.0 - cl.land[j]
+        } else {
+            c.ocean_fraction
+        };
+        if sea <= 0.0 {
+            continue;
+        }
+        let (u, gust) = cl.wind10_at(lat);
+        let s2 = sse_climate::wind::expect(u, gust, |w| {
+            run("sse.light.sea_glint", &[(w * drive).abs(), n]).map_or(0.0, |v| v[0])
+        });
+        let w = sea * m::cos(lat * m::PI / 180.0);
+        wsum += w;
+        ssum += w * s2;
+        usum += w * sse_climate::wind::mean_speed(u, gust);
+    }
+    if wsum <= 0.0 {
+        return None;
+    }
+    let s2 = ssum / wsum;
+    let wind = usum / wsum;
+    let r0 = run("sse.light.sea_glint", &[0.0, n]).map(|v| v[1])?;
+    out["slope_variance"] = serde_json::json!(s2);
+    out["normal_reflectance"] = serde_json::json!(r0);
+    out["refractive_index"] = serde_json::json!(n);
+    out["wind_m_s"] = serde_json::json!(wind);
+    out["drive"] = serde_json::json!(drive);
+    out["why"] = serde_json::json!([
+        format!("The waves' mean square slope is {s2:.4}, from the year's winds over the sea (about {wind:.1} m/s ten metres up), by Cox and Munk's clean-sea fit."),
+        format!("The {name} reflects {:.1}% of the light straight back (refractive index {n:.3}, from the data sheet).", r0 * 100.0),
+    ]);
+    Some(out)
+}
+
 /// Copy `from`'s keys into `into` (both objects).
 fn merge(into: &mut serde_json::Value, from: serde_json::Value) {
     if let (Some(a), serde_json::Value::Object(b)) = (into.as_object_mut(), from) {
