@@ -59,7 +59,7 @@ take its state from its branch, its PR above and its `handover/status/` file.
   - Next: TRUE4 part 2 per-tile stains; VP-P1, P2, P4 (wait on VP1, VP6, K-e); heat and plumes in Lineup3D; Gallery checks on Sol. See `status/true-surface.md`.
 - **Surface time-lapse**: branch 7g5v90 at 31c34ad, no PR. PRs 436, 476, 579, 583 merged.
   - Doing: R6d, natural outlines in the time-lapse (`drawnCellOf` in `renderer/src/timelapse.ts`, using the shared naturalDirection). ui:test 1003/1003 locally.
-  - Left: the branch contains PR 589 merged locally, so 589 must reach main first. Then merge main, check `sse4/handover-screens/R6d-screens/`, and open the PR.
+  - Left: none. R6d merged as PR 593 (26 Nov, 3446d53).
   - Next: the globe's sea per climate band once W-sea2 to W-sea4 kernel numbers land (agree with the renderer). Parked by Alex: air and oceans that evolve through the frames.
 - **Kernel hand-offs (Local Arm; galaxy arm fix and atmosphere advice)**: branch bvlyq1, WIP commit b3530b1f, no PR.
   - Doing: the home galaxy's arms from measured positions (Reid et al. 2019), Local Arm included, as one measured-arms list in `packs/base-cosmology`, plus chart arm_names. ATMOS check: the hydrogen_per_carbon ratio was upside down (fixed), and the escape constant is credited to Hunten and Strobel 1974.
