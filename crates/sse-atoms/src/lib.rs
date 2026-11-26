@@ -15,6 +15,7 @@ pub mod extinction;
 pub mod field;
 pub mod formulas;
 pub mod heat;
+pub mod ice_ground;
 pub mod inertia;
 pub mod layers;
 pub mod ledger;
@@ -478,6 +479,16 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("surface.weathering_factor_650", "weathered over fresh reflectance of the same soil at 650 nm (red)"),
     ("surface.weathering_factor_550", "weathered over fresh reflectance of the same soil at 550 nm (green)"),
     ("surface.weathering_factor_450", "weathered over fresh reflectance of the same soil at 450 nm (blue)"),
+    ("body.ice_share", "share of a world's mass that is ice"),
+    ("material.rock_density", "density of rock at low pressure"),
+    ("material.ice_density", "density of ice at low pressure"),
+    ("material.vapour_pressure", "pressure of a substance's own vapour over its solid or liquid at a temperature"),
+    ("material.molar_mass", "mass of one mole of a substance"),
+    ("orbit.star_distance", "distance from the star (a moon's is its planet's)"),
+    ("surface.ice_lost", "depth of open ice an airless world loses over its age"),
+    ("material.reflectance", "share of light a material's ground sends back, against a white Lambertian surface"),
+    ("surface.lag_share", "share of icy ground under a dark lag of dust and rock"),
+    ("surface.ground_reflectance", "share of light the ground sends back"),
     ("body.moment_of_inertia_factor", "moment of inertia over mass times radius squared: 0.4 for a uniform ball, less as mass gathers in the middle"),
     ("interior.dynamo_onset", "how far a dynamo runs, 0 to 1, from its magnetic Reynolds number"),
     ("interior.dynamo_rossby", "spin period over a dynamo's stirring time"),
@@ -608,6 +619,23 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("range.beam_power", "power in a beam as it leaves its mirror or lens"),
     ("range.wavelength", "wavelength of a beam"),
     ("range.aperture", "width of the mirror or lens that sends a beam"),
+    // Ship sizing (RK3).
+    ("ship.thrust", "push a drive gives"),
+    ("ship.exhaust_speed", "speed of a drive's exhaust"),
+    ("ship.jet_power", "power carried by a drive's exhaust"),
+    ("ship.stowed_mass", "mass of propellant or cargo carried"),
+    ("ship.packed_density", "how densely a load packs: a liquid's density or cargo's stowage"),
+    ("ship.stowed_volume", "room a load takes in tanks or holds"),
+    ("ship.crew", "people aboard"),
+    ("ship.habitable_per_person", "net habitable room each person needs"),
+    ("ship.net_to_gross", "share of a pressurised module left free once equipment is in"),
+    ("ship.crew_volume", "pressurised room a crew needs"),
+    ("ship.waste_per_jet", "heat left aboard for each watt in the jet"),
+    ("ship.waste_heat", "heat a ship must shed"),
+    ("ship.radiator_temperature", "temperature radiators shed heat at"),
+    ("ship.emissivity", "how well a radiator panel glows, from 0 to 1"),
+    ("ship.radiating_faces", "faces of a panel that see space"),
+    ("ship.radiator_area", "area of radiator panel, one face"),
     ("range.spread", "beam quality M²: how much faster than a perfect beam it spreads"),
     ("range.jitter", "pointing wobble of a beam, as an angle"),
     ("range.distance", "distance from the weapon to its target"),

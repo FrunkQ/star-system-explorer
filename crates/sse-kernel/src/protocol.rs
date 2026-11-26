@@ -1807,6 +1807,12 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         at_s: Option<i64>,
+        /// The radiator panels (base-ships `ship_design.radiator`:
+        /// `{emissivity, two_sided}`). Given, the answer's `radiators` sizes
+        /// each temperature's panels through `sse.ship.radiator_area`.
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        radiator: Option<serde_json::Value>,
     },
     /// V8 flight log: write one entry of a construct's log on the record,
     /// written at `at_s` (the campaign clock). Give one of `piece` (sse-nav

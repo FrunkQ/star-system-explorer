@@ -29,7 +29,7 @@ use crate::{Body, SurfaceEnvelope};
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
-pub const STAINS_VERSION: &str = "surface-stains-v1";
+pub const STAINS_VERSION: &str = "surface-stains-v2";
 
 /// Oxidising partial pressure, bar, that rusts a surface in a billion years
 /// (calibrated: Mars's 6 mbar of CO2 over 4 Gyr leaves its dust fully
@@ -41,6 +41,11 @@ pub const OXIDISE_WET_GYR: f64 = 0.1;
 /// in tholin in a billion years (calibrated so Pluto's 50 nbar under 0.9 W/m²
 /// stains most of it and Triton's few nbar a little). Fudge register.
 pub const THOLIN_BAR_W_GYR: f64 = 3e-8;
+/// Methane to oxidant ratio (CH4 over CO2 plus O2) below which no organic haze
+/// forms: Trainer et al. 2006, PNAS 103, 18035, find haze from CH4/CO2 of
+/// about 0.1 upward in laboratory early-Earth air. Oxygen is counted with CO2
+/// as an oxidant (fudge register), so Earth's trace methane makes no tholin.
+pub const THOLIN_MIN_CH4_PER_OX: f64 = 0.1;
 /// Heat flow, W/m², at which a dry world's volcanism coats half of it with
 /// sulphur (Io's 2 to 3 W/m² coats nearly all; Veeder et al. 2012). Fudge register.
 pub const SULPHUR_HALF_W_M2: f64 = 0.5;
@@ -121,7 +126,13 @@ pub fn stains(b: &Body, env: &SurfaceEnvelope, i: &StainInputs) -> Vec<Stain> {
     }
     // 2. Tholin.
     let ch4_bar = i.pressure_bar * x("ch4");
-    let dose = ch4_bar * i.flux_w_m2.max(0.0) * age / THOLIN_BAR_W_GYR;
+    let oxidant = x("co2") + x("o2");
+    let hazy = oxidant <= 0.0 || x("ch4") >= THOLIN_MIN_CH4_PER_OX * oxidant;
+    let dose = if hazy {
+        ch4_bar * i.flux_w_m2.max(0.0) * age / THOLIN_BAR_W_GYR
+    } else {
+        0.0
+    };
     let share = 1.0 - m::exp(-dose);
     if !b.deep_envelope && share >= STAIN_FLOOR {
         out.push(Stain {

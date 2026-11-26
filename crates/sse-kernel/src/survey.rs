@@ -267,6 +267,8 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
         // SW1: how its bare ground weathers (tiles carry each sample's
         // maturity); absent where nothing from space reaches the ground.
         "weathering": v(&sv.weathering.as_ref().filter(|w| w.active)),
+        // IG1: whether and why its bare ground is ice.
+        "ice_ground": v(&sv.ice_ground),
         "tiles": tiles,
         "refused": refused,
     });

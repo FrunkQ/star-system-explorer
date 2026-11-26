@@ -89,6 +89,8 @@ pub struct Survey {
     pub stages: Vec<String>,
     /// SW1: how its bare ground weathers (None for a giant).
     pub weathering: Option<crate::weathering::Weathering>,
+    /// IG1: whether its bare ground is ice (None for a giant).
+    pub ice_ground: Option<crate::ice_ground::IceGround>,
 }
 
 /// The day length the climate reads: given, else a locked world's orbital period.
@@ -168,6 +170,7 @@ fn chain(
             climate: None,
             stages: vec!["envelope".into(), "cloud-deck".into()],
             weathering: None,
+            ice_ground: None,
         });
     }
     let h = crate::plates::history(s, &e, seed, epoch_gyr);
@@ -259,7 +262,14 @@ fn chain(
         feat.craters.retain(|c| c.d_km >= min_km);
         rs.landforms.retain(|l| l.size_km >= min_km);
     }
-    let atlas = atlas.with_impacts(feat, field).with_regime(rs);
+    let ice = crate::ice_ground::ice_ground(s, body, &e, opts.star_distance_au);
+    let atlas = atlas
+        .with_impacts(feat, field)
+        .with_regime(rs)
+        .with_ice_ground(
+            ice.as_ref(),
+            body.pressure_bar < crate::weathering::AIR_STOPS_BAR,
+        );
     let inp = CoverInputs {
         air,
         water: oceans || body.water_fraction > 0.0,
@@ -284,6 +294,7 @@ fn chain(
             climate: Some(climate),
             stages: stages.iter().map(|x| x.to_string()).collect(),
             weathering,
+            ice_ground: ice,
         });
     }
     let reg = register(
@@ -307,6 +318,7 @@ fn chain(
         climate: Some(climate),
         stages: stages.iter().map(|x| x.to_string()).collect(),
         weathering,
+        ice_ground: ice,
     })
 }
 

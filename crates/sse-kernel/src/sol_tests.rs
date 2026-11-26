@@ -61,8 +61,13 @@ fn open_sol_with(
                 format!("{SOL}/body:{}", n - 1)
             }
             Some(h) => {
+                // Each moon its own slot under its host.
                 let ha = &addr.iter().find(|(i, _)| i == h).unwrap().1;
-                format!("{ha}/body:0")
+                let k = addr
+                    .iter()
+                    .filter(|(_, a)| a.rsplit_once('/').is_some_and(|(p, _)| p == ha))
+                    .count();
+                format!("{ha}/body:{k}")
             }
         };
         edits.push(serde_json::json!({"address":a,"field":"name","value":b["name"]}));

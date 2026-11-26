@@ -1568,6 +1568,13 @@ pub(crate) fn resolved_system(
                 {
                     v["weathering"] = serde_json::to_value(w).expect("plain data");
                 }
+                // IG1: why its bare ground is ice, where it is.
+                if let Some(ig) =
+                    sse_surface::ice_ground::ice_ground(&s, b, e, star_distance_au(&bodies, b))
+                        .filter(|x| x.ice)
+                {
+                    v["ice_ground"] = serde_json::to_value(ig).expect("plain data");
+                }
                 // What stains its ground (TRUE4), when its tiles were read: from
                 // the surveyed atlas's one climate, already in the cache.
                 let key = orbit_cache_key(

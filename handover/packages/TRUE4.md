@@ -37,3 +37,6 @@ Track TRUE-surface, third V3 audit R15 and R16 ("tholins and coloured frosts"), 
 
 ## Where the stain is drawn
 `trueSurface` stains the flat equirect picture (`stainPrepared`) and the GPU's face pictures (`composeFaces(tiles, stains)`). The face pictures keep their stains on `Composite.stains`, so a finer tile laid in later (`withFiner`) is stained alike. Bare ground (cover none) is stained and every other cover is left alone. That includes ice: frost has its own cover in the tiles.
+
+## Part 1b (25 Nov): no tholin in oxidising air
+After proven core's PR 417 brought Sol's catalogued air into the tile atlas, Earth showed a full tholin coat from its 2 ppm of methane. Organic haze needs a reducing air: Trainer et al. 2006 (PNAS 103, 18035) find haze from CH4/CO2 of about 0.1 upward. `THOLIN_MIN_CH4_PER_OX` (0.1) now gates the tholin dose on CH4 over CO2 plus O2; counting O2 is our assumption (fudge register). `STAINS_VERSION` is now surface-stains-v2. New check: Earth's air makes no tholin.

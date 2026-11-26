@@ -135,6 +135,15 @@ fn sse3s_hall_thruster_shows_its_power_from_nowhere() {
         "danger is drama: it still flies on its stated numbers"
     );
     assert_eq!(l.heat_by_k.get(&900), Some(&600000.0));
+    // Each heat row says the temperature it leaves at, so the Flow view needs no guess.
+    assert!(l
+        .flows
+        .iter()
+        .all(|f| (f.kind == "heat") == f.reject_k.is_some()));
+    assert!(l
+        .flows
+        .iter()
+        .any(|f| f.kind == "heat" && f.reject_k == Some(900)));
 }
 
 #[test]

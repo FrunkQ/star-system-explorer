@@ -194,6 +194,18 @@ try {
     await shot(gm, `classes-${vp}`);
     await gm.keyboard.press("Escape");
     await ccard.waitFor({ state: "detached" });
+    // V14i: a class opened is drawn from a sample world the kernel makes for it on a what-if branch, in True; its tile
+    // then wears the picture. Nothing reaches the campaign (the state hash is checked at the end).
+    if (vp === "desk") {
+      await classes.locator('[data-class="iron-rich"]').click();
+      const pic = gm.locator('[data-class-card="iron-rich"] [data-picture]');
+      await gm.waitForFunction(() => ["drawn", "none"].includes(document.querySelector('[data-class-card="iron-rich"] [data-picture]')?.getAttribute("data-picture") ?? ""), null, { timeout: 60000 });
+      assert.equal(await pic.getAttribute("data-picture"), "drawn", await pic.innerText());
+      assert.match(await pic.innerText(), /after Mercury/);
+      await classes.locator('[data-class="iron-rich"] [data-tile-picture]').waitFor({ state: "attached" });
+      await shot(gm, "classes-picture-desk");
+      await gm.keyboard.press("Escape");
+    }
     await classes.locator("[data-classes-find]").fill("rings");
     await classes.locator('[data-hit="physical/ringed"]').click();
     await gm.locator('[data-class-card="physical/ringed"]').waitFor();

@@ -73,6 +73,14 @@ fn methane_under_starlight_makes_tholin_more_where_there_is_more() {
     let triton = of("Triton", &[("n2", 0.9998), ("ch4", 2e-4)], 1.4e-5, 1.5);
     let t = share(&triton, "tholin");
     assert!(t > 0.1 && t < 0.8, "{t}");
+    // Earth's trace methane in oxidising air makes no haze (Trainer et al. 2006).
+    let earth = of(
+        "Earth",
+        &[("n2", 0.78), ("o2", 0.21), ("co2", 4.2e-4), ("ch4", 1.9e-6)],
+        1.0,
+        1361.0,
+    );
+    assert_eq!(share(&earth, "tholin"), 0.0, "{earth:#?}");
     // No methane, no tholin.
     assert_eq!(
         share(&of("Triton", &[("n2", 1.0)], 1.4e-5, 1.5), "tholin"),

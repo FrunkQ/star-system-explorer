@@ -116,3 +116,33 @@ fn engines_by_id_come_from_the_stack() {
     let r = ask(&mut k, json!({"op": "ship_power", "ship": ship}));
     assert!(r["power"]["why"].to_string().contains("warp-core"), "{r}");
 }
+
+#[test]
+fn radiators_are_sized_by_their_block_at_each_temperature() {
+    let mut k = Kernel::new();
+    let mut ship = hall_ship();
+    ship["power"][0]["thermal_w"] = json!(3.0e5);
+    ship["power"][0]["reject_k"] = json!(900.0);
+    let r = ask(
+        &mut k,
+        json!({"op": "ship_power", "ship": ship,
+            "radiator": {"emissivity": 0.9, "two_sided": true}}),
+    );
+    assert_eq!(r["type"], "ship_power_is", "{r}");
+    let rad = r["power"]["radiators"].as_array().expect("radiators");
+    // Hottest first: the plant's 300 kW at 900 K, then the drive's loss at the default 300 K.
+    assert_eq!(rad[0]["reject_k"], 900);
+    assert_eq!(rad[0]["block"], "sse.ship.radiator_area");
+    let want = 3.0e5 / (2.0 * 0.9 * 5.670_374_419e-8 * (900.0 * 900.0 * 900.0 * 900.0));
+    let got = rad[0]["area_m2"].as_f64().unwrap();
+    assert!((got - want).abs() < 1e-6 * want, "{got} vs {want}");
+    assert!(rad.iter().all(|x| x["inputs"]["emissivity"] == 0.9));
+    // Without a panel rule the answer is as before.
+    let plain = ask(&mut k, json!({"op": "ship_power", "ship": hall_ship()}));
+    assert!(plain["power"].get("radiators").is_none());
+    let bad = ask(
+        &mut k,
+        json!({"op": "ship_power", "ship": hall_ship(), "radiator": {}}),
+    );
+    assert_eq!(bad["type"], "error", "{bad}");
+}
