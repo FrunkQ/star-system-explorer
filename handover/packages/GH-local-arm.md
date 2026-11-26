@@ -34,11 +34,53 @@ positions (Reid 2019)".
   midplane at low latitude. Not a tuning fix. Look at the young-star scale height and the dust layer under the
   arms (the arm boost may apply to dust and stars alike), with the light thread. The PR is core lane.
 
+## 26 Nov: the dust's cause (thread "Fix Local Arm dust physics")
+
+Alex: "the failing dust check is right and the model is wrong ... do not tune"; then "Dust cause first, then
+young stars"; then (in the design thread) yes to sending the mid-disc metals to the conserved budget chain.
+
+What the failing lane check measures. At the test's nside 8 the "b = 0" pixel is centred at l = 5.6°, b = 0
+and the "b = -8°" pixel at l = 0, b = -4.8° (it passes over the nucleus at z = -810 pc). Both sight lines were
+traced shell by shell (a debug print in `sse_sky::glow`, not committed).
+
+- Young stars' scale height and arms (the first guess) do not fix it: put at the gas layer and in the arms,
+  they brighten V's midplane, so V's lane falls (offline from age-split traces: V 0.42 to 0.07 at 60 pc). Ks's
+  lane stays deeper whatever their height.
+- The real gap is midplane dust. In-plane A_V toward the centre was 64 mag to 1 kpc from it (Ks loses 7.5 mag;
+  measured about 2.5, from memory). The gas alone gives about 21 mag (close to measured); the dust rule's
+  10^[Fe/H] tripled it, because the inner disc was a closed box at 5% gas with [Fe/H] +0.5 to +0.8.
+- Cause one, fixed here: the home galaxy is barred but its bar only ever made a starburst. A bar sweeps its
+  gas into the nucleus (`rings.rs`, `RingParams::bar_*`, fudge register "rings.rs bar sweep"): the gas between
+  0.12 and 1.15 disc scale lengths falls in once the disc is bar-unstable (`Galaxy::bar_from_gyr`, the first
+  unstable history point read forward, so edits stay causal). A_V toward the centre 64 to 46.
+- Cause two, handed on: the mid disc's gas runs +0.3 to +0.46 at 3.6 to 6.6 kpc (about 30 of the 46 mag).
+  The design thread "Design the conserved budget chain" wrote the check set the chemistry must match
+  (`handover/design/SSE4-conserved-chain-checks.md`, PR 604; A1 gas at the Sun 0.00 within 0.05, A10 extinction
+  to the centre 30 within 5); a builder retunes the rings against it (CC3). This PR merges after that, when
+  the glow check passes unchanged.
+- The bulge's stars were missing from the star field. Now: a bulge ledger in the galaxy (`born_hist`,
+  `bulge_joins`, `bulge_bursts`, `disc_moves`), the rings give up the disc stars mergers moved (each star counted
+  once), a Hernquist bulge sized by DM4's own rule (`GalaxyEnvelope::bulge_pc3`), its own count tree layer and
+  keys (`Layer::Bulge`, `f<frame>b<slot>`, `StarSystem::in_bulge`), its own glow light mix. Drawn stars plus glow
+  still add up (the glow's double-count test passes). Glow now: V lane 0.80, Ks 2.13 (still fails, as expected).
+- The bar's swept zone made a thin complex-life band at 6 Gyr (green test, Lineweaver 2004). Physics, not the
+  test: `Green::gas_kept` is false where a bar has swept the ring's gas (`Ring::swept_from_gyr`), so no new
+  systems count as green there. The test passes again unchanged.
+- New tests: `a_bar_sweeps_its_gas_into_the_nucleus`, `the_bulge_and_the_disc_count_each_star_once`
+  (g4_tests). Both seen red with the fix removed (sweep off; rings not giving up moved stars).
+- Next, its own package: stars' scale height by age (`packages/GH-age-heights.md`).
+
 ## Goldens
 
 Changed on purpose: `tests/golden/envelope.json`, `galaxy-events.json`, and the core contract lines that read
 the home galaxy's arms (galaxy chart crests and `arm_names`, sky and glow). Reason: the home galaxy's arms are
 now Reid 2019's measured arms rather than a generic two-armed spiral.
+
+26 Nov, changed on purpose again, for every barred galaxy and every galaxy with a bulge: `galaxy.json`
+(rings' gas and stars), `envelope.json` (gas, bulge density, `gas_kept`), `stars`/`g5` goldens (bulge stars
+drawn, disc stars fewer by what mergers moved), `galaxy-events.json`, and the core contract lines that read
+them. Reasons: a bar sweeps its gas into the nucleus; the bulge's stars are drawn and glow; each star is
+counted once. To re-bless after the chemistry retune lands.
 
 ## Next
 

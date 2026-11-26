@@ -191,6 +191,9 @@ pub struct Ring {
     /// Present rates per year: core collapse, type Ia.
     pub cc_rate: f64,
     pub ia_rate: f64,
+    /// When a bar began sweeping this ring's gas into the nucleus, if it does.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub swept_from_gyr: Option<f64>,
 }
 
 impl Ring {
@@ -338,6 +341,7 @@ pub fn evolve_clocked(
     let mut feh_hist = vec![vec![]; nr];
     let mut states: Vec<Vec<RingState>> = vec![Vec::with_capacity(n); nr];
     let mut stars_so_far = vec![0.0f64; nr];
+    let mut swept_from: Vec<Option<f64>> = vec![None; nr];
     let total: f64 = clock_total.unwrap_or_else(|| inflow_clock(gal, p));
     let span = dt * n as f64;
     let mut cum = 0.0;
@@ -503,6 +507,9 @@ pub fn evolve_clocked(
                 if mid[i] >= bar {
                     break;
                 }
+                if swept_from[i].is_none() {
+                    swept_from[i] = Some(gal.t_start_gyr + dt * k as f64);
+                }
                 moved += gas[i] * share;
                 gas[i] -= gas[i] * share;
                 for g in 0..6 {
@@ -540,6 +547,7 @@ pub fn evolve_clocked(
             deaths: deaths[i].clone(),
             cc_rate: rates[i].0,
             ia_rate: rates[i].1,
+            swept_from_gyr: swept_from[i],
         })
         .collect();
     Disc {

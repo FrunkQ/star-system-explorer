@@ -323,6 +323,9 @@ pub struct Local {
 /// Each green criterion, pass or fail, and the verdict.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Green {
+    /// False where a bar has swept the gas away (no new systems form there).
+    #[serde(default = "yes")]
+    pub gas_kept: bool,
     pub metals_enough: bool,
     pub metals_not_too_many: bool,
     pub few_supernovae: bool,
@@ -344,6 +347,10 @@ pub struct GalaxyEnvelope<'a> {
     pub address: Address,
     /// GH4: the shapes of the galaxy's remains, worked out once a time.
     pub remains: crate::remains::Cache,
+}
+
+fn yes() -> bool {
+    true
 }
 
 fn is_zero(x: &f64) -> bool {
@@ -745,13 +752,23 @@ impl GalaxyEnvelope<'_> {
         let few_bursts = l.grb_per_gyr <= g.grb_max_per_gyr;
         let nucleus_quiet = l.agn_dose <= g.agn_dose_max;
         let quiet_long_enough = l.rocky_for_gyr.is_some_and(|q| q >= g.quiet_gyr);
-        let habitable = metals_enough
+        // Where a bar has swept the gas away no new stars or planets form, so
+        // the place's gas (which the other criteria read) speaks for no new
+        // systems and the place is not green for them.
+        let gas_kept = !self
+            .disc
+            .ring_at(l.place.r_kpc)
+            .swept_from_gyr
+            .is_some_and(|t| t <= l.place.t_gyr);
+        let habitable = gas_kept
+            && metals_enough
             && metals_not_too_many
             && few_supernovae
             && few_passages
             && few_bursts
             && nucleus_quiet;
         Green {
+            gas_kept,
             metals_enough,
             metals_not_too_many,
             few_supernovae,

@@ -405,3 +405,110 @@ fn measured_arms_keep_each_rings_total() {
         assert!((mean - 1.0).abs() < 0.12, "ring {r} kpc averages {mean}");
     }
 }
+
+/// A bar sweeps its gas into the nucleus (Local Arm package): once the home
+/// galaxy is bar-unstable, the rings between the nucleus and the bar's end
+/// hold almost no gas, the nucleus holds more than the disc beyond, and no
+/// place there counts as green for new systems, while the disc beyond the
+/// bar keeps its gas and its green verdict.
+#[test]
+fn a_bar_sweeps_its_gas_into_the_nucleus() {
+    let (c, w) = world();
+    let (g, d) = milky_way_like(&c, &w);
+    let e = env(&g, &d);
+    let gp = GreenParams::default();
+    let rp = crate::rings::RingParams::default();
+    let rd = g.now.disc_kpc;
+    let tb = g.bar_from_gyr.expect("the Milky-Way-like galaxy is barred");
+    assert!(tb < 13.0, "bar from {tb}");
+    let now = 13.8;
+    let swept = e.surface(0.6 * rd, now).gas;
+    let beyond = e.surface(2.0 * rd, now).gas;
+    let nucleus = e.surface(0.11 * rd, now).gas;
+    // Measured: the Milky Way's gas between about 0.3 and 3 kpc is a
+    // hundredth or less of the disc's beyond (absolute floor: under 0.1
+    // solar masses per pc², where the disc holds several).
+    assert!(swept < 0.1 && beyond > 3.0, "swept {swept} beyond {beyond}");
+    assert!(nucleus > beyond, "nucleus {nucleus} beyond {beyond}");
+    for r in d
+        .rings
+        .iter()
+        .filter(|r| r.radius_kpc > rp.bar_nucleus_rd * rd)
+    {
+        if r.radius_kpc < rp.bar_rd * rd {
+            assert!(
+                r.swept_from_gyr.is_some_and(|t| t >= tb - 0.06),
+                "{}",
+                r.radius_kpc
+            );
+        } else {
+            assert!(r.swept_from_gyr.is_none(), "{}", r.radius_kpc);
+        }
+    }
+    let at = |r: f64, t: f64| {
+        e.local(
+            Place {
+                r_kpc: r,
+                phi: 0.0,
+                z_pc: 0.0,
+                t_gyr: t,
+            },
+            &gp,
+        )
+    };
+    let inside = e.green(&at(0.6 * rd, now), &gp);
+    assert!(!inside.gas_kept && !inside.habitable && !inside.complex);
+    // Before the bar the same place kept its gas.
+    assert!(e.green(&at(0.6 * rd, tb - 0.5), &gp).gas_kept);
+    assert!(e.green(&at(e.sun_radius_kpc(), now), &gp).gas_kept);
+}
+
+/// Each star is counted once: mergers move a share of the disc's stars into
+/// the bulge and the rings give the same share up, so the rings' stars and
+/// the bulge's together are the galaxy's, to the part that fell in from
+/// outside (the bulge's ex-situ stars, which the rings never held).
+#[test]
+fn the_bulge_and_the_disc_count_each_star_once() {
+    let (c, w) = world();
+    let (g, d) = milky_way_like(&c, &w);
+    let e = env(&g, &d);
+    let rings: f64 = (0..d.rings.len())
+        .map(|i| d.states[i].last().map_or(0.0, |s| s.stars))
+        .sum();
+    let joined: f64 = g.bulge_joins.iter().map(|b| b.1).sum();
+    let burst: f64 = g.bulge_bursts.iter().map(|b| b.1).sum();
+    assert!(g.now.bulge > 0.0 && (joined + burst - g.now.bulge).abs() < 1.0e-6 * g.now.bulge);
+    // The rings gave up what mergers moved: their stars are fewer than they
+    // formed, by no more than the share every move took (a star born before
+    // every move lost the most).
+    assert!(!g.disc_moves.is_empty());
+    let formed: f64 = d.rings.iter().map(|r| r.stars()).sum();
+    let all_moves: f64 = g.disc_moves.iter().map(|(_, f)| 1.0 - f).product();
+    println!("rings {rings:.3e} formed {formed:.3e} kept at least {all_moves:.3}");
+    assert!(rings < formed * (1.0 - 1.0e-9) && rings >= formed * all_moves * (1.0 - 1.0e-9));
+    // The bulge's births as they stood at a time hold only what had joined by then.
+    let half = g.bulge_births_at(8.0).iter().map(|b| b.1).sum::<f64>();
+    assert!(
+        (half - g.bulge_at(8.0)).abs() < 0.1 * g.bulge_at(8.0).max(1.0),
+        "{half} {}",
+        g.bulge_at(8.0)
+    );
+    // Its density is the Hernquist sphere's: the mass inside a large radius is nearly all of it.
+    let a = g.bulge_a_kpc(13.8);
+    assert!(a > 0.05 && a < 3.0, "bulge scale {a}");
+    let rho = e.bulge_pc3(Place {
+        r_kpc: a,
+        phi: 0.0,
+        z_pc: 0.0,
+        t_gyr: 13.8,
+    });
+    let want = g.now.bulge * a * 1000.0
+        / (2.0
+            * sse_core::math::PI
+            * (a * 1000.0)
+            * ((2.0 * a * 1000.0) * (2.0 * a * 1000.0) * (2.0 * a * 1000.0)));
+    assert!(
+        (rho - want).abs() < 1.0e-9 * want.max(1.0e-12),
+        "{rho} {want}"
+    );
+}
