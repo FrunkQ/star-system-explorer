@@ -1,7 +1,7 @@
 // Drawing a page of live stars in True with one GPU (SC1): every star on the page is an item in one straight-on
 // scene, placed over its tile, its face from the one door the system's True uses (star-now.ts `liveFace` through
 // true-body.ts `trueLook`), at its own clock. One canvas and one draw a frame, so a page of 48 stars costs one view.
-import { liveFace, trueLook, type Gpu, type GpuItem, type LiveStar, type Vec3 } from "../../../renderer/src/index.ts";
+import { liveFace, trueLook, type Gpu, type GpuItem, type GpuRing, type LiveStar, type Vec3 } from "../../../renderer/src/index.ts";
 import { thermalColour } from "../../../ui-contract/src/index.ts";
 
 export interface StageStar {
@@ -16,21 +16,43 @@ export interface StageStar {
   clock: number;
 }
 
-/** Draw `stars` at screen time `t_s` (seconds since the page showed); `calm` holds each at its present (reduced motion). */
-export function drawStage(gpu: Gpu, o: { width: number; height: number; dpr: number; ground: string; t_s: number; calm: boolean; stars: readonly StageStar[] }): void {
+/** A lit body beside the stars (Earth on its orbit in one star's life), over the canvas as the stars are. */
+export interface StageBody {
+  key: string;
+  x: number;
+  y: number;
+  r: number;
+  colour: string;
+}
+
+/** A closed line over the canvas (Earth's orbit), CSS pixels; `over` draws it over the stars (an orbit inside a star). */
+export interface StageLine {
+  points: { x: number; y: number }[];
+  colour: string;
+  over?: boolean;
+}
+
+/**
+ * Draw `stars` at screen time `t_s` (seconds since the page showed); `calm` holds each at its present (reduced motion).
+ * `bodies` and `lines` are drawn in the stars' plane, so a body inside a star's disc is hidden by it.
+ */
+export function drawStage(gpu: Gpu, o: { width: number; height: number; dpr: number; ground: string; t_s: number; calm: boolean; stars: readonly StageStar[]; bodies?: readonly StageBody[]; lines?: readonly StageLine[] }): void {
   const back = 2 * Math.max(10, ...o.stars.map((s) => s.r)) + 10;
+  const at = (x: number, y: number): Vec3 => [x - o.width / 2, o.height / 2 - y, -back];
   const items: GpuItem[] = [];
   // A face drawn every tenth of a second of the screen's time, each at its own star's clock.
   const tick = Math.floor(o.t_s * 10) / 10;
   for (const s of o.stars) {
     const px = 2 * s.r * o.dpr;
     const face = liveFace(s.key, s.live, { t: s.live.age_s + tick * s.clock, clock: s.clock, span: s.clock / 10, calm: o.calm, px: Math.max(16, px) }).face;
-    const c: Vec3 = [s.x - o.width / 2, o.height / 2 - s.y, -back];
+    const c = at(s.x, s.y);
     items.push({ id: s.key, rel: c, radius: s.r, ...trueLook({ key: s.key, star: true, colour: thermalColour(s.live.teff), radius_m: s.live.radius, face, pole: [0, 1, 0] }) });
   }
+  for (const b of o.bodies ?? []) items.push({ id: b.key, rel: at(b.x, b.y), radius: b.r, colour: b.colour });
+  const rings: GpuRing[] = (o.lines ?? []).map((l) => ({ points: l.points.map((p) => at(p.x, p.y)), colour: l.colour, ...(l.over ? { over: true } : {}) }));
   gpu.draw({
     items,
-    rings: [],
+    rings,
     forward: [0, 0, -1],
     up: [0, 1, 0],
     fovY: 0.5,

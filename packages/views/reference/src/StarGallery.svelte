@@ -12,6 +12,7 @@
   import { cellsAcross, granulesShow, limbLumps, narrateLumps, startGpu, type Gpu } from "../../../renderer/src/index.ts";
   import { readGalleryStar, radiiOnPage, shareWords, span, type GalleryStar, type SizeMode, type StarTile } from "./star-gallery.ts";
   import { drawStage, type StageStar } from "./star-stage.ts";
+  import StarLife from "./StarLife.svelte";
 
   let {
     session,
@@ -30,6 +31,15 @@
     stamp?: string;
   } = $props();
   const full = $derived(depth !== "curious");
+
+  // Two ways to look: every kind side by side, or one star through its life (Alex 26 Nov: "order by 'same star'").
+  let view = $state<"kinds" | "life">("kinds");
+  let lifeMass = $state(1);
+  function follow(g: GalleryStar) {
+    lifeMass = g.ask.mass_msun;
+    openId = null;
+    view = "life";
+  }
 
   // Sizes, remembered on this device (aids are per device).
   const SIZE_KEY = "sse.star-gallery.size";
@@ -247,6 +257,13 @@
   }}
 />
 
+<div class="views chips" role="group" aria-label="View">
+  <button type="button" class="chip" aria-pressed={view === "kinds"} data-star-view="kinds" onclick={() => (view = "kinds")}>Kinds</button>
+  <button type="button" class="chip" aria-pressed={view === "life"} data-star-view="life" onclick={() => (view = "life")}>One star's life</button>
+</div>
+{#if view === "life"}
+  <StarLife {session} mass={lifeMass} {depth} />
+{:else}
 <div class="stars" class:opened={!!open} data-star-gallery data-gpu={gpuState} data-size={size} data-drawn={drawnCount}>
   <section class="gallery" aria-label="Star classes">
     {#if stamp}<p class="muted small" data-star-stamp>{stamp}</p>{/if}
@@ -339,13 +356,26 @@
           {#each cellWords(openStar, BIG * 0.92 * zoom * Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1)) as w (w)}<p class="small">{w}</p>{/each}
         {/if}
         {#if full && openStar.desc.notes.length}<p class="muted small">{openStar.desc.notes.join(" ")}</p>{/if}
-        {#if onpick}<button type="button" class="btn ink" data-star-pick={open.id} onclick={() => onpick?.(openStar!)}>{pickWords}</button>{/if}
+        <div class="acts">
+          {#if onpick}<button type="button" class="btn ink" data-star-pick={open.id} onclick={() => onpick?.(openStar!)}>{pickWords}</button>{/if}
+          <button type="button" class="chip" data-star-follow={open.id} onclick={() => follow(openStar!)}>Follow its life</button>
+        </div>
       {/if}
     </section>
   {/if}
 </div>
+{/if}
 
 <style>
+  .views {
+    margin-bottom: 10px;
+  }
+  .acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
   .stars {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
