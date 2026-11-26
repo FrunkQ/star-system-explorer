@@ -18,7 +18,7 @@ Nothing is built. RB is a code only, never shown in the product.
 | RB2 the row and boxes: handle sheet rows for "ring or belt" (Where, How much, Made of, Grains, Stir), walls, typing | proposed, needs RB1 | planet and star editing |
 | RB3 the Profile part (an amount along a line), read-only first, then joins and heights that keep the sum | proposed, needs RB1 and question 4 | planet and star editing |
 | RB4 "Others like this", Kinds, the Add hoop and edge grips on the chart | proposed, needs RB2, RB3 | planet and star editing, chart room |
-| RB5 the books: "How much" as a claim on a source, the overdraft line, Break up and Gather | proposed, needs RB1 and questions 5, 6 | kernel |
+| RB5 the books: "How much" offers a moon to break up first (Alex, 26 Nov), then other sources, then "from nowhere" with the overdraft line; Break up and Gather | proposed, needs RB1 and questions 5, 6 | kernel |
 | RB6 sculptors: authored zones against moons, Reach it adding the moon, "Could be" records; planets sculpting belts | proposed, needs RB3, RB5 | small bodies, editing |
 | RB7 coatings and the "What it would take" card; proven on the red B ring, a generated ring and a belt | proposed, needs RB3, RB5, pigment optics rows | editing, data sheet |
 | RB8 the Detail fit: the size ladder with the cut, kept members, "Show finer" | proposed, needs RW4, RW5 | small bodies |
