@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { AU_M, M_SUN, meanFromTrue, orbitBodies, phasesFrom, withPhases } from "../src/orbits.ts";
+import { AU_M, M_SUN, meanFromTrue, MOTION_STEP_S, motionsFrom, orbitBodies, phasesFrom, withPhases } from "../src/orbits.ts";
 import type { SystemScene } from "../src/scene.ts";
 
 const kestrel = JSON.parse(readFileSync(new URL("../../shell/src/documents/kestrel.scene.json", import.meta.url), "utf8")) as SystemScene;
@@ -34,4 +34,15 @@ test("phases go onto the scene; unplaced bodies keep theirs", () => {
   assert.equal(s.subjects.find((x) => x.address.endsWith("body:1"))!.orbit!.phase_deg, 10);
   assert.equal(s.subjects.find((x) => x.address.endsWith("body:2"))!.orbit!.phase_deg, 212);
   assert.equal(withPhases(kestrel, null), kestrel);
+});
+
+test("a body's velocity is its move between the two times asked, a minute apart", () => {
+  const m = motionsFrom([
+    { address: "moon", placed: true, at: [{ at_s: 1060, r_m: [3.84e8, 61320, 0], phase_deg: 0 }, { at_s: 1000, r_m: [3.84e8, 0, 0], phase_deg: 0 }] },
+    { address: "lost", placed: false },
+    { address: "once", placed: true, at: [{ at_s: 1000, r_m: [1, 2, 3], phase_deg: 0 }] },
+  ]);
+  assert.deepEqual(m.get("moon"), [0, 1022, 0]);
+  assert.equal(m.has("lost") || m.has("once"), false);
+  assert.equal(MOTION_STEP_S, 60);
 });

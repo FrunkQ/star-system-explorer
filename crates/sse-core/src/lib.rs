@@ -10,8 +10,10 @@ pub mod hash;
 pub mod math;
 pub mod quantity;
 pub mod sheet;
+pub mod time;
 
 pub use address::Address;
 pub use draw::{Draws, Seed, Stream};
 pub use hash::ContentHash;
 pub use quantity::{Dimension, Quantity, QuantityKind, Units};
+pub use time::Instant;

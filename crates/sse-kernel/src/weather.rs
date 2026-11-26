@@ -8,6 +8,9 @@ use sse_weather::{Conditions, Date, Pin, WeatherBlock};
 
 type Out = Result<Response, Response>;
 
+/// What `want` may be, as the refusal names them (kept as the core golden has it; `glint` is also taken).
+const WANTS: &str = "climate, systems, field, patch, glint, report, column or sound";
+
 fn to_json<T: serde::Serialize>(t: &T) -> serde_json::Value {
     serde_json::to_value(t).expect("plain data")
 }
@@ -166,6 +169,13 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
             }
             out
         }
+        "glint" => {
+            // The sun's glint off the seas, for the view's drawing (EC2).
+            let cs = &block.settings.climate;
+            let core = climates.orbit(cs, &c, a.epoch_myr);
+            let g = crate::sea::glint(&a.sheet, cs, core);
+            g.unwrap_or(serde_json::Value::Null)
+        }
         "column" => {
             rule_only("column")?;
             to_json(&sse_weather::hooks::column(
@@ -178,14 +188,7 @@ pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
                 &block, &c, date, a.lat, a.lon, &pins, None,
             ))
         }
-        other => {
-            return Err(err(
-                "bad_want",
-                format!(
-                    "weather want {other}: climate, systems, field, patch, report, column or sound"
-                ),
-            ))
-        }
+        other => return Err(err("bad_want", format!("weather want {other}: {WANTS}"))),
     };
     Ok(Response::WeatherRead {
         want: a.want,
