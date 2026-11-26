@@ -33,6 +33,8 @@ export interface Body3D {
   figure?: SmallShape;
   /** Where the kernel places it from its parent's centre (metres, the system's frame), when placed by date: shadows in True. */
   r_m?: [number, number, number];
+  /** Its velocity from its parent (m/s, the same frame), when placed by date: a shadow's caster is read where the light passed it. */
+  v_m_s?: [number, number, number];
 }
 
 /** A resolved belt member as a body round the star, where its orbit puts it now (True only). */
@@ -54,7 +56,7 @@ export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => M
     .filter((s) => s === star || s.orbit)
     .map((s) => {
       const rings = scene.subjects.filter((r) => r.ring && r.parent === s.address).map((r) => ({ name: r.label, ...r.ring! }));
-      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, ...(s.orbit?.r_m ? { r_m: s.orbit.r_m } : {}), mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...massOf(s) };
+      return { id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, ...(s.orbit?.r_m ? { r_m: s.orbit.r_m } : {}), ...(s.orbit?.v_m_s ? { v_m_s: s.orbit.v_m_s } : {}), mark: mark(s), radius_m: radiusOf(s), t_k: tempOf(s), ...(rings.length ? { rings } : {}), ...(s.tilt_rad !== undefined ? { tilt_rad: s.tilt_rad } : {}), ...massOf(s) };
     });
 }
 
@@ -235,27 +237,30 @@ export const hasChildren = (bodies: readonly Body3D[], id: string) => bodies.som
  * A body with no radius, no distance or a phase spread for display (a players' scene) is left out: a shadow drawn from
  * a made-up place would tell a lie. The star sits at the origin.
  */
-export function placedBodies(bodies: readonly Body3D[]): Map<string, { id: string; at_m: [number, number, number]; radius_m: number }> {
+export function placedBodies(bodies: readonly Body3D[]): Map<string, { id: string; at_m: [number, number, number]; radius_m: number; v_m_s?: [number, number, number] }> {
   const byId = new Map(bodies.map((b) => [b.id, b]));
-  const at = new Map<string, [number, number, number] | null>();
-  const place = (b: Body3D, depth = 0): [number, number, number] | null => {
+  type V = [number, number, number];
+  const at = new Map<string, { p: V; v: V | null } | null>();
+  const place = (b: Body3D, depth = 0): { p: V; v: V | null } | null => {
     if (at.has(b.id)) return at.get(b.id)!;
-    let p: [number, number, number] | null = null;
-    if (b.parent === null) p = [0, 0, 0];
+    let out: { p: V; v: V | null } | null = null;
+    if (b.parent === null) out = { p: [0, 0, 0], v: [0, 0, 0] };
     else if (depth < 16 && b.phase_known) {
       const up = byId.get(b.parent);
       const base = up ? place(up, depth + 1) : null;
       const t = (b.phase_deg * Math.PI) / 180;
-      const own: [number, number, number] | null = b.r_m ?? (b.a_m !== null ? [b.a_m * Math.cos(t), b.a_m * Math.sin(t), 0] : null);
-      p = base && own ? [base[0] + own[0], base[1] + own[1], base[2] + own[2]] : null;
+      const own: V | null = b.r_m ?? (b.a_m !== null ? [b.a_m * Math.cos(t), b.a_m * Math.sin(t), 0] : null);
+      // A velocity only where the whole chain up to the star has one (each from the kernel's two times).
+      const v: V | null = base?.v && b.v_m_s ? [base.v[0] + b.v_m_s[0], base.v[1] + b.v_m_s[1], base.v[2] + b.v_m_s[2]] : null;
+      out = base && own ? { p: [base.p[0] + own[0], base.p[1] + own[1], base.p[2] + own[2]], v } : null;
     }
-    at.set(b.id, p);
-    return p;
+    at.set(b.id, out);
+    return out;
   };
-  const out = new Map<string, { id: string; at_m: [number, number, number]; radius_m: number }>();
+  const res = new Map<string, { id: string; at_m: V; radius_m: number; v_m_s?: V }>();
   for (const b of bodies) {
-    const p = place(b);
-    if (p && b.radius_m && b.radius_m > 0) out.set(b.id, { id: b.id, at_m: p, radius_m: b.radius_m });
+    const q = place(b);
+    if (q && b.radius_m && b.radius_m > 0) res.set(b.id, { id: b.id, at_m: q.p, radius_m: b.radius_m, ...(q.v ? { v_m_s: q.v } : {}) });
   }
-  return out;
+  return res;
 }

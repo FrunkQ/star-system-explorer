@@ -137,6 +137,8 @@ export { SIGNIFICANCE_PARTS, valueWords, fieldWords, storyBrief } from "./story.
 export type { SifterDoc, StoryEvidence, StoryHit, SiftAsk, SiftResult } from "./story.ts";
 export * from "./orbits.ts";
 export { climateBelts, isExtrapolation, regimeWords } from "./climate.ts";
+export { HEAT_BOOK_FIELDS, HEAT_COLUMNS, HEAT_NODES, booksClose, heatBooks, heatCaveats, heatColumn, heatMarksBy, heatRank, heatStepAt, heatWatts, heatWhen, heatWhy, surfaceArea } from "./heat-flow.ts";
+export type { HeatBooks, HeatCaveat, HeatEnvelope, HeatEvent, HeatHistory, HeatStep } from "./heat-flow.ts";
 export type { ClimateBelt, ClimateSummary } from "./climate.ts";
 export { bandWords, replayAt, replayClock, replayModel } from "./replay.ts";
 export type { ReplayBody, ReplayCloud, ReplayEvent, ReplayFrame, ReplayModel, ReplayStage } from "./replay.ts";
@@ -230,6 +232,8 @@ export { STAR_KINDS, spectralLetter, massSteps, readMassStrip, kindMass, starEdi
 export type { StarDescription, StarPhase, StarKind, StarSample, Describe } from "./star-chooser.ts";
 export { readShape, readShapes, shapeAsk, shapeOf } from "./small-shape.ts";
 export type { ShapeAsk, ShapeReader, SmallShape } from "./small-shape.ts";
+export { chartFate, fateLine, fatePlan, withFate, FATE_LIMIT_MYR } from "./formation-fate.ts";
+export type { ChartFate, FateMark, FatePlan, FateWorld } from "./formation-fate.ts";
 export { annulus, authoredZones, causeTag, edgesHeld, joins, lightThrough, markWords, moveJoin, profileMass, profileSpans, sculptorOf, setDensity, setShare, srgb } from "./profile.ts";
 export type { AuthoredZone, ProfileSpan, RingMark, RingStructure, RingZone, Sculptor, ZoneCause } from "./profile.ts";
 export { GRAMMAR_PARTS, partOfScale } from "./grammar.ts";

@@ -87,8 +87,9 @@ export interface GpuItem {
    * `shadeFor`), and its star's angular radius. Its rings' shadow and its own on its rings need nothing more.
    */
   shade?: Shade;
-  /** True look: the sun's glint off its liquid ground, spread by this wind (m/s; a stand-in when left out) at this index. */
-  glint?: { wind_m_s?: number; index?: number };
+  /** True look: the sun's glint off its liquid ground: the waves' mean square slope and the liquid's reflectance straight
+   * back, the kernel's (`sse.light.sea_glint`, the weather op's `glint`); stand-ins when left out (eclipse.ts). */
+  glint?: { slope_variance?: number; normal_reflectance?: number };
 }
 
 /** True look: the star's light. `at` a camera-relative point (the star is in the frame), else `from` a direction. */

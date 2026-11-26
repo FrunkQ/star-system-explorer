@@ -14,6 +14,9 @@
   import { bodyCard } from "../../views/body-card/src/index.ts";
   import FormationReplay from "../../views/system-chart/src/FormationReplay.svelte";
   import { createWorkspace } from "./workspace.svelte.ts";
+  import StarGallery from "../../views/reference/src/StarGallery.svelte";
+  import { STAND_IN, tilesFromScheme, type GalleryStar, type StarTile } from "../../views/reference/src/star-gallery.ts";
+  import { classesOnStack, className, sayNumber, type PackDoc } from "../../ui-contract/src/index.ts";
 
   let { session, context, onadopted, start = "import", view, onview, file = null }: { file?: { text: string; name: string } | null; view?: import("../../ui-contract/src/index.ts").ViewChoice; onview?: (c: import("../../ui-contract/src/index.ts").ViewChoice) => void; session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session">; onadopted?: (systems: { system: string; title: string }[], note: string, state_hash: string) => void; start?: "import" | "generate" } = $props();
 
@@ -76,11 +79,69 @@
     else if (!replayOpen && replayDlg.open) replayDlg.close();
   });
   let grownReq = $state<FormationRequest | null>(null);
+
+  // ── The star, picked from the star gallery (SC1, Alex 26 Nov: "That gallery could be the picker") ──
+  // Its mass, age and metals then hold in the formation run ("work out what happened from its birth to now"), or it
+  // stands alone in a new system for the game master to fill by hand.
+  let picked = $state<GalleryStar | null>(null);
+  let galleryOpen = $state(false);
+  let galleryDlg = $state<HTMLDialogElement | undefined>();
+  $effect(() => {
+    if (!galleryDlg) return;
+    if (galleryOpen && !galleryDlg.open) galleryDlg.showModal();
+    else if (!galleryOpen && galleryDlg.open) galleryDlg.close();
+  });
+  // The star classes from the base atlas's star scheme on the stack, else the shipped atlas, else the stand-in list.
+  let starTiles = $state.raw<readonly StarTile[]>(STAND_IN);
+  $effect(() => {
+    if (!galleryOpen) return;
+    untrack(() => void starClassTiles().then((t) => (starTiles = t)));
+  });
+  async function starClassTiles(): Promise<readonly StarTile[]> {
+    const info = session.stack();
+    const on = classesOnStack([...info.base, ...(info.campaign ? [info.campaign] : [])]).schemes.find((s) => s.id === "star");
+    if (on) return tilesFromScheme(on, (c) => className(c));
+    // The shipped atlas as the shell serves it (scripts/build-shell.sh), as the Classes page offers it.
+    const atlasUrl = String("packs/base-atlas.json");
+    const doc = await fetch(new URL(atlasUrl, document.baseURI)).then((r) => (r.ok ? (r.json() as Promise<PackDoc>) : null)).catch(() => null);
+    const shipped = doc ? classesOnStack([doc]).schemes.find((s) => s.id === "star") : null;
+    return shipped ? tilesFromScheme(shipped, (c) => className(c)) : STAND_IN;
+  }
+  function pickStar(g: GalleryStar) {
+    picked = g;
+    pinMass = true;
+    mass = g.ask.mass_msun;
+    galleryOpen = false;
+    grown = null;
+  }
+  const pickedCode = $derived((picked?.desc.now as { class?: { code?: string } } | undefined)?.class?.code ?? null);
+  /** The picked star's pins: its mass, alone, at its age and metals. */
+  const pickedPins = $derived(picked ? { star_pins: { primary_mass: picked.ask.mass_msun, count: 1 }, inherit_pins: { age_gyr: picked.ask.age_yr / 1e9, feh: picked.ask.feh ?? picked.desc.feh } } : {});
+
+  // "Fill it in myself": a system holding only the picked star, added to the campaign at once, for the game master to
+  // add worlds to by hand (Add here). Written through the V3 importer's door, the one way an authored system enters
+  // the chronicle today: a single star node with its mass, radius, temperature and the system's age.
+  async function addStarAlone() {
+    if (!picked) return;
+    const n = picked.desc.now;
+    const name = seed.trim() || picked.tile.name;
+    const id = slug(name);
+    const v3 = { id: `sys-${id}`, name, seed: id, epochT0: 0, age_Gyr: picked.ask.age_yr / 1e9, nodes: [{ id: "star", name: `${name} A`, parentId: null, kind: "body", roleHint: "star", massKg: n.mass_kg, radiusKm: n.radius_m / 1000, temperatureK: n.teff_k, ...(pickedCode ? { classes: [`star/${pickedCode.replace(/\s+/g, "")}`] } : {}) }] };
+    busy = true;
+    problem = null;
+    const r = await session.adopt({ import_v3: JSON.stringify(v3) });
+    busy = false;
+    if (!r.ok) return void (problem = r.code === "already_adopted" ? "A system of this name is already in the campaign: change the seed to name it differently." : r.message);
+    const list = r.result.systems.map((x) => ({ system: x, title: name }));
+    const note = `Added ${name} to the campaign: its star alone, ready for you to add worlds by hand.`;
+    adoptedNote = note;
+    onadopted?.(list, note, r.result.state_hash);
+  }
   let importText = "";
   async function grow() {
     busy = true;
     problem = null;
-    const req: FormationRequest = { seed, block, system: `${universeRoot}/sys:@${slug(seed)}`, ...(pinMass ? { star_pins: { primary_mass: Number(mass) } } : {}) };
+    const req: FormationRequest = { seed, block, system: `${universeRoot}/sys:@${slug(seed)}`, ...(picked ? pickedPins : pinMass ? { star_pins: { primary_mass: Number(mass) } } : {}) };
     const r = await session.runFormation(req);
     busy = false;
     if (!r.ok) return void ((problem = r.message), (grown = null));
@@ -194,10 +255,26 @@
       </div>
     {/if}
   {:else}
+    <div class="row pickrow">
+      <button type="button" class="linkbtn" data-star-gallery-open onclick={() => (galleryOpen = true)}>{picked ? "Choose another star…" : "Choose the star from the gallery…"}</button>
+      {#if picked}
+        <span data-picked={picked.tile.id}><b>{picked.tile.name}</b>{pickedCode ? ` (${pickedCode})` : ""}: born with {sayNumber(picked.ask.mass_msun, 3)} M☉, {sayNumber(picked.ask.age_yr / 1e9, 3)} billion years ago, now {picked.desc.now.label}.</span>
+        <button type="button" class="linkbtn" onclick={() => ((picked = null), (grown = null))}>Let the seed choose instead</button>
+      {/if}
+    </div>
+    {#if picked}
+      <div class="row">
+        <button type="button" class="go" data-grow-picked onclick={grow} disabled={busy || !seed.trim()}>{busy ? "Working it out…" : "Work out what happened since its birth"}</button>
+        <button type="button" class="go plain" data-alone-picked onclick={addStarAlone} disabled={busy}>Fill it in myself</button>
+      </div>
+      <p class="note">Working it out runs the formation pipeline with this star held at its mass, age and metals: the disc, the worlds and what became of them by now. Filling it in yourself adds a system with only this star; add its worlds on the chart.</p>
+    {/if}
     <div class="row form">
-      <label>Seed<input type="text" bind:value={seed} aria-label="Seed" /></label>
-      <label class="check"><input type="checkbox" bind:checked={pinMass} /> Pin the star's mass</label>
-      {#if pinMass}<label>Star mass (M☉)<input type="number" min="0.1" max="8" step="0.05" bind:value={mass} aria-label="Star mass" /></label>{/if}
+      <label>{picked ? "Name (and seed)" : "Seed"}<input type="text" bind:value={seed} aria-label="Seed" /></label>
+      {#if !picked}
+        <label class="check"><input type="checkbox" bind:checked={pinMass} /> Pin the star's mass</label>
+        {#if pinMass}<label>Star mass (M☉)<input type="number" min="0.1" max="8" step="0.05" bind:value={mass} aria-label="Star mass" /></label>{/if}
+      {/if}
       <label>Formation rule
         <select bind:value={block} aria-label="Formation rule">
           <option value="modern">Modern (pebbles and planetesimals)</option>
@@ -205,7 +282,7 @@
           <option value="classic-corrected">Classic Accrete, corrected</option>
         </select>
       </label>
-      <button type="button" class="go" onclick={grow} disabled={busy || !seed.trim()}>{busy ? "Growing…" : "Grow it"}</button>
+      {#if !picked}<button type="button" class="go" onclick={grow} disabled={busy || !seed.trim()}>{busy ? "Growing…" : "Grow it"}</button>{/if}
     </div>
     <p class="note">One run of the nine-stage formation pipeline: medium cost, a second or two on most devices. The same seed and settings always grow the same system.</p>
     {#if grown}
@@ -235,6 +312,13 @@
   {/if}
   {#if adoptedNote}<p role="status" data-adopted>{adoptedNote}</p>{/if}
 
+  <dialog class="gallery-dlg" bind:this={galleryDlg} aria-label="Choose the star" onclose={() => (galleryOpen = false)}>
+    {#if galleryOpen}
+      <div class="dlg-head"><h2>Choose the star</h2><button type="button" class="linkbtn" onclick={() => (galleryOpen = false)}>Close</button></div>
+      <StarGallery {session} tiles={starTiles} onpick={pickStar} pickWords="Make a system round this star" />
+    {/if}
+  </dialog>
+
   {#if grown}
     <dialog class="replay-dlg" bind:this={replayDlg} aria-label="How {grownSeed} formed" onclose={() => (replayOpen = false)}>
       {#if replayOpen}<FormationReplay run={grown} title={`Seed "${grownSeed}"`} onclose={() => (replayOpen = false)} {view} {onview} />{/if}
@@ -252,6 +336,24 @@
 </section>
 
 <style>
+  .gallery-dlg {
+    width: min(1180px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    padding: 16px;
+    border: var(--sse-line, 1px) solid var(--sse-ink);
+    background: var(--sse-ground, Canvas);
+    color: var(--sse-ink);
+  }
+  .dlg-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .go.plain {
+    background: var(--sse-ground, Canvas);
+    color: var(--sse-ink);
+  }
   .make {
     display: grid;
     gap: 10px;
