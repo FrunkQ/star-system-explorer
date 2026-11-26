@@ -77,7 +77,7 @@ sources?: unknown,
 /**
  * Which weather block, `{id, version, level}`; default the rule block.
  */
-block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "read_light_paths", fixture?: string, bodies?: unknown[], table?: boolean, } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, 
+block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "bake", table: string, subject?: unknown, tier?: string, } | { "op": "read_light_paths", fixture?: string, bodies?: unknown[], table?: boolean, } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, 
 /**
  * The setting's range bands (a measure, RK11): each detection's
  * distance and range are labelled with them.

@@ -21,6 +21,7 @@ pub mod air;
 pub mod bows;
 pub mod colour;
 pub mod disc_image;
+pub mod disc_table;
 pub mod emit;
 pub mod feed;
 pub mod gas;
@@ -34,6 +35,8 @@ pub mod shadow;
 pub mod shift;
 pub mod table;
 
+#[cfg(test)]
+mod disc_table_tests;
 #[cfg(test)]
 mod disc_tests;
 #[cfg(test)]

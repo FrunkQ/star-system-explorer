@@ -15,3 +15,5 @@ sse-reference.workspace = true
 sse-gravity = { path = "../sse-gravity" }
 serde.workspace = true
 serde_json.workspace = true
+sse-physics.workspace = true
+sse-formula = { path = "../sse-formula" }

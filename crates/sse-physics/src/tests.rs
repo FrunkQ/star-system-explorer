@@ -122,3 +122,115 @@ fn bare_physics_has_no_sheet_door_and_no_settings() {
     assert!(p.flows().is_empty());
     assert!(!p.blocks().is_empty());
 }
+
+mod table_tests {
+    use crate::table::*;
+
+    fn axis1(n: usize) -> Axis {
+        Axis::new("x", "1", Spacing::Log, 1.0, 100.0, n, "x")
+    }
+
+    fn baked(n: usize, bound: f64) -> Baked {
+        Baked {
+            axes: vec![
+                axis1(n),
+                Axis::new("y", "1", Spacing::Even, -1.0, 1.0, 9, "y"),
+            ],
+            channels: vec![
+                Channel::new("a", "1", "test", "x plus y"),
+                Channel::new("b", "1", "test", "x squared"),
+            ],
+            exact: Box::new(|x: &[f64]| Ok(vec![x[0] + x[1], x[0] * x[0]])),
+            bound: vec![bound, bound],
+            floor: vec![1e-6, 1e-6],
+            reads: vec![],
+            why: vec![],
+            stand_ins: vec![],
+        }
+    }
+
+    #[test]
+    fn axes_put_their_ends_on_nodes_and_index_back() {
+        let a = axis1(5);
+        assert_eq!(a.at(0), 1.0);
+        assert_eq!(a.at(4), 100.0);
+        assert!((a.at(2) - 10.0).abs() < 1e-12);
+        assert!((a.index_of(10.0) - 2.0).abs() < 1e-12);
+        assert_eq!(a.index_of(0.5), 0.0, "held to the first node");
+        assert_eq!(a.index_of(1e9), 4.0, "held to the last node");
+        assert!((a.index_of(a.at_index(2.5)) - 2.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn a_sealed_table_is_exact_at_nodes_and_linear_in_its_axes() {
+        let t = Table::seal(
+            "test",
+            serde_json::json!({}),
+            Size::Medium,
+            None,
+            "p".into(),
+            baked(33, 0.05),
+        )
+        .expect("bakes");
+        assert_eq!(t.format, FORMAT);
+        assert_eq!(t.values.len(), 33 * 9 * 2);
+        // At nodes, exactly the f32 of the exact value.
+        let x = [t.axes[0].at(7), t.axes[1].at(3)];
+        let s = t.sample(&x);
+        assert_eq!(s[0], (x[0] + x[1]) as f32 as f64);
+        // y is an even axis and channel a is linear in y: exact between nodes.
+        let y = 0.123;
+        let s = t.sample(&[t.axes[0].at(7), y]);
+        assert!((s[0] - (t.axes[0].at(7) + y)).abs() < 1e-5);
+        assert!(t.sampling.within, "{:?}", t.sampling);
+        assert!(t.sampling.probes > 0);
+        assert_eq!(t.hash.len(), 64);
+    }
+
+    #[test]
+    fn sampling_goes_red_when_the_table_is_too_coarse() {
+        // x squared on a log axis of 3 nodes over two decades samples badly.
+        let t = Table::seal(
+            "test",
+            serde_json::json!({}),
+            Size::Small,
+            None,
+            "p".into(),
+            baked(3, 0.01),
+        )
+        .expect("bakes");
+        assert!(!t.sampling.within, "{:?}", t.sampling);
+        assert!(t.sampling.worst[1] > 0.1, "{:?}", t.sampling.worst);
+        // And green on a fine one.
+        let t = Table::seal(
+            "test",
+            serde_json::json!({}),
+            Size::Large,
+            None,
+            "p".into(),
+            baked(257, 0.01),
+        )
+        .expect("bakes");
+        assert!(t.sampling.within, "{:?}", t.sampling);
+    }
+
+    #[test]
+    fn tiers_pick_sizes() {
+        assert_eq!(Size::of_tier(Some("gpu-basic")), Size::Small);
+        assert_eq!(Size::of_tier(Some("canvas")), Size::Small);
+        assert_eq!(Size::of_tier(Some("gpu-high")), Size::Medium);
+        assert_eq!(Size::of_tier(None), Size::Medium);
+        assert_eq!(Size::of_tier(Some("gpu-ultra")), Size::Large);
+        assert_eq!(Size::of_tier(Some("still")), Size::Large);
+    }
+
+    #[test]
+    fn a_table_refuses_bad_axes_and_values() {
+        let mut b = baked(9, 0.1);
+        b.axes[0] = Axis::new("x", "1", Spacing::Log, 0.0, 1.0, 9, "x");
+        assert!(Table::seal("t", serde_json::json!({}), Size::Small, None, "p".into(), b).is_err());
+        let mut b = baked(9, 0.1);
+        b.exact = Box::new(|_| Ok(vec![f64::NAN, 1.0]));
+        assert!(Table::seal("t", serde_json::json!({}), Size::Small, None, "p".into(), b).is_err());
+    }
+}
