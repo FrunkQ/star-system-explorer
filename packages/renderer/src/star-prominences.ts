@@ -216,18 +216,14 @@ export function addProminences(out: { width: number; data: Uint8ClampedArray }, 
   return drawn;
 }
 
-/** The prominences in words: how many stand at the limb now, what holds them, how bright they really are. */
+/**
+ * The prominences in words, kept short (it sits in the view's note): how many stand at the limb now and the field
+ * holding them. Nothing when none shows. How faint they really are is in the star's card, not here.
+ */
 export function narrateProminences(s: LiveStar, now: ProminenceNow[], limb: number): string {
-  const c = s.corona as { surface_field_t?: number; slingshots?: boolean; corotation_radii?: number } | undefined;
-  if (!(s.prominences ?? []).length) return "";
+  if (!limb) return "";
+  const c = s.corona as { surface_field_t?: number } | undefined;
   const gauss = Number(c?.surface_field_t ?? 0) * 1e4;
-  const field = gauss > 0 ? ` held up by its field of about ${sayNumber(gauss, 2)} gauss` : "";
-  const up = now.filter((p) => p.erupting).length;
-  const sling = c?.slingshots ? ` Gas is also slung round it at ${sayNumber(c.corotation_radii ?? 0, 2)} radii, where an orbit keeps pace with its fast spin, and flung off.` : "";
-  const lead = limb ? `${limb === 1 ? "A prominence stands" : `${limb} prominences stand`} at the limb now` : "No prominence is at the limb just now";
-  const all = s.prominences ?? [];
-  const share = all.reduce((m, p) => Math.max(m, p.share_visible), 0);
-  const tk = all[0]?.temperature_k ?? 8000;
-  const faint = share > 0 ? ` (to the eye at most ${sayNumber(share, 1)} of the disc's brightness, seen only in an eclipse)` : "";
-  return `${lead}: cool hydrogen at about ${sayNumber(tk, 2)} K${field}, drawn as a hydrogen-alpha filter shows it${faint}${up ? `; ${up === 1 ? "one is" : `${up} are`} erupting` : ""}.${sling}`;
+  const up = now.some((p) => p.erupting) ? ", one erupting" : "";
+  return `${limb === 1 ? "A prominence" : `${limb} prominences`} at the limb${up}: cool gas held by its ${gauss > 0 ? `${sayNumber(gauss, 2)} gauss ` : ""}field, as a hydrogen-alpha filter shows it.`;
 }

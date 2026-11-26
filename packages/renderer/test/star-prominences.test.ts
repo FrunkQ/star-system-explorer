@@ -87,5 +87,5 @@ test("the living star draws its prominences into the halo and says so", () => {
   const halo = { width: 160, data: new Uint8ClampedArray(160 * 160 * 4) };
   const now = drawStarNow(face, halo, s, { t: s.age_s, clock: DAY / 4, span: DAY / 40, lat_deg: 0, disc_deg: 10 });
   assert.equal(now.limb, 2);
-  assert.ok(now.words.some((w) => /2 prominences stand at the limb/.test(w) && /95 gauss/.test(w)), now.words.join(" | "));
+  assert.ok(now.words.some((w) => /2 prominences at the limb/.test(w) && /95 gauss/.test(w)), now.words.join(" | "));
 });
