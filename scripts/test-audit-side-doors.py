@@ -53,7 +53,9 @@ def main():
         with open(os.path.join(root, LEDGER), encoding="utf-8") as f:
             led = f.read()
         expect("sheet crates/sse-a/src/lib.rs 2" in led, "sheet lines counted", led)
-        expect("sheet-units crates/sse-a/src/units.rs 1" in led, "a units-only file is its own kind", led)
+        expect("units.rs" not in led, "a units-only file is not on the ledger", led)
+        code, out = run(root, "--list")
+        expect("sheet-units crates/sse-a/src/units.rs: lines 1" in out, "a units-only file is listed as its own kind", out)
         expect("settings crates/sse-a/src/lib.rs 1" in led, "an inline test module is not scanned", led)
         expect("a_tests.rs" not in led and "scenario.rs" not in led, "test files and scenario.rs are not scanned", led)
         code, out = run(root, "--check")
@@ -67,16 +69,21 @@ def main():
         expect(code == 1 and "refused" in out, "--shrink never raises a count", out)
         os.remove(os.path.join(root, "crates/sse-b/src/lib.rs"))
 
-        # A converted site whose line is left in the ledger goes red too.
-        write(root, "crates/sse-a/src/units.rs", "fn d() -> f64 { 1.0 }\n")
+        # A new units read never fails.
+        write(root, "crates/sse-c/src/lib.rs", "fn d() -> f64 { sse_core::sheet::AU }\n")
         code, out = run(root, "--check")
-        expect(code == 1 and "CONVERTED sheet-units crates/sse-a/src/units.rs" in out, "a stale ledger line fails", out)
+        expect(code == 0, "a new units-only read passes", out)
+
+        # A converted site whose line is left in the ledger goes red too.
+        write(root, "crates/sse-a/src/lib.rs", "fn s() {\n    let x = sse_surface::scenario::settings();\n}\n")
+        code, out = run(root, "--check")
+        expect(code == 1 and "CONVERTED sheet crates/sse-a/src/lib.rs" in out, "a stale ledger line fails", out)
         code, out = run(root, "--shrink")
         expect(code == 0, "--shrink takes the converted file off", out)
         code, out = run(root, "--check")
         expect(code == 0, "green once shrunk", out)
         with open(os.path.join(root, LEDGER), encoding="utf-8") as f:
-            expect("units.rs" not in f.read(), "the converted file left the ledger")
+            expect("sheet crates/sse-a/src/lib.rs" not in f.read(), "the converted file left the ledger")
 
         # --base: a ledger line raised by hand against the base fails.
         subprocess.run(["git", "init", "-q"], cwd=root, check=True)
@@ -89,7 +96,8 @@ def main():
         with open(os.path.join(root, LEDGER), encoding="utf-8") as f:
             led = f.read()
         with open(os.path.join(root, LEDGER), "w", encoding="utf-8") as f:
-            f.write(led.replace("sheet crates/sse-a/src/lib.rs 2", "sheet crates/sse-a/src/lib.rs 3"))
+            f.write(led.replace("settings crates/sse-a/src/lib.rs 1",
+                                "settings crates/sse-a/src/lib.rs 1\nsheet crates/sse-a/src/lib.rs 3"))
         code, out = run(root, "--check")
         expect(code == 0, "the hand-raised ledger matches the scan", out)
         code, out = run(root, "--check", "--base", "HEAD")

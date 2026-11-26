@@ -16,9 +16,9 @@ Kinds of side door, per file outside tests (one count per kind and file):
   sheet     the data sheet's built-in values (`sse_core::sheet`). Door: the
             sheet's fast table (ER4), then ER5.
   sheet-units  the same, in a file that reads only units and conventions
-            (au, day, the Julian year, the parsec, atm, g0, 0 C ...). Kept
-            apart because Alex ruled on 26 Nov that units never move, so
-            these may stay; they are still counted.
+            (au, day, the Julian year, the parsec, atm, g0, 0 C ...). Alex
+            ruled on 26 Nov that units never move, so these are listed by
+            --list and the totals but are not on the ledger and never fail.
   settings  a shipped pack's settings instead of the stack's: a crate's
             `scenario::settings()` / `envelope()` / `block()`, a
             `base_*_pack()` or `base_*()` reader, or a pack file read with
@@ -63,6 +63,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LEDGER = os.path.join("handover", "packages", "ER-side-doors.txt")
 KINDS = ["block", "sheet", "sheet-units", "settings"]
+# Kinds the ledger holds and --check enforces (units never move: Alex, 26 Nov).
+LEDGERED = ["block", "sheet", "settings"]
 
 SKIP_PATHS = [
     "crates/sse-core/src/sheet.rs",
@@ -190,6 +192,10 @@ def counts(found):
     return {k: len(v) for k, v in found.items()}
 
 
+def ledgered(c):
+    return {k: n for k, n in c.items() if k[0] in LEDGERED}
+
+
 def read_ledger_text(text):
     led = {}
     for line in text.splitlines():
@@ -197,7 +203,7 @@ def read_ledger_text(text):
         if not line or line.startswith("#"):
             continue
         parts = line.split()
-        if len(parts) != 3 or parts[0] not in KINDS:
+        if len(parts) != 3 or parts[0] not in LEDGERED:
             raise ValueError(f"bad ledger line: {line!r}")
         led[(parts[0], parts[1])] = int(parts[2])
     return led
@@ -209,7 +215,7 @@ def ledger_text(c):
         "# kind  file  sites. Convert a file's sites to the physics in force, then",
         "# run `python3 scripts/audit-side-doors.py --shrink`. Never add a line.",
     ]
-    for kind in KINDS:
+    for kind in LEDGERED:
         for (k, path), n in sorted(c.items()):
             if k == kind and n > 0:
                 out.append(f"{k} {path} {n}")
@@ -255,20 +261,21 @@ def main(argv):
     ledger_rel = ledger or LEDGER
     ledger_path = ledger_rel if os.path.isabs(ledger_rel) else os.path.join(root, ledger_rel)
     found = scan(root)
-    now = counts(found)
+    every = counts(found)
+    now = ledgered(every)
 
     if mode == "summary":
-        print("side doors:", totals(now))
+        print("side doors:", totals(every))
         return 0
     if mode == "list":
         for (k, path), lines in sorted(found.items()):
             print(f"{k} {path}: lines {', '.join(map(str, lines))}")
-        print("side doors:", totals(now))
+        print("side doors:", totals(every))
         return 0
     if mode == "write-ledger":
         with open(ledger_path, "w", encoding="utf-8", newline="\n") as f:
             f.write(ledger_text(now))
-        print("ledger written:", totals(now))
+        print("ledger written:", totals(every))
         return 0
     try:
         with open(ledger_path, encoding="utf-8") as f:
@@ -285,7 +292,7 @@ def main(argv):
             return 1
         with open(ledger_path, "w", encoding="utf-8", newline="\n") as f:
             f.write(ledger_text(now))
-        print("ledger shrunk:", totals(now))
+        print("ledger shrunk:", totals(every))
         return 0
 
     # --check
@@ -330,7 +337,7 @@ def main(argv):
         print(b, file=sys.stderr)
     if bad:
         return 1
-    print("side doors left:", totals(now))
+    print("side doors left:", totals(every))
     return 0
 
 

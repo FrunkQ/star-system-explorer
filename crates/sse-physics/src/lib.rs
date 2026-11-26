@@ -217,6 +217,20 @@ pub fn now() -> Option<Arc<Physics>> {
     NOW.with(|n| n.borrow().clone())
 }
 
+/// A sheet constant in force by its sheet id (`"M_sun"`, `"G"`), read from
+/// the stack's sheet; none outside a call or when the sheet lacks the row.
+/// The door for a new constant read until ER4's fast table lands.
+pub fn constant(id: &str) -> Option<f64> {
+    now().and_then(|p| p.sheet().constant(id))
+}
+
+/// A settings block in force (the topmost pack's `provides.other.<key>`);
+/// none outside a call or when the stack has none. The door for a new
+/// settings read: parse it as the crate's own `from_packs` does.
+pub fn settings(key: &str) -> Option<Value> {
+    now().and_then(|p| p.settings(key).cloned())
+}
+
 /// Run `f` with `p` in force, and with its two views set: the constants
 /// handle (`c`, which the kernel reads at the call's date) and the sheet
 /// for the Look up block. Everything is restored afterwards, also on a panic.

@@ -99,6 +99,10 @@ fn with_puts_the_physics_and_its_two_views_in_force_and_restores_them() {
         )
     });
     assert_eq!(h, Some(p.hash()));
+    let (g_row, surface) = with(&p, c, || (constant("G"), settings("surface")));
+    assert_eq!(g_row, Some(sse_core::sheet::G));
+    assert!(surface.is_some());
+    assert_eq!(constant("G"), None);
     assert_eq!(g, 2.0 * sse_core::sheet::G);
     assert!(has_sheet);
     assert!(now().is_none());
